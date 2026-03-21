@@ -40,15 +40,16 @@ import {
   type KangurMiniGameTranslate,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
-import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
+import type {
+  KangurMiniGameFeedback,
+  KangurMiniGameFinishProps,
+  KangurRewardBreakdownEntry,
+} from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 import type { DropResult } from '@hello-pangea/dnd';
 
-type GeometryBasicsWorkshopGameProps = {
-  finishLabel?: string;
-  onFinish: () => void;
-};
+type GeometryBasicsWorkshopGameProps = KangurMiniGameFinishProps;
 
 type TileId = 'point' | 'segment' | 'side' | 'angle';
 
@@ -69,10 +70,7 @@ type RoundState = {
   slot: LabelTile | null;
 };
 
-type Feedback = {
-  kind: 'success' | 'error';
-  text: string;
-} | null;
+type Feedback = KangurMiniGameFeedback | null;
 
 const LABEL_TILES: LabelTile[] = [
   { id: 'point', icon: '●', accent: 'sky' },

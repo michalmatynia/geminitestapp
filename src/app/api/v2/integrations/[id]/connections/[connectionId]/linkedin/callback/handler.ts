@@ -3,6 +3,10 @@ import { z } from 'zod';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
+import type {
+  LinkedInProfileResponseDto,
+  OAuthTokenResponseDto,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { mapErrorToAppError } from '@/shared/errors/error-mapper';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
@@ -15,21 +19,6 @@ const API_BASE_URL = process.env['LINKEDIN_API_BASE_URL'] ?? 'https://api.linked
 const DEFAULT_SCOPE = process.env['LINKEDIN_OAUTH_SCOPE'] ?? 'openid profile w_member_social';
 const ENV_CLIENT_ID = process.env['LINKEDIN_APP_KEY_SECRET']?.trim() ?? null;
 const ENV_CLIENT_SECRET = process.env['LINKEDIN_APP_CLIENT_SECRET']?.trim() ?? null;
-
-type LinkedInTokenResponse = {
-  access_token?: string;
-  refresh_token?: string;
-  token_type?: string;
-  expires_in?: number;
-  scope?: string;
-  error?: string;
-  error_description?: string;
-};
-
-type LinkedInProfileResponse = {
-  sub?: string;
-  name?: string;
-};
 
 const toErrorRedirect = (origin: string, reason: string): string => {
   const url = new URL('/admin/integrations', origin);
@@ -47,7 +36,7 @@ export const querySchema = z.object({
 
 const fetchLinkedInProfile = async (
   accessToken: string
-): Promise<LinkedInProfileResponse | null> => {
+): Promise<LinkedInProfileResponseDto | null> => {
   const profileRes = await fetch(
     `${API_BASE_URL}/userinfo`,
     {
@@ -57,7 +46,7 @@ const fetchLinkedInProfile = async (
     }
   );
   if (!profileRes.ok) return null;
-  return (await profileRes.json()) as LinkedInProfileResponse;
+  return (await profileRes.json()) as LinkedInProfileResponseDto;
 };
 
 export async function GET_handler(
@@ -214,11 +203,11 @@ export async function GET_handler(
       }),
     });
 
-    let payload: LinkedInTokenResponse;
+    let payload: OAuthTokenResponseDto;
     tokenContentType = tokenRes.headers.get('content-type') || '';
     tokenStatus = tokenRes.status;
     if (tokenContentType.includes('application/json')) {
-      payload = (await tokenRes.json()) as LinkedInTokenResponse;
+      payload = (await tokenRes.json()) as OAuthTokenResponseDto;
     } else {
       payload = { error_description: await tokenRes.text() };
     }

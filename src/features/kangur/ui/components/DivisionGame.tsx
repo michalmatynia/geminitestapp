@@ -38,7 +38,10 @@ import {
 } from '@/features/kangur/ui/services/progress';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
-import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
+import type {
+  KangurMiniGameFinishVariantProps,
+  KangurRewardBreakdownEntry,
+} from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 type DivisionQuotientQuestion = {
@@ -63,10 +66,7 @@ type DivisionRemainderQuestion = {
 
 type DivisionQuestion = DivisionQuotientQuestion | DivisionRemainderQuestion;
 
-type DivisionGameProps = {
-  finishLabelVariant?: 'lesson' | 'play';
-  onFinish: () => void;
-};
+type DivisionGameProps = KangurMiniGameFinishVariantProps;
 
 const TOTAL = 7;
 

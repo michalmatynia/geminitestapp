@@ -3,10 +3,10 @@ import { redirect } from 'next/navigation';
 
 import { AdminLayout } from '@/features/admin/layout/AdminLayout';
 import { auth, getUserPreferences } from '@/features/auth/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
 
 import type { JSX } from 'react';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
 export const dynamic = 'force-dynamic';
@@ -54,7 +54,11 @@ export default async function Layout({
         initialMenuCollapsed = preferences.adminMenuCollapsed;
       }
     } catch (error) {
-      logClientError(error);
+      void ErrorSystem.captureException(error, {
+        service: 'admin.layout',
+        source: 'admin.layout',
+        action: 'loadUserPreferences',
+      });
       // Fallback to cookie-derived value when preferences are unavailable.
       const cookieStore = await cookies();
       const cookieValue = cookieStore.get(ADMIN_MENU_COLLAPSED_COOKIE_KEY)?.value;
@@ -65,7 +69,11 @@ export default async function Layout({
       }
     }
   } catch (error) {
-    logClientError(error);
+    void ErrorSystem.captureException(error, {
+      service: 'admin.layout',
+      source: 'admin.layout',
+      action: 'loadAdminLayout',
+    });
     redirect('/auth/signin');
   }
   return (

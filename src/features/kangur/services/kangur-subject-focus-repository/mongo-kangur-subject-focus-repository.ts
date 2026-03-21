@@ -4,21 +4,17 @@ import {
   kangurSubjectFocusSchema,
   type KangurLessonSubject,
 } from '@kangur/contracts';
+import {
+  KANGUR_LEGACY_SETTINGS_COLLECTION,
+  type KangurLegacySettingDocument,
+} from '@/features/kangur/services/kangur-legacy-settings-store';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 import type { Filter } from 'mongodb';
 
 import type { KangurSubjectFocusRepository } from './types';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
-
-const SETTINGS_COLLECTION = 'settings';
 const KANGUR_SUBJECT_FOCUS_SETTING_PREFIX = 'kangur_subject_focus:';
-
-type MongoSubjectFocusSettingDocument = {
-  _id?: string;
-  key?: string;
-  value?: string;
-};
 
 const toSettingKey = (learnerId: string): string =>
   `${KANGUR_SUBJECT_FOCUS_SETTING_PREFIX}${encodeURIComponent(learnerId.trim().toLowerCase())}`;
@@ -41,9 +37,9 @@ export const mongoKangurSubjectFocusRepository: KangurSubjectFocusRepository = {
   async getSubjectFocus(learnerId: string): Promise<KangurLessonSubject | null> {
     const db = await getMongoDb();
     const settingKey = toSettingKey(learnerId);
-    const row = await db.collection<MongoSubjectFocusSettingDocument>(SETTINGS_COLLECTION).findOne({
+    const row = await db.collection<KangurLegacySettingDocument>(KANGUR_LEGACY_SETTINGS_COLLECTION).findOne({
       $or: [{ key: settingKey }, { _id: settingKey }],
-    } as Filter<MongoSubjectFocusSettingDocument>);
+    } as Filter<KangurLegacySettingDocument>);
 
     return parseSubjectFocusValue(row?.value);
   },
@@ -57,10 +53,10 @@ export const mongoKangurSubjectFocusRepository: KangurSubjectFocusRepository = {
     const payload = JSON.stringify({ subject });
 
     await executeMongoWriteWithRetry(async () => {
-      await db.collection<MongoSubjectFocusSettingDocument>(SETTINGS_COLLECTION).updateOne(
+      await db.collection<KangurLegacySettingDocument>(KANGUR_LEGACY_SETTINGS_COLLECTION).updateOne(
         {
           $or: [{ key: settingKey }, { _id: settingKey }],
-        } as Filter<MongoSubjectFocusSettingDocument>,
+        } as Filter<KangurLegacySettingDocument>,
         {
           $set: {
             key: settingKey,

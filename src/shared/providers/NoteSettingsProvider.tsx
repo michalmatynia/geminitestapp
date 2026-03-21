@@ -14,7 +14,7 @@ import {
 import type { NoteSettings } from '@/shared/contracts/notes';
 import { internalError } from '@/shared/errors/app-error';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export const DEFAULT_NOTE_SETTINGS: NoteSettings = {
   sidebarCollapsed: false,
@@ -79,12 +79,9 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
         previousEditorModeRef.current = parsed.editorMode ?? 'markdown';
       }
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'NoteSettingsContext',
-          action: 'loadSettingsFromLocalStorage',
-        },
+      logClientCatch(error, {
+        source: 'NoteSettingsContext',
+        action: 'loadSettingsFromLocalStorage',
       });
     }
     setIsInitialized(true);
@@ -144,12 +141,9 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'NoteSettingsContext',
-          action: 'saveSettingsToLocalStorage',
-        },
+      logClientCatch(error, {
+        source: 'NoteSettingsContext',
+        action: 'saveSettingsToLocalStorage',
       });
     }
   }, [settings, isInitialized]);

@@ -4,7 +4,7 @@ import { useCallback, type MutableRefObject } from 'react';
 
 import type { Toast } from '@/shared/contracts/ui';
 import { recordPromptValidationCounter } from '@/shared/lib/prompt-core/runtime-observability';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { promptExploderClampNumber } from '../../helpers/formatting';
 import { explodePromptWithValidationRuntime } from '../../prompt-validation-orchestrator';
@@ -133,16 +133,13 @@ export const useDocumentExplodeAction = ({
         variant: 'success',
       });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'DocumentProvider',
-          action: 'handleExplode',
-          correlationId: runtimeSelection.correlationId,
-          scope: runtimeSelection.identity.scope,
-          stack: runtimeSelection.identity.stack,
-          level: 'error',
-        },
+      logClientCatch(error, {
+        source: 'DocumentProvider',
+        action: 'handleExplode',
+        correlationId: runtimeSelection.correlationId,
+        scope: runtimeSelection.identity.scope,
+        stack: runtimeSelection.identity.stack,
+        level: 'error',
       });
       toast(error instanceof Error ? error.message : 'Explosion failed.', {
         variant: 'error',

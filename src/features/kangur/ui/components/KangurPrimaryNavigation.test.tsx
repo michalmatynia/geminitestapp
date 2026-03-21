@@ -123,6 +123,32 @@ const { translationMessages } = vi.hoisted(() => ({
         },
       },
     },
+    uk: {
+      KangurNavigation: {
+        home: 'Головна',
+        lessons: 'Уроки',
+        duels: 'Дуелі',
+        parent: 'Батьки',
+        languageSwitcher: {
+          triggerAriaLabel: 'Поточна мова: {language}. Відкрити меню мов.',
+          triggerTitle: 'Мова: {language}',
+        },
+        subject: {
+          label: 'Вибрати предмет',
+          currentTitle: 'Поточний предмет: {subject}',
+          dialogDescription: 'Виберіть предмет, на якому хочете зосередитися зараз.',
+          closeAriaLabel: 'Закрити вибір предмета',
+          groupAriaLabel: 'Вибір предмета',
+        },
+        ageGroup: {
+          label: 'Вибрати вікову групу',
+          currentTitle: 'Поточна група: {group}',
+          dialogDescription: 'Виберіть, для кого мають бути підібрані уроки.',
+          closeAriaLabel: 'Закрити вибір вікової групи',
+          groupAriaLabel: 'Вибір вікової групи',
+        },
+      },
+    },
   },
 }));
 
@@ -1077,8 +1103,9 @@ describe('KangurPrimaryNavigation', () => {
       await screen.findByTestId('kangur-language-switcher-option-pl'),
       await screen.findByTestId('kangur-language-switcher-option-en'),
       await screen.findByTestId('kangur-language-switcher-option-de'),
+      await screen.findByTestId('kangur-language-switcher-option-uk'),
     ];
-    const labels = ['Polski', 'English', 'Deutsch'] as const;
+    const labels = ['Polski', 'English', 'Deutsch', 'Українська'] as const;
 
     expect(menu).toHaveClass(
       'w-fit',
@@ -1118,6 +1145,7 @@ describe('KangurPrimaryNavigation', () => {
     expect(within(rows[0]).queryByText('Polish')).toBeNull();
     expect(within(rows[1]).queryByText('English')).not.toBeNull();
     expect(within(rows[2]).queryByText('German')).toBeNull();
+    expect(within(rows[3]).queryByText('Ukrainian')).toBeNull();
   });
 
   it('places the language selector left of the appearance toggle in the mobile menu header', async () => {

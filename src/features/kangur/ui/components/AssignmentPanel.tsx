@@ -28,14 +28,10 @@ import {
   KANGUR_START_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { buildKangurAssignments } from '@/features/kangur/ui/services/assignments';
-import type { KangurProgressState } from '@/features/kangur/ui/types';
+import type { KangurBasePathProgressProps } from '@/features/kangur/ui/types';
 import type { KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
 import { cn } from '@/features/kangur/shared/utils';
-
-type AssignmentPanelProps = {
-  basePath: string;
-  progress: KangurProgressState;
-};
+type AssignmentPanelProps = KangurBasePathProgressProps;
 
 const buildAssignmentHref = (
   basePath: string,

@@ -338,8 +338,7 @@ const parseJsonBody = async (
   try {
     parsed = JSON.parse(text);
   } catch (error) {
-    void ErrorSystem.captureException(error);
-    throw badRequestError('Invalid JSON payload');
+    throw badRequestError('Invalid JSON payload').withCause(error);
   }
 
   if (options.schema) {
@@ -518,7 +517,6 @@ export function apiHandler(
           applyCorsHeaders(mutableResponse, request, options);
           return mutableResponse;
         } catch (error) {
-          void ErrorSystem.captureException(error);
           const response = await createErrorResponseWithTiming(error, request, context, options);
           if (context.rateLimitHeaders) {
             Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
@@ -684,7 +682,6 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
           applyCorsHeaders(mutableResponse, request, options);
           return mutableResponse;
         } catch (error) {
-          void ErrorSystem.captureException(error);
           const response = await createErrorResponseWithTiming(
             error,
             request,

@@ -1,15 +1,25 @@
-import { Link, type Href, useLocalSearchParams } from 'expo-router';
+import { Link, type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
+import type { KangurDuelSeries } from '@kangur/contracts';
 
 import { useKangurMobileAuth } from '../src/auth/KangurMobileAuthContext';
 import { createKangurDuelsHref } from '../src/duels/duelsHref';
+import {
+  MOBILE_DUEL_DEFAULT_DIFFICULTY,
+  MOBILE_DUEL_DEFAULT_OPERATION,
+  MOBILE_DUEL_DEFAULT_QUESTION_COUNT,
+  MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC,
+} from '../src/duels/mobileDuelDefaults';
+import { shareKangurDuelInvite } from '../src/duels/duelInviteShare';
 import {
   buildKangurHomeDebugProofViewModel,
   resolveKangurHomeDebugProofOperation,
 } from '../src/home/homeDebugProof';
 import { getKangurHomeAuthBoundaryViewModel } from '../src/home/homeAuthBoundary';
+import { useKangurMobileHomeDuelsRematches } from '../src/home/useKangurMobileHomeDuelsRematches';
+import { useKangurMobileHomeDuelsLeaderboard } from '../src/home/useKangurMobileHomeDuelsLeaderboard';
 import { useKangurMobileHomeDuelsSpotlight } from '../src/home/useKangurMobileHomeDuelsSpotlight';
 import { useKangurMobileRecentResults } from '../src/home/useKangurMobileRecentResults';
 import { useKangurMobileHomeDuelsInvites } from '../src/home/useKangurMobileHomeDuelsInvites';
@@ -131,6 +141,27 @@ const getHomeDuelStatusLabel = (
   }[locale];
 };
 
+const getHomeDuelSeriesLabel = (
+  series: KangurDuelSeries,
+  locale: 'pl' | 'en' | 'de',
+): string => {
+  const gameIndex = Math.min(series.bestOf, Math.max(1, series.gameIndex));
+
+  if (series.isComplete) {
+    return {
+      de: `Serie BO${series.bestOf} • beendet nach ${series.completedGames} Spielen`,
+      en: `BO${series.bestOf} series • completed after ${series.completedGames} games`,
+      pl: `Seria BO${series.bestOf} • zakończona po ${series.completedGames} grach`,
+    }[locale];
+  }
+
+  return {
+    de: `Serie BO${series.bestOf} • Spiel ${gameIndex} von ${series.bestOf} • beendet: ${series.completedGames}`,
+    en: `BO${series.bestOf} series • game ${gameIndex} of ${series.bestOf} • completed: ${series.completedGames}`,
+    pl: `Seria BO${series.bestOf} • gra ${gameIndex} z ${series.bestOf} • ukończone: ${series.completedGames}`,
+  }[locale];
+};
+
 function SectionCard({
   children,
   title,
@@ -194,10 +225,12 @@ function OutlineLink({
 }
 
 function PrimaryButton({
+  disabled = false,
   hint,
   label,
   onPress,
 }: {
+  disabled?: boolean;
   hint?: string;
   label: string;
   onPress: () => void | Promise<void>;
@@ -207,13 +240,17 @@ function PrimaryButton({
       accessibilityHint={hint}
       accessibilityLabel={label}
       accessibilityRole='button'
+      disabled={disabled}
       onPress={() => {
-        void onPress();
+        if (!disabled) {
+          void onPress();
+        }
       }}
       style={{
         alignSelf: 'flex-start',
         backgroundColor: '#2563eb',
         borderRadius: 999,
+        opacity: disabled ? 0.55 : 1,
         paddingHorizontal: 14,
         paddingVertical: 10,
       }}
@@ -416,8 +453,11 @@ export default function HomeScreen(): React.JSX.Element {
   const params = useLocalSearchParams<{
     debugProofOperation?: string | string[];
   }>();
+  const router = useRouter();
   const [loginName, setLoginName] = useState('');
   const [password, setPassword] = useState('');
+  const [duelInviteShareError, setDuelInviteShareError] = useState<string | null>(null);
+  const [sharingDuelSessionId, setSharingDuelSessionId] = useState<string | null>(null);
   const { apiBaseUrl, apiBaseUrlSource } = useKangurMobileRuntime();
   const {
     authError,
@@ -433,6 +473,8 @@ export default function HomeScreen(): React.JSX.Element {
   } = useKangurMobileAuth();
   const recentResults = useKangurMobileRecentResults();
   const duelInvites = useKangurMobileHomeDuelsInvites();
+  const duelLeaderboard = useKangurMobileHomeDuelsLeaderboard();
+  const duelRematches = useKangurMobileHomeDuelsRematches();
   const duelSpotlight = useKangurMobileHomeDuelsSpotlight();
   const trainingFocus = useKangurMobileTrainingFocus();
   const authBoundary = getKangurHomeAuthBoundaryViewModel({
@@ -456,6 +498,40 @@ export default function HomeScreen(): React.JSX.Element {
     strongestOperation: trainingFocus.strongestOperation,
     weakestOperation: trainingFocus.weakestOperation,
   });
+  const duelSharerDisplayName =
+    session.user?.activeLearner?.displayName?.trim() ||
+    session.user?.full_name?.trim() ||
+    copy({
+      de: 'dem Kangur-Lernkonto',
+      en: 'the Kangur learner account',
+      pl: 'konta ucznia Kangura',
+    });
+  const openDuelSession = (sessionId: string): void => {
+    router.replace(createKangurDuelsHref({ sessionId }));
+  };
+  const handleShareOutgoingChallenge = async (sessionId: string): Promise<void> => {
+    setDuelInviteShareError(null);
+    setSharingDuelSessionId(sessionId);
+
+    try {
+      await shareKangurDuelInvite({
+        sessionId,
+        sharerDisplayName: duelSharerDisplayName,
+      });
+    } catch (error) {
+      setDuelInviteShareError(
+        error instanceof Error && error.message.trim()
+          ? error.message
+          : copy({
+              de: 'Der Einladungslink konnte nicht geteilt werden.',
+              en: 'Could not share the invite link.',
+              pl: 'Nie udało się udostępnić linku do zaproszenia.',
+            }),
+      );
+    } finally {
+      setSharingDuelSessionId(null);
+    }
+  };
 
   return (
     <SafeAreaView style={{ backgroundColor: '#fffaf2', flex: 1 }}>
@@ -490,7 +566,7 @@ export default function HomeScreen(): React.JSX.Element {
         {__DEV__ && homeDebugProof ? (
           <SectionCard
             title={copy({
-              de: 'Entwicklungsansicht der Startseiten-Synchronizacji',
+              de: 'Entwicklungsansicht der Startseiten-Synchronisierung',
               en: 'Developer home sync preview',
               pl: 'Deweloperski podgląd synchronizacji strony głównej',
             })}
@@ -901,6 +977,11 @@ export default function HomeScreen(): React.JSX.Element {
                       pl: `${invite.questionCount} pytań • ${invite.timePerQuestionSec}s na pytanie • aktualizacja ${formatHomeRelativeAge(invite.updatedAt, locale)}`,
                     })}
                   </Text>
+                  {invite.series ? (
+                    <Text style={{ color: '#4338ca', lineHeight: 20 }}>
+                      {getHomeDuelSeriesLabel(invite.series, locale)}
+                    </Text>
+                  ) : null}
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                     <OutlineLink
                       href={createKangurDuelsHref({ joinSessionId: invite.sessionId })}
@@ -926,6 +1007,179 @@ export default function HomeScreen(): React.JSX.Element {
                         de: 'Lobby öffnen',
                         en: 'Open lobby',
                         pl: 'Otwórz lobby',
+                      })}
+                    />
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+        </SectionCard>
+
+        <SectionCard
+          title={copy({
+            de: 'Gesendete Herausforderungen',
+            en: 'Sent challenges',
+            pl: 'Wysłane wyzwania',
+          })}
+        >
+          {!duelInvites.isAuthenticated ? (
+            <View style={{ gap: 10 }}>
+              <Text style={{ color: '#475569', lineHeight: 20 }}>
+                {copy({
+                  de: 'Nach der Anmeldung erscheinen hier deine privaten Herausforderungen zusammen mit einem direkten Link zum erneuten Teilen.',
+                  en: 'After signing in, your private challenges will appear here together with a direct invite-share action.',
+                  pl: 'Po zalogowaniu pojawią się tutaj Twoje prywatne wyzwania razem z akcją ponownego udostępnienia zaproszenia.',
+                })}
+              </Text>
+              <OutlineLink
+                href={DUELS_ROUTE}
+                hint={copy({
+                  de: 'Öffnet die Duell-Lobby.',
+                  en: 'Opens the duels lobby.',
+                  pl: 'Otwiera lobby pojedynków.',
+                })}
+                label={copy({
+                  de: 'Duell-Lobby öffnen',
+                  en: 'Open duels lobby',
+                  pl: 'Otwórz lobby pojedynków',
+                })}
+              />
+            </View>
+          ) : duelInvites.isRestoringAuth || duelInvites.isLoading ? (
+            <Text style={{ color: '#475569', lineHeight: 20 }}>
+              {copy({
+                de: 'Gesendete private Herausforderungen werden geladen.',
+                en: 'Loading sent private challenges.',
+                pl: 'Pobieramy wysłane prywatne wyzwania.',
+              })}
+            </Text>
+          ) : duelInvites.error ? (
+            <View style={{ gap: 10 }}>
+              <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
+                {duelInvites.error}
+              </Text>
+              <PrimaryButton
+                hint={copy({
+                  de: 'Aktualisiert die privaten Herausforderungen.',
+                  en: 'Refreshes the private challenges.',
+                  pl: 'Odświeża prywatne wyzwania.',
+                })}
+                label={copy({
+                  de: 'Herausforderungen aktualisieren',
+                  en: 'Refresh challenges',
+                  pl: 'Odśwież wyzwania',
+                })}
+                onPress={duelInvites.refresh}
+              />
+            </View>
+          ) : duelInvites.outgoingChallenges.length === 0 ? (
+            <View style={{ gap: 10 }}>
+              <Text style={{ color: '#475569', lineHeight: 20 }}>
+                {copy({
+                  de: 'Du hast noch keine privaten Herausforderungen gesendet. Öffne die Lobby, um direkt einen Rivalen einzuladen.',
+                  en: 'You have not sent any private challenges yet. Open the lobby to invite a rival directly.',
+                  pl: 'Nie wysłano jeszcze prywatnych wyzwań. Otwórz lobby, aby od razu zaprosić rywala.',
+                })}
+              </Text>
+              <OutlineLink
+                href={DUELS_ROUTE}
+                hint={copy({
+                  de: 'Öffnet die Duell-Lobby.',
+                  en: 'Opens the duels lobby.',
+                  pl: 'Otwiera lobby pojedynków.',
+                })}
+                label={copy({
+                  de: 'Duell-Lobby öffnen',
+                  en: 'Open duels lobby',
+                  pl: 'Otwórz lobby pojedynków',
+                })}
+              />
+            </View>
+          ) : (
+            <View style={{ gap: 12 }}>
+              {duelInviteShareError ? (
+                <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
+                  {duelInviteShareError}
+                </Text>
+              ) : null}
+              {duelInvites.outgoingChallenges.map((entry) => (
+                <View
+                  key={entry.sessionId}
+                  style={{
+                    backgroundColor: '#f8fafc',
+                    borderColor: '#e2e8f0',
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    gap: 8,
+                    padding: 14,
+                  }}
+                >
+                  <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
+                    {copy({
+                      de: 'Private Herausforderung',
+                      en: 'Private challenge',
+                      pl: 'Prywatne wyzwanie',
+                    })}
+                  </Text>
+                  <Text style={{ color: '#475569', lineHeight: 20 }}>
+                    {getHomeDuelModeLabel(entry.mode, locale)} •{' '}
+                    {formatKangurMobileScoreOperation(entry.operation, locale)} •{' '}
+                    {copy({
+                      de: 'Stufe',
+                      en: 'level',
+                      pl: 'poziom',
+                    })}{' '}
+                    {getHomeDuelDifficultyLabel(entry.difficulty, locale)}
+                  </Text>
+                  <Text style={{ color: '#64748b' }}>
+                    {copy({
+                      de: `${entry.questionCount} Fragen • ${entry.timePerQuestionSec}s pro Frage • aktualisiert ${formatHomeRelativeAge(entry.updatedAt, locale)}`,
+                      en: `${entry.questionCount} questions • ${entry.timePerQuestionSec}s per question • updated ${formatHomeRelativeAge(entry.updatedAt, locale)}`,
+                      pl: `${entry.questionCount} pytań • ${entry.timePerQuestionSec}s na pytanie • aktualizacja ${formatHomeRelativeAge(entry.updatedAt, locale)}`,
+                    })}
+                  </Text>
+                  {entry.series ? (
+                    <Text style={{ color: '#4338ca', lineHeight: 20 }}>
+                      {getHomeDuelSeriesLabel(entry.series, locale)}
+                    </Text>
+                  ) : null}
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    <PrimaryButton
+                      disabled={sharingDuelSessionId === entry.sessionId}
+                      hint={copy({
+                        de: 'Teilt den direkten Einladungslink erneut.',
+                        en: 'Reshares the direct invite link.',
+                        pl: 'Udostępnia ponownie bezpośredni link do zaproszenia.',
+                      })}
+                      label={
+                        sharingDuelSessionId === entry.sessionId
+                          ? copy({
+                              de: 'Link wird geteilt...',
+                              en: 'Sharing link...',
+                              pl: 'Udostępnianie linku...',
+                            })
+                          : copy({
+                              de: 'Link teilen',
+                              en: 'Share link',
+                              pl: 'Udostępnij link',
+                            })
+                      }
+                      onPress={async () => {
+                        await handleShareOutgoingChallenge(entry.sessionId);
+                      }}
+                    />
+                    <OutlineLink
+                      href={createKangurDuelsHref({ sessionId: entry.sessionId })}
+                      hint={copy({
+                        de: 'Öffnet die private Duellsitzung.',
+                        en: 'Opens the private duel session.',
+                        pl: 'Otwiera prywatną sesję pojedynku.',
+                      })}
+                      label={copy({
+                        de: 'Duell öffnen',
+                        en: 'Open duel',
+                        pl: 'Otwórz pojedynek',
                       })}
                     />
                   </View>
@@ -1073,6 +1327,11 @@ export default function HomeScreen(): React.JSX.Element {
                         pl: `${getHomeDuelStatusLabel(entry.status, locale)} • ${entry.questionCount} pytań • ${entry.timePerQuestionSec}s na pytanie • aktualizacja ${formatHomeRelativeAge(entry.updatedAt, locale)}`,
                       })}
                     </Text>
+                    {entry.series ? (
+                      <Text style={{ color: '#4338ca', lineHeight: 20 }}>
+                        {getHomeDuelSeriesLabel(entry.series, locale)}
+                      </Text>
+                    ) : null}
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                       <OutlineLink
                         href={primaryHref}
@@ -1096,6 +1355,297 @@ export default function HomeScreen(): React.JSX.Element {
                   </View>
                 );
               })}
+            </View>
+          )}
+        </SectionCard>
+
+        <SectionCard
+          title={copy({
+            de: 'Letzte Rivalen',
+            en: 'Recent opponents',
+            pl: 'Ostatni rywale',
+          })}
+        >
+          <Text style={{ color: '#475569', lineHeight: 20 }}>
+            {copy({
+              de: `Der schnelle Rückkampf nutzt die mobilen Standardwerte: ${formatKangurMobileScoreOperation(
+                MOBILE_DUEL_DEFAULT_OPERATION,
+                locale,
+              )}, ${getHomeDuelDifficultyLabel(
+                MOBILE_DUEL_DEFAULT_DIFFICULTY,
+                locale,
+              )}, ${MOBILE_DUEL_DEFAULT_QUESTION_COUNT} Fragen mit ${MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC}s pro Frage.`,
+              en: `Quick rematch uses the mobile defaults: ${formatKangurMobileScoreOperation(
+                MOBILE_DUEL_DEFAULT_OPERATION,
+                locale,
+              )}, ${getHomeDuelDifficultyLabel(
+                MOBILE_DUEL_DEFAULT_DIFFICULTY,
+                locale,
+              )}, ${MOBILE_DUEL_DEFAULT_QUESTION_COUNT} questions with ${MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC}s per question.`,
+              pl: `Szybki rewanż używa mobilnych ustawień domyślnych: ${formatKangurMobileScoreOperation(
+                MOBILE_DUEL_DEFAULT_OPERATION,
+                locale,
+              )}, poziom ${getHomeDuelDifficultyLabel(
+                MOBILE_DUEL_DEFAULT_DIFFICULTY,
+                locale,
+              )}, ${MOBILE_DUEL_DEFAULT_QUESTION_COUNT} pytań po ${MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC}s.`,
+            })}
+          </Text>
+          {!duelRematches.isAuthenticated ? (
+            <View style={{ gap: 10 }}>
+              <Text style={{ color: '#475569', lineHeight: 20 }}>
+                {copy({
+                  de: 'Nach der Anmeldung erscheinen hier die letzten Rivalen zusammen mit einer schnellen privaten Rückkampf-Aktion.',
+                  en: 'After signing in, your recent opponents will appear here together with a quick private rematch action.',
+                  pl: 'Po zalogowaniu pojawią się tutaj ostatni rywale razem z akcją szybkiego prywatnego rewanżu.',
+                })}
+              </Text>
+              <OutlineLink
+                href={DUELS_ROUTE}
+                hint={copy({
+                  de: 'Öffnet die Duell-Lobby.',
+                  en: 'Opens the duels lobby.',
+                  pl: 'Otwiera lobby pojedynków.',
+                })}
+                label={copy({
+                  de: 'Duell-Lobby öffnen',
+                  en: 'Open duels lobby',
+                  pl: 'Otwórz lobby pojedynków',
+                })}
+              />
+            </View>
+          ) : duelRematches.isRestoringAuth || duelRematches.isLoading ? (
+            <Text style={{ color: '#475569', lineHeight: 20 }}>
+              {copy({
+                de: 'Die letzten Rivalen werden geladen.',
+                en: 'Loading recent opponents.',
+                pl: 'Pobieramy ostatnich rywali.',
+              })}
+            </Text>
+          ) : duelRematches.error ? (
+            <View style={{ gap: 10 }}>
+              <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
+                {duelRematches.error}
+              </Text>
+              <PrimaryButton
+                hint={copy({
+                  de: 'Aktualisiert die Liste der letzten Rivalen.',
+                  en: 'Refreshes the list of recent opponents.',
+                  pl: 'Odświeża listę ostatnich rywali.',
+                })}
+                label={copy({
+                  de: 'Rivalen aktualisieren',
+                  en: 'Refresh opponents',
+                  pl: 'Odśwież rywali',
+                })}
+                onPress={duelRematches.refresh}
+              />
+            </View>
+          ) : duelRematches.opponents.length === 0 ? (
+            <View style={{ gap: 10 }}>
+              <Text style={{ color: '#475569', lineHeight: 20 }}>
+                {copy({
+                  de: 'Noch keine letzten Rivalen. Beende dein erstes Duell, damit hier schnelle Rückkämpfe erscheinen.',
+                  en: 'There are no recent opponents yet. Finish your first duel to unlock quick rematches here.',
+                  pl: 'Nie ma jeszcze ostatnich rywali. Zakończ pierwszy pojedynek, aby odblokować tutaj szybkie rewanże.',
+                })}
+              </Text>
+              <OutlineLink
+                href={DUELS_ROUTE}
+                hint={copy({
+                  de: 'Öffnet die Duell-Lobby.',
+                  en: 'Opens the duels lobby.',
+                  pl: 'Otwiera lobby pojedynków.',
+                })}
+                label={copy({
+                  de: 'Duell-Lobby öffnen',
+                  en: 'Open duels lobby',
+                  pl: 'Otwórz lobby pojedynków',
+                })}
+              />
+            </View>
+          ) : (
+            <View style={{ gap: 12 }}>
+              {duelRematches.actionError ? (
+                <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
+                  {duelRematches.actionError}
+                </Text>
+              ) : null}
+              {duelRematches.opponents.map((entry) => (
+                <View
+                  key={entry.learnerId}
+                  style={{
+                    backgroundColor: '#f8fafc',
+                    borderColor: '#e2e8f0',
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    gap: 8,
+                    padding: 14,
+                  }}
+                >
+                  <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
+                    {entry.displayName}
+                  </Text>
+                  <Text style={{ color: '#64748b' }}>
+                    {copy({
+                      de: `Letztes Duell ${formatHomeRelativeAge(entry.lastPlayedAt, locale)}`,
+                      en: `Last duel ${formatHomeRelativeAge(entry.lastPlayedAt, locale)}`,
+                      pl: `Ostatni pojedynek ${formatHomeRelativeAge(entry.lastPlayedAt, locale)}`,
+                    })}
+                  </Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    <PrimaryButton
+                      disabled={duelRematches.isActionPending}
+                      hint={copy({
+                        de: `Sendet einen schnellen privaten Rückkampf an ${entry.displayName}.`,
+                        en: `Sends a quick private rematch to ${entry.displayName}.`,
+                        pl: `Wysyła szybki prywatny rewanż do ${entry.displayName}.`,
+                      })}
+                      label={
+                        duelRematches.isActionPending
+                          ? copy({
+                              de: 'Rückkampf wird gesendet...',
+                              en: 'Sending rematch...',
+                              pl: 'Wysyłanie rewanżu...',
+                            })
+                          : copy({
+                              de: 'Schneller Rückkampf',
+                              en: 'Quick rematch',
+                              pl: 'Szybki rewanż',
+                            })
+                      }
+                      onPress={async () => {
+                        const nextSessionId = await duelRematches.createRematch(
+                          entry.learnerId,
+                        );
+                        if (nextSessionId) {
+                          openDuelSession(nextSessionId);
+                        }
+                      }}
+                    />
+                    <OutlineLink
+                      href={DUELS_ROUTE}
+                      hint={copy({
+                        de: 'Öffnet die Duell-Lobby.',
+                        en: 'Opens the duels lobby.',
+                        pl: 'Otwiera lobby pojedynków.',
+                      })}
+                      label={copy({
+                        de: 'Lobby öffnen',
+                        en: 'Open lobby',
+                        pl: 'Otwórz lobby',
+                      })}
+                    />
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+        </SectionCard>
+
+        <SectionCard
+          title={copy({
+            de: 'Duell-Rangliste',
+            en: 'Duel leaderboard',
+            pl: 'Ranking pojedynków',
+          })}
+        >
+          {duelLeaderboard.isLoading ? (
+            <Text style={{ color: '#475569', lineHeight: 20 }}>
+              {copy({
+                de: 'Die Duell-Rangliste wird geladen.',
+                en: 'Loading the duel leaderboard.',
+                pl: 'Pobieramy ranking pojedynków.',
+              })}
+            </Text>
+          ) : duelLeaderboard.error ? (
+            <View style={{ gap: 10 }}>
+              <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
+                {duelLeaderboard.error}
+              </Text>
+              <PrimaryButton
+                hint={copy({
+                  de: 'Aktualisiert die Duell-Rangliste auf der Startseite.',
+                  en: 'Refreshes the duel leaderboard on the home screen.',
+                  pl: 'Odświeża ranking pojedynków na stronie głównej.',
+                })}
+                label={copy({
+                  de: 'Ranking aktualisieren',
+                  en: 'Refresh leaderboard',
+                  pl: 'Odśwież ranking',
+                })}
+                onPress={duelLeaderboard.refresh}
+              />
+            </View>
+          ) : duelLeaderboard.entries.length === 0 ? (
+            <View style={{ gap: 10 }}>
+              <Text style={{ color: '#475569', lineHeight: 20 }}>
+                {copy({
+                  de: 'Noch keine abgeschlossenen Duelle im aktuellen Zeitraum. Öffne die Lobby, um die nächste Serie zu starten.',
+                  en: 'There are no completed duels in the current window yet. Open the lobby to start the next series.',
+                  pl: 'W bieżącym oknie nie ma jeszcze zakończonych pojedynków. Otwórz lobby, aby rozpocząć kolejną serię.',
+                })}
+              </Text>
+              <OutlineLink
+                href={DUELS_ROUTE}
+                hint={copy({
+                  de: 'Öffnet die Duell-Lobby.',
+                  en: 'Opens the duels lobby.',
+                  pl: 'Otwiera lobby pojedynków.',
+                })}
+                label={copy({
+                  de: 'Duell-Lobby öffnen',
+                  en: 'Open duels lobby',
+                  pl: 'Otwórz lobby pojedynków',
+                })}
+              />
+            </View>
+          ) : (
+            <View style={{ gap: 12 }}>
+              {duelLeaderboard.entries.map((entry, index) => (
+                <View
+                  key={entry.learnerId}
+                  style={{
+                    backgroundColor: '#f8fafc',
+                    borderColor: '#e2e8f0',
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    gap: 8,
+                    padding: 14,
+                  }}
+                >
+                  <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
+                    #{index + 1} {entry.displayName}
+                  </Text>
+                  <Text style={{ color: '#475569', lineHeight: 20 }}>
+                    {copy({
+                      de: `Siege ${entry.wins} • Niederlagen ${entry.losses} • Unentschieden ${entry.ties}`,
+                      en: `Wins ${entry.wins} • Losses ${entry.losses} • Ties ${entry.ties}`,
+                      pl: `Wygrane ${entry.wins} • Porażki ${entry.losses} • Remisy ${entry.ties}`,
+                    })}
+                  </Text>
+                  <Text style={{ color: '#64748b' }}>
+                    {copy({
+                      de: `Matches ${entry.matches} • Quote ${Math.round(entry.winRate * 100)}% • letztes Duell ${formatHomeRelativeAge(entry.lastPlayedAt, locale)}`,
+                      en: `Matches ${entry.matches} • Win rate ${Math.round(entry.winRate * 100)}% • last duel ${formatHomeRelativeAge(entry.lastPlayedAt, locale)}`,
+                      pl: `Mecze ${entry.matches} • Win rate ${Math.round(entry.winRate * 100)}% • ostatni pojedynek ${formatHomeRelativeAge(entry.lastPlayedAt, locale)}`,
+                    })}
+                  </Text>
+                </View>
+              ))}
+              <OutlineLink
+                href={DUELS_ROUTE}
+                hint={copy({
+                  de: 'Öffnet die vollständige Duell-Lobby mit der erweiterten Rangliste.',
+                  en: 'Opens the full duels lobby with the extended leaderboard.',
+                  pl: 'Otwiera pełne lobby pojedynków z rozszerzonym rankingiem.',
+                })}
+                label={copy({
+                  de: 'Volle Duell-Rangliste',
+                  en: 'Full duel leaderboard',
+                  pl: 'Pełny ranking pojedynków',
+                })}
+              />
             </View>
           )}
         </SectionCard>

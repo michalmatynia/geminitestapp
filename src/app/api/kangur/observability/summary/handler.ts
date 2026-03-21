@@ -1,25 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { auth } from '@/features/auth/server';
 import { getKangurObservabilitySummary } from '@/features/kangur/observability/summary';
 import {
   kangurObservabilityRangeSchema,
   kangurObservabilitySummaryResponseSchema,
   type ApiHandlerContext,
 } from '@/shared/contracts';
-import { authError, badRequestError, internalError } from '@/shared/errors/app-error';
+import { badRequestError, internalError } from '@/shared/errors/app-error';
+import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
 import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
-
-type KangurObservabilitySession = {
-  user?: {
-    isElevated?: boolean;
-    permissions?: string[];
-  } | null;
-} | null;
-
-const canAccessKangurObservability = (session: KangurObservabilitySession): boolean =>
-  Boolean(session?.user?.isElevated || session?.user?.permissions?.includes('settings.manage'));
 
 export const querySchema = z.object({
   range: z.preprocess(
@@ -29,10 +19,7 @@ export const querySchema = z.object({
 });
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const session = await auth();
-  if (!canAccessKangurObservability(session)) {
-    throw authError('Unauthorized.');
-  }
+  await assertSettingsManageAccess();
 
   const parsedQuery = querySchema.safeParse(_ctx.query ?? {});
   if (!parsedQuery.success) {

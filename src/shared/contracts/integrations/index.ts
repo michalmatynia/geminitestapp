@@ -58,6 +58,7 @@ export * from './connections';
 export * from './listings';
 export * from './marketplace';
 export * from './mongo';
+export * from './oauth';
 export * from './producers';
 export * from './context';
 export {

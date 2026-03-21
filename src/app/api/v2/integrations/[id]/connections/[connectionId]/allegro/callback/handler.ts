@@ -3,27 +3,17 @@ import { z } from 'zod';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
+import type { OAuthTokenResponseDto } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { mapErrorToAppError } from '@/shared/errors/error-mapper';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
 const PROD_TOKEN_URL = process.env['ALLEGRO_TOKEN_URL'] ?? 'https://allegro.pl/auth/oauth/token';
 const SANDBOX_TOKEN_URL =
   process.env['ALLEGRO_SANDBOX_TOKEN_URL'] ??
   'https://allegro.pl.allegrosandbox.pl/auth/oauth/token';
-
-type AllegroTokenResponse = {
-  access_token?: string;
-  refresh_token?: string;
-  token_type?: string;
-  expires_in?: number;
-  scope?: string;
-  error?: string;
-  error_description?: string;
-};
 
 const toErrorRedirect = (origin: string, reason: string): string => {
   const url = new URL('/admin/integrations', origin);
@@ -107,10 +97,10 @@ export async function GET_handler(
       }),
     });
 
-    let payload: AllegroTokenResponse;
+    let payload: OAuthTokenResponseDto;
     const contentType = tokenRes.headers.get('content-type') || '';
     if (contentType.includes('application/json')) {
-      payload = (await tokenRes.json()) as AllegroTokenResponse;
+      payload = (await tokenRes.json()) as OAuthTokenResponseDto;
     } else {
       payload = { error_description: await tokenRes.text() };
     }

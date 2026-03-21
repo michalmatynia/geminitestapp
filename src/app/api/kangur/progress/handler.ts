@@ -33,8 +33,7 @@ const readBodyJson = async (request: NextRequest): Promise<unknown> => {
   try {
     return JSON.parse(rawBody) as unknown;
   } catch (error) {
-    void ErrorSystem.captureException(error);
-    throw badRequestError('Invalid JSON payload.');
+    throw badRequestError('Invalid JSON payload.').withCause(error);
   }
 };
 

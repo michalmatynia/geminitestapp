@@ -13,6 +13,13 @@ import { useMemo, useState } from 'react';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
+import {
+  MOBILE_DUEL_DEFAULT_DIFFICULTY,
+  MOBILE_DUEL_DEFAULT_OPERATION,
+  MOBILE_DUEL_DEFAULT_QUESTION_COUNT,
+  MOBILE_DUEL_DEFAULT_SERIES_BEST_OF,
+  MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC,
+} from './mobileDuelDefaults';
 
 const MOBILE_DUEL_LOBBY_LIMIT = 12;
 const MOBILE_DUEL_PRESENCE_LIMIT = 24;
@@ -22,16 +29,27 @@ const MOBILE_DUEL_LEADERBOARD_LIMIT = 6;
 const MOBILE_DUEL_LEADERBOARD_LOOKBACK_DAYS = 14;
 const MOBILE_DUEL_LOBBY_POLL_MS = 15_000;
 const MOBILE_DUEL_PRESENCE_POLL_MS = 20_000;
-const MOBILE_DUEL_DEFAULT_QUESTION_COUNT = 5;
-const MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC = 15;
 
 type KangurMobileDuelModeFilter = 'all' | KangurDuelMode;
+type KangurMobileDuelSeriesBestOf = 1 | 3 | 5 | 7 | 9;
+type KangurMobileDuelCreateOverrides = {
+  difficulty?: KangurDuelDifficulty;
+  operation?: KangurDuelOperation;
+  seriesBestOf?: KangurMobileDuelSeriesBestOf;
+};
 
 type UseKangurMobileDuelsLobbyResult = {
   actionError: string | null;
-  createPrivateChallenge: (opponentLearnerId: string) => Promise<string | null>;
-  createPublicChallenge: () => Promise<string | null>;
-  createQuickMatch: () => Promise<string | null>;
+  createPrivateChallenge: (
+    opponentLearnerId: string,
+    overrides?: KangurMobileDuelCreateOverrides,
+  ) => Promise<string | null>;
+  createPublicChallenge: (
+    overrides?: KangurMobileDuelCreateOverrides,
+  ) => Promise<string | null>;
+  createQuickMatch: (
+    overrides?: KangurMobileDuelCreateOverrides,
+  ) => Promise<string | null>;
   difficulty: KangurDuelDifficulty;
   inviteEntries: KangurDuelLobbyEntry[];
   isActionPending: boolean;
@@ -57,9 +75,11 @@ type UseKangurMobileDuelsLobbyResult = {
   searchQuery: string;
   searchResults: KangurDuelSearchEntry[];
   searchSubmittedQuery: string;
+  seriesBestOf: KangurMobileDuelSeriesBestOf;
   setDifficulty: (value: KangurDuelDifficulty) => void;
   setModeFilter: (value: KangurMobileDuelModeFilter) => void;
   setOperation: (value: KangurDuelOperation) => void;
+  setSeriesBestOf: (value: KangurMobileDuelSeriesBestOf) => void;
   setSearchQuery: (value: string) => void;
   submitSearch: () => void;
   clearSearch: () => void;
@@ -102,8 +122,14 @@ export const useKangurMobileDuelsLobby =
     const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
     const { isLoadingAuth, session } = useKangurMobileAuth();
     const [modeFilter, setModeFilter] = useState<KangurMobileDuelModeFilter>('all');
-    const [operation, setOperation] = useState<KangurDuelOperation>('addition');
-    const [difficulty, setDifficulty] = useState<KangurDuelDifficulty>('easy');
+    const [operation, setOperation] = useState<KangurDuelOperation>(
+      MOBILE_DUEL_DEFAULT_OPERATION,
+    );
+    const [difficulty, setDifficulty] = useState<KangurDuelDifficulty>(
+      MOBILE_DUEL_DEFAULT_DIFFICULTY,
+    );
+    const [seriesBestOf, setSeriesBestOf] =
+      useState<KangurMobileDuelSeriesBestOf>(MOBILE_DUEL_DEFAULT_SERIES_BEST_OF);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchSubmittedQuery, setSearchSubmittedQuery] = useState('');
     const [actionError, setActionError] = useState<string | null>(null);
@@ -259,9 +285,14 @@ export const useKangurMobileDuelsLobby =
       }
     };
 
+    const resolveSeriesInput = (
+      value: KangurMobileDuelSeriesBestOf,
+    ): { seriesBestOf?: KangurMobileDuelSeriesBestOf } =>
+      value > 1 ? { seriesBestOf: value } : {};
+
     return {
       actionError,
-      createPrivateChallenge: async (opponentLearnerId) =>
+      createPrivateChallenge: async (opponentLearnerId, overrides) =>
         runSessionAction(
           async () =>
             apiClient.createDuel(
@@ -269,41 +300,44 @@ export const useKangurMobileDuelsLobby =
                 mode: 'challenge',
                 visibility: 'private',
                 opponentLearnerId,
-                operation,
-                difficulty,
+                operation: overrides?.operation ?? operation,
+                difficulty: overrides?.difficulty ?? difficulty,
                 questionCount: MOBILE_DUEL_DEFAULT_QUESTION_COUNT,
+                ...resolveSeriesInput(overrides?.seriesBestOf ?? seriesBestOf),
                 timePerQuestionSec: MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC,
               },
               { cache: 'no-store' },
             ),
           'Nie udało się wysłać prywatnego wyzwania.',
         ),
-      createPublicChallenge: async () =>
+      createPublicChallenge: async (overrides) =>
         runSessionAction(
           async () =>
             apiClient.createDuel(
               {
                 mode: 'challenge',
                 visibility: 'public',
-                operation,
-                difficulty,
+                operation: overrides?.operation ?? operation,
+                difficulty: overrides?.difficulty ?? difficulty,
                 questionCount: MOBILE_DUEL_DEFAULT_QUESTION_COUNT,
+                ...resolveSeriesInput(overrides?.seriesBestOf ?? seriesBestOf),
                 timePerQuestionSec: MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC,
               },
               { cache: 'no-store' },
             ),
           'Nie udało się utworzyć publicznego wyzwania.',
         ),
-      createQuickMatch: async () =>
+      createQuickMatch: async (overrides) =>
         runSessionAction(
           async () =>
             apiClient.createDuel(
               {
                 mode: 'quick_match',
                 visibility: 'public',
-                operation,
-                difficulty,
+                operation: overrides?.operation ?? operation,
+                difficulty: overrides?.difficulty ?? difficulty,
                 questionCount: MOBILE_DUEL_DEFAULT_QUESTION_COUNT,
+                ...resolveSeriesInput(overrides?.seriesBestOf ?? seriesBestOf),
                 timePerQuestionSec: MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC,
               },
               { cache: 'no-store' },
@@ -364,9 +398,11 @@ export const useKangurMobileDuelsLobby =
       searchQuery,
       searchResults: searchQueryState.data?.entries ?? [],
       searchSubmittedQuery: normalizedSearchQuery,
+      seriesBestOf,
       setDifficulty,
       setModeFilter,
       setOperation,
+      setSeriesBestOf,
       setSearchQuery,
       submitSearch: () => {
         setSearchSubmittedQuery(searchQuery.trim());

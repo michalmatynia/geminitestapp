@@ -26,6 +26,7 @@ import LogicalReasoningLessonView from '@/features/kangur/ui/components/LogicalR
 import LogicalThinkingLessonView from '@/features/kangur/ui/components/LogicalThinkingLesson';
 import MultiplicationLessonView from '@/features/kangur/ui/components/MultiplicationLesson';
 import SubtractingLessonView from '@/features/kangur/ui/components/SubtractingLesson';
+import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';
 
 import type { ComponentType } from 'react';
 
@@ -33,9 +34,7 @@ type LessonProps = {
   onBack?: () => void;
 };
 
-type CalendarTrainingGameProps = {
-  onFinish: () => void;
-};
+type CalendarTrainingGameProps = KangurMiniGameFinishActionProps;
 
 export const ClockLesson = ClockLessonView as ComponentType<LessonProps>;
 export const CalendarLesson = CalendarLessonView as ComponentType<LessonProps>;

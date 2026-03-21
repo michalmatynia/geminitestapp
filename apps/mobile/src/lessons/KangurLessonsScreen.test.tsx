@@ -6,6 +6,8 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { KangurMobileI18nProvider } from '../i18n/kangurMobileI18n';
+
 const {
   useLessonsScreenBootStateMock,
   useKangurMobileLessonsMock,
@@ -83,6 +85,17 @@ vi.mock('./useKangurMobileLessons', () => ({
 
 import { KangurLessonsScreen } from './KangurLessonsScreen';
 
+const renderLessonsScreen = (locale?: 'pl' | 'en' | 'de') =>
+  render(
+    locale ? (
+      <KangurMobileI18nProvider locale={locale}>
+        <KangurLessonsScreen />
+      </KangurMobileI18nProvider>
+    ) : (
+      <KangurLessonsScreen />
+    ),
+  );
+
 const mockLessonItem = {
   isFocused: true,
   lesson: {
@@ -113,7 +126,7 @@ describe('KangurLessonsScreen', () => {
   it('keeps the hero visible while lesson skeletons are loading', () => {
     useLessonsScreenBootStateMock.mockReturnValue(true);
 
-    render(<KangurLessonsScreen />);
+    renderLessonsScreen();
 
     expect(screen.getByText('Lekcje')).toBeTruthy();
     expect(screen.getByText('Nauka i powtórki')).toBeTruthy();
@@ -128,7 +141,7 @@ describe('KangurLessonsScreen', () => {
   it('replaces the loading cards with the focused lesson content after boot', () => {
     useLessonsScreenBootStateMock.mockReturnValue(false);
 
-    render(<KangurLessonsScreen />);
+    renderLessonsScreen();
 
     expect(screen.getByText('Lekcje')).toBeTruthy();
     expect(screen.getByText('Wybrana lekcja')).toBeTruthy();
@@ -141,5 +154,16 @@ describe('KangurLessonsScreen', () => {
     ).toBeTruthy();
     expect(screen.queryByText('Ładowanie lekcji')).toBeNull();
     expect(screen.queryByText('Wczytujemy listę tematów i stan opanowania.')).toBeNull();
+  });
+
+  it('renders German lesson-shell copy when the locale is de', () => {
+    useLessonsScreenBootStateMock.mockReturnValue(true);
+
+    renderLessonsScreen('de');
+
+    expect(screen.getByText('Lektionen')).toBeTruthy();
+    expect(screen.getByText('Lernen und Wiederholen')).toBeTruthy();
+    expect(screen.getByText('Lektionen werden geladen')).toBeTruthy();
+    expect(screen.getByText('Die Themenliste und der Beherrschungsstand werden geladen.')).toBeTruthy();
   });
 });

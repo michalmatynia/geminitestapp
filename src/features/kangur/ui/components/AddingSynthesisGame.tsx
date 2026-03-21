@@ -47,12 +47,13 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
-import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
+import type {
+  KangurMiniGameFinishActionProps,
+  KangurRewardBreakdownEntry,
+} from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
-type AddingSynthesisGameProps = {
-  onFinish: () => void;
-};
+type AddingSynthesisGameProps = KangurMiniGameFinishActionProps;
 
 type GamePhase = 'intro' | 'playing' | 'summary';
 type FeedbackKind = AddingSynthesisTimingGrade | 'wrong' | 'miss';

@@ -113,8 +113,10 @@ async function patchDocFile(
   let before = '';
   try {
     before = await fs.readFile(absolutePath, 'utf8');
-  } catch (_error) {
-    throw operationFailedError(`Failed to read documentation file at ${docPath}.`);
+  } catch (error) {
+    throw operationFailedError(`Failed to read documentation file at ${docPath}.`).withCause(
+      error
+    );
   }
 
   const brainConfig = await resolveBrainExecutionConfigForCapability(

@@ -30,7 +30,7 @@ import type { ListQuery } from '@/shared/contracts/ui';
 import { buildPlaywrightSettings } from '@/shared/lib/playwright/personas';
 import { useToast } from '@/shared/ui';
 import { isObjectRecord } from '@/shared/utils/object-utils';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
   IntegrationDefinition,
@@ -118,7 +118,11 @@ export function useIntegrationsActionsImpl(args: {
           slug: def.slug,
         });
       } catch (error: unknown) {
-        logClientError(error);
+        logClientCatch(error, {
+          source: 'IntegrationsContext',
+          action: 'ensureIntegration',
+          slug: def.slug,
+        });
         toast((error as Error)?.message ?? `Failed to add ${def.name}`, { variant: 'error' });
         return null;
       }
@@ -207,7 +211,13 @@ export function useIntegrationsActionsImpl(args: {
       }
       return saved;
     } catch (error: unknown) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'IntegrationsContext',
+        action: 'handleSaveConnection',
+        integrationId: args.activeIntegration.id,
+        connectionId: resolvedConnectionId,
+        mode: isCreateMode ? 'create' : 'update',
+      });
       toast((error as Error)?.message ?? 'Failed to save connection.', { variant: 'error' });
       return null;
     }
@@ -241,7 +251,12 @@ export function useIntegrationsActionsImpl(args: {
       args.setConnectionToDelete(null);
       return true;
     } catch (error: unknown) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'IntegrationsContext',
+        action: 'handleConfirmDeleteConnection',
+        integrationId: args.connectionToDelete.integrationId,
+        connectionId: args.connectionToDelete.id,
+      });
       toast((error as Error)?.message ?? 'Failed to delete connection.', { variant: 'error' });
       return false;
     }
@@ -300,8 +315,16 @@ export function useIntegrationsActionsImpl(args: {
         );
         args.setShowTestSuccessModal(true);
       } catch (error: unknown) {
-        logClientError(error);
         const durationMs = Math.round(performance.now() - startedAt);
+        logClientCatch(error, {
+          source: 'IntegrationsContext',
+          action: 'handleConnectionTest',
+          integrationId: args.activeIntegration.id,
+          connectionId: connection.id,
+          type,
+          requestUrl,
+          durationMs,
+        });
         const message = (error as Error)?.message ?? 'Unknown error';
         const data = isObjectRecord((error as { data?: unknown } | null)?.data)
           ? (error as { data?: Record<string, unknown> }).data
@@ -396,7 +419,11 @@ export function useIntegrationsActionsImpl(args: {
       });
       toast('Playwright settings saved.', { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'IntegrationsContext',
+        action: 'handleSavePlaywrightSettings',
+        connectionId: connection.id,
+      });
       toast((error as Error)?.message ?? 'Failed to save Playwright settings.', {
         variant: 'error',
       });
@@ -420,9 +447,11 @@ export function useIntegrationsActionsImpl(args: {
       });
       toast('Allegro disconnected.', { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'IntegrationsContext', action: 'disconnectAllegro' },
+      logClientCatch(error, {
+        source: 'IntegrationsContext',
+        action: 'disconnectAllegro',
+        integrationId: args.activeIntegration.id,
+        connectionId: activeConnection.id,
       });
       toast('Failed to disconnect Allegro.', { variant: 'error' });
     }
@@ -444,7 +473,12 @@ export function useIntegrationsActionsImpl(args: {
       });
       toast('Allegro sandbox setting updated.', { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'IntegrationsContext',
+        action: 'handleAllegroSandboxToggle',
+        connectionId: activeConnection.id,
+        value,
+      });
       toast((error as Error)?.message ?? 'Failed to update Allegro sandbox setting.', {
         variant: 'error',
       });
@@ -472,7 +506,12 @@ export function useIntegrationsActionsImpl(args: {
       });
       window.location.href = `/api/v2/integrations/${args.activeIntegration.id}/connections/${activeConnection.id}/allegro/authorize`;
     } catch (error: unknown) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'IntegrationsContext',
+        action: 'handleAllegroSandboxConnect',
+        integrationId: args.activeIntegration.id,
+        connectionId: activeConnection.id,
+      });
       toast((error as Error)?.message ?? 'Failed to enable Allegro sandbox.', { variant: 'error' });
     } finally {
       setSavingAllegroSandbox(false);
@@ -496,9 +535,11 @@ export function useIntegrationsActionsImpl(args: {
       });
       toast('LinkedIn disconnected.', { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'IntegrationsContext', action: 'disconnectLinkedIn' },
+      logClientCatch(error, {
+        source: 'IntegrationsContext',
+        action: 'disconnectLinkedIn',
+        integrationId: args.activeIntegration.id,
+        connectionId: activeConnection.id,
       });
       toast('Failed to disconnect LinkedIn.', { variant: 'error' });
     }
@@ -514,7 +555,11 @@ export function useIntegrationsActionsImpl(args: {
       if (args.baseApiParams.trim())
         params = JSON.parse(args.baseApiParams) as Record<string, unknown>;
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'IntegrationsContext',
+        action: 'handleBaseApiRequest.parseParams',
+        method: args.baseApiMethod,
+      });
       toast('Parameters must be valid JSON.', { variant: 'error' });
       return;
     }
@@ -530,7 +575,13 @@ export function useIntegrationsActionsImpl(args: {
       });
       args.setBaseApiResponse(payload);
     } catch (error: unknown) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'IntegrationsContext',
+        action: 'handleBaseApiRequest',
+        integrationId: args.activeIntegration.id,
+        connectionId: activeConnection.id,
+        method: args.baseApiMethod,
+      });
       args.setBaseApiError((error as Error)?.message ?? 'Failed to send request.');
     } finally {
       args.setBaseApiLoading(false);
@@ -547,7 +598,12 @@ export function useIntegrationsActionsImpl(args: {
       try {
         body = JSON.parse(args.allegroApiBody);
       } catch (error) {
-        logClientError(error);
+        logClientCatch(error, {
+          source: 'IntegrationsContext',
+          action: 'handleAllegroApiRequest.parseBody',
+          method: args.allegroApiMethod,
+          path: args.allegroApiPath,
+        });
         toast('Request body must be valid JSON.', { variant: 'error' });
         return;
       }
@@ -565,7 +621,14 @@ export function useIntegrationsActionsImpl(args: {
       });
       args.setAllegroApiResponse(payload);
     } catch (error: unknown) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'IntegrationsContext',
+        action: 'handleAllegroApiRequest',
+        integrationId: args.activeIntegration.id,
+        connectionId: activeConnection.id,
+        method: args.allegroApiMethod,
+        path: args.allegroApiPath,
+      });
       args.setAllegroApiError((error as Error)?.message ?? 'Failed to send request.');
     } finally {
       args.setAllegroApiLoading(false);

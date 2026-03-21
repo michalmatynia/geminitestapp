@@ -7,6 +7,7 @@ import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRun
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
+import type { KangurHomeScreenVisibilityProps } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 type HomeActionTone = 'neutral' | 'violet' | 'sky' | 'mist' | 'sand';
@@ -252,9 +253,7 @@ function KangurHomeActionCard({
   );
 }
 
-type KangurGameHomeActionsWidgetProps = {
-  hideWhenScreenMismatch?: boolean;
-};
+type KangurGameHomeActionsWidgetProps = KangurHomeScreenVisibilityProps;
 
 export function KangurGameHomeActionsWidget({
   hideWhenScreenMismatch = true,

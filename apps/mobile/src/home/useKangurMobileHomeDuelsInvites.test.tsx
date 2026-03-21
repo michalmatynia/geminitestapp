@@ -136,8 +136,8 @@ describe('useKangurMobileHomeDuelsInvites', () => {
           createdAt: '2026-03-21T08:00:00.000Z',
           difficulty: 'hard',
           host: {
-            displayName: 'Maja Sprint',
-            learnerId: 'learner-4',
+            displayName: 'Ada Learner',
+            learnerId: 'learner-1',
             status: 'ready',
             score: 0,
             bonusPoints: 0,
@@ -147,7 +147,7 @@ describe('useKangurMobileHomeDuelsInvites', () => {
           mode: 'challenge',
           operation: 'division',
           questionCount: 8,
-          sessionId: 'invite-2',
+          sessionId: 'outgoing-1',
           status: 'waiting',
           timePerQuestionSec: 20,
           updatedAt: '2026-03-21T08:07:00.000Z',
@@ -181,16 +181,16 @@ describe('useKangurMobileHomeDuelsInvites', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.invites).toHaveLength(2);
+      expect(result.current.invites).toHaveLength(1);
     });
 
     expect(listDuelLobbyMock).toHaveBeenCalledWith(
-      { limit: 4 },
+      { limit: 8 },
       { cache: 'no-store' },
     );
-    expect(result.current.invites.map((entry) => entry.sessionId)).toEqual([
-      'invite-2',
-      'invite-1',
+    expect(result.current.invites.map((entry) => entry.sessionId)).toEqual(['invite-1']);
+    expect(result.current.outgoingChallenges.map((entry) => entry.sessionId)).toEqual([
+      'outgoing-1',
     ]);
     expect(result.current.isAuthenticated).toBe(true);
   });
@@ -216,6 +216,7 @@ describe('useKangurMobileHomeDuelsInvites', () => {
 
     expect(result.current.isRestoringAuth).toBe(true);
     expect(result.current.invites).toEqual([]);
+    expect(result.current.outgoingChallenges).toEqual([]);
     expect(listDuelLobbyMock).not.toHaveBeenCalled();
   });
 });

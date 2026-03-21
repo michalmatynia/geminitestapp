@@ -287,8 +287,23 @@ export const syncProductParameters: DatabaseSyncHandler = async ({ mongo, prisma
 // --- Prisma to Mongo handlers ---
 
 export const syncPriceGroupsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.priceGroup.findMany();
-  const docs = rows.map((row: any) => ({
+  type PersistedPriceGroupRow = {
+    id: string;
+    groupId: string;
+    isDefault: boolean;
+    name: string;
+    description: string | null;
+    currencyId: string;
+    type: string;
+    basePriceField: string;
+    sourceGroupId: string | null;
+    priceMultiplier: number;
+    addToPrice: number;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  const rows = (await prisma.priceGroup.findMany()) as PersistedPriceGroupRow[];
+  const docs = rows.map((row: PersistedPriceGroupRow) => ({
     _id: row.id,
     id: row.id,
     groupId: row.groupId,
@@ -315,8 +330,26 @@ export const syncPriceGroupsPrismaToMongo: DatabaseSyncHandler = async ({ mongo,
 };
 
 export const syncCatalogsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.catalog.findMany({ include: { languages: true } });
-  const docs = rows.map((row: any) => ({
+  type PersistedCatalogLanguageRow = {
+    languageId: string;
+    position: number;
+  };
+  type PersistedCatalogRow = {
+    id: string;
+    name: string;
+    description: string | null;
+    isDefault: boolean;
+    defaultLanguageId: string | null;
+    defaultPriceGroupId: string | null;
+    priceGroupIds: string[];
+    languages: PersistedCatalogLanguageRow[];
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  const rows = (await prisma.catalog.findMany({
+    include: { languages: true },
+  })) as PersistedCatalogRow[];
+  const docs = rows.map((row: PersistedCatalogRow) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -342,8 +375,18 @@ export const syncCatalogsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, pr
 };
 
 export const syncProductCategoriesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.productCategory.findMany();
-  const docs = rows.map((row: any) => ({
+  type PersistedProductCategoryRow = {
+    id: string;
+    name: string;
+    description: string | null;
+    color: string | null;
+    parentId: string | null;
+    catalogId: string;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  const rows = (await prisma.productCategory.findMany()) as PersistedProductCategoryRow[];
+  const docs = rows.map((row: PersistedProductCategoryRow) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -365,8 +408,16 @@ export const syncProductCategoriesPrismaToMongo: DatabaseSyncHandler = async ({ 
 };
 
 export const syncProductTagsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.productTag.findMany();
-  const docs = rows.map((row: any) => ({
+  type PersistedProductTagRow = {
+    id: string;
+    name: string;
+    color: string | null;
+    catalogId: string;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  const rows = (await prisma.productTag.findMany()) as PersistedProductTagRow[];
+  const docs = rows.map((row: PersistedProductTagRow) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -386,8 +437,15 @@ export const syncProductTagsPrismaToMongo: DatabaseSyncHandler = async ({ mongo,
 };
 
 export const syncProductProducersPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.producer.findMany();
-  const docs = rows.map((row: any) => ({
+  type PersistedProducerRow = {
+    id: string;
+    name: string;
+    website: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  const rows = (await prisma.producer.findMany()) as PersistedProducerRow[];
+  const docs = rows.map((row: PersistedProducerRow) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -406,8 +464,19 @@ export const syncProductProducersPrismaToMongo: DatabaseSyncHandler = async ({ m
 };
 
 export const syncProductParametersPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.productParameter.findMany();
-  const docs = rows.map((row: any) => ({
+  type PersistedProductParameterRow = {
+    id: string;
+    catalogId: string;
+    name_en: string;
+    name_pl: string | null;
+    name_de: string | null;
+    selectorType: string;
+    optionLabels: string[];
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  const rows = (await prisma.productParameter.findMany()) as PersistedProductParameterRow[];
+  const docs = rows.map((row: PersistedProductParameterRow) => ({
     _id: row.id,
     id: row.id,
     catalogId: row.catalogId,

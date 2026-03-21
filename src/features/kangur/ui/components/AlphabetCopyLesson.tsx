@@ -21,6 +21,7 @@ import {
 } from '@/features/kangur/ui/services/drawing-canvas';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurCanvasTouchLock } from '@/features/kangur/ui/hooks/useKangurCanvasTouchLock';
+import type { KangurMiniGameFeedback } from '@/features/kangur/ui/types';
 import type { Point2d } from '@/shared/contracts/geometry';
 import type { TranslationValues } from 'use-intl';
 
@@ -83,7 +84,7 @@ const translateAlphabetCopy = (
   return translated === key || translated.endsWith(`.${key}`) ? fallback : translated;
 };
 
-type FeedbackState = { kind: 'success' | 'error'; text: string } | null;
+type FeedbackState = KangurMiniGameFeedback | null;
 
 const flattenPoints = (strokes: Point2d[][]): Point2d[] =>
   strokes.flatMap((stroke) => stroke);

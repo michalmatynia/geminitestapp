@@ -348,7 +348,7 @@ function OperationInsightCard({
 }
 
 export function KangurResultsScreen(): React.JSX.Element {
-  const { copy } = useKangurMobileI18n();
+  const { copy, locale } = useKangurMobileI18n();
   const params = useLocalSearchParams<{
     family?: string | string[];
     operation?: string | string[];

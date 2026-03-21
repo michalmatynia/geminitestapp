@@ -14,7 +14,7 @@ import type { CapturedLog } from '@/features/integrations/services/exports/log-c
 import { listProductFormSchema } from '@/features/integrations/validations/listing-forms';
 import type { ImageTransformOptions, ImageRetryPreset } from '@/shared/contracts/integrations';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 type UseListProductFormResult = {
@@ -146,14 +146,11 @@ export function useListProductForm(productId: string): UseListProductFormResult 
         onSuccess();
       }
     } catch (err: unknown) {
-      logClientError(err);
-      logClientError(err, {
-        context: {
-          source: 'ListProductModal',
-          action: 'submit',
-          productId,
-          integrationId: selectedIntegrationId,
-        },
+      logClientCatch(err, {
+        source: 'ListProductModal',
+        action: 'submit',
+        productId,
+        integrationId: selectedIntegrationId,
       });
       setError(err instanceof Error ? err.message : 'Failed to list product');
     }
@@ -180,10 +177,7 @@ export function useListProductForm(productId: string): UseListProductFormResult 
       await exportToBase(selectedConnectionId || '', selectedInventoryId || '', exportOptions);
       onSuccess();
     } catch (err: unknown) {
-      logClientError(err);
-      logClientError(err, {
-        context: { source: 'ListProductModal', action: 'imageRetry', productId },
-      });
+      logClientCatch(err, { source: 'ListProductModal', action: 'imageRetry', productId });
       setError(err instanceof Error ? err.message : 'Failed to export product');
     }
   };

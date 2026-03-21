@@ -33,10 +33,8 @@ import {
   getRecommendedSessionMomentum,
   translateKangurProgressWithFallback,
 } from '@/features/kangur/ui/services/progress';
-
-type KangurGameHomeQuestWidgetProps = {
-  hideWhenScreenMismatch?: boolean;
-};
+import type { KangurHomeScreenVisibilityProps } from '@/features/kangur/ui/types';
+type KangurGameHomeQuestWidgetProps = KangurHomeScreenVisibilityProps;
 
 const buildAssignmentHref = (
   basePath: string,

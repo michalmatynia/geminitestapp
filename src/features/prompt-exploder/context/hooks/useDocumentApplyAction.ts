@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 
 import type { Toast } from '@/shared/contracts/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
   savePromptExploderApplyPrompt,
@@ -132,15 +132,12 @@ export const useDocumentApplyAction = ({
 
       router.push(returnTo);
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'DocumentProvider',
-          action: 'handleApplyToImageStudio',
-          scope: runtimeSelection.identity.scope,
-          stack: runtimeSelection.identity.stack,
-          level: 'error',
-        },
+      logClientCatch(error, {
+        source: 'DocumentProvider',
+        action: 'handleApplyToImageStudio',
+        scope: runtimeSelection.identity.scope,
+        stack: runtimeSelection.identity.stack,
+        level: 'error',
       });
       toast(error instanceof Error ? error.message : 'Failed to apply prompt output.', {
         variant: 'error',

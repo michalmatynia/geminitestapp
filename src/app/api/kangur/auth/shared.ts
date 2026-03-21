@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
 
 import { badRequestError } from '@/shared/errors/app-error';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
 export const readKangurAuthJsonBody = async (
@@ -21,7 +20,6 @@ export const readKangurAuthJsonBody = async (
   try {
     return JSON.parse(rawBody) as unknown;
   } catch (error) {
-    void ErrorSystem.captureException(error);
-    throw badRequestError('Invalid JSON payload.');
+    throw badRequestError('Invalid JSON payload.').withCause(error);
   }
 };

@@ -1,7 +1,7 @@
 import { type ProductFilter } from '@/shared/contracts/products/filters';
 import { type ProductWithImages, type ProductsPagedResult } from '@/shared/contracts/products/product';
 import { api, type ApiClientOptions } from '@/shared/lib/api-client';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 const PRODUCT_READ_TIMEOUT_MS = 60_000;
@@ -38,7 +38,12 @@ export async function countProducts(filters: ProductFilter, signal?: AbortSignal
     const data = await api.get<{ count: number }>('/api/v2/products/count', options);
     return data.count ?? 0;
   } catch (_error) {
-    logClientError(_error);
+    logClientCatch(_error, {
+      source: 'products.api',
+      action: 'countProducts',
+      filters,
+      level: 'warn',
+    });
     return 0;
   }
 }
@@ -101,7 +106,12 @@ export async function deleteProduct(id: string): Promise<{ success: boolean }> {
     await api.delete(`/api/v2/products/${id}`);
     return { success: true };
   } catch (_error) {
-    logClientError(_error);
+    logClientCatch(_error, {
+      source: 'products.api',
+      action: 'deleteProduct',
+      id,
+      level: 'warn',
+    });
     return { success: false };
   }
 }

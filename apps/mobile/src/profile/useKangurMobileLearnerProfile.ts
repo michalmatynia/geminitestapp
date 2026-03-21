@@ -13,6 +13,7 @@ import type { Href } from 'expo-router';
 import { useMemo, useSyncExternalStore } from 'react';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
+import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 import { useKangurMobileScoreHistory } from '../scores/useKangurMobileScoreHistory';
 
@@ -38,6 +39,7 @@ type UseKangurMobileLearnerProfileResult = {
 const getKangurMobileProfileDisplayName = (
   fullName: string | null | undefined,
   learnerDisplayName: string | null | undefined,
+  fallbackLabel: string,
 ): string => {
   const activeLearner = learnerDisplayName?.trim();
   if (activeLearner) {
@@ -45,7 +47,7 @@ const getKangurMobileProfileDisplayName = (
   }
 
   const userName = fullName?.trim();
-  return userName || 'Tryb lokalny';
+  return userName || fallbackLabel;
 };
 
 const createKangurMobileActionHref = (
@@ -86,6 +88,7 @@ const createKangurMobileActionHref = (
 
 export const useKangurMobileLearnerProfile =
   (): UseKangurMobileLearnerProfileResult => {
+    const { copy, locale } = useKangurMobileI18n();
     const {
       authError,
       authMode,
@@ -113,11 +116,15 @@ export const useKangurMobileLearnerProfile =
           progress,
           scores: scoresQuery.scores,
           dailyGoalGames: defaultDailyGoalGames,
+          locale,
         }),
-      [defaultDailyGoalGames, progress, scoresQuery.scores],
+      [defaultDailyGoalGames, locale, progress, scoresQuery.scores],
     );
-    const masteryInsights = useMemo(() => buildLessonMasteryInsights(progress), [progress]);
-    const assignments = useMemo(() => buildKangurAssignments(progress), [progress]);
+    const masteryInsights = useMemo(
+      () => buildLessonMasteryInsights(progress, 3, locale),
+      [locale, progress],
+    );
+    const assignments = useMemo(() => buildKangurAssignments(progress, 3, locale), [locale, progress]);
 
     return {
       assignments,
@@ -131,18 +138,30 @@ export const useKangurMobileLearnerProfile =
       displayName: getKangurMobileProfileDisplayName(
         session.user?.full_name,
         session.user?.activeLearner?.displayName,
+        copy({
+          de: 'Lokaler Modus',
+          en: 'Local mode',
+          pl: 'Tryb lokalny',
+        }),
       ),
       getActionHref: createKangurMobileActionHref,
       isAuthenticated,
       isLoadingAuth,
       isLoadingScores: isLoadingAuth || scoresQuery.isLoading,
       masteryInsights,
-      recommendationsNote:
-        'Na mobile działają już lekcje, trening arytmetyczny oraz pierwszy quiz logiczny. Bardziej rozbudowane tryby graficzne pozostają jeszcze informacyjne.',
+      recommendationsNote: copy({
+        de: 'Auf Mobile laufen bereits Lektionen, Arithmetiktraining und das erste Logikquiz. Ausgebautere grafische Modi bleiben vorerst informativ.',
+        en: 'Lessons, arithmetic practice, and the first logic quiz already work on mobile. More advanced graphical modes are still informational for now.',
+        pl: 'Na mobile działają już lekcje, trening arytmetyczny oraz pierwszy quiz logiczny. Bardziej rozbudowane tryby graficzne pozostają jeszcze informacyjne.',
+      }),
       refreshScores: scoresQuery.refresh,
       scoresError:
         scoresQuery.error instanceof Error
-          ? 'Nie udało się pobrać historii wyników.'
+          ? copy({
+              de: 'Der Ergebnisverlauf konnte nicht geladen werden.',
+              en: 'Could not load the score history.',
+              pl: 'Nie udało się pobrać historii wyników.',
+            })
           : null,
       signIn,
       supportsLearnerCredentials,

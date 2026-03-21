@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   baseActiveTemplatePreferencePayloadSchema,
   createImportExportTemplateSchema,
+  linkedInProfileResponseSchema,
+  oauthTokenResponseSchema,
   playwrightStorageStateSchema,
   sessionPayloadSchema,
 } from '@/shared/contracts/integrations';
@@ -81,5 +83,22 @@ describe('integrations contract runtime', () => {
         },
       }).name
     ).toBe('Base Import');
+  });
+
+  it('parses shared OAuth token and LinkedIn profile response DTOs', () => {
+    expect(
+      oauthTokenResponseSchema.parse({
+        access_token: 'token',
+        expires_in: 3600,
+        scope: 'openid profile',
+      }).access_token
+    ).toBe('token');
+
+    expect(
+      linkedInProfileResponseSchema.parse({
+        sub: 'user-123',
+        name: 'profile-slug',
+      }).sub
+    ).toBe('user-123');
   });
 });

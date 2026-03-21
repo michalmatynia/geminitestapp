@@ -13,6 +13,7 @@ describe('site locale helpers', () => {
   it('detects locale prefixes in pathnames', () => {
     expect(getPathLocale('/en/products')).toBe('en');
     expect(getPathLocale('/pl')).toBe('pl');
+    expect(getPathLocale('/uk/lessons')).toBe('uk');
     expect(getPathLocale('/products')).toBeNull();
   });
 
@@ -34,6 +35,7 @@ describe('site locale helpers', () => {
     ).toBe('Polska tresc');
 
     expect(getLocaleFallbackChain('de')).toEqual(['de', 'pl']);
+    expect(getLocaleFallbackChain('uk')).toEqual(['uk', 'en', 'pl']);
   });
 
   it('prefers explicit and cookie locales before accept-language', () => {
@@ -51,5 +53,12 @@ describe('site locale helpers', () => {
         acceptLanguage: 'en-US,en;q=0.9',
       })
     ).toBe('en');
+
+    expect(
+      resolvePreferredSiteLocale({
+        pathname: '/unknown',
+        acceptLanguage: 'uk-UA,uk;q=0.9,en;q=0.8',
+      })
+    ).toBe('uk');
   });
 });

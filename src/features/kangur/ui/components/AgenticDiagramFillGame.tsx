@@ -26,6 +26,7 @@ import {
 import { useKangurCanvasRedraw } from '@/features/kangur/ui/hooks/useKangurCanvasRedraw';
 import { useKangurCanvasTouchLock } from '@/features/kangur/ui/hooks/useKangurCanvasTouchLock';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import type { KangurMiniGameInformationalFeedback } from '@/features/kangur/ui/types';
 import type { Point2d } from '@/shared/contracts/geometry';
 
 export type AgenticDiagramGameId =
@@ -82,10 +83,7 @@ type DiagramGameConfig = {
   renderSvg: () => React.JSX.Element;
 };
 
-type FeedbackState = {
-  kind: 'success' | 'error' | 'info';
-  text: string;
-} | null;
+type FeedbackState = KangurMiniGameInformationalFeedback | null;
 
 type AgenticDiagramFillGameProps = {
   gameId: AgenticDiagramGameId;

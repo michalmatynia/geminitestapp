@@ -47,16 +47,18 @@ describe('lesson-catalog-i18n', () => {
     ).toBe('Poznaj podstawy komponentów i buduj interfejsy w React 19.2.');
   });
 
-  it('returns localized subject labels for English and German locales', () => {
+  it('returns localized subject labels for English, German, and Ukrainian locales', () => {
     expect(getLocalizedKangurSubjectLabel('maths', 'en')).toBe('Maths');
     expect(getLocalizedKangurSubjectLabel('geometry', 'en')).toBe('Shapes');
     expect(getLocalizedKangurSubjectLabel('geometry', 'de')).toBe('Formen');
+    expect(getLocalizedKangurSubjectLabel('geometry', 'uk')).toBe('Фігури');
     expect(getLocalizedKangurSubjectLabel('english', 'pl')).toBe('Angielski');
   });
 
-  it('returns localized age-group labels for English and German locales', () => {
+  it('returns localized age-group labels for English, German, and Ukrainian locales', () => {
     expect(getLocalizedKangurAgeGroupLabel('ten_year_old', 'en')).toBe('Age 10');
     expect(getLocalizedKangurAgeGroupLabel('grown_ups', 'de')).toBe('Erwachsene');
+    expect(getLocalizedKangurAgeGroupLabel('six_year_old', 'uk')).toBe('6 років');
     expect(getLocalizedKangurAgeGroupLabel('six_year_old', 'pl')).toBe('6 lat');
   });
 
@@ -67,14 +69,18 @@ describe('lesson-catalog-i18n', () => {
     expect(
       getLocalizedKangurLessonSectionLabel('alphabet_matching', 'de', 'Dopasuj litery')
     ).toBe('Buchstaben zuordnen');
+    expect(getLocalizedKangurLessonSectionLabel('maths_geometry', 'uk', 'Geometria')).toBe(
+      'Геометрія'
+    );
     expect(getLocalizedKangurLessonSectionLabel('maths_geometry', 'pl', 'Geometria')).toBe(
       'Geometria'
     );
   });
 
-  it('returns localized section type labels for English and German routes and keeps Polish defaults in pl', () => {
+  it('returns localized section type labels for English, German, and Ukrainian routes and keeps Polish defaults in pl', () => {
     expect(getLocalizedKangurLessonSectionTypeLabel('en', 'Gra')).toBe('Game');
     expect(getLocalizedKangurLessonSectionTypeLabel('de', 'Lekcja')).toBe('Lektion');
+    expect(getLocalizedKangurLessonSectionTypeLabel('uk', 'Section')).toBe('Розділ');
     expect(getLocalizedKangurLessonSectionTypeLabel('pl', 'Gra')).toBe('Gra');
   });
 });

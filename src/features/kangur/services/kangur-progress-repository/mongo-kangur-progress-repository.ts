@@ -6,22 +6,17 @@ import {
   normalizeKangurProgressState,
   type KangurProgressState,
 } from '@kangur/contracts';
+import {
+  KANGUR_LEGACY_SETTINGS_COLLECTION,
+  type KangurLegacySettingDocument,
+} from '@/features/kangur/services/kangur-legacy-settings-store';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 
 import type { KangurProgressRepository } from './types';
 import type { Filter } from 'mongodb';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
-
-
-const SETTINGS_COLLECTION = 'settings';
 const KANGUR_PROGRESS_SETTING_PREFIX = 'kangur_progress:';
-
-type MongoProgressSettingDocument = {
-  _id?: string;
-  key?: string;
-  value?: string;
-};
 
 const toSettingKey = (userKey: string): string =>
   `${KANGUR_PROGRESS_SETTING_PREFIX}${encodeURIComponent(userKey.trim().toLowerCase())}`;
@@ -52,19 +47,19 @@ export const mongoKangurProgressRepository: KangurProgressRepository = {
     if (!isSubjectProgressKey(normalizedKey)) {
       const subjectSettingKey = toSettingKey(buildSubjectProgressKey(normalizedKey, 'maths'));
       const subjectRow = await db
-        .collection<MongoProgressSettingDocument>(SETTINGS_COLLECTION)
+        .collection<KangurLegacySettingDocument>(KANGUR_LEGACY_SETTINGS_COLLECTION)
         .findOne({
           $or: [{ key: subjectSettingKey }, { _id: subjectSettingKey }],
-        } as Filter<MongoProgressSettingDocument>);
+        } as Filter<KangurLegacySettingDocument>);
       if (subjectRow) {
         return parseProgressValue(subjectRow.value);
       }
     }
 
     const settingKey = toSettingKey(normalizedKey);
-    const row = await db.collection<MongoProgressSettingDocument>(SETTINGS_COLLECTION).findOne({
+    const row = await db.collection<KangurLegacySettingDocument>(KANGUR_LEGACY_SETTINGS_COLLECTION).findOne({
       $or: [{ key: settingKey }, { _id: settingKey }],
-    } as Filter<MongoProgressSettingDocument>);
+    } as Filter<KangurLegacySettingDocument>);
 
     return parseProgressValue(row?.value);
   },
@@ -75,10 +70,10 @@ export const mongoKangurProgressRepository: KangurProgressRepository = {
     const normalized = normalizeKangurProgressState(progress);
 
     await executeMongoWriteWithRetry(async () => {
-      await db.collection<MongoProgressSettingDocument>(SETTINGS_COLLECTION).updateOne(
+      await db.collection<KangurLegacySettingDocument>(KANGUR_LEGACY_SETTINGS_COLLECTION).updateOne(
         {
           $or: [{ key: settingKey }, { _id: settingKey }],
-        } as Filter<MongoProgressSettingDocument>,
+        } as Filter<KangurLegacySettingDocument>,
         {
           $set: {
             key: settingKey,

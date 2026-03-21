@@ -21,13 +21,13 @@ import {
   getRecommendedSessionMomentum,
 } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressTranslate } from '@/features/kangur/ui/services/progress-i18n';
-import type { KangurProgressState } from '@/features/kangur/ui/types';
+import type {
+  KangurBasePathProgressProps,
+  KangurLessonMasteryEntry,
+  KangurProgressState,
+} from '@/features/kangur/ui/types';
 import type { KangurLessonComponentId, KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
-
-type KangurGameHomeMomentumWidgetProps = {
-  basePath: string;
-  progress: KangurProgressState;
-};
+type KangurGameHomeMomentumWidgetProps = KangurBasePathProgressProps;
 
 type KangurHomeRecommendation = {
   action: KangurRouteAction;
@@ -123,7 +123,9 @@ const getWeakestLessonRecommendation = (
   locale: string,
   translate?: RecommendationTranslate
 ): KangurHomeRecommendation | null => {
-  const weakestLesson = Object.entries(progress.lessonMastery)
+  const weakestLesson = (
+    Object.entries(progress.lessonMastery) as [KangurLessonComponentId, KangurLessonMasteryEntry][]
+  )
     .filter(([, entry]) => entry.attempts > 0 && entry.masteryPercent < 80)
     .sort((left, right) => left[1].masteryPercent - right[1].masteryPercent)[0];
 
@@ -131,12 +133,12 @@ const getWeakestLessonRecommendation = (
     return null;
   }
 
-  const [componentId, entry] = weakestLesson;
-  const lesson = KANGUR_LESSON_LIBRARY[componentId as KangurLessonComponentId];
+  const [lessonId, entry] = weakestLesson;
+  const lesson = KANGUR_LESSON_LIBRARY[lessonId];
   if (!lesson) {
     return null;
   }
-  const lessonTitle = getLocalizedKangurLessonTitle(componentId, locale, lesson.title);
+  const lessonTitle = getLocalizedKangurLessonTitle(lessonId, locale, lesson.title);
 
   return {
     accent: entry.masteryPercent < 60 ? 'rose' : 'amber',
@@ -148,7 +150,7 @@ const getWeakestLessonRecommendation = (
       ),
       page: 'Lessons',
       query: {
-        focus: componentId,
+        focus: lessonId,
       },
     },
     description: translateRecommendationWithFallback(

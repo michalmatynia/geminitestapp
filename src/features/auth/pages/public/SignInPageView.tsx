@@ -22,7 +22,7 @@ import {
   UI_STACK_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export const resolveSignInCallbackNavigation = (
   callbackUrl: string,
@@ -91,8 +91,7 @@ function SignInPageLoader(): React.JSX.Element {
         }
       }
     } catch (err) {
-      logClientError(err);
-      logClientError(err, { context: { source: 'SignInPage', action: 'handleSubmit', email } });
+      logClientCatch(err, { source: 'SignInPage', action: 'handleSubmit', email });
       setError(translations('unexpectedError'));
     } finally {
       setIsSubmitting(false);

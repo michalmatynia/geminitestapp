@@ -13,6 +13,7 @@ import {
   buildKangurSocialPostCombinedBody,
   type KangurSocialPost,
 } from '@/shared/contracts/kangur-social-posts';
+import type { LinkedInProfileResponseDto } from '@/shared/contracts/integrations';
 import { configurationError, operationFailedError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
@@ -27,11 +28,6 @@ const API_BASE_URL = process.env['LINKEDIN_API_BASE_URL'] ?? 'https://api.linked
 const ASSET_RECIPE = 'urn:li:digitalmediaRecipe:feedshare-image';
 const UPLOAD_RELATIONSHIP = 'urn:li:userGeneratedContent';
 const RESTLI_PROTOCOL_VERSION = '2.0.0';
-
-type LinkedInProfileResponse = {
-  sub?: string;
-  name?: string;
-};
 
 type RegisteredUpload = {
   asset: string;
@@ -51,7 +47,9 @@ const resolveContentType = (value: string | null | undefined): string | null => 
   return normalized ? normalized : null;
 };
 
-const fetchLinkedInProfile = async (accessToken: string): Promise<LinkedInProfileResponse | null> => {
+const fetchLinkedInProfile = async (
+  accessToken: string
+): Promise<LinkedInProfileResponseDto | null> => {
   const response = await fetch(
     `${API_BASE_URL}/userinfo`,
     {
@@ -61,7 +59,7 @@ const fetchLinkedInProfile = async (accessToken: string): Promise<LinkedInProfil
     }
   );
   if (!response.ok) return null;
-  return (await response.json()) as LinkedInProfileResponse;
+  return (await response.json()) as LinkedInProfileResponseDto;
 };
 
 const extractLinkedInPostUrn = (value: string | null | undefined): string | null => {

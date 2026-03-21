@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const getActiveOtelContextAttributesMock = vi.fn(() => ({}));
 const mockedLogSystemEvent = vi.fn().mockResolvedValue(undefined);
+const mockedCaptureException = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('@/shared/lib/observability/otel-context', () => ({
   getActiveOtelContextAttributes: getActiveOtelContextAttributesMock,
@@ -17,8 +18,13 @@ const loadApiHandler = async () => {
     logSystemEvent: mockedLogSystemEvent,
     getErrorFingerprint: vi.fn(() => 'test-fingerprint'),
   }));
+  vi.doMock('@/shared/utils/observability/error-system', () => ({
+    ErrorSystem: {
+      captureException: mockedCaptureException,
+    },
+  }));
   const { apiHandler, apiOptionsHandler } = await import('@/shared/lib/api/api-handler');
-  return { apiHandler, apiOptionsHandler, mockedLogSystemEvent };
+  return { apiHandler, apiOptionsHandler, mockedLogSystemEvent, mockedCaptureException };
 };
 
 describe('apiHandler observability propagation', () => {
@@ -26,6 +32,7 @@ describe('apiHandler observability propagation', () => {
     vi.resetModules();
     vi.clearAllMocks();
     mockedLogSystemEvent.mockClear();
+    mockedCaptureException.mockClear();
     getActiveOtelContextAttributesMock.mockReturnValue({});
     process.env['NODE_ENV'] = 'development';
     delete process.env['ENABLE_RATE_LIMITS'];
@@ -162,5 +169,35 @@ describe('apiHandler observability propagation', () => {
       retryAfterMs: 45_000,
     });
     expect(payload['fingerprint']).toBe(response.headers.get('x-error-fingerprint'));
+  });
+
+  it('reports handler failures through the centralized response logger without a pre-capture', async () => {
+    const { apiHandler, mockedLogSystemEvent, mockedCaptureException } = await loadApiHandler();
+    const handler = apiHandler(async () => {
+      throw new Error('boom');
+    }, {
+      source: 'centralized.errors.GET',
+    });
+
+    const response = await handler(
+      new NextRequest('http://localhost/api/centralized-errors', {
+        method: 'GET',
+        headers: new Headers({
+          'x-request-id': 'req-centralized',
+        }),
+      })
+    );
+
+    expect(response.status).toBe(500);
+    expect(mockedCaptureException).not.toHaveBeenCalled();
+    expect(mockedLogSystemEvent).toHaveBeenCalledTimes(1);
+    expect(mockedLogSystemEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'centralized.errors.GET',
+        requestId: 'req-centralized',
+        service: 'centralized.errors',
+        level: 'error',
+      })
+    );
   });
 });

@@ -40,7 +40,11 @@ import {
 } from '@/features/kangur/ui/services/progress';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
-import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
+import type {
+  KangurMiniGameFeedback,
+  KangurMiniGameFinishProps,
+  KangurRewardBreakdownEntry,
+} from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 type ClickRound = {
@@ -105,15 +109,9 @@ const ROUNDS: ClickRound[] = [
 
 const TOTAL_ROUNDS = ROUNDS.length;
 
-type FeedbackState = {
-  kind: 'success' | 'error';
-  text: string;
-};
+type FeedbackState = KangurMiniGameFeedback;
 
-type EnglishPronounsGameProps = {
-  finishLabel?: string;
-  onFinish: () => void;
-};
+type EnglishPronounsGameProps = KangurMiniGameFinishProps;
 
 export default function EnglishPronounsGame({
   finishLabel,

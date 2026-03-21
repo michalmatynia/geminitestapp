@@ -68,7 +68,7 @@ export async function GET_handler(
       sessionId,
       messageCount: session.messages.length,
     });
-  } catch (_error) {
-    throw badRequestError('Failed to retrieve conversation history.');
+  } catch (error) {
+    throw badRequestError('Failed to retrieve conversation history.').withCause(error);
   }
 }

@@ -2,21 +2,21 @@ import 'server-only';
 
 import type {
   MongoPersistedStringSettingRecord,
-  MongoStringSettingRecord,
   SettingRecord,
 } from '@/shared/contracts/settings';
+import {
+  KANGUR_LEGACY_SETTINGS_COLLECTION,
+  type KangurLegacySettingDocument,
+} from '@/features/kangur/services/kangur-legacy-settings-store';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/settings-compression';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const KANGUR_SETTINGS_COLLECTION = 'kangur_settings';
-const LEGACY_SETTINGS_COLLECTION = 'settings';
 const KANGUR_SETTINGS_KEY_PREFIX = 'kangur_';
 const KANGUR_SETTINGS_KEY_INDEX = 'kangur_settings_key';
 
 type KangurSettingDocument = MongoPersistedStringSettingRecord<string, Date>;
-
-type LegacySettingDocument = MongoStringSettingRecord<string>;
 
 let kangurSettingsIndexesEnsured: Promise<void> | null = null;
 
@@ -71,7 +71,7 @@ const readLegacySettingsByKeys = async (keys: string[]): Promise<SettingRecord[]
   if (keys.length === 0) return [];
   const mongo = await getMongoDb();
   const docs = await mongo
-    .collection<LegacySettingDocument>(LEGACY_SETTINGS_COLLECTION)
+    .collection<KangurLegacySettingDocument>(KANGUR_LEGACY_SETTINGS_COLLECTION)
     .find(
       { $or: [{ key: { $in: keys } }, { _id: { $in: keys } }] },
       { projection: { _id: 1, key: 1, value: 1 } }
@@ -79,7 +79,7 @@ const readLegacySettingsByKeys = async (keys: string[]): Promise<SettingRecord[]
     .toArray();
 
   return docs
-    .map((doc: LegacySettingDocument) => toSettingRecord(doc))
+    .map((doc: KangurLegacySettingDocument) => toSettingRecord(doc))
     .filter((item: SettingRecord | null): item is SettingRecord => Boolean(item));
 };
 
@@ -142,7 +142,7 @@ export const listKangurSettingsByKeys = async (keys: string[]): Promise<SettingR
   const mongo = await getMongoDb();
   const [legacyDocs, kangurDocs] = await Promise.all([
     mongo
-      .collection<LegacySettingDocument>(LEGACY_SETTINGS_COLLECTION)
+      .collection<KangurLegacySettingDocument>(KANGUR_LEGACY_SETTINGS_COLLECTION)
       .find(
         { $or: [{ key: { $in: kangurKeys } }, { _id: { $in: kangurKeys } }] },
         { projection: { _id: 1, key: 1, value: 1 } }
@@ -158,7 +158,7 @@ export const listKangurSettingsByKeys = async (keys: string[]): Promise<SettingR
   ]);
 
   const merged = new Map<string, string>();
-  legacyDocs.forEach((doc: LegacySettingDocument) => {
+  legacyDocs.forEach((doc: KangurLegacySettingDocument) => {
     const record = toSettingRecord(doc);
     if (record) merged.set(record.key, record.value);
   });
@@ -198,7 +198,7 @@ export const deleteKangurSettingValue = async (key: string): Promise<boolean> =>
       .collection<KangurSettingDocument>(KANGUR_SETTINGS_COLLECTION)
       .deleteOne({ $or: [{ _id: key }, { key }] }),
     mongo
-      .collection<LegacySettingDocument>(LEGACY_SETTINGS_COLLECTION)
+      .collection<KangurLegacySettingDocument>(KANGUR_LEGACY_SETTINGS_COLLECTION)
       .deleteOne({ $or: [{ _id: key }, { key }] }),
   ]);
   return true;

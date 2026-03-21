@@ -47,7 +47,11 @@ import {
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
-import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
+import type {
+  KangurMiniGameFeedback,
+  KangurMiniGameFinishProps,
+  KangurRewardBreakdownEntry,
+} from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 import { safeSetInterval, safeClearInterval, type SafeTimerId } from '@/shared/lib/timers';
 
@@ -173,15 +177,9 @@ const normalizeText = (value: string): string =>
     .replace(/[.!?]/g, '')
     .replace(/\s+/g, ' ');
 
-type FeedbackState = {
-  kind: 'success' | 'error';
-  text: string;
-};
+type FeedbackState = KangurMiniGameFeedback;
 
-type EnglishSentenceStructureGameProps = {
-  finishLabel?: string;
-  onFinish: () => void;
-};
+type EnglishSentenceStructureGameProps = KangurMiniGameFinishProps;
 
 type RoundState = {
   selection: string | null;

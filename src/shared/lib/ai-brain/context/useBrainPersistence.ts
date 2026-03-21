@@ -10,7 +10,7 @@ import {
   hasCatalogPoolEntries,
   replaceCatalogPoolValues,
 } from '@/shared/lib/ai-brain/catalog-entries';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
@@ -139,13 +139,10 @@ export function useBrainPersistence({
       try {
         parsedBrain = parseBrainSettings(rawBrainSettings);
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'BrainContext',
-            action: 'hydrateSettings',
-            settingKey: AI_BRAIN_SETTINGS_KEY,
-          },
+        logClientCatch(error, {
+          source: 'BrainContext',
+          action: 'hydrateSettings',
+          settingKey: AI_BRAIN_SETTINGS_KEY,
         });
         toast(
           error instanceof Error
@@ -163,13 +160,10 @@ export function useBrainPersistence({
       try {
         parsedCatalog = parseBrainProviderCatalog(rawProviderCatalog);
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'BrainContext',
-            action: 'hydrateProviderCatalog',
-            settingKey: AI_BRAIN_PROVIDER_CATALOG_KEY,
-          },
+        logClientCatch(error, {
+          source: 'BrainContext',
+          action: 'hydrateProviderCatalog',
+          settingKey: AI_BRAIN_PROVIDER_CATALOG_KEY,
         });
         toast(
           error instanceof Error
@@ -401,8 +395,7 @@ export function useBrainPersistence({
 
       toast('Brain settings saved.', { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, { context: { source: 'AdminBrainPage', action: 'save' } });
+      logClientCatch(error, { source: 'AdminBrainPage', action: 'save' });
       toast('Failed to save Brain settings.', { variant: 'error' });
     }
   }, [

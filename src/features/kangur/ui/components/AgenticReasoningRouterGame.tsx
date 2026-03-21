@@ -21,6 +21,7 @@ import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_WRAP_ROW_SPACED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 type ReasoningLevelId = 'low' | 'medium' | 'high' | 'xhigh';
@@ -38,9 +39,7 @@ type RouterTask = {
   answer: ReasoningLevelId;
 };
 
-type AgenticReasoningRouterGameProps = {
-  onFinish: () => void;
-};
+type AgenticReasoningRouterGameProps = KangurMiniGameFinishActionProps;
 
 const REASONING_LEVELS: ReasoningLevel[] = [
   {

@@ -3,7 +3,6 @@ import { z } from 'zod';
 import type { JsonParseResult, ParseJsonOptions } from '@/shared/contracts/ui';
 import { badRequestError, validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
 const jsonObjectSchema = z.object({}).catchall(z.unknown());
@@ -19,13 +18,12 @@ export async function parseJsonBody<T>(
   try {
     body = await req.json();
   } catch (error) {
-    logClientError(error);
     if (options?.allowEmpty) {
       body = {};
     } else {
       return {
         ok: false,
-        response: await createErrorResponse(badRequestError('Invalid JSON payload'), {
+        response: await createErrorResponse(badRequestError('Invalid JSON payload').withCause(error), {
           request: req,
           source: logPrefix,
         }),

@@ -11,7 +11,7 @@ import { useCallback } from 'react';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import type { TanstackFactoryMeta } from '@/shared/lib/tanstack-factory-v2.types';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface QueuedMutation {
   id: string;
@@ -52,13 +52,10 @@ class OfflineMutationQueue {
         }
         mutation.onProcessed?.({ queryClient });
       } catch (error) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'offline-queue',
-            mutationId: mutation.id,
-            queryKey: mutation.queryKey,
-          },
+        logClientCatch(error, {
+          source: 'offline-queue',
+          mutationId: mutation.id,
+          queryKey: mutation.queryKey,
         });
         // Re-queue if it's a network error
         if (error instanceof Error && error.message.includes('fetch')) {

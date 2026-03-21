@@ -3,13 +3,14 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   useLocalSearchParamsMock,
   useRouterMock,
   replaceMock,
+  shareKangurDuelInviteMock,
   useKangurMobileAuthMock,
   useKangurMobileDuelLobbyChatMock,
   useKangurMobileDuelsLobbyMock,
@@ -18,6 +19,7 @@ const {
   useLocalSearchParamsMock: vi.fn(),
   useRouterMock: vi.fn(),
   replaceMock: vi.fn(),
+  shareKangurDuelInviteMock: vi.fn(),
   useKangurMobileAuthMock: vi.fn(),
   useKangurMobileDuelLobbyChatMock: vi.fn(),
   useKangurMobileDuelsLobbyMock: vi.fn(),
@@ -46,11 +48,16 @@ vi.mock('./useKangurMobileDuelSession', () => ({
   useKangurMobileDuelSession: useKangurMobileDuelSessionMock,
 }));
 
+vi.mock('./duelInviteShare', () => ({
+  shareKangurDuelInvite: shareKangurDuelInviteMock,
+}));
+
 import { KangurDuelsScreen } from './KangurDuelsScreen';
 
 describe('KangurDuelsScreen', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    shareKangurDuelInviteMock.mockResolvedValue(undefined);
     useLocalSearchParamsMock.mockReturnValue({});
     useRouterMock.mockReturnValue({
       replace: replaceMock,
@@ -110,9 +117,11 @@ describe('KangurDuelsScreen', () => {
       searchQuery: '',
       searchResults: [],
       searchSubmittedQuery: '',
+      seriesBestOf: 1,
       setDifficulty: vi.fn(),
       setModeFilter: vi.fn(),
       setOperation: vi.fn(),
+      setSeriesBestOf: vi.fn(),
       setSearchQuery: vi.fn(),
       submitSearch: vi.fn(),
       clearSearch: vi.fn(),
@@ -217,6 +226,17 @@ describe('KangurDuelsScreen', () => {
           mode: 'quick_match',
           operation: 'multiplication',
           questionCount: 5,
+          series: {
+            bestOf: 3,
+            completedGames: 1,
+            gameIndex: 2,
+            id: 'series-1',
+            isComplete: false,
+            leaderLearnerId: 'learner-2',
+            winsByPlayer: {
+              'learner-2': 1,
+            },
+          },
           sessionId: 'public-1',
           status: 'waiting',
           timePerQuestionSec: 15,
@@ -235,9 +255,11 @@ describe('KangurDuelsScreen', () => {
         },
       ],
       searchSubmittedQuery: 'ola',
+      seriesBestOf: 3,
       setDifficulty: vi.fn(),
       setModeFilter: vi.fn(),
       setOperation: vi.fn(),
+      setSeriesBestOf: vi.fn(),
       setSearchQuery: vi.fn(),
       submitSearch: vi.fn(),
       clearSearch: vi.fn(),
@@ -257,6 +279,17 @@ describe('KangurDuelsScreen', () => {
           mode: 'quick_match',
           operation: 'multiplication',
           questionCount: 5,
+          series: {
+            bestOf: 3,
+            completedGames: 1,
+            gameIndex: 2,
+            id: 'series-1',
+            isComplete: false,
+            leaderLearnerId: 'learner-2',
+            winsByPlayer: {
+              'learner-2': 1,
+            },
+          },
           sessionId: 'public-1',
           status: 'waiting',
           timePerQuestionSec: 15,
@@ -293,6 +326,8 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Panel gry')).toBeTruthy();
     expect(screen.getAllByText('Szybki mecz').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Publiczne wyzwanie')).toBeTruthy();
+    expect(screen.getByText('Format')).toBeTruthy();
+    expect(screen.getByText('Nowe wyzwania utworzą Seria BO3.')).toBeTruthy();
     expect(screen.getByText('Zaproszenia')).toBeTruthy();
     expect(screen.getByText('Ada Mentor')).toBeTruthy();
     expect(screen.getByText('Aktywni uczniowie')).toBeTruthy();
@@ -300,6 +335,8 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Czat lobby')).toBeTruthy();
     expect(screen.getByText('Maja Sprint')).toBeTruthy();
     expect(screen.getByText('Szukam meczu z mnozeniem.')).toBeTruthy();
+    expect(screen.getAllByText('Seria BO3').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText('Gra 2 z 3 · ukończone gry: 1')).toBeTruthy();
     expect(screen.getByText('Obserwuj pojedynek')).toBeTruthy();
     expect(screen.getByText('Wyniki dueli')).toBeTruthy();
     expect(screen.getByText('#1 Ola')).toBeTruthy();
@@ -373,6 +410,18 @@ describe('KangurDuelsScreen', () => {
             type: 'cheer',
           },
         ],
+        series: {
+          bestOf: 3,
+          completedGames: 1,
+          gameIndex: 2,
+          id: 'series-ada-bob',
+          isComplete: false,
+          leaderLearnerId: 'learner-1',
+          winsByPlayer: {
+            'learner-1': 1,
+            'learner-2': 0,
+          },
+        },
         startedAt: null,
         status: 'waiting',
         timePerQuestionSec: 15,
@@ -391,10 +440,172 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Poczekalnia pojedynku')).toBeTruthy();
     expect(screen.getByText('Ada')).toBeTruthy();
     expect(screen.getByText('Bob')).toBeTruthy();
+    expect(screen.getAllByText('Seria BO3').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Gra 2 z 3')).toBeTruthy();
+    expect(screen.getByText('Prowadzi Ada 1:0.')).toBeTruthy();
+    expect(screen.getByText('Wygrane gry w serii: 1')).toBeTruthy();
+    expect(screen.getByText('Wygrane gry w serii: 0')).toBeTruthy();
     expect(screen.getByText('Reakcje')).toBeTruthy();
     expect(screen.getByText('Wyślij szybką reakcję bez opuszczania pojedynku.')).toBeTruthy();
     expect(screen.getByText('Minimalna liczba graczy do startu: 2')).toBeTruthy();
     expect(screen.getByText('Opuść pojedynek')).toBeTruthy();
+  });
+
+  it('shares a private waiting-room invite link for the missing player', async () => {
+    useLocalSearchParamsMock.mockReturnValue({
+      sessionId: 'duel-share-1',
+    });
+    useKangurMobileDuelSessionMock.mockReturnValue({
+      actionError: null,
+      currentQuestion: null,
+      error: null,
+      isAuthenticated: true,
+      isLoading: false,
+      isMutating: false,
+      isRestoringAuth: false,
+      isSpectating: false,
+      leaveSession: vi.fn(),
+      player: {
+        displayName: 'Ada',
+        learnerId: 'learner-1',
+        status: 'ready',
+        score: 0,
+        bonusPoints: 0,
+        currentQuestionIndex: 0,
+        joinedAt: '2026-03-21T08:00:00.000Z',
+      },
+      refresh: vi.fn(),
+      sendReaction: vi.fn(),
+      session: {
+        createdAt: '2026-03-21T08:00:00.000Z',
+        currentQuestionIndex: 0,
+        difficulty: 'easy',
+        endedAt: null,
+        id: 'duel-share-1',
+        invitedLearnerId: 'learner-2',
+        invitedLearnerName: 'Bob',
+        maxPlayers: 2,
+        minPlayersToStart: 2,
+        mode: 'challenge',
+        operation: 'addition',
+        players: [
+          {
+            displayName: 'Ada',
+            learnerId: 'learner-1',
+            status: 'ready',
+            score: 0,
+            bonusPoints: 0,
+            currentQuestionIndex: 0,
+            joinedAt: '2026-03-21T08:00:00.000Z',
+          },
+        ],
+        questionCount: 5,
+        questions: [],
+        recentReactions: [],
+        startedAt: null,
+        status: 'waiting',
+        timePerQuestionSec: 15,
+        updatedAt: '2026-03-21T08:02:00.000Z',
+        visibility: 'private',
+      },
+      spectatorCount: 0,
+      submitAnswer: vi.fn(),
+    });
+
+    render(<KangurDuelsScreen />);
+
+    expect(screen.getByText('Udostępnij zaproszenie')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Wyślij bezpośredni link do Bob, aby otworzyć prywatny pojedynek na telefonie bez szukania go w lobby.',
+      ),
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Udostępnij link zaproszenia'));
+
+    await waitFor(() => {
+      expect(shareKangurDuelInviteMock).toHaveBeenCalledWith({
+        sessionId: 'duel-share-1',
+        sharerDisplayName: 'Ada',
+      });
+    });
+  });
+
+  it('shows a share error when invite-link sharing fails', async () => {
+    shareKangurDuelInviteMock.mockRejectedValueOnce(
+      new Error('System share sheet unavailable.'),
+    );
+
+    useLocalSearchParamsMock.mockReturnValue({
+      sessionId: 'duel-share-error-1',
+    });
+    useKangurMobileDuelSessionMock.mockReturnValue({
+      actionError: null,
+      currentQuestion: null,
+      error: null,
+      isAuthenticated: true,
+      isLoading: false,
+      isMutating: false,
+      isRestoringAuth: false,
+      isSpectating: false,
+      leaveSession: vi.fn(),
+      player: {
+        displayName: 'Ada',
+        learnerId: 'learner-1',
+        status: 'ready',
+        score: 0,
+        bonusPoints: 0,
+        currentQuestionIndex: 0,
+        joinedAt: '2026-03-21T08:00:00.000Z',
+      },
+      refresh: vi.fn(),
+      sendReaction: vi.fn(),
+      session: {
+        createdAt: '2026-03-21T08:00:00.000Z',
+        currentQuestionIndex: 0,
+        difficulty: 'easy',
+        endedAt: null,
+        id: 'duel-share-error-1',
+        invitedLearnerId: 'learner-2',
+        invitedLearnerName: 'Bob',
+        maxPlayers: 2,
+        minPlayersToStart: 2,
+        mode: 'challenge',
+        operation: 'addition',
+        players: [
+          {
+            displayName: 'Ada',
+            learnerId: 'learner-1',
+            status: 'ready',
+            score: 0,
+            bonusPoints: 0,
+            currentQuestionIndex: 0,
+            joinedAt: '2026-03-21T08:00:00.000Z',
+          },
+        ],
+        questionCount: 5,
+        questions: [],
+        recentReactions: [],
+        startedAt: null,
+        status: 'waiting',
+        timePerQuestionSec: 15,
+        updatedAt: '2026-03-21T08:02:00.000Z',
+        visibility: 'private',
+      },
+      spectatorCount: 0,
+      submitAnswer: vi.fn(),
+    });
+
+    render(<KangurDuelsScreen />);
+
+    fireEvent.click(screen.getByText('Udostępnij link zaproszenia'));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Nie udało się udostępnić zaproszenia'),
+      ).toBeTruthy();
+    });
+    expect(screen.getByText('System share sheet unavailable.')).toBeTruthy();
   });
 
   it('renders spectator mode for a public duel session route', () => {
@@ -531,9 +742,11 @@ describe('KangurDuelsScreen', () => {
       searchQuery: '',
       searchResults: [],
       searchSubmittedQuery: '',
+      seriesBestOf: 1,
       setDifficulty: vi.fn(),
       setModeFilter: vi.fn(),
       setOperation: vi.fn(),
+      setSeriesBestOf: vi.fn(),
       setSearchQuery: vi.fn(),
       submitSearch: vi.fn(),
       clearSearch: vi.fn(),
@@ -552,6 +765,160 @@ describe('KangurDuelsScreen', () => {
         pathname: '/duels',
         params: {
           sessionId: 'duel-joined-1',
+        },
+      });
+    });
+  });
+
+  it('offers a rematch action after a completed private series duel', async () => {
+    const createPrivateChallengeMock = vi
+      .fn()
+      .mockResolvedValue('duel-rematch-1');
+
+    useLocalSearchParamsMock.mockReturnValue({
+      sessionId: 'duel-complete-1',
+    });
+    useKangurMobileDuelsLobbyMock.mockReturnValue({
+      actionError: null,
+      createPrivateChallenge: createPrivateChallengeMock,
+      createPublicChallenge: vi.fn(),
+      createQuickMatch: vi.fn(),
+      difficulty: 'easy',
+      inviteEntries: [],
+      isActionPending: false,
+      isAuthenticated: true,
+      isLoadingAuth: false,
+      isLobbyLoading: false,
+      isOpponentsLoading: false,
+      isPresenceLoading: false,
+      isRestoringAuth: false,
+      isSearchLoading: false,
+      joinDuel: vi.fn(),
+      leaderboardEntries: [],
+      leaderboardError: null,
+      lobbyError: null,
+      modeFilter: 'all',
+      operation: 'addition',
+      opponents: [],
+      presenceEntries: [],
+      presenceError: null,
+      publicEntries: [],
+      refresh: vi.fn(),
+      searchError: null,
+      searchQuery: '',
+      searchResults: [],
+      searchSubmittedQuery: '',
+      seriesBestOf: 1,
+      setDifficulty: vi.fn(),
+      setModeFilter: vi.fn(),
+      setOperation: vi.fn(),
+      setSeriesBestOf: vi.fn(),
+      setSearchQuery: vi.fn(),
+      submitSearch: vi.fn(),
+      clearSearch: vi.fn(),
+      visiblePublicEntries: [],
+    });
+    useKangurMobileDuelSessionMock.mockReturnValue({
+      actionError: null,
+      currentQuestion: null,
+      error: null,
+      isAuthenticated: true,
+      isLoading: false,
+      isMutating: false,
+      isRestoringAuth: false,
+      isSpectating: false,
+      leaveSession: vi.fn(),
+      player: {
+        displayName: 'Ada',
+        learnerId: 'learner-1',
+        status: 'completed',
+        score: 4,
+        bonusPoints: 1,
+        currentQuestionIndex: 5,
+        joinedAt: '2026-03-21T08:00:00.000Z',
+      },
+      refresh: vi.fn(),
+      sendReaction: vi.fn(),
+      session: {
+        createdAt: '2026-03-21T08:00:00.000Z',
+        currentQuestionIndex: 5,
+        difficulty: 'hard',
+        endedAt: '2026-03-21T08:10:00.000Z',
+        id: 'duel-complete-1',
+        invitedLearnerId: 'learner-2',
+        invitedLearnerName: 'Leo',
+        maxPlayers: 2,
+        minPlayersToStart: 2,
+        mode: 'challenge',
+        operation: 'division',
+        players: [
+          {
+            displayName: 'Ada',
+            learnerId: 'learner-1',
+            status: 'completed',
+            score: 4,
+            bonusPoints: 1,
+            currentQuestionIndex: 5,
+            joinedAt: '2026-03-21T08:00:00.000Z',
+          },
+          {
+            displayName: 'Leo',
+            learnerId: 'learner-2',
+            status: 'completed',
+            score: 3,
+            bonusPoints: 0,
+            currentQuestionIndex: 5,
+            joinedAt: '2026-03-21T08:00:15.000Z',
+          },
+        ],
+        questionCount: 5,
+        questions: [],
+        recentReactions: [],
+        series: {
+          bestOf: 5,
+          completedGames: 3,
+          gameIndex: 4,
+          id: 'series-complete-1',
+          isComplete: false,
+          leaderLearnerId: 'learner-1',
+          winsByPlayer: {
+            'learner-1': 2,
+            'learner-2': 1,
+          },
+        },
+        startedAt: '2026-03-21T08:01:00.000Z',
+        status: 'completed',
+        timePerQuestionSec: 15,
+        updatedAt: '2026-03-21T08:10:00.000Z',
+        visibility: 'private',
+      },
+      spectatorCount: 0,
+      submitAnswer: vi.fn(),
+    });
+
+    render(<KangurDuelsScreen />);
+
+    expect(screen.getByText('Podsumowanie')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Rewanż zachowa ten sam tryb, działanie, poziom i format serii.',
+      ),
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Zagraj rewanż'));
+
+    await waitFor(() => {
+      expect(createPrivateChallengeMock).toHaveBeenCalledWith('learner-2', {
+        difficulty: 'hard',
+        operation: 'division',
+        seriesBestOf: 5,
+      });
+    });
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith({
+        pathname: '/duels',
+        params: {
+          sessionId: 'duel-rematch-1',
         },
       });
     });

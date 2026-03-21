@@ -38,7 +38,10 @@ import {
 } from '@/features/kangur/ui/services/progress';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
-import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
+import type {
+  KangurMiniGameFinishVariantProps,
+  KangurRewardBreakdownEntry,
+} from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 type SubtractingQuestion = {
@@ -48,10 +51,7 @@ type SubtractingQuestion = {
   choices: number[];
 };
 
-type SubtractingGameProps = {
-  finishLabelVariant?: 'lesson' | 'play';
-  onFinish: () => void;
-};
+type SubtractingGameProps = KangurMiniGameFinishVariantProps;
 
 const TOTAL = 6;
 

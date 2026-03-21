@@ -1,4 +1,3 @@
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 // ---------------------------------------------------------------------------
 // Ring buffer — O(1) push, O(n) drain; bounded, no slice on every overflow
 // ---------------------------------------------------------------------------
@@ -74,8 +73,8 @@ function shipMetric(name: string, value: number, tags?: Record<string, string>):
         },
       });
     } catch (error) {
-      logClientError(error);
-    
+      console.error('[products.performance.monitor] Failed to ship metric', error);
+
       // Never let observability failures propagate
     }
   })();
@@ -303,7 +302,7 @@ export function withPerformanceMiddleware(
 
       return result;
     } catch (error) {
-      logClientError(error);
+      console.error('[products.performance.monitor] Request wrapper failed', error);
       const duration = performance.now() - start;
 
       performanceMonitor.record('request', duration, {

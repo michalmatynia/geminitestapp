@@ -11,7 +11,7 @@ import type {
 import { ApiError } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { findTreeNodeById, findTreeNodeParentId } from '@/shared/utils/tree-operations';
 
 import {
@@ -84,10 +84,7 @@ export function useNoteOperations({
             }
             toast('Folder created successfully');
           } catch (error: unknown) {
-            logClientError(error);
-            logClientError(error, {
-              context: { source: 'useNoteOperations.handleCreateFolder' },
-            });
+            logClientCatch(error, { source: 'useNoteOperations.handleCreateFolder' });
             toast('Failed to create folder', { variant: 'error' });
           }
         },
@@ -109,12 +106,9 @@ export function useNoteOperations({
             await deleteCategoryMutation.mutateAsync(folderId);
             toast('Folder deleted successfully');
           } catch (error: unknown) {
-            logClientError(error);
-            logClientError(error, {
-              context: {
-                source: 'useNoteOperations.handleDeleteFolder',
-                folderId,
-              },
+            logClientCatch(error, {
+              source: 'useNoteOperations.handleDeleteFolder',
+              folderId,
             });
             toast('Failed to delete folder', { variant: 'error' });
           }
@@ -150,13 +144,10 @@ export function useNoteOperations({
         }
         toast('Folder renamed successfully');
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'useNoteOperations.handleRenameFolder',
-            folderId,
-            newName,
-          },
+        logClientCatch(error, {
+          source: 'useNoteOperations.handleRenameFolder',
+          folderId,
+          newName,
         });
         toast('Failed to rename folder', { variant: 'error' });
       }
@@ -223,9 +214,9 @@ export function useNoteOperations({
 
         toast('Note duplicated successfully');
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: { source: 'useNoteOperations.handleDuplicateNote', noteId },
+        logClientCatch(error, {
+          source: 'useNoteOperations.handleDuplicateNote',
+          noteId,
         });
         toast('Failed to duplicate note', { variant: 'error' });
       }
@@ -248,12 +239,9 @@ export function useNoteOperations({
             }
             toast('Note deleted successfully');
           } catch (error: unknown) {
-            logClientError(error);
-            logClientError(error, {
-              context: {
-                source: 'useNoteOperations.handleDeleteNoteFromTree',
-                noteId,
-              },
+            logClientCatch(error, {
+              source: 'useNoteOperations.handleDeleteNoteFromTree',
+              noteId,
             });
             toast('Failed to delete note', { variant: 'error' });
           }
@@ -292,13 +280,10 @@ export function useNoteOperations({
         }
         toast('Note renamed successfully');
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'useNoteOperations.handleRenameNote',
-            noteId,
-            newTitle,
-          },
+        logClientCatch(error, {
+          source: 'useNoteOperations.handleRenameNote',
+          noteId,
+          newTitle,
         });
         toast('Failed to rename note', { variant: 'error' });
       }
@@ -331,13 +316,10 @@ export function useNoteOperations({
         }
         toast('Note moved successfully');
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'useNoteOperations.handleMoveNoteToFolder',
-            noteId,
-            folderId,
-          },
+        logClientCatch(error, {
+          source: 'useNoteOperations.handleMoveNoteToFolder',
+          noteId,
+          folderId,
         });
         toast('Failed to move note', { variant: 'error' });
       }
@@ -370,13 +352,10 @@ export function useNoteOperations({
         }
         toast('Folder moved successfully');
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'useNoteOperations.handleMoveFolderToFolder',
-            folderId,
-            targetParentId,
-          },
+        logClientCatch(error, {
+          source: 'useNoteOperations.handleMoveFolderToFolder',
+          folderId,
+          targetParentId,
         });
         toast('Failed to move folder', { variant: 'error' });
       }
@@ -428,14 +407,11 @@ export function useNoteOperations({
         );
         toast('Folder reordered successfully');
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'useNoteOperations.handleReorderFolder',
-            folderId,
-            targetId,
-            position,
-          },
+        logClientCatch(error, {
+          source: 'useNoteOperations.handleReorderFolder',
+          folderId,
+          targetId,
+          position,
         });
         toast('Failed to reorder folder', { variant: 'error' });
       }
@@ -516,13 +492,10 @@ export function useNoteOperations({
 
         toast('Notes linked');
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'useNoteOperations.handleRelateNotes',
-            sourceNoteId,
-            targetNoteId,
-          },
+        logClientCatch(error, {
+          source: 'useNoteOperations.handleRelateNotes',
+          sourceNoteId,
+          targetNoteId,
         });
         toast('Failed to link notes', { variant: 'error' });
       }

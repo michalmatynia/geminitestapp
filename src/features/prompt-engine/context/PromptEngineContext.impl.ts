@@ -13,7 +13,7 @@ import {
 } from '@/shared/lib/prompt-engine/settings';
 import { useToast } from '@/shared/ui';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import type {
@@ -742,8 +742,7 @@ export function usePromptEngineActionsImpl(args: {
       toast('Prompt engine settings saved successfully.', { variant: 'success' });
       if (args.resolvedOnSaved) args.resolvedOnSaved();
     } catch (error) {
-      logClientError(error);
-      logClientError(error, { context: { source: 'PromptEngineContext', action: 'handleSave' } });
+      logClientCatch(error, { source: 'PromptEngineContext', action: 'handleSave' });
       const message = error instanceof Error ? error.message : 'Failed to save settings.';
       args.setSaveError(message);
       toast(message, { variant: 'error' });

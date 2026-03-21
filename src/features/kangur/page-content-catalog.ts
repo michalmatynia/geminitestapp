@@ -510,6 +510,43 @@ const GERMAN_PAGE_CONTENT_COPY_OVERRIDES: Partial<Record<string, KangurPageConte
   },
 };
 
+const UKRAINIAN_PAGE_CONTENT_COPY_OVERRIDES: Partial<
+  Record<string, KangurPageContentCopyOverride>
+> = {
+  'game-home-actions': {
+    title: 'Виберіть активність',
+    summary:
+      'Перейдіть до уроку, швидкої гри, змішаного тренування або Математичного Кенгуру.',
+  },
+  'parent-dashboard-hero': {
+    title: 'Панель для батьків',
+    summary:
+      'Це центр рішень для опікуна: виберіть учня та відкрийте вкладку з потрібним контекстом.',
+  },
+  'parent-dashboard-tabs': {
+    title: 'Вкладки панелі',
+    summary:
+      'Перемикайтеся між результатами, прогресом, завданнями, моніторингом і налаштуваннями Tutor-AI.',
+  },
+  'login-page-form': {
+    title: 'Увійти',
+    summary:
+      'Увійдіть за допомогою електронної пошти батьків або нікнейма учня. Тип акаунта визначимо після натискання кнопки входу.',
+  },
+  'shared-nav-login-action': {
+    title: 'Увійти',
+    summary: 'Відкрийте вхід для батьків або учня з будь-якої сторінки Kangur.',
+  },
+  'lessons-library': {
+    title: 'Бібліотека уроків',
+    summary: 'Виберіть тему й почніть навчання або повторення у власному темпі.',
+  },
+  'learner-profile-overview': {
+    title: 'Огляд результатів',
+    summary: 'Головні сигнали дня: точність, місія, ціль і значки в одному місці.',
+  },
+};
+
 const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
   KangurLessonComponentId,
   {
@@ -1010,9 +1047,15 @@ const dedupeOrdered = (values: readonly string[]): string[] => {
   return normalized;
 };
 
-const resolveKangurPageContentLocale = (locale: string | null | undefined): 'pl' | 'en' | 'de' => {
+const resolveKangurPageContentLocale = (
+  locale: string | null | undefined
+): 'pl' | 'en' | 'de' | 'uk' => {
   const normalizedLocale = normalizeSiteLocale(locale);
-  if (normalizedLocale === 'pl' || normalizedLocale === 'de') {
+  if (
+    normalizedLocale === 'pl' ||
+    normalizedLocale === 'de' ||
+    normalizedLocale === 'uk'
+  ) {
     return normalizedLocale;
   }
   return 'en';
@@ -1029,7 +1072,11 @@ const resolvePageContentCopyOverride = (
   }
 
   return (
-    (contentLocale === 'de' ? GERMAN_PAGE_CONTENT_COPY_OVERRIDES[entryId] : undefined) ??
+    (contentLocale === 'de'
+      ? GERMAN_PAGE_CONTENT_COPY_OVERRIDES[entryId]
+      : contentLocale === 'uk'
+        ? UKRAINIAN_PAGE_CONTENT_COPY_OVERRIDES[entryId]
+        : undefined) ??
     ENGLISH_PAGE_CONTENT_COPY_OVERRIDES[entryId]
   );
 };

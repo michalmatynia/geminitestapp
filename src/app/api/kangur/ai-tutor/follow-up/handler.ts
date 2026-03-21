@@ -56,7 +56,7 @@ export async function POST_handler(
       },
       { status: 200 }
     );
-  } catch (_error) {
-    throw badRequestError('Failed to record follow-up action completion.');
+  } catch (error) {
+    throw badRequestError('Failed to record follow-up action completion.').withCause(error);
   }
 }

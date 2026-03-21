@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { auth } from '@/features/auth/server';
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import { getKangurAiTutorNativeGuideStore } from '@/features/kangur/server/ai-tutor-native-guide-repository';
 import { buildKangurKnowledgeGraph } from '@/features/kangur/server/knowledge-graph/build-kangur-knowledge-graph';
@@ -14,24 +13,12 @@ import {
   kangurKnowledgeGraphSyncResponseSchema,
   type ApiHandlerContext,
 } from '@/shared/contracts';
-import { authError, badRequestError, internalError } from '@/shared/errors/app-error';
+import { badRequestError, internalError } from '@/shared/errors/app-error';
+import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
 import { isNeo4jEnabled } from '@/shared/lib/neo4j/config';
 
-type KangurKnowledgeGraphSyncSession = {
-  user?: {
-    isElevated?: boolean;
-    permissions?: string[];
-  } | null;
-} | null;
-
-const canManageKangurKnowledgeGraph = (session: KangurKnowledgeGraphSyncSession): boolean =>
-  Boolean(session?.user?.isElevated || session?.user?.permissions?.includes('settings.manage'));
-
 export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const session = await auth();
-  if (!canManageKangurKnowledgeGraph(session)) {
-    throw authError('Unauthorized.');
-  }
+  await assertSettingsManageAccess();
 
   if (!isNeo4jEnabled()) {
     throw badRequestError('Neo4j is not enabled for Kangur knowledge graph sync.');

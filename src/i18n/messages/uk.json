@@ -1,0 +1,3750 @@
+{
+  "Common": {
+    "loadingStorefront": "Завантаження вітрини...",
+    "skipToMainContent": "Перейти до основного вмісту"
+  },
+  "Routes": {
+    "siteTitle": "StudiQ",
+    "loginTitle": "Вхід до StudiQ",
+    "pageNotFoundTitle": "Сторінку не знайдено"
+  },
+  "Metadata": {
+    "siteDescription": "Панель керування StudiQ та вітрина.",
+    "previewTitle": "Попередній перегляд {id}"
+  },
+  "KangurPublic": {
+    "routeLoading": "Завантаження Kangur...",
+    "entryLoading": "Завантаження Kangur...",
+    "loaderStatus": "Завантаження",
+    "loaderSrLabel": "Завантаження застосунку Kangur",
+    "errorTitle": "У Kangur сталася помилка",
+    "errorDescription": "Під час завантаження застосунку Kangur щось пішло не так.",
+    "tryAgain": "Спробувати ще раз",
+    "backToHome": "Назад до Kangur",
+    "loadingApp": "Завантаження застосунку Kangur",
+    "loadingPage": "Завантаження сторінки Kangur",
+    "loadingLanguage": "Перемикання мови Kangur",
+    "accessibility": {
+      "pageAnnouncement": "Перегляд: {label}",
+      "languageSwitchAnnouncement": "Перемикання мови: {label}",
+      "pages": {
+        "Competition": "Математичний Кенгуру",
+        "Game": "Головна",
+        "Lessons": "Уроки",
+        "Tests": "Тести",
+        "LearnerProfile": "Профіль учня",
+        "ParentDashboard": "Панель для батьків",
+        "Duels": "Дуелі",
+        "default": "Сторінка Kangur"
+      }
+    }
+  },
+  "KangurShell": {
+    "creatorCredentials": "Дані автора: {name} · створено {year} ·",
+    "socialUpdates": "Оновлення",
+    "contactLabel": "контакт: {email}"
+  },
+  "KangurNavigation": {
+    "home": "Головна",
+    "lessons": "Уроки",
+    "duels": "Дуелі",
+    "parent": "Батьки",
+    "languageSwitcher": {
+      "triggerAriaLabel": "Поточна мова: {language}. Відкрити меню мов.",
+      "triggerTitle": "Мова: {language}"
+    },
+    "subject": {
+      "label": "Вибрати предмет",
+      "currentTitle": "Поточний предмет: {subject}",
+      "dialogDescription": "Виберіть предмет, на якому хочете зосередитися зараз.",
+      "closeAriaLabel": "Закрити вибір предмета",
+      "groupAriaLabel": "Вибір предмета"
+    },
+    "ageGroup": {
+      "label": "Вибрати вікову групу",
+      "currentTitle": "Поточна група: {group}",
+      "dialogDescription": "Виберіть, для кого мають бути підібрані уроки.",
+      "closeAriaLabel": "Закрити вибір вікової групи",
+      "groupAriaLabel": "Вибір вікової групи"
+    }
+  },
+  "KangurGameHomeActions": {
+    "sectionLabel": "Виберіть активність",
+    "actions": {
+      "lessons": "Уроки",
+      "play": "Граймо!",
+      "duels": "Дуелі",
+      "kangur": "Математичний Кенгуру"
+    }
+  },
+  "KangurGamePage": {
+    "questionProgress": "Питання {current}/{total}",
+    "resultProgress": "Результат {score}/{total}",
+    "activityTitle": "Гра: {title}",
+    "statusAnnouncement": "Перегляд: {label}",
+    "phoneSimulation": {
+      "scrollUp": "Прокрутити вгору",
+      "scrollDown": "Прокрутити вниз"
+    },
+    "screens": {
+      "home": {
+        "label": "Стартовий екран",
+        "description": "Виберіть спосіб тренування і почніть наступну сесію."
+      },
+      "training": {
+        "label": "Налаштування тренування",
+        "wordmarkLabel": "Тренування",
+        "description": "Налаштуйте змішане тренування й виберіть діапазон запитань."
+      },
+      "kangur_setup": {
+        "label": "Налаштування сесії Математичного Кенгуру",
+        "description": "Підготуйте сесію Математичного Кенгуру."
+      },
+      "kangur": {
+        "label": "Сесія Математичного Кенгуру",
+        "description": "Розв'язуйте завдання Математичного Кенгуру крок за кроком."
+      },
+      "calendar_quiz": {
+        "label": "Практика з календарем",
+        "description": "Тренуйте читання дат і зв’язків у календарі."
+      },
+      "geometry_quiz": {
+        "label": "Практика з фігурами",
+        "description": "Тренуйте фігури та просторові зв’язки."
+      },
+      "clock_quiz": {
+        "label": "Практика з годинником",
+        "description": "Тренуйте читання годин і хвилин."
+      },
+      "addition_quiz": {
+        "label": "Вікторина з додавання",
+        "description": "Швидка вікторина з додавання."
+      },
+      "subtraction_quiz": {
+        "label": "Вікторина з віднімання",
+        "description": "Швидка вікторина з віднімання."
+      },
+      "division_quiz": {
+        "label": "Вікторина з ділення",
+        "description": "Швидка вікторина з ділення."
+      },
+      "multiplication_quiz": {
+        "label": "Вікторина з множення",
+        "description": "Швидка вікторина з таблиці множення."
+      },
+      "logical_patterns_quiz": {
+        "label": "Вікторина з візерунків",
+        "description": "Доповнюйте візерунки й послідовності у швидкій вікторині."
+      },
+      "logical_classification_quiz": {
+        "label": "Вікторина з класифікації",
+        "description": "Сортуйте елементи та знаходьте спільні ознаки."
+      },
+      "logical_analogies_quiz": {
+        "label": "Вікторина з аналогій",
+        "description": "Тренуйте аналогії та зв’язки в коротких раундах."
+      },
+      "english_sentence_quiz": {
+        "label": "Вікторина зі структури речення",
+        "description": "Тренуйте порядок слів, запитання та сполучники в англійській мові."
+      },
+      "english_parts_of_speech_quiz": {
+        "label": "Вікторина з частин мови",
+        "description": "Сортуйте слова за частинами мови в коротких раундах."
+      },
+      "operation": {
+        "label": "Вибір типу гри",
+        "description": "Виберіть тип математичної гри та рівень складності."
+      },
+      "playing": {
+        "label": "Питання для розв'язання",
+        "description": "Розв'яжіть поточне запитання без підказок і підготуйте остаточну відповідь."
+      },
+      "result": {
+        "label": "Результат гри",
+        "description": "Перегляньте результат гри й оберіть, що тренувати далі."
+      }
+    },
+    "home": {
+      "actionsLabel": "Старт і вибір активності",
+      "parentSuggestionsHeading": "Поради від батьків",
+      "missingLearnerTitle": "Немає профілю учня",
+      "missingLearnerDescription": "Додайте або виберіть профіль учня в розділі нижче, щоб побачити прогрес і місії на сьогодні.",
+      "addLearner": "Додати учня",
+      "questHeading": "Місія для учня",
+      "summaryHeading": "Підсумок прогресу",
+      "priorityAssignmentsHeading": "Пріоритетні завдання",
+      "priorityAssignmentsTitle": "Пріоритетні завдання",
+      "priorityAssignmentsEmpty": "Немає активних завдань від батьків.",
+      "progressHeading": "Рейтинг і прогрес",
+      "leaderboardLabel": "Рейтинг",
+      "progressLabel": "Прогрес гравця"
+    },
+    "result": {
+      "leaderboardLabel": "Рейтинг після раунду"
+    },
+    "operationSelector": {
+      "title": "Граймо!",
+      "intro": {
+        "maths": "Виберіть тип гри й одразу переходьте до математичної практики.",
+        "alphabet": "Виберіть гру з літерами й потренуйте абетку.",
+        "geometry": "Виберіть гру з фігурами й потренуйте геометрію.",
+        "language": "Виберіть мовну гру й одразу переходьте до практики."
+      },
+      "quickPractice": {
+        "title": "Швидка практика",
+        "description": "Короткі вікторини на основі тем уроків.",
+        "groupAria": "{group} швидка практика",
+        "cardAria": "Швидка практика: {label}",
+        "gameChip": "Гра"
+      }
+    }
+  },
+  "KangurLessonsPage": {
+    "pageTitle": "Уроки",
+    "introDescription": "Виберіть тему й одразу переходьте до практики або повторення.",
+    "loadingDescription": "Уроки скоро будуть готові.",
+    "emptyTitle": "Немає активних уроків",
+    "emptyDescription": "Немає активних уроків для групи {ageGroup}.",
+    "groupTypeLabel": "Група",
+    "subsectionTypeLabel": "Підрозділ",
+    "mobileControls": {
+      "backToTopics": "Назад до тем",
+      "scrollUp": "Прокрутити вгору",
+      "scrollDown": "Прокрутити вниз"
+    }
+  },
+  "KangurLearnerProfilePage": {
+    "tabs": {
+      "overview": "Профіль учня",
+      "overviewMobile": "Профіль",
+      "aiMood": "Взаємодія з AI Tutor",
+      "aiMoodMobile": "AI Tutor"
+    },
+    "loadError": "Не вдалося завантажити профіль.",
+    "backToHome": "Назад на головну",
+    "statsHeading": "Статистика учня",
+    "tabListLabel": "Профіль учня"
+  },
+  "KangurParentDashboard": {
+    "tabs": {
+      "title": "Вкладки панелі",
+      "description": "Перемикайтеся між результатами, прогресом, завданнями, моніторингом і налаштуваннями AI Tutor.",
+      "scores": "Результати",
+      "progress": "Прогрес",
+      "assign": "Завдання",
+      "monitoring": "Моніторинг",
+      "ai-tutor": "AI Tutor",
+      "mobile": {
+        "scores": "Результати",
+        "progress": "Прогрес",
+        "assign": "Завдання",
+        "monitoring": "Моніторинг",
+        "ai-tutor": "Tutor"
+      }
+    },
+    "hero": {
+      "unauthenticated": {
+        "title": "Панель для батьків / учителів",
+        "description": "Цей перегляд показує приватний прогрес учня, тому потрібен батьківський акаунт. Якщо у вас його ще немає, створіть його, не виходячи зі StudiQ.",
+        "summarySuffix": "Якщо у вас ще немає батьківського акаунта, створіть його, не виходячи зі StudiQ."
+      },
+      "signIn": "Увійти",
+      "createParentAccount": "Створити батьківський акаунт",
+      "createParentAccountAria": "Створити батьківський акаунт",
+      "restricted": {
+        "title": "Панель для батьків",
+        "description": "Цей перегляд доступний лише для батьківського акаунта, який керує профілями учнів.",
+        "summarySuffix": "Цей перегляд доступний лише для батьківського акаунта, який керує профілями учнів."
+      },
+      "backToLearnerProfile": "Назад до профілю учня",
+      "selectedLearner": "Вибраний учень",
+      "viewerRoleFallback": "Батьки",
+      "parentTitle": "Панель для батьків",
+      "addLearner": "Додати учня",
+      "noLearnerTitle": "Немає профілю учня",
+      "noLearnerDescription": "Додайте або виберіть профіль учня в розділі нижче, щоб побачити прогрес і сьогоднішні місії.",
+      "openActivity": "Відкрити активність",
+      "profile": "Профіль {learner}",
+      "quickActions": "Швидкі дії для батьків",
+      "nav": {
+        "game": "Гра",
+        "lessons": "Уроки",
+        "profile": "Профіль",
+        "parent": "Батьки"
+      },
+      "logout": "Вийти",
+      "learnerFallback": "учень",
+      "activity": {
+        "status": {
+          "loading": "Перевірка активності",
+          "online": "Учень онлайн",
+          "recent": "Учень нещодавно був активний",
+          "offline": "Учень офлайн"
+        },
+        "loadingDescription": "Перевіряємо поточну активність учня.",
+        "offlineDescription": "Зараз у застосунку немає активності.",
+        "lessonFallback": "Урок",
+        "kind": {
+          "game": "Гра",
+          "lesson": "Урок",
+          "test": "Тест",
+          "default": "Активність"
+        },
+        "description": {
+          "observability": {
+            "currentWithTitle": "Поточна активність: {title}.",
+            "recentWithTitle": "Остання активність: {title}.",
+            "currentGeneric": "Учень активний у застосунку.",
+            "offlineGeneric": "Зараз у застосунку немає активності."
+          },
+          "activityLog": {
+            "currentWithTitle": "Нещодавно відкрито: {title}.",
+            "recentWithTitle": "Останнє відкрите завдання: {title}.",
+            "currentByKind": "Нещодавно відкрито: {kind}.",
+            "recentByKind": "Останнє відкрите: {kind}."
+          },
+          "monitoring": {
+            "currentWithDetail": "Активність у панелі: {detail}.",
+            "recentWithDetail": "Нещодавня сесія в панелі: {detail}."
+          }
+        }
+      }
+    },
+    "page": {
+      "tabs": {
+        "scores": "Результати учня",
+        "progress": "Прогрес учня",
+        "assign": "Завдання учня",
+        "monitoring": "Моніторинг завдань",
+        "aiTutor": "AI Tutor для батьків"
+      },
+      "dashboardTitle": "Панель для батьків: {tab}",
+      "dashboardTitleRestricted": "Панель для батьків без доступу",
+      "sessionDescriptionAuthenticated": "Панель для батьків із результатами, прогресом, завданнями, моніторингом і підтримкою AI Tutor.",
+      "sessionDescriptionRestricted": "Перегляд панелі для батьків з обмеженим доступом.",
+      "anchors": {
+        "heroGuest": "Герой панелі для батьків без доступу",
+        "hero": "Герой панелі для батьків",
+        "learnerManagement": "Керування учнями",
+        "tabs": "Вкладки панелі для батьків",
+        "scores": "Результати учня",
+        "progress": "Прогрес учня",
+        "assignments": "Завдання учня",
+        "monitoring": "Моніторинг завдань",
+        "aiTutor": "AI Tutor для батьків"
+      }
+    },
+    "widgets": {
+      "assignments": {
+        "title": "Завдання учня",
+        "description": "Встановлюйте пріоритети та переглядайте, що активне або потребує нагадування."
+      },
+      "progress": {
+        "title": "Прогрес учня",
+        "description": "Переглядайте ритм навчання, поточний рівень, щоденні місії та головний наступний фокус.",
+        "timestampUnavailable": "Немає даних",
+        "taskKind": {
+          "game": "Гра",
+          "lesson": "Урок",
+          "test": "Тест",
+          "default": "Активність"
+        },
+        "dailyQuest": {
+          "label": "Щоденна місія",
+          "description": "Це поточна щоденна місія учня, синхронізована з переглядами гри та профілю.",
+          "questLabel": "Щоденна місія"
+        },
+        "openedTasks": {
+          "label": "Відкриті завдання",
+          "description": "Нещодавня активність учня для кожного завдання, яке він відкривав.",
+          "listAria": "Відкриті завдання учня",
+          "openAction": "Відкрити",
+          "empty": "Ще немає зафіксованих відкриттів. Дані з’являться, коли учень розпочне завдання."
+        },
+        "assignments": {
+          "loading": "Завантаження активних завдань...",
+          "loadError": "Не вдалося завантажити активні завдання.",
+          "archiveError": "Не вдалося архівувати завдання.",
+          "recentTitle": "Нещодавні активні завдання",
+          "recentSummary": "Швидкий перегляд завдань, які учень зараз має виконати.",
+          "recentEmpty": "Для цього учня немає активних завдань.",
+          "activeTitle": "Активні завдання",
+          "activeEmpty": "Для цього учня немає активних завдань."
+        },
+        "lessonProgress": {
+          "label": "Прогрес уроків",
+          "description": "Прогрес уроків, збережений по панелях.",
+          "listAria": "Прогрес уроків учня",
+          "panelsCount": "{viewed}/{total} панелей",
+          "sectionPanelsCount": "{viewed}/{total} панелей",
+          "aria": "Прогрес уроку {title}",
+          "empty": "Ще немає даних про панелі. Дані з’являться після того, як учень відкриє уроки."
+        }
+      },
+      "monitoring": {
+        "title": "Моніторинг завдань",
+        "description": "Відстежуйте призначену роботу, включно з порадами StudiQ, щоб підтримувати стабільний ритм навчання.",
+        "timestampUnavailable": "Немає даних",
+        "duration": {
+          "seconds": "{seconds} с",
+          "minutesSeconds": "{minutes} хв {seconds} с"
+        },
+        "filters": {
+          "label": "Фільтри",
+          "ariaLabel": "Фільтри взаємодій",
+          "all": "Усі",
+          "openedTask": "Завдання",
+          "lessonPanel": "Панелі уроків",
+          "session": "Сесії",
+          "dateFromLabel": "Дата від",
+          "dateToLabel": "Дата до",
+          "clear": "Очистити фільтри"
+        },
+        "lessonPanelTime": {
+          "label": "Час у панелях уроків",
+          "description": "Час, проведений у панелях уроків під час останньої сесії (рахується лише поки вкладка активна).",
+          "lastSession": "Остання сесія: {timestamp}",
+          "total": "{duration} загалом",
+          "panelDefault": "Панель",
+          "panelNumber": "Панель {number}",
+          "empty": "Ще немає даних про час у панелях. Дані з’являться після проходження уроків учнем."
+        },
+        "history": {
+          "label": "Історія взаємодій",
+          "description": "Нещодавні взаємодії учня: відкриті завдання, активність у панелях і сесії входу.",
+          "loadMoreError": "Не вдалося завантажити старіші взаємодії.",
+          "loadError": "Не вдалося завантажити історію взаємодій.",
+          "loadingTitle": "Завантаження...",
+          "loadingDescription": "Завантаження недавніх взаємодій учня.",
+          "errorDescription": "Спробуйте ще раз за мить.",
+          "filteredEmptyTitle": "Немає результатів.",
+          "filteredEmptyDescription": "Змініть фільтри, щоб побачити більше активності.",
+          "emptyTitle": "Немає активності.",
+          "emptyDescription": "Немає взаємодій для показу.",
+          "loadingMore": "Завантаження...",
+          "loadMore": "Показати старіші"
+        },
+        "interaction": {
+          "kind": {
+            "game": "Гра",
+            "lesson": "Урок",
+            "test": "Тест",
+            "default": "Завдання"
+          },
+          "openedTaskTitle": "Відкрите завдання",
+          "openedTaskLabel": "Відкрито: {kind}",
+          "lessonFallback": "Урок",
+          "lessonPanelLabel": "Активність у панелі",
+          "sessionLabel": "Сесія входу",
+          "sessionDuration": "Тривалість: {duration}",
+          "sessionEnded": "Сесію завершено.",
+          "sessionInProgressWithDuration": "Сесія триває · {duration}",
+          "sessionInProgress": "Сесія триває.",
+          "learnerActivityLabel": "Активність учня",
+          "learnerActivityDescription": "Активність учня."
+        }
+      },
+      "aiTutor": {
+        "title": "AI Tutor для батьків"
+      },
+      "scores": {
+        "title": "Результати учня",
+        "description": "Переглядайте останні ігри, точність і теми, до яких варто повернутися зараз.",
+        "trackSummary": {
+          "label": "Треки прогресу учня",
+          "description": "Значки, які учень зараз поступово відкриває."
+        }
+      }
+    }
+  },
+  "KangurLogin": {
+    "defaultLoginTitle": "Увійти",
+    "defaultSessionTitle": "Вхід до Kangur",
+    "defaultSessionDescription": "Батьки входять за електронною поштою та паролем. Учні входять за своїм нікнеймом і паролем.",
+    "checkInboxLabel": "Перевірте вхідні: {email}",
+    "checkInboxTitle": "Перевірте вхідні",
+    "verifyEmailNow": "Підтвердити пошту зараз",
+    "cooldownMinutes": "{count} хв",
+    "cooldownSeconds": "{count} с",
+    "magicLinkDeprecatedNotice": "Вхід за посиланням з електронного листа більше недоступний. Увійдіть за електронною поштою та паролем або створіть акаунт.",
+    "verifyParentEmailFailed": "Не вдалося підтвердити електронну пошту батьків.",
+    "fillEmailAndPassword": "Введіть електронну пошту та пароль.",
+    "completeSecurityVerification": "Пройдіть перевірку безпеки.",
+    "createAccountInstruction": "Натисніть на посилання підтвердження в електронному листі. Потім увійдіть, використовуючи ту саму пошту й пароль.",
+    "createParentAccountFailed": "Не вдалося створити батьківський акаунт.",
+    "createParentAccountUnexpected": "Під час створення акаунта сталася помилка.",
+    "resendEmailUnexpected": "Під час надсилання листа сталася помилка.",
+    "enterParentEmailAndPassword": "Введіть електронну пошту та пароль батьків.",
+    "emailUnverifiedNotice": "Підтвердьте електронну пошту батьків перед входом. Ви також можете надіслати новий лист для підтвердження.",
+    "passwordSetupRequiredNotice": "У цього старішого батьківського акаунта ще немає пароля. Задайте пароль нижче, і ми надішлемо лист для підтвердження.",
+    "parentLoginFailed": "Не вдалося увійти як батьки.",
+    "parentLoginUnexpected": "Під час входу для батьків сталася помилка.",
+    "enterStudentLoginAndPassword": "Введіть нікнейм і пароль учня.",
+    "invalidLearnerLoginNotice": "Нікнейм учня може містити лише літери, цифри та дефіси.",
+    "studentLoginFailed": "Не вдалося увійти як учень.",
+    "studentLoginUnexpected": "Під час входу для учня сталася помилка.",
+    "resendEmailIn": "Надіслати лист повторно через {label}",
+    "resendEmail": "Надіслати лист повторно",
+    "resendHelper": "Новий лист можна надіслати через {label}.",
+    "createAccountIdentifierLabel": "Електронна пошта",
+    "identifierLabel": "Електронна пошта або нікнейм учня",
+    "createAccountIdentifierPlaceholder": "parent@example.com",
+    "identifierPlaceholder": "Введіть пошту або нікнейм учня",
+    "haveAccount": "У мене є акаунт",
+    "createAccount": "Створити акаунт",
+    "passwordLabel": "Пароль",
+    "passwordPlaceholder": "Введіть пароль",
+    "securityVerificationLabel": "Перевірка безпеки",
+    "submitCreateAccount": "Створити батьківський акаунт",
+    "submitParentLogin": "Увійти як батьки",
+    "submitStudentLogin": "Увійти",
+    "loading": "Завантаження...",
+    "successStudent": "Учень увійшов",
+    "successParent": "Батьки увійшли",
+    "loginFormAriaLabel": "Форма входу",
+    "loginSubmit": "Увійти",
+    "loginSubmitting": "Вхід...",
+    "continueWith": "Або продовжити за допомогою",
+    "signupFormAriaLabel": "Форма реєстрації для батьків",
+    "parentEmailLabel": "Пошта батьків",
+    "setPasswordLabel": "Задайте пароль",
+    "setPasswordPlaceholder": "Щонайменше 8 символів",
+    "passwordRequirement": "Пароль має містити щонайменше 8 символів.",
+    "createAccountSubmitting": "Створення акаунта...",
+    "verificationSentTo": "Ми надіслали посилання для підтвердження на:",
+    "verificationAction": "Натисніть посилання в листі, щоб активувати акаунт.",
+    "debugLinkLabel": "Налагоджувальне посилання (лише dev)"
+  },
+  "KangurGameWidgets": {
+    "quizBackButton": "Назад на попередню сторінку",
+    "returnToGameHome": "Назад до «Граймо!»",
+    "homeHero": {
+      "title": "Ваш прогрес",
+      "summary": "Перевірте наступну віху та завдання, які варто завершити сьогодні."
+    },
+    "homeQuest": {
+      "defaultLabel": "Місія дня",
+      "status": {
+        "completed": "Місію завершено",
+        "inProgress": "Місія триває",
+        "notStarted": "Місія очікує"
+      },
+      "targetPrefix": "Ціль:",
+      "streakPrefix": "Серія:",
+      "pacePrefix": "Темп:",
+      "trackPrefix": "Імпульс:",
+      "directionPrefix": "Напрям:"
+    },
+    "priorityAssignments": {
+      "title": "Пріоритетні завдання",
+      "emptyDescription": "Немає активних завдань від батьків.",
+      "loading": "Завантаження пріоритетних завдань...",
+      "zeroCount": "0 завдань"
+    },
+    "kangurSession": {
+      "recommendationLabel": "Рекомендований шлях"
+    },
+    "leaderboard": {
+      "title": "Найкращі результати",
+      "loadingTitle": "Завантаження...",
+      "loadingDescription": "Отримуємо найновіші результати учня.",
+      "emptyDescription": "Змініть фільтр або поверніться пізніше, коли з’являться нові спроби.",
+      "emptyStateLabel": "Для цих фільтрів немає результатів.",
+      "currentUserBadge": "Ви",
+      "errors": {
+        "loadScores": "Не вдалося завантажити результати."
+      },
+      "account": {
+        "registered": "Увійшов",
+        "anonymous": "Анонімний"
+      },
+      "userFilters": {
+        "all": "Усі",
+        "registered": "Увійшов",
+        "anonymous": "Анонімний"
+      },
+      "operations": {
+        "all": "Усі",
+        "addition": "Додавання",
+        "subtraction": "Віднімання",
+        "multiplication": "Множення",
+        "division": "Ділення",
+        "decimals": "Дроби",
+        "powers": "Степені",
+        "roots": "Корені",
+        "clock": "Годинник",
+        "calendar": "Календар",
+        "geometry": "Геометрія",
+        "mixed": "Змішане",
+        "english_basics": "Основи",
+        "english_parts_of_speech": "Частини мови",
+        "english_sentence_structure": "Структура речення",
+        "english_subject_verb_agreement": "Узгодження підмета і присудка",
+        "english_articles": "Артиклі",
+        "english_prepositions_time_place": "Прийменники часу і місця",
+        "alphabet_basics": "Абетка",
+        "alphabet_copy": "Копіювання літер",
+        "alphabet_syllables": "Склади",
+        "geometry_shape_recognition": "Геометрія"
+      }
+    }
+  },
+  "KangurAssignmentsList": {
+    "count": {
+      "one": "{count} завдання",
+      "few": "{count} завдання",
+      "many": "{count} завдань"
+    },
+    "emptyLabel": "Немає завдань для показу.",
+    "compactEyebrow": "Швидкий огляд",
+    "fullEyebrow": "Призначені завдання",
+    "lastActivityPrefix": "Остання активність:",
+    "progressLabel": "Прогрес",
+    "timeLimitButtonLabel": "Ліміт часу",
+    "reassigning": "Призначення...",
+    "reassign": "Призначити знову",
+    "archive": "Архівувати"
+  },
+  "KangurAssignmentManager": {
+    "catalog": {
+      "eyebrow": "Призначити нове завдання",
+      "description": "Шукайте уроки та практичні завдання, а потім призначайте їх учню як пріоритетні."
+    },
+    "suggested": {
+      "label": "Поради StudiQ",
+      "description": "StudiQ пропонує ці завдання на основі поточних слабших зон учня та його ритму роботи."
+    },
+    "search": {
+      "placeholder": "Пошук за темою, типом завдання або ключовим словом...",
+      "label": "Пошук завдань",
+      "title": "Пошук завдань"
+    },
+    "filters": {
+      "all": "Усі",
+      "time": "Час",
+      "arithmetic": "Арифметика",
+      "geometry": "Геометрія",
+      "logic": "Логіка",
+      "practice": "Практика"
+    },
+    "actions": {
+      "unassignPending": "Видалення...",
+      "unassign": "Прибрати призначення",
+      "assignPending": "Призначення...",
+      "assignSuggested": "Призначити пораду",
+      "assign": "Призначити",
+      "setTime": "Встановити час",
+      "save": "Зберегти",
+      "saveAndAssign": "Зберегти і призначити",
+      "saving": "Збереження...",
+      "cancel": "Скасувати"
+    },
+    "feedback": {
+      "alreadyActive": "Це завдання вже активне.",
+      "assignError": "Не вдалося призначити завдання.",
+      "assignSuccess": "Призначено: {title}.",
+      "assignWithTimeLimitSuccess": "Призначено: {title} з лімітом часу.",
+      "archiveError": "Не вдалося архівувати завдання.",
+      "archiveSuccess": "Завдання переміщено до архіву.",
+      "unassignError": "Не вдалося прибрати призначення.",
+      "unassignSuccess": "Призначення прибрано.",
+      "unassignSuccessWithTitle": "Прибрано призначення: {title}.",
+      "reassignError": "Не вдалося повторно призначити завдання.",
+      "reassignSuccess": "Завдання призначено знову.",
+      "reassignSuccessWithTitle": "Призначено знову: {title}.",
+      "timeLimitSaveError": "Не вдалося зберегти ліміт часу.",
+      "timeLimitRemoved": "Ліміт часу прибрано.",
+      "timeLimitSaved": "Ліміт часу збережено."
+    },
+    "empty": {
+      "filtered": "Немає результатів для вибраного фільтра."
+    },
+    "tracking": {
+      "eyebrow": "Відстеження завдань",
+      "description": "Швидкий огляд того, що учень почав, завершив або все ще відкладає.",
+      "metrics": {
+        "active": {
+          "label": "Активні",
+          "description": "завдання, які ще потребують роботи"
+        },
+        "notStarted": {
+          "label": "Не розпочато",
+          "description": "завдання, які учень ще не почав"
+        },
+        "inProgress": {
+          "label": "У процесі",
+          "description": "завдання, над якими учень уже працює"
+        },
+        "completed": {
+          "label": "Завершені",
+          "description": "завдання, які учень виконав"
+        },
+        "completionRate": {
+          "label": "Рівень завершення",
+          "description": "частка всіх неархівованих завдань, які учень уже завершив"
+        }
+      }
+    },
+    "lists": {
+      "eyebrow": "Список завдань",
+      "ariaLabel": "Фільтрувати список завдань",
+      "activeTab": "Активні ({count})",
+      "completedTab": "Завершені ({count})",
+      "activeTitle": "Активні завдання",
+      "activeEmpty": "Для цього учня немає активних завдань.",
+      "completedTitle": "Завершені завдання",
+      "completedEmpty": "Учень ще не завершив жодного призначеного завдання."
+    },
+    "timeLimit": {
+      "hoursMinutes": "{hours} год {minutes} хв",
+      "hoursOnly": "{hours} год",
+      "minutesOnly": "{minutes} хв"
+    },
+    "timeLimitModal": {
+      "title": "Ліміт часу",
+      "description": "Встановіть ліміт часу для завдання. Залиште поле порожнім, щоб призначити без ліміту.",
+      "closeAriaLabel": "Закрити налаштування часу",
+      "eyebrow": "Ліміт часу",
+      "current": "Поточний: {value}",
+      "inputAriaLabel": "Ліміт часу в хвилинах",
+      "inputTitle": "Ліміт часу (хвилини)",
+      "placeholder": "наприклад, 30",
+      "helper": "Введіть кількість хвилин ({minMinutes}-{maxMinutes})."
+    },
+    "validation": {
+      "integerMinutes": "Введіть цілу кількість хвилин.",
+      "range": "Діапазон: {minMinutes}-{maxMinutes} хв."
+    }
+  },
+  "KangurAssignmentSuggestions": {
+    "actions": {
+      "openLesson": "Відкрити урок",
+      "startTraining": "Почати тренування",
+      "repeatLesson": "Повторити урок"
+    },
+    "starter": {
+      "title": "Перший стартовий урок",
+      "description": "Запустіть перший урок, щоб почати збирати дані про сильні сторони учня.",
+      "target": "1 урок",
+      "progressLabel": "Прогрес: 0/1 урок",
+      "questLabel": "Стартова місія"
+    },
+    "retry": {
+      "title": "{emoji} Повторення: {title}",
+      "descriptionCritical": "Це одна з найслабших зон ({masteryPercent}%). Потрібне швидке повторення й ще одна спроба.",
+      "descriptionDefault": "У цьому уроці ще є куди зростати ({masteryPercent}%). Одне повторення має допомогти закріпити результат.",
+      "targetPrimary": "1 повторення + мін. 75% результату",
+      "targetSecondary": "1 повторення + мін. 80% результату",
+      "progressLabel": "Прогрес: {masteryPercent}% / {targetPercent}%",
+      "questLabelCritical": "Місія відновлення",
+      "questLabelDefault": "Місія повторення"
+    },
+    "mixed": {
+      "title": "Змішане тренування",
+      "descriptionNeedsPractice": "Після повторення запустіть змішане тренування, щоб перевірити, чи переносяться навички у практику.",
+      "descriptionDefault": "Підтримуйте ритм навчання коротшою змішаною сесією з кількома типами завдань.",
+      "target": "{questionCount} запитань",
+      "progressLabel": "Щоденний ритм: {gamesPlayed} ігор",
+      "progressLabelEmpty": "Щоденний ритм: почніть з першої гри",
+      "questLabelNeedsPractice": "Місія дня",
+      "questLabelDefault": "Місія ритму"
+    },
+    "retain": {
+      "title": "{emoji} Підтримуйте сильну сторону",
+      "description": "{title} стабільний ({masteryPercent}%). Коротке повторення допоможе втримати рівень.",
+      "target": "1 коротке повторення",
+      "progressLabel": "Опрацювання: {masteryPercent}%",
+      "questLabel": "Місія підтримки"
+    }
+  },
+  "KangurLoginModal": {
+    "title": "Увійти",
+    "description": "Увійдіть як батьки за електронною поштою або як учень за нікнеймом, не залишаючи сторінку.",
+    "closeAriaLabel": "Закрити вхід"
+  },
+  "KangurTests": {
+    "activityTitleWithSuite": "Тест: {title}",
+    "activityTitleDefault": "Тести",
+    "emptyAdultTitle": "Тести для дорослих у підготовці",
+    "emptyAdultDescription": "Зараз доступні лише тести для 10-річних.",
+    "emptyTitle": "Немає активних тестів",
+    "emptyDescription": "Увімкніть тести в адмін-панелі, щоб вони з’явилися тут.",
+    "introDescription": "Виберіть набір тестів і проходьте запитання крок за кроком.",
+    "title": "Тести",
+    "listAria": "Список тестів",
+    "summary": {
+      "year": "Рік {year}",
+      "gradeLevel": "Рівень: {value}",
+      "category": "Категорія: {value}"
+    },
+    "questionsCount": "{count} запитань",
+    "noQuestions": "Немає запитань",
+    "startTest": "Почати тест",
+    "activeDescriptionFallback": "Пройдіть запитання тесту та перевірте підсумковий результат.",
+    "backToList": "Назад до списку тестів"
+  },
+  "KangurOperationSelector": {
+    "recommendedNow": "Рекомендовано зараз",
+    "actions": {
+      "startLesson": "Почати урок"
+    },
+    "descriptionNoAssignment": "Перейдіть до набору запитань і тренуйтеся у власному темпі.",
+    "status": {
+      "parentAssignment": "Завдання від батьків",
+      "freePractice": "Вільна практика"
+    },
+    "priority": {
+      "high": "Високий пріоритет",
+      "medium": "Середній пріоритет",
+      "low": "Низький пріоритет"
+    },
+    "difficulty": {
+      "easy": "Легкий",
+      "medium": "Середній",
+      "hard": "Складний"
+    },
+    "difficultyMeta": "{seconds} с · діапазон 1-{range}",
+    "operations": {
+      "addition": "Додавання",
+      "subtraction": "Віднімання",
+      "multiplication": "Множення",
+      "division": "Ділення",
+      "decimals": "Дроби",
+      "powers": "Степені",
+      "roots": "Корені",
+      "clock": "Годинник",
+      "mixed": "Змішане"
+    }
+  },
+  "KangurTrainingSetup": {
+    "categories": {
+      "addition": "Додавання",
+      "subtraction": "Віднімання",
+      "multiplication": "Множення",
+      "division": "Ділення",
+      "decimals": "Дроби",
+      "powers": "Степені",
+      "roots": "Корені"
+    },
+    "difficulty": {
+      "easy": "Легкий",
+      "medium": "Середній",
+      "hard": "Складний"
+    },
+    "difficultySummary": {
+      "easy": "легкий",
+      "medium": "середній",
+      "hard": "складний"
+    },
+    "difficultyMeta": "{seconds} с · діапазон 1-{range}",
+    "summaryLabel": "Вибрано {categories} категорій, {count} запитань, рівень {difficulty}.",
+    "toggleAll": {
+      "selectAll": "Вибрати все",
+      "clear": "Очистити все"
+    }
+  },
+  "KangurPlayerProgress": {
+    "fallbackTitle": "Прогрес учня",
+    "fallbackSummary": "Перегляньте рівень, серію, точність і найближчі значки в одному місці.",
+    "totalXpLine": "Рівень {level} · усього {xp} XP",
+    "nextLevel": "до рівня {level}: {xp} XP",
+    "maxLevel": "Максимальний рівень!",
+    "metrics": {
+      "games": "Ігри",
+      "lessons": "Уроки",
+      "accuracy": "Точність",
+      "streak": "Серія",
+      "xpPerGame": "XP / гра"
+    },
+    "topActivityDescription": "{sessions} сесій · {xp} XP / гра",
+    "topActivityEyebrow": "Найчастіше ви тренуєте",
+    "nextBadgeEyebrow": "Наступний значок",
+    "guidedMomentumDescriptionWithBadge": "До значка {badge}: {summary}",
+    "guidedMomentumDescriptionUnlocked": "Усі значки в рекомендованому треку вже відкриті.",
+    "guidedMomentumEyebrow": "Рекомендований трек",
+    "guidedMomentumTitle": "{count} рекомендованих раундів"
+  },
+  "KangurPageNotFound": {
+    "unknownPage": "невідомо",
+    "title": "Сторінку не знайдено",
+    "description": "Сторінку \"{pageName}\" не вдалося знайти в цьому застосунку.",
+    "adminNoteLabel": "Нотатка для адміна",
+    "adminNoteDescription": "Це може означати, що AI ще не реалізував цю сторінку.",
+    "goHome": "Перейти на головну"
+  },
+  "KangurUserAccess": {
+    "restricted": "Доступ обмежено",
+    "title": "Цей акаунт ще не має доступу до Kangur",
+    "description": "Схоже, ваш акаунт ще не додано до застосунку. Зверніться до адміністратора, щоб отримати доступ.",
+    "checkLabel": "Якщо це помилка, перевірте:",
+    "checkCurrentAccount": "що ви увійшли з правильним акаунтом,",
+    "checkAccessGranted": "що адміністратор надав доступ цьому акаунту,",
+    "checkSignInAgain": "чи допомагає повторний вхід."
+  },
+  "KangurAssignmentPanel": {
+    "heading": "Завдання",
+    "empty": "Поки що немає рекомендованих завдань. Спочатку дайте учню трохи більше прогресу.",
+    "target": "Ціль: {target}",
+    "completion": {
+      "none": "Немає завдань",
+      "allCompleted": "Усі завдання виконано",
+      "progress": "Виконано {completed}/{total}"
+    },
+    "toggle": {
+      "markDone": "Позначити {title} як виконане",
+      "markUndone": "Позначити {title} як невиконане"
+    },
+    "priority": {
+      "high": "Високий пріоритет",
+      "medium": "Середній пріоритет",
+      "low": "Низький пріоритет"
+    }
+  },
+  "KangurParentDashboardRuntime": {
+    "account": "Акаунт",
+    "viewerRole": {
+      "teacher": "Учитель",
+      "parent": "Батьки"
+    },
+    "validation": {
+      "missingLearnerData": "Заповніть дані учня.",
+      "duplicateNick": "Цей нікнейм уже зайнято.",
+      "passwordMin": "Пароль учня має містити щонайменше {count} символів.",
+      "passwordPattern": "Пароль учня може містити лише літери та цифри.",
+      "passwordCombined": "Пароль учня має містити щонайменше {count} символів і лише літери та цифри.",
+      "ageRange": "Вік учня має бути в межах від 3 до 99 років.",
+      "displayNameMax": "Ім’я учня може містити не більше 120 символів.",
+      "loginNameMax": "Нікнейм може містити не більше 80 символів.",
+      "loginNamePattern": "Нікнейм може містити лише літери та цифри.",
+      "passwordMax": "Пароль може містити не більше {count} символів."
+    },
+    "timeout": {
+      "create": "Створення профілю триває надто довго. Перевірте з’єднання та спробуйте ще раз.",
+      "activate": "Активація профілю триває надто довго. Спробуйте вибрати його вручну.",
+      "refresh": "Оновлення панелі триває надто довго.",
+      "save": "Збереження профілю триває надто довго. Спробуйте ще раз.",
+      "delete": "Видалення профілю триває надто довго. Спробуйте ще раз."
+    },
+    "feedback": {
+      "createdButInactive": "Профіль додано, але його не вдалося одразу активувати. Виберіть його зі списку.",
+      "addLearnerError": "Не вдалося додати учня.",
+      "saveSuccess": "Дані учня збережено.",
+      "saveError": "Не вдалося зберегти зміни.",
+      "deleteSuccess": "Профіль учня видалено: {name}.",
+      "deleteError": "Не вдалося видалити профіль учня."
+    }
+  },
+  "KangurLearnerProfileRuntime": {
+    "localMode": "Локальний режим",
+    "dateMissing": "Немає дати",
+    "errors": {
+      "loadScores": "Не вдалося завантажити історію результатів."
+    },
+    "activityLabels": {
+      "addition": "Додавання",
+      "subtraction": "Віднімання",
+      "multiplication": "Множення",
+      "division": "Ділення",
+      "decimals": "Дроби",
+      "powers": "Степені",
+      "roots": "Корені",
+      "clock": "Годинник",
+      "calendar": "Календар",
+      "geometry": "Геометрія",
+      "logical": "Логіка",
+      "mixed": "Змішане",
+      "english_basics": "Основи",
+      "english_parts_of_speech": "Частини мови",
+      "english_sentence_structure": "Будова речення",
+      "english_subject_verb_agreement": "Узгодження підмета і присудка",
+      "english_articles": "Артиклі",
+      "english_prepositions_time_place": "Прийменники часу й місця"
+    },
+    "weeklyActivity": {
+      "sun": "Нд",
+      "mon": "Пн",
+      "tue": "Вт",
+      "wed": "Ср",
+      "thu": "Чт",
+      "fri": "Пт",
+      "sat": "Сб"
+    },
+    "guidedMomentum": {
+      "badges": {
+        "guidedStep": "Рівний крок",
+        "guidedKeeper": "Тримайся курсу"
+      },
+      "summary": {
+        "guidedStep": "{completed}/1 раунд",
+        "guidedKeeper": "{completed}/3 раунди",
+        "complete": "Усі цілі досягнуто!"
+      }
+    },
+    "recommendations": {
+      "actions": {
+        "openLesson": "Відкрити урок",
+        "startTraining": "Почати тренування",
+        "playNow": "Грати зараз",
+        "playToday": "Грати сьогодні"
+      },
+      "focusWeakestOperation": {
+        "title": "Зосередьтеся на: {operation}",
+        "description": "Проведіть 2 короткі сесії з {operation} і прагніть щонайменше 80% точності."
+      },
+      "improveAccuracy": {
+        "title": "Стабілізуйте точність",
+        "description": "У наступних 3 іграх вибирайте середню складність і робіть акцент на точності, а не на швидкості."
+      },
+      "strengthenLessonMastery": {
+        "title": "Повторіть урок: {lessonTitle}",
+        "description": "Поточний рівень засвоєння становить {masteryPercent}%. Ще одне проходження цього уроку допоможе закріпити результат."
+      },
+      "dailyGoal": {
+        "title": "Завершіть щоденну ціль",
+        "descriptionSingle": "До щоденної цілі залишилася лише 1 гра. Сьогодні ви вже заробили +{todayXpEarned} XP.",
+        "descriptionMultiple": "До щоденної цілі залишилося {remainingGames} ігор. Сьогодні ви вже заробили +{todayXpEarned} XP."
+      },
+      "boostXpMomentum": {
+        "title": "Підсиліть XP за сьогодні",
+        "descriptionWithOperation": "Ігрову ціль уже виконано, але сьогодні ви заробили лише +{todayXpEarned} XP. Одна сильніша сесія з {operation} зазвичай приносить близько {averageXpPerSession} XP за спробу.",
+        "descriptionFallback": "Ігрову ціль уже виконано, але сьогодні ви заробили лише +{todayXpEarned} XP. Одна сильніша тренувальна сесія має принести понад {xpMomentumTarget} XP."
+      },
+      "streakBootstrap": {
+        "title": "Побудуйте серію",
+        "description": "Зіграйте ще раз завтра, щоб почати серію з послідовних днів."
+      },
+      "maintainMomentum": {
+        "title": "Підтримуйте темп",
+        "descriptionWithOperation": "Ви у чудовій формі. За 7 днів ви заробили +{weeklyXpEarned} XP. Додайте ще 1 сесію з {operation}, щоб закріпити результат.",
+        "descriptionFallback": "Ви у чудовій формі. За 7 днів ви заробили +{weeklyXpEarned} XP. Підтримуйте сьогоднішній ритм навчання."
+      }
+    }
+  },
+  "KangurLessonsWidgets": {
+    "emptyDescription": "Увімкніть уроки в адмін-панелі, щоб вони відображалися тут.",
+    "mastery": {
+      "new": "Новий",
+      "noSavedPractice": "Немає збереженої практики",
+      "mastered": "Опановано {percent}%",
+      "completedBest": "Завершено {completions}× · найкращий результат {percent}%",
+      "inProgress": "У процесі {percent}%",
+      "completedLast": "Завершено {completions}× · останній результат {percent}%",
+      "revisit": "Повторити {percent}%"
+    },
+    "libraryCard": {
+      "closedAssignment": "Завдання закрито",
+      "customContent": "Власний контент",
+      "parentPriority": "Пріоритет від батьків",
+      "completedForParent": "Виконано для батьків",
+      "completedAssignmentSummary": "Завдання від батьків уже виконано. {summary}",
+      "ariaLabel": "Урок: {title}"
+    },
+    "navigation": {
+      "ariaLabel": "Навігація уроком",
+      "previousLesson": "Попередній урок: {title}",
+      "noPreviousLesson": "Немає попереднього уроку",
+      "previousShort": "Попередній",
+      "nextLesson": "Наступний урок: {title}",
+      "noNextLesson": "Немає наступного уроку",
+      "nextShort": "Наступний"
+    },
+    "activeHeader": {
+      "narrator": {
+        "loading": "Підготовка...",
+        "pause": "Пауза",
+        "read": "Читати",
+        "resume": "Продовжити"
+      },
+      "parentPriority": "Пріоритет від батьків",
+      "completedForParent": "Виконано для батьків",
+      "backToLessons": "Назад до списку уроків",
+      "fallbackTitle": "Урок",
+      "subsectionType": {
+        "game": "Гра",
+        "lesson": "Урок"
+      }
+    },
+    "documentRenderer": {
+      "svgAltFallback": "Ілюстрація до цього розділу уроку.",
+      "imageAltFallback": "Ілюстрація уроку",
+      "imageMissingSource": "Для цього блоку зображення джерело ще не задано.",
+      "callouts": {
+        "info": "Інформація",
+        "tip": "Порада",
+        "warning": "Попередження",
+        "success": "Успіх"
+      },
+      "quizAnswerAria": "Відповідь: {answer}",
+      "quizEyebrow": "Вікторина",
+      "sectionLabel": "Розділ",
+      "pageLabel": "Сторінка {index}",
+      "editorEmptyDescription": "Додайте текст, зображення, SVG або блок активності, щоб почати наповнювати цю сторінку.",
+      "noBlocksTitle": "На цій сторінці ще немає блоків."
+    }
+  },
+  "KangurLearnerProfileWidgets": {
+    "hero": {
+      "title": "Профіль учня",
+      "avatarLabel": "Аватар учня",
+      "signIn": "Увійдіть, щоб синхронізувати прогрес",
+      "createParentAccount": "Створити батьківський акаунт"
+    },
+    "levelProgress": {
+      "title": "Прогрес рівня",
+      "summary": "Перегляньте поточний рівень, загальний XP і відстань до наступного порога.",
+      "totalXpLine": "Рівень {level} · усього {xp} XP",
+      "xpToNextLevel": "До рівня {level}: {xp} XP",
+      "maxLevelReached": "Досягнуто максимального рівня"
+    },
+    "lessonMastery": {
+      "title": "Засвоєння уроків",
+      "summary": "Перегляньте теми, які варто повторити, і найсильніші зони на основі збережених уроків.",
+      "dateMissing": "немає дати",
+      "attemptsLine": "Спроби: {attempts} · останній результат {lastScore}%",
+      "bestScoreLine": "Найкращий результат: {bestScore}% · Остання спроба: {date}",
+      "trackedSummary": "Відстежується: {tracked} · опановано: {mastered} · на повторення: {review}",
+      "trackedBadge": "{count} уроків зі збереженим прогресом",
+      "emptyDescription": "Ще немає збережених спроб уроків. Завершіть будь-який урок, щоб побачити сильні сторони та зони для повторення.",
+      "reviewTitle": "На повторення",
+      "reviewEmpty": "Усі відстежувані уроки на безпечному рівні.",
+      "strongestTitle": "Найсильніші уроки",
+      "strongestEmpty": "Спочатку завершіть кілька уроків, щоб побачити найсильніші зони."
+    },
+    "overview": {
+      "title": "Огляд результатів",
+      "summary": "Ключові показники дня: точність, місія, ціль і значки в одному місці.",
+      "avatarSaveError": "Не вдалося зберегти аватар.",
+      "avatarTitle": "Аватар учня",
+      "avatarDescription": "Виберіть героя, який буде відображатися у профілі учня.",
+      "avatarGroupLabel": "Виберіть аватар",
+      "averageAccuracyDescription": "Найкраща сесія: {value}%",
+      "averageAccuracyLabel": "Середня точність",
+      "streakDescription": "Найдовша: {value} днів",
+      "streakLabel": "Серія днів",
+      "xpTodayDescription": "7 днів: +{weeklyXp} XP · у середньому {averageXp} XP за сесію",
+      "xpTodayLabel": "XP сьогодні",
+      "guidedRoundsDescription": "До значка: {badge} · {summary}",
+      "guidedRoundsUnlocked": "Усі значки в рекомендованому треку вже відкриті.",
+      "guidedRoundsLabel": "Рекомендовані раунди",
+      "dailyQuestMissing": "Нова місія з’явиться разом із прогресом.",
+      "dailyQuestLoading": "Завантаження місії дня...",
+      "dailyQuestLabel": "Щоденна місія",
+      "dailyGoalDescription": "Виконання: {value}%",
+      "dailyGoalLabel": "Щоденна ціль",
+      "badgesDescription": "Наступний: {badge} · {summary}",
+      "badgesUnlocked": "Усі значки відкрито",
+      "badgesLabel": "Значки"
+    },
+    "performance": {
+      "title": "Результати учня",
+      "summary": "Перегляньте ритм останніх семи днів і точність для кожної операції.",
+      "activityHeading": "Активність за 7 днів",
+      "todayChip": "Сьогодні: +{xp} XP",
+      "weeklyChip": "7 днів: +{xp} XP",
+      "averageChip": "У середньому: {xp} XP за сесію",
+      "guidedChipPrefix": "Рекомендовано: {count} ·",
+      "guidedChipUnlocked": "усі значки треку відкриті",
+      "activityBarTitle": "{count} ігор, середня точність {accuracy}%",
+      "operationsHeading": "Результати за операціями",
+      "emptyTitle": "Немає даних за операціями.",
+      "emptyDescription": "Зіграйте кілька завдань, щоб побачити точність для кожної операції.",
+      "train": "Тренувати",
+      "operationStats": "Спроби: {attempts} · XP за сесію: {averageXp} · Усього: {totalXp} XP · Найкраща точність: {bestScore}%"
+    },
+    "questSummary": {
+      "defaultQuestLabel": "Місія дня",
+      "tracksHeading": "Треки прогресу учня"
+    },
+    "recommendations": {
+      "title": "План на сьогодні",
+      "summary": "Короткий список наступних кроків на основі недавніх результатів і активності.",
+      "emptyDescription": "Немає рекомендацій для показу."
+    },
+    "sessions": {
+      "title": "Історія сесій",
+      "summary": "Перегляньте недавні спроби й треки значків, які формуються завдяки регулярній грі.",
+      "recentSessionsHeading": "Недавні сесії",
+      "loadingTitle": "Завантаження історії...",
+      "loadingDescription": "Перевіряємо недавні спроби учня.",
+      "errorDescription": "Спробуйте оновити профіль за мить.",
+      "emptyTitle": "Ще немає зіграних сесій.",
+      "emptyDescription": "Перші сесії автоматично з’являться тут.",
+      "badgeTracksHeading": "Треки значків"
+    }
+  },
+  "KangurGameResult": {
+    "xpToast": {
+      "defaultLead": "Чудова робота, ви заробляєте більше балів",
+      "recommendationLead": "Чудова робота, ви трималися рекомендованого шляху",
+      "nextBadgePrefix": "Наступний значок:",
+      "dailyQuestPrefix": "Щоденну місію виконано:",
+      "recommendationPrefix": "Рекомендований шлях:",
+      "recommendationSummaryWithQuest": "Цей хід закрив і рекомендований шлях, і щоденну місію.",
+      "recommendationSummaryWithBadge": "Цей хід наблизив вас до значка {badge}.",
+      "recommendationSummaryDefault": "Це був найсильніший хід для поточного прогресу.",
+      "newBadgeLabel": "Новий значок"
+    },
+    "resultWidget": {
+      "rewardChip": "Нагорода за раунд",
+      "rewardTitleDefault": "Цей раунд просунув ваш прогрес уперед.",
+      "rewardTitleRecommended": "Цей раунд збігся з рекомендованим шляхом і просунув ваш прогрес уперед.",
+      "nextBadgePrefix": "Наступний значок:",
+      "recommendationPrefix": "Рекомендований шлях:",
+      "recommendationPlayedChip": "Зіграно за рекомендацією",
+      "newBadgesChip": "Нові значки",
+      "dailyQuestCompletedChip": "Щоденну місію виконано",
+      "dailyQuestBonus": "Бонус +{xp} XP",
+      "nextBadgeChip": "Наступний значок",
+      "nextBadgeRemaining": "Залишилося до відкриття: {summary}"
+    }
+  },
+  "KangurLessonChrome": {
+    "lessonNavigation": "Навігація уроком",
+    "openSecretPanel": "Відкрити секретну панель",
+    "secretPanelTitle": "Секретна панель",
+    "backToTopics": "Назад до тем",
+    "panelsNavigation": "Навігація панелями",
+    "previousPanel": "Попередня панель",
+    "nextPanel": "Наступна панель",
+    "panelLabel": "Панель {index}"
+  },
+  "KangurAuthApi": {
+    "invalidPayload": "Некоректні дані запиту.",
+    "notificationsDisabled": "Надсилання листів для підтвердження наразі вимкнено. Зверніться до адміністратора.",
+    "captchaMissing": "Підтвердьте, що ви не бот.",
+    "captchaVerificationFailed": "Не вдалося перевірити captcha. Спробуйте ще раз.",
+    "parentAccountReady": "Батьківський акаунт готовий. Увійдіть за допомогою електронної пошти та пароля.",
+    "parentVerificationResent": "Ми надіслали новий лист для підтвердження. Батьківський акаунт активується після підтвердження адреси.",
+    "invalidLearnerCredentials": "Неправильний нікнейм або пароль учня.",
+    "parentEmailConflict": "Акаунт із цією електронною поштою вже існує. Увійдіть за допомогою електронної пошти та пароля.",
+    "verificationAlreadySent": "Лист для підтвердження вже надіслано. Зачекайте {label} і спробуйте ще раз.",
+    "emailVerificationDisabled": "Підтвердження електронної пошти вимкнено для цього проєкту.",
+    "pendingParentAccountMissing": "Ми не знайшли очікуваний батьківський акаунт для цієї пошти. Створіть акаунт ще раз.",
+    "emailVerificationLinkInvalid": "Це посилання для підтвердження пошти більше не дійсне.",
+    "parentAccountUnavailable": "Цей батьківський акаунт більше недоступний.",
+    "passwordAlreadySet": "Для цього акаунта пароль уже встановлено. Ви можете увійти за допомогою електронної пошти та пароля.",
+    "parentPasswordSet": "Пароль для батьківського акаунта встановлено. Тепер ви можете увійти за допомогою електронної пошти та пароля.",
+    "onlyParentCanSetPassword": "Лише батьківські акаунти можуть встановлювати пароль для батьків.",
+    "passwordTooWeak": "Пароль не відповідає вимогам безпеки.",
+    "passwordMinLength": "Пароль має містити щонайменше {count} символів.",
+    "passwordUppercase": "Пароль має містити щонайменше одну велику літеру.",
+    "passwordLowercase": "Пароль має містити щонайменше одну малу літеру.",
+    "passwordNumber": "Пароль має містити щонайменше одну цифру.",
+    "passwordSymbol": "Пароль має містити щонайменше один спеціальний символ."
+  },
+  "KangurScoreHistory": {
+    "loading": {
+      "title": "Завантаження результатів...",
+      "description": "Отримуємо найновіші результати та готуємо підсумок прогресу."
+    },
+    "empty": {
+      "description": "Немає збережених результатів."
+    },
+    "summary": {
+      "totalGames": "Усього ігор",
+      "averageAccuracy": "Середня точність",
+      "perfectGames": "Ідеальні результати"
+    },
+    "window": {
+      "title": "Огляд за останні {days} днів",
+      "weeklySessions": "Сесій цього тижня",
+      "weeklySummary": "У середньому {accuracy}% · ідеальних {perfect}",
+      "weeklyXp": "XP: +{xp} · у середньому {average} за сесію",
+      "lastActivityPrefix": "Остання активність:"
+    },
+    "relative": {
+      "noActivity": "Немає активності",
+      "today": "Сьогодні",
+      "yesterday": "Учора",
+      "daysAgo": "{days} днів тому"
+    },
+    "trend": {
+      "label": "Тижневий тренд",
+      "newRange": "Новий діапазон",
+      "context": {
+        "insufficient": "Потрібні старіші результати для порівняння.",
+        "up": "Зростання з {previous}% до {recent}%.",
+        "down": "Спад з {previous}% до {recent}%.",
+        "flat": "Стабільно: {recent}% тиждень до тижня."
+      }
+    },
+    "strongest": {
+      "label": "Сильна сторона",
+      "empty": "Недостатньо даних, щоб визначити сильну сторону."
+    },
+    "weakest": {
+      "label": "Потребує підтримки",
+      "empty": "Потрібно більше ніж один тип завдань, щоб визначити зону, яка потребує підтримки.",
+      "reviewLesson": "Повторити урок"
+    },
+    "shared": {
+      "noData": "Немає даних",
+      "operationSummary": "У середньому {accuracy}% · спроб {attempts} · +{xp} XP / сесію"
+    },
+    "byOperation": {
+      "heading": "Результати за операціями"
+    },
+    "recent": {
+      "heading": "Останні ігри"
+    },
+    "operations": {
+      "alphabet": "Абетка",
+      "alphabet_basics": "Абетка",
+      "alphabet_copy": "Копіювання літер",
+      "alphabet_syllables": "Склади",
+      "alphabet_words": "Перші слова",
+      "alphabet_matching": "Зіставлення літер",
+      "alphabet_sequence": "Порядок літер",
+      "geometry_shape_recognition": "Геометрія",
+      "addition": "Додавання",
+      "subtraction": "Віднімання",
+      "multiplication": "Множення",
+      "division": "Ділення",
+      "decimals": "Дроби",
+      "powers": "Степені",
+      "roots": "Корені",
+      "clock": "Годинник",
+      "calendar": "Календар",
+      "geometry": "Геометрія",
+      "logical": "Логічне мислення",
+      "mixed": "Змішана практика",
+      "english_basics": "Основи англійської",
+      "english_parts_of_speech": "Частини мови",
+      "english_sentence_structure": "Будова речення",
+      "english_subject_verb_agreement": "Узгодження підмета і присудка",
+      "english_articles": "Артиклі",
+      "english_prepositions_time_place": "Прийменники часу й місця"
+    }
+  },
+  "KangurAssignmentsRuntime": {
+    "catalog": {
+      "groups": {
+        "time": "Час",
+        "geometry": "Геометрія",
+        "logic": "Логіка",
+        "lesson": "Урок",
+        "hint": "Підказка"
+      },
+      "lesson": {
+        "descriptionTemplate": "{description}. Призначте учню одне нове повторення цього уроку.",
+        "createDescriptionTemplate": "Повторіть урок \"{title}\" і завершіть одну додаткову сесію."
+      },
+      "practice": {
+        "practiceMixed": {
+          "title": "Практика: Змішане тренування",
+          "description": "Призначте сесію практики з різними темами та різними типами запитань.",
+          "badge": "Практика",
+          "createTitle": "Практика: Змішане тренування",
+          "createDescription": "Завершіть змішану практику та підтримуйте стабільний ритм."
+        },
+        "practiceAddition": {
+          "title": "Практика: Додавання",
+          "description": "Одна сесія з додавання з ціллю 80% правильних відповідей.",
+          "badge": "Практика",
+          "createTitle": "Практика: Додавання",
+          "createDescription": "Завершіть сесію з додавання і досягніть щонайменше 80% точності."
+        },
+        "practiceSubtraction": {
+          "title": "Практика: Віднімання",
+          "description": "Одна сесія з віднімання з ціллю 80% правильних відповідей.",
+          "badge": "Практика",
+          "createTitle": "Практика: Віднімання",
+          "createDescription": "Завершіть сесію з віднімання і досягніть щонайменше 80% точності."
+        },
+        "practiceMultiplication": {
+          "title": "Практика: Множення",
+          "description": "Одна сесія з множення з ціллю 80% правильних відповідей.",
+          "badge": "Практика",
+          "createTitle": "Практика: Множення",
+          "createDescription": "Завершіть сесію з множення і досягніть щонайменше 80% точності."
+        },
+        "practiceDivision": {
+          "title": "Практика: Ділення",
+          "description": "Одна сесія з ділення з ціллю 80% правильних відповідей.",
+          "badge": "Практика",
+          "createTitle": "Практика: Ділення",
+          "createDescription": "Завершіть сесію з ділення і досягніть щонайменше 80% точності."
+        },
+        "practiceDecimals": {
+          "title": "Практика: Дроби",
+          "description": "Одна сесія з дробів із ціллю 75% правильних відповідей.",
+          "badge": "Практика",
+          "createTitle": "Практика: Дроби",
+          "createDescription": "Завершіть сесію з дробів і досягніть щонайменше 75% точності."
+        },
+        "practicePowers": {
+          "title": "Практика: Степені",
+          "description": "Одна сесія зі степенів із ціллю 75% правильних відповідей.",
+          "badge": "Практика",
+          "createTitle": "Практика: Степені",
+          "createDescription": "Завершіть сесію зі степенів і досягніть щонайменше 75% точності."
+        },
+        "practiceRoots": {
+          "title": "Практика: Корені",
+          "description": "Одна сесія з коренів із ціллю 75% правильних відповідей.",
+          "badge": "Практика",
+          "createTitle": "Практика: Корені",
+          "createDescription": "Завершіть сесію з коренів і досягніть щонайменше 75% точності."
+        },
+        "practiceClock": {
+          "title": "Практика: Годинник",
+          "description": "Практична сесія з годинами, хвилинами та повним часом на годиннику.",
+          "badge": "Практика",
+          "createTitle": "Практика: Годинник",
+          "createDescription": "Завершіть практику з годинником і перевірте читання годин, хвилин і повного часу."
+        }
+      }
+    },
+    "priority": {
+      "high": "Високий пріоритет",
+      "medium": "Середній пріоритет",
+      "low": "Низький пріоритет"
+    },
+    "status": {
+      "completed": "Виконано",
+      "inProgress": "У процесі",
+      "new": "Нове"
+    },
+    "time": {
+      "hoursMinutes": "{hours} год {minutes} хв",
+      "hoursOnly": "{hours} год",
+      "minutesOnly": "{minutes} хв",
+      "timeLimitLabel": "Ліміт часу: {label}",
+      "expired": "Час вичерпано",
+      "remainingHoursMinutes": "Залишилося: {hours} год {minutes} хв",
+      "remainingMinutesSeconds": "Залишилося: {minutes} хв {seconds} с",
+      "remainingSeconds": "Залишилося: {seconds} с"
+    },
+    "actions": {
+      "openLesson": "Відкрити урок",
+      "startTraining": "Почати тренування",
+      "trainNow": "Тренувати зараз"
+    },
+    "operations": {
+      "addition": "Додавання",
+      "subtraction": "Віднімання",
+      "multiplication": "Множення",
+      "division": "Ділення",
+      "decimals": "Дроби",
+      "powers": "Степені",
+      "roots": "Корені",
+      "clock": "Годинник",
+      "mixed": "Змішана практика"
+    },
+    "banner": {
+      "activeHelper": "У цій сесії ви виконуєте призначене завдання.",
+      "completedHelper": "Завдання від батьків було виконано в цій сесії.",
+      "queueHelper": "Найближчий пріоритет у практиці: {label}.",
+      "parentPriority": "Пріоритет від батьків"
+    },
+    "spotlight": {
+      "title": "Поради від батьків"
+    }
+  },
+  "KangurGameRecommendations": {
+    "trainingSetup": {
+      "training": {
+        "starter": {
+          "description": "М'який старт із двома категоріями допоможе знайти ритм без перевантаження на першій сесії.",
+          "label": "Старт",
+          "title": "Рекомендоване стартове тренування"
+        },
+        "weakestLesson": {
+          "description": "Найслабша тема - це {title} ({masteryPercent}%). Одна цілеспрямована сесія швидше відновить цю зону.",
+          "label": "Відновіть урок",
+          "title": "Рекомендоване тренування: {title}"
+        },
+        "topActivity": {
+          "description": "{activity} зараз приносить близько {averageXpPerSession} XP за гру. Це найсильніший кандидат для наступної сесії.",
+          "label": "Сильна серія",
+          "title": "Рекомендоване тренування: {activity}"
+        },
+        "mixed": {
+          "descriptionWithTrack": "Трек {track} найближчий до наступного значка. Змішана практика допомагає рухати прогрес одразу в кількох категоріях.",
+          "descriptionDefault": "Змішана практика підтримує ритм і допомагає збирати більше XP одразу в кількох категоріях.",
+          "labelTrack": "Трек значків",
+          "labelDefault": "Темп",
+          "title": "Рекомендоване змішане тренування"
+        }
+      },
+      "mode": {
+        "gentle": {
+          "description": "Легший тренувальний набір - це найбезпечніший спосіб увійти в режим Кенгуру без різкого стрибка складності.",
+          "label": "М'який старт",
+          "title": "Рекомендуємо почати з набору на 3 бали"
+        },
+        "competitionReady": {
+          "description": "У вас сильний темп і висока точність. Повний конкурсний тест має дати найкращий прогрес.",
+          "label": "Готовність до конкурсу",
+          "title": "Рекомендуємо повний конкурсний тест"
+        },
+        "challenge": {
+          "description": "Ваша точність уже висока. Набір на 5 балів дає кращий виклик і сильнішу нагороду.",
+          "label": "Виклик",
+          "title": "Рекомендуємо набір на 5 балів"
+        },
+        "strongStep": {
+          "description": "Набір середньої складності має підвищити результат без надто різкого стрибка.",
+          "label": "Сильний крок",
+          "title": "Рекомендуємо набір на 4 бали"
+        },
+        "steadyStep": {
+          "description": "Набір на 3 бали все ще дає конкурсний ритм, але лишається безпечнішим за складніші варіанти.",
+          "label": "Рівний крок",
+          "title": "Рекомендуємо набір на 3 бали"
+        }
+      },
+      "activityLabels": {
+        "addition": "Додавання",
+        "subtraction": "Віднімання",
+        "multiplication": "Множення",
+        "division": "Ділення",
+        "decimals": "Дроби",
+        "powers": "Степені",
+        "roots": "Корені",
+        "mixed": "Змішана практика",
+        "clock": "Годинник",
+        "calendar": "Календар",
+        "geometry": "Геометрія",
+        "logical": "Логічне мислення",
+        "english_basics": "Основи англійської",
+        "english_parts_of_speech": "Частини мови",
+        "english_sentence_structure": "Будова речення",
+        "english_subject_verb_agreement": "Узгодження підмета і присудка",
+        "english_prepositions_time_place": "Прийменники часу й місця"
+      }
+    },
+    "setupMomentum": {
+      "quest": {
+        "titleCompleted": "Сьогоднішня місія готова до отримання",
+        "titleTraining": "Ця сесія наближає сьогоднішню місію",
+        "titleKangur": "Цей раунд може завершити сьогоднішню місію",
+        "label": "Місія дня"
+      },
+      "guided": {
+        "descriptionKangur": "Цей раунд просуває рекомендований шлях до значка {badge}. {summary}.",
+        "descriptionTraining": "Ця сесія просуває рекомендований шлях до значка {badge}. {summary}.",
+        "label": "Рекомендований шлях",
+        "titleKangur": "Грайте в рекомендованому ритмі",
+        "titleTraining": "Завершіть рекомендований шлях"
+      },
+      "nextBadge": {
+        "descriptionKangur": "Сильний результат у цьому раунді наблизить значок {badge}. {summary}.",
+        "descriptionTraining": "Ця сесія просуває значок {badge}. {summary}.",
+        "label": "Наступний значок",
+        "titleKangur": "Грайте заради наступного рубежу",
+        "titleTraining": "Наберіть темп до наступної нагороди"
+      },
+      "streak": {
+        "descriptionStart": "Одна хороша сесія сьогодні запустить нову серію і підвищить темп навчання.",
+        "descriptionContinue": "Ваша серія - {streak}. Ще один сильний раунд закріпить сьогоднішній ритм.",
+        "label": "Серія",
+        "titleStart": "Відновіть ритм",
+        "titleContinue": "Закрийте наступний крок серії"
+      },
+      "pace": {
+        "description": "Ваш поточний темп - {averageXpPerSession} XP за гру. Ця сесія допоможе його втримати.",
+        "label": "Темп",
+        "titleKangur": "Увійдіть із хорошим темпом",
+        "titleTraining": "Підтримуйте сильний темп"
+      },
+      "chips": {
+        "streak": "Серія: {streak}",
+        "pace": "Темп: {averageXpPerSession} XP / гра"
+      }
+    },
+    "homeMomentum": {
+      "actions": {
+        "openLesson": "Відкрити урок",
+        "playNow": "Грати зараз",
+        "startTraining": "Почати тренування"
+      },
+      "weakestLesson": {
+        "description": "Засвоєння {masteryPercent}%. Одне коротке повторення цього уроку швидше закриє наступний поріг опанування.",
+        "priorityHigh": "Високий пріоритет",
+        "priorityMedium": "Середній пріоритет",
+        "title": "Варто зробити сьогодні: {title}"
+      },
+      "streak": {
+        "descriptionStart": "Одна коротка гра сьогодні запустить нову серію й допоможе підтримати ритм навчання.",
+        "descriptionContinue": "Ваша серія - {streak}. Ще один сильний раунд сьогодні додасть більше імпульсу.",
+        "priority": "Середній пріоритет",
+        "titleStart": "Відновіть серію",
+        "titleContinue": "Розвивайте поточну серію"
+      },
+      "guided": {
+        "descriptionWithActivity": "У вас уже є {summary} у рекомендованому ритмі. Ще один сильний раунд з {activity} наблизить значок {nextBadgeName}.",
+        "descriptionDefault": "У вас уже є {summary} у рекомендованому ритмі. Ще один сильний раунд наблизить значок {nextBadgeName}.",
+        "priority": "Рекомендований напрям",
+        "title": "Завершіть: {nextBadgeName}"
+      },
+      "track": {
+        "descriptionWithActivity": "Трек {track} зараз найближчий. Щоб дійти до значка {badge}, вам ще потрібно {summary}. Найшвидше це просуне {activity}.",
+        "descriptionDefault": "Трек {track} зараз найближчий. Щоб дійти до значка {badge}, вам ще потрібно {summary}.",
+        "priority": "Темп прогресу",
+        "title": "Закрийте трек: {track}"
+      },
+      "fallback": {
+        "description": "{activity} зараз приносить близько {averageXpPerSession} XP за гру. Це найкращий кандидат для наступного сильного ходу.",
+        "priority": "Сильна серія",
+        "title": "Підтримуйте темп у: {activity}"
+      }
+    },
+    "operationSelector": {
+      "actions": {
+        "playAddition": "Грати в додавання",
+        "playSubtraction": "Грати у віднімання",
+        "playMultiplication": "Грати в множення",
+        "playDivision": "Грати в ділення",
+        "playClock": "Грати в годинник",
+        "startMixedTraining": "Почати змішане тренування",
+        "playFractions": "Грати в дроби",
+        "playPowers": "Грати в степені",
+        "playRoots": "Грати в корені",
+        "practiceCalendar": "Практикувати календар",
+        "practiceGeometry": "Практикувати фігури",
+        "practiceSubtraction": "Практикувати віднімання",
+        "practiceDivision": "Практикувати ділення",
+        "practiceMultiplication": "Практикувати множення",
+        "startTraining": "Почати тренування",
+        "playNow": "Грати зараз"
+      },
+      "quest": {
+        "label": "Місія дня"
+      },
+      "weakestLesson": {
+        "description": "Засвоєння {masteryPercent}%. Один хороший раунд допоможе швидше закрити цю тему перед наступним уроком.",
+        "label": "Підтягніть уроки",
+        "title": "Спочатку виправте: {title}"
+      },
+      "track": {
+        "descriptionWithActivity": "Трек {track} найближчий до нагороди. Зараз його найсильніше просуває {activity}.",
+        "descriptionDefault": "Трек {track} найближчий до наступного значка.",
+        "label": "Трек значків",
+        "title": "Просуньте трек: {track}"
+      },
+      "guided": {
+        "descriptionWithActivity": "У вас уже є {summary} у рекомендованому ритмі. Ще один сильний раунд з {activity} допоможе завершити значок {nextBadgeName}.",
+        "descriptionDefault": "У вас уже є {summary} у рекомендованому ритмі. Ще один сильний раунд допоможе завершити значок {nextBadgeName}.",
+        "label": "Рекомендований напрям",
+        "title": "Завершіть: {nextBadgeName}"
+      },
+      "fallback": {
+        "description": "{activity} зараз приносить близько {averageXpPerSession} XP за гру. Це найкращий хід для наступного раунду.",
+        "label": "Сильна серія",
+        "title": "Продовжуйте грати в: {activity}"
+      }
+    },
+    "activityLabels": {
+      "addition": "Додавання",
+      "subtraction": "Віднімання",
+      "multiplication": "Множення",
+      "division": "Ділення",
+      "decimals": "Дроби",
+      "powers": "Степені",
+      "roots": "Корені",
+      "mixed": "Змішана практика",
+      "clock": "Годинник",
+      "calendar": "Календар",
+      "geometry": "Геометрія",
+      "logical": "Логічне мислення",
+      "english_basics": "Основи англійської",
+      "english_parts_of_speech": "Частини мови",
+      "english_sentence_structure": "Будова речення",
+      "english_subject_verb_agreement": "Узгодження підмета і присудка",
+      "english_prepositions_time_place": "Прийменники часу й місця"
+    }
+  },
+  "KangurProgressRuntime": {
+    "levels": {
+      "1": "Початківець 🐣",
+      "2": "Учень ✏️",
+      "3": "Мислитель 🤔",
+      "4": "Майстер чисел 🔢",
+      "5": "Математик 📐",
+      "6": "Геній 🧠",
+      "7": "Легенда 🏆"
+    },
+    "activityLabels": {
+      "alphabet": "Абетка",
+      "alphabetCopy": "Копіювання літер",
+      "alphabetSyllables": "Склади й слова",
+      "alphabetWords": "Перші слова",
+      "alphabetMatching": "Зіставлення літер",
+      "alphabetSequence": "Порядок літер",
+      "geometry": "Геометрія",
+      "geometryShapeRecognition": "Геометрія",
+      "addition": "Додавання",
+      "subtraction": "Віднімання",
+      "multiplication": "Множення",
+      "division": "Ділення",
+      "decimals": "Дроби",
+      "powers": "Степені",
+      "roots": "Корені",
+      "mixed": "Змішане",
+      "clock": "Годинник",
+      "calendar": "Календар",
+      "geometryBasics": "Основи геометрії",
+      "geometryShapes": "Геометричні фігури",
+      "geometrySymmetry": "Симетрія",
+      "geometryPerimeter": "Периметр",
+      "logicalThinking": "Логічне мислення",
+      "logicalPatterns": "Візерунки",
+      "logicalClassification": "Класифікація",
+      "logicalReasoning": "Міркування",
+      "logicalAnalogies": "Аналогії",
+      "logical": "Логіка"
+    },
+    "clockSections": {
+      "hours": "Години",
+      "minutes": "Хвилини",
+      "combined": "Повний час",
+      "mixed": "Змішана практика"
+    },
+    "activityKinds": {
+      "game": "Гра: {label}",
+      "lessonPractice": "Практика: {label}",
+      "training": "Тренування: {label}",
+      "clockTraining": "Тренування з годинником: {label}",
+      "lessonCompletion": "Урок: {label}"
+    },
+    "rewardBreakdown": {
+      "base": "Раунд завершено",
+      "accuracy": "Точність",
+      "difficulty": "Складність",
+      "speed": "Швидкість",
+      "streak": "Серія",
+      "firstActivity": "Перша сильна спроба",
+      "improvement": "Покращений результат",
+      "mastery": "Прогрес опанування",
+      "variety": "Новий шлях",
+      "guidedFocus": "Рекомендований шлях",
+      "perfect": "Ідеальний результат",
+      "antiRepeat": "Повтор активності",
+      "minimumFloor": "Мінімальна нагорода",
+      "dailyQuest": "Щоденна місія"
+    },
+    "badgeTracks": {
+      "onboarding": "Старт",
+      "consistency": "Серія",
+      "mastery": "Опанування",
+      "variety": "Різноманіття",
+      "challenge": "Виклики",
+      "xp": "XP",
+      "quest": "Місії",
+      "english": "Англійська"
+    },
+    "badges": {
+      "first_game": {
+        "name": "Перша гра",
+        "desc": "Завершіть першу гру"
+      },
+      "perfect_10": {
+        "name": "Ідеальний результат",
+        "desc": "Отримайте ідеальний результат у грі"
+      },
+      "lesson_hero": {
+        "name": "Герой уроків",
+        "desc": "Завершіть перший урок"
+      },
+      "clock_master": {
+        "name": "Майстер годинника",
+        "desc": "Завершіть тренування з годинником із результатом 5/5"
+      },
+      "calendar_keeper": {
+        "name": "Майстер календаря",
+        "desc": "Завершіть тренування з календарем з ідеальним результатом"
+      },
+      "geometry_artist": {
+        "name": "Митець фігур",
+        "desc": "Завершіть тренування з геометричними фігурами з ідеальним результатом"
+      },
+      "streak_3": {
+        "name": "Сильна серія",
+        "desc": "Утримуйте 3 сильні раунди поспіль"
+      },
+      "accuracy_ace": {
+        "name": "Гострий розум",
+        "desc": "Підтримуйте середню точність щонайменше 85% після 25 запитань"
+      },
+      "ten_games": {
+        "name": "Десять ігор",
+        "desc": "Зіграйте 10 ігор"
+      },
+      "xp_500": {
+        "name": "Пів тисячі XP",
+        "desc": "Заробіть загалом 500 XP"
+      },
+      "xp_1000": {
+        "name": "Клуб тисячі",
+        "desc": "Заробіть загалом 1000 XP"
+      },
+      "quest_starter": {
+        "name": "Дослідник місій",
+        "desc": "Завершіть першу щоденну місію"
+      },
+      "quest_keeper": {
+        "name": "Мисливець на місії",
+        "desc": "Завершіть 3 щоденні місії"
+      },
+      "guided_step": {
+        "name": "Рівний крок",
+        "desc": "Завершіть перший раунд за рекомендацією"
+      },
+      "guided_keeper": {
+        "name": "Тримайтеся курсу",
+        "desc": "Завершіть 3 раунди за рекомендацією"
+      },
+      "mastery_builder": {
+        "name": "Будівничий опанування",
+        "desc": "Доведіть 3 уроки щонайменше до 75% опанування"
+      },
+      "variety": {
+        "name": "Універсал",
+        "desc": "Зіграйте 5 різних операцій"
+      },
+      "english_first_game": {
+        "name": "Старт англійської",
+        "desc": "Зіграйте першу гру з англійської"
+      },
+      "english_perfect": {
+        "name": "Ідеальна англійська",
+        "desc": "Отримайте 100% у грі з англійської"
+      },
+      "english_pronoun_pro": {
+        "name": "Профі займенників",
+        "desc": "Отримайте 2 ідеальні результати в Pronoun Remix"
+      },
+      "english_sorter_star": {
+        "name": "Майстер частин мови",
+        "desc": "Отримайте 2 ідеальні результати в Parts of Speech"
+      },
+      "english_sentence_builder": {
+        "name": "Архітектор речень",
+        "desc": "Досягніть 80%+ і зіграйте 3 сесії Sentence Structure"
+      },
+      "english_agreement_guardian": {
+        "name": "Охоронець узгодження",
+        "desc": "Отримайте ідеальний результат у Subject-Verb Agreement"
+      },
+      "english_grammar_collection": {
+        "name": "Колекція граматики",
+        "desc": "Зіграйте в усі ігри з англійської"
+      },
+      "english_articles_reader": {
+        "name": "Майстер артиклів",
+        "desc": "Завершіть урок English: Articles"
+      },
+      "english_mastery_builder": {
+        "name": "Будівничий англійської",
+        "desc": "Доведіть 3 уроки з англійської до 75% опанування"
+      }
+    },
+    "badgeSummaries": {
+      "game": "{current}/{target} {target, plural, one {гра} few {ігри} many {ігор} other {гри}}",
+      "perfectGame": "{current}/{target} {target, plural, one {ідеальна гра} few {ідеальні ігри} many {ідеальних ігор} other {ідеальної гри}}",
+      "lesson": "{current}/{target} {target, plural, one {урок} few {уроки} many {уроків} other {уроку}}",
+      "perfect": "{current}/{target} ідеально",
+      "streak": "{current}/{target} поспіль",
+      "questions": "{current}/{target} {target, plural, one {запитання} few {запитання} many {запитань} other {запитання}}",
+      "percentGoal": "{current}% / {target}%",
+      "games": "{current}/{target} {target, plural, one {гра} few {ігри} many {ігор} other {гри}}",
+      "xp": "{current}/{target} XP",
+      "quest": "{current}/{target} {target, plural, one {місія} few {місії} many {місій} other {місії}}",
+      "round": "{current}/{target} {target, plural, one {раунд} few {раунди} many {раундів} other {раунду}}",
+      "types": "{current}/{target} {target, plural, one {тип} few {типи} many {типів} other {типу}}",
+      "sessions": "{current}/{target} {target, plural, one {сесія} few {сесії} many {сесій} other {сесії}}"
+    },
+    "momentum": {
+      "allGoalsCompleted": "Усі цілі виконано!"
+    },
+    "dailyQuest": {
+      "progress": {
+        "gamesPlayed": "{current}/{target} {target, plural, one {раунд сьогодні} few {раунди сьогодні} many {раундів сьогодні} other {раунду сьогодні}}",
+        "lessonsCompleted": "{current}/{target} {target, plural, one {урок сьогодні} few {уроки сьогодні} many {уроків сьогодні} other {уроку сьогодні}}",
+        "lessonMastery": "{current}% / {target}% опанування"
+      },
+      "expiresToday": "Спливає сьогодні",
+      "reward": {
+        "claimed": "Нагороду отримано +{xp} XP",
+        "ready": "Нагорода готова +{xp} XP",
+        "locked": "Нагорода +{xp} XP"
+      }
+    },
+    "questMomentum": {
+      "paceValue": "{xp} XP / гра"
+    },
+    "badgeGrid": {
+      "empty": "Більше значків з'явиться зі зростанням прогресу."
+    },
+    "badgeTrackCard": {
+      "count": "{unlocked}/{total} значків",
+      "allUnlocked": "Усі значки відкрито"
+    },
+    "badgeTrackHighlights": {
+      "placeholders": {
+        "quest": {
+          "title": "Відкрийте першу місію",
+          "description": "Ця панель з'явиться тут, коли почнеться перша місія дня."
+        },
+        "mastery": {
+          "title": "Почніть будувати опанування",
+          "description": "Панель заповниться, щойно перший урок почне рух до опанування."
+        },
+        "genericPinned": {
+          "title": "Цей трек чекає на старт",
+          "description": "Перший прогрес у цьому напрямку відкриє повну панель значків."
+        },
+        "generic": {
+          "label": "Наступний трек",
+          "title": "Місце для наступної панелі",
+          "description": "Відкривайте більше значків, і тут з'явиться наступний напрям прогресу."
+        }
+      }
+    },
+    "heroMilestone": {
+      "nextBadgeEyebrow": "Наступний рубіж"
+    },
+    "overview": {
+      "stats": {
+        "totalXp": "Усього XP",
+        "xpPerGame": "XP / гра",
+        "gamesPlayed": "Зіграно ігор",
+        "lessonsCompleted": "Завершено уроків",
+        "averageAccuracy": "Середня точність",
+        "bestStreak": "Найкраща серія"
+      },
+      "levelEyebrow": "Рівень і досвід",
+      "levelDescription": "Рівень {level} · усього {xp} XP",
+      "nextLevel": "До рівня {level}: {xp} XP",
+      "maxLevel": "Досягнуто максимального рівня!",
+      "dailyQuestEyebrow": "Місія дня",
+      "guidedMomentum": {
+        "descriptionWithBadge": "До значка {badge}: {summary}",
+        "descriptionUnlocked": "Усі значки в рекомендованому треку вже відкриті.",
+        "eyebrow": "Рекомендований трек",
+        "title": "{count} рекомендованих раундів"
+      },
+      "operationsHeading": "Треновані операції",
+      "topActivitiesHeading": "Найчастіше треновані активності",
+      "topActivityDescription": "{sessions} сесій · {xp} XP / гра · у середньому {accuracy}% · найкращий результат {best}%"
+    }
+  },
+  "KangurDuels": {
+    "common": {
+      "status": {
+        "session": {
+          "created": "Створено",
+          "waiting": "Очікує на гравців",
+          "ready": "Готово до старту",
+          "in_progress": "У процесі",
+          "completed": "Завершено",
+          "aborted": "Скасовано"
+        },
+        "player": {
+          "invited": "Запрошено",
+          "ready": "Готовий",
+          "playing": "Грає",
+          "completed": "Завершив",
+          "left": "Вийшов"
+        }
+      },
+      "mode": {
+        "challenge": "Виклик",
+        "quick_match": "Швидка дуель"
+      },
+      "operation": {
+        "addition": "Додавання",
+        "subtraction": "Віднімання",
+        "multiplication": "Множення",
+        "division": "Ділення"
+      },
+      "difficulty": {
+        "easy": "Легкий",
+        "medium": "Середній",
+        "hard": "Складний"
+      },
+      "winner": {
+        "completed": "Дуель завершено.",
+        "score": "Результат: {name}",
+        "wins": "{name} перемагає!",
+        "tie": "Нічия!"
+      },
+      "relative": {
+        "missingData": "немає даних",
+        "justNow": "щойно",
+        "secondsAgo": "{count} с тому",
+        "minutesAgo": "{count} хв тому",
+        "hoursAgo": "{count} год тому",
+        "daysAgo": "{count} днів тому"
+      }
+    },
+    "lobby": {
+      "countLabel": "{count} активних",
+      "heading": "Лобі дуелей",
+      "description": "Виберіть учня, який чекає на дуель, або додайте власний виклик.",
+      "loading": "Завантаження лобі дуелей...",
+      "publicListAria": "Публічні дуелі",
+      "publicCardAria": "Публічний виклик від {name}. {operation}, {difficulty}. {questionCount} запитань, {seconds} секунд на запитання.",
+      "publicJoinAria": "Приєднатися до дуелі з {name}",
+      "publicLoginToJoinAria": "Увійдіть, щоб приєднатися до дуелі з {name}",
+      "invite": {
+        "heading": "Запрошення",
+        "description": "Приватні дуелі, до яких вас запросили.",
+        "listAria": "Запрошення до приватних дуелей",
+        "cardAria": "Приватне запрошення від {name}. {operation}, {difficulty}. {questionCount} запитань, {seconds} секунд на запитання.",
+        "meta": "Приватне запрошення • {updated}",
+        "joinAria": "Приєднатися до приватної дуелі з {name}",
+        "loginToJoinAria": "Увійдіть, щоб приєднатися до приватної дуелі з {name}"
+      },
+      "chips": {
+        "fresh": "Нове",
+        "private": "Приватна",
+        "public": "Публічна",
+        "refreshPaused": "Оновлення призупинено",
+        "offline": "Немає з'єднання",
+        "connectionProblem": "Проблема зі з'єднанням",
+        "connectingLive": "Підключення в реальному часі",
+        "live": "Наживо",
+        "stale": "Дані можуть бути неактуальними"
+      },
+      "meta": {
+        "questionCount": "{count} запитань",
+        "secondsPerQuestion": "{seconds} с / запитання",
+        "secondsCompact": "{seconds} с",
+        "estimatedDuration": "≈ {duration}",
+        "updated": "Оновлено {value}",
+        "fallbackEvery": "Резервне оновлення кожні {seconds} с",
+        "autoEvery": "Авто кожні {seconds} с",
+        "visibleCount": "Видно: {count}",
+        "waitingForOpponent": "Очікує на суперника • {updated}"
+      },
+      "guestBanner": {
+        "description": "Лобі видно гостям. Увійдіть, щоб приєднуватися до дуелей і створювати власні виклики."
+      },
+      "filters": {
+        "mode": {
+          "label": "Режим",
+          "aria": "Фільтрувати лобі за режимом дуелі",
+          "all": "Усі режими",
+          "challenge": "Виклики",
+          "quickMatch": "Швидкі дуелі"
+        },
+        "operation": {
+          "label": "Операція",
+          "aria": "Фільтрувати лобі за операцією",
+          "all": "Усі операції"
+        },
+        "difficulty": {
+          "label": "Рівень",
+          "aria": "Фільтрувати лобі за складністю",
+          "all": "Усі рівні"
+        },
+        "sort": {
+          "label": "Сортування",
+          "aria": "Сортувати публічні дуелі",
+          "recent": "Найновіші",
+          "timeFast": "Найкоротший час",
+          "timeSlow": "Найдовший час",
+          "questionsLow": "Найменше запитань",
+          "questionsHigh": "Найбільше запитань"
+        }
+      },
+      "empty": {
+        "noEntries": "Ніхто з учнів не чекає на дуель.",
+        "noMatches": "Немає викликів для вибраного фільтра."
+      },
+      "buttons": {
+        "refreshAria": "Оновити лобі дуелей",
+        "refresh": "Оновити",
+        "refreshing": "Оновлення...",
+        "retry": "Спробувати ще раз",
+        "join": "Приєднатися",
+        "connecting": "Підключення...",
+        "loginToJoin": "Увійдіть, щоб приєднатися",
+        "loginToPlay": "Увійдіть, щоб грати",
+        "createChallenge": "Створити власний виклик",
+        "loginToCreate": "Увійдіть, щоб додати виклик",
+        "showAll": "Показати всі"
+      }
+    },
+    "chat": {
+      "heading": "Чат лобі",
+      "description": "Поспілкуйтеся з гравцями, перш ніж приєднатися до дуелі.",
+      "unreadButton": "Нові повідомлення ({count})",
+      "updated": "Оновлено {value}",
+      "refreshAria": "Оновити чат лобі",
+      "refresh": "Оновити",
+      "refreshing": "Оновлення...",
+      "empty": "Поки що немає повідомлень. Напишіть перше, щоб почати розмову.",
+      "loadingOlder": "Завантаження...",
+      "loadOlder": "Завантажити старіші",
+      "you": "Ви",
+      "loginPrompt": "Увійдіть, щоб писати в чаті.",
+      "loginButton": "Увійти",
+      "messageAria": "Повідомлення чату лобі",
+      "sending": "Надсилання...",
+      "send": "Надіслати",
+      "remainingCharacters": "Залишилося {count} символів",
+      "offlineNotice": "Немає інтернет-з'єднання.",
+      "chips": {
+        "offline": "Офлайн",
+        "live": "Наживо",
+        "refreshing": "Оновлення"
+      },
+      "placeholders": {
+        "paused": "Чат призупинено.",
+        "default": "Напишіть повідомлення до лобі...",
+        "loginRequired": "Увійдіть, щоб писати"
+      }
+    },
+    "homeInvites": {
+      "loadError": "Не вдалося завантажити запрошення до дуелей.",
+      "heading": "Запрошення до дуелі",
+      "description": "Приватні виклики від інших гравців.",
+      "sendInvite": "Надіслати запрошення",
+      "loading": "Завантаження запрошень...",
+      "listAria": "Запрошення до дуелі",
+      "cardAria": "Запрошення від {name}",
+      "meta": "{operation} • {difficulty} • {questionCount} запитань • {seconds} с / запитання • {updated}",
+      "join": "Приєднатися",
+      "empty": "Немає запрошень. Надішліть власний виклик, щоб запросити друзів."
+    }
+  },
+  "KangurMiniGames": {
+    "shared": {
+      "restart": "Спробуйте ще раз",
+      "scoreLabel": "Результат",
+      "pointsShort": "б.",
+      "correctAnswersSuffix": "правильних відповідей",
+      "finish": {
+        "lesson": "Назад до уроку",
+        "topics": "Назад до тем",
+        "play": "Назад до «Граймо!»",
+        "back": "Назад",
+        "menu": "Назад до меню",
+        "done": "Завершити урок ✅",
+        "end": "Завершити"
+      }
+    },
+    "questionCard": {
+      "progressLabel": "Питання {questionNumber} з {total}",
+      "timerAriaLabel": "Час, що залишився",
+      "timerValueText": "Залишилося {timeLeft} секунд",
+      "clockTitle": "Який час показує годинник?",
+      "clockDescription": "Виберіть відповідь, яка відповідає положенню стрілок.",
+      "defaultDescription": "Яка правильна відповідь?",
+      "choicesAriaLabel": "Відповіді",
+      "answerChoiceAriaLabel": "Відповідь {choice}",
+      "choiceStatus": {
+        "correct": "правильно",
+        "incorrect": "неправильно",
+        "notChosen": "не вибрано"
+      },
+      "result": {
+        "correct": "🎉 Правильно!",
+        "timedOut": "⏰ Час вийшов!",
+        "incorrect": "❌ Цього разу ні.",
+        "checking": "Перевіряємо відповідь…",
+        "answerIs": "❌ Правильна відповідь: {answer}",
+        "timedOutAnswer": "⏰ Час вийшов! Відповідь: {answer}"
+      },
+      "clockAriaLabel": "Аналоговий годинник показує {time}."
+    },
+    "adding": {
+      "summary": {
+        "perfect": "Ідеально! Ви майстер додавання!",
+        "good": "Чудова робота!",
+        "retry": "Не здавайтеся!"
+      }
+    },
+    "subtraction": {
+      "summary": {
+        "perfect": "Ідеально! Майстер віднімання!",
+        "good": "Чудова робота!",
+        "retry": "Практикуйтеся далі!"
+      }
+    },
+    "multiplication": {
+      "summary": {
+        "perfect": "Ідеально! Майстер таблиці множення!",
+        "good": "Чудова робота!",
+        "retry": "Практикуйтеся далі!"
+      }
+    },
+    "division": {
+      "summary": {
+        "perfect": "Ідеально! Майстер ділення!",
+        "good": "Чудова робота!",
+        "retry": "Практикуйтеся далі!"
+      }
+    },
+    "divisionGroups": {
+      "summary": {
+        "perfect": "Ідеально! Ви вже опанували ділення.",
+        "good": "Чудова робота!",
+        "retry": "Практикуйтеся далі!"
+      },
+      "feedback": {
+        "assignAll": "Розкладіть усі елементи по групах.",
+        "checkRemainder": "Перевірте, скільки елементів залишилося в остачі.",
+        "equalGroups": "Переконайтеся, що кожна група має однаковий розмір.",
+        "correct": "Чудово! Групи розподілено порівну.",
+        "idle": "Перетягніть або натискайте елементи, щоб поділити їх на групи."
+      }
+    },
+    "calendarTraining": {
+      "progressAriaLabel": "Точність у вправах з календарем",
+      "summary": {
+        "perfect": "Ідеально! Ви справді добре знаєте календар!",
+        "retry": "Практикуйтеся далі, і ви опануєте календар!"
+      }
+    },
+    "logicalPatterns": {
+      "summary": {
+        "perfect": "Ідеально! Ви миттєво помічаєте закономірності.",
+        "good": "Чудово! Візерунки й послідовності стають дедалі легшими.",
+        "retry": "Гарна спроба! Перегляньте правило й спробуйте ще раз."
+      }
+    },
+    "logicalClassification": {
+      "summary": {
+        "perfect": "Ідеально! Ви чудово класифікуєте.",
+        "good": "Чудово! Ви швидко помічаєте групи та зайвий елемент.",
+        "retry": "Гарна спроба! Ще кілька раундів, і все стане простим."
+      },
+      "feedback": {
+        "correct": "Чудово!",
+        "wrong": "Це не зайвий елемент."
+      }
+    },
+    "englishPronouns": {
+      "inRound": {
+        "roundLabel": "Раунд {current}/{total}",
+        "modeLabel": "Клік",
+        "check": "Перевірити ✓"
+      },
+      "feedback": {
+        "correct": "Чудово! Правильний вибір.",
+        "incorrect": "Правильна відповідь: {answer}."
+      },
+      "summary": {
+        "perfect": "Ідеально! Займенники під контролем.",
+        "good": "Гарна робота!",
+        "retry": "Ще один раунд, і все стане легким."
+      }
+    },
+    "englishPronounsWarmup": {
+      "inRound": {
+        "roundLabel": "Раунд {current}/{total}",
+        "modeLabel": "Розминка",
+        "check": "Перевірити ✓",
+        "rounds": {
+          "warmup-graph": {
+            "prompt": "Виберіть правильну присвійну форму.",
+            "hint": "Ми говоримо про наш графік - our + іменник."
+          },
+          "warmup-calculator": {
+            "prompt": "Виберіть правильну присвійну форму.",
+            "hint": "Після \"is\" ми використовуємо присвійний займенник: mine."
+          },
+          "warmup-solution": {
+            "prompt": "Виберіть правильну присвійну форму.",
+            "hint": "Перед іменником ми використовуємо your."
+          }
+        }
+      },
+      "feedback": {
+        "correct": "Чудово! Правильний вибір.",
+        "incorrect": "Правильна відповідь: {answer}."
+      },
+      "summary": {
+        "perfect": "Ідеально! Розминку завершено.",
+        "good": "Гарна робота!",
+        "retry": "Ще один раунд розминки, і все стане зрозумілим."
+      }
+    },
+    "subtractingGarden": {
+      "feedback": {
+        "correct": "Чудово! Залишилося:"
+      },
+      "summary": {
+        "perfect": "Ідеально! Віднімання у вас на кінчиках пальців.",
+        "good": "Чудова робота!",
+        "retry": "Практикуйтеся далі!"
+      }
+    },
+    "multiplicationArray": {
+      "summary": {
+        "title": "Ви зібрали {score}/{total} груп!",
+        "perfect": "Майстер групування! Таблиця множення ваша!",
+        "good": "Чудова робота! Майже ідеально!",
+        "retry": "Гарна спроба! Продовжуйте грати, щоб тренуватися!"
+      },
+      "inRound": {
+        "header": "Торкніться кожної групи, щоб зібрати її!",
+        "collectedLabel": "Зібрано",
+        "targetLabel": "Ціль",
+        "celebrationDetail": "{a} груп по {b} = {total} разом",
+        "progress": "Зібрано: {collected}/{total} груп — торкніться наступної!"
+      }
+    },
+    "numberBalance": {
+      "summary": {
+        "solvedLabel": "Розв'язано",
+        "averageTimeLabel": "Середній час",
+        "opponentLabel": "Суперник",
+        "placeLabel": "Місце",
+        "outcome": {
+          "win": "Перемога!",
+          "draw": "Нічия!",
+          "loss": "Поразка!"
+        }
+      },
+      "inRound": {
+        "errors": {
+          "start": "Не вдалося почати матч. Спробуйте ще раз.",
+          "save": "Не вдалося зберегти хід. Спробуйте ще раз."
+        },
+        "opponent": {
+          "ready": "Суперник: {score}",
+          "searching": "Суперник: ...",
+          "empty": "Суперник: -"
+        },
+        "waiting": {
+          "title": "Очікуємо другого гравця...",
+          "matchCode": "Код матчу: {matchId}",
+          "copy": {
+            "idle": "Копіювати код",
+            "success": "Скопійовано!",
+            "error": "Не вдалося скопіювати"
+          }
+        },
+        "selfLabel": "Ви: {score}",
+        "loading": "Завантаження матчу...",
+        "player": {
+          "self": "Ви",
+          "other": "Гравець {index}"
+        },
+        "rank": "Місце: {rank}/{total}",
+        "leader": "Ви лідируєте",
+        "gap": "Відставання від лідера: {scoreGap}",
+        "leaderBadge": "Лідер",
+        "targetLabel": "Ціль: {target}",
+        "sumLabel": "Сума: {sum}",
+        "instruction": "Перетягніть числа на обидві сторони так, щоб вони відповідали цілям.",
+        "aria": {
+          "leftSide": "Ліва сторона терезів",
+          "rightSide": "Права сторона терезів",
+          "tray": "Лоток з числами"
+        },
+        "tileAria": "Число {value}",
+        "countdown": "Початок через {seconds}…"
+      }
+    },
+    "kangurGame": {
+      "actions": {
+        "retry": "Спробуйте ще раз 🔁",
+        "menu": "Меню"
+      },
+      "summary": {
+        "perfect": "Ідеальний результат! Ви чемпіон Kangur! 🦘",
+        "good": "Чудово! Ви готові до конкурсу!",
+        "fair": "Гарна робота! Практикуйтеся далі!",
+        "retry": "Не здавайтеся! Спробуйте ще раз!"
+      }
+    },
+    "kangurExam": {
+      "actions": {
+        "backToMenu": "Назад до меню"
+      },
+      "progressAriaLabel": "Точність відповідей у тесті Kangur",
+      "summary": {
+        "perfect": "Ідеальний результат! Ви чемпіон Kangur! 🦘",
+        "good": "Чудово! Ви готові до конкурсу!",
+        "fair": "Гарна робота! Практикуйтеся далі!",
+        "retry": "Не здавайтеся! Спробуйте ще раз!"
+      }
+    },
+    "resultScreen": {
+      "heading": "Чудова робота",
+      "starsAria": "Оцінка: {stars} з 3 зірок.",
+      "progressAriaLabel": "Точність відповідей",
+      "summary": {
+        "perfect": "Ідеальний результат! Ви зірка математики! 🌟",
+        "excellent": "Неймовірна робота! Так тримати! 🎉",
+        "good": "Гарна робота! Практика веде до майстерності! 💪",
+        "retry": "Продовжуйте пробувати. У вас вийде! 🚀"
+      },
+      "stats": {
+        "score": "Результат",
+        "accuracy": "Точність",
+        "time": "Час",
+        "topic": "Тема"
+      },
+      "actions": {
+        "restart": "Зіграти ще раз",
+        "home": "Головна сторінка"
+      },
+      "operations": {
+        "addition": "Додавання",
+        "subtraction": "Віднімання",
+        "multiplication": "Множення",
+        "division": "Ділення",
+        "decimals": "Дроби",
+        "powers": "Степені",
+        "roots": "Корені",
+        "clock": "Годинник",
+        "mixed": "Змішане"
+      }
+    },
+    "englishSubjectVerbAgreement": {
+      "summary": {
+        "perfect": "Ідеальне узгодження.",
+        "good": "Гарна робота!",
+        "retry": "Ще один раунд, і все стане зрозумілим."
+      },
+      "inRound": {
+        "roundLabel": "Раунд {current}/{total}",
+        "modeLabel": "Клік",
+        "subjectLabel": "Підмет",
+        "blank": "____",
+        "check": "Перевірити",
+        "feedback": {
+          "correct": "Так! Усе узгоджується.",
+          "incorrect": "Правильна відповідь: {answer}."
+        },
+        "rounds": {
+          "streamer-goes": {
+            "prompt": "Натисніть дієслово, яке підходить до однини.",
+            "hint": "Підмет в однині + -s."
+          },
+          "friends-try": {
+            "prompt": "Натисніть дієслово для множини.",
+            "hint": "Підмет у множині = базова форма дієслова."
+          },
+          "everyone-arrives": {
+            "prompt": "Everyone граматично все одно вимагає однини.",
+            "hint": "Everyone = однина."
+          },
+          "there-are": {
+            "prompt": "There is/are залежить від іменника після нього.",
+            "hint": "Two finals = множина."
+          },
+          "either-players": {
+            "prompt": "У конструкції either/or дієслово узгоджується з найближчим підметом.",
+            "hint": "Найближчий підмет = players (множина)."
+          },
+          "pair-is": {
+            "prompt": "Фраза \"pair of\" рахується як однина.",
+            "hint": "Pair = один набір."
+          }
+        }
+      }
+    },
+    "englishSentenceStructure": {
+      "summary": {
+        "excellent": "Чудовий порядок слів у реченні!",
+        "good": "Гарна робота, залишилося лише кілька деталей.",
+        "retry": "Зробіть ще один раунд і покращіть порядок слів."
+      },
+      "inRound": {
+        "roundLabel": "Раунд {current} з {total}",
+        "timeLabel": "Час: {seconds} с",
+        "fillPlaceholder": "Введіть відповідь",
+        "fillAria": "Заповніть пропущене слово",
+        "fillHelp": "Введіть пропущене слово, а потім натисніть \"Перевірити\".",
+        "check": "Перевірити",
+        "checking": "Перевіряємо...",
+        "feedback": {
+          "correct": "Чудово! Саме так будується це речення.",
+          "incorrect": "Правильна відповідь: {answer}."
+        },
+        "rounds": {
+          "svo-order": {
+            "prompt": "Виберіть речення з правильним порядком S + V + O.",
+            "hint": "Спочатку підмет, потім дієслово, потім додаток.",
+            "question": "Яке речення правильне?"
+          },
+          "order-words": {
+            "prompt": "Перетягніть слова, щоб побудувати правильне речення.",
+            "hint": "Почніть з підмета, потім дієслово, потім решта.",
+            "question": "Arrange: My friend always finishes homework on time."
+          },
+          "do-question": {
+            "prompt": "Доповніть запитання правильним словом.",
+            "hint": "Для \"you\" ми використовуємо \"do\".",
+            "question": "___ you play football on Saturdays?"
+          },
+          "connector-so": {
+            "prompt": "Швидкий раунд - у вас лише кілька секунд!",
+            "hint": "Наслідок -> so.",
+            "question": "I was late, ___ I texted my coach."
+          },
+          "frequency-adverb": {
+            "prompt": "Виберіть правильне місце для прислівника.",
+            "hint": "Прислівники частотності стоять перед основним дієсловом.",
+            "question": "She ___ checks her notes after class."
+          },
+          "does-negative": {
+            "prompt": "Доповніть заперечну форму.",
+            "hint": "She -> does not -> doesn't.",
+            "question": "She ___ like exams."
+          }
+        },
+        "orderTokenAria": "Слово: {token}"
+      }
+    },
+    "englishPartsOfSpeech": {
+      "feedback": {
+        "roundPerfect": "Ідеально! Кожне слово на правильному місці.",
+        "roundProgress": "У вас {correct}/{total} правильних. Перевірте кольори й продовжуйте."
+      },
+      "summary": {
+        "perfect": "Ідеально! Ви безпомилково розпізнаєте частини мови.",
+        "good": "Чудово! Ви вже дуже близько до ідеального раунду.",
+        "retry": "Гарна робота! Спробуйте ще раз і покращіть результат."
+      },
+      "inRound": {
+        "roundLabel": "Раунд {current}/{total}",
+        "modeLabel": "Перетягніть і відпустіть",
+        "poolLabel": "Набір слів",
+        "poolAria": "Набір слів для сортування",
+        "poolEmpty": "Набір порожній",
+        "binAria": "Кошик {label}",
+        "missingWords": "Бракує слів",
+        "clearRound": "Очистити раунд",
+        "hitsLabel": "{hits}/{total} правильних",
+        "check": "Перевірити",
+        "next": "Далі",
+        "seeResult": "Переглянути результат",
+        "rounds": {
+          "math-core": {
+            "title": "Математичний стартовий набір",
+            "prompt": "Розсортуйте слова за правильною частиною мови.",
+            "hint": "Noun = річ, Verb = дія, Adjective = ознака."
+          },
+          "positions": {
+            "title": "Положення в геометрії",
+            "prompt": "Сортуйте слова про місце й дію.",
+            "hint": "Prepositions показують зв'язки: between, above."
+          },
+          "speed": {
+            "title": "Прислівники в дії",
+            "prompt": "Додайте темп і стиль до дії.",
+            "hint": "Adverbs описують як: quickly, carefully."
+          }
+        },
+        "parts": {
+          "noun": {
+            "label": "Іменник",
+            "description": "Особа, річ, поняття"
+          },
+          "verb": {
+            "label": "Дієслово",
+            "description": "Дія або рух"
+          },
+          "adjective": {
+            "label": "Прикметник",
+            "description": "Описує ознаку"
+          },
+          "preposition": {
+            "label": "Прийменник",
+            "description": "Місце або зв'язок"
+          },
+          "adverb": {
+            "label": "Прислівник",
+            "description": "Як? коли? як часто?"
+          }
+        }
+      }
+    },
+    "geometryBasics": {
+      "progressAriaLabel": "Точність у вправах з основ геометрії",
+      "summary": {
+        "perfect": "Ідеально! Ви дуже добре розпізнаєте основи геометрії.",
+        "good": "Дуже добре! Ще трохи - і буде ідеально.",
+        "retry": "Гарна спроба! Спробуйте ще раз, щоб закріпити поняття."
+      },
+      "inRound": {
+        "missionTitle": "Гео-місія: точка, відрізок, сторона, кут",
+        "roundLabel": "Раунд {current}/{total}",
+        "instruction": "Перетягніть мітку на позначене місце або натисніть мітку, а потім поле.",
+        "boardLabel": "Поле",
+        "boardFilledAria": "Поле: мітка {label}",
+        "boardEmptyAria": "Поле: перетягніть мітку",
+        "dropLabel": "Перетягніть мітку",
+        "labelsTitle": "Мітки",
+        "poolLabel": "{count} у наборі",
+        "poolEmpty": "Усі мітки використано!",
+        "clear": "Очистити",
+        "check": "Перевірити",
+        "next": "Далі",
+        "seeResult": "Переглянути результат",
+        "tileAria": "Мітка: {label}",
+        "feedback": {
+          "correct": "Чудово! Це правильна відповідь.",
+          "incorrect": "Не ця. Правильно: {label}."
+        },
+        "tiles": {
+          "point": "Точка",
+          "segment": "Відрізок",
+          "side": "Сторона",
+          "angle": "Кут"
+        },
+        "rounds": {
+          "round-point": {
+            "title": "Точка",
+            "prompt": "Розпізнайте окреме місце на полі.",
+            "hint": "Точка - це одна крапка без довжини й ширини."
+          },
+          "round-segment": {
+            "title": "Відрізок",
+            "prompt": "Знайдіть частину, що з'єднує дві точки.",
+            "hint": "Відрізок має початок і кінець - дві точки."
+          },
+          "round-side": {
+            "title": "Сторона",
+            "prompt": "Знайдіть сторону фігури.",
+            "hint": "Сторона - це відрізок, що належить багатокутнику."
+          },
+          "round-angle": {
+            "title": "Кут",
+            "prompt": "Знайдіть місце, де зустрічаються два відрізки.",
+            "hint": "Кут - це розкриття між двома променями."
+          }
+        }
+      }
+    },
+    "geometryPerimeter": {
+      "progressAriaLabel": "Точність у грі на периметр",
+      "summary": {
+        "perfect": "Ідеально! Периметри опановано.",
+        "good": "Чудова робота! Ще трохи - і буде ідеально.",
+        "retry": "Гарна спроба! Спробуйте ще раз."
+      },
+      "inRound": {
+        "keyboard": {
+          "started": "Розпочато малювання з клавіатури.",
+          "finished": "Малювання з клавіатури завершено.",
+          "cleared": "Поле очищено, а курсор повернуто в центр.",
+          "restarted": "Розпочато новий раунд із периметром.",
+          "ready": "Поле готове до малювання з клавіатури.",
+          "boardCleared": "Поле очищено."
+        },
+        "errors": {
+          "noTask": "Немає завдання для перевірки.",
+          "tooShort": "Намалюйте фігуру трохи довше, щоб її можна було перевірити.",
+          "tooSmall": "Намалюйте на сітці більшу фігуру.",
+          "alignToGrid": "Малюйте уважніше вздовж ліній сітки.",
+          "squareSize": "Спробуйте намалювати квадрат зі стороною {size} клітинок.",
+          "rectangleSize": "Спробуйте намалювати прямокутник {a} × {b} клітинок.",
+          "adjustEdges": "Точніше вирівняйте сторони по лініях сітки."
+        },
+        "feedback": {
+          "shapeAccepted": "Чудово! Фігура відповідає завданню.",
+          "selectPerimeter": "Малюнок правильний. Тепер виберіть значення периметра.",
+          "pickAnswer": "Виберіть значення периметра.",
+          "correctPerimeter": "Чудово! Периметр дорівнює {perimeter} см.",
+          "incorrectPerimeter": "Перевірте периметр ще раз. Правильна відповідь: {perimeter} см."
+        },
+        "modeLabel": "Малювання периметра",
+        "gridScale": "1 клітинка = 1 см",
+        "canvasAria": "Поле для малювання фігури {shape}. Використовуйте мишу, дотик або клавіатуру, щоб намалювати її.",
+        "canvasAriaFallback": "Поле для малювання фігури.",
+        "drawOnGrid": "Малюйте на сітці",
+        "inputHelp": "Поле для малювання підтримує мишу, дотик або клавіатуру. Enter або пробіл починає і завершує лінію, стрілки рухають курсор, а Escape очищає поле.",
+        "clear": "Очистити",
+        "checkDrawing": "Перевірити малюнок",
+        "checkPerimeter": "Перевірити периметр",
+        "rounds": {
+          "square-3": {
+            "title": "Намалюйте: квадрат",
+            "hint": "Намалюйте квадрат зі стороною 3 клітинки.",
+            "shapeName": "квадрат"
+          },
+          "rect-6-4": {
+            "title": "Намалюйте: прямокутник",
+            "hint": "Намалюйте прямокутник 6 × 4 клітинки.",
+            "shapeName": "прямокутник"
+          },
+          "rect-5-2": {
+            "title": "Намалюйте: прямокутник",
+            "hint": "Намалюйте прямокутник 5 × 2 клітинки.",
+            "shapeName": "прямокутник"
+          },
+          "square-4": {
+            "title": "Намалюйте: квадрат",
+            "hint": "Намалюйте квадрат зі стороною 4 клітинки.",
+            "shapeName": "квадрат"
+          },
+          "rect-7-3": {
+            "title": "Намалюйте: прямокутник",
+            "hint": "Намалюйте прямокутник 7 × 3 клітинки.",
+            "shapeName": "прямокутник"
+          }
+        },
+        "liveRegion": "Раунд {current} з {total}. Намалюйте фігуру {shape}."
+      }
+    },
+    "geometrySymmetry": {
+      "progressAriaLabel": "Точність у грі на симетрію",
+      "summary": {
+        "perfect": "Ідеально! Ваші відображення дуже точні.",
+        "good": "Чудова робота! Симетрія дається вам дедалі легше.",
+        "retry": "Пробуйте далі - кожна наступна спроба буде точнішою."
+      },
+      "feedback": {
+        "axis": {
+          "drawLonger": "Намалюйте довшу лінію осі - від одного краю фігури до іншого.",
+          "extendLine": "Вісь має бути довшою - проведіть її майже через усю фігуру.",
+          "keepStraightVertical": "Вісь симетрії має бути прямою і вертикальною.",
+          "keepStraightHorizontal": "Вісь симетрії має бути прямою і горизонтальною.",
+          "moveToCenter": "Посуньте вісь ближче до центру фігури.",
+          "success": "Чудово! Це правильна вісь симетрії."
+        },
+        "mirror": {
+          "drawMissingHalf": "Домалюйте відсутню половину, щоб можна було перевірити симетрію.",
+          "drawMore": "Домалюйте більше фігури - значна частина відображення ще відсутня.",
+          "expectedSide": "Малюйте на зеленому боці осі симетрії.",
+          "alignToGhost": "Спробуйте намалювати фігуру ближче до пунктирного відображення.",
+          "success": "Чудово! Відображення відповідає осі."
+        }
+      },
+      "inRound": {
+        "keyboard": {
+          "ready": "Поле готове до малювання.",
+          "boardCleared": "Поле очищено.",
+          "started": "Розпочато малювання з клавіатури.",
+          "finished": "Малювання з клавіатури завершено.",
+          "cleared": "Поле очищено, а курсор повернуто в центр.",
+          "restarted": "Розпочато новий раунд симетрії."
+        },
+        "tooShort": "Зробіть кілька штрихів, щоб з'явилася лінія для перевірки.",
+        "liveRegion": "Раунд {current} з {total}. {prompt}",
+        "progressValueText": "Раунд {current} з {total}",
+        "modeLabel": "Симетрія • {mode}",
+        "mode": {
+          "axis": "Вісь",
+          "mirror": "Відображення"
+        },
+        "mirror": {
+          "zoneHint": "Малюйте лише в зеленій зоні. Сіра зона не призначена для малювання.",
+          "showHint": "Показати підказку",
+          "hideHint": "Приховати підказку",
+          "ghostHint": "Пунктир показує відсутнє відображення."
+        },
+        "canvasAria": "Поле для малювання осей симетрії та відображень.",
+        "inputHelp": "Поле для малювання підтримує мишу, дотик або клавіатуру. Enter або пробіл починає і завершує лінію, стрілки рухають курсор, а Escape очищає поле.",
+        "clear": "Очистити",
+        "check": "Перевірити",
+        "rounds": {
+          "axis-butterfly": {
+            "title": "Вісь метелика",
+            "prompt": "Намалюйте вісь симетрії метелика.",
+            "hint": "Це вертикальна лінія через центр - орієнтуйтеся на зелену смугу."
+          },
+          "mirror-heart": {
+            "title": "Серце в дзеркалі",
+            "prompt": "Домалюйте відсутню половину серця.",
+            "hint": "Відобразіть фігуру відносно осі, малюючи на зеленому боці."
+          },
+          "axis-square": {
+            "title": "Вісь квадрата",
+            "prompt": "Намалюйте вісь симетрії квадрата.",
+            "hint": "Це вертикальна лінія посередині квадрата - зелена смуга показує вісь."
+          },
+          "mirror-leaf": {
+            "title": "Листок",
+            "prompt": "Домалюйте нижню половину листка.",
+            "hint": "Відобразіть відносно горизонтальної осі - малюйте в зеленій зоні."
+          },
+          "mirror-zigzag": {
+            "title": "Зигзаг у дзеркалі",
+            "prompt": "Намалюйте відображення зигзага.",
+            "hint": "Малюйте лише в зеленій зоні праворуч від осі."
+          },
+          "axis-eye": {
+            "title": "Вісь ока",
+            "prompt": "Намалюйте вісь симетрії ока.",
+            "hint": "Це горизонтальна лінія посередині - зелена смуга показує вісь."
+          }
+        }
+      }
+    },
+    "calendar": {
+      "lessonTitle": "Вивчення календаря",
+      "labels": {
+        "schoolTag": "Школа",
+        "weekendTag": "Вихідні",
+        "daysSuffix": "днів",
+        "howToWriteDate": "Як записати дату?",
+        "shortDatePrefix": "Або:",
+        "datePattern": "День / Місяць / Рік"
+      },
+      "sections": {
+        "intro": {
+          "title": "Що таке календар?",
+          "description": "Рік, місяці та дні"
+        },
+        "dni": {
+          "title": "Дні тижня",
+          "description": "Від понеділка до неділі"
+        },
+        "miesiace": {
+          "title": "Місяці та пори року",
+          "description": "12 місяців і чотири пори року"
+        },
+        "data": {
+          "title": "Як читати дату?",
+          "description": "День / Місяць / Рік"
+        },
+        "gameDays": {
+          "title": "Практика: Дні тижня",
+          "description": "Вихідні, дні тижня та стовпці календаря"
+        },
+        "gameMonths": {
+          "title": "Практика: Місяці",
+          "description": "Місяці, порядок і пори року"
+        },
+        "gameDates": {
+          "title": "Практика: Дати",
+          "description": "Знайдіть правильну дату в календарі"
+        }
+      },
+      "slides": {
+        "intro": {
+          "whatIsCalendar": {
+            "title": "Що таке календар?",
+            "tts": "Календар допомагає нам упорядковувати час. Рік має 12 місяців і 365 днів. Тиждень має 7 днів.",
+            "body": "Календар допомагає нам упорядковувати час.",
+            "yearStat": "Рік має 12 місяців і 365 днів.",
+            "weekStat": "Тиждень має 7 днів."
+          },
+          "yearLoop": {
+            "title": "Рік по колу",
+            "tts": "Місяці щороку повертаються в тому самому порядку.",
+            "caption": "Після грудня знову починається січень."
+          },
+          "seasons": {
+            "title": "Пори року",
+            "tts": "Є чотири пори року, і вони повторюються по колу.",
+            "caption": "Весна, літо, осінь, зима."
+          }
+        },
+        "dni": {
+          "weekdays": {
+            "title": "Дні тижня",
+            "tts": "Тиждень має 7 днів: понеділок, вівторок, середа, четвер, п'ятниця, субота, неділя."
+          },
+          "rhythm": {
+            "title": "Тиждень у ритмі",
+            "tts": "Дні тижня завжди йдуть в одному й тому самому порядку.",
+            "caption": "Після неділі знову починається понеділок."
+          },
+          "weekend": {
+            "title": "Вихідні",
+            "tts": "Субота та неділя утворюють вихідні.",
+            "caption": "Вихідні виділяються своїм кольором."
+          }
+        },
+        "miesiace": {
+          "monthsOfYear": {
+            "title": "12 місяців року",
+            "tts": "Рік має 12 місяців, об'єднаних у чотири пори року."
+          },
+          "monthLength": {
+            "title": "Скільки днів у місяці?",
+            "tts": "Більшість місяців мають 30 або 31 день. Лютий має лише 28 днів."
+          },
+          "monthsWheel": {
+            "title": "Колесо місяців",
+            "tts": "Місяці вишикуються в коло і повторюються щороку.",
+            "caption": "Місяці крутяться без кінця."
+          },
+          "lengthAnimation": {
+            "title": "Тривалість місяців",
+            "tts": "Деякі місяці мають 31 день, деякі 30, а лютий 28.",
+            "caption": "Запам'ятайте, скільки триває кожен місяць."
+          }
+        },
+        "data": {
+          "readDate": {
+            "title": "Як читати дату?",
+            "tts": "Ми записуємо дату як день, місяць, рік. Наприклад: 15 березня 2025.",
+            "longExample": "15 березня 2025",
+            "shortExample": "15/03/2025"
+          },
+          "format": {
+            "title": "Формат дати",
+            "tts": "Ми записуємо дату як день, місяць і рік, наприклад 15 скісна риска 03 скісна риска 2025.",
+            "caption": "День / Місяць / Рік."
+          },
+          "findDay": {
+            "title": "Знайдіть день",
+            "tts": "У календарі ми вибираємо один конкретний день.",
+            "caption": "Вкажіть правильну дату."
+          }
+        }
+      }
+    },
+    "addingSynthesis": {
+      "intro": {
+        "newGame": "Нова гра",
+        "style": "у стилі Synthesia",
+        "title": "Синтез додавання",
+        "description": "Рахуйте подумки, стежте, як вираз падає до лінії, і натискайте доріжку з правильною відповіддю. Ви починаєте з простих сум, потім переходите через 10 і завершуєте двоцифровим додаванням.",
+        "rhythmLabel": "Ритм гри",
+        "rhythmValue": "{notes} нот • {lanes} доріжки • швидкий зворотний зв'язок",
+        "howToPlayLabel": "Як грати",
+        "howToPlay": {
+          "chooseLane": "Натискайте правильну доріжку або клавіші 1, 2, 3, 4.",
+          "timing": "Чим ближче до лінії ви влучите, тим краща оцінка ритму.",
+          "feedback": "Після кожної помилки ви отримуєте коротку підказку."
+        },
+        "start": "Почати синтез"
+      },
+      "shared": {
+        "backToAdding": "Назад до Додавання"
+      },
+      "stages": {
+        "warmup": {
+          "title": "Розминка",
+          "description": "Суми до 10. Спочатку знайдіть більше число, а потім долічіть решту.",
+          "coachingTip": "Починайте з більшого числа і стежте, як сума опускається до лінії."
+        },
+        "bridge_ten": {
+          "title": "Міст до 10",
+          "description": "Переходьте через 10, розбиваючи друге число на частину, яка дає 10, і частину, що залишається.",
+          "coachingTip": "Подивіться, скільки не вистачає до 10, а потім додайте те, що лишилося."
+        },
+        "double_digits": {
+          "title": "Дві цифри",
+          "description": "Додавайте десятки й одиниці окремо, а коли переносите, перетворюйте 10 одиниць на один новий десяток.",
+          "coachingTip": "Спочатку десятки, потім одиниці. Якщо виходить 10 або більше, перенесіть один десяток."
+        }
+      },
+      "hints": {
+        "warmup": "Почніть з {larger} і долічіть {smaller}: {steps}.",
+        "bridgeTen": "{left} потрібно ще {toTen}, щоб вийшло 10. Розбийте {right} на {toTen} і {leftover}, а потім порахуйте 10 + {leftover} = {answer}.",
+        "doubleDigits": "Десятки дають {tens}, одиниці дають {ones}. Разом це {answer}.",
+        "doubleDigitsCarry": "Десятки дають {tens}. Одиниці дають {ones}, тобто {carryOnes} і ще один новий десяток. Разом це {answer}."
+      },
+      "focus": {
+        "warmup": "Починайте з більшого числа і додавайте маленькими кроками.",
+        "bridgeTen": "Спочатку доведіть до 10, а потім додайте те, що залишилося.",
+        "doubleDigits": "Розділіть десятки й одиниці, а потім об'єднайте обидва результати.",
+        "doubleDigitsCarry": "Стежте за одиницями. Коли набирається 10, перенесіть один десяток."
+      },
+      "feedback": {
+        "perfect": {
+          "title": "Ідеальне влучання",
+          "description": "{left} + {right} = {answer}. Ви влучили точно по лінії."
+        },
+        "great": {
+          "title": "Чудовий таймінг",
+          "description": "{left} + {right} = {answer}. Правильна відповідь і сильний ритм."
+        },
+        "good": {
+          "title": "Правильна відповідь",
+          "description": "{left} + {right} = {answer}. Наступного разу спробуйте влучити трохи ближче до лінії."
+        },
+        "wrong": {
+          "title": "Не та доріжка",
+          "description": "{left} + {right} дорівнює {answer}, а не {chosen}."
+        },
+        "miss": {
+          "title": "Нота пройшла повз лінію",
+          "description": "Правильна відповідь: {answer}. Зловіть наступну ноту трохи швидше."
+        }
+      },
+      "summary": {
+        "sessionComplete": "Сесію завершено",
+        "score": "Результат {score}/{total}",
+        "messages": {
+          "strong": "Дуже сильна сесія. Додавання тримало ритм і темп.",
+          "good": "Хороший результат. Ще кілька раундів - і ці суми стануть автоматичними.",
+          "retry": "База вже є. Повторіть сесію і зосередьтеся на підказках для складніших нот."
+        },
+        "stats": {
+          "accuracy": "Точність",
+          "perfectHits": "Ідеальні влучання",
+          "bestStreak": "Найкраща серія",
+          "round": "Раунд"
+        },
+        "playAgain": "Зіграти ще раз"
+      },
+      "playing": {
+        "noteCount": "Нота {current}/{total}",
+        "stats": {
+          "streak": "Серія",
+          "perfect": "Ідеально",
+          "hit": "Влучання"
+        },
+        "laneLabel": "Доріжка {index}",
+        "laneAria": "Доріжка {index}: {choice}",
+        "hitLine": "Лінія на {percent}%",
+        "hitPrompt": "Натисніть правильну доріжку",
+        "chooseLane": "Виберіть доріжку",
+        "accuracy": "Точність {accuracy}%",
+        "hintTitle": "Підказка до цієї ноти",
+        "keyboardHint": "Якщо вам зручніше клавіатурою, натискайте 1, 2, 3 або 4.",
+        "sessionProgress": "Прогрес сесії",
+        "endAttempt": "Завершити спробу"
+      }
+    },
+    "logicalAnalogies": {
+      "summary": {
+        "perfect": "Ідеально! Ви розпізнаєте зв'язки в будь-якому контексті.",
+        "good": "Чудово! У вас є відчуття зв'язків.",
+        "retry": "Гарна спроба! Порівняйте відмінності й спробуйте ще раз."
+      },
+      "game": {
+        "fallbackTitle": "Зв'язки",
+        "fallbackPrompt": "Немає даних для гри.",
+        "rushModeChip": "Bridge Rush ⏱",
+        "quietMode": "Спокійний режим",
+        "rushMode": "Bridge Rush",
+        "rushModeHint": "Режим Bridge Rush: встигніть до завершення часу. Зміна режиму перезапускає гру.",
+        "modeResetHint": "Зміна режиму перезапускає гру.",
+        "stageTitle": "Міст зв'язків",
+        "roundLabel": "Раунд {current}/{total}",
+        "timeExpired": "Час вийшов",
+        "instructions": "Перетягніть зв'язок на картку пари або натисніть зв'язок, а потім натисніть пару. Іконки підказують тип зв'язку.",
+        "relationIconsLabel": "Іконки зв'язків",
+        "relationHintPrefix": "Підказка: {hint}",
+        "relationHintIdle": "Наведіть або торкніться іконки, щоб побачити підказку.",
+        "relationsHeading": "Зв'язки",
+        "poolCount": "{count} у наборі",
+        "poolAriaLabel": "Набір зв'язків для перетягування",
+        "emptyPool": "Усі зв'язки вже використано.",
+        "relationAriaLabel": "Зв'язок: {label}",
+        "clearRound": "Очистити раунд",
+        "hitsLabel": "{correct}/{total} збігів",
+        "targetsHeading": "Пари для зіставлення",
+        "relationBadge": "зв'язок",
+        "dropHint": "Використайте це місце, щоб зіставити зв'язок із парою.",
+        "dropZoneCta": "Перетягніть зв'язок",
+        "correctRelation": "Правильно: {label}",
+        "oneToOneHint": "Кожен зв'язок підходить лише до однієї пари.",
+        "check": "Перевірити",
+        "seeResult": "Переглянути результат",
+        "next": "Далі",
+        "tokens": {
+          "part_whole": {
+            "label": "частина -> ціле",
+            "hint": "елемент належить до більшого цілого"
+          },
+          "opposite": {
+            "label": "протилежність",
+            "hint": "слова з протилежним значенням"
+          },
+          "tool_action": {
+            "label": "інструмент -> дія",
+            "hint": "інструмент використовують, щоб щось робити"
+          },
+          "cause_effect": {
+            "label": "причина -> наслідок",
+            "hint": "одна подія спричиняє іншу"
+          },
+          "category_example": {
+            "label": "категорія -> приклад",
+            "hint": "загальна група та її приклад"
+          },
+          "place_inhabitants": {
+            "label": "місце -> мешканці",
+            "hint": "хто або що живе в певному місці"
+          },
+          "material_object": {
+            "label": "матеріал -> предмет",
+            "hint": "з чого щось зроблено"
+          },
+          "sequence": {
+            "label": "послідовність -> наступний крок",
+            "hint": "що йде далі"
+          },
+          "creator_work": {
+            "label": "творець -> твір",
+            "hint": "хто створює і що створюється"
+          }
+        },
+        "rounds": {
+          "rozgrzewka": {
+            "title": "Розминка: два прості зв'язки",
+            "prompt": "Почніть із протилежностей і категорій.",
+            "targets": {
+              "r1-1": {
+                "pair": "Гарячий -> холодний"
+              },
+              "r1-2": {
+                "pair": "Фрукт -> яблуко"
+              }
+            }
+          },
+          "codzienne": {
+            "title": "Повсякденні зв'язки",
+            "prompt": "Поєднайте частину з цілим, інструмент із дією, а місце з мешканцями.",
+            "targets": {
+              "r2-1": {
+                "pair": "Пелюстка -> квітка"
+              },
+              "r2-2": {
+                "pair": "Пензель -> малювання"
+              },
+              "r2-3": {
+                "pair": "Вулик -> бджоли"
+              }
+            }
+          },
+          "przyczyny": {
+            "title": "Причина, матеріал і послідовність",
+            "prompt": "Складніший набір: що спричиняє наслідок і що з чого виникає.",
+            "targets": {
+              "r3-1": {
+                "pair": "Дощ -> калюжа"
+              },
+              "r3-2": {
+                "pair": "Вовна -> светр"
+              },
+              "r3-3": {
+                "pair": "Насінина -> рослина"
+              }
+            }
+          },
+          "mieszanka": {
+            "title": "Міст зв'язків: мікс",
+            "prompt": "Поєднайте чотири різні типи зв'язків в одному наборі.",
+            "targets": {
+              "r4-1": {
+                "pair": "Автор -> книга"
+              },
+              "r4-2": {
+                "pair": "Високий -> низький"
+              },
+              "r4-3": {
+                "pair": "Колесо -> велосипед"
+              },
+              "r4-4": {
+                "pair": "Інструмент -> гітара"
+              }
+            }
+          }
+        }
+      }
+    },
+    "geometryDrawing": {
+      "progressAriaLabel": "Точність у вправах з малювання фігур",
+      "summary": {
+        "perfect": "Ідеально! Ваші фігури виглядають чудово.",
+        "good": "Чудова робота! Ваші малюнки стають дедалі точнішими.",
+        "retry": "Практикуйтеся далі. Кожна наступна фігура буде кращою."
+      },
+      "feedback": {
+        "success": {
+          "circle": "Чудово! Це схоже на коло.",
+          "oval": "Чудово! Це схоже на овал.",
+          "triangle": "Чудово! Це правильний трикутник.",
+          "square": "Чудово! Це схоже на квадрат.",
+          "diamond": "Чудово! Це схоже на ромб.",
+          "rectangle": "Добре! Це схоже на прямокутник.",
+          "pentagon": "Супер! Ви намалювали п'ятикутник.",
+          "hexagon": "Чудово! Це схоже на шестикутник."
+        },
+        "failure": {
+          "default": {
+            "circle": "Спробуйте намалювати більш округлу лінію.",
+            "oval": "Спробуйте намалювати більш витягнутий овал.",
+            "triangle": "Спробуйте зробити 3 чіткі кути.",
+            "square": "Спробуйте намалювати 4 сторони приблизно однакової довжини.",
+            "diamond": "Спробуйте намалювати похилі сторони й 4 чіткі кути.",
+            "rectangle": "Спробуйте намалювати 4 кути, причому одна сторона має бути помітно довшою за іншу.",
+            "pentagon": "Спробуйте намалювати 5 чітких кутів.",
+            "hexagon": "Спробуйте намалювати 6 чітких кутів."
+          },
+          "closeShape": "Замкніть фігуру. Початок і кінець лінії занадто далеко один від одного.",
+          "tooShortPath": "Лінія занадто коротка. Обведіть фігуру далі по колу.",
+          "tooJaggedPath": "Лінія занадто ламана. Спробуйте малювати плавніше.",
+          "addMoreCorners": "Додайте більше кутів. Ця фігура має мати приблизно {idealCorners}.",
+          "tooManyCorners": "Кутів забагато. Спробуйте намалювати приблизно {idealCorners}.",
+          "aspect": {
+            "square": "У квадрата сторони мають бути більш схожими за довжиною.",
+            "rectangle": "У прямокутника дві сторони мають бути помітно довшими.",
+            "circle": "Коло має бути рівнішим і круглішим.",
+            "oval": "Овал має бути більш витягнутим.",
+            "diamond": "Ромб має бути менш сплющеним або менш витягнутим."
+          },
+          "drawLonger": "Намалюйте більшу фігуру однією безперервною лінією.",
+          "tooSmall": "Фігура занадто мала. Намалюйте її більшою.",
+          "unreadable": "Не вдалося розпізнати малюнок."
+        }
+      },
+      "inRound": {
+        "difficulty": {
+          "starter": "Стартовий",
+          "pro": "Про",
+          "default": "Базовий"
+        },
+        "difficultyChip": "Рівень фігур",
+        "difficultyGroupAria": "Рівень складності фігур",
+        "liveRegion": "Раунд {current} з {total}. Намалюйте фігуру {shape}. Рівень {difficulty}.",
+        "progressValueText": "Раунд {current} з {total}",
+        "modeLabel": "Фігури • {difficulty}",
+        "prompt": "Намалюйте: {shape}",
+        "canvasAria": "Поле для малювання фігури {shape}. Використовуйте мишу, дотик або клавіатуру, щоб її намалювати.",
+        "drawHere": "Малюйте тут",
+        "inputHelp": "Поле для малювання підтримує мишу, дотик або клавіатуру. Enter або пробіл починає і завершує лінію, стрілки рухають курсор, а Escape очищає поле.",
+        "clear": "Очистити",
+        "check": "Перевірити",
+        "tooShort": "Намалюйте фігуру трохи довше, щоб її можна було перевірити.",
+        "keyboard": {
+          "ready": "Поле готове до малювання з клавіатури.",
+          "boardCleared": "Поле очищено.",
+          "restarted": "Розпочато новий раунд фігур.",
+          "difficultyChanged": "Рівень змінено на {difficulty}.",
+          "started": "Розпочато малювання з клавіатури.",
+          "finished": "Малювання з клавіатури завершено.",
+          "cleared": "Поле очищено, а курсор повернуто в центр."
+        },
+        "shapes": {
+          "circle": {
+            "label": "Коло",
+            "hint": "Намалюйте одну плавну замкнену лінію."
+          },
+          "oval": {
+            "label": "Овал",
+            "hint": "Намалюйте фігуру без кутів, але трохи витягнуту."
+          },
+          "triangle": {
+            "label": "Трикутник",
+            "hint": "Спробуйте зробити 3 чіткі кути."
+          },
+          "diamond": {
+            "label": "Ромб",
+            "hint": "4 кути, а сторони мають виглядати похилими."
+          },
+          "square": {
+            "label": "Квадрат",
+            "hint": "4 сторони, кожна сторона приблизно однакової довжини."
+          },
+          "rectangle": {
+            "label": "Прямокутник",
+            "hint": "4 кути, причому дві сторони помітно довші."
+          },
+          "pentagon": {
+            "label": "П'ятикутник",
+            "hint": "5 кутів і замкнена фігура."
+          },
+          "hexagon": {
+            "label": "Шестикутник",
+            "hint": "6 кутів і замкнена лінія."
+          }
+        }
+      }
+    },
+    "englishPrepositions": {
+      "feedback": {
+        "correct": "Чудово! Правильний вибір.",
+        "incorrect": "Правильна відповідь: {answer}."
+      },
+      "summary": {
+        "perfect": "Ідеально! Прийменники опановано.",
+        "good": "Гарна робота!",
+        "retry": "Ще один раунд - і все стане зрозумілим."
+      },
+      "inRound": {
+        "roundLabel": "Раунд {current}/{total}",
+        "hitsLabel": "{hits}/{total} правильних",
+        "check": "Перевірити",
+        "next": "Далі",
+        "seeResult": "Переглянути результат",
+        "click": {
+          "topicLabel": "Прийменники",
+          "rounds": {
+            "time-at": {
+              "prompt": "Виберіть прийменник часу.",
+              "hint": "Точний час -> at."
+            },
+            "time-on": {
+              "prompt": "Виберіть прийменник часу.",
+              "hint": "День тижня -> on."
+            },
+            "time-in": {
+              "prompt": "Виберіть прийменник часу.",
+              "hint": "Місяць -> in."
+            },
+            "time-before": {
+              "prompt": "Виберіть прийменник часу.",
+              "hint": "Перед уроком -> before."
+            },
+            "place-on": {
+              "prompt": "Виберіть прийменник місця.",
+              "hint": "Поверхня -> on."
+            },
+            "place-at": {
+              "prompt": "Виберіть прийменник місця.",
+              "hint": "Точка або місце зустрічі -> at."
+            },
+            "relation-between": {
+              "prompt": "Виберіть прийменник відношення.",
+              "hint": "P лежить у просторі між A і B."
+            },
+            "relation-above": {
+              "prompt": "Виберіть прийменник відношення.",
+              "hint": "Лампа розташована вище за стіл."
+            },
+            "relation-below": {
+              "prompt": "Виберіть прийменник відношення.",
+              "hint": "Коробка розташована нижче за парту."
+            }
+          }
+        },
+        "order": {
+          "modeLabel": "Порядок слів",
+          "buildLabel": "Складіть: {sentence}",
+          "dragInstruction": "Перетягніть слова, щоб скласти речення",
+          "sentenceAria": "Конструктор речення",
+          "shuffle": "Перемішати ще раз",
+          "feedback": {
+            "perfect": "Ідеально! Речення готове.",
+            "answer": "Правильне речення: {answer}"
+          },
+          "rounds": {
+            "time-start": {
+              "prompt": "Складіть речення про час.",
+              "hint": "Години = at.",
+              "title": "Час: початок"
+            },
+            "time-quiz": {
+              "prompt": "Складіть речення про день тижня.",
+              "hint": "Дні = on.",
+              "title": "Час: день"
+            },
+            "time-month": {
+              "prompt": "Складіть речення про місяць.",
+              "hint": "Місяці = in.",
+              "title": "Час: місяць"
+            },
+            "place-notes": {
+              "prompt": "Складіть речення про поверхню.",
+              "hint": "Поверхня = on.",
+              "title": "Місце: поверхня"
+            },
+            "place-bus": {
+              "prompt": "Складіть речення про точку або місце.",
+              "hint": "Точка зустрічі = at.",
+              "title": "Місце: точка"
+            },
+            "relation-between": {
+              "prompt": "Складіть речення про відношення між точками.",
+              "hint": "Між = between.",
+              "title": "Відношення: between"
+            }
+          }
+        },
+        "sort": {
+          "modeLabel": "Перетягніть і відпустіть",
+          "poolLabel": "Набір фраз",
+          "poolAria": "Набір фраз для сортування",
+          "poolEmpty": "Набір порожній",
+          "binAria": "Кошик {label}",
+          "missingPhrases": "Бракує фраз",
+          "clearRound": "Очистити раунд",
+          "feedback": {
+            "perfect": "Ідеально! Усе на правильному місці.",
+            "retry": "Перевірте виділені прийменники."
+          },
+          "rounds": {
+            "time-sort": {
+              "prompt": "Перетягніть фрази до правильного прийменника часу.",
+              "hint": "Години = at, дні = on, місяці = in.",
+              "title": "Сортування часу"
+            },
+            "place-sort": {
+              "prompt": "Перетягніть фрази до правильного прийменника місця.",
+              "hint": "Точка = at, поверхня = on, всередині = in.",
+              "title": "Сортування місця"
+            },
+            "relations-sort": {
+              "prompt": "Перетягніть фрази до правильного просторового відношення.",
+              "hint": "between = між, above = над, below = під.",
+              "title": "Сортування відношень"
+            }
+          },
+          "bins": {
+            "at": {
+              "description": "точка в часі / місці"
+            },
+            "on": {
+              "description": "день / поверхня"
+            },
+            "in": {
+              "description": "місяць / всередині"
+            },
+            "between": {
+              "description": "між"
+            },
+            "above": {
+              "description": "над"
+            },
+            "below": {
+              "description": "під"
+            }
+          }
+        },
+        "wordAria": "Слово: {token}"
+      }
+    }
+    ,
+    "calendarInteractive": {
+      "progressAriaLabel": "Точність в інтерактивній практиці з календарем",
+      "summary": {
+        "mixed": {
+          "perfect": "Ідеально! Ви знаєте календар досконало!",
+          "retry": "Чудово! Продовжуйте тренувати календарні завдання.",
+          "encouragement": "Не здавайтеся!"
+        },
+        "dni": {
+          "perfect": "Чудово! Ви впевнено розпізнаєте дні тижня та вихідні.",
+          "retry": "Ще трохи потренуйте назви днів тижня й стовпці вихідних."
+        },
+        "miesiace": {
+          "perfect": "Чудово! Місяці та пори року вже добре впорядковані.",
+          "retry": "Ще трохи потренуйте порядок місяців і відповідні їм пори року."
+        },
+        "data": {
+          "perfect": "Чудово! Ви швидко й точно читаєте календарні дати.",
+          "retry": "Ще трохи потренуйте пошук конкретних дат у сітці календаря."
+        },
+        "sectionEncouragement": "Не здавайтеся. Ще кілька спроб - і ця секція стане легшою."
+      },
+      "section": {
+        "dni": {
+          "guidanceTitle": "Тренування днів тижня",
+          "guidance": "Ви тренуєте назви днів тижня та розпізнавання вихідних у макеті календаря.",
+          "promptLabel": "Знайдіть правильний день тижня"
+        },
+        "miesiace": {
+          "guidanceTitle": "Тренування місяців",
+          "guidance": "Ви тренуєте місяці, їхній порядок і зіставлення з правильною порою року.",
+          "promptLabel": "Працюйте з місяцями та порами року"
+        },
+        "data": {
+          "guidanceTitle": "Тренування дат",
+          "guidance": "Ви тренуєте читання дат і пошук конкретного дня в сітці календаря.",
+          "promptLabel": "Знайдіть правильну дату в календарі"
+        }
+      },
+      "inRound": {
+        "previousMonth": "Попередній місяць",
+        "nextMonth": "Наступний місяць",
+        "tryAgain": "Ой, не той варіант. Спробуйте ще раз!",
+        "done": "Готово",
+        "confirmMonth": "Натисніть, коли вважаєте, що обрали правильний місяць.",
+        "chooseSeason": "Перетягніть або виберіть правильну пору року нижче.",
+        "monthAria": "Місяць {monthName}"
+      },
+      "months": {
+        "january": "Січень",
+        "february": "Лютий",
+        "march": "Березень",
+        "april": "Квітень",
+        "may": "Травень",
+        "june": "Червень",
+        "july": "Липень",
+        "august": "Серпень",
+        "september": "Вересень",
+        "october": "Жовтень",
+        "november": "Листопад",
+        "december": "Грудень"
+      },
+      "weekdays": {
+        "short": {
+          "mondayShort": "Пн",
+          "tuesdayShort": "Вт",
+          "wednesdayShort": "Ср",
+          "thursdayShort": "Чт",
+          "fridayShort": "Пт",
+          "saturdayShort": "Сб",
+          "sundayShort": "Нд"
+        },
+        "abbr": {
+          "mondayAbbr": "Пн",
+          "tuesdayAbbr": "Вт",
+          "wednesdayAbbr": "Ср",
+          "thursdayAbbr": "Чт",
+          "fridayAbbr": "Пт",
+          "saturdayAbbr": "Сб",
+          "sundayAbbr": "Нд"
+        },
+        "full": {
+          "monday": "Понеділок",
+          "tuesday": "Вівторок",
+          "wednesday": "Середа",
+          "thursday": "Четвер",
+          "friday": "П'ятниця",
+          "saturday": "Субота",
+          "sunday": "Неділя"
+        },
+        "lookup": {
+          "monday": "понеділок",
+          "tuesday": "вівторок",
+          "wednesday": "середу",
+          "thursday": "четвер",
+          "friday": "п'ятницю",
+          "saturday": "суботу",
+          "sunday": "неділю"
+        }
+      },
+      "weekends": {
+        "saturdays": "суботи",
+        "sundays": "неділі"
+      },
+      "seasons": {
+        "spring": "Весна",
+        "summer": "Літо",
+        "autumn": "Осінь",
+        "winter": "Зима"
+      },
+      "tasks": {
+        "clickWeekday": "Натисніть день тижня: \"{dayLabel}\"",
+        "clickDate": "Натисніть дату в календарі, яка припадає на {weekdayName}",
+        "dragSeason": "Перетягніть місяць \"{monthName}\" до правильної пори року",
+        "flipMonth": "Перейдіть до місяця номер {monthNumber} ({monthName})",
+        "clickAllWeekends": "Натисніть усі {dayName} в цьому місяці"
+      }
+    },
+    "clockTraining": {
+      "mode": {
+        "label": "Режим",
+        "challenge": "Виклик",
+        "practice": "Режим практики"
+      },
+      "sections": {
+        "hours": "Години",
+        "minutes": "Хвилини",
+        "combined": "Повний час",
+        "mixed": "Змішане"
+      },
+      "medals": {
+        "gold": "Золота медаль",
+        "silver": "Срібна медаль",
+        "bronze": "Бронзова медаль",
+        "default": "Медаль"
+      },
+      "bestStreak": "Найкраща серія",
+      "adaptiveRetries": "Адаптивні повтори",
+      "adaptiveRetriesWithCount": "Адаптивні повтори: {count}",
+      "adaptiveRetryAdded": "Ми додали коротке повторення цього завдання.",
+      "challengePill": "Виклик",
+      "taskProgress": "Завдання {current} з {total}",
+      "seriesProgress": "Серія {current}/{total}",
+      "progressAriaLabel": "Точність у тренуванні з годинником",
+      "emptyState": "Немає завдання.",
+      "actions": {
+        "finish": "Завершити вправу ✅"
+      },
+      "content": {
+        "hours": {
+          "promptLabel": "Встановіть повну годину"
+        },
+        "minutes": {
+          "promptLabel": "Встановіть хвилини на циферблаті"
+        },
+        "combined": {
+          "guidance": "Спочатку встановіть годину короткою стрілкою, а потім уточніть хвилини довгою стрілкою.",
+          "guidanceTitle": "Читання повного часу",
+          "legend": "Ви одночасно тренуєте обидва рухи: години й хвилини.",
+          "promptLabel": "Встановіть повний час"
+        },
+        "mixed": {
+          "guidance": "Іноді ви тренуєте повні години, іноді хвилини, а іноді весь час. Використовуйте обидві стрілки.",
+          "guidanceTitle": "Змішане тренування з годинником",
+          "legend": "Перемикайтеся між короткою і довгою стрілкою залежно від завдання.",
+          "promptLabel": "Встановіть годинник на потрібний час"
+        }
+      },
+      "prompt": {
+        "hours": {
+          "default": "Повна година. Встановіть коротку стрілку, а хвилини залиште на 00."
+        },
+        "minutes": {
+          "quarterPast": "Чверть після. Коротка стрілка залишається на 12.",
+          "halfHour": "Пів години. Коротка стрілка залишається на 12.",
+          "fortyFiveMinutes": "45 хвилин. Коротка стрілка залишається на 12.",
+          "default": "Зосередьтеся на довгій стрілці. Коротка стрілка залишається на 12."
+        },
+        "default": {
+          "fullHour": "Повна година (хвилини = 00).",
+          "quarterPast": "Чверть після {hour}.",
+          "halfTo": "Половина після {currentHour}.",
+          "quarterTo": "Чверть до {nextHour}.",
+          "general": "Годинникова стрілка рухається разом із хвилинами."
+        }
+      },
+      "feedback": {
+        "wrong": {
+          "title": {
+            "hours": {
+              "neighbor": "Майже! Це сусідня година.",
+              "close": "Близько!"
+            },
+            "minutes": {
+              "veryNear": "Дуже близько по хвилинах!",
+              "near": "Майже! Хвилини близькі."
+            },
+            "veryNear": "Дуже близько!",
+            "near": "Майже!",
+            "default": "Спробуйте ще раз!"
+          },
+          "hint": {
+            "hours": {
+              "minutesStayZero": "У тренуванні годин довга стрілка залишається на 12, тож хвилини мають бути :00.",
+              "checkShortHand": "Перевірте коротку стрілку й виберіть повну годину."
+            },
+            "minutes": {
+              "moveOneTick": "Довга стрілка майже правильна. Посуньте її ще на одну поділку.",
+              "countByFives": "Рахуйте поділки по п'ять хвилин і підкоригуйте довгу стрілку.",
+              "focusLongHand": "Зосередьтеся лише на довгій стрілці. Коротка залишається на 12."
+            },
+            "combined": {
+              "adjustShortHand": "Довга стрілка майже правильна. Трохи підкоригуйте коротку стрілку (години).",
+              "focusLongHand": "Зосередьтеся на довгій стрілці (хвилини)."
+            },
+            "default": "Перевірте обидві стрілки."
+          },
+          "details": {
+            "hours": "Ваша відповідь: {actual}. Правильно: {expected}. Помилка на {distance} год. {hint}",
+            "default": "Ваша відповідь: {actual}. Правильно: {expected}. Різниця: {distance} хв. {hint}"
+          }
+        },
+        "correct": {
+          "title": {
+            "default": "Чудово! Правильно!",
+            "hours": "Чудово! Це правильна година!",
+            "minutes": "Чудово! Хвилини збігаються!",
+            "combined": "Чудово! Повний час встановлено!"
+          },
+          "details": {
+            "default": "Ви правильно встановили: {time}.",
+            "hours": "Ви правильно встановили повну годину: {time}.",
+            "minutes": "Ви правильно встановили хвилини: {time}.",
+            "combined": "Ви правильно встановили повний час: {time}.",
+            "challengeStreak": "Серія: {streak}."
+          }
+        },
+        "timeout": {
+          "title": "Час вийшов!",
+          "details": {
+            "hours": "Ви не встигли встановити повну годину. Правильний час: {time}.",
+            "minutes": "Ви не встигли встановити хвилини. Правильне читання: {time}.",
+            "combined": "Ви не встигли встановити повний час. Правильний час: {time}.",
+            "default": "Ви не встигли встановити час. Правильний час: {time}."
+          }
+        }
+      },
+      "snapMode": {
+        "step5": "Крок 5 хв",
+        "step1": "Точність до 1 хв"
+      },
+      "interactionHint": {
+        "correct": {
+          "summary": "Правильна відповідь. Далі буде підсумок.",
+          "nextStage": "Правильна відповідь. Далі наступний етап.",
+          "nextTask": "Правильна відповідь. Далі наступне завдання."
+        },
+        "wrong": {
+          "summary": "Ми перевірили відповідь. Далі буде підсумок.",
+          "nextStage": "Ми перевірили відповідь. Далі наступний етап.",
+          "nextTask": "Ми перевірили відповідь. Далі наступне завдання."
+        },
+        "idle": {
+          "mixed": "Годинникова стрілка плавно рухається разом із хвилинами."
+        }
+      },
+      "legend": {
+        "hourHand": "Години (коротка стрілка)",
+        "minuteHand": "Хвилини (довга стрілка)"
+      },
+      "submit": {
+        "correct": "Правильно! ✅",
+        "wrong": "Не зовсім! ❌",
+        "idle": "Перевірити! ✅"
+      },
+      "summary": {
+        "hours": {
+          "perfect": "Чудово! Ви впевнено читаєте повні години.",
+          "retry": "Ще трохи потренуйте повні години й стежте за короткою стрілкою."
+        },
+        "minutes": {
+          "perfect": "Чудово! Хвилини вже під контролем.",
+          "retry": "Ще трохи потренуйте хвилини, рахуючи поділки по п'ять."
+        },
+        "combined": {
+          "perfect": "Чудово! Ви впевнено поєднуєте години й хвилини.",
+          "retry": "Ще трохи потренуйте встановлення годин і хвилин разом."
+        },
+        "default": {
+          "perfect": "Ідеально! Ви дуже добре знаєте годинник!",
+          "retry": "Практикуйтеся далі, і ви опануєте годинник!"
+        }
+      }
+    }
+  },
+  "KangurCmsRuntime": {
+    "common": {
+      "playerFallback": "Гравець"
+    },
+    "progress": {
+      "totalXpLabel": "{xp} XP усього",
+      "xpIntoLevelLabel": "{xp} XP"
+    },
+    "assignments": {
+      "actions": {
+        "returnToPractice": "Повернутися до практики"
+      },
+      "description": {
+        "returnToPractice": "Поверніться до практики і продовжіть виклик."
+      },
+      "title": {
+        "continuePractice": "Продовжити практику"
+      },
+      "countLabel": "{count} завдань",
+      "priority": {
+        "high": "Високий пріоритет",
+        "medium": "Середній пріоритет",
+        "low": "Низький пріоритет",
+        "self": "Власний пріоритет",
+        "session": "Сесія практики"
+      },
+      "progress": {
+        "completedPercent": "{percent}% виконано",
+        "none": "Немає активного завдання."
+      },
+      "helper": {
+        "activeSession": "Ця сесія зосереджена на призначеному завданні.",
+        "nextPractice": "Найближчий пріоритет у практиці: {operation}.",
+        "nextStep": "Наступний крок у практиці."
+      },
+      "eyebrow": {
+        "completedParent": "Виконане завдання від батьків",
+        "parent": "Завдання від батьків",
+        "followUp": "Наступна практика"
+      }
+    },
+    "operationSelector": {
+      "greetingLabel": "Привіт, {playerName}! 👋"
+    },
+    "result": {
+      "title": "Чудова робота, {playerName}!",
+      "starsLabel": "{stars} / 3 зірки",
+      "timeTakenLabel": "{seconds} с",
+      "message": {
+        "perfect": "Ідеальний результат! Ви зірка математики.",
+        "great": "Неймовірна робота! Так тримати.",
+        "good": "Гарна робота! Практика веде до прогресу.",
+        "tryAgain": "Продовжуйте старатися. У вас вийде."
+      }
+    }
+  }
+}

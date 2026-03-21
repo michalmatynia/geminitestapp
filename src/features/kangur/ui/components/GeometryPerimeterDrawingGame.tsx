@@ -57,13 +57,14 @@ import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import { useKangurCanvasRedraw } from '@/features/kangur/ui/hooks/useKangurCanvasRedraw';
 import type { Point2d } from '@/shared/contracts/geometry';
-import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
+import type {
+  KangurMiniGameFinishProps,
+  KangurMiniGameInformationalFeedback,
+  KangurRewardBreakdownEntry,
+} from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
-type GeometryPerimeterDrawingGameProps = {
-  finishLabel?: string;
-  onFinish: () => void;
-};
+type GeometryPerimeterDrawingGameProps = KangurMiniGameFinishProps;
 
 type PerimeterRound = {
   id: string;
@@ -73,10 +74,7 @@ type PerimeterRound = {
   emoji: string;
 };
 
-type FeedbackState = {
-  kind: 'success' | 'error' | 'info';
-  text: string;
-} | null;
+type FeedbackState = KangurMiniGameInformationalFeedback | null;
 
 const ROUNDS: PerimeterRound[] = [
   {

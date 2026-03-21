@@ -23,7 +23,7 @@ import {
   Hint,
   UI_STACK_RELAXED_CLASSNAME,
 } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export default function RegisterPage(): React.JSX.Element {
   return <RegisterForm />;
@@ -81,15 +81,13 @@ function RegisterForm(): React.JSX.Element {
           callbackUrl: '/admin',
         });
       } catch (signInErr) {
-        logClientError(signInErr);
-        logClientError(signInErr, { context: { source: 'RegisterPage', action: 'signIn', email } });
+        logClientCatch(signInErr, { source: 'RegisterPage', action: 'signIn', email });
         const message =
           signInErr instanceof Error ? signInErr.message : translations('signInFailed');
         setError(message);
       }
     } catch (err) {
-      logClientError(err);
-      logClientError(err, { context: { source: 'RegisterPage', action: 'handleSubmit', email } });
+      logClientCatch(err, { source: 'RegisterPage', action: 'handleSubmit', email });
       const message = err instanceof Error ? err.message : translations('createAccountFailed');
       setError(message);
     } finally {

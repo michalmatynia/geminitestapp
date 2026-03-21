@@ -46,7 +46,11 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
-import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
+import type {
+  KangurMiniGameFeedback,
+  KangurMiniGameFinishProps,
+  KangurRewardBreakdownEntry,
+} from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 import {
@@ -90,15 +94,9 @@ type RoundState = {
   bins: Partial<Record<PartOfSpeech, SpeechToken[]>>;
 };
 
-type FeedbackState = {
-  kind: 'success' | 'error';
-  text: string;
-};
+type FeedbackState = KangurMiniGameFeedback;
 
-type EnglishPartsOfSpeechGameProps = {
-  finishLabel?: string;
-  onFinish: () => void;
-};
+type EnglishPartsOfSpeechGameProps = KangurMiniGameFinishProps;
 
 const getPartsOfSpeechRoundMessage = (
   translate: ReturnType<typeof useTranslations>,

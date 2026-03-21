@@ -6,7 +6,7 @@ import { internalError } from '@/shared/errors/app-error';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { APP_EMBED_SETTING_KEY, type AppEmbedId } from '@/shared/lib/app-embeds';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 interface AppEmbedsContextType {
@@ -68,8 +68,7 @@ export function AppEmbedsProvider({ children }: { children: React.ReactNode }): 
       setUserEnabled(null);
       toast('App embed settings saved.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, { context: { source: 'AppEmbedsProvider', action: 'saveSettings' } });
+      logClientCatch(error, { source: 'AppEmbedsProvider', action: 'saveSettings' });
       toast('Failed to save app embed settings.', { variant: 'error' });
       throw error;
     }

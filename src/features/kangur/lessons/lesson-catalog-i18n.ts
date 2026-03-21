@@ -15,7 +15,7 @@ type LessonCopyOverride = {
   description?: string;
 };
 
-type KangurLessonCatalogLocale = 'pl' | 'en' | 'de';
+type KangurLessonCatalogLocale = 'pl' | 'en' | 'de' | 'uk';
 
 const ENGLISH_LESSON_SECTION_LABELS: Record<string, string> = {
   alphabet_rysuj_litery: 'Trace the letters',
@@ -47,6 +47,21 @@ const GERMAN_LESSON_SECTION_LABELS: Record<string, string> = {
   english_grammar: 'Grammatik',
 };
 
+const UKRAINIAN_LESSON_SECTION_LABELS: Record<string, string> = {
+  alphabet_rysuj_litery: 'Обводь літери',
+  alphabet_syllables: 'Склади і слова',
+  alphabet_first_words: 'Перші слова',
+  alphabet_matching: 'Добери літери',
+  alphabet_sequence: 'Порядок літер',
+  geometry_shapes: 'Геометричні фігури',
+  maths_time: 'Час',
+  maths_arithmetic: 'Арифметика',
+  maths_geometry: 'Геометрія',
+  maths_logic: 'Логічне мислення',
+  english_basics_section: 'Основи',
+  english_grammar: 'Граматика',
+};
+
 const ENGLISH_LESSON_SECTION_TYPE_LABELS: Record<string, string> = {
   Gra: 'Game',
   Lekcja: 'Lesson',
@@ -59,6 +74,13 @@ const GERMAN_LESSON_SECTION_TYPE_LABELS: Record<string, string> = {
   Lekcja: 'Lektion',
   Section: 'Abschnitt',
   Subsection: 'Unterabschnitt',
+};
+
+const UKRAINIAN_LESSON_SECTION_TYPE_LABELS: Record<string, string> = {
+  Gra: 'Гра',
+  Lekcja: 'Урок',
+  Section: 'Розділ',
+  Subsection: 'Підрозділ',
 };
 
 const ENGLISH_SUBJECT_LABELS: Record<KangurLessonSubject, string> = {
@@ -79,6 +101,15 @@ const GERMAN_SUBJECT_LABELS: Record<KangurLessonSubject, string> = {
   agentic_coding: 'Agentic Coding',
 };
 
+const UKRAINIAN_SUBJECT_LABELS: Record<KangurLessonSubject, string> = {
+  alphabet: 'Абетка',
+  geometry: 'Фігури',
+  maths: 'Математика',
+  english: 'Англійська',
+  web_development: 'Веброзробка',
+  agentic_coding: 'Агентне програмування',
+};
+
 const ENGLISH_AGE_GROUP_LABELS: Record<KangurLessonAgeGroup, string> = {
   six_year_old: 'Age 6',
   ten_year_old: 'Age 10',
@@ -89,6 +120,12 @@ const GERMAN_AGE_GROUP_LABELS: Record<KangurLessonAgeGroup, string> = {
   six_year_old: '6 Jahre',
   ten_year_old: '10 Jahre',
   grown_ups: 'Erwachsene',
+};
+
+const UKRAINIAN_AGE_GROUP_LABELS: Record<KangurLessonAgeGroup, string> = {
+  six_year_old: '6 років',
+  ten_year_old: '10 років',
+  grown_ups: 'Дорослі',
 };
 
 const SUBJECT_LABEL_MAP = new Map<KangurLessonSubject, string>(
@@ -631,7 +668,11 @@ const resolveKangurLessonCatalogLocale = (
   locale: string | null | undefined
 ): KangurLessonCatalogLocale => {
   const normalizedLocale = normalizeSiteLocale(locale);
-  if (normalizedLocale === 'pl' || normalizedLocale === 'de') {
+  if (
+    normalizedLocale === 'pl' ||
+    normalizedLocale === 'de' ||
+    normalizedLocale === 'uk'
+  ) {
     return normalizedLocale;
   }
   return 'en';
@@ -700,7 +741,11 @@ export const getLocalizedKangurSubjectLabel = (
   }
 
   return (
-    (catalogLocale === 'de' ? GERMAN_SUBJECT_LABELS[subject] : undefined) ??
+    (catalogLocale === 'de'
+      ? GERMAN_SUBJECT_LABELS[subject]
+      : catalogLocale === 'uk'
+        ? UKRAINIAN_SUBJECT_LABELS[subject]
+        : undefined) ??
     ENGLISH_SUBJECT_LABELS[subject] ??
     sourceLabel
   );
@@ -719,7 +764,11 @@ export const getLocalizedKangurAgeGroupLabel = (
   }
 
   return (
-    (catalogLocale === 'de' ? GERMAN_AGE_GROUP_LABELS[ageGroup] : undefined) ??
+    (catalogLocale === 'de'
+      ? GERMAN_AGE_GROUP_LABELS[ageGroup]
+      : catalogLocale === 'uk'
+        ? UKRAINIAN_AGE_GROUP_LABELS[ageGroup]
+        : undefined) ??
     ENGLISH_AGE_GROUP_LABELS[ageGroup] ??
     sourceLabel
   );
@@ -737,7 +786,11 @@ export const getLocalizedKangurLessonSectionLabel = (
   }
 
   return (
-    (catalogLocale === 'de' ? GERMAN_LESSON_SECTION_LABELS[sectionId] : undefined) ??
+    (catalogLocale === 'de'
+      ? GERMAN_LESSON_SECTION_LABELS[sectionId]
+      : catalogLocale === 'uk'
+        ? UKRAINIAN_LESSON_SECTION_LABELS[sectionId]
+        : undefined) ??
     ENGLISH_LESSON_SECTION_LABELS[sectionId] ??
     fallbackLabel
   );
@@ -756,7 +809,9 @@ export const getLocalizedKangurLessonSectionTypeLabel = (
   return (
     (catalogLocale === 'de'
       ? GERMAN_LESSON_SECTION_TYPE_LABELS[fallbackTypeLabel]
-      : undefined) ??
+      : catalogLocale === 'uk'
+        ? UKRAINIAN_LESSON_SECTION_TYPE_LABELS[fallbackTypeLabel]
+        : undefined) ??
     ENGLISH_LESSON_SECTION_TYPE_LABELS[fallbackTypeLabel] ??
     fallbackTypeLabel
   );

@@ -7,11 +7,14 @@ import { createDefaultKangurAiTutorLearnerMood, createDefaultKangurProgressState
 import type {
   KangurAuthSession,
   KangurClientStorageAdapter,
+  KangurScoreRecord,
   KangurUser,
 } from '@kangur/platform';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { KangurMobileI18nProvider } from '../i18n/kangurMobileI18n';
 
 const {
   listScoresMock,
@@ -90,10 +93,65 @@ const createStorage = (): KangurClientStorageAdapter => ({
   subscribe: vi.fn(() => () => {}),
 });
 
+const createScore = (overrides: Partial<KangurScoreRecord> = {}): KangurScoreRecord => ({
+  correct_answers: 4,
+  created_by: 'user-1',
+  created_date: '2026-03-20T12:00:00.000Z',
+  id: 'score-1',
+  learner_id: 'learner-1',
+  operation: 'division',
+  owner_user_id: 'user-1',
+  player_name: 'Ada Learner',
+  score: 4,
+  subject: 'maths',
+  time_taken: 44,
+  total_questions: 10,
+  ...overrides,
+});
+
+const createProgressSnapshot = () => ({
+  ...createDefaultKangurProgressState(),
+  gamesPlayed: 12,
+  lessonMastery: {
+    adding: {
+      attempts: 3,
+      bestScorePercent: 80,
+      completions: 3,
+      lastCompletedAt: '2026-03-06T11:00:00.000Z',
+      lastScorePercent: 70,
+      masteryPercent: 67,
+    },
+    clock: {
+      attempts: 4,
+      bestScorePercent: 100,
+      completions: 4,
+      lastCompletedAt: '2026-03-06T12:00:00.000Z',
+      lastScorePercent: 90,
+      masteryPercent: 92,
+    },
+    division: {
+      attempts: 2,
+      bestScorePercent: 60,
+      completions: 2,
+      lastCompletedAt: '2026-03-06T10:00:00.000Z',
+      lastScorePercent: 40,
+      masteryPercent: 45,
+    },
+  },
+  lessonsCompleted: 7,
+  operationsPlayed: ['addition', 'division'],
+  perfectGames: 3,
+  totalXp: 620,
+});
+
 const createWrapper =
-  (queryClient: QueryClient) =>
+  (queryClient: QueryClient, locale?: 'pl' | 'en' | 'de') =>
   ({ children }: { children: React.ReactNode }): React.JSX.Element =>
-    (
+    locale ? (
+      <KangurMobileI18nProvider locale={locale}>
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      </KangurMobileI18nProvider>
+    ) : (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 
@@ -237,5 +295,77 @@ describe('useKangurMobileLearnerProfile', () => {
     expect(result.current.isAuthenticated).toBe(false);
     expect(result.current.isLoadingScores).toBe(true);
     expect(listScoresMock).not.toHaveBeenCalled();
+  });
+
+  it('localizes fallback profile copy in German', async () => {
+    useKangurMobileAuthMock.mockReturnValue({
+      authError: null,
+      authMode: 'learner-session',
+      isLoadingAuth: false,
+      session: createSession(
+        createUser({
+          full_name: ' ',
+          activeLearner: null,
+        }),
+      ),
+      signIn: signInMock,
+      supportsLearnerCredentials: true,
+    });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(() => useKangurMobileLearnerProfile(), {
+      wrapper: createWrapper(queryClient, 'de'),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isAuthenticated).toBe(true);
+    });
+
+    expect(result.current.displayName).toBe('Lokaler Modus');
+    expect(result.current.recommendationsNote).toContain('Auf Mobile laufen bereits Lektionen');
+  });
+
+  it('passes the active locale through to localized recommendations and assignments', async () => {
+    listScoresMock.mockResolvedValue([createScore()]);
+    const progressSnapshot = createProgressSnapshot();
+
+    useKangurMobileRuntimeMock.mockReturnValue({
+      apiBaseUrl: 'http://localhost:3000',
+      apiClient: {
+        listScores: listScoresMock,
+      },
+      defaultDailyGoalGames: 5,
+      progressStore: {
+        subscribeToProgress: () => () => {},
+        loadProgress: () => progressSnapshot,
+      },
+      storage: createStorage(),
+    });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(() => useKangurMobileLearnerProfile(), {
+      wrapper: createWrapper(queryClient, 'de'),
+    });
+
+    await waitFor(() => {
+      expect(result.current.snapshot.recommendations.map((entry) => entry.id)).toContain(
+        'focus_weakest_operation',
+      );
+    });
+
+    expect(result.current.snapshot.recommendations[0]).toMatchObject({
+      action: {
+        label: 'Lektion öffnen',
+      },
+      id: 'focus_weakest_operation',
+      title: 'Fokus auf: Division',
+    });
+    expect(result.current.assignments[0]).toMatchObject({
+      action: {
+        label: 'Lektion öffnen',
+      },
+      id: 'lesson-retry-division',
+      title: '➗ Wiederholung: Division',
+    });
   });
 });

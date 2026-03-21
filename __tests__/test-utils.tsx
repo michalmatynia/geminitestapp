@@ -1,12 +1,12 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, RenderOptions, RenderResult } from '@/__tests__/test-utils';
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, type RenderOptions, type RenderResult } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 
 import { ToastProvider } from '@/shared/ui/toast';
 import plMessages from '@/i18n/messages/pl.json';
 
-const createTestQueryClient = () =>
+const createTestQueryClient = (): QueryClient =>
   new QueryClient({
     defaultOptions: {
       queries: {
@@ -27,7 +27,7 @@ const customRender = (ui: React.ReactElement, options?: CustomRenderOptions): Re
   const queryClient = options?.queryClient || createTestQueryClient();
   const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <NextIntlClientProvider
-      locale="pl"
+      locale='pl'
       messages={plMessages}
       onError={() => {}}
       getMessageFallback={({ key }) => key}
@@ -40,6 +40,6 @@ const customRender = (ui: React.ReactElement, options?: CustomRenderOptions): Re
   return render(ui, { wrapper: Wrapper, ...options });
 };
 
-export * from '@/__tests__/test-utils';
+export * from '@testing-library/react';
 export { customRender as render };
 export { createTestQueryClient };

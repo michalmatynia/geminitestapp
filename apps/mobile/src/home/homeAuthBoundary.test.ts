@@ -119,4 +119,49 @@ describe('getKangurHomeAuthBoundaryViewModel', () => {
       userLabel: 'Ada Lovelace (uczen)',
     });
   });
+
+  it('can localize authenticated labels for German mobile chrome', () => {
+    expect(
+      getKangurHomeAuthBoundaryViewModel({
+        authError: null,
+        developerAutoSignInEnabled: false,
+        hasAttemptedDeveloperAutoSignIn: false,
+        isLoadingAuth: false,
+        locale: 'de',
+        session: {
+          lastResolvedAt: '2026-03-20T00:00:00.000Z',
+          source: 'native-learner-session',
+          status: 'authenticated',
+          user: {
+            actorType: 'learner',
+            activeLearner: {
+              id: 'learner-1',
+              ownerUserId: 'parent-1',
+              displayName: 'Ada Learner',
+              loginName: 'ada',
+              status: 'active',
+              legacyUserKey: null,
+              createdAt: '2026-03-20T00:00:00.000Z',
+              updatedAt: '2026-03-20T00:00:00.000Z',
+            },
+            full_name: 'Ada Lovelace',
+            id: 'user-1',
+            email: null,
+            learner_id: 'learner-1',
+            role: 'user',
+            canManageLearners: false,
+            ownerUserId: 'parent-1',
+            learners: [],
+          },
+        } as never,
+        supportsLearnerCredentials: true,
+      }),
+    ).toEqual({
+      developerAutoSignInLabel: null,
+      isRestoringLearnerSession: false,
+      showLearnerCredentialsForm: false,
+      statusLabel: 'angemeldet',
+      userLabel: 'Ada Lovelace (schuler)',
+    });
+  });
 });

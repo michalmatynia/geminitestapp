@@ -21,6 +21,7 @@ import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_WRAP_ROW_SPACED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 type SurfaceOption = {
@@ -36,9 +37,7 @@ type Scenario = {
   answer: string;
 };
 
-type AgenticSurfaceMatchGameProps = {
-  onFinish: () => void;
-};
+type AgenticSurfaceMatchGameProps = KangurMiniGameFinishActionProps;
 
 const SURFACE_OPTIONS: SurfaceOption[] = [
   {

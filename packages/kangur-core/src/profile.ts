@@ -1,30 +1,21 @@
 import type { KangurProgressState, KangurScore } from '@kangur/contracts';
 
 import { KANGUR_LESSON_CATALOG } from './lesson-catalog';
+import {
+  getLocalizedKangurCoreLessonTitle,
+  getLocalizedKangurCoreLevelTitle,
+  getLocalizedKangurCoreOperationInfo,
+  getLocalizedKangurCoreWeekdayLabel,
+  localizeKangurCoreText,
+  normalizeKangurCoreLocale,
+  type KangurCoreLocale,
+} from './profile-i18n';
 import { resolvePreferredKangurPracticeOperation } from './practice';
 import {
   KANGUR_BADGES,
   getCurrentKangurLevel,
   getNextKangurLevel,
 } from './progress-metadata';
-
-const OPERATION_LABELS: Record<string, { label: string; emoji: string }> = {
-  addition: { label: 'Dodawanie', emoji: '➕' },
-  subtraction: { label: 'Odejmowanie', emoji: '➖' },
-  multiplication: { label: 'Mnozenie', emoji: '✖️' },
-  division: { label: 'Dzielenie', emoji: '➗' },
-  calendar: { label: 'Kalendarz', emoji: '📅' },
-  decimals: { label: 'Ulamki', emoji: '🔢' },
-  powers: { label: 'Potegi', emoji: '⚡' },
-  roots: { label: 'Pierwiastki', emoji: '√' },
-  clock: { label: 'Zegar', emoji: '🕐' },
-  mixed: { label: 'Mieszane', emoji: '🎲' },
-  logical_thinking: { label: 'Myslenie logiczne', emoji: '🧠' },
-  logical_patterns: { label: 'Wzorce i ciagi', emoji: '🔢' },
-  logical_classification: { label: 'Klasyfikacja', emoji: '📦' },
-  logical_reasoning: { label: 'Wnioskowanie', emoji: '💡' },
-  logical_analogies: { label: 'Analogie', emoji: '🔗' },
-};
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 export const KANGUR_PROFILE_DEFAULT_DAILY_GOAL_GAMES = 3;
@@ -144,7 +135,44 @@ export type BuildKangurLearnerProfileSnapshotInput = {
   progress: KangurProgressState;
   scores: KangurScore[];
   dailyGoalGames: number;
+  locale?: string | null | undefined;
   now?: Date | undefined;
+};
+
+const getRecommendationActionLabel = (
+  key: 'openLesson' | 'practiceNow' | 'playToday',
+  locale: KangurCoreLocale,
+): string => {
+  if (key === 'openLesson') {
+    return localizeKangurCoreText(
+      {
+        de: 'Lektion öffnen',
+        en: 'Open lesson',
+        pl: 'Otwórz lekcję',
+      },
+      locale,
+    );
+  }
+
+  if (key === 'playToday') {
+    return localizeKangurCoreText(
+      {
+        de: 'Heute spielen',
+        en: 'Play today',
+        pl: 'Zagraj dzis',
+      },
+      locale,
+    );
+  }
+
+  return localizeKangurCoreText(
+    {
+      de: 'Jetzt trainieren',
+      en: 'Practice now',
+      pl: 'Trenuj teraz',
+    },
+    locale,
+  );
 };
 
 const normalizeScoresDesc = (scores: KangurScore[]): KangurScore[] =>
@@ -226,6 +254,7 @@ const computeStreaks = (
 
 const computeOperationPerformance = (
   scores: KangurScore[],
+  locale: KangurCoreLocale,
 ): KangurOperationPerformance[] => {
   const buckets = new Map<
     string,
@@ -255,7 +284,7 @@ const computeOperationPerformance = (
 
   return Array.from(buckets.entries())
     .map(([operation, bucket]): KangurOperationPerformance => {
-      const operationInfo = OPERATION_LABELS[operation] ?? { label: operation, emoji: '❓' };
+      const operationInfo = getLocalizedKangurCoreOperationInfo(operation, locale);
       return {
         operation,
         label: operationInfo.label,
@@ -272,6 +301,7 @@ const computeOperationPerformance = (
 const computeWeeklyActivity = (
   scores: KangurScore[],
   now: Date,
+  locale: KangurCoreLocale,
 ): KangurWeeklyActivityPoint[] => {
   const daysToDisplay = 7;
   const buckets = new Map<string, { games: number; accuracySum: number }>();
@@ -289,7 +319,6 @@ const computeWeeklyActivity = (
     buckets.set(dateKey, bucket);
   });
 
-  const dayLabels = ['niedz.', 'pon.', 'wt.', 'sr.', 'czw.', 'pt.', 'sob.'];
   const result: KangurWeeklyActivityPoint[] = [];
   for (let offset = daysToDisplay - 1; offset >= 0; offset -= 1) {
     const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset);
@@ -298,7 +327,7 @@ const computeWeeklyActivity = (
     const avg = bucket && bucket.games > 0 ? toPercent(bucket.accuracySum / bucket.games) : 0;
     result.push({
       dateKey,
-      label: dayLabels[day.getDay()] ?? dateKey,
+      label: getLocalizedKangurCoreWeekdayLabel(day.getDay(), locale) || dateKey,
       games: bucket?.games ?? 0,
       averageAccuracy: avg,
     });
@@ -307,12 +336,12 @@ const computeWeeklyActivity = (
   return result;
 };
 
-const computeRecentSessions = (scores: KangurScore[]): KangurRecentSession[] =>
+const computeRecentSessions = (
+  scores: KangurScore[],
+  locale: KangurCoreLocale,
+): KangurRecentSession[] =>
   scores.slice(0, 8).map((score): KangurRecentSession => {
-    const operationInfo = OPERATION_LABELS[score.operation] ?? {
-      label: score.operation,
-      emoji: '❓',
-    };
+    const operationInfo = getLocalizedKangurCoreOperationInfo(score.operation, locale);
     const totalQuestions = Math.max(1, score.total_questions || 1);
     return {
       id: score.id,
@@ -329,13 +358,15 @@ const computeRecentSessions = (scores: KangurScore[]): KangurRecentSession[] =>
 
 const resolveLessonMasteryEntries = (
   progress: KangurProgressState,
+  locale: KangurCoreLocale,
 ): KangurLessonMasteryInsight[] =>
   Object.entries(progress.lessonMastery).map(([componentId, mastery]) => {
     const lesson = KANGUR_LESSON_CATALOG[componentId];
+    const lessonTitle = getLocalizedKangurCoreLessonTitle(componentId, locale, lesson?.title);
 
     return {
       componentId,
-      title: lesson?.title ?? componentId,
+      title: lessonTitle,
       emoji: lesson?.emoji ?? '📘',
       masteryPercent: mastery.masteryPercent,
       attempts: mastery.attempts,
@@ -348,8 +379,10 @@ const resolveLessonMasteryEntries = (
 export const buildLessonMasteryInsights = (
   progress: KangurProgressState,
   limit = 3,
+  locale?: string | null | undefined,
 ): KangurLessonMasteryInsights => {
-  const entries = resolveLessonMasteryEntries(progress);
+  const safeLocale = normalizeKangurCoreLocale(locale);
+  const entries = resolveLessonMasteryEntries(progress, safeLocale);
   const safeLimit = Math.max(1, Math.floor(limit));
   const weakest = [...entries]
     .filter((entry) => entry.masteryPercent < 80)
@@ -389,6 +422,7 @@ const buildRecommendations = (input: {
   currentStreakDays: number;
   dailyGoalGames: number;
   todayGames: number;
+  locale: KangurCoreLocale;
   operationPerformance: KangurOperationPerformance[];
   progress: KangurProgressState;
 }): KangurLearnerRecommendation[] => {
@@ -396,7 +430,11 @@ const buildRecommendations = (input: {
   const remainingDailyGames = Math.max(0, input.dailyGoalGames - input.todayGames);
   const weakestOperation = input.operationPerformance.at(-1) ?? null;
   const strongestOperation = input.operationPerformance[0] ?? null;
-  const weakestLessonEntry = buildLessonMasteryInsights(input.progress, 1).weakest[0] ?? null;
+  const weakestLessonEntry = buildLessonMasteryInsights(
+    input.progress,
+    1,
+    input.locale,
+  ).weakest[0] ?? null;
   const weakestPracticeOperation = resolvePreferredKangurPracticeOperation(
     weakestOperation?.operation,
   );
@@ -407,11 +445,25 @@ const buildRecommendations = (input: {
   if (weakestOperation && weakestOperation.averageAccuracy < 75) {
     recommendations.push({
       id: 'focus_weakest_operation',
-      title: `Skup się na: ${weakestOperation.label}`,
-      description: `Wykonaj 2 krótkie sesje ${weakestOperation.label.toLowerCase()} i celuj w min. 80% poprawności.`,
+      title: localizeKangurCoreText(
+        {
+          de: `Fokus auf: ${weakestOperation.label}`,
+          en: `Focus on: ${weakestOperation.label}`,
+          pl: `Skup się na: ${weakestOperation.label}`,
+        },
+        input.locale,
+      ),
+      description: localizeKangurCoreText(
+        {
+          de: `Mache 2 kurze ${weakestOperation.label.toLowerCase()}-Sitzungen und peile mindestens 80 % Genauigkeit an.`,
+          en: `Complete 2 short ${weakestOperation.label.toLowerCase()} sessions and aim for at least 80% accuracy.`,
+          pl: `Wykonaj 2 krótkie sesje ${weakestOperation.label.toLowerCase()} i celuj w min. 80% poprawności.`,
+        },
+        input.locale,
+      ),
       priority: 'high',
       action: {
-        label: 'Otwórz lekcję',
+        label: getRecommendationActionLabel('openLesson', input.locale),
         page: 'Lessons',
         query: {
           focus: weakestOperation.operation,
@@ -423,11 +475,25 @@ const buildRecommendations = (input: {
   if (input.averageAccuracy < 70) {
     recommendations.push({
       id: 'improve_accuracy',
-      title: 'Stabilizuj skuteczność',
-      description: 'Przez 3 gry wybieraj tryb średni i skup się na dokładności zamiast czasie.',
+      title: localizeKangurCoreText(
+        {
+          de: 'Trefferquote stabilisieren',
+          en: 'Stabilize accuracy',
+          pl: 'Stabilizuj skuteczność',
+        },
+        input.locale,
+      ),
+      description: localizeKangurCoreText(
+        {
+          de: 'Waehle fuer 3 Spiele den mittleren Modus und konzentriere dich mehr auf Genauigkeit als auf Zeit.',
+          en: 'For 3 games, choose the medium mode and focus on accuracy instead of speed.',
+          pl: 'Przez 3 gry wybieraj tryb średni i skup się na dokładności zamiast czasie.',
+        },
+        input.locale,
+      ),
       priority: 'high',
       action: {
-        label: 'Uruchom trening',
+        label: getRecommendationActionLabel('practiceNow', input.locale),
         page: 'Game',
         query: {
           operation: weakestPracticeOperation ?? 'mixed',
@@ -440,11 +506,25 @@ const buildRecommendations = (input: {
   if (weakestLessonEntry && weakestLessonEntry.masteryPercent < 80) {
     recommendations.push({
       id: 'strengthen_lesson_mastery',
-      title: `Powtórz lekcję: ${weakestLessonEntry.title}`,
-      description: `Aktualne opanowanie to ${weakestLessonEntry.masteryPercent}%. Jedna powtórka tej lekcji podniesie stabilność.`,
+      title: localizeKangurCoreText(
+        {
+          de: `Lektion wiederholen: ${weakestLessonEntry.title}`,
+          en: `Review lesson: ${weakestLessonEntry.title}`,
+          pl: `Powtórz lekcję: ${weakestLessonEntry.title}`,
+        },
+        input.locale,
+      ),
+      description: localizeKangurCoreText(
+        {
+          de: `Die aktuelle Beherrschung liegt bei ${weakestLessonEntry.masteryPercent} %. Eine Wiederholung dieser Lektion bringt mehr Stabilität.`,
+          en: `Current mastery is ${weakestLessonEntry.masteryPercent}%. One review of this lesson should make the result more stable.`,
+          pl: `Aktualne opanowanie to ${weakestLessonEntry.masteryPercent}%. Jedna powtórka tej lekcji podniesie stabilność.`,
+        },
+        input.locale,
+      ),
       priority: weakestLessonEntry.masteryPercent < 60 ? 'high' : 'medium',
       action: {
-        label: 'Otwórz lekcję',
+        label: getRecommendationActionLabel('openLesson', input.locale),
         page: 'Lessons',
         query: {
           focus: weakestLessonEntry.componentId,
@@ -456,14 +536,35 @@ const buildRecommendations = (input: {
   if (remainingDailyGames > 0) {
     recommendations.push({
       id: 'daily_goal',
-      title: 'Domknij dzienny cel',
+      title: localizeKangurCoreText(
+        {
+          de: 'Tagesziel abschliessen',
+          en: 'Close the daily goal',
+          pl: 'Domknij dzienny cel',
+        },
+        input.locale,
+      ),
       description:
         remainingDailyGames === 1
-          ? 'Brakuje tylko 1 gry do dziennego celu.'
-          : `Brakuje ${remainingDailyGames} gier do dziennego celu.`,
+          ? localizeKangurCoreText(
+              {
+                de: 'Es fehlt nur noch 1 Spiel bis zum Tagesziel.',
+                en: 'Only 1 game is missing to reach the daily goal.',
+                pl: 'Brakuje tylko 1 gry do dziennego celu.',
+              },
+              input.locale,
+            )
+          : localizeKangurCoreText(
+              {
+                de: `Es fehlen noch ${remainingDailyGames} Spiele bis zum Tagesziel.`,
+                en: `${remainingDailyGames} games are still missing to reach the daily goal.`,
+                pl: `Brakuje ${remainingDailyGames} gier do dziennego celu.`,
+              },
+              input.locale,
+            ),
       priority: 'medium',
       action: {
-        label: 'Zagraj teraz',
+        label: getRecommendationActionLabel('practiceNow', input.locale),
         page: 'Game',
         query: {
           operation: weakestPracticeOperation ?? 'mixed',
@@ -476,11 +577,25 @@ const buildRecommendations = (input: {
   if (input.currentStreakDays < 2) {
     recommendations.push({
       id: 'streak_bootstrap',
-      title: 'Zbuduj serię',
-      description: 'Zagraj także jutro, aby uruchomić serię kolejnych dni.',
+      title: localizeKangurCoreText(
+        {
+          de: 'Serie aufbauen',
+          en: 'Build a streak',
+          pl: 'Zbuduj serię',
+        },
+        input.locale,
+      ),
+      description: localizeKangurCoreText(
+        {
+          de: 'Spiele auch morgen, um eine Serie aufeinanderfolgender Tage zu starten.',
+          en: 'Play again tomorrow to start a streak of consecutive days.',
+          pl: 'Zagraj także jutro, aby uruchomić serię kolejnych dni.',
+        },
+        input.locale,
+      ),
       priority: 'medium',
       action: {
-        label: 'Zagraj dzis',
+        label: getRecommendationActionLabel('playToday', input.locale),
         page: 'Game',
         query: {
           operation: weakestPracticeOperation ?? 'mixed',
@@ -493,13 +608,34 @@ const buildRecommendations = (input: {
   if (recommendations.length === 0) {
     recommendations.push({
       id: 'maintain_momentum',
-      title: 'Utrzymaj tempo',
+      title: localizeKangurCoreText(
+        {
+          de: 'Tempo halten',
+          en: 'Keep the pace',
+          pl: 'Utrzymaj tempo',
+        },
+        input.locale,
+      ),
       description: strongestOperation
-        ? `Świetna forma. Dorzuć 1 sesję ${strongestOperation.label.toLowerCase()} dla utrwalenia.`
-        : 'Świetna forma. Kontynuuj dzisiejszy rytm nauki.',
+        ? localizeKangurCoreText(
+            {
+              de: `Starke Form. Fuege 1 ${strongestOperation.label.toLowerCase()}-Sitzung zur Festigung hinzu.`,
+              en: `Great form. Add 1 ${strongestOperation.label.toLowerCase()} session to reinforce it.`,
+              pl: `Świetna forma. Dorzuć 1 sesję ${strongestOperation.label.toLowerCase()} dla utrwalenia.`,
+            },
+            input.locale,
+          )
+        : localizeKangurCoreText(
+            {
+              de: 'Starke Form. Halte den heutigen Lernrhythmus aufrecht.',
+              en: 'Great form. Keep the learning rhythm going today.',
+              pl: 'Świetna forma. Kontynuuj dzisiejszy rytm nauki.',
+            },
+            input.locale,
+          ),
       priority: 'low',
       action: {
-        label: 'Kontynuuj grę',
+        label: getRecommendationActionLabel('practiceNow', input.locale),
         page: 'Game',
         query: {
           operation: strongestPracticeOperation ?? 'mixed',
@@ -515,17 +651,28 @@ const buildRecommendations = (input: {
 export const buildKangurLearnerProfileSnapshot = (
   input: BuildKangurLearnerProfileSnapshotInput,
 ): KangurLearnerProfileSnapshot => {
+  const locale = normalizeKangurCoreLocale(input.locale);
   const now = input.now ?? new Date();
   const normalizedScores = normalizeScoresDesc(input.scores);
-  const level = getCurrentKangurLevel(input.progress.totalXp);
-  const nextLevel = getNextKangurLevel(input.progress.totalXp);
+  const currentLevel = getCurrentKangurLevel(input.progress.totalXp);
+  const upcomingLevel = getNextKangurLevel(input.progress.totalXp);
+  const level = {
+    ...currentLevel,
+    title: getLocalizedKangurCoreLevelTitle(currentLevel.level, currentLevel.title, locale),
+  };
+  const nextLevel = upcomingLevel
+    ? {
+        ...upcomingLevel,
+        title: getLocalizedKangurCoreLevelTitle(upcomingLevel.level, upcomingLevel.title, locale),
+      }
+    : null;
   const xpIntoLevel = input.progress.totalXp - level.minXp;
   const xpNeeded = nextLevel ? Math.max(1, nextLevel.minXp - level.minXp) : 1;
   const levelProgressPercent = nextLevel ? toPercent((xpIntoLevel / xpNeeded) * 100) : 100;
   const streaks = computeStreaks(normalizedScores, now);
-  const operationPerformance = computeOperationPerformance(normalizedScores);
-  const weeklyActivity = computeWeeklyActivity(normalizedScores, now);
-  const recentSessions = computeRecentSessions(normalizedScores);
+  const operationPerformance = computeOperationPerformance(normalizedScores, locale);
+  const weeklyActivity = computeWeeklyActivity(normalizedScores, now, locale);
+  const recentSessions = computeRecentSessions(normalizedScores, locale);
   const accuracyValues = normalizedScores.map(
     (score) => (score.correct_answers / Math.max(1, score.total_questions || 1)) * 100,
   );
@@ -542,12 +689,13 @@ export const buildKangurLearnerProfileSnapshot = (
     input.progress.badges.includes(badge.id),
   ).map((badge) => badge.id);
   const recommendations = buildRecommendations({
-    averageAccuracy,
-    currentStreakDays: streaks.currentStreakDays,
-    dailyGoalGames,
-    todayGames,
-    operationPerformance,
-    progress: input.progress,
+      averageAccuracy,
+      currentStreakDays: streaks.currentStreakDays,
+      dailyGoalGames,
+      locale,
+      todayGames,
+      operationPerformance,
+      progress: input.progress,
   });
 
   return {

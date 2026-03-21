@@ -28,15 +28,14 @@ import {
   formatDuelOperationLabel,
   formatRelativeAge,
 } from '@/features/kangur/ui/pages/duels/duels-helpers';
+import type { KangurHomeScreenVisibilityProps } from '@/features/kangur/ui/types';
 import { withKangurClientError } from '@/features/kangur/observability/client';
 
 const kangurPlatform = getKangurPlatform();
 const HOME_DUELS_INVITE_LIMIT = 4;
 const HOME_DUELS_INVITE_TRANSITION_MS = 110;
 
-type KangurGameHomeDuelsInvitesWidgetProps = {
-  hideWhenScreenMismatch?: boolean;
-};
+type KangurGameHomeDuelsInvitesWidgetProps = KangurHomeScreenVisibilityProps;
 
 export function KangurGameHomeDuelsInvitesWidget({
   hideWhenScreenMismatch = true,

@@ -9,9 +9,16 @@ import { Link, type Href } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import {
+  getKangurMobileLocaleTag,
+  useKangurMobileI18n,
+} from '../i18n/kangurMobileI18n';
 import { createKangurLessonHrefForPracticeOperation } from '../lessons/lessonHref';
 import { createKangurPlanHref } from '../plan/planHref';
 import { createKangurPracticeHref } from '../practice/practiceHref';
+import {
+  formatKangurMobileScoreOperation,
+} from '../scores/mobileScoreSummary';
 import { createKangurResultsHref } from '../scores/resultsHref';
 import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
 import { useKangurMobileLearnerProfile } from './useKangurMobileLearnerProfile';
@@ -100,29 +107,47 @@ function Pill({
   );
 }
 
-const formatProfileDate = (value: string | null): string => {
+const formatProfileDate = (
+  value: string | null,
+  locale: 'pl' | 'en' | 'de',
+): string => {
   if (!value) {
-    return 'brak daty';
+    return {
+      de: 'kein Datum',
+      en: 'no date',
+      pl: 'brak daty',
+    }[locale];
   }
 
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
-    return 'brak daty';
+    return {
+      de: 'kein Datum',
+      en: 'no date',
+      pl: 'brak daty',
+    }[locale];
   }
 
-  return parsed.toLocaleDateString('pl-PL', {
+  return parsed.toLocaleDateString(getKangurMobileLocaleTag(locale), {
     day: '2-digit',
     month: 'short',
   });
 };
 
-const formatProfileDateTime = (value: string): string => {
+const formatProfileDateTime = (
+  value: string,
+  locale: 'pl' | 'en' | 'de',
+): string => {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
-    return 'brak daty';
+    return {
+      de: 'kein Datum',
+      en: 'no date',
+      pl: 'brak daty',
+    }[locale];
   }
 
-  return parsed.toLocaleString('pl-PL', {
+  return parsed.toLocaleString(getKangurMobileLocaleTag(locale), {
     day: '2-digit',
     month: 'short',
     hour: '2-digit',
@@ -141,14 +166,29 @@ const formatProfileDuration = (value: number): string => {
   return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
 };
 
-const getPriorityLabel = (priority: KangurAssignmentPriority): string => {
+const getPriorityLabel = (
+  priority: KangurAssignmentPriority,
+  locale: 'pl' | 'en' | 'de',
+): string => {
   if (priority === 'high') {
-    return 'Priorytet wysoki';
+    return {
+      de: 'Hohe Priorität',
+      en: 'High priority',
+      pl: 'Priorytet wysoki',
+    }[locale];
   }
   if (priority === 'medium') {
-    return 'Priorytet średni';
+    return {
+      de: 'Mittlere Priorität',
+      en: 'Medium priority',
+      pl: 'Priorytet średni',
+    }[locale];
   }
-  return 'Priorytet niski';
+  return {
+    de: 'Niedrige Priorität',
+    en: 'Low priority',
+    pl: 'Priorytet niski',
+  }[locale];
 };
 
 const getPriorityTone = (priority: KangurAssignmentPriority): Tone => {
@@ -288,11 +328,212 @@ const getSessionAccentTone = (operation: string): Tone => {
   };
 };
 
+const getLocalizedProfileLessonTitle = (
+  componentId: string,
+  fallbackTitle: string,
+  locale: 'pl' | 'en' | 'de',
+): string => {
+  if (locale === 'pl') {
+    return fallbackTitle;
+  }
+
+  const titles: Record<string, { pl: string; en: string; de: string }> = {
+    clock: {
+      de: 'Uhr',
+      en: 'Clock',
+      pl: 'Nauka zegara',
+    },
+    calendar: {
+      de: 'Kalender',
+      en: 'Calendar',
+      pl: 'Nauka kalendarza',
+    },
+    adding: {
+      de: 'Addition',
+      en: 'Addition',
+      pl: 'Dodawanie',
+    },
+    subtracting: {
+      de: 'Subtraktion',
+      en: 'Subtraction',
+      pl: 'Odejmowanie',
+    },
+    multiplication: {
+      de: 'Multiplikation',
+      en: 'Multiplication',
+      pl: 'Mnozenie',
+    },
+    division: {
+      de: 'Division',
+      en: 'Division',
+      pl: 'Dzielenie',
+    },
+    geometry_basics: {
+      de: 'Grundlagen der Geometrie',
+      en: 'Geometry basics',
+      pl: 'Podstawy geometrii',
+    },
+    geometry_shapes: {
+      de: 'Geometrische Formen',
+      en: 'Geometric shapes',
+      pl: 'Figury geometryczne',
+    },
+    geometry_symmetry: {
+      de: 'Symmetrie',
+      en: 'Symmetry',
+      pl: 'Symetria',
+    },
+    geometry_perimeter: {
+      de: 'Umfang',
+      en: 'Perimeter',
+      pl: 'Obwód figur',
+    },
+    logical_thinking: {
+      de: 'Logisches Denken',
+      en: 'Logical thinking',
+      pl: 'Myslenie logiczne',
+    },
+    logical_patterns: {
+      de: 'Muster',
+      en: 'Patterns',
+      pl: 'Wzorce i ciagi',
+    },
+    logical_classification: {
+      de: 'Klassifikation',
+      en: 'Classification',
+      pl: 'Klasyfikacja',
+    },
+    logical_reasoning: {
+      de: 'Schlussfolgern',
+      en: 'Reasoning',
+      pl: 'Wnioskowanie',
+    },
+    logical_analogies: {
+      de: 'Analogien',
+      en: 'Analogies',
+      pl: 'Analogie',
+    },
+  };
+
+  return titles[componentId]?.[locale] ?? fallbackTitle;
+};
+
+const getLocalizedProfileLevelTitle = (
+  level: number,
+  fallbackTitle: string,
+  locale: 'pl' | 'en' | 'de',
+): string => {
+  if (locale === 'pl') {
+    return fallbackTitle;
+  }
+
+  const titles: Record<number, { pl: string; en: string; de: string }> = {
+    1: {
+      de: 'Anfaenger 🐣',
+      en: 'Beginner 🐣',
+      pl: 'Raczkujacy 🐣',
+    },
+    2: {
+      de: 'Schueler ✏️',
+      en: 'Student ✏️',
+      pl: 'Uczen ✏️',
+    },
+    3: {
+      de: 'Denker 🤔',
+      en: 'Thinker 🤔',
+      pl: 'Mysliciel 🤔',
+    },
+    4: {
+      de: 'Zahlenmeister 🔢',
+      en: 'Number master 🔢',
+      pl: 'Liczmistrz 🔢',
+    },
+    5: {
+      de: 'Mathematiker 📐',
+      en: 'Mathematician 📐',
+      pl: 'Matematyk 📐',
+    },
+    6: {
+      de: 'Genie 🧠',
+      en: 'Genius 🧠',
+      pl: 'Geniusz 🧠',
+    },
+    7: {
+      de: 'Legende 🏆',
+      en: 'Legend 🏆',
+      pl: 'Legenda 🏆',
+    },
+  };
+
+  return titles[level]?.[locale] ?? fallbackTitle;
+};
+
+const getLocalizedProfileBadgeName = (
+  badgeId: string,
+  fallbackName: string,
+  locale: 'pl' | 'en' | 'de',
+): string => {
+  if (locale === 'pl') {
+    return fallbackName;
+  }
+
+  const titles: Record<string, { pl: string; en: string; de: string }> = {
+    first_game: {
+      de: 'Erstes Spiel',
+      en: 'First game',
+      pl: 'Pierwsza gra',
+    },
+    perfect_10: {
+      de: 'Perfektes Ergebnis',
+      en: 'Perfect score',
+      pl: 'Idealny wynik',
+    },
+    lesson_hero: {
+      de: 'Lektionsheld',
+      en: 'Lesson hero',
+      pl: 'Bohater lekcji',
+    },
+    clock_master: {
+      de: 'Uhrmeister',
+      en: 'Clock master',
+      pl: 'Mistrz zegara',
+    },
+    geometry_artist: {
+      de: 'Formenkuenstler',
+      en: 'Shape artist',
+      pl: 'Artysta figur',
+    },
+    ten_games: {
+      de: 'Zehn Spiele',
+      en: 'Ten games',
+      pl: 'Dziesiatka',
+    },
+    xp_500: {
+      de: '500 XP',
+      en: '500 XP',
+      pl: 'Pol tysiaca XP',
+    },
+    xp_1000: {
+      de: '1000 XP',
+      en: '1000 XP',
+      pl: 'Tysiacznik',
+    },
+    variety: {
+      de: 'Vielseitig',
+      en: 'All-rounder',
+      pl: 'Wszechstronny',
+    },
+  };
+
+  return titles[badgeId]?.[locale] ?? fallbackName;
+};
+
 function MasteryInsightRow({
   insight,
 }: {
   insight: KangurLessonMasteryInsight;
 }): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
   const masteryTone = getMasteryTone(insight.masteryPercent);
 
   return (
@@ -316,17 +557,24 @@ function MasteryInsightRow({
       >
         <View style={{ flex: 1, gap: 4 }}>
           <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-            {insight.emoji} {insight.title}
+            {insight.emoji} {getLocalizedProfileLessonTitle(insight.componentId, insight.title, locale)}
           </Text>
           <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
-            Próby: {insight.attempts} · ostatni wynik {insight.lastScorePercent}%
+            {copy({
+              de: `Versuche: ${insight.attempts} · letztes Ergebnis ${insight.lastScorePercent}%`,
+              en: `Attempts: ${insight.attempts} · last score ${insight.lastScorePercent}%`,
+              pl: `Próby: ${insight.attempts} · ostatni wynik ${insight.lastScorePercent}%`,
+            })}
           </Text>
         </View>
         <Pill label={`${insight.masteryPercent}%`} tone={masteryTone} />
       </View>
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-        Najlepszy wynik: {insight.bestScorePercent}% · Ostatnia próba:{' '}
-        {formatProfileDate(insight.lastCompletedAt)}
+        {copy({
+          de: `Bestes Ergebnis: ${insight.bestScorePercent}% · Letzter Versuch: ${formatProfileDate(insight.lastCompletedAt, locale)}`,
+          en: `Best score: ${insight.bestScorePercent}% · Last attempt: ${formatProfileDate(insight.lastCompletedAt, locale)}`,
+          pl: `Najlepszy wynik: ${insight.bestScorePercent}% · Ostatnia próba: ${formatProfileDate(insight.lastCompletedAt, locale)}`,
+        })}
       </Text>
     </View>
   );
@@ -337,6 +585,7 @@ function SessionRow({
 }: {
   session: KangurRecentSession;
 }): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
   const operationTone = getSessionAccentTone(session.operation);
   const lessonHref = createKangurLessonHrefForPracticeOperation(session.operation);
 
@@ -376,10 +625,10 @@ function SessionRow({
           </View>
           <View style={{ flex: 1, gap: 4 }}>
             <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-              {session.operationLabel}
+              {formatKangurMobileScoreOperation(session.operation, locale)}
             </Text>
             <Text style={{ color: '#64748b', fontSize: 12 }}>
-              {formatProfileDateTime(session.createdAt)}
+              {formatProfileDateTime(session.createdAt, locale)}
             </Text>
           </View>
         </View>
@@ -390,9 +639,20 @@ function SessionRow({
       </View>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Pill label={`Skuteczność ${session.accuracyPercent}%`} tone={operationTone} />
         <Pill
-          label={`Czas ${formatProfileDuration(session.timeTakenSeconds)}`}
+          label={copy({
+            de: `Trefferquote ${session.accuracyPercent}%`,
+            en: `Accuracy ${session.accuracyPercent}%`,
+            pl: `Skuteczność ${session.accuracyPercent}%`,
+          })}
+          tone={operationTone}
+        />
+        <Pill
+          label={copy({
+            de: `Zeit ${formatProfileDuration(session.timeTakenSeconds)}`,
+            en: `Time ${formatProfileDuration(session.timeTakenSeconds)}`,
+            pl: `Czas ${formatProfileDuration(session.timeTakenSeconds)}`,
+          })}
           tone={{
             backgroundColor: '#f1f5f9',
             borderColor: '#cbd5e1',
@@ -414,7 +674,11 @@ function SessionRow({
             }}
           >
             <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-              Trenuj ponownie
+              {copy({
+                de: 'Erneut trainieren',
+                en: 'Train again',
+                pl: 'Trenuj ponownie',
+              })}
             </Text>
           </Pressable>
         </Link>
@@ -434,7 +698,11 @@ function SessionRow({
               }}
             >
               <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                Otwórz lekcję
+                {copy({
+                  de: 'Lektion öffnen',
+                  en: 'Open lesson',
+                  pl: 'Otwórz lekcję',
+                })}
               </Text>
             </Pressable>
           </Link>
@@ -459,7 +727,11 @@ function SessionRow({
             }}
           >
             <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-              Historia trybu
+              {copy({
+                de: 'Modusverlauf',
+                en: 'Mode history',
+                pl: 'Historia trybu',
+              })}
             </Text>
           </Pressable>
         </Link>
@@ -475,6 +747,7 @@ function AssignmentRow({
   assignment: KangurAssignmentPlan;
   href: Href | null;
 }): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
   const priorityTone = getPriorityTone(assignment.priority);
 
   return (
@@ -488,7 +761,10 @@ function AssignmentRow({
         gap: 8,
       }}
     >
-      <Pill label={getPriorityLabel(assignment.priority)} tone={priorityTone} />
+      <Pill
+        label={getPriorityLabel(assignment.priority, locale)}
+        tone={priorityTone}
+      />
       <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
         {assignment.title}
       </Text>
@@ -496,7 +772,11 @@ function AssignmentRow({
         {assignment.description}
       </Text>
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-        Cel: {assignment.target}
+        {copy({
+          de: `Ziel: ${assignment.target}`,
+          en: `Goal: ${assignment.target}`,
+          pl: `Cel: ${assignment.target}`,
+        })}
       </Text>
       {href ? (
         <Link href={href} asChild>
@@ -511,7 +791,7 @@ function AssignmentRow({
             }}
           >
             <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-              {translateKangurMobileActionLabel(assignment.action.label)}
+              {translateKangurMobileActionLabel(assignment.action.label, locale)}
             </Text>
           </Pressable>
         </Link>
@@ -526,7 +806,12 @@ function AssignmentRow({
           }}
         >
           <Text style={{ color: '#475569', fontWeight: '700' }}>
-            {translateKangurMobileActionLabel(assignment.action.label)} · wkrotce
+            {translateKangurMobileActionLabel(assignment.action.label, locale)} ·{' '}
+            {copy({
+              de: 'bald',
+              en: 'soon',
+              pl: 'wkrotce',
+            })}
           </Text>
         </View>
       )}
@@ -535,6 +820,7 @@ function AssignmentRow({
 }
 
 export function KangurProfileScreen(): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
   const {
     assignments,
     authError,
@@ -582,34 +868,62 @@ export function KangurProfileScreen(): React.JSX.Element {
                 paddingVertical: 10,
               }}
             >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Wróć</Text>
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                {copy({
+                  de: 'Zurück',
+                  en: 'Back',
+                  pl: 'Wróć',
+                })}
+              </Text>
             </Pressable>
           </Link>
 
           <Card>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-              Dane i postęp
+              {copy({
+                de: 'Daten und Fortschritt',
+                en: 'Data and progress',
+                pl: 'Dane i postęp',
+              })}
             </Text>
             <Text style={{ color: '#0f172a', fontSize: 28, fontWeight: '800' }}>
-              Profil ucznia
+              {copy({
+                de: 'Schülerprofil',
+                en: 'Learner profile',
+                pl: 'Profil ucznia',
+              })}
             </Text>
             <Text style={{ color: '#475569', fontSize: 15, lineHeight: 22 }}>
               {isLoadingAuth && !isAuthenticated
-                ? 'Przywracamy sesję ucznia i zapisane statystyki.'
-                : `Statystyki ucznia: ${displayName}.`}
+                ? copy({
+                    de: 'Die Schulersitzung und die gespeicherten Statistiken werden wiederhergestellt.',
+                    en: 'Restoring the learner session and saved stats.',
+                    pl: 'Przywracamy sesję ucznia i zapisane statystyki.',
+                  })
+                : copy({
+                    de: `Statistiken für ${displayName}.`,
+                    en: `Learner stats: ${displayName}.`,
+                    pl: `Statystyki ucznia: ${displayName}.`,
+                  })}
             </Text>
 
             {isLoadingAuth && !isAuthenticated ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Sprawdzamy zapisaną sesję ucznia. Po zakończeniu przywrócimy
-                zsynchronizowane wyniki i lokalny postęp.
+                {copy({
+                  de: 'Wir prüfen die gespeicherte Schulersitzung. Danach stellen wir synchronisierte Ergebnisse und lokalen Fortschritt wieder her.',
+                  en: 'Checking the saved learner session. After that we will restore synchronized results and local progress.',
+                  pl: 'Sprawdzamy zapisaną sesję ucznia. Po zakończeniu przywrócimy zsynchronizowane wyniki i lokalny postęp.',
+                })}
               </Text>
             ) : !isAuthenticated ? (
               supportsLearnerCredentials ? (
                 <View style={{ gap: 10 }}>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    Tryb `{authMode}` wymaga loginu ucznia. Formularz logowania jest teraz na
-                    ekranie głównym aplikacji.
+                    {copy({
+                      de: `Der Modus \`${authMode}\` verlangt einen Schüler-Login. Das Anmeldeformular befindet sich jetzt auf dem Startbildschirm.`,
+                      en: `The \`${authMode}\` mode requires a learner login. The sign-in form is now on the home screen.`,
+                      pl: `Tryb \`${authMode}\` wymaga loginu ucznia. Formularz logowania jest teraz na ekranie głównym aplikacji.`,
+                    })}
                   </Text>
                   <Link href='/' asChild>
                     <Pressable
@@ -623,7 +937,11 @@ export function KangurProfileScreen(): React.JSX.Element {
                       }}
                     >
                       <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                        Otwórz ekran logowania
+                        {copy({
+                          de: 'Anmeldebildschirm öffnen',
+                          en: 'Open auth screen',
+                          pl: 'Otwórz ekran logowania',
+                        })}
                       </Text>
                     </Pressable>
                   </Link>
@@ -643,7 +961,11 @@ export function KangurProfileScreen(): React.JSX.Element {
                   }}
                 >
                   <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                    Zaloguj sesję demo
+                    {copy({
+                      de: 'Demo-Sitzung anmelden',
+                      en: 'Sign in demo session',
+                      pl: 'Zaloguj sesję demo',
+                    })}
                   </Text>
                 </Pressable>
               )
@@ -665,23 +987,35 @@ export function KangurProfileScreen(): React.JSX.Element {
                   paddingHorizontal: 16,
                   paddingVertical: 12,
                 }}
-              >
-                <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                  Otwórz plan dnia
-                </Text>
-              </Pressable>
-            </Link>
+                >
+                  <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                    {copy({
+                      de: 'Tagesplan öffnen',
+                      en: 'Open daily plan',
+                      pl: 'Otwórz plan dnia',
+                    })}
+                  </Text>
+                </Pressable>
+              </Link>
           </Card>
 
           <Card>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-              Postęp poziomu
+              {copy({
+                de: 'Level-Fortschritt',
+                en: 'Level progress',
+                pl: 'Postęp poziomu',
+              })}
             </Text>
             <Text style={{ color: '#0f172a', fontSize: 24, fontWeight: '800' }}>
-              {snapshot.level.title}
+              {getLocalizedProfileLevelTitle(snapshot.level.level, snapshot.level.title, locale)}
             </Text>
             <Text style={{ color: '#475569', fontSize: 14 }}>
-              Poziom {snapshot.level.level} · {snapshot.totalXp} XP łącznie
+              {copy({
+                de: `Level ${snapshot.level.level} · ${snapshot.totalXp} XP insgesamt`,
+                en: `Level ${snapshot.level.level} · ${snapshot.totalXp} XP total`,
+                pl: `Poziom ${snapshot.level.level} · ${snapshot.totalXp} XP łącznie`,
+              })}
             </Text>
             <View
               style={{
@@ -701,8 +1035,16 @@ export function KangurProfileScreen(): React.JSX.Element {
             </View>
             <Text style={{ color: '#64748b', fontSize: 13 }}>
               {snapshot.nextLevel
-                ? `Do poziomu ${snapshot.nextLevel.level}: ${xpToNextLevel} XP`
-                : 'Maksymalny poziom osiągnięty'}
+                ? copy({
+                    de: `Bis Level ${snapshot.nextLevel.level}: ${xpToNextLevel} XP`,
+                    en: `To level ${snapshot.nextLevel.level}: ${xpToNextLevel} XP`,
+                    pl: `Do poziomu ${snapshot.nextLevel.level}: ${xpToNextLevel} XP`,
+                  })
+                : copy({
+                    de: 'Maximales Level erreicht',
+                    en: 'Maximum level reached',
+                    pl: 'Maksymalny poziom osiągnięty',
+                  })}
             </Text>
           </Card>
 
@@ -715,41 +1057,84 @@ export function KangurProfileScreen(): React.JSX.Element {
             }}
           >
             <Metric
-              label='Średnia skuteczność'
+              label={copy({
+                de: 'Durchschnittliche Trefferquote',
+                en: 'Average accuracy',
+                pl: 'Średnia skuteczność',
+              })}
               value={`${snapshot.averageAccuracy}%`}
-              description={`Najlepsza sesja: ${snapshot.bestAccuracy}%`}
+              description={copy({
+                de: `Beste Sitzung: ${snapshot.bestAccuracy}%`,
+                en: `Best session: ${snapshot.bestAccuracy}%`,
+                pl: `Najlepsza sesja: ${snapshot.bestAccuracy}%`,
+              })}
             />
             <Metric
-              label='Seria dni'
+              label={copy({
+                de: 'Tagesserie',
+                en: 'Day streak',
+                pl: 'Seria dni',
+              })}
               value={`${snapshot.currentStreakDays}`}
-              description={`Najdłuższa: ${snapshot.longestStreakDays} dni`}
+              description={copy({
+                de: `Längste: ${snapshot.longestStreakDays} Tage`,
+                en: `Longest: ${snapshot.longestStreakDays} days`,
+                pl: `Najdłuższa: ${snapshot.longestStreakDays} dni`,
+              })}
             />
             <Metric
-              label='Cel dzienny'
+              label={copy({
+                de: 'Tagesziel',
+                en: 'Daily goal',
+                pl: 'Cel dzienny',
+              })}
               value={`${snapshot.todayGames}/${snapshot.dailyGoalGames}`}
-              description={`Wypełnienie: ${snapshot.dailyGoalPercent}%`}
+              description={copy({
+                de: `Erfüllung: ${snapshot.dailyGoalPercent}%`,
+                en: `Completion: ${snapshot.dailyGoalPercent}%`,
+                pl: `Wypełnienie: ${snapshot.dailyGoalPercent}%`,
+              })}
             />
             <Metric
-              label='Odznaki'
+              label={copy({
+                de: 'Abzeichen',
+                en: 'Badges',
+                pl: 'Odznaki',
+              })}
               value={`${snapshot.unlockedBadges}/${snapshot.totalBadges}`}
-              description='Odblokowane osiągnięcia'
+              description={copy({
+                de: 'Freigeschaltete Erfolge',
+                en: 'Unlocked achievements',
+                pl: 'Odblokowane osiągnięcia',
+              })}
             />
           </View>
 
           <Card>
             <View style={{ gap: 4 }}>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                Opanowanie lekcji
+                {copy({
+                  de: 'Lektionsbeherrschung',
+                  en: 'Lesson mastery',
+                  pl: 'Opanowanie lekcji',
+                })}
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Mobilny profil pokazuje najmocniejsze i najsłabsze obszary na podstawie
-                zapisanych lekcji.
+                {copy({
+                  de: 'Das mobile Profil zeigt die stärksten und schwächsten Bereiche auf Basis gespeicherter Lektionen.',
+                  en: 'The mobile profile shows the strongest and weakest areas based on saved lessons.',
+                  pl: 'Mobilny profil pokazuje najmocniejsze i najsłabsze obszary na podstawie zapisanych lekcji.',
+                })}
               </Text>
             </View>
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               <Pill
-                label={`Śledzone ${masteryInsights.trackedLessons}`}
+                label={copy({
+                  de: `Verfolgt ${masteryInsights.trackedLessons}`,
+                  en: `Tracked ${masteryInsights.trackedLessons}`,
+                  pl: `Śledzone ${masteryInsights.trackedLessons}`,
+                })}
                 tone={{
                   backgroundColor: '#eef2ff',
                   borderColor: '#c7d2fe',
@@ -757,7 +1142,11 @@ export function KangurProfileScreen(): React.JSX.Element {
                 }}
               />
               <Pill
-                label={`Opanowane ${masteryInsights.masteredLessons}`}
+                label={copy({
+                  de: `Beherrscht ${masteryInsights.masteredLessons}`,
+                  en: `Mastered ${masteryInsights.masteredLessons}`,
+                  pl: `Opanowane ${masteryInsights.masteredLessons}`,
+                })}
                 tone={{
                   backgroundColor: '#ecfdf5',
                   borderColor: '#a7f3d0',
@@ -765,7 +1154,11 @@ export function KangurProfileScreen(): React.JSX.Element {
                 }}
               />
               <Pill
-                label={`Do powtórki ${masteryInsights.lessonsNeedingPractice}`}
+                label={copy({
+                  de: `Zum Wiederholen ${masteryInsights.lessonsNeedingPractice}`,
+                  en: `Needs review ${masteryInsights.lessonsNeedingPractice}`,
+                  pl: `Do powtórki ${masteryInsights.lessonsNeedingPractice}`,
+                })}
                 tone={{
                   backgroundColor: '#fff7ed',
                   borderColor: '#fdba74',
@@ -776,18 +1169,29 @@ export function KangurProfileScreen(): React.JSX.Element {
 
             {masteryInsights.trackedLessons === 0 ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Brak zapisanych prób lekcji. Ukończ dowolną lekcję, aby zobaczyć mocne strony i
-                obszary do powtórki.
+                {copy({
+                  de: 'Es gibt keine gespeicherten Lektionsversuche. Schließe eine beliebige Lektion ab, um Stärken und Wiederholungsbereiche zu sehen.',
+                  en: 'There are no saved lesson attempts. Complete any lesson to see strengths and review areas.',
+                  pl: 'Brak zapisanych prób lekcji. Ukończ dowolną lekcję, aby zobaczyć mocne strony i obszary do powtórki.',
+                })}
               </Text>
             ) : (
               <View style={{ gap: 14 }}>
                 <View style={{ gap: 10 }}>
                   <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-                    Do powtórki
+                    {copy({
+                      de: 'Zum Wiederholen',
+                      en: 'Needs review',
+                      pl: 'Do powtórki',
+                    })}
                   </Text>
                   {masteryInsights.weakest.length === 0 ? (
                     <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                      Wszystkie śledzone lekcje są na bezpiecznym poziomie.
+                      {copy({
+                        de: 'Alle verfolgten Lektionen sind auf einem sicheren Niveau.',
+                        en: 'All tracked lessons are at a safe level.',
+                        pl: 'Wszystkie śledzone lekcje są na bezpiecznym poziomie.',
+                      })}
                     </Text>
                   ) : (
                     masteryInsights.weakest.map((insight) => (
@@ -798,11 +1202,19 @@ export function KangurProfileScreen(): React.JSX.Element {
 
                 <View style={{ gap: 10 }}>
                   <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-                    Najmocniejsze lekcje
+                    {copy({
+                      de: 'Stärkste Lektionen',
+                      en: 'Strongest lessons',
+                      pl: 'Najmocniejsze lekcje',
+                    })}
                   </Text>
                   {masteryInsights.strongest.length === 0 ? (
                     <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                      Najpierw ukończ kilka lekcji, aby zobaczyć najmocniejsze obszary.
+                      {copy({
+                        de: 'Schließe zuerst ein paar Lektionen ab, um die stärksten Bereiche zu sehen.',
+                        en: 'Finish a few lessons first to see the strongest areas.',
+                        pl: 'Najpierw ukończ kilka lekcji, aby zobaczyć najmocniejsze obszary.',
+                      })}
                     </Text>
                   ) : (
                     masteryInsights.strongest.map((insight) => (
@@ -817,16 +1229,28 @@ export function KangurProfileScreen(): React.JSX.Element {
           <Card>
             <View style={{ gap: 4 }}>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                Plan na dziś
+                {copy({
+                  de: 'Plan für heute',
+                  en: 'Plan for today',
+                  pl: 'Plan na dziś',
+                })}
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Krótka lista kolejnych kroków na podstawie ostatnich wyników i aktywności.
+                {copy({
+                  de: 'Eine kurze Liste der nächsten Schritte auf Basis der letzten Ergebnisse und Aktivitäten.',
+                  en: 'A short list of the next steps based on recent results and activity.',
+                  pl: 'Krótka lista kolejnych kroków na podstawie ostatnich wyników i aktywności.',
+                })}
               </Text>
             </View>
 
             {snapshot.recommendations.length === 0 ? (
               <Text style={{ color: '#475569', fontSize: 14 }}>
-                Brak rekomendacji do wyświetlenia.
+                {copy({
+                  de: 'Keine Empfehlungen zum Anzeigen.',
+                  en: 'No recommendations to show.',
+                  pl: 'Brak rekomendacji do wyświetlenia.',
+                })}
               </Text>
             ) : (
               <View style={{ gap: 12 }}>
@@ -847,11 +1271,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                       }}
                     >
                       <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
-                        {recommendation.priority === 'high'
-                          ? 'Priorytet wysoki'
-                          : recommendation.priority === 'medium'
-                            ? 'Priorytet średni'
-                            : 'Priorytet niski'}
+                        {getPriorityLabel(recommendation.priority, locale)}
                       </Text>
                       <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
                         {recommendation.title}
@@ -873,7 +1293,10 @@ export function KangurProfileScreen(): React.JSX.Element {
                             }}
                           >
                             <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                              {translateKangurMobileActionLabel(recommendation.action.label)}
+                              {translateKangurMobileActionLabel(
+                                recommendation.action.label,
+                                locale,
+                              )}
                             </Text>
                           </Pressable>
                         </Link>
@@ -888,7 +1311,16 @@ export function KangurProfileScreen(): React.JSX.Element {
                           }}
                         >
                           <Text style={{ color: '#475569', fontWeight: '700' }}>
-                            {translateKangurMobileActionLabel(recommendation.action.label)} · wkrótce
+                            {translateKangurMobileActionLabel(
+                              recommendation.action.label,
+                              locale,
+                            )}{' '}
+                            ·{' '}
+                            {copy({
+                              de: 'bald',
+                              en: 'soon',
+                              pl: 'wkrotce',
+                            })}
                           </Text>
                         </View>
                       )}
@@ -906,23 +1338,38 @@ export function KangurProfileScreen(): React.JSX.Element {
           <Card>
             <View style={{ gap: 4 }}>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                Ostatnie sesje
+                {copy({
+                  de: 'Letzte Sitzungen',
+                  en: 'Recent sessions',
+                  pl: 'Ostatnie sesje',
+                })}
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Widok ostatnich prób i rytmu pracy ucznia. To zastąpi bardziej rozbudowaną historię
-                po porcie kolejnych ekranów.
+                {copy({
+                  de: 'Eine Übersicht der letzten Versuche und des Lernrhythmus. Sie ersetzt die ausführlichere Historie, bis weitere Screens portiert sind.',
+                  en: 'A view of the latest attempts and the learner rhythm. This replaces the more advanced history until the remaining screens are ported.',
+                  pl: 'Widok ostatnich prób i rytmu pracy ucznia. To zastąpi bardziej rozbudowaną historię po porcie kolejnych ekranów.',
+                })}
               </Text>
             </View>
 
             {isLoadingScores ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Sprawdzamy ostatnie podejścia ucznia.
+                {copy({
+                  de: 'Die letzten Versuche des Lernenden werden geladen.',
+                  en: 'Checking the learner recent attempts.',
+                  pl: 'Sprawdzamy ostatnie podejścia ucznia.',
+                })}
               </Text>
             ) : scoresError ? (
               <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>{scoresError}</Text>
             ) : !hasRecentSessions ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Brak rozegranych sesji. Pierwsze podejścia pojawią się tutaj automatycznie.
+                {copy({
+                  de: 'Es gibt noch keine gespielten Sitzungen. Die ersten Versuche erscheinen hier automatisch.',
+                  en: 'There are no completed sessions yet. The first attempts will appear here automatically.',
+                  pl: 'Brak rozegranych sesji. Pierwsze podejścia pojawią się tutaj automatycznie.',
+                })}
               </Text>
             ) : (
               <View style={{ gap: 10 }}>
@@ -944,7 +1391,11 @@ export function KangurProfileScreen(): React.JSX.Element {
                     }}
                   >
                     <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                      Otwórz całą historię
+                      {copy({
+                        de: 'Gesamte Historie öffnen',
+                        en: 'Open full history',
+                        pl: 'Otwórz całą historię',
+                      })}
                     </Text>
                   </Pressable>
                 </Link>
@@ -955,11 +1406,18 @@ export function KangurProfileScreen(): React.JSX.Element {
           <Card>
             <View style={{ gap: 4 }}>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                Odznaki
+                {copy({
+                  de: 'Abzeichen',
+                  en: 'Badges',
+                  pl: 'Odznaki',
+                })}
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Pełna siatka odznak jest już wspólna dla web i mobile, więc tutaj pokazujemy stan
-                odblokowania bez dodatkowej logiki platformowej.
+                {copy({
+                  de: 'Das vollständige Abzeichenraster ist bereits zwischen Web und Mobile geteilt, daher zeigen wir hier nur den Freischaltstatus ohne zusätzliche Plattformlogik.',
+                  en: 'The full badge grid is already shared between web and mobile, so this view only shows the unlock state without extra platform logic.',
+                  pl: 'Pełna siatka odznak jest już wspólna dla web i mobile, więc tutaj pokazujemy stan odblokowania bez dodatkowej logiki platformowej.',
+                })}
               </Text>
             </View>
 
@@ -969,7 +1427,11 @@ export function KangurProfileScreen(): React.JSX.Element {
                 return (
                   <Pill
                     key={badge.id}
-                    label={`${badge.emoji} ${badge.name}`}
+                    label={`${badge.emoji} ${getLocalizedProfileBadgeName(
+                      badge.id,
+                      badge.name,
+                      locale,
+                    )}`}
                     tone={
                       unlocked
                         ? {
@@ -992,23 +1454,40 @@ export function KangurProfileScreen(): React.JSX.Element {
           <Card>
             <View style={{ gap: 4 }}>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                Zadania na teraz
+                {copy({
+                  de: 'Aufgaben für jetzt',
+                  en: 'Tasks for now',
+                  pl: 'Zadania na teraz',
+                })}
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                To lekka wersja planera zadań. Pełny panel przypisanych zadań zostanie przeniesiony
-                później razem z pełnymi trasami treningu i lekcji.
+                {copy({
+                  de: 'Das ist eine leichte Version des Aufgabenplaners. Das vollständige Aufgabenpanel wird später zusammen mit den kompletten Trainings- und Lektionspfaden portiert.',
+                  en: 'This is a lightweight version of the task planner. The full assigned-tasks panel will be ported later together with the complete training and lesson flows.',
+                  pl: 'To lekka wersja planera zadań. Pełny panel przypisanych zadań zostanie przeniesiony później razem z pełnymi trasami treningu i lekcji.',
+                })}
               </Text>
             </View>
 
-            <View style={{ gap: 10 }}>
-              {assignments.map((assignment) => (
-                <AssignmentRow
-                  key={assignment.id}
-                  assignment={assignment}
-                  href={getActionHref(assignment.action)}
-                />
-              ))}
-            </View>
+            {assignments.length === 0 ? (
+              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {copy({
+                  de: 'Es gibt noch keine aktiven Aufgaben. Neue Vorschläge erscheinen hier zusammen mit weiterem Fortschritt.',
+                  en: 'There are no active tasks yet. New suggestions will appear here as progress grows.',
+                  pl: 'Nie ma jeszcze aktywnych zadań. Nowe propozycje pojawią się tutaj wraz z kolejnym postępem.',
+                })}
+              </Text>
+            ) : (
+              <View style={{ gap: 10 }}>
+                {assignments.map((assignment) => (
+                  <AssignmentRow
+                    key={assignment.id}
+                    assignment={assignment}
+                    href={getActionHref(assignment.action)}
+                  />
+                ))}
+              </View>
+            )}
           </Card>
 
           <Card>
@@ -1021,13 +1500,25 @@ export function KangurProfileScreen(): React.JSX.Element {
             >
               <View style={{ gap: 4, flex: 1 }}>
                 <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                  Historia wyników
+                  {copy({
+                    de: 'Ergebnisverlauf',
+                    en: 'Score history',
+                    pl: 'Historia wyników',
+                  })}
                 </Text>
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                   {isLoadingScores
-                    ? 'Pobieramy zapisane podejścia dla profilu.'
+                    ? copy({
+                        de: 'Die gespeicherten Versuche für das Profil werden geladen.',
+                        en: 'Loading saved attempts for the profile.',
+                        pl: 'Pobieramy zapisane podejścia dla profilu.',
+                      })
                     : scoresError ??
-                      'W tej wersji mobilnej historia wyników jest tylko dodatkiem do lokalnego postępu.'}
+                      copy({
+                        de: 'In dieser mobilen Version ist der Ergebnisverlauf nur eine Ergänzung zum lokalen Fortschritt.',
+                        en: 'In this mobile version the score history is only a supplement to local progress.',
+                        pl: 'W tej wersji mobilnej historia wyników jest tylko dodatkiem do lokalnego postępu.',
+                      })}
                 </Text>
               </View>
               <Pressable
@@ -1042,7 +1533,13 @@ export function KangurProfileScreen(): React.JSX.Element {
                   paddingVertical: 10,
                 }}
               >
-                <Text style={{ color: '#ffffff', fontWeight: '700' }}>Odśwież</Text>
+                <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                  {copy({
+                    de: 'Aktualisieren',
+                    en: 'Refresh',
+                    pl: 'Odśwież',
+                  })}
+                </Text>
               </Pressable>
             </View>
           </Card>

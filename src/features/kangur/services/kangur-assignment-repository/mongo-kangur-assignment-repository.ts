@@ -11,21 +11,16 @@ import type {
 } from '@kangur/contracts';
 import { kangurAssignmentSchema } from '@kangur/contracts';
 import { notFoundError } from '@/features/kangur/shared/errors/app-error';
+import {
+  KANGUR_LEGACY_SETTINGS_COLLECTION,
+  type KangurLegacySettingDocument,
+} from '@/features/kangur/services/kangur-legacy-settings-store';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 
 import type { KangurAssignmentListInput, KangurAssignmentRepository } from './types';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
-
-
-const SETTINGS_COLLECTION = 'settings';
 const KANGUR_ASSIGNMENT_SETTING_PREFIX = 'kangur_assignment:';
-
-type MongoAssignmentSettingDocument = {
-  _id?: string;
-  key?: string;
-  value?: string;
-};
 
 const toLearnerPrefix = (learnerKey: string): string =>
   `${KANGUR_ASSIGNMENT_SETTING_PREFIX}${encodeURIComponent(learnerKey.trim().toLowerCase())}:`;
@@ -86,10 +81,10 @@ export const mongoKangurAssignmentRepository: KangurAssignmentRepository = {
     const settingKey = toSettingKey(learnerKey, assignmentId);
 
     await executeMongoWriteWithRetry(async () => {
-      await db.collection<MongoAssignmentSettingDocument>(SETTINGS_COLLECTION).updateOne(
+      await db.collection<KangurLegacySettingDocument>(KANGUR_LEGACY_SETTINGS_COLLECTION).updateOne(
         {
           $or: [{ key: settingKey }, { _id: settingKey }],
-        } as Filter<MongoAssignmentSettingDocument>,
+        } as Filter<KangurLegacySettingDocument>,
         {
           $set: {
             _id: settingKey,
@@ -108,12 +103,12 @@ export const mongoKangurAssignmentRepository: KangurAssignmentRepository = {
 
   async getAssignment(learnerKey: string, assignmentId: string): Promise<KangurAssignment | null> {
     const db = await getMongoDb();
-    const row = await db.collection<MongoAssignmentSettingDocument>(SETTINGS_COLLECTION).findOne({
+    const row = await db.collection<KangurLegacySettingDocument>(KANGUR_LEGACY_SETTINGS_COLLECTION).findOne({
       $or: [
         { key: toSettingKey(learnerKey, assignmentId) },
         { _id: toSettingKey(learnerKey, assignmentId) },
       ],
-    } as Filter<MongoAssignmentSettingDocument>);
+    } as Filter<KangurLegacySettingDocument>);
 
     return parseAssignmentValue(row?.value);
   },
@@ -122,12 +117,12 @@ export const mongoKangurAssignmentRepository: KangurAssignmentRepository = {
     const db = await getMongoDb();
     const prefix = toLearnerPrefix(input.learnerKey);
     const rows = await db
-      .collection<MongoAssignmentSettingDocument>(SETTINGS_COLLECTION)
+      .collection<KangurLegacySettingDocument>(KANGUR_LEGACY_SETTINGS_COLLECTION)
       .find({
         key: {
           $regex: `^${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`,
         },
-      } as Filter<MongoAssignmentSettingDocument>)
+      } as Filter<KangurLegacySettingDocument>)
       .toArray();
 
     const assignments = rows
@@ -148,10 +143,10 @@ export const mongoKangurAssignmentRepository: KangurAssignmentRepository = {
     const now = new Date().toISOString();
     const settingKey = toSettingKey(learnerKey, assignmentId);
     const current = await db
-      .collection<MongoAssignmentSettingDocument>(SETTINGS_COLLECTION)
+      .collection<KangurLegacySettingDocument>(KANGUR_LEGACY_SETTINGS_COLLECTION)
       .findOne({
         $or: [{ key: settingKey }, { _id: settingKey }],
-      } as Filter<MongoAssignmentSettingDocument>);
+      } as Filter<KangurLegacySettingDocument>);
     const parsed = parseAssignmentValue(current?.value);
 
     if (!parsed) {
@@ -180,10 +175,10 @@ export const mongoKangurAssignmentRepository: KangurAssignmentRepository = {
     };
 
     await executeMongoWriteWithRetry(async () => {
-      await db.collection<MongoAssignmentSettingDocument>(SETTINGS_COLLECTION).updateOne(
+      await db.collection<KangurLegacySettingDocument>(KANGUR_LEGACY_SETTINGS_COLLECTION).updateOne(
         {
           $or: [{ key: settingKey }, { _id: settingKey }],
-        } as Filter<MongoAssignmentSettingDocument>,
+        } as Filter<KangurLegacySettingDocument>,
         {
           $set: {
             _id: settingKey,

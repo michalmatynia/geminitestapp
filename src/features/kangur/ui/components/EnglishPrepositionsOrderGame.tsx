@@ -42,7 +42,11 @@ import {
   type KangurMiniGameTranslate,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
-import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
+import type {
+  KangurMiniGameFeedback,
+  KangurMiniGameFinishProps,
+  KangurRewardBreakdownEntry,
+} from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 import type { DropResult } from '@hello-pangea/dnd';
@@ -60,15 +64,9 @@ type OrderRound = {
   target: string;
 };
 
-type FeedbackState = {
-  kind: 'success' | 'error';
-  text: string;
-};
+type FeedbackState = KangurMiniGameFeedback;
 
-type EnglishPrepositionsOrderGameProps = {
-  finishLabel?: string;
-  onFinish: () => void;
-};
+type EnglishPrepositionsOrderGameProps = KangurMiniGameFinishProps;
 
 const ROUNDS: OrderRound[] = [
   {

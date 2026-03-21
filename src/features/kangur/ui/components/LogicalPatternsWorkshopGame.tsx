@@ -40,7 +40,10 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
-import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
+import type {
+  KangurMiniGameFinishProps,
+  KangurRewardBreakdownEntry,
+} from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 import {
@@ -53,10 +56,7 @@ import {
 
 import type { DropResult } from '@hello-pangea/dnd';
 
-type LogicalPatternsWorkshopGameProps = {
-  finishLabel?: string;
-  onFinish: () => void;
-};
+type LogicalPatternsWorkshopGameProps = KangurMiniGameFinishProps;
 
 type RoundState = {
   pool: LogicalPatternTile[];

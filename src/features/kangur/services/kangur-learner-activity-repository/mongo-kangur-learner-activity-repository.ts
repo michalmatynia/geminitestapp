@@ -5,22 +5,17 @@ import {
   type KangurLearnerActivitySnapshot,
   type KangurLearnerActivityUpdateInput,
 } from '@kangur/contracts';
+import {
+  KANGUR_LEGACY_SETTINGS_COLLECTION,
+  type KangurLegacySettingDocument,
+} from '@/features/kangur/services/kangur-legacy-settings-store';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 
 import type { KangurLearnerActivityRepository } from './types';
 import type { Filter } from 'mongodb';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
-
-
-const SETTINGS_COLLECTION = 'settings';
 const KANGUR_ACTIVITY_SETTING_PREFIX = 'kangur_activity:';
-
-type MongoActivitySettingDocument = {
-  _id?: string;
-  key?: string;
-  value?: string;
-};
 
 const toSettingKey = (learnerId: string): string =>
   `${KANGUR_ACTIVITY_SETTING_PREFIX}${encodeURIComponent(learnerId.trim().toLowerCase())}`;
@@ -64,9 +59,9 @@ export const mongoKangurLearnerActivityRepository: KangurLearnerActivityReposito
   async getActivity(learnerId: string): Promise<KangurLearnerActivitySnapshot | null> {
     const db = await getMongoDb();
     const settingKey = toSettingKey(learnerId);
-    const row = await db.collection<MongoActivitySettingDocument>(SETTINGS_COLLECTION).findOne({
+    const row = await db.collection<KangurLegacySettingDocument>(KANGUR_LEGACY_SETTINGS_COLLECTION).findOne({
       $or: [{ key: settingKey }, { _id: settingKey }],
-    } as Filter<MongoActivitySettingDocument>);
+    } as Filter<KangurLegacySettingDocument>);
 
     return parseActivityValue(row?.value);
   },
@@ -77,17 +72,17 @@ export const mongoKangurLearnerActivityRepository: KangurLearnerActivityReposito
   ): Promise<KangurLearnerActivitySnapshot> {
     const db = await getMongoDb();
     const settingKey = toSettingKey(learnerId);
-    const existing = await db.collection<MongoActivitySettingDocument>(SETTINGS_COLLECTION).findOne({
+    const existing = await db.collection<KangurLegacySettingDocument>(KANGUR_LEGACY_SETTINGS_COLLECTION).findOne({
       $or: [{ key: settingKey }, { _id: settingKey }],
-    } as Filter<MongoActivitySettingDocument>);
+    } as Filter<KangurLegacySettingDocument>);
     const previous = parseActivityValue(existing?.value);
     const snapshot = buildSnapshot(learnerId, input, previous);
 
     await executeMongoWriteWithRetry(async () => {
-      await db.collection<MongoActivitySettingDocument>(SETTINGS_COLLECTION).updateOne(
+      await db.collection<KangurLegacySettingDocument>(KANGUR_LEGACY_SETTINGS_COLLECTION).updateOne(
         {
           $or: [{ key: settingKey }, { _id: settingKey }],
-        } as Filter<MongoActivitySettingDocument>,
+        } as Filter<KangurLegacySettingDocument>,
         {
           $set: {
             key: settingKey,

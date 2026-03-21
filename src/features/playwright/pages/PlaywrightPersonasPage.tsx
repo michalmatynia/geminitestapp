@@ -11,7 +11,7 @@ import {
 } from '@/features/playwright/utils/personas';
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 import { AdminSettingsBreadcrumbs, ItemLibrary, useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { SetStateAction } from 'react';
 
@@ -49,9 +49,10 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
       await savePersonas({ personas: next });
       toast(existing ? 'Persona updated.' : 'Persona created.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'PlaywrightPersonasPage', action: 'savePersona', personaId: draft.id },
+      logClientCatch(error, {
+        source: 'PlaywrightPersonasPage',
+        action: 'savePersona',
+        personaId: draft.id,
       });
       const errorMessage = error instanceof Error ? error.message : 'Failed to save personas.';
       toast(errorMessage, { variant: 'error' });
@@ -64,13 +65,10 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
       await savePersonas({ personas: next });
       toast('Persona deleted.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'PlaywrightPersonasPage',
-          action: 'deletePersona',
-          personaId: persona.id,
-        },
+      logClientCatch(error, {
+        source: 'PlaywrightPersonasPage',
+        action: 'deletePersona',
+        personaId: persona.id,
       });
       const errorMessage = error instanceof Error ? error.message : 'Failed to save personas.';
       toast(errorMessage, { variant: 'error' });

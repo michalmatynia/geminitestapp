@@ -54,7 +54,10 @@ import {
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import { useKangurCanvasRedraw } from '@/features/kangur/ui/hooks/useKangurCanvasRedraw';
-import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
+import type {
+  KangurMiniGameInformationalFeedback,
+  KangurRewardBreakdownEntry,
+} from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 type GeometryDrawingGameProps = {
@@ -78,10 +81,7 @@ type ShapeRound = {
 
 type GeometryDifficultyId = 'starter' | 'pro';
 
-type FeedbackState = {
-  kind: 'success' | 'error' | 'info';
-  text: string;
-} | null;
+type FeedbackState = KangurMiniGameInformationalFeedback | null;
 
 const SHAPE_ROUND_LIBRARY: Record<GeometryShapeId, ShapeRound> = {
   circle: {

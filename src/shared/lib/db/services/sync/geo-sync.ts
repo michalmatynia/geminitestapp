@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 import type { MongoCurrencyDoc, MongoCountryDoc, MongoLanguageDoc } from '../database-sync-types';
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma, CurrencyCode } from '@prisma/client';
@@ -138,8 +138,16 @@ export const syncLanguages: DatabaseSyncHandler = async ({ mongo, prisma }) => {
 // --- Prisma to Mongo handlers ---
 
 export const syncCurrenciesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.currency.findMany();
-  const docs = rows.map((row: any) => ({
+  type PersistedCurrencyRow = {
+    id: string;
+    code: string;
+    name: string;
+    symbol: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  const rows = (await prisma.currency.findMany()) as PersistedCurrencyRow[];
+  const docs = rows.map((row: PersistedCurrencyRow) => ({
     _id: row.id,
     id: row.id,
     code: row.code,
@@ -159,8 +167,21 @@ export const syncCurrenciesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, 
 };
 
 export const syncCountriesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.country.findMany({ include: { currencies: true } });
-  const docs = rows.map((row: any) => ({
+  type PersistedCountryCurrencyRow = {
+    currencyId: string;
+  };
+  type PersistedCountryRow = {
+    id: string;
+    code: string;
+    name: string;
+    currencies: PersistedCountryCurrencyRow[];
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  const rows = (await prisma.country.findMany({
+    include: { currencies: true },
+  })) as PersistedCountryRow[];
+  const docs = rows.map((row: PersistedCountryRow) => ({
     _id: row.id,
     id: row.id,
     code: row.code,
@@ -180,10 +201,27 @@ export const syncCountriesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, p
 };
 
 export const syncLanguagesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.language.findMany({
+  type PersistedLanguageCountryRow = {
+    countryId: string;
+    country: {
+      id: string;
+      code: string;
+      name: string;
+    };
+  };
+  type PersistedLanguageRow = {
+    id: string;
+    code: string;
+    name: string;
+    nativeName: string | null;
+    countries: PersistedLanguageCountryRow[];
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  const rows = (await prisma.language.findMany({
     include: { countries: { include: { country: true } } },
-  });
-  const docs = rows.map((row: any) => ({
+  })) as PersistedLanguageRow[];
+  const docs = rows.map((row: PersistedLanguageRow) => ({
     _id: row.id,
     id: row.id,
     code: row.code,

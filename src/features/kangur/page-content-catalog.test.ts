@@ -36,6 +36,13 @@ describe('page-content-catalog', () => {
     );
   });
 
+  it('returns the started Ukrainian page-content translation while keeping catalog fallbacks', () => {
+    const entry = getEntry('uk', 'learner-profile-overview');
+
+    expect(entry.title).toBe('Огляд результатів');
+    expect(entry.summary).toBe('Головні сигнали дня: точність, місія, ціль і значки в одному місці.');
+  });
+
   it('builds English lesson-library fragments from localized lesson catalog defaults', () => {
     const entry = getEntry('en', 'lessons-library');
     const additionFragment = entry.fragments.find((fragment) => fragment.id === 'lesson:adding');

@@ -95,6 +95,20 @@ export class AppError extends Error {
       ...(this.retryAfterMs !== undefined && { retryAfterMs: this.retryAfterMs }),
     });
   }
+
+  /** Create a copy with a cause attached for downstream reporting. */
+  withCause(cause: unknown): AppError {
+    return new AppError(this.message, {
+      code: this.code,
+      httpStatus: this.httpStatus,
+      cause,
+      meta: this.meta,
+      expected: this.expected,
+      critical: this.critical,
+      retryable: this.retryable,
+      ...(this.retryAfterMs !== undefined && { retryAfterMs: this.retryAfterMs }),
+    });
+  }
 }
 
 export const isAppError = (error: unknown): error is AppError => error instanceof AppError;

@@ -1,9 +1,9 @@
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import type { SettingsPanelField } from '@/features/kangur/shared/ui/templates/SettingsPanelBuilder';
 import type { KangurStorefrontAppearanceMode } from '@/features/kangur/storefront-appearance-settings';
 import type { KangurAdminLocaleDto as AppearanceAdminLocale } from '../kangur-admin-locale';
+import { resolveKangurAdminLocale } from '../kangur-admin-locale';
 import {
   BUILTIN_DAILY_ID,
   BUILTIN_DAWN_ID,
@@ -734,7 +734,7 @@ const CONTEXT_COPY = {
 
 export const resolveAppearanceAdminLocale = (
   locale: string | null | undefined
-): AppearanceAdminLocale => (normalizeSiteLocale(locale) === 'pl' ? 'pl' : 'en');
+): AppearanceAdminLocale => resolveKangurAdminLocale(locale);
 
 export const getAppearancePageCopy = (locale: AppearanceAdminLocale) => PAGE_COPY[locale];
 

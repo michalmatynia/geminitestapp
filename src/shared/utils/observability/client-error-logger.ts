@@ -4,7 +4,7 @@ import { classifyError } from '@/shared/errors/error-classifier';
 import { isSensitiveKey, REDACTED_VALUE, truncateString } from './client-redaction';
 import { isAbortLikeError } from './is-abort-like-error';
 import { getLastUserAction, initUserActionTracker } from './user-action-tracker';
-type ClientErrorContext = Record<string, unknown>;
+export type ClientErrorContext = Record<string, unknown>;
 type SerializedContext =
   | Record<string, unknown>
   | { truncated: true; preview: string }
@@ -211,6 +211,20 @@ export const logClientError = (
       // Swallow network failures for non-blocking client diagnostics.
     });
   }
+};
+
+export const logClientCatch = (
+  error: unknown,
+  context: ClientErrorContext,
+  extra?: {
+    digest?: string | null | undefined;
+    componentStack?: string | null | undefined;
+  }
+): void => {
+  logClientError(error, {
+    ...(extra ?? {}),
+    context,
+  });
 };
 
 let handlerAttached = false;

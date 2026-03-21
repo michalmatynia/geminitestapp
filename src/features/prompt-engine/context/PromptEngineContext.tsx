@@ -11,7 +11,7 @@ import {
   type PromptValidationSeverity,
 } from '@/shared/lib/prompt-engine/settings';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { RuleDraft, RulePatch } from './prompt-engine-context-utils';
 import {
@@ -261,10 +261,7 @@ export function PromptEngineProvider({
           await navigator.clipboard.writeText(value);
           toast(`${label} copied to clipboard`, { variant: 'success' });
         } catch (error) {
-          logClientError(error);
-          logClientError(error, {
-            context: { source: 'PromptEngineContext', action: 'handleCopy' },
-          });
+          logClientCatch(error, { source: 'PromptEngineContext', action: 'handleCopy' });
           toast('Failed to copy to clipboard', { variant: 'error' });
         }
       },
@@ -282,4 +279,3 @@ export function PromptEngineProvider({
     </ConfigContext.Provider>
   );
 }
-

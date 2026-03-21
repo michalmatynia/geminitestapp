@@ -61,6 +61,33 @@ export type KangurRewardBreakdownEntry = {
   xp: number;
 };
 
+export type KangurMiniGameFinishActionPropsDto = {
+  onFinish: () => void;
+};
+export type KangurMiniGameFinishActionProps = KangurMiniGameFinishActionPropsDto;
+
+export type KangurMiniGameFinishPropsDto = KangurMiniGameFinishActionPropsDto & {
+  finishLabel?: string;
+};
+export type KangurMiniGameFinishProps = KangurMiniGameFinishPropsDto;
+
+export type KangurMiniGameFinishVariantPropsDto = KangurMiniGameFinishActionPropsDto & {
+  finishLabelVariant?: 'lesson' | 'play';
+};
+export type KangurMiniGameFinishVariantProps = KangurMiniGameFinishVariantPropsDto;
+
+export type KangurMiniGameFeedbackDto = {
+  kind: 'success' | 'error';
+  text: string;
+};
+export type KangurMiniGameFeedback = KangurMiniGameFeedbackDto;
+
+export type KangurMiniGameInformationalFeedbackDto = {
+  kind: 'success' | 'error' | 'info';
+  text: string;
+};
+export type KangurMiniGameInformationalFeedback = KangurMiniGameInformationalFeedbackDto;
+
 export type KangurXpToastBadgeHint = {
   emoji: string;
   name: string;
@@ -101,6 +128,17 @@ export type KangurAddXpResult = {
   newBadges: string[];
   xpGained: number;
 };
+
+export type KangurBasePathProgressPropsDto = {
+  basePath: string;
+  progress: KangurProgressState;
+};
+export type KangurBasePathProgressProps = KangurBasePathProgressPropsDto;
+
+export type KangurHomeScreenVisibilityPropsDto = {
+  hideWhenScreenMismatch?: boolean;
+};
+export type KangurHomeScreenVisibilityProps = KangurHomeScreenVisibilityPropsDto;
 
 export type KangurTrainingSelection = {
   categories: KangurOperation[];

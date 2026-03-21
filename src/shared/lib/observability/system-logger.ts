@@ -12,7 +12,6 @@ import {
 import { getActiveOtelContextAttributes } from './otel-context';
 import { emitOtelLogRecord } from './otel-log-bridge';
 import { forwardToCentralizedLogging } from './system-logger-central-forwarding';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
 const MAX_CONTEXT_SIZE = 12000;
@@ -40,6 +39,10 @@ type CreateSystemLogFn = (input: {
 }) => Promise<SystemLogRecord>;
 
 type NotifyCriticalErrorFn = (record: SystemLogRecord, shouldNotify: boolean) => Promise<unknown>;
+
+const logSystemLoggerFailure = (message: string, error: unknown): void => {
+  console.error(message, error);
+};
 
 const loadCreateSystemLog = async (): Promise<CreateSystemLogFn | null> => {
   if (typeof window !== 'undefined') return null;
@@ -102,7 +105,7 @@ const sanitizeValue = (value: unknown): Record<string, unknown> | null => {
     }
     return { value: parsed };
   } catch (error) {
-    logClientError(error);
+    logSystemLoggerFailure('[system-logger] Failed to serialize context', error);
     return { error: 'Failed to serialize context.' };
   }
 };
@@ -310,7 +313,7 @@ const extractRequestInfo = (
       ...(headerCorrelationId ? { correlationId: headerCorrelationId } : {}),
     };
   } catch (error) {
-    logClientError(error);
+    logSystemLoggerFailure('[system-logger] Failed to extract request info', error);
     return {};
   }
 };
@@ -418,9 +421,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
         const { classifyError } = await import('@/shared/errors/error-classifier');
         category = classifyError(input.error);
       } catch (error) {
-        logClientError(error);
-      
-        // Fallback if import fails
+        logSystemLoggerFailure('[system-logger] Failed to classify error', error);
       }
     }
 
@@ -566,8 +567,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
               )) as Record<string, unknown>) ?? context;
           }
         } catch (enrichmentError) {
-          logClientError(enrichmentError);
-          console.error(
+          logSystemLoggerFailure(
             '[system-logger] Failed to attach registry runtime context',
             enrichmentError
           );
@@ -644,13 +644,11 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
           }
         }
       } catch (err) {
-        logClientError(err);
-        console.error('[system-logger] Failed to persist log asynchronously', err);
+        logSystemLoggerFailure('[system-logger] Failed to persist log asynchronously', err);
       }
     })();
   } catch (error) {
-    logClientError(error);
-    console.error('[system-logger] Failed to process system log', error);
+    logSystemLoggerFailure('[system-logger] Failed to process system log', error);
   }
 }
 

@@ -18,7 +18,7 @@ import {
   useTraderaQueueHealth,
 } from '@/shared/lib/jobs/hooks/useJobQueries';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 type SelectedListing = { job: ProductJob; listing: ListingJob } | null;
 
@@ -114,10 +114,7 @@ export function JobsProvider({ children }: { children: ReactNode }): React.JSX.E
     try {
       await cancelListingMutation.mutateAsync({ productId, listingId });
     } catch (err: unknown) {
-      logClientError(err);
-      logClientError(err, {
-        context: { source: 'JobsContext', action: 'cancelListing', productId, listingId },
-      });
+      logClientCatch(err, { source: 'JobsContext', action: 'cancelListing', productId, listingId });
     }
   };
 
@@ -135,10 +132,7 @@ export function JobsProvider({ children }: { children: ReactNode }): React.JSX.E
     try {
       await chatbotMutation.mutateAsync({ jobId, action: 'cancel' });
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'JobsContext', action: 'cancelChatbotJob', jobId },
-      });
+      logClientCatch(error, { source: 'JobsContext', action: 'cancelChatbotJob', jobId });
     }
   };
 

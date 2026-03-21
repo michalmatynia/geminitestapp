@@ -10,7 +10,7 @@ import {
   type ExportToBaseVariables,
 } from '@/features/integrations/hooks/useProductListingMutations';
 import { selectProductForListingFormSchema } from '@/features/integrations/validations/listing-forms';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 type UseProductSelectionFormResult = {
@@ -80,10 +80,7 @@ export function useProductSelectionForm(): UseProductSelectionFormResult {
       }
       onSuccess();
     } catch (err: unknown) {
-      logClientError(err);
-      logClientError(err, {
-        context: { source: 'SelectProductForListingModal', action: 'submit' },
-      });
+      logClientCatch(err, { source: 'SelectProductForListingModal', action: 'submit' });
       setError(err instanceof Error ? err.message : 'Failed to list product');
     }
   };

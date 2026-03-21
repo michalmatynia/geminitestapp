@@ -5,6 +5,7 @@ import type {
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 
 const MOBILE_HOME_DUELS_SPOTLIGHT_LIMIT = 4;
@@ -27,23 +28,38 @@ const DUEL_SPOTLIGHT_STATUS_PRIORITY: Record<KangurDuelStatus, number> = {
   waiting: 2,
 };
 
-const toSpotlightErrorMessage = (error: unknown): string | null => {
+const toSpotlightErrorMessage = (
+  error: unknown,
+  copy: ReturnType<typeof useKangurMobileI18n>['copy'],
+): string | null => {
   if (!error) {
     return null;
   }
 
   if (!(error instanceof Error)) {
-    return 'Nie udało się pobrać aktywnych pojedynków z lobby.';
+    return copy({
+      de: 'Aktive Duelle aus der Lobby konnten nicht geladen werden.',
+      en: 'Could not load active duels from the lobby.',
+      pl: 'Nie udało się pobrać aktywnych pojedynków z lobby.',
+    });
   }
 
   const message = error.message.trim();
   if (!message) {
-    return 'Nie udało się pobrać aktywnych pojedynków z lobby.';
+    return copy({
+      de: 'Aktive Duelle aus der Lobby konnten nicht geladen werden.',
+      en: 'Could not load active duels from the lobby.',
+      pl: 'Nie udało się pobrać aktywnych pojedynków z lobby.',
+    });
   }
 
   const normalized = message.toLowerCase();
   if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
-    return 'Nie udało się połączyć z API Kangura.';
+    return copy({
+      de: 'Die Verbindung zur Kangur-API konnte nicht hergestellt werden.',
+      en: 'Could not connect to the Kangur API.',
+      pl: 'Nie udało się połączyć z API Kangura.',
+    });
   }
 
   return message;
@@ -57,6 +73,7 @@ const isSpotlightEntry = (entry: KangurDuelLobbyEntry): boolean =>
 
 export const useKangurMobileHomeDuelsSpotlight =
   (): UseKangurMobileHomeDuelsSpotlightResult => {
+    const { copy } = useKangurMobileI18n();
     const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
 
     const spotlightQuery = useQuery({
@@ -98,7 +115,7 @@ export const useKangurMobileHomeDuelsSpotlight =
 
     return {
       entries,
-      error: toSpotlightErrorMessage(spotlightQuery.error),
+      error: toSpotlightErrorMessage(spotlightQuery.error, copy),
       isLoading: spotlightQuery.isLoading,
       refresh: async () => {
         await spotlightQuery.refetch();

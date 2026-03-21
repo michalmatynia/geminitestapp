@@ -1,9 +1,9 @@
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import type { SettingsPanelField } from '@/features/kangur/shared/ui/templates/SettingsPanelBuilder';
 import type { KangurThemeMode } from '@/features/kangur/theme-settings';
 import type { KangurAdminLocaleDto as KangurThemeSettingsLocale } from '../kangur-admin-locale';
+import { resolveKangurAdminLocale } from '../kangur-admin-locale';
 export type KangurThemePreviewSectionId =
   | 'corePalette'
   | 'textOverrides'
@@ -521,7 +521,7 @@ const PL_FIELD_PLACEHOLDERS: Record<string, string> = {
 
 export const resolveKangurThemeSettingsLocale = (
   locale: string | null | undefined
-): KangurThemeSettingsLocale => (normalizeSiteLocale(locale) === 'pl' ? 'pl' : 'en');
+): KangurThemeSettingsLocale => resolveKangurAdminLocale(locale);
 
 export const getKangurThemeModeCopy = (
   locale: KangurThemeSettingsLocale,

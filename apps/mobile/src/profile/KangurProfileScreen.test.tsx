@@ -6,6 +6,8 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { KangurMobileI18nProvider } from '../i18n/kangurMobileI18n';
+
 const { useKangurMobileLearnerProfileMock } = vi.hoisted(() => ({
   useKangurMobileLearnerProfileMock: vi.fn(),
 }));
@@ -19,6 +21,17 @@ vi.mock('./useKangurMobileLearnerProfile', () => ({
 }));
 
 import { KangurProfileScreen } from './KangurProfileScreen';
+
+const renderProfileScreen = (locale?: 'pl' | 'en' | 'de') =>
+  render(
+    locale ? (
+      <KangurMobileI18nProvider locale={locale}>
+        <KangurProfileScreen />
+      </KangurMobileI18nProvider>
+    ) : (
+      <KangurProfileScreen />
+    ),
+  );
 
 describe('KangurProfileScreen', () => {
   beforeEach(() => {
@@ -121,7 +134,7 @@ describe('KangurProfileScreen', () => {
       },
     });
 
-    render(<KangurProfileScreen />);
+    renderProfileScreen();
 
     expect(screen.getByText('Profil ucznia')).toBeTruthy();
     expect(screen.getByText('Przywracamy sesję ucznia i zapisane statystyki.')).toBeTruthy();
@@ -218,7 +231,7 @@ describe('KangurProfileScreen', () => {
       },
     });
 
-    render(<KangurProfileScreen />);
+    renderProfileScreen();
 
     expect(screen.getByText('Statystyki ucznia: Ada Learner.')).toBeTruthy();
     expect(screen.getByText('Liczmistrz')).toBeTruthy();
@@ -228,5 +241,14 @@ describe('KangurProfileScreen', () => {
     expect(screen.getByText('Zegar')).toBeTruthy();
     expect(screen.getByText('Powtórka dodawania')).toBeTruthy();
     expect(screen.getByText('Otwórz całą historię')).toBeTruthy();
+  });
+
+  it('renders German profile chrome when the locale provider is set to de', () => {
+    renderProfileScreen('de');
+
+    expect(screen.getByText('Schülerprofil')).toBeTruthy();
+    expect(screen.getByText('Plan für heute')).toBeTruthy();
+    expect(screen.getByText('Aufgaben für jetzt')).toBeTruthy();
+    expect(screen.getByText('Ergebnisverlauf')).toBeTruthy();
   });
 });

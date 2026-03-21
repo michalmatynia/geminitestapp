@@ -45,10 +45,10 @@ const defaultMessageLoader = () =>
   import('./messages/pl.json').then((module) => module.default as SiteMessageDictionary);
 
 const messageLoaders: Partial<Record<string, () => Promise<SiteMessageDictionary>>> = {
-  pl: () => import('./messages/pl.json').then((module) => module.default),
-  en: () => import('./messages/en.json').then((module) => module.default),
-  de: () => import('./messages/de.json').then((module) => module.default),
-  uk: () => import('./messages/uk.json').then((module) => module.default),
+  pl: () => import('./messages/pl.json').then((module) => module.default as SiteMessageDictionary),
+  en: () => import('./messages/en.json').then((module) => module.default as SiteMessageDictionary),
+  de: () => import('./messages/de.json').then((module) => module.default as SiteMessageDictionary),
+  uk: () => import('./messages/uk.json').then((module) => module.default as SiteMessageDictionary),
 };
 
 export const loadSiteMessages = async (locale: string | null | undefined): Promise<SiteMessages> => {
@@ -66,7 +66,7 @@ export const loadSiteMessages = async (locale: string | null | undefined): Promi
 
   if (loaders.length === 0) {
     const fallbackLoader =
-      messageLoaders[getDefaultSiteLocaleCode()] ?? messageLoaders.en ?? defaultMessageLoader;
+      messageLoaders[getDefaultSiteLocaleCode()] ?? messageLoaders['en'] ?? defaultMessageLoader;
     return (await fallbackLoader()) as SiteMessages;
   }
 

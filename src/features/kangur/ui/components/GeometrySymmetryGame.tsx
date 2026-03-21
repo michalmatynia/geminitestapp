@@ -51,7 +51,11 @@ import {
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import { useKangurCanvasRedraw } from '@/features/kangur/ui/hooks/useKangurCanvasRedraw';
-import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
+import type {
+  KangurMiniGameFinishActionProps,
+  KangurMiniGameInformationalFeedback,
+  KangurRewardBreakdownEntry,
+} from '@/features/kangur/ui/types';
 import type { Point2d } from '@/shared/contracts/geometry';
 import { cn } from '@/features/kangur/shared/utils';
 import {
@@ -74,14 +78,9 @@ import {
 } from './GeometrySymmetryGame.canvas';
 import type { SymmetryRound } from './GeometrySymmetryGame.types';
 
-type GeometrySymmetryGameProps = {
-  onFinish: () => void;
-};
+type GeometrySymmetryGameProps = KangurMiniGameFinishActionProps;
 
-type FeedbackState = {
-  kind: 'success' | 'error' | 'info';
-  text: string;
-} | null;
+type FeedbackState = KangurMiniGameInformationalFeedback | null;
 
 const distance = (a: Point2d, b: Point2d): number =>
   Math.hypot(a.x - b.x, a.y - b.y);

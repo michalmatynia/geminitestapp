@@ -7,6 +7,7 @@ import type {
   KangurDuelPlayer,
   KangurDuelPlayerStatus,
   KangurDuelReactionType,
+  KangurDuelSeries,
   KangurDuelSession,
   KangurDuelStatus,
 } from '@kangur/contracts';
@@ -16,6 +17,7 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
+import { shareKangurDuelInvite } from './duelInviteShare';
 import { createKangurDuelsHref } from './duelsHref';
 import { useKangurMobileDuelLobbyChat } from './useKangurMobileDuelLobbyChat';
 import { useKangurMobileDuelSession } from './useKangurMobileDuelSession';
@@ -94,6 +96,7 @@ const OPERATION_OPTIONS: KangurDuelOperation[] = [
 ];
 
 const DIFFICULTY_OPTIONS: KangurDuelDifficulty[] = ['easy', 'medium', 'hard'];
+const SERIES_BEST_OF_OPTIONS: Array<1 | 3 | 5 | 7 | 9> = [1, 3, 5, 7, 9];
 const DUEL_REACTION_OPTIONS: KangurDuelReactionType[] = [
   'cheer',
   'wow',
@@ -124,6 +127,10 @@ const DUEL_REACTION_LABELS: Record<KangurDuelReactionType, string> = {
   rocket: 'Rakieta',
   thumbs_up: 'Kciuk w górę',
 };
+
+function isWaitingSessionStatus(status: KangurDuelStatus): boolean {
+  return status === 'waiting' || status === 'ready' || status === 'created';
+}
 
 function Card({
   children,
@@ -435,6 +442,24 @@ function formatStatusLabel(status: KangurDuelStatus): string {
   return DUEL_STATUS_LABELS[status];
 }
 
+function formatSeriesBestOfLabel(bestOf: 1 | 3 | 5 | 7 | 9): string {
+  if (bestOf === 1) {
+    return 'Pojedynczy mecz';
+  }
+
+  return `Seria BO${bestOf}`;
+}
+
+function normalizeSeriesBestOf(
+  bestOf: number | null | undefined,
+): 1 | 3 | 5 | 7 | 9 {
+  if (bestOf === 3 || bestOf === 5 || bestOf === 7 || bestOf === 9) {
+    return bestOf;
+  }
+
+  return 1;
+}
+
 function formatPlayerStatusLabel(status: KangurDuelPlayerStatus): string {
   return DUEL_PLAYER_STATUS_LABELS[status];
 }
@@ -513,6 +538,82 @@ function resolveWinnerSummary(players: KangurDuelPlayer[]): string {
   return `Wygrywa ${topPlayer.displayName} z wynikiem ${topScore}.`;
 }
 
+function formatSeriesTitle(series: KangurDuelSeries): string {
+  return `Seria BO${series.bestOf}`;
+}
+
+function formatSeriesProgress(series: KangurDuelSeries): string {
+  const gameIndex = Math.min(
+    series.bestOf,
+    Math.max(1, series.gameIndex),
+  );
+  return `Gra ${gameIndex} z ${series.bestOf}`;
+}
+
+function formatLobbySeriesSummary(series: KangurDuelSeries): string {
+  if (series.isComplete) {
+    return `Seria zakończona · ukończone gry: ${series.completedGames}`;
+  }
+
+  return `${formatSeriesProgress(series)} · ukończone gry: ${series.completedGames}`;
+}
+
+function resolveSeriesWins(
+  series: KangurDuelSeries,
+  learnerId: string,
+): number {
+  return series.winsByPlayer[learnerId] ?? 0;
+}
+
+function formatSeriesSummary(
+  series: KangurDuelSeries,
+  players: KangurDuelPlayer[],
+): string {
+  if (players.length === 0) {
+    return `Ukończono ${series.completedGames} gier w serii.`;
+  }
+
+  const rankedPlayers = [...players].sort((left, right) => {
+    const leftWins = resolveSeriesWins(series, left.learnerId);
+    const rightWins = resolveSeriesWins(series, right.learnerId);
+    return rightWins - leftWins;
+  });
+  const leader =
+    players.find((player) => player.learnerId === series.leaderLearnerId) ??
+    rankedPlayers[0] ??
+    null;
+  const challenger = rankedPlayers.find(
+    (player) => player.learnerId !== leader?.learnerId,
+  );
+
+  if (!leader) {
+    return `Ukończono ${series.completedGames} gier w serii.`;
+  }
+
+  const leaderWins = resolveSeriesWins(series, leader.learnerId);
+  const challengerWins = challenger
+    ? resolveSeriesWins(series, challenger.learnerId)
+    : 0;
+
+  if (series.isComplete) {
+    if (challenger && challengerWins === leaderWins) {
+      return `Seria zakończona remisem ${leaderWins}:${challengerWins}.`;
+    }
+
+    return `Serię wygrywa ${leader.displayName} ${leaderWins}:${challengerWins}.`;
+  }
+
+  if (leaderWins === 0 && challengerWins === 0) {
+    return 'Pierwsza gra serii jeszcze się nie rozstrzygnęła.';
+  }
+
+  if (challenger && challengerWins === leaderWins) {
+    return `Seria jest remisowa ${leaderWins}:${challengerWins}.`;
+  }
+
+  return `Prowadzi ${leader.displayName} ${leaderWins}:${challengerWins}.`;
+}
+
 function resolveSessionIdParam(value: string | string[] | undefined): string | null {
   const raw = Array.isArray(value) ? value[0] : value;
   const normalized = typeof raw === 'string' ? raw.trim() : '';
@@ -551,6 +652,7 @@ function LobbyEntryCard({
     mode: KangurDuelMode;
     operation: KangurDuelOperation;
     questionCount: number;
+    series?: KangurDuelSeries | null;
     sessionId: string;
     status: KangurDuelStatus;
     timePerQuestionSec: number;
@@ -595,12 +697,27 @@ function LobbyEntryCard({
             textColor: '#b45309',
           }}
         />
+        {entry.series ? (
+          <Pill
+            label={formatSeriesTitle(entry.series)}
+            tone={{
+              backgroundColor: '#f5f3ff',
+              borderColor: '#ddd6fe',
+              textColor: '#6d28d9',
+            }}
+          />
+        ) : null}
       </View>
 
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
         {entry.questionCount} pytań · {entry.timePerQuestionSec}s na pytanie · aktualizacja{' '}
         {formatRelativeAge(entry.updatedAt)}
       </Text>
+      {entry.series ? (
+        <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+          {formatLobbySeriesSummary(entry.series)}
+        </Text>
+      ) : null}
 
       <View style={{ gap: 8 }}>
         {action}
@@ -639,6 +756,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
     authSession.user?.activeLearner?.id ?? authSession.user?.id ?? null;
   const [chatDraft, setChatDraft] = useState('');
   const [chatActionError, setChatActionError] = useState<string | null>(null);
+  const [inviteShareError, setInviteShareError] = useState<string | null>(null);
   const [routeJoinError, setRouteJoinError] = useState<string | null>(null);
   const [isJoiningFromRoute, setIsJoiningFromRoute] = useState(false);
   const lobbyChatPreview = chat.messages.slice(-LOBBY_CHAT_PREVIEW_LIMIT);
@@ -648,6 +766,32 @@ export function KangurDuelsScreen(): React.JSX.Element {
     !chat.isSending &&
     chatDraft.trim().length > 0 &&
     chatDraft.trim().length <= chat.maxMessageLength;
+  const hasWaitingSession = duel.session
+    ? isWaitingSessionStatus(duel.session.status)
+    : false;
+  const activePlayersCount =
+    duel.session?.players.filter((player) => player.status !== 'left').length ?? 0;
+  const hasPendingInvitedPlayer =
+    duel.session?.players.some((player) => player.status === 'invited') ?? false;
+  const isInvitedLearnerMissing = duel.session?.invitedLearnerId
+    ? !duel.session.players.some(
+        (player) =>
+          player.learnerId === duel.session?.invitedLearnerId &&
+          player.status !== 'left',
+      )
+    : false;
+  const needsMorePlayersToStart = duel.session
+    ? activePlayersCount < (duel.session.minPlayersToStart ?? 2)
+    : false;
+  const canShareInvite = Boolean(
+    duel.session &&
+      duel.player &&
+      !duel.isSpectating &&
+      duel.session.visibility === 'private' &&
+      hasWaitingSession &&
+      (hasPendingInvitedPlayer || isInvitedLearnerMissing || needsMorePlayersToStart),
+  );
+  const inviteeName = duel.session?.invitedLearnerName?.trim() || 'drugiej osoby';
 
   const createLoginCallToAction = (label: string): React.JSX.Element =>
     supportsLearnerCredentials ? (
@@ -662,6 +806,67 @@ export function KangurDuelsScreen(): React.JSX.Element {
 
   const openLobby = (): void => {
     router.replace(createKangurDuelsHref());
+  };
+
+  const handleRematch = async (): Promise<void> => {
+    if (!duel.session || duel.isSpectating) {
+      return;
+    }
+
+    const nextSeriesBestOf = normalizeSeriesBestOf(duel.session.series?.bestOf);
+    const overrides = {
+      difficulty: duel.session.difficulty,
+      operation: duel.session.operation,
+      seriesBestOf: nextSeriesBestOf,
+    } as const;
+
+    if (duel.session.visibility === 'private') {
+      const opponentLearnerId =
+        duel.session.players.find((player) => player.learnerId !== activeLearnerId)
+          ?.learnerId ?? null;
+
+      if (!opponentLearnerId) {
+        return;
+      }
+
+      const nextSessionId = await lobby.createPrivateChallenge(
+        opponentLearnerId,
+        overrides,
+      );
+      if (nextSessionId) {
+        openSession(nextSessionId);
+      }
+      return;
+    }
+
+    const nextSessionId =
+      duel.session.mode === 'quick_match'
+        ? await lobby.createQuickMatch(overrides)
+        : await lobby.createPublicChallenge(overrides);
+    if (nextSessionId) {
+      openSession(nextSessionId);
+    }
+  };
+
+  const handleInviteShare = async (): Promise<void> => {
+    if (!duel.session || !duel.player || duel.isSpectating) {
+      return;
+    }
+
+    setInviteShareError(null);
+
+    try {
+      await shareKangurDuelInvite({
+        sessionId: duel.session.id,
+        sharerDisplayName: duel.player.displayName,
+      });
+    } catch (error) {
+      setInviteShareError(
+        error instanceof Error && error.message.trim().length > 0
+          ? error.message
+          : 'Nie udało się udostępnić linku do zaproszenia.',
+      );
+    }
   };
 
   const joinSessionFromRoute = async (): Promise<void> => {
@@ -930,6 +1135,16 @@ export function KangurDuelsScreen(): React.JSX.Element {
                       }}
                     />
                   ) : null}
+                  {duel.session.series ? (
+                    <Pill
+                      label={formatSeriesTitle(duel.session.series)}
+                      tone={{
+                        backgroundColor: '#f5f3ff',
+                        borderColor: '#ddd6fe',
+                        textColor: '#6d28d9',
+                      }}
+                    />
+                  ) : null}
                 </View>
 
                 {duel.isSpectating ? (
@@ -951,6 +1166,20 @@ export function KangurDuelsScreen(): React.JSX.Element {
                   />
                 ) : null}
               </Card>
+
+              {duel.session.series ? (
+                <Card>
+                  <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+                    Seria
+                  </Text>
+                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {formatSeriesProgress(duel.session.series)}
+                  </Text>
+                  <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
+                    {formatSeriesSummary(duel.session.series, duel.session.players)}
+                  </Text>
+                </Card>
+              ) : null}
 
               <Card>
                 <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
@@ -992,6 +1221,12 @@ export function KangurDuelsScreen(): React.JSX.Element {
                         {player.bonusPoints ? ` + ${player.bonusPoints} bonus` : ''} ·{' '}
                         {formatQuestionProgress(duel.session!, player)}
                       </Text>
+                      {duel.session!.series ? (
+                        <Text style={{ color: '#64748b', fontSize: 13, lineHeight: 18 }}>
+                          Wygrane gry w serii:{' '}
+                          {resolveSeriesWins(duel.session!.series, player.learnerId)}
+                        </Text>
+                      ) : null}
                     </View>
                   ))}
                 </View>
@@ -1076,9 +1311,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
                 )}
               </Card>
 
-              {duel.session.status === 'waiting' ||
-              duel.session.status === 'ready' ||
-              duel.session.status === 'created' ? (
+              {hasWaitingSession ? (
                 <Card>
                   <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
                     {duel.isSpectating
@@ -1093,6 +1326,27 @@ export function KangurDuelsScreen(): React.JSX.Element {
                   <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
                     Minimalna liczba graczy do startu: {duel.session.minPlayersToStart ?? 2}
                   </Text>
+                  {canShareInvite ? (
+                    <View style={{ gap: 8 }}>
+                      <MessageCard
+                        title='Udostępnij zaproszenie'
+                        description={`Wyślij bezpośredni link do ${inviteeName}, aby otworzyć prywatny pojedynek na telefonie bez szukania go w lobby.`}
+                      />
+                      <ActionButton
+                        label='Udostępnij link zaproszenia'
+                        onPress={handleInviteShare}
+                        stretch
+                        tone='secondary'
+                      />
+                      {inviteShareError ? (
+                        <MessageCard
+                          title='Nie udało się udostępnić zaproszenia'
+                          description={inviteShareError}
+                          tone='error'
+                        />
+                      ) : null}
+                    </View>
+                  ) : null}
                 </Card>
               ) : null}
 
@@ -1155,6 +1409,19 @@ export function KangurDuelsScreen(): React.JSX.Element {
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {resolveWinnerSummary(duel.session.players)}
                   </Text>
+                  {!duel.isSpectating && duel.isAuthenticated ? (
+                    <View style={{ gap: 8 }}>
+                      <Text style={{ color: '#64748b', fontSize: 13, lineHeight: 18 }}>
+                        Rewanż zachowa ten sam tryb, działanie, poziom i format serii.
+                      </Text>
+                      <ActionButton
+                        disabled={lobby.isActionPending}
+                        label='Zagraj rewanż'
+                        onPress={handleRematch}
+                        stretch
+                      />
+                    </View>
+                  ) : null}
                 </Card>
               ) : null}
 
@@ -1265,6 +1532,27 @@ export function KangurDuelsScreen(): React.JSX.Element {
                 />
               ))}
             </View>
+          </View>
+
+          <View style={{ gap: 8 }}>
+            <Text style={{ color: '#0f172a', fontWeight: '700' }}>Format</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {SERIES_BEST_OF_OPTIONS.map((option) => (
+                <FilterChip
+                  key={`series-best-of-${option}`}
+                  label={formatSeriesBestOfLabel(option)}
+                  onPress={() => {
+                    lobby.setSeriesBestOf(option);
+                  }}
+                  selected={lobby.seriesBestOf === option}
+                />
+              ))}
+            </View>
+            <Text style={{ color: '#64748b', fontSize: 13, lineHeight: 18 }}>
+              {lobby.seriesBestOf === 1
+                ? 'Nowe wyzwania utworzą pojedynczy mecz.'
+                : `Nowe wyzwania utworzą ${formatSeriesBestOfLabel(lobby.seriesBestOf)}.`}
+            </Text>
           </View>
 
           {lobby.actionError ? (

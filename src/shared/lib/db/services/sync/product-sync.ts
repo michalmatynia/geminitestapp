@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 import type { MongoProductDoc } from '../database-sync-types';
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
@@ -88,8 +88,14 @@ export const syncProducts: DatabaseSyncHandler = async ({ mongo, prisma, normali
     ? await prisma.product.createMany({ data: productData as Prisma.ProductCreateManyInput[] })
     : { count: 0 };
 
-  const imageRows = data.flatMap((product: any) =>
-    product.images.map((image: any) => ({
+  type SyncedProduct = (typeof data)[number];
+  type SyncedProductImage = SyncedProduct['images'][number];
+  type SyncedProductCatalog = SyncedProduct['catalogs'][number];
+  type SyncedProductCategory = SyncedProduct['categories'][number];
+  type SyncedProductTag = SyncedProduct['tags'][number];
+
+  const imageRows = data.flatMap((product: SyncedProduct) =>
+    product.images.map((image: SyncedProductImage) => ({
       productId: product.id,
       imageFileId: image.imageFileId,
       assignedAt: toDate(image.assignedAt) ?? new Date(),
@@ -99,8 +105,8 @@ export const syncProducts: DatabaseSyncHandler = async ({ mongo, prisma, normali
     await prisma.productImage.createMany({ data: imageRows });
   }
 
-  const catalogRows = data.flatMap((product: any) =>
-    product.catalogs.map((catalog: any) => ({
+  const catalogRows = data.flatMap((product: SyncedProduct) =>
+    product.catalogs.map((catalog: SyncedProductCatalog) => ({
       productId: product.id,
       catalogId: catalog.catalogId,
       assignedAt: toDate(catalog.assignedAt) ?? new Date(),
@@ -110,8 +116,8 @@ export const syncProducts: DatabaseSyncHandler = async ({ mongo, prisma, normali
     await prisma.productCatalog.createMany({ data: catalogRows });
   }
 
-  const categoryRows = data.flatMap((product: any) =>
-    product.categories.map((category: any) => ({
+  const categoryRows = data.flatMap((product: SyncedProduct) =>
+    product.categories.map((category: SyncedProductCategory) => ({
       productId: product.id,
       categoryId: category.categoryId,
       assignedAt: toDate(category.assignedAt) ?? new Date(),
@@ -121,8 +127,8 @@ export const syncProducts: DatabaseSyncHandler = async ({ mongo, prisma, normali
     await prisma.productCategoryAssignment.createMany({ data: categoryRows });
   }
 
-  const tagRows = data.flatMap((product: any) =>
-    product.tags.map((tag: any) => ({
+  const tagRows = data.flatMap((product: SyncedProduct) =>
+    product.tags.map((tag: SyncedProductTag) => ({
       productId: product.id,
       tagId: tag.tagId,
       assignedAt: toDate(tag.assignedAt) ?? new Date(),
@@ -134,17 +140,17 @@ export const syncProducts: DatabaseSyncHandler = async ({ mongo, prisma, normali
 
   const producerRows: Prisma.ProductProducerAssignmentCreateManyInput[] = [];
   const producerKeys = new Set<string>();
-  data.forEach((product: any) => {
+  data.forEach((product: SyncedProduct) => {
     product.producers.forEach(
       (producer: { producerId: string; assignedAt?: Date | string | null }) => {
-      const key = `${product.id}::${producer.producerId}`;
-      if (producerKeys.has(key)) return;
-      producerKeys.add(key);
-      producerRows.push({
-        productId: product.id,
-        producerId: producer.producerId,
-        assignedAt: toDate(producer.assignedAt) ?? new Date(),
-      });
+        const key = `${product.id}::${producer.producerId}`;
+        if (producerKeys.has(key)) return;
+        producerKeys.add(key);
+        producerRows.push({
+          productId: product.id,
+          producerId: producer.producerId,
+          assignedAt: toDate(producer.assignedAt) ?? new Date(),
+        });
       }
     );
   });
@@ -229,7 +235,93 @@ export const syncProductsPrismaToMongo: DatabaseSyncHandler = async ({
   prisma,
   toObjectIdMaybe,
 }) => {
-  const [rows, catalogRows] = await Promise.all([
+  type PersistedCatalogLanguageRow = {
+    languageId: string;
+    position: number;
+  };
+  type PersistedCatalogRow = {
+    id: string;
+    languages: PersistedCatalogLanguageRow[];
+  };
+  type PersistedProductImageRow = {
+    productId: string;
+    imageFileId: string;
+    assignedAt: Date;
+    imageFile: {
+      id: string;
+      filename: string;
+      filepath: string;
+      mimetype: string;
+      size: number;
+      width: number | null;
+      height: number | null;
+      tags: unknown[];
+      createdAt: Date;
+      updatedAt: Date;
+    };
+  };
+  type PersistedProductCatalogRow = {
+    productId: string;
+    catalogId: string;
+    assignedAt: Date;
+    catalog: {
+      id: string;
+      name: string;
+      description: string | null;
+      isDefault: boolean;
+      defaultLanguageId: string | null;
+      defaultPriceGroupId: string | null;
+      priceGroupIds: unknown[];
+      createdAt: Date;
+      updatedAt: Date;
+    };
+  };
+  type PersistedProductCategoryRef = {
+    categoryId: string | null;
+  };
+  type PersistedProductTagRow = {
+    tagId: string;
+    assignedAt: Date;
+  };
+  type PersistedProductProducerRow = {
+    producerId: string;
+    assignedAt: Date;
+  };
+  type PersistedProductRow = {
+    id: string;
+    sku: string | null;
+    baseProductId: string | null;
+    defaultPriceGroupId: string | null;
+    ean: string | null;
+    gtin: string | null;
+    asin: string | null;
+    name_en: string | null;
+    name_pl: string | null;
+    name_de: string | null;
+    description_en: string | null;
+    description_pl: string | null;
+    description_de: string | null;
+    supplierName: string | null;
+    supplierLink: string | null;
+    priceComment: string | null;
+    stock: number | null;
+    price: number | null;
+    sizeLength: number | null;
+    sizeWidth: number | null;
+    weight: number | null;
+    length: number | null;
+    parameters: unknown[];
+    imageLinks: unknown[];
+    imageBase64s: unknown[];
+    createdAt: Date;
+    updatedAt: Date;
+    images: PersistedProductImageRow[];
+    catalogs: PersistedProductCatalogRow[];
+    categories: PersistedProductCategoryRef | PersistedProductCategoryRef[] | null;
+    tags: PersistedProductTagRow[];
+    producers: PersistedProductProducerRow[];
+  };
+  const [rows, catalogRows] = (await Promise.all([
     prisma.product.findMany({
       include: {
         images: { include: { imageFile: true } },
@@ -240,17 +332,23 @@ export const syncProductsPrismaToMongo: DatabaseSyncHandler = async ({
       },
     }),
     prisma.catalog.findMany({ include: { languages: true } }),
-  ]);
+  ])) as [PersistedProductRow[], PersistedCatalogRow[]];
   const catalogLanguageMap = new Map(
-    catalogRows.map((catalog: any) => [
+    catalogRows.map((catalog: PersistedCatalogRow) => [
       catalog.id,
       catalog.languages
-        .sort((a: any, b: any) => a.position - b.position)
-        .map((entry: { languageId: string }) => entry.languageId),
+        .sort(
+          (a: PersistedCatalogLanguageRow, b: PersistedCatalogLanguageRow) =>
+            a.position - b.position
+        )
+        .map((entry: PersistedCatalogLanguageRow) => entry.languageId),
     ])
   );
-  const docs = rows.map((product: any) => {
-    const categoryId = product.categories?.categoryId ?? null;
+  const docs = rows.map((product: PersistedProductRow) => {
+    const categorySource = Array.isArray(product.categories)
+      ? product.categories[0]
+      : product.categories;
+    const categoryId = categorySource?.categoryId ?? null;
     return {
       _id: toObjectIdMaybe(product.id),
       id: product.id,
@@ -280,7 +378,7 @@ export const syncProductsPrismaToMongo: DatabaseSyncHandler = async ({
       imageBase64s: product.imageBase64s ?? [],
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
-      images: product.images.map((image: any) => ({
+      images: product.images.map((image: PersistedProductImageRow) => ({
         productId: image.productId,
         imageFileId: image.imageFileId,
         assignedAt: image.assignedAt,
@@ -297,7 +395,7 @@ export const syncProductsPrismaToMongo: DatabaseSyncHandler = async ({
           updatedAt: image.imageFile.updatedAt,
         },
       })),
-      catalogs: product.catalogs.map((entry: any) => ({
+      catalogs: product.catalogs.map((entry: PersistedProductCatalogRow) => ({
         productId: entry.productId,
         catalogId: entry.catalogId,
         assignedAt: entry.assignedAt,
@@ -324,12 +422,12 @@ export const syncProductsPrismaToMongo: DatabaseSyncHandler = async ({
           },
         ]
         : [],
-      tags: product.tags.map((entry: any) => ({
+      tags: product.tags.map((entry: PersistedProductTagRow) => ({
         productId: product.id,
         tagId: entry.tagId,
         assignedAt: entry.assignedAt,
       })),
-      producers: product.producers.map((entry: any) => ({
+      producers: product.producers.map((entry: PersistedProductProducerRow) => ({
         productId: product.id,
         producerId: entry.producerId,
         assignedAt: entry.assignedAt,
@@ -351,8 +449,46 @@ export const syncProductDraftsPrismaToMongo: DatabaseSyncHandler = async ({
   prisma,
   toObjectIdMaybe,
 }) => {
-  const rows = await prisma.productDraft.findMany();
-  const docs = rows.map((row: any) => ({
+  type PersistedProductDraftRow = {
+    id: string;
+    name: string;
+    description: string | null;
+    sku: string | null;
+    ean: string | null;
+    gtin: string | null;
+    asin: string | null;
+    name_en: string | null;
+    name_pl: string | null;
+    name_de: string | null;
+    description_en: string | null;
+    description_pl: string | null;
+    description_de: string | null;
+    weight: number | null;
+    sizeLength: number | null;
+    sizeWidth: number | null;
+    length: number | null;
+    price: number | null;
+    supplierName: string | null;
+    supplierLink: string | null;
+    priceComment: string | null;
+    stock: number | null;
+    catalogIds: unknown[];
+    categoryId: string | null;
+    tagIds: unknown[];
+    producerIds: unknown[];
+    parameters: unknown[];
+    defaultPriceGroupId: string | null;
+    active: boolean;
+    icon: string | null;
+    iconColorMode: string | null;
+    iconColor: string | null;
+    imageLinks: unknown[];
+    baseProductId: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  const rows = (await prisma.productDraft.findMany()) as PersistedProductDraftRow[];
+  const docs = rows.map((row: PersistedProductDraftRow) => ({
     _id: toObjectIdMaybe(row.id),
     id: row.id,
     name: row.name,

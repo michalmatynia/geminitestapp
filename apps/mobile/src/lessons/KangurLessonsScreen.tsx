@@ -7,6 +7,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 
+import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileLessons } from './useKangurMobileLessons';
 import { useLessonsScreenBootState } from './useLessonsScreenBootState';
 
@@ -62,10 +63,16 @@ function SkeletonBlock({
 }
 
 function LessonsLoadingDetailCard(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
   return (
     <Card>
       <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-        Ładowanie lekcji
+        {copy({
+          de: 'Lektionen werden geladen',
+          en: 'Loading lessons',
+          pl: 'Ładowanie lekcji',
+        })}
       </Text>
       <SkeletonBlock height={28} width='68%' radius={16} />
       <SkeletonBlock height={18} width='100%' />
@@ -95,20 +102,34 @@ function LessonsLoadingDetailCard(): React.JSX.Element {
         </View>
       </View>
       <Text style={{ color: '#64748b', fontSize: 13, lineHeight: 18 }}>
-        Przygotowujemy wybraną lekcję i sekcje do czytania.
+        {copy({
+          de: 'Die ausgewählte Lektion und ihre Abschnitte werden vorbereitet.',
+          en: 'Preparing the selected lesson and reading sections.',
+          pl: 'Przygotowujemy wybraną lekcję i sekcje do czytania.',
+        })}
       </Text>
     </Card>
   );
 }
 
 function LessonsLoadingCatalogCard(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
   return (
     <Card>
       <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-        Katalog lekcji
+        {copy({
+          de: 'Lektionskatalog',
+          en: 'Lesson catalog',
+          pl: 'Katalog lekcji',
+        })}
       </Text>
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-        Wczytujemy listę tematów i stan opanowania.
+        {copy({
+          de: 'Die Themenliste und der Beherrschungsstand werden geladen.',
+          en: 'Loading the topic list and mastery state.',
+          pl: 'Wczytujemy listę tematów i stan opanowania.',
+        })}
       </Text>
 
       <View style={{ gap: 12 }}>
@@ -205,6 +226,7 @@ const getMasteryTone = (badgeAccent: string): Tone => {
 };
 
 export function KangurLessonsScreen(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
   const params = useLocalSearchParams<{ focus?: string | string[] }>();
   const rawFocusParam = Array.isArray(params.focus) ? params.focus[0] : params.focus;
   const normalizedRouteFocusToken =
@@ -279,20 +301,37 @@ export function KangurLessonsScreen(): React.JSX.Element {
                 paddingVertical: 10,
               }}
             >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Wróć</Text>
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                {copy({
+                  de: 'Zurück',
+                  en: 'Back',
+                  pl: 'Wróć',
+                })}
+              </Text>
             </Pressable>
           </Link>
 
           <Card>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-              Nauka i powtórki
+              {copy({
+                de: 'Lernen und Wiederholen',
+                en: 'Learn and review',
+                pl: 'Nauka i powtórki',
+              })}
             </Text>
             <Text style={{ color: '#0f172a', fontSize: 28, fontWeight: '800' }}>
-              Lekcje
+              {copy({
+                de: 'Lektionen',
+                en: 'Lessons',
+                pl: 'Lekcje',
+              })}
             </Text>
             <Text style={{ color: '#475569', fontSize: 15, lineHeight: 22 }}>
-              To pierwszy mobilny katalog lekcji. Rekomendacje i zadania z profilu mogą już
-              otwierać konkretne tematy przez parametr focus.
+              {copy({
+                de: 'Das ist der erste mobile Lektionskatalog. Empfehlungen und Aufgaben aus dem Profil können bereits gezielte Themen über den Parameter focus öffnen.',
+                en: 'This is the first mobile lesson catalog. Profile recommendations and tasks can already open specific topics through the focus parameter.',
+                pl: 'To pierwszy mobilny katalog lekcji. Rekomendacje i zadania z profilu mogą już otwierać konkretne tematy przez parametr focus.',
+              })}
             </Text>
           </Card>
 
@@ -304,7 +343,11 @@ export function KangurLessonsScreen(): React.JSX.Element {
           ) : selectedLesson ? (
             <Card>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                Wybrana lekcja
+                {copy({
+                  de: 'Ausgewählte Lektion',
+                  en: 'Selected lesson',
+                  pl: 'Wybrana lekcja',
+                })}
               </Text>
               <Text style={{ color: '#0f172a', fontSize: 24, fontWeight: '800' }}>
                 {selectedLesson.lesson.emoji} {selectedLesson.lesson.title}
@@ -318,7 +361,11 @@ export function KangurLessonsScreen(): React.JSX.Element {
                   tone={getMasteryTone(selectedLesson.mastery.badgeAccent)}
                 />
                 <Pill
-                  label='Widok z rekomendacji'
+                  label={copy({
+                    de: 'Aus Empfehlung geöffnet',
+                    en: 'Opened from recommendation',
+                    pl: 'Widok z rekomendacji',
+                  })}
                   tone={{
                     backgroundColor: '#eef2ff',
                     borderColor: '#c7d2fe',
@@ -335,10 +382,14 @@ export function KangurLessonsScreen(): React.JSX.Element {
                     {selectedLessonBody.introduction}
                   </Text>
 
-                  <View style={{ gap: 8 }}>
-                    <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                      Sekcje lekcji
-                    </Text>
+                    <View style={{ gap: 8 }}>
+                      <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                        {copy({
+                          de: 'Lektionsabschnitte',
+                          en: 'Lesson sections',
+                          pl: 'Sekcje lekcji',
+                        })}
+                      </Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                       {selectedLessonBody.sections.map((section, index) => (
                         <Pressable
@@ -385,7 +436,11 @@ export function KangurLessonsScreen(): React.JSX.Element {
                     >
                       <View style={{ gap: 4 }}>
                         <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                          Krok {activeSectionIndex + 1} z {selectedLessonBody.sections.length}
+                          {copy({
+                            de: `Schritt ${activeSectionIndex + 1} von ${selectedLessonBody.sections.length}`,
+                            en: `Step ${activeSectionIndex + 1} of ${selectedLessonBody.sections.length}`,
+                            pl: `Krok ${activeSectionIndex + 1} z ${selectedLessonBody.sections.length}`,
+                          })}
                         </Text>
                         <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
                           {activeSection.title}
@@ -461,7 +516,11 @@ export function KangurLessonsScreen(): React.JSX.Element {
                               fontWeight: '700',
                             }}
                           >
-                            Poprzednia
+                            {copy({
+                              de: 'Zurück',
+                              en: 'Previous',
+                              pl: 'Poprzednia',
+                            })}
                           </Text>
                         </Pressable>
 
@@ -492,7 +551,11 @@ export function KangurLessonsScreen(): React.JSX.Element {
                               fontWeight: '700',
                             }}
                           >
-                            Następna
+                            {copy({
+                              de: 'Weiter',
+                              en: 'Next',
+                              pl: 'Następna',
+                            })}
                           </Text>
                         </Pressable>
                       </View>
@@ -510,7 +573,11 @@ export function KangurLessonsScreen(): React.JSX.Element {
                     }}
                   >
                     <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
-                      Co dalej
+                      {copy({
+                        de: 'Wie weiter',
+                        en: 'What next',
+                        pl: 'Co dalej',
+                      })}
                     </Text>
                     <Text style={{ color: '#3730a3', fontSize: 14, lineHeight: 20 }}>
                       {selectedLessonBody.practiceNote}
@@ -519,8 +586,11 @@ export function KangurLessonsScreen(): React.JSX.Element {
                 </View>
               ) : (
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                  Właściwa treść tej lekcji nie jest jeszcze przeniesiona do mobilnej aplikacji.
-                  Ten ekran zamyka za to lukę nawigacyjną i pokazuje prawidłowy stan opanowania.
+                  {copy({
+                    de: 'Der eigentliche Inhalt dieser Lektion wurde noch nicht in die mobile App übertragen. Dieser Screen schließt aber bereits die Navigationslücke und zeigt den korrekten Beherrschungsstand.',
+                    en: 'The main content of this lesson has not been ported to the mobile app yet. This screen already closes the navigation gap and shows the correct mastery state.',
+                    pl: 'Właściwa treść tej lekcji nie jest jeszcze przeniesiona do mobilnej aplikacji. Ten ekran zamyka za to lukę nawigacyjną i pokazuje prawidłowy stan opanowania.',
+                  })}
                 </Text>
               )}
               <Pressable
@@ -537,7 +607,11 @@ export function KangurLessonsScreen(): React.JSX.Element {
                 }}
               >
                 <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                  Wróć do listy lekcji
+                  {copy({
+                    de: 'Zurück zur Lektionsliste',
+                    en: 'Back to lesson list',
+                    pl: 'Wróć do listy lekcji',
+                  })}
                 </Text>
               </Pressable>
               {selectedPracticeOperation ? (
@@ -553,7 +627,11 @@ export function KangurLessonsScreen(): React.JSX.Element {
                     }}
                   >
                     <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                      Start practice
+                      {copy({
+                        de: 'Training starten',
+                        en: 'Start practice',
+                        pl: 'Uruchom trening',
+                      })}
                     </Text>
                   </Pressable>
                 </Link>
@@ -562,13 +640,25 @@ export function KangurLessonsScreen(): React.JSX.Element {
           ) : focusToken ? (
             <Card>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                Brak dopasowania
+                {copy({
+                  de: 'Keine Übereinstimmung',
+                  en: 'No match',
+                  pl: 'Brak dopasowania',
+                })}
               </Text>
               <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
-                Nie znaleziono lekcji dla "{focusToken}"
+                {copy({
+                  de: `Keine Lektion für "${focusToken}" gefunden`,
+                  en: `No lesson found for "${focusToken}"`,
+                  pl: `Nie znaleziono lekcji dla "${focusToken}"`,
+                })}
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Pokazujemy pełny katalog, aby można było przejść dalej ręcznie.
+                {copy({
+                  de: 'Der vollständige Katalog wird angezeigt, damit du manuell weitergehen kannst.',
+                  en: 'Showing the full catalog so you can continue manually.',
+                  pl: 'Pokazujemy pełny katalog, aby można było przejść dalej ręcznie.',
+                })}
               </Text>
             </Card>
           ) : null}
@@ -576,10 +666,18 @@ export function KangurLessonsScreen(): React.JSX.Element {
           {!isPreparingLessonsView ? (
             <Card>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                Katalog lekcji
+                {copy({
+                  de: 'Lektionskatalog',
+                  en: 'Lesson catalog',
+                  pl: 'Katalog lekcji',
+                })}
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Zacznij od nowych tematów albo wróć do obszarów wymagających powtórki.
+                {copy({
+                  de: 'Beginne mit neuen Themen oder kehre zu Bereichen zurück, die Wiederholung brauchen.',
+                  en: 'Start with new topics or return to the areas that need review.',
+                  pl: 'Zacznij od nowych tematów albo wróć do obszarów wymagających powtórki.',
+                })}
               </Text>
 
               <View style={{ gap: 12 }}>

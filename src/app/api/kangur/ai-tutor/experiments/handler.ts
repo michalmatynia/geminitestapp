@@ -42,8 +42,8 @@ export async function GET_handler(req: NextRequest): Promise<Response> {
       learnerId,
       experimentFlags: tutorSettings.experimentFlags,
     });
-  } catch (_error) {
-    throw badRequestError('Failed to read experiment flags.');
+  } catch (error) {
+    throw badRequestError('Failed to read experiment flags.').withCause(error);
   }
 }
 
@@ -95,7 +95,7 @@ export async function PUT_handler(req: NextRequest): Promise<Response> {
       learnerId,
       experimentFlags: updatedFlags,
     });
-  } catch (_error) {
-    throw badRequestError('Failed to update experiment flags.');
+  } catch (error) {
+    throw badRequestError('Failed to update experiment flags.').withCause(error);
   }
 }

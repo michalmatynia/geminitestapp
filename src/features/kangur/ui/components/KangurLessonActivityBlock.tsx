@@ -14,6 +14,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_WRAP_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import type { KangurLessonActivityBlock as KangurLessonActivityBlockType } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';
 
 import AddingBallGame from './AddingBallGame';
 import AddingSynthesisGame from './AddingSynthesisGame';
@@ -30,9 +31,7 @@ type KangurLessonActivityBlockProps = {
   renderMode?: 'lesson' | 'editor';
 };
 
-type ActivityGameProps = {
-  onFinish: () => void;
-};
+type ActivityGameProps = KangurMiniGameFinishActionProps;
 
 const ACTIVITY_COMPONENTS: Record<
   KangurLessonActivityBlockType['activityId'],

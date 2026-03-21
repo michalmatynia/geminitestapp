@@ -19,8 +19,7 @@ const readBodyJson = async (request: NextRequest): Promise<unknown> => {
   try {
     return JSON.parse(rawBody) as unknown;
   } catch (error) {
-    void ErrorSystem.captureException(error);
-    throw badRequestError('Invalid JSON payload.');
+    throw badRequestError('Invalid JSON payload.').withCause(error);
   }
 };
 
@@ -38,10 +37,14 @@ const resolveOptionalKangurActor = async (request: NextRequest) => {
   try {
     return await resolveKangurActor(request);
   } catch (error) {
-    void ErrorSystem.captureException(error);
     if (isAppError(error) && error.code === AppErrorCodes.unauthorized) {
       return null;
     }
+    void ErrorSystem.captureException(error, {
+      service: 'kangur.tts',
+      source: 'kangur.tts.POST',
+      action: 'resolveOptionalKangurActor',
+    });
     throw error;
   }
 };

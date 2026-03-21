@@ -137,23 +137,23 @@ describe('KangurGameHomeQuestWidget', () => {
     );
     expect(screen.getByTestId('kangur-home-quest-label')).toHaveTextContent('Misja ratunkowa');
     expect(screen.getByTestId('kangur-home-quest-priority')).toHaveTextContent(
-      'priorityHigh'
+      'Priorytet wysoki'
     );
-    expect(screen.getByTestId('kangur-home-quest-status')).toHaveTextContent('questStatusInProgress');
+    expect(screen.getByTestId('kangur-home-quest-status')).toHaveTextContent('Misja w toku');
     expect(screen.getByTestId('kangur-home-quest-reward')).toHaveTextContent(
-      'rewardPreview'
+      'Nagroda +55 XP'
     );
-    expect(screen.getByTestId('kangur-home-quest-expiry')).toHaveTextContent('expiresToday');
+    expect(screen.getByTestId('kangur-home-quest-expiry')).toHaveTextContent('Wygasa dzisiaj');
     expect(screen.getByTestId('kangur-home-quest-target')).toHaveTextContent(
       'Cel: 1 powtórka + wynik min. 75%'
     );
     expect(screen.getByTestId('kangur-home-quest-progress')).toHaveTextContent(
-      'masteryComparison'
+      '45% / 75% opanowania'
     );
     expect(screen.getByTestId('kangur-home-quest-momentum')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-home-quest-streak')).toHaveTextContent('streakLabel');
+    expect(screen.getByTestId('kangur-home-quest-streak')).toHaveTextContent('Seria: 3');
     expect(screen.getByTestId('kangur-home-quest-xp-rate')).toHaveTextContent(
-      'paceLabel'
+      'Tempo: 45 XP / grę'
     );
     expect(screen.getByTestId('kangur-home-quest-track')).toHaveTextContent(
       'Na fali: Start'
@@ -236,7 +236,7 @@ describe('KangurGameHomeQuestWidget', () => {
     render(<KangurGameHomeQuestWidget />);
 
     expect(screen.getByTestId('kangur-home-quest-status')).toHaveTextContent(
-      'Misja ukonczona'
+      'Misja ukończona'
     );
     expect(screen.getByTestId('kangur-home-quest-reward')).toHaveTextContent(
       'Nagroda odebrana +55 XP'

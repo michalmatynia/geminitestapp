@@ -112,12 +112,12 @@ describe('publishLinkedInPersonalPost', () => {
         });
       }
 
-      if (url.startsWith('https://api.linkedin.com/v2/me')) {
+      if (url.startsWith('https://api.linkedin.com/v2/userinfo')) {
         expect(init?.headers).toMatchObject({
           Authorization: 'Bearer token-1',
         });
         return new Response(
-          JSON.stringify({ id: 'person-1', vanityName: 'kangur' }),
+          JSON.stringify({ sub: 'person-1', name: 'kangur' }),
           { status: 200, headers: { 'content-type': 'application/json' } }
         );
       }

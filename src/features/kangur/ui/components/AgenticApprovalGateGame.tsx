@@ -21,6 +21,7 @@ import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_WRAP_ROW_SPACED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 type ApprovalDecision = 'safe' | 'approval';
@@ -38,9 +39,7 @@ type ApprovalAction = {
   answer: ApprovalDecision;
 };
 
-type AgenticApprovalGateGameProps = {
-  onFinish: () => void;
-};
+type AgenticApprovalGateGameProps = KangurMiniGameFinishActionProps;
 
 const APPROVAL_OPTIONS: ApprovalOption[] = [
   {

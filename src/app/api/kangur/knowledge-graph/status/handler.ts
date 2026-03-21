@@ -1,27 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { auth } from '@/features/auth/server';
 import { getKangurKnowledgeGraphStatusSnapshot } from '@/features/kangur/server/knowledge-graph/status-loader';
 import {
   kangurKnowledgeGraphStatusResponseSchema,
   type ApiHandlerContext,
 } from '@/shared/contracts';
 import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/shared/contracts/kangur-knowledge-graph';
-import { authError, badRequestError, internalError } from '@/shared/errors/app-error';
+import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
-
-type KangurKnowledgeGraphStatusSession = {
-  user?: {
-    isElevated?: boolean;
-    permissions?: string[];
-  } | null;
-} | null;
-
-const canAccessKangurKnowledgeGraphStatus = (
-  session: KangurKnowledgeGraphStatusSession
-): boolean =>
-  Boolean(session?.user?.isElevated || session?.user?.permissions?.includes('settings.manage'));
+import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
 
 export const querySchema = z.object({
   graphKey: z.preprocess(
@@ -31,10 +19,7 @@ export const querySchema = z.object({
 });
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const session = await auth();
-  if (!canAccessKangurKnowledgeGraphStatus(session)) {
-    throw authError('Unauthorized.');
-  }
+  await assertSettingsManageAccess();
 
   const parsedQuery = querySchema.safeParse(_ctx.query ?? {});
   if (!parsedQuery.success) {

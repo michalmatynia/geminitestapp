@@ -167,7 +167,7 @@ export const syncCategories: DatabaseSyncHandler = async ({ mongo, prisma, norma
     })
     .filter((item): item is Prisma.CategoryCreateManyInput => item !== null);
   const seenCategories = new Set<string>();
-  const deduped = raw.filter((entry: any) => {
+  const deduped = raw.filter((entry) => {
     const key = `${entry.notebookId ?? 'none'}::${entry.name}`;
     if (seenCategories.has(key)) {
       warnings.push(
@@ -178,7 +178,7 @@ export const syncCategories: DatabaseSyncHandler = async ({ mongo, prisma, norma
     seenCategories.add(key);
     return true;
   });
-  const availableCategoryIds = new Set(deduped.map((entry: any) => entry.id));
+  const availableCategoryIds = new Set(deduped.map((entry) => entry.id));
   const data = deduped.map((entry): Prisma.CategoryCreateManyInput => {
     const resolvedParentId =
       entry.parentId && availableCategoryIds.has(entry.parentId) ? entry.parentId : null;
@@ -293,7 +293,9 @@ export const syncNotes: DatabaseSyncHandler = async ({ mongo, prisma }) => {
     ? await prisma.note.createMany({ data: noteData as Prisma.NoteCreateManyInput[] })
     : { count: 0 };
 
-  const tagRows = data.flatMap((note: any) =>
+  type SyncedNote = (typeof data)[number];
+
+  const tagRows = data.flatMap((note: SyncedNote) =>
     note.tags.map((tag: { tagId: string; assignedAt?: Date | string }) => ({
       noteId: note.id,
       tagId: tag.tagId,
@@ -302,7 +304,7 @@ export const syncNotes: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   ) as Prisma.NoteTagCreateManyInput[];
   if (tagRows.length) await prisma.noteTag.createMany({ data: tagRows });
 
-  const categoryRows = data.flatMap((note: any) =>
+  const categoryRows = data.flatMap((note: SyncedNote) =>
     note.categories.map((cat: { categoryId: string; assignedAt?: Date | string }) => ({
       noteId: note.id,
       categoryId: cat.categoryId,
@@ -311,7 +313,7 @@ export const syncNotes: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   ) as Prisma.NoteCategoryCreateManyInput[];
   if (categoryRows.length) await prisma.noteCategory.createMany({ data: categoryRows });
 
-  const relationRows = data.flatMap((note: any) =>
+  const relationRows = data.flatMap((note: SyncedNote) =>
     note.relationsFrom
       .filter((rel: { targetNoteId?: string; assignedAt?: Date | string }): rel is {
         targetNoteId: string;
@@ -381,14 +383,15 @@ export const syncNotesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prism
   type PersistedNoteTag = PersistedNote['tags'][number];
   type PersistedNoteCategory = PersistedNote['categories'][number];
   type PersistedNoteRelation = PersistedNote['relationsFrom'][number];
+  type PersistedNoteFile = PersistedNote['files'][number];
 
-  const tagMap = new Map<string, PersistedTag>(tags.map((tag) => [tag.id, tag]));
+  const tagMap = new Map<string, PersistedTag>(tags.map((tag: PersistedTag) => [tag.id, tag]));
   const categoryMap = new Map<string, PersistedCategory>(
-    categories.map((category) => [category.id, category])
+    categories.map((category: PersistedCategory) => [category.id, category])
   );
-  const noteMap = new Map<string, PersistedNote>(notes.map((note) => [note.id, note]));
+  const noteMap = new Map<string, PersistedNote>(notes.map((note: PersistedNote) => [note.id, note]));
 
-  const docs = notes.map((note) => {
+  const docs = notes.map((note: PersistedNote) => {
     const tagEntries = note.tags.map((entry: PersistedNoteTag) => {
       const tag = tagMap.get(entry.tagId);
       return {
@@ -474,7 +477,7 @@ export const syncNotesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prism
       tags: tagEntries,
       categories: categoryEntries,
       relationsFrom,
-      files: note.files.map((file: any) => ({
+      files: note.files.map((file: PersistedNoteFile) => ({
         noteId: file.noteId,
         slotIndex: file.slotIndex,
         filename: file.filename,
@@ -500,8 +503,21 @@ export const syncNotesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prism
 };
 
 export const syncNoteFilesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const files = await prisma.noteFile.findMany();
-  const docs = files.map((file: any) => ({
+  type PersistedNoteFileRow = {
+    id: string;
+    noteId: string;
+    slotIndex: number;
+    filename: string;
+    filepath: string;
+    mimetype: string;
+    size: number;
+    width: number | null;
+    height: number | null;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  const files = (await prisma.noteFile.findMany()) as PersistedNoteFileRow[];
+  const docs = files.map((file: PersistedNoteFileRow) => ({
     _id: file.id,
     id: file.id,
     noteId: file.noteId,
@@ -526,8 +542,16 @@ export const syncNoteFilesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, p
 };
 
 export const syncTagsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.tag.findMany();
-  const docs = rows.map((row: any) => ({
+  type PersistedTagRow = {
+    id: string;
+    name: string;
+    color: string | null;
+    notebookId: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  const rows = (await prisma.tag.findMany()) as PersistedTagRow[];
+  const docs = rows.map((row: PersistedTagRow) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -547,8 +571,20 @@ export const syncTagsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma
 };
 
 export const syncCategoriesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.category.findMany();
-  const docs = rows.map((row: any) => ({
+  type PersistedCategoryRow = {
+    id: string;
+    name: string;
+    description: string | null;
+    color: string | null;
+    parentId: string | null;
+    themeId: string | null;
+    notebookId: string | null;
+    sortIndex: number;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  const rows = (await prisma.category.findMany()) as PersistedCategoryRow[];
+  const docs = rows.map((row: PersistedCategoryRow) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -572,8 +608,16 @@ export const syncCategoriesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, 
 };
 
 export const syncNotebooksPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.notebook.findMany();
-  const docs = rows.map((row: any) => ({
+  type PersistedNotebookRow = {
+    id: string;
+    name: string;
+    color: string | null;
+    defaultThemeId: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  const rows = (await prisma.notebook.findMany()) as PersistedNotebookRow[];
+  const docs = rows.map((row: PersistedNotebookRow) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -593,8 +637,25 @@ export const syncNotebooksPrismaToMongo: DatabaseSyncHandler = async ({ mongo, p
 };
 
 export const syncThemesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.theme.findMany();
-  const docs = rows.map((row: any) => ({
+  type PersistedThemeRow = {
+    id: string;
+    name: string;
+    textColor: string;
+    backgroundColor: string;
+    markdownHeadingColor: string;
+    markdownLinkColor: string;
+    markdownCodeBackground: string;
+    markdownCodeText: string;
+    relatedNoteBorderWidth: number;
+    relatedNoteBorderColor: string;
+    relatedNoteBackgroundColor: string;
+    relatedNoteTextColor: string;
+    notebookId: string;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  const rows = (await prisma.theme.findMany()) as PersistedThemeRow[];
+  const docs = rows.map((row: PersistedThemeRow) => ({
     _id: row.id,
     id: row.id,
     name: row.name,

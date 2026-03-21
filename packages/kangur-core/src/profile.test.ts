@@ -1,0 +1,105 @@
+import { createDefaultKangurProgressState, type KangurScore } from '@kangur/contracts';
+import { describe, expect, it } from 'vitest';
+
+import { buildKangurLearnerProfileSnapshot, buildLessonMasteryInsights } from './profile';
+
+const createProgressWithMastery = () => ({
+  ...createDefaultKangurProgressState(),
+  badges: ['first_game'],
+  gamesPlayed: 12,
+  lessonMastery: {
+    adding: {
+      attempts: 3,
+      bestScorePercent: 80,
+      completions: 3,
+      lastCompletedAt: '2026-03-06T11:00:00.000Z',
+      lastScorePercent: 70,
+      masteryPercent: 67,
+    },
+    clock: {
+      attempts: 4,
+      bestScorePercent: 100,
+      completions: 4,
+      lastCompletedAt: '2026-03-06T12:00:00.000Z',
+      lastScorePercent: 90,
+      masteryPercent: 92,
+    },
+    division: {
+      attempts: 2,
+      bestScorePercent: 60,
+      completions: 2,
+      lastCompletedAt: '2026-03-06T10:00:00.000Z',
+      lastScorePercent: 40,
+      masteryPercent: 45,
+    },
+  },
+  lessonsCompleted: 7,
+  operationsPlayed: ['addition', 'division'],
+  perfectGames: 3,
+  totalXp: 620,
+});
+
+const createScore = (overrides: Partial<KangurScore> = {}): KangurScore => ({
+  correct_answers: 4,
+  created_by: 'user-1',
+  created_date: '2026-03-06T12:00:00.000Z',
+  id: 'score-1',
+  learner_id: 'learner-1',
+  operation: 'division',
+  owner_user_id: 'user-1',
+  player_name: 'Ada Learner',
+  score: 4,
+  subject: 'maths',
+  time_taken: 44,
+  total_questions: 10,
+  ...overrides,
+});
+
+describe('kangur-core profile localization', () => {
+  it('localizes lesson mastery titles in English', () => {
+    const insights = buildLessonMasteryInsights(createProgressWithMastery(), 3, 'en');
+
+    expect(insights.weakest[0]?.title).toBe('Division');
+    expect(insights.strongest[0]?.title).toBe('Clock');
+  });
+
+  it('localizes learner snapshot labels and recommendations in German', () => {
+    const snapshot = buildKangurLearnerProfileSnapshot({
+      dailyGoalGames: 3,
+      locale: 'de',
+      now: new Date('2026-03-06T15:00:00.000Z'),
+      progress: createProgressWithMastery(),
+      scores: [createScore()],
+    });
+
+    expect(snapshot.level.title).toBe('Zahlenmeister 🔢');
+    expect(snapshot.operationPerformance[0]).toMatchObject({
+      label: 'Division',
+      operation: 'division',
+    });
+    expect(snapshot.recentSessions[0]?.operationLabel).toBe('Division');
+    expect(snapshot.recommendations).toEqual([
+      expect.objectContaining({
+        action: expect.objectContaining({
+          label: 'Lektion öffnen',
+        }),
+        id: 'focus_weakest_operation',
+        title: 'Fokus auf: Division',
+      }),
+      expect.objectContaining({
+        action: expect.objectContaining({
+          label: 'Jetzt trainieren',
+        }),
+        id: 'improve_accuracy',
+        title: 'Trefferquote stabilisieren',
+      }),
+      expect.objectContaining({
+        action: expect.objectContaining({
+          label: 'Lektion öffnen',
+        }),
+        id: 'strengthen_lesson_mastery',
+        title: 'Lektion wiederholen: Division',
+      }),
+    ]);
+  });
+});

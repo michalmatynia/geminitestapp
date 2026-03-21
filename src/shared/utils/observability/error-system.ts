@@ -10,11 +10,36 @@ import {
 import { isAppError } from '@/shared/errors/app-error';
 import { resolveErrorUserMessage } from '@/shared/errors/error-catalog';
 import type { ResolvedError } from '@/shared/contracts/base';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
 export const ErrorCategories = ERROR_CATEGORY;
 export type { ErrorCategory, ErrorContext };
+
+const logErrorSystemFailure = async (
+  message: string,
+  error: unknown,
+  level: 'error' | 'warn' = 'error'
+): Promise<void> => {
+  try {
+    const { logger } = (await import('@/shared/utils/logger')) as {
+      logger: {
+        error: (msg: string, error?: unknown) => void;
+        warn: (msg: string, context?: Record<string, unknown>) => void;
+      };
+    };
+    if (level === 'warn') {
+      logger.warn(message, { error });
+      return;
+    }
+    logger.error(message, error);
+  } catch {
+    if (level === 'warn') {
+      console.warn(message, error);
+      return;
+    }
+    console.error(message, error);
+  }
+};
 
 /**
  * Centralized error handling system.
@@ -63,16 +88,11 @@ export const ErrorSystem = {
             ...context,
           });
         } catch (auditError) {
-          logClientError(auditError);
-          // Fallback to logger if audit logging fails
-          const { logger } = (await import('@/shared/utils/logger')) as { logger: { error: (msg: string, ...args: unknown[]) => void } };
-          logger.error('[ErrorSystem] Failed to log to Agent Audit:', auditError);
+          await logErrorSystemFailure('[ErrorSystem] Failed to log to Agent Audit.', auditError);
         }
       }
     } catch (importError) {
-      logClientError(importError);
-      const { logger } = (await import('@/shared/utils/logger')) as { logger: { error: (msg: string, ...args: unknown[]) => void } };
-      logger.error('[ErrorSystem] Failed to import dependencies:', importError);
+      await logErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
     }
   },
 
@@ -102,15 +122,15 @@ export const ErrorSystem = {
           const { logAgentAudit } = await import('@/features/ai/server');
           await logAgentAudit(context.runId, 'warning', message, context);
         } catch (auditError) {
-          logClientError(auditError);
-          const { logger } = (await import('@/shared/utils/logger')) as { logger: { warn: (msg: string, ...args: unknown[]) => void } };
-          logger.warn('[ErrorSystem] Failed to log warning to Agent Audit:', { error: auditError });
+          await logErrorSystemFailure(
+            '[ErrorSystem] Failed to log warning to Agent Audit.',
+            auditError,
+            'warn'
+          );
         }
       }
     } catch (importError) {
-      logClientError(importError);
-      const { logger } = (await import('@/shared/utils/logger')) as { logger: { error: (msg: string, ...args: unknown[]) => void } };
-      logger.error('[ErrorSystem] Failed to import dependencies:', importError);
+      await logErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
     }
   },
 
@@ -132,9 +152,7 @@ export const ErrorSystem = {
         },
       });
     } catch (importError) {
-      logClientError(importError);
-      const { logger } = (await import('@/shared/utils/logger')) as { logger: { error: (msg: string, ...args: unknown[]) => void } };
-      logger.error('[ErrorSystem] Failed to import dependencies:', importError);
+      await logErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
     }
   },
 
@@ -158,9 +176,7 @@ export const ErrorSystem = {
         },
       });
     } catch (importError) {
-      logClientError(importError);
-      const { logger } = (await import('@/shared/utils/logger')) as { logger: { error: (msg: string, ...args: unknown[]) => void } };
-      logger.error('[ErrorSystem] Failed to import dependencies:', importError);
+      await logErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
     }
   },
 

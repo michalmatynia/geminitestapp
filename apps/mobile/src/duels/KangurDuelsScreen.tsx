@@ -476,6 +476,14 @@ function formatQuestionProgress(session: KangurDuelSession, player: KangurDuelPl
   return `${completed}/${session.questionCount} pytań`;
 }
 
+function formatSpectatorQuestionProgress(session: KangurDuelSession): string {
+  const currentQuestion =
+    session.status === 'in_progress'
+      ? Math.min((session.currentQuestionIndex ?? 0) + 1, session.questionCount)
+      : Math.min(session.currentQuestionIndex ?? 0, session.questionCount);
+  return `Runda ${currentQuestion}/${session.questionCount}`;
+}
+
 function resolveWinnerSummary(players: KangurDuelPlayer[]): string {
   if (!players.length) {
     return 'Pojedynek zakończony.';
@@ -509,6 +517,12 @@ function resolveSessionIdParam(value: string | string[] | undefined): string | n
   const raw = Array.isArray(value) ? value[0] : value;
   const normalized = typeof raw === 'string' ? raw.trim() : '';
   return normalized || null;
+}
+
+function resolveSpectateParam(value: string | string[] | undefined): boolean {
+  const raw = Array.isArray(value) ? value[0] : value;
+  const normalized = typeof raw === 'string' ? raw.trim().toLowerCase() : '';
+  return normalized === '1' || normalized === 'true' || normalized === 'yes';
 }
 
 function formatLobbyChatSenderLabel(
@@ -599,6 +613,7 @@ function LobbyEntryCard({
 export function KangurDuelsScreen(): React.JSX.Element {
   const params = useLocalSearchParams<{
     join?: string | string[];
+    spectate?: string | string[];
     sessionId?: string | string[];
   }>();
   const router = useRouter();
@@ -610,9 +625,12 @@ export function KangurDuelsScreen(): React.JSX.Element {
   } = useKangurMobileAuth();
   const sessionId =
     resolveSessionIdParam(params.sessionId) ?? resolveSessionIdParam(params.join);
+  const isSpectatingRoute = resolveSpectateParam(params.spectate);
   const lobby = useKangurMobileDuelsLobby();
   const chat = useKangurMobileDuelLobbyChat();
-  const duel = useKangurMobileDuelSession(sessionId);
+  const duel = useKangurMobileDuelSession(sessionId, {
+    spectate: isSpectatingRoute,
+  });
   const activeLearnerId =
     authSession.user?.activeLearner?.id ?? authSession.user?.id ?? null;
   const [chatDraft, setChatDraft] = useState('');
@@ -668,6 +686,15 @@ export function KangurDuelsScreen(): React.JSX.Element {
       createLoginCallToAction('Zaloguj, aby dołączyć')
     );
 
+  const renderSpectateAction = (targetSessionId: string): React.JSX.Element => (
+    <LinkButton
+      href={createKangurDuelsHref({ sessionId: targetSessionId, spectate: true })}
+      label='Obserwuj pojedynek'
+      stretch
+      tone='secondary'
+    />
+  );
+
   if (sessionId) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
@@ -681,12 +708,16 @@ export function KangurDuelsScreen(): React.JSX.Element {
           <View style={{ gap: 14 }}>
             <ActionButton label='Wróć do lobby' onPress={openLobby} tone='ghost' />
             <SectionTitle
-              title='Pojedynek'
-              subtitle='Mobilny ekran pojedynku pokazuje poczekalnię, postęp gracza i stan rundy na tych samych kontraktach duels co web.'
+              title={duel.isSpectating ? 'Podgląd pojedynku' : 'Pojedynek'}
+              subtitle={
+                duel.isSpectating
+                  ? 'Tryb obserwatora pokazuje publiczny stan pojedynku i reakcje bez dołączania do meczu jako gracz.'
+                  : 'Mobilny ekran pojedynku pokazuje poczekalnię, postęp gracza i stan rundy na tych samych kontraktach duels co web.'
+              }
             />
           </View>
 
-          {!duel.isAuthenticated && !isLoadingAuth ? (
+          {!duel.isSpectating && !duel.isAuthenticated && !isLoadingAuth ? (
             <Card>
               <MessageCard
                 title='Zaloguj sesję ucznia'
@@ -697,21 +728,29 @@ export function KangurDuelsScreen(): React.JSX.Element {
           ) : duel.isLoading ? (
             <Card>
               <MessageCard
-                title='Ładujemy pojedynek'
+                title={duel.isSpectating ? 'Ładujemy podgląd pojedynku' : 'Ładujemy pojedynek'}
                 description={
                   duel.isRestoringAuth
                     ? 'Przywracamy sesję ucznia i stan aktywnego pojedynku.'
-                    : 'Pobieramy aktualny stan rundy i listę graczy.'
+                    : duel.isSpectating
+                      ? 'Pobieramy publiczny stan rundy, listę graczy i liczbę widzów.'
+                      : 'Pobieramy aktualny stan rundy i listę graczy.'
                 }
               />
             </Card>
-          ) : duel.error || !duel.session || !duel.player ? (
+          ) : duel.error || !duel.session || (!duel.isSpectating && !duel.player) ? (
             <Card>
               <MessageCard
-                title='Nie udało się otworzyć pojedynku'
+                title={
+                  duel.isSpectating
+                    ? 'Nie udało się otworzyć podglądu pojedynku'
+                    : 'Nie udało się otworzyć pojedynku'
+                }
                 description={
                   duel.error ??
-                  'Brakuje danych pojedynku. Wróć do lobby i spróbuj jeszcze raz.'
+                  (duel.isSpectating
+                    ? 'Brakuje danych publicznego podglądu. Wróć do lobby i spróbuj jeszcze raz.'
+                    : 'Brakuje danych pojedynku. Wróć do lobby i spróbuj jeszcze raz.')
                 }
                 tone='error'
               />
@@ -747,14 +786,39 @@ export function KangurDuelsScreen(): React.JSX.Element {
                     }}
                   />
                   <Pill
-                    label={formatQuestionProgress(duel.session, duel.player)}
+                    label={
+                      duel.player
+                        ? formatQuestionProgress(duel.session, duel.player)
+                        : formatSpectatorQuestionProgress(duel.session)
+                    }
                     tone={{
                       backgroundColor: '#eff6ff',
                       borderColor: '#bfdbfe',
                       textColor: '#1d4ed8',
                     }}
                   />
+                  {duel.isSpectating || duel.spectatorCount > 0 ? (
+                    <Pill
+                      label={`Widownia ${duel.spectatorCount}`}
+                      tone={{
+                        backgroundColor: '#f5f3ff',
+                        borderColor: '#ddd6fe',
+                        textColor: '#6d28d9',
+                      }}
+                    />
+                  ) : null}
                 </View>
+
+                {duel.isSpectating ? (
+                  <MessageCard
+                    title='Tryb obserwatora'
+                    description={
+                      duel.isAuthenticated
+                        ? 'Obserwujesz publiczny stan pojedynku. Możesz wysyłać reakcje, ale nie odpowiadasz na pytania.'
+                        : 'Obserwujesz publiczny stan pojedynku. Zaloguj sesję ucznia, jeśli chcesz wysyłać reakcje.'
+                    }
+                  />
+                ) : null}
 
                 {duel.actionError ? (
                   <MessageCard
@@ -819,10 +883,17 @@ export function KangurDuelsScreen(): React.JSX.Element {
                     Sesja jest zakończona, ale ostatnie reakcje zostają widoczne w historii
                     pojedynku.
                   </Text>
+                ) : !duel.isAuthenticated ? (
+                  <MessageCard
+                    title='Reakcje dla zalogowanych'
+                    description='Zalogowany uczeń może reagować na przebieg pojedynku emotkami na żywo.'
+                  />
                 ) : (
                   <>
                     <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                      Wyślij szybką reakcję bez opuszczania pojedynku.
+                      {duel.isSpectating
+                        ? 'Wyślij szybką reakcję podczas oglądania pojedynku.'
+                        : 'Wyślij szybką reakcję bez opuszczania pojedynku.'}
                     </Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                       {DUEL_REACTION_OPTIONS.map((type) => (
@@ -887,11 +958,14 @@ export function KangurDuelsScreen(): React.JSX.Element {
               duel.session.status === 'created' ? (
                 <Card>
                   <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-                    Poczekalnia pojedynku
+                    {duel.isSpectating
+                      ? 'Poczekalnia publicznego pojedynku'
+                      : 'Poczekalnia pojedynku'}
                   </Text>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    Czekamy, aż wszyscy gracze dołączą i backend przełączy sesję do aktywnej rundy.
-                    Gdy druga osoba pojawi się w lobby, ekran odświeży się automatycznie.
+                    {duel.isSpectating
+                      ? 'Obserwujesz etap oczekiwania. Gdy wymagani gracze dołączą, podgląd przełączy się automatycznie do aktywnej rundy.'
+                      : 'Czekamy, aż wszyscy gracze dołączą i backend przełączy sesję do aktywnej rundy. Gdy druga osoba pojawi się w lobby, ekran odświeży się automatycznie.'}
                   </Text>
                   <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
                     Minimalna liczba graczy do startu: {duel.session.minPlayersToStart ?? 2}
@@ -902,25 +976,51 @@ export function KangurDuelsScreen(): React.JSX.Element {
               {duel.session.status === 'in_progress' && duel.currentQuestion ? (
                 <Card>
                   <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-                    Aktualne pytanie
+                    {duel.isSpectating ? 'Podgląd pytania' : 'Aktualne pytanie'}
                   </Text>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 22 }}>
                     {duel.currentQuestion.prompt}
                   </Text>
-                  <View style={{ gap: 8 }}>
-                    {duel.currentQuestion.choices.map((choice, index) => (
-                      <ActionButton
-                        key={`duel-choice-${index}-${String(choice)}`}
-                        disabled={duel.isMutating}
-                        label={`Odpowiedź: ${String(choice)}`}
-                        onPress={async () => {
-                          await duel.submitAnswer(choice as KangurDuelChoice);
-                        }}
-                        stretch
-                        tone='secondary'
-                      />
-                    ))}
-                  </View>
+                  {duel.isSpectating ? (
+                    <>
+                      <Text style={{ color: '#64748b', fontSize: 13, lineHeight: 18 }}>
+                        Widz nie wysyła odpowiedzi, ale może śledzić pytanie i tempo meczu.
+                      </Text>
+                      <View style={{ gap: 8 }}>
+                        {duel.currentQuestion.choices.map((choice, index) => (
+                          <View
+                            key={`spectator-choice-${index}-${String(choice)}`}
+                            style={{
+                              borderRadius: 18,
+                              borderWidth: 1,
+                              borderColor: '#e2e8f0',
+                              backgroundColor: '#f8fafc',
+                              padding: 12,
+                            }}
+                          >
+                            <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                              Opcja {index + 1}: {String(choice)}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    </>
+                  ) : (
+                    <View style={{ gap: 8 }}>
+                      {duel.currentQuestion.choices.map((choice, index) => (
+                        <ActionButton
+                          key={`duel-choice-${index}-${String(choice)}`}
+                          disabled={duel.isMutating}
+                          label={`Odpowiedź: ${String(choice)}`}
+                          onPress={async () => {
+                            await duel.submitAnswer(choice as KangurDuelChoice);
+                          }}
+                          stretch
+                          tone='secondary'
+                        />
+                      ))}
+                    </View>
+                  )}
                 </Card>
               ) : null}
 
@@ -939,22 +1039,34 @@ export function KangurDuelsScreen(): React.JSX.Element {
                 <View style={{ gap: 8 }}>
                   <ActionButton
                     disabled={duel.isMutating}
-                    label='Odśwież stan pojedynku'
+                    label={
+                      duel.isSpectating
+                        ? 'Odśwież podgląd pojedynku'
+                        : 'Odśwież stan pojedynku'
+                    }
                     onPress={duel.refresh}
                     stretch
                     tone='secondary'
                   />
-                  <ActionButton
-                    disabled={duel.isMutating}
-                    label='Opuść pojedynek'
-                    onPress={async () => {
-                      const didLeave = await duel.leaveSession();
-                      if (didLeave) {
-                        openLobby();
-                      }
-                    }}
-                    stretch
-                  />
+                  {duel.isSpectating ? (
+                    <ActionButton
+                      label='Wróć do lobby'
+                      onPress={openLobby}
+                      stretch
+                    />
+                  ) : (
+                    <ActionButton
+                      disabled={duel.isMutating}
+                      label='Opuść pojedynek'
+                      onPress={async () => {
+                        const didLeave = await duel.leaveSession();
+                        if (didLeave) {
+                          openLobby();
+                        }
+                      }}
+                      stretch
+                    />
+                  )}
                 </View>
               </Card>
             </>
@@ -1156,8 +1268,13 @@ export function KangurDuelsScreen(): React.JSX.Element {
                   lobby.visiblePublicEntries.map((entry) => (
                     <LobbyEntryCard
                       key={entry.sessionId}
-                      action={renderJoinAction(entry.sessionId)}
-                      actionLabel='Dołączenie pobierze pełny stan sesji i przeniesie Cię do pokoju.'
+                      action={
+                        <View style={{ gap: 8 }}>
+                          {renderJoinAction(entry.sessionId)}
+                          {renderSpectateAction(entry.sessionId)}
+                        </View>
+                      }
+                      actionLabel='Możesz dołączyć jako gracz albo otworzyć pokój w trybie obserwatora.'
                       description={`${formatModeLabel(entry.mode)} gospodarza ${entry.host.displayName}. Status: ${formatStatusLabel(entry.status).toLowerCase()}.`}
                       entry={entry}
                     />

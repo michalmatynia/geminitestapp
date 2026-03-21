@@ -46,7 +46,7 @@ import {
 } from './ClockLesson.data';
 import type { ClockLessonTranslate, WidenLessonCopy } from './ClockLesson.i18n';
 import { translateClockLesson } from './ClockLesson.i18n';
-import type { ClockChallengeResult, ClockTrainingSectionId } from './clock-training-utils';
+import type { ClockChallengeResult, ClockTrainingSectionId } from './clock-training/types';
 
 export { HUB_SECTIONS, LESSON_SECTIONS, SLIDES } from './ClockLesson.data';
 

@@ -13,9 +13,10 @@ import { useProductSettings } from '@/features/products/hooks/useProductSettings
 import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import * as queuedProductOps from '@/features/products/state/queued-product-ops';
 import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
+import type { ListQuery } from '@/shared/contracts/ui';
+import { useDraftQueries } from '@/shared/hooks/useDraftQueries';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
 import { useToast } from '@/shared/ui';
-
 
 import { useProductEditHydration } from './product-list/useProductEditHydration';
 import { useProductListCategories } from './product-list/useProductListCategories';
@@ -368,7 +369,8 @@ export function useProductListState(): ProductListContextType & {
 
   const columns = useMemo(() => getProductColumns(), []);
 
-  const { data: allDrafts = [] } = useDraftQueries();
+  const draftQueries = useDraftQueries as () => ListQuery<ProductDraft>;
+  const { data: allDrafts = [] } = draftQueries();
   const activeDrafts = useMemo(
     () => allDrafts.filter((d: ProductDraft) => d.active !== false),
     [allDrafts]

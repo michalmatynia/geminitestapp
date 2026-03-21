@@ -2,7 +2,7 @@ import type {
   ClockTask,
   ClockTrainingSectionContent,
   ClockTrainingTaskPoolId,
-} from './clock-training-utils';
+} from './clock-training/types';
 import type { ClockTrainingTranslate } from './clock-training-i18n';
 import { translateClockTrainingWithFallback } from './clock-training-i18n';
 

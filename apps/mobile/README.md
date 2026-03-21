@@ -9,7 +9,7 @@ This workspace is no longer a scaffold. It contains a real mobile shell with:
 - shared Kangur runtime and auth providers
 - learner-session and development auth adapters
 - persistent mobile development storage
-- home, lessons, practice, profile, results, leaderboard, and daily-plan routes
+- home, lessons, practice, profile, results, leaderboard, daily-plan, and duels routes
 - visible lesson skeleton loading on the lessons screen instead of a hero-only freeze
 - native/export tooling under `scripts/mobile`
 
@@ -33,6 +33,7 @@ This workspace is no longer a scaffold. It contains a real mobile shell with:
 - `/results`
 - `/leaderboard`
 - `/plan`
+- `/duels`
 
 ## Local commands
 

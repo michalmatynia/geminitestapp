@@ -6,7 +6,7 @@ import type {
   LessonSlide,
   SectionId,
 } from './ClockLesson.types';
-import type { ClockTrainingSectionId } from './clock-training-utils';
+import type { ClockTrainingSectionId } from './clock-training/types';
 import {
   buildClockCombinedSlides,
   CLOCK_COMBINED_SLIDES_COPY_PL,

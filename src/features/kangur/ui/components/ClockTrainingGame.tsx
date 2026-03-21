@@ -34,7 +34,7 @@ import type {
   ClockGameMode,
   ClockTask,
   ClockTrainingTaskPoolId,
-} from './clock-training-utils';
+} from './clock-training/types';
 import {
   CHALLENGE_TIME_LIMIT_SECONDS,
   buildClockCorrectFeedback,

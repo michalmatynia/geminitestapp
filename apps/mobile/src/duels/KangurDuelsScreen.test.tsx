@@ -124,11 +124,13 @@ describe('KangurDuelsScreen', () => {
       isLoading: false,
       isMutating: false,
       isRestoringAuth: false,
+      isSpectating: false,
       leaveSession: vi.fn(),
       player: null,
       refresh: vi.fn(),
       sendReaction: vi.fn(),
       session: null,
+      spectatorCount: 0,
       submitAnswer: vi.fn(),
     });
   });
@@ -296,6 +298,7 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Czat lobby')).toBeTruthy();
     expect(screen.getByText('Maja Sprint')).toBeTruthy();
     expect(screen.getByText('Szukam meczu z mnozeniem.')).toBeTruthy();
+    expect(screen.getByText('Obserwuj pojedynek')).toBeTruthy();
     expect(screen.getByText('Wyniki dueli')).toBeTruthy();
     expect(screen.getByText('#1 Ola')).toBeTruthy();
     expect(screen.getByText('Ola Quiz')).toBeTruthy();
@@ -313,6 +316,7 @@ describe('KangurDuelsScreen', () => {
       isLoading: false,
       isMutating: false,
       isRestoringAuth: false,
+      isSpectating: false,
       leaveSession: vi.fn(),
       player: {
         displayName: 'Ada',
@@ -374,6 +378,7 @@ describe('KangurDuelsScreen', () => {
         visibility: 'private',
       },
       sendReaction: vi.fn(),
+      spectatorCount: 1,
       submitAnswer: vi.fn(),
     });
 
@@ -388,5 +393,103 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Wyślij szybką reakcję bez opuszczania pojedynku.')).toBeTruthy();
     expect(screen.getByText('Minimalna liczba graczy do startu: 2')).toBeTruthy();
     expect(screen.getByText('Opuść pojedynek')).toBeTruthy();
+  });
+
+  it('renders spectator mode for a public duel session route', () => {
+    useLocalSearchParamsMock.mockReturnValue({
+      sessionId: 'duel-2',
+      spectate: '1',
+    });
+    useKangurMobileAuthMock.mockReturnValue({
+      isLoadingAuth: false,
+      session: {
+        status: 'anonymous',
+        user: null,
+      },
+      signIn: vi.fn(),
+      supportsLearnerCredentials: true,
+    });
+    useKangurMobileDuelSessionMock.mockReturnValue({
+      actionError: null,
+      currentQuestion: {
+        choices: [4, 5, 6],
+        id: 'question-1',
+        prompt: '2 + 2 = ?',
+      },
+      error: null,
+      isAuthenticated: false,
+      isLoading: false,
+      isMutating: false,
+      isRestoringAuth: false,
+      isSpectating: true,
+      leaveSession: vi.fn(),
+      player: null,
+      refresh: vi.fn(),
+      sendReaction: vi.fn(),
+      session: {
+        createdAt: '2026-03-21T08:00:00.000Z',
+        currentQuestionIndex: 0,
+        difficulty: 'medium',
+        endedAt: null,
+        id: 'duel-2',
+        invitedLearnerId: null,
+        invitedLearnerName: null,
+        maxPlayers: 2,
+        minPlayersToStart: 2,
+        mode: 'quick_match',
+        operation: 'addition',
+        players: [
+          {
+            displayName: 'Maja',
+            learnerId: 'learner-3',
+            status: 'playing',
+            score: 3,
+            bonusPoints: 0,
+            currentQuestionIndex: 0,
+            joinedAt: '2026-03-21T08:00:00.000Z',
+          },
+          {
+            displayName: 'Leo',
+            learnerId: 'learner-4',
+            status: 'playing',
+            score: 2,
+            bonusPoints: 0,
+            currentQuestionIndex: 0,
+            joinedAt: '2026-03-21T08:00:30.000Z',
+          },
+        ],
+        questionCount: 5,
+        questions: [
+          {
+            choices: [4, 5, 6],
+            id: 'question-1',
+            prompt: '2 + 2 = ?',
+          },
+        ],
+        recentReactions: [],
+        spectatorCount: 3,
+        startedAt: '2026-03-21T08:01:00.000Z',
+        status: 'in_progress',
+        timePerQuestionSec: 15,
+        updatedAt: '2026-03-21T08:02:00.000Z',
+        visibility: 'public',
+      },
+      spectatorCount: 3,
+      submitAnswer: vi.fn(),
+    });
+
+    render(<KangurDuelsScreen />);
+
+    expect(screen.getByText('Podgląd pojedynku')).toBeTruthy();
+    expect(screen.getByText('Tryb obserwatora')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Obserwujesz publiczny stan pojedynku. Zaloguj sesję ucznia, jeśli chcesz wysyłać reakcje.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText('Widownia 3')).toBeTruthy();
+    expect(screen.getByText('Podgląd pytania')).toBeTruthy();
+    expect(screen.getByText('Opcja 1: 4')).toBeTruthy();
+    expect(screen.getByText('Odśwież podgląd pojedynku')).toBeTruthy();
   });
 });

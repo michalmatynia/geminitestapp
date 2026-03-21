@@ -1,14 +1,16 @@
 import type { LessonSlide as LessonSlideSectionSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import type {
+  ClockChallengeMedal as SharedClockChallengeMedal,
+  ClockTask as SharedClockTask,
+  ClockTrainingSectionId as SharedClockTrainingSectionId,
+} from './clock-training/types';
 
-export type SectionId = 'hours' | 'minutes' | 'combined';
+export type SectionId = SharedClockTrainingSectionId;
 export type TrainingCardId = 'game_hours' | 'game_minutes' | 'game_combined';
 export type ClockHubId = SectionId | TrainingCardId;
 export type ClockTrainingPanelId = 'learn' | 'pick_one' | 'pick_two' | 'challenge';
-export type ClockChallengeMedal = 'gold' | 'silver' | 'bronze';
-export type ClockPracticeTask = {
-  hours: number;
-  minutes: number;
-};
+export type ClockChallengeMedal = SharedClockChallengeMedal;
+export type ClockPracticeTask = SharedClockTask;
 
 export type LessonSlide = LessonSlideSectionSlide & {
   tts: string;

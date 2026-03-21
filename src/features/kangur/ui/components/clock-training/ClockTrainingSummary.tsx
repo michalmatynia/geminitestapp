@@ -24,7 +24,7 @@ import type {
   ClockChallengeMedal,
   ClockGameMode,
   ClockTrainingTaskPoolId,
-} from '../clock-training-utils';
+} from './types';
 import { getClockChallengeMedalLabel } from '../clock-training-utils';
 
 export type ClockTrainingSummaryProps = {

@@ -3,7 +3,7 @@ import { useTranslations } from 'next-intl';
 import { useKangurUnifiedLessonBack } from '@/features/kangur/ui/lessons/lesson-components';
 
 import ClockTrainingGame from './ClockTrainingGame';
-import type { ClockTrainingSectionId } from './clock-training-utils';
+import type { ClockTrainingSectionId } from './clock-training/types';
 import type { ClockPracticeTask } from './ClockLesson.types';
 
 type AnalogClockProps = {

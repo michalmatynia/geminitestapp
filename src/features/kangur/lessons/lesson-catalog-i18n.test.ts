@@ -10,9 +10,9 @@ import {
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
 
 describe('lesson-catalog-i18n', () => {
-  it('returns English lesson titles for non-Polish locales when the source copy is the default catalog text', () => {
+  it('returns locale-specific lesson titles when the source copy is the default catalog text', () => {
     expect(getLocalizedKangurLessonTitle('clock', 'en', 'Nauka zegara')).toBe('Clock');
-    expect(getLocalizedKangurLessonTitle('clock', 'de', 'Nauka zegara')).toBe('Clock');
+    expect(getLocalizedKangurLessonTitle('clock', 'de', 'Nauka zegara')).toBe('Uhr');
   });
 
   it('keeps custom lesson titles intact instead of overwriting Mongo-edited copy', () => {
@@ -21,7 +21,7 @@ describe('lesson-catalog-i18n', () => {
     );
   });
 
-  it('returns English lesson descriptions for non-Polish locales and keeps Polish fallback for pl', () => {
+  it('returns localized lesson descriptions for English and German locales and keeps Polish fallback for pl', () => {
     expect(
       getLocalizedKangurLessonDescription(
         'webdev_react_components',
@@ -33,39 +33,48 @@ describe('lesson-catalog-i18n', () => {
     expect(
       getLocalizedKangurLessonDescription(
         'webdev_react_components',
+        'de',
+        'Poznaj podstawy komponentów i buduj interfejsy w React 19.2.'
+      )
+    ).toBe('Lerne die Grundlagen von Komponenten und baue Oberflaechen in React 19.2.');
+
+    expect(
+      getLocalizedKangurLessonDescription(
+        'webdev_react_components',
         'pl',
         'Poznaj podstawy komponentów i buduj interfejsy w React 19.2.'
       )
     ).toBe('Poznaj podstawy komponentów i buduj interfejsy w React 19.2.');
   });
 
-  it('returns English subject labels for non-Polish locales', () => {
+  it('returns localized subject labels for English and German locales', () => {
     expect(getLocalizedKangurSubjectLabel('maths', 'en')).toBe('Maths');
     expect(getLocalizedKangurSubjectLabel('geometry', 'en')).toBe('Shapes');
+    expect(getLocalizedKangurSubjectLabel('geometry', 'de')).toBe('Formen');
     expect(getLocalizedKangurSubjectLabel('english', 'pl')).toBe('Angielski');
   });
 
-  it('returns English age-group labels for non-Polish locales', () => {
+  it('returns localized age-group labels for English and German locales', () => {
     expect(getLocalizedKangurAgeGroupLabel('ten_year_old', 'en')).toBe('Age 10');
-    expect(getLocalizedKangurAgeGroupLabel('grown_ups', 'de')).toBe('Adults');
+    expect(getLocalizedKangurAgeGroupLabel('grown_ups', 'de')).toBe('Erwachsene');
     expect(getLocalizedKangurAgeGroupLabel('six_year_old', 'pl')).toBe('6 lat');
   });
 
-  it('returns English lesson section labels for non-Polish locales while keeping Polish in pl', () => {
+  it('returns localized lesson section labels while keeping Polish in pl', () => {
     expect(getLocalizedKangurLessonSectionLabel('maths_geometry', 'en', 'Geometria')).toBe(
       'Geometry'
     );
     expect(
       getLocalizedKangurLessonSectionLabel('alphabet_matching', 'de', 'Dopasuj litery')
-    ).toBe('Match the letters');
+    ).toBe('Buchstaben zuordnen');
     expect(getLocalizedKangurLessonSectionLabel('maths_geometry', 'pl', 'Geometria')).toBe(
       'Geometria'
     );
   });
 
-  it('returns localized section type labels for English routes and keeps Polish defaults in pl', () => {
+  it('returns localized section type labels for English and German routes and keeps Polish defaults in pl', () => {
     expect(getLocalizedKangurLessonSectionTypeLabel('en', 'Gra')).toBe('Game');
-    expect(getLocalizedKangurLessonSectionTypeLabel('de', 'Lekcja')).toBe('Lesson');
+    expect(getLocalizedKangurLessonSectionTypeLabel('de', 'Lekcja')).toBe('Lektion');
     expect(getLocalizedKangurLessonSectionTypeLabel('pl', 'Gra')).toBe('Gra');
   });
 });

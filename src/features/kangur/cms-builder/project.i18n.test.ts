@@ -21,6 +21,21 @@ describe('Kangur CMS project i18n defaults', () => {
     expect(serialized).toContain('Training setup');
   });
 
+  it('builds German default CMS blocks for German locale fallbacks', () => {
+    const project = parseKangurCmsProject(null, {
+      fallbackToDefault: true,
+      locale: 'de',
+    });
+
+    expect(project).not.toBeNull();
+
+    const serialized = JSON.stringify(project);
+    expect(serialized).toContain('Name des Spielers');
+    expect(serialized).toContain('Prioritaetsaufgaben');
+    expect(serialized).toContain('Stark gemacht, Spieler!');
+    expect(serialized).toContain('Training einrichten');
+  });
+
   it('keeps Polish defaults and page locale for Polish builder state', () => {
     const project = parseKangurCmsProject(null, {
       fallbackToDefault: true,
@@ -32,7 +47,7 @@ describe('Kangur CMS project i18n defaults', () => {
     }
 
     const serialized = JSON.stringify(project);
-    expect(serialized).toContain('Imie gracza');
+    expect(serialized).toContain('Imię gracza');
     expect(serialized).toContain('Priorytetowe zadania');
 
     const state = buildKangurCmsBuilderState(project, 'Game', 'pl');

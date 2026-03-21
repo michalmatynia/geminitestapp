@@ -3,25 +3,26 @@ import {
   translateClockTrainingWithFallback,
   type ClockTrainingTranslate,
 } from './clock-training-i18n';
+import type {
+  ClockChallengeMedal,
+  ClockGameMode,
+  ClockTask,
+  ClockTrainingTaskPoolId,
+} from './clock-training/types';
 
-export type ClockTask = {
-  hours: number;
-  minutes: number;
-};
+export type {
+  ClockChallengeMedal,
+  ClockChallengeResult,
+  ClockGameMode,
+  ClockTask,
+  ClockTrainingSectionContent,
+  ClockTrainingSectionId,
+  ClockTrainingTaskPoolId,
+} from './clock-training/types';
 
 export type Feedback = 'correct' | 'wrong' | null;
 export type Hand = 'hour' | 'minute';
 export type MinuteSnapMode = '5min' | '1min';
-export type ClockGameMode = 'practice' | 'challenge';
-export type ClockTrainingSectionId = 'hours' | 'minutes' | 'combined';
-export type ClockTrainingTaskPoolId = ClockTrainingSectionId | 'mixed';
-export type ClockChallengeMedal = 'gold' | 'silver' | 'bronze';
-
-export type ClockChallengeResult = {
-  correctCount: number;
-  medal: ClockChallengeMedal;
-  totalCount: number;
-};
 
 export type ClockFeedback = {
   kind: Feedback;
@@ -29,14 +30,6 @@ export type ClockFeedback = {
   details: string;
   emoji: string;
   tone?: 'near' | 'far';
-};
-
-export type ClockTrainingSectionContent = {
-  accent: 'amber' | 'emerald' | 'indigo' | 'rose';
-  guidance?: string;
-  guidanceTitle?: string;
-  legend?: string;
-  promptLabel: string;
 };
 
 function shuffle<T>(items: T[]): T[] {

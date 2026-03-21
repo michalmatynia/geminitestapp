@@ -1,6 +1,12 @@
 import React from 'react';
 
-import type { IdLabeledOptionDto, LabeledOptionDto } from '@/shared/contracts/base';
+import type {
+  DatabasePresetOption,
+  DatabaseSnippetGroup,
+  DatabaseSnippetItem,
+  DatabaseTemplateSnippet,
+} from '@/features/ai/ai-paths/config/query-presets';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button, Label } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
@@ -9,26 +15,16 @@ import {
 } from './DatabaseConstructorContext';
 import { useAiPathOrchestrator } from '../../AiPathConfigContext';
 
-type TemplateSnippet = LabeledOptionDto<string>;
-type ReadQuerySnippet = LabeledOptionDto<string> & { disabled?: boolean; note?: string };
-type OperatorGroup = {
-  label: string;
-  items: Array<LabeledOptionDto<string>>;
-};
-type StageSnippet = LabeledOptionDto<string>;
-type SortPreset = IdLabeledOptionDto;
-type ProjectionPreset = IdLabeledOptionDto;
-
 type DatabaseTemplateSnippetsDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  templateSnippets: TemplateSnippet[];
-  readQueryTypes: ReadQuerySnippet[];
-  queryOperatorGroups: OperatorGroup[];
-  updateOperatorGroups: OperatorGroup[];
-  aggregationStageSnippets: StageSnippet[];
-  sortPresets: SortPreset[];
-  projectionPresets: ProjectionPreset[];
+  templateSnippets: DatabaseTemplateSnippet[];
+  readQueryTypes: DatabaseSnippetItem[];
+  queryOperatorGroups: DatabaseSnippetGroup[];
+  updateOperatorGroups: DatabaseSnippetGroup[];
+  aggregationStageSnippets: DatabaseTemplateSnippet[];
+  sortPresets: DatabasePresetOption[];
+  projectionPresets: DatabasePresetOption[];
 };
 
 export function DatabaseTemplateSnippetsDialog(
@@ -63,7 +59,7 @@ export function DatabaseTemplateSnippetsDialog(
           <Label className='text-xs text-gray-400 uppercase tracking-wide'>Query Templates</Label>
           <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
             {templateSnippets.map(
-              (snippet: TemplateSnippet): React.JSX.Element => (
+              (snippet: DatabaseTemplateSnippet): React.JSX.Element => (
                 <Button
                   key={snippet.label}
                   type='button'
@@ -92,7 +88,7 @@ export function DatabaseTemplateSnippetsDialog(
           <Label className='text-xs text-gray-400 uppercase tracking-wide'>Read Query Types</Label>
           <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
             {readQueryTypes.map(
-              (snippet: ReadQuerySnippet): React.JSX.Element => (
+              (snippet: DatabaseSnippetItem): React.JSX.Element => (
                 <Button
                   key={snippet.label}
                   type='button'
@@ -123,7 +119,7 @@ export function DatabaseTemplateSnippetsDialog(
           <Label className='text-xs text-gray-400 uppercase tracking-wide'>Query Operators</Label>
           <div className='space-y-3'>
             {queryOperatorGroups.map(
-              (group: OperatorGroup): React.JSX.Element => (
+              (group: DatabaseSnippetGroup): React.JSX.Element => (
                 <div key={group.label} className='space-y-1'>
                   <div className='text-[10px] text-gray-500'>{group.label}</div>
                   <div className='flex flex-wrap gap-2'>
@@ -153,7 +149,7 @@ export function DatabaseTemplateSnippetsDialog(
           <Label className='text-xs text-gray-400 uppercase tracking-wide'>Update Operators</Label>
           <div className='space-y-3'>
             {updateOperatorGroups.map(
-              (group: OperatorGroup): React.JSX.Element => (
+              (group: DatabaseSnippetGroup): React.JSX.Element => (
                 <div key={group.label} className='space-y-1'>
                   <div className='text-[10px] text-gray-500'>{group.label}</div>
                   <div className='flex flex-wrap gap-2'>
@@ -186,7 +182,7 @@ export function DatabaseTemplateSnippetsDialog(
           {aggregationStageSnippets.length > 0 ? (
             <div className='flex flex-wrap gap-2'>
               {aggregationStageSnippets.map(
-                (stage: StageSnippet): React.JSX.Element => (
+                (stage: DatabaseTemplateSnippet): React.JSX.Element => (
                   <Button
                     key={stage.label}
                     type='button'
@@ -212,7 +208,7 @@ export function DatabaseTemplateSnippetsDialog(
           <Label className='text-xs text-gray-400 uppercase tracking-wide'>Sort Options</Label>
           <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
             {sortPresets.map(
-              (preset: SortPreset): React.JSX.Element => (
+              (preset: DatabasePresetOption): React.JSX.Element => (
                 <Button
                   key={preset.id}
                   type='button'
@@ -242,7 +238,7 @@ export function DatabaseTemplateSnippetsDialog(
           </Label>
           <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
             {projectionPresets.map(
-              (preset: ProjectionPreset): React.JSX.Element => (
+              (preset: DatabasePresetOption): React.JSX.Element => (
                 <Button
                   key={preset.id}
                   type='button'

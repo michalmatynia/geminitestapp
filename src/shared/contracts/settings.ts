@@ -28,6 +28,8 @@ export type MongoTimestampedStringSettingRecord<
   TId = string,
   TTimestamp = string | Date,
 > = MongoTimestampedSettingRecord<TId, string, TTimestamp>;
+export type MongoTimestampedStringSettingDocument<TId = string> =
+  MongoTimestampedStringSettingRecord<TId, Date>;
 export type MongoPersistedSettingRecord<
   TId = string,
   TValue = string,
@@ -40,6 +42,8 @@ export type MongoPersistedStringSettingRecord<
   TId = string,
   TTimestamp = string | Date,
 > = MongoPersistedSettingRecord<TId, string, TTimestamp>;
+export type MongoPersistedStringSettingDocument<TId = string> =
+  MongoPersistedStringSettingRecord<TId, Date>;
 
 /**
  * Settings Scope Contract

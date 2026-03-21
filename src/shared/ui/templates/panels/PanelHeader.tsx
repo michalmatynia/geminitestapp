@@ -7,7 +7,7 @@ import { Button } from '@/shared/ui/button';
 import { RefreshButton } from '@/shared/ui/RefreshButton';
 import { cn } from '@/shared/utils';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import {
   UI_STACK_RELAXED_CLASSNAME,
   UI_START_ROW_SPACED_CLASSNAME,
@@ -79,7 +79,11 @@ function PanelHeaderRefreshAction(): React.JSX.Element | null {
     try {
       await onRefresh();
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'PanelHeader',
+        action: 'refresh',
+        level: 'warn',
+      });
       void logSystemEvent({
         level: 'error',
         source: 'PanelHeader',

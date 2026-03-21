@@ -1,8 +1,8 @@
 'use client';
 
+import { useLocale } from 'next-intl';
 import React, { useMemo, useState } from 'react';
 
-import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { Button, FormModal } from '@/features/kangur/shared/ui';
@@ -35,26 +35,14 @@ import {
   readQuestionEditorDraft,
   writeQuestionEditorDraft,
 } from './question-editor-drafts';
+import {
+  getQuestionManagerCopy,
+  resolveQuestionManagerLocale,
+} from './question-manager.copy';
 import { getKangurTestSuiteHealth } from './test-suite-health';
 
 import type { QuestionListFilter, QuestionListSort } from './question-manager-view';
 
-
-const QUESTION_LIST_FILTER_OPTIONS: Array<LabeledOptionDto<QuestionListFilter>> = [
-  { value: 'all', label: 'All' },
-  { value: 'needs-review', label: 'Needs review' },
-  { value: 'needs-fix', label: 'Needs fix' },
-  { value: 'draft', label: 'Draft' },
-  { value: 'ready', label: 'Ready to publish' },
-  { value: 'published', label: 'Published' },
-  { value: 'rich-ui', label: 'Rich UI' },
-  { value: 'illustrated', label: 'SVG' },
-];
-
-const QUESTION_LIST_SORT_OPTIONS: Array<LabeledOptionDto<QuestionListSort>> = [
-  { value: 'manual', label: 'Manual order' },
-  { value: 'review-queue', label: 'Review queue' },
-];
 
 const QUESTION_STATUS_PRIORITY: Record<'ready' | 'needs-review' | 'needs-fix', number> = {
   'needs-fix': 0,
@@ -62,7 +50,10 @@ const QUESTION_STATUS_PRIORITY: Record<'ready' | 'needs-review' | 'needs-fix', n
   ready: 2,
 };
 
-const formatDraftTimestamp = (value: string | null): string | null => {
+const formatDraftTimestamp = (
+  value: string | null,
+  locale: string
+): string | null => {
   if (!value) return null;
 
   return withKangurClientErrorSync(
@@ -73,7 +64,7 @@ const formatDraftTimestamp = (value: string | null): string | null => {
       context: { value },
     },
     () =>
-      new Intl.DateTimeFormat('pl-PL', {
+      new Intl.DateTimeFormat(locale, {
         dateStyle: 'medium',
         timeStyle: 'short',
       }).format(new Date(value)),
@@ -93,6 +84,8 @@ const buildQuestionEditorSnapshot = (
 export function KangurQuestionsManagerPanel(): React.JSX.Element {
   const { suite, onClose, initialView } = useKangurQuestionsManagerRuntimeContext();
   const settingsStore = useSettingsStore();
+  const locale = resolveQuestionManagerLocale(useLocale());
+  const copy = useMemo(() => getQuestionManagerCopy(locale), [locale]);
 
   const rawQuestions = settingsStore.get(KANGUR_TEST_QUESTIONS_SETTING_KEY);
   const rawSuites = settingsStore.get(KANGUR_TEST_SUITES_SETTING_KEY);
@@ -326,10 +319,12 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
 
   const emptyFilterLabel =
     searchQuery.trim().length > 0
-      ? `No questions match "${searchQuery.trim()}".`
+      ? copy.emptyStates.noMatches(searchQuery.trim())
       : listFilter === 'all'
-        ? 'No questions yet. Add the first question to start.'
-        : `No questions match the "${QUESTION_LIST_FILTER_OPTIONS.find((option) => option.value === listFilter)?.label ?? listFilter}" filter.`;
+        ? copy.emptyStates.noQuestionsYet
+        : copy.emptyStates.noFilterMatches(
+            copy.filterOptions.find((option) => option.value === listFilter)?.label ?? listFilter
+          );
 
   React.useEffect(() => {
     if (didAutoOpenQuestion) {
@@ -449,8 +444,10 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
     <>
       <div className='flex h-full flex-col gap-4 overflow-hidden'>
         <KangurQuestionsHeader
+          copy={copy.header}
           currentSuite={currentSuite}
           questionCount={questions.length}
+          formatQuestionCount={copy.formatQuestionCount}
           readyCount={readyCount}
           richQuestionCount={richQuestionCount}
           needsReviewCount={needsReviewCount}
@@ -482,33 +479,32 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
 
         {currentSuiteHealth.liveNeedsAttention ? (
           <div className='rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100'>
-            This suite is still marked live, but its published question set is incomplete or needs review.
-            Learner runtime will keep it offline until you repair and republish it.
+            {copy.alerts.liveNeedsAttention}
           </div>
         ) : currentSuiteHealth.isLive ? (
           <div className='rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100'>
-            This suite is live for learners. Draft edits, deletions, or unpublished duplicates will
-            take it offline until the published set is complete again.
+            {copy.alerts.live}
           </div>
         ) : currentSuiteHealth.canGoLive ? (
           <div className='rounded-2xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100'>
-            This suite is fully published and ready to go live for learners.
+            {copy.alerts.readyForLive}
           </div>
         ) : canPublishAndGoLiveCurrentSuite ? (
           <div className='rounded-2xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100'>
-            This suite can publish its ready queue and go live for learners in one step.
+            {copy.alerts.publishAndGoLive}
           </div>
         ) : null}
 
         <KangurQuestionsFilterTriage
+          copy={copy.filters}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           sortMode={sortMode}
           onSortChange={setSortMode}
           listFilter={listFilter}
           onFilterChange={setListFilter}
-          filterOptions={QUESTION_LIST_FILTER_OPTIONS}
-          sortOptions={QUESTION_LIST_SORT_OPTIONS}
+          filterOptions={copy.filterOptions}
+          sortOptions={copy.sortOptions}
         />
 
         {/* Question list */}
@@ -527,6 +523,7 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
 
                 return (
                   <KangurQuestionListItem
+                    copy={copy.listItem}
                     key={q.id}
                     question={q}
                     index={index}
@@ -562,7 +559,7 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
       <FormModal
         isOpen={showEditor}
         onClose={handleRequestClose}
-        title={isNewQuestion ? 'Add Question' : 'Edit Question'}
+        title={isNewQuestion ? copy.modal.addQuestionTitle : copy.modal.editQuestionTitle}
         subtitle={`${suite.title}`}
         onSave={(): void => {
           void handleSave();
@@ -570,7 +567,7 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
         isSaving={isSaving}
         isSaveDisabled={isSaveDisabled}
         hasUnsavedChanges={isEditorDirty}
-        saveText={isNewQuestion ? 'Add Question' : 'Save Question'}
+        saveText={isNewQuestion ? copy.modal.addQuestionSave : copy.modal.saveQuestion}
         size='xl'
       >
         {formData ? (
@@ -579,18 +576,22 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
               <div className='rounded-xl border border-cyan-400/20 bg-cyan-500/10 px-4 py-3'>
                 <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
                   <div>
-                    <div className='text-sm font-semibold text-cyan-100'>Recovered local draft</div>
+                    <div className='text-sm font-semibold text-cyan-100'>
+                      {copy.modal.recoveredDraftTitle}
+                    </div>
                     <div className='mt-1 text-xs text-cyan-50/80'>
-                      A newer local draft is available from{' '}
-                      {formatDraftTimestamp(restorableDraftSavedAt)}.
+                      {copy.modal.recoveredDraftFrom(
+                        formatDraftTimestamp(restorableDraftSavedAt, copy.intlLocale) ??
+                          restorableDraftSavedAt
+                      )}
                     </div>
                   </div>
                   <div className='flex items-center gap-2'>
                     <Button type='button' size='sm' variant='outline' onClick={handleDismissDraft}>
-                      Dismiss draft
+                      {copy.modal.dismissDraft}
                     </Button>
                     <Button type='button' size='sm' onClick={handleRestoreDraft}>
-                      Restore draft
+                      {copy.modal.restoreDraft}
                     </Button>
                   </div>
                 </div>
@@ -600,7 +601,7 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
               formData={formData}
               onChange={setFormData}
               isDirty={isEditorDirty}
-              localDraftSavedAtLabel={formatDraftTimestamp(localDraftSavedAt)}
+              localDraftSavedAtLabel={formatDraftTimestamp(localDraftSavedAt, copy.intlLocale)}
             />
           </div>
         ) : null}
@@ -613,9 +614,11 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
         onConfirm={(): void => {
           void handleDelete();
         }}
-        title='Delete Question'
-        message={`Delete question "${questionToDelete?.prompt.slice(0, 60) ?? ''}"? This cannot be undone.`}
-        confirmText='Delete'
+        title={copy.modal.deleteQuestionTitle}
+        message={copy.modal.deleteQuestionMessage(
+          questionToDelete?.prompt.slice(0, 60) ?? ''
+        )}
+        confirmText={copy.modal.deleteQuestionConfirm}
         isDangerous={true}
       />
 
@@ -629,11 +632,11 @@ export function KangurQuestionsManagerPanel(): React.JSX.Element {
           }
           closeEditor();
         }}
-        title='Discard question changes?'
-        subtitle='You have unsaved changes in this question draft.'
-        message='Close the editor without saving? Your current question edits will be lost.'
-        confirmText='Discard changes'
-        cancelText='Keep editing'
+        title={copy.modal.discardChangesTitle}
+        subtitle={copy.modal.discardChangesSubtitle}
+        message={copy.modal.discardChangesMessage}
+        confirmText={copy.modal.discardChangesConfirm}
+        cancelText={copy.modal.discardChangesCancel}
         isDangerous={true}
       />
     </>

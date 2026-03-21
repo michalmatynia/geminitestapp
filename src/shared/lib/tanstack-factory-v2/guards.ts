@@ -6,7 +6,7 @@ import {
 } from './types';
 
 import type { QueryKey } from '@tanstack/react-query';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 export const DEFAULT_STALE_TIME_MS = 5 * 60 * 1000;
@@ -41,7 +41,11 @@ export const isRefetchEnabledForQuery = (query: unknown): boolean => {
     try {
       return Boolean(enabled(query));
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'tanstack-factory-v2.guards',
+        action: 'isRefetchEnabledForQuery',
+        level: 'warn',
+      });
       return false;
     }
   }
@@ -63,7 +67,11 @@ export const guardRefetchInterval = <TQuery>(
       try {
         nextValue = callback(query);
       } catch (error) {
-        logClientError(error);
+        logClientCatch(error, {
+          source: 'tanstack-factory-v2.guards',
+          action: 'guardRefetchInterval',
+          level: 'warn',
+        });
         return false;
       }
 

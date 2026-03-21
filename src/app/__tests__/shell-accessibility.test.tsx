@@ -37,7 +37,7 @@ describe('app shell accessibility', () => {
     const { container } = render(layout);
 
     const main = screen.getByRole('main');
-    expect(main).toHaveAttribute('id', 'app-content');
+    expect(main).toHaveAttribute('id', 'kangur-main-content');
     expect(main).toHaveAttribute('tabindex', '-1');
 
     await expectNoAxeViolations(container);
@@ -52,7 +52,7 @@ describe('app shell accessibility', () => {
     );
 
     const main = screen.getByRole('main');
-    expect(main).toHaveAttribute('id', 'app-content');
+    expect(main).toHaveAttribute('id', 'kangur-main-content');
     expect(main).toHaveAttribute('tabindex', '-1');
 
     await expectNoAxeViolations(container);

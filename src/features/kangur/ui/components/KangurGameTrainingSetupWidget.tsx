@@ -28,13 +28,23 @@ export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
     [locale, progress, recommendationTranslations]
   );
   const trainingSetupFallbackTitle =
-    normalizedLocale === 'uk' ? 'Налаштування тренування' : 'Trening mieszany';
+    normalizedLocale === 'uk'
+      ? 'Налаштування тренування'
+      : normalizedLocale === 'de'
+        ? 'Gemischtes Training'
+        : normalizedLocale === 'pl'
+          ? 'Trening mieszany'
+          : 'Mixed training';
   const trainingSetupFallbackWordmarkLabel =
     normalizedLocale === 'uk' ? 'Тренування' : normalizedLocale === 'pl' ? 'Trening' : 'Training';
   const trainingSetupFallbackDescription =
     normalizedLocale === 'uk'
       ? 'Налаштуйте змішане тренування й виберіть діапазон запитань.'
-      : 'Dobierz poziom, kategorie i liczbe pytan do jednej sesji.';
+      : normalizedLocale === 'de'
+        ? 'Wähle Niveau, Kategorien und die Anzahl der Fragen für eine Sitzung.'
+        : normalizedLocale === 'pl'
+          ? 'Dobierz poziom, kategorie i liczbe pytan do jednej sesji.'
+          : 'Choose the level, categories, and number of questions for one session.';
   const trainingSetupTitle = translateRecommendationWithFallback(
     gamePageTranslations,
     'screens.training.label',

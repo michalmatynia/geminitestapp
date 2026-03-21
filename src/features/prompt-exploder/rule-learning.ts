@@ -1,8 +1,7 @@
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 
 import { mergeRegexPatternsForRule } from './rule-merge';
-
-type PromptValidationRegexRule = Extract<PromptValidationRule, { kind: 'regex' }>;
+import type { PromptValidationRegexRule } from './types';
 
 export const mergeRegexLearnedRule = (args: {
   existingRule: PromptValidationRule | null | undefined;

@@ -3,7 +3,7 @@
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { Button } from './button';
 import { ConfirmDialog } from './confirm-dialog';
@@ -111,8 +111,9 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
     }
     void Promise.resolve(onEditorClose({ draft: currentDraft, originalItem, saved })).catch(
       (error) => {
-        logClientError(error, {
-          context: { source: 'ItemLibrary', action: 'onEditorClose' },
+        logClientCatch(error, {
+          source: 'ItemLibrary',
+          action: 'onEditorClose',
         });
       }
     );

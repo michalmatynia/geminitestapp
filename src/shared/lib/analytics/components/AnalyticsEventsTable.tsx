@@ -11,7 +11,7 @@ import {
   UI_GRID_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -111,7 +111,12 @@ function AnalyticsEventDetails({ event }: { event: AnalyticsEvent }): React.JSX.
     try {
       return new Date(event.ts).toLocaleString();
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'analytics.events-table',
+        action: 'formatDetailTimestamp',
+        eventTs: event.ts,
+        eventType: event.type,
+      });
       return event.ts;
     }
   })();
@@ -338,7 +343,12 @@ export function AnalyticsEventsTable({
                 </span>
               );
             } catch (error) {
-              logClientError(error);
+              logClientCatch(error, {
+                source: 'analytics.events-table',
+                action: 'formatTableTimestamp',
+                eventTs: row.original.ts,
+                eventType: row.original.type,
+              });
               return <span className='text-xs text-gray-300'>{row.original.ts}</span>;
             }
           },

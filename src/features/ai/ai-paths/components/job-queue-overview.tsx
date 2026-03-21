@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Alert, Button, InsetPanel, StatusBadge } from '@/shared/ui';
+import { Alert, InsetPanel, StatusBadge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import {
@@ -10,6 +10,7 @@ import {
   type QueueHistoryEntry,
   type QueueStatus,
 } from './job-queue-panel-utils';
+import { AiPathsPillButton } from './AiPathsPillButton';
 import { RunningIndicator } from './job-queue-running-indicator';
 
 type JobQueueOverviewProps = {
@@ -29,6 +30,25 @@ type QueueOverviewCardProps = {
   title: string;
   children: React.ReactNode;
   className?: string;
+};
+
+type QueueDepthSparklineProps = {
+  entries: QueueHistoryEntry[];
+  maxItems?: number;
+  className?: string;
+  barClassName: string;
+  minHeight: number;
+  titleFormatter: (entry: QueueHistoryEntry) => string;
+};
+
+type QueueOverviewLineProps = {
+  children: React.ReactNode;
+  className?: string;
+};
+
+type QueueOverviewStateLineProps = QueueOverviewLineProps & {
+  showIndicator?: boolean;
+  indicatorLabel: string;
 };
 
 function QueueOverviewCard({
@@ -65,6 +85,81 @@ function QueueOverviewMiniCard({
   );
 }
 
+function QueueDepthSparkline({
+  entries,
+  maxItems,
+  className,
+  barClassName,
+  minHeight,
+  titleFormatter,
+}: QueueDepthSparklineProps): React.JSX.Element {
+  const visibleEntries =
+    typeof maxItems === 'number' ? entries.slice(-maxItems) : entries;
+  const maxQueued = Math.max(
+    1,
+    ...visibleEntries.map((item: QueueHistoryEntry) => item.queued)
+  );
+
+  return (
+    <div className={className}>
+      <div className='flex h-full items-end gap-[2px]'>
+        {visibleEntries.length === 0 ? (
+          <div className='text-[10px] text-gray-500'>No samples</div>
+        ) : (
+          visibleEntries.map((entry: QueueHistoryEntry, index: number) => {
+            const height = Math.max(minHeight, Math.round((entry.queued / maxQueued) * 100));
+            return (
+              <div
+                key={`${entry.ts}-${index}`}
+                className={barClassName}
+                style={{ height: `${height}%` }}
+                title={titleFormatter(entry)}
+              />
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
+function QueueOverviewPrimaryLine({
+  children,
+  className,
+}: QueueOverviewLineProps): React.JSX.Element {
+  return <div className={cn('mt-1 text-sm text-white', className)}>{children}</div>;
+}
+
+function QueueOverviewDetailLine({
+  children,
+  className,
+}: QueueOverviewLineProps): React.JSX.Element {
+  return <div className={cn('mt-1 text-[11px] text-gray-400', className)}>{children}</div>;
+}
+
+function QueueOverviewCompactDetailLine({
+  children,
+  className,
+}: QueueOverviewLineProps): React.JSX.Element {
+  return <div className={cn('mt-1 text-[10px] text-gray-400', className)}>{children}</div>;
+}
+
+function QueueOverviewStateLine({
+  children,
+  className,
+  showIndicator = false,
+  indicatorLabel,
+}: QueueOverviewStateLineProps): React.JSX.Element {
+  return (
+    <QueueOverviewPrimaryLine className={cn('flex items-center gap-2', className)}>
+      <>
+        {children}
+        {showIndicator ? <RunningIndicator label={indicatorLabel} /> : null}
+      </>
+    </QueueOverviewPrimaryLine>
+  );
+}
+
 export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Element {
   const {
     queueStatus,
@@ -85,43 +180,45 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
     <>
       <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-6'>
         <QueueOverviewCard title='Worker'>
-          <div className='mt-1 flex items-center gap-2 text-sm text-white'>
+          <QueueOverviewStateLine
+            showIndicator={Boolean(queueStatus?.running)}
+            indicatorLabel='Active'
+          >
             {queueStatus ? (queueStatus.running ? 'Running' : 'Stopped') : '-'}
-            {queueStatus?.running ? <RunningIndicator label='Active' /> : null}
-          </div>
-          <div className='mt-1 text-[11px] text-gray-400'>
+          </QueueOverviewStateLine>
+          <QueueOverviewDetailLine>
             Healthy: {queueStatus ? (queueStatus.healthy ? 'Yes' : 'No') : '-'}
-          </div>
+          </QueueOverviewDetailLine>
         </QueueOverviewCard>
         <QueueOverviewCard title='Concurrency'>
-          <div className='mt-1 text-sm text-white'>{queueStatus?.concurrency ?? '-'}</div>
-          <div className='mt-1 flex items-center gap-2 text-[11px] text-gray-400'>
+          <QueueOverviewPrimaryLine>{queueStatus?.concurrency ?? '-'}</QueueOverviewPrimaryLine>
+          <QueueOverviewDetailLine className='flex items-center gap-2'>
             <span>Active runs: {queueStatus?.activeRuns ?? 0}</span>
             {(queueStatus?.activeRuns ?? 0) > 0 ? <RunningIndicator label='Busy' /> : null}
-          </div>
+          </QueueOverviewDetailLine>
         </QueueOverviewCard>
         <QueueOverviewCard title='Last poll'>
-          <div className='mt-1 text-sm text-white'>
+          <QueueOverviewPrimaryLine>
             {formatUtcClockTime(queueStatus?.lastPollTime)}
-          </div>
-          <div className='mt-1 text-[11px] text-gray-400'>
+          </QueueOverviewPrimaryLine>
+          <QueueOverviewDetailLine>
             Age: {formatDurationMs(queueStatus?.timeSinceLastPoll ?? null)}
-          </div>
+          </QueueOverviewDetailLine>
         </QueueOverviewCard>
         <QueueOverviewCard title='Status'>
-          <div className='mt-1 text-sm text-white'>
+          <QueueOverviewPrimaryLine>
             {queueStatusFetching ? 'Refreshing...' : 'Live'}
-          </div>
+          </QueueOverviewPrimaryLine>
           {queueStatusError ? (
-            <div className='mt-1 text-[11px] text-rose-200'>
+            <QueueOverviewDetailLine className='text-rose-200'>
               {queueStatusError instanceof Error
                 ? queueStatusError.message
                 : 'Failed to load queue status.'}
-            </div>
+            </QueueOverviewDetailLine>
           ) : (
-            <div className='mt-1 text-[11px] text-gray-400'>
+            <QueueOverviewDetailLine>
               Polled every 5s while this panel is active
-            </div>
+            </QueueOverviewDetailLine>
           )}
           {queueStatus?.slo ? (
             <StatusBadge
@@ -133,34 +230,19 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
           ) : null}
         </QueueOverviewCard>
         <QueueOverviewCard title='Queue Depth'>
-          <div className='mt-1 text-sm text-white'>{queueStatus?.queuedCount ?? 0} queued</div>
-          <div className='mt-1 text-[11px] text-gray-400'>
+          <QueueOverviewPrimaryLine>{queueStatus?.queuedCount ?? 0} queued</QueueOverviewPrimaryLine>
+          <QueueOverviewDetailLine>
             Lag: {formatDurationMs(queueStatus?.queueLagMs ?? null)}
-          </div>
-          <div className='mt-2 h-10 w-full rounded bg-foreground/5 px-1 py-1'>
-            <div className='flex h-full items-end gap-[2px]'>
-              {queueHistory.length === 0 ? (
-                <div className='text-[10px] text-gray-500'>No samples</div>
-              ) : (
-                queueHistory.slice(-30).map((entry: QueueHistoryEntry, index: number) => {
-                  const max = Math.max(
-                    1,
-                    ...queueHistory.slice(-30).map((item: QueueHistoryEntry) => item.queued)
-                  );
-                  const height = Math.max(8, Math.round((entry.queued / max) * 100));
-                  return (
-                    <div
-                      key={`${entry.ts}-${index}`}
-                      className='w-[6px] rounded bg-sky-400/60'
-                      style={{ height: `${height}%` }}
-                      title={`${entry.queued} queued`}
-                    />
-                  );
-                })
-              )}
-            </div>
-          </div>
-          <div className='mt-2 flex flex-wrap gap-2 text-[10px] text-gray-400'>
+          </QueueOverviewDetailLine>
+          <QueueDepthSparkline
+            entries={queueHistory}
+            maxItems={30}
+            className='mt-2 h-10 w-full rounded bg-foreground/5 px-1 py-1'
+            barClassName='w-[6px] rounded bg-sky-400/60'
+            minHeight={8}
+            titleFormatter={(entry: QueueHistoryEntry) => `${entry.queued} queued`}
+          />
+          <QueueOverviewCompactDetailLine className='mt-2 flex flex-wrap gap-2'>
             <span>Throughput: {queueStatus?.throughputPerMinute ?? 0}/min</span>
             {runtimeAnalyticsEnabled ? (
               <>
@@ -170,14 +252,16 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
             ) : (
               <span>Runtime analytics disabled</span>
             )}
-          </div>
+          </QueueOverviewCompactDetailLine>
         </QueueOverviewCard>
         <QueueOverviewCard title='Brain Analytics Queue'>
-          <div className='mt-1 flex items-center gap-2 text-sm text-white'>
+          <QueueOverviewStateLine
+            showIndicator={Boolean(queueStatus?.brainQueue?.running)}
+            indicatorLabel='Active'
+          >
             {queueStatus?.brainQueue?.running ? 'Running' : 'Stopped'}
-            {queueStatus?.brainQueue?.running ? <RunningIndicator label='Active' /> : null}
-          </div>
-          <div className='mt-1 flex items-center gap-2 text-[11px] text-gray-400'>
+          </QueueOverviewStateLine>
+          <QueueOverviewDetailLine className='flex items-center gap-2'>
             <span>
               Active {queueStatus?.brainQueue?.activeJobs ?? 0} · Waiting{' '}
               {queueStatus?.brainQueue?.waitingJobs ?? 0}
@@ -185,25 +269,25 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
             {(queueStatus?.brainQueue?.activeJobs ?? 0) > 0 ? (
               <RunningIndicator label='Busy' />
             ) : null}
-          </div>
+          </QueueOverviewDetailLine>
           {runtimeAnalyticsEnabled ? (
             <>
-              <div className='mt-2 text-[10px] text-gray-400'>
+              <QueueOverviewCompactDetailLine className='mt-2'>
                 Reports 24h: {queueStatus?.brainAnalytics24h?.totalReports ?? 0}
-              </div>
-              <div className='mt-1 text-[10px] text-gray-400'>
+              </QueueOverviewCompactDetailLine>
+              <QueueOverviewCompactDetailLine>
                 Analytics {queueStatus?.brainAnalytics24h?.analyticsReports ?? 0} · Logs{' '}
                 {queueStatus?.brainAnalytics24h?.logReports ?? 0}
-              </div>
-              <div className='mt-1 text-[10px] text-amber-200/90'>
+              </QueueOverviewCompactDetailLine>
+              <QueueOverviewCompactDetailLine className='text-amber-200/90'>
                 Warnings {queueStatus?.brainAnalytics24h?.warningReports ?? 0} · Errors{' '}
                 {queueStatus?.brainAnalytics24h?.errorReports ?? 0}
-              </div>
+              </QueueOverviewCompactDetailLine>
             </>
           ) : (
-            <div className='mt-2 text-[10px] text-gray-400'>
+            <QueueOverviewCompactDetailLine className='mt-2'>
               Runtime analytics disabled in AI Brain.
-            </div>
+            </QueueOverviewCompactDetailLine>
           )}
         </QueueOverviewCard>
       </div>
@@ -241,75 +325,61 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
             </div>
           </div>
           <div className='flex items-center gap-2'>
-            <Button
-              type='button'
-              className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
+            <AiPathsPillButton
+              className='text-gray-200'
               onClick={onToggleMetricsPanel}
             >
               {showMetricsPanel ? 'Hide' : 'Show'}
-            </Button>
-            <Button
-              type='button'
-              className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
+            </AiPathsPillButton>
+            <AiPathsPillButton
+              className='text-gray-200'
               onClick={onClearHistory}
             >
               Clear
-            </Button>
+            </AiPathsPillButton>
           </div>
         </div>
         {showMetricsPanel ? (
           <div className='mt-3 space-y-3'>
-            <div className='h-24 w-full rounded bg-foreground/5 px-2 py-2'>
-              <div className='flex h-full items-end gap-[2px]'>
-                {queueHistory.length === 0 ? (
-                  <div className='text-[10px] text-gray-500'>No samples</div>
-                ) : (
-                  queueHistory.map((entry: QueueHistoryEntry, index: number) => {
-                    const max = Math.max(
-                      1,
-                      ...queueHistory.map((item: QueueHistoryEntry) => item.queued)
-                    );
-                    const height = Math.max(6, Math.round((entry.queued / max) * 100));
-                    return (
-                      <div
-                        key={`${entry.ts}-${index}`}
-                        className='w-[5px] rounded bg-emerald-400/60'
-                        style={{ height: `${height}%` }}
-                        title={`${entry.queued} queued @ ${formatUtcClockTime(entry.ts)}`}
-                      />
-                    );
-                  })
-                )}
-              </div>
-            </div>
+            <QueueDepthSparkline
+              entries={queueHistory}
+              className='h-24 w-full rounded bg-foreground/5 px-2 py-2'
+              barClassName='w-[5px] rounded bg-emerald-400/60'
+              minHeight={6}
+              titleFormatter={(entry: QueueHistoryEntry) =>
+                `${entry.queued} queued @ ${formatUtcClockTime(entry.ts)}`
+              }
+            />
             <div className='grid gap-2 md:grid-cols-3'>
               <QueueOverviewMiniCard title='Queue Depth'>
-                <div className='mt-1 text-sm text-white'>{queueStatus?.queuedCount ?? 0}</div>
-                <div className='mt-1 text-[10px] text-gray-400'>
+                <QueueOverviewPrimaryLine>{queueStatus?.queuedCount ?? 0}</QueueOverviewPrimaryLine>
+                <QueueOverviewCompactDetailLine>
                   Lag: {formatDurationMs(queueStatus?.queueLagMs ?? null)}
-                </div>
+                </QueueOverviewCompactDetailLine>
               </QueueOverviewMiniCard>
               <QueueOverviewMiniCard title='Throughput'>
-                <div className='mt-1 text-sm text-white'>
+                <QueueOverviewPrimaryLine>
                   {queueStatus?.throughputPerMinute ?? 0}/min
-                </div>
-                <div className='mt-1 text-[10px] text-gray-400'>
+                </QueueOverviewPrimaryLine>
+                <QueueOverviewCompactDetailLine>
                   Completed: {queueStatus?.completedLastMinute ?? 0} (last min)
-                </div>
+                </QueueOverviewCompactDetailLine>
               </QueueOverviewMiniCard>
               <QueueOverviewMiniCard title='Runtime'>
                 {runtimeAnalyticsEnabled ? (
                   <>
-                    <div className='mt-1 text-sm text-white'>
+                    <QueueOverviewPrimaryLine>
                       avg {formatDurationMs(queueStatus?.avgRuntimeMs ?? null)}
-                    </div>
-                    <div className='mt-1 text-[10px] text-gray-400'>
+                    </QueueOverviewPrimaryLine>
+                    <QueueOverviewCompactDetailLine>
                       p50 {formatDurationMs(queueStatus?.p50RuntimeMs ?? null)} · p95{' '}
                       {formatDurationMs(queueStatus?.p95RuntimeMs ?? null)}
-                    </div>
+                    </QueueOverviewCompactDetailLine>
                   </>
                 ) : (
-                  <div className='mt-1 text-[10px] text-gray-400'>Runtime analytics disabled.</div>
+                  <QueueOverviewCompactDetailLine>
+                    Runtime analytics disabled.
+                  </QueueOverviewCompactDetailLine>
                 )}
               </QueueOverviewMiniCard>
             </div>

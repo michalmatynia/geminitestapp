@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useMemo } from 'react';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 export interface FormStateOptions<T extends Record<string, unknown>> {
@@ -142,8 +142,11 @@ export function useFormState<T extends Record<string, unknown>>({
       await onSubmit(values);
       onSubmitSuccess?.();
     } catch (error) {
-      logClientError(error);
       const err = error instanceof Error ? error : new Error(String(error));
+      logClientCatch(err, {
+        source: 'useFormState',
+        action: 'handleSubmit',
+      });
       onSubmitError?.(err);
     } finally {
       setIsSubmitting(false);

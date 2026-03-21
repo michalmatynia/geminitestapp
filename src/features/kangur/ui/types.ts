@@ -81,6 +81,9 @@ export type KangurMiniGameFeedbackDto = {
   text: string;
 };
 export type KangurMiniGameFeedback = KangurMiniGameFeedbackDto;
+export type KangurMiniGameFeedbackState = KangurMiniGameFeedback | null;
+export type KangurMiniGameBinaryFeedbackState = 'correct' | 'wrong' | null;
+export type KangurIntlTranslate = ReturnType<(typeof import('next-intl'))['useTranslations']>;
 
 export type KangurMiniGameInformationalFeedbackDto = {
   kind: 'success' | 'error' | 'info';

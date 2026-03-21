@@ -12,7 +12,7 @@ import type { MutationResult, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import {
   normalizeUserPreferencesResponse,
   normalizeUserPreferencesUpdatePayload,
@@ -35,7 +35,12 @@ const hasPreferenceChanged = (
     try {
       return JSON.stringify(currentValue) !== JSON.stringify(nextValue);
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'useUserPreferences',
+        action: 'compareNestedPreferenceValue',
+        preferenceKey: key,
+        level: 'warn',
+      });
       return true;
     }
   }
@@ -51,8 +56,10 @@ export function useUserPreferences(): SingleQuery<UserPreferences> {
         .get<UserPreferencesResponse>('/api/user/preferences', { signal })
         .then((data: UserPreferencesResponse) => normalizeUserPreferencesResponse(data) as UserPreferences)
         .catch((error) => {
-          logClientError(error instanceof Error ? error : new Error(String(error)), {
-            context: { source: 'useUserPreferences', action: 'loadUserPreferences', level: 'warn' },
+          logClientCatch(error, {
+            source: 'useUserPreferences',
+            action: 'loadUserPreferences',
+            level: 'warn',
           });
           return {} as UserPreferences;
         }),

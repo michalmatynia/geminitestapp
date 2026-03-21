@@ -8,7 +8,7 @@ canonical: true
 ---
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-03-21T10:39:08.225Z
+Generated at: 2026-03-21T13:39:48.229Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -16,15 +16,15 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 282 |
-| `src/app/api/image-studio/[[...path]]/route.ts` | 236 |
-| `src/app/api/v2/integrations/[[...path]]/route.ts` | 232 |
-| `src/app/api/agentcreator/[[...path]]/route.ts` | 230 |
-| `src/app/api/ai-paths/[[...path]]/route.ts` | 206 |
-| `src/app/api/databases/[[...path]]/route.ts` | 204 |
-| `src/app/api/chatbot/[[...path]]/route.ts` | 169 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 277 |
+| `src/app/api/image-studio/[[...path]]/route.ts` | 232 |
+| `src/app/api/v2/integrations/[[...path]]/route.ts` | 228 |
+| `src/app/api/agentcreator/[[...path]]/route.ts` | 225 |
+| `src/app/api/ai-paths/[[...path]]/route.ts` | 202 |
+| `src/app/api/databases/[[...path]]/route.ts` | 200 |
+| `src/app/api/chatbot/[[...path]]/route.ts` | 165 |
 | `src/app/api/agent/leases/route.ts` | 122 |
-| `src/app/api/kangur/[[...path]]/route.ts` | 63 |
+| `src/app/api/kangur/[[...path]]/route.ts` | 62 |
 | `src/app/api/agent/resources/route.ts` | 59 |
 | `src/app/api/agent/approval-gates/route.ts` | 50 |
 | `src/app/api/marketplace/[resource]/route.ts` | 38 |

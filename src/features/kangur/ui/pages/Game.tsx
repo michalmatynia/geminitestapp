@@ -154,6 +154,7 @@ function GameContent(): React.JSX.Element {
   const isMobile = useKangurMobileBreakpoint();
   const { enabled: phoneSimulationEnabled } = useKangurPhoneSimulation();
   const shouldUsePhoneSimulation = isMobile && phoneSimulationEnabled;
+  const shouldUseGameMobileChrome = shouldUsePhoneSimulation && screen !== 'home';
   const [canScrollUp, setCanScrollUp] = useState(false);
   const [canScrollDown, setCanScrollDown] = useState(false);
   const getScreenLabel = (screenKey: KangurGameScreen): string =>
@@ -585,15 +586,15 @@ function GameContent(): React.JSX.Element {
   });
 
   useEffect(() => {
-    if (!shouldUsePhoneSimulation || typeof window === 'undefined') {
+    if (!shouldUseGameMobileChrome || typeof window === 'undefined') {
       return;
     }
 
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  }, [shouldUsePhoneSimulation]);
+  }, [shouldUseGameMobileChrome]);
 
   useEffect(() => {
-    if (!shouldUsePhoneSimulation) {
+    if (!shouldUseGameMobileChrome) {
       unlockKangurPageVerticalScroll();
       return;
     }
@@ -602,10 +603,10 @@ function GameContent(): React.JSX.Element {
     return () => {
       unlockKangurPageVerticalScroll();
     };
-  }, [shouldUsePhoneSimulation]);
+  }, [shouldUseGameMobileChrome]);
 
   useEffect(() => {
-    if (!shouldUsePhoneSimulation) {
+    if (!shouldUseGameMobileChrome) {
       return undefined;
     }
 
@@ -625,7 +626,7 @@ function GameContent(): React.JSX.Element {
       node.removeEventListener('wheel', preventScroll);
       node.removeEventListener('touchmove', preventScroll);
     };
-  }, [screen, shouldUsePhoneSimulation]);
+  }, [screen, shouldUseGameMobileChrome]);
 
   const updateScrollButtons = useCallback((): void => {
     const container = gameScrollRef.current;
@@ -643,7 +644,7 @@ function GameContent(): React.JSX.Element {
   }, []);
 
   useEffect(() => {
-    if (!shouldUsePhoneSimulation) {
+    if (!shouldUseGameMobileChrome) {
       setCanScrollUp(false);
       setCanScrollDown(false);
       return;
@@ -683,7 +684,7 @@ function GameContent(): React.JSX.Element {
       resizeObserver?.disconnect();
       mutationObserver?.disconnect();
     };
-  }, [screen, shouldUsePhoneSimulation, updateScrollButtons]);
+  }, [screen, shouldUseGameMobileChrome, updateScrollButtons]);
 
   const handleScrollBy = useCallback(
     (direction: 'up' | 'down'): void => {
@@ -713,7 +714,7 @@ function GameContent(): React.JSX.Element {
 
     const frameId = window.requestAnimationFrame(() => {
       if (GAME_TOP_RESET_SCREENS.has(screen)) {
-        if (shouldUsePhoneSimulation && gameScrollRef.current) {
+        if (shouldUseGameMobileChrome && gameScrollRef.current) {
           gameScrollRef.current.scrollTo({ top: 0, left: 0, behavior: 'auto' });
           updateScrollButtons();
         } else {
@@ -726,7 +727,7 @@ function GameContent(): React.JSX.Element {
 
     previousScreenRef.current = screen;
     return () => window.cancelAnimationFrame(frameId);
-  }, [screen, shouldUsePhoneSimulation, updateScrollButtons]);
+  }, [screen, shouldUseGameMobileChrome, updateScrollButtons]);
 
   const renderScreen = (
     screenKey: KangurGameScreen,
@@ -768,7 +769,7 @@ function GameContent(): React.JSX.Element {
             visible={xpToast.visible}
           />
         )}
-        navigation={<KangurGameNavigationWidget />}
+        navigation={<KangurGameNavigationWidget visible={screen !== 'home'} />}
         afterNavigation={(
           <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
             {translations('statusAnnouncement', { label: currentScreenLabel })}
@@ -779,19 +780,19 @@ function GameContent(): React.JSX.Element {
           'data-kangur-route-main': true,
           id: GAME_MAIN_ID,
           'aria-labelledby': `${GAME_TITLE_ID} ${GAME_SCREEN_TITLE_ID}`,
-          className: shouldUsePhoneSimulation
+          className: shouldUseGameMobileChrome
             ? `flex h-[calc(var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px))] min-h-0 flex-col items-center py-3 sm:py-4 ${KANGUR_PANEL_GAP_CLASSNAME}`
             : `flex flex-col items-center pb-[calc(var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px)] pt-8 sm:pt-10 ${KANGUR_PANEL_GAP_CLASSNAME}`,
         }}
       >
         <div
           className={cn(
-            shouldUsePhoneSimulation
+            shouldUseGameMobileChrome
               ? 'flex h-full min-h-0 w-full flex-1 flex-col gap-3'
               : 'w-full'
           )}
         >
-          {shouldUsePhoneSimulation && canScrollUp ? (
+          {shouldUseGameMobileChrome && canScrollUp ? (
             <KangurButton
               fullWidth
               size='sm'
@@ -806,14 +807,16 @@ function GameContent(): React.JSX.Element {
             </KangurButton>
           ) : null}
           <div
-            ref={shouldUsePhoneSimulation ? gameScrollRef : undefined}
+            ref={shouldUseGameMobileChrome ? gameScrollRef : undefined}
             className={cn(
-              shouldUsePhoneSimulation
+              shouldUseGameMobileChrome
                 ? `flex-1 min-h-0 w-full overflow-y-auto overscroll-contain touch-none ${KANGUR_PANEL_GAP_CLASSNAME}`
                 : undefined
             )}
             data-testid={
-              shouldUsePhoneSimulation ? 'kangur-game-phone-simulation-scroll-container' : undefined
+              shouldUseGameMobileChrome
+                ? 'kangur-game-phone-simulation-scroll-container'
+                : undefined
             }
           >
           <h1 id={GAME_TITLE_ID} className='sr-only'>
@@ -1113,7 +1116,7 @@ function GameContent(): React.JSX.Element {
             ) : null}
           </AnimatePresence>
           </div>
-          {shouldUsePhoneSimulation && canScrollDown ? (
+          {shouldUseGameMobileChrome && canScrollDown ? (
             <KangurButton
               fullWidth
               size='sm'

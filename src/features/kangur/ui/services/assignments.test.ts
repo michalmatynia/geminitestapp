@@ -147,4 +147,24 @@ describe('buildKangurAssignments', () => {
       },
     });
   });
+
+  it('falls back to English assignment copy when only the locale and lesson resolver are provided', () => {
+    const assignments = buildKangurAssignments(progressWithMastery, 1, {
+      locale: 'en',
+      resolveLessonTitle: (componentId, fallbackTitle) =>
+        componentId === 'division' ? 'Division' : fallbackTitle,
+    });
+
+    expect(assignments[0]).toMatchObject({
+      id: 'lesson-retry-division',
+      title: '➗ Review: Division',
+      description: 'This is one of the weakest areas (45%). It needs a quick review and another attempt.',
+      target: '1 review + min. 75% score',
+      progressLabel: 'Progress: 45% / 75%',
+      questLabel: 'Recovery mission',
+      action: {
+        label: 'Open lesson',
+      },
+    });
+  });
 });

@@ -24,7 +24,10 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
-import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
+import type {
+  KangurMiniGameBinaryFeedbackState,
+  KangurRewardBreakdownEntry,
+} from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 import { translateClockTrainingWithFallback } from './clock-training-i18n';
 
@@ -70,10 +73,8 @@ type ClockTrainingGameProps = {
   showTimeDisplay?: boolean;
 };
 
-type Feedback = 'correct' | 'wrong' | null;
-
 type ClockFeedback = {
-  kind: Feedback;
+  kind: KangurMiniGameBinaryFeedbackState;
   title: string;
   details: string;
   tone?: 'near' | 'far';

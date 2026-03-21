@@ -119,5 +119,13 @@ describe('GeometryDrawingGame', () => {
     );
     expect(checkButton).toHaveClass('bg-rose-500');
     expect(evaluateSpy).toHaveBeenCalledTimes(1);
+    expect(evaluateSpy).toHaveBeenCalledWith(
+      'circle',
+      expect.any(Array),
+      expect.objectContaining({
+        locale: 'pl',
+        translate: expect.any(Function),
+      })
+    );
   });
 });

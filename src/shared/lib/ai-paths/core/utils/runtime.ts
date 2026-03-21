@@ -1,4 +1,17 @@
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
+
+const reportRuntimeUtilsError = (
+  error: unknown,
+  action: string,
+  context?: Record<string, unknown>
+): void => {
+  reportObservabilityInternalError(error, {
+    source: 'ai-paths.core.runtime-utils',
+    action,
+    ...(context ?? {}),
+  });
+};
+
 export const toNumber = (value: string, fallback: number): number => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -12,7 +25,9 @@ export function safeStringify(value: unknown): string {
     try {
       return JSON.stringify(value);
     } catch (error) {
-      logClientError(error);
+      reportRuntimeUtilsError(error, 'safeStringify', {
+        valueType: typeof value,
+      });
       return '[Complex Object]';
     }
   }
@@ -47,7 +62,7 @@ export const cloneJsonSafe = <T>(value: T): T | null => {
   try {
     return normalizeForJsonClone(value) as T;
   } catch (error) {
-    logClientError(error);
+    reportRuntimeUtilsError(error, 'cloneJsonSafe');
     return null;
   }
 };
@@ -56,7 +71,7 @@ export const safeJsonStringify = (value: unknown): string => {
   try {
     return JSON.stringify(normalizeForJsonClone(value)) ?? '';
   } catch (error) {
-    logClientError(error);
+    reportRuntimeUtilsError(error, 'safeJsonStringify');
     return '';
   }
 };
@@ -119,7 +134,7 @@ export const stableStringify = (value: unknown): string => {
     if (normalized === undefined) return '';
     return JSON.stringify(normalized) ?? '';
   } catch (error) {
-    logClientError(error);
+    reportRuntimeUtilsError(error, 'stableStringify');
     return '';
   }
 };
@@ -144,7 +159,7 @@ export const formatRuntimeValue = (value: unknown): string => {
     if (json.length > 400) return `${json.slice(0, 400)}…`;
     return json;
   } catch (error) {
-    logClientError(error);
+    reportRuntimeUtilsError(error, 'formatRuntimeValue');
     return '[Complex Object]';
   }
 };
@@ -160,7 +175,9 @@ export const safeParseJson = <T = unknown>(value: string): { value: T; error: st
   try {
     return { value: JSON.parse(value) as T, error: '' };
   } catch (error) {
-    logClientError(error);
+    reportRuntimeUtilsError(error, 'safeParseJson', {
+      valueLength: value.length,
+    });
     return { value: null as T, error: 'Invalid JSON' };
   }
 };
@@ -172,7 +189,7 @@ export const cloneValue = <T>(value: T): T => {
   try {
     return JSON.parse(JSON.stringify(value)) as T;
   } catch (error) {
-    logClientError(error);
+    reportRuntimeUtilsError(error, 'cloneValue');
     return value;
   }
 };
@@ -182,7 +199,9 @@ export const parseJsonSafe = (value: string): unknown => {
   try {
     return JSON.parse(value) as unknown;
   } catch (error) {
-    logClientError(error);
+    reportRuntimeUtilsError(error, 'parseJsonSafe', {
+      valueLength: value.length,
+    });
     return undefined;
   }
 };

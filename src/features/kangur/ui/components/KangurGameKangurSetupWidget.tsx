@@ -33,7 +33,13 @@ export function KangurGameKangurSetupWidget({
     [locale, progress, recommendationTranslations]
   );
   const kangurSetupFallbackTitle =
-    normalizedLocale === 'uk' ? 'Налаштування сесії Математичного Кенгуру' : 'Kangur';
+    normalizedLocale === 'uk'
+      ? 'Налаштування сесії Математичного Кенгуру'
+      : normalizedLocale === 'de'
+        ? 'Mathe-Kanguru'
+        : normalizedLocale === 'pl'
+          ? 'Kangur'
+          : 'Math Kangaroo';
   const kangurSetupFallbackWordmarkLabel =
     normalizedLocale === 'uk'
       ? 'Математичний Кенгуру'
@@ -43,7 +49,11 @@ export function KangurGameKangurSetupWidget({
   const kangurSetupFallbackDescription =
     normalizedLocale === 'uk'
       ? 'Підготуйте сесію Математичного Кенгуру.'
-      : 'Wybierz edycję konkursu i zestaw zadań do rozwiązania.';
+      : normalizedLocale === 'de'
+        ? 'Wähle die Wettbewerbsedition und das Aufgabenset zum Lösen aus.'
+        : normalizedLocale === 'pl'
+          ? 'Wybierz edycję konkursu i zestaw zadań do rozwiązania.'
+          : 'Choose the competition edition and the task set to solve.';
   const kangurSetupTitle = translateRecommendationWithFallback(
     gamePageTranslations,
     'screens.kangur_setup.label',

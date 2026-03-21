@@ -23,7 +23,7 @@ import type {
   ProductValidationSeverity,
   ProductValidationTarget,
 } from '@/shared/contracts/products';
-import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
+import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import {
@@ -146,7 +146,7 @@ type ProductValidationPatternInsert = {
   updatedAt: Date;
 };
 
-type SettingDoc = Document & MongoTimestampedStringSettingRecord<ObjectId | string, Date>;
+type SettingDoc = Document & MongoTimestampedStringSettingDocument<ObjectId | string>;
 
 let indexesInitialized = false;
 let indexesInFlight: Promise<void> | null = null;

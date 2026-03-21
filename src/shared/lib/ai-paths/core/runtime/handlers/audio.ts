@@ -4,8 +4,7 @@ import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-path
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { coerceInput } from '../../utils';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 type OscillatorSignal = {
   kind: 'oscillator';
@@ -148,8 +147,11 @@ const resolveAudioContext = async (): Promise<AudioContext | null> => {
     try {
       await state.context.resume();
     } catch (error) {
-      logClientError(error);
-    
+      logClientCatch(error, {
+        source: 'ai-paths.audio',
+        action: 'resolveAudioContext.resume',
+      });
+
       // Ignore; caller decides fallback status.
     }
   }
@@ -163,16 +165,24 @@ const stopActivePlayback = (nodeId: string): void => {
   try {
     active.oscillator.stop();
   } catch (error) {
-    logClientError(error);
-  
+    logClientCatch(error, {
+      source: 'ai-paths.audio',
+      action: 'stopActivePlayback.stopOscillator',
+      nodeId,
+    });
+
     // Oscillator might already be stopped.
   }
   try {
     active.oscillator.disconnect();
     active.gainNode.disconnect();
   } catch (error) {
-    logClientError(error);
-  
+    logClientCatch(error, {
+      source: 'ai-paths.audio',
+      action: 'stopActivePlayback.disconnect',
+      nodeId,
+    });
+
     // Ignore disconnect errors on closed context.
   }
   state.activeByNode.delete(nodeId);
@@ -213,8 +223,12 @@ const playSignalOnMonoSpeaker = async (
       oscillator.disconnect();
       gainNode.disconnect();
     } catch (error) {
-      logClientError(error);
-    
+      logClientCatch(error, {
+        source: 'ai-paths.audio',
+        action: 'playSignalOnMonoSpeaker.onended.disconnect',
+        nodeId,
+      });
+
       // Ignore teardown errors.
     }
   };

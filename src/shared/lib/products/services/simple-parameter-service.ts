@@ -3,7 +3,7 @@ import 'server-only';
 import { randomUUID } from 'crypto';
 
 import type { ProductSimpleParameter } from '@/shared/contracts/products';
-import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
+import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY } from '@/shared/lib/products/constants';
@@ -34,7 +34,7 @@ type ListSimpleParametersInput = {
 
 const toMongoSettingFilter = (
   key: string
-): Filter<MongoTimestampedStringSettingRecord<string, Date>> => ({
+): Filter<MongoTimestampedStringSettingDocument> => ({
   $or: [{ _id: key }, { key }],
 });
 
@@ -93,7 +93,7 @@ const readSimpleParametersRaw = async (): Promise<string | null> => {
   await getProductDataProvider();
   const mongo = await getMongoDb();
   const doc = await mongo
-    .collection<MongoTimestampedStringSettingRecord<string, Date>>('settings')
+    .collection<MongoTimestampedStringSettingDocument>('settings')
     .findOne(toMongoSettingFilter(PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY));
   return typeof doc?.value === 'string' ? doc.value : null;
 };
@@ -102,7 +102,7 @@ const writeSimpleParametersRaw = async (value: string): Promise<void> => {
   await getProductDataProvider();
   const mongo = await getMongoDb();
   await mongo
-    .collection<MongoTimestampedStringSettingRecord<string, Date>>('settings')
+    .collection<MongoTimestampedStringSettingDocument>('settings')
     .updateOne(
       toMongoSettingFilter(PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY),
       {

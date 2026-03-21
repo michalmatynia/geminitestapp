@@ -6,6 +6,8 @@ import type {
   KangurTestQuestionWorkflowStatus,
 } from '@/features/kangur/shared/contracts/kangur-tests';
 
+import type { KangurAdminLocaleDto } from './kangur-admin-locale';
+import { resolveKangurAdminLocale } from './kangur-admin-locale';
 import type { QuestionFormData } from '../test-questions';
 
 type QuestionAuthoringDraftLike = Pick<
@@ -50,17 +52,128 @@ export type QuestionAuthoringSummary = {
   workflowStatus: KangurTestQuestionWorkflowStatus;
 };
 
-export const getQuestionWorkflowLabel = (
-  workflowStatus: KangurTestQuestionWorkflowStatus
-): string => {
-  switch (workflowStatus) {
-    case 'ready':
-      return 'Ready to publish';
-    case 'published':
-      return 'Published';
-    default:
-      return 'Draft';
+const QUESTION_AUTHORING_MESSAGES: Record<
+  KangurAdminLocaleDto,
+  {
+    workflowLabels: Record<KangurTestQuestionWorkflowStatus, string>;
+    issues: Record<QuestionAuthoringIssueCode, string>;
+    publishedClean: string;
+    readyToPublish: string;
+    savedDraft: string;
   }
+> = {
+  en: {
+    workflowLabels: {
+      draft: 'Draft',
+      ready: 'Ready to publish',
+      published: 'Published',
+    },
+    issues: {
+      missing_prompt: 'Add the learner-facing question prompt.',
+      not_enough_choices: 'Add at least two answer choices.',
+      missing_choice_label: 'Every answer choice needs a label.',
+      duplicate_choice_labels: 'Answer choice labels must stay unique.',
+      empty_choice_text: 'Every answer choice needs visible text.',
+      duplicate_choice_text: 'Duplicate answer texts make the question ambiguous.',
+      missing_correct_choice: 'Mark one of the current choices as the correct answer.',
+      split_layout_without_illustration: 'Split layouts need an illustration before they can be saved.',
+      legacy_fix_required: 'Legacy import contains inconsistent answer or explanation data.',
+      missing_explanation:
+        'Add an explanation so learners can review the reasoning after answering.',
+      visual_prompt_without_visuals:
+        'The prompt appears to reference a visual, but no SVG or illustration is attached yet.',
+      choice_svg_without_note: 'Add a short note or visual description for SVG-backed choices.',
+      legacy_review_required:
+        'Legacy import should be reviewed before the question is published.',
+      ready_workflow_requires_clean_review:
+        'Resolve review warnings before marking this question ready to publish.',
+      published_workflow_requires_clean_review:
+        'Resolve review warnings before publishing this question.',
+    },
+    publishedClean: 'Question is published and structurally clean.',
+    readyToPublish: 'Question is ready to publish.',
+    savedDraft: 'Question is saved as a draft. Mark it ready when review is complete.',
+  },
+  pl: {
+    workflowLabels: {
+      draft: 'Szkic',
+      ready: 'Gotowe do publikacji',
+      published: 'Opublikowane',
+    },
+    issues: {
+      missing_prompt: 'Dodaj treść pytania widoczną dla ucznia.',
+      not_enough_choices: 'Dodaj co najmniej dwie odpowiedzi.',
+      missing_choice_label: 'Każda odpowiedź potrzebuje etykiety.',
+      duplicate_choice_labels: 'Etykiety odpowiedzi muszą pozostać unikalne.',
+      empty_choice_text: 'Każda odpowiedź potrzebuje widocznego tekstu.',
+      duplicate_choice_text: 'Zduplikowane teksty odpowiedzi sprawiają, że pytanie jest niejednoznaczne.',
+      missing_correct_choice: 'Oznacz jedną z obecnych odpowiedzi jako poprawną.',
+      split_layout_without_illustration:
+        'Układy split wymagają ilustracji, zanim będzie można je zapisać.',
+      legacy_fix_required: 'Import legacy zawiera niespójne dane odpowiedzi lub wyjaśnienia.',
+      missing_explanation:
+        'Dodaj wyjaśnienie, żeby uczniowie mogli przejrzeć tok rozumowania po odpowiedzi.',
+      visual_prompt_without_visuals:
+        'Prompt wygląda na odwołujący się do elementu wizualnego, ale nie ma jeszcze dołączonego SVG ani ilustracji.',
+      choice_svg_without_note:
+        'Dodaj krótką notatkę lub opis wizualny dla odpowiedzi opartych na SVG.',
+      legacy_review_required:
+        'Import legacy powinien zostać sprawdzony przed publikacją pytania.',
+      ready_workflow_requires_clean_review:
+        'Rozwiąż uwagi z review, zanim oznaczysz to pytanie jako gotowe do publikacji.',
+      published_workflow_requires_clean_review:
+        'Rozwiąż uwagi z review, zanim opublikujesz to pytanie.',
+    },
+    publishedClean: 'Pytanie jest opublikowane i strukturalnie czyste.',
+    readyToPublish: 'Pytanie jest gotowe do publikacji.',
+    savedDraft:
+      'Pytanie jest zapisane jako szkic. Oznacz je jako gotowe, gdy review będzie zakończone.',
+  },
+  uk: {
+    workflowLabels: {
+      draft: 'Чернетка',
+      ready: 'Готово до публікації',
+      published: 'Опубліковано',
+    },
+    issues: {
+      missing_prompt: 'Додайте текст запитання для учня.',
+      not_enough_choices: 'Додайте щонайменше два варіанти відповіді.',
+      missing_choice_label: 'Кожен варіант відповіді повинен мати позначку.',
+      duplicate_choice_labels: 'Позначки варіантів мають залишатися унікальними.',
+      empty_choice_text: 'Кожен варіант відповіді повинен мати видимий текст.',
+      duplicate_choice_text:
+        'Дубльовані тексти відповідей роблять запитання неоднозначним.',
+      missing_correct_choice: 'Позначте один із поточних варіантів як правильну відповідь.',
+      split_layout_without_illustration:
+        'Split-макети потребують ілюстрації, перш ніж їх можна буде зберегти.',
+      legacy_fix_required: 'Legacy-імпорт містить неузгоджені дані відповіді або пояснення.',
+      missing_explanation:
+        'Додайте пояснення, щоб учні могли переглянути міркування після відповіді.',
+      visual_prompt_without_visuals:
+        'Схоже, prompt посилається на візуальний елемент, але SVG або ілюстрацію ще не додано.',
+      choice_svg_without_note:
+        'Додайте коротку нотатку або візуальний опис для варіантів на основі SVG.',
+      legacy_review_required:
+        'Legacy-імпорт потрібно перевірити перед публікацією запитання.',
+      ready_workflow_requires_clean_review:
+        'Приберіть попередження review, перш ніж позначати це запитання як готове до публікації.',
+      published_workflow_requires_clean_review:
+        'Приберіть попередження review, перш ніж публікувати це запитання.',
+    },
+    publishedClean: 'Запитання опубліковане й структурно чисте.',
+    readyToPublish: 'Запитання готове до публікації.',
+    savedDraft:
+      'Запитання збережене як чернетка. Позначте його як готове, коли review буде завершено.',
+  },
+};
+
+export const getQuestionWorkflowLabel = (
+  workflowStatus: KangurTestQuestionWorkflowStatus,
+  locale: string | null | undefined = 'en'
+): string => {
+  const resolvedLocale = resolveKangurAdminLocale(locale);
+
+  return QUESTION_AUTHORING_MESSAGES[resolvedLocale].workflowLabels[workflowStatus];
 };
 
 const VISUAL_PROMPT_PATTERN =
@@ -119,11 +232,18 @@ const hasDuplicateLabels = (choices: KangurTestChoice[]): boolean => {
   return false;
 };
 
-const getLegacyFixMessage = (editorial: KangurTestQuestionEditorial): string =>
-  editorial.note?.trim() || 'Legacy import contains inconsistent answer or explanation data.';
+const getLegacyFixMessage = (
+  editorial: KangurTestQuestionEditorial,
+  locale: KangurAdminLocaleDto
+): string =>
+  editorial.note?.trim() || QUESTION_AUTHORING_MESSAGES[locale].issues.legacy_fix_required;
 
-const buildIssues = (draft: QuestionAuthoringDraftLike): QuestionAuthoringIssue[] => {
+const buildIssues = (
+  draft: QuestionAuthoringDraftLike,
+  locale: KangurAdminLocaleDto
+): QuestionAuthoringIssue[] => {
   const issues: QuestionAuthoringIssue[] = [];
+  const localizedMessages = QUESTION_AUTHORING_MESSAGES[locale].issues;
   const prompt = draft.prompt.trim();
   const explanation = (draft.explanation ?? '').trim();
   const hasVisualSupport =
@@ -133,7 +253,7 @@ const buildIssues = (draft: QuestionAuthoringDraftLike): QuestionAuthoringIssue[
     issues.push({
       code: 'missing_prompt',
       severity: 'blocker',
-      message: 'Add the learner-facing question prompt.',
+      message: localizedMessages.missing_prompt,
     });
   }
 
@@ -141,7 +261,7 @@ const buildIssues = (draft: QuestionAuthoringDraftLike): QuestionAuthoringIssue[
     issues.push({
       code: 'not_enough_choices',
       severity: 'blocker',
-      message: 'Add at least two answer choices.',
+      message: localizedMessages.not_enough_choices,
     });
   }
 
@@ -149,7 +269,7 @@ const buildIssues = (draft: QuestionAuthoringDraftLike): QuestionAuthoringIssue[
     issues.push({
       code: 'missing_choice_label',
       severity: 'blocker',
-      message: 'Every answer choice needs a label.',
+      message: localizedMessages.missing_choice_label,
     });
   }
 
@@ -157,7 +277,7 @@ const buildIssues = (draft: QuestionAuthoringDraftLike): QuestionAuthoringIssue[
     issues.push({
       code: 'duplicate_choice_labels',
       severity: 'blocker',
-      message: 'Answer choice labels must stay unique.',
+      message: localizedMessages.duplicate_choice_labels,
     });
   }
 
@@ -165,7 +285,7 @@ const buildIssues = (draft: QuestionAuthoringDraftLike): QuestionAuthoringIssue[
     issues.push({
       code: 'empty_choice_text',
       severity: 'blocker',
-      message: 'Every answer choice needs visible text.',
+      message: localizedMessages.empty_choice_text,
     });
   }
 
@@ -173,7 +293,7 @@ const buildIssues = (draft: QuestionAuthoringDraftLike): QuestionAuthoringIssue[
     issues.push({
       code: 'duplicate_choice_text',
       severity: 'blocker',
-      message: 'Duplicate answer texts make the question ambiguous.',
+      message: localizedMessages.duplicate_choice_text,
     });
   }
 
@@ -181,7 +301,7 @@ const buildIssues = (draft: QuestionAuthoringDraftLike): QuestionAuthoringIssue[
     issues.push({
       code: 'missing_correct_choice',
       severity: 'blocker',
-      message: 'Mark one of the current choices as the correct answer.',
+      message: localizedMessages.missing_correct_choice,
     });
   }
 
@@ -192,7 +312,7 @@ const buildIssues = (draft: QuestionAuthoringDraftLike): QuestionAuthoringIssue[
     issues.push({
       code: 'split_layout_without_illustration',
       severity: 'blocker',
-      message: 'Split layouts need an illustration before they can be saved.',
+      message: localizedMessages.split_layout_without_illustration,
     });
   }
 
@@ -200,7 +320,7 @@ const buildIssues = (draft: QuestionAuthoringDraftLike): QuestionAuthoringIssue[
     issues.push({
       code: 'legacy_fix_required',
       severity: 'blocker',
-      message: getLegacyFixMessage(draft.editorial),
+      message: getLegacyFixMessage(draft.editorial, locale),
     });
   }
 
@@ -208,7 +328,7 @@ const buildIssues = (draft: QuestionAuthoringDraftLike): QuestionAuthoringIssue[
     issues.push({
       code: 'missing_explanation',
       severity: 'warning',
-      message: 'Add an explanation so learners can review the reasoning after answering.',
+      message: localizedMessages.missing_explanation,
     });
   }
 
@@ -216,7 +336,7 @@ const buildIssues = (draft: QuestionAuthoringDraftLike): QuestionAuthoringIssue[
     issues.push({
       code: 'visual_prompt_without_visuals',
       severity: 'warning',
-      message: 'The prompt appears to reference a visual, but no SVG or illustration is attached yet.',
+      message: localizedMessages.visual_prompt_without_visuals,
     });
   }
 
@@ -224,7 +344,7 @@ const buildIssues = (draft: QuestionAuthoringDraftLike): QuestionAuthoringIssue[
     issues.push({
       code: 'choice_svg_without_note',
       severity: 'warning',
-      message: 'Add a short note or visual description for SVG-backed choices.',
+      message: localizedMessages.choice_svg_without_note,
     });
   }
 
@@ -234,7 +354,7 @@ const buildIssues = (draft: QuestionAuthoringDraftLike): QuestionAuthoringIssue[
       severity: 'warning',
       message:
         draft.editorial.note?.trim() ||
-        'Legacy import should be reviewed before the question is published.',
+        localizedMessages.legacy_review_required,
     });
   }
 
@@ -243,7 +363,7 @@ const buildIssues = (draft: QuestionAuthoringDraftLike): QuestionAuthoringIssue[
     issues.push({
       code: 'ready_workflow_requires_clean_review',
       severity: 'blocker',
-      message: 'Resolve review warnings before marking this question ready to publish.',
+      message: localizedMessages.ready_workflow_requires_clean_review,
     });
   }
 
@@ -251,7 +371,7 @@ const buildIssues = (draft: QuestionAuthoringDraftLike): QuestionAuthoringIssue[
     issues.push({
       code: 'published_workflow_requires_clean_review',
       severity: 'blocker',
-      message: 'Resolve review warnings before publishing this question.',
+      message: localizedMessages.published_workflow_requires_clean_review,
     });
   }
 
@@ -259,9 +379,12 @@ const buildIssues = (draft: QuestionAuthoringDraftLike): QuestionAuthoringIssue[
 };
 
 export const getQuestionAuthoringSummary = (
-  draft: QuestionAuthoringDraftLike | KangurTestQuestion
+  draft: QuestionAuthoringDraftLike | KangurTestQuestion,
+  locale: string | null | undefined = 'en'
 ): QuestionAuthoringSummary => {
-  const issues = buildIssues(draft);
+  const resolvedLocale = resolveKangurAdminLocale(locale);
+  const localizedMessages = QUESTION_AUTHORING_MESSAGES[resolvedLocale];
+  const issues = buildIssues(draft, resolvedLocale);
   const blockers = issues.filter((issue) => issue.severity === 'blocker');
   const warnings = issues.filter((issue) => issue.severity === 'warning');
   const status: QuestionAuthoringStatus =
@@ -271,10 +394,10 @@ export const getQuestionAuthoringSummary = (
     blockers[0]?.message ||
     warnings[0]?.message ||
     (draft.editorial.workflowStatus === 'published'
-      ? 'Question is published and structurally clean.'
+      ? localizedMessages.publishedClean
       : draft.editorial.workflowStatus === 'ready'
-        ? 'Question is ready to publish.'
-        : 'Question is saved as a draft. Mark it ready when review is complete.');
+        ? localizedMessages.readyToPublish
+        : localizedMessages.savedDraft);
 
   return {
     status,

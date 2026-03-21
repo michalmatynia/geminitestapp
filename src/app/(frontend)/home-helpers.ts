@@ -2,9 +2,9 @@ import { getUserPreferences } from '@/features/auth/server';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { FRONT_PAGE_ALLOWED } from '@/shared/lib/front-page-app';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { Session } from 'next-auth';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
 const FRONT_PAGE_SETTING_KEY = 'front_page_app';
@@ -29,7 +29,12 @@ export const canPreviewDrafts = async (session: Session | null): Promise<boolean
     const prefs = await getUserPreferences(userId);
     return prefs.cmsPreviewEnabled === true;
   } catch (error) {
-    logClientError(error);
+    void ErrorSystem.captureException(error, {
+      service: 'frontend.home-helpers',
+      source: 'frontend.home-helpers',
+      action: 'canPreviewDrafts',
+      userId,
+    });
     return false;
   }
 };
@@ -48,8 +53,13 @@ const readMongoFrontPageSetting = async (): Promise<string | null> => {
       .findOne({ _id: FRONT_PAGE_SETTING_KEY });
     if (doc?.value) return doc.value;
   } catch (error) {
-    logClientError(error);
-  
+    void ErrorSystem.captureException(error, {
+      service: 'frontend.home-helpers',
+      source: 'frontend.home-helpers',
+      action: 'readMongoFrontPageSetting',
+      settingKey: FRONT_PAGE_SETTING_KEY,
+    });
+
     // Mongo unavailable — ignore.
   }
   return null;

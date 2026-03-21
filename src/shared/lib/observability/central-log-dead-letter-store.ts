@@ -1,7 +1,7 @@
 
-import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
+import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 
 
 const SETTINGS_COLLECTION = 'settings';
@@ -84,7 +84,10 @@ const parseStoredEntries = (
     if (!Array.isArray(envelope.entries)) return [];
     return normalizeEntries(envelope.entries, maxEntries);
   } catch (error) {
-    logClientError(error);
+    reportObservabilityInternalError(error, {
+      source: 'observability.central-log-dead-letter-store',
+      action: 'parseStoredEntries',
+    });
     return [];
   }
 };
@@ -101,7 +104,11 @@ const stringifyEntries = (
     };
     return JSON.stringify(payload);
   } catch (error) {
-    logClientError(error);
+    reportObservabilityInternalError(error, {
+      source: 'observability.central-log-dead-letter-store',
+      action: 'stringifyEntries',
+      entryCount: entries.length,
+    });
     return null;
   }
 };
@@ -111,11 +118,15 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   try {
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<MongoTimestampedStringSettingRecord<string, Date>>(SETTINGS_COLLECTION)
+      .collection<MongoTimestampedStringSettingDocument>(SETTINGS_COLLECTION)
       .findOne({ $or: [{ _id: key }, { key }] }, { projection: { value: 1 } });
     return typeof doc?.value === 'string' ? doc.value : null;
   } catch (error) {
-    logClientError(error);
+    reportObservabilityInternalError(error, {
+      source: 'observability.central-log-dead-letter-store',
+      action: 'readMongoSetting',
+      settingKey: key,
+    });
     return null;
   }
 };
@@ -126,7 +137,7 @@ const writeMongoSetting = async (key: string, value: string): Promise<boolean> =
     const mongo = await getMongoDb();
     const now = new Date();
     await mongo
-      .collection<MongoTimestampedStringSettingRecord<string, Date>>(SETTINGS_COLLECTION)
+      .collection<MongoTimestampedStringSettingDocument>(SETTINGS_COLLECTION)
       .updateOne(
         { $or: [{ _id: key }, { key }] },
         {
@@ -144,7 +155,11 @@ const writeMongoSetting = async (key: string, value: string): Promise<boolean> =
       );
     return true;
   } catch (error) {
-    logClientError(error);
+    reportObservabilityInternalError(error, {
+      source: 'observability.central-log-dead-letter-store',
+      action: 'writeMongoSetting',
+      settingKey: key,
+    });
     return false;
   }
 };

@@ -7,12 +7,14 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
+  useKangurMobileLeaderboardAssignmentsMock,
   replaceMock,
   useKangurMobileLeaderboardDuelsMock,
   useKangurMobileLessonCheckpointsMock,
   useKangurMobileLeaderboardMock,
   useRouterMock,
 } = vi.hoisted(() => ({
+  useKangurMobileLeaderboardAssignmentsMock: vi.fn(),
   replaceMock: vi.fn(),
   useKangurMobileLeaderboardDuelsMock: vi.fn(),
   useKangurMobileLessonCheckpointsMock: vi.fn(),
@@ -27,6 +29,10 @@ vi.mock('expo-router', () => ({
 
 vi.mock('./useKangurMobileLeaderboard', () => ({
   useKangurMobileLeaderboard: useKangurMobileLeaderboardMock,
+}));
+
+vi.mock('./useKangurMobileLeaderboardAssignments', () => ({
+  useKangurMobileLeaderboardAssignments: useKangurMobileLeaderboardAssignmentsMock,
 }));
 
 vi.mock('./useKangurMobileLeaderboardDuels', () => ({
@@ -81,6 +87,9 @@ describe('KangurLeaderboardScreen', () => {
     });
     useKangurMobileLessonCheckpointsMock.mockReturnValue({
       recentCheckpoints: [],
+    });
+    useKangurMobileLeaderboardAssignmentsMock.mockReturnValue({
+      assignmentItems: [],
     });
   });
 
@@ -215,6 +224,32 @@ describe('KangurLeaderboardScreen', () => {
         },
       ],
     });
+    useKangurMobileLeaderboardAssignmentsMock.mockReturnValue({
+      assignmentItems: [
+        {
+          assignment: {
+            action: {
+              label: 'Open lesson',
+              page: 'Lessons',
+              query: {
+                focus: 'clock',
+              },
+            },
+            description: 'Wroc do lekcji o zegarze i popraw ostatnie luki.',
+            id: 'assignment-leaderboard-1',
+            priority: 'high',
+            target: '1 lekcja',
+            title: 'Domknij zegar',
+          },
+          href: {
+            pathname: '/lessons',
+            params: {
+              focus: 'clock',
+            },
+          },
+        },
+      ],
+    });
 
     render(<KangurLeaderboardScreen />);
 
@@ -235,6 +270,12 @@ describe('KangurLeaderboardScreen', () => {
     expect(screen.getByText('Wróć do lekcji: Zegar i czas')).toBeTruthy();
     expect(screen.getByText('Potem trenuj: Zegar i czas')).toBeTruthy();
     expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
+    expect(screen.getByText('Następne kroki')).toBeTruthy();
+    expect(screen.getByText('Lokalne zadania po rankingu')).toBeTruthy();
+    expect(screen.getByText('Domknij zegar')).toBeTruthy();
+    expect(screen.getByText('Priorytet wysoki')).toBeTruthy();
+    expect(screen.getByText('Cel: 1 lekcja')).toBeTruthy();
+    expect(screen.getAllByText('Otwórz lekcję').length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText('Przywracamy sesję ucznia i ranking...')).toBeNull();
 
     fireEvent.click(screen.getByText('Rzuć wyzwanie'));

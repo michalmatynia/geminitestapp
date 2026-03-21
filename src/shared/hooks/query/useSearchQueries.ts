@@ -7,7 +7,7 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 
 import type { UseQueryResult } from '@tanstack/react-query';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 interface SearchConfig<T> {
@@ -62,7 +62,12 @@ export function useAutocomplete<T>(
     try {
       return JSON.parse(localStorage.getItem(storageKey) || '[]') as string[];
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'useAutocomplete',
+        action: 'getRecentSearches',
+        storageKey,
+        level: 'warn',
+      });
       return [];
     }
   }, [storageKey]);

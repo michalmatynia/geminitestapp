@@ -47,7 +47,8 @@ import {
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type {
-  KangurMiniGameFeedback,
+  KangurIntlTranslate,
+  KangurMiniGameFeedbackState,
   KangurMiniGameFinishProps,
   KangurRewardBreakdownEntry,
 } from '@/features/kangur/ui/types';
@@ -95,7 +96,7 @@ type RoundState = {
 };
 
 const getPartsOfSpeechRoundMessage = (
-  translate: ReturnType<typeof useTranslations>,
+  translate: KangurIntlTranslate,
   roundId: string,
   field: 'title' | 'prompt' | 'hint',
   fallback: string
@@ -107,7 +108,7 @@ const getPartsOfSpeechRoundMessage = (
   );
 
 const getPartsOfSpeechPartMessage = (
-  translate: ReturnType<typeof useTranslations>,
+  translate: KangurIntlTranslate,
   part: PartOfSpeech,
   field: 'label' | 'description',
   fallback: string
@@ -404,7 +405,7 @@ export default function EnglishPartsOfSpeechGame({
   const [roundCorrect, setRoundCorrect] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
-  const [feedback, setFeedback] = useState<KangurMiniGameFeedback | null>(null);
+  const [feedback, setFeedback] = useState<KangurMiniGameFeedbackState>(null);
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const scoreRef = useRef(0);

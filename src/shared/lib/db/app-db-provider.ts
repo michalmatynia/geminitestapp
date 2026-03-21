@@ -7,7 +7,7 @@ import {
   getDatabaseEngineServiceProvider,
   isPrimaryProviderConfigured,
 } from './database-engine-policy';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-reporting';
 
 
 export const APP_DB_PROVIDER_SETTING_KEY = 'app_db_provider';
@@ -43,7 +43,11 @@ const readMongoAppProviderSetting = async (): Promise<AppDbProvider | null> => {
       });
     return normalizeProvider(doc?.value ?? null);
   } catch (error) {
-    logClientError(error);
+    void reportRuntimeCatch(error, {
+      source: 'db.app-db-provider',
+      action: 'readMongoAppProviderSetting',
+      settingKey: APP_DB_PROVIDER_SETTING_KEY,
+    });
     return null;
   }
 };

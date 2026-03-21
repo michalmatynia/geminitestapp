@@ -22,7 +22,8 @@ import { type AiBrainCapabilityKey } from '@/shared/lib/ai-brain/settings';
 import { listAnalyticsEvents, getAnalyticsSummary } from '@/shared/lib/analytics/server';
 import { buildSystemLogsContextRegistrySystemPrompt } from '@/shared/lib/observability/runtime-context/server';
 import { sanitizeSystemLogForAi } from '@/features/observability/server';
-import { getSystemLogMetrics, listSystemLogs, logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { getSystemLogMetrics, listSystemLogs } from '@/shared/lib/observability/system-log-repository';;
 
 import { callInsightChatModel } from './generator/chat-runtime';
 import {

@@ -2,7 +2,7 @@ import {
   DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS,
   type DatabaseEngineOperationControls,
 } from './database-engine-constants';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-reporting';
 
 
 const parseJsonObject = (raw: unknown): Record<string, unknown> | null => {
@@ -15,7 +15,11 @@ const parseJsonObject = (raw: unknown): Record<string, unknown> | null => {
     }
     return null;
   } catch (error) {
-    logClientError(error);
+    void reportRuntimeCatch(error, {
+      source: 'db.database-engine-operation-controls',
+      action: 'parseJsonObject',
+      rawType: typeof raw,
+    });
     return null;
   }
 };

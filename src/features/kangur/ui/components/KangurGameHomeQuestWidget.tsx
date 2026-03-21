@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
 import {
@@ -34,6 +34,7 @@ import {
   translateKangurProgressWithFallback,
 } from '@/features/kangur/ui/services/progress';
 import type { KangurHomeScreenVisibilityProps } from '@/features/kangur/ui/types';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 type KangurGameHomeQuestWidgetProps = KangurHomeScreenVisibilityProps;
 
 const buildAssignmentHref = (
@@ -52,18 +53,114 @@ const QUEST_STATUS_ACCENTS = {
 
 const HOME_QUEST_ROUTE_ACKNOWLEDGE_MS = 110;
 
+type KangurHomeQuestFallbackCopy = {
+  defaultLabel: string;
+  status: {
+    completed: string;
+    inProgress: string;
+    notStarted: string;
+  };
+  targetPrefix: string;
+  streakPrefix: string;
+  pacePrefix: string;
+  trackPrefix: string;
+  directionPrefix: string;
+  paceValue: (xp: number) => string;
+};
+
+const getHomeQuestFallbackCopy = (
+  locale: ReturnType<typeof normalizeSiteLocale>
+): KangurHomeQuestFallbackCopy => {
+  if (locale === 'uk') {
+    return {
+      defaultLabel: 'Місія дня',
+      status: {
+        completed: 'Місію завершено',
+        inProgress: 'Місія триває',
+        notStarted: 'Місія чекає',
+      },
+      targetPrefix: 'Ціль:',
+      streakPrefix: 'Серія:',
+      pacePrefix: 'Темп:',
+      trackPrefix: 'У русі:',
+      directionPrefix: 'Напрям:',
+      paceValue: (xp) => `${xp} XP / гру`,
+    };
+  }
+
+  if (locale === 'de') {
+    return {
+      defaultLabel: 'Mission des Tages',
+      status: {
+        completed: 'Mission abgeschlossen',
+        inProgress: 'Mission lauft',
+        notStarted: 'Mission wartet',
+      },
+      targetPrefix: 'Ziel:',
+      streakPrefix: 'Serie:',
+      pacePrefix: 'Tempo:',
+      trackPrefix: 'Im Fluss:',
+      directionPrefix: 'Richtung:',
+      paceValue: (xp) => `${xp} XP / Spiel`,
+    };
+  }
+
+  if (locale === 'en') {
+    return {
+      defaultLabel: 'Mission of the day',
+      status: {
+        completed: 'Mission completed',
+        inProgress: 'Mission in progress',
+        notStarted: 'Mission waiting',
+      },
+      targetPrefix: 'Target:',
+      streakPrefix: 'Streak:',
+      pacePrefix: 'Pace:',
+      trackPrefix: 'Momentum:',
+      directionPrefix: 'Direction:',
+      paceValue: (xp) => `${xp} XP / game`,
+    };
+  }
+
+  return {
+    defaultLabel: 'Misja dnia',
+    status: {
+      completed: 'Misja ukończona',
+      inProgress: 'Misja w toku',
+      notStarted: 'Misja czeka',
+    },
+    targetPrefix: 'Cel:',
+    streakPrefix: 'Seria:',
+    pacePrefix: 'Tempo:',
+    trackPrefix: 'Na fali:',
+    directionPrefix: 'Kierunek:',
+    paceValue: (xp) => `${xp} XP / grę`,
+  };
+};
+
 export function KangurGameHomeQuestWidget({
   hideWhenScreenMismatch = true,
 }: KangurGameHomeQuestWidgetProps = {}): React.JSX.Element | null {
+  const locale = useLocale();
+  const normalizedLocale = normalizeSiteLocale(locale);
   const translations = useTranslations('KangurGameWidgets');
   const runtimeTranslations = useTranslations('KangurProgressRuntime');
   const runtime = useKangurGameRuntime();
   const { basePath, progress, screen } = runtime;
   const { subject } = useKangurSubjectFocus();
   const progressLocalizer = { translate: runtimeTranslations };
+  const fallbackCopy = useMemo(
+    () => getHomeQuestFallbackCopy(normalizedLocale),
+    [normalizedLocale]
+  );
   const quest = useMemo(
-    () => getCurrentKangurDailyQuest(progress, { subject, translate: runtimeTranslations }),
-    [progress, runtimeTranslations, subject]
+    () =>
+      getCurrentKangurDailyQuest(progress, {
+        locale: normalizedLocale,
+        subject,
+        translate: runtimeTranslations,
+      }),
+    [normalizedLocale, progress, runtimeTranslations, subject]
   );
   const averageXpPerSession = useMemo(() => getProgressAverageXpPerSession(progress), [progress]);
   const guidedMomentum = useMemo(
@@ -99,9 +196,9 @@ export function KangurGameHomeQuestWidget({
 
   const assignment = quest.assignment;
   const questStatusLabels = {
-    completed: translateWithFallback('homeQuest.status.completed', 'Misja ukończona'),
-    in_progress: translateWithFallback('homeQuest.status.inProgress', 'Misja w toku'),
-    not_started: translateWithFallback('homeQuest.status.notStarted', 'Misja czeka'),
+    completed: translateWithFallback('homeQuest.status.completed', fallbackCopy.status.completed),
+    in_progress: translateWithFallback('homeQuest.status.inProgress', fallbackCopy.status.inProgress),
+    not_started: translateWithFallback('homeQuest.status.notStarted', fallbackCopy.status.notStarted),
   } as const;
 
   return (
@@ -120,7 +217,8 @@ export function KangurGameHomeQuestWidget({
               data-testid='kangur-home-quest-label'
               labelStyle='caps'
             >
-              {assignment.questLabel ?? translateWithFallback('homeQuest.defaultLabel', 'Misja dnia')}
+              {assignment.questLabel ??
+                translateWithFallback('homeQuest.defaultLabel', fallbackCopy.defaultLabel)}
             </KangurStatusChip>
             <KangurAssignmentPriorityChip
               data-testid='kangur-home-quest-priority'
@@ -177,7 +275,8 @@ export function KangurGameHomeQuestWidget({
               labelStyle='compact'
               size='sm'
             >
-              {translateWithFallback('homeQuest.targetPrefix', 'Cel:')} {assignment.target}
+              {translateWithFallback('homeQuest.targetPrefix', fallbackCopy.targetPrefix)}{' '}
+              {assignment.target}
             </KangurStatusChip>
             <KangurStatusChip
               accent='slate'
@@ -204,7 +303,8 @@ export function KangurGameHomeQuestWidget({
                     labelStyle='compact'
                     size='sm'
                   >
-                  {translateWithFallback('homeQuest.streakPrefix', 'Seria:')} {currentWinStreak}
+                  {translateWithFallback('homeQuest.streakPrefix', fallbackCopy.streakPrefix)}{' '}
+                  {currentWinStreak}
                   </KangurStatusChip>
                 ) : null}
                 {averageXpPerSession > 0 ? (
@@ -214,11 +314,11 @@ export function KangurGameHomeQuestWidget({
                     labelStyle='compact'
                     size='sm'
                   >
-                  {translateWithFallback('homeQuest.pacePrefix', 'Tempo:')}{' '}
+                  {translateWithFallback('homeQuest.pacePrefix', fallbackCopy.pacePrefix)}{' '}
                   {translateKangurProgressWithFallback(
                     runtimeTranslations,
                     'questMomentum.paceValue',
-                    `${averageXpPerSession} XP / grę`,
+                    fallbackCopy.paceValue(averageXpPerSession),
                     { xp: averageXpPerSession }
                   )}
                   </KangurStatusChip>
@@ -230,7 +330,8 @@ export function KangurGameHomeQuestWidget({
                     labelStyle='compact'
                     size='sm'
                   >
-                  {translateWithFallback('homeQuest.trackPrefix', 'Na fali:')} {visibleLeadingTrack.label}
+                  {translateWithFallback('homeQuest.trackPrefix', fallbackCopy.trackPrefix)}{' '}
+                  {visibleLeadingTrack.label}
                   </KangurStatusChip>
                 ) : null}
                 {guidedMomentum.completedSessions > 0 ? (
@@ -240,7 +341,8 @@ export function KangurGameHomeQuestWidget({
                     labelStyle='compact'
                     size='sm'
                   >
-                  {translateWithFallback('homeQuest.directionPrefix', 'Kierunek:')} {guidedMomentum.summary}
+                  {translateWithFallback('homeQuest.directionPrefix', fallbackCopy.directionPrefix)}{' '}
+                  {guidedMomentum.summary}
                   </KangurStatusChip>
                 ) : null}
               </div>

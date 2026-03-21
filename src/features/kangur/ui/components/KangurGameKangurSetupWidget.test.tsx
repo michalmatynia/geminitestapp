@@ -16,30 +16,38 @@ const { localeState } = vi.hoisted(() => ({
   },
 }));
 
+const { translationState } = vi.hoisted(() => ({
+  translationState: {
+    missing: false,
+  },
+}));
+
 vi.mock('next-intl', () => ({
   useLocale: () => localeState.value,
   useTranslations:
     (namespace?: string) =>
     (key: string) =>
-      (
-        {
-          'KangurGameHomeActions.actions.kangur': {
-            de: 'Mathe-Kanguru',
-            en: 'Math Kangaroo',
-            pl: 'Kangur Matematyczny',
-          },
-          'KangurGamePage.screens.kangur_setup.description': {
-            de: 'Bereite eine Mathe-Kanguru-Sitzung vor.',
-            en: 'Prepare a Mathematical Kangaroo session.',
-            pl: 'Przygotuj sesje Kangura Matematycznego.',
-          },
-          'KangurGamePage.screens.kangur_setup.label': {
-            de: 'Mathe-Kanguru-Sitzung einrichten',
-            en: 'Mathematical Kangaroo session setup',
-            pl: 'Konfiguracja sesji Kangura Matematycznego',
-          },
-        } as const
-      )[`${namespace}.${key}`]?.[localeState.value] ?? key,
+      translationState.missing
+        ? key
+        : (
+            {
+              'KangurGameHomeActions.actions.kangur': {
+                de: 'Mathe-Kanguru',
+                en: 'Math Kangaroo',
+                pl: 'Kangur Matematyczny',
+              },
+              'KangurGamePage.screens.kangur_setup.description': {
+                de: 'Bereite eine Mathe-Kanguru-Sitzung vor.',
+                en: 'Prepare a Mathematical Kangaroo session.',
+                pl: 'Przygotuj sesje Kangura Matematycznego.',
+              },
+              'KangurGamePage.screens.kangur_setup.label': {
+                de: 'Mathe-Kanguru-Sitzung einrichten',
+                en: 'Mathematical Kangaroo session setup',
+                pl: 'Konfiguracja sesji Kangura Matematycznego',
+              },
+            } as const
+          )[`${namespace}.${key}`]?.[localeState.value] ?? key,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
@@ -83,6 +91,7 @@ describe('KangurGameKangurSetupWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localeState.value = 'pl';
+    translationState.missing = false;
     getRecommendedKangurModeMock.mockReturnValue({
       description: 'Łatwiejszy zestaw treningowy pozwoli wejść w formule Kangura.',
       label: 'Łagodny start',
@@ -137,6 +146,7 @@ describe('KangurGameKangurSetupWidget', () => {
 
   it('falls back to Ukrainian Kangaroo setup copy when translations are unavailable', () => {
     localeState.value = 'uk';
+    translationState.missing = true;
 
     render(<KangurGameKangurSetupWidget />);
 
@@ -154,5 +164,22 @@ describe('KangurGameKangurSetupWidget', () => {
     expect(text).toHaveAttribute('font-size', '68');
     expect(text).not.toHaveAttribute('textLength');
     expect(text).not.toHaveAttribute('lengthAdjust');
+  });
+
+  it('falls back to German Kangaroo setup copy instead of Polish when translations are unavailable', () => {
+    localeState.value = 'de';
+    translationState.missing = true;
+
+    render(<KangurGameKangurSetupWidget />);
+
+    const art = screen.getByTestId('kangur-kangur-heading-art');
+    const text = art.querySelector('text');
+
+    expect(screen.getByRole('heading', { name: 'Mathe-Kanguru' })).toBeInTheDocument();
+    expect(screen.getByTestId('mock-kangur-stage-description')).toHaveTextContent(
+      'Wähle die Wettbewerbsedition und das Aufgabenset zum Lösen aus.'
+    );
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent('Mathe-Kanguru');
   });
 });

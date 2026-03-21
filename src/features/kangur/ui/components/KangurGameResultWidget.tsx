@@ -1,5 +1,5 @@
 import type { ComponentProps, ReactNode } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 import KangurGameHomeMomentumWidget from '@/features/kangur/ui/components/KangurGameHomeMomentumWidget';
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
@@ -19,6 +19,7 @@ import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_WRAP_ROW_CLASSNAME } from '@/feature
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import { getNextLockedBadge, getProgressBadges } from '@/features/kangur/ui/services/progress';
 import { translateKangurProgressWithFallback } from '@/features/kangur/ui/services/progress-i18n';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type KangurResultSectionCardProps = {
   accent: ComponentProps<typeof KangurInfoCard>['accent'];
@@ -51,7 +52,92 @@ function KangurResultSectionChips({ children }: { children: ReactNode }): React.
   return <div className={KANGUR_WRAP_ROW_CLASSNAME}>{children}</div>;
 }
 
+type KangurGameResultFallbackCopy = {
+  rewardChip: string;
+  rewardTitleDefault: string;
+  rewardTitleRecommended: string;
+  nextBadgePrefix: string;
+  recommendationPrefix: string;
+  recommendationPlayedChip: string;
+  newBadgesChip: string;
+  dailyQuestCompletedChip: string;
+  dailyQuestBonus: (xp: number) => string;
+  nextBadgeChip: string;
+  nextBadgeRemaining: (summary: string) => string;
+};
+
+const getGameResultFallbackCopy = (
+  locale: ReturnType<typeof normalizeSiteLocale>
+): KangurGameResultFallbackCopy => {
+  if (locale === 'uk') {
+    return {
+      rewardChip: 'Нагорода за раунд',
+      rewardTitleDefault: 'Цей раунд просунув твій прогрес уперед.',
+      rewardTitleRecommended: 'Цей раунд влучив у рекомендований шлях і просунув твій прогрес.',
+      nextBadgePrefix: 'Наступний значок:',
+      recommendationPrefix: 'Рекомендований шлях:',
+      recommendationPlayedChip: 'Зіграно за рекомендацією',
+      newBadgesChip: 'Нові значки',
+      dailyQuestCompletedChip: 'Місію дня завершено',
+      dailyQuestBonus: (xp) => `Бонус +${xp} XP`,
+      nextBadgeChip: 'Наступний значок',
+      nextBadgeRemaining: (summary) => `До значка залишилось: ${summary}`,
+    };
+  }
+
+  if (locale === 'de') {
+    return {
+      rewardChip: 'Belohnung fur die Runde',
+      rewardTitleDefault: 'Diese Runde hat deinen Fortschritt vorangebracht.',
+      rewardTitleRecommended:
+        'Diese Runde hat den empfohlenen Weg getroffen und deinen Fortschritt vorangebracht.',
+      nextBadgePrefix: 'Nachstes Abzeichen:',
+      recommendationPrefix: 'Empfohlene Richtung:',
+      recommendationPlayedChip: 'Mit Empfehlung gespielt',
+      newBadgesChip: 'Neue Abzeichen',
+      dailyQuestCompletedChip: 'Tagesmission abgeschlossen',
+      dailyQuestBonus: (xp) => `Bonus +${xp} XP`,
+      nextBadgeChip: 'Nachstes Abzeichen',
+      nextBadgeRemaining: (summary) => `Bis zum Abzeichen fehlen: ${summary}`,
+    };
+  }
+
+  if (locale === 'en') {
+    return {
+      rewardChip: 'Reward for the round',
+      rewardTitleDefault: 'This round moved your progress forward.',
+      rewardTitleRecommended:
+        'This round matched the recommended path and moved your progress forward.',
+      nextBadgePrefix: 'Next badge:',
+      recommendationPrefix: 'Recommended path:',
+      recommendationPlayedChip: 'Played with the recommendation',
+      newBadgesChip: 'New badges',
+      dailyQuestCompletedChip: 'Daily mission completed',
+      dailyQuestBonus: (xp) => `Bonus +${xp} XP`,
+      nextBadgeChip: 'Next badge',
+      nextBadgeRemaining: (summary) => `Remaining to unlock: ${summary}`,
+    };
+  }
+
+  return {
+    rewardChip: 'Nagroda za runde',
+    rewardTitleDefault: 'Ta runda przesunęła postęp do przodu.',
+    rewardTitleRecommended:
+      'Ta runda trafiła w polecany kierunek i przesunęła postęp do przodu.',
+    nextBadgePrefix: 'Następna odznaka:',
+    recommendationPrefix: 'Polecony kierunek:',
+    recommendationPlayedChip: 'Zagrano zgodnie z rekomendacja',
+    newBadgesChip: 'Nowe odznaki',
+    dailyQuestCompletedChip: 'Misja dnia ukończona',
+    dailyQuestBonus: (xp) => `Bonus +${xp} XP`,
+    nextBadgeChip: 'Następna odznaka',
+    nextBadgeRemaining: (summary) => `Do odznaki brakuje: ${summary}`,
+  };
+};
+
 export function KangurGameResultWidget(): React.JSX.Element | null {
+  const locale = useLocale();
+  const normalizedLocale = normalizeSiteLocale(locale);
   const resultTranslations = useTranslations('KangurGameResult');
   const progressTranslations = useTranslations('KangurProgressRuntime');
   const {
@@ -77,9 +163,11 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
 
   const progressLocalizer = { translate: progressTranslations };
   const currentQuest = getCurrentKangurDailyQuest(progress, {
+    locale: normalizedLocale,
     subject,
     translate: progressTranslations,
   });
+  const fallbackCopy = getGameResultFallbackCopy(normalizedLocale);
   const nextBadge = getNextLockedBadge(progress, progressLocalizer);
   const unlockedBadgeIds = new Set(xpToast.newBadges ?? []);
   const unlockedBadgeDetails = getProgressBadges(progress, progressLocalizer).filter((badge) =>
@@ -119,7 +207,7 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
               {translateKangurProgressWithFallback(
                 resultTranslations,
                 'resultWidget.rewardChip',
-                'Nagroda za runde'
+                fallbackCopy.rewardChip
               )}
             </KangurStatusChip>
             <KangurStatusChip
@@ -135,14 +223,14 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
           <KangurCardTitle data-testid='kangur-result-reward-title'>
             {xpToast.recommendation
               ? translateKangurProgressWithFallback(
-                  resultTranslations,
-                  'resultWidget.rewardTitleRecommended',
-                  'Ta runda trafiła w polecany kierunek i przesunęła postęp do przodu.'
-                )
+                resultTranslations,
+                'resultWidget.rewardTitleRecommended',
+                fallbackCopy.rewardTitleRecommended
+              )
               : translateKangurProgressWithFallback(
                   resultTranslations,
                   'resultWidget.rewardTitleDefault',
-                  'Ta runda przesunęła postęp do przodu.'
+                  fallbackCopy.rewardTitleDefault
                 )}
           </KangurCardTitle>
 
@@ -162,7 +250,7 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
               {translateKangurProgressWithFallback(
                 resultTranslations,
                 'resultWidget.nextBadgePrefix',
-                'Następna odznaka:'
+                fallbackCopy.nextBadgePrefix
               )}{' '}
               {xpToast.nextBadge.emoji} {xpToast.nextBadge.name} ·{' '}
               {xpToast.nextBadge.summary}
@@ -176,7 +264,7 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
               {translateKangurProgressWithFallback(
                 resultTranslations,
                 'resultWidget.recommendationPrefix',
-                'Polecony kierunek:'
+                fallbackCopy.recommendationPrefix
               )}{' '}
               {xpToast.recommendation.title} · {xpToast.recommendation.summary}
             </div>
@@ -208,7 +296,7 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
           label={translateKangurProgressWithFallback(
             resultTranslations,
             'resultWidget.recommendationPlayedChip',
-            'Zagrano zgodnie z rekomendacja'
+            fallbackCopy.recommendationPlayedChip
           )}
           labelSize='sm'
           labelStyle='caps'
@@ -230,7 +318,7 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
               {translateKangurProgressWithFallback(
                 resultTranslations,
                 'resultWidget.newBadgesChip',
-                'Nowe odznaki'
+                fallbackCopy.newBadgesChip
               )}
             </KangurStatusChip>
             <KangurStatusChip
@@ -283,7 +371,7 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
                   {translateKangurProgressWithFallback(
                     resultTranslations,
                     'resultWidget.dailyQuestCompletedChip',
-                    'Misja dnia ukończona'
+                    fallbackCopy.dailyQuestCompletedChip
                   )}
                 </KangurStatusChip>
                 {xpToast.dailyQuest.xpAwarded > 0 ? (
@@ -296,7 +384,7 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
                     {translateKangurProgressWithFallback(
                       resultTranslations,
                       'resultWidget.dailyQuestBonus',
-                      'Bonus +{xp} XP',
+                      fallbackCopy.dailyQuestBonus(xpToast.dailyQuest.xpAwarded),
                       { xp: xpToast.dailyQuest.xpAwarded }
                     )}
                   </KangurStatusChip>
@@ -314,7 +402,7 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
                 {translateKangurProgressWithFallback(
                   resultTranslations,
                   'resultWidget.nextBadgeChip',
-                  'Następna odznaka'
+                  fallbackCopy.nextBadgeChip
                 )}
               </KangurStatusChip>
             ) : null}
@@ -363,7 +451,7 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
                 {translateKangurProgressWithFallback(
                   resultTranslations,
                   'resultWidget.nextBadgeRemaining',
-                  'Do odznaki brakuje: {summary}',
+                  fallbackCopy.nextBadgeRemaining(nextBadge.summary),
                   { summary: nextBadge.summary }
                 )}
               </KangurCardDescription>

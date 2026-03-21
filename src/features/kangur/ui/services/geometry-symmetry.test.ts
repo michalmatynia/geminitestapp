@@ -133,4 +133,34 @@ describe('geometry symmetry evaluator', () => {
       }).message
     ).toBe('Draw on the green side of the symmetry axis.');
   });
+
+  it('returns locale-aware fallback feedback when only a locale is provided', () => {
+    const axis: SymmetryAxis = { orientation: 'vertical', position: 160 };
+    const template = buildPolyline([
+      { x: 160, y: 60 },
+      { x: 125, y: 80 },
+      { x: 115, y: 120 },
+      { x: 140, y: 155 },
+    ]);
+
+    expect(
+      evaluateAxisDrawing(
+        buildPolyline([
+          { x: 160, y: 20 },
+          { x: 160, y: 200 },
+        ]),
+        axis,
+        { locale: 'en' }
+      ).message
+    ).toBe('Great! That is a correct axis of symmetry.');
+    expect(
+      evaluateMirrorDrawing({
+        points: template,
+        template,
+        axis,
+        expectedSide: 'right',
+        locale: 'de',
+      }).message
+    ).toBe('Zeichne auf der grunen Seite der Symmetrieachse.');
+  });
 });

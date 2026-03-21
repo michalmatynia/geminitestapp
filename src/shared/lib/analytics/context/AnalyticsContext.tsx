@@ -13,7 +13,7 @@ import {
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { type AnalyticsRange } from '../api';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 interface AnalyticsFiltersContextValue {
@@ -72,7 +72,12 @@ export function AnalyticsProvider({ children }: { children: ReactNode }): React.
       const to = new Date(summary.to).toLocaleString();
       return `${from} → ${to}`;
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'analytics.context',
+        action: 'formatFromToLabel',
+        from: summary.from,
+        to: summary.to,
+      });
       return null;
     }
   }, [summaryQuery.data]);

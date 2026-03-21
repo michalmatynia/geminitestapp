@@ -2,7 +2,7 @@ import 'server-only';
 
 
 import type { ProductStudioConfig } from '@/shared/contracts/products';
-import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
+import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -130,7 +130,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
   const row = await mongo
-    .collection<MongoTimestampedStringSettingRecord<string, Date>>(SETTINGS_COLLECTION)
+    .collection<MongoTimestampedStringSettingDocument>(SETTINGS_COLLECTION)
     .findOne({ $or: [{ key }, { _id: key }] }, { projection: { value: 1 } });
 
   return typeof row?.value === 'string' ? row.value : null;
@@ -145,7 +145,7 @@ const writeMongoSetting = async (key: string, value: string): Promise<void> => {
   const mongo = await getMongoDb();
   const now = new Date();
   await mongo
-    .collection<MongoTimestampedStringSettingRecord<string, Date>>(SETTINGS_COLLECTION)
+    .collection<MongoTimestampedStringSettingDocument>(SETTINGS_COLLECTION)
     .updateOne(
       { key },
       {
@@ -173,7 +173,7 @@ const listMongoProductStudioConfigs = async (): Promise<Array<{ key: string; val
   if (!process.env['MONGODB_URI']) return [];
   const mongo = await getMongoDb();
   const rows = await mongo
-    .collection<MongoTimestampedStringSettingRecord<string, Date>>(SETTINGS_COLLECTION)
+    .collection<MongoTimestampedStringSettingDocument>(SETTINGS_COLLECTION)
     .find(
       {
         $or: [

@@ -1,10 +1,10 @@
+import type { Point2d } from '@/shared/contracts/geometry';
+
 import { clamp01, normalizeImageContentFrame } from './GenerationToolbarImageUtils.helpers';
 import {
   type ImageContentFrame,
   type MaskShapeForExport,
 } from './GenerationToolbarImageUtils.types';
-
-type MaskPoint = { x: number; y: number };
 
 const toNormalizedUnit = (value: number, sourceSize: number): number | null => {
   if (!Number.isFinite(value)) return null;
@@ -47,11 +47,11 @@ const mapCanvasUnitToImageUnit = (
 };
 
 const toUnitPoint = (
-  point: { x: number; y: number },
+  point: Point2d,
   sourceWidth: number,
   sourceHeight: number,
   imageFrame: ImageContentFrame | null
-): { x: number; y: number } | null => {
+): Point2d | null => {
   const canvasUnitX = toNormalizedUnit(point.x, sourceWidth);
   const canvasUnitY = toNormalizedUnit(point.y, sourceHeight);
   if (canvasUnitX === null || canvasUnitY === null) return null;
@@ -78,7 +78,7 @@ export const normalizeShapeToPolygons = (
     imageFrame?: ImageContentFrame | null;
     imageContentFrame?: ImageContentFrame | null;
   }
-): Array<Array<{ x: number; y: number }>> => {
+): Point2d[][] => {
   const unitImageFrame = normalizeImageFrameToUnitRect(
     options?.imageContentFrame ?? options?.imageFrame ?? null,
     sourceWidth,
@@ -88,8 +88,8 @@ export const normalizeShapeToPolygons = (
   if (shape.type === 'polygon' || shape.type === 'lasso' || shape.type === 'brush') {
     if (!shape.closed || shape.points.length < 3) return [];
     const polygon = shape.points
-      .map((point: MaskPoint) => toUnitPoint(point, sourceWidth, sourceHeight, unitImageFrame))
-      .filter((point): point is { x: number; y: number } => point !== null);
+      .map((point: Point2d) => toUnitPoint(point, sourceWidth, sourceHeight, unitImageFrame))
+      .filter((point): point is Point2d => point !== null);
     if (polygon.length < 3) return [];
     return [polygon];
   }
@@ -97,8 +97,8 @@ export const normalizeShapeToPolygons = (
   if (shape.type === 'rect') {
     if (shape.points.length < 2) return [];
     const unitPoints = shape.points
-      .map((point: MaskPoint) => toUnitPoint(point, sourceWidth, sourceHeight, unitImageFrame))
-      .filter((point): point is { x: number; y: number } => point !== null);
+      .map((point: Point2d) => toUnitPoint(point, sourceWidth, sourceHeight, unitImageFrame))
+      .filter((point): point is Point2d => point !== null);
     if (unitPoints.length < 2) return [];
     const xs = unitPoints.map((point) => point.x);
     const ys = unitPoints.map((point) => point.y);
@@ -120,8 +120,8 @@ export const normalizeShapeToPolygons = (
   if (shape.type === 'ellipse') {
     if (shape.points.length < 2) return [];
     const unitPoints = shape.points
-      .map((point: MaskPoint) => toUnitPoint(point, sourceWidth, sourceHeight, unitImageFrame))
-      .filter((point): point is { x: number; y: number } => point !== null);
+      .map((point: Point2d) => toUnitPoint(point, sourceWidth, sourceHeight, unitImageFrame))
+      .filter((point): point is Point2d => point !== null);
     if (unitPoints.length < 2) return [];
     const xs = unitPoints.map((point) => point.x);
     const ys = unitPoints.map((point) => point.y);
@@ -157,11 +157,11 @@ export const shapeHasUsableCropGeometry = (shape: MaskShapeForExport): boolean =
     if (shape.points.length < 2) return false;
     return shape.points
       .slice(0, 2)
-      .every((point: MaskPoint) => Number.isFinite(point.x) && Number.isFinite(point.y));
+      .every((point: Point2d) => Number.isFinite(point.x) && Number.isFinite(point.y));
   }
   if (shape.type === 'polygon' || shape.type === 'lasso' || shape.type === 'brush') {
     if (!shape.closed || shape.points.length < 3) return false;
-    return shape.points.every((point: MaskPoint) => Number.isFinite(point.x) && Number.isFinite(point.y));
+    return shape.points.every((point: Point2d) => Number.isFinite(point.x) && Number.isFinite(point.y));
   }
   return false;
 };
@@ -174,7 +174,7 @@ export const polygonsFromShapes = (
     imageFrame?: ImageContentFrame | null;
     imageContentFrame?: ImageContentFrame | null;
   }
-): Array<Array<{ x: number; y: number }>> =>
+): Point2d[][] =>
   shapes
     .filter((shape) => shape.visible)
     .flatMap((shape) => normalizeShapeToPolygons(shape, sourceWidth, sourceHeight, options));
@@ -191,7 +191,7 @@ const resolveMaskColors = (
 };
 
 export const renderMaskDataUrlFromPolygons = (
-  polygons: Array<Array<{ x: number; y: number }>>,
+  polygons: Point2d[][],
   width: number,
   height: number,
   variant: 'white' | 'black',

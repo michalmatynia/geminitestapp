@@ -37,11 +37,9 @@ import {
   upsertKangurSocialPost,
 } from './social-posts-repository';
 
-type EditorState = KangurSocialPostEditorStateDto;
-
 export type RunKangurSocialPostPipelineInput = {
   postId: string;
-  editorState: EditorState;
+  editorState: KangurSocialPostEditorStateDto;
   imageAssets: ImageFileSelection[];
   imageAddonIds: string[];
   captureMode: Extract<KangurSocialPipelineCaptureMode, 'existing_assets' | 'fresh_capture'>;

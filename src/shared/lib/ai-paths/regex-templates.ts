@@ -1,5 +1,5 @@
 import type { RegexTemplate, RegexTemplatesStore } from '@/shared/contracts/ai-paths';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 export const AI_PATHS_REGEX_TEMPLATES_KEY = 'ai_paths_regex_templates';
@@ -78,7 +78,11 @@ export const parseRegexTemplatesStore = (raw?: string | null): RegexTemplatesSto
     }
     return defaultStore;
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'ai-paths.regex-templates',
+      action: 'parseStore',
+      storageKey: AI_PATHS_REGEX_TEMPLATES_KEY,
+    });
     return defaultStore;
   }
 };

@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
+import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -10,7 +10,7 @@ const readSettingsRawFromMongo = async (key: string): Promise<string | null> => 
   try {
     const mongo = await getMongoDb();
     const record = await mongo
-      .collection<MongoTimestampedStringSettingRecord<string, Date>>('settings')
+      .collection<MongoTimestampedStringSettingDocument>('settings')
       .findOne(
         {
           $or: [{ _id: key }, { key }],
@@ -29,7 +29,7 @@ const writeSettingsRawToMongo = async (key: string, raw: string): Promise<boolea
   try {
     const mongo = await getMongoDb();
     const now = new Date();
-    await mongo.collection<MongoTimestampedStringSettingRecord<string, Date>>('settings').updateOne(
+    await mongo.collection<MongoTimestampedStringSettingDocument>('settings').updateOne(
       {
         $or: [{ _id: key }, { key }],
       },

@@ -27,6 +27,7 @@ import type {
   KangurProgressState,
 } from '@/features/kangur/ui/types';
 import type { KangurLessonComponentId, KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 type KangurGameHomeMomentumWidgetProps = KangurBasePathProgressProps;
 
 type KangurHomeRecommendation = {
@@ -35,6 +36,49 @@ type KangurHomeRecommendation = {
   description: string;
   priorityLabel: string;
   title: string;
+};
+
+type KangurHomeMomentumFallbackCopy = {
+  actions: {
+    openLesson: string;
+    playNow: string;
+    startTraining: string;
+  };
+  weakestLesson: {
+    description: (masteryPercent: number) => string;
+    priorityHigh: string;
+    priorityMedium: string;
+    title: (title: string) => string;
+  };
+  streak: {
+    descriptionContinue: (streak: number) => string;
+    descriptionStart: string;
+    priority: string;
+    titleContinue: string;
+    titleStart: string;
+  };
+  guided: {
+    descriptionDefault: (summary: string, nextBadgeName: string) => string;
+    descriptionWithActivity: (summary: string, activity: string, nextBadgeName: string) => string;
+    priority: string;
+    title: (nextBadgeName: string) => string;
+  };
+  track: {
+    descriptionDefault: (track: string, badge: string, summary: string) => string;
+    descriptionWithActivity: (
+      track: string,
+      badge: string,
+      summary: string,
+      activity: string
+    ) => string;
+    priority: string;
+    title: (track: string) => string;
+  };
+  fallback: {
+    description: (activity: string, averageXpPerSession: number) => string;
+    priority: string;
+    title: (activity: string) => string;
+  };
 };
 
 const QUICK_START_OPERATIONS = new Set([
@@ -48,6 +92,200 @@ const QUICK_START_OPERATIONS = new Set([
   'clock',
   'mixed',
 ]);
+
+const getHomeMomentumFallbackCopy = (
+  locale: ReturnType<typeof normalizeSiteLocale>
+): KangurHomeMomentumFallbackCopy => {
+  if (locale === 'uk') {
+    return {
+      actions: {
+        openLesson: 'Відкрити урок',
+        playNow: 'Грати зараз',
+        startTraining: 'Почати тренування',
+      },
+      weakestLesson: {
+        description: (masteryPercent) =>
+          `Опановування ${masteryPercent}%. Коротке повторення цього уроку швидше закриє наступний поріг майстерності.`,
+        priorityHigh: 'Високий пріоритет',
+        priorityMedium: 'Середній пріоритет',
+        title: (title) => `Сьогодні варто: ${title}`,
+      },
+      streak: {
+        descriptionContinue: (streak) =>
+          `У тебе серія ${streak}. Ще один сильний раунд сьогодні допоможе її розігнати.`,
+        descriptionStart:
+          'Одна коротка гра сьогодні запустить нову серію й допоможе зберегти ритм навчання.',
+        priority: 'Середній пріоритет',
+        titleContinue: 'Розжени поточну серію',
+        titleStart: 'Запусти серію знову',
+      },
+      guided: {
+        descriptionDefault: (summary, nextBadgeName) =>
+          `У тебе вже є ${summary} у рекомендованому ритмі. Ще один сильний раунд наблизить значок ${nextBadgeName}.`,
+        descriptionWithActivity: (summary, activity, nextBadgeName) =>
+          `У тебе вже є ${summary} у рекомендованому ритмі. Ще один сильний раунд ${activity} наблизить значок ${nextBadgeName}.`,
+        priority: 'Рекомендований напрям',
+        title: (nextBadgeName) => `Заверши: ${nextBadgeName}`,
+      },
+      track: {
+        descriptionDefault: (track, badge, summary) =>
+          `Найближче зараз шлях ${track}. До значка ${badge} бракує: ${summary}.`,
+        descriptionWithActivity: (track, badge, summary, activity) =>
+          `Найближче зараз шлях ${track}. До значка ${badge} бракує: ${summary}. Найшвидше це підштовхне ${activity}.`,
+        priority: 'Темп прогресу',
+        title: (track) => `Закрий шлях: ${track}`,
+      },
+      fallback: {
+        description: (activity, averageXpPerSession) =>
+          `${activity} зараз приносить у середньому ${averageXpPerSession} XP за гру. Це найсильніший крок для наступного раунду.`,
+        priority: 'Сильна серія',
+        title: (activity) => `Тримай темп у: ${activity}`,
+      },
+    };
+  }
+
+  if (locale === 'de') {
+    return {
+      actions: {
+        openLesson: 'Lektion offnen',
+        playNow: 'Jetzt spielen',
+        startTraining: 'Training starten',
+      },
+      weakestLesson: {
+        description: (masteryPercent) =>
+          `Beherrschung ${masteryPercent}%. Eine kurze Wiederholung dieser Lektion schliesst die nachste Meisterschaftsstufe schneller.`,
+        priorityHigh: 'Hohe Prioritat',
+        priorityMedium: 'Mittlere Prioritat',
+        title: (title) => `Heute lohnt sich: ${title}`,
+      },
+      streak: {
+        descriptionContinue: (streak) =>
+          `Deine Serie ist ${streak}. Noch eine starke Runde heute wird sie beschleunigen.`,
+        descriptionStart:
+          'Ein kurzes Spiel heute startet eine neue Serie und halt den Lernrhythmus in Bewegung.',
+        priority: 'Mittlere Prioritat',
+        titleContinue: 'Aktuelle Serie beschleunigen',
+        titleStart: 'Serie neu starten',
+      },
+      guided: {
+        descriptionDefault: (summary, nextBadgeName) =>
+          `Du hast bereits ${summary} im empfohlenen Rhythmus. Noch eine starke Runde bringt das Abzeichen ${nextBadgeName} naher.`,
+        descriptionWithActivity: (summary, activity, nextBadgeName) =>
+          `Du hast bereits ${summary} im empfohlenen Rhythmus. Noch eine starke Runde ${activity} bringt das Abzeichen ${nextBadgeName} naher.`,
+        priority: 'Empfohlene Richtung',
+        title: (nextBadgeName) => `Abschliessen: ${nextBadgeName}`,
+      },
+      track: {
+        descriptionDefault: (track, badge, summary) =>
+          `Am nachsten ist jetzt der Pfad ${track}. Fur das Abzeichen ${badge} fehlt noch: ${summary}.`,
+        descriptionWithActivity: (track, badge, summary, activity) =>
+          `Am nachsten ist jetzt der Pfad ${track}. Fur das Abzeichen ${badge} fehlt noch: ${summary}. ${activity} schiebt ihn am schnellsten an.`,
+        priority: 'Fortschrittstempo',
+        title: (track) => `Pfad schliessen: ${track}`,
+      },
+      fallback: {
+        description: (activity, averageXpPerSession) =>
+          `${activity} bringt derzeit etwa ${averageXpPerSession} XP pro Spiel. Das ist der starkste Zug fur die nachste Runde.`,
+        priority: 'Starke Phase',
+        title: (activity) => `Tempo halten in: ${activity}`,
+      },
+    };
+  }
+
+  if (locale === 'en') {
+    return {
+      actions: {
+        openLesson: 'Open lesson',
+        playNow: 'Play now',
+        startTraining: 'Start training',
+      },
+      weakestLesson: {
+        description: (masteryPercent) =>
+          `Mastery ${masteryPercent}%. One short review of this lesson will close the next mastery step faster.`,
+        priorityHigh: 'High priority',
+        priorityMedium: 'Medium priority',
+        title: (title) => `Today, revisit: ${title}`,
+      },
+      streak: {
+        descriptionContinue: (streak) =>
+          `Your streak is ${streak}. One more strong round today will speed it up.`,
+        descriptionStart:
+          'One short game today will start a new streak and help keep the learning rhythm going.',
+        priority: 'Medium priority',
+        titleContinue: 'Build the current streak',
+        titleStart: 'Restart the streak',
+      },
+      guided: {
+        descriptionDefault: (summary, nextBadgeName) =>
+          `You already have ${summary} in the recommended rhythm. One more strong round brings the ${nextBadgeName} badge closer.`,
+        descriptionWithActivity: (summary, activity, nextBadgeName) =>
+          `You already have ${summary} in the recommended rhythm. One more strong round of ${activity} brings the ${nextBadgeName} badge closer.`,
+        priority: 'Recommended direction',
+        title: (nextBadgeName) => `Finish: ${nextBadgeName}`,
+      },
+      track: {
+        descriptionDefault: (track, badge, summary) =>
+          `The ${track} track is currently closest. To reach the ${badge} badge, you still need: ${summary}.`,
+        descriptionWithActivity: (track, badge, summary, activity) =>
+          `The ${track} track is currently closest. To reach the ${badge} badge, you still need: ${summary}. ${activity} will push it the fastest.`,
+        priority: 'Progress pace',
+        title: (track) => `Close the track: ${track}`,
+      },
+      fallback: {
+        description: (activity, averageXpPerSession) =>
+          `${activity} is currently worth about ${averageXpPerSession} XP per game. It is the strongest move for the next round.`,
+        priority: 'Strong run',
+        title: (activity) => `Keep the pace in: ${activity}`,
+      },
+    };
+  }
+
+  return {
+    actions: {
+      openLesson: 'Otwórz lekcję',
+      playNow: 'Zagraj teraz',
+      startTraining: 'Uruchom trening',
+    },
+    weakestLesson: {
+      description: (masteryPercent) =>
+        `Opanowanie ${masteryPercent}%. Jedna krótka powtórka tej lekcji szybciej domknie kolejny próg mistrzostwa.`,
+      priorityHigh: 'Priorytet wysoki',
+      priorityMedium: 'Priorytet średni',
+      title: (title) => `Dziś warto: ${title}`,
+    },
+    streak: {
+      descriptionContinue: (streak) =>
+        `Masz serię ${streak}. Jeszcze jedna mocna runda dzisiaj ją rozpędzi.`,
+      descriptionStart:
+        'Jedna krótka gra dzisiaj uruchomi nową serię i pomoże podtrzymać rytm nauki.',
+      priority: 'Priorytet średni',
+      titleContinue: 'Rozpędź aktualną serię',
+      titleStart: 'Zbuduj serię na nowo',
+    },
+    guided: {
+      descriptionDefault: (summary, nextBadgeName) =>
+        `Masz już ${summary} w poleconym rytmie. Jeszcze jedna mocna runda przybliża odznakę ${nextBadgeName}.`,
+      descriptionWithActivity: (summary, activity, nextBadgeName) =>
+        `Masz już ${summary} w poleconym rytmie. Jeszcze jedna mocna runda ${activity} przybliża odznakę ${nextBadgeName}.`,
+      priority: 'Polecony kierunek',
+      title: (nextBadgeName) => `Dopnij: ${nextBadgeName}`,
+    },
+    track: {
+      descriptionDefault: (track, badge, summary) =>
+        `Najbliżej jest teraz tor ${track}. Do odznaki ${badge} brakuje: ${summary}.`,
+      descriptionWithActivity: (track, badge, summary, activity) =>
+        `Najbliżej jest teraz tor ${track}. Do odznaki ${badge} brakuje: ${summary}. Najszybciej podbije to ${activity}.`,
+      priority: 'Tempo postępu',
+      title: (track) => `Domknij tor: ${track}`,
+    },
+    fallback: {
+      description: (activity, averageXpPerSession) =>
+        `${activity} daje teraz średnio ${averageXpPerSession} XP na grę. To najlepszy kandydat na kolejny mocny ruch.`,
+      priority: 'Dobra passa',
+      title: (activity) => `Utrzymaj tempo w: ${activity}`,
+    },
+  };
+};
 
 const resolvePracticeDifficulty = (averageAccuracy: number): 'easy' | 'medium' | 'hard' => {
   if (averageAccuracy >= 85) {
@@ -67,6 +305,7 @@ const buildAssignmentHref = (basePath: string, action: KangurRouteAction): strin
 const buildPracticeRecommendationAction = (
   operation: string | null,
   averageAccuracy: number,
+  fallbackCopy: KangurHomeMomentumFallbackCopy,
   translate?: RecommendationTranslate
 ): KangurRouteAction => {
   if (!operation || !QUICK_START_OPERATIONS.has(operation)) {
@@ -74,7 +313,7 @@ const buildPracticeRecommendationAction = (
       label: translateRecommendationWithFallback(
         translate,
         'homeMomentum.actions.startTraining',
-        'Uruchom trening'
+        fallbackCopy.actions.startTraining
       ),
       page: 'Game',
       query: {
@@ -87,7 +326,7 @@ const buildPracticeRecommendationAction = (
     label: translateRecommendationWithFallback(
       translate,
       'homeMomentum.actions.startTraining',
-      'Uruchom trening'
+      fallbackCopy.actions.startTraining
     ),
     page: 'Game',
     query: {
@@ -121,6 +360,7 @@ const resolveActivityOperation = (activityKey: string): string | null => {
 const getWeakestLessonRecommendation = (
   progress: KangurProgressState,
   locale: string,
+  fallbackCopy: KangurHomeMomentumFallbackCopy,
   translate?: RecommendationTranslate
 ): KangurHomeRecommendation | null => {
   const weakestLesson = (
@@ -146,7 +386,7 @@ const getWeakestLessonRecommendation = (
       label: translateRecommendationWithFallback(
         translate,
         'homeMomentum.actions.openLesson',
-        'Otwórz lekcję'
+        fallbackCopy.actions.openLesson
       ),
       page: 'Lessons',
       query: {
@@ -156,7 +396,7 @@ const getWeakestLessonRecommendation = (
     description: translateRecommendationWithFallback(
       translate,
       'homeMomentum.weakestLesson.description',
-      `Opanowanie ${entry.masteryPercent}%. Jedna krótka powtórka tej lekcji szybciej domknie kolejny próg mistrzostwa.`,
+      fallbackCopy.weakestLesson.description(entry.masteryPercent),
       { masteryPercent: entry.masteryPercent }
     ),
     priorityLabel:
@@ -164,17 +404,17 @@ const getWeakestLessonRecommendation = (
         ? translateRecommendationWithFallback(
             translate,
             'homeMomentum.weakestLesson.priorityHigh',
-            'Priorytet wysoki'
+            fallbackCopy.weakestLesson.priorityHigh
           )
         : translateRecommendationWithFallback(
             translate,
             'homeMomentum.weakestLesson.priorityMedium',
-            'Priorytet średni'
+            fallbackCopy.weakestLesson.priorityMedium
           ),
     title: translateRecommendationWithFallback(
       translate,
       'homeMomentum.weakestLesson.title',
-      `Dziś warto: ${lessonTitle}`,
+      fallbackCopy.weakestLesson.title(lessonTitle),
       { title: lessonTitle }
     ),
   };
@@ -182,6 +422,7 @@ const getWeakestLessonRecommendation = (
 
 const getStreakRecommendation = (
   progress: KangurProgressState,
+  fallbackCopy: KangurHomeMomentumFallbackCopy,
   translate?: RecommendationTranslate
 ): KangurHomeRecommendation | null => {
   const gamesPlayed = progress.gamesPlayed ?? 0;
@@ -197,7 +438,7 @@ const getStreakRecommendation = (
       label: translateRecommendationWithFallback(
         translate,
         'homeMomentum.actions.playNow',
-        'Zagraj teraz'
+        fallbackCopy.actions.playNow
       ),
       page: 'Game',
       query: {
@@ -209,36 +450,37 @@ const getStreakRecommendation = (
         ? translateRecommendationWithFallback(
             translate,
             'homeMomentum.streak.descriptionStart',
-            'Jedna krótka gra dzisiaj uruchomi nową serię i pomoże podtrzymać rytm nauki.'
+            fallbackCopy.streak.descriptionStart
           )
         : translateRecommendationWithFallback(
             translate,
             'homeMomentum.streak.descriptionContinue',
-            `Masz serię ${currentWinStreak}. Jeszcze jedna mocna runda dzisiaj ją rozpędzi.`,
+            fallbackCopy.streak.descriptionContinue(currentWinStreak),
             { streak: currentWinStreak }
           ),
     priorityLabel: translateRecommendationWithFallback(
       translate,
       'homeMomentum.streak.priority',
-      'Priorytet średni'
+      fallbackCopy.streak.priority
     ),
     title:
       currentWinStreak <= 0
         ? translateRecommendationWithFallback(
             translate,
             'homeMomentum.streak.titleStart',
-            'Zbuduj serię na nowo'
+            fallbackCopy.streak.titleStart
           )
         : translateRecommendationWithFallback(
             translate,
             'homeMomentum.streak.titleContinue',
-            'Rozpędź aktualną serię'
+            fallbackCopy.streak.titleContinue
           ),
   };
 };
 
 const getGuidedRecommendation = (
   progress: KangurProgressState,
+  fallbackCopy: KangurHomeMomentumFallbackCopy,
   translate?: RecommendationTranslate,
   progressTranslate?: KangurProgressTranslate
 ): KangurHomeRecommendation | null => {
@@ -259,6 +501,7 @@ const getGuidedRecommendation = (
   const action = buildPracticeRecommendationAction(
     resolveActivityOperation(topActivity?.key ?? ''),
     topActivity?.averageAccuracy ?? getProgressAverageAccuracy(progress),
+    fallbackCopy,
     translate
   );
 
@@ -266,10 +509,14 @@ const getGuidedRecommendation = (
     accent: 'indigo',
     action,
     description: topActivity
-      ? translateRecommendationWithFallback(
+        ? translateRecommendationWithFallback(
           translate,
           'homeMomentum.guided.descriptionWithActivity',
-          `Masz już ${guidedMomentum.summary} w poleconym rytmie. Jeszcze jedna mocna runda ${activityLabel?.toLowerCase()} przybliża odznakę ${guidedMomentum.nextBadgeName}.`,
+          fallbackCopy.guided.descriptionWithActivity(
+            guidedMomentum.summary,
+            activityLabel?.toLowerCase() ?? '',
+            guidedMomentum.nextBadgeName
+          ),
           {
             summary: guidedMomentum.summary,
             activity: activityLabel?.toLowerCase() ?? '',
@@ -279,7 +526,10 @@ const getGuidedRecommendation = (
       : translateRecommendationWithFallback(
           translate,
           'homeMomentum.guided.descriptionDefault',
-          `Masz już ${guidedMomentum.summary} w poleconym rytmie. Jeszcze jedna mocna runda przybliża odznakę ${guidedMomentum.nextBadgeName}.`,
+          fallbackCopy.guided.descriptionDefault(
+            guidedMomentum.summary,
+            guidedMomentum.nextBadgeName
+          ),
           {
             summary: guidedMomentum.summary,
             nextBadgeName: guidedMomentum.nextBadgeName,
@@ -288,12 +538,12 @@ const getGuidedRecommendation = (
     priorityLabel: translateRecommendationWithFallback(
       translate,
       'homeMomentum.guided.priority',
-      'Polecony kierunek'
+      fallbackCopy.guided.priority
     ),
     title: translateRecommendationWithFallback(
       translate,
       'homeMomentum.guided.title',
-      `Dopnij: ${guidedMomentum.nextBadgeName}`,
+      fallbackCopy.guided.title(guidedMomentum.nextBadgeName),
       { nextBadgeName: guidedMomentum.nextBadgeName }
     ),
   };
@@ -301,6 +551,7 @@ const getGuidedRecommendation = (
 
 const getTrackRecommendation = (
   progress: KangurProgressState,
+  fallbackCopy: KangurHomeMomentumFallbackCopy,
   translate?: RecommendationTranslate,
   progressTranslate?: KangurProgressTranslate
 ): KangurHomeRecommendation | null => {
@@ -326,6 +577,7 @@ const getTrackRecommendation = (
   const action = buildPracticeRecommendationAction(
     resolveActivityOperation(topActivity?.key ?? ''),
     topActivity?.averageAccuracy ?? getProgressAverageAccuracy(progress),
+    fallbackCopy,
     translate
   );
 
@@ -333,10 +585,15 @@ const getTrackRecommendation = (
     accent: 'indigo',
     action,
     description: topActivity
-      ? translateRecommendationWithFallback(
+        ? translateRecommendationWithFallback(
           translate,
           'homeMomentum.track.descriptionWithActivity',
-          `Najbliżej jest teraz tor ${track.label}. Do odznaki ${track.nextBadge.name} brakuje: ${track.nextBadge.summary}. Najszybciej podbije to ${activityLabel?.toLowerCase()}.`,
+          fallbackCopy.track.descriptionWithActivity(
+            track.label,
+            track.nextBadge.name,
+            track.nextBadge.summary,
+            activityLabel?.toLowerCase() ?? ''
+          ),
           {
             track: track.label,
             badge: track.nextBadge.name,
@@ -347,7 +604,11 @@ const getTrackRecommendation = (
       : translateRecommendationWithFallback(
           translate,
           'homeMomentum.track.descriptionDefault',
-          `Najbliżej jest teraz tor ${track.label}. Do odznaki ${track.nextBadge.name} brakuje: ${track.nextBadge.summary}.`,
+          fallbackCopy.track.descriptionDefault(
+            track.label,
+            track.nextBadge.name,
+            track.nextBadge.summary
+          ),
           {
             track: track.label,
             badge: track.nextBadge.name,
@@ -357,12 +618,12 @@ const getTrackRecommendation = (
     priorityLabel: translateRecommendationWithFallback(
       translate,
       'homeMomentum.track.priority',
-      'Tempo postępu'
+      fallbackCopy.track.priority
     ),
     title: translateRecommendationWithFallback(
       translate,
       'homeMomentum.track.title',
-      `Domknij tor: ${track.label}`,
+      fallbackCopy.track.title(track.label),
       { track: track.label }
     ),
   };
@@ -370,6 +631,7 @@ const getTrackRecommendation = (
 
 const getFallbackRecommendation = (
   progress: KangurProgressState,
+  fallbackCopy: KangurHomeMomentumFallbackCopy,
   translate?: RecommendationTranslate,
   progressTranslate?: KangurProgressTranslate
 ): KangurHomeRecommendation | null => {
@@ -388,12 +650,13 @@ const getFallbackRecommendation = (
     action: buildPracticeRecommendationAction(
       resolveActivityOperation(topActivity.key),
       topActivity.averageAccuracy,
+      fallbackCopy,
       translate
     ),
     description: translateRecommendationWithFallback(
       translate,
       'homeMomentum.fallback.description',
-      `${activityLabel} daje teraz średnio ${topActivity.averageXpPerSession} XP na grę. To najlepszy kandydat na kolejny mocny ruch.`,
+      fallbackCopy.fallback.description(activityLabel, topActivity.averageXpPerSession),
       {
         activity: activityLabel,
         averageXpPerSession: topActivity.averageXpPerSession,
@@ -402,12 +665,12 @@ const getFallbackRecommendation = (
     priorityLabel: translateRecommendationWithFallback(
       translate,
       'homeMomentum.fallback.priority',
-      'Dobra passa'
+      fallbackCopy.fallback.priority
     ),
     title: translateRecommendationWithFallback(
       translate,
       'homeMomentum.fallback.title',
-      `Utrzymaj tempo w: ${activityLabel}`,
+      fallbackCopy.fallback.title(activityLabel),
       { activity: activityLabel }
     ),
   };
@@ -416,14 +679,15 @@ const getFallbackRecommendation = (
 const getHomeRecommendation = (
   progress: KangurProgressState,
   locale: string,
+  fallbackCopy: KangurHomeMomentumFallbackCopy,
   translate?: RecommendationTranslate,
   progressTranslate?: KangurProgressTranslate
 ): KangurHomeRecommendation | null =>
-  getWeakestLessonRecommendation(progress, locale, translate) ??
-  getGuidedRecommendation(progress, translate, progressTranslate) ??
-  getStreakRecommendation(progress, translate) ??
-  getTrackRecommendation(progress, translate, progressTranslate) ??
-  getFallbackRecommendation(progress, translate, progressTranslate);
+  getWeakestLessonRecommendation(progress, locale, fallbackCopy, translate) ??
+  getGuidedRecommendation(progress, fallbackCopy, translate, progressTranslate) ??
+  getStreakRecommendation(progress, fallbackCopy, translate) ??
+  getTrackRecommendation(progress, fallbackCopy, translate, progressTranslate) ??
+  getFallbackRecommendation(progress, fallbackCopy, translate, progressTranslate);
 
 const HOME_MOMENTUM_ROUTE_ACKNOWLEDGE_MS = 110;
 
@@ -441,9 +705,17 @@ export default function KangurGameHomeMomentumWidget({
   progress,
 }: KangurGameHomeMomentumWidgetProps): React.JSX.Element | null {
   const locale = useLocale();
+  const normalizedLocale = normalizeSiteLocale(locale);
   const translations = useTranslations('KangurGameRecommendations');
   const runtimeTranslations = useTranslations('KangurProgressRuntime');
-  const recommendation = getHomeRecommendation(progress, locale, translations, runtimeTranslations);
+  const fallbackCopy = getHomeMomentumFallbackCopy(normalizedLocale);
+  const recommendation = getHomeRecommendation(
+    progress,
+    normalizedLocale,
+    fallbackCopy,
+    translations,
+    runtimeTranslations
+  );
 
   if (!recommendation) {
     return null;

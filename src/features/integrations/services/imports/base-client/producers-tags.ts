@@ -12,14 +12,9 @@ import { fetchBaseInventories } from './inventory';
 import type { BaseInventoryScopeOptions } from './config';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
-type FetchBaseProducersOptions = BaseInventoryScopeOptions;
-
-export type { FetchBaseProducersOptions };
-
 export async function fetchBaseProducers(
   token: string,
-  options?: FetchBaseProducersOptions
+  options?: BaseInventoryScopeOptions
 ): Promise<BaseProducer[]> {
   let lastError: Error | null = null;
   const preferredInventoryId =
@@ -97,13 +92,9 @@ export async function fetchBaseProducers(
   return [];
 }
 
-type FetchBaseTagsOptions = BaseInventoryScopeOptions;
-
-export type { FetchBaseTagsOptions };
-
 export async function fetchBaseTags(
   token: string,
-  options?: FetchBaseTagsOptions
+  options?: BaseInventoryScopeOptions
 ): Promise<BaseTag[]> {
   let lastError: Error | null = null;
   const preferredInventoryId =

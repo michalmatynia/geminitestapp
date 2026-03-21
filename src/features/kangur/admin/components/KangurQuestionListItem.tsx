@@ -10,9 +10,11 @@ import {
   hasRichChoiceContent,
   usesRichQuestionPresentation,
 } from '../../test-questions';
-import { getQuestionWorkflowLabel, type QuestionAuthoringSummary } from '../question-authoring-insights';
+import type { QuestionAuthoringSummary } from '../question-authoring-insights';
+import type { QuestionManagerCopy } from '../question-manager.copy';
 
 interface KangurQuestionListItemProps {
+  copy: QuestionManagerCopy['listItem'];
   question: KangurTestQuestion;
   index: number;
   absoluteIndex: number;
@@ -31,6 +33,7 @@ export function KangurQuestionListItem(
   props: KangurQuestionListItemProps
 ): React.JSX.Element {
   const {
+    copy,
     question,
     index,
     absoluteIndex,
@@ -44,7 +47,7 @@ export function KangurQuestionListItem(
     onDuplicate,
     onDelete,
   } = props;
-  const workflowLabel = getQuestionWorkflowLabel(question.editorial.workflowStatus);
+  const workflowLabel = copy.workflowLabels[question.editorial.workflowStatus];
 
   return (
     <div className={`${KANGUR_STACK_RELAXED_CLASSNAME} group rounded-2xl border border-border/50 bg-card/35 p-4 transition hover:border-cyan-400/30 hover:bg-card/50 sm:flex-row sm:items-start sm:p-5`}>
@@ -56,8 +59,8 @@ export function KangurQuestionListItem(
           className='h-5 px-1'
           onClick={onMoveUp}
           disabled={!canReorder || absoluteIndex === 0 || isSaving}
-          aria-label='Move up'
-          title='Move up'
+          aria-label={copy.moveUp}
+          title={copy.moveUp}
         >
           <ArrowUp className='size-3' />
         </Button>
@@ -68,8 +71,8 @@ export function KangurQuestionListItem(
           className='h-5 px-1'
           onClick={onMoveDown}
           disabled={!canReorder || absoluteIndex < 0 || isSaving}
-          aria-label='Move down'
-          title='Move down'
+          aria-label={copy.moveDown}
+          title={copy.moveDown}
         >
           <ArrowDown className='size-3' />
         </Button>
@@ -80,16 +83,16 @@ export function KangurQuestionListItem(
           <span className='text-xs font-semibold text-gray-400'>#{index + 1}</span>
           {absoluteIndex >= 0 ? (
             <Badge variant='outline' className='h-4 px-1 text-[9px] text-slate-300'>
-              Order {absoluteIndex + 1}
+              {copy.order(absoluteIndex + 1)}
             </Badge>
           ) : null}
           {queuePosition ? (
             <Badge variant='outline' className='h-4 px-1 text-[9px] text-cyan-300 border-cyan-400/40'>
-              Queue {queuePosition}
+              {copy.queue(queuePosition)}
             </Badge>
           ) : null}
           <Badge variant='outline' className='h-4 px-1 text-[9px]'>
-            {question.pointValue}pt
+            {copy.points(question.pointValue)}
           </Badge>
           <Badge
             variant='outline'
@@ -102,7 +105,7 @@ export function KangurQuestionListItem(
               variant='outline'
               className='h-4 px-1 text-[9px] text-violet-300 border-violet-400/40'
             >
-              SVG
+              {copy.svg}
             </Badge>
           ) : null}
           {hasRichChoiceContent(question) ? (
@@ -110,7 +113,7 @@ export function KangurQuestionListItem(
               variant='outline'
               className='h-4 px-1 text-[9px] text-sky-300 border-sky-400/40'
             >
-              Choice UI
+              {copy.choiceUi}
             </Badge>
           ) : null}
           {usesRichQuestionPresentation(question) ? (
@@ -118,7 +121,7 @@ export function KangurQuestionListItem(
               variant='outline'
               className='h-4 px-1 text-[9px] text-cyan-300 border-cyan-400/40'
             >
-              Layout
+              {copy.layout}
             </Badge>
           ) : null}
           {questionSummary?.status === 'needs-review' ? (
@@ -126,7 +129,7 @@ export function KangurQuestionListItem(
               variant='outline'
               className='h-4 px-1 text-[9px] text-amber-300 border-amber-400/40'
             >
-              Review
+              {copy.review}
             </Badge>
           ) : null}
           {questionSummary?.status === 'needs-fix' ? (
@@ -134,7 +137,7 @@ export function KangurQuestionListItem(
               variant='outline'
               className='h-4 px-1 text-[9px] text-rose-300 border-rose-400/40'
             >
-              Fix
+              {copy.fix}
             </Badge>
           ) : null}
           <Badge
@@ -151,7 +154,7 @@ export function KangurQuestionListItem(
           </Badge>
         </div>
         <p className='line-clamp-2 text-sm leading-6 text-gray-200 sm:text-[15px]'>
-          {question.prompt || '(empty prompt)'}
+          {question.prompt || copy.emptyPrompt}
         </p>
       </div>
 
@@ -160,10 +163,10 @@ export function KangurQuestionListItem(
           type='button'
           className='inline-flex items-center justify-center rounded-lg p-2.5 text-gray-400 hover:bg-sky-500/20 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
           onClick={onEdit}
-          title='Edit question'
+          title={copy.editQuestion}
           disabled={isSaving}
         >
-          <span className='sr-only'>Edit</span>
+          <span className='sr-only'>{copy.edit}</span>
           <svg className='size-3.5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
             <path
               strokeLinecap='round'
@@ -177,9 +180,9 @@ export function KangurQuestionListItem(
           type='button'
           className='inline-flex items-center justify-center rounded-lg p-2.5 text-gray-400 hover:bg-gray-700/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
           onClick={onDuplicate}
-          title='Duplicate question'
+          title={copy.duplicateQuestion}
           disabled={isSaving}
-          aria-label='Duplicate question'
+          aria-label={copy.duplicateQuestion}
         >
           <Copy className='size-3.5' />
         </button>
@@ -187,9 +190,9 @@ export function KangurQuestionListItem(
           type='button'
           className='inline-flex items-center justify-center rounded-lg p-2.5 text-gray-400 hover:bg-red-500/20 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
           onClick={onDelete}
-          title='Delete question'
+          title={copy.deleteQuestion}
           disabled={isSaving}
-          aria-label='Delete question'
+          aria-label={copy.deleteQuestion}
         >
           <Trash2 className='size-3.5' />
         </button>

@@ -15,8 +15,7 @@ import {
   type PromptExploderBridgePayloadSnapshot,
   type PromptExploderBridgeSaveOptions,
 } from '@/shared/contracts/prompt-exploder';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export const PROMPT_EXPLODER_DRAFT_PROMPT_KEY = 'prompt_exploder:draft_prompt';
 export const PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY = 'prompt_exploder:apply_to_studio_prompt';
@@ -158,15 +157,21 @@ const getBridgeStorages = (): BridgeStorage[] => {
   try {
     if (window.localStorage) storages.push(window.localStorage);
   } catch (error) {
-    logClientError(error);
-  
+    logClientCatch(error, {
+      source: 'prompt-exploder.bridge',
+      action: 'getBridgeStorages.localStorage',
+    });
+
     // Ignore blocked localStorage.
   }
   try {
     if (window.sessionStorage) storages.push(window.sessionStorage);
   } catch (error) {
-    logClientError(error);
-  
+    logClientCatch(error, {
+      source: 'prompt-exploder.bridge',
+      action: 'getBridgeStorages.sessionStorage',
+    });
+
     // Ignore blocked sessionStorage.
   }
   return storages;
@@ -365,7 +370,11 @@ const parseBridgePayload = (raw: string | null): PromptExploderBridgePayload | n
       appliedAt,
     };
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'prompt-exploder.bridge',
+      action: 'parseBridgePayload',
+      valueLength: raw.length,
+    });
     return null;
   }
 };
@@ -422,7 +431,12 @@ const writeBridgePayload = (storageKey: string, payload: PromptExploderBridgePay
         dispatchBridgeStorageEvent(storageKey);
         return;
       } catch (error: unknown) {
-        logClientError(error);
+        logClientCatch(error, {
+          source: 'prompt-exploder.bridge',
+          action: 'writeBridgePayload.setItem',
+          storageKey,
+          payloadLength: serialized.length,
+        });
         lastError = error;
         if (!isQuotaExceededError(error)) {
           continue;
@@ -482,8 +496,12 @@ const readBridgePayload = (storageKey: string): PromptExploderBridgePayload | nu
     try {
       storage.removeItem(storageKey);
     } catch (error) {
-      logClientError(error);
-    
+      logClientCatch(error, {
+        source: 'prompt-exploder.bridge',
+        action: 'readBridgePayload.removeExpired',
+        storageKey,
+      });
+
       // Ignore blocked storage cleanup.
     }
   }

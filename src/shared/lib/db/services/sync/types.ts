@@ -5,7 +5,7 @@ import type { PrismaClient } from '@prisma/client';
 export type DatabaseSyncHandlerContext = {
   mongo: Db;
   prisma: PrismaClient;
-  normalizeId: (doc: Record<string, unknown>) => string;
+  normalizeId: (doc: { id?: unknown; _id?: unknown }) => string;
   toDate: (value: unknown) => Date | null;
   toJsonValue: (value: unknown) => unknown;
   toObjectIdMaybe: (value: string | null | undefined) => ObjectId | string | null;

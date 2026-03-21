@@ -15,12 +15,13 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KANGUR_GRID_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
+import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 
 type SectionId = 'greetings' | 'phrases' | 'summary' | 'pronoun_remix';
 type SlideSectionId = SectionId;
 
 const buildEnglishBasicsSlides = (
-  translations: ReturnType<typeof useTranslations>
+  translations: KangurIntlTranslate
 ): Record<SlideSectionId, LessonSlide[]> => ({
   greetings: [
     {

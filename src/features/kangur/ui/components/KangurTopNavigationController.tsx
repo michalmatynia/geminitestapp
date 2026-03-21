@@ -17,8 +17,10 @@ const createKangurTopNavigationOwnerId = (): string => {
 
 export function KangurTopNavigationController({
   navigation,
+  visible = true,
 }: {
   navigation: KangurPrimaryNavigationProps;
+  visible?: boolean;
 }): React.JSX.Element | null {
   const topNavigation = useOptionalKangurTopNavigation();
   const ownerIdRef = useRef<string | null>(null);
@@ -33,6 +35,11 @@ export function KangurTopNavigationController({
       return;
     }
 
+    if (!visible) {
+      topNavigation.clearNavigation(ownerIdRef.current, { immediate: true });
+      return;
+    }
+
     topNavigation.setNavigation(ownerIdRef.current, primaryNavigation);
 
     return () => {
@@ -42,10 +49,10 @@ export function KangurTopNavigationController({
 
       topNavigation.clearNavigation(ownerIdRef.current);
     };
-  }, [primaryNavigation, topNavigation]);
+  }, [primaryNavigation, topNavigation, visible]);
 
   if (!topNavigation) {
-    return <KangurPrimaryNavigation {...primaryNavigation} />;
+    return visible ? <KangurPrimaryNavigation {...primaryNavigation} /> : null;
   }
 
   return null;

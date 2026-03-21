@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { clearOfflineMutationQueue } from '@/shared/hooks/offline/useOfflineMutation';
 import { useInterval } from '@/shared/hooks/use-interval';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 export type OfflineQueueItem = {
@@ -34,7 +34,12 @@ const readQueueFromStorage = (): OfflineQueueItem[] => {
         })
       );
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'useOfflineQueueStatus',
+      action: 'readQueueFromStorage',
+      storageKey: STORAGE_KEY,
+      level: 'warn',
+    });
     return [];
   }
 };

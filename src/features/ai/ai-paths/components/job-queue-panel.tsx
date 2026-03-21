@@ -11,6 +11,13 @@ import { JobQueueControls } from './JobQueueControls';
 import { JobQueueFilterPanel } from './JobQueueFilterPanel';
 import { JobQueueList } from './JobQueueList';
 
+type JobQueueConfirmModalConfig = {
+  key: string;
+} & Pick<
+  React.ComponentProps<typeof ConfirmModal>,
+  'isOpen' | 'onClose' | 'onConfirm' | 'title' | 'message' | 'confirmText' | 'loading'
+>;
+
 function JobQueuePanelInner(): React.JSX.Element {
   const {
     queueStatus,
@@ -34,6 +41,44 @@ function JobQueuePanelInner(): React.JSX.Element {
     handleDeleteRun,
   } = useJobQueueActions();
 
+  const confirmModalConfigs: JobQueueConfirmModalConfig[] = [
+    {
+      key: 'clear-terminal',
+      isOpen: clearScope === 'terminal',
+      onClose: () => setClearScope(null),
+      onConfirm: () => void handleClearRuns('terminal'),
+      title: 'Clear finished AI Path runs',
+      message:
+        'Delete completed, failed, canceled, and dead-lettered runs from this queue list.',
+      confirmText: 'Clear Finished',
+      loading: isClearingRuns,
+    },
+    {
+      key: 'clear-all',
+      isOpen: clearScope === 'all',
+      onClose: () => setClearScope(null),
+      onConfirm: () => void handleClearRuns('all'),
+      title: 'Clear all AI Path runs',
+      message:
+        'Delete all runs in this queue list, including queued, running, and paused entries.',
+      confirmText: 'Clear All',
+      loading: isClearingRuns,
+    },
+    {
+      key: 'delete-run',
+      isOpen: runToDelete !== null,
+      onClose: () => setRunToDelete(null),
+      onConfirm: () => {
+        if (!runToDelete) return;
+        void handleDeleteRun(runToDelete.id);
+      },
+      title: 'Delete AI Path run',
+      message: `Delete run ${runToDelete?.id ?? ''}? This removes its run, node, and event history.`,
+      confirmText: 'Delete Run',
+      loading: runToDelete ? isDeletingRun(runToDelete.id) : false,
+    },
+  ];
+
   return (
     <div className='space-y-4'>
       <JobQueueControls />
@@ -55,41 +100,9 @@ function JobQueuePanelInner(): React.JSX.Element {
 
       <JobQueueList />
 
-      <ConfirmModal
-        isOpen={clearScope === 'terminal'}
-        onClose={() => setClearScope(null)}
-        onConfirm={() => void handleClearRuns('terminal')}
-        title='Clear finished AI Path runs'
-        message='Delete completed, failed, canceled, and dead-lettered runs from this queue list.'
-        confirmText='Clear Finished'
-        isDangerous={true}
-        loading={isClearingRuns}
-      />
-
-      <ConfirmModal
-        isOpen={clearScope === 'all'}
-        onClose={() => setClearScope(null)}
-        onConfirm={() => void handleClearRuns('all')}
-        title='Clear all AI Path runs'
-        message='Delete all runs in this queue list, including queued, running, and paused entries.'
-        confirmText='Clear All'
-        isDangerous={true}
-        loading={isClearingRuns}
-      />
-
-      <ConfirmModal
-        isOpen={runToDelete !== null}
-        onClose={() => setRunToDelete(null)}
-        onConfirm={() => {
-          if (!runToDelete) return;
-          void handleDeleteRun(runToDelete.id);
-        }}
-        title='Delete AI Path run'
-        message={`Delete run ${runToDelete?.id ?? ''}? This removes its run, node, and event history.`}
-        confirmText='Delete Run'
-        isDangerous={true}
-        loading={runToDelete ? isDeletingRun(runToDelete.id) : false}
-      />
+      {confirmModalConfigs.map(({ key, ...modalConfig }: JobQueueConfirmModalConfig) => (
+        <ConfirmModal key={key} {...modalConfig} isDangerous={true} />
+      ))}
     </div>
   );
 }

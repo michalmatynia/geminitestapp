@@ -3,9 +3,11 @@ import React from 'react';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button, Input } from '@/features/kangur/shared/ui';
 
+import type { QuestionManagerCopy } from '../question-manager.copy';
 import type { QuestionListFilter, QuestionListSort } from '../question-manager-view';
 
 interface KangurQuestionsFilterTriageProps {
+  copy: QuestionManagerCopy['filters'];
   searchQuery: string;
   onSearchChange: (value: string) => void;
   sortMode: QuestionListSort;
@@ -20,6 +22,7 @@ export function KangurQuestionsFilterTriage(
   props: KangurQuestionsFilterTriageProps
 ): React.JSX.Element {
   const {
+    copy,
     searchQuery,
     onSearchChange,
     sortMode,
@@ -32,22 +35,22 @@ export function KangurQuestionsFilterTriage(
   return (
     <div className='rounded-[28px] border border-border/60 bg-card/25 p-4 sm:p-5'>
       <div className='mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground'>
-        Filter and triage
+        {copy.panelTitle}
       </div>
       <div className='grid gap-3.5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end'>
         <Input
           type='search'
           value={searchQuery}
           onChange={(event): void => onSearchChange(event.target.value)}
-          placeholder='Search prompts, answers, or audit flags...'
-          aria-label='Search questions'
+          placeholder={copy.searchPlaceholder}
+          aria-label={copy.searchAriaLabel}
           className='h-10 text-sm'
-          title='Search prompts, answers, or audit flags...'
+          title={copy.searchPlaceholder}
         />
         <div className='grid gap-3 lg:min-w-[26rem] lg:grid-cols-2'>
           <div className='space-y-2'>
             <div className='text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground'>
-              Sort
+              {copy.sortLabel}
             </div>
             <div className='flex flex-wrap items-center gap-2'>
               {sortOptions.map((option) => {
@@ -73,7 +76,7 @@ export function KangurQuestionsFilterTriage(
           </div>
           <div className='space-y-2'>
             <div className='text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground'>
-              Filter
+              {copy.filterLabel}
             </div>
             <div className='flex flex-wrap items-center gap-2'>
               {filterOptions.map((option) => {
@@ -101,7 +104,7 @@ export function KangurQuestionsFilterTriage(
       </div>
       {listFilter !== 'all' || sortMode !== 'manual' ? (
         <div className='mt-3 text-[11px] text-muted-foreground'>
-          Reorder questions in the Manual order / All view.
+          {copy.reorderHint}
         </div>
       ) : null}
     </div>

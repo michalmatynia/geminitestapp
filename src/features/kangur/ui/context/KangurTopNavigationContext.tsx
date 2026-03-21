@@ -27,7 +27,7 @@ type KangurTopNavigationStateContextValue = {
 };
 
 type KangurTopNavigationActionsContextValue = {
-  clearNavigation: (ownerId: string) => void;
+  clearNavigation: (ownerId: string, options?: { immediate?: boolean }) => void;
   setNavigation: (ownerId: string, navigation: KangurPrimaryNavigationProps) => void;
 };
 
@@ -47,38 +47,41 @@ export function KangurTopNavigationProvider({
   const [visibleRegistration, setVisibleRegistration] =
     useState<KangurTopNavigationRegistration | null>(null);
   const clearTimeoutRef = useRef<number | null>(null);
-
-  const clearNavigation = useCallback((ownerId: string): void => {
-    if (typeof window === 'undefined') {
-      setRegistration((current) => {
-        if (current?.ownerId !== ownerId) {
-          return current;
-        }
-        return null;
-      });
-      return;
-    }
-
-    if (clearTimeoutRef.current !== null) {
-      window.clearTimeout(clearTimeoutRef.current);
-    }
-
-    clearTimeoutRef.current = window.setTimeout(() => {
-      clearTimeoutRef.current = null;
-      setRegistration((current) => {
-        if (current?.ownerId !== ownerId) {
-          return current;
-        }
-        return null;
-      });
-      setVisibleRegistration((current) => {
-        if (current?.ownerId !== ownerId) {
-          return current;
-        }
-        return null;
-      });
-    }, TOP_NAVIGATION_CLEAR_DELAY_MS);
+  const applyClearNavigation = useCallback((ownerId: string): void => {
+    setRegistration((current) => {
+      if (current?.ownerId !== ownerId) {
+        return current;
+      }
+      return null;
+    });
+    setVisibleRegistration((current) => {
+      if (current?.ownerId !== ownerId) {
+        return current;
+      }
+      return null;
+    });
   }, []);
+
+  const clearNavigation = useCallback(
+    (ownerId: string, options?: { immediate?: boolean }): void => {
+      const immediate = options?.immediate === true;
+      if (clearTimeoutRef.current !== null && typeof window !== 'undefined') {
+        window.clearTimeout(clearTimeoutRef.current);
+        clearTimeoutRef.current = null;
+      }
+
+      if (typeof window === 'undefined' || immediate) {
+        applyClearNavigation(ownerId);
+        return;
+      }
+
+      clearTimeoutRef.current = window.setTimeout(() => {
+        clearTimeoutRef.current = null;
+        applyClearNavigation(ownerId);
+      }, TOP_NAVIGATION_CLEAR_DELAY_MS);
+    },
+    [applyClearNavigation]
+  );
 
   const setNavigation = useCallback(
     (ownerId: string, navigation: KangurPrimaryNavigationProps): void => {

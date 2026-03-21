@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { productParameterValueSchema, productSchema } from './product';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 /**
  * Product Input Contracts (Modular/API)
@@ -42,8 +42,12 @@ const preprocessStringArrayField = (value: unknown): unknown => {
     const parsed = JSON.parse(trimmed) as unknown;
     if (Array.isArray(parsed)) return parsed;
   } catch (error) {
-    logClientError(error);
-  
+    logClientCatch(error, {
+      source: 'contracts.products.io',
+      action: 'preprocessStringArrayField',
+      valueLength: trimmed.length,
+    });
+
     // Fall through to CSV parsing.
   }
 
@@ -69,7 +73,11 @@ const optionalParameterValuesFromFormSchema = z.preprocess((value: unknown): unk
   try {
     return JSON.parse(trimmed) as unknown;
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'contracts.products.io',
+      action: 'optionalParameterValuesFromFormSchema',
+      valueLength: trimmed.length,
+    });
     return value;
   }
 }, z.array(productParameterValueSchema).optional());

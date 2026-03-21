@@ -3,7 +3,7 @@ import type { SystemLogLevelDto as SystemLogLevel } from '@/shared/contracts/obs
 import { truncateString } from './log-redaction';
 import { isTransientError, withTransientRecovery } from './transient-recovery/with-recovery';
 import { logger } from '@/shared/utils/logger';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 
 
 export type CentralLogPayload = {
@@ -124,7 +124,10 @@ const getCentralLogWebhookHost = (): string | null => {
     const parsed = new URL(webhookUrl);
     return parsed.host || null;
   } catch (error) {
-    logClientError(error);
+    reportObservabilityInternalError(error, {
+      source: 'observability.system-log-central-forwarding',
+      action: 'getCentralLogWebhookHost',
+    });
     return null;
   }
 };
@@ -191,7 +194,10 @@ const toForwardErrorMessage = (error: unknown): string => {
   try {
     return truncateString(JSON.stringify(error), 500);
   } catch (error) {
-    logClientError(error);
+    reportObservabilityInternalError(error, {
+      source: 'observability.system-log-central-forwarding',
+      action: 'toForwardErrorMessage',
+    });
     return 'unknown_forward_error';
   }
 };
@@ -223,7 +229,10 @@ const loadDeadLetterStore = async (): Promise<DeadLetterStoreModule | null> => {
       (await import('@/shared/lib/observability/central-log-dead-letter-store')) as DeadLetterStoreModule | null;
     return mod;
   } catch (error) {
-    logClientError(error);
+    reportObservabilityInternalError(error, {
+      source: 'observability.system-log-central-forwarding',
+      action: 'loadDeadLetterStore',
+    });
     logger.error('[system-logger] Failed to load dead-letter persistence module', error, {
       service: 'system-logger',
       action: 'loadDeadLetterStore',
@@ -280,7 +289,10 @@ const queueDeadLetterPersistence = (): void => {
           centralLoggingRuntimeState.lastDeadLetterPersistFailedAt = new Date().toISOString();
         }
       } catch (error) {
-        logClientError(error);
+        reportObservabilityInternalError(error, {
+          source: 'observability.system-log-central-forwarding',
+          action: 'persistDeadLetterQueue',
+        });
         centralLoggingRuntimeState.deadLetterPersistFailed += 1;
         centralLoggingRuntimeState.lastDeadLetterPersistFailedAt = new Date().toISOString();
         logger.error('[system-logger] Failed to persist dead-letter queue', error, {
@@ -317,7 +329,10 @@ const ensureDeadLetterStoreHydrated = async (): Promise<void> => {
         centralLoggingRuntimeState.lastDeadLetterHydratedAt = new Date().toISOString();
       }
     } catch (error) {
-      logClientError(error);
+      reportObservabilityInternalError(error, {
+        source: 'observability.system-log-central-forwarding',
+        action: 'hydrateDeadLetterQueue',
+      });
       logger.error('[system-logger] Failed to hydrate dead-letter queue', error, {
         service: 'system-logger',
         action: 'hydrateDeadLetterQueue',
@@ -429,7 +444,11 @@ const replayCentralLogDeadLetters = async (): Promise<void> => {
         centralLoggingRuntimeState.lastDeliveredAt = new Date().toISOString();
         queueDeadLetterPersistence();
       } catch (error) {
-        logClientError(error);
+        reportObservabilityInternalError(error, {
+          source: 'observability.system-log-central-forwarding',
+          action: 'replayCentralLogDeadLetters',
+          retryCount: entry.retryCount,
+        });
         centralLoggingRuntimeState.replayFailed += 1;
         centralLoggingRuntimeState.lastFailedAt = new Date().toISOString();
         entry.retryCount += 1;
@@ -463,7 +482,11 @@ export const forwardToCentralizedLogging = async (
     }
     return 'delivered';
   } catch (error) {
-    logClientError(error);
+    reportObservabilityInternalError(error, {
+      source: 'observability.system-log-central-forwarding',
+      action: 'forwardToCentralizedLogging',
+      payloadSource: payload.source ?? null,
+    });
     centralLoggingRuntimeState.failed += 1;
     centralLoggingRuntimeState.lastFailedAt = new Date().toISOString();
     enqueueCentralLogDeadLetter(payload, error, 1);

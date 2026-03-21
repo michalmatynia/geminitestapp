@@ -7,11 +7,6 @@ import { fetchBaseInventories } from './inventory';
 import type { BaseInventoryScopeOptions } from './config';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
-type FetchBaseCategoriesOptions = BaseInventoryScopeOptions;
-
-export type { FetchBaseCategoriesOptions };
-
 export const hasCategoryHierarchy = (categories: BaseCategory[]): boolean =>
   categories.some((category: BaseCategory): boolean => Boolean(category.parentId));
 
@@ -42,7 +37,7 @@ export const isBetterCategoryCandidate = (
 
 export async function fetchBaseCategories(
   token: string,
-  options?: FetchBaseCategoriesOptions
+  options?: BaseInventoryScopeOptions
 ): Promise<BaseCategory[]> {
   let lastError: Error | null = null;
   let bestCategories: BaseCategory[] = [];

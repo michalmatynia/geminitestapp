@@ -7,6 +7,7 @@ import type {
   CaseResolverCaptureDocumentDateAction,
 } from '@/features/case-resolver-capture';
 import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture';
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type {
   CaseResolverGraph,
   CaseResolverRelationGraph,
@@ -27,11 +28,7 @@ type WorkspaceView = CaseResolverWorkspaceView;
 
 export type { WorkspaceView };
 
-type SelectOption = {
-  value: string;
-  label: string;
-  description?: string | undefined;
-};
+type SelectOption = LabeledOptionWithDescriptionDto<string>;
 
 export type CaseResolverViewContextValue = {
   state: CaseResolverStateValue;

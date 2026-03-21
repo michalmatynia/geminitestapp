@@ -95,8 +95,7 @@ type NativeGuideManifestCoverageRow = {
   disabledGuideIds: string[];
 };
 
-type EntryTranslationStatus = KangurAiTutorLocaleTranslationStatusDto;
-type EntryTranslationStatusValue = EntryTranslationStatus['status'];
+type EntryTranslationStatusValue = KangurAiTutorLocaleTranslationStatusDto['status'];
 
 export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
   const { toast } = useToast();
@@ -270,7 +269,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
     );
   }, [parsedState.store, translationStoresByLocale]);
   const translationStatusByEntryId = useMemo(() => {
-    const statuses = new Map<string, EntryTranslationStatus[]>();
+    const statuses = new Map<string, KangurAiTutorLocaleTranslationStatusDto[]>();
     if (!parsedState.store) {
       return statuses;
     }

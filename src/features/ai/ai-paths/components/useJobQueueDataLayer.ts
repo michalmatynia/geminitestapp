@@ -4,7 +4,7 @@ import { useCallback, useMemo, useRef, useState, type Dispatch, type SetStateAct
 
 import type { Toast, ListQuery, MutationResult } from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
-import type { AiPathRunRecord, AiPathRunVisibility } from '@/shared/lib/ai-paths';
+import type { AiPathRunListResult, AiPathRunRecord, AiPathRunVisibility } from '@/shared/lib/ai-paths';
 import {
   cancelAiPathRun,
   clearAiPathRuns,
@@ -45,7 +45,6 @@ export type JobQueueRefetchOptions = {
 
 export type JobQueueRefetchData = (options?: JobQueueRefetchOptions) => void;
 
-type QueueRunsPayload = { runs: AiPathRunRecord[]; total: number };
 type QueueStatusPayload = { status: QueueStatus };
 
 interface JobQueueDataLayerParams {
@@ -77,8 +76,8 @@ interface JobQueueDataLayerResult {
   rememberVisibleOptimisticRun: (run: AiPathRunRecord) => void;
   queueStatusQuery: ListQuery<QueueStatusPayload, QueueStatusPayload>;
   refetchQueueData: JobQueueRefetchData;
-  runsQuery: ListQuery<QueueRunsPayload, QueueRunsPayload>;
-  visibleRunsPayload: QueueRunsPayload;
+  runsQuery: ListQuery<AiPathRunListResult, AiPathRunListResult>;
+  visibleRunsPayload: AiPathRunListResult;
 }
 
 export function useJobQueueDataLayer({
@@ -153,7 +152,7 @@ export function useJobQueueDataLayer({
     [autoRefreshInterval, effectiveAutoRefreshEnabled, isBurstRefreshActive]
   );
 
-  const runsQuery = createListQueryV2<QueueRunsPayload, QueueRunsPayload>({
+  const runsQuery = createListQueryV2<AiPathRunListResult, AiPathRunListResult>({
     queryKey: QUERY_KEYS.ai.aiPaths.jobQueue({
       pathId: normalizedPathFilter,
       source: normalizedSourceFilter,
@@ -180,7 +179,7 @@ export function useJobQueueDataLayer({
       };
       const response = await listAiPathRuns(options);
       if (!response.ok) throw internalError(response.error);
-      return mergeAiPathQueuePayloadWithOptimisticRuns(response.data as QueueRunsPayload, {
+      return mergeAiPathQueuePayloadWithOptimisticRuns(response.data, {
         pathId: normalizedPathFilter || undefined,
         source: normalizedSourceFilter || undefined,
         sourceMode,
@@ -284,7 +283,7 @@ export function useJobQueueDataLayer({
   );
 
   const visibleRunsPayload = useMemo(
-    (): QueueRunsPayload =>
+    (): AiPathRunListResult =>
       optimisticRunsHydrated
         ? previewAiPathQueuePayloadWithOptimisticRuns(
           runsQuery.data ?? { runs: [], total: 0 },

@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 
 import { getProductListQueryKey } from '@/shared/lib/product-query-keys';
 import { safeSetInterval, safeClearInterval, type SafeTimerId } from '@/shared/lib/timers';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 interface BackgroundSyncOptions {
   queryKey: QueryKey;
@@ -52,9 +52,10 @@ export function useBackgroundSync({
         previousDataRef.current = currentData;
       }
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error instanceof Error ? error : new Error(String(error)), {
-        context: { source: 'useBackgroundSync', action: 'backgroundSyncFailed', level: 'warn' },
+      logClientCatch(error, {
+        source: 'useBackgroundSync',
+        action: 'backgroundSyncFailed',
+        level: 'warn',
       });
     }
   };

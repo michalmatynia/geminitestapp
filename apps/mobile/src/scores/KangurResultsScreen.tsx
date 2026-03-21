@@ -25,8 +25,13 @@ import {
   getKangurMobileScoreFamily,
 } from './mobileScoreSummary';
 import { createKangurPracticeHref } from '../practice/practiceHref';
+import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
 import { createKangurResultsHref } from './resultsHref';
 import { useKangurMobileResults } from './useKangurMobileResults';
+import {
+  useKangurMobileResultsAssignments,
+  type KangurMobileResultsAssignmentItem,
+} from './useKangurMobileResultsAssignments';
 import { useKangurMobileResultsDuels } from './useKangurMobileResultsDuels';
 
 function Card({
@@ -469,6 +474,130 @@ function LessonCheckpointRow({
   );
 }
 
+function ResultsAssignmentRow({
+  item,
+}: {
+  item: KangurMobileResultsAssignmentItem;
+}): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+  const priorityTone =
+    item.assignment.priority === 'high'
+      ? {
+          backgroundColor: '#fef2f2',
+          borderColor: '#fecaca',
+          textColor: '#b91c1c',
+        }
+      : item.assignment.priority === 'medium'
+        ? {
+            backgroundColor: '#fffbeb',
+            borderColor: '#fde68a',
+            textColor: '#b45309',
+          }
+        : {
+            backgroundColor: '#eff6ff',
+            borderColor: '#bfdbfe',
+            textColor: '#1d4ed8',
+          };
+
+  return (
+    <View
+      style={{
+        borderRadius: 18,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        backgroundColor: '#ffffff',
+        padding: 12,
+        gap: 8,
+      }}
+    >
+      <View
+        style={{
+          alignSelf: 'flex-start',
+          borderRadius: 999,
+          borderWidth: 1,
+          borderColor: priorityTone.borderColor,
+          backgroundColor: priorityTone.backgroundColor,
+          paddingHorizontal: 12,
+          paddingVertical: 7,
+        }}
+      >
+        <Text style={{ color: priorityTone.textColor, fontSize: 12, fontWeight: '700' }}>
+          {copy({
+            de:
+              item.assignment.priority === 'high'
+                ? 'Hohe Priorität'
+                : item.assignment.priority === 'medium'
+                  ? 'Mittlere Priorität'
+                  : 'Niedrige Priorität',
+            en:
+              item.assignment.priority === 'high'
+                ? 'High priority'
+                : item.assignment.priority === 'medium'
+                  ? 'Medium priority'
+                  : 'Low priority',
+            pl:
+              item.assignment.priority === 'high'
+                ? 'Priorytet wysoki'
+                : item.assignment.priority === 'medium'
+                  ? 'Priorytet średni'
+                  : 'Priorytet niski',
+          })}
+        </Text>
+      </View>
+      <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
+        {item.assignment.title}
+      </Text>
+      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+        {item.assignment.description}
+      </Text>
+      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+        {copy({
+          de: `Ziel: ${item.assignment.target}`,
+          en: `Goal: ${item.assignment.target}`,
+          pl: `Cel: ${item.assignment.target}`,
+        })}
+      </Text>
+      {item.href ? (
+        <Link href={item.href} asChild>
+          <Pressable
+            accessibilityRole='button'
+            style={{
+              alignSelf: 'flex-start',
+              borderRadius: 999,
+              backgroundColor: '#0f172a',
+              paddingHorizontal: 12,
+              paddingVertical: 9,
+            }}
+          >
+            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+              {translateKangurMobileActionLabel(item.assignment.action.label, locale)}
+            </Text>
+          </Pressable>
+        </Link>
+      ) : (
+        <View
+          style={{
+            alignSelf: 'flex-start',
+            borderRadius: 999,
+            backgroundColor: '#e2e8f0',
+            paddingHorizontal: 12,
+            paddingVertical: 9,
+          }}
+        >
+          <Text style={{ color: '#475569', fontWeight: '700' }}>
+            {translateKangurMobileActionLabel(item.assignment.action.label, locale)} ·{' '}
+            {copy({
+              de: 'bald',
+              en: 'soon',
+              pl: 'wkrotce',
+            })}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
 export function KangurResultsScreen(): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const router = useRouter();
@@ -483,6 +612,7 @@ export function KangurResultsScreen(): React.JSX.Element {
     operation: filterOperation,
   });
   const duelResults = useKangurMobileResultsDuels();
+  const resultsAssignments = useKangurMobileResultsAssignments();
   const lessonCheckpoints = useKangurMobileLessonCheckpoints({ limit: 2 });
   const strongestOperation = results.operationPerformance[0] ?? null;
   const weakestOperation =
@@ -771,6 +901,48 @@ export function KangurResultsScreen(): React.JSX.Element {
                   </View>
                 </Card>
               ) : null}
+
+              <Card>
+                <View style={{ gap: 4 }}>
+                  <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                    {copy({
+                      de: 'Nächste Schritte',
+                      en: 'Next steps',
+                      pl: 'Następne kroki',
+                    })}
+                  </Text>
+                  <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+                    {copy({
+                      de: 'Lokale Aufgaben nach den Ergebnissen',
+                      en: 'Local tasks after results',
+                      pl: 'Lokalne zadania po wynikach',
+                    })}
+                  </Text>
+                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({
+                      de: 'Nach dem Blick auf die letzten Ergebnisse kannst du direkt in die nächsten lokalen Aufgaben aus deinem Fortschritt wechseln.',
+                      en: 'After reviewing recent results, you can jump straight into the next local tasks from your progress.',
+                      pl: 'Po sprawdzeniu ostatnich wyników możesz od razu przejść do kolejnych lokalnych zadań wynikających z Twojego postępu.',
+                    })}
+                  </Text>
+                </View>
+
+                {resultsAssignments.assignmentItems.length === 0 ? (
+                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({
+                      de: 'Es gibt noch keine lokalen Aufgaben. Öffne Lektionen oder absolviere weitere Trainings, um den nächsten Plan aufzubauen.',
+                      en: 'There are no local tasks yet. Open lessons or complete more practice to build the next plan.',
+                      pl: 'Nie ma jeszcze lokalnych zadań. Otwórz lekcje albo wykonaj kolejne treningi, aby zbudować następny plan.',
+                    })}
+                  </Text>
+                ) : (
+                  <View style={{ gap: 10 }}>
+                    {resultsAssignments.assignmentItems.map((item) => (
+                      <ResultsAssignmentRow key={item.assignment.id} item={item} />
+                    ))}
+                  </View>
+                )}
+              </Card>
 
               <Card>
                 <View style={{ gap: 4 }}>

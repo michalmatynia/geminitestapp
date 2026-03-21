@@ -1,5 +1,5 @@
 import type { HttpResult } from '@/shared/contracts/http';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export const resolveApiUrl = (url: string): string => {
   if (url.startsWith('http://') || url.startsWith('https://')) {
@@ -21,6 +21,7 @@ export async function apiFetch<T>(
 ): Promise<HttpResult<T>> {
   const { timeoutMs = 15000, ...fetchOptions } = options ?? {};
   const callerSignal = fetchOptions.signal;
+  const resolvedUrl = resolveApiUrl(url);
   const abortController = typeof AbortController !== 'undefined' ? new AbortController() : null;
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   let timedOut = false;
@@ -45,7 +46,6 @@ export async function apiFetch<T>(
   }
 
   try {
-    const resolvedUrl = resolveApiUrl(url);
     const res = await fetch(resolvedUrl, {
       ...fetchOptions,
       ...(abortController ? { signal: abortController.signal } : {}),
@@ -63,7 +63,14 @@ export async function apiFetch<T>(
     const data = (await res.json()) as T;
     return { ok: true, data };
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'ai-paths.api-client',
+      action: 'apiFetch',
+      url: resolvedUrl,
+      method: fetchOptions.method ?? 'GET',
+      timeoutMs,
+      timedOut,
+    });
     if (timedOut) {
       return {
         ok: false,

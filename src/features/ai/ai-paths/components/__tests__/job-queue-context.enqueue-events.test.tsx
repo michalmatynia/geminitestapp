@@ -5,7 +5,7 @@ import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AI_PATH_RUN_ENQUEUED_EVENT_NAME } from '@/shared/contracts/ai-paths';
-import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathRunListResult, AiPathRunRecord } from '@/shared/lib/ai-paths';
 import {
   listOptimisticAiPathRuns,
   rememberOptimisticAiPathRun,
@@ -58,7 +58,7 @@ vi.mock('@/shared/lib/ai-paths', () => ({
   retryAiPathRunNode: (...args: unknown[]) => mocks.retryAiPathRunNodeMock(...args),
 }));
 
-let jobQueueRunsData: { runs: AiPathRunRecord[]; total: number } = { runs: [], total: 0 };
+let jobQueueRunsData: AiPathRunListResult = { runs: [], total: 0 };
 
 const renderProvider = () =>
   render(

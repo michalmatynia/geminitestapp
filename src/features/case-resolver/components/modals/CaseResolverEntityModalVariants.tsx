@@ -10,27 +10,13 @@ import {
   CaseResolverEntitySettingsModal,
   CaseResolverEntitySettingsModalProvider,
 } from './CaseResolverEntitySettingsModal';
+import type {
+  CaseResolverCategoryFormData,
+  CaseResolverIdentifierFormData,
+  CaseResolverTagFormData,
+} from '../../entity-form-data';
 
 import type { CaseResolverCategory, CaseResolverIdentifier, CaseResolverTag } from '../../types';
-
-type CategoryFormData = {
-  name: string;
-  description: string;
-  color: string;
-  parentId: string | null;
-};
-
-type CaseIdentifierFormData = {
-  name: string;
-  color: string;
-  parentId: string | null;
-};
-
-type TagFormData = {
-  name: string;
-  color: string;
-  parentId: string | null;
-};
 
 const ROOT_CATEGORY_OPTION: LabeledOptionDto<string> = { value: '__root__', label: 'Root' };
 const ROOT_IDENTIFIER_OPTION: LabeledOptionDto<string> = {
@@ -106,8 +92,8 @@ function CaseResolverConfiguredEntityModal<TItem, TForm extends object>({
 }
 
 interface CaseResolverCategoryModalProps extends EntityModalProps<CaseResolverCategory> {
-  formData: CategoryFormData;
-  setFormData: React.Dispatch<React.SetStateAction<CategoryFormData>>;
+  formData: CaseResolverCategoryFormData;
+  setFormData: React.Dispatch<React.SetStateAction<CaseResolverCategoryFormData>>;
   parentOptions: Array<LabeledOptionDto<string>>;
   isSaving: boolean;
   onSave: () => void;
@@ -123,7 +109,7 @@ export function CaseResolverCategoryModal(
     [parentOptions]
   );
 
-  const fields: SettingsPanelField<CategoryFormData>[] = useMemo(
+  const fields: SettingsPanelField<CaseResolverCategoryFormData>[] = useMemo(
     () => [
       {
         key: 'name',
@@ -173,8 +159,8 @@ export function CaseResolverCategoryModal(
 }
 
 interface CaseResolverIdentifierModalProps extends EntityModalProps<CaseResolverIdentifier> {
-  formData: CaseIdentifierFormData;
-  setFormData: React.Dispatch<React.SetStateAction<CaseIdentifierFormData>>;
+  formData: CaseResolverIdentifierFormData;
+  setFormData: React.Dispatch<React.SetStateAction<CaseResolverIdentifierFormData>>;
   parentIdentifierOptions: Array<LabeledOptionDto<string>>;
   isSaving: boolean;
   onSave: () => void;
@@ -199,7 +185,7 @@ export function CaseResolverIdentifierModal(
     [parentIdentifierOptions]
   );
 
-  const fields: SettingsPanelField<CaseIdentifierFormData>[] = useMemo(
+  const fields: SettingsPanelField<CaseResolverIdentifierFormData>[] = useMemo(
     () => [
       {
         key: 'name',
@@ -243,8 +229,8 @@ export function CaseResolverIdentifierModal(
 }
 
 interface CaseResolverTagModalProps extends EntityModalProps<CaseResolverTag> {
-  formData: TagFormData;
-  setFormData: React.Dispatch<React.SetStateAction<TagFormData>>;
+  formData: CaseResolverTagFormData;
+  setFormData: React.Dispatch<React.SetStateAction<CaseResolverTagFormData>>;
   parentTagOptions: Array<LabeledOptionDto<string>>;
   isSaving: boolean;
   onSave: () => void;
@@ -256,7 +242,7 @@ export function CaseResolverTagModal(props: CaseResolverTagModalProps): React.JS
 
   const tagOptions = useMemo(() => [ROOT_TAG_OPTION, ...parentTagOptions], [parentTagOptions]);
 
-  const fields: SettingsPanelField<TagFormData>[] = useMemo(
+  const fields: SettingsPanelField<CaseResolverTagFormData>[] = useMemo(
     () => [
       {
         key: 'name',

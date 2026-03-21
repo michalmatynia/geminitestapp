@@ -1,5 +1,6 @@
 import { getActiveOtelContextAttributes } from '@/shared/lib/observability/otel-context';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 
 
 /**
@@ -165,20 +166,21 @@ export const logger = {
     // Integration with centralized observability (Client-side)
     // Only call if no handlers are registered to prevent duplicate logging
     if (typeof window !== 'undefined' && handlers.length === 0) {
-      void (async (): Promise<void> => {
-        try {
-          const { logClientError } =
-            await import('@/shared/utils/observability/client-error-logger');
-          const err = error instanceof Error ? error : new Error(message);
-          logClientError(err, {
-            context: { source: 'shared-logger', message, ...combinedContext },
-          });
-        } catch (error) {
-          logClientError(error);
-        
-          // Fallback if logClientError fails or import fails
-        }
-      })();
+      try {
+        const err = error instanceof Error ? error : new Error(message);
+        logClientCatch(err, {
+          source: 'shared-logger',
+          action: 'logger.error',
+          message,
+          ...combinedContext,
+        });
+      } catch (error) {
+        reportObservabilityInternalError(error, {
+          source: 'shared.logger',
+          action: 'forwardClientError',
+          message,
+        });
+      }
     }
   },
   log: (message: string, context?: Record<string, unknown>): void => {

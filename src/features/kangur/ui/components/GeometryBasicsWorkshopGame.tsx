@@ -41,7 +41,7 @@ import {
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type {
-  KangurMiniGameFeedback,
+  KangurMiniGameFeedbackState,
   KangurMiniGameFinishProps,
   KangurRewardBreakdownEntry,
 } from '@/features/kangur/ui/types';
@@ -67,8 +67,6 @@ type RoundState = {
   pool: LabelTile[];
   slot: LabelTile | null;
 };
-
-type Feedback = KangurMiniGameFeedback | null;
 
 const LABEL_TILES: LabelTile[] = [
   { id: 'point', icon: '●', accent: 'sky' },
@@ -289,7 +287,7 @@ export default function GeometryBasicsWorkshopGame({
   const [roundState, setRoundState] = useState<RoundState>(() => buildRoundState());
   const [selectedTileId, setSelectedTileId] = useState<TileId | null>(null);
   const [checked, setChecked] = useState(false);
-  const [feedback, setFeedback] = useState<Feedback>(null);
+  const [feedback, setFeedback] = useState<KangurMiniGameFeedbackState>(null);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);

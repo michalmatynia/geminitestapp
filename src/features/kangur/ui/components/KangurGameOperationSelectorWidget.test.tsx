@@ -27,6 +27,12 @@ const { localeState } = vi.hoisted(() => ({
   },
 }));
 
+const { translationState } = vi.hoisted(() => ({
+  translationState: {
+    missing: false,
+  },
+}));
+
 const lessonsState = vi.hoisted(() => ({
   value: [] as Array<Record<string, unknown>>,
 }));
@@ -36,25 +42,27 @@ vi.mock('next-intl', () => ({
   useTranslations:
     (namespace?: string) =>
     (key: string) =>
-      (
-        {
-          'KangurGamePage.operationSelector.title': {
-            de: "Los geht's!",
-            en: "Let's play!",
-            pl: 'Grajmy!',
-          },
-          'KangurGamePage.screens.training.label': {
-            de: 'Training einrichten',
-            en: 'Training setup',
-            pl: 'Konfiguracja treningu',
-          },
-          'KangurGamePage.screens.training.wordmarkLabel': {
-            de: 'Training',
-            en: 'Training',
-            pl: 'Trening',
-          },
-        } as const
-      )[`${namespace}.${key}`]?.[localeState.value] ?? key,
+      translationState.missing
+        ? key
+        : (
+            {
+              'KangurGamePage.operationSelector.title': {
+                de: "Los geht's!",
+                en: "Let's play!",
+                pl: 'Grajmy!',
+              },
+              'KangurGamePage.screens.training.label': {
+                de: 'Training einrichten',
+                en: 'Training setup',
+                pl: 'Konfiguracja treningu',
+              },
+              'KangurGamePage.screens.training.wordmarkLabel': {
+                de: 'Training',
+                en: 'Training',
+                pl: 'Trening',
+              },
+            } as const
+          )[`${namespace}.${key}`]?.[localeState.value] ?? key,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
@@ -177,6 +185,7 @@ describe('KangurGameOperationSelectorWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localeState.value = 'pl';
+    translationState.missing = false;
     getCurrentKangurDailyQuestMock.mockReturnValue(null);
     useKangurSubjectFocusMock.mockReturnValue({
       subject: 'maths',
@@ -432,6 +441,29 @@ describe('KangurGameOperationSelectorWidget', () => {
     expect(text).not.toHaveAttribute('lengthAdjust');
   });
 
+  it('falls back to English operation and quick-practice copy when translations are unavailable', () => {
+    localeState.value = 'en';
+    translationState.missing = true;
+    useKangurGameRuntimeMock.mockReturnValue(buildRuntime(buildProgress()));
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    const art = screen.getByTestId('kangur-grajmy-heading-art');
+    const intro = art.closest('[data-testid="mock-operation-intro"]');
+
+    expect(intro).not.toBeNull();
+    expect(intro).toHaveTextContent(
+      'Choose a game type and jump straight into maths practice.'
+    );
+    expect(screen.getByRole('heading', { name: 'Quick practice' })).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-quick-practice-card-calendar_quiz')).toHaveTextContent(
+      'Calendar practice'
+    );
+    expect(screen.getByTestId('kangur-quick-practice-card-calendar_quiz')).toHaveTextContent(
+      'Check dates, weekdays, and months in short tasks.'
+    );
+  });
+
   it('renders the localized English training wordmark in the training heading art', () => {
     localeState.value = 'en';
     useKangurGameRuntimeMock.mockReturnValue(
@@ -453,6 +485,27 @@ describe('KangurGameOperationSelectorWidget', () => {
     expect(text).toHaveAttribute('font-size', '68');
     expect(text).not.toHaveAttribute('textLength');
     expect(text).not.toHaveAttribute('lengthAdjust');
+  });
+
+  it('falls back to English training copy when translations are unavailable', () => {
+    localeState.value = 'en';
+    translationState.missing = true;
+    useKangurGameRuntimeMock.mockReturnValue(
+      buildRuntime(buildProgress(), {
+        screen: 'training',
+      })
+    );
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    const art = screen.getByTestId('kangur-training-heading-art');
+    const intro = art.closest('[data-testid="mock-operation-intro"]');
+
+    expect(intro).not.toBeNull();
+    expect(intro).toHaveTextContent('Mixed training');
+    expect(intro).toHaveTextContent(
+      'Choose the level, categories, and number of questions for one session.'
+    );
   });
 
   it('renders the localized German play wordmark in the operation heading art', () => {
@@ -514,6 +567,47 @@ describe('KangurGameOperationSelectorWidget', () => {
     expect(text).toHaveAttribute('font-size', '68');
     expect(text).not.toHaveAttribute('textLength');
     expect(text).not.toHaveAttribute('lengthAdjust');
+  });
+
+  it('falls back to German recommendation labels and actions when translations are unavailable', () => {
+    localeState.value = 'de';
+    translationState.missing = true;
+    const progress = buildProgress();
+    const runtime = buildRuntime(progress);
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+    getCurrentKangurDailyQuestMock.mockReturnValue({
+      assignment: {
+        title: '📅 Powtórka: Kalendarz',
+        description: 'Dni i daty potrzebują jeszcze jednej serii.',
+        action: {
+          label: 'Otwórz lekcję',
+          page: 'Lessons',
+          query: {
+            focus: 'calendar',
+          },
+        },
+      },
+      progress: {
+        current: 62,
+        percent: 83,
+        status: 'in_progress',
+        summary: '62% / 75% opanowania',
+        target: 75,
+      },
+    });
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.getByTestId('kangur-operation-recommendation-label')).toHaveTextContent(
+      'Mission des Tages'
+    );
+    expect(screen.getByTestId('kangur-operation-recommendation-action')).toHaveTextContent(
+      'Kalender uben'
+    );
+
+    fireEvent.click(screen.getByTestId('kangur-operation-recommendation-action'));
+
+    expect(runtime.setScreen).toHaveBeenCalledWith('calendar_quiz');
   });
 
   it('falls back to Ukrainian training copy when translations are unavailable', () => {

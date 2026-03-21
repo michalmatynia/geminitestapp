@@ -1,4 +1,4 @@
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 /**
  * Autoformat markdown content:
  * - Trim leading/trailing whitespace
@@ -45,7 +45,12 @@ export const autoformatMarkdown = (text: string): string => {
 
       return `[${title}](${url})`;
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'markdown-utils',
+        action: 'autoformatMarkdownUrlLabel',
+        url,
+        level: 'warn',
+      });
       return `[link](${url})`;
     }
   });

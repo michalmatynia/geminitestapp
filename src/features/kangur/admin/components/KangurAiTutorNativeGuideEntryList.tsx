@@ -5,14 +5,12 @@ import type {
 } from '@/shared/contracts/kangur-ai-tutor-locale-scaffold';
 import { Badge, Card } from '@/features/kangur/shared/ui';
 
-type EntryTranslationStatus = KangurAiTutorLocaleTranslationStatusDto;
-
 type Props = {
   entries: KangurAiTutorNativeGuideEntry[];
   selectedEntryId: string | null;
   onSelect: (entryId: string) => void;
   entryValidationCounts: Map<string, { total: number; blocking: number }>;
-  translationStatusByEntryId: Map<string, EntryTranslationStatus[]>;
+  translationStatusByEntryId: Map<string, KangurAiTutorLocaleTranslationStatusDto[]>;
   className: string;
 };
 

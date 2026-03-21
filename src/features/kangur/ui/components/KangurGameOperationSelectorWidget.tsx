@@ -87,104 +87,745 @@ type LessonQuizOption = LessonQuizDefinition & {
   sortOrder: number;
 };
 
-const LESSON_QUIZ_DEFINITIONS: LessonQuizDefinition[] = [
-  {
-    accent: 'indigo',
-    description: 'Ćwicz odczytywanie godzin i minut w trybie quizu.',
-    emoji: '🕐',
-    label: 'Ćwiczenia z Zegarem',
-    lessonComponentIds: ['clock'],
-    onSelectScreen: 'clock_quiz',
-  },
-  {
-    accent: 'emerald',
-    description: 'Sprawdź daty, dni tygodnia i miesiące w krótkich zadaniach.',
-    emoji: '📅',
-    label: 'Ćwiczenia z Kalendarzem',
-    lessonComponentIds: ['calendar'],
-    onSelectScreen: 'calendar_quiz',
-  },
-  {
-    accent: 'amber',
-    description: 'Szybki quiz z dodawania w rytmie gry z lekcji.',
-    emoji: '➕',
-    label: 'Quiz dodawania',
-    lessonComponentIds: ['adding'],
-    onSelectScreen: 'addition_quiz',
-  },
-  {
-    accent: 'rose',
-    description: 'Szybka seria odejmowania z natychmiastową odpowiedzią.',
-    emoji: '➖',
-    label: 'Quiz odejmowania',
-    lessonComponentIds: ['subtracting'],
-    onSelectScreen: 'subtraction_quiz',
-  },
-  {
-    accent: 'violet',
-    description: 'Sprawdź tabliczkę w krótkim quizie z mnożenia.',
-    emoji: '✖️',
-    label: 'Quiz mnożenia',
-    lessonComponentIds: ['multiplication'],
-    onSelectScreen: 'multiplication_quiz',
-  },
-  {
-    accent: 'emerald',
-    description: 'Szybki quiz z dzielenia na równe grupy.',
-    emoji: '➗',
-    label: 'Quiz dzielenia',
-    lessonComponentIds: ['division'],
-    onSelectScreen: 'division_quiz',
-  },
-  {
-    accent: 'violet',
-    description: 'Rozpoznawaj figury, symetrię i obwody w krótkich wyzwaniach.',
-    emoji: '🔷',
-    label: 'Ćwiczenia z Figurami',
-    lessonComponentIds: KANGUR_GEOMETRY_LESSON_COMPONENT_IDS,
-    onSelectScreen: 'geometry_quiz',
-  },
-  {
-    accent: 'violet',
-    description: 'Uzupełniaj ciągi i sprawdzaj reguły wzorców.',
-    emoji: '🔢',
-    label: 'Quiz wzorców',
-    lessonComponentIds: ['logical_patterns'],
-    onSelectScreen: 'logical_patterns_quiz',
-  },
-  {
-    accent: 'teal',
-    description: 'Grupuj elementy i znajdź wspólne cechy.',
-    emoji: '📦',
-    label: 'Quiz klasyfikacji',
-    lessonComponentIds: ['logical_classification'],
-    onSelectScreen: 'logical_classification_quiz',
-  },
-  {
-    accent: 'rose',
-    description: 'Dopasuj relacje i znajdź właściwe analogie.',
-    emoji: '🔗',
-    label: 'Quiz analogii',
-    lessonComponentIds: ['logical_analogies'],
-    onSelectScreen: 'logical_analogies_quiz',
-  },
-  {
-    accent: 'violet',
-    description: 'Ćwicz szyk zdania, pytania i spójniki w krótkich rundach.',
-    emoji: '🧩',
-    label: 'Quiz składni zdania',
-    lessonComponentIds: ['english_sentence_structure'],
-    onSelectScreen: 'english_sentence_quiz',
-  },
-  {
-    accent: 'sky',
-    description: 'Sortuj słowa według części mowy w krótkich rundach.',
-    emoji: '🎮',
-    label: 'Quiz części mowy',
-    lessonComponentIds: ['english_parts_of_speech'],
-    onSelectScreen: 'english_parts_of_speech_quiz',
-  },
-];
+type OperationSelectorFallbackCopy = {
+  operationSelectorTitle: string;
+  trainingSetupTitle: string;
+  trainingSetupWordmarkLabel: string;
+  trainingSetupDescription: string;
+  intro: {
+    maths: string;
+    alphabet: string;
+    geometry: string;
+    language: string;
+  };
+  quickPractice: {
+    title: string;
+    description: string;
+    groupAria: (group: string) => string;
+    cardAria: (label: string) => string;
+    gameChip: string;
+  };
+  lessonQuizDefinitions: LessonQuizDefinition[];
+  recommendation: {
+    actions: {
+      playAddition: string;
+      playSubtraction: string;
+      playMultiplication: string;
+      playDivision: string;
+      playClock: string;
+      startMixedTraining: string;
+      playFractions: string;
+      playPowers: string;
+      playRoots: string;
+      practiceCalendar: string;
+      practiceGeometry: string;
+      practiceSubtraction: string;
+      practiceDivision: string;
+      practiceMultiplication: string;
+      startTraining: string;
+      playNow: string;
+    };
+    questLabel: string;
+    weakestLesson: {
+      description: (masteryPercent: number) => string;
+      label: string;
+      title: (title: string) => string;
+    };
+    track: {
+      descriptionWithActivity: (track: string, activity: string) => string;
+      descriptionDefault: (track: string) => string;
+      label: string;
+      title: (track: string) => string;
+    };
+    guided: {
+      descriptionWithActivity: (summary: string, activity: string, nextBadgeName: string) => string;
+      descriptionDefault: (summary: string, nextBadgeName: string) => string;
+      label: string;
+      title: (nextBadgeName: string) => string;
+    };
+    fallback: {
+      description: (activity: string, averageXpPerSession: number) => string;
+      label: string;
+      title: (activity: string) => string;
+    };
+  };
+};
+
+const getOperationSelectorFallbackCopy = (
+  locale: ReturnType<typeof normalizeSiteLocale>
+): OperationSelectorFallbackCopy => {
+  if (locale === 'uk') {
+    return {
+      operationSelectorTitle: 'Граймо!',
+      trainingSetupTitle: 'Налаштування тренування',
+      trainingSetupWordmarkLabel: 'Тренування',
+      trainingSetupDescription: 'Налаштуйте змішане тренування й виберіть діапазон запитань.',
+      intro: {
+        maths: 'Виберіть тип гри й переходьте просто до математичної забави.',
+        alphabet: 'Виберіть літерну забаву й тренуйте алфавіт.',
+        geometry: 'Виберіть забаву з формами й тренуйте геометрію.',
+        language: 'Виберіть тип мовної гри й переходьте просто до вправ.',
+      },
+      quickPractice: {
+        title: 'Швидкі вправи',
+        description: 'Швидкі вікторини на основі тем з уроків.',
+        groupAria: (group) => `${group} швидкі вправи`,
+        cardAria: (label) => `Швидка вправа: ${label}`,
+        gameChip: 'Гра',
+      },
+      lessonQuizDefinitions: [
+        {
+          accent: 'indigo',
+          description: 'Тренуйте читання годин і хвилин у режимі вікторини.',
+          emoji: '🕐',
+          label: 'Вправи з годинником',
+          lessonComponentIds: ['clock'],
+          onSelectScreen: 'clock_quiz',
+        },
+        {
+          accent: 'emerald',
+          description: 'Перевіряйте дати, дні тижня і місяці в коротких завданнях.',
+          emoji: '📅',
+          label: 'Вправи з календарем',
+          lessonComponentIds: ['calendar'],
+          onSelectScreen: 'calendar_quiz',
+        },
+        {
+          accent: 'amber',
+          description: 'Швидка вікторина з додавання в ритмі гри з уроку.',
+          emoji: '➕',
+          label: 'Вікторина з додавання',
+          lessonComponentIds: ['adding'],
+          onSelectScreen: 'addition_quiz',
+        },
+        {
+          accent: 'rose',
+          description: 'Швидка серія віднімання з миттєвою відповіддю.',
+          emoji: '➖',
+          label: 'Вікторина з віднімання',
+          lessonComponentIds: ['subtracting'],
+          onSelectScreen: 'subtraction_quiz',
+        },
+        {
+          accent: 'violet',
+          description: 'Перевіряйте таблицю множення в короткій вікторині.',
+          emoji: '✖️',
+          label: 'Вікторина з множення',
+          lessonComponentIds: ['multiplication'],
+          onSelectScreen: 'multiplication_quiz',
+        },
+        {
+          accent: 'emerald',
+          description: 'Швидка вікторина з ділення на рівні групи.',
+          emoji: '➗',
+          label: 'Вікторина з ділення',
+          lessonComponentIds: ['division'],
+          onSelectScreen: 'division_quiz',
+        },
+        {
+          accent: 'violet',
+          description: 'Розпізнавайте фігури, симетрію та периметри в коротких викликах.',
+          emoji: '🔷',
+          label: 'Вправи з фігурами',
+          lessonComponentIds: KANGUR_GEOMETRY_LESSON_COMPONENT_IDS,
+          onSelectScreen: 'geometry_quiz',
+        },
+        {
+          accent: 'violet',
+          description: 'Доповнюйте послідовності й перевіряйте правила візерунків.',
+          emoji: '🔢',
+          label: 'Вікторина з візерунків',
+          lessonComponentIds: ['logical_patterns'],
+          onSelectScreen: 'logical_patterns_quiz',
+        },
+        {
+          accent: 'teal',
+          description: 'Групуйте елементи й знаходьте спільні ознаки.',
+          emoji: '📦',
+          label: 'Вікторина з класифікації',
+          lessonComponentIds: ['logical_classification'],
+          onSelectScreen: 'logical_classification_quiz',
+        },
+        {
+          accent: 'rose',
+          description: 'Добирайте зв’язки й знаходьте правильні аналогії.',
+          emoji: '🔗',
+          label: 'Вікторина з аналогій',
+          lessonComponentIds: ['logical_analogies'],
+          onSelectScreen: 'logical_analogies_quiz',
+        },
+        {
+          accent: 'violet',
+          description: 'Тренуйте порядок речення, питання і сполучники в коротких раундах.',
+          emoji: '🧩',
+          label: 'Вікторина з будови речення',
+          lessonComponentIds: ['english_sentence_structure'],
+          onSelectScreen: 'english_sentence_quiz',
+        },
+        {
+          accent: 'sky',
+          description: 'Сортуйте слова за частинами мови в коротких раундах.',
+          emoji: '🎮',
+          label: 'Вікторина з частин мови',
+          lessonComponentIds: ['english_parts_of_speech'],
+          onSelectScreen: 'english_parts_of_speech_quiz',
+        },
+      ],
+      recommendation: {
+        actions: {
+          playAddition: 'Грати в додавання',
+          playSubtraction: 'Грати у віднімання',
+          playMultiplication: 'Грати в множення',
+          playDivision: 'Грати в ділення',
+          playClock: 'Грати з годинником',
+          startMixedTraining: 'Запустити змішане тренування',
+          playFractions: 'Грати в дроби',
+          playPowers: 'Грати в степені',
+          playRoots: 'Грати в корені',
+          practiceCalendar: 'Тренувати календар',
+          practiceGeometry: 'Тренувати фігури',
+          practiceSubtraction: 'Тренувати віднімання',
+          practiceDivision: 'Тренувати ділення',
+          practiceMultiplication: 'Тренувати множення',
+          startTraining: 'Запустити тренування',
+          playNow: 'Грати зараз',
+        },
+        questLabel: 'Місія дня',
+        weakestLesson: {
+          description: (masteryPercent) =>
+            `Опрацювання ${masteryPercent}%. Один вдалий раунд допоможе швидше закрити цю тему перед наступним уроком.`,
+          label: 'Наздоганяємо уроки',
+          title: (title) => `Спершу покращ: ${title}`,
+        },
+        track: {
+          descriptionWithActivity: (track, activity) =>
+            `Доріжка ${track} зараз найближча до нагороди. Найсильніше її просуває ${activity}.`,
+          descriptionDefault: (track) => `Доріжка ${track} зараз найближча до наступного значка.`,
+          label: 'Доріжка значків',
+          title: (track) => `Розжени доріжку: ${track}`,
+        },
+        guided: {
+          descriptionWithActivity: (summary, activity, nextBadgeName) =>
+            `У тебе вже є ${summary} у рекомендованому ритмі. Ще один сильний раунд ${activity} допоможе закрити значок ${nextBadgeName}.`,
+          descriptionDefault: (summary, nextBadgeName) =>
+            `У тебе вже є ${summary} у рекомендованому ритмі. Ще один сильний раунд допоможе закрити значок ${nextBadgeName}.`,
+          label: 'Рекомендований напрям',
+          title: (nextBadgeName) => `Закрий: ${nextBadgeName}`,
+        },
+        fallback: {
+          description: (activity, averageXpPerSession) =>
+            `${activity} зараз дає в середньому ${averageXpPerSession} XP за гру. Це найкращий хід на наступний раунд.`,
+          label: 'Сильна серія',
+          title: (activity) => `Грай далі в: ${activity}`,
+        },
+      },
+    };
+  }
+
+  if (locale === 'de') {
+    return {
+      operationSelectorTitle: "Los geht's!",
+      trainingSetupTitle: 'Gemischtes Training',
+      trainingSetupWordmarkLabel: 'Training',
+      trainingSetupDescription:
+        'Wahle Niveau, Kategorien und die Anzahl der Fragen fur eine Sitzung.',
+      intro: {
+        maths: 'Wahle einen Spieltyp und starte direkt mit dem Mathematiktraining.',
+        alphabet: 'Wahle ein Buchstabenspiel und ube das Alphabet.',
+        geometry: 'Wahle ein Formenspiel und ube Geometrie.',
+        language: 'Wahle einen Sprachspieltyp und starte direkt ins Uben.',
+      },
+      quickPractice: {
+        title: 'Schnelles Uben',
+        description: 'Kurze Quizrunden auf Basis von Lektionsthemen.',
+        groupAria: (group) => `${group} schnelles Uben`,
+        cardAria: (label) => `Schnelles Uben: ${label}`,
+        gameChip: 'Spiel',
+      },
+      lessonQuizDefinitions: [
+        {
+          accent: 'indigo',
+          description: 'Ube das Lesen von Stunden und Minuten im Quizmodus.',
+          emoji: '🕐',
+          label: 'Uhrzeitubung',
+          lessonComponentIds: ['clock'],
+          onSelectScreen: 'clock_quiz',
+        },
+        {
+          accent: 'emerald',
+          description: 'Prufe Daten, Wochentage und Monate in kurzen Aufgaben.',
+          emoji: '📅',
+          label: 'Kalenderubung',
+          lessonComponentIds: ['calendar'],
+          onSelectScreen: 'calendar_quiz',
+        },
+        {
+          accent: 'amber',
+          description: 'Ein schnelles Additionsquiz im Rhythmus des Lernspiels.',
+          emoji: '➕',
+          label: 'Additionsquiz',
+          lessonComponentIds: ['adding'],
+          onSelectScreen: 'addition_quiz',
+        },
+        {
+          accent: 'rose',
+          description: 'Eine schnelle Subtraktionsserie mit sofortiger Antwort.',
+          emoji: '➖',
+          label: 'Subtraktionsquiz',
+          lessonComponentIds: ['subtracting'],
+          onSelectScreen: 'subtraction_quiz',
+        },
+        {
+          accent: 'violet',
+          description: 'Prufe das Einmaleins in einem kurzen Quiz.',
+          emoji: '✖️',
+          label: 'Multiplikationsquiz',
+          lessonComponentIds: ['multiplication'],
+          onSelectScreen: 'multiplication_quiz',
+        },
+        {
+          accent: 'emerald',
+          description: 'Ein schnelles Divisionsquiz mit gleichen Gruppen.',
+          emoji: '➗',
+          label: 'Divisionsquiz',
+          lessonComponentIds: ['division'],
+          onSelectScreen: 'division_quiz',
+        },
+        {
+          accent: 'violet',
+          description: 'Erkenne Formen, Symmetrie und Umfang in kurzen Herausforderungen.',
+          emoji: '🔷',
+          label: 'Formenubung',
+          lessonComponentIds: KANGUR_GEOMETRY_LESSON_COMPONENT_IDS,
+          onSelectScreen: 'geometry_quiz',
+        },
+        {
+          accent: 'violet',
+          description: 'Erganze Reihen und prufe Musterregeln.',
+          emoji: '🔢',
+          label: 'Musterquiz',
+          lessonComponentIds: ['logical_patterns'],
+          onSelectScreen: 'logical_patterns_quiz',
+        },
+        {
+          accent: 'teal',
+          description: 'Ordne Elemente und finde gemeinsame Merkmale.',
+          emoji: '📦',
+          label: 'Klassifikationsquiz',
+          lessonComponentIds: ['logical_classification'],
+          onSelectScreen: 'logical_classification_quiz',
+        },
+        {
+          accent: 'rose',
+          description: 'Ordne Beziehungen zu und finde die passenden Analogien.',
+          emoji: '🔗',
+          label: 'Analogiequiz',
+          lessonComponentIds: ['logical_analogies'],
+          onSelectScreen: 'logical_analogies_quiz',
+        },
+        {
+          accent: 'violet',
+          description: 'Ube Satzbau, Fragen und Konjunktionen in kurzen Runden.',
+          emoji: '🧩',
+          label: 'Satzbauquiz',
+          lessonComponentIds: ['english_sentence_structure'],
+          onSelectScreen: 'english_sentence_quiz',
+        },
+        {
+          accent: 'sky',
+          description: 'Sortiere Worter nach Wortarten in kurzen Runden.',
+          emoji: '🎮',
+          label: 'Wortartenquiz',
+          lessonComponentIds: ['english_parts_of_speech'],
+          onSelectScreen: 'english_parts_of_speech_quiz',
+        },
+      ],
+      recommendation: {
+        actions: {
+          playAddition: 'Addition spielen',
+          playSubtraction: 'Subtraktion spielen',
+          playMultiplication: 'Multiplikation spielen',
+          playDivision: 'Division spielen',
+          playClock: 'Uhr spielen',
+          startMixedTraining: 'Gemischtes Training starten',
+          playFractions: 'Bruche spielen',
+          playPowers: 'Potenzen spielen',
+          playRoots: 'Wurzeln spielen',
+          practiceCalendar: 'Kalender uben',
+          practiceGeometry: 'Formen uben',
+          practiceSubtraction: 'Subtraktion uben',
+          practiceDivision: 'Division uben',
+          practiceMultiplication: 'Multiplikation uben',
+          startTraining: 'Training starten',
+          playNow: 'Jetzt spielen',
+        },
+        questLabel: 'Mission des Tages',
+        weakestLesson: {
+          description: (masteryPercent) =>
+            `Beherrschung ${masteryPercent}%. Eine gute Runde schliesst dieses Thema vor der nachsten Lektion schneller.`,
+          label: 'Lektionen nachholen',
+          title: (title) => `Zuerst verbessern: ${title}`,
+        },
+        track: {
+          descriptionWithActivity: (track, activity) =>
+            `Der Pfad ${track} ist einer Belohnung am nachsten. Gerade schiebt ${activity} ihn am starksten.`,
+          descriptionDefault: (track) =>
+            `Der Pfad ${track} ist dem nachsten Abzeichen am nachsten.`,
+          label: 'Abzeichenpfad',
+          title: (track) => `Pfad anschieben: ${track}`,
+        },
+        guided: {
+          descriptionWithActivity: (summary, activity, nextBadgeName) =>
+            `Du hast bereits ${summary} im empfohlenen Rhythmus. Noch eine starke Runde ${activity} hilft, das Abzeichen ${nextBadgeName} abzuschliessen.`,
+          descriptionDefault: (summary, nextBadgeName) =>
+            `Du hast bereits ${summary} im empfohlenen Rhythmus. Noch eine starke Runde hilft, das Abzeichen ${nextBadgeName} abzuschliessen.`,
+          label: 'Empfohlene Richtung',
+          title: (nextBadgeName) => `Schliesse ab: ${nextBadgeName}`,
+        },
+        fallback: {
+          description: (activity, averageXpPerSession) =>
+            `${activity} bringt derzeit durchschnittlich ${averageXpPerSession} XP pro Spiel. Das ist der beste Zug fur die nachste Runde.`,
+          label: 'Starke Serie',
+          title: (activity) => `Spiel weiter in: ${activity}`,
+        },
+      },
+    };
+  }
+
+  if (locale === 'en') {
+    return {
+      operationSelectorTitle: "Let's play!",
+      trainingSetupTitle: 'Mixed training',
+      trainingSetupWordmarkLabel: 'Training',
+      trainingSetupDescription: 'Choose the level, categories, and number of questions for one session.',
+      intro: {
+        maths: 'Choose a game type and jump straight into maths practice.',
+        alphabet: 'Choose a letter game and practise the alphabet.',
+        geometry: 'Choose a shapes game and practise geometry.',
+        language: 'Choose a language game type and jump straight into practice.',
+      },
+      quickPractice: {
+        title: 'Quick practice',
+        description: 'Quick quizzes based on lesson topics.',
+        groupAria: (group) => `${group} quick practice`,
+        cardAria: (label) => `Quick practice: ${label}`,
+        gameChip: 'Game',
+      },
+      lessonQuizDefinitions: [
+        {
+          accent: 'indigo',
+          description: 'Practise reading hours and minutes in quiz mode.',
+          emoji: '🕐',
+          label: 'Clock practice',
+          lessonComponentIds: ['clock'],
+          onSelectScreen: 'clock_quiz',
+        },
+        {
+          accent: 'emerald',
+          description: 'Check dates, weekdays, and months in short tasks.',
+          emoji: '📅',
+          label: 'Calendar practice',
+          lessonComponentIds: ['calendar'],
+          onSelectScreen: 'calendar_quiz',
+        },
+        {
+          accent: 'amber',
+          description: 'A quick addition quiz in the rhythm of the lesson game.',
+          emoji: '➕',
+          label: 'Addition quiz',
+          lessonComponentIds: ['adding'],
+          onSelectScreen: 'addition_quiz',
+        },
+        {
+          accent: 'rose',
+          description: 'A quick subtraction streak with instant feedback.',
+          emoji: '➖',
+          label: 'Subtraction quiz',
+          lessonComponentIds: ['subtracting'],
+          onSelectScreen: 'subtraction_quiz',
+        },
+        {
+          accent: 'violet',
+          description: 'Check the times table in a short multiplication quiz.',
+          emoji: '✖️',
+          label: 'Multiplication quiz',
+          lessonComponentIds: ['multiplication'],
+          onSelectScreen: 'multiplication_quiz',
+        },
+        {
+          accent: 'emerald',
+          description: 'A quick division quiz based on equal groups.',
+          emoji: '➗',
+          label: 'Division quiz',
+          lessonComponentIds: ['division'],
+          onSelectScreen: 'division_quiz',
+        },
+        {
+          accent: 'violet',
+          description: 'Recognize shapes, symmetry, and perimeter in short challenges.',
+          emoji: '🔷',
+          label: 'Shapes practice',
+          lessonComponentIds: KANGUR_GEOMETRY_LESSON_COMPONENT_IDS,
+          onSelectScreen: 'geometry_quiz',
+        },
+        {
+          accent: 'violet',
+          description: 'Complete sequences and check the rules behind patterns.',
+          emoji: '🔢',
+          label: 'Patterns quiz',
+          lessonComponentIds: ['logical_patterns'],
+          onSelectScreen: 'logical_patterns_quiz',
+        },
+        {
+          accent: 'teal',
+          description: 'Group items and find shared traits.',
+          emoji: '📦',
+          label: 'Classification quiz',
+          lessonComponentIds: ['logical_classification'],
+          onSelectScreen: 'logical_classification_quiz',
+        },
+        {
+          accent: 'rose',
+          description: 'Match relationships and find the right analogies.',
+          emoji: '🔗',
+          label: 'Analogies quiz',
+          lessonComponentIds: ['logical_analogies'],
+          onSelectScreen: 'logical_analogies_quiz',
+        },
+        {
+          accent: 'violet',
+          description: 'Practise sentence order, questions, and conjunctions in short rounds.',
+          emoji: '🧩',
+          label: 'Sentence structure quiz',
+          lessonComponentIds: ['english_sentence_structure'],
+          onSelectScreen: 'english_sentence_quiz',
+        },
+        {
+          accent: 'sky',
+          description: 'Sort words by parts of speech in short rounds.',
+          emoji: '🎮',
+          label: 'Parts of speech quiz',
+          lessonComponentIds: ['english_parts_of_speech'],
+          onSelectScreen: 'english_parts_of_speech_quiz',
+        },
+      ],
+      recommendation: {
+        actions: {
+          playAddition: 'Play addition',
+          playSubtraction: 'Play subtraction',
+          playMultiplication: 'Play multiplication',
+          playDivision: 'Play division',
+          playClock: 'Play the clock',
+          startMixedTraining: 'Start mixed training',
+          playFractions: 'Play fractions',
+          playPowers: 'Play powers',
+          playRoots: 'Play roots',
+          practiceCalendar: 'Practise calendar',
+          practiceGeometry: 'Practise shapes',
+          practiceSubtraction: 'Practise subtraction',
+          practiceDivision: 'Practise division',
+          practiceMultiplication: 'Practise multiplication',
+          startTraining: 'Start training',
+          playNow: 'Play now',
+        },
+        questLabel: 'Mission of the day',
+        weakestLesson: {
+          description: (masteryPercent) =>
+            `Mastery ${masteryPercent}%. One good round will close this topic faster before the next lesson.`,
+          label: 'Recover lessons',
+          title: (title) => `Fix first: ${title}`,
+        },
+        track: {
+          descriptionWithActivity: (track, activity) =>
+            `The ${track} track is closest to a reward. Right now ${activity} pushes it the most.`,
+          descriptionDefault: (track) => `The ${track} track is closest to the next badge.`,
+          label: 'Badge track',
+          title: (track) => `Push the track: ${track}`,
+        },
+        guided: {
+          descriptionWithActivity: (summary, activity, nextBadgeName) =>
+            `You already have ${summary} in the recommended rhythm. One more strong round of ${activity} will help finish the ${nextBadgeName} badge.`,
+          descriptionDefault: (summary, nextBadgeName) =>
+            `You already have ${summary} in the recommended rhythm. One more strong round will help finish the ${nextBadgeName} badge.`,
+          label: 'Recommended direction',
+          title: (nextBadgeName) => `Finish: ${nextBadgeName}`,
+        },
+        fallback: {
+          description: (activity, averageXpPerSession) =>
+            `${activity} is currently worth about ${averageXpPerSession} XP per game. It is the best move for the next round.`,
+          label: 'Strong streak',
+          title: (activity) => `Keep playing: ${activity}`,
+        },
+      },
+    };
+  }
+
+  return {
+    operationSelectorTitle: 'Grajmy!',
+    trainingSetupTitle: 'Trening mieszany',
+    trainingSetupWordmarkLabel: 'Trening',
+    trainingSetupDescription: 'Dobierz poziom, kategorie i liczbę pytań do jednej sesji.',
+    intro: {
+      maths: 'Wybierz rodzaj gry i przejdź od razu do matematycznej zabawy.',
+      alphabet: 'Wybierz literową zabawę i ćwicz alfabet.',
+      geometry: 'Wybierz zabawę z kształtami i ćwicz geometrię.',
+      language: 'Wybierz typ gry językowej i przejdź od razu do ćwiczeń.',
+    },
+    quickPractice: {
+      title: 'Szybkie ćwiczenia',
+      description: 'Szybkie quizy oparte na tematach z Lekcji.',
+      groupAria: (group) => `${group} szybkie ćwiczenia`,
+      cardAria: (label) => `Szybkie ćwiczenie: ${label}`,
+      gameChip: 'Gra',
+    },
+    lessonQuizDefinitions: [
+      {
+        accent: 'indigo',
+        description: 'Ćwicz odczytywanie godzin i minut w trybie quizu.',
+        emoji: '🕐',
+        label: 'Ćwiczenia z Zegarem',
+        lessonComponentIds: ['clock'],
+        onSelectScreen: 'clock_quiz',
+      },
+      {
+        accent: 'emerald',
+        description: 'Sprawdź daty, dni tygodnia i miesiące w krótkich zadaniach.',
+        emoji: '📅',
+        label: 'Ćwiczenia z Kalendarzem',
+        lessonComponentIds: ['calendar'],
+        onSelectScreen: 'calendar_quiz',
+      },
+      {
+        accent: 'amber',
+        description: 'Szybki quiz z dodawania w rytmie gry z lekcji.',
+        emoji: '➕',
+        label: 'Quiz dodawania',
+        lessonComponentIds: ['adding'],
+        onSelectScreen: 'addition_quiz',
+      },
+      {
+        accent: 'rose',
+        description: 'Szybka seria odejmowania z natychmiastową odpowiedzią.',
+        emoji: '➖',
+        label: 'Quiz odejmowania',
+        lessonComponentIds: ['subtracting'],
+        onSelectScreen: 'subtraction_quiz',
+      },
+      {
+        accent: 'violet',
+        description: 'Sprawdź tabliczkę w krótkim quizie z mnożenia.',
+        emoji: '✖️',
+        label: 'Quiz mnożenia',
+        lessonComponentIds: ['multiplication'],
+        onSelectScreen: 'multiplication_quiz',
+      },
+      {
+        accent: 'emerald',
+        description: 'Szybki quiz z dzielenia na równe grupy.',
+        emoji: '➗',
+        label: 'Quiz dzielenia',
+        lessonComponentIds: ['division'],
+        onSelectScreen: 'division_quiz',
+      },
+      {
+        accent: 'violet',
+        description: 'Rozpoznawaj figury, symetrię i obwody w krótkich wyzwaniach.',
+        emoji: '🔷',
+        label: 'Ćwiczenia z Figurami',
+        lessonComponentIds: KANGUR_GEOMETRY_LESSON_COMPONENT_IDS,
+        onSelectScreen: 'geometry_quiz',
+      },
+      {
+        accent: 'violet',
+        description: 'Uzupełniaj ciągi i sprawdzaj reguły wzorców.',
+        emoji: '🔢',
+        label: 'Quiz wzorców',
+        lessonComponentIds: ['logical_patterns'],
+        onSelectScreen: 'logical_patterns_quiz',
+      },
+      {
+        accent: 'teal',
+        description: 'Grupuj elementy i znajdź wspólne cechy.',
+        emoji: '📦',
+        label: 'Quiz klasyfikacji',
+        lessonComponentIds: ['logical_classification'],
+        onSelectScreen: 'logical_classification_quiz',
+      },
+      {
+        accent: 'rose',
+        description: 'Dopasuj relacje i znajdź właściwe analogie.',
+        emoji: '🔗',
+        label: 'Quiz analogii',
+        lessonComponentIds: ['logical_analogies'],
+        onSelectScreen: 'logical_analogies_quiz',
+      },
+      {
+        accent: 'violet',
+        description: 'Ćwicz szyk zdania, pytania i spójniki w krótkich rundach.',
+        emoji: '🧩',
+        label: 'Quiz składni zdania',
+        lessonComponentIds: ['english_sentence_structure'],
+        onSelectScreen: 'english_sentence_quiz',
+      },
+      {
+        accent: 'sky',
+        description: 'Sortuj słowa według części mowy w krótkich rundach.',
+        emoji: '🎮',
+        label: 'Quiz części mowy',
+        lessonComponentIds: ['english_parts_of_speech'],
+        onSelectScreen: 'english_parts_of_speech_quiz',
+      },
+    ],
+    recommendation: {
+      actions: {
+        playAddition: 'Zagraj w dodawanie',
+        playSubtraction: 'Zagraj w odejmowanie',
+        playMultiplication: 'Zagraj w mnożenie',
+        playDivision: 'Zagraj w dzielenie',
+        playClock: 'Zagraj na zegarze',
+        startMixedTraining: 'Uruchom trening mieszany',
+        playFractions: 'Zagraj we ułamki',
+        playPowers: 'Zagraj w potęgi',
+        playRoots: 'Zagraj w pierwiastki',
+        practiceCalendar: 'Ćwicz kalendarz',
+        practiceGeometry: 'Ćwicz figury',
+        practiceSubtraction: 'Ćwicz odejmowanie',
+        practiceDivision: 'Ćwicz dzielenie',
+        practiceMultiplication: 'Ćwicz mnożenie',
+        startTraining: 'Uruchom trening',
+        playNow: 'Zagraj teraz',
+      },
+      questLabel: 'Misja dnia',
+      weakestLesson: {
+        description: (masteryPercent) =>
+          `Opanowanie ${masteryPercent}%. Jedna dobra runda pomoże szybciej domknąć ten temat przed kolejną lekcją.`,
+        label: 'Nadrabiamy lekcje',
+        title: (title) => `Najpierw popraw: ${title}`,
+      },
+      track: {
+        descriptionWithActivity: (track, activity) =>
+          `Tor ${track} jest najbliżej nagrody. Najmocniej pcha go teraz ${activity}.`,
+        descriptionDefault: (track) => `Tor ${track} jest najbliżej kolejnej odznaki.`,
+        label: 'Tor odznak',
+        title: (track) => `Rozpędź tor: ${track}`,
+      },
+      guided: {
+        descriptionWithActivity: (summary, activity, nextBadgeName) =>
+          `Masz już ${summary} w polecanym rytmie. Jeszcze jedna mocna runda ${activity} pomoże domknąć odznakę ${nextBadgeName}.`,
+        descriptionDefault: (summary, nextBadgeName) =>
+          `Masz już ${summary} w polecanym rytmie. Jeszcze jedna mocna runda pomoże domknąć odznakę ${nextBadgeName}.`,
+        label: 'Polecony kierunek',
+        title: (nextBadgeName) => `Dopnij: ${nextBadgeName}`,
+      },
+      fallback: {
+        description: (activity, averageXpPerSession) =>
+          `${activity} daje teraz średnio ${averageXpPerSession} XP na grę. To najlepszy ruch na kolejną rundę.`,
+        label: 'Mocna passa',
+        title: (activity) => `Zagraj dalej w: ${activity}`,
+      },
+    },
+  };
+};
 
 const OPERATION_LESSON_QUIZ_SCREENS: Partial<Record<KangurOperation, KangurGameScreen>> = {
   addition: 'addition_quiz',
@@ -351,25 +992,26 @@ const resolveActionRecommendationTarget = (
 
 const getRecommendationActionLabel = (
   target: KangurOperationSelectorRecommendationTarget,
+  fallbackCopy: OperationSelectorFallbackCopy,
   translate?: RecommendationTranslate
 ): string => {
   const operationLabels: Partial<Record<KangurOperation, { fallback: string; key: string }>> = {
-    addition: { fallback: 'Zagraj w dodawanie', key: 'operationSelector.actions.playAddition' },
-    subtraction: { fallback: 'Zagraj w odejmowanie', key: 'operationSelector.actions.playSubtraction' },
-    multiplication: { fallback: 'Zagraj w mnożenie', key: 'operationSelector.actions.playMultiplication' },
-    division: { fallback: 'Zagraj w dzielenie', key: 'operationSelector.actions.playDivision' },
-    clock: { fallback: 'Zagraj na zegarze', key: 'operationSelector.actions.playClock' },
-    mixed: { fallback: 'Uruchom trening mieszany', key: 'operationSelector.actions.startMixedTraining' },
-    decimals: { fallback: 'Zagraj we ułamki', key: 'operationSelector.actions.playFractions' },
-    powers: { fallback: 'Zagraj w potęgi', key: 'operationSelector.actions.playPowers' },
-    roots: { fallback: 'Zagraj w pierwiastki', key: 'operationSelector.actions.playRoots' },
+    addition: { fallback: fallbackCopy.recommendation.actions.playAddition, key: 'operationSelector.actions.playAddition' },
+    subtraction: { fallback: fallbackCopy.recommendation.actions.playSubtraction, key: 'operationSelector.actions.playSubtraction' },
+    multiplication: { fallback: fallbackCopy.recommendation.actions.playMultiplication, key: 'operationSelector.actions.playMultiplication' },
+    division: { fallback: fallbackCopy.recommendation.actions.playDivision, key: 'operationSelector.actions.playDivision' },
+    clock: { fallback: fallbackCopy.recommendation.actions.playClock, key: 'operationSelector.actions.playClock' },
+    mixed: { fallback: fallbackCopy.recommendation.actions.startMixedTraining, key: 'operationSelector.actions.startMixedTraining' },
+    decimals: { fallback: fallbackCopy.recommendation.actions.playFractions, key: 'operationSelector.actions.playFractions' },
+    powers: { fallback: fallbackCopy.recommendation.actions.playPowers, key: 'operationSelector.actions.playPowers' },
+    roots: { fallback: fallbackCopy.recommendation.actions.playRoots, key: 'operationSelector.actions.playRoots' },
   };
 
   if (target.kind === 'training') {
     return translateRecommendationWithFallback(
       translate,
       'operationSelector.actions.startMixedTraining',
-      'Uruchom trening mieszany'
+      fallbackCopy.recommendation.actions.startMixedTraining
     );
   }
 
@@ -378,41 +1020,41 @@ const getRecommendationActionLabel = (
       return translateRecommendationWithFallback(
         translate,
         'operationSelector.actions.practiceCalendar',
-        'Ćwicz kalendarz'
+        fallbackCopy.recommendation.actions.practiceCalendar
       );
     }
     if (target.screen === 'geometry_quiz') {
       return translateRecommendationWithFallback(
         translate,
         'operationSelector.actions.practiceGeometry',
-        'Ćwicz figury'
+        fallbackCopy.recommendation.actions.practiceGeometry
       );
     }
     if (target.screen === 'subtraction_quiz') {
       return translateRecommendationWithFallback(
         translate,
         'operationSelector.actions.practiceSubtraction',
-        'Ćwicz odejmowanie'
+        fallbackCopy.recommendation.actions.practiceSubtraction
       );
     }
     if (target.screen === 'division_quiz') {
       return translateRecommendationWithFallback(
         translate,
         'operationSelector.actions.practiceDivision',
-        'Ćwicz dzielenie'
+        fallbackCopy.recommendation.actions.practiceDivision
       );
     }
     if (target.screen === 'multiplication_quiz') {
       return translateRecommendationWithFallback(
         translate,
         'operationSelector.actions.practiceMultiplication',
-        'Ćwicz mnożenie'
+        fallbackCopy.recommendation.actions.practiceMultiplication
       );
     }
     return translateRecommendationWithFallback(
       translate,
       'operationSelector.actions.startTraining',
-      'Uruchom trening'
+      fallbackCopy.recommendation.actions.startTraining
     );
   }
 
@@ -422,7 +1064,7 @@ const getRecommendationActionLabel = (
     : translateRecommendationWithFallback(
         translate,
         'operationSelector.actions.playNow',
-        'Zagraj teraz'
+        fallbackCopy.recommendation.actions.playNow
       );
 };
 
@@ -431,10 +1073,11 @@ const finalizeRecommendation = (
     KangurOperationSelectorRecommendation,
     'actionLabel' | 'recommendedOperation' | 'recommendedScreen'
   >,
+  fallbackCopy: OperationSelectorFallbackCopy,
   translate?: RecommendationTranslate
 ): KangurOperationSelectorRecommendation => ({
   ...draft,
-  actionLabel: getRecommendationActionLabel(draft.target, translate),
+  actionLabel: getRecommendationActionLabel(draft.target, fallbackCopy, translate),
   recommendedOperation: draft.target.kind === 'operation' ? draft.target.operation : null,
   recommendedScreen: draft.target.kind === 'screen' ? draft.target.screen : null,
 });
@@ -442,6 +1085,7 @@ const finalizeRecommendation = (
 const getQuestRecommendation = (
   quest: KangurDailyQuestState | null,
   progress: KangurProgressState,
+  fallbackCopy: OperationSelectorFallbackCopy,
   translate?: RecommendationTranslate
 ): KangurOperationSelectorRecommendation | null => {
   if (!quest?.assignment) {
@@ -464,15 +1108,16 @@ const getQuestRecommendation = (
       translateRecommendationWithFallback(
         translate,
         'operationSelector.quest.label',
-        'Misja dnia'
+        fallbackCopy.recommendation.questLabel
       ),
     target,
     title: quest.assignment.title,
-  }, translate);
+  }, fallbackCopy, translate);
 };
 
 const getWeakestLessonRecommendation = (
   progress: KangurProgressState,
+  fallbackCopy: OperationSelectorFallbackCopy,
   localizer?: KangurRecommendationLocalizer
 ): KangurOperationSelectorRecommendation | null => {
   const translate = localizer?.translate;
@@ -500,7 +1145,7 @@ const getWeakestLessonRecommendation = (
     description: translateRecommendationWithFallback(
       translate,
       'operationSelector.weakestLesson.description',
-      `Opanowanie ${entry.masteryPercent}%. Jedna dobra runda pomoże szybciej domknąć ten temat przed kolejną lekcją.`,
+      fallbackCopy.recommendation.weakestLesson.description(entry.masteryPercent),
       {
         masteryPercent: entry.masteryPercent,
       }
@@ -508,20 +1153,21 @@ const getWeakestLessonRecommendation = (
     label: translateRecommendationWithFallback(
       translate,
       'operationSelector.weakestLesson.label',
-      'Nadrabiamy lekcje'
+      fallbackCopy.recommendation.weakestLesson.label
     ),
     target,
     title: translateRecommendationWithFallback(
       translate,
       'operationSelector.weakestLesson.title',
-      `Najpierw popraw: ${lessonTitle}`,
+      fallbackCopy.recommendation.weakestLesson.title(lessonTitle),
       { title: lessonTitle }
     ),
-  }, translate);
+  }, fallbackCopy, translate);
 };
 
 const getTrackRecommendation = (
   progress: KangurProgressState,
+  fallbackCopy: OperationSelectorFallbackCopy,
   translate?: RecommendationTranslate,
   progressTranslate?: KangurProgressTranslate
 ): KangurOperationSelectorRecommendation | null => {
@@ -556,7 +1202,10 @@ const getTrackRecommendation = (
       ? translateRecommendationWithFallback(
           translate,
           'operationSelector.track.descriptionWithActivity',
-          `Tor ${track.label} jest najbliżej nagrody. Najmocniej pcha go teraz ${activityLabel?.toLowerCase()}.`,
+          fallbackCopy.recommendation.track.descriptionWithActivity(
+            track.label,
+            activityLabel?.toLowerCase() ?? ''
+          ),
           {
             activity: activityLabel?.toLowerCase() ?? '',
             track: track.label,
@@ -565,26 +1214,27 @@ const getTrackRecommendation = (
       : translateRecommendationWithFallback(
           translate,
           'operationSelector.track.descriptionDefault',
-          `Tor ${track.label} jest najbliżej kolejnej odznaki.`,
+          fallbackCopy.recommendation.track.descriptionDefault(track.label),
           { track: track.label }
         ),
     label: translateRecommendationWithFallback(
       translate,
       'operationSelector.track.label',
-      'Tor odznak'
+      fallbackCopy.recommendation.track.label
     ),
     target,
     title: translateRecommendationWithFallback(
       translate,
       'operationSelector.track.title',
-      `Rozpędź tor: ${track.label}`,
+      fallbackCopy.recommendation.track.title(track.label),
       { track: track.label }
     ),
-  }, translate);
+  }, fallbackCopy, translate);
 };
 
 const getGuidedRecommendation = (
   progress: KangurProgressState,
+  fallbackCopy: OperationSelectorFallbackCopy,
   translate?: RecommendationTranslate,
   progressTranslate?: KangurProgressTranslate
 ): KangurOperationSelectorRecommendation | null => {
@@ -614,7 +1264,11 @@ const getGuidedRecommendation = (
       ? translateRecommendationWithFallback(
           translate,
           'operationSelector.guided.descriptionWithActivity',
-          `Masz już ${guidedMomentum.summary} w polecanym rytmie. Jeszcze jedna mocna runda ${activityLabel?.toLowerCase()} pomoże domknąć odznakę ${guidedMomentum.nextBadgeName}.`,
+          fallbackCopy.recommendation.guided.descriptionWithActivity(
+            guidedMomentum.summary,
+            activityLabel?.toLowerCase() ?? '',
+            guidedMomentum.nextBadgeName
+          ),
           {
             activity: activityLabel?.toLowerCase() ?? '',
             nextBadgeName: guidedMomentum.nextBadgeName,
@@ -624,7 +1278,10 @@ const getGuidedRecommendation = (
       : translateRecommendationWithFallback(
           translate,
           'operationSelector.guided.descriptionDefault',
-          `Masz już ${guidedMomentum.summary} w polecanym rytmie. Jeszcze jedna mocna runda pomoże domknąć odznakę ${guidedMomentum.nextBadgeName}.`,
+          fallbackCopy.recommendation.guided.descriptionDefault(
+            guidedMomentum.summary,
+            guidedMomentum.nextBadgeName
+          ),
           {
             nextBadgeName: guidedMomentum.nextBadgeName,
             summary: guidedMomentum.summary,
@@ -633,20 +1290,21 @@ const getGuidedRecommendation = (
     label: translateRecommendationWithFallback(
       translate,
       'operationSelector.guided.label',
-      'Polecony kierunek'
+      fallbackCopy.recommendation.guided.label
     ),
     target,
     title: translateRecommendationWithFallback(
       translate,
       'operationSelector.guided.title',
-      `Dopnij: ${guidedMomentum.nextBadgeName}`,
+      fallbackCopy.recommendation.guided.title(guidedMomentum.nextBadgeName),
       { nextBadgeName: guidedMomentum.nextBadgeName }
     ),
-  }, translate);
+  }, fallbackCopy, translate);
 };
 
 const getFallbackRecommendation = (
   progress: KangurProgressState,
+  fallbackCopy: OperationSelectorFallbackCopy,
   translate?: RecommendationTranslate,
   progressTranslate?: KangurProgressTranslate
 ): KangurOperationSelectorRecommendation | null => {
@@ -669,7 +1327,10 @@ const getFallbackRecommendation = (
     description: translateRecommendationWithFallback(
       translate,
       'operationSelector.fallback.description',
-      `${activityLabel} daje teraz średnio ${topActivity.averageXpPerSession} XP na grę. To najlepszy ruch na kolejną rundę.`,
+      fallbackCopy.recommendation.fallback.description(
+        activityLabel,
+        topActivity.averageXpPerSession
+      ),
       {
         activity: activityLabel,
         averageXpPerSession: topActivity.averageXpPerSession,
@@ -678,32 +1339,37 @@ const getFallbackRecommendation = (
     label: translateRecommendationWithFallback(
       translate,
       'operationSelector.fallback.label',
-      'Mocna passa'
+      fallbackCopy.recommendation.fallback.label
     ),
     target,
     title: translateRecommendationWithFallback(
       translate,
       'operationSelector.fallback.title',
-      `Zagraj dalej w: ${activityLabel}`,
+      fallbackCopy.recommendation.fallback.title(activityLabel),
       { activity: activityLabel }
     ),
-  }, translate);
+  }, fallbackCopy, translate);
 };
 
 const getOperationSelectorRecommendation = (
   progress: KangurProgressState,
   quest: KangurDailyQuestState | null,
+  fallbackCopy: OperationSelectorFallbackCopy,
   localizer?: KangurRecommendationLocalizer
 ): KangurOperationSelectorRecommendation | null =>
-  getQuestRecommendation(quest, progress, localizer?.translate) ??
-  getWeakestLessonRecommendation(progress, localizer) ??
-  getGuidedRecommendation(progress, localizer?.translate, localizer?.progressTranslate) ??
-  getTrackRecommendation(progress, localizer?.translate, localizer?.progressTranslate) ??
-  getFallbackRecommendation(progress, localizer?.translate, localizer?.progressTranslate);
+  getQuestRecommendation(quest, progress, fallbackCopy, localizer?.translate) ??
+  getWeakestLessonRecommendation(progress, fallbackCopy, localizer) ??
+  getGuidedRecommendation(progress, fallbackCopy, localizer?.translate, localizer?.progressTranslate) ??
+  getTrackRecommendation(progress, fallbackCopy, localizer?.translate, localizer?.progressTranslate) ??
+  getFallbackRecommendation(progress, fallbackCopy, localizer?.translate, localizer?.progressTranslate);
 
 export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
   const locale = useLocale();
   const normalizedLocale = normalizeSiteLocale(locale);
+  const fallbackCopy = useMemo(
+    () => getOperationSelectorFallbackCopy(normalizedLocale),
+    [normalizedLocale]
+  );
   const gamePageTranslations = useTranslations('KangurGamePage');
   const recommendationTranslations = useTranslations('KangurGameRecommendations');
   const trainingSetupTranslations = useTranslations('KangurGameRecommendations.trainingSetup');
@@ -739,19 +1405,27 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
   const dailyQuest = useMemo(
     () =>
       getCurrentKangurDailyQuest(normalizedProgress, {
+        locale: normalizedLocale,
         subject,
         translate: runtimeTranslations,
       }),
-    [normalizedProgress, runtimeTranslations, subject]
+    [normalizedLocale, normalizedProgress, runtimeTranslations, subject]
   );
   const recommendation = useMemo(
     () =>
-      getOperationSelectorRecommendation(normalizedProgress, dailyQuest, {
-        locale,
+      getOperationSelectorRecommendation(normalizedProgress, dailyQuest, fallbackCopy, {
+        locale: normalizedLocale,
         translate: recommendationTranslations,
         progressTranslate: runtimeTranslations,
       }),
-    [dailyQuest, locale, normalizedProgress, recommendationTranslations, runtimeTranslations]
+    [
+      dailyQuest,
+      fallbackCopy,
+      normalizedLocale,
+      normalizedProgress,
+      recommendationTranslations,
+      runtimeTranslations,
+    ]
   );
   const suggestedTraining = useMemo(
     () =>
@@ -762,29 +1436,20 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
       }),
     [locale, normalizedProgress, runtimeTranslations, trainingSetupTranslations]
   );
-  const operationSelectorFallbackTitle = normalizedLocale === 'uk' ? 'Граймо!' : 'Grajmy!';
-  const trainingSetupFallbackTitle =
-    normalizedLocale === 'uk' ? 'Налаштування тренування' : 'Trening mieszany';
-  const trainingSetupFallbackWordmarkLabel =
-    normalizedLocale === 'uk' ? 'Тренування' : normalizedLocale === 'pl' ? 'Trening' : 'Training';
-  const trainingSetupFallbackDescription =
-    normalizedLocale === 'uk'
-      ? 'Налаштуйте змішане тренування й виберіть діапазон запитань.'
-      : 'Dobierz poziom, kategorie i liczbę pytań do jednej sesji.';
   const operationSelectorTitle = translateRecommendationWithFallback(
     gamePageTranslations,
     'operationSelector.title',
-    operationSelectorFallbackTitle
+    fallbackCopy.operationSelectorTitle
   );
   const trainingSetupTitle = translateRecommendationWithFallback(
     gamePageTranslations,
     'screens.training.label',
-    trainingSetupFallbackTitle
+    fallbackCopy.trainingSetupTitle
   );
   const trainingWordmarkLabel = translateRecommendationWithFallback(
     gamePageTranslations,
     'screens.training.wordmarkLabel',
-    trainingSetupFallbackWordmarkLabel
+    fallbackCopy.trainingSetupWordmarkLabel
   );
   const lessonsQuery = useKangurLessons({ subject, ageGroup, enabledOnly: true });
   const emptyLessonsRefetchedForSubject = useRef<KangurLessonSubject | null>(null);
@@ -804,7 +1469,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
       return orders.length > 0 ? Math.min(...orders) : Number.MAX_SAFE_INTEGER;
     };
 
-    const options = LESSON_QUIZ_DEFINITIONS.flatMap((definition) => {
+    const options = fallbackCopy.lessonQuizDefinitions.flatMap((definition) => {
       const activeLessons = definition.lessonComponentIds
         .map((componentId) => lessonsByComponentId.get(componentId))
         .filter((lesson): lesson is KangurLesson => Boolean(lesson));
@@ -840,7 +1505,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
       ];
     });
     return options.sort((left, right) => left.sortOrder - right.sortOrder);
-  }, [lessonsQuery.data, subject]);
+  }, [fallbackCopy.lessonQuizDefinitions, lessonsQuery.data, subject]);
   const lessonQuizGroups = useMemo(
     () =>
       subjectGroups.map((group) => ({
@@ -882,24 +1547,24 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
       ? translateRecommendationWithFallback(
           gamePageTranslations,
           'operationSelector.intro.maths',
-          'Wybierz rodzaj gry i przejdź od razu do matematycznej zabawy.'
+          fallbackCopy.intro.maths
         )
       : subject === 'alphabet'
         ? translateRecommendationWithFallback(
             gamePageTranslations,
             'operationSelector.intro.alphabet',
-            'Wybierz literową zabawę i ćwicz alfabet.'
+            fallbackCopy.intro.alphabet
           )
         : subject === 'geometry'
           ? translateRecommendationWithFallback(
               gamePageTranslations,
               'operationSelector.intro.geometry',
-              'Wybierz zabawę z kształtami i ćwicz geometrię.'
+              fallbackCopy.intro.geometry
             )
         : translateRecommendationWithFallback(
             gamePageTranslations,
             'operationSelector.intro.language',
-            'Wybierz typ gry językowej i przejdź od razu do ćwiczeń.'
+            fallbackCopy.intro.language
           );
 
   useEffect(() => {
@@ -1064,14 +1729,14 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
           description={translateRecommendationWithFallback(
             gamePageTranslations,
             'operationSelector.quickPractice.description',
-            'Szybkie quizy oparte na tematach z Lekcji.'
+            fallbackCopy.quickPractice.description
           )}
           headingAs='h3'
           headingSize='sm'
           title={translateRecommendationWithFallback(
             gamePageTranslations,
             'operationSelector.quickPractice.title',
-            'Szybkie ćwiczenia'
+            fallbackCopy.quickPractice.title
           )}
           titleId='kangur-game-quick-practice-heading'
         />
@@ -1082,7 +1747,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
               ariaLabel={translateRecommendationWithFallback(
                 gamePageTranslations,
                 'operationSelector.quickPractice.groupAria',
-                `${group.label} quick practice`,
+                fallbackCopy.quickPractice.groupAria(group.label),
                 { group: group.label }
               )}
               label={group.label}
@@ -1113,7 +1778,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
                       aria-label={translateRecommendationWithFallback(
                         gamePageTranslations,
                         'operationSelector.quickPractice.cardAria',
-                        `Szybkie ćwiczenie: ${option.label}`,
+                        fallbackCopy.quickPractice.cardAria(optionLabel),
                         { label: optionLabel }
                       )}
                       onClick={() => setScreen(option.onSelectScreen)}
@@ -1129,7 +1794,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
                               {translateRecommendationWithFallback(
                                 gamePageTranslations,
                                 'operationSelector.quickPractice.gameChip',
-                                'Gra'
+                                fallbackCopy.quickPractice.gameChip
                               )}
                             </KangurStatusChip>
                             {isRecommended && recommendation ? (
@@ -1182,7 +1847,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
             description={translateRecommendationWithFallback(
               gamePageTranslations,
               'screens.training.description',
-              trainingSetupFallbackDescription
+              fallbackCopy.trainingSetupDescription
             )}
             headingAs='h3'
             headingSize='md'

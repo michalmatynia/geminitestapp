@@ -20,13 +20,8 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { CaseResolverTagModal } from '../components/modals/CaseResolverEntityModalVariants';
+import type { CaseResolverTagFormData } from '../entity-form-data';
 import { CASE_RESOLVER_TAGS_KEY, parseCaseResolverTags } from '../settings';
-
-type TagFormData = {
-  name: string;
-  color: string;
-  parentId: string | null;
-};
 
 const createTagId = (): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -113,7 +108,7 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
   const [showModal, setShowModal] = useState(false);
   const [editingTag, setEditingTag] = useState<CaseResolverTag | null>(null);
   const [tagToDelete, setTagToDelete] = useState<CaseResolverTag | null>(null);
-  const [formData, setFormData] = useState<TagFormData>({
+  const [formData, setFormData] = useState<CaseResolverTagFormData>({
     name: '',
     color: '#38bdf8',
     parentId: null,

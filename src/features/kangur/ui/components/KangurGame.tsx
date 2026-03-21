@@ -84,6 +84,11 @@ type ResultViewProps = {
   onRestart: () => void;
 };
 
+type KangurQuestionTier = {
+  difficulty: 'easy' | 'medium' | 'hard';
+  points: 3 | 4 | 5;
+};
+
 const ILLUSTRATIONS: Record<string, IllustrationComponent | undefined> = {
   '2024_1': Q1Illustration,
   '2024_2': Q2Illustration,
@@ -100,12 +105,30 @@ const ILLUSTRATIONS: Record<string, IllustrationComponent | undefined> = {
   '2024_4pt_16': Q16Illustration,
 };
 
+const resolveKangurQuestionTier = (questionId: string): KangurQuestionTier | null => {
+  if (!/^\d{4}_/.test(questionId)) {
+    return null;
+  }
+
+  if (questionId.includes('_5pt_')) {
+    return { points: 5, difficulty: 'hard' };
+  }
+
+  if (questionId.includes('_4pt_')) {
+    return { points: 4, difficulty: 'medium' };
+  }
+
+  return { points: 3, difficulty: 'easy' };
+};
+
 function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.JSX.Element {
+  const translations = useTranslations('KangurGamePage');
   const [selected, setSelected] = useState<KangurQuestionChoice | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const choices = q.choices ?? [];
   const questionNumber = qIndex + 1;
   const progressValue = (qIndex / total) * 100;
+  const pointTier = resolveKangurQuestionTier(q.id);
 
   const handleSelect = (choice: KangurQuestionChoice): void => {
     if (confirmed) {
@@ -150,13 +173,16 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
       >
         <div className='flex items-center justify-between mb-1'>
           <p className='break-words text-sm font-bold uppercase tracking-wide text-orange-500'>
-            Pytanie {questionNumber}
+            {translations('practiceQuestion.label', { number: questionNumber })}
           </p>
-          {q.id.startsWith('2024_') && (
+          {pointTier ? (
             <KangurStatusChip accent='emerald' data-testid='kangur-game-point-chip' size='sm'>
-              ⭐ 3 pkt (łatwe)
+              {translations('practiceQuestion.pointChip', {
+                points: pointTier.points,
+                difficulty: translations(`practiceQuestion.difficulty.${pointTier.difficulty}`),
+              })}
             </KangurStatusChip>
-          )}
+          ) : null}
         </div>
         <p className='break-words font-semibold leading-relaxed [color:var(--kangur-page-text)]'>
           {q.question}
@@ -239,7 +265,9 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
                     aria-hidden='true'
                     className='w-4 h-4 text-green-600 ml-auto flex-shrink-0'
                   />
-                  <span className='sr-only'>Poprawna odpowiedź</span>
+                  <span className='sr-only'>
+                    {translations('practiceQuestion.answerState.correct')}
+                  </span>
                 </>
               )}
               {confirmed && choice === selected && choice !== q.answer && (
@@ -248,7 +276,9 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
                     aria-hidden='true'
                     className='w-4 h-4 text-red-500 ml-auto flex-shrink-0'
                   />
-                  <span className='sr-only'>Błędna odpowiedź</span>
+                  <span className='sr-only'>
+                    {translations('practiceQuestion.answerState.incorrect')}
+                  </span>
                 </>
               )}
             </KangurAnswerChoiceCard>
@@ -281,7 +311,7 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
           size='lg'
           variant='primary'
         >
-          Zatwierdź odpowiedź ✓
+          {translations('practiceQuestion.confirm')}
         </KangurButton>
       )}
     </div>

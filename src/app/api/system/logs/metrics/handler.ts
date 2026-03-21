@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
-import { getSystemLogMetrics } from '@/shared/lib/observability/system-logger';
+import { getSystemLogMetrics } from '@/shared/lib/observability/system-log-repository';;
 
 const levelSchema = z.enum(['info', 'warn', 'error']);
 

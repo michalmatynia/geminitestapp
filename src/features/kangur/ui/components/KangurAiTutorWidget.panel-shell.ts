@@ -2,6 +2,7 @@
 
 import { useId, type CSSProperties } from 'react';
 
+import type { Point2d } from '@/shared/contracts/geometry';
 import {
   ATTACHED_AVATAR_EDGE_INSET,
   ATTACHED_AVATAR_OVERLAP,
@@ -25,7 +26,6 @@ import { getAttachedAvatarRectForSurface } from './KangurAiTutorAvatarAttachment
 
 import type { Transition } from 'framer-motion';
 
-
 type BubblePlacement = {
   launchOrigin: 'dock-bottom-right' | 'sheet';
   mode: 'bubble' | 'sheet';
@@ -44,11 +44,6 @@ type GuidedTutorTargetLike = {
   kind: string;
 } | null;
 
-type PanelShellPoint = {
-  x: number;
-  y: number;
-};
-
 type RectLike = {
   bottom: number;
   height: number;
@@ -58,17 +53,12 @@ type RectLike = {
   width: number;
 };
 
-type AvatarPointer = TutorAvatarPointer;
-
 type PanelShellState = {
   attachedAvatarStyle: CSSProperties;
-  attachedLaunchOffset: {
-    x: number;
-    y: number;
-  };
+  attachedLaunchOffset: Point2d;
   avatarAnchorKind: string;
   avatarAttachmentSide: TutorHorizontalSide;
-  avatarPointer: AvatarPointer | null;
+  avatarPointer: TutorAvatarPointer | null;
   avatarStyle: TutorMotionPosition;
   floatingAvatarPlacement: 'ask-modal' | 'guided' | 'floating';
   isPanelDraggable: boolean;
@@ -86,7 +76,7 @@ type PanelShellState = {
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max);
 
-const getDockAvatarPoint = (viewport: { width: number; height: number }): PanelShellPoint => ({
+const getDockAvatarPoint = (viewport: { width: number; height: number }): Point2d => ({
   x: viewport.width - EDGE_GAP - AVATAR_SIZE,
   y: viewport.height - EDGE_GAP - AVATAR_SIZE,
 });
@@ -117,7 +107,7 @@ const getDockLaunchOffset = (input: {
   side: TutorHorizontalSide;
   viewport: { width: number; height: number };
   width: number;
-}): { x: number; y: number } => {
+}): Point2d => {
   const dockRect = getDockAvatarRect(input.viewport);
   const dockCenterX = dockRect.left + dockRect.width / 2;
   const dockCenterY = dockRect.top + dockRect.height / 2;
@@ -183,7 +173,7 @@ const getTutorPointerGeometry = (input: {
   panelTop: number;
   panelWidth: number;
   side: TutorHorizontalSide;
-}): AvatarPointer | null => {
+}): TutorAvatarPointer | null => {
   if (!input.focusRect) {
     return null;
   }
@@ -245,7 +235,7 @@ export function useKangurAiTutorPanelShellState(input: {
   compactDockedTutorPanelWidth: number;
   contextualTutorMode: 'selection_explain' | 'section_explain' | null;
   displayFocusRect: DOMRect | null;
-  draggedAvatarPoint: PanelShellPoint | null;
+  draggedAvatarPoint: Point2d | null;
   guidedAvatarStyle: TutorMotionPosition | null;
   guidedFocusRect: DOMRect | null;
   guidedMode: 'home_onboarding' | 'selection' | 'section' | 'auth' | null;
@@ -265,7 +255,7 @@ export function useKangurAiTutorPanelShellState(input: {
   isTutorHidden: boolean;
   motionProfile: TutorMotionProfile;
   panelMeasuredHeight: number | null;
-  panelPosition: PanelShellPoint | null;
+  panelPosition: Point2d | null;
   panelShellMode: 'default' | 'minimal';
   panelSnapPreference: TutorPanelSnapState;
   prefersReducedMotion: boolean;

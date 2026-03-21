@@ -1,7 +1,7 @@
 import type { ProductAiJobRecord, ProductAiJobUpdate } from '@/shared/contracts/jobs';
 import type { ProductAiJobType, ProductAiJob, ProductAiJobResult } from '@/shared/contracts/jobs';
 import { invalidStateError, notFoundError } from '@/shared/errors/app-error';
-import { ErrorSystem, logSystemError, logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem, logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import {
@@ -12,8 +12,7 @@ import {
 } from './product-ai-graph-model-payload';
 import { getProductAiJobRepository } from './product-ai-job-repository';
 import { productService } from './productService';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
+import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 
 type ProductSummary = {
   name_en: string | null;
@@ -151,7 +150,12 @@ export async function enqueueProductAiJob(
       },
     });
   } catch (error) {
-    logClientError(error);
+    reportObservabilityInternalError(error, {
+      source: LOG_SOURCE,
+      action: 'enqueueProductAiJob.logCreatingJob',
+      productId,
+      type,
+    });
     // Fallback to console if logging fails
     void logSystemEvent({
       level: 'info',
@@ -184,7 +188,14 @@ export async function enqueueProductAiJob(
           context: { type, cacheKey, payloadHash, status: reusable.status },
         });
       } catch (error) {
-        logClientError(error);
+        reportObservabilityInternalError(error, {
+          source: LOG_SOURCE,
+          action: 'enqueueProductAiJob.logReuse',
+          productId,
+          jobId: reusable.id,
+          type,
+          cacheKey,
+        });
         void logSystemEvent({
           level: 'info',
           source: LOG_SOURCE,
@@ -206,7 +217,13 @@ export async function enqueueProductAiJob(
       context: { type },
     });
   } catch (error) {
-    logClientError(error);
+    reportObservabilityInternalError(error, {
+      source: LOG_SOURCE,
+      action: 'enqueueProductAiJob.logCreatedJob',
+      productId,
+      jobId: jobRecord.id,
+      type,
+    });
     void logSystemEvent({
       level: 'info',
       source: LOG_SOURCE,
@@ -238,24 +255,11 @@ export async function getProductAiJobs(
           const product = await productService.getProductById(id);
           return { id, product: isObjectRecord(product) ? product : null };
         } catch (error: unknown) {
-          logClientError(error);
-          try {
-            await logSystemError({
-              message: '[product-ai-service] Failed to fetch product in getProductAiJobs',
-              error,
-              source: 'product-ai-service',
-              context: { action: 'getProductAiJobs', productId: id },
-            });
-          } catch (logError) {
-            logClientError(logError);
-            void logSystemEvent({
-              level: 'error',
-              source: LOG_SOURCE,
-              message: 'Failed to fetch product in getProductAiJobs',
-              error,
-              context: { productId: id, logError },
-            });
-          }
+          void ErrorSystem.captureException(error, {
+            service: 'product-ai-service',
+            action: 'getProductAiJobs',
+            productId: id,
+          });
           return { id, product: null };
         }
       }
@@ -293,24 +297,13 @@ export async function getProductAiJob(
       const result = await productService.getProductById(job.productId);
       product = isObjectRecord(result) ? result : null;
     } catch (error: unknown) {
-      logClientError(error);
-      try {
-        await logSystemError({
-          message: '[product-ai-service] Failed to fetch product in getProductAiJob',
-          error,
-          source: 'product-ai-service',
-          context: { action: 'getProductAiJob', productId: job.productId, jobId: job.id },
-        });
-      } catch (logError) {
-        logClientError(logError);
-        void logSystemEvent({
-          level: 'error',
-          source: LOG_SOURCE,
-          message: 'Failed to fetch product in getProductAiJob',
-          error,
-          context: { productId: job.productId, jobId: job.id, logError },
-        });
-      } // Continue without product details if it fails
+      void ErrorSystem.captureException(error, {
+        service: 'product-ai-service',
+        action: 'getProductAiJob',
+        productId: job.productId,
+        jobId: job.id,
+      });
+      // Continue without product details if it fails
     }
   }
 

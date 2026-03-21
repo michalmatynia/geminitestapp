@@ -9,7 +9,7 @@ import {
 import { getTransientRecoverySettings } from './settings';
 
 import type { TransientRecoverySettings } from './constants';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 
 
 export type TransientRecoveryOptions = {
@@ -34,8 +34,12 @@ const logRecoveryFallbackExecuted = async (
       context: { error: error instanceof Error ? error.message : String(error) },
     });
   } catch (error) {
-    logClientError(error);
-  
+    reportObservabilityInternalError(error, {
+      source: 'observability.transient-recovery',
+      action: 'logRecoveryFallbackExecuted',
+      fallbackSource: source ?? 'transient-recovery',
+    });
+
     // logging must never interrupt recovery fallback
   }
 };
@@ -107,7 +111,13 @@ export async function withTransientRecovery<T>(
     }
     return await execute();
   } catch (error) {
-    logClientError(error);
+    reportObservabilityInternalError(error, {
+      source: 'observability.transient-recovery',
+      action: 'withTransientRecovery',
+      recoverySource: options?.source ?? 'transient-recovery',
+      circuitId: options?.circuitId ?? null,
+      hasFallback: Boolean(options?.fallback),
+    });
     if (options?.fallback && isTransientError(error)) {
       void logRecoveryFallbackExecuted(options?.source, error);
       return (await options.fallback()) as T;

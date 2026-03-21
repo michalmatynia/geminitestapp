@@ -1,15 +1,21 @@
+'use client';
+
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import React from 'react';
 
 import { Button, FormField, Input, Textarea } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';
 
 import { nextChoiceLabel } from '../../test-questions';
+import { getQuestionEditorCopy, resolveQuestionEditorLocale } from '../question-editor.copy';
 import { useKangurTestQuestionEditorContext } from '../context/KangurTestQuestionEditorContext';
 import { moveItem } from '../utils';
 import { SvgCodeEditor } from './SvgCodeEditor';
 
 export function QuestionChoicesEditor(): React.JSX.Element {
+  const locale = resolveQuestionEditorLocale(useLocale());
+  const copy = React.useMemo(() => getQuestionEditorCopy(locale), [locale]);
   const { choices, correctChoiceLabel, setChoices, setCorrectChoiceLabel, updateFormData } =
     useKangurTestQuestionEditorContext();
 
@@ -85,7 +91,7 @@ export function QuestionChoicesEditor(): React.JSX.Element {
     <div className='space-y-2'>
       <div className='mb-1 flex items-center justify-between gap-2'>
         <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-          Choices
+          {copy.choices.sectionTitle}
         </div>
         <Button
           type='button'
@@ -94,7 +100,7 @@ export function QuestionChoicesEditor(): React.JSX.Element {
           className='h-7 px-2 text-[11px]'
           onClick={autoRelabel}
         >
-          Auto-label A–E
+          {copy.choices.autoLabel}
         </Button>
       </div>
 
@@ -112,7 +118,11 @@ export function QuestionChoicesEditor(): React.JSX.Element {
             <div className='flex items-center gap-2'>
               <button
                 type='button'
-                title={isCorrect ? 'Correct answer' : 'Mark as correct'}
+                title={
+                  isCorrect
+                    ? copy.choices.correctAnswer
+                    : copy.choices.markAsCorrect(choice.label)
+                }
                 onClick={(): void => setCorrectChoiceLabel(choice.label)}
                 className={cn(
                   'size-5 shrink-0 rounded-full border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background',
@@ -120,7 +130,11 @@ export function QuestionChoicesEditor(): React.JSX.Element {
                     ? 'border-emerald-400 bg-emerald-400'
                     : 'border-gray-500 bg-transparent hover:border-emerald-400/60'
                 )}
-                aria-label={isCorrect ? 'Correct answer' : `Mark ${choice.label} as correct`}
+                aria-label={
+                  isCorrect
+                    ? copy.choices.correctAnswer
+                    : copy.choices.markAsCorrect(choice.label)
+                }
               />
 
               <Input
@@ -128,15 +142,18 @@ export function QuestionChoicesEditor(): React.JSX.Element {
                 onChange={(e): void => updateLabel(index, e.target.value)}
                 className='h-7 w-10 shrink-0 px-1 text-center text-sm font-bold'
                 maxLength={4}
-                aria-label='Choice label'
-               title='Input field'/>
+                aria-label={copy.choices.choiceLabel}
+                title={copy.choices.choiceLabel}
+              />
 
               <Input
                 value={choice.text}
                 onChange={(e): void => updateText(index, e.target.value)}
-                placeholder={`Choice ${choice.label} text`}
+                placeholder={copy.choices.choiceText(choice.label)}
                 className='h-7 flex-1 text-sm'
-               aria-label={`Choice ${choice.label} text`} title={`Choice ${choice.label} text`}/>
+                aria-label={copy.choices.choiceText(choice.label)}
+                title={copy.choices.choiceText(choice.label)}
+              />
 
               <div className='flex shrink-0 items-center gap-0.5'>
                 <Button
@@ -146,8 +163,9 @@ export function QuestionChoicesEditor(): React.JSX.Element {
                   className='h-6 px-1'
                   onClick={(): void => move(index, index - 1)}
                   disabled={index === 0}
-                  aria-label='Move up'
-                  title={'Move up'}>
+                  aria-label={copy.choices.moveUp}
+                  title={copy.choices.moveUp}
+                >
                   <ArrowUp className='size-3' />
                 </Button>
                 <Button
@@ -157,8 +175,9 @@ export function QuestionChoicesEditor(): React.JSX.Element {
                   className='h-6 px-1'
                   onClick={(): void => move(index, index + 1)}
                   disabled={index === choices.length - 1}
-                  aria-label='Move down'
-                  title={'Move down'}>
+                  aria-label={copy.choices.moveDown}
+                  title={copy.choices.moveDown}
+                >
                   <ArrowDown className='size-3' />
                 </Button>
                 <Button
@@ -168,8 +187,9 @@ export function QuestionChoicesEditor(): React.JSX.Element {
                   className='h-6 px-1 text-rose-400 hover:text-rose-300'
                   onClick={(): void => removeChoice(index)}
                   disabled={choices.length <= 1}
-                  aria-label='Delete choice'
-                  title={'Delete choice'}>
+                  aria-label={copy.choices.deleteChoice}
+                  title={copy.choices.deleteChoice}
+                >
                   <Trash2 className='size-3' />
                 </Button>
               </div>
@@ -177,20 +197,22 @@ export function QuestionChoicesEditor(): React.JSX.Element {
 
             <details className='mt-3 rounded-lg border border-border/40 bg-background/30 px-3 py-2' open={hasRichDetails}>
               <summary className='cursor-pointer text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-                Rich choice details
+                {copy.choices.richChoiceDetails}
               </summary>
               <div className='mt-3 space-y-3'>
-                <FormField label='Choice note / visual description'>
+                <FormField label={copy.choices.choiceNote}>
                   <Textarea
                     value={choice.description ?? ''}
                     onChange={(event): void => updateDescription(index, event.target.value)}
-                    placeholder='Optional learner-facing note or visual description'
+                    placeholder={copy.choices.choiceNotePlaceholder}
                     className='min-h-[72px] text-sm'
-                   aria-label='Optional learner-facing note or visual description' title='Optional learner-facing note or visual description'/>
+                    aria-label={copy.choices.choiceNotePlaceholder}
+                    title={copy.choices.choiceNotePlaceholder}
+                  />
                 </FormField>
                 <div className='space-y-1'>
                   <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-                    Choice SVG
+                    {copy.choices.choiceSvg}
                   </div>
                   <SvgCodeEditor
                     value={choice.svgContent ?? ''}
@@ -214,7 +236,7 @@ export function QuestionChoicesEditor(): React.JSX.Element {
           onClick={addChoice}
         >
           <Plus className='mr-1 size-3.5' />
-          Add choice
+          {copy.choices.addChoice}
         </Button>
       ) : null}
     </div>

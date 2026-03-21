@@ -52,7 +52,8 @@ vi.mock('@/features/kangur/docs/tooltips', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurGameNavigationWidget', () => ({
-  KangurGameNavigationWidget: () => <div data-testid='kangur-game-navigation-widget' />,
+  KangurGameNavigationWidget: ({ visible = true }: { visible?: boolean }) =>
+    visible ? <div data-testid='kangur-game-navigation-widget' /> : null,
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurGameHomeHeroWidget', () => ({

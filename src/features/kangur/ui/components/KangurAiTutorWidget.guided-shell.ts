@@ -15,9 +15,14 @@ import {
   resolveContinuousRotationDegrees,
 } from './KangurAiTutorGuidedLayout';
 import { getExpandedRect } from './KangurAiTutorWidget.helpers';
-import { AVATAR_SIZE, EDGE_GAP, type TutorMotionPosition, type TutorMotionProfile } from './KangurAiTutorWidget.shared';
+import {
+  AVATAR_SIZE,
+  EDGE_GAP,
+  type TutorEdgePlacement,
+  type TutorMotionPosition,
+  type TutorMotionProfile,
+} from './KangurAiTutorWidget.shared';
 import type { TutorGuidedMode } from './KangurAiTutorWidget.types';
-type GuidedPlacement = 'top' | 'bottom' | 'left' | 'right';
 const GUIDED_CALLOUT_FOCUS_PROTECTED_AREA_RATIO_LIMIT = 18;
 const GUIDED_SELECTION_CALLOUT_EDGE_BUFFER = EDGE_GAP * 2;
 
@@ -26,7 +31,7 @@ type GuidedShellState = {
   guidedAvatarArrowhead: ReturnType<typeof getFloatingTutorArrowheadGeometry>;
   guidedAvatarArrowheadDisplayAngle: number | null;
   guidedAvatarArrowheadDisplayAngleLabel: string | undefined;
-  guidedAvatarLayout: { style: TutorMotionPosition; placement: GuidedPlacement } | null;
+  guidedAvatarLayout: { style: TutorMotionPosition; placement: TutorEdgePlacement } | null;
   guidedAvatarStyle: TutorMotionPosition | null;
   guidedCalloutLayout: ReturnType<typeof getGuidedCalloutLayout> | null;
   guidedCalloutStyle: ReturnType<typeof getGuidedCalloutLayout>['style'] | null;

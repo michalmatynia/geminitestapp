@@ -1,3 +1,5 @@
+import type { TranslationValues } from 'use-intl';
+
 export type WidenLessonCopy<T> = T extends string
   ? string
   : T extends readonly (infer U)[]
@@ -6,4 +8,4 @@ export type WidenLessonCopy<T> = T extends string
       ? { [K in keyof T]: WidenLessonCopy<T[K]> }
       : T;
 
-export type LessonTranslate = (key: string) => string;
+export type LessonTranslate = (key: string, values?: TranslationValues) => string;

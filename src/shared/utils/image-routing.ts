@@ -1,4 +1,4 @@
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 export const normalizeProductImageExternalBaseUrl = (value: string | null | undefined): string => {
   const trimmed = value?.trim() ?? '';
   if (!trimmed) return '';
@@ -9,7 +9,12 @@ export const normalizeProductImageExternalBaseUrl = (value: string | null | unde
   try {
     return new URL(withProtocol).toString().replace(/\/+$/, '');
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'image-routing',
+      action: 'normalizeProductImageExternalBaseUrl',
+      input: trimmed,
+      level: 'warn',
+    });
     return trimmed.replace(/\/+$/, '');
   }
 };
@@ -29,7 +34,12 @@ const isLoopbackBaseUrl = (baseUrl: string): boolean => {
   try {
     return isLoopbackHostname(new URL(baseUrl).hostname);
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'image-routing',
+      action: 'isLoopbackBaseUrl',
+      baseUrl,
+      level: 'warn',
+    });
     return false;
   }
 };
@@ -86,7 +96,13 @@ export const resolveProductImageUrl = (
 
       return joinPathToBase(path, normalizedBase) || value;
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'image-routing',
+        action: 'resolveProductImageUrl',
+        value,
+        externalBaseUrl: normalizedBase,
+        level: 'warn',
+      });
       return value;
     }
   }

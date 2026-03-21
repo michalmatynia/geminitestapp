@@ -24,6 +24,7 @@ import {
   createLessonCompletionReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
 import CalendarInteractiveGame, {
@@ -46,7 +47,7 @@ type CalendarLiveHubSection = {
   isGame?: boolean;
 };
 
-type Translate = ReturnType<typeof useTranslations>;
+type Translate = KangurIntlTranslate;
 type CalendarMonthId =
   | 'january'
   | 'february'

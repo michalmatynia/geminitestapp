@@ -34,6 +34,7 @@ import {
   KANGUR_STACK_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import type { KangurMiniGameBinaryFeedbackState } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 type CalendarInteractiveGameProps = {
@@ -41,7 +42,6 @@ type CalendarInteractiveGameProps = {
   section?: CalendarInteractiveTaskPoolId;
 };
 
-type Feedback = 'correct' | 'wrong' | null;
 type CalendarInteractiveTranslate = KangurMiniGameTranslate;
 
 const MONTHS_DATA = [
@@ -366,7 +366,7 @@ export default function CalendarInteractiveGame({
 
   const [month, setMonth] = useState(0);
   const [task, setTask] = useState<Task>(() => generateTask(0, YEAR, translations, section));
-  const [feedback, setFeedback] = useState<Feedback>(null);
+  const [feedback, setFeedback] = useState<KangurMiniGameBinaryFeedbackState>(null);
   const [round, setRound] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);

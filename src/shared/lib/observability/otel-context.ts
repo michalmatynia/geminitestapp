@@ -1,5 +1,5 @@
 import { context, trace } from '@opentelemetry/api';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 
 
 export type OtelContextAttributes = {
@@ -26,7 +26,10 @@ export const getActiveOtelContextAttributes = (): OtelContextAttributes => {
         : {}),
     };
   } catch (error) {
-    logClientError(error);
+    reportObservabilityInternalError(error, {
+      source: 'observability.otel-context',
+      action: 'getActiveOtelContextAttributes',
+    });
     return {};
   }
 };

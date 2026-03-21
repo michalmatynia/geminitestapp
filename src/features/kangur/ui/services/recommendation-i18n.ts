@@ -1,6 +1,7 @@
+import type { TranslationValues } from 'use-intl';
 import type { KangurProgressTranslate } from '@/features/kangur/ui/services/progress-i18n';
 
-type RecommendationTranslationValues = Record<string, string | number>;
+type RecommendationTranslationValues = TranslationValues;
 
 export type RecommendationTranslate = (
   key: string,

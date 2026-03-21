@@ -1,5 +1,4 @@
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 type NodeSdkConstructor = typeof import('@opentelemetry/sdk-node').NodeSDK;
 type NodeSdkInstance = InstanceType<NodeSdkConstructor>;
 type BatchLogRecordProcessorConstructor =
@@ -187,7 +186,6 @@ const registerShutdownHooks = (globalScope: OTelGlobal, sdk: NodeSdkInstance): v
     try {
       await sdk.shutdown();
     } catch (error) {
-      logClientError(error);
       void logSystemEvent({
         level: 'error',
         source: 'otel',
@@ -253,7 +251,6 @@ export const initializeNodeOtel = async (): Promise<void> => {
     globalScope.__otelNodeSdk = sdk;
     registerShutdownHooks(globalScope, sdk);
   } catch (error) {
-    logClientError(error);
     globalScope.__otelNodeInitialized = false;
     void logSystemEvent({
       level: 'warn',

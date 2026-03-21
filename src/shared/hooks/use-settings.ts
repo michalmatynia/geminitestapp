@@ -16,7 +16,7 @@ import {
 } from '@/shared/lib/query-factories-v2';
 import { invalidateAllSettings } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export type { SystemSetting };
 
@@ -30,9 +30,11 @@ const fetchSettingsWithFallback = async (
   try {
     return await fetchSettingsCached({ scope });
   } catch (error) {
-    logClientError(error);
-    logClientError(error instanceof Error ? error : new Error(String(error)), {
-      context: { source, action: 'fetchSettings', scope, level: 'warn' },
+    logClientCatch(error, {
+      source,
+      action: 'fetchSettings',
+      scope,
+      level: 'warn',
     });
     return [];
   }
@@ -42,9 +44,10 @@ const fetchLiteSettingsWithFallback = async (): Promise<SystemSetting[]> => {
   try {
     return await fetchLiteSettingsCached();
   } catch (error) {
-    logClientError(error);
-    logClientError(error instanceof Error ? error : new Error(String(error)), {
-      context: { source: 'useLiteSettingsMap', action: 'fetchLiteSettings', level: 'warn' },
+    logClientCatch(error, {
+      source: 'useLiteSettingsMap',
+      action: 'fetchLiteSettings',
+      level: 'warn',
     });
     return [];
   }

@@ -12,28 +12,17 @@ import type { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
 
 import { normalizeFolderPath, normalizeFolderPaths, renameFolderPath } from '../settings';
 import { deleteCaseResolverNodeFileSnapshot } from '../workspace-persistence';
+import type { UseCaseResolverWorkspaceMutationsValue } from './useCaseResolverState.workspace-mutations';
 import {
   collectCaseScopeIds,
   removeOwnedFolderRecordsWithinPath,
   renameOwnedFolderRecordsWithinPath,
 } from './useCaseResolverState.helpers';
 
-type UpdateWorkspaceOptions = {
-  persistToast?: string;
-  persistNow?: boolean;
-  mutationId?: string;
-  source?: string;
-};
-
-type UpdateWorkspaceFn = (
-  updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
-  options?: UpdateWorkspaceOptions
-) => void;
-
 type UseCaseResolverStateFolderActionsInput = {
   confirm: (config: ConfirmConfig) => void;
   toast: CaseResolverToast;
-  updateWorkspace: UpdateWorkspaceFn;
+  updateWorkspace: UseCaseResolverWorkspaceMutationsValue['updateWorkspace'];
   workspace: CaseResolverWorkspace;
   selectedCaseScopeIds: Set<string> | null;
   selectedCaseContainerId: string | null;

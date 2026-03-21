@@ -5,7 +5,11 @@ import {
   emitTanstackTelemetry,
   getTanstackFactoryMetaFromBag,
 } from '@/shared/lib/observability/tanstack-telemetry';
-import { logClientError, isLoggableObject } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+  isLoggableObject,
+} from '@/shared/utils/observability/client-error-logger';
 import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
 import { getTraceId } from '@/shared/utils/observability/trace';
 
@@ -57,7 +61,11 @@ const toStableKey = (key: QueryKey | undefined): string => {
   try {
     return JSON.stringify(key);
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'query-client',
+      action: 'serializeQueryKey',
+      level: 'warn',
+    });
     return String(key);
   }
 };
@@ -105,8 +113,13 @@ const safeLogCacheError = (
         try {
           error.__logged = true;
         } catch (error) {
-          logClientError(error);
-        
+          logClientCatch(error, {
+            source: 'query-client',
+            action: 'markCacheErrorLogged',
+            cacheSource: source,
+            level: 'warn',
+          });
+
           // ignore read-only errors
         }
       }
@@ -140,8 +153,13 @@ const safeLogCacheError = (
       });
     }
   } catch (error) {
-    logClientError(error);
-  
+    logClientCatch(error, {
+      source: 'query-client',
+      action: 'safeLogCacheError',
+      cacheSource: source,
+      level: 'warn',
+    });
+
     // Cache callbacks must never throw.
   }
 };

@@ -1,3 +1,5 @@
+'use server';
+
 import { randomUUID } from 'crypto';
 
 import { ObjectId, type Filter, type OptionalId } from 'mongodb';

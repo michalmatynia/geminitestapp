@@ -13,7 +13,7 @@ import {
 } from '@/features/integrations/services/active-template-preference';
 import { type ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import { type Template, type TemplateMapping } from '@/shared/contracts/integrations/templates';
-import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
+import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
 import { badRequestError } from '@/shared/errors/app-error';
 import {
   getDefaultImageRetryPresets,
@@ -24,7 +24,6 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type { Template, TemplateMapping };
-type SettingDoc = MongoTimestampedStringSettingRecord<string | _ObjectId, Date>;
 
 const LOG_SOURCE = 'export-template-repository';
 
@@ -144,9 +143,11 @@ const assertNoUnsupportedParameterSourceMappings = (args: {
 
 const readTemplatesValue = async (): Promise<string | null> => {
   const mongo = await getMongoDb();
-  const doc = await mongo.collection<SettingDoc>('settings').findOne({
-    $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }],
-  });
+  const doc = await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
+    .findOne({
+      $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }],
+    });
   const val = typeof doc?.value === 'string' ? doc.value : null;
   await logSystemEvent({
     level: 'info',
@@ -159,41 +160,51 @@ const readTemplatesValue = async (): Promise<string | null> => {
 
 const readActiveTemplateValue = async (): Promise<string | null> => {
   const mongo = await getMongoDb();
-  const doc = await mongo.collection<SettingDoc>('settings').findOne({
-    $or: [{ _id: toMongoId(ACTIVE_TEMPLATE_KEY) }, { key: ACTIVE_TEMPLATE_KEY }],
-  });
+  const doc = await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
+    .findOne({
+      $or: [{ _id: toMongoId(ACTIVE_TEMPLATE_KEY) }, { key: ACTIVE_TEMPLATE_KEY }],
+    });
   return typeof doc?.value === 'string' ? doc.value : null;
 };
 
 const readDefaultInventoryValue = async (): Promise<string | null> => {
   const mongo = await getMongoDb();
-  const doc = await mongo.collection<SettingDoc>('settings').findOne({
-    $or: [{ _id: toMongoId(DEFAULT_INVENTORY_KEY) }, { key: DEFAULT_INVENTORY_KEY }],
-  });
+  const doc = await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
+    .findOne({
+      $or: [{ _id: toMongoId(DEFAULT_INVENTORY_KEY) }, { key: DEFAULT_INVENTORY_KEY }],
+    });
   return typeof doc?.value === 'string' ? doc.value : null;
 };
 
 const readStockFallbackValue = async (): Promise<string | null> => {
   const mongo = await getMongoDb();
-  const doc = await mongo.collection<SettingDoc>('settings').findOne({
-    $or: [{ _id: toMongoId(STOCK_FALLBACK_KEY) }, { key: STOCK_FALLBACK_KEY }],
-  });
+  const doc = await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
+    .findOne({
+      $or: [{ _id: toMongoId(STOCK_FALLBACK_KEY) }, { key: STOCK_FALLBACK_KEY }],
+    });
   return typeof doc?.value === 'string' ? doc.value : null;
 };
 
 const readDefaultConnectionValue = async (): Promise<string | null> => {
   const mongo = await getMongoDb();
-  const doc = await mongo.collection<SettingDoc>('settings').findOne({
-    $or: [{ _id: toMongoId(DEFAULT_CONNECTION_KEY) }, { key: DEFAULT_CONNECTION_KEY }],
-  });
+  const doc = await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
+    .findOne({
+      $or: [{ _id: toMongoId(DEFAULT_CONNECTION_KEY) }, { key: DEFAULT_CONNECTION_KEY }],
+    });
   return typeof doc?.value === 'string' ? doc.value : null;
 };
 
 const readImageRetryPresetsValue = async (): Promise<string | null> => {
   const mongo = await getMongoDb();
-  const doc = await mongo.collection<SettingDoc>('settings').findOne({
-    $or: [{ _id: toMongoId(IMAGE_RETRY_PRESETS_KEY) }, { key: IMAGE_RETRY_PRESETS_KEY }],
-  });
+  const doc = await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
+    .findOne({
+      $or: [{ _id: toMongoId(IMAGE_RETRY_PRESETS_KEY) }, { key: IMAGE_RETRY_PRESETS_KEY }],
+    });
   return typeof doc?.value === 'string' ? doc.value : null;
 };
 
@@ -206,18 +217,20 @@ const writeTemplatesValue = async (value: string): Promise<void> => {
     context: { length: value.length, provider },
   });
   const mongo = await getMongoDb();
-  await mongo.collection<SettingDoc>('settings').updateMany(
-    { $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }] },
-    {
-      $set: {
-        value,
-        key: SETTINGS_KEY,
-        updatedAt: new Date(),
+  await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
+    .updateMany(
+      { $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }] },
+      {
+        $set: {
+          value,
+          key: SETTINGS_KEY,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
       },
-      $setOnInsert: { createdAt: new Date() },
-    },
-    { upsert: true }
-  );
+      { upsert: true }
+    );
   await logSystemEvent({
     level: 'info',
     source: LOG_SOURCE,
@@ -227,82 +240,92 @@ const writeTemplatesValue = async (value: string): Promise<void> => {
 
 const writeActiveTemplateValue = async (value: string): Promise<void> => {
   const mongo = await getMongoDb();
-  await mongo.collection<SettingDoc>('settings').updateOne(
-    { $or: [{ _id: toMongoId(ACTIVE_TEMPLATE_KEY) }, { key: ACTIVE_TEMPLATE_KEY }] },
-    {
-      $set: {
-        value,
-        key: ACTIVE_TEMPLATE_KEY,
-        updatedAt: new Date(),
+  await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
+    .updateOne(
+      { $or: [{ _id: toMongoId(ACTIVE_TEMPLATE_KEY) }, { key: ACTIVE_TEMPLATE_KEY }] },
+      {
+        $set: {
+          value,
+          key: ACTIVE_TEMPLATE_KEY,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
       },
-      $setOnInsert: { createdAt: new Date() },
-    },
-    { upsert: true }
-  );
+      { upsert: true }
+    );
 };
 
 const writeDefaultInventoryValue = async (value: string): Promise<void> => {
   const mongo = await getMongoDb();
-  await mongo.collection<SettingDoc>('settings').updateOne(
-    { $or: [{ _id: toMongoId(DEFAULT_INVENTORY_KEY) }, { key: DEFAULT_INVENTORY_KEY }] },
-    {
-      $set: {
-        value,
-        key: DEFAULT_INVENTORY_KEY,
-        updatedAt: new Date(),
+  await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
+    .updateOne(
+      { $or: [{ _id: toMongoId(DEFAULT_INVENTORY_KEY) }, { key: DEFAULT_INVENTORY_KEY }] },
+      {
+        $set: {
+          value,
+          key: DEFAULT_INVENTORY_KEY,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
       },
-      $setOnInsert: { createdAt: new Date() },
-    },
-    { upsert: true }
-  );
+      { upsert: true }
+    );
 };
 
 const writeStockFallbackValue = async (value: string): Promise<void> => {
   const mongo = await getMongoDb();
-  await mongo.collection<SettingDoc>('settings').updateOne(
-    { $or: [{ _id: toMongoId(STOCK_FALLBACK_KEY) }, { key: STOCK_FALLBACK_KEY }] },
-    {
-      $set: {
-        value,
-        key: STOCK_FALLBACK_KEY,
-        updatedAt: new Date(),
+  await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
+    .updateOne(
+      { $or: [{ _id: toMongoId(STOCK_FALLBACK_KEY) }, { key: STOCK_FALLBACK_KEY }] },
+      {
+        $set: {
+          value,
+          key: STOCK_FALLBACK_KEY,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
       },
-      $setOnInsert: { createdAt: new Date() },
-    },
-    { upsert: true }
-  );
+      { upsert: true }
+    );
 };
 
 const writeDefaultConnectionValue = async (value: string): Promise<void> => {
   const mongo = await getMongoDb();
-  await mongo.collection<SettingDoc>('settings').updateOne(
-    { $or: [{ _id: toMongoId(DEFAULT_CONNECTION_KEY) }, { key: DEFAULT_CONNECTION_KEY }] },
-    {
-      $set: {
-        value,
-        key: DEFAULT_CONNECTION_KEY,
-        updatedAt: new Date(),
+  await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
+    .updateOne(
+      { $or: [{ _id: toMongoId(DEFAULT_CONNECTION_KEY) }, { key: DEFAULT_CONNECTION_KEY }] },
+      {
+        $set: {
+          value,
+          key: DEFAULT_CONNECTION_KEY,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
       },
-      $setOnInsert: { createdAt: new Date() },
-    },
-    { upsert: true }
-  );
+      { upsert: true }
+    );
 };
 
 const writeImageRetryPresetsValue = async (value: string): Promise<void> => {
   const mongo = await getMongoDb();
-  await mongo.collection<SettingDoc>('settings').updateOne(
-    { $or: [{ _id: toMongoId(IMAGE_RETRY_PRESETS_KEY) }, { key: IMAGE_RETRY_PRESETS_KEY }] },
-    {
-      $set: {
-        value,
-        key: IMAGE_RETRY_PRESETS_KEY,
-        updatedAt: new Date(),
+  await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
+    .updateOne(
+      { $or: [{ _id: toMongoId(IMAGE_RETRY_PRESETS_KEY) }, { key: IMAGE_RETRY_PRESETS_KEY }] },
+      {
+        $set: {
+          value,
+          key: IMAGE_RETRY_PRESETS_KEY,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
       },
-      $setOnInsert: { createdAt: new Date() },
-    },
-    { upsert: true }
-  );
+      { upsert: true }
+    );
 };
 
 export const listExportTemplates = async (): Promise<Template[]> => {

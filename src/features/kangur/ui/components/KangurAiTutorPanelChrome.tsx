@@ -33,6 +33,7 @@ import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state'
 import type {
   TutorAvatarPointer,
   TutorHorizontalSide,
+  TutorPanelChromeVariant,
   TutorMotionProfile,
   TutorPanelSnapState,
 } from './KangurAiTutorWidget.shared';
@@ -56,9 +57,6 @@ type ReducedMotionTransitions = {
   };
 };
 
-type AvatarPointer = TutorAvatarPointer;
-type TutorPanelChromeVariant = 'default' | 'contextual_result';
-
 type Props = {
   attachedAvatarStyle: CSSProperties;
   attachedLaunchOffset: {
@@ -68,7 +66,7 @@ type Props = {
   avatarAnchorKind: string;
   avatarAttachmentSide: TutorHorizontalSide;
   avatarButtonClassName: string;
-  avatarPointer: AvatarPointer | null;
+  avatarPointer: TutorAvatarPointer | null;
   bubbleEntryDirection: TutorHorizontalSide;
   bubbleMode: 'bubble' | 'sheet';
   bubbleLaunchOrigin: 'dock-bottom-right' | 'sheet';

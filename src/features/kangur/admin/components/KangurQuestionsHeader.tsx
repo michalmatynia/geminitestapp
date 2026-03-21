@@ -5,10 +5,13 @@ import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-
 import { Badge, Button } from '@/features/kangur/shared/ui';
 import { KANGUR_STACK_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import type { KangurTestSuiteHealth } from '../test-suite-health';
+import type { QuestionManagerCopy } from '../question-manager.copy';
 
 interface KangurQuestionsHeaderProps {
+  copy: QuestionManagerCopy['header'];
   currentSuite: KangurTestSuite;
   questionCount: number;
+  formatQuestionCount: (count: number) => string;
   readyCount: number;
   richQuestionCount: number;
   needsReviewCount: number;
@@ -34,8 +37,10 @@ export function KangurQuestionsHeader(
   props: KangurQuestionsHeaderProps
 ): React.JSX.Element {
   const {
+    copy,
     currentSuite,
     questionCount,
+    formatQuestionCount,
     readyCount,
     richQuestionCount,
     needsReviewCount,
@@ -61,11 +66,11 @@ export function KangurQuestionsHeader(
       <div className={`${KANGUR_STACK_RELAXED_CLASSNAME} xl:flex-row xl:items-start xl:justify-between`}>
         <div className='max-w-3xl space-y-2'>
           <div className='text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-200/78'>
-            Suite question workspace
+            {copy.eyebrow}
           </div>
           <div className='text-xl font-semibold text-white'>{currentSuite.title}</div>
           <div className='text-sm leading-6 text-slate-300/82'>
-            {questionCount} {questionCount === 1 ? 'question' : 'questions'}
+            {formatQuestionCount(questionCount)}
             {currentSuite.year ? ` · ${currentSuite.year}` : ''}
             {currentSuite.gradeLevel ? ` · ${currentSuite.gradeLevel}` : ''}
           </div>
@@ -74,59 +79,59 @@ export function KangurQuestionsHeader(
               variant='outline'
               className='h-5 px-2 text-[10px] text-emerald-300 border-emerald-400/40'
             >
-              Ready {readyCount}
+              {copy.ready} {readyCount}
             </Badge>
             <Badge variant='outline' className='h-5 px-2 text-[10px]'>
-              Rich UI {richQuestionCount}
+              {copy.richUi} {richQuestionCount}
             </Badge>
             <Badge
               variant='outline'
               className='h-5 px-2 text-[10px] text-amber-300 border-amber-400/40'
             >
-              Needs review {needsReviewCount}
+              {copy.needsReview} {needsReviewCount}
             </Badge>
             <Badge
               variant='outline'
               className='h-5 px-2 text-[10px] text-rose-300 border-rose-400/40'
             >
-              Needs fix {needsFixCount}
+              {copy.needsFix} {needsFixCount}
             </Badge>
             <Badge
               variant='outline'
               className='h-5 px-2 text-[10px] text-violet-300 border-violet-400/40'
             >
-              SVG {illustratedCount}
+              {copy.illustrated} {illustratedCount}
             </Badge>
             <Badge
               variant='outline'
               className='h-5 px-2 text-[10px] text-cyan-300 border-cyan-400/40'
             >
-              Review queue {reviewQueueCount}
+              {copy.reviewQueue} {reviewQueueCount}
             </Badge>
             <Badge
               variant='outline'
               className='h-5 px-2 text-[10px] text-slate-300 border-slate-400/40'
             >
-              Draft {draftCount}
+              {copy.draft} {draftCount}
             </Badge>
             <Badge
               variant='outline'
               className='h-5 px-2 text-[10px] text-sky-300 border-sky-400/40'
             >
-              Ready to publish {readyToPublishCount}
+              {copy.readyToPublish} {readyToPublishCount}
             </Badge>
             <Badge
               variant='outline'
               className='h-5 px-2 text-[10px] text-emerald-300 border-emerald-400/40'
             >
-              Published {publishedCount}
+              {copy.published} {publishedCount}
             </Badge>
             {currentSuiteHealth.publishStatus === 'partial' ? (
               <Badge
                 variant='outline'
                 className='h-5 px-2 text-[10px] text-cyan-300 border-cyan-400/40'
               >
-                Published {currentSuiteHealth.publishedQuestionCount}/
+                {copy.published} {currentSuiteHealth.publishedQuestionCount}/
                 {currentSuiteHealth.questionCount}
               </Badge>
             ) : null}
@@ -136,7 +141,7 @@ export function KangurQuestionsHeader(
                 variant='outline'
                 className='h-5 px-2 text-[10px] text-slate-300 border-slate-400/40'
               >
-                Not published
+                {copy.notPublished}
               </Badge>
             ) : null}
             {currentSuiteHealth.canGoLive ? (
@@ -144,7 +149,7 @@ export function KangurQuestionsHeader(
                 variant='outline'
                 className='h-5 px-2 text-[10px] text-emerald-300 border-emerald-400/40'
               >
-                Ready for live
+                {copy.readyForLive}
               </Badge>
             ) : null}
             {canPublishAndGoLive ? (
@@ -152,7 +157,7 @@ export function KangurQuestionsHeader(
                 variant='outline'
                 className='h-5 px-2 text-[10px] text-cyan-300 border-cyan-400/40'
               >
-                Go live after publish
+                {copy.goLiveAfterPublish}
               </Badge>
             ) : null}
             {currentSuiteHealth.isLive ? (
@@ -160,7 +165,7 @@ export function KangurQuestionsHeader(
                 variant='outline'
                 className='h-5 px-2 text-[10px] border-emerald-400/40 bg-emerald-500/10 text-emerald-200'
               >
-                Live
+                {copy.live}
               </Badge>
             ) : null}
             {currentSuiteHealth.liveNeedsAttention ? (
@@ -168,7 +173,7 @@ export function KangurQuestionsHeader(
                 variant='outline'
                 className='h-5 px-2 text-[10px] border-rose-400/40 bg-rose-500/10 text-rose-200'
               >
-                Live needs attention
+                {copy.liveNeedsAttention}
               </Badge>
             ) : null}
           </div>
@@ -182,7 +187,7 @@ export function KangurQuestionsHeader(
               onClick={onPublishAndGoLive}
               disabled={isSaving}
             >
-              Publish and go live
+              {copy.publishAndGoLive}
             </Button>
           ) : null}
           <Button
@@ -193,7 +198,7 @@ export function KangurQuestionsHeader(
             onClick={onPublishReady}
             disabled={isSaving || !canPublishReady}
           >
-            Publish ready questions
+            {copy.publishReadyQuestions}
           </Button>
           <Button
             type='button'
@@ -203,7 +208,7 @@ export function KangurQuestionsHeader(
             onClick={onGoLive}
             disabled={isSaving || !currentSuiteHealth.canGoLive}
           >
-            Go live for learners
+            {copy.goLiveForLearners}
           </Button>
           <Button
             type='button'
@@ -213,7 +218,7 @@ export function KangurQuestionsHeader(
             onClick={onTakeOffline}
             disabled={isSaving || !currentSuiteHealth.isLive}
           >
-            Take suite offline
+            {copy.takeSuiteOffline}
           </Button>
           <Button
             type='button'
@@ -224,7 +229,7 @@ export function KangurQuestionsHeader(
             disabled={isSaving}
           >
             <Plus className='mr-1 size-3.5' />
-            Add question
+            {copy.addQuestion}
           </Button>
           <Button
             type='button'
@@ -233,7 +238,7 @@ export function KangurQuestionsHeader(
             className='h-8 w-full rounded-full px-3 text-[11px] font-semibold text-gray-300 sm:w-auto'
             onClick={onBack}
           >
-            ← Back to suites
+            ← {copy.backToSuites}
           </Button>
         </div>
       </div>

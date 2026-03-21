@@ -1,7 +1,7 @@
 'use client';
 
 import { Eraser } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -34,6 +34,7 @@ import {
   KANGUR_ACCENT_STYLES,
   KANGUR_PANEL_GAP_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { getGeometrySymmetryMiniGameFallbackCopy } from '@/features/kangur/ui/components/geometry-mini-game-fallbacks';
 import {
   evaluateAxisDrawing,
   evaluateMirrorDrawing,
@@ -86,30 +87,33 @@ const flattenPoints = (strokes: Point2d[][]): Point2d[] =>
 
 const localizeSymmetryRound = (
   translate: KangurMiniGameTranslate,
-  round: SymmetryRound
+  round: SymmetryRound,
+  fallbackRound: Pick<SymmetryRound, 'hint' | 'prompt' | 'title'>
 ): SymmetryRound => ({
   ...round,
   title: translateKangurMiniGameWithFallback(
     translate,
     `geometrySymmetry.inRound.rounds.${round.id}.title`,
-    round.title
+    fallbackRound.title
   ),
   prompt: translateKangurMiniGameWithFallback(
     translate,
     `geometrySymmetry.inRound.rounds.${round.id}.prompt`,
-    round.prompt
+    fallbackRound.prompt
   ),
   hint: translateKangurMiniGameWithFallback(
     translate,
     `geometrySymmetry.inRound.rounds.${round.id}.hint`,
-    round.hint
+    fallbackRound.hint
   ),
 });
 
 export default function GeometrySymmetryGame({
   onFinish,
 }: KangurMiniGameFinishActionProps): React.JSX.Element {
+  const locale = useLocale();
   const translations = useTranslations('KangurMiniGames');
+  const fallbackCopy = useMemo(() => getGeometrySymmetryMiniGameFallbackCopy(locale), [locale]);
   const translateWithFallback = useCallback(
     (key: string, fallback: string, values?: Record<string, string | number>): string =>
       translateKangurMiniGameWithFallback(translations, key, fallback, values),
@@ -120,7 +124,13 @@ export default function GeometrySymmetryGame({
   const isDrawingRef = useRef(false);
   const sessionStartedAtRef = useRef(Date.now());
   const nextRoundTimeoutRef = useRef<number | null>(null);
-  const resolvedRounds = useMemo(() => ROUNDS.map((round) => localizeSymmetryRound(translations, round)), [translations]);
+  const resolvedRounds = useMemo(
+    () =>
+      ROUNDS.map((round) =>
+        localizeSymmetryRound(translations, round, fallbackCopy.rounds[round.id] ?? round)
+      ),
+    [fallbackCopy.rounds, translations]
+  );
 
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -137,7 +147,7 @@ export default function GeometrySymmetryGame({
   const [keyboardStatus, setKeyboardStatus] = useState(() =>
     translateWithFallback(
       'geometrySymmetry.inRound.keyboard.ready',
-      'Plansza gotowa do rysowania.'
+      fallbackCopy.keyboard.ready
     )
   );
   const isCoarsePointer = useKangurCoarsePointer();
@@ -450,7 +460,10 @@ export default function GeometrySymmetryGame({
     }
 
     if (currentRound.type === 'axis') {
-      const result = evaluateAxisDrawing(points, currentRound.axis, translations);
+      const result = evaluateAxisDrawing(points, currentRound.axis, {
+        locale,
+        translate: translations,
+      });
       setFeedback({
         kind: result.kind,
         text: result.message,
@@ -465,6 +478,7 @@ export default function GeometrySymmetryGame({
       template: templatePoints,
       axis: currentRound.axis,
       expectedSide: currentRound.expectedSide ?? 'right',
+      locale,
       translate: translations,
     });
     setFeedback({

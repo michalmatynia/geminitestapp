@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react';
 
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface RealtimeConfig {
   queryKey?: readonly unknown[];
@@ -56,9 +56,10 @@ export function useRealtimeQuery<TData>(
           queryClient.setQueryData(queryKey as unknown[], data);
           config?.onUpdate?.(data);
         } catch (error) {
-          logClientError(error);
-          logClientError(error instanceof Error ? error : new Error(String(error)), {
-            context: { source: 'useRealtimeQuery', action: 'parseWebSocketData', level: 'warn' },
+          logClientCatch(error, {
+            source: 'useRealtimeQuery',
+            action: 'parseWebSocketData',
+            level: 'warn',
           });
         }
       };
@@ -67,8 +68,13 @@ export function useRealtimeQuery<TData>(
         // Fallback to polling if WebSocket fails
       };
     } catch (error) {
-      logClientError(error);
-    
+      logClientCatch(error, {
+        source: 'useRealtimeQuery',
+        action: 'openWebSocket',
+        level: 'warn',
+        wsUrl,
+      });
+
       // WebSocket not available, use polling
     }
 
@@ -105,9 +111,10 @@ export function useServerSentEvents<TData>(
         queryClient.setQueryData(queryKey as unknown[], data);
         config?.onUpdate?.(data);
       } catch (error) {
-        logClientError(error);
-        logClientError(error instanceof Error ? error : new Error(String(error)), {
-          context: { source: 'useServerSentEvents', action: 'parseSSEData', level: 'warn' },
+        logClientCatch(error, {
+          source: 'useServerSentEvents',
+          action: 'parseSSEData',
+          level: 'warn',
         });
       }
     };

@@ -1,6 +1,6 @@
 import type { ErrorContext } from '@/shared/contracts/observability';
 import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 export const reportClientError = async (
@@ -27,7 +27,11 @@ export const reportClientError = async (
       keepalive: true,
     });
   } catch (err) {
-    logClientError(err);
+    logClientCatch(err, {
+      source: 'client-error-reporter',
+      action: 'sendClientErrorReport',
+      service: context.service || 'observability.client-error-reporter',
+    });
     const { logger } = await import('@/shared/utils/logger');
     logger.error(
       'Failed to send client error report',

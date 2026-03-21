@@ -9,7 +9,6 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { withTransientRecovery } from './transient-recovery/with-recovery';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
 const SETTINGS_COLLECTION = 'settings';
@@ -197,7 +196,6 @@ export const notifyCriticalError = async (
     }
     return { delivered: true, throttled: false };
   } catch (error) {
-    logClientError(error);
     void ErrorSystem.captureException(error, {
       service: 'critical-error-notifier',
       action: 'notifyCriticalError',

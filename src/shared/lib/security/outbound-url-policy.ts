@@ -1,4 +1,4 @@
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 type OutboundHostRule = {
   raw: string;
   suffix: boolean;
@@ -60,8 +60,12 @@ const resolveAppSelfOriginHosts = (): Set<string> => {
       const host = parsed.host.toLowerCase();
       if (host) hosts.add(host);
     } catch (error) {
-      logClientError(error);
-    
+      reportObservabilityInternalError(error, {
+        source: 'outbound-url-policy',
+        action: 'resolveAppSelfOriginHosts',
+        service: 'security.outbound-url-policy',
+      });
+
       // Unparseable env value — skip.
     }
   }
@@ -145,7 +149,12 @@ export const evaluateOutboundUrlPolicy = (rawUrl: string): OutboundUrlPolicyDeci
   try {
     parsed = new URL(trimmedUrl);
   } catch (error) {
-    logClientError(error);
+    reportObservabilityInternalError(error, {
+      source: 'outbound-url-policy',
+      action: 'evaluateOutboundUrlPolicy',
+      service: 'security.outbound-url-policy',
+      rawUrl: trimmedUrl,
+    });
     return {
       allowed: false,
       reason: 'invalid_url',

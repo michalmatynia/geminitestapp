@@ -10,11 +10,6 @@ import {
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
-import type {
-  KangurAiTutorGuestIntroStatus,
-  KangurAiTutorHomeOnboardingStatus,
-  KangurAiTutorOnboardingRecord,
-} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 import { isAuthGuidedTutorTarget } from './KangurAiTutorWidget.helpers';
 import {
@@ -26,13 +21,11 @@ import {
 import type {
   GuidedTutorAuthKind,
   GuidedTutorTarget,
+  KangurAiTutorGuestIntroRecord,
+  KangurAiTutorHomeOnboardingRecord,
   PendingSelectionResponse,
   TutorHomeOnboardingStep,
 } from './KangurAiTutorWidget.types';
-
-type KangurAiTutorGuestIntroRecord = KangurAiTutorOnboardingRecord<KangurAiTutorGuestIntroStatus>;
-type KangurAiTutorHomeOnboardingRecord =
-  KangurAiTutorOnboardingRecord<KangurAiTutorHomeOnboardingStatus>;
 
 const AUTO_START_HOME_ONBOARDING_ON_FIRST_VISIT = false;
 

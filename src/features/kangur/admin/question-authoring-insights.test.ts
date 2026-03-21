@@ -128,4 +128,29 @@ describe('getQuestionAuthoringSummary', () => {
       'ready_workflow_requires_clean_review'
     );
   });
+
+  it('can localize authoring messages to Ukrainian', () => {
+    const summary = getQuestionAuthoringSummary(
+      makeQuestion({
+        explanation: '',
+        editorial: {
+          source: 'manual',
+          reviewStatus: 'ready',
+          workflowStatus: 'published',
+          auditFlags: [],
+        },
+      }),
+      'uk-UA'
+    );
+
+    expect(summary.warnings[0]?.message).toBe(
+      'Додайте пояснення, щоб учні могли переглянути міркування після відповіді.'
+    );
+    expect(summary.blockers[0]?.message).toBe(
+      'Приберіть попередження review, перш ніж публікувати це запитання.'
+    );
+    expect(summary.nextAction).toBe(
+      'Приберіть попередження review, перш ніж публікувати це запитання.'
+    );
+  });
 });

@@ -10,6 +10,7 @@ const {
   replaceMock,
   useLocalSearchParamsMock,
   useKangurMobileLessonCheckpointsMock,
+  useKangurMobileResultsAssignmentsMock,
   useKangurMobileResultsMock,
   useKangurMobileResultsDuelsMock,
   useRouterMock,
@@ -17,6 +18,7 @@ const {
   replaceMock: vi.fn(),
   useLocalSearchParamsMock: vi.fn(),
   useKangurMobileLessonCheckpointsMock: vi.fn(),
+  useKangurMobileResultsAssignmentsMock: vi.fn(),
   useKangurMobileResultsMock: vi.fn(),
   useKangurMobileResultsDuelsMock: vi.fn(),
   useRouterMock: vi.fn(),
@@ -30,6 +32,10 @@ vi.mock('expo-router', () => ({
 
 vi.mock('./useKangurMobileResults', () => ({
   useKangurMobileResults: useKangurMobileResultsMock,
+}));
+
+vi.mock('./useKangurMobileResultsAssignments', () => ({
+  useKangurMobileResultsAssignments: useKangurMobileResultsAssignmentsMock,
 }));
 
 vi.mock('./useKangurMobileResultsDuels', () => ({
@@ -83,6 +89,9 @@ describe('KangurResultsScreen', () => {
     });
     useKangurMobileLessonCheckpointsMock.mockReturnValue({
       recentCheckpoints: [],
+    });
+    useKangurMobileResultsAssignmentsMock.mockReturnValue({
+      assignmentItems: [],
     });
   });
 
@@ -215,6 +224,32 @@ describe('KangurResultsScreen', () => {
         },
       ],
     });
+    useKangurMobileResultsAssignmentsMock.mockReturnValue({
+      assignmentItems: [
+        {
+          assignment: {
+            action: {
+              label: 'Open lesson',
+              page: 'Lessons',
+              query: {
+                focus: 'clock',
+              },
+            },
+            description: 'Wroc do lekcji o zegarze i zamknij ostatnie braki.',
+            id: 'assignment-results-1',
+            priority: 'high',
+            target: 'Powtorka zegara',
+            title: 'Domknij zegar',
+          },
+          href: {
+            pathname: '/lessons',
+            params: {
+              focus: 'clock',
+            },
+          },
+        },
+      ],
+    });
 
     render(<KangurResultsScreen />);
 
@@ -229,6 +264,12 @@ describe('KangurResultsScreen', () => {
     expect(screen.getByText('#2 Ada Learner')).toBeTruthy();
     expect(screen.getByText('Leo Mentor')).toBeTruthy();
     expect(screen.getByText('Szybki rewanż')).toBeTruthy();
+    expect(screen.getByText('Następne kroki')).toBeTruthy();
+    expect(screen.getByText('Lokalne zadania po wynikach')).toBeTruthy();
+    expect(screen.getByText('Domknij zegar')).toBeTruthy();
+    expect(screen.getByText('Priorytet wysoki')).toBeTruthy();
+    expect(screen.getByText('Cel: Powtorka zegara')).toBeTruthy();
+    expect(screen.getAllByText('Otwórz lekcję').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
     expect(screen.getByText('Ostatni wynik 70% • opanowanie 68%')).toBeTruthy();
     expect(screen.getByText('Wróć do lekcji: Dodawanie')).toBeTruthy();

@@ -3,19 +3,9 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
+import { loadProductIntegrationsAdapter } from '@/features/products/lib/product-integrations-adapter-loader';
 import { prefetchQueryV2, fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
-
-type ProductIntegrationsAdapterModule = typeof import('@/shared/lib/product-integrations-adapter');
-
-let productIntegrationsAdapterPromise: Promise<ProductIntegrationsAdapterModule> | null = null;
-
-const loadProductIntegrationsAdapter = (): Promise<ProductIntegrationsAdapterModule> => {
-  if (!productIntegrationsAdapterPromise) {
-    productIntegrationsAdapterPromise = import('@/shared/lib/product-integrations-adapter');
-  }
-  return productIntegrationsAdapterPromise;
-};
 
 export function useProductListIntegrations() {
   const queryClient = useQueryClient();

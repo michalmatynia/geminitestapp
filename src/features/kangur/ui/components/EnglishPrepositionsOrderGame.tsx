@@ -43,7 +43,7 @@ import {
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type {
-  KangurMiniGameFeedback,
+  KangurMiniGameFeedbackState,
   KangurMiniGameFinishProps,
   KangurRewardBreakdownEntry,
 } from '@/features/kangur/ui/types';
@@ -225,7 +225,7 @@ export default function EnglishPrepositionsOrderGame({
   const [checked, setChecked] = useState(false);
   const [roundCorrect, setRoundCorrect] = useState(0);
   const [totalCorrect, setTotalCorrect] = useState(0);
-  const [feedback, setFeedback] = useState<KangurMiniGameFeedback | null>(null);
+  const [feedback, setFeedback] = useState<KangurMiniGameFeedbackState>(null);
   const [done, setDone] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);

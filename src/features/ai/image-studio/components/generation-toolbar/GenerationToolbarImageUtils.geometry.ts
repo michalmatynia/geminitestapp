@@ -1,3 +1,5 @@
+import type { Point2d } from '@/shared/contracts/geometry';
+
 import {
   normalizeImageContentFrame,
   shapePointsAreUnitNormalized,
@@ -16,8 +18,6 @@ type ShapeBounds = {
   minY: number;
   maxY: number;
 };
-
-type MaskPoint = { x: number; y: number };
 
 const resolveContextImageFrame = (context: CropCanvasContext): ImageContentFrame | null => {
   const normalizedFrame = normalizeImageContentFrame(
@@ -106,7 +106,7 @@ export const resolveCropRectFromShapesWithDiagnostics = (
 
   const shapeBounds: ShapeBounds = eligibleShapes.reduce(
     (acc: ShapeBounds, shape) => {
-      shape.points.forEach((point: MaskPoint) => {
+      shape.points.forEach((point: Point2d) => {
         acc.minX = Math.min(acc.minX, point.x);
         acc.maxX = Math.max(acc.maxX, point.x);
         acc.minY = Math.min(acc.minY, point.y);

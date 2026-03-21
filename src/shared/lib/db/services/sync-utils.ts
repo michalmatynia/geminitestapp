@@ -37,10 +37,10 @@ export const toJsonValue = (value: unknown): unknown => {
   return value;
 };
 
-export const normalizeId = (doc: Record<string, unknown>): string => {
-  const direct = doc['id'];
+export const normalizeId = (doc: { id?: unknown; _id?: unknown }): string => {
+  const direct = doc.id;
   if (typeof direct === 'string' && direct.trim()) return direct;
-  const raw = doc['_id'];
+  const raw = doc._id;
   if (typeof raw === 'string') return raw;
   if (raw && typeof raw === 'object' && 'toString' in raw) {
     return (raw as { toString: () => string }).toString();

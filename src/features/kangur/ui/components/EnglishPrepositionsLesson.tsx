@@ -27,6 +27,7 @@ import {
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
+import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 
 const LESSON_KEY = 'english_prepositions_time_place';
 
@@ -48,7 +49,7 @@ type SlideSectionId = Exclude<
 >;
 
 const buildEnglishPrepositionsSlides = (
-  translations: ReturnType<typeof useTranslations>
+  translations: KangurIntlTranslate
 ): Record<SlideSectionId, LessonSlide[]> => ({
   intro: [
     {

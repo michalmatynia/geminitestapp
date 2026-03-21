@@ -1,5 +1,5 @@
 import type { SettingsScope, SettingRecord } from '@/shared/lib/settings-cache';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 const HEAVY_PREFIXES = ['image_studio_', 'base_import_', 'base_export_'];
@@ -82,7 +82,11 @@ const parseJsonStringLiteral = (raw: string): string | null => {
     const parsed = JSON.parse(raw) as unknown;
     return typeof parsed === 'string' ? parsed : null;
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'settings-logic',
+      action: 'parseJsonStringLiteral',
+      level: 'warn',
+    });
     return null;
   }
 };
@@ -136,7 +140,11 @@ export const parseCaseResolverWorkspaceMetadata = (
       lastMutationId,
     };
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'settings-logic',
+      action: 'parseCaseResolverWorkspaceMetadata',
+      level: 'warn',
+    });
     return {
       revision: 0,
       lastMutationId: null,
@@ -151,7 +159,11 @@ export const parseUpdatedAtMsFromPathConfig = (raw: string): number | null => {
     const ms = Date.parse(parsed.updatedAt);
     return Number.isFinite(ms) ? ms : null;
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'settings-logic',
+      action: 'parseUpdatedAtMsFromPathConfig',
+      level: 'warn',
+    });
     return null;
   }
 };
@@ -162,7 +174,11 @@ export const parsePathConfigObject = (raw: string): Record<string, unknown> | nu
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
     return parsed as Record<string, unknown>;
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'settings-logic',
+      action: 'parsePathConfigObject',
+      level: 'warn',
+    });
     return null;
   }
 };

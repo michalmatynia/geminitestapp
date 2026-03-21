@@ -19,6 +19,7 @@ const {
   useRouterMock,
   useKangurMobileAuthMock,
   useKangurMobileLessonCheckpointsMock,
+  useKangurMobilePracticeAssignmentsMock,
   useKangurMobilePracticeDuelsMock,
   useKangurMobileRuntimeMock,
   useKangurPracticeSyncProofMock,
@@ -35,6 +36,7 @@ const {
   useRouterMock: vi.fn(),
   useKangurMobileAuthMock: vi.fn(),
   useKangurMobileLessonCheckpointsMock: vi.fn(),
+  useKangurMobilePracticeAssignmentsMock: vi.fn(),
   useKangurMobilePracticeDuelsMock: vi.fn(),
   useKangurMobileRuntimeMock: vi.fn(),
   useKangurPracticeSyncProofMock: vi.fn(),
@@ -86,6 +88,10 @@ vi.mock('../scores/resultsHref', () => ({
 
 vi.mock('./useKangurPracticeSyncProof', () => ({
   useKangurPracticeSyncProof: useKangurPracticeSyncProofMock,
+}));
+
+vi.mock('./useKangurMobilePracticeAssignments', () => ({
+  useKangurMobilePracticeAssignments: useKangurMobilePracticeAssignmentsMock,
 }));
 
 vi.mock('./useKangurMobilePracticeDuels', () => ({
@@ -149,6 +155,9 @@ describe('KangurPracticeScreen', () => {
     });
     useKangurMobileLessonCheckpointsMock.mockReturnValue({
       recentCheckpoints: [],
+    });
+    useKangurMobilePracticeAssignmentsMock.mockReturnValue({
+      assignmentItems: [],
     });
     useKangurMobilePracticeDuelsMock.mockReturnValue({
       actionError: null,
@@ -290,6 +299,32 @@ describe('KangurPracticeScreen', () => {
         },
       ],
     });
+    useKangurMobilePracticeAssignmentsMock.mockReturnValue({
+      assignmentItems: [
+        {
+          assignment: {
+            action: {
+              label: 'Open lesson',
+              page: 'Lessons',
+              query: {
+                focus: 'clock',
+              },
+            },
+            description: 'Wroc do lekcji o zegarze i utrwal pelne godziny.',
+            id: 'practice-assignment-1',
+            priority: 'high',
+            target: '1 lekcja',
+            title: 'Powtorz zegar',
+          },
+          href: {
+            pathname: '/lessons',
+            params: {
+              focus: 'clock',
+            },
+          },
+        },
+      ],
+    });
 
     renderPracticeScreen();
 
@@ -312,6 +347,10 @@ describe('KangurPracticeScreen', () => {
     expect(screen.getByText('Wróć do lekcji: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Potem trenuj: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
+    expect(screen.getByText('Następne kroki')).toBeTruthy();
+    expect(screen.getByText('Powtorz zegar')).toBeTruthy();
+    expect(screen.getByText('Cel: 1 lekcja')).toBeTruthy();
+    expect(screen.getByText('Otwórz lekcję')).toBeTruthy();
     expect(screen.getByText('Zobacz historię trybu')).toBeTruthy();
     expect(screen.getByText('Otwórz plan dnia')).toBeTruthy();
     expect(screen.queryByText('Failed to fetch')).toBeNull();

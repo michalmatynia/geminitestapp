@@ -400,6 +400,20 @@
       "dailyQuest": "Mission des Tages: {summary}",
       "nextBadge": "Nächstes Abzeichen: {summary}"
     },
+    "practiceQuestion": {
+      "label": "Frage {number}",
+      "pointChip": "⭐ {points} Pkt. ({difficulty})",
+      "difficulty": {
+        "easy": "leicht",
+        "medium": "mittel",
+        "hard": "schwer"
+      },
+      "answerState": {
+        "correct": "Richtige Antwort",
+        "incorrect": "Falsche Antwort"
+      },
+      "confirm": "Antwort bestätigen ✓"
+    },
     "operationSelector": {
       "title": "Los geht's!",
       "intro": {
@@ -4541,6 +4555,209 @@
       },
       "game": {
         "stageTitle": "Formen zeichnen"
+      }
+    },
+    "geometryShapeRecognition": {
+      "lessonTitle": "Geometrie",
+      "sections": {
+        "intro": {
+          "title": "Formen kennenlernen",
+          "description": "Sieh dir die häufigsten Formen an."
+        },
+        "practice": {
+          "title": "Übungen",
+          "description": "Benenne die Form, die du siehst."
+        },
+        "draw": {
+          "title": "Spiel: Formen zeichnen",
+          "description": "Zeichne Kreis, Dreieck, Quadrat, Rechteck, Oval und Raute."
+        },
+        "summary": {
+          "title": "Zusammenfassung",
+          "description": "Die wichtigsten Hinweise."
+        }
+      },
+      "shapes": {
+        "circle": {
+          "label": "Kreis",
+          "clue": "Rund, ohne Ecken."
+        },
+        "square": {
+          "label": "Quadrat",
+          "clue": "4 gleich lange Seiten."
+        },
+        "triangle": {
+          "label": "Dreieck",
+          "clue": "3 Seiten und 3 Ecken."
+        },
+        "rectangle": {
+          "label": "Rechteck",
+          "clue": "2 lange und 2 kurze Seiten."
+        },
+        "oval": {
+          "label": "Oval",
+          "clue": "Ohne Ecken, aber gestreckt."
+        },
+        "diamond": {
+          "label": "Raute",
+          "clue": "Sieht wie ein gekipptes Quadrat aus."
+        }
+      },
+      "clues": {
+        "title": "Hinweise",
+        "lead": "Nutze diese Hinweise, um die Form zu erkennen:",
+        "chips": {
+          "corners": "Ecken",
+          "sides": "Seiten",
+          "curves": "Rundungen",
+          "longShortSides": "Lange und kurze Seiten"
+        },
+        "inset": "Zähle zuerst die Ecken, dann vergleiche die Seitenlängen."
+      },
+      "practice": {
+        "emptyRounds": "Keine Runden.",
+        "finished": {
+          "status": "Fertig",
+          "title": "Ergebnis: {score}/{total}",
+          "subtitle": "Du erkennst Formen schon sehr gut!",
+          "restart": "Noch einmal spielen"
+        },
+        "progress": {
+          "round": "Runde {current}/{total}",
+          "score": "Ergebnis {score}"
+        },
+        "question": "Welche Form ist das?",
+        "feedback": {
+          "correct": "Gut gemacht!",
+          "incorrect": "Fast! Es ist {shape}."
+        },
+        "actions": {
+          "next": "Weiter",
+          "finish": "Beenden"
+        }
+      },
+      "intro": {
+        "title": "Formen kennenlernen",
+        "lead": "Achte auf Ecken, Seiten und Rundungen."
+      },
+      "practiceSlide": {
+        "title": "Formen-Challenge"
+      },
+      "summary": {
+        "title": "Starke Leistung!",
+        "status": "Bereit für mehr",
+        "lead": "Jetzt kannst du Formen um dich herum benennen.",
+        "caption": "Suche zu Hause nach Kreisen, Quadraten, Dreiecken, Rechtecken, Ovalen und Rauten."
+      },
+      "draw": {
+        "stageTitle": "Spiel: Formen zeichnen",
+        "difficultyLabel": "Basis",
+        "finishLabel": "Zurück zu den Themen"
+      }
+    },
+    "geometrySymmetry": {
+      "lessonTitle": "Symmetrie",
+      "sections": {
+        "intro": {
+          "title": "Was ist Symmetrie?",
+          "description": "Definition und Beispiele"
+        },
+        "os": {
+          "title": "Symmetrieachse",
+          "description": "Die Linie, die die Figur teilt"
+        },
+        "figury": {
+          "title": "Symmetrische Formen",
+          "description": "Welche Formen haben Symmetrie?"
+        },
+        "podsumowanie": {
+          "title": "Zusammenfassung",
+          "description": "Alles zusammen"
+        },
+        "game": {
+          "title": "Symmetrie-Spiegel",
+          "description": "Zeichne die Achse und ergänze die Spiegelung"
+        }
+      },
+      "slides": {
+        "intro": {
+          "whatIsSymmetry": {
+            "title": "Was ist Symmetrie?",
+            "lead": "Eine Figur ist symmetrisch, wenn nach dem Falten in der Mitte beide Seiten zusammenpassen.",
+            "callout": "Ein Schmetterling ist fast symmetrisch.",
+            "note": "Symmetrie bedeutet: linke Seite = rechte Seite (oder oben = unten)."
+          },
+          "mirrorSymmetry": {
+            "title": "Spiegelsymmetrie",
+            "lead": "Die Achse wirkt wie ein Spiegel: Die rechte Seite spiegelt die linke.",
+            "caption": "Nach dem Falten sind beide Teile gleich."
+          }
+        },
+        "os": {
+          "axisOfSymmetry": {
+            "title": "Symmetrieachse",
+            "lead": "Eine Symmetrieachse ist eine Linie, die eine Figur in zwei passende Teile teilt.",
+            "caption": "Die senkrechte Linie ist die Symmetrieachse.",
+            "note": "Eine Figur kann mehr als eine Symmetrieachse haben!"
+          },
+          "axisInPractice": {
+            "title": "Die Achse in der Praxis",
+            "lead": "Die Achsenlinie zeigt, wo sich die Figur faltet.",
+            "caption": "Die Achse teilt die Figur in zwei gleich große Teile."
+          }
+        },
+        "figury": {
+          "symmetricShapes": {
+            "title": "Welche Formen sind symmetrisch?",
+            "cards": {
+              "square": "Quadrat",
+              "rectangle": "Rechteck",
+              "circle": "Kreis",
+              "isoscelesTriangle": "Gleichschenkliges Dreieck",
+              "zigzag": "Beliebiger Zickzack",
+              "irregularPolygon": "Unregelmäßiges Vieleck"
+            },
+            "circleNote": "Ein Kreis hat unendlich viele Symmetrieachsen!"
+          },
+          "symmetricOrNot": {
+            "title": "Symmetrisch oder nicht?",
+            "caption": "Symmetrische Figuren haben passende Hälften."
+          },
+          "rotational": {
+            "title": "Drehsymmetrie",
+            "caption": "Eine Drehung verändert das Aussehen der Figur nicht."
+          }
+        },
+        "podsumowanie": {
+          "overview": {
+            "title": "Zusammenfassung",
+            "items": {
+              "item1": "Symmetrie bedeutet, dass zwei Seiten gleich sind.",
+              "item2": "Eine Symmetrieachse ist eine Linie, die eine Figur in zwei passende Teile teilt.",
+              "item3": "Viele Figuren haben mehr als eine Symmetrieachse.",
+              "item4": "Ein Kreis hat unendlich viele Symmetrieachsen."
+            }
+          },
+          "axis": {
+            "title": "Zusammenfassung: Symmetrieachse",
+            "caption": "Falte die Figur entlang der Achse."
+          },
+          "manyAxes": {
+            "title": "Zusammenfassung: viele Achsen",
+            "caption": "Symmetrie bedeutet Übereinstimmung auf beiden Seiten der Achse."
+          },
+          "mirror": {
+            "title": "Zusammenfassung: Spiegelung",
+            "caption": "Spiegelung an der Achse."
+          },
+          "rotation": {
+            "title": "Zusammenfassung: Drehsymmetrie",
+            "caption": "Drehsymmetrie."
+          }
+        }
+      },
+      "game": {
+        "stageTitle": "Symmetrie-Spiegel"
       }
     },
     "calendar": {

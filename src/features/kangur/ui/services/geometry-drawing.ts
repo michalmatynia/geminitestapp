@@ -3,6 +3,7 @@ import {
   translateKangurMiniGameWithFallback,
   type KangurMiniGameTranslate,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 import { loosenMax, loosenMin, loosenMinInt } from './drawing-leniency';
 
@@ -52,6 +53,33 @@ type GeometryShapeRule = {
   successMessage: string;
   failureMessageKey: string;
   failureMessage: string;
+};
+
+type GeometryDrawingLocalizer =
+  | KangurMiniGameTranslate
+  | {
+      locale?: string | null;
+      translate?: KangurMiniGameTranslate;
+    };
+
+type GeometryDrawingFallbackCopy = {
+  drawLonger: string;
+  tooSmall: string;
+  unreadable: string;
+  closeShape: string;
+  tooShortPath: string;
+  tooJaggedPath: string;
+  addMoreCorners: (idealCorners: number) => string;
+  tooManyCorners: (idealCorners: number) => string;
+  aspect: {
+    circle: string;
+    diamond: string;
+    oval: string;
+    rectangle: string;
+    square: string;
+  };
+  success: Record<GeometryShapeId, string>;
+  failureDefault: Record<GeometryShapeId, string>;
 };
 
 const MIN_DRAWING_POINTS = loosenMinInt(14);
@@ -178,6 +206,194 @@ const SHAPE_RULES: Record<GeometryShapeId, GeometryShapeRule> = {
     failureMessageKey: 'geometryDrawing.feedback.failure.default.hexagon',
     failureMessage: 'Spróbuj narysować 6 wyraźnych rogów.',
   },
+};
+
+const getGeometryDrawingFallbackCopy = (
+  locale: string | null | undefined
+): GeometryDrawingFallbackCopy => {
+  const normalizedLocale = normalizeSiteLocale(locale);
+
+  if (normalizedLocale === 'uk') {
+    return {
+      drawLonger: 'Намалюй більшу фігуру одним рухом, щоб її можна було оцінити.',
+      tooSmall: 'Фігура занадто мала. Намалюй її більшою.',
+      unreadable: 'Не вдалося зчитати малюнок.',
+      closeShape: 'Замкни фігуру. Початок і кінець лінії занадто далеко.',
+      tooShortPath: 'Лінія занадто коротка. Обведи форму більше по колу.',
+      tooJaggedPath: 'Лінія занадто рвана. Спробуй малювати плавніше.',
+      addMoreCorners: (idealCorners) =>
+        `Додай більше кутів. Ця фігура повинна мати приблизно ${idealCorners}.`,
+      tooManyCorners: (idealCorners) =>
+        `Кутів забагато. Спробуй намалювати приблизно ${idealCorners}.`,
+      aspect: {
+        circle: 'Коло повинно бути рівнішим і круглішим.',
+        diamond: 'Ромб має бути менш сплюснутим або менш витягнутим.',
+        oval: 'Овал має бути більш витягнутим.',
+        rectangle: 'Прямокутник повинен мати дві сторони помітно довші.',
+        square: 'Квадрат повинен мати сторони більш подібної довжини.',
+      },
+      success: {
+        circle: 'Супер! Це схоже на коло.',
+        oval: 'Чудово! Це схоже на овал.',
+        triangle: 'Браво! Це правильний трикутник.',
+        diamond: 'Браво! Це схоже на ромб.',
+        square: 'Чудово! Це схоже на квадрат.',
+        rectangle: 'Добре! Це схоже на прямокутник.',
+        pentagon: 'Клас! Намальовано пʼятикутник.',
+        hexagon: 'Чудово! Це схоже на шестикутник.',
+      },
+      failureDefault: {
+        circle: 'Спробуй намалювати більш круглу лінію.',
+        oval: 'Спробуй намалювати більш витягнутий овал.',
+        triangle: 'Спробуй намалювати 3 виразні кути.',
+        diamond: 'Спробуй намалювати похилі сторони і 4 виразні кути.',
+        square: 'Спробуй намалювати 4 сторони схожої довжини.',
+        rectangle: 'Спробуй намалювати 4 кути і одну сторону довшу за іншу.',
+        pentagon: 'Спробуй намалювати 5 виразних кутів.',
+        hexagon: 'Спробуй намалювати 6 виразних кутів.',
+      },
+    };
+  }
+
+  if (normalizedLocale === 'de') {
+    return {
+      drawLonger: 'Zeichne die Form etwas langer in einem Zug, damit sie bewertet werden kann.',
+      tooSmall: 'Die Form ist zu klein. Zeichne sie grosser.',
+      unreadable: 'Die Zeichnung konnte nicht gelesen werden.',
+      closeShape: 'Schliesse die Form. Anfang und Ende der Linie liegen zu weit auseinander.',
+      tooShortPath: 'Die Linie ist zu kurz. Umrunde die Form weiter.',
+      tooJaggedPath: 'Die Linie ist zu zackig. Versuche flussiger zu zeichnen.',
+      addMoreCorners: (idealCorners) =>
+        `Fuge mehr Ecken hinzu. Diese Form sollte ungefahr ${idealCorners} haben.`,
+      tooManyCorners: (idealCorners) =>
+        `Du hast zu viele Ecken. Versuche ungefahr ${idealCorners} zu zeichnen.`,
+      aspect: {
+        circle: 'Ein Kreis sollte gleichmassiger und runder sein.',
+        diamond: 'Eine Raute sollte weniger abgeflacht oder weniger langgezogen sein.',
+        oval: 'Ein Oval sollte langer gezogen sein.',
+        rectangle: 'Ein Rechteck sollte zwei deutlich langere Seiten haben.',
+        square: 'Ein Quadrat sollte Seiten mit ahnlicherer Lange haben.',
+      },
+      success: {
+        circle: 'Super! Das sieht wie ein Kreis aus.',
+        oval: 'Klasse! Das sieht wie ein Oval aus.',
+        triangle: 'Bravo! Das ist ein korrektes Dreieck.',
+        diamond: 'Bravo! Das sieht wie eine Raute aus.',
+        square: 'Klasse! Das sieht wie ein Quadrat aus.',
+        rectangle: 'Gut! Das sieht wie ein Rechteck aus.',
+        pentagon: 'Stark! Ein Funfeck wurde gezeichnet.',
+        hexagon: 'Klasse! Das sieht wie ein Sechseck aus.',
+      },
+      failureDefault: {
+        circle: 'Versuche eine rundere Linie zu zeichnen.',
+        oval: 'Versuche ein langlicheres Oval zu zeichnen.',
+        triangle: 'Versuche 3 deutliche Ecken zu zeichnen.',
+        diamond: 'Versuche schräge Seiten und 4 deutliche Ecken zu zeichnen.',
+        square: 'Versuche 4 Seiten mit ahnlicher Lange zu zeichnen.',
+        rectangle: 'Versuche 4 Ecken und eine langere Seite als die andere zu zeichnen.',
+        pentagon: 'Versuche 5 deutliche Ecken zu zeichnen.',
+        hexagon: 'Versuche 6 deutliche Ecken zu zeichnen.',
+      },
+    };
+  }
+
+  if (normalizedLocale === 'en') {
+    return {
+      drawLonger: 'Draw the shape a bit longer in one stroke so it can be checked.',
+      tooSmall: 'The shape is too small. Draw it bigger.',
+      unreadable: 'The drawing could not be read.',
+      closeShape: 'Close the shape. The start and end of the line are too far apart.',
+      tooShortPath: 'The line is too short. Trace more of the shape.',
+      tooJaggedPath: 'The line is too jagged. Try drawing more smoothly.',
+      addMoreCorners: (idealCorners) =>
+        `Add more corners. This shape should have about ${idealCorners}.`,
+      tooManyCorners: (idealCorners) =>
+        `You have too many corners. Try drawing about ${idealCorners}.`,
+      aspect: {
+        circle: 'A circle should be more even and round.',
+        diamond: 'A diamond should be less flattened or less stretched.',
+        oval: 'An oval should be more stretched out.',
+        rectangle: 'A rectangle should have two clearly longer sides.',
+        square: 'A square should have sides of more similar length.',
+      },
+      success: {
+        circle: 'Great! That looks like a circle.',
+        oval: 'Great! That looks like an oval.',
+        triangle: 'Nice work! That is a correct triangle.',
+        diamond: 'Nice work! That looks like a diamond.',
+        square: 'Great! That looks like a square.',
+        rectangle: 'Good! That looks like a rectangle.',
+        pentagon: 'Awesome! You drew a pentagon.',
+        hexagon: 'Great! That looks like a hexagon.',
+      },
+      failureDefault: {
+        circle: 'Try drawing a rounder line.',
+        oval: 'Try drawing a more stretched oval.',
+        triangle: 'Try drawing 3 clear corners.',
+        diamond: 'Try drawing slanted sides and 4 clear corners.',
+        square: 'Try drawing 4 sides of similar length.',
+        rectangle: 'Try drawing 4 corners and one side longer than the other.',
+        pentagon: 'Try drawing 5 clear corners.',
+        hexagon: 'Try drawing 6 clear corners.',
+      },
+    };
+  }
+
+  return {
+    drawLonger: 'Narysuj większy kształt jednym ciągiem.',
+    tooSmall: 'Kształt jest zbyt mały. Narysuj go większego.',
+    unreadable: 'Nie udało się odczytać rysunku.',
+    closeShape: 'Domknij figurę. Początek i koniec linii są zbyt daleko.',
+    tooShortPath: 'Linia jest zbyt krótka. Obrysuj kształt bardziej dookoła.',
+    tooJaggedPath: 'Linia jest zbyt poszarpana. Spróbuj rysować bardziej płynnie.',
+    addMoreCorners: (idealCorners) =>
+      `Dodaj więcej rogów. Ta figura powinna mieć około ${idealCorners}.`,
+    tooManyCorners: (idealCorners) =>
+      `Masz za dużo rogów. Spróbuj narysować około ${idealCorners}.`,
+    aspect: {
+      circle: 'Koło powinno być bardziej równe i okrągłe.',
+      diamond: 'Romb powinien być mniej spłaszczony lub mniej wydłużony.',
+      oval: 'Owal powinien być bardziej wydłużony.',
+      rectangle: 'Prostokąt powinien mieć dwa boki wyraźnie dłuższe.',
+      square: 'Kwadrat powinien mieć boki bardziej podobnej długości.',
+    },
+    success: {
+      circle: 'Super! To wygląda jak koło.',
+      oval: 'Świetnie! To wygląda jak owal.',
+      triangle: 'Brawo! To poprawny trójkąt.',
+      diamond: 'Brawo! To wygląda jak romb.',
+      square: 'Świetnie! To wygląda jak kwadrat.',
+      rectangle: 'Dobrze! To wygląda jak prostokąt.',
+      pentagon: 'Mega! Narysowano pięciokąt.',
+      hexagon: 'Świetnie! To wygląda jak sześciokąt.',
+    },
+    failureDefault: {
+      circle: 'Spróbuj narysować bardziej okrągłą linię.',
+      oval: 'Spróbuj narysować bardziej wydłużony owal.',
+      triangle: 'Spróbuj narysować 3 wyraźne rogi.',
+      diamond: 'Spróbuj narysować ukośne boki i 4 wyraźne rogi.',
+      square: 'Spróbuj narysować 4 boki o podobnej długości.',
+      rectangle: 'Spróbuj narysować 4 rogi i dłuższy bok niż drugi.',
+      pentagon: 'Spróbuj narysować 5 wyraźnych rogów.',
+      hexagon: 'Spróbuj narysować 6 wyraźnych rogów.',
+    },
+  };
+};
+
+const resolveGeometryDrawingLocalizer = (
+  localizer?: GeometryDrawingLocalizer
+): { fallbackCopy: GeometryDrawingFallbackCopy; translate?: KangurMiniGameTranslate } => {
+  if (typeof localizer === 'function') {
+    return {
+      fallbackCopy: getGeometryDrawingFallbackCopy(null),
+      translate: localizer,
+    };
+  }
+
+  return {
+    fallbackCopy: getGeometryDrawingFallbackCopy(localizer?.locale),
+    translate: localizer?.translate,
+  };
 };
 
 const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
@@ -441,6 +657,7 @@ const toRejected = (
 const resolveFailureMessage = (
   target: GeometryShapeId,
   rule: GeometryShapeRule,
+  fallbackCopy: GeometryDrawingFallbackCopy,
   corners: number,
   closureRatio: number,
   aspectRatio: number,
@@ -454,7 +671,7 @@ const resolveFailureMessage = (
     return translateGeometryDrawing(
       translate,
       'geometryDrawing.feedback.failure.closeShape',
-      'Domknij figurę. Początek i koniec linii są zbyt daleko.'
+      fallbackCopy.closeShape
     );
   }
 
@@ -462,7 +679,7 @@ const resolveFailureMessage = (
     return translateGeometryDrawing(
       translate,
       'geometryDrawing.feedback.failure.tooShortPath',
-      'Linia jest zbyt krótka. Obrysuj kształt bardziej dookoła.'
+      fallbackCopy.tooShortPath
     );
   }
 
@@ -470,7 +687,7 @@ const resolveFailureMessage = (
     return translateGeometryDrawing(
       translate,
       'geometryDrawing.feedback.failure.tooJaggedPath',
-      'Linia jest zbyt poszarpana. Spróbuj rysować bardziej płynnie.'
+      fallbackCopy.tooJaggedPath
     );
   }
 
@@ -478,7 +695,7 @@ const resolveFailureMessage = (
     return translateGeometryDrawing(
       translate,
       'geometryDrawing.feedback.failure.addMoreCorners',
-      `Dodaj więcej rogów. Ta figura powinna mieć około ${rule.idealCorners}.`,
+      fallbackCopy.addMoreCorners(rule.idealCorners),
       { idealCorners: rule.idealCorners }
     );
   }
@@ -487,7 +704,7 @@ const resolveFailureMessage = (
     return translateGeometryDrawing(
       translate,
       'geometryDrawing.feedback.failure.tooManyCorners',
-      `Masz za dużo rogów. Spróbuj narysować około ${rule.idealCorners}.`,
+      fallbackCopy.tooManyCorners(rule.idealCorners),
       { idealCorners: rule.idealCorners }
     );
   }
@@ -497,47 +714,52 @@ const resolveFailureMessage = (
       return translateGeometryDrawing(
         translate,
         'geometryDrawing.feedback.failure.aspect.square',
-        'Kwadrat powinien mieć boki bardziej podobnej długości.'
+        fallbackCopy.aspect.square
       );
     }
     if (target === 'rectangle') {
       return translateGeometryDrawing(
         translate,
         'geometryDrawing.feedback.failure.aspect.rectangle',
-        'Prostokąt powinien mieć dwa boki wyraźnie dłuższe.'
+        fallbackCopy.aspect.rectangle
       );
     }
     if (target === 'circle') {
       return translateGeometryDrawing(
         translate,
         'geometryDrawing.feedback.failure.aspect.circle',
-        'Koło powinno być bardziej równe i okrągłe.'
+        fallbackCopy.aspect.circle
       );
     }
     if (target === 'oval') {
       return translateGeometryDrawing(
         translate,
         'geometryDrawing.feedback.failure.aspect.oval',
-        'Owal powinien być bardziej wydłużony.'
+        fallbackCopy.aspect.oval
       );
     }
     if (target === 'diamond') {
       return translateGeometryDrawing(
         translate,
         'geometryDrawing.feedback.failure.aspect.diamond',
-        'Romb powinien być mniej spłaszczony lub mniej wydłużony.'
+        fallbackCopy.aspect.diamond
       );
     }
   }
 
-  return translateGeometryDrawing(translate, rule.failureMessageKey, rule.failureMessage);
+  return translateGeometryDrawing(
+    translate,
+    rule.failureMessageKey,
+    fallbackCopy.failureDefault[target]
+  );
 };
 
 export const evaluateGeometryDrawing = (
   target: GeometryShapeId,
   rawPoints: Point2d[],
-  translate?: KangurMiniGameTranslate
+  localizer?: GeometryDrawingLocalizer
 ): GeometryDrawingEvaluation => {
+  const { fallbackCopy, translate } = resolveGeometryDrawingLocalizer(localizer);
   const rule = SHAPE_RULES[target];
   const lenientRule = applyDrawingLeniency(rule);
   const sanitized = sanitizePoints(rawPoints);
@@ -546,7 +768,7 @@ export const evaluateGeometryDrawing = (
     return toRejected(
       translate,
       'geometryDrawing.feedback.failure.drawLonger',
-      'Narysuj większy kształt jednym ciągiem.'
+      fallbackCopy.drawLonger
     );
   }
 
@@ -556,7 +778,7 @@ export const evaluateGeometryDrawing = (
     return toRejected(
       translate,
       'geometryDrawing.feedback.failure.tooSmall',
-      'Kształt jest zbyt mały. Narysuj go większego.'
+      fallbackCopy.tooSmall
     );
   }
 
@@ -566,7 +788,7 @@ export const evaluateGeometryDrawing = (
     return toRejected(
       translate,
       'geometryDrawing.feedback.failure.unreadable',
-      'Nie udało się odczytać rysunku.'
+      fallbackCopy.unreadable
     );
   }
 
@@ -605,10 +827,15 @@ export const evaluateGeometryDrawing = (
     aspectRatio: Number(aspectRatio.toFixed(3)),
     lengthRatio: Number(lengthRatio.toFixed(3)),
     message: accepted
-      ? translateGeometryDrawing(translate, rule.successMessageKey, rule.successMessage)
+      ? translateGeometryDrawing(
+          translate,
+          rule.successMessageKey,
+          fallbackCopy.success[target]
+        )
       : resolveFailureMessage(
           target,
           lenientRule,
+          fallbackCopy,
           corners,
           closureRatio,
           aspectRatio,

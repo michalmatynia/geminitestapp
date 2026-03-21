@@ -1,7 +1,5 @@
-import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import type { PromptExploderSegmentType } from '@/shared/contracts/prompt-exploder';
-
-type PromptValidationRegexRule = Extract<PromptValidationRule, { kind: 'regex' }>;
+import type { PromptValidationRegexRule } from './types';
 
 const clampNumber = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));

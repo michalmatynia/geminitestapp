@@ -9,7 +9,7 @@ import {
   truncateString,
 } from './log-redaction';
 import { getActiveOtelContextAttributes } from './otel-context';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 
 
 const OTEL_LOGGER_NAME = 'geminitestapp.system-logger';
@@ -61,7 +61,11 @@ const asAttributeValue = (key: string, value: unknown): string | number | boolea
     if (!serialized) return undefined;
     return truncateString(redactSensitiveText(serialized), MAX_ATTRIBUTE_VALUE_LENGTH);
   } catch (error) {
-    logClientError(error);
+    reportObservabilityInternalError(error, {
+      source: 'observability.otel-log-bridge',
+      action: 'asAttributeValue',
+      attributeKey: key,
+    });
     return '[Unserializable]';
   }
 };
@@ -118,8 +122,13 @@ export const emitOtelLogRecord = (input: EmitOtelLogRecordInput): void => {
       attributes,
     });
   } catch (error) {
-    logClientError(error);
-  
+    reportObservabilityInternalError(error, {
+      source: 'observability.otel-log-bridge',
+      action: 'emitOtelLogRecord',
+      inputSource: input.source ?? null,
+      level: input.level,
+    });
+
     // Never throw from observability bridge.
   }
 };

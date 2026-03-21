@@ -5,7 +5,7 @@ import { useEffect, useMemo } from 'react';
 
 import type { AnalyticsEventCreateInput, AnalyticsScope } from '@/shared/contracts';
 import { useTrackEventMutation } from '@/shared/lib/analytics/hooks/useAnalyticsQueries';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 const VISITOR_COOKIE = 'pa_vid';
@@ -68,7 +68,10 @@ const getTimeZone = (): string | null => {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone ?? null;
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'page-analytics-tracker',
+      action: 'readTimeZone',
+    });
     return null;
   }
 };

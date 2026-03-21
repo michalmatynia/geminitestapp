@@ -17,7 +17,7 @@ import {
   type DatabaseEngineServiceRoute,
 } from './database-engine-constants';
 import { normalizeDatabaseEngineOperationControls } from './database-engine-operation-controls';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-reporting';
 
 
 const readPositiveIntegerEnv = (key: string, fallback: number): number => {
@@ -71,7 +71,11 @@ const parseJsonObject = (raw: unknown): Record<string, unknown> | null => {
     }
     return null;
   } catch (error) {
-    logClientError(error);
+    void reportRuntimeCatch(error, {
+      source: 'db.database-engine-policy',
+      action: 'parseJsonObject',
+      rawType: typeof raw,
+    });
     return null;
   }
 };
@@ -138,7 +142,11 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
       });
     return typeof doc?.value === 'string' ? doc.value : null;
   } catch (error) {
-    logClientError(error);
+    void reportRuntimeCatch(error, {
+      source: 'db.database-engine-policy',
+      action: 'readMongoSetting',
+      settingKey: key,
+    });
     return null;
   }
 };

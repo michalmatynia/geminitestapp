@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useMemo, useEffect, useCallback } from 'react';
 
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import {
   type CaseResolverFile,
   type ResultHeight,
@@ -25,11 +26,7 @@ import type { RelationTreeLookup } from '../types';
 export type { ResultHeight, CaseRow };
 
 export type DocumentSearchScope = NodeFileDocumentSearchScope;
-type SelectOption = {
-  value: string;
-  label: string;
-  description?: string | undefined;
-};
+type SelectOption = LabeledOptionWithDescriptionDto<string>;
 
 interface DocumentRelationSearchContextType {
   // State from hook

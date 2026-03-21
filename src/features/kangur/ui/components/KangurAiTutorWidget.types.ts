@@ -1,6 +1,9 @@
 import type { KangurTutorAnchorKind } from '@/features/kangur/ui/context/kangur-tutor-types';
 import type {
+  KangurAiTutorGuestIntroStatus,
+  KangurAiTutorHomeOnboardingStatus,
   KangurAiTutorKnowledgeReference,
+  KangurAiTutorOnboardingRecord,
   KangurAiTutorSurface,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
@@ -19,6 +22,10 @@ export type GuidedTutorAuthKind =
   | 'login_identifier_field'
   | 'login_form';
 export type GuidedTutorSectionKind = Exclude<KangurTutorAnchorKind, GuidedTutorAuthKind>;
+export type KangurAiTutorGuestIntroRecord =
+  KangurAiTutorOnboardingRecord<KangurAiTutorGuestIntroStatus>;
+export type KangurAiTutorHomeOnboardingRecord =
+  KangurAiTutorOnboardingRecord<KangurAiTutorHomeOnboardingStatus>;
 
 export type SectionExplainContext = {
   anchorId: string;

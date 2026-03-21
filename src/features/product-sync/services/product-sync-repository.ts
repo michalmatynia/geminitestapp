@@ -23,7 +23,7 @@ import type {
   ProductSyncRunStatus,
   ProductSyncRunTrigger,
 } from '@/shared/contracts/product-sync';
-import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
+import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { Filter } from 'mongodb';
@@ -35,8 +35,6 @@ const MAX_RUN_SCAN_LIMIT = 2_000;
 const STALE_QUEUED_DEFAULT_MS = 20 * 60 * 1000;
 const STALE_RUNNING_DEFAULT_MS = 2 * 60 * 60 * 1000;
 const RUN_HISTORY_KEEP_DEFAULT = 150;
-
-type SettingDoc = MongoTimestampedStringSettingRecord<string | ObjectId, Date>;
 
 const toMongoId = (id: string): string | ObjectId => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
@@ -83,36 +81,44 @@ const PRODUCT_SYNC_RUN_HISTORY_KEEP = toBoundedInt(
 
 const readSettingValue = async (key: string): Promise<string | null> => {
   const mongo = await getMongoDb();
-  const doc = await mongo.collection<SettingDoc>('settings').findOne({
-    $or: [{ _id: toMongoId(key) }, { key }],
-  } as Filter<SettingDoc>);
+  const doc = await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | ObjectId>>('settings')
+    .findOne({
+      $or: [{ _id: toMongoId(key) }, { key }],
+    } as Filter<MongoTimestampedStringSettingDocument<string | ObjectId>>);
   return typeof doc?.value === 'string' ? doc.value : null;
 };
 
 const writeSettingValue = async (key: string, value: string): Promise<void> => {
   const mongo = await getMongoDb();
-  await mongo.collection<SettingDoc>('settings').updateOne(
-    { $or: [{ _id: toMongoId(key) }, { key }] } as Filter<SettingDoc>,
-    {
-      $set: {
-        key,
-        value,
-        updatedAt: new Date(),
+  await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | ObjectId>>('settings')
+    .updateOne(
+      {
+        $or: [{ _id: toMongoId(key) }, { key }],
+      } as Filter<MongoTimestampedStringSettingDocument<string | ObjectId>>,
+      {
+        $set: {
+          key,
+          value,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: {
+          _id: key,
+          createdAt: new Date(),
+        },
       },
-      $setOnInsert: {
-        _id: key,
-        createdAt: new Date(),
-      },
-    },
-    { upsert: true }
-  );
+      { upsert: true }
+    );
 };
 
 const deleteSettingByKey = async (key: string): Promise<void> => {
   const mongo = await getMongoDb();
-  await mongo.collection<SettingDoc>('settings').deleteMany({
-    $or: [{ _id: toMongoId(key) }, { key }],
-  } as Filter<SettingDoc>);
+  await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | ObjectId>>('settings')
+    .deleteMany({
+      $or: [{ _id: toMongoId(key) }, { key }],
+    } as Filter<MongoTimestampedStringSettingDocument<string | ObjectId>>);
 };
 
 const listSettingValuesByPrefix = async (prefix: string, take: number): Promise<string[]> => {
@@ -120,14 +126,18 @@ const listSettingValuesByPrefix = async (prefix: string, take: number): Promise<
   const mongo = await getMongoDb();
   const regex = new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`);
   const docs = await mongo
-    .collection<SettingDoc>('settings')
-    .find({ key: { $regex: regex } } as Filter<SettingDoc>)
+    .collection<MongoTimestampedStringSettingDocument<string | ObjectId>>('settings')
+    .find(
+      { key: { $regex: regex } } as Filter<MongoTimestampedStringSettingDocument<string | ObjectId>>
+    )
     .sort({ updatedAt: -1, createdAt: -1 })
     .limit(safeTake)
     .toArray();
 
   return docs
-    .map((doc: SettingDoc) => (typeof doc.value === 'string' ? doc.value : null))
+    .map((doc: MongoTimestampedStringSettingDocument<string | ObjectId>) =>
+      typeof doc.value === 'string' ? doc.value : null
+    )
     .filter((value: string | null): value is string => Boolean(value));
 };
 

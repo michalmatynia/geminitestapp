@@ -2,13 +2,14 @@
 
 import { Eye, EyeOff, PlusIcon, Package } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { memo, useEffect, useMemo, type ComponentProps, type ReactNode } from 'react';
+import { memo, useEffect, useMemo, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 import {
   useProductListFiltersContext,
   useProductListHeaderActionsContext,
 } from '@/features/products/context/ProductListContext';
+import type { ProductTriggerButtonBarProps } from '@/features/products/lib/product-integrations-adapter-loader';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Catalog } from '@/shared/contracts/products';
 import type { ProductDraft } from '@/shared/contracts/products';
@@ -18,11 +19,7 @@ import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/A
 import { AdminProductsBreadcrumbs, Button, SelectSimple, Pagination } from '@/shared/ui';
 import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
 
-type TriggerButtonBarProps = ComponentProps<
-  typeof import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').TriggerButtonBar
->;
-
-const TriggerButtonBar = dynamic<TriggerButtonBarProps>(
+const TriggerButtonBar = dynamic<ProductTriggerButtonBarProps>(
   () =>
     import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').then(
       (

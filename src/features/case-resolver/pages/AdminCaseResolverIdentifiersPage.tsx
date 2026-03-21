@@ -20,13 +20,8 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { CaseResolverIdentifierModal } from '../components/modals/CaseResolverEntityModalVariants';
+import type { CaseResolverIdentifierFormData } from '../entity-form-data';
 import { CASE_RESOLVER_IDENTIFIERS_KEY, parseCaseResolverIdentifiers } from '../settings';
-
-type CaseIdentifierFormData = {
-  name: string;
-  color: string;
-  parentId: string | null;
-};
 
 const createCaseIdentifierId = (): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -132,7 +127,7 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
   );
   const [caseIdentifierToDelete, setCaseIdentifierToDelete] =
     useState<CaseResolverIdentifier | null>(null);
-  const [formData, setFormData] = useState<CaseIdentifierFormData>({
+  const [formData, setFormData] = useState<CaseResolverIdentifierFormData>({
     name: '',
     color: '#f59e0b',
     parentId: null,

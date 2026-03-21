@@ -6,7 +6,7 @@ import {
   type DatabaseEngineBackupTargetSchedule,
 } from './database-engine-constants';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 const VALID_TIME_UTC = /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -22,7 +22,11 @@ const parseRawObject = (raw: unknown): Record<string, unknown> | null => {
       const parsed = JSON.parse(raw) as unknown;
       return asRecord(parsed);
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'db.database-engine-backup-schedule',
+        action: 'parseRawObject',
+        rawType: typeof raw,
+      });
       return null;
     }
   }

@@ -1,10 +1,14 @@
 'use client';
 
-import { aiPathRunStatusSchema, type AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import {
+  aiPathRunStatusSchema,
+  type AiPathRunListResult,
+  type AiPathRunRecord,
+} from '@/shared/contracts/ai-paths';
 import { logger } from '@/shared/utils/logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { AI_PATHS_RUN_SOURCE_VALUES } from './run-sources';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
 const STORAGE_KEY = 'ai-paths-optimistic-run-queue';
@@ -33,11 +37,6 @@ export type OptimisticRunFilters = {
   sourceMode?: 'include' | 'exclude';
   status?: string;
   query?: string;
-};
-
-type AiPathQueuePayload = {
-  runs: AiPathRunRecord[];
-  total: number;
 };
 
 const inMemoryOptimisticRunQueue = new Map<string, StoredOptimisticRun>();
@@ -189,7 +188,11 @@ const safeLocalStorageGet = (key: string): string | null => {
   try {
     return window.localStorage.getItem(key);
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'optimistic-run-queue',
+      action: 'localStorageGet',
+      storageKey: key,
+    });
     return null;
   }
 };
@@ -199,7 +202,12 @@ const safeLocalStorageSet = (key: string, value: string): boolean => {
     window.localStorage.setItem(key, value);
     return true;
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'optimistic-run-queue',
+      action: 'localStorageSet',
+      storageKey: key,
+      valueLength: value.length,
+    });
     return false;
   }
 };
@@ -208,8 +216,12 @@ const safeLocalStorageRemove = (key: string): void => {
   try {
     window.localStorage.removeItem(key);
   } catch (error) {
-    logClientError(error);
-  
+    logClientCatch(error, {
+      source: 'optimistic-run-queue',
+      action: 'localStorageRemove',
+      storageKey: key,
+    });
+
     // Ignore storage failures.
   }
 };
@@ -323,7 +335,11 @@ const readEntries = (): StoredOptimisticRun[] => {
           safeLocalStorageRemove(STORAGE_KEY);
         }
       } catch (error) {
-        logClientError(error);
+        logClientCatch(error, {
+          source: 'optimistic-run-queue',
+          action: 'parseStoredQueue',
+          storageKey: STORAGE_KEY,
+        });
         logger.warn('[ai-paths-optimistic-run-queue] invalid stored payload (json parse failure)', {
           event: 'storage-invalid',
           source: 'invalid-json',
@@ -437,12 +453,12 @@ export const listOptimisticAiPathRuns = (filters?: OptimisticRunFilters): AiPath
 };
 
 export const previewAiPathQueuePayloadWithOptimisticRuns = (
-  payload: AiPathQueuePayload,
+  payload: AiPathRunListResult,
   options?: OptimisticRunFilters & {
     limit?: number;
     offset?: number;
   }
-): AiPathQueuePayload => {
+): AiPathRunListResult => {
   const currentRuns = Array.isArray(payload.runs) ? payload.runs : [];
   const offset = typeof options?.offset === 'number' ? options.offset : 0;
   if (offset > 0) return payload;
@@ -466,12 +482,12 @@ export const previewAiPathQueuePayloadWithOptimisticRuns = (
 };
 
 export const mergeAiPathQueuePayloadWithOptimisticRuns = (
-  payload: AiPathQueuePayload,
+  payload: AiPathRunListResult,
   options?: OptimisticRunFilters & {
     limit?: number;
     offset?: number;
   }
-): AiPathQueuePayload => {
+): AiPathRunListResult => {
   const serverRuns = Array.isArray(payload.runs) ? payload.runs : [];
   const serverRunIds = new Set<string>();
   serverRuns.forEach((run) => {

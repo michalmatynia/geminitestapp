@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 
 import { cn } from '@/shared/utils';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { CopyButton } from './copy-button';
 import { InsetPanel } from './InsetPanel';
@@ -44,7 +44,11 @@ export function JsonViewer({
     try {
       return JSON.stringify(data, circularReplacer, 2);
     } catch (err) {
-      logClientError(err);
+      logClientCatch(err, {
+        source: 'JsonViewer',
+        action: 'formatJson',
+        level: 'warn',
+      });
       return `Error formatting JSON: ${err instanceof Error ? err.message : String(err)}`;
     }
   }, [data]);

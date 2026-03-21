@@ -34,13 +34,7 @@ import {
   normalizeCaseResolverCategories,
   parseCaseResolverCategories,
 } from '../settings';
-
-type CategoryFormData = {
-  name: string;
-  description: string;
-  color: string;
-  parentId: string | null;
-};
+import type { CaseResolverCategoryFormData } from '../entity-form-data';
 
 const createCategoryId = (): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -65,7 +59,7 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<CaseResolverCategory | null>(null);
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set<string>());
-  const [formData, setFormData] = useState<CategoryFormData>({
+  const [formData, setFormData] = useState<CaseResolverCategoryFormData>({
     name: '',
     description: '',
     color: '#10b981',

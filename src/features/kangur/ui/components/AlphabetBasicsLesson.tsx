@@ -21,7 +21,10 @@ import {
 } from '@/features/kangur/ui/services/drawing-canvas';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurCanvasTouchLock } from '@/features/kangur/ui/hooks/useKangurCanvasTouchLock';
-import type { KangurMiniGameFeedback } from '@/features/kangur/ui/types';
+import type {
+  KangurIntlTranslate,
+  KangurMiniGameFeedbackState,
+} from '@/features/kangur/ui/types';
 import type { Point2d } from '@/shared/contracts/geometry';
 import type { TranslationValues } from 'use-intl';
 
@@ -30,7 +33,7 @@ const CANVAS_HEIGHT = 240;
 const BASE_MIN_DRAWING_POINTS = 24;
 const BASE_MIN_DRAWING_LENGTH = 180;
 
-type Translate = ReturnType<typeof useTranslations>;
+type Translate = KangurIntlTranslate;
 
 type LetterRound = {
   id: string;
@@ -85,8 +88,6 @@ const translateAlphabetBasics = (
   return translated === key || translated.endsWith(`.${key}`) ? fallback : translated;
 };
 
-type FeedbackState = KangurMiniGameFeedback | null;
-
 const flattenPoints = (strokes: Point2d[][]): Point2d[] =>
   strokes.flatMap((stroke) => stroke);
 
@@ -110,7 +111,7 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
   const [roundIndex, setRoundIndex] = useState(0);
   const [strokes, setStrokes] = useState<Point2d[][]>([]);
   const [isPointerDrawing, setIsPointerDrawing] = useState(false);
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
+  const [feedback, setFeedback] = useState<KangurMiniGameFeedbackState>(null);
   const isCoarsePointer = useKangurCoarsePointer();
 
   const currentRound = (LETTER_ROUNDS[roundIndex] ?? LETTER_ROUNDS[0]) as LetterRound;
@@ -259,7 +260,7 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
     setIsPointerDrawing(false);
   };
 
-  const evaluateDrawing = (): FeedbackState => {
+  const evaluateDrawing = (): KangurMiniGameFeedbackState => {
     if (points.length < minDrawingPoints) {
       return {
         kind: 'error',

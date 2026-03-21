@@ -11,7 +11,7 @@ import {
 } from '@/features/kangur/services/kangur-settings-repository';
 import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/constants/tradera';
 import {
-  type MongoPersistedStringSettingRecord,
+  type MongoPersistedStringSettingDocument,
   upsertSettingSchema as settingSchema,
 } from '@/shared/contracts/settings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -84,8 +84,6 @@ const CASE_RESOLVER_DETACHED_WORKSPACE_KEYS = new Set<string>([
   CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY,
 ]);
 
-type SettingDocument = MongoPersistedStringSettingRecord<string, Date>;
-
 const SETTINGS_COLLECTION = 'settings';
 const DEFAULT_SCOPE: SettingsScope = 'light';
 let settingsIndexesEnsured: Promise<void> | null = null;
@@ -143,7 +141,7 @@ const readCurrentSettingValue = async (
     await ensureSettingsIndexes();
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<SettingDocument>(SETTINGS_COLLECTION)
+      .collection<MongoPersistedStringSettingDocument>(SETTINGS_COLLECTION)
       .findOne({ key }, { projection: { value: 1 } });
     if (typeof doc?.value !== 'string') return null;
     return decodeSettingValue(key, doc.value);
@@ -249,11 +247,11 @@ const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]>
   const mongo = await getMongoDb();
   const query = buildMongoScopeQuery(scope);
   const docs = await mongo
-    .collection<SettingDocument>(SETTINGS_COLLECTION)
+    .collection<MongoPersistedStringSettingDocument>(SETTINGS_COLLECTION)
     .find(query, { projection: { _id: 1, key: 1, value: 1 } })
     .toArray();
   const baseSettings = docs
-    .map((doc: WithId<SettingDocument>) => ({
+    .map((doc: WithId<MongoPersistedStringSettingDocument>) => ({
       key: doc.key ?? String(doc._id),
       value: decodeSettingValue(doc.key ?? String(doc._id), doc.value),
     }))
@@ -285,7 +283,7 @@ const upsertMongoSetting = async (key: string, value: string): Promise<SettingRe
   const mongo = await getMongoDb();
   const now = new Date();
   const encodedValue = encodeSettingValue(key, value);
-  await mongo.collection<SettingDocument>(SETTINGS_COLLECTION).updateOne(
+  await mongo.collection<MongoPersistedStringSettingDocument>(SETTINGS_COLLECTION).updateOne(
     { key },
     {
       $set: { value: encodedValue, updatedAt: now },

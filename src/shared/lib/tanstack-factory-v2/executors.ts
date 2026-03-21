@@ -5,7 +5,7 @@ import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 
 import { emitFactoryTelemetry, withQueryKeyMeta } from './telemetry';
 import { EnsureQueryDataV2Config, ManualQueryExecutorInput, QueryFactoryFn } from './types';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 export const invokeQueryFactoryFn = <TQueryFnData, TQueryKey extends QueryKey>(
@@ -60,7 +60,10 @@ export const createManualQueryExecutor = <
 
       return data;
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'tanstack-factory-v2.executors',
+        action: 'createManualQueryExecutor',
+      });
       emitFactoryTelemetry({
         entity: 'query',
         stage: telemetryErrorStage(error),

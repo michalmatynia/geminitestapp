@@ -26,7 +26,7 @@ import { cn } from '@/shared/utils';
 import { Button } from './button';
 import { EmptyState } from './empty-state';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 interface DataTableProps<TData> {
@@ -180,8 +180,13 @@ export const DataTable = memo(function DataTable<TData>({
         setSorting(parsed);
       }
     } catch (error) {
-      logClientError(error);
-    
+      logClientCatch(error, {
+        source: 'DataTable',
+        action: 'loadSortingState',
+        sortingStorageKey,
+        level: 'warn',
+      });
+
       // Ignore invalid localStorage values.
     }
   }, [sortingStorageKey]);
@@ -191,8 +196,13 @@ export const DataTable = memo(function DataTable<TData>({
     try {
       window.localStorage.setItem(sortingStorageKey, JSON.stringify(sorting));
     } catch (error) {
-      logClientError(error);
-    
+      logClientCatch(error, {
+        source: 'DataTable',
+        action: 'saveSortingState',
+        sortingStorageKey,
+        level: 'warn',
+      });
+
       // Ignore storage write errors.
     }
   }, [sorting, sortingStorageKey]);

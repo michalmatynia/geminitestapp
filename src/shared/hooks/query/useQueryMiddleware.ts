@@ -3,7 +3,7 @@
 import { useQueryClient, type Query } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface QueryMiddleware {
   name: string;
@@ -80,7 +80,11 @@ const getQueryKeyLabel = (query: Query<unknown, Error, unknown, readonly unknown
   try {
     return JSON.stringify(query.queryKey);
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'QueryMiddleware',
+      action: 'serializeQueryKey',
+      queryHash: (query as { queryHash?: string }).queryHash ?? 'unknown-query',
+    });
     return String((query as { queryHash?: string }).queryHash ?? 'unknown-query');
   }
 };
@@ -122,13 +126,10 @@ export function useQueryMiddleware(middlewares: QueryMiddleware[]): void {
               break;
           }
         } catch (error) {
-          logClientError(error);
-          logClientError(error instanceof Error ? error : new Error(String(error)), {
-            context: {
-              source: 'QueryMiddleware',
-              action: 'middlewareError',
-              middlewareName: middleware.name,
-            },
+          logClientCatch(error, {
+            source: 'QueryMiddleware',
+            action: 'middlewareError',
+            middlewareName: middleware.name,
           });
         }
       });

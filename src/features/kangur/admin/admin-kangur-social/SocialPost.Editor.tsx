@@ -15,12 +15,10 @@ import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-im
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import { SocialPostVisuals } from './SocialPost.Visuals';
 
-type SocialPostEditorState = KangurSocialPostEditorStateDto;
-
 export type SocialPostEditorProps = {
   activePost: KangurSocialPost | null;
-  editorState: SocialPostEditorState;
-  setEditorState: React.Dispatch<React.SetStateAction<SocialPostEditorState>>;
+  editorState: KangurSocialPostEditorStateDto;
+  setEditorState: React.Dispatch<React.SetStateAction<KangurSocialPostEditorStateDto>>;
   scheduledAt: string;
   setScheduledAt: React.Dispatch<React.SetStateAction<string>>;
   imageAssets: ImageFileSelection[];

@@ -10,6 +10,7 @@ import {
   resolveRuntimeAgentId,
   stopBrokerRuntimeLease,
 } from './lib/runtime-broker.mjs';
+import { detectExistingPlaywrightServer } from './lib/playwright-suite-runtime.mjs';
 import {
   buildAccessibilityBrokerLeaseRequest,
   buildAccessibilityPlaywrightRuntimeContext,
@@ -32,6 +33,7 @@ const accessibilityRuntime = buildAccessibilityPlaywrightRuntimeContext({
 });
 const playwrightAgentId = accessibilityRuntime.agentId;
 const shouldStopPlaywrightRuntime = accessibilityRuntime.shouldStopRuntime;
+const shouldReusePlaywrightRuntimeAcrossSuites = !shouldStopPlaywrightRuntime;
 
 const suites = [
   {
@@ -130,6 +132,9 @@ const formatDuration = (ms) => {
 
 const countActWarnings = (value) => (value.match(/not wrapped in act\(\.\.\.\)/g) ?? []).length;
 
+const formatRuntimeLabel = (runtime) =>
+  runtime ? `${runtime.source}${runtime.reused ? ':reused' : ':started'}` : 'none';
+
 const resolveSuiteCommand = (suite, playwrightRuntime) => {
   if (suite.runner === 'playwright') {
     const artifacts = resolvePlaywrightRunArtifacts({
@@ -165,68 +170,103 @@ const resolveSuiteCommand = (suite, playwrightRuntime) => {
 };
 
 const runSuite = async (suite, playwrightRuntime) => {
-    const startedAt = Date.now();
-    const { command, args: commandArgs, env: suiteEnv } = resolveSuiteCommand(
-      suite,
-      playwrightRuntime
-    );
+  const startedAt = Date.now();
+  const { command, args: commandArgs, env: suiteEnv } = resolveSuiteCommand(
+    suite,
+    playwrightRuntime
+  );
 
-    return await new Promise((resolve) => {
-      const child = spawn(command, commandArgs, {
-        cwd: root,
-        env: {
-          ...process.env,
-          ...(suiteEnv ?? {}),
-          FORCE_COLOR: '0',
-        },
-        stdio: ['ignore', 'pipe', 'pipe'],
-      });
+  return await new Promise((resolve) => {
+    const child = spawn(command, commandArgs, {
+      cwd: root,
+      env: {
+        ...process.env,
+        ...(suiteEnv ?? {}),
+        FORCE_COLOR: '0',
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
 
-      let output = '';
+    let output = '';
 
-      const append = (chunk) => {
-        output += chunk.toString();
-        if (output.length > MAX_OUTPUT_BYTES) {
-          output = output.slice(-MAX_OUTPUT_BYTES);
-        }
-      };
+    const append = (chunk) => {
+      output += chunk.toString();
+      if (output.length > MAX_OUTPUT_BYTES) {
+        output = output.slice(-MAX_OUTPUT_BYTES);
+      }
+    };
 
-      child.stdout?.on('data', append);
-      child.stderr?.on('data', append);
+    child.stdout?.on('data', append);
+    child.stderr?.on('data', append);
 
-      child.on('error', (error) => {
-        const durationMs = Date.now() - startedAt;
-        const resolvedOutput = `${output}\n${error.stack ?? String(error)}`.trim();
-        resolve({
-          id: suite.id,
-          name: suite.name,
-          runner: suite.runner ?? 'vitest',
-          tests: suite.tests,
-          command: [command, ...commandArgs].join(' '),
-          status: 'fail',
-          exitCode: null,
-          durationMs,
-          actWarnings: countActWarnings(resolvedOutput),
-          output: resolvedOutput,
-        });
-      });
-
-      child.on('close', (exitCode) => {
-        const durationMs = Date.now() - startedAt;
-        resolve({
-          id: suite.id,
-          name: suite.name,
-          runner: suite.runner ?? 'vitest',
-          tests: suite.tests,
-          command: [command, ...commandArgs].join(' '),
-          status: exitCode === 0 ? 'pass' : 'fail',
-          exitCode,
-          durationMs,
-          actWarnings: countActWarnings(output),
-          output: output.trim(),
-        });
+    child.on('error', (error) => {
+      const durationMs = Date.now() - startedAt;
+      const resolvedOutput = `${output}\n${error.stack ?? String(error)}`.trim();
+      resolve({
+        id: suite.id,
+        name: suite.name,
+        runner: suite.runner ?? 'vitest',
+        tests: suite.tests,
+        command: [command, ...commandArgs].join(' '),
+        status: 'fail',
+        exitCode: null,
+        durationMs,
+        actWarnings: countActWarnings(resolvedOutput),
+        output: resolvedOutput,
       });
     });
+
+    child.on('close', (exitCode) => {
+      const durationMs = Date.now() - startedAt;
+      resolve({
+        id: suite.id,
+        name: suite.name,
+        runner: suite.runner ?? 'vitest',
+        tests: suite.tests,
+        command: [command, ...commandArgs].join(' '),
+        status: exitCode === 0 ? 'pass' : 'fail',
+        exitCode,
+        durationMs,
+        actWarnings: countActWarnings(output),
+        output: output.trim(),
+      });
+    });
+  });
+};
+
+const acquirePlaywrightRuntime = async () =>
+  await acquireRuntimeLease(
+    buildAccessibilityBrokerLeaseRequest({
+      rootDir: root,
+      context: accessibilityRuntime,
+    })
+  );
+
+const stopManagedPlaywrightRuntime = async (runtime) => {
+  if (!runtime?.managed || !runtime.leaseFilePath) {
+    return;
+  }
+
+  await stopBrokerRuntimeLease({
+    lease: runtime,
+    leaseFilePath: runtime.leaseFilePath,
+  });
+};
+
+const ensurePlaywrightRuntime = async (runtime) => {
+  if (!runtime) {
+    return await acquirePlaywrightRuntime();
+  }
+
+  const healthy = await detectExistingPlaywrightServer({
+    baseUrl: runtime.baseUrl,
+  });
+  if (healthy) {
+    return runtime;
+  }
+
+  await stopManagedPlaywrightRuntime(runtime);
+  return await acquirePlaywrightRuntime();
 };
 
 const toMarkdown = (payload) => {
@@ -317,29 +357,35 @@ const buildSummaryJsonSummary = (payload) => ({
 });
 
 const run = async () => {
+  let initialPlaywrightRuntime = null;
   let playwrightRuntime = null;
 
   try {
-    playwrightRuntime = await acquireRuntimeLease(
-      buildAccessibilityBrokerLeaseRequest({
-        rootDir: root,
-        context: accessibilityRuntime,
-      })
-    );
-    if (!summaryJson) {
-      console.log(
-        `[a11y-smoke] runtime=${playwrightRuntime.source}${playwrightRuntime.reused ? ':reused' : ':started'} baseUrl=${playwrightRuntime.baseUrl} agent=${playwrightRuntime.agentId}`
-      );
-    }
-
     const results = [];
     for (const suite of suites) {
+      if (suite.runner === 'playwright') {
+        const previousBaseUrl = playwrightRuntime?.baseUrl ?? null;
+        playwrightRuntime = await ensurePlaywrightRuntime(playwrightRuntime);
+        initialPlaywrightRuntime ??= playwrightRuntime;
+
+        if (!summaryJson && previousBaseUrl !== playwrightRuntime.baseUrl) {
+          console.log(
+            `[a11y-smoke] runtime=${formatRuntimeLabel(playwrightRuntime)} baseUrl=${playwrightRuntime.baseUrl} agent=${playwrightRuntime.agentId}`
+          );
+        }
+      }
+
       const result = await runSuite(suite, playwrightRuntime);
       results.push(result);
       if (!summaryJson) {
         console.log(
           `[a11y-smoke] ${suite.name.padEnd(38, ' ')} ${result.status.toUpperCase().padEnd(4, ' ')} ${formatDuration(result.durationMs)}`
         );
+      }
+
+      if (suite.runner === 'playwright' && !shouldReusePlaywrightRuntimeAcrossSuites) {
+        await stopManagedPlaywrightRuntime(playwrightRuntime);
+        playwrightRuntime = null;
       }
     }
 
@@ -361,11 +407,12 @@ const run = async () => {
       strictMode,
       failOnWarningBudgetExceed,
       runtime: {
-        source: playwrightRuntime.source,
-        reused: playwrightRuntime.reused,
-        baseUrl: playwrightRuntime.baseUrl,
-        agentId: playwrightRuntime.agentId,
-        leaseKey: playwrightRuntime.leaseKey ?? null,
+        source: initialPlaywrightRuntime?.source ?? 'none',
+        reused: initialPlaywrightRuntime?.reused ?? false,
+        baseUrl: initialPlaywrightRuntime?.baseUrl ?? null,
+        agentId: initialPlaywrightRuntime?.agentId ?? null,
+        leaseKey: initialPlaywrightRuntime?.leaseKey ?? null,
+        strategy: shouldReusePlaywrightRuntimeAcrossSuites ? 'shared' : 'per-playwright-suite',
       },
       summary,
       results,

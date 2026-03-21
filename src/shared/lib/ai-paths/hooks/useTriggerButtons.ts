@@ -18,10 +18,10 @@ import {
   type TriggerButtonRunFeedbackSnapshot,
 } from '@/shared/lib/ai-paths/trigger-button-run-feedback';
 import { useToast } from '@/shared/ui';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { useAiPathsTriggerButtonsQuery } from './useAiPathQueries';
 import { useAiPathTriggerEvent } from './useAiPathTriggerEvent';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
 const TOGGLE_STORAGE_KEY = 'aiPathsTriggerButtonToggles';
@@ -89,7 +89,11 @@ const readMapFromStorage = (key: string): Record<string, boolean> => {
     if (!parsed || typeof parsed !== 'object') return {};
     return parsed as Record<string, boolean>;
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'useTriggerButtons',
+      action: 'readMapFromStorage',
+      storageKey: key,
+    });
     return {};
   }
 };
@@ -99,8 +103,13 @@ const writeMapToStorage = (key: string, value: Record<string, boolean>): void =>
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    logClientError(error);
-  
+    logClientCatch(error, {
+      source: 'useTriggerButtons',
+      action: 'writeMapToStorage',
+      storageKey: key,
+      entryCount: Object.keys(value).length,
+    });
+
     // ignore
   }
 };
@@ -511,7 +520,14 @@ export function useTriggerButtons({
           },
         });
       } catch (error) {
-        logClientError(error);
+        logClientCatch(error, {
+          source: 'useTriggerButtons',
+          action: 'handleTrigger',
+          buttonId: button.id,
+          pathId: button.pathId,
+          location,
+          entityType,
+        });
         const message = error instanceof Error ? error.message : 'Unknown error';
         setLastRuns((prev) => {
           if (prev[button.id]?.status !== 'waiting') return prev;

@@ -1,7 +1,7 @@
 'use client';
 
 import { Eraser, PencilRuler } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
@@ -192,6 +192,7 @@ export default function GeometryPerimeterDrawingGame({
   finishLabel,
   onFinish,
 }: KangurMiniGameFinishProps): React.JSX.Element {
+  const locale = useLocale();
   const translations = useTranslations('KangurMiniGames');
   const summaryFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'lesson');
   const handleFinish = onFinish;
@@ -538,7 +539,7 @@ export default function GeometryPerimeterDrawingGame({
     }
     const shapeId: GeometryShapeId =
       currentRound.shape === 'square' ? 'square' : 'rectangle';
-    const result = evaluateGeometryDrawing(shapeId, points);
+    const result = evaluateGeometryDrawing(shapeId, points, { locale });
     if (!result.accepted) {
       return { accepted: false, message: result.message };
     }

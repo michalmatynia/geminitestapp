@@ -17,7 +17,7 @@ import type {
   BaseImportRunStatus,
   BaseImportPreflight,
 } from '@/shared/contracts/integrations';
-import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
+import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
 import { mutateAgentLease } from '@/shared/lib/agent-lease-service';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
@@ -30,8 +30,6 @@ const ITEM_KEY_PREFIX = 'base_import_run_item:';
 const LIST_LIMIT_DEFAULT = 50;
 const RUN_ITEM_HARD_LIMIT = 100_000;
 const BASE_IMPORT_AGENT_RESOURCE_ID = 'integrations.base-import.run';
-
-type SettingDoc = MongoTimestampedStringSettingRecord<string | ObjectId, Date>;
 
 const toRunLeasePatch = (
   lease:
@@ -174,36 +172,44 @@ const normalizeRunRecord = (run: BaseImportRunRecord): BaseImportRunRecord => ({
 
 const readSettingValue = async (key: string): Promise<string | null> => {
   const mongo = await getMongoDb();
-  const doc = await mongo.collection<SettingDoc>('settings').findOne({
-    $or: [{ _id: toMongoId(key) }, { key }],
-  });
+  const doc = await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | ObjectId>>('settings')
+    .findOne({
+      $or: [{ _id: toMongoId(key) }, { key }],
+    });
   return typeof doc?.value === 'string' ? doc.value : null;
 };
 
 const writeSettingValue = async (key: string, value: string): Promise<void> => {
   const mongo = await getMongoDb();
-  await mongo.collection<SettingDoc>('settings').updateOne(
-    { $or: [{ _id: toMongoId(key) }, { key }] } as Filter<SettingDoc>,
-    {
-      $set: {
-        key,
-        value,
-        updatedAt: new Date(),
+  await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | ObjectId>>('settings')
+    .updateOne(
+      {
+        $or: [{ _id: toMongoId(key) }, { key }],
+      } as Filter<MongoTimestampedStringSettingDocument<string | ObjectId>>,
+      {
+        $set: {
+          key,
+          value,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: {
+          _id: key,
+          createdAt: new Date(),
+        },
       },
-      $setOnInsert: {
-        _id: key,
-        createdAt: new Date(),
-      },
-    },
-    { upsert: true }
-  );
+      { upsert: true }
+    );
 };
 
 const deleteSettingByKey = async (key: string): Promise<void> => {
   const mongo = await getMongoDb();
-  await mongo.collection<SettingDoc>('settings').deleteMany({
-    $or: [{ _id: toMongoId(key) }, { key }],
-  } as Filter<SettingDoc>);
+  await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | ObjectId>>('settings')
+    .deleteMany({
+      $or: [{ _id: toMongoId(key) }, { key }],
+    } as Filter<MongoTimestampedStringSettingDocument<string | ObjectId>>);
 };
 
 const listSettingValuesByPrefix = async (
@@ -213,13 +219,15 @@ const listSettingValuesByPrefix = async (
   const mongo = await getMongoDb();
   const regex = new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`);
   const docs = await mongo
-    .collection<SettingDoc>('settings')
-    .find({ key: { $regex: regex } } as Filter<SettingDoc>)
+    .collection<MongoTimestampedStringSettingDocument<string | ObjectId>>('settings')
+    .find(
+      { key: { $regex: regex } } as Filter<MongoTimestampedStringSettingDocument<string | ObjectId>>
+    )
     .sort({ updatedAt: -1, createdAt: -1 })
     .limit(Math.max(1, take))
     .toArray();
   return docs
-    .map((doc: SettingDoc) => (typeof doc.value === 'string' ? doc.value : null))
+    .map((doc: MongoTimestampedStringSettingDocument<string | ObjectId>) => (typeof doc.value === 'string' ? doc.value : null))
     .filter((value: string | null): value is string => Boolean(value));
 };
 
@@ -325,7 +333,7 @@ export const putBaseImportRunItems = async (items: BaseImportItemRecord[]): Prom
       upsert: true,
     },
   }));
-  const result = await mongo.collection<SettingDoc>('settings').bulkWrite(bulkOps);
+  const result = await mongo.collection<MongoTimestampedStringSettingDocument<string | ObjectId>>('settings').bulkWrite(bulkOps);
   return (result.modifiedCount || 0) + (result.upsertedCount || 0);
 };
 

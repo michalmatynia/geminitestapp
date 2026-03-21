@@ -113,6 +113,23 @@ describe('game setup recommendations', () => {
     expect(recommendation.description).toContain('A gentle start');
   });
 
+  it('falls back to English starter copy when only the locale is provided', () => {
+    const recommendation = getRecommendedTrainingSetup(
+      buildProgress({
+        gamesPlayed: 0,
+        totalCorrectAnswers: 0,
+        totalQuestionsAnswered: 0,
+      }),
+      {
+        locale: 'en',
+      }
+    );
+
+    expect(recommendation.label).toBe('Start');
+    expect(recommendation.title).toBe('Recommended starter practice');
+    expect(recommendation.description).toContain('A gentle start');
+  });
+
   it('chooses the full kangur test only for truly competition-ready learners', () => {
     const recommendation = getRecommendedKangurMode(
       buildProgress({
@@ -151,5 +168,24 @@ describe('game setup recommendations', () => {
 
     expect(recommendation.label).toBe('Competition ready');
     expect(recommendation.title).toBe('We recommend the full competition test');
+  });
+
+  it('falls back to German Kangur mode copy when only the locale is provided', () => {
+    const recommendation = getRecommendedKangurMode(
+      buildProgress({
+        gamesPlayed: 15,
+        perfectGames: 4,
+        totalCorrectAnswers: 92,
+        totalQuestionsAnswered: 100,
+        currentWinStreak: 4,
+      }),
+      {
+        locale: 'de',
+      }
+    );
+
+    expect(recommendation.label).toBe('Wettbewerbsbereit');
+    expect(recommendation.title).toBe('Wir empfehlen den vollen Wettbewerbstest');
+    expect(recommendation.description).toContain('starkes Tempo');
   });
 });

@@ -1,4 +1,4 @@
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 function unknownToErrorMessage(value: unknown): string | null {
   if (value == null) return null;
 
@@ -16,7 +16,11 @@ function unknownToErrorMessage(value: unknown): string | null {
     try {
       return JSON.stringify(value);
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'error-formatting',
+        action: 'stringifyUnknownValue',
+        level: 'warn',
+      });
       // last-resort: try to extract a "message" property if present
       const maybeMessage = (value as { message?: unknown }).message;
       return typeof maybeMessage === 'string' ? maybeMessage : 'Non-serializable error object';

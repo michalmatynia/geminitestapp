@@ -1,7 +1,8 @@
 'use client';
 
 import type * as React from 'react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import GeometryDrawingGame from '@/features/kangur/ui/components/GeometryDrawingGame';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
@@ -19,6 +20,7 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
+import type { LessonTranslate } from './lesson-copy';
 
 type SectionId = 'intro' | 'practice' | 'draw' | 'summary';
 type ShapeId = 'circle' | 'square' | 'triangle' | 'rectangle' | 'oval' | 'diamond';
@@ -33,85 +35,101 @@ type ShapeDefinition = {
 type ShapeRound = {
   id: ShapeId;
   shape: ShapeId;
-  correct: string;
-  options: readonly string[];
+  correct: ShapeId;
+  options: readonly ShapeId[];
 };
 
-const SHAPES: ShapeDefinition[] = [
+const SHAPE_META: Array<{ id: ShapeId; color: string }> = [
   {
     id: 'circle',
-    label: 'Koło',
-    clue: 'Okrągłe, bez rogów.',
     color: '#38bdf8',
   },
   {
     id: 'square',
-    label: 'Kwadrat',
-    clue: '4 równe boki.',
     color: '#4ade80',
   },
   {
     id: 'triangle',
-    label: 'Trójkąt',
-    clue: '3 boki i 3 rogi.',
     color: '#fbbf24',
   },
   {
     id: 'rectangle',
-    label: 'Prostokąt',
-    clue: '2 długie i 2 krótkie boki.',
     color: '#fb7185',
   },
   {
     id: 'oval',
-    label: 'Owal',
-    clue: 'Bez rogów, ale wydłużony.',
     color: '#a78bfa',
   },
   {
     id: 'diamond',
-    label: 'Romb',
-    clue: 'Wygląda jak przechylony kwadrat.',
     color: '#f97316',
   },
 ];
 
-const HUB_SECTIONS = [
-  {
-    id: 'intro',
-    emoji: '🔍',
-    title: 'Poznaj kształty',
-    description: 'Zobacz najczęstsze kształty.',
-  },
-  {
-    id: 'practice',
-    emoji: '🎯',
-    title: 'Ćwiczenia',
-    description: 'Nazwij kształt, który widzisz.',
-  },
-  {
-    id: 'draw',
-    emoji: '✍️',
-    title: 'Gra: Rysuj kształty',
-    description: 'Narysuj koło, trójkąt, kwadrat i prostokąt.',
-    isGame: true,
-  },
-  {
-    id: 'summary',
-    emoji: '⭐',
-    title: 'Podsumowanie',
-    description: 'Najważniejsze informacje.',
-  },
-] as const;
-
 const SHAPE_ROUNDS: ShapeRound[] = [
-  { id: 'circle', shape: 'circle', correct: 'Koło', options: ['Koło', 'Kwadrat', 'Trójkąt'] },
-  { id: 'triangle', shape: 'triangle', correct: 'Trójkąt', options: ['Trójkąt', 'Prostokąt', 'Koło'] },
-  { id: 'square', shape: 'square', correct: 'Kwadrat', options: ['Kwadrat', 'Romb', 'Prostokąt'] },
-  { id: 'rectangle', shape: 'rectangle', correct: 'Prostokąt', options: ['Prostokąt', 'Kwadrat', 'Owal'] },
-  { id: 'oval', shape: 'oval', correct: 'Owal', options: ['Owal', 'Koło', 'Romb'] },
-  { id: 'diamond', shape: 'diamond', correct: 'Romb', options: ['Romb', 'Kwadrat', 'Trójkąt'] },
+  { id: 'circle', shape: 'circle', correct: 'circle', options: ['circle', 'square', 'triangle'] },
+  {
+    id: 'triangle',
+    shape: 'triangle',
+    correct: 'triangle',
+    options: ['triangle', 'rectangle', 'circle'],
+  },
+  {
+    id: 'square',
+    shape: 'square',
+    correct: 'square',
+    options: ['square', 'diamond', 'rectangle'],
+  },
+  {
+    id: 'rectangle',
+    shape: 'rectangle',
+    correct: 'rectangle',
+    options: ['rectangle', 'square', 'oval'],
+  },
+  { id: 'oval', shape: 'oval', correct: 'oval', options: ['oval', 'circle', 'diamond'] },
+  {
+    id: 'diamond',
+    shape: 'diamond',
+    correct: 'diamond',
+    options: ['diamond', 'square', 'triangle'],
+  },
 ];
+
+const buildShapes = (translate: LessonTranslate): ShapeDefinition[] =>
+  SHAPE_META.map((shape) => ({
+    ...shape,
+    label: translate(`shapes.${shape.id}.label`),
+    clue: translate(`shapes.${shape.id}.clue`),
+  }));
+
+const buildSections = (translate: LessonTranslate) =>
+  [
+    {
+      id: 'intro',
+      emoji: '🔍',
+      title: translate('sections.intro.title'),
+      description: translate('sections.intro.description'),
+    },
+    {
+      id: 'practice',
+      emoji: '🎯',
+      title: translate('sections.practice.title'),
+      description: translate('sections.practice.description'),
+    },
+    {
+      id: 'draw',
+      emoji: '✍️',
+      title: translate('sections.draw.title'),
+      description: translate('sections.draw.description'),
+      isGame: true,
+    },
+    {
+      id: 'summary',
+      emoji: '⭐',
+      title: translate('sections.summary.title'),
+      description: translate('sections.summary.description'),
+    },
+  ] as const;
 
 const ShapeIcon = ({
   shape,
@@ -158,9 +176,9 @@ const ShapeIcon = ({
   );
 };
 
-const ShapeGrid = (): React.JSX.Element => (
+const ShapeGrid = ({ shapes }: { shapes: ShapeDefinition[] }): React.JSX.Element => (
   <div className='grid gap-4 sm:grid-cols-2'>
-    {SHAPES.map((shape) => (
+    {shapes.map((shape) => (
       <KangurLessonCallout
         key={shape.id}
         accent='emerald'
@@ -175,32 +193,49 @@ const ShapeGrid = (): React.JSX.Element => (
   </div>
 );
 
-const ShapeClues = (): React.JSX.Element => (
+const ShapeClues = ({
+  translate,
+}: {
+  translate: LessonTranslate;
+}): React.JSX.Element => (
   <KangurLessonStack align='start' gap='md'>
     <KangurLessonLead align='left'>
-      Użyj tych wskazówek, aby rozpoznać kształt:
+      {translate('clues.lead')}
     </KangurLessonLead>
     <div className='flex flex-wrap gap-2'>
-      <KangurLessonChip accent='sky'>Rogi</KangurLessonChip>
-      <KangurLessonChip accent='emerald'>Boki</KangurLessonChip>
-      <KangurLessonChip accent='amber'>Zaokrąglenia</KangurLessonChip>
-      <KangurLessonChip accent='rose'>Długie i krótkie boki</KangurLessonChip>
+      <KangurLessonChip accent='sky'>{translate('clues.chips.corners')}</KangurLessonChip>
+      <KangurLessonChip accent='emerald'>{translate('clues.chips.sides')}</KangurLessonChip>
+      <KangurLessonChip accent='amber'>{translate('clues.chips.curves')}</KangurLessonChip>
+      <KangurLessonChip accent='rose'>{translate('clues.chips.longShortSides')}</KangurLessonChip>
     </div>
     <KangurLessonInset accent='emerald'>
-      Najpierw policz rogi, potem porównaj długości boków.
+      {translate('clues.inset')}
     </KangurLessonInset>
   </KangurLessonStack>
 );
 
-const ShapeRecognitionGame = (): React.JSX.Element => {
+const ShapeRecognitionGame = ({
+  shapes,
+  translate,
+}: {
+  shapes: ShapeDefinition[];
+  translate: LessonTranslate;
+}): React.JSX.Element => {
   const [roundIndex, setRoundIndex] = useState(0);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<ShapeId | null>(null);
   const [score, setScore] = useState(0);
+  const shapeLabels = useMemo(
+    () =>
+      Object.fromEntries(
+        shapes.map((shape) => [shape.id, shape.label]),
+      ) as Record<ShapeId, string>,
+    [shapes],
+  );
 
   if (SHAPE_ROUNDS.length === 0) {
     return (
       <KangurGlassPanel className='w-full' padding='lg' surface='playField'>
-        <div className='text-sm text-slate-500'>Brak rund.</div>
+        <div className='text-sm text-slate-500'>{translate('practice.emptyRounds')}</div>
       </KangurGlassPanel>
     );
   }
@@ -208,10 +243,11 @@ const ShapeRecognitionGame = (): React.JSX.Element => {
   const isFinished = roundIndex >= SHAPE_ROUNDS.length;
   const safeIndex = Math.min(roundIndex, SHAPE_ROUNDS.length - 1);
   const round = SHAPE_ROUNDS[safeIndex]!;
-  const shape = SHAPES.find((item) => item.id === round.shape) ?? SHAPES[0]!;
+  const shape = shapes.find((item) => item.id === round.shape) ?? shapes[0]!;
   const isCorrect = selected === round.correct;
+  const correctLabel = shapeLabels[round.correct] ?? round.correct;
 
-  const handleSelect = (option: string): void => {
+  const handleSelect = (option: ShapeId): void => {
     if (selected) return;
     setSelected(option);
     if (option === round.correct) {
@@ -234,12 +270,19 @@ const ShapeRecognitionGame = (): React.JSX.Element => {
     return (
       <KangurGlassPanel className='w-full text-center' padding='lg' surface='playField'>
         <KangurStatusChip accent='emerald' size='sm'>
-          Koniec
+          {translate('practice.finished.status')}
         </KangurStatusChip>
-        <div className='mt-4 text-xl font-semibold'>Wynik: {score}/{SHAPE_ROUNDS.length}</div>
-        <div className='mt-2 text-sm text-slate-500'>Świetnie rozpoznajesz kształty!</div>
+        <div className='mt-4 text-xl font-semibold'>
+          {translate('practice.finished.title', {
+            score,
+            total: SHAPE_ROUNDS.length,
+          })}
+        </div>
+        <div className='mt-2 text-sm text-slate-500'>
+          {translate('practice.finished.subtitle')}
+        </div>
         <KangurButton className='mt-5' variant='primary' onClick={handleRestart}>
-          Zagraj ponownie
+          {translate('practice.finished.restart')}
         </KangurButton>
       </KangurGlassPanel>
     );
@@ -249,13 +292,18 @@ const ShapeRecognitionGame = (): React.JSX.Element => {
     <KangurGlassPanel className='w-full' padding='lg' surface='playField'>
       <div className='flex items-center justify-between'>
         <KangurStatusChip accent='emerald' size='sm'>
-          Runda {roundIndex + 1}/{SHAPE_ROUNDS.length}
+          {translate('practice.progress.round', {
+            current: roundIndex + 1,
+            total: SHAPE_ROUNDS.length,
+          })}
         </KangurStatusChip>
-        <div className='text-xs text-slate-500'>Wynik {score}</div>
+        <div className='text-xs text-slate-500'>
+          {translate('practice.progress.score', { score })}
+        </div>
       </div>
       <div className='mt-5 flex flex-col items-center gap-4'>
         <ShapeIcon shape={shape.id} color={shape.color} className='h-28 w-28' />
-        <div className='text-lg font-semibold'>Jaki to kształt?</div>
+        <div className='text-lg font-semibold'>{translate('practice.question')}</div>
       </div>
       <div className='mt-5 grid gap-3 sm:grid-cols-2'>
         {round.options.map((option) => {
@@ -272,7 +320,7 @@ const ShapeRecognitionGame = (): React.JSX.Element => {
               variant={variant}
               onClick={() => handleSelect(option)}
             >
-              {option}
+              {shapeLabels[option] ?? option}
             </KangurButton>
           );
         })}
@@ -280,10 +328,16 @@ const ShapeRecognitionGame = (): React.JSX.Element => {
       {selected ? (
         <div className='mt-5 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between'>
           <KangurStatusChip accent={isCorrect ? 'emerald' : 'rose'} size='sm'>
-            {isCorrect ? 'Brawo!' : `Prawie! To ${round.correct}.`}
+            {isCorrect
+              ? translate('practice.feedback.correct')
+              : translate('practice.feedback.incorrect', {
+                  shape: correctLabel,
+                })}
           </KangurStatusChip>
           <KangurButton variant='primary' onClick={handleNext}>
-            {roundIndex + 1 >= SHAPE_ROUNDS.length ? 'Zakończ' : 'Dalej'}
+            {roundIndex + 1 >= SHAPE_ROUNDS.length
+              ? translate('practice.actions.finish')
+              : translate('practice.actions.next')}
           </KangurButton>
         </div>
       ) : null}
@@ -291,56 +345,63 @@ const ShapeRecognitionGame = (): React.JSX.Element => {
   );
 };
 
-const SLIDES: Record<Exclude<SectionId, 'draw'>, LessonSlide[]> = {
+const buildSlides = (
+  shapes: ShapeDefinition[],
+  translate: LessonTranslate,
+): Record<Exclude<SectionId, 'draw'>, LessonSlide[]> => ({
   intro: [
     {
-      title: 'Poznaj kształty',
+      title: translate('intro.title'),
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>Szukaj rogów, boków i zaokrągleń.</KangurLessonLead>
-          <ShapeGrid />
+          <KangurLessonLead>{translate('intro.lead')}</KangurLessonLead>
+          <ShapeGrid shapes={shapes} />
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Wskazówki',
-      content: <ShapeClues />,
+      title: translate('clues.title'),
+      content: <ShapeClues translate={translate} />,
     },
   ],
   practice: [
     {
-      title: 'Wyzwanie kształtów',
-      content: <ShapeRecognitionGame />,
+      title: translate('practiceSlide.title'),
+      content: <ShapeRecognitionGame shapes={shapes} translate={translate} />,
       panelClassName: 'w-full',
     },
   ],
   summary: [
     {
-      title: 'Świetna robota!',
+      title: translate('summary.title'),
       content: (
         <KangurLessonStack>
           <KangurStatusChip accent='emerald' size='sm'>
-            Gotowe na więcej
+            {translate('summary.status')}
           </KangurStatusChip>
-          <KangurLessonLead>Teraz potrafisz nazwać kształty wokół siebie.</KangurLessonLead>
-          <KangurLessonCaption>
-            Poszukaj kół, kwadratów, trójkątów, prostokątów, owali i rombów w domu.
-          </KangurLessonCaption>
+          <KangurLessonLead>{translate('summary.lead')}</KangurLessonLead>
+          <KangurLessonCaption>{translate('summary.caption')}</KangurLessonCaption>
         </KangurLessonStack>
       ),
     },
   ],
-};
+});
 
 export default function GeometryShapeRecognitionLesson(): React.JSX.Element {
+  const translations = useTranslations('KangurStaticLessons.geometryShapeRecognition');
+  const translate: LessonTranslate = (key, values) => translations(key as never, values as never);
+  const shapes = useMemo(() => buildShapes(translate), [translations]);
+  const sections = useMemo(() => buildSections(translate), [translations]);
+  const slides = useMemo(() => buildSlides(shapes, translate), [shapes, translations]);
+
   return (
     <KangurUnifiedLesson
       progressMode='panel'
       lessonId='geometry_shape_recognition'
       lessonEmoji='🔷'
-      lessonTitle='Geometria'
-      sections={HUB_SECTIONS}
-      slides={SLIDES}
+      lessonTitle={translate('lessonTitle')}
+      sections={sections}
+      slides={slides}
       gradientClass='kangur-gradient-accent-emerald'
       progressDotClassName='bg-emerald-300'
       dotActiveClass='bg-emerald-400'
@@ -351,7 +412,7 @@ export default function GeometryShapeRecognitionLesson(): React.JSX.Element {
           sectionId: 'draw',
           stage: {
             accent: 'emerald',
-            title: 'Gra: Rysuj kształty',
+            title: translate('draw.stageTitle'),
             icon: '✍️',
             maxWidthClassName: 'max-w-3xl',
             shellTestId: 'geometry-shape-recognition-draw-shell',
@@ -359,8 +420,8 @@ export default function GeometryShapeRecognitionLesson(): React.JSX.Element {
           render: ({ onFinish }) => (
             <GeometryDrawingGame
               activityKey='training:geometry_shape_recognition:draw'
-              difficultyLabelOverride='Podstawowe'
-              finishLabel='Wróć do tematów'
+              difficultyLabelOverride={translate('draw.difficultyLabel')}
+              finishLabel={translate('draw.finishLabel')}
               lessonKey='geometry_shape_recognition'
               onFinish={onFinish}
               shapeIds={['circle', 'oval', 'triangle', 'diamond', 'square', 'rectangle']}

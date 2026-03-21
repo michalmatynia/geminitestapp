@@ -1,4 +1,4 @@
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 type UserAction = {
   type: string;
   target: string;
@@ -65,8 +65,12 @@ export const initUserActionTracker = (): void => {
         actionHistory.pop();
       }
     } catch (error) {
-      logClientError(error);
-    
+      logClientCatch(error, {
+        source: 'user-action-tracker',
+        action: 'captureUserAction',
+        eventType: event.type,
+      });
+
       // safe fail
     }
   };

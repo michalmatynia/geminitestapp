@@ -23,18 +23,14 @@ import type {
   KangurSocialPost,
 } from '@/shared/contracts/kangur-social-posts';
 import type { KangurSocialImageAddonsBatchResult } from '@/shared/contracts/kangur-social-image-addons';
+import type { SelectSimpleOptionDto } from '@/shared/contracts/ui/controls';
 import {
   BRAIN_MODEL_DEFAULT_VALUE,
   type AddonFormState,
 } from './AdminKangurSocialPage.Constants';
 import { KangurAdminCard } from '../components/KangurAdminCard';
 
-type SelectOption = {
-  value: string;
-  label: string;
-  description?: string;
-  disabled?: boolean;
-};
+type SelectOption = SelectSimpleOptionDto;
 
 type AdminKangurSocialSettingsModalProps = {
   open: boolean;

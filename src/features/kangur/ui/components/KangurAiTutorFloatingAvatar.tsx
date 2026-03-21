@@ -15,8 +15,6 @@ import type { CSSProperties, JSX, MouseEvent, PointerEvent } from 'react';
 
 const KANGUR_AI_TUTOR_PANEL_SURFACE_ID = 'kangur-ai-tutor-panel-surface';
 
-type GuidedArrowhead = TutorGuidedArrowhead;
-
 type ReducedMotionTransitions = {
   instant: {
     duration: number;
@@ -31,7 +29,7 @@ type Props = {
   avatarStyle: TutorMotionPosition;
   floatingAvatarPlacement: string;
   guidedArrowheadTransition?: string;
-  guidedAvatarArrowhead: GuidedArrowhead | null;
+  guidedAvatarArrowhead: TutorGuidedArrowhead | null;
   guidedAvatarArrowheadDisplayAngle: number | null;
   guidedAvatarArrowheadDisplayAngleLabel?: string;
   guidedAvatarPlacement: string;

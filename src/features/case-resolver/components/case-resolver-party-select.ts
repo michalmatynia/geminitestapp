@@ -2,11 +2,9 @@ import {
   decodeFilemakerPartyReference,
   encodeFilemakerPartyReference,
 } from '@/features/filemaker';
-type CaseResolverPartySelectOption = {
-  value: string;
-  label: string;
-  description?: string | undefined;
-};
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
+
+type CaseResolverPartySelectOption = LabeledOptionWithDescriptionDto<string>;
 
 export type DecodedFilemakerPartyReference = ReturnType<typeof decodeFilemakerPartyReference>;
 

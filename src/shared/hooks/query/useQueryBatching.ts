@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 interface QueryBatchConfig {
@@ -97,7 +97,12 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
             }
           }
         } catch (error) {
-          logClientError(error);
+          logClientCatch(error, {
+            source: 'useQueryBatching',
+            action: 'processBatchGroup',
+            groupSize: group.length,
+            level: 'warn',
+          });
           group.forEach((item) => item.reject(error as Error));
         }
       })

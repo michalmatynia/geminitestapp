@@ -6,7 +6,11 @@ import { useCallback, useEffect, useRef } from 'react';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 import { useToast } from '@/shared/ui';
-import { logClientError, isLoggableObject } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+  isLoggableObject,
+} from '@/shared/utils/observability/client-error-logger';
 import { getTraceId } from '@/shared/utils/observability/trace';
 
 interface LoggableWithErrorFlag {
@@ -103,7 +107,11 @@ const toQueryKeySignature = (queryKey: unknown[]): string => {
   try {
     return JSON.stringify(queryKey);
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'useQueryErrorHandling',
+      action: 'toQueryKeySignature',
+      queryKeyLength: queryKey.length,
+    });
     return String(queryKey);
   }
 };
@@ -225,9 +233,12 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
           if (isLoggableObject(error)) {
             try {
               (error as LoggableWithErrorFlag).__logged = true;
-            } catch (error) {
-              logClientError(error);
-            
+            } catch (markLoggedError) {
+              logClientCatch(markLoggedError, {
+                source: 'useQueryErrorHandling',
+                action: 'markErrorLogged',
+              });
+
               // ignore
             }
           }
@@ -407,7 +418,11 @@ export function useCircuitBreakerQuery<TData>(
         }
         return result;
       } catch (error) {
-        logClientError(error);
+        logClientCatch(error, {
+          source: 'useQueryErrorHandling',
+          action: 'useCircuitBreakerQuery.queryFn',
+          queryKey,
+        });
         const newFailures = circuit.failures + 1;
         const shouldOpen = newFailures >= failureThreshold;
 

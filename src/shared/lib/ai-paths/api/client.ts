@@ -12,6 +12,7 @@ import type {
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import {
   aiPathRunEnqueueResponseSchema,
+  type AiPathRunListResult,
   type AiPathRunEnqueueResponse,
   type AiPathRunRecord,
   type AiPathRuntimeAnalyticsSummary,
@@ -402,7 +403,7 @@ export async function listAiPathRuns(options?: {
   fresh?: boolean;
   timeoutMs?: number;
   signal?: AbortSignal;
-}): Promise<HttpResult<{ runs: unknown[]; total: number }>> {
+}): Promise<HttpResult<AiPathRunListResult>> {
   const params = new URLSearchParams();
   if (options?.pathId) params.set('pathId', options.pathId);
   if (options?.nodeId) params.set('nodeId', options.nodeId);
@@ -421,7 +422,7 @@ export async function listAiPathRuns(options?: {
 
   const query = params.toString();
   const url = query ? `/api/ai-paths/runs?${query}` : '/api/ai-paths/runs';
-  return apiFetch<{ runs: unknown[]; total: number }>(url, {
+  return apiFetch<AiPathRunListResult>(url, {
     ...(typeof options?.timeoutMs === 'number' ? { timeoutMs: options.timeoutMs } : {}),
     ...(options?.signal ? { signal: options.signal } : {}),
   });

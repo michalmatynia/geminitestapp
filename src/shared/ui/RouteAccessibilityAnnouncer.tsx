@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 const DEFAULT_PATH_LABEL = 'Home';
@@ -32,7 +32,11 @@ const focusMainRegion = (): void => {
   try {
     mainRegion.focus({ preventScroll: true });
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'RouteAccessibilityAnnouncer',
+      action: 'focusMainRegion',
+      level: 'warn',
+    });
     mainRegion.focus();
   }
 };

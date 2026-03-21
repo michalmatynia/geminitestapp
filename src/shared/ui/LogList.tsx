@@ -4,7 +4,7 @@ import type { LogListEntry } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
 import { StatusBadge } from './status-badge';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export type { LogListEntry };
 
@@ -42,7 +42,11 @@ export function LogList({
     try {
       return new Date(ts).toLocaleTimeString();
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'LogList',
+        action: 'formatTimestamp',
+        level: 'warn',
+      });
       return String(ts);
     }
   };

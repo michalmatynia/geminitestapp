@@ -32,12 +32,14 @@ import {
 
 import type { QueryClient } from '@tanstack/react-query';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import type {
+  CropMode as GenerationToolbarCropMode,
+  ImageStudioOperationStatus,
+  UpscaleMode,
+  UpscaleStrategy,
+} from './GenerationToolbarContext';
 
-type UpscaleMode = 'client_canvas' | 'server_sharp';
-type UpscaleStatus = 'idle' | 'resolving' | 'preparing' | 'uploading' | 'processing' | 'persisting';
-type CropMode = 'client_bbox' | 'server_bbox';
-type CropStatus = 'idle' | 'resolving' | 'preparing' | 'uploading' | 'processing' | 'persisting';
-type UpscaleStrategy = 'scale' | 'target_resolution';
+type CropMode = Exclude<GenerationToolbarCropMode, 'canvas_overflow'>;
 
 type UpscaleActionResponse = ImageStudioUpscaleResponse;
 type CropActionResponse = ImageStudioCropResponse;
@@ -59,10 +61,10 @@ type CreateGenerationToolbarActionHandlersDeps = {
   resolveCropCanvasContext: () => Promise<CropCanvasContext | null>;
   resolveUpscaleSourceDimensions: () => Promise<{ width: number; height: number }>;
   setCropBusy: (value: boolean) => void;
-  setCropStatus: (value: CropStatus) => void;
+  setCropStatus: (value: ImageStudioOperationStatus) => void;
   setSelectedSlotId: (slotId: string | null) => void;
   setUpscaleBusy: (value: boolean) => void;
-  setUpscaleStatus: (value: UpscaleStatus) => void;
+  setUpscaleStatus: (value: ImageStudioOperationStatus) => void;
   setWorkingSlotId: (slotId: string | null) => void;
   toast: Toast;
   upscaleAbortControllerRef: React.MutableRefObject<AbortController | null>;

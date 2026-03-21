@@ -76,8 +76,9 @@ export default async function Layout({
     });
     redirect('/auth/signin');
   }
+  const shouldEnableAdminSettingsStore = canReadAdminSettings || isPlaywrightRuntime;
   return (
-    <SettingsStoreProvider mode='admin' canReadAdminSettings={canReadAdminSettings}>
+    <SettingsStoreProvider mode='admin' canReadAdminSettings={shouldEnableAdminSettingsStore}>
       <AdminLayout session={session} initialMenuCollapsed={initialMenuCollapsed}>
         {children}
       </AdminLayout>

@@ -18,7 +18,7 @@ import {
   type PortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionMode,
 } from '@/shared/lib/ai-paths/portable-engine/server';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
-import { listSystemLogs } from '@/shared/lib/observability/system-logger';
+import { listSystemLogs } from '@/shared/lib/observability/system-log-repository';;
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 

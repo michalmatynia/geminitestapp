@@ -6,7 +6,7 @@ import { createContext, useCallback, useContext, useMemo, useRef, useState } fro
 import type { Toast, ToastVariant, ToastOptions } from '@/shared/contracts/ui';
 import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
 import { Button, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export type { Toast, ToastVariant, ToastOptions };
 
@@ -141,7 +141,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
       const accent = parsed.accent in accentStyles ? parsed.accent : defaultSettings.accent;
       return { ...defaultSettings, position, accent };
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'ToastProvider',
+        action: 'loadToastSettings',
+        storageKey: 'toastSettings',
+        level: 'warn',
+      });
       return defaultSettings;
     }
   });

@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getCategoryRepository, getParameterRepository } from '@/features/products/server';
-import type { ProductCategory, ProductParameter } from '@/shared/contracts/products';
+import {
+  toProductCategorySummaryDto,
+  type ProductCategorySummaryDto,
+  type ProductParameter,
+} from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import type { DescriptionContextQuery } from '@/shared/validations/product-metadata-api-schemas';
-
-type DescriptionContextCategory = {
-  id: string;
-  name: string;
-  name_en: string | null;
-  name_pl: string | null;
-  name_de: string | null;
-  parentId: string | null;
-  sortIndex: number | null;
-};
 
 type DescriptionContextPayload = {
   catalogId: string | null;
@@ -27,7 +21,7 @@ type DescriptionContextPayload = {
     selectorType: ProductParameter['selectorType'];
     optionLabels: string[];
   }>;
-  categories: DescriptionContextCategory[];
+  categories: ProductCategorySummaryDto[];
 };
 
 const buildEmptyPayload = (
@@ -58,11 +52,11 @@ const normalizeOptionLabels = (input: unknown): string[] => {
 };
 
 const resolveCategoryName = (
-  categories: DescriptionContextCategory[],
+  categories: ProductCategorySummaryDto[],
   categoryId: string
 ): string | null => {
   const match = categories.find(
-    (category: DescriptionContextCategory): boolean => category.id === categoryId
+    (category: ProductCategorySummaryDto): boolean => category.id === categoryId
   );
   if (!match) return null;
   const preferredName = [match.name_en, match.name, match.name_pl, match.name_de].find(
@@ -70,16 +64,6 @@ const resolveCategoryName = (
   );
   return preferredName?.trim() ?? null;
 };
-
-const toDescriptionContextCategory = (category: ProductCategory): DescriptionContextCategory => ({
-  id: category.id,
-  name: category.name,
-  name_en: category.name_en ?? null,
-  name_pl: category.name_pl ?? null,
-  name_de: category.name_de ?? null,
-  parentId: category.parentId,
-  sortIndex: category.sortIndex ?? null,
-});
 
 export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = ctx.query as DescriptionContextQuery | undefined;
@@ -97,12 +81,12 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   const [parameters, categories] = await Promise.all([
     parameterRepository.listParameters({ catalogId }),
     shouldFetchCategories
-      ? (async (): Promise<DescriptionContextCategory[]> => {
+      ? (async (): Promise<ProductCategorySummaryDto[]> => {
         const categoryRepository = await getCategoryRepository();
         const categoryList = await categoryRepository.listCategories({ catalogId });
-        return categoryList.map(toDescriptionContextCategory);
+        return categoryList.map(toProductCategorySummaryDto);
       })()
-      : Promise.resolve<DescriptionContextCategory[]>([]),
+      : Promise.resolve<ProductCategorySummaryDto[]>([]),
   ]);
 
   const categoryName = categoryId ? resolveCategoryName(categories, categoryId) : null;

@@ -42,7 +42,7 @@ import {
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type {
-  KangurMiniGameFeedback,
+  KangurMiniGameFeedbackState,
   KangurMiniGameFinishProps,
   KangurRewardBreakdownEntry,
 } from '@/features/kangur/ui/types';
@@ -136,7 +136,7 @@ export default function EnglishSubjectVerbAgreementGame({
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
-  const [feedback, setFeedback] = useState<KangurMiniGameFeedback | null>(null);
+  const [feedback, setFeedback] = useState<KangurMiniGameFeedbackState>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);

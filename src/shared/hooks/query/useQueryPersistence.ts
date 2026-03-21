@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useCallback } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 interface PersistenceConfig {
   key: string;
@@ -54,19 +54,17 @@ export function useQueryPersistence(config: PersistenceConfig): { clearPersisted
         storage.setItem(key, serialized);
         mutedQuotaKeys.delete(key);
       } catch (error) {
-        logClientError(error);
         if (isQuotaExceededError(error)) {
           storage.removeItem(key);
           if (mutedQuotaKeys.has(key)) return;
           mutedQuotaKeys.add(key);
         }
-        logClientError(error instanceof Error ? error : new Error(String(error)), {
-          context: {
-            source: 'useQueryPersistence',
-            action: 'saveQueryToStorage',
-            level: 'warn',
-            storageKey: key,
-          },
+        logClientCatch(error, {
+          source: 'useQueryPersistence',
+          action: 'saveQueryToStorage',
+          level: 'warn',
+          storageKey: key,
+          quotaExceeded: isQuotaExceededError(error),
         });
       }
     },
@@ -91,9 +89,10 @@ export function useQueryPersistence(config: PersistenceConfig): { clearPersisted
 
         return parsed.data;
       } catch (error) {
-        logClientError(error);
-        logClientError(error instanceof Error ? error : new Error(String(error)), {
-          context: { source: 'useQueryPersistence', action: 'loadQueryFromStorage', level: 'warn' },
+        logClientCatch(error, {
+          source: 'useQueryPersistence',
+          action: 'loadQueryFromStorage',
+          level: 'warn',
         });
         return null;
       }
@@ -170,9 +169,10 @@ export function useFormPersistence<T>(
         };
         storage.setItem(key, JSON.stringify(item));
       } catch (error) {
-        logClientError(error);
-        logClientError(error instanceof Error ? error : new Error(String(error)), {
-          context: { source: 'useFormPersistence', action: 'saveFormState', level: 'warn' },
+        logClientCatch(error, {
+          source: 'useFormPersistence',
+          action: 'saveFormState',
+          level: 'warn',
         });
       }
     },
@@ -195,9 +195,10 @@ export function useFormPersistence<T>(
 
       return { ...defaultValues, ...parsed.data };
     } catch (error) {
-      logClientError(error);
-      logClientError(error instanceof Error ? error : new Error(String(error)), {
-        context: { source: 'useFormPersistence', action: 'loadFormState', level: 'warn' },
+      logClientCatch(error, {
+        source: 'useFormPersistence',
+        action: 'loadFormState',
+        level: 'warn',
       });
       return defaultValues;
     }

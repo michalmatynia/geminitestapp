@@ -1,11 +1,16 @@
 import type { IdLabeledOptionDto, LabeledOptionDto } from '@/shared/contracts/base';
 import type { DbQueryConfig } from '@/shared/lib/ai-paths';
 
-type LabeledPreset = IdLabeledOptionDto;
-
-type TemplateSnippet = LabeledOptionDto<string>;
-type SnippetItem = LabeledOptionDto<string> & { disabled?: boolean; note?: string };
-type SnippetGroup = { label: string; items: SnippetItem[] };
+export type DatabasePresetOption = IdLabeledOptionDto;
+export type DatabaseTemplateSnippet = LabeledOptionDto<string>;
+export type DatabaseSnippetItem = LabeledOptionDto<string> & {
+  disabled?: boolean;
+  note?: string;
+};
+export type DatabaseSnippetGroup = {
+  label: string;
+  items: DatabaseSnippetItem[];
+};
 
 const PLACEHOLDER_CHIPS = [
   '{{value}}',
@@ -16,7 +21,7 @@ const PLACEHOLDER_CHIPS = [
   '{{meta.pathId}}',
 ];
 
-const TEMPLATE_SNIPPETS: TemplateSnippet[] = [
+const TEMPLATE_SNIPPETS: DatabaseTemplateSnippet[] = [
   {
     label: 'By _id',
     value: '{\n  "_id": "{{value}}"\n}',
@@ -39,7 +44,7 @@ const TEMPLATE_SNIPPETS: TemplateSnippet[] = [
   },
 ];
 
-const SORT_PRESETS: LabeledPreset[] = [
+const SORT_PRESETS: DatabasePresetOption[] = [
   { id: 'created_desc', label: 'Newest first (createdAt desc)', value: '{ "createdAt": -1 }' },
   { id: 'created_asc', label: 'Oldest first (createdAt asc)', value: '{ "createdAt": 1 }' },
   { id: 'updated_desc', label: 'Recently updated', value: '{ "updatedAt": -1 }' },
@@ -49,7 +54,7 @@ const SORT_PRESETS: LabeledPreset[] = [
   { id: 'price_desc', label: 'Price high-low', value: '{ "price": -1 }' },
 ];
 
-const PROJECTION_PRESETS: LabeledPreset[] = [
+const PROJECTION_PRESETS: DatabasePresetOption[] = [
   {
     id: 'list_minimal',
     label: 'Minimal list',
@@ -82,7 +87,7 @@ const PROJECTION_PRESETS: LabeledPreset[] = [
   },
 ];
 
-const READ_QUERY_TYPES: SnippetItem[] = [
+const READ_QUERY_TYPES: DatabaseSnippetItem[] = [
   {
     label: 'Find (filter)',
     value: '{\n  "status": "active"\n}',
@@ -115,7 +120,7 @@ const READ_QUERY_TYPES: SnippetItem[] = [
   },
 ];
 
-const QUERY_OPERATOR_GROUPS: SnippetGroup[] = [
+const QUERY_OPERATOR_GROUPS: DatabaseSnippetGroup[] = [
   {
     label: 'Comparison',
     items: [
@@ -201,7 +206,7 @@ const QUERY_OPERATOR_GROUPS: SnippetGroup[] = [
   },
 ];
 
-const UPDATE_OPERATOR_GROUPS: SnippetGroup[] = [
+const UPDATE_OPERATOR_GROUPS: DatabaseSnippetGroup[] = [
   {
     label: 'Field updates',
     items: [
@@ -257,7 +262,7 @@ const UPDATE_OPERATOR_GROUPS: SnippetGroup[] = [
   },
 ];
 
-const AGGREGATION_STAGE_SNIPPETS: SnippetItem[] = [
+const AGGREGATION_STAGE_SNIPPETS: DatabaseSnippetItem[] = [
   { label: '$match', value: '{ "$match": { "status": "active" } }' },
   { label: '$project', value: '{ "$project": { "field": 1 } }' },
   { label: '$addFields / $set', value: '{ "$addFields": { "field": "value" } }' },

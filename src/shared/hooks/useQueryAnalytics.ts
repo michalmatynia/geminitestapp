@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface QueryMetrics {
   queryKey: string;
@@ -89,7 +89,11 @@ export function useQueryAnalytics(config: AnalyticsConfig = {}): {
     try {
       return new Blob([JSON.stringify(data)]).size;
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'useQueryAnalytics',
+        action: 'getDataSize',
+        level: 'warn',
+      });
       return 0;
     }
   }, []);

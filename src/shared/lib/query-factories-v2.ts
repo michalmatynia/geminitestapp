@@ -65,7 +65,7 @@ import {
   type SaveMutationFactoryV2Config,
   type QueryOptionsWithoutCore,
 } from './tanstack-factory-v2/types';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 export type {
@@ -413,7 +413,11 @@ export function createMutationV2<TData, TVariables, TContext = unknown, TError =
         attemptRef.current = 0;
         return data;
       } catch (error) {
-        logClientError(error);
+        logClientCatch(error, {
+          source: 'query-factories-v2',
+          action: 'mutationFn',
+          attempt,
+        });
         const finalError = transformError ? transformError(error) : (error as Error);
         emitFactoryTelemetry({
           entity: 'mutation',

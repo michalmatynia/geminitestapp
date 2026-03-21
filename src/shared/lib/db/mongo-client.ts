@@ -5,7 +5,7 @@ import { configurationError } from '@/shared/errors/app-error';
 import type { Db } from 'mongodb';
 import type { MongoClient } from 'mongodb';
 import type { MongoClientOptions } from 'mongodb';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-reporting';
 
 
 const parsePositiveInt = (value: string | undefined, fallback: number): number => {
@@ -188,7 +188,11 @@ export async function getMongoClient(): Promise<MongoClient> {
     attachMongoObservability(globalForMongo.__mongoClient);
     return globalForMongo.__mongoClient;
   } catch (error) {
-    logClientError(error);
+    void reportRuntimeCatch(error, {
+      source: 'db.mongo-client',
+      action: 'getMongoClient',
+      hasMongoUri: Boolean(process.env['MONGODB_URI']),
+    });
     delete globalForMongo.__mongoClientPromise;
     throw error;
   }

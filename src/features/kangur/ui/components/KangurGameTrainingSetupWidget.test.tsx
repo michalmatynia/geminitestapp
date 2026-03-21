@@ -16,30 +16,38 @@ const { localeState } = vi.hoisted(() => ({
   },
 }));
 
+const { translationState } = vi.hoisted(() => ({
+  translationState: {
+    missing: false,
+  },
+}));
+
 vi.mock('next-intl', () => ({
   useLocale: () => localeState.value,
   useTranslations:
     (namespace?: string) =>
     (key: string) =>
-      (
-        {
-          'KangurGamePage.screens.training.description': {
-            de: 'Konfiguriere das gemischte Training und wahl den Fragenbereich.',
-            en: 'Configure mixed training and choose the question range.',
-            pl: 'Skonfiguruj trening mieszany i dobierz zakres pytan.',
-          },
-          'KangurGamePage.screens.training.label': {
-            de: 'Training einrichten',
-            en: 'Training setup',
-            pl: 'Konfiguracja treningu',
-          },
-          'KangurGamePage.screens.training.wordmarkLabel': {
-            de: 'Training',
-            en: 'Training',
-            pl: 'Trening',
-          },
-        } as const
-      )[`${namespace}.${key}`]?.[localeState.value] ?? key,
+      translationState.missing
+        ? key
+        : (
+            {
+              'KangurGamePage.screens.training.description': {
+                de: 'Konfiguriere das gemischte Training und wahl den Fragenbereich.',
+                en: 'Configure mixed training and choose the question range.',
+                pl: 'Skonfiguruj trening mieszany i dobierz zakres pytan.',
+              },
+              'KangurGamePage.screens.training.label': {
+                de: 'Training einrichten',
+                en: 'Training setup',
+                pl: 'Konfiguracja treningu',
+              },
+              'KangurGamePage.screens.training.wordmarkLabel': {
+                de: 'Training',
+                en: 'Training',
+                pl: 'Trening',
+              },
+            } as const
+          )[`${namespace}.${key}`]?.[localeState.value] ?? key,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
@@ -87,6 +95,7 @@ describe('KangurGameTrainingSetupWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localeState.value = 'pl';
+    translationState.missing = false;
     getRecommendedTrainingSetupMock.mockReturnValue({
       description: 'Lagodny start z dwiema kategoriami pomoze zlapac rytm.',
       label: 'Start',
@@ -147,6 +156,7 @@ describe('KangurGameTrainingSetupWidget', () => {
 
   it('falls back to Ukrainian training copy when translations are unavailable', () => {
     localeState.value = 'uk';
+    translationState.missing = true;
 
     render(<KangurGameTrainingSetupWidget />);
 
@@ -162,5 +172,22 @@ describe('KangurGameTrainingSetupWidget', () => {
     expect(text).toHaveAttribute('font-size', '68');
     expect(text).not.toHaveAttribute('textLength');
     expect(text).not.toHaveAttribute('lengthAdjust');
+  });
+
+  it('falls back to English training copy instead of Polish when translations are unavailable', () => {
+    localeState.value = 'en';
+    translationState.missing = true;
+
+    render(<KangurGameTrainingSetupWidget />);
+
+    const art = screen.getByTestId('kangur-training-heading-art');
+    const text = art.querySelector('text');
+
+    expect(screen.getByRole('heading', { name: 'Mixed training' })).toBeInTheDocument();
+    expect(screen.getByTestId('mock-training-stage-description')).toHaveTextContent(
+      'Choose the level, categories, and number of questions for one session.'
+    );
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent('Training');
   });
 });

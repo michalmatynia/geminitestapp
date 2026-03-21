@@ -12,10 +12,10 @@ import { getCmsRepository } from '@/features/cms/server';
 import { getCmsThemeSettings } from '@/features/cms/server';
 import type { CmsTheme, Page, PageComponent } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { Metadata } from 'next';
 import type { Session } from 'next-auth';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
 export type SlugRenderData = {
@@ -67,7 +67,12 @@ const canPreviewDrafts = async (session: Session | null): Promise<boolean> => {
     const prefs = await getUserPreferences(userId);
     return prefs.cmsPreviewEnabled === true;
   } catch (error) {
-    logClientError(error);
+    void ErrorSystem.captureException(error, {
+      service: 'frontend.slug-page-data',
+      source: 'frontend.slug-page-data',
+      action: 'canPreviewDrafts',
+      userId,
+    });
     return false;
   }
 };
@@ -76,8 +81,8 @@ export async function resolveSlugToPage(
   slugSegments: string[],
   options?: SlugResolutionOptions
 ): Promise<Page | null> {
+  const slugValue = slugSegments.join('/');
   try {
-    const slugValue = slugSegments.join('/');
     const cmsRepository = await getCmsRepository();
     const hdrs = await headers();
     const domain = await resolveCmsDomainFromHeaders(hdrs);
@@ -93,7 +98,13 @@ export async function resolveSlugToPage(
     if (!allowDrafts) return null;
     return page;
   } catch (error) {
-    logClientError(error);
+    void ErrorSystem.captureException(error, {
+      service: 'frontend.slug-page-data',
+      source: 'frontend.slug-page-data',
+      action: 'resolveSlugToPage',
+      slug: slugValue,
+      locale: options?.locale ?? null,
+    });
     return null;
   }
 }

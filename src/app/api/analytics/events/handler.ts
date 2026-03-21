@@ -2,9 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { auth, extractClientIp } from '@/features/auth/server';
-import type { AnalyticsEventCreateInput, AnalyticsEventType } from '@/shared/contracts';
+import {
+  analyticsEventFilterBotSchema,
+  analyticsEventFilterScopeSchema,
+  analyticsEventFilterTypeSchema,
+  analyticsEventTypeSchema,
+  analyticsRangeSchema,
+  analyticsScopeSchema,
+  type AnalyticsEventCreateInput,
+  type AnalyticsEventType,
+} from '@/shared/contracts/analytics';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError } from '@/shared/errors/app-error';
+import { resolveAnalyticsRangeWindow } from '@/shared/lib/analytics/range';
 import { insertAnalyticsEvent, listAnalyticsEvents } from '@/shared/lib/analytics/server';
 import {
   buildAnalyticsRequestMeta,
@@ -23,8 +33,8 @@ const BLOCKING_ANALYTICS_EVENTS_INGESTION =
   process.env['ANALYTICS_EVENTS_BLOCKING_INGESTION'] === 'true';
 
 const createEventSchema = z.object({
-  type: z.enum(['pageview', 'event']),
-  scope: z.enum(['public', 'admin']),
+  type: analyticsEventTypeSchema,
+  scope: analyticsScopeSchema,
   path: z.string().min(1),
   search: z.string().optional().nullable(),
   url: z.string().optional().nullable(),
@@ -73,23 +83,17 @@ const createEventSchema = z.object({
   clientTs: z.string().optional().nullable(),
 });
 
-const RANGE_VALUES = ['24h', '7d', '30d'] as const;
-type AnalyticsRange = (typeof RANGE_VALUES)[number];
-
 export const querySchema = z.object({
   page: optionalIntegerQuerySchema(z.number().int().min(1)).default(1),
   pageSize: optionalIntegerQuerySchema(z.number().int().min(1).max(100)).default(20),
-  range: z.preprocess(
-    (value) => normalizeOptionalQueryString(value) ?? '24h',
-    z.enum(RANGE_VALUES)
-  ),
+  range: z.preprocess((value) => normalizeOptionalQueryString(value) ?? '24h', analyticsRangeSchema),
   scope: z.preprocess(
     (value) => normalizeOptionalQueryString(value) ?? 'all',
-    z.enum(['all', 'public', 'admin'])
+    analyticsEventFilterScopeSchema
   ),
   type: z.preprocess(
     (value) => normalizeOptionalQueryString(value) ?? 'all',
-    z.enum(['all', 'pageview', 'event'])
+    analyticsEventFilterTypeSchema
   ),
   search: z.preprocess((value) => normalizeOptionalQueryString(value) ?? '', z.string()),
   country: z.preprocess((value) => normalizeOptionalQueryString(value) ?? '', z.string()),
@@ -101,20 +105,9 @@ export const querySchema = z.object({
   device: z.preprocess((value) => normalizeOptionalQueryString(value) ?? '', z.string()),
   bot: z.preprocess(
     (value) => normalizeOptionalQueryString(value) ?? 'all',
-    z.enum(['all', 'bots', 'humans'])
+    analyticsEventFilterBotSchema
   ),
 });
-
-const getRangeWindow = (range: AnalyticsRange): { from: Date; to: Date } => {
-  const to = new Date();
-  const msByRange: Record<AnalyticsRange, number> = {
-    '24h': 24 * 60 * 60 * 1000,
-    '7d': 7 * 24 * 60 * 60 * 1000,
-    '30d': 30 * 24 * 60 * 60 * 1000,
-  };
-  const from = new Date(to.getTime() - msByRange[range]);
-  return { from, to };
-};
 
 const resolveSessionUserId = async (): Promise<string | null> => {
   const session = await auth().catch(() => null);
@@ -241,7 +234,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   const botRaw = query.bot;
   const isBot = botRaw === 'all' ? undefined : botRaw === 'bots';
 
-  const { from, to } = getRangeWindow(range);
+  const { from, to } = resolveAnalyticsRangeWindow(range);
   const result = await listAnalyticsEvents({
     from,
     to,

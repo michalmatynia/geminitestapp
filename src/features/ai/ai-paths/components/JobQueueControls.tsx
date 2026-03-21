@@ -4,9 +4,10 @@ import { Trash2 } from 'lucide-react';
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { Button, Hint, Label, SelectSimple } from '@/shared/ui';
+import { Hint, Label, SelectSimple } from '@/shared/ui';
 
 import { JOB_QUEUE_AUTO_REFRESH_INTERVAL_OPTIONS } from './job-queue-auto-refresh';
+import { AiPathsPillButton } from './AiPathsPillButton';
 import { useJobQueueActions, useJobQueueState } from './JobQueueContext';
 
 const AUTO_REFRESH_INTERVAL_OPTIONS = JOB_QUEUE_AUTO_REFRESH_INTERVAL_OPTIONS.map(
@@ -45,49 +46,41 @@ export function JobQueueControls(): React.JSX.Element {
           <div className='text-xs text-gray-400'>{panelDescription}</div>
         </div>
         <div className='flex flex-wrap gap-2'>
-          <Button
-            type='button'
-            className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
+          <AiPathsPillButton
+            className='text-gray-200'
             onClick={refetchQueueData}
             disabled={isLoadingRuns}
           >
             {isLoadingRuns ? 'Refreshing...' : 'Refresh'}
-          </Button>
-          <Button
-            type='button'
+          </AiPathsPillButton>
+          <AiPathsPillButton
             variant='destructive'
-            className='rounded-md border px-2 py-1 text-[10px]'
+            inactiveClassName=''
             onClick={() => setClearScope('terminal')}
             disabled={isClearingRuns}
           >
             <Trash2 className='mr-1 size-3' />
             Clear Finished
-          </Button>
-          <Button
-            type='button'
+          </AiPathsPillButton>
+          <AiPathsPillButton
             variant='destructive'
-            className='rounded-md border px-2 py-1 text-[10px]'
+            inactiveClassName=''
             onClick={() => setClearScope('all')}
             disabled={isClearingRuns}
           >
             <Trash2 className='mr-1 size-3' />
             Clear All
-          </Button>
+          </AiPathsPillButton>
         </div>
       </div>
 
       <div className='flex flex-wrap items-center gap-3 text-[11px] text-gray-400'>
-        <Button
-          type='button'
-          className={`rounded-md border px-2 py-1 text-[10px] ${
-            autoRefreshEnabled
-              ? 'border-emerald-500/50 text-emerald-200'
-              : 'text-gray-300 hover:bg-muted/60'
-          }`}
+        <AiPathsPillButton
+          active={autoRefreshEnabled}
           onClick={() => setAutoRefreshEnabled((prev: boolean) => !prev)}
         >
           {autoRefreshEnabled ? 'Auto-refresh on' : 'Auto-refresh off'}
-        </Button>
+        </AiPathsPillButton>
         <div className='flex items-center gap-2'>
           <Label className='text-[10px] uppercase text-gray-500'>Base interval</Label>
           <SelectSimple
@@ -100,22 +93,20 @@ export function JobQueueControls(): React.JSX.Element {
             triggerClassName='h-7 w-[110px] border-border bg-card/70 text-[11px] text-white'
            title='Select option'/>
         </div>
-        <Button
-          type='button'
-          className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
+        <AiPathsPillButton
+          className='text-gray-200'
           onClick={pauseAllStreams}
           disabled={expandedRunIds.size === 0}
         >
           Pause all streams
-        </Button>
-        <Button
-          type='button'
-          className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
+        </AiPathsPillButton>
+        <AiPathsPillButton
+          className='text-gray-200'
           onClick={resumeAllStreams}
           disabled={expandedRunIds.size === 0}
         >
           Resume all streams
-        </Button>
+        </AiPathsPillButton>
       </div>
     </div>
   );

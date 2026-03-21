@@ -182,4 +182,13 @@ describe('geometry drawing evaluator', () => {
       ).message
     ).toBe('Add more corners. This shape should have about 3.');
   });
+
+  it('returns locale-aware fallback feedback when only a locale is provided', () => {
+    expect(
+      evaluateGeometryDrawing('circle', EXPECT_ACCEPTED.circle, { locale: 'en' }).message
+    ).toBe('Great! That looks like a circle.');
+    expect(
+      evaluateGeometryDrawing('triangle', EXPECT_ACCEPTED.circle, { locale: 'de' }).message
+    ).toBe('Fuge mehr Ecken hinzu. Diese Form sollte ungefahr 3 haben.');
+  });
 });

@@ -1,3 +1,5 @@
+import type { KangurMiniGameBinaryFeedbackState } from '@/features/kangur/ui/types';
+
 import { CLOCK_TRAINING_TASKS } from './clock-training-data';
 import {
   translateClockTrainingWithFallback,
@@ -17,7 +19,7 @@ export type {
   ClockTrainingTaskPoolId,
 } from './clock-training/types';
 
-export type Feedback = 'correct' | 'wrong' | null;
+export type Feedback = KangurMiniGameBinaryFeedbackState;
 export type Hand = 'hour' | 'minute';
 export type MinuteSnapMode = '5min' | '1min';
 

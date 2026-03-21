@@ -36,6 +36,27 @@ export const createProductCategorySchema = productCategorySchema.omit({
 
 export type ProductCategoryCreateInput = z.infer<typeof createProductCategorySchema>;
 export type ProductCategoryUpdateInput = Partial<ProductCategoryCreateInput>;
+export type ProductCategorySummaryDto = {
+  id: string;
+  name: string;
+  name_en: string | null;
+  name_pl: string | null;
+  name_de: string | null;
+  parentId: string | null;
+  sortIndex: number | null;
+};
+
+export const toProductCategorySummaryDto = (
+  category: ProductCategory
+): ProductCategorySummaryDto => ({
+  id: category.id,
+  name: category.name,
+  name_en: category.name_en ?? null,
+  name_pl: category.name_pl ?? null,
+  name_de: category.name_de ?? null,
+  parentId: category.parentId,
+  sortIndex: category.sortIndex ?? null,
+});
 
 export const productCategoryFiltersSchema = z.object({
   catalogId: z.string().optional(),

@@ -10,7 +10,7 @@ import { getAiInsightsMeta, setAiInsightsMeta } from '@/features/ai/insights/ser
 import { AI_INSIGHTS_SETTINGS_KEYS } from '@/features/ai/insights/server';
 import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-import { listSystemLogs } from '@/shared/lib/observability/system-logger';
+import { listSystemLogs } from '@/shared/lib/observability/system-log-repository';;
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 

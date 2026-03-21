@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 
 import type {
   AiPathRunEventRecord,
+  AiPathRunListResult,
   AiPathRunNodeRecord,
   AiPathRunRecord,
 } from '@/shared/contracts/ai-paths';
@@ -120,7 +121,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       if (!response.ok) {
         throw new Error(response.error || 'Failed to load dead-letter runs.');
       }
-      const data = response.data as { runs: AiPathRunRecord[]; total: number };
+      const data: AiPathRunListResult = response.data;
       return { items: data.runs, total: data.total };
     },
     meta: {

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import React, { useCallback, useEffect, useRef, useState, type ComponentProps } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ProductFormProvider } from '@/features/products/context/ProductFormContext';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
@@ -14,6 +14,7 @@ import {
 } from '@/features/products/context/ProductListContext';
 import { isEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
+import type { ProductTriggerButtonBarProps } from '@/features/products/lib/product-integrations-adapter-loader';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations';
 import type { ProductDraft, ProductWithImages } from '@/shared/contracts/products';
 import {
@@ -32,11 +33,7 @@ const FileManager = dynamic(() => import('@/features/files/public'), {
   ssr: false,
 });
 
-type TriggerButtonBarProps = ComponentProps<
-  typeof import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').TriggerButtonBar
->;
-
-const TriggerButtonBar = dynamic<TriggerButtonBarProps>(
+const TriggerButtonBar = dynamic<ProductTriggerButtonBarProps>(
   () =>
     import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').then(
       (

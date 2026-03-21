@@ -659,4 +659,3 @@ export async function logSystemError(input: Omit<SystemLogInput, 'level'>): Prom
 export type { CentralLoggingRuntimeStats } from './system-logger-central-forwarding';
 export { getCentralLoggingRuntimeStats } from './system-logger-central-forwarding';
 export { ErrorSystem } from '../../utils/observability/error-system';
-export { getSystemLogById, getSystemLogMetrics, listSystemLogs } from './system-log-repository';

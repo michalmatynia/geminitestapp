@@ -27,7 +27,7 @@ import {
   UI_GRID_RELAXED_CLASSNAME,
   UI_GRID_ROOMY_CLASSNAME,
 } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { type AnalyticsRange } from '../api';
 import AnalyticsEventsTable from '../components/AnalyticsEventsTable';
 import {
@@ -42,7 +42,11 @@ const formatCount = (value: number): string => {
   try {
     return value.toLocaleString();
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'analytics.admin-page',
+      action: 'formatCount',
+      value,
+    });
     return String(value);
   }
 };

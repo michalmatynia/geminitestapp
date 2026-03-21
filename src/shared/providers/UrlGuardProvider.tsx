@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const normalizeBadHostPath = (host: string, path: string): string | null => {
   const hostPrefix = `/${host}`;
@@ -136,8 +136,12 @@ export function UrlGuardProvider(): null {
       if (restoreAssign) restoreCallbacks.push(restoreAssign);
       if (restoreReplace) restoreCallbacks.push(restoreReplace);
     } catch (error) {
-      logClientError(error);
-    
+      logClientCatch(error, {
+        source: 'UrlGuardProvider',
+        action: 'overrideLocationNavigation',
+        level: 'warn',
+      });
+
       // Ignore if location is not writable in this environment.
     }
 
@@ -184,8 +188,12 @@ export function UrlGuardProvider(): null {
       if (restorePushState) restoreCallbacks.push(restorePushState);
       if (restoreReplaceState) restoreCallbacks.push(restoreReplaceState);
     } catch (error) {
-      logClientError(error);
-    
+      logClientCatch(error, {
+        source: 'UrlGuardProvider',
+        action: 'overrideHistoryNavigation',
+        level: 'warn',
+      });
+
       // Ignore history patch failures.
     }
 

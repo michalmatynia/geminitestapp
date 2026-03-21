@@ -400,6 +400,20 @@
       "dailyQuest": "Mission of the day: {summary}",
       "nextBadge": "Next badge: {summary}"
     },
+    "practiceQuestion": {
+      "label": "Question {number}",
+      "pointChip": "⭐ {points} pts ({difficulty})",
+      "difficulty": {
+        "easy": "easy",
+        "medium": "medium",
+        "hard": "hard"
+      },
+      "answerState": {
+        "correct": "Correct answer",
+        "incorrect": "Incorrect answer"
+      },
+      "confirm": "Confirm answer ✓"
+    },
     "operationSelector": {
       "title": "Let's play!",
       "intro": {
@@ -4541,6 +4555,209 @@
       },
       "game": {
         "stageTitle": "Draw shapes"
+      }
+    },
+    "geometryShapeRecognition": {
+      "lessonTitle": "Geometry",
+      "sections": {
+        "intro": {
+          "title": "Meet the shapes",
+          "description": "See the most common shapes."
+        },
+        "practice": {
+          "title": "Practice",
+          "description": "Name the shape you see."
+        },
+        "draw": {
+          "title": "Game: Draw shapes",
+          "description": "Draw a circle, triangle, square, rectangle, oval, and diamond."
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "Most important tips."
+        }
+      },
+      "shapes": {
+        "circle": {
+          "label": "Circle",
+          "clue": "Round, with no corners."
+        },
+        "square": {
+          "label": "Square",
+          "clue": "4 equal sides."
+        },
+        "triangle": {
+          "label": "Triangle",
+          "clue": "3 sides and 3 corners."
+        },
+        "rectangle": {
+          "label": "Rectangle",
+          "clue": "2 long and 2 short sides."
+        },
+        "oval": {
+          "label": "Oval",
+          "clue": "No corners, but stretched."
+        },
+        "diamond": {
+          "label": "Diamond",
+          "clue": "Looks like a tilted square."
+        }
+      },
+      "clues": {
+        "title": "Hints",
+        "lead": "Use these hints to recognize the shape:",
+        "chips": {
+          "corners": "Corners",
+          "sides": "Sides",
+          "curves": "Curves",
+          "longShortSides": "Long and short sides"
+        },
+        "inset": "First count the corners, then compare side lengths."
+      },
+      "practice": {
+        "emptyRounds": "No rounds.",
+        "finished": {
+          "status": "Finished",
+          "title": "Score: {score}/{total}",
+          "subtitle": "You recognize shapes very well!",
+          "restart": "Play again"
+        },
+        "progress": {
+          "round": "Round {current}/{total}",
+          "score": "Score {score}"
+        },
+        "question": "Which shape is it?",
+        "feedback": {
+          "correct": "Nice!",
+          "incorrect": "Almost! It is {shape}."
+        },
+        "actions": {
+          "next": "Next",
+          "finish": "Finish"
+        }
+      },
+      "intro": {
+        "title": "Meet the shapes",
+        "lead": "Look for corners, sides, and curves."
+      },
+      "practiceSlide": {
+        "title": "Shape challenge"
+      },
+      "summary": {
+        "title": "Great job!",
+        "status": "Ready for more",
+        "lead": "Now you can name the shapes around you.",
+        "caption": "Look for circles, squares, triangles, rectangles, ovals, and diamonds at home."
+      },
+      "draw": {
+        "stageTitle": "Game: Draw shapes",
+        "difficultyLabel": "Basic",
+        "finishLabel": "Back to topics"
+      }
+    },
+    "geometrySymmetry": {
+      "lessonTitle": "Symmetry",
+      "sections": {
+        "intro": {
+          "title": "What is symmetry?",
+          "description": "Definition and examples"
+        },
+        "os": {
+          "title": "Axis of symmetry",
+          "description": "The line that splits the shape"
+        },
+        "figury": {
+          "title": "Symmetric shapes",
+          "description": "Which shapes have symmetry?"
+        },
+        "podsumowanie": {
+          "title": "Summary",
+          "description": "Everything together"
+        },
+        "game": {
+          "title": "Symmetry mirrors",
+          "description": "Draw an axis and complete the reflection"
+        }
+      },
+      "slides": {
+        "intro": {
+          "whatIsSymmetry": {
+            "title": "What is symmetry?",
+            "lead": "A shape is symmetric when, after folding it in half, both sides match.",
+            "callout": "A butterfly is almost symmetric.",
+            "note": "Symmetry means: left side = right side (or top = bottom)."
+          },
+          "mirrorSymmetry": {
+            "title": "Mirror symmetry",
+            "lead": "The axis works like a mirror: the right side reflects the left side.",
+            "caption": "After folding, both parts are the same."
+          }
+        },
+        "os": {
+          "axisOfSymmetry": {
+            "title": "Axis of symmetry",
+            "lead": "An axis of symmetry is a line that divides a shape into two matching parts.",
+            "caption": "The vertical line is the axis of symmetry.",
+            "note": "A shape can have more than one axis of symmetry!"
+          },
+          "axisInPractice": {
+            "title": "Axis in practice",
+            "lead": "The axis line shows where the shape folds.",
+            "caption": "The axis splits the shape into two equal parts."
+          }
+        },
+        "figury": {
+          "symmetricShapes": {
+            "title": "Which shapes are symmetric?",
+            "cards": {
+              "square": "Square",
+              "rectangle": "Rectangle",
+              "circle": "Circle",
+              "isoscelesTriangle": "Isosceles triangle",
+              "zigzag": "Any zigzag",
+              "irregularPolygon": "Irregular polygon"
+            },
+            "circleNote": "A circle has infinitely many axes of symmetry!"
+          },
+          "symmetricOrNot": {
+            "title": "Symmetric or not?",
+            "caption": "Symmetric shapes have matching halves."
+          },
+          "rotational": {
+            "title": "Rotational symmetry",
+            "caption": "Rotation does not change the shape's appearance."
+          }
+        },
+        "podsumowanie": {
+          "overview": {
+            "title": "Summary",
+            "items": {
+              "item1": "Symmetry means that two sides are the same.",
+              "item2": "An axis of symmetry is a line that divides a shape into two matching parts.",
+              "item3": "Many shapes have more than one axis of symmetry.",
+              "item4": "A circle has infinitely many axes of symmetry."
+            }
+          },
+          "axis": {
+            "title": "Summary: axis of symmetry",
+            "caption": "Fold the shape along the axis."
+          },
+          "manyAxes": {
+            "title": "Summary: many axes",
+            "caption": "Symmetry means matching on both sides of the axis."
+          },
+          "mirror": {
+            "title": "Summary: mirror reflection",
+            "caption": "Mirror reflection across the axis."
+          },
+          "rotation": {
+            "title": "Summary: rotational symmetry",
+            "caption": "Rotational symmetry."
+          }
+        }
+      },
+      "game": {
+        "stageTitle": "Symmetry mirrors"
       }
     },
     "calendar": {

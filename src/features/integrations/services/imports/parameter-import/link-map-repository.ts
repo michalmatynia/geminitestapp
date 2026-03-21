@@ -8,12 +8,10 @@ import {
   stringifyScopedCatalogParameterLinkMap,
   normalizeParameterLinkEntries,
 } from '@/features/integrations/services/imports/parameter-import/link-map-preference';
-import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/settings';
+import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { Filter } from 'mongodb';
-
-type SettingDoc = MongoTimestampedStringSettingRecord<string | ObjectId, Date>;
 
 const SETTINGS_KEY = 'base_import_parameter_link_map';
 
@@ -24,29 +22,35 @@ const toMongoId = (id: string): string | ObjectId => {
 
 const readSettingsValue = async (): Promise<string | null> => {
   const mongo = await getMongoDb();
-  const doc = await mongo.collection<SettingDoc>('settings').findOne({
-    $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }],
-  });
+  const doc = await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | ObjectId>>('settings')
+    .findOne({
+      $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }],
+    });
   return typeof doc?.value === 'string' ? doc.value : null;
 };
 
 const writeSettingsValue = async (value: string): Promise<void> => {
   const mongo = await getMongoDb();
-  await mongo.collection<SettingDoc>('settings').updateOne(
-    { $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }] } as Filter<SettingDoc>,
-    {
-      $set: {
-        key: SETTINGS_KEY,
-        value,
-        updatedAt: new Date(),
+  await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | ObjectId>>('settings')
+    .updateOne(
+      {
+        $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }],
+      } as Filter<MongoTimestampedStringSettingDocument<string | ObjectId>>,
+      {
+        $set: {
+          key: SETTINGS_KEY,
+          value,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: {
+          _id: SETTINGS_KEY,
+          createdAt: new Date(),
+        },
       },
-      $setOnInsert: {
-        _id: SETTINGS_KEY,
-        createdAt: new Date(),
-      },
-    },
-    { upsert: true }
-  );
+      { upsert: true }
+    );
 };
 
 export const getCatalogParameterLinks = async (input: {

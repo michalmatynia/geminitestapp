@@ -24,6 +24,7 @@ import {
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
+import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 
 type SectionId =
   | 'blueprint'
@@ -34,7 +35,7 @@ type SectionId =
   | 'summary';
 
 const buildEnglishSentenceStructureSlides = (
-  translations: ReturnType<typeof useTranslations>
+  translations: KangurIntlTranslate
 ): Record<SectionId, LessonSlide[]> => ({
   blueprint: [
     {

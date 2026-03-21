@@ -1,8 +1,8 @@
 'use client';
 
+import { useLocale } from 'next-intl';
 import React from 'react';
 
-import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
 import { Badge, Button, SelectSimple, Textarea } from '@/features/kangur/shared/ui';
 import {
@@ -29,36 +29,15 @@ import {
 } from './question-authoring-repairs';
 import {
   applyQuestionPresentationPreset,
-  QUESTION_PRESENTATION_PRESETS,
+  getQuestionPresentationPresets,
 } from './question-presentation-presets';
 import { KangurTestQuestionRenderer } from '../ui/components/KangurTestQuestionRenderer';
+import {
+  getQuestionEditorCopy,
+  resolveQuestionEditorLocale,
+} from './question-editor.copy';
 
 import type { QuestionFormData } from '../test-questions';
-
-const POINT_VALUE_OPTIONS = [
-  { value: '1', label: '1 pt' },
-  { value: '2', label: '2 pts' },
-  { value: '3', label: '3 pts' },
-  { value: '4', label: '4 pts' },
-  { value: '5', label: '5 pts' },
-] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
-
-const PRESENTATION_LAYOUT_OPTIONS = [
-  { value: 'classic', label: 'Classic stack' },
-  { value: 'split-illustration-left', label: 'Illustration left' },
-  { value: 'split-illustration-right', label: 'Illustration right' },
-] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
-
-const CHOICE_STYLE_OPTIONS = [
-  { value: 'list', label: 'Choice list' },
-  { value: 'grid', label: 'Choice grid' },
-] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
-
-const QUESTION_WORKFLOW_OPTIONS = [
-  { value: 'draft', label: 'Draft' },
-  { value: 'ready', label: 'Ready to publish' },
-  { value: 'published', label: 'Published' },
-] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 type Props = {
   formData: QuestionFormData;
@@ -99,6 +78,12 @@ function KangurTestQuestionEditorContent({
   localDraftSavedAtLabel?: string | null;
 }): React.JSX.Element {
   const { formData, suiteTitle, updateFormData } = useKangurTestQuestionEditorContext();
+  const locale = resolveQuestionEditorLocale(useLocale());
+  const copy = React.useMemo(() => getQuestionEditorCopy(locale), [locale]);
+  const presentationPresets = React.useMemo(
+    () => getQuestionPresentationPresets(locale),
+    [locale]
+  );
   const [previewMode, setPreviewMode] = React.useState<'learner' | 'correct' | 'incorrect'>(
     'learner'
   );
@@ -120,7 +105,7 @@ function KangurTestQuestionEditorContent({
     presentation: formData.presentation,
     editorial: formData.editorial,
   };
-  const authoringSummary = getQuestionAuthoringSummary(previewQuestion);
+  const authoringSummary = getQuestionAuthoringSummary(previewQuestion, locale);
   const statusBadgeClassName =
     authoringSummary.status === 'needs-fix'
       ? 'border-rose-400/40 text-[10px] text-rose-300'
@@ -129,28 +114,36 @@ function KangurTestQuestionEditorContent({
         : 'border-emerald-400/40 text-[10px] text-emerald-300';
   const statusLabel =
     authoringSummary.status === 'needs-fix'
-      ? 'Needs fixes'
+      ? copy.statusLabels['needs-fix']
       : authoringSummary.status === 'needs-review'
-        ? 'Needs review'
-        : 'Ready';
-  const workflowLabel = getQuestionWorkflowLabel(formData.editorial.workflowStatus);
+        ? copy.statusLabels['needs-review']
+        : copy.statusLabels.ready;
+  const workflowLabel = getQuestionWorkflowLabel(formData.editorial.workflowStatus, locale);
   const workflowBadgeClassName =
     formData.editorial.workflowStatus === 'published'
       ? 'border-emerald-400/40 text-[10px] text-emerald-300'
       : formData.editorial.workflowStatus === 'ready'
         ? 'border-cyan-400/40 text-[10px] text-cyan-300'
         : 'border-slate-400/40 text-[10px] text-slate-300';
-  const dirtyStateLabel = isDirty ? 'Unsaved changes' : 'Saved';
+  const dirtyStateLabel = isDirty ? copy.dirtyStateLabels.unsaved : copy.dirtyStateLabels.saved;
   const draftStateLabel = localDraftSavedAtLabel
-    ? `Autosaved ${localDraftSavedAtLabel}`
-    : 'No local autosave yet';
+    ? locale === 'uk'
+      ? `Автозбережено ${localDraftSavedAtLabel}`
+      : locale === 'pl'
+        ? `Autozapis ${localDraftSavedAtLabel}`
+        : `Autosaved ${localDraftSavedAtLabel}`
+    : locale === 'uk'
+      ? 'Ще немає локального автозбереження'
+      : locale === 'pl'
+        ? 'Brak lokalnego autosave'
+        : 'No local autosave yet';
   const repairActions = React.useMemo(
     () =>
       getQuestionAuthoringRepairActions([
         ...authoringSummary.blockers,
         ...authoringSummary.warnings,
-      ]),
-    [authoringSummary.blockers, authoringSummary.warnings]
+      ], locale),
+    [authoringSummary.blockers, authoringSummary.warnings, locale]
   );
   const previewSelectedLabel =
     previewMode === 'learner'
@@ -162,10 +155,10 @@ function KangurTestQuestionEditorContent({
   const previewShowAnswer = previewMode !== 'learner';
   const previewModeLabel =
     previewMode === 'learner'
-      ? 'Learner view'
+      ? copy.shell.previewModes.learner
       : previewMode === 'correct'
-        ? 'Correct answer review'
-        : 'Wrong answer review';
+        ? copy.shell.previewModes.correctReview
+        : copy.shell.previewModes.incorrectReview;
 
   return (
     <div
@@ -177,20 +170,14 @@ function KangurTestQuestionEditorContent({
           <div className='flex flex-wrap items-start justify-between gap-4'>
             <div className='max-w-2xl space-y-2'>
               <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-200/80'>
-                Question workspace
+                {copy.shell.eyebrow}
               </div>
-              <div className='text-lg font-semibold text-white'>
-                Shape the learner-facing question, keep the review rail visible, and publish from a
-                cleaner workspace.
-              </div>
-              <div className='text-sm leading-6 text-slate-300'>
-                The editor now keeps the suite target, workflow, authoring health, and autosave
-                signal in one control surface so you do not have to scan across the form.
-              </div>
+              <div className='text-lg font-semibold text-white'>{copy.shell.title}</div>
+              <div className='text-sm leading-6 text-slate-300'>{copy.shell.description}</div>
             </div>
             <div className='min-w-[148px] rounded-2xl border border-cyan-400/25 bg-cyan-500/10 p-3'>
               <div className='text-[11px] font-semibold uppercase tracking-wide text-cyan-100/80'>
-                Point value
+                {copy.shell.pointValue}
               </div>
               <div className='mt-2'>
                 <SelectSimple
@@ -200,9 +187,11 @@ function KangurTestQuestionEditorContent({
                     const n = parseInt(v, 10);
                     if (Number.isFinite(n)) updateFormData({ pointValue: n });
                   }}
-                  options={POINT_VALUE_OPTIONS}
+                  options={copy.pointValueOptions}
                   triggerClassName='h-9'
-                 ariaLabel='Select option' title='Select option'/>
+                  ariaLabel={copy.selectOptionLabel}
+                  title={copy.selectOptionLabel}
+                />
               </div>
             </div>
           </div>
@@ -210,27 +199,27 @@ function KangurTestQuestionEditorContent({
           <div className='mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4'>
             <div className='rounded-2xl border border-white/10 bg-white/5 p-3'>
               <div className='text-[11px] font-semibold uppercase tracking-wide text-slate-400'>
-                Suite target
+                {copy.shell.suiteTarget}
               </div>
               <div className='mt-1 text-sm font-medium text-white'>
-                {suiteTitle ?? 'Ad hoc draft'}
+                {suiteTitle ?? copy.shell.adHocDraft}
               </div>
             </div>
             <div className='rounded-2xl border border-white/10 bg-white/5 p-3'>
               <div className='text-[11px] font-semibold uppercase tracking-wide text-slate-400'>
-                Workflow
+                {copy.shell.workflow}
               </div>
               <div className='mt-1 text-sm font-medium text-white'>{workflowLabel}</div>
             </div>
             <div className='rounded-2xl border border-white/10 bg-white/5 p-3'>
               <div className='text-[11px] font-semibold uppercase tracking-wide text-slate-400'>
-                Authoring status
+                {copy.shell.authoringStatus}
               </div>
               <div className='mt-1 text-sm font-medium text-white'>{statusLabel}</div>
             </div>
             <div className='rounded-2xl border border-white/10 bg-white/5 p-3'>
               <div className='text-[11px] font-semibold uppercase tracking-wide text-slate-400'>
-                Local draft
+                {copy.shell.localDraft}
               </div>
               <div className='mt-1 text-sm font-medium text-white'>{draftStateLabel}</div>
             </div>
@@ -251,7 +240,7 @@ function KangurTestQuestionEditorContent({
                 variant='outline'
                 className='border-violet-400/40 text-[10px] text-violet-300'
               >
-                Has illustration
+                {copy.shell.hasIllustration}
               </Badge>
             ) : null}
             {formData.editorial.reviewStatus !== 'ready' ? (
@@ -263,12 +252,14 @@ function KangurTestQuestionEditorContent({
                     : 'border-amber-400/40 text-[10px] text-amber-300'
                 }
               >
-                {formData.editorial.reviewStatus === 'needs-fix' ? 'Needs fix' : 'Needs review'}
+                {formData.editorial.reviewStatus === 'needs-fix'
+                  ? copy.reviewStatusBadges['needs-fix']
+                  : copy.reviewStatusBadges['needs-review']}
               </Badge>
             ) : null}
             {formData.presentation.choiceStyle === 'grid' ? (
               <Badge variant='outline' className='border-sky-400/40 text-[10px] text-sky-300'>
-                Choice grid
+                {copy.choiceStyleOptions[1]?.label}
               </Badge>
             ) : null}
           </div>
@@ -280,9 +271,9 @@ function KangurTestQuestionEditorContent({
           <div className='flex flex-wrap items-start justify-between gap-3'>
             <div className='space-y-1'>
               <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-                Question review
+                {copy.shell.questionReview}
               </div>
-              <div className='text-sm font-semibold text-white'>Next action</div>
+              <div className='text-sm font-semibold text-white'>{copy.shell.nextAction}</div>
               <div className='text-sm text-muted-foreground'>{authoringSummary.nextAction}</div>
             </div>
             <Badge variant='outline' className={statusBadgeClassName}>
@@ -292,7 +283,7 @@ function KangurTestQuestionEditorContent({
           <div className='grid gap-3 md:grid-cols-2'>
             <div className='rounded-2xl border border-border/40 bg-background/30 p-4'>
               <div className='mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-                Required before save
+                {copy.shell.requiredBeforeSave}
               </div>
               {authoringSummary.blockers.length > 0 ? (
                 <ul className='space-y-1 text-sm text-rose-200'>
@@ -302,13 +293,13 @@ function KangurTestQuestionEditorContent({
                 </ul>
               ) : (
                 <div className='text-sm text-emerald-200'>
-                  No structural blockers. This draft can be saved.
+                  {copy.shell.noStructuralBlockers}
                 </div>
               )}
             </div>
             <div className='rounded-2xl border border-border/40 bg-background/30 p-4'>
               <div className='mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-                Review before publish
+                {copy.shell.reviewBeforePublish}
               </div>
               {authoringSummary.warnings.length > 0 ? (
                 <ul className='space-y-1 text-sm text-amber-100'>
@@ -318,7 +309,7 @@ function KangurTestQuestionEditorContent({
                 </ul>
               ) : (
                 <div className='text-sm text-emerald-200'>
-                  No review warnings. The question is editorially clean.
+                  {copy.shell.noReviewWarnings}
                 </div>
               )}
             </div>
@@ -331,7 +322,7 @@ function KangurTestQuestionEditorContent({
           {repairActions.length > 0 ? (
             <div className='rounded-2xl border border-border/40 bg-background/30 p-4'>
               <div className='mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-                Quick repairs
+                {copy.shell.quickRepairs}
               </div>
               <div className='flex flex-wrap gap-2'>
                 {repairActions.map((repair) => (
@@ -342,7 +333,7 @@ function KangurTestQuestionEditorContent({
                     variant='outline'
                     className='h-8 px-3 text-[11px]'
                     onClick={(): void =>
-                      updateFormData(applyQuestionAuthoringRepair(formData, repair.id))
+                      updateFormData(applyQuestionAuthoringRepair(formData, repair.id, locale))
                     }
                   >
                     {repair.label}
@@ -356,14 +347,14 @@ function KangurTestQuestionEditorContent({
         <div className='grid gap-3 rounded-3xl border border-border/50 bg-card/25 p-5'>
           <div className='space-y-1'>
             <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-              Presentation presets
+              {copy.shell.presentationPresets}
             </div>
             <div className='text-sm text-muted-foreground'>
-              Start from a learner-facing question layout, then adjust the details below.
+              {copy.shell.presentationPresetsHint}
             </div>
           </div>
           <div className='grid gap-2 md:grid-cols-2'>
-            {QUESTION_PRESENTATION_PRESETS.map((preset) => (
+            {presentationPresets.map((preset) => (
               <button
                 key={preset.id}
                 type='button'
@@ -385,15 +376,12 @@ function KangurTestQuestionEditorContent({
         <div className='grid gap-3 rounded-3xl border border-border/50 bg-card/25 p-5'>
           <div className='space-y-1'>
             <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-              Publishing state
+              {copy.shell.publishingState}
             </div>
-            <div className='text-sm text-muted-foreground'>
-              Draft questions stay in authoring. Ready questions are cleared for publish. Published
-              marks the question as live-approved in the bank.
-            </div>
+            <div className='text-sm text-muted-foreground'>{copy.shell.publishingStateHint}</div>
           </div>
           <div className='flex flex-wrap gap-2'>
-            {QUESTION_WORKFLOW_OPTIONS.map((option) => {
+            {copy.workflowOptions.map((option) => {
               const isActive = formData.editorial.workflowStatus === option.value;
               return (
                 <button
@@ -410,7 +398,7 @@ function KangurTestQuestionEditorContent({
                     updateFormData({
                       editorial: {
                         ...formData.editorial,
-                        workflowStatus: option.value,
+                        workflowStatus: option.value as 'published' | 'ready' | 'draft',
                       },
                     })
                   }
@@ -422,11 +410,13 @@ function KangurTestQuestionEditorContent({
           </div>
           {formData.editorial.publishedAt ? (
             <div className='text-xs text-muted-foreground'>
-              Last published: {new Date(formData.editorial.publishedAt).toLocaleString('pl-PL')}
+              {copy.shell.lastPublished(
+                new Date(formData.editorial.publishedAt).toLocaleString(copy.intlLocale)
+              )}
             </div>
           ) : (
             <div className='text-xs text-muted-foreground'>
-              This question has not been published yet.
+              {copy.shell.notPublishedYet}
             </div>
           )}
         </div>
@@ -434,7 +424,7 @@ function KangurTestQuestionEditorContent({
         <div className='grid gap-3 rounded-2xl border border-border/50 bg-card/20 p-4 md:grid-cols-2'>
           <div className='space-y-1'>
             <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-              Question layout
+              {copy.shell.questionLayout}
             </div>
             <SelectSimple
               size='sm'
@@ -454,13 +444,15 @@ function KangurTestQuestionEditorContent({
                   },
                 });
               }}
-              options={PRESENTATION_LAYOUT_OPTIONS}
+              options={copy.presentationLayoutOptions}
               triggerClassName='h-9'
-             ariaLabel='Select option' title='Select option'/>
+              ariaLabel={copy.selectOptionLabel}
+              title={copy.selectOptionLabel}
+            />
           </div>
           <div className='space-y-1'>
             <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-              Choice style
+              {copy.shell.choiceStyle}
             </div>
             <SelectSimple
               size='sm'
@@ -476,14 +468,16 @@ function KangurTestQuestionEditorContent({
                   },
                 });
               }}
-              options={CHOICE_STYLE_OPTIONS}
+              options={copy.choiceStyleOptions}
               triggerClassName='h-9'
-             ariaLabel='Select option' title='Select option'/>
+              ariaLabel={copy.selectOptionLabel}
+              title={copy.selectOptionLabel}
+            />
           </div>
           {formData.editorial.auditFlags.length > 0 ? (
             <div className='space-y-2 md:col-span-2'>
               <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-                Legacy review notes
+                {copy.shell.legacyReviewNotes}
               </div>
               <div className='flex flex-wrap gap-1.5'>
                 {formData.editorial.auditFlags.map((flag) => (
@@ -503,18 +497,17 @@ function KangurTestQuestionEditorContent({
         {/* Prompt */}
         <div className='space-y-1'>
           <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-            Question prompt
+            {copy.shell.questionPrompt}
           </div>
           <Textarea
             value={formData.prompt}
             onChange={(e): void => updateFormData({ prompt: e.target.value })}
-            placeholder='Enter the question text. You can use $$formula$$ markers for math expressions.'
+            placeholder={copy.shell.questionPromptPlaceholder}
             className='min-h-[100px]'
-           aria-label='Enter the question text. You can use $$formula$$ markers for math expressions.' title='Enter the question text. You can use $$formula$$ markers for math expressions.'/>
-          <div className='text-xs text-muted-foreground'>
-            This prompt is also mirrored into the structured question-content engine so richer
-            layouts can evolve without migrating the data again.
-          </div>
+            aria-label={copy.shell.questionPromptPlaceholder}
+            title={copy.shell.questionPromptPlaceholder}
+          />
+          <div className='text-xs text-muted-foreground'>{copy.shell.questionPromptHelper}</div>
         </div>
 
         {/* Choices */}
@@ -523,7 +516,7 @@ function KangurTestQuestionEditorContent({
         {/* Illustration */}
         <div className='space-y-2'>
           <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-            Illustration
+            {copy.shell.illustration}
           </div>
           <QuestionIllustrationEditor />
         </div>
@@ -531,18 +524,17 @@ function KangurTestQuestionEditorContent({
         {/* Explanation */}
         <div className='space-y-1'>
           <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-            Explanation (shown after answer)
+            {copy.shell.explanation}
           </div>
           <Textarea
             value={formData.explanation}
             onChange={(e): void => updateFormData({ explanation: e.target.value })}
-            placeholder='Step-by-step explanation of why the correct answer is correct.'
+            placeholder={copy.shell.explanationPlaceholder}
             className='min-h-[80px]'
-           aria-label='Step-by-step explanation of why the correct answer is correct.' title='Step-by-step explanation of why the correct answer is correct.'/>
-          <div className='text-xs text-muted-foreground'>
-            Add the learner-facing explanation here. Imported legacy questions keep any review
-            flags above until they are repaired.
-          </div>
+            aria-label={copy.shell.explanationPlaceholder}
+            title={copy.shell.explanationPlaceholder}
+          />
+          <div className='text-xs text-muted-foreground'>{copy.shell.explanationHelper}</div>
         </div>
       </div>
 
@@ -550,7 +542,7 @@ function KangurTestQuestionEditorContent({
       <div className='sticky top-4 hidden h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/20 xl:flex'>
         <div className='flex items-center justify-between border-b border-border/60 bg-card/40 px-4 py-3 backdrop-blur-md'>
           <div>
-            <div className='text-sm font-semibold text-white'>Preview</div>
+            <div className='text-sm font-semibold text-white'>{copy.shell.preview}</div>
             <div className='text-xs text-muted-foreground'>{previewModeLabel}</div>
           </div>
           <div className='flex flex-wrap items-center justify-end gap-2'>
@@ -558,10 +550,10 @@ function KangurTestQuestionEditorContent({
               {(['learner', 'correct', 'incorrect'] as const).map((mode) => {
                 const label =
                   mode === 'learner'
-                    ? 'Learner view'
+                    ? copy.shell.previewModes.learner
                     : mode === 'correct'
-                      ? 'Correct answer'
-                      : 'Wrong answer';
+                      ? copy.shell.previewModes.correct
+                      : copy.shell.previewModes.incorrect;
                 return (
                   <button
                     key={mode}
@@ -592,9 +584,15 @@ function KangurTestQuestionEditorContent({
                   }
                   onClick={(): void => setPreviewFrame(frame)}
                   aria-pressed={previewFrame === frame}
-                  aria-label={frame === 'desktop' ? 'Desktop' : 'Compact'}
+                  aria-label={
+                    frame === 'desktop'
+                      ? copy.shell.previewFrames.desktop
+                      : copy.shell.previewFrames.compact
+                  }
                 >
-                  {frame === 'desktop' ? 'Desktop' : 'Compact'}
+                  {frame === 'desktop'
+                    ? copy.shell.previewFrames.desktop
+                    : copy.shell.previewFrames.compact}
                 </button>
               ))}
             </div>

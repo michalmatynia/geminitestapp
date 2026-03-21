@@ -8,7 +8,7 @@ import {
   getClientCsrfToken,
   isSameOriginUrl,
 } from '@/shared/lib/security/csrf-client';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 const isInternalNextRouteRequest = (input: RequestInfo | URL, init?: RequestInit): boolean => {
@@ -31,7 +31,11 @@ const isInternalNextRouteRequest = (input: RequestInfo | URL, init?: RequestInit
           : new URL(input.url, origin);
     return url.searchParams.has('_rsc');
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'CsrfProvider',
+      action: 'isInternalNextRouteRequest',
+      level: 'warn',
+    });
     return false;
   }
 };

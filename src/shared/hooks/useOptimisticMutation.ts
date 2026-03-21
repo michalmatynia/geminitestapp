@@ -4,7 +4,7 @@ import { type UseMutationResult } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { createOptimisticMutationV2 } from '@/shared/lib/query-factories-v2';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 interface OptimisticUpdateConfig<TData, TVariables> {
@@ -66,7 +66,12 @@ export function useBatchMutation<TData, TError, TVariables>(
           count++;
           options?.onProgress?.(count, items.length);
         } catch (error) {
-          logClientError(error);
+          logClientCatch(error, {
+            source: 'useBatchMutation',
+            action: 'executeBatchItem',
+            itemIndex: count + errors.length,
+            totalItems: items.length,
+          });
           errors.push(error as TError);
         }
       }

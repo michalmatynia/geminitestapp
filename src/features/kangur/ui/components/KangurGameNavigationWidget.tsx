@@ -7,7 +7,11 @@ import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginMod
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 
-export function KangurGameNavigationWidget(): React.JSX.Element {
+export function KangurGameNavigationWidget({
+  visible = true,
+}: {
+  visible?: boolean;
+} = {}): React.JSX.Element {
   const {
     basePath,
     handleHome,
@@ -44,5 +48,5 @@ export function KangurGameNavigationWidget(): React.JSX.Element {
     ]
   );
 
-  return <KangurTopNavigationController navigation={navigation} />;
+  return <KangurTopNavigationController navigation={navigation} visible={visible} />;
 }

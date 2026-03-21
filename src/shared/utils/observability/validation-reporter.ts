@@ -1,5 +1,5 @@
 import type { ErrorContext } from '@/shared/contracts/observability';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 /**
@@ -36,7 +36,11 @@ export async function reportValidationError(
       keepalive: true,
     });
   } catch (err) {
-    logClientError(err);
+    logClientCatch(err, {
+      source: 'validation-reporter',
+      action: 'sendClientValidationReport',
+      service: context.service || 'validation',
+    });
     const { logger } = await import('@/shared/utils/logger');
     logger.error(
       '[ValidationReporter] Failed to report client validation error',

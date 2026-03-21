@@ -1,15 +1,23 @@
 /**
  * @vitest-environment jsdom
  */
-
-
-"use client";
+'use client';
 
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+const { localeState } = vi.hoisted(() => ({
+  localeState: {
+    value: 'en',
+  },
+}));
+
 import { KangurQuestionsManagerRuntimeProvider } from '@/features/kangur/admin/context/KangurQuestionsManagerRuntimeContext';
+vi.mock('next-intl', () => ({
+  useLocale: () => localeState.value,
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurTestQuestionRenderer', () => ({
   KangurTestQuestionRenderer: ({
     selectedLabel,
@@ -94,6 +102,7 @@ const runtimeSuite: KangurTestSuite = {
 
 describe('KangurTestQuestionEditor', () => {
   it('auto-relables choices through the editor context', () => {
+    localeState.value = 'en';
     const handleChange = vi.fn();
 
     render(
@@ -118,6 +127,7 @@ describe('KangurTestQuestionEditor', () => {
   });
 
   it('syncs panel labels from choice labels through the illustration runtime context', () => {
+    localeState.value = 'en';
     render(<StatefulQuestionEditorHarness initialValue={buildFormData()} suiteTitle='Sample suite' />);
 
     fireEvent.change(screen.getAllByLabelText('Choice label')[0], {
@@ -130,6 +140,7 @@ describe('KangurTestQuestionEditor', () => {
   });
 
   it('shows legacy review metadata when present', () => {
+    localeState.value = 'en';
     render(
       <StatefulQuestionEditorHarness
         initialValue={buildFormData({
@@ -158,6 +169,7 @@ describe('KangurTestQuestionEditor', () => {
   });
 
   it('shows structural blockers when the draft is not save-ready', () => {
+    localeState.value = 'en';
     render(
       <StatefulQuestionEditorHarness
         initialValue={buildFormData({
@@ -183,6 +195,7 @@ describe('KangurTestQuestionEditor', () => {
   });
 
   it('falls back to the questions manager runtime suite title when no override is provided', () => {
+    localeState.value = 'en';
     render(
       <KangurQuestionsManagerRuntimeProvider suite={runtimeSuite} onClose={vi.fn()}>
         <StatefulQuestionEditorHarness initialValue={buildFormData()} suiteTitle={undefined} />
@@ -193,6 +206,7 @@ describe('KangurTestQuestionEditor', () => {
   });
 
   it('shows published workflow state when the question is already published', () => {
+    localeState.value = 'en';
     render(
       <StatefulQuestionEditorHarness
         initialValue={buildFormData({
@@ -212,6 +226,7 @@ describe('KangurTestQuestionEditor', () => {
   });
 
   it('switches the preview into correct-answer review mode', () => {
+    localeState.value = 'en';
     render(<StatefulQuestionEditorHarness initialValue={buildFormData()} />);
 
     fireEvent.click(screen.getByText('Correct answer', { selector: 'button' }));
@@ -223,6 +238,7 @@ describe('KangurTestQuestionEditor', () => {
   });
 
   it('switches the preview into wrong-answer review mode', () => {
+    localeState.value = 'en';
     render(<StatefulQuestionEditorHarness initialValue={buildFormData()} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Wrong answer' }));
@@ -234,6 +250,7 @@ describe('KangurTestQuestionEditor', () => {
   });
 
   it('supports compact preview framing', () => {
+    localeState.value = 'en';
     render(<StatefulQuestionEditorHarness initialValue={buildFormData()} />);
 
     const frame = screen.getByTestId('question-preview-frame');
@@ -246,6 +263,7 @@ describe('KangurTestQuestionEditor', () => {
   });
 
   it('offers a quick repair to add an explanation starter', () => {
+    localeState.value = 'en';
     render(<StatefulQuestionEditorHarness initialValue={buildFormData({ explanation: '' })} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Add explanation starter' }));
@@ -256,6 +274,7 @@ describe('KangurTestQuestionEditor', () => {
   });
 
   it('offers a quick repair to switch split layouts back to classic without an illustration', () => {
+    localeState.value = 'en';
     render(
       <StatefulQuestionEditorHarness
         initialValue={buildFormData({
@@ -277,6 +296,7 @@ describe('KangurTestQuestionEditor', () => {
   });
 
   it('offers a quick repair to add starter notes for SVG-backed choices', () => {
+    localeState.value = 'en';
     render(
       <StatefulQuestionEditorHarness
         initialValue={buildFormData({
@@ -300,6 +320,7 @@ describe('KangurTestQuestionEditor', () => {
   });
 
   it('applies the grid answer-card preset', () => {
+    localeState.value = 'en';
     render(<StatefulQuestionEditorHarness initialValue={buildFormData()} />);
 
     fireEvent.click(screen.getByRole('button', { name: /^Grid answer cards/i }));
@@ -308,6 +329,7 @@ describe('KangurTestQuestionEditor', () => {
   });
 
   it('applies the split illustration preset and seeds illustration panels', () => {
+    localeState.value = 'en';
     render(
       <StatefulQuestionEditorHarness
         initialValue={buildFormData({
@@ -326,5 +348,35 @@ describe('KangurTestQuestionEditor', () => {
     const panelLabelInputs = screen.getAllByLabelText('Panel label');
     expect(panelLabelInputs[0]?.value).toBe('A');
     expect(panelLabelInputs[1]?.value).toBe('B');
+  });
+
+  it('renders the editor shell in Ukrainian', () => {
+    localeState.value = 'uk-UA';
+
+    render(
+      <StatefulQuestionEditorHarness
+        initialValue={buildFormData({
+          explanation: '',
+          editorial: {
+            source: 'legacy-import',
+            reviewStatus: 'needs-review',
+            workflowStatus: 'published',
+            auditFlags: ['legacy_choice_descriptions'],
+            publishedAt: '2026-03-09T10:00:00.000Z',
+          },
+        })}
+      />
+    );
+
+    expect(screen.getByText('Робоча зона запитання')).toBeInTheDocument();
+    expect(screen.getByText('Перевірка запитання')).toBeInTheDocument();
+    expect(screen.getByText('Стан публікації')).toBeInTheDocument();
+    expect(screen.getByText('Остання публікація:', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText(/Додайте пояснення/)).toBeInTheDocument();
+    expect(screen.getAllByText('Сітка варіантів').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Правильна відповідь' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Компактний' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Додати варіант' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Синхронізувати позначки з варіантами' })).toBeInTheDocument();
   });
 });

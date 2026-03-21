@@ -28,6 +28,7 @@ import {
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
+import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 
 type SectionId =
   | 'subject_pronouns'
@@ -60,7 +61,7 @@ const POSSESSIVE_PRONOUNS = [
 ];
 
 const buildEnglishPartsOfSpeechSlides = (
-  translations: ReturnType<typeof useTranslations>
+  translations: KangurIntlTranslate
 ): Record<SlideSectionId, LessonSlide[]> => {
   const subjectPronouns = [
     {

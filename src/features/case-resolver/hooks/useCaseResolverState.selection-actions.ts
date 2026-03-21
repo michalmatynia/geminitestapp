@@ -7,23 +7,15 @@ import type {
 } from '@/shared/contracts/case-resolver';
 
 import { logCaseResolverWorkspaceEvent } from '../workspace-persistence';
-
-type UpdateWorkspaceOptions = {
-  persistToast?: string;
-  persistNow?: boolean;
-  mutationId?: string;
-  source?: string;
-};
-
-type UpdateWorkspaceFn = (
-  updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
-  options?: UpdateWorkspaceOptions
-) => void;
+import type {
+  CaseResolverWorkspaceUpdateOptions,
+  UseCaseResolverWorkspaceMutationsValue,
+} from './useCaseResolverState.workspace-mutations';
 
 type UseCaseResolverStateSelectionActionsInput = {
   workspace: CaseResolverWorkspace;
   selectedAssetId: string | null;
-  updateWorkspace: UpdateWorkspaceFn;
+  updateWorkspace: UseCaseResolverWorkspaceMutationsValue['updateWorkspace'];
   treeSaveToast: string;
 };
 
@@ -32,7 +24,7 @@ type UseCaseResolverStateSelectionActionsResult = {
   selectedAsset: CaseResolverAssetFile | null;
   handleUpdateSelectedAsset: (
     patch: Partial<Pick<CaseResolverAssetFile, 'textContent' | 'description' | 'metadata'>>,
-    options?: UpdateWorkspaceOptions
+    options?: CaseResolverWorkspaceUpdateOptions
   ) => void;
   handleUpdateActiveFileParties: (
     patch: Partial<Pick<CaseResolverFile, 'addresser' | 'addressee' | 'referenceCaseIds'>>
@@ -66,10 +58,10 @@ export const useCaseResolverStateSelectionActions = ({
   const handleUpdateSelectedAsset = useCallback(
     (
       patch: Partial<Pick<CaseResolverAssetFile, 'textContent' | 'description' | 'metadata'>>,
-      options?: UpdateWorkspaceOptions
+      options?: CaseResolverWorkspaceUpdateOptions
     ): void => {
       if (!selectedAssetId) return;
-      const resolvedOptions: UpdateWorkspaceOptions = options ?? {
+      const resolvedOptions: CaseResolverWorkspaceUpdateOptions = options ?? {
         persistToast: treeSaveToast,
       };
       updateWorkspace(

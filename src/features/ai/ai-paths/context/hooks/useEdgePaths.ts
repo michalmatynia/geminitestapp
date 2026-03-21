@@ -15,12 +15,11 @@
 
 import { useMemo, useRef } from 'react';
 
+import type { Point2d } from '@/shared/contracts/geometry';
 import { NODE_WIDTH, getPortOffsetY } from '@/shared/lib/ai-paths';
 import type { AiNode, Edge } from '@/shared/lib/ai-paths';
 
 import { useGraphState } from '../GraphContext';
-
-type Point = { x: number; y: number };
 
 export type EdgeRoutingMode = 'bezier' | 'orthogonal';
 
@@ -44,7 +43,7 @@ function getPortPosition(
   node: AiNode,
   portName: string | undefined,
   side: 'input' | 'output'
-): { x: number; y: number } {
+): Point2d {
   const ports = side === 'input' ? node.inputs : node.outputs;
   const index = portName ? ports.indexOf(portName) : -1;
   const safeIndex = index >= 0 ? index : Math.max(0, Math.floor(ports.length / 2));
@@ -53,7 +52,7 @@ function getPortPosition(
   return { x, y };
 }
 
-const midpoint = (a: Point, b: Point): Point => ({
+const midpoint = (a: Point2d, b: Point2d): Point2d => ({
   x: (a.x + b.x) / 2,
   y: (a.y + b.y) / 2,
 });
@@ -62,9 +61,9 @@ const toAngleDegrees = (dx: number, dy: number): number => (Math.atan2(dy, dx) *
 const ORTHOGONAL_CORNER_RADIUS = 18;
 const SEGMENT_EPSILON = 0.001;
 
-const dedupeAdjacentPoints = (points: Point[]): Point[] => {
-  const deduped: Point[] = [];
-  points.forEach((point: Point) => {
+const dedupeAdjacentPoints = (points: Point2d[]): Point2d[] => {
+  const deduped: Point2d[] = [];
+  points.forEach((point: Point2d) => {
     const previous = deduped[deduped.length - 1];
     if (
       previous &&
@@ -78,7 +77,7 @@ const dedupeAdjacentPoints = (points: Point[]): Point[] => {
   return deduped;
 };
 
-const buildOrthogonalPolyline = (from: Point, to: Point): Point[] => {
+const buildOrthogonalPolyline = (from: Point2d, to: Point2d): Point2d[] => {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const absDx = Math.abs(dx);
@@ -95,21 +94,21 @@ const buildOrthogonalPolyline = (from: Point, to: Point): Point[] => {
   return dedupeAdjacentPoints([from, { x: bendX, y: from.y }, { x: bendX, y: to.y }, to]);
 };
 
-const buildRoundedOrthogonalPath = (points: Point[], cornerRadius: number): string => {
+const buildRoundedOrthogonalPath = (points: Point2d[], cornerRadius: number): string => {
   if (points.length === 0) return '';
   if (points.length === 1) {
-    const only = points[0] as Point;
+    const only = points[0] as Point2d;
     return `M ${only.x} ${only.y}`;
   }
 
   const segments: string[] = [];
-  const first = points[0] as Point;
+  const first = points[0] as Point2d;
   segments.push(`M ${first.x} ${first.y}`);
 
   for (let index = 1; index < points.length - 1; index += 1) {
-    const prev = points[index - 1] as Point;
-    const curr = points[index] as Point;
-    const next = points[index + 1] as Point;
+    const prev = points[index - 1] as Point2d;
+    const curr = points[index] as Point2d;
+    const next = points[index + 1] as Point2d;
     const dxIn = curr.x - prev.x;
     const dyIn = curr.y - prev.y;
     const dxOut = next.x - curr.x;
@@ -144,17 +143,17 @@ const buildRoundedOrthogonalPath = (points: Point[], cornerRadius: number): stri
     segments.push(`Q ${curr.x} ${curr.y} ${exitX} ${exitY}`);
   }
 
-  const last = points[points.length - 1] as Point;
+  const last = points[points.length - 1] as Point2d;
   segments.push(`L ${last.x} ${last.y}`);
   return segments.join(' ');
 };
 
-const computePolylineArrow = (points: Point[]): { x: number; y: number; angle: number } => {
+const computePolylineArrow = (points: Point2d[]): { x: number; y: number; angle: number } => {
   if (points.length < 2) return { x: 0, y: 0, angle: 0 };
   const segments = points
     .slice(0, -1)
-    .map((point: Point, index: number) => {
-      const next = points[index + 1] as Point;
+    .map((point: Point2d, index: number) => {
+      const next = points[index + 1] as Point2d;
       const dx = next.x - point.x;
       const dy = next.y - point.y;
       const length = Math.hypot(dx, dy);
@@ -168,7 +167,7 @@ const computePolylineArrow = (points: Point[]): { x: number; y: number; angle: n
     })
     .filter((segment): boolean => segment.length > 0.001);
   if (segments.length === 0) {
-    const from = points[0] as Point;
+    const from = points[0] as Point2d;
     return { x: from.x, y: from.y, angle: 0 };
   }
   const totalLength = segments.reduce((sum: number, segment): number => sum + segment.length, 0);
@@ -251,8 +250,8 @@ function computeEdgePaths(
       if (routingMode === 'orthogonal') {
         const points = buildOrthogonalPolyline(p0, p3);
         path = buildRoundedOrthogonalPath(points, ORTHOGONAL_CORNER_RADIUS);
-        const xs = points.map((point: Point): number => point.x);
-        const ys = points.map((point: Point): number => point.y);
+        const xs = points.map((point: Point2d): number => point.x);
+        const ys = points.map((point: Point2d): number => point.y);
         bounds = {
           minX: Math.min(...xs),
           minY: Math.min(...ys),

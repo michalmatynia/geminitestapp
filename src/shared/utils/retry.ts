@@ -6,6 +6,8 @@ import {
   wrapError,
 } from '@/shared/errors/app-error';
 import { logger } from '@/shared/utils/logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 
 // Local type definition to avoid importing from features layer
 type SystemLogLevel = 'info' | 'warn' | 'error';
@@ -24,7 +26,12 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
     const mod = await import('@/shared/lib/observability/system-logger');
     await mod.logSystemEvent(params);
   } catch (error) {
-    logClientError(error);
+    reportObservabilityInternalError(error, {
+      source: 'shared.retry',
+      action: 'logSystemEventFallback',
+      level: params.level,
+      eventSource: params.source,
+    });
     logger.error('Failed to log system event via observability feature', error, {
       service: 'shared.retry',
     });
@@ -120,8 +127,6 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, operation: strin
 }
 
 import { delay } from './time-utils';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
 
 /**
  * Executes an async operation with automatic retries on failure.
@@ -169,12 +174,19 @@ export async function withRetry<T>(
 
       return result;
     } catch (error) {
-      logClientError(error);
       lastError = error;
 
       // Check if we should retry
       const shouldRetry =
         attempt < maxAttempts && (isRetryable?.(error) ?? isRetryableError(error) ?? true);
+
+      logClientCatch(error, {
+        source: source ?? 'shared.retry',
+        action: 'withRetryAttempt',
+        attempt,
+        maxAttempts,
+        willRetry: shouldRetry,
+      });
 
       if (!shouldRetry) {
         throw error;
@@ -220,12 +232,16 @@ export async function withRetryAll<T>(
   options?: RetryOptions
 ): Promise<Array<{ success: true; result: T } | { success: false; error: unknown }>> {
   return Promise.all(
-    operations.map(async (op: () => Promise<T>) => {
+    operations.map(async (op: () => Promise<T>, index: number) => {
       try {
         const result = await withRetry(op, options);
         return { success: true as const, result };
       } catch (error) {
-        logClientError(error);
+        logClientCatch(error, {
+          source: options?.source ?? 'shared.retry',
+          action: 'withRetryAllOperation',
+          operationIndex: index,
+        });
         return { success: false as const, error };
       }
     })
@@ -307,10 +323,16 @@ export async function withCircuitBreaker<T>(
     state.failures = 0;
     return result;
   } catch (error) {
-    logClientError(error);
     // Record failure
     state.failures++;
     state.lastFailure = Date.now();
+    logClientCatch(error, {
+      source: 'circuit-breaker',
+      action: 'operationFailure',
+      circuitId,
+      failures: state.failures,
+      failureThreshold,
+    });
 
     // Check if threshold reached
     if (state.failures >= failureThreshold) {

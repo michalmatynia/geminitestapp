@@ -4,6 +4,7 @@ import {
   AI_PATH_RUN_ENQUEUED_EVENT_NAME,
   AI_PATH_RUN_QUEUE_CHANNEL,
   parseAiPathRunEnqueuedEventPayload,
+  type AiPathRunListResult,
   type AiPathRunRecord,
 } from '@/shared/contracts/ai-paths';
 import type { StudioSlotsResponse } from '@/shared/contracts/image-studio';
@@ -15,7 +16,7 @@ import {
 import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 
 import { QUERY_KEYS } from './query-keys';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 const AI_PATHS_NODE_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
@@ -46,7 +47,12 @@ const safeLocalStorageGetItem = (key: string): string | null => {
   try {
     return window.localStorage.getItem(key);
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'query-invalidation',
+      action: 'safeLocalStorageGetItem',
+      storageKey: key,
+      level: 'warn',
+    });
     return null;
   }
 };
@@ -57,7 +63,12 @@ const safeLocalStorageSetItem = (key: string, value: string): boolean => {
     window.localStorage.setItem(key, value);
     return true;
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'query-invalidation',
+      action: 'safeLocalStorageSetItem',
+      storageKey: key,
+      level: 'warn',
+    });
     return false;
   }
 };
@@ -67,8 +78,13 @@ const safeLocalStorageRemoveItem = (key: string): void => {
   try {
     window.localStorage.removeItem(key);
   } catch (error) {
-    logClientError(error);
-  
+    logClientCatch(error, {
+      source: 'query-invalidation',
+      action: 'safeLocalStorageRemoveItem',
+      storageKey: key,
+      level: 'warn',
+    });
+
     // Ignore storage cleanup failures.
   }
 };
@@ -163,7 +179,12 @@ export const getRecentAiPathRunEnqueue = (): {
     try {
       parsed = JSON.parse(raw);
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'query-invalidation',
+        action: 'parseRecentAiPathRunEnqueue',
+        storageKey: RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY,
+        level: 'warn',
+      });
       safeLocalStorageRemoveItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
       parsed = null;
     }
@@ -630,11 +651,6 @@ export const patchImageStudioSlotsCache = (
 
 // --- AI Paths ---
 
-type AiPathQueueCachePayload = {
-  runs: AiPathRunRecord[];
-  total: number;
-};
-
 const parsePositiveInt = (value: unknown): number | null => {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return value > 0 ? Math.floor(value) : null;
@@ -669,7 +685,7 @@ const shouldIncludeInQueueCache = (
   return aiPathRunMatchesFilters(run, typed);
 };
 
-const isQueuePayload = (value: unknown): value is AiPathQueueCachePayload => {
+const isQueuePayload = (value: unknown): value is AiPathRunListResult => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const record = value as Record<string, unknown>;
   return Array.isArray(record['runs']) && typeof record['total'] === 'number';
@@ -714,7 +730,7 @@ export const optimisticallyInsertAiPathRunInQueueCache = (
   rememberOptimisticAiPathRun(runRecord);
 
   const queueKeyPrefix = [...QUERY_KEYS.ai.aiPaths.lists(), 'job-queue'] as const;
-  const entries = queryClient.getQueriesData<AiPathQueueCachePayload>({
+  const entries = queryClient.getQueriesData<AiPathRunListResult>({
     queryKey: queueKeyPrefix,
   });
 
@@ -739,7 +755,7 @@ export const optimisticallyInsertAiPathRunInQueueCache = (
       nextRuns = pageSize > 0 ? expanded.slice(0, pageSize) : expanded;
     }
 
-    queryClient.setQueryData<AiPathQueueCachePayload>(queryKey, {
+    queryClient.setQueryData<AiPathRunListResult>(queryKey, {
       ...payload,
       runs: nextRuns,
       total: nextTotal,
@@ -796,8 +812,13 @@ export const notifyAiPathRunEnqueued = (
     channel.postMessage(payload);
     channel.close();
   } catch (error) {
-    logClientError(error);
-  
+    logClientCatch(error, {
+      source: 'query-invalidation',
+      action: 'broadcastRecentAiPathRunEnqueue',
+      channel: AI_PATH_RUN_QUEUE_CHANNEL,
+      level: 'warn',
+    });
+
     // best-effort notification channel
   }
 };

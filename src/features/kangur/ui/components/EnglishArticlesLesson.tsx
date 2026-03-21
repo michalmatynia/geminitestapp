@@ -26,11 +26,12 @@ import {
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
+import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 
 type SectionId = 'intro' | 'a_an' | 'the' | 'zero' | 'practice' | 'summary';
 
 const buildEnglishArticlesSlides = (
-  translations: ReturnType<typeof useTranslations>
+  translations: KangurIntlTranslate
 ): Record<SectionId, LessonSlide[]> => ({
   intro: [
     {

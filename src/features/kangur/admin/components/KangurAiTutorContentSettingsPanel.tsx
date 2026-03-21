@@ -70,8 +70,6 @@ const AI_TUTOR_CONTENT_SECTION_CARD_KEYS = [
 const stringifyAiTutorContent = (content: KangurAiTutorContent): string =>
   `${JSON.stringify(content, null, 2)}\n`;
 
-type SectionTranslationStatus = KangurAiTutorLocaleTranslationStatusDto;
-
 type SectionTranslationFilterStatus = Extract<
   KangurAiTutorTranslationStatusDto,
   'manual' | 'scaffolded' | 'source-copy'
@@ -338,7 +336,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
   const sectionTranslationStatuses = useMemo(() => {
     const sectionStatuses = new Map<
       KangurAiTutorContentTranslatableSectionKey,
-      SectionTranslationStatus[]
+      KangurAiTutorLocaleTranslationStatusDto[]
     >();
 
     for (const section of AI_TUTOR_CONTENT_SECTION_CARD_KEYS) {

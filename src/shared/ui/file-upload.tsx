@@ -4,7 +4,7 @@ import { Slot } from '@radix-ui/react-slot';
 import * as React from 'react';
 
 import { getTextContent } from '@/shared/utils';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type {
   FileUploadButtonProps as FileUploadButtonBaseProps,
@@ -153,12 +153,15 @@ export function FileUploadButton(props: FileUploadButtonProps): React.JSX.Elemen
       helpers.setProgress(100);
       setStatusMessage(`${multiple ? 'Files' : 'File'} uploaded.`);
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'FileUploadButton',
+        action: 'handleSelectedFiles',
+        fileCount: files.length,
+        multiple,
+      });
       setStatusMessage(`Failed to upload ${multiple ? 'files' : 'file'}.`);
       if (onError) {
         onError(error);
-      } else {
-        logClientError(error, { context: { source: 'FileUploadButton' } });
       }
     } finally {
       setIsUploading(false);
@@ -325,12 +328,15 @@ export function FileUploadTrigger(props: FileUploadTriggerProps): React.JSX.Elem
       helpers.setProgress(100);
       setStatusMessage(`${multiple ? 'Files' : 'File'} uploaded.`);
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'FileUploadTrigger',
+        action: 'handleSelectedFiles',
+        fileCount: files.length,
+        multiple,
+      });
       setStatusMessage(`Failed to upload ${multiple ? 'files' : 'file'}.`);
       if (onError) {
         onError(error);
-      } else {
-        logClientError(error, { context: { source: 'FileUploadTrigger' } });
       }
     } finally {
       setIsUploading(false);

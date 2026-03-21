@@ -16,6 +16,8 @@ const {
   homeDuelsInvitesPropsMock,
   tutorSessionSyncPropsMock,
   xpToastPropsMock,
+  lockKangurPageVerticalScrollMock,
+  unlockKangurPageVerticalScrollMock,
 } = vi.hoisted(() => ({
   useKangurGameRuntimeMock: vi.fn(),
   useKangurMobileBreakpointMock: vi.fn(),
@@ -26,6 +28,8 @@ const {
   homeDuelsInvitesPropsMock: vi.fn(),
   tutorSessionSyncPropsMock: vi.fn(),
   xpToastPropsMock: vi.fn(),
+  lockKangurPageVerticalScrollMock: vi.fn(),
+  unlockKangurPageVerticalScrollMock: vi.fn(),
 }));
 
 vi.mock('framer-motion', () => {
@@ -90,7 +94,8 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurGameNavigationWidget', () => ({
-  KangurGameNavigationWidget: () => <div data-testid='kangur-game-navigation-widget' />,
+  KangurGameNavigationWidget: ({ visible = true }: { visible?: boolean }) =>
+    visible ? <div data-testid='kangur-game-navigation-widget' /> : null,
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurGameHomeHeroWidget', () => ({
@@ -197,6 +202,11 @@ vi.mock('@/features/kangur/docs/tooltips', () => ({
   useKangurDocsTooltips: () => ({ enabled: false }),
 }));
 
+vi.mock('@/features/kangur/ui/scroll/kangur-page-scroll-lock', () => ({
+  lockKangurPageVerticalScroll: () => lockKangurPageVerticalScrollMock(),
+  unlockKangurPageVerticalScroll: () => unlockKangurPageVerticalScrollMock(),
+}));
+
 import Game from '@/features/kangur/ui/pages/Game';
 
 describe('Game page', () => {
@@ -227,6 +237,7 @@ describe('Game page', () => {
   });
 
   beforeEach(() => {
+    vi.clearAllMocks();
     useKangurMobileBreakpointMock.mockReturnValue(false);
     useKangurPhoneSimulationMock.mockReturnValue({ enabled: true });
     Object.defineProperty(window, 'scrollTo', {
@@ -262,6 +273,7 @@ describe('Game page', () => {
     expect(homeActionsPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({ hideWhenScreenMismatch: false })
     );
+    expect(screen.queryByTestId('kangur-game-navigation-widget')).toBeNull();
   });
 
   it('shows the parent add-learner prompt under the home actions when no learner is selected', () => {
@@ -365,14 +377,41 @@ describe('Game page', () => {
     });
   });
 
-  it('shows mobile phone simulation scroll controls when the game viewport overflows', async () => {
+  it('keeps the home screen on the standard mobile layout when phone simulation is enabled', () => {
     useKangurMobileBreakpointMock.mockReturnValue(true);
+    useKangurPhoneSimulationMock.mockReturnValue({ enabled: true });
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildRuntime('home'),
       progress: { totalXp: 1 },
     });
 
     render(<Game />);
+
+    const gameMain = document.getElementById('kangur-game-main');
+
+    expect(gameMain).not.toBeNull();
+    expect(gameMain?.className).toContain(
+      'var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px'
+    );
+    expect(gameMain?.className).not.toContain(
+      'var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px)'
+    );
+    expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-container')).toBeNull();
+    expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-up')).toBeNull();
+    expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-down')).toBeNull();
+    expect(lockKangurPageVerticalScrollMock).not.toHaveBeenCalled();
+  });
+
+  it('shows mobile phone simulation scroll controls when an active game screen overflows', async () => {
+    useKangurMobileBreakpointMock.mockReturnValue(true);
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildRuntime('operation'),
+      progress: { totalXp: 1 },
+    });
+
+    render(<Game />);
+
+    expect(screen.getByTestId('kangur-game-navigation-widget')).toBeInTheDocument();
 
     const scrollContainer = screen.getByTestId('kangur-game-phone-simulation-scroll-container');
 
@@ -434,7 +473,7 @@ describe('Game page', () => {
   it('uses the shared shell viewport height and bottom clearance for phone simulation chrome', async () => {
     useKangurMobileBreakpointMock.mockReturnValue(true);
     useKangurPhoneSimulationMock.mockReturnValue({ enabled: true });
-    useKangurGameRuntimeMock.mockReturnValue(buildRuntime('home'));
+    useKangurGameRuntimeMock.mockReturnValue(buildRuntime('operation'));
 
     render(<Game />);
 
@@ -471,6 +510,7 @@ describe('Game page', () => {
     expect(screen.getByTestId('kangur-game-phone-simulation-scroll-down').className).toContain(
       'var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))'
     );
+    expect(lockKangurPageVerticalScrollMock).toHaveBeenCalled();
   });
 
   it('scrolls back to the top and focuses the next screen heading without re-scrolling when entering a quiz', () => {

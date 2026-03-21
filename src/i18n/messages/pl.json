@@ -400,6 +400,20 @@
       "dailyQuest": "Misja dnia: {summary}",
       "nextBadge": "Następna odznaka: {summary}"
     },
+    "practiceQuestion": {
+      "label": "Pytanie {number}",
+      "pointChip": "⭐ {points} pkt ({difficulty})",
+      "difficulty": {
+        "easy": "łatwe",
+        "medium": "średnie",
+        "hard": "trudne"
+      },
+      "answerState": {
+        "correct": "Poprawna odpowiedź",
+        "incorrect": "Błędna odpowiedź"
+      },
+      "confirm": "Zatwierdź odpowiedź ✓"
+    },
     "operationSelector": {
       "title": "Grajmy!",
       "intro": {
@@ -4541,6 +4555,209 @@
       },
       "game": {
         "stageTitle": "Rysuj figury"
+      }
+    },
+    "geometryShapeRecognition": {
+      "lessonTitle": "Geometria",
+      "sections": {
+        "intro": {
+          "title": "Poznaj kształty",
+          "description": "Zobacz najczęstsze kształty."
+        },
+        "practice": {
+          "title": "Ćwiczenia",
+          "description": "Nazwij kształt, który widzisz."
+        },
+        "draw": {
+          "title": "Gra: Rysuj kształty",
+          "description": "Narysuj koło, trójkąt, kwadrat, prostokąt, owal i romb."
+        },
+        "summary": {
+          "title": "Podsumowanie",
+          "description": "Najważniejsze wskazówki."
+        }
+      },
+      "shapes": {
+        "circle": {
+          "label": "Koło",
+          "clue": "Okrągłe, bez rogów."
+        },
+        "square": {
+          "label": "Kwadrat",
+          "clue": "4 równe boki."
+        },
+        "triangle": {
+          "label": "Trójkąt",
+          "clue": "3 boki i 3 rogi."
+        },
+        "rectangle": {
+          "label": "Prostokąt",
+          "clue": "2 długie i 2 krótkie boki."
+        },
+        "oval": {
+          "label": "Owal",
+          "clue": "Bez rogów, ale wydłużony."
+        },
+        "diamond": {
+          "label": "Romb",
+          "clue": "Wygląda jak przechylony kwadrat."
+        }
+      },
+      "clues": {
+        "title": "Wskazówki",
+        "lead": "Użyj tych wskazówek, aby rozpoznać kształt:",
+        "chips": {
+          "corners": "Rogi",
+          "sides": "Boki",
+          "curves": "Zaokrąglenia",
+          "longShortSides": "Długie i krótkie boki"
+        },
+        "inset": "Najpierw policz rogi, potem porównaj długości boków."
+      },
+      "practice": {
+        "emptyRounds": "Brak rund.",
+        "finished": {
+          "status": "Koniec",
+          "title": "Wynik: {score}/{total}",
+          "subtitle": "Świetnie rozpoznajesz kształty!",
+          "restart": "Zagraj ponownie"
+        },
+        "progress": {
+          "round": "Runda {current}/{total}",
+          "score": "Wynik {score}"
+        },
+        "question": "Jaki to kształt?",
+        "feedback": {
+          "correct": "Brawo!",
+          "incorrect": "Prawie! To {shape}."
+        },
+        "actions": {
+          "next": "Dalej",
+          "finish": "Zakończ"
+        }
+      },
+      "intro": {
+        "title": "Poznaj kształty",
+        "lead": "Szukaj rogów, boków i zaokrągleń."
+      },
+      "practiceSlide": {
+        "title": "Wyzwanie kształtów"
+      },
+      "summary": {
+        "title": "Świetna robota!",
+        "status": "Gotowe na więcej",
+        "lead": "Teraz potrafisz nazwać kształty wokół siebie.",
+        "caption": "Poszukaj kół, kwadratów, trójkątów, prostokątów, owali i rombów w domu."
+      },
+      "draw": {
+        "stageTitle": "Gra: Rysuj kształty",
+        "difficultyLabel": "Podstawowe",
+        "finishLabel": "Wróć do tematów"
+      }
+    },
+    "geometrySymmetry": {
+      "lessonTitle": "Symetria",
+      "sections": {
+        "intro": {
+          "title": "Co to jest symetria?",
+          "description": "Definicja i przykłady"
+        },
+        "os": {
+          "title": "Oś symetrii",
+          "description": "Linia podziału figury"
+        },
+        "figury": {
+          "title": "Figury symetryczne",
+          "description": "Które figury mają symetrię?"
+        },
+        "podsumowanie": {
+          "title": "Podsumowanie",
+          "description": "Wszystko razem"
+        },
+        "game": {
+          "title": "Lustra symetrii",
+          "description": "Narysuj oś i dorysuj odbicie"
+        }
+      },
+      "slides": {
+        "intro": {
+          "whatIsSymmetry": {
+            "title": "Co to jest symetria?",
+            "lead": "Figura jest symetryczna, gdy po złożeniu na pół obie strony pasują do siebie.",
+            "callout": "Motyl jest prawie symetryczny.",
+            "note": "Symetria to reguła: lewa strona = prawa strona (lub góra = dół)."
+          },
+          "mirrorSymmetry": {
+            "title": "Symetria lustrzana",
+            "lead": "Oś działa jak lustro: prawa strona odbija lewą.",
+            "caption": "Po złożeniu obie części są takie same."
+          }
+        },
+        "os": {
+          "axisOfSymmetry": {
+            "title": "Oś symetrii",
+            "lead": "Oś symetrii to linia, po której dzielimy figurę na dwie pasujące części.",
+            "caption": "Pionowa kreska to oś symetrii.",
+            "note": "Figura może mieć więcej niż jedną oś symetrii!"
+          },
+          "axisInPractice": {
+            "title": "Oś w praktyce",
+            "lead": "Linia osi pokazuje, gdzie figura się zgina.",
+            "caption": "Oś dzieli figurę na dwie równe części."
+          }
+        },
+        "figury": {
+          "symmetricShapes": {
+            "title": "Które figury są symetryczne?",
+            "cards": {
+              "square": "Kwadrat",
+              "rectangle": "Prostokąt",
+              "circle": "Koło",
+              "isoscelesTriangle": "Trójkąt równoramienny",
+              "zigzag": "Dowolny zygzak",
+              "irregularPolygon": "Nieregularny wielokąt"
+            },
+            "circleNote": "Koło ma nieskończoną liczbę osi symetrii!"
+          },
+          "symmetricOrNot": {
+            "title": "Symetryczne czy nie?",
+            "caption": "Symetryczne figury mają pasujące połówki."
+          },
+          "rotational": {
+            "title": "Symetria obrotowa",
+            "caption": "Obrót nie zmienia wyglądu figury."
+          }
+        },
+        "podsumowanie": {
+          "overview": {
+            "title": "Podsumowanie",
+            "items": {
+              "item1": "Symetria oznacza, że dwie strony są takie same.",
+              "item2": "Oś symetrii to linia dzieląca figurę na dwie pasujące części.",
+              "item3": "Wiele figur ma więcej niż jedną oś symetrii.",
+              "item4": "Koło ma nieskończoną liczbę osi symetrii."
+            }
+          },
+          "axis": {
+            "title": "Podsumowanie: oś symetrii",
+            "caption": "Złóż figurę wzdłuż osi."
+          },
+          "manyAxes": {
+            "title": "Podsumowanie: wiele osi",
+            "caption": "Symetria to zgodność po obu stronach osi."
+          },
+          "mirror": {
+            "title": "Podsumowanie: odbicie lustrzane",
+            "caption": "Odbicie lustrzane po osi."
+          },
+          "rotation": {
+            "title": "Podsumowanie: symetria obrotowa",
+            "caption": "Symetria obrotowa."
+          }
+        }
+      },
+      "game": {
+        "stageTitle": "Lustra symetrii"
       }
     },
     "calendar": {

@@ -23,6 +23,7 @@ import type {
   PromptExploderValidationRuleStack,
   PromptExploderPatternSnapshot,
 } from '@/shared/contracts/prompt-exploder';
+import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 
 export type {
   PromptExploderBinding,
@@ -49,6 +50,7 @@ export type {
   PromptExploderValidationRuleStack,
   PromptExploderPatternSnapshot,
 };
+export type PromptValidationRegexRule = Extract<PromptValidationRule, { kind: 'regex' }>;
 
 export type PromptExploderState = {
   activeScope: PromptExploderRuntimeValidationScope;

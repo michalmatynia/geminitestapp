@@ -9,7 +9,13 @@ import { getTutorBubblePlacement } from './KangurAiTutorWidget.focus-layout';
 import { getGuestIntroPanelStyle } from './KangurAiTutorWidget.storage';
 import type { KangurAiTutorPanelBodyContextValue } from './KangurAiTutorPanelBody.context';
 import type { KangurAiTutorPortalContextValue } from './KangurAiTutorPortal.context';
-import { EDGE_GAP, type TutorMotionProfile, type TutorQuickAction } from './KangurAiTutorWidget.shared';
+import {
+  EDGE_GAP,
+  type TutorEdgePlacement,
+  type TutorMotionProfile,
+  type TutorPanelChromeVariant,
+  type TutorQuickAction,
+} from './KangurAiTutorWidget.shared';
 import type {
   GuidedTutorTarget,
   TutorPanelShellMode,
@@ -25,12 +31,10 @@ type TutorSurfaceMode =
   | 'selection_guided'
   | 'section_guided'
   | 'chat';
-type TutorPanelChromeVariant = 'default' | 'contextual_result';
-type GuidedCalloutAvatarPlacement = 'top' | 'bottom' | 'left' | 'right';
 
 const isGuidedCalloutAvatarPlacement = (
   value: string | null | undefined
-): value is GuidedCalloutAvatarPlacement =>
+): value is TutorEdgePlacement =>
   value === 'top' || value === 'bottom' || value === 'left' || value === 'right';
 
 const DRAWING_PANEL_WIDTH = 360;

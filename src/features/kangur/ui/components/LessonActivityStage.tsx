@@ -17,6 +17,7 @@ import {
   KangurIconBadge,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 type LessonActivityStageProps = {
@@ -61,7 +62,7 @@ const useLessonActivityStageContext = () => {
 };
 
 const translateLessonChrome = (
-  translate: ReturnType<typeof useTranslations>,
+  translate: KangurIntlTranslate,
   key: string,
   fallback: string
 ): string => {

@@ -6,12 +6,15 @@ import React from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { settingsStoreMock, mutateAsyncMock, toastMock } = vi.hoisted(() => ({
+const { settingsStoreMock, mutateAsyncMock, toastMock, localeState } = vi.hoisted(() => ({
   settingsStoreMock: {
     get: vi.fn(),
   },
   mutateAsyncMock: vi.fn(),
   toastMock: vi.fn(),
+  localeState: {
+    value: 'en',
+  },
 }));
 
 vi.mock('@/shared/hooks/use-settings', () => ({
@@ -24,6 +27,51 @@ vi.mock('@/shared/hooks/use-settings', () => ({
 vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreMock,
 }));
+
+vi.mock('use-intl', () => ({
+  useFormatter: () => ({
+    dateTime: (value: unknown) => String(value),
+    number: (value: unknown) => String(value),
+    relativeTime: (value: unknown) => String(value),
+    list: (value: unknown) => (Array.isArray(value) ? value.join(', ') : String(value)),
+  }),
+}));
+
+vi.mock('next-intl', () => {
+  const createTranslationsMock = () => {
+    const translate = ((key: string, values?: Record<string, unknown>) => {
+      if (typeof values?.index === 'number') {
+        return `${key} ${values.index}`;
+      }
+
+      return key;
+    }) as {
+      (key: string, values?: Record<string, unknown>): string;
+      rich: (key: string) => string;
+      markup: (key: string) => string;
+      raw: (key: string) => string;
+      has: () => boolean;
+    };
+
+    translate.rich = (key: string) => key;
+    translate.markup = (key: string) => key;
+    translate.raw = (key: string) => key;
+    translate.has = () => false;
+
+    return translate;
+  };
+
+  return {
+    useLocale: () => localeState.value,
+    useFormatter: () => ({
+      dateTime: (value: unknown) => String(value),
+      number: (value: unknown) => String(value),
+      relativeTime: (value: unknown) => String(value),
+      list: (value: unknown) => (Array.isArray(value) ? value.join(', ') : String(value)),
+    }),
+    useTranslations: createTranslationsMock,
+  };
+});
 
 vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/kangur/shared/ui')>();
@@ -74,6 +122,7 @@ describe('KangurQuestionsManagerPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
+    localeState.value = 'en';
     settingsStoreMock.get.mockImplementation((key: string) => {
       if (key === KANGUR_TEST_QUESTIONS_SETTING_KEY) {
         return JSON.stringify({
@@ -196,6 +245,32 @@ describe('KangurQuestionsManagerPanel', () => {
     expect(screen.getByText('Filter')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /back to suites/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add question' })).toBeInTheDocument();
+  });
+
+  it('renders the question workspace chrome and filters in Ukrainian', () => {
+    localeState.value = 'uk-UA';
+
+    render(
+      <KangurQuestionsManagerRuntimeProvider suite={suite} onClose={vi.fn()}>
+        <KangurQuestionsManagerPanel />
+      </KangurQuestionsManagerRuntimeProvider>
+    );
+
+    expect(screen.getByText('Робоча зона запитань набору')).toBeInTheDocument();
+    expect(screen.getByText('Фільтри й тріаж')).toBeInTheDocument();
+    expect(screen.getByText('Сортування')).toBeInTheDocument();
+    expect(screen.getByText('Фільтр')).toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: 'Пошук запитань' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '← Назад до наборів' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Додати запитання' })).toBeInTheDocument();
+    expect(screen.getByText('Потрібне виправлення 1')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Потрібне виправлення' }));
+
+    expect(
+      screen.getByText('Перевпорядковувати запитання можна в режимі "Ручний порядок / Усі".')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Порядок 3')).toBeInTheDocument();
   });
 
   it('searches across audit flags and other question content', () => {

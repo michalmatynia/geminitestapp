@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Download } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { memo, useCallback, type ComponentProps, type ReactNode } from 'react';
+import { memo, useCallback, type ReactNode } from 'react';
 
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import {
@@ -13,6 +13,10 @@ import {
 } from '@/features/products/context/ProductListContext';
 import { resolveProductAiRunFeedbackForList } from '@/features/products/lib/product-ai-run-feedback';
 import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
+import {
+  loadProductIntegrationsAdapter,
+  type ProductTriggerButtonBarProps,
+} from '@/features/products/lib/product-integrations-adapter-loader';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import {
   calculatePriceForCurrency,
@@ -29,11 +33,7 @@ import {
   resolveProductCategoryLabel,
 } from './columns/product-column-utils';
 
-type TriggerButtonBarProps = ComponentProps<
-  typeof import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').TriggerButtonBar
->;
-
-const TriggerButtonBar = dynamic<TriggerButtonBarProps>(
+const TriggerButtonBar = dynamic<ProductTriggerButtonBarProps>(
   () =>
     import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').then(
       (
@@ -67,17 +67,6 @@ const TraderaStatusButton = dynamic(
     loading: () => null,
   }
 );
-
-type ProductIntegrationsAdapterModule = typeof import('@/shared/lib/product-integrations-adapter');
-
-let productIntegrationsAdapterPromise: Promise<ProductIntegrationsAdapterModule> | null = null;
-
-const loadProductIntegrationsAdapter = (): Promise<ProductIntegrationsAdapterModule> => {
-  if (!productIntegrationsAdapterPromise) {
-    productIntegrationsAdapterPromise = import('@/shared/lib/product-integrations-adapter');
-  }
-  return productIntegrationsAdapterPromise;
-};
 
 const resolveThumbnailUrl = (
   product: ProductWithImages,

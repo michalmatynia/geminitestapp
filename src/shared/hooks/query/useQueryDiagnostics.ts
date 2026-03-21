@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 export type QueryDiagnosticsItem = {
@@ -48,7 +48,12 @@ const buildSnapshot = (queryClient: QueryClient): QueryDiagnosticsItem[] => {
           try {
             dataSize = JSON.stringify(query.state.data).length;
           } catch (error) {
-            logClientError(error);
+            logClientCatch(error, {
+              source: 'useQueryDiagnostics',
+              action: 'measureQueryDataSize',
+              queryHash: (query as Query & { queryHash?: string }).queryHash ?? keyString,
+              level: 'warn',
+            });
             dataSize = null;
           }
         }

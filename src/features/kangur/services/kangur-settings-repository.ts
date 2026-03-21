@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type {
-  MongoPersistedStringSettingRecord,
+  MongoPersistedStringSettingDocument,
   SettingRecord,
 } from '@/shared/contracts/settings';
 import {
@@ -16,8 +16,6 @@ const KANGUR_SETTINGS_COLLECTION = 'kangur_settings';
 const KANGUR_SETTINGS_KEY_PREFIX = 'kangur_';
 const KANGUR_SETTINGS_KEY_INDEX = 'kangur_settings_key';
 
-type KangurSettingDocument = MongoPersistedStringSettingRecord<string, Date>;
-
 let kangurSettingsIndexesEnsured: Promise<void> | null = null;
 
 export const isKangurSettingKey = (key: string): boolean =>
@@ -30,7 +28,7 @@ const ensureKangurSettingsIndexes = async (): Promise<void> => {
       try {
         const mongo = await getMongoDb();
         await mongo
-          .collection<KangurSettingDocument>(KANGUR_SETTINGS_COLLECTION)
+          .collection<MongoPersistedStringSettingDocument>(KANGUR_SETTINGS_COLLECTION)
           .createIndex({ key: 1 }, { name: KANGUR_SETTINGS_KEY_INDEX, unique: true });
       } catch (error) {
         void ErrorSystem.captureException(error);
@@ -106,7 +104,7 @@ export const readKangurSettingValue = async (key: string): Promise<string | null
   await ensureKangurSettingsIndexes();
   const mongo = await getMongoDb();
   const doc = await mongo
-    .collection<KangurSettingDocument>(KANGUR_SETTINGS_COLLECTION)
+    .collection<MongoPersistedStringSettingDocument>(KANGUR_SETTINGS_COLLECTION)
     .findOne({ $or: [{ _id: key }, { key }] }, { projection: { _id: 1, key: 1, value: 1 } });
   const record = doc ? toSettingRecord(doc) : null;
   if (record) {
@@ -125,12 +123,12 @@ export const listKangurSettings = async (): Promise<SettingRecord[]> => {
   await ensureKangurSettingsIndexes();
   const mongo = await getMongoDb();
   const docs = await mongo
-    .collection<KangurSettingDocument>(KANGUR_SETTINGS_COLLECTION)
+    .collection<MongoPersistedStringSettingDocument>(KANGUR_SETTINGS_COLLECTION)
     .find({}, { projection: { _id: 1, key: 1, value: 1 } })
     .toArray();
 
   return docs
-    .map((doc: KangurSettingDocument) => toSettingRecord(doc))
+    .map((doc: MongoPersistedStringSettingDocument) => toSettingRecord(doc))
     .filter((item: SettingRecord | null): item is SettingRecord => Boolean(item));
 };
 
@@ -149,7 +147,7 @@ export const listKangurSettingsByKeys = async (keys: string[]): Promise<SettingR
       )
       .toArray(),
     mongo
-      .collection<KangurSettingDocument>(KANGUR_SETTINGS_COLLECTION)
+      .collection<MongoPersistedStringSettingDocument>(KANGUR_SETTINGS_COLLECTION)
       .find(
         { $or: [{ key: { $in: kangurKeys } }, { _id: { $in: kangurKeys } }] },
         { projection: { _id: 1, key: 1, value: 1 } }
@@ -162,7 +160,7 @@ export const listKangurSettingsByKeys = async (keys: string[]): Promise<SettingR
     const record = toSettingRecord(doc);
     if (record) merged.set(record.key, record.value);
   });
-  kangurDocs.forEach((doc: KangurSettingDocument) => {
+  kangurDocs.forEach((doc: MongoPersistedStringSettingDocument) => {
     const record = toSettingRecord(doc);
     if (record) merged.set(record.key, record.value);
   });
@@ -179,14 +177,16 @@ export const upsertKangurSettingValue = async (
   const mongo = await getMongoDb();
   const now = new Date();
   const encodedValue = encodeSettingValue(key, value);
-  await mongo.collection<KangurSettingDocument>(KANGUR_SETTINGS_COLLECTION).updateOne(
-    { $or: [{ _id: key }, { key }] },
-    {
-      $set: { key, value: encodedValue, updatedAt: now },
-      $setOnInsert: { _id: key, createdAt: now },
-    },
-    { upsert: true }
-  );
+  await mongo
+    .collection<MongoPersistedStringSettingDocument>(KANGUR_SETTINGS_COLLECTION)
+    .updateOne(
+      { $or: [{ _id: key }, { key }] },
+      {
+        $set: { key, value: encodedValue, updatedAt: now },
+        $setOnInsert: { _id: key, createdAt: now },
+      },
+      { upsert: true }
+    );
   return { key, value: encodedValue };
 };
 
@@ -195,7 +195,7 @@ export const deleteKangurSettingValue = async (key: string): Promise<boolean> =>
   const mongo = await getMongoDb();
   await Promise.all([
     mongo
-      .collection<KangurSettingDocument>(KANGUR_SETTINGS_COLLECTION)
+      .collection<MongoPersistedStringSettingDocument>(KANGUR_SETTINGS_COLLECTION)
       .deleteOne({ $or: [{ _id: key }, { key }] }),
     mongo
       .collection<KangurLegacySettingDocument>(KANGUR_LEGACY_SETTINGS_COLLECTION)

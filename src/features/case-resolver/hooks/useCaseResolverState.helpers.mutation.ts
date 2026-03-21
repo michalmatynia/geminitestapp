@@ -8,6 +8,10 @@ import type {
 
 import { createCaseResolverFile } from '../settings';
 import { buildCaseResolverFileComparableFingerprint } from './useCaseResolverState.helpers.canonical';
+import type {
+  CaseResolverWorkspaceUpdateOptions,
+  UseCaseResolverWorkspaceMutationsValue,
+} from './useCaseResolverState.workspace-mutations';
 
 export type { CaseResolverRequestedCaseStatus };
 
@@ -110,18 +114,7 @@ export const resolveCaptureTargetFile = ({
 
 export type CaseResolverFileMutationStage = 'precheck' | 'mutation' | null;
 
-type CaseResolverWorkspaceMutationOptions = {
-  persistToast?: string;
-  persistNow?: boolean;
-  mutationId?: string;
-  source?: string;
-  skipNormalization?: boolean;
-};
-
-type CaseResolverWorkspaceUpdater = (
-  updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
-  options?: CaseResolverWorkspaceMutationOptions
-) => void;
+type CaseResolverWorkspaceUpdater = UseCaseResolverWorkspaceMutationsValue['updateWorkspace'];
 
 type CaseResolverEditingDraftUpdater = React.Dispatch<
   React.SetStateAction<CaseResolverFileEditDraft | null>
@@ -201,7 +194,7 @@ export const applyCaseResolverFileMutationAndRebaseDraft = ({
   let nextFile: CaseResolverFile | null = null;
   let resolvedTargetFileId: string | null = precheckTarget?.id ?? null;
 
-  const mutationOptions: CaseResolverWorkspaceMutationOptions = {
+  const mutationOptions: CaseResolverWorkspaceUpdateOptions = {
     source,
     ...(persistToast ? { persistToast } : {}),
     ...(skipNormalization ? { skipNormalization: true } : {}),

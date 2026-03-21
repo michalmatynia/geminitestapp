@@ -9,7 +9,6 @@ import type {
 } from '@/shared/lib/ai-paths';
 import {
   Alert,
-  Button,
   SelectSimple,
   StatusBadge,
   Textarea,
@@ -42,6 +41,7 @@ import { useJobQueueActions, useJobQueueState } from './JobQueueContext';
 import { extractPlaywrightArtifactsFromNode } from './playwright-artifacts';
 import { resolveRunHistoryEntryAction } from './run-history-entry-actions';
 import { buildHistoryNodeOptions } from './run-history-utils';
+import { AiPathsPillButton } from './AiPathsPillButton';
 import { RunHistoryEntries } from './RunHistoryEntries';
 
 type HistoryOption = {
@@ -60,6 +60,27 @@ type RunCoordinationNotice = {
   description: string;
   detail?: string | null;
 };
+
+type JobQueueDetailFieldProps = {
+  label: string;
+  value: React.ReactNode;
+  className?: string;
+  valueClassName?: string;
+};
+
+type JobQueueJsonTextareaProps = {
+  value: unknown;
+  minHeightClassName?: string;
+  ariaLabel: string;
+  title?: string;
+};
+
+type JobQueueJsonFieldProps = JobQueueJsonTextareaProps & {
+  label: string;
+};
+
+const jobQueueJsonTextareaClassName =
+  'mt-1 w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200';
 
 const asRecord = (value: unknown): Record<string, unknown> | null =>
   typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null;
@@ -118,6 +139,56 @@ const resolveRunCoordinationNotice = (
 
   return null;
 };
+
+function JobQueueDetailField({
+  label,
+  value,
+  className,
+  valueClassName,
+}: JobQueueDetailFieldProps): React.JSX.Element {
+  return (
+    <div className={className}>
+      <span className='uppercase text-gray-500'>{label}</span>
+      <div className={valueClassName ?? 'text-white'}>{value}</div>
+    </div>
+  );
+}
+
+function JobQueueJsonTextarea({
+  value,
+  minHeightClassName = 'min-h-[120px]',
+  ariaLabel,
+  title,
+}: JobQueueJsonTextareaProps): React.JSX.Element {
+  return (
+    <Textarea
+      className={[jobQueueJsonTextareaClassName, minHeightClassName].join(' ')}
+      readOnly
+      value={safePrettyJson(value)}
+      aria-label={ariaLabel}
+      title={title ?? ariaLabel}
+    />
+  );
+}
+
+function JobQueueJsonField({
+  label,
+  value,
+  minHeightClassName,
+  ariaLabel,
+  title,
+}: JobQueueJsonFieldProps): React.JSX.Element {
+  return (
+    <FormField label={label}>
+      <JobQueueJsonTextarea
+        value={value}
+        minHeightClassName={minHeightClassName}
+        ariaLabel={ariaLabel}
+        title={title}
+      />
+    </FormField>
+  );
+}
 
 export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX.Element {
   const {
@@ -298,58 +369,52 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
           ) : null}
         </div>
         <div className='flex flex-wrap items-center gap-2'>
-          <Button
-            type='button'
-            className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
+          <AiPathsPillButton
+            className='text-gray-200 hover:bg-muted/60'
             onClick={onToggleRun}
           >
             {isExpanded ? 'Hide details' : 'Details'}
-          </Button>
-          <Button
-            type='button'
-            className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
+          </AiPathsPillButton>
+          <AiPathsPillButton
+            className='text-gray-200 hover:bg-muted/60'
             onClick={onToggleStream}
             disabled={!isExpanded}
           >
             {paused ? 'Resume stream' : 'Pause stream'}
-          </Button>
-          <Button
-            type='button'
-            className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
+          </AiPathsPillButton>
+          <AiPathsPillButton
+            className='text-gray-200 hover:bg-muted/60'
             onClick={onRefreshDetail}
             disabled={detailLoading}
           >
             {detailLoading ? 'Loading...' : 'Refresh detail'}
-          </Button>
+          </AiPathsPillButton>
           {detailRun.status === 'blocked_on_lease' ? (
-            <Button
-              type='button'
+            <AiPathsPillButton
               variant='outline'
-              className='rounded-md border px-2 py-1 text-[10px] text-blue-200 hover:bg-blue-500/10'
+              inactiveClassName='text-blue-200 hover:bg-blue-500/10'
               onClick={onHandoffRun}
               disabled={isMarkingHandoff}
             >
               {isMarkingHandoff ? 'Marking...' : 'Mark handoff-ready'}
-            </Button>
+            </AiPathsPillButton>
           ) : null}
-          <Button
-            type='button'
+          <AiPathsPillButton
             variant='outline'
-            className='rounded-md border px-2 py-1 text-[10px] text-amber-200 hover:bg-amber-500/10'
+            inactiveClassName='text-amber-200 hover:bg-amber-500/10'
             onClick={onCancelRun}
             disabled={!canCancel || isCancellingThisRun}
           >
             {isCancellingThisRun ? 'Canceling...' : 'Cancel'}
-          </Button>
-          <Button
-            type='button'
+          </AiPathsPillButton>
+          <AiPathsPillButton
             variant='destructive'
-            className='rounded-md border px-2 py-1 text-[10px]'
+            inactiveClassName=''
             onClick={onDeleteRun}
             disabled={isDeletingThisRun}
           >
             {isDeletingThisRun ? 'Deleting...' : 'Delete'}
-          </Button>
+          </AiPathsPillButton>
         </div>
       </div>
 
@@ -368,64 +433,45 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
           {detail ? (
             <>
               <div className='grid gap-3 text-[11px] text-gray-400 sm:grid-cols-2 lg:grid-cols-3'>
-                <div>
-                  <span className='uppercase text-gray-500'>Path ID</span>
-                  <div className='text-white'>{detailRun.pathId ?? '-'}</div>
-                </div>
-                <div>
-                  <span className='uppercase text-gray-500'>Status</span>
-                  <div className='text-white'>{detailRun.status}</div>
-                </div>
-                <div>
-                  <span className='uppercase text-gray-500'>Trigger</span>
-                  <div className='text-white'>{detailRun.triggerEvent ?? '-'}</div>
-                </div>
-                <div>
-                  <span className='uppercase text-gray-500'>Origin</span>
-                  <div className='text-white'>{getOriginLabel(runOrigin)}</div>
-                </div>
-                <div>
-                  <span className='uppercase text-gray-500'>Run type</span>
-                  <div className='text-white'>{getExecutionLabel(runExecution)}</div>
-                </div>
-                <div>
-                  <span className='uppercase text-gray-500'>Source</span>
-                  <div className='text-white'>{runSource}</div>
-                </div>
-                <div className='sm:col-span-2 lg:col-span-3'>
-                  <span className='uppercase text-gray-500'>Source debug</span>
-                  <div className='font-mono text-sky-200'>{runSourceDebug}</div>
-                </div>
-                <div className='sm:col-span-2 lg:col-span-3'>
-                  <span className='uppercase text-gray-500'>Runtime fingerprint</span>
-                  <div className='font-mono text-sky-200'>{runtimeFingerprint ?? 'n/a'}</div>
-                </div>
-                <div>
-                  <span className='uppercase text-gray-500'>Started</span>
-                  <div className='text-white'>{formatDate(detailRun.startedAt)}</div>
-                </div>
-                <div>
-                  <span className='uppercase text-gray-500'>Finished</span>
-                  <div className='text-white'>{formatDate(detailRun.finishedAt)}</div>
-                </div>
-                <div>
-                  <span className='uppercase text-gray-500'>Dead-lettered</span>
-                  <div className='text-white'>{formatDate(detailRun.deadLetteredAt)}</div>
-                </div>
-                <div>
-                  <span className='uppercase text-gray-500'>Retry</span>
-                  <div className='text-white'>
-                    {detailRun.retryCount ?? 0}/{detailRun.maxAttempts ?? '-'}
-                  </div>
-                </div>
-                <div>
-                  <span className='uppercase text-gray-500'>Next retry</span>
-                  <div className='text-white'>{formatDate(detailRun.nextRetryAt)}</div>
-                </div>
-                <div>
-                  <span className='uppercase text-gray-500'>Trigger node</span>
-                  <div className='text-white'>{detailRun.triggerNodeId ?? '-'}</div>
-                </div>
+                <JobQueueDetailField label='Path ID' value={detailRun.pathId ?? '-'} />
+                <JobQueueDetailField label='Status' value={detailRun.status} />
+                <JobQueueDetailField label='Trigger' value={detailRun.triggerEvent ?? '-'} />
+                <JobQueueDetailField label='Origin' value={getOriginLabel(runOrigin)} />
+                <JobQueueDetailField
+                  label='Run type'
+                  value={getExecutionLabel(runExecution)}
+                />
+                <JobQueueDetailField label='Source' value={runSource} />
+                <JobQueueDetailField
+                  label='Source debug'
+                  value={runSourceDebug}
+                  className='sm:col-span-2 lg:col-span-3'
+                  valueClassName='font-mono text-sky-200'
+                />
+                <JobQueueDetailField
+                  label='Runtime fingerprint'
+                  value={runtimeFingerprint ?? 'n/a'}
+                  className='sm:col-span-2 lg:col-span-3'
+                  valueClassName='font-mono text-sky-200'
+                />
+                <JobQueueDetailField label='Started' value={formatDate(detailRun.startedAt)} />
+                <JobQueueDetailField label='Finished' value={formatDate(detailRun.finishedAt)} />
+                <JobQueueDetailField
+                  label='Dead-lettered'
+                  value={formatDate(detailRun.deadLetteredAt)}
+                />
+                <JobQueueDetailField
+                  label='Retry'
+                  value={`${detailRun.retryCount ?? 0}/${detailRun.maxAttempts ?? '-'}`}
+                />
+                <JobQueueDetailField
+                  label='Next retry'
+                  value={formatDate(detailRun.nextRetryAt)}
+                />
+                <JobQueueDetailField
+                  label='Trigger node'
+                  value={detailRun.triggerNodeId ?? '-'}
+                />
               </div>
 
               <CollapsibleSection
@@ -503,18 +549,15 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                           variant='subtle'
                         >
                           <div className='mt-1 grid gap-2 text-[11px] text-gray-400 sm:grid-cols-2 lg:grid-cols-3'>
-                            <div>
-                              <span className='uppercase text-gray-500'>Started</span>
-                              <div className='text-white'>{formatDate(node.startedAt)}</div>
-                            </div>
-                            <div>
-                              <span className='uppercase text-gray-500'>Finished</span>
-                              <div className='text-white'>{formatDate(node.finishedAt)}</div>
-                            </div>
-                            <div>
-                              <span className='uppercase text-gray-500'>Attempt</span>
-                              <div className='text-white'>{node.attempt}</div>
-                            </div>
+                            <JobQueueDetailField
+                              label='Started'
+                              value={formatDate(node.startedAt)}
+                            />
+                            <JobQueueDetailField
+                              label='Finished'
+                              value={formatDate(node.finishedAt)}
+                            />
+                            <JobQueueDetailField label='Attempt' value={node.attempt} />
                           </div>
                           {node.errorMessage ? (
                             <div className='mt-2 rounded-md border border-rose-500/30 bg-rose-500/10 p-2 text-[11px] text-rose-200'>
@@ -522,20 +565,16 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                             </div>
                           ) : null}
                           <div className='mt-3 grid gap-3 lg:grid-cols-2'>
-                            <FormField label='Inputs'>
-                              <Textarea
-                                className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                                readOnly
-                                value={safePrettyJson(node.inputs)}
-                               aria-label='Inputs' title='Inputs'/>
-                            </FormField>
-                            <FormField label='Outputs'>
-                              <Textarea
-                                className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                                readOnly
-                                value={safePrettyJson(node.outputs)}
-                               aria-label='Outputs' title='Outputs'/>
-                            </FormField>
+                            <JobQueueJsonField
+                              label='Inputs'
+                              value={node.inputs}
+                              ariaLabel='Inputs'
+                            />
+                            <JobQueueJsonField
+                              label='Outputs'
+                              value={node.outputs}
+                              ariaLabel='Outputs'
+                            />
                           </div>
                           {artifactLinks.length > 0 ? (
                             <div className='mt-3 rounded-md border border-sky-500/30 bg-sky-500/5 p-2'>
@@ -609,35 +648,24 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                 className='border-border/70 bg-black/20'
               >
                 <div className='mt-1 grid gap-3 lg:grid-cols-2'>
-                  <FormField label='Inputs'>
-                    <Textarea
-                      className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                      readOnly
-                      value={safePrettyJson(
-                        (detailRun.runtimeState as Record<string, unknown>)?.['inputs']
-                      )}
-                     aria-label='Inputs' title='Inputs'/>
-                  </FormField>
-                  <FormField label='Outputs'>
-                    <Textarea
-                      className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                      readOnly
-                      value={safePrettyJson(
-                        (detailRun.runtimeState as Record<string, unknown>)?.['outputs']
-                      )}
-                     aria-label='Outputs' title='Outputs'/>
-                  </FormField>
+                  <JobQueueJsonField
+                    label='Inputs'
+                    value={(detailRun.runtimeState as Record<string, unknown>)?.['inputs']}
+                    ariaLabel='Inputs'
+                  />
+                  <JobQueueJsonField
+                    label='Outputs'
+                    value={(detailRun.runtimeState as Record<string, unknown>)?.['outputs']}
+                    ariaLabel='Outputs'
+                  />
                 </div>
                 <div className='mt-3'>
-                  <FormField label='Hashes'>
-                    <Textarea
-                      className='mt-1 min-h-[80px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                      readOnly
-                      value={safePrettyJson(
-                        (detailRun.runtimeState as Record<string, unknown>)?.['hashes']
-                      )}
-                     aria-label='Hashes' title='Hashes'/>
-                  </FormField>
+                  <JobQueueJsonField
+                    label='Hashes'
+                    value={(detailRun.runtimeState as Record<string, unknown>)?.['hashes']}
+                    minHeightClassName='min-h-[80px]'
+                    ariaLabel='Hashes'
+                  />
                 </div>
               </CollapsibleSection>
 
@@ -646,12 +674,11 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                 variant='subtle'
                 className='border-border/70 bg-black/20'
               >
-                <Textarea
-                  className='mt-1 min-h-[160px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                  readOnly
-                  value={safePrettyJson(detailRun.graph)}
-                  aria-label='Graph snapshot'
-                 title='Textarea'/>
+                <JobQueueJsonTextarea
+                  value={detailRun.graph}
+                  minHeightClassName='min-h-[160px]'
+                  ariaLabel='Graph snapshot'
+                />
               </CollapsibleSection>
 
               <CollapsibleSection
@@ -660,27 +687,23 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                 className='border-border/70 bg-black/20'
               >
                 <div className='mt-1 space-y-3'>
-                  <FormField label='Run'>
-                    <Textarea
-                      className='mt-1 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                      readOnly
-                      value={safePrettyJson(detailRun)}
-                     aria-label='Run' title='Run'/>
-                  </FormField>
-                  <FormField label='Nodes'>
-                    <Textarea
-                      className='mt-1 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                      readOnly
-                      value={safePrettyJson(nodes)}
-                     aria-label='Nodes' title='Nodes'/>
-                  </FormField>
-                  <FormField label='Events'>
-                    <Textarea
-                      className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                      readOnly
-                      value={safePrettyJson(events)}
-                     aria-label='Events' title='Events'/>
-                  </FormField>
+                  <JobQueueJsonField
+                    label='Run'
+                    value={detailRun}
+                    minHeightClassName='min-h-[140px]'
+                    ariaLabel='Run'
+                  />
+                  <JobQueueJsonField
+                    label='Nodes'
+                    value={nodes}
+                    minHeightClassName='min-h-[140px]'
+                    ariaLabel='Nodes'
+                  />
+                  <JobQueueJsonField
+                    label='Events'
+                    value={events}
+                    ariaLabel='Events'
+                  />
                 </div>
               </CollapsibleSection>
             </>

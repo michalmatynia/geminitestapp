@@ -12,10 +12,23 @@ import { resolveErrorUserMessage } from '@/shared/errors/error-catalog';
 import type { ResolvedError } from '@/shared/contracts/base';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
 import { logger } from '@/shared/utils/logger';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export const ErrorCategories = ERROR_CATEGORY;
 export type { ErrorCategory, ErrorContext };
+
+const reportErrorSystemClientCatch = (
+  error: unknown,
+  action: string,
+  context: ErrorContext
+): void => {
+  logClientCatch(error, {
+    source: 'error-system-client',
+    action,
+    service: context.service || 'unknown',
+    ...(context.category ? { category: context.category } : {}),
+  });
+};
 
 /**
  * Client-safe error handling system.
@@ -47,7 +60,7 @@ export const ErrorSystem = {
         },
       });
     } catch (logError) {
-      logClientError(logError);
+      reportErrorSystemClientCatch(logError, 'captureException', context);
       logger.error('[ErrorSystem] Failed to log client error:', logError);
     }
   },
@@ -70,7 +83,7 @@ export const ErrorSystem = {
         },
       });
     } catch (logError) {
-      logClientError(logError);
+      reportErrorSystemClientCatch(logError, 'logWarning', context);
       logger.warn('[ErrorSystem] Failed to log client warning:', { error: logError });
     }
   },
@@ -92,7 +105,7 @@ export const ErrorSystem = {
         },
       });
     } catch (logError) {
-      logClientError(logError);
+      reportErrorSystemClientCatch(logError, 'logValidationError', context);
       logger.error('[ErrorSystem] Failed to log client validation error:', logError);
     }
   },
@@ -115,7 +128,7 @@ export const ErrorSystem = {
         },
       });
     } catch (logError) {
-      logClientError(logError);
+      reportErrorSystemClientCatch(logError, 'logInfo', context);
       logger.error('[ErrorSystem] Failed to log client info:', logError);
     }
   },

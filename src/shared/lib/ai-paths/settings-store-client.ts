@@ -9,7 +9,10 @@ import {
 import { settingRecordSchema, type SettingRecord as AiPathsSettingRecord } from '@/shared/contracts/settings';
 import { ApiError, api } from '@/shared/lib/api-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+} from '@/shared/utils/observability/client-error-logger';
 
 export type { AiPathsSettingRecord };
 export { AI_PATHS_MAINTENANCE_ACTION_IDS };
@@ -80,7 +83,11 @@ const readBackupSettings = (): AiPathsSettingRecord[] | null => {
     const normalized = parsedSettings.data;
     return normalized.length > 0 ? normalized : null;
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'ai-paths-settings-client',
+      action: 'readBackupSettings',
+      storageKey: AI_PATHS_SETTINGS_BACKUP_KEY,
+    });
     return null;
   }
 };
@@ -93,8 +100,13 @@ const writeBackupSettings = (records: AiPathsSettingRecord[]): void => {
       JSON.stringify({ savedAt: Date.now(), records })
     );
   } catch (error) {
-    logClientError(error);
-  
+    logClientCatch(error, {
+      source: 'ai-paths-settings-client',
+      action: 'writeBackupSettings',
+      storageKey: AI_PATHS_SETTINGS_BACKUP_KEY,
+      recordCount: records.length,
+    });
+
     // Ignore storage failures in private mode/quota conditions.
   }
 };
@@ -177,7 +189,13 @@ const fetchAiPathsSettingsResponse = async (options?: {
       }
       return response;
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'ai-paths-settings-client',
+        action: 'fetchSettingsResponse',
+        requestUrl,
+        timeoutMs,
+        attempt,
+      });
       clearTimeout(timeoutId);
       lastError = error;
       if (!shouldRetrySettingsFetch(error) || attempt >= AI_PATHS_SETTINGS_RETRY_DELAYS_MS.length) {
@@ -404,7 +422,11 @@ export const updateAiPathsSettingsBulk = async (
       }
     );
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'ai-paths-settings-client',
+      action: 'updateSettingsBulk',
+      itemCount: payload.length,
+    });
     if (error instanceof ApiError) {
       throw new Error(`Failed to update AI Paths settings (${error.status})`, { cause: error });
     }
@@ -430,7 +452,11 @@ export const updateAiPathsSetting = async (
       }
     );
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'ai-paths-settings-client',
+      action: 'updateSetting',
+      key,
+    });
     if (error instanceof ApiError) {
       throw new Error(`Failed to update AI Paths setting (${error.status})`, { cause: error });
     }
@@ -456,7 +482,11 @@ export const deleteAiPathsSettings = async (keys: string[]): Promise<number> => 
       body: JSON.stringify({ keys: normalizedKeys }),
     });
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'ai-paths-settings-client',
+      action: 'deleteSettings',
+      keyCount: normalizedKeys.length,
+    });
     if (error instanceof ApiError) {
       throw new Error(`Failed to delete AI Paths settings (${error.status})`, { cause: error });
     }
@@ -472,7 +502,10 @@ export const fetchAiPathsMaintenanceReport = async (): Promise<AiPathsMaintenanc
   try {
     data = await api.get<AiPathsMaintenanceReport>('/api/ai-paths/settings/maintenance');
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'ai-paths-settings-client',
+      action: 'fetchMaintenanceReport',
+    });
     if (error instanceof ApiError) {
       throw new Error(`Failed to load AI Paths maintenance report (${error.status})`, {
         cause: error,
@@ -494,7 +527,11 @@ export const applyAiPathsMaintenanceActions = async (
       ...(normalizedActionIds ? { actionIds: normalizedActionIds } : {}),
     });
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'ai-paths-settings-client',
+      action: 'applyMaintenanceActions',
+      actionCount: normalizedActionIds?.length ?? 0,
+    });
     if (error instanceof ApiError) {
       throw new Error(`Failed to apply AI Paths maintenance (${error.status})`, {
         cause: error,

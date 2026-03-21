@@ -1,8 +1,7 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema } from './base';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export const validatorScopeSchema = z.enum([
   'products',
@@ -271,7 +270,11 @@ export const parseValidatorPatternLists = (value: unknown): ValidatorPatternList
     }
     return buildDefaultValidatorPatternLists();
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'contracts.validator',
+      action: 'parseValidatorPatternLists',
+      valueType: typeof value,
+    });
     return buildDefaultValidatorPatternLists();
   }
 };

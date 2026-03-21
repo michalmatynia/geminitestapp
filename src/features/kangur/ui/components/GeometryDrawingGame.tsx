@@ -1,7 +1,7 @@
 'use client';
 
 import { Eraser, PencilRuler } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import {
@@ -35,6 +35,7 @@ import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_STACK_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { getGeometryDrawingMiniGameFallbackCopy } from '@/features/kangur/ui/components/geometry-mini-game-fallbacks';
 import {
   evaluateGeometryDrawing,
   type GeometryShapeId,
@@ -247,11 +248,12 @@ const getGeometryDrawingShapeHint = (
 
 const localizeShapeRound = (
   translate: KangurMiniGameTranslate,
-  round: ShapeRound
+  round: ShapeRound,
+  fallbackRound: ShapeRound
 ): ShapeRound => ({
   ...round,
-  label: getGeometryDrawingShapeLabel(translate, round.id, round.label),
-  hint: getGeometryDrawingShapeHint(translate, round.id, round.hint),
+  label: getGeometryDrawingShapeLabel(translate, round.id, fallbackRound.label),
+  hint: getGeometryDrawingShapeHint(translate, round.id, fallbackRound.hint),
 });
 
 const getGeometryDifficultyLabel = (
@@ -274,7 +276,9 @@ export default function GeometryDrawingGame({
   shapeIds,
   showDifficultySelector,
 }: GeometryDrawingGameProps): React.JSX.Element {
+  const locale = useLocale();
   const translations = useTranslations('KangurMiniGames');
+  const fallbackCopy = useMemo(() => getGeometryDrawingMiniGameFallbackCopy(locale), [locale]);
   const translateWithFallback = useCallback(
     (key: string, fallback: string, values?: Record<string, string | number>): string =>
       translateKangurMiniGameWithFallback(translations, key, fallback, values),
@@ -288,10 +292,13 @@ export default function GeometryDrawingGame({
       Object.fromEntries(
         Object.entries(SHAPE_ROUND_LIBRARY).map(([shapeId, round]) => [
           shapeId,
-          localizeShapeRound(translations, round),
+          localizeShapeRound(translations, round, {
+            ...round,
+            ...fallbackCopy.shapes[shapeId as GeometryShapeId],
+          }),
         ])
       ) as Record<GeometryShapeId, ShapeRound>,
-    [translations]
+    [fallbackCopy.shapes, translations]
   );
   const difficultyLabels = useMemo<Record<GeometryDifficultyId, string>>(
     () => ({
@@ -315,7 +322,7 @@ export default function GeometryDrawingGame({
   const [keyboardStatus, setKeyboardStatus] = useState(() =>
     translateWithFallback(
       'geometryDrawing.inRound.keyboard.ready',
-      'Plansza gotowa do rysowania klawiaturą.'
+      fallbackCopy.keyboard.ready
     )
   );
   const isCoarsePointer = useKangurCoarsePointer();
@@ -338,9 +345,17 @@ export default function GeometryDrawingGame({
       ? customRounds
       : SHAPE_ROUNDS_BY_DIFFICULTY[difficulty]?.length > 0
         ? SHAPE_ROUNDS_BY_DIFFICULTY[difficulty].map((round) =>
-            localizeShapeRound(translations, round)
+            localizeShapeRound(translations, round, {
+              ...round,
+              ...fallbackCopy.shapes[round.id],
+            })
           )
-        : LEGACY_SHAPE_ROUNDS.map((round) => localizeShapeRound(translations, round));
+        : LEGACY_SHAPE_ROUNDS.map((round) =>
+            localizeShapeRound(translations, round, {
+              ...round,
+              ...fallbackCopy.shapes[round.id],
+            })
+          );
   const currentRound = rounds[roundIndex];
   const totalRounds = rounds.length;
   const resolvedActivityKey = activityKey ?? `training:${operation}:${difficulty}`;
@@ -349,7 +364,10 @@ export default function GeometryDrawingGame({
   const resolvedDifficultyLabel = shouldShowDifficultySelector
     ? difficultyLabels[difficulty]
     : difficultyLabelOverride ??
-      translateWithFallback('geometryDrawing.inRound.difficulty.default', 'Podstawowy');
+      translateWithFallback(
+        'geometryDrawing.inRound.difficulty.default',
+        fallbackCopy.difficultyDefault
+      );
   const points = useMemo(() => flattenPoints(strokes), [strokes]);
   const minPointDistance = isCoarsePointer ? 5 : 2;
   const minDrawingPoints = isCoarsePointer
@@ -425,9 +443,12 @@ export default function GeometryDrawingGame({
     });
     setKeyboardDrawing(false);
     setKeyboardStatus(
-      translateWithFallback('geometryDrawing.inRound.keyboard.boardCleared', 'Wyczyszczono planszę.')
+      translateWithFallback(
+        'geometryDrawing.inRound.keyboard.boardCleared',
+        fallbackCopy.keyboard.boardCleared
+      )
     );
-  }, [redrawCanvas, translateWithFallback]);
+  }, [fallbackCopy.keyboard.boardCleared, redrawCanvas, translateWithFallback]);
 
   const resolvePoint = useCallback(
     (event: React.PointerEvent<HTMLCanvasElement>): Point2d => {
@@ -516,10 +537,13 @@ export default function GeometryDrawingGame({
     setKeyboardDrawing(false);
     clearDrawing();
     setKeyboardStatus(
-      translateWithFallback('geometryDrawing.inRound.keyboard.restarted', 'Rozpoczęto nową rundę figur.')
+      translateWithFallback(
+        'geometryDrawing.inRound.keyboard.restarted',
+        fallbackCopy.keyboard.restarted
+      )
     );
     sessionStartedAtRef.current = Date.now();
-  }, [clearDrawing, translateWithFallback]);
+  }, [clearDrawing, fallbackCopy.keyboard.restarted, translateWithFallback]);
 
   const handleDifficultyChange = (nextDifficulty: GeometryDifficultyId): void => {
     if (nextDifficulty === difficulty) return;
@@ -530,7 +554,7 @@ export default function GeometryDrawingGame({
     setKeyboardStatus(
       translateWithFallback(
         'geometryDrawing.inRound.keyboard.difficultyChanged',
-        `Zmieniono poziom na ${difficultyLabels[nextDifficulty]}.`,
+        fallbackCopy.keyboard.difficultyChanged,
         { difficulty: difficultyLabels[nextDifficulty] }
       )
     );
@@ -559,10 +583,10 @@ export default function GeometryDrawingGame({
     setKeyboardStatus(
       translateWithFallback(
         'geometryDrawing.inRound.keyboard.started',
-        'Rozpoczęto rysowanie klawiaturą.'
+        fallbackCopy.keyboard.started
       )
     );
-  }, [keyboardCursor, translateWithFallback, updateStrokes]);
+  }, [fallbackCopy.keyboard.started, keyboardCursor, translateWithFallback, updateStrokes]);
 
   const finishKeyboardStroke = useCallback((): void => {
     if (keyboardDrawing) {
@@ -572,10 +596,16 @@ export default function GeometryDrawingGame({
     setKeyboardStatus(
       translateWithFallback(
         'geometryDrawing.inRound.keyboard.finished',
-        'Zakończono rysowanie klawiaturą.'
+        fallbackCopy.keyboard.finished
       )
     );
-  }, [appendKeyboardPoint, keyboardCursor, keyboardDrawing, translateWithFallback]);
+  }, [
+    appendKeyboardPoint,
+    fallbackCopy.keyboard.finished,
+    keyboardCursor,
+    keyboardDrawing,
+    translateWithFallback,
+  ]);
 
   const handleCanvasKeyDown = (event: React.KeyboardEvent<HTMLCanvasElement>): void => {
     if (done || feedback) return;
@@ -610,7 +640,7 @@ export default function GeometryDrawingGame({
       setKeyboardStatus(
         translateWithFallback(
           'geometryDrawing.inRound.keyboard.cleared',
-          'Wyczyszczono planszę i ustawiono kursor na środku.'
+          fallbackCopy.keyboard.cleared
         )
       );
       return;
@@ -664,13 +694,16 @@ export default function GeometryDrawingGame({
         kind: 'info',
         text: translateWithFallback(
           'geometryDrawing.inRound.tooShort',
-          'Narysuj figurę trochę dłużej, żeby można było ją ocenić.'
+          fallbackCopy.tooShort
         ),
       });
       return;
     }
 
-    const result = evaluateGeometryDrawing(currentRound.id, points, translations);
+    const result = evaluateGeometryDrawing(currentRound.id, points, {
+      locale,
+      translate: translations,
+    });
     setFeedback({
       kind: result.accepted ? 'success' : 'error',
       text: result.message,
@@ -752,7 +785,7 @@ export default function GeometryDrawingGame({
           <div aria-live='polite' aria-atomic='true' className='sr-only'>
             {translateWithFallback(
               'geometryDrawing.inRound.liveRegion',
-              `Runda ${roundIndex + 1} z ${totalRounds}. Narysuj figurę ${currentRound?.label}. Poziom ${resolvedDifficultyLabel}.`,
+              fallbackCopy.liveRegion,
               {
                 current: roundIndex + 1,
                 total: totalRounds,
@@ -780,14 +813,14 @@ export default function GeometryDrawingGame({
                 <KangurStatusChip accent='teal' size='sm'>
                   {translateWithFallback(
                     'geometryDrawing.inRound.difficultyChip',
-                    'Poziom figur'
+                    fallbackCopy.difficultyChip
                   )}
                 </KangurStatusChip>
               </div>
               <div
                 aria-label={translateWithFallback(
                   'geometryDrawing.inRound.difficultyGroupAria',
-                  'Poziom trudności figur'
+                  fallbackCopy.difficultyGroupAria
                 )}
                 className='grid grid-cols-1 gap-2 min-[420px]:grid-cols-2'
                 role='group'
@@ -816,11 +849,11 @@ export default function GeometryDrawingGame({
               accent='emerald'
               aria-label={translateWithFallback(
                 'geometryDrawing.progressAriaLabel',
-                'Dokładność w treningu figur'
+                fallbackCopy.progressAriaLabel
               )}
               aria-valuetext={translateWithFallback(
                 'geometryDrawing.inRound.progressValueText',
-                `Runda ${roundIndex + 1} z ${totalRounds}`,
+                fallbackCopy.progressValueText,
                 { current: roundIndex + 1, total: totalRounds }
               )}
               className='flex-1'
@@ -856,7 +889,7 @@ export default function GeometryDrawingGame({
                 <KangurStatusChip accent='teal' size='sm'>
                   {translateWithFallback(
                     'geometryDrawing.inRound.modeLabel',
-                    `Figury • ${resolvedDifficultyLabel}`,
+                    fallbackCopy.modeLabel,
                     { difficulty: resolvedDifficultyLabel }
                   )}
                 </KangurStatusChip>
@@ -864,7 +897,7 @@ export default function GeometryDrawingGame({
                 <KangurHeadline accent='violet' as='h3' id='geometry-drawing-heading' size='sm'>
                   {translateWithFallback(
                     'geometryDrawing.inRound.prompt',
-                    `Narysuj: ${currentRound?.label}`,
+                    fallbackCopy.prompt,
                     { shape: currentRound?.label ?? '' }
                   )}
                 </KangurHeadline>
@@ -890,7 +923,7 @@ export default function GeometryDrawingGame({
                   aria-describedby='geometry-drawing-hint geometry-drawing-input-help'
                   aria-label={translateWithFallback(
                     'geometryDrawing.inRound.canvasAria',
-                    `Plansza do rysowania figury ${currentRound?.label}. Użyj myszy lub dotyku, aby narysować figurę.`,
+                    fallbackCopy.canvasAria,
                     { shape: currentRound?.label ?? '' }
                   )}
                   aria-keyshortcuts='Enter Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape'
@@ -924,7 +957,10 @@ export default function GeometryDrawingGame({
                 {points.length === 0 && (
                   <div className='pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-semibold [color:var(--kangur-page-muted-text)]'>
                     <PencilRuler aria-hidden='true' className='w-4 h-4 mr-2' />
-                    {translateWithFallback('geometryDrawing.inRound.drawHere', 'Rysuj tutaj')}
+                    {translateWithFallback(
+                      'geometryDrawing.inRound.drawHere',
+                      fallbackCopy.drawHere
+                    )}
                   </div>
                 )}
               </KangurInfoCard>
@@ -934,7 +970,7 @@ export default function GeometryDrawingGame({
               >
                 {translateWithFallback(
                   'geometryDrawing.inRound.inputHelp',
-                  'Pole rysowania obsługuje mysz, dotyk lub klawiaturę. Enter albo spacja zaczyna i kończy kreskę, strzałki przesuwają kursor, Escape czyści planszę.'
+                  fallbackCopy.inputHelp
                 )}
               </p>
 
@@ -948,7 +984,7 @@ export default function GeometryDrawingGame({
                   variant='surface'
                 >
                   <Eraser aria-hidden='true' className='w-4 h-4' />
-                  {translateWithFallback('geometryDrawing.inRound.clear', 'Wyczyść')}
+                  {translateWithFallback('geometryDrawing.inRound.clear', fallbackCopy.clear)}
                 </KangurButton>
                 <KangurButton
                   className={cn(
@@ -967,7 +1003,7 @@ export default function GeometryDrawingGame({
                   size='lg'
                   variant='primary'
                 >
-                  {translateWithFallback('geometryDrawing.inRound.check', 'Sprawdź')}
+                  {translateWithFallback('geometryDrawing.inRound.check', fallbackCopy.check)}
                 </KangurButton>
               </KangurPanelRow>
 

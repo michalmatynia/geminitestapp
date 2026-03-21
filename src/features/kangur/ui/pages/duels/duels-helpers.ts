@@ -1,3 +1,4 @@
+import type { TranslationValues } from 'use-intl';
 import type {
   KangurDuelDifficulty,
   KangurDuelMode,
@@ -9,7 +10,7 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur-duels';
 import type { QuestionCardQuestion } from '@/features/kangur/ui/components/QuestionCard';
 
-export type KangurDuelTranslationValues = Record<string, string | number>;
+export type KangurDuelTranslationValues = TranslationValues;
 export type KangurDuelTranslations = (
   key: string,
   values?: KangurDuelTranslationValues

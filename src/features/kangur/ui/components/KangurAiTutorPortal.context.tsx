@@ -14,15 +14,16 @@ import { internalError } from '@/features/kangur/shared/errors/app-error';
 import type { KangurAiTutorPanelBodyContextValue } from './KangurAiTutorPanelBody.context';
 import type {
   TutorAvatarPointer,
+  TutorEdgePlacement,
   TutorGuidedArrowhead,
   TutorHorizontalSide,
   TutorMotionPosition,
   TutorMotionProfile,
+  TutorPanelChromeVariant,
   TutorPanelSnapState,
 } from './KangurAiTutorWidget.shared';
 import type { TutorGuidedMode } from './KangurAiTutorWidget.types';
 import type { Transition } from 'framer-motion';
-type EdgePlacement = 'top' | 'bottom' | 'left' | 'right';
 
 type ReducedMotionTransitions = {
   instant: {
@@ -39,10 +40,6 @@ type ReducedMotionTransitions = {
   };
 };
 
-type GuidedArrowhead = TutorGuidedArrowhead;
-type AvatarPointer = TutorAvatarPointer;
-type TutorPanelChromeVariant = 'default' | 'contextual_result';
-
 export type KangurAiTutorPortalContextValue = {
   avatar: {
     ariaLabel: string;
@@ -52,7 +49,7 @@ export type KangurAiTutorPortalContextValue = {
     avatarStyle: TutorMotionPosition;
     floatingAvatarPlacement: string;
     guidedArrowheadTransition?: string;
-    guidedAvatarArrowhead: GuidedArrowhead | null;
+    guidedAvatarArrowhead: TutorGuidedArrowhead | null;
     guidedAvatarArrowheadDisplayAngle: number | null;
     guidedAvatarArrowheadDisplayAngleLabel?: string;
     guidedAvatarPlacement: string;
@@ -107,14 +104,14 @@ export type KangurAiTutorPortalContextValue = {
     onStartChat: () => void;
   };
   guidedCallout: {
-    avatarPlacement: 'top' | 'bottom' | 'left' | 'right' | null;
+    avatarPlacement: TutorEdgePlacement | null;
     calloutKey: string;
     calloutTestId: string;
     detail: string;
     entryDirection: TutorHorizontalSide;
     headerLabel: string;
     mode: TutorGuidedMode;
-    placement: EdgePlacement;
+    placement: TutorEdgePlacement;
     prefersReducedMotion: boolean;
     reducedMotionTransitions: ReducedMotionTransitions;
     sectionGuidanceLabel: string | null;
@@ -142,7 +139,7 @@ export type KangurAiTutorPortalContextValue = {
     avatarAnchorKind: string;
     avatarAttachmentSide: TutorHorizontalSide;
     avatarButtonClassName: string;
-    avatarPointer: AvatarPointer | null;
+    avatarPointer: TutorAvatarPointer | null;
     bubbleEntryDirection: TutorHorizontalSide;
     bubbleLaunchOrigin: 'dock-bottom-right' | 'sheet';
     bubbleMode: 'bubble' | 'sheet';
@@ -196,7 +193,7 @@ export type KangurAiTutorPortalContextValue = {
     onHeaderPointerUp: (event: PointerEvent<HTMLDivElement>) => void;
   };
   selectionAction: {
-    placement: EdgePlacement;
+    placement: TutorEdgePlacement;
     prefersReducedMotion: boolean;
     shouldRender: boolean;
     style: CSSProperties | null;

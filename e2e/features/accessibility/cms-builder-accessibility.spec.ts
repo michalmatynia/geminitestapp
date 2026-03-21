@@ -8,6 +8,7 @@ test('cms builder exposes shell controls accessibly and passes the accessibility
   page,
 }) => {
   test.setTimeout(360_000);
+  const builderUiTimeoutMs = 120_000;
 
   await mockCmsBuilderApis(page);
   await ensureAdminSession(page, '/admin', {
@@ -29,20 +30,21 @@ test('cms builder exposes shell controls accessibly and passes the accessibility
   await expect(main).toBeVisible({ timeout: 60_000 });
   await expect(main).toHaveAttribute('tabindex', '-1');
 
+  // Cold brokered webpack runs can spend over a minute compiling this route before the builder chrome mounts.
   await expect(page.getByRole('combobox', { name: 'Select a page...' })).toBeVisible({
-    timeout: 60_000,
+    timeout: builderUiTimeoutMs,
   });
   await expect(page.getByRole('combobox', { name: 'Zone selector' }).first()).toBeVisible({
-    timeout: 60_000,
+    timeout: builderUiTimeoutMs,
   });
   await expect(page.getByRole('button', { name: 'Hide left panel' })).toBeVisible({
-    timeout: 60_000,
+    timeout: builderUiTimeoutMs,
   });
   await expect(page.getByRole('button', { name: 'Hide right panel' })).toBeVisible({
-    timeout: 60_000,
+    timeout: builderUiTimeoutMs,
   });
   await expect(page.getByRole('heading', { name: '2 sections' })).toBeVisible({
-    timeout: 60_000,
+    timeout: builderUiTimeoutMs,
   });
 
   const selectSectionButton = page.getByRole('button', { name: 'Select section Block' }).first();

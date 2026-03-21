@@ -1,30 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getCategoryRepository, getProductDataProvider } from '@/features/products/server';
-import type { ProductCategory } from '@/shared/contracts/products';
+import { toProductCategorySummaryDto } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import type { CatalogIdQuery } from '@/shared/validations/product-metadata-api-schemas';
-
-type PublicProductCategory = {
-  id: string;
-  name: string;
-  name_en: string | null;
-  name_pl: string | null;
-  name_de: string | null;
-  parentId: string | null;
-  sortIndex: number | null;
-};
-
-const toPublicProductCategory = (category: ProductCategory): PublicProductCategory => ({
-  id: category.id,
-  name: category.name,
-  name_en: category.name_en ?? null,
-  name_pl: category.name_pl ?? null,
-  name_de: category.name_de ?? null,
-  parentId: category.parentId,
-  sortIndex: category.sortIndex ?? null,
-});
 
 /**
  * GET /api/public/products/categories
@@ -43,5 +23,5 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
   const repository = await getCategoryRepository(primaryProvider);
   const categories = await repository.listCategories({ catalogId });
 
-  return NextResponse.json(categories.map(toPublicProductCategory));
+  return NextResponse.json(categories.map(toProductCategorySummaryDto));
 }

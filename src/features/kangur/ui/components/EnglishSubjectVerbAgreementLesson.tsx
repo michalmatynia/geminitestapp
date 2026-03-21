@@ -27,6 +27,7 @@ import {
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
+import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 
 type SectionId =
   | 'core'
@@ -41,7 +42,7 @@ type SectionId =
 type SlideSectionId = Exclude<SectionId, 'game_agreement'>;
 
 const buildEnglishSubjectVerbAgreementSlides = (
-  translations: ReturnType<typeof useTranslations>
+  translations: KangurIntlTranslate
 ): Record<SlideSectionId, LessonSlide[]> => ({
   core: [
     {

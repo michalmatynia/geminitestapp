@@ -98,4 +98,26 @@ describe('KangurTopNavigationController', () => {
     expect(screen.getByTestId('kangur-primary-nav-home')).toHaveAttribute('aria-current', 'page');
     expect(screen.queryByTestId('kangur-primary-nav-parent-dashboard')).toBeNull();
   });
+
+  it('clears the shared host immediately when visibility is disabled', () => {
+    const { rerender } = render(
+      <KangurTopNavigationProvider>
+        <KangurTopNavigationHost />
+        <KangurTopNavigationController navigation={GAME_NAVIGATION} visible />
+      </KangurTopNavigationProvider>
+    );
+
+    expect(
+      screen.getByRole('navigation', { name: /główna nawigacja kangur/i })
+    ).toBeInTheDocument();
+
+    rerender(
+      <KangurTopNavigationProvider>
+        <KangurTopNavigationHost />
+        <KangurTopNavigationController navigation={GAME_NAVIGATION} visible={false} />
+      </KangurTopNavigationProvider>
+    );
+
+    expect(screen.queryByRole('navigation', { name: /główna nawigacja kangur/i })).toBeNull();
+  });
 });

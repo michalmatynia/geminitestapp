@@ -84,6 +84,8 @@ export type TutorPanelSnapState =
 export type TutorPanelPositionMode = 'contextual' | 'manual';
 
 export type TutorHorizontalSide = 'left' | 'right';
+export type TutorEdgePlacement = 'top' | 'bottom' | 'left' | 'right';
+export type TutorPanelChromeVariant = 'default' | 'contextual_result';
 
 export type TutorBubblePlacementStrategy =
   | 'dock'
@@ -113,7 +115,7 @@ export type TutorGuidedArrowhead = {
   anchorOffsetX: number;
   anchorOffsetY: number;
   left: number;
-  quadrant: 'top' | 'right' | 'bottom' | 'left';
+  quadrant: TutorEdgePlacement;
   side: TutorHorizontalSide;
   targetX: number;
   targetY: number;

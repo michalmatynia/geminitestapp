@@ -8,12 +8,12 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-21T10:39:04.716Z
+Generated at: 2026-03-21T13:39:44.547Z
 
 ## Snapshot
 
-- Source files: 7102
-- Source lines: 1157762
+- Source files: 7117
+- Source lines: 1160881
 - use client files: 2
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
@@ -25,22 +25,22 @@ Generated at: 2026-03-21T10:39:04.716Z
 - Cross-feature dependency pairs: 3
 - Shared -> features imports: 1
 - setInterval occurrences: 0
-- Prop-drilling chains (depth >= 3): 20
+- Prop-drilling chains (depth >= 3): 28
 - Prop-drilling chains (depth >= 4): 5
 
 ## Top API Hotspots (by LOC)
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 282 |
-| `src/app/api/image-studio/[[...path]]/route.ts` | 236 |
-| `src/app/api/v2/integrations/[[...path]]/route.ts` | 232 |
-| `src/app/api/agentcreator/[[...path]]/route.ts` | 230 |
-| `src/app/api/ai-paths/[[...path]]/route.ts` | 206 |
-| `src/app/api/databases/[[...path]]/route.ts` | 204 |
-| `src/app/api/chatbot/[[...path]]/route.ts` | 169 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 277 |
+| `src/app/api/image-studio/[[...path]]/route.ts` | 232 |
+| `src/app/api/v2/integrations/[[...path]]/route.ts` | 228 |
+| `src/app/api/agentcreator/[[...path]]/route.ts` | 225 |
+| `src/app/api/ai-paths/[[...path]]/route.ts` | 202 |
+| `src/app/api/databases/[[...path]]/route.ts` | 200 |
+| `src/app/api/chatbot/[[...path]]/route.ts` | 165 |
 | `src/app/api/agent/leases/route.ts` | 122 |
-| `src/app/api/kangur/[[...path]]/route.ts` | 63 |
+| `src/app/api/kangur/[[...path]]/route.ts` | 62 |
 | `src/app/api/agent/resources/route.ts` | 59 |
 | `src/app/api/agent/approval-gates/route.ts` | 50 |
 | `src/app/api/marketplace/[resource]/route.ts` | 38 |
@@ -60,23 +60,23 @@ Generated at: 2026-03-21T10:39:04.716Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1708 |
-| `src/features/kangur/ui/components/AddingLesson.tsx` | 1688 |
-| `src/features/kangur/server/ai-tutor-content-locale-scaffold.ts` | 1566 |
-| `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 1540 |
-| `src/features/kangur/server/ai-tutor-native-guide-locale-scaffold.ts` | 1266 |
-| `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx` | 1219 |
+| `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1701 |
+| `src/features/kangur/ui/components/AddingLesson.tsx` | 1681 |
+| `src/features/kangur/server/ai-tutor-content-locale-scaffold.ts` | 1617 |
+| `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 1568 |
+| `src/features/kangur/page-content-catalog.ts` | 1477 |
+| `src/features/kangur/admin/appearance/appearance.copy.ts` | 1396 |
+| `src/features/kangur/server/ai-tutor-native-guide-locale-scaffold.ts` | 1265 |
+| `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx` | 1223 |
 | `src/features/kangur/ui/pages/Game.tsx` | 1143 |
-| `src/features/kangur/admin/components/KangurAiTutorContentSettingsPanel.tsx` | 1131 |
+| `src/features/kangur/admin/components/KangurAiTutorContentSettingsPanel.tsx` | 1141 |
+| `src/features/kangur/lessons/lesson-catalog-i18n.ts` | 1138 |
 | `src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts` | 1128 |
-| `src/features/kangur/page-content-catalog.ts` | 1105 |
 | `src/features/kangur/ui/components/NumberBalanceRushGame.tsx` | 1086 |
 | `src/features/kangur/ui/services/delegated-assignments.ts` | 1081 |
-| `src/features/kangur/ui/components/LogicalThinkingLesson.tsx` | 1069 |
+| `src/features/kangur/ui/components/LogicalThinkingLesson.tsx` | 1061 |
 | `src/app/api/kangur/ai-tutor/chat/handler.ts` | 1046 |
 | `src/features/kangur/ui/components/animations/AddingAnimations.tsx` | 1041 |
 | `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts` | 1041 |
 | `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 1035 |
 | `src/features/kangur/ui/components/KangurPrimaryNavigation.tsx` | 1031 |
-| `src/shared/contracts/cms.ts` | 1023 |
-| `src/features/kangur/ui/components/GeometryDrawingGame.tsx` | 1000 |

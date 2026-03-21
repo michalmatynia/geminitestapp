@@ -7,6 +7,7 @@ test('cms pages list exposes filters and actions accessibly and passes the acces
   page,
 }) => {
   test.setTimeout(240_000);
+  const cmsPagesUiTimeoutMs = 120_000;
 
   await ensureAdminSession(page, '/admin/cms/pages');
 
@@ -23,16 +24,18 @@ test('cms pages list exposes filters and actions accessibly and passes the acces
   });
   const zoneSelector = page.getByRole('combobox', { name: 'Zone selector' });
   const simpleRoutingIndicator = page.getByText('Simple routing');
+  // Cold brokered runs can spend tens of seconds compiling the zone/slugs data path.
+  await expect(page.getByText('Loading zones...')).toBeHidden({ timeout: cmsPagesUiTimeoutMs });
   await expect
     .poll(
       async () => (await zoneSelector.count()) > 0 || (await simpleRoutingIndicator.count()) > 0,
-      { timeout: 20_000 }
+      { timeout: cmsPagesUiTimeoutMs }
     )
     .toBe(true);
   if ((await zoneSelector.count()) > 0) {
-    await expect(zoneSelector).toBeVisible({ timeout: 10_000 });
+    await expect(zoneSelector).toBeVisible({ timeout: 15_000 });
   } else {
-    await expect(simpleRoutingIndicator).toBeVisible({ timeout: 10_000 });
+    await expect(simpleRoutingIndicator).toBeVisible({ timeout: 15_000 });
   }
   await expect(page.getByRole('textbox', { name: 'Search pages by name...' })).toBeVisible({
     timeout: 15_000,

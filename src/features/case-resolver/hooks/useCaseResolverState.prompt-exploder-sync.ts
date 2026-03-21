@@ -31,18 +31,9 @@ import {
   buildCaseResolverFileComparableFingerprint,
   CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
 } from './useCaseResolverState.helpers';
-
-type UpdateWorkspaceOptions = {
-  persistToast?: string;
-  mutationId?: string;
-  source?: string;
-  skipNormalization?: boolean;
-};
-
-type UpdateWorkspaceFn = (
-  updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
-  options?: UpdateWorkspaceOptions
-) => void;
+import type {
+  UseCaseResolverWorkspaceMutationsValue,
+} from './useCaseResolverState.workspace-mutations';
 
 type SetEditingDocumentDraftFn = React.Dispatch<
   React.SetStateAction<CaseResolverFileEditDraft | null>
@@ -297,7 +288,7 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
 }: {
   payload?: CaseResolverPromptExploderPendingPayload | null;
   workspaceFiles: CaseResolverWorkspace['files'];
-  updateWorkspace: UpdateWorkspaceFn;
+  updateWorkspace: UseCaseResolverWorkspaceMutationsValue['updateWorkspace'];
   setEditingDocumentDraft: SetEditingDocumentDraftFn;
   filemakerDatabase: FilemakerDatabase;
   caseResolverCaptureSettings: CaseResolverCaptureSettings;

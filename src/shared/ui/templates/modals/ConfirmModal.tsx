@@ -18,7 +18,7 @@ import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { cn } from '@/shared/utils';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 export interface ConfirmModalProps {
@@ -159,7 +159,11 @@ export function ConfirmModal({
       await Promise.resolve(onConfirm());
       onClose();
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'ConfirmModal',
+        action: 'confirm',
+        level: 'warn',
+      });
       void logSystemEvent({
         level: 'error',
         source: 'ConfirmModal',

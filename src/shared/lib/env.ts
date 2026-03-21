@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-reporting';
 
 
 const captureException = async (
@@ -7,16 +7,17 @@ const captureException = async (
   context: { source: string; context?: Record<string, unknown>; critical?: boolean }
 ): Promise<void> => {
   try {
-    const mod = await import('@/shared/lib/observability/system-logger');
-    await mod.ErrorSystem.captureException(error, {
-      service: context.source,
-      ...context.context,
+    await reportRuntimeCatch(error, {
+      source: context.source,
+      action: 'captureException',
       critical: context.critical,
+      ...(context.context ?? {}),
     });
-  } catch (error) {
-    logClientError(error);
-  
-    // ignore
+  } catch (reportingError) {
+    console.error('[env-validation] Failed to capture exception', reportingError, {
+      originalError: error,
+      context,
+    });
   }
 };
 

@@ -10,7 +10,7 @@ import type {
   TanstackTelemetryBatch,
   TanstackTelemetryEvent,
 } from '@/shared/lib/tanstack-factory-v2.types';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   isSensitiveKey,
   REDACTED_VALUE,
@@ -126,12 +126,27 @@ const sanitizeTags = (tags: unknown): string[] => {
   return next;
 };
 
+const logTanstackTelemetryCatch = (
+  error: unknown,
+  action: string,
+  context?: Record<string, unknown>
+): void => {
+  logClientCatch(error, {
+    source: 'tanstack-telemetry',
+    action,
+    ...(context ?? {}),
+  });
+};
+
 const toStableKey = (queryKey: QueryKey | undefined): string => {
   if (!queryKey) return '[]';
   try {
     return JSON.stringify(queryKey);
   } catch (error) {
-    logClientError(error);
+    logTanstackTelemetryCatch(error, 'serializeQueryKey', {
+      hasQueryKey: queryKey !== undefined,
+      queryKeyType: Array.isArray(queryKey) ? 'array' : typeof queryKey,
+    });
     return String(queryKey);
   }
 };
@@ -199,7 +214,9 @@ const sanitizeContext = (
       sanitized = toRecord(parsed) ?? { value: parsed };
     }
   } catch (error) {
-    logClientError(error);
+    logTanstackTelemetryCatch(error, 'sanitizeContext', {
+      contextKeys: Object.keys(context),
+    });
     sanitized = { error: 'Failed to serialize telemetry context.' };
   }
 
@@ -305,7 +322,7 @@ export const getTanstackFactoryMetaFromBag = (
         : [],
     });
   } catch (error) {
-    logClientError(error);
+    logTanstackTelemetryCatch(error, 'resolveFactoryMetaFromBag');
     return null;
   }
 };
@@ -376,8 +393,10 @@ const flushQueue = async (): Promise<void> => {
       if (navigator.sendBeacon(TELEMETRY_ENDPOINT, blob)) return;
     }
   } catch (error) {
-    logClientError(error);
-  
+    logTanstackTelemetryCatch(error, 'sendBeacon', {
+      eventCount: events.length,
+    });
+
     // Fallback to fetch.
   }
 
@@ -392,8 +411,10 @@ const flushQueue = async (): Promise<void> => {
       keepalive: true,
     });
   } catch (error) {
-    logClientError(error);
-  
+    logTanstackTelemetryCatch(error, 'flushQueue', {
+      eventCount: events.length,
+    });
+
     // Never throw from telemetry transport.
   }
 };

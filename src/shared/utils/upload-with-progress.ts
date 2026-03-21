@@ -4,7 +4,7 @@ import {
   getClientCsrfToken,
   isSameOriginUrl,
 } from '@/shared/lib/security/csrf-client';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 export type UploadWithProgressOptions = {
@@ -27,7 +27,11 @@ const safeJsonParse = <T>(raw: string): T => {
   try {
     return JSON.parse(raw) as T;
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'upload-with-progress',
+      action: 'safeJsonParse',
+      level: 'warn',
+    });
     return {} as T;
   }
 };

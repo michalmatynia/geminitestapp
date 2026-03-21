@@ -7,18 +7,12 @@ import {
 } from './KangurAiTutorWidget.shared';
 
 import type { CSSProperties } from 'react';
-import type {
-  KangurAiTutorGuestIntroStatus,
-  KangurAiTutorHomeOnboardingStatus,
-  KangurAiTutorOnboardingRecord,
-} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type { TutorPanelPositionMode, TutorPanelSnapState } from './KangurAiTutorWidget.shared';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
-
-
-type KangurAiTutorGuestIntroRecord = KangurAiTutorOnboardingRecord<KangurAiTutorGuestIntroStatus>;
-type KangurAiTutorHomeOnboardingRecord =
-  KangurAiTutorOnboardingRecord<KangurAiTutorHomeOnboardingStatus>;
+import type {
+  KangurAiTutorGuestIntroRecord,
+  KangurAiTutorHomeOnboardingRecord,
+} from './KangurAiTutorWidget.types';
 
 export type KangurAiTutorGuestIntroCheckResponse = {
   ok?: boolean;

@@ -3,7 +3,7 @@
 import { aiPathRunRecordSchema, type AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { getAiPathRun, streamAiPathRun } from '@/shared/lib/ai-paths/api/client';
 import { parseAiPathRunErrorSummary } from '@/shared/lib/ai-paths/error-reporting';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 const RUN_DETAIL_POLL_INTERVAL_MS = 2_000;
@@ -313,7 +313,11 @@ const parseMessageEventPayload = (event: MessageEvent): unknown => {
   try {
     return JSON.parse(raw) as unknown;
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'client-run-tracker',
+      action: 'parseMessageEventPayload',
+      runEventType: event.type,
+    });
     return raw;
   }
 };
@@ -345,7 +349,11 @@ const syncTerminalDetail = async (
     const nextSnapshot = resolveSnapshotFromDetailPayload(response.data, record.runId, fallback);
     finalizeRecord(record, nextSnapshot ?? fallback);
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'client-run-tracker',
+      action: 'syncTerminalDetail',
+      runId: record.runId,
+    });
     if (trackRecords.get(record.runId) !== record) return;
     if (isTransientRunDetailError(error instanceof Error ? error.message : null)) {
       finalizeRecord(record, fallback);
@@ -417,7 +425,11 @@ const pollRecord = async (runId: string): Promise<void> => {
     updateRecordSnapshot(record, nextSnapshot);
     schedulePoll(record, RUN_DETAIL_POLL_INTERVAL_MS);
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'client-run-tracker',
+      action: 'pollRecord',
+      runId,
+    });
     const activeRecord = trackRecords.get(runId);
     if (activeRecord !== record) return;
     const errorMessage = error instanceof Error ? error.message : null;
@@ -480,7 +492,11 @@ const startStreaming = (record: TrackRecord): void => {
       eventSource.removeEventListener('error', handleErrorEvent);
     };
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'client-run-tracker',
+      action: 'startStreaming',
+      runId: record.runId,
+    });
     startPolling(record, 0);
   }
 };

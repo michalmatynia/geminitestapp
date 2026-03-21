@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { chromium, devices } from 'playwright';
+import { chromium, devices, type BrowserContextOptions } from 'playwright';
 
 import {
   isTraderaApiIntegrationSlug,
@@ -9,6 +9,7 @@ import { decryptSecret, encryptSecret } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { getTraderaUserInfo } from '@/features/integrations/services/tradera-api-client';
 import { createTraderaBrowserTestUtils } from '@/features/integrations/services/tradera-browser-test-utils';
+import type { PersistedStorageState } from '@/features/integrations/services/tradera-playwright-settings';
 import {
   integrationConnectionTestRequestSchema,
   type IntegrationConnectionTestRequest,
@@ -20,11 +21,8 @@ import { internalError } from '@/shared/errors/app-error';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
-import type { Browser, BrowserContext, Page, BrowserContextOptions } from 'playwright';
+import type { Browser, BrowserContext, Page } from 'playwright';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-
-type PersistedStorageState = NonNullable<Exclude<BrowserContextOptions['storageState'], string>>;
 
 const DEFAULT_MANUAL_LOGIN_TIMEOUT_MS = 240000;
 const MAX_MANUAL_LOGIN_TIMEOUT_MS = 600000;

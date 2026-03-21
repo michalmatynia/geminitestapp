@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface StreamConfig<T = unknown> {
   endpoint: string;
@@ -42,9 +42,10 @@ export function useStreamingQuery<T>(
         config.onMessage?.(data);
         reconnectAttemptsRef.current = 0; // Reset on successful message
       } catch (error) {
-        logClientError(error);
-        logClientError(error instanceof Error ? error : new Error(String(error)), {
-          context: { source: 'useStreamingQuery', action: 'parseStreamingData', level: 'warn' },
+        logClientCatch(error, {
+          source: 'useStreamingQuery',
+          action: 'parseStreamingData',
+          level: 'warn',
         });
       }
     };
@@ -119,9 +120,10 @@ export function useWebSocketQuery<T>(
         queryClient.setQueryData(queryKey, data);
         options?.onMessage?.(data);
       } catch (error) {
-        logClientError(error);
-        logClientError(error instanceof Error ? error : new Error(String(error)), {
-          context: { source: 'useWebSocketQuery', action: 'parseWebSocketData', level: 'warn' },
+        logClientCatch(error, {
+          source: 'useWebSocketQuery',
+          action: 'parseWebSocketData',
+          level: 'warn',
         });
       }
     };

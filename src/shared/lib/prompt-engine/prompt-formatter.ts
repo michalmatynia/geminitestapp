@@ -25,7 +25,7 @@ import {
   validateProgrammaticPromptWithRuntime,
   type PromptValidationExecutionContext,
 } from './prompt-validator';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export type { FormatPromptResult, FormatPromptOptions };
 
@@ -100,7 +100,12 @@ function applyAutofixOperation(prompt: string, operation: PromptAutofixOperation
     const re = new RegExp(operation.pattern, flags);
     return prompt.replace(re, operation.replacement);
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'prompt-formatter',
+      action: 'applyAutofixOperation',
+      operationKind: operation.kind,
+      pattern: operation.pattern,
+    });
     return prompt;
   }
 }
@@ -119,7 +124,11 @@ function applySuggestionFix(prompt: string, suggestion: PromptValidationSimilarP
     const safeReplacement = replacement.replace(/\$/g, '$$');
     return prompt.replace(re, safeReplacement);
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'prompt-formatter',
+      action: 'applySuggestionFix',
+      pattern: suggestion.pattern,
+    });
     return prompt;
   }
 }

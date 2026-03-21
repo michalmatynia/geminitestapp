@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
 export const readDocsTooltipsEnabled = (storageKey: string, defaultValue = false): boolean => {
@@ -11,7 +11,12 @@ export const readDocsTooltipsEnabled = (storageKey: string, defaultValue = false
     if (raw === null) return defaultValue;
     return raw === '1';
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'docs-tooltip-settings',
+      action: 'readDocsTooltipsEnabled',
+      storageKey,
+      level: 'warn',
+    });
     return defaultValue;
   }
 };
@@ -36,8 +41,13 @@ export function useDocsTooltipsSetting(
         try {
           window.localStorage.setItem(storageKey, value ? '1' : '0');
         } catch (error) {
-          logClientError(error);
-        
+          logClientCatch(error, {
+            source: 'docs-tooltip-settings',
+            action: 'writeDocsTooltipsEnabled',
+            storageKey,
+            level: 'warn',
+          });
+
           // No-op when storage is unavailable; keep UI state responsive.
         }
       }

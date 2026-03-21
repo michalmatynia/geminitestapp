@@ -3,7 +3,7 @@
 import { QueryClient } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import type { AiPathRunListResult, AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import {
   listOptimisticAiPathRuns,
   removeOptimisticAiPathRuns,
@@ -56,7 +56,7 @@ describe('optimisticallyInsertAiPathRunInQueueCache', () => {
 
     optimisticallyInsertAiPathRunInQueueCache(queryClient, buildRun());
 
-    const cached = queryClient.getQueryData<{ runs: AiPathRunRecord[]; total: number }>(key);
+    const cached = queryClient.getQueryData<AiPathRunListResult>(key);
     expect(cached?.runs).toHaveLength(1);
     expect(cached?.runs[0].id).toBe('run-1');
     expect(cached?.total).toBe(1);
@@ -82,7 +82,7 @@ describe('optimisticallyInsertAiPathRunInQueueCache', () => {
     const updated = { ...run, status: 'running' as const };
     optimisticallyInsertAiPathRunInQueueCache(queryClient, updated);
 
-    const cached = queryClient.getQueryData<{ runs: AiPathRunRecord[]; total: number }>(key);
+    const cached = queryClient.getQueryData<AiPathRunListResult>(key);
     expect(cached?.runs).toHaveLength(1);
     expect(cached?.total).toBe(1);
     expect(cached?.runs[0].status).toBe('running');
@@ -95,7 +95,7 @@ describe('optimisticallyInsertAiPathRunInQueueCache', () => {
 
     optimisticallyInsertAiPathRunInQueueCache(queryClient, buildRun({ id: 'run-new' }));
 
-    const cached = queryClient.getQueryData<{ runs: AiPathRunRecord[]; total: number }>(key);
+    const cached = queryClient.getQueryData<AiPathRunListResult>(key);
     expect(cached?.runs).toHaveLength(25); // still capped at pageSize
     expect(cached?.runs[0].id).toBe('run-new'); // prepended at front
     expect(cached?.total).toBe(26); // total reflects the new run
@@ -109,7 +109,7 @@ describe('optimisticallyInsertAiPathRunInQueueCache', () => {
 
     optimisticallyInsertAiPathRunInQueueCache(queryClient, buildRun({ status: 'queued' }));
 
-    const cached = queryClient.getQueryData<{ runs: unknown[]; total: number }>(key);
+    const cached = queryClient.getQueryData<AiPathRunListResult>(key);
     expect(cached?.runs).toHaveLength(0);
     expect(cached?.total).toBe(0);
   });
@@ -120,7 +120,7 @@ describe('optimisticallyInsertAiPathRunInQueueCache', () => {
 
     optimisticallyInsertAiPathRunInQueueCache(queryClient, buildRun({ pathId: 'path-1' }));
 
-    const cached = queryClient.getQueryData<{ runs: unknown[]; total: number }>(key);
+    const cached = queryClient.getQueryData<AiPathRunListResult>(key);
     expect(cached?.runs).toHaveLength(0);
     expect(cached?.total).toBe(0);
   });
@@ -141,7 +141,7 @@ describe('optimisticallyInsertAiPathRunInQueueCache', () => {
       buildRun({ meta: { source: 'trigger_button' } })
     );
 
-    const cached = queryClient.getQueryData<{ runs: unknown[]; total: number }>(key);
+    const cached = queryClient.getQueryData<AiPathRunListResult>(key);
     expect(cached?.runs).toHaveLength(0);
     expect(cached?.total).toBe(0);
   });
@@ -154,7 +154,7 @@ describe('optimisticallyInsertAiPathRunInQueueCache', () => {
 
     optimisticallyInsertAiPathRunInQueueCache(queryClient, buildRun());
 
-    const cached = queryClient.getQueryData<{ runs: unknown[]; total: number }>(key);
+    const cached = queryClient.getQueryData<AiPathRunListResult>(key);
     expect(cached?.runs).toHaveLength(0); // not prepended on page 2
     expect(cached?.total).toBe(31); // total updated for correct pagination display
   });
@@ -169,8 +169,8 @@ describe('optimisticallyInsertAiPathRunInQueueCache', () => {
 
     optimisticallyInsertAiPathRunInQueueCache(queryClient, buildRun());
 
-    const cached1 = queryClient.getQueryData<{ runs: unknown[]; total: number }>(key1);
-    const cached2 = queryClient.getQueryData<{ runs: unknown[]; total: number }>(key2);
+    const cached1 = queryClient.getQueryData<AiPathRunListResult>(key1);
+    const cached2 = queryClient.getQueryData<AiPathRunListResult>(key2);
     expect(cached1?.runs).toHaveLength(1);
     expect(cached2?.runs).toHaveLength(1);
   });
@@ -183,7 +183,7 @@ describe('optimisticallyInsertAiPathRunInQueueCache', () => {
 
     optimisticallyInsertAiPathRunInQueueCache(queryClient, { status: 'queued' } as AiPathRunRecord);
 
-    const cached = queryClient.getQueryData<{ runs: unknown[]; total: number }>(key);
+    const cached = queryClient.getQueryData<AiPathRunListResult>(key);
     expect(cached?.runs).toHaveLength(0);
     expect(listOptimisticAiPathRuns()).toHaveLength(0);
   });
@@ -194,7 +194,7 @@ describe('optimisticallyInsertAiPathRunInQueueCache', () => {
 
     optimisticallyInsertAiPathRunInQueueCache(queryClient, { id: 'run-1' } as AiPathRunRecord);
 
-    const cached = queryClient.getQueryData<{ runs: unknown[]; total: number }>(key);
+    const cached = queryClient.getQueryData<AiPathRunListResult>(key);
     expect(cached?.runs).toHaveLength(0);
     expect(listOptimisticAiPathRuns()).toHaveLength(0);
   });
@@ -206,7 +206,7 @@ describe('optimisticallyInsertAiPathRunInQueueCache', () => {
     optimisticallyInsertAiPathRunInQueueCache(queryClient, null as unknown as AiPathRunRecord);
     optimisticallyInsertAiPathRunInQueueCache(queryClient, undefined as unknown as AiPathRunRecord);
 
-    const cached = queryClient.getQueryData<{ runs: unknown[]; total: number }>(key);
+    const cached = queryClient.getQueryData<AiPathRunListResult>(key);
     expect(cached?.runs).toHaveLength(0);
   });
 });

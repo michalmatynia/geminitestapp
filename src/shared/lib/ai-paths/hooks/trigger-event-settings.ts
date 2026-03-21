@@ -18,7 +18,7 @@ import {
   fetchAiPathsSettingsByKeysCached,
   updateAiPathsSetting,
 } from '@/shared/lib/ai-paths/settings-store-client';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export const TRIGGER_SETTINGS_PRELOAD_TIMEOUT_MS = 8_000;
 
@@ -70,8 +70,12 @@ export const buildSelectiveTriggerSettingsData = async (
       preferredPathName = parsed.name.trim();
     }
   } catch (error) {
-    logClientError(error);
-  
+    logClientCatch(error, {
+      source: 'useAiPathTriggerEvent',
+      action: 'parsePreferredPathConfigName',
+      preferredPathId,
+    });
+
     // Keep fallback name when config is malformed.
   }
 
@@ -114,16 +118,13 @@ export const loadTriggerSettingsData = async (args: {
       settingsData: await buildSelectiveTriggerSettingsData(preferredPathId),
     };
   } catch (error) {
-    logClientError(error);
     if (isAppError(error)) {
       throw error;
     }
-    logClientError(error, {
-      context: {
-        source: 'useAiPathTriggerEvent',
-        action: 'selectiveSettingsFallback',
-        preferredPathId,
-      },
+    logClientCatch(error, {
+      source: 'useAiPathTriggerEvent',
+      action: 'selectiveSettingsFallback',
+      preferredPathId,
     });
     return {
       mode: 'full',
@@ -161,7 +162,11 @@ export const loadPathConfigsFromSettings = async (
   try {
     parsedIndex = JSON.parse(indexRaw) as unknown;
   } catch (error) {
-    logClientError(error);
+    logClientCatch(error, {
+      source: 'useAiPathTriggerEvent',
+      action: 'parseSettingsIndex',
+      indexKey: PATH_INDEX_KEY,
+    });
     throw validationError('Invalid AI Paths index payload.', {
       source: 'ai_paths.trigger_payload',
       reason: 'index_invalid_json',

@@ -176,7 +176,7 @@ const normalizeCoachingModeVariant = (value: unknown): KangurAiTutorCoachingMode
     case 'misconception_check':
     case 'review_reflection':
     case 'next_best_action':
-      return normalized as KangurAiTutorCoachingMode;
+      return normalized;
     default:
       return null;
   }
@@ -189,7 +189,7 @@ const normalizeContextStrategy = (value: unknown): 'default' | 'no_kg' | 'native
     case 'default':
     case 'no_kg':
     case 'native_guide_only':
-      return normalized as 'default' | 'no_kg' | 'native_guide_only';
+      return normalized;
     default:
       return null;
   }

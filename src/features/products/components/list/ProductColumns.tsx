@@ -3,8 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowUpDown, Download, Eye, EyeOff } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { memo, type ComponentProps } from 'react';
-
+import { memo } from 'react';
 
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';
@@ -15,6 +14,10 @@ import {
 } from '@/features/products/context/ProductListContext';
 import { resolveProductAiRunFeedbackForList } from '@/features/products/lib/product-ai-run-feedback';
 import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
+import {
+  loadProductIntegrationsAdapter,
+  type ProductTriggerButtonBarProps,
+} from '@/features/products/lib/product-integrations-adapter-loader';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { getDocumentationTooltip } from '@/shared/lib/documentation';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
@@ -46,11 +49,7 @@ const PRODUCT_TABLE_COLUMN_SIZES = {
   actions: 64,
 } as const;
 
-type TriggerButtonBarProps = ComponentProps<
-  typeof import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').TriggerButtonBar
->;
-
-const TriggerButtonBar = dynamic<TriggerButtonBarProps>(
+const TriggerButtonBar = dynamic<ProductTriggerButtonBarProps>(
   () =>
     import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').then(
       (
@@ -62,17 +61,6 @@ const TriggerButtonBar = dynamic<TriggerButtonBarProps>(
     loading: () => null,
   }
 );
-
-type ProductIntegrationsAdapterModule = typeof import('@/shared/lib/product-integrations-adapter');
-
-let productIntegrationsAdapterPromise: Promise<ProductIntegrationsAdapterModule> | null = null;
-
-const loadProductIntegrationsAdapter = (): Promise<ProductIntegrationsAdapterModule> => {
-  if (!productIntegrationsAdapterPromise) {
-    productIntegrationsAdapterPromise = import('@/shared/lib/product-integrations-adapter');
-  }
-  return productIntegrationsAdapterPromise;
-};
 
 const BaseQuickExportButton = dynamic(
   () =>
@@ -539,6 +527,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
       <Button
         variant='ghost'
         onClick={(): void => column.toggleSorting()}
+      aria-sort={column.getIsSorted() === 'asc' ? 'ascending' : column.getIsSorted() === 'desc' ? 'descending' : 'none'}
       >
         Name
         <ArrowUpDown className='ml-2 size-4' aria-hidden='true' />
@@ -563,6 +552,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
         <Button
           variant='ghost'
           onClick={(): void => column.toggleSorting()}
+        aria-sort={column.getIsSorted() === 'asc' ? 'ascending' : column.getIsSorted() === 'desc' ? 'descending' : 'none'}
         >
           Price{' '}
           <span className='ml-1 text-xs text-muted-foreground' suppressHydrationWarning>
@@ -583,6 +573,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
       <Button
         variant='ghost'
         onClick={(): void => column.toggleSorting()}
+      aria-sort={column.getIsSorted() === 'asc' ? 'ascending' : column.getIsSorted() === 'desc' ? 'descending' : 'none'}
       >
         Stock
         <ArrowUpDown className='ml-2 size-4' aria-hidden='true' />
@@ -599,6 +590,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
       <Button
         variant='ghost'
         onClick={(): void => column.toggleSorting()}
+      aria-sort={column.getIsSorted() === 'asc' ? 'ascending' : column.getIsSorted() === 'desc' ? 'descending' : 'none'}
       >
         Created At
         <ArrowUpDown className='ml-2 size-4' aria-hidden='true' />

@@ -14,7 +14,7 @@ import type { Asset3DRecord, Asset3DListFilters } from '@/shared/contracts/viewe
 import { internalError } from '@/shared/errors/app-error';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type {
   FileManagerActions,
@@ -287,13 +287,10 @@ export function FileManagerProvider({
           setSelectedFiles([]);
           toast('Selected files deleted.', { variant: 'success' });
         } catch (error) {
-          logClientError(error);
-          logClientError(error, {
-            context: {
-              source: 'FileManager',
-              action: 'deleteSelected',
-              count: selectedFiles.length,
-            },
+          logClientCatch(error, {
+            source: 'FileManager',
+            action: 'deleteSelected',
+            count: selectedFiles.length,
           });
           toast('Failed to delete selected files.', { variant: 'error' });
         }
@@ -323,9 +320,10 @@ export function FileManagerProvider({
       toast('Tags updated.', { variant: 'success' });
       setBulkTagInput('');
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'FileManager', action: 'applyTags', count: selectedFiles.length },
+      logClientCatch(error, {
+        source: 'FileManager',
+        action: 'applyTags',
+        count: selectedFiles.length,
       });
       toast('Failed to update tags.', { variant: 'error' });
     }
@@ -343,10 +341,7 @@ export function FileManagerProvider({
             await deleteFileMutation.mutateAsync(fileId);
             toast('File deleted successfully.', { variant: 'success' });
           } catch (error) {
-            logClientError(error);
-            logClientError(error, {
-              context: { source: 'FileManager', action: 'deleteFile', fileId },
-            });
+            logClientCatch(error, { source: 'FileManager', action: 'deleteFile', fileId });
             toast('Failed to delete file.', { variant: 'error' });
           }
         },

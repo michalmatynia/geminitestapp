@@ -4,7 +4,7 @@ import { useSaveCatalogMutation } from '@/features/products/hooks/useProductSett
 import type { Language } from '@/shared/contracts/internationalization';
 import type { Catalog } from '@/shared/contracts/products';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 interface CatalogFormState {
   name: string;
@@ -180,10 +180,7 @@ export function useCatalogForm({
 
       toast('Catalog saved.', { variant: 'success' });
     } catch (err) {
-      logClientError(err);
-      logClientError(err, {
-        context: { source: 'CatalogModal', action: 'saveCatalog', catalogId: catalog?.id },
-      });
+      logClientCatch(err, { source: 'CatalogModal', action: 'saveCatalog', catalogId: catalog?.id });
       setError(err instanceof Error ? err.message : 'Failed to save catalog.');
     }
   };

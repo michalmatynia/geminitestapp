@@ -1,5 +1,7 @@
 import type { KangurLessonComponentId } from '@kangur/contracts';
 
+import { localizeKangurPortableLessonBody } from './lessons-i18n';
+
 export type KangurPortableLessonBodySection = {
   id: string;
   title: string;
@@ -405,6 +407,274 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
     practiceNote:
       'Interaktywna gra z kalendarzem pozostaje jeszcze po stronie web. Na mobile masz juz jednak pelny zestaw podstaw potrzebnych do dalszej praktyki.',
   },
+  geometry_basics: {
+    introduction:
+      'Podstawy geometrii uczą patrzeć na figury jak na zestaw punktów, odcinków, boków i kątów. W wersji mobilnej przenosimy najważniejsze pojęcia i obserwacje potrzebne przed bardziej interaktywnymi ćwiczeniami.',
+    sections: [
+      {
+        id: 'intro',
+        title: 'Czym zajmuje się geometria',
+        description:
+          'Geometria opisuje kształty, położenie i wielkość. Zamiast liczyć tylko wynik, patrzysz na to, jak wygląda figura i z jakich elementów się składa.',
+        example: {
+          label: 'Przykład',
+          equation: 'punkt A, odcinek AB, trójkąt ABC',
+          explanation:
+            'To trzy różne obiekty geometryczne: pojedynczy punkt, fragment prostej i cała figura z kilku elementów.',
+        },
+        reminders: [
+          'Geometria pomaga nazywać i porównywać figury.',
+          'Jedna figura może składać się z kilku prostszych elementów.',
+        ],
+      },
+      {
+        id: 'point-line-segment',
+        title: 'Punkt, prosta i odcinek',
+        description:
+          'Punkt oznacza dokładne miejsce. Prosta może biec bez końca w obie strony, a odcinek ma dwa końce i da się zmierzyć jego długość.',
+        example: {
+          label: 'Przykład',
+          equation: 'A •      A-----B',
+          explanation:
+            'Punkt A pokazuje tylko położenie, a odcinek AB ma początek, koniec i konkretną długość.',
+        },
+        reminders: [
+          'Punkt nie ma długości ani szerokości.',
+          'Odcinek jest częścią prostej między dwoma punktami.',
+        ],
+      },
+      {
+        id: 'sides-angles',
+        title: 'Boki i kąty',
+        description:
+          'Bok to prosty fragment figury, a kąt powstaje tam, gdzie spotykają się dwa boki. Dzięki temu możesz opisywać, jak zbudowana jest figura.',
+        example: {
+          label: 'Przykład',
+          equation: 'Trójkąt ma 3 boki i 3 kąty',
+          explanation:
+            'Każdy wierzchołek trójkąta tworzy kąt, a odcinki między wierzchołkami są bokami figury.',
+        },
+        reminders: [
+          'Liczba boków często pomaga rozpoznać figurę.',
+          'Kąty pokazują, jak boki ustawiają się względem siebie.',
+        ],
+      },
+      {
+        id: 'remember',
+        title: 'Zapamietaj',
+        description:
+          'Kilka podstawowych pojęć wraca w prawie każdej dalszej lekcji geometrii, więc warto je od razu utrwalić.',
+        reminders: [
+          'Punkt pokazuje miejsce.',
+          'Odcinek ma dwa końce i da się zmierzyć.',
+          'Boki i kąty pomagają opisać figurę.',
+        ],
+      },
+    ],
+    practiceNote:
+      'Bardziej interaktywne warsztaty geometrii zostają jeszcze po stronie web. Na mobile masz już jednak słownictwo i kolejność pojęć potrzebnych przed dalszą praktyką.',
+  },
+  geometry_shapes: {
+    introduction:
+      'Figury geometryczne różnią się liczbą boków, kątów i tym, czy mają proste czy zaokrąglone brzegi. Ta lekcja porządkuje najważniejsze kształty i ich cechy.',
+    sections: [
+      {
+        id: 'basic-shapes',
+        title: 'Najczęstsze figury',
+        description:
+          'Na początku warto rozpoznawać podstawowe figury: trójkąt, kwadrat, prostokąt i koło. Każda z nich ma cechy, które łatwo zauważyć.',
+        example: {
+          label: 'Przykład',
+          equation: 'trójkąt / kwadrat / prostokąt / koło',
+          explanation:
+            'Trójkąt ma 3 boki, kwadrat i prostokąt mają po 4 boki, a koło nie ma boków ani wierzchołków.',
+        },
+        reminders: [
+          'Najpierw policz boki albo zauważ, że figura jest okrągła.',
+          'Wierzchołki pomagają odróżniać figury o prostych bokach.',
+        ],
+      },
+      {
+        id: 'quadrilaterals',
+        title: 'Kwadrat i prostokąt',
+        description:
+          'Kwadrat i prostokąt należą do figur czworokątnych, ale nie są takie same. Obie mają 4 kąty proste, jednak kwadrat ma wszystkie boki równe.',
+        example: {
+          label: 'Przykład',
+          equation: 'kwadrat: 4 równe boki / prostokąt: 2 pary równych boków',
+          explanation:
+            'Jeśli wszystkie boki są tej samej długości, to kwadrat. Jeśli równe są tylko pary boków naprzeciw siebie, to prostokąt.',
+        },
+        reminders: [
+          'Kwadrat jest szczególnym rodzajem prostokąta.',
+          'Długości boków pomagają odróżnić podobne figury.',
+        ],
+      },
+      {
+        id: 'curved-shapes',
+        title: 'Koło, owal i inne kształty',
+        description:
+          'Nie każda figura ma proste boki. Koło i owal rozpoznajesz po gładkim brzegu, a romb po czterech bokach i charakterystycznym pochyleniu.',
+        example: {
+          label: 'Przykład',
+          equation: 'koło ≠ owal',
+          explanation:
+            'Koło jest równe w każdym kierunku, a owal jest bardziej wydłużony. Obie figury nie mają wierzchołków.',
+        },
+        reminders: [
+          'Brak wierzchołków to ważna wskazówka przy kole i owalu.',
+          'Romb ma 4 boki tej samej długości, ale nie musi mieć kątów prostych.',
+        ],
+      },
+      {
+        id: 'remember',
+        title: 'Zapamietaj',
+        description:
+          'Przy rozpoznawaniu figur najlepiej porównywać kilka cech naraz, a nie tylko nazwę albo ogólny wygląd.',
+        reminders: [
+          'Policz boki i wierzchołki.',
+          'Sprawdź, czy boki są równe i czy są kąty proste.',
+          'Zauważ, czy figura ma proste czy zaokrąglone brzegi.',
+        ],
+      },
+    ],
+    practiceNote:
+      'Gra do rysowania figur pozostaje jeszcze po stronie web. Mobilna lekcja daje już jednak porządek rozpoznawania i porównywania kształtów.',
+  },
+  geometry_symmetry: {
+    introduction:
+      'Symetria pomaga zauważyć, kiedy figura składa się z dwóch pasujących do siebie połówek. To ważne zarówno przy oglądaniu kształtów, jak i przy ich rysowaniu.',
+    sections: [
+      {
+        id: 'intro',
+        title: 'Co to jest symetria',
+        description:
+          'Figura jest symetryczna, gdy można ją podzielić tak, aby jedna część pasowała do drugiej jak odbicie w lustrze.',
+        example: {
+          label: 'Przykład',
+          equation: '🦋',
+          explanation:
+            'Skrzydła motyla po lewej i prawej stronie są do siebie podobne, dlatego łatwo zauważyć symetrię.',
+        },
+        reminders: [
+          'Symetria nie oznacza, że wszystko wygląda identycznie z każdej strony.',
+          'Szukasz dwóch połówek pasujących do siebie po złożeniu lub odbiciu.',
+        ],
+      },
+      {
+        id: 'axis',
+        title: 'Oś symetrii',
+        description:
+          'Oś symetrii to linia, która dzieli figurę na dwie pasujące części. Czasem jest pionowa, czasem pozioma, a czasem ukośna.',
+        example: {
+          label: 'Przykład',
+          equation: 'kwadrat: 4 osie symetrii',
+          explanation:
+            'Kwadrat ma osie pionową, poziomą i dwie ukośne, bo po każdej z tych linii obie części nadal do siebie pasują.',
+        },
+        reminders: [
+          'Nie każda figura ma tylko jedną oś symetrii.',
+          'Jeśli po złożeniu połówki się nie pokrywają, to nie jest oś symetrii.',
+        ],
+      },
+      {
+        id: 'mirror',
+        title: 'Odbicie lustrzane',
+        description:
+          'Przy odbiciu lustrzanym każdy punkt po jednej stronie osi ma swój odpowiednik po drugiej stronie w tej samej odległości.',
+        example: {
+          label: 'Przykład',
+          equation: '● | ●',
+          explanation:
+            'Dwa punkty po obu stronach osi są symetryczne, jeśli są tak samo daleko od linii odbicia.',
+        },
+        reminders: [
+          'Odbicie nie przesuwa figury dowolnie, tylko odwraca ją względem osi.',
+          'Odległość od osi po obu stronach musi być taka sama.',
+        ],
+      },
+      {
+        id: 'remember',
+        title: 'Zapamietaj',
+        description:
+          'Najlepszy sposób sprawdzania symetrii to szukanie osi i porównywanie odpowiadających sobie punktów lub boków.',
+        reminders: [
+          'Najpierw wskaż możliwą oś symetrii.',
+          'Potem porównaj lewą i prawą albo górną i dolną część figury.',
+          'Brak dopasowania po jednej stronie oznacza brak symetrii względem tej osi.',
+        ],
+      },
+    ],
+    practiceNote:
+      'Interaktywne odbicia lustrzane zostają jeszcze po stronie web. Na mobile możesz już przećwiczyć sposób myślenia potrzebny do znajdowania osi symetrii.',
+  },
+  geometry_perimeter: {
+    introduction:
+      'Obwód to długość całej drogi wokół figury. Ta lekcja uczy, jak dodawać boki krok po kroku i pilnować, aby wynik miał sens.',
+    sections: [
+      {
+        id: 'intro',
+        title: 'Co to jest obwód',
+        description:
+          'Obwód figury otrzymujesz, gdy dodasz długości wszystkich jej boków. To tak, jakbyś obchodził figurę dookoła i liczył całą trasę.',
+        example: {
+          label: 'Przykład',
+          equation: '3 cm + 2 cm + 3 cm + 2 cm = 10 cm',
+          explanation:
+            'Dodajesz każdy bok prostokąta i dostajesz całkowitą długość brzegu figury.',
+        },
+        reminders: [
+          'Obwód to suma wszystkich boków.',
+          'Wynik powinien być zapisany w tej samej jednostce co boki.',
+        ],
+      },
+      {
+        id: 'rectangles',
+        title: 'Prostokąt i kwadrat',
+        description:
+          'W prostokącie przeciwległe boki są równe, a w kwadracie wszystkie boki są równe. Dzięki temu łatwiej planować dodawanie.',
+        example: {
+          label: 'Przykład',
+          equation: 'kwadrat 4 cm + 4 cm + 4 cm + 4 cm = 16 cm',
+          explanation:
+            'Jeśli wszystkie boki są takie same, możesz powtarzać tę samą długość zamiast szukać każdej osobno.',
+        },
+        reminders: [
+          'Przy prostokącie często pojawiają się dwie pary tych samych boków.',
+          'Przy kwadracie wszystkie cztery boki mają tę samą długość.',
+        ],
+      },
+      {
+        id: 'step-by-step',
+        title: 'Liczenie krok po kroku',
+        description:
+          'Najbezpieczniej zapisać wszystkie boki w kolejności i dopiero potem dodać liczby. To zmniejsza ryzyko pominięcia któregoś fragmentu.',
+        example: {
+          label: 'Przykład',
+          equation: '5 cm + 1 cm + 2 cm + 1 cm + 5 cm + 2 cm',
+          explanation:
+            'Przy bardziej złożonych figurach przechodzisz po brzegu jeden bok po drugim, aż wrócisz do punktu startu.',
+        },
+        reminders: [
+          'Nie pomijaj żadnego boku.',
+          'Zacznij w jednym miejscu i idź wokół figury w ustalonym kierunku.',
+        ],
+      },
+      {
+        id: 'remember',
+        title: 'Zapamietaj',
+        description:
+          'Obwód jest prosty do policzenia, jeśli konsekwentnie patrzysz na każdy bok i pilnujesz jednostek.',
+        reminders: [
+          'Dodaj wszystkie boki dokładnie raz.',
+          'Sprawdź, czy wynik ma poprawną jednostkę.',
+          'Przy figurach równobocznych możesz wykorzystać powtarzającą się długość.',
+        ],
+      },
+    ],
+    practiceNote:
+      'Mobilna lekcja porządkuje sposób liczenia obwodu, ale bardziej rozbudowane zadania rysunkowe pozostają jeszcze po stronie web.',
+  },
   logical_thinking: {
     introduction:
       'Myslenie logiczne pomaga porzadkowac informacje, szukac zasad i wyciagac wnioski krok po kroku. To wspolna baza dla zagadek, matematyki i codziennego rozwiazywania problemow.',
@@ -770,4 +1040,10 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
 
 export const getKangurPortableLessonBody = (
   componentId: KangurLessonComponentId,
-): KangurPortableLessonBody | null => KANGUR_PORTABLE_LESSON_BODIES[componentId] ?? null;
+  locale?: string | null | undefined,
+): KangurPortableLessonBody | null =>
+  localizeKangurPortableLessonBody(
+    componentId,
+    KANGUR_PORTABLE_LESSON_BODIES[componentId] ?? null,
+    locale,
+  );

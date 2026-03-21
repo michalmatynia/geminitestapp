@@ -9,10 +9,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { KangurMobileI18nProvider } from '../i18n/kangurMobileI18n';
 
 const {
+  getKangurPortableLessonBodyMock,
   useLessonsScreenBootStateMock,
   useKangurMobileLessonsMock,
   useLocalSearchParamsMock,
 } = vi.hoisted(() => ({
+  getKangurPortableLessonBodyMock: vi.fn(),
   useLessonsScreenBootStateMock: vi.fn(),
   useKangurMobileLessonsMock: vi.fn(),
   useLocalSearchParamsMock: vi.fn(),
@@ -60,18 +62,7 @@ vi.mock('expo-router', () => ({
 }));
 
 vi.mock('@kangur/core', () => ({
-  getKangurPortableLessonBody: vi.fn(() => ({
-    introduction: 'Najpierw zobacz, jak przesuwaja sie wskazowki.',
-    practiceNote: 'Po lekcji przejdz od razu do krotszego treningu zegara.',
-    sections: [
-      {
-        description: 'Zacznij od pelnych godzin.',
-        id: 'sec-1',
-        reminders: ['Najpierw patrz na krotsza wskazowke.'],
-        title: 'Pelne godziny',
-      },
-    ],
-  })),
+  getKangurPortableLessonBody: getKangurPortableLessonBodyMock,
   getKangurPracticeOperationForLessonComponent: vi.fn(() => 'clock'),
 }));
 
@@ -116,6 +107,51 @@ describe('KangurLessonsScreen', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useLocalSearchParamsMock.mockReturnValue({});
+    getKangurPortableLessonBodyMock.mockImplementation((_: string, locale?: string) => {
+      if (locale === 'de') {
+        return {
+          introduction: 'Schau zuerst, wie sich die Zeiger bewegen.',
+          practiceNote:
+            'Nach der Lektion kannst du direkt in das kuerzere Uhrtraining wechseln.',
+          sections: [
+            {
+              description: 'Beginne mit vollen Stunden.',
+              id: 'sec-1',
+              reminders: ['Schau zuerst auf den kurzen Zeiger.'],
+              title: 'Volle Stunden',
+            },
+          ],
+        };
+      }
+
+      if (locale === 'en') {
+        return {
+          introduction: 'First watch how the hands move.',
+          practiceNote: 'After the lesson, go straight into the shorter clock practice.',
+          sections: [
+            {
+              description: 'Start with full hours.',
+              id: 'sec-1',
+              reminders: ['Look at the short hand first.'],
+              title: 'Full hours',
+            },
+          ],
+        };
+      }
+
+      return {
+        introduction: 'Najpierw zobacz, jak przesuwaja sie wskazowki.',
+        practiceNote: 'Po lekcji przejdz od razu do krotszego treningu zegara.',
+        sections: [
+          {
+            description: 'Zacznij od pelnych godzin.',
+            id: 'sec-1',
+            reminders: ['Najpierw patrz na krotsza wskazowke.'],
+            title: 'Pelne godziny',
+          },
+        ],
+      };
+    });
     useKangurMobileLessonsMock.mockReturnValue({
       focusToken: 'clock',
       lessons: [mockLessonItem],
@@ -165,5 +201,16 @@ describe('KangurLessonsScreen', () => {
     expect(screen.getByText('Lernen und Wiederholen')).toBeTruthy();
     expect(screen.getByText('Lektionen werden geladen')).toBeTruthy();
     expect(screen.getByText('Die Themenliste und der Beherrschungsstand werden geladen.')).toBeTruthy();
+  });
+
+  it('passes the active locale into the lesson body resolver and renders German body copy', () => {
+    useLessonsScreenBootStateMock.mockReturnValue(false);
+
+    renderLessonsScreen('de');
+
+    expect(getKangurPortableLessonBodyMock).toHaveBeenCalledWith('clock', 'de');
+    expect(screen.getByText('Schau zuerst, wie sich die Zeiger bewegen.')).toBeTruthy();
+    expect(screen.getByText('Volle Stunden')).toBeTruthy();
+    expect(screen.getByText('Nach der Lektion kannst du direkt in das kuerzere Uhrtraining wechseln.')).toBeTruthy();
   });
 });

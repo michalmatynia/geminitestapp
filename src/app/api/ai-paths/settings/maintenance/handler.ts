@@ -6,16 +6,14 @@ import {
   applyAiPathsSettingsMaintenance,
   inspectAiPathsSettingsMaintenance,
 } from '@/features/ai/ai-paths/server';
+import type { AiPathsMaintenanceActionId } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
-type MaintenanceActionId = (typeof AI_PATHS_MAINTENANCE_ACTION_IDS)[number];
-
 const DEPRECATED_MAINTENANCE_ACTION_ID_ALIASES = {
   normalize_runtime_kernel_mode: 'normalize_runtime_kernel_settings',
-} as const satisfies Record<string, MaintenanceActionId>;
+} as const satisfies Record<string, AiPathsMaintenanceActionId>;
 
 type DeprecatedMaintenanceActionId = keyof typeof DEPRECATED_MAINTENANCE_ACTION_ID_ALIASES;
 
@@ -29,10 +27,10 @@ const applyMaintenancePayloadSchema = z.object({
 });
 
 const normalizeMaintenanceActionIds = (
-  actionIds: Array<MaintenanceActionId | DeprecatedMaintenanceActionId> | undefined
-): MaintenanceActionId[] | undefined => {
+  actionIds: Array<AiPathsMaintenanceActionId | DeprecatedMaintenanceActionId> | undefined
+): AiPathsMaintenanceActionId[] | undefined => {
   if (!actionIds || actionIds.length === 0) return undefined;
-  const normalizedActionIds = new Set<MaintenanceActionId>();
+  const normalizedActionIds = new Set<AiPathsMaintenanceActionId>();
   actionIds.forEach((actionId) => {
     if (actionId === 'normalize_runtime_kernel_mode') {
       normalizedActionIds.add(

@@ -210,6 +210,28 @@ interface TutorDrawingJsonResponse {
   };
 }
 
+const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const isTutorDrawingJsonResponse = (value: unknown): value is TutorDrawingJsonResponse => {
+  if (!isPlainRecord(value) || typeof value['message'] !== 'string') {
+    return false;
+  }
+
+  const drawing = value['drawing'];
+  if (drawing === undefined) {
+    return true;
+  }
+
+  return (
+    isPlainRecord(drawing) &&
+    typeof drawing['svg'] === 'string' &&
+    (drawing['title'] === undefined || typeof drawing['title'] === 'string') &&
+    (drawing['caption'] === undefined || typeof drawing['caption'] === 'string') &&
+    (drawing['alt'] === undefined || typeof drawing['alt'] === 'string')
+  );
+};
+
 export const extractTutorDrawingArtifactsFromJson = (
   jsonText: string
 ): {
@@ -217,7 +239,12 @@ export const extractTutorDrawingArtifactsFromJson = (
   artifacts: KangurAiTutorMessageArtifact[];
 } => {
   try {
-    const parsed = JSON.parse(jsonText) as unknown as TutorDrawingJsonResponse;
+    const parsedJson = JSON.parse(jsonText) as unknown;
+    if (!isTutorDrawingJsonResponse(parsedJson)) {
+      return { message: '', artifacts: [] };
+    }
+
+    const parsed = parsedJson;
     const artifacts: KangurAiTutorMessageArtifact[] = [];
 
     if (parsed.drawing?.svg) {

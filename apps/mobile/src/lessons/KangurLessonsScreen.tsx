@@ -226,7 +226,7 @@ const getMasteryTone = (badgeAccent: string): Tone => {
 };
 
 export function KangurLessonsScreen(): React.JSX.Element {
-  const { copy } = useKangurMobileI18n();
+  const { copy, locale } = useKangurMobileI18n();
   const params = useLocalSearchParams<{ focus?: string | string[] }>();
   const rawFocusParam = Array.isArray(params.focus) ? params.focus[0] : params.focus;
   const normalizedRouteFocusToken =
@@ -243,7 +243,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
   const isPreparingLessonsView = useLessonsScreenBootState(lessonsViewKey);
   const selectedLessonBody =
     !isPreparingLessonsView && selectedLesson
-      ? getKangurPortableLessonBody(selectedLesson.lesson.componentId)
+      ? getKangurPortableLessonBody(selectedLesson.lesson.componentId, locale)
       : null;
   const selectedPracticeOperation =
     !isPreparingLessonsView && selectedLesson

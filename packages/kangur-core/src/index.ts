@@ -10,6 +10,7 @@ export {
   buildActiveKangurLessonAssignmentsByComponent,
   buildCompletedKangurLessonAssignmentsByComponent,
   getKangurLessonMasteryPresentation,
+  getLocalizedKangurPortableLessons,
   orderKangurLessonsByAssignmentPriority,
   resolveFocusedKangurLessonId,
   type KangurLessonAssignmentSnapshot,

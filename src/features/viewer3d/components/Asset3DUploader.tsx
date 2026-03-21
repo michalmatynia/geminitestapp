@@ -19,7 +19,7 @@ import {
   UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { uploadAsset3DFile } from '../api';
 import { useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';
@@ -159,10 +159,7 @@ export function Asset3DUploader({ className }: Asset3DUploaderProps): React.JSX.
       );
       onUpload(uploaded);
     } catch (err) {
-      logClientError(err);
-      logClientError(err, {
-        context: { source: 'Asset3DUploader', action: 'handleUpload', filename: file.name },
-      });
+      logClientCatch(err, { source: 'Asset3DUploader', action: 'handleUpload', filename: file.name });
       setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setIsUploading(false);

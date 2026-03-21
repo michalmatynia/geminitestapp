@@ -14,7 +14,7 @@ export const syncChatbotSessions: DatabaseSyncHandler = async ({ mongo, prisma, 
     .toArray();
   const data = docs
     .map((doc): Prisma.ChatbotSessionCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       return {
         id,
@@ -26,7 +26,7 @@ export const syncChatbotSessions: DatabaseSyncHandler = async ({ mongo, prisma, 
     .filter((item): item is Prisma.ChatbotSessionCreateManyInput => item !== null);
 
   const messages = docs.flatMap((doc) => {
-    const sessionId = normalizeId(doc as unknown as Record<string, unknown>);
+    const sessionId = normalizeId(doc as Record<string, unknown>);
     if (!sessionId || !doc.messages) return [];
     return doc.messages.map((message) => ({
       sessionId,
@@ -55,7 +55,7 @@ export const syncChatbotJobs: DatabaseSyncHandler = async ({
   const docs = await mongo.collection<MongoChatbotJobDoc>('chatbot_jobs').find({}).toArray();
   const data = docs
     .map((doc): Prisma.ChatbotJobCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       const sessionId = doc.sessionId;
       if (!id || !sessionId) return null;
       return {
@@ -98,7 +98,7 @@ export const syncChatbotSessionsPrismaToMongo: DatabaseSyncHandler = async ({ mo
   const collection = mongo.collection<MongoChatbotSessionDoc>('chatbot_sessions');
   const deleted = await collection.deleteMany({});
   if (docs.length) {
-    await collection.insertMany(docs as unknown as MongoChatbotSessionDoc[]);
+    await collection.insertMany(docs as MongoChatbotSessionDoc[]);
   }
   return {
     sourceCount: rows.length,
@@ -125,7 +125,7 @@ export const syncChatbotJobsPrismaToMongo: DatabaseSyncHandler = async ({ mongo,
   const collection = mongo.collection<MongoChatbotJobDoc>('chatbot_jobs');
   const deleted = await collection.deleteMany({});
   if (docs.length) {
-    await collection.insertMany(docs as unknown as MongoChatbotJobDoc[]);
+    await collection.insertMany(docs as MongoChatbotJobDoc[]);
   }
   return {
     sourceCount: rows.length,

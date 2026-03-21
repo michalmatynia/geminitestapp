@@ -5,6 +5,9 @@ import type {
   KangurProgressState,
 } from '@kangur/contracts';
 
+import { getLocalizedKangurPortableLesson } from './lessons-i18n';
+import { localizeKangurCoreText } from './profile-i18n';
+
 export type KangurPortableLesson = Pick<
   KangurLesson,
   'id' | 'componentId' | 'title' | 'description' | 'emoji' | 'sortOrder'
@@ -21,6 +24,49 @@ export type KangurLessonAssignmentSnapshot = KangurAssignmentSnapshot & {
 };
 
 const KANGUR_LESSON_SORT_ORDER_GAP = 1000;
+
+const KANGUR_LESSON_MASTERY_COPY = {
+  completed: {
+    de: 'Abgeschlossen',
+    en: 'Completed',
+    pl: 'Ukończono',
+  },
+  inProgress: {
+    de: 'In Arbeit',
+    en: 'In progress',
+    pl: 'W trakcie',
+  },
+  lastScore: {
+    de: 'letztes Ergebnis',
+    en: 'last score',
+    pl: 'ostatni wynik',
+  },
+  mastered: {
+    de: 'Beherrscht',
+    en: 'Mastered',
+    pl: 'Opanowane',
+  },
+  newLabel: {
+    de: 'Neu',
+    en: 'New',
+    pl: 'Nowa',
+  },
+  noPractice: {
+    de: 'Noch keine gespeicherte Uebung',
+    en: 'No practice saved yet',
+    pl: 'Brak zapisanej praktyki',
+  },
+  repeat: {
+    de: 'Wiederhole',
+    en: 'Review',
+    pl: 'Powtórz',
+  },
+  bestScore: {
+    de: 'bestes Ergebnis',
+    en: 'best score',
+    pl: 'najlepszy wynik',
+  },
+} as const;
 
 export const KANGUR_PORTABLE_LESSONS: readonly KangurPortableLesson[] = [
   {
@@ -145,6 +191,11 @@ export const KANGUR_PORTABLE_LESSONS: readonly KangurPortableLesson[] = [
   },
 ] as const;
 
+export const getLocalizedKangurPortableLessons = (
+  locale?: string | null | undefined,
+): readonly KangurPortableLesson[] =>
+  KANGUR_PORTABLE_LESSONS.map((lesson) => getLocalizedKangurPortableLesson(lesson, locale));
+
 const KANGUR_LESSON_FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
   adding: 'adding',
   addition: 'adding',
@@ -217,35 +268,36 @@ export const resolveFocusedKangurLessonId = <
 export const getKangurLessonMasteryPresentation = (
   lesson: Pick<KangurLesson, 'componentId'>,
   progress: Pick<KangurProgressState, 'lessonMastery'>,
+  locale?: string | null | undefined,
 ): KangurLessonMasteryPresentation => {
   const mastery = progress.lessonMastery[lesson.componentId];
   if (!mastery) {
     return {
-      statusLabel: 'Nowa',
-      summaryLabel: 'Brak zapisanej praktyki',
+      statusLabel: localizeKangurCoreText(KANGUR_LESSON_MASTERY_COPY.newLabel, locale),
+      summaryLabel: localizeKangurCoreText(KANGUR_LESSON_MASTERY_COPY.noPractice, locale),
       badgeAccent: 'slate',
     };
   }
 
   if (mastery.masteryPercent >= 85) {
     return {
-      statusLabel: `Opanowane ${mastery.masteryPercent}%`,
-      summaryLabel: `Ukończono ${mastery.completions}x · najlepszy wynik ${mastery.bestScorePercent}%`,
+      statusLabel: `${localizeKangurCoreText(KANGUR_LESSON_MASTERY_COPY.mastered, locale)} ${mastery.masteryPercent}%`,
+      summaryLabel: `${localizeKangurCoreText(KANGUR_LESSON_MASTERY_COPY.completed, locale)} ${mastery.completions}x · ${localizeKangurCoreText(KANGUR_LESSON_MASTERY_COPY.bestScore, locale)} ${mastery.bestScorePercent}%`,
       badgeAccent: 'emerald',
     };
   }
 
   if (mastery.masteryPercent >= 60) {
     return {
-      statusLabel: `W trakcie ${mastery.masteryPercent}%`,
-      summaryLabel: `Ukończono ${mastery.completions}x · ostatni wynik ${mastery.lastScorePercent}%`,
+      statusLabel: `${localizeKangurCoreText(KANGUR_LESSON_MASTERY_COPY.inProgress, locale)} ${mastery.masteryPercent}%`,
+      summaryLabel: `${localizeKangurCoreText(KANGUR_LESSON_MASTERY_COPY.completed, locale)} ${mastery.completions}x · ${localizeKangurCoreText(KANGUR_LESSON_MASTERY_COPY.lastScore, locale)} ${mastery.lastScorePercent}%`,
       badgeAccent: 'amber',
     };
   }
 
   return {
-    statusLabel: `Powtórz ${mastery.masteryPercent}%`,
-    summaryLabel: `Ukończono ${mastery.completions}x · ostatni wynik ${mastery.lastScorePercent}%`,
+    statusLabel: `${localizeKangurCoreText(KANGUR_LESSON_MASTERY_COPY.repeat, locale)} ${mastery.masteryPercent}%`,
+    summaryLabel: `${localizeKangurCoreText(KANGUR_LESSON_MASTERY_COPY.completed, locale)} ${mastery.completions}x · ${localizeKangurCoreText(KANGUR_LESSON_MASTERY_COPY.lastScore, locale)} ${mastery.lastScorePercent}%`,
     badgeAccent: 'rose',
   };
 };

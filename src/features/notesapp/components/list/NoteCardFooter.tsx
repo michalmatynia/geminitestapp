@@ -3,21 +3,17 @@
 import React from 'react';
 
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
-import type { RelatedNote, NoteRelationRecord } from '@/shared/contracts/notes';
+import type {
+  NoteRelationWithSource,
+  NoteRelationWithTarget,
+  RelatedNote,
+} from '@/shared/contracts/notes';
 import { Breadcrumbs } from '@/shared/ui';
 
 import { useNoteCardHeaderRuntime } from './NoteCardHeader';
 import { buildBreadcrumbPath, darkenColor } from '../../utils';
 
 type BreadcrumbItem = { id: string | null; name: string };
-
-type NoteRelationWithTarget = NoteRelationRecord & {
-  targetNote?: RelatedNote | undefined;
-};
-
-type NoteRelationWithSource = NoteRelationRecord & {
-  sourceNote?: RelatedNote | undefined;
-};
 
 export function NoteCardFooter(): React.JSX.Element | null {
   const { note, backgroundColor, relatedNoteStyle } = useNoteCardHeaderRuntime();

@@ -21,7 +21,7 @@ import {
   LoadingState,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 type FrontAppOption = FrontPageSelectableApp;
 
@@ -61,10 +61,7 @@ function AdminFrontManageContent({
       });
       toast('Front page updated', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AdminFrontManagePage', action: 'saveSettings' },
-      });
+      logClientCatch(error, { source: 'AdminFrontManagePage', action: 'saveSettings' });
       toast('Failed to save front page setting', { variant: 'error' });
     }
   };

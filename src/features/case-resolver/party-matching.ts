@@ -1,4 +1,5 @@
 import type { FilemakerAddress, FilemakerDatabase } from '@/features/filemaker/types';
+import type { FilemakerAddressFields } from '@/shared/contracts/filemaker';
 import type { CountryOption } from '@/shared/contracts/internationalization';
 import type { PromptExploderCaseResolverPartyCandidate } from '@/shared/contracts/prompt-exploder';
 
@@ -329,14 +330,7 @@ export const findExistingFilemakerPartyReference = (
   return null;
 };
 
-type AddressInput = {
-  street: string;
-  streetNumber: string;
-  city: string;
-  postalCode: string;
-  country: string;
-  countryId: string;
-};
+type AddressInput = FilemakerAddressFields;
 
 const hasAddressData = (value: AddressInput): boolean =>
   Boolean(

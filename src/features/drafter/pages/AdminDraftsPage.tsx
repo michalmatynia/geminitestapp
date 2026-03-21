@@ -20,7 +20,7 @@ import {
   useToast,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
   DrafterProvider,
@@ -57,9 +57,10 @@ function DraftList(): React.JSX.Element {
       await deleteDraftMutation.mutateAsync(draftToDelete);
       toast('Draft deleted successfully', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'DraftList', action: 'deleteDraft', draftId: draftToDelete },
+      logClientCatch(error, {
+        source: 'DraftList',
+        action: 'deleteDraft',
+        draftId: draftToDelete,
       });
       toast('Failed to delete draft', { variant: 'error' });
     } finally {

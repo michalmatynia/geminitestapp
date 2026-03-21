@@ -1,12 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PauseIcon, PlayIcon, RefreshCwIcon } from 'lucide-react';
 
 import { Badge, Button, Card, ListPanel, LoadingState } from '@/features/kangur/shared/ui';
 import { api } from '@/shared/lib/api-client';
 import type { QueueHealthStatus } from '@/shared/contracts/jobs';
-import { safeSetInterval } from '@/shared/lib/timers';
+import { safeClearTimeout, safeSetInterval, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 
 const REFRESH_INTERVAL_MS = 10_000;
 const QUEUE_PANEL_REQUEST_TIMEOUT_MS = 60_000;
@@ -65,6 +65,7 @@ export function KangurSocialPipelineQueuePanel({
   const [togglingPause, setTogglingPause] = useState(false);
   const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const refreshTimeoutRef = useRef<SafeTimerId | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -101,13 +102,24 @@ export function KangurSocialPipelineQueuePanel({
     return () => clearInterval(interval);
   }, [fetchData]);
 
+  useEffect(() => {
+    return () => {
+      safeClearTimeout(refreshTimeoutRef.current);
+      refreshTimeoutRef.current = null;
+    };
+  }, []);
+
   const handleTrigger = useCallback(async () => {
     setTriggering(true);
     try {
       await api.post('/api/kangur/social-pipeline/trigger', undefined, {
         timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS,
       });
-      setTimeout(() => void fetchData(), 1500);
+      safeClearTimeout(refreshTimeoutRef.current);
+      refreshTimeoutRef.current = safeSetTimeout(() => {
+        refreshTimeoutRef.current = null;
+        void fetchData();
+      }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to trigger pipeline.');
     } finally {

@@ -31,7 +31,7 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useOptionalKangurAiTutor: useOptionalKangurAiTutorMock,
 }));
 
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/__tests__/test-utils';
 import { KangurTestSuitePlayer } from '@/features/kangur/ui/components/KangurTestSuitePlayer';
 import type { KangurTestQuestion, KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
 

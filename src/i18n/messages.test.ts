@@ -66,12 +66,45 @@ describe('site messages', () => {
       'Завершити вправу ✅',
     );
     expect(messages.KangurCmsRuntime.result.title).toBe('Чудова робота, {playerName}!');
+    expect(messages.KangurCmsBuilder.previewPanel.toolbar.status.saved).toBe('Збережено');
+    expect(messages.KangurStaticLessons.adding.lessonTitle).toBe('Додавання');
+    expect(messages.KangurStaticLessons.adding.slides.basics.meaning.partLabel).toBe('Частина');
+    expect(messages.KangurStaticLessons.subtracting.lessonTitle).toBe('Віднімання');
+    expect(messages.KangurStaticLessons.subtracting.sections.basics.title).toBe(
+      'Основи віднімання',
+    );
+    expect(messages.KangurStaticLessons.geometryPerimeter.lessonTitle).toBe(
+      'Периметр фігур',
+    );
+    expect(messages.KangurStaticLessons.geometryPerimeter.slides.intro.title).toBe(
+      'Що таке периметр?',
+    );
+    expect(messages.KangurStaticLessons.clock.lessonTitle).toBe('Вивчення годинника');
+    expect(messages.KangurStaticLessons.clock.hubSections.hours.title).toBe('Години');
+    expect(messages.KangurStaticLessons.calendar.lessonTitle).toBe('Вивчення календаря');
+    expect(messages.KangurStaticLessons.calendar.sections.dni.title).toBe('Дні тижня');
+    expect(messages.KangurStaticLessons.geometryBasics.lessonTitle).toBe(
+      'Основи геометрії',
+    );
+    expect(messages.KangurStaticLessons.geometryBasics.slides.kat.whatIsAngle.title).toBe(
+      'Що таке кут?',
+    );
+    expect(messages.KangurStaticLessons.geometryShapes.lessonTitle).toBe(
+      'Геометричні фігури',
+    );
+    expect(messages.KangurStaticLessons.geometryShapes.shapeCards.hexagon.name).toBe(
+      'Шестикутник',
+    );
   });
 
   it('falls back to English for untranslated Ukrainian sections before Polish', async () => {
     const messages = await loadSiteMessages('uk');
 
-    expect(messages.KangurCmsBuilder.previewPanel.toolbar.status.saved).toBe('Saved');
-    expect(messages.KangurStaticLessons.adding.lessonTitle).toBe('Addition');
+    expect(messages.KangurStaticLessons.logicalPatterns.lessonTitle).toBe(
+      'Patterns and sequences',
+    );
+    expect(messages.KangurStaticLessons.logicalPatterns.sections.intro.title).toBe(
+      'Patterns - introduction',
+    );
   });
 });

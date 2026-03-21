@@ -142,13 +142,14 @@ export const mongoProductAssociationsImpl = {
         filepath: file.filepath,
       },
     }));
-
-    await collection.updateOne(buildProductIdFilter(productId), {
+    const update = {
       $set: {
         images: newImages,
         updatedAt: new Date(),
       },
-    } as unknown as UpdateFilter<ProductDocument>);
+    } as UpdateFilter<ProductDocument>;
+
+    await collection.updateOne(buildProductIdFilter(productId), update);
   },
 
   async removeProductImage(
@@ -189,14 +190,15 @@ export const mongoProductAssociationsImpl = {
       catalog: { id: c.id },
     }));
     const primaryCatalogId = newCatalogs[0]?.catalogId ?? '';
-
-    await collection.updateOne(buildProductIdFilter(productId), {
+    const update = {
       $set: {
         catalogs: newCatalogs,
         catalogId: primaryCatalogId,
         updatedAt: new Date(),
       },
-    } as unknown as UpdateFilter<ProductDocument>);
+    } as UpdateFilter<ProductDocument>;
+
+    await collection.updateOne(buildProductIdFilter(productId), update);
   },
 
   async replaceProductCategory(
@@ -234,13 +236,14 @@ export const mongoProductAssociationsImpl = {
       tagId: resolveLookupDocumentId(t),
       assignedAt: now,
     }));
-
-    await collection.updateOne(buildProductIdFilter(productId), {
+    const update: UpdateFilter<ProductDocument> = {
       $set: {
         tags: newTags,
         updatedAt: new Date(),
       },
-    } as unknown as UpdateFilter<ProductDocument>);
+    };
+
+    await collection.updateOne(buildProductIdFilter(productId), update);
   },
 
   async replaceProductProducers(
@@ -261,13 +264,14 @@ export const mongoProductAssociationsImpl = {
       producerId: resolveLookupDocumentId(p),
       assignedAt: now,
     }));
-
-    await collection.updateOne(buildProductIdFilter(productId), {
+    const update: UpdateFilter<ProductDocument> = {
       $set: {
         producers: newProducers,
         updatedAt: new Date(),
       },
-    } as unknown as UpdateFilter<ProductDocument>);
+    };
+
+    await collection.updateOne(buildProductIdFilter(productId), update);
   },
 
   async replaceProductNotes(
@@ -276,12 +280,13 @@ export const mongoProductAssociationsImpl = {
     getCollection: () => Promise<Collection<ProductDocument>>
   ) {
     const collection = await getCollection();
-    await collection.updateOne(buildProductIdFilter(productId), {
+    const update: UpdateFilter<ProductDocument> = {
       $set: {
         noteIds,
         updatedAt: new Date(),
       },
-    } as unknown as UpdateFilter<ProductDocument>);
+    };
+    await collection.updateOne(buildProductIdFilter(productId), update);
   },
 
   async bulkReplaceProductCatalogs(
@@ -292,28 +297,33 @@ export const mongoProductAssociationsImpl = {
     const collection = await getCollection();
     const catalogs = await mongoCatalogRepository.getCatalogsByIds(catalogIds);
     const now = new Date().toISOString();
-    const primaryCatalogId = (catalogs as Array<{ id: string }>)[0]?.id ?? '';
+    const resolvedCatalogs = catalogs as Array<{ id: string }>;
+    const primaryCatalogId = resolvedCatalogs[0]?.id ?? '';
 
-    const bulkOps = productIds.map((pid) => ({
-      updateOne: {
-        filter: buildProductIdFilter(pid),
-        update: {
-          $set: {
-            catalogs: (catalogs as Array<{ id: string }>).map((c) => ({
-              productId: pid,
-              catalogId: c.id,
-              assignedAt: now,
-              catalog: { id: c.id },
-            })),
-            catalogId: primaryCatalogId,
-            updatedAt: new Date(),
-          },
+    const bulkOps: AnyBulkWriteOperation<ProductDocument>[] = productIds.map((pid) => {
+      const update = {
+        $set: {
+          catalogs: resolvedCatalogs.map((c) => ({
+            productId: pid,
+            catalogId: c.id,
+            assignedAt: now,
+            catalog: { id: c.id },
+          })),
+          catalogId: primaryCatalogId,
+          updatedAt: new Date(),
         },
-      },
-    }));
+      } as UpdateFilter<ProductDocument>;
+
+      return {
+        updateOne: {
+          filter: buildProductIdFilter(pid),
+          update,
+        },
+      };
+    });
 
     if (bulkOps.length > 0) {
-      await collection.bulkWrite(bulkOps as unknown as AnyBulkWriteOperation<ProductDocument>[]);
+      await collection.bulkWrite(bulkOps);
     }
   },
 
@@ -325,28 +335,33 @@ export const mongoProductAssociationsImpl = {
     const collection = await getCollection();
     const catalogs = await mongoCatalogRepository.getCatalogsByIds(catalogIds);
     const now = new Date().toISOString();
+    const resolvedCatalogs = catalogs as Array<{ id: string }>;
 
-    const bulkOps = productIds.map((pid) => ({
-      updateOne: {
-        filter: buildProductIdFilter(pid),
-        update: {
-          $addToSet: {
-            catalogs: {
-              $each: (catalogs as Array<{ id: string }>).map((c) => ({
-                productId: pid,
-                catalogId: c.id,
-                assignedAt: now,
-                catalog: { id: c.id },
-              })),
-            },
+    const bulkOps: AnyBulkWriteOperation<ProductDocument>[] = productIds.map((pid) => {
+      const update: UpdateFilter<ProductDocument> = {
+        $addToSet: {
+          catalogs: {
+            $each: resolvedCatalogs.map((c) => ({
+              productId: pid,
+              catalogId: c.id,
+              assignedAt: now,
+              catalog: { id: c.id },
+            })),
           },
-          $set: { updatedAt: new Date() },
         },
-      },
-    }));
+        $set: { updatedAt: new Date() },
+      };
+
+      return {
+        updateOne: {
+          filter: buildProductIdFilter(pid),
+          update,
+        },
+      };
+    });
 
     if (bulkOps.length > 0) {
-      await collection.bulkWrite(bulkOps as unknown as AnyBulkWriteOperation<ProductDocument>[]);
+      await collection.bulkWrite(bulkOps);
     }
   },
 
@@ -362,7 +377,7 @@ export const mongoProductAssociationsImpl = {
         update: {
           $pull: {
             catalogs: { catalogId: { $in: catalogIds } },
-          } as unknown as UpdateFilter<ProductDocument>,
+          },
           $set: { updatedAt: new Date() },
         },
       },

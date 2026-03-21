@@ -3,7 +3,7 @@ import React from 'react';
 import { useSaveCountryMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
 import type { CountryOption, CurrencyOption } from '@/shared/contracts/internationalization';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 interface CountryFormState {
   code: string;
@@ -76,9 +76,10 @@ export function useCountryForm({
 
       toast('Country saved.', { variant: 'success' });
     } catch (err) {
-      logClientError(err);
-      logClientError(err, {
-        context: { source: 'CountryModal', action: 'saveCountry', countryId: country?.id },
+      logClientCatch(err, {
+        source: 'CountryModal',
+        action: 'saveCountry',
+        countryId: country?.id,
       });
       toast('Failed to save country.', { variant: 'error' });
     }

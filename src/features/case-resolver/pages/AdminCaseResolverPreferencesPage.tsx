@@ -4,6 +4,12 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
+import type {
+  CaseSearchScope,
+  CaseSortKey,
+  CaseSortOrder,
+  CaseViewMode,
+} from '@/shared/contracts/case-resolver';
 import type { UserPreferences } from '@/shared/contracts/auth';
 import {
   useUpdateUserPreferences,
@@ -21,19 +27,10 @@ import {
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
-type CaseResolverCaseListViewMode = 'hierarchy' | 'list';
-type CaseResolverCaseListSortBy =
-  | 'updated'
-  | 'created'
-  | 'happeningDate'
-  | 'name'
-  | 'status'
-  | 'signature'
-  | 'locked'
-  | 'sent';
-type CaseResolverCaseListSortOrder = 'asc' | 'desc';
-type CaseResolverCaseListSearchScope = 'all' | 'name' | 'folder' | 'content';
+type CaseResolverCaseListViewMode = CaseViewMode;
+type CaseResolverCaseListSortBy = CaseSortKey;
+type CaseResolverCaseListSortOrder = CaseSortOrder;
+type CaseResolverCaseListSearchScope = CaseSearchScope;
 type CaseResolverCaseListFiltersVisibility = 'hidden' | 'shown';
 
 type CaseResolverCaseListPreferences = {

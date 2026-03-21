@@ -10,7 +10,7 @@ This workspace is no longer a scaffold. It contains a real mobile shell with:
 - learner-session and development auth adapters
 - persistent mobile development storage
 - home, lessons, practice, profile, results, leaderboard, daily-plan, and duels routes
-- home dashboard shortcuts for private duel invites, outgoing challenge re-sharing, live public duel matches, recent-opponent rematches, series-aware duel cards, and a duel leaderboard snapshot
+- home dashboard shortcuts for private duel invites, outgoing challenge re-sharing, active lobby rivals with direct challenges, live public duel matches, recent-opponent rematches, series-aware duel cards, and a duel leaderboard snapshot
 - visible lesson skeleton loading on the lessons screen instead of a hero-only freeze
 - native/export tooling under `scripts/mobile`
 

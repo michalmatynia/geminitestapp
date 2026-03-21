@@ -5,7 +5,7 @@ import { useState, useMemo, useCallback } from 'react';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
   useAssets3D,
@@ -71,13 +71,10 @@ export function useAdmin3DAssetsState() {
             await deleteMutation.mutateAsync(asset.id);
             toast(`Asset "${asset.name || asset.filename}" deleted.`, { variant: 'success' });
           } catch (err) {
-            logClientError(err);
-            logClientError(err, {
-              context: {
-                source: 'useAdmin3DAssetsState',
-                action: 'deleteAsset',
-                assetId: asset.id,
-              },
+            logClientCatch(err, {
+              source: 'useAdmin3DAssetsState',
+              action: 'deleteAsset',
+              assetId: asset.id,
             });
             toast(err instanceof Error ? err.message : 'Failed to delete asset', {
               variant: 'error',
@@ -94,10 +91,7 @@ export function useAdmin3DAssetsState() {
       await reindexMutation.mutateAsync();
       toast('Assets reindexed successfully.', { variant: 'success' });
     } catch (err) {
-      logClientError(err);
-      logClientError(err, {
-        context: { source: 'useAdmin3DAssetsState', action: 'reindexAssets' },
-      });
+      logClientCatch(err, { source: 'useAdmin3DAssetsState', action: 'reindexAssets' });
       toast(err instanceof Error ? err.message : 'Failed to reindex assets', { variant: 'error' });
     }
   }, [reindexMutation, toast]);

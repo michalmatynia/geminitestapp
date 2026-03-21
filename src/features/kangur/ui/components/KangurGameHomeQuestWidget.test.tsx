@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/__tests__/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { useKangurGameRuntimeMock } = vi.hoisted(() => ({
@@ -20,24 +20,43 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
-vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string, values?: any) => {
-    const t: Record<string, string> = {
-      'guidedMomentum': `Kierunek: ${values?.current}/${values?.target} rundy`,
-      'questStatusCompleted': 'Misja ukończona',
-      'rewardClaimed': `Nagroda odebrana +${values?.xp} XP`,
-      'priorityHigh': 'Priorytet wysoki',
-      'questStatusInProgress': 'Misja w toku',
-      'rewardPreview': `Nagroda +${values?.xp} XP`,
-      'expiresToday': 'Wygasa dzisiaj',
-      'masteryComparison': '45% / 75% opanowania',
-      'streakLabel': `Seria: ${values?.count}`,
-      'paceLabel': `Tempo: ${values?.xp} XP / grę`,
-    };
-    return t[key] || key;
-  },
-  useLocale: vi.fn(() => 'pl'),
-}));
+vi.mock('next-intl', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('next-intl')>();
+  return {
+    ...actual,
+    useTranslations: () => (key: string, values?: any) => {
+      const t: Record<string, string> = {
+        'guidedMomentum': `Kierunek: ${values?.current}/${values?.target} rundy`,
+        'questStatusCompleted': 'Misja ukończona',
+        'rewardClaimed': `Nagroda odebrana +${values?.xp} XP`,
+        'priorityHigh': 'Priorytet wysoki',
+        'questStatusInProgress': 'Misja w toku',
+        'rewardPreview': `Nagroda +${values?.xp} XP`,
+        'expiresToday': 'Wygasa dzisiaj',
+        'masteryComparison': '45% / 75% opanowania',
+        'streakLabel': `Seria: ${values?.count}`,
+        'paceLabel': `Tempo: ${values?.xp} XP / grę`,
+      };
+      return t[key] || key;
+    },
+    useLocale: vi.fn(() => 'pl'),
+    useFormatter: () => ({
+      dateTime: (date: Date) => date.toLocaleDateString(),
+      number: (value: number) => value.toString(),
+    }),
+  };
+});
+
+vi.mock('use-intl', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('use-intl')>();
+  return {
+    ...actual,
+    useFormatter: () => ({
+      dateTime: (date: Date) => date.toLocaleDateString(),
+      number: (value: number) => value.toString(),
+    }),
+  };
+});
 
 import { KangurGameHomeQuestWidget } from '@/features/kangur/ui/components/KangurGameHomeQuestWidget';
 import type { KangurProgressState } from '@/features/kangur/ui/types';

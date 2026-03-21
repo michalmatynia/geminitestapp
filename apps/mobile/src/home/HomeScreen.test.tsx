@@ -16,6 +16,7 @@ const {
   useKangurMobileAuthMock,
   useKangurMobileHomeDuelsLeaderboardMock,
   useKangurMobileHomeDuelsInvitesMock,
+  useKangurMobileHomeDuelsPresenceMock,
   useKangurMobileHomeDuelsRematchesMock,
   useKangurMobileHomeDuelsSpotlightMock,
   useKangurMobileRuntimeMock,
@@ -29,6 +30,7 @@ const {
   useKangurMobileAuthMock: vi.fn(),
   useKangurMobileHomeDuelsLeaderboardMock: vi.fn(),
   useKangurMobileHomeDuelsInvitesMock: vi.fn(),
+  useKangurMobileHomeDuelsPresenceMock: vi.fn(),
   useKangurMobileHomeDuelsRematchesMock: vi.fn(),
   useKangurMobileHomeDuelsSpotlightMock: vi.fn(),
   useKangurMobileRuntimeMock: vi.fn(),
@@ -64,6 +66,10 @@ vi.mock('./useKangurMobileHomeDuelsInvites', () => ({
 
 vi.mock('./useKangurMobileHomeDuelsLeaderboard', () => ({
   useKangurMobileHomeDuelsLeaderboard: useKangurMobileHomeDuelsLeaderboardMock,
+}));
+
+vi.mock('./useKangurMobileHomeDuelsPresence', () => ({
+  useKangurMobileHomeDuelsPresence: useKangurMobileHomeDuelsPresenceMock,
 }));
 
 vi.mock('./useKangurMobileHomeDuelsRematches', () => ({
@@ -140,6 +146,18 @@ describe('HomeScreen', () => {
       entries: [],
       error: null,
       isLoading: false,
+      refresh: vi.fn(),
+    });
+    useKangurMobileHomeDuelsPresenceMock.mockReturnValue({
+      actionError: null,
+      createPrivateChallenge: vi.fn(),
+      entries: [],
+      error: null,
+      isActionPending: false,
+      isAuthenticated: false,
+      isLoading: false,
+      isRestoringAuth: false,
+      pendingLearnerId: null,
       refresh: vi.fn(),
     });
     useKangurMobileHomeDuelsRematchesMock.mockReturnValue({
@@ -225,6 +243,7 @@ describe('HomeScreen', () => {
   });
 
   it('renders authenticated focus cards and recent results after the shell settles', async () => {
+    const createPresenceChallengeMock = vi.fn().mockResolvedValue('duel-presence-1');
     const createRematchMock = vi.fn().mockResolvedValue('duel-rematch-1');
 
     useKangurMobileAuthMock.mockReturnValue({
@@ -236,6 +255,10 @@ describe('HomeScreen', () => {
       session: {
         status: 'authenticated',
         user: {
+          activeLearner: {
+            displayName: 'Ada Learner',
+            id: 'leader-2',
+          },
           actorType: 'learner',
           full_name: 'Ada Learner',
         },
@@ -364,9 +387,42 @@ describe('HomeScreen', () => {
           winRate: 0.75,
           wins: 3,
         },
+        {
+          displayName: 'Ada Learner',
+          lastPlayedAt: '2026-03-21T08:01:00.000Z',
+          learnerId: 'leader-2',
+          losses: 2,
+          matches: 5,
+          ties: 0,
+          winRate: 0.6,
+          wins: 3,
+        },
       ],
       error: null,
       isLoading: false,
+      refresh: vi.fn(),
+    });
+    useKangurMobileHomeDuelsPresenceMock.mockReturnValue({
+      actionError: null,
+      createPrivateChallenge: createPresenceChallengeMock,
+      entries: [
+        {
+          displayName: 'Iga Lobby',
+          lastSeenAt: '2026-03-21T08:10:30.000Z',
+          learnerId: 'learner-11',
+        },
+        {
+          displayName: 'Ada Learner',
+          lastSeenAt: '2026-03-21T08:09:30.000Z',
+          learnerId: 'leader-2',
+        },
+      ],
+      error: null,
+      isActionPending: false,
+      isAuthenticated: true,
+      isLoading: false,
+      isRestoringAuth: false,
+      pendingLearnerId: null,
       refresh: vi.fn(),
     });
     useKangurMobileTrainingFocusMock.mockReturnValue({
@@ -448,13 +504,20 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Prywatne wyzwanie')).toBeTruthy();
     expect(screen.getByText('Udostępnij link')).toBeTruthy();
     expect(screen.getByText('Seria BO5 • gra 3 z 5 • ukończone: 2')).toBeTruthy();
+    expect(screen.getByText('Aktywni rywale w lobby')).toBeTruthy();
+    expect(screen.getByText('Iga Lobby')).toBeTruthy();
+    expect(screen.getByText('Ada Learner · Ty')).toBeTruthy();
+    expect(screen.getByText('Wyzwij: Iga Lobby')).toBeTruthy();
     expect(screen.getByText('Na żywo w pojedynkach')).toBeTruthy();
     expect(screen.getByText('Maja Sprint')).toBeTruthy();
     expect(screen.getByText('Obserwuj na żywo')).toBeTruthy();
     expect(screen.getByText('Ostatni rywale')).toBeTruthy();
     expect(screen.getByText('Nina Turbo')).toBeTruthy();
     expect(screen.getByText('Ranking pojedynków')).toBeTruthy();
+    expect(screen.getByText('TWÓJ WYNIK W POJEDYNKACH')).toBeTruthy();
     expect(screen.getByText('#1 Ola')).toBeTruthy();
+    expect(screen.getByText('#2 Ada Learner')).toBeTruthy();
+    expect(screen.getByText('#2 Ada Learner · Ty')).toBeTruthy();
     expect(screen.getByText('Wygrane 3 • Porażki 1 • Remisy 0')).toBeTruthy();
     expect(screen.getByText('Pełny ranking pojedynków')).toBeTruthy();
 
@@ -464,6 +527,20 @@ describe('HomeScreen', () => {
       expect(shareKangurDuelInviteMock).toHaveBeenCalledWith({
         sessionId: 'outgoing-home-1',
         sharerDisplayName: 'Ada Learner',
+      });
+    });
+
+    fireEvent.click(screen.getByText('Wyzwij: Iga Lobby'));
+
+    await waitFor(() => {
+      expect(createPresenceChallengeMock).toHaveBeenCalledWith('learner-11');
+    });
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith({
+        pathname: '/duels',
+        params: {
+          sessionId: 'duel-presence-1',
+        },
       });
     });
 
@@ -508,6 +585,7 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Schuler-Login')).toBeTruthy();
     expect(screen.getByText('Duelleinladungen')).toBeTruthy();
     expect(screen.getByText('Gesendete Herausforderungen')).toBeTruthy();
+    expect(screen.getByText('Aktive Rivalen in der Lobby')).toBeTruthy();
     expect(screen.getByText('Live-Duelle')).toBeTruthy();
     expect(screen.getByText('Duell-Rangliste')).toBeTruthy();
   });

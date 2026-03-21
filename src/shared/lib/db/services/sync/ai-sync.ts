@@ -19,7 +19,7 @@ export const syncProductAiJobs: DatabaseSyncHandler = async ({ mongo, prisma, no
   const docs = await mongo.collection<MongoProductAiJobDoc>('product_ai_jobs').find({}).toArray();
   const data = docs
     .map((doc): Prisma.ProductAiJobCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       const productId = doc.productId;
       if (!id || !productId) return null;
       const rawType = doc.type;
@@ -52,7 +52,7 @@ export const syncAiPathRuns: DatabaseSyncHandler = async ({
   const docs = await mongo.collection<MongoAiPathRunDoc>('ai_path_runs').find({}).toArray();
   const data = docs
     .map((doc): Prisma.AiPathRunCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       return {
         id,
@@ -97,7 +97,7 @@ export const syncAiPathRunNodes: DatabaseSyncHandler = async ({
   const docs = await mongo.collection<MongoAiPathRunNodeDoc>('ai_path_run_nodes').find({}).toArray();
   const data = docs
     .map((doc): Prisma.AiPathRunNodeCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       const runId = doc.runId;
       if (!id || !runId) return null;
       return {
@@ -135,7 +135,7 @@ export const syncAiPathRunEvents: DatabaseSyncHandler = async ({
     .toArray();
   const data = docs
     .map((doc): Prisma.AiPathRunEventCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       const runId = doc.runId;
       if (!id || !runId) return null;
       return {
@@ -173,7 +173,7 @@ export const syncProductAiJobsPrismaToMongo: DatabaseSyncHandler = async ({ mong
   const collection = mongo.collection<MongoProductAiJobDoc>('product_ai_jobs');
   const deleted = await collection.deleteMany({});
   if (docs.length) {
-    await collection.insertMany(docs as unknown as MongoProductAiJobDoc[]);
+    await collection.insertMany(docs as MongoProductAiJobDoc[]);
   }
   return {
     sourceCount: rows.length,
@@ -212,7 +212,7 @@ export const syncAiPathRunsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, 
   const collection = mongo.collection<MongoAiPathRunDoc>('ai_path_runs');
   const deleted = await collection.deleteMany({});
   if (docs.length) {
-    await collection.insertMany(docs as unknown as MongoAiPathRunDoc[]);
+    await collection.insertMany(docs as MongoAiPathRunDoc[]);
   }
   return {
     sourceCount: rows.length,
@@ -243,7 +243,7 @@ export const syncAiPathRunNodesPrismaToMongo: DatabaseSyncHandler = async ({ mon
   const collection = mongo.collection<MongoAiPathRunNodeDoc>('ai_path_run_nodes');
   const deleted = await collection.deleteMany({});
   if (docs.length) {
-    await collection.insertMany(docs as unknown as MongoAiPathRunNodeDoc[]);
+    await collection.insertMany(docs as MongoAiPathRunNodeDoc[]);
   }
   return {
     sourceCount: rows.length,
@@ -266,7 +266,7 @@ export const syncAiPathRunEventsPrismaToMongo: DatabaseSyncHandler = async ({ mo
   const collection = mongo.collection<MongoAiPathRunEventDoc>('ai_path_run_events');
   const deleted = await collection.deleteMany({});
   if (docs.length) {
-    await collection.insertMany(docs as unknown as MongoAiPathRunEventDoc[]);
+    await collection.insertMany(docs as MongoAiPathRunEventDoc[]);
   }
   return {
     sourceCount: rows.length,

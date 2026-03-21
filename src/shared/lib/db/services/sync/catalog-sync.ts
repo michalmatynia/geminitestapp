@@ -20,15 +20,15 @@ export const syncPriceGroups: DatabaseSyncHandler = async ({ mongo, prisma, norm
   const docs = (await mongo
     .collection('price_groups')
     .find({})
-    .toArray()) as unknown as MongoPriceGroupDoc[];
+    .toArray()) as MongoPriceGroupDoc[];
   const availableGroupIds = new Set<string>(
     docs
-      .map((doc: MongoPriceGroupDoc) => normalizeId(doc as unknown as Record<string, unknown>))
+      .map((doc: MongoPriceGroupDoc) => normalizeId(doc as Record<string, unknown>))
       .filter((id: string | null): id is string => Boolean(id))
   );
   const data = docs
     .map((doc: MongoPriceGroupDoc): Prisma.PriceGroupCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       const rawCurrencyId = doc.currencyId ?? 'PLN';
       const resolvedCurrencyId = availableCurrencyIds.has(rawCurrencyId)
@@ -88,10 +88,10 @@ export const syncCatalogs: DatabaseSyncHandler = async ({ mongo, prisma, normali
   const docs = (await mongo
     .collection('catalogs')
     .find({})
-    .toArray()) as unknown as MongoCatalogDoc[];
+    .toArray()) as MongoCatalogDoc[];
   const data = docs
     .map((doc: MongoCatalogDoc) => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       const rawDefaultLanguageId = doc.defaultLanguageId ?? null;
       const resolvedDefaultLanguageId =
@@ -172,10 +172,10 @@ export const syncProductCategories: DatabaseSyncHandler = async ({ mongo, prisma
   const docs = (await mongo
     .collection('product_categories')
     .find({})
-    .toArray()) as unknown as MongoCategoryDoc[];
+    .toArray()) as MongoCategoryDoc[];
   const data = docs
     .map((doc: MongoCategoryDoc): Prisma.ProductCategoryCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       return {
         id,
@@ -198,10 +198,10 @@ export const syncProductTags: DatabaseSyncHandler = async ({ mongo, prisma, norm
   const docs = (await mongo
     .collection('product_tags')
     .find({})
-    .toArray()) as unknown as MongoTagDoc[];
+    .toArray()) as MongoTagDoc[];
   const data = docs
     .map((doc: MongoTagDoc): Prisma.ProductTagCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       return {
         id,
@@ -222,12 +222,12 @@ export const syncProductProducers: DatabaseSyncHandler = async ({ mongo, prisma,
   const docs = (await mongo
     .collection('product_producers')
     .find({})
-    .toArray()) as unknown as MongoProducerDoc[];
+    .toArray()) as MongoProducerDoc[];
   const warnings: string[] = [];
   const seenNames = new Set<string>();
   const data = docs
     .map((doc: MongoProducerDoc): Prisma.ProducerCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       const rawName = typeof doc.name === 'string' ? (doc.name?.trim() ?? '') : '';
       const name = rawName || id;
@@ -261,10 +261,10 @@ export const syncProductParameters: DatabaseSyncHandler = async ({ mongo, prisma
   const docs = (await mongo
     .collection('product_parameters')
     .find({})
-    .toArray()) as unknown as MongoProductParameterDoc[];
+    .toArray()) as MongoProductParameterDoc[];
   const data = docs
     .map((doc: MongoProductParameterDoc): Prisma.ProductParameterCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       return {
         id,

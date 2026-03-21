@@ -36,7 +36,7 @@ import {
   LoadingState,
   Card,
 } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 import { DraftCreatorFormProvider } from './DraftCreatorFormContext';
@@ -291,9 +291,11 @@ export function DraftCreator({
         const dataUrl = await fileToDataUrl(slot.data as File);
         if (dataUrl) serialized.push(dataUrl);
       } catch (error) {
-        logClientError(error);
-        logClientError(error, {
-          context: { source: 'DraftCreator', action: 'serializeDraftImage', draftId, slotIndex: i },
+        logClientCatch(error, {
+          source: 'DraftCreator',
+          action: 'serializeDraftImage',
+          draftId,
+          slotIndex: i,
         });
       }
     }
@@ -466,8 +468,7 @@ export function DraftCreator({
       });
       handleSaveSuccess();
     } catch (error) {
-      logClientError(error);
-      logClientError(error, { context: { source: 'DraftCreator', action: 'saveDraft', draftId } });
+      logClientCatch(error, { source: 'DraftCreator', action: 'saveDraft', draftId });
       toast('Failed to save draft', { variant: 'error' });
     }
   };

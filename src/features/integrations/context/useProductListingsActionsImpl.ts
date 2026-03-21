@@ -21,7 +21,7 @@ import type { ImageRetryPreset, ImageTransformOptions } from '@/shared/contracts
 import { badRequestError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { ProductListingsActions } from './ProductListingsContext';
 
@@ -109,14 +109,11 @@ export const useProductListingsActionsImpl = ({
         );
         onListingsUpdated?.();
       } catch (err: unknown) {
-        logClientError(err);
-        logClientError(err, {
-          context: {
-            source: 'ProductListingsContext',
-            action: 'deleteFromBase',
-            listingId,
-            productId,
-          },
+        logClientCatch(err, {
+          source: 'ProductListingsContext',
+          action: 'deleteFromBase',
+          listingId,
+          productId,
         });
         setError(err instanceof Error ? err.message : 'Failed to delete from Base.com');
       } finally {
@@ -134,14 +131,11 @@ export const useProductListingsActionsImpl = ({
         await purgeListingMutation.mutateAsync(listingId);
         onListingsUpdated?.();
       } catch (err: unknown) {
-        logClientError(err);
-        logClientError(err, {
-          context: {
-            source: 'ProductListingsContext',
-            action: 'purgeListing',
-            listingId,
-            productId,
-          },
+        logClientCatch(err, {
+          source: 'ProductListingsContext',
+          action: 'purgeListing',
+          listingId,
+          productId,
         });
         setError(err instanceof Error ? err.message : 'Failed to remove listing history');
       } finally {
@@ -169,14 +163,11 @@ export const useProductListingsActionsImpl = ({
         });
         onListingsUpdated?.();
       } catch (err: unknown) {
-        logClientError(err);
-        logClientError(err, {
-          context: {
-            source: 'ProductListingsContext',
-            action: 'saveInventoryId',
-            listingId,
-            productId,
-          },
+        logClientCatch(err, {
+          source: 'ProductListingsContext',
+          action: 'saveInventoryId',
+          listingId,
+          productId,
         });
         setError(err instanceof Error ? err.message : 'Failed to save inventory ID');
       } finally {
@@ -202,13 +193,10 @@ export const useProductListingsActionsImpl = ({
         });
         toast(`Synced ${response.count} image link(s) from Base.com`, { variant: 'success' });
       } catch (err: unknown) {
-        logClientError(err);
-        logClientError(err, {
-          context: {
-            source: 'ProductListingsContext',
-            action: 'syncBaseImages',
-            productId,
-          },
+        logClientCatch(err, {
+          source: 'ProductListingsContext',
+          action: 'syncBaseImages',
+          productId,
         });
         setError(err instanceof Error ? err.message : 'Failed to sync image URLs');
       } finally {
@@ -232,14 +220,11 @@ export const useProductListingsActionsImpl = ({
         );
         onListingsUpdated?.();
       } catch (err: unknown) {
-        logClientError(err);
-        logClientError(err, {
-          context: {
-            source: 'ProductListingsContext',
-            action: 'relistTradera',
-            listingId,
-            productId,
-          },
+        logClientCatch(err, {
+          source: 'ProductListingsContext',
+          action: 'relistTradera',
+          listingId,
+          productId,
         });
         setError(err instanceof Error ? err.message : 'Failed to queue relist');
       } finally {
@@ -271,16 +256,13 @@ export const useProductListingsActionsImpl = ({
         await refetchListingsQuery();
         onListingsUpdated?.();
       } catch (err: unknown) {
-        logClientError(err);
-        logClientError(err, {
-          context: {
-            source: 'ProductListingsContext',
-            action: 'openTraderaLogin',
-            listingId,
-            productId,
-            integrationId,
-            connectionId,
-          },
+        logClientCatch(err, {
+          source: 'ProductListingsContext',
+          action: 'openTraderaLogin',
+          listingId,
+          productId,
+          integrationId,
+          connectionId,
         });
         setError(err instanceof Error ? err.message : 'Failed to open Tradera login window');
       } finally {
@@ -336,14 +318,11 @@ export const useProductListingsActionsImpl = ({
         await exportListingToBase(listingId);
         onListingsUpdated?.();
       } catch (err: unknown) {
-        logClientError(err);
-        logClientError(err, {
-          context: {
-            source: 'ProductListingsContext',
-            action: 'exportAgain',
-            listingId,
-            productId,
-          },
+        logClientCatch(err, {
+          source: 'ProductListingsContext',
+          action: 'exportAgain',
+          listingId,
+          productId,
         });
         setError(err instanceof Error ? err.message : 'Failed to export product');
       } finally {
@@ -390,14 +369,11 @@ export const useProductListingsActionsImpl = ({
 
         onListingsUpdated?.();
       } catch (err: unknown) {
-        logClientError(err);
-        logClientError(err, {
-          context: {
-            source: 'ProductListingsContext',
-            action: 'exportImagesOnly',
-            listingId,
-            productId,
-          },
+        logClientCatch(err, {
+          source: 'ProductListingsContext',
+          action: 'exportImagesOnly',
+          listingId,
+          productId,
         });
         setError(err instanceof Error ? err.message : 'Failed to export product images');
       } finally {
@@ -426,13 +402,10 @@ export const useProductListingsActionsImpl = ({
         await exportListingToBase(lastExportListingId, exportOptions);
         onListingsUpdated?.();
       } catch (err: unknown) {
-        logClientError(err);
-        logClientError(err, {
-          context: {
-            source: 'ProductListingsContext',
-            action: 'imageRetry',
-            productId,
-          },
+        logClientCatch(err, {
+          source: 'ProductListingsContext',
+          action: 'imageRetry',
+          productId,
         });
         setError(err instanceof Error ? err.message : 'Failed to export product');
       } finally {

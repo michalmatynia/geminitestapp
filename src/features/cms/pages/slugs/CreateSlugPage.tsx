@@ -11,7 +11,7 @@ import {
   useUpdateSlugDomains,
 } from '@/features/cms/hooks/useCmsQueries';
 import { AdminCmsPageLayout, Alert, useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export default function CreateSlugPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -45,9 +45,11 @@ export default function CreateSlugPage(): React.JSX.Element {
         : '/admin/cms/slugs';
       router.push(next);
     } catch (err: unknown) {
-      logClientError(err);
-      logClientError(err, {
-        context: { source: 'CreateSlugPage', action: 'createSlug', slug: data.slug, domainId },
+      logClientCatch(err, {
+        source: 'CreateSlugPage',
+        action: 'createSlug',
+        slug: data.slug,
+        domainId,
       });
       setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
     }

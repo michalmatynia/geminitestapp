@@ -4,7 +4,7 @@ import { Check, Copy } from 'lucide-react';
 import * as React from 'react';
 import { useState } from 'react';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { Button } from './button';
 
@@ -56,8 +56,7 @@ export function CopyButton(props: CopyButtonProps): React.JSX.Element {
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), timeout);
     } catch (err) {
-      logClientError(err);
-      logClientError(err, { context: { source: 'CopyButton', action: 'copyToClipboard' } });
+      logClientCatch(err, { source: 'CopyButton', action: 'copyToClipboard' });
     }
   };
 

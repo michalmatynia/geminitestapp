@@ -1,6 +1,7 @@
 import type { CaseResolverPartyReference } from '@/shared/contracts/case-resolver';
 import type {
   FilemakerAddressDto as FilemakerAddress,
+  FilemakerAddressFields,
   FilemakerDatabaseDto as FilemakerDatabase,
 } from '@/shared/contracts/filemaker';
 import type { PromptExploderCaseResolverPartyCandidate } from '@/shared/contracts/prompt-exploder';
@@ -25,14 +26,7 @@ export type UpsertFilemakerCaptureCandidateResult = {
   createdAddress: boolean;
 };
 
-type CandidateAddressInput = {
-  street: string;
-  streetNumber: string;
-  city: string;
-  postalCode: string;
-  country: string;
-  countryId: string;
-};
+type CandidateAddressInput = FilemakerAddressFields;
 
 const toCandidateAddressInput = (
   candidate: PromptExploderCaseResolverPartyCandidate

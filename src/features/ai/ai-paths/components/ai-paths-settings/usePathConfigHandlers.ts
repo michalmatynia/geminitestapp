@@ -2,14 +2,13 @@
 
 import { useCallback } from 'react';
 
-import type { PathConfig } from '@/shared/contracts/ai-paths';
+import type { PathConfig, PathFlowIntensity } from '@/shared/contracts/ai-paths';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
 import { useToast } from '@/shared/ui';
 
 import { useGraphActions, useGraphState } from '../../context';
 
 type PathExecutionMode = 'local' | 'server';
-type PathFlowIntensity = 'off' | 'low' | 'medium' | 'high';
 type PathRunMode = 'manual' | 'automatic' | 'step';
 
 export interface PathConfigHandlers {

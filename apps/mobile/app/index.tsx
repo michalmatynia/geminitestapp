@@ -18,6 +18,7 @@ import {
   resolveKangurHomeDebugProofOperation,
 } from '../src/home/homeDebugProof';
 import { getKangurHomeAuthBoundaryViewModel } from '../src/home/homeAuthBoundary';
+import { useKangurMobileHomeDuelsPresence } from '../src/home/useKangurMobileHomeDuelsPresence';
 import { useKangurMobileHomeDuelsRematches } from '../src/home/useKangurMobileHomeDuelsRematches';
 import { useKangurMobileHomeDuelsLeaderboard } from '../src/home/useKangurMobileHomeDuelsLeaderboard';
 import { useKangurMobileHomeDuelsSpotlight } from '../src/home/useKangurMobileHomeDuelsSpotlight';
@@ -474,6 +475,7 @@ export default function HomeScreen(): React.JSX.Element {
   const recentResults = useKangurMobileRecentResults();
   const duelInvites = useKangurMobileHomeDuelsInvites();
   const duelLeaderboard = useKangurMobileHomeDuelsLeaderboard();
+  const duelPresence = useKangurMobileHomeDuelsPresence();
   const duelRematches = useKangurMobileHomeDuelsRematches();
   const duelSpotlight = useKangurMobileHomeDuelsSpotlight();
   const trainingFocus = useKangurMobileTrainingFocus();
@@ -506,6 +508,12 @@ export default function HomeScreen(): React.JSX.Element {
       en: 'the Kangur learner account',
       pl: 'konta ucznia Kangura',
     });
+  const activeDuelLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
+  const currentLearnerDuelRank = activeDuelLearnerId
+    ? duelLeaderboard.entries.findIndex((entry) => entry.learnerId === activeDuelLearnerId)
+    : -1;
+  const currentLearnerDuelEntry =
+    currentLearnerDuelRank >= 0 ? duelLeaderboard.entries[currentLearnerDuelRank] : null;
   const openDuelSession = (sessionId: string): void => {
     router.replace(createKangurDuelsHref({ sessionId }));
   };
@@ -1191,6 +1199,189 @@ export default function HomeScreen(): React.JSX.Element {
 
         <SectionCard
           title={copy({
+            de: 'Aktive Rivalen in der Lobby',
+            en: 'Active rivals in the lobby',
+            pl: 'Aktywni rywale w lobby',
+          })}
+        >
+          {!duelPresence.isAuthenticated ? (
+            <View style={{ gap: 10 }}>
+              <Text style={{ color: '#475569', lineHeight: 20 }}>
+                {copy({
+                  de: 'Nach der Anmeldung erscheint hier eine Momentaufnahme aktiver Rivalen aus der Duell-Lobby zusammen mit einer direkten privaten Herausforderungsaktion.',
+                  en: 'After signing in, this section shows a snapshot of active rivals from the duels lobby together with a direct private challenge action.',
+                  pl: 'Po zalogowaniu zobaczysz tutaj migawkę aktywnych rywali z lobby pojedynków razem z bezpośrednią akcją prywatnego wyzwania.',
+                })}
+              </Text>
+              <OutlineLink
+                href={DUELS_ROUTE}
+                hint={copy({
+                  de: 'Öffnet die Duell-Lobby.',
+                  en: 'Opens the duels lobby.',
+                  pl: 'Otwiera lobby pojedynków.',
+                })}
+                label={copy({
+                  de: 'Duell-Lobby öffnen',
+                  en: 'Open duels lobby',
+                  pl: 'Otwórz lobby pojedynków',
+                })}
+              />
+            </View>
+          ) : duelPresence.isRestoringAuth || duelPresence.isLoading ? (
+            <Text style={{ color: '#475569', lineHeight: 20 }}>
+              {copy({
+                de: 'Aktive Rivalen in der Lobby werden geladen.',
+                en: 'Loading active rivals in the lobby.',
+                pl: 'Pobieramy aktywnych rywali w lobby.',
+              })}
+            </Text>
+          ) : duelPresence.error ? (
+            <View style={{ gap: 10 }}>
+              <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
+                {duelPresence.error}
+              </Text>
+              <PrimaryButton
+                hint={copy({
+                  de: 'Aktualisiert die aktiven Rivalen in der Lobby.',
+                  en: 'Refreshes the active rivals in the lobby.',
+                  pl: 'Odświeża aktywnych rywali w lobby.',
+                })}
+                label={copy({
+                  de: 'Rivalen aktualisieren',
+                  en: 'Refresh rivals',
+                  pl: 'Odśwież rywali',
+                })}
+                onPress={duelPresence.refresh}
+              />
+            </View>
+          ) : duelPresence.entries.length === 0 ? (
+            <View style={{ gap: 10 }}>
+              <Text style={{ color: '#475569', lineHeight: 20 }}>
+                {copy({
+                  de: 'Gerade ist niemand in der Duell-Lobby aktiv. Öffne die Lobby, um auf den nächsten Rivalen zu warten.',
+                  en: 'Nobody is active in the duels lobby right now. Open the lobby to wait for the next rival.',
+                  pl: 'Teraz nikt nie jest aktywny w lobby pojedynków. Otwórz lobby, aby poczekać na kolejnego rywala.',
+                })}
+              </Text>
+              <OutlineLink
+                href={DUELS_ROUTE}
+                hint={copy({
+                  de: 'Öffnet die Duell-Lobby.',
+                  en: 'Opens the duels lobby.',
+                  pl: 'Otwiera lobby pojedynków.',
+                })}
+                label={copy({
+                  de: 'Duell-Lobby öffnen',
+                  en: 'Open duels lobby',
+                  pl: 'Otwórz lobby pojedynków',
+                })}
+              />
+            </View>
+          ) : (
+            <View style={{ gap: 12 }}>
+              <Text style={{ color: '#475569', lineHeight: 20 }}>
+                {duelPresence.entries.some((entry) => entry.learnerId === activeDuelLearnerId)
+                  ? copy({
+                      de: 'Dein Konto ist derzeit in der Lobby sichtbar. Du kannst jetzt direkt einen aktiven Rivalen privat herausfordern.',
+                      en: 'Your account is currently visible in the lobby. You can directly challenge an active rival right now.',
+                      pl: 'Twoje konto jest teraz widoczne w lobby. Możesz od razu wysłać prywatne wyzwanie aktywnemu rywalowi.',
+                    })
+                  : copy({
+                      de: 'Das ist eine kompakte Momentaufnahme aktiver Rivalen. Öffne die Duell-Lobby, damit andere auch dich in dieser Liste sehen.',
+                      en: 'This is a compact snapshot of active rivals. Open the duels lobby so others can also see you in this list.',
+                      pl: 'To kompaktowa migawka aktywnych rywali. Otwórz lobby pojedynków, aby inni zobaczyli tu również Ciebie.',
+                    })}
+              </Text>
+              {duelPresence.actionError ? (
+                <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
+                  {duelPresence.actionError}
+                </Text>
+              ) : null}
+              {duelPresence.entries.map((entry) => {
+                const isCurrentLearner = entry.learnerId === activeDuelLearnerId;
+
+                return (
+                  <View
+                    key={entry.learnerId}
+                    style={{
+                      backgroundColor: isCurrentLearner ? '#eff6ff' : '#f8fafc',
+                      borderColor: isCurrentLearner ? '#bfdbfe' : '#e2e8f0',
+                      borderRadius: 20,
+                      borderWidth: 1,
+                      gap: 8,
+                      padding: 14,
+                    }}
+                  >
+                    <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
+                      {entry.displayName}
+                      {isCurrentLearner
+                        ? copy({
+                            de: ' · Du',
+                            en: ' · You',
+                            pl: ' · Ty',
+                          })
+                        : ''}
+                    </Text>
+                    <Text style={{ color: '#64748b' }}>
+                      {copy({
+                        de: `Zuletzt aktiv ${formatHomeRelativeAge(entry.lastSeenAt, locale)}`,
+                        en: `Last active ${formatHomeRelativeAge(entry.lastSeenAt, locale)}`,
+                        pl: `Ostatnia aktywność ${formatHomeRelativeAge(entry.lastSeenAt, locale)}`,
+                      })}
+                    </Text>
+                    {!isCurrentLearner ? (
+                      <PrimaryButton
+                        disabled={duelPresence.isActionPending}
+                        hint={copy({
+                          de: `Sendet sofort eine private Herausforderung an ${entry.displayName}.`,
+                          en: `Sends an immediate private challenge to ${entry.displayName}.`,
+                          pl: `Od razu wysyła prywatne wyzwanie do ${entry.displayName}.`,
+                        })}
+                        label={
+                          duelPresence.pendingLearnerId === entry.learnerId
+                            ? copy({
+                                de: 'Herausforderung wird gesendet...',
+                                en: 'Sending challenge...',
+                                pl: 'Wysyłanie wyzwania...',
+                              })
+                            : `${copy({
+                                de: 'Herausfordern',
+                                en: 'Challenge',
+                                pl: 'Wyzwij',
+                              })}: ${entry.displayName}`
+                        }
+                        onPress={async () => {
+                          const nextSessionId = await duelPresence.createPrivateChallenge(
+                            entry.learnerId,
+                          );
+                          if (nextSessionId) {
+                            openDuelSession(nextSessionId);
+                          }
+                        }}
+                      />
+                    ) : null}
+                  </View>
+                );
+              })}
+              <OutlineLink
+                href={DUELS_ROUTE}
+                hint={copy({
+                  de: 'Öffnet die vollständige Duell-Lobby.',
+                  en: 'Opens the full duels lobby.',
+                  pl: 'Otwiera pełne lobby pojedynków.',
+                })}
+                label={copy({
+                  de: 'Lobby öffnen',
+                  en: 'Open lobby',
+                  pl: 'Otwórz lobby',
+                })}
+              />
+            </View>
+          )}
+        </SectionCard>
+
+        <SectionCard
+          title={copy({
             de: 'Live-Duelle',
             en: 'Live duels',
             pl: 'Na żywo w pojedynkach',
@@ -1602,12 +1793,74 @@ export default function HomeScreen(): React.JSX.Element {
             </View>
           ) : (
             <View style={{ gap: 12 }}>
+              {session.status === 'authenticated' && currentLearnerDuelEntry ? (
+                <View
+                  style={{
+                    backgroundColor: '#eff6ff',
+                    borderColor: '#bfdbfe',
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    gap: 8,
+                    padding: 14,
+                  }}
+                >
+                  <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
+                    {copy({
+                      de: 'DEIN DUELLSTAND',
+                      en: 'YOUR DUEL SNAPSHOT',
+                      pl: 'TWÓJ WYNIK W POJEDYNKACH',
+                    })}
+                  </Text>
+                  <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+                    #{currentLearnerDuelRank + 1} {currentLearnerDuelEntry.displayName}
+                  </Text>
+                  <Text style={{ color: '#475569', lineHeight: 20 }}>
+                    {copy({
+                      de: `Siege ${currentLearnerDuelEntry.wins} • Niederlagen ${currentLearnerDuelEntry.losses} • Unentschieden ${currentLearnerDuelEntry.ties}`,
+                      en: `Wins ${currentLearnerDuelEntry.wins} • Losses ${currentLearnerDuelEntry.losses} • Ties ${currentLearnerDuelEntry.ties}`,
+                      pl: `Wygrane ${currentLearnerDuelEntry.wins} • Porażki ${currentLearnerDuelEntry.losses} • Remisy ${currentLearnerDuelEntry.ties}`,
+                    })}
+                  </Text>
+                  <Text style={{ color: '#64748b' }}>
+                    {copy({
+                      de: `Matches ${currentLearnerDuelEntry.matches} • Quote ${Math.round(
+                        currentLearnerDuelEntry.winRate * 100,
+                      )}% • letztes Duell ${formatHomeRelativeAge(
+                        currentLearnerDuelEntry.lastPlayedAt,
+                        locale,
+                      )}`,
+                      en: `Matches ${currentLearnerDuelEntry.matches} • Win rate ${Math.round(
+                        currentLearnerDuelEntry.winRate * 100,
+                      )}% • last duel ${formatHomeRelativeAge(
+                        currentLearnerDuelEntry.lastPlayedAt,
+                        locale,
+                      )}`,
+                      pl: `Mecze ${currentLearnerDuelEntry.matches} • Win rate ${Math.round(
+                        currentLearnerDuelEntry.winRate * 100,
+                      )}% • ostatni pojedynek ${formatHomeRelativeAge(
+                        currentLearnerDuelEntry.lastPlayedAt,
+                        locale,
+                      )}`,
+                    })}
+                  </Text>
+                </View>
+              ) : session.status === 'authenticated' ? (
+                <Text style={{ color: '#64748b', lineHeight: 20 }}>
+                  {copy({
+                    de: 'Dein Konto ist noch nicht im aktuellen Kurz-Ranking sichtbar.',
+                    en: 'Your account is not yet visible in the current compact ranking.',
+                    pl: 'Twojego konta nie ma jeszcze w bieżącym skrócie rankingu.',
+                  })}
+                </Text>
+              ) : null}
               {duelLeaderboard.entries.map((entry, index) => (
                 <View
                   key={entry.learnerId}
                   style={{
-                    backgroundColor: '#f8fafc',
-                    borderColor: '#e2e8f0',
+                    backgroundColor:
+                      entry.learnerId === activeDuelLearnerId ? '#eff6ff' : '#f8fafc',
+                    borderColor:
+                      entry.learnerId === activeDuelLearnerId ? '#bfdbfe' : '#e2e8f0',
                     borderRadius: 20,
                     borderWidth: 1,
                     gap: 8,
@@ -1616,6 +1869,13 @@ export default function HomeScreen(): React.JSX.Element {
                 >
                   <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
                     #{index + 1} {entry.displayName}
+                    {entry.learnerId === activeDuelLearnerId
+                      ? copy({
+                          de: ' · Du',
+                          en: ' · You',
+                          pl: ' · Ty',
+                        })
+                      : ''}
                   </Text>
                   <Text style={{ color: '#475569', lineHeight: 20 }}>
                     {copy({

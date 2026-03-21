@@ -23,6 +23,7 @@ export const mongoProductWriteImpl = {
     const collection = await getCollection();
     const id = data.id || randomUUID();
     const now = new Date();
+    const storageInput = data as ProductCreateInput & { catalogId?: string | null };
 
     const doc: ProductDocument = {
       _id: id,
@@ -50,7 +51,7 @@ export const mongoProductWriteImpl = {
       length: data.length ?? null,
       published: true,
       categoryId: data.categoryId || null,
-      catalogId: (data as unknown as { catalogId?: string }).catalogId || 'default',
+      catalogId: storageInput.catalogId || 'default',
       createdAt: now,
       updatedAt: now,
       images: [],
@@ -64,7 +65,7 @@ export const mongoProductWriteImpl = {
     };
 
     await collection.insertOne(doc);
-    return toProductResponse(doc as unknown as WithId<ProductDocument>);
+    return toProductResponse(doc as WithId<ProductDocument>);
   },
 
   async updateProduct(
@@ -184,9 +185,10 @@ export const mongoProductWriteImpl = {
       producers: _p,
       ...rest
     } = product;
-    return await createProduct({
+    const duplicateInput = {
       ...rest,
       sku: newSku,
-    } as unknown as ProductCreateInput);
+    } as ProductCreateInput;
+    return await createProduct(duplicateInput);
   },
 };

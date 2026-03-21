@@ -14,6 +14,7 @@ import type {
   BaseImportErrorCode,
   BaseImportItemRecord,
   BaseImportMode,
+  BaseParameterImportSummary,
   BaseImportRunRecord,
   ProductListing,
   ProductListingRepository,
@@ -466,12 +467,7 @@ const mergeParameterValues = (
   return Array.from(byParameterId.values());
 };
 
-type ParameterImportSummary = {
-  extracted: number;
-  resolved: number;
-  created: number;
-  written: number;
-};
+type ParameterImportSummary = BaseParameterImportSummary;
 
 type ParameterImportResult = {
   applied: boolean;

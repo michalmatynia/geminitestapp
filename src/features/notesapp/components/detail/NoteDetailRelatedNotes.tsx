@@ -5,16 +5,12 @@ import React, { useMemo } from 'react';
 
 import { useNotesLookup } from '@/features/notesapp/api/useNoteQueries';
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
-import type { RelatedNote, NoteRelationRecord } from '@/shared/contracts/notes';
+import type {
+  NoteRelationWithSource,
+  NoteRelationWithTarget,
+  RelatedNote,
+} from '@/shared/contracts/notes';
 import { Button } from '@/shared/ui';
-
-type NoteRelationWithTarget = NoteRelationRecord & {
-  targetNote?: RelatedNote | undefined;
-};
-
-type NoteRelationWithSource = NoteRelationRecord & {
-  sourceNote?: RelatedNote | undefined;
-};
 
 export function NoteDetailRelatedNotes(): React.JSX.Element | null {
   const { selectedNote, selectedNoteTheme } = useNotesAppState();

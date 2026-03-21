@@ -16,7 +16,7 @@ import {
 } from '@/shared/contracts/prompt-exploder';
 import type { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import type { LearningDraft } from '../SettingsContext';
@@ -101,9 +101,9 @@ export function useSettingsActionsImpl(args: UseSettingsActionsImplArgs) {
         { variant: 'success' }
       );
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'PromptExploderSettingsContext', action: 'handleInstallPatternPack' },
+      logClientCatch(error, {
+        source: 'PromptExploderSettingsContext',
+        action: 'handleInstallPatternPack',
       });
       toast('Failed to install pattern pack.', { variant: 'error' });
     }
@@ -131,9 +131,9 @@ export function useSettingsActionsImpl(args: UseSettingsActionsImplArgs) {
       args.setHasUnsavedLearningDraft(false);
       toast('Learning settings saved.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'PromptExploderSettingsContext', action: 'handleSaveLearningSettings' },
+      logClientCatch(error, {
+        source: 'PromptExploderSettingsContext',
+        action: 'handleSaveLearningSettings',
       });
       toast('Failed to save learning settings.', { variant: 'error' });
     }
@@ -159,9 +159,9 @@ export function useSettingsActionsImpl(args: UseSettingsActionsImplArgs) {
       args.setHasUnsavedParserTuningDrafts(false);
       toast(`Saved ${args.parserTuningDrafts.length} parser tuning rules.`, { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'PromptExploderSettingsContext', action: 'handleSaveParserTuningRules' },
+      logClientCatch(error, {
+        source: 'PromptExploderSettingsContext',
+        action: 'handleSaveParserTuningRules',
       });
       toast('Failed to save parser tuning rules.', { variant: 'error' });
     }
@@ -204,12 +204,9 @@ export function useSettingsActionsImpl(args: UseSettingsActionsImplArgs) {
       args.setSnapshotDraftName('');
       toast(`Captured snapshot "${snapshot.name ?? 'Unnamed snapshot'}".`, { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'PromptExploderSettingsContext',
-          action: 'handleCapturePatternSnapshot',
-        },
+      logClientCatch(error, {
+        source: 'PromptExploderSettingsContext',
+        action: 'handleCapturePatternSnapshot',
       });
       toast('Failed to capture snapshot.', { variant: 'error' });
     }
@@ -238,12 +235,9 @@ export function useSettingsActionsImpl(args: UseSettingsActionsImplArgs) {
         variant: 'success',
       });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'PromptExploderSettingsContext',
-          action: 'handleRestorePatternSnapshot',
-        },
+      logClientCatch(error, {
+        source: 'PromptExploderSettingsContext',
+        action: 'handleRestorePatternSnapshot',
       });
       toast('Failed to restore snapshot.', { variant: 'error' });
     }
@@ -269,7 +263,10 @@ export function useSettingsActionsImpl(args: UseSettingsActionsImplArgs) {
         variant: 'success',
       });
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, {
+        source: 'PromptExploderSettingsContext',
+        action: 'handleDeletePatternSnapshot',
+      });
       toast(error instanceof Error ? error.message : 'Failed to delete snapshot.', {
         variant: 'error',
       });
@@ -304,7 +301,12 @@ export function useSettingsActionsImpl(args: UseSettingsActionsImplArgs) {
         );
         toast(`Template state changed to ${nextState}.`, { variant: 'success' });
       } catch (error) {
-        logClientError(error);
+        logClientCatch(error, {
+          source: 'PromptExploderSettingsContext',
+          action: 'handleTemplateStateChange',
+          templateId,
+          nextState,
+        });
         toast(error instanceof Error ? error.message : 'Failed to update template state.', {
           variant: 'error',
         });
@@ -336,7 +338,11 @@ export function useSettingsActionsImpl(args: UseSettingsActionsImplArgs) {
         );
         toast('Template removed.', { variant: 'success' });
       } catch (error) {
-        logClientError(error);
+        logClientCatch(error, {
+          source: 'PromptExploderSettingsContext',
+          action: 'handleDeleteTemplate',
+          templateId,
+        });
         toast(error instanceof Error ? error.message : 'Failed to delete template.', {
           variant: 'error',
         });

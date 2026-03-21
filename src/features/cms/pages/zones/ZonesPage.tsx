@@ -25,7 +25,7 @@ import {
   UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 import { cmsDomainCreateSchema, cmsDomainUpdateSchema } from '../../validations/api';
@@ -87,8 +87,7 @@ export default function ZonesPage(): React.JSX.Element {
         setDomain('');
         toast(`Zone ${validation.data.domain} added successfully.`, { variant: 'success' });
       } catch (err: unknown) {
-        logClientError(err);
-        logClientError(err, { context: { source: 'ZonesPage', action: 'createDomain', domain } });
+        logClientCatch(err, { source: 'ZonesPage', action: 'createDomain', domain });
         setError(err instanceof Error ? err.message : 'Failed to create domain.');
       }
     };
@@ -101,10 +100,7 @@ export default function ZonesPage(): React.JSX.Element {
       toast('Zone removed successfully.', { variant: 'success' });
       setZoneToDelete(null);
     } catch (err: unknown) {
-      logClientError(err);
-      logClientError(err, {
-        context: { source: 'ZonesPage', action: 'deleteDomain', domainId: id },
-      });
+      logClientCatch(err, { source: 'ZonesPage', action: 'deleteDomain', domainId: id });
       toast(err instanceof Error ? err.message : 'Failed to delete domain.', { variant: 'error' });
     }
   };
@@ -127,10 +123,7 @@ export default function ZonesPage(): React.JSX.Element {
       await updateDomain.mutateAsync({ id, input });
       toast('Zone routing updated.', { variant: 'success' });
     } catch (err: unknown) {
-      logClientError(err);
-      logClientError(err, {
-        context: { source: 'ZonesPage', action: 'updateAlias', domainId: id, aliasOf },
-      });
+      logClientCatch(err, { source: 'ZonesPage', action: 'updateAlias', domainId: id, aliasOf });
       toast(err instanceof Error ? err.message : 'Failed to update alias.', { variant: 'error' });
     }
   };

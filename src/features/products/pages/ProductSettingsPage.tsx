@@ -27,7 +27,7 @@ import {
 import { Catalog, PriceGroup } from '@/shared/contracts/products';
 import { AdminProductsPageLayout, Button, useToast, Card, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { settingSections } from './ProductSettingsConstants';
 
@@ -125,9 +125,10 @@ export function ProductSettingsPage({
       await updatePriceGroupMutation.mutateAsync({ ...group, isDefault: true });
       toast('Default price group updated.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'ProductSettingsPage', action: 'handleSetDefaultGroup', groupId },
+      logClientCatch(error, {
+        source: 'ProductSettingsPage',
+        action: 'handleSetDefaultGroup',
+        groupId,
       });
     }
   };
@@ -143,13 +144,10 @@ export function ProductSettingsPage({
           await deleteCatalogMutation.mutateAsync(catalog.id);
           toast('Catalog deleted.', { variant: 'success' });
         } catch (err) {
-          logClientError(err);
-          logClientError(err, {
-            context: {
-              source: 'ProductSettingsPage',
-              action: 'handleDeleteCatalog',
-              catalogId: catalog.id,
-            },
+          logClientCatch(err, {
+            source: 'ProductSettingsPage',
+            action: 'handleDeleteCatalog',
+            catalogId: catalog.id,
           });
           toast('Failed to delete catalog.', { variant: 'error' });
         }
@@ -172,13 +170,10 @@ export function ProductSettingsPage({
           await deletePriceGroupMutation.mutateAsync(group.id);
           toast('Price group deleted.', { variant: 'success' });
         } catch (err) {
-          logClientError(err);
-          logClientError(err, {
-            context: {
-              source: 'ProductSettingsPage',
-              action: 'handleDeleteGroup',
-              groupId: group.id,
-            },
+          logClientCatch(err, {
+            source: 'ProductSettingsPage',
+            action: 'handleDeleteGroup',
+            groupId: group.id,
           });
           toast('Failed to delete price group.', { variant: 'error' });
         }

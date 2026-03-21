@@ -1,6 +1,6 @@
 import {
-  KANGUR_PORTABLE_LESSONS,
   getKangurLessonMasteryPresentation,
+  getLocalizedKangurPortableLessons,
   resolveFocusedKangurLessonId,
   type KangurLessonMasteryPresentation,
   type KangurPortableLesson,
@@ -8,6 +8,7 @@ import {
 import { createDefaultKangurProgressState } from '@kangur/contracts';
 import { useMemo, useSyncExternalStore } from 'react';
 
+import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 
 type KangurMobileLessonItem = {
@@ -25,6 +26,7 @@ type UseKangurMobileLessonsResult = {
 export const useKangurMobileLessons = (
   rawFocusToken: string | null,
 ): UseKangurMobileLessonsResult => {
+  const { locale } = useKangurMobileI18n();
   const { progressStore } = useKangurMobileRuntime();
   const progress = useSyncExternalStore(
     progressStore.subscribeToProgress,
@@ -32,23 +34,24 @@ export const useKangurMobileLessons = (
     createDefaultKangurProgressState,
   );
   const focusToken = rawFocusToken?.trim().toLowerCase() || null;
+  const portableLessons = useMemo(() => getLocalizedKangurPortableLessons(locale), [locale]);
 
   const selectedLessonId = useMemo(
     () =>
       focusToken
-        ? resolveFocusedKangurLessonId(focusToken, KANGUR_PORTABLE_LESSONS)
+        ? resolveFocusedKangurLessonId(focusToken, portableLessons)
         : null,
-    [focusToken],
+    [focusToken, portableLessons],
   );
 
   const lessons = useMemo(
     () =>
-      KANGUR_PORTABLE_LESSONS.map((lesson) => ({
+      portableLessons.map((lesson) => ({
         isFocused: lesson.id === selectedLessonId,
         lesson,
-        mastery: getKangurLessonMasteryPresentation(lesson, progress),
+        mastery: getKangurLessonMasteryPresentation(lesson, progress, locale),
       })),
-    [progress, selectedLessonId],
+    [locale, portableLessons, progress, selectedLessonId],
   );
 
   return {

@@ -3,7 +3,7 @@ import React from 'react';
 import { useSavePriceGroupMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { PriceGroup } from '@/shared/contracts/products';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 interface PriceGroupFormState {
   name: string;
@@ -62,13 +62,10 @@ export function usePriceGroupForm({ priceGroup }: UsePriceGroupFormProps): UsePr
 
       toast('Price group saved.', { variant: 'success' });
     } catch (err) {
-      logClientError(err);
-      logClientError(err, {
-        context: {
-          source: 'PriceGroupModal',
-          action: 'savePriceGroup',
-          priceGroupId: priceGroup?.id,
-        },
+      logClientCatch(err, {
+        source: 'PriceGroupModal',
+        action: 'savePriceGroup',
+        priceGroupId: priceGroup?.id,
       });
       toast('Failed to save price group.', { variant: 'error' });
     }

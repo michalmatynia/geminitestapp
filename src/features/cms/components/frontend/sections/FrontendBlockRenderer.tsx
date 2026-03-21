@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import React from 'react';
 
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
-import type { BlockInstance } from '@/features/cms/types/page-builder';
+import type { PreviewBlockItemProps as FrontendBlockRendererProps } from '@/shared/contracts/cms';
 
 import { useSectionLayout } from './SectionLayoutContext';
 import {
@@ -45,10 +45,6 @@ const RichTextBlock = dynamic(() => import('../blocks/RichTextBlock').then(mod =
 
 export { BlockSettingsContext };
 export const useBlockSettings = useBlockSettingsFromBlockContext;
-
-interface FrontendBlockRendererProps {
-  block: BlockInstance;
-}
 
 export function FrontendBlockRenderer({ block }: FrontendBlockRendererProps): React.ReactNode {
   const mediaStyles = useMediaStyles();

@@ -3,15 +3,10 @@
 import { createContext, type ReactNode, useContext } from 'react';
 
 import { KangurAdminMenuToggle } from '@/features/kangur/admin/KangurAdminMenuToggle';
-import type { BreadcrumbItem } from '@/shared/contracts/ui';
+import type { BreadcrumbItem, SectionHeaderRefreshConfigDto } from '@/shared/contracts/ui';
 import { Breadcrumbs, ListPanel, SectionHeader } from '@/features/kangur/shared/ui';
 import { AdminFavoriteBreadcrumbRow } from '@/shared/ui/admin-favorite-breadcrumb-row';
 import { cn } from '@/features/kangur/shared/utils';
-
-type KangurAdminRefresh = {
-  onRefresh: () => void;
-  isRefreshing: boolean;
-};
 
 type KangurAdminContentShellProps = {
   title: string;
@@ -21,7 +16,7 @@ type KangurAdminContentShellProps = {
   headerLayout?: 'inline' | 'stacked';
   headerFooterSpacing?: 'default' | 'flush';
   showBreadcrumbs?: boolean;
-  refresh?: KangurAdminRefresh | undefined;
+  refresh?: SectionHeaderRefreshConfigDto | undefined;
   children: ReactNode;
   className?: string;
   panelClassName?: string;
@@ -38,7 +33,7 @@ const KangurAdminContentShellContext = createContext<{
   headerLayout?: 'inline' | 'stacked';
   headerFooterSpacing?: 'default' | 'flush';
   showBreadcrumbs?: boolean;
-  refresh?: KangurAdminRefresh | undefined;
+  refresh?: SectionHeaderRefreshConfigDto | undefined;
 } | null>(null);
 
 const useKangurAdminContentShellContext = () => {

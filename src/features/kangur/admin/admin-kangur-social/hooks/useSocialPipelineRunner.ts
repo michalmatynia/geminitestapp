@@ -11,6 +11,7 @@ import {
 import { api } from '@/shared/lib/api-client';
 import type { KangurSocialManualPipelineProgress } from '@/shared/contracts/kangur-social-pipeline';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 import type {
   KangurSocialDocUpdatesResponse,
   KangurSocialPost,
@@ -102,9 +103,6 @@ const isManualPipelineResult = (value: unknown): value is ManualPipelineJobResul
       (value as { type?: string }).type === 'manual-post-pipeline'
   );
 
-const delay = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
-
 const invalidateSocialQueries = (queryClient: {
   invalidateQueries: (args: { queryKey: readonly unknown[] }) => Promise<unknown> | unknown;
 }): void => {
@@ -121,7 +119,18 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
   const [pipelineErrorMessage, setPipelineErrorMessage] = useState<string | null>(null);
 
   const depsRef = useRef(deps);
+  const pollDelayTimeoutRef = useRef<SafeTimerId | null>(null);
+  const isUnmountedRef = useRef(false);
   depsRef.current = deps;
+
+  useEffect(() => {
+    isUnmountedRef.current = false;
+    return () => {
+      isUnmountedRef.current = true;
+      safeClearTimeout(pollDelayTimeoutRef.current);
+      pollDelayTimeoutRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     deps.setDocUpdatesResult(null);
@@ -134,6 +143,19 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     if (!progress) return;
     setPipelineProgress(progress);
     setPipelineStep(progress.step);
+  }, []);
+
+  const waitForNextPoll = useCallback((ms: number): Promise<boolean> => {
+    if (isUnmountedRef.current) {
+      return Promise.resolve(false);
+    }
+
+    return new Promise((resolve) => {
+      pollDelayTimeoutRef.current = safeSetTimeout(() => {
+        pollDelayTimeoutRef.current = null;
+        resolve(!isUnmountedRef.current);
+      }, ms);
+    });
   }, []);
 
   const runPipeline = useCallback(async (
@@ -248,7 +270,9 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
         );
 
         if (!job) {
-          await delay(PIPELINE_POLL_INTERVAL_MS);
+          if (!(await waitForNextPoll(PIPELINE_POLL_INTERVAL_MS))) {
+            return;
+          }
           continue;
         }
 
@@ -263,7 +287,9 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
           throw new Error(job.failedReason ?? 'Server pipeline job failed.');
         }
 
-        await delay(PIPELINE_POLL_INTERVAL_MS);
+        if (!(await waitForNextPoll(PIPELINE_POLL_INTERVAL_MS))) {
+          return;
+        }
       }
 
       if (finalJob?.status !== 'completed') {
@@ -335,7 +361,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
         depsRef.current.buildSocialContext({ error: true, captureMode })
       );
     }
-  }, [queryClient, toast]);
+  }, [queryClient, syncProgress, toast, waitForNextPoll]);
 
   const handleRunFullPipeline = useCallback(
     async (): Promise<void> => runPipeline('existing_assets'),

@@ -76,8 +76,9 @@ export const mongoProductReadImpl = {
         ? { hint: { createdAt: -1 } }
         : undefined;
       const docs = await collection.aggregate(pipeline, aggregateOptions).toArray();
+      const projectedDocs = docs as WithId<ProductDocument>[];
 
-      return docs.map((doc) => toProductResponse(doc as unknown as WithId<ProductDocument>));
+      return projectedDocs.map((doc) => toProductResponse(doc));
     }
 
     let cursor = collection.find(searchFilter).sort({ createdAt: -1 });
@@ -157,9 +158,10 @@ export const mongoProductReadImpl = {
         })(),
         collection.estimatedDocumentCount(),
       ]);
+      const projectedDocs = docs as WithId<ProductDocument>[];
 
       return {
-        products: docs.map((doc) => toProductResponse(doc as unknown as WithId<ProductDocument>)),
+        products: projectedDocs.map((doc) => toProductResponse(doc)),
         total,
       };
     }
@@ -190,9 +192,10 @@ export const mongoProductReadImpl = {
       result?.meta && Array.isArray(result.meta) && typeof result.meta[0]?.total === 'number'
         ? result.meta[0].total
         : 0;
+    const projectedDocs = docs as WithId<ProductDocument>[];
 
     return {
-      products: docs.map((doc) => toProductResponse(doc as unknown as WithId<ProductDocument>)),
+      products: projectedDocs.map((doc) => toProductResponse(doc)),
       total,
     };
   },

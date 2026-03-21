@@ -38,7 +38,7 @@ const resolveProductRepository = async (
 ): Promise<ProductRepository> => getProductRepository(providerOverride);
 
 const resolveImageFileRepository = async (): Promise<ImageFileRepository> =>
-  getImageFileRepository() as unknown as Promise<ImageFileRepository>;
+  getImageFileRepository();
 
 const normalizeCreateProductPayloadForStorage = <TData extends Record<string, unknown>>(
   data: TData

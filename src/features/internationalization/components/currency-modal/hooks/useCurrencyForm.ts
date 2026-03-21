@@ -3,7 +3,7 @@ import React from 'react';
 import { useSaveCurrencyMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
 import type { CurrencyOption } from '@/shared/contracts/internationalization';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 interface CurrencyFormState {
   code: string;
@@ -65,9 +65,10 @@ export function useCurrencyForm({ currency }: UseCurrencyFormProps): UseCurrency
 
       toast('Currency saved.', { variant: 'success' });
     } catch (err) {
-      logClientError(err);
-      logClientError(err, {
-        context: { source: 'CurrencyModal', action: 'saveCurrency', currencyId: currency?.id },
+      logClientCatch(err, {
+        source: 'CurrencyModal',
+        action: 'saveCurrency',
+        currencyId: currency?.id,
       });
       toast('Failed to save currency.', { variant: 'error' });
     }

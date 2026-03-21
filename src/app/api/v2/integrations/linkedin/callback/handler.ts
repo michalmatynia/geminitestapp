@@ -44,15 +44,23 @@ export const querySchema = z.object({
 const parseState = (raw: string): StatePayload | null => {
   try {
     const json = Buffer.from(raw, 'base64url').toString('utf-8');
-    const parsed = JSON.parse(json) as Record<string, unknown>;
-    if (
-      typeof parsed['nonce'] === 'string' &&
-      typeof parsed['integrationId'] === 'string' &&
-      typeof parsed['connectionId'] === 'string'
-    ) {
-      return parsed as unknown as StatePayload;
+    const parsed = JSON.parse(json) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return null;
     }
-    return null;
+
+    const record = parsed as Record<string, unknown>;
+    const nonce = typeof record['nonce'] === 'string' ? record['nonce'] : null;
+    const integrationId =
+      typeof record['integrationId'] === 'string' ? record['integrationId'] : null;
+    const connectionId =
+      typeof record['connectionId'] === 'string' ? record['connectionId'] : null;
+
+    if (nonce === null || integrationId === null || connectionId === null) {
+      return null;
+    }
+
+    return { nonce, integrationId, connectionId };
   } catch {
     return null;
   }
@@ -89,10 +97,10 @@ export async function GET_handler(
   let profileResolved = false;
   let profileHasVanity = false;
   const requestUrl = new URL(req.url);
-  const query = (_ctx.query ?? {}) as unknown as z.infer<typeof querySchema>;
 
   try {
     stage = 'validate';
+    const query = querySchema.parse(_ctx.query ?? {});
 
     const errorParam = query.error ?? null;
     if (errorParam) {

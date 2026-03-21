@@ -7,7 +7,7 @@ import type {
   GenericItemMapperConfig,
   PendingExternalMappingsState,
 } from '@/shared/contracts/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { GenericMapperExternalCell } from './GenericMapperExternalCell';
 import { GenericMapperHeaderActions } from './GenericMapperHeaderActions';
@@ -103,10 +103,7 @@ export function GenericMapper<TInternal, TExternal, TMapping>({
       const result = await onFetch();
       toast(result.message, { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'GenericMapper', action: 'fetch', connectionId, title },
-      });
+      logClientCatch(error, { source: 'GenericMapper', action: 'fetch', connectionId, title });
       const message =
         error instanceof Error ? error.message : `Failed to fetch ${title.toLowerCase()}`;
       toast(message, { variant: 'error' });
@@ -131,10 +128,7 @@ export function GenericMapper<TInternal, TExternal, TMapping>({
       toast(result.message, { variant: 'success' });
       resetPendingMappings();
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'GenericMapper', action: 'save', connectionId, title },
-      });
+      logClientCatch(error, { source: 'GenericMapper', action: 'save', connectionId, title });
       const message =
         error instanceof Error ? error.message : `Failed to save ${title.toLowerCase()}`;
       toast(message, { variant: 'error' });

@@ -5,10 +5,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
+  CaseFileTypeFilter,
   CaseResolverFile,
   CaseResolverTag,
   CaseResolverIdentifier,
   CaseResolverCategory,
+  CaseSortKey,
+  CaseSortOrder,
 } from '@/shared/contracts/case-resolver';
 import {
   Button,
@@ -26,9 +29,9 @@ import {
   useCaseResolverPageState,
 } from '../context/CaseResolverPageContext';
 
-type SortKey = 'updated' | 'created' | 'name';
-type SortOrder = 'asc' | 'desc';
-type FileTypeFilter = 'all' | 'document' | 'scanfile';
+type SortKey = Extract<CaseSortKey, 'updated' | 'created' | 'name'>;
+type SortOrder = CaseSortOrder;
+type FileTypeFilter = Extract<CaseFileTypeFilter, 'all' | 'document' | 'scanfile'>;
 
 const FILE_TYPE_OPTIONS: Array<LabeledOptionDto<FileTypeFilter>> = [
   { value: 'all', label: 'All file types' },

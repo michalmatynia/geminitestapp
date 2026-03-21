@@ -43,10 +43,10 @@ export const syncUserPreferences: DatabaseSyncHandler = async ({ mongo, prisma, 
   const docs: MongoUserPreferencesDoc[] = (await mongo
     .collection('user_preferences')
     .find({})
-    .toArray()) as unknown as MongoUserPreferencesDoc[];
+    .toArray()) as MongoUserPreferencesDoc[];
   const data = docs
     .map((doc): Prisma.UserPreferencesCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       const userId = doc.userId;
       if (!userId || !existingUserIds.has(userId)) return null;
       return {
@@ -85,10 +85,10 @@ export const syncSystemLogs: DatabaseSyncHandler = async ({
   const docs: MongoSystemLogDoc[] = (await mongo
     .collection('system_logs')
     .find({})
-    .toArray()) as unknown as MongoSystemLogDoc[];
+    .toArray()) as MongoSystemLogDoc[];
   const data = docs
     .map((doc): Prisma.SystemLogCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       return {
         ...(id ? { id } : null),
         level: doc.level ?? 'error',
@@ -120,11 +120,11 @@ export const syncFileUploadEvents: DatabaseSyncHandler = async ({
   const docs: MongoFileUploadEventDoc[] = (await mongo
     .collection('file_upload_events')
     .find({})
-    .toArray()) as unknown as MongoFileUploadEventDoc[];
+    .toArray()) as MongoFileUploadEventDoc[];
   const warnings: string[] = [];
   const data = docs
     .map((doc): Prisma.FileUploadEventCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       const status = doc.status;
       const resolvedStatus = status === 'error' || status === 'success' ? status : 'success';
@@ -164,10 +164,10 @@ export const syncAiConfigurations: DatabaseSyncHandler = async ({ mongo, prisma,
   const docs: MongoAiConfigurationDoc[] = (await mongo
     .collection('ai_configurations')
     .find({})
-    .toArray()) as unknown as MongoAiConfigurationDoc[];
+    .toArray()) as MongoAiConfigurationDoc[];
   const data = docs
     .map((doc): Prisma.AiConfigurationCreateManyInput | null => {
-      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       return {
         id,

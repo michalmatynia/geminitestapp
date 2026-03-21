@@ -6,6 +6,7 @@ import {
   buildCompletedKangurLessonAssignmentsByComponent,
   getKangurPortableLessonBody,
   getKangurLessonMasteryPresentation,
+  getLocalizedKangurPortableLessons,
   orderKangurLessonsByAssignmentPriority,
   resolveFocusedKangurLessonId,
 } from '@kangur/core';
@@ -79,10 +80,22 @@ describe('shared lessons helpers', () => {
     const presentation = getKangurLessonMasteryPresentation(lesson, progress);
 
     expect(presentation).toMatchObject({
-      statusLabel: 'Powtorz 45%',
+      statusLabel: 'Powtórz 45%',
       badgeAccent: 'rose',
     });
     expect(presentation.summaryLabel).toContain('ostatni wynik 40%');
+  });
+
+  it('localizes portable lesson catalog entries and mastery presentation in German', () => {
+    const lesson = getLocalizedKangurPortableLessons('de').find(
+      (candidate) => candidate.componentId === 'division',
+    )!;
+    const presentation = getKangurLessonMasteryPresentation(lesson, progress, 'de');
+
+    expect(lesson.title).toBe('Division');
+    expect(lesson.description).toBe('Grundlagen der Division und Reste.');
+    expect(presentation.statusLabel).toBe('Wiederhole 45%');
+    expect(presentation.summaryLabel).toContain('letztes Ergebnis 40%');
   });
 
   it('prefers the highest priority active lesson assignment and sorts lessons around it', () => {
@@ -150,10 +163,30 @@ describe('shared lessons helpers', () => {
     expect(getKangurPortableLessonBody('division')?.sections).toHaveLength(4);
     expect(getKangurPortableLessonBody('clock')?.sections).toHaveLength(3);
     expect(getKangurPortableLessonBody('calendar')?.sections).toHaveLength(4);
+    expect(getKangurPortableLessonBody('geometry_basics')?.sections).toHaveLength(4);
+    expect(getKangurPortableLessonBody('geometry_shapes')?.sections).toHaveLength(4);
+    expect(getKangurPortableLessonBody('geometry_symmetry')?.sections).toHaveLength(4);
+    expect(getKangurPortableLessonBody('geometry_perimeter')?.sections).toHaveLength(4);
     expect(getKangurPortableLessonBody('logical_thinking')?.sections).toHaveLength(4);
     expect(getKangurPortableLessonBody('logical_patterns')?.sections).toHaveLength(4);
     expect(getKangurPortableLessonBody('logical_classification')?.sections).toHaveLength(4);
     expect(getKangurPortableLessonBody('logical_reasoning')?.sections).toHaveLength(4);
     expect(getKangurPortableLessonBody('logical_analogies')?.sections).toHaveLength(4);
+  });
+
+  it('localizes portable lesson bodies in English', () => {
+    const lessonBody = getKangurPortableLessonBody('clock', 'en');
+
+    expect(lessonBody?.introduction).toContain('The clock lesson has three stages');
+    expect(lessonBody?.sections[0]?.title).toBe('Hours and the short hand');
+    expect(lessonBody?.practiceNote).toContain('interactive clock exercise');
+  });
+
+  it('localizes geometry lesson bodies in German', () => {
+    const lessonBody = getKangurPortableLessonBody('geometry_symmetry', 'de');
+
+    expect(lessonBody?.introduction).toContain('Symmetrie hilft dir zu erkennen');
+    expect(lessonBody?.sections[1]?.title).toBe('Symmetrieachse');
+    expect(lessonBody?.practiceNote).toContain('Symmetrieachsen');
   });
 });

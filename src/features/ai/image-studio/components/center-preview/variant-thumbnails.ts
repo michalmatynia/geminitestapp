@@ -3,9 +3,9 @@ import {
   isLikelyImageStudioErrorText,
 } from '@/features/ai/image-studio/image-src';
 import { estimateGenerationCost } from '@/features/ai/image-studio/utils/generation-cost';
-import type { ImageFileRecord } from '@/shared/contracts/files';
 import type {
   ImageStudioSlotRecord,
+  LandingSlotLike,
   SlotGenerationMetadata,
 } from '@/shared/contracts/image-studio';
 
@@ -22,12 +22,6 @@ import type { VersionNode } from '../../context/VersionGraphContext';
 
 const GENERATED_SOURCE_PATH_REGEX =
   /^\/uploads\/studio\/(?:center|crops|upscale|autoscale)\/[^/]+\/([^/]+)\//i;
-
-type LandingSlotLike = {
-  index: number;
-  status: string;
-  output?: ImageFileRecord | null;
-};
 
 type BuildVariantThumbnailsParams = {
   activeRunId: string | null;

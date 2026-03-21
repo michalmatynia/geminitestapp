@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 import type { Asset3DRecord, Asset3DUpdateInput } from '@/shared/contracts/viewer3d';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { updateAsset3D } from '../api';
 
@@ -57,10 +57,7 @@ export function useAsset3DForm(
       onSave(updated);
       onClose();
     } catch (err) {
-      logClientError(err);
-      logClientError(err, {
-        context: { source: 'Asset3DEditModal', action: 'saveAsset', assetId: asset.id },
-      });
+      logClientCatch(err, { source: 'Asset3DEditModal', action: 'saveAsset', assetId: asset.id });
       setError(err instanceof Error ? err.message : 'Failed to save');
     } finally {
       setIsSaving(false);

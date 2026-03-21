@@ -18,6 +18,7 @@ import type {
   AgentRunsResponse,
 } from '@/shared/contracts/agent-runtime';
 import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
+import type { IdDto } from '@/shared/contracts/base';
 import type { InputJsonValue } from '@/shared/contracts/json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, configurationError, internalError } from '@/shared/errors/app-error';
@@ -61,9 +62,7 @@ type AgentRunCreateRecord = Pick<
   tools: string[];
 };
 
-type AgentRunIdRecord = {
-  id: string;
-};
+type AgentRunIdRecord = IdDto;
 
 const toIsoString = (value: Date | string | null): string | null => {
   if (!value) return null;

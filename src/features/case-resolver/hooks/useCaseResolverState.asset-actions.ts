@@ -2,6 +2,7 @@ import { useRef } from 'react';
 
 import type {
   CaseResolverAssetKind,
+  CaseResolverRequestedCaseStatus,
   CaseResolverFileEditDraft,
   CaseResolverWorkspace,
   CaseResolverAssetFile,
@@ -12,8 +13,6 @@ import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvide
 import { useCaseResolverAssetFactoryActions } from './useCaseResolverState.asset-factory-actions';
 import { useCaseResolverStateOcrActions } from './useCaseResolverState.ocr-actions';
 import { useCaseResolverStateUploadActions } from './useCaseResolverState.upload-actions';
-
-type CaseResolverRequestedCaseStatus = 'loading' | 'ready' | 'missing';
 
 type UseCaseResolverStateAssetActionsInput = {
   settingsStore: SettingsStoreValue;

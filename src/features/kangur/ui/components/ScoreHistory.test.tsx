@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@/__tests__/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildKangurEmbeddedBasePath } from '@/features/kangur/config/routing';
 import type { KangurScoreRecord } from '@kangur/platform';

@@ -96,9 +96,9 @@ export const exportGuideEntriesToXliff = (
   sourceLanguage: string = 'pl',
   targetLanguage: string = 'en'
 ): string => {
-  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
   xml += `<xliff version="2.0" srcLang="${sourceLanguage}" trgLang="${targetLanguage}" xmlns="urn:oasis:names:tc:xliff:document:2.0">\n`;
-  xml += `  <file id="kangur-native-guides" type="plaintext">\n`;
+  xml += '  <file id="kangur-native-guides" type="plaintext">\n';
 
   entries.forEach((entry, index) => {
     const groupId = `group-${entry.id}`;
@@ -106,48 +106,48 @@ export const exportGuideEntriesToXliff = (
 
     // Title
     xml += `      <unit id="${groupId}-title">\n`;
-    xml += `        <segment>\n`;
+    xml += '        <segment>\n';
     xml += `          <source>${escapeXml(entry.title)}</source>\n`;
-    xml += `        </segment>\n`;
-    xml += `      </unit>\n`;
+    xml += '        </segment>\n';
+    xml += '      </unit>\n';
 
     // Short description
     xml += `      <unit id="${groupId}-shortDesc">\n`;
-    xml += `        <segment>\n`;
+    xml += '        <segment>\n';
     xml += `          <source>${escapeXml(entry.shortDescription)}</source>\n`;
-    xml += `        </segment>\n`;
-    xml += `      </unit>\n`;
+    xml += '        </segment>\n';
+    xml += '      </unit>\n';
 
     // Full description
     xml += `      <unit id="${groupId}-fullDesc">\n`;
-    xml += `        <segment>\n`;
+    xml += '        <segment>\n';
     xml += `          <source>${escapeXml(entry.fullDescription)}</source>\n`;
-    xml += `        </segment>\n`;
-    xml += `      </unit>\n`;
+    xml += '        </segment>\n';
+    xml += '      </unit>\n';
 
     // Hints
     entry.hints.forEach((hint, hintIndex) => {
       xml += `      <unit id="${groupId}-hint-${hintIndex}">\n`;
-      xml += `        <segment>\n`;
+      xml += '        <segment>\n';
       xml += `          <source>${escapeXml(hint)}</source>\n`;
-      xml += `        </segment>\n`;
-      xml += `      </unit>\n`;
+      xml += '        </segment>\n';
+      xml += '      </unit>\n';
     });
 
     // Trigger phrases
     entry.triggerPhrases.forEach((phrase, phraseIndex) => {
       xml += `      <unit id="${groupId}-phrase-${phraseIndex}">\n`;
-      xml += `        <segment>\n`;
+      xml += '        <segment>\n';
       xml += `          <source>${escapeXml(phrase)}</source>\n`;
-      xml += `        </segment>\n`;
-      xml += `      </unit>\n`;
+      xml += '        </segment>\n';
+      xml += '      </unit>\n';
     });
 
-    xml += `    </group>\n`;
+    xml += '    </group>\n';
   });
 
-  xml += `  </file>\n`;
-  xml += `</xliff>\n`;
+  xml += '  </file>\n';
+  xml += '</xliff>\n';
 
   return xml;
 };
@@ -242,7 +242,7 @@ const escapeXml = (str: string): string =>
  */
 const unescapeXml = (str: string): string =>
   str
-    .replace(/&apos;/g, "'")
+    .replace(/&apos;/g, '\'')
     .replace(/&quot;/g, '"')
     .replace(/&gt;/g, '>')
     .replace(/&lt;/g, '<')

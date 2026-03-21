@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook } from '@/__tests__/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {

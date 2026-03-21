@@ -119,14 +119,14 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
               }}
             >
               <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                Back
+                Wroc
               </Text>
             </Pressable>
           </Link>
 
           <SectionTitle
-            title='Leaderboard'
-            subtitle='The first mobile feature slice uses the shared Kangur score contracts and leaderboard mapping logic.'
+            title='Ranking'
+            subtitle='Mobilny ranking korzysta z tych samych kontraktow wynikow i mapowania leaderboardu co wspolny Kangur.'
           />
         </View>
 
@@ -145,7 +145,7 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
         >
           <View style={{ gap: 8 }}>
             <Text style={{ color: '#0f172a', fontWeight: '700', fontSize: 16 }}>
-              Operation
+              Tryb
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={FILTER_SCROLL_STYLE}>
               {operationOptions.map((option) => (
@@ -163,7 +163,7 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
 
           <View style={{ gap: 8 }}>
             <Text style={{ color: '#0f172a', fontWeight: '700', fontSize: 16 }}>
-              Players
+              Gracze
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={FILTER_SCROLL_STYLE}>
               {userOptions.map((option) => (
@@ -187,7 +187,7 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
             }}
           >
             <Text style={{ color: '#64748b', fontSize: 13 }}>
-              Visible results: {visibleCount}
+              Widoczne wyniki: {visibleCount}
             </Text>
             <Pressable
               accessibilityRole='button'
@@ -201,7 +201,7 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
                 paddingVertical: 10,
               }}
             >
-              <Text style={{ color: '#ffffff', fontWeight: '700' }}>Refresh</Text>
+              <Text style={{ color: '#ffffff', fontWeight: '700' }}>Odswiez</Text>
             </Pressable>
           </View>
         </View>
@@ -216,8 +216,8 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
           >
             <Text style={{ color: '#334155', fontSize: 15 }}>
               {isRestoringAuth
-                ? 'Restoring learner session and leaderboard...'
-                : 'Loading leaderboard...'}
+                ? 'Przywracamy sesje ucznia i ranking...'
+                : 'Ladujemy ranking...'}
             </Text>
           </View>
         ) : error ? (
@@ -230,10 +230,11 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
             }}
           >
             <Text style={{ color: '#991b1b', fontWeight: '800', fontSize: 16 }}>
-              Leaderboard unavailable
+              Ranking niedostepny
             </Text>
             <Text style={{ color: '#475569', fontSize: 14, lineHeight: 21 }}>
-              {error} Start the web app API on the configured base URL, then refresh.
+              {error} Uruchom webowe API Kangura pod skonfigurowanym adresem, a potem
+              odswiez widok.
             </Text>
           </View>
         ) : items.length === 0 ? (
@@ -245,7 +246,7 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
             }}
           >
             <Text style={{ color: '#334155', fontSize: 15 }}>
-              No scores match the current filters.
+              Zaden wynik nie pasuje do obecnych filtrow.
             </Text>
           </View>
         ) : (

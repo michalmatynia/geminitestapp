@@ -440,7 +440,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 paddingVertical: 10,
               }}
             >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Back</Text>
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Wroc</Text>
             </Pressable>
           </Link>
 
@@ -505,15 +505,15 @@ export function KangurPracticeScreen(): React.JSX.Element {
                   }}
                 >
                   <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
-                    Developer sync proof
+                    Deweloperski podglad synchronizacji
                   </Text>
                   <Text style={{ color: '#1e3a8a', fontSize: 13, lineHeight: 18 }}>
-                    This checks the same mobile data sources that power results,
-                    profile, daily plan, and leaderboard.
+                    To sprawdza te same mobilne zrodla danych, ktore zasilaja
+                    wyniki, profil, plan dnia i ranking.
                   </Text>
                   {practiceSyncProof.isLoading ? (
                     <Text style={{ color: '#1e3a8a', fontSize: 13, lineHeight: 18 }}>
-                      Refreshing synced proof...
+                      Odswiezamy podglad synchronizacji...
                     </Text>
                   ) : (
                     <View style={{ gap: 8 }}>
@@ -539,7 +539,8 @@ export function KangurPracticeScreen(): React.JSX.Element {
                               fontWeight: '800',
                             }}
                           >
-                            {surface.label}: {surface.status === 'ready' ? 'ready' : 'missing'}
+                            {surface.label}:{' '}
+                            {surface.status === 'ready' ? 'gotowe' : 'brak'}
                           </Text>
                           <Text
                             style={{
@@ -576,7 +577,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                     }}
                   >
                     <Text style={{ color: '#1d4ed8', fontWeight: '700' }}>
-                      Refresh proof
+                      Odswiez podglad
                     </Text>
                   </Pressable>
                 </View>
@@ -611,7 +612,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                     paddingVertical: 10,
                   }}
                 >
-                  <Text style={{ color: '#ffffff', fontWeight: '700' }}>Play again</Text>
+                  <Text style={{ color: '#ffffff', fontWeight: '700' }}>Zagraj ponownie</Text>
                 </Pressable>
                 <Link
                   href={createKangurResultsHref({
@@ -631,7 +632,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                     }}
                   >
                     <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                      View mode history
+                      Zobacz historie trybu
                     </Text>
                   </Pressable>
                 </Link>
@@ -649,7 +650,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                       }}
                     >
                       <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                        Open matching lesson
+                        Otworz pasujaca lekcje
                       </Text>
                     </Pressable>
                   </Link>
@@ -667,7 +668,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                     }}
                   >
                     <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                      Open daily plan
+                      Otworz plan dnia
                     </Text>
                   </Pressable>
                 </Link>
@@ -681,7 +682,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                       paddingVertical: 10,
                     }}
                   >
-                    <Text style={{ color: '#ffffff', fontWeight: '700' }}>Back to profile</Text>
+                    <Text style={{ color: '#ffffff', fontWeight: '700' }}>Wroc do profilu</Text>
                   </Pressable>
                 </Link>
               </View>

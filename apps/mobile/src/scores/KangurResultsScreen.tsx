@@ -243,7 +243,7 @@ function OperationInsightCard({
               fontWeight: '700',
             }}
           >
-            Avg {operation.averageAccuracyPercent}%
+            Srednio {operation.averageAccuracyPercent}%
           </Text>
         </View>
         <View
@@ -257,7 +257,7 @@ function OperationInsightCard({
           }}
         >
           <Text style={{ color: '#475569', fontSize: 12, fontWeight: '700' }}>
-            Sessions {operation.sessions}
+            Sesje {operation.sessions}
           </Text>
         </View>
       </View>
@@ -295,7 +295,7 @@ function OperationInsightCard({
               }}
             >
               <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                Open lesson
+                Otworz lekcje
               </Text>
             </Pressable>
           </Link>
@@ -319,7 +319,7 @@ function OperationInsightCard({
               paddingVertical: 9,
             }}
           >
-            <Text style={{ color: '#0f172a', fontWeight: '700' }}>Mode history</Text>
+            <Text style={{ color: '#0f172a', fontWeight: '700' }}>Historia trybu</Text>
           </Pressable>
         </Link>
       </View>
@@ -367,7 +367,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                 paddingVertical: 10,
               }}
             >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Back</Text>
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Wroc</Text>
             </Pressable>
           </Link>
 
@@ -396,7 +396,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                 }}
               >
                 <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                  Open daily plan
+                  Otworz plan dnia
                 </Text>
               </Pressable>
             </Link>
@@ -425,7 +425,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                   }}
                 >
                   <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                    Open auth screen
+                    Otworz ekran logowania
                   </Text>
                 </Pressable>
               </Link>
@@ -497,7 +497,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                           return focus ? createKangurLessonHref(focus) : undefined;
                         })()}
                         operation={strongestOperation}
-                        practiceLabel='Keep momentum'
+                        practiceLabel='Utrzymaj tempo'
                         title='Najmocniejszy tryb'
                       />
                     ) : null}
@@ -511,7 +511,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                           return focus ? createKangurLessonHref(focus) : undefined;
                         })()}
                         operation={weakestOperation}
-                        practiceLabel='Practice weakest'
+                        practiceLabel='Trenuj najslabszy tryb'
                         title='Do powtorki'
                       />
                     ) : null}
@@ -550,7 +550,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                       paddingVertical: 10,
                     }}
                   >
-                    <Text style={{ color: '#ffffff', fontWeight: '700' }}>Refresh</Text>
+                    <Text style={{ color: '#ffffff', fontWeight: '700' }}>Odswiez</Text>
                   </Pressable>
                 </View>
 
@@ -562,7 +562,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                         operation: null,
                       })}
                       isActive={filterFamily === 'all' && !filterOperation}
-                      label='All sessions'
+                      label='Wszystkie sesje'
                     />
                     <FilterPill
                       href={createKangurResultsHref({
@@ -570,7 +570,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                         operation: null,
                       })}
                       isActive={filterFamily === 'arithmetic' && !filterOperation}
-                      label='Arithmetic'
+                      label='Arytmetyka'
                     />
                     <FilterPill
                       href={createKangurResultsHref({
@@ -578,7 +578,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                         operation: null,
                       })}
                       isActive={filterFamily === 'logic' && !filterOperation}
-                      label='Logic'
+                      label='Logika'
                     />
                     <FilterPill
                       href={createKangurResultsHref({
@@ -586,7 +586,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                         operation: null,
                       })}
                       isActive={filterFamily === 'time' && !filterOperation}
-                      label='Time'
+                      label='Czas'
                     />
                   </View>
 
@@ -684,7 +684,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                                   fontWeight: '700',
                                 }}
                               >
-                                {accuracyPercent}% accuracy
+                                Skutecznosc {accuracyPercent}%
                               </Text>
                             </View>
                           </View>
@@ -736,7 +736,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                                 <Text
                                   style={{ color: '#ffffff', fontWeight: '700' }}
                                 >
-                                  Train this mode
+                                  Trenuj ten tryb
                                 </Text>
                               </Pressable>
                             </Link>
@@ -758,7 +758,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                                   <Text
                                     style={{ color: '#0f172a', fontWeight: '700' }}
                                   >
-                                    Open lesson
+                                    Otworz lekcje
                                   </Text>
                                 </Pressable>
                               </Link>
@@ -787,7 +787,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                                   <Text
                                     style={{ color: '#0f172a', fontWeight: '700' }}
                                   >
-                                    Filter this mode
+                                    Filtruj ten tryb
                                   </Text>
                                 </Pressable>
                               </Link>

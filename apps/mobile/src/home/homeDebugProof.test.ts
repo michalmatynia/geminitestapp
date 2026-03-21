@@ -55,13 +55,13 @@ describe('buildKangurHomeDebugProofViewModel', () => {
     expect(model).toEqual({
       checks: [
         {
-          detail: '8/8 in recent synced results.',
-          label: 'Recent results',
+          detail: '8/8 w ostatnich zsynchronizowanych wynikach.',
+          label: 'Ostatnie wyniki',
           status: 'ready',
         },
         {
-          detail: 'Strongest mode on home at 100% across 4 sessions.',
-          label: 'Training focus',
+          detail: 'Najmocniejszy tryb na stronie glownej: 100% w 4 sesjach.',
+          label: 'Fokus treningowy',
           status: 'ready',
         },
       ],
@@ -83,8 +83,8 @@ describe('buildKangurHomeDebugProofViewModel', () => {
     ).toEqual({
       checks: [
         {
-          detail: 'Restoring learner session and synced score data.',
-          label: 'Home score loop',
+          detail: 'Przywracamy sesje ucznia i zsynchronizowane dane wynikow.',
+          label: 'Petla wynikow strony glownej',
           status: 'info',
         },
       ],

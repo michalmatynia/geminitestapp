@@ -13,6 +13,7 @@ import { createKangurLessonHrefForPracticeOperation } from '../lessons/lessonHre
 import { createKangurPlanHref } from '../plan/planHref';
 import { createKangurPracticeHref } from '../practice/practiceHref';
 import { createKangurResultsHref } from '../scores/resultsHref';
+import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
 import { useKangurMobileLearnerProfile } from './useKangurMobileLearnerProfile';
 
 const RESULTS_ROUTE = createKangurResultsHref();
@@ -413,7 +414,7 @@ function SessionRow({
             }}
           >
             <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-              Train again
+              Trenuj ponownie
             </Text>
           </Pressable>
         </Link>
@@ -433,7 +434,7 @@ function SessionRow({
               }}
             >
               <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                Open lesson
+                Otworz lekcje
               </Text>
             </Pressable>
           </Link>
@@ -458,7 +459,7 @@ function SessionRow({
             }}
           >
             <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-              Mode history
+              Historia trybu
             </Text>
           </Pressable>
         </Link>
@@ -509,7 +510,9 @@ function AssignmentRow({
               paddingVertical: 10,
             }}
           >
-            <Text style={{ color: '#ffffff', fontWeight: '700' }}>{assignment.action.label}</Text>
+            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+              {translateKangurMobileActionLabel(assignment.action.label)}
+            </Text>
           </Pressable>
         </Link>
       ) : (
@@ -523,7 +526,7 @@ function AssignmentRow({
           }}
         >
           <Text style={{ color: '#475569', fontWeight: '700' }}>
-            {assignment.action.label} · soon
+            {translateKangurMobileActionLabel(assignment.action.label)} · wkrotce
           </Text>
         </View>
       )}
@@ -579,7 +582,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                 paddingVertical: 10,
               }}
             >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Back</Text>
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Wroc</Text>
             </Pressable>
           </Link>
 
@@ -620,7 +623,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                       }}
                     >
                       <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                        Open auth screen
+                        Otworz ekran logowania
                       </Text>
                     </Pressable>
                   </Link>
@@ -640,7 +643,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                   }}
                 >
                   <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                    Sign in demo session
+                    Zaloguj sesje demo
                   </Text>
                 </Pressable>
               )
@@ -664,7 +667,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                 }}
               >
                 <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                  Open daily plan
+                  Otworz plan dnia
                 </Text>
               </Pressable>
             </Link>
@@ -870,7 +873,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                             }}
                           >
                             <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                              {recommendation.action.label}
+                              {translateKangurMobileActionLabel(recommendation.action.label)}
                             </Text>
                           </Pressable>
                         </Link>
@@ -885,7 +888,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                           }}
                         >
                           <Text style={{ color: '#475569', fontWeight: '700' }}>
-                            {recommendation.action.label} · soon
+                            {translateKangurMobileActionLabel(recommendation.action.label)} · wkrotce
                           </Text>
                         </View>
                       )}
@@ -941,7 +944,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                     }}
                   >
                     <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                      Open full history
+                      Otworz cala historie
                     </Text>
                   </Pressable>
                 </Link>
@@ -1039,7 +1042,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                   paddingVertical: 10,
                 }}
               >
-                <Text style={{ color: '#ffffff', fontWeight: '700' }}>Refresh</Text>
+                <Text style={{ color: '#ffffff', fontWeight: '700' }}>Odswiez</Text>
               </Pressable>
             </View>
           </Card>

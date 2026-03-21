@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Table } from '@tanstack/react-table';
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/__tests__/test-utils';
 import { vi } from 'vitest';
 
 import { ProductTableFooter } from '@/features/products/components/list/ProductTableFooter';

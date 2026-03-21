@@ -103,38 +103,36 @@ export const buildKangurPracticeSyncProofSnapshot = ({
             detail: `${operationLabel} ${matchedScore.score}/${matchedScore.total_questions} · ${formatKangurMobileScoreDateTime(
               matchedScore.created_date,
             )}`,
-            label: 'Results history',
+            label: 'Historia wynikow',
             status: 'ready',
           }
         : {
-            detail:
-              'Fresh synced row is not visible in learner score history yet.',
-            label: 'Results history',
+            detail: 'Swiezy zsynchronizowany wynik nie jest jeszcze widoczny w historii ucznia.',
+            label: 'Historia wynikow',
             status: 'missing',
           },
       hasOperationProgress
         ? {
             detail: lessonMastery
-              ? `Mastery ${lessonMastery.masteryPercent}% · games ${progress.gamesPlayed}`
-              : `Operation saved locally · games ${progress.gamesPlayed}`,
-            label: 'Profile progress',
+              ? `Opanowanie ${lessonMastery.masteryPercent}% · gier ${progress.gamesPlayed}`
+              : `Tryb zapisany lokalnie · gier ${progress.gamesPlayed}`,
+            label: 'Postep profilu',
             status: 'ready',
           }
         : {
-            detail:
-              'Local progress does not show this operation in lesson mastery yet.',
-            label: 'Profile progress',
+            detail: 'Lokalny postep nie pokazuje jeszcze tego trybu w opanowaniu lekcji.',
+            label: 'Postep profilu',
             status: 'missing',
           },
       isVisibleInDailyPlan
         ? {
-            detail: 'Fresh score is visible in the recent-results slice used by /plan.',
-            label: 'Daily plan',
+            detail: 'Swiezy wynik jest widoczny w sekcji ostatnich wynikow uzywanej przez /plan.',
+            label: 'Plan dnia',
             status: 'ready',
           }
         : {
-            detail: 'Fresh score is not in the recent-results slice for /plan yet.',
-            label: 'Daily plan',
+            detail: 'Swiezy wynik nie trafil jeszcze do sekcji ostatnich wynikow dla /plan.',
+            label: 'Plan dnia',
             status: 'missing',
           },
       leaderboardItem
@@ -142,13 +140,12 @@ export const buildKangurPracticeSyncProofSnapshot = ({
             detail: `${leaderboardItem.rankLabel} ${leaderboardItem.playerName}${
               leaderboardItem.isCurrentUser ? ' · Ty' : ''
             }`,
-            label: 'Leaderboard',
+            label: 'Ranking',
             status: 'ready',
           }
         : {
-            detail:
-              'Current synced row is not visible in the leaderboard feed yet.',
-            label: 'Leaderboard',
+            detail: 'Biezacy zsynchronizowany wynik nie jest jeszcze widoczny w rankingu.',
+            label: 'Ranking',
             status: 'missing',
           },
     ],

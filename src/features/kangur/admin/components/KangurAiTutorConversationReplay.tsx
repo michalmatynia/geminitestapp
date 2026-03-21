@@ -102,94 +102,100 @@ export const KangurAiTutorConversationReplay = (): JSX.Element => {
         <h3 style={{ marginTop: 0 }}>Search Parameters</h3>
 
         <div style={{ marginBottom: '12px' }}>
-          <label htmlFor="learner-id" style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
+          <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
             Learner ID *
+            <input
+              type='text'
+              aria-label='Learner ID'
+              placeholder='e.g., learner-123'
+              value={learnerId}
+              onChange={handleLearnerIdChange}
+              style={{
+                width: '100%',
+                padding: '8px',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                fontFamily: 'monospace',
+                boxSizing: 'border-box',
+                marginTop: '4px',
+              }}
+            />
           </label>
-          <input
-            id="learner-id"
-            type="text"
-            placeholder="e.g., learner-123"
-            value={learnerId}
-            onChange={handleLearnerIdChange}
-            style={{
-              width: '100%',
-              padding: '8px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              fontFamily: 'monospace',
-              boxSizing: 'border-box',
-            }}
-          />
         </div>
 
         <div style={{ marginBottom: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           <div>
-            <label htmlFor="surface" style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
+            <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
               Surface (optional)
+              <input
+                type='text'
+                aria-label='Surface'
+                placeholder='e.g., lesson'
+                value={surface}
+                onChange={handleSurfaceChange}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  fontFamily: 'monospace',
+                  boxSizing: 'border-box',
+                  marginTop: '4px',
+                }}
+              />
             </label>
-            <input
-              id="surface"
-              type="text"
-              placeholder="e.g., lesson"
-              value={surface}
-              onChange={handleSurfaceChange}
-              style={{
-                width: '100%',
-                padding: '8px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                fontFamily: 'monospace',
-                boxSizing: 'border-box',
-              }}
-            />
           </div>
 
           <div>
-            <label htmlFor="content-id" style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
+            <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
               Content ID (optional)
+              <input
+                type='text'
+                aria-label='Content ID'
+                placeholder='e.g., lesson-456'
+                value={contentId}
+                onChange={handleContentIdChange}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  fontFamily: 'monospace',
+                  boxSizing: 'border-box',
+                  marginTop: '4px',
+                }}
+              />
             </label>
-            <input
-              id="content-id"
-              type="text"
-              placeholder="e.g., lesson-456"
-              value={contentId}
-              onChange={handleContentIdChange}
-              style={{
-                width: '100%',
-                padding: '8px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                fontFamily: 'monospace',
-                boxSizing: 'border-box',
-              }}
-            />
           </div>
         </div>
 
         <div style={{ marginBottom: '16px' }}>
-          <label htmlFor="limit" style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
+          <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
             Message Limit (max 100)
+            <input
+              type='number'
+              aria-label='Message Limit'
+              min='1'
+              max='100'
+              value={limit}
+              onChange={handleLimitChange}
+              style={{
+                width: '100%',
+                padding: '8px',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                fontFamily: 'monospace',
+                boxSizing: 'border-box',
+                marginTop: '4px',
+              }}
+            />
           </label>
-          <input
-            id="limit"
-            type="number"
-            min="1"
-            max="100"
-            value={limit}
-            onChange={handleLimitChange}
-            style={{
-              width: '100%',
-              padding: '8px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              fontFamily: 'monospace',
-              boxSizing: 'border-box',
-            }}
-          />
         </div>
 
         <button
-          onClick={handleLoadConversation}
+          onClick={() => {
+            void handleLoadConversation();
+          }}
           disabled={loadingState.isLoading}
           style={{
             padding: '8px 16px',

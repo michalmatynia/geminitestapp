@@ -59,19 +59,7 @@ export function ActiveLessonView() {
   const scrollUpLabel = translations('mobileControls.scrollUp');
   const scrollDownLabel = translations('mobileControls.scrollDown');
   const [lessonBackLabel, setLessonBackLabel] = useState(defaultBackToTopicsLabel);
-
-  if (!activeLesson) return null;
-
-  const activeIdx = orderedLessons.findIndex((l) => l.id === activeLesson.id);
-  const prev = activeIdx > 0 ? orderedLessons[activeIdx - 1] : null;
-  const next = activeIdx >= 0 && activeIdx < orderedLessons.length - 1 ? orderedLessons[activeIdx + 1] : null;
-  
-  const ActiveLessonComponent = LESSON_COMPONENTS[activeLesson.componentId];
-  const activeLessonDocument = lessonDocuments[activeLesson.id] ?? null;
-  const hasActiveLessonDocContent = hasKangurLessonDocumentContent(activeLessonDocument);
-  
-  const activeLessonAssignment = lessonAssignmentsByComponent.get(activeLesson.componentId) ?? null;
-  const completedActiveLessonAssignment = !activeLessonAssignment ? (completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null) : null;
+  const activeLessonId = activeLesson?.id ?? null;
 
   const secretHostLesson = orderedLessons.at(-1) ?? null;
   const masteryByComponent = progress?.lessonMastery ?? {};
@@ -85,7 +73,7 @@ export function ActiveLessonView() {
   };
   const secretHostLabel = secretHostLesson?.title ?? 'Ostatnia lekcja';
 
-  const emptyDocumentTitle = activeLessonEmptyDocumentContent?.title?.trim() || activeLesson.title;
+  const emptyDocumentTitle = activeLessonEmptyDocumentContent?.title?.trim() || activeLesson?.title || '';
   const emptyDocumentDescription =
     activeLessonEmptyDocumentContent?.summary?.trim() ||
     'Ta lekcja ma włączony tryb dokumentu, ale nie zapisano jeszcze bloków treści.';
@@ -116,7 +104,7 @@ export function ActiveLessonView() {
   }, [activeLessonContentRef, defaultBackToTopicsLabel, handleSelectLesson]);
 
   useEffect(() => {
-    if (!isMobile) {
+    if (!activeLesson || !isMobile) {
       setIsHubListActive(false);
       setHasLessonBackAction(false);
       setLessonBackLabel(defaultBackToTopicsLabel);
@@ -142,9 +130,9 @@ export function ActiveLessonView() {
       window.cancelAnimationFrame(frameId);
       mutationObserver?.disconnect();
     };
-  }, [activeLesson.id, activeLessonContentRef, defaultBackToTopicsLabel, isMobile, updateLessonContentState]);
+  }, [activeLesson, activeLessonContentRef, defaultBackToTopicsLabel, isMobile, updateLessonContentState]);
 
-  const shouldLockScroll = isMobile && !isHubListActive;
+  const shouldLockScroll = Boolean(activeLesson) && isMobile && !isHubListActive;
 
   useEffect(() => {
     if (!shouldLockScroll) {
@@ -155,7 +143,7 @@ export function ActiveLessonView() {
     return () => {
       unlockKangurLessonScroll();
     };
-  }, [shouldLockScroll, activeLesson.id]);
+  }, [shouldLockScroll, activeLessonId]);
 
   useEffect(() => {
     if (!shouldLockScroll) return undefined;
@@ -170,7 +158,7 @@ export function ActiveLessonView() {
       node.removeEventListener('wheel', preventScroll);
       node.removeEventListener('touchmove', preventScroll);
     };
-  }, [activeLesson.id, activeLessonScrollRef, shouldLockScroll]);
+  }, [activeLessonId, activeLessonScrollRef, shouldLockScroll]);
 
   const updateScrollButtons = useCallback((): void => {
     const container = activeLessonScrollRef.current;
@@ -221,7 +209,7 @@ export function ActiveLessonView() {
       resizeObserver?.disconnect();
       mutationObserver?.disconnect();
     };
-  }, [activeLesson.id, activeLessonScrollRef, shouldLockScroll, updateScrollButtons]);
+  }, [activeLessonId, activeLessonScrollRef, shouldLockScroll, updateScrollButtons]);
 
   const handleScrollBy = useCallback(
     (direction: 'up' | 'down'): void => {
@@ -257,6 +245,24 @@ export function ActiveLessonView() {
     }
     handleReturnToLessonList();
   }, [activeLessonContentRef, handleReturnToLessonList]);
+
+  if (!activeLesson) {
+    return null;
+  }
+
+  const activeIdx = orderedLessons.findIndex((lesson) => lesson.id === activeLesson.id);
+  const prev = activeIdx > 0 ? orderedLessons[activeIdx - 1] : null;
+  const next =
+    activeIdx >= 0 && activeIdx < orderedLessons.length - 1 ? orderedLessons[activeIdx + 1] : null;
+
+  const ActiveLessonComponent = LESSON_COMPONENTS[activeLesson.componentId];
+  const activeLessonDocument = lessonDocuments[activeLesson.id] ?? null;
+  const hasActiveLessonDocContent = hasKangurLessonDocumentContent(activeLessonDocument);
+
+  const activeLessonAssignment = lessonAssignmentsByComponent.get(activeLesson.componentId) ?? null;
+  const completedActiveLessonAssignment = !activeLessonAssignment
+    ? (completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null)
+    : null;
 
   const headerSection = !isMobile ? (
     <div ref={activeLessonHeaderRef} id='kangur-lesson-header' className='w-full max-w-5xl'>
@@ -350,6 +356,36 @@ export function ActiveLessonView() {
     </div>
   );
 
+  const topControlsSection = canScrollUp || hasLessonBackAction ? (
+    <div data-testid='kangur-lesson-top-controls' className='flex w-full gap-2'>
+      {hasLessonBackAction ? (
+        <KangurButton
+          size='sm'
+          variant='surface'
+          className='flex-1 justify-center shadow-sm [border-color:var(--kangur-soft-card-border)]'
+          onClick={handleLessonBackAction}
+          aria-label={lessonBackLabel}
+          title={lessonBackLabel}
+        >
+          <ChevronsLeft className='h-4 w-4' aria-hidden='true' />
+          <span className='sr-only'>{lessonBackLabel}</span>
+        </KangurButton>
+      ) : null}
+      {canScrollUp ? (
+        <KangurButton
+          size='sm'
+          variant='surface'
+          className='flex-1 justify-center shadow-sm [border-color:var(--kangur-soft-card-border)]'
+          onClick={() => handleScrollBy('up')}
+          aria-label={scrollUpLabel}
+        >
+          <ChevronUp className='h-4 w-4' aria-hidden='true' />
+          {scrollUpLabel}
+        </KangurButton>
+      ) : null}
+    </div>
+  ) : null;
+
   return (
     <motion.div
       key={activeLesson.id}
@@ -366,40 +402,12 @@ export function ActiveLessonView() {
       >
         {shouldLockScroll ? (
           <div className='w-full max-w-5xl flex flex-col gap-3 h-[calc(var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px))]'>
-            {canScrollUp || hasLessonBackAction ? (
-              <div className='flex w-full gap-2'>
-                {hasLessonBackAction ? (
-                  <KangurButton
-                    size='sm'
-                    variant='surface'
-                    className='flex-1 justify-center shadow-sm [border-color:var(--kangur-soft-card-border)]'
-                    onClick={handleLessonBackAction}
-                    aria-label={lessonBackLabel}
-                    title={lessonBackLabel}
-                  >
-                    <ChevronsLeft className='h-4 w-4' aria-hidden='true' />
-                    <span className='sr-only'>{lessonBackLabel}</span>
-                  </KangurButton>
-                ) : null}
-                {canScrollUp ? (
-                  <KangurButton
-                    size='sm'
-                    variant='surface'
-                    className='flex-1 justify-center shadow-sm [border-color:var(--kangur-soft-card-border)]'
-                    onClick={() => handleScrollBy('up')}
-                    aria-label={scrollUpLabel}
-                  >
-                    <ChevronUp className='h-4 w-4' aria-hidden='true' />
-                    {scrollUpLabel}
-                  </KangurButton>
-                ) : null}
-              </div>
-            ) : null}
             <div
               ref={activeLessonScrollRef}
               className={`flex-1 min-h-0 w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME} overflow-y-auto overscroll-contain touch-none`}
               data-testid='kangur-lesson-scroll-container'
             >
+              {topControlsSection}
               {headerSection}
               {navigationSection}
               {lessonContentSection}

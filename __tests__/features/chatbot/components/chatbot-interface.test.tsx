@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/__tests__/test-utils';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { ChatInterface } from '@/features/ai/chatbot/components/ChatInterface';

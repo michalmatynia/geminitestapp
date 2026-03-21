@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, waitFor } from '@testing-library/react';
+import { render, waitFor } from '@/__tests__/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createGuestKangurScore,

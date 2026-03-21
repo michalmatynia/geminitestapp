@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { renderHook } from '@testing-library/react';
+import { renderHook } from '@/__tests__/test-utils';
 import { describe, expect, it } from 'vitest';
 
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';

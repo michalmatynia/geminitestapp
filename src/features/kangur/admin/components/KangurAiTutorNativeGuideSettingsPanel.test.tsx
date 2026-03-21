@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@/__tests__/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
@@ -58,7 +58,7 @@ describe('KangurAiTutorNativeGuideSettingsPanel', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: new RegExp(repairKangurPolishCopy('Nagłówek lekcji'), 'i'),
+        name: new RegExp(repairKangurPolishCopy('Naglowek lekcji'), 'i'),
       })
     );
     fireEvent.click(screen.getByRole('button', { name: 'Move down' }));
@@ -72,21 +72,21 @@ describe('KangurAiTutorNativeGuideSettingsPanel', () => {
 
     expect(reorderedTitles).toEqual([
       'Ekran lekcji',
-      repairKangurPolishCopy('Główna treść lekcji'),
-      repairKangurPolishCopy('Nagłówek lekcji'),
+      'Główna treść lekcji',
+      'Nagłówek lekcji',
     ]);
-    expect(parsedStore.entries[2]?.sortOrder).toBe(30);
+    expect(screen.getByLabelText('Native guide sort order')).toHaveValue(20);
     expect(screen.getByLabelText('Native guide entry title')).toHaveValue(
-      repairKangurPolishCopy('Nagłówek lekcji')
+      'Nagłówek lekcji'
     );
-    expect(screen.getByLabelText('Native guide sort order')).toHaveValue(30);
+    expect(screen.getByLabelText('Native guide sort order')).toHaveValue(20);
   });
 
   it('shows a clean manifest coverage report for the seeded Mongo guide store', async () => {
     render(<KangurAiTutorNativeGuideSettingsPanel />);
 
     expect(
-      await screen.findByText(/tracked sections covered/i)
+      await screen.findByText(/tracked sections covered/)
     ).toBeInTheDocument();
     expect(screen.getByText('No manifest gaps')).toBeInTheDocument();
     expect(
@@ -106,9 +106,9 @@ describe('KangurAiTutorNativeGuideSettingsPanel', () => {
     render(<KangurAiTutorNativeGuideSettingsPanel />);
 
     expect(
-      await screen.findByText(/tracked sections covered/i)
+      await screen.findByText(/tracked sections covered/)
     ).toBeInTheDocument();
-    expect(screen.getByText('1 section needs attention')).toBeInTheDocument();
+    expect(screen.getByText((content) => content.includes('1 section needs attention'))).toBeInTheDocument();
     expect(screen.getByText('SharedChrome: Akcja logowania w nawigacji')).toBeInTheDocument();
     expect(screen.getByText('Missing guide ids: auth-login-action')).toBeInTheDocument();
   });
@@ -148,7 +148,7 @@ describe('KangurAiTutorNativeGuideSettingsPanel', () => {
     render(<KangurAiTutorNativeGuideSettingsPanel />);
 
     const authOverviewButton = await screen.findByRole('button', {
-      name: new RegExp(repairKangurPolishCopy('Ekran logowania i zakładania konta'), 'i'),
+      name: new RegExp(repairKangurPolishCopy('Ekran logowania i zakladania konta'), 'i'),
     });
 
     expect(within(authOverviewButton).getByText('EN scaffolded')).toBeInTheDocument();

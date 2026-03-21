@@ -5,7 +5,7 @@
 
 "use client";
 
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/__tests__/test-utils';
 import { useEffect, type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 

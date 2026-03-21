@@ -76,7 +76,7 @@ export const getConversationHistory = async (
 ): Promise<ChatMessageDto[]> => {
   try {
     const session = await chatbotSessionRepository.findById(sessionId);
-    if (!session || !session.messages) return [];
+    if (!session?.messages) return [];
     return session.messages.slice(-limit);
   } catch (error) {
     void ErrorSystem.captureException(error);

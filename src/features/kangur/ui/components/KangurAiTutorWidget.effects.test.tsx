@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor } from '@/__tests__/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useKangurAiTutorGuidanceCompletionEffects } from './KangurAiTutorWidget.effects';
 

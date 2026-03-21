@@ -79,19 +79,19 @@ describe('buildKangurPracticeSyncProofSnapshot', () => {
     expect(snapshot.matchedScoreId).toBe('score-1');
     expect(snapshot.surfaces).toEqual([
       expect.objectContaining({
-        label: 'Results history',
+        label: 'Historia wynikow',
         status: 'ready',
       }),
       expect.objectContaining({
-        label: 'Profile progress',
+        label: 'Postep profilu',
         status: 'ready',
       }),
       expect.objectContaining({
-        label: 'Daily plan',
+        label: 'Plan dnia',
         status: 'ready',
       }),
       expect.objectContaining({
-        label: 'Leaderboard',
+        label: 'Ranking',
         status: 'ready',
       }),
     ]);
@@ -116,19 +116,19 @@ describe('buildKangurPracticeSyncProofSnapshot', () => {
     expect(snapshot.matchedScoreId).toBeNull();
     expect(snapshot.surfaces).toEqual([
       expect.objectContaining({
-        label: 'Results history',
+        label: 'Historia wynikow',
         status: 'missing',
       }),
       expect.objectContaining({
-        label: 'Profile progress',
+        label: 'Postep profilu',
         status: 'missing',
       }),
       expect.objectContaining({
-        label: 'Daily plan',
+        label: 'Plan dnia',
         status: 'missing',
       }),
       expect.objectContaining({
-        label: 'Leaderboard',
+        label: 'Ranking',
         status: 'missing',
       }),
     ]);

@@ -10,6 +10,7 @@ import {
   getKangurMobileScoreAccuracyPercent,
 } from '../scores/mobileScoreSummary';
 import { createKangurResultsHref } from '../scores/resultsHref';
+import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
 import { useKangurMobileDailyPlan } from './useKangurMobileDailyPlan';
 
 function Card({
@@ -140,7 +141,7 @@ function FocusCard({
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{description}</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <Pill
-          label={`Avg ${operation.averageAccuracyPercent}%`}
+          label={`Srednio ${operation.averageAccuracyPercent}%`}
           tone={{
             backgroundColor: accentColor === '#b91c1c' ? '#fef2f2' : '#ecfdf5',
             borderColor: accentColor === '#b91c1c' ? '#fecaca' : '#a7f3d0',
@@ -148,7 +149,7 @@ function FocusCard({
           }}
         />
         <Pill
-          label={`Sessions ${operation.sessions}`}
+          label={`Sesje ${operation.sessions}`}
           tone={{
             backgroundColor: '#f1f5f9',
             borderColor: '#cbd5e1',
@@ -158,9 +159,9 @@ function FocusCard({
       </View>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <LinkButton href={practiceHref} label='Practice now' tone='primary' />
-        {lessonHref ? <LinkButton href={lessonHref} label='Open lesson' /> : null}
-        <LinkButton href={historyHref} label='Mode history' />
+        <LinkButton href={practiceHref} label='Trenuj teraz' tone='primary' />
+        {lessonHref ? <LinkButton href={lessonHref} label='Otworz lekcje' /> : null}
+        <LinkButton href={historyHref} label='Historia trybu' />
       </View>
     </View>
   );
@@ -235,7 +236,11 @@ function AssignmentRow({
         Cel: {assignment.target}
       </Text>
       {href ? (
-        <LinkButton href={href} label={assignment.action.label} tone='primary' />
+        <LinkButton
+          href={href}
+          label={translateKangurMobileActionLabel(assignment.action.label)}
+          tone='primary'
+        />
       ) : (
         <View
           style={{
@@ -247,7 +252,7 @@ function AssignmentRow({
           }}
         >
           <Text style={{ color: '#475569', fontWeight: '700' }}>
-            {assignment.action.label} · soon
+            {translateKangurMobileActionLabel(assignment.action.label)} · wkrotce
           </Text>
         </View>
       )}
@@ -308,9 +313,9 @@ function RecentResultRow({
         />
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <LinkButton href={practiceHref} label='Train again' tone='primary' />
-        {lessonHref ? <LinkButton href={lessonHref} label='Open lesson' /> : null}
-        <LinkButton href={historyHref} label='Mode history' />
+        <LinkButton href={practiceHref} label='Trenuj ponownie' tone='primary' />
+        {lessonHref ? <LinkButton href={lessonHref} label='Otworz lekcje' /> : null}
+        <LinkButton href={historyHref} label='Historia trybu' />
       </View>
     </View>
   );
@@ -356,13 +361,13 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                 paddingVertical: 10,
               }}
             >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Back</Text>
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Wroc</Text>
             </Pressable>
           </Link>
 
           <Card>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-              Daily plan
+              Plan dnia
             </Text>
             <Text style={{ color: '#0f172a', fontSize: 28, fontWeight: '800' }}>
               Jedno miejsce na dzis
@@ -374,7 +379,11 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             </Text>
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              <LinkButton href='/practice?operation=mixed' label='Start mixed practice' tone='primary' />
+              <LinkButton
+                href='/practice?operation=mixed'
+                label='Uruchom trening mieszany'
+                tone='primary'
+              />
               <Pressable
                 accessibilityRole='button'
                 onPress={() => {
@@ -389,7 +398,7 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                   paddingVertical: 10,
                 }}
               >
-                <Text style={{ color: '#0f172a', fontWeight: '700' }}>Refresh plan</Text>
+                <Text style={{ color: '#0f172a', fontWeight: '700' }}>Odswiez plan</Text>
               </Pressable>
             </View>
 
@@ -405,7 +414,7 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                     Zaloguj ucznia na ekranie glownym, aby pobrac wyniki, fokus
                     treningowy i zsynchronizowana historie.
                   </Text>
-                  <LinkButton href='/' label='Open auth screen' />
+                  <LinkButton href='/' label='Otworz ekran logowania' />
                 </View>
               ) : (
                 <Pressable
@@ -421,7 +430,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                     paddingVertical: 10,
                   }}
                 >
-                  <Text style={{ color: '#ffffff', fontWeight: '700' }}>Sign in demo session</Text>
+                  <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                    Zaloguj sesje demo
+                  </Text>
                 </Pressable>
               )
             ) : null}
@@ -433,42 +444,42 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
 
           <Card>
             <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
-              Training focus
+              Fokus treningowy
             </Text>
             {isLoading ? (
-              <Text style={{ color: '#475569' }}>Loading score-based focus...</Text>
+              <Text style={{ color: '#475569' }}>Ladujemy fokus oparty na wynikach...</Text>
             ) : scoreError ? (
               <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{scoreError}</Text>
             ) : !isAuthenticated ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
-                Sign in to unlock weakest and strongest mode guidance.
+                Zaloguj ucznia, aby odblokowac wskazowki dla najmocniejszego i najslabszego trybu.
               </Text>
             ) : !weakestFocus && !strongestFocus ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
-                Finish one synced practice run to build your first training focus.
+                Ukoncz jedna zsynchronizowana sesje, aby zbudowac pierwszy fokus treningowy.
               </Text>
             ) : (
               <View style={{ gap: 12 }}>
                 {weakestFocus ? (
                   <FocusCard
                     accentColor='#b91c1c'
-                    description='This is the weakest synced mode right now. Start with a short targeted session, then revisit the matching lesson if needed.'
+                    description='To obecnie najslabszy zsynchronizowany tryb. Zacznij od krotkiej sesji celowanej, a potem wroc do pasujacej lekcji, jesli bedzie trzeba.'
                     historyHref={weakestFocus.historyHref}
                     lessonHref={weakestFocus.lessonHref}
                     operation={weakestFocus.operation}
                     practiceHref={weakestFocus.practiceHref}
-                    title='Weakest mode'
+                    title='Do powtorki'
                   />
                 ) : null}
                 {strongestFocus ? (
                   <FocusCard
                     accentColor='#047857'
-                    description='This mode is currently the most stable. Use it for a confidence boost or quick momentum session.'
+                    description='Ten tryb jest teraz najbardziej stabilny. Uzyj go do szybkiego podbicia pewnosci albo lekkiej rozgrzewki.'
                     historyHref={strongestFocus.historyHref}
                     lessonHref={strongestFocus.lessonHref}
                     operation={strongestFocus.operation}
                     practiceHref={strongestFocus.practiceHref}
-                    title='Strongest mode'
+                    title='Najmocniejszy tryb'
                   />
                 ) : null}
               </View>
@@ -477,12 +488,12 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
 
           <Card>
             <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
-              Assignments
+              Zadania
             </Text>
             {assignmentItems.length === 0 ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
-                No local assignments yet. Open lessons or practice once to generate
-                the first next-step plan.
+                Brak jeszcze lokalnych zadan. Otworz lekcje albo wykonaj trening,
+                aby wygenerowac pierwszy plan kolejnych krokow.
               </Text>
             ) : (
               <View style={{ gap: 12 }}>
@@ -507,22 +518,22 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
               }}
             >
               <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
-                Recent results
+                Ostatnie wyniki
               </Text>
-              <LinkButton href={createKangurResultsHref()} label='Open history' />
+              <LinkButton href={createKangurResultsHref()} label='Otworz historie' />
             </View>
             {isLoading ? (
-              <Text style={{ color: '#475569' }}>Loading recent results...</Text>
+              <Text style={{ color: '#475569' }}>Ladujemy ostatnie wyniki...</Text>
             ) : !isAuthenticated ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
-                Sign in with a learner session to see synced results here.
+                Zaloguj sesje ucznia, aby zobaczyc tutaj zsynchronizowane wyniki.
               </Text>
             ) : scoreError ? (
               <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{scoreError}</Text>
             ) : recentResultItems.length === 0 ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
-                No synced results yet. Finish one practice run to populate this
-                section.
+                Brak jeszcze zsynchronizowanych wynikow. Ukoncz jedna sesje,
+                aby wypelnic te sekcje.
               </Text>
             ) : (
               <View style={{ gap: 12 }}>

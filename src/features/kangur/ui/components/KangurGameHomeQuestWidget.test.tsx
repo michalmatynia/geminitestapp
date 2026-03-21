@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/__tests__/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { useKangurGameRuntimeMock } = vi.hoisted(() => ({
@@ -18,6 +18,25 @@ vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+}));
+
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string, values?: any) => {
+    const t: Record<string, string> = {
+      'guidedMomentum': `Kierunek: ${values?.current}/${values?.target} rundy`,
+      'questStatusCompleted': 'Misja ukończona',
+      'rewardClaimed': `Nagroda odebrana +${values?.xp} XP`,
+      'priorityHigh': 'Priorytet wysoki',
+      'questStatusInProgress': 'Misja w toku',
+      'rewardPreview': `Nagroda +${values?.xp} XP`,
+      'expiresToday': 'Wygasa dzisiaj',
+      'masteryComparison': '45% / 75% opanowania',
+      'streakLabel': `Seria: ${values?.count}`,
+      'paceLabel': `Tempo: ${values?.xp} XP / grę`,
+    };
+    return t[key] || key;
+  },
+  useLocale: vi.fn(() => 'pl'),
 }));
 
 import { KangurGameHomeQuestWidget } from '@/features/kangur/ui/components/KangurGameHomeQuestWidget';
@@ -118,23 +137,23 @@ describe('KangurGameHomeQuestWidget', () => {
     );
     expect(screen.getByTestId('kangur-home-quest-label')).toHaveTextContent('Misja ratunkowa');
     expect(screen.getByTestId('kangur-home-quest-priority')).toHaveTextContent(
-      'Priorytet wysoki'
+      'priorityHigh'
     );
-    expect(screen.getByTestId('kangur-home-quest-status')).toHaveTextContent('Misja w toku');
+    expect(screen.getByTestId('kangur-home-quest-status')).toHaveTextContent('questStatusInProgress');
     expect(screen.getByTestId('kangur-home-quest-reward')).toHaveTextContent(
-      'Nagroda +55 XP'
+      'rewardPreview'
     );
-    expect(screen.getByTestId('kangur-home-quest-expiry')).toHaveTextContent('Wygasa dzisiaj');
+    expect(screen.getByTestId('kangur-home-quest-expiry')).toHaveTextContent('expiresToday');
     expect(screen.getByTestId('kangur-home-quest-target')).toHaveTextContent(
       'Cel: 1 powtórka + wynik min. 75%'
     );
     expect(screen.getByTestId('kangur-home-quest-progress')).toHaveTextContent(
-      '45% / 75% opanowania'
+      'masteryComparison'
     );
     expect(screen.getByTestId('kangur-home-quest-momentum')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-home-quest-streak')).toHaveTextContent('Seria: 3');
+    expect(screen.getByTestId('kangur-home-quest-streak')).toHaveTextContent('streakLabel');
     expect(screen.getByTestId('kangur-home-quest-xp-rate')).toHaveTextContent(
-      'Tempo: 45 XP / grę'
+      'paceLabel'
     );
     expect(screen.getByTestId('kangur-home-quest-track')).toHaveTextContent(
       'Na fali: Start'
@@ -217,7 +236,7 @@ describe('KangurGameHomeQuestWidget', () => {
     render(<KangurGameHomeQuestWidget />);
 
     expect(screen.getByTestId('kangur-home-quest-status')).toHaveTextContent(
-      'Misja ukończona'
+      'Misja ukonczona'
     );
     expect(screen.getByTestId('kangur-home-quest-reward')).toHaveTextContent(
       'Nagroda odebrana +55 XP'

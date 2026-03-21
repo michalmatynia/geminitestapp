@@ -46,8 +46,8 @@ export const buildKangurHomeDebugProofViewModel = (input: {
     return {
       checks: [
         {
-          detail: 'Restoring learner session and synced score data.',
-          label: 'Home score loop',
+          detail: 'Przywracamy sesje ucznia i zsynchronizowane dane wynikow.',
+          label: 'Petla wynikow strony glownej',
           status: 'info',
         },
       ],
@@ -60,8 +60,8 @@ export const buildKangurHomeDebugProofViewModel = (input: {
     return {
       checks: [
         {
-          detail: 'Learner-session score hooks are not enabled on home yet.',
-          label: 'Home score loop',
+          detail: 'Na stronie glownej nie wlaczono jeszcze petli wynikow dla sesji ucznia.',
+          label: 'Petla wynikow strony glownej',
           status: 'missing',
         },
       ],
@@ -80,31 +80,31 @@ export const buildKangurHomeDebugProofViewModel = (input: {
     checks: [
       recentResult
         ? {
-            detail: `${recentResult.correct_answers}/${recentResult.total_questions} in recent synced results.`,
-            label: 'Recent results',
+            detail: `${recentResult.correct_answers}/${recentResult.total_questions} w ostatnich zsynchronizowanych wynikach.`,
+            label: 'Ostatnie wyniki',
             status: 'ready',
           }
         : {
-            detail: 'This mode is not visible in the recent-results slice yet.',
-            label: 'Recent results',
+            detail: 'Ten tryb nie jest jeszcze widoczny w sekcji ostatnich wynikow.',
+            label: 'Ostatnie wyniki',
             status: 'missing',
           },
       strongestOperation?.operation === input.operation
         ? {
-            detail: `Strongest mode on home at ${strongestOperation.averageAccuracyPercent}% across ${strongestOperation.sessions} sessions.`,
-            label: 'Training focus',
+            detail: `Najmocniejszy tryb na stronie glownej: ${strongestOperation.averageAccuracyPercent}% w ${strongestOperation.sessions} sesjach.`,
+            label: 'Fokus treningowy',
             status: 'ready',
           }
         : weakestOperation?.operation === input.operation
           ? {
-              detail: `Weakest mode on home at ${weakestOperation.averageAccuracyPercent}% across ${weakestOperation.sessions} sessions.`,
-              label: 'Training focus',
+              detail: `Tryb do powtorki na stronie glownej: ${weakestOperation.averageAccuracyPercent}% w ${weakestOperation.sessions} sesjach.`,
+              label: 'Fokus treningowy',
               status: 'ready',
             }
           : {
               detail:
-                'Home training focus is loaded, but this mode is not the current strongest or weakest card.',
-              label: 'Training focus',
+                'Fokus treningowy jest juz gotowy, ale ten tryb nie jest teraz najmocniejsza ani najslabsza karta.',
+              label: 'Fokus treningowy',
               status: 'missing',
             },
     ],

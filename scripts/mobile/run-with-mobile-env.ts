@@ -13,6 +13,11 @@ if (!command) {
 
 loadMobileEnvFiles();
 
+// Local mobile commands should not depend on Expo telemetry internals.
+if (!process.env.EXPO_NO_TELEMETRY) {
+  process.env.EXPO_NO_TELEMETRY = '1';
+}
+
 const child = spawn(command, args, {
   env: process.env,
   stdio: 'inherit',

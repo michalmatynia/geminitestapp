@@ -22,8 +22,8 @@ describe('getKangurHomeAuthBoundaryViewModel', () => {
       developerAutoSignInLabel: null,
       isRestoringLearnerSession: true,
       showLearnerCredentialsForm: false,
-      statusLabel: 'restoring',
-      userLabel: 'restoring learner session',
+      statusLabel: 'przywracanie',
+      userLabel: 'przywracanie sesji ucznia',
     });
   });
 
@@ -46,8 +46,8 @@ describe('getKangurHomeAuthBoundaryViewModel', () => {
       developerAutoSignInLabel: null,
       isRestoringLearnerSession: false,
       showLearnerCredentialsForm: true,
-      statusLabel: 'anonymous',
-      userLabel: 'anonymous',
+      statusLabel: 'anonimowy',
+      userLabel: 'anonimowy',
     });
   });
 
@@ -71,8 +71,8 @@ describe('getKangurHomeAuthBoundaryViewModel', () => {
       developerAutoSignInLabel: 'failed',
       isRestoringLearnerSession: false,
       showLearnerCredentialsForm: true,
-      statusLabel: 'anonymous',
-      userLabel: 'anonymous',
+      statusLabel: 'anonimowy',
+      userLabel: 'anonimowy',
     });
   });
 
@@ -115,8 +115,8 @@ describe('getKangurHomeAuthBoundaryViewModel', () => {
       developerAutoSignInLabel: 'authenticated',
       isRestoringLearnerSession: false,
       showLearnerCredentialsForm: false,
-      statusLabel: 'authenticated',
-      userLabel: 'Ada Lovelace (learner)',
+      statusLabel: 'zalogowany',
+      userLabel: 'Ada Lovelace (uczen)',
     });
   });
 });

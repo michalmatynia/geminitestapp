@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen } from '@/__tests__/test-utils';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
 

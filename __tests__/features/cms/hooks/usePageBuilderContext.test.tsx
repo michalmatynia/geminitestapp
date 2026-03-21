@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act } from '@/__tests__/test-utils';
 import { vi } from 'vitest';
 
 import { PageBuilderProvider, usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';

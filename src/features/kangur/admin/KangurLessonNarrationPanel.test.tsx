@@ -6,7 +6,7 @@
 "use client";
 
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@/__tests__/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ContextRegistryPageProvider } from '@/shared/lib/ai-context-registry/page-context';

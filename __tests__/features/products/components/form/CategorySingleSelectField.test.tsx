@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render } from '@/__tests__/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CategorySingleSelectField } from '@/features/products/components/form/CategorySingleSelectField';

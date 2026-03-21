@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { renderHook } from '@/__tests__/test-utils';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { useBuilderKeyboardShortcuts } from '@/features/cms/hooks/useBuilderKeyboardShortcuts';

@@ -47,7 +47,7 @@ export async function GET_handler(
 
   try {
     const session = await chatbotSessionRepository.findById(sessionId);
-    if (!session || !session.messages) {
+    if (!session?.messages) {
       return NextResponse.json(
         {
           learnerId,
@@ -68,7 +68,7 @@ export async function GET_handler(
       sessionId,
       messageCount: session.messages.length,
     });
-  } catch (error) {
+  } catch (_error) {
     throw badRequestError('Failed to retrieve conversation history.');
   }
 }

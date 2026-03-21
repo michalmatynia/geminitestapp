@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { renderHook } from '@testing-library/react';
+import { renderHook } from '@/__tests__/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ProductWithImages } from '@/shared/contracts/products';

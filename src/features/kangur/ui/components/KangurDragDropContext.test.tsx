@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { act, render } from '@testing-library/react';
+import { act, render } from '@/__tests__/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KangurDragDropContext } from './KangurDragDropContext';

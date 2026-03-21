@@ -25,6 +25,21 @@ export const getKangurHomeAuthBoundaryViewModel = ({
 }): KangurHomeAuthBoundaryViewModel => {
   const isRestoringLearnerSession =
     isLoadingAuth && session.status !== 'authenticated';
+  const statusLabel = isRestoringLearnerSession
+    ? 'przywracanie'
+    : isLoadingAuth
+      ? 'ladowanie'
+      : session.status === 'authenticated'
+        ? 'zalogowany'
+        : 'anonimowy';
+  const actorTypeLabel =
+    session.user?.actorType === 'learner'
+      ? 'uczen'
+      : session.user?.actorType === 'parent'
+        ? 'rodzic'
+        : session.user?.actorType === 'admin'
+          ? 'admin'
+          : session.user?.actorType ?? null;
 
   return {
     developerAutoSignInLabel: !developerAutoSignInEnabled
@@ -45,15 +60,11 @@ export const getKangurHomeAuthBoundaryViewModel = ({
       supportsLearnerCredentials &&
       !isRestoringLearnerSession &&
       session.status !== 'authenticated',
-    statusLabel: isRestoringLearnerSession
-      ? 'restoring'
-      : isLoadingAuth
-        ? 'loading'
-        : session.status,
+    statusLabel,
     userLabel: isRestoringLearnerSession
-      ? 'restoring learner session'
+      ? 'przywracanie sesji ucznia'
       : session.user
-        ? `${session.user.full_name} (${session.user.actorType})`
-        : 'anonymous',
+        ? `${session.user.full_name} (${actorTypeLabel})`
+        : 'anonimowy',
   };
 };

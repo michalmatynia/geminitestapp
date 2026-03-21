@@ -1,0 +1,20 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#app-content"
+  - link "Skip to content" [ref=e3] [cursor=pointer]:
+    - /url: "#app-content"
+  - status [ref=e4]
+  - main [ref=e5]:
+    - generic [ref=e7]:
+      - link "Skip to main content" [ref=e8] [cursor=pointer]:
+        - /url: "#kangur-main-content"
+      - generic [ref=e9]:
+        - status [ref=e10]
+        - status [ref=e11]:
+          - generic [ref=e15]:
+            - img [ref=e20]
+            - generic [ref=e29]:
+              - generic [ref=e30]: StudiQ
+              - generic [ref=e31]: Loading
+          - generic [ref=e32]: Loading the Kangur app
+  - alert [ref=e33]

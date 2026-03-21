@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, RenderOptions, RenderResult } from '@testing-library/react';
+import { render, RenderOptions, RenderResult } from '@/__tests__/test-utils';
 import React from 'react';
 import { NextIntlClientProvider } from 'next-intl';
 
@@ -40,6 +40,6 @@ const customRender = (ui: React.ReactElement, options?: CustomRenderOptions): Re
   return render(ui, { wrapper: Wrapper, ...options });
 };
 
-export * from '@testing-library/react';
+export * from '@/__tests__/test-utils';
 export { customRender as render };
 export { createTestQueryClient };

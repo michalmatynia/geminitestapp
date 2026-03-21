@@ -213,18 +213,18 @@ export default function HomeScreen(): React.JSX.Element {
       >
         <View style={{ gap: 10 }}>
           <Text style={{ color: '#0f172a', fontSize: 32, fontWeight: '800' }}>
-            Kangur Mobile
+            Kangur mobilnie
           </Text>
           <Text style={{ color: '#475569', fontSize: 16, lineHeight: 24 }}>
-            Mobile shell for the shared Kangur practice flow. Lessons, profile,
-            results, plan, and leaderboard routes are wired in this workspace.
+            Mobilna wersja wspolnego flow Kangura. W tym workspace sa juz
+            podpiete lekcje, profil, wyniki, plan dnia i ranking.
           </Text>
         </View>
 
         {__DEV__ && homeDebugProof ? (
-          <SectionCard title='Developer home sync proof'>
+          <SectionCard title='Deweloperski podglad synchronizacji strony glownej'>
             <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-              Operation: {homeDebugProof.operationLabel}
+              Tryb: {homeDebugProof.operationLabel}
             </Text>
             <View style={{ gap: 10 }}>
               {homeDebugProof.checks.map((check) => (
@@ -250,7 +250,12 @@ export default function HomeScreen(): React.JSX.Element {
                   }}
                 >
                   <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                    {check.label}: {check.status}
+                    {check.label}:{' '}
+                    {check.status === 'ready'
+                      ? 'gotowe'
+                      : check.status === 'info'
+                        ? 'w toku'
+                        : 'brak'}
                   </Text>
                   <Text style={{ color: '#475569', lineHeight: 20 }}>
                     {check.detail}
@@ -261,10 +266,10 @@ export default function HomeScreen(): React.JSX.Element {
           </SectionCard>
         ) : null}
 
-        <SectionCard title='Auth and runtime'>
+        <SectionCard title='Sesja i polaczenie'>
           <Text style={{ color: '#0f172a' }}>Status: {authBoundary.statusLabel}</Text>
-          <Text style={{ color: '#475569' }}>User: {authBoundary.userLabel}</Text>
-          <Text style={{ color: '#475569' }}>Auth mode: {authMode}</Text>
+          <Text style={{ color: '#475569' }}>Uzytkownik: {authBoundary.userLabel}</Text>
+          <Text style={{ color: '#475569' }}>Tryb logowania: {authMode}</Text>
           <Text style={{ color: '#475569' }}>
             API: {apiBaseUrl} ({apiBaseUrlSource})
           </Text>
@@ -277,7 +282,7 @@ export default function HomeScreen(): React.JSX.Element {
               <TextInput
                 autoCapitalize='none'
                 onChangeText={setLoginName}
-                placeholder='Learner login'
+                placeholder='Login ucznia'
                 style={{
                   backgroundColor: '#ffffff',
                   borderColor: '#cbd5e1',
@@ -291,7 +296,7 @@ export default function HomeScreen(): React.JSX.Element {
               <TextInput
                 autoCapitalize='none'
                 onChangeText={setPassword}
-                placeholder='Password'
+                placeholder='Haslo'
                 secureTextEntry
                 style={{
                   backgroundColor: '#ffffff',
@@ -304,34 +309,34 @@ export default function HomeScreen(): React.JSX.Element {
                 value={password}
               />
               <PrimaryButton
-                label='Sign in learner session'
+                label='Zaloguj sesje ucznia'
                 onPress={async () => {
                   await signInWithLearnerCredentials(loginName, password);
                 }}
               />
             </View>
           ) : session.status === 'authenticated' ? (
-            <PrimaryButton label='Sign out' onPress={signOut} />
+            <PrimaryButton label='Wyloguj' onPress={signOut} />
           ) : (
-            <PrimaryButton label='Sign in demo session' onPress={signIn} />
+            <PrimaryButton label='Zaloguj sesje demo' onPress={signIn} />
           )}
         </SectionCard>
 
-        <SectionCard title='Routes'>
+        <SectionCard title='Nawigacja'>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             <OutlineLink href={LESSONS_ROUTE} label='Lekcje' />
-            <OutlineLink href={PRACTICE_ROUTE} label='Practice' />
-            <OutlineLink href={PLAN_ROUTE} label='Plan' />
-            <OutlineLink href={RESULTS_ROUTE} label='Results' />
-            <OutlineLink href={PROFILE_ROUTE} label='Profile' />
-            <OutlineLink href={LEADERBOARD_ROUTE} label='Leaderboard' />
+            <OutlineLink href={PRACTICE_ROUTE} label='Trening' />
+            <OutlineLink href={PLAN_ROUTE} label='Plan dnia' />
+            <OutlineLink href={RESULTS_ROUTE} label='Wyniki' />
+            <OutlineLink href={PROFILE_ROUTE} label='Profil' />
+            <OutlineLink href={LEADERBOARD_ROUTE} label='Ranking' />
           </View>
         </SectionCard>
 
-        <SectionCard title='Training focus'>
+        <SectionCard title='Fokus treningowy'>
           {trainingFocus.isRestoringAuth || trainingFocus.isLoading ? (
             <Text style={{ color: '#475569', lineHeight: 20 }}>
-              Restoring learner session and score-backed training focus.
+              Przywracamy sesje ucznia i fokus treningowy oparty na wynikach.
             </Text>
           ) : trainingFocus.error ? (
             <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
@@ -344,7 +349,7 @@ export default function HomeScreen(): React.JSX.Element {
                   actionHref={createKangurPracticeHref(
                     trainingFocus.weakestOperation.operation,
                   )}
-                  actionLabel='Practice weakest mode'
+                  actionLabel='Trenuj najslabszy tryb'
                   averageAccuracyPercent={
                     trainingFocus.weakestOperation.averageAccuracyPercent
                   }
@@ -353,7 +358,7 @@ export default function HomeScreen(): React.JSX.Element {
                   )}
                   operation={trainingFocus.weakestOperation.operation}
                   sessions={trainingFocus.weakestOperation.sessions}
-                  title='Weakest mode'
+                  title='Do powtorki'
                 />
               ) : null}
 
@@ -362,7 +367,7 @@ export default function HomeScreen(): React.JSX.Element {
                   actionHref={createKangurPracticeHref(
                     trainingFocus.strongestOperation.operation,
                   )}
-                  actionLabel='Keep momentum'
+                  actionLabel='Utrzymaj tempo'
                   averageAccuracyPercent={
                     trainingFocus.strongestOperation.averageAccuracyPercent
                   }
@@ -371,25 +376,25 @@ export default function HomeScreen(): React.JSX.Element {
                   )}
                   operation={trainingFocus.strongestOperation.operation}
                   sessions={trainingFocus.strongestOperation.sessions}
-                  title='Strongest mode'
+                  title='Najmocniejszy tryb'
                 />
               ) : null}
 
               {!trainingFocus.weakestOperation &&
               !trainingFocus.strongestOperation ? (
                 <Text style={{ color: '#475569', lineHeight: 20 }}>
-                  No synced score history yet. Start with a practice run or open
-                  lessons directly.
+                  Brak jeszcze zsynchronizowanej historii wynikow. Zacznij od
+                  treningu albo otworz lekcje bezposrednio.
                 </Text>
               ) : null}
             </View>
           )}
         </SectionCard>
 
-        <SectionCard title='Recent results'>
+        <SectionCard title='Ostatnie wyniki'>
           {recentResults.isRestoringAuth || recentResults.isLoading ? (
             <Text style={{ color: '#475569', lineHeight: 20 }}>
-              Loading learner results.
+              Pobieramy wyniki ucznia.
             </Text>
           ) : recentResults.error ? (
             <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
@@ -397,7 +402,7 @@ export default function HomeScreen(): React.JSX.Element {
             </Text>
           ) : recentResults.results.length === 0 ? (
             <Text style={{ color: '#475569', lineHeight: 20 }}>
-              No synced mobile sessions yet.
+              Brak jeszcze zsynchronizowanych sesji mobilnych.
             </Text>
           ) : (
             <View style={{ gap: 12 }}>
@@ -422,11 +427,11 @@ export default function HomeScreen(): React.JSX.Element {
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                     <OutlineLink
                       href={createKangurPracticeHref(result.operation)}
-                      label='Train again'
+                      label='Trenuj ponownie'
                     />
                     <OutlineLink
                       href={createKangurResultsHref({ operation: result.operation })}
-                      label='Mode history'
+                      label='Historia trybu'
                     />
                   </View>
                 </View>

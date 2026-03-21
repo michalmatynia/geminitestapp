@@ -1,4 +1,4 @@
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@/__tests__/test-utils';
 import { describe, it, expect, vi } from 'vitest';
 
 import { useFormState } from '@/shared/hooks/useFormState';

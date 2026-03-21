@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@/__tests__/test-utils';
 import React, { useEffect } from 'react';
 import { vi } from 'vitest';
 

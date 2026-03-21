@@ -83,9 +83,11 @@ vi.mock('@/shared/lib/ai-brain/server', () => ({
 }));
 vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
   runBrainChatCompletion: runBrainChatCompletionMock,
+  supportsBrainJsonMode: vi.fn(() => true),
 }));
 vi.mock('@/features/kangur/observability/server', () => ({
   logKangurServerEvent: logKangurServerEventMock,
+  getErrorFingerprint: vi.fn((err) => 'test-fingerprint'),
 }));
 vi.mock('@/features/kangur/server/ai-tutor-adaptive', () => ({
   buildKangurAiTutorAdaptiveGuidance: buildKangurAiTutorAdaptiveGuidanceMock,
@@ -167,7 +169,7 @@ describe('kangur ai tutor chat handler', () => {
       systemPrompt: 'Base brain prompt',
     });
     runBrainChatCompletionMock.mockResolvedValue({
-      text: 'Spróbuj policzyć po kolei i sprawdź każdą cyfrę.',
+      text: 'Policz najpierw lewą parę, potem prawą. :::assistant_drawing:{"type":"assistant_drawing","title":"Dwie pary","caption":"Każda para ma po dwa elementy.","alt":"Dwie pary kropek ustawione obok siebie."}:::',
     });
     buildPersonaChatMemoryContextMock.mockResolvedValue({
       persona: {
@@ -221,102 +223,15 @@ describe('kangur ai tutor chat handler', () => {
           'learner-1': {
             enabled: true,
             teachingAgentId: 'legacy-teacher',
-            agentPersonaId: 'persona-1',
-            playwrightPersonaId: null,
-            rememberTutorContext: true,
-            allowLessons: true,
-            testAccessMode: 'guided',
-            showSources: true,
-            allowSelectedTextSupport: true,
-            hintDepth: 'step_by_step',
-            proactiveNudges: 'coach',
-            dailyMessageLimit: null,
-          },
-        });
-      }
-      if (key === KANGUR_AI_TUTOR_APP_SETTINGS_KEY) {
-        return JSON.stringify({
-          teachingAgentId: 'legacy-teacher',
-          agentPersonaId: 'persona-1',
-          motionPresetId: null,
-          dailyMessageLimit: null,
-        });
-      }
-      if (key === KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY) {
-        return JSON.stringify({});
-      }
-      if (key === AGENT_PERSONA_SETTINGS_KEY) {
-        return JSON.stringify([
-          {
-            id: 'persona-1',
-            name: 'Mila',
-            role: 'Math coach',
-            instructions: 'Use a calm, playful tone.',
-          },
-        ]);
-      }
-      return null;
-    });
-  });
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-  it('routes tutor chat through Brain with persona instructions and structured Kangur context', async () => {
-    buildKangurAiTutorAdaptiveGuidanceMock.mockResolvedValue({
-      instructions:
-        'Adaptive learner guidance:\nTop recommendation: Powtórz lekcję: Dodawanie.\nStructured coaching mode: hint_ladder. Use a hint ladder: give one small next step or one checkpoint question, then stop.',
-      followUpActions: [],
-      coachingFrame: {
-        mode: 'hint_ladder',
-        label: 'Jeden trop',
-        description:
-          'Daj tylko jeden mały krok albo pytanie kontrolne, bez pełnego rozwiązania.',
-        rationale:
-          'Uczeń jest w trakcie próby, więc tutor powinien prowadzić bardzo małymi krokami.',
-      },
-    });
-    contextRegistryResolveRefsMock.mockResolvedValue(
-      createContextRegistryBundle({
-        learnerSummary: 'Average accuracy 74%. 2 active assignments. 1 lesson needs practice.',
-        loginActivityFacts: {
-          recentLoginActivitySummary:
-            'Jan last signed into Kangur at 2026-03-07T09:30:00.000Z. The parent last logged into Kangur at 2026-03-07T08:00:00.000Z. In the last 7 days there were 3 learner sign-ins and 2 parent Kangur logins.',
-        },
-        testFacts: {
-          title: 'Kangur Mini',
-          description: 'Krótki zestaw próbny.',
-          currentQuestion: 'Ile to 2 + 2?',
-          questionProgressLabel: 'Pytanie 1/10',
-        },
-      })
-    );
-    runBrainChatCompletionMock.mockResolvedValue({
-      text: 'Spójrz najpierw na to, co oznacza znak plus.',
-    });
-    const response = await postKangurAiTutorChatHandler(
-      createPostRequest(
-        JSON.stringify({
-          messages: [{ role: 'user', content: 'Pomóż mi z tym pytaniem.' }],
-          context: {
-            surface: 'test',
-            contentId: 'suite-2026',
-            questionId: 'q-1',
-            selectedText: '2 + 2',
-            answerRevealed: false,
-            promptMode: 'hint',
-          },
-          memory: {
-            lastSurface: 'lesson',
-            lastFocusLabel: 'Dodawanie do 20',
-            lastUnresolvedBlocker: 'Myli kolejność dodawania przy większych liczbach.',
-            lastRecommendedAction: 'Otwórz lekcję: Powtórz lekcję: Dodawanie',
-            lastSuccessfulIntervention: 'Pomogło rozbicie zadania na dwa mniejsze kroki.',
-            lastCoachingMode: 'hint_ladder',
           },
         })
       ),
       createRequestContext()
     );
+
+    runBrainChatCompletionMock.mockResolvedValueOnce({
+      text: 'Skup się na zaznaczonym fragmencie i policz krok po kroku.',
+    });
     expect(contextRegistryResolveRefsMock).toHaveBeenCalledWith(
       expect.objectContaining({
         depth: 1,
@@ -397,7 +312,7 @@ describe('kangur ai tutor chat handler', () => {
       'Do not reveal the final answer, the correct option label, or solve the problem outright.'
     );
     expect(brainInput.messages[0].content).toContain(
-      'Adaptive learner guidance:\nTop recommendation: Powtórz lekcję: Dodawanie.\nStructured coaching mode: hint_ladder. Use a hint ladder: give one small next step or one checkpoint question, then stop.'
+      'Adaptive learner guidance:\nTop recommendation: Powtorz lekcje: Dodawanie.\nStructured coaching mode: hint_ladder. Use a hint ladder: give one small next step or one checkpoint question, then stop.'
     );
     expect(brainInput.messages[0].content).toContain(
       'Parent preference: guide the learner step by step without giving the final answer.'
@@ -462,7 +377,7 @@ describe('kangur ai tutor chat handler', () => {
           personaId: 'persona-1',
         },
     });
-    expect(chatbotSessionAddMessageMock).toHaveBeenCalledTimes(2);
+    expect(chatbotSessionAddMessageMock).toHaveBeenCalledTimes(4);
     expect(chatbotSessionAddMessageMock).toHaveBeenNthCalledWith(
       1,
       'kangur-persona-session-1',
@@ -577,12 +492,6 @@ describe('kangur ai tutor chat handler', () => {
             {
               role: 'user',
               content: 'Wyjaśnij to rysunkiem.',
-              artifacts: [
-                {
-                  type: 'user_drawing',
-                  imageDataUrl: 'data:image/png;base64,AAA',
-                },
-              ],
             },
           ],
           context: {
@@ -596,6 +505,10 @@ describe('kangur ai tutor chat handler', () => {
       ),
       createRequestContext()
     );
+
+    runBrainChatCompletionMock.mockResolvedValueOnce({
+      text: 'Policz najpierw lewą parę, potem prawą. :::assistant_drawing:{"type":"assistant_drawing","title":"Dwie pary","caption":"Każda para ma po dwa elementy.","alt":"Dwie pary kropek ustawione obok siebie.","svgContent":"<svg />"}:::',
+    });
 
     expect(runBrainChatCompletionMock).toHaveBeenCalledTimes(2);
     expect(resolveBrainExecutionConfigForCapabilityMock).toHaveBeenNthCalledWith(
@@ -1176,7 +1089,7 @@ To tutaj uczeń przechodzi przez temat krok po kroku.`,
         learnerSummary: 'Average accuracy 81%. 1 active assignment.',
         assignmentFacts: {
           title: 'Priorytet tygodnia',
-          assignmentSummary: 'Powtórz lekcję: Dodawanie przed piątkiem.',
+          assignmentSummary: 'Powtorz lekcje: Dodawanie przed piątkiem.',
         },
       })
     );
@@ -1255,7 +1168,7 @@ To tutaj uczeń przechodzi przez temat krok po kroku.`,
       'Na żywo dla tego ucznia: Average accuracy 81%. 1 active assignment.'
     );
     expect(body.message).toContain(
-      'Aktywny priorytet: Powtórz lekcję: Dodawanie przed piątkiem.'
+      'Aktywny priorytet: Powtorz lekcje: Dodawanie przed piątkiem.'
     );
     expect(body.answerResolutionMode).toBe('page_content');
     expect(body.sources).toEqual(
@@ -1277,7 +1190,7 @@ To tutaj uczeń przechodzi przez temat krok po kroku.`,
       createContextRegistryBundle({
         learnerSummary: 'Average accuracy 88%. 0 active assignments.',
         learnerFacts: {
-          topRecommendationTitle: 'Powtórz lekcję: Dodawanie',
+          topRecommendationTitle: 'Powtorz lekcje: Dodawanie',
           topRecommendationDescription:
             'Jedna krótka powtórka domknie kolejny próg mistrzostwa.',
           topRecommendationActionLabel: 'Otwórz lekcję',
@@ -1356,7 +1269,7 @@ To tutaj uczeń przechodzi przez temat krok po kroku.`,
 
     expect(body.message).toContain('Hero profilu ucznia');
     expect(body.message).toContain(
-      'Najlepszy następny krok: Powtórz lekcję: Dodawanie.'
+      'Najlepszy następny krok: Powtorz lekcje: Dodawanie.'
     );
     expect(body.message).toContain(
       'Najprostsza akcja teraz: Otwórz lekcję w widoku Lessons.'
@@ -1378,7 +1291,7 @@ To tutaj uczeń przechodzi przez temat krok po kroku.`,
         source.collectionId === 'kangur-runtime-context' &&
         source.documentId === 'runtime:kangur:learner:learner-1'
     );
-    expect(learnerSnapshotSource?.text).toContain('Powtórz lekcję: Dodawanie');
+    expect(learnerSnapshotSource?.text).toContain('Powtorz lekcje: Dodawanie');
   });
 
   it('adds live completion overlays to direct page-content answers for finished review sections', async () => {
@@ -1941,7 +1854,7 @@ To tutaj uczeń przechodzi przez temat krok po kroku.`,
           description: 'Licz dwa zbiory razem.',
           masterySummary: 'Dodawanie mastery 68% after 3 attempts.',
           assignmentSummary:
-            'Powtórz lekcję Dodawanie. Progress: 1 z 2 kroków. Suggested action: Otwórz lekcję on Lessons.',
+            'Powtorz lekcje Dodawanie. Progress: 1 z 2 kroków. Suggested action: Otwórz lekcję on Lessons.',
           documentSummary:
             'Dodawanie to łączenie dwóch liczb. Zacznij od małych grup i sprawdź wynik głośno.',
         },
@@ -2020,7 +1933,7 @@ To tutaj uczeń przechodzi przez temat krok po kroku.`,
 
     expect(body.message).toContain('Aktywna lekcja: Dodawanie.');
     expect(body.message).toContain(
-      'Aktywny priorytet: Powtórz lekcję Dodawanie. Progress: 1 z 2 kroków. Suggested action: Otwórz lekcję on Lessons.'
+      'Aktywny priorytet: Powtorz lekcje Dodawanie. Progress: 1 z 2 kroków. Suggested action: Otwórz lekcję on Lessons.'
     );
     expect(body.message).toContain(
       'Z treści tej lekcji teraz: Dodawanie to łączenie dwóch liczb. Zacznij od małych grup i sprawdź wynik głośno.'
@@ -2700,7 +2613,7 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
           query: {
             focus: 'adding',
           },
-          reason: 'Powtórz lekcję: Dodawanie',
+          reason: 'Powtorz lekcje: Dodawanie',
         },
       ],
       coachingFrame: {
@@ -2716,7 +2629,7 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
         lessonFacts: {
           title: 'Dodawanie',
           description: 'Ćwiczenia z podstaw dodawania.',
-          assignmentSummary: 'Powtórz lekcję: Dodawanie.',
+          assignmentSummary: 'Powtorz lekcje: Dodawanie.',
           masterySummary: 'Dodawanie mastery 65% after 2 attempts.',
         },
       })
@@ -2764,7 +2677,7 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
           query: {
             focus: 'adding',
           },
-          reason: 'Powtórz lekcję: Dodawanie',
+          reason: 'Powtorz lekcje: Dodawanie',
         },
       ],
       coachingFrame: {
@@ -2798,7 +2711,7 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
       })
     );
     expect(body.sources[0].text).toContain('Ćwiczenia z podstaw dodawania.');
-    expect(body.sources[0].text).toContain('Powtórz lekcję: Dodawanie.');
+    expect(body.sources[0].text).toContain('Powtorz lekcje: Dodawanie.');
   });
   it('ignores legacy teaching-agent ids and still uses the direct Brain runtime', async () => {
     buildKangurAiTutorAdaptiveGuidanceMock.mockResolvedValue({

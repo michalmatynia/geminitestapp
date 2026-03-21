@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within } from '@/__tests__/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {

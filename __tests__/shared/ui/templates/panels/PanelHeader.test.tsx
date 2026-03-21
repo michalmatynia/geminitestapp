@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/__tests__/test-utils';
 import { describe, it, expect, vi } from 'vitest';
 
 import { PanelHeader } from '@/shared/ui/templates/panels/PanelHeader';

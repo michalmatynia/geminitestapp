@@ -1,6 +1,6 @@
 "use client";
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@/__tests__/test-utils';
 import { useEffect, type ReactNode } from 'react';
 
 import {

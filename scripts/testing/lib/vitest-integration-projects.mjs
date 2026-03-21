@@ -1,4 +1,5 @@
 export const mongoIntegrationTestFiles = [
+  'src/shared/lib/products/services/validation-pattern-repository/mongo-validation-pattern-repository.test.ts',
   '__tests__/features/cms/services/mongo-cms-repository.test.ts',
   '__tests__/features/notesapp/services/mongo-note-repository.test.ts',
   '__tests__/features/products/services/mongo-parameter-repository.test.ts',

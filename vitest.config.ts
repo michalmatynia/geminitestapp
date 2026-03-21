@@ -14,15 +14,16 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@/__tests__': path.resolve(__dirname, './__tests__'),
       '@': path.resolve(__dirname, './src'),
+      '@/__tests__': path.resolve(__dirname, './__tests__'),
+      '@docs': path.resolve(__dirname, './docs'),
+      '@kangur/contracts': path.resolve(__dirname, './packages/kangur-contracts/src/index.ts'),
+      '@kangur/core': path.resolve(__dirname, './packages/kangur-core/src/index.ts'),
+      '@kangur/api-client': path.resolve(__dirname, './packages/kangur-api-client/src/index.ts'),
+      '@kangur/platform': path.resolve(__dirname, './packages/kangur-platform/src/index.ts'),
       'server-only': path.resolve(__dirname, './__tests__/mocks/server-only.js'),
-      'next/navigation': path.resolve(
-        __dirname,
-        './node_modules/next/dist/client/components/navigation.js'
-      ),
-      'next/server': nextServerExportPath,
-      [nextServerAbsoluteImportPath]: nextServerExportPath,
+      'next/server': path.resolve(__dirname, './node_modules/next/dist/server/web/exports/index.js'),
+      'next/navigation': path.resolve(__dirname, './node_modules/next/dist/client/components/navigation.js'),
     },
   },
   test: {
@@ -34,11 +35,6 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-    },
-    server: {
-      deps: {
-        inline: ['next-auth', 'next-intl'],
-      },
     },
     projects: [
       {
@@ -76,19 +72,5 @@ export default defineConfig({
         },
       },
     ],
-  },
-  resolve: {
-    alias: {
-      'next/server': path.resolve(__dirname, './node_modules/next/server.js'),
-      'next/navigation': path.resolve(__dirname, './node_modules/next/navigation.js'),
-      '@docs': path.resolve(__dirname, './docs'),
-      '@/__tests__': path.resolve(__dirname, './__tests__'),
-      '@': path.resolve(__dirname, './src'),
-      '@kangur/contracts': path.resolve(__dirname, './packages/kangur-contracts/src/index.ts'),
-      '@kangur/core': path.resolve(__dirname, './packages/kangur-core/src/index.ts'),
-      '@kangur/api-client': path.resolve(__dirname, './packages/kangur-api-client/src/index.ts'),
-      '@kangur/platform': path.resolve(__dirname, './packages/kangur-platform/src/index.ts'),
-      'server-only': path.resolve(__dirname, './__tests__/mocks/server-only.js'),
-    },
   },
 });

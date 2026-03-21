@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/__tests__/test-utils';
 import { vi } from 'vitest';
 
 import { SettingsFieldRenderer } from '@/features/cms/components/page-builder/SettingsFieldRenderer';

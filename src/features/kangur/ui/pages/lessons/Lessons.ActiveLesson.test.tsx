@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@/__tests__/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -207,6 +207,14 @@ describe('ActiveLessonView mobile scroll controls', () => {
     });
 
     const upButton = screen.getByRole('button', { name: 'Przewiń w górę' });
+    const topControls = screen.getByTestId('kangur-lesson-top-controls');
+    const header = screen.getByTestId('active-lesson-header');
+
+    expect(scrollContainer.contains(topControls)).toBe(true);
+    expect(
+      topControls.compareDocumentPosition(header) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+
     fireEvent.click(upButton);
     expect(scrollByMock).toHaveBeenCalledWith(
       expect.objectContaining({ top: -240, behavior: 'smooth' })
@@ -257,6 +265,37 @@ describe('ActiveLessonView mobile scroll controls', () => {
     fireEvent.click(headerBackButton);
 
     expect(handleSelectLesson).toHaveBeenCalledWith(null);
+  });
+
+  it('does not break hook order when the active lesson becomes null after a rerender', async () => {
+    useKangurMobileBreakpointMock.mockReturnValue(false);
+
+    let currentActiveLesson: typeof activeLesson | null = activeLesson;
+
+    useLessonsMock.mockImplementation(() => ({
+      activeLesson: currentActiveLesson,
+      handleSelectLesson,
+      lessonDocuments: {},
+      lessonAssignmentsByComponent: new Map(),
+      completedLessonAssignmentsByComponent: new Map(),
+      setIsActiveLessonComponentReady: vi.fn(),
+      activeLessonHeaderRef: React.createRef<HTMLDivElement>(),
+      activeLessonNavigationRef: React.createRef<HTMLDivElement>(),
+      activeLessonContentRef,
+      activeLessonScrollRef: React.createRef<HTMLDivElement>(),
+      orderedLessons: [activeLesson, nextLesson],
+      isSecretLessonActive: false,
+      progress: { lessonMastery: {} },
+    }));
+
+    const { rerender } = render(<ActiveLessonView />);
+    await act(async () => {});
+
+    currentActiveLesson = null;
+
+    expect(() => {
+      rerender(<ActiveLessonView />);
+    }).not.toThrow();
   });
 
   it('uses the in-content back action from the mobile lesson controls when available', async () => {

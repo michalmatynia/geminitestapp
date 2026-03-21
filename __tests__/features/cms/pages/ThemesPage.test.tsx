@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/__tests__/test-utils';
 import userEvent from '@testing-library/user-event';
 import { useRouter } from 'next/navigation';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
@@ -8,6 +8,20 @@ import { useCmsThemes, useDeleteTheme } from '@/features/cms/hooks/useCmsQueries
 import ThemesPage from '@/features/cms/pages/themes/ThemesPage';
 
 // Mock hooks
+vi.mock('next-intl', () => ({
+  useTranslations: vi.fn(() => (key: string) => {
+    const translations: Record<string, string> = {
+      'emptyDescription': 'No themes defined',
+      'createAction': 'Create Theme',
+      'actionsLabel': 'Actions for theme Dark',
+      'deleteAction': 'Delete',
+      'destroyAction': 'Destroy Theme',
+    };
+    return translations[key] || key;
+  }),
+  useLocale: vi.fn(() => 'pl'),
+}));
+
 vi.mock('@/features/cms/hooks/useCmsQueries', () => ({
   useCmsThemes: vi.fn(),
   useDeleteTheme: vi.fn(),
@@ -15,6 +29,8 @@ vi.mock('@/features/cms/hooks/useCmsQueries', () => ({
 
 vi.mock('next/navigation', () => ({
   useRouter: vi.fn(),
+  usePathname: vi.fn(() => '/admin/cms/themes'),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
 }));
 
 const queryClient = new QueryClient({
@@ -37,7 +53,7 @@ describe('ThemesPage Component', () => {
   it('should render empty state when no themes exist', () => {
     (useCmsThemes as any).mockReturnValue({ data: [], isLoading: false });
     renderWithProviders(<ThemesPage />);
-    expect(screen.getByText('No themes defined')).toBeInTheDocument();
+    expect(screen.getByText('emptyDescription')).toBeInTheDocument();
   });
 
   it('should render themes list', () => {
@@ -57,7 +73,7 @@ describe('ThemesPage Component', () => {
     (useCmsThemes as any).mockReturnValue({ data: [], isLoading: false });
     renderWithProviders(<ThemesPage />);
 
-    const createBtn = screen.getByRole('button', { name: /Create Theme/i });
+    const createBtn = screen.getByRole('button', { name: /createAction/i });
     await user.click(createBtn);
 
     expect(mockPush).toHaveBeenCalledWith('/admin/cms/themes/create');
@@ -75,15 +91,15 @@ describe('ThemesPage Component', () => {
     renderWithProviders(<ThemesPage />);
 
     // 1. Open the ActionMenu
-    const actionsBtn = screen.getByLabelText(/Actions for theme Dark/i);
+    const actionsBtn = screen.getByLabelText(/actionsLabel/i);
     await user.click(actionsBtn);
 
     // 2. Click the Delete item in dropdown
-    const deleteItem = screen.getByText('Delete');
+    const deleteItem = screen.getByText('deleteAction');
     await user.click(deleteItem);
 
     // 3. Confirm in the modal
-    const confirmBtn = screen.getByRole('button', { name: /Destroy Theme/i });
+    const confirmBtn = screen.getByRole('button', { name: /destroyAction/i });
     await user.click(confirmBtn);
 
     expect(mockDelete).toHaveBeenCalledWith('t1');

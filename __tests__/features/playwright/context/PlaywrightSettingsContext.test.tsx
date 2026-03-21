@@ -1,4 +1,4 @@
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act } from '@/__tests__/test-utils';
 import { describe, it, expect, vi } from 'vitest';
 
 import {

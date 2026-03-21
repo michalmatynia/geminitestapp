@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/__tests__/test-utils';
 import type { CSSProperties, ReactNode } from 'react';
 
 import { KangurAiTutorSpotlightOverlays } from './KangurAiTutorSpotlightOverlays';

@@ -279,7 +279,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
                 paddingVertical: 10,
               }}
             >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Back</Text>
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Wroc</Text>
             </Pressable>
           </Link>
 
@@ -461,7 +461,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
                               fontWeight: '700',
                             }}
                           >
-                            Previous
+                            Poprzednia
                           </Text>
                         </Pressable>
 
@@ -492,7 +492,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
                               fontWeight: '700',
                             }}
                           >
-                            Next
+                            Nastepna
                           </Text>
                         </Pressable>
                       </View>

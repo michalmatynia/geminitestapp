@@ -217,7 +217,7 @@ export const extractTutorDrawingArtifactsFromJson = (
   artifacts: KangurAiTutorMessageArtifact[];
 } => {
   try {
-    const parsed: TutorDrawingJsonResponse = JSON.parse(jsonText);
+    const parsed = JSON.parse(jsonText) as unknown as TutorDrawingJsonResponse;
     const artifacts: KangurAiTutorMessageArtifact[] = [];
 
     if (parsed.drawing?.svg) {

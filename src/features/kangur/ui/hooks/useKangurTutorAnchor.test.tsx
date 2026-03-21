@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { renderHook } from '@testing-library/react';
+import { renderHook } from '@/__tests__/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { registerAnchorMock, unregisterAnchorMock } = vi.hoisted(() => ({

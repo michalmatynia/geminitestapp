@@ -39,8 +39,6 @@ type RouterTask = {
   answer: ReasoningLevelId;
 };
 
-type AgenticReasoningRouterGameProps = KangurMiniGameFinishActionProps;
-
 const REASONING_LEVELS: ReasoningLevel[] = [
   {
     id: 'low',
@@ -160,7 +158,7 @@ const ReasoningDialVisual = (): JSX.Element => (
 
 export default function AgenticReasoningRouterGame({
   onFinish,
-}: AgenticReasoningRouterGameProps): JSX.Element {
+}: KangurMiniGameFinishActionProps): JSX.Element {
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [assignments, setAssignments] = useState<Record<string, ReasoningLevelId>>({});
   const [checked, setChecked] = useState(false);
@@ -237,7 +235,7 @@ export default function AgenticReasoningRouterGame({
             </div>
             <KangurProgressBar accent='teal' value={progress} size='sm' />
 
-            <div className='grid gap-3'>
+            <div className='grid gap-3' role='group' aria-label='Select a task to route'>
               {ROUTER_TASKS.map((task) => {
                 const assignedLevel = assignments[task.id];
                 const isActive = activeTaskId === task.id;
@@ -252,6 +250,7 @@ export default function AgenticReasoningRouterGame({
                     className={cn(
                       'w-full rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition-all',
                       'bg-white/80 hover:-translate-y-0.5 hover:shadow-md',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/70 focus-visible:ring-offset-2 ring-offset-white',
                       isActive && 'border-teal-400 bg-teal-50',
                       !isActive && 'border-teal-100/80',
                       isCorrect && 'border-teal-400 bg-teal-50',
@@ -284,7 +283,7 @@ export default function AgenticReasoningRouterGame({
               </div>
               <ReasoningDialVisual />
             </div>
-            <div className={cn('grid gap-3', KANGUR_GRID_TIGHT_CLASSNAME)}>
+            <div className={cn('grid gap-3', KANGUR_GRID_TIGHT_CLASSNAME)} role='group' aria-label='Choose a reasoning level'>
               {REASONING_LEVELS.map((level) => (
                 <button
                   key={level.id}
@@ -293,11 +292,13 @@ export default function AgenticReasoningRouterGame({
                   className={cn(
                     'rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition-all',
                     'hover:-translate-y-0.5 hover:shadow-md',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/70 focus-visible:ring-offset-2 ring-offset-white',
                     level.colorClass,
                     activeTaskId ? 'opacity-100' : 'opacity-60'
                   )}
                   disabled={!activeTaskId}
                   aria-disabled={!activeTaskId}
+                  aria-label={level.label}
                 >
                   <div className='text-xs font-semibold uppercase tracking-[0.2em]'>{level.label}</div>
                   <KangurLessonCaption className='mt-1 text-teal-900'>

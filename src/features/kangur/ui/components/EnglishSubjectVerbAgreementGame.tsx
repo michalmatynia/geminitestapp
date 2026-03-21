@@ -127,20 +127,16 @@ const getAgreementRoundHint = (
   roundId: AgreementRound['id']
 ): string => translate(`englishSubjectVerbAgreement.inRound.rounds.${roundId}.hint`);
 
-type FeedbackState = KangurMiniGameFeedback;
-
-type EnglishSubjectVerbAgreementGameProps = KangurMiniGameFinishProps;
-
 export default function EnglishSubjectVerbAgreementGame({
   finishLabel,
   onFinish,
-}: EnglishSubjectVerbAgreementGameProps): React.JSX.Element {
+}: KangurMiniGameFinishProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
-  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const [feedback, setFeedback] = useState<KangurMiniGameFeedback | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
@@ -292,7 +288,7 @@ export default function EnglishSubjectVerbAgreementGame({
         </KangurInfoCard>
 
         <div className='space-y-3'>
-          <div className='rounded-[20px] border border-slate-200/80 bg-white px-4 py-3 text-sm text-slate-700'>
+          <div id='sva-question' className='rounded-[20px] border border-slate-200/80 bg-white px-4 py-3 text-sm text-slate-700'>
             <div className={`${KANGUR_WRAP_CENTER_ROW_CLASSNAME} text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400`}>
               <span>{translations('englishSubjectVerbAgreement.inRound.subjectLabel')}</span>
               <KangurStatusChip accent={round.accent} size='sm'>
@@ -318,7 +314,7 @@ export default function EnglishSubjectVerbAgreementGame({
             </p>
           </div>
 
-          <div className='grid grid-cols-1 gap-2 min-[420px]:grid-cols-2'>
+          <div className='grid grid-cols-1 gap-2 min-[420px]:grid-cols-2' role='group' aria-labelledby='sva-question'>
             {round.options.map((option) => {
               const isSelected = selection === option;
               return (

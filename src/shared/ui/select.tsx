@@ -339,7 +339,7 @@ const SelectItem = React.forwardRef<
     >
       <span className='absolute left-2 flex size-3.5 items-center justify-center'>
         <SelectPrimitive.ItemIndicator>
-          <Check className='size-4' />
+          <Check className='size-4' aria-hidden='true' />
         </SelectPrimitive.ItemIndicator>
       </span>
 

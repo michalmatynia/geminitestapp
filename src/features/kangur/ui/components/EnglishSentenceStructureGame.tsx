@@ -177,10 +177,6 @@ const normalizeText = (value: string): string =>
     .replace(/[.!?]/g, '')
     .replace(/\s+/g, ' ');
 
-type FeedbackState = KangurMiniGameFeedback;
-
-type EnglishSentenceStructureGameProps = KangurMiniGameFinishProps;
-
 type RoundState = {
   selection: string | null;
   orderTokens: string[];
@@ -221,13 +217,13 @@ const evaluateRound = (
 export default function EnglishSentenceStructureGame({
   finishLabel,
   onFinish,
-}: EnglishSentenceStructureGameProps): React.JSX.Element {
+}: KangurMiniGameFinishProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'play');
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
-  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const [feedback, setFeedback] = useState<KangurMiniGameFeedback | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
@@ -488,6 +484,7 @@ export default function EnglishSentenceStructureGame({
                 onClick={() => setSelection(option)}
                 className={cn(
                   'rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
                   selection === option
                     ? KANGUR_ACCENT_STYLES[round.accent].activeCard
                     : 'border-slate-200 bg-white/70 hover:-translate-y-[1px]'

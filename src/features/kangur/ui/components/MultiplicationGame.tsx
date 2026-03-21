@@ -342,6 +342,14 @@ export default function MultiplicationGame({
             })}
           </div>
 
+          <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
+            {confirmed
+              ? selected === question.correct
+                ? 'Dobrze! Poprawna odpowiedź.'
+                : `Niepoprawnie. Poprawna odpowiedź: ${question.correct}.`
+              : ''}
+          </div>
+
           <KangurButton
             className={cn(
               'w-full',

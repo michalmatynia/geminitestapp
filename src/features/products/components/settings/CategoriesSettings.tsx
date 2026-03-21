@@ -34,7 +34,7 @@ import {
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import type { MasterTreeNode } from '@/shared/utils';
 import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { buildMasterNodesFromCategoryTree } from './category-master-tree';
 import { createCategoryMasterTreeAdapter } from './category-master-tree-adapter';
@@ -123,13 +123,10 @@ export function CategoriesSettings(): React.JSX.Element {
         toast('Category moved successfully', { variant: 'success' });
         onRefresh();
       } catch (error) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'CategoriesSettings',
-            action: 'applyCategoryReorderPayload',
-            payload,
-          },
+        logClientCatch(error, {
+          source: 'CategoriesSettings',
+          action: 'applyCategoryReorderPayload',
+          payload,
         });
         const message: string = error instanceof Error ? error.message : 'Failed to move category';
         toast(message, { variant: 'error' });
@@ -211,13 +208,10 @@ export function CategoriesSettings(): React.JSX.Element {
       toast('Category deleted successfully', { variant: 'success' });
       onRefresh();
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'CategoriesSettings',
-          action: 'deleteCategory',
-          categoryId: categoryToDelete.id,
-        },
+      logClientCatch(error, {
+        source: 'CategoriesSettings',
+        action: 'deleteCategory',
+        categoryId: categoryToDelete.id,
       });
       const message: string = error instanceof Error ? error.message : 'Failed to delete category';
       toast(message, { variant: 'error' });
@@ -259,13 +253,10 @@ export function CategoriesSettings(): React.JSX.Element {
       setShowModal(false);
       onRefresh();
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'CategoriesSettings',
-          action: 'saveCategory',
-          categoryId: editingCategory?.id,
-        },
+      logClientCatch(error, {
+        source: 'CategoriesSettings',
+        action: 'saveCategory',
+        categoryId: editingCategory?.id,
       });
       const message: string = error instanceof Error ? error.message : 'Failed to save category';
       toast(message, { variant: 'error' });
@@ -483,15 +474,16 @@ export function CategoriesSettings(): React.JSX.Element {
                       className='h-7 px-2 text-xs'
                       onClick={(): void => setPanelCollapsed(!panelCollapsed)}
                       title={panelCollapsed ? 'Show category tree' : 'Collapse category tree'}
+                      aria-expanded={!panelCollapsed}
                     >
                       {panelCollapsed ? (
                         <>
-                          <ChevronRight className='mr-1 size-3.5 -scale-x-100' />
+                          <ChevronRight className='mr-1 size-3.5 -scale-x-100' aria-hidden='true' />
                           Show Tree
                         </>
                       ) : (
                         <>
-                          <ChevronLeft className='mr-1 size-3.5' />
+                          <ChevronLeft className='mr-1 size-3.5' aria-hidden='true' />
                           Collapse
                         </>
                       )}

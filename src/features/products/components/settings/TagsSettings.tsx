@@ -21,7 +21,7 @@ import {
   UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { useProductSettingsTagsContext } from './ProductSettingsContext';
 
@@ -106,9 +106,10 @@ export function TagsSettings(): React.JSX.Element {
       setShowModal(false);
       onRefresh();
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'TagsSettings', action: 'saveTag', tagId: editingTag?.id },
+      logClientCatch(error, {
+        source: 'TagsSettings',
+        action: 'saveTag',
+        tagId: editingTag?.id,
       });
       const message = error instanceof Error ? error.message : 'Failed to save tag.';
       toast(message, { variant: 'error' });
@@ -126,9 +127,10 @@ export function TagsSettings(): React.JSX.Element {
       toast('Tag deleted.', { variant: 'success' });
       onRefresh();
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'TagsSettings', action: 'deleteTag', tagId: tagToDelete.id },
+      logClientCatch(error, {
+        source: 'TagsSettings',
+        action: 'deleteTag',
+        tagId: tagToDelete.id,
       });
       const message = error instanceof Error ? error.message : 'Failed to delete tag.';
       toast(message, { variant: 'error' });
@@ -266,7 +268,7 @@ export function TagsSettings(): React.JSX.Element {
                     setFormData((prev: TagFormData) => ({ ...prev, color: e.target.value }))
                   }
                   placeholder='#38bdf8'
-                 aria-label='#38bdf8' title='#38bdf8'/>
+                 aria-label='Tag color hex value' title='Tag color hex value'/>
               </div>
             </FormField>
           </div>

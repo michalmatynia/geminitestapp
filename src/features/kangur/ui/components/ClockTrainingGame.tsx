@@ -585,6 +585,10 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
         </p>
       </KangurSummaryPanel>
 
+      <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
+        {feedback ? feedback.title : ''}
+      </div>
+
       <DraggableClock
         onSubmit={handleSubmit}
         showChallengeRing={gameMode === 'challenge'}

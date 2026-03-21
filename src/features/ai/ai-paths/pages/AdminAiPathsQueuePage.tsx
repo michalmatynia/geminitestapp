@@ -121,10 +121,8 @@ export function AdminAiPathsQueuePage({
                     isActive
                       ? 'border border-white/20 bg-white/10 text-white'
                       : 'border border-transparent text-gray-300 hover:bg-white/5'
-                  }`}
-                  aria-label={'Icon'}
-                  title={'Icon'}>
-                  <Icon className='size-3.5' />
+                  }`}>
+                  <Icon className='size-3.5' aria-hidden='true' />
                   <Hint size='xs' uppercase className='font-semibold'>
                     {tab.label}
                   </Hint>

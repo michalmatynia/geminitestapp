@@ -49,8 +49,6 @@ import { cn } from '@/features/kangur/shared/utils';
 
 import type { DropResult } from '@hello-pangea/dnd';
 
-type GeometryBasicsWorkshopGameProps = KangurMiniGameFinishProps;
-
 type TileId = 'point' | 'segment' | 'side' | 'angle';
 
 type LabelTile = {
@@ -178,7 +176,7 @@ function BoardIllustration({ board }: { board: TileId }): React.JSX.Element {
   switch (board) {
     case 'point':
       return (
-        <svg viewBox='0 0 320 220' className='h-full w-full text-slate-300'>
+        <svg viewBox='0 0 320 220' className='h-full w-full text-slate-300' role='img' aria-label='Diagram: point on a coordinate plane'>
           <line x1='40' y1='110' x2='280' y2='110' stroke='currentColor' strokeWidth='2' />
           <line x1='160' y1='30' x2='160' y2='190' stroke='currentColor' strokeWidth='2' />
           <circle cx='90' cy='70' r='6' fill='currentColor' />
@@ -187,7 +185,7 @@ function BoardIllustration({ board }: { board: TileId }): React.JSX.Element {
       );
     case 'segment':
       return (
-        <svg viewBox='0 0 320 220' className='h-full w-full text-slate-300'>
+        <svg viewBox='0 0 320 220' className='h-full w-full text-slate-300' role='img' aria-label='Diagram: line segment between two endpoints'>
           <circle cx='80' cy='110' r='6' fill='currentColor' />
           <circle cx='240' cy='110' r='6' fill='currentColor' />
           <line x1='80' y1='110' x2='240' y2='110' stroke='currentColor' strokeWidth='5' />
@@ -195,14 +193,14 @@ function BoardIllustration({ board }: { board: TileId }): React.JSX.Element {
       );
     case 'side':
       return (
-        <svg viewBox='0 0 320 220' className='h-full w-full text-slate-300'>
+        <svg viewBox='0 0 320 220' className='h-full w-full text-slate-300' role='img' aria-label='Diagram: side of a rectangle highlighted'>
           <rect x='80' y='50' width='160' height='120' fill='none' stroke='currentColor' strokeWidth='4' />
           <line x1='80' y1='50' x2='240' y2='50' stroke='currentColor' strokeWidth='7' />
         </svg>
       );
     case 'angle':
       return (
-        <svg viewBox='0 0 320 220' className='h-full w-full text-slate-300'>
+        <svg viewBox='0 0 320 220' className='h-full w-full text-slate-300' role='img' aria-label='Diagram: right angle formed by two line segments'>
           <line x1='160' y1='150' x2='160' y2='60' stroke='currentColor' strokeWidth='5' />
           <line x1='160' y1='150' x2='250' y2='150' stroke='currentColor' strokeWidth='5' />
           <path
@@ -283,7 +281,7 @@ function DraggableTile({
 export default function GeometryBasicsWorkshopGame({
   finishLabel,
   onFinish,
-}: GeometryBasicsWorkshopGameProps): React.JSX.Element {
+}: KangurMiniGameFinishProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
   const summaryFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const handleFinish = onFinish;

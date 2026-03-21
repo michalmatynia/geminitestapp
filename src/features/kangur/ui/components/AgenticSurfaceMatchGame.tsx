@@ -37,8 +37,6 @@ type Scenario = {
   answer: string;
 };
 
-type AgenticSurfaceMatchGameProps = KangurMiniGameFinishActionProps;
-
 const SURFACE_OPTIONS: SurfaceOption[] = [
   {
     id: 'cli',
@@ -148,7 +146,7 @@ const SurfaceOrbitVisual = (): JSX.Element => (
 
 export default function AgenticSurfaceMatchGame({
   onFinish,
-}: AgenticSurfaceMatchGameProps): JSX.Element {
+}: KangurMiniGameFinishActionProps): JSX.Element {
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
   const [assignments, setAssignments] = useState<Record<string, string>>({});
   const [checked, setChecked] = useState(false);
@@ -225,7 +223,7 @@ export default function AgenticSurfaceMatchGame({
             </div>
             <KangurProgressBar accent='emerald' value={progress} size='sm' />
 
-            <div className='grid gap-3'>
+            <div className='grid gap-3' role='group' aria-label='Select a scenario to match'>
               {SCENARIOS.map((scenario) => {
                 const assignedSurface = assignments[scenario.id];
                 const isActive = activeScenarioId === scenario.id;
@@ -240,6 +238,7 @@ export default function AgenticSurfaceMatchGame({
                     className={cn(
                       'w-full rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition-all',
                       'bg-white/80 hover:-translate-y-0.5 hover:shadow-md',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 ring-offset-white',
                       isActive && 'border-emerald-400 bg-emerald-50',
                       !isActive && 'border-emerald-100/80',
                       isCorrect && 'border-emerald-400 bg-emerald-50',
@@ -272,7 +271,7 @@ export default function AgenticSurfaceMatchGame({
               </div>
               <SurfaceOrbitVisual />
             </div>
-            <div className={cn('grid gap-3', KANGUR_GRID_TIGHT_CLASSNAME)}>
+            <div className={cn('grid gap-3', KANGUR_GRID_TIGHT_CLASSNAME)} role='group' aria-label='Choose a surface'>
               {SURFACE_OPTIONS.map((surface) => (
                 <button
                   key={surface.id}
@@ -281,11 +280,13 @@ export default function AgenticSurfaceMatchGame({
                   className={cn(
                     'rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition-all',
                     'hover:-translate-y-0.5 hover:shadow-md',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 ring-offset-white',
                     surface.colorClass,
                     activeScenarioId ? 'opacity-100' : 'opacity-60'
                   )}
                   disabled={!activeScenarioId}
                   aria-disabled={!activeScenarioId}
+                  aria-label={surface.label}
                 >
                   <div className='text-xs font-semibold uppercase tracking-[0.2em]'>{surface.label}</div>
                   <KangurLessonCaption className='mt-1 text-emerald-900'>

@@ -536,9 +536,13 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
   {
     accessorKey: 'name_en',
     header: ({ column }: { column: Column<ProductWithImages, unknown> }): React.JSX.Element => (
-      <Button variant='ghost' onClick={(): void => column.toggleSorting()}>
+      <Button
+        variant='ghost'
+        onClick={(): void => column.toggleSorting()}
+        aria-sort={column.getIsSorted() === 'asc' ? 'ascending' : column.getIsSorted() === 'desc' ? 'descending' : 'none'}
+      >
         Name
-        <ArrowUpDown className='ml-2 size-4' />
+        <ArrowUpDown className='ml-2 size-4' aria-hidden='true' />
       </Button>
     ),
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => <NameCell row={row} />,
@@ -557,12 +561,16 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
       const currencyCode: string = meta?.currencyCode || '';
 
       return (
-        <Button variant='ghost' onClick={(): void => column.toggleSorting()}>
+        <Button
+          variant='ghost'
+          onClick={(): void => column.toggleSorting()}
+          aria-sort={column.getIsSorted() === 'asc' ? 'ascending' : column.getIsSorted() === 'desc' ? 'descending' : 'none'}
+        >
           Price{' '}
           <span className='ml-1 text-xs text-muted-foreground' suppressHydrationWarning>
             {currencyCode ? `(${currencyCode})` : ''}
           </span>
-          <ArrowUpDown className='ml-2 size-4' />
+          <ArrowUpDown className='ml-2 size-4' aria-hidden='true' />
         </Button>
       );
     },
@@ -574,9 +582,13 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
   {
     accessorKey: 'stock',
     header: ({ column }: { column: Column<ProductWithImages, unknown> }): React.JSX.Element => (
-      <Button variant='ghost' onClick={(): void => column.toggleSorting()}>
+      <Button
+        variant='ghost'
+        onClick={(): void => column.toggleSorting()}
+        aria-sort={column.getIsSorted() === 'asc' ? 'ascending' : column.getIsSorted() === 'desc' ? 'descending' : 'none'}
+      >
         Stock
-        <ArrowUpDown className='ml-2 size-4' />
+        <ArrowUpDown className='ml-2 size-4' aria-hidden='true' />
       </Button>
     ),
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => <StockCell row={row} />,
@@ -587,9 +599,13 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
   {
     accessorKey: 'createdAt',
     header: ({ column }: { column: Column<ProductWithImages, unknown> }): React.JSX.Element => (
-      <Button variant='ghost' onClick={(): void => column.toggleSorting()}>
+      <Button
+        variant='ghost'
+        onClick={(): void => column.toggleSorting()}
+        aria-sort={column.getIsSorted() === 'asc' ? 'ascending' : column.getIsSorted() === 'desc' ? 'descending' : 'none'}
+      >
         Created At
-        <ArrowUpDown className='ml-2 size-4' />
+        <ArrowUpDown className='ml-2 size-4' aria-hidden='true' />
       </Button>
     ),
     size: PRODUCT_TABLE_COLUMN_SIZES.createdAt,

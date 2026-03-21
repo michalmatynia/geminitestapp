@@ -178,6 +178,7 @@ export function PatternNodeItem(props: PatternNodeItemProps): React.JSX.Element 
               className={cn(
                 'inline-flex items-center justify-center rounded p-0.5 text-gray-400 transition',
                 'hover:bg-gray-700/60',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-1',
                 isPending && 'pointer-events-none opacity-40'
               )}
               onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
@@ -198,6 +199,7 @@ export function PatternNodeItem(props: PatternNodeItemProps): React.JSX.Element 
               className={cn(
                 'inline-flex items-center justify-center rounded p-0.5 text-gray-400 transition',
                 'hover:bg-gray-700/60',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-1',
                 isPending && 'pointer-events-none opacity-40'
               )}
               onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
@@ -218,6 +220,7 @@ export function PatternNodeItem(props: PatternNodeItemProps): React.JSX.Element 
               className={cn(
                 'inline-flex items-center justify-center rounded p-0.5 text-gray-400 transition',
                 'hover:bg-red-500/20 hover:text-red-300',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-1',
                 isPending && 'pointer-events-none opacity-40'
               )}
               onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {

@@ -109,20 +109,16 @@ const ROUNDS: ClickRound[] = [
 
 const TOTAL_ROUNDS = ROUNDS.length;
 
-type FeedbackState = KangurMiniGameFeedback;
-
-type EnglishPronounsGameProps = KangurMiniGameFinishProps;
-
 export default function EnglishPronounsGame({
   finishLabel,
   onFinish,
-}: EnglishPronounsGameProps): React.JSX.Element {
+}: KangurMiniGameFinishProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
-  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const [feedback, setFeedback] = useState<KangurMiniGameFeedback | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
@@ -275,10 +271,10 @@ export default function EnglishPronounsGame({
         </div>
 
         <div className={KANGUR_STACK_SPACED_CLASSNAME}>
-          <div className='rounded-[20px] border border-slate-200/80 bg-white px-4 py-3 text-sm font-semibold text-slate-700'>
+          <div id='pronouns-question' className='rounded-[20px] border border-slate-200/80 bg-white px-4 py-3 text-sm font-semibold text-slate-700'>
             {round.question}
           </div>
-          <div className='grid grid-cols-1 gap-2 min-[420px]:grid-cols-2'>
+          <div className='grid grid-cols-1 gap-2 min-[420px]:grid-cols-2' role='group' aria-labelledby='pronouns-question'>
             {round.options.map((option) => {
               const isSelected = selection === option;
               const accent = PRONOUN_ACCENTS[option] ?? round.accent;

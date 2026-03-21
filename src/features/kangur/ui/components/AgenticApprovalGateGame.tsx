@@ -39,8 +39,6 @@ type ApprovalAction = {
   answer: ApprovalDecision;
 };
 
-type AgenticApprovalGateGameProps = KangurMiniGameFinishActionProps;
-
 const APPROVAL_OPTIONS: ApprovalOption[] = [
   {
     id: 'safe',
@@ -143,7 +141,7 @@ const ApprovalGateVisual = (): JSX.Element => (
 
 export default function AgenticApprovalGateGame({
   onFinish,
-}: AgenticApprovalGateGameProps): JSX.Element {
+}: KangurMiniGameFinishActionProps): JSX.Element {
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
   const [assignments, setAssignments] = useState<Record<string, ApprovalDecision>>({});
   const [checked, setChecked] = useState(false);
@@ -220,7 +218,7 @@ export default function AgenticApprovalGateGame({
             </div>
             <KangurProgressBar accent='slate' value={progress} size='sm' />
 
-            <div className='grid gap-3'>
+            <div className='grid gap-3' role='group' aria-label='Select an action to review'>
               {APPROVAL_ACTIONS.map((action) => {
                 const assignedDecision = assignments[action.id];
                 const isActive = activeActionId === action.id;
@@ -235,6 +233,7 @@ export default function AgenticApprovalGateGame({
                     className={cn(
                       'w-full rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition-all',
                       'bg-white/80 hover:-translate-y-0.5 hover:shadow-md',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70 focus-visible:ring-offset-2 ring-offset-white',
                       isActive && 'border-slate-400 bg-slate-50',
                       !isActive && 'border-slate-100/80',
                       isCorrect && 'border-emerald-300 bg-emerald-50',
@@ -267,7 +266,7 @@ export default function AgenticApprovalGateGame({
               </div>
               <ApprovalGateVisual />
             </div>
-            <div className={cn('grid gap-3', KANGUR_GRID_TIGHT_CLASSNAME)}>
+            <div className={cn('grid gap-3', KANGUR_GRID_TIGHT_CLASSNAME)} role='group' aria-label='Choose an approval decision'>
               {APPROVAL_OPTIONS.map((option) => (
                 <button
                   key={option.id}
@@ -276,11 +275,13 @@ export default function AgenticApprovalGateGame({
                   className={cn(
                     'rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition-all',
                     'hover:-translate-y-0.5 hover:shadow-md',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70 focus-visible:ring-offset-2 ring-offset-white',
                     option.colorClass,
                     activeActionId ? 'opacity-100' : 'opacity-60'
                   )}
                   disabled={!activeActionId}
                   aria-disabled={!activeActionId}
+                  aria-label={option.label}
                 >
                   <div className='text-xs font-semibold uppercase tracking-[0.2em]'>{option.label}</div>
                   <KangurLessonCaption className='mt-1 text-slate-900'>

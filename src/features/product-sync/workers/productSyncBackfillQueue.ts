@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { runBaseListingBackfill } from '@/features/product-sync/services/product-sync-service';
+import { runBaseListingBackfill } from '@/features/product-sync/public/services/product-sync-service';
 import { createManagedQueue } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

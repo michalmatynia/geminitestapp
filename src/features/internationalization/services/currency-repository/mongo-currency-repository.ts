@@ -1,6 +1,6 @@
 import { ObjectId, type Document, type AnyBulkWriteOperation, type UpdateFilter } from 'mongodb';
 
-import { defaultCurrencies } from '@/features/internationalization/server';
+import { defaultCurrencies } from '@/features/internationalization/public/server';
 import type { CurrencyRecord } from '@/shared/contracts/internationalization';
 import type { CurrencyRepository } from '@/shared/contracts/internationalization';
 import { notFoundError, internalError } from '@/shared/errors/app-error';

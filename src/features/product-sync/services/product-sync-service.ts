@@ -9,7 +9,7 @@ import {
   touchProductSyncProfileLastRunAt,
   updateProductSyncRun,
   updateProductSyncRunStatus,
-} from '@/features/product-sync/services/product-sync-repository';
+} from '@/features/product-sync/public/services/product-sync-repository';
 import {
   getExportDefaultConnectionId,
   getIntegrationRepository,

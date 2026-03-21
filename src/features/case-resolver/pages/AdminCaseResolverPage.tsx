@@ -1,37 +1,22 @@
 'use client';
-import React, { useMemo } from 'react';
+import React, { useMemo, Suspense, lazy } from 'react';
 import { CaseResolverViewProvider } from '../components/CaseResolverViewContext';
-import { AdminCaseResolverPageProvider, useAdminCaseResolverPageActionsContext, useAdminCaseResolverPageStateContext } from '../context/AdminCaseResolverPageContext';
+import { AdminCaseResolverPageProvider, useAdminCaseResolverPageActionsContext as useActions, useAdminCaseResolverPageStateContext as useStateCtx } from '../context/AdminCaseResolverPageContext';
 
-const LazyCaseResolverPageView = React.lazy(() =>
-  import('../components/CaseResolverPageView').then((mod) => ({
-    default: mod.CaseResolverPageView,
-  }))
-);
-function AdminCaseResolverPageInner(): React.JSX.Element {
-  const state = useAdminCaseResolverPageStateContext();
-  const actions = useAdminCaseResolverPageActionsContext();
-  const contextValue = useMemo(() => ({ ...state, ...actions }), [state, actions]);
+const LazyCaseResolverPageView = lazy(() => import('../components/CaseResolverPageView').then(m => ({ default: m.CaseResolverPageView })));
 
+function AdminCaseResolverPageInner() {
+  const state = useStateCtx(), actions = useActions();
+  const val = useMemo(() => ({ ...state, ...actions }), [state, actions]);
   return (
-    <CaseResolverViewProvider value={contextValue}>
-      <React.Suspense
-        fallback={
-          <div className='min-h-[420px] rounded-xl border border-border/40 bg-card/20 p-6 text-sm text-muted-foreground'>
-            Loading case resolver...
-          </div>
-        }
-      >
+    <CaseResolverViewProvider value={val}>
+      <Suspense fallback={<div className='min-h-[420px] rounded-xl border border-border/40 bg-card/20 p-6 text-sm text-muted-foreground'>Loading case resolver...</div>}>
         <LazyCaseResolverPageView />
-      </React.Suspense>
+      </Suspense>
     </CaseResolverViewProvider>
   );
 }
 
-export function AdminCaseResolverPage(): React.JSX.Element {
-  return (
-    <AdminCaseResolverPageProvider>
-      <AdminCaseResolverPageInner />
-    </AdminCaseResolverPageProvider>
-  );
+export function AdminCaseResolverPage() {
+  return <AdminCaseResolverPageProvider><AdminCaseResolverPageInner /></AdminCaseResolverPageProvider>;
 }

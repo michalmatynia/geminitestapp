@@ -5,4 +5,4 @@ export {
   startProductSyncBackfillQueue,
   stopProductSyncBackfillQueue,
   enqueueProductSyncBackfillJob,
-} from '@/features/product-sync/server';
+} from '@/features/product-sync/public/server';

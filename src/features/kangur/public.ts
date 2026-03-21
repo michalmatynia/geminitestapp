@@ -43,3 +43,4 @@ export { default as Leaderboard } from '@/features/kangur/ui/components/Leaderbo
 export * from '@/features/kangur/ui/components/KangurLessonsCatalogWidget';
 export { default as PlayerProgressCard } from '@/features/kangur/ui/components/PlayerProgressCard';
 export * from '@/features/kangur/ui/components/KangurPriorityAssignments';
+export { KangurSocialPipelineQueuePanel } from '@/features/kangur/admin/admin-kangur-social/KangurSocialPipelineQueuePanel';

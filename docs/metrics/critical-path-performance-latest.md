@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-17'
+last_reviewed: '2026-03-21'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Critical Path Performance Report
 
-Generated at: 2026-03-17T09:54:45.456Z
+Generated at: 2026-03-21T09:38:31.854Z
 
 ## Summary
 
@@ -24,9 +24,9 @@ Generated at: 2026-03-17T09:54:45.456Z
 | --- | --- | ---: | ---: | ---: |
 | Authentication + Session Bootstrap (UI) | PASS | 2 | 110 | -108 |
 | Products CRUD + Listing Refresh (UI) | PASS | 2 | 40 | -38 |
-| Image Studio Generate + Preview (UI) | PASS | 2 | 180 | -178 |
-| AI Paths Run Execution (UI) | PASS | 51 | 60 | -9 |
-| Case Resolver OCR + Capture Mapping (UI) | PASS | 25 | 30 | -5 |
+| Image Studio Generate + Preview (UI) | PASS | 24 | 180 | -156 |
+| AI Paths Run Execution (UI) | PASS | 16 | 60 | -44 |
+| Case Resolver OCR + Capture Mapping (UI) | PASS | 23 | 30 | -7 |
 
 ## Critical API Route Budgets (LOC)
 
@@ -50,15 +50,15 @@ Generated at: 2026-03-17T09:54:45.456Z
 
 ### Image Studio Generate + Preview (UI)
 
-- `src/features/ai/image-studio/pages/AdminImageStudioPage.tsx`: 2 LOC | 0 branch points
+- `src/features/ai/image-studio/pages/AdminImageStudioPage.tsx`: 24 LOC | 0 branch points
 
 ### AI Paths Run Execution (UI)
 
-- `src/features/ai/ai-paths/pages/AdminAiPathsPage.tsx`: 51 LOC | 0 branch points
+- `src/features/ai/ai-paths/pages/AdminAiPathsPage.tsx`: 16 LOC | 0 branch points
 
 ### Case Resolver OCR + Capture Mapping (UI)
 
-- `src/features/case-resolver/pages/AdminCaseResolverPage.tsx`: 25 LOC | 0 branch points
+- `src/features/case-resolver/pages/AdminCaseResolverPage.tsx`: 23 LOC | 1 branch points
 
 ## API File Breakdown
 
@@ -86,30 +86,30 @@ Generated at: 2026-03-17T09:54:45.456Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/kangur/ui/KangurLoginPage.tsx` | 1648 |
-| `src/shared/contracts/kangur-ai-tutor-native-guide-entries.ts` | 1459 |
-| `src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts` | 1414 |
-| `src/features/kangur/server/ai-tutor-adaptive.ts` | 1226 |
-| `src/features/kangur/admin/AdminKangurSettingsPage.tsx` | 1219 |
-| `src/features/kangur/ui/components/AddingBallGame.tsx` | 1196 |
-| `src/shared/contracts/kangur-ai-tutor-content.ts` | 1189 |
-| `src/features/kangur/cms-builder/defaults/game-defaults.ts` | 1188 |
-| `src/features/kangur/ui/components/ClockLesson.tsx` | 1170 |
-| `src/shared/contracts/image-studio.ts` | 1162 |
+| `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1708 |
+| `src/features/kangur/ui/components/AddingLesson.tsx` | 1688 |
+| `src/features/kangur/server/ai-tutor-content-locale-scaffold.ts` | 1570 |
+| `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 1540 |
+| `src/features/kangur/server/ai-tutor-native-guide-locale-scaffold.ts` | 1270 |
+| `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx` | 1219 |
+| `src/features/kangur/ui/pages/Game.tsx` | 1143 |
+| `src/features/kangur/admin/components/KangurAiTutorContentSettingsPanel.tsx` | 1129 |
+| `src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts` | 1128 |
+| `src/features/kangur/page-content-catalog.ts` | 1105 |
 
 ## Top API Route Hotspots (Reference)
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/kangur/[[...path]]/route.ts` | 1047 |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 383 |
-| `src/app/api/v2/integrations/[[...path]]/route.ts` | 325 |
-| `src/app/api/image-studio/[[...path]]/route.ts` | 289 |
-| `src/app/api/ai-paths/[[...path]]/route.ts` | 256 |
-| `src/app/api/databases/[[...path]]/route.ts` | 229 |
-| `src/app/api/agentcreator/[[...path]]/route.ts` | 214 |
-| `src/app/api/chatbot/[[...path]]/route.ts` | 172 |
+| `src/app/api/agentcreator/[[...path]]/route.ts` | 251 |
+| `src/app/api/image-studio/[[...path]]/route.ts` | 236 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 234 |
+| `src/app/api/v2/integrations/[[...path]]/route.ts` | 232 |
+| `src/app/api/ai-paths/[[...path]]/route.ts` | 206 |
+| `src/app/api/databases/[[...path]]/route.ts` | 204 |
+| `src/app/api/chatbot/[[...path]]/route.ts` | 169 |
 | `src/app/api/agent/leases/route.ts` | 122 |
+| `src/app/api/kangur/[[...path]]/route.ts` | 63 |
 | `src/app/api/agent/resources/route.ts` | 59 |
 
 ## Notes

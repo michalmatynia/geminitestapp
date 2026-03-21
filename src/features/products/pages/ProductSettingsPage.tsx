@@ -2,13 +2,6 @@
 
 import { useEffect, useState } from 'react';
 
-import {
-  InternationalizationSettings,
-  InternationalizationProvider,
-} from '@/features/internationalization';
-import { CountryModal } from '@/features/internationalization';
-import { CurrencyModal } from '@/features/internationalization';
-import { LanguageModal } from '@/features/internationalization';
 import { ParametersSettings } from '@/features/products/components/constructor/ParametersSettings';
 import { CatalogsSettings } from '@/features/products/components/settings/catalogs/CatalogsSettings';
 import { CategoriesSettings } from '@/features/products/components/settings/CategoriesSettings';
@@ -31,7 +24,6 @@ import {
   useTags,
   useUpdatePriceGroupMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
-import { ProductSyncSettings } from '@/features/product-sync';
 import { Catalog, PriceGroup } from '@/shared/contracts/products';
 import { AdminProductsPageLayout, Button, useToast, Card, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
@@ -39,17 +31,19 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 import { settingSections } from './ProductSettingsConstants';
 
-function InternationalizationModals(): React.JSX.Element | null {
-  return (
-    <>
-      <LanguageModal />
-      <CurrencyModal />
-      <CountryModal />
-    </>
-  );
-}
+export type ProductSettingsPageProps = {
+  internationalizationSettingsSlot?: React.ReactNode;
+  internationalizationProvider?: React.ComponentType<{ children: React.ReactNode }>;
+  internationalizationModalsSlot?: React.ReactNode;
+  productSyncSettingsSlot?: React.ReactNode;
+};
 
-export function ProductSettingsPage(): React.JSX.Element {
+export function ProductSettingsPage({
+  internationalizationSettingsSlot,
+  internationalizationProvider: InternationalizationProvider = ({ children }) => <>{children}</>,
+  internationalizationModalsSlot,
+  productSyncSettingsSlot,
+}: ProductSettingsPageProps): React.JSX.Element {
   const [activeSection, setActiveSection] =
     useState<(typeof settingSections)[number]>('Categories');
 
@@ -310,7 +304,7 @@ export function ProductSettingsPage(): React.JSX.Element {
               )}
               {activeSection === 'Price Groups' && <PriceGroupsSettings />}
               {activeSection === 'Catalogs' && <CatalogsSettings />}
-              {activeSection === 'Sync Settings' && <ProductSyncSettings />}
+              {activeSection === 'Sync Settings' && (productSyncSettingsSlot ?? <div>Product Sync Settings is not available.</div>)}
               {activeSection === 'Images & Studio' && <ProductImageRoutingSettings />}
               {activeSection === 'Validator' && (
                 <ValidatorDocsTooltipsProvider>
@@ -320,7 +314,7 @@ export function ProductSettingsPage(): React.JSX.Element {
                   </div>
                 </ValidatorDocsTooltipsProvider>
               )}
-              {activeSection === 'Internationalization' && <InternationalizationSettings />}
+              {activeSection === 'Internationalization' && (internationalizationSettingsSlot ?? <div>Internationalization Settings is not available.</div>)}
             </Card>
           </ProductSettingsProvider>
         </div>
@@ -348,7 +342,7 @@ export function ProductSettingsPage(): React.JSX.Element {
           items={priceGroups}
         />
 
-        <InternationalizationModals />
+        {internationalizationModalsSlot}
 
         <ConfirmModal
           isOpen={Boolean(confirmation)}

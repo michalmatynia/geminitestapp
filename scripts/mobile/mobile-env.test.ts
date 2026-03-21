@@ -5,8 +5,10 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
+  applyDefaultAndroidSdkEnv,
   DEFAULT_MOBILE_ENV_FILE_PATHS,
   loadMobileEnvFiles,
+  resolveAndroidSdkEnvironment,
   resolveMobileEnvFilePaths,
 } from './mobile-env';
 
@@ -70,5 +72,45 @@ describe('mobile env helpers', () => {
       force: true,
       recursive: true,
     });
+  });
+
+  it('resolves the default Android SDK root when env vars are unset', () => {
+    const resolved = resolveAndroidSdkEnvironment(
+      {},
+      {
+        defaultAndroidSdkRoot: '/tmp/android-sdk',
+        pathExists: (path) => path === '/tmp/android-sdk',
+      },
+    );
+
+    expect(resolved).toEqual({
+      androidHome: '/tmp/android-sdk',
+      androidSdkRoot: '/tmp/android-sdk',
+    });
+  });
+
+  it('applies Android SDK defaults and prepends SDK tool paths', () => {
+    const env: NodeJS.ProcessEnv = {
+      PATH: '/usr/bin:/bin',
+    };
+
+    applyDefaultAndroidSdkEnv(env, {
+      defaultAndroidSdkRoot: '/tmp/android-sdk',
+      pathExists: (path) =>
+        [
+          '/tmp/android-sdk',
+          '/tmp/android-sdk/platform-tools',
+          '/tmp/android-sdk/emulator',
+          '/tmp/android-sdk/cmdline-tools/latest/bin',
+        ].includes(path),
+    });
+
+    expect(env['ANDROID_SDK_ROOT']).toBe('/tmp/android-sdk');
+    expect(env['ANDROID_HOME']).toBe('/tmp/android-sdk');
+    expect(env['PATH']?.split(':').slice(0, 3)).toEqual([
+      '/tmp/android-sdk/cmdline-tools/latest/bin',
+      '/tmp/android-sdk/emulator',
+      '/tmp/android-sdk/platform-tools',
+    ]);
   });
 });

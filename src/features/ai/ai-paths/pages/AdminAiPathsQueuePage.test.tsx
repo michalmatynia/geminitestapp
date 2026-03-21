@@ -70,7 +70,7 @@ vi.mock('../components/job-queue-panel', () => ({
   ),
 }));
 
-vi.mock('@/features/files', () => ({
+vi.mock('@/features/files/public', () => ({
   FileUploadEventsPanel: () => <div data-testid='file-upload-events'>file uploads</div>,
 }));
 

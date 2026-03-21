@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import type { BlockInstance } from '@/features/cms/types/page-builder';
 import { CompactEmptyState } from '@/shared/ui';
 
@@ -34,12 +35,17 @@ export function FrontendHeroSection(): React.ReactNode {
       >
         {/* Background image or gradient */}
         {image ? (
-          <div
-            className='absolute inset-0 bg-cover bg-center'
-            style={{ backgroundImage: `url(${image})` }}
-          >
+          <>
+            <Image
+              src={image}
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className='object-cover object-center'
+            />
             <div className='absolute inset-0 bg-black/50' />
-          </div>
+          </>
         ) : (
           <div className='absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900' />
         )}

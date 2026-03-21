@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 
-import { useInternationalizationData } from '@/features/internationalization';
+import { useInternationalizationData } from '@/features/internationalization/public';
 import type { PriceGroup } from '@/shared/contracts/products';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';

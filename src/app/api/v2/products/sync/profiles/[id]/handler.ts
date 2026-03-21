@@ -7,7 +7,7 @@ import {
   deleteProductSyncProfile,
   getProductSyncProfile,
   updateProductSyncProfile,
-} from '@/features/product-sync/services/product-sync-repository';
+} from '@/features/product-sync/public/services/product-sync-repository';
 import type {
   ProductSyncDeleteResponse,
   ProductSyncProfile,

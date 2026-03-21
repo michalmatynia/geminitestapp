@@ -1,7 +1,10 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { homedir } from 'node:os';
-
-const DEFAULT_MACOS_ANDROID_SDK_ROOT = `${homedir()}/Library/Android/sdk`;
+import {
+  DEFAULT_MACOS_ANDROID_SDK_ROOT,
+  resolveAndroidSdkEnvironment,
+} from './mobile-env';
 
 export type KangurMobileAndroidToolchainIssue = {
   level: 'error' | 'warning';
@@ -136,13 +139,41 @@ const runCommand = (
   };
 };
 
+const resolveSdkToolCommand = (
+  androidSdkRoot: string | null,
+  segments: string[],
+  fallbackCommand: string,
+): string => {
+  if (!androidSdkRoot) {
+    return fallbackCommand;
+  }
+
+  const candidate = join(androidSdkRoot, ...segments);
+  return existsSync(candidate) ? candidate : fallbackCommand;
+};
+
 export const runKangurMobileAndroidToolchainCheck = (): void => {
-  const adb = runCommand('adb', ['version']);
-  const emulator = runCommand('emulator', ['-version']);
+  const resolvedEnvironment = resolveAndroidSdkEnvironment(process.env);
+  const adb = runCommand(
+    resolveSdkToolCommand(
+      resolvedEnvironment.androidSdkRoot,
+      ['platform-tools', 'adb'],
+      'adb',
+    ),
+    ['version'],
+  );
+  const emulator = runCommand(
+    resolveSdkToolCommand(
+      resolvedEnvironment.androidSdkRoot,
+      ['emulator', 'emulator'],
+      'emulator',
+    ),
+    ['-version'],
+  );
   const report = analyzeKangurMobileAndroidToolchain({
     adbAvailable: adb.ok,
-    androidHome: process.env['ANDROID_HOME']?.trim() || null,
-    androidSdkRoot: process.env['ANDROID_SDK_ROOT']?.trim() || null,
+    androidHome: resolvedEnvironment.androidHome,
+    androidSdkRoot: resolvedEnvironment.androidSdkRoot,
     emulatorAvailable: emulator.ok,
   });
 

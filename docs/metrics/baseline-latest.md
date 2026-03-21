@@ -8,12 +8,12 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-21T09:22:28.438Z
+Generated at: 2026-03-21T09:44:32.188Z
 
 ## Snapshot
 
 - Source files: 7097
-- Source lines: 1157205
+- Source lines: 1157144
 - use client files: 2
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
@@ -22,7 +22,7 @@ Generated at: 2026-03-21T09:22:28.438Z
 - API delegated server routes: 159
 - API routes without apiHandler/delegation: 0
 - API explicit cache policy coverage: 285/29 (982.8%)
-- Cross-feature dependency pairs: 5
+- Cross-feature dependency pairs: 3
 - Shared -> features imports: 3
 - setInterval occurrences: 0
 - Prop-drilling chains (depth >= 3): 20
@@ -32,9 +32,9 @@ Generated at: 2026-03-21T09:22:28.438Z
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 282 |
-| `src/app/api/agentcreator/[[...path]]/route.ts` | 271 |
+| `src/app/api/agentcreator/[[...path]]/route.ts` | 251 |
 | `src/app/api/image-studio/[[...path]]/route.ts` | 236 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 234 |
 | `src/app/api/v2/integrations/[[...path]]/route.ts` | 232 |
 | `src/app/api/ai-paths/[[...path]]/route.ts` | 206 |
 | `src/app/api/databases/[[...path]]/route.ts` | 204 |
@@ -53,10 +53,8 @@ Generated at: 2026-03-21T09:22:28.438Z
 | Edge | References |
 | --- | ---: |
 | `kangur -> cms` | 10 |
-| `products -> internationalization` | 4 |
 | `admin -> foldertree` | 2 |
 | `integrations -> product-sync` | 1 |
-| `products -> product-sync` | 1 |
 
 ## Top File Hotspots (by LOC)
 

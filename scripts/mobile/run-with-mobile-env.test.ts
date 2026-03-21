@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -65,5 +65,48 @@ describe('run-with-mobile-env cli', () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain(expectedApiUrl);
+  });
+
+  it('applies the default Android SDK root and PATH before executing the child command', () => {
+    const tempDir = createTempDir();
+    const sdkRoot = join(tempDir, 'android-sdk');
+    const cmdlineBin = join(sdkRoot, 'cmdline-tools/latest/bin');
+    const emulatorDir = join(sdkRoot, 'emulator');
+    const platformToolsDir = join(sdkRoot, 'platform-tools');
+
+    for (const directory of [cmdlineBin, emulatorDir, platformToolsDir]) {
+      mkdirSync(directory, { recursive: true });
+      writeFileSync(join(directory, '.keep'), '', { flag: 'w' });
+    }
+
+    const result = spawnSync(
+      'node',
+      [
+        '--import',
+        'tsx',
+        RUNNER_PATH,
+        'node',
+        '-e',
+        'console.log(JSON.stringify({ sdkRoot: process.env.ANDROID_SDK_ROOT, androidHome: process.env.ANDROID_HOME, path: process.env.PATH?.split(\":\").slice(0,3) }))',
+      ],
+      {
+        cwd: REPO_ROOT,
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          ANDROID_HOME: '',
+          ANDROID_SDK_ROOT: '',
+          HOME: tempDir,
+          PATH: '/usr/bin:/bin',
+        },
+      },
+    );
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(`"sdkRoot":"${sdkRoot}"`);
+    expect(result.stdout).toContain(`"androidHome":"${sdkRoot}"`);
+    expect(result.stdout).toContain(`"${cmdlineBin}"`);
+    expect(result.stdout).toContain(`"${emulatorDir}"`);
+    expect(result.stdout).toContain(`"${platformToolsDir}"`);
   });
 });

@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-03-21T09:22:28.438Z",
+  "generatedAt": "2026-03-21T09:44:32.188Z",
   "source": {
     "totalFiles": 7097,
-    "totalLines": 1157205,
+    "totalLines": 1157144,
     "useClientFiles": 2,
     "filesOver800": 0,
     "filesOver1000": 0,
@@ -25,16 +25,16 @@
     "routesWithoutExplicitCachePolicy": 0,
     "topRouteHotspots": [
       {
-        "path": "src/app/api/v2/products/[[...path]]/route.ts",
-        "lines": 282
-      },
-      {
         "path": "src/app/api/agentcreator/[[...path]]/route.ts",
-        "lines": 271
+        "lines": 251
       },
       {
         "path": "src/app/api/image-studio/[[...path]]/route.ts",
         "lines": 236
+      },
+      {
+        "path": "src/app/api/v2/products/[[...path]]/route.ts",
+        "lines": 234
       },
       {
         "path": "src/app/api/v2/integrations/[[...path]]/route.ts",
@@ -107,22 +107,18 @@
     ]
   },
   "imports": {
-    "appFeatureBarrelImports": 1,
+    "appFeatureBarrelImports": 0,
     "appFeatureDeepImports": 22,
     "featureToSharedTotalImports": 28,
     "featureToAppApiTotalImports": 0,
     "sharedToFeaturesTotalImports": 3
   },
   "architecture": {
-    "crossFeatureEdgePairs": 5,
+    "crossFeatureEdgePairs": 3,
     "topCrossFeatureEdges": [
       {
         "edge": "kangur -> cms",
         "references": 10
-      },
-      {
-        "edge": "products -> internationalization",
-        "references": 4
       },
       {
         "edge": "admin -> foldertree",
@@ -131,17 +127,13 @@
       {
         "edge": "integrations -> product-sync",
         "references": 1
-      },
-      {
-        "edge": "products -> product-sync",
-        "references": 1
       }
     ],
     "featureSizeByLines": [
       {
         "feature": "kangur",
         "files": 1406,
-        "lines": 303703
+        "lines": 303704
       },
       {
         "feature": "ai",
@@ -151,17 +143,17 @@
       {
         "feature": "case-resolver",
         "files": 288,
-        "lines": 63021
+        "lines": 63006
       },
       {
         "feature": "cms",
         "files": 333,
-        "lines": 53743
+        "lines": 53749
       },
       {
         "feature": "products",
         "files": 254,
-        "lines": 51225
+        "lines": 51219
       },
       {
         "feature": "integrations",
@@ -629,6 +621,10 @@
         "lines": 37
       },
       {
+        "path": "src/app/(admin)/admin/products/settings/page.tsx",
+        "lines": 29
+      },
+      {
         "path": "src/app/(frontend)/kangur/(app)/[[...slug]]/page.tsx",
         "lines": 28
       },
@@ -662,10 +658,6 @@
       },
       {
         "path": "src/app/(admin)/admin/integrations/page.tsx",
-        "lines": 14
-      },
-      {
-        "path": "src/app/(admin)/admin/notes/notebooks/page.tsx",
         "lines": 14
       }
     ]

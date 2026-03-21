@@ -7,54 +7,6 @@ import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error'
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 
-import * as productsIndex from '../route-handler';
-import * as productsCount from '../count/route-handler';
-import * as productsPaged from '../paged/route-handler';
-import * as productsIds from '../ids/route-handler';
-import * as productsSimpleParameters from '../simple-parameters/route-handler';
-import * as productsParameters from '../parameters/route-handler';
-import * as productsParametersId from '../parameters/[id]/route-handler';
-import * as productsProducers from '../producers/route-handler';
-import * as productsProducersId from '../producers/[id]/route-handler';
-import * as productsTags from '../tags/route-handler';
-import * as productsTagsAll from '../tags/all/route-handler';
-import * as productsTagsId from '../tags/[id]/route-handler';
-import * as productsValidation from '../validation/route-handler';
-import * as productsValidatorConfig from '../validator-config/route-handler';
-import * as productsValidatorDecisions from '../validator-decisions/route-handler';
-import * as productsValidatorSettings from '../validator-settings/route-handler';
-import * as productsValidatorPatterns from '../validator-patterns/route-handler';
-import * as productsValidatorPatternsId from '../validator-patterns/[id]/route-handler';
-import * as productsValidatorPatternsImport from '../validator-patterns/import/route-handler';
-import * as productsValidatorPatternsReorder from '../validator-patterns/reorder/route-handler';
-import * as productsValidatorPatternsTemplates from '../validator-patterns/templates/[type]/route-handler';
-import * as productsValidatorRuntimeEvaluate from '../validator-runtime/evaluate/route-handler';
-import * as productsCategories from '../categories/route-handler';
-import * as productsCategoriesId from '../categories/[id]/route-handler';
-import * as productsCategoriesTree from '../categories/tree/route-handler';
-import * as productsCategoriesBatch from '../categories/batch/route-handler';
-import * as productsCategoriesMigrate from '../categories/migrate/route-handler';
-import * as productsCategoriesReorder from '../categories/reorder/route-handler';
-import * as productsEntitiesType from '../entities/[type]/route-handler';
-import * as productsEntitiesTypeId from '../entities/[type]/[id]/route-handler';
-import * as productsEntitiesCatalogsAssign from '../entities/catalogs/assign/route-handler';
-import * as productsMetadataType from '../metadata/[type]/route-handler';
-import * as productsMetadataTypeId from '../metadata/[type]/[id]/route-handler';
-import * as productsImagesBase64 from '../images/base64/route-handler';
-import * as productsImagesBase64All from '../images/base64/all/route-handler';
-import * as productsImagesUpload from '../images/upload/route-handler';
-import * as productsImportCsv from '../import/csv/route-handler';
-import * as productsAiJobs from '../ai-jobs/route-handler';
-import * as productsAiJobsJob from '../ai-jobs/[jobId]/route-handler';
-import * as productsAiJobsBulk from '../ai-jobs/bulk/route-handler';
-import * as productsAiJobsEnqueue from '../ai-jobs/enqueue/route-handler';
-import * as productsAiPathsDescriptionContext from '../ai-paths/description-context/route-handler';
-import * as productsSyncProfiles from '../sync/profiles/route-handler';
-import * as productsSyncProfilesId from '../sync/profiles/[id]/route-handler';
-import * as productsSyncProfilesRun from '../sync/profiles/[id]/run/route-handler';
-import * as productsSyncRuns from '../sync/runs/route-handler';
-import * as productsSyncRunsId from '../sync/runs/[runId]/route-handler';
-import * as productsSyncRelink from '../sync/relink/route-handler';
 import * as productIdRoute from '../[id]/route-handler';
 import * as productDuplicate from '../[id]/duplicate/route-handler';
 import * as productImagesBase64 from '../[id]/images/base64/route-handler';
@@ -76,7 +28,7 @@ type PatternToken =
   | string
   | { literal: string; optional?: boolean }
   | { param: string; optional?: boolean };
-type RouteDefinition = { pattern: PatternToken[]; module: RouteModule };
+type RouteDefinition = { pattern: PatternToken[]; load: () => Promise<RouteModule> };
 
 const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
@@ -248,7 +200,7 @@ const routeProducts = (
     if (!params) {
       continue;
     }
-    return dispatch(route.module, method, request, params);
+    return dispatch(route.load, method, request, params);
   }
 
   return notFound(request, method);

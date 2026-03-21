@@ -5,7 +5,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import { Button, FileUploadTrigger } from '@/shared/ui';
-import FileManager, { FileManagerRuntimeContext } from '@/features/files';
+import FileManager, { FileManagerRuntimeContext } from '@/features/files/public';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 import { useStudioImportContext } from '../studio-modals/StudioImportContext';

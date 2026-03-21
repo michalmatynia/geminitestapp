@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { loadMobileEnvFiles } from './mobile-env';
+import { applyDefaultAndroidSdkEnv, loadMobileEnvFiles } from './mobile-env';
 
 const command = process.argv[2];
 const args = process.argv.slice(3);
@@ -12,6 +12,7 @@ if (!command) {
 }
 
 loadMobileEnvFiles();
+applyDefaultAndroidSdkEnv();
 
 // Local mobile commands should not depend on Expo telemetry internals.
 if (!process.env['EXPO_NO_TELEMETRY']) {

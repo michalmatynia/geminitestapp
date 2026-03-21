@@ -1,0 +1,11 @@
+
+> libapp2@0.1.0 build:hi-mem
+> NODE_OPTIONS='--max-old-space-size=6144' next build --webpack
+
+▲ Next.js 16.1.7 (webpack)
+- Environments: .env
+- Experiments (use with caution):
+  · optimizePackageImports
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...

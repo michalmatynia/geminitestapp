@@ -51,7 +51,7 @@ vi.mock('@/shared/ui/templates/modals', async () => {
   };
 });
 
-vi.mock('@/features/files', async () => {
+vi.mock('@/features/files/public', async () => {
   const React = await import('react');
 
   const FileManagerRuntimeContext = React.createContext<{

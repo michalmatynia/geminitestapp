@@ -12,7 +12,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 import { useUploadCmsMedia } from '../../hooks/useCmsQueries';
 
-const FileManager = dynamic(() => import('@/features/files'), {
+const FileManager = dynamic(() => import('@/features/files/public'), {
   ssr: false,
   loading: () => <div>Loading file manager...</div>,
 });

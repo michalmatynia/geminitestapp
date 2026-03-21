@@ -30,6 +30,7 @@ describe('buildKangurHomeDebugProofViewModel', () => {
           player_name: 'Super Admin',
           score: 8,
           operation: 'clock',
+          subject: 'maths',
           total_questions: 8,
           correct_answers: 8,
           time_taken: 0,

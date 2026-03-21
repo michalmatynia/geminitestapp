@@ -183,7 +183,7 @@ export const buildKangurMobileTrainingFocus = (
   strongestOperation: operationPerformance[0] ?? null,
   weakestOperation:
     operationPerformance.length > 1
-      ? operationPerformance[operationPerformance.length - 1]
+      ? operationPerformance[operationPerformance.length - 1] ?? null
       : null,
 });
 

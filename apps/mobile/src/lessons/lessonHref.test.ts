@@ -1,13 +1,24 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  createKangurLessonsCatalogHref,
   createKangurLessonHref,
   createKangurLessonHrefForPracticeOperation,
 } from './lessonHref';
 
+describe('createKangurLessonsCatalogHref', () => {
+  it('builds the base lessons catalog route', () => {
+    expect(createKangurLessonsCatalogHref()).toEqual({
+      pathname: '/lessons',
+    });
+  });
+});
+
 describe('createKangurLessonHref', () => {
   it('builds the base lessons route when no focus is provided', () => {
-    expect(createKangurLessonHref(null)).toBe('/lessons');
+    expect(createKangurLessonHref(null)).toEqual({
+      pathname: '/lessons',
+    });
   });
 
   it('builds a focused lessons route when a lesson focus is provided', () => {

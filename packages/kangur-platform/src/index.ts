@@ -55,8 +55,98 @@ export type {
   KangurScoreCreateInput,
 } from '@kangur/contracts';
 
-export type KangurUser = KangurAuthUser;
+export type KangurUser = Omit<KangurAuthUser, 'ownerEmailVerified'> & {
+  ownerEmailVerified?: boolean;
+};
 export type KangurScoreRecord = KangurScore;
+export type KangurAuthSessionStatus = 'authenticated' | 'anonymous';
+export type KangurAuthSessionSource =
+  | 'web-session'
+  | 'native-development'
+  | 'native-token'
+  | 'native-learner-session';
+
+export type KangurStorageChange = {
+  key: string | null;
+  value: string | null;
+};
+
+export type KangurAuthSession = {
+  status: KangurAuthSessionStatus;
+  source: KangurAuthSessionSource;
+  user: KangurUser | null;
+  lastResolvedAt: string;
+};
+
+export type KangurAuthTransitionInput = {
+  learnerCredentials?: {
+    loginName: string;
+    password: string;
+  };
+  returnUrl?: string;
+};
+
+export interface KangurAuthAdapter {
+  getSession: () => Promise<KangurAuthSession>;
+  signIn: (input?: KangurAuthTransitionInput) => Promise<KangurAuthSession>;
+  signOut: (input?: KangurAuthTransitionInput) => Promise<KangurAuthSession>;
+}
+
+export interface KangurClientStorageAdapter {
+  getItem: (key: string) => string | null;
+  removeItem: (key: string) => void;
+  setItem: (key: string, value: string) => void;
+  subscribe: (listener: (change: KangurStorageChange) => void) => () => void;
+}
+
+const createSessionTimestamp = (): string => new Date().toISOString();
+
+export const createAuthenticatedKangurAuthSession = (
+  user: KangurUser,
+  source: KangurAuthSessionSource = 'web-session',
+): KangurAuthSession => ({
+  lastResolvedAt: createSessionTimestamp(),
+  source,
+  status: 'authenticated',
+  user,
+});
+
+export const createAnonymousKangurAuthSession = (
+  source: KangurAuthSessionSource = 'web-session',
+): KangurAuthSession => ({
+  lastResolvedAt: createSessionTimestamp(),
+  source,
+  status: 'anonymous',
+  user: null,
+});
+
+export const createMemoryKangurClientStorage =
+  (): KangurClientStorageAdapter => {
+    const values = new Map<string, string>();
+    const listeners = new Set<(change: KangurStorageChange) => void>();
+
+    const emitChange = (change: KangurStorageChange): void => {
+      listeners.forEach((listener) => listener(change));
+    };
+
+    return {
+      getItem: (key) => values.get(key) ?? null,
+      removeItem: (key) => {
+        values.delete(key);
+        emitChange({ key, value: null });
+      },
+      setItem: (key, value) => {
+        values.set(key, value);
+        emitChange({ key, value });
+      },
+      subscribe: (listener) => {
+        listeners.add(listener);
+        return () => {
+          listeners.delete(listener);
+        };
+      },
+    };
+  };
 
 export type KangurDuelCreateInput = KangurDuelCreateInputContract;
 export type KangurDuelJoinInput = KangurDuelJoinInputContract;

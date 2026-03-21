@@ -73,7 +73,7 @@ vi.mock('@/features/kangur/ui/components/KangurRouteAccessibilityAnnouncer', () 
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurTopNavigationContext', () => ({
-  KangurTopNavigationHost: () => null,
+  KangurTopNavigationHost: () => <div data-testid='kangur-top-navigation-host' />,
   KangurTopNavigationProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
@@ -211,6 +211,7 @@ describe('KangurFeatureApp', () => {
   it('renders the resolved Kangur page content once auth is ready', () => {
     render(<KangurFeatureApp />);
 
+    expect(screen.getByTestId('kangur-top-navigation-host')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-lessons')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
@@ -361,6 +362,7 @@ describe('KangurFeatureApp', () => {
 
     render(<KangurFeatureApp />);
 
+    expect(screen.queryByTestId('kangur-top-navigation-host')).toBeNull();
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
       'Lessons:lessons-library'
     );
@@ -386,6 +388,7 @@ describe('KangurFeatureApp', () => {
 
     render(<KangurFeatureApp />);
 
+    expect(screen.getByTestId('kangur-top-navigation-host')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
       'Lessons:lessons-library'
     );

@@ -5,18 +5,42 @@ import {
   KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
   KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY,
   parseKangurStorefrontAppearanceMode,
+  type KangurStorefrontThemeSettingsSnapshot,
   type KangurStorefrontAppearanceMode,
 } from '@/features/kangur/storefront-appearance-settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
+
+const KANGUR_EMPTY_THEME_SETTINGS_SNAPSHOT: KangurStorefrontThemeSettingsSnapshot = {
+  default: null,
+  dawn: null,
+  sunset: null,
+  dark: null,
+};
+
+const KangurStorefrontInitialThemeSettingsContext =
+  createContext<KangurStorefrontThemeSettingsSnapshot>(KANGUR_EMPTY_THEME_SETTINGS_SNAPSHOT);
+
+export const useKangurStorefrontInitialThemeSettings =
+  (): KangurStorefrontThemeSettingsSnapshot =>
+    useContext(KangurStorefrontInitialThemeSettingsContext);
 
 export function KangurStorefrontAppearanceProvider({
   children,
   initialMode,
+  initialThemeSettings,
 }: {
   children: ReactNode;
   initialMode?: KangurStorefrontAppearanceMode;
+  initialThemeSettings?: Partial<KangurStorefrontThemeSettingsSnapshot>;
 }): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const [hydrated, setHydrated] = useState(false);
@@ -24,6 +48,15 @@ export function KangurStorefrontAppearanceProvider({
   const resolvedMode = useMemo(
     () => parseKangurStorefrontAppearanceMode(storedMode),
     [storedMode]
+  );
+  const resolvedInitialThemeSettings = useMemo<KangurStorefrontThemeSettingsSnapshot>(
+    () => ({
+      default: initialThemeSettings?.default ?? null,
+      dawn: initialThemeSettings?.dawn ?? null,
+      sunset: initialThemeSettings?.sunset ?? null,
+      dark: initialThemeSettings?.dark ?? null,
+    }),
+    [initialThemeSettings]
   );
   const defaultMode = hydrated ? resolvedMode : (initialMode ?? 'default');
   const shouldPersistMode = useMemo(() => {
@@ -39,12 +72,14 @@ export function KangurStorefrontAppearanceProvider({
   }, []);
 
   return (
-    <CmsStorefrontAppearanceProvider
-      initialMode={defaultMode}
-      storageKey={KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY}
-      persistMode={shouldPersistMode}
-    >
-      {children}
-    </CmsStorefrontAppearanceProvider>
+    <KangurStorefrontInitialThemeSettingsContext.Provider value={resolvedInitialThemeSettings}>
+      <CmsStorefrontAppearanceProvider
+        initialMode={defaultMode}
+        storageKey={KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY}
+        persistMode={shouldPersistMode}
+      >
+        {children}
+      </CmsStorefrontAppearanceProvider>
+    </KangurStorefrontInitialThemeSettingsContext.Provider>
   );
 }

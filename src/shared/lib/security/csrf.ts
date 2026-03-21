@@ -92,15 +92,28 @@ const resolveCandidateOrigin = (request: NextRequest): string | null => {
   if (origin) {
     return normalizeOrigin(origin);
   }
-  if (referer) {
-    try {
-      return isAllowedOrigin(new URL(referer).origin, requestOrigin);
-    } catch (error) {
-      logClientError(error);
-      return false;
-    }
+
+  const referer = request.headers.get('referer');
+  if (!referer) {
+    return null;
   }
-  return true;
+
+  try {
+    return new URL(referer).origin;
+  } catch (error) {
+    logClientError(error);
+    return null;
+  }
+};
+
+export const isSameOriginRequest = (request: NextRequest): boolean => {
+  const candidateOrigin = resolveCandidateOrigin(request);
+  if (!candidateOrigin) {
+    return true;
+  }
+
+  const requestOrigin = getRequestOrigin(request);
+  return isAllowedOrigin(candidateOrigin, requestOrigin);
 };
 
 export const isTrustedOriginRequest = (

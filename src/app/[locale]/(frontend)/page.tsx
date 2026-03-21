@@ -4,7 +4,7 @@ import { JSX } from 'react';
 
 import { getCmsRepository } from '@/features/cms/server';
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/server';
-import { getKangurStorefrontDefaultMode } from '@/features/kangur/server/storefront-appearance';
+import { getKangurStorefrontInitialState } from '@/features/kangur/server/storefront-appearance';
 import { KangurPublicAppEntry } from '@/features/kangur/ui/KangurPublicAppEntry';
 import {
   buildLocalizedPathname,
@@ -47,12 +47,13 @@ export default async function LocalizedHome({
   }
 
   if (shouldApplyFrontPageSelection && publicOwner === 'kangur') {
-    const initialMode = await getKangurStorefrontDefaultMode();
+    const initialState = await getKangurStorefrontInitialState();
     await flush();
     return (
       <KangurPublicAppEntry
         basePath={buildLocalizedPathname('/', resolvedLocale)}
-        initialMode={initialMode}
+        initialMode={initialState.initialMode}
+        initialThemeSettings={initialState.initialThemeSettings}
       />
     );
   }

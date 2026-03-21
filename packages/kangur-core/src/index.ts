@@ -1,3 +1,85 @@
+export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+export {
+  buildKangurAssignments,
+  type KangurAssignmentAction,
+  type KangurAssignmentPlan,
+  type KangurAssignmentPriority,
+} from './assignments';
+export {
+  KANGUR_PORTABLE_LESSONS,
+  buildActiveKangurLessonAssignmentsByComponent,
+  buildCompletedKangurLessonAssignmentsByComponent,
+  getKangurLessonMasteryPresentation,
+  orderKangurLessonsByAssignmentPriority,
+  resolveFocusedKangurLessonId,
+  type KangurLessonAssignmentSnapshot,
+  type KangurLessonMasteryPresentation,
+  type KangurPortableLesson,
+} from './lessons';
+export {
+  getKangurPortableLessonBody,
+  type KangurPortableLessonBody,
+  type KangurPortableLessonBodySection,
+} from './lesson-content';
+export {
+  KANGUR_PRACTICE_OPERATIONS,
+  buildKangurLessonMasteryUpdate,
+  completeKangurPracticeSession,
+  generateKangurLogicPracticeQuestions,
+  getKangurPracticeOperationConfig,
+  getKangurPracticeOperationForLessonComponent,
+  isKangurLogicPracticeOperation,
+  isKangurPracticeOperation,
+  resolveKangurLessonFocusForPracticeOperation,
+  resolveKangurPracticeOperation,
+  resolvePreferredKangurPracticeOperation,
+  type KangurPracticeCompletionResult,
+  type KangurPracticeOperation,
+  type KangurPracticeOperationConfig,
+  type KangurPracticeQuestion,
+} from './practice';
+export {
+  KANGUR_BADGES,
+  KANGUR_LEVELS,
+  KANGUR_XP_REWARDS,
+  checkKangurNewBadges,
+  getCurrentKangurLevel,
+  getNextKangurLevel,
+  type KangurBadge as KangurMetadataBadge,
+  type KangurProgressLevel,
+} from './progress-metadata';
+export {
+  KANGUR_LESSON_CATALOG,
+  type KangurLessonCatalogEntry,
+} from './lesson-catalog';
+export {
+  KANGUR_LEADERBOARD_OPERATION_OPTIONS,
+  KANGUR_LEADERBOARD_USER_OPTIONS,
+  buildKangurLeaderboardItems,
+  filterKangurLeaderboardScores,
+  getKangurLeaderboardOperationInfo,
+  type KangurLeaderboardItem,
+  type KangurLeaderboardOperationOption,
+  type KangurLeaderboardUserFilter,
+  type KangurLeaderboardUserFilterIcon,
+  type KangurLeaderboardUserOption,
+} from './leaderboard';
+export {
+  KANGUR_PROFILE_DEFAULT_DAILY_GOAL_GAMES,
+  buildKangurLearnerProfileSnapshot,
+  buildLessonMasteryInsights,
+  type BuildKangurLearnerProfileSnapshotInput,
+  type KangurLearnerProfileSnapshot,
+  type KangurLearnerRecommendation,
+  type KangurLearnerRecommendationAction,
+  type KangurLearnerRecommendationPriority,
+  type KangurLessonMasteryInsight,
+  type KangurLessonMasteryInsights,
+  type KangurOperationPerformance,
+  type KangurRecentSession,
+  type KangurWeeklyActivityPoint,
+} from './profile';
+
 export type {
   KangurDifficulty,
   KangurDifficultyConfig,
@@ -5,6 +87,7 @@ export type {
   KangurOperation,
   KangurQuestion,
 } from './math/types';
+export type { KangurQuestionChoice } from '@kangur/contracts';
 
 export {
   DIFFICULTY_CONFIG,

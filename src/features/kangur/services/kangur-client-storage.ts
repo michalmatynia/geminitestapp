@@ -1,10 +1,47 @@
 'use client';
 
-import {
-  createMemoryKangurClientStorage,
-  type KangurClientStorageAdapter,
-  type KangurStorageChange,
-} from '@kangur/platform';
+export type KangurStorageChange = {
+  key: string | null;
+  value: string | null;
+};
+
+export type KangurClientStorageAdapter = {
+  getItem: (key: string) => string | null;
+  setItem: (key: string, value: string) => void;
+  removeItem: (key: string) => void;
+  subscribe: (listener: (change: KangurStorageChange) => void) => () => void;
+};
+
+export const createMemoryKangurClientStorage = (): KangurClientStorageAdapter => {
+  const snapshot = new Map<string, string>();
+  const listeners = new Set<(change: KangurStorageChange) => void>();
+
+  const notifyListeners = (change: KangurStorageChange): void => {
+    listeners.forEach((listener) => listener(change));
+  };
+
+  return {
+    getItem: (key) => snapshot.get(key) ?? null,
+    setItem: (key, value) => {
+      snapshot.set(key, value);
+      notifyListeners({ key, value });
+    },
+    removeItem: (key) => {
+      if (!snapshot.has(key)) {
+        return;
+      }
+
+      snapshot.delete(key);
+      notifyListeners({ key, value: null });
+    },
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+  };
+};
 
 const canUseLocalStorage = (): boolean => {
   if (typeof window === 'undefined') {

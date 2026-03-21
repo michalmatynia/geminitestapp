@@ -9,6 +9,7 @@ const createScore = (overrides: Partial<KangurScore> = {}): KangurScore => ({
   player_name: 'Ada Learner',
   score: 8,
   operation: 'clock',
+  subject: 'maths',
   total_questions: 8,
   correct_answers: 8,
   time_taken: 30,

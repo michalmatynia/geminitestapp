@@ -8,7 +8,10 @@ import { KangurFeaturePageShell } from '@/features/kangur/ui/KangurFeaturePage';
 import { KangurPublicErrorBoundary } from '@/features/kangur/ui/KangurPublicErrorBoundary';
 import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
-import type { KangurStorefrontAppearanceMode } from '@/features/kangur/storefront-appearance-settings';
+import type {
+  KangurStorefrontAppearanceMode,
+  KangurStorefrontThemeSettingsSnapshot,
+} from '@/features/kangur/storefront-appearance-settings';
 
 import type { JSX } from 'react';
 
@@ -17,11 +20,13 @@ export function KangurPublicApp({
   basePath = '/',
   embedded = false,
   initialMode,
+  initialThemeSettings,
 }: {
   slug?: string[];
   basePath?: string;
   embedded?: boolean;
   initialMode?: KangurStorefrontAppearanceMode;
+  initialThemeSettings?: Partial<KangurStorefrontThemeSettingsSnapshot>;
 }): JSX.Element {
   const { normalizedBasePath, pageKey, requestedPath } = resolveKangurFeaturePageRoute(
     slug,
@@ -31,7 +36,10 @@ export function KangurPublicApp({
   const isEmbedded = embedded;
 
   return (
-    <KangurStorefrontAppearanceProvider initialMode={initialMode}>
+    <KangurStorefrontAppearanceProvider
+      initialMode={initialMode}
+      initialThemeSettings={initialThemeSettings}
+    >
       <KangurSurfaceClassSync>
         <KangurPublicErrorBoundary homeHref={homeHref}>
           <KangurRoutingProvider

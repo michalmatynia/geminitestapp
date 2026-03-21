@@ -130,11 +130,6 @@ const getOperationTone = (
   };
 };
 
-type ResultsFilters = {
-  family: KangurMobileScoreFamily;
-  operation: string | null;
-};
-
 const RESULTS_HOME_ROUTE = '/' as const;
 
 const resolveResultsFilterFamily = (

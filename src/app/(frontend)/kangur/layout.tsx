@@ -1,13 +1,16 @@
 import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
-import { getKangurStorefrontDefaultMode } from '@/features/kangur/server/storefront-appearance';
+import { getKangurStorefrontInitialState } from '@/features/kangur/server/storefront-appearance';
 
 import type { ReactNode } from 'react';
 
 export default async function Layout({ children }: { children: ReactNode }): Promise<ReactNode> {
-  const initialMode = await getKangurStorefrontDefaultMode();
+  const initialState = await getKangurStorefrontInitialState();
   return (
-    <KangurStorefrontAppearanceProvider initialMode={initialMode}>
+    <KangurStorefrontAppearanceProvider
+      initialMode={initialState.initialMode}
+      initialThemeSettings={initialState.initialThemeSettings}
+    >
       <KangurSurfaceClassSync>{children}</KangurSurfaceClassSync>
     </KangurStorefrontAppearanceProvider>
   );

@@ -5,6 +5,16 @@ export { KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY };
 
 export type KangurStorefrontAppearanceMode = 'default' | 'dawn' | 'sunset' | 'dark';
 
+export type KangurStorefrontThemeSettingsSnapshot = Record<
+  KangurStorefrontAppearanceMode,
+  string | null
+>;
+
+export type KangurStorefrontInitialState = {
+  initialMode: KangurStorefrontAppearanceMode;
+  initialThemeSettings: KangurStorefrontThemeSettingsSnapshot;
+};
+
 export const KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY = 'kangur-storefront-appearance-mode';
 
 export const KANGUR_STOREFRONT_THEME_OPTIONS = [

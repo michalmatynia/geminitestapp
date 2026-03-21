@@ -27,6 +27,7 @@ import type {
   KangurLearnerActivityUpdateInput,
   KangurLearnerInteractionHistory,
   KangurLearnerProfile,
+  KangurLearnerSignInInput,
   KangurLearnerSessionHistory,
   KangurLearnerUpdateInput,
   KangurLessonSubject,
@@ -41,6 +42,7 @@ export type KangurApiClientOptions = {
   credentials?: RequestCredentials;
   fetchImpl?: typeof fetch;
   getHeaders?: () => Promise<HeadersInit> | HeadersInit;
+  onResponse?: (response: Response) => Promise<void> | void;
 };
 
 export type KangurApiRequestOptions = Omit<RequestInit, 'body' | 'headers' | 'method'> & {
@@ -122,6 +124,8 @@ const SUBJECT_FOCUS_PATH = '/api/kangur/subject-focus';
 const ASSIGNMENTS_PATH = '/api/kangur/assignments';
 const LEARNERS_PATH = '/api/kangur/learners';
 const LEARNER_ACTIVITY_PATH = '/api/kangur/learner-activity';
+const AUTH_LEARNER_SIGN_IN_PATH = '/api/kangur/auth/learner-signin';
+const AUTH_LEARNER_SIGN_OUT_PATH = '/api/kangur/auth/learner-signout';
 const AUTH_ME_PATH = '/api/kangur/auth/me';
 const AUTH_LOGOUT_PATH = '/api/kangur/auth/logout';
 const DUELS_CREATE_PATH = '/api/kangur/duels/create';
@@ -366,6 +370,7 @@ export const createKangurApiClient = (options: KangurApiClientOptions = {}) => {
       credentials: init.credentials ?? credentials,
       headers: await resolveHeaders(options.getHeaders, init.headers, includeJsonContentType),
     });
+    await options.onResponse?.(response);
 
     if (!response.ok) {
       throw await createKangurApiRequestError(response, path);
@@ -385,6 +390,7 @@ export const createKangurApiClient = (options: KangurApiClientOptions = {}) => {
       credentials: init.credentials ?? credentials,
       headers: await resolveHeaders(options.getHeaders, init.headers, includeJsonContentType),
     });
+    await options.onResponse?.(response);
 
     if (!response.ok) {
       throw await createKangurApiRequestError(response, path);
@@ -407,6 +413,27 @@ export const createKangurApiClient = (options: KangurApiClientOptions = {}) => {
         ...requestOptions,
         method: 'GET',
       }),
+    signInLearner: (
+      input: KangurLearnerSignInInput,
+      requestOptions?: KangurApiRequestOptions,
+    ) =>
+      request<{ learnerId: string; ok: boolean; ownerEmail: string | null }>(
+        AUTH_LEARNER_SIGN_IN_PATH,
+        {
+          ...requestOptions,
+          body: JSON.stringify(input),
+          method: 'POST',
+        },
+      ),
+    signOutLearner: (requestOptions?: KangurApiRequestOptions) =>
+      requestOptionalJson<{ ok: boolean }>(
+        AUTH_LEARNER_SIGN_OUT_PATH,
+        { ok: true },
+        {
+          ...requestOptions,
+          method: 'POST',
+        },
+      ),
     logout: (requestOptions?: KangurApiRequestOptions) =>
       requestOptionalJson<{ ok: boolean }>(AUTH_LOGOUT_PATH, { ok: true }, {
         ...requestOptions,

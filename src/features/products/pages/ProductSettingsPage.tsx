@@ -31,8 +31,8 @@ import {
   useTags,
   useUpdatePriceGroupMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
+import { ProductSyncSettings } from '@/features/product-sync';
 import { Catalog, PriceGroup } from '@/shared/contracts/products';
-import { ProductSyncSettings } from '@/shared/lib/product-sync-adapter';
 import { AdminProductsPageLayout, Button, useToast, Card, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

@@ -101,6 +101,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const transitionPageKey =
     pendingPageKey ?? activeTransitionPageKey ?? resolvedPageKey ?? KANGUR_MAIN_PAGE;
   const isRouteSkeletonVisible = isNavigationSkeletonVisible;
+  const shouldHideTopNavigationHost = isLanguageSwitcherTransition && isRouteSkeletonVisible;
   const shouldKeepRouteContentVisibleDuringTransition =
     isLanguageSwitcherTransition && isRouteSkeletonVisible;
   const isRouteContentVisuallyHidden =
@@ -248,7 +249,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
   return (
     <>
       <KangurRouteAccessibilityAnnouncer />
-      <KangurTopNavigationHost />
+      {shouldHideTopNavigationHost ? null : <KangurTopNavigationHost />}
       <KangurAppLoader visible={isBootSkeletonVisible} />
       <AnimatePresence mode='wait'>
         {routeContent ? (

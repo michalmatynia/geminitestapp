@@ -1,10 +1,15 @@
 import { resolveKangurLessonFocusForPracticeOperation } from '@kangur/core';
 import type { Href } from 'expo-router';
 
+export const createKangurLessonsCatalogHref = (): Href =>
+  ({
+    pathname: '/lessons',
+  }) as unknown as Href;
+
 export const createKangurLessonHref = (focus: string | null | undefined): Href => {
   const trimmedFocus = focus?.trim();
   if (!trimmedFocus) {
-    return '/lessons' as Href;
+    return createKangurLessonsCatalogHref();
   }
 
   return ({

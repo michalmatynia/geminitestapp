@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { JSX } from 'react';
 
 import { KangurPublicApp } from '@/features/kangur/public';
-import { getKangurStorefrontDefaultMode } from '@/features/kangur/server/storefront-appearance';
+import { getKangurStorefrontInitialState } from '@/features/kangur/server/storefront-appearance';
 import {
   buildLocalizedPathname,
   normalizeSiteLocale,
@@ -72,12 +72,13 @@ export default async function LocalizedCmsSlugPage({
   const resolvedLocale = normalizeSiteLocale(locale);
 
   if (await isKangurFrontPageSelected()) {
-    const initialMode = await getKangurStorefrontDefaultMode();
+    const initialState = await getKangurStorefrontInitialState();
     return (
       <KangurPublicApp
         slug={slug}
         basePath={buildLocalizedPathname('/', resolvedLocale)}
-        initialMode={initialMode}
+        initialMode={initialState.initialMode}
+        initialThemeSettings={initialState.initialThemeSettings}
       />
     );
   }

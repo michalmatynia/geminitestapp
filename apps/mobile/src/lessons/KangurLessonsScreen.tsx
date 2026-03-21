@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 
 import { useKangurMobileLessons } from './useKangurMobileLessons';
+import { useLessonsScreenBootState } from './useLessonsScreenBootState';
 
 type Tone = {
   backgroundColor: string;
@@ -36,6 +37,114 @@ function Card({
     >
       {children}
     </View>
+  );
+}
+
+function SkeletonBlock({
+  height,
+  width = '100%',
+  radius = 14,
+}: {
+  height: number;
+  width?: number | `${number}%`;
+  radius?: number;
+}): React.JSX.Element {
+  return (
+    <View
+      style={{
+        height,
+        width,
+        borderRadius: radius,
+        backgroundColor: '#e2e8f0',
+      }}
+    />
+  );
+}
+
+function LessonsLoadingDetailCard(): React.JSX.Element {
+  return (
+    <Card>
+      <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+        Ladowanie lekcji
+      </Text>
+      <SkeletonBlock height={28} width='68%' radius={16} />
+      <SkeletonBlock height={18} width='100%' />
+      <SkeletonBlock height={18} width='92%' />
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <SkeletonBlock height={34} width={132} radius={999} />
+        <SkeletonBlock height={34} width={144} radius={999} />
+      </View>
+      <View
+        style={{
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: '#e2e8f0',
+          backgroundColor: '#f8fafc',
+          padding: 14,
+          gap: 10,
+        }}
+      >
+        <SkeletonBlock height={18} width='40%' />
+        <SkeletonBlock height={22} width='62%' />
+        <SkeletonBlock height={16} width='100%' />
+        <SkeletonBlock height={16} width='88%' />
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <SkeletonBlock height={34} width={104} radius={999} />
+          <SkeletonBlock height={34} width={96} radius={999} />
+          <SkeletonBlock height={34} width={114} radius={999} />
+        </View>
+      </View>
+      <Text style={{ color: '#64748b', fontSize: 13, lineHeight: 18 }}>
+        Przygotowujemy wybrana lekcje i sekcje do czytania.
+      </Text>
+    </Card>
+  );
+}
+
+function LessonsLoadingCatalogCard(): React.JSX.Element {
+  return (
+    <Card>
+      <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+        Katalog lekcji
+      </Text>
+      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+        Wczytujemy liste tematow i stan opanowania.
+      </Text>
+
+      <View style={{ gap: 12 }}>
+        {Array.from({ length: 4 }).map((_, index) => (
+          <View
+            key={`lessons-skeleton-row-${index}`}
+            style={{
+              borderRadius: 22,
+              borderWidth: 1,
+              borderColor: '#e2e8f0',
+              backgroundColor: '#f8fafc',
+              padding: 16,
+              gap: 10,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                gap: 12,
+              }}
+            >
+              <View style={{ flex: 1, gap: 8 }}>
+                <SkeletonBlock height={22} width='64%' radius={14} />
+                <SkeletonBlock height={16} width='100%' />
+                <SkeletonBlock height={16} width='84%' />
+              </View>
+              <SkeletonBlock height={32} width={110} radius={999} />
+            </View>
+
+            <SkeletonBlock height={14} width='58%' />
+          </View>
+        ))}
+      </View>
+    </Card>
   );
 }
 
@@ -98,20 +207,42 @@ const getMasteryTone = (badgeAccent: string): Tone => {
 export function KangurLessonsScreen(): React.JSX.Element {
   const params = useLocalSearchParams<{ focus?: string | string[] }>();
   const rawFocusParam = Array.isArray(params.focus) ? params.focus[0] : params.focus;
+  const normalizedRouteFocusToken =
+    typeof rawFocusParam === 'string' ? rawFocusParam.trim().toLowerCase() || null : null;
+  const [dismissedFocusToken, setDismissedFocusToken] = useState<string | null>(null);
+  const effectiveFocusToken =
+    normalizedRouteFocusToken && normalizedRouteFocusToken === dismissedFocusToken
+      ? null
+      : normalizedRouteFocusToken;
   const { focusToken, lessons, selectedLesson } = useKangurMobileLessons(
-    typeof rawFocusParam === 'string' ? rawFocusParam : null,
+    effectiveFocusToken,
   );
-  const selectedLessonBody = selectedLesson
-    ? getKangurPortableLessonBody(selectedLesson.lesson.componentId)
-    : null;
-  const selectedPracticeOperation = selectedLesson
-    ? getKangurPracticeOperationForLessonComponent(selectedLesson.lesson.componentId)
-    : null;
+  const lessonsViewKey = focusToken ?? 'catalog';
+  const isPreparingLessonsView = useLessonsScreenBootState(lessonsViewKey);
+  const selectedLessonBody =
+    !isPreparingLessonsView && selectedLesson
+      ? getKangurPortableLessonBody(selectedLesson.lesson.componentId)
+      : null;
+  const selectedPracticeOperation =
+    !isPreparingLessonsView && selectedLesson
+      ? getKangurPracticeOperationForLessonComponent(selectedLesson.lesson.componentId)
+      : null;
   const [activeSectionIndex, setActiveSectionIndex] = useState(0);
 
   useEffect(() => {
     setActiveSectionIndex(0);
   }, [selectedLesson?.lesson.id]);
+
+  useEffect(() => {
+    if (!normalizedRouteFocusToken) {
+      setDismissedFocusToken(null);
+      return;
+    }
+
+    if (dismissedFocusToken && normalizedRouteFocusToken !== dismissedFocusToken) {
+      setDismissedFocusToken(null);
+    }
+  }, [dismissedFocusToken, normalizedRouteFocusToken]);
 
   const activeSection =
     selectedLessonBody?.sections[Math.min(activeSectionIndex, selectedLessonBody.sections.length - 1)] ??
@@ -165,7 +296,12 @@ export function KangurLessonsScreen(): React.JSX.Element {
             </Text>
           </Card>
 
-          {selectedLesson ? (
+          {isPreparingLessonsView ? (
+            <>
+              {selectedLesson || focusToken ? <LessonsLoadingDetailCard /> : null}
+              <LessonsLoadingCatalogCard />
+            </>
+          ) : selectedLesson ? (
             <Card>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                 Wybrana lekcja
@@ -387,20 +523,23 @@ export function KangurLessonsScreen(): React.JSX.Element {
                   ekran zamyka za to luke nawigacyjna i pokazuje prawidlowy stan opanowania.
                 </Text>
               )}
-              <Link href='/lessons' asChild>
-                <Pressable
-                  accessibilityRole='button'
-                  style={{
-                    alignSelf: 'flex-start',
-                    borderRadius: 999,
-                    backgroundColor: '#0f172a',
-                    paddingHorizontal: 14,
-                    paddingVertical: 10,
-                  }}
-                >
-                  <Text style={{ color: '#ffffff', fontWeight: '700' }}>Show all lessons</Text>
-                </Pressable>
-              </Link>
+              <Pressable
+                accessibilityRole='button'
+                onPress={() => {
+                  setDismissedFocusToken(normalizedRouteFocusToken);
+                }}
+                style={{
+                  alignSelf: 'flex-start',
+                  borderRadius: 999,
+                  backgroundColor: '#0f172a',
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                }}
+              >
+                <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                  Wroc do listy lekcji
+                </Text>
+              </Pressable>
               {selectedPracticeOperation ? (
                 <Link href={selectedPracticeHref!} asChild>
                   <Pressable
@@ -434,65 +573,70 @@ export function KangurLessonsScreen(): React.JSX.Element {
             </Card>
           ) : null}
 
-          <Card>
-            <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-              Katalog lekcji
-            </Text>
-            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-              Zacznij od nowych tematow albo wroc do obszarow wymagajacych powtorki.
-            </Text>
+          {!isPreparingLessonsView ? (
+            <Card>
+              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                Katalog lekcji
+              </Text>
+              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                Zacznij od nowych tematow albo wroc do obszarow wymagajacych powtorki.
+              </Text>
 
-            <View style={{ gap: 12 }}>
-              {lessons.map((item) => {
-                const masteryTone = getMasteryTone(item.mastery.badgeAccent);
-                const href: Href = {
-                  pathname: '/lessons',
-                  params: {
-                    focus: item.lesson.componentId,
-                  },
-                };
+              <View style={{ gap: 12 }}>
+                {lessons.map((item) => {
+                  const masteryTone = getMasteryTone(item.mastery.badgeAccent);
+                  const href: Href = {
+                    pathname: '/lessons',
+                    params: {
+                      focus: item.lesson.componentId,
+                    },
+                  };
 
-                return (
-                  <Link href={href} key={item.lesson.id} asChild>
-                    <Pressable
-                      accessibilityRole='button'
-                      style={{
-                        borderRadius: 22,
-                        borderWidth: 1,
-                        borderColor: item.isFocused ? '#1d4ed8' : '#e2e8f0',
-                        backgroundColor: item.isFocused ? '#eff6ff' : '#f8fafc',
-                        padding: 16,
-                        gap: 10,
-                      }}
-                    >
-                      <View
+                  return (
+                    <Link href={href} key={item.lesson.id} asChild>
+                      <Pressable
+                        accessibilityRole='button'
+                        onPress={() => {
+                          setDismissedFocusToken(null);
+                        }}
                         style={{
-                          flexDirection: 'row',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                          gap: 12,
+                          borderRadius: 22,
+                          borderWidth: 1,
+                          borderColor: item.isFocused ? '#1d4ed8' : '#e2e8f0',
+                          backgroundColor: item.isFocused ? '#eff6ff' : '#f8fafc',
+                          padding: 16,
+                          gap: 10,
                         }}
                       >
-                        <View style={{ flex: 1, gap: 4 }}>
-                          <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-                            {item.lesson.emoji} {item.lesson.title}
-                          </Text>
-                          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                            {item.lesson.description}
-                          </Text>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                            gap: 12,
+                          }}
+                        >
+                          <View style={{ flex: 1, gap: 4 }}>
+                            <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+                              {item.lesson.emoji} {item.lesson.title}
+                            </Text>
+                            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                              {item.lesson.description}
+                            </Text>
+                          </View>
+                          <Pill label={item.mastery.statusLabel} tone={masteryTone} />
                         </View>
-                        <Pill label={item.mastery.statusLabel} tone={masteryTone} />
-                      </View>
 
-                      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-                        {item.mastery.summaryLabel}
-                      </Text>
-                    </Pressable>
-                  </Link>
-                );
-              })}
-            </View>
-          </Card>
+                        <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+                          {item.mastery.summaryLabel}
+                        </Text>
+                      </Pressable>
+                    </Link>
+                  );
+                })}
+              </View>
+            </Card>
+          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>

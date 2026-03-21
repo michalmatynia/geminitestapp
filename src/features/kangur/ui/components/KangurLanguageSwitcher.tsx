@@ -16,7 +16,11 @@ import {
 
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
 import { setClientCookie } from '@/shared/lib/browser/client-cookies';
-import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
+import {
+  buildLocalizedPathname,
+  getPathLocale,
+  normalizeSiteLocale,
+} from '@/shared/lib/i18n/site-locale';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -173,6 +177,24 @@ const buildLocalizedHref = ({
   return `${localizedPath}${query}${hash ?? ''}`;
 };
 
+const resolveLocaleFromHref = (href: string | null | undefined): string | null => {
+  if (typeof href !== 'string') {
+    return null;
+  }
+
+  const trimmedHref = href.trim();
+  if (!trimmedHref) {
+    return null;
+  }
+
+  try {
+    const pathname = new URL(trimmedHref, 'https://kangur.local').pathname;
+    return normalizeSiteLocale(getPathLocale(pathname) ?? DEFAULT_LOCALE);
+  } catch {
+    return normalizeSiteLocale(getPathLocale(trimmedHref) ?? DEFAULT_LOCALE);
+  }
+};
+
 const resolveLanguageMenuPalette = (
   kangurAppearance: KangurAppearanceValue
 ): KangurLanguageMenuPalette => {
@@ -216,6 +238,7 @@ export function KangurLanguageSwitcher({
   const routeNavigator = useKangurRouteNavigator();
   const queryClient = useContext(QueryClientContext);
   const [open, setOpen] = useState(false);
+  const [optimisticLocale, setOptimisticLocale] = useState<string | null>(null);
   const warmedLocaleTargetsRef = useRef<Set<string>>(new Set());
 
   const currentLocale = normalizeSiteLocale(locale);
@@ -228,10 +251,6 @@ export function KangurLanguageSwitcher({
     () => resolveLanguageMenuPalette(kangurAppearance),
     [kangurAppearance]
   );
-  const currentLocaleEntry =
-    ENABLED_LOCALES.find((entry) => normalizeSiteLocale(entry.code) === currentLocale) ??
-    ENABLED_LOCALES[0];
-
   const localeOptions = useMemo(
     () =>
       ENABLED_LOCALES.map((entry) => {
@@ -260,10 +279,28 @@ export function KangurLanguageSwitcher({
     isLanguageTransitionActive &&
     (routeTransitionState?.transitionPhase === 'acknowledging' ||
       routeTransitionState?.transitionPhase === 'pending');
+  const transitionTargetLocale = useMemo(
+    () => resolveLocaleFromHref(routeTransitionState?.activeTransitionRequestedHref),
+    [routeTransitionState?.activeTransitionRequestedHref]
+  );
+  const selectedLocale =
+    optimisticLocale ??
+    (isLanguageTransitionActive ? transitionTargetLocale : null) ??
+    currentLocale;
 
   useEffect(() => {
     warmedLocaleTargetsRef.current.clear();
   }, [currentHash, currentPathname, search]);
+
+  useEffect(() => {
+    if (optimisticLocale === null) {
+      return;
+    }
+
+    if (optimisticLocale === currentLocale || !isLanguageTransitionActive) {
+      setOptimisticLocale(null);
+    }
+  }, [currentLocale, isLanguageTransitionActive, optimisticLocale]);
 
   useEffect(() => {
     if (isLanguageTransitionActive) {
@@ -273,7 +310,7 @@ export function KangurLanguageSwitcher({
 
   const warmLocaleTarget = useCallback(
     (target: { code: string; href: string } | null | undefined): void => {
-      if (!target || target.code === currentLocale) {
+      if (!target || target.code === selectedLocale) {
         return;
       }
 
@@ -285,20 +322,24 @@ export function KangurLanguageSwitcher({
       routeNavigator.prefetch(target.href);
       void prefetchKangurPageContentStore(queryClient, target.code);
     },
-    [currentLocale, queryClient, routeNavigator]
+    [queryClient, routeNavigator, selectedLocale]
   );
 
   useEffect(() => {
-    if (!open || currentLocale === DEFAULT_LOCALE) {
+    if (!open || selectedLocale === DEFAULT_LOCALE) {
       return;
     }
 
     warmLocaleTarget(defaultLocaleOption);
-  }, [currentLocale, defaultLocaleOption, open, warmLocaleTarget]);
+  }, [defaultLocaleOption, open, selectedLocale, warmLocaleTarget]);
 
   if (ENABLED_LOCALES.length < 2 || isKangurEmbeddedBasePath(basePath)) {
     return null;
   }
+
+  const currentLocaleEntry =
+    ENABLED_LOCALES.find((entry) => normalizeSiteLocale(entry.code) === selectedLocale) ??
+    ENABLED_LOCALES[0];
 
   const menuStyle = {
     '--kangur-language-menu-active-bg': palette.activeBackground,
@@ -311,7 +352,7 @@ export function KangurLanguageSwitcher({
     '--kangur-language-menu-shadow': palette.shadow,
     '--kangur-language-menu-text': palette.text,
   } as CSSProperties;
-  const currentLanguageLabel = currentLocaleEntry?.nativeLabel ?? currentLocale.toUpperCase();
+  const currentLanguageLabel = currentLocaleEntry?.nativeLabel ?? selectedLocale.toUpperCase();
   const triggerAriaLabel = translations('languageSwitcher.triggerAriaLabel', {
     language: currentLanguageLabel,
   });
@@ -340,7 +381,7 @@ export function KangurLanguageSwitcher({
             aria-hidden='true'
             className='inline-flex h-[1.15rem] w-[1.7rem] shrink-0 items-center justify-center overflow-hidden rounded-[6px] border [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_80%,transparent)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,transparent)] shadow-[inset_0_1px_0_rgba(255,255,255,0.28)]'
           >
-            <KangurLocaleFlag className='h-full w-full' locale={currentLocale} />
+            <KangurLocaleFlag className='h-full w-full' locale={selectedLocale} />
           </span>
           <span className='min-w-0 flex-1 truncate text-sm font-semibold'>
             {currentLanguageLabel}
@@ -376,7 +417,7 @@ export function KangurLanguageSwitcher({
             className='flex flex-col gap-1.5'
             data-testid='kangur-language-switcher-options'
             onValueChange={(nextLocale) => {
-              if (isLanguageTransitionPending || nextLocale === currentLocale) {
+              if (isLanguageTransitionPending || nextLocale === selectedLocale) {
                 setOpen(false);
                 return;
               }
@@ -388,6 +429,7 @@ export function KangurLanguageSwitcher({
               }
 
               setOpen(false);
+              setOptimisticLocale(target.code);
               setClientCookie(DEFAULT_SITE_I18N_CONFIG.cookieName, target.code, {
                 maxAgeSeconds: LANGUAGE_COOKIE_MAX_AGE_SECONDS,
                 path: '/',
@@ -409,7 +451,7 @@ export function KangurLanguageSwitcher({
                 transitionKind: 'locale-switch',
               });
             }}
-            value={currentLocale}
+            value={selectedLocale}
           >
             {localeOptions.map((option) => {
               return (

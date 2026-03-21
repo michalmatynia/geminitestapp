@@ -73,6 +73,8 @@ type UseKangurLeaderboardStateResult = {
   visibleScores: KangurScoreRecord[];
 };
 
+const MEDALS = ['🥇', '🥈', '🥉'] as const;
+
 const MATH_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
   all: { label: 'Wszystkie', emoji: '🏆' },
   addition: { label: 'Dodawanie', emoji: '➕' },

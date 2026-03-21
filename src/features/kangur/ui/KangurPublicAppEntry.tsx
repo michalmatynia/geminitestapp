@@ -2,7 +2,10 @@
 
 import { useTranslations } from 'next-intl';
 import React from 'react';
-import type { KangurStorefrontAppearanceMode } from '@/features/kangur/storefront-appearance-settings';
+import type {
+  KangurStorefrontAppearanceMode,
+  KangurStorefrontThemeSettingsSnapshot,
+} from '@/features/kangur/storefront-appearance-settings';
 
 const LazyKangurPublicApp = React.lazy(() =>
   import('./KangurPublicApp').then((mod) => ({
@@ -13,9 +16,11 @@ const LazyKangurPublicApp = React.lazy(() =>
 export function KangurPublicAppEntry({
   basePath,
   initialMode,
+  initialThemeSettings,
 }: {
   basePath: string;
   initialMode?: KangurStorefrontAppearanceMode;
+  initialThemeSettings?: Partial<KangurStorefrontThemeSettingsSnapshot>;
 }): React.JSX.Element {
   const translations = useTranslations('KangurPublic');
 
@@ -27,7 +32,11 @@ export function KangurPublicAppEntry({
         </div>
       }
     >
-      <LazyKangurPublicApp basePath={basePath} initialMode={initialMode} />
+      <LazyKangurPublicApp
+        basePath={basePath}
+        initialMode={initialMode}
+        initialThemeSettings={initialThemeSettings}
+      />
     </React.Suspense>
   );
 }

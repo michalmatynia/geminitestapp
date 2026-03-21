@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { JSX } from 'react';
 
 import { KangurPublicApp } from '@/features/kangur/public';
-import { getKangurStorefrontDefaultMode } from '@/features/kangur/server/storefront-appearance';
+import { getKangurStorefrontInitialState } from '@/features/kangur/server/storefront-appearance';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
 import { renderCmsPage } from '../cms-render';
@@ -49,8 +49,15 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
 export default async function CmsSlugPage({ params }: SlugPageProps): Promise<JSX.Element> {
   const { slug } = await params;
   if (await isKangurFrontPageSelected()) {
-    const initialMode = await getKangurStorefrontDefaultMode();
-    return <KangurPublicApp slug={slug} basePath='/' initialMode={initialMode} />;
+    const initialState = await getKangurStorefrontInitialState();
+    return (
+      <KangurPublicApp
+        slug={slug}
+        basePath='/'
+        initialMode={initialState.initialMode}
+        initialThemeSettings={initialState.initialThemeSettings}
+      />
+    );
   }
   const page = await resolveSlugToPage(slug);
 

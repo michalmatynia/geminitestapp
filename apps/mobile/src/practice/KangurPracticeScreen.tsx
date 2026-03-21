@@ -251,6 +251,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
         player_name: resolvePracticePlayerName(session),
         score: input.correctAnswers,
         operation: input.operation,
+        subject: 'maths',
         total_questions: input.totalQuestions,
         correct_answers: input.correctAnswers,
         time_taken: timeTakenSeconds,

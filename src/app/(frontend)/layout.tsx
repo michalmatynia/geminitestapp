@@ -1,7 +1,7 @@
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '@/app/(frontend)/home-helpers';
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import { getCmsThemeSettings } from '@/features/cms/server';
-import { getKangurStorefrontDefaultMode } from '@/features/kangur/server/storefront-appearance';
+import { getKangurStorefrontInitialState } from '@/features/kangur/server/storefront-appearance';
 import { FrontendPublicOwnerProvider } from '@/features/kangur/ui/FrontendPublicOwnerContext';
 import FrontendPublicOwnerShellClient from '@/features/kangur/ui/FrontendPublicOwnerShellClient';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
@@ -23,8 +23,8 @@ export default async function FrontendLayout({
     ? getFrontPagePublicOwner(frontPageSetting)
     : 'cms';
   const storefrontAppearanceMode = themeSettings.darkMode ? 'dark' : 'default';
-  const kangurInitialMode =
-    publicOwner === 'kangur' ? await getKangurStorefrontDefaultMode() : undefined;
+  const kangurInitialState =
+    publicOwner === 'kangur' ? await getKangurStorefrontInitialState() : null;
 
   return (
     <main
@@ -37,7 +37,8 @@ export default async function FrontendLayout({
           <QueryErrorBoundary>
             <FrontendPublicOwnerShellClient
               publicOwner={publicOwner}
-              kangurInitialMode={kangurInitialMode}
+              kangurInitialMode={kangurInitialState?.initialMode}
+              kangurInitialThemeSettings={kangurInitialState?.initialThemeSettings}
             >
               {children}
             </FrontendPublicOwnerShellClient>

@@ -889,6 +889,48 @@ describe('KangurPrimaryNavigation', () => {
     expect(screen.getByTestId('kangur-language-switcher-trigger')).toBeEnabled();
   });
 
+  it('pins the language switcher to the pending target locale until the new locale route mounts', async () => {
+    localeMock.mockReturnValue('en');
+    pathnameMock.mockReturnValue('/en/lessons');
+    routeTransitionStateMock.mockReturnValue({
+      activeTransitionKind: 'locale-switch',
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/de/lessons',
+      activeTransitionSkeletonVariant: 'lessons-library',
+      activeTransitionSourceId: 'kangur-language-switcher',
+      isRouteAcknowledging: false,
+      isRoutePending: false,
+      isRouteRevealing: false,
+      isRouteWaitingForReady: true,
+      pendingPageKey: null,
+      transitionPhase: 'waiting_for_ready',
+    });
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/en'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    const trigger = screen.getByTestId('kangur-language-switcher-trigger');
+
+    expect(trigger).toHaveTextContent('Deutsch');
+    expect(trigger).toHaveAttribute('title', 'Language: Deutsch');
+
+    openLanguageMenu(trigger);
+
+    const activeOption = await screen.findByTestId('kangur-language-switcher-option-de');
+
+    expect(activeOption).toHaveAttribute('data-state', 'checked');
+    expect(screen.getByTestId('kangur-language-switcher-option-en')).toHaveAttribute(
+      'data-state',
+      'unchecked'
+    );
+  });
+
   it('translates the desktop section labels and chooser copy for English locale', () => {
     localeMock.mockReturnValue('en');
     pathnameMock.mockReturnValue('/en/lessons');

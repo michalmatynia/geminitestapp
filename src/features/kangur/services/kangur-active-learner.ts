@@ -1,4 +1,4 @@
-export const KANGUR_ACTIVE_LEARNER_STORAGE_KEY = 'kangur.activeLearnerId';
+import { getKangurClientStorage } from '@/features/kangur/services/kangur-client-storage';
 
 export const KANGUR_ACTIVE_LEARNER_STORAGE_KEY = 'kangur.activeLearnerId';
 

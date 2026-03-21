@@ -101,6 +101,7 @@ describe('useKangurMobileLeaderboard', () => {
         player_name: 'Ada Learner',
         score: 8,
         operation: 'logical_patterns',
+        subject: 'maths',
         total_questions: 8,
         correct_answers: 8,
         time_taken: 30,

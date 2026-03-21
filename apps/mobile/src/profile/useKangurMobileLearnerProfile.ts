@@ -52,7 +52,7 @@ const createKangurMobileActionHref = (
   action: KangurLearnerRecommendationAction,
 ): Href | null => {
   if (action.page === 'Lessons') {
-    const focus = action.query?.focus?.trim();
+    const focus = action.query?.['focus']?.trim();
     return focus
       ? {
           pathname: '/lessons',
@@ -65,8 +65,8 @@ const createKangurMobileActionHref = (
 
   if (action.page === 'Game') {
     const resolvedOperation =
-      resolvePreferredKangurPracticeOperation(action.query?.operation) ??
-      resolvePreferredKangurPracticeOperation(action.query?.focus) ??
+      resolvePreferredKangurPracticeOperation(action.query?.['operation']) ??
+      resolvePreferredKangurPracticeOperation(action.query?.['focus']) ??
       'mixed';
 
     return {

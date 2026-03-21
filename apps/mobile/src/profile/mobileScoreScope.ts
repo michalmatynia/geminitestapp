@@ -1,4 +1,5 @@
-import type { KangurAuthUser, KangurScoreListQuery } from '@kangur/contracts';
+import type { KangurScoreListQuery } from '@kangur/contracts';
+import type { KangurUser } from '@kangur/platform';
 
 export type KangurMobileScoreScope = {
   identityKey: string;
@@ -6,7 +7,7 @@ export type KangurMobileScoreScope = {
 };
 
 export const resolveKangurMobileScoreScope = (
-  user: KangurAuthUser | null | undefined,
+  user: KangurUser | null | undefined,
 ): KangurMobileScoreScope | null => {
   const learnerId = user?.activeLearner?.id?.trim();
   if (learnerId) {

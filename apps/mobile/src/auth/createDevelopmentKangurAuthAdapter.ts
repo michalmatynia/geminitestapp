@@ -36,6 +36,7 @@ const DEMO_USER = {
   actorType: 'parent' as const,
   canManageLearners: true,
   ownerUserId: null,
+  ownerEmailVerified: true,
   activeLearner: DEMO_LEARNER,
   learners: [DEMO_LEARNER],
 };

@@ -10,6 +10,9 @@ const ROUTE_INITIAL_GOTO_TIMEOUT_MS = 90_000;
 const HOME_LESSONS_ACTION_SOURCE_ID = 'game-home-action:lessons';
 const PRIMARY_NAV_HOME_SOURCE_ID = 'kangur-primary-nav:home';
 const PRIMARY_NAV_LESSONS_SOURCE_ID = 'kangur-primary-nav:lessons';
+const LESSONS_ROUTE_PATH_PATTERN = /^\/(?:[a-z]{2}\/)?lessons$/;
+const LESSONS_ROUTE_URL_PATTERN = /\/(?:[a-z]{2}\/)?lessons$/;
+const LESSONS_HEADING_PATTERN = /^(?:Lekcje|Lessons)$/;
 
 type RouteShellMonitorSample = {
   hasShell: boolean;
@@ -60,6 +63,8 @@ type RouteScrollMonitorSample = {
   path: string;
   scrollY: number;
   hasSkeleton: boolean;
+  skeletonTop: number | null;
+  topBarBottom: number | null;
   hasAppLoader: boolean;
   transitionPhase: string | null;
   activeTransitionSourceId: string | null;
@@ -164,6 +169,9 @@ const gotoKangurPath = async (page: Page, path: string): Promise<void> => {
     timeout: ROUTE_INITIAL_GOTO_TIMEOUT_MS,
   });
 };
+
+const matchesRoutePath = (path: string, targetPath: string | RegExp): boolean =>
+  typeof targetPath === 'string' ? path === targetPath : targetPath.test(path);
 
 const startRouteShellMonitor = async (page: Page): Promise<void> => {
   await page.evaluate((monitorKey) => {
@@ -594,10 +602,16 @@ const startRouteScrollMonitor = async (page: Page): Promise<void> => {
     const sample = (): void => {
       const routeContent = document.querySelector('[data-testid="kangur-route-content"]');
       const homeLessonsAction = document.querySelector('[data-testid="kangur-home-action-lessons"]');
+      const skeleton = document.querySelector('[data-testid="kangur-page-transition-skeleton"]');
+      const topBar = document.querySelector('[data-testid="kangur-page-top-bar"]');
+      const skeletonRect = skeleton?.getBoundingClientRect() ?? null;
+      const topBarRect = topBar?.getBoundingClientRect() ?? null;
       samples.push({
         path: `${window.location.pathname}${window.location.search}`,
         scrollY: window.scrollY,
-        hasSkeleton: Boolean(document.querySelector('[data-testid="kangur-page-transition-skeleton"]')),
+        hasSkeleton: Boolean(skeletonRect),
+        skeletonTop: skeletonRect?.top ?? null,
+        topBarBottom: topBarRect?.bottom ?? null,
         hasAppLoader: Boolean(document.querySelector('[data-testid="kangur-app-loader"]')),
         transitionPhase: routeContent?.getAttribute('data-route-transition-phase') ?? null,
         activeTransitionSourceId:
@@ -635,10 +649,10 @@ const stopRouteScrollMonitor = async (page: Page): Promise<RouteScrollMonitorSam
 
 const expectRouteToResetScrollAfterCommit = (
   samples: RouteScrollMonitorSample[],
-  targetPath: string,
+  targetPath: string | RegExp,
   stepLabel: string
 ): void => {
-  const matchingSamples = samples.filter((sample) => sample.path === targetPath);
+  const matchingSamples = samples.filter((sample) => matchesRoutePath(sample.path, targetPath));
 
   expect(matchingSamples.length, `${stepLabel}: expected monitor samples on the target route`).toBeGreaterThan(0);
   expect(
@@ -657,9 +671,30 @@ const expectNoAppLoaderFlash = (
   ).toBe(false);
 };
 
+const expectLessonsSkeletonToStartBelowTopBar = (
+  samples: RouteScrollMonitorSample[],
+  stepLabel: string,
+  tolerance = 2
+): void => {
+  const skeletonSamples = samples.filter(
+    (sample) => sample.hasSkeleton && sample.skeletonTop !== null && sample.topBarBottom !== null
+  );
+
+  expect(
+    skeletonSamples.length,
+    `${stepLabel}: expected geometry samples while the lessons skeleton was visible`
+  ).toBeGreaterThan(0);
+  expect(
+    skeletonSamples.every(
+      (sample) => (sample.skeletonTop ?? Number.NEGATIVE_INFINITY) >= (sample.topBarBottom ?? 0) - tolerance
+    ),
+    `${stepLabel}: lessons skeleton rendered above the top bar before settling`
+  ).toBe(true);
+};
+
 const expectHomeActionSkeletonHandoff = (
   samples: RouteScrollMonitorSample[],
-  targetPath: string,
+  targetPath: string | RegExp,
   stepLabel: string
 ): void => {
   const pressedIndex = samples.findIndex((sample) => sample.homeLessonsNavState === 'pressed');
@@ -670,7 +705,7 @@ const expectHomeActionSkeletonHandoff = (
       sample.transitionPhase === 'pending'
   );
   const skeletonIndex = samples.findIndex((sample) => sample.hasSkeleton);
-  const targetRouteIndex = samples.findIndex((sample) => sample.path === targetPath);
+  const targetRouteIndex = samples.findIndex((sample) => matchesRoutePath(sample.path, targetPath));
 
   expect(
     pressedIndex,
@@ -707,14 +742,14 @@ const expectRouteSkeletonHandoff = ({
   samples: RouteScrollMonitorSample[];
   sourceId: string;
   stepLabel: string;
-  targetPath: string;
+  targetPath: string | RegExp;
 }): void => {
   const acknowledgeIndex = samples.findIndex(
     (sample) =>
       sample.activeTransitionSourceId === sourceId && sample.transitionPhase === 'acknowledging'
   );
   const skeletonIndex = samples.findIndex((sample) => sample.hasSkeleton);
-  const targetRouteIndex = samples.findIndex((sample) => sample.path === targetPath);
+  const targetRouteIndex = samples.findIndex((sample) => matchesRoutePath(sample.path, targetPath));
 
   expect(
     acknowledgeIndex,
@@ -1039,7 +1074,7 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     await startRouteShellMonitor(page);
     await page.getByTestId('kangur-primary-nav-lessons').click();
-    await expect(page).toHaveURL(/\/kangur\/lessons$/);
+    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN);
     await expectRouteShellMarker(page);
     await expect(page.getByTestId('kangur-route-content')).toBeVisible();
     await page.waitForTimeout(250);
@@ -1125,7 +1160,7 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     await startRouteLayoutMonitor(page);
     await page.getByTestId('kangur-primary-nav-lessons').click();
-    await expect(page).toHaveURL(/\/kangur\/lessons$/);
+    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN);
     await expect(page.getByTestId('kangur-route-content')).toBeVisible();
     await page.waitForTimeout(250);
     expectRouteLayoutStability(await stopRouteLayoutMonitor(page), 'game -> lessons');
@@ -1153,25 +1188,28 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     await startRouteScrollMonitor(page);
     await page.getByTestId('kangur-primary-nav-lessons').click();
-    await expect(page).toHaveURL(/\/kangur\/lessons$/);
+    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN);
     await expect(page.getByTestId('lessons-list-transition')).toBeVisible();
     await expect(page.getByTestId('lessons-list-intro-card')).toBeVisible();
     await expect(page.getByTestId('kangur-lessons-heading-art')).toBeVisible();
     await expectLocatorToHaveClassToken(page.getByTestId('lessons-list-intro-card'), 'text-center');
     await expect(
-      page.getByTestId('lessons-list-intro-card').getByRole('heading', { name: 'Lekcje' })
+      page.getByTestId('lessons-list-intro-card').getByRole('heading', {
+        name: LESSONS_HEADING_PATTERN,
+      })
     ).toBeVisible();
     await page.waitForTimeout(120);
     const samples = await stopRouteScrollMonitor(page);
 
-    expectRouteToResetScrollAfterCommit(samples, '/kangur/lessons', 'game -> lessons');
+    expectRouteToResetScrollAfterCommit(samples, LESSONS_ROUTE_PATH_PATTERN, 'game -> lessons');
     expectRouteSkeletonHandoff({
       samples,
       sourceId: PRIMARY_NAV_LESSONS_SOURCE_ID,
       stepLabel: 'game -> lessons',
-      targetPath: '/kangur/lessons',
+      targetPath: LESSONS_ROUTE_PATH_PATTERN,
     });
     expectNoAppLoaderFlash(samples, 'game -> lessons');
+    expectLessonsSkeletonToStartBelowTopBar(samples, 'game -> lessons');
   });
 
   test('hands the home lessons action off through a pressed state and page skeleton before reveal', async ({
@@ -1187,13 +1225,17 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     await startRouteScrollMonitor(page);
     await page.locator('[data-doc-id="home_lessons_action"]').click();
-    await expect(page).toHaveURL(/\/kangur\/lessons$/);
+    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN);
     await expect(page.getByTestId('lessons-list-transition')).toBeVisible();
     await page.waitForTimeout(120);
 
     const samples = await stopRouteScrollMonitor(page);
 
-    expectHomeActionSkeletonHandoff(samples, '/kangur/lessons', 'home lessons action -> lessons');
+    expectHomeActionSkeletonHandoff(
+      samples,
+      LESSONS_ROUTE_PATH_PATTERN,
+      'home lessons action -> lessons'
+    );
     expectNoAppLoaderFlash(samples, 'home lessons action -> lessons');
   });
 
@@ -1209,7 +1251,7 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     );
 
     await page.getByTestId('kangur-primary-nav-lessons').click();
-    await expect(page).toHaveURL(/\/kangur\/lessons$/);
+    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN);
     await expect(page.getByTestId('lessons-list-transition')).toBeVisible();
 
     expectAnimatedTransitionSnapshot(await lessonsEntrySnapshotPromise, 'game -> lessons');
@@ -1236,7 +1278,7 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     await expectGameRouteReady(page, 'kangur-primary-nav-lessons');
 
     await page.getByTestId('kangur-primary-nav-lessons').click();
-    await expect(page).toHaveURL(/\/kangur\/lessons$/);
+    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN);
     await expect(page.getByTestId('lessons-list-transition')).toBeVisible();
 
     await page.evaluate(() => {
@@ -1310,18 +1352,22 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     await startRouteScrollMonitor(page);
     await page.getByTestId('kangur-primary-nav-lessons').click();
-    await expect(page).toHaveURL(/\/kangur\/lessons$/);
+    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN);
     await expect(page.getByTestId('lessons-list-transition')).toBeVisible();
     await page.waitForTimeout(120);
 
     const gameToLessonsSamples = await stopRouteScrollMonitor(page);
 
-    expectRouteToResetScrollAfterCommit(gameToLessonsSamples, '/kangur/lessons', 'game -> lessons');
+    expectRouteToResetScrollAfterCommit(
+      gameToLessonsSamples,
+      LESSONS_ROUTE_PATH_PATTERN,
+      'game -> lessons'
+    );
     expectRouteSkeletonHandoff({
       samples: gameToLessonsSamples,
       sourceId: PRIMARY_NAV_LESSONS_SOURCE_ID,
       stepLabel: 'game -> lessons',
-      targetPath: '/kangur/lessons',
+      targetPath: LESSONS_ROUTE_PATH_PATTERN,
     });
     expectNoAppLoaderFlash(gameToLessonsSamples, 'game -> lessons');
 

@@ -7,6 +7,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 import ResultScreen from '@/features/kangur/ui/components/ResultScreen';
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 describe('ResultScreen', () => {
   it('uses the shared Kangur progress bar for the score summary', () => {
     render(
@@ -49,7 +53,15 @@ describe('ResultScreen', () => {
     );
     expect(screen.getByRole('button', { name: 'Strona główna' })).toHaveClass(
       'kangur-cta-pill',
-      'surface-cta'
+      'surface-cta',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
+    expect(screen.getByRole('button', { name: 'Zagraj ponownie' })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
   });
 });

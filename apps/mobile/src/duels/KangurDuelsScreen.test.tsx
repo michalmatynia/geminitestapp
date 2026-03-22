@@ -471,6 +471,11 @@ describe('KangurDuelsScreen', () => {
     renderDuelsScreen();
 
     expect(screen.getByText('Pojedynki')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Stąd uruchomisz szybkie mecze, otworzysz publiczne wyzwania i od razu wrócisz do aktywnych rywali.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('Panel gry')).toBeTruthy();
     expect(screen.getAllByText('Szybki mecz').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Publiczne wyzwanie')).toBeTruthy();
@@ -506,7 +511,7 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Podtrzymaj: Mnożenie')).toBeTruthy();
     expect(screen.getByText('Najmocniejsza lekcja')).toBeTruthy();
     expect(screen.getByText('Próby 4 • ostatni wynik 92%')).toBeTruthy();
-    expect(screen.getByText('Następne kroki')).toBeTruthy();
+    expect(screen.getByText('W lobby')).toBeTruthy();
     expect(screen.getByText('Plan z lobby')).toBeTruthy();
     expect(screen.getByText('Domknij zegar')).toBeTruthy();
     expect(screen.getByText('Priorytet wysoki')).toBeTruthy();
@@ -864,6 +869,11 @@ describe('KangurDuelsScreen', () => {
     renderDuelsScreen();
 
     expect(screen.getByText('Pojedynek')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Tutaj możesz zostać w poczekalni, śledzić postęp graczy i sprawdzać stan rundy bez wychodzenia z pojedynku.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('Sesja duel-1')).toBeTruthy();
     expect(screen.getByText('Poczekalnia pojedynku')).toBeTruthy();
     expect(screen.getByText('Ada')).toBeTruthy();
@@ -906,7 +916,7 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('⚔️ Początek pojedynku')).toBeTruthy();
     expect(screen.getByText('📚 Bohater lekcji')).toBeTruthy();
     expect(screen.getByText('Otwórz profil i odznaki')).toBeTruthy();
-    expect(screen.getByText('Następne kroki')).toBeTruthy();
+    expect(screen.getByText('W pojedynku')).toBeTruthy();
     expect(screen.getByText('Plan obok pojedynku')).toBeTruthy();
     expect(screen.getByText('Domknij dodawanie')).toBeTruthy();
     expect(screen.getByText('Cel: 1 lekcja')).toBeTruthy();

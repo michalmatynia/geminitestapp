@@ -1132,9 +1132,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             {duelPlan.isRestoringAuth || duelPlan.isLoading ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
                 {copy({
-                  de: 'Die heutige mobile Duell-Momentaufnahme wird geladen...',
-                  en: 'Loading today’s mobile duel snapshot...',
-                  pl: 'Ładujemy dzisiejszą mobilną migawkę pojedynków...',
+                  de: 'Der heutige Duellstand wird geladen...',
+                  en: 'Loading today’s duel standing...',
+                  pl: 'Ładujemy dzisiejszy stan pojedynków...',
                 })}
               </Text>
             ) : duelPlan.error ? (
@@ -1165,9 +1165,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             ) : !duelPlan.isAuthenticated ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
                 {copy({
-                  de: 'Melde die Schulersitzung an, um hier deinen Duellstand, letzte Rivalen und schnelle Rückkämpfe in der mobilen Übersicht zu sehen.',
-                  en: 'Sign in the learner session to see duel standing, recent rivals, and quick rematches in this mobile overview.',
-                  pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże w mobilnym podsumowaniu.',
+                  de: 'Melde die Schulersitzung an, um hier deinen Duellstand, letzte Rivalen und schnelle Rückkämpfe zu sehen.',
+                  en: 'Sign in the learner session to see duel standing, recent rivals, and quick rematches here.',
+                  pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże.',
                 })}
               </Text>
             ) : (
@@ -1204,9 +1204,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                 ) : (
                   <Text style={{ color: '#475569', lineHeight: 22 }}>
                     {copy({
-                      de: 'Dein Konto ist in dieser mobilen Ranglisten-Momentaufnahme noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
-                      en: 'Your account is not visible in this mobile leaderboard snapshot yet. Finish another duel or open the lobby so your rank appears here.',
-                      pl: 'Twojego konta nie widać jeszcze w tej mobilnej migawce rankingu. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
+                      de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
+                      en: 'Your account is not visible in this duel standing yet. Finish another duel or open the lobby so your rank appears here.',
+                      pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
                     })}
                   </Text>
                 )}
@@ -1328,9 +1328,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             <View style={{ gap: 4 }}>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                 {copy({
-                  de: 'Nächste Schritte',
-                  en: 'Next steps',
-                  pl: 'Następne kroki',
+                  de: 'Für heute',
+                  en: 'For today',
+                  pl: 'Na dziś',
                 })}
               </Text>
               <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
@@ -1561,17 +1561,17 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             >
               <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
                 {copy({
-                  de: 'Letzte Ergebnisse',
-                  en: 'Recent results',
-                  pl: 'Ostatnie wyniki',
+                  de: 'Ergebniszentrale',
+                  en: 'Results hub',
+                  pl: 'Centrum wyników',
                 })}
               </Text>
               <LinkButton
                 href={createKangurResultsHref()}
                 label={copy({
-                  de: 'Verlauf öffnen',
-                  en: 'Open history',
-                  pl: 'Otwórz historię',
+                  de: 'Vollständigen Verlauf öffnen',
+                  en: 'Open full history',
+                  pl: 'Otwórz pełną historię',
                 })}
               />
             </View>

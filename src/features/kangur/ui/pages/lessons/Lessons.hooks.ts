@@ -25,6 +25,10 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur';
 import { LESSON_COMPONENTS } from '@/features/kangur/lessons/lesson-ui-registry';
 import { resolveFocusedLessonSubject } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
+import {
+  KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX,
+  KANGUR_TOP_BAR_HEIGHT_VAR_NAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonTemplates } from '@/features/kangur/ui/hooks/useKangurLessonTemplates';
 import {
   ACTIVE_LESSON_HEADER_SCROLL_MAX_FRAMES,
@@ -258,12 +262,12 @@ export function useLessonsLogic() {
     let remainingFrames = ACTIVE_LESSON_HEADER_SCROLL_MAX_FRAMES;
     const resolveTopOffset = (): number => {
       const styles = window.getComputedStyle(document.documentElement);
-      let topBarHeight = Number.parseFloat(styles.getPropertyValue('--kangur-top-bar-height')) || 0;
+      let topBarHeight = Number.parseFloat(styles.getPropertyValue(KANGUR_TOP_BAR_HEIGHT_VAR_NAME));
       if (!topBarHeight) {
         const topBar = document.querySelector('[data-testid="kangur-page-top-bar"]');
         if (topBar instanceof HTMLElement) topBarHeight = topBar.getBoundingClientRect().height;
       }
-      return topBarHeight;
+      return topBarHeight || KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX;
     };
     const scrollToTarget = (): boolean => {
       const target = activeLessonNavigationRef.current ?? activeLessonHeaderRef.current;

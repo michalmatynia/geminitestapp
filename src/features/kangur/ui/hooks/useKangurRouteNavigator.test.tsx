@@ -180,4 +180,36 @@ describe('useKangurRouteNavigator', () => {
 
     expect(routerPushMock).toHaveBeenCalledWith('/lessons', { scroll: false });
   });
+
+  it('allows a new managed navigation to supersede a stale in-flight transition on the current route', () => {
+    useLocaleMock.mockReturnValue('en');
+    usePathnameMock.mockReturnValue('/en/kangur/game');
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+      pageKey: 'Game',
+      requestedHref: '/en/kangur/game',
+      requestedPath: '/kangur/game',
+    });
+    useOptionalKangurRouteTransitionStateMock.mockReturnValue({
+      activeTransitionKind: 'navigation',
+      activeTransitionPageKey: 'Game',
+      activeTransitionRequestedHref: '/en/kangur/game',
+      activeTransitionSkeletonVariant: 'game-home',
+      activeTransitionSourceId: 'kangur-primary-nav:home',
+      isRouteAcknowledging: false,
+      isRoutePending: true,
+      isRouteRevealing: false,
+      isRouteWaitingForReady: false,
+      pendingPageKey: 'Game',
+      transitionPhase: 'pending',
+    });
+
+    render(<NavigatorPushProbe acknowledgeMs={110} href='/kangur/lessons' />);
+
+    fireEvent.click(screen.getByTestId('navigator-push'));
+
+    expect(startRouteTransitionMock).not.toHaveBeenCalled();
+    expect(routerPushMock).toHaveBeenCalledWith('/en/kangur/lessons', { scroll: false });
+  });
 });

@@ -3,15 +3,19 @@
 import Image from 'next/image';
 import React from 'react';
 
+import type { NoteWithRelations, NoteFileRecord } from '@/shared/contracts/notes';
 import type { NoteFileRecord } from '@/shared/contracts/notes';
 import { Tag } from '@/shared/ui';
 import { sanitizeHtml } from '@/shared/utils';
 
-import { useNoteCardHeaderRuntime } from './NoteCardHeader';
 import { renderMarkdownToHtml } from '../../utils';
 
-export function NoteCardContent(): React.JSX.Element {
-  const { note } = useNoteCardHeaderRuntime();
+export type NoteCardContentProps = {
+  note: NoteWithRelations;
+};
+
+export function NoteCardContent(props: NoteCardContentProps): React.JSX.Element {
+  const { note } = props;
   const sanitizedContentHtml = React.useMemo((): string => {
     let html =
       (note.editorType as string) === 'wysiwyg' ? note.content : renderMarkdownToHtml(note.content);

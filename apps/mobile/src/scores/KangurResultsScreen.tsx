@@ -860,23 +860,23 @@ export function KangurResultsScreen(): React.JSX.Element {
           <Card>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
               {copy({
-                de: 'Ergebnisverlauf',
-                en: 'Score history',
-                pl: 'Historia wyników',
+                de: 'In den Ergebnissen',
+                en: 'In results',
+                pl: 'W wynikach',
               })}
             </Text>
             <Text style={{ color: '#0f172a', fontSize: 28, fontWeight: '800' }}>
               {copy({
-                de: 'Letzte mobile Sitzungen',
-                en: 'Recent mobile sessions',
-                pl: 'Ostatnie sesje mobilne',
+                de: 'Ergebniszentrale',
+                en: 'Results hub',
+                pl: 'Centrum wyników',
               })}
             </Text>
             <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
               {copy({
-                de: 'Eine Ansicht für letzte Ergebnisse, Genauigkeit und die Aufteilung in arithmetische, zeitbezogene und logische Sitzungen.',
-                en: 'One view for recent results, accuracy, and the split across arithmetic, time, and logic sessions.',
-                pl: 'Jeden widok dla ostatnich wyników, skuteczności oraz podziału na sesje arytmetyczne, czasowe i logiczne.',
+                de: 'Ein Ort für letzte Ergebnisse, Genauigkeit und die Aufteilung in arithmetische, zeitbezogene und logische Sitzungen.',
+                en: 'One place for recent results, accuracy, and the split across arithmetic, time, and logic sessions.',
+                pl: 'Jedno miejsce dla ostatnich wyników, skuteczności oraz podziału na sesje arytmetyczne, czasowe i logiczne.',
               })}
             </Text>
             <Link href={createKangurPlanHref()} asChild>
@@ -1107,9 +1107,9 @@ export function KangurResultsScreen(): React.JSX.Element {
                 <View style={{ gap: 4 }}>
                   <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                     {copy({
-                      de: 'Nächste Schritte',
-                      en: 'Next steps',
-                      pl: 'Następne kroki',
+                      de: 'Nach den Ergebnissen',
+                      en: 'After results',
+                      pl: 'Po wynikach',
                     })}
                   </Text>
                   <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
@@ -1503,9 +1503,9 @@ export function KangurResultsScreen(): React.JSX.Element {
                 {duelResults.isRestoringAuth || duelResults.isLoading ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Die mobile Duell-Momentaufnahme in den Ergebnissen wird geladen.',
-                      en: 'Loading the mobile duel snapshot in results.',
-                      pl: 'Pobieramy mobilną migawkę pojedynków w wynikach.',
+                      de: 'Der Duellstand in den Ergebnissen wird geladen.',
+                      en: 'Loading the duel standing in results.',
+                      pl: 'Pobieramy stan pojedynków w wynikach.',
                     })}
                   </Text>
                 ) : duelResults.error ? (
@@ -1576,9 +1576,9 @@ export function KangurResultsScreen(): React.JSX.Element {
                     ) : (
                       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                         {copy({
-                          de: 'Dein Konto ist in dieser mobilen Ranglisten-Momentaufnahme noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
-                          en: 'Your account is not visible in this mobile leaderboard snapshot yet. Finish another duel or open the lobby so your rank appears here.',
-                          pl: 'Twojego konta nie widać jeszcze w tej mobilnej migawce rankingu. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
+                          de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
+                          en: 'Your account is not visible in this duel standing yet. Finish another duel or open the lobby so your rank appears here.',
+                          pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
                         })}
                       </Text>
                     )}

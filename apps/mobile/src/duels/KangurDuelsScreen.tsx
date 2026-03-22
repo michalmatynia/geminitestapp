@@ -1270,11 +1270,17 @@ function NextStepsCard({
     <Card>
       <View style={{ gap: 4 }}>
         <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-          {copy({
-            de: 'Nächste Schritte',
-            en: 'Next steps',
-            pl: 'Następne kroki',
-          })}
+          {context === 'session'
+            ? copy({
+                de: 'Im Duell',
+                en: 'In duel',
+                pl: 'W pojedynku',
+              })
+            : copy({
+                de: 'In der Lobby',
+                en: 'In lobby',
+                pl: 'W lobby',
+              })}
         </Text>
         <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
           {context === 'session'
@@ -2432,9 +2438,9 @@ export function KangurDuelsScreen(): React.JSX.Element {
                       pl: 'Tryb obserwatora pokazuje publiczny stan pojedynku i reakcje bez dołączania do meczu jako gracz.',
                     })
                   : copy({
-                      de: 'Der mobile Duellbildschirm zeigt Warteraum, Spielerfortschritt und Rundenstatus auf denselben Duels-Verträgen wie das Web.',
-                      en: 'The mobile duel screen shows the waiting room, player progress, and round state using the same duels contracts as the web app.',
-                      pl: 'Mobilny ekran pojedynku pokazuje poczekalnię, postęp gracza i stan rundy na tych samych kontraktach duels co web.',
+                      de: 'Hier kannst du im Warteraum bleiben, den Spielfortschritt verfolgen und den Rundenstatus prüfen, ohne das Duell zu verlassen.',
+                      en: 'Here you can stay in the waiting room, follow player progress, and check round status without leaving the duel.',
+                      pl: 'Tutaj możesz zostać w poczekalni, śledzić postęp graczy i sprawdzać stan rundy bez wychodzenia z pojedynku.',
                     })
               }
             />
@@ -3211,9 +3217,9 @@ export function KangurDuelsScreen(): React.JSX.Element {
               pl: 'Pojedynki',
             })}
             subtitle={copy({
-              de: 'Die mobile Duell-Lobby nutzt dieselben Kangur-Duels-Verträge und Endpunkte wie die Webversion.',
-              en: 'The mobile duels lobby uses the same Kangur duels contracts and endpoints as the web version.',
-              pl: 'Mobilne lobby pojedynków korzysta z tych samych kontraktów i endpointów Kangur duels co wersja webowa.',
+              de: 'Von hier aus startest du schnelle Matches, öffnest öffentliche Herausforderungen und kehrst direkt zu aktiven Rivalen zurück.',
+              en: 'From here you can start quick matches, open public challenges, and jump straight back to active rivals.',
+              pl: 'Stąd uruchomisz szybkie mecze, otworzysz publiczne wyzwania i od razu wrócisz do aktywnych rywali.',
             })}
           />
         </View>

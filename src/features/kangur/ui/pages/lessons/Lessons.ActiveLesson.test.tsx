@@ -38,7 +38,7 @@ vi.mock('@/features/kangur/ui/components/KangurActiveLessonHeader', () => ({
   }) => (
     <div data-testid={headerTestId}>
       <button type='button' onClick={onBack}>
-        Wroc do listy lekcji
+        Wróć do listy lekcji
       </button>
     </div>
   ),
@@ -95,9 +95,14 @@ vi.mock('@/features/kangur/ui/design/primitives', () => ({
   KangurSummaryPanel: ({ title }: { title: string }) => <div>{title}</div>,
 }));
 
-vi.mock('@/features/kangur/ui/design/tokens', () => ({
-  KANGUR_PANEL_GAP_CLASSNAME: 'gap',
-}));
+vi.mock('@/features/kangur/ui/design/tokens', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/ui/design/tokens')>();
+
+  return {
+    ...actual,
+    KANGUR_PANEL_GAP_CLASSNAME: 'gap',
+  };
+});
 
 vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
   useKangurMobileBreakpoint: () => useKangurMobileBreakpointMock(),
@@ -252,7 +257,7 @@ describe('ActiveLessonView mobile scroll controls', () => {
     inContentBackButton.addEventListener('click', inContentBackClick);
     activeLessonContentRef.current?.appendChild(inContentBackButton);
 
-    const headerBackButton = screen.getByRole('button', { name: 'Wroc do listy lekcji' });
+    const headerBackButton = screen.getByRole('button', { name: 'Wróć do listy lekcji' });
     fireEvent.click(headerBackButton);
 
     expect(inContentBackClick).not.toHaveBeenCalled();
@@ -264,7 +269,7 @@ describe('ActiveLessonView mobile scroll controls', () => {
     render(<ActiveLessonView />);
     await act(async () => {});
 
-    const headerBackButton = screen.getByRole('button', { name: 'Wroc do listy lekcji' });
+    const headerBackButton = screen.getByRole('button', { name: 'Wróć do listy lekcji' });
     fireEvent.click(headerBackButton);
 
     expect(handleSelectLesson).toHaveBeenCalledWith(null);
@@ -307,10 +312,10 @@ describe('ActiveLessonView mobile scroll controls', () => {
       <button
         type='button'
         data-kangur-lesson-back='true'
-        data-kangur-lesson-back-label='Wroc do tematow'
+        data-kangur-lesson-back-label='Wróć do tematow'
         onClick={() => lessonDocumentBackClickMock()}
       >
-        Wroc do tematow
+        Wróć do tematow
       </button>
     );
     render(<ActiveLessonView />);

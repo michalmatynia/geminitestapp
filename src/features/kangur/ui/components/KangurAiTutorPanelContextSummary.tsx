@@ -1,6 +1,7 @@
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurButton, KangurPanelStack } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PAGE_CONTENT_COLLECTION } from '@/features/kangur/shared/contracts/kangur-page-content';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   KANGUR_STACK_ROW_CLASSNAME,
   KANGUR_TIGHT_ROW_CLASSNAME,
@@ -14,7 +15,6 @@ import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state'
 
 import type { HTMLAttributes, JSX, ReactNode } from 'react';
 
-const contextSummaryCardActionClassName = 'h-8 w-full px-3 text-[11px] sm:w-auto sm:shrink-0';
 const contextSummaryChipClassName =
   'rounded-full border px-3 py-1 kangur-chat-surface-soft [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]';
 
@@ -68,10 +68,14 @@ function KangurAiTutorPanelContextCard({
   testId,
   title,
 }: ContextSummaryCardProps): JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const cardTestId = testId;
   const primaryActionConfig = primaryAction;
   const secondaryActionConfig = secondaryAction;
   const statusConfig = status;
+  const contextSummaryCardActionClassName = isCoarsePointer
+    ? 'min-h-11 w-full px-4 text-xs touch-manipulation select-none active:scale-[0.97] sm:w-auto sm:shrink-0'
+    : 'h-8 w-full px-3 text-[11px] sm:w-auto sm:shrink-0';
 
   return (
     <KangurAiTutorWarmInsetCard

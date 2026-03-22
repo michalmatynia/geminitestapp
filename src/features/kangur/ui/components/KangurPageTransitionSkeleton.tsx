@@ -16,6 +16,8 @@ import {
   KANGUR_LESSON_PANEL_GAP_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_PANEL_ROW_CLASSNAME,
+  KANGUR_TOP_BAR_OFFSET_CLASSNAME,
+  KANGUR_TOP_BAR_PADDED_OFFSET_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import {
@@ -522,7 +524,7 @@ export function KangurPageTransitionSkeleton({
         embedded
           ? 'absolute inset-0'
           : shouldOffsetStandaloneLessonsOverlay
-            ? 'fixed inset-x-0 bottom-0 top-[var(--kangur-top-bar-height,88px)]'
+            ? cn('fixed inset-x-0 bottom-0', KANGUR_TOP_BAR_OFFSET_CLASSNAME)
             : 'fixed inset-0',
         'z-30 cursor-progress overflow-hidden',
         isLocaleSwitch ? 'backdrop-blur-md' : null
@@ -557,7 +559,7 @@ export function KangurPageTransitionSkeleton({
             resolvedPageKey === 'Lessons'
               ? null
               : resolvedPageKey === 'Game'
-                ? 'pt-[calc(var(--kangur-top-bar-height,88px)+12px)]'
+                ? KANGUR_TOP_BAR_PADDED_OFFSET_CLASSNAME
                 : 'pt-24 sm:pt-28'
           ),
           'data-kangur-route-main': false,

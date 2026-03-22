@@ -142,10 +142,46 @@ describe('KangurResultsScreen', () => {
 
     render(<KangurResultsScreen />);
 
-    expect(screen.getByText('Historia wyników')).toBeTruthy();
-    expect(screen.getByText('Ostatnie sesje mobilne')).toBeTruthy();
+    expect(screen.getByText('W wynikach')).toBeTruthy();
+    expect(screen.getByText('Centrum wyników')).toBeTruthy();
     expect(
       screen.getByText('Przywracamy sesję ucznia i historię wyników.'),
+    ).toBeTruthy();
+  });
+
+  it('shows the duel loading state after results are available', () => {
+    useKangurMobileResultsDuelsMock.mockReturnValue({
+      actionError: null,
+      createRematch: vi.fn(),
+      currentEntry: null,
+      currentRank: null,
+      error: null,
+      isActionPending: false,
+      isAuthenticated: true,
+      isLoading: true,
+      isRestoringAuth: false,
+      opponents: [],
+      pendingOpponentLearnerId: null,
+      refresh: vi.fn(),
+    });
+
+    render(<KangurResultsScreen />);
+
+    expect(screen.getByText('Pojedynki')).toBeTruthy();
+    expect(screen.getByText('Pobieramy stan pojedynków w wynikach.')).toBeTruthy();
+  });
+
+  it('shows the pending duel standing when the learner rank is not visible yet', () => {
+    render(<KangurResultsScreen />);
+
+    expect(screen.getByText('Pojedynki')).toBeTruthy();
+    expect(screen.getByText('Szybki powrót do rywali')).toBeTruthy();
+    expect(screen.getByText('Rywale 0')).toBeTruthy();
+    expect(screen.getByText('Czeka na widoczność')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
+      ),
     ).toBeTruthy();
   });
 
@@ -359,7 +395,9 @@ describe('KangurResultsScreen', () => {
     expect(screen.getByText('#2 Ada Learner')).toBeTruthy();
     expect(screen.getByText('Leo Mentor')).toBeTruthy();
     expect(screen.getByText('Szybki rewanż')).toBeTruthy();
-    expect(screen.getByText('Następne kroki')).toBeTruthy();
+    expect(screen.getByText('W wynikach')).toBeTruthy();
+    expect(screen.getByText('Centrum wyników')).toBeTruthy();
+    expect(screen.getByText('Po wynikach')).toBeTruthy();
     expect(screen.getByText('Plan po wynikach')).toBeTruthy();
     expect(screen.getByText('Domknij zegar')).toBeTruthy();
     expect(screen.getByText('Priorytet wysoki')).toBeTruthy();

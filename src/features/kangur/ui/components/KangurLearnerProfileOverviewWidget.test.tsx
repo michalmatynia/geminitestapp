@@ -43,6 +43,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 import { KangurLearnerProfileOverviewWidget } from './KangurLearnerProfileOverviewWidget';
 
 describe('KangurLearnerProfileOverviewWidget placeholder', () => {
@@ -88,5 +92,16 @@ describe('KangurLearnerProfileOverviewWidget placeholder', () => {
   it('renders without crashing', () => {
     render(<KangurLearnerProfileOverviewWidget />);
     expect(true).toBe(true);
+  });
+
+  it('uses larger touch-friendly avatar buttons on coarse pointers', () => {
+    render(<KangurLearnerProfileOverviewWidget />);
+
+    expect(screen.getAllByRole('radio')[0]).toHaveClass(
+      'h-12',
+      'w-12',
+      'touch-manipulation',
+      'select-none'
+    );
   });
 });

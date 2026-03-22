@@ -94,6 +94,9 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
 
 import { KangurParentDashboardLearnerManagementWidget } from './KangurParentDashboardLearnerManagementWidget';
 
@@ -291,6 +294,16 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
     });
 
     expect(await screen.findByTestId('parent-profile-session-session-2')).toBeInTheDocument();
+  });
+
+  it('widens the learner settings shortcut on coarse pointers', () => {
+    render(<KangurParentDashboardLearnerManagementWidget />);
+
+    expect(screen.getByRole('button', { name: 'Ustawienia profilu ucznia' })).toHaveClass(
+      'h-11',
+      'w-11',
+      'p-0'
+    );
   });
 
   it('stays hidden without dashboard access', () => {

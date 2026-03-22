@@ -18,6 +18,10 @@ import {
   KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 describe('KangurPracticeGameChrome', () => {
   it('renders the shared practice game stage and progress row', () => {
     render(
@@ -83,11 +87,17 @@ describe('KangurPracticeGameChrome', () => {
     expect(screen.getByTestId('practice-summary-breakdown')).toHaveTextContent('Skuteczność');
     expect(screen.getByRole('button', { name: /jeszcze raz/i })).toHaveClass(
       'kangur-cta-pill',
-      'surface-cta'
+      'surface-cta',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
     expect(screen.getByRole('button', { name: 'Wróć' })).toHaveClass(
       'kangur-cta-pill',
-      'primary-cta'
+      'primary-cta',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
   });
 

@@ -208,11 +208,16 @@ vi.mock('@/features/kangur/ui/design/primitives', () => ({
   KangurStatusChip: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock('@/features/kangur/ui/design/tokens', () => ({
-  KANGUR_PANEL_GAP_CLASSNAME: 'panel-gap',
-  KANGUR_TIGHT_ROW_CLASSNAME: 'tight-row',
-  KANGUR_WRAP_ROW_CLASSNAME: 'wrap-row',
-}));
+vi.mock('@/features/kangur/ui/design/tokens', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/ui/design/tokens')>();
+
+  return {
+    ...actual,
+    KANGUR_PANEL_GAP_CLASSNAME: 'panel-gap',
+    KANGUR_TIGHT_ROW_CLASSNAME: 'tight-row',
+    KANGUR_WRAP_ROW_CLASSNAME: 'wrap-row',
+  };
+});
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLearnerActivity', () => ({
   useKangurLearnerActivityPing: () => undefined,

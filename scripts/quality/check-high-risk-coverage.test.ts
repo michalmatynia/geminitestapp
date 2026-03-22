@@ -116,6 +116,20 @@ describe('analyzeHighRiskCoverage', () => {
         expect.objectContaining({ ruleId: 'high-risk-coverage-target-unmatched', severity: 'warn' }),
       ])
     );
+    expect(report.targets[0]).toEqual(
+      expect.objectContaining({
+        id: 'api-routes',
+        lowestCoverageFiles: [
+          expect.objectContaining({
+            filePath: 'src/app/api/health/route.ts',
+            lines: 60,
+            statements: 60,
+            functions: 60,
+            branches: 50,
+          }),
+        ],
+      })
+    );
   });
 
   it('warns when the coverage summary artifact is missing', () => {

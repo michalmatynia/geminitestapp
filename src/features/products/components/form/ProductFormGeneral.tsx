@@ -552,23 +552,35 @@ export default function ProductFormGeneral(): React.JSX.Element {
       <FormSection title='Identifiers' gridClassName='md:grid-cols-2'>
         <ValidatedField name='sku' label='SKU' required placeholder='Unique stock keeping unit' />
 
-        <FormField label='Product Identifier' description='EAN, GTIN or ASIN code.'>
-          <div className='flex gap-2'>
-            <SelectSimple
-              size='sm'
-              value={identifierType}
-              onValueChange={(value: string): void =>
-                setIdentifierType(value as 'ean' | 'gtin' | 'asin')
-              }
-              ariaLabel='Product identifier type'
-              options={PRODUCT_IDENTIFIER_OPTIONS}
-              className='w-[100px]'
-             title='Product Identifier'/>
-            <Input
-              id={identifierType}
-              {...register(identifierType)}
-              placeholder={`Enter ${identifierType.toUpperCase()}`}
-             aria-label={`Enter ${identifierType.toUpperCase()}`} title={`Enter ${identifierType.toUpperCase()}`}/>
+        <FormField label='Product Identifier' controlId={identifierType}>
+          <div className='space-y-1.5'>
+            <div className='flex gap-2'>
+              <SelectSimple
+                size='sm'
+                value={identifierType}
+                onValueChange={(value: string): void =>
+                  setIdentifierType(value as 'ean' | 'gtin' | 'asin')
+                }
+                ariaLabel='Product identifier type'
+                options={PRODUCT_IDENTIFIER_OPTIONS}
+                className='w-[100px]'
+                title='Product Identifier'
+              />
+              <Input
+                id={identifierType}
+                {...register(identifierType)}
+                placeholder={`Enter ${identifierType.toUpperCase()}`}
+                aria-label={`Enter ${identifierType.toUpperCase()}`}
+                aria-describedby='product-identifier-hint'
+                title={`Enter ${identifierType.toUpperCase()}`}
+              />
+            </div>
+            <p
+              id='product-identifier-hint'
+              className='text-[10px] italic leading-relaxed text-gray-500'
+            >
+              EAN, GTIN or ASIN code.
+            </p>
           </div>
         </FormField>
       </FormSection>

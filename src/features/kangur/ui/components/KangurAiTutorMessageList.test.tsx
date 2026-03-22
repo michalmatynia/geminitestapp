@@ -16,6 +16,10 @@ import { getAssistantMessageFeedbackKey } from './KangurAiTutorWidget.helpers';
 
 import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 const EMPTY_FEEDBACK: Record<string, 'helpful' | 'not_helpful'> = {};
 
 const createPanelBodyContextValue = (
@@ -412,6 +416,16 @@ describe('KangurAiTutorMessageList', () => {
     expect(screen.getByTestId('kangur-ai-tutor-feedback-helpful-0')).toHaveAttribute(
       'aria-pressed',
       'true'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-feedback-helpful-0')).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'text-xs'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-feedback-not-helpful-0')).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'text-xs'
     );
     expect(screen.getByTestId('kangur-ai-tutor-feedback-0')).toHaveClass(
       'kangur-chat-card',

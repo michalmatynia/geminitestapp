@@ -15,7 +15,6 @@ import {
 import { normalizePageSlugValues } from '@/features/cms/utils/slug-utils';
 import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
 import type { Page, Slug } from '@/shared/contracts/cms';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import {
   AdminCmsBreadcrumbs,
   Alert,
@@ -82,23 +81,16 @@ export default function EditPagePageLoader(): React.JSX.Element {
   return <EditPageContent key={pageQuery.data.id} initialPage={pageQuery.data} pageId={pageId} />;
 }
 
-type EditPageRouteListRuntimeValue = {
+type EditPageRouteListProps = {
   visibleSlugs: Slug[];
   selectedSlugIds: string[];
   domainSlugIds: Set<string>;
   onToggleSlug: (slugId: string) => void;
 };
 
-const { Context: EditPageRouteListRuntimeContext, useStrictContext: useEditPageRouteListRuntime } =
-  createStrictContext<EditPageRouteListRuntimeValue>({
-    hookName: 'useEditPageRouteListRuntime',
-    providerName: 'EditPageRouteListRuntimeProvider',
-    displayName: 'EditPageRouteListRuntimeContext',
-  });
+export function EditPageRouteList(props: EditPageRouteListProps): React.JSX.Element {
+  const { visibleSlugs, selectedSlugIds, domainSlugIds, onToggleSlug } = props;
 
-function EditPageRouteList(): React.JSX.Element {
-  const { visibleSlugs, selectedSlugIds, domainSlugIds, onToggleSlug } =
-    useEditPageRouteListRuntime();
   return (
     <SearchableList
       items={visibleSlugs}
@@ -182,15 +174,6 @@ function EditPageContent({
       });
     },
     [selectedSlugIds]
-  );
-  const routeListRuntimeValue = useMemo(
-    () => ({
-      visibleSlugs,
-      selectedSlugIds,
-      domainSlugIds,
-      onToggleSlug: handleToggleSlug,
-    }),
-    [domainSlugIds, handleToggleSlug, selectedSlugIds, visibleSlugs]
   );
 
   const handleSave = async (): Promise<void> => {
@@ -280,9 +263,12 @@ function EditPageContent({
             }
             className='p-6'
           >
-            <EditPageRouteListRuntimeContext.Provider value={routeListRuntimeValue}>
-              <EditPageRouteList />
-            </EditPageRouteListRuntimeContext.Provider>
+            <EditPageRouteList
+              visibleSlugs={visibleSlugs}
+              selectedSlugIds={selectedSlugIds}
+              domainSlugIds={domainSlugIds}
+              onToggleSlug={handleToggleSlug}
+            />
           </FormSection>
 
           {crossZoneSlugs.length > 0 && (

@@ -22,6 +22,7 @@ import {
   KANGUR_INLINE_CENTER_ROW_CLASSNAME,
   KANGUR_RELAXED_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import type { KangurDailyQuestState } from '@/features/kangur/shared/contracts/kangur-quests';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
@@ -40,6 +41,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
   const nextBadge = getNextLockedBadge(progress, { translate: runtimeTranslations });
   const [isSavingAvatar, setIsSavingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const isCoarsePointer = useKangurCoarsePointer();
   const activeLearner = user?.activeLearner ?? null;
   const selectedAvatar = getKangurAvatarById(activeLearner?.avatarId);
   const dailyQuest = useMemo<KangurDailyQuestState | null | undefined>(
@@ -152,7 +154,9 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
                 onClick={() => {
                   void handleAvatarSelect(option.id);
                 }}
-                className={`relative h-11 w-11 overflow-hidden rounded-full border transition sm:h-12 sm:w-12 ${
+                className={`relative overflow-hidden rounded-full border transition touch-manipulation select-none active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white ${
+                  isCoarsePointer ? 'h-12 w-12 sm:h-14 sm:w-14' : 'h-11 w-11 sm:h-12 sm:w-12'
+                } ${
                   isSelected
                     ? 'border-amber-400 shadow-[0_0_0_3px_rgba(251,191,36,0.25)]'
                     : 'border-white/80 hover:border-amber-200'

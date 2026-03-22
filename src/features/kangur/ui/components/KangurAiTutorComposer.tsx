@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurTextField } from '@/features/kangur/ui/design/primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   KANGUR_CENTER_ROW_CLASSNAME,
   KANGUR_START_ROW_CLASSNAME,
@@ -26,6 +27,7 @@ type TutorDrawingContent = {
 
 export function KangurAiTutorComposer(): JSX.Element {
   const tutorContent = useKangurAiTutorContent();
+  const isCoarsePointer = useKangurCoarsePointer();
   const drawingContent = (tutorContent as { drawing?: TutorDrawingContent }).drawing;
   const {
     canSendMessages,
@@ -83,10 +85,12 @@ export function KangurAiTutorComposer(): JSX.Element {
             <button
               type='button'
               onClick={handleClearDrawing}
-              className='absolute -right-1.5 -top-1.5 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border kangur-chat-surface-soft shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white hover:[background:var(--kangur-chat-danger-background,#fff1f2)] hover:[color:var(--kangur-chat-danger-text,#ef4444)] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
+              className={`absolute -right-1.5 -top-1.5 flex cursor-pointer items-center justify-center rounded-full border kangur-chat-surface-soft shadow-sm transition-colors touch-manipulation select-none active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white hover:[background:var(--kangur-chat-danger-background,#fff1f2)] hover:[color:var(--kangur-chat-danger-text,#ef4444)] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] ${
+                isCoarsePointer ? 'h-8 w-8' : 'h-5 w-5'
+              }`}
               aria-label={drawingContent?.clearLabel ?? 'Usuń rysunek'}
               title={drawingContent?.clearLabel ?? 'Usuń rysunek'}>
-              <X aria-hidden='true' className='h-2.5 w-2.5' />
+              <X aria-hidden='true' className={isCoarsePointer ? 'h-3.5 w-3.5' : 'h-2.5 w-2.5'} />
             </button>
           </div>
           <span className='mt-1 text-[10px] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
@@ -107,7 +111,9 @@ export function KangurAiTutorComposer(): JSX.Element {
               type='button'
               disabled={isLoading || !canSendMessages}
               aria-label={action.label}
-              className={`inline-flex h-7 items-center rounded-full border px-3 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white ${
+              className={`inline-flex items-center rounded-full border font-medium transition-colors touch-manipulation select-none active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white ${
+                isCoarsePointer ? 'min-h-10 px-4 text-xs' : 'h-7 px-3 text-[11px]'
+              } ${
                 isLoading || !canSendMessages
                   ? 'cursor-not-allowed border-transparent opacity-40'
                   : 'cursor-pointer border-[color:var(--kangur-soft-card-border)] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))] hover:[background:var(--kangur-soft-card-background)]'
@@ -148,13 +154,15 @@ export function KangurAiTutorComposer(): JSX.Element {
             <button
               data-testid='kangur-ai-tutor-drawing-toggle'
               type='button'
-              className='absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center p-0 transition-colors [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 disabled:opacity-40 disabled:cursor-not-allowed'
+              className={`absolute right-1 top-1/2 flex -translate-y-1/2 cursor-pointer items-center justify-center p-0 transition-colors touch-manipulation select-none active:scale-[0.97] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 disabled:opacity-40 disabled:cursor-not-allowed ${
+                isCoarsePointer ? 'h-10 w-10' : 'h-8 w-8'
+              }`}
               disabled={isLoading || !canSendMessages}
               onClick={handleToggleDrawing}
               aria-label={drawingContent?.toggleLabel ?? 'Rysuj'}
               aria-pressed={drawingMode}
             >
-              <Pen aria-hidden='true' className='h-3.5 w-3.5' />
+              <Pen aria-hidden='true' className={isCoarsePointer ? 'h-4 w-4' : 'h-3.5 w-3.5'} />
             </button>
           ) : null}
         </div>

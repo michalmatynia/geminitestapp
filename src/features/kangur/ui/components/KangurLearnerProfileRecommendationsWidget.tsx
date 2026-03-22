@@ -13,12 +13,14 @@ import {
   KangurGlassPanel,
   KangurPanelIntro,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 
 const LEARNER_PROFILE_RECOMMENDATION_ROUTE_ACKNOWLEDGE_MS = 110;
 
 export function KangurLearnerProfileRecommendationsWidget(): React.JSX.Element {
   const translations = useTranslations('KangurLearnerProfileWidgets.recommendations');
+  const isCoarsePointer = useKangurCoarsePointer();
   const { basePath, snapshot } = useKangurLearnerProfileRuntime();
   const { entry: recommendationsContent } =
     useKangurPageContentEntry('learner-profile-recommendations');
@@ -48,7 +50,11 @@ export function KangurLearnerProfileRecommendationsWidget(): React.JSX.Element {
                 action={
                   <KangurButton
                     asChild
-                    className='mt-0 w-full sm:w-auto'
+                    className={
+                      isCoarsePointer
+                        ? 'mt-0 w-full min-h-11 px-4 sm:w-auto'
+                        : 'mt-0 w-full sm:w-auto'
+                    }
                     size='sm'
                     variant='primary'
                     data-doc-id='learner_recommendation_action'

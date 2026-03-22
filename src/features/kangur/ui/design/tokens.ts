@@ -13,6 +13,13 @@ export const KANGUR_TOP_BAR_CLASSNAME =
   'kangur-top-bar sticky inset-x-0 top-0 z-40 w-full';
 export const KANGUR_TOP_BAR_INNER_CLASSNAME =
   'flex w-full flex-col items-stretch kangur-panel-gap px-4 sm:px-6 lg:px-8 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap';
+export const KANGUR_TOP_BAR_HEIGHT_VAR_NAME = '--kangur-top-bar-height';
+export const KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX = 88;
+export const KANGUR_TOP_BAR_OFFSET_CLASSNAME = 'top-[var(--kangur-top-bar-height,88px)]';
+export const KANGUR_TOP_BAR_PADDED_OFFSET_CLASSNAME =
+  'pt-[calc(var(--kangur-top-bar-height,88px)+12px)]';
+export const KANGUR_SHELL_MINUS_TOP_BAR_HEIGHT_CLASSNAME =
+  'h-[calc(var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px))]';
 export const KANGUR_PAGE_CONTAINER_CLASSNAME =
   'kangur-page-container w-full min-w-0 max-w-full px-4 sm:px-6 lg:px-8 mx-auto';
 export const KANGUR_PANEL_GAP_CLASSNAME = 'kangur-panel-gap';

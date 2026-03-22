@@ -55,17 +55,17 @@ export const buildKangurHomeDebugProofViewModel = (input: {
         {
           detail: getKangurMobileLocalizedValue(
             {
-              de: 'Die Schulersitzung und die synchronisierten Ergebnisdaten werden wiederhergestellt.',
-              en: 'We are restoring the learner session and synchronized score data.',
-              pl: 'Przywracamy sesję ucznia i zsynchronizowane dane wyników.',
+              de: 'Die Schulersitzung und die synchronisierten Ergebnisdaten für den Startbildschirm werden wiederhergestellt.',
+              en: 'We are restoring the learner session and synchronized results data for home.',
+              pl: 'Przywracamy sesję ucznia i zsynchronizowane dane wyników dla ekranu głównego.',
             },
             locale,
           ),
           label: getKangurMobileLocalizedValue(
             {
-              de: 'Ergebnisschleife auf dem Startbildschirm',
-              en: 'Home score loop',
-              pl: 'Pętla wyników strony głównej',
+              de: 'Ergebniszentrale des Startbildschirms',
+              en: 'Home results hub',
+              pl: 'Centrum wyników strony głównej',
             },
             locale,
           ),
@@ -83,17 +83,17 @@ export const buildKangurHomeDebugProofViewModel = (input: {
         {
           detail: getKangurMobileLocalizedValue(
             {
-              de: 'Auf dem Startbildschirm ist die Ergebnisschleife für die Schulersitzung noch nicht aktiviert.',
-              en: 'The home screen score loop is not enabled yet for the learner session.',
-              pl: 'Na stronie głównej nie włączono jeszcze pętli wyników dla sesji ucznia.',
+              de: 'Auf dem Startbildschirm ist die Ergebniszentrale für die Schulersitzung noch nicht aktiviert.',
+              en: 'The home results hub is not enabled yet for the learner session.',
+              pl: 'Na ekranie głównym nie włączono jeszcze centrum wyników dla sesji ucznia.',
             },
             locale,
           ),
           label: getKangurMobileLocalizedValue(
             {
-              de: 'Ergebnisschleife auf dem Startbildschirm',
-              en: 'Home score loop',
-              pl: 'Pętla wyników strony głównej',
+              de: 'Ergebniszentrale des Startbildschirms',
+              en: 'Home results hub',
+              pl: 'Centrum wyników strony głównej',
             },
             locale,
           ),
@@ -125,9 +125,9 @@ export const buildKangurHomeDebugProofViewModel = (input: {
             ),
             label: getKangurMobileLocalizedValue(
               {
-                de: 'Letzte Ergebnisse',
-                en: 'Recent results',
-                pl: 'Ostatnie wyniki',
+                de: 'Ergebniszentrale',
+                en: 'Results hub',
+                pl: 'Centrum wyników',
               },
               locale,
             ),
@@ -136,17 +136,17 @@ export const buildKangurHomeDebugProofViewModel = (input: {
         : {
             detail: getKangurMobileLocalizedValue(
               {
-                de: 'Dieser Modus ist im Bereich der letzten Ergebnisse noch nicht sichtbar.',
-                en: 'This mode is not visible in the recent results section yet.',
-                pl: 'Ten tryb nie jest jeszcze widoczny w sekcji ostatnich wyników.',
+                de: 'Dieser Modus ist in der Ergebniszentrale noch nicht sichtbar.',
+                en: 'This mode is not visible in the results hub yet.',
+                pl: 'Ten tryb nie jest jeszcze widoczny w centrum wyników.',
               },
               locale,
             ),
             label: getKangurMobileLocalizedValue(
               {
-                de: 'Letzte Ergebnisse',
-                en: 'Recent results',
-                pl: 'Ostatnie wyniki',
+                de: 'Ergebniszentrale',
+                en: 'Results hub',
+                pl: 'Centrum wyników',
               },
               locale,
             ),

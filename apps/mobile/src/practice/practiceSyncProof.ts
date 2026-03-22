@@ -114,9 +114,9 @@ export const buildKangurPracticeSyncProofSnapshot = ({
       pl: 'Postęp profilu',
     },
     recentResults: {
-      de: 'Ergebnisverlauf',
-      en: 'Result history',
-      pl: 'Historia wyników',
+      de: 'Ergebniszentrale',
+      en: 'Results hub',
+      pl: 'Centrum wyników',
     },
     you: {
       de: 'Du',

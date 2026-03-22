@@ -162,6 +162,7 @@ function DraggableToken({
       disableInteractiveElementBlocking
     >
       {(draggableProvided, snapshot) => {
+        const isCoarse = isCoarsePointer;
         const content = (
           <div
             ref={draggableProvided.innerRef}
@@ -169,7 +170,7 @@ function DraggableToken({
             {...draggableProvided.dragHandleProps}
             className={cn(
               'flex items-center justify-center rounded-full text-lg transition-transform duration-150 touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white sm:h-12 sm:w-12 sm:text-xl lg:h-14 lg:w-14',
-              isCoarsePointer
+              isCoarse
                 ? 'h-14 w-14 text-xl active:scale-[0.98] sm:h-14 sm:w-14 lg:h-16 lg:w-16 lg:text-2xl'
                 : 'h-11 w-11',
               token.style,

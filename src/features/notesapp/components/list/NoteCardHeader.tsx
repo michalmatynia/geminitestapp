@@ -5,31 +5,18 @@ import React from 'react';
 
 import { useNotesAppActions } from '@/features/notesapp/hooks/NotesAppContext';
 import type { NoteWithRelations } from '@/shared/contracts/notes';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button, CopyButton, Badge } from '@/shared/ui';
 
-export type NoteCardHeaderRuntimeValue = {
+export type NoteCardHeaderProps = {
   note: NoteWithRelations;
-  backgroundColor: string;
-  relatedNoteStyle: React.CSSProperties;
   onSelectNote: (note: NoteWithRelations) => void;
   enableDrag: boolean;
   onNoteDragStart: (event: React.DragEvent<HTMLElement>) => void;
   onNoteDragEnd: () => void;
 };
 
-const { Context: NoteCardHeaderRuntimeContext, useStrictContext: useNoteCardHeaderRuntime } =
-  createStrictContext<NoteCardHeaderRuntimeValue>({
-    hookName: 'useNoteCardHeaderRuntime',
-    providerName: 'NoteCardHeaderRuntimeProvider',
-    displayName: 'NoteCardHeaderRuntimeContext',
-  });
-
-export { NoteCardHeaderRuntimeContext, useNoteCardHeaderRuntime };
-
-export function NoteCardHeader(): React.JSX.Element {
-  const { note, onSelectNote, enableDrag, onNoteDragStart, onNoteDragEnd } =
-    useNoteCardHeaderRuntime();
+export function NoteCardHeader(props: NoteCardHeaderProps): React.JSX.Element {
+  const { note, onSelectNote, enableDrag, onNoteDragStart, onNoteDragEnd } = props;
   const { handleToggleFavorite } = useNotesAppActions();
 
   const isCodeNote = (note.editorType as string) === 'code';

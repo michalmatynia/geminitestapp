@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowDown, ArrowUp, Copy, Plus, Trash2 } from 'lucide-react';
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 
 import {
   PRODUCT_ADVANCED_FILTER_MAX_DEPTH,
@@ -11,7 +11,6 @@ import {
   type ProductAdvancedFilterGroup,
   type ProductAdvancedFilterRule,
 } from '@/shared/contracts/products';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button, Checkbox, Input, Label, SelectSimple } from '@/shared/ui';
 import type { SelectSimpleOption } from '@/shared/contracts/ui';
 
@@ -48,8 +47,7 @@ interface AdvancedFilterBuilderProps {
   fieldValueOptions?: AdvancedFilterBuilderFieldValueOptions;
 }
 
-interface AdvancedFilterContextValue {
-  group: ProductAdvancedFilterGroup;
+type AdvancedFilterEditorRuntime = {
   onChange: (group: ProductAdvancedFilterGroup) => void;
   fieldValueOptions: AdvancedFilterBuilderFieldValueOptions;
   handleRuleChange: (
@@ -74,14 +72,7 @@ interface AdvancedFilterContextValue {
     parentGroup: ProductAdvancedFilterGroup,
     updateParent: (next: ProductAdvancedFilterGroup) => void
   ) => void;
-}
-
-const { Context: AdvancedFilterContext, useStrictContext: useAdvancedFilter } =
-  createStrictContext<AdvancedFilterContextValue>({
-    hookName: 'useAdvancedFilter',
-    providerName: 'AdvancedFilterProvider',
-    displayName: 'AdvancedFilterContext',
-  });
+};
 
 const COMBINATOR_OPTIONS: SelectSimpleOption[] = [
   { value: 'and', label: 'AND' },
@@ -200,6 +191,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
   condition: ProductAdvancedFilterCondition;
   parentGroup: ProductAdvancedFilterGroup;
   updateParent: (next: ProductAdvancedFilterGroup) => void;
+  runtime: AdvancedFilterEditorRuntime;
   canMoveUp: boolean;
   canMoveDown: boolean;
   disableRemove?: boolean;
@@ -208,6 +200,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
     condition,
     parentGroup,
     updateParent,
+    runtime,
     canMoveUp,
     canMoveDown,
     disableRemove = false,
@@ -219,7 +212,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
     handleRemoveRule,
     handleMoveRule,
     handleDuplicateRule,
-  } = useAdvancedFilter();
+  } = runtime;
 
   const valueOptions = fieldValueOptions?.[condition.field];
   const fieldConfig = getFieldConfig(condition.field);
@@ -536,6 +529,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
 
 const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor(props: {
   group: ProductAdvancedFilterGroup;
+  runtime: AdvancedFilterEditorRuntime;
   updateParent?: (next: ProductAdvancedFilterGroup) => void;
   onRemove?: (() => void) | undefined;
   onDuplicate?: (() => void) | undefined;
@@ -548,6 +542,7 @@ const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor(props:
 }): React.JSX.Element {
   const {
     group,
+    runtime,
     updateParent,
     onRemove,
     onDuplicate,
@@ -559,7 +554,8 @@ const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor(props:
     depth = 1,
   } = props;
 
-  const { handleRemoveRule, handleMoveRule, handleDuplicateRule, onChange } = useAdvancedFilter();
+  const { handleRuleChange, handleRemoveRule, handleMoveRule, handleDuplicateRule, onChange } =
+    runtime;
 
   const updateThisGroup = (next: ProductAdvancedFilterGroup) => {
     if (isRoot) {
@@ -691,6 +687,7 @@ const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor(props:
               condition={rule}
               parentGroup={group}
               updateParent={updateThisGroup}
+              runtime={runtime}
               canMoveUp={canMoveRuleUp}
               canMoveDown={canMoveRuleDown}
               disableRemove={!canRemoveLeaf}
@@ -699,8 +696,11 @@ const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor(props:
             <AdvancedFilterGroupEditor
               key={rule.id}
               group={rule}
+              runtime={runtime}
               depth={depth + 1}
-              updateParent={updateThisGroup}
+              updateParent={(nextGroup) =>
+                handleRuleChange(rule.id, nextGroup, group, updateThisGroup)
+              }
               onRemove={() => handleThisRemoveRule(rule.id)}
               onDuplicate={() => handleThisDuplicateRule(rule.id)}
               onMoveUp={() => handleThisMoveRule(rule.id, -1)}
@@ -737,77 +737,88 @@ export const AdvancedFilterBuilder = memo(function AdvancedFilterBuilder(
 ): React.JSX.Element {
   const { group, onChange, fieldValueOptions } = props;
 
-  const handleRuleChange = (
-    ruleId: string,
-    nextRule: ProductAdvancedFilterRule,
-    parentGroup: ProductAdvancedFilterGroup,
-    updateParent: (next: ProductAdvancedFilterGroup) => void
-  ): void => {
-    updateParent({
-      ...parentGroup,
-      rules: parentGroup.rules.map((rule: ProductAdvancedFilterRule) =>
-        rule.id === ruleId ? nextRule : rule
-      ),
-    });
-  };
+  const handleRuleChange = useCallback(
+    (
+      ruleId: string,
+      nextRule: ProductAdvancedFilterRule,
+      parentGroup: ProductAdvancedFilterGroup,
+      updateParent: (next: ProductAdvancedFilterGroup) => void
+    ): void => {
+      updateParent({
+        ...parentGroup,
+        rules: parentGroup.rules.map((rule: ProductAdvancedFilterRule) =>
+          rule.id === ruleId ? nextRule : rule
+        ),
+      });
+    },
+    []
+  );
 
-  const handleRemoveRule = (
-    ruleId: string,
-    parentGroup: ProductAdvancedFilterGroup,
-    updateParent: (next: ProductAdvancedFilterGroup) => void
-  ): void => {
-    const nextRules = parentGroup.rules.filter(
-      (rule: ProductAdvancedFilterRule) => rule.id !== ruleId
-    );
-    if (nextRules.length > 0) {
+  const handleRemoveRule = useCallback(
+    (
+      ruleId: string,
+      parentGroup: ProductAdvancedFilterGroup,
+      updateParent: (next: ProductAdvancedFilterGroup) => void
+    ): void => {
+      const nextRules = parentGroup.rules.filter(
+        (rule: ProductAdvancedFilterRule) => rule.id !== ruleId
+      );
+      if (nextRules.length > 0) {
+        updateParent({ ...parentGroup, rules: nextRules });
+        return;
+      }
+      updateParent({ ...parentGroup, rules: [createEmptyCondition()] });
+    },
+    []
+  );
+
+  const handleMoveRule = useCallback(
+    (
+      ruleId: string,
+      direction: -1 | 1,
+      parentGroup: ProductAdvancedFilterGroup,
+      updateParent: (next: ProductAdvancedFilterGroup) => void
+    ): void => {
+      const currentIndex = parentGroup.rules.findIndex(
+        (rule: ProductAdvancedFilterRule) => rule.id === ruleId
+      );
+      if (currentIndex < 0) return;
+      const targetIndex = currentIndex + direction;
+      if (targetIndex < 0 || targetIndex >= parentGroup.rules.length) return;
+
+      const nextRules = [...parentGroup.rules];
+      const [movedRule] = nextRules.splice(currentIndex, 1);
+      if (!movedRule) return;
+      nextRules.splice(targetIndex, 0, movedRule);
       updateParent({ ...parentGroup, rules: nextRules });
-      return;
-    }
-    updateParent({ ...parentGroup, rules: [createEmptyCondition()] });
-  };
+    },
+    []
+  );
 
-  const handleMoveRule = (
-    ruleId: string,
-    direction: -1 | 1,
-    parentGroup: ProductAdvancedFilterGroup,
-    updateParent: (next: ProductAdvancedFilterGroup) => void
-  ): void => {
-    const currentIndex = parentGroup.rules.findIndex(
-      (rule: ProductAdvancedFilterRule) => rule.id === ruleId
-    );
-    if (currentIndex < 0) return;
-    const targetIndex = currentIndex + direction;
-    if (targetIndex < 0 || targetIndex >= parentGroup.rules.length) return;
+  const handleDuplicateRule = useCallback(
+    (
+      ruleId: string,
+      parentGroup: ProductAdvancedFilterGroup,
+      updateParent: (next: ProductAdvancedFilterGroup) => void
+    ): void => {
+      const currentIndex = parentGroup.rules.findIndex(
+        (rule: ProductAdvancedFilterRule) => rule.id === ruleId
+      );
+      if (currentIndex < 0) return;
 
-    const nextRules = [...parentGroup.rules];
-    const [movedRule] = nextRules.splice(currentIndex, 1);
-    if (!movedRule) return;
-    nextRules.splice(targetIndex, 0, movedRule);
-    updateParent({ ...parentGroup, rules: nextRules });
-  };
+      const sourceRule = parentGroup.rules[currentIndex];
+      if (!sourceRule) return;
 
-  const handleDuplicateRule = (
-    ruleId: string,
-    parentGroup: ProductAdvancedFilterGroup,
-    updateParent: (next: ProductAdvancedFilterGroup) => void
-  ): void => {
-    const currentIndex = parentGroup.rules.findIndex(
-      (rule: ProductAdvancedFilterRule) => rule.id === ruleId
-    );
-    if (currentIndex < 0) return;
+      const duplicated = duplicateRuleWithNewIds(sourceRule);
+      const nextRules = [...parentGroup.rules];
+      nextRules.splice(currentIndex + 1, 0, duplicated);
+      updateParent({ ...parentGroup, rules: nextRules });
+    },
+    []
+  );
 
-    const sourceRule = parentGroup.rules[currentIndex];
-    if (!sourceRule) return;
-
-    const duplicated = duplicateRuleWithNewIds(sourceRule);
-    const nextRules = [...parentGroup.rules];
-    nextRules.splice(currentIndex + 1, 0, duplicated);
-    updateParent({ ...parentGroup, rules: nextRules });
-  };
-
-  const contextValue = useMemo<AdvancedFilterContextValue>(
+  const editorRuntime = useMemo<AdvancedFilterEditorRuntime>(
     () => ({
-      group,
       onChange,
       fieldValueOptions,
       handleRuleChange,
@@ -815,14 +826,17 @@ export const AdvancedFilterBuilder = memo(function AdvancedFilterBuilder(
       handleMoveRule,
       handleDuplicateRule,
     }),
-    [group, onChange, fieldValueOptions]
+    [
+      fieldValueOptions,
+      handleDuplicateRule,
+      handleMoveRule,
+      handleRemoveRule,
+      handleRuleChange,
+      onChange,
+    ]
   );
 
-  return (
-    <AdvancedFilterContext.Provider value={contextValue}>
-      <AdvancedFilterGroupEditor group={group} isRoot depth={1} />
-    </AdvancedFilterContext.Provider>
-  );
+  return <AdvancedFilterGroupEditor group={group} runtime={editorRuntime} isRoot depth={1} />;
 });
 
 AdvancedFilterBuilder.displayName = 'AdvancedFilterBuilder';

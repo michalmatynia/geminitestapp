@@ -283,6 +283,11 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Status: przywracanie')).toBeTruthy();
     expect(screen.getByText('Użytkownik: przywracanie sesji ucznia')).toBeTruthy();
     expect(
+      screen.getByText(
+        'Ekran główny przywraca teraz sesję ucznia, ostatnie wyniki i wskazówki treningowe.',
+      ),
+    ).toBeTruthy();
+    expect(
       screen.getByText('Przywracamy sesję ucznia i fokus treningowy oparty na wynikach.'),
     ).toBeTruthy();
     expect(screen.getByText('Pobieramy wyniki ucznia.')).toBeTruthy();
@@ -366,6 +371,44 @@ describe('HomeScreen', () => {
     ).toBeTruthy();
     expect(screen.getByText(/#1 Maja Sprint/)).toBeTruthy();
     expect(screen.getByText('Pełny ranking pojedynków')).toBeTruthy();
+  });
+
+  it('shows the empty results hub when an authenticated learner has no synced results yet', () => {
+    useKangurMobileAuthMock.mockReturnValue({
+      authError: null,
+      authMode: 'learner-session',
+      developerAutoSignInEnabled: false,
+      hasAttemptedDeveloperAutoSignIn: false,
+      isLoadingAuth: false,
+      session: {
+        status: 'authenticated',
+        user: {
+          activeLearner: {
+            displayName: 'Ada Learner',
+            id: 'leader-2',
+          },
+          actorType: 'learner',
+          full_name: 'Ada Learner',
+        },
+      },
+      signIn: vi.fn(),
+      signInWithLearnerCredentials: vi.fn(),
+      signOut: vi.fn(),
+      supportsLearnerCredentials: true,
+    });
+    useKangurMobileRecentResultsMock.mockReturnValue({
+      error: null,
+      isEnabled: true,
+      isLoading: false,
+      isRestoringAuth: false,
+      refresh: vi.fn(),
+      results: [],
+    });
+
+    renderHomeScreen();
+
+    expect(screen.getByText('Centrum wyników')).toBeTruthy();
+    expect(screen.getByText('Brak jeszcze zsynchronizowanych wyników.')).toBeTruthy();
   });
 
   it('renders authenticated focus cards and recent results after the shell settles', async () => {
@@ -820,6 +863,11 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Potem trenuj: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Otwórz wszystkie lekcje')).toBeTruthy();
     expect(screen.getByText('Plan z ekranu głównego')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Zamień lokalny postęp i zapisane lekcje bezpośrednio na kolejne kroki z ekranu głównego.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('➕ Powtórka: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Priorytet wysoki')).toBeTruthy();
     expect(screen.getByText('Cel: 1 powtórka + wynik min. 75%')).toBeTruthy();
@@ -827,6 +875,11 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Trenuj teraz')).toBeTruthy();
     expect(screen.getByText('Otwórz pełny plan dnia')).toBeTruthy();
     expect(screen.getByText('Centrum wyników')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Ostatnie zsynchronizowane sesje są tutaj pod ręką, aby można było z ekranu głównego od razu wrócić do treningu albo pełnej historii.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('7/8 poprawnych')).toBeTruthy();
     expect(screen.getByText('Pojedynki')).toBeTruthy();
     expect(screen.getByText('Zaproszenia do pojedynków')).toBeTruthy();
@@ -930,6 +983,21 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Abzeichen-Zentrale')).toBeTruthy();
     expect(screen.getByText('Zurück zu den letzten Lektionen')).toBeTruthy();
     expect(screen.getByText('Plan vom Startbildschirm')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Verwandle lokalen Fortschritt und gespeicherte Lektionen direkt vom Startbildschirm aus in die nächsten Schritte.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('Ergebniszentrale')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Es gibt noch keine synchronisierten Ergebnisse.',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Die letzten synchronisierten Sitzungen bleiben hier griffbereit, damit du vom Startbildschirm direkt wieder ins Training oder in den vollständigen Verlauf springen kannst.',
+      ),
+    ).toBeTruthy();
   });
 });

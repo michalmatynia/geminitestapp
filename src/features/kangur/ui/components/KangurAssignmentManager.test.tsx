@@ -51,6 +51,9 @@ vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
 }));
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   useKangurLessons: () => ({
@@ -188,8 +191,18 @@ describe('KangurAssignmentManager', () => {
 
     expect(screen.getByText(assignmentManagerMessages.lists.activeTitle)).toBeInTheDocument();
     expect(screen.queryByText(assignmentManagerMessages.lists.completedTitle)).toBeNull();
+    expect(screen.getByRole('tab', { name: /Aktywne/i })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
+    expect(screen.getByRole('tab', { name: /Ukonczone/i })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
 
-    fireEvent.click(screen.getByRole('tab', { name: /Ukończone/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /Ukonczone/i }));
 
     expect(screen.getByText(assignmentManagerMessages.lists.completedTitle)).toBeInTheDocument();
     expect(screen.queryByText(assignmentManagerMessages.lists.activeTitle)).toBeNull();
@@ -320,6 +333,12 @@ describe('KangurAssignmentManager', () => {
     });
 
     render(<KangurAssignmentManager basePath='/kangur' view='catalog' />);
+
+    expect(screen.getByTestId('assignment-manager-filter-all')).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
 
     const unassignButton = screen.getByRole('button', {
       name: assignmentManagerMessages.actions.unassign,

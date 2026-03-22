@@ -24,6 +24,9 @@ vi.mock('@/features/kangur/ui/context/KangurLessonsRuntimeContext', () => ({
   useKangurLessonsRuntimeActions: useKangurLessonsRuntimeActionsMock,
   useOptionalKangurLessonsRuntime: useOptionalKangurLessonsRuntimeMock,
 }));
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
 
 import { KangurLessonNavigationWidget } from '@/features/kangur/ui/components/KangurLessonNavigationWidget';
 import {
@@ -66,5 +69,37 @@ describe('KangurLessonNavigationWidget', () => {
 
     expect(screen.getByTestId('subsection-navigation-marker')).toBeInTheDocument();
     expect(screen.queryByText('📅 Nauka kalendarza')).not.toBeInTheDocument();
+  });
+
+  it('widens previous and next lesson buttons on coarse pointers', () => {
+    const selectLesson = vi.fn();
+    useOptionalKangurLessonsRuntimeMock.mockReturnValue({
+      prevLesson: {
+        id: 'lesson-adding',
+        emoji: '➕',
+        title: 'Dodawanie',
+      },
+      nextLesson: {
+        id: 'lesson-calendar',
+        emoji: '📅',
+        title: 'Kalendarz',
+      },
+      selectLesson,
+    });
+
+    render(
+      <KangurLessonNavigationProvider onBack={vi.fn()}>
+        <KangurLessonNavigationWidget />
+      </KangurLessonNavigationProvider>
+    );
+
+    expect(screen.getByRole('button', { name: /Poprzednia lekcja/i })).toHaveClass(
+      'min-h-11',
+      'touch-manipulation'
+    );
+    expect(screen.getByRole('button', { name: /Nastepna lekcja/i })).toHaveClass(
+      'min-h-11',
+      'touch-manipulation'
+    );
   });
 });

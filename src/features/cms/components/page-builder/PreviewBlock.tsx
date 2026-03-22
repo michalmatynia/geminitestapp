@@ -17,11 +17,9 @@ import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import type { SectionInstance, BlockInstance, PreviewBlockItemProps } from '@/shared/contracts/cms';
 import { DEFAULT_APP_EMBED_ID, getAppEmbedOption } from '@/shared/lib/app-embeds';
 import { getKangurWidgetLabel } from '@/shared/lib/kangur-cms-adapter';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button, Card, Input } from '@/shared/ui';
 
 import { useCmsPageContext } from '../frontend/CmsPageContext';
-import { SectionRenderer as FrontendSectionRenderer } from '../frontend/CmsPageRenderer';
 import { CssAnimationWrapper } from '../frontend/CssAnimationWrapper';
 import { GsapAnimationWrapper } from '../frontend/GsapAnimationWrapper';
 import { useMediaStyles } from '../frontend/media-styles-context';
@@ -71,6 +69,7 @@ import {
   PreviewTextAtomBlock,
   registerPreviewBlockItem,
 } from './preview/PreviewSectionBlocks';
+import { PreviewFrontendSection } from './PreviewFrontendSection';
 import { PreviewGridSection } from './preview/sections/PreviewGridSection';
 import {
   PreviewHeroSection,
@@ -110,34 +109,6 @@ const isTruthyRuntimeValue = (value: unknown): boolean => {
   return Boolean(value);
 };
 const CONTAINED_BLOCK_CONTEXT_VALUE = { contained: true };
-
-type PreviewFrontendSectionRendererRuntimeValue = {
-  type: string;
-  sectionId: string;
-  settings: Record<string, unknown>;
-  blocks: BlockInstance[];
-};
-
-const {
-  Context: PreviewFrontendSectionRendererRuntimeContext,
-  useStrictContext: usePreviewFrontendSectionRendererRuntime,
-} = createStrictContext<PreviewFrontendSectionRendererRuntimeValue>({
-  hookName: 'usePreviewFrontendSectionRendererRuntime',
-  providerName: 'PreviewFrontendSectionRendererRuntimeProvider',
-  displayName: 'PreviewFrontendSectionRendererRuntimeContext',
-});
-
-function PreviewFrontendSectionRenderer(): React.JSX.Element {
-  const runtime = usePreviewFrontendSectionRendererRuntime();
-  return (
-    <FrontendSectionRenderer
-      type={runtime.type}
-      sectionId={runtime.sectionId}
-      settings={runtime.settings}
-      blocks={runtime.blocks}
-    />
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Top-level section preview
@@ -461,17 +432,6 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
 
   // Render section types via the storefront renderer when a dedicated editor preview is not implemented.
   if (FRONTEND_PREVIEW_SECTION_TYPES.has(section.type)) {
-    const frontendSectionRendererRuntimeValue =
-      React.useMemo<PreviewFrontendSectionRendererRuntimeValue>(
-        () => ({
-          type: section.type,
-          sectionId: section.id,
-          settings: section.settings,
-          blocks: section.blocks,
-        }),
-        [section.type, section.id, section.settings, section.blocks]
-      );
-
     return wrapInspector(
       <div
         {...selectableSectionProps}
@@ -480,11 +440,12 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
         {renderSelectionButton()}
         {renderSectionActions()}
         {divider}
-        <PreviewFrontendSectionRendererRuntimeContext.Provider
-          value={frontendSectionRendererRuntimeValue}
-        >
-          <PreviewFrontendSectionRenderer />
-        </PreviewFrontendSectionRendererRuntimeContext.Provider>
+        <PreviewFrontendSection
+          type={section.type}
+          sectionId={section.id}
+          settings={section.settings}
+          blocks={section.blocks}
+        />
       </div>
     );
   }

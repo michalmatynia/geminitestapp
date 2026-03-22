@@ -1199,11 +1199,15 @@ describe('KangurPrimaryNavigation', () => {
     const utilityActions = screen.getByTestId('kangur-primary-nav-utility-actions');
     const mobileMenuDialog = screen.getByRole('dialog');
     const headerScope = within(header);
+    const mobileToggle = screen.getByTestId('kangur-primary-nav-mobile-toggle');
     const trigger = within(headerActions).getByTestId('kangur-language-switcher-trigger');
     const themeToggle = headerScope.getByRole('button', { name: 'Switch to Dawn theme' });
+    const lessonsAction = screen.getByTestId('kangur-primary-nav-lessons');
 
     expect(trigger).toBeInTheDocument();
     expect(themeToggle).toBeInTheDocument();
+    expect(mobileToggle).toHaveClass('min-h-12');
+    expect(lessonsAction).toHaveClass('max-sm:min-h-11', 'max-sm:px-4');
     expect(headerActions.firstElementChild).toBe(trigger);
     expect(headerActions).toContainElement(trigger);
     expect(headerActions).toContainElement(themeToggle);

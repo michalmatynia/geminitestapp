@@ -79,7 +79,7 @@ describe('buildKangurPracticeSyncProofSnapshot', () => {
     expect(snapshot.matchedScoreId).toBe('score-1');
     expect(snapshot.surfaces).toEqual([
       expect.objectContaining({
-        label: 'Historia wyników',
+        label: 'Centrum wyników',
         status: 'ready',
       }),
       expect.objectContaining({
@@ -116,7 +116,7 @@ describe('buildKangurPracticeSyncProofSnapshot', () => {
     expect(snapshot.matchedScoreId).toBeNull();
     expect(snapshot.surfaces).toEqual([
       expect.objectContaining({
-        label: 'Historia wyników',
+        label: 'Centrum wyników',
         status: 'missing',
       }),
       expect.objectContaining({
@@ -151,7 +151,7 @@ describe('buildKangurPracticeSyncProofSnapshot', () => {
     });
 
     expect(snapshot.surfaces[0]).toMatchObject({
-      label: 'Result history',
+      label: 'Results hub',
       status: 'ready',
     });
     expect(snapshot.surfaces[1]?.detail).toContain('Mode saved locally');

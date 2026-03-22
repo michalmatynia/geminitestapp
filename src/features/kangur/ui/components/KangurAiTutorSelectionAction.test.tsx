@@ -2,6 +2,10 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import { KangurAiTutorSelectionAction } from './KangurAiTutorSelectionAction';
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 describe('KangurAiTutorSelectionAction', () => {
   it('renders the floating action with the themed question badge', () => {
     const onAskAbout = vi.fn();
@@ -23,7 +27,11 @@ describe('KangurAiTutorSelectionAction', () => {
     const badge = button.querySelector('span[aria-hidden="true"]');
 
     expect(root).toHaveAttribute('data-selection-placement', 'bottom');
+    expect(button).toHaveClass('min-h-11', 'min-w-[156px]', 'px-4', 'text-sm');
     expect(badge).toHaveClass(
+      'h-5',
+      'w-5',
+      'text-[11px]',
       'kangur-chat-selection-badge'
     );
 

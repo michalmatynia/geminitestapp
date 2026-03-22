@@ -25,6 +25,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({
   KangurTransitionLink: ({
     children,
@@ -102,9 +106,11 @@ describe('KangurLearnerProfileRecommendationsWidget', () => {
     );
     expect(screen.getByText('Priorytet wysoki')).toBeInTheDocument();
     expect(screen.getByText('Wróć do zegara')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Uruchom trening' })).toHaveAttribute(
+    const actionLink = screen.getByRole('link', { name: 'Uruchom trening' });
+    expect(actionLink).toHaveAttribute(
       'href',
       '/kangur/game?quickStart=operation'
     );
+    expect(actionLink).toHaveClass('min-h-11', 'px-4');
   });
 });

@@ -50,10 +50,7 @@ const LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID = 'kangur-language-switcher';
 const AuthenticatedApp = (): JSX.Element | null => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, isAuthenticated } =
     useKangurAuth();
-  const {
-    isLoading: isLoadingSettings,
-    isFetching: isFetchingSettings,
-  } = useSettingsStore();
+  const { isLoading: isLoadingSettings } = useSettingsStore();
   const {
     isRouteAcknowledging,
     isRoutePending,
@@ -81,8 +78,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
   const isBootLoading = isLoadingPublicSettings || isLoadingAuth;
-  const isThemeLoading = isLoadingSettings || isFetchingSettings;
-  const shouldShowBootLoader = isThemeLoading;
+  const isThemeBootLoading = isLoadingSettings;
+  const shouldShowBootLoader = isThemeBootLoading;
   const isNavigationTransitionActive =
     isRouteAcknowledging || isRoutePending || isRouteWaitingForReady || isRouteRevealing;
   const isLanguageSwitcherTransition =
@@ -90,7 +87,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     activeTransitionSourceId === LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID;
   const shouldSkipNavigationSkeletonDelay = activeTransitionSourceId !== null;
   const shouldBlockRouteContent =
-    isThemeLoading || shouldRedirectToHome;
+    isThemeBootLoading || shouldRedirectToHome;
   const [isBootSkeletonVisible, setIsBootSkeletonVisible] = useState<boolean>(shouldShowBootLoader);
   const [isNavigationSkeletonVisible, setIsNavigationSkeletonVisible] = useState<boolean>(false);
   const bootSkeletonShownAtRef = useRef<number | null>(

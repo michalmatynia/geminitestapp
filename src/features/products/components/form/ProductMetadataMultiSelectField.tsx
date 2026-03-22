@@ -5,7 +5,6 @@ import { useContext, useMemo } from 'react';
 import { ProductFormMetadataContext } from '@/features/products/context/ProductFormMetadataContext';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { internalError } from '@/shared/errors/app-error';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { MultiSelect } from '@/features/products/ui';
 
 import {
@@ -153,57 +152,6 @@ export interface ProductMetadataMultiSelectFieldProps {
   formContextToggleName?: 'toggleCatalog' | 'toggleProducer' | 'toggleTag';
 
   single?: boolean;
-}
-
-type ProductMetadataMultiSelectRuntimeValue = {
-  label: string;
-  options: Array<LabeledOptionDto<string>>;
-  selectedIds: string[];
-  onChange: (nextIds: string[]) => void;
-  loading: boolean;
-  disabled: boolean;
-  placeholder: string;
-  searchPlaceholder: string;
-  emptyMessage?: string | undefined;
-  single: boolean;
-};
-
-const {
-  Context: ProductMetadataMultiSelectRuntimeContext,
-  useStrictContext: useProductMetadataMultiSelectRuntime,
-} = createStrictContext<ProductMetadataMultiSelectRuntimeValue>({
-  hookName: 'useProductMetadataMultiSelectRuntime',
-  providerName: 'ProductMetadataMultiSelectRuntimeProvider',
-  displayName: 'ProductMetadataMultiSelectRuntimeContext',
-});
-
-function ProductMetadataMultiSelectRuntime(): React.JSX.Element {
-  const {
-    label,
-    options,
-    selectedIds,
-    onChange,
-    loading,
-    disabled,
-    placeholder,
-    searchPlaceholder,
-    emptyMessage,
-    single,
-  } = useProductMetadataMultiSelectRuntime();
-  return (
-    <MultiSelect
-      label={label}
-      options={options}
-      selected={selectedIds}
-      onChange={onChange}
-      loading={loading}
-      disabled={disabled}
-      placeholder={placeholder}
-      searchPlaceholder={searchPlaceholder}
-      emptyMessage={emptyMessage}
-      single={single}
-    />
-  );
 }
 
 /**
@@ -376,47 +324,31 @@ export function ProductMetadataMultiSelectField({
     );
   }
 
-  const options = (() => {
+  const options = useMemo<Array<LabeledOptionDto<string>>>(() => {
     if (contextItemsKey === 'categories') {
       return buildCategoryTreeOptions(items);
     }
+
     return items.map((item) => ({
       value: item.id,
       label: item.name,
     }));
-  })();
+  }, [contextItemsKey, items]);
   const resolvedPlaceholder = placeholder || `Select ${label.toLowerCase()}`;
   const resolvedSearchPlaceholder = searchPlaceholder || `Search ${label.toLowerCase()}...`;
-  const runtimeValue = useMemo(
-    () => ({
-      label,
-      options,
-      selectedIds,
-      onChange: resolvedOnChange,
-      loading: resolvedLoading,
-      disabled,
-      placeholder: resolvedPlaceholder,
-      searchPlaceholder: resolvedSearchPlaceholder,
-      emptyMessage,
-      single,
-    }),
-    [
-      disabled,
-      emptyMessage,
-      label,
-      options,
-      resolvedLoading,
-      resolvedOnChange,
-      resolvedPlaceholder,
-      resolvedSearchPlaceholder,
-      selectedIds,
-      single,
-    ]
-  );
 
   return (
-    <ProductMetadataMultiSelectRuntimeContext.Provider value={runtimeValue}>
-      <ProductMetadataMultiSelectRuntime />
-    </ProductMetadataMultiSelectRuntimeContext.Provider>
+    <MultiSelect
+      label={label}
+      options={options}
+      selected={selectedIds}
+      onChange={resolvedOnChange}
+      loading={resolvedLoading}
+      disabled={disabled}
+      placeholder={resolvedPlaceholder}
+      searchPlaceholder={resolvedSearchPlaceholder}
+      emptyMessage={emptyMessage}
+      single={single}
+    />
   );
 }

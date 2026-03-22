@@ -8,11 +8,7 @@ import { cn, setNoteDragData } from '@/shared/utils';
 
 import { NoteCardContent } from './list/NoteCardContent';
 import { NoteCardFooter } from './list/NoteCardFooter';
-import {
-  NoteCardHeader,
-  NoteCardHeaderRuntimeContext,
-  type NoteCardHeaderRuntimeValue,
-} from './list/NoteCardHeader';
+import { NoteCardHeader } from './list/NoteCardHeader';
 
 // Hardcoded dark mode fallback theme - consistent with page styling
 const FALLBACK_THEME: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt' | 'name' | 'notebookId'> =
@@ -139,26 +135,6 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
     backgroundColor: effectiveTheme.relatedNoteBackgroundColor,
     color: effectiveTheme.relatedNoteTextColor,
   } as const;
-  const noteCardHeaderRuntimeValue = React.useMemo<NoteCardHeaderRuntimeValue>(
-    () => ({
-      note,
-      backgroundColor,
-      relatedNoteStyle,
-      onSelectNote,
-      enableDrag,
-      onNoteDragStart,
-      onNoteDragEnd,
-    }),
-    [
-      note,
-      backgroundColor,
-      relatedNoteStyle,
-      onSelectNote,
-      enableDrag,
-      onNoteDragStart,
-      onNoteDragEnd,
-    ]
-  );
 
   return (
     <div
@@ -181,13 +157,21 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
         'cursor-pointer hover:shadow-md hover:brightness-90'
       )}
     >
-      <NoteCardHeaderRuntimeContext.Provider value={noteCardHeaderRuntimeValue}>
-        <div>
-          <NoteCardHeader />
-          <NoteCardContent />
-          <NoteCardFooter />
-        </div>
-      </NoteCardHeaderRuntimeContext.Provider>
+      <div>
+        <NoteCardHeader
+          note={note}
+          onSelectNote={onSelectNote}
+          enableDrag={enableDrag}
+          onNoteDragStart={onNoteDragStart}
+          onNoteDragEnd={onNoteDragEnd}
+        />
+        <NoteCardContent note={note} />
+        <NoteCardFooter
+          note={note}
+          backgroundColor={backgroundColor}
+          relatedNoteStyle={relatedNoteStyle}
+        />
+      </div>
     </div>
   );
 }

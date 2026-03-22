@@ -12,6 +12,9 @@ import { KangurAiTutorPanelAuxiliaryControls } from './KangurAiTutorPanelAuxilia
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
   useKangurAiTutorContent: () => DEFAULT_KANGUR_AI_TUTOR_CONTENT,
 }));
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
 
 const createPanelBodyContextValue = (
   overrides: Partial<KangurAiTutorPanelBodyContextValue> = {}
@@ -196,6 +199,16 @@ describe('KangurAiTutorPanelAuxiliaryControls', () => {
     expect(screen.getByTestId('kangur-ai-tutor-toolbox')).toHaveClass(
       'kangur-chat-card',
       'kangur-chat-padding-md'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-toolbox-drawing-toggle')).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'text-xs'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-toolbox-action-hint')).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'text-xs'
     );
     expect(screen.getByTestId('kangur-ai-tutor-toolbox')).toHaveTextContent(
       repairKangurPolishCopy(

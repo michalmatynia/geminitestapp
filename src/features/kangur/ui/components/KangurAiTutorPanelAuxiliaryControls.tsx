@@ -1,6 +1,7 @@
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurButton, KangurPanelRow } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { formatKangurAiTutorTemplate } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
 
@@ -8,6 +9,7 @@ import type { JSX } from 'react';
 
 export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
   const tutorContent = useKangurAiTutorContent();
+  const isCoarsePointer = useKangurCoarsePointer();
   const auxiliaryContent = (
     tutorContent as {
       auxiliaryControls?: {
@@ -35,6 +37,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
     visibleQuickActions,
   } = useKangurAiTutorPanelBodyContext();
   const shouldRenderToolbox = showToolboxLayout;
+  const compactActionClassName = isCoarsePointer ? 'min-h-11 px-4 text-xs' : 'h-9 px-3 text-xs';
 
   if (!shouldRenderAuxiliaryPanelControls && !shouldRenderToolbox) {
     return null;
@@ -64,7 +67,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
                 type='button'
                 size='sm'
                 variant='surface'
-                className='h-9 px-3 text-xs'
+                className={compactActionClassName}
                 onClick={handleStartHomeOnboarding}
               >
                 {homeOnboardingReplayLabel}
@@ -76,7 +79,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
                 type='button'
                 size='sm'
                 variant={drawingMode ? 'primary' : 'surface'}
-                className='h-9 px-3 text-xs'
+                className={compactActionClassName}
                 disabled={isLoading || !canSendMessages}
                 onClick={handleToggleDrawing}
                 aria-pressed={drawingMode}
@@ -91,7 +94,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
                 type='button'
                 size='sm'
                 variant='surface'
-                className='h-9 px-3 text-xs'
+                className={compactActionClassName}
                 disabled={isLoading || !canSendMessages}
                 onClick={() => void handleQuickAction(action)}
               >
@@ -107,7 +110,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
           type='button'
           size='sm'
           variant='surface'
-          className='h-9 px-3 text-xs'
+          className={compactActionClassName}
           onClick={handleStartHomeOnboarding}
         >
           {homeOnboardingReplayLabel}

@@ -18,6 +18,7 @@ import {
   KangurEmptyState,
   KangurGlassPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurLessonPanelCtaSync } from '@/features/kangur/ui/hooks/useKangurLessonPanelCtaSync';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
@@ -75,6 +76,7 @@ export default function LessonSlideSection({
   const totalSlides = slides.length;
   const isLast = slide === totalSlides - 1;
   const isFirst = slide === 0;
+  const isCoarsePointer = useKangurCoarsePointer();
   const activeSlide = slides[slide];
   const slidePanelId = `lesson-slide-panel-${slideInstanceId}`;
   const slideTitleId = `lesson-slide-title-${slideInstanceId}`;
@@ -402,7 +404,10 @@ export default function LessonSlideSection({
           aria-label={previousPanelLabel}
           aria-keyshortcuts='ArrowLeft PageUp'
           aria-controls={slidePanelId}
-          className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-20'
+          className={cn(
+            'justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-20',
+            isCoarsePointer && 'min-h-11 min-w-11 px-5'
+          )}
           data-testid='lesson-slide-prev-button'
           size='sm'
           type='button'
@@ -418,7 +423,10 @@ export default function LessonSlideSection({
           aria-label={nextPanelLabel}
           aria-keyshortcuts='ArrowRight PageDown'
           aria-controls={slidePanelId}
-          className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-20'
+          className={cn(
+            'justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-20',
+            isCoarsePointer && 'min-h-11 min-w-11 px-5'
+          )}
           data-testid='lesson-slide-next-button'
           size='sm'
           type='button'
@@ -465,7 +473,8 @@ export default function LessonSlideSection({
                 aria-setsize={totalSlides}
                 className={cn(
                   KANGUR_STEP_PILL_CLASSNAME,
-                  'h-[14px] w-6 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+                  'cursor-pointer touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white active:scale-[0.97]',
+                  isCoarsePointer ? 'h-9 min-w-9 px-3' : 'h-[14px] w-6',
                   i === slide
                     ? ['scale-[1.04]', dotActiveClass]
                     : i < slide
@@ -484,7 +493,10 @@ export default function LessonSlideSection({
                 aria-label='Otwórz sekretny panel'
                 className={cn(
                   KANGUR_STEP_PILL_CLASSNAME,
-                  'h-[14px] min-w-[40px] cursor-pointer justify-center text-[10px] font-black shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white'
+                  'cursor-pointer justify-center font-black shadow-sm touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white active:scale-[0.97]',
+                  isCoarsePointer
+                    ? 'h-9 min-w-[52px] px-3 text-sm'
+                    : 'h-[14px] min-w-[40px] text-[10px]'
                 )}
                 style={{
                   background:

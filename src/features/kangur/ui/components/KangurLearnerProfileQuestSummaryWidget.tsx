@@ -18,6 +18,7 @@ import {
   KangurSectionEyebrow,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import type { KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
 
@@ -35,6 +36,7 @@ export function KangurLearnerProfileQuestSummaryWidget(): React.JSX.Element {
   const translations = useTranslations('KangurLearnerProfileWidgets.questSummary');
   const runtimeTranslations = useTranslations('KangurProgressRuntime');
   const { basePath, progress, user } = useKangurLearnerProfileRuntime();
+  const isCoarsePointer = useKangurCoarsePointer();
   const { subject } = useKangurSubjectFocus();
   const activeLearner = user?.activeLearner ?? null;
   const dailyQuest = useMemo(
@@ -49,6 +51,9 @@ export function KangurLearnerProfileQuestSummaryWidget(): React.JSX.Element {
         : dailyQuest?.progress.status === 'in_progress'
           ? 'indigo'
           : 'slate';
+  const actionClassName = isCoarsePointer
+    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto sm:shrink-0'
+    : 'w-full sm:w-auto sm:shrink-0';
 
   return (
     <section className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
@@ -61,7 +66,7 @@ export function KangurLearnerProfileQuestSummaryWidget(): React.JSX.Element {
             action={
               <KangurButton
                 asChild
-                className='w-full sm:w-auto sm:shrink-0'
+                className={actionClassName}
                 size='sm'
                 variant='surface'
               >

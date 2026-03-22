@@ -66,6 +66,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => ({
     get: () => null,
@@ -195,6 +199,7 @@ describe('KangurParentDashboardAssignmentsMonitoringWidget', () => {
     const loadMoreButton = screen.getByRole('button', {
       name: 'Pokaż starsze',
     });
+    expect(loadMoreButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
     fireEvent.click(loadMoreButton);
 
     await waitFor(() => expect(learnerInteractionsListMock).toHaveBeenCalledTimes(2));
@@ -270,9 +275,9 @@ describe('KangurParentDashboardAssignmentsMonitoringWidget', () => {
       ).toBeInTheDocument()
     );
 
-    fireEvent.click(
-      screen.getByRole('tab', { name: 'Zadania' })
-    );
+    const taskFilterTab = screen.getByRole('tab', { name: 'Zadania' });
+    expect(taskFilterTab).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+    fireEvent.click(taskFilterTab);
 
     await waitFor(() =>
       expect(
@@ -337,6 +342,12 @@ describe('KangurParentDashboardAssignmentsMonitoringWidget', () => {
     fireEvent.change(screen.getByLabelText('Data od'), {
       target: { value: '2026-03-15' },
     });
+
+    expect(screen.getByRole('button', { name: 'Wyczyść filtry' })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
 
     await waitFor(() =>
       expect(

@@ -7,6 +7,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 import TrainingSetup from '@/features/kangur/ui/components/TrainingSetup';
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 describe('TrainingSetup', () => {
   it('surfaces pressed state for category and question-count selections', () => {
     render(<TrainingSetup onStart={vi.fn()} />);
@@ -52,6 +56,18 @@ describe('TrainingSetup', () => {
     expect(twentyQuestionsButton).toHaveClass('kangur-segmented-control-item', 'rounded-[18px]');
     expect(twentyQuestionsButton).not.toHaveClass('kangur-segmented-control-item-active');
     expect(screen.getByRole('button', { name: /Start/i })).toHaveClass('kangur-cta-pill', 'primary-cta');
+    expect(screen.getByRole('button', { name: /Odznacz wszystkie|Zaznacz wszystkie/i })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
+    expect(additionButton).toHaveClass('touch-manipulation', 'select-none');
+    expect(tenQuestionsButton).toHaveClass('touch-manipulation', 'select-none');
+    expect(screen.getByRole('button', { name: /Start/i })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
 
     fireEvent.click(additionButton);
     fireEvent.click(twentyQuestionsButton);

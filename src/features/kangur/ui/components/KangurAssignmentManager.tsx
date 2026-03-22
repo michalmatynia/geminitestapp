@@ -29,6 +29,7 @@ import {
   KANGUR_TIGHT_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import {
   buildKangurAssignmentCatalog,
@@ -65,6 +66,7 @@ export function KangurAssignmentManager({
   const locale = useLocale();
   const translations = useTranslations('KangurAssignmentManager');
   const assignmentRuntimeTranslations = useTranslations('KangurAssignmentsRuntime');
+  const isCoarsePointer = useKangurCoarsePointer();
   const progress = useKangurProgressState();
   const { ageGroup } = useKangurAgeGroupFocus();
   const lessonsQuery = useKangurLessons({ ageGroup, enabledOnly: true });
@@ -96,6 +98,12 @@ export function KangurAssignmentManager({
   );
   const [timeLimitDraft, setTimeLimitDraft] = useState('');
   const [isSavingTimeLimit, setIsSavingTimeLimit] = useState(false);
+  const segmentedButtonClassName = isCoarsePointer
+    ? 'min-h-11 min-w-0 flex-1 px-4 text-xs touch-manipulation select-none active:scale-[0.97] sm:flex-none'
+    : 'min-w-0 flex-1 px-3 text-xs sm:flex-none';
+  const listTabButtonClassName = isCoarsePointer
+    ? 'min-h-11 min-w-0 flex-1 px-4 text-xs touch-manipulation select-none active:scale-[0.97]'
+    : 'min-w-0 flex-1 px-3 text-xs';
   const {
     assignments,
     isLoading,
@@ -640,7 +648,11 @@ export function KangurAssignmentManager({
                           <KangurButton
                             aria-label={translations('actions.setTime')}
                             title={translations('actions.setTime')}
-                            className='w-full sm:w-auto sm:px-3'
+                            className={
+                              isCoarsePointer
+                                ? 'min-h-11 w-full px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+                                : 'w-full sm:w-auto sm:px-3'
+                            }
                             type='button'
                             onClick={() => handleOpenTimeLimitModalForCatalog(item.id)}
                             disabled={isAssigned || isPending}
@@ -678,7 +690,7 @@ export function KangurAssignmentManager({
                 type='button'
                 onClick={() => setActiveFilter(option.value)}
                 aria-pressed={activeFilter === option.value}
-                className='min-w-0 flex-1 px-3 text-xs sm:flex-none'
+                className={segmentedButtonClassName}
                 data-testid={`assignment-manager-filter-${option.value}`}
                 size='sm'
                 variant={activeFilter === option.value ? 'segmentActive' : 'segment'}
@@ -904,7 +916,7 @@ export function KangurAssignmentManager({
                   aria-pressed={activeListTab === 'active'}
                   aria-selected={activeListTab === 'active'}
                   role='tab'
-                  className='min-w-0 flex-1 px-3 text-xs'
+                  className={listTabButtonClassName}
                   size='sm'
                   variant={activeListTab === 'active' ? 'segmentActive' : 'segment'}
                 >
@@ -916,7 +928,7 @@ export function KangurAssignmentManager({
                   aria-pressed={activeListTab === 'completed'}
                   aria-selected={activeListTab === 'completed'}
                   role='tab'
-                  className='min-w-0 flex-1 px-3 text-xs'
+                  className={listTabButtonClassName}
                   size='sm'
                   variant={activeListTab === 'completed' ? 'segmentActive' : 'segment'}
                 >

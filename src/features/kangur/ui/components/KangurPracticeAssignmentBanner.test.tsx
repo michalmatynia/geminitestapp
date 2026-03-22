@@ -7,6 +7,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 vi.mock('next/link', () => ({
   default: ({
     children,
@@ -100,6 +104,11 @@ describe('KangurPracticeAssignmentBanner', () => {
     expect(screen.getByRole('link', { name: 'Trenuj teraz' })).toHaveAttribute(
       'href',
       '/kangur/game?quickStart=operation&operation=division&difficulty=medium'
+    );
+    expect(screen.getByRole('link', { name: 'Trenuj teraz' })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
   });
 

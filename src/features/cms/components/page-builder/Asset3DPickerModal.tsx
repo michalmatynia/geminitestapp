@@ -15,16 +15,15 @@ import { FilterPanel, Button, FormSection, CompactEmptyState } from '@/shared/ui
 import { DetailModal } from '@/shared/ui/templates/modals';
 import type { FilterField } from '@/shared/contracts/ui';
 
-import { useAsset3DPickerModalRuntime } from './Asset3DPickerModalRuntimeContext';
-
-type Asset3DPickerModalProps = EntityModalProps<Asset3DRecord, Asset3DRecord>;
+type Asset3DPickerModalProps = EntityModalProps<Asset3DRecord, Asset3DRecord> & {
+  onSelectAsset: (assetId: string) => void;
+};
 
 const ALL_ASSET_CATEGORIES_OPTION = { value: '__all__', label: 'All categories' };
 
 export function Asset3DPickerModal(props: Asset3DPickerModalProps): React.JSX.Element | null {
-  const { isOpen, onClose } = props;
+  const { isOpen, onClose, onSelectAsset } = props;
 
-  const { onSelectAsset } = useAsset3DPickerModalRuntime();
   const [previewAsset, setPreviewAsset] = useState<Asset3DRecord | null>(null);
   const [filters, setFilters] = useState({
     search: '',

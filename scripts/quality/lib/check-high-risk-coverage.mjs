@@ -49,7 +49,7 @@ const toRepoRelativeCoverageKey = (root, filePath) => {
 const summarizeMetric = (entries, metricKey) => {
   const aggregate = entries.reduce(
     (acc, entry) => {
-      const metric = entry?.[metricKey];
+      const metric = entry?.metrics?.[metricKey] ?? entry?.[metricKey];
       return {
         total: acc.total + Number(metric?.total ?? 0),
         covered: acc.covered + Number(metric?.covered ?? 0),
@@ -67,6 +67,24 @@ const summarizeMetric = (entries, metricKey) => {
         : Number(((aggregate.covered / aggregate.total) * 100).toFixed(1)),
   };
 };
+
+const summarizeLowestCoverageFiles = (entries, limit = 5) =>
+  entries
+    .map((entry) => ({
+      filePath: typeof entry.filePath === 'string' && entry.filePath.length > 0 ? entry.filePath : '(unknown)',
+      lines: Number(entry.metrics?.lines?.pct ?? 0),
+      statements: Number(entry.metrics?.statements?.pct ?? 0),
+      functions: Number(entry.metrics?.functions?.pct ?? 0),
+      branches: Number(entry.metrics?.branches?.pct ?? 0),
+    }))
+    .sort((left, right) => {
+      if (left.lines !== right.lines) return left.lines - right.lines;
+      if (left.branches !== right.branches) return left.branches - right.branches;
+      if (left.functions !== right.functions) return left.functions - right.functions;
+      if (left.statements !== right.statements) return left.statements - right.statements;
+      return left.filePath.localeCompare(right.filePath);
+    })
+    .slice(0, limit);
 
 const readJson = (absolutePath) => JSON.parse(fs.readFileSync(absolutePath, 'utf8'));
 
@@ -164,6 +182,7 @@ const summarizeTarget = ({ target, entries }) => {
     metrics,
     status: failingMetrics.length > 0 ? 'fail' : 'pass',
     failingMetrics,
+    lowestCoverageFiles: failingMetrics.length > 0 ? summarizeLowestCoverageFiles(entries) : [],
   };
 };
 
@@ -231,9 +250,7 @@ export const analyzeHighRiskCoverage = ({
 
   const targetSummaries = selectedTargets.map((target) => {
     const prefix = `${target.directory.replace(/\\/g, '/')}/`;
-    const matchingEntries = fileEntries
-      .filter((entry) => entry.filePath.startsWith(prefix))
-      .map((entry) => entry.metrics);
+    const matchingEntries = fileEntries.filter((entry) => entry.filePath.startsWith(prefix));
 
     if (matchingEntries.length === 0) {
       issues.push(
@@ -254,6 +271,7 @@ export const analyzeHighRiskCoverage = ({
         metrics: null,
         status: 'missing',
         failingMetrics: [],
+        lowestCoverageFiles: [],
       };
     }
 

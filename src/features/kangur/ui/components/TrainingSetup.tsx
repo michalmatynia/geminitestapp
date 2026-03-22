@@ -16,6 +16,7 @@ import {
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
   KANGUR_TIGHT_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurTrainingSetupState } from '@/features/kangur/ui/hooks/useKangurTrainingSetupState';
 import type { KangurTrainingSelection } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
@@ -35,6 +36,7 @@ export default function TrainingSetup({
   suggestionLabel,
   suggestionTitle,
 }: TrainingSetupProps): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const recommendationDescription = suggestionDescription;
   const recommendationLabel = suggestionLabel ?? 'Polecamy teraz';
   const recommendationTitle = suggestionTitle;
@@ -113,7 +115,11 @@ export default function TrainingSetup({
               Kategorie pytań
             </h3>
             <KangurButton
-              className='w-full sm:w-auto'
+              className={
+                isCoarsePointer
+                  ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+                  : 'w-full sm:w-auto'
+              }
               onClick={toggleAllCategories}
               size='sm'
               variant='ghost'
@@ -137,6 +143,7 @@ export default function TrainingSetup({
                   onClick={category.select}
                   className={cn(
                     'h-11 justify-start px-4 text-sm sm:flex-none',
+                    isCoarsePointer ? 'touch-manipulation select-none active:scale-[0.97]' : null,
                     category.selected ? 'shadow-sm' : ''
                   )}
                   size='md'
@@ -170,7 +177,10 @@ export default function TrainingSetup({
                 aria-label={`${option.value} pytań`}
                 aria-pressed={option.selected}
                 onClick={option.select}
-                className='h-11 px-4 text-sm sm:flex-none'
+                className={cn(
+                  'h-11 px-4 text-sm sm:flex-none',
+                  isCoarsePointer ? 'touch-manipulation select-none active:scale-[0.97]' : null
+                )}
                 size='md'
                 type='button'
                 variant={option.selected ? 'segmentActive' : 'segment'}
@@ -182,7 +192,17 @@ export default function TrainingSetup({
         </section>
 
         <div className='flex justify-end'>
-          <KangurButton className='w-full sm:w-auto' onClick={startTraining} size='lg' type='button' variant='primary'>
+          <KangurButton
+            className={
+              isCoarsePointer
+                ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+                : 'w-full sm:w-auto'
+            }
+            onClick={startTraining}
+            size='lg'
+            type='button'
+            variant='primary'
+          >
             Start! 🚀
           </KangurButton>
         </div>

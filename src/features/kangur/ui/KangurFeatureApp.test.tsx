@@ -3,7 +3,7 @@
  */
 
 import React, { type ReactNode } from 'react';
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -462,7 +462,7 @@ describe('KangurFeatureApp', () => {
     expect(screen.queryByTestId('kangur-route-content')).toBeNull();
   });
 
-  it('keeps the app loader visible while cached theme settings are refreshing', () => {
+  it('keeps route content visible while cached theme settings are refreshing', () => {
     routingStateMock.mockReturnValue({
       pageKey: 'Game',
       embedded: false,
@@ -483,7 +483,8 @@ describe('KangurFeatureApp', () => {
 
     render(<KangurFeatureApp />);
 
-    expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
-    expect(screen.queryByTestId('kangur-route-content')).toBeNull();
+    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
+    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-page-game')).toBeInTheDocument();
   });
 });

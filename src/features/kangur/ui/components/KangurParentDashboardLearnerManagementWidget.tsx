@@ -24,6 +24,7 @@ import {
   KangurTextField,
   KangurWidgetIntro,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { cn } from '@/features/kangur/shared/utils';
 import { withKangurClientError } from '@/features/kangur/observability/client';
@@ -45,6 +46,7 @@ const PROFILE_MODAL_TABS: Array<{ id: ProfileModalTabId; label: string; docId: s
 ];
 
 export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Element | null {
+  const isCoarsePointer = useKangurCoarsePointer();
   const {
     activeLearner,
     canAccessDashboard,
@@ -378,7 +380,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
 
         <KangurPanelRow className='sm:flex-wrap sm:items-center'>
           <KangurButton
-            className='h-9 w-9 p-0'
+            className={isCoarsePointer ? 'h-11 w-11 p-0' : 'h-9 w-9 p-0'}
             disabled={isSubmitting || !activeLearner}
             onClick={() => openProfileSettings('settings')}
             size='sm'

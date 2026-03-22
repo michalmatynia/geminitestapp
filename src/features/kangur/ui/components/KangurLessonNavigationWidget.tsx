@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useKangurLessonSubsectionNavigationActive } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { useOptionalKangurLessonsRuntime } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { KangurButton, KangurPanelIntro } from '@/features/kangur/ui/design/primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -29,6 +30,7 @@ export function KangurLessonNavigationWidget({
   align = 'center',
 }: KangurLessonNavigationWidgetProps = {}): JSX.Element | null {
   const translations = useTranslations('KangurLessonsWidgets.navigation');
+  const isCoarsePointer = useKangurCoarsePointer();
   const runtime = useOptionalKangurLessonsRuntime();
   const isSubsectionNavigationActive = useKangurLessonSubsectionNavigationActive();
   const prevLesson = overridePrevLesson ?? runtime?.prevLesson ?? null;
@@ -73,7 +75,10 @@ export function KangurLessonNavigationWidget({
         <KangurButton
           onClick={prevLesson ? () => handleSelectLesson(prevLesson.id) : undefined}
           disabled={!prevLesson}
-          className='flex-1 justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-35 sm:flex-none'
+          className={cn(
+            'flex-1 justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-35 sm:flex-none',
+            isCoarsePointer ? 'min-h-11 touch-manipulation select-none active:scale-[0.97]' : null
+          )}
           size='sm'
           variant='surface'
           data-doc-id='lessons_prev_next'
@@ -96,7 +101,10 @@ export function KangurLessonNavigationWidget({
         <KangurButton
           onClick={nextLesson ? () => handleSelectLesson(nextLesson.id) : undefined}
           disabled={!nextLesson}
-          className='flex-1 justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-35 sm:flex-none'
+          className={cn(
+            'flex-1 justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-35 sm:flex-none',
+            isCoarsePointer ? 'min-h-11 touch-manipulation select-none active:scale-[0.97]' : null
+          )}
           size='sm'
           variant='surface'
           data-doc-id='lessons_prev_next'

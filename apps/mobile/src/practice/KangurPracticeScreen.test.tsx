@@ -257,9 +257,19 @@ describe('KangurPracticeScreen', () => {
     expect(screen.getByText('Trening mobilny')).toBeTruthy();
     expect(screen.getByText('Zegar')).toBeTruthy();
     expect(screen.getByText('Plan sesji')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Trening czasu i kalendarza łączy krótkie pytania, lokalny postęp oraz bezpośrednie przejścia do lekcji, historii i planu dnia.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('1 pytanie')).toBeTruthy();
     expect(screen.getByText('Czas i kalendarz')).toBeTruthy();
     expect(screen.getByText('Lokalnie + API')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Na starcie widzisz tutaj rozmiar serii, sposób zapisu oraz najszybsze przejścia do lekcji, historii i planu dnia.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('Otwórz pasującą lekcję')).toBeTruthy();
     expect(screen.getByText('Zobacz historię trybu')).toBeTruthy();
     expect(screen.getByText('Otwórz plan dnia')).toBeTruthy();
@@ -281,9 +291,19 @@ describe('KangurPracticeScreen', () => {
     expect(screen.getByText('Mobile practice')).toBeTruthy();
     expect(screen.getByText('Clock')).toBeTruthy();
     expect(screen.getByText('Session plan')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Time and calendar practice combines short questions, local progress, and direct routes back to lessons, history, and the daily plan.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('1 question')).toBeTruthy();
     expect(screen.getByText('Time and calendar')).toBeTruthy();
     expect(screen.getByText('Local + API')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'At the start, this shows the run size, the save path, and the quickest routes back to lessons, history, and the daily plan.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('Question 1 of 1')).toBeTruthy();
     expect(
       screen.getByText(
@@ -306,7 +326,54 @@ describe('KangurPracticeScreen', () => {
     expect(screen.getByText('Local only')).toBeTruthy();
     expect(
       screen.getByText(
-        'After the run, the result will be saved locally. Sign in the learner session so the mobile app can also sync it with the Kangur API.',
+        'After the run, the result will be saved locally. Sign in the learner session so it also syncs with the Kangur API.',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('shows signed-out duel guidance after finishing a run', async () => {
+    renderPracticeScreen();
+
+    fireEvent.click(screen.getByText('7:00'));
+    fireEvent.click(screen.getByText('Zakończ trening'));
+
+    expect(await screen.findByText('Podsumowanie')).toBeTruthy();
+    expect(screen.getByText('Szybki powrót do rywali')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże.',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('shows the pending duel standing after finishing a run when the learner rank is not visible yet', async () => {
+    useKangurMobilePracticeDuelsMock.mockReturnValue({
+      actionError: null,
+      createRematch: vi.fn(),
+      currentEntry: null,
+      currentRank: null,
+      error: null,
+      isActionPending: false,
+      isAuthenticated: true,
+      isLoading: false,
+      isRestoringAuth: false,
+      opponents: [],
+      pendingOpponentLearnerId: null,
+      refresh: vi.fn(),
+    });
+
+    renderPracticeScreen();
+
+    fireEvent.click(screen.getByText('7:00'));
+    fireEvent.click(screen.getByText('Zakończ trening'));
+
+    expect(await screen.findByText('Podsumowanie')).toBeTruthy();
+    expect(screen.getByText('Szybki powrót do rywali')).toBeTruthy();
+    expect(screen.getByText('Rywale 0')).toBeTruthy();
+    expect(screen.getByText('Czeka na widoczność')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
       ),
     ).toBeTruthy();
   });
@@ -532,7 +599,7 @@ describe('KangurPracticeScreen', () => {
     expect(screen.getByText('Wróć do lekcji: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Potem trenuj: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
-    expect(screen.getByText('Następne kroki')).toBeTruthy();
+    expect(screen.getAllByText('Po treningu').length).toBeGreaterThanOrEqual(3);
     expect(screen.getByText('Plan po treningu')).toBeTruthy();
     expect(screen.getByText('Powtorz zegar')).toBeTruthy();
     expect(screen.getByText('Cel: 1 lekcja')).toBeTruthy();
@@ -562,8 +629,8 @@ describe('KangurPracticeScreen', () => {
     expect(screen.getByText('Zobacz historię trybu')).toBeTruthy();
     expect(screen.getByText('Otwórz plan dnia')).toBeTruthy();
     expect(screen.queryByText('Failed to fetch')).toBeNull();
-    expect(screen.getByText('Historia wyników')).toBeTruthy();
-    expect(screen.getByText('Ostatnie sesje mobilne')).toBeTruthy();
+    expect(screen.getByText('Centrum wyników')).toBeTruthy();
+    expect(screen.getByText('Otwórz pełną historię')).toBeTruthy();
     expect(screen.getAllByText('Trenuj ponownie').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Historia trybu')).toBeTruthy();
 

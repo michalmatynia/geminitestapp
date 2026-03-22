@@ -49,7 +49,11 @@ import {
   KangurButton,
   KangurEmptyState,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_TIGHT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_SHELL_MINUS_TOP_BAR_HEIGHT_CLASSNAME,
+  KANGUR_TIGHT_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurPhoneSimulation } from '@/features/kangur/ui/hooks/useKangurPhoneSimulation';
@@ -558,7 +562,7 @@ function GameContent(): React.JSX.Element {
           id: GAME_MAIN_ID,
           'aria-labelledby': `${GAME_TITLE_ID} ${GAME_SCREEN_TITLE_ID}`,
           className: shouldUseGameMobileChrome
-            ? `flex h-[calc(var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px))] min-h-0 flex-col items-center py-3 sm:py-4 ${KANGUR_PANEL_GAP_CLASSNAME}`
+            ? `flex ${KANGUR_SHELL_MINUS_TOP_BAR_HEIGHT_CLASSNAME} min-h-0 flex-col items-center py-3 sm:py-4 ${KANGUR_PANEL_GAP_CLASSNAME}`
             : cn(
                 `flex flex-col items-center pb-[calc(var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px)] pt-8 sm:pt-10 ${KANGUR_PANEL_GAP_CLASSNAME}`,
                 shouldUseStandardMobileScroll

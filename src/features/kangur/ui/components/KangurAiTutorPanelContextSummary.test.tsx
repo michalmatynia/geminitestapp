@@ -19,6 +19,10 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
   useKangurAiTutorContent: () => DEFAULT_KANGUR_AI_TUTOR_CONTENT,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 const createPanelBodyContextValue = (
   overrides: Partial<KangurAiTutorPanelBodyContextValue> = {}
 ): KangurAiTutorPanelBodyContextValue => ({
@@ -128,6 +132,12 @@ describe('KangurAiTutorPanelContextSummary', () => {
   it('shows the saved page-content source for section-aware selected text threads', () => {
     render(<PanelContextSummaryHarness bodyValue={createPanelBodyContextValue()} />);
 
+    expect(screen.getByTestId('kangur-ai-tutor-selected-text-detach')).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation',
+      'select-none'
+    );
     expect(screen.getByTestId('kangur-ai-tutor-selected-text-source')).toHaveTextContent(
       'Zapisane źródło'
     );

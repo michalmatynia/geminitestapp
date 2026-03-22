@@ -1437,9 +1437,9 @@ export function KangurProfileScreen(): React.JSX.Element {
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Das mobile Profil zeigt die stärksten und schwächsten Bereiche auf Basis gespeicherter Lektionen.',
-                  en: 'The mobile profile shows the strongest and weakest areas based on saved lessons.',
-                  pl: 'Mobilny profil pokazuje najmocniejsze i najsłabsze obszary na podstawie zapisanych lekcji.',
+                  de: 'Im Profil siehst du die stärksten und schwächsten Bereiche auf Basis gespeicherter Lektionen.',
+                  en: 'In the profile you can see the strongest and weakest areas based on saved lessons.',
+                  pl: 'W profilu zobaczysz najmocniejsze i najsłabsze obszary na podstawie zapisanych lekcji.',
                 })}
               </Text>
             </View>
@@ -1662,9 +1662,9 @@ export function KangurProfileScreen(): React.JSX.Element {
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Die letzten synchronisierten Sitzungen bleiben hier griffbereit, damit du aus dem Profil direkt wieder ins Training, die passende Lektion oder den vollständigen Verlauf springen kannst.',
-                  en: 'The latest synchronized sessions stay close here so you can jump from the profile straight back into practice, the matching lesson, or the full history.',
-                  pl: 'Ostatnie zsynchronizowane sesje są tutaj pod ręką, aby można było z profilu od razu wrócić do treningu, pasującej lekcji albo pełnej historii.',
+                  de: 'Die letzten synchronisierten Ergebnisse bleiben hier griffbereit, damit du aus dem Profil direkt wieder ins Training, die passende Lektion oder den vollständigen Verlauf springen kannst.',
+                  en: 'The latest synchronized results stay close here so you can jump from the profile straight back into practice, the matching lesson, or the full history.',
+                  pl: 'Ostatnie zsynchronizowane wyniki są tutaj pod ręką, aby można było z profilu od razu wrócić do treningu, pasującej lekcji albo pełnej historii.',
                 })}
               </Text>
             </View>
@@ -1680,9 +1680,9 @@ export function KangurProfileScreen(): React.JSX.Element {
             ) : !profileRecentResults.isEnabled ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Melde die Schulersitzung an, um hier synchronisierte mobile Sitzungen zu sehen.',
-                  en: 'Sign in the learner session to see synchronized mobile sessions here.',
-                  pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj zsynchronizowane mobilne sesje.',
+                  de: 'Melde die Schulersitzung an, um hier synchronisierte Ergebnisse zu sehen.',
+                  en: 'Sign in the learner session to see synchronized results here.',
+                  pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj zsynchronizowane wyniki.',
                 })}
               </Text>
             ) : profileRecentResults.error ? (
@@ -1692,9 +1692,9 @@ export function KangurProfileScreen(): React.JSX.Element {
             ) : profileRecentResults.recentResultItems.length === 0 ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Es gibt noch keine gespielten Sitzungen. Die ersten Versuche erscheinen hier automatisch.',
-                  en: 'There are no completed sessions yet. The first attempts will appear here automatically.',
-                  pl: 'Brak rozegranych sesji. Pierwsze podejścia pojawią się tutaj automatycznie.',
+                  de: 'Es gibt noch keine synchronisierten Ergebnisse. Die ersten Versuche erscheinen hier automatisch.',
+                  en: 'There are no synchronized results yet. The first attempts will appear here automatically.',
+                  pl: 'Brak jeszcze zsynchronizowanych wyników. Pierwsze podejścia pojawią się tutaj automatycznie.',
                 })}
               </Text>
             ) : (
@@ -1718,9 +1718,9 @@ export function KangurProfileScreen(): React.JSX.Element {
                   >
                     <Text style={{ color: '#0f172a', fontWeight: '700' }}>
                       {copy({
-                        de: 'Gesamte Historie öffnen',
+                        de: 'Vollständigen Verlauf öffnen',
                         en: 'Open full history',
-                        pl: 'Otwórz całą historię',
+                        pl: 'Otwórz pełną historię',
                       })}
                     </Text>
                   </Pressable>
@@ -1851,9 +1851,9 @@ export function KangurProfileScreen(): React.JSX.Element {
             <View style={{ gap: 4 }}>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                 {copy({
-                  de: 'Nächste Schritte',
-                  en: 'Next steps',
-                  pl: 'Następne kroki',
+                  de: 'Im Profil',
+                  en: 'In profile',
+                  pl: 'W profilu',
                 })}
               </Text>
               <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
@@ -1897,16 +1897,16 @@ export function KangurProfileScreen(): React.JSX.Element {
             <View style={{ gap: 4 }}>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                 {copy({
-                  de: 'Ergebnisverlauf',
-                  en: 'Score history',
-                  pl: 'Historia wyników',
+                  de: 'Ergebnisse im Profil',
+                  en: 'Results in profile',
+                  pl: 'Wyniki w profilu',
                 })}
               </Text>
               <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
                 {copy({
-                  de: 'Historienzentrum',
-                  en: 'History hub',
-                  pl: 'Centrum historii',
+                  de: 'Ergebniszentrale',
+                  en: 'Results hub',
+                  pl: 'Centrum wyników',
                 })}
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
@@ -1918,9 +1918,9 @@ export function KangurProfileScreen(): React.JSX.Element {
                     })
                   : !profileRecentResults.isEnabled
                     ? copy({
-                        de: 'Melde die Schulersitzung an, um den mobilen Ergebnisverlauf im Profil zu sehen.',
-                        en: 'Sign in the learner session to see mobile score history in the profile.',
-                        pl: 'Zaloguj sesję ucznia, aby zobaczyć mobilną historię wyników w profilu.',
+                        de: 'Melde die Schulersitzung an, um hier synchronisierte Ergebnisse und den vollständigen Verlauf zu sehen.',
+                        en: 'Sign in the learner session to see synchronized results and the full history here.',
+                        pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj zsynchronizowane wyniki i pełną historię.',
                       })
                     : profileRecentResults.error
                       ? profileRecentResults.error
@@ -2025,21 +2025,21 @@ export function KangurProfileScreen(): React.JSX.Element {
                     paddingHorizontal: 14,
                     paddingVertical: 12,
                   }}
-                >
-                  <Text
-                    style={{
-                      color: '#0f172a',
-                      fontWeight: '700',
-                      textAlign: 'center',
-                    }}
                   >
-                    {copy({
-                      de: 'Gesamte Historie öffnen',
-                      en: 'Open full history',
-                      pl: 'Otwórz całą historię',
-                    })}
-                  </Text>
-                </Pressable>
+                    <Text
+                      style={{
+                        color: '#0f172a',
+                        fontWeight: '700',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {copy({
+                        de: 'Vollständigen Verlauf öffnen',
+                        en: 'Open full history',
+                        pl: 'Otwórz pełną historię',
+                      })}
+                    </Text>
+                  </Pressable>
               </Link>
 
               <Link href={createKangurPlanHref()} asChild>

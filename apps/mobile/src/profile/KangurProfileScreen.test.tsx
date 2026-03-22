@@ -534,16 +534,21 @@ describe('KangurProfileScreen', () => {
     expect(screen.getByText('Odśwież pojedynki')).toBeTruthy();
     expect(screen.getByText('Otwórz pojedynki')).toBeTruthy();
     expect(screen.getByText('Opanowanie lekcji')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'W profilu zobaczysz najmocniejsze i najsłabsze obszary na podstawie zapisanych lekcji.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
     expect(screen.getByText('Ostatni wynik: 70% · próby 3')).toBeTruthy();
     expect(screen.getByText('Wróć do lekcji: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Potem trenuj: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
-    expect(screen.getByText('Następne kroki')).toBeTruthy();
+    expect(screen.getByText('W profilu')).toBeTruthy();
     expect(screen.getByText('Plan w profilu')).toBeTruthy();
     expect(screen.getByText('Plan dnia z profilu')).toBeTruthy();
     expect(screen.getByText('Powrót do ostatnich sesji')).toBeTruthy();
-    expect(screen.getByText('Centrum historii')).toBeTruthy();
+    expect(screen.getByText('Centrum wyników')).toBeTruthy();
     expect(screen.getByText('Sesje 1')).toBeTruthy();
     expect(screen.getByText('Najlepsza skuteczność 88%')).toBeTruthy();
     expect(screen.getByText('Ostatni tryb Zegar')).toBeTruthy();
@@ -561,7 +566,7 @@ describe('KangurProfileScreen', () => {
     expect(screen.getByText('Powtórka dodawania')).toBeTruthy();
     expect(screen.getAllByText('Priorytet wysoki').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Cel: 1 lekcja')).toBeTruthy();
-    expect(screen.getAllByText('Otwórz całą historię').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText('Otwórz pełną historię').length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText('Otwórz plan dnia').length).toBeGreaterThanOrEqual(2);
 
     fireEvent.click(screen.getByText('Szybki rewanż'));
@@ -602,10 +607,15 @@ describe('KangurProfileScreen', () => {
     expect(screen.getByText('Zurück zu den letzten Sitzungen')).toBeTruthy();
     expect(screen.getAllByText('Abzeichen').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Letzte Lektions-Checkpoints')).toBeTruthy();
-    expect(screen.getByText('Plan für heute')).toBeTruthy();
-    expect(screen.getByText('Nächste Schritte')).toBeTruthy();
-    expect(screen.getByText('Ergebnisverlauf')).toBeTruthy();
-    expect(screen.getByText('Historienzentrum')).toBeTruthy();
+    expect(screen.getByText('Tagesplan aus dem Profil')).toBeTruthy();
+    expect(screen.getByText('Im Profil')).toBeTruthy();
+    expect(screen.getByText('Ergebnisse im Profil')).toBeTruthy();
+    expect(screen.getByText('Ergebniszentrale')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Melde die Schulersitzung an, um hier synchronisierte Ergebnisse und den vollständigen Verlauf zu sehen.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('🎮 Erstes Spiel')).toBeTruthy();
   });
 });

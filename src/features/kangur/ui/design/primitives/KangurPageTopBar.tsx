@@ -1,13 +1,15 @@
 'use client';
 
 import * as React from 'react';
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 
 import { cn } from '@/features/kangur/shared/utils';
 
-import { KANGUR_TOP_BAR_CLASSNAME, KANGUR_TOP_BAR_INNER_CLASSNAME } from '../tokens';
-
-const TOP_BAR_HEIGHT_VAR = '--kangur-top-bar-height';
+import {
+  KANGUR_TOP_BAR_CLASSNAME,
+  KANGUR_TOP_BAR_HEIGHT_VAR_NAME,
+  KANGUR_TOP_BAR_INNER_CLASSNAME,
+} from '../tokens';
 
 export const KangurPageTopBar = ({
   left,
@@ -22,7 +24,7 @@ export const KangurPageTopBar = ({
 }): React.JSX.Element => {
   const topBarRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const node = topBarRef.current;
     if (!node || typeof document === 'undefined') {
       return undefined;
@@ -30,7 +32,10 @@ export const KangurPageTopBar = ({
 
     const updateHeight = (): void => {
       const height = node.getBoundingClientRect().height;
-      document.documentElement.style.setProperty(TOP_BAR_HEIGHT_VAR, `${Math.round(height)}px`);
+      document.documentElement.style.setProperty(
+        KANGUR_TOP_BAR_HEIGHT_VAR_NAME,
+        `${Math.round(height)}px`
+      );
     };
 
     updateHeight();

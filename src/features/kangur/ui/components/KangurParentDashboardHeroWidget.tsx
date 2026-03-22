@@ -27,6 +27,7 @@ import {
   KangurSummaryPanel,
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurLearnerActivityStatus } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
@@ -51,6 +52,7 @@ export function KangurParentDashboardHeroWidget({
   const locale = useLocale();
   const translations = useTranslations('KangurParentDashboard');
   const routeNavigator = useKangurRouteNavigator();
+  const isCoarsePointer = useKangurCoarsePointer();
   const {
     activeLearner,
     basePath,
@@ -99,6 +101,8 @@ export function KangurParentDashboardHeroWidget({
   const { entry: guestHeroContent } = useKangurPageContentEntry('parent-dashboard-guest-hero');
   const { entry: dashboardHeroContent } = useKangurPageContentEntry('parent-dashboard-hero');
   const parentWordmarkLabel = translations('hero.parentTitle');
+  const compactActionClassName = isCoarsePointer ? 'min-h-11 px-4' : undefined;
+  const compactWideActionClassName = isCoarsePointer ? 'w-full sm:w-auto min-h-11 px-4' : 'w-full sm:w-auto';
   const handleGoHome = (): void => {
     routeNavigator.push(getKangurHomeHref(basePath), {
       acknowledgeMs: PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS,
@@ -239,7 +243,7 @@ export function KangurParentDashboardHeroWidget({
       headingAction={
         shouldShowCreateLearner ? (
           <KangurButton
-            className='w-full sm:w-auto'
+            className={compactWideActionClassName}
             onClick={handleCreateLearner}
             size='sm'
             variant='surface'
@@ -291,7 +295,7 @@ export function KangurParentDashboardHeroWidget({
           tone='accent'
         >
           {shouldShowActivityLink ? (
-            <KangurButton asChild className='w-full sm:w-auto' size='sm' variant='surface'>
+            <KangurButton asChild className={compactWideActionClassName} size='sm' variant='surface'>
               <Link
                 href={activityHref ?? createPageUrl('Game', basePath)}
                 transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
@@ -306,7 +310,7 @@ export function KangurParentDashboardHeroWidget({
 
       {hasActiveLearner ? (
         <div className={`mt-3 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME}`}>
-          <KangurButton asChild size='sm' variant='surface'>
+          <KangurButton asChild className={compactActionClassName} size='sm' variant='surface'>
             <Link
               href={createPageUrl('LearnerProfile', basePath)}
               targetPageKey='LearnerProfile'
@@ -329,6 +333,7 @@ export function KangurParentDashboardHeroWidget({
               className='w-full sm:w-auto'
             >
               <KangurNavAction
+                className={compactActionClassName}
                 docId='top_nav_home'
                 href={getKangurHomeHref(basePath)}
                 size='sm'
@@ -342,6 +347,7 @@ export function KangurParentDashboardHeroWidget({
                 <Home className='h-4 w-4' /> {translations('hero.nav.game')}
               </KangurNavAction>
               <KangurNavAction
+                className={compactActionClassName}
                 docId='top_nav_lessons'
                 href={createPageUrl('Lessons', basePath)}
                 size='sm'
@@ -355,6 +361,7 @@ export function KangurParentDashboardHeroWidget({
                 <BookOpen className='h-4 w-4' /> {translations('hero.nav.lessons')}
               </KangurNavAction>
               <KangurNavAction
+                className={compactActionClassName}
                 docId='top_nav_profile'
                 href={createPageUrl('LearnerProfile', basePath)}
                 size='sm'
@@ -368,6 +375,7 @@ export function KangurParentDashboardHeroWidget({
                 <UserRound className='h-4 w-4' /> {translations('hero.nav.profile')}
               </KangurNavAction>
               <KangurNavAction
+                className={compactActionClassName}
                 docId='top_nav_parent_dashboard'
                 href={createPageUrl('ParentDashboard', basePath)}
                 size='sm'
@@ -383,7 +391,7 @@ export function KangurParentDashboardHeroWidget({
             </KangurTopNavGroup>
           </div>
           <KangurButton
-            className='w-full sm:w-auto'
+            className={compactWideActionClassName}
             onClick={() => logout(false)}
             size='sm'
             type='button'

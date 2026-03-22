@@ -15,6 +15,9 @@ const { buildKangurAssignmentsMock } = vi.hoisted(() => ({
 vi.mock('@/features/kangur/ui/services/assignments', () => ({
   buildKangurAssignments: buildKangurAssignmentsMock,
 }));
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
 
 import AssignmentPanel from '@/features/kangur/ui/components/AssignmentPanel';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
@@ -108,8 +111,8 @@ describe('AssignmentPanel', () => {
       'kangur-glass-surface-neutral'
     );
     expect(screen.getByText('Zadania')).toBeInTheDocument();
-    expect(screen.getByText('Ukonczono 0/3')).toBeInTheDocument();
-    expect(screen.getByText('Ukonczono 0/3')).toHaveClass(
+    expect(screen.getByText(/Ukonczono 0\/3/i)).toBeInTheDocument();
+    expect(screen.getByText(/Ukonczono 0\/3/i)).toHaveClass(
       'inline-flex',
       'rounded-full',
       'border'
@@ -145,7 +148,13 @@ describe('AssignmentPanel', () => {
       name: /Oznacz .* jako ukonczone/i,
     })[0];
 
-    expect(completionToggle).toHaveClass('kangur-cta-pill', 'soft-cta');
+    expect(completionToggle).toHaveClass(
+      'kangur-cta-pill',
+      'soft-cta',
+      'h-11',
+      'w-11',
+      'touch-manipulation'
+    );
     expect(completionToggle).toHaveAttribute('aria-pressed', 'false');
 
     await userEvent.click(completionToggle);
@@ -163,7 +172,7 @@ describe('AssignmentPanel', () => {
       'border',
       'transition'
     );
-    expect(screen.getByText('Ukonczono 1/3')).toBeInTheDocument();
+    expect(screen.getByText(/Ukonczono 1\/3/i)).toBeInTheDocument();
   });
 
   it('builds embedded cms links when rendered inside a host page route', () => {

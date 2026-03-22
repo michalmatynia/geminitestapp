@@ -166,7 +166,8 @@ export function useKangurRouteNavigator(): {
 
       if (
         href &&
-        routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
+        routeTransitionState &&
+        routeTransitionState.transitionPhase !== 'idle' &&
         targetPathname &&
         currentPathname &&
         targetPathname !== currentPathname &&

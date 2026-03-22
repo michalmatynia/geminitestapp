@@ -21,6 +21,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 let KangurLearnerProfilePerformanceWidget: typeof import('./KangurLearnerProfilePerformanceWidget').KangurLearnerProfilePerformanceWidget;
 
 const performanceMessages = plMessages.KangurLearnerProfileWidgets.performance;
@@ -150,6 +154,11 @@ describe('KangurLearnerProfilePerformanceWidget', () => {
     expect(screen.getByRole('link', { name: performanceMessages.train })).toHaveAttribute(
       'href',
       '/kangur/game?quickStart=operation&operation=clock'
+    );
+    expect(screen.getByRole('link', { name: performanceMessages.train })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
   });
 

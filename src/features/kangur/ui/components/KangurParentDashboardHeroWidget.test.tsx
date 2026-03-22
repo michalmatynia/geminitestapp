@@ -73,6 +73,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreMock,
 }));
@@ -282,6 +286,7 @@ describe('KangurParentDashboardHeroWidget', () => {
     render(<KangurParentDashboardHeroWidget showActions={false} showLearnerManagement />);
 
     const addButton = screen.getByRole('button', { name: heroMessages.addLearner });
+    expect(addButton).toHaveClass('min-h-11', 'px-4');
     fireEvent.click(addButton);
 
     expect(setCreateLearnerModalOpen).toHaveBeenCalledWith(true);
@@ -400,10 +405,12 @@ describe('KangurParentDashboardHeroWidget', () => {
     render(<KangurParentDashboardHeroWidget showActions={false} />);
 
     expect(screen.getByText(heroMessages.activity.status.online)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: heroMessages.openActivity })).toHaveAttribute(
+    const openActivityLink = screen.getByRole('link', { name: heroMessages.openActivity });
+    expect(openActivityLink).toHaveAttribute(
       'href',
       '/kangur/lessons?focus=clock'
     );
+    expect(openActivityLink).toHaveClass('min-h-11', 'px-4');
 
     vi.useRealTimers();
   });

@@ -188,7 +188,7 @@ describe('KangurDailyPlanScreen', () => {
     expect(screen.getByText('Czeka na widoczność')).toBeTruthy();
     expect(
       screen.getByText(
-        'Twojego konta nie widać jeszcze w tej mobilnej migawce rankingu. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
+        'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
       ),
     ).toBeTruthy();
     expect(
@@ -198,6 +198,17 @@ describe('KangurDailyPlanScreen', () => {
     ).toBeTruthy();
     expect(screen.getByText('Odśwież pojedynki')).toBeTruthy();
     expect(screen.getAllByText('Otwórz pojedynki').length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('shows signed-out duel guidance without mobile-overview wording', () => {
+    render(<KangurDailyPlanScreen />);
+
+    expect(screen.getByText('Szybki powrót do rywali')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże.',
+      ),
+    ).toBeTruthy();
   });
 
   it('renders focus, assignments, recent results, and duel actions for an authenticated learner', async () => {
@@ -401,11 +412,12 @@ describe('KangurDailyPlanScreen', () => {
     expect(screen.getAllByText('Otwórz pojedynki').length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText('Do powtórki').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Najmocniejszy tryb')).toBeTruthy();
-    expect(screen.getByText('Następne kroki')).toBeTruthy();
+    expect(screen.getByText('Na dziś')).toBeTruthy();
     expect(screen.getByText('Plan działań na dziś')).toBeTruthy();
     expect(screen.getByText('Lokalne zadania na dziś')).toBeTruthy();
     expect(screen.getByText('Powtórka dodawania')).toBeTruthy();
-    expect(screen.getByText('Ostatnie wyniki')).toBeTruthy();
+    expect(screen.getByText('Centrum wyników')).toBeTruthy();
+    expect(screen.getByText('Otwórz pełną historię')).toBeTruthy();
     expect(screen.getAllByText('Dodawanie').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Trenuj ponownie')).toBeTruthy();
     expect(screen.getByText('Pojedynki na dziś')).toBeTruthy();

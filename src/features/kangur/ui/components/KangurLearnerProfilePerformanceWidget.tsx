@@ -20,6 +20,7 @@ import {
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 
 const LEARNER_PROFILE_PERFORMANCE_ROUTE_ACKNOWLEDGE_MS = 110;
@@ -27,11 +28,15 @@ const LEARNER_PROFILE_PERFORMANCE_ROUTE_ACKNOWLEDGE_MS = 110;
 export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
   const translations = useTranslations('KangurLearnerProfileWidgets.performance');
   const { basePath, maxWeeklyGames, snapshot } = useKangurLearnerProfileRuntime();
+  const isCoarsePointer = useKangurCoarsePointer();
   const { entry: performanceContent } = useKangurPageContentEntry('learner-profile-performance');
   const sectionTitle = performanceContent?.title ?? translations('title');
   const sectionSummary =
     performanceContent?.summary ??
     translations('summary');
+  const operationActionClassName = isCoarsePointer
+    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+    : 'w-full sm:w-auto';
 
   return (
     <section className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
@@ -115,7 +120,12 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
                   </span>
                   <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
                     <span>{item.averageAccuracy}%</span>
-                    <KangurButton asChild className='w-full sm:w-auto' size='sm' variant='surface'>
+                    <KangurButton
+                      asChild
+                      className={operationActionClassName}
+                      size='sm'
+                      variant='surface'
+                    >
                       <Link
                         href={buildKangurOperationPracticeHref(
                           basePath,

@@ -4,19 +4,25 @@ import React from 'react';
 
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import type {
+  NoteWithRelations,
   NoteRelationWithSource,
   NoteRelationWithTarget,
   RelatedNote,
 } from '@/shared/contracts/notes';
 import { Breadcrumbs } from '@/shared/ui';
 
-import { useNoteCardHeaderRuntime } from './NoteCardHeader';
 import { buildBreadcrumbPath, darkenColor } from '../../utils';
 
 type BreadcrumbItem = { id: string | null; name: string };
 
-export function NoteCardFooter(): React.JSX.Element | null {
-  const { note, backgroundColor, relatedNoteStyle } = useNoteCardHeaderRuntime();
+export type NoteCardFooterProps = {
+  note: NoteWithRelations;
+  backgroundColor: string;
+  relatedNoteStyle: React.CSSProperties;
+};
+
+export function NoteCardFooter(props: NoteCardFooterProps): React.JSX.Element | null {
+  const { note, backgroundColor, relatedNoteStyle } = props;
   const { folderTree, settings } = useNotesAppState();
   const { setSelectedFolderId, setSelectedNote, setIsEditing } = useNotesAppActions();
 

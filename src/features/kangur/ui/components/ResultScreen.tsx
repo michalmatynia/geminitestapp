@@ -14,6 +14,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { getKangurMiniGameAccuracyText } from '@/features/kangur/ui/constants/mini-game-i18n';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurOperation } from '@/features/kangur/ui/types';
 
 export type ResultScreenProps = {
@@ -36,6 +37,7 @@ export default function ResultScreen({
   onHome,
 }: ResultScreenProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const isCoarsePointer = useKangurCoarsePointer();
   const percent = total > 0 ? Math.round((score / total) * 100) : 0;
   const stars = percent >= 90 ? 3 : percent >= 60 ? 2 : 1;
   const operationLabel = operation
@@ -134,7 +136,11 @@ export default function ResultScreen({
 
       <KangurPanelRow className='w-full sm:justify-center'>
         <KangurButton
-          className='w-full sm:w-auto'
+          className={
+            isCoarsePointer
+              ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+              : 'w-full sm:w-auto'
+          }
           onClick={handleRestartGame}
           size='lg'
           variant='primary'
@@ -142,7 +148,11 @@ export default function ResultScreen({
           <RotateCcw aria-hidden='true' className='w-5 h-5' /> {translations('resultScreen.actions.restart')}
         </KangurButton>
         <KangurButton
-          className='w-full sm:w-auto'
+          className={
+            isCoarsePointer
+              ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+              : 'w-full sm:w-auto'
+          }
           onClick={handleGoHome}
           size='lg'
           variant='surface'

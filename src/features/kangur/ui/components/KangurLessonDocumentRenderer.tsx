@@ -16,6 +16,7 @@ import {
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type {
   KangurLessonActivityBlock,
   KangurLessonCalloutBlock,
@@ -402,6 +403,7 @@ function KangurLessonQuizBlockView(
   props: { block: KangurLessonQuizBlock; translate: (key: string, values?: Record<string, string | number>) => string }
 ): React.JSX.Element {
   const { block, translate } = props;
+  const isCoarsePointer = useKangurCoarsePointer();
   const [state, setState] = React.useState<QuizState>({ selectedId: null, revealed: false });
 
   const handleSelect = (choiceId: string): void => {
@@ -424,7 +426,10 @@ function KangurLessonQuizBlockView(
           const isSelected = state.selectedId === choice.id;
           const isCorrect = choice.id === block.correctChoiceId;
           let choiceClass =
-            'rounded-lg border px-4 py-2 text-left text-sm w-full break-words transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white';
+            'w-full break-words rounded-lg border px-4 py-2 text-left text-sm transition touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white active:scale-[0.985]';
+          if (isCoarsePointer) {
+            choiceClass += ' min-h-[4rem] rounded-2xl py-3 text-base';
+          }
           if (!state.revealed) {
             choiceClass +=
               ' soft-card [color:var(--kangur-page-text)]';
@@ -466,6 +471,7 @@ function KangurLessonQuizBlockView(
               disabled={state.revealed}
               aria-label={translate('quizAnswerAria', { answer: choice.text })}
               aria-pressed={isSelected}
+              data-testid={`lesson-quiz-choice-${choice.id}`}
             >
               {choice.text}
             </button>

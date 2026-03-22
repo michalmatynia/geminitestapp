@@ -68,6 +68,7 @@ import {
   getLocalizedKangurSubjectLabel,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
@@ -200,10 +201,15 @@ export function KangurPrimaryNavigation({
   const profileAvatar = getKangurAvatarById(activeLearner?.avatarId);
   const shouldRenderProfileMenu =
     effectiveIsAuthenticated && (!isParentAccount || hasActiveLearner);
+  const isCoarsePointer = useKangurCoarsePointer();
   const mobileNavItemClassName =
-    'max-sm:col-span-1 max-sm:min-w-0 max-sm:w-full max-sm:justify-center max-sm:px-3';
+    `max-sm:col-span-1 max-sm:min-w-0 max-sm:w-full max-sm:justify-center ${
+      isCoarsePointer ? 'max-sm:min-h-11 max-sm:px-4' : 'max-sm:px-3'
+    }`;
   const mobileWideNavItemClassName =
-    'max-sm:col-span-2 max-sm:min-w-0 max-sm:w-full max-sm:justify-center max-sm:px-3';
+    `max-sm:col-span-2 max-sm:min-w-0 max-sm:w-full max-sm:justify-center ${
+      isCoarsePointer ? 'max-sm:min-h-11 max-sm:px-4' : 'max-sm:px-3'
+    }`;
   const mobileAuthActionClassName = mobileNavItemClassName;
   const { entry: loginActionContent } = useKangurPageContentEntry('shared-nav-login-action');
   const loginActionRef = useRef<HTMLButtonElement | null>(null);
@@ -862,7 +868,9 @@ export function KangurPrimaryNavigation({
         aria-controls={mobileMenuId}
         aria-haspopup='dialog'
         aria-expanded={isMobileMenuOpen}
-        className='glass-panel w-full justify-center rounded-[30px] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]'
+        className={`glass-panel w-full justify-center rounded-[30px] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] ${
+          isCoarsePointer ? 'min-h-12' : ''
+        }`}
         data-testid='kangur-primary-nav-mobile-toggle'
         onClick={toggleMobileMenu}
         size='md'

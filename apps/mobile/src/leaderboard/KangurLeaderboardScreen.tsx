@@ -1726,9 +1726,9 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
           <View style={{ gap: 4 }}>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
               {copy({
-                de: 'Nächste Schritte',
-                en: 'Next steps',
-                pl: 'Następne kroki',
+                de: 'Nach der Rangliste',
+                en: 'After leaderboard',
+                pl: 'Po rankingu',
               })}
             </Text>
             <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>

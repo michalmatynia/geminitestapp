@@ -40,7 +40,7 @@ const createLessonAssignment = (
   id: 'assignment-1',
   learnerKey: 'learner-1',
   title: 'Powtorka dzielenia',
-  description: 'Wroc do dzielenia i popraw wynik.',
+  description: 'Wróć do dzielenia i popraw wynik.',
   priority: 'medium',
   archived: false,
   target: {

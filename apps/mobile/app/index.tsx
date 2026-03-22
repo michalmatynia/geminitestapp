@@ -933,8 +933,8 @@ export default function HomeScreen(): React.JSX.Element {
             {isLoadingAuth && session.status !== 'authenticated'
               ? copy({
                   de: 'Der Startbildschirm stellt gerade die Schulersitzung, Ergebnisse und Trainingshinweise wieder her.',
-                  en: 'The home dashboard is restoring the learner session, recent results, and training cues.',
-                  pl: 'Pulpit startowy przywraca teraz sesję ucznia, ostatnie wyniki i wskazówki treningowe.',
+                  en: 'The home screen is restoring the learner session, recent results, and training cues.',
+                  pl: 'Ekran główny przywraca teraz sesję ucznia, ostatnie wyniki i wskazówki treningowe.',
                 })
               : session.status === 'authenticated' && homeHeroLearnerName
                 ? copy({
@@ -944,8 +944,8 @@ export default function HomeScreen(): React.JSX.Element {
                   })
                 : copy({
                     de: 'Von hier aus kannst du Lektionen, Training, Ergebnisse und Duelle durchsuchen. Nach der Anmeldung synchronisiert der Startbildschirm auch Verlauf und Tagesplan.',
-                    en: 'From here you can browse lessons, practice, results, and duels. After sign-in, the home dashboard also syncs history and the daily plan.',
-                    pl: 'Stąd możesz przeglądać lekcje, trening, wyniki i pojedynki. Po zalogowaniu pulpit startowy synchronizuje także historię oraz plan dnia.',
+                    en: 'From here you can browse lessons, practice, results, and duels. After sign-in, the home screen also syncs history and the daily plan.',
+                    pl: 'Stąd możesz przeglądać lekcje, trening, wyniki i pojedynki. Po zalogowaniu ekran główny synchronizuje także historię oraz plan dnia.',
                   })}
           </Text>
 
@@ -2684,9 +2684,9 @@ export default function HomeScreen(): React.JSX.Element {
         >
           <Text style={{ color: '#475569', lineHeight: 20 }}>
             {copy({
-              de: 'Verwandle lokalen Fortschritt und gespeicherte Lektionen direkt vom Dashboard aus in die nächsten Schritte.',
-              en: 'Turn local progress and saved lessons into the next steps directly from the dashboard.',
-              pl: 'Zamień lokalny postęp i zapisane lekcje bezpośrednio na kolejne kroki z poziomu dashboardu.',
+              de: 'Verwandle lokalen Fortschritt und gespeicherte Lektionen direkt vom Startbildschirm aus in die nächsten Schritte.',
+              en: 'Turn local progress and saved lessons into the next steps directly from the home screen.',
+              pl: 'Zamień lokalny postęp i zapisane lekcje bezpośrednio na kolejne kroki z ekranu głównego.',
             })}
           </Text>
           {homeAssignments.assignmentItems.length === 0 ? (
@@ -2731,9 +2731,9 @@ export default function HomeScreen(): React.JSX.Element {
         >
           <Text style={{ color: '#475569', lineHeight: 20 }}>
             {copy({
-              de: 'Die letzten synchronisierten Sitzungen bleiben hier griffbereit, damit du vom Dashboard direkt wieder ins Training oder in den vollständigen Verlauf springen kannst.',
-              en: 'The latest synchronized sessions stay close here so you can jump from the dashboard straight back into practice or the full history.',
-              pl: 'Ostatnie zsynchronizowane sesje są tutaj pod ręką, aby można było z dashboardu od razu wrócić do treningu albo pełnej historii.',
+              de: 'Die letzten synchronisierten Sitzungen bleiben hier griffbereit, damit du vom Startbildschirm direkt wieder ins Training oder in den vollständigen Verlauf springen kannst.',
+              en: 'The latest synchronized sessions stay close here so you can jump from the home screen straight back into practice or the full history.',
+              pl: 'Ostatnie zsynchronizowane sesje są tutaj pod ręką, aby można było z ekranu głównego od razu wrócić do treningu albo pełnej historii.',
             })}
           </Text>
           {recentResults.isRestoringAuth || recentResults.isLoading ? (
@@ -2751,9 +2751,9 @@ export default function HomeScreen(): React.JSX.Element {
           ) : recentResults.results.length === 0 ? (
             <Text style={{ color: '#475569', lineHeight: 20 }}>
               {copy({
-                de: 'Es gibt noch keine synchronisierten mobilen Sitzungen.',
-                en: 'There are no synchronized mobile sessions yet.',
-                pl: 'Brak jeszcze zsynchronizowanych sesji mobilnych.',
+                de: 'Es gibt noch keine synchronisierten Ergebnisse.',
+                en: 'There are no synchronized results yet.',
+                pl: 'Brak jeszcze zsynchronizowanych wyników.',
               })}
             </Text>
           ) : (
@@ -2818,7 +2818,7 @@ export default function HomeScreen(): React.JSX.Element {
                   pl: 'Otwiera pełną mobilną historię wyników.',
                 })}
                 label={copy({
-                  de: 'Gesamten Verlauf öffnen',
+                  de: 'Vollständigen Verlauf öffnen',
                   en: 'Open full history',
                   pl: 'Otwórz pełną historię',
                 })}

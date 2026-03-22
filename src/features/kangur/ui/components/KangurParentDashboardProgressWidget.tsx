@@ -32,6 +32,7 @@ import {
   KangurWidgetIntro,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { buildKangurAssignmentListItems } from '@/features/kangur/ui/services/delegated-assignments';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
@@ -96,6 +97,7 @@ export function KangurParentDashboardProgressWidget({
     useKangurParentDashboardRuntime();
   const { subject } = useKangurSubjectFocus();
   const { ageGroup } = useKangurAgeGroupFocus();
+  const isCoarsePointer = useKangurCoarsePointer();
   const { entry: progressContent } = useKangurPageContentEntry('parent-dashboard-progress');
   const lessonsQuery = useKangurLessons({ ageGroup, enabledOnly: true });
   const lessons = useMemo(() => lessonsQuery.data ?? [], [lessonsQuery.data]);
@@ -116,6 +118,9 @@ export function KangurParentDashboardProgressWidget({
   const activeAssignmentsEmptyLabel = translations('widgets.progress.assignments.activeEmpty');
   const activeAssignmentsErrorLabel = translations('widgets.progress.assignments.loadError');
   const archiveAssignmentErrorLabel = translations('widgets.progress.assignments.archiveError');
+  const compactActionClassName = isCoarsePointer
+    ? 'w-full min-h-11 px-4 sm:w-auto sm:shrink-0'
+    : 'w-full sm:w-auto sm:shrink-0';
   const recentAssignmentsTitle = translations('widgets.progress.assignments.recentTitle');
   const recentAssignmentsSummary = translations('widgets.progress.assignments.recentSummary');
   const recentAssignmentsEmptyLabel = translations('widgets.progress.assignments.recentEmpty');
@@ -280,7 +285,7 @@ export function KangurParentDashboardProgressWidget({
             <KangurDailyQuestHighlightCardContent
               action={
                 dailyQuestHref ? (
-                  <KangurButton asChild className='w-full sm:w-auto sm:shrink-0' size='sm' variant='surface'>
+                  <KangurButton asChild className={compactActionClassName} size='sm' variant='surface'>
                     <Link
                       href={dailyQuestHref}
                       targetPageKey={dailyQuestTargetPage ?? undefined}
@@ -342,7 +347,7 @@ export function KangurParentDashboardProgressWidget({
                     </KangurMetaText>
                   </div>
                   {isLocalHref ? (
-                    <KangurButton asChild className='w-full sm:w-auto sm:shrink-0' size='sm' variant='surface'>
+                    <KangurButton asChild className={compactActionClassName} size='sm' variant='surface'>
                       <Link
                         href={task.href}
                         transitionAcknowledgeMs={110}

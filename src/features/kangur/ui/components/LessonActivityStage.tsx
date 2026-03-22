@@ -17,6 +17,7 @@ import {
   KangurIconBadge,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -73,6 +74,7 @@ const translateLessonChrome = (
 function LessonActivityStageTopBar(): React.JSX.Element {
   const lessonChrome = useTranslations('KangurLessonChrome');
   const { backButtonLabel, navigationPills, onBack, secretLessonPill } = useLessonActivityStageContext();
+  const isCoarsePointer = useKangurCoarsePointer();
   const navigationLabel = translateLessonChrome(
     lessonChrome,
     'lessonNavigation',
@@ -106,7 +108,10 @@ function LessonActivityStageTopBar(): React.JSX.Element {
               type='button'
               onClick={secretLessonPill.onOpen}
               aria-label={openSecretPanelLabel}
-              className='kangur-cta-pill h-[14px] min-w-[40px] cursor-pointer justify-center bg-gradient-to-r kangur-gradient-accent-amber kangur-gradient-with-mid text-[10px] font-black text-amber-950 shadow-sm ring-1 ring-amber-300/90'
+              className={cn(
+                'kangur-cta-pill cursor-pointer justify-center bg-gradient-to-r kangur-gradient-accent-amber kangur-gradient-with-mid font-black text-amber-950 shadow-sm ring-1 ring-amber-300/90 touch-manipulation select-none active:scale-[0.97]',
+                isCoarsePointer ? 'h-9 min-w-[52px] px-3 text-sm' : 'h-[14px] min-w-[40px] text-[10px]'
+              )}
               data-testid='lesson-activity-secret-indicator'
               title={secretPanelTitle}
             >

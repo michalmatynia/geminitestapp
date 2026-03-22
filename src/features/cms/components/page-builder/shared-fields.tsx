@@ -26,7 +26,6 @@ import {
 import { cn } from '@/shared/utils';
 
 import { Asset3DPickerModal } from './Asset3DPickerModal';
-import { Asset3DPickerModalRuntimeContext } from './Asset3DPickerModalRuntimeContext';
 import { MediaLibraryPanel } from './MediaLibraryPanel';
 import { useUploadCmsMedia } from '../../hooks/useCmsQueries';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -181,15 +180,6 @@ export function Asset3DPickerField(props: FieldProps<string>): React.JSX.Element
   const closePickerModal = (): void => {
     setOpen(false);
   };
-  const pickerRuntimeValue = useMemo(
-    () => ({
-      onSelectAsset: (assetId: string): void => {
-        onChange(assetId);
-        setOpen(false);
-      },
-    }),
-    [onChange]
-  );
 
   return (
     <FormField label={label}>
@@ -262,9 +252,15 @@ export function Asset3DPickerField(props: FieldProps<string>): React.JSX.Element
         ) : null}
       </div>
 
-      <Asset3DPickerModalRuntimeContext.Provider value={pickerRuntimeValue}>
-        <Asset3DPickerModal isOpen={open} onClose={closePickerModal} onSuccess={() => {}} />
-      </Asset3DPickerModalRuntimeContext.Provider>
+      <Asset3DPickerModal
+        isOpen={open}
+        onClose={closePickerModal}
+        onSuccess={() => {}}
+        onSelectAsset={(assetId: string): void => {
+          onChange(assetId);
+          setOpen(false);
+        }}
+      />
 
       {previewAsset ? (
         <Asset3DPreviewModal

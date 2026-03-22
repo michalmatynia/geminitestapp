@@ -14,11 +14,13 @@ import {
   KANGUR_PANEL_GRID_TO_ROW_CLASSNAME,
   KANGUR_SPACED_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { translateKangurLearnerProfileWithFallback } from '@/features/kangur/ui/services/profile';
 
 export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
   const translations = useTranslations('KangurLearnerProfileWidgets.hero');
   const runtimeTranslations = useTranslations('KangurLearnerProfileRuntime');
+  const isCoarsePointer = useKangurCoarsePointer();
   const { user, progress } = useKangurLearnerProfileRuntime();
   const { openLoginModal } = useKangurLoginModal();
   const activeLearner = user?.activeLearner ?? null;
@@ -85,7 +87,11 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
       {!user ? (
         <div className={KANGUR_PANEL_GRID_TO_ROW_CLASSNAME}>
           <KangurButton
-            className='w-full sm:w-auto'
+            className={
+              isCoarsePointer
+                ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+                : 'w-full sm:w-auto'
+            }
             onClick={() => {
               openLoginModal();
             }}
@@ -96,7 +102,11 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
             <LogIn aria-hidden='true' className='h-4 w-4' /> {translations('signIn')}
           </KangurButton>
           <KangurButton
-            className='w-full sm:w-auto'
+            className={
+              isCoarsePointer
+                ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+                : 'w-full sm:w-auto'
+            }
             onClick={() => {
               openLoginModal(null, { authMode: 'create-account' });
             }}

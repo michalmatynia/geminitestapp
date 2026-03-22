@@ -848,6 +848,13 @@ export function KangurLessonsScreen(): React.JSX.Element {
     router.replace(createKangurDuelsHref({ sessionId }));
   };
 
+  const openLessonCatalog = (): void => {
+    if (normalizedRouteFocusToken) {
+      setDismissedFocusToken(normalizedRouteFocusToken);
+    }
+    router.replace('/lessons');
+  };
+
   useEffect(() => {
     setActiveSectionIndex(0);
   }, [selectedLesson?.lesson.id]);
@@ -995,9 +1002,9 @@ export function KangurLessonsScreen(): React.JSX.Element {
             ) : !isPreparingLessonsView && focusToken ? (
               <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
                 {copy({
-                  de: `Es wurde nach "${focusToken}" gesucht. Wenn es keinen Treffer gibt, kannst du unten zum Katalog zurückkehren.`,
-                  en: `The route searched for "${focusToken}". If there is no match, you can return to the catalog below.`,
-                  pl: `Trasa wyszukała "${focusToken}". Jeśli nie ma dopasowania, niżej możesz wrócić do katalogu.`,
+                  de: `Der Shortcut wollte "${focusToken}" öffnen. Wenn es hier keinen Treffer gibt, kannst du unten direkt in den vollständigen Katalog oder zurück zum Tagesplan gehen.`,
+                  en: `The shortcut tried to open "${focusToken}". If there is no match here, you can jump straight into the full catalog below or return to the daily plan.`,
+                  pl: `Skrót próbował otworzyć "${focusToken}". Jeśli nie ma tu dopasowania, niżej możesz od razu przejść do pełnego katalogu albo wrócić do planu dnia.`,
                 })}
               </Text>
             ) : (
@@ -1063,9 +1070,9 @@ export function KangurLessonsScreen(): React.JSX.Element {
                     }}
                   >
                     {copy({
-                      de: 'Ergebnisverlauf öffnen',
-                      en: 'Open score history',
-                      pl: 'Otwórz historię wyników',
+                      de: 'Vollständigen Verlauf öffnen',
+                      en: 'Open full history',
+                      pl: 'Otwórz pełną historię',
                     })}
                   </Text>
                 </Pressable>
@@ -1521,9 +1528,9 @@ export function KangurLessonsScreen(): React.JSX.Element {
                   </Text>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Diese Lektion hat noch keine tragbaren mobilen Abschnitte. Du siehst hier aber bereits den Beherrschungsstand, den letzten gespeicherten Stand und den schnellsten Weg zurück ins passende Training.',
-                      en: 'This lesson does not have portable mobile sections yet. You can already see the mastery state, the latest saved checkpoint, and the fastest route back to matching practice here.',
-                      pl: 'Ta lekcja nie ma jeszcze przenośnych sekcji mobilnych. Widzisz tu jednak stan opanowania, ostatni zapis oraz najszybszy powrót do pasującego treningu.',
+                      de: 'Diese Lektion ist hier vorerst als Kurzbrief verfügbar. Du siehst bereits den Beherrschungsstand, den letzten gespeicherten Stand und den schnellsten Weg zurück ins passende Training.',
+                      en: 'This lesson is available here as a short brief for now. You can already see the mastery state, the latest saved checkpoint, and the fastest route back to matching practice.',
+                      pl: 'Ta lekcja jest tu na razie dostępna jako krótki skrót. Widzisz już stan opanowania, ostatni zapis oraz najszybszy powrót do pasującego treningu.',
                     })}
                   </Text>
 
@@ -1597,9 +1604,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
               )}
               <Pressable
                 accessibilityRole='button'
-                onPress={() => {
-                  setDismissedFocusToken(normalizedRouteFocusToken);
-                }}
+                onPress={openLessonCatalog}
                 style={{
                   alignSelf: 'stretch',
                   width: '100%',
@@ -1645,25 +1650,45 @@ export function KangurLessonsScreen(): React.JSX.Element {
             <Card>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                 {copy({
-                  de: 'Keine Übereinstimmung',
-                  en: 'No match',
-                  pl: 'Brak dopasowania',
+                  de: 'Lektions-Shortcut',
+                  en: 'Lesson shortcut',
+                  pl: 'Skrót do lekcji',
                 })}
               </Text>
               <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
                 {copy({
-                  de: `Keine Lektion für "${focusToken}" gefunden`,
-                  en: `No lesson found for "${focusToken}"`,
-                  pl: `Nie znaleziono lekcji dla "${focusToken}"`,
+                  de: `Dieser Shortcut öffnet "${focusToken}" nicht mehr`,
+                  en: `This shortcut no longer opens "${focusToken}"`,
+                  pl: `Ten skrót nie otwiera już lekcji "${focusToken}"`,
                 })}
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Der vollständige Katalog wird angezeigt, damit du manuell weitergehen kannst.',
-                  en: 'Showing the full catalog so you can continue manually.',
-                  pl: 'Pokazujemy pełny katalog, aby można było przejść dalej ręcznie.',
+                  de: 'Der vollständige Themenkatalog bleibt sichtbar, damit du sofort die nächste passende Lektion wählen oder über den Tagesplan weiterlernen kannst.',
+                  en: 'The full topic catalog stays visible so you can immediately choose the closest lesson match or continue from the daily plan.',
+                  pl: 'Pełny katalog tematów pozostaje widoczny, więc możesz od razu wybrać najbliższą lekcję albo wrócić do nauki przez plan dnia.',
                 })}
               </Text>
+              <Pressable
+                accessibilityRole='button'
+                onPress={openLessonCatalog}
+                style={{
+                  alignSelf: 'stretch',
+                  width: '100%',
+                  borderRadius: 999,
+                  backgroundColor: '#0f172a',
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                }}
+              >
+                <Text style={{ color: '#ffffff', fontWeight: '700', textAlign: 'center' }}>
+                  {copy({
+                    de: 'Vollen Katalog öffnen',
+                    en: 'Open full catalog',
+                    pl: 'Otwórz pełny katalog',
+                  })}
+                </Text>
+              </Pressable>
             </Card>
           ) : null}
 
@@ -1671,16 +1696,16 @@ export function KangurLessonsScreen(): React.JSX.Element {
             <Card>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                 {copy({
-                  de: 'Ergebnisverlauf',
-                  en: 'Score history',
-                  pl: 'Historia wyników',
+                  de: 'Nach den Lektionen',
+                  en: 'After lessons',
+                  pl: 'Po lekcjach',
                 })}
               </Text>
               <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
                 {copy({
-                  de: 'Letzte mobile Sitzungen',
-                  en: 'Recent mobile sessions',
-                  pl: 'Ostatnie sesje mobilne',
+                  de: 'Ergebniszentrale',
+                  en: 'Results hub',
+                  pl: 'Centrum wyników',
                 })}
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
@@ -1706,9 +1731,9 @@ export function KangurLessonsScreen(): React.JSX.Element {
                 >
                   <Text style={{ color: '#0f172a', fontWeight: '700' }}>
                     {copy({
-                      de: 'Ergebnisverlauf öffnen',
-                      en: 'Open score history',
-                      pl: 'Otwórz historię wyników',
+                      de: 'Vollständigen Verlauf öffnen',
+                      en: 'Open full history',
+                      pl: 'Otwórz pełną historię',
                     })}
                   </Text>
                 </Pressable>
@@ -2077,9 +2102,9 @@ export function KangurLessonsScreen(): React.JSX.Element {
             <Card>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                 {copy({
-                  de: 'Nächste Schritte',
-                  en: 'Next steps',
-                  pl: 'Następne kroki',
+                  de: 'Nach den Lektionen',
+                  en: 'After lessons',
+                  pl: 'Po lekcjach',
                 })}
               </Text>
               <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
@@ -2173,9 +2198,9 @@ export function KangurLessonsScreen(): React.JSX.Element {
               {lessonDuels.isRestoringAuth || lessonDuels.isLoading ? (
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                   {copy({
-                    de: 'Die mobile Duell-Momentaufnahme nach der Lektion wird geladen.',
-                    en: 'Loading the post-lesson mobile duel snapshot.',
-                    pl: 'Pobieramy mobilną migawkę pojedynków po lekcji.',
+                    de: 'Der Duellstand nach der Lektion wird geladen.',
+                    en: 'Loading the post-lesson duel standing.',
+                    pl: 'Pobieramy stan pojedynków po lekcji.',
                   })}
                 </Text>
               ) : lessonDuels.error ? (
@@ -2209,9 +2234,9 @@ export function KangurLessonsScreen(): React.JSX.Element {
               ) : !lessonDuels.isAuthenticated ? (
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                   {copy({
-                    de: 'Melde die Schulersitzung an, um hier deinen Duellstand, letzte Rivalen und schnelle Rückkämpfe in der mobilen Übersicht zu sehen.',
-                    en: 'Sign in the learner session to see duel standing, recent rivals, and quick rematches in this mobile overview.',
-                    pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże w mobilnym podsumowaniu.',
+                    de: 'Melde die Schulersitzung an, um hier deinen Duellstand, letzte Rivalen und schnelle Rückkämpfe zu sehen.',
+                    en: 'Sign in the learner session to see duel standing, recent rivals, and quick rematches here.',
+                    pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże.',
                   })}
                 </Text>
               ) : (
@@ -2248,9 +2273,9 @@ export function KangurLessonsScreen(): React.JSX.Element {
                   ) : (
                     <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                       {copy({
-                        de: 'Dein Konto ist in dieser mobilen Ranglisten-Momentaufnahme noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
-                        en: 'Your account is not visible in this mobile leaderboard snapshot yet. Finish another duel or open the lobby so your rank appears here.',
-                        pl: 'Twojego konta nie widać jeszcze w tej mobilnej migawce rankingu. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
+                        de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
+                        en: 'Your account is not visible in this duel standing yet. Finish another duel or open the lobby so your rank appears here.',
+                        pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
                       })}
                     </Text>
                   )}

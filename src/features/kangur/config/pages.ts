@@ -1,13 +1,13 @@
+'use client';
+
 import dynamic from 'next/dynamic';
 
 import { createElement, type ComponentType, type ReactElement } from 'react';
 
+import { KangurRouteLoadingFallback } from '@/features/kangur/ui/components/KangurRouteLoadingFallback';
+
 const PageLoadingFallback = (): ReactElement =>
-  createElement('div', {
-    'aria-busy': 'true',
-    'aria-live': 'polite',
-    className: 'kangur-shell-viewport-height w-full',
-  });
+  createElement(KangurRouteLoadingFallback);
 
 const lazyPage = (loader: () => Promise<{ default: ComponentType }>) =>
   dynamic(loader, { loading: PageLoadingFallback });

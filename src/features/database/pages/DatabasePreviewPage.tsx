@@ -27,7 +27,6 @@ import type {
   DatabaseType,
   DatabasePreviewMode,
 } from '@/shared/contracts/database';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import {
   AdminDatabasePageLayout,
   Badge,
@@ -77,22 +76,16 @@ const groupIconMap: Record<string, React.ComponentType<{ className?: string }>> 
 
 /* ─── Table Detail Card ─── */
 
-type TableDetailCardRuntimeValue = {
+type TableDetailCardResolvedProps = {
   detail: DatabaseTableDetail;
   tableRow: DatabaseTablePreviewData | undefined;
   onQueryTable?: (tableName: string) => void;
   onManageTable?: (tableName: string) => void;
 };
 
-const { Context: TableDetailCardRuntimeContext, useStrictContext: useTableDetailCardRuntime } =
-  createStrictContext<TableDetailCardRuntimeValue>({
-    hookName: 'useTableDetailCardRuntime',
-    providerName: 'TableDetailCardRuntimeProvider',
-    displayName: 'TableDetailCardRuntimeContext',
-  });
-
-function TableDetailCardTitle(): React.JSX.Element {
-  const { detail } = useTableDetailCardRuntime();
+function TableDetailCardTitle({
+  detail,
+}: Pick<TableDetailCardResolvedProps, 'detail'>): React.JSX.Element {
   return (
     <div className={`${UI_CENTER_ROW_SPACED_CLASSNAME} flex-1`}>
       <TableIcon className='size-4 text-emerald-300' />
@@ -104,8 +97,14 @@ function TableDetailCardTitle(): React.JSX.Element {
   );
 }
 
-function TableDetailCardActions(): React.ReactNode {
-  const { detail, onQueryTable, onManageTable } = useTableDetailCardRuntime();
+function TableDetailCardActions({
+  detail,
+  onQueryTable,
+  onManageTable,
+}: Pick<
+  TableDetailCardResolvedProps,
+  'detail' | 'onQueryTable' | 'onManageTable'
+>): React.ReactNode {
   if (!onQueryTable && !onManageTable) return null;
 
   return (
@@ -142,7 +141,7 @@ function TableDetailCardActions(): React.ReactNode {
   );
 }
 
-function TableDetailCard({
+export function TableDetailCard({
   detail,
   onQueryTable,
   onManageTable,
@@ -158,68 +157,67 @@ function TableDetailCard({
     () => tableRows.find((r: DatabaseTablePreviewData) => r.name === detail.name),
     [tableRows, detail.name]
   );
-  const runtimeValue = useMemo<TableDetailCardRuntimeValue>(
-    () => ({ detail, tableRow, onQueryTable, onManageTable }),
-    [detail, tableRow, onQueryTable, onManageTable]
-  );
 
   return (
-    <TableDetailCardRuntimeContext.Provider value={runtimeValue}>
-      <CollapsibleSection
-        open={expanded}
-        onOpenChange={setExpanded}
-        title={<TableDetailCardTitle />}
-        actions={<TableDetailCardActions />}
-        variant='card'
-        className='bg-card/60'
-        headerClassName='px-4 py-3'
-      >
-        <div className='border-t border-border bg-black/20'>
-          <Tabs defaultValue='columns' className='w-full'>
-            <div className='px-4 pt-2'>
-              <TabsList
-                className='h-8 bg-transparent border-b border-white/5 w-full justify-start rounded-none'
-                aria-label='Table detail tabs'
-              >
-                <TabsTrigger value='columns' className='text-[10px] uppercase tracking-wider'>
-                  Columns ({detail.columns.length})
-                </TabsTrigger>
-                <TabsTrigger value='indexes' className='text-[10px] uppercase tracking-wider'>
-                  Indexes ({detail.indexes.length})
-                </TabsTrigger>
-                <TabsTrigger value='foreignKeys' className='text-[10px] uppercase tracking-wider'>
-                  Foreign Keys ({detail.foreignKeys.length})
-                </TabsTrigger>
-                <TabsTrigger value='data' className='text-[10px] uppercase tracking-wider'>
-                  Preview {tableRow ? `(${tableRow.totalRows})` : ''}
-                </TabsTrigger>
-              </TabsList>
-            </div>
+    <CollapsibleSection
+      open={expanded}
+      onOpenChange={setExpanded}
+      title={<TableDetailCardTitle detail={detail} />}
+      actions={
+        <TableDetailCardActions
+          detail={detail}
+          {...(onQueryTable !== undefined ? { onQueryTable } : {})}
+          {...(onManageTable !== undefined ? { onManageTable } : {})}
+        />
+      }
+      variant='card'
+      className='bg-card/60'
+      headerClassName='px-4 py-3'
+    >
+      <div className='border-t border-border bg-black/20'>
+        <Tabs defaultValue='columns' className='w-full'>
+          <div className='px-4 pt-2'>
+            <TabsList
+              className='h-8 bg-transparent border-b border-white/5 w-full justify-start rounded-none'
+              aria-label='Table detail tabs'
+            >
+              <TabsTrigger value='columns' className='text-[10px] uppercase tracking-wider'>
+                Columns ({detail.columns.length})
+              </TabsTrigger>
+              <TabsTrigger value='indexes' className='text-[10px] uppercase tracking-wider'>
+                Indexes ({detail.indexes.length})
+              </TabsTrigger>
+              <TabsTrigger value='foreignKeys' className='text-[10px] uppercase tracking-wider'>
+                Foreign Keys ({detail.foreignKeys.length})
+              </TabsTrigger>
+              <TabsTrigger value='data' className='text-[10px] uppercase tracking-wider'>
+                Preview {tableRow ? `(${tableRow.totalRows})` : ''}
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-            <TabsContent value='columns' className='mt-0'>
-              <ColumnsTab />
-            </TabsContent>
+          <TabsContent value='columns' className='mt-0'>
+            <ColumnsTab detail={detail} />
+          </TabsContent>
 
-            <TabsContent value='indexes' className='mt-0'>
-              <IndexesTab />
-            </TabsContent>
+          <TabsContent value='indexes' className='mt-0'>
+            <IndexesTab detail={detail} />
+          </TabsContent>
 
-            <TabsContent value='foreignKeys' className='mt-0'>
-              <ForeignKeysTab />
-            </TabsContent>
+          <TabsContent value='foreignKeys' className='mt-0'>
+            <ForeignKeysTab detail={detail} />
+          </TabsContent>
 
-            <TabsContent value='data' className='mt-0'>
-              <DataTab />
-            </TabsContent>
-          </Tabs>
-        </div>
-      </CollapsibleSection>
-    </TableDetailCardRuntimeContext.Provider>
+          <TabsContent value='data' className='mt-0'>
+            <DataTab tableRow={tableRow} />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </CollapsibleSection>
   );
 }
 
-function ColumnsTab(): React.JSX.Element {
-  const { detail } = useTableDetailCardRuntime();
+function ColumnsTab({ detail }: Pick<TableDetailCardResolvedProps, 'detail'>): React.JSX.Element {
   const tableColumns = useMemo<ColumnDef<DatabaseColumnInfo>[]>(
     () => [
       {
@@ -282,8 +280,7 @@ function ColumnsTab(): React.JSX.Element {
   );
 }
 
-function IndexesTab(): React.JSX.Element {
-  const { detail } = useTableDetailCardRuntime();
+function IndexesTab({ detail }: Pick<TableDetailCardResolvedProps, 'detail'>): React.JSX.Element {
   const tableColumns = useMemo<ColumnDef<DatabaseIndexInfo>[]>(
     () => [
       {
@@ -331,8 +328,9 @@ function IndexesTab(): React.JSX.Element {
   );
 }
 
-function ForeignKeysTab(): React.JSX.Element {
-  const { detail } = useTableDetailCardRuntime();
+function ForeignKeysTab({
+  detail,
+}: Pick<TableDetailCardResolvedProps, 'detail'>): React.JSX.Element {
   const tableColumns = useMemo<ColumnDef<DatabaseForeignKeyInfo>[]>(
     () => [
       {
@@ -372,8 +370,9 @@ function ForeignKeysTab(): React.JSX.Element {
   );
 }
 
-function DataTab(): React.JSX.Element {
-  const { tableRow: tableRows } = useTableDetailCardRuntime();
+function DataTab({
+  tableRow: tableRows,
+}: Pick<TableDetailCardResolvedProps, 'tableRow'>): React.JSX.Element {
   const { page, pageSize } = useDatabasePreviewState();
 
   const columns = useMemo(() => {

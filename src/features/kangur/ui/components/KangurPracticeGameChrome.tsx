@@ -18,6 +18,7 @@ import {
   KANGUR_PANEL_GAP_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -215,6 +216,7 @@ export function KangurPracticeGameSummaryActions({
   finishButtonClassName?: string;
   className?: string;
 }): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const handleRestart = onRestart;
   const handleFinish = onFinish;
   const restartClassName = restartButtonClassName;
@@ -224,7 +226,12 @@ export function KangurPracticeGameSummaryActions({
   return (
     <KangurPanelRow className={cn('w-full', wrapperClassName)}>
       <KangurButton
-        className={cn('w-full sm:flex-1', restartClassName)}
+        className={cn(
+          isCoarsePointer
+            ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:flex-1'
+            : 'w-full sm:flex-1',
+          restartClassName
+        )}
         onClick={handleRestart}
         size='lg'
         variant='surface'
@@ -232,7 +239,12 @@ export function KangurPracticeGameSummaryActions({
         <RefreshCw aria-hidden='true' className='w-4 h-4' /> {restartLabel}
       </KangurButton>
       <KangurButton
-        className={cn('w-full sm:flex-1', finishClassName)}
+        className={cn(
+          isCoarsePointer
+            ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:flex-1'
+            : 'w-full sm:flex-1',
+          finishClassName
+        )}
         onClick={handleFinish}
         size='lg'
         variant='primary'

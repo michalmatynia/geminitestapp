@@ -57,6 +57,26 @@ const toMarkdown = (payload) => {
   } else {
     lines.push(...renderIssueTable(payload.issues));
   }
+  const failingTargetsWithFiles = payload.targets.filter(
+    (target) => target.status === 'fail' && Array.isArray(target.lowestCoverageFiles) && target.lowestCoverageFiles.length > 0
+  );
+  if (failingTargetsWithFiles.length > 0) {
+    lines.push('');
+    lines.push('## Lowest Coverage Files');
+    lines.push('');
+    for (const target of failingTargetsWithFiles) {
+      lines.push(`### ${target.label}`);
+      lines.push('');
+      lines.push('| File | Lines | Statements | Functions | Branches |');
+      lines.push('| --- | ---: | ---: | ---: | ---: |');
+      for (const file of target.lowestCoverageFiles) {
+        lines.push(
+          `| \`${file.filePath}\` | ${formatPct(file.lines)} | ${formatPct(file.statements)} | ${formatPct(file.functions)} | ${formatPct(file.branches)} |`
+        );
+      }
+      lines.push('');
+    }
+  }
   lines.push('');
   lines.push('## Notes');
   lines.push('');

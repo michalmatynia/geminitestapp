@@ -27,6 +27,7 @@ import {
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
   KANGUR_START_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { buildKangurAssignments } from '@/features/kangur/ui/services/assignments';
 import type { KangurBasePathProgressProps } from '@/features/kangur/ui/types';
 import type { KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
@@ -47,6 +48,7 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
   const locale = useLocale();
   const panelTranslations = useTranslations('KangurAssignmentPanel');
   const suggestionTranslations = useTranslations('KangurAssignmentSuggestions');
+  const isCoarsePointer = useKangurCoarsePointer();
   const assignments = useMemo(
     () =>
       buildKangurAssignments(progress, 3, {
@@ -132,7 +134,10 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                         : panelTranslations('toggle.markDone', { title: assignment.title })
                     }
                     aria-pressed={completed}
-                    className='mt-0.5 h-8 w-8 min-w-0 rounded-full px-0'
+                    className={cn(
+                      'mt-0.5 min-w-0 rounded-full px-0',
+                      isCoarsePointer ? 'h-11 w-11 touch-manipulation active:scale-[0.97]' : 'h-8 w-8'
+                    )}
                     data-testid={`assignment-panel-toggle-${assignment.id}`}
                     size='sm'
                     variant={completed ? 'success' : 'secondary'}

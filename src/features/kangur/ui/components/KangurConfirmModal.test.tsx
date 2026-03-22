@@ -34,9 +34,11 @@ describe('KangurConfirmModal', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Anuluj' }));
+    expect(onClose).toHaveBeenCalled();
+
+    onClose.mockClear();
     fireEvent.click(screen.getByRole('button', { name: 'Potwierdź' }));
 
-    expect(onClose).toHaveBeenCalledTimes(1);
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 });

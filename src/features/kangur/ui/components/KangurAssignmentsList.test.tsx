@@ -10,6 +10,10 @@ import { buildKangurAssignmentListItems } from '@/features/kangur/ui/services/de
 
 import KangurAssignmentsList from './KangurAssignmentsList';
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 const regularAssignment: KangurAssignmentSnapshot = {
   id: 'assignment-regular',
   learnerKey: 'jan@example.com',
@@ -124,11 +128,17 @@ describe('KangurAssignmentsList', () => {
     expect(screen.getByText('Czas na wykonanie: 45 min')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Trenuj teraz' })).toHaveClass(
       'kangur-cta-pill',
-      'surface-cta'
+      'surface-cta',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
     expect(screen.getByRole('button', { name: 'Archiwizuj' })).toHaveClass(
       'border-transparent',
-      'bg-transparent'
+      'bg-transparent',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
   });
 
@@ -185,7 +195,10 @@ describe('KangurAssignmentsList', () => {
     );
     expect(screen.getByRole('link', { name: 'Otwórz lekcję' })).toHaveClass(
       'kangur-cta-pill',
-      'primary-cta'
+      'primary-cta',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
   });
 
@@ -202,6 +215,10 @@ describe('KangurAssignmentsList', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'Przypisz ponownie' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Przypisz ponownie' })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
   });
 });

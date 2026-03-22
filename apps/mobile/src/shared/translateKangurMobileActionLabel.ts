@@ -63,14 +63,14 @@ const KANGUR_MOBILE_ACTION_LABEL_MAP: Record<
     pl: 'Otwórz plan dnia',
   },
   'Open full history': {
-    de: 'Gesamten Verlauf öffnen',
+    de: 'Vollständigen Verlauf öffnen',
     en: 'Open full history',
-    pl: 'Otwórz całą historię',
+    pl: 'Otwórz pełną historię',
   },
   'Open history': {
-    de: 'Verlauf öffnen',
-    en: 'Open history',
-    pl: 'Otwórz historię',
+    de: 'Vollständigen Verlauf öffnen',
+    en: 'Open full history',
+    pl: 'Otwórz pełną historię',
   },
   'Open lesson': {
     de: 'Lektion öffnen',
@@ -93,9 +93,9 @@ const KANGUR_MOBILE_ACTION_LABEL_MAP: Record<
     pl: 'Trenuj najsłabszy tryb',
   },
   'Recent results': {
-    de: 'Letzte Ergebnisse',
-    en: 'Recent results',
-    pl: 'Ostatnie wyniki',
+    de: 'Ergebniszentrale',
+    en: 'Results hub',
+    pl: 'Centrum wyników',
   },
   Refresh: {
     de: 'Aktualisieren',

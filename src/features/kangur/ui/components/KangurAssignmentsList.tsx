@@ -33,6 +33,7 @@ import {
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
   KANGUR_CENTER_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
 const ASSIGNMENTS_LIST_ROUTE_ACKNOWLEDGE_MS = 110;
 
@@ -146,6 +147,7 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
   const locale = useLocale();
   const translations = useTranslations('KangurAssignmentsList');
   const runtimeTranslations = useTranslations('KangurAssignmentsRuntime');
+  const isCoarsePointer = useKangurCoarsePointer();
   const item = useKangurAssignmentsListItem();
   const { onItemActionClick } = useKangurAssignmentsListActions();
   const { now, showTimeCountdown } = useKangurAssignmentsListRuntime();
@@ -206,7 +208,16 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
           <KangurCardDescription as='div' size='sm'>
             {item.progressSummary}
           </KangurCardDescription>
-          <KangurButton asChild className='w-full sm:w-auto' size='sm' variant={item.actionVariant}>
+          <KangurButton
+            asChild
+            className={
+              isCoarsePointer
+                ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+                : 'w-full sm:w-auto'
+            }
+            size='sm'
+            variant={item.actionVariant}
+          >
             <Link
               href={item.actionHref}
               onClick={(event) => {
@@ -247,6 +258,7 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
   const locale = useLocale();
   const translations = useTranslations('KangurAssignmentsList');
   const runtimeTranslations = useTranslations('KangurAssignmentsRuntime');
+  const isCoarsePointer = useKangurCoarsePointer();
   const item = useKangurAssignmentsListItem();
   const { onItemActionClick } = useKangurAssignmentsListActions();
   const { onArchive, onTimeLimitClick, onReassign, reassigningId } =
@@ -330,7 +342,16 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
       </KangurSummaryPanel>
 
       <div className={`mt-5 ${KANGUR_TIGHT_ROW_CLASSNAME} sm:flex-wrap sm:items-center`}>
-        <KangurButton asChild className='w-full sm:w-auto' size='sm' variant='surface'>
+        <KangurButton
+          asChild
+          className={
+            isCoarsePointer
+              ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+              : 'w-full sm:w-auto'
+          }
+          size='sm'
+          variant='surface'
+        >
           <Link
             href={item.actionHref}
             onClick={(event) => {
@@ -348,7 +369,11 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
           <KangurButton
             aria-label={translations('timeLimitButtonLabel')}
             title={translations('timeLimitButtonLabel')}
-            className='w-full sm:w-auto sm:px-3'
+            className={
+              isCoarsePointer
+                ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto sm:px-3'
+                : 'w-full sm:w-auto sm:px-3'
+            }
             type='button'
             onClick={() => onTimeLimitClick(item.id)}
             size='sm'
@@ -359,7 +384,11 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
         ) : null}
         {canReassign ? (
           <KangurButton
-            className='w-full sm:w-auto'
+            className={
+              isCoarsePointer
+                ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+                : 'w-full sm:w-auto'
+            }
             type='button'
             onClick={() => onReassign?.(item.id)}
             size='sm'
@@ -371,7 +400,11 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
         ) : null}
         {onArchive ? (
           <KangurButton
-            className='w-full sm:w-auto'
+            className={
+              isCoarsePointer
+                ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+                : 'w-full sm:w-auto'
+            }
             type='button'
             onClick={() => onArchive(item.id)}
             size='sm'

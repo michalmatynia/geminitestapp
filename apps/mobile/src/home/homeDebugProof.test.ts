@@ -56,7 +56,7 @@ describe('buildKangurHomeDebugProofViewModel', () => {
       checks: [
         {
           detail: '8/8 w ostatnich zsynchronizowanych wynikach.',
-          label: 'Ostatnie wyniki',
+          label: 'Centrum wyników',
           status: 'ready',
         },
         {
@@ -83,9 +83,38 @@ describe('buildKangurHomeDebugProofViewModel', () => {
     ).toEqual({
       checks: [
         {
-          detail: 'Przywracamy sesję ucznia i zsynchronizowane dane wyników.',
-          label: 'Pętla wyników strony głównej',
+          detail: 'Przywracamy sesję ucznia i zsynchronizowane dane wyników dla ekranu głównego.',
+          label: 'Centrum wyników strony głównej',
           status: 'info',
+        },
+      ],
+      operation: 'clock',
+      operationLabel: 'Zegar',
+    });
+  });
+
+  it('marks the results hub as missing when the home route has no synced result for that mode yet', () => {
+    expect(
+      buildKangurHomeDebugProofViewModel({
+        isEnabled: true,
+        isLoading: false,
+        operation: 'clock',
+        recentResults: [],
+        strongestOperation: null,
+        weakestOperation: null,
+      }),
+    ).toEqual({
+      checks: [
+        {
+          detail: 'Ten tryb nie jest jeszcze widoczny w centrum wyników.',
+          label: 'Centrum wyników',
+          status: 'missing',
+        },
+        {
+          detail:
+            'Fokus treningowy jest już gotowy, ale ten tryb nie jest teraz najmocniejszą ani najsłabszą kartą.',
+          label: 'Fokus treningowy',
+          status: 'missing',
         },
       ],
       operation: 'clock',

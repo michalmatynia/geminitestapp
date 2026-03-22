@@ -5,6 +5,7 @@ import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTu
 import { useOptionalKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_WRAP_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { cn, sanitizeSvg } from '@/features/kangur/shared/utils';
 
 import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
@@ -64,6 +65,7 @@ export function KangurAiTutorMessageList({
   introMessage,
 }: KangurAiTutorMessageListProps): JSX.Element {
   const tutorContent = useKangurAiTutorContent();
+  const isCoarsePointer = useKangurCoarsePointer();
   const tutor = useOptionalKangurAiTutor();
   const drawingContent = (tutorContent as { drawing?: TutorDrawingContent }).drawing;
   const {
@@ -432,7 +434,9 @@ export function KangurAiTutorMessageList({
                       aria-pressed={submittedFeedback === 'helpful'}
                       disabled={submittedFeedback !== null}
                       className={cn(
-                        'h-8 px-3 text-[11px]',
+                        isCoarsePointer
+                          ? 'min-h-11 px-4 text-xs'
+                          : 'h-8 px-3 text-[11px]',
                         submittedFeedback === 'helpful'
                           ? 'kangur-chat-feedback-positive'
                           : ''
@@ -449,7 +453,9 @@ export function KangurAiTutorMessageList({
                       aria-pressed={submittedFeedback === 'not_helpful'}
                       disabled={submittedFeedback !== null}
                       className={cn(
-                        'h-8 px-3 text-[11px]',
+                        isCoarsePointer
+                          ? 'min-h-11 px-4 text-xs'
+                          : 'h-8 px-3 text-[11px]',
                         submittedFeedback === 'not_helpful'
                           ? 'kangur-chat-feedback-negative'
                           : ''

@@ -21,6 +21,7 @@ import {
   KangurSurfacePanel,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   buildKangurAssignmentListItem,
   formatKangurAssignmentOperationLabel,
@@ -107,6 +108,7 @@ function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
   const locale = useLocale();
   const runtimeTranslations = useTranslations('KangurAssignmentsRuntime');
   const listTranslations = useTranslations('KangurAssignmentsList');
+  const isCoarsePointer = useKangurCoarsePointer();
   const banner = useKangurPracticeAssignmentBannerModel();
   const shouldTick = Boolean(banner.timeLimitMinutes) && banner.status !== 'completed';
   const [now, setNow] = useState(() => Date.now());
@@ -193,7 +195,16 @@ function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
           </KangurMetaText>
         ) : null}
 
-        <KangurButton asChild className='mt-4' fullWidth variant='primary'>
+        <KangurButton
+          asChild
+          className={
+            isCoarsePointer
+              ? 'mt-4 min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
+              : 'mt-4'
+          }
+          fullWidth
+          variant='primary'
+        >
           <Link
             href={banner.actionHref}
             transitionAcknowledgeMs={110}

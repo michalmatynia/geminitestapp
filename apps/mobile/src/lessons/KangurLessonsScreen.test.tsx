@@ -274,7 +274,7 @@ describe('KangurLessonsScreen', () => {
     expect(screen.getByText('Śledzone 0')).toBeTruthy();
     expect(screen.getByText('Opanowane 0')).toBeTruthy();
     expect(screen.getByText('Do powtórki 0')).toBeTruthy();
-    expect(screen.getByText('Otwórz historię wyników')).toBeTruthy();
+    expect(screen.getByText('Otwórz pełną historię')).toBeTruthy();
     expect(screen.getByText('Otwórz plan dnia')).toBeTruthy();
     expect(screen.getByText('Ładowanie lekcji')).toBeTruthy();
     expect(
@@ -499,11 +499,10 @@ describe('KangurLessonsScreen', () => {
     expect(screen.getByText('Wróć do lekcji: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Potem trenuj: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
-    expect(screen.getByText('Historia wyników')).toBeTruthy();
-    expect(screen.getByText('Ostatnie sesje mobilne')).toBeTruthy();
+    expect(screen.getByText('Centrum wyników')).toBeTruthy();
+    expect(screen.getAllByText('Otwórz pełną historię').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Trenuj ponownie')).toBeTruthy();
     expect(screen.getByText('Historia trybu')).toBeTruthy();
-    expect(screen.getAllByText('Otwórz historię wyników').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Opanowanie lekcji')).toBeTruthy();
     expect(screen.getByText('Plan lekcji po czytaniu')).toBeTruthy();
     expect(
@@ -526,7 +525,7 @@ describe('KangurLessonsScreen', () => {
     expect(screen.getAllByText('Do powtórki 1').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Najmocniejsza lekcja')).toBeTruthy();
     expect(screen.getByText('Próby 4 • ostatni wynik 94%')).toBeTruthy();
-    expect(screen.getByText('Następne kroki')).toBeTruthy();
+    expect(screen.getAllByText('Po lekcjach').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Plan po lekcjach')).toBeTruthy();
     expect(screen.getByText('Domknij zegar')).toBeTruthy();
     expect(screen.getByText('Priorytet wysoki')).toBeTruthy();
@@ -571,6 +570,48 @@ describe('KangurLessonsScreen', () => {
     expect(screen.getByText('Die Themenliste und der Beherrschungsstand werden geladen.')).toBeTruthy();
   });
 
+  it('shows signed-out duel guidance without mobile-overview wording', () => {
+    useLessonsScreenBootStateMock.mockReturnValue(false);
+
+    renderLessonsScreen();
+
+    expect(screen.getByText('Szybki powrót do rywali')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże.',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('shows the pending duel standing when the learner rank is not visible yet', () => {
+    useLessonsScreenBootStateMock.mockReturnValue(false);
+    useKangurMobileLessonsDuelsMock.mockReturnValue({
+      actionError: null,
+      createRematch: vi.fn(),
+      currentEntry: null,
+      currentRank: null,
+      error: null,
+      isActionPending: false,
+      isAuthenticated: true,
+      isLoading: false,
+      isRestoringAuth: false,
+      opponents: [],
+      pendingOpponentLearnerId: null,
+      refresh: vi.fn(),
+    });
+
+    renderLessonsScreen();
+
+    expect(screen.getByText('Szybki powrót do rywali')).toBeTruthy();
+    expect(screen.getByText('Rywale 0')).toBeTruthy();
+    expect(screen.getByText('Czeka na widoczność')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
+      ),
+    ).toBeTruthy();
+  });
+
   it('passes the active locale into the lesson body resolver and renders German body copy', () => {
     useLessonsScreenBootStateMock.mockReturnValue(false);
 
@@ -582,13 +623,18 @@ describe('KangurLessonsScreen', () => {
     expect(screen.getByText('Nach der Lektion kannst du direkt in das kuerzere Uhrtraining wechseln.')).toBeTruthy();
   });
 
-  it('renders a mobile lesson brief when the focused lesson has no portable body yet', () => {
+  it('renders a learner-facing lesson brief when the focused lesson has no mobile body yet', () => {
     useLessonsScreenBootStateMock.mockReturnValue(false);
     getKangurPortableLessonBodyMock.mockReturnValue(null);
 
     renderLessonsScreen();
 
     expect(screen.getByText('Mobilny skrót lekcji')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Ta lekcja jest tu na razie dostępna jako krótki skrót. Widzisz już stan opanowania, ostatni zapis oraz najszybszy powrót do pasującego treningu.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('Próby 4')).toBeTruthy();
     expect(screen.getByText('Najlepszy wynik 100%')).toBeTruthy();
     expect(screen.getByText('Ostatni wynik 90%')).toBeTruthy();
@@ -596,6 +642,35 @@ describe('KangurLessonsScreen', () => {
     expect(
       screen.queryByText(/Właściwa treść tej lekcji nie jest jeszcze przeniesiona/),
     ).toBeNull();
+  });
+
+  it('shows a lesson-shortcut recovery state when the focused lesson is missing', () => {
+    useLessonsScreenBootStateMock.mockReturnValue(false);
+    useLocalSearchParamsMock.mockReturnValue({
+      focus: 'fractions',
+    });
+    useKangurMobileLessonsMock.mockReturnValue({
+      actionError: null,
+      focusToken: 'fractions',
+      lessons: [mockLessonItem],
+      saveLessonCheckpoint: vi.fn(),
+      selectedLesson: null,
+    });
+
+    renderLessonsScreen();
+
+    expect(screen.getByText(/Skrót próbował otworzyć "fractions"\./)).toBeTruthy();
+    expect(screen.getByText('Skrót do lekcji')).toBeTruthy();
+    expect(screen.getByText('Ten skrót nie otwiera już lekcji "fractions"')).toBeTruthy();
+    expect(screen.getByText('Otwórz pełny katalog')).toBeTruthy();
+    expect(screen.queryByText('Brak dopasowania')).toBeNull();
+    expect(
+      screen.queryByText('Pokazujemy pełny katalog, aby można było przejść dalej ręcznie.'),
+    ).toBeNull();
+
+    fireEvent.click(screen.getByText('Otwórz pełny katalog'));
+
+    expect(replaceMock).toHaveBeenCalledWith('/lessons');
   });
 
   it('saves a local lesson checkpoint from the current section coverage', () => {

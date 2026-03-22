@@ -32,6 +32,7 @@ import {
   KANGUR_STACK_TIGHT_CLASSNAME,
   KANGUR_TIGHT_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { ActivityTypes } from '@/shared/constants/observability';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
@@ -167,6 +168,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
 }): React.JSX.Element | null {
   const locale = useLocale();
   const translations = useTranslations('KangurParentDashboard');
+  const isCoarsePointer = useKangurCoarsePointer();
   const {
     activeLearner,
     activeTab,
@@ -214,6 +216,12 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
   const [interactionFilter, setInteractionFilter] = useState<InteractionFilter>('all');
   const [interactionDateFrom, setInteractionDateFrom] = useState('');
   const [interactionDateTo, setInteractionDateTo] = useState('');
+  const compactActionClassName = isCoarsePointer
+    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+    : 'w-full sm:w-auto';
+  const segmentedFilterClassName = isCoarsePointer
+    ? 'min-h-11 min-w-0 flex-1 px-4 text-xs touch-manipulation select-none active:scale-[0.97] sm:flex-none'
+    : 'min-w-0 flex-1 px-3 text-xs sm:flex-none';
   const lessonPanelTimeCards = useMemo(
     () =>
       lessons
@@ -640,7 +648,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                     aria-pressed={interactionFilter === option.value}
                     aria-selected={interactionFilter === option.value}
                     role='tab'
-                    className='min-w-0 flex-1 px-3 text-xs sm:flex-none'
+                    className={segmentedFilterClassName}
                     size='sm'
                     variant={interactionFilter === option.value ? 'segmentActive' : 'segment'}
                   >
@@ -685,7 +693,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                       setInteractionDateFrom('');
                       setInteractionDateTo('');
                     }}
-                    className='w-full sm:w-auto'
+                    className={compactActionClassName}
                   >
                     {translations('widgets.monitoring.filters.clear')}
                   </KangurButton>
@@ -750,7 +758,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
             {hasMoreInteractions ? (
               <div className='flex justify-center'>
                 <KangurButton
-                  className='w-full sm:w-auto'
+                  className={compactActionClassName}
                   disabled={isLoadingMoreInteractions}
                   onClick={() => void handleLoadMoreInteractions()}
                   size='sm'

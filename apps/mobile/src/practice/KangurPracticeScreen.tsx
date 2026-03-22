@@ -341,9 +341,9 @@ const getPracticeSyncPreview = ({
 
   return {
     body: {
-      de: 'Nach der Runde wird das Ergebnis lokal gespeichert. Melde die Lernenden-Sitzung an, damit die mobile App es auch mit der Kangur-API synchronisiert.',
-      en: 'After the run, the result will be saved locally. Sign in the learner session so the mobile app can also sync it with the Kangur API.',
-      pl: 'Po zakończeniu serii wynik zapisze się lokalnie. Zaloguj sesję ucznia, aby aplikacja mobilna mogła zsynchronizować go także z API Kangura.',
+      de: 'Nach der Runde wird das Ergebnis lokal gespeichert. Melde die Lernenden-Sitzung an, damit es auch mit der Kangur-API synchronisiert wird.',
+      en: 'After the run, the result will be saved locally. Sign in the learner session so it also syncs with the Kangur API.',
+      pl: 'Po zakończeniu serii wynik zapisze się lokalnie. Zaloguj sesję ucznia, aby zsynchronizować go także z API Kangura.',
     }[locale],
     label: {
       de: 'Nur lokal',
@@ -360,24 +360,24 @@ const getPracticeKindDescription = (
 ): string => {
   if (kind === 'logic') {
     return {
-      de: 'Das mobile Logiktraining nutzt textbasierte Multiple-Choice-Fragen und dieselbe Ergebnis-, Verlaufs- und Folgelektionsstrecke wie die übrigen Trainingsmodi.',
-      en: 'Mobile logic practice uses text-based multiple-choice questions and the same score, history, and follow-up lesson flow as the other practice modes.',
-      pl: 'Mobilny trening logiki korzysta z tekstowych pytań wielokrotnego wyboru i z tej samej ścieżki wyników, historii oraz dalszych lekcji co pozostałe tryby treningu.',
+      de: 'Das Logiktraining nutzt textbasierte Multiple-Choice-Fragen und dieselbe Ergebnis-, Verlaufs- und Folgelektionsstrecke wie die übrigen Trainingsmodi.',
+      en: 'Logic practice uses text-based multiple-choice questions and the same score, history, and follow-up lesson flow as the other practice modes.',
+      pl: 'Trening logiki korzysta z tekstowych pytań wielokrotnego wyboru i z tej samej ścieżki wyników, historii oraz dalszych lekcji co pozostałe tryby treningu.',
     }[locale];
   }
 
   if (kind === 'time') {
     return {
-      de: 'Das mobile Zeit- und Kalendertraining bündelt kurze Fragen, lokale Fortschritte und direkte Wege zurück zu Lektionen, Verlauf und Tagesplan.',
-      en: 'Mobile time and calendar practice combines short questions, local progress, and direct routes back to lessons, history, and the daily plan.',
-      pl: 'Mobilny trening czasu i kalendarza łączy krótkie pytania, lokalny postęp oraz bezpośrednie przejścia do lekcji, historii i planu dnia.',
+      de: 'Das Zeit- und Kalendertraining bündelt kurze Fragen, lokale Fortschritte und direkte Wege zurück zu Lektionen, Verlauf und Tagesplan.',
+      en: 'Time and calendar practice combines short questions, local progress, and direct routes back to lessons, history, and the daily plan.',
+      pl: 'Trening czasu i kalendarza łączy krótkie pytania, lokalny postęp oraz bezpośrednie przejścia do lekcji, historii i planu dnia.',
     }[locale];
   }
 
   return {
-    de: 'Das mobile Arithmetiktraining deckt die Grundoperationen mit kurzen Serien ab und verbindet Ergebnisse direkt mit Verlauf, Lektionen und den nächsten Aufgaben.',
-    en: 'Mobile arithmetic practice covers the core operations in short runs and connects results directly with history, lessons, and the next tasks.',
-    pl: 'Mobilny trening arytmetyki obejmuje podstawowe działania w krótkich seriach i od razu łączy wynik z historią, lekcjami oraz kolejnymi zadaniami.',
+    de: 'Das Arithmetiktraining deckt die Grundoperationen mit kurzen Serien ab und verbindet Ergebnisse direkt mit Verlauf, Lektionen und den nächsten Aufgaben.',
+    en: 'Arithmetic practice covers the core operations in short runs and connects results directly with history, lessons, and the next tasks.',
+    pl: 'Trening arytmetyki obejmuje podstawowe działania w krótkich seriach i od razu łączy wynik z historią, lekcjami oraz kolejnymi zadaniami.',
   }[locale];
 };
 
@@ -1423,9 +1423,9 @@ export function KangurPracticeScreen(): React.JSX.Element {
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Vor dem ersten Tipp siehst du hier den Umfang der Serie, die Speicherstrategie und die schnellsten Wege zurück zu Lektionen, Verlauf und Tagesplan.',
-                  en: 'Before the first tap, this shows the run size, the save path, and the quickest routes back to lessons, history, and the daily plan.',
-                  pl: 'Przed pierwszym kliknięciem widzisz tutaj rozmiar serii, sposób zapisu oraz najszybsze przejścia do lekcji, historii i planu dnia.',
+                  de: 'Zum Start siehst du hier den Umfang der Serie, den Speicherweg und die schnellsten Wege zurück zu Lektionen, Verlauf und Tagesplan.',
+                  en: 'At the start, this shows the run size, the save path, and the quickest routes back to lessons, history, and the daily plan.',
+                  pl: 'Na starcie widzisz tutaj rozmiar serii, sposób zapisu oraz najszybsze przejścia do lekcji, historii i planu dnia.',
                 })}
               </Text>
 
@@ -1765,9 +1765,9 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 {practiceDuels.isRestoringAuth || practiceDuels.isLoading ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Die mobile Duell-Momentaufnahme nach dem Training wird geladen.',
-                      en: 'Loading the post-practice mobile duel snapshot.',
-                      pl: 'Pobieramy mobilną migawkę pojedynków po treningu.',
+                      de: 'Der Duellstand nach dem Training wird geladen.',
+                      en: 'Loading the post-practice duel standing.',
+                      pl: 'Pobieramy stan pojedynków po treningu.',
                     })}
                   </Text>
                 ) : practiceDuels.error ? (
@@ -1800,9 +1800,9 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 ) : !practiceDuels.isAuthenticated ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Melde eine Lernenden-Sitzung an, um hier dein Duellergebnis, letzte Rivalen und schnelle Rueckspiele in der mobilen Übersicht zu sehen.',
-                      en: 'Sign in the learner session to see your duel result, recent rivals, and quick rematches in this mobile overview.',
-                      pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże w mobilnym podsumowaniu.',
+                      de: 'Melde eine Lernenden-Sitzung an, um hier dein Duellergebnis, letzte Rivalen und schnelle Rueckspiele zu sehen.',
+                      en: 'Sign in the learner session to see your duel result, recent rivals, and quick rematches here.',
+                      pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże.',
                     })}
                   </Text>
                 ) : (
@@ -1835,9 +1835,9 @@ export function KangurPracticeScreen(): React.JSX.Element {
                     ) : (
                       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                         {copy({
-                          de: 'Dein Konto ist in dieser mobilen Ranglisten-Momentaufnahme noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
-                          en: 'Your account is not visible in this mobile leaderboard snapshot yet. Finish another duel or open the lobby so your rank appears here.',
-                          pl: 'Twojego konta nie widać jeszcze w tej mobilnej migawce rankingu. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
+                          de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
+                          en: 'Your account is not visible in this duel standing yet. Finish another duel or open the lobby so your rank appears here.',
+                          pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
                         })}
                       </Text>
                     )}
@@ -2288,16 +2288,16 @@ export function KangurPracticeScreen(): React.JSX.Element {
               >
                 <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                   {copy({
-                    de: 'Ergebnisverlauf',
-                    en: 'Score history',
-                    pl: 'Historia wyników',
+                    de: 'Nach dem Training',
+                    en: 'After practice',
+                    pl: 'Po treningu',
                   })}
                 </Text>
                 <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
                   {copy({
-                    de: 'Letzte mobile Sitzungen',
-                    en: 'Recent mobile sessions',
-                    pl: 'Ostatnie sesje mobilne',
+                    de: 'Ergebniszentrale',
+                    en: 'Results hub',
+                    pl: 'Centrum wyników',
                   })}
                 </Text>
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
@@ -2323,9 +2323,9 @@ export function KangurPracticeScreen(): React.JSX.Element {
                   >
                     <Text style={{ color: '#0f172a', fontWeight: '700' }}>
                       {copy({
-                        de: 'Ergebnisverlauf öffnen',
-                        en: 'Open score history',
-                        pl: 'Otwórz historię wyników',
+                        de: 'Vollständigen Verlauf öffnen',
+                        en: 'Open full history',
+                        pl: 'Otwórz pełną historię',
                       })}
                     </Text>
                   </Pressable>
@@ -2380,9 +2380,9 @@ export function KangurPracticeScreen(): React.JSX.Element {
               >
                 <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                   {copy({
-                    de: 'Nächste Schritte',
-                    en: 'Next steps',
-                    pl: 'Następne kroki',
+                    de: 'Nach dem Training',
+                    en: 'After practice',
+                    pl: 'Po treningu',
                   })}
                 </Text>
                 <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>

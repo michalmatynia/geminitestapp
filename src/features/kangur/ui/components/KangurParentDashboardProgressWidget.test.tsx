@@ -54,6 +54,10 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
@@ -155,6 +159,7 @@ describe('KangurParentDashboardProgressWidget', () => {
     render(<KangurParentDashboardProgressWidget />);
 
     expect(screen.getByTestId('parent-dashboard-daily-quest')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Uruchom' })).toHaveClass('min-h-11', 'px-4');
     expect(getCurrentKangurDailyQuestMock).toHaveBeenCalledWith(
       runtimeState.value.progress,
       expect.objectContaining({

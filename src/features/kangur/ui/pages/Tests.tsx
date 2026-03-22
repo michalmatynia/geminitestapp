@@ -30,6 +30,8 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
+  KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX,
+  KANGUR_TOP_BAR_HEIGHT_VAR_NAME,
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_TIGHT_ROW_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
@@ -196,15 +198,14 @@ export default function Tests(): React.JSX.Element {
 
     const resolveTopOffset = (): number => {
       const styles = window.getComputedStyle(document.documentElement);
-      let topBarHeight =
-        Number.parseFloat(styles.getPropertyValue('--kangur-top-bar-height')) || 0;
+      let topBarHeight = Number.parseFloat(styles.getPropertyValue(KANGUR_TOP_BAR_HEIGHT_VAR_NAME));
       if (!topBarHeight) {
         const topBar = document.querySelector('[data-testid="kangur-page-top-bar"]');
         if (topBar instanceof HTMLElement) {
           topBarHeight = topBar.getBoundingClientRect().height;
         }
       }
-      return topBarHeight;
+      return topBarHeight || KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX;
     };
 
     const scrollToTarget = (): boolean => {

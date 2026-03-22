@@ -72,6 +72,11 @@ describe('KangurGameHomeMomentumWidget', () => {
       'href',
       '/kangur/lessons?focus=division'
     );
+    expect(screen.getByRole('link', { name: 'Otworz lekcje' })).toHaveClass(
+      'touch-manipulation',
+      'select-none',
+      'min-h-11'
+    );
   });
 
   it('uses theme-aware accent surfaces for recommendation cards and chips', () => {
@@ -127,6 +132,11 @@ describe('KangurGameHomeMomentumWidget', () => {
     expect(screen.getByRole('link', { name: 'Zagraj teraz' })).toHaveAttribute(
       'href',
       '/kangur/game?quickStart=training'
+    );
+    expect(screen.getByRole('link', { name: 'Zagraj teraz' })).toHaveClass(
+      'touch-manipulation',
+      'select-none',
+      'min-h-11'
     );
   });
 

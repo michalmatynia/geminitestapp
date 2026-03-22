@@ -188,6 +188,11 @@ describe('KangurGameHomeQuestWidget', () => {
       'href',
       '/kangur/lessons?focus=division'
     );
+    expect(screen.getByRole('link', { name: 'Otwórz lekcję' })).toHaveClass(
+      'touch-manipulation',
+      'select-none',
+      'min-h-11'
+    );
   });
 
   it('stays hidden outside the home screen by default', () => {

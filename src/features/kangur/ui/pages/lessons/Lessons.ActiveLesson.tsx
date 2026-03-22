@@ -17,6 +17,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_SHELL_MINUS_TOP_BAR_HEIGHT_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { LESSON_COMPONENTS } from '@/features/kangur/lessons/lesson-ui-registry';
 import { useLessons } from './LessonsContext';
@@ -379,7 +380,7 @@ export function ActiveLessonView() {
       >
         {shouldLockScroll ? (
           <div
-            className={`${LESSONS_ACTIVE_SECTION_CLASSNAME} flex h-[calc(var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px))] flex-col gap-3`}
+            className={`${LESSONS_ACTIVE_SECTION_CLASSNAME} flex ${KANGUR_SHELL_MINUS_TOP_BAR_HEIGHT_CLASSNAME} flex-col gap-3`}
           >
             <div
               ref={activeLessonScrollRef}

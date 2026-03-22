@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
 import type { CSSProperties, JSX, MouseEvent } from 'react';
 
@@ -23,6 +24,7 @@ export function KangurAiTutorSelectionAction({
   style,
 }: Props): JSX.Element | null {
   const tutorContent = useKangurAiTutorContent();
+  const isCoarsePointer = useKangurCoarsePointer();
   const handleSelectionActionMouseDown = (event: MouseEvent<HTMLButtonElement>): void => {
     onSelectionActionMouseDown(event);
   };
@@ -55,13 +57,21 @@ export function KangurAiTutorSelectionAction({
         type='button'
         size='sm'
         variant='primary'
-        className='min-w-[124px] kangur-chat-selection-action-shadow'
+        className={
+          isCoarsePointer
+            ? 'min-h-11 min-w-[156px] px-4 text-sm kangur-chat-selection-action-shadow'
+            : 'min-w-[124px] kangur-chat-selection-action-shadow'
+        }
         onMouseDown={handleSelectionActionMouseDown}
         onClick={handleAskAbout}
       >
         <span
           aria-hidden='true'
-          className='inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] kangur-chat-selection-badge'
+          className={
+            isCoarsePointer
+              ? 'inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] kangur-chat-selection-badge'
+              : 'inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] kangur-chat-selection-badge'
+          }
         >
           ?
         </span>

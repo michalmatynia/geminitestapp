@@ -19,6 +19,9 @@ vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () =>
     user?.activeLearner?.displayName ?? 'Tryb lokalny',
   useKangurLearnerProfileRuntime: useKangurLearnerProfileRuntimeMock,
 }));
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
 
 import { KangurLearnerProfileHeroWidget } from '@/features/kangur/ui/components/KangurLearnerProfileHeroWidget';
 
@@ -90,8 +93,12 @@ describe('KangurLearnerProfileHeroWidget', () => {
     ).toBeNull();
     expect(
       screen.getByRole('button', { name: 'Zaloguj się, aby synchronizować postęp' })
-    ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Utwórz konto rodzica' })).toBeInTheDocument();
+    ).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+    expect(screen.getByRole('button', { name: 'Utwórz konto rodzica' })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
     expect(
       screen.queryByRole('button', { name: 'Wróć do poprzedniej strony' })
     ).toBeNull();

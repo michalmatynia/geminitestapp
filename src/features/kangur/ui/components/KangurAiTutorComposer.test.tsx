@@ -25,6 +25,10 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
   useKangurAiTutorContent: () => DEFAULT_KANGUR_AI_TUTOR_CONTENT,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 const createPanelBodyContextValue = (
   overrides: Partial<KangurAiTutorPanelBodyContextValue> = {}
 ): KangurAiTutorPanelBodyContextValue => ({
@@ -153,7 +157,22 @@ describe('KangurAiTutorComposer', () => {
 
     expect(screen.getByAltText('Rysunek')).toHaveClass('kangur-chat-inset');
     expect(screen.getByTestId('kangur-ai-tutor-composer-pills')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Podpowiedź' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Podpowiedź' })).toHaveClass(
+      'min-h-10',
+      'touch-manipulation',
+      'select-none'
+    );
+    expect(
+      screen.getByRole('button', {
+        name: DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing?.clearLabel ?? 'Usuń rysunek',
+      })
+    ).toHaveClass('h-8', 'w-8', 'touch-manipulation', 'select-none');
+    expect(screen.getByTestId('kangur-ai-tutor-drawing-toggle')).toHaveClass(
+      'h-10',
+      'w-10',
+      'touch-manipulation',
+      'select-none'
+    );
     expect(screen.getByLabelText('Wpisz pytanie')).toBeInTheDocument();
   });
 });

@@ -97,7 +97,7 @@ describe('KangurLessonNavigationWidget', () => {
       'min-h-11',
       'touch-manipulation'
     );
-    expect(screen.getByRole('button', { name: /Nastepna lekcja/i })).toHaveClass(
+    expect(screen.getByRole('button', { name: /Następna lekcja/i })).toHaveClass(
       'min-h-11',
       'touch-manipulation'
     );

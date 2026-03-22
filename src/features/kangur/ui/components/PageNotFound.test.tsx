@@ -34,6 +34,10 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useOptionalKangurRouting: () => useKangurRoutingMock(),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 import { PageNotFound } from '@/features/kangur/ui/components/PageNotFound';
 
 const createWrapper = (): React.FC<{ children: ReactNode }> => {
@@ -68,7 +72,13 @@ describe('PageNotFound', () => {
     const homeButton = await screen.findByRole('button', { name: 'Wróć do strony głównej' });
 
     expect(screen.getByTestId('page-not-found-shell')).toHaveClass('kangur-premium-bg');
-    expect(homeButton).toHaveClass('kangur-cta-pill', 'primary-cta');
+    expect(homeButton).toHaveClass(
+      'kangur-cta-pill',
+      'primary-cta',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
     expect(screen.getByTestId('page-not-found-divider')).toHaveClass('h-0.5', 'w-16', 'bg-slate-200');
     expect(screen.getByRole('heading', { name: 'Nie znaleziono strony' })).toBeInTheDocument();
   });

@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-const globalStylesheetPath = path.join(process.cwd(), 'src/app/globals.css');
+const kangurStylesheetPath = path.join(process.cwd(), 'src/app/(frontend)/kangur/kangur.css');
 const kangurButtonPath = path.join(
   process.cwd(),
   'src/features/kangur/ui/design/primitives/KangurButton.tsx'
@@ -81,7 +81,7 @@ const findSourceMatches = (pattern: string): string[] =>
 
 describe('Kangur CTA contract cleanup', () => {
   it('keeps a single primary-cta class without the removed play-cta alias', () => {
-    const source = readFileSync(globalStylesheetPath, 'utf8');
+    const source = readFileSync(kangurStylesheetPath, 'utf8');
 
     expect(source).toContain('.primary-cta');
     expect(source).not.toContain('.play-cta');
@@ -95,7 +95,7 @@ describe('Kangur CTA contract cleanup', () => {
   });
 
   it('keeps the ai tutor launcher on the warm orange chrome instead of the old purple tint', () => {
-    const source = readSources([kangurAiTutorWidgetDisplayPath, globalStylesheetPath]);
+    const source = readSources([kangurAiTutorWidgetDisplayPath, kangurStylesheetPath]);
 
     expect(source).toContain('kangur-chat-floating-avatar');
     expect(source).toContain(

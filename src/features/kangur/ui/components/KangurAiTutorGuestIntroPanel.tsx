@@ -3,6 +3,9 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import { cn } from '@/features/kangur/shared/utils';
+
 import {
   KangurAiTutorChromeCloseButton,
   KangurAiTutorChromeKicker,
@@ -36,6 +39,7 @@ export function KangurAiTutorGuestIntroPanel({
   prefersReducedMotion,
 }: Props): JSX.Element | null {
   const [dismissed, setDismissed] = useState(false);
+  const isCoarsePointer = useKangurCoarsePointer();
   const handleClose = onClose;
   const shouldShowProposal = isAnonymousVisitor && !dismissed;
   const handleYes = (): void => {
@@ -103,7 +107,10 @@ export function KangurAiTutorGuestIntroPanel({
                 <button
                   type='button'
                   data-testid='kangur-ai-tutor-onboarding-accept'
-                  className='cursor-pointer transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white [color:var(--kangur-chat-panel-text,var(--kangur-page-text))] hover:scale-[1.02]'
+                  className={cn(
+                    'cursor-pointer transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white [color:var(--kangur-chat-panel-text,var(--kangur-page-text))] hover:scale-[1.02]',
+                    isCoarsePointer && 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
+                  )}
                   onClick={handleYes}
                 >
                   Tak
@@ -111,7 +118,10 @@ export function KangurAiTutorGuestIntroPanel({
                 <button
                   type='button'
                   data-testid='kangur-ai-tutor-onboarding-dismiss'
-                  className='cursor-pointer transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white [color:var(--kangur-chat-panel-text,var(--kangur-page-text))] hover:scale-[1.02]'
+                  className={cn(
+                    'cursor-pointer transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white [color:var(--kangur-chat-panel-text,var(--kangur-page-text))] hover:scale-[1.02]',
+                    isCoarsePointer && 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
+                  )}
                   onClick={() => {
                     setDismissed(true);
                     onDismiss();

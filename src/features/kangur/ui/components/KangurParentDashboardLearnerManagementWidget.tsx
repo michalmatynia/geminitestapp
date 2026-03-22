@@ -486,7 +486,10 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                     aria-controls={createPasswordInputId}
                     className={cn(
                       'absolute right-3 top-1/2 -translate-y-1/2 rounded-full',
-                      'p-2 text-slate-500 transition hover:text-slate-700',
+                      isCoarsePointer
+                        ? 'h-11 w-11 touch-manipulation select-none active:scale-[0.97]'
+                        : 'p-2',
+                      'inline-flex items-center justify-center text-slate-500 transition hover:text-slate-700',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200/70'
                     )}
                   >
@@ -676,7 +679,10 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                           Anuluj
                         </KangurButton>
                         <KangurButton
-                          className='w-full sm:w-auto border-rose-500 bg-rose-500 text-white hover:bg-rose-600 hover:border-rose-600'
+                          className={cn(
+                            compactActionClassName,
+                            'border-rose-500 bg-rose-500 text-white hover:bg-rose-600 hover:border-rose-600'
+                          )}
                           disabled={isSubmitting}
                           onClick={() => {
                             setPendingRemovalId(null);

@@ -7,6 +7,7 @@ import {
   KangurIconBadge,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { LessonHubSectionProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 
 export type HubSection = {
@@ -36,6 +37,7 @@ export default function LessonHub({
   sections,
   onSelect,
 }: LessonHubProps): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const activeProgressDotClassName = progressDotClassName;
   const hubLabel = lessonTitle ? `Tematy lekcji ${lessonTitle}` : 'Tematy lekcji';
   const hasSections = sections.length > 0;
@@ -78,7 +80,11 @@ export default function LessonHub({
             >
               <KangurIconSummaryOptionCard
                 accent={accent}
-                buttonClassName='w-full rounded-[28px] p-4 text-left disabled:cursor-not-allowed disabled:opacity-70'
+                buttonClassName={
+                  isCoarsePointer
+                    ? 'w-full min-h-[11rem] rounded-[28px] px-5 py-5 text-left active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70'
+                    : 'w-full rounded-[28px] p-4 text-left disabled:cursor-not-allowed disabled:opacity-70'
+                }
                 data-testid={`lesson-hub-section-${section.id}`}
                 disabled={section.locked}
                 emphasis={section.isGame ? 'accent' : 'neutral'}

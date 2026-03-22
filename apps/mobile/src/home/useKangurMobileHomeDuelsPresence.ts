@@ -42,9 +42,9 @@ const toPresenceErrorMessage = (
 
     if (status === 401) {
       return copy({
-        de: 'Melde die Schulersitzung an, um aktive Rivalen im Duell-Lobby zu laden.',
-        en: 'Sign in the learner session to load active rivals in the duel lobby.',
-        pl: 'Zaloguj sesję ucznia, aby pobrać aktywnych rywali w lobby pojedynków.',
+        de: 'Melde dich an, um aktive Rivalen aus der Duell-Lobby zu laden.',
+        en: 'Sign in to load active rivals in the duel lobby.',
+        pl: 'Zaloguj się, aby pobrać aktywnych rywali z lobby pojedynków.',
       });
     }
   }
@@ -69,9 +69,9 @@ const toPresenceErrorMessage = (
   const normalized = message.toLowerCase();
   if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
     return copy({
-      de: 'Die Verbindung zur Kangur-API konnte nicht hergestellt werden.',
-      en: 'Could not connect to the Kangur API.',
-      pl: 'Nie udało się połączyć z API Kangura.',
+      de: 'Die aktive Duell-Lobby konnte nicht geladen werden.',
+      en: 'Could not load the active duel lobby.',
+      pl: 'Nie udało się pobrać aktywnego lobby pojedynków.',
     });
   }
 
@@ -87,9 +87,9 @@ const toPresenceActionErrorMessage = (
 
     if (status === 401) {
       return copy({
-        de: 'Melde die Schulersitzung an, um eine private Herausforderung zu senden.',
-        en: 'Sign in the learner session to send a private challenge.',
-        pl: 'Zaloguj sesję ucznia, aby wysłać prywatne wyzwanie.',
+        de: 'Melde dich an, um eine private Herausforderung zu senden.',
+        en: 'Sign in to send a private challenge.',
+        pl: 'Zaloguj się, aby wysłać prywatne wyzwanie.',
       });
     }
   }
@@ -114,9 +114,9 @@ const toPresenceActionErrorMessage = (
   const normalized = message.toLowerCase();
   if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
     return copy({
-      de: 'Die Verbindung zur Kangur-API konnte nicht hergestellt werden.',
-      en: 'Could not connect to the Kangur API.',
-      pl: 'Nie udało się połączyć z API Kangura.',
+      de: 'Die private Herausforderung konnte nicht erstellt werden.',
+      en: 'Could not create the private challenge.',
+      pl: 'Nie udało się utworzyć prywatnego wyzwania.',
     });
   }
 

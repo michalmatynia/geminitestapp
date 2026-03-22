@@ -833,7 +833,7 @@ export default function GeometryDrawingGame({
                     type='button'
                     onClick={() => handleDifficultyChange(mode)}
                     disabled={feedback !== null}
-                    className='min-h-10 px-4 text-xs'
+                    className='min-h-11 px-4 text-xs'
                     size='sm'
                     variant={difficulty === mode ? 'surface' : 'secondary'}
                   >

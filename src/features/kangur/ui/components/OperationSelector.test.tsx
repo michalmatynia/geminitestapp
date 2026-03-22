@@ -35,6 +35,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurOperationSelectorState', () => ({
   useKangurOperationSelectorState: useKangurOperationSelectorStateMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 vi.mock('@/features/kangur/ui/components/DifficultySelector', () => ({
   default: () => <div data-testid='difficulty-selector'>difficulty-selector</div>,
 }));
@@ -77,6 +81,11 @@ describe('OperationSelector', () => {
     ).toHaveClass('[color:var(--kangur-page-muted-text)]');
     expect(screen.getByTestId('operation-card-recommendation-division')).toHaveTextContent(
       'Misja dnia'
+    );
+    expect(screen.getByTestId('operation-card-division')).toHaveClass(
+      'min-h-[176px]',
+      'px-5',
+      'py-5'
     );
   });
 });

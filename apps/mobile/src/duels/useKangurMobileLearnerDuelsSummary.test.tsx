@@ -151,7 +151,7 @@ describe('useKangurMobileLearnerDuelsSummary', () => {
 
     await waitFor(() => {
       expect(result.current.error).toBe(
-        'Melde eine Lernenden-Sitzung an, um Duellstatistiken zu laden.',
+        'Melde dich an, um Duellstatistiken zu laden.',
       );
     });
   });
@@ -183,7 +183,7 @@ describe('useKangurMobileLearnerDuelsSummary', () => {
 
     expect(sessionId).toBeNull();
     expect(result.current.actionError).toBe(
-      'Melde eine Lernenden-Sitzung an, um ein privates Rückspiel zu senden.',
+      'Melde dich an, um ein privates Rückspiel zu senden.',
     );
     expect(result.current.pendingOpponentLearnerId).toBeNull();
   });

@@ -313,6 +313,10 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useOptionalKangurAiTutor: () => optionalTutorMock(),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   prefetchKangurPageContentStore: prefetchKangurPageContentStoreMock,
   useKangurPageContentEntry: useKangurPageContentEntryMock,
@@ -492,7 +496,7 @@ describe('KangurPrimaryNavigation', () => {
     );
   });
 
-  it('navigates to the learner profile directly from the profile item', () => {
+  it('navigates to the learner profile directly from the profile item', async () => {
     render(
       <KangurPrimaryNavigation
         basePath='/kangur'
@@ -502,7 +506,7 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
-    expect(screen.getByRole('link', { name: /profil/i })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /profil/i })).toHaveAttribute(
       'href',
       '/kangur/profile'
     );
@@ -548,7 +552,7 @@ describe('KangurPrimaryNavigation', () => {
     });
   });
 
-  it('starts the managed handoff when opening the learner profile from the navbar', () => {
+  it('starts the managed handoff when opening the learner profile from the navbar', async () => {
     render(
       <KangurPrimaryNavigation
         basePath='/kangur'
@@ -558,7 +562,7 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('link', { name: /profil/i }));
+    fireEvent.click(await screen.findByRole('link', { name: /profil/i }));
 
     expect(startRouteTransitionMock).toHaveBeenCalledWith({
       acknowledgeMs: 110,
@@ -617,6 +621,10 @@ describe('KangurPrimaryNavigation', () => {
     );
 
     fireEvent.click(await screen.findByTestId('kangur-primary-nav-mobile-toggle'));
+    expect(screen.getByRole('button', { name: 'Close navigation menu' })).toHaveClass(
+      'touch-manipulation',
+      'active:opacity-95'
+    );
     fireEvent.click(screen.getByRole('button', { name: /wyloguj/i }));
 
     expect(onLogout).toHaveBeenCalledTimes(1);
@@ -650,6 +658,35 @@ describe('KangurPrimaryNavigation', () => {
     expect(pushMock).toHaveBeenCalledWith('/kangur/lessons', { scroll: false });
     vi.runOnlyPendingTimers();
     vi.useRealTimers();
+  });
+
+  it('closes the mobile menu when the current Kangur page changes', async () => {
+    setViewport({ width: 390, matches: true });
+
+    const { rerender } = render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Game'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    fireEvent.click(await screen.findByTestId('kangur-primary-nav-mobile-toggle'));
+    expect(screen.getByRole('dialog', { name: /menu kangur/i })).toBeVisible();
+
+    rerender(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: /menu kangur/i })).not.toBeInTheDocument();
+    });
   });
 
   it('disables the logout action while auth logout is already pending', () => {
@@ -755,12 +792,14 @@ describe('KangurPrimaryNavigation', () => {
     const trigger = screen.getByTestId('kangur-language-switcher-trigger');
 
     expect(utilityActions).toContainElement(trigger);
+    expect(trigger).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
 
     openLanguageMenu(trigger);
 
     const activeOption = await screen.findByTestId('kangur-language-switcher-option-de');
 
     expect(activeOption).toHaveAttribute('data-state', 'checked');
+    expect(activeOption).toHaveClass('min-h-[3.5rem]', 'touch-manipulation');
     expect(screen.getByRole('menu')).toBeInTheDocument();
   });
 
@@ -1113,7 +1152,9 @@ describe('KangurPrimaryNavigation', () => {
       'shrink-0',
       'overflow-hidden',
       'gap-2',
-      'px-3'
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
     expect(trigger.className).not.toContain('sm:w-[11rem]');
     expect(trigger).toHaveAttribute('title', 'Język: Polski');
@@ -1154,12 +1195,13 @@ describe('KangurPrimaryNavigation', () => {
       const flagShell = row.querySelector('div > span[aria-hidden="true"]');
 
       expect(row).toHaveClass(
-        'min-h-[3.1rem]',
+        'min-h-[3.5rem]',
         'rounded-[18px]',
         'py-2.5',
         'pl-3.5',
         'pr-3.5',
-        'text-left'
+        'text-left',
+        'touch-manipulation'
       );
       expect(row.className).toContain('cursor-pointer');
       expect(row.className).toContain('data-[state=checked]:cursor-default');

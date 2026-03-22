@@ -223,9 +223,103 @@ describe('kangur ai tutor chat handler', () => {
           'learner-1': {
             enabled: true,
             teachingAgentId: 'legacy-teacher',
+            rememberTutorContext: true,
+            allowLessons: true,
+            testAccessMode: 'guided',
+            showSources: true,
+            allowSelectedTextSupport: true,
+            hintDepth: 'step_by_step',
+            proactiveNudges: 'coach',
+            dailyMessageLimit: null,
           },
         });
       }
+      if (key === KANGUR_AI_TUTOR_APP_SETTINGS_KEY) {
+        return JSON.stringify({
+          agentPersonaId: 'persona-1',
+          motionPresetId: null,
+          dailyMessageLimit: null,
+        });
+      }
+      if (key === KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY) {
+        return JSON.stringify({});
+      }
+      if (key === AGENT_PERSONA_SETTINGS_KEY) {
+        return JSON.stringify([
+          {
+            id: 'persona-1',
+            name: 'Mila',
+            role: 'Math coach',
+            instructions: 'Use a calm, playful tone.',
+          },
+        ]);
+      }
+      return null;
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('uses persona, registry context, and adaptive guidance for active test hints', async () => {
+    buildKangurAiTutorAdaptiveGuidanceMock.mockResolvedValue({
+      instructions:
+        'Adaptive learner guidance:\nTop recommendation: Powtorz lekcje: Dodawanie.\nStructured coaching mode: hint_ladder. Use a hint ladder: give one small next step or one checkpoint question, then stop.',
+      followUpActions: [],
+      coachingFrame: {
+        mode: 'hint_ladder',
+        label: 'Jeden trop',
+        description:
+          'Daj tylko jeden mały krok albo pytanie kontrolne, bez pełnego rozwiązania.',
+        rationale:
+          'Uczeń jest w trakcie próby, więc tutor powinien prowadzić bardzo małymi krokami.',
+      },
+    });
+    contextRegistryResolveRefsMock.mockResolvedValue(
+      createContextRegistryBundle({
+        learnerSummary: 'Average accuracy 74%. 2 active assignments. 1 lesson needs practice.',
+        loginActivityFacts: {
+          recentLoginActivitySummary:
+            'Jan last signed into Kangur at 2026-03-07T09:30:00.000Z. The parent last logged into Kangur at 2026-03-07T08:00:00.000Z. In the last 7 days there were 3 learner sign-ins and 2 parent Kangur logins.',
+        },
+        testFacts: {
+          title: 'Kangur Mini',
+          description: 'Krótki zestaw próbny.',
+          currentQuestion: 'Ile to 2 + 2?',
+          questionProgressLabel: 'Pytanie 1/10',
+        },
+      })
+    );
+    runBrainChatCompletionMock.mockResolvedValue({
+      text: 'Spójrz najpierw na to, co oznacza znak plus.',
+    });
+
+    const response = await postKangurAiTutorChatHandler(
+      createPostRequest(
+        JSON.stringify({
+          messages: [{ role: 'user', content: 'Pomóż mi z tym pytaniem.' }],
+          context: {
+            surface: 'test',
+            contentId: 'suite-2026',
+            questionId: 'q-1',
+            title: 'Kangur Mini',
+            description: 'Krótki zestaw próbny.',
+            currentQuestion: 'Ile to 2 + 2?',
+            questionProgressLabel: 'Pytanie 1/10',
+            selectedText: '2 + 2',
+            promptMode: 'hint',
+          },
+          memory: {
+            lastSurface: 'lesson',
+            lastFocusLabel: 'Dodawanie do 20',
+            lastUnresolvedBlocker: 'Myli kolejność dodawania przy większych liczbach.',
+          },
+        })
+      ),
+      createRequestContext()
+    );
+
     expect(contextRegistryResolveRefsMock).toHaveBeenCalledWith(
       expect.objectContaining({
         depth: 1,
@@ -468,15 +562,16 @@ describe('kangur ai tutor chat handler', () => {
         text: 'Widać dwie grupy kropek ustawione obok siebie.',
       })
       .mockResolvedValueOnce({
-        text: [
-          'Policz najpierw lewą parę, potem prawą.',
-          '<kangur_tutor_drawing>',
-          '<title>Dwie pary</title>',
-          '<caption>Każda para ma po dwa elementy.</caption>',
-          '<alt>Dwie pary kropek ustawione obok siebie.</alt>',
-          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200"><circle cx="90" cy="90" r="18" fill="#f59e0b" /><circle cx="130" cy="90" r="18" fill="#f59e0b" /></svg>',
-          '</kangur_tutor_drawing>',
-        ].join('\n'),
+        text: JSON.stringify({
+          message: 'Policz najpierw lewą parę, potem prawą.',
+          drawing: {
+            title: 'Dwie pary',
+            caption: 'Każda para ma po dwa elementy.',
+            alt: 'Dwie pary kropek ustawione obok siebie.',
+            svg:
+              '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200"><circle cx="90" cy="90" r="18" fill="#f59e0b" /><circle cx="130" cy="90" r="18" fill="#f59e0b" /></svg>',
+          },
+        }),
       });
 
     const response = await postKangurAiTutorChatHandler(
@@ -499,10 +594,6 @@ describe('kangur ai tutor chat handler', () => {
       ),
       createRequestContext()
     );
-
-    runBrainChatCompletionMock.mockResolvedValueOnce({
-      text: 'Policz najpierw lewą parę, potem prawą. :::assistant_drawing:{"type":"assistant_drawing","title":"Dwie pary","caption":"Każda para ma po dwa elementy.","alt":"Dwie pary kropek ustawione obok siebie.","svgContent":"<svg />"}:::',
-    });
 
     expect(runBrainChatCompletionMock).toHaveBeenCalledTimes(2);
     expect(resolveBrainExecutionConfigForCapabilityMock).toHaveBeenNthCalledWith(
@@ -532,6 +623,7 @@ describe('kangur ai tutor chat handler', () => {
       ])
     );
     const tutorReplyInput = runBrainChatCompletionMock.mock.calls[1]?.[0];
+    expect(tutorReplyInput?.jsonMode).toBe(true);
     expect(tutorReplyInput?.messages?.[0]?.content).toContain('Drawing support:');
     expect(tutorReplyInput?.messages?.[0]?.content).toContain(
       'Learner drawing analysis summary:'
@@ -2714,7 +2806,9 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
       coachingFrame: null,
     });
     runBrainChatCompletionMock.mockResolvedValue({
-      text: 'Skup się na zaznaczonym fragmencie i policz krok po kroku.',
+      text: JSON.stringify({
+        message: 'Skup się na zaznaczonym fragmencie i policz krok po kroku.',
+      }),
     });
     const response = await postKangurAiTutorChatHandler(
       createPostRequest(
@@ -2739,6 +2833,7 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
     );
     expect(runBrainChatCompletionMock).toHaveBeenCalledTimes(1);
     const brainInput = runBrainChatCompletionMock.mock.calls[0]?.[0];
+    expect(brainInput.jsonMode).toBe(true);
     expect(brainInput.messages[0].content).toContain('Learner selected this text: """3 + 4"""');
     expect(brainInput.messages[0].content).toContain(
       'The learner selected a specific excerpt. Focus on that excerpt first and relate your response back to it.'
@@ -2897,7 +2992,9 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
               answerRevealed: false,
               promptMode: 'hint',
             },
-          }), createRequestContext()
+          }),
+          createRequestContext()
+        )
       )
     ).rejects.toMatchObject({
       message: 'AI Tutor is available in tests only after the answer has been revealed.',
@@ -2962,7 +3059,9 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
               currentQuestion: 'Który dzień jest po wtorku?',
               promptMode: 'hint',
             },
-          }), createRequestContext()
+          }),
+          createRequestContext()
+        )
       )
     ).rejects.toMatchObject({
       message: 'AI Tutor is disabled for games for this learner.',
@@ -3028,7 +3127,9 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
               contentId: 'lesson-1',
               promptMode: 'chat',
             },
-          }), createRequestContext()
+          }),
+          createRequestContext()
+        )
       )
     ).rejects.toMatchObject({
       message: 'Daily AI Tutor message limit reached for this learner. Try again tomorrow.',

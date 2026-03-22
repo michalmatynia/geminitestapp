@@ -18,6 +18,10 @@ import {
 
 import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
   useKangurAiTutorContent: () => DEFAULT_KANGUR_AI_TUTOR_CONTENT,
 }));
@@ -199,7 +203,17 @@ describe('KangurAiTutorGuestIntroPanel', () => {
       screen.getByText(/Jak chcesz, mogę pokazać Ci, jak odnaleźć się na Stronie\./)
     ).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-onboarding-accept')).toHaveTextContent('Tak');
+    expect(screen.getByTestId('kangur-ai-tutor-onboarding-accept')).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
     expect(screen.getByTestId('kangur-ai-tutor-onboarding-dismiss')).toHaveTextContent('Nie');
+    expect(screen.getByTestId('kangur-ai-tutor-onboarding-dismiss')).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
   });
 
   it('skips the onboarding prompt for authenticated users', () => {

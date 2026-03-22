@@ -2,6 +2,8 @@
 
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { memo, type ComponentProps, type ReactNode, type Ref } from 'react';
 
@@ -46,9 +48,16 @@ export const KangurNavAction = memo(function KangurNavAction({
   variant,
   children,
 }: KangurNavActionProps): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const transitionActive = transition?.active ?? false;
   const resolvedVariant =
     variant ?? (active || transitionActive ? 'navigationActive' : 'navigation');
+  const resolvedClassName = cn(
+    isCoarsePointer &&
+      (size === 'sm' || size === 'md') &&
+      'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]',
+    className
+  );
 
   if (href) {
     return (
@@ -56,7 +65,7 @@ export const KangurNavAction = memo(function KangurNavAction({
         asChild
         aria-current={active ? 'page' : undefined}
         aria-label={ariaLabel}
-        className={className}
+        className={resolvedClassName}
         data-doc-id={docId}
         data-nav-state={transitionActive ? 'transitioning' : 'idle'}
         data-testid={testId}
@@ -82,7 +91,7 @@ export const KangurNavAction = memo(function KangurNavAction({
     <KangurButton
       aria-current={active ? 'page' : undefined}
       aria-label={ariaLabel}
-      className={className}
+      className={resolvedClassName}
       data-doc-id={docId}
       data-nav-state={transitionActive ? 'transitioning' : 'idle'}
       data-testid={testId}

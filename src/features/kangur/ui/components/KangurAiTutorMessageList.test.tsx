@@ -207,6 +207,7 @@ describe('KangurAiTutorMessageList', () => {
     expect(screen.getByText('Potrzebujesz kolejnej podpowiedzi?')).toBeInTheDocument();
     const hintCta = screen.getByTestId('kangur-ai-tutor-hint-followup-cta');
     expect(hintCta).toHaveTextContent('Tak, pomóż mi');
+    expect(hintCta).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
     fireEvent.click(hintCta);
     expect(handleQuickAction).toHaveBeenCalledWith(hintQuickAction);
     expect(screen.getByRole('link', { name: 'Otwórz lekcję' })).toHaveAttribute(
@@ -278,6 +279,11 @@ describe('KangurAiTutorMessageList', () => {
     expect(screen.getByRole('link', { name: 'Przejdź do tego miejsca' })).toHaveAttribute(
       'href',
       '/kangur#kangur-primary-nav-login'
+    );
+    expect(screen.getByRole('link', { name: 'Przejdź do tego miejsca' })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
   });
 
@@ -420,12 +426,14 @@ describe('KangurAiTutorMessageList', () => {
     expect(screen.getByTestId('kangur-ai-tutor-feedback-helpful-0')).toHaveClass(
       'min-h-11',
       'px-4',
-      'text-xs'
+      'text-xs',
+      'touch-manipulation'
     );
     expect(screen.getByTestId('kangur-ai-tutor-feedback-not-helpful-0')).toHaveClass(
       'min-h-11',
       'px-4',
-      'text-xs'
+      'text-xs',
+      'touch-manipulation'
     );
     expect(screen.getByTestId('kangur-ai-tutor-feedback-0')).toHaveClass(
       'kangur-chat-card',

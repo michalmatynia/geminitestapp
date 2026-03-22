@@ -24,6 +24,7 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
 import { useKangurLessonSections } from '@/features/kangur/ui/hooks/useKangurLessonSections';
+import { Skeleton } from '@/shared/ui';
 import {
   LESSONS_CARD_TRANSITION,
   LESSONS_CARD_STAGGER_DELAY,
@@ -49,6 +50,51 @@ type LessonGroup = {
   subsections?: LessonSubsection[];
 };
 
+const LESSONS_SKELETON_SECTION_COUNT = 3;
+const LESSONS_SKELETON_CARD_COUNT = 2;
+
+function LessonsCatalogSkeleton() {
+  return (
+    <div
+      aria-hidden='true'
+      className={LESSONS_LIBRARY_LIST_CLASSNAME}
+      data-testid='lessons-catalog-skeleton'
+    >
+      {Array.from({ length: LESSONS_SKELETON_SECTION_COUNT }, (_, sectionIndex) => (
+        <div
+          key={`lessons-skeleton-section-${sectionIndex}`}
+          className='w-full rounded-[28px] border border-slate-200/70 bg-white/85 p-5 shadow-[0_24px_60px_-36px_rgba(15,23,42,0.4)]'
+        >
+          <div className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}>
+            <div className='flex items-start justify-between gap-4'>
+              <div className={`min-w-0 flex-1 ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}>
+                <Skeleton className='h-3 w-24 rounded-full bg-slate-200/80' />
+                <Skeleton className='h-7 w-2/3 rounded-full bg-slate-200/80' />
+              </div>
+              <Skeleton className='h-10 w-10 rounded-2xl bg-slate-200/80' />
+            </div>
+            {Array.from({ length: LESSONS_SKELETON_CARD_COUNT }, (_, cardIndex) => (
+              <div
+                key={`lessons-skeleton-card-${sectionIndex}-${cardIndex}`}
+                className='w-full rounded-[24px] border border-slate-200/60 bg-slate-50/90 p-4'
+              >
+                <div className='flex items-start gap-4'>
+                  <Skeleton className='h-12 w-12 shrink-0 rounded-2xl bg-slate-200/80' />
+                  <div className='flex min-w-0 flex-1 flex-col gap-2'>
+                    <Skeleton className='h-5 w-1/2 rounded-full bg-slate-200/80' />
+                    <Skeleton className='h-4 w-full rounded-full bg-slate-200/70' />
+                    <Skeleton className='h-4 w-5/6 rounded-full bg-slate-200/70' />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function LessonsCatalog() {
   const locale = useLocale();
   const translations = useTranslations('KangurLessonsPage');
@@ -65,6 +111,7 @@ export function LessonsCatalog() {
     completedLessonAssignmentsByComponent,
     lessonDocuments,
     activeLessonId,
+    isLessonsCatalogLoading,
   } = useLessons();
 
   const { entry: lessonListIntroContent } = useKangurPageContentEntry('lessons-list-intro');
@@ -72,7 +119,16 @@ export function LessonsCatalog() {
 
   const ageGroupLabel = getLocalizedKangurAgeGroupLabel(ageGroup, locale);
 
-  const { data: sections = [] } = useKangurLessonSections({ subject, ageGroup, enabledOnly: true });
+  const sectionsQuery = useKangurLessonSections({ subject, ageGroup, enabledOnly: true });
+  const sections = sectionsQuery.data ?? [];
+  const isLessonSectionsLoading =
+    isDeferredContentReady &&
+    Boolean(
+      sectionsQuery.isPending ||
+        sectionsQuery.isLoading ||
+        (sectionsQuery.isFetching && typeof sectionsQuery.data === 'undefined')
+    );
+  const isCatalogLoading = isLessonsCatalogLoading || isLessonSectionsLoading;
   const [expandedLessonGroupId, setExpandedLessonGroupId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -152,9 +208,10 @@ export function LessonsCatalog() {
     lessonEntries.push({ kind: 'lesson', lesson });
   });
 
-  const lessonListIntroDescription = isDeferredContentReady
-    ? (lessonListIntroContent?.summary ?? translations('introDescription'))
-    : translations('loadingDescription');
+  const lessonListIntroDescription =
+    isDeferredContentReady && !isCatalogLoading
+      ? (lessonListIntroContent?.summary ?? translations('introDescription'))
+      : translations('loadingDescription');
 
   const renderLessonEntries = () => {
     let lessonIndex = 0;
@@ -255,7 +312,9 @@ export function LessonsCatalog() {
       </div>
       {isDeferredContentReady && (
         <div className={LESSONS_LIBRARY_LIST_CLASSNAME} data-testid='lessons-list-transition'>
-          {orderedLessons.length === 0 ? (
+          {isCatalogLoading ? (
+            <LessonsCatalogSkeleton />
+          ) : orderedLessons.length === 0 ? (
             <KangurEmptyState
               accent='indigo'
               description={

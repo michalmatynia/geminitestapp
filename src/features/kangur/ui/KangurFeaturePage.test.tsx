@@ -230,7 +230,7 @@ describe('KangurFeaturePage', () => {
     });
   });
 
-  it('promotes the Kangur preload stylesheet into an active stylesheet link', () => {
+  it('does not mutate unrelated stylesheet preload links', () => {
     const preload = document.createElement('link');
     preload.rel = 'preload';
     preload.as = 'style';
@@ -239,17 +239,15 @@ describe('KangurFeaturePage', () => {
 
     const { unmount } = renderWithIntl(<KangurFeaturePage slug={['tests']} basePath='/kangur' />);
 
-    const stylesheet = document.head.querySelector(
-      'link[data-kangur-route-css-link="true"]'
-    ) as HTMLLinkElement | null;
-
-    expect(stylesheet).not.toBeNull();
-    expect(stylesheet?.rel).toBe('stylesheet');
-    expect(stylesheet?.href).toBe(preload.href);
+    expect(document.head.contains(preload)).toBe(true);
+    expect(preload.rel).toBe('preload');
+    expect(preload.href).toBe(
+      'https://example.test/_next/static/chunks/src_app_(frontend)_kangur_kangur_test.css'
+    );
 
     unmount();
 
-    expect(document.head.querySelector('link[data-kangur-route-css-link="true"]')).toBeNull();
+    expect(document.head.contains(preload)).toBe(true);
   });
 
   it('supports direct root-mounted Kangur page mounts', () => {

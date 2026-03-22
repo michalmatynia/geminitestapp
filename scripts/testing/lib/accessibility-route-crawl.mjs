@@ -32,6 +32,11 @@ const parseRouteIdFilter = (value) => {
     .filter(Boolean);
 };
 
+const parsePositiveInt = (value) => {
+  const parsed = Number.parseInt(value ?? '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+};
+
 export const buildAccessibilityRouteCrawlTitle = (routeEntry) =>
   `[${routeEntry.id}] ${routeEntry.route} passes the route-crawl accessibility scan`;
 
@@ -141,6 +146,34 @@ export const filterAccessibilityRouteEntries = (routeEntries, { env = process.en
   }
 
   return filtered;
+};
+
+export const resolveAccessibilityRouteCrawlChunkSize = ({
+  env = process.env,
+  strictMode = false,
+  totalRoutes = 0,
+  defaultStrictChunkSize = 6,
+  defaultLargeRunChunkSize = 5,
+  largeRunThreshold = 12,
+} = {}) => {
+  if (Object.prototype.hasOwnProperty.call(env, 'PLAYWRIGHT_ROUTE_CRAWL_CHUNK_SIZE')) {
+    return parsePositiveInt(env['PLAYWRIGHT_ROUTE_CRAWL_CHUNK_SIZE']);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(env, 'PLAYWRIGHT_ROUTE_CRAWL_CHUNKS')) {
+    const parsedChunkCount = parsePositiveInt(env['PLAYWRIGHT_ROUTE_CRAWL_CHUNKS']);
+    return parsedChunkCount ? Math.ceil(totalRoutes / parsedChunkCount) : null;
+  }
+
+  if (strictMode) {
+    return Math.min(totalRoutes, defaultStrictChunkSize);
+  }
+
+  if (totalRoutes >= largeRunThreshold) {
+    return Math.min(totalRoutes, defaultLargeRunChunkSize);
+  }
+
+  return null;
 };
 
 const flattenSuites = (suites = []) => {

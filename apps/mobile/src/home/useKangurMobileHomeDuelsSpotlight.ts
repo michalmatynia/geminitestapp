@@ -56,9 +56,9 @@ const toSpotlightErrorMessage = (
   const normalized = message.toLowerCase();
   if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
     return copy({
-      de: 'Die Verbindung zur Kangur-API konnte nicht hergestellt werden.',
-      en: 'Could not connect to the Kangur API.',
-      pl: 'Nie udało się połączyć z API Kangura.',
+      de: 'Aktive Duelle aus der Lobby konnten nicht geladen werden.',
+      en: 'Could not load active duels from the lobby.',
+      pl: 'Nie udało się pobrać aktywnych pojedynków z lobby.',
     });
   }
 

@@ -444,7 +444,7 @@ describe('KangurFeatureApp', () => {
     });
   });
 
-  it('keeps the app loader while Kangur theme settings are loading', () => {
+  it('keeps the app loader visible while still rendering route content during theme loading', () => {
     settingsStoreStateMock.mockReturnValue({
       map: new Map(),
       isLoading: true,
@@ -459,7 +459,8 @@ describe('KangurFeatureApp', () => {
     render(<KangurFeatureApp />);
 
     expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
-    expect(screen.queryByTestId('kangur-route-content')).toBeNull();
+    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-page-lessons')).toBeInTheDocument();
   });
 
   it('keeps route content visible while cached theme settings are refreshing', () => {

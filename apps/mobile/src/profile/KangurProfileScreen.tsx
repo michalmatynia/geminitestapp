@@ -830,7 +830,6 @@ export function KangurProfileScreen(): React.JSX.Element {
   const profileRecentResults = useKangurMobileProfileRecentResults();
   const {
     authError,
-    authMode,
     canNavigateToRecommendation,
     displayName,
     getActionHref,
@@ -914,9 +913,9 @@ export function KangurProfileScreen(): React.JSX.Element {
             <Text style={{ color: '#475569', fontSize: 15, lineHeight: 22 }}>
               {isLoadingAuth && !isAuthenticated
                 ? copy({
-                    de: 'Die Schulersitzung und die gespeicherten Statistiken werden wiederhergestellt.',
-                    en: 'Restoring the learner session and saved stats.',
-                    pl: 'Przywracamy sesję ucznia i zapisane statystyki.',
+                    de: 'Die Anmeldung und die gespeicherten Statistiken werden wiederhergestellt.',
+                    en: 'Restoring sign-in and saved stats.',
+                    pl: 'Przywracamy logowanie i zapisane statystyki.',
                   })
                 : copy({
                     de: `Statistiken für ${displayName}.`,
@@ -928,9 +927,9 @@ export function KangurProfileScreen(): React.JSX.Element {
             {isLoadingAuth && !isAuthenticated ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Wir prüfen die gespeicherte Schulersitzung. Danach stellen wir synchronisierte Ergebnisse und lokalen Fortschritt wieder her.',
-                  en: 'Checking the saved learner session. After that we will restore synchronized results and local progress.',
-                  pl: 'Sprawdzamy zapisaną sesję ucznia. Po zakończeniu przywrócimy zsynchronizowane wyniki i lokalny postęp.',
+                  de: 'Wir prüfen die gespeicherte Anmeldung. Danach stellen wir Ergebnisse und Fortschritt wieder her.',
+                  en: 'Checking saved sign-in. After that we will restore results and progress.',
+                  pl: 'Sprawdzamy zapisane logowanie. Po zakończeniu przywrócimy wyniki i postęp.',
                 })}
               </Text>
             ) : !isAuthenticated ? (
@@ -938,9 +937,9 @@ export function KangurProfileScreen(): React.JSX.Element {
                 <View style={{ gap: 10 }}>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: `Der Modus \`${authMode}\` verlangt einen Schüler-Login. Das Anmeldeformular befindet sich jetzt auf dem Startbildschirm.`,
-                      en: `The \`${authMode}\` mode requires a learner login. The sign-in form is now on the home screen.`,
-                      pl: `Tryb \`${authMode}\` wymaga loginu ucznia. Formularz logowania jest teraz na ekranie głównym aplikacji.`,
+                      de: 'Melde dich an, um im Profil Ergebnisse, Fortschritt und Duelle zu sehen.',
+                      en: 'Sign in to see results, progress, and duels in the profile.',
+                      pl: 'Zaloguj się, aby zobaczyć w profilu wyniki, postęp i pojedynki.',
                     })}
                   </Text>
                   <Link href='/' asChild>
@@ -956,9 +955,9 @@ export function KangurProfileScreen(): React.JSX.Element {
                     >
                       <Text style={{ color: '#ffffff', fontWeight: '700' }}>
                         {copy({
-                          de: 'Anmeldebildschirm öffnen',
-                          en: 'Open auth screen',
-                          pl: 'Otwórz ekran logowania',
+                          de: 'Zum Login',
+                          en: 'Go to sign in',
+                          pl: 'Przejdź do logowania',
                         })}
                       </Text>
                     </Pressable>
@@ -1195,17 +1194,17 @@ export function KangurProfileScreen(): React.JSX.Element {
             {!duelProfile.isAuthenticated ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Melde die Schulersitzung an, um hier den Duellstand, letzte Rivalen und schnelle Rückkämpfe aus dem Profil zu sehen.',
-                  en: 'Sign in the learner session to see duel standing, recent rivals, and quick rematches from the profile here.',
-                  pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże z profilu.',
+                  de: 'Melde dich an, um hier Duellstand, letzte Rivalen und schnelle Rückkämpfe aus dem Profil zu sehen.',
+                  en: 'Sign in to see duel standing, recent rivals, and quick rematches from the profile here.',
+                  pl: 'Zaloguj się, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże z profilu.',
                 })}
               </Text>
             ) : duelProfile.isRestoringAuth || duelProfile.isLoading ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Die Profilübersicht zu Rivalen und Rangliste wird geladen.',
-                  en: 'Loading the profile duel overview for rivals and leaderboard.',
-                  pl: 'Pobieramy profilowy przegląd rywali i rankingu pojedynków.',
+                  de: 'Rivalen und Duellrangliste werden geladen.',
+                  en: 'Loading rivals and the duel leaderboard.',
+                  pl: 'Pobieramy rywali i ranking pojedynków.',
                 })}
               </Text>
             ) : duelProfile.error ? (
@@ -1655,16 +1654,16 @@ export function KangurProfileScreen(): React.JSX.Element {
             <View style={{ gap: 4 }}>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                 {copy({
-                  de: 'Zurück zu den letzten Sitzungen',
-                  en: 'Return to recent sessions',
-                  pl: 'Powrót do ostatnich sesji',
+                  de: 'Zurück zu den letzten Ergebnissen',
+                  en: 'Return to recent results',
+                  pl: 'Powrót do ostatnich wyników',
                 })}
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Die letzten synchronisierten Ergebnisse bleiben hier griffbereit, damit du aus dem Profil direkt wieder ins Training, die passende Lektion oder den vollständigen Verlauf springen kannst.',
-                  en: 'The latest synchronized results stay close here so you can jump from the profile straight back into practice, the matching lesson, or the full history.',
-                  pl: 'Ostatnie zsynchronizowane wyniki są tutaj pod ręką, aby można było z profilu od razu wrócić do treningu, pasującej lekcji albo pełnej historii.',
+                  de: 'Die letzten Ergebnisse bleiben hier griffbereit, damit du aus dem Profil direkt wieder ins Training, die passende Lektion oder den vollständigen Verlauf springen kannst.',
+                  en: 'The latest results stay close here so you can jump from the profile straight back into practice, the matching lesson, or the full history.',
+                  pl: 'Ostatnie wyniki są tutaj pod ręką, aby można było z profilu od razu wrócić do treningu, pasującej lekcji albo pełnej historii.',
                 })}
               </Text>
             </View>
@@ -1680,9 +1679,9 @@ export function KangurProfileScreen(): React.JSX.Element {
             ) : !profileRecentResults.isEnabled ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Melde die Schulersitzung an, um hier synchronisierte Ergebnisse zu sehen.',
-                  en: 'Sign in the learner session to see synchronized results here.',
-                  pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj zsynchronizowane wyniki.',
+                  de: 'Melde dich an, um hier Ergebnisse zu sehen.',
+                  en: 'Sign in to see results here.',
+                  pl: 'Zaloguj się, aby zobaczyć tutaj wyniki.',
                 })}
               </Text>
             ) : profileRecentResults.error ? (
@@ -1692,9 +1691,9 @@ export function KangurProfileScreen(): React.JSX.Element {
             ) : profileRecentResults.recentResultItems.length === 0 ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Es gibt noch keine synchronisierten Ergebnisse. Die ersten Versuche erscheinen hier automatisch.',
-                  en: 'There are no synchronized results yet. The first attempts will appear here automatically.',
-                  pl: 'Brak jeszcze zsynchronizowanych wyników. Pierwsze podejścia pojawią się tutaj automatycznie.',
+                  de: 'Es gibt hier noch keine Ergebnisse. Die ersten Versuche erscheinen hier automatisch.',
+                  en: 'There are no results here yet. The first attempts will appear here automatically.',
+                  pl: 'Nie ma tu jeszcze wyników. Pierwsze podejścia pojawią się tutaj automatycznie.',
                 })}
               </Text>
             ) : (
@@ -1747,9 +1746,9 @@ export function KangurProfileScreen(): React.JSX.Element {
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Behalte die letzten lokalen Freischaltungen und das vollständige Abzeichenraster an einem Ort im Blick.',
-                  en: 'Keep the latest local unlocks and the full badge grid in one place.',
-                  pl: 'Śledź w jednym miejscu ostatnie lokalne odblokowania i pełną siatkę odznak.',
+                  de: 'Behalte die letzten Freischaltungen und das vollständige Abzeichenraster an einem Ort im Blick.',
+                  en: 'Keep the latest unlocks and the full badge grid in one place.',
+                  pl: 'Śledź w jednym miejscu ostatnie odblokowania i pełną siatkę odznak.',
                 })}
               </Text>
             </View>
@@ -1865,9 +1864,9 @@ export function KangurProfileScreen(): React.JSX.Element {
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Nutze das Profil als schnellen Weg in die nächsten lokalen Aufgaben aus deinem Fortschritt, ohne zuerst zum Startbildschirm zurückzukehren.',
-                  en: 'Use the profile as a quick path into the next local tasks from your progress without first going back to home.',
-                  pl: 'Potraktuj profil jako szybkie wejście w kolejne lokalne zadania z postępu bez wracania najpierw na start.',
+                  de: 'Nutze das Profil als schnellen Weg in die nächsten Aufgaben aus deinem Fortschritt.',
+                  en: 'Use the profile as a quick path into the next tasks from your progress.',
+                  pl: 'Potraktuj profil jako szybkie wejście w kolejne zadania z postępu.',
                 })}
               </Text>
             </View>
@@ -1875,9 +1874,9 @@ export function KangurProfileScreen(): React.JSX.Element {
             {profileAssignments.assignmentItems.length === 0 ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Es gibt noch keine lokalen Aufgaben. Öffne Lektionen oder absolviere weitere Trainings, um den nächsten Plan aufzubauen.',
-                  en: 'There are no local tasks yet. Open lessons or complete more practice to build the next plan.',
-                  pl: 'Nie ma jeszcze lokalnych zadań. Otwórz lekcje albo wykonaj kolejne treningi, aby zbudować następny plan.',
+                  de: 'Es gibt noch keine Aufgaben. Öffne Lektionen oder absolviere weitere Trainings, um den nächsten Plan aufzubauen.',
+                  en: 'There are no tasks yet. Open lessons or complete more practice to build the next plan.',
+                  pl: 'Nie ma jeszcze zadań. Otwórz lekcje albo wykonaj kolejne treningi, aby zbudować następny plan.',
                 })}
               </Text>
             ) : (
@@ -1918,16 +1917,16 @@ export function KangurProfileScreen(): React.JSX.Element {
                     })
                   : !profileRecentResults.isEnabled
                     ? copy({
-                        de: 'Melde die Schulersitzung an, um hier synchronisierte Ergebnisse und den vollständigen Verlauf zu sehen.',
-                        en: 'Sign in the learner session to see synchronized results and the full history here.',
-                        pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj zsynchronizowane wyniki i pełną historię.',
+                        de: 'Melde dich an, um hier Ergebnisse und den vollständigen Verlauf zu sehen.',
+                        en: 'Sign in to see results and the full history here.',
+                        pl: 'Zaloguj się, aby zobaczyć tutaj wyniki i pełną historię.',
                       })
                     : profileRecentResults.error
                       ? profileRecentResults.error
                       : copy({
                           de: 'Von hier aus kannst du den Verlauf aktualisieren, die vollständige Historie öffnen und direkt in den nächsten Lernschritt springen.',
-                          en: 'From here you can refresh the history, open the full results view, and jump straight into the next study step.',
-                          pl: 'Stąd możesz odświeżyć historię, otworzyć pełny widok wyników i od razu przejść do kolejnego kroku nauki.',
+                          en: 'From here you can refresh results, open the full history, and jump straight into the next study step.',
+                          pl: 'Stąd możesz odświeżyć wyniki, otworzyć pełną historię i od razu przejść do kolejnego kroku nauki.',
                         })}
               </Text>
             </View>

@@ -204,7 +204,7 @@ export function KangurAppLoader({
           aria-live='polite'
           aria-atomic='true'
           role='status'
-          className='fixed inset-0 z-[90] flex items-center justify-center overflow-hidden px-4'
+          className='pointer-events-none fixed inset-0 z-[90] flex items-center justify-center overflow-hidden px-4'
           data-testid='kangur-app-loader'
           initial={allowIntroAnimation ? { opacity: 0 } : { opacity: 1 }}
           animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1 }}

@@ -18,6 +18,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_WRAP_CENTER_ROW_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   buildKangurAssignmentHref,
   getKangurAssignmentActionLabel,
@@ -25,6 +26,7 @@ import {
   resolveKangurAssignmentSubject,
   selectKangurPriorityAssignments,
 } from '@/features/kangur/ui/services/delegated-assignments';
+import { cn } from '@/features/kangur/shared/utils';
 import type { KangurLessonSubject } from '@/features/kangur/shared/contracts/kangur';
 
 type KangurAssignmentSpotlightProps = {
@@ -47,6 +49,7 @@ export function KangurAssignmentSpotlight({
 }: KangurAssignmentSpotlightProps): React.JSX.Element | null {
   const locale = useLocale();
   const runtimeTranslations = useTranslations('KangurAssignmentsRuntime');
+  const isCoarsePointer = useKangurCoarsePointer();
   const { subject, setSubject } = useKangurSubjectFocus();
   const { assignments, isLoading, error } = useKangurAssignments({
     enabled,
@@ -177,7 +180,10 @@ export function KangurAssignmentSpotlight({
 
         <KangurButton
           asChild
-          className='mt-5 rounded-[22px] py-3.5 text-lg font-extrabold shadow-[0_24px_58px_-30px_rgba(255,133,72,0.56)]'
+          className={cn(
+            'mt-5 rounded-[22px] py-3.5 text-lg font-extrabold shadow-[0_24px_58px_-30px_rgba(255,133,72,0.56)]',
+            isCoarsePointer && 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
+          )}
           fullWidth
           variant='primary'
         >

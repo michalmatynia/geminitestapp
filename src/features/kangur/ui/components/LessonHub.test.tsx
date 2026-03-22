@@ -27,6 +27,10 @@ vi.mock('framer-motion', () => ({
   },
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 
 describe('LessonHub', () => {
@@ -61,9 +65,12 @@ describe('LessonHub', () => {
     const lessonCard = screen.getByTestId('lesson-hub-section-days');
     const gameCard = screen.getByTestId('lesson-hub-section-game');
 
-    expect(lessonCard).toHaveClass('soft-card');
+    expect(lessonCard).toHaveClass('soft-card', 'min-h-[11rem]', 'px-5', 'py-5');
     expect(gameCard).toHaveClass(
       'soft-card',
+      'min-h-[11rem]',
+      'px-5',
+      'py-5',
       '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,var(--kangur-accent-indigo-end,#6366f1))]',
       '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,var(--kangur-accent-indigo-start,#a855f7))]'
     );

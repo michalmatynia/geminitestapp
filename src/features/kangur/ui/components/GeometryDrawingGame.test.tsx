@@ -61,8 +61,8 @@ describe('GeometryDrawingGame', () => {
       'kangur-panel-soft',
       'kangur-glass-surface-solid'
     );
-    expect(starterButton).toHaveClass('kangur-cta-pill', 'surface-cta');
-    expect(proButton).toHaveClass('kangur-cta-pill', 'soft-cta');
+    expect(starterButton).toHaveClass('kangur-cta-pill', 'surface-cta', 'min-h-11', 'px-4');
+    expect(proButton).toHaveClass('kangur-cta-pill', 'soft-cta', 'min-h-11', 'px-4');
     expect(starterButton).toHaveAttribute('aria-pressed', 'true');
     expect(proButton).toHaveAttribute('aria-pressed', 'false');
     expect(board).toHaveClass('soft-card', 'border');

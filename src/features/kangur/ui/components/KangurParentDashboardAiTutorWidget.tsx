@@ -36,6 +36,7 @@ import {
   KangurStatusChip,
   KangurSurfacePanel,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import type { KangurAiTutorUsageResponse } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
@@ -172,6 +173,7 @@ function TutorToggleField({
 function AiTutorConfigPanel(): React.JSX.Element | null {
   const locale = useLocale();
   const translations = useTranslations('KangurParentDashboard');
+  const isCoarsePointer = useKangurCoarsePointer();
   const tutorContent = useKangurAiTutorContent();
   const tutor = useOptionalKangurAiTutor();
   const { activeLearner, canAccessDashboard } = useKangurParentDashboardRuntime();
@@ -201,6 +203,12 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
   );
   const isUsageEnabled = isTemporarilyDisabled ? false : currentSettings?.enabled ?? false;
   const shouldLoadUsage = canAccessDashboard && Boolean(activeLearnerId) && isUsageEnabled;
+  const compactActionClassName = isCoarsePointer
+    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+    : 'w-full sm:w-auto';
+  const fullWidthActionClassName = isCoarsePointer
+    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
+    : undefined;
 
   const [enabled, setEnabled] = useState(isUsageEnabled);
   const [uiMode, setUiMode] = useState<KangurAiTutorUiMode>(
@@ -433,7 +441,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
           </KangurPanelRow>
           {isTutorHidden ? (
             <KangurButton
-              className='w-full border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 sm:w-auto'
+              className={`${compactActionClassName} border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800`}
               onClick={() => {
                 persistTutorVisibilityHidden(false);
                 if (tutor?.enabled) {
@@ -553,7 +561,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
             : tutorContent.parentDashboard.toggleDisabledLabel}
         </span>
         <KangurButton
-          className='w-full sm:w-auto'
+          className={compactActionClassName}
           onClick={() => {
             setEnabled((current) => {
               const nextEnabled = !current;
@@ -739,6 +747,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
         onClick={() => void handleSave()}
         disabled={isSaving || isTemporarilyDisabled}
         fullWidth
+        className={fullWidthActionClassName}
       >
         {isSaving
           ? tutorContent.parentDashboard.savePendingLabel

@@ -19,6 +19,7 @@ import {
   KANGUR_PANEL_GAP_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurQuestionChoice } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -166,6 +167,7 @@ export default function QuestionCard({
   serverResult = null,
 }: QuestionCardProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const isCoarsePointer = useKangurCoarsePointer();
   const questionHeadingId = useId();
   const questionDescriptionId = useId();
   const choicesGroupId = useId();
@@ -470,6 +472,7 @@ export default function QuestionCard({
               aria-pressed={selected === choice}
               buttonClassName={cn(
                 'flex items-center justify-center px-3 py-3 text-center text-lg font-bold shadow sm:px-4 sm:py-4 sm:text-xl md:text-2xl',
+                isCoarsePointer && 'min-h-[4.25rem] touch-manipulation select-none active:scale-[0.98]',
                 cardClass,
                 showResult ? 'cursor-default' : 'cursor-pointer'
               )}

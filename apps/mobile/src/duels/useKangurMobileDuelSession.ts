@@ -59,9 +59,9 @@ const toSessionErrorMessage = (
 
     if (status === 401) {
       return copy({
-        de: 'Melde eine Lernenden-Sitzung an, um das Duell zu öffnen.',
-        en: 'Sign in the learner session to open the duel.',
-        pl: 'Zaloguj sesję ucznia, aby otworzyć pojedynek.',
+        de: 'Melde dich an, um dieses Duell zu öffnen.',
+        en: 'Sign in to open this duel.',
+        pl: 'Zaloguj się, aby otworzyć ten pojedynek.',
       });
     }
   }
@@ -77,11 +77,7 @@ const toSessionErrorMessage = (
 
   const normalized = message.toLowerCase();
   if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
-    return copy({
-      de: 'Die Verbindung zur Kangur-API konnte nicht hergestellt werden.',
-      en: 'Could not connect to the Kangur API.',
-      pl: 'Nie udało się połączyć z API Kangura.',
-    });
+    return fallback;
   }
 
   return message;
@@ -236,9 +232,9 @@ export const useKangurMobileDuelSession = (
       isSpectating ? spectatorQuery.error : playerQuery.error,
       isSpectating
         ? copy({
-            de: 'Die Duellansicht konnte nicht geladen werden.',
-            en: 'Could not load the duel view.',
-            pl: 'Nie udało się pobrać podglądu pojedynku.',
+            de: 'Das öffentliche Duell konnte nicht geladen werden.',
+            en: 'Could not load the public duel.',
+            pl: 'Nie udało się pobrać publicznego pojedynku.',
           })
         : copy({
             de: 'Der Duellstatus konnte nicht geladen werden.',

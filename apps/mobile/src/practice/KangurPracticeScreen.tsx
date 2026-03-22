@@ -90,9 +90,9 @@ const resolvePracticePlayerName = (
   }
 
   return {
-    de: 'Mobiler Lernender',
-    en: 'Mobile learner',
-    pl: 'Uczeń mobilny',
+    de: 'Lernender',
+    en: 'Learner',
+    pl: 'Uczeń',
   }[locale];
 };
 
@@ -1392,9 +1392,9 @@ export function KangurPracticeScreen(): React.JSX.Element {
           <Card>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
               {copy({
-                de: 'Mobiles Training',
-                en: 'Mobile practice',
-                pl: 'Trening mobilny',
+                de: 'Training',
+                en: 'Practice',
+                pl: 'Trening',
               })}
             </Text>
             <Text style={{ color: '#0f172a', fontSize: 28, fontWeight: '800' }}>
@@ -1574,24 +1574,24 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 >
                   <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
                     {copy({
-                      de: 'Entwickler-Synchronisierungsvorschau',
-                      en: 'Developer sync proof',
-                      pl: 'Deweloperski podgląd synchronizacji',
+                      de: 'Entwickler-Prüfung der Synchronisierung',
+                      en: 'Developer sync checks',
+                      pl: 'Deweloperskie sprawdzenie synchronizacji',
                     })}
                   </Text>
                   <Text style={{ color: '#1e3a8a', fontSize: 13, lineHeight: 18 }}>
                     {copy({
-                      de: 'Das prueft dieselben mobilen Datenquellen, die Ergebnisse, Profil, Tagesplan und Rangliste speisen.',
-                      en: 'This checks the same mobile data sources that feed scores, profile, daily plan, and leaderboard.',
-                      pl: 'To sprawdza te same mobilne źródła danych, które zasilają wyniki, profil, plan dnia i ranking.',
+                      de: 'Das prüft dieselben Daten für Ergebnisse, Profil, Tagesplan und Rangliste, die nach einer Serie aktualisiert werden.',
+                      en: 'This checks the same results, profile, daily plan, and leaderboard data used after a run.',
+                      pl: 'To sprawdza te same dane wyników, profilu, planu dnia i rankingu, których używamy po serii.',
                     })}
                   </Text>
                   {practiceSyncProof.isLoading ? (
                     <Text style={{ color: '#1e3a8a', fontSize: 13, lineHeight: 18 }}>
                       {copy({
-                        de: 'Synchronisierungsvorschau wird aktualisiert...',
-                        en: 'Refreshing the sync proof...',
-                        pl: 'Odświeżamy podgląd synchronizacji...',
+                        de: 'Synchronisierungs-Prüfung wird aktualisiert...',
+                        en: 'Refreshing sync checks...',
+                        pl: 'Odświeżamy sprawdzenie synchronizacji...',
                       })}
                     </Text>
                   ) : (
@@ -2302,9 +2302,9 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 </Text>
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                   {copy({
-                    de: 'Nach der Runde bleiben die zuletzt synchronisierten Sitzungen hier griffbereit, damit du direkt wieder ins Training, die passende Lektion oder die Modus-Historie springen kannst.',
-                    en: 'The latest synchronized sessions stay close here so you can jump right back into practice, the matching lesson, or the mode history.',
-                    pl: 'Ostatnie zsynchronizowane sesje są tutaj pod ręką, aby można było od razu wrócić do treningu, pasującej lekcji albo historii trybu.',
+                    de: 'Nach der Runde bleiben die letzten Ergebnisse hier griffbereit, damit du direkt wieder ins Training, die passende Lektion oder die Modus-Historie springen kannst.',
+                    en: 'The latest results stay close here so you can jump right back into practice, the matching lesson, or the mode history.',
+                    pl: 'Ostatnie wyniki są tutaj pod ręką, aby można było od razu wrócić do treningu, pasującej lekcji albo historii trybu.',
                   })}
                 </Text>
 
@@ -2342,9 +2342,9 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 ) : !practiceRecentResults.isEnabled ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Melde die Schulersitzung an, um hier die synchronisierten Sitzungen zu sehen.',
-                      en: 'Sign in the learner session to see synchronized sessions here.',
-                      pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj zsynchronizowane sesje.',
+                      de: 'Melde die Schülersitzung an, um hier Ergebnisse zu sehen.',
+                      en: 'Sign in the learner session to see results here.',
+                      pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wyniki.',
                     })}
                   </Text>
                 ) : practiceRecentResults.error ? (
@@ -2354,9 +2354,9 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 ) : practiceRecentResults.recentResultItems.length === 0 ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Es gibt noch keine synchronisierten Ergebnisse. Beende einen Lauf, damit er hier erscheint.',
-                      en: 'There are no synchronized results yet. Finish a run so it appears here.',
-                      pl: 'Nie ma jeszcze zsynchronizowanych wyników. Ukończ serię, aby pojawiła się tutaj.',
+                      de: 'Es gibt hier noch keine Ergebnisse. Beende einen Lauf, um diesen Bereich zu füllen.',
+                      en: 'There are no results here yet. Finish a run to fill this section.',
+                      pl: 'Nie ma tu jeszcze wyników. Ukończ serię, aby wypełnić tę sekcję.',
                     })}
                   </Text>
                 ) : (

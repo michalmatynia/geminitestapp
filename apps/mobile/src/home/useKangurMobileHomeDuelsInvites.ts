@@ -33,9 +33,9 @@ const toInviteErrorMessage = (
 
     if (status === 401) {
       return copy({
-        de: 'Melde die Schulersitzung an, um private Duelleinladungen zu laden.',
-        en: 'Sign in the learner session to load private duel invites.',
-        pl: 'Zaloguj sesję ucznia, aby pobrać prywatne zaproszenia do pojedynków.',
+        de: 'Melde dich an, um private Duelleinladungen zu laden.',
+        en: 'Sign in to load private duel invites.',
+        pl: 'Zaloguj się, aby pobrać prywatne zaproszenia do pojedynków.',
       });
     }
   }
@@ -60,9 +60,9 @@ const toInviteErrorMessage = (
   const normalized = message.toLowerCase();
   if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
     return copy({
-      de: 'Die Verbindung zur Kangur-API konnte nicht hergestellt werden.',
-      en: 'Could not connect to the Kangur API.',
-      pl: 'Nie udało się połączyć z API Kangura.',
+      de: 'Die Duelleinladungen konnten nicht geladen werden.',
+      en: 'Could not load duel invites.',
+      pl: 'Nie udało się pobrać zaproszeń do pojedynków.',
     });
   }
 

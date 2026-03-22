@@ -254,7 +254,7 @@ describe('KangurPracticeScreen', () => {
   it('renders the main training shell and first question for the practice route', () => {
     renderPracticeScreen();
 
-    expect(screen.getByText('Trening mobilny')).toBeTruthy();
+    expect(screen.getByText('Trening')).toBeTruthy();
     expect(screen.getByText('Zegar')).toBeTruthy();
     expect(screen.getByText('Plan sesji')).toBeTruthy();
     expect(
@@ -293,7 +293,7 @@ describe('KangurPracticeScreen', () => {
   it('renders the mobile practice chrome in English when the locale changes', () => {
     renderPracticeScreen('en');
 
-    expect(screen.getByText('Mobile practice')).toBeTruthy();
+    expect(screen.getByText('Practice')).toBeTruthy();
     expect(screen.getByText('Clock')).toBeTruthy();
     expect(screen.getByText('Session plan')).toBeTruthy();
     expect(
@@ -348,6 +348,16 @@ describe('KangurPracticeScreen', () => {
     fireEvent.click(screen.getByText('Zakończ trening'));
 
     expect(await screen.findByText('Podsumowanie')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Ostatnie wyniki są tutaj pod ręką, aby można było od razu wrócić do treningu, pasującej lekcji albo historii trybu.',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Zaloguj sesję ucznia, aby zobaczyć tutaj wyniki.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('Szybki powrót do rywali')).toBeTruthy();
     expect(
       screen.getByText(
@@ -641,6 +651,11 @@ describe('KangurPracticeScreen', () => {
     expect(screen.queryByText('Failed to fetch')).toBeNull();
     expect(screen.getByText('Centrum wyników')).toBeTruthy();
     expect(screen.getByText('Otwórz pełną historię')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Ostatnie wyniki są tutaj pod ręką, aby można było od razu wrócić do treningu, pasującej lekcji albo historii trybu.',
+      ),
+    ).toBeTruthy();
     expect(screen.getAllByText('Trenuj ponownie').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Historia trybu')).toBeTruthy();
 

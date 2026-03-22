@@ -345,7 +345,17 @@ describe('useBrainPersistence', () => {
   });
 
   it('resets by hydrating from the loaded settings map when one exists', () => {
-    const settingsMap = new Map<string, string>([['ai_brain_saved', '1']]);
+    const resetSettings: AiBrainSettings = {
+      ...defaultBrainSettings,
+      defaults: {
+        ...defaultBrainAssignment,
+        modelId: 'reset-model',
+      },
+    };
+    const settingsMap = new Map<string, string>([
+      [AI_BRAIN_SETTINGS_KEY, JSON.stringify(resetSettings)],
+      ['openai_api_key', 'reset-openai'],
+    ]);
     const params = createParams({
       settingsMap,
     });
@@ -356,9 +366,8 @@ describe('useBrainPersistence', () => {
       result.current.handleReset();
     });
 
-    expect(params.setSettings).not.toHaveBeenCalledWith(defaultBrainSettings);
-    expect(params.setProviderCatalog).not.toHaveBeenCalledWith(defaultBrainProviderCatalog);
-    expect(params.setSettings).not.toHaveBeenCalled();
+    expect(params.setSettings).toHaveBeenCalledWith(resetSettings);
+    expect(params.setOpenaiApiKey).toHaveBeenCalledWith('reset-openai');
   });
 
   it('resets local state to defaults when there is no settings map', () => {

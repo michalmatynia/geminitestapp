@@ -58,4 +58,30 @@ describe('RadixOverlayContentShell', () => {
     expect(contentRef.current).toBe(screen.getByTestId('content'));
     expect(screen.getByText('Dialog body')).toBeInTheDocument();
   });
+
+  it('preserves children passed through contentProps when no explicit shell children are provided', () => {
+    const Portal = ({ children }: { children?: React.ReactNode }) => <div data-testid='portal'>{children}</div>;
+    const Overlay = ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div data-testid='overlay' {...props}>{children}</div>;
+    const Content = ({
+      children,
+      ...props
+    }: React.HTMLAttributes<HTMLDivElement>) => <div data-testid='content' {...props}>{children}</div>;
+
+    render(
+      <RadixOverlayContentShell
+        Portal={Portal}
+        Overlay={Overlay}
+        Content={Content}
+        overlayBaseClassName='overlay-base'
+        contentBaseClassName='content-base'
+        contentProps={{
+          role: 'dialog',
+          children: <span>Content prop body</span>,
+        } as React.HTMLAttributes<HTMLDivElement>}
+      />
+    );
+
+    expect(screen.getByTestId('content')).toHaveAttribute('role', 'dialog');
+    expect(screen.getByText('Content prop body')).toBeInTheDocument();
+  });
 });

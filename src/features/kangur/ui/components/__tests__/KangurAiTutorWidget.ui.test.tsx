@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '../../../../../../__tests__/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { persistTutorVisibilityHidden } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
@@ -172,68 +172,27 @@ vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useKangurAiTutor: useKangurAiTutorMock,
-  useOptionalKangurAiTutor: useKangurAiTutorMock,
+  useOptionalKangurAiTutor: useKangurAiTutorMock, KangurAiTutorActivationContext: { displayName: 'KangurAiTutorActivationContext' },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
   useKangurAiTutorContent: () => DEFAULT_KANGUR_AI_TUTOR_CONTENT, useActivateKangurAiTutorContent: vi.fn(),
 }));
 
-vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
-  useOptionalKangurAuth: useOptionalKangurAuthMock,
+
+vi.mock('@/features/kangur/ui/context/KangurAiTutorRuntime.hook', () => ({
+  useKangurAiTutorRuntime: () => ({
+    value: useKangurAiTutorMock(),
+    sessionRegistryValue: { setRegistration: vi.fn() },
+  }),
 }));
 
-vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
-  useKangurLoginModal: useKangurLoginMock,
-}));
 
-vi.mock('@/features/kangur/ui/hooks/useKangurTextHighlight', () => ({
-  useKangurTextHighlight: useKangurTextHighlightMock,
-}));
 
-vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
-  useKangurPageContentEntry: useKangurPageContentEntryMock,
+vi.mock('../KangurAiTutorWidget.coordinator.helpers', async (importOriginal) => ({
+  ...(await importOriginal()),
+  isSelectionWithinTutorUi: () => false,
 }));
-
-vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
-  useOptionalKangurRouting: useOptionalKangurRoutingMock,
-}));
-
-vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () => ({
-  buildKangurRecommendationHref: (
-    basePath: string,
-    action: {
-      page: 'Game' | 'Lessons' | 'ParentDashboard' | 'LearnerProfile';
-      query?: Record<string, string>;
-    }
-  ) => {
-    const pageSlug = action.page === 'Lessons' ? 'lessons' : action.page.toLowerCase();
-    const params = action.query ? new URLSearchParams(action.query).toString() : '';
-    return `${basePath}/${pageSlug}${params ? `?${params}` : ''}`;
-  },
-}));
-
-vi.mock('next/link', () => ({
-  default: ({
-    href,
-    children,
-    scroll: _scroll,
-    ...props
-  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; scroll?: boolean }) => (
-    <a href={href} {...props}>
-      {children}
-    </a>
-  ),
-}));
-
-vi.mock('@/features/kangur/observability/client', () => {
-  const mocks = globalThis.__kangurClientErrorMocks();
-  return {
-    trackKangurClientEvent: mocks.trackKangurClientEventMock,
-    withKangurClientError: mocks.withKangurClientError,
-    withKangurClientErrorSync: mocks.withKangurClientErrorSync,
-  };
-});
 
 import { KangurAiTutorWidget } from '../KangurAiTutorWidget';
 

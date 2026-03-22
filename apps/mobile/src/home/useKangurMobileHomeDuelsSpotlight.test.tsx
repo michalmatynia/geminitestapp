@@ -216,7 +216,7 @@ describe('useKangurMobileHomeDuelsSpotlight', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.error).toBe('Nie udało się połączyć z API Kangura.');
+      expect(result.current.error).toBe('Nie udało się pobrać aktywnych pojedynków z lobby.');
     });
   });
 });

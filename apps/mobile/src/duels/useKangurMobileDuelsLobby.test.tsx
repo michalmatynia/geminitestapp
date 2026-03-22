@@ -218,7 +218,7 @@ describe('useKangurMobileDuelsLobby', () => {
 
     await waitFor(() => {
       expect(result.current.lobbyError).toBe(
-        'Melde eine Lernenden-Sitzung an, um diese Ansicht zu nutzen.',
+        'Melde dich an, um Duelle zu öffnen.',
       );
     });
   });

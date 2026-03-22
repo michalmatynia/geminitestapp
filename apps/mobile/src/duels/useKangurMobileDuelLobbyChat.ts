@@ -44,9 +44,9 @@ const toChatErrorMessage = (
 
     if (status === 401 || status === 403) {
       return copy({
-        de: 'Melde eine Lernenden-Sitzung an, um den Lobby-Chat zu nutzen.',
-        en: 'Sign in the learner session to use the lobby chat.',
-        pl: 'Zaloguj sesję ucznia, aby korzystać z czatu lobby.',
+        de: 'Melde dich an, um den Lobby-Chat zu nutzen.',
+        en: 'Sign in to use the lobby chat.',
+        pl: 'Zaloguj się, aby korzystać z czatu lobby.',
       });
     }
   }
@@ -62,11 +62,7 @@ const toChatErrorMessage = (
 
   const normalized = message.toLowerCase();
   if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
-    return copy({
-      de: 'Die Verbindung zur Kangur-API konnte nicht hergestellt werden.',
-      en: 'Could not connect to the Kangur API.',
-      pl: 'Nie udało się połączyć z API Kangura.',
-    });
+    return fallback;
   }
 
   return message;

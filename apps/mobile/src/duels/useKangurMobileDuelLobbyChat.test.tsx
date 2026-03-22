@@ -168,7 +168,7 @@ describe('useKangurMobileDuelLobbyChat', () => {
 
     await waitFor(() => {
       expect(result.current.error).toBe(
-        'Die Verbindung zur Kangur-API konnte nicht hergestellt werden.',
+        'Der Lobby-Chat konnte nicht geladen werden.',
       );
     });
   });

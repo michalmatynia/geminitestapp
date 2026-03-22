@@ -101,8 +101,12 @@ export function KangurParentDashboardHeroWidget({
   const { entry: guestHeroContent } = useKangurPageContentEntry('parent-dashboard-guest-hero');
   const { entry: dashboardHeroContent } = useKangurPageContentEntry('parent-dashboard-hero');
   const parentWordmarkLabel = translations('hero.parentTitle');
-  const compactActionClassName = isCoarsePointer ? 'min-h-11 px-4' : undefined;
-  const compactWideActionClassName = isCoarsePointer ? 'w-full sm:w-auto min-h-11 px-4' : 'w-full sm:w-auto';
+  const compactActionClassName = isCoarsePointer
+    ? 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
+    : undefined;
+  const compactWideActionClassName = isCoarsePointer
+    ? 'w-full sm:w-auto min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
+    : 'w-full sm:w-auto';
   const handleGoHome = (): void => {
     routeNavigator.push(getKangurHomeHref(basePath), {
       acknowledgeMs: PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS,
@@ -148,7 +152,7 @@ export function KangurParentDashboardHeroWidget({
       >
         <div className={KANGUR_PANEL_GRID_TO_ROW_CLASSNAME}>
           <KangurButton
-            className='w-full sm:w-auto'
+            className={compactWideActionClassName}
             onClick={() => {
               openLoginModal();
             }}
@@ -161,7 +165,7 @@ export function KangurParentDashboardHeroWidget({
           </KangurButton>
           <KangurButton
             asChild
-            className='w-full sm:w-auto'
+            className={compactWideActionClassName}
             size='lg'
             variant='surface'
           >
@@ -206,7 +210,7 @@ export function KangurParentDashboardHeroWidget({
         }
       >
         <KangurButton
-          className='w-full sm:w-auto'
+          className={compactWideActionClassName}
           onClick={handleGoToProfile}
           size='lg'
           variant='primary'

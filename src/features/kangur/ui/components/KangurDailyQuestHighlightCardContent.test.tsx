@@ -3,7 +3,13 @@
  */
 
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+import React from 'react';
+
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
 
 import { KangurDailyQuestHighlightCardContent } from '@/features/kangur/ui/components/KangurDailyQuestHighlightCardContent';
 
@@ -34,6 +40,10 @@ describe('KangurDailyQuestHighlightCardContent', () => {
       screen.getByText('Podtrzymaj rytm nauki krotszym treningiem mieszanym.')
     ).toHaveClass('[color:var(--kangur-page-muted-text)]');
     expect(screen.getByText('1/1 runda dzisiaj')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Uruchom trening' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Uruchom trening' })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
   });
 });

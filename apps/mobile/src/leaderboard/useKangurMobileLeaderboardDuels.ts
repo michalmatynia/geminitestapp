@@ -36,9 +36,9 @@ const toLeaderboardDuelsActionErrorMessage = (
 
     if (status === 401) {
       return copy({
-        de: 'Melde die Schulersitzung an, um ein privates Duell zu senden.',
-        en: 'Sign in the learner session to send a private duel.',
-        pl: 'Zaloguj sesję ucznia, aby wysłać prywatny pojedynek.',
+        de: 'Melde dich an, um ein privates Duell zu senden.',
+        en: 'Sign in to send a private duel.',
+        pl: 'Zaloguj się, aby wysłać prywatny pojedynek.',
       });
     }
   }
@@ -63,9 +63,9 @@ const toLeaderboardDuelsActionErrorMessage = (
   const normalized = message.toLowerCase();
   if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
     return copy({
-      de: 'Die Verbindung zur Kangur-API konnte nicht hergestellt werden.',
-      en: 'Could not connect to the Kangur API.',
-      pl: 'Nie udało się połączyć z API Kangura.',
+      de: 'Das private Duell konnte nicht erstellt werden.',
+      en: 'Could not create the private duel.',
+      pl: 'Nie udało się utworzyć prywatnego pojedynku.',
     });
   }
 

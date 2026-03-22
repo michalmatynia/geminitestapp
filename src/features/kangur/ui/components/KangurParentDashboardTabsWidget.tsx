@@ -15,6 +15,7 @@ import {
   KangurWidgetIntro,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -70,6 +71,7 @@ export function KangurParentDashboardTabsWidget({
 } = {}): React.JSX.Element | null {
   const translations = useTranslations('KangurParentDashboard');
   const { activeTab, canAccessDashboard, setActiveTab } = useKangurParentDashboardRuntime();
+  const isCoarsePointer = useKangurCoarsePointer();
   const { entry: tabsContent } = useKangurPageContentEntry('parent-dashboard-tabs');
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const tabs = useMemo(
@@ -142,6 +144,10 @@ export function KangurParentDashboardTabsWidget({
     return null;
   }
 
+  const tabActionClassName = isCoarsePointer
+    ? 'min-h-11 min-w-0 flex-1 justify-center gap-1.5 px-4 text-center text-xs touch-manipulation select-none active:scale-[0.97] sm:flex-none sm:px-4'
+    : 'min-w-0 flex-1 justify-center gap-1.5 px-2 text-center sm:px-4';
+
   return (
     <KangurPanelStack>
       <KangurWidgetIntro
@@ -184,7 +190,7 @@ export function KangurParentDashboardTabsWidget({
               aria-controls={panelId}
               tabIndex={isActive ? 0 : -1}
               className={cn(
-                'min-w-0 flex-1 justify-center gap-1.5 px-2 text-center sm:px-4',
+                tabActionClassName,
                 isLastOdd && 'col-span-2 max-[420px]:col-span-1 sm:col-span-1'
               )}
               size='sm'

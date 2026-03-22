@@ -158,7 +158,7 @@ describe('KangurAiTutorComposer', () => {
     expect(screen.getByAltText('Rysunek')).toHaveClass('kangur-chat-inset');
     expect(screen.getByTestId('kangur-ai-tutor-composer-pills')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Podpowiedź' })).toHaveClass(
-      'min-h-10',
+      'min-h-11',
       'touch-manipulation',
       'select-none'
     );
@@ -166,10 +166,10 @@ describe('KangurAiTutorComposer', () => {
       screen.getByRole('button', {
         name: DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing?.clearLabel ?? 'Usuń rysunek',
       })
-    ).toHaveClass('h-8', 'w-8', 'touch-manipulation', 'select-none');
+    ).toHaveClass('h-11', 'w-11', 'touch-manipulation', 'select-none');
     expect(screen.getByTestId('kangur-ai-tutor-drawing-toggle')).toHaveClass(
-      'h-10',
-      'w-10',
+      'h-11',
+      'w-11',
       'touch-manipulation',
       'select-none'
     );

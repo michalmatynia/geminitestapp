@@ -281,14 +281,14 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Fokus treningowy: Trening mieszany')).toBeTruthy();
     expect(screen.getByText('Plan dnia teraz')).toBeTruthy();
     expect(screen.getByText('Status: przywracanie')).toBeTruthy();
-    expect(screen.getByText('Użytkownik: przywracanie sesji ucznia')).toBeTruthy();
+    expect(screen.getByText('Użytkownik: przywracanie logowania')).toBeTruthy();
     expect(
       screen.getByText(
-        'Ekran główny przywraca teraz sesję ucznia, ostatnie wyniki i wskazówki treningowe.',
+        'Przywracamy teraz logowanie, ostatnie wyniki i wskazówki treningowe.',
       ),
     ).toBeTruthy();
     expect(
-      screen.getByText('Przywracamy sesję ucznia i fokus treningowy oparty na wynikach.'),
+      screen.getByText('Przywracamy logowanie i fokus treningowy oparty na wynikach.'),
     ).toBeTruthy();
     expect(screen.getByText('Pobieramy wyniki ucznia.')).toBeTruthy();
     expect(screen.queryByText('Login ucznia')).toBeNull();
@@ -408,7 +408,7 @@ describe('HomeScreen', () => {
     renderHomeScreen();
 
     expect(screen.getByText('Centrum wyników')).toBeTruthy();
-    expect(screen.getByText('Brak jeszcze zsynchronizowanych wyników.')).toBeTruthy();
+    expect(screen.getByText('Nie ma tu jeszcze wyników.')).toBeTruthy();
   });
 
   it('renders authenticated focus cards and recent results after the shell settles', async () => {
@@ -865,7 +865,7 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Plan z ekranu głównego')).toBeTruthy();
     expect(
       screen.getByText(
-        'Zamień lokalny postęp i zapisane lekcje bezpośrednio na kolejne kroki z ekranu głównego.',
+        'Zamień postęp i zapisane lekcje bezpośrednio w kolejne kroki.',
       ),
     ).toBeTruthy();
     expect(screen.getByText('➕ Powtórka: Dodawanie')).toBeTruthy();
@@ -877,7 +877,7 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Centrum wyników')).toBeTruthy();
     expect(
       screen.getByText(
-        'Ostatnie zsynchronizowane sesje są tutaj pod ręką, aby można było z ekranu głównego od razu wrócić do treningu albo pełnej historii.',
+        'Ostatnie wyniki są tutaj pod ręką, aby od razu wrócić do treningu albo pełnej historii.',
       ),
     ).toBeTruthy();
     expect(screen.getByText('7/8 poprawnych')).toBeTruthy();
@@ -974,29 +974,35 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Trainingsfokus: Gemischtes Training')).toBeTruthy();
     expect(screen.getByText('Status: anonym')).toBeTruthy();
     expect(screen.getByText('Schuler-Login')).toBeTruthy();
+    expect(screen.getByText('Anmelden')).toBeTruthy();
     expect(screen.getByText('Duelleinladungen')).toBeTruthy();
     expect(screen.getByText('Gesendete Herausforderungen')).toBeTruthy();
     expect(screen.getByText('Aktive Rivalen in der Lobby')).toBeTruthy();
     expect(screen.getByText('Live-Duelle')).toBeTruthy();
     expect(screen.getByText('Duell-Rangliste')).toBeTruthy();
-    expect(screen.getByText('Lektionsplan vom Startbildschirm')).toBeTruthy();
+    expect(screen.getByText('Lektionsplan zum Start')).toBeTruthy();
     expect(screen.getByText('Abzeichen-Zentrale')).toBeTruthy();
     expect(screen.getByText('Zurück zu den letzten Lektionen')).toBeTruthy();
-    expect(screen.getByText('Plan vom Startbildschirm')).toBeTruthy();
+    expect(screen.getByText('Plan zum Start')).toBeTruthy();
     expect(
       screen.getByText(
-        'Verwandle lokalen Fortschritt und gespeicherte Lektionen direkt vom Startbildschirm aus in die nächsten Schritte.',
+        'Verwandle Fortschritt und gespeicherte Lektionen direkt in die nächsten Schritte.',
       ),
     ).toBeTruthy();
     expect(screen.getByText('Ergebniszentrale')).toBeTruthy();
     expect(
       screen.getByText(
-        'Es gibt noch keine synchronisierten Ergebnisse.',
+        'Es gibt hier noch keine Ergebnisse.',
       ),
     ).toBeTruthy();
     expect(
       screen.getByText(
-        'Die letzten synchronisierten Sitzungen bleiben hier griffbereit, damit du vom Startbildschirm direkt wieder ins Training oder in den vollständigen Verlauf springen kannst.',
+        'Die letzten Ergebnisse bleiben hier griffbereit, damit du direkt wieder ins Training oder in den vollständigen Verlauf springen kannst.',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Von hier aus kannst du Lektionen, Training, Ergebnisse und Duelle durchsuchen. Nach der Anmeldung siehst du hier auch Ergebnisse und den Tagesplan.',
       ),
     ).toBeTruthy();
   });

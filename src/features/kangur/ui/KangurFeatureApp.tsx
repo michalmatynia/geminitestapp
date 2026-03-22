@@ -86,8 +86,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     activeTransitionKind === 'locale-switch' ||
     activeTransitionSourceId === LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID;
   const shouldSkipNavigationSkeletonDelay = activeTransitionSourceId !== null;
-  const shouldBlockRouteContent =
-    isThemeBootLoading || shouldRedirectToHome;
+  const shouldBlockRouteContent = shouldRedirectToHome;
   const [isBootSkeletonVisible, setIsBootSkeletonVisible] = useState<boolean>(shouldShowBootLoader);
   const [isNavigationSkeletonVisible, setIsNavigationSkeletonVisible] = useState<boolean>(false);
   const bootSkeletonShownAtRef = useRef<number | null>(

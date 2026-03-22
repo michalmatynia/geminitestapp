@@ -5,6 +5,10 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 import type { KangurQuestion } from '@/features/kangur/ui/types';
 
 import QuestionCard from '@/features/kangur/ui/components/QuestionCard';
@@ -47,8 +51,22 @@ describe('QuestionCard', () => {
     );
     expect(screen.getByTestId('question-card-shell')).toHaveClass('glass-panel', 'kangur-panel-soft');
     expect(screen.getByRole('group', { name: '6 + 1' })).toBeInTheDocument();
-    expect(correctChoice).toHaveClass('soft-card', 'border', 'kangur-card-surface', 'kangur-card-padding-md');
-    expect(wrongChoice).toHaveClass('soft-card', 'border', 'kangur-card-surface', 'kangur-card-padding-md');
+    expect(correctChoice).toHaveClass(
+      'soft-card',
+      'border',
+      'kangur-card-surface',
+      'kangur-card-padding-md',
+      'min-h-[4.25rem]',
+      'touch-manipulation'
+    );
+    expect(wrongChoice).toHaveClass(
+      'soft-card',
+      'border',
+      'kangur-card-surface',
+      'kangur-card-padding-md',
+      'min-h-[4.25rem]',
+      'touch-manipulation'
+    );
 
     fireEvent.click(wrongChoice);
 

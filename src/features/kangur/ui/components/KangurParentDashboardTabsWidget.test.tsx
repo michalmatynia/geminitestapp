@@ -23,6 +23,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 import { KangurParentDashboardTabsWidget } from './KangurParentDashboardTabsWidget';
 
 describe('KangurParentDashboardTabsWidget', () => {
@@ -58,6 +62,7 @@ describe('KangurParentDashboardTabsWidget', () => {
     fireEvent(progressTab, mouseDown);
     fireEvent.click(progressTab);
 
+    expect(progressTab).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
     expect(mouseDown.defaultPrevented).toBe(true);
     expect(onBeforeTabChange).toHaveBeenCalledWith('progress');
     expect(runtimeState.value.setActiveTab).toHaveBeenCalledWith('progress');

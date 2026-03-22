@@ -5,6 +5,8 @@ import '@/app/(frontend)/kangur/kangur.css';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 
+import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
+
 import type {
   KangurStorefrontAppearanceMode,
   KangurStorefrontThemeSettingsSnapshot,
@@ -32,7 +34,7 @@ export default function FrontendPublicOwnerShellClient({
   kangurInitialThemeSettings,
 }: FrontendPublicOwnerShellProps): JSX.Element {
   const pathname = usePathname();
-  const normalizedPathname = pathname?.trim() || '/';
+  const normalizedPathname = stripSiteLocalePrefix(pathname?.trim() || '/');
   const isHomeRoute = normalizedPathname === '/';
   const isKangurAliasRoute =
     normalizedPathname === '/kangur' || normalizedPathname.startsWith('/kangur/');

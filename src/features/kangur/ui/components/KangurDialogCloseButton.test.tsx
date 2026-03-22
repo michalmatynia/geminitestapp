@@ -23,7 +23,8 @@ describe('KangurDialogCloseButton', () => {
     expect(screen.getByRole('button', { name: 'Zamknij okno' })).toHaveClass(
       'touch-manipulation',
       'select-none',
-      'min-h-10'
+      'min-h-11',
+      'px-4'
     );
   });
 });

@@ -557,7 +557,10 @@ export default function LogicalAnalogiesRelationGame({
                     key={token.id}
                     type='button'
                     className={cn(
-                      'inline-flex h-9 w-9 items-center justify-center rounded-full border bg-white/90 text-base transition',
+                      'inline-flex items-center justify-center rounded-full border bg-white/90 text-base transition',
+                      isCoarsePointer
+                        ? 'h-11 w-11 touch-manipulation active:scale-[0.97]'
+                        : 'h-9 w-9',
                       isActive
                         ? 'ring-2 ring-rose-400/80 shadow-[0_0_18px_rgba(251,113,133,0.35)]'
                         : 'border-rose-200/70',

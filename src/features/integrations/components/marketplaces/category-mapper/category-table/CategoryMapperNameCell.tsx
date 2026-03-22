@@ -21,21 +21,10 @@ type CategoryMapperExpandRuntimeValue = {
   onToggleExpand: () => void;
 };
 
-const CategoryMapperExpandRuntimeContext =
-  React.createContext<CategoryMapperExpandRuntimeValue | null>(null);
-
-function useCategoryMapperExpandRuntime(): CategoryMapperExpandRuntimeValue {
-  const runtime = React.useContext(CategoryMapperExpandRuntimeContext);
-  if (!runtime) {
-    throw new Error(
-      'useCategoryMapperExpandRuntime must be used within CategoryMapperExpandRuntimeContext.Provider'
-    );
-  }
-  return runtime;
-}
-
-function CategoryMapperExpandButton(): React.JSX.Element {
-  const { isExpanded, onToggleExpand } = useCategoryMapperExpandRuntime();
+function CategoryMapperExpandButton({
+  isExpanded,
+  onToggleExpand,
+}: CategoryMapperExpandRuntimeValue): React.JSX.Element {
   return (
     <Button
       variant='ghost'
@@ -58,11 +47,6 @@ export function CategoryMapperNameCell({
   isMapped,
   hasPendingChange,
 }: CategoryMapperNameCellProps): React.JSX.Element {
-  const expandRuntimeValue = React.useMemo(
-    () => ({ isExpanded, onToggleExpand }),
-    [isExpanded, onToggleExpand]
-  );
-
   return (
     <div
       className={cn(
@@ -72,9 +56,7 @@ export function CategoryMapperNameCell({
     >
       <div style={{ paddingLeft: `${depth * 20}px` }} className='flex items-center'>
         {canExpand ? (
-          <CategoryMapperExpandRuntimeContext.Provider value={expandRuntimeValue}>
-            <CategoryMapperExpandButton />
-          </CategoryMapperExpandRuntimeContext.Provider>
+          <CategoryMapperExpandButton isExpanded={isExpanded} onToggleExpand={onToggleExpand} />
         ) : (
           <span className='mr-2 w-6 inline-block' />
         )}

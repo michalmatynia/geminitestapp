@@ -96,11 +96,16 @@ describe('KangurTransitionLink', () => {
 
     expect(nextLinkPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        className: 'touch-manipulation select-none',
         href: '/kangur/lessons',
         scroll: false,
       })
     );
     expect(screen.getByRole('link', { name: 'Lekcje' })).toHaveAttribute('data-scroll', 'false');
+    expect(screen.getByRole('link', { name: 'Lekcje' })).toHaveClass(
+      'touch-manipulation',
+      'select-none'
+    );
   });
 
   it('preserves an explicit scroll override from the caller', () => {

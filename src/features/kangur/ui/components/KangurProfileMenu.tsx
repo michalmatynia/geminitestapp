@@ -3,6 +3,7 @@ import { User } from 'lucide-react';
 import { KANGUR_BASE_PATH, getKangurPageHref } from '@/features/kangur/config/routing';
 import { KangurNavAction } from '@/features/kangur/ui/components/KangurNavAction';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
 type KangurProfileMenuProps = {
   label?: string;
@@ -48,11 +49,17 @@ export function KangurProfileMenu({
   transitionSourceId,
 }: KangurProfileMenuProps): React.JSX.Element {
   const routeTransitionState = useOptionalKangurRouteTransitionState();
+  const isCoarsePointer = useKangurCoarsePointer();
   const resolvedHref =
     profile?.href ??
     getKangurPageHref('LearnerProfile', basePath ?? KANGUR_BASE_PATH);
   const navigationActive = isActive ?? profile?.isActive ?? false;
-  const buttonClassName = triggerClassName;
+  const buttonClassName = [
+    triggerClassName,
+    isCoarsePointer ? 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]' : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
   const transitionMs = transitionAcknowledgeMs;
   const transitionSource = transitionSourceId;
   const avatarSrc = avatar?.src?.trim() ?? '';

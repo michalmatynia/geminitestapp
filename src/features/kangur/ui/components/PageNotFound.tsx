@@ -21,6 +21,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { KANGUR_INLINE_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import {
   withKangurClientError,
@@ -37,6 +38,7 @@ type PageNotFoundAuthState = {
 
 export function PageNotFound(): React.JSX.Element {
   const translations = useTranslations('KangurPageNotFound');
+  const isCoarsePointer = useKangurCoarsePointer();
   const routeNavigator = useKangurRouteNavigator();
   const { requestedPath, basePath } = useKangurRouting();
 
@@ -153,6 +155,11 @@ export function PageNotFound(): React.JSX.Element {
 
           <div className='pt-6'>
             <KangurButton
+              className={
+                isCoarsePointer
+                  ? 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
+                  : undefined
+              }
               onClick={() => {
                 routeNavigator.push(getKangurHomeHref(basePath), {
                   acknowledgeMs: 110,

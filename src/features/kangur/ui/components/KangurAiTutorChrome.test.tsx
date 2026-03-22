@@ -15,8 +15,8 @@ describe('KangurAiTutorChromeTextButton', () => {
       'touch-manipulation',
       'select-none',
       'active:scale-[0.97]',
-      'max-sm:min-h-10',
-      'max-sm:px-3'
+      'max-sm:min-h-11',
+      'max-sm:px-4'
     );
   });
 });

@@ -455,10 +455,10 @@ export function useKangurAiTutorConversationViewState(
     [bridgeQuickAction, input.tutorContent]
   );
   const isSelectionExplainPendingMode = Boolean(
-    input.selectionResponsePending && input.isOpen && !input.isAskModalMode
+    input.selectionResponsePending && !input.isAskModalMode
   );
   const isSectionExplainPendingMode = Boolean(
-    input.sectionResponsePending && input.isOpen && !input.isAskModalMode
+    input.sectionResponsePending && !input.isAskModalMode
   );
   const showSelectionExplainCompleteState = Boolean(
     input.activeSelectedText &&

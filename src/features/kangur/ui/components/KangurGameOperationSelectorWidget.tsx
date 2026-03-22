@@ -58,6 +58,7 @@ import {
 } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressTranslate } from '@/features/kangur/ui/services/progress-i18n';
 import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type {
   KangurDifficulty,
   KangurGameScreen,
@@ -1365,6 +1366,7 @@ const getOperationSelectorRecommendation = (
 
 export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
   const locale = useLocale();
+  const isCoarsePointer = useKangurCoarsePointer();
   const normalizedLocale = normalizeSiteLocale(locale);
   const fallbackCopy = useMemo(
     () => getOperationSelectorFallbackCopy(normalizedLocale),
@@ -1542,6 +1544,9 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
       : null;
   const shouldRender = screen === 'operation' || screen === 'training';
   const showMathSections = subject === 'maths';
+  const compactActionClassName = isCoarsePointer
+    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+    : 'w-full shrink-0 sm:w-auto';
   const gameIntroDescription =
     subject === 'maths'
       ? translateRecommendationWithFallback(
@@ -1699,7 +1704,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
               </p>
             </div>
             <KangurButton
-              className='w-full shrink-0 sm:w-auto'
+              className={compactActionClassName}
               data-testid='kangur-operation-recommendation-action'
               size='sm'
               type='button'

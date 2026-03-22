@@ -212,6 +212,12 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
       '[color:var(--kangur-page-text)]'
     );
     expect(screen.getByTestId('parent-create-learner-modal')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Pokaż hasło' })).toHaveClass(
+      'h-11',
+      'w-11',
+      'touch-manipulation',
+      'select-none'
+    );
 
     expect(screen.getByText('Zapisano dane ucznia.')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'

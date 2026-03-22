@@ -46,7 +46,7 @@ export const kangurButtonVariants = cva(
           'kangur-button-shell border-transparent bg-transparent text-[var(--kangur-button-surface-text,#6e7ee7)] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:text-[var(--kangur-button-surface-hover-text,#4f63d8)] focus-visible:ring-indigo-300/70',
       },
       size: {
-        sm: 'kangur-button-size-sm',
+        sm: 'kangur-button-size-sm [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-[3rem]',
         md: 'kangur-button-size-md',
         lg: 'kangur-button-size-lg',
         xl: 'kangur-button-size-xl',

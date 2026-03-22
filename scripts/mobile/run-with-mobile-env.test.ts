@@ -26,7 +26,7 @@ afterEach(() => {
 
 describe('run-with-mobile-env cli', () => {
   it('fails with a clear error when no command is provided', () => {
-    const result = spawnSync('node', ['--import', 'tsx', RUNNER_PATH], {
+    const result = spawnSync(process.execPath, ['--import', 'tsx', RUNNER_PATH], {
       cwd: REPO_ROOT,
       encoding: 'utf8',
     });
@@ -47,12 +47,12 @@ describe('run-with-mobile-env cli', () => {
     delete env.EXPO_PUBLIC_KANGUR_API_URL;
 
     const result = spawnSync(
-      'node',
+      process.execPath,
       [
         '--import',
         'tsx',
         RUNNER_PATH,
-        'node',
+        process.execPath,
         '-e',
         'console.log(process.env.EXPO_PUBLIC_KANGUR_API_URL ?? "unset")',
       ],
@@ -69,7 +69,7 @@ describe('run-with-mobile-env cli', () => {
 
   it('applies the default Android SDK root and PATH before executing the child command', () => {
     const tempDir = createTempDir();
-    const sdkRoot = join(tempDir, 'android-sdk');
+    const sdkRoot = join(tempDir, 'Library/Android/sdk');
     const cmdlineBin = join(sdkRoot, 'cmdline-tools/latest/bin');
     const emulatorDir = join(sdkRoot, 'emulator');
     const platformToolsDir = join(sdkRoot, 'platform-tools');
@@ -80,12 +80,12 @@ describe('run-with-mobile-env cli', () => {
     }
 
     const result = spawnSync(
-      'node',
+      process.execPath,
       [
         '--import',
         'tsx',
         RUNNER_PATH,
-        'node',
+        process.execPath,
         '-e',
         'console.log(JSON.stringify({ sdkRoot: process.env.ANDROID_SDK_ROOT, androidHome: process.env.ANDROID_HOME, path: process.env.PATH?.split(\":\").slice(0,3) }))',
       ],

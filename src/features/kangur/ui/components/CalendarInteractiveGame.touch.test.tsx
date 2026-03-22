@@ -90,4 +90,23 @@ describe('CalendarInteractiveGame touch interactions', () => {
 
     expect(winterButton).toBeDisabled();
   });
+
+  it('uses touch-sized month navigation buttons in calendar rounds', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <CalendarInteractiveGame onFinish={vi.fn()} section='data' />
+      </NextIntlClientProvider>
+    );
+
+    const previousMonthButton = screen.getByLabelText('Previous month');
+    const nextMonthButton = screen.getByLabelText('Next month');
+    expect(previousMonthButton).toHaveClass('h-11');
+    expect(previousMonthButton).toHaveClass('w-11');
+    expect(previousMonthButton).toHaveClass('touch-manipulation');
+    expect(nextMonthButton).toHaveClass('h-11');
+    expect(nextMonthButton).toHaveClass('w-11');
+    expect(nextMonthButton).toHaveClass('touch-manipulation');
+  });
 });

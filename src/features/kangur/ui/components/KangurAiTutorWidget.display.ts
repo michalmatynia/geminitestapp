@@ -348,15 +348,19 @@ export function useKangurAiTutorGuidedDisplayState(input: {
   const selectionGuidanceCalloutText = isSelectionGuidedTutorTargetActive
     ? guidedTutorTarget.selectedText
     : (selectionResponsePending?.selectedText ?? selectionResponseComplete?.selectedText ?? null);
+
+  const isSelectionGuidedTutorMode =
+    isSelectionGuidedTutorTargetActive ||
+    (!isTutorHidden && (selectionResponsePending !== null || selectionResponseComplete !== null));
+
   const showSelectionGuidanceCallout =
     selectionGuidanceCalloutText !== null &&
-    selectionGuidanceCalloutVisibleText === selectionGuidanceCalloutText &&
-    (
-      isSelectionGuidedTutorTargetActive ||
-      (!isTutorHidden && isOpen && !isAskModalState && (selectionResponsePending !== null || selectionResponseComplete !== null))
-    );
-  const isSelectionGuidedTutorMode =
-    isSelectionGuidedTutorTargetActive && showSelectionGuidanceCallout;
+    (isSelectionGuidedTutorTargetActive ||
+      (selectionGuidanceCalloutVisibleText === selectionGuidanceCalloutText &&
+        !isTutorHidden &&
+        !isAskModalState &&
+        (selectionResponsePending !== null || selectionResponseComplete !== null)));
+
   const showSectionGuidanceCallout =
     isSectionGuidedTutorMode ||
     (!isTutorHidden && isOpen && !isAskModalState && sectionResponsePending !== null);

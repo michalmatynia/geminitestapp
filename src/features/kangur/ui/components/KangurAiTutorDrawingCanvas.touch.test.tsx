@@ -56,8 +56,18 @@ describe('KangurAiTutorDrawingCanvas touch interactions', () => {
   it('enlarges touch controls and shows active board feedback on coarse pointers', () => {
     render(<KangurAiTutorDrawingCanvas onCancel={vi.fn()} onComplete={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'Kolor #2563eb' })).toHaveClass('h-8', 'w-8');
-    expect(screen.getByRole('button', { name: 'Pióro' })).toHaveClass('h-9', 'w-9');
+    expect(screen.getByRole('button', { name: 'Kolor #2563eb' })).toHaveClass('h-11', 'w-11');
+    expect(screen.getByRole('button', { name: 'Pióro' })).toHaveClass('h-11', 'w-11');
+    expect(screen.getByRole('button', { name: 'Anuluj' })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
+    expect(screen.getByRole('button', { name: 'Gotowe' })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
 
     const board = screen.getByTestId('kangur-ai-tutor-drawing-board');
     const canvas = screen.getByLabelText('Plansza do rysowania');

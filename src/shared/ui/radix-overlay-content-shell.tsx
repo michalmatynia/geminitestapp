@@ -48,8 +48,15 @@ export function RadixOverlayContentShell<
 }: RadixOverlayContentShellProps<OverlayProps, ContentProps>): React.JSX.Element {
   const { className: overlayClassName, style: overlayStyle, ...overlayRest } =
     (overlayProps ?? {}) as SurfaceProps<OverlayProps>;
-  const { className: contentClassName, style: contentStyle, ...contentRest } =
-    (contentProps ?? {}) as SurfaceProps<ContentProps>;
+  const {
+    className: contentClassName,
+    style: contentStyle,
+    children: contentPropChildren,
+    ...contentRest
+  } = ((contentProps ?? {}) as SurfaceProps<ContentProps> & {
+    children?: React.ReactNode;
+  });
+  const resolvedChildren = children ?? contentPropChildren;
 
   return (
     <Portal>
@@ -67,7 +74,7 @@ export function RadixOverlayContentShell<
           className: cn(contentBaseClassName, contentClassName),
           style: contentStyle,
         },
-        children
+        resolvedChildren
       )}
     </Portal>
   );

@@ -55,9 +55,9 @@ const ACTOR_TYPE_LABELS = {
 } as const;
 
 const RESTORING_SESSION_LABEL = {
-  de: 'wiederherstellung der schulersitzung',
-  en: 'restoring learner session',
-  pl: 'przywracanie sesji ucznia',
+  de: 'wiederherstellung der anmeldung',
+  en: 'restoring sign-in',
+  pl: 'przywracanie logowania',
 } as const;
 
 export const getKangurHomeAuthBoundaryViewModel = ({

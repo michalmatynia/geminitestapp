@@ -18,6 +18,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
   useKangurTutorAnchor: useKangurTutorAnchorMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 import { KangurTestQuestionRenderer } from '@/features/kangur/ui/components/KangurTestQuestionRenderer';
 import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
 
@@ -69,13 +73,15 @@ describe('KangurTestQuestionRenderer', () => {
       'soft-card',
       'kangur-card-surface',
       'kangur-card-padding-md',
-      'cursor-pointer'
+      'cursor-pointer',
+      'min-h-[4.25rem]'
     );
     expect(wrongChoiceButton).toHaveClass(
       'soft-card',
       'kangur-card-surface',
       'kangur-card-padding-md',
-      'cursor-pointer'
+      'cursor-pointer',
+      'min-h-[4.25rem]'
     );
 
     fireEvent.click(correctChoiceButton);

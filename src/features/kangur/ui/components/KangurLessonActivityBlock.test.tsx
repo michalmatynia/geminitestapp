@@ -5,6 +5,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 const { createMockGame } = vi.hoisted(() => ({
   createMockGame: (label: string) =>
     function MockGame({ onFinish }: { onFinish: () => void }): React.JSX.Element {
@@ -78,7 +82,10 @@ describe('KangurLessonActivityBlock', () => {
     expect(screen.getByText(/activity completed/i).parentElement).toHaveClass('soft-card', 'border');
     expect(screen.getByRole('button', { name: /restart activity/i })).toHaveClass(
       'kangur-cta-pill',
-      'surface-cta'
+      'surface-cta',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
 
     fireEvent.click(screen.getByRole('button', { name: /restart activity/i }));

@@ -4,6 +4,7 @@ import {
   buildAccessibilityRouteCrawlHeartbeatLine,
   buildAccessibilityRouteCrawlTitle,
   normalizeAccessibilityRouteEntries,
+  resolveAccessibilityRouteCrawlChunkSize,
   resolveAccessibilityRouteCrawlAgentId,
   summarizeAccessibilityRouteCrawlReport,
 } from './lib/accessibility-route-crawl.mjs';
@@ -107,6 +108,52 @@ describe('resolveAccessibilityRouteCrawlAgentId', () => {
         defaultAgentId: 'michalmatynia',
       })
     ).toBe('route-crawl-final');
+  });
+});
+
+describe('resolveAccessibilityRouteCrawlChunkSize', () => {
+  it('defaults large non-strict crawls to five-route chunks', () => {
+    expect(
+      resolveAccessibilityRouteCrawlChunkSize({
+        env: {},
+        strictMode: false,
+        totalRoutes: 32,
+      })
+    ).toBe(5);
+  });
+
+  it('keeps the existing strict-mode chunk size for moderate runs', () => {
+    expect(
+      resolveAccessibilityRouteCrawlChunkSize({
+        env: {},
+        strictMode: true,
+        totalRoutes: 8,
+      })
+    ).toBe(6);
+  });
+
+  it('honors an explicit chunk-size override', () => {
+    expect(
+      resolveAccessibilityRouteCrawlChunkSize({
+        env: {
+          PLAYWRIGHT_ROUTE_CRAWL_CHUNK_SIZE: '3',
+        },
+        strictMode: false,
+        totalRoutes: 32,
+      })
+    ).toBe(3);
+  });
+
+  it('derives chunk size from the requested chunk count override', () => {
+    expect(
+      resolveAccessibilityRouteCrawlChunkSize({
+        env: {
+          PLAYWRIGHT_ROUTE_CRAWL_CHUNKS: '4',
+        },
+        strictMode: false,
+        totalRoutes: 17,
+      })
+    ).toBe(5);
   });
 });
 

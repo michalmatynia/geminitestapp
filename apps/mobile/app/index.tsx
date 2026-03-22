@@ -409,7 +409,7 @@ function FocusCard({
           href={createKangurResultsHref({ operation })}
           hint={copy({
             de: `Öffnet den Ergebnisverlauf für den Modus ${operationLabel}.`,
-            en: `Opens score history for the ${operationLabel} mode.`,
+            en: `Opens result history for the ${operationLabel} mode.`,
             pl: `Otwiera historię wyników dla trybu ${operationLabel}.`,
           })}
           label={`${copy({
@@ -932,9 +932,9 @@ export default function HomeScreen(): React.JSX.Element {
           <Text style={{ color: '#475569', fontSize: 16, lineHeight: 24 }}>
             {isLoadingAuth && session.status !== 'authenticated'
               ? copy({
-                  de: 'Der Startbildschirm stellt gerade die Schulersitzung, Ergebnisse und Trainingshinweise wieder her.',
-                  en: 'The home screen is restoring the learner session, recent results, and training cues.',
-                  pl: 'Ekran główny przywraca teraz sesję ucznia, ostatnie wyniki i wskazówki treningowe.',
+                  de: 'Wir stellen gerade die Anmeldung, letzte Ergebnisse und Trainingshinweise wieder her.',
+                  en: 'We are restoring sign-in, recent results, and training cues.',
+                  pl: 'Przywracamy teraz logowanie, ostatnie wyniki i wskazówki treningowe.',
                 })
               : session.status === 'authenticated' && homeHeroLearnerName
                 ? copy({
@@ -943,9 +943,9 @@ export default function HomeScreen(): React.JSX.Element {
                     pl: `Witaj ponownie, ${homeHeroLearnerName}. Zacznij od fokusu treningowego, wróć do ostatniej lekcji albo od razu otwórz plan dnia.`,
                   })
                 : copy({
-                    de: 'Von hier aus kannst du Lektionen, Training, Ergebnisse und Duelle durchsuchen. Nach der Anmeldung synchronisiert der Startbildschirm auch Verlauf und Tagesplan.',
-                    en: 'From here you can browse lessons, practice, results, and duels. After sign-in, the home screen also syncs history and the daily plan.',
-                    pl: 'Stąd możesz przeglądać lekcje, trening, wyniki i pojedynki. Po zalogowaniu ekran główny synchronizuje także historię oraz plan dnia.',
+                    de: 'Von hier aus kannst du Lektionen, Training, Ergebnisse und Duelle durchsuchen. Nach der Anmeldung siehst du hier auch Ergebnisse und den Tagesplan.',
+                    en: 'From here you can browse lessons, practice, results, and duels. After sign-in, you will also see results and the daily plan here.',
+                    pl: 'Stąd możesz przeglądać lekcje, trening, wyniki i pojedynki. Po zalogowaniu zobaczysz tu też wyniki oraz plan dnia.',
                   })}
           </Text>
 
@@ -1050,9 +1050,9 @@ export default function HomeScreen(): React.JSX.Element {
         {__DEV__ && homeDebugProof ? (
           <SectionCard
             title={copy({
-              de: 'Entwicklungsansicht der Startseiten-Synchronisierung',
-              en: 'Developer home sync preview',
-              pl: 'Deweloperski podgląd synchronizacji strony głównej',
+              de: 'Entwickler-Prüfung für Startdaten',
+              en: 'Developer home checks',
+              pl: 'Deweloperskie sprawdzenie danych startu',
             })}
           >
             <Text style={{ color: '#0f172a', fontWeight: '700' }}>
@@ -1158,9 +1158,9 @@ export default function HomeScreen(): React.JSX.Element {
               <LabeledTextField
                 autoCapitalize='none'
                 hint={copy({
-                  de: 'Gib den Schuler-Login für die mobile Sitzung ein.',
-                  en: 'Enter the learner login for the mobile session.',
-                  pl: 'Wpisz login ucznia do sesji mobilnej.',
+                  de: 'Gib den Schüler-Login ein.',
+                  en: 'Enter the learner login.',
+                  pl: 'Wpisz login ucznia.',
                 })}
                 label={copy({
                   de: 'Schuler-Login',
@@ -1179,9 +1179,9 @@ export default function HomeScreen(): React.JSX.Element {
               <LabeledTextField
                 autoCapitalize='none'
                 hint={copy({
-                  de: 'Gib das Passwort des Schulers für die mobile Sitzung ein.',
-                  en: 'Enter the learner password for the mobile session.',
-                  pl: 'Wpisz hasło ucznia do sesji mobilnej.',
+                  de: 'Gib das Schülerpasswort ein.',
+                  en: 'Enter the learner password.',
+                  pl: 'Wpisz hasło ucznia.',
                 })}
                 label={copy({
                   de: 'Passwort',
@@ -1200,14 +1200,14 @@ export default function HomeScreen(): React.JSX.Element {
               />
               <PrimaryButton
                 hint={copy({
-                  de: 'Meldet die Schulersitzung mit den eingegebenen Daten an.',
-                  en: 'Signs in the learner session with the entered credentials.',
-                  pl: 'Loguje do sesji ucznia przy użyciu wpisanych danych.',
+                  de: 'Meldet mit den eingegebenen Daten an.',
+                  en: 'Signs in with the entered credentials.',
+                  pl: 'Loguje przy użyciu wpisanych danych.',
                 })}
                 label={copy({
-                  de: 'Schulersitzung anmelden',
-                  en: 'Sign in learner session',
-                  pl: 'Zaloguj sesję ucznia',
+                  de: 'Anmelden',
+                  en: 'Sign in',
+                  pl: 'Zaloguj',
                 })}
                 onPress={async () => {
                   await signInWithLearnerCredentials(loginName, password);
@@ -1217,9 +1217,9 @@ export default function HomeScreen(): React.JSX.Element {
           ) : session.status === 'authenticated' ? (
             <PrimaryButton
               hint={copy({
-                de: 'Meldet die aktuelle Schulersitzung ab.',
-                en: 'Signs out the current learner session.',
-                pl: 'Wylogowuje aktualną sesję ucznia.',
+                de: 'Meldet das aktuelle Konto ab.',
+                en: 'Signs out the current account.',
+                pl: 'Wylogowuje bieżące konto.',
               })}
               label={copy({
                 de: 'Abmelden',
@@ -1256,9 +1256,9 @@ export default function HomeScreen(): React.JSX.Element {
             <OutlineLink
               href={LESSONS_ROUTE}
               hint={copy({
-                de: 'Öffnet den Lektionen-Bildschirm.',
-                en: 'Opens the lessons screen.',
-                pl: 'Otwiera ekran lekcji.',
+                de: 'Öffnet die Lektionen.',
+                en: 'Opens lessons.',
+                pl: 'Otwiera lekcje.',
               })}
               label={copy({
                 de: 'Lektionen',
@@ -1269,9 +1269,9 @@ export default function HomeScreen(): React.JSX.Element {
             <OutlineLink
               href={PRACTICE_ROUTE}
               hint={copy({
-                de: 'Öffnet den Trainings-Bildschirm.',
-                en: 'Opens the practice screen.',
-                pl: 'Otwiera ekran treningu.',
+                de: 'Öffnet das Training.',
+                en: 'Opens practice.',
+                pl: 'Otwiera trening.',
               })}
               label={copy({
                 de: 'Training',
@@ -1295,9 +1295,9 @@ export default function HomeScreen(): React.JSX.Element {
             <OutlineLink
               href={RESULTS_ROUTE}
               hint={copy({
-                de: 'Öffnet den Ergebnis- und Sitzungsverlauf.',
-                en: 'Opens the results and session history screen.',
-                pl: 'Otwiera ekran wyników i historii sesji.',
+                de: 'Öffnet Ergebnisse und den vollständigen Verlauf.',
+                en: 'Opens results and full history.',
+                pl: 'Otwiera wyniki i pełną historię.',
               })}
               label={copy({
                 de: 'Ergebnisse',
@@ -1878,9 +1878,9 @@ export default function HomeScreen(): React.JSX.Element {
               </Text>
               <PrimaryButton
                 hint={copy({
-                  de: 'Aktualisiert die öffentlichen Duelle auf der Startseite.',
-                  en: 'Refreshes the public duels on the home screen.',
-                  pl: 'Odświeża publiczne pojedynki na stronie głównej.',
+                  de: 'Aktualisiert die öffentlichen Duelle aus der Lobby.',
+                  en: 'Refreshes the public duels from the lobby.',
+                  pl: 'Odświeża publiczne pojedynki z lobby.',
                 })}
                 label={copy({
                   de: 'Live-Duelle aktualisieren',
@@ -1929,9 +1929,9 @@ export default function HomeScreen(): React.JSX.Element {
                     : DUELS_ROUTE;
                 const primaryHint = isLiveEntry
                   ? copy({
-                      de: `Öffnet die Live-Zuschauansicht für ${entry.host.displayName}.`,
-                      en: `Opens the live spectator view for ${entry.host.displayName}.`,
-                      pl: `Otwiera podgląd na żywo dla meczu ${entry.host.displayName}.`,
+                      de: `Öffnet das Live-Duell von ${entry.host.displayName}.`,
+                      en: `Opens the live duel hosted by ${entry.host.displayName}.`,
+                      pl: `Otwiera pojedynek na żywo gospodarza ${entry.host.displayName}.`,
                     })
                   : session.status === 'authenticated'
                     ? copy({
@@ -2035,21 +2035,21 @@ export default function HomeScreen(): React.JSX.Element {
         >
           <Text style={{ color: '#475569', lineHeight: 20 }}>
             {copy({
-              de: `Der schnelle Rückkampf nutzt die mobilen Standardwerte: ${formatKangurMobileScoreOperation(
+              de: `Der schnelle Rückkampf startet mit den Standardwerten: ${formatKangurMobileScoreOperation(
                 MOBILE_DUEL_DEFAULT_OPERATION,
                 locale,
               )}, ${getHomeDuelDifficultyLabel(
                 MOBILE_DUEL_DEFAULT_DIFFICULTY,
                 locale,
               )}, ${MOBILE_DUEL_DEFAULT_QUESTION_COUNT} Fragen mit ${MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC}s pro Frage.`,
-              en: `Quick rematch uses the mobile defaults: ${formatKangurMobileScoreOperation(
+              en: `Quick rematch starts with the default setup: ${formatKangurMobileScoreOperation(
                 MOBILE_DUEL_DEFAULT_OPERATION,
                 locale,
               )}, ${getHomeDuelDifficultyLabel(
                 MOBILE_DUEL_DEFAULT_DIFFICULTY,
                 locale,
               )}, ${MOBILE_DUEL_DEFAULT_QUESTION_COUNT} questions with ${MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC}s per question.`,
-              pl: `Szybki rewanż używa mobilnych ustawień domyślnych: ${formatKangurMobileScoreOperation(
+              pl: `Szybki rewanż startuje z domyślnym ustawieniem: ${formatKangurMobileScoreOperation(
                 MOBILE_DUEL_DEFAULT_OPERATION,
                 locale,
               )}, poziom ${getHomeDuelDifficultyLabel(
@@ -2232,9 +2232,9 @@ export default function HomeScreen(): React.JSX.Element {
               </Text>
               <PrimaryButton
                 hint={copy({
-                  de: 'Aktualisiert die Duell-Rangliste auf der Startseite.',
-                  en: 'Refreshes the duel leaderboard on the home screen.',
-                  pl: 'Odświeża ranking pojedynków na stronie głównej.',
+                  de: 'Aktualisiert die Duell-Rangliste.',
+                  en: 'Refreshes the duel leaderboard.',
+                  pl: 'Odświeża ranking pojedynków.',
                 })}
                 label={copy({
                   de: 'Ranking aktualisieren',
@@ -2396,9 +2396,9 @@ export default function HomeScreen(): React.JSX.Element {
           {trainingFocus.isRestoringAuth || trainingFocus.isLoading ? (
             <Text style={{ color: '#475569', lineHeight: 20 }}>
               {copy({
-                de: 'Die Schulersitzung und der ergebnisbasierte Trainingsfokus werden wiederhergestellt.',
-                en: 'Restoring the learner session and score-based training focus.',
-                pl: 'Przywracamy sesję ucznia i fokus treningowy oparty na wynikach.',
+                de: 'Die Anmeldung und der ergebnisbasierte Trainingsfokus werden wiederhergestellt.',
+                en: 'Restoring sign-in and score-based training focus.',
+                pl: 'Przywracamy logowanie i fokus treningowy oparty na wynikach.',
               })}
             </Text>
           ) : trainingFocus.error ? (
@@ -2463,9 +2463,9 @@ export default function HomeScreen(): React.JSX.Element {
               !trainingFocus.strongestOperation ? (
                 <Text style={{ color: '#475569', lineHeight: 20 }}>
                   {copy({
-                    de: 'Es gibt noch keinen synchronisierten Ergebnisverlauf. Starte mit einem Training oder öffne direkt eine Lektion.',
-                    en: 'There is no synchronized score history yet. Start with practice or open a lesson directly.',
-                    pl: 'Brak jeszcze zsynchronizowanej historii wyników. Zacznij od treningu albo otwórz lekcję bezpośrednio.',
+                    de: 'Es gibt noch keine Ergebnisse für diesen Fokus. Starte mit einem Training oder öffne direkt eine Lektion.',
+                    en: 'There are no results for this focus yet. Start with practice or open a lesson directly.',
+                    pl: 'Nie ma jeszcze wyników dla tego fokusu. Zacznij od treningu albo otwórz lekcję bezpośrednio.',
                   })}
                 </Text>
               ) : null}
@@ -2475,16 +2475,16 @@ export default function HomeScreen(): React.JSX.Element {
 
         <SectionCard
           title={copy({
-            de: 'Lektionsplan vom Startbildschirm',
+            de: 'Lektionsplan zum Start',
             en: 'Lesson plan from home',
             pl: 'Plan lekcji ze startu',
           })}
         >
           <Text style={{ color: '#475569', lineHeight: 20 }}>
             {copy({
-              de: 'Nutze den Startbildschirm, um sofort zu sehen, was wiederholt werden sollte und welche Lektion nur kurz aufgefrischt werden muss.',
-              en: 'Use home to see right away what needs review and which lesson only needs a quick refresh.',
-              pl: 'Użyj startu, aby od razu zobaczyć, co wymaga powtórki, a którą lekcję trzeba tylko krótko odświeżyć.',
+              de: 'Sieh sofort, was wiederholt werden sollte und welche Lektion nur kurz aufgefrischt werden muss.',
+              en: 'See right away what needs review and which lesson only needs a quick refresh.',
+              pl: 'Od razu zobacz, co wymaga powtórki, a którą lekcję trzeba tylko krótko odświeżyć.',
             })}
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -2566,9 +2566,9 @@ export default function HomeScreen(): React.JSX.Element {
         >
           <Text style={{ color: '#475569', lineHeight: 20 }}>
             {copy({
-              de: 'Die letzten lokalen Freischaltungen und der direkte Weg zum vollständigen Abzeichenüberblick bleiben hier griffbereit.',
-              en: 'The latest local unlocks and the direct path to the full badge overview stay close here.',
-              pl: 'Ostatnie lokalne odblokowania i bezpośrednie przejście do pełnego przeglądu odznak są tutaj zawsze pod ręką.',
+              de: 'Die letzten Freischaltungen und der direkte Weg zum vollständigen Abzeichenüberblick bleiben hier griffbereit.',
+              en: 'The latest unlocks and the direct path to the full badge overview stay close here.',
+              pl: 'Ostatnie odblokowania i bezpośrednie przejście do pełnego przeglądu odznak są tutaj zawsze pod ręką.',
             })}
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -2677,24 +2677,24 @@ export default function HomeScreen(): React.JSX.Element {
 
         <SectionCard
           title={copy({
-            de: 'Plan vom Startbildschirm',
+            de: 'Plan zum Start',
             en: 'Plan from home',
             pl: 'Plan z ekranu głównego',
           })}
         >
           <Text style={{ color: '#475569', lineHeight: 20 }}>
             {copy({
-              de: 'Verwandle lokalen Fortschritt und gespeicherte Lektionen direkt vom Startbildschirm aus in die nächsten Schritte.',
-              en: 'Turn local progress and saved lessons into the next steps directly from the home screen.',
-              pl: 'Zamień lokalny postęp i zapisane lekcje bezpośrednio na kolejne kroki z ekranu głównego.',
+              de: 'Verwandle Fortschritt und gespeicherte Lektionen direkt in die nächsten Schritte.',
+              en: 'Turn progress and saved lessons directly into the next steps.',
+              pl: 'Zamień postęp i zapisane lekcje bezpośrednio w kolejne kroki.',
             })}
           </Text>
           {homeAssignments.assignmentItems.length === 0 ? (
             <Text style={{ color: '#475569', lineHeight: 20 }}>
               {copy({
-                de: 'Es gibt noch keine lokalen Aufgaben. Öffne eine Lektion oder schließe ein Training ab, um sie zu erzeugen.',
-                en: 'There are no local tasks yet. Open a lesson or finish practice to generate them.',
-                pl: 'Nie ma jeszcze lokalnych zadań. Otwórz lekcję albo ukończ trening, aby je wygenerować.',
+                de: 'Es gibt noch keine Aufgaben. Öffne eine Lektion oder schließe ein Training ab, um sie zu erzeugen.',
+                en: 'There are no tasks yet. Open a lesson or finish practice to generate them.',
+                pl: 'Nie ma jeszcze zadań. Otwórz lekcję albo ukończ trening, aby je wygenerować.',
               })}
             </Text>
           ) : (
@@ -2731,9 +2731,9 @@ export default function HomeScreen(): React.JSX.Element {
         >
           <Text style={{ color: '#475569', lineHeight: 20 }}>
             {copy({
-              de: 'Die letzten synchronisierten Sitzungen bleiben hier griffbereit, damit du vom Startbildschirm direkt wieder ins Training oder in den vollständigen Verlauf springen kannst.',
-              en: 'The latest synchronized sessions stay close here so you can jump from the home screen straight back into practice or the full history.',
-              pl: 'Ostatnie zsynchronizowane sesje są tutaj pod ręką, aby można było z ekranu głównego od razu wrócić do treningu albo pełnej historii.',
+              de: 'Die letzten Ergebnisse bleiben hier griffbereit, damit du direkt wieder ins Training oder in den vollständigen Verlauf springen kannst.',
+              en: 'The latest results stay close here so you can jump straight back into practice or the full history.',
+              pl: 'Ostatnie wyniki są tutaj pod ręką, aby od razu wrócić do treningu albo pełnej historii.',
             })}
           </Text>
           {recentResults.isRestoringAuth || recentResults.isLoading ? (
@@ -2751,9 +2751,9 @@ export default function HomeScreen(): React.JSX.Element {
           ) : recentResults.results.length === 0 ? (
             <Text style={{ color: '#475569', lineHeight: 20 }}>
               {copy({
-                de: 'Es gibt noch keine synchronisierten Ergebnisse.',
-                en: 'There are no synchronized results yet.',
-                pl: 'Brak jeszcze zsynchronizowanych wyników.',
+                de: 'Es gibt hier noch keine Ergebnisse.',
+                en: 'There are no results here yet.',
+                pl: 'Nie ma tu jeszcze wyników.',
               })}
             </Text>
           ) : (
@@ -2798,7 +2798,7 @@ export default function HomeScreen(): React.JSX.Element {
                       href={createKangurResultsHref({ operation: result.operation })}
                       hint={copy({
                         de: `Öffnet den Ergebnisverlauf für den Modus ${formatKangurMobileScoreOperation(result.operation, locale)}.`,
-                        en: `Opens score history for the ${formatKangurMobileScoreOperation(result.operation, locale)} mode.`,
+                        en: `Opens result history for the ${formatKangurMobileScoreOperation(result.operation, locale)} mode.`,
                         pl: `Otwiera historię wyników dla trybu ${formatKangurMobileScoreOperation(result.operation, locale)}.`,
                       })}
                       label={`${copy({

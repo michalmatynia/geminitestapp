@@ -144,9 +144,33 @@ describe('KangurResultsScreen', () => {
 
     expect(screen.getByText('W wynikach')).toBeTruthy();
     expect(screen.getByText('Centrum wyników')).toBeTruthy();
-    expect(
-      screen.getByText('Przywracamy sesję ucznia i historię wyników.'),
-    ).toBeTruthy();
+    expect(screen.getByText('Przywracamy logowanie i wyniki.')).toBeTruthy();
+  });
+
+  it('shows signed-out results guidance when the learner session is unavailable', () => {
+    useKangurMobileResultsMock.mockReturnValue({
+      availableOperations: [],
+      error: null,
+      isEnabled: false,
+      isLoading: false,
+      isRestoringAuth: false,
+      operationPerformance: [],
+      refresh: vi.fn(),
+      scores: [],
+      summary: {
+        arithmeticSessions: 0,
+        averageAccuracyPercent: 0,
+        bestAccuracyPercent: 0,
+        logicSessions: 0,
+        timeSessions: 0,
+        totalSessions: 0,
+      },
+    });
+
+    render(<KangurResultsScreen />);
+
+    expect(screen.getByText('Zaloguj ucznia, aby zobaczyć wyniki.')).toBeTruthy();
+    expect(screen.getByText('Przejdź do logowania')).toBeTruthy();
   });
 
   it('shows the duel loading state after results are available', () => {
@@ -385,12 +409,18 @@ describe('KangurResultsScreen', () => {
     render(<KangurResultsScreen />);
 
     expect(screen.getByText('Sesje')).toBeTruthy();
+    expect(screen.getByText('Ta sekcja obejmuje 40 ostatnich podejść.')).toBeTruthy();
     expect(screen.getAllByText('Arytmetyka').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Czas').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Wnioski po trybach')).toBeTruthy();
     expect(screen.getAllByText('Zegar').length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText('Dodawanie').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Pojedynki')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Sprawdź aktualny stan pojedynków, zobacz ostatnich rywali i wejdź w rewanż bez wychodzenia z wyników.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('TWÓJ WYNIK W POJEDYNKACH')).toBeTruthy();
     expect(screen.getByText('#2 Ada Learner')).toBeTruthy();
     expect(screen.getByText('Leo Mentor')).toBeTruthy();
@@ -435,7 +465,7 @@ describe('KangurResultsScreen', () => {
     expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
     expect(screen.getByText('Pełna lista')).toBeTruthy();
     expect(screen.getByText('Trening czasu')).toBeTruthy();
-    expect(screen.queryByText('Przywracamy sesję ucznia i historię wyników.')).toBeNull();
+    expect(screen.queryByText('Przywracamy logowanie i wyniki.')).toBeNull();
 
     fireEvent.click(screen.getByText('Szybki rewanż'));
 

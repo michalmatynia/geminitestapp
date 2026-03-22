@@ -55,12 +55,12 @@ describe('buildKangurHomeDebugProofViewModel', () => {
     expect(model).toEqual({
       checks: [
         {
-          detail: '8/8 w ostatnich zsynchronizowanych wynikach.',
+          detail: '8/8 w ostatnich wynikach.',
           label: 'Centrum wyników',
           status: 'ready',
         },
         {
-          detail: 'Najmocniejszy tryb na stronie głównej: 100% w 4 sesjach.',
+          detail: 'Najmocniejszy tryb tutaj: 100% w 4 sesjach.',
           label: 'Fokus treningowy',
           status: 'ready',
         },
@@ -83,8 +83,8 @@ describe('buildKangurHomeDebugProofViewModel', () => {
     ).toEqual({
       checks: [
         {
-          detail: 'Przywracamy sesję ucznia i zsynchronizowane dane wyników dla ekranu głównego.',
-          label: 'Centrum wyników strony głównej',
+          detail: 'Przywracamy sesję ucznia i dane wyników dla startu.',
+          label: 'Wyniki na starcie',
           status: 'info',
         },
       ],

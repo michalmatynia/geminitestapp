@@ -43,9 +43,9 @@ const toLeaderboardErrorMessage = (
   const normalized = message.toLowerCase();
   if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
     return copy({
-      de: 'Die Verbindung zur Kangur-API konnte nicht hergestellt werden.',
-      en: 'Could not connect to the Kangur API.',
-      pl: 'Nie udało się połączyć z API Kangura.',
+      de: 'Die Duell-Rangliste konnte nicht geladen werden.',
+      en: 'Could not load the duel leaderboard.',
+      pl: 'Nie udało się pobrać rankingu pojedynków.',
     });
   }
 

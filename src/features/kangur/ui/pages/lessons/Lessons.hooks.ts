@@ -87,6 +87,13 @@ export function useLessonsLogic() {
     enabled: isDeferredContentReady,
   });
   const lessonDocumentsQuery = useKangurLessonDocuments({ enabled: isDeferredContentReady });
+  const isLessonsCatalogLoading =
+    isDeferredContentReady &&
+    Boolean(
+      lessonsQuery.isPending ||
+        lessonsQuery.isLoading ||
+        (lessonsQuery.isFetching && typeof lessonsQuery.data === 'undefined')
+    );
   
   const lessons = useMemo(
     (): KangurLesson[] =>
@@ -231,9 +238,12 @@ export function useLessonsLogic() {
   const isLessonsShellReady = expectsFocusedLesson
     ? Boolean(activeLesson) && isActiveLessonSurfaceReady
     : isActiveLessonSurfaceReady;
+  const isLessonsCatalogTransitionReady =
+    !expectsFocusedLesson && activeLesson === null && !isSecretLessonActive;
 
   const isLessonsPageReady =
-    (isLocaleSwitchTransition || isDeferredContentReady) && isLessonsShellReady;
+    (isLocaleSwitchTransition || isDeferredContentReady || isLessonsCatalogTransitionReady) &&
+    isLessonsShellReady;
 
   useKangurRoutePageReady({
     pageKey: 'Lessons',
@@ -296,6 +306,7 @@ export function useLessonsLogic() {
     setAgeGroup,
     lessons,
     orderedLessons,
+    isLessonsCatalogLoading,
     lessonDocuments,
     activeLesson,
     activeLessonId,

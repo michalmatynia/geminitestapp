@@ -23,7 +23,7 @@ describe('getKangurHomeAuthBoundaryViewModel', () => {
       isRestoringLearnerSession: true,
       showLearnerCredentialsForm: false,
       statusLabel: 'przywracanie',
-      userLabel: 'przywracanie sesji ucznia',
+      userLabel: 'przywracanie logowania',
     });
   });
 
@@ -55,7 +55,7 @@ describe('getKangurHomeAuthBoundaryViewModel', () => {
     expect(
       getKangurHomeAuthBoundaryViewModel({
         authError:
-          'Learner sign-in did not produce a persisted mobile session. Check cookie/session support for the current device runtime.',
+          'Learner sign-in did not produce a persisted learner session. Check cookie/session support for the current device runtime.',
         developerAutoSignInEnabled: true,
         hasAttemptedDeveloperAutoSignIn: true,
         isLoadingAuth: false,

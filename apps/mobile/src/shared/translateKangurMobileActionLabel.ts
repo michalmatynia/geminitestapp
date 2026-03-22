@@ -53,9 +53,9 @@ const KANGUR_MOBILE_ACTION_LABEL_MAP: Record<
     pl: 'Historia trybu',
   },
   'Open auth screen': {
-    de: 'Anmeldebildschirm öffnen',
-    en: 'Open auth screen',
-    pl: 'Otwórz ekran logowania',
+    de: 'Zum Login',
+    en: 'Go to sign in',
+    pl: 'Przejdź do logowania',
   },
   'Open daily plan': {
     de: 'Tagesplan öffnen',

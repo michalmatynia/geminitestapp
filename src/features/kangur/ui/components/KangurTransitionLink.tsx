@@ -4,6 +4,7 @@ import NextLink from 'next/link';
 import { useEffect } from 'react';
 
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
+import { cn } from '@/features/kangur/shared/utils';
 
 import type { MouseEvent } from 'react';
 
@@ -39,6 +40,7 @@ const shouldStartTransition = (
 
 export function KangurTransitionLink({
   href,
+  className,
   onClick,
   scroll,
   target,
@@ -65,6 +67,7 @@ export function KangurTransitionLink({
   return (
     <NextLink
       href={href}
+      className={cn('touch-manipulation select-none', className)}
       scroll={resolvedScroll}
       target={target}
       onClick={(event) => {

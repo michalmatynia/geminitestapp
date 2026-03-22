@@ -222,10 +222,10 @@ describe('KangurProfileScreen', () => {
     renderProfileScreen();
 
     expect(screen.getByText('Profil ucznia')).toBeTruthy();
-    expect(screen.getByText('Przywracamy sesję ucznia i zapisane statystyki.')).toBeTruthy();
+    expect(screen.getByText('Przywracamy logowanie i zapisane statystyki.')).toBeTruthy();
     expect(
       screen.getByText(
-        'Sprawdzamy zapisaną sesję ucznia. Po zakończeniu przywrócimy zsynchronizowane wyniki i lokalny postęp.',
+        'Sprawdzamy zapisane logowanie. Po zakończeniu przywrócimy wyniki i postęp.',
       ),
     ).toBeTruthy();
     expect(screen.getByText('Sprawdzamy ostatnie podejścia ucznia.')).toBeTruthy();
@@ -257,7 +257,7 @@ describe('KangurProfileScreen', () => {
       isLoadingAuth: false,
       isLoadingScores: false,
       recommendationsNote:
-        'Na mobile działają już lekcje, trening arytmetyczny oraz pierwszy quiz logiczny.',
+        'Lekcje, trening arytmetyczny i pierwszy quiz logiczny są już gotowe.',
       refreshScores: vi.fn(),
       scoresError: null,
       signIn: vi.fn(),
@@ -547,8 +547,13 @@ describe('KangurProfileScreen', () => {
     expect(screen.getByText('W profilu')).toBeTruthy();
     expect(screen.getByText('Plan w profilu')).toBeTruthy();
     expect(screen.getByText('Plan dnia z profilu')).toBeTruthy();
-    expect(screen.getByText('Powrót do ostatnich sesji')).toBeTruthy();
+    expect(screen.getByText('Powrót do ostatnich wyników')).toBeTruthy();
     expect(screen.getByText('Centrum wyników')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Ostatnie wyniki są tutaj pod ręką, aby można było z profilu od razu wrócić do treningu, pasującej lekcji albo pełnej historii.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('Sesje 1')).toBeTruthy();
     expect(screen.getByText('Najlepsza skuteczność 88%')).toBeTruthy();
     expect(screen.getByText('Ostatni tryb Zegar')).toBeTruthy();
@@ -604,7 +609,7 @@ describe('KangurProfileScreen', () => {
     expect(screen.getByText('Abzeichen-Zentrale')).toBeTruthy();
     expect(screen.getByText('Profilplan')).toBeTruthy();
     expect(screen.getByText('Tagesplan aus dem Profil')).toBeTruthy();
-    expect(screen.getByText('Zurück zu den letzten Sitzungen')).toBeTruthy();
+    expect(screen.getByText('Zurück zu den letzten Ergebnissen')).toBeTruthy();
     expect(screen.getAllByText('Abzeichen').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Letzte Lektions-Checkpoints')).toBeTruthy();
     expect(screen.getByText('Tagesplan aus dem Profil')).toBeTruthy();
@@ -613,7 +618,7 @@ describe('KangurProfileScreen', () => {
     expect(screen.getByText('Ergebniszentrale')).toBeTruthy();
     expect(
       screen.getByText(
-        'Melde die Schulersitzung an, um hier synchronisierte Ergebnisse und den vollständigen Verlauf zu sehen.',
+        'Melde dich an, um hier Ergebnisse und den vollständigen Verlauf zu sehen.',
       ),
     ).toBeTruthy();
     expect(screen.getByText('🎮 Erstes Spiel')).toBeTruthy();

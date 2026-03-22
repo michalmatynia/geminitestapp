@@ -187,6 +187,9 @@ describe('Kangur shared primitives', () => {
         <KangurButton data-testid='kangur-button-primary' variant='primary'>
           Primary CTA
         </KangurButton>
+        <KangurButton data-testid='kangur-button-primary-sm' size='sm' variant='primary'>
+          Small primary CTA
+        </KangurButton>
         <KangurButton data-testid='kangur-button-surface' variant='surface'>
           Surface CTA
         </KangurButton>
@@ -457,6 +460,13 @@ describe('Kangur shared primitives', () => {
       'active:scale-[0.985]',
       'primary-cta',
       'focus-visible:ring-amber-300/70'
+    );
+    expect(screen.getByTestId('kangur-button-primary-sm')).toHaveClass(
+      'kangur-button-shell',
+      'kangur-button-size-sm',
+      '[@media(pointer:coarse)]:min-h-11',
+      '[@media(pointer:coarse)]:min-w-[3rem]',
+      'primary-cta'
     );
     expect(screen.getByTestId('kangur-button-surface')).toHaveClass(
       'kangur-button-shell',

@@ -827,9 +827,9 @@ export function KangurLessonsScreen(): React.JSX.Element {
         pl: `Z poziomu "${selectedLesson.lesson.title}" możesz sprawdzić stan pojedynków, wrócić do ostatnich rywali i od razu wejść w rewanż.`,
       })
     : copy({
-        de: 'Vom Lektionsbildschirm aus kannst du direkt den Duellstand prüfen, zu den letzten Rivalen zurückkehren oder die Lobby öffnen.',
-        en: 'From the lessons screen, you can immediately check duels, return to recent rivals, or open the lobby.',
-        pl: 'Z ekranu lekcji możesz od razu sprawdzić pojedynki, wrócić do ostatnich rywali albo otworzyć lobby.',
+        de: 'Von hier aus kannst du direkt den Duellstand prüfen, zu den letzten Rivalen zurückkehren oder die Lobby öffnen.',
+        en: 'From here, you can immediately check duels, return to recent rivals, or open the lobby.',
+        pl: 'Stąd możesz od razu sprawdzić pojedynki, wrócić do ostatnich rywali albo otworzyć lobby.',
       });
   const lessonFocusSummary = weakestLesson
     ? copy({
@@ -1521,9 +1521,9 @@ export function KangurLessonsScreen(): React.JSX.Element {
                 >
                   <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                     {copy({
-                      de: 'Mobiler Kurzbrief',
-                      en: 'Mobile lesson brief',
-                      pl: 'Mobilny skrót lekcji',
+                      de: 'Lektionsbrief',
+                      en: 'Lesson brief',
+                      pl: 'Skrót lekcji',
                     })}
                   </Text>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
@@ -1710,9 +1710,9 @@ export function KangurLessonsScreen(): React.JSX.Element {
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Die zuletzt synchronisierten Sitzungen bleiben hier griffbereit, damit du direkt wieder ins Training, die passende Lektion oder die Modus-Historie springen kannst.',
-                  en: 'The latest synchronized sessions stay close here so you can jump right back into practice, the matching lesson, or the mode history.',
-                  pl: 'Ostatnie zsynchronizowane sesje są tutaj pod ręką, aby można było od razu wrócić do treningu, pasującej lekcji albo historii trybu.',
+                  de: 'Die letzten Ergebnisse bleiben hier griffbereit, damit du direkt wieder ins Training, die passende Lektion oder die Modus-Historie springen kannst.',
+                  en: 'The latest results stay close here so you can jump right back into practice, the matching lesson, or the mode history.',
+                  pl: 'Ostatnie wyniki są tutaj pod ręką, aby można było od razu wrócić do treningu, pasującej lekcji albo historii trybu.',
                 })}
               </Text>
 
@@ -1750,9 +1750,9 @@ export function KangurLessonsScreen(): React.JSX.Element {
               ) : !lessonRecentResults.isEnabled ? (
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                   {copy({
-                    de: 'Melde die Schülersitzung an, um hier die synchronisierten Sitzungen zu sehen.',
-                    en: 'Sign in the learner session to see synchronized sessions here.',
-                    pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj zsynchronizowane sesje.',
+                    de: 'Melde die Schülersitzung an, um hier Ergebnisse zu sehen.',
+                    en: 'Sign in the learner session to see results here.',
+                    pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wyniki.',
                   })}
                 </Text>
               ) : lessonRecentResults.error ? (
@@ -1762,9 +1762,9 @@ export function KangurLessonsScreen(): React.JSX.Element {
               ) : lessonRecentResults.recentResultItems.length === 0 ? (
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                   {copy({
-                    de: 'Es gibt noch keine synchronisierten Ergebnisse. Beende einen Lauf, damit er hier erscheint.',
-                    en: 'There are no synchronized results yet. Finish a run so it appears here.',
-                    pl: 'Nie ma jeszcze zsynchronizowanych wyników. Ukończ serię, aby pojawiła się tutaj.',
+                    de: 'Es gibt hier noch keine Ergebnisse. Beende einen Lauf, um diesen Bereich zu füllen.',
+                    en: 'There are no results here yet. Finish a run to fill this section.',
+                    pl: 'Nie ma tu jeszcze wyników. Ukończ serię, aby wypełnić tę sekcję.',
                   })}
                 </Text>
               ) : (

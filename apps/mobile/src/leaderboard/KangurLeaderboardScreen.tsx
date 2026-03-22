@@ -629,9 +629,9 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
               pl: 'Ranking',
             })}
             subtitle={copy({
-              de: 'Prüfe die letzten Ergebnisse, vergleiche das Duelltempo und springe direkt zurück in die nächsten mobilen Lernschritte.',
-              en: 'Check the latest results, compare duel momentum, and jump straight back into the next mobile study steps.',
-              pl: 'Sprawdź ostatnie wyniki, porównaj tempo w pojedynkach i od razu wróć do kolejnych mobilnych kroków nauki.',
+              de: 'Prüfe die letzten Ergebnisse, vergleiche das Duelltempo und springe direkt zurück in die nächsten Lernschritte.',
+              en: 'Check the latest results, compare duel momentum, and jump straight back into your next study steps.',
+              pl: 'Sprawdź ostatnie wyniki, porównaj tempo w pojedynkach i od razu wróć do kolejnych kroków nauki.',
             })}
           />
 
@@ -952,9 +952,9 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
             <Text style={{ color: '#334155', fontSize: 15 }}>
               {isRestoringAuth
                 ? copy({
-                    de: 'Die Schulersitzung und die Rangliste werden wiederhergestellt...',
-                    en: 'Restoring the learner session and leaderboard...',
-                    pl: 'Przywracamy sesję ucznia i ranking...',
+                    de: 'Die Anmeldung und die Rangliste werden wiederhergestellt...',
+                    en: 'Restoring sign-in and leaderboard...',
+                    pl: 'Przywracamy logowanie i ranking...',
                   })
                 : copy({
                     de: 'Die Rangliste wird geladen...',
@@ -982,9 +982,9 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
             <Text style={{ color: '#475569', fontSize: 14, lineHeight: 21 }}>
               {error}{' '}
               {copy({
-                de: 'Starte die Kangur-Web-API unter der konfigurierten Adresse und aktualisiere dann die Ansicht.',
-                en: 'Start the Kangur web API at the configured address and then refresh the view.',
-                pl: 'Uruchom webowe API Kangura pod skonfigurowanym adresem, a potem odśwież widok.',
+                de: 'Starte die Kangur-Web-API unter der konfigurierten Adresse und aktualisiere danach die Rangliste.',
+                en: 'Start the Kangur web API at the configured address and then refresh the leaderboard.',
+                pl: 'Uruchom webowe API Kangura pod skonfigurowanym adresem, a potem odśwież ranking.',
               })}
             </Text>
           </View>
@@ -1114,16 +1114,16 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
             </Text>
             <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
               {copy({
-                de: 'Mobile Rivalentabelle',
-                en: 'Mobile rivals board',
-                pl: 'Mobilna tabela rywali',
+                de: 'Rivalentabelle',
+                en: 'Rivals board',
+                pl: 'Tabela rywali',
               })}
             </Text>
             <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
               {copy({
-                de: 'Vergleiche die aktuelle Form, prüfe ob dein Stand schon sichtbar ist und fordere Rivalen heraus, ohne den mobilen Ablauf zu verlassen.',
-                en: 'Compare current form, check whether your standing is already visible, and challenge a rival without leaving the mobile flow.',
-                pl: 'Porównaj bieżącą formę, sprawdź czy Twój wynik jest już widoczny i rzuć wyzwanie bez wychodzenia z mobilnego flow.',
+                de: 'Vergleiche die aktuelle Form, prüfe ob dein Stand schon sichtbar ist und fordere Rivalen direkt von hier aus heraus.',
+                en: 'Compare current form, check whether your standing is already visible, and challenge a rival right from here.',
+                pl: 'Porównaj bieżącą formę, sprawdź czy Twój wynik jest już widoczny i rzuć wyzwanie od razu stąd.',
               })}
             </Text>
           </View>
@@ -1270,9 +1270,9 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
               ) : (
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                   {copy({
-                    de: 'Melde die Schulersitzung an, damit deine eigene Position in diesem Duellstand hervorgehoben wird.',
-                    en: 'Sign in the learner session so your own standing can be highlighted in this duel standing.',
-                    pl: 'Zaloguj sesję ucznia, aby wyróżnić tutaj Twoją pozycję w tym stanie pojedynków.',
+                    de: 'Melde dich an, damit deine eigene Position hier hervorgehoben wird.',
+                    en: 'Sign in so your own standing can be highlighted here.',
+                    pl: 'Zaloguj się, aby wyróżnić tutaj Twoją pozycję.',
                   })}
                 </Text>
               )}

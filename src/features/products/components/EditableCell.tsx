@@ -23,24 +23,15 @@ type EditableCellInputRuntimeValue = {
   handleBlur: () => void;
 };
 
-const EditableCellInputRuntimeContext = React.createContext<EditableCellInputRuntimeValue | null>(
-  null
-);
-
-function useEditableCellInputRuntime(): EditableCellInputRuntimeValue {
-  const runtime = React.useContext(EditableCellInputRuntimeContext);
-  if (!runtime) {
-    throw new Error(
-      'useEditableCellInputRuntime must be used within EditableCellInputRuntimeContext.Provider'
-    );
-  }
-  return runtime;
-}
-
-function EditableCellInput(): React.JSX.Element {
-  const { field, editValue, isSaving, inputRef, setEditValue, handleKeyDown, handleBlur } =
-    useEditableCellInputRuntime();
-
+function EditableCellInput({
+  field,
+  editValue,
+  isSaving,
+  inputRef,
+  setEditValue,
+  handleKeyDown,
+  handleBlur,
+}: EditableCellInputRuntimeValue): React.JSX.Element {
   return (
     <Input
       ref={inputRef}
@@ -54,7 +45,8 @@ function EditableCellInput(): React.JSX.Element {
       onBlur={handleBlur}
       disabled={isSaving}
       className='h-8 w-24 text-sm'
-     title='Input field'/>
+      title='Input field'
+    />
   );
 }
 
@@ -136,20 +128,16 @@ export const EditableCell = memo(
     };
 
     if (isEditing) {
-      const inputRuntimeValue: EditableCellInputRuntimeValue = {
-        field,
-        editValue,
-        isSaving,
-        inputRef,
-        setEditValue: (next: string): void => setEditValue(next),
-        handleKeyDown,
-        handleBlur,
-      };
-
       return (
-        <EditableCellInputRuntimeContext.Provider value={inputRuntimeValue}>
-          <EditableCellInput />
-        </EditableCellInputRuntimeContext.Provider>
+        <EditableCellInput
+          field={field}
+          editValue={editValue}
+          isSaving={isSaving}
+          inputRef={inputRef}
+          setEditValue={(next: string): void => setEditValue(next)}
+          handleKeyDown={handleKeyDown}
+          handleBlur={handleBlur}
+        />
       );
     }
 

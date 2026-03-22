@@ -142,7 +142,7 @@ describe('KangurLeaderboardScreen', () => {
     expect(screen.getByText('Ranking')).toBeTruthy();
     expect(
       screen.getByText(
-        'Sprawdź ostatnie wyniki, porównaj tempo w pojedynkach i od razu wróć do kolejnych mobilnych kroków nauki.',
+        'Sprawdź ostatnie wyniki, porównaj tempo w pojedynkach i od razu wróć do kolejnych kroków nauki.',
       ),
     ).toBeTruthy();
     expect(screen.getByText('Wyniki 0')).toBeTruthy();
@@ -150,13 +150,13 @@ describe('KangurLeaderboardScreen', () => {
     expect(screen.getByText('Lekcje 0')).toBeTruthy();
     expect(screen.getByText('Plan dnia teraz')).toBeTruthy();
     expect(screen.getByText('Otwórz lobby pojedynków')).toBeTruthy();
-    expect(screen.getByText('Przywracamy sesję ucznia i ranking...')).toBeTruthy();
+    expect(screen.getByText('Przywracamy logowanie i ranking...')).toBeTruthy();
   });
 
   it('shows the empty duel table when no duels are completed yet', () => {
     render(<KangurLeaderboardScreen />);
 
-    expect(screen.getByText('Mobilna tabela rywali')).toBeTruthy();
+    expect(screen.getByText('Tabela rywali')).toBeTruthy();
     expect(
       screen.getByText(
         'Nie ma jeszcze zakończonych pojedynków w tym oknie. Pierwsze skończone mecze od razu wypełnią tutaj tabelę rywali.',
@@ -194,7 +194,7 @@ describe('KangurLeaderboardScreen', () => {
 
     expect(
       screen.getByText(
-        'Zaloguj sesję ucznia, aby wyróżnić tutaj Twoją pozycję w tym stanie pojedynków.',
+        'Zaloguj się, aby wyróżnić tutaj Twoją pozycję.',
       ),
     ).toBeTruthy();
   });
@@ -476,7 +476,12 @@ describe('KangurLeaderboardScreen', () => {
     expect(screen.getByText('Zegar')).toBeTruthy();
     expect(screen.getByText('8 pkt')).toBeTruthy();
     expect(screen.getByText('Ranking pojedynków')).toBeTruthy();
-    expect(screen.getByText('Mobilna tabela rywali')).toBeTruthy();
+    expect(screen.getByText('Tabela rywali')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Porównaj bieżącą formę, sprawdź czy Twój wynik jest już widoczny i rzuć wyzwanie od razu stąd.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('Gracze 2')).toBeTruthy();
     expect(screen.getByText('Top win rate 80%')).toBeTruthy();
     expect(screen.getByText('Twoja pozycja #2')).toBeTruthy();
@@ -517,7 +522,7 @@ describe('KangurLeaderboardScreen', () => {
     expect(screen.getByText('Priorytet wysoki')).toBeTruthy();
     expect(screen.getByText('Cel: 1 lekcja')).toBeTruthy();
     expect(screen.getAllByText('Otwórz lekcję').length).toBeGreaterThanOrEqual(1);
-    expect(screen.queryByText('Przywracamy sesję ucznia i ranking...')).toBeNull();
+    expect(screen.queryByText('Przywracamy logowanie i ranking...')).toBeNull();
 
     fireEvent.click(screen.getByText('Rzuć wyzwanie'));
 

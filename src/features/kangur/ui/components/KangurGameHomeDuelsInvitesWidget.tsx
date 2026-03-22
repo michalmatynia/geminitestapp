@@ -23,6 +23,7 @@ import {
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
   KANGUR_GRID_TIGHT_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   formatDuelDifficultyLabel,
   formatDuelOperationLabel,
@@ -30,6 +31,7 @@ import {
 } from '@/features/kangur/ui/pages/duels/duels-helpers';
 import type { KangurHomeScreenVisibilityProps } from '@/features/kangur/ui/types';
 import { withKangurClientError } from '@/features/kangur/observability/client';
+import { cn } from '@/features/kangur/shared/utils';
 
 const kangurPlatform = getKangurPlatform();
 const HOME_DUELS_INVITE_LIMIT = 4;
@@ -44,6 +46,7 @@ export function KangurGameHomeDuelsInvitesWidget({
   const commonTranslations = useTranslations('KangurDuels.common');
   const runtime = useKangurGameRuntime();
   const { basePath, screen, user } = runtime;
+  const isCoarsePointer = useKangurCoarsePointer();
   const canPlay = Boolean(user?.activeLearner?.id);
   const [inviteEntries, setInviteEntries] = useState<KangurDuelLobbyEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -163,7 +166,10 @@ export function KangurGameHomeDuelsInvitesWidget({
           asChild
           size='sm'
           variant='secondary'
-          className='w-full sm:w-auto sm:shrink-0'
+          className={cn(
+            'w-full sm:w-auto sm:shrink-0',
+            isCoarsePointer && 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
+          )}
           data-doc-id='home_duels_invite'
         >
           <Link
@@ -231,7 +237,11 @@ export function KangurGameHomeDuelsInvitesWidget({
                     asChild
                     size='sm'
                     variant='primary'
-                    className='w-full sm:w-auto sm:shrink-0'
+                    className={cn(
+                      'w-full sm:w-auto sm:shrink-0',
+                      isCoarsePointer &&
+                        'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
+                    )}
                   >
                     <Link
                       href={buildJoinHref(entry.sessionId)}

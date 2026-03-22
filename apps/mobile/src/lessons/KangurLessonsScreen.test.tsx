@@ -503,6 +503,11 @@ describe('KangurLessonsScreen', () => {
     expect(screen.getByText('Potem trenuj: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
     expect(screen.getByText('Centrum wyników')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Ostatnie wyniki są tutaj pod ręką, aby można było od razu wrócić do treningu, pasującej lekcji albo historii trybu.',
+      ),
+    ).toBeTruthy();
     expect(screen.getAllByText('Otwórz pełną historię').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Trenuj ponownie')).toBeTruthy();
     expect(screen.getByText('Historia trybu')).toBeTruthy();
@@ -578,6 +583,11 @@ describe('KangurLessonsScreen', () => {
 
     renderLessonsScreen();
 
+    expect(
+      screen.getByText(
+        'Zaloguj sesję ucznia, aby zobaczyć tutaj wyniki.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('Szybki powrót do rywali')).toBeTruthy();
     expect(
       screen.getByText(
@@ -632,7 +642,7 @@ describe('KangurLessonsScreen', () => {
 
     renderLessonsScreen();
 
-    expect(screen.getByText('Mobilny skrót lekcji')).toBeTruthy();
+    expect(screen.getByText('Skrót lekcji')).toBeTruthy();
     expect(
       screen.getByText(
         'Ta lekcja jest tu na razie dostępna jako krótki skrót. Widzisz już stan opanowania, ostatni zapis oraz najszybszy powrót do pasującego treningu.',

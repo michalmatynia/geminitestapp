@@ -357,9 +357,10 @@ const hasSiblingLeaseForManagedRuntimeTmpDir = async ({
 const cleanupLeaseManagedDistDir = async ({
   lease,
   leaseFilePath = null,
+  preserveManagedDistDir = false,
 } = {}) => {
   const managedDistDirPath = resolveManagedLeaseDistDirPath(lease);
-  if (!managedDistDirPath) {
+  if (!managedDistDirPath || preserveManagedDistDir) {
     return;
   }
 
@@ -391,8 +392,14 @@ const cleanupFreshManagedRuntimeArtifacts = async ({
   distDir = null,
   managedDistDir = false,
   runtimeTmpDir = null,
+  preserveManagedDistDir = false,
 } = {}) => {
-  if (managedDistDir && typeof distDir === 'string' && distDir.length > 0) {
+  if (
+    managedDistDir &&
+    !preserveManagedDistDir &&
+    typeof distDir === 'string' &&
+    distDir.length > 0
+  ) {
     await removeDirectoryIfPresent(path.join(rootDir, distDir));
   }
 
@@ -864,6 +871,7 @@ export const stopBrokerRuntimeLease = async ({
   force = true,
   removeLeaseFile = true,
   graceMs = 3_000,
+  preserveManagedDistDir = false,
   spawnImpl = spawn,
 } = {}) => {
   const pid = lease?.pid ?? null;
@@ -889,7 +897,11 @@ export const stopBrokerRuntimeLease = async ({
     await removeFileIfPresent(leaseFilePath);
   }
 
-  await cleanupLeaseManagedDistDir({ lease, leaseFilePath });
+  await cleanupLeaseManagedDistDir({
+    lease,
+    leaseFilePath,
+    preserveManagedDistDir,
+  });
   await cleanupLeaseManagedRuntimeTmpDir({ lease, leaseFilePath });
 };
 
@@ -905,6 +917,7 @@ export const acquireRuntimeLease = async ({
   preferredBrowserNodeBinDir = resolvePreferredBrowserNodeBinDir({ env }),
   startupTimeoutMs = DEFAULT_STARTUP_TIMEOUT_MS,
   reuseTimeoutMs = DEFAULT_REUSE_TIMEOUT_MS,
+  preserveManagedDistDir = false,
 } = {}) => {
   const explicitRuntime = await resolveExplicitPlaywrightRuntime({
     env,
@@ -1027,6 +1040,7 @@ export const acquireRuntimeLease = async ({
       distDir,
       managedDistDir,
       runtimeTmpDir,
+      preserveManagedDistDir,
     });
     await fsPromises.mkdir(path.dirname(logFilePath), { recursive: true });
     await fsPromises.mkdir(resolvedRuntimeTmpDir, { recursive: true });

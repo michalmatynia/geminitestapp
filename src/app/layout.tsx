@@ -1,5 +1,5 @@
 import { NextIntlClientProvider } from 'next-intl';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import { RootClientShell } from './_providers/RootClientShell';
 import { cn } from '@/shared/utils';
@@ -37,12 +37,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>): Promise<React.JSX.Element> {
+  const locale = await getLocale();
   const commonTranslations = await getTranslations('Common');
 
   return (
-    <html lang={DEFAULT_SITE_I18N_CONFIG.defaultLocale} suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body suppressHydrationWarning className={cn('max-w-full overflow-x-hidden font-sans')}>
-        <NextIntlClientProvider>
+        <NextIntlClientProvider locale={locale}>
           <a href='#kangur-main-content' className='app-skip-link'>
             {commonTranslations('skipToMainContent')}
           </a>

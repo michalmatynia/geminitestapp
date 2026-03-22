@@ -414,7 +414,7 @@ export default function ClockLesson(): React.JSX.Element {
               className={cn(
                 KANGUR_STEP_PILL_CLASSNAME,
                 isCoarsePointer
-                  ? 'h-8 min-w-8 cursor-pointer touch-manipulation select-none active:scale-[0.97]'
+                  ? 'h-11 min-w-11 cursor-pointer touch-manipulation select-none active:scale-[0.97]'
                   : 'h-[14px] min-w-[14px] cursor-pointer',
                 isActive
                   ? [

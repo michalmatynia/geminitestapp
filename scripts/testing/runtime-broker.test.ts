@@ -367,6 +367,67 @@ describe('acquireRuntimeLease', () => {
     await expect(fs.stat(path.join(rootDir, runtimeTmpDir))).resolves.toBeTruthy();
   });
 
+  it('preserves the managed dist dir across an intermediate restart when requested', async () => {
+    const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'runtime-broker-preserve-dist-'));
+    cleanupTargets.push(rootDir);
+
+    const appId = 'web';
+    const mode = 'dev';
+    const agentId = 'agent-preserve-dist';
+    const bundler = 'webpack';
+    const distDir = resolveBrokerManagedDistDir({ appId, mode, bundler, agentId });
+    const distMarker = path.join(rootDir, distDir, 'preserved.txt');
+
+    await fs.mkdir(path.dirname(distMarker), { recursive: true });
+    await fs.writeFile(distMarker, 'keep me', 'utf8');
+
+    const healthyBaseUrls = new Set<string>();
+    const spawnImpl = vi.fn(
+      (_command: string, _args: string[], options: { env: Record<string, string> }) => {
+        const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], {
+          detached: true,
+          stdio: 'ignore',
+        });
+        child.unref();
+
+        const baseUrl = `http://${options.env.HOST}:${options.env.PORT}`;
+        setTimeout(() => {
+          healthyBaseUrls.add(baseUrl);
+        }, 50);
+
+        return child;
+      }
+    );
+
+    const fetchImpl = async (candidate: string) => {
+      const url = new URL(candidate);
+      const baseUrl = `${url.protocol}//${url.host}`;
+      if (healthyBaseUrls.has(baseUrl)) {
+        return { status: 200 };
+      }
+
+      throw new Error('runtime not ready');
+    };
+
+    const lease = await acquireRuntimeLease({
+      rootDir,
+      appId,
+      mode,
+      agentId,
+      env: {
+        PLAYWRIGHT_BASE_URL: 'http://127.0.0.1:43179',
+      },
+      spawnImpl,
+      fetchImpl,
+      startupTimeoutMs: 3_000,
+      reuseTimeoutMs: 500,
+      preserveManagedDistDir: true,
+    });
+
+    expect(lease.reused).toBe(false);
+    await expect(fs.readFile(distMarker, 'utf8')).resolves.toBe('keep me');
+  });
+
   it('scopes broker-managed runtimes by bundler and passes it to the dev server env', async () => {
     const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'runtime-broker-bundler-'));
     cleanupTargets.push(rootDir);
@@ -869,6 +930,51 @@ describe('cleanupBrokerRuntimeLeases', () => {
       killSpy.mockRestore();
     }
 
+    await expect(fs.stat(leaseFilePath)).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
+  it('keeps the managed dist dir when preserveManagedDistDir is enabled', async () => {
+    const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'runtime-broker-stop-preserve-'));
+    cleanupTargets.push(rootDir);
+
+    const leaseFilePath = path.join(rootDir, 'tmp', 'playwright-runtime-broker', 'leases', 'lease.json');
+    const distDir = resolveBrokerManagedDistDir({
+      appId: 'web',
+      mode: 'dev',
+      agentId: 'agent-stop-preserve',
+    });
+    const distMarker = path.join(rootDir, distDir, 'marker.txt');
+
+    await fs.mkdir(path.dirname(leaseFilePath), { recursive: true });
+    await fs.writeFile(leaseFilePath, '{}\n', 'utf8');
+    await fs.mkdir(path.dirname(distMarker), { recursive: true });
+    await fs.writeFile(distMarker, 'persist', 'utf8');
+
+    await stopBrokerRuntimeLease({
+      lease: {
+        source: 'broker',
+        managed: true,
+        reused: false,
+        rootDir,
+        appId: 'web',
+        mode: 'dev',
+        agentId: 'agent-stop-preserve',
+        host: '127.0.0.1',
+        port: 43213,
+        baseUrl: 'http://127.0.0.1:43213',
+        pid: null,
+        distDir,
+        managedDistDir: true,
+        runtimeTmpDir: null,
+        managedRuntimeTmpDir: false,
+        leaseKey: 'lease-stop-preserve',
+        startedAt: new Date().toISOString(),
+      },
+      leaseFilePath,
+      preserveManagedDistDir: true,
+    });
+
+    await expect(fs.readFile(distMarker, 'utf8')).resolves.toBe('persist');
     await expect(fs.stat(leaseFilePath)).rejects.toMatchObject({ code: 'ENOENT' });
   });
 });

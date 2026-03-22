@@ -587,7 +587,12 @@ export default function CalendarInteractiveGame({
               <KangurButton
                 aria-label={translations('calendarInteractive.inRound.previousMonth')}
                 onClick={() => handleFlipMonth(-1)}
-                className='h-9 w-9 min-w-0 px-0'
+                className={cn(
+                  'min-w-0 px-0',
+                  isCoarsePointer
+                    ? 'h-11 w-11 touch-manipulation active:scale-[0.97]'
+                    : 'h-9 w-9'
+                )}
                 size='sm'
                 type='button'
                 variant='surface'
@@ -603,7 +608,12 @@ export default function CalendarInteractiveGame({
               <KangurButton
                 aria-label={translations('calendarInteractive.inRound.nextMonth')}
                 onClick={() => handleFlipMonth(1)}
-                className='h-9 w-9 min-w-0 px-0'
+                className={cn(
+                  'min-w-0 px-0',
+                  isCoarsePointer
+                    ? 'h-11 w-11 touch-manipulation active:scale-[0.97]'
+                    : 'h-9 w-9'
+                )}
                 size='sm'
                 type='button'
                 variant='surface'

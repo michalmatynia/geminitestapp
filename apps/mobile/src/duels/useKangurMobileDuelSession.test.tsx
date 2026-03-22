@@ -293,7 +293,25 @@ describe('useKangurMobileDuelSession', () => {
 
     await waitFor(() => {
       expect(result.current.error).toBe(
-        'Melde eine Lernenden-Sitzung an, um das Duell zu öffnen.',
+        'Melde dich an, um dieses Duell zu öffnen.',
+      );
+    });
+  });
+
+  it('localizes public-duel loading errors when spectator mode is enabled', async () => {
+    getDuelSpectatorStateMock.mockRejectedValueOnce({ status: 500 });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () => useKangurMobileDuelSession('duel-spectator-error', { spectate: true }),
+      {
+        wrapper: createWrapper(queryClient, 'de'),
+      },
+    );
+
+    await waitFor(() => {
+      expect(result.current.error).toBe(
+        'Das öffentliche Duell konnte nicht geladen werden.',
       );
     });
   });

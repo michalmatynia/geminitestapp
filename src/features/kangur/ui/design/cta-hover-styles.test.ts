@@ -3,11 +3,11 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-const globalStylesheetPath = path.join(process.cwd(), 'src/app/globals.css');
+const kangurStylesheetPath = path.join(process.cwd(), 'src/app/(frontend)/kangur/kangur.css');
 
 describe('Kangur CTA hover styles', () => {
   it('keeps the primary cta driven by theme variables', () => {
-    const source = readFileSync(globalStylesheetPath, 'utf8');
+    const source = readFileSync(kangurStylesheetPath, 'utf8');
     const primaryCtaBlock = source.match(/\.primary-cta\s*\{[\s\S]*?will-change:\s*transform;/)?.[0];
     const primaryHoverBlock = source.match(
       /\.primary-cta:hover,\s*\.primary-cta:focus-visible\s*\{[\s\S]*?transform:\s*translateY\(-1px\)\s*scale\(1\.014\)/
@@ -28,7 +28,7 @@ describe('Kangur CTA hover styles', () => {
   });
 
   it('keeps warning ctas on the same warm hover direction instead of introducing purple', () => {
-    const source = readFileSync(globalStylesheetPath, 'utf8');
+    const source = readFileSync(kangurStylesheetPath, 'utf8');
 
     expect(source).toMatch(
       /\.warning-cta:hover,\s*\.warning-cta:focus-visible\s*\{[\s\S]*rgba\(255,\s*247,\s*230,\s*0\.99\)[\s\S]*rgba\(255,\s*232,\s*195,\s*0\.96\)/
@@ -42,7 +42,7 @@ describe('Kangur CTA hover styles', () => {
   });
 
   it('keeps the Kangur home action pills darker when the storefront is in dark mode', () => {
-    const source = readFileSync(globalStylesheetPath, 'utf8');
+    const source = readFileSync(kangurStylesheetPath, 'utf8');
 
     expect(source).toContain("data-kangur-appearance-mode='dark'");
     expect(source).toContain("data-kangur-appearance-mode='sunset'");
@@ -54,7 +54,7 @@ describe('Kangur CTA hover styles', () => {
   });
 
   it('keeps shared gradient color shift on ctas and progress fills without attaching it to the excluded home action buttons', () => {
-    const source = readFileSync(globalStylesheetPath, 'utf8');
+    const source = readFileSync(kangurStylesheetPath, 'utf8');
     const primaryCtaBlock = source.match(/\.primary-cta\s*\{[\s\S]*?will-change:\s*transform;/)?.[0];
     const warningCtaBlock = source.match(/\.warning-cta\s*\{[\s\S]*?will-change:\s*transform;/)?.[0];
     const sharedButtonGradientMotionBlock = source.match(

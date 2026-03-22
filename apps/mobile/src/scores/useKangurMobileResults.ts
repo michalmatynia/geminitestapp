@@ -63,9 +63,9 @@ export const useKangurMobileResults = (
     error:
       scoresQuery.error instanceof Error
         ? copy({
-            de: 'Der Ergebnisverlauf konnte nicht geladen werden.',
-            en: 'Could not load the score history.',
-            pl: 'Nie udało się pobrać historii wyników.',
+            de: 'Die Ergebnisse konnten nicht geladen werden.',
+            en: 'Could not load the results.',
+            pl: 'Nie udało się pobrać wyników.',
           })
         : null,
     isEnabled: scoresQuery.isEnabled,

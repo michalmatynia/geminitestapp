@@ -14,6 +14,7 @@ import type {
 } from '@/features/kangur/tts/contracts';
 import { hasKangurLessonNarrationContent } from '@/features/kangur/tts/script';
 import { KangurButton, KangurSummaryPanel } from '@/features/kangur/ui/design/primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import { api } from '@/shared/lib/api-client';
 import { cn } from '@/features/kangur/shared/utils';
@@ -65,6 +66,7 @@ export function KangurNarratorControl({
   docId,
 }: KangurNarratorControlProps): React.JSX.Element | null {
   const isIconMode = displayMode === 'icon';
+  const isCoarsePointer = useKangurCoarsePointer();
   const shouldShowFeedback = showFeedback ?? !isIconMode;
   const narratorDocId = docId;
   const contextRegistrySignature = useMemo(
@@ -438,6 +440,11 @@ export function KangurNarratorControl({
           ? Play
           : Volume2;
   const handlePrimaryAction = status === 'playing' ? handlePause : () => void handlePlay();
+  const controlTouchClassName = isCoarsePointer
+    ? isIconMode
+      ? 'min-h-11 min-w-11 touch-manipulation select-none active:scale-[0.97]'
+      : 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
+    : null;
 
   const hasNarration = hasKangurLessonNarrationContent(script);
   if (!hasNarration && !renderWhenEmpty) {
@@ -470,6 +477,7 @@ export function KangurNarratorControl({
           title={isIconMode ? controlLabel : undefined}
           className={cn(
             isIconMode ? 'h-6 w-6 rounded-full p-0' : 'justify-center',
+            controlTouchClassName,
             status === 'loading' ? 'cursor-wait' : null
           )}
           size='sm'

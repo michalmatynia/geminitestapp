@@ -172,6 +172,11 @@ describe('KangurParentDashboardHeroWidget', () => {
 
     render(<KangurParentDashboardHeroWidget />);
 
+    const signInButton = screen.getByRole('button', { name: heroMessages.signIn });
+    const createAccountButton = screen.getByRole('button', {
+      name: heroMessages.createParentAccountAria,
+    });
+
     expect(screen.getByTestId('kangur-parent-dashboard-hero')).toHaveClass(
       'glass-panel',
       'kangur-panel-soft',
@@ -183,9 +188,11 @@ describe('KangurParentDashboardHeroWidget', () => {
       'text-2xl',
       'sm:text-3xl'
     );
+    expect(signInButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+    expect(createAccountButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
 
-    fireEvent.click(screen.getByRole('button', { name: heroMessages.signIn }));
-    fireEvent.click(screen.getByRole('button', { name: heroMessages.createParentAccountAria }));
+    fireEvent.click(signInButton);
+    fireEvent.click(createAccountButton);
 
     expect(openLoginModal).toHaveBeenCalledTimes(2);
     expect(openLoginModal).toHaveBeenLastCalledWith(null, {
@@ -286,7 +293,7 @@ describe('KangurParentDashboardHeroWidget', () => {
     render(<KangurParentDashboardHeroWidget showActions={false} showLearnerManagement />);
 
     const addButton = screen.getByRole('button', { name: heroMessages.addLearner });
-    expect(addButton).toHaveClass('min-h-11', 'px-4');
+    expect(addButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
     fireEvent.click(addButton);
 
     expect(setCreateLearnerModalOpen).toHaveBeenCalledWith(true);
@@ -410,7 +417,7 @@ describe('KangurParentDashboardHeroWidget', () => {
       'href',
       '/kangur/lessons?focus=clock'
     );
-    expect(openActivityLink).toHaveClass('min-h-11', 'px-4');
+    expect(openActivityLink).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
 
     vi.useRealTimers();
   });

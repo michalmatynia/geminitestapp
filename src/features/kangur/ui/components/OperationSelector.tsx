@@ -20,6 +20,7 @@ import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_WRAP_START_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurOperationSelectorState } from '@/features/kangur/ui/hooks/useKangurOperationSelectorState';
 import type { KangurDifficulty, KangurOperation } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
@@ -40,6 +41,7 @@ export default function OperationSelector({
   recommendedOperation,
 }: OperationSelectorProps): React.JSX.Element {
   const locale = useLocale();
+  const isCoarsePointer = useKangurCoarsePointer();
   const { difficulty, operations, setDifficulty } = useKangurOperationSelectorState({
     onSelect,
     priorityAssignmentsByOperation,
@@ -125,7 +127,11 @@ export default function OperationSelector({
                           .filter(Boolean)
                           .join(' ')
                       }
-                      buttonClassName='flex min-h-[160px] flex-col kangur-panel-gap rounded-[26px] p-4 sm:min-h-[180px] sm:rounded-[30px] sm:p-5'
+                      buttonClassName={cn(
+                        'flex min-h-[160px] flex-col kangur-panel-gap rounded-[26px] p-4 sm:min-h-[180px] sm:rounded-[30px] sm:p-5',
+                        isCoarsePointer &&
+                          'min-h-[176px] px-5 py-5 active:scale-[0.98] sm:min-h-[196px]'
+                      )}
                       data-testid={`operation-card-${operation.id}`}
                       emphasis={
                         operation.hasPriorityAssignment || operation.isRecommended

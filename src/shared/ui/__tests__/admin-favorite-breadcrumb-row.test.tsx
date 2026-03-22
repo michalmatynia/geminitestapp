@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   toastMock: vi.fn(),
   useSettingsStoreMock: vi.fn(),
   invalidateSettingsCacheMock: vi.fn(),
+  useAdminFavoritesMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/api-client', () => ({
@@ -24,6 +25,10 @@ vi.mock('@/shared/api/settings-client', () => ({
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => mocks.useSettingsStoreMock(),
+}));
+
+vi.mock('@/shared/providers/AdminFavoritesProvider', () => ({
+  useAdminFavorites: () => mocks.useAdminFavoritesMock(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -48,6 +53,22 @@ describe('AdminFavoriteBreadcrumbRow', () => {
       map: new Map<string, string>(),
       get: () => undefined,
       refetch: vi.fn(),
+    });
+    mocks.useAdminFavoritesMock.mockReset().mockReturnValue({
+      favoritesKey: 'admin_menu_favorites',
+      candidates: [],
+      resolveCandidate: (pathname: string | null) => {
+        switch (pathname) {
+          case '/admin/system/logs':
+            return { id: 'system/logs', label: 'System Logs' };
+          case '/admin/products/123':
+            return { id: 'commerce/products/all', label: 'All Products' };
+          case '/admin/agentcreator/runs':
+            return { id: 'ai/agent-creator/runs', label: 'Runs' };
+          default:
+            return null;
+        }
+      },
     });
     vi.mocked(usePathname).mockReturnValue('/');
     vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams());

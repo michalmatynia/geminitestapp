@@ -1341,7 +1341,7 @@
       "closedAssignment": "Zadanie zamkniete",
       "customContent": "Wlasna zawartosc",
       "parentPriority": "Priorytet rodzica",
-      "completedForParent": "Ukonczone dla rodzica",
+      "completedForParent": "Ukończone dla rodzica",
       "completedAssignmentSummary": "Zadanie od rodzica zostalo juz wykonane. {summary}",
       "ariaLabel": "Lekcja: {title}"
     },
@@ -1350,20 +1350,20 @@
       "previousLesson": "Poprzednia lekcja: {title}",
       "noPreviousLesson": "Brak poprzedniej lekcji",
       "previousShort": "Poprzednia",
-      "nextLesson": "Nastepna lekcja: {title}",
-      "noNextLesson": "Brak nastepnej lekcji",
-      "nextShort": "Nastepna"
+      "nextLesson": "Następna lekcja: {title}",
+      "noNextLesson": "Brak następnej lekcji",
+      "nextShort": "Następna"
     },
     "activeHeader": {
       "narrator": {
         "loading": "Przygotowywanie...",
         "pause": "Pauza",
         "read": "Czytaj",
-        "resume": "Wznow"
+        "resume": "Wznów"
       },
       "parentPriority": "Priorytet rodzica",
-      "completedForParent": "Ukonczone dla rodzica",
-      "backToLessons": "Wroc do listy lekcji",
+      "completedForParent": "Ukończone dla rodzica",
+      "backToLessons": "Wróć do listy lekcji",
       "fallbackTitle": "Lekcja",
       "subsectionType": {
         "game": "Gra",

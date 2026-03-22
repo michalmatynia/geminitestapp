@@ -7,6 +7,7 @@ import {
   KangurPanelRow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { KANGUR_WRAP_CENTER_ROW_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -128,6 +129,7 @@ type KangurDailyQuestHighlightCardContentProps = {
 export function KangurDailyQuestHighlightCardContent(
   props: KangurDailyQuestHighlightCardContentProps
 ): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const {
     action,
     chipLabelStyle = 'caps',
@@ -146,6 +148,16 @@ export function KangurDailyQuestHighlightCardContent(
     title,
     titleClassName,
   } = props;
+  const resolvedAction =
+    React.isValidElement<{ className?: string }>(action)
+      ? React.cloneElement(action, {
+          className: cn(
+            action.props.className,
+            isCoarsePointer &&
+              'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+          ),
+        })
+      : action;
 
   return (
     <KangurPanelRow className={cn('sm:items-start sm:justify-between', className)}>
@@ -170,7 +182,7 @@ export function KangurDailyQuestHighlightCardContent(
           titleClassName={titleClassName}
         />
       </div>
-      {action}
+      {resolvedAction}
     </KangurPanelRow>
   );
 }

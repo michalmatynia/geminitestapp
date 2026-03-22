@@ -88,7 +88,7 @@ const createMissingCredentialsError = (): Error =>
 const createMissingPersistedSessionError = (): Error =>
   createAuthAdapterError(
     KANGUR_MOBILE_AUTH_ERROR_CODES.missingPersistedSession,
-    'Learner sign-in did not produce a persisted mobile session. Check cookie/session support for the current device runtime.',
+    'Learner sign-in did not produce a persisted learner session. Check cookie/session support for the current device runtime.',
   );
 
 export const createLearnerSessionKangurAuthAdapter = ({

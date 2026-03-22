@@ -137,17 +137,17 @@ export const useKangurMobileLearnerProfile =
       isLoadingAuth,
       isLoadingScores: isLoadingAuth || scoresQuery.isLoading,
       recommendationsNote: copy({
-        de: 'Auf Mobile laufen bereits Lektionen, Arithmetiktraining und das erste Logikquiz. Ausgebautere grafische Modi bleiben vorerst informativ.',
-        en: 'Lessons, arithmetic practice, and the first logic quiz already work on mobile. More advanced graphical modes are still informational for now.',
-        pl: 'Na mobile działają już lekcje, trening arytmetyczny oraz pierwszy quiz logiczny. Bardziej rozbudowane tryby graficzne pozostają jeszcze informacyjne.',
+        de: 'Lektionen, Arithmetiktraining und das erste Logikquiz sind schon bereit. Ausgebautere grafische Modi erscheinen hier später.',
+        en: 'Lessons, arithmetic practice, and the first logic quiz are already ready. More advanced graphical modes will appear here later.',
+        pl: 'Lekcje, trening arytmetyczny i pierwszy quiz logiczny są już gotowe. Bardziej rozbudowane tryby graficzne pojawią się tu później.',
       }),
       refreshScores: scoresQuery.refresh,
       scoresError:
         scoresQuery.error instanceof Error
           ? copy({
-              de: 'Der Ergebnisverlauf konnte nicht geladen werden.',
-              en: 'Could not load the score history.',
-              pl: 'Nie udało się pobrać historii wyników.',
+              de: 'Die Ergebnisse konnten nicht geladen werden.',
+              en: 'Could not load the results.',
+              pl: 'Nie udało się pobrać wyników.',
             })
           : null,
       signIn,

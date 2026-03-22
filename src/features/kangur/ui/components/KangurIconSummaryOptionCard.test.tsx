@@ -5,6 +5,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
 
@@ -33,7 +37,7 @@ describe('KangurIconSummaryOptionCard', () => {
 
     const card = screen.getByTestId('summary-option-card');
 
-    expect(card).toHaveClass('soft-card', 'rounded-[28px]');
+    expect(card).toHaveClass('soft-card', 'rounded-[28px]', 'min-h-11', 'px-4');
     expect(screen.getByTestId('summary-option-icon')).toBeInTheDocument();
     expect(screen.getByText('Nagłówek')).toBeInTheDocument();
     expect(screen.getByText('Opis')).toBeInTheDocument();

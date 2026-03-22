@@ -850,9 +850,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             {isLoadingAuth && !isAuthenticated ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Die Schulersitzung wird wiederhergestellt. Sobald sie bereit ist, lädt der Plan synchronisierte Ergebnisse und Trainingshinweise.',
-                  en: 'Restoring the learner session. Once it is ready, the plan will load synchronized results and training guidance.',
-                  pl: 'Przywracamy sesję ucznia. Gdy będzie gotowa, plan pobierze zsynchronizowane wyniki i wskazówki treningowe.',
+                  de: 'Die Schulersitzung wird wiederhergestellt. Sobald sie bereit ist, lädt der Plan Ergebnisse und Trainingshinweise.',
+                  en: 'Restoring the learner session. Once it is ready, the plan will load results and training guidance.',
+                  pl: 'Przywracamy sesję ucznia. Gdy będzie gotowa, plan pobierze wyniki i wskazówki treningowe.',
                 })}
               </Text>
             ) : !isAuthenticated ? (
@@ -860,17 +860,17 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                 <View style={{ gap: 10 }}>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Melde den Schuler auf dem Startbildschirm an, um Ergebnisse, Trainingsfokus und synchronisierten Verlauf zu laden.',
-                      en: 'Sign in the learner on the home screen to load results, training focus, and synchronized history.',
-                      pl: 'Zaloguj ucznia na ekranie głównym, aby pobrać wyniki, fokus treningowy i zsynchronizowaną historię.',
+                      de: 'Melde eine Lernenden-Sitzung an, um Ergebnisse, Trainingsfokus und letzte Fortschritte zu laden.',
+                      en: 'Sign in the learner session to load results, training focus, and recent progress.',
+                      pl: 'Zaloguj sesję ucznia, aby pobrać wyniki, fokus treningowy i ostatnie postępy.',
                     })}
                   </Text>
                   <LinkButton
                     href='/'
                     label={copy({
-                      de: 'Anmeldebildschirm öffnen',
-                      en: 'Open auth screen',
-                      pl: 'Otwórz ekran logowania',
+                      de: 'Zum Login',
+                      en: 'Go to sign in',
+                      pl: 'Przejdź do logowania',
                     })}
                   />
                 </View>
@@ -933,9 +933,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             ) : !weakestFocus && !strongestFocus ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
                 {copy({
-                  de: 'Schließe eine synchronisierte Sitzung ab, um den ersten Trainingsfokus aufzubauen.',
-                  en: 'Complete one synchronized session to build the first training focus.',
-                  pl: 'Ukończ jedną zsynchronizowaną sesję, aby zbudować pierwszy fokus treningowy.',
+                  de: 'Schließe einen Lauf ab, um den ersten Trainingsfokus aufzubauen.',
+                  en: 'Finish one run to build the first training focus.',
+                  pl: 'Ukończ jedną serię, aby zbudować pierwszy fokus treningowy.',
                 })}
               </Text>
             ) : (
@@ -944,9 +944,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                   <FocusCard
                     accentColor='#b91c1c'
                     description={copy({
-                      de: 'Das ist aktuell der schwächste synchronisierte Modus. Starte mit einer kurzen gezielten Sitzung und kehre bei Bedarf zur passenden Lektion zurück.',
-                      en: 'This is currently the weakest synchronized mode. Start with a short targeted session and then return to the matching lesson if needed.',
-                      pl: 'To obecnie najsłabszy zsynchronizowany tryb. Zacznij od krótkiej sesji celowanej, a potem wróć do pasującej lekcji, jeśli będzie trzeba.',
+                      de: 'Das ist aktuell der schwächste Bereich in deinen Ergebnissen. Starte mit einer kurzen gezielten Serie und kehre bei Bedarf zur passenden Lektion zurück.',
+                      en: 'This is currently the weakest area in your results. Start with a short targeted run and then return to the matching lesson if needed.',
+                      pl: 'To obecnie najsłabszy obszar w Twoich wynikach. Zacznij od krótkiej celowanej serii, a potem wróć do pasującej lekcji, jeśli będzie trzeba.',
                     })}
                     historyHref={weakestFocus.historyHref}
                     lessonHref={weakestFocus.lessonHref}
@@ -1342,25 +1342,25 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
               </Text>
               <Text style={{ color: '#475569', lineHeight: 22 }}>
                 {copy({
-                  de: 'Wandle den Blick auf Fortschritt, Ergebnisse und Fokus direkt in die nächsten lokalen Schritte für heute um.',
-                  en: 'Turn progress, results, and focus into the next local actions for today right away.',
-                  pl: 'Zamień postęp, wyniki i fokus w kolejne lokalne kroki na dziś, bez gubienia rytmu nauki.',
+                  de: 'Wandle den Blick auf Fortschritt, Ergebnisse und Fokus direkt in die nächsten Schritte für heute um.',
+                  en: 'Turn progress, results, and focus into the next steps for today right away.',
+                  pl: 'Zamień postęp, wyniki i fokus w kolejne kroki na dziś, bez gubienia rytmu nauki.',
                 })}
               </Text>
             </View>
             <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
               {copy({
-                de: 'Lokale Aufgaben für heute',
-                en: 'Local tasks for today',
-                pl: 'Lokalne zadania na dziś',
+                de: 'Aufgaben für heute',
+                en: 'Tasks for today',
+                pl: 'Zadania na dziś',
               })}
             </Text>
             {dailyPlanAssignments.assignmentItems.length === 0 ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
                 {copy({
-                  de: 'Es gibt noch keine lokalen Aufgaben. Öffne Lektionen oder absolviere ein Training, um den ersten Plan der nächsten Schritte zu erzeugen.',
-                  en: 'There are no local tasks yet. Open lessons or complete more practice to build the first next-steps plan.',
-                  pl: 'Nie ma jeszcze lokalnych zadań. Otwórz lekcje albo wykonaj więcej treningów, aby zbudować pierwszy plan kolejnych kroków.',
+                  de: 'Es gibt noch keine Aufgaben. Öffne Lektionen oder absolviere ein Training, um den ersten Plan der nächsten Schritte zu erzeugen.',
+                  en: 'There are no tasks yet. Open lessons or complete more practice to build the first next-steps plan.',
+                  pl: 'Nie ma jeszcze zadań. Otwórz lekcje albo wykonaj więcej treningów, aby zbudować pierwszy plan kolejnych kroków.',
                 })}
               </Text>
             ) : (
@@ -1394,9 +1394,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
               </Text>
               <Text style={{ color: '#475569', lineHeight: 22 }}>
                 {copy({
-                  de: 'Verbinde lokale Lektionsstände direkt mit schnellen Wiederholungen und entscheide sofort, was heute Fokus und was nur Erhaltung ist.',
-                  en: 'Connect local lesson progress directly with quick review and decide right away what is today’s focus and what only needs maintenance.',
-                  pl: 'Połącz lokalne opanowanie lekcji z szybką powtórką i od razu zdecyduj, co jest dziś fokusem, a co wymaga tylko podtrzymania.',
+                  de: 'Verbinde den aktuellen Lektionsstand direkt mit schnellen Wiederholungen und entscheide sofort, was heute Fokus und was nur Erhaltung ist.',
+                  en: 'Connect the current lesson progress directly with quick review and decide right away what is today’s focus and what only needs maintenance.',
+                  pl: 'Połącz bieżące opanowanie lekcji z szybką powtórką i od razu zdecyduj, co jest dziś fokusem, a co wymaga tylko podtrzymania.',
                 })}
               </Text>
             </View>
@@ -1586,9 +1586,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             ) : !isAuthenticated ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
                 {copy({
-                  de: 'Melde die Schulersitzung an, um hier synchronisierte Ergebnisse zu sehen.',
-                  en: 'Sign in the learner session to see synchronized results here.',
-                  pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj zsynchronizowane wyniki.',
+                  de: 'Melde die Schulersitzung an, um hier Ergebnisse zu sehen.',
+                  en: 'Sign in the learner session to see results here.',
+                  pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wyniki.',
                 })}
               </Text>
             ) : scoreError ? (
@@ -1596,9 +1596,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             ) : recentResultItems.length === 0 ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
                 {copy({
-                  de: 'Es gibt noch keine synchronisierten Ergebnisse. Schließe eine Sitzung ab, um diesen Bereich zu füllen.',
-                  en: 'There are no synchronized results yet. Complete one session to fill this section.',
-                  pl: 'Brak jeszcze zsynchronizowanych wyników. Ukończ jedną sesję, aby wypełnić tę sekcję.',
+                  de: 'Es gibt hier noch keine Ergebnisse. Schließe einen Lauf ab, um diesen Bereich zu füllen.',
+                  en: 'There are no results here yet. Finish one run to fill this section.',
+                  pl: 'Nie ma tu jeszcze wyników. Ukończ jedną serię, aby wypełnić tę sekcję.',
                 })}
               </Text>
             ) : (

@@ -144,7 +144,7 @@ describe('KangurDailyPlanScreen', () => {
     expect(screen.getAllByText('Otwórz pojedynki').length).toBeGreaterThanOrEqual(1);
     expect(
       screen.getByText(
-        'Przywracamy sesję ucznia. Gdy będzie gotowa, plan pobierze zsynchronizowane wyniki i wskazówki treningowe.',
+        'Przywracamy sesję ucznia. Gdy będzie gotowa, plan pobierze wyniki i wskazówki treningowe.',
       ),
     ).toBeTruthy();
     expect(screen.getByText('Ładujemy fokus oparty na wynikach...')).toBeTruthy();
@@ -183,6 +183,12 @@ describe('KangurDailyPlanScreen', () => {
 
     render(<KangurDailyPlanScreen />);
 
+    expect(screen.getByText('Ukończ jedną serię, aby zbudować pierwszy fokus treningowy.')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Nie ma tu jeszcze wyników. Ukończ jedną serię, aby wypełnić tę sekcję.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('Szybki powrót do rywali')).toBeTruthy();
     expect(screen.getByText('Rywale 0')).toBeTruthy();
     expect(screen.getByText('Czeka na widoczność')).toBeTruthy();
@@ -203,6 +209,12 @@ describe('KangurDailyPlanScreen', () => {
   it('shows signed-out duel guidance without mobile-overview wording', () => {
     render(<KangurDailyPlanScreen />);
 
+    expect(
+      screen.getByText(
+        'Zaloguj sesję ucznia, aby pobrać wyniki, fokus treningowy i ostatnie postępy.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText('Zaloguj sesję ucznia, aby zobaczyć tutaj wyniki.')).toBeTruthy();
     expect(screen.getByText('Szybki powrót do rywali')).toBeTruthy();
     expect(
       screen.getByText(
@@ -435,7 +447,7 @@ describe('KangurDailyPlanScreen', () => {
     expect(screen.getByText('Najmocniejszy tryb')).toBeTruthy();
     expect(screen.getByText('Na dziś')).toBeTruthy();
     expect(screen.getByText('Plan działań na dziś')).toBeTruthy();
-    expect(screen.getByText('Lokalne zadania na dziś')).toBeTruthy();
+    expect(screen.getByText('Zadania na dziś')).toBeTruthy();
     expect(screen.getByText('Powtórka dodawania')).toBeTruthy();
     expect(screen.getByText('Centrum wyników')).toBeTruthy();
     expect(screen.getByText('Otwórz pełną historię')).toBeTruthy();

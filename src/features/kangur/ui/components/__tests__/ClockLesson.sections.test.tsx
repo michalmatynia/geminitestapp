@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render } from '../../../../../../__tests__/test-utils';
 import { describe, it, vi } from 'vitest';
 import React from 'react';
 

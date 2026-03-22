@@ -104,9 +104,9 @@ const toQueryErrorMessage = (
 
     if (status === 401) {
       return copy({
-        de: 'Melde eine Lernenden-Sitzung an, um diese Ansicht zu nutzen.',
-        en: 'Sign in the learner session to use this view.',
-        pl: 'Zaloguj sesję ucznia, aby korzystać z tego widoku.',
+        de: 'Melde dich an, um Duelle zu öffnen.',
+        en: 'Sign in to open duels.',
+        pl: 'Zaloguj się, aby otworzyć pojedynki.',
       });
     }
   }
@@ -122,11 +122,7 @@ const toQueryErrorMessage = (
 
   const normalized = message.toLowerCase();
   if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
-    return copy({
-      de: 'Die Verbindung zur Kangur-API konnte nicht hergestellt werden.',
-      en: 'Could not connect to the Kangur API.',
-      pl: 'Nie udało się połączyć z API Kangura.',
-    });
+    return fallback;
   }
 
   return message;

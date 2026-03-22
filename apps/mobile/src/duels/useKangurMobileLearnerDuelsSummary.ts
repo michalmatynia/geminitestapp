@@ -49,9 +49,9 @@ const toDuelsSummaryErrorMessage = (
 
     if (status === 401) {
       return copy({
-        de: 'Melde eine Lernenden-Sitzung an, um Duellstatistiken zu laden.',
-        en: 'Sign in the learner session to load duel stats.',
-        pl: 'Zaloguj sesję ucznia, aby pobrać statystyki pojedynków.',
+        de: 'Melde dich an, um Duellstatistiken zu laden.',
+        en: 'Sign in to load duel stats.',
+        pl: 'Zaloguj się, aby pobrać statystyki pojedynków.',
       });
     }
   }
@@ -76,9 +76,9 @@ const toDuelsSummaryErrorMessage = (
   const normalized = message.toLowerCase();
   if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
     return copy({
-      de: 'Die Verbindung zur Kangur-API konnte nicht hergestellt werden.',
-      en: 'Could not connect to the Kangur API.',
-      pl: 'Nie udało się połączyć z API Kangura.',
+      de: 'Die Duellstatistiken konnten nicht geladen werden.',
+      en: 'Could not load duel stats.',
+      pl: 'Nie udało się pobrać statystyk pojedynków.',
     });
   }
 
@@ -94,9 +94,9 @@ const toDuelsSummaryActionErrorMessage = (
 
     if (status === 401) {
       return copy({
-        de: 'Melde eine Lernenden-Sitzung an, um ein privates Rückspiel zu senden.',
-        en: 'Sign in the learner session to send a private rematch.',
-        pl: 'Zaloguj sesję ucznia, aby wysłać prywatny rewanż.',
+        de: 'Melde dich an, um ein privates Rückspiel zu senden.',
+        en: 'Sign in to send a private rematch.',
+        pl: 'Zaloguj się, aby wysłać prywatny rewanż.',
       });
     }
   }
@@ -121,9 +121,9 @@ const toDuelsSummaryActionErrorMessage = (
   const normalized = message.toLowerCase();
   if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
     return copy({
-      de: 'Die Verbindung zur Kangur-API konnte nicht hergestellt werden.',
-      en: 'Could not connect to the Kangur API.',
-      pl: 'Nie udało się połączyć z API Kangura.',
+      de: 'Das private Rückspiel konnte nicht erstellt werden.',
+      en: 'Could not create the private rematch.',
+      pl: 'Nie udało się utworzyć prywatnego rewanżu.',
     });
   }
 

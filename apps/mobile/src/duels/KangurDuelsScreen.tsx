@@ -2301,14 +2301,14 @@ export function KangurDuelsScreen(): React.JSX.Element {
             <Card>
               <MessageCard
                 title={copy({
-                  de: 'Lernenden-Sitzung anmelden',
-                  en: 'Sign in the learner session',
-                  pl: 'Zaloguj sesję ucznia',
+                  de: 'Anmelden, um die Einladung anzunehmen',
+                  en: 'Sign in to accept the invite',
+                  pl: 'Zaloguj się, aby przyjąć zaproszenie',
                 })}
                 description={copy({
-                  de: 'Eine private Duell-Einladung erfordert eine aktive Lernenden-Sitzung.',
-                  en: 'A private duel invite requires an active learner session.',
-                  pl: 'Prywatne zaproszenie do pojedynku wymaga aktywnej sesji ucznia.',
+                  de: 'Melde dich an, dann kannst du diese private Duell-Einladung annehmen.',
+                  en: 'Sign in first to accept this private duel invite.',
+                  pl: 'Zaloguj się, aby przyjąć to prywatne zaproszenie do pojedynku.',
                 })}
               />
               {createLoginCallToAction(
@@ -2384,9 +2384,9 @@ export function KangurDuelsScreen(): React.JSX.Element {
                   pl: 'Przygotowujemy sesję',
                 })}
                 description={copy({
-                  de: 'Wenn der Link korrekt ist, öffnet sich gleich der Duellbildschirm.',
-                  en: 'If the link is correct, the duel screen will open shortly.',
-                  pl: 'Jeśli link jest poprawny, za chwilę otworzy się ekran pojedynku.',
+                  de: 'Wenn der Link korrekt ist, öffnet sich gleich das Duell.',
+                  en: 'If the link is correct, the duel will open shortly.',
+                  pl: 'Jeśli link jest poprawny, pojedynek otworzy się za chwilę.',
                 })}
               />
             </Card>
@@ -2420,9 +2420,9 @@ export function KangurDuelsScreen(): React.JSX.Element {
               title={
                 duel.isSpectating
                   ? copy({
-                      de: 'Duellansicht',
-                      en: 'Duel view',
-                      pl: 'Podgląd pojedynku',
+                      de: 'Öffentliches Duell',
+                      en: 'Public duel',
+                      pl: 'Publiczny pojedynek',
                     })
                   : copy({
                       de: 'Duell',
@@ -2433,9 +2433,9 @@ export function KangurDuelsScreen(): React.JSX.Element {
               subtitle={
                 duel.isSpectating
                   ? copy({
-                      de: 'Der Zuschauermodus zeigt den öffentlichen Duellstatus und Reaktionen, ohne dem Match als Spieler beizutreten.',
-                      en: 'Spectator mode shows the public duel state and reactions without joining the match as a player.',
-                      pl: 'Tryb obserwatora pokazuje publiczny stan pojedynku i reakcje bez dołączania do meczu jako gracz.',
+                      de: 'Im Zuschauermodus verfolgst du das öffentliche Duell und die Reaktionen, ohne als Spieler beizutreten.',
+                      en: 'In spectator mode, you follow the public duel and reactions without joining as a player.',
+                      pl: 'W trybie obserwatora śledzisz publiczny pojedynek i reakcje bez dołączania jako gracz.',
                     })
                   : copy({
                       de: 'Hier kannst du im Warteraum bleiben, den Spielfortschritt verfolgen und den Rundenstatus prüfen, ohne das Duell zu verlassen.',
@@ -2450,14 +2450,14 @@ export function KangurDuelsScreen(): React.JSX.Element {
             <Card>
               <MessageCard
                 title={copy({
-                  de: 'Lernenden-Sitzung anmelden',
-                  en: 'Sign in the learner session',
-                  pl: 'Zaloguj sesję ucznia',
+                  de: 'Anmelden, um dieses Duell zu öffnen',
+                  en: 'Sign in to open this duel',
+                  pl: 'Zaloguj się, aby otworzyć ten pojedynek',
                 })}
                 description={copy({
-                  de: 'Um dieses konkrete Duell zu öffnen, ist eine aktive Lernenden-Sitzung erforderlich.',
-                  en: 'An active learner session is required to open this duel.',
-                  pl: 'Do otwarcia konkretnego pojedynku potrzebna jest aktywna sesja ucznia.',
+                  de: 'Melde dich zuerst an, dann kannst du dieses Duell öffnen.',
+                  en: 'Sign in first to open this duel.',
+                  pl: 'Najpierw się zaloguj, aby otworzyć ten pojedynek.',
                 })}
               />
               {createLoginCallToAction(
@@ -2474,9 +2474,9 @@ export function KangurDuelsScreen(): React.JSX.Element {
                 title={
                   duel.isSpectating
                     ? copy({
-                        de: 'Duellansicht wird geladen',
-                        en: 'Loading duel view',
-                        pl: 'Ładujemy podgląd pojedynku',
+                        de: 'Öffentliches Duell wird geladen',
+                        en: 'Loading public duel',
+                        pl: 'Ładujemy publiczny pojedynek',
                       })
                     : copy({
                         de: 'Duell wird geladen',
@@ -2487,9 +2487,9 @@ export function KangurDuelsScreen(): React.JSX.Element {
                 description={
                   duel.isRestoringAuth
                     ? copy({
-                        de: 'Die Lernenden-Sitzung und der Status des aktiven Duells werden wiederhergestellt.',
-                        en: 'Restoring the learner session and the active duel state.',
-                        pl: 'Przywracamy sesję ucznia i stan aktywnego pojedynku.',
+                        de: 'Die Anmeldung wird wiederhergestellt und das aktive Duell geladen.',
+                        en: 'Restoring sign-in and loading the active duel.',
+                        pl: 'Przywracamy logowanie i pobieramy aktywny pojedynek.',
                       })
                     : duel.isSpectating
                       ? copy({
@@ -2511,9 +2511,9 @@ export function KangurDuelsScreen(): React.JSX.Element {
                 title={
                   duel.isSpectating
                     ? copy({
-                        de: 'Duellansicht konnte nicht geöffnet werden',
-                        en: 'Could not open the duel view',
-                        pl: 'Nie udało się otworzyć podglądu pojedynku',
+                        de: 'Öffentliches Duell konnte nicht geöffnet werden',
+                        en: 'Could not open the public duel',
+                        pl: 'Nie udało się otworzyć publicznego pojedynku',
                       })
                     : copy({
                         de: 'Duell konnte nicht geöffnet werden',
@@ -2525,9 +2525,9 @@ export function KangurDuelsScreen(): React.JSX.Element {
                   duel.error ??
                   (duel.isSpectating
                     ? copy({
-                        de: 'Es fehlen Daten für die öffentliche Ansicht. Kehre zur Lobby zurück und versuche es erneut.',
-                        en: 'The public view data is missing. Go back to the lobby and try again.',
-                        pl: 'Brakuje danych publicznego podglądu. Wróć do lobby i spróbuj jeszcze raz.',
+                        de: 'Es fehlen öffentliche Duelldaten. Kehre zur Lobby zurück und versuche es erneut.',
+                        en: 'Public duel details are missing. Go back to the lobby and try again.',
+                        pl: 'Brakuje danych publicznego pojedynku. Wróć do lobby i spróbuj jeszcze raz.',
                       })
                     : copy({
                         de: 'Es fehlen Duelldaten. Kehre zur Lobby zurück und versuche es erneut.',
@@ -2705,14 +2705,14 @@ export function KangurDuelsScreen(): React.JSX.Element {
                     description={
                       duel.isAuthenticated
                         ? copy({
-                            de: 'Du beobachtest den öffentlichen Duellstatus. Du kannst Reaktionen senden, beantwortest aber keine Fragen.',
-                            en: 'You are watching the public duel state. You can send reactions, but you do not answer questions.',
-                            pl: 'Obserwujesz publiczny stan pojedynku. Możesz wysyłać reakcje, ale nie odpowiadasz na pytania.',
+                            de: 'Du beobachtest das öffentliche Duell. Du kannst Reaktionen senden, beantwortest aber keine Fragen.',
+                            en: 'You are watching the public duel. You can send reactions, but you do not answer questions.',
+                            pl: 'Obserwujesz publiczny pojedynek. Możesz wysyłać reakcje, ale nie odpowiadasz na pytania.',
                           })
                         : copy({
-                            de: 'Du beobachtest den öffentlichen Duellstatus. Melde eine Lernenden-Sitzung an, wenn du Reaktionen senden möchtest.',
-                            en: 'You are watching the public duel state. Sign in the learner session if you want to send reactions.',
-                            pl: 'Obserwujesz publiczny stan pojedynku. Zaloguj sesję ucznia, jeśli chcesz wysyłać reakcje.',
+                            de: 'Du beobachtest das öffentliche Duell. Melde dich an, wenn du Reaktionen senden möchtest.',
+                            en: 'You are watching the public duel. Sign in if you want to send reactions.',
+                            pl: 'Obserwujesz publiczny pojedynek. Zaloguj się, jeśli chcesz wysyłać reakcje.',
                           })
                     }
                   />
@@ -2823,9 +2823,9 @@ export function KangurDuelsScreen(): React.JSX.Element {
                 {duel.session.status === 'completed' || duel.session.status === 'aborted' ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Die Sitzung ist beendet, aber die letzten Reaktionen bleiben in der Duellhistorie sichtbar.',
-                      en: 'The session is finished, but the latest reactions remain visible in the duel history.',
-                      pl: 'Sesja jest zakończona, ale ostatnie reakcje zostają widoczne w historii pojedynku.',
+                      de: 'Die Sitzung ist beendet, aber die letzten Reaktionen bleiben weiter unten sichtbar.',
+                      en: 'The session is finished, but the latest reactions remain visible below.',
+                      pl: 'Sesja jest zakończona, ale ostatnie reakcje nadal widać poniżej.',
                     })}
                   </Text>
                 ) : !duel.isAuthenticated ? (
@@ -2940,14 +2940,14 @@ export function KangurDuelsScreen(): React.JSX.Element {
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {duel.isSpectating
                       ? copy({
-                          de: 'Du beobachtest die Wartephase. Sobald die benötigten Spieler beigetreten sind, wechselt die Ansicht automatisch zur aktiven Runde.',
-                          en: 'You are watching the waiting phase. Once the required players join, the view will switch automatically to the active round.',
-                          pl: 'Obserwujesz etap oczekiwania. Gdy wymagani gracze dołączą, podgląd przełączy się automatycznie do aktywnej rundy.',
+                          de: 'Du beobachtest die Wartephase. Sobald die benötigten Spieler beigetreten sind, beginnt die aktive Runde automatisch.',
+                          en: 'You are watching the waiting phase. Once the required players join, the active round will begin automatically.',
+                          pl: 'Obserwujesz etap oczekiwania. Gdy wymagani gracze dołączą, aktywna runda zacznie się automatycznie.',
                         })
                       : copy({
-                          de: 'Wir warten, bis alle Spieler beitreten und das Backend die Sitzung in die aktive Runde umschaltet. Wenn die zweite Person in der Lobby erscheint, aktualisiert sich der Bildschirm automatisch.',
-                          en: 'Waiting for all players to join so the backend can switch the session to the active round. When the second player appears in the lobby, the screen will refresh automatically.',
-                          pl: 'Czekamy, aż wszyscy gracze dołączą i backend przełączy sesję do aktywnej rundy. Gdy druga osoba pojawi się w lobby, ekran odświeży się automatycznie.',
+                          de: 'Wir warten, bis alle Spieler beitreten. Wenn die zweite Person in der Lobby erscheint, startet das Duell automatisch.',
+                          en: 'Waiting for all players to join. When the second player appears in the lobby, the duel will start automatically.',
+                          pl: 'Czekamy, aż wszyscy gracze dołączą. Gdy druga osoba pojawi się w lobby, pojedynek wystartuje automatycznie.',
                         })}
                   </Text>
                   <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
@@ -2966,9 +2966,9 @@ export function KangurDuelsScreen(): React.JSX.Element {
                           pl: 'Udostępnij zaproszenie',
                         })}
                         description={copy({
-                          de: `Sende ${inviteeName} einen direkten Link, um das private Duell auf dem Handy zu öffnen, ohne in der Lobby zu suchen.`,
-                          en: `Send a direct link to ${inviteeName} to open the private duel on mobile without searching in the lobby.`,
-                          pl: `Wyślij bezpośredni link do ${inviteeName}, aby otworzyć prywatny pojedynek na telefonie bez szukania go w lobby.`,
+                          de: `Sende ${inviteeName} einen direkten Link, damit das private Duell sofort ohne Suche in der Lobby geöffnet werden kann.`,
+                          en: `Send a direct link to ${inviteeName} so the private duel opens right away without searching in the lobby.`,
+                          pl: `Wyślij bezpośredni link do ${inviteeName}, aby prywatny pojedynek otworzył się od razu bez szukania go w lobby.`,
                         })}
                       />
                       <ActionButton
@@ -3002,9 +3002,9 @@ export function KangurDuelsScreen(): React.JSX.Element {
                   <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
                     {duel.isSpectating
                       ? copy({
-                          de: 'Fragenansicht',
-                          en: 'Question view',
-                          pl: 'Podgląd pytania',
+                          de: 'Aktuelle Frage',
+                          en: 'Current question',
+                          pl: 'Aktualne pytanie',
                         })
                       : copy({
                           de: 'Aktuelle Frage',
@@ -3134,9 +3134,9 @@ export function KangurDuelsScreen(): React.JSX.Element {
                       label={
                         duel.isSpectating
                           ? copy({
-                              de: 'Duellansicht aktualisieren',
-                              en: 'Refresh duel view',
-                              pl: 'Odśwież podgląd pojedynku',
+                              de: 'Öffentliches Duell aktualisieren',
+                              en: 'Refresh public duel',
+                              pl: 'Odśwież publiczny pojedynek',
                             })
                           : copy({
                               de: 'Duellstatus aktualisieren',
@@ -3228,14 +3228,14 @@ export function KangurDuelsScreen(): React.JSX.Element {
           <Card>
             <MessageCard
               title={copy({
-                de: 'Lernenden-Sitzung anmelden',
-                en: 'Sign in the learner session',
-                pl: 'Zaloguj sesję ucznia',
+                de: 'Anmelden, um Duelle zu spielen',
+                en: 'Sign in to duel',
+                pl: 'Zaloguj się, aby grać w pojedynki',
               })}
               description={copy({
-                de: 'Gäste können die öffentliche Lobby und Rangliste ansehen. Zum Erstellen oder Beitreten von Duellen ist eine aktive Lernenden-Sitzung nötig.',
-                en: 'Guests can browse the public lobby and leaderboard. Creating or joining duels requires an active learner session.',
-                pl: 'Goście mogą przeglądać publiczne lobby i ranking. Do tworzenia lub dołączania do pojedynków potrzebna jest aktywna sesja ucznia.',
+                de: 'Gäste können die öffentliche Lobby und Rangliste ansehen. Melde dich an, um Duelle zu erstellen oder ihnen beizutreten.',
+                en: 'Guests can browse the public lobby and leaderboard. Sign in to create or join duels.',
+                pl: 'Goście mogą przeglądać publiczne lobby i ranking. Zaloguj się, aby tworzyć pojedynki lub do nich dołączać.',
               })}
             />
             {createLoginCallToAction(
@@ -3476,9 +3476,9 @@ export function KangurDuelsScreen(): React.JSX.Element {
               description={
                 lobby.isRestoringAuth
                   ? copy({
-                      de: 'Die Lernenden-Sitzung wird wiederhergestellt und verfügbare Duelle werden geladen.',
-                      en: 'Restoring the learner session and loading available duels.',
-                      pl: 'Przywracamy sesję ucznia i pobieramy dostępne pojedynki.',
+                      de: 'Die Anmeldung wird wiederhergestellt und verfügbare Duelle werden geladen.',
+                      en: 'Restoring sign-in and loading available duels.',
+                      pl: 'Przywracamy logowanie i pobieramy dostępne pojedynki.',
                     })
                   : copy({
                       de: 'Verfügbare öffentliche und private Räume werden geladen.',
@@ -3606,14 +3606,14 @@ export function KangurDuelsScreen(): React.JSX.Element {
           {!chat.isAuthenticated ? (
             <MessageCard
               title={copy({
-                de: 'Lobby-Chat erfordert Anmeldung',
-                en: 'Lobby chat requires sign-in',
-                pl: 'Czat lobby wymaga logowania',
+                de: 'Zum Lobby-Chat anmelden',
+                en: 'Sign in for lobby chat',
+                pl: 'Zaloguj się do czatu lobby',
               })}
               description={copy({
-                de: 'Ein angemeldeter Lernender kann kurze Nachrichten an andere Personen in der Lobby lesen und senden.',
-                en: 'A signed-in learner can read and send short messages to other people in the lobby.',
-                pl: 'Zalogowany uczeń może czytać i wysyłać krótkie wiadomości do innych osób w lobby.',
+                de: 'Nach der Anmeldung kannst du kurze Nachrichten lesen und senden, um szybki mecz albo rewanż ustalić.',
+                en: 'After sign-in, you can read and send short messages to set up a quick match or rematch.',
+                pl: 'Po zalogowaniu możesz czytać i wysyłać krótkie wiadomości, aby ustalić szybki mecz albo rewanż.',
               })}
             />
           ) : chat.error ? (
@@ -3636,9 +3636,9 @@ export function KangurDuelsScreen(): React.JSX.Element {
               description={
                 chat.isRestoringAuth
                   ? copy({
-                      de: 'Die Lernenden-Sitzung wird wiederhergestellt und die letzten Nachrichten werden geladen.',
-                      en: 'Restoring the learner session and loading the latest messages.',
-                      pl: 'Przywracamy sesję ucznia i pobieramy ostatnie wiadomości.',
+                      de: 'Die Anmeldung wird wiederhergestellt und die letzten Nachrichten werden geladen.',
+                      en: 'Restoring sign-in and loading the latest messages.',
+                      pl: 'Przywracamy logowanie i pobieramy ostatnie wiadomości.',
                     })
                   : copy({
                       de: 'Die aktuellen Nachrichten aus der Lobby werden geladen.',
@@ -3777,14 +3777,14 @@ export function KangurDuelsScreen(): React.JSX.Element {
           {!lobby.isAuthenticated ? (
             <MessageCard
               title={copy({
-                de: 'Liste aktiver Lernender erfordert Anmeldung',
-                en: 'Active learners list requires sign-in',
-                pl: 'Lista aktywnych uczniów wymaga logowania',
+                de: 'Zum aktiven Lobby-Feed anmelden',
+                en: 'Sign in to see active learners',
+                pl: 'Zaloguj się, aby zobaczyć aktywnych uczniów',
               })}
               description={copy({
-                de: 'Nach der Anmeldung wirst du auch in der Lobby sichtbar und kannst dort schneller zu aktiven Rivalen zurückkehren.',
-                en: 'After sign-in, you will also become visible in the lobby and can return to active rivals faster there.',
-                pl: 'Po zalogowaniu będziesz też widoczny w lobby i szybciej wrócisz tam do aktywnych rywali.',
+                de: 'Nach der Anmeldung wirst du auch in der Lobby sichtbar und kannst schneller zu aktiven Rivalen zurückkehren.',
+                en: 'After sign-in, you will also become visible in the lobby and can return to active rivals faster.',
+                pl: 'Po zalogowaniu będziesz też widoczny w lobby i szybciej wrócisz do aktywnych rywali.',
               })}
             />
           ) : lobby.presenceError ? (
@@ -3868,14 +3868,14 @@ export function KangurDuelsScreen(): React.JSX.Element {
           {!lobby.isAuthenticated ? (
             <MessageCard
               title={copy({
-                de: 'Suche erfordert Anmeldung',
-                en: 'Search requires sign-in',
-                pl: 'Wyszukiwanie wymaga logowania',
+                de: 'Zum Suchen anmelden',
+                en: 'Sign in to search learners',
+                pl: 'Zaloguj się, aby szukać uczniów',
               })}
               description={copy({
-                de: 'Nach der Anmeldung kannst du über den Login eines Lernenden eine private Herausforderung senden.',
-                en: 'After signing in, you can send a private challenge using a learner login.',
-                pl: 'Po zalogowaniu możesz wysłać prywatne wyzwanie po loginie ucznia.',
+                de: 'Nach der Anmeldung znajdziesz ucznia po loginie lub nazwie i od razu wyślesz prywatne wyzwanie.',
+                en: 'After sign-in, you can find a learner by login or name and send a private challenge right away.',
+                pl: 'Po zalogowaniu znajdziesz ucznia po loginie lub nazwie i od razu wyślesz prywatne wyzwanie.',
               })}
             />
           ) : (
@@ -4051,14 +4051,14 @@ export function KangurDuelsScreen(): React.JSX.Element {
           {!lobby.isAuthenticated ? (
             <MessageCard
               title={copy({
-                de: 'Gegnerverlauf erfordert Anmeldung',
-                en: 'Opponent history requires sign-in',
-                pl: 'Historia przeciwników wymaga logowania',
+                de: 'Letzte Rivalen erfordern Anmeldung',
+                en: 'Recent rivals require sign-in',
+                pl: 'Ostatni rywale wymagają logowania',
               })}
               description={copy({
-                de: 'Nach der Anmeldung erscheint hier eine Abkürzung, um die letzten Rivalen erneut herauszufordern.',
-                en: 'After signing in, a shortcut to challenge recent rivals again will appear here.',
-                pl: 'Po zalogowaniu pojawi się tutaj skrót do ponownego wyzwania ostatnich rywali.',
+                de: 'Nach der Anmeldung erscheinen hier die letzten Rivalen und schnelle Rückkämpfe.',
+                en: 'After signing in, recent rivals and quick rematches will appear here.',
+                pl: 'Po zalogowaniu pojawią się tutaj ostatni rywale i szybkie rewanże.',
               })}
             />
           ) : lobby.isOpponentsLoading ? (
@@ -4069,22 +4069,22 @@ export function KangurDuelsScreen(): React.JSX.Element {
                 pl: 'Ładujemy listę przeciwników',
               })}
               description={copy({
-                de: 'Die letzten Kontakte aus der Duellhistorie werden geladen.',
-                en: 'Loading recent contacts from the duel history.',
-                pl: 'Pobieramy ostatnie kontakty z historii pojedynków.',
+                de: 'Die letzten Rivalen aus wcześniejszych Duellen werden geladen.',
+                en: 'Loading recent rivals from earlier duels.',
+                pl: 'Pobieramy ostatnich rywali z wcześniejszych pojedynków.',
               })}
             />
           ) : lobby.opponents.length === 0 ? (
             <MessageCard
               title={copy({
-                de: 'Keine gespeicherten Gegner',
-                en: 'No saved opponents',
-                pl: 'Brak zapisanych przeciwników',
+                de: 'Noch keine letzten Rivalen',
+                en: 'No recent rivals yet',
+                pl: 'Brak jeszcze ostatnich rywali',
               })}
               description={copy({
-                de: 'Das Backend hat für diesen Lernenden noch keinen Gegnerverlauf zurückgegeben.',
-                en: 'The backend has not returned any opponent history for this learner yet.',
-                pl: 'Backend nie zwrócił jeszcze historii przeciwników dla tego ucznia.',
+                de: 'Beende das erste Duell, damit sich diese Liste automatisch füllt.',
+                en: 'Finish the first duel and this list will fill automatically.',
+                pl: 'Rozegraj pierwszy pojedynek, aby ta lista wypełniła się automatycznie.',
               })}
             />
           ) : (

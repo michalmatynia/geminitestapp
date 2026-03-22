@@ -13,6 +13,7 @@ import {
   KangurSurfacePanel,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_WRAP_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurLessonActivityBlock as KangurLessonActivityBlockType } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';
 
@@ -87,6 +88,7 @@ export function KangurLessonActivityBlock(
   props: KangurLessonActivityBlockProps
 ): React.JSX.Element {
   const { block, renderMode = 'lesson' } = props;
+  const isCoarsePointer = useKangurCoarsePointer();
   const definition = getKangurLessonActivityDefinition(block.activityId);
   const [instanceKey, setInstanceKey] = React.useState(0);
   const [isCompleted, setIsCompleted] = React.useState(false);
@@ -146,7 +148,11 @@ export function KangurLessonActivityBlock(
             type='button'
             size='sm'
             variant='surface'
-            className='mt-4'
+            className={
+              isCoarsePointer
+                ? 'mt-4 min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
+                : 'mt-4'
+            }
             onClick={(): void => {
               setIsCompleted(false);
               setInstanceKey((current) => current + 1);

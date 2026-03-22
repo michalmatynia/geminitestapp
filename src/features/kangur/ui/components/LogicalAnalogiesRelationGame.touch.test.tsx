@@ -72,6 +72,11 @@ describe('LogicalAnalogiesRelationGame touch interactions', () => {
       'Tap a relation, then tap a pair to assign it.'
     );
 
+    const relationIcon = screen.getByRole('button', { name: 'opposite' });
+    expect(relationIcon).toHaveClass('h-11');
+    expect(relationIcon).toHaveClass('w-11');
+    expect(relationIcon).toHaveClass('touch-manipulation');
+
     const pool = screen.getByTestId('logical-analogies-pool');
     const token = within(pool).getByRole('listitem', { name: 'Relation: opposite' });
     expect(token).toHaveClass('touch-manipulation');

@@ -34,6 +34,7 @@ export const buildAccessibilityBrokerLeaseRequest = ({
   rootDir,
   appId = 'web',
   context,
+  preserveManagedDistDir = false,
 }) => ({
   rootDir,
   appId,
@@ -41,4 +42,5 @@ export const buildAccessibilityBrokerLeaseRequest = ({
   agentId: context.agentId,
   host: context.host,
   env: context.runtimeEnv,
+  preserveManagedDistDir,
 });

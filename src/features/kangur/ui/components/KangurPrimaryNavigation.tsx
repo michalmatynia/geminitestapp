@@ -325,6 +325,10 @@ export function KangurPrimaryNavigation({
   }, [isMobile]);
 
   useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [currentPage]);
+
+  useEffect(() => {
     if (!isMobileMenuOpen || typeof document === 'undefined') return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -906,7 +910,7 @@ export function KangurPrimaryNavigation({
     >
       <button
         type='button'
-        className='absolute inset-0 cursor-pointer border-0 bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.4)_0%,rgba(15,23,42,0.72)_100%)] p-0'
+        className='absolute inset-0 cursor-pointer border-0 bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.4)_0%,rgba(15,23,42,0.72)_100%)] p-0 touch-manipulation active:opacity-95'
         onClick={closeMobileMenu}
         aria-label='Close navigation menu'
         tabIndex={-1}

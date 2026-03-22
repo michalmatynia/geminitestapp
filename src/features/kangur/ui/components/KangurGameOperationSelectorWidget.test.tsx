@@ -92,6 +92,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   },
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 vi.mock('@/features/kangur/ui/services/daily-quests', () => ({
   getCurrentKangurDailyQuest: getCurrentKangurDailyQuestMock,
 }));
@@ -275,6 +279,11 @@ describe('KangurGameOperationSelectorWidget', () => {
         recommendedLabel: 'Misja dnia',
         recommendedOperation: 'division',
       })
+    );
+    expect(screen.getByTestId('kangur-operation-recommendation-action')).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
 
     fireEvent.click(screen.getByTestId('kangur-operation-recommendation-action'));

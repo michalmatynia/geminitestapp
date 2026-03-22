@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '../../../../../../__tests__/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { persistTutorVisibilityHidden } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
@@ -14,6 +14,9 @@ import type {
   ReactNode,
   SVGProps,
 } from 'react';
+import { createContext } from 'react';
+
+const GUIDED_SELECTION_SETTLE_MS = 1_000;
 
 const {
   settingsStoreMock,
@@ -164,10 +167,20 @@ vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useKangurAiTutor: useKangurAiTutorMock,
   useOptionalKangurAiTutor: useKangurAiTutorMock,
+  KangurAiTutorActivationContext: createContext(null),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
-  useKangurAiTutorContent: () => DEFAULT_KANGUR_AI_TUTOR_CONTENT, useActivateKangurAiTutorContent: vi.fn(),
+  useKangurAiTutorContent: () => DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+  useActivateKangurAiTutorContent: vi.fn(),
+}));
+
+
+vi.mock('@/features/kangur/ui/context/KangurAiTutorRuntime.hook', () => ({
+  useKangurAiTutorRuntime: () => ({
+    value: useKangurAiTutorMock(),
+    sessionRegistryValue: { setRegistration: vi.fn() },
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
@@ -190,14 +203,19 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useOptionalKangurRouting: useOptionalKangurRoutingMock,
 }));
 
+vi.mock('@/shared/hooks/useAgentPersonaVisuals', () => ({
+  useAgentPersonaVisuals: () => ({
+    data: [],
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () => ({
-  buildKangurRecommendationHref: (
-    basePath: string,
-    action: {
-      page: 'Game' | 'Lessons' | 'ParentDashboard' | 'LearnerProfile';
-      query?: Record<string, string>;
-    }
-  ) => {
+  buildKangurRecommendationHref: (basePath: string, action: {
+    page: 'Game' | 'Lessons' | 'ParentDashboard' | 'LearnerProfile';
+    query?: Record<string, string>;
+  }) => {
     const pageSlug = action.page === 'Lessons' ? 'lessons' : action.page.toLowerCase();
     const params = action.query ? new URLSearchParams(action.query).toString() : '';
     return `${basePath}/${pageSlug}${params ? `?${params}` : ''}`;
@@ -208,23 +226,25 @@ vi.mock('next/link', () => ({
   default: ({
     href,
     children,
-    scroll: _scroll,
     ...props
-  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; scroll?: boolean }) => (
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
     <a href={href} {...props}>
       {children}
     </a>
   ),
 }));
 
-vi.mock('@/features/kangur/observability/client', () => {
-  const mocks = globalThis.__kangurClientErrorMocks();
-  return {
-    trackKangurClientEvent: mocks.trackKangurClientEventMock,
-    withKangurClientError: mocks.withKangurClientError,
-    withKangurClientErrorSync: mocks.withKangurClientErrorSync,
-  };
-});
+
+vi.mock('../KangurAiTutorWidget.coordinator.helpers', async (importOriginal) => ({
+  ...(await importOriginal()),
+  isSelectionWithinTutorUi: () => false,
+}));
+
+vi.mock('@/features/kangur/observability/client', () => ({
+  trackKangurClientEvent: trackKangurClientEventMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
+}));
 
 import { KangurAiTutorWidget } from '../KangurAiTutorWidget';
 
@@ -323,12 +343,14 @@ describe('KangurAiTutorWidget - Selection', () => {
       selectionGlowSupported: false,
     });
     render(<KangurAiTutorWidget />);
+
     expect(screen.getByTestId('kangur-ai-tutor-selection-action')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Zapytaj o to' })).toBeInTheDocument();
-    fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
+    const zapytajButton = screen.getByRole('button', { name: 'Zapytaj o to' });
+    expect(zapytajButton).toBeInTheDocument();
+    fireEvent.mouseDown(zapytajButton);
+    fireEvent.click(zapytajButton);
     await act(async () => {
-      await vi.runAllTimersAsync();
+      await vi.advanceTimersByTimeAsync(GUIDED_SELECTION_SETTLE_MS);
     });
     expect(setHighlightedTextMock).toHaveBeenCalledWith('2 + 2');
     expect(activateSelectionGlowMock).toHaveBeenCalledTimes(1);
@@ -403,9 +425,6 @@ describe('KangurAiTutorWidget - Selection', () => {
     expect(
       (scrollToMock.mock.calls[0]?.[0] as ScrollToOptions | undefined)?.top ?? 0
     ).toBeGreaterThan(0);
-    await act(async () => {
-      await vi.runAllTimersAsync();
-    });
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-callout')).toHaveTextContent(
       'Wyjaśniam ten fragment.'
@@ -433,7 +452,7 @@ describe('KangurAiTutorWidget - Selection', () => {
       })
     );
     expect(screen.queryByTestId('kangur-ai-tutor-ask-modal')).not.toBeInTheDocument();
-    vi.useRealTimers();
+    
   });
 
   it('keeps anonymous Zapytaj o to on the same guided-selection path without auto guest intro', async () => {
@@ -492,18 +511,17 @@ describe('KangurAiTutorWidget - Selection', () => {
     });
     render(<KangurAiTutorWidget />);
 
-    await act(async () => {
-      await Promise.resolve();
-    });
+    
 
-    fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
+    const zapytajButton = screen.getByRole('button', { name: 'Zapytaj o to' });
+    fireEvent.mouseDown(zapytajButton);
+    fireEvent.click(zapytajButton);
 
     expect(screen.queryByTestId('kangur-ai-tutor-guest-intro')).not.toBeInTheDocument();
     expect(screen.queryByTestId('kangur-ai-tutor-guest-intro-backdrop')).not.toBeInTheDocument();
 
     await act(async () => {
-      await vi.runAllTimersAsync();
+      await vi.advanceTimersByTimeAsync(GUIDED_SELECTION_SETTLE_MS);
     });
 
     expect(screen.getByTestId('kangur-ai-tutor-avatar')).toHaveAttribute(
@@ -521,7 +539,7 @@ describe('KangurAiTutorWidget - Selection', () => {
         behavior: 'smooth',
       })
     );
-    vi.useRealTimers();
+    
   });
 
   it('renders one aggregate spotlight and no per-line glow boxes for a multi-line excerpt outside tutor sections', async () => {
@@ -578,11 +596,14 @@ describe('KangurAiTutorWidget - Selection', () => {
     });
     render(<KangurAiTutorWidget />);
 
-    fireEvent.mouseDown(screen.getByRole('button', { name: 'Zapytaj o to' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Zapytaj o to' }));
+    
+
+    const zapytajButton = screen.getByRole('button', { name: 'Zapytaj o to' });
+    fireEvent.mouseDown(zapytajButton);
+    fireEvent.click(zapytajButton);
 
     await act(async () => {
-      await vi.runAllTimersAsync();
+      await vi.advanceTimersByTimeAsync(GUIDED_SELECTION_SETTLE_MS);
     });
 
     expect(screen.queryAllByTestId('kangur-ai-tutor-selection-glow')).toHaveLength(0);
@@ -593,7 +614,7 @@ describe('KangurAiTutorWidget - Selection', () => {
     });
 
     vi.clearAllTimers();
-    vi.useRealTimers();
+    
   });
 
   

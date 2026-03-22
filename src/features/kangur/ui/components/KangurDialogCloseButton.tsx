@@ -15,7 +15,7 @@ type KangurDialogCloseButtonProps = Omit<
 
 const closeButtonClassName = cn(
   'absolute right-4 top-4 z-10 cursor-pointer rounded-full border border-amber-200/80',
-  'px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em] touch-manipulation select-none min-h-10 active:scale-[0.97]',
+  'px-4 py-1.5 text-xs font-bold uppercase tracking-[0.18em] touch-manipulation select-none min-h-11 active:scale-[0.97]',
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
   'shadow-[0_16px_34px_-26px_rgba(249,115,22,0.5)] transition'
 );

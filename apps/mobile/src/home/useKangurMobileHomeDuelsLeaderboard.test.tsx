@@ -108,7 +108,7 @@ describe('useKangurMobileHomeDuelsLeaderboard', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.error).toBe('Nie udało się połączyć z API Kangura.');
+      expect(result.current.error).toBe('Nie udało się pobrać rankingu pojedynków.');
     });
   });
 });

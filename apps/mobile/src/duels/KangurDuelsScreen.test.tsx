@@ -674,11 +674,87 @@ describe('KangurDuelsScreen', () => {
 
     renderDuelsScreen();
 
-    expect(screen.getByText('Aktywni uczniowie')).toBeTruthy();
-    expect(screen.getByText('Lista aktywnych uczniów wymaga logowania')).toBeTruthy();
+    expect(screen.getByText('Zaloguj się, aby grać w pojedynki')).toBeTruthy();
     expect(
       screen.getByText(
-        'Po zalogowaniu będziesz też widoczny w lobby i szybciej wrócisz tam do aktywnych rywali.',
+        'Goście mogą przeglądać publiczne lobby i ranking. Zaloguj się, aby tworzyć pojedynki lub do nich dołączać.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText('Aktywni uczniowie')).toBeTruthy();
+    expect(screen.getByText('Zaloguj się, aby zobaczyć aktywnych uczniów')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Po zalogowaniu będziesz też widoczny w lobby i szybciej wrócisz do aktywnych rywali.',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('shows signed-out guidance for the lobby chat', () => {
+    useKangurMobileDuelLobbyChatMock.mockReturnValue({
+      error: null,
+      isAuthenticated: false,
+      isLoading: false,
+      isRestoringAuth: false,
+      isSending: false,
+      maxMessageLength: 280,
+      messages: [],
+      refresh: vi.fn(),
+      sendMessage: vi.fn(),
+    });
+
+    renderDuelsScreen();
+
+    expect(screen.getByText('Czat lobby')).toBeTruthy();
+    expect(screen.getByText('Zaloguj się do czatu lobby')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Po zalogowaniu możesz czytać i wysyłać krótkie wiadomości, aby ustalić szybki mecz albo rewanż.',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('shows signed-out guidance for learner search', () => {
+    useKangurMobileDuelsLobbyMock.mockReturnValue({
+      ...createDefaultDuelsLobbyMock(),
+      isAuthenticated: false,
+    });
+
+    renderDuelsScreen();
+
+    expect(screen.getByText('Szukaj uczniów')).toBeTruthy();
+    expect(screen.getByText('Zaloguj się, aby szukać uczniów')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Po zalogowaniu znajdziesz ucznia po loginie lub nazwie i od razu wyślesz prywatne wyzwanie.',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('shows signed-out guidance for the recent rivals card', () => {
+    useKangurMobileDuelsLobbyMock.mockReturnValue({
+      ...createDefaultDuelsLobbyMock(),
+      isAuthenticated: false,
+    });
+
+    renderDuelsScreen();
+
+    expect(screen.getByText('Ostatni przeciwnicy')).toBeTruthy();
+    expect(screen.getByText('Ostatni rywale wymagają logowania')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Po zalogowaniu pojawią się tutaj ostatni rywale i szybkie rewanże.',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('shows the empty recent rivals state before the first duel is finished', () => {
+    renderDuelsScreen();
+
+    expect(screen.getByText('Ostatni przeciwnicy')).toBeTruthy();
+    expect(screen.getByText('Brak jeszcze ostatnich rywali')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Rozegraj pierwszy pojedynek, aby ta lista wypełniła się automatycznie.',
       ),
     ).toBeTruthy();
   });
@@ -893,6 +969,11 @@ describe('KangurDuelsScreen', () => {
     ).toBeTruthy();
     expect(screen.getByText('Sesja duel-1')).toBeTruthy();
     expect(screen.getByText('Poczekalnia pojedynku')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Czekamy, aż wszyscy gracze dołączą. Gdy druga osoba pojawi się w lobby, pojedynek wystartuje automatycznie.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('Ada')).toBeTruthy();
     expect(screen.getByText('Bob')).toBeTruthy();
     expect(screen.getAllByText('Seria BO3').length).toBeGreaterThanOrEqual(1);
@@ -1007,7 +1088,7 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Udostępnij zaproszenie')).toBeTruthy();
     expect(
       screen.getByText(
-        'Wyślij bezpośredni link do Bob, aby otworzyć prywatny pojedynek na telefonie bez szukania go w lobby.',
+        'Wyślij bezpośredni link do Bob, aby prywatny pojedynek otworzył się od razu bez szukania go w lobby.',
       ),
     ).toBeTruthy();
 
@@ -1208,20 +1289,105 @@ describe('KangurDuelsScreen', () => {
 
     renderDuelsScreen();
 
-    expect(screen.getByText('Podgląd pojedynku')).toBeTruthy();
+    expect(screen.getByText('Publiczny pojedynek')).toBeTruthy();
     expect(screen.getByText('Tryb obserwatora')).toBeTruthy();
     expect(
       screen.getByText(
-        'Obserwujesz publiczny stan pojedynku. Zaloguj sesję ucznia, jeśli chcesz wysyłać reakcje.',
+        'W trybie obserwatora śledzisz publiczny pojedynek i reakcje bez dołączania jako gracz.',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Obserwujesz publiczny pojedynek. Zaloguj się, jeśli chcesz wysyłać reakcje.',
       ),
     ).toBeTruthy();
     expect(screen.getByText('Widownia 3')).toBeTruthy();
     expect(screen.getByText('Postęp rundy 1/5')).toBeTruthy();
     expect(screen.getByText('Oś sesji')).toBeTruthy();
     expect(screen.getByText(/Rozpoczęto/)).toBeTruthy();
-    expect(screen.getByText('Podgląd pytania')).toBeTruthy();
+    expect(screen.getByText('Aktualne pytanie')).toBeTruthy();
     expect(screen.getByText('Opcja 1: 4')).toBeTruthy();
-    expect(screen.getByText('Odśwież podgląd pojedynku')).toBeTruthy();
+    expect(screen.getByText('Odśwież publiczny pojedynek')).toBeTruthy();
+  });
+
+  it('renders the public duel loading state for a spectator route', () => {
+    useLocalSearchParamsMock.mockReturnValue({
+      sessionId: 'duel-loading-1',
+      spectate: '1',
+    });
+    useKangurMobileAuthMock.mockReturnValue({
+      isLoadingAuth: false,
+      session: {
+        status: 'anonymous',
+        user: null,
+      },
+      signIn: vi.fn(),
+      supportsLearnerCredentials: true,
+    });
+    useKangurMobileDuelSessionMock.mockReturnValue({
+      actionError: null,
+      currentQuestion: null,
+      error: null,
+      isAuthenticated: false,
+      isLoading: true,
+      isMutating: false,
+      isRestoringAuth: false,
+      isSpectating: true,
+      leaveSession: vi.fn(),
+      player: null,
+      refresh: vi.fn(),
+      sendReaction: vi.fn(),
+      session: null,
+      spectatorCount: 0,
+      submitAnswer: vi.fn(),
+    });
+
+    renderDuelsScreen();
+
+    expect(screen.getByText('Ładujemy publiczny pojedynek')).toBeTruthy();
+    expect(
+      screen.getByText('Pobieramy publiczny stan rundy, listę graczy i liczbę widzów.'),
+    ).toBeTruthy();
+  });
+
+  it('renders the public duel error state when spectator details are missing', () => {
+    useLocalSearchParamsMock.mockReturnValue({
+      sessionId: 'duel-missing-1',
+      spectate: '1',
+    });
+    useKangurMobileAuthMock.mockReturnValue({
+      isLoadingAuth: false,
+      session: {
+        status: 'anonymous',
+        user: null,
+      },
+      signIn: vi.fn(),
+      supportsLearnerCredentials: true,
+    });
+    useKangurMobileDuelSessionMock.mockReturnValue({
+      actionError: null,
+      currentQuestion: null,
+      error: null,
+      isAuthenticated: false,
+      isLoading: false,
+      isMutating: false,
+      isRestoringAuth: false,
+      isSpectating: true,
+      leaveSession: vi.fn(),
+      player: null,
+      refresh: vi.fn(),
+      sendReaction: vi.fn(),
+      session: null,
+      spectatorCount: 0,
+      submitAnswer: vi.fn(),
+    });
+
+    renderDuelsScreen();
+
+    expect(screen.getByText('Nie udało się otworzyć publicznego pojedynku')).toBeTruthy();
+    expect(
+      screen.getByText('Brakuje danych publicznego pojedynku. Wróć do lobby i spróbuj jeszcze raz.'),
+    ).toBeTruthy();
   });
 
   it('auto-joins an invite route and replaces the route with the active session id', async () => {

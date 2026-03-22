@@ -39,9 +39,9 @@ const toRematchesErrorMessage = (
 
     if (status === 401) {
       return copy({
-        de: 'Melde die Schulersitzung an, um letzte Rivalen zu laden.',
-        en: 'Sign in the learner session to load recent opponents.',
-        pl: 'Zaloguj sesję ucznia, aby pobrać ostatnich rywali.',
+        de: 'Melde dich an, um letzte Rivalen zu laden.',
+        en: 'Sign in to load recent opponents.',
+        pl: 'Zaloguj się, aby pobrać ostatnich rywali.',
       });
     }
   }
@@ -66,9 +66,9 @@ const toRematchesErrorMessage = (
   const normalized = message.toLowerCase();
   if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
     return copy({
-      de: 'Die Verbindung zur Kangur-API konnte nicht hergestellt werden.',
-      en: 'Could not connect to the Kangur API.',
-      pl: 'Nie udało się połączyć z API Kangura.',
+      de: 'Die letzten Rivalen konnten nicht geladen werden.',
+      en: 'Could not load recent opponents.',
+      pl: 'Nie udało się pobrać ostatnich rywali.',
     });
   }
 
@@ -84,9 +84,9 @@ const toRematchActionErrorMessage = (
 
     if (status === 401) {
       return copy({
-        de: 'Melde die Schulersitzung an, um einen privaten Rückkampf zu senden.',
-        en: 'Sign in the learner session to send a private rematch.',
-        pl: 'Zaloguj sesję ucznia, aby wysłać prywatny rewanż.',
+        de: 'Melde dich an, um ein privates Rückspiel zu senden.',
+        en: 'Sign in to send a private rematch.',
+        pl: 'Zaloguj się, aby wysłać prywatny rewanż.',
       });
     }
   }
@@ -111,9 +111,9 @@ const toRematchActionErrorMessage = (
   const normalized = message.toLowerCase();
   if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
     return copy({
-      de: 'Die Verbindung zur Kangur-API konnte nicht hergestellt werden.',
-      en: 'Could not connect to the Kangur API.',
-      pl: 'Nie udało się połączyć z API Kangura.',
+      de: 'Der private Rückkampf konnte nicht erstellt werden.',
+      en: 'Could not create the private rematch.',
+      pl: 'Nie udało się utworzyć prywatnego rewanżu.',
     });
   }
 

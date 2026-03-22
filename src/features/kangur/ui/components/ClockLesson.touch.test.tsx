@@ -65,8 +65,8 @@ describe('ClockLesson touch mode', () => {
     });
 
     expect(screen.getByTestId('clock-lesson-training-panel-pick_one')).toHaveClass(
-      'h-8',
-      'min-w-8',
+      'h-11',
+      'min-w-11',
       'touch-manipulation',
       'select-none'
     );

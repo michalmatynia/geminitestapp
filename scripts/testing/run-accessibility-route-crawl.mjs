@@ -21,6 +21,7 @@ import {
   buildAccessibilityRouteCrawlHeartbeatLine,
   filterAccessibilityRouteEntries,
   normalizeAccessibilityRouteEntries,
+  resolveAccessibilityRouteCrawlChunkSize,
   resolveAccessibilityRouteCrawlAgentId,
   summarizeAccessibilityRouteCrawlReport,
 } from './lib/accessibility-route-crawl.mjs';
@@ -128,35 +129,14 @@ const buildSummaryJsonPaths = (outputs, shouldWriteHistory) =>
       }
     : null;
 
-const parsePositiveInt = (value) => {
-  const parsed = Number.parseInt(value ?? '', 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-};
-
-const resolveRouteCrawlChunkSize = ({ env = process.env, strictMode, totalRoutes }) => {
-  if (Object.prototype.hasOwnProperty.call(env, 'PLAYWRIGHT_ROUTE_CRAWL_CHUNK_SIZE')) {
-    const parsed = Number.parseInt(env['PLAYWRIGHT_ROUTE_CRAWL_CHUNK_SIZE'], 10);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-  }
-
-  if (Object.prototype.hasOwnProperty.call(env, 'PLAYWRIGHT_ROUTE_CRAWL_CHUNKS')) {
-    const parsed = Number.parseInt(env['PLAYWRIGHT_ROUTE_CRAWL_CHUNKS'], 10);
-    return Number.isFinite(parsed) && parsed > 0 ? Math.ceil(totalRoutes / parsed) : null;
-  }
-
-  if (strictMode) {
-    return Math.min(totalRoutes, 6);
-  }
-
-  return null;
-};
-
 const chunkRouteEntries = (entries, chunkSize) => {
   if (!Array.isArray(entries) || entries.length === 0) {
     return [];
   }
 
-  const resolvedChunkSize = parsePositiveInt(chunkSize);
+  const parsedChunkSize = Number.parseInt(String(chunkSize ?? ''), 10);
+  const resolvedChunkSize =
+    Number.isFinite(parsedChunkSize) && parsedChunkSize > 0 ? parsedChunkSize : null;
   if (!resolvedChunkSize || resolvedChunkSize >= entries.length) {
     return [entries];
   }
@@ -326,6 +306,8 @@ const runRouteCrawlChunk = async ({
   chunkCount,
   emitHeartbeat,
   summaryJson,
+  preserveManagedDistDirOnAcquire = false,
+  preserveManagedDistDirOnStop = false,
 }) => {
   if (!Array.isArray(chunkRoutes) || chunkRoutes.length === 0) {
     return {
@@ -358,6 +340,7 @@ const runRouteCrawlChunk = async ({
       buildAccessibilityBrokerLeaseRequest({
         rootDir: root,
         context: accessibilityRuntime,
+        preserveManagedDistDir: preserveManagedDistDirOnAcquire,
       })
     );
     if (!summaryJson && chunkCount > 1) {
@@ -405,6 +388,7 @@ const runRouteCrawlChunk = async ({
       await stopBrokerRuntimeLease({
         lease: playwrightRuntime,
         leaseFilePath: playwrightRuntime.leaseFilePath,
+        preserveManagedDistDir: preserveManagedDistDirOnStop,
       });
     }
   }
@@ -511,7 +495,7 @@ const run = async () => {
     throw new Error('No accessibility route crawl routes matched the current filters.');
   }
 
-  const chunkSize = resolveRouteCrawlChunkSize({
+  const chunkSize = resolveAccessibilityRouteCrawlChunkSize({
     env: process.env,
     strictMode,
     totalRoutes: routeEntries.length,
@@ -527,6 +511,8 @@ const run = async () => {
         chunkCount: routeChunks.length,
         emitHeartbeat: !summaryJson,
         summaryJson,
+        preserveManagedDistDirOnAcquire: index > 0 && routeChunks.length > 1,
+        preserveManagedDistDirOnStop: index < routeChunks.length - 1,
       })
     );
   }

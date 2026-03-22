@@ -23,6 +23,7 @@ describe('KangurAppLoader', () => {
 
     expect(loader).toHaveAttribute('aria-busy', 'true');
     expect(loader).toHaveAttribute('aria-live', 'polite');
+    expect(loader).toHaveClass('pointer-events-none');
     expect(panel).toHaveAttribute('data-loader-layout', 'expanded-card');
     expect(screen.getByTestId('kangur-app-loader-copy')).toBeInTheDocument();
     expect(screen.getByText('StudiQ')).toBeInTheDocument();

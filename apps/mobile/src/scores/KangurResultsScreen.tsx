@@ -907,9 +907,9 @@ export function KangurResultsScreen(): React.JSX.Element {
             <Card>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Die Schulersitzung und der Ergebnisverlauf werden wiederhergestellt.',
-                  en: 'Restoring the learner session and score history.',
-                  pl: 'Przywracamy sesję ucznia i historię wyników.',
+                  de: 'Die Anmeldung und die Ergebnisse werden wiederhergestellt.',
+                  en: 'Restoring sign-in and results.',
+                  pl: 'Przywracamy logowanie i wyniki.',
                 })}
               </Text>
             </Card>
@@ -917,9 +917,9 @@ export function KangurResultsScreen(): React.JSX.Element {
             <Card>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Melde den Schuler an, um den synchronisierten Ergebnisverlauf zu sehen.',
-                  en: 'Sign in the learner to see synchronized score history.',
-                  pl: 'Zaloguj ucznia, aby zobaczyć zsynchronizowaną historię wyników.',
+                  de: 'Melde den Schuler an, um Ergebnisse zu sehen.',
+                  en: 'Sign in the learner to see results.',
+                  pl: 'Zaloguj ucznia, aby zobaczyć wyniki.',
                 })}
               </Text>
               <Link href={RESULTS_HOME_ROUTE} asChild>
@@ -935,9 +935,9 @@ export function KangurResultsScreen(): React.JSX.Element {
                 >
                   <Text style={{ color: '#ffffff', fontWeight: '700' }}>
                     {copy({
-                      de: 'Anmeldebildschirm öffnen',
-                      en: 'Open auth screen',
-                      pl: 'Otwórz ekran logowania',
+                      de: 'Zum Login',
+                      en: 'Go to sign in',
+                      pl: 'Przejdź do logowania',
                     })}
                   </Text>
                 </Pressable>
@@ -961,9 +961,9 @@ export function KangurResultsScreen(): React.JSX.Element {
                   })}
                   value={`${results.summary.totalSessions}`}
                   description={copy({
-                    de: 'Die Ansicht umfasst die letzten 40 Versuche.',
-                    en: 'This view includes the latest 40 attempts.',
-                    pl: 'Widok obejmuje 40 ostatnich podejść.',
+                    de: 'Dieser Bereich umfasst die letzten 40 Versuche.',
+                    en: 'This section includes the latest 40 attempts.',
+                    pl: 'Ta sekcja obejmuje 40 ostatnich podejść.',
                   })}
                 />
                 <Metric
@@ -1032,9 +1032,9 @@ export function KangurResultsScreen(): React.JSX.Element {
                     </Text>
                     <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                       {copy({
-                        de: 'Ein schneller Blick auf den stärksten und schwächsten Modus im aktuellen Filterbereich.',
-                        en: 'A quick view of the strongest and weakest mode in the current filter scope.',
-                        pl: 'Szybki podgląd najmocniejszego i najsłabszego trybu w aktualnym zakresie filtrowania.',
+                        de: 'Hier siehst du den stärksten und schwächsten Modus im aktuellen Filterbereich auf einen Blick.',
+                        en: 'See the strongest and weakest mode in the current filter scope at a glance.',
+                        pl: 'Tutaj od razu widać najmocniejszy i najsłabszy tryb w aktualnym zakresie filtrowania.',
                       })}
                     </Text>
                   </View>
@@ -1121,9 +1121,9 @@ export function KangurResultsScreen(): React.JSX.Element {
                   </Text>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Verwandle die letzten Ergebnisse direkt in die nächsten lokalen Schritte, ohne den Trainingsfluss zu verlieren.',
-                      en: 'Turn the latest results directly into the next local actions without losing the training flow.',
-                      pl: 'Zamień ostatnie wyniki od razu w kolejne lokalne kroki, bez gubienia rytmu treningu.',
+                      de: 'Verwandle die letzten Ergebnisse direkt in die nächsten Schritte, ohne den Trainingsfluss zu verlieren.',
+                      en: 'Turn the latest results directly into the next steps without losing the training flow.',
+                      pl: 'Zamień ostatnie wyniki od razu w kolejne kroki, bez gubienia rytmu treningu.',
                     })}
                   </Text>
                 </View>
@@ -1131,9 +1131,9 @@ export function KangurResultsScreen(): React.JSX.Element {
                 {resultsAssignments.assignmentItems.length === 0 ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Es gibt noch keine lokalen Aufgaben. Öffne Lektionen oder absolviere weitere Trainings, um den nächsten Plan aufzubauen.',
-                      en: 'There are no local tasks yet. Open lessons or complete more practice to build the next plan.',
-                      pl: 'Nie ma jeszcze lokalnych zadań. Otwórz lekcje albo wykonaj kolejne treningi, aby zbudować następny plan.',
+                      de: 'Es gibt noch keine Aufgaben. Öffne Lektionen oder absolviere weitere Trainings, um den nächsten Plan aufzubauen.',
+                      en: 'There are no tasks yet. Open lessons or complete more practice to build the next plan.',
+                      pl: 'Nie ma jeszcze zadań. Otwórz lekcje albo wykonaj kolejne treningi, aby zbudować następny plan.',
                     })}
                   </Text>
                 ) : (
@@ -1163,9 +1163,9 @@ export function KangurResultsScreen(): React.JSX.Element {
                   </Text>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Behalte im Blick, was schon freigeschaltet ist und welches lokale Ziel am nächsten an der nächsten Abzeichenstufe liegt.',
-                      en: 'Keep track of what is already unlocked and which local goal is closest to the next badge threshold.',
-                      pl: 'Śledź, co jest już odblokowane i który lokalny cel jest najbliżej kolejnego progu odznaki.',
+                      de: 'Behalte im Blick, was schon freigeschaltet ist und welches Ziel am nächsten an der nächsten Abzeichenstufe liegt.',
+                      en: 'Keep track of what is already unlocked and which goal is closest to the next badge threshold.',
+                      pl: 'Śledź, co jest już odblokowane i który cel jest najbliżej kolejnego progu odznaki.',
                     })}
                   </Text>
                 </View>
@@ -1462,9 +1462,9 @@ export function KangurResultsScreen(): React.JSX.Element {
                   </Text>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Prüfe den aktuellen Duellstand, sieh die letzten Rivalen und starte einen Rückkampf, ohne den Ergebnisverlauf zu verlassen.',
-                      en: 'Check the current duel standing, see recent rivals, and jump into a rematch without leaving score history.',
-                      pl: 'Sprawdź aktualny stan pojedynków, zobacz ostatnich rywali i wejdź w rewanż bez wychodzenia z historii wyników.',
+                      de: 'Prüfe den aktuellen Duellstand, sieh die letzten Rivalen und starte einen Rückkampf, ohne Ergebnisse zu verlassen.',
+                      en: 'Check the current duel standing, see recent rivals, and jump into a rematch without leaving results.',
+                      pl: 'Sprawdź aktualny stan pojedynków, zobacz ostatnich rywali i wejdź w rewanż bez wychodzenia z wyników.',
                     })}
                   </Text>
                 </View>
@@ -1797,9 +1797,9 @@ export function KangurResultsScreen(): React.JSX.Element {
                     </Text>
                     <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                       {copy({
-                        de: 'Der Verlauf nutzt dieselbe auf den Schuler begrenzte Abfrage wie Profil und Startbildschirm.',
-                        en: 'History uses the same learner-scoped query as the profile and home screen.',
-                        pl: 'Historia korzysta z tego samego zapytania ograniczonego do ucznia co profil i ekran główny.',
+                        de: 'Hier kannst du die gesamte Ergebnisliste aktualisieren und ohne Umwege durch die letzten Einträge gehen.',
+                        en: 'Refresh the full results list here and move through the latest entries without leaving this section.',
+                        pl: 'Tutaj odświeżysz pełną listę wyników i przejdziesz przez ostatnie wpisy bez wychodzenia z tej sekcji.',
                       })}
                     </Text>
                   </View>
@@ -1898,9 +1898,9 @@ export function KangurResultsScreen(): React.JSX.Element {
                 {results.isLoading ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Der Ergebnisverlauf wird geladen.',
-                      en: 'Loading score history.',
-                      pl: 'Pobieramy historię wyników.',
+                      de: 'Die Ergebnisse werden geladen.',
+                      en: 'Loading results.',
+                      pl: 'Pobieramy wyniki.',
                     })}
                   </Text>
                 ) : results.error ? (
@@ -1910,9 +1910,9 @@ export function KangurResultsScreen(): React.JSX.Element {
                 ) : results.scores.length === 0 ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Es gibt keine synchronisierten Ergebnisse. Schließe eine Trainingseinheit ab, um diese Ansicht zu füllen.',
-                      en: 'There are no synchronized results. Complete one practice session to fill this view.',
-                      pl: 'Brak zsynchronizowanych wyników. Ukończ jedną sesję treningową, aby wypełnić ten widok.',
+                      de: 'Es gibt hier noch keine Ergebnisse. Schließe einen Trainingslauf ab, um diesen Bereich zu füllen.',
+                      en: 'There are no results here yet. Finish one practice run to fill this section.',
+                      pl: 'Nie ma tu jeszcze wyników. Ukończ jedną serię treningową, aby wypełnić tę sekcję.',
                     })}
                   </Text>
                 ) : (

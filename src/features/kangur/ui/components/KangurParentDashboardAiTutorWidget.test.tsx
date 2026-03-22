@@ -97,6 +97,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 import { KangurParentDashboardAiTutorWidget } from './KangurParentDashboardAiTutorWidget';
 
 describe('KangurParentDashboardAiTutorWidget', () => {
@@ -186,6 +190,11 @@ describe('KangurParentDashboardAiTutorWidget', () => {
       screen.getByText('Wybierz ucznia, aby skonfigurować AI Tutora.')
     ).toBeInTheDocument();
     expect(screen.queryByText(/^AI Tutor dla /i)).not.toBeInTheDocument();
+    expect(screen.getByTestId('parent-dashboard-ai-tutor-enable')).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
   });
 
   it('enables AI Tutor controls in the parent dashboard when not disabled', async () => {
@@ -197,6 +206,8 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     expect(lessonsToggle).not.toBeDisabled();
     expect(toggleButton).not.toBeDisabled();
     expect(saveButton).not.toBeDisabled();
+    expect(toggleButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+    expect(saveButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
 
     fireEvent.click(saveButton);
 

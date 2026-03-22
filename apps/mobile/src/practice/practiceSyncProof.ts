@@ -126,9 +126,9 @@ export const buildKangurPracticeSyncProofSnapshot = ({
   } as const;
   const readyCopy = {
     dailyPlan: {
-      de: 'Das frische Ergebnis ist im Bereich der letzten Ergebnisse sichtbar, den /plan verwendet.',
-      en: 'The fresh result is visible in the recent-results section used by /plan.',
-      pl: 'Świeży wynik jest widoczny w sekcji ostatnich wyników używanej przez /plan.',
+      de: 'Das frische Ergebnis ist bereits bei den letzten Ergebnissen im Tagesplan sichtbar.',
+      en: 'The fresh result is already visible in the recent results on the daily plan.',
+      pl: 'Świeży wynik jest już widoczny w ostatnich wynikach w planie dnia.',
     },
     localProgress: {
       de: 'Modus lokal gespeichert · Spiele {gamesPlayed}',
@@ -143,14 +143,14 @@ export const buildKangurPracticeSyncProofSnapshot = ({
   } as const;
   const missingCopy = {
     dailyPlan: {
-      de: 'Das frische Ergebnis ist noch nicht im Bereich der letzten Ergebnisse fuer /plan angekommen.',
-      en: 'The fresh result has not reached the recent-results section for /plan yet.',
-      pl: 'Świeży wynik nie trafił jeszcze do sekcji ostatnich wyników dla /plan.',
+      de: 'Das frische Ergebnis ist bei den letzten Ergebnissen im Tagesplan noch nicht angekommen.',
+      en: 'The fresh result has not appeared in the daily plan recent results yet.',
+      pl: 'Świeży wynik nie pojawił się jeszcze w ostatnich wynikach planu dnia.',
     },
     leaderboard: {
-      de: 'Das aktuelle synchronisierte Ergebnis ist in der Rangliste noch nicht sichtbar.',
-      en: 'The current synced result is not visible in the leaderboard yet.',
-      pl: 'Bieżący zsynchronizowany wynik nie jest jeszcze widoczny w rankingu.',
+      de: 'Das aktuelle Ergebnis ist in der Rangliste noch nicht sichtbar.',
+      en: 'The current result is not visible in the leaderboard yet.',
+      pl: 'Bieżący wynik nie jest jeszcze widoczny w rankingu.',
     },
     profileProgress: {
       de: 'Der lokale Fortschritt zeigt diesen Modus noch nicht in der Lektionsbeherrschung.',
@@ -158,9 +158,9 @@ export const buildKangurPracticeSyncProofSnapshot = ({
       pl: 'Lokalny postęp nie pokazuje jeszcze tego trybu w opanowaniu lekcji.',
     },
     recentResults: {
-      de: 'Das frische synchronisierte Ergebnis ist im Verlauf der Lernenden noch nicht sichtbar.',
-      en: 'The fresh synced result is not visible in the learner history yet.',
-      pl: 'Świeży zsynchronizowany wynik nie jest jeszcze widoczny w historii ucznia.',
+      de: 'Das frische Ergebnis ist im Verlauf der Lernenden noch nicht sichtbar.',
+      en: 'The fresh result is not visible in the learner history yet.',
+      pl: 'Świeży wynik nie jest jeszcze widoczny w historii ucznia.',
     },
   } as const;
   const localized = <T extends Record<KangurMobileLocale, string>>(value: T): string =>

@@ -34,19 +34,17 @@ import {
   getKangurPageHref,
   isKangurEmbeddedBasePath,
 } from '@/features/kangur/config/routing';
-import {
-  useOptionalKangurRouteTransitionState,
-} from '@/features/kangur/ui/context/KangurRouteTransitionContext';
+import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { prefetchKangurPageContentStore } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 
 const LANGUAGE_SWITCHER_SOURCE_ID = 'kangur-language-switcher';
 const LANGUAGE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
-const DEFAULT_LOCALE = normalizeSiteLocale(DEFAULT_SITE_I18N_CONFIG.defaultLocale);
-
 const ENABLED_LOCALES = DEFAULT_SITE_I18N_CONFIG.locales.filter((locale) => locale.enabled);
+const DEFAULT_SITE_LOCALE = normalizeSiteLocale(DEFAULT_SITE_I18N_CONFIG.defaultLocale);
 
 type KangurLanguageSwitcherProps = {
   basePath: string;
@@ -192,20 +190,15 @@ const buildLocalizedHref = ({
 };
 
 const resolveLocaleFromHref = (href: string | null | undefined): string | null => {
-  if (typeof href !== 'string') {
-    return null;
-  }
-
-  const trimmedHref = href.trim();
-  if (!trimmedHref) {
+  if (typeof href !== 'string' || href.trim().length === 0) {
     return null;
   }
 
   try {
-    const pathname = new URL(trimmedHref, 'https://kangur.local').pathname;
-    return normalizeSiteLocale(getPathLocale(pathname) ?? DEFAULT_LOCALE);
+    const parsed = new URL(href, 'https://kangur.local');
+    return normalizeSiteLocale(getPathLocale(parsed.pathname) ?? DEFAULT_SITE_LOCALE);
   } catch {
-    return normalizeSiteLocale(getPathLocale(trimmedHref) ?? DEFAULT_LOCALE);
+    return normalizeSiteLocale(getPathLocale(href) ?? DEFAULT_SITE_LOCALE);
   }
 };
 
@@ -247,20 +240,22 @@ export function KangurLanguageSwitcher({
   const translations = useTranslations('KangurNavigation');
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isCoarsePointer = useKangurCoarsePointer();
   const kangurAppearance = useKangurStorefrontAppearance();
-  const routeTransitionState = useOptionalKangurRouteTransitionState();
   const routeNavigator = useKangurRouteNavigator();
+  const routeTransitionState = useOptionalKangurRouteTransitionState();
   const queryClient = useContext(QueryClientContext);
   const [open, setOpen] = useState(false);
-  const [optimisticLocale, setOptimisticLocale] = useState<string | null>(null);
-  const warmedLocaleTargetsRef = useRef<Set<string>>(new Set());
+  const [pendingLocale, setPendingLocale] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState<string | null>(null);
+  const warmedLocaleCodesRef = useRef<Set<string>>(new Set());
 
   const currentLocale = normalizeSiteLocale(locale);
   const search = searchParams?.toString() ?? '';
   const fallbackPath = buildCurrentPageFallbackPath(currentPage, basePath);
   const currentPathname = pathname?.trim() || fallbackPath;
   const currentHash = typeof window === 'undefined' ? '' : window.location.hash;
-  const currentHref = `${currentPathname}${search ? `?${search}` : ''}${currentHash}`;
+
   const palette = useMemo(
     () => resolveLanguageMenuPalette(kangurAppearance),
     [kangurAppearance]
@@ -283,69 +278,67 @@ export function KangurLanguageSwitcher({
       }),
     [currentHash, currentPathname, search]
   );
-  const defaultLocaleOption = localeOptions.find((option) => option.code === DEFAULT_LOCALE) ?? null;
 
-  const isLanguageTransitionActive =
-    (routeTransitionState?.activeTransitionKind === 'locale-switch' ||
-      routeTransitionState?.activeTransitionSourceId === LANGUAGE_SWITCHER_SOURCE_ID) &&
-    routeTransitionState?.transitionPhase !== 'idle';
-  const isLanguageTransitionPending =
-    isLanguageTransitionActive &&
-    (routeTransitionState?.transitionPhase === 'acknowledging' ||
-      routeTransitionState?.transitionPhase === 'pending');
-  const transitionTargetLocale = useMemo(
-    () => resolveLocaleFromHref(routeTransitionState?.activeTransitionRequestedHref),
-    [routeTransitionState?.activeTransitionRequestedHref]
-  );
-  const selectedLocale =
-    optimisticLocale ??
-    (isLanguageTransitionActive ? transitionTargetLocale : null) ??
-    currentLocale;
+  const transitionPendingLocale = useMemo(() => {
+    if (
+      routeTransitionState?.activeTransitionKind !== 'locale-switch' ||
+      routeTransitionState.activeTransitionSourceId !== LANGUAGE_SWITCHER_SOURCE_ID
+    ) {
+      return null;
+    }
 
-  useEffect(() => {
-    warmedLocaleTargetsRef.current.clear();
-  }, [currentHash, currentPathname, search]);
+    return resolveLocaleFromHref(routeTransitionState.activeTransitionRequestedHref);
+  }, [
+    routeTransitionState?.activeTransitionKind,
+    routeTransitionState?.activeTransitionRequestedHref,
+    routeTransitionState?.activeTransitionSourceId,
+  ]);
+
+  const selectedLocale = pendingLocale ?? transitionPendingLocale ?? currentLocale;
 
   useEffect(() => {
-    if (optimisticLocale === null) {
+    if (pendingLocale === null) {
       return;
     }
 
-    if (optimisticLocale === currentLocale || !isLanguageTransitionActive) {
-      setOptimisticLocale(null);
+    if (pendingLocale === currentLocale || pendingLocale === transitionPendingLocale) {
+      setPendingLocale(null);
     }
-  }, [currentLocale, isLanguageTransitionActive, optimisticLocale]);
+  }, [currentLocale, pendingLocale, transitionPendingLocale]);
 
   useEffect(() => {
-    if (isLanguageTransitionActive) {
-      setOpen(false);
-    }
-  }, [isLanguageTransitionActive]);
+    warmedLocaleCodesRef.current.clear();
+  }, [currentHash, currentPage, currentPathname, search]);
 
   const warmLocaleTarget = useCallback(
-    (target: { code: string; href: string } | null | undefined): void => {
-      if (!target || target.code === selectedLocale) {
+    (targetLocaleCode: string): void => {
+      if (targetLocaleCode === selectedLocale) {
         return;
       }
 
-      if (warmedLocaleTargetsRef.current.has(target.href)) {
+      if (warmedLocaleCodesRef.current.has(targetLocaleCode)) {
         return;
       }
 
-      warmedLocaleTargetsRef.current.add(target.href);
+      const target = localeOptions.find((option) => option.code === targetLocaleCode);
+      if (!target) {
+        return;
+      }
+
+      warmedLocaleCodesRef.current.add(targetLocaleCode);
       routeNavigator.prefetch(target.href);
-      void prefetchKangurPageContentStore(queryClient, target.code);
+      void prefetchKangurPageContentStore(queryClient, targetLocaleCode);
     },
-    [queryClient, routeNavigator, selectedLocale]
+    [localeOptions, queryClient, routeNavigator, selectedLocale]
   );
 
   useEffect(() => {
-    if (!open || selectedLocale === DEFAULT_LOCALE) {
+    if (!open || currentLocale === DEFAULT_SITE_LOCALE) {
       return;
     }
 
-    warmLocaleTarget(defaultLocaleOption);
-  }, [defaultLocaleOption, open, selectedLocale, warmLocaleTarget]);
+    warmLocaleTarget(DEFAULT_SITE_LOCALE);
+  }, [currentLocale, open, warmLocaleTarget]);
 
   if (ENABLED_LOCALES.length < 2 || isKangurEmbeddedBasePath(basePath)) {
     return null;
@@ -373,20 +366,29 @@ export function KangurLanguageSwitcher({
   const triggerTitle = translations('languageSwitcher.triggerTitle', {
     language: currentLanguageLabel,
   });
+  const triggerActionClassName = isCoarsePointer
+    ? 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
+    : null;
+  const optionActionClassName = isCoarsePointer
+    ? 'min-h-[3.5rem] touch-manipulation select-none active:scale-[0.985]'
+    : null;
+  const isPending = pendingLocale !== null;
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild disabled={isLanguageTransitionPending}>
+      <DropdownMenuTrigger asChild disabled={isPending}>
         <KangurButton
           aria-label={triggerAriaLabel}
           className={[
             'min-w-[8.75rem] max-w-full shrink-0 justify-start gap-2 overflow-hidden px-3 text-left',
+            triggerActionClassName,
+            isPending ? 'pointer-events-none opacity-70' : null,
             className,
           ]
             .filter(Boolean)
             .join(' ')}
           data-testid='kangur-language-switcher-trigger'
-          disabled={isLanguageTransitionPending}
+          disabled={isPending}
           title={triggerTitle}
           type='button'
           variant='navigation'
@@ -400,10 +402,17 @@ export function KangurLanguageSwitcher({
           <span className='min-w-0 flex-1 truncate text-sm font-semibold'>
             {currentLanguageLabel}
           </span>
-          <ChevronDown
-            aria-hidden='true'
-            className='h-4 w-4 shrink-0 opacity-70 transition-transform duration-200 data-[state=open]:rotate-180'
-          />
+          {isPending ? (
+            <span
+              aria-hidden='true'
+              className='inline-flex h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent'
+            />
+          ) : (
+            <ChevronDown
+              aria-hidden='true'
+              className='h-4 w-4 shrink-0 opacity-70 transition-transform duration-200 data-[state=open]:rotate-180'
+            />
+          )}
         </KangurButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -431,7 +440,7 @@ export function KangurLanguageSwitcher({
             className='flex flex-col gap-1.5'
             data-testid='kangur-language-switcher-options'
             onValueChange={(nextLocale) => {
-              if (isLanguageTransitionPending || nextLocale === selectedLocale) {
+              if (isPending || nextLocale === selectedLocale) {
                 setOpen(false);
                 return;
               }
@@ -443,21 +452,25 @@ export function KangurLanguageSwitcher({
               }
 
               setOpen(false);
-              setOptimisticLocale(target.code);
+              setPendingLocale(target.code);
+              setAnnouncement(`${target.nativeLabel}…`);
+              warmLocaleTarget(target.code);
               setClientCookie(DEFAULT_SITE_I18N_CONFIG.cookieName, target.code, {
                 maxAgeSeconds: LANGUAGE_COOKIE_MAX_AGE_SECONDS,
                 path: '/',
                 sameSite: 'Lax',
               });
 
-              if (target.href === currentHref) {
-                if (typeof window !== 'undefined' && typeof window.location.replace === 'function') {
-                  window.location.replace(target.href);
-                  return;
-                }
+              const shouldForceDocumentReplace =
+                target.code === DEFAULT_SITE_LOCALE &&
+                currentLocale !== DEFAULT_SITE_LOCALE &&
+                getPathLocale(currentPathname) === null;
+
+              if (shouldForceDocumentReplace && typeof window !== 'undefined') {
+                window.location.replace(target.href);
+                return;
               }
 
-              warmLocaleTarget(target);
               routeNavigator.replace(target.href, {
                 pageKey: currentPage,
                 scroll: false,
@@ -470,16 +483,17 @@ export function KangurLanguageSwitcher({
             {localeOptions.map((option) => {
               return (
                 <DropdownMenuRadioItem
-                  className='relative min-h-[3.1rem] cursor-pointer rounded-[18px] border border-transparent py-2.5 pl-3.5 pr-3.5 text-left outline-none transition-[background,border-color,box-shadow] duration-200 [color:var(--kangur-language-menu-text)] hover:[background:var(--kangur-language-menu-hover-bg)] focus:[background:var(--kangur-language-menu-hover-bg)] data-[highlighted]:[background:var(--kangur-language-menu-hover-bg)] data-[highlighted]:[color:var(--kangur-language-menu-text)] data-[state=checked]:cursor-default data-[state=checked]:[background:var(--kangur-language-menu-active-bg)] data-[state=checked]:[border-color:var(--kangur-language-menu-active-border)] data-[state=checked]:[box-shadow:var(--kangur-language-menu-active-shadow)] data-[state=checked]:[color:var(--kangur-language-menu-text)] [&>span:first-child]:hidden'
+                  className={[
+                    'relative min-h-[3.1rem] cursor-pointer rounded-[18px] border border-transparent py-2.5 pl-3.5 pr-3.5 text-left outline-none transition-[background,border-color,box-shadow] duration-200 [color:var(--kangur-language-menu-text)] hover:[background:var(--kangur-language-menu-hover-bg)] focus:[background:var(--kangur-language-menu-hover-bg)] data-[highlighted]:[background:var(--kangur-language-menu-hover-bg)] data-[highlighted]:[color:var(--kangur-language-menu-text)] data-[state=checked]:cursor-default data-[state=checked]:[background:var(--kangur-language-menu-active-bg)] data-[state=checked]:[border-color:var(--kangur-language-menu-active-border)] data-[state=checked]:[box-shadow:var(--kangur-language-menu-active-shadow)] data-[state=checked]:[color:var(--kangur-language-menu-text)] [&>span:first-child]:hidden',
+                    optionActionClassName,
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
                   data-testid={`kangur-language-switcher-option-${option.code}`}
-                  disabled={isLanguageTransitionPending}
+                  disabled={isPending}
                   key={option.code}
-                  onFocus={() => {
-                    warmLocaleTarget(option);
-                  }}
-                  onMouseEnter={() => {
-                    warmLocaleTarget(option);
-                  }}
+                  onFocus={() => warmLocaleTarget(option.code)}
+                  onMouseEnter={() => warmLocaleTarget(option.code)}
                   value={option.code}
                 >
                   <div className='flex min-w-0 items-center gap-3'>
@@ -502,6 +516,14 @@ export function KangurLanguageSwitcher({
           </DropdownMenuRadioGroup>
         </div>
       </DropdownMenuContent>
+      <span
+        aria-atomic='true'
+        aria-live='assertive'
+        className='sr-only'
+        role='status'
+      >
+        {announcement}
+      </span>
     </DropdownMenu>
   );
 }

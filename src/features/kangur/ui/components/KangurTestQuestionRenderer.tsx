@@ -24,6 +24,7 @@ import {
   KANGUR_CENTER_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
@@ -63,6 +64,7 @@ export function KangurTestQuestionRenderer({
   showSectionIntro = true,
 }: Props): React.JSX.Element {
   const runtime = useOptionalKangurTestSuiteRuntime();
+  const isCoarsePointer = useKangurCoarsePointer();
   const sectionEntryId = showSectionIntro ? (showAnswer ? 'tests-review' : 'tests-question') : null;
   const { entry: sectionContent } = useKangurPageContentEntry(sectionEntryId);
   const presentation = question.presentation ?? { layout: 'classic', choiceStyle: 'list' };
@@ -251,6 +253,7 @@ export function KangurTestQuestionRenderer({
                 aria-label={accessibleChoiceLabel}
                 buttonClassName={cn(
                   'flex items-start kangur-panel-gap px-4 py-3 text-left text-sm font-semibold',
+                  isCoarsePointer && 'min-h-[4.25rem] active:scale-[0.98]',
                   cardClassName,
                   choiceGrid && 'h-full min-h-[112px]'
                 )}

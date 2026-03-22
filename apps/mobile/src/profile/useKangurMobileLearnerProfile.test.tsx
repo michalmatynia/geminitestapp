@@ -322,7 +322,9 @@ describe('useKangurMobileLearnerProfile', () => {
     });
 
     expect(result.current.displayName).toBe('Lokaler Modus');
-    expect(result.current.recommendationsNote).toContain('Auf Mobile laufen bereits Lektionen');
+    expect(result.current.recommendationsNote).toContain(
+      'Lektionen, Arithmetiktraining und das erste Logikquiz sind schon bereit.',
+    );
   });
 
   it('passes the active locale through to localized recommendations', async () => {

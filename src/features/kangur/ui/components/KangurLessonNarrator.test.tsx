@@ -46,6 +46,10 @@ vi.mock('@/shared/lib/api-client', () => ({
   },
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 import { KANGUR_NARRATOR_SETTINGS_KEY } from '@/features/kangur/settings';
 import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
 
@@ -163,7 +167,10 @@ describe('KangurLessonNarrator', () => {
     expect(apiPostMock).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: /^pause$/i })).toHaveClass(
       'kangur-cta-pill',
-      'surface-cta'
+      'surface-cta',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
     expect(screen.queryByRole('button', { name: /^stop$/i })).toBeNull();
     expect(screen.queryByText('Voice')).toBeNull();

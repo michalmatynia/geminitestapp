@@ -334,6 +334,11 @@ export function useKangurAiTutorPanelActions({
       if (activeSelectedText) {
         persistSelectionGeometry();
       }
+      const conversationFocus = activeFocus.conversationFocus;
+      const resolvedFocusKind =
+        normalizeConversationFocusKind(conversationFocus.kind) ??
+        (activeSelectedText ? 'selection' : undefined);
+
       trackKangurClientEvent('kangur_ai_tutor_quick_action_clicked', {
         ...telemetryContext,
         source: options?.source ?? 'quick_action',
@@ -342,14 +347,13 @@ export function useKangurAiTutorPanelActions({
         bridgeActionId: bridgeQuickActionId,
         isBridgeAction: action.id === bridgeQuickActionId,
         hasSelectedText: Boolean(activeSelectedText),
-        focusKind: activeFocus.kind ?? null,
+        focusKind: activeFocus.kind ?? resolvedFocusKind ?? null,
       });
-      const conversationFocus = activeFocus.conversationFocus;
       await sendMessage(action.prompt, {
         promptMode: action.promptMode,
         selectedText: activeSelectedText,
         contentId: conversationFocus.contentId,
-        focusKind: normalizeConversationFocusKind(conversationFocus.kind),
+        focusKind: resolvedFocusKind,
         focusId: conversationFocus.id,
         focusLabel: conversationFocus.label,
         assignmentId: conversationFocus.assignmentId,

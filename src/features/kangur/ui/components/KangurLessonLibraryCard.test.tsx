@@ -120,7 +120,7 @@ describe('KangurLessonLibraryCard', () => {
       />
     );
 
-    expect(screen.getByText('Ukonczone dla rodzica')).toBeInTheDocument();
+    expect(screen.getByText('Ukończone dla rodzica')).toBeInTheDocument();
     expect(screen.getByText('Zadanie zamkniete')).toBeInTheDocument();
     expect(screen.getByText('Zadanie od rodzica zostalo juz wykonane. Powtórki: 1/1')).toBeInTheDocument();
   });

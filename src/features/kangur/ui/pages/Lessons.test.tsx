@@ -9,30 +9,44 @@ import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catal
 const {
   useKangurSubjectFocusMock,
   useKangurAuthMock,
+  useKangurRoutePageReadyMock,
   lessonCardPropsMock,
   lessonsWordmarkPropsMock,
   openLoginModalMock,
   localeState,
+  routeTransitionStateState,
   topNavigationPropsMock,
   tutorSessionSyncPropsMock,
   lessonsState,
+  lessonsLoadingState,
   lessonSectionsState,
+  lessonSectionsLoadingState,
 } = vi.hoisted(() => ({
   useKangurSubjectFocusMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
+  useKangurRoutePageReadyMock: vi.fn(),
   lessonCardPropsMock: vi.fn(),
   lessonsWordmarkPropsMock: vi.fn(),
   openLoginModalMock: vi.fn(),
   localeState: {
     value: 'pl' as 'de' | 'en' | 'pl',
   },
+  routeTransitionStateState: {
+    value: null as null | Record<string, unknown>,
+  },
   topNavigationPropsMock: vi.fn(),
   tutorSessionSyncPropsMock: vi.fn(),
   lessonsState: {
     value: [] as Array<Record<string, unknown>>,
   },
+  lessonsLoadingState: {
+    value: false,
+  },
   lessonSectionsState: {
     value: [] as Array<Record<string, unknown>>,
+  },
+  lessonSectionsLoadingState: {
+    value: false,
   },
 }));
 
@@ -57,6 +71,11 @@ vi.mock('next-intl', () => ({
             de: 'Wahle eine Lektion und starte mit dem Lernen.',
             en: 'Choose a lesson and start learning.',
             pl: 'Wybierz lekcje i zacznij nauke.',
+          },
+          'KangurLessonsPage.emptyTitle': {
+            de: 'Keine aktiven Lektionen',
+            en: 'No active lessons',
+            pl: 'Brak aktywnych lekcji',
           },
         } as const
       )[`${namespace}.${key}`]?.[localeState.value] ?? key,
@@ -109,13 +128,16 @@ vi.mock('@/features/kangur/ui/components/KangurLessonsWordmark', () => ({
 vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
   KangurPageIntroCard: ({
     title,
+    description,
     visualTitle,
   }: {
     title: string;
+    description?: string;
     visualTitle?: React.ReactNode;
   }) => (
     <div data-testid='mock-lessons-intro'>
       <span>{title}</span>
+      {description ? <span>{description}</span> : null}
       {visualTitle}
     </div>
   ),
@@ -174,7 +196,7 @@ vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
-  useOptionalKangurRouteTransitionState: () => null,
+  useOptionalKangurRouteTransitionState: () => routeTransitionStateState.value,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
@@ -220,8 +242,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
       data = data.filter((lesson) => (lesson.subject ?? 'maths') === options.subject);
     }
     return {
-      data,
-      isFetching: false,
+      data: lessonsLoadingState.value ? undefined : data,
+      isFetching: lessonsLoadingState.value,
+      isLoading: lessonsLoadingState.value,
+      isPending: lessonsLoadingState.value,
       refetch: vi.fn(),
     };
   },
@@ -235,7 +259,12 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
-  useKangurLessonSections: () => ({ data: lessonSectionsState.value }),
+  useKangurLessonSections: () => ({
+    data: lessonSectionsLoadingState.value ? undefined : lessonSectionsState.value,
+    isFetching: lessonSectionsLoadingState.value,
+    isLoading: lessonSectionsLoadingState.value,
+    isPending: lessonSectionsLoadingState.value,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
@@ -257,7 +286,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurRoutePageReady', () => ({
-  useKangurRoutePageReady: () => undefined,
+  useKangurRoutePageReady: (input: unknown) => useKangurRoutePageReadyMock(input),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
@@ -324,7 +353,10 @@ describe('Lessons page subject filtering', () => {
       window.clearTimeout(handle);
     });
     lessonsState.value = lessonsFixture;
+    lessonsLoadingState.value = false;
     lessonSectionsState.value = [];
+    lessonSectionsLoadingState.value = false;
+    routeTransitionStateState.value = null;
     useKangurSubjectFocusMock.mockReturnValue({
       subject: 'english',
       setSubject: vi.fn(),
@@ -343,6 +375,7 @@ describe('Lessons page subject filtering', () => {
     openLoginModalMock.mockClear();
     topNavigationPropsMock.mockClear();
     tutorSessionSyncPropsMock.mockClear();
+    useKangurRoutePageReadyMock.mockClear();
   });
 
   afterEach(() => {
@@ -364,6 +397,48 @@ describe('Lessons page subject filtering', () => {
     );
   });
 
+  it('marks the lessons library transition ready before deferred lesson data resolves', () => {
+    routeTransitionStateState.value = {
+      transitionPhase: 'waiting_for_ready',
+      activeTransitionKind: 'navigation',
+      activeTransitionSkeletonVariant: 'lessons-library',
+    };
+    const view = render(<Lessons />);
+
+    expect(useKangurRoutePageReadyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pageKey: 'Lessons',
+        ready: true,
+      })
+    );
+
+    act(() => {
+      vi.runOnlyPendingTimers();
+    });
+    view.unmount();
+  });
+
+  it('keeps focused lesson transitions waiting until the lesson surface is ready', () => {
+    routeTransitionStateState.value = {
+      transitionPhase: 'waiting_for_ready',
+      activeTransitionKind: 'navigation',
+      activeTransitionSkeletonVariant: 'lessons-focus',
+    };
+    const view = render(<Lessons />);
+
+    expect(useKangurRoutePageReadyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pageKey: 'Lessons',
+        ready: false,
+      })
+    );
+
+    act(() => {
+      vi.runOnlyPendingTimers();
+    });
+    view.unmount();
+  });
+
   it('keeps the live lessons library shell aligned with the transition skeleton layout', () => {
     render(<Lessons />);
     act(() => {
@@ -380,6 +455,33 @@ describe('Lessons page subject filtering', () => {
       'w-full',
       'flex-col'
     );
+  });
+
+  it('shows a lesson-section skeleton while the catalog data is loading', () => {
+    lessonsLoadingState.value = true;
+    lessonSectionsLoadingState.value = true;
+
+    render(<Lessons />);
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(screen.getByTestId('lessons-catalog-skeleton')).toBeInTheDocument();
+    expect(screen.getByText('Lekcje zaraz beda gotowe.')).toBeInTheDocument();
+    expect(screen.queryByText('Brak aktywnych lekcji')).not.toBeInTheDocument();
+  });
+
+  it('shows the empty state only after the catalog finishes loading with no lessons', () => {
+    lessonsState.value = [];
+    lessonSectionsState.value = [];
+
+    render(<Lessons />);
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(screen.queryByTestId('lessons-catalog-skeleton')).not.toBeInTheDocument();
+    expect(screen.getByText('Brak aktywnych lekcji')).toBeInTheDocument();
   });
 
   it('uses the translated page title in the tutor session context when no lesson is active', () => {

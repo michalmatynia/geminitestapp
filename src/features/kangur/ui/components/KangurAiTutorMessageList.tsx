@@ -130,6 +130,9 @@ export function KangurAiTutorMessageList({
   const chatTitleSuffix = tutorContent.narrator?.chatTitleSuffix ?? '';
   const tutorName = tutor?.tutorName ?? tutorContent.common.defaultTutorName;
   const conversationLabel = `${tutorName} ${chatTitleSuffix}`.trim();
+  const compactActionClassName = isCoarsePointer
+    ? 'w-full min-h-11 px-4 text-xs touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+    : 'w-full sm:w-auto';
 
   return (
     <div
@@ -289,6 +292,7 @@ export function KangurAiTutorMessageList({
                         size='sm'
                         variant='primary'
                         disabled={isLoading || !canSendMessages}
+                        className={compactActionClassName}
                         onClick={() => void handleQuickAction(hintQuickAction)}
                       >
                         {tutorContent.messageList.hintFollowUpActionLabel}
@@ -395,7 +399,12 @@ export function KangurAiTutorMessageList({
                       {msg.websiteHelpTarget.label}
                     </div>
                     <div className='mt-2'>
-                      <KangurButton asChild size='sm' variant='primary' className='w-full sm:w-auto'>
+                      <KangurButton
+                        asChild
+                        size='sm'
+                        variant='primary'
+                        className={compactActionClassName}
+                      >
                         <Link
                           href={websiteHelpTargetHref}
                           onClick={() =>
@@ -435,7 +444,7 @@ export function KangurAiTutorMessageList({
                       disabled={submittedFeedback !== null}
                       className={cn(
                         isCoarsePointer
-                          ? 'min-h-11 px-4 text-xs'
+                          ? 'min-h-11 px-4 text-xs touch-manipulation select-none active:scale-[0.97]'
                           : 'h-8 px-3 text-[11px]',
                         submittedFeedback === 'helpful'
                           ? 'kangur-chat-feedback-positive'
@@ -454,7 +463,7 @@ export function KangurAiTutorMessageList({
                       disabled={submittedFeedback !== null}
                       className={cn(
                         isCoarsePointer
-                          ? 'min-h-11 px-4 text-xs'
+                          ? 'min-h-11 px-4 text-xs touch-manipulation select-none active:scale-[0.97]'
                           : 'h-8 px-3 text-[11px]',
                         submittedFeedback === 'not_helpful'
                           ? 'kangur-chat-feedback-negative'

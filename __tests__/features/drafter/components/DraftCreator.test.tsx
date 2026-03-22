@@ -1,4 +1,5 @@
-import { screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { DraftCreator } from '@/features/drafter/components/DraftCreator';
@@ -38,8 +39,24 @@ describe('DraftCreator Component', () => {
     });
   });
 
+  const renderDraftCreator = () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
+
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <DraftCreator draftId={null} onSaveSuccess={vi.fn()} onCancel={vi.fn()} />
+      </QueryClientProvider>
+    );
+  };
+
   it('should render the form with initial state', async () => {
-    render(<DraftCreator draftId={null} onSaveSuccess={vi.fn()} onCancel={vi.fn()} />);
+    renderDraftCreator();
 
     expect(screen.getByText('Draft Information')).toBeInTheDocument();
     expect(screen.getByLabelText(/Draft Name/i)).toBeInTheDocument();
@@ -57,7 +74,7 @@ describe('DraftCreator Component', () => {
   });
 
   it('should update name input correctly', () => {
-    render(<DraftCreator draftId={null} onSaveSuccess={vi.fn()} onCancel={vi.fn()} />);
+    renderDraftCreator();
 
     const nameInput = screen.getByLabelText(/Draft Name/i);
     fireEvent.change(nameInput, { target: { value: 'My New Draft' } });
@@ -67,8 +84,17 @@ describe('DraftCreator Component', () => {
 
   it('should show validation error if saving without a name', () => {
     const onSaveSuccess = vi.fn();
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
     const { container } = render(
-      <DraftCreator draftId={null} onSaveSuccess={onSaveSuccess} onCancel={vi.fn()} />
+      <QueryClientProvider client={queryClient}>
+        <DraftCreator draftId={null} onSaveSuccess={onSaveSuccess} onCancel={vi.fn()} />
+      </QueryClientProvider>
     );
 
     const form = container.querySelector('form');
@@ -82,7 +108,7 @@ describe('DraftCreator Component', () => {
   });
 
   it('should open icon selector modal', async () => {
-    render(<DraftCreator draftId={null} onSaveSuccess={vi.fn()} onCancel={vi.fn()} />);
+    renderDraftCreator();
 
     const chooseIconButton = screen.getByRole('button', { name: /Choose Icon/i });
     fireEvent.click(chooseIconButton);

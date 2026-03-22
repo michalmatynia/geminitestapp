@@ -59,7 +59,7 @@ describe('KangurPageTransitionSkeleton', () => {
     });
   });
 
-  it('uses a fixed full-viewport overlay for standalone non-home non-lessons routes', () => {
+  it('offsets standalone learner-profile overlays below the top navigation host', () => {
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
       embedded: false,
@@ -67,8 +67,14 @@ describe('KangurPageTransitionSkeleton', () => {
 
     renderWithIntl(<KangurPageTransitionSkeleton pageKey='LearnerProfile' />);
 
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass('fixed', 'inset-0');
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass(
+      'fixed',
+      'inset-x-0',
+      'bottom-0',
+      'top-[var(--kangur-top-bar-height,88px)]'
+    );
     expect(screen.getByTestId('kangur-page-transition-skeleton')).not.toHaveClass('absolute');
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).not.toHaveClass('inset-0');
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
       'data-kangur-skeleton-variant',
       'learner-profile'
@@ -115,6 +121,31 @@ describe('KangurPageTransitionSkeleton', () => {
       'data-kangur-skeleton-variant',
       'lessons-library'
     );
+  });
+
+  it('keeps standalone game-session overlays below the top bar without adding a second top-bar offset', () => {
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+    });
+
+    renderWithIntl(<KangurPageTransitionSkeleton pageKey='Competition' variant='game-session' />);
+
+    const skeleton = screen.getByTestId('kangur-page-transition-skeleton');
+    expect(skeleton).toHaveClass(
+      'fixed',
+      'inset-x-0',
+      'bottom-0',
+      'top-[var(--kangur-top-bar-height,88px)]'
+    );
+
+    const container = skeleton.querySelector('[data-kangur-route-main="false"]');
+    if (!container) {
+      throw new Error('Expected the standalone game-session skeleton container to render.');
+    }
+
+    expect(container).toHaveClass('pt-24', 'sm:pt-28');
+    expect(container).not.toHaveClass('pt-[calc(var(--kangur-top-bar-height,88px)+12px)]');
   });
 
   it('uses an in-shell absolute overlay for embedded Kangur routes', () => {

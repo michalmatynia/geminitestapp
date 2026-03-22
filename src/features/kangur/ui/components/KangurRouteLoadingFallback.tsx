@@ -3,9 +3,14 @@
 import { usePathname, useSearchParams } from 'next/navigation';
 
 import { KangurPageTransitionSkeleton } from '@/features/kangur/ui/components/KangurPageTransitionSkeleton';
+import { KangurTopNavigationSkeleton } from '@/features/kangur/ui/components/KangurTopNavigationSkeleton';
 import { resolveKangurRouteTransitionSkeletonVariant } from '@/features/kangur/ui/routing/route-transition-skeletons';
 
-export function KangurRouteLoadingFallback(): React.JSX.Element {
+export function KangurRouteLoadingFallback({
+  includeTopNavigationSkeleton = true,
+}: {
+  includeTopNavigationSkeleton?: boolean;
+} = {}): React.JSX.Element {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const serializedSearchParams = searchParams?.toString().trim() ?? '';
@@ -20,5 +25,16 @@ export function KangurRouteLoadingFallback(): React.JSX.Element {
     href,
   });
 
-  return <KangurPageTransitionSkeleton reason='navigation' variant={variant} />;
+  const pageSkeleton = <KangurPageTransitionSkeleton reason='navigation' variant={variant} />;
+
+  if (!includeTopNavigationSkeleton) {
+    return pageSkeleton;
+  }
+
+  return (
+    <>
+      <KangurTopNavigationSkeleton />
+      {pageSkeleton}
+    </>
+  );
 }

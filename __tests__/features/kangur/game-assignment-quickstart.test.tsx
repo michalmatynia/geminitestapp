@@ -106,11 +106,13 @@ vi.mock('@/features/kangur/ui/components/progress', () => ({
 
 vi.mock('@/features/kangur/ui/components/KangurPriorityAssignments', () => ({
   __esModule: true,
+  KangurPriorityAssignments: () => <div data-testid='kangur-priority-assignments' />,
   default: () => <div data-testid='kangur-priority-assignments' />,
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurAssignmentSpotlight', () => ({
   __esModule: true,
+  KangurAssignmentSpotlight: () => <div data-testid='kangur-assignment-spotlight' />,
   default: () => <div data-testid='kangur-assignment-spotlight' />,
 }));
 

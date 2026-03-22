@@ -1067,8 +1067,7 @@ export function KangurPageTransitionSkeleton({
       pageKey,
     });
   const resolvedPageKey = resolveSkeletonPageKey(resolvedVariant);
-  const shouldOffsetStandaloneRouteOverlay =
-    !embedded && (resolvedPageKey === 'Lessons' || resolvedVariant === 'game-home');
+  const shouldOffsetStandaloneRouteOverlay = !embedded;
 
   return (
     <div
@@ -1113,7 +1112,9 @@ export function KangurPageTransitionSkeleton({
               : resolvedPageKey === 'Lessons'
               ? null
               : resolvedPageKey === 'Game'
-                ? KANGUR_TOP_BAR_PADDED_OFFSET_CLASSNAME
+                ? shouldOffsetStandaloneRouteOverlay
+                  ? 'pt-24 sm:pt-28'
+                  : KANGUR_TOP_BAR_PADDED_OFFSET_CLASSNAME
                 : 'pt-24 sm:pt-28'
           ),
           'data-kangur-route-main': false,

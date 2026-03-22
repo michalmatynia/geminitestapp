@@ -14,7 +14,10 @@ const { useSearchParamsMock } = vi.hoisted(() => ({
   useSearchParamsMock: vi.fn(),
 }));
 
-const kangurPageTransitionSkeletonMock = vi.fn();
+const { kangurPageTransitionSkeletonMock, kangurTopNavigationSkeletonMock } = vi.hoisted(() => ({
+  kangurPageTransitionSkeletonMock: vi.fn(),
+  kangurTopNavigationSkeletonMock: vi.fn(),
+}));
 
 vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
@@ -25,6 +28,13 @@ vi.mock('@/features/kangur/ui/components/KangurPageTransitionSkeleton', () => ({
   KangurPageTransitionSkeleton: (props: Record<string, unknown>) => {
     kangurPageTransitionSkeletonMock(props);
     return <div data-testid='kangur-page-transition-skeleton-probe' />;
+  },
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurTopNavigationSkeleton', () => ({
+  KangurTopNavigationSkeleton: () => {
+    kangurTopNavigationSkeletonMock();
+    return <div data-testid='kangur-top-navigation-skeleton-probe' />;
   },
 }));
 
@@ -40,7 +50,9 @@ describe('KangurRouteLoadingFallback', () => {
   it('renders the lessons skeleton for localized lesson routes', () => {
     render(<KangurRouteLoadingFallback />);
 
+    expect(screen.getByTestId('kangur-top-navigation-skeleton-probe')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-transition-skeleton-probe')).toBeInTheDocument();
+    expect(kangurTopNavigationSkeletonMock).toHaveBeenCalledTimes(1);
     expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
       reason: 'navigation',
       variant: 'lessons-library',
@@ -68,5 +80,13 @@ describe('KangurRouteLoadingFallback', () => {
       reason: 'navigation',
       variant: 'game-session',
     });
+  });
+
+  it('can skip the navbar skeleton for in-app lazy page fallbacks', () => {
+    render(<KangurRouteLoadingFallback includeTopNavigationSkeleton={false} />);
+
+    expect(screen.queryByTestId('kangur-top-navigation-skeleton-probe')).toBeNull();
+    expect(screen.getByTestId('kangur-page-transition-skeleton-probe')).toBeInTheDocument();
+    expect(kangurTopNavigationSkeletonMock).not.toHaveBeenCalled();
   });
 });

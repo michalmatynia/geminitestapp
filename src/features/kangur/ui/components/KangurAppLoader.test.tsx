@@ -28,6 +28,20 @@ describe('KangurAppLoader', () => {
     expect(screen.getByTestId('kangur-app-loader-copy')).toBeInTheDocument();
     expect(screen.getByText('StudiQ')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-app-loader-copy')).toHaveTextContent('Ładowanie');
+    expect(loader).toHaveAttribute('data-loader-offset-top-bar', 'false');
+  });
+
+  it('can reserve the top-bar slot while the loader is visible', () => {
+    renderWithIntl(<KangurAppLoader offsetTopBar visible />);
+
+    const loader = screen.getByTestId('kangur-app-loader');
+
+    expect(loader).toHaveAttribute('data-loader-offset-top-bar', 'true');
+    expect(loader).toHaveClass(
+      'inset-x-0',
+      'bottom-0',
+      'top-[var(--kangur-top-bar-height,88px)]'
+    );
   });
 
   it('does not render when hidden', () => {

@@ -13,7 +13,7 @@ import {
   saveCentralLogDeadLetters,
 } from '@/shared/lib/observability/central-log-dead-letter-store';
 import { createSystemLog } from '@/shared/lib/observability/system-log-repository';
-import { hydrateLogRuntimeContext } from '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context';
+import { hydrateLogRuntimeContext } from '@/features/observability/entry-server';
 import {
   logSystemEvent,
   logSystemError,
@@ -31,7 +31,7 @@ vi.mock('@/shared/lib/observability/critical-error-notifier', () => ({
   notifyCriticalError: vi.fn().mockResolvedValue({ delivered: true, throttled: false }),
 }));
 
-vi.mock('@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context', () => ({
+vi.mock('@/features/observability/entry-server', () => ({
   hydrateLogRuntimeContext: vi.fn().mockImplementation(async (context) => context),
 }));
 

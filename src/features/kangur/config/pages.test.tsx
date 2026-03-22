@@ -23,8 +23,8 @@ vi.mock('next/dynamic', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurRouteLoadingFallback', () => ({
-  KangurRouteLoadingFallback: () => {
-    routeLoadingFallbackMock();
+  KangurRouteLoadingFallback: (props: Record<string, unknown>) => {
+    routeLoadingFallbackMock(props);
     return <div data-testid='kangur-route-loading-fallback-probe' />;
   },
 }));
@@ -72,5 +72,8 @@ describe('kangur page config', () => {
 
     expect(screen.getByTestId('kangur-route-loading-fallback-probe')).toBeInTheDocument();
     expect(routeLoadingFallbackMock).toHaveBeenCalledTimes(1);
+    expect(routeLoadingFallbackMock).toHaveBeenCalledWith({
+      includeTopNavigationSkeleton: false,
+    });
   });
 });

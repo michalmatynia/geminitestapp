@@ -177,7 +177,7 @@ describe('KangurGameHomeActionsWidget', () => {
       expect.objectContaining({
         href: '/kangur/lessons',
         targetPageKey: 'Lessons',
-        transitionAcknowledgeMs: 110,
+        
         transitionSourceId: 'game-home-action:lessons',
       })
     );

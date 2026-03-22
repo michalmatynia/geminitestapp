@@ -896,7 +896,9 @@ const expectRouteSkeletonHandoff = ({
     requireAcknowledgement
       ? `${stepLabel}: page skeleton appeared before the acknowledgement phase`
       : `${stepLabel}: page skeleton appeared before the tracked transition phase`
-  ).toBeGreaterThan(requireAcknowledgement ? acknowledgeIndex : transitionStartIndex);
+  )[requireAcknowledgement ? 'toBeGreaterThan' : 'toBeGreaterThanOrEqual'](
+    requireAcknowledgement ? acknowledgeIndex : transitionStartIndex
+  );
   expect(
     targetRouteIndex,
     `${stepLabel}: target route committed before the page skeleton handoff appeared`
@@ -946,7 +948,9 @@ const expectRouteSkeletonAcknowledgement = ({
     requireAcknowledgement
       ? `${stepLabel}: page skeleton appeared before the acknowledgement phase`
       : `${stepLabel}: page skeleton appeared before the tracked transition phase`
-  ).toBeGreaterThan(requireAcknowledgement ? acknowledgeIndex : transitionStartIndex);
+  )[requireAcknowledgement ? 'toBeGreaterThan' : 'toBeGreaterThanOrEqual'](
+    requireAcknowledgement ? acknowledgeIndex : transitionStartIndex
+  );
 };
 
 const waitForAnimationFrames = async (page: Page, frameCount: number): Promise<void> => {

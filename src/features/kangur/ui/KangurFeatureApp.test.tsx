@@ -50,8 +50,19 @@ vi.mock('@/features/kangur/ui/components/KangurPageTransitionSkeleton', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurAppLoader', () => ({
-  KangurAppLoader: ({ visible }: { visible: boolean }) =>
-    visible ? <div data-testid='kangur-app-loader' /> : null,
+  KangurAppLoader: ({
+    offsetTopBar,
+    visible,
+  }: {
+    offsetTopBar?: boolean;
+    visible: boolean;
+  }) =>
+    visible ? (
+      <div
+        data-loader-offset-top-bar={offsetTopBar ? 'true' : 'false'}
+        data-testid='kangur-app-loader'
+      />
+    ) : null,
 }));
 
 vi.mock('@/features/kangur/ui/components/PageNotFound', () => ({
@@ -532,8 +543,61 @@ describe('KangurFeatureApp', () => {
     render(<KangurFeatureApp />);
 
     expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-app-loader')).toHaveAttribute(
+      'data-loader-offset-top-bar',
+      'true'
+    );
     expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-lessons')).toBeInTheDocument();
+  });
+
+  it('keeps the navbar skeleton visible while the boot loader runs and top navigation is still unregistered', () => {
+    topNavigationHostVisibleMock.mockReturnValue(false);
+    settingsStoreStateMock.mockReturnValue({
+      map: new Map(),
+      isLoading: true,
+      isFetching: false,
+      error: null,
+      get: vi.fn(),
+      getBoolean: vi.fn(),
+      getNumber: vi.fn(),
+      refetch: vi.fn(),
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-app-loader')).toHaveAttribute(
+      'data-loader-offset-top-bar',
+      'true'
+    );
+    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
+  });
+
+  it('keeps the navbar skeleton mounted for standalone routes even when route content is temporarily null', async () => {
+    topNavigationHostVisibleMock.mockReturnValue(false);
+    authStateMock.mockReturnValue({
+      isLoadingAuth: false,
+      isLoadingPublicSettings: false,
+      authError: null,
+      navigateToLogin: vi.fn(),
+      isAuthenticated: false,
+    });
+    routingStateMock.mockReturnValue({
+      pageKey: 'ParentDashboard',
+      embedded: false,
+      requestedPath: '/parent-dashboard',
+      basePath: '/',
+    });
+
+    render(<KangurFeatureApp />);
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-route-content')).toBeNull();
   });
 
   it('keeps route content visible while cached theme settings are refreshing', () => {

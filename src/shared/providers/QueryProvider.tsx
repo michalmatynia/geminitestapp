@@ -79,6 +79,10 @@ function QueryProviderAdvancedRuntime({ shouldWarmup }: { shouldWarmup: boolean 
   return null;
 }
 
+// Stable query key arrays for persistence — avoids re-running effects on every render.
+const PERSISTED_PREFERENCES_KEYS = [[...QUERY_KEYS.userPreferences.all]];
+const PERSISTED_SETTINGS_KEYS = [[...QUERY_KEYS.settings.scope('lite')]];
+
 function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element {
   useGlobalQueryErrorHandler({
     showToast: true,
@@ -89,14 +93,14 @@ function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element
 
   useQueryPersistence({
     key: 'app-queries',
-    queryKeys: [[...QUERY_KEYS.userPreferences.all]],
+    queryKeys: PERSISTED_PREFERENCES_KEYS,
     ttl: 1000 * 60 * 60,
     maxItemBytes: 16 * 1024,
   });
 
   useQueryPersistence({
     key: 'app-queries',
-    queryKeys: [[...QUERY_KEYS.settings.scope('lite')]],
+    queryKeys: PERSISTED_SETTINGS_KEYS,
     ttl: 1000 * 60 * 60,
     maxItemBytes: 16 * 1024,
     revalidateOnLoad: true,

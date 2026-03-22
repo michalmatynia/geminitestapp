@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 
 import { useSystemSync } from '@/shared/hooks/sync/useSystemSync';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -62,8 +62,6 @@ export function BackgroundSyncProvider({
     enabled: resolvedSettings.enabled,
     interval: resolvedSettings.intervalSeconds * 1000,
   });
-
-  useEffect(() => {}, [isOnline, lastSync]);
 
   const stateValue = useMemo(
     () => ({

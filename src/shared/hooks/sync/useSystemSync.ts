@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
@@ -54,9 +54,15 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
     };
   }, []);
 
-  // Sync when coming back online
+  // Sync when coming back online (skip initial mount — only on false→true transition)
+  const wasOfflineRef = useRef(false);
   useEffect(() => {
-    if (isOnline && enabled) {
+    if (!isOnline) {
+      wasOfflineRef.current = true;
+      return undefined;
+    }
+    if (wasOfflineRef.current && enabled) {
+      wasOfflineRef.current = false;
       const timer = setTimeout(() => {
         void performSync();
       }, 0);

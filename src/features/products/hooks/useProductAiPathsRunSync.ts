@@ -66,6 +66,25 @@ const hasTrackedProductRuns = (
   return false;
 };
 
+const areFeedbackMapsEqual = (
+  prev: ReadonlyMap<string, ProductAiRunFeedback>,
+  next: ReadonlyMap<string, ProductAiRunFeedback>
+): boolean => {
+  if (prev.size !== next.size) return false;
+  for (const [key, nextFeedback] of next) {
+    const prevFeedback = prev.get(key);
+    if (!prevFeedback) return false;
+    if (
+      prevFeedback.runId !== nextFeedback.runId ||
+      prevFeedback.status !== nextFeedback.status ||
+      prevFeedback.updatedAt !== nextFeedback.updatedAt
+    ) {
+      return false;
+    }
+  }
+  return true;
+};
+
 const buildProductAiRunStatusByProductId = (
   trackedRuns: ReadonlyMap<string, TrackedProductRun>
 ): ReadonlyMap<string, ProductAiRunFeedback> => {
@@ -109,9 +128,12 @@ export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeed
     disposedRef.current = false;
 
     const syncProductAiRunStatuses = (): void => {
-      setProductAiRunStatusByProductId(
-        buildProductAiRunStatusByProductId(trackedRunsRef.current)
-      );
+      setProductAiRunStatusByProductId((prev) => {
+        const next = buildProductAiRunStatusByProductId(trackedRunsRef.current);
+        if (next.size === 0 && prev.size === 0) return prev;
+        if (areFeedbackMapsEqual(prev, next)) return prev;
+        return next;
+      });
     };
 
     const stopBadgeRefresh = (): void => {

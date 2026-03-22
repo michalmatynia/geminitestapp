@@ -1,5 +1,5 @@
 import { useQueryClient, type QueryKey } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { getProductListQueryKey } from '@/shared/lib/product-query-keys';
 import { safeSetInterval, safeClearInterval, type SafeTimerId } from '@/shared/lib/timers';
@@ -12,6 +12,9 @@ interface BackgroundSyncOptions {
   onUpdate?: (data: unknown) => void;
 }
 
+// Minimum time (ms) between visibility-triggered syncs to avoid tab-switch storms.
+const VISIBILITY_SYNC_DEBOUNCE_MS = 5_000;
+
 export function useBackgroundSync({
   queryKey,
   interval = 30000, // 30 seconds default
@@ -22,33 +25,22 @@ export function useBackgroundSync({
   const intervalRef = useRef<SafeTimerId | undefined>(undefined);
   const previousDataRef = useRef<unknown>(undefined);
   const isVisibleRef = useRef(true);
+  const lastSyncAtRef = useRef<number>(0);
+  const queryKeyRef = useRef(queryKey);
+  queryKeyRef.current = queryKey;
+  const onUpdateRef = useRef(onUpdate);
+  onUpdateRef.current = onUpdate;
 
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-
-    const handleVisibilityChange = (): void => {
-      isVisibleRef.current = document.visibilityState === 'visible';
-      if (isVisibleRef.current && enabled) {
-        // Immediate sync when tab becomes visible after being hidden
-        void syncData();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [enabled]);
-
-  const syncData = async (): Promise<void> => {
+  const syncData = useCallback(async (): Promise<void> => {
     if (!isVisibleRef.current || !enabled) return;
 
     try {
-      await queryClient.refetchQueries({ queryKey });
-      const currentData = queryClient.getQueryData(queryKey);
+      await queryClient.refetchQueries({ queryKey: queryKeyRef.current });
+      lastSyncAtRef.current = Date.now();
+      const currentData = queryClient.getQueryData(queryKeyRef.current);
 
       if (currentData !== previousDataRef.current) {
-        onUpdate?.(currentData);
+        onUpdateRef.current?.(currentData);
         previousDataRef.current = currentData;
       }
     } catch (error: unknown) {
@@ -58,7 +50,27 @@ export function useBackgroundSync({
         level: 'warn',
       });
     }
-  };
+  }, [enabled, queryClient]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    const handleVisibilityChange = (): void => {
+      isVisibleRef.current = document.visibilityState === 'visible';
+      if (isVisibleRef.current && enabled) {
+        // Only sync if enough time has passed since the last sync
+        const elapsed = Date.now() - lastSyncAtRef.current;
+        if (elapsed >= VISIBILITY_SYNC_DEBOUNCE_MS) {
+          void syncData();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [enabled, syncData]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -72,11 +84,11 @@ export function useBackgroundSync({
         safeClearInterval(intervalRef.current);
       }
     };
-  }, [queryKey, interval, enabled, onUpdate, queryClient]);
+  }, [interval, enabled, syncData]);
 
   return {
     forceSync: async (): Promise<void> => {
-      await queryClient.refetchQueries({ queryKey });
+      await queryClient.refetchQueries({ queryKey: queryKeyRef.current });
     },
   };
 }

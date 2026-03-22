@@ -11,6 +11,7 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
 import type { SortGameConfig, SortGameItem } from './AgenticCodingMiniGames.types';
 
@@ -21,6 +22,7 @@ export function AgenticSortGame({
   accent: KangurAccent;
   config: SortGameConfig;
 }): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const [assignments, setAssignments] = useState<Record<string, string | null>>(() => {
     const base: Record<string, string | null> = {};
     config.items.forEach((item) => {
@@ -30,6 +32,7 @@ export function AgenticSortGame({
   });
   const [checked, setChecked] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   const poolItems = config.items.filter((item) => assignments[item.id] === null);
   const binsWithItems = config.bins.map((bin) => ({
@@ -45,7 +48,23 @@ export function AgenticSortGame({
     if (!itemId) return;
     setAssignments((prev) => ({ ...prev, [itemId]: binId === 'pool' ? null : binId }));
     setChecked(false);
+    setSelectedItemId(null);
   };
+
+  const handleAssign = (itemId: string, binId: string | null): void => {
+    setAssignments((prev) => ({ ...prev, [itemId]: binId }));
+    setChecked(false);
+    setSelectedItemId(null);
+  };
+
+  const handleBinActivate = (binId: string | null): void => {
+    if (!isCoarsePointer || !selectedItemId) return;
+    handleAssign(selectedItemId, binId);
+  };
+
+  const touchHint = selectedItemId
+    ? 'Dotknij wybraną kategorię, aby odłożyć kartę.'
+    : 'Dotknij kartę, a potem dotknij kategorię.';
 
   return (
     <KangurLessonStack align='start' className='w-full'>
@@ -64,14 +83,25 @@ export function AgenticSortGame({
           </span>
         </div>
         <KangurLessonCaption className='mt-2 text-left'>{config.prompt}</KangurLessonCaption>
+        {isCoarsePointer ? (
+          <KangurLessonCaption className='mt-2 text-left' data-testid='agentic-sort-touch-hint'>
+            {touchHint}
+          </KangurLessonCaption>
+        ) : null}
       </KangurLessonCallout>
       <div className={`grid ${KANGUR_PANEL_GAP_CLASSNAME} sm:grid-cols-2`}>
         {binsWithItems.map((bin) => (
           <div
             key={bin.id}
-            className='soft-card border border-slate-200/80 bg-white px-4 py-3'
+            className={cn(
+              'soft-card border border-slate-200/80 bg-white px-4 py-3',
+              isCoarsePointer ? 'touch-manipulation transition-colors' : null,
+              isCoarsePointer && selectedItemId ? 'ring-2 ring-amber-300/70 ring-offset-2 ring-offset-white' : null
+            )}
             onDragOver={(event) => event.preventDefault()}
             onDrop={(event) => handleDrop(bin.id, event)}
+            onClick={() => handleBinActivate(bin.id)}
+            data-testid={`agentic-sort-bin-${bin.id}`}
           >
             <p className='text-sm font-semibold text-slate-900'>{bin.label}</p>
             <div className='mt-3 space-y-2'>
@@ -80,9 +110,12 @@ export function AgenticSortGame({
                   <DraggableToken
                     key={item.id}
                     draggingId={draggingId}
+                    isCoarsePointer={isCoarsePointer}
+                    isSelected={selectedItemId === item.id}
                     item={item}
                     onDragStart={setDraggingId}
                     onDragEnd={() => setDraggingId(null)}
+                    onSelect={setSelectedItemId}
                     isCorrect={checked ? item.binId === bin.id : undefined}
                   />
                 ))
@@ -95,9 +128,15 @@ export function AgenticSortGame({
       </div>
       <div className={`grid ${KANGUR_PANEL_GAP_CLASSNAME} sm:grid-cols-[1.4fr_1fr]`}>
         <div
-          className='soft-card border border-slate-200/80 bg-slate-50 px-4 py-3'
+          className={cn(
+            'soft-card border border-slate-200/80 bg-slate-50 px-4 py-3',
+            isCoarsePointer ? 'touch-manipulation transition-colors' : null,
+            isCoarsePointer && selectedItemId ? 'ring-2 ring-amber-300/70 ring-offset-2 ring-offset-white' : null
+          )}
           onDragOver={(event) => event.preventDefault()}
           onDrop={(event) => handleDrop('pool', event)}
+          onClick={() => handleBinActivate(null)}
+          data-testid='agentic-sort-pool'
         >
           <p className='text-sm font-semibold text-slate-900'>Pool</p>
           <div className='mt-3 flex flex-wrap gap-2'>
@@ -105,9 +144,12 @@ export function AgenticSortGame({
               <DraggableToken
                 key={item.id}
                 draggingId={draggingId}
+                isCoarsePointer={isCoarsePointer}
+                isSelected={selectedItemId === item.id}
                 item={item}
                 onDragStart={setDraggingId}
                 onDragEnd={() => setDraggingId(null)}
+                onSelect={setSelectedItemId}
                 isCorrect={checked ? false : undefined}
               />
             ))}
@@ -118,12 +160,15 @@ export function AgenticSortGame({
         </div>
         <KangurLessonInset accent={accent} className='flex flex-col gap-3'>
           <KangurLessonCaption className='text-left text-slate-700'>
-            Przeciągnij karty, a potem sprawdź wynik.
+            {isCoarsePointer
+              ? 'Dotknij kartę, dotknij kategorię i dopiero potem sprawdź wynik.'
+              : 'Przeciągnij karty, a potem sprawdź wynik.'}
           </KangurLessonCaption>
           <KangurButton
             variant={allCorrect && checked ? 'success' : 'surface'}
             disabled={!allPlaced}
             onClick={() => setChecked(true)}
+            className={isCoarsePointer ? 'touch-manipulation select-none min-h-11 active:scale-[0.98]' : undefined}
           >
             {allCorrect && checked ? 'Gotowe' : 'Sprawdź'}
           </KangurButton>
@@ -145,18 +190,49 @@ export function AgenticSortGame({
 
 function DraggableToken({
   draggingId,
+  isCoarsePointer,
+  isSelected,
   item,
   onDragEnd,
   onDragStart,
+  onSelect,
   isCorrect,
 }: {
   draggingId: string | null;
+  isCoarsePointer: boolean;
+  isSelected: boolean;
   item: SortGameItem;
   onDragStart: (id: string) => void;
   onDragEnd: () => void;
+  onSelect: (id: string | null) => void;
   isCorrect?: boolean;
 }): React.JSX.Element {
   const isDragging = draggingId === item.id;
+  const stateClassName = cn(
+    'rounded-xl border px-3 py-2 text-xs font-semibold shadow-sm transition',
+    isDragging ? 'opacity-60' : '',
+    isCorrect === undefined
+      ? 'border-slate-200/80 bg-white text-slate-900'
+      : isCorrect
+        ? 'border-emerald-200/80 bg-emerald-50 text-emerald-900'
+        : 'border-rose-200/80 bg-rose-50 text-rose-900',
+    isSelected ? 'ring-2 ring-amber-300/70 ring-offset-2 ring-offset-white' : null
+  );
+  if (isCoarsePointer) {
+    return (
+      <button
+        type='button'
+        aria-pressed={isSelected}
+        onClick={() => onSelect(isSelected ? null : item.id)}
+        className={cn(
+          stateClassName,
+          'w-full text-left touch-manipulation select-none min-h-[3.5rem] active:scale-[0.98]'
+        )}
+      >
+        {item.label}
+      </button>
+    );
+  }
   return (
     <div
       draggable
@@ -165,15 +241,7 @@ function DraggableToken({
         onDragStart(item.id);
       }}
       onDragEnd={onDragEnd}
-      className={cn(
-        'cursor-grab rounded-xl border px-3 py-2 text-xs font-semibold shadow-sm transition',
-        isDragging ? 'opacity-60' : '',
-        isCorrect === undefined
-          ? 'border-slate-200/80 bg-white text-slate-900'
-          : isCorrect
-            ? 'border-emerald-200/80 bg-emerald-50 text-emerald-900'
-            : 'border-rose-200/80 bg-rose-50 text-rose-900'
-      )}
+      className={cn(stateClassName, 'cursor-grab')}
       style={{ touchAction: 'none' }}
       aria-label={item.label}
     >

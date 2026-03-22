@@ -271,7 +271,7 @@ describe('Lessons page focus query support', () => {
     expect(await screen.findByTestId('active-lesson-header')).toHaveTextContent('Dzielenie');
     expect(await screen.findByText('Co to dzielenie?')).toBeInTheDocument();
     expect(screen.getByTestId('active-lesson-parent-completed-chip')).toHaveTextContent(
-      'Ukonczone dla rodzica'
+      'Ukończone dla rodzica'
     );
     expect(window.location.search).toBe('');
   });

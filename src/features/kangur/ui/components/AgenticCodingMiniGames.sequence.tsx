@@ -10,6 +10,7 @@ import {
   KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
 import type { SequenceGameConfig } from './AgenticCodingMiniGames.types';
 
@@ -20,6 +21,7 @@ export function AgenticSequenceGame({
   accent: KangurAccent;
   config: SequenceGameConfig;
 }): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [errorId, setErrorId] = useState<string | null>(null);
   const completed = config.steps.map((_, index) => index < currentIndex);
@@ -54,6 +56,11 @@ export function AgenticSequenceGame({
           </span>
         </div>
         <KangurLessonCaption className='mt-2 text-left'>{config.prompt}</KangurLessonCaption>
+        {isCoarsePointer ? (
+          <KangurLessonCaption className='mt-2 text-left' data-testid='agentic-sequence-touch-hint'>
+            Dotykaj kroków po kolei. Każdy poprawny wybór odblokowuje następny.
+          </KangurLessonCaption>
+        ) : null}
       </KangurLessonCallout>
       <div className={`grid ${KANGUR_PANEL_GAP_CLASSNAME} sm:grid-cols-2`}>
         {config.steps.map((label, index) => {
@@ -70,7 +77,8 @@ export function AgenticSequenceGame({
                 isDone
                   ? 'border-emerald-200/80 bg-emerald-50 text-emerald-900'
                   : 'border-slate-200/80 bg-white text-slate-900 hover:border-slate-300/80',
-                isError ? 'border-rose-200/80 bg-rose-50 text-rose-900' : ''
+                isError ? 'border-rose-200/80 bg-rose-50 text-rose-900' : '',
+                isCoarsePointer ? 'touch-manipulation select-none min-h-[3.75rem] active:scale-[0.98]' : null
               )}
             >
               {label}

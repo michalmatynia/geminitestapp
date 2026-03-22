@@ -31,7 +31,23 @@ describe('KangurPageTransitionSkeleton', () => {
     vi.clearAllMocks();
   });
 
-  it('uses a fixed viewport overlay for standalone Kangur routes', () => {
+  it('uses a fixed full-viewport overlay for standalone non-lessons routes', () => {
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+    });
+
+    renderWithIntl(<KangurPageTransitionSkeleton pageKey='Game' />);
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass('fixed', 'inset-0');
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).not.toHaveClass('absolute');
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-kangur-skeleton-variant',
+      'game-home'
+    );
+  });
+
+  it('offsets the standalone lessons overlay below the top navigation host', () => {
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
       embedded: false,
@@ -39,8 +55,13 @@ describe('KangurPageTransitionSkeleton', () => {
 
     renderWithIntl(<KangurPageTransitionSkeleton pageKey='Lessons' />);
 
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass('fixed', 'inset-0');
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).not.toHaveClass('absolute');
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass(
+      'fixed',
+      'inset-x-0',
+      'bottom-0',
+      'top-[var(--kangur-top-bar-height,88px)]'
+    );
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).not.toHaveClass('inset-0');
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
       'data-kangur-skeleton-variant',
       'lessons-library'

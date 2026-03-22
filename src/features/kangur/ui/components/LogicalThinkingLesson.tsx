@@ -289,6 +289,7 @@ const LOGICAL_THINKING_LESSON_COPY_PL = {
         header: {
           stepTemplate: 'Krok {current} / {total}',
           instruction: 'Kliknij karty i ułóż: fakt → reguła → wniosek',
+          touchInstruction: 'Dotknij kartę, a potem dotknij pole, do którego chcesz ją wstawić.',
         },
         slots: {
           fact: {
@@ -479,6 +480,7 @@ const buildIfThenGameCopy = (copy: LogicalThinkingLessonCopy): LogicalIfThenStep
   header: {
     stepTemplate: copy.games.ifThen.ui.header.stepTemplate,
     instruction: copy.games.ifThen.ui.header.instruction,
+    touchInstruction: copy.games.ifThen.ui.header.touchInstruction,
   },
   slots: {
     fact: {

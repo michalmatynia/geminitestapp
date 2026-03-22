@@ -27,6 +27,10 @@ vi.mock('framer-motion', () => ({
   },
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 import DifficultySelector from '@/features/kangur/ui/components/DifficultySelector';
 
 describe('DifficultySelector', () => {
@@ -36,6 +40,9 @@ describe('DifficultySelector', () => {
     render(<DifficultySelector onSelect={onSelect} selected='medium' />);
 
     expect(screen.getByRole('group', { name: 'Wybierz poziom trudności' })).toBeInTheDocument();
+    expect(screen.getByTestId('difficulty-selector-touch-hint')).toHaveTextContent(
+      'Dotknij kartę z poziomem, który chcesz uruchomić.'
+    );
     expect(screen.getByTestId('difficulty-selector-heading')).toHaveClass(
       'flex',
       'flex-col',
@@ -53,6 +60,7 @@ describe('DifficultySelector', () => {
 
     expect(easyOption).toHaveClass('soft-card', 'border', 'kangur-card-surface', 'kangur-card-padding-lg');
     expect(mediumOption).toHaveClass('soft-card', 'border', 'kangur-card-surface', 'kangur-card-padding-lg');
+    expect(easyOption).toHaveClass('touch-manipulation', 'select-none', 'min-h-[10.5rem]');
     expect(easyOption).toHaveAttribute('aria-pressed', 'false');
     expect(mediumOption).toHaveAttribute('aria-pressed', 'true');
     expect(within(easyOption).getByText('Łatwy')).toHaveClass('[color:var(--kangur-page-text)]');

@@ -730,7 +730,7 @@ export default function KangurGameHomeMomentumWidget({
       action={
         <KangurButton
           asChild
-          className='w-full sm:w-auto sm:shrink-0'
+          className='w-full sm:w-auto sm:shrink-0 touch-manipulation select-none min-h-11 active:scale-[0.98]'
           size='sm'
           variant='primary'
         >

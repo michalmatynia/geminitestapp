@@ -52,7 +52,7 @@ describe('Kangur error boundary', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Sprobuj ponownie' }));
     expect(reset).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('link', { name: 'Wroc do Kangura' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Wróć do Kangura' })).toHaveAttribute(
       'href',
       '/kangur'
     );

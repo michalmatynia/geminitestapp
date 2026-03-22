@@ -289,6 +289,85 @@ describe('HomeScreen', () => {
     expect(screen.queryByText('Login ucznia')).toBeNull();
   });
 
+  it('shows mobile duel snapshot fallbacks when the learner is not yet visible on home', () => {
+    useKangurMobileAuthMock.mockReturnValue({
+      authError: null,
+      authMode: 'learner-session',
+      developerAutoSignInEnabled: false,
+      hasAttemptedDeveloperAutoSignIn: false,
+      isLoadingAuth: false,
+      session: {
+        status: 'authenticated',
+        user: {
+          activeLearner: {
+            displayName: 'Ada Learner',
+            id: 'leader-2',
+          },
+          actorType: 'learner',
+          full_name: 'Ada Learner',
+        },
+      },
+      signIn: vi.fn(),
+      signInWithLearnerCredentials: vi.fn(),
+      signOut: vi.fn(),
+      supportsLearnerCredentials: true,
+    });
+    useKangurMobileHomeDuelsPresenceMock.mockReturnValue({
+      actionError: null,
+      createPrivateChallenge: vi.fn(),
+      entries: [
+        {
+          displayName: 'Iga Lobby',
+          lastSeenAt: '2026-03-21T08:10:30.000Z',
+          learnerId: 'learner-11',
+        },
+      ],
+      error: null,
+      isActionPending: false,
+      isAuthenticated: true,
+      isLoading: false,
+      isRestoringAuth: false,
+      pendingLearnerId: null,
+      refresh: vi.fn(),
+    });
+    useKangurMobileHomeDuelsLeaderboardMock.mockReturnValue({
+      entries: [
+        {
+          displayName: 'Maja Sprint',
+          lastPlayedAt: '2026-03-21T08:03:00.000Z',
+          learnerId: 'leader-1',
+          losses: 1,
+          matches: 4,
+          ties: 0,
+          winRate: 0.75,
+          wins: 3,
+        },
+      ],
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
+    });
+
+    renderHomeScreen();
+
+    expect(screen.getByText('Aktywni rywale w lobby')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'To mobilna migawka aktywnych rywali. Otwórz lobby pojedynków, aby inni zobaczyli tu również Ciebie.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText('Iga Lobby')).toBeTruthy();
+    expect(screen.getByText('Wyzwij: Iga Lobby')).toBeTruthy();
+    expect(screen.getByText('Ranking pojedynków')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Twojego konta nie widać jeszcze w tej mobilnej migawce rankingu. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText(/#1 Maja Sprint/)).toBeTruthy();
+    expect(screen.getByText('Pełny ranking pojedynków')).toBeTruthy();
+  });
+
   it('renders authenticated focus cards and recent results after the shell settles', async () => {
     const createPresenceChallengeMock = vi.fn().mockResolvedValue('duel-presence-1');
     const createRematchMock = vi.fn().mockResolvedValue('duel-rematch-1');
@@ -718,7 +797,7 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Najmocniejszy tryb')).toBeTruthy();
     expect(screen.getByText('Historia trybu: Dodawanie')).toBeTruthy();
     expect(screen.getAllByText('Historia trybu: Zegar').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Opanowanie lekcji')).toBeTruthy();
+    expect(screen.getByText('Plan lekcji ze startu')).toBeTruthy();
     expect(screen.getByText('Śledzone 2')).toBeTruthy();
     expect(screen.getByText('Opanowane 1')).toBeTruthy();
     expect(screen.getAllByText('Do powtórki').length).toBeGreaterThanOrEqual(2);
@@ -727,26 +806,27 @@ describe('HomeScreen', () => {
     expect(screen.getAllByText('🕒 Zegar').length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText('Otwórz lekcję: Dodawanie').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Trenuj: Dodawanie')).toBeTruthy();
-    expect(screen.getByText('Odznaki')).toBeTruthy();
+    expect(screen.getByText('Centrum odznak')).toBeTruthy();
     expect(screen.getByText('Odblokowane 2/9')).toBeTruthy();
     expect(screen.getByText('Do zdobycia 7')).toBeTruthy();
     expect(screen.getByText('Ostatnio odblokowane')).toBeTruthy();
     expect(screen.getByText('🕐 Mistrz zegara')).toBeTruthy();
     expect(screen.getByText('📚 Bohater lekcji')).toBeTruthy();
     expect(screen.getByText('Otwórz profil i odznaki')).toBeTruthy();
-    expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
+    expect(screen.getByText('Powrót do ostatnich lekcji')).toBeTruthy();
     expect(screen.getByText('Ostatni wynik 70% • opanowanie 68%')).toBeTruthy();
     expect(screen.getByText('Najlepszy wynik 72% • próby 3')).toBeTruthy();
     expect(screen.getByText('Wróć do lekcji: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Potem trenuj: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Otwórz wszystkie lekcje')).toBeTruthy();
-    expect(screen.getByText('Następne kroki')).toBeTruthy();
+    expect(screen.getByText('Plan z ekranu głównego')).toBeTruthy();
     expect(screen.getByText('➕ Powtórka: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Priorytet wysoki')).toBeTruthy();
     expect(screen.getByText('Cel: 1 powtórka + wynik min. 75%')).toBeTruthy();
     expect(screen.getByText('Trening celowany')).toBeTruthy();
     expect(screen.getByText('Trenuj teraz')).toBeTruthy();
     expect(screen.getByText('Otwórz pełny plan dnia')).toBeTruthy();
+    expect(screen.getByText('Centrum wyników')).toBeTruthy();
     expect(screen.getByText('7/8 poprawnych')).toBeTruthy();
     expect(screen.getByText('Pojedynki')).toBeTruthy();
     expect(screen.getByText('Zaproszenia do pojedynków')).toBeTruthy();
@@ -775,6 +855,7 @@ describe('HomeScreen', () => {
     expect(screen.getByText('#2 Ada Learner · Ty')).toBeTruthy();
     expect(screen.getByText('Wygrane 3 • Porażki 1 • Remisy 0')).toBeTruthy();
     expect(screen.getByText('Pełny ranking pojedynków')).toBeTruthy();
+    expect(screen.getByText('Otwórz pełną historię')).toBeTruthy();
 
     fireEvent.click(screen.getByText('Udostępnij link'));
 
@@ -845,5 +926,10 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Aktive Rivalen in der Lobby')).toBeTruthy();
     expect(screen.getByText('Live-Duelle')).toBeTruthy();
     expect(screen.getByText('Duell-Rangliste')).toBeTruthy();
+    expect(screen.getByText('Lektionsplan vom Startbildschirm')).toBeTruthy();
+    expect(screen.getByText('Abzeichen-Zentrale')).toBeTruthy();
+    expect(screen.getByText('Zurück zu den letzten Lektionen')).toBeTruthy();
+    expect(screen.getByText('Plan vom Startbildschirm')).toBeTruthy();
+    expect(screen.getByText('Ergebniszentrale')).toBeTruthy();
   });
 });

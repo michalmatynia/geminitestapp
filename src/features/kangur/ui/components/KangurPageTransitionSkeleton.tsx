@@ -7,6 +7,12 @@ import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/Kan
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
 import {
+  LESSONS_ACTIVE_LAYOUT_CLASSNAME,
+  LESSONS_ACTIVE_SECTION_CLASSNAME,
+  LESSONS_LIBRARY_LAYOUT_CLASSNAME,
+  LESSONS_LIBRARY_LIST_CLASSNAME,
+} from '@/features/kangur/ui/pages/lessons/Lessons.constants';
+import {
   KANGUR_LESSON_PANEL_GAP_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_PANEL_ROW_CLASSNAME,
@@ -304,7 +310,7 @@ const LessonsLibraryGroupSkeleton = ({
 
 const LessonsLibrarySkeleton = (): React.JSX.Element => (
   <div
-    className={cn('flex w-full max-w-lg flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
+    className={LESSONS_LIBRARY_LAYOUT_CLASSNAME}
     data-testid='kangur-page-transition-skeleton-lessons-library-layout'
   >
     <div className='w-full' data-testid='kangur-page-transition-skeleton-lessons-library-intro'>
@@ -322,7 +328,7 @@ const LessonsLibrarySkeleton = (): React.JSX.Element => (
       </KangurGlassPanel>
     </div>
     <div
-      className={cn('flex w-full flex-col', KANGUR_LESSON_PANEL_GAP_CLASSNAME)}
+      className={LESSONS_LIBRARY_LIST_CLASSNAME}
       data-testid='kangur-page-transition-skeleton-lessons-library-list'
     >
       <LessonsLibraryGroupSkeleton />
@@ -334,10 +340,13 @@ const LessonsLibrarySkeleton = (): React.JSX.Element => (
 
 const LessonsFocusSkeleton = (): React.JSX.Element => (
   <div
-    className={cn('flex w-full flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
+    className={LESSONS_ACTIVE_LAYOUT_CLASSNAME}
     data-testid='kangur-page-transition-skeleton-lessons-focus-layout'
   >
-    <div className='w-full max-w-5xl' data-testid='kangur-page-transition-skeleton-lessons-focus-header'>
+    <div
+      className={LESSONS_ACTIVE_SECTION_CLASSNAME}
+      data-testid='kangur-page-transition-skeleton-lessons-focus-header'
+    >
       <div className='w-full'>
         <KangurGlassPanel className='w-full' data-testid='lessons-focus-header-panel' padding='md' surface='mistStrong' variant='soft'>
           <div className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME, 'sm:flex-row sm:flex-wrap sm:items-center')}>
@@ -357,7 +366,10 @@ const LessonsFocusSkeleton = (): React.JSX.Element => (
         </KangurGlassPanel>
       </div>
     </div>
-    <div className='w-full max-w-5xl' data-testid='kangur-page-transition-skeleton-lessons-focus-navigation'>
+    <div
+      className={LESSONS_ACTIVE_SECTION_CLASSNAME}
+      data-testid='kangur-page-transition-skeleton-lessons-focus-navigation'
+    >
       <nav className='flex w-full flex-col gap-2'>
         <div className='flex w-full flex-col items-stretch gap-2 sm:w-fit sm:self-center sm:flex-row sm:items-center'>
           <SkeletonBlock className='h-10 w-full rounded-full bg-slate-200/78 sm:w-24' />
@@ -369,7 +381,7 @@ const LessonsFocusSkeleton = (): React.JSX.Element => (
       className={cn('w-full flex flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
       data-testid='kangur-page-transition-skeleton-lessons-focus-content'
     >
-      <div className='w-full max-w-5xl space-y-4'>
+      <div className={`${LESSONS_ACTIVE_SECTION_CLASSNAME} space-y-4`}>
         <KangurGlassPanel className='w-full' padding='lg' surface='mistStrong' variant='soft'>
           <div className='space-y-3'>
             <SkeletonChip className='h-7 w-32' />
@@ -502,12 +514,17 @@ export function KangurPageTransitionSkeleton({
       pageKey,
     });
   const resolvedPageKey = resolveSkeletonPageKey(resolvedVariant);
+  const shouldOffsetStandaloneLessonsOverlay = !embedded && resolvedPageKey === 'Lessons';
 
   return (
     <div
       className={cn(
-        embedded ? 'absolute' : 'fixed',
-        'inset-0 z-30 cursor-progress overflow-hidden',
+        embedded
+          ? 'absolute inset-0'
+          : shouldOffsetStandaloneLessonsOverlay
+            ? 'fixed inset-x-0 bottom-0 top-[var(--kangur-top-bar-height,88px)]'
+            : 'fixed inset-0',
+        'z-30 cursor-progress overflow-hidden',
         isLocaleSwitch ? 'backdrop-blur-md' : null
       )}
       data-kangur-skeleton-reason={reason}
@@ -538,7 +555,7 @@ export function KangurPageTransitionSkeleton({
             'flex flex-col items-center',
             KANGUR_PANEL_GAP_CLASSNAME,
             resolvedPageKey === 'Lessons'
-              ? 'pt-[calc(var(--kangur-top-bar-height,88px)+clamp(24px,calc(var(--kangur-page-padding-top,40px)*0.6),var(--kangur-page-padding-top,40px)))] sm:pt-[calc(var(--kangur-top-bar-height,88px)+var(--kangur-page-padding-top,40px))]'
+              ? null
               : resolvedPageKey === 'Game'
                 ? 'pt-[calc(var(--kangur-top-bar-height,88px)+12px)]'
                 : 'pt-24 sm:pt-28'

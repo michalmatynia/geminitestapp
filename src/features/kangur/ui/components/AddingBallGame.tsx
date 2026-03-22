@@ -23,6 +23,7 @@ import {
 import {
   KangurGlassPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import {
   addXp,
@@ -52,6 +53,7 @@ export default function AddingBallGame({
     translations,
     finishLabelVariant === 'topics' ? 'topics' : finishLabelVariant === 'play' ? 'play' : 'lesson'
   );
+  const isCoarsePointer = useKangurCoarsePointer();
   const prefersReducedMotion = useReducedMotion();
   const resolveMotionOpacity = (value: unknown, fallback: number): number => {
     if (!value || typeof value !== 'object') return fallback;
@@ -149,11 +151,17 @@ export default function AddingBallGame({
   }
 
   const modeLabelByMode: Record<RoundMode, string> = {
-    complete_equation: 'Uzupełnij równanie',
-    group_sum: 'Podziel na grupy',
-    pick_answer: 'Wybierz odpowiedź',
+    complete_equation: translations('adding.rounds.completeEquation.label'),
+    group_sum: translations('adding.rounds.groupSum.label'),
+    pick_answer: translations('adding.rounds.pickAnswer.label'),
   };
   const modeLabel = modeLabelByMode[round.mode];
+  const touchHintByMode: Record<RoundMode, string> = {
+    complete_equation: translations('adding.rounds.completeEquation.touchHint'),
+    group_sum: translations('adding.rounds.groupSum.touchHint'),
+    pick_answer: translations('adding.rounds.pickAnswer.touchHint'),
+  };
+  const touchHint = touchHintByMode[round.mode];
 
   return (
     <KangurPracticeGameStage className='w-full max-w-none'>
@@ -174,6 +182,14 @@ export default function AddingBallGame({
         <p className='text-xs font-bold text-orange-500 uppercase tracking-wide mb-3'>
           {modeLabel}
         </p>
+        {isCoarsePointer ? (
+          <p
+            className='mb-4 rounded-2xl border border-orange-200/70 bg-orange-50/80 px-3 py-2 text-sm font-semibold text-orange-700'
+            data-testid='adding-ball-touch-hint'
+          >
+            {touchHint}
+          </p>
+        ) : null}
         <AnimatePresence mode='wait'>
           <motion.div
             key={roundIdx}

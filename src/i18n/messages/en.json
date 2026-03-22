@@ -405,6 +405,7 @@
     "practiceQuestion": {
       "label": "Question {number}",
       "pointChip": "⭐ {points} pts ({difficulty})",
+      "touchHint": "Tap an answer, then tap the confirm button.",
       "difficulty": {
         "easy": "easy",
         "medium": "medium",
@@ -1428,6 +1429,20 @@
       "clockAriaLabel": "The analog clock shows {time}."
     },
     "adding": {
+      "rounds": {
+        "completeEquation": {
+          "label": "Complete the equation",
+          "touchHint": "Tap a ball, then tap the slot where you want to place it."
+        },
+        "groupSum": {
+          "label": "Split into groups",
+          "touchHint": "Tap a ball, then tap the group where you want to place it."
+        },
+        "pickAnswer": {
+          "label": "Choose the answer",
+          "touchHint": "Tap a ball, then tap the correct answer."
+        }
+      },
       "summary": {
         "perfect": "Perfect! You are an addition master!",
         "good": "Great job!",
@@ -1534,6 +1549,7 @@
         "chooseLane": "Choose lane",
         "accuracy": "Accuracy {accuracy}%",
         "hintTitle": "Hint for this note",
+        "touchHint": "Tap the lane when the note reaches the hit line.",
         "keyboardHint": "If you prefer the keyboard, press 1, 2, 3 or 4.",
         "sessionProgress": "Session progress",
         "endAttempt": "End attempt"
@@ -1560,6 +1576,9 @@
       }
     },
     "division": {
+      "inRound": {
+        "touchHint": "Tap an answer, then tap Check."
+      },
       "summary": {
         "perfect": "Perfect! Division master!",
         "good": "Great job!",
@@ -1584,6 +1603,7 @@
     },
     "calendarTraining": {
       "progressAriaLabel": "Accuracy in calendar practice",
+      "touchHint": "Tap an answer, then wait for the next question.",
       "summary": {
         "perfect": "Perfect! You really know the calendar!",
         "retry": "Keep practising and you will master the calendar!"
@@ -1893,7 +1913,9 @@
       "inRound": {
         "roundLabel": "Round {current}/{total}",
         "modeLabel": "Warm-up",
+        "modeLabelTouch": "Tap",
         "check": "Check ✓",
+        "touchHint": "Tap a form, then tap Check.",
         "rounds": {
           "warmup-graph": {
             "prompt": "Choose the correct possessive form.",
@@ -2053,6 +2075,8 @@
         "seeResult": "See result",
         "click": {
           "topicLabel": "Prepositions",
+          "modeLabelTouch": "Tap",
+          "touchHint": "Tap the preposition, then tap Check.",
           "rounds": {
             "time-at": {
               "prompt": "Choose the time preposition.",
@@ -2260,9 +2284,11 @@
       "inRound": {
         "roundLabel": "Round {current}/{total}",
         "modeLabel": "Click",
+        "modeLabelTouch": "Tap",
         "subjectLabel": "Subject",
         "blank": "____",
         "check": "Check",
+        "touchHint": "Tap the verb, then tap Check.",
         "feedback": {
           "correct": "Yes! Everything matches.",
           "incorrect": "Correct answer: {answer}."
@@ -2854,6 +2880,7 @@
       "adaptiveRetriesWithCount": "Adaptive retries: {count}",
       "adaptiveRetryAdded": "We added a short review of this task.",
       "challengePill": "Challenge",
+      "touchHint": "Drag the hands with your finger to set the time.",
       "taskProgress": "Task {current} of {total}",
       "seriesProgress": "Streak {current}/{total}",
       "progressAriaLabel": "Accuracy in clock practice",

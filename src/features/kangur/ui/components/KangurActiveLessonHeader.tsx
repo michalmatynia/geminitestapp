@@ -95,7 +95,7 @@ function KangurActiveLessonHeaderActions(): React.JSX.Element {
           size='sm'
           type='button'
           variant='surface'
-          className='w-full justify-center sm:w-auto sm:justify-start'
+          className='w-full justify-center sm:w-auto sm:justify-start touch-manipulation select-none min-h-11 active:scale-[0.98]'
         >
           {backButtonLabel}
         </KangurButton>

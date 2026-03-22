@@ -7,6 +7,7 @@ import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRun
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurHomeScreenVisibilityProps } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -119,6 +120,7 @@ function KangurHomeActionCard({
   const actionTrailingSymbol = action.trailingSymbol;
   const docId = resolveHomeActionDocId(actionId);
   const tone = HOME_ACTION_TONE_STYLES[actionTone];
+  const isCoarsePointer = useKangurCoarsePointer();
   const wrapperClassName = cn(
     'relative home-action-featured-shell',
     tone.shell,
@@ -129,7 +131,8 @@ function KangurHomeActionCard({
     'relative z-10 w-full cursor-pointer text-center',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
     'disabled:cursor-not-allowed',
-    'home-action-featured'
+    'home-action-featured',
+    isCoarsePointer ? 'touch-manipulation select-none min-h-[4.75rem] active:scale-[0.98]' : null
   );
 
   const content = (

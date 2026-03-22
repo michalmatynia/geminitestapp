@@ -137,6 +137,11 @@ describe('KangurDailyPlanScreen', () => {
         'Przywracamy sesję ucznia oraz ostatni plan oparty na wynikach i postępie.',
       ),
     ).toBeTruthy();
+    expect(screen.getByText('Zadania 0')).toBeTruthy();
+    expect(screen.getByText('Wyniki 0')).toBeTruthy();
+    expect(screen.getByText('Lekcje 0')).toBeTruthy();
+    expect(screen.getByText('Otwórz wyniki')).toBeTruthy();
+    expect(screen.getAllByText('Otwórz pojedynki').length).toBeGreaterThanOrEqual(1);
     expect(
       screen.getByText(
         'Przywracamy sesję ucznia. Gdy będzie gotowa, plan pobierze zsynchronizowane wyniki i wskazówki treningowe.',
@@ -144,6 +149,55 @@ describe('KangurDailyPlanScreen', () => {
     ).toBeTruthy();
     expect(screen.getByText('Ładujemy fokus oparty na wynikach...')).toBeTruthy();
     expect(screen.getByText('Ładujemy ostatnie wyniki...')).toBeTruthy();
+  });
+
+  it('shows the pending duel snapshot when the learner rank is not visible yet', () => {
+    useKangurMobileDailyPlanMock.mockReturnValue({
+      authError: null,
+      displayName: 'Ada Learner',
+      isAuthenticated: true,
+      isLoadingAuth: false,
+      isLoading: false,
+      recentResultItems: [],
+      refresh: vi.fn(),
+      scoreError: null,
+      signIn: vi.fn(),
+      strongestFocus: null,
+      supportsLearnerCredentials: true,
+      weakestFocus: null,
+    });
+    useKangurMobileDailyPlanDuelsMock.mockReturnValue({
+      actionError: null,
+      createRematch: vi.fn(),
+      currentEntry: null,
+      currentRank: null,
+      error: null,
+      isActionPending: false,
+      isAuthenticated: true,
+      isLoading: false,
+      isRestoringAuth: false,
+      opponents: [],
+      pendingOpponentLearnerId: null,
+      refresh: vi.fn(),
+    });
+
+    render(<KangurDailyPlanScreen />);
+
+    expect(screen.getByText('Szybki powrót do rywali')).toBeTruthy();
+    expect(screen.getByText('Rywale 0')).toBeTruthy();
+    expect(screen.getByText('Czeka na widoczność')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Twojego konta nie widać jeszcze w tej mobilnej migawce rankingu. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Nie ma jeszcze ostatnich rywali. Pierwszy zakończony pojedynek wypełni tutaj listę rywali i odblokuje szybkie rewanże.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText('Odśwież pojedynki')).toBeTruthy();
+    expect(screen.getAllByText('Otwórz pojedynki').length).toBeGreaterThanOrEqual(2);
   });
 
   it('renders focus, assignments, recent results, and duel actions for an authenticated learner', async () => {
@@ -340,24 +394,43 @@ describe('KangurDailyPlanScreen', () => {
         content.includes('Skupiony plan nauki dla Ada Learner'),
       ),
     ).toBeTruthy();
+    expect(screen.getByText('Zadania 1')).toBeTruthy();
+    expect(screen.getByText('Wyniki 1')).toBeTruthy();
+    expect(screen.getByText('Lekcje 3')).toBeTruthy();
+    expect(screen.getByText('Otwórz wyniki')).toBeTruthy();
+    expect(screen.getAllByText('Otwórz pojedynki').length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText('Do powtórki').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Najmocniejszy tryb')).toBeTruthy();
     expect(screen.getByText('Następne kroki')).toBeTruthy();
+    expect(screen.getByText('Plan działań na dziś')).toBeTruthy();
     expect(screen.getByText('Lokalne zadania na dziś')).toBeTruthy();
     expect(screen.getByText('Powtórka dodawania')).toBeTruthy();
     expect(screen.getByText('Ostatnie wyniki')).toBeTruthy();
     expect(screen.getAllByText('Dodawanie').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Trenuj ponownie')).toBeTruthy();
     expect(screen.getByText('Pojedynki na dziś')).toBeTruthy();
+    expect(screen.getByText('Szybki powrót do rywali')).toBeTruthy();
+    expect(screen.getByText('Rywale 1')).toBeTruthy();
+    expect(screen.getByText('Twoja pozycja #2')).toBeTruthy();
     expect(screen.getByText('TWÓJ WYNIK W POJEDYNKACH')).toBeTruthy();
     expect(screen.getByText('#2 Ada Learner')).toBeTruthy();
     expect(screen.getByText('Leo Mentor')).toBeTruthy();
     expect(screen.getByText('Szybki rewanż')).toBeTruthy();
+    expect(screen.getByText('Odśwież pojedynki')).toBeTruthy();
     expect(screen.getByText('Opanowanie lekcji')).toBeTruthy();
+    expect(screen.getByText('Plan lekcji na dziś')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Fokus na dziś: Dodawanie potrzebuje jeszcze krótkiej powtórki, zanim znowu wejdziesz w tempo.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText('Skup się: Dodawanie')).toBeTruthy();
+    expect(screen.getByText('Podtrzymaj: Zegar')).toBeTruthy();
     expect(screen.getByText('Śledzone 3')).toBeTruthy();
     expect(screen.getAllByText('Do powtórki').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Najmocniejsza lekcja')).toBeTruthy();
     expect(screen.getByText('Odznaki')).toBeTruthy();
+    expect(screen.getByText('Centrum odznak')).toBeTruthy();
     expect(screen.getByText('Odblokowane 2/9')).toBeTruthy();
     expect(screen.getByText('Do zdobycia 7')).toBeTruthy();
     expect(screen.getByText('Ostatnio odblokowane')).toBeTruthy();

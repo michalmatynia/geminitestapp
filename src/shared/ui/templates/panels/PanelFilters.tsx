@@ -1,10 +1,9 @@
 'use client';
 
 import { Search, X } from 'lucide-react';
-import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 
 import { FilterField } from '@/shared/contracts/ui';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button, Label, SelectSimple, SearchInput } from '@/shared/ui';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { Input } from '@/shared/ui/input';
@@ -68,18 +67,6 @@ interface PanelFiltersProps {
   actions?: React.ReactNode;
   className?: string;
 }
-
-type PanelFiltersRuntimeValue = {
-  values: Record<string, unknown>;
-  onFilterChange: (key: string, value: unknown) => void;
-};
-
-const { Context: PanelFiltersRuntimeContext, useStrictContext: usePanelFiltersRuntime } =
-  createStrictContext<PanelFiltersRuntimeValue>({
-    hookName: 'usePanelFiltersRuntime',
-    providerName: 'PanelFiltersRuntimeProvider',
-    displayName: 'PanelFiltersRuntimeContext',
-  });
 
 export const PanelFiltersSearchPlaceholderRuntimeContext = React.createContext<string | undefined>(
   undefined
@@ -148,14 +135,6 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
   const activeFilterCount = Object.values(activeFilterSource).filter((value) =>
     isActiveFilterValue(value)
   ).length;
-  const runtimeValue = useMemo<PanelFiltersRuntimeValue>(
-    () => ({
-      values,
-      onFilterChange,
-    }),
-    [values, onFilterChange]
-  );
-
   const filterFieldsToRender = filters;
   const showToggleButton = filterFieldsToRender.length > 0 && (compact || collapsible);
 
@@ -221,26 +200,23 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
       {filterFieldsToRender.length > 0 && (
         <>
           {isExpanded && (
-            <PanelFiltersRuntimeContext.Provider value={runtimeValue}>
-              <div className='flex flex-wrap gap-2'>
-                {filterFieldsToRender.map((field) => (
-                  <PanelFilterControl key={field.key} field={field} />
-                ))}
+            <div className='flex flex-wrap gap-2'>
+              {filterFieldsToRender.map((field) => (
+                <PanelFilterControl
+                  key={field.key}
+                  field={field}
+                  values={values}
+                  onFilterChange={onFilterChange}
+                />
+              ))}
 
-                {/* Reset Button */}
-                {hasActiveFilters && (
-                  <Button
-                    type='button'
-                    variant='outline'
-                    size='xs'
-                    onClick={handleReset}
-                    className='ml-auto'
-                  >
-                    Reset Filters
-                  </Button>
-                )}
-              </div>
-            </PanelFiltersRuntimeContext.Provider>
+              {/* Reset Button */}
+              {hasActiveFilters && (
+                <Button type='button' variant='outline' size='xs' onClick={handleReset} className='ml-auto'>
+                  Reset Filters
+                </Button>
+              )}
+            </div>
           )}
         </>
       )}
@@ -250,24 +226,24 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
 
 interface PanelFilterControlProps {
   field: FilterField;
+  values: Record<string, unknown>;
+  onFilterChange: (key: string, value: unknown) => void;
 }
 
 /**
  * PanelFilterControl - Renders individual filter input based on field type
  */
 const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilterControlProps) => {
-  const { field } = props;
-
-  const runtime = usePanelFiltersRuntime();
-  const value = runtime.values[field.key];
+  const { field, values, onFilterChange } = props;
+  const value = values[field.key];
   const fieldId = React.useId().replace(/:/g, '');
   const inputId = `panel-filter-${field.key}-${fieldId}`;
   const labelId = `${inputId}-label`;
   const onChange = useCallback(
     (nextValue: unknown): void => {
-      runtime.onFilterChange(field.key, nextValue);
+      onFilterChange(field.key, nextValue);
     },
-    [field.key, runtime]
+    [field.key, onFilterChange]
   );
   const containerStyle: React.CSSProperties = {
     ...(field.width ? { width: field.width } : {}),

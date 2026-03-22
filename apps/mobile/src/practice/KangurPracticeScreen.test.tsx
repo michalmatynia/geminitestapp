@@ -517,11 +517,15 @@ describe('KangurPracticeScreen', () => {
 
     expect(await screen.findByText('Podsumowanie')).toBeTruthy();
     expect(screen.getByText('Wynik: 1/1')).toBeTruthy();
-    expect(screen.getByText('Pojedynki')).toBeTruthy();
+    expect(screen.getByText('Szybki powrót do rywali')).toBeTruthy();
+    expect(screen.getByText('Rywale 1')).toBeTruthy();
+    expect(screen.getByText('Twoja pozycja #2')).toBeTruthy();
     expect(screen.getByText('TWÓJ WYNIK W POJEDYNKACH')).toBeTruthy();
     expect(screen.getByText('#2 Ada Learner')).toBeTruthy();
     expect(screen.getByText('Leo Mentor')).toBeTruthy();
     expect(screen.getByText('Szybki rewanż')).toBeTruthy();
+    expect(screen.getByText('Odśwież pojedynki')).toBeTruthy();
+    expect(screen.getByText('Otwórz pojedynki')).toBeTruthy();
     expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
     expect(screen.getByText('Kontynuuj lekcje')).toBeTruthy();
     expect(screen.getByText('Ostatni wynik 70% • opanowanie 68%')).toBeTruthy();
@@ -529,9 +533,11 @@ describe('KangurPracticeScreen', () => {
     expect(screen.getByText('Potem trenuj: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
     expect(screen.getByText('Następne kroki')).toBeTruthy();
+    expect(screen.getByText('Plan po treningu')).toBeTruthy();
     expect(screen.getByText('Powtorz zegar')).toBeTruthy();
     expect(screen.getByText('Cel: 1 lekcja')).toBeTruthy();
     expect(screen.getByText('Odznaki')).toBeTruthy();
+    expect(screen.getByText('Centrum odznak')).toBeTruthy();
     expect(screen.getByText('Odblokowane 2/9')).toBeTruthy();
     expect(screen.getByText('Do zdobycia 7')).toBeTruthy();
     expect(screen.getByText('Ostatnio odblokowane')).toBeTruthy();
@@ -539,9 +545,17 @@ describe('KangurPracticeScreen', () => {
     expect(screen.getByText('📚 Bohater lekcji')).toBeTruthy();
     expect(screen.getByText('Otwórz profil i odznaki')).toBeTruthy();
     expect(screen.getByText('Opanowanie lekcji')).toBeTruthy();
+    expect(screen.getByText('Plan lekcji po treningu')).toBeTruthy();
     expect(screen.getByText('Śledzone 2')).toBeTruthy();
     expect(screen.getByText('Opanowane 1')).toBeTruthy();
     expect(screen.getByText('Do powtórki 1')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Fokus po treningu: Dodawanie potrzebuje jeszcze krótkiej powtórki, zanim przejdziesz dalej.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText('Skup się: Dodawanie')).toBeTruthy();
+    expect(screen.getByText('Podtrzymaj: Zegar')).toBeTruthy();
     expect(screen.getByText('Najmocniejsza lekcja')).toBeTruthy();
     expect(screen.getByText('Próby 4 • ostatni wynik 94%')).toBeTruthy();
     expect(screen.getAllByText('Otwórz lekcję').length).toBeGreaterThanOrEqual(1);

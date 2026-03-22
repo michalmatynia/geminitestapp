@@ -11,6 +11,7 @@ const {
   startRouteTransitionMock,
   useOptionalKangurRouteTransitionStateMock,
   useOptionalKangurRoutingMock,
+  useLocaleMock,
   usePathnameMock,
   routerPushMock,
   routerReplaceMock,
@@ -20,10 +21,15 @@ const {
   startRouteTransitionMock: vi.fn(),
   useOptionalKangurRouteTransitionStateMock: vi.fn(),
   useOptionalKangurRoutingMock: vi.fn(),
+  useLocaleMock: vi.fn(),
   usePathnameMock: vi.fn(),
   routerPushMock: vi.fn(),
   routerReplaceMock: vi.fn(),
   routerPrefetchMock: vi.fn(),
+}));
+
+vi.mock('next-intl', () => ({
+  useLocale: useLocaleMock,
 }));
 
 vi.mock('next/link', () => ({
@@ -67,6 +73,7 @@ import { KangurTransitionLink } from '@/features/kangur/ui/components/KangurTran
 describe('KangurTransitionLink', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useLocaleMock.mockReturnValue('pl');
     usePathnameMock.mockReturnValue('/kangur');
     useOptionalKangurRouteTransitionStateMock.mockReturnValue(null);
     useOptionalKangurRoutingMock.mockReturnValue(null);
@@ -145,6 +152,32 @@ describe('KangurTransitionLink', () => {
       pageKey: 'Lessons',
     });
     expect(routerPushMock).toHaveBeenCalledWith('/kangur/lessons', { scroll: false });
+  });
+
+  it('preserves the active locale prefix when clicking Lessons from a localized route', () => {
+    useLocaleMock.mockReturnValue('en');
+    usePathnameMock.mockReturnValue('/en/kangur');
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+      pageKey: 'Game',
+      requestedHref: '/en/kangur',
+      requestedPath: '/kangur',
+    });
+
+    render(
+      <KangurTransitionLink href='/kangur/lessons' targetPageKey='Lessons'>
+        Lekcje
+      </KangurTransitionLink>
+    );
+
+    fireEvent.click(screen.getByRole('link', { name: 'Lekcje' }));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/en/kangur/lessons',
+      pageKey: 'Lessons',
+    });
+    expect(routerPushMock).toHaveBeenCalledWith('/en/kangur/lessons', { scroll: false });
   });
 
   it('prefetches managed local links while mounted', () => {

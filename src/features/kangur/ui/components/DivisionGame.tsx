@@ -31,6 +31,7 @@ import {
   KANGUR_PANEL_GAP_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   addXp,
   createLessonPracticeReward,
@@ -170,6 +171,7 @@ export default function DivisionGame({
   onFinish,
 }: DivisionGameProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const isCoarsePointer = useKangurCoarsePointer();
   const finishLabel = getKangurMiniGameFinishLabel(
     translations,
     finishLabelVariant === 'play' ? 'play' : 'lesson'
@@ -321,6 +323,15 @@ export default function DivisionGame({
             </KangurInfoCard>
           )}
 
+          {isCoarsePointer ? (
+            <p
+              data-testid='division-game-touch-hint'
+              className='text-center text-xs font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'
+            >
+              {translations('division.inRound.touchHint')}
+            </p>
+          ) : null}
+
           <div className='grid w-full grid-cols-1 gap-2 sm:grid-cols-2'>
             {question.choices.map((choice, index) => {
               let accent: KangurAccent = 'sky';
@@ -351,7 +362,8 @@ export default function DivisionGame({
                 <KangurAnswerChoiceCard
                   accent={accent}
                   buttonClassName={cn(
-                    'flex items-center justify-center px-4 py-3 text-center text-lg font-extrabold sm:text-xl',
+                    'flex items-center justify-center px-4 py-3 text-center text-lg font-extrabold touch-manipulation select-none sm:text-xl',
+                    isCoarsePointer && 'min-h-[4.25rem] active:scale-[0.98]',
                     className,
                     confirmed ? 'cursor-default' : 'cursor-pointer'
                   )}

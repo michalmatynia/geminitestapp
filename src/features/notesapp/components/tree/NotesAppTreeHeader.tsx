@@ -1,12 +1,11 @@
 'use client';
 
 import { FolderPlus, FilePlus, ChevronRight, Star, Folder } from 'lucide-react';
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import type { NoteWithRelations } from '@/shared/contracts/notes';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button, TreeHeader } from '@/shared/ui';
 
 type NotesTreeHeaderOperations = {
@@ -35,16 +34,20 @@ type NotesAppTreeHeaderActionsRuntimeValue = {
   handleCreateFolder: (parentId?: string | null) => Promise<void>;
 };
 
-const {
-  Context: NotesAppTreeHeaderActionsRuntimeContext,
-  useStrictContext: useNotesAppTreeHeaderActionsRuntime,
-} = createStrictContext<NotesAppTreeHeaderActionsRuntimeValue>({
-  hookName: 'useNotesAppTreeHeaderActionsRuntime',
-  providerName: 'NotesAppTreeHeaderActionsRuntimeProvider',
-  displayName: 'NotesAppTreeHeaderActionsRuntimeContext',
-});
-
-function NotesAppTreeHeaderActions(): React.JSX.Element {
+function NotesAppTreeHeaderActions(
+  props: Pick<
+    NotesAppTreeHeaderActionsRuntimeValue,
+    | 'selectedFolderForCreate'
+    | 'undoStackLength'
+    | 'setSelectedNote'
+    | 'setIsCreating'
+    | 'setSelectedFolderId'
+    | 'setIsFolderTreeCollapsed'
+    | 'setPanelCollapsed'
+    | 'handleUndoFolderTree'
+    | 'handleCreateFolder'
+  >
+): React.JSX.Element {
   const {
     selectedFolderForCreate,
     undoStackLength,
@@ -55,8 +58,7 @@ function NotesAppTreeHeaderActions(): React.JSX.Element {
     setPanelCollapsed,
     handleUndoFolderTree,
     handleCreateFolder,
-  } = useNotesAppTreeHeaderActionsRuntime();
-
+  } = props;
   return (
     <>
       <Button
@@ -110,9 +112,15 @@ function NotesAppTreeHeaderActions(): React.JSX.Element {
   );
 }
 
-function NotesAppTreeHeaderQuickFilters(): React.JSX.Element {
-  const { isAllNotesActive, isFavoritesFilterActive, onSelectAllNotes, onToggleFavorites } =
-    useNotesAppTreeHeaderActionsRuntime();
+function NotesAppTreeHeaderQuickFilters({
+  isAllNotesActive,
+  isFavoritesFilterActive,
+  onSelectAllNotes,
+  onToggleFavorites,
+}: Pick<
+  NotesAppTreeHeaderActionsRuntimeValue,
+  'isAllNotesActive' | 'isFavoritesFilterActive' | 'onSelectAllNotes' | 'onToggleFavorites'
+>): React.JSX.Element {
   return (
     <>
       <Button
@@ -157,50 +165,52 @@ export function NotesAppTreeHeader({
   } = useNotesAppActions();
 
   const isAllNotesActive = !settings.selectedFolderId && !settings.selectedNoteId;
-  const actionsRuntimeValue = useMemo(
-    () => ({
-      selectedFolderForCreate,
-      undoStackLength: undoStack.length,
-      isAllNotesActive,
-      isFavoritesFilterActive: filters.filterFavorite === true,
-      setSelectedNote,
-      setIsCreating,
-      setSelectedFolderId,
-      setIsFolderTreeCollapsed,
-      setPanelCollapsed,
-      onSelectAllNotes: () => {
-        setSelectedFolderId(null);
-        setSelectedNote(null);
-        setIsEditing(false);
-        controller.selectNode(null);
-      },
-      onToggleFavorites: () => {
-        filters.handleToggleFavoritesFilter(setSelectedFolderId, setSelectedNote, setIsEditing);
-      },
-      handleUndoFolderTree,
-      handleCreateFolder: (operations as NotesTreeHeaderOperations).handleCreateFolder,
-    }),
-    [
-      controller,
-      filters,
-      handleUndoFolderTree,
-      isAllNotesActive,
-      operations,
-      selectedFolderForCreate,
-      setIsCreating,
-      setIsEditing,
-      setIsFolderTreeCollapsed,
-      setPanelCollapsed,
-      setSelectedFolderId,
-      setSelectedNote,
-      undoStack.length,
-    ]
-  );
+  const actionsRuntimeValue: NotesAppTreeHeaderActionsRuntimeValue = {
+    selectedFolderForCreate,
+    undoStackLength: undoStack.length,
+    isAllNotesActive,
+    isFavoritesFilterActive: filters.filterFavorite === true,
+    setSelectedNote,
+    setIsCreating,
+    setSelectedFolderId,
+    setIsFolderTreeCollapsed,
+    setPanelCollapsed,
+    onSelectAllNotes: () => {
+      setSelectedFolderId(null);
+      setSelectedNote(null);
+      setIsEditing(false);
+      controller.selectNode(null);
+    },
+    onToggleFavorites: () => {
+      filters.handleToggleFavoritesFilter(setSelectedFolderId, setSelectedNote, setIsEditing);
+    },
+    handleUndoFolderTree,
+    handleCreateFolder: (operations as NotesTreeHeaderOperations).handleCreateFolder,
+  };
 
   return (
-    <NotesAppTreeHeaderActionsRuntimeContext.Provider value={actionsRuntimeValue}>
-      <TreeHeader title='Folders' actions={<NotesAppTreeHeaderActions />}>
-        <NotesAppTreeHeaderQuickFilters />
+    <TreeHeader
+      title='Folders'
+      actions={
+        <NotesAppTreeHeaderActions
+          selectedFolderForCreate={actionsRuntimeValue.selectedFolderForCreate}
+          undoStackLength={actionsRuntimeValue.undoStackLength}
+          setSelectedNote={actionsRuntimeValue.setSelectedNote}
+          setIsCreating={actionsRuntimeValue.setIsCreating}
+          setSelectedFolderId={actionsRuntimeValue.setSelectedFolderId}
+          setIsFolderTreeCollapsed={actionsRuntimeValue.setIsFolderTreeCollapsed}
+          setPanelCollapsed={actionsRuntimeValue.setPanelCollapsed}
+          handleUndoFolderTree={actionsRuntimeValue.handleUndoFolderTree}
+          handleCreateFolder={actionsRuntimeValue.handleCreateFolder}
+        />
+      }
+    >
+      <NotesAppTreeHeaderQuickFilters
+        isAllNotesActive={actionsRuntimeValue.isAllNotesActive}
+        isFavoritesFilterActive={actionsRuntimeValue.isFavoritesFilterActive}
+        onSelectAllNotes={actionsRuntimeValue.onSelectAllNotes}
+        onToggleFavorites={actionsRuntimeValue.onToggleFavorites}
+      />
         {undoHistory.length > 0 && (
           <div className='mt-3 rounded border border-border bg-card/60 p-2 text-xs text-gray-300'>
             <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>History</div>
@@ -218,7 +228,6 @@ export function NotesAppTreeHeader({
             </div>
           </div>
         )}
-      </TreeHeader>
-    </NotesAppTreeHeaderActionsRuntimeContext.Provider>
+    </TreeHeader>
   );
 }

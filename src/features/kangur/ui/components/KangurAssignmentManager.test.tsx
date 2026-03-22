@@ -189,7 +189,7 @@ describe('KangurAssignmentManager', () => {
     expect(screen.getByText(assignmentManagerMessages.lists.activeTitle)).toBeInTheDocument();
     expect(screen.queryByText(assignmentManagerMessages.lists.completedTitle)).toBeNull();
 
-    fireEvent.click(screen.getByRole('tab', { name: /Ukonczone/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /Ukończone/i }));
 
     expect(screen.getByText(assignmentManagerMessages.lists.completedTitle)).toBeInTheDocument();
     expect(screen.queryByText(assignmentManagerMessages.lists.activeTitle)).toBeNull();

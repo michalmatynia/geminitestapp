@@ -524,10 +524,15 @@ describe('KangurProfileScreen', () => {
     expect(screen.getByText('Statystyki ucznia: Ada Learner.')).toBeTruthy();
     expect(screen.getByText('Uczeń ✏️')).toBeTruthy();
     expect(screen.getByText('Pojedynki')).toBeTruthy();
+    expect(screen.getByText('Szybki powrót do rywali')).toBeTruthy();
+    expect(screen.getByText('Rywale 1')).toBeTruthy();
+    expect(screen.getByText('Twoja pozycja #2')).toBeTruthy();
     expect(screen.getByText('TWÓJ WYNIK W POJEDYNKACH')).toBeTruthy();
     expect(screen.getByText('#2 Ada Learner')).toBeTruthy();
     expect(screen.getByText('Leo Mentor')).toBeTruthy();
     expect(screen.getByText('Szybki rewanż')).toBeTruthy();
+    expect(screen.getByText('Odśwież pojedynki')).toBeTruthy();
+    expect(screen.getByText('Otwórz pojedynki')).toBeTruthy();
     expect(screen.getByText('Opanowanie lekcji')).toBeTruthy();
     expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
     expect(screen.getByText('Ostatni wynik: 70% · próby 3')).toBeTruthy();
@@ -535,9 +540,9 @@ describe('KangurProfileScreen', () => {
     expect(screen.getByText('Potem trenuj: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
     expect(screen.getByText('Następne kroki')).toBeTruthy();
-    expect(screen.getByText('Lokalne zadania w profilu')).toBeTruthy();
-    expect(screen.getByText('Plan na dziś')).toBeTruthy();
-    expect(screen.getByText('Ostatnie sesje')).toBeTruthy();
+    expect(screen.getByText('Plan w profilu')).toBeTruthy();
+    expect(screen.getByText('Plan dnia z profilu')).toBeTruthy();
+    expect(screen.getByText('Powrót do ostatnich sesji')).toBeTruthy();
     expect(screen.getByText('Centrum historii')).toBeTruthy();
     expect(screen.getByText('Sesje 1')).toBeTruthy();
     expect(screen.getByText('Najlepsza skuteczność 88%')).toBeTruthy();
@@ -546,6 +551,7 @@ describe('KangurProfileScreen', () => {
     expect(screen.getByText('Historia trybu')).toBeTruthy();
     expect(screen.getByText('Odblokowane 5/9')).toBeTruthy();
     expect(screen.getByText('Do zdobycia 4')).toBeTruthy();
+    expect(screen.getByText('Centrum odznak')).toBeTruthy();
     expect(screen.getByText('Ostatnio odblokowane')).toBeTruthy();
     expect(screen.getAllByText('🎮 Pierwsza gra').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('📚 Bohater lekcji').length).toBeGreaterThanOrEqual(1);
@@ -589,6 +595,11 @@ describe('KangurProfileScreen', () => {
     expect(screen.getByText('Schülerprofil')).toBeTruthy();
     expect(screen.getByText('Anfaenger 🐣')).toBeTruthy();
     expect(screen.getByText('Duelle')).toBeTruthy();
+    expect(screen.getByText('Schneller Rückweg zu Rivalen')).toBeTruthy();
+    expect(screen.getByText('Abzeichen-Zentrale')).toBeTruthy();
+    expect(screen.getByText('Profilplan')).toBeTruthy();
+    expect(screen.getByText('Tagesplan aus dem Profil')).toBeTruthy();
+    expect(screen.getByText('Zurück zu den letzten Sitzungen')).toBeTruthy();
     expect(screen.getAllByText('Abzeichen').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Letzte Lektions-Checkpoints')).toBeTruthy();
     expect(screen.getByText('Plan für heute')).toBeTruthy();

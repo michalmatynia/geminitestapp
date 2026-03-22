@@ -1684,9 +1684,9 @@ export default function HomeScreen(): React.JSX.Element {
             <View style={{ gap: 10 }}>
               <Text style={{ color: '#475569', lineHeight: 20 }}>
                 {copy({
-                  de: 'Nach der Anmeldung erscheint hier eine Momentaufnahme aktiver Rivalen aus der Duell-Lobby zusammen mit einer direkten privaten Herausforderungsaktion.',
-                  en: 'After signing in, this section shows a snapshot of active rivals from the duels lobby together with a direct private challenge action.',
-                  pl: 'Po zalogowaniu zobaczysz tutaj migawkę aktywnych rywali z lobby pojedynków razem z bezpośrednią akcją prywatnego wyzwania.',
+                  de: 'Nach der Anmeldung erscheint hier eine mobile Momentaufnahme aktiver Rivalen aus der Duell-Lobby zusammen mit einer direkten privaten Herausforderungsaktion.',
+                  en: 'After signing in, this section shows a mobile snapshot of active rivals from the duels lobby together with a direct private challenge action.',
+                  pl: 'Po zalogowaniu zobaczysz tutaj mobilną migawkę aktywnych rywali z lobby pojedynków razem z bezpośrednią akcją prywatnego wyzwania.',
                 })}
               </Text>
               <OutlineLink
@@ -1763,9 +1763,9 @@ export default function HomeScreen(): React.JSX.Element {
                       pl: 'Twoje konto jest teraz widoczne w lobby. Możesz od razu wysłać prywatne wyzwanie aktywnemu rywalowi.',
                     })
                   : copy({
-                      de: 'Das ist eine kompakte Momentaufnahme aktiver Rivalen. Öffne die Duell-Lobby, damit andere auch dich in dieser Liste sehen.',
-                      en: 'This is a compact snapshot of active rivals. Open the duels lobby so others can also see you in this list.',
-                      pl: 'To kompaktowa migawka aktywnych rywali. Otwórz lobby pojedynków, aby inni zobaczyli tu również Ciebie.',
+                      de: 'Das ist eine mobile Momentaufnahme aktiver Rivalen. Öffne die Duell-Lobby, damit andere auch dich in dieser Liste sehen.',
+                      en: 'This is a mobile snapshot of active rivals. Open the duels lobby so others can also see you in this list.',
+                      pl: 'To mobilna migawka aktywnych rywali. Otwórz lobby pojedynków, aby inni zobaczyli tu również Ciebie.',
                     })}
               </Text>
               {duelPresence.actionError ? (
@@ -2248,9 +2248,9 @@ export default function HomeScreen(): React.JSX.Element {
             <View style={{ gap: 10 }}>
               <Text style={{ color: '#475569', lineHeight: 20 }}>
                 {copy({
-                  de: 'Noch keine abgeschlossenen Duelle im aktuellen Zeitraum. Öffne die Lobby, um die nächste Serie zu starten.',
-                  en: 'There are no completed duels in the current window yet. Open the lobby to start the next series.',
-                  pl: 'W bieżącym oknie nie ma jeszcze zakończonych pojedynków. Otwórz lobby, aby rozpocząć kolejną serię.',
+                  de: 'Noch keine abgeschlossenen Duelle in diesem Fenster. Die ersten beendeten Serien füllen hier sofort die mobile Ranglisten-Momentaufnahme.',
+                  en: 'There are no completed duels in this window yet. The first finished series will fill this mobile leaderboard snapshot right away.',
+                  pl: 'W tym oknie nie ma jeszcze zakończonych pojedynków. Pierwsze skończone serie od razu wypełnią tutaj mobilną migawkę rankingu.',
                 })}
               </Text>
               <OutlineLink
@@ -2323,9 +2323,9 @@ export default function HomeScreen(): React.JSX.Element {
               ) : session.status === 'authenticated' ? (
                 <Text style={{ color: '#64748b', lineHeight: 20 }}>
                   {copy({
-                    de: 'Dein Konto ist in diesem Ausschnitt noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit du hier erscheinst.',
-                    en: 'Your account is not visible in this snapshot yet. Finish another duel or open the lobby so it shows up here.',
-                    pl: 'Twojego konta nie widać jeszcze w tym widoku. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawić się tutaj.',
+                    de: 'Dein Konto ist in dieser mobilen Ranglisten-Momentaufnahme noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
+                    en: 'Your account is not visible in this mobile leaderboard snapshot yet. Finish another duel or open the lobby so your rank appears here.',
+                    pl: 'Twojego konta nie widać jeszcze w tej mobilnej migawce rankingu. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
                   })}
                 </Text>
               ) : null}
@@ -2475,16 +2475,16 @@ export default function HomeScreen(): React.JSX.Element {
 
         <SectionCard
           title={copy({
-            de: 'Lektionsbeherrschung',
-            en: 'Lesson mastery',
-            pl: 'Opanowanie lekcji',
+            de: 'Lektionsplan vom Startbildschirm',
+            en: 'Lesson plan from home',
+            pl: 'Plan lekcji ze startu',
           })}
         >
           <Text style={{ color: '#475569', lineHeight: 20 }}>
             {copy({
-              de: 'Lokale Lektions-Checkpoints und abgeschlossene mobile Lektionen aktualisieren diesen Überblick sofort.',
-              en: 'Local lesson checkpoints and completed mobile lessons update this overview immediately.',
-              pl: 'Lokalne checkpointy lekcji i ukończone mobilne lekcje aktualizują ten przegląd od razu.',
+              de: 'Nutze den Startbildschirm, um sofort zu sehen, was wiederholt werden sollte und welche Lektion nur kurz aufgefrischt werden muss.',
+              en: 'Use home to see right away what needs review and which lesson only needs a quick refresh.',
+              pl: 'Użyj startu, aby od razu zobaczyć, co wymaga powtórki, a którą lekcję trzeba tylko krótko odświeżyć.',
             })}
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -2559,16 +2559,16 @@ export default function HomeScreen(): React.JSX.Element {
 
         <SectionCard
           title={copy({
-            de: 'Abzeichen',
-            en: 'Badges',
-            pl: 'Odznaki',
+            de: 'Abzeichen-Zentrale',
+            en: 'Badge hub',
+            pl: 'Centrum odznak',
           })}
         >
           <Text style={{ color: '#475569', lineHeight: 20 }}>
             {copy({
-              de: 'Die zuletzt lokal freigeschalteten Abzeichen erscheinen hier sofort, damit Fortschritt auf dem Dashboard sichtbar bleibt.',
-              en: 'Recently unlocked local badges appear here right away so progress stays visible on the dashboard.',
-              pl: 'Ostatnio lokalnie odblokowane odznaki pojawiają się tutaj od razu, aby postęp był widoczny także na dashboardzie.',
+              de: 'Die letzten lokalen Freischaltungen und der direkte Weg zum vollständigen Abzeichenüberblick bleiben hier griffbereit.',
+              en: 'The latest local unlocks and the direct path to the full badge overview stay close here.',
+              pl: 'Ostatnie lokalne odblokowania i bezpośrednie przejście do pełnego przeglądu odznak są tutaj zawsze pod ręką.',
             })}
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -2630,16 +2630,16 @@ export default function HomeScreen(): React.JSX.Element {
 
         <SectionCard
           title={copy({
-            de: 'Letzte Lektions-Checkpoints',
-            en: 'Recent lesson checkpoints',
-            pl: 'Ostatnie checkpointy lekcji',
+            de: 'Zurück zu den letzten Lektionen',
+            en: 'Return to recent lessons',
+            pl: 'Powrót do ostatnich lekcji',
           })}
         >
           <Text style={{ color: '#475569', lineHeight: 20 }}>
             {copy({
-              de: 'Jeder lokal gespeicherte Checkpoint oder Lektionsabschluss erscheint hier sofort, damit du direkt an der zuletzt gespeicherten Stelle weitermachen kannst.',
-              en: 'Every locally saved checkpoint or lesson completion appears here right away so you can resume from the most recently saved lesson.',
-              pl: 'Każdy lokalnie zapisany checkpoint albo ukończenie lekcji pojawia się tutaj od razu, aby można było wrócić do ostatnio zapisanej lekcji.',
+              de: 'Jeder lokal gespeicherte Checkpoint oder Lektionsabschluss erscheint hier sofort, damit du vom Start aus direkt an der zuletzt gespeicherten Stelle weitermachen kannst.',
+              en: 'Every locally saved checkpoint or lesson completion appears here right away so you can resume from home at the most recently saved lesson.',
+              pl: 'Każdy lokalnie zapisany checkpoint albo ukończenie lekcji pojawia się tutaj od razu, aby można było ze startu wrócić do ostatnio zapisanej lekcji.',
             })}
           </Text>
           {lessonCheckpoints.recentCheckpoints.length === 0 ? (
@@ -2677,16 +2677,16 @@ export default function HomeScreen(): React.JSX.Element {
 
         <SectionCard
           title={copy({
-            de: 'Nächste Schritte',
-            en: 'Next steps',
-            pl: 'Następne kroki',
+            de: 'Plan vom Startbildschirm',
+            en: 'Plan from home',
+            pl: 'Plan z ekranu głównego',
           })}
         >
           <Text style={{ color: '#475569', lineHeight: 20 }}>
             {copy({
-              de: 'Kurze Aufgaben aus lokalem Lernfortschritt und gespeicherten Lektionen, damit du direkt vom Dashboard weitermachen kannst.',
-              en: 'Short tasks from local learning progress and saved lessons so you can continue straight from the dashboard.',
-              pl: 'Krótkie zadania z lokalnego postępu i zapisanych lekcji, aby można było kontynuować naukę prosto z dashboardu.',
+              de: 'Verwandle lokalen Fortschritt und gespeicherte Lektionen direkt vom Dashboard aus in die nächsten Schritte.',
+              en: 'Turn local progress and saved lessons into the next steps directly from the dashboard.',
+              pl: 'Zamień lokalny postęp i zapisane lekcje bezpośrednio na kolejne kroki z poziomu dashboardu.',
             })}
           </Text>
           {homeAssignments.assignmentItems.length === 0 ? (
@@ -2724,11 +2724,18 @@ export default function HomeScreen(): React.JSX.Element {
 
         <SectionCard
           title={copy({
-            de: 'Letzte Ergebnisse',
-            en: 'Recent results',
-            pl: 'Ostatnie wyniki',
+            de: 'Ergebniszentrale',
+            en: 'Results hub',
+            pl: 'Centrum wyników',
           })}
         >
+          <Text style={{ color: '#475569', lineHeight: 20 }}>
+            {copy({
+              de: 'Die letzten synchronisierten Sitzungen bleiben hier griffbereit, damit du vom Dashboard direkt wieder ins Training oder in den vollständigen Verlauf springen kannst.',
+              en: 'The latest synchronized sessions stay close here so you can jump from the dashboard straight back into practice or the full history.',
+              pl: 'Ostatnie zsynchronizowane sesje są tutaj pod ręką, aby można było z dashboardu od razu wrócić do treningu albo pełnej historii.',
+            })}
+          </Text>
           {recentResults.isRestoringAuth || recentResults.isLoading ? (
             <Text style={{ color: '#475569', lineHeight: 20 }}>
               {copy({
@@ -2803,6 +2810,19 @@ export default function HomeScreen(): React.JSX.Element {
                   </View>
                 </View>
               ))}
+              <OutlineLink
+                href={RESULTS_ROUTE}
+                hint={copy({
+                  de: 'Öffnet den vollständigen mobilen Ergebnisverlauf.',
+                  en: 'Opens the full mobile score history.',
+                  pl: 'Otwiera pełną mobilną historię wyników.',
+                })}
+                label={copy({
+                  de: 'Gesamten Verlauf öffnen',
+                  en: 'Open full history',
+                  pl: 'Otwórz pełną historię',
+                })}
+              />
             </View>
           )}
         </SectionCard>

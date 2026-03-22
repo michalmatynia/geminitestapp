@@ -1,34 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
+import { systemLogsMetricsQuerySchema } from '@/shared/contracts/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
-import { getSystemLogMetrics } from '@/shared/lib/observability/system-log-repository';;
-
-const levelSchema = z.enum(['info', 'warn', 'error']);
-
-const metricsSchema = z.object({
-  level: levelSchema.optional(),
-  source: z.string().trim().optional(),
-  service: z.string().trim().optional(),
-  method: z.string().trim().optional(),
-  statusCode: z.coerce.number().int().optional(),
-  minDurationMs: z.coerce.number().int().nonnegative().optional(),
-  requestId: z.string().trim().optional(),
-  traceId: z.string().trim().optional(),
-  correlationId: z.string().trim().optional(),
-  userId: z.string().trim().optional(),
-  fingerprint: z.string().trim().optional(),
-  category: z.string().trim().optional(),
-  query: z.string().trim().optional(),
-  from: z.string().datetime().optional(),
-  to: z.string().datetime().optional(),
-});
+import { getSystemLogMetrics } from '@/shared/lib/observability/system-log-repository';
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const url = new URL(req.url);
-  const parsed = metricsSchema.parse(Object.fromEntries(url.searchParams.entries()));
+  const parsed = systemLogsMetricsQuerySchema.parse(Object.fromEntries(url.searchParams.entries()));
   const metrics = await getSystemLogMetrics({
     level: parsed.level ?? undefined,
     source: parsed.source ?? undefined,

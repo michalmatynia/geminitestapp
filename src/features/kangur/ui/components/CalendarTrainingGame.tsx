@@ -31,6 +31,7 @@ import {
   KANGUR_STEP_PILL_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   addXp,
   createTrainingReward,
@@ -145,6 +146,7 @@ export default function CalendarTrainingGame({
   onFinish,
 }: KangurMiniGameFinishActionProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const isCoarsePointer = useKangurCoarsePointer();
   const [questions] = useState(() => Array.from({ length: TOTAL }, generateQuestion));
   const [current, setCurrent] = useState(0);
   const [score, setScore] = useState(0);
@@ -320,6 +322,15 @@ export default function CalendarTrainingGame({
         </KangurInfoCard>
       </KangurGlassPanel>
 
+      {isCoarsePointer ? (
+        <p
+          data-testid='calendar-training-touch-hint'
+          className='text-center text-xs font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'
+        >
+          {translations('calendarTraining.touchHint')}
+        </p>
+      ) : null}
+
       <div
         aria-labelledby='calendar-training-question-title'
         className='grid w-full grid-cols-1 kangur-panel-gap sm:grid-cols-2'
@@ -351,7 +362,8 @@ export default function CalendarTrainingGame({
               aria-disabled={selected !== null}
             aria-label={`Odpowiedź ${choice}`}
               buttonClassName={cn(
-                'px-4 py-3 text-sm font-bold min-[420px]:text-base',
+                'px-4 py-3 text-sm font-bold touch-manipulation select-none min-[420px]:text-base',
+                isCoarsePointer && 'min-h-[4.25rem] active:scale-[0.98]',
                 choiceClassName,
                 selected === null ? 'cursor-pointer' : 'cursor-default'
               )}

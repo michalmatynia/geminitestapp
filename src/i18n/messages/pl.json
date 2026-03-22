@@ -405,6 +405,7 @@
     "practiceQuestion": {
       "label": "Pytanie {number}",
       "pointChip": "⭐ {points} pkt ({difficulty})",
+      "touchHint": "Dotknij odpowiedź, a potem dotknij przycisk zatwierdzania.",
       "difficulty": {
         "easy": "łatwe",
         "medium": "średnie",
@@ -1428,6 +1429,20 @@
       "clockAriaLabel": "Zegar analogowy pokazuje godzinę {time}."
     },
     "adding": {
+      "rounds": {
+        "completeEquation": {
+          "label": "Uzupełnij równanie",
+          "touchHint": "Dotknij piłkę, a potem dotknij pole, do którego chcesz ją przenieść."
+        },
+        "groupSum": {
+          "label": "Podziel na grupy",
+          "touchHint": "Dotknij piłkę, a potem dotknij grupę, do której chcesz ją dodać."
+        },
+        "pickAnswer": {
+          "label": "Wybierz odpowiedź",
+          "touchHint": "Dotknij piłkę, a potem dotknij poprawną odpowiedź."
+        }
+      },
       "summary": {
         "perfect": "Idealnie! Jesteś mistrzem dodawania!",
         "good": "Świetna robota!",
@@ -1534,6 +1549,7 @@
         "chooseLane": "Wybierz tor",
         "accuracy": "Dokładność {accuracy}%",
         "hintTitle": "Podpowiedź do tej nuty",
+        "touchHint": "Dotknij tor, gdy nuta dojdzie do linii trafienia.",
         "keyboardHint": "Jeśli wolisz klawiaturę, naciśnij 1, 2, 3 lub 4.",
         "sessionProgress": "Postęp sesji",
         "endAttempt": "Zakończ próbę"
@@ -1560,6 +1576,9 @@
       }
     },
     "division": {
+      "inRound": {
+        "touchHint": "Dotknij odpowiedź, a potem dotknij Sprawdź."
+      },
       "summary": {
         "perfect": "Idealnie! Mistrz dzielenia!",
         "good": "Świetna robota!",
@@ -1584,6 +1603,7 @@
     },
     "calendarTraining": {
       "progressAriaLabel": "Dokładność w ćwiczeniach z kalendarzem",
+      "touchHint": "Dotknij odpowiedź, a potem poczekaj na kolejne pytanie.",
       "summary": {
         "perfect": "Idealnie! Świetnie znasz kalendarz!",
         "retry": "Ćwicz dalej, a zostaniesz mistrzem kalendarza!"
@@ -1893,7 +1913,9 @@
       "inRound": {
         "roundLabel": "Runda {current}/{total}",
         "modeLabel": "Rozgrzewka",
+        "modeLabelTouch": "Dotknij",
         "check": "Sprawdź ✓",
+        "touchHint": "Dotknij formę, a potem dotknij Sprawdź.",
         "rounds": {
           "warmup-graph": {
             "prompt": "Wybierz poprawną formę dzierżawczą.",
@@ -2053,6 +2075,8 @@
         "seeResult": "Zobacz wynik",
         "click": {
           "topicLabel": "Przyimki",
+          "modeLabelTouch": "Dotknij",
+          "touchHint": "Dotknij przyimek, a potem dotknij Sprawdź.",
           "rounds": {
             "time-at": {
               "prompt": "Wybierz przyimek czasu.",
@@ -2260,9 +2284,11 @@
       "inRound": {
         "roundLabel": "Runda {current}/{total}",
         "modeLabel": "Kliknij",
+        "modeLabelTouch": "Dotknij",
         "subjectLabel": "Podmiot",
         "blank": "____",
         "check": "Sprawdź",
+        "touchHint": "Dotknij czasownik, a potem dotknij Sprawdź.",
         "feedback": {
           "correct": "Tak! Wszystko się zgadza.",
           "incorrect": "Poprawna odpowiedź: {answer}."
@@ -2854,6 +2880,7 @@
       "adaptiveRetriesWithCount": "Powtórki adaptacyjne: {count}",
       "adaptiveRetryAdded": "Dodaliśmy krótką powtórkę tego zadania.",
       "challengePill": "Wyzwanie",
+      "touchHint": "Przesuwaj wskazówki palcem, aby ustawić czas.",
       "taskProgress": "Zadanie {current} z {total}",
       "seriesProgress": "Seria {current}/{total}",
       "progressAriaLabel": "Dokładność w treningu zegara",

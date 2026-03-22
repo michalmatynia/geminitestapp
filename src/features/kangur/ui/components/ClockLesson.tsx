@@ -15,6 +15,7 @@ import {
   buildLessonHubSectionsWithProgress,
 } from '@/features/kangur/ui/components/lesson-utils';
 import type { LessonHubSectionProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   addXp,
   createLessonCompletionReward,
@@ -83,6 +84,7 @@ const localizeClockCopy = <T,>(
 
 export default function ClockLesson(): React.JSX.Element {
   const translations = useTranslations('KangurStaticLessons.clock');
+  const isCoarsePointer = useKangurCoarsePointer();
   const [sectionProgressSnapshot, setSectionProgressSnapshot] = useState<
     Partial<Record<SectionId, { viewedCount: number; totalCount: number }>>
   >({});
@@ -411,11 +413,16 @@ export default function ClockLesson(): React.JSX.Element {
               aria-current={isActive ? 'step' : undefined}
               className={cn(
                 KANGUR_STEP_PILL_CLASSNAME,
-                'h-[14px] min-w-[14px] cursor-pointer',
+                isCoarsePointer
+                  ? 'h-8 min-w-8 cursor-pointer touch-manipulation select-none active:scale-[0.97]'
+                  : 'h-[14px] min-w-[14px] cursor-pointer',
                 isActive
-                  ? ['w-8 scale-[1.04]', medalClassName ?? panel.activeClassName]
+                  ? [
+                      isCoarsePointer ? 'w-12 scale-[1.02]' : 'w-8 scale-[1.04]',
+                      medalClassName ?? panel.activeClassName,
+                    ]
                   : isCompleted
-                    ? ['w-6', medalClassName ?? panel.completedClassName]
+                    ? [isCoarsePointer ? 'w-10' : 'w-6', medalClassName ?? panel.completedClassName]
                     : KANGUR_PENDING_STEP_PILL_CLASSNAME
               )}
               data-testid={`clock-lesson-training-panel-${panel.id}`}
@@ -437,7 +444,7 @@ export default function ClockLesson(): React.JSX.Element {
                 })
               }
               aria-label={copy.training.previousPanel}
-              className='w-full justify-center px-5 shadow-sm [border-color:var(--kangur-soft-card-border)] sm:min-w-[72px] sm:w-auto'
+              className='w-full justify-center px-5 shadow-sm [border-color:var(--kangur-soft-card-border)] sm:min-w-[72px] sm:w-auto touch-manipulation select-none min-h-11 active:scale-[0.98]'
               data-testid='clock-lesson-training-prev-button'
               size='sm'
               type='button'
@@ -460,7 +467,7 @@ export default function ClockLesson(): React.JSX.Element {
                 })
               }
               aria-label={copy.training.nextPanel}
-              className='w-full justify-center px-5 shadow-sm [border-color:var(--kangur-soft-card-border)] sm:min-w-[72px] sm:w-auto'
+              className='w-full justify-center px-5 shadow-sm [border-color:var(--kangur-soft-card-border)] sm:min-w-[72px] sm:w-auto touch-manipulation select-none min-h-11 active:scale-[0.98]'
               data-testid='clock-lesson-training-next-button'
               size='sm'
               type='button'

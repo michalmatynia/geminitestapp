@@ -302,14 +302,14 @@ describe('Lessons page mastery list', () => {
     expect(screen.getByText('Priorytet rodzica')).toBeInTheDocument();
     expect(screen.getByText('Priorytet wysoki')).toBeInTheDocument();
     expect(screen.getByText('To zadanie ma priorytet od rodzica.')).toBeInTheDocument();
-    expect(screen.getByText('Ukonczone dla rodzica')).toBeInTheDocument();
+    expect(screen.getByText('Ukończone dla rodzica')).toBeInTheDocument();
     expect(screen.getByText('Zadanie zamkniete')).toBeInTheDocument();
     expect(
       screen.getByText('Zadanie od rodzica zostalo juz wykonane.', { exact: false })
     ).toBeInTheDocument();
     expect(screen.getByText('Powtorki po przydziale: 1/1.', { exact: false })).toBeInTheDocument();
-    expect(screen.getByText('Ukonczono 2× · najlepszy wynik 100%')).toBeInTheDocument();
-    expect(screen.getByText('Ukonczono 1× · ostatni wynik 45%')).toBeInTheDocument();
+    expect(screen.getByText('Ukończono 2× · najlepszy wynik 100%')).toBeInTheDocument();
+    expect(screen.getByText('Ukończono 1× · ostatni wynik 45%')).toBeInTheDocument();
     expect(screen.getByText('Brak zapisanej praktyki')).toBeInTheDocument();
     const lessonCards = screen
       .getAllByRole('button')
@@ -373,7 +373,7 @@ describe('Lessons page mastery list', () => {
     expect(section).toBeInTheDocument();
     expect(screen.getByText('Lekcje zaraz beda gotowe.', { exact: false })).toBeInTheDocument();
     expect(
-      screen.queryByText('Wybierz temat i przejdz od razu do praktyki lub powtorki.')
+      screen.queryByText('Wybierz temat i przejdz od razu do praktyki lub powtórki.')
     ).not.toBeInTheDocument();
     expect(screen.queryByTestId('lessons-list-transition')).not.toBeInTheDocument();
 
@@ -384,7 +384,7 @@ describe('Lessons page mastery list', () => {
     const contentTransitionSection = await screen.findByTestId('lessons-list-transition');
     expect(contentTransitionSection).toBeInTheDocument();
     expect(screen.queryByText('Lekcje zaraz beda gotowe.', { exact: false })).not.toBeInTheDocument();
-    const introText = 'Wybierz temat i przejdz od razu do praktyki lub powtorki.';
+    const introText = 'Wybierz temat i przejdz od razu do praktyki lub powtórki.';
     expect(
       screen.getByText((content, element) => {
         return element?.tagName.toLowerCase() === 'p' && content.includes('Wybierz temat');

@@ -153,6 +153,79 @@ describe('KangurLeaderboardScreen', () => {
     expect(screen.getByText('Przywracamy sesję ucznia i ranking...')).toBeTruthy();
   });
 
+  it('shows the pending mobile duel snapshot when the learner rank is not visible yet', () => {
+    useKangurMobileLeaderboardDuelsMock.mockReturnValue({
+      actionError: null,
+      challengeLearner: vi.fn(),
+      currentEntry: null,
+      currentRank: null,
+      entries: [
+        {
+          displayName: 'Maja Sprint',
+          lastPlayedAt: '2026-03-21T08:10:00.000Z',
+          learnerId: 'learner-2',
+          losses: 1,
+          matches: 5,
+          ties: 0,
+          winRate: 0.8,
+          wins: 4,
+        },
+      ],
+      error: null,
+      isActionPending: false,
+      isAuthenticated: true,
+      isLoading: false,
+      pendingLearnerId: null,
+      refresh: vi.fn(),
+    });
+    useKangurMobileLeaderboardMock.mockReturnValue({
+      error: null,
+      isLoading: false,
+      isLoadingAuth: false,
+      isRestoringAuth: false,
+      items: [
+        {
+          id: 'item-1',
+          currentUserBadgeLabel: null,
+          isCurrentUser: false,
+          metaLabel: 'Dzisiaj · 1 sesja',
+          operationSummary: 'Zegar',
+          playerName: 'Maja Sprint',
+          rankLabel: '#1',
+          scoreLabel: '8 pkt',
+          timeLabel: '33s',
+        },
+      ],
+      operationFilter: 'clock',
+      operationOptions: [
+        { id: 'all', label: 'Wszystkie', emoji: '⭐' },
+        { id: 'clock', label: 'Zegar', emoji: '🕐' },
+      ],
+      refresh: vi.fn(),
+      setOperationFilter: vi.fn(),
+      setUserFilter: vi.fn(),
+      userFilter: 'all',
+      userOptions: [
+        { id: 'all', label: 'Wszyscy' },
+        { id: 'mine', label: 'Ty' },
+      ],
+      visibleCount: 1,
+    });
+
+    render(<KangurLeaderboardScreen />);
+
+    expect(screen.getByText('Czeka na widoczność')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Twojego konta nie widać jeszcze w tej mobilnej migawce rankingu. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getAllByText('Maja Sprint').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Rzuć wyzwanie')).toBeTruthy();
+    expect(screen.getByText('Odśwież pojedynki')).toBeTruthy();
+    expect(screen.getByText('Otwórz pojedynki')).toBeTruthy();
+  });
+
   it('renders leaderboard rows after the shell settles', async () => {
     const challengeLearnerMock = vi.fn().mockResolvedValue('duel-leaderboard-1');
     useKangurMobileLeaderboardDuelsMock.mockReturnValue({

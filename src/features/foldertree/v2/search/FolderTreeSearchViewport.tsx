@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 
 import type {
   MasterFolderTreeController,
   FolderTreeProfileV2,
 } from '@/shared/contracts/master-folder-tree';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { FolderTreeSearchBar } from './FolderTreeSearchBar';
 import { useMasterFolderTreeSearch } from './useMasterFolderTreeSearch';
@@ -30,7 +29,7 @@ export type FolderTreeSearchViewportProps = {
 
 type FolderTreeSearchStateValue = ReturnType<typeof useMasterFolderTreeSearch>;
 
-type FolderTreeSearchViewportRuntimeValue = {
+type FolderTreeSearchViewportResolvedProps = {
   controller: MasterFolderTreeController;
   query: string;
   onQueryChange: (query: string) => void;
@@ -40,27 +39,30 @@ type FolderTreeSearchViewportRuntimeValue = {
   viewportProps: Omit<FolderTreeViewportV2Props, 'controller'>;
 };
 
-const {
-  Context: FolderTreeSearchViewportRuntimeContext,
-  useStrictContext: useFolderTreeSearchViewportRuntime,
-} = createStrictContext<FolderTreeSearchViewportRuntimeValue>({
-  hookName: 'useFolderTreeSearchViewportRuntime',
-  providerName: 'FolderTreeSearchViewportRuntimeProvider',
-  displayName: 'FolderTreeSearchViewportRuntimeContext',
-});
-
-function FolderTreeSearchViewportSearchBar(): React.JSX.Element | null {
-  const { query, onQueryChange, searchEnabled, searchPlaceholder } =
-    useFolderTreeSearchViewportRuntime();
+function FolderTreeSearchViewportSearchBar({
+  query,
+  onQueryChange,
+  searchEnabled,
+  searchPlaceholder,
+}: Pick<
+  FolderTreeSearchViewportResolvedProps,
+  'query' | 'onQueryChange' | 'searchEnabled' | 'searchPlaceholder'
+>): React.JSX.Element | null {
   if (!searchEnabled) return null;
   return (
     <FolderTreeSearchBar value={query} onChange={onQueryChange} placeholder={searchPlaceholder} />
   );
 }
 
-function FolderTreeSearchViewportTree(): React.JSX.Element {
-  const { controller, viewportProps, searchEnabled, searchState } =
-    useFolderTreeSearchViewportRuntime();
+function FolderTreeSearchViewportTree({
+  controller,
+  viewportProps,
+  searchEnabled,
+  searchState,
+}: Pick<
+  FolderTreeSearchViewportResolvedProps,
+  'controller' | 'viewportProps' | 'searchEnabled' | 'searchState'
+>): React.JSX.Element {
   return (
     <FolderTreeViewportV2
       controller={controller}
@@ -86,25 +88,20 @@ export function FolderTreeSearchViewport({
   const searchState = useMasterFolderTreeSearch(controller.nodes, query, { profile });
 
   const searchEnabled = profile?.search?.enabled ?? true;
-  const runtimeValue = useMemo(
-    () => ({
-      controller,
-      query,
-      onQueryChange: setQuery,
-      searchEnabled,
-      searchPlaceholder,
-      searchState,
-      viewportProps,
-    }),
-    [controller, query, searchEnabled, searchPlaceholder, searchState, viewportProps]
-  );
+  const resolvedProps: FolderTreeSearchViewportResolvedProps = {
+    controller,
+    query,
+    onQueryChange: setQuery,
+    searchEnabled,
+    searchPlaceholder,
+    searchState,
+    viewportProps,
+  };
 
   return (
-    <FolderTreeSearchViewportRuntimeContext.Provider value={runtimeValue}>
-      <div className='flex flex-col gap-1'>
-        <FolderTreeSearchViewportSearchBar />
-        <FolderTreeSearchViewportTree />
-      </div>
-    </FolderTreeSearchViewportRuntimeContext.Provider>
+    <div className='flex flex-col gap-1'>
+      <FolderTreeSearchViewportSearchBar {...resolvedProps} />
+      <FolderTreeSearchViewportTree {...resolvedProps} />
+    </div>
   );
 }

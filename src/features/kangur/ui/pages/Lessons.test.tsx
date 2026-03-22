@@ -364,6 +364,24 @@ describe('Lessons page subject filtering', () => {
     );
   });
 
+  it('keeps the live lessons library shell aligned with the transition skeleton layout', () => {
+    render(<Lessons />);
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(screen.getByTestId('lessons-shell-transition')).toHaveClass(
+      'w-full',
+      'max-w-lg',
+      'flex-col',
+      'items-center'
+    );
+    expect(screen.getByTestId('lessons-list-transition')).toHaveClass(
+      'w-full',
+      'flex-col'
+    );
+  });
+
   it('uses the translated page title in the tutor session context when no lesson is active', () => {
     render(<Lessons />);
     act(() => {

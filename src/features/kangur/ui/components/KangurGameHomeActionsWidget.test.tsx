@@ -6,6 +6,10 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const { kangurTransitionLinkPropsMock } = vi.hoisted(() => ({
+  kangurTransitionLinkPropsMock: vi.fn(),
+}));
+
 const { useKangurGameRuntimeMock } = vi.hoisted(() => ({
   useKangurGameRuntimeMock: vi.fn(),
 }));
@@ -22,20 +26,29 @@ vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({
   KangurTransitionLink: ({
     children,
     href,
-    targetPageKey: _targetPageKey,
-    transitionAcknowledgeMs: _transitionAcknowledgeMs,
-    transitionSourceId: _transitionSourceId,
+    targetPageKey,
+    transitionAcknowledgeMs,
+    transitionSourceId,
     ...rest
   }: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
     href: string;
     targetPageKey?: string | null;
     transitionAcknowledgeMs?: number;
     transitionSourceId?: string | null;
-  }) => (
-    <a href={href} {...rest}>
-      {children}
-    </a>
-  ),
+  }) => {
+    kangurTransitionLinkPropsMock({
+      href,
+      targetPageKey,
+      transitionAcknowledgeMs,
+      transitionSourceId,
+    });
+
+    return (
+      <a href={href} {...rest}>
+        {children}
+      </a>
+    );
+  },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
@@ -50,11 +63,16 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 import { KangurGameHomeActionsWidget } from './KangurGameHomeActionsWidget';
 
 describe('KangurGameHomeActionsWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    kangurTransitionLinkPropsMock.mockClear();
     useOptionalKangurRouteTransitionStateMock.mockReturnValue(null);
     useKangurSubjectFocusMock.mockReturnValue({
       subject: 'maths',
@@ -105,8 +123,18 @@ describe('KangurGameHomeActionsWidget', () => {
     expect(screen.getByRole('link', { name: 'Lekcje' })).toHaveClass(
       'focus-visible:ring-amber-300/70'
     );
+    expect(screen.getByRole('link', { name: 'Lekcje' })).toHaveClass(
+      'touch-manipulation',
+      'select-none',
+      'min-h-[4.75rem]'
+    );
     expect(screen.getByRole('button', { name: 'Grajmy!' })).toHaveClass(
       'focus-visible:ring-amber-300/70'
+    );
+    expect(screen.getByRole('button', { name: 'Grajmy!' })).toHaveClass(
+      'touch-manipulation',
+      'select-none',
+      'min-h-[4.75rem]'
     );
   });
 
@@ -127,6 +155,27 @@ describe('KangurGameHomeActionsWidget', () => {
       '/kangur/duels'
     );
     expect(screen.getByRole('button', { name: 'Kangur Matematyczny' })).toBeEnabled();
+  });
+
+  it('wires the lessons home action through the managed Kangur transition contract', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      basePath: '/kangur',
+      canStartFromHome: true,
+      handleStartGame: vi.fn(),
+      screen: 'home',
+      setScreen: vi.fn(),
+    });
+
+    render(<KangurGameHomeActionsWidget />);
+
+    expect(kangurTransitionLinkPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        href: '/kangur/lessons',
+        targetPageKey: 'Lessons',
+        transitionAcknowledgeMs: 110,
+        transitionSourceId: 'game-home-action:lessons',
+      })
+    );
   });
 
   it('hides the kangur math contest action when English is selected', () => {

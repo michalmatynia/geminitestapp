@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+import {
+  optionalIntegerQuerySchema,
+  optionalTrimmedQueryString,
+} from '@/shared/lib/api/query-schema';
+
 import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import { dtoBaseSchema, namedDtoSchema } from './base';
 import { activityLogSchema } from './system';
@@ -131,6 +136,57 @@ export const listSystemLogsResultSchema = z.object({
 
 export type ListSystemLogsResult = z.infer<typeof listSystemLogsResultSchema>;
 export type ListSystemLogsResultDto = ListSystemLogsResult;
+
+export const systemLogsFilterQuerySchema = z.object({
+  level: optionalTrimmedQueryString(systemLogLevelSchema),
+  source: optionalTrimmedQueryString(),
+  service: optionalTrimmedQueryString(),
+  method: optionalTrimmedQueryString(),
+  statusCode: optionalIntegerQuerySchema(z.number().int()),
+  minDurationMs: optionalIntegerQuerySchema(z.number().int().nonnegative()),
+  requestId: optionalTrimmedQueryString(),
+  traceId: optionalTrimmedQueryString(),
+  correlationId: optionalTrimmedQueryString(),
+  userId: optionalTrimmedQueryString(),
+  fingerprint: optionalTrimmedQueryString(),
+  category: optionalTrimmedQueryString(),
+  query: optionalTrimmedQueryString(),
+  from: optionalTrimmedQueryString(z.string().datetime()),
+  to: optionalTrimmedQueryString(z.string().datetime()),
+});
+
+export type SystemLogsFilterQuery = z.infer<typeof systemLogsFilterQuerySchema>;
+
+export const systemLogsListQuerySchema = systemLogsFilterQuerySchema.extend({
+  page: optionalIntegerQuerySchema(z.number().int().positive()),
+  pageSize: optionalIntegerQuerySchema(z.number().int().positive()),
+});
+
+export type SystemLogsListQuery = z.infer<typeof systemLogsListQuerySchema>;
+
+export const systemLogsMetricsQuerySchema = systemLogsFilterQuerySchema;
+export type SystemLogsMetricsQuery = z.infer<typeof systemLogsMetricsQuerySchema>;
+
+export const systemLogsCreateRequestSchema = z.object({
+  level: systemLogLevelSchema.optional(),
+  message: z.string().min(1),
+  category: z.string().trim().optional(),
+  source: z.string().trim().optional(),
+  service: z.string().trim().optional(),
+  context: z.record(z.string(), z.unknown()).optional(),
+  stack: z.string().optional(),
+  path: z.string().optional(),
+  method: z.string().optional(),
+  statusCode: z.number().int().optional(),
+  requestId: z.string().optional(),
+  traceId: z.string().optional(),
+  correlationId: z.string().optional(),
+  spanId: z.string().optional(),
+  parentSpanId: z.string().optional(),
+  userId: z.string().optional(),
+});
+
+export type SystemLogsCreateRequest = z.infer<typeof systemLogsCreateRequestSchema>;
 
 export const systemLogMetricsSchema = z.object({
   total: z.number(),
@@ -280,6 +336,13 @@ export const clearLogsTargetSchema = z.enum([
 export type ClearLogsTarget = z.infer<typeof clearLogsTargetSchema>;
 export type ClearLogsTargetDto = ClearLogsTarget;
 
+export const systemLogsClearQuerySchema = z.object({
+  before: optionalTrimmedQueryString(z.string().datetime()),
+  target: optionalTrimmedQueryString(clearLogsTargetSchema).default('all_logs'),
+});
+
+export type SystemLogsClearQuery = z.infer<typeof systemLogsClearQuerySchema>;
+
 export const clearLogsResponseSchema = z.object({
   target: clearLogsTargetSchema,
   deleted: z.number(),
@@ -299,6 +362,12 @@ export const systemLogsInsightRequestSchema = z.object({
 
 export type SystemLogsInsightRequest = z.infer<typeof systemLogsInsightRequestSchema>;
 export type SystemLogsInsightRequestDto = SystemLogsInsightRequest;
+
+export const systemLogsInsightsListQuerySchema = z.object({
+  limit: optionalIntegerQuerySchema(z.number().int().positive().max(50)),
+});
+
+export type SystemLogsInsightsListQuery = z.infer<typeof systemLogsInsightsListQuerySchema>;
 
 export const systemLogsInterpretRequestSchema = z.object({
   logId: z.string().trim().min(1),

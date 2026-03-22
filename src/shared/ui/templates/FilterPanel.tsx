@@ -1,9 +1,8 @@
 'use client';
 
-import { useMemo, type JSX, type ReactNode } from 'react';
+import { type JSX, type ReactNode } from 'react';
 
 import { FilterField } from '@/shared/contracts/ui';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { PanelFilters, PanelFiltersSearchPlaceholderRuntimeContext } from './panels/PanelFilters';
 
@@ -55,32 +54,6 @@ export interface FilterPanelProps {
   className?: string;
 }
 
-type FilterPanelRuntimeValue = {
-  filters: FilterField[];
-  values: Record<string, unknown>;
-  activeValues?: Record<string, unknown>;
-  search: string;
-  filterSearchPlaceholder: string;
-  onFilterChange: (key: string, value: unknown) => void;
-  onSearchChange?: (search: string) => void;
-  onReset?: () => void;
-  presets: Array<{
-    label: string;
-    values: Record<string, unknown>;
-  }>;
-  onApplyPreset?: (preset: Record<string, unknown>) => void;
-  compact: boolean;
-  collapsible: boolean;
-  defaultExpanded?: boolean;
-  toggleButtonAlignment: 'start' | 'end';
-  showHeader: boolean;
-  headerTitle: string;
-  headerAction?: ReactNode;
-  actions?: ReactNode;
-  children?: ReactNode;
-  className?: string;
-};
-
 const isActiveFilterValue = (value: unknown): boolean => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim() !== '';
@@ -95,15 +68,17 @@ const isActiveFilterValue = (value: unknown): boolean => {
   return true;
 };
 
-const { Context: FilterPanelRuntimeContext, useStrictContext: useFilterPanelRuntime } =
-  createStrictContext<FilterPanelRuntimeValue>({
-    hookName: 'useFilterPanelRuntime',
-    providerName: 'FilterPanelRuntimeProvider',
-    displayName: 'FilterPanelRuntimeContext',
-  });
+interface FilterPanelHeaderProps {
+  showHeader: boolean;
+  headerTitle: string;
+  headerAction?: ReactNode;
+}
 
-function FilterPanelHeader(): JSX.Element | null {
-  const { headerAction, headerTitle, showHeader } = useFilterPanelRuntime();
+function FilterPanelHeader({
+  headerAction,
+  headerTitle,
+  showHeader,
+}: FilterPanelHeaderProps): JSX.Element | null {
   if (!showHeader) return null;
   return (
     <div className='mb-3 flex items-center justify-between'>
@@ -113,22 +88,37 @@ function FilterPanelHeader(): JSX.Element | null {
   );
 }
 
-function FilterPanelMainFilters(): JSX.Element {
-  const {
-    actions,
-    activeValues,
-    collapsible,
-    compact,
-    defaultExpanded,
-    filterSearchPlaceholder,
-    filters,
-    onFilterChange,
-    onReset,
-    onSearchChange,
-    search,
-    toggleButtonAlignment,
-    values,
-  } = useFilterPanelRuntime();
+interface FilterPanelMainFiltersProps {
+  actions?: ReactNode;
+  activeValues?: Record<string, unknown>;
+  collapsible: boolean;
+  compact: boolean;
+  defaultExpanded?: boolean;
+  filterSearchPlaceholder: string;
+  filters: FilterField[];
+  onFilterChange: (key: string, value: unknown) => void;
+  onReset?: () => void;
+  onSearchChange?: (search: string) => void;
+  search: string;
+  toggleButtonAlignment: 'start' | 'end';
+  values: Record<string, unknown>;
+}
+
+function FilterPanelMainFilters({
+  actions,
+  activeValues,
+  collapsible,
+  compact,
+  defaultExpanded,
+  filterSearchPlaceholder,
+  filters,
+  onFilterChange,
+  onReset,
+  onSearchChange,
+  search,
+  toggleButtonAlignment,
+  values,
+}: FilterPanelMainFiltersProps): JSX.Element {
   return (
     <PanelFiltersSearchPlaceholderRuntimeContext.Provider value={filterSearchPlaceholder}>
       <PanelFilters
@@ -149,14 +139,20 @@ function FilterPanelMainFilters(): JSX.Element {
   );
 }
 
-function FilterPanelChildrenSlot(): JSX.Element | null {
-  const { children } = useFilterPanelRuntime();
+function FilterPanelChildrenSlot({ children }: { children?: ReactNode }): JSX.Element | null {
   if (!children) return null;
   return <div className='mt-3'>{children}</div>;
 }
 
-function FilterPanelPresets(): JSX.Element | null {
-  const { onApplyPreset, presets } = useFilterPanelRuntime();
+interface FilterPanelPresetsProps {
+  presets: Array<{
+    label: string;
+    values: Record<string, unknown>;
+  }>;
+  onApplyPreset?: (preset: Record<string, unknown>) => void;
+}
+
+function FilterPanelPresets({ onApplyPreset, presets }: FilterPanelPresetsProps): JSX.Element | null {
   if (presets.length === 0) return null;
   return (
     <div className='mt-3 flex flex-wrap gap-2 border-t border-gray-200 pt-3'>
@@ -175,8 +171,17 @@ function FilterPanelPresets(): JSX.Element | null {
   );
 }
 
-function FilterPanelActiveCount(): JSX.Element | null {
-  const { activeValues, search, values } = useFilterPanelRuntime();
+interface FilterPanelActiveCountProps {
+  activeValues?: Record<string, unknown>;
+  search: string;
+  values: Record<string, unknown>;
+}
+
+function FilterPanelActiveCount({
+  activeValues,
+  search,
+  values,
+}: FilterPanelActiveCountProps): JSX.Element | null {
   const activeFilterSource = activeValues ?? values;
   const hasActiveFilters =
     Object.values(activeFilterSource).some((value) => isActiveFilterValue(value)) || search;
@@ -187,19 +192,6 @@ function FilterPanelActiveCount(): JSX.Element | null {
   return (
     <div className='mt-2 text-xs text-gray-500'>
       {activeFilterCount} filter{activeFilterCount !== 1 ? 's' : ''} active
-    </div>
-  );
-}
-
-function FilterPanelRuntime(): JSX.Element {
-  const { className } = useFilterPanelRuntime();
-  return (
-    <div className={className}>
-      <FilterPanelHeader />
-      <FilterPanelMainFilters />
-      <FilterPanelChildrenSlot />
-      <FilterPanelPresets />
-      <FilterPanelActiveCount />
     </div>
   );
 }
@@ -226,58 +218,32 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   children,
   className,
 }) => {
-  const runtimeValue = useMemo<FilterPanelRuntimeValue>(
-    () => ({
-      filters,
-      values,
-      ...(activeValues !== undefined ? { activeValues } : {}),
-      search,
-      filterSearchPlaceholder,
-      onFilterChange,
-      onSearchChange,
-      onReset,
-      presets,
-      onApplyPreset,
-      compact,
-      collapsible,
-      defaultExpanded,
-      toggleButtonAlignment,
-      showHeader,
-      headerTitle,
-      headerAction,
-      actions,
-      activeValues,
-      children,
-      className,
-    }),
-    [
-      actions,
-      activeValues,
-      children,
-      className,
-      collapsible,
-      compact,
-      defaultExpanded,
-      filterSearchPlaceholder,
-      filters,
-      headerAction,
-      headerTitle,
-      onApplyPreset,
-      onFilterChange,
-      onReset,
-      onSearchChange,
-      presets,
-      search,
-      showHeader,
-      toggleButtonAlignment,
-      values,
-    ]
-  );
-
   return (
-    <FilterPanelRuntimeContext.Provider value={runtimeValue}>
-      <FilterPanelRuntime />
-    </FilterPanelRuntimeContext.Provider>
+    <div className={className}>
+      <FilterPanelHeader
+        showHeader={showHeader}
+        headerTitle={headerTitle}
+        {...(headerAction !== undefined ? { headerAction } : {})}
+      />
+      <FilterPanelMainFilters
+        filters={filters}
+        values={values}
+        {...(activeValues !== undefined ? { activeValues } : {})}
+        search={search}
+        filterSearchPlaceholder={filterSearchPlaceholder}
+        onFilterChange={onFilterChange}
+        {...(onSearchChange !== undefined ? { onSearchChange } : {})}
+        {...(onReset !== undefined ? { onReset } : {})}
+        compact={compact}
+        collapsible={collapsible}
+        {...(defaultExpanded !== undefined ? { defaultExpanded } : {})}
+        toggleButtonAlignment={toggleButtonAlignment}
+        {...(actions !== undefined ? { actions } : {})}
+      />
+      <FilterPanelChildrenSlot {...(children !== undefined ? { children } : {})} />
+      <FilterPanelPresets presets={presets} {...(onApplyPreset !== undefined ? { onApplyPreset } : {})} />
+      <FilterPanelActiveCount values={values} search={search} {...(activeValues !== undefined ? { activeValues } : {})} />
+    </div>
   );
 };
 

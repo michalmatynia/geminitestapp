@@ -53,6 +53,7 @@ import {
   KANGUR_STACK_TIGHT_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { getKangurQuestions, isExamMode } from '@/features/kangur/ui/services/kangur-questions';
 import {
@@ -123,6 +124,7 @@ const resolveKangurQuestionTier = (questionId: string): KangurQuestionTier | nul
 
 function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.JSX.Element {
   const translations = useTranslations('KangurGamePage');
+  const isCoarsePointer = useKangurCoarsePointer();
   const [selected, setSelected] = useState<KangurQuestionChoice | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const choices = q.choices ?? [];
@@ -207,6 +209,15 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
           })()}
       </KangurGlassPanel>
 
+      {isCoarsePointer ? (
+        <p
+          className='text-center text-xs font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'
+          data-testid='kangur-game-touch-hint'
+        >
+          {translations('practiceQuestion.touchHint')}
+        </p>
+      ) : null}
+
       <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
         {choices.map((choice, index) => {
           let accent: KangurAccent = 'slate';
@@ -241,7 +252,8 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
             <KangurAnswerChoiceCard
               accent={accent}
               buttonClassName={cn(
-                'flex items-center kangur-panel-gap px-4 py-3 font-semibold',
+                'flex items-center kangur-panel-gap px-4 py-3 font-semibold touch-manipulation select-none',
+                isCoarsePointer && 'min-h-[4.25rem] active:scale-[0.98]',
                 style,
                 confirmed ? 'cursor-default' : 'cursor-pointer'
               )}
@@ -305,7 +317,10 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
 
       {!confirmed && (
         <KangurButton
-          className='w-full'
+          className={cn(
+            'w-full touch-manipulation select-none',
+            isCoarsePointer && 'min-h-12 active:scale-[0.98]'
+          )}
           disabled={selected === null}
           onClick={handleConfirm}
           size='lg'

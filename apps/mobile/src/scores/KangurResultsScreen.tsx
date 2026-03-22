@@ -1503,9 +1503,9 @@ export function KangurResultsScreen(): React.JSX.Element {
                 {duelResults.isRestoringAuth || duelResults.isLoading ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Die Duellzusammenfassung in den Ergebnissen wird geladen.',
-                      en: 'Loading duel summary in results.',
-                      pl: 'Pobieramy podsumowanie pojedynków w wynikach.',
+                      de: 'Die mobile Duell-Momentaufnahme in den Ergebnissen wird geladen.',
+                      en: 'Loading the mobile duel snapshot in results.',
+                      pl: 'Pobieramy mobilną migawkę pojedynków w wynikach.',
                     })}
                   </Text>
                 ) : duelResults.error ? (
@@ -1576,9 +1576,9 @@ export function KangurResultsScreen(): React.JSX.Element {
                     ) : (
                       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                         {copy({
-                          de: 'Dein Konto ist in diesem Duell-Ausschnitt noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit du hier erscheinst.',
-                          en: 'Your account is not visible in this duel snapshot yet. Finish another duel or open the lobby so it shows up here.',
-                          pl: 'Twojego konta nie widać jeszcze w tym widoku pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawić się tutaj.',
+                          de: 'Dein Konto ist in dieser mobilen Ranglisten-Momentaufnahme noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
+                          en: 'Your account is not visible in this mobile leaderboard snapshot yet. Finish another duel or open the lobby so your rank appears here.',
+                          pl: 'Twojego konta nie widać jeszcze w tej mobilnej migawce rankingu. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
                         })}
                       </Text>
                     )}
@@ -1592,9 +1592,9 @@ export function KangurResultsScreen(): React.JSX.Element {
                     {duelResults.opponents.length === 0 ? (
                       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                         {copy({
-                          de: 'Es gibt noch keine letzten Rivalen. Beende das erste Duell, damit hier schnelle Rückkämpfe erscheinen.',
-                          en: 'There are no recent rivals yet. Finish the first duel to unlock quick rematches here.',
-                          pl: 'Nie ma jeszcze ostatnich rywali. Zakończ pierwszy pojedynek, aby odblokować tutaj szybkie rewanże.',
+                          de: 'Es gibt noch keine letzten Rivalen. Das erste beendete Duell füllt hier die Rivalenliste und schaltet schnelle Rückkämpfe frei.',
+                          en: 'There are no recent rivals yet. The first completed duel will fill the rival list here and unlock quick rematches.',
+                          pl: 'Nie ma jeszcze ostatnich rywali. Pierwszy zakończony pojedynek wypełni tutaj listę rywali i odblokuje szybkie rewanże.',
                         })}
                       </Text>
                     ) : (

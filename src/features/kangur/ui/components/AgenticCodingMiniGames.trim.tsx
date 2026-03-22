@@ -11,6 +11,7 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
 import type { TrimGameConfig, TrimGameToken } from './AgenticCodingMiniGames.types';
 
@@ -29,6 +30,7 @@ export function AgenticTrimGame({
   accent: KangurAccent;
   config: TrimGameConfig;
 }): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const [removed, setRemoved] = useState<Record<string, boolean>>(() => buildTrimState(config.tokens));
   const [checked, setChecked] = useState(false);
 
@@ -72,6 +74,11 @@ export function AgenticTrimGame({
           </span>
         </div>
         <KangurLessonCaption className='mt-2 text-left'>{config.prompt}</KangurLessonCaption>
+        {isCoarsePointer ? (
+          <KangurLessonCaption className='mt-2 text-left' data-testid='agentic-trim-touch-hint'>
+            Dotykaj zbędnych słów, aby je wykreślić. Ponowne dotknięcie przywraca wyraz.
+          </KangurLessonCaption>
+        ) : null}
       </KangurLessonCallout>
       <div className='soft-card border border-slate-200/80 bg-white px-4 py-4'>
         <div className='flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-slate-500'>
@@ -111,10 +118,15 @@ export function AgenticTrimGame({
             <KangurButton
               variant={checked && allCorrect ? 'success' : 'surface'}
               onClick={() => setChecked(true)}
+              className={isCoarsePointer ? 'touch-manipulation select-none min-h-11 active:scale-[0.98]' : undefined}
             >
               {checked && allCorrect ? 'Perfect' : 'Check'}
             </KangurButton>
-            <KangurButton variant='surface' onClick={reset}>
+            <KangurButton
+              variant='surface'
+              onClick={reset}
+              className={isCoarsePointer ? 'touch-manipulation select-none min-h-11 active:scale-[0.98]' : undefined}
+            >
               Reset
             </KangurButton>
           </div>
@@ -161,7 +173,12 @@ function TrimTokenButton({
       type='button'
       aria-pressed={removed}
       onClick={() => onToggle(token.id)}
-      className={cn(baseStyle, stateStyle, removalStyle)}
+      className={cn(
+        baseStyle,
+        stateStyle,
+        removalStyle,
+        'touch-manipulation select-none min-h-[3rem] active:scale-[0.98]'
+      )}
     >
       <span>{token.text}</span>
       <span

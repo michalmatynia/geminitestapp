@@ -11,6 +11,7 @@ const {
   useOptionalKangurRouteTransitionStateMock,
   useOptionalKangurRoutingMock,
   usePathnameMock,
+  useLocaleMock,
   routerPrefetchMock,
   routerPushMock,
   routerReplaceMock,
@@ -19,9 +20,14 @@ const {
   useOptionalKangurRouteTransitionStateMock: vi.fn(),
   useOptionalKangurRoutingMock: vi.fn(),
   usePathnameMock: vi.fn(),
+  useLocaleMock: vi.fn(),
   routerPrefetchMock: vi.fn(),
   routerPushMock: vi.fn(),
   routerReplaceMock: vi.fn(),
+}));
+
+vi.mock('next-intl', () => ({
+  useLocale: useLocaleMock,
 }));
 
 vi.mock('next/navigation', () => ({
@@ -84,6 +90,7 @@ const NavigatorPushProbe = ({
 describe('useKangurRouteNavigator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useLocaleMock.mockReturnValue('pl');
     usePathnameMock.mockReturnValue('/lessons');
     useOptionalKangurRouteTransitionStateMock.mockReturnValue(null);
     useOptionalKangurRoutingMock.mockReturnValue({
@@ -134,6 +141,28 @@ describe('useKangurRouteNavigator', () => {
       pageKey: 'Tests',
     });
     expect(routerReplaceMock).toHaveBeenCalledWith('/de/kangur/tests', { scroll: false });
+  });
+
+  it('preserves the active locale prefix when navigating from a localized Kangur route', () => {
+    useLocaleMock.mockReturnValue('en');
+    usePathnameMock.mockReturnValue('/en/kangur');
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+      pageKey: 'Game',
+      requestedHref: '/en/kangur',
+      requestedPath: '/kangur',
+    });
+
+    render(<NavigatorProbe href='/kangur/lessons' />);
+
+    fireEvent.click(screen.getByTestId('navigator-replace'));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/en/kangur/lessons',
+      pageKey: 'Lessons',
+    });
+    expect(routerReplaceMock).toHaveBeenCalledWith('/en/kangur/lessons', { scroll: false });
   });
 
   it('keeps an acknowledged push alive after the calling component unmounts', () => {

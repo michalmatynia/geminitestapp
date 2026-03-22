@@ -1067,6 +1067,21 @@ export function KangurPracticeScreen(): React.JSX.Element {
   const operation = resolveKangurPracticeOperation(
     typeof rawOperation === 'string' ? rawOperation : null,
   );
+  const weakestLesson = lessonMastery.weakest[0] ?? null;
+  const strongestLesson = lessonMastery.strongest[0] ?? null;
+  const lessonFocusSummary = weakestLesson
+    ? copy({
+        de: `Fokus nach dem Training: ${weakestLesson.title} braucht noch eine kurze Wiederholung, bevor du weiterziehst.`,
+        en: `Post-practice focus: ${weakestLesson.title} still needs a short review before you move on.`,
+        pl: `Fokus po treningu: ${weakestLesson.title} potrzebuje jeszcze krótkiej powtórki, zanim przejdziesz dalej.`,
+      })
+    : strongestLesson
+      ? copy({
+          de: `Stabile Stärke: ${strongestLesson.title} hält das Niveau und eignet sich für eine kurze Auffrischung nach dem Training.`,
+          en: `Stable strength: ${strongestLesson.title} is holding its level and works well for a short post-practice refresh.`,
+          pl: `Stabilna mocna strona: ${strongestLesson.title} trzyma poziom i nadaje się na krótkie podtrzymanie po treningu.`,
+        })
+      : null;
   const operationConfig = getKangurPracticeOperationConfig(operation, locale);
   const queryClient = useQueryClient();
   const { isLoadingAuth, session } = useKangurMobileAuth();
@@ -1699,25 +1714,60 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 </Text>
                 <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
                   {copy({
-                    de: 'Duelle',
-                    en: 'Duels',
-                    pl: 'Pojedynki',
+                    de: 'Schneller Rückweg zu Rivalen',
+                    en: 'Quick return to rivals',
+                    pl: 'Szybki powrót do rywali',
                   })}
                 </Text>
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                   {copy({
-                    de: 'Nach der Runde kannst du direkt zu den Duellen wechseln oder zu deinen letzten Gegnern zurueckkehren.',
-                    en: 'After the run you can jump straight into duels or return to your latest opponents.',
-                    pl: 'Po zakończeniu serii możesz od razu wejść do pojedynków albo wrócić do ostatnich rywali.',
+                    de: 'Prüfe den aktuellen Duellstand, sieh die letzten Rivalen und starte einen Rückkampf, ohne die Trainingszusammenfassung zu verlassen.',
+                    en: 'Check the current duel standing, see recent rivals, and start a rematch without leaving the practice summary.',
+                    pl: 'Sprawdź aktualny stan pojedynków, zobacz ostatnich rywali i wejdź w rewanż bez wychodzenia z podsumowania treningu.',
                   })}
                 </Text>
+
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  <Pill
+                    label={copy({
+                      de: `Rivalen ${practiceDuels.opponents.length}`,
+                      en: `Rivals ${practiceDuels.opponents.length}`,
+                      pl: `Rywale ${practiceDuels.opponents.length}`,
+                    })}
+                    tone={{
+                      backgroundColor: '#eef2ff',
+                      borderColor: '#c7d2fe',
+                      textColor: '#4338ca',
+                    }}
+                  />
+                  <Pill
+                    label={
+                      practiceDuels.currentRank
+                        ? copy({
+                            de: `Deine Position #${practiceDuels.currentRank}`,
+                            en: `Your rank #${practiceDuels.currentRank}`,
+                            pl: `Twoja pozycja #${practiceDuels.currentRank}`,
+                          })
+                        : copy({
+                            de: 'Wartet auf Sichtbarkeit',
+                            en: 'Waiting for visibility',
+                            pl: 'Czeka na widoczność',
+                          })
+                    }
+                    tone={{
+                      backgroundColor: '#ecfdf5',
+                      borderColor: '#a7f3d0',
+                      textColor: '#047857',
+                    }}
+                  />
+                </View>
 
                 {practiceDuels.isRestoringAuth || practiceDuels.isLoading ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Duellzusammenfassung nach dem Training wird geladen.',
-                      en: 'Loading the post-practice duel summary.',
-                      pl: 'Pobieramy podsumowanie pojedynków po treningu.',
+                      de: 'Die mobile Duell-Momentaufnahme nach dem Training wird geladen.',
+                      en: 'Loading the post-practice mobile duel snapshot.',
+                      pl: 'Pobieramy mobilną migawkę pojedynków po treningu.',
                     })}
                   </Text>
                 ) : practiceDuels.error ? (
@@ -1750,9 +1800,9 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 ) : !practiceDuels.isAuthenticated ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Melde eine Lernenden-Sitzung an, um hier dein Duellergebnis und schnelle Rueckspiele zu sehen.',
-                      en: 'Sign in the learner session to see your duel result and quick rematches here.',
-                      pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach i szybkie rewanże.',
+                      de: 'Melde eine Lernenden-Sitzung an, um hier dein Duellergebnis, letzte Rivalen und schnelle Rueckspiele in der mobilen Übersicht zu sehen.',
+                      en: 'Sign in the learner session to see your duel result, recent rivals, and quick rematches in this mobile overview.',
+                      pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże w mobilnym podsumowaniu.',
                     })}
                   </Text>
                 ) : (
@@ -1785,9 +1835,9 @@ export function KangurPracticeScreen(): React.JSX.Element {
                     ) : (
                       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                         {copy({
-                          de: 'Dein Konto ist im sichtbaren Ausschnitt der Duellrangliste noch nicht vorhanden.',
-                          en: 'Your account is not in the visible slice of the duel leaderboard yet.',
-                          pl: 'Twojego konta nie ma jeszcze w widocznym wycinku rankingu pojedynków.',
+                          de: 'Dein Konto ist in dieser mobilen Ranglisten-Momentaufnahme noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
+                          en: 'Your account is not visible in this mobile leaderboard snapshot yet. Finish another duel or open the lobby so your rank appears here.',
+                          pl: 'Twojego konta nie widać jeszcze w tej mobilnej migawce rankingu. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
                         })}
                       </Text>
                     )}
@@ -1801,9 +1851,9 @@ export function KangurPracticeScreen(): React.JSX.Element {
                     {practiceDuels.opponents.length === 0 ? (
                       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                         {copy({
-                          de: 'Es gibt noch keine letzten Gegner. Schliesse dein erstes Duell ab, um hier schnelle Rueckspiele freizuschalten.',
-                          en: 'There are no recent opponents yet. Finish the first duel to unlock quick rematches here.',
-                          pl: 'Nie ma jeszcze ostatnich rywali. Zakończ pierwszy pojedynek, aby odblokować tutaj szybkie rewanże.',
+                          de: 'Es gibt noch keine letzten Rivalen. Das erste beendete Duell füllt hier die Rivalenliste und schaltet schnelle Rueckspiele frei.',
+                          en: 'There are no recent rivals yet. The first completed duel will fill the rival list here and unlock quick rematches.',
+                          pl: 'Nie ma jeszcze ostatnich rywali. Pierwszy zakończony pojedynek wypełni tutaj listę rywali i odblokuje szybkie rewanże.',
                         })}
                       </Text>
                     ) : (
@@ -1871,11 +1921,15 @@ export function KangurPracticeScreen(): React.JSX.Element {
                       </View>
                     )}
 
-                    <Link href={createKangurDuelsHref()} asChild>
+                    <View style={{ alignSelf: 'stretch', gap: 10 }}>
                       <Pressable
                         accessibilityRole='button'
+                        onPress={() => {
+                          void practiceDuels.refresh();
+                        }}
                         style={{
-                          alignSelf: 'flex-start',
+                          alignSelf: 'stretch',
+                          width: '100%',
                           borderRadius: 999,
                           borderWidth: 1,
                           borderColor: '#cbd5e1',
@@ -1884,15 +1938,39 @@ export function KangurPracticeScreen(): React.JSX.Element {
                           paddingVertical: 10,
                         }}
                       >
-                        <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                        <Text style={{ color: '#0f172a', fontWeight: '700', textAlign: 'center' }}>
                           {copy({
-                            de: 'Duelle oeffnen',
-                            en: 'Open duels',
-                            pl: 'Otwórz pojedynki',
+                            de: 'Duelle aktualisieren',
+                            en: 'Refresh duels',
+                            pl: 'Odśwież pojedynki',
                           })}
                         </Text>
                       </Pressable>
-                    </Link>
+
+                      <Link href={createKangurDuelsHref()} asChild>
+                        <Pressable
+                          accessibilityRole='button'
+                          style={{
+                            alignSelf: 'stretch',
+                            width: '100%',
+                            borderRadius: 999,
+                            borderWidth: 1,
+                            borderColor: '#cbd5e1',
+                            backgroundColor: '#ffffff',
+                            paddingHorizontal: 14,
+                            paddingVertical: 10,
+                          }}
+                        >
+                          <Text style={{ color: '#0f172a', fontWeight: '700', textAlign: 'center' }}>
+                            {copy({
+                              de: 'Duelle oeffnen',
+                              en: 'Open duels',
+                              pl: 'Otwórz pojedynki',
+                            })}
+                          </Text>
+                        </Pressable>
+                      </Link>
+                    </View>
                   </View>
                 )}
               </View>
@@ -1916,16 +1994,16 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 </Text>
                 <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
                   {copy({
-                    de: 'Nach dem Training',
-                    en: 'After practice',
-                    pl: 'Po treningu',
+                    de: 'Lektionsplan nach dem Training',
+                    en: 'Post-practice lesson plan',
+                    pl: 'Plan lekcji po treningu',
                   })}
                 </Text>
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                   {copy({
-                    de: 'Verbinde das frische Trainingsergebnis direkt mit dem lokal gespeicherten Lektionsstand, um die nächste Wiederholung schneller zu wählen.',
-                    en: 'Connect the fresh practice result directly with locally saved lesson mastery so the next review is easier to choose.',
-                    pl: 'Połącz świeży wynik treningu z lokalnie zapisanym opanowaniem lekcji, aby łatwiej wybrać następną powtórkę.',
+                    de: 'Verbinde das frische Trainingsergebnis direkt mit lokal gespeichertem Lektionsstand und entscheide sofort, was wiederholt und was nur gehalten werden soll.',
+                    en: 'Connect the fresh practice result directly with saved lesson mastery and decide right away what needs review and what only needs maintaining.',
+                    pl: 'Połącz świeży wynik treningu z zapisanym opanowaniem lekcji i od razu zdecyduj, co powtórzyć, a co tylko podtrzymać.',
                   })}
                 </Text>
 
@@ -1996,6 +2074,64 @@ export function KangurPracticeScreen(): React.JSX.Element {
                   </Text>
                 ) : (
                   <View style={{ gap: 10 }}>
+                    {lessonFocusSummary ? (
+                      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                        {lessonFocusSummary}
+                      </Text>
+                    ) : null}
+
+                    <View style={{ alignSelf: 'stretch', gap: 10 }}>
+                      {weakestLesson ? (
+                        <Link href={weakestLesson.lessonHref} asChild>
+                          <Pressable
+                            accessibilityRole='button'
+                            style={{
+                              alignSelf: 'stretch',
+                              width: '100%',
+                              borderRadius: 999,
+                              backgroundColor: '#0f172a',
+                              paddingHorizontal: 14,
+                              paddingVertical: 10,
+                            }}
+                          >
+                            <Text style={{ color: '#ffffff', fontWeight: '700', textAlign: 'center' }}>
+                              {copy({
+                                de: `Fokus: ${weakestLesson.title}`,
+                                en: `Focus: ${weakestLesson.title}`,
+                                pl: `Skup się: ${weakestLesson.title}`,
+                              })}
+                            </Text>
+                          </Pressable>
+                        </Link>
+                      ) : null}
+
+                      {strongestLesson ? (
+                        <Link href={strongestLesson.lessonHref} asChild>
+                          <Pressable
+                            accessibilityRole='button'
+                            style={{
+                              alignSelf: 'stretch',
+                              width: '100%',
+                              borderRadius: 999,
+                              borderWidth: 1,
+                              borderColor: '#cbd5e1',
+                              backgroundColor: '#ffffff',
+                              paddingHorizontal: 14,
+                              paddingVertical: 10,
+                            }}
+                          >
+                            <Text style={{ color: '#0f172a', fontWeight: '700', textAlign: 'center' }}>
+                              {copy({
+                                de: `Stärke halten: ${strongestLesson.title}`,
+                                en: `Maintain strength: ${strongestLesson.title}`,
+                                pl: `Podtrzymaj: ${strongestLesson.title}`,
+                              })}
+                            </Text>
+                          </Pressable>
+                        </Link>
+                      ) : null}
+                    </View>
+
                     {lessonMastery.weakest[0] ? (
                       <LessonMasteryRow
                         insight={lessonMastery.weakest[0]}
@@ -2039,16 +2175,16 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 </Text>
                 <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
                   {copy({
-                    de: 'Nach dem Training',
-                    en: 'After practice',
-                    pl: 'Po treningu',
+                    de: 'Abzeichen-Zentrale',
+                    en: 'Badge hub',
+                    pl: 'Centrum odznak',
                   })}
                 </Text>
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                   {copy({
-                    de: 'Nach der Runde kannst du sehen, welche lokalen Abzeichen bereits freigeschaltet wurden.',
-                    en: 'After the run you can see which local badges are already unlocked.',
-                    pl: 'Po zakończeniu serii możesz zobaczyć, które lokalne odznaki są już odblokowane.',
+                    de: 'Behalte im Blick, was bereits freigeschaltet ist und welches lokale Ziel am nächsten an der nächsten Abzeichenstufe liegt.',
+                    en: 'Keep track of what is already unlocked and which local goal is closest to the next badge threshold.',
+                    pl: 'Śledź, co jest już odblokowane i który lokalny cel jest najbliżej kolejnego progu odznaki.',
                   })}
                 </Text>
 
@@ -2251,16 +2387,16 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 </Text>
                 <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
                   {copy({
-                    de: 'Lokale Aufgaben nach dem Training',
-                    en: 'Local tasks after practice',
-                    pl: 'Lokalne zadania po treningu',
+                    de: 'Plan nach dem Training',
+                    en: 'Post-practice plan',
+                    pl: 'Plan po treningu',
                   })}
                 </Text>
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                   {copy({
-                    de: 'Nach dieser Runde kannst du direkt in die nächsten lokalen Aufgaben aus deinem Fortschritt springen.',
-                    en: 'After this run you can jump straight into the next local tasks from your progress.',
-                    pl: 'Po tej serii możesz od razu wejść w kolejne lokalne zadania wynikające z Twojego postępu.',
+                    de: 'Wandle diese Runde direkt in die nächsten lokalen Schritte um, ohne den Trainingsfluss zu verlieren.',
+                    en: 'Turn this run directly into the next local actions without losing the training flow.',
+                    pl: 'Zamień tę serię od razu w kolejne lokalne kroki, bez gubienia rytmu treningu.',
                   })}
                 </Text>
 

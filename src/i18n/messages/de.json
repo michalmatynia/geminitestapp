@@ -405,6 +405,7 @@
     "practiceQuestion": {
       "label": "Frage {number}",
       "pointChip": "⭐ {points} Pkt. ({difficulty})",
+      "touchHint": "Tippe eine Antwort an und danach auf den Bestätigen-Knopf.",
       "difficulty": {
         "easy": "leicht",
         "medium": "mittel",
@@ -1428,6 +1429,20 @@
       "clockAriaLabel": "Die analoge Uhr zeigt {time}."
     },
     "adding": {
+      "rounds": {
+        "completeEquation": {
+          "label": "Ergänze die Gleichung",
+          "touchHint": "Tippe einen Ball an und danach das Feld, in das du ihn legen willst."
+        },
+        "groupSum": {
+          "label": "In Gruppen aufteilen",
+          "touchHint": "Tippe einen Ball an und danach die Gruppe, in die du ihn legen willst."
+        },
+        "pickAnswer": {
+          "label": "Antwort wählen",
+          "touchHint": "Tippe einen Ball an und danach die richtige Antwort."
+        }
+      },
       "summary": {
         "perfect": "Perfekt! Du bist ein Additionsprofi!",
         "good": "Starke Leistung!",
@@ -1534,6 +1549,7 @@
         "chooseLane": "Spur waehlen",
         "accuracy": "Genauigkeit {accuracy}%",
         "hintTitle": "Hinweis fuer diese Note",
+        "touchHint": "Tippe die Spur an, wenn die Note die Trefferlinie erreicht.",
         "keyboardHint": "Wenn du lieber die Tastatur nutzt, druecke 1, 2, 3 oder 4.",
         "sessionProgress": "Session-Fortschritt",
         "endAttempt": "Versuch beenden"
@@ -1560,6 +1576,9 @@
       }
     },
     "division": {
+      "inRound": {
+        "touchHint": "Tippe eine Antwort an und danach auf Prüfen."
+      },
       "summary": {
         "perfect": "Perfekt! Division sitzt.",
         "good": "Starke Leistung!",
@@ -1584,6 +1603,7 @@
     },
     "calendarTraining": {
       "progressAriaLabel": "Genauigkeit beim Kalendertraining",
+      "touchHint": "Tippe eine Antwort an und warte auf die nächste Frage.",
       "summary": {
         "perfect": "Perfekt! Du kennst den Kalender richtig gut!",
         "retry": "Übe weiter, dann wirst du zum Kalenderprofi!"
@@ -1893,7 +1913,9 @@
       "inRound": {
         "roundLabel": "Runde {current}/{total}",
         "modeLabel": "Aufwärmen",
+        "modeLabelTouch": "Tippen",
         "check": "Prüfen ✓",
+        "touchHint": "Tippe eine Form an und danach auf Prüfen.",
         "rounds": {
           "warmup-graph": {
             "prompt": "Wähle die richtige Possessivform.",
@@ -2053,6 +2075,8 @@
         "seeResult": "Ergebnis ansehen",
         "click": {
           "topicLabel": "Präpositionen",
+          "modeLabelTouch": "Tippen",
+          "touchHint": "Tippe die Präposition an und danach auf Prüfen.",
           "rounds": {
             "time-at": {
               "prompt": "Wähle die Zeitpräposition.",
@@ -2260,9 +2284,11 @@
       "inRound": {
         "roundLabel": "Runde {current}/{total}",
         "modeLabel": "Klicken",
+        "modeLabelTouch": "Tippen",
         "subjectLabel": "Subjekt",
         "blank": "____",
         "check": "Prüfen",
+        "touchHint": "Tippe das Verb an und danach auf Prüfen.",
         "feedback": {
           "correct": "Ja! Alles passt zusammen.",
           "incorrect": "Richtige Antwort: {answer}."
@@ -2854,6 +2880,7 @@
       "adaptiveRetriesWithCount": "Adaptive Wiederholungen: {count}",
       "adaptiveRetryAdded": "Wir haben eine kurze Wiederholung dieser Aufgabe hinzugefuegt.",
       "challengePill": "Herausforderung",
+      "touchHint": "Bewege die Zeiger mit dem Finger, um die Uhrzeit einzustellen.",
       "taskProgress": "Aufgabe {current} von {total}",
       "seriesProgress": "Serie {current}/{total}",
       "progressAriaLabel": "Genauigkeit beim Uhrtraining",

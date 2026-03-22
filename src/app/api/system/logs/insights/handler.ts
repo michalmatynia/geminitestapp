@@ -1,26 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import { generateLogsInsight } from '@/features/ai/insights/server';
 import { listAiInsights } from '@/features/ai/insights/server';
 import { startAiInsightsQueue } from '@/features/jobs/server';
 import type { AiInsightResponse, AiInsightsResponse } from '@/shared/contracts/ai-insights';
-import { systemLogsInsightRequestSchema } from '@/shared/contracts/observability';
+import {
+  systemLogsInsightRequestSchema,
+  systemLogsInsightsListQuerySchema,
+} from '@/shared/contracts/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
 import { resolveObservabilityContextRegistryEnvelope } from '@/shared/lib/observability/runtime-context/server';
 
-const listSchema = z.object({
-  limit: z.coerce.number().int().positive().max(50).optional(),
-});
-
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   startAiInsightsQueue();
   const url = new URL(req.url);
-  const parsed = listSchema.parse(Object.fromEntries(url.searchParams.entries()));
+  const parsed = systemLogsInsightsListQuerySchema.parse(
+    Object.fromEntries(url.searchParams.entries())
+  );
   const insights = await listAiInsights('logs', parsed.limit ?? 10);
   const response: AiInsightsResponse = { insights };
   return NextResponse.json(response);

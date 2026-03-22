@@ -493,17 +493,26 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Potem trenuj: Zegar i czas')).toBeTruthy();
     expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
     expect(screen.getByText('Opanowanie lekcji')).toBeTruthy();
+    expect(screen.getByText('Plan lekcji z lobby')).toBeTruthy();
     expect(screen.getByText('Śledzone 2')).toBeTruthy();
     expect(screen.getByText('Opanowane 1')).toBeTruthy();
     expect(screen.getByText('Do powtórki 1')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Fokus z lobby: Zegar i czas potrzebuje jeszcze krótkiej powtórki, zanim otworzysz kolejnego rywala.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText('Skup się: Zegar i czas')).toBeTruthy();
+    expect(screen.getByText('Podtrzymaj: Mnożenie')).toBeTruthy();
     expect(screen.getByText('Najmocniejsza lekcja')).toBeTruthy();
     expect(screen.getByText('Próby 4 • ostatni wynik 92%')).toBeTruthy();
     expect(screen.getByText('Następne kroki')).toBeTruthy();
-    expect(screen.getByText('Lokalne zadania z lobby')).toBeTruthy();
+    expect(screen.getByText('Plan z lobby')).toBeTruthy();
     expect(screen.getByText('Domknij zegar')).toBeTruthy();
     expect(screen.getByText('Priorytet wysoki')).toBeTruthy();
     expect(screen.getByText('Cel: 1 lekcja')).toBeTruthy();
     expect(screen.getAllByText('Otwórz lekcję').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Centrum odznak')).toBeTruthy();
     expect(screen.getByText('#1 Ola')).toBeTruthy();
     expect(screen.getByText('Ola Quiz')).toBeTruthy();
   });
@@ -876,12 +885,21 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Wróć do lekcji: Dodawanie w pamięci')).toBeTruthy();
     expect(screen.getByText('Potem trenuj: Dodawanie w pamięci')).toBeTruthy();
     expect(screen.getByText('Opanowanie lekcji')).toBeTruthy();
+    expect(screen.getByText('Plan lekcji obok pojedynku')).toBeTruthy();
     expect(screen.getByText('Śledzone 2')).toBeTruthy();
     expect(screen.getByText('Opanowane 1')).toBeTruthy();
     expect(screen.getByText('Do powtórki 1')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Fokus obok pojedynku: Zegar i czas potrzebuje jeszcze krótkiej powtórki, gdy ta sesja się skończy.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText('Skup się: Zegar i czas')).toBeTruthy();
+    expect(screen.getByText('Podtrzymaj: Dodawanie w pamięci')).toBeTruthy();
     expect(screen.getByText('Najmocniejsza lekcja')).toBeTruthy();
     expect(screen.getByText('Próby 5 • ostatni wynik 93%')).toBeTruthy();
     expect(screen.getByText('Odznaki')).toBeTruthy();
+    expect(screen.getByText('Centrum odznak')).toBeTruthy();
     expect(screen.getByText('Odblokowane 2/9')).toBeTruthy();
     expect(screen.getByText('Do zdobycia 7')).toBeTruthy();
     expect(screen.getByText('Ostatnio odblokowane')).toBeTruthy();
@@ -889,7 +907,7 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('📚 Bohater lekcji')).toBeTruthy();
     expect(screen.getByText('Otwórz profil i odznaki')).toBeTruthy();
     expect(screen.getByText('Następne kroki')).toBeTruthy();
-    expect(screen.getByText('Lokalne zadania obok pojedynku')).toBeTruthy();
+    expect(screen.getByText('Plan obok pojedynku')).toBeTruthy();
     expect(screen.getByText('Domknij dodawanie')).toBeTruthy();
     expect(screen.getByText('Cel: 1 lekcja')).toBeTruthy();
     expect(screen.getAllByText('Otwórz lekcję').length).toBeGreaterThanOrEqual(1);

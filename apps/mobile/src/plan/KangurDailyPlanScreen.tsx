@@ -85,9 +85,11 @@ function LinkButton({
   href,
   label,
   tone = 'secondary',
+  stretch = false,
 }: {
   href: Href;
   label: string;
+  stretch?: boolean;
   tone?: 'primary' | 'secondary';
 }): React.JSX.Element {
   const isPrimary = tone === 'primary';
@@ -97,6 +99,8 @@ function LinkButton({
       <Pressable
         accessibilityRole='button'
         style={{
+          alignSelf: stretch ? 'stretch' : 'flex-start',
+          width: stretch ? '100%' : undefined,
           borderRadius: 999,
           borderWidth: isPrimary ? 0 : 1,
           borderColor: isPrimary ? 'transparent' : '#cbd5e1',
@@ -109,6 +113,7 @@ function LinkButton({
           style={{
             color: isPrimary ? '#ffffff' : '#0f172a',
             fontWeight: '700',
+            textAlign: stretch ? 'center' : 'left',
           }}
         >
           {label}
@@ -619,6 +624,7 @@ function LessonMasteryRow({
 const LESSONS_ROUTE = '/lessons' as Href;
 const DUELS_ROUTE = createKangurDuelsHref();
 const PROFILE_ROUTE = '/profile' as Href;
+const RESULTS_ROUTE = createKangurResultsHref();
 
 function DailyPlanBadgeChip({
   item,
@@ -666,6 +672,21 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
     weakestFocus,
   } = useKangurMobileDailyPlan();
   const duelPlan = useKangurMobileDailyPlanDuels();
+  const weakestLesson = lessonMastery.weakest[0] ?? null;
+  const strongestLesson = lessonMastery.strongest[0] ?? null;
+  const lessonFocusSummary = weakestLesson
+    ? copy({
+        de: `Fokus für heute: ${weakestLesson.title} braucht noch eine kurze Wiederholung, bevor du wieder Tempo aufnimmst.`,
+        en: `Focus for today: ${weakestLesson.title} still needs a short review before you build pace again.`,
+        pl: `Fokus na dziś: ${weakestLesson.title} potrzebuje jeszcze krótkiej powtórki, zanim znowu wejdziesz w tempo.`,
+      })
+    : strongestLesson
+      ? copy({
+          de: `Stabile Stärke: ${strongestLesson.title} hält das Niveau und eignet sich für einen kurzen sicheren Einstieg.`,
+          en: `Stable strength: ${strongestLesson.title} is holding its level and works well for a short confident start.`,
+          pl: `Stabilna mocna strona: ${strongestLesson.title} trzyma poziom i nadaje się na krótki, pewny start.`,
+        })
+      : null;
   const openDuelSession = (sessionId: string): void => {
     router.replace(createKangurDuelsHref({ sessionId }));
   };
@@ -733,6 +754,45 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             </Text>
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              <Pill
+                label={copy({
+                  de: `Aufgaben ${dailyPlanAssignments.assignmentItems.length}`,
+                  en: `Tasks ${dailyPlanAssignments.assignmentItems.length}`,
+                  pl: `Zadania ${dailyPlanAssignments.assignmentItems.length}`,
+                })}
+                tone={{
+                  backgroundColor: '#eef2ff',
+                  borderColor: '#c7d2fe',
+                  textColor: '#4338ca',
+                }}
+              />
+              <Pill
+                label={copy({
+                  de: `Ergebnisse ${recentResultItems.length}`,
+                  en: `Results ${recentResultItems.length}`,
+                  pl: `Wyniki ${recentResultItems.length}`,
+                })}
+                tone={{
+                  backgroundColor: '#ecfdf5',
+                  borderColor: '#a7f3d0',
+                  textColor: '#047857',
+                }}
+              />
+              <Pill
+                label={copy({
+                  de: `Lektionen ${lessonMastery.trackedLessons}`,
+                  en: `Lessons ${lessonMastery.trackedLessons}`,
+                  pl: `Lekcje ${lessonMastery.trackedLessons}`,
+                })}
+                tone={{
+                  backgroundColor: '#fffbeb',
+                  borderColor: '#fde68a',
+                  textColor: '#b45309',
+                }}
+              />
+            </View>
+
+            <View style={{ alignSelf: 'stretch', gap: 10 }}>
               <LinkButton
                 href='/practice?operation=mixed'
                 label={copy({
@@ -741,6 +801,25 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                   pl: 'Uruchom trening mieszany',
                 })}
                 tone='primary'
+                stretch
+              />
+              <LinkButton
+                href={RESULTS_ROUTE}
+                label={copy({
+                  de: 'Ergebnisse öffnen',
+                  en: 'Open results',
+                  pl: 'Otwórz wyniki',
+                })}
+                stretch
+              />
+              <LinkButton
+                href={DUELS_ROUTE}
+                label={copy({
+                  de: 'Duelle öffnen',
+                  en: 'Open duels',
+                  pl: 'Otwórz pojedynki',
+                })}
+                stretch
               />
               <Pressable
                 accessibilityRole='button'
@@ -748,6 +827,8 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                   void refresh();
                 }}
                 style={{
+                  alignSelf: 'stretch',
+                  width: '100%',
                   borderRadius: 999,
                   borderWidth: 1,
                   borderColor: '#cbd5e1',
@@ -756,7 +837,7 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                   paddingVertical: 10,
                 }}
               >
-                <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                <Text style={{ color: '#0f172a', fontWeight: '700', textAlign: 'center' }}>
                   {copy({
                     de: 'Plan aktualisieren',
                     en: 'Refresh plan',
@@ -903,18 +984,25 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
 
           <Card>
             <View style={{ gap: 4 }}>
-              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                 {copy({
                   de: 'Abzeichen',
                   en: 'Badges',
                   pl: 'Odznaki',
                 })}
               </Text>
+              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+                {copy({
+                  de: 'Abzeichen-Zentrale',
+                  en: 'Badge hub',
+                  pl: 'Centrum odznak',
+                })}
+              </Text>
               <Text style={{ color: '#475569', lineHeight: 22 }}>
                 {copy({
-                  de: 'Der Tagesplan zeigt auch die zuletzt lokal freigeschalteten Abzeichen, damit Fortschritt und Ziele an einem Ort sichtbar bleiben.',
-                  en: 'The daily plan also shows the most recently unlocked local badges so progress and goals stay visible in one place.',
-                  pl: 'Plan dnia pokazuje także ostatnio lokalnie odblokowane odznaki, aby postęp i cele były widoczne w jednym miejscu.',
+                  de: 'Behalte im Blick, was schon freigeschaltet ist und welches lokale Ziel am nächsten an der nächsten Abzeichenstufe liegt.',
+                  en: 'Keep track of what is already unlocked and which local goal is closest to the next badge threshold.',
+                  pl: 'Śledź, co jest już odblokowane i który lokalny cel jest najbliżej kolejnego progu odznaki.',
                 })}
               </Text>
             </View>
@@ -983,28 +1071,70 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
 
           <Card>
             <View style={{ gap: 4 }}>
-              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                 {copy({
                   de: 'Duelle für heute',
                   en: 'Duels for today',
                   pl: 'Pojedynki na dziś',
                 })}
               </Text>
-              <Text style={{ color: '#475569', lineHeight: 22 }}>
+              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
                 {copy({
-                  de: 'Ein kurzer Duell-Check-in hilft dir, nach dem Training direkt in einen Rückkampf oder in die Lobby zu springen.',
-                  en: 'A quick duel check-in helps you jump into a rematch or the lobby right after training.',
-                  pl: 'Krótki podgląd pojedynków pomaga po treningu od razu wejść w rewanż albo do lobby.',
+                  de: 'Schneller Rückweg zu Rivalen',
+                  en: 'Quick return to rivals',
+                  pl: 'Szybki powrót do rywali',
                 })}
               </Text>
+              <Text style={{ color: '#475569', lineHeight: 22 }}>
+                {copy({
+                  de: 'Prüfe den aktuellen Duellstand, sieh die letzten Rivalen und starte einen Rückkampf, ohne den Tagesplan zu verlassen.',
+                  en: 'Check the current duel standing, see recent rivals, and start a rematch without leaving the daily plan.',
+                  pl: 'Sprawdź aktualny stan pojedynków, zobacz ostatnich rywali i wejdź w rewanż bez wychodzenia z planu dnia.',
+                })}
+              </Text>
+            </View>
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              <Pill
+                label={copy({
+                  de: `Rivalen ${duelPlan.opponents.length}`,
+                  en: `Rivals ${duelPlan.opponents.length}`,
+                  pl: `Rywale ${duelPlan.opponents.length}`,
+                })}
+                tone={{
+                  backgroundColor: '#eef2ff',
+                  borderColor: '#c7d2fe',
+                  textColor: '#4338ca',
+                }}
+              />
+              <Pill
+                label={
+                  duelPlan.currentRank
+                    ? copy({
+                        de: `Deine Position #${duelPlan.currentRank}`,
+                        en: `Your rank #${duelPlan.currentRank}`,
+                        pl: `Twoja pozycja #${duelPlan.currentRank}`,
+                      })
+                    : copy({
+                        de: 'Wartet auf Sichtbarkeit',
+                        en: 'Waiting for visibility',
+                        pl: 'Czeka na widoczność',
+                      })
+                }
+                tone={{
+                  backgroundColor: '#ecfdf5',
+                  borderColor: '#a7f3d0',
+                  textColor: '#047857',
+                }}
+              />
             </View>
 
             {duelPlan.isRestoringAuth || duelPlan.isLoading ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
                 {copy({
-                  de: 'Die heutige Duell-Zusammenfassung wird geladen...',
-                  en: 'Loading today’s duel summary...',
-                  pl: 'Ładujemy dzisiejsze podsumowanie pojedynków...',
+                  de: 'Die heutige mobile Duell-Momentaufnahme wird geladen...',
+                  en: 'Loading today’s mobile duel snapshot...',
+                  pl: 'Ładujemy dzisiejszą mobilną migawkę pojedynków...',
                 })}
               </Text>
             ) : duelPlan.error ? (
@@ -1035,9 +1165,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             ) : !duelPlan.isAuthenticated ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
                 {copy({
-                  de: 'Melde die Schulersitzung an, um hier deinen Duellstand und schnelle Rückkämpfe zu sehen.',
-                  en: 'Sign in the learner session to see duel standing and quick rematches here.',
-                  pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach i szybkie rewanże.',
+                  de: 'Melde die Schulersitzung an, um hier deinen Duellstand, letzte Rivalen und schnelle Rückkämpfe in der mobilen Übersicht zu sehen.',
+                  en: 'Sign in the learner session to see duel standing, recent rivals, and quick rematches in this mobile overview.',
+                  pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże w mobilnym podsumowaniu.',
                 })}
               </Text>
             ) : (
@@ -1074,9 +1204,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                 ) : (
                   <Text style={{ color: '#475569', lineHeight: 22 }}>
                     {copy({
-                      de: 'Dein Konto ist in diesem Ausschnitt der Duell-Rangliste noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit du hier erscheinst.',
-                      en: 'Your account is not visible in this duel leaderboard snapshot yet. Finish another duel or open the lobby so it shows up here.',
-                      pl: 'Twojego konta nie widać jeszcze w tym wycinku rankingu pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawić się tutaj.',
+                      de: 'Dein Konto ist in dieser mobilen Ranglisten-Momentaufnahme noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
+                      en: 'Your account is not visible in this mobile leaderboard snapshot yet. Finish another duel or open the lobby so your rank appears here.',
+                      pl: 'Twojego konta nie widać jeszcze w tej mobilnej migawce rankingu. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
                     })}
                   </Text>
                 )}
@@ -1088,9 +1218,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                 {duelPlan.opponents.length === 0 ? (
                   <Text style={{ color: '#475569', lineHeight: 22 }}>
                     {copy({
-                      de: 'Es gibt noch keine letzten Rivalen. Beende das erste Duell, damit hier schnelle Rückkämpfe erscheinen.',
-                      en: 'There are no recent rivals yet. Finish the first duel to unlock quick rematches here.',
-                      pl: 'Nie ma jeszcze ostatnich rywali. Zakończ pierwszy pojedynek, aby odblokować tutaj szybkie rewanże.',
+                      de: 'Es gibt noch keine letzten Rivalen. Das erste beendete Duell füllt hier die Rivalenliste und schaltet schnelle Rückkämpfe frei.',
+                      en: 'There are no recent rivals yet. The first completed duel will fill the rival list here and unlock quick rematches.',
+                      pl: 'Nie ma jeszcze ostatnich rywali. Pierwszy zakończony pojedynek wypełni tutaj listę rywali i odblokuje szybkie rewanże.',
                     })}
                   </Text>
                 ) : (
@@ -1154,32 +1284,67 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                   </View>
                 )}
 
-                <LinkButton
-                  href={DUELS_ROUTE}
-                  label={copy({
-                    de: 'Duelle öffnen',
-                    en: 'Open duels',
-                    pl: 'Otwórz pojedynki',
-                  })}
-                />
+                <View style={{ alignSelf: 'stretch', gap: 10 }}>
+                  <Pressable
+                    accessibilityRole='button'
+                    onPress={() => {
+                      void duelPlan.refresh();
+                    }}
+                    style={{
+                      alignSelf: 'stretch',
+                      width: '100%',
+                      borderRadius: 999,
+                      borderWidth: 1,
+                      borderColor: '#cbd5e1',
+                      backgroundColor: '#ffffff',
+                      paddingHorizontal: 14,
+                      paddingVertical: 10,
+                    }}
+                  >
+                    <Text style={{ color: '#0f172a', fontWeight: '700', textAlign: 'center' }}>
+                      {copy({
+                        de: 'Duelle aktualisieren',
+                        en: 'Refresh duels',
+                        pl: 'Odśwież pojedynki',
+                      })}
+                    </Text>
+                  </Pressable>
+
+                  <LinkButton
+                    href={DUELS_ROUTE}
+                    label={copy({
+                      de: 'Duelle öffnen',
+                      en: 'Open duels',
+                      pl: 'Otwórz pojedynki',
+                    })}
+                    stretch
+                  />
+                </View>
               </View>
             )}
           </Card>
 
           <Card>
             <View style={{ gap: 4 }}>
-              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                 {copy({
                   de: 'Nächste Schritte',
                   en: 'Next steps',
                   pl: 'Następne kroki',
                 })}
               </Text>
+              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+                {copy({
+                  de: 'Aktionsplan für heute',
+                  en: 'Action plan for today',
+                  pl: 'Plan działań na dziś',
+                })}
+              </Text>
               <Text style={{ color: '#475569', lineHeight: 22 }}>
                 {copy({
-                  de: 'Der Tagesplan sammelt die wichtigsten lokalen Aufgaben an einem Ort, damit du direkt mit der nächsten Lektion oder dem nächsten Training weitermachen kannst.',
-                  en: 'The daily plan keeps the most important local tasks in one place so you can jump straight into the next lesson or practice block.',
-                  pl: 'Plan dnia zbiera najważniejsze lokalne zadania w jednym miejscu, aby od razu przejść do kolejnej lekcji albo bloku treningowego.',
+                  de: 'Wandle den Blick auf Fortschritt, Ergebnisse und Fokus direkt in die nächsten lokalen Schritte für heute um.',
+                  en: 'Turn progress, results, and focus into the next local actions for today right away.',
+                  pl: 'Zamień postęp, wyniki i fokus w kolejne lokalne kroki na dziś, bez gubienia rytmu nauki.',
                 })}
               </Text>
             </View>
@@ -1213,18 +1378,25 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
 
           <Card>
             <View style={{ gap: 4 }}>
-              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                 {copy({
                   de: 'Lektionsbeherrschung',
                   en: 'Lesson mastery',
                   pl: 'Opanowanie lekcji',
                 })}
               </Text>
+              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+                {copy({
+                  de: 'Lektionsplan für heute',
+                  en: 'Lesson plan for today',
+                  pl: 'Plan lekcji na dziś',
+                })}
+              </Text>
               <Text style={{ color: '#475569', lineHeight: 22 }}>
                 {copy({
-                  de: 'Der Tagesplan verbindet lokale Lektionsstände direkt mit schnellen Wiederholungen und den aktuell stärksten Themen.',
-                  en: 'The daily plan connects local lesson progress directly with quick review and the strongest current topics.',
-                  pl: 'Plan dnia łączy lokalne opanowanie lekcji z szybką powtórką i obecnie najmocniejszymi tematami.',
+                  de: 'Verbinde lokale Lektionsstände direkt mit schnellen Wiederholungen und entscheide sofort, was heute Fokus und was nur Erhaltung ist.',
+                  en: 'Connect local lesson progress directly with quick review and decide right away what is today’s focus and what only needs maintenance.',
+                  pl: 'Połącz lokalne opanowanie lekcji z szybką powtórką i od razu zdecyduj, co jest dziś fokusem, a co wymaga tylko podtrzymania.',
                 })}
               </Text>
             </View>
@@ -1278,6 +1450,36 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
               </Text>
             ) : (
               <View style={{ gap: 12 }}>
+                {lessonFocusSummary ? (
+                  <Text style={{ color: '#475569', lineHeight: 22 }}>{lessonFocusSummary}</Text>
+                ) : null}
+
+                <View style={{ alignSelf: 'stretch', gap: 10 }}>
+                  {weakestLesson ? (
+                    <LinkButton
+                      href={weakestLesson.lessonHref}
+                      label={copy({
+                        de: `Fokus: ${weakestLesson.title}`,
+                        en: `Focus: ${weakestLesson.title}`,
+                        pl: `Skup się: ${weakestLesson.title}`,
+                      })}
+                      tone='primary'
+                      stretch
+                    />
+                  ) : null}
+                  {strongestLesson ? (
+                    <LinkButton
+                      href={strongestLesson.lessonHref}
+                      label={copy({
+                        de: `Stärke halten: ${strongestLesson.title}`,
+                        en: `Maintain strength: ${strongestLesson.title}`,
+                        pl: `Podtrzymaj: ${strongestLesson.title}`,
+                      })}
+                      stretch
+                    />
+                  ) : null}
+                </View>
+
                 {lessonMastery.weakest[0] ? (
                   <LessonMasteryRow
                     insight={lessonMastery.weakest[0]}

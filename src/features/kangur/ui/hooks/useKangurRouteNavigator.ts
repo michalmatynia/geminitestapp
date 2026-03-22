@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useMemo } from 'react';
 
@@ -18,6 +19,13 @@ import {
   resolveManagedKangurPageKeyFromHref,
 } from '@/features/kangur/ui/routing/managed-paths';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
+import {
+  buildLocalizedPathname,
+  getPathLocale,
+  normalizeSiteLocale,
+  stripSiteLocalePrefix,
+} from '@/shared/lib/i18n/site-locale';
+
 type KangurRouteNavigationOptions = {
   pageKey?: string | null;
   scroll?: boolean;
@@ -47,6 +55,56 @@ const getManagedPathnameFromHref = (href: string): string | null => {
   );
 };
 
+const localizeManagedHref = ({
+  href,
+  locale,
+  pathname,
+}: {
+  href: string;
+  locale: string;
+  pathname: string | null;
+}): string => {
+  if (!isManagedLocalHref(href)) {
+    return href;
+  }
+
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'localize-managed-href',
+      description: 'Localizes managed Kangur hrefs to the active route locale.',
+      context: {
+        href,
+        locale,
+        pathname,
+      },
+    },
+    () => {
+      const parsed = new URL(href, 'https://kangur.local');
+      const hrefLocale = getPathLocale(parsed.pathname);
+      if (hrefLocale) {
+        return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      }
+
+      const explicitPathLocale = getPathLocale(pathname);
+      const normalizedPathname = stripSiteLocalePrefix(parsed.pathname);
+      const normalizedCurrentPathname = stripSiteLocalePrefix(pathname);
+      if (explicitPathLocale && normalizedCurrentPathname === normalizedPathname) {
+        return `${normalizedPathname}${parsed.search}${parsed.hash}`;
+      }
+
+      const localizedPathname = explicitPathLocale
+        ? normalizedPathname === '/'
+          ? `/${explicitPathLocale}`
+          : `/${explicitPathLocale}${normalizedPathname}`
+        : buildLocalizedPathname(normalizedPathname, normalizeSiteLocale(locale));
+
+      return `${localizedPathname}${parsed.search}${parsed.hash}`;
+    },
+    { fallback: href }
+  );
+};
+
 let queuedManagedNavigationTimeoutId: number | null = null;
 
 const clearQueuedManagedNavigation = (): void => {
@@ -64,6 +122,7 @@ export function useKangurRouteNavigator(): {
   push: (href: string, options?: KangurRouteNavigationOptions) => void;
   replace: (href: string, options?: KangurRouteNavigationOptions) => void;
 } {
+  const locale = useLocale();
   const pathname = usePathname();
   const router = useRouter();
   const routeTransitionActions = useOptionalKangurRouteTransitionActions();
@@ -71,6 +130,15 @@ export function useKangurRouteNavigator(): {
   const routing = useOptionalKangurRouting();
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
   const requestedHref = routing?.requestedHref ?? routing?.requestedPath;
+  const resolveManagedHref = useCallback(
+    (href: string): string =>
+      localizeManagedHref({
+        href,
+        locale,
+        pathname,
+      }),
+    [locale, pathname]
+  );
 
   const startManagedTransition = useCallback(
     (
@@ -124,10 +192,12 @@ export function useKangurRouteNavigator(): {
         };
       }
 
+      const resolvedHref = href ? resolveManagedHref(href) : null;
       const resolvedPageKey =
-        pageKey ?? (href ? resolveManagedKangurPageKeyFromHref(href, basePath) : null);
+        pageKey ??
+        (resolvedHref ? resolveManagedKangurPageKeyFromHref(resolvedHref, basePath) : null);
       const transitionResult = routeTransitionActions.startRouteTransition({
-        ...(href ? { href } : {}),
+        ...(resolvedHref ? { href: resolvedHref } : {}),
         ...(resolvedPageKey ? { pageKey: resolvedPageKey } : {}),
         ...(sourceId?.trim() ? { sourceId: sourceId.trim() } : {}),
         ...(typeof acknowledgeMs === 'number' && acknowledgeMs > 0 ? { acknowledgeMs } : {}),
@@ -148,7 +218,7 @@ export function useKangurRouteNavigator(): {
         started: true,
       };
     },
-    [basePath, pathname, requestedHref, routeTransitionActions, routeTransitionState]
+    [basePath, pathname, requestedHref, resolveManagedHref, routeTransitionActions, routeTransitionState]
   );
 
   const clearQueuedNavigation = useCallback((): void => {
@@ -178,20 +248,21 @@ export function useKangurRouteNavigator(): {
         return;
       }
 
-      router.prefetch(href);
+      router.prefetch(resolveManagedHref(href));
     },
-    [router]
+    [resolveManagedHref, router]
   );
 
   const push = useCallback(
     (href: string, options: KangurRouteNavigationOptions = {}): void => {
-      const transitionResult = startManagedTransition(href, options);
+      const resolvedHref = resolveManagedHref(href);
+      const transitionResult = startManagedTransition(resolvedHref, options);
       if (!transitionResult.started) {
         return;
       }
 
       const performPush = (): void => {
-        router.push(href, {
+        router.push(resolvedHref, {
           scroll: options.scroll ?? false,
         });
       };
@@ -202,18 +273,19 @@ export function useKangurRouteNavigator(): {
 
       performPush();
     },
-    [router, scheduleManagedNavigation, startManagedTransition]
+    [resolveManagedHref, router, scheduleManagedNavigation, startManagedTransition]
   );
 
   const replace = useCallback(
     (href: string, options: KangurRouteNavigationOptions = {}): void => {
-      const transitionResult = startManagedTransition(href, options);
+      const resolvedHref = resolveManagedHref(href);
+      const transitionResult = startManagedTransition(resolvedHref, options);
       if (!transitionResult.started) {
         return;
       }
 
       const performReplace = (): void => {
-        router.replace(href, {
+        router.replace(resolvedHref, {
           scroll: options.scroll ?? false,
         });
       };
@@ -224,7 +296,7 @@ export function useKangurRouteNavigator(): {
 
       performReplace();
     },
-    [router, scheduleManagedNavigation, startManagedTransition]
+    [resolveManagedHref, router, scheduleManagedNavigation, startManagedTransition]
   );
 
   const back = useCallback(

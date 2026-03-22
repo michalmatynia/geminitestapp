@@ -27,6 +27,7 @@ import {
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   ADDING_SYNTHESIS_FEEDBACK_PAUSE_MS,
   ADDING_SYNTHESIS_HIT_LINE_RATIO,
@@ -114,6 +115,7 @@ export default function AddingSynthesisGame({
   onFinish,
 }: KangurMiniGameFinishActionProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const isCoarsePointer = useKangurCoarsePointer();
   const t = (
     key: string,
     fallback: string,
@@ -796,7 +798,8 @@ export default function AddingSynthesisGame({
                         { index: laneIndex + 1, choice }
                       )}
                       buttonClassName={cn(
-                        'min-h-[80px] flex-col justify-center rounded-[18px] px-1.5 py-2.5 text-center min-[360px]:min-h-[88px] min-[360px]:px-2 sm:min-h-[96px] sm:rounded-[24px] sm:py-3',
+                        'min-h-[80px] flex-col justify-center rounded-[18px] px-1.5 py-2.5 text-center touch-manipulation select-none min-[360px]:min-h-[88px] min-[360px]:px-2 sm:min-h-[96px] sm:rounded-[24px] sm:py-3',
+                        isCoarsePointer && 'min-h-[96px] active:scale-[0.98] min-[360px]:min-h-[104px] sm:min-h-[112px]',
                         laneTextClassName
                       )}
                       data-testid={`adding-synthesis-lane-${laneIndex}`}
@@ -874,10 +877,15 @@ export default function AddingSynthesisGame({
               </p>
             ) : currentNote ? (
               <p className='mt-2 text-xs leading-6 [color:var(--kangur-page-muted-text)]'>
-                {t(
-                  'addingSynthesis.playing.keyboardHint',
-                  'Jeśli wolisz klawiaturę, naciśnij 1, 2, 3 lub 4.'
-                )}
+                {isCoarsePointer
+                  ? t(
+                      'addingSynthesis.playing.touchHint',
+                      'Dotknij tor, gdy nuta dojdzie do linii trafienia.'
+                    )
+                  : t(
+                      'addingSynthesis.playing.keyboardHint',
+                      'Jeśli wolisz klawiaturę, naciśnij 1, 2, 3 lub 4.'
+                    )}
               </p>
             ) : null}
           </KangurSummaryPanel>

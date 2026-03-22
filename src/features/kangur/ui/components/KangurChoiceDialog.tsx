@@ -82,7 +82,7 @@ export function KangurChoiceDialog({
             {options.map((option) => (
               <KangurButton
                 key={option.id}
-                className='h-10 flex-1 text-xs sm:text-sm'
+                className='h-10 flex-1 text-xs sm:text-sm touch-manipulation select-none min-h-11 active:scale-[0.98]'
                 onClick={option.onSelect}
                 size='sm'
                 type='button'
@@ -96,7 +96,7 @@ export function KangurChoiceDialog({
           <div className='flex w-full flex-col gap-2 text-xs [color:var(--kangur-page-muted-text)]'>
             <span>Aktualny wybór: {currentChoiceLabel}.</span>
             <KangurButton
-              className='w-full'
+              className='w-full touch-manipulation select-none min-h-11 active:scale-[0.98]'
               onClick={() => onOpenChange(false)}
               size='sm'
               type='button'

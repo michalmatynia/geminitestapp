@@ -14,6 +14,7 @@ import {
   KANGUR_WRAP_ROW_SPACED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurMobileInteractionScrollLock } from '@/features/kangur/ui/hooks/useKangurMobileInteractionScrollLock';
 import type { ClockTrainingTaskPoolId } from './types';
 import {
@@ -60,6 +61,7 @@ export function DraggableClock({
   submitLocked = false,
 }: DraggableClockProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const isCoarsePointer = useKangurCoarsePointer();
   const [cycleMinutes, setCycleMinutes] = useState(0);
   const [minuteSnapMode, setMinuteSnapMode] = useState<MinuteSnapMode>('5min');
   const [activeHand, setActiveHand] = useState<Hand | null>(null);
@@ -254,7 +256,10 @@ export function DraggableClock({
             type='button'
             data-testid='clock-snap-mode-5'
             onClick={() => setMinuteSnapMode('5min')}
-            className='h-10 flex-1 px-3.5 text-xs sm:flex-none'
+            className={cn(
+              'h-10 flex-1 px-3.5 text-xs touch-manipulation select-none sm:flex-none',
+              isCoarsePointer && 'min-h-12 active:scale-[0.98]'
+            )}
             size='sm'
             variant={minuteSnapMode === '5min' ? 'segmentActive' : 'segment'}
           >
@@ -268,7 +273,10 @@ export function DraggableClock({
             type='button'
             data-testid='clock-snap-mode-1'
             onClick={() => setMinuteSnapMode('1min')}
-            className='h-10 flex-1 px-3.5 text-xs sm:flex-none'
+            className={cn(
+              'h-10 flex-1 px-3.5 text-xs touch-manipulation select-none sm:flex-none',
+              isCoarsePointer && 'min-h-12 active:scale-[0.98]'
+            )}
             size='sm'
             variant={minuteSnapMode === '1min' ? 'segmentActive' : 'segment'}
           >

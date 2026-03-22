@@ -2,11 +2,13 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
+  listAiInsightsMock,
   startAiInsightsQueueMock,
   resolveObservabilityContextRegistryEnvelopeMock,
   generateLogsInsightMock,
   assertSettingsManageAccessMock,
 } = vi.hoisted(() => ({
+  listAiInsightsMock: vi.fn(),
   startAiInsightsQueueMock: vi.fn(),
   resolveObservabilityContextRegistryEnvelopeMock: vi.fn(),
   generateLogsInsightMock: vi.fn(),
@@ -22,7 +24,7 @@ vi.mock('@/shared/lib/observability/runtime-context/server', () => ({
 }));
 
 vi.mock('@/features/ai/insights/server', () => ({
-  listAiInsights: vi.fn(),
+  listAiInsights: listAiInsightsMock,
   generateLogsInsight: generateLogsInsightMock,
 }));
 
@@ -34,6 +36,25 @@ describe('system logs insights handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     assertSettingsManageAccessMock.mockResolvedValue(undefined);
+  });
+
+  it('parses the shared insights list query DTO before loading history', async () => {
+    const { GET_handler } = await import('./handler');
+
+    listAiInsightsMock.mockResolvedValue([{ id: 'insight-1' }]);
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/system/logs/insights?limit=7'),
+      {} as never
+    );
+
+    expect(assertSettingsManageAccessMock).toHaveBeenCalledTimes(1);
+    expect(startAiInsightsQueueMock).toHaveBeenCalledTimes(1);
+    expect(listAiInsightsMock).toHaveBeenCalledWith('logs', 7);
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      insights: [{ id: 'insight-1' }],
+    });
   });
 
   it('resolves registry context before generating a logs insight', async () => {

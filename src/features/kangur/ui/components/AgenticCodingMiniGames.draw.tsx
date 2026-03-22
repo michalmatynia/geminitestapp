@@ -11,6 +11,7 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
 import type { DrawCheckpoint, DrawGameConfig } from './AgenticCodingMiniGames.types';
 
@@ -21,6 +22,7 @@ export function AgenticDrawGame({
   accent: KangurAccent;
   config: DrawGameConfig;
 }): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const [points, setPoints] = useState<Array<{ x: number; y: number }>>([]);
   const [visited, setVisited] = useState<Record<string, boolean>>(() => {
     const base: Record<string, boolean> = {};
@@ -124,13 +126,22 @@ export function AgenticDrawGame({
           </span>
         </div>
         <KangurLessonCaption className='mt-2 text-left'>{config.prompt}</KangurLessonCaption>
+        {isCoarsePointer ? (
+          <KangurLessonCaption className='mt-2 text-left' data-testid='agentic-draw-touch-hint'>
+            Prowadź palcem po planszy i zalicz wszystkie punkty kontrolne.
+          </KangurLessonCaption>
+        ) : null}
       </KangurLessonCallout>
       <KangurLessonInset accent={accent} className='flex flex-col gap-3'>
         <KangurLessonCaption className='text-left text-slate-700'>
           Narysuj linię i dotknij wszystkich punktów.
         </KangurLessonCaption>
         <div className='flex flex-wrap items-center gap-2'>
-          <KangurButton variant='surface' onClick={reset}>
+          <KangurButton
+            variant='surface'
+            onClick={reset}
+            className={isCoarsePointer ? 'touch-manipulation select-none min-h-11 active:scale-[0.98]' : undefined}
+          >
             Reset
           </KangurButton>
           {isComplete ? (

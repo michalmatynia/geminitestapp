@@ -7,6 +7,7 @@ import {
   KangurLessonCallout,
   KangurLessonCaption,
 } from '@/features/kangur/ui/design/lesson-primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -32,6 +33,7 @@ export default function AgenticLessonQuickCheck({
   incorrectNote = 'Spróbuj jeszcze raz lub wróć do slajdu powyżej.',
 }: AgenticLessonQuickCheckProps): React.JSX.Element {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const isCoarsePointer = useKangurCoarsePointer();
 
   const selectedChoice = useMemo(
     () => choices.find((choice) => choice.id === selectedId) ?? null,
@@ -56,6 +58,14 @@ export default function AgenticLessonQuickCheck({
   return (
     <KangurLessonCallout accent={accent} padding='sm' className='text-left'>
       <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>{question}</div>
+      {isCoarsePointer ? (
+        <KangurLessonCaption
+          className='mt-2 text-left'
+          data-testid='agentic-lesson-quick-check-touch-hint'
+        >
+          Dotknij odpowiedź, aby ją wybrać.
+        </KangurLessonCaption>
+      ) : null}
       <div className='mt-3 grid gap-2'>
         {choices.map((choice) => (
           <KangurButton
@@ -64,7 +74,10 @@ export default function AgenticLessonQuickCheck({
             variant={getVariant(choice)}
             fullWidth
             onClick={(): void => setSelectedId(choice.id)}
-            className={cn(selectedChoice ? 'pointer-events-none' : null)}
+            className={cn(
+              selectedChoice ? 'pointer-events-none' : null,
+              isCoarsePointer ? 'touch-manipulation select-none min-h-[3.5rem] active:scale-[0.98]' : null
+            )}
           >
             {choice.label}
           </KangurButton>

@@ -358,7 +358,11 @@ export function KangurGameHomeQuestWidget({
         </div>
 
         <div className='w-full lg:w-auto lg:shrink-0'>
-          <KangurButton asChild className='w-full lg:w-auto' variant='primary'>
+          <KangurButton
+            asChild
+            className='w-full lg:w-auto touch-manipulation select-none min-h-11 active:scale-[0.98]'
+            variant='primary'
+          >
             <Link
               href={buildAssignmentHref(basePath, assignment.action)}
               targetPageKey={assignment.action.page}

@@ -10,11 +10,13 @@ import {
   KangurSectionHeading,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { KangurLessonCaption } from '@/features/kangur/ui/design/lesson-primitives';
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_PANEL_GAP_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurDifficulty } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -38,6 +40,7 @@ export default function DifficultySelector({
   onSelect,
   showHeading = true,
 }: DifficultySelectorProps): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const headingId = useId();
   const descriptionId = useId();
   const groupLabelId = showHeading ? headingId : undefined;
@@ -63,6 +66,11 @@ export default function DifficultySelector({
           titleId={headingId}
         />
       ) : null}
+      {isCoarsePointer ? (
+        <KangurLessonCaption className='text-center' data-testid='difficulty-selector-touch-hint'>
+          Dotknij kartę z poziomem, który chcesz uruchomić.
+        </KangurLessonCaption>
+      ) : null}
       <div
         aria-label={groupAriaLabel}
         aria-labelledby={groupLabelId}
@@ -80,7 +88,10 @@ export default function DifficultySelector({
               animate={{ opacity: 1, y: 0 }}
               aria-label={`${config.label}. Limit ${config.timeLimit} sekund. Zakres od 1 do ${config.range}.`}
               aria-pressed={isSelected}
-              buttonClassName='flex w-full flex-col items-center kangur-panel-gap kangur-card-padding-lg text-center'
+              buttonClassName={cn(
+                'flex w-full flex-col items-center kangur-panel-gap kangur-card-padding-lg text-center',
+                isCoarsePointer ? 'min-h-[10.5rem] touch-manipulation select-none active:scale-[0.98]' : null
+              )}
               data-testid={`difficulty-option-${difficulty.id}`}
               emphasis={isSelected ? 'accent' : 'neutral'}
               initial={{ opacity: 0, y: 10 }}

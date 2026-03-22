@@ -18,6 +18,7 @@ import {
   KANGUR_STEP_PILL_CLASSNAME,
   KANGUR_INLINE_WRAP_CENTER_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   addXp,
   createTrainingReward,
@@ -98,6 +99,7 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
     showTimeDisplay = true,
   } = props;
   const translations = useTranslations('KangurMiniGames');
+  const isCoarsePointer = useKangurCoarsePointer();
   const [gameMode, setGameMode] = useState<ClockGameMode>(initialMode);
   const [tasks, setTasks] = useState<ClockTask[]>(() =>
     resolveClockPracticeTaskSet(section, practiceTasks)
@@ -413,7 +415,10 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
           <KangurButton
             data-testid='clock-mode-practice'
             onClick={() => resetSession('practice')}
-            className='h-10 flex-1 px-4 text-xs sm:flex-none'
+            className={cn(
+              'h-10 flex-1 px-4 text-xs touch-manipulation select-none sm:flex-none',
+              isCoarsePointer && 'min-h-12 active:scale-[0.98]'
+            )}
             size='sm'
             variant={gameMode === 'practice' ? 'segmentActive' : 'segment'}
           >
@@ -426,7 +431,10 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
           <KangurButton
             data-testid='clock-mode-challenge'
             onClick={() => resetSession('challenge')}
-            className='h-10 flex-1 px-4 text-xs sm:flex-none'
+            className={cn(
+              'h-10 flex-1 px-4 text-xs touch-manipulation select-none sm:flex-none',
+              isCoarsePointer && 'min-h-12 active:scale-[0.98]'
+            )}
             size='sm'
             variant={gameMode === 'challenge' ? 'segmentActive' : 'segment'}
           >
@@ -585,6 +593,19 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
           {buildClockTaskPrompt(task, section, translations)}
         </p>
       </KangurSummaryPanel>
+
+      {isCoarsePointer ? (
+        <p
+          className='text-center text-xs font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'
+          data-testid='clock-training-touch-hint'
+        >
+          {translateClockTrainingWithFallback(
+            translations,
+            'touchHint',
+            'Przesuwaj wskazówki palcem, aby ustawić czas.'
+          )}
+        </p>
+      ) : null}
 
       <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
         {feedback ? feedback.title : ''}

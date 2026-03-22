@@ -18,7 +18,6 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_LESSON_PANEL_GAP_CLASSNAME,
-  KANGUR_PANEL_GAP_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import type {
   KangurLesson,
@@ -28,6 +27,8 @@ import { useKangurLessonSections } from '@/features/kangur/ui/hooks/useKangurLes
 import {
   LESSONS_CARD_TRANSITION,
   LESSONS_CARD_STAGGER_DELAY,
+  LESSONS_LIBRARY_LAYOUT_CLASSNAME,
+  LESSONS_LIBRARY_LIST_CLASSNAME,
 } from './Lessons.constants';
 import { getLessonMasteryPresentation } from './Lessons.utils';
 import { useLessons } from './LessonsContext';
@@ -233,10 +234,7 @@ export function LessonsCatalog() {
   };
 
   return (
-    <div
-      className={`flex w-full max-w-lg flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
-      data-testid='lessons-shell-transition'
-    >
+    <div className={LESSONS_LIBRARY_LAYOUT_CLASSNAME} data-testid='lessons-shell-transition'>
       <div id='kangur-lessons-intro' className='w-full'>
         <KangurPageIntroCard
           description={lessonListIntroDescription}
@@ -256,10 +254,7 @@ export function LessonsCatalog() {
         />
       </div>
       {isDeferredContentReady && (
-        <div
-          className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}
-          data-testid='lessons-list-transition'
-        >
+        <div className={LESSONS_LIBRARY_LIST_CLASSNAME} data-testid='lessons-list-transition'>
           {orderedLessons.length === 0 ? (
             <KangurEmptyState
               accent='indigo'
@@ -270,7 +265,7 @@ export function LessonsCatalog() {
               title={lessonListEmptyStateContent?.title ?? translations('emptyTitle')}
             />
           ) : (
-            <div className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}>
+            <div className={LESSONS_LIBRARY_LIST_CLASSNAME}>
               {renderLessonEntries()}
             </div>
           )}

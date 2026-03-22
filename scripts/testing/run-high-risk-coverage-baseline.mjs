@@ -145,10 +145,8 @@ const run = async () => {
 
   const coverageRuns = new Array(coverageDomains.length);
   let nextDomainIndex = 0;
-  let shouldStopScheduling = false;
-
   const runWorker = async () => {
-    while (!shouldStopScheduling) {
+    while (true) {
       const domainIndex = nextDomainIndex;
       nextDomainIndex += 1;
       if (domainIndex >= coverageDomains.length) {
@@ -157,20 +155,12 @@ const run = async () => {
 
       const coverageRun = await runCoverageDomain(coverageDomains[domainIndex]);
       coverageRuns[domainIndex] = coverageRun;
-      if (coverageRun.status !== 'pass') {
-        shouldStopScheduling = true;
-      }
     }
   };
 
   await Promise.all(
     Array.from({ length: Math.min(coverageConcurrency, coverageDomains.length) }, () => runWorker())
   );
-
-  const failedCoverageRun = coverageRuns.find((coverageRun) => coverageRun && coverageRun.status !== 'pass');
-  if (failedCoverageRun) {
-    process.exit(failedCoverageRun.exitCode ?? 1);
-  }
 
   const preservedSummaryPaths =
     selectedTargetIds.length === 0
@@ -180,15 +170,23 @@ const run = async () => {
           .map((domain) => `${domain.reportsDirectory}/coverage-summary.json`)
           .filter((summaryPath) => fs.existsSync(path.join(root, summaryPath)));
 
-  const mergedCoverageSummary = mergeHighRiskCoverageSummaries({
-    root,
-    summaryPaths: [
-      ...preservedSummaryPaths,
-      ...coverageRuns.map((coverageRun) => coverageRun.coverageSummaryPath),
-    ],
-  });
-  fs.mkdirSync(coverageReportsAbsolutePath, { recursive: true });
-  fs.writeFileSync(coverageSummaryAbsolutePath, `${JSON.stringify(mergedCoverageSummary, null, 2)}\n`, 'utf8');
+  const discoveredSummaryPaths = coverageRuns
+    .map((coverageRun) => coverageRun.coverageSummaryPath)
+    .filter((summaryPath) => fs.existsSync(path.join(root, summaryPath)));
+  const mergedSummaryPaths = [...preservedSummaryPaths, ...discoveredSummaryPaths];
+
+  if (mergedSummaryPaths.length > 0) {
+    const mergedCoverageSummary = mergeHighRiskCoverageSummaries({
+      root,
+      summaryPaths: mergedSummaryPaths,
+    });
+    fs.mkdirSync(coverageReportsAbsolutePath, { recursive: true });
+    fs.writeFileSync(
+      coverageSummaryAbsolutePath,
+      `${JSON.stringify(mergedCoverageSummary, null, 2)}\n`,
+      'utf8'
+    );
+  }
 
   const totalCoverageDurationMs = coverageRuns.reduce(
     (total, coverageRun) => total + coverageRun.durationMs,
@@ -263,6 +261,13 @@ const run = async () => {
     console.log(
       `[high-risk-coverage-baseline] check ${checkRun.status.toUpperCase()} ${checkRun.durationMs}ms`
     );
+  }
+
+  const failedCoverageRun = coverageRuns.find(
+    (coverageRun) => coverageRun && coverageRun.status !== 'pass'
+  );
+  if (failedCoverageRun) {
+    process.exit(failedCoverageRun.exitCode ?? 1);
   }
 
   if (checkRun.status === 'fail') {

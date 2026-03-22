@@ -1,10 +1,9 @@
 'use client';
 
 import { CopyIcon } from 'lucide-react';
-import { useMemo, useId, type JSX } from 'react';
+import { useId, type JSX } from 'react';
 
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import {
   Badge,
   Button,
@@ -61,18 +60,25 @@ const resolveResultClassName = (pathNumber: number): string =>
     pathNumber === 1 ? 'h-[100px] font-mono' : 'h-[132px] font-sans'
   );
 
-const {
-  Context: PromptGenerationSectionRuntimeContext,
-  useStrictContext: usePromptGenerationSectionRuntime,
-} = createStrictContext<PromptGenerationSectionProps>({
-  hookName: 'usePromptGenerationSectionRuntime',
-  providerName: 'PromptGenerationSectionRuntimeProvider',
-  displayName: 'PromptGenerationSectionRuntimeContext',
-});
+type PromptGenerationSectionResolvedProps = PromptGenerationSectionProps & {
+  inputId: string;
+  outputPromptId: string;
+  modelSelectId: string;
+  initialResultId: string;
+  finalResultId: string;
+  initialResultLabelId: string;
+  finalResultLabelId: string;
+};
 
-function PromptGenerationSectionHeader(): JSX.Element {
-  const { badgeVariant, badgeTextColor, pathNumber, pathTitle } =
-    usePromptGenerationSectionRuntime();
+function PromptGenerationSectionHeader({
+  badgeVariant,
+  badgeTextColor,
+  pathNumber,
+  pathTitle,
+}: Pick<
+  PromptGenerationSectionResolvedProps,
+  'badgeVariant' | 'badgeTextColor' | 'pathNumber' | 'pathTitle'
+>): JSX.Element {
   return (
     <div className='flex items-center gap-2'>
       <Badge
@@ -86,9 +92,16 @@ function PromptGenerationSectionHeader(): JSX.Element {
   );
 }
 
-function PromptGenerationInputPanel(): JSX.Element {
-  const { inputLabel, inputValue, onInputChange, pathNumber, inputId } =
-    usePromptGenerationSectionRuntime();
+function PromptGenerationInputPanel({
+  inputId,
+  inputLabel,
+  inputValue,
+  onInputChange,
+  pathNumber,
+}: Pick<
+  PromptGenerationSectionResolvedProps,
+  'inputId' | 'inputLabel' | 'inputValue' | 'onInputChange' | 'pathNumber'
+>): JSX.Element {
   return (
     <div className='space-y-2'>
       <Label htmlFor={inputId}>{inputLabel}</Label>
@@ -103,15 +116,22 @@ function PromptGenerationInputPanel(): JSX.Element {
   );
 }
 
-function PromptGenerationInitialResultPanel(): JSX.Element {
-  const {
-    initialResultLabel,
-    initialResultValue,
-    onCopyInitialResult,
-    pathNumber,
-    initialResultId,
-    initialResultLabelId,
-  } = usePromptGenerationSectionRuntime();
+function PromptGenerationInitialResultPanel({
+  initialResultId,
+  initialResultLabel,
+  initialResultLabelId,
+  initialResultValue,
+  onCopyInitialResult,
+  pathNumber,
+}: Pick<
+  PromptGenerationSectionResolvedProps,
+  | 'initialResultId'
+  | 'initialResultLabel'
+  | 'initialResultLabelId'
+  | 'initialResultValue'
+  | 'onCopyInitialResult'
+  | 'pathNumber'
+>): JSX.Element {
   return (
     <div className='space-y-2'>
       <div className='flex items-center justify-between'>
@@ -145,9 +165,16 @@ function PromptGenerationInitialResultPanel(): JSX.Element {
   );
 }
 
-function PromptGenerationModelPanel(): JSX.Element {
-  const { modelLabel, modelOptions, modelValue, onModelChange, modelSelectId } =
-    usePromptGenerationSectionRuntime();
+function PromptGenerationModelPanel({
+  modelLabel,
+  modelOptions,
+  modelSelectId,
+  modelValue,
+  onModelChange,
+}: Pick<
+  PromptGenerationSectionResolvedProps,
+  'modelLabel' | 'modelOptions' | 'modelSelectId' | 'modelValue' | 'onModelChange'
+>): JSX.Element {
   return (
     <div className='max-w-md'>
       <Label htmlFor={modelSelectId}>{modelLabel}</Label>
@@ -162,14 +189,20 @@ function PromptGenerationModelPanel(): JSX.Element {
   );
 }
 
-function PromptGenerationOutputToggle(): JSX.Element {
-  const {
-    badgeTextColor,
-    modelValue,
-    onOutputEnabledChange,
-    outputEnabled,
-    outputEnabledCheckboxId,
-  } = usePromptGenerationSectionRuntime();
+function PromptGenerationOutputToggle({
+  badgeTextColor,
+  modelValue,
+  onOutputEnabledChange,
+  outputEnabled,
+  outputEnabledCheckboxId,
+}: Pick<
+  PromptGenerationSectionResolvedProps,
+  | 'badgeTextColor'
+  | 'modelValue'
+  | 'onOutputEnabledChange'
+  | 'outputEnabled'
+  | 'outputEnabledCheckboxId'
+>): JSX.Element {
   return (
     <div className='flex items-center gap-2'>
       <Checkbox
@@ -184,15 +217,22 @@ function PromptGenerationOutputToggle(): JSX.Element {
   );
 }
 
-function PromptGenerationOutputPromptPanel(): JSX.Element {
-  const {
-    outputPlaceholder,
-    outputPromptLabel,
-    outputPromptValue,
-    onOutputPromptChange,
-    pathNumber,
-    outputPromptId,
-  } = usePromptGenerationSectionRuntime();
+function PromptGenerationOutputPromptPanel({
+  onOutputPromptChange,
+  outputPlaceholder,
+  outputPromptId,
+  outputPromptLabel,
+  outputPromptValue,
+  pathNumber,
+}: Pick<
+  PromptGenerationSectionResolvedProps,
+  | 'onOutputPromptChange'
+  | 'outputPlaceholder'
+  | 'outputPromptId'
+  | 'outputPromptLabel'
+  | 'outputPromptValue'
+  | 'pathNumber'
+>): JSX.Element {
   return (
     <div className='space-y-2'>
       <Label htmlFor={outputPromptId}>{outputPromptLabel}</Label>
@@ -208,15 +248,22 @@ function PromptGenerationOutputPromptPanel(): JSX.Element {
   );
 }
 
-function PromptGenerationFinalResultPanel(): JSX.Element {
-  const {
-    finalResultLabel,
-    finalResultValue,
-    onCopyFinalResult,
-    pathNumber,
-    finalResultId,
-    finalResultLabelId,
-  } = usePromptGenerationSectionRuntime();
+function PromptGenerationFinalResultPanel({
+  finalResultId,
+  finalResultLabel,
+  finalResultLabelId,
+  finalResultValue,
+  onCopyFinalResult,
+  pathNumber,
+}: Pick<
+  PromptGenerationSectionResolvedProps,
+  | 'finalResultId'
+  | 'finalResultLabel'
+  | 'finalResultLabelId'
+  | 'finalResultValue'
+  | 'onCopyFinalResult'
+  | 'pathNumber'
+>): JSX.Element {
   return (
     <div className='space-y-2'>
       <div className='flex items-center justify-between'>
@@ -250,35 +297,39 @@ function PromptGenerationFinalResultPanel(): JSX.Element {
   );
 }
 
-function PromptGenerationOutputPanels(): JSX.Element | null {
-  const { outputEnabled } = usePromptGenerationSectionRuntime();
+function PromptGenerationOutputPanels(
+  props: PromptGenerationSectionResolvedProps
+): JSX.Element | null {
+  const { outputEnabled } = props;
   if (!outputEnabled) return null;
   return (
     <div
       className={`${UI_GRID_ROOMY_CLASSNAME} grid-cols-1 lg:grid-cols-2 animate-in fade-in slide-in-from-top-2 duration-300`}
     >
-      <PromptGenerationOutputPromptPanel />
-      <PromptGenerationFinalResultPanel />
+      <PromptGenerationOutputPromptPanel {...props} />
+      <PromptGenerationFinalResultPanel {...props} />
     </div>
   );
 }
 
-function PromptGenerationSectionRuntime(): JSX.Element {
+function PromptGenerationSectionLayout(
+  props: PromptGenerationSectionResolvedProps
+): JSX.Element {
   return (
     <div className='space-y-4'>
-      <PromptGenerationSectionHeader />
+      <PromptGenerationSectionHeader {...props} />
 
       <div className='pl-8 space-y-6'>
         <div className={`${UI_GRID_ROOMY_CLASSNAME} grid-cols-1 lg:grid-cols-2`}>
-          <PromptGenerationInputPanel />
-          <PromptGenerationInitialResultPanel />
+          <PromptGenerationInputPanel {...props} />
+          <PromptGenerationInitialResultPanel {...props} />
         </div>
 
-        <PromptGenerationModelPanel />
+        <PromptGenerationModelPanel {...props} />
 
         <div className='pt-4 border-t border-border/50 space-y-4'>
-          <PromptGenerationOutputToggle />
-          <PromptGenerationOutputPanels />
+          <PromptGenerationOutputToggle {...props} />
+          <PromptGenerationOutputPanels {...props} />
         </div>
       </div>
     </div>
@@ -287,34 +338,16 @@ function PromptGenerationSectionRuntime(): JSX.Element {
 
 export function PromptGenerationSection(props: PromptGenerationSectionProps): JSX.Element {
   const baseId = useId().replace(/:/g, '');
+  const resolvedProps: PromptGenerationSectionResolvedProps = {
+    ...props,
+    inputId: props.inputId ?? `${baseId}-input`,
+    outputPromptId: props.outputPromptId ?? `${baseId}-output`,
+    modelSelectId: props.modelSelectId ?? `${baseId}-model`,
+    initialResultId: props.initialResultId ?? `${baseId}-initial-result`,
+    finalResultId: props.finalResultId ?? `${baseId}-final-result`,
+    initialResultLabelId: props.initialResultLabelId ?? `${baseId}-initial-label`,
+    finalResultLabelId: props.finalResultLabelId ?? `${baseId}-final-label`,
+  };
 
-  const runtimeValue = useMemo<PromptGenerationSectionProps>(
-    () => ({
-      ...props,
-      inputId: props.inputId ?? `${baseId}-input`,
-      outputPromptId: props.outputPromptId ?? `${baseId}-output`,
-      modelSelectId: props.modelSelectId ?? `${baseId}-model`,
-      initialResultId: props.initialResultId ?? `${baseId}-initial-result`,
-      finalResultId: props.finalResultId ?? `${baseId}-final-result`,
-      initialResultLabelId: props.initialResultLabelId ?? `${baseId}-initial-label`,
-      finalResultLabelId: props.finalResultLabelId ?? `${baseId}-final-label`,
-    }),
-    [
-      props,
-      baseId,
-      props.inputId,
-      props.outputPromptId,
-      props.modelSelectId,
-      props.initialResultId,
-      props.finalResultId,
-      props.initialResultLabelId,
-      props.finalResultLabelId,
-    ]
-  );
-
-  return (
-    <PromptGenerationSectionRuntimeContext.Provider value={runtimeValue}>
-      <PromptGenerationSectionRuntime />
-    </PromptGenerationSectionRuntimeContext.Provider>
-  );
+  return <PromptGenerationSectionLayout {...resolvedProps} />;
 }

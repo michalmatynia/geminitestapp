@@ -27,7 +27,7 @@ export function ExamNavigation({
   progressTestId,
 }: ExamNavigationProps): React.JSX.Element {
   const buttonClassName =
-    'justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-35';
+    'justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-35 touch-manipulation select-none min-h-11 min-w-[3rem] active:scale-[0.98]';
 
   return (
     <div className='grid w-full gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-center'>

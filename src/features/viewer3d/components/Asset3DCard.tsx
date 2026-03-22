@@ -1,10 +1,9 @@
 'use client';
 
 import { Box, Eye, Edit2, Trash2, Globe, Lock } from 'lucide-react';
-import { useCallback, useMemo, type JSX, type MouseEvent } from 'react';
+import { useCallback, type JSX, type MouseEvent } from 'react';
 
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button, Tag, ResourceCard } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -15,7 +14,7 @@ export interface Asset3DCardProps {
   className?: string;
 }
 
-type Asset3DCardRuntimeValue = {
+type Asset3DResourceCardProps = {
   asset: Asset3DRecord;
   className?: string;
   isDeleting: boolean;
@@ -24,16 +23,14 @@ type Asset3DCardRuntimeValue = {
   onDeleteAsset: () => void;
 };
 
-const { Context: Asset3DCardRuntimeContext, useStrictContext: useAsset3DCardRuntime } =
-  createStrictContext<Asset3DCardRuntimeValue>({
-    hookName: 'useAsset3DCardRuntime',
-    providerName: 'Asset3DCardRuntimeProvider',
-    displayName: 'Asset3DCardRuntimeContext',
-  });
-
-function Asset3DResourceCard(): JSX.Element {
-  const runtime = useAsset3DCardRuntime();
-  const { asset, className, isDeleting } = runtime;
+function Asset3DResourceCard({
+  asset,
+  className,
+  isDeleting,
+  onDeleteAsset,
+  onEditAsset,
+  onPreviewAsset,
+}: Asset3DResourceCardProps): JSX.Element {
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -55,7 +52,7 @@ function Asset3DResourceCard(): JSX.Element {
       title={displayName}
       description={asset.description ?? ''}
       {...(className ? { className } : {})}
-      onClick={runtime.onPreviewAsset}
+      onClick={onPreviewAsset}
       actions={
         <div className='flex items-center gap-1'>
           <Button
@@ -65,7 +62,7 @@ function Asset3DResourceCard(): JSX.Element {
             aria-label='Edit asset'
             onClick={(e: MouseEvent): void => {
               e.stopPropagation();
-              runtime.onEditAsset();
+              onEditAsset();
             }}
             title={'Edit asset'}>
             <Edit2 className='h-4 w-4' />
@@ -77,7 +74,7 @@ function Asset3DResourceCard(): JSX.Element {
             aria-label='Delete asset'
             onClick={(e: MouseEvent): void => {
               e.stopPropagation();
-              runtime.onDeleteAsset();
+              onDeleteAsset();
             }}
             disabled={isDeleting}
             loading={isDeleting}
@@ -174,21 +171,14 @@ export function Asset3DCard({ asset, className }: Asset3DCardProps): JSX.Element
     void handleDelete(asset);
   }, [handleDelete, asset]);
 
-  const runtimeValue = useMemo<Asset3DCardRuntimeValue>(
-    () => ({
-      asset,
-      className,
-      isDeleting,
-      onPreviewAsset,
-      onEditAsset,
-      onDeleteAsset,
-    }),
-    [asset, className, isDeleting, onPreviewAsset, onEditAsset, onDeleteAsset]
-  );
-
   return (
-    <Asset3DCardRuntimeContext.Provider value={runtimeValue}>
-      <Asset3DResourceCard />
-    </Asset3DCardRuntimeContext.Provider>
+    <Asset3DResourceCard
+      asset={asset}
+      className={className}
+      isDeleting={isDeleting}
+      onPreviewAsset={onPreviewAsset}
+      onEditAsset={onEditAsset}
+      onDeleteAsset={onDeleteAsset}
+    />
   );
 }

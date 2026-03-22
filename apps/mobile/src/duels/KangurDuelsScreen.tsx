@@ -751,6 +751,7 @@ function LessonCheckpointsCard({
               en: 'Open lessons',
               pl: 'Otwórz lekcje',
             })}
+            stretch
           />
         </View>
       )}
@@ -776,17 +777,24 @@ function BadgesCard({
             pl: 'Odznaki',
           })}
         </Text>
+        <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
+          {copy({
+            de: 'Abzeichen-Zentrale',
+            en: 'Badge hub',
+            pl: 'Centrum odznak',
+          })}
+        </Text>
         <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
           {context === 'session'
             ? copy({
-                de: 'Auch während einer Duellsitzung kannst du sehen, welche lokalen Abzeichen bereits freigeschaltet wurden.',
-                en: 'Even during a duel session, you can see which local badges are already unlocked.',
-                pl: 'Nawet w trakcie sesji pojedynku możesz sprawdzić, które lokalne odznaki są już odblokowane.',
+                de: 'Auch während einer Duellsitzung siehst du, welche lokalen Abzeichen bereits freigeschaltet sind und welches Ziel dem nächsten Schwellenwert am nächsten ist.',
+                en: 'Even during a duel session, you can see which local badges are already unlocked and which goal is closest to the next threshold.',
+                pl: 'Nawet w trakcie sesji pojedynku widzisz, które lokalne odznaki są już odblokowane i który cel jest najbliżej kolejnego progu.',
               })
             : copy({
-                de: 'Zwischen Lobby, Suche und Rangliste kannst du sehen, welche lokalen Abzeichen bereits freigeschaltet wurden.',
-                en: 'Between the lobby, search, and leaderboard, you can see which local badges are already unlocked.',
-                pl: 'Między lobby, wyszukiwaniem i rankingiem możesz sprawdzić, które lokalne odznaki są już odblokowane.',
+                de: 'Aus der Lobby heraus kannst du prüfen, welche lokalen Abzeichen schon freigeschaltet sind und welches Ziel am nächsten an der nächsten Stufe liegt.',
+                en: 'From the lobby, you can check which local badges are already unlocked and which goal is closest to the next tier.',
+                pl: 'Z lobby możesz sprawdzić, które lokalne odznaki są już odblokowane i który cel jest najbliżej kolejnego poziomu.',
               })}
         </Text>
       </View>
@@ -850,6 +858,7 @@ function BadgesCard({
           en: 'Open profile and badges',
           pl: 'Otwórz profil i odznaki',
         })}
+        stretch
       />
     </Card>
   );
@@ -971,6 +980,39 @@ function LessonMasteryCard({
 }): React.JSX.Element {
   const { copy } = useKangurMobileI18n();
   const lessonMastery = useKangurMobileDuelsLessonMastery();
+  const weakestLesson = lessonMastery.weakest[0] ?? null;
+  const strongestLesson = lessonMastery.strongest[0] ?? null;
+  const lessonFocusSummary = weakestLesson
+    ? copy({
+        de:
+          context === 'session'
+            ? `Fokus neben dem Duell: ${weakestLesson.title} braucht noch eine kurze Wiederholung, sobald diese Sitzung endet.`
+            : `Fokus aus der Lobby: ${weakestLesson.title} braucht noch eine kurze Wiederholung, bevor du den nächsten Rivalen öffnest.`,
+        en:
+          context === 'session'
+            ? `Focus beside the duel: ${weakestLesson.title} still needs a short review once this session ends.`
+            : `Focus from the lobby: ${weakestLesson.title} still needs a short review before you open the next rival.`,
+        pl:
+          context === 'session'
+            ? `Fokus obok pojedynku: ${weakestLesson.title} potrzebuje jeszcze krótkiej powtórki, gdy ta sesja się skończy.`
+            : `Fokus z lobby: ${weakestLesson.title} potrzebuje jeszcze krótkiej powtórki, zanim otworzysz kolejnego rywala.`,
+      })
+    : strongestLesson
+      ? copy({
+          de:
+            context === 'session'
+              ? `Stabile Stärke neben dem Duell: ${strongestLesson.title} hält ihr Niveau und eignet sich nach dieser Sitzung für eine kurze Auffrischung.`
+              : `Stabile Stärke aus der Lobby: ${strongestLesson.title} hält ihr Niveau und eignet sich vor dem nächsten Match für eine kurze Auffrischung.`,
+          en:
+            context === 'session'
+              ? `Stable strength beside the duel: ${strongestLesson.title} is holding its level and works for a short refresh after this session.`
+              : `Stable strength from the lobby: ${strongestLesson.title} is holding its level and works for a short refresh before the next match.`,
+          pl:
+            context === 'session'
+              ? `Stabilna mocna strona obok pojedynku: ${strongestLesson.title} trzyma poziom i nadaje się na krótkie podtrzymanie po tej sesji.`
+              : `Stabilna mocna strona z lobby: ${strongestLesson.title} trzyma poziom i nadaje się na krótkie podtrzymanie przed następnym meczem.`,
+        })
+      : null;
 
   return (
     <Card>
@@ -982,17 +1024,30 @@ function LessonMasteryCard({
             pl: 'Opanowanie lekcji',
           })}
         </Text>
+        <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
+          {context === 'session'
+            ? copy({
+                de: 'Lektionsplan neben dem Duell',
+                en: 'Lesson plan beside the duel',
+                pl: 'Plan lekcji obok pojedynku',
+              })
+            : copy({
+                de: 'Lektionsplan aus der Lobby',
+                en: 'Lesson plan from the lobby',
+                pl: 'Plan lekcji z lobby',
+              })}
+        </Text>
         <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
           {context === 'session'
             ? copy({
-                de: 'Auch während einer Duellsitzung kannst du den lokal gespeicherten Lektionsstand nutzen, um die nächste Wiederholung schneller zu wählen.',
-                en: 'Even during a duel session, you can use locally saved lesson mastery to choose the next review faster.',
-                pl: 'Nawet w trakcie sesji pojedynku możesz wykorzystać lokalnie zapisane opanowanie lekcji, aby szybciej wybrać następną powtórkę.',
+                de: 'Noch während einer Duellsitzung siehst du, zu welcher Lektion du nach dem Match zuerst zurückkehren und welche du nur kurz auffrischen solltest.',
+                en: 'Even during a duel session, you can see which lesson to return to first after the match and which one only needs a quick refresh.',
+                pl: 'Jeszcze w trakcie sesji pojedynku widzisz, do której lekcji wrócić najpierw po meczu, a którą trzeba tylko krótko odświeżyć.',
               })
             : copy({
-                de: 'Zwischen Lobby, Suche und Rangliste kannst du den lokal gespeicherten Lektionsstand nutzen, um schneller zu Wiederholungen zurückzukehren.',
-                en: 'Between the lobby, search, and leaderboard, you can use locally saved lesson mastery to jump back into review faster.',
-                pl: 'Między lobby, wyszukiwaniem i rankingiem możesz wykorzystać lokalnie zapisane opanowanie lekcji, aby szybciej wrócić do powtórek.',
+                de: 'Aus der Lobby heraus kannst du direkt in die richtige Wiederholung springen oder die stärkste Lektion vor der nächsten Herausforderung nur kurz auffrischen.',
+                en: 'From the lobby, you can jump straight into the right review or just maintain the strongest lesson before the next challenge.',
+                pl: 'Z lobby możesz od razu wrócić do właściwej powtórki albo tylko podtrzymać najmocniejszą lekcję przed następnym wyzwaniem.',
               })}
         </Text>
       </View>
@@ -1046,9 +1101,41 @@ function LessonMasteryCard({
         </Text>
       ) : (
         <View style={{ gap: 12 }}>
-          {lessonMastery.weakest[0] ? (
+          {lessonFocusSummary ? (
+            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+              {lessonFocusSummary}
+            </Text>
+          ) : null}
+
+          <View style={{ alignSelf: 'stretch', gap: 10 }}>
+            {weakestLesson ? (
+              <LinkButton
+                href={weakestLesson.lessonHref}
+                label={copy({
+                  de: `Fokus: ${weakestLesson.title}`,
+                  en: `Focus: ${weakestLesson.title}`,
+                  pl: `Skup się: ${weakestLesson.title}`,
+                })}
+                stretch
+                tone='primary'
+              />
+            ) : null}
+            {strongestLesson ? (
+              <LinkButton
+                href={strongestLesson.lessonHref}
+                label={copy({
+                  de: `Stärke halten: ${strongestLesson.title}`,
+                  en: `Maintain strength: ${strongestLesson.title}`,
+                  pl: `Podtrzymaj: ${strongestLesson.title}`,
+                })}
+                stretch
+              />
+            ) : null}
+          </View>
+
+          {weakestLesson ? (
             <LessonMasteryRow
-              insight={lessonMastery.weakest[0]}
+              insight={weakestLesson}
               title={copy({
                 de: 'Zum Wiederholen',
                 en: 'Needs review',
@@ -1056,9 +1143,9 @@ function LessonMasteryCard({
               })}
             />
           ) : null}
-          {lessonMastery.strongest[0] ? (
+          {strongestLesson ? (
             <LessonMasteryRow
-              insight={lessonMastery.strongest[0]}
+              insight={strongestLesson}
               title={copy({
                 de: 'Stärkste Lektion',
                 en: 'Strongest lesson',
@@ -1151,6 +1238,7 @@ function DuelAssignmentRow({
           href={item.href}
           label={translateKangurMobileActionLabel(item.assignment.action.label, locale)}
           tone='primary'
+          stretch
         />
       ) : (
         <Pill
@@ -1191,27 +1279,27 @@ function NextStepsCard({
         <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
           {context === 'session'
             ? copy({
-                de: 'Lokale Aufgaben neben dem Duell',
-                en: 'Local tasks beside the duel',
-                pl: 'Lokalne zadania obok pojedynku',
+                de: 'Plan neben dem Duell',
+                en: 'Plan beside the duel',
+                pl: 'Plan obok pojedynku',
               })
             : copy({
-                de: 'Lokale Aufgaben aus der Lobby',
-                en: 'Local tasks from the lobby',
-                pl: 'Lokalne zadania z lobby',
+                de: 'Plan aus der Lobby',
+                en: 'Plan from the lobby',
+                pl: 'Plan z lobby',
               })}
         </Text>
         <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
           {context === 'session'
             ? copy({
-                de: 'Auch während einer Duellsitzung kannst du direkt in die nächsten lokalen Aufgaben aus deinem Fortschritt springen.',
-                en: 'Even during a duel session, you can jump straight into the next local tasks from your progress.',
-                pl: 'Nawet w trakcie sesji pojedynku możesz od razu wejść w kolejne lokalne zadania wynikające z Twojego postępu.',
+                de: 'Auch während einer Duellsitzung kannst du schon den nächsten lokalen Schritt aus Lektionen und Training vorbereiten, sobald das Match endet.',
+                en: 'Even during a duel session, you can line up the next local step from lessons and practice for when the match ends.',
+                pl: 'Nawet w trakcie sesji pojedynku możesz już ustawić kolejny lokalny krok z lekcji i treningu na moment po zakończeniu meczu.',
               })
             : copy({
-                de: 'Zwischen Lobby, Suche und Rangliste kannst du direkt in die nächsten lokalen Aufgaben aus deinem Fortschritt springen.',
-                en: 'Between the lobby, search, and leaderboard, you can jump straight into the next local tasks from your progress.',
-                pl: 'Między lobby, wyszukiwaniem i rankingiem możesz od razu wejść w kolejne lokalne zadania wynikające z Twojego postępu.',
+                de: 'Aus der Lobby heraus kannst du direkt den nächsten lokalen Schritt aus deinem Fortschritt öffnen, bevor du wieder nach einem Match suchst.',
+                en: 'From the lobby, you can open the next local step from your progress before you search for another match.',
+                pl: 'Z lobby możesz od razu otworzyć kolejny lokalny krok wynikający z postępu, zanim znowu zaczniesz szukać meczu.',
               })}
         </Text>
       </View>

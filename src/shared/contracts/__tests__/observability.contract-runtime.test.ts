@@ -3,6 +3,11 @@ import { describe, expect, it } from 'vitest';
 import {
   mongoDiagnosticsResponseSchema,
   mongoRebuildIndexesResponseSchema,
+  systemLogsClearQuerySchema,
+  systemLogsCreateRequestSchema,
+  systemLogsInsightsListQuerySchema,
+  systemLogsListQuerySchema,
+  systemLogsMetricsQuerySchema,
 } from '@/shared/contracts/observability';
 
 const sampleCollection = {
@@ -32,5 +37,59 @@ describe('observability contract runtime', () => {
 
     expect(parsed.created[0]?.collection).toBe('system_logs');
     expect(parsed.collections[0]?.name).toBe('system_logs');
+  });
+
+  it('parses system logs list and metrics query DTOs', () => {
+    expect(
+      systemLogsListQuerySchema.parse({
+        page: '2',
+        pageSize: '25',
+        level: 'error',
+        source: ' api ',
+        from: '2026-03-11T00:00:00.000Z',
+      })
+    ).toEqual({
+      page: 2,
+      pageSize: 25,
+      level: 'error',
+      source: 'api',
+      from: '2026-03-11T00:00:00.000Z',
+    });
+
+    expect(
+      systemLogsMetricsQuerySchema.parse({
+        minDurationMs: '150',
+        query: ' timeout ',
+      })
+    ).toEqual({
+      minDurationMs: 150,
+      query: 'timeout',
+    });
+  });
+
+  it('parses system logs create, clear, and insights-list DTOs', () => {
+    expect(
+      systemLogsCreateRequestSchema.parse({
+        level: 'warn',
+        message: 'Disk pressure',
+        source: ' worker ',
+      })
+    ).toEqual({
+      level: 'warn',
+      message: 'Disk pressure',
+      source: 'worker',
+    });
+
+    expect(systemLogsClearQuerySchema.parse({})).toEqual({
+      target: 'all_logs',
+    });
+
+    expect(
+      systemLogsInsightsListQuerySchema.parse({
+        limit: '12',
+      })
+    ).toEqual({
+      limit: 12,
+    });
   });
 });

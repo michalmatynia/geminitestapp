@@ -1221,9 +1221,9 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
           ) : duelLeaderboard.entries.length === 0 ? (
             <Text style={{ color: '#334155', fontSize: 15 }}>
               {copy({
-                de: 'Es gibt noch keine abgeschlossenen Duelle im aktuellen Zeitraum.',
-                en: 'There are no completed duels in the current window yet.',
-                pl: 'Nie ma jeszcze zakończonych pojedynków w bieżącym oknie.',
+                de: 'Es gibt in diesem Fenster noch keine abgeschlossenen Duelle. Die ersten beendeten Matches füllen hier sofort die mobile Rivalentabelle.',
+                en: 'There are no completed duels in this window yet. The first finished matches will fill the mobile rivals table here right away.',
+                pl: 'Nie ma jeszcze zakończonych pojedynków w tym oknie. Pierwsze skończone mecze od razu wypełnią tutaj mobilną tabelę rywali.',
               })}
             </Text>
           ) : (
@@ -1261,18 +1261,18 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
                 ) : (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Dein Konto ist in diesem Ausschnitt der Duell-Rangliste noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit du hier erscheinst.',
-                      en: 'Your account is not visible in this duel leaderboard snapshot yet. Finish another duel or open the lobby so it shows up here.',
-                      pl: 'Twojego konta nie widać jeszcze w tym wycinku rankingu pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawić się tutaj.',
+                      de: 'Dein Konto ist in dieser mobilen Ranglisten-Momentaufnahme noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
+                      en: 'Your account is not visible in this mobile leaderboard snapshot yet. Finish another duel or open the lobby so your rank appears here.',
+                      pl: 'Twojego konta nie widać jeszcze w tej mobilnej migawce rankingu. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
                     })}
                   </Text>
                 )
               ) : (
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                   {copy({
-                    de: 'Melde die Schulersitzung an, damit dein eigenes Duellkonto in diesem Ausschnitt hervorgehoben wird.',
-                    en: 'Sign in the learner session so your duel standing can be highlighted in this snapshot.',
-                    pl: 'Zaloguj sesję ucznia, aby wyróżnić tutaj Twój wynik w pojedynkach.',
+                    de: 'Melde die Schulersitzung an, damit deine eigene Position in dieser mobilen Ranglisten-Momentaufnahme hervorgehoben wird.',
+                    en: 'Sign in the learner session so your own standing can be highlighted in this mobile leaderboard snapshot.',
+                    pl: 'Zaloguj sesję ucznia, aby wyróżnić tutaj Twoją pozycję w tej mobilnej migawce rankingu.',
                   })}
                 </Text>
               )}
@@ -1382,7 +1382,7 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
                                   pl: 'Wysyłanie pojedynku...',
                                 })
                               : copy({
-                                  de: 'Rzuć wyzwanie',
+                                  de: 'Herausfordern',
                                   en: 'Challenge player',
                                   pl: 'Rzuć wyzwanie',
                                 })}

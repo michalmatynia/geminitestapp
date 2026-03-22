@@ -4,12 +4,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const {
+  hydrateSystemLogRecordRuntimeContextMock,
   assertSettingsManageAccessMock,
+  listSystemLogsMock,
   clearSystemLogsMock,
   clearActivityLogsMock,
   clearAnalyticsEventsMock,
 } = vi.hoisted(() => ({
+  hydrateSystemLogRecordRuntimeContextMock: vi.fn(),
   assertSettingsManageAccessMock: vi.fn(),
+  listSystemLogsMock: vi.fn(),
   clearSystemLogsMock: vi.fn(),
   clearActivityLogsMock: vi.fn(),
   clearAnalyticsEventsMock: vi.fn(),
@@ -25,7 +29,7 @@ vi.mock('@/shared/lib/api/handle-api-error', () => ({
 
 vi.mock('@/features/observability/entry-server', () => ({
   hydrateLogRuntimeContext: vi.fn(),
-  hydrateSystemLogRecordRuntimeContext: vi.fn(),
+  hydrateSystemLogRecordRuntimeContext: hydrateSystemLogRecordRuntimeContextMock,
 }));
 
 vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
@@ -35,7 +39,7 @@ vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
 vi.mock('@/shared/lib/observability/system-log-repository', () => ({
   clearSystemLogs: clearSystemLogsMock,
   createSystemLog: vi.fn(),
-  listSystemLogs: vi.fn(),
+  listSystemLogs: listSystemLogsMock,
 }));
 
 vi.mock('@/shared/lib/observability/activity-repository', () => ({
@@ -46,7 +50,7 @@ vi.mock('@/shared/lib/analytics/server', () => ({
   clearAnalyticsEvents: clearAnalyticsEventsMock,
 }));
 
-import { DELETE_handler } from './handler';
+import { DELETE_handler, GET_handler } from './handler';
 
 const createRequestContext = (): ApiHandlerContext =>
   ({
@@ -60,6 +64,86 @@ const createRequestContext = (): ApiHandlerContext =>
 describe('system logs delete handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    assertSettingsManageAccessMock.mockResolvedValue(undefined);
+  });
+
+  it('parses shared list query DTOs before loading and hydrating logs', async () => {
+    listSystemLogsMock.mockResolvedValue({
+      logs: [
+        {
+          id: 'log-1',
+          level: 'error',
+          message: 'Run failed',
+          source: ' api ',
+          service: 'worker',
+          context: null,
+          stack: null,
+          path: '/api/system/logs',
+          method: 'GET',
+          statusCode: 500,
+          requestId: 'req-1',
+          traceId: 'trace-1',
+          correlationId: 'corr-1',
+          spanId: null,
+          parentSpanId: null,
+          userId: null,
+          category: 'system',
+          createdAt: '2026-03-20T10:00:00.000Z',
+          updatedAt: null,
+        },
+      ],
+      total: 1,
+      page: 2,
+      pageSize: 25,
+    });
+    hydrateSystemLogRecordRuntimeContextMock.mockImplementation(async (log) => ({
+      ...log,
+      source: 'api',
+    }));
+
+    const response = await GET_handler(
+      new NextRequest(
+        'http://localhost/api/system/logs?page=2&pageSize=25&level=error&source=%20api%20&from=2026-03-20T00:00:00.000Z'
+      ),
+      createRequestContext()
+    );
+
+    expect(assertSettingsManageAccessMock).toHaveBeenCalledTimes(1);
+    expect(listSystemLogsMock).toHaveBeenCalledWith({
+      page: 2,
+      pageSize: 25,
+      level: 'error',
+      source: 'api',
+      service: undefined,
+      method: undefined,
+      statusCode: undefined,
+      minDurationMs: undefined,
+      requestId: undefined,
+      traceId: undefined,
+      correlationId: undefined,
+      userId: undefined,
+      fingerprint: undefined,
+      category: undefined,
+      query: undefined,
+      from: new Date('2026-03-20T00:00:00.000Z'),
+      to: null,
+    });
+    expect(hydrateSystemLogRecordRuntimeContextMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'log-1' })
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    await expect(response.json()).resolves.toEqual({
+      logs: [
+        expect.objectContaining({
+          id: 'log-1',
+          source: 'api',
+        }),
+      ],
+      total: 1,
+      page: 2,
+      pageSize: 25,
+    });
   });
 
   it('clears only error-level system logs when the error_logs target is selected', async () => {

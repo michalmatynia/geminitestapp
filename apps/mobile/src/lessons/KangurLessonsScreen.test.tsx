@@ -492,7 +492,7 @@ describe('KangurLessonsScreen', () => {
         'Zacznij od nowych tematów albo wróć do obszarów wymagających powtórki.',
       ),
     ).toBeTruthy();
-    expect(screen.getByText('Pojedynki')).toBeTruthy();
+    expect(screen.getByText('Po lekcji')).toBeTruthy();
     expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
     expect(screen.getByText('Kontynuuj lekcje')).toBeTruthy();
     expect(screen.getByText('Ostatni wynik 70% • opanowanie 68%')).toBeTruthy();
@@ -505,7 +505,16 @@ describe('KangurLessonsScreen', () => {
     expect(screen.getByText('Historia trybu')).toBeTruthy();
     expect(screen.getAllByText('Otwórz historię wyników').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Opanowanie lekcji')).toBeTruthy();
+    expect(screen.getByText('Plan lekcji po czytaniu')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Fokus po czytaniu: Dodawanie potrzebuje jeszcze krótkiej powtórki, zanim przejdziesz dalej.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText('Skup się: Dodawanie')).toBeTruthy();
+    expect(screen.getByText('Podtrzymaj: Nauka zegara')).toBeTruthy();
     expect(screen.getByText('Odznaki')).toBeTruthy();
+    expect(screen.getByText('Centrum odznak')).toBeTruthy();
     expect(screen.getByText('Odblokowane 2/9')).toBeTruthy();
     expect(screen.getByText('Do zdobycia 7')).toBeTruthy();
     expect(screen.getByText('Ostatnio odblokowane')).toBeTruthy();
@@ -518,7 +527,7 @@ describe('KangurLessonsScreen', () => {
     expect(screen.getByText('Najmocniejsza lekcja')).toBeTruthy();
     expect(screen.getByText('Próby 4 • ostatni wynik 94%')).toBeTruthy();
     expect(screen.getByText('Następne kroki')).toBeTruthy();
-    expect(screen.getByText('Lokalne zadania po lekcjach')).toBeTruthy();
+    expect(screen.getByText('Plan po lekcjach')).toBeTruthy();
     expect(screen.getByText('Domknij zegar')).toBeTruthy();
     expect(screen.getByText('Priorytet wysoki')).toBeTruthy();
     expect(screen.getByText('Cel: 1 lekcja')).toBeTruthy();
@@ -530,7 +539,11 @@ describe('KangurLessonsScreen', () => {
     expect(screen.getByText('TWÓJ WYNIK W POJEDYNKACH')).toBeTruthy();
     expect(screen.getByText('#2 Ada Learner')).toBeTruthy();
     expect(screen.getByText('Leo Mentor')).toBeTruthy();
+    expect(screen.getByText('Szybki powrót do rywali')).toBeTruthy();
+    expect(screen.getByText('Rywale 1')).toBeTruthy();
+    expect(screen.getByText('Twoja pozycja #2')).toBeTruthy();
     expect(screen.getByText('Szybki rewanż')).toBeTruthy();
+    expect(screen.getByText('Odśwież pojedynki')).toBeTruthy();
     expect(screen.queryByText('Ładowanie lekcji')).toBeNull();
     expect(screen.queryByText('Wczytujemy listę tematów i stan opanowania.')).toBeNull();
 

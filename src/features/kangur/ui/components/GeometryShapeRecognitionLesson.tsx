@@ -19,6 +19,7 @@ import {
   KangurGlassPanel,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 import type { LessonTranslate } from './lesson-copy';
 
@@ -221,6 +222,7 @@ const ShapeRecognitionGame = ({
   shapes: ShapeDefinition[];
   translate: LessonTranslate;
 }): React.JSX.Element => {
+  const isCoarsePointer = useKangurCoarsePointer();
   const [roundIndex, setRoundIndex] = useState(0);
   const [selected, setSelected] = useState<ShapeId | null>(null);
   const [score, setScore] = useState(0);
@@ -281,7 +283,11 @@ const ShapeRecognitionGame = ({
         <div className='mt-2 text-sm text-slate-500'>
           {translate('practice.finished.subtitle')}
         </div>
-        <KangurButton className='mt-5' variant='primary' onClick={handleRestart}>
+        <KangurButton
+          className={isCoarsePointer ? 'mt-5 touch-manipulation select-none min-h-11 active:scale-[0.98]' : 'mt-5'}
+          variant='primary'
+          onClick={handleRestart}
+        >
           {translate('practice.finished.restart')}
         </KangurButton>
       </KangurGlassPanel>
@@ -319,6 +325,7 @@ const ShapeRecognitionGame = ({
               fullWidth
               variant={variant}
               onClick={() => handleSelect(option)}
+              className={isCoarsePointer ? 'touch-manipulation select-none min-h-[4rem] active:scale-[0.98]' : undefined}
             >
               {shapeLabels[option] ?? option}
             </KangurButton>
@@ -334,7 +341,11 @@ const ShapeRecognitionGame = ({
                   shape: correctLabel,
                 })}
           </KangurStatusChip>
-          <KangurButton variant='primary' onClick={handleNext}>
+          <KangurButton
+            variant='primary'
+            onClick={handleNext}
+            className={isCoarsePointer ? 'touch-manipulation select-none min-h-11 active:scale-[0.98]' : undefined}
+          >
             {roundIndex + 1 >= SHAPE_ROUNDS.length
               ? translate('practice.actions.finish')
               : translate('practice.actions.next')}

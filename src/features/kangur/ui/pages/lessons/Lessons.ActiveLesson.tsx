@@ -21,7 +21,11 @@ import {
 import { LESSON_COMPONENTS } from '@/features/kangur/lessons/lesson-ui-registry';
 import { useLessons } from './LessonsContext';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
-import { LESSON_NAV_ANCHOR_ID } from './Lessons.constants';
+import {
+  LESSON_NAV_ANCHOR_ID,
+  LESSONS_ACTIVE_LAYOUT_CLASSNAME,
+  LESSONS_ACTIVE_SECTION_CLASSNAME,
+} from './Lessons.constants';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { lockKangurLessonScroll, unlockKangurLessonScroll } from './lessons-scroll-lock';
 
@@ -231,7 +235,11 @@ export function ActiveLessonView() {
     : null;
 
   const headerSection = !isMobile ? (
-    <div ref={activeLessonHeaderRef} id='kangur-lesson-header' className='w-full max-w-5xl'>
+    <div
+      ref={activeLessonHeaderRef}
+      id='kangur-lesson-header'
+      className={LESSONS_ACTIVE_SECTION_CLASSNAME}
+    >
       <KangurActiveLessonHeader
         lesson={activeLesson}
         lessonDocument={activeLessonDocument}
@@ -253,7 +261,11 @@ export function ActiveLessonView() {
   ) : null;
 
   const navigationSection = (
-    <div ref={activeLessonNavigationRef} id={LESSON_NAV_ANCHOR_ID} className='w-full max-w-5xl'>
+    <div
+      ref={activeLessonNavigationRef}
+      id={LESSON_NAV_ANCHOR_ID}
+      className={LESSONS_ACTIVE_SECTION_CLASSNAME}
+    >
       <KangurLessonNavigationWidget
         nextLesson={next}
         onSelectLesson={handleSelectLesson}
@@ -359,14 +371,16 @@ export function ActiveLessonView() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0.98, y: -4 }}
       transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-      className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
+      className={LESSONS_ACTIVE_LAYOUT_CLASSNAME}
     >
       <KangurLessonNavigationProvider
         onBack={handleReturnToLessonList}
         secretLessonPill={{ isUnlocked: isSecretLessonUnlocked, onOpen: handleOpenSecretLesson }}
       >
         {shouldLockScroll ? (
-          <div className='w-full max-w-5xl flex flex-col gap-3 h-[calc(var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px))]'>
+          <div
+            className={`${LESSONS_ACTIVE_SECTION_CLASSNAME} flex h-[calc(var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px))] flex-col gap-3`}
+          >
             <div
               ref={activeLessonScrollRef}
               className={`flex-1 min-h-0 w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME} overflow-y-auto overscroll-contain touch-pan-y`}

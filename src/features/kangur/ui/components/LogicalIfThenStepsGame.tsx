@@ -11,6 +11,7 @@ import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { cn } from '@/features/kangur/shared/utils';
 
 type SlotId = 'fact' | 'rule' | 'conclusion';
@@ -40,6 +41,7 @@ export type LogicalIfThenStepsGameCopy = {
   header: {
     stepTemplate: string;
     instruction: string;
+    touchInstruction?: string;
   };
   slots: Record<
     SlotId,
@@ -89,6 +91,7 @@ export default function LogicalIfThenStepsGame({
   rounds,
   copy,
 }: LogicalIfThenStepsGameProps): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const [roundIndex, setRoundIndex] = useState(0);
   const [slots, setSlots] = useState<Record<SlotId, string | null>>({
     fact: null,
@@ -186,8 +189,21 @@ export default function LogicalIfThenStepsGame({
             total: rounds.length,
           })}
         </KangurStatusChip>
-        <span className='text-xs [color:var(--kangur-page-muted-text)]'>{copy.header.instruction}</span>
+        <span className='text-xs [color:var(--kangur-page-muted-text)]'>
+          {isCoarsePointer && copy.header.touchInstruction
+            ? copy.header.touchInstruction
+            : copy.header.instruction}
+        </span>
       </div>
+
+      {isCoarsePointer && copy.header.touchInstruction ? (
+        <p
+          className='text-center text-xs font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'
+          data-testid='logical-if-then-touch-hint'
+        >
+          {copy.header.touchInstruction}
+        </p>
+      ) : null}
 
       <div className='grid kangur-panel-gap sm:grid-cols-3'>
         {SLOT_ORDER.map((slot) => {
@@ -204,7 +220,8 @@ export default function LogicalIfThenStepsGame({
               type='button'
               onClick={() => handleSlotClick(slot)}
               className={cn(
-                'flex min-h-[96px] w-full flex-col gap-2 rounded-2xl border px-3 py-3 text-left transition',
+                'flex min-h-[96px] w-full flex-col gap-2 rounded-2xl border px-3 py-3 text-left transition touch-manipulation select-none',
+                isCoarsePointer && 'min-h-[120px] active:scale-[0.98]',
                 slotStatus === 'correct' && 'border-emerald-300 bg-emerald-50/70',
                 slotStatus === 'wrong' && 'border-rose-300 bg-rose-50/70',
                 slotStatus === 'neutral' && 'border-slate-200/80 bg-white/70',
@@ -237,7 +254,10 @@ export default function LogicalIfThenStepsGame({
               key={card.id}
               type='button'
               onClick={() => handleCardClick(card.id)}
-              className='rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-left text-xs font-semibold [color:var(--kangur-page-text)] shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md'
+              className={cn(
+                'rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-left text-xs font-semibold [color:var(--kangur-page-text)] shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md touch-manipulation select-none',
+                isCoarsePointer && 'min-h-[3.5rem] px-4 active:scale-[0.98]'
+              )}
               disabled={checked}
               aria-label={formatTemplate(copy.cardAriaTemplate, { text: card.text })}
             >
@@ -271,17 +291,38 @@ export default function LogicalIfThenStepsGame({
           size='sm'
           type='button'
           variant='primary'
-          className='px-4'
+          className={cn(
+            'px-4 touch-manipulation select-none',
+            isCoarsePointer && 'min-h-11 active:scale-[0.98]'
+          )}
         >
           {copy.actions.check}
         </KangurButton>
         {checked ? (
           <>
-            <KangurButton onClick={resetRound} size='sm' type='button' variant='surface'>
+            <KangurButton
+              onClick={resetRound}
+              size='sm'
+              type='button'
+              variant='surface'
+              className={cn(
+                'touch-manipulation select-none',
+                isCoarsePointer && 'min-h-11 active:scale-[0.98]'
+              )}
+            >
               {copy.actions.retry}
             </KangurButton>
             {isCorrect ? (
-              <KangurButton onClick={handleNext} size='sm' type='button' variant='surface'>
+              <KangurButton
+                onClick={handleNext}
+                size='sm'
+                type='button'
+                variant='surface'
+                className={cn(
+                  'touch-manipulation select-none',
+                  isCoarsePointer && 'min-h-11 active:scale-[0.98]'
+                )}
+              >
                 {copy.actions.next}
               </KangurButton>
             ) : null}

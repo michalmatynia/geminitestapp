@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { parseJsonBody } from '@/features/products/server';
 import {
-  clearLogsTargetSchema,
+  type SystemLogsCreateRequest,
   type ClearLogsTargetDto as ClearLogsTarget,
+  systemLogsClearQuerySchema,
+  systemLogsCreateRequestSchema,
+  systemLogsListQuerySchema,
 } from '@/shared/contracts/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { validationError } from '@/shared/errors/app-error';
@@ -22,60 +24,12 @@ import {
   listSystemLogs,
 } from '@/shared/lib/observability/system-log-repository';
 
-const levelSchema = z.enum(['info', 'warn', 'error']);
-
-const listSchema = z.object({
-  page: z.coerce.number().int().positive().optional(),
-  pageSize: z.coerce.number().int().positive().optional(),
-  level: levelSchema.optional(),
-  source: z.string().trim().optional(),
-  service: z.string().trim().optional(),
-  method: z.string().trim().optional(),
-  statusCode: z.coerce.number().int().optional(),
-  minDurationMs: z.coerce.number().int().nonnegative().optional(),
-  requestId: z.string().trim().optional(),
-  traceId: z.string().trim().optional(),
-  correlationId: z.string().trim().optional(),
-  userId: z.string().trim().optional(),
-  fingerprint: z.string().trim().optional(),
-  category: z.string().trim().optional(),
-  query: z.string().trim().optional(),
-  from: z.string().datetime().optional(),
-  to: z.string().datetime().optional(),
-});
-
-const createSchema = z.object({
-  level: levelSchema.optional(),
-  message: z.string().min(1),
-  category: z.string().trim().optional(),
-  source: z.string().trim().optional(),
-  service: z.string().trim().optional(),
-  context: z.record(z.string(), z['unknown']()).optional(),
-  stack: z.string().optional(),
-  path: z.string().optional(),
-  method: z.string().optional(),
-  statusCode: z.number().int().optional(),
-  requestId: z.string().optional(),
-  traceId: z.string().optional(),
-  correlationId: z.string().optional(),
-  spanId: z.string().optional(),
-  parentSpanId: z.string().optional(),
-  userId: z.string().optional(),
-});
-
-const clearSchema = z.object({
-  before: z.string().datetime().optional(),
-  target: clearLogsTargetSchema.default('all_logs'),
-});
-
 const parseCreateBody = async (
   req: NextRequest,
   ctx: ApiHandlerContext
-): Promise<
-  { ok: true; data: z.infer<typeof createSchema> } | { ok: false; response: Response }
-> => {
+): Promise<{ ok: true; data: SystemLogsCreateRequest } | { ok: false; response: Response }> => {
   if (ctx.body !== undefined) {
-    const parsed = createSchema.safeParse(ctx.body);
+    const parsed = systemLogsCreateRequestSchema.safeParse(ctx.body);
     if (parsed.success) {
       return { ok: true, data: parsed.data };
     }
@@ -87,13 +41,13 @@ const parseCreateBody = async (
       ),
     };
   }
-  return parseJsonBody(req, createSchema, { logPrefix: 'systemLogs.POST' });
+  return parseJsonBody(req, systemLogsCreateRequestSchema, { logPrefix: 'systemLogs.POST' });
 };
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const url = new URL(req.url);
-  const parsed = listSchema.parse(Object.fromEntries(url.searchParams.entries()));
+  const parsed = systemLogsListQuerySchema.parse(Object.fromEntries(url.searchParams.entries()));
   const result = await listSystemLogs({
     page: parsed.page ?? undefined,
     pageSize: parsed.pageSize ?? undefined,
@@ -161,7 +115,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
 export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const url = new URL(req.url);
-  const parsed = clearSchema.parse(Object.fromEntries(url.searchParams.entries()));
+  const parsed = systemLogsClearQuerySchema.parse(Object.fromEntries(url.searchParams.entries()));
   const before = parsed.before ? new Date(parsed.before) : null;
   const target: ClearLogsTarget = parsed.target;
 

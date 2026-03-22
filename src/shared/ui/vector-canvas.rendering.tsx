@@ -12,10 +12,9 @@ import {
   Trash2,
   Unlink,
 } from 'lucide-react';
-import { useMemo, type JSX } from 'react';
+import { type JSX } from 'react';
 
 import { type VectorPoint, type VectorShape, type VectorToolMode } from '@/shared/contracts/vector';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 
 import { Button } from './button';
@@ -37,30 +36,14 @@ export interface VectorToolbarProps {
   className?: string;
 }
 
-type VectorToolbarRuntimeValue = {
-  tool: VectorToolMode;
-  onSelectTool: (tool: VectorToolMode) => void;
-  onUndo?: () => void;
-  onClose?: () => void;
-  onDetach?: () => void;
-  onClear?: () => void;
-  disableUndo?: boolean;
-  disableClose?: boolean;
-  disableDetach?: boolean;
-  disableClear?: boolean;
-  className?: string;
+type VectorToolbarResolvedProps = VectorToolbarProps & {
   hasActions: boolean;
 };
 
-const { Context: VectorToolbarRuntimeContext, useStrictContext: useVectorToolbarRuntime } =
-  createStrictContext<VectorToolbarRuntimeValue>({
-    hookName: 'useVectorToolbarRuntime',
-    providerName: 'VectorToolbarRuntimeProvider',
-    displayName: 'VectorToolbarRuntimeContext',
-  });
-
-function VectorToolbarToolButtons(): JSX.Element {
-  const { onSelectTool, tool } = useVectorToolbarRuntime();
+function VectorToolbarToolButtons({
+  onSelectTool,
+  tool,
+}: Pick<VectorToolbarResolvedProps, 'onSelectTool' | 'tool'>): JSX.Element {
   return (
     <>
       <Tooltip content='Select'>
@@ -139,17 +122,26 @@ function VectorToolbarToolButtons(): JSX.Element {
   );
 }
 
-function VectorToolbarActionButtons(): JSX.Element {
-  const {
-    disableClear,
-    disableClose,
-    disableDetach,
-    disableUndo,
-    onClear,
-    onClose,
-    onDetach,
-    onUndo,
-  } = useVectorToolbarRuntime();
+function VectorToolbarActionButtons({
+  disableClear,
+  disableClose,
+  disableDetach,
+  disableUndo,
+  onClear,
+  onClose,
+  onDetach,
+  onUndo,
+}: Pick<
+  VectorToolbarResolvedProps,
+  | 'disableClear'
+  | 'disableClose'
+  | 'disableDetach'
+  | 'disableUndo'
+  | 'onClear'
+  | 'onClose'
+  | 'onDetach'
+  | 'onUndo'
+>): JSX.Element {
   return (
     <>
       {onUndo ? (
@@ -212,8 +204,11 @@ function VectorToolbarActionButtons(): JSX.Element {
   );
 }
 
-function VectorToolbarRuntime(): JSX.Element {
-  const { className, hasActions } = useVectorToolbarRuntime();
+function VectorToolbarLayout({
+  className,
+  hasActions,
+  ...props
+}: VectorToolbarResolvedProps): JSX.Element {
   return (
     <div
       className={cn(
@@ -221,9 +216,18 @@ function VectorToolbarRuntime(): JSX.Element {
         className
       )}
     >
-      <VectorToolbarToolButtons />
+      <VectorToolbarToolButtons tool={props.tool} onSelectTool={props.onSelectTool} />
       {hasActions ? <div className='mx-1 h-6 w-px bg-border' /> : null}
-      <VectorToolbarActionButtons />
+      <VectorToolbarActionButtons
+        onUndo={props.onUndo}
+        onClose={props.onClose}
+        onDetach={props.onDetach}
+        onClear={props.onClear}
+        disableUndo={props.disableUndo}
+        disableClose={props.disableClose}
+        disableDetach={props.disableDetach}
+        disableClear={props.disableClear}
+      />
     </div>
   );
 }
@@ -241,40 +245,21 @@ export function VectorToolbar({
   disableClear,
   className,
 }: VectorToolbarProps): JSX.Element {
-  const runtimeValue = useMemo<VectorToolbarRuntimeValue>(
-    () => ({
-      tool,
-      onSelectTool,
-      onUndo,
-      onClose,
-      onDetach,
-      onClear,
-      disableUndo,
-      disableClose,
-      disableDetach,
-      disableClear,
-      className,
-      hasActions: Boolean(onUndo || onClose || onDetach || onClear),
-    }),
-    [
-      tool,
-      onSelectTool,
-      onUndo,
-      onClose,
-      onDetach,
-      onClear,
-      disableUndo,
-      disableClose,
-      disableDetach,
-      disableClear,
-      className,
-    ]
-  );
-
   return (
-    <VectorToolbarRuntimeContext.Provider value={runtimeValue}>
-      <VectorToolbarRuntime />
-    </VectorToolbarRuntimeContext.Provider>
+    <VectorToolbarLayout
+      tool={tool}
+      onSelectTool={onSelectTool}
+      onUndo={onUndo}
+      onClose={onClose}
+      onDetach={onDetach}
+      onClear={onClear}
+      disableUndo={disableUndo}
+      disableClose={disableClose}
+      disableDetach={disableDetach}
+      disableClear={disableClear}
+      className={className}
+      hasActions={Boolean(onUndo || onClose || onDetach || onClear)}
+    />
   );
 }
 

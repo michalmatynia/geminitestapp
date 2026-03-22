@@ -73,7 +73,7 @@ export function KangurConfirmModal({
           {showCancel ? (
             <AlertDialog.Cancel asChild>
               <KangurButton
-                className='w-full sm:w-auto'
+                className='w-full sm:w-auto touch-manipulation select-none min-h-11 active:scale-[0.98]'
                 onClick={handleCancel}
                 type='button'
                 variant='secondary'
@@ -84,7 +84,7 @@ export function KangurConfirmModal({
           ) : null}
           <AlertDialog.Action asChild>
             <KangurButton
-              className='w-full sm:w-auto'
+              className='w-full sm:w-auto touch-manipulation select-none min-h-11 active:scale-[0.98]'
               onClick={handleConfirm}
               type='button'
               variant='primary'

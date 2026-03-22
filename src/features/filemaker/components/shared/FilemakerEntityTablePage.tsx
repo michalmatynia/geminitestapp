@@ -3,7 +3,6 @@
 import React from 'react';
 
 import type { PanelAction } from '@/shared/contracts/ui';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { EmptyState, PanelHeader, SearchInput, StandardDataTablePanel } from '@/shared/ui';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -33,30 +32,27 @@ type FilemakerEntityTableRuntimeValue = {
   emptyDescription: string;
 };
 
-const {
-  Context: FilemakerEntityTableRuntimeContext,
-  useStrictContext: useFilemakerEntityTableRuntime,
-} = createStrictContext<FilemakerEntityTableRuntimeValue>({
-  hookName: 'useFilemakerEntityTableRuntime',
-  providerName: 'FilemakerEntityTableRuntimeProvider',
-  displayName: 'FilemakerEntityTableRuntimeContext',
-});
-
-function FilemakerEntityTableFilters(): React.JSX.Element {
-  const runtime = useFilemakerEntityTableRuntime();
-
+function FilemakerEntityTableFilters({
+  badges,
+  query,
+  onQueryChange,
+  queryPlaceholder,
+}: Pick<
+  FilemakerEntityTableRuntimeValue,
+  'badges' | 'query' | 'onQueryChange' | 'queryPlaceholder'
+>): React.JSX.Element {
   return (
     <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
-      <div className='flex items-center gap-2'>{runtime.badges}</div>
+      <div className='flex items-center gap-2'>{badges}</div>
       <div className='w-full max-w-sm'>
         <SearchInput
-          value={runtime.query}
+          value={query}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-            runtime.onQueryChange(event.target.value);
+            onQueryChange(event.target.value);
           }}
-          onClear={() => runtime.onQueryChange('')}
-          placeholder={runtime.queryPlaceholder}
-          aria-label={runtime.queryPlaceholder}
+          onClear={() => onQueryChange('')}
+          placeholder={queryPlaceholder}
+          aria-label={queryPlaceholder}
           size='sm'
         />
       </div>
@@ -64,9 +60,11 @@ function FilemakerEntityTableFilters(): React.JSX.Element {
   );
 }
 
-function FilemakerEntityTableEmptyState(): React.JSX.Element {
-  const runtime = useFilemakerEntityTableRuntime();
-  return <EmptyState title={runtime.emptyTitle} description={runtime.emptyDescription} />;
+function FilemakerEntityTableEmptyState({
+  emptyTitle,
+  emptyDescription,
+}: Pick<FilemakerEntityTableRuntimeValue, 'emptyTitle' | 'emptyDescription'>): React.JSX.Element {
+  return <EmptyState title={emptyTitle} description={emptyDescription} />;
 }
 
 export function FilemakerEntityTablePage<TData>(
@@ -88,31 +86,29 @@ export function FilemakerEntityTablePage<TData>(
     emptyDescription,
   } = props;
 
-  const runtimeValue = React.useMemo<FilemakerEntityTableRuntimeValue>(
-    () => ({
-      badges,
-      query,
-      onQueryChange,
-      queryPlaceholder,
-      emptyTitle,
-      emptyDescription,
-    }),
-    [badges, query, onQueryChange, queryPlaceholder, emptyTitle, emptyDescription]
-  );
-
   return (
     <div className='page-section-compact space-y-6'>
       <PanelHeader title={title} description={description} icon={icon} actions={actions} />
 
-      <FilemakerEntityTableRuntimeContext.Provider value={runtimeValue}>
-        <StandardDataTablePanel
-          filters={<FilemakerEntityTableFilters />}
-          columns={columns}
-          data={data}
-          isLoading={isLoading}
-          emptyState={<FilemakerEntityTableEmptyState />}
-        />
-      </FilemakerEntityTableRuntimeContext.Provider>
+      <StandardDataTablePanel
+        filters={
+          <FilemakerEntityTableFilters
+            badges={badges}
+            query={query}
+            onQueryChange={onQueryChange}
+            queryPlaceholder={queryPlaceholder}
+          />
+        }
+        columns={columns}
+        data={data}
+        isLoading={isLoading}
+        emptyState={
+          <FilemakerEntityTableEmptyState
+            emptyTitle={emptyTitle}
+            emptyDescription={emptyDescription}
+          />
+        }
+      />
     </div>
   );
 }

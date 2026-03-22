@@ -13,6 +13,7 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
 import { AGENTIC_CODING_GAMES } from './AgenticCodingMiniGames.config';
 import type { TrimGameConfig } from './AgenticCodingMiniGames.types';
@@ -52,6 +53,7 @@ type AgenticPromptTrimGameProps = {
 export default function AgenticPromptTrimGame({
   onFinish,
 }: AgenticPromptTrimGameProps): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const [activeTokens, setActiveTokens] = useState<Record<string, boolean>>(buildInitialState);
   const [checked, setChecked] = useState(false);
 
@@ -122,6 +124,15 @@ export default function AgenticPromptTrimGame({
         </ul>
       </KangurLessonCallout>
 
+      {isCoarsePointer ? (
+        <KangurLessonCaption
+          className='w-full text-center text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'
+          data-testid='agentic-prompt-trim-touch-hint'
+        >
+          Tap a token to keep or remove it, then tap Check.
+        </KangurLessonCaption>
+      ) : null}
+
       <div className={`flex flex-wrap gap-2 ${KANGUR_PANEL_GAP_CLASSNAME}`}>
         {PROMPT_TOKENS.map((token) => {
           const isActive = activeTokens[token.id];
@@ -138,7 +149,8 @@ export default function AgenticPromptTrimGame({
               aria-pressed={isActive}
               onClick={() => toggleToken(token.id)}
               className={cn(
-                'rounded-2xl border px-3 py-2 text-xs font-semibold shadow-sm transition',
+                'rounded-2xl border px-3 py-2 text-xs font-semibold shadow-sm transition touch-manipulation select-none',
+                isCoarsePointer && 'min-h-[3.5rem] px-4 active:scale-[0.98]',
                 isActive ? 'bg-white' : 'bg-slate-100 text-slate-400 line-through',
                 token.required ? 'border-rose-200/90 text-rose-900' : 'border-slate-200/80',
                 isCorrect === undefined

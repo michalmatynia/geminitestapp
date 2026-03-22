@@ -121,6 +121,95 @@ function Pill({
   );
 }
 
+function ActionButton({
+  disabled = false,
+  label,
+  onPress,
+  stretch = false,
+  tone = 'primary',
+}: {
+  disabled?: boolean;
+  label: string;
+  onPress: () => void | Promise<void>;
+  stretch?: boolean;
+  tone?: 'primary' | 'secondary';
+}): React.JSX.Element {
+  const isPrimary = tone === 'primary';
+
+  return (
+    <Pressable
+      accessibilityRole='button'
+      disabled={disabled}
+      onPress={() => {
+        void onPress();
+      }}
+      style={{
+        alignSelf: stretch ? 'stretch' : 'flex-start',
+        width: stretch ? '100%' : undefined,
+        opacity: disabled ? 0.55 : 1,
+        borderRadius: 999,
+        borderWidth: isPrimary ? 0 : 1,
+        borderColor: isPrimary ? 'transparent' : '#cbd5e1',
+        backgroundColor: isPrimary ? '#0f172a' : '#ffffff',
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+      }}
+    >
+      <Text
+        style={{
+          color: isPrimary ? '#ffffff' : '#0f172a',
+          fontWeight: '700',
+          textAlign: 'center',
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function LinkButton({
+  href,
+  label,
+  stretch = false,
+  tone = 'secondary',
+}: {
+  href: Href;
+  label: string;
+  stretch?: boolean;
+  tone?: 'primary' | 'secondary';
+}): React.JSX.Element {
+  const isPrimary = tone === 'primary';
+
+  return (
+    <Link href={href} asChild>
+      <Pressable
+        accessibilityRole='button'
+        style={{
+          alignSelf: stretch ? 'stretch' : 'flex-start',
+          width: stretch ? '100%' : undefined,
+          borderRadius: 999,
+          borderWidth: isPrimary ? 0 : 1,
+          borderColor: isPrimary ? 'transparent' : '#cbd5e1',
+          backgroundColor: isPrimary ? '#0f172a' : '#ffffff',
+          paddingHorizontal: 14,
+          paddingVertical: 10,
+        }}
+      >
+        <Text
+          style={{
+            color: isPrimary ? '#ffffff' : '#0f172a',
+            fontWeight: '700',
+            textAlign: 'center',
+          }}
+        >
+          {label}
+        </Text>
+      </Pressable>
+    </Link>
+  );
+}
+
 const formatProfileDate = (
   value: string | null,
   locale: 'pl' | 'en' | 'de',
@@ -1052,29 +1141,71 @@ export function KangurProfileScreen(): React.JSX.Element {
                   pl: 'Pojedynki',
                 })}
               </Text>
-              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+              <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
                 {copy({
-                  de: 'Ein kompakter Blick auf deinen Duellstand und die letzten Rivalen direkt im Profil.',
-                  en: 'A compact view of your duel standing and recent rivals directly in the profile.',
-                  pl: 'Kompaktowy podgląd Twojego wyniku w pojedynkach i ostatnich rywali bezpośrednio w profilu.',
+                  de: 'Schneller Rückweg zu Rivalen',
+                  en: 'Quick return to rivals',
+                  pl: 'Szybki powrót do rywali',
                 })}
               </Text>
+              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {copy({
+                  de: 'Prüfe direkt im Profil den aktuellen Duellstand, springe zu den letzten Rivalen zurück und öffne einen Rückkampf ohne den Verlauf zu verlassen.',
+                  en: 'Check the current duel standing right in the profile, return to recent rivals, and open a rematch without leaving your history.',
+                  pl: 'Sprawdź bezpośrednio w profilu aktualny stan pojedynków, wróć do ostatnich rywali i otwórz rewanż bez wychodzenia z historii.',
+                })}
+              </Text>
+            </View>
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              <Pill
+                label={copy({
+                  de: `Rivalen ${duelProfile.opponents.length}`,
+                  en: `Rivals ${duelProfile.opponents.length}`,
+                  pl: `Rywale ${duelProfile.opponents.length}`,
+                })}
+                tone={{
+                  backgroundColor: '#eef2ff',
+                  borderColor: '#c7d2fe',
+                  textColor: '#4338ca',
+                }}
+              />
+              <Pill
+                label={
+                  duelProfile.currentRank
+                    ? copy({
+                        de: `Deine Position #${duelProfile.currentRank}`,
+                        en: `Your rank #${duelProfile.currentRank}`,
+                        pl: `Twoja pozycja #${duelProfile.currentRank}`,
+                      })
+                    : copy({
+                        de: 'Position ausstehend',
+                        en: 'Rank pending',
+                        pl: 'Pozycja czeka',
+                      })
+                }
+                tone={{
+                  backgroundColor: '#ecfdf5',
+                  borderColor: '#a7f3d0',
+                  textColor: '#047857',
+                }}
+              />
             </View>
 
             {!duelProfile.isAuthenticated ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Melde die Schulersitzung an, um hier den Duellstand und letzte Rivalen zu sehen.',
-                  en: 'Sign in the learner session to see duel standing and recent rivals here.',
-                  pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach i ostatnich rywali.',
+                  de: 'Melde die Schulersitzung an, um hier den Duellstand, letzte Rivalen und schnelle Rückkämpfe aus dem Profil zu sehen.',
+                  en: 'Sign in the learner session to see duel standing, recent rivals, and quick rematches from the profile here.',
+                  pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże z profilu.',
                 })}
               </Text>
             ) : duelProfile.isRestoringAuth || duelProfile.isLoading ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Die Duellstatistiken im Profil werden geladen.',
-                  en: 'Loading duel stats in the profile.',
-                  pl: 'Pobieramy statystyki pojedynków w profilu.',
+                  de: 'Die Profilübersicht zu Rivalen und Rangliste wird geladen.',
+                  en: 'Loading the profile duel overview for rivals and leaderboard.',
+                  pl: 'Pobieramy profilowy przegląd rywali i rankingu pojedynków.',
                 })}
               </Text>
             ) : duelProfile.error ? (
@@ -1082,27 +1213,15 @@ export function KangurProfileScreen(): React.JSX.Element {
                 <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
                   {duelProfile.error}
                 </Text>
-                <Pressable
-                  accessibilityRole='button'
-                  onPress={() => {
-                    void duelProfile.refresh();
-                  }}
-                  style={{
-                    alignSelf: 'flex-start',
-                    borderRadius: 999,
-                    backgroundColor: '#0f172a',
-                    paddingHorizontal: 14,
-                    paddingVertical: 10,
-                  }}
-                >
-                  <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                    {copy({
-                      de: 'Duelle aktualisieren',
-                      en: 'Refresh duels',
-                      pl: 'Odśwież pojedynki',
-                    })}
-                  </Text>
-                </Pressable>
+                <ActionButton
+                  label={copy({
+                    de: 'Duelle aktualisieren',
+                    en: 'Refresh duels',
+                    pl: 'Odśwież pojedynki',
+                  })}
+                  onPress={() => duelProfile.refresh()}
+                  stretch
+                />
               </View>
             ) : (
               <View style={{ gap: 12 }}>
@@ -1145,9 +1264,9 @@ export function KangurProfileScreen(): React.JSX.Element {
                 ) : (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Dein Konto ist in diesem Duell-Ausschnitt noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit du hier erscheinst.',
-                      en: 'Your account is not visible in this duel snapshot yet. Finish another duel or open the lobby so it shows up here.',
-                      pl: 'Twojego konta nie widać jeszcze w tym widoku pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawić się tutaj.',
+                      de: 'Dein Konto ist in dieser Profil-Momentaufnahme noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit dein Rang hier auftaucht.',
+                      en: 'Your account is not visible in this profile snapshot yet. Finish another duel or open the lobby so your rank shows up here.',
+                      pl: 'Twojego konta nie widać jeszcze w tej migawce profilu. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
                     })}
                   </Text>
                 )}
@@ -1161,9 +1280,9 @@ export function KangurProfileScreen(): React.JSX.Element {
                 {duelProfile.opponents.length === 0 ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Es gibt noch keine letzten Rivalen. Beende das erste Duell, damit hier schnelle Rückkämpfe erscheinen.',
-                      en: 'There are no recent rivals yet. Finish the first duel to unlock quick rematches here.',
-                      pl: 'Nie ma jeszcze ostatnich rywali. Zakończ pierwszy pojedynek, aby odblokować tutaj szybkie rewanże.',
+                      de: 'Es gibt noch keine letzten Rivalen. Das erste beendete Duell füllt hier die Rivalenliste und schaltet schnelle Rückkämpfe frei.',
+                      en: 'There are no recent rivals yet. The first completed duel will fill the rival list here and unlock quick rematches.',
+                      pl: 'Nie ma jeszcze ostatnich rywali. Pierwszy zakończony pojedynek wypełni tutaj listę rywali i odblokuje szybkie rewanże.',
                     })}
                   </Text>
                 ) : (
@@ -1197,26 +1316,10 @@ export function KangurProfileScreen(): React.JSX.Element {
                             pl: `Ostatni pojedynek ${formatProfileDateTime(opponent.lastPlayedAt, locale)}`,
                           })}
                         </Text>
-                        <Pressable
-                          accessibilityRole='button'
+                        <ActionButton
                           disabled={duelProfile.isActionPending}
-                          onPress={() => {
-                            void duelProfile.createRematch(opponent.learnerId).then((sessionId) => {
-                              if (sessionId) {
-                                openDuelSession(sessionId);
-                              }
-                            });
-                          }}
-                          style={{
-                            alignSelf: 'flex-start',
-                            borderRadius: 999,
-                            backgroundColor: duelProfile.isActionPending ? '#94a3b8' : '#1d4ed8',
-                            paddingHorizontal: 14,
-                            paddingVertical: 10,
-                          }}
-                        >
-                          <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                            {duelProfile.pendingOpponentLearnerId === opponent.learnerId
+                          label={
+                            duelProfile.pendingOpponentLearnerId === opponent.learnerId
                               ? copy({
                                   de: 'Rückkampf wird gesendet...',
                                   en: 'Sending rematch...',
@@ -1226,36 +1329,41 @@ export function KangurProfileScreen(): React.JSX.Element {
                                   de: 'Schneller Rückkampf',
                                   en: 'Quick rematch',
                                   pl: 'Szybki rewanż',
-                                })}
-                          </Text>
-                        </Pressable>
+                                })
+                          }
+                          onPress={async () => {
+                            const sessionId = await duelProfile.createRematch(opponent.learnerId);
+                            if (sessionId) {
+                              openDuelSession(sessionId);
+                            }
+                          }}
+                        />
                       </View>
                     ))}
                   </View>
                 )}
 
-                <Link href={DUELS_ROUTE} asChild>
-                  <Pressable
-                    accessibilityRole='button'
-                    style={{
-                      alignSelf: 'flex-start',
-                      borderRadius: 999,
-                      borderWidth: 1,
-                      borderColor: '#cbd5e1',
-                      backgroundColor: '#ffffff',
-                      paddingHorizontal: 14,
-                      paddingVertical: 10,
-                    }}
-                  >
-                    <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                      {copy({
-                        de: 'Duelle öffnen',
-                        en: 'Open duels',
-                        pl: 'Otwórz pojedynki',
-                      })}
-                    </Text>
-                  </Pressable>
-                </Link>
+                <View style={{ alignSelf: 'stretch', gap: 10 }}>
+                  <ActionButton
+                    label={copy({
+                      de: 'Duelle aktualisieren',
+                      en: 'Refresh duels',
+                      pl: 'Odśwież pojedynki',
+                    })}
+                    onPress={() => duelProfile.refresh()}
+                    stretch
+                    tone='secondary'
+                  />
+                  <LinkButton
+                    href={DUELS_ROUTE}
+                    label={copy({
+                      de: 'Duelle öffnen',
+                      en: 'Open duels',
+                      pl: 'Otwórz pojedynki',
+                    })}
+                    stretch
+                  />
+                </View>
               </View>
             )}
           </Card>
@@ -1438,16 +1546,16 @@ export function KangurProfileScreen(): React.JSX.Element {
             <View style={{ gap: 4 }}>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                 {copy({
-                  de: 'Plan für heute',
-                  en: 'Plan for today',
-                  pl: 'Plan na dziś',
+                  de: 'Tagesplan aus dem Profil',
+                  en: 'Daily plan from profile',
+                  pl: 'Plan dnia z profilu',
                 })}
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Eine kurze Liste der nächsten Schritte auf Basis der letzten Ergebnisse und Aktivitäten.',
-                  en: 'A short list of the next steps based on recent results and activity.',
-                  pl: 'Krótka lista kolejnych kroków na podstawie ostatnich wyników i aktywności.',
+                  de: 'Ordne die nächsten Schritte aus letzten Ergebnissen und Aktivitäten direkt aus dem Profil heraus an.',
+                  en: 'Line up the next steps from recent results and activity directly from the profile.',
+                  pl: 'Ułóż kolejne kroki z ostatnich wyników i aktywności bezpośrednio z poziomu profilu.',
                 })}
               </Text>
             </View>
@@ -1547,16 +1655,16 @@ export function KangurProfileScreen(): React.JSX.Element {
             <View style={{ gap: 4 }}>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                 {copy({
-                  de: 'Letzte Sitzungen',
-                  en: 'Recent sessions',
-                  pl: 'Ostatnie sesje',
+                  de: 'Zurück zu den letzten Sitzungen',
+                  en: 'Return to recent sessions',
+                  pl: 'Powrót do ostatnich sesji',
                 })}
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Die letzten synchronisierten Sitzungen bleiben hier griffbereit, damit du direkt wieder ins Training, die passende Lektion oder den vollständigen Verlauf springen kannst.',
-                  en: 'The latest synchronized sessions stay close here so you can jump straight back into practice, the matching lesson, or the full history.',
-                  pl: 'Ostatnie zsynchronizowane sesje są tutaj pod ręką, aby można było od razu wrócić do treningu, pasującej lekcji albo pełnej historii.',
+                  de: 'Die letzten synchronisierten Sitzungen bleiben hier griffbereit, damit du aus dem Profil direkt wieder ins Training, die passende Lektion oder den vollständigen Verlauf springen kannst.',
+                  en: 'The latest synchronized sessions stay close here so you can jump from the profile straight back into practice, the matching lesson, or the full history.',
+                  pl: 'Ostatnie zsynchronizowane sesje są tutaj pod ręką, aby można było z profilu od razu wrócić do treningu, pasującej lekcji albo pełnej historii.',
                 })}
               </Text>
             </View>
@@ -1630,11 +1738,18 @@ export function KangurProfileScreen(): React.JSX.Element {
                   pl: 'Odznaki',
                 })}
               </Text>
+              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+                {copy({
+                  de: 'Abzeichen-Zentrale',
+                  en: 'Badge hub',
+                  pl: 'Centrum odznak',
+                })}
+              </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Das Profil zeigt die letzten lokalen Freischaltungen und das vollständige Abzeichenraster an einem Ort.',
-                  en: 'The profile shows the latest local unlocks and the full badge grid in one place.',
-                  pl: 'Profil pokazuje w jednym miejscu ostatnie lokalne odblokowania i pełną siatkę odznak.',
+                  de: 'Behalte die letzten lokalen Freischaltungen und das vollständige Abzeichenraster an einem Ort im Blick.',
+                  en: 'Keep the latest local unlocks and the full badge grid in one place.',
+                  pl: 'Śledź w jednym miejscu ostatnie lokalne odblokowania i pełną siatkę odznak.',
                 })}
               </Text>
             </View>
@@ -1743,16 +1858,16 @@ export function KangurProfileScreen(): React.JSX.Element {
               </Text>
               <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
                 {copy({
-                  de: 'Lokale Aufgaben im Profil',
-                  en: 'Local tasks in the profile',
-                  pl: 'Lokalne zadania w profilu',
+                  de: 'Profilplan',
+                  en: 'Profile plan',
+                  pl: 'Plan w profilu',
                 })}
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Auch im Profil kannst du direkt in die nächsten lokalen Aufgaben aus deinem Fortschritt springen, ohne zur Startseite zurückzukehren.',
-                  en: 'The profile can also jump straight into the next local tasks from your progress without going back to the home screen.',
-                  pl: 'Także z profilu możesz od razu wejść w kolejne lokalne zadania wynikające z Twojego postępu bez wracania na ekran główny.',
+                  de: 'Nutze das Profil als schnellen Weg in die nächsten lokalen Aufgaben aus deinem Fortschritt, ohne zuerst zum Startbildschirm zurückzukehren.',
+                  en: 'Use the profile as a quick path into the next local tasks from your progress without first going back to home.',
+                  pl: 'Potraktuj profil jako szybkie wejście w kolejne lokalne zadania z postępu bez wracania najpierw na start.',
                 })}
               </Text>
             </View>

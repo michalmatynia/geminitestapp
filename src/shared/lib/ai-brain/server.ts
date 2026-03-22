@@ -2,7 +2,25 @@ import 'server-only';
 
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { configurationError } from '@/shared/errors/app-error';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { findProviderForKey } from '@/shared/lib/db/settings-registry';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
+import {
+  AI_BRAIN_SETTINGS_KEY,
+  parseBrainSettings,
+  getBrainCapabilityDefinition,
+  getDefaultCapabilityForFeature,
+  resolveBrainAssignment,
+  resolveBrainCapabilityAssignment,
+  type AiBrainAssignment,
+  type AiBrainCapabilityKey,
+  type AiBrainFeature,
+  type AiBrainCapabilityPolicy,
+  type BrainAppliedMeta,
+  type BrainExecutionConfig,
+  type AiPathsNodeExecutionInput,
+} from './settings';
 
 const readMongoSettingValue = async (key: string): Promise<string | null> => {
   const provider = await findProviderForKey(key);

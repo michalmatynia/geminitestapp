@@ -61,6 +61,7 @@ const envSchema = z.object({
   // Features & Debug
   AI_JOBS_INLINE: z.coerce.boolean().default(false),
   DEBUG_API_TIMING: z.coerce.boolean().default(false),
+  DEBUG_MONGODB_POOL: z.coerce.boolean().default(false),
   DEBUG_SETTINGS: z.coerce.boolean().default(false),
   ENABLE_RATE_LIMITS: z.coerce.boolean().default(true),
   DISABLE_RATE_LIMITS: z.coerce.boolean().default(false),

@@ -3,10 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   LogCapture,
 } from '@/features/integrations/server';
-import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import { enqueueBaseExportJob } from '@/features/integrations/workers/baseExportQueue';
 import { parseJsonBody } from '@/features/products/server';
-import type { ProductWithImages } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, externalServiceError } from '@/shared/errors/app-error';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
@@ -19,18 +17,20 @@ import {
   type BaseExportRequestData,
 } from './helpers';
 import {
-  prepareBaseExportMappingsAndProduct,
   loadExportResources,
   createExportRun,
   updateRunStarted,
-  resolveListingForExport,
 } from './segments';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
 /**
  * POST /api/v2/integrations/products/[id]/export-to-base
- * Exports a product to Base.com using optional template
+ *
+ * Validates the export request, creates a tracking run, and enqueues
+ * a BullMQ job for background processing.  All heavy work (template
+ * resolution, SKU checks, warehouse mapping, Base.com API calls) is
+ * handled by the processor.
  */
 export async function postExportToBaseHandler(
   _req: NextRequest,
@@ -41,7 +41,7 @@ export async function postExportToBaseHandler(
   logCapture.start();
   let runId: string | null = null;
   let requestLockKey: string | null = null;
-  let runMeta: Record<string, unknown> = {
+  const runMeta: Record<string, unknown> = {
     source: BASE_EXPORT_SOURCE,
     sourceInfo: {
       tab: 'products',
@@ -80,6 +80,8 @@ export async function postExportToBaseHandler(
         'Inventory ID is required for Base.com export. Default inventory fallback is disabled.'
       );
     }
+
+    // ── Idempotency dedup ──
     const normalizedRequestId = requestId?.trim() ?? '';
     if (normalizedRequestId) {
       clearExpiredExportRequestLocks();
@@ -92,21 +94,21 @@ export async function postExportToBaseHandler(
       ].join(':');
       if (inFlightExportRequests.has(lockKey)) {
         logCapture.stop();
-        const logs = logCapture.getLogs();
         return NextResponse.json({
           success: true,
           message: 'Export already in progress',
           idempotent: true,
           inProgress: true,
           runId: null,
-          logs,
+          logs: logCapture.getLogs(),
         });
       }
       inFlightExportRequests.set(lockKey, Date.now());
       requestLockKey = lockKey;
     }
 
-    const { product, connection, integrations, session, primaryListingRepo } =
+    // ── Quick existence check ──
+    const { product, connection, session } =
       await loadExportResources(productId, data.connectionId);
 
     if (!product) {
@@ -118,6 +120,7 @@ export async function postExportToBaseHandler(
 
     const userId = session?.user?.id ?? null;
 
+    // ── Create tracking run ──
     const { run, runRepository } = await createExportRun({
       userId,
       productId,
@@ -136,92 +139,7 @@ export async function postExportToBaseHandler(
       imagesOnly,
     });
 
-    const preparedProduct: ProductWithImages = {
-      ...product,
-      categoryId: product.categoryId ?? null,
-    };
-
-    const preparedExportContext = await prepareBaseExportMappingsAndProduct<ProductWithImages>({
-      data,
-      imagesOnly,
-      productId,
-      resolvedInventoryId,
-      product: preparedProduct,
-    });
-
-    const { exportImagesAsBase64, imageBase64Mode, imageTransform } = preparedExportContext;
-
-    const baseIntegration = integrations.find((integration) =>
-      ['baselinker', 'base-com', 'base'].includes(integration.slug)
-    );
-    const baseIntegrationId = baseIntegration?.id ?? connection.integrationId ?? null;
-    const tokenResolution = resolveBaseConnectionToken({
-      baseApiToken: connection.baseApiToken,
-    });
-    if (!tokenResolution.token) {
-      throw badRequestError(
-        tokenResolution.error ??
-          'No Base API token configured. Please test or re-save the connection.',
-        { connectionId: data.connectionId }
-      );
-    }
-
-    const { listingRepo, listingId } =
-      await resolveListingForExport({
-        productId,
-        connectionId: data.connectionId,
-        inventoryId: resolvedInventoryId,
-        imagesOnly,
-        externalListingId: data.externalListingId ?? null,
-        listingIdFromData: data.listingId ?? null,
-        baseIntegrationId,
-        primaryListingRepo,
-      });
-
-    if (requestId && listingId) {
-      const existingListing = await listingRepo.getListingById(listingId);
-      const history = existingListing?.exportHistory ?? [];
-      const prior = history.find(
-        (event) => event.requestId === requestId && event.status === 'success'
-      );
-      if (prior) {
-        if (runId) {
-          await runRepository
-            .createRunEvent({
-              runId,
-              level: 'info',
-              message: 'Export already completed (idempotent).',
-              metadata: {
-                productId,
-                listingId,
-                externalListingId:
-                  prior.externalListingId ?? existingListing?.externalListingId ?? null,
-                requestId,
-                idempotent: true,
-              },
-            })
-            .catch(() => undefined);
-          await runRepository
-            .updateRun(runId, {
-              status: 'completed',
-              finishedAt: new Date().toISOString(),
-              meta: { ...runMeta, idempotent: true, completedAt: new Date().toISOString() },
-            })
-            .catch(() => undefined);
-        }
-        logCapture.stop();
-        return NextResponse.json({
-          success: true,
-          message: 'Export already completed',
-          externalProductId: prior.externalListingId ?? existingListing?.externalListingId ?? null,
-          idempotent: true,
-          runId,
-          logs: logCapture.getLogs(),
-        });
-      }
-    }
-
-    // Enqueue the export job for background processing
+    // ── Enqueue for background processing ──
     const jobId = await enqueueBaseExportJob({
       productId,
       connectionId: data.connectionId,
@@ -231,9 +149,9 @@ export async function postExportToBaseHandler(
       listingId: data.listingId ?? null,
       externalListingId: data.externalListingId ?? null,
       allowDuplicateSku: data.allowDuplicateSku ?? false,
-      exportImagesAsBase64,
-      imageBase64Mode,
-      imageTransform,
+      exportImagesAsBase64: data.exportImagesAsBase64 ?? null,
+      imageBase64Mode: data.imageBase64Mode ?? null,
+      imageTransform: data.imageTransform ?? null,
       imageBaseUrl,
       requestId: requestId ?? null,
       runId,

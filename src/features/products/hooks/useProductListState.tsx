@@ -1,7 +1,6 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
-import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useState } from 'react';
+import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 
 import { getProductColumns } from '@/features/products/components/list/ProductColumns';
 import { ProductTableSkeleton } from '@/features/products/components/list/ProductTableSkeleton';
@@ -36,6 +35,19 @@ import type { Row } from '@tanstack/react-table';
 
 export { shouldAdoptIncomingEditProductDetail } from './product-list/useProductEditHydration';
 
+const subscribeToSearchParams = (callback: () => void): (() => void) => {
+  window.addEventListener('popstate', callback);
+  return () => window.removeEventListener('popstate', callback);
+};
+const getSearchParamsSnapshot = (): string =>
+  typeof window !== 'undefined' ? window.location.search : '';
+const getSearchParamsServerSnapshot = (): string => '';
+
+function useStableSearchParams(): URLSearchParams {
+  const search = useSyncExternalStore(subscribeToSearchParams, getSearchParamsSnapshot, getSearchParamsServerSnapshot);
+  return useMemo(() => new URLSearchParams(search), [search]);
+}
+
 export function applyProductListAdvancedFilterState(args: {
   value: string;
   presetId: string | null;
@@ -63,7 +75,7 @@ export function useProductListState(): ProductListContextType & {
   handleConfirmSingleDelete: () => Promise<void>;
   bulkDeletePending: boolean;
   } {
-  const searchParams = useSearchParams();
+  const searchParams = useStableSearchParams();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);

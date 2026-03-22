@@ -16,7 +16,8 @@ export type BaseExportJobData = {
   listingId: string | null;
   externalListingId: string | null;
   allowDuplicateSku: boolean;
-  exportImagesAsBase64: boolean;
+  /** null means "resolve from template defaults in the processor" */
+  exportImagesAsBase64: boolean | null;
   imageBase64Mode: ImageBase64Mode | null;
   imageTransform: ImageTransformOptions | null;
   imageBaseUrl: string;
@@ -66,7 +67,7 @@ export const stopBaseExportQueue = async (): Promise<void> => {
 
 export const enqueueBaseExportJob = async (data: BaseExportJobData): Promise<string> => {
   const dedupeBucket = Math.floor(Date.now() / 30_000);
-  const jobId = `export:${data.productId}:${data.connectionId}:${data.inventoryId}:${dedupeBucket}`;
+  const jobId = `export-${data.productId}-${data.connectionId}-${data.inventoryId}-${dedupeBucket}`;
   const queuedJobId = await queue.enqueue(data, { jobId });
   await ErrorSystem.logInfo('Base export job queued', {
     service: 'base-export-queue',

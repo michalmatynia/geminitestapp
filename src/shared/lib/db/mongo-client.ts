@@ -21,6 +21,7 @@ const parsePositiveInt = (value: string | undefined, fallback: number): number =
 const POOL_LOG_COOLDOWN_MS = 30_000; // suppress repeated events of the same type
 const SLOW_COMMAND_THRESHOLD_MS = parsePositiveInt(process.env['MONGODB_SLOW_COMMAND_MS'], 3_000);
 const MONITOR_COMMANDS = process.env['MONGODB_MONITOR_COMMANDS'] === 'true';
+const DEBUG_MONGODB_POOL = process.env['DEBUG_MONGODB_POOL'] === 'true';
 
 const poolLoggedAt = new Map<string, number>();
 const shouldEmit = (key: string): boolean => {
@@ -64,43 +65,45 @@ const attachMongoObservability = (client: MongoClient): void => {
   instrumented.add(client);
   const observableClient = client as ObservableMongoClient;
 
-  // --- Connection pool events (always available) ---
-  observableClient.on('connectionPoolCreated', (e) => {
-    mongoLog('info', `MongoDB connection pool created for ${e.address}`, {
-      event: 'connectionPoolCreated',
-      address: e.address,
+  // --- Connection pool events (opt-in via DEBUG_MONGODB_POOL=true) ---
+  if (DEBUG_MONGODB_POOL) {
+    observableClient.on('connectionPoolCreated', (e) => {
+      mongoLog('info', `MongoDB connection pool created for ${e.address}`, {
+        event: 'connectionPoolCreated',
+        address: e.address,
+      });
     });
-  });
 
-  observableClient.on('connectionPoolCleared', (e) => {
-    const key = `poolCleared:${e.address}`;
-    if (!shouldEmit(key)) return;
-    mongoLog('warn', `MongoDB connection pool cleared for ${e.address}`, {
-      event: 'connectionPoolCleared',
-      address: e.address,
+    observableClient.on('connectionPoolCleared', (e) => {
+      const key = `poolCleared:${e.address}`;
+      if (!shouldEmit(key)) return;
+      mongoLog('warn', `MongoDB connection pool cleared for ${e.address}`, {
+        event: 'connectionPoolCleared',
+        address: e.address,
+      });
     });
-  });
 
-  observableClient.on('connectionCheckOutFailed', (e) => {
-    const key = `checkOutFailed:${e.address}:${e.reason}`;
-    if (!shouldEmit(key)) return;
-    mongoLog('warn', `MongoDB connection check-out failed: ${e.reason}`, {
-      event: 'connectionCheckOutFailed',
-      reason: e.reason,
-      address: e.address,
+    observableClient.on('connectionCheckOutFailed', (e) => {
+      const key = `checkOutFailed:${e.address}:${e.reason}`;
+      if (!shouldEmit(key)) return;
+      mongoLog('warn', `MongoDB connection check-out failed: ${e.reason}`, {
+        event: 'connectionCheckOutFailed',
+        reason: e.reason,
+        address: e.address,
+      });
     });
-  });
 
-  observableClient.on('connectionClosed', (e) => {
-    const key = `connClosed:${e.address}:${e.reason}`;
-    if (!shouldEmit(key)) return;
-    mongoLog('info', `MongoDB connection closed: ${e.reason}`, {
-      event: 'connectionClosed',
-      connectionId: e.connectionId,
-      reason: e.reason,
-      address: e.address,
+    observableClient.on('connectionClosed', (e) => {
+      const key = `connClosed:${e.address}:${e.reason}`;
+      if (!shouldEmit(key)) return;
+      mongoLog('info', `MongoDB connection closed: ${e.reason}`, {
+        event: 'connectionClosed',
+        connectionId: e.connectionId,
+        reason: e.reason,
+        address: e.address,
+      });
     });
-  });
+  }
 
   // --- Command monitoring (opt-in via MONGODB_MONITOR_COMMANDS=true) ---
   if (MONITOR_COMMANDS) {

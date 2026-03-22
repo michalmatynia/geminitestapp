@@ -212,7 +212,6 @@ export function BaseQuickExportButton(props: {
     try {
       const response = await quickExportMutation.mutateAsync(payload);
       prefetchListings();
-      void invalidateProductListingsAndBadges(queryClient, product.id);
       toast(
         response?.status === 'queued'
           ? 'Base.com export queued.'

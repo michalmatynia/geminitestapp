@@ -15,7 +15,6 @@ import type { BaseExportJobData } from './baseExportQueue';
 async function loadSegments() {
   // Dynamic import to avoid circular dependency issues with the API route tree
   const segments = await import(
-    /* webpackIgnore: true */
     '@/app/api/v2/integrations/products/[id]/export-to-base/segments'
   );
   return segments;
@@ -84,7 +83,7 @@ export async function processBaseExportJob(
         listingId: dataListingId ?? undefined,
         externalListingId: dataExternalListingId ?? undefined,
         allowDuplicateSku,
-        exportImagesAsBase64,
+        exportImagesAsBase64: exportImagesAsBase64 ?? undefined,
         imageBase64Mode: imageBase64Mode ?? undefined,
         imageTransform: requestImageTransform,
       },

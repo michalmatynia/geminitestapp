@@ -188,10 +188,12 @@ export function useGenericExportToBaseMutation(): UpdateMutation<
       removeListingBadgeStatus(queryClient, vars.productId, 'base');
     },
     invalidate: async (queryClient, data, vars) => {
-      // Keep badge as 'pending' when the export is queued for background processing
+      // Keep badge as 'pending' when the export is queued for background processing.
+      // Only invalidate the specific product's listings — avoid invalidating all
+      // badges which would cause the entire product list to re-render.
       const badgeStatus = data?.status === 'queued' ? 'pending' : 'active';
       setListingBadgeStatus(queryClient, vars.productId, 'base', badgeStatus);
-      await invalidateListingsBadgesAndQueues(queryClient, vars.productId);
+      await invalidateProductListingsAndBadges(queryClient, vars.productId);
     },
   });
 }

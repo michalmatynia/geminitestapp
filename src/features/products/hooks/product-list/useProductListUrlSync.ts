@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useCallback } from 'react';
 
 const PRODUCT_EDITOR_QUERY_KEYS = [
@@ -15,10 +15,11 @@ const PRODUCT_EDITOR_QUERY_KEYS = [
 export function useProductListUrlSync() {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   const clearProductEditorQueryParams = useCallback((): void => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(
+      typeof window !== 'undefined' ? window.location.search : ''
+    );
     let changed = false;
     PRODUCT_EDITOR_QUERY_KEYS.forEach((key) => {
       if (!params.has(key)) return;
@@ -28,7 +29,7 @@ export function useProductListUrlSync() {
     if (!changed) return;
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [pathname, router, searchParams]);
+  }, [pathname, router]);
 
   return {
     clearProductEditorQueryParams,

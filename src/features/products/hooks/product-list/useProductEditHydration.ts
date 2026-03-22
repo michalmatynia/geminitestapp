@@ -1,8 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 import {
   isEditingProductHydrated,
@@ -23,6 +22,14 @@ import {
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
+
+const subscribeToSearchParams = (callback: () => void): (() => void) => {
+  window.addEventListener('popstate', callback);
+  return () => window.removeEventListener('popstate', callback);
+};
+const getSearchSnapshot = (): string =>
+  typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('openProductId')?.trim() ?? '') : '';
+const getSearchServerSnapshot = (): string => '';
 
 const PRODUCT_DETAIL_TIMEOUT_MS = 60_000;
 const PRODUCT_DETAIL_PREFETCH_DEBOUNCE_MS = 120;
@@ -56,8 +63,7 @@ export function useProductEditHydration({
 }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const searchParams = useSearchParams();
-  const openProductIdFromQuery = searchParams.get('openProductId')?.trim() ?? '';
+  const openProductIdFromQuery = useSyncExternalStore(subscribeToSearchParams, getSearchSnapshot, getSearchServerSnapshot);
 
   const [isEditHydrating, setIsEditHydrating] = useState(false);
   const editOpenRequestTokenRef = useRef(0);

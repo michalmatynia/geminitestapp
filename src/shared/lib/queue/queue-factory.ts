@@ -106,12 +106,22 @@ export function createManagedQueue<TJobData>(
       return `inline-${Date.now()}`;
     }
     const { repeat, jobId, ...jobOpts } = opts ?? {};
-    const job = await q.add(config.name, data as Record<string, unknown>, {
-      ...jobOpts,
-      ...(repeat ? { repeat } : {}),
-      ...(jobId ? { jobId } : {}),
-    });
-    return job.id ?? `unknown-${Date.now()}`;
+    try {
+      const job = await q.add(config.name, data as Record<string, unknown>, {
+        ...jobOpts,
+        ...(repeat ? { repeat } : {}),
+        ...(jobId ? { jobId } : {}),
+      });
+      return job.id ?? `unknown-${Date.now()}`;
+    } catch (error) {
+      void ErrorSystem.captureException(error, {
+        service: `queue:${config.name}`,
+        category: 'SYSTEM',
+        action: 'enqueue',
+        jobId: jobId ?? null,
+      });
+      throw error;
+    }
   };
 
   const startWorker = (): void => {

@@ -174,6 +174,40 @@ describe('KangurPageTransitionSkeleton', () => {
     ).toHaveClass('w-full', 'max-w-[560px]', 'space-y-8', 'sm:space-y-10');
   });
 
+  it('keeps the Game home transition skeleton in the same section order as the page it reveals', () => {
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+    });
+
+    renderWithIntl(<KangurPageTransitionSkeleton pageKey='Game' />);
+
+    const parentSpotlight = screen.getByTestId(
+      'kangur-page-transition-skeleton-game-home-parent-spotlight'
+    );
+    const actionsColumn = screen.getByTestId(
+      'kangur-page-transition-skeleton-game-home-actions-column'
+    );
+    const quest = screen.getByTestId('kangur-page-transition-skeleton-game-home-quest');
+    const summary = screen.getByTestId('kangur-page-transition-skeleton-game-home-summary');
+    const assignments = screen.getByTestId(
+      'kangur-page-transition-skeleton-game-home-assignments'
+    );
+    const progressGrid = screen.getByTestId(
+      'kangur-page-transition-skeleton-game-home-progress-grid'
+    );
+
+    expect(parentSpotlight).toHaveClass('w-full', 'max-w-[900px]');
+    expect(quest).toHaveClass('mx-auto', 'w-full', 'max-w-[900px]');
+    expect(assignments).toHaveClass('mx-auto', 'w-full', 'max-w-[900px]');
+
+    expect(parentSpotlight.compareDocumentPosition(actionsColumn) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(actionsColumn.compareDocumentPosition(quest) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(quest.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(summary.compareDocumentPosition(assignments) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(assignments.compareDocumentPosition(progressGrid) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+  });
+
   it('uses a softer blurred overlay for locale-switch skeletons', () => {
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',

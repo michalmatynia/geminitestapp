@@ -825,9 +825,7 @@ describe('KangurPrimaryNavigation', () => {
       sourceId: 'kangur-language-switcher',
       transitionKind: 'locale-switch',
     });
-    expect(replaceMock).toHaveBeenCalledWith('/en/lessons?mode=solo&difficulty=hard', {
-      scroll: false,
-    });
+    expect(window.location.assign).toHaveBeenCalledWith('/en/lessons?mode=solo&difficulty=hard');
     expect(document.cookie).toContain('NEXT_LOCALE=en');
   });
 
@@ -855,10 +853,10 @@ describe('KangurPrimaryNavigation', () => {
       sourceId: 'kangur-language-switcher',
       transitionKind: 'locale-switch',
     });
-    expect(replaceMock).toHaveBeenCalledWith('/duels', { scroll: false });
+    expect(window.location.assign).toHaveBeenCalledWith('/duels');
   });
 
-  it('forces a document replace when switching back to Polish from an unprefixed English lessons route', async () => {
+  it('forces a hard navigation when switching back to Polish from an unprefixed English lessons route', async () => {
     localeMock.mockReturnValue('en');
     pathnameMock.mockReturnValue('/lessons');
 
@@ -878,7 +876,7 @@ describe('KangurPrimaryNavigation', () => {
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-pl'));
 
     expect(replaceMock).not.toHaveBeenCalled();
-    expect(window.location.replace).toHaveBeenCalledWith('/lessons');
+    expect(window.location.assign).toHaveBeenCalledWith('/lessons');
     expect(document.cookie).toContain('NEXT_LOCALE=pl');
   });
 

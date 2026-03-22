@@ -797,7 +797,7 @@ export default function GeometrySymmetryGame({
           <KangurPanelRow className='w-full'>
             <KangurButton
               className={cn('w-full sm:flex-1', isCoarsePointer && 'min-h-11')}
-              disabled={isResultLocked || points.length === 0}
+              disabled={isResultLocked || (points.length === 0 && feedback === null)}
               onClick={clearDrawing}
               type='button'
               size='lg'

@@ -4,6 +4,30 @@ import { applyDefaultAndroidSdkEnv, loadMobileEnvFiles } from './mobile-env';
 const command = process.argv[2];
 const args = process.argv.slice(3);
 
+const createChildEnv = (
+  childCommand: string,
+  env: NodeJS.ProcessEnv = process.env,
+): NodeJS.ProcessEnv => {
+  if (childCommand !== 'node') {
+    return env;
+  }
+
+  const childEnv: NodeJS.ProcessEnv = { ...env };
+
+  // npm injects a large command-run environment into child Node processes.
+  // The mobile native host/runtime checks should behave the same way whether
+  // they are launched directly or through npm run wrappers.
+  for (const key of Object.keys(childEnv)) {
+    if (key.startsWith('npm_')) {
+      delete childEnv[key];
+    }
+  }
+
+  delete childEnv['INIT_CWD'];
+
+  return childEnv;
+};
+
 if (!command) {
   console.error(
     '[kangur-mobile-env] Missing command. Usage: node --import tsx scripts/mobile/run-with-mobile-env.ts <command> [...args]',
@@ -20,7 +44,7 @@ if (!process.env['EXPO_NO_TELEMETRY']) {
 }
 
 const child = spawn(command, args, {
-  env: process.env,
+  env: createChildEnv(command),
   stdio: 'inherit',
 });
 

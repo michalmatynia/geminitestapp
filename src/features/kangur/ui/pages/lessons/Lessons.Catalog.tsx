@@ -129,6 +129,7 @@ export function LessonsCatalog() {
         (sectionsQuery.isFetching && typeof sectionsQuery.data === 'undefined')
     );
   const isCatalogLoading = isLessonsCatalogLoading || isLessonSectionsLoading;
+  const shouldShowCatalogSkeleton = !isDeferredContentReady || isCatalogLoading;
   const [expandedLessonGroupId, setExpandedLessonGroupId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -209,7 +210,7 @@ export function LessonsCatalog() {
   });
 
   const lessonListIntroDescription =
-    isDeferredContentReady && !isCatalogLoading
+    !shouldShowCatalogSkeleton
       ? (lessonListIntroContent?.summary ?? translations('introDescription'))
       : translations('loadingDescription');
 
@@ -310,26 +311,24 @@ export function LessonsCatalog() {
           }
         />
       </div>
-      {isDeferredContentReady && (
-        <div className={LESSONS_LIBRARY_LIST_CLASSNAME} data-testid='lessons-list-transition'>
-          {isCatalogLoading ? (
-            <LessonsCatalogSkeleton />
-          ) : orderedLessons.length === 0 ? (
-            <KangurEmptyState
-              accent='indigo'
-              description={
-                lessonListEmptyStateContent?.summary ??
-                translations('emptyDescription', { ageGroup: ageGroupLabel })
-              }
-              title={lessonListEmptyStateContent?.title ?? translations('emptyTitle')}
-            />
-          ) : (
-            <div className={LESSONS_LIBRARY_LIST_CLASSNAME}>
-              {renderLessonEntries()}
-            </div>
-          )}
-        </div>
-      )}
+      <div className={LESSONS_LIBRARY_LIST_CLASSNAME} data-testid='lessons-list-transition'>
+        {shouldShowCatalogSkeleton ? (
+          <LessonsCatalogSkeleton />
+        ) : orderedLessons.length === 0 ? (
+          <KangurEmptyState
+            accent='indigo'
+            description={
+              lessonListEmptyStateContent?.summary ??
+              translations('emptyDescription', { ageGroup: ageGroupLabel })
+            }
+            title={lessonListEmptyStateContent?.title ?? translations('emptyTitle')}
+          />
+        ) : (
+          <div className={LESSONS_LIBRARY_LIST_CLASSNAME}>
+            {renderLessonEntries()}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

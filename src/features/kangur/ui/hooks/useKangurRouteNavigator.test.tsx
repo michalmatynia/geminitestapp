@@ -87,6 +87,35 @@ const NavigatorPushProbe = ({
   );
 };
 
+const NavigatorBackProbe = ({
+  acknowledgeMs,
+  fallbackHref,
+  fallbackPageKey,
+}: {
+  acknowledgeMs?: number;
+  fallbackHref?: string;
+  fallbackPageKey?: string;
+}): React.JSX.Element => {
+  const routeNavigator = useKangurRouteNavigator();
+
+  return (
+    <button
+      data-testid='navigator-back'
+      onClick={() =>
+        routeNavigator.back({
+          acknowledgeMs,
+          fallbackHref,
+          fallbackPageKey,
+          sourceId: 'lessons:list-back',
+        })
+      }
+      type='button'
+    >
+      Back
+    </button>
+  );
+};
+
 describe('useKangurRouteNavigator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -211,5 +240,36 @@ describe('useKangurRouteNavigator', () => {
 
     expect(startRouteTransitionMock).not.toHaveBeenCalled();
     expect(routerPushMock).toHaveBeenCalledWith('/en/kangur/lessons', { scroll: false });
+  });
+
+  it('pins the fallback page key when starting a managed history-back transition', () => {
+    const historyBackSpy = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
+    const originalHistoryLengthDescriptor = Object.getOwnPropertyDescriptor(window.history, 'length');
+
+    Object.defineProperty(window.history, 'length', {
+      configurable: true,
+      get: () => 2,
+    });
+
+    render(
+      <NavigatorBackProbe
+        acknowledgeMs={120}
+        fallbackHref='/kangur'
+        fallbackPageKey='Game'
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('navigator-back'));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      acknowledgeMs: 120,
+      pageKey: 'Game',
+      sourceId: 'lessons:list-back',
+    });
+    expect(historyBackSpy).toHaveBeenCalledTimes(1);
+
+    if (originalHistoryLengthDescriptor) {
+      Object.defineProperty(window.history, 'length', originalHistoryLengthDescriptor);
+    }
   });
 });

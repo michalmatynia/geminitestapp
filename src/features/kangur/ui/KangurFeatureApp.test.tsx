@@ -12,6 +12,7 @@ const {
   routeTransitionStateMock,
   routeNavigatorMock,
   settingsStoreStateMock,
+  topNavigationHostVisibleMock,
 } = vi.hoisted(() => ({
   authStateMock: vi.fn(),
   routingStateMock: vi.fn(),
@@ -23,6 +24,7 @@ const {
     replace: vi.fn(),
   },
   settingsStoreStateMock: vi.fn(),
+  topNavigationHostVisibleMock: vi.fn(),
 }));
 
 vi.mock('framer-motion', () => ({
@@ -73,7 +75,12 @@ vi.mock('@/features/kangur/ui/components/KangurRouteAccessibilityAnnouncer', () 
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurTopNavigationContext', () => ({
-  KangurTopNavigationHost: () => <div data-testid='kangur-top-navigation-host' />,
+  KangurTopNavigationHost: ({ fallback }: { fallback?: ReactNode }) =>
+    topNavigationHostVisibleMock() ? (
+      <div data-testid='kangur-top-navigation-host' />
+    ) : (
+      <>{fallback ?? null}</>
+    ),
   KangurTopNavigationProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
@@ -199,6 +206,7 @@ describe('KangurFeatureApp', () => {
       startRouteTransition: vi.fn(),
       markRouteTransitionReady: vi.fn(),
     });
+    topNavigationHostVisibleMock.mockReturnValue(true);
 
     ({ KangurFeatureApp } = await import('@/features/kangur/ui/KangurFeatureApp'));
   });
@@ -216,6 +224,16 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-lessons')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
+  });
+
+  it('renders the navbar skeleton while the shared top-navigation host has not registered yet', () => {
+    topNavigationHostVisibleMock.mockReturnValue(false);
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-top-navigation-host')).toBeNull();
+    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
   });
 
   it('uses deferred page skeletons instead of the global app loader during route transitions', async () => {
@@ -322,6 +340,60 @@ describe('KangurFeatureApp', () => {
     );
   });
 
+  it('keeps the last visible Home skeleton target latched if transition metadata momentarily drops during reveal', async () => {
+    routingStateMock.mockReturnValue({
+      pageKey: 'Lessons',
+      embedded: false,
+      requestedPath: '/kangur/lessons',
+      basePath: '/kangur',
+    });
+    routeTransitionStateMock.mockReturnValue({
+      isRouteAcknowledging: false,
+      isRoutePending: false,
+      isRouteWaitingForReady: false,
+      isRouteRevealing: true,
+      transitionPhase: 'revealing',
+      activeTransitionSourceId: 'lessons:list-back',
+      activeTransitionKind: 'navigation',
+      activeTransitionPageKey: 'Game',
+      activeTransitionRequestedHref: '/kangur',
+      activeTransitionSkeletonVariant: 'game-home',
+      pendingPageKey: null,
+      startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
+    });
+
+    const { rerender } = render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Game:game-home'
+    );
+
+    routeTransitionStateMock.mockReturnValue({
+      isRouteAcknowledging: false,
+      isRoutePending: false,
+      isRouteWaitingForReady: false,
+      isRouteRevealing: true,
+      transitionPhase: 'revealing',
+      activeTransitionSourceId: 'lessons:list-back',
+      activeTransitionKind: 'navigation',
+      activeTransitionPageKey: null,
+      activeTransitionRequestedHref: '/kangur',
+      activeTransitionSkeletonVariant: null,
+      pendingPageKey: null,
+      startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
+    });
+
+    await act(async () => {
+      rerender(<KangurFeatureApp />);
+    });
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Game:game-home'
+    );
+  });
+
   it('keeps the old page visible during the button acknowledgement phase', () => {
     routeTransitionStateMock.mockReturnValue({
       isRouteAcknowledging: true,
@@ -364,6 +436,7 @@ describe('KangurFeatureApp', () => {
     render(<KangurFeatureApp />);
 
     expect(screen.queryByTestId('kangur-top-navigation-host')).toBeNull();
+    expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
       'Lessons:lessons-library'
     );

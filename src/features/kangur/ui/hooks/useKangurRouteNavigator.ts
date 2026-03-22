@@ -321,7 +321,11 @@ export function useKangurRouteNavigator(): {
         return;
       }
 
-      const transitionResult = startManagedTransition(null, options);
+      const fallbackTransitionPageKey = options.fallbackPageKey ?? options.pageKey ?? null;
+      const transitionResult = startManagedTransition(null, {
+        ...options,
+        pageKey: fallbackTransitionPageKey,
+      });
       if (!transitionResult.started) {
         return;
       }

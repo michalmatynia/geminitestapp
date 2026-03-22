@@ -9,6 +9,7 @@ import { KANGUR_MAIN_PAGE, kangurPages } from '@/features/kangur/config/pages';
 import { getKangurHomeHref, resolveKangurPageKey } from '@/features/kangur/config/routing';
 import { KangurAppLoader } from '@/features/kangur/ui/components/KangurAppLoader';
 import { KangurPageTransitionSkeleton } from '@/features/kangur/ui/components/KangurPageTransitionSkeleton';
+import { KangurTopNavigationSkeleton } from '@/features/kangur/ui/components/KangurTopNavigationSkeleton';
 
 const KangurAiTutorWidget = dynamic(() => import('@/features/kangur/ui/components/KangurAiTutorWidget').then(m => ({ default: m.KangurAiTutorWidget })), { ssr: false });
 const KangurLoginModal = dynamic(() => import('@/features/kangur/ui/components/KangurLoginModal').then(m => ({ default: m.KangurLoginModal })), { ssr: false });
@@ -38,6 +39,7 @@ import {
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
+import type { KangurRouteTransitionSkeletonVariant } from '@/features/kangur/ui/routing/route-transition-skeletons';
 import { cn } from '@/features/kangur/shared/utils';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
@@ -46,6 +48,11 @@ import type { JSX } from 'react';
 const BOOT_SKELETON_MIN_VISIBLE_MS = 120;
 const NAVIGATION_SKELETON_DELAY_MS = 60;
 const LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID = 'kangur-language-switcher';
+
+type LatchedNavigationSkeletonState = {
+  pageKey: string;
+  variant: KangurRouteTransitionSkeletonVariant | null;
+};
 
 const AuthenticatedApp = (): JSX.Element | null => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, isAuthenticated } =
@@ -93,9 +100,18 @@ const AuthenticatedApp = (): JSX.Element | null => {
     shouldShowBootLoader ? Date.now() : null
   );
   const navigationSkeletonShownRef = useRef(false);
+  const latchedNavigationSkeletonRef = useRef<LatchedNavigationSkeletonState | null>(null);
   const transitionPageKey =
     pendingPageKey ?? activeTransitionPageKey ?? resolvedPageKey ?? KANGUR_MAIN_PAGE;
   const isRouteSkeletonVisible = isNavigationSkeletonVisible;
+  const visibleTransitionSkeletonPageKey =
+    isRouteSkeletonVisible
+      ? latchedNavigationSkeletonRef.current?.pageKey ?? transitionPageKey
+      : transitionPageKey;
+  const visibleTransitionSkeletonVariant =
+    isRouteSkeletonVisible
+      ? latchedNavigationSkeletonRef.current?.variant ?? activeTransitionSkeletonVariant
+      : activeTransitionSkeletonVariant;
   const shouldHideTopNavigationHost = isLanguageSwitcherTransition && isRouteSkeletonVisible;
   const shouldKeepRouteContentVisibleDuringTransition =
     isLanguageSwitcherTransition && isRouteSkeletonVisible;
@@ -149,6 +165,25 @@ const AuthenticatedApp = (): JSX.Element | null => {
       window.clearTimeout(timeoutId);
     };
   }, [shouldShowBootLoader]);
+
+  useEffect(() => {
+    if (isNavigationTransitionActive) {
+      latchedNavigationSkeletonRef.current = {
+        pageKey: transitionPageKey,
+        variant: activeTransitionSkeletonVariant,
+      };
+      return;
+    }
+
+    if (!isRouteSkeletonVisible) {
+      latchedNavigationSkeletonRef.current = null;
+    }
+  }, [
+    activeTransitionSkeletonVariant,
+    isNavigationTransitionActive,
+    isRouteSkeletonVisible,
+    transitionPageKey,
+  ]);
 
   useEffect(() => {
     if (isBootLoading) {
@@ -240,11 +275,17 @@ const AuthenticatedApp = (): JSX.Element | null => {
       );
     }
   }
+  const topNavigationFallback =
+    !embedded && routeContent ? <KangurTopNavigationSkeleton /> : null;
 
   return (
     <>
       <KangurRouteAccessibilityAnnouncer />
-      {shouldHideTopNavigationHost ? null : <KangurTopNavigationHost />}
+      {shouldHideTopNavigationHost ? (
+        topNavigationFallback
+      ) : (
+        <KangurTopNavigationHost fallback={topNavigationFallback} />
+      )}
       <KangurAppLoader visible={isBootSkeletonVisible} />
       <AnimatePresence mode='wait'>
         {routeContent ? (
@@ -278,9 +319,9 @@ const AuthenticatedApp = (): JSX.Element | null => {
             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.18, ease: 'easeOut' }}
           >
             <KangurPageTransitionSkeleton
-              pageKey={transitionPageKey}
+              pageKey={visibleTransitionSkeletonPageKey}
               reason={isLanguageSwitcherTransition ? 'locale-switch' : 'navigation'}
-              variant={activeTransitionSkeletonVariant}
+              variant={visibleTransitionSkeletonVariant}
             />
           </motion.div>
         ) : null}

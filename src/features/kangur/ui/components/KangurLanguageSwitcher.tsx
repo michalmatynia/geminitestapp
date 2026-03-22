@@ -461,15 +461,8 @@ export function KangurLanguageSwitcher({
                 sameSite: 'Lax',
               });
 
-              const shouldForceDocumentReplace =
-                target.code === DEFAULT_SITE_LOCALE &&
-                currentLocale !== DEFAULT_SITE_LOCALE &&
-                getPathLocale(currentPathname) === null;
-
-              if (shouldForceDocumentReplace) {
-                if (typeof window !== 'undefined' && typeof window.location.replace === 'function') {
-                  window.location.replace(target.href);
-                }
+              if (typeof window !== 'undefined') {
+                window.location.assign(target.href);
                 return;
               }
 

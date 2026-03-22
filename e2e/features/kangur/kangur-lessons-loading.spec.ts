@@ -141,7 +141,13 @@ test('shows a lessons section skeleton while the lesson catalog is loading', asy
   });
   await expect(page.getByTestId('kangur-route-content')).toBeVisible({ timeout: 60_000 });
 
-  await expect(page.getByTestId('lessons-catalog-skeleton')).toBeVisible({
+  const introCard = page.getByTestId('lessons-list-intro-card');
+  const listTransition = page.getByTestId('lessons-list-transition');
+  const catalogSkeleton = page.getByTestId('lessons-catalog-skeleton');
+
+  await expect(introCard).toBeVisible({ timeout: 60_000 });
+  await expect(listTransition).toBeVisible({ timeout: 60_000 });
+  await expect(catalogSkeleton).toBeVisible({
     timeout: 60_000,
   });
   await expect(page.getByText('Lessons will be ready shortly.')).toBeVisible({
@@ -149,6 +155,20 @@ test('shows a lessons section skeleton while the lesson catalog is loading', asy
   });
   await expect(page.getByText('No active lessons')).toHaveCount(0);
   await expect(page.getByTestId('lesson-card-lesson-clock')).toHaveCount(0);
+
+  const [introBox, listBox, skeletonBox] = await Promise.all([
+    introCard.boundingBox(),
+    listTransition.boundingBox(),
+    catalogSkeleton.boundingBox(),
+  ]);
+
+  expect(introBox).not.toBeNull();
+  expect(listBox).not.toBeNull();
+  expect(skeletonBox).not.toBeNull();
+
+  expect(listBox!.y).toBeGreaterThan(introBox!.y + introBox!.height - 8);
+  expect(skeletonBox!.y).toBeGreaterThan(introBox!.y + introBox!.height - 8);
+  expect(Math.abs(skeletonBox!.y - listBox!.y)).toBeLessThanOrEqual(8);
 
   const openingSectionButton = page.getByRole('button', { name: /clock focus/i });
   await expect(openingSectionButton).toBeVisible({ timeout: 60_000 });

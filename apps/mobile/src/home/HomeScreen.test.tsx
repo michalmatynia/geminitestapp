@@ -26,6 +26,7 @@ const {
   useKangurMobileRuntimeMock,
   useKangurMobileRecentResultsMock,
   useKangurMobileTrainingFocusMock,
+  useHomeScreenBootStateMock,
 } = vi.hoisted(() => ({
   useLocalSearchParamsMock: vi.fn(),
   useRouterMock: vi.fn(),
@@ -44,6 +45,7 @@ const {
   useKangurMobileRuntimeMock: vi.fn(),
   useKangurMobileRecentResultsMock: vi.fn(),
   useKangurMobileTrainingFocusMock: vi.fn(),
+  useHomeScreenBootStateMock: vi.fn(),
 }));
 
 vi.mock('expo-router', () => ({
@@ -108,6 +110,10 @@ vi.mock('./useKangurMobileTrainingFocus', () => ({
   useKangurMobileTrainingFocus: useKangurMobileTrainingFocusMock,
 }));
 
+vi.mock('./useHomeScreenBootState', () => ({
+  useHomeScreenBootState: useHomeScreenBootStateMock,
+}));
+
 import HomeScreen from '../../app/index';
 
 const renderHomeScreen = (locale?: 'pl' | 'en' | 'de') =>
@@ -130,6 +136,7 @@ describe('HomeScreen', () => {
     useRouterMock.mockReturnValue({
       replace: replaceMock,
     });
+    useHomeScreenBootStateMock.mockReturnValue(false);
     useKangurMobileRuntimeMock.mockReturnValue({
       apiBaseUrl: 'http://localhost:3000',
       apiBaseUrlSource: 'env',
@@ -292,6 +299,18 @@ describe('HomeScreen', () => {
     ).toBeTruthy();
     expect(screen.getByText('Pobieramy wyniki ucznia.')).toBeTruthy();
     expect(screen.queryByText('Login ucznia')).toBeNull();
+  });
+
+  it('renders the home loading shell before the home panels settle', () => {
+    useHomeScreenBootStateMock.mockReturnValue(true);
+
+    renderHomeScreen();
+
+    expect(document.querySelector('[testid="home-loading-shell"]')).not.toBeNull();
+    expect(document.querySelector('[testid="home-loading-hero"]')).not.toBeNull();
+    expect(document.querySelector('[testid="home-loading-account-card"]')).not.toBeNull();
+    expect(document.querySelector('[testid="home-loading-navigation-card"]')).not.toBeNull();
+    expect(screen.queryByText('Kangur mobilnie')).toBeNull();
   });
 
   it('shows duel standing fallbacks when the learner is not yet visible on home', () => {

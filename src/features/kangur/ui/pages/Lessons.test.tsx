@@ -457,6 +457,17 @@ describe('Lessons page subject filtering', () => {
     );
   });
 
+  it('keeps the lessons list slot mounted and shows the skeleton before deferred content resolves', () => {
+    vi.mocked(window.requestAnimationFrame).mockImplementation(() => 0);
+    vi.mocked(window.cancelAnimationFrame).mockImplementation(() => undefined);
+
+    render(<Lessons />);
+
+    expect(screen.getByTestId('lessons-list-transition')).toBeInTheDocument();
+    expect(screen.getByTestId('lessons-catalog-skeleton')).toBeInTheDocument();
+    expect(screen.getByText('Lekcje zaraz beda gotowe.')).toBeInTheDocument();
+  });
+
   it('shows a lesson-section skeleton while the catalog data is loading', () => {
     lessonsLoadingState.value = true;
     lessonSectionsLoadingState.value = true;

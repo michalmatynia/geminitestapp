@@ -104,6 +104,7 @@ describe('GeometrySymmetryGame touch interactions', () => {
 
     const board = screen.getByTestId('geometry-symmetry-board');
     const canvas = screen.getByTestId('geometry-symmetry-canvas');
+    const clearButton = screen.getByRole('button', { name: 'Clear' });
     const checkButton = screen.getByRole('button', { name: 'Check' });
 
     fireEvent.click(checkButton);
@@ -111,6 +112,7 @@ describe('GeometrySymmetryGame touch interactions', () => {
     expect(screen.getByTestId('geometry-symmetry-feedback')).toHaveTextContent(
       'Make a few strokes so there is a line to check.'
     );
+    expect(clearButton).not.toBeDisabled();
 
     fireEvent.pointerDown(canvas, {
       pointerId: 4,
@@ -120,6 +122,28 @@ describe('GeometrySymmetryGame touch interactions', () => {
 
     expect(canvas).toHaveAttribute('data-drawing-active', 'true');
     expect(board).toHaveClass('ring-2');
+    expect(screen.queryByTestId('geometry-symmetry-feedback')).not.toBeInTheDocument();
+  });
+
+  it('allows clearing the empty-check warning without drawing', () => {
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <GeometrySymmetryGame onFinish={() => undefined} />
+      </NextIntlClientProvider>
+    );
+
+    const clearButton = screen.getByRole('button', { name: 'Clear' });
+    const checkButton = screen.getByRole('button', { name: 'Check' });
+
+    fireEvent.click(checkButton);
+
+    expect(screen.getByTestId('geometry-symmetry-feedback')).toHaveTextContent(
+      'Make a few strokes so there is a line to check.'
+    );
+    expect(clearButton).not.toBeDisabled();
+
+    fireEvent.click(clearButton);
+
     expect(screen.queryByTestId('geometry-symmetry-feedback')).not.toBeInTheDocument();
   });
 

@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import {
   analyzeKangurMobileAndroidToolchain,
@@ -10,6 +12,7 @@ import {
   type KangurMobileIosToolchainReport,
   type KangurMobileIosToolchainState,
 } from './check-kangur-mobile-ios-toolchain';
+import { resolveAndroidSdkEnvironment } from './mobile-env';
 
 export type KangurMobileNativeHostReport = {
   android: KangurMobileAndroidToolchainReport;
@@ -38,13 +41,32 @@ const runCommand = (
 
 export const collectKangurMobileAndroidToolchainState =
   (env: NodeJS.ProcessEnv = process.env): KangurMobileAndroidToolchainState => {
-    const adb = runCommand('adb', ['version']);
-    const emulator = runCommand('emulator', ['-version']);
+    const resolvedEnvironment = resolveAndroidSdkEnvironment(env);
+    const resolveSdkToolCommand = (
+      segments: string[],
+      fallbackCommand: string,
+    ): string => {
+      const androidSdkRoot = resolvedEnvironment.androidSdkRoot;
+      if (!androidSdkRoot) {
+        return fallbackCommand;
+      }
+
+      const candidate = join(androidSdkRoot, ...segments);
+      return existsSync(candidate) ? candidate : fallbackCommand;
+    };
+    const adb = runCommand(
+      resolveSdkToolCommand(['platform-tools', 'adb'], 'adb'),
+      ['version'],
+    );
+    const emulator = runCommand(
+      resolveSdkToolCommand(['emulator', 'emulator'], 'emulator'),
+      ['-version'],
+    );
 
     return {
       adbAvailable: adb.ok,
-      androidHome: env['ANDROID_HOME']?.trim() || null,
-      androidSdkRoot: env['ANDROID_SDK_ROOT']?.trim() || null,
+      androidHome: resolvedEnvironment.androidHome,
+      androidSdkRoot: resolvedEnvironment.androidSdkRoot,
       emulatorAvailable: emulator.ok,
     };
   };

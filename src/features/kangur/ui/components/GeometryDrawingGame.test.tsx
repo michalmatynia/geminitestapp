@@ -156,6 +156,7 @@ describe('GeometryDrawingGame', () => {
 
     const canvas = screen.getByTestId('geometry-drawing-canvas');
     const board = screen.getByTestId('geometry-drawing-board');
+    const clearButton = screen.getByRole('button', { name: /wyczyść/i });
     const checkButton = screen.getByRole('button', { name: /sprawdź/i });
 
     fireEvent.click(checkButton);
@@ -163,6 +164,7 @@ describe('GeometryDrawingGame', () => {
     expect(screen.getByTestId('geometry-drawing-feedback')).toHaveTextContent(
       'Narysuj figurę trochę dłużej, żeby można było ją ocenić.'
     );
+    expect(clearButton).not.toBeDisabled();
 
     fireEvent.pointerDown(canvas, {
       pointerId: 3,
@@ -172,6 +174,24 @@ describe('GeometryDrawingGame', () => {
 
     expect(canvas).toHaveAttribute('data-drawing-active', 'true');
     expect(board).toHaveClass('ring-2');
+    expect(screen.queryByTestId('geometry-drawing-feedback')).not.toBeInTheDocument();
+  });
+
+  it('allows clearing the empty-check warning without drawing', () => {
+    render(<GeometryDrawingGame onFinish={() => undefined} />);
+
+    const clearButton = screen.getByRole('button', { name: /wyczyść/i });
+    const checkButton = screen.getByRole('button', { name: /sprawdź/i });
+
+    fireEvent.click(checkButton);
+
+    expect(screen.getByTestId('geometry-drawing-feedback')).toHaveTextContent(
+      'Narysuj figurę trochę dłużej, żeby można było ją ocenić.'
+    );
+    expect(clearButton).not.toBeDisabled();
+
+    fireEvent.click(clearButton);
+
     expect(screen.queryByTestId('geometry-drawing-feedback')).not.toBeInTheDocument();
   });
 

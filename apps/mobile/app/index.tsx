@@ -18,6 +18,7 @@ import {
   resolveKangurHomeDebugProofOperation,
 } from '../src/home/homeDebugProof';
 import { getKangurHomeAuthBoundaryViewModel } from '../src/home/homeAuthBoundary';
+import { HomeLoadingShell } from '../src/home/HomeLoadingShell';
 import { useKangurMobileHomeDuelsPresence } from '../src/home/useKangurMobileHomeDuelsPresence';
 import { useKangurMobileHomeDuelsRematches } from '../src/home/useKangurMobileHomeDuelsRematches';
 import { useKangurMobileHomeDuelsLeaderboard } from '../src/home/useKangurMobileHomeDuelsLeaderboard';
@@ -41,6 +42,7 @@ import { useKangurMobileHomeDuelsSpotlight } from '../src/home/useKangurMobileHo
 import { useKangurMobileRecentResults } from '../src/home/useKangurMobileRecentResults';
 import { useKangurMobileHomeDuelsInvites } from '../src/home/useKangurMobileHomeDuelsInvites';
 import { useKangurMobileTrainingFocus } from '../src/home/useKangurMobileTrainingFocus';
+import { useHomeScreenBootState } from '../src/home/useHomeScreenBootState';
 import { useKangurMobileI18n } from '../src/i18n/kangurMobileI18n';
 import { createKangurLessonHref } from '../src/lessons/lessonHref';
 import { createKangurPlanHref } from '../src/plan/planHref';
@@ -832,6 +834,7 @@ export default function HomeScreen(): React.JSX.Element {
   const duelRematches = useKangurMobileHomeDuelsRematches();
   const duelSpotlight = useKangurMobileHomeDuelsSpotlight();
   const trainingFocus = useKangurMobileTrainingFocus();
+  const isPreparingHomeView = useHomeScreenBootState('home');
   const authBoundary = getKangurHomeAuthBoundaryViewModel({
     authError,
     developerAutoSignInEnabled,
@@ -907,6 +910,10 @@ export default function HomeScreen(): React.JSX.Element {
       setSharingDuelSessionId(null);
     }
   };
+
+  if (isPreparingHomeView) {
+    return <HomeLoadingShell />;
+  }
 
   return (
     <SafeAreaView style={{ backgroundColor: '#fffaf2', flex: 1 }}>

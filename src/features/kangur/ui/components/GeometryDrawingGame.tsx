@@ -1000,7 +1000,7 @@ export default function GeometryDrawingGame({
               <KangurPanelRow className='w-full'>
                 <KangurButton
                   className='w-full sm:flex-1'
-                  disabled={isResultLocked || points.length === 0}
+                  disabled={isResultLocked || (points.length === 0 && feedback === null)}
                   onClick={clearDrawing}
                   type='button'
                   size='lg'

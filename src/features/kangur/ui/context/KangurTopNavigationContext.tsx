@@ -154,7 +154,11 @@ export function KangurTopNavigationProvider({
   );
 }
 
-export function KangurTopNavigationHost(): React.JSX.Element | null {
+export function KangurTopNavigationHost({
+  fallback = null,
+}: {
+  fallback?: ReactNode;
+} = {}): React.JSX.Element | null {
   const state = useContext(KangurTopNavigationStateContext);
   if (!state) {
     throw internalError(
@@ -163,7 +167,7 @@ export function KangurTopNavigationHost(): React.JSX.Element | null {
   }
 
   if (!state.visibleRegistration) {
-    return null;
+    return <>{fallback}</>;
   }
 
   return <KangurPrimaryNavigation {...state.visibleRegistration.navigation} />;

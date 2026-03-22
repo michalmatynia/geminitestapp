@@ -109,4 +109,31 @@ describe('run-with-mobile-env cli', () => {
     expect(result.stdout).toContain(`"${emulatorDir}"`);
     expect(result.stdout).toContain(`"${platformToolsDir}"`);
   });
+
+  it('strips npm wrapper env when spawning child node commands', () => {
+    const result = spawnSync(
+      process.execPath,
+      [
+        '--import',
+        'tsx',
+        RUNNER_PATH,
+        process.execPath,
+        '-e',
+        'console.log(JSON.stringify({ npmLifecycle: process.env.npm_lifecycle_event ?? null, initCwd: process.env.INIT_CWD ?? null }))',
+      ],
+      {
+        cwd: REPO_ROOT,
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          INIT_CWD: '/tmp/fake-mobile-root',
+          npm_lifecycle_event: 'check:native:runtime:android',
+        },
+      },
+    );
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('"npmLifecycle":null');
+    expect(result.stdout).toContain('"initCwd":null');
+  });
 });

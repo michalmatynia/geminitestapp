@@ -1,8 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormMetadataState } from '@/features/products/context/ProductFormMetadataContext';
@@ -26,6 +25,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
 import { ProductFormFooter } from './form/ProductFormFooter';
 import ProductFormGeneral from './form/ProductFormGeneral';
 import { useProductFormValidator } from '../hooks/useProductFormValidator';
+
+const subscribePopstate = (cb: () => void): (() => void) => {
+  window.addEventListener('popstate', cb);
+  return () => window.removeEventListener('popstate', cb);
+};
+const getSearchSnapshot = (): string =>
+  typeof window !== 'undefined' ? window.location.search : '';
+const getSearchServerSnapshot = (): string => '';
 
 const DeferredTabPlaceholder = (): React.JSX.Element => (
   <div className='rounded-lg border border-border/60 bg-background/40 px-4 py-6 text-sm text-muted-foreground'>
@@ -202,7 +209,12 @@ export default function ProductForm({
 }: ProductFormProps): React.JSX.Element {
   const { handleSubmit, product, draft, ConfirmationModal } = useProductFormCore();
 
-  const searchParams = useSearchParams();
+  const searchString = useSyncExternalStore(
+    subscribePopstate,
+    getSearchSnapshot,
+    getSearchServerSnapshot
+  );
+  const searchParams = useMemo(() => new URLSearchParams(searchString), [searchString]);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<ProductDraftOpenFormTab>(() =>
     normalizeProductFormTab(draft?.openProductFormTab)

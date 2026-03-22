@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { delimiter } from 'node:path';
 import { applyDefaultAndroidSdkEnv, loadMobileEnvFiles } from './mobile-env';
 
 const command = process.argv[2];
@@ -13,17 +14,14 @@ const createChildEnv = (
   }
 
   const childEnv: NodeJS.ProcessEnv = { ...env };
-
-  // npm injects a large command-run environment into child Node processes.
-  // The mobile native host/runtime checks should behave the same way whether
-  // they are launched directly or through npm run wrappers.
-  for (const key of Object.keys(childEnv)) {
-    if (key.startsWith('npm_')) {
-      delete childEnv[key];
-    }
-  }
-
-  delete childEnv['INIT_CWD'];
+  const pathEntries = (childEnv['PATH'] ?? '').split(delimiter).filter(Boolean);
+  childEnv['PATH'] = pathEntries
+    .filter(
+      (entry) =>
+        !entry.includes('/node_modules/.bin') &&
+        !entry.includes('/@npmcli/run-script/lib/node-gyp-bin'),
+    )
+    .join(delimiter);
 
   return childEnv;
 };

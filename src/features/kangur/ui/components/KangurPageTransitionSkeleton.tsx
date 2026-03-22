@@ -2,15 +2,27 @@ import { useTranslations } from 'next-intl';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   KangurGlassPanel,
+  KangurInfoCard,
 } from '@/features/kangur/ui/design/primitives';
 import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
 import {
+  GAME_HOME_ACTIONS_LIST_CLASSNAME,
   GAME_HOME_ACTIONS_COLUMN_CLASSNAME,
+  GAME_HOME_ACTIONS_SHELL_CLASSNAME,
+  GAME_HOME_ASSIGNMENT_SPOTLIGHT_INNER_SHELL_CLASSNAME,
+  GAME_HOME_ASSIGNMENT_SPOTLIGHT_SHELL_CLASSNAME,
   GAME_HOME_CENTERED_SECTION_CLASSNAME,
+  GAME_HOME_DUELS_SHELL_CLASSNAME,
+  GAME_HOME_HERO_SHELL_CLASSNAME,
   GAME_HOME_LAYOUT_CLASSNAME,
+  GAME_HOME_LEADERBOARD_COLUMN_CLASSNAME,
+  GAME_HOME_LEADERBOARD_SHELL_CLASSNAME,
+  GAME_HOME_PLAYER_PROGRESS_COLUMN_CLASSNAME,
+  GAME_HOME_PLAYER_PROGRESS_SHELL_CLASSNAME,
   GAME_HOME_PROGRESS_GRID_CLASSNAME,
+  GAME_HOME_QUEST_SHELL_CLASSNAME,
   GAME_HOME_SECTION_CLASSNAME,
   GAME_PAGE_STANDARD_CONTAINER_CLASSNAME,
 } from '@/features/kangur/ui/pages/GameHome.constants';
@@ -22,6 +34,7 @@ import {
 } from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 import {
   KANGUR_LESSON_PANEL_GAP_CLASSNAME,
+  KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_PANEL_ROW_CLASSNAME,
   KANGUR_TOP_BAR_OFFSET_CLASSNAME,
@@ -109,10 +122,89 @@ const SkeletonPanel = ({
   </div>
 );
 
+const SkeletonGlassPanel = ({
+  children,
+  className,
+  dataTestId,
+  padding = 'lg',
+  surface = 'mist',
+  variant = 'soft',
+}: {
+  children?: React.ReactNode;
+  className?: string;
+  dataTestId?: string;
+  padding?: React.ComponentProps<typeof KangurGlassPanel>['padding'];
+  surface?: React.ComponentProps<typeof KangurGlassPanel>['surface'];
+  variant?: React.ComponentProps<typeof KangurGlassPanel>['variant'];
+}): React.JSX.Element => (
+  <KangurGlassPanel
+    className={className}
+    data-testid={dataTestId}
+    padding={padding}
+    surface={surface}
+    variant={variant}
+  >
+    {children}
+  </KangurGlassPanel>
+);
+
+const SkeletonInfoSurface = ({
+  children,
+  className,
+  dataTestId,
+  padding = 'md',
+  tone = 'neutral',
+}: {
+  children?: React.ReactNode;
+  className?: string;
+  dataTestId?: string;
+  padding?: React.ComponentProps<typeof KangurInfoCard>['padding'];
+  tone?: React.ComponentProps<typeof KangurInfoCard>['tone'];
+}): React.JSX.Element => (
+  <KangurInfoCard className={className} data-testid={dataTestId} padding={padding} tone={tone}>
+    {children}
+  </KangurInfoCard>
+);
+
 const SkeletonLine = ({ className }: { className?: string }): React.JSX.Element => {
   const lineClassName = className;
   return <SkeletonBlock className={cn('h-4 rounded-full', lineClassName)} />;
 };
+
+const HOME_ACTION_SKELETONS = [
+  { id: 'lessons', themeClassName: 'home-action-theme-neutral' },
+  { id: 'play', themeClassName: 'home-action-theme-violet' },
+  { id: 'duels', themeClassName: 'home-action-theme-sky' },
+  { id: 'kangur', themeClassName: 'home-action-theme-sand' },
+] as const;
+
+const HomeActionSkeletonCard = ({
+  actionId,
+  themeClassName,
+}: {
+  actionId: (typeof HOME_ACTION_SKELETONS)[number]['id'];
+  themeClassName: (typeof HOME_ACTION_SKELETONS)[number]['themeClassName'];
+}): React.JSX.Element => (
+  <div
+    className={cn('relative home-action-featured-shell pointer-events-none', themeClassName)}
+    data-home-action={actionId}
+    data-testid={`kangur-page-transition-skeleton-game-home-action-${actionId}`}
+  >
+    <div className='home-action-featured-underlay' />
+    <div className='relative z-10 w-full home-action-featured' role='presentation'>
+      <span className='home-action-featured-face' />
+      <span className='home-action-featured-accent' />
+      <span className='pointer-events-none absolute inset-[1px] rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.42)_0%,rgba(255,255,255,0.12)_36%,rgba(255,255,255,0)_58%)] opacity-82' />
+      <span className='pointer-events-none absolute left-[10%] top-[18%] h-[34px] w-[140px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.18)_0%,rgba(255,255,255,0)_70%)] opacity-60 blur-xl sm:h-[52px] sm:w-[220px]' />
+      <span className='pointer-events-none absolute right-[8%] top-[14%] h-[36px] w-[110px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.1)_0%,rgba(255,255,255,0)_72%)] opacity-45 blur-xl sm:h-[60px] sm:w-[180px]' />
+      <span className='relative z-10 flex w-full min-w-0 flex-col items-center justify-center gap-0.5 text-[12px] font-semibold leading-tight tracking-[-0.03em] sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-5 sm:text-[22px] sm:leading-none sm:tracking-[-0.04em]'>
+        <SkeletonBlock className='h-6 w-6 rounded-full bg-white/50 sm:h-8 sm:w-8 sm:justify-self-end' />
+        <SkeletonLine className='h-4 w-24 rounded-full bg-white/72 sm:h-6 sm:w-36 sm:justify-self-center' />
+        <SkeletonBlock className='hidden h-6 w-6 rounded-full bg-white/40 sm:inline-block sm:h-8 sm:w-8 sm:justify-self-start' />
+      </span>
+    </div>
+  </div>
+);
 
 const GameHomeSkeleton = (): React.JSX.Element => (
   <div
@@ -123,47 +215,133 @@ const GameHomeSkeleton = (): React.JSX.Element => (
       className={GAME_HOME_SECTION_CLASSNAME}
       data-testid='kangur-page-transition-skeleton-game-home-parent-spotlight'
     >
-      <SkeletonPanel className='min-h-[200px]'>
-        <div className='space-y-4'>
-          <SkeletonChip className='h-7 w-40' />
-          <SkeletonLine className='h-8 w-3/4 max-w-[520px]' />
-          <SkeletonLine className='w-full max-w-[640px]' />
-          <div className='grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'>
-            <SkeletonBlock className='h-20 rounded-[24px] bg-slate-200/76' />
-            <SkeletonBlock className='h-20 rounded-[24px] bg-slate-200/76' />
-          </div>
+      <SkeletonGlassPanel
+        className={GAME_HOME_ASSIGNMENT_SPOTLIGHT_SHELL_CLASSNAME}
+        dataTestId='kangur-page-transition-skeleton-game-home-parent-spotlight-shell'
+        padding='md'
+        surface='mist'
+        variant='elevated'
+      >
+        <div className='px-3 pt-2 sm:px-4'>
+          <SkeletonLine className='h-8 w-44 max-w-full' />
         </div>
-      </SkeletonPanel>
+        <SkeletonGlassPanel
+          className={GAME_HOME_ASSIGNMENT_SPOTLIGHT_INNER_SHELL_CLASSNAME}
+          dataTestId='kangur-page-transition-skeleton-game-home-parent-spotlight-inner-shell'
+          padding='lg'
+          surface='solid'
+          variant='subtle'
+        >
+          <SkeletonChip className='mb-3 h-10 w-16 sm:absolute sm:right-5 sm:top-5 sm:mb-0' />
+          <div className='sm:pr-24'>
+            <div className={KANGUR_WRAP_ROW_CLASSNAME}>
+              <SkeletonChip className='h-6 w-24' />
+              <SkeletonChip className='h-6 w-20' />
+            </div>
+            <div className='mt-4 flex items-start kangur-panel-gap'>
+              <SkeletonBlock className='mt-1 h-7 w-7 rounded-full bg-slate-200/76' />
+              <div className='min-w-0 flex-1 space-y-4'>
+                <SkeletonLine className='h-8 w-2/3 max-w-[420px]' />
+                <SkeletonLine className='w-full max-w-[560px]' />
+                <SkeletonLine className='w-5/6 max-w-[460px]' />
+              </div>
+            </div>
+          </div>
+          <div className='mt-6 flex justify-center'>
+            <SkeletonBlock className='h-16 w-full max-w-[360px] rounded-[28px] bg-amber-100/80' />
+          </div>
+          <div className='mt-5 space-y-4'>
+            <SkeletonLine className='h-px w-full rounded-full bg-slate-200/80' />
+            <SkeletonLine className='w-full max-w-[520px]' />
+          </div>
+          <SkeletonBlock className='mt-5 h-12 w-full rounded-[22px] bg-slate-200/76' />
+        </SkeletonGlassPanel>
+      </SkeletonGlassPanel>
     </section>
 
     <div
       className={GAME_HOME_ACTIONS_COLUMN_CLASSNAME}
       data-testid='kangur-page-transition-skeleton-game-home-actions-column'
     >
-      <SkeletonPanel className='min-h-[248px]'>
-        <div className='grid grid-cols-1 kangur-panel-gap'>
-          <SkeletonBlock className='h-16 rounded-full bg-slate-200/76' />
-          <SkeletonBlock className='h-16 rounded-full bg-slate-200/76' />
-          <SkeletonBlock className='h-16 rounded-full bg-slate-200/76' />
-          <SkeletonBlock className='h-16 rounded-full bg-slate-200/76' />
+      <SkeletonGlassPanel
+        className={GAME_HOME_ACTIONS_SHELL_CLASSNAME}
+        dataTestId='kangur-page-transition-skeleton-game-home-actions-shell'
+        padding='lg'
+        surface='mist'
+        variant='soft'
+      >
+        <div
+          className={GAME_HOME_ACTIONS_LIST_CLASSNAME}
+          data-testid='kangur-page-transition-skeleton-game-home-actions-list'
+        >
+          {HOME_ACTION_SKELETONS.map((action) => (
+            <HomeActionSkeletonCard
+              key={action.id}
+              actionId={action.id}
+              themeClassName={action.themeClassName}
+            />
+          ))}
         </div>
-      </SkeletonPanel>
-      <SkeletonPanel className='min-h-[176px]'>
-        <div className='space-y-4'>
-          <SkeletonChip className='h-7 w-36' />
-          <SkeletonLine className='h-7 w-2/3 max-w-[360px]' />
-          <SkeletonLine className='w-full max-w-[420px]' />
-          <SkeletonLine className='w-5/6 max-w-[320px]' />
-          <SkeletonBlock className='h-11 w-full max-w-[220px] rounded-[20px] bg-slate-200/76' />
+      </SkeletonGlassPanel>
+      <SkeletonGlassPanel
+        className={GAME_HOME_DUELS_SHELL_CLASSNAME}
+        dataTestId='kangur-page-transition-skeleton-game-home-duels-shell'
+        padding='lg'
+        surface='solid'
+        variant='soft'
+      >
+        <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+          <div className='min-w-0 flex-1 space-y-2'>
+            <div className={KANGUR_WRAP_ROW_CLASSNAME}>
+              <SkeletonLine className='h-6 w-32' />
+              <SkeletonChip className='h-6 w-8' />
+            </div>
+            <SkeletonLine className='w-full max-w-[320px]' />
+          </div>
+          <SkeletonBlock className='h-10 w-full rounded-[18px] bg-slate-200/76 sm:w-32' />
         </div>
-      </SkeletonPanel>
+        <div className={KANGUR_GRID_TIGHT_CLASSNAME}>
+          <SkeletonInfoSurface className='flex flex-col gap-3 p-4' dataTestId='kangur-page-transition-skeleton-game-home-duels-card-1'>
+            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+              <div className='space-y-2'>
+                <SkeletonLine className='h-5 w-28' />
+                <SkeletonLine className='w-40' />
+              </div>
+              <SkeletonChip className='h-6 w-20' />
+            </div>
+            <div className={KANGUR_WRAP_ROW_CLASSNAME}>
+              <SkeletonChip className='h-6 w-20' />
+              <SkeletonChip className='h-6 w-24' />
+            </div>
+          </SkeletonInfoSurface>
+          <SkeletonInfoSurface className='flex flex-col gap-3 p-4' dataTestId='kangur-page-transition-skeleton-game-home-duels-card-2'>
+            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+              <div className='space-y-2'>
+                <SkeletonLine className='h-5 w-24' />
+                <SkeletonLine className='w-36' />
+              </div>
+              <SkeletonChip className='h-6 w-16' />
+            </div>
+            <div className={KANGUR_WRAP_ROW_CLASSNAME}>
+              <SkeletonChip className='h-6 w-20' />
+              <SkeletonChip className='h-6 w-20' />
+            </div>
+          </SkeletonInfoSurface>
+        </div>
+      </SkeletonGlassPanel>
     </div>
 
     <section
       className={GAME_HOME_CENTERED_SECTION_CLASSNAME}
       data-testid='kangur-page-transition-skeleton-game-home-quest'
     >
-      <SkeletonPanel className='min-h-[240px]'>
+      <SkeletonGlassPanel
+        className={GAME_HOME_QUEST_SHELL_CLASSNAME}
+        dataTestId='kangur-page-transition-skeleton-game-home-quest-shell'
+        padding='lg'
+        surface='mistStrong'
+        variant='soft'
+      >
         <div className='space-y-4'>
           <SkeletonChip className='h-7 w-28' />
           <SkeletonChip className='h-7 w-24' />
@@ -176,50 +354,137 @@ const GameHomeSkeleton = (): React.JSX.Element => (
             <SkeletonChip className='h-6 w-28' />
             <SkeletonChip className='h-6 w-20' />
           </div>
+          <SkeletonBlock className='h-3 w-full max-w-sm rounded-full bg-slate-200/72' />
         </div>
-      </SkeletonPanel>
+      </SkeletonGlassPanel>
     </section>
 
     <section
       className={GAME_HOME_SECTION_CLASSNAME}
       data-testid='kangur-page-transition-skeleton-game-home-summary'
     >
-      <SkeletonPanel className='min-h-[240px]'>
-        <div className='space-y-4'>
-          <div className={KANGUR_WRAP_ROW_CLASSNAME}>
-            <SkeletonChip className='h-7 w-28' />
-            <SkeletonChip className='h-7 w-24' />
-            <SkeletonChip className='h-7 w-32' />
-          </div>
-          <SkeletonLine className='h-9 w-3/4 max-w-[520px]' />
-          <SkeletonLine className='w-full max-w-[640px]' />
-          <SkeletonLine className='w-2/3 max-w-[420px]' />
-          <div className={KANGUR_WRAP_ROW_CLASSNAME}>
-            <SkeletonChip className='h-6 w-24' />
-            <SkeletonChip className='h-6 w-28' />
-            <SkeletonChip className='h-6 w-20' />
-          </div>
-          <SkeletonLine className='h-3 w-1/3 max-w-[200px]' />
-          <SkeletonBlock className='h-11 w-full max-w-[220px] rounded-[20px] bg-slate-200/76' />
+      <div
+        className={GAME_HOME_HERO_SHELL_CLASSNAME}
+        data-testid='kangur-page-transition-skeleton-game-home-summary-shell'
+      >
+        <div className='space-y-2' data-testid='kangur-page-transition-skeleton-game-home-summary-copy'>
+          <SkeletonLine className='h-5 w-36' />
+          <SkeletonLine className='h-8 w-3/4 max-w-[420px]' />
+          <SkeletonLine className='w-full max-w-[560px]' />
         </div>
-      </SkeletonPanel>
+        <SkeletonGlassPanel
+          className='mx-auto w-full max-w-3xl'
+          dataTestId='kangur-page-transition-skeleton-game-home-summary-spotlight-shell'
+          padding='md'
+          surface='mist'
+          variant='elevated'
+        >
+          <div className='px-3 pt-2 sm:px-4'>
+            <SkeletonLine className='h-7 w-40' />
+          </div>
+          <SkeletonGlassPanel
+            className='relative mt-4'
+            dataTestId='kangur-page-transition-skeleton-game-home-summary-spotlight-inner-shell'
+            padding='lg'
+            surface='solid'
+            variant='subtle'
+          >
+            <SkeletonChip className='mb-3 h-8 w-16 sm:absolute sm:right-5 sm:top-5 sm:mb-0' />
+            <div className='sm:pr-24'>
+              <div className={KANGUR_WRAP_ROW_CLASSNAME}>
+                <SkeletonChip className='h-6 w-20' />
+                <SkeletonChip className='h-6 w-24' />
+              </div>
+              <div className='mt-4 space-y-3'>
+                <SkeletonLine className='h-7 w-2/3 max-w-[360px]' />
+                <SkeletonLine className='w-full max-w-[520px]' />
+                <SkeletonLine className='w-4/5 max-w-[460px]' />
+              </div>
+            </div>
+          </SkeletonGlassPanel>
+        </SkeletonGlassPanel>
+        <div
+          className='grid kangur-panel-gap text-left'
+          data-testid='kangur-page-transition-skeleton-game-home-summary-milestones'
+        >
+          <div className='rounded-[28px] border border-amber-200/80 px-4 py-4 bg-amber-50/50'>
+            <div className='space-y-4'>
+              <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+                <div className='space-y-2'>
+                  <SkeletonLine className='h-5 w-40' />
+                  <SkeletonLine className='h-7 w-56' />
+                  <SkeletonLine className='w-full max-w-[420px]' />
+                </div>
+                <SkeletonChip className='h-6 w-24' />
+              </div>
+              <SkeletonBlock className='h-3 w-full rounded-full bg-amber-100/80' />
+            </div>
+          </div>
+          <div className='grid kangur-panel-gap min-[420px]:grid-cols-2'>
+            <SkeletonInfoSurface className='space-y-3 p-4' dataTestId='kangur-page-transition-skeleton-game-home-summary-track-1'>
+              <SkeletonLine className='h-5 w-28' />
+              <SkeletonLine className='w-full' />
+              <SkeletonBlock className='h-3 w-full rounded-full bg-slate-200/72' />
+            </SkeletonInfoSurface>
+            <SkeletonInfoSurface className='space-y-3 p-4' dataTestId='kangur-page-transition-skeleton-game-home-summary-track-2'>
+              <SkeletonLine className='h-5 w-24' />
+              <SkeletonLine className='w-full' />
+              <SkeletonBlock className='h-3 w-full rounded-full bg-slate-200/72' />
+            </SkeletonInfoSurface>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section
       className={GAME_HOME_CENTERED_SECTION_CLASSNAME}
       data-testid='kangur-page-transition-skeleton-game-home-assignments'
     >
-      <SkeletonPanel className='min-h-[240px]'>
-        <div className='space-y-4'>
-          <SkeletonLine className='h-4 w-32' />
-          <SkeletonLine className='h-7 w-2/3 max-w-[420px]' />
-          <SkeletonLine className='w-full max-w-[640px]' />
-          <div className='space-y-3 pt-2'>
-            <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
-            <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
-          </div>
+      <SkeletonGlassPanel
+        className='w-full'
+        dataTestId='kangur-page-transition-skeleton-game-home-assignments-shell'
+        padding='lg'
+        surface='mist'
+        variant='soft'
+      >
+        <div className='mb-5 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between'>
+          <SkeletonLine className='h-8 w-52' />
+          <SkeletonLine className='h-5 w-14' />
         </div>
-      </SkeletonPanel>
+        <div className='mb-4 space-y-2'>
+          <SkeletonLine className='w-full max-w-[560px]' />
+        </div>
+        <div className='space-y-3'>
+          <SkeletonInfoSurface className='space-y-4 p-5' dataTestId='kangur-page-transition-skeleton-game-home-assignments-card-1' padding='lg'>
+            <div className={KANGUR_WRAP_ROW_CLASSNAME}>
+              <SkeletonChip className='h-6 w-20' />
+              <SkeletonChip className='h-6 w-16' />
+              <SkeletonChip className='h-8 w-14' />
+            </div>
+            <SkeletonLine className='h-6 w-3/4 max-w-[420px]' />
+            <SkeletonLine className='w-full max-w-[560px]' />
+            <SkeletonLine className='h-px w-full rounded-full bg-slate-200/80' />
+            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+              <SkeletonLine className='w-full max-w-[280px]' />
+              <SkeletonBlock className='h-10 w-full rounded-[18px] bg-slate-200/76 sm:w-32' />
+            </div>
+          </SkeletonInfoSurface>
+          <SkeletonInfoSurface className='space-y-4 p-5' dataTestId='kangur-page-transition-skeleton-game-home-assignments-card-2' padding='lg'>
+            <div className={KANGUR_WRAP_ROW_CLASSNAME}>
+              <SkeletonChip className='h-6 w-24' />
+              <SkeletonChip className='h-6 w-16' />
+              <SkeletonChip className='h-8 w-14' />
+            </div>
+            <SkeletonLine className='h-6 w-2/3 max-w-[380px]' />
+            <SkeletonLine className='w-full max-w-[520px]' />
+            <SkeletonLine className='h-px w-full rounded-full bg-slate-200/80' />
+            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+              <SkeletonLine className='w-full max-w-[260px]' />
+              <SkeletonBlock className='h-10 w-full rounded-[18px] bg-slate-200/76 sm:w-32' />
+            </div>
+          </SkeletonInfoSurface>
+        </div>
+      </SkeletonGlassPanel>
     </section>
 
     <section
@@ -227,38 +492,118 @@ const GameHomeSkeleton = (): React.JSX.Element => (
       data-testid='kangur-page-transition-skeleton-game-home-progress-grid'
     >
       <div
-        className='order-2 flex w-full justify-center xl:order-1'
+        className={GAME_HOME_LEADERBOARD_COLUMN_CLASSNAME}
         data-testid='kangur-page-transition-skeleton-game-home-leaderboard'
       >
-        <SkeletonPanel className='min-h-[320px]'>
-          <div className='space-y-4'>
-            <SkeletonChip className='h-7 w-32' />
-            <SkeletonLine className='h-6 w-1/2' />
-            <SkeletonLine className='w-full' />
-            <SkeletonLine className='w-5/6' />
-            <SkeletonLine className='w-4/6' />
-            <div className='space-y-3 pt-3'>
-              <SkeletonBlock className='h-16 rounded-[22px] bg-slate-200/78' />
-              <SkeletonBlock className='h-16 rounded-[22px] bg-slate-200/78' />
-              <SkeletonBlock className='h-16 rounded-[22px] bg-slate-200/78' />
+        <SkeletonGlassPanel
+          className={GAME_HOME_LEADERBOARD_SHELL_CLASSNAME}
+          dataTestId='kangur-page-transition-skeleton-game-home-leaderboard-shell'
+          padding='lg'
+          surface='solid'
+          variant='soft'
+        >
+          <div className='mb-4 flex items-center gap-2'>
+            <SkeletonBlock className='h-6 w-6 rounded-full bg-amber-100/80' />
+            <SkeletonLine className='h-7 w-36' />
+          </div>
+          <div className='mb-4 space-y-2'>
+            <div className='flex w-full flex-col gap-1.5 rounded-[28px] border p-1.5 sm:flex-row sm:flex-wrap sm:justify-start'>
+              <SkeletonBlock className='h-10 flex-1 rounded-[18px] bg-slate-200/76 sm:w-20 sm:flex-none' />
+              <SkeletonBlock className='h-10 flex-1 rounded-[18px] bg-slate-200/76 sm:w-20 sm:flex-none' />
+              <SkeletonBlock className='h-10 flex-1 rounded-[18px] bg-slate-200/76 sm:w-20 sm:flex-none' />
+            </div>
+            <div className='flex w-full flex-col gap-1.5 rounded-[28px] border p-1.5 sm:flex-row sm:flex-wrap sm:justify-start'>
+              <SkeletonBlock className='h-10 flex-1 rounded-[18px] bg-slate-200/76 sm:w-24 sm:flex-none' />
+              <SkeletonBlock className='h-10 flex-1 rounded-[18px] bg-slate-200/76 sm:w-24 sm:flex-none' />
             </div>
           </div>
-        </SkeletonPanel>
+          <div className='space-y-2'>
+            <SkeletonInfoSurface className='flex flex-col gap-3 p-3 sm:flex-row sm:items-center' dataTestId='kangur-page-transition-skeleton-game-home-leaderboard-row-1' padding='sm'>
+              <SkeletonBlock className='h-7 w-7 rounded-full bg-slate-200/76' />
+              <div className='min-w-0 flex-1 space-y-2'>
+                <SkeletonLine className='h-5 w-28' />
+                <SkeletonLine className='w-24' />
+              </div>
+              <div className='space-y-2 sm:text-right'>
+                <SkeletonLine className='h-5 w-20' />
+                <SkeletonLine className='w-16' />
+              </div>
+            </SkeletonInfoSurface>
+            <SkeletonInfoSurface className='flex flex-col gap-3 p-3 sm:flex-row sm:items-center' dataTestId='kangur-page-transition-skeleton-game-home-leaderboard-row-2' padding='sm'>
+              <SkeletonBlock className='h-7 w-7 rounded-full bg-slate-200/76' />
+              <div className='min-w-0 flex-1 space-y-2'>
+                <SkeletonLine className='h-5 w-24' />
+                <SkeletonLine className='w-20' />
+              </div>
+              <div className='space-y-2 sm:text-right'>
+                <SkeletonLine className='h-5 w-18' />
+                <SkeletonLine className='w-14' />
+              </div>
+            </SkeletonInfoSurface>
+          </div>
+        </SkeletonGlassPanel>
       </div>
       <div
-        className='order-1 flex w-full justify-center xl:order-2'
+        className={GAME_HOME_PLAYER_PROGRESS_COLUMN_CLASSNAME}
         data-testid='kangur-page-transition-skeleton-game-home-player-progress'
       >
-        <SkeletonPanel className='min-h-[320px]'>
-          <div className='space-y-4'>
-            <SkeletonChip className='h-7 w-28' />
-            <SkeletonBlock className='h-44 rounded-[28px] bg-slate-200/80' />
-            <div className='grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'>
-              <SkeletonBlock className='h-20 rounded-[22px] bg-slate-200/76' />
-              <SkeletonBlock className='h-20 rounded-[22px] bg-slate-200/76' />
+        <SkeletonGlassPanel
+          className={GAME_HOME_PLAYER_PROGRESS_SHELL_CLASSNAME}
+          dataTestId='kangur-page-transition-skeleton-game-home-player-progress-shell'
+          padding='lg'
+          surface='solid'
+          variant='soft'
+        >
+          <div className='space-y-2'>
+            <SkeletonLine className='h-5 w-28' />
+            <SkeletonLine className='w-full max-w-[220px]' />
+          </div>
+          <div className='flex items-start kangur-panel-gap sm:items-center'>
+            <SkeletonBlock className='h-10 w-10 rounded-full bg-slate-200/76' />
+            <div className='min-w-0 flex-1 space-y-2'>
+              <SkeletonLine className='h-6 w-28' />
+              <SkeletonLine className='w-32' />
             </div>
           </div>
-        </SkeletonPanel>
+          <div className='space-y-2'>
+            <div className='flex flex-col gap-1 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between'>
+              <SkeletonLine className='w-16' />
+              <SkeletonLine className='w-28' />
+            </div>
+            <SkeletonBlock className='h-3 w-full rounded-full bg-slate-200/72' />
+          </div>
+          <div className='grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'>
+            <SkeletonInfoSurface className='p-4' dataTestId='kangur-page-transition-skeleton-game-home-player-progress-metric-1'>
+              <div className='space-y-2'>
+                <SkeletonLine className='w-16' />
+                <SkeletonLine className='h-7 w-14' />
+              </div>
+            </SkeletonInfoSurface>
+            <SkeletonInfoSurface className='p-4' dataTestId='kangur-page-transition-skeleton-game-home-player-progress-metric-2'>
+              <div className='space-y-2'>
+                <SkeletonLine className='w-18' />
+                <SkeletonLine className='h-7 w-14' />
+              </div>
+            </SkeletonInfoSurface>
+            <SkeletonInfoSurface className='p-4' dataTestId='kangur-page-transition-skeleton-game-home-player-progress-metric-3'>
+              <div className='space-y-2'>
+                <SkeletonLine className='w-20' />
+                <SkeletonLine className='h-7 w-12' />
+              </div>
+            </SkeletonInfoSurface>
+            <SkeletonInfoSurface className='p-4' dataTestId='kangur-page-transition-skeleton-game-home-player-progress-metric-4'>
+              <div className='space-y-2'>
+                <SkeletonLine className='w-18' />
+                <SkeletonLine className='h-7 w-10' />
+              </div>
+            </SkeletonInfoSurface>
+          </div>
+          <SkeletonInfoSurface className='space-y-3 p-4' dataTestId='kangur-page-transition-skeleton-game-home-player-progress-top-activity'>
+            <SkeletonLine className='w-24' />
+            <SkeletonLine className='h-6 w-40' />
+            <SkeletonLine className='w-full max-w-[260px]' />
+          </SkeletonInfoSurface>
+        </SkeletonGlassPanel>
       </div>
     </section>
   </div>

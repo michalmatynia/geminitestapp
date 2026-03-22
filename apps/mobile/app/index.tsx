@@ -55,12 +55,14 @@ import {
 import {
   formatKangurMobileScoreOperation,
 } from '../src/scores/mobileScoreSummary';
+import { createKangurTestsHref } from '../src/tests/testsHref';
 
 const RESULTS_ROUTE = '/results' as Href;
 const PROFILE_ROUTE = '/profile' as Href;
 const LEADERBOARD_ROUTE = '/leaderboard' as Href;
 const LESSONS_ROUTE = '/lessons' as Href;
 const PRACTICE_ROUTE = createKangurPracticeHref('mixed');
+const TESTS_ROUTE = createKangurTestsHref();
 const PLAN_ROUTE = createKangurPlanHref();
 const DUELS_ROUTE = createKangurDuelsHref();
 
@@ -1284,6 +1286,19 @@ export default function HomeScreen(): React.JSX.Element {
                 de: 'Training',
                 en: 'Practice',
                 pl: 'Trening',
+              })}
+            />
+            <OutlineLink
+              href={TESTS_ROUTE}
+              hint={copy({
+                de: 'Öffnet die Tests.',
+                en: 'Opens tests.',
+                pl: 'Otwiera testy.',
+              })}
+              label={copy({
+                de: 'Tests',
+                en: 'Tests',
+                pl: 'Testy',
               })}
             />
             <OutlineLink

@@ -31,6 +31,7 @@ type HarnessProps = {
   persistedSelectionPageRects?: DOMRect[];
   persistedSelectionRect?: DOMRect | null;
   selectionGuidanceCalloutVisibleText?: string | null;
+  selectionResponseComplete?: PendingSelectionResponse | null;
   selectionResponsePending?: PendingSelectionResponse | null;
   tutorAnchorContext?: { anchors: KangurTutorAnchorRegistration[] } | null;
 };
@@ -46,6 +47,7 @@ function GuidedDisplayHarness({
   persistedSelectionPageRects = [],
   persistedSelectionRect = null,
   selectionGuidanceCalloutVisibleText = null,
+  selectionResponseComplete = null,
   selectionResponsePending = null,
   tutorAnchorContext = null,
 }: HarnessProps) {
@@ -74,6 +76,7 @@ function GuidedDisplayHarness({
     persistedSelectionRect,
     sectionResponsePending: null,
     selectionGuidanceCalloutVisibleText,
+    selectionResponseComplete,
     selectionResponsePending,
     sessionContentId: 'lesson-1',
     sessionSurface: 'lesson',
@@ -145,7 +148,7 @@ describe('useKangurAiTutorGuidedDisplayState', () => {
 
     expect(screen.getByTestId('ask-modal-mode')).toHaveTextContent('false');
     expect(screen.getByTestId('selection-guidance')).toHaveTextContent('true');
-    expect(screen.getByTestId('guided-mode')).toHaveTextContent('null');
+    expect(screen.getByTestId('guided-mode')).toHaveTextContent('selection');
   });
 
   it('uses the full selection line cluster as the guided focus rect when multiple line rects exist', () => {

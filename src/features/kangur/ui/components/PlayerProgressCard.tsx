@@ -21,7 +21,6 @@ import {
   KangurSectionEyebrow,
 } from '@/features/kangur/ui/design/primitives';
 import {
-  KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_STACK_COMPACT_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import {
@@ -34,6 +33,7 @@ import {
   getRecommendedSessionMomentum,
 } from '@/features/kangur/ui/services/progress';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
+import { GAME_HOME_PLAYER_PROGRESS_SHELL_CLASSNAME } from '@/features/kangur/ui/pages/GameHome.constants';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 type PlayerProgressCardProps = {
@@ -72,7 +72,7 @@ export default function PlayerProgressCard({
       className='w-full max-w-sm'
     >
       <KangurGlassPanel
-        className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME} shadow-[0_18px_40px_-30px_rgba(168,175,216,0.2)]`}
+        className={GAME_HOME_PLAYER_PROGRESS_SHELL_CLASSNAME}
         data-testid='player-progress-shell'
         padding='lg'
         surface='solid'

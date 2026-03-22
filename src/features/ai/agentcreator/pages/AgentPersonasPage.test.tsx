@@ -20,6 +20,7 @@ const {
   deletePersonaAvatarThumbnailMock,
   toastMock,
   logClientErrorMock,
+  logClientCatchMock,
 } = vi.hoisted(() => ({
   useAgentPersonasMock: vi.fn(),
   useSaveAgentPersonasMutationMock: vi.fn(),
@@ -27,6 +28,7 @@ const {
   deletePersonaAvatarThumbnailMock: vi.fn(),
   toastMock: vi.fn(),
   logClientErrorMock: vi.fn(),
+  logClientCatchMock: vi.fn(),
 }));
 
 let latestItemLibraryProps: Record<string, unknown> | null = null;
@@ -43,6 +45,7 @@ vi.mock('@/features/ai/agentcreator/utils/avatar-input', () => ({
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: logClientErrorMock,
+  logClientCatch: logClientCatchMock,
 }));
 
 vi.mock('@/features/ai/agentcreator/components/AgentPersonaSettingsForm', () => ({
@@ -349,7 +352,14 @@ describe('AgentPersonasPage', () => {
     ).rejects.toThrow('Save failed.');
 
     expect(deletePersonaAvatarMock).not.toHaveBeenCalled();
-    expect(logClientErrorMock).toHaveBeenCalled();
+    expect(logClientCatchMock).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        source: 'AgentPersonasPage',
+        action: 'savePersona',
+        personaId: existingPersona.id,
+      })
+    );
     expect(toastMock).toHaveBeenCalledWith('Save failed.', { variant: 'error' });
   });
 

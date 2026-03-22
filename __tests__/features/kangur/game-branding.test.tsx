@@ -13,6 +13,7 @@ const {
   useKangurProgressStateMock,
   useKangurAssignmentsMock,
   useKangurAuthMock,
+  useKangurPageContentEntryMock,
   useKangurSubjectFocusMock,
   authMeMock,
   redirectToLoginMock,
@@ -23,6 +24,7 @@ const {
   useKangurProgressStateMock: vi.fn(),
   useKangurAssignmentsMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
   useKangurSubjectFocusMock: vi.fn(),
   authMeMock: vi.fn(),
   redirectToLoginMock: vi.fn(),
@@ -67,6 +69,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
   useOptionalKangurAuth: useKangurAuthMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
@@ -202,6 +208,13 @@ describe('Game branding', () => {
       logout: logoutMock,
       navigateToLogin: redirectToLoginMock,
       user: null,
+    });
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: null,
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
     });
     useKangurSubjectFocusMock.mockReturnValue({
       subject: 'maths',

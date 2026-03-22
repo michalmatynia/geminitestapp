@@ -4,9 +4,11 @@ import { parseJsonBody } from '@/features/products/server';
 import {
   type SystemLogsCreateRequest,
   type ClearLogsTargetDto as ClearLogsTarget,
+  clearLogsTargetSchema,
   systemLogsClearQuerySchema,
   systemLogsCreateRequestSchema,
   systemLogsListQuerySchema,
+  systemLogLevelSchema,
 } from '@/shared/contracts/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { validationError } from '@/shared/errors/app-error';
@@ -51,7 +53,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const result = await listSystemLogs({
     page: parsed.page ?? undefined,
     pageSize: parsed.pageSize ?? undefined,
-    level: parsed.level ?? undefined,
+    level: parsed.level ? systemLogLevelSchema.parse(parsed.level) : undefined,
     source: parsed.source ?? undefined,
     service: parsed.service ?? undefined,
     method: parsed.method ?? undefined,
@@ -117,7 +119,7 @@ export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext):
   const url = new URL(req.url);
   const parsed = systemLogsClearQuerySchema.parse(Object.fromEntries(url.searchParams.entries()));
   const before = parsed.before ? new Date(parsed.before) : null;
-  const target: ClearLogsTarget = parsed.target;
+  const target: ClearLogsTarget = clearLogsTargetSchema.parse(parsed.target);
 
   if (target === 'error_logs') {
     const result = await clearSystemLogs({ before, level: 'error' });

@@ -461,6 +461,63 @@ describe('KangurRouteTransitionProvider', () => {
     );
   });
 
+  it('lets a newer navigation supersede an in-flight acknowledged navigation before reveal', async () => {
+    const { rerender } = renderRouteTransitionHarness({
+      acknowledgeMs: 110,
+      pageKey: 'Lessons',
+      requestedPath: '/kangur/lessons',
+      requestedHref: '/kangur/lessons',
+      sourceId: 'kangur-primary-nav:home',
+      targetHref: '/kangur',
+      targetPageKey: 'Game',
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
+    });
+
+    expect(screen.getByTestId('route-transition-phase')).toHaveTextContent('acknowledging');
+    expect(screen.getByTestId('route-transition-source-id')).toHaveTextContent(
+      'kangur-primary-nav:home'
+    );
+    expect(screen.getByTestId('route-transition-active-href')).toHaveTextContent('/kangur');
+
+    await act(async () => {
+      rerender(
+        <KangurRoutingProvider
+          basePath='/kangur'
+          pageKey='Lessons'
+          requestedPath='/kangur/lessons'
+          requestedHref='/kangur/lessons'
+        >
+          <KangurRouteTransitionProvider>
+            <RouteTransitionProbe
+              acknowledgeMs={110}
+              sourceId='kangur-primary-nav:profile'
+              targetHref='/kangur/profile'
+              targetPageKey='LearnerProfile'
+            />
+          </KangurRouteTransitionProvider>
+        </KangurRoutingProvider>
+      );
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
+    });
+
+    expect(screen.getByTestId('route-transition-phase')).toHaveTextContent('acknowledging');
+    expect(screen.getByTestId('route-transition-source-id')).toHaveTextContent(
+      'kangur-primary-nav:profile'
+    );
+    expect(screen.getByTestId('route-transition-active-page-key')).toHaveTextContent(
+      'LearnerProfile'
+    );
+    expect(screen.getByTestId('route-transition-active-href')).toHaveTextContent(
+      '/kangur/profile'
+    );
+  });
+
   it('commits query-driven transitions when the requested href changes without a page-key change', async () => {
     const { rerender } = renderRouteTransitionHarness({
       pageKey: 'Lessons',

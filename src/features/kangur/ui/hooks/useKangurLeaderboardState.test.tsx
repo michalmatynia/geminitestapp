@@ -4,29 +4,26 @@
 
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { KangurScoreRecord, KangurUser } from '@kangur/platform';
+import type { KangurScoreRecord } from '@kangur/platform';
 
 const {
   logKangurClientErrorMock,
   withKangurClientError,
   withKangurClientErrorSync,
-  authMeMock,
   scoreFilterMock,
   useKangurSubjectFocusMock,
+  useOptionalKangurAuthMock,
 } = vi.hoisted(() => ({
   logKangurClientErrorMock: globalThis.__kangurClientErrorMocks().logKangurClientErrorMock,
   withKangurClientError: globalThis.__kangurClientErrorMocks().withKangurClientError,
   withKangurClientErrorSync: globalThis.__kangurClientErrorMocks().withKangurClientErrorSync,
-  authMeMock: vi.fn<() => Promise<KangurUser>>(),
   scoreFilterMock: vi.fn<() => Promise<KangurScoreRecord[]>>(),
   useKangurSubjectFocusMock: vi.fn(),
+  useOptionalKangurAuthMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
   getKangurPlatform: () => ({
-    auth: {
-      me: authMeMock,
-    },
     score: {
       filter: scoreFilterMock,
     },
@@ -35,6 +32,10 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useOptionalKangurAuth: () => useOptionalKangurAuthMock(),
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({
@@ -63,10 +64,12 @@ const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord =
 describe('useKangurLeaderboardState', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    authMeMock.mockResolvedValue({
-      email: 'ada@example.com',
-      role: 'student',
-      display_name: 'Ada',
+    useOptionalKangurAuthMock.mockReturnValue({
+      user: {
+        email: 'ada@example.com',
+        role: 'student',
+        display_name: 'Ada',
+      },
     });
     scoreFilterMock.mockResolvedValue([
       createScore({

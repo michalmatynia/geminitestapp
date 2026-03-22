@@ -73,8 +73,8 @@ describe('LogicalAnalogiesRelationGame touch interactions', () => {
     );
 
     const relationIcon = screen.getByRole('button', { name: 'opposite' });
-    expect(relationIcon).toHaveClass('h-9');
-    expect(relationIcon).toHaveClass('w-9');
+    expect(relationIcon).toHaveClass('h-11');
+    expect(relationIcon).toHaveClass('w-11');
     expect(relationIcon).toHaveClass('touch-manipulation');
 
     const pool = screen.getByTestId('logical-analogies-pool');

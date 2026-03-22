@@ -68,7 +68,7 @@ describe('LessonMasteryInsights', () => {
 
     expect(
       screen.getByText(
-        'Brak zapisanych prób lekcji. Ukończ dowolna lekcje, aby zobaczyć mocne strony i obszary do powtórki.'
+        'Brak zapisanych prób lekcji. Ukończ dowolną lekcję, aby zobaczyć mocne strony i obszary do powtórki.'
       ).parentElement
     ).toHaveClass('soft-card', 'border-dashed', 'border');
   });

@@ -14,8 +14,8 @@ vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
   useKangurGameRuntime: useKangurGameRuntimeMock,
 }));
 
-vi.mock('@/features/kangur/ui/components/progress', () => ({
-  XpToast: (props: unknown) => {
+vi.mock('@/features/kangur/ui/components/XpToast', () => ({
+  default: (props: unknown) => {
     xpToastPropsMock(props);
     return <div data-testid='mock-xp-toast'>xp-toast</div>;
   },

@@ -8,6 +8,10 @@ import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjec
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import {
+  GAME_HOME_ACTIONS_LIST_CLASSNAME,
+  GAME_HOME_ACTIONS_SHELL_CLASSNAME,
+} from '@/features/kangur/ui/pages/GameHome.constants';
 import type { KangurHomeScreenVisibilityProps } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -316,7 +320,7 @@ export function KangurGameHomeActionsWidget({
 
   return (
     <KangurGlassPanel
-      className='w-full shadow-[0_18px_40px_-28px_rgba(168,175,216,0.18)]'
+      className={GAME_HOME_ACTIONS_SHELL_CLASSNAME}
       data-testid='kangur-home-actions-shell'
       padding='lg'
       surface='mist'
@@ -326,7 +330,7 @@ export function KangurGameHomeActionsWidget({
         <h3 id='kangur-home-actions-heading' className='sr-only'>
           {translations('sectionLabel')}
         </h3>
-        <div className='grid grid-cols-1 kangur-panel-gap' data-testid='kangur-home-actions-list'>
+        <div className={GAME_HOME_ACTIONS_LIST_CLASSNAME} data-testid='kangur-home-actions-list'>
           {visibleActions.map((action, index) => (
             <KangurHomeActionCard
               key={action.id}

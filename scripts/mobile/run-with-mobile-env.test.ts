@@ -110,30 +110,40 @@ describe('run-with-mobile-env cli', () => {
     expect(result.stdout).toContain(`"${platformToolsDir}"`);
   });
 
-  it('strips npm wrapper env when spawning child node commands', () => {
+  it('strips npm PATH shims before executing child node commands', () => {
     const result = spawnSync(
       process.execPath,
       [
         '--import',
         'tsx',
         RUNNER_PATH,
-        process.execPath,
+        'node',
         '-e',
-        'console.log(JSON.stringify({ npmLifecycle: process.env.npm_lifecycle_event ?? null, initCwd: process.env.INIT_CWD ?? null }))',
+        'console.log(process.env.PATH)',
       ],
       {
         cwd: REPO_ROOT,
         encoding: 'utf8',
         env: {
           ...process.env,
-          INIT_CWD: '/tmp/fake-mobile-root',
-          npm_lifecycle_event: 'check:native:runtime:android',
+          PATH: [
+            '/tmp/project/node_modules/.bin',
+            '/tmp/other/node_modules/.bin',
+            '/usr/local/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin',
+            '/usr/local/bin',
+            '/usr/bin',
+            '/bin',
+          ].join(':'),
         },
       },
     );
 
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain('"npmLifecycle":null');
-    expect(result.stdout).toContain('"initCwd":null');
+    expect(result.stdout).not.toContain('/tmp/project/node_modules/.bin');
+    expect(result.stdout).not.toContain('/tmp/other/node_modules/.bin');
+    expect(result.stdout).not.toContain('/@npmcli/run-script/lib/node-gyp-bin');
+    expect(result.stdout).toContain('/usr/local/bin');
+    expect(result.stdout).toContain('/usr/bin');
+    expect(result.stdout).toContain('/bin');
   });
 });

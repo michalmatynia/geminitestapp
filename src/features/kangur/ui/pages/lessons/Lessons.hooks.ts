@@ -14,6 +14,7 @@ import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/cont
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
+import { useKangurLessonSections } from '@/features/kangur/ui/hooks/useKangurLessonSections';
 import { useKangurLessonDocuments, useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
@@ -86,6 +87,12 @@ export function useLessonsLogic() {
     enabledOnly: true,
     enabled: isDeferredContentReady,
   });
+  const lessonSectionsQuery = useKangurLessonSections({
+    subject,
+    ageGroup,
+    enabledOnly: true,
+    enabled: isDeferredContentReady,
+  });
   const lessonDocumentsQuery = useKangurLessonDocuments({ enabled: isDeferredContentReady });
   const isLessonsCatalogLoading =
     isDeferredContentReady &&
@@ -94,6 +101,14 @@ export function useLessonsLogic() {
         lessonsQuery.isLoading ||
         (lessonsQuery.isFetching && typeof lessonsQuery.data === 'undefined')
     );
+  const isLessonSectionsLoading =
+    isDeferredContentReady &&
+    Boolean(
+      lessonSectionsQuery.isPending ||
+        lessonSectionsQuery.isLoading ||
+        (lessonSectionsQuery.isFetching && typeof lessonSectionsQuery.data === 'undefined')
+    );
+  const shouldShowLessonsCatalogSkeleton = !isDeferredContentReady || isLessonsCatalogLoading || isLessonSectionsLoading;
   
   const lessons = useMemo(
     (): KangurLesson[] =>
@@ -103,6 +118,10 @@ export function useLessonsLogic() {
           )
         : [],
     [ageGroup, isDeferredContentReady, lessonsQuery.data, subject]
+  );
+  const lessonSections = useMemo(
+    () => (isDeferredContentReady ? lessonSectionsQuery.data ?? [] : []),
+    [isDeferredContentReady, lessonSectionsQuery.data]
   );
   const lessonDocuments = useMemo(
     () => (isDeferredContentReady ? lessonDocumentsQuery.data ?? {} : {}),
@@ -231,6 +250,9 @@ export function useLessonsLogic() {
     isActiveLessonComponentReady;
   const isLocaleSwitchTransition =
     routeTransitionState?.activeTransitionKind === 'locale-switch';
+  const shouldHoldLessonsLibraryTransition =
+    routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
+    routeTransitionState.activeTransitionSkeletonVariant === 'lessons-library';
 
   const expectsFocusedLesson =
     routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
@@ -239,11 +261,17 @@ export function useLessonsLogic() {
     ? Boolean(activeLesson) && isActiveLessonSurfaceReady
     : isActiveLessonSurfaceReady;
   const isLessonsCatalogTransitionReady =
-    !expectsFocusedLesson && activeLesson === null && !isSecretLessonActive;
+    !expectsFocusedLesson &&
+    activeLesson === null &&
+    !isSecretLessonActive &&
+    (!shouldHoldLessonsLibraryTransition || !shouldShowLessonsCatalogSkeleton);
 
   const isLessonsPageReady =
-    (isLocaleSwitchTransition || isDeferredContentReady || isLessonsCatalogTransitionReady) &&
-    isLessonsShellReady;
+    isLocaleSwitchTransition
+      ? isLessonsShellReady
+      : shouldHoldLessonsLibraryTransition
+        ? isLessonsCatalogTransitionReady && isLessonsShellReady
+        : (isDeferredContentReady || isLessonsCatalogTransitionReady) && isLessonsShellReady;
 
   useKangurRoutePageReady({
     pageKey: 'Lessons',
@@ -305,8 +333,11 @@ export function useLessonsLogic() {
     ageGroup,
     setAgeGroup,
     lessons,
+    lessonSections,
     orderedLessons,
     isLessonsCatalogLoading,
+    isLessonSectionsLoading,
+    shouldShowLessonsCatalogSkeleton,
     lessonDocuments,
     activeLesson,
     activeLessonId,

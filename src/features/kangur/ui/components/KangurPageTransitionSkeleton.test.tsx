@@ -174,6 +174,43 @@ describe('KangurPageTransitionSkeleton', () => {
     ).toHaveClass('w-full', 'max-w-[560px]', 'space-y-8', 'sm:space-y-10');
   });
 
+  it('mirrors the Home widget surface shells for the Game transition skeleton', () => {
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+    });
+
+    renderWithIntl(<KangurPageTransitionSkeleton pageKey='Game' />);
+
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-game-home-parent-spotlight-shell')
+    ).toHaveClass('kangur-glass-surface-mist', 'kangur-panel-elevated');
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-game-home-parent-spotlight-inner-shell')
+    ).toHaveClass('kangur-glass-surface-solid', 'kangur-panel-subtle');
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-game-home-actions-shell')
+    ).toHaveClass('kangur-glass-surface-mist', 'kangur-panel-soft');
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-game-home-action-lessons')
+    ).toHaveClass('home-action-featured-shell', 'home-action-theme-neutral');
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-game-home-duels-shell')
+    ).toHaveClass('kangur-glass-surface-solid', 'kangur-panel-soft');
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-game-home-quest-shell')
+    ).toHaveClass('kangur-glass-surface-mist-strong', 'kangur-panel-soft');
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-game-home-assignments-shell')
+    ).toHaveClass('kangur-glass-surface-mist', 'kangur-panel-soft');
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-game-home-leaderboard-shell')
+    ).toHaveClass('kangur-glass-surface-solid', 'kangur-panel-soft');
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-game-home-player-progress-shell')
+    ).toHaveClass('kangur-glass-surface-solid', 'kangur-panel-soft');
+  });
+
   it('keeps the Game home transition skeleton in the same section order as the page it reveals', () => {
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',

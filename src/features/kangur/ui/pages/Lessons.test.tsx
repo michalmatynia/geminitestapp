@@ -397,24 +397,38 @@ describe('Lessons page subject filtering', () => {
     );
   });
 
-  it('marks the lessons library transition ready before deferred lesson data resolves', () => {
+  it('keeps the lessons library transition waiting until the catalog loading state settles', () => {
     routeTransitionStateState.value = {
       transitionPhase: 'waiting_for_ready',
       activeTransitionKind: 'navigation',
       activeTransitionSkeletonVariant: 'lessons-library',
     };
+    lessonsLoadingState.value = true;
+    lessonSectionsLoadingState.value = true;
+
     const view = render(<Lessons />);
 
     expect(useKangurRoutePageReadyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pageKey: 'Lessons',
+        ready: false,
+      })
+    );
+
+    lessonsLoadingState.value = false;
+    lessonSectionsLoadingState.value = false;
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(useKangurRoutePageReadyMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
         pageKey: 'Lessons',
         ready: true,
       })
     );
 
-    act(() => {
-      vi.runOnlyPendingTimers();
-    });
     view.unmount();
   });
 

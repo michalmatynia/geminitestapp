@@ -17,8 +17,10 @@ import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 import {
   KangurAiTutorSessionRegistryContext,
+  KangurAiTutorSessionSyncInner,
   useKangurAiTutorSessionSync,
 } from './KangurAiTutorRuntime.session';
+import { useKangurAiTutorRuntime } from './KangurAiTutorRuntime.hook';
 import type {
   KangurAiTutorContextValue,
   KangurAiTutorSessionRegistryContextValue,
@@ -106,6 +108,36 @@ export function KangurAiTutorDeferredProvider({
     <KangurAiTutorActivationContext.Provider value={setActiveRuntimeValue}>
       <KangurAiTutorSessionRegistryContext.Provider value={sessionRegistryValue}>
         <KangurAiTutorContext.Provider value={contextValue}>
+          {children}
+        </KangurAiTutorContext.Provider>
+      </KangurAiTutorSessionRegistryContext.Provider>
+    </KangurAiTutorActivationContext.Provider>
+  );
+}
+
+type KangurAiTutorProviderProps = {
+  children: ReactNode;
+  learnerId?: KangurAiTutorSessionSyncProps['learnerId'];
+  sessionContext?: KangurAiTutorSessionSyncProps['sessionContext'];
+};
+
+export function KangurAiTutorProvider({
+  children,
+  learnerId,
+  sessionContext,
+}: KangurAiTutorProviderProps): JSX.Element {
+  const { value, sessionRegistryValue } = useKangurAiTutorRuntime();
+
+  return (
+    <KangurAiTutorActivationContext.Provider value={null}>
+      <KangurAiTutorSessionRegistryContext.Provider value={sessionRegistryValue}>
+        <KangurAiTutorContext.Provider value={value}>
+          {learnerId || sessionContext ? (
+            <KangurAiTutorSessionSyncInner
+              learnerId={learnerId ?? null}
+              sessionContext={sessionContext ?? null}
+            />
+          ) : null}
           {children}
         </KangurAiTutorContext.Provider>
       </KangurAiTutorSessionRegistryContext.Provider>

@@ -21,6 +21,7 @@ describe('createKangurMobileNativeHostReport', () => {
     ).toEqual({
       android: {
         issues: [],
+        nextSteps: [],
         resolved: {
           androidHome: '/sdk',
           androidSdkRoot: '/sdk',

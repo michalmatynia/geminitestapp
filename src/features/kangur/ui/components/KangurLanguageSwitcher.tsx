@@ -246,7 +246,6 @@ export function KangurLanguageSwitcher({
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const queryClient = useContext(QueryClientContext);
   const [open, setOpen] = useState(false);
-  const [pendingLocale, setPendingLocale] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState<string | null>(null);
   const warmedLocaleCodesRef = useRef<Set<string>>(new Set());
 
@@ -294,17 +293,7 @@ export function KangurLanguageSwitcher({
     routeTransitionState?.activeTransitionSourceId,
   ]);
 
-  const selectedLocale = pendingLocale ?? transitionPendingLocale ?? currentLocale;
-
-  useEffect(() => {
-    if (pendingLocale === null) {
-      return;
-    }
-
-    if (pendingLocale === currentLocale || pendingLocale === transitionPendingLocale) {
-      setPendingLocale(null);
-    }
-  }, [currentLocale, pendingLocale, transitionPendingLocale]);
+  const selectedLocale = transitionPendingLocale ?? currentLocale;
 
   useEffect(() => {
     warmedLocaleCodesRef.current.clear();
@@ -372,7 +361,7 @@ export function KangurLanguageSwitcher({
   const optionActionClassName = isCoarsePointer
     ? 'min-h-[3.5rem] touch-manipulation select-none active:scale-[0.985]'
     : null;
-  const isPending = pendingLocale !== null;
+  const isPending = transitionPendingLocale !== null;
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -452,7 +441,6 @@ export function KangurLanguageSwitcher({
               }
 
               setOpen(false);
-              setPendingLocale(target.code);
               setAnnouncement(`${target.nativeLabel}…`);
               warmLocaleTarget(target.code);
               setClientCookie(DEFAULT_SITE_I18N_CONFIG.cookieName, target.code, {
@@ -460,11 +448,6 @@ export function KangurLanguageSwitcher({
                 path: '/',
                 sameSite: 'Lax',
               });
-
-              if (typeof window !== 'undefined') {
-                window.location.assign(target.href);
-                return;
-              }
 
               routeNavigator.replace(target.href, {
                 pageKey: currentPage,

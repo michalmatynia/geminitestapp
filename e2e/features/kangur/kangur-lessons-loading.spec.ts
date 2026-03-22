@@ -139,38 +139,35 @@ test('shows a lessons section skeleton while the lesson catalog is loading', asy
   await expect(page).toHaveURL(/\/(?:[a-z]{2}\/)?kangur\/lessons$/, {
     timeout: 60_000,
   });
-  await expect(page.getByTestId('kangur-route-content')).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByTestId('kangur-page-transition-skeleton')).toBeVisible({
+    timeout: 60_000,
+  });
+  await expect(
+    page.getByTestId('kangur-page-transition-skeleton-lessons-library-layout')
+  ).toBeVisible({
+    timeout: 60_000,
+  });
 
   const introCard = page.getByTestId('lessons-list-intro-card');
   const listTransition = page.getByTestId('lessons-list-transition');
   const catalogSkeleton = page.getByTestId('lessons-catalog-skeleton');
+  const routeContent = page.getByTestId('kangur-route-content');
 
-  await expect(introCard).toBeVisible({ timeout: 60_000 });
-  await expect(listTransition).toBeVisible({ timeout: 60_000 });
-  await expect(catalogSkeleton).toBeVisible({
+  await expect(routeContent).toHaveAttribute('aria-hidden', 'true', {
     timeout: 60_000,
   });
-  await expect(page.getByText('Lessons will be ready shortly.')).toBeVisible({
-    timeout: 60_000,
+  await expect(catalogSkeleton).not.toBeVisible({
+    timeout: 10_000,
   });
-  await expect(page.getByText('No active lessons')).toHaveCount(0);
-  await expect(page.getByTestId('lesson-card-lesson-clock')).toHaveCount(0);
-
-  const [introBox, listBox, skeletonBox] = await Promise.all([
-    introCard.boundingBox(),
-    listTransition.boundingBox(),
-    catalogSkeleton.boundingBox(),
-  ]);
-
-  expect(introBox).not.toBeNull();
-  expect(listBox).not.toBeNull();
-  expect(skeletonBox).not.toBeNull();
-
-  expect(listBox!.y).toBeGreaterThan(introBox!.y + introBox!.height - 8);
-  expect(skeletonBox!.y).toBeGreaterThan(introBox!.y + introBox!.height - 8);
-  expect(Math.abs(skeletonBox!.y - listBox!.y)).toBeLessThanOrEqual(8);
 
   const openingSectionButton = page.getByRole('button', { name: /clock focus/i });
   await expect(openingSectionButton).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByTestId('kangur-page-transition-skeleton')).toHaveCount(0);
+  await expect(routeContent).not.toHaveAttribute('aria-hidden', 'true');
+  await expect(introCard).toBeVisible({ timeout: 60_000 });
+  await expect(listTransition).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText('Lessons will be ready shortly.')).toHaveCount(0);
+  await expect(page.getByText('No active lessons')).toHaveCount(0);
+  await expect(page.getByTestId('lesson-card-lesson-clock')).toHaveCount(0);
   await expect(page.getByTestId('lessons-catalog-skeleton')).toHaveCount(0);
 });

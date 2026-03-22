@@ -20,6 +20,10 @@ import { KANGUR_WRAP_CENTER_ROW_CLASSNAME, type KangurAccent } from '@/features/
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
+  GAME_HOME_ASSIGNMENT_SPOTLIGHT_INNER_SHELL_CLASSNAME,
+  GAME_HOME_ASSIGNMENT_SPOTLIGHT_SHELL_CLASSNAME,
+} from '@/features/kangur/ui/pages/GameHome.constants';
+import {
   buildKangurAssignmentHref,
   getKangurAssignmentActionLabel,
   resolveKangurAssignmentCountdownLabel,
@@ -100,20 +104,20 @@ export function KangurAssignmentSpotlight({
 
   return (
     <KangurGlassPanel
-      className='mx-auto w-full max-w-3xl'
-        data-testid='kangur-assignment-spotlight-shell'
-        padding='md'
-        surface='mist'
-        variant='elevated'
-      >
-        <div className='px-3 pt-2 sm:px-4'>
-          <div className='text-[1.6rem] font-extrabold tracking-tight [color:var(--kangur-page-text)] sm:text-[2rem]'>
+      className={GAME_HOME_ASSIGNMENT_SPOTLIGHT_SHELL_CLASSNAME}
+      data-testid='kangur-assignment-spotlight-shell'
+      padding='md'
+      surface='mist'
+      variant='elevated'
+    >
+      <div className='px-3 pt-2 sm:px-4'>
+        <div className='text-[1.6rem] font-extrabold tracking-tight [color:var(--kangur-page-text)] sm:text-[2rem]'>
           {runtimeTranslations('spotlight.title')}
-          </div>
         </div>
+      </div>
 
       <KangurGlassPanel
-        className='relative mt-4'
+        className={GAME_HOME_ASSIGNMENT_SPOTLIGHT_INNER_SHELL_CLASSNAME}
         data-testid='kangur-assignment-spotlight-inner-shell'
         padding='lg'
         surface='solid'

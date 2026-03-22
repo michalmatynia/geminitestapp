@@ -18,12 +18,12 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
-  KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_SPACED_ROW_CLASSNAME,
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
   KANGUR_GRID_TIGHT_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import { GAME_HOME_DUELS_SHELL_CLASSNAME } from '@/features/kangur/ui/pages/GameHome.constants';
 import {
   formatDuelDifficultyLabel,
   formatDuelOperationLabel,
@@ -138,7 +138,7 @@ export function KangurGameHomeDuelsInvitesWidget({
 
   return (
     <KangurGlassPanel
-      className={KANGUR_PANEL_GAP_CLASSNAME}
+      className={GAME_HOME_DUELS_SHELL_CLASSNAME}
       padding='lg'
       surface='solid'
       variant='soft'

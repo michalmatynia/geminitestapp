@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 
 import { CmsPageRenderer } from '@/features/cms/components/frontend/CmsPageRenderer';
@@ -53,7 +53,7 @@ describe('CmsPageRenderer Component', () => {
     expect(container.querySelectorAll('.cms-page > div')).toHaveLength(0);
   });
 
-  it('should render sections in zone order (header -> template -> footer)', () => {
+  it('should render sections in zone order (header -> template -> footer)', async () => {
     const components = [
       buildComponent({ type: 'RichText', zone: 'template', sectionId: 's-template' }),
       buildComponent({ type: 'Hero', zone: 'header', sectionId: 's-header' }),
@@ -61,6 +61,10 @@ describe('CmsPageRenderer Component', () => {
     ];
 
     render(<CmsPageRenderer components={components} />);
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/^section-/)).toHaveLength(3);
+    });
 
     const sections = screen.getAllByTestId(/^section-/);
     expect(sections).toHaveLength(3);
@@ -112,7 +116,7 @@ describe('CmsPageRenderer Component', () => {
     expect(screen.queryByTestId('section-rich-text')).not.toBeInTheDocument();
   });
 
-  it('should render multiple sections in the same zone in their original order', () => {
+  it('should render multiple sections in the same zone in their original order', async () => {
     const components = [
       buildComponent({ type: 'Hero', zone: 'template', sectionId: 's-hero', settings: { id: 1 } }),
       buildComponent({
@@ -124,6 +128,10 @@ describe('CmsPageRenderer Component', () => {
     ];
 
     render(<CmsPageRenderer components={components} />);
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/^section-/)).toHaveLength(2);
+    });
+
     const sections = screen.getAllByTestId(/^section-/);
     expect(sections[0]).toHaveAttribute('data-testid', 'section-hero');
     expect(sections[1]).toHaveAttribute('data-testid', 'section-rich-text');

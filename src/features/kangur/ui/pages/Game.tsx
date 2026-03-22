@@ -21,6 +21,8 @@ import {
   GAME_HOME_ACTIONS_COLUMN_CLASSNAME,
   GAME_HOME_CENTERED_SECTION_CLASSNAME,
   GAME_HOME_LAYOUT_CLASSNAME,
+  GAME_HOME_LEADERBOARD_COLUMN_CLASSNAME,
+  GAME_HOME_PLAYER_PROGRESS_COLUMN_CLASSNAME,
   GAME_HOME_PROGRESS_GRID_CLASSNAME,
   GAME_HOME_SECTION_CLASSNAME,
   GAME_PAGE_STANDARD_CONTAINER_CLASSNAME,
@@ -755,14 +757,14 @@ function GameContent(): React.JSX.Element {
                       <div
                         ref={homeLeaderboardRef}
                         id='kangur-home-leaderboard'
-                        className='order-2 flex w-full justify-center xl:order-1'
+                        className={GAME_HOME_LEADERBOARD_COLUMN_CLASSNAME}
                       >
                         <Leaderboard />
                       </div>
                       <div
                         ref={homeProgressRef}
                         id='kangur-home-player-progress'
-                        className='order-1 flex w-full justify-center xl:order-2'
+                        className={GAME_HOME_PLAYER_PROGRESS_COLUMN_CLASSNAME}
                       >
                         <PlayerProgressCard progress={progress} />
                       </div>

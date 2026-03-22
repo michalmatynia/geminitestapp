@@ -29,10 +29,16 @@ describe('category-mapping-repository (mongodb)', () => {
       createIndex,
       bulkWrite,
     };
+    const externalCategoryCollection = {
+      find: vi.fn(() => ({
+        toArray: vi.fn().mockResolvedValue([]),
+      })),
+    };
 
     vi.mocked(getMongoDb).mockResolvedValue({
       collection: (name: string) => {
         if (name === 'category_mappings') return mappingCollection;
+        if (name === 'external_categories') return externalCategoryCollection;
         throw new Error(`Unexpected collection: ${name}`);
       },
     } as never);
@@ -61,7 +67,7 @@ describe('category-mapping-repository (mongodb)', () => {
       $setOnInsert: Record<string, unknown>;
     };
 
-    expect(updatePayload.$set['externalCategoryId']).toBeUndefined();
+    expect(updatePayload.$set['externalCategoryId']).toBe('base-external-100');
     expect(updatePayload.$setOnInsert['externalCategoryId']).toBeUndefined();
     expect(updatePayload.$set['internalCategoryId']).toBe('internal-1');
   });

@@ -6,6 +6,7 @@ import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { KangurProgressState } from '@/features/kangur/ui/types';
+import { GAME_HOME_PLAYER_PROGRESS_SHELL_CLASSNAME } from '@/features/kangur/ui/pages/GameHome.constants';
 
 let PlayerProgressCard: typeof import('@/features/kangur/ui/components/PlayerProgressCard').default;
 
@@ -70,6 +71,7 @@ describe('PlayerProgressCard', () => {
 
     expect(screen.getByTestId('player-progress-copy')).toHaveTextContent('Postępy ucznia');
     expect(screen.getByTestId('player-progress-shell')).toHaveClass(
+      ...GAME_HOME_PLAYER_PROGRESS_SHELL_CLASSNAME.split(' '),
       'glass-panel',
       'kangur-panel-soft'
     );

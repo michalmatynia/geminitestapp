@@ -59,10 +59,12 @@ const localizeManagedHref = ({
   href,
   locale,
   pathname,
+  transitionKind,
 }: {
   href: string;
   locale: string;
   pathname: string | null;
+  transitionKind?: KangurRouteTransitionKind | null;
 }): string => {
   if (!isManagedLocalHref(href)) {
     return href;
@@ -83,6 +85,10 @@ const localizeManagedHref = ({
       const parsed = new URL(href, 'https://kangur.local');
       const hrefLocale = getPathLocale(parsed.pathname);
       if (hrefLocale) {
+        return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      }
+
+      if (transitionKind === 'locale-switch') {
         return `${parsed.pathname}${parsed.search}${parsed.hash}`;
       }
 
@@ -131,11 +137,12 @@ export function useKangurRouteNavigator(): {
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
   const requestedHref = routing?.requestedHref ?? routing?.requestedPath;
   const resolveManagedHref = useCallback(
-    (href: string): string =>
+    (href: string, transitionKind?: KangurRouteTransitionKind | null): string =>
       localizeManagedHref({
         href,
         locale,
         pathname,
+        transitionKind,
       }),
     [locale, pathname]
   );
@@ -193,7 +200,7 @@ export function useKangurRouteNavigator(): {
         };
       }
 
-      const resolvedHref = href ? resolveManagedHref(href) : null;
+      const resolvedHref = href ? resolveManagedHref(href, transitionKind) : null;
       const resolvedPageKey =
         pageKey ??
         (resolvedHref ? resolveManagedKangurPageKeyFromHref(resolvedHref, basePath) : null);
@@ -256,7 +263,7 @@ export function useKangurRouteNavigator(): {
 
   const push = useCallback(
     (href: string, options: KangurRouteNavigationOptions = {}): void => {
-      const resolvedHref = resolveManagedHref(href);
+      const resolvedHref = resolveManagedHref(href, options.transitionKind);
       const transitionResult = startManagedTransition(resolvedHref, options);
       if (!transitionResult.started) {
         return;
@@ -279,7 +286,7 @@ export function useKangurRouteNavigator(): {
 
   const replace = useCallback(
     (href: string, options: KangurRouteNavigationOptions = {}): void => {
-      const resolvedHref = resolveManagedHref(href);
+      const resolvedHref = resolveManagedHref(href, options.transitionKind);
       const transitionResult = startManagedTransition(resolvedHref, options);
       if (!transitionResult.started) {
         return;

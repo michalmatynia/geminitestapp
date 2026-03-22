@@ -3,15 +3,15 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-const globalStylesheetPath = path.join(process.cwd(), 'src/app/globals.css');
+const kangurStylesheetPath = path.join(process.cwd(), 'src/app/(frontend)/kangur/kangur.css');
 const storefrontAppearanceLogicPath = path.join(
   process.cwd(),
   'src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts'
 );
 
 describe('Kangur storefront theme remap', () => {
-  it('keeps the legacy storefront utility remap layer inside globals.css', () => {
-    const source = readFileSync(globalStylesheetPath, 'utf8');
+  it('keeps the legacy storefront utility remap layer inside the extracted Kangur stylesheet', () => {
+    const source = readFileSync(kangurStylesheetPath, 'utf8');
 
     expect(source).toContain('.border-indigo-500');
     expect(source).toContain('.border-orange-400');

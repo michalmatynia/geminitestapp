@@ -332,8 +332,17 @@ export function KangurRouteTransitionProvider({
         activeTransition?.kind === 'locale-switch' &&
         nextTransitionKind === 'locale-switch' &&
         activeTransition.href !== normalizedHref;
+      const canSupersedeNavigation =
+        activeTransition?.kind === 'navigation' &&
+        nextTransitionKind === 'navigation' &&
+        (activeTransition.href !== normalizedHref || activeTransition.pageKey !== nextPageKey);
 
-      if (activeTransition && activeTransition.phase !== 'revealing' && !canSupersedeLocaleSwitch) {
+      if (
+        activeTransition &&
+        activeTransition.phase !== 'revealing' &&
+        !canSupersedeLocaleSwitch &&
+        !canSupersedeNavigation
+      ) {
         return {
           started: false,
           acknowledgeMs: 0,

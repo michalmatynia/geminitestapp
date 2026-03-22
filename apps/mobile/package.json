@@ -25,7 +25,7 @@
     "check:android:toolchain": "node --import tsx ../../scripts/mobile/check-kangur-mobile-android-toolchain.ts",
     "check:native:deps": "node --import tsx ../../scripts/mobile/check-kangur-mobile-native-deps.ts",
     "check:native:port": "node --import tsx ../../scripts/mobile/check-kangur-mobile-native-port.ts",
-    "check:native:host": "node --import tsx ../../scripts/mobile/run-with-mobile-env.ts node --import tsx ../../scripts/mobile/check-kangur-mobile-native-host.ts",
+    "check:native:host": "node --import tsx ../../scripts/mobile/check-kangur-mobile-native-host.ts",
     "check:native:runtime": "xcrun simctl list devices >/dev/null 2>&1 || true && node --import tsx ../../scripts/mobile/run-with-mobile-env.ts node --import tsx ../../scripts/mobile/check-kangur-mobile-native-runtime-readiness.ts --local-launch-env",
     "check:native:runtime:ios": "xcrun simctl list devices >/dev/null 2>&1 || true && node --import tsx ../../scripts/mobile/run-with-mobile-env.ts node --import tsx ../../scripts/mobile/check-kangur-mobile-native-runtime-readiness.ts --target ios-simulator --local-launch-env",
     "check:native:runtime:android": "node --import tsx ../../scripts/mobile/run-with-mobile-env.ts node --import tsx ../../scripts/mobile/check-kangur-mobile-native-runtime-readiness.ts --target android-emulator --local-launch-env",

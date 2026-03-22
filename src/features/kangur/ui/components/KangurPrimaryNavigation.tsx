@@ -125,8 +125,6 @@ type KangurPrimaryNavigationProps = {
 export type { KangurPrimaryNavigationProps };
 
 const ICON_CLASSNAME = 'h-[18px] w-[18px] sm:h-5 sm:w-5';
-const NAVIGATION_TRANSITION_ACKNOWLEDGE_MS = 110;
-
 const isTransitionSourceActive = ({
   activeTransitionSourceId,
   transitionPhase,
@@ -610,7 +608,6 @@ export function KangurPrimaryNavigation({
         transitionPhase,
         transitionSourceId: homeTransitionSourceId,
       }),
-      acknowledgeMs: onHomeClick ? undefined : NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
       sourceId: onHomeClick ? undefined : homeTransitionSourceId,
     },
   };
@@ -633,7 +630,6 @@ export function KangurPrimaryNavigation({
         transitionPhase,
         transitionSourceId: lessonsTransitionSourceId,
       }),
-      acknowledgeMs: NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
       sourceId: lessonsTransitionSourceId,
     },
   };
@@ -684,7 +680,6 @@ export function KangurPrimaryNavigation({
         transitionPhase,
         transitionSourceId: duelsTransitionSourceId,
       }),
-      acknowledgeMs: NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
       sourceId: duelsTransitionSourceId,
     },
   };
@@ -708,7 +703,6 @@ export function KangurPrimaryNavigation({
           transitionPhase,
           transitionSourceId: parentDashboardTransitionSourceId,
         }),
-        acknowledgeMs: NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
         sourceId: parentDashboardTransitionSourceId,
       },
     }
@@ -844,7 +838,6 @@ export function KangurPrimaryNavigation({
             avatar={profileAvatar}
             label={profileLabel}
             profile={{ href: profileHref, isActive: learnerProfileIsActive }}
-            transitionAcknowledgeMs={NAVIGATION_TRANSITION_ACKNOWLEDGE_MS}
             transitionSourceId={profileTransitionSourceId}
             triggerClassName={mobileNavItemClassName}
           />

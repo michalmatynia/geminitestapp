@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { systemLogsMetricsQuerySchema } from '@/shared/contracts/observability';
+import {
+  systemLogsMetricsQuerySchema,
+  systemLogLevelSchema,
+} from '@/shared/contracts/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
 import { getSystemLogMetrics } from '@/shared/lib/observability/system-log-repository';
@@ -10,7 +13,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const url = new URL(req.url);
   const parsed = systemLogsMetricsQuerySchema.parse(Object.fromEntries(url.searchParams.entries()));
   const metrics = await getSystemLogMetrics({
-    level: parsed.level ?? undefined,
+    level: parsed.level ? systemLogLevelSchema.parse(parsed.level) : undefined,
     source: parsed.source ?? undefined,
     service: parsed.service ?? undefined,
     method: parsed.method ?? undefined,

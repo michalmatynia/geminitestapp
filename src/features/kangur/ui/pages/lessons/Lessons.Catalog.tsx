@@ -23,7 +23,6 @@ import type {
   KangurLesson,
 } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
-import { useKangurLessonSections } from '@/features/kangur/ui/hooks/useKangurLessonSections';
 import { Skeleton } from '@/shared/ui';
 import {
   LESSONS_CARD_TRANSITION,
@@ -102,16 +101,16 @@ export function LessonsCatalog() {
   const {
     subject,
     ageGroup,
+    lessonSections,
     orderedLessons,
     handleSelectLesson,
-    isDeferredContentReady,
     handleGoBack,
     progress,
     lessonAssignmentsByComponent,
     completedLessonAssignmentsByComponent,
     lessonDocuments,
     activeLessonId,
-    isLessonsCatalogLoading,
+    shouldShowLessonsCatalogSkeleton,
   } = useLessons();
 
   const { entry: lessonListIntroContent } = useKangurPageContentEntry('lessons-list-intro');
@@ -119,17 +118,7 @@ export function LessonsCatalog() {
 
   const ageGroupLabel = getLocalizedKangurAgeGroupLabel(ageGroup, locale);
 
-  const sectionsQuery = useKangurLessonSections({ subject, ageGroup, enabledOnly: true });
-  const sections = sectionsQuery.data ?? [];
-  const isLessonSectionsLoading =
-    isDeferredContentReady &&
-    Boolean(
-      sectionsQuery.isPending ||
-        sectionsQuery.isLoading ||
-        (sectionsQuery.isFetching && typeof sectionsQuery.data === 'undefined')
-    );
-  const isCatalogLoading = isLessonsCatalogLoading || isLessonSectionsLoading;
-  const shouldShowCatalogSkeleton = !isDeferredContentReady || isCatalogLoading;
+  const sections = lessonSections;
   const [expandedLessonGroupId, setExpandedLessonGroupId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -210,7 +199,7 @@ export function LessonsCatalog() {
   });
 
   const lessonListIntroDescription =
-    !shouldShowCatalogSkeleton
+    !shouldShowLessonsCatalogSkeleton
       ? (lessonListIntroContent?.summary ?? translations('introDescription'))
       : translations('loadingDescription');
 
@@ -312,7 +301,7 @@ export function LessonsCatalog() {
         />
       </div>
       <div className={LESSONS_LIBRARY_LIST_CLASSNAME} data-testid='lessons-list-transition'>
-        {shouldShowCatalogSkeleton ? (
+        {shouldShowLessonsCatalogSkeleton ? (
           <LessonsCatalogSkeleton />
         ) : orderedLessons.length === 0 ? (
           <KangurEmptyState

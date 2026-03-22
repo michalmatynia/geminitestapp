@@ -109,7 +109,7 @@ describe('KangurLearnerProfileSessionsWidget', () => {
     expect(screen.getByText('Ostatnie sesje')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
-    expect(screen.getByText('Sciezki odznak')).toHaveClass(
+    expect(screen.getByText('Ścieżki odznak')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
     expect(screen.getByText('Zegar')).toHaveClass('[color:var(--kangur-page-text)]');

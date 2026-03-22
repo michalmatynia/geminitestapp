@@ -19,6 +19,7 @@ const {
   useRouterMock,
   useSearchParamsMock,
   usePathnameMock,
+  useKangurPageContentEntryMock,
 } = vi.hoisted(() => ({
   trackKangurClientEventMock: vi.fn(),
   withKangurClientError: globalThis.__kangurClientErrorMocks().withKangurClientError,
@@ -27,6 +28,7 @@ const {
   useRouterMock: vi.fn(),
   useSearchParamsMock: vi.fn(),
   usePathnameMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
 }));
 
 vi.mock('next/link', () => ({
@@ -66,6 +68,10 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: () => null,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
+
 vi.mock('@/shared/lib/security/csrf-client', () => ({
   withCsrfHeaders: (headers?: HeadersInit) => new Headers(headers),
 }));
@@ -100,6 +106,13 @@ describe('KangurLoginPage', () => {
     });
     useRouterMock.mockReturnValue({
       push: routerPushMock,
+    });
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: null,
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
     });
     useSearchParamsMock.mockReturnValue(new URLSearchParams('callbackUrl=/kangur/profile'));
     usePathnameMock.mockReturnValue('/kangur/login');

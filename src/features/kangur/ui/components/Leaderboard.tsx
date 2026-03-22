@@ -22,6 +22,7 @@ import {
   type KangurLeaderboardUserFilterIcon,
 } from '@/features/kangur/ui/hooks/useKangurLeaderboardState';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
+import { GAME_HOME_LEADERBOARD_SHELL_CLASSNAME } from '@/features/kangur/ui/pages/GameHome.constants';
 
 const renderUserFilterIcon = (icon: KangurLeaderboardUserFilterIcon): React.ReactNode => {
   if (icon === 'user') {
@@ -47,7 +48,7 @@ export default function Leaderboard(): React.JSX.Element {
 
   return (
     <KangurGlassPanel
-      className='w-full max-w-lg shadow-[0_18px_40px_-30px_rgba(168,175,216,0.2)]'
+      className={GAME_HOME_LEADERBOARD_SHELL_CLASSNAME}
       data-testid='leaderboard-shell'
       padding='lg'
       surface='solid'

@@ -6,6 +6,11 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  GAME_HOME_ACTIONS_LIST_CLASSNAME,
+  GAME_HOME_ACTIONS_SHELL_CLASSNAME,
+} from '@/features/kangur/ui/pages/GameHome.constants';
+
 const { kangurTransitionLinkPropsMock } = vi.hoisted(() => ({
   kangurTransitionLinkPropsMock: vi.fn(),
 }));
@@ -208,10 +213,11 @@ describe('KangurGameHomeActionsWidget', () => {
 
     render(<KangurGameHomeActionsWidget />);
 
+    expect(screen.getByTestId('kangur-home-actions-shell')).toHaveClass(
+      ...GAME_HOME_ACTIONS_SHELL_CLASSNAME.split(' ')
+    );
     expect(screen.getByTestId('kangur-home-actions-list')).toHaveClass(
-      'grid',
-      'grid-cols-1',
-      'kangur-panel-gap'
+      ...GAME_HOME_ACTIONS_LIST_CLASSNAME.split(' ')
     );
   });
 

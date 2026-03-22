@@ -729,6 +729,16 @@ const expectHomeSkeletonToAlignWithLoadedHomeLayout = (
       sample.topBarBottom !== null
   );
   const firstSkeletonTop = skeletonSamples[0]?.skeletonHomeLayoutTop ?? null;
+  const minSkeletonTop = skeletonSamples.reduce(
+    (minimum, sample) =>
+      Math.min(minimum, sample.skeletonHomeLayoutTop ?? Number.POSITIVE_INFINITY),
+    Number.POSITIVE_INFINITY
+  );
+  const maxSkeletonTop = skeletonSamples.reduce(
+    (maximum, sample) =>
+      Math.max(maximum, sample.skeletonHomeLayoutTop ?? Number.NEGATIVE_INFINITY),
+    Number.NEGATIVE_INFINITY
+  );
   const finalHomeLayoutTop =
     [...samples].reverse().find((sample) => sample.homeLayoutTop !== null)?.homeLayoutTop ?? null;
 
@@ -746,6 +756,11 @@ const expectHomeSkeletonToAlignWithLoadedHomeLayout = (
   ).toBe(true);
   expect(firstSkeletonTop, `${stepLabel}: missing the first home skeleton layout sample`).not.toBeNull();
   expect(finalHomeLayoutTop, `${stepLabel}: missing the final loaded home layout sample`).not.toBeNull();
+  expect(
+    (maxSkeletonTop === Number.NEGATIVE_INFINITY ? 0 : maxSkeletonTop) -
+      (minSkeletonTop === Number.POSITIVE_INFINITY ? 0 : minSkeletonTop),
+    `${stepLabel}: home skeleton layout jumped while it was visible`
+  ).toBeLessThanOrEqual(tolerance);
   expect(
     Math.abs((firstSkeletonTop ?? 0) - (finalHomeLayoutTop ?? 0)),
     `${stepLabel}: home skeleton layout did not align with the loaded home layout`

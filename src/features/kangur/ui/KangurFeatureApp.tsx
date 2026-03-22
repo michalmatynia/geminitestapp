@@ -168,10 +168,19 @@ const AuthenticatedApp = (): JSX.Element | null => {
 
   useEffect(() => {
     if (isNavigationTransitionActive) {
-      latchedNavigationSkeletonRef.current = {
-        pageKey: transitionPageKey,
-        variant: activeTransitionSkeletonVariant,
-      };
+      const nextTransitionPageKey = pendingPageKey ?? activeTransitionPageKey ?? null;
+      const nextTransitionSkeletonVariant = activeTransitionSkeletonVariant ?? null;
+
+      if (nextTransitionPageKey !== null || nextTransitionSkeletonVariant !== null) {
+        latchedNavigationSkeletonRef.current = {
+          pageKey:
+            nextTransitionPageKey ??
+            latchedNavigationSkeletonRef.current?.pageKey ??
+            transitionPageKey,
+          variant:
+            nextTransitionSkeletonVariant ?? latchedNavigationSkeletonRef.current?.variant ?? null,
+        };
+      }
       return;
     }
 
@@ -179,9 +188,11 @@ const AuthenticatedApp = (): JSX.Element | null => {
       latchedNavigationSkeletonRef.current = null;
     }
   }, [
+    activeTransitionPageKey,
     activeTransitionSkeletonVariant,
     isNavigationTransitionActive,
     isRouteSkeletonVisible,
+    pendingPageKey,
     transitionPageKey,
   ]);
 

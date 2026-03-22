@@ -33,6 +33,7 @@ import {
   getRecommendedSessionMomentum,
   translateKangurProgressWithFallback,
 } from '@/features/kangur/ui/services/progress';
+import { GAME_HOME_QUEST_SHELL_CLASSNAME } from '@/features/kangur/ui/pages/GameHome.constants';
 import type { KangurHomeScreenVisibilityProps } from '@/features/kangur/ui/types';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 type KangurGameHomeQuestWidgetProps = KangurHomeScreenVisibilityProps;
@@ -203,7 +204,7 @@ export function KangurGameHomeQuestWidget({
 
   return (
     <KangurGlassPanel
-      className='w-full'
+      className={GAME_HOME_QUEST_SHELL_CLASSNAME}
       data-testid='kangur-home-quest-widget'
       padding='lg'
       surface='mistStrong'

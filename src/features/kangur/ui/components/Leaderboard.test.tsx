@@ -7,7 +7,9 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { KangurScoreRecord, KangurUser } from '@kangur/platform';
 
-const { logKangurClientErrorMock, withKangurClientError, withKangurClientErrorSync } =
+import { GAME_HOME_LEADERBOARD_SHELL_CLASSNAME } from '@/features/kangur/ui/pages/GameHome.constants';
+
+const { logKangurClientErrorMock: _logKangurClientErrorMock, withKangurClientError: _withKangurClientError, withKangurClientErrorSync: _withKangurClientErrorSync } =
   globalThis.__kangurClientErrorMocks();
 const authMeMock = vi.fn<() => Promise<KangurUser>>();
 const scoreFilterMock = vi.fn<() => Promise<KangurScoreRecord[]>>();
@@ -138,6 +140,7 @@ describe('Leaderboard', () => {
     const userGroup = screen.getByTestId('leaderboard-user-filter-group');
 
     expect(screen.getByTestId('leaderboard-shell')).toHaveClass(
+      ...GAME_HOME_LEADERBOARD_SHELL_CLASSNAME.split(' '),
       'glass-panel',
       'kangur-panel-soft'
     );

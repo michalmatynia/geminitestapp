@@ -5,6 +5,7 @@ import KangurHeroMilestoneSummary from '@/features/kangur/ui/components/KangurHe
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { KangurPanelIntro } from '@/features/kangur/ui/design/primitives';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
+import { GAME_HOME_HERO_SHELL_CLASSNAME } from '@/features/kangur/ui/pages/GameHome.constants';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 type KangurGameHomeHeroWidgetProps = {
@@ -65,7 +66,7 @@ export function KangurGameHomeHeroWidget({
 
   if (shouldShowMilestones) {
     return (
-      <div className='w-full space-y-4' data-testid='kangur-home-hero-shell'>
+      <div className={GAME_HOME_HERO_SHELL_CLASSNAME} data-testid='kangur-home-hero-shell'>
         {intro}
         {assignmentSpotlight}
         {milestoneSummary}
@@ -75,7 +76,7 @@ export function KangurGameHomeHeroWidget({
 
   if (assignmentSpotlight) {
     return (
-      <div className='w-full space-y-4' data-testid='kangur-home-hero-shell'>
+      <div className={GAME_HOME_HERO_SHELL_CLASSNAME} data-testid='kangur-home-hero-shell'>
         {intro}
         {assignmentSpotlight}
       </div>

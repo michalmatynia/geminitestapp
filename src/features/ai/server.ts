@@ -1,4 +1,16 @@
-import 'server-only';
+import { logAgentAudit } from './agent-runtime/audit';
+import { registerErrorEnricher } from '@/shared/utils/observability/error-enricher-registry';
+
+// Register AI-specific error enricher to ErrorSystem without circular dependencies
+if (typeof logAgentAudit === 'function') {
+  registerErrorEnricher(async (error, context) => {
+    if (context['runId']) {
+      const message = error instanceof Error ? error.message : String(error);
+      const level = context['level'] === 'warn' ? 'warning' : 'error';
+      await logAgentAudit(context['runId'] as string, level, message, context);
+    }
+  });
+}
 
 export * from './ai-context-registry/server';
 export * from './ai-context-registry/services/runtime-providers/kangur-recent-features';

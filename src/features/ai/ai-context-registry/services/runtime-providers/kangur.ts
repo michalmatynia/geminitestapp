@@ -1,1 +1,1 @@
-export { kangurRuntimeContextProvider } from '@/shared/lib/ai-context-registry/runtime-providers/kangur';
+export { kangurRuntimeContextProvider } from '@/features/kangur/server/context-registry/kangur-ai-context-provider-adapter';

@@ -15,7 +15,7 @@ import {
   type KangurLessonSubject,
 } from '@kangur/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError } from '@/shared/errors/app-error';
+import { AppErrorCodes, badRequestError, isAppError } from '@/shared/errors/app-error';
 import {
   normalizeOptionalQueryString,
   parseOptionalIntegerQueryValue,
@@ -108,7 +108,9 @@ export async function getKangurScoresHandler(
   ctx: ApiHandlerContext
 ): Promise<Response> {
   await resolveKangurActor(req).catch((error) => {
-    void ErrorSystem.captureException(error);
+    if (!isAppError(error) || error.code !== AppErrorCodes.unauthorized) {
+      void ErrorSystem.captureException(error);
+    }
     return null;
   });
   const query = resolveKangurScoresQuery(req, ctx);

@@ -194,6 +194,28 @@ describe('useKangurRouteNavigator', () => {
     expect(routerReplaceMock).toHaveBeenCalledWith('/en/kangur/lessons', { scroll: false });
   });
 
+  it('preserves the active locale prefix when navigating between root-owned public Kangur routes', () => {
+    useLocaleMock.mockReturnValue('en');
+    usePathnameMock.mockReturnValue('/en/lessons');
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/',
+      embedded: false,
+      pageKey: 'Lessons',
+      requestedHref: '/en/lessons',
+      requestedPath: '/lessons',
+    });
+
+    render(<NavigatorProbe href='/duels?mode=ranked' />);
+
+    fireEvent.click(screen.getByTestId('navigator-replace'));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/en/duels?mode=ranked',
+      pageKey: 'Duels',
+    });
+    expect(routerReplaceMock).toHaveBeenCalledWith('/en/duels?mode=ranked', { scroll: false });
+  });
+
   it('keeps an acknowledged push alive after the calling component unmounts', () => {
     vi.useFakeTimers();
     startRouteTransitionMock.mockReturnValueOnce({

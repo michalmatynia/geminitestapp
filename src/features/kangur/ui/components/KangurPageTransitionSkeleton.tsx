@@ -1,4 +1,6 @@
-import { useLocale, useTranslations } from 'next-intl';
+'use client';
+
+import { usePathname } from 'next/navigation';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
@@ -51,6 +53,7 @@ import {
   type KangurRouteTransitionSkeletonVariant,
 } from '@/features/kangur/ui/routing/route-transition-skeletons';
 import { cn } from '@/features/kangur/shared/utils';
+import { getPathLocale, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type KangurSkeletonPageKey =
   | 'Game'
@@ -66,6 +69,52 @@ const SKELETON_TONE_BY_PAGE: Record<
   Lessons: 'learn',
   LearnerProfile: 'profile',
   ParentDashboard: 'dashboard',
+};
+
+type KangurSkeletonLocale = 'de' | 'en' | 'pl' | 'uk';
+
+type KangurSkeletonCopy = {
+  lessonsPageTitle: string;
+  loadingApp: string;
+  loadingLanguage: string;
+  loadingPage: string;
+};
+
+const DEFAULT_SKELETON_LOCALE: KangurSkeletonLocale = 'pl';
+
+const KANGUR_SKELETON_COPY_BY_LOCALE: Record<KangurSkeletonLocale, KangurSkeletonCopy> = {
+  de: {
+    lessonsPageTitle: 'Lektionen',
+    loadingApp: 'Kangur-App wird geladen',
+    loadingLanguage: 'Kangur-Sprache wird gewechselt',
+    loadingPage: 'Kangur-Seite wird geladen',
+  },
+  en: {
+    lessonsPageTitle: 'Lessons',
+    loadingApp: 'Loading Kangur app',
+    loadingLanguage: 'Switching Kangur language',
+    loadingPage: 'Loading Kangur page',
+  },
+  pl: {
+    lessonsPageTitle: 'Lekcje',
+    loadingApp: 'Ładowanie aplikacji Kangur',
+    loadingLanguage: 'Przełączanie języka Kangura',
+    loadingPage: 'Ładowanie strony Kangura',
+  },
+  uk: {
+    lessonsPageTitle: 'Уроки',
+    loadingApp: 'Завантаження застосунку Kangur',
+    loadingLanguage: 'Перемикання мови Kangur',
+    loadingPage: 'Завантаження сторінки Kangur',
+  },
+};
+
+const resolveSkeletonLocale = (pathname: string | null): KangurSkeletonLocale => {
+  const normalizedLocale = normalizeSiteLocale(getPathLocale(pathname));
+
+  return normalizedLocale in KANGUR_SKELETON_COPY_BY_LOCALE
+    ? (normalizedLocale as KangurSkeletonLocale)
+    : DEFAULT_SKELETON_LOCALE;
 };
 
 const SkeletonBlock = ({
@@ -176,11 +225,13 @@ const SkeletonLine = ({ className }: { className?: string }): React.JSX.Element 
   return <SkeletonBlock className={cn('h-4 rounded-full', lineClassName)} />;
 };
 
-const LessonsLibraryIntroSkeleton = (): React.JSX.Element => {
-  const locale = useLocale();
-  const lessonsTranslations = useTranslations('KangurLessonsPage');
-  const lessonsTitle = lessonsTranslations('pageTitle');
-
+const LessonsLibraryIntroSkeleton = ({
+  lessonsTitle,
+  locale,
+}: {
+  lessonsTitle: string;
+  locale: KangurSkeletonLocale;
+}): React.JSX.Element => {
   return (
     <KangurPageIntroCard
       backButtonContent={
@@ -873,13 +924,19 @@ const LessonsLibraryGroupSkeleton = ({
   </KangurGlassPanel>
 );
 
-const LessonsLibrarySkeleton = (): React.JSX.Element => (
+const LessonsLibrarySkeleton = ({
+  lessonsTitle,
+  locale,
+}: {
+  lessonsTitle: string;
+  locale: KangurSkeletonLocale;
+}): React.JSX.Element => (
   <div
     className={LESSONS_LIBRARY_LAYOUT_CLASSNAME}
     data-testid='kangur-page-transition-skeleton-lessons-library-layout'
   >
     <div className='w-full' data-testid='kangur-page-transition-skeleton-lessons-library-intro'>
-      <LessonsLibraryIntroSkeleton />
+      <LessonsLibraryIntroSkeleton lessonsTitle={lessonsTitle} locale={locale} />
     </div>
     <div
       className={LESSONS_LIBRARY_LIST_CLASSNAME}
@@ -1029,7 +1086,11 @@ const resolveSkeletonPageKey = (
 };
 
 const renderSkeletonVariant = (
-  variant: KangurRouteTransitionSkeletonVariant
+  variant: KangurRouteTransitionSkeletonVariant,
+  options: {
+    lessonsTitle: string;
+    locale: KangurSkeletonLocale;
+  }
 ): React.JSX.Element => {
   switch (variant) {
     case 'game-session':
@@ -1037,7 +1098,12 @@ const renderSkeletonVariant = (
     case 'lessons-focus':
       return <LessonsFocusSkeleton />;
     case 'lessons-library':
-      return <LessonsLibrarySkeleton />;
+      return (
+        <LessonsLibrarySkeleton
+          lessonsTitle={options.lessonsTitle}
+          locale={options.locale}
+        />
+      );
     case 'learner-profile':
       return <LearnerProfileSkeleton />;
     case 'parent-dashboard':
@@ -1059,7 +1125,9 @@ export function KangurPageTransitionSkeleton({
   renderInlineTopNavigationSkeleton?: boolean;
   variant?: KangurRouteTransitionSkeletonVariant | null;
 }): React.JSX.Element {
-  const translations = useTranslations('KangurPublic');
+  const pathname = usePathname();
+  const skeletonLocale = resolveSkeletonLocale(pathname);
+  const skeletonCopy = KANGUR_SKELETON_COPY_BY_LOCALE[skeletonLocale];
   const routing = useOptionalKangurRouting();
   const embedded = routing?.embedded ?? false;
   const isLocaleSwitch = reason === 'locale-switch';
@@ -1103,10 +1171,10 @@ export function KangurPageTransitionSkeleton({
     >
       <div className='sr-only' role='status' aria-live='polite'>
         {reason === 'boot'
-          ? translations('loadingApp')
+          ? skeletonCopy.loadingApp
           : reason === 'locale-switch'
-            ? translations('loadingLanguage')
-            : translations('loadingPage')}
+            ? skeletonCopy.loadingLanguage
+            : skeletonCopy.loadingPage}
       </div>
       {shouldRenderInlineTopNavigationSkeleton ? <KangurTopNavigationSkeleton /> : null}
       <KangurStandardPageLayout
@@ -1131,7 +1199,10 @@ export function KangurPageTransitionSkeleton({
           'data-kangur-route-main': false,
         }}
       >
-        {renderSkeletonVariant(resolvedVariant)}
+        {renderSkeletonVariant(resolvedVariant, {
+          lessonsTitle: skeletonCopy.lessonsPageTitle,
+          locale: skeletonLocale,
+        })}
       </KangurStandardPageLayout>
     </div>
   );

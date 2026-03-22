@@ -1,4 +1,18 @@
-import 'server-only';
+import { registerSettingsProvider } from '@/shared/lib/db/settings-registry';
+import {
+  deleteKangurSettingValue,
+  isKangurSettingKey,
+  readKangurSettingValue,
+  upsertKangurSettingValue,
+} from '@/features/kangur/services/kangur-settings-repository';
+
+// Register Kangur-specific settings provider to shared AI Brain without circular dependencies
+registerSettingsProvider({
+  isKey: isKangurSettingKey,
+  readValue: readKangurSettingValue,
+  upsertValue: async (key, value) => Boolean(await upsertKangurSettingValue(key, value)),
+  deleteValue: deleteKangurSettingValue,
+});
 
 export * from '@/features/kangur/services/kangur-progress-repository';
 export * from '@/features/kangur/services/kangur-score-repository';

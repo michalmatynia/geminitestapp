@@ -10,13 +10,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import enMessages from '@/i18n/messages/en.json';
 
 const {
+  usePathnameMock,
   useKangurProgressStateMock,
   useOptionalKangurAuthMock,
   useOptionalKangurRoutingMock,
 } = vi.hoisted(() => ({
+  usePathnameMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
   useOptionalKangurAuthMock: vi.fn(),
   useOptionalKangurRoutingMock: vi.fn(),
+}));
+
+vi.mock('next/navigation', () => ({
+  usePathname: usePathnameMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
@@ -43,6 +49,7 @@ const renderWithIntl = (element: ReactElement) =>
 describe('KangurPageTransitionSkeleton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    usePathnameMock.mockReturnValue('/en/lessons');
     useOptionalKangurAuthMock.mockReturnValue({
       canAccessParentAssignments: true,
       isAuthenticated: true,
@@ -146,6 +153,18 @@ describe('KangurPageTransitionSkeleton', () => {
       'top-[var(--kangur-top-bar-height,88px)]'
     );
     expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
+  });
+
+  it('renders with path-based fallback copy when next-intl context is unavailable', () => {
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+    });
+
+    render(<KangurPageTransitionSkeleton pageKey='Lessons' variant='lessons-library' />);
+
+    expect(screen.getByText('Loading Kangur page')).toBeInTheDocument();
+    expect(screen.getAllByText('Lessons')).not.toHaveLength(0);
   });
 
   it('keeps standalone game-session overlays below the top bar without adding a second top-bar offset', () => {

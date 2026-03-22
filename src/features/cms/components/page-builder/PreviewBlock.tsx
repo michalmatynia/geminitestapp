@@ -16,7 +16,7 @@ import type { GsapAnimationConfig } from '@/features/gsap/public';
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import type { SectionInstance, BlockInstance, PreviewBlockItemProps } from '@/shared/contracts/cms';
 import { DEFAULT_APP_EMBED_ID, getAppEmbedOption } from '@/shared/lib/app-embeds';
-import { getKangurWidgetLabel } from '@/shared/lib/kangur-cms-adapter';
+import { getKangurWidgetLabel } from '@/features/kangur/kangur-cms-adapter';
 import { Button, Card, Input } from '@/shared/ui';
 
 import { useCmsPageContext } from '../frontend/CmsPageContext';

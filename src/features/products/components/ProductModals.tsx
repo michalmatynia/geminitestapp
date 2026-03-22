@@ -48,24 +48,24 @@ const TriggerButtonBar = dynamic<ProductTriggerButtonBarProps>(
 
 const ListProductModal = dynamic(
   () =>
-    import('@/shared/lib/product-integrations-adapter').then(
-      (mod: typeof import('@/shared/lib/product-integrations-adapter')) => mod.ListProductModal
+    import('@/features/integrations/product-integrations-adapter').then(
+      (mod: typeof import('@/features/integrations/product-integrations-adapter')) => mod.ListProductModal
     ),
   { ssr: false }
 );
 
 const MassListProductModal = dynamic(
   () =>
-    import('@/shared/lib/product-integrations-adapter').then(
-      (mod: typeof import('@/shared/lib/product-integrations-adapter')) => mod.MassListProductModal
+    import('@/features/integrations/product-integrations-adapter').then(
+      (mod: typeof import('@/features/integrations/product-integrations-adapter')) => mod.MassListProductModal
     ),
   { ssr: false }
 );
 
 const ProductListingsModal = dynamic(
   () =>
-    import('@/shared/lib/product-integrations-adapter').then(
-      (mod: typeof import('@/shared/lib/product-integrations-adapter')) =>
+    import('@/features/integrations/product-integrations-adapter').then(
+      (mod: typeof import('@/features/integrations/product-integrations-adapter')) =>
         mod.ProductListingsModal
     ),
   { ssr: false }

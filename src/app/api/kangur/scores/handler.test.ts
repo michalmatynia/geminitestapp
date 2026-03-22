@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { authError } from '@/shared/errors/app-error';
 
 const {
   getKangurScoreRepositoryMock,
@@ -9,12 +10,14 @@ const {
   createScoreMock,
   resolveKangurActorMock,
   logKangurServerEventMock,
+  captureExceptionMock,
 } = vi.hoisted(() => ({
   getKangurScoreRepositoryMock: vi.fn(),
   listScoresMock: vi.fn(),
   createScoreMock: vi.fn(),
   resolveKangurActorMock: vi.fn(),
   logKangurServerEventMock: vi.fn(),
+  captureExceptionMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/server', () => ({
@@ -25,6 +28,12 @@ vi.mock('@/features/kangur/server', () => ({
 
 vi.mock('@/features/kangur/observability/server', () => ({
   logKangurServerEvent: logKangurServerEventMock,
+}));
+
+vi.mock('@/shared/utils/observability/error-system', () => ({
+  ErrorSystem: {
+    captureException: captureExceptionMock,
+  },
 }));
 
 import { getKangurScoresHandler, postKangurScoresHandler } from './handler';
@@ -66,6 +75,7 @@ describe('kangur scores handler', () => {
     listScoresMock.mockReset();
     createScoreMock.mockReset();
     resolveKangurActorMock.mockReset();
+    captureExceptionMock.mockReset();
 
     getKangurScoreRepositoryMock.mockResolvedValue({
       listScores: listScoresMock,
@@ -117,6 +127,35 @@ describe('kangur scores handler', () => {
     });
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual([row]);
+  });
+
+  it('does not capture expected anonymous auth failures for public score reads', async () => {
+    listScoresMock.mockResolvedValue([]);
+    resolveKangurActorMock.mockRejectedValueOnce(authError('Authentication required.'));
+
+    const response = await getKangurScoresHandler(
+      new NextRequest('http://localhost/api/kangur/scores?limit=10'),
+      createRequestContext()
+    );
+
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual([]);
+  });
+
+  it('captures unexpected score-read auth resolution failures', async () => {
+    const error = new Error('db exploded');
+    listScoresMock.mockResolvedValue([]);
+    resolveKangurActorMock.mockRejectedValueOnce(error);
+
+    const response = await getKangurScoresHandler(
+      new NextRequest('http://localhost/api/kangur/scores?limit=10'),
+      createRequestContext()
+    );
+
+    expect(captureExceptionMock).toHaveBeenCalledWith(error);
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual([]);
   });
 
   it('falls back to canonical sort when query sort field is unsupported', async () => {

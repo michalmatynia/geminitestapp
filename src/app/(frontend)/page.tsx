@@ -4,6 +4,7 @@ import { JSX } from 'react';
 
 import { getCmsRepository } from '@/features/cms/server';
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/server';
+import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server/launch-route';
 import { getFrontPagePublicOwner, getFrontPageRedirectPath } from '@/shared/lib/front-page-app';
 
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from './home-helpers';
@@ -22,10 +23,24 @@ export default async function Home(): Promise<JSX.Element | null> {
     : null;
   const publicOwner = getFrontPagePublicOwner(frontPageSetting);
   const redirectPath = getFrontPageRedirectPath(frontPageSetting);
+  const kangurLaunchTarget =
+    shouldApplyFrontPageSelection && publicOwner === 'kangur'
+      ? await withTiming('kangurLaunchTarget', () => getKangurConfiguredLaunchTarget())
+      : null;
 
   if (shouldApplyFrontPageSelection && redirectPath) {
     await flush();
     redirect(redirectPath);
+  }
+
+  if (
+    shouldApplyFrontPageSelection &&
+    publicOwner === 'kangur' &&
+    kangurLaunchTarget &&
+    kangurLaunchTarget.href !== kangurLaunchTarget.fallbackHref
+  ) {
+    await flush();
+    redirect(kangurLaunchTarget.href);
   }
 
   if (shouldApplyFrontPageSelection && publicOwner === 'kangur') {

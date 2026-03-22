@@ -2,35 +2,12 @@ import 'server-only';
 
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { configurationError } from '@/shared/errors/app-error';
-import {
-  deleteKangurSettingValue,
-  isKangurSettingKey,
-  readKangurSettingValue,
-  upsertKangurSettingValue,
-} from '@/features/kangur/services/kangur-settings-repository';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
-
-import {
-  AI_BRAIN_SETTINGS_KEY,
-  parseBrainSettings,
-  getBrainCapabilityDefinition,
-  getDefaultCapabilityForFeature,
-  resolveBrainAssignment,
-  resolveBrainCapabilityAssignment,
-  type AiBrainAssignment,
-  type AiBrainCapabilityKey,
-  type AiBrainFeature,
-  type AiBrainCapabilityPolicy,
-  type BrainAppliedMeta,
-  type BrainExecutionConfig,
-  type AiPathsNodeExecutionInput,
-} from './settings';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
+import { findProviderForKey } from '@/shared/lib/db/settings-registry';
 
 const readMongoSettingValue = async (key: string): Promise<string | null> => {
-  if (isKangurSettingKey(key)) {
-    return await readKangurSettingValue(key);
+  const provider = await findProviderForKey(key);
+  if (provider) {
+    return await provider.readValue(key);
   }
   if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
@@ -41,8 +18,9 @@ const readMongoSettingValue = async (key: string): Promise<string | null> => {
 };
 
 const writeMongoSettingValue = async (key: string, value: string): Promise<boolean> => {
-  if (isKangurSettingKey(key)) {
-    return Boolean(await upsertKangurSettingValue(key, value));
+  const provider = await findProviderForKey(key);
+  if (provider) {
+    return await provider.upsertValue(key, value);
   }
   if (!process.env['MONGODB_URI']) return false;
   const mongo = await getMongoDb();
@@ -65,8 +43,9 @@ const writeMongoSettingValue = async (key: string, value: string): Promise<boole
 };
 
 const deleteMongoSettingValue = async (key: string): Promise<boolean> => {
-  if (isKangurSettingKey(key)) {
-    return await deleteKangurSettingValue(key);
+  const provider = await findProviderForKey(key);
+  if (provider) {
+    return await provider.deleteValue(key);
   }
   if (!process.env['MONGODB_URI']) return false;
   const mongo = await getMongoDb();

@@ -77,20 +77,12 @@ export const ErrorSystem = {
       });
 
       // 2. Domain-Specific Logging
-
-      // If it's an Agent Run, log to Agent Audit
-      if (context.runId) {
-        try {
-          // Dynamic import from public entrypoint to avoid deep coupling
-          const { logAgentAudit } = await import('@/features/ai/server');
-          await logAgentAudit(context.runId, 'error', message, {
-            errorId: context.errorId || 'unknown',
-            ...context,
-          });
-        } catch (auditError) {
-          await logErrorSystemFailure('[ErrorSystem] Failed to log to Agent Audit.', auditError);
-        }
-      }
+      await (await import('./error-enricher-registry')).notifyErrorEnrichers(error, {
+        ...context,
+        category,
+        message,
+        level: 'error',
+      });
     } catch (importError) {
       await logErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
     }
@@ -116,19 +108,13 @@ export const ErrorSystem = {
         },
       });
 
-      if (context.runId) {
-        try {
-          // Dynamic import from public entrypoint to avoid deep coupling
-          const { logAgentAudit } = await import('@/features/ai/server');
-          await logAgentAudit(context.runId, 'warning', message, context);
-        } catch (auditError) {
-          await logErrorSystemFailure(
-            '[ErrorSystem] Failed to log warning to Agent Audit.',
-            auditError,
-            'warn'
-          );
-        }
-      }
+      // Domain-Specific Logging
+      await (await import('./error-enricher-registry')).notifyErrorEnrichers(message, {
+        ...context,
+        category,
+        message,
+        level: 'warn',
+      });
     } catch (importError) {
       await logErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
     }

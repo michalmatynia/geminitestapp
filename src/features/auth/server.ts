@@ -1,4 +1,13 @@
-import 'server-only';
+import { auth } from './auth';
+import { registerSessionResolver } from '@/shared/lib/api/session-registry';
+
+// Register auth function to shared API handler registry
+if (typeof auth === 'function') {
+  registerSessionResolver(async () => {
+    const session = await auth();
+    return session?.user ?? null;
+  });
+}
 
 export * from './auth';
 export { invalidateAuthAccessCache } from './services/auth-access';

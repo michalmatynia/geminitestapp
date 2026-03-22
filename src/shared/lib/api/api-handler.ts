@@ -138,9 +138,8 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
 
 const getSessionUser = async (): Promise<{ id?: string | null } | null> => {
   try {
-    const { auth } = await import('@/features/auth/auth');
-    const session = await auth();
-    return session?.user ?? null;
+    const { getSessionUser: realGetSessionUser } = await import('./session-registry');
+    return await realGetSessionUser();
   } catch (error) {
     void ErrorSystem.captureException(error);
     return null;

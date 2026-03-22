@@ -11,7 +11,7 @@ import {
   findExistingFilemakerPartyReference,
   normalizeCaseResolverComparable,
   createId,
-} from '@/shared/lib/case-resolver-capture-adapter';
+} from '@/features/case-resolver-capture/case-resolver-capture-adapter';
 import {
   createFilemakerAddress,
   createFilemakerOrganization,

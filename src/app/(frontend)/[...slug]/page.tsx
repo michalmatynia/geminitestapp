@@ -1,8 +1,9 @@
 import { getTranslations } from 'next-intl/server';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { JSX } from 'react';
 
 import { KangurPublicApp } from '@/features/kangur/public';
+import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server/launch-route';
 import { getKangurStorefrontInitialState } from '@/features/kangur/server/storefront-appearance';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
@@ -16,6 +17,7 @@ export const revalidate = 3600; // Hourly revalidation for CMS slug pages
 
 interface SlugPageProps {
   params: Promise<{ slug: string[] }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
 const isKangurFrontPageSelected = async (): Promise<boolean> => {
@@ -46,9 +48,18 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
   return buildSlugMetadata(page);
 }
 
-export default async function CmsSlugPage({ params }: SlugPageProps): Promise<JSX.Element> {
+export default async function CmsSlugPage({
+  params,
+  searchParams,
+}: SlugPageProps): Promise<JSX.Element> {
   const { slug } = await params;
   if (await isKangurFrontPageSelected()) {
+    const resolvedSearchParams = searchParams ? await searchParams : undefined;
+    const launchTarget = await getKangurConfiguredLaunchTarget(slug, resolvedSearchParams);
+    if (launchTarget.href !== launchTarget.fallbackHref) {
+      redirect(launchTarget.href);
+    }
+
     const initialState = await getKangurStorefrontInitialState();
     return (
       <KangurPublicApp

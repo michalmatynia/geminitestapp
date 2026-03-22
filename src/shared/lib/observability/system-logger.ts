@@ -552,20 +552,8 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
       try {
         let hydratedContext = context;
         try {
-          const hydrationModule = (await import(
-            '@/features/observability/entry-server'
-          )) as {
-            hydrateLogRuntimeContext?: (
-              ctx: Record<string, unknown> | null | undefined
-            ) => Promise<Record<string, unknown> | null>;
-          };
-
-          if (typeof hydrationModule.hydrateLogRuntimeContext === 'function') {
-            hydratedContext =
-              ((await hydrationModule.hydrateLogRuntimeContext(
-                context as Record<string, unknown>
-              )) as Record<string, unknown>) ?? context;
-          }
+          const { hydrateLogContext } = await import('./log-hydration-registry');
+          hydratedContext = (await hydrateLogContext(context as Record<string, unknown>)) ?? context;
         } catch (enrichmentError) {
           logSystemLoggerFailure(
             '[system-logger] Failed to attach registry runtime context',

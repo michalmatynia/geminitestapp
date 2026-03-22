@@ -82,6 +82,7 @@ describe('kangur routing config', () => {
       'kangur://lessons?focus=division'
     );
     expect(getKangurDedicatedAppHref(['parent-dashboard'])).toBe('kangur://parent');
+    expect(getKangurDedicatedAppHref(['login'])).toBeNull();
   });
 
   it('falls back to the public web route when a dedicated app route is unavailable', () => {

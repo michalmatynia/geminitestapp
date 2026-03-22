@@ -393,7 +393,6 @@ const KANGUR_DEDICATED_APP_PATH_BY_SLUG: Record<string, string> = Object.freeze(
   duels: 'duels',
   leaderboard: 'leaderboard',
   lessons: 'lessons',
-  login: '',
   'parent-dashboard': 'parent',
   plan: 'plan',
   practice: 'practice',

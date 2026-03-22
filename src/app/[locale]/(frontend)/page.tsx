@@ -4,6 +4,7 @@ import { JSX } from 'react';
 
 import { getCmsRepository } from '@/features/cms/server';
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/server';
+import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server/launch-route';
 import {
   buildLocalizedPathname,
   normalizeSiteLocale,
@@ -38,10 +39,24 @@ export default async function LocalizedHome({
     : null;
   const publicOwner = getFrontPagePublicOwner(frontPageSetting);
   const redirectPath = getFrontPageRedirectPath(frontPageSetting);
+  const kangurLaunchTarget =
+    shouldApplyFrontPageSelection && publicOwner === 'kangur'
+      ? await withTiming('kangurLaunchTarget', () => getKangurConfiguredLaunchTarget())
+      : null;
 
   if (shouldApplyFrontPageSelection && redirectPath) {
     await flush();
     redirect(localizePublicPath(redirectPath, resolvedLocale));
+  }
+
+  if (
+    shouldApplyFrontPageSelection &&
+    publicOwner === 'kangur' &&
+    kangurLaunchTarget &&
+    kangurLaunchTarget.href !== kangurLaunchTarget.fallbackHref
+  ) {
+    await flush();
+    redirect(kangurLaunchTarget.href);
   }
 
   if (shouldApplyFrontPageSelection && publicOwner === 'kangur') {

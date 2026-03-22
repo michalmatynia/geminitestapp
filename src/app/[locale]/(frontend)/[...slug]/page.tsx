@@ -1,8 +1,9 @@
 import { getTranslations } from 'next-intl/server';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { JSX } from 'react';
 
 import { KangurPublicApp } from '@/features/kangur/public';
+import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server/launch-route';
 import { getKangurStorefrontInitialState } from '@/features/kangur/server/storefront-appearance';
 import {
   buildLocalizedPathname,
@@ -27,6 +28,7 @@ export const revalidate = 3600;
 
 type LocalizedSlugPageProps = {
   params: Promise<{ locale: string; slug: string[] }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 const isKangurFrontPageSelected = async (): Promise<boolean> => {
@@ -67,11 +69,18 @@ export async function generateMetadata({
 
 export default async function LocalizedCmsSlugPage({
   params,
+  searchParams,
 }: LocalizedSlugPageProps): Promise<JSX.Element> {
   const { locale, slug } = await params;
   const resolvedLocale = normalizeSiteLocale(locale);
 
   if (await isKangurFrontPageSelected()) {
+    const resolvedSearchParams = searchParams ? await searchParams : undefined;
+    const launchTarget = await getKangurConfiguredLaunchTarget(slug, resolvedSearchParams);
+    if (launchTarget.href !== launchTarget.fallbackHref) {
+      redirect(launchTarget.href);
+    }
+
     const initialState = await getKangurStorefrontInitialState();
     return (
       <KangurPublicApp

@@ -26,6 +26,7 @@ import {
   autoMatchCategoryMappingsByName,
   formatAutoMatchCategoryMappingsByNameMessage,
 } from '@/features/integrations/components/marketplaces/category-mapper/category-table/auto-match-by-name';
+import { buildCategoryTree } from '@/features/integrations/components/marketplaces/category-mapper/category-table/utils';
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations';
 import type {
   InternalCategoryOption,
@@ -395,11 +396,7 @@ export function CategoryMapperProvider({
     });
   }, []);
 
-  const categoryTree = useMemo((): ExternalCategory[] => {
-    return externalCategories
-      .filter((category: ExternalCategory): boolean => isRootCategory(category))
-      .sort((a: ExternalCategory, b: ExternalCategory): number => a.name.localeCompare(b.name));
-  }, [externalCategories, isRootCategory]);
+  const categoryTree = useMemo(() => buildCategoryTree(externalCategories), [externalCategories]);
 
   const stats = useMemo((): { total: number; mapped: number; pending: number } => {
     const total = externalCategories.length;

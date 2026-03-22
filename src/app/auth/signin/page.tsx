@@ -1,6 +1,6 @@
 import { JSX, Suspense } from 'react';
 
-import { SignInPage } from '@/features/auth/';
+import { SignInPage } from '@/features/auth/public';
 
 export const dynamic = 'force-dynamic';
 

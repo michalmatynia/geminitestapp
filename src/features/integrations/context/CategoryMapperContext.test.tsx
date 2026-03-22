@@ -136,7 +136,7 @@ const createCategoryMapping = (
 });
 
 function Harness(): React.JSX.Element {
-  const { selectedCatalogId } = useCategoryMapperData();
+  const { selectedCatalogId, categoryTree } = useCategoryMapperData();
   const { pendingMappings } = useCategoryMapperUIState();
   const { handleAutoMatchByName, getMappingForExternal } = useCategoryMapperActions();
 
@@ -149,6 +149,14 @@ function Harness(): React.JSX.Element {
       </div>
       <div data-testid='mapping-ext-saved'>
         {getMappingForExternal('market-ext-saved') ?? 'none'}
+      </div>
+      <div data-testid='tree-shape'>
+        {JSON.stringify(
+          categoryTree.map((node) => ({
+            name: node.name,
+            children: (node.subRows ?? []).map((child) => child.name),
+          }))
+        )}
       </div>
       <button type='button' onClick={handleAutoMatchByName}>
         Run auto match
@@ -211,6 +219,58 @@ describe('CategoryMapperProvider auto-match by name', () => {
     expect(mocks.toast).toHaveBeenCalledWith(
       'Matched 1 category, 1 already mapped, 1 ambiguous, 1 unmatched.',
       { variant: 'success' }
+    );
+  });
+
+  it('builds a nested tree from parent external ids instead of returning only roots', async () => {
+    mocks.internalCategories = [];
+    mocks.externalCategories = [
+      createExternalCategory({
+        id: 'pins-root',
+        externalId: 'pins',
+        name: 'PINS',
+        depth: 0,
+        isLeaf: false,
+      }),
+      createExternalCategory({
+        id: 'pins-anime',
+        externalId: 'pins-anime',
+        name: 'Anime Pins',
+        parentExternalId: 'pins',
+        depth: 1,
+      }),
+      createExternalCategory({
+        id: 'pins-gaming',
+        externalId: 'pins-gaming',
+        name: 'Gaming Pins',
+        parentExternalId: 'pins',
+        depth: 1,
+      }),
+      createExternalCategory({
+        id: 'pins-movie',
+        externalId: 'pins-movie',
+        name: 'Movie Pins',
+        parentExternalId: 'pins',
+        depth: 1,
+      }),
+    ];
+    mocks.mappings = [];
+
+    render(
+      <CategoryMapperProvider connectionId='conn-1' connectionName='Base'>
+        <Harness />
+      </CategoryMapperProvider>
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('tree-shape')).toHaveTextContent(
+        JSON.stringify([
+          {
+            name: 'PINS',
+            children: ['Anime Pins', 'Gaming Pins', 'Movie Pins'],
+          },
+        ])
+      )
     );
   });
 });

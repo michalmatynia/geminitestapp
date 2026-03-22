@@ -1,4 +1,4 @@
-import { AuthProvider } from '@/features/auth/';
+import { AuthProvider } from '@/features/auth/public';
 
 export default function AuthAdminLayout({
   children,

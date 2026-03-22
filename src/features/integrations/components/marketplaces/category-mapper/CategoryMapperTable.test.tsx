@@ -39,17 +39,42 @@ vi.mock('@/shared/ui', () => ({
     description,
     headerActions,
     alerts,
+    data,
+    expanded,
+    getSubRows,
   }: {
     title: string;
     description?: string;
     headerActions?: React.ReactNode;
     alerts?: React.ReactNode;
+    data?: Array<{ id: string; name: string; subRows?: Array<{ id: string; name: string }> }>;
+    expanded?: Record<string, boolean>;
+    getSubRows?: (
+      row: { id: string; name: string; subRows?: Array<{ id: string; name: string }> }
+    ) => Array<{ id: string; name: string; subRows?: Array<{ id: string; name: string }> }> | undefined;
   }) => (
     <section>
       <h2>{title}</h2>
       {description ? <p>{description}</p> : null}
       {headerActions}
       {alerts}
+      <ul data-testid='category-tree'>
+        {(data ?? []).map(function renderRow(row) {
+          const subRows = getSubRows?.(row) ?? row.subRows ?? [];
+          const isExpanded = expanded?.[row.id] ?? false;
+
+          return (
+            <li key={row.id}>
+              <span>{row.name}</span>
+              {isExpanded && subRows.length > 0 ? (
+                <ul>
+                  {subRows.map((child) => renderRow(child))}
+                </ul>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
     </section>
   ),
   CompactEmptyState: ({
@@ -212,6 +237,52 @@ describe('CategoryMapperTable', () => {
 
     expect(mocks.toast).toHaveBeenCalledWith('Matched 1 category.', {
       variant: 'success',
+    });
+  });
+
+  it('renders nested external categories in the left-column tree when parent-child links exist', async () => {
+    mocks.externalCategories = [
+      createExternalCategory({
+        id: 'pins-root',
+        externalId: 'pins',
+        name: 'PINS',
+        depth: 0,
+        isLeaf: false,
+      }),
+      createExternalCategory({
+        id: 'pins-anime',
+        externalId: 'pins-anime',
+        name: 'Anime Pins',
+        parentExternalId: 'pins',
+        depth: 1,
+      }),
+      createExternalCategory({
+        id: 'pins-gaming',
+        externalId: 'pins-gaming',
+        name: 'Gaming Pins',
+        parentExternalId: 'pins',
+        depth: 1,
+      }),
+      createExternalCategory({
+        id: 'pins-movie',
+        externalId: 'pins-movie',
+        name: 'Movie Pins',
+        parentExternalId: 'pins',
+        depth: 1,
+      }),
+    ];
+
+    render(
+      <CategoryMapperProvider connectionId='conn-1' connectionName='Base'>
+        <CategoryMapperTable />
+      </CategoryMapperProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('PINS')).toBeInTheDocument();
+      expect(screen.getByText('Anime Pins')).toBeInTheDocument();
+      expect(screen.getByText('Gaming Pins')).toBeInTheDocument();
+      expect(screen.getByText('Movie Pins')).toBeInTheDocument();
     });
   });
 });

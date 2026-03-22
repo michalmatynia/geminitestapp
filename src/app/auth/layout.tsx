@@ -1,6 +1,6 @@
 import { NextIntlClientProvider } from 'next-intl';
 
-import { AuthProvider } from '@/features/auth/';
+import { AuthProvider } from '@/features/auth/public';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
 
 export default function AuthPublicLayout({

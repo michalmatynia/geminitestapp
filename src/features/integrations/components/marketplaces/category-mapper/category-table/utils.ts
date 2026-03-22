@@ -1,8 +1,6 @@
-import type { ExternalCategory } from '@/shared/contracts/integrations';
+import type { CategoryMapperTreeRow, ExternalCategory } from '@/shared/contracts/integrations';
 
-export type CategoryRow = ExternalCategory & {
-  subRows?: CategoryRow[] | undefined;
-};
+export type CategoryRow = CategoryMapperTreeRow;
 
 const normalizeParentExternalId = (value: string | null | undefined): string | null => {
   const candidate = typeof value === 'string' ? value.trim() : '';

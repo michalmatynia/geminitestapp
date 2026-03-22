@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { RegisterPage } from '@/features/auth/';
+import { RegisterPage } from '@/features/auth/public';
 
 export const dynamic = 'force-dynamic';
 

@@ -26,6 +26,10 @@ export interface IntegrationsData {
 
 export type { InternalCategoryOption };
 
+export type CategoryMapperTreeRow = ExternalCategory & {
+  subRows?: CategoryMapperTreeRow[] | undefined;
+};
+
 export interface CategoryMapperData {
   catalogs: CatalogRecord[];
   catalogsLoading: boolean;
@@ -39,7 +43,7 @@ export interface CategoryMapperData {
   externalIds: Set<string>;
   mappings: CategoryMappingWithDetails[];
   mappingsLoading: boolean;
-  categoryTree: ExternalCategory[];
+  categoryTree: CategoryMapperTreeRow[];
 }
 
 export interface CategoryMapperActions {

@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 
-import { invalidateProductsCountsAndDetail } from '@/features/products/hooks/productCache';
+import { invalidateProductDetail } from '@/features/products/hooks/productCache';
 import {
   buildProductAiRunFeedbackFromSnapshot,
   compareProductAiRunFeedback,
@@ -130,7 +130,7 @@ export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeed
       const trackedRun = trackedRunsRef.current.get(runId);
       trackedRun?.unsubscribe();
       trackedRunsRef.current.delete(runId);
-      void invalidateProductsCountsAndDetail(queryClient, productId);
+      void invalidateProductDetail(queryClient, productId);
       const source = buildQueuedProductAiRunSource(runId);
       if (source) {
         removeQueuedProductSource(productId, source);

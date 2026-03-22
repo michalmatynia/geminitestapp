@@ -10,14 +10,14 @@ import {
 import type { TrackedAiPathRunSnapshot } from '@/shared/lib/ai-paths/client-run-tracker';
 
 const {
-  invalidateProductsCountsAndDetailMock,
+  invalidateProductDetailMock,
   getRecentAiPathRunEnqueueMock,
   listTriggerButtonRunFeedbackMock,
   markQueuedProductSourceMock,
   removeQueuedProductSourceMock,
   subscribeToTrackedAiPathRunMock,
 } = vi.hoisted(() => ({
-  invalidateProductsCountsAndDetailMock: vi.fn(),
+  invalidateProductDetailMock: vi.fn(),
   getRecentAiPathRunEnqueueMock: vi.fn(),
   listTriggerButtonRunFeedbackMock: vi.fn(),
   markQueuedProductSourceMock: vi.fn(),
@@ -26,8 +26,8 @@ const {
 }));
 
 vi.mock('@/features/products/hooks/productCache', () => ({
-  invalidateProductsCountsAndDetail: (...args: unknown[]) =>
-    invalidateProductsCountsAndDetailMock(...args),
+  invalidateProductDetail: (...args: unknown[]) =>
+    invalidateProductDetailMock(...args),
 }));
 
 vi.mock('@/features/products/state/queued-product-ops', () => ({
@@ -102,7 +102,7 @@ const flushAsync = async (): Promise<void> => {
 describe('useProductAiPathsRunSync', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    invalidateProductsCountsAndDetailMock.mockReset();
+    invalidateProductDetailMock.mockReset();
     getRecentAiPathRunEnqueueMock.mockReset();
     listTriggerButtonRunFeedbackMock.mockReset();
     markQueuedProductSourceMock.mockReset();
@@ -182,7 +182,7 @@ describe('useProductAiPathsRunSync', () => {
     });
 
     expect(removeQueuedProductSourceMock).toHaveBeenCalledWith('product-1', 'ai-run:run-1');
-    expect(invalidateProductsCountsAndDetailMock).toHaveBeenCalledWith(queryClient, 'product-1');
+    expect(invalidateProductDetailMock).toHaveBeenCalledWith(queryClient, 'product-1');
   });
 
   it('exposes the active tracked status for the product list and clears it when the run finishes', async () => {
@@ -364,7 +364,7 @@ describe('useProductAiPathsRunSync', () => {
     });
 
     expect(removeQueuedProductSourceMock).toHaveBeenCalledWith('product-1', 'ai-run:run-2');
-    expect(invalidateProductsCountsAndDetailMock).toHaveBeenCalledTimes(2);
+    expect(invalidateProductDetailMock).toHaveBeenCalledTimes(2);
   });
 
   it('clears the queued source when a run reaches failed status', async () => {
@@ -392,7 +392,7 @@ describe('useProductAiPathsRunSync', () => {
     });
 
     expect(removeQueuedProductSourceMock).toHaveBeenCalledWith('product-7', 'ai-run:run-failed');
-    expect(invalidateProductsCountsAndDetailMock).toHaveBeenCalledWith(queryClient, 'product-7');
+    expect(invalidateProductDetailMock).toHaveBeenCalledWith(queryClient, 'product-7');
   });
 
   it('clears the queued source when the shared tracker stops without a terminal status', async () => {

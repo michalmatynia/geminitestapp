@@ -6,8 +6,7 @@ import {
   invalidateAiPathQueue,
   invalidateNotes,
   notifyAiPathRunEnqueued,
-  invalidateProductsCountsAndDetail,
-  invalidateProductsAndCounts,
+  invalidateProductDetail,
   invalidateIntegrationJobs,
 } from '@/shared/lib/query-invalidation';
 
@@ -28,12 +27,8 @@ export const handleAiPathTriggerInvalidation = async (args: {
     run: run ?? null,
   });
 
-  if (entityType === 'product') {
-    if (entityId) {
-      void invalidateProductsCountsAndDetail(queryClient, entityId);
-    } else {
-      void invalidateProductsAndCounts(queryClient);
-    }
+  if (entityType === 'product' && entityId) {
+    void invalidateProductDetail(queryClient, entityId);
   }
   if (entityType === 'note') {
     void invalidateNotes(queryClient);

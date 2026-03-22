@@ -272,6 +272,16 @@ export const invalidateProductsCountsAndDetail = async (
   ]);
 };
 
+export const invalidateProductDetail = async (
+  queryClient: QueryClient,
+  productId: string
+): Promise<void> => {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.detail(productId) }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.detailEdit(productId) }),
+  ]);
+};
+
 export const refetchProductsAndCounts = async (queryClient: QueryClient): Promise<void> => {
   await Promise.all([
     queryClient.refetchQueries({ queryKey: QUERY_KEYS.products.lists() }),

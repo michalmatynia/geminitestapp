@@ -46,6 +46,7 @@ export const mongoProducerRepository: ProducerRepository = {
   },
 
   async getProducerById(id: string): Promise<Producer | null> {
+    if (!ObjectId.isValid(id)) return null;
     const db = await getMongoDb();
     const doc = await db.collection<ProducerDoc>(COLLECTION).findOne({ _id: new ObjectId(id) });
     return doc ? toProducerDomain(doc) : null;

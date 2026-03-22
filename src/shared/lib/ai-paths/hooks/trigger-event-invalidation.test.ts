@@ -6,15 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   invalidateAiPathQueueMock,
   notifyAiPathRunEnqueuedMock,
-  invalidateProductsCountsAndDetailMock,
-  invalidateProductsAndCountsMock,
+  invalidateProductDetailMock,
   invalidateNotesMock,
   invalidateIntegrationJobsMock,
 } = vi.hoisted(() => ({
   invalidateAiPathQueueMock: vi.fn(),
   notifyAiPathRunEnqueuedMock: vi.fn(),
-  invalidateProductsCountsAndDetailMock: vi.fn(),
-  invalidateProductsAndCountsMock: vi.fn(),
+  invalidateProductDetailMock: vi.fn(),
   invalidateNotesMock: vi.fn(),
   invalidateIntegrationJobsMock: vi.fn(),
 }));
@@ -22,9 +20,8 @@ const {
 vi.mock('@/shared/lib/query-invalidation', () => ({
   invalidateAiPathQueue: (...args: unknown[]) => invalidateAiPathQueueMock(...args),
   notifyAiPathRunEnqueued: (...args: unknown[]) => notifyAiPathRunEnqueuedMock(...args),
-  invalidateProductsCountsAndDetail: (...args: unknown[]) =>
-    invalidateProductsCountsAndDetailMock(...args),
-  invalidateProductsAndCounts: (...args: unknown[]) => invalidateProductsAndCountsMock(...args),
+  invalidateProductDetail: (...args: unknown[]) =>
+    invalidateProductDetailMock(...args),
   invalidateNotes: (...args: unknown[]) => invalidateNotesMock(...args),
   invalidateIntegrationJobs: (...args: unknown[]) => invalidateIntegrationJobsMock(...args),
   invalidateAiPathSettings: vi.fn(),
@@ -39,8 +36,7 @@ describe('handleAiPathTriggerInvalidation', () => {
     queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     invalidateAiPathQueueMock.mockReset();
     notifyAiPathRunEnqueuedMock.mockReset();
-    invalidateProductsCountsAndDetailMock.mockReset();
-    invalidateProductsAndCountsMock.mockReset();
+    invalidateProductDetailMock.mockReset();
     invalidateNotesMock.mockReset();
     invalidateIntegrationJobsMock.mockReset();
   });
@@ -91,26 +87,24 @@ describe('handleAiPathTriggerInvalidation', () => {
 
   // ── product entity routing ────────────────────────────────────────────────
 
-  it('invalidates product counts+detail when entityType is product and entityId is set', async () => {
+  it('invalidates product detail when entityType is product and entityId is set', async () => {
     await handleAiPathTriggerInvalidation({
       queryClient,
       runId: 'run-1',
       entityType: 'product',
       entityId: 'product-42',
     });
-    expect(invalidateProductsCountsAndDetailMock).toHaveBeenCalledWith(queryClient, 'product-42');
-    expect(invalidateProductsAndCountsMock).not.toHaveBeenCalled();
+    expect(invalidateProductDetailMock).toHaveBeenCalledWith(queryClient, 'product-42');
   });
 
-  it('invalidates products+counts (broad) when entityType is product and entityId is null', async () => {
+  it('does not invalidate products when entityType is product but entityId is null', async () => {
     await handleAiPathTriggerInvalidation({
       queryClient,
       runId: 'run-1',
       entityType: 'product',
       entityId: null,
     });
-    expect(invalidateProductsAndCountsMock).toHaveBeenCalledWith(queryClient);
-    expect(invalidateProductsCountsAndDetailMock).not.toHaveBeenCalled();
+    expect(invalidateProductDetailMock).not.toHaveBeenCalled();
   });
 
   // ── note entity routing ───────────────────────────────────────────────────
@@ -123,8 +117,7 @@ describe('handleAiPathTriggerInvalidation', () => {
       entityId: 'note-1',
     });
     expect(invalidateNotesMock).toHaveBeenCalledWith(queryClient);
-    expect(invalidateProductsCountsAndDetailMock).not.toHaveBeenCalled();
-    expect(invalidateProductsAndCountsMock).not.toHaveBeenCalled();
+    expect(invalidateProductDetailMock).not.toHaveBeenCalled();
   });
 
   // ── custom entity — no extra invalidations ────────────────────────────────
@@ -136,8 +129,7 @@ describe('handleAiPathTriggerInvalidation', () => {
       entityType: 'custom',
       entityId: 'custom-1',
     });
-    expect(invalidateProductsCountsAndDetailMock).not.toHaveBeenCalled();
-    expect(invalidateProductsAndCountsMock).not.toHaveBeenCalled();
+    expect(invalidateProductDetailMock).not.toHaveBeenCalled();
     expect(invalidateNotesMock).not.toHaveBeenCalled();
     expect(invalidateIntegrationJobsMock).not.toHaveBeenCalled();
   });

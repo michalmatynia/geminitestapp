@@ -1,3 +1,3 @@
 import type { Href } from 'expo-router';
 
-export const createKangurParentDashboardHref = (): Href => '/parent';
+export const createKangurParentDashboardHref = (): Href => '/parent' as Href;

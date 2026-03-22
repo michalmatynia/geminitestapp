@@ -8,12 +8,12 @@ canonical: true
 ---
 # Import Boundaries Check
 
-Generated at: 2026-03-22T10:14:24.631Z
+Generated at: 2026-03-22T15:42:07.455Z
 
 ## Summary
 
 - Status: WARN
-- Files scanned: 5669
+- Files scanned: 5674
 - Features tracked: 10
 - Circular dependencies: 0
 - Errors: 0

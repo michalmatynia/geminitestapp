@@ -8,7 +8,7 @@ canonical: true
 ---
 # Test Distribution Check
 
-Generated at: 2026-03-22T10:14:26.923Z
+Generated at: 2026-03-22T15:42:09.629Z
 
 ## Summary
 
@@ -18,7 +18,7 @@ Generated at: 2026-03-22T10:14:26.923Z
 - Features without tests: 0
 - Features without fast tests: 0
 - Features without negative-path tests: 0
-- Total test files: 2021
+- Total test files: 2151
 - .only() occurrences: 0
 - .skip() occurrences: 32
 - .todo() occurrences: 0
@@ -27,21 +27,21 @@ Generated at: 2026-03-22T10:14:26.923Z
 
 | Feature | Test Files | Fast | E2E | Negative |
 | --- | ---: | ---: | ---: | ---: |
-| kangur | 461 | 448 | 13 | 94 |
-| ai | 290 | 290 | 0 | 107 |
-| products | 100 | 93 | 7 | 32 |
+| kangur | 499 | 483 | 16 | 96 |
+| ai | 293 | 293 | 0 | 107 |
+| products | 102 | 95 | 7 | 32 |
 | case-resolver | 78 | 77 | 1 | 32 |
-| cms | 64 | 63 | 1 | 15 |
+| cms | 70 | 69 | 1 | 15 |
+| integrations | 48 | 47 | 1 | 16 |
 | prompt-exploder | 47 | 47 | 0 | 24 |
-| integrations | 46 | 45 | 1 | 16 |
-| foldertree | 27 | 25 | 2 | 7 |
+| foldertree | 28 | 26 | 2 | 7 |
 | observability | 25 | 24 | 1 | 4 |
 | admin | 17 | 14 | 3 | 4 |
+| database | 13 | 12 | 1 | 8 |
+| notesapp | 12 | 10 | 2 | 3 |
 | auth | 11 | 11 | 0 | 6 |
-| database | 11 | 10 | 1 | 7 |
-| notesapp | 11 | 9 | 2 | 3 |
+| viewer3d | 8 | 7 | 1 | 3 |
 | filemaker | 7 | 7 | 0 | 3 |
-| viewer3d | 7 | 6 | 1 | 3 |
 | jobs | 6 | 6 | 0 | 3 |
 | files | 5 | 4 | 1 | 2 |
 | internationalization | 5 | 5 | 0 | 4 |

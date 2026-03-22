@@ -18,6 +18,7 @@ import type { LabeledOptionDto, LabeledOptionWithDescriptionDto } from '@/shared
 import {
   KANGUR_LESSONS_SETTING_KEY,
   KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
+  KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
   KANGUR_PHONE_SIMULATION_SETTINGS_KEY,
   kangurLessonAgeGroupSchema,
   kangurLessonContentModeSchema,
@@ -29,15 +30,26 @@ import {
   type KangurLessonContentMode,
   type KangurLessonSubject,
 } from '@/features/kangur/shared/contracts/kangur';
+import {
+  DEFAULT_KANGUR_LAUNCH_ROUTE,
+  isKangurLaunchRoute,
+  type KangurLaunchRoute,
+} from '@/features/kangur/launch-route';
 import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
 export {
   KANGUR_LESSONS_SETTING_KEY,
   KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
+  KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
   KANGUR_PHONE_SIMULATION_SETTINGS_KEY,
 };
 export { KANGUR_LESSON_COMPONENT_ORDER, KANGUR_LESSON_LIBRARY };
 export * from './help-settings';
+export {
+  DEFAULT_KANGUR_LAUNCH_ROUTE,
+  KANGUR_LAUNCH_ROUTE_VALUES,
+  type KangurLaunchRoute,
+} from './launch-route';
 
 export const KANGUR_LESSON_SORT_ORDER_GAP = 1000;
 export const KANGUR_NARRATOR_SETTINGS_KEY = 'kangur_narrator_settings_v1';
@@ -61,6 +73,10 @@ export type KangurParentVerificationEmailSettings = {
 
 export type KangurPhoneSimulationSettings = {
   enabled: boolean;
+};
+
+export type KangurLaunchRouteSettings = {
+  route: KangurLaunchRoute;
 };
 
 export type KangurNarratorSettings = {
@@ -251,6 +267,9 @@ const resolveKangurParentVerificationRequireCaptcha = (
 const resolveKangurPhoneSimulationEnabled = (value: unknown): boolean =>
   typeof value === 'boolean' ? value : KANGUR_PHONE_SIMULATION_DEFAULT_ENABLED;
 
+const resolveKangurLaunchRoute = (value: unknown): KangurLaunchRoute =>
+  isKangurLaunchRoute(value) ? value.trim() as KangurLaunchRoute : DEFAULT_KANGUR_LAUNCH_ROUTE;
+
 const resolveKangurParentVerificationNotificationsDisabledUntil = (
   value: unknown
 ): string | null => {
@@ -431,6 +450,10 @@ export const createDefaultKangurPhoneSimulationSettings =
     enabled: KANGUR_PHONE_SIMULATION_DEFAULT_ENABLED,
   });
 
+export const createDefaultKangurLaunchRouteSettings = (): KangurLaunchRouteSettings => ({
+  route: DEFAULT_KANGUR_LAUNCH_ROUTE,
+});
+
 export const normalizeKangurNarratorSettings = (value: unknown): KangurNarratorSettings => {
   if (!isRecord(value)) {
     return createDefaultKangurNarratorSettings();
@@ -459,6 +482,18 @@ export const normalizeKangurPhoneSimulationSettings = (
 
   return {
     enabled: resolveKangurPhoneSimulationEnabled(value['enabled']),
+  };
+};
+
+export const normalizeKangurLaunchRouteSettings = (
+  value: unknown
+): KangurLaunchRouteSettings => {
+  if (!isRecord(value)) {
+    return createDefaultKangurLaunchRouteSettings();
+  }
+
+  return {
+    route: resolveKangurLaunchRoute(value['route']),
   };
 };
 
@@ -611,6 +646,13 @@ export const parseKangurPhoneSimulationSettings = (
 ): KangurPhoneSimulationSettings =>
   normalizeKangurPhoneSimulationSettings(
     parseJsonSetting<unknown>(raw, createDefaultKangurPhoneSimulationSettings())
+  );
+
+export const parseKangurLaunchRouteSettings = (
+  raw: string | null | undefined
+): KangurLaunchRouteSettings =>
+  normalizeKangurLaunchRouteSettings(
+    parseJsonSetting<unknown>(raw, createDefaultKangurLaunchRouteSettings())
   );
 
 const ensureUniqueAppendedLessonId = (baseId: string, usedIds: Set<string>): string => {

@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-17'
+last_reviewed: '2026-03-22'
 status: 'active'
 doc_type: 'index'
 scope: 'feature:kangur'
@@ -12,6 +12,13 @@ canonical: true
 ## Purpose
 
 Kangur is the learner-facing math practice application for guided lessons, games, tests, and parent-supported progress tracking. It powers the public StudiQ learning app and combines authored lesson content, interactive minigames, practice flows, and test suites in one product shell.
+
+## Application topology
+
+- The root Next.js app at the repository root is still the canonical web deployment. It owns the public StudiQ shell, CMS embedding, `/admin/kangur`, and `/api/kangur/*`.
+- `apps/mobile` is the Expo Router native shell for learner-facing Kangur routes on iOS, Android, and Expo web preview.
+- `apps/mobile-web` is reserved for a future Expo or React Native Web target and is not the canonical public web app today.
+- Shared cross-platform boundaries live in `packages/kangur-contracts`, `packages/kangur-core`, `packages/kangur-api-client`, and `packages/kangur-platform`.
 
 ## Core surfaces
 
@@ -28,7 +35,7 @@ Kangur is the learner-facing math practice application for guided lessons, games
 
 ## Documentation model
 
-Kangur documentation is centralized under `docs/kangur/*`. Tooltip copy must be derived from the documentation catalog and never authored inline in React components. UI controls reference stable `docId` values, and the shared documentation registry resolves tooltip strings from those entries. AI Tutor copy is sourced from the page-content catalog and native guide entries, not inline UI strings.
+Canonical feature documentation stays under `docs/kangur/*`. Local app READMEs can document app-specific runtime and commands, but they must point back to this hub rather than becoming parallel feature specifications. Tooltip copy must be derived from the documentation catalog and never authored inline in React components. UI controls reference stable `docId` values, and the shared documentation registry resolves tooltip strings from those entries. AI Tutor copy is sourced from the page-content catalog and native guide entries, not inline UI strings.
 
 ## Operational rules
 
@@ -40,6 +47,8 @@ Kangur documentation is centralized under `docs/kangur/*`. Tooltip copy must be 
 
 ## Primary references
 
+- `docs/kangur/studiq-application.md`: current web, mobile, admin, API, and runtime topology.
+- `docs/kangur/react-native-monorepo-scaffold.md`: shared package boundaries and cross-platform workspace rules.
 - `docs/kangur/learner-navigation.md`
 - `docs/kangur/lessons-and-activities.md`
 - `docs/kangur/tests-and-exams.md`
@@ -51,8 +60,8 @@ Kangur documentation is centralized under `docs/kangur/*`. Tooltip copy must be 
 - `docs/kangur/number-balance-rush-ui.md`
 - `docs/kangur/observability-and-operations.md`
 - `docs/kangur/neo4j-semantic-bridge.md`
-- `docs/kangur/studiq-application.md`
 - `docs/kangur/linkedin-posts-runbook.md`
-- `docs/kangur/react-native-monorepo-scaffold.md`
 - `docs/kangur/recent-feature-updates.md`
 - `docs/kangur/plans/README.md`
+- `apps/mobile/README.md`: native route inventory, provider stack, commands, and caveats.
+- `apps/mobile-web/README.md`: reserved workspace status and ownership boundary.

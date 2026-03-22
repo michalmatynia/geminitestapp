@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-22T10:14:26.923Z",
+  "generatedAt": "2026-03-22T15:42:09.629Z",
   "status": "passed",
   "summary": {
     "total": 32,
@@ -12,7 +12,7 @@
     "featuresWithoutTestCount": 0,
     "featuresWithoutFastTestCount": 0,
     "featuresWithoutNegativeTestCount": 0,
-    "totalTestFiles": 2021,
+    "totalTestFiles": 2151,
     "onlyCount": 0,
     "skipCount": 32,
     "todoCount": 0
@@ -28,22 +28,22 @@
   "featuresWithTests": [
     {
       "feature": "kangur",
-      "testCount": 461,
-      "fastTestCount": 448,
-      "e2eTestCount": 13,
-      "negativePathTestCount": 94
+      "testCount": 499,
+      "fastTestCount": 483,
+      "e2eTestCount": 16,
+      "negativePathTestCount": 96
     },
     {
       "feature": "ai",
-      "testCount": 290,
-      "fastTestCount": 290,
+      "testCount": 293,
+      "fastTestCount": 293,
       "e2eTestCount": 0,
       "negativePathTestCount": 107
     },
     {
       "feature": "products",
-      "testCount": 100,
-      "fastTestCount": 93,
+      "testCount": 102,
+      "fastTestCount": 95,
       "e2eTestCount": 7,
       "negativePathTestCount": 32
     },
@@ -56,10 +56,17 @@
     },
     {
       "feature": "cms",
-      "testCount": 64,
-      "fastTestCount": 63,
+      "testCount": 70,
+      "fastTestCount": 69,
       "e2eTestCount": 1,
       "negativePathTestCount": 15
+    },
+    {
+      "feature": "integrations",
+      "testCount": 48,
+      "fastTestCount": 47,
+      "e2eTestCount": 1,
+      "negativePathTestCount": 16
     },
     {
       "feature": "prompt-exploder",
@@ -69,16 +76,9 @@
       "negativePathTestCount": 24
     },
     {
-      "feature": "integrations",
-      "testCount": 46,
-      "fastTestCount": 45,
-      "e2eTestCount": 1,
-      "negativePathTestCount": 16
-    },
-    {
       "feature": "foldertree",
-      "testCount": 27,
-      "fastTestCount": 25,
+      "testCount": 28,
+      "fastTestCount": 26,
       "e2eTestCount": 2,
       "negativePathTestCount": 7
     },
@@ -97,6 +97,20 @@
       "negativePathTestCount": 4
     },
     {
+      "feature": "database",
+      "testCount": 13,
+      "fastTestCount": 12,
+      "e2eTestCount": 1,
+      "negativePathTestCount": 8
+    },
+    {
+      "feature": "notesapp",
+      "testCount": 12,
+      "fastTestCount": 10,
+      "e2eTestCount": 2,
+      "negativePathTestCount": 3
+    },
+    {
       "feature": "auth",
       "testCount": 11,
       "fastTestCount": 11,
@@ -104,17 +118,10 @@
       "negativePathTestCount": 6
     },
     {
-      "feature": "database",
-      "testCount": 11,
-      "fastTestCount": 10,
+      "feature": "viewer3d",
+      "testCount": 8,
+      "fastTestCount": 7,
       "e2eTestCount": 1,
-      "negativePathTestCount": 7
-    },
-    {
-      "feature": "notesapp",
-      "testCount": 11,
-      "fastTestCount": 9,
-      "e2eTestCount": 2,
       "negativePathTestCount": 3
     },
     {
@@ -122,13 +129,6 @@
       "testCount": 7,
       "fastTestCount": 7,
       "e2eTestCount": 0,
-      "negativePathTestCount": 3
-    },
-    {
-      "feature": "viewer3d",
-      "testCount": 7,
-      "fastTestCount": 6,
-      "e2eTestCount": 1,
       "negativePathTestCount": 3
     },
     {
@@ -556,5 +556,5 @@
       "infoCount": 32
     }
   ],
-  "durationMs": 281
+  "durationMs": 257
 }

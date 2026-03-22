@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-21'
+last_reviewed: '2026-03-22'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,12 +8,12 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-21T15:59:40.995Z
+Generated at: 2026-03-22T15:42:13.029Z
 
 ## Snapshot
 
-- Source files: 7135
-- Source lines: 1167597
+- Source files: 7349
+- Source lines: 1197056
 - use client files: 2
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
@@ -25,8 +25,8 @@ Generated at: 2026-03-21T15:59:40.995Z
 - Cross-feature dependency pairs: 3
 - Shared -> features imports: 1
 - setInterval occurrences: 0
-- Prop-drilling chains (depth >= 3): 33
-- Prop-drilling chains (depth >= 4): 5
+- Prop-drilling chains (depth >= 3): 225
+- Prop-drilling chains (depth >= 4): 52
 
 ## Top API Hotspots (by LOC)
 
@@ -60,23 +60,23 @@ Generated at: 2026-03-21T15:59:40.995Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx` | 1888 |
+| `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx` | 1893 |
 | `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1701 |
 | `src/features/kangur/ui/components/AddingLesson.tsx` | 1681 |
+| `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 1624 |
 | `src/features/kangur/server/ai-tutor-content-locale-scaffold.ts` | 1617 |
-| `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 1549 |
 | `src/features/kangur/page-content-catalog.ts` | 1461 |
 | `src/features/kangur/admin/appearance/appearance.copy.ts` | 1396 |
 | `src/features/kangur/server/ai-tutor-native-guide-locale-scaffold.ts` | 1265 |
-| `src/features/kangur/ui/pages/Game.tsx` | 1151 |
+| `src/shared/contracts/ai-paths.ts` | 1165 |
 | `src/features/kangur/admin/components/KangurAiTutorContentSettingsPanel.tsx` | 1139 |
 | `src/features/kangur/lessons/lesson-catalog-i18n.ts` | 1138 |
 | `src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts` | 1128 |
-| `src/features/kangur/ui/components/NumberBalanceRushGame.tsx` | 1086 |
+| `src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx` | 1128 |
+| `src/features/kangur/ui/components/NumberBalanceRushGame.tsx` | 1117 |
 | `src/features/kangur/ui/services/delegated-assignments.ts` | 1081 |
-| `src/features/kangur/ui/components/LogicalThinkingLesson.tsx` | 1061 |
+| `src/features/kangur/ui/components/LogicalThinkingLesson.tsx` | 1074 |
+| `src/features/kangur/ui/components/GeometryDrawingGame.tsx` | 1057 |
 | `src/app/api/kangur/ai-tutor/chat/handler.ts` | 1046 |
 | `src/features/kangur/ui/components/animations/AddingAnimations.tsx` | 1041 |
 | `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts` | 1041 |
-| `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 1035 |
-| `src/features/kangur/ui/components/GeometryDrawingGame.tsx` | 1034 |

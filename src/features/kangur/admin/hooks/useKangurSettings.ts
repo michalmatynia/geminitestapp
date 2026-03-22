@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
+  KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
   KANGUR_NARRATOR_SETTINGS_KEY,
   KANGUR_PHONE_SIMULATION_SETTINGS_KEY,
   KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
+  parseKangurLaunchRouteSettings,
   parseKangurParentVerificationEmailSettings,
   parseKangurPhoneSimulationSettings,
   parseKangurNarratorSettings,
+  type KangurLaunchRoute,
   type KangurNarratorEngine,
   type KangurPhoneSimulationSettings,
   type KangurParentVerificationEmailSettings,
@@ -104,6 +107,7 @@ export function useKangurSettings() {
   const rawParentVerificationEmailSettings =
     settingsStore.get(KANGUR_PARENT_VERIFICATION_SETTINGS_KEY);
   const rawPhoneSimulationSettings = settingsStore.get(KANGUR_PHONE_SIMULATION_SETTINGS_KEY);
+  const rawLaunchRouteSettings = settingsStore.get(KANGUR_LAUNCH_ROUTE_SETTINGS_KEY);
 
   const persistedNarratorSettings = useMemo(
     () => parseKangurNarratorSettings(rawNarratorSettings),
@@ -124,6 +128,10 @@ export function useKangurSettings() {
   const persistedPhoneSimulationSettings = useMemo(
     () => parseKangurPhoneSimulationSettings(rawPhoneSimulationSettings),
     [rawPhoneSimulationSettings]
+  );
+  const persistedLaunchRouteSettings = useMemo(
+    () => parseKangurLaunchRouteSettings(rawLaunchRouteSettings),
+    [rawLaunchRouteSettings]
   );
 
   const [engine, setEngine] = useState<KangurNarratorEngine>(persistedNarratorSettings.engine);
@@ -161,6 +169,9 @@ export function useKangurSettings() {
   );
   const [phoneSimulationEnabled, setPhoneSimulationEnabled] = useState(
     persistedPhoneSimulationSettings.enabled
+  );
+  const [launchRoute, setLaunchRoute] = useState<KangurLaunchRoute>(
+    persistedLaunchRouteSettings.route
   );
   const [guestIntroMode, setGuestIntroMode] = useState<KangurAiTutorGuestIntroMode>(
     persistedAiTutorSettings.guestIntroMode
@@ -227,6 +238,10 @@ export function useKangurSettings() {
   useEffect(() => {
     setPhoneSimulationEnabled(persistedPhoneSimulationSettings.enabled);
   }, [persistedPhoneSimulationSettings.enabled]);
+
+  useEffect(() => {
+    setLaunchRoute(persistedLaunchRouteSettings.route);
+  }, [persistedLaunchRouteSettings.route]);
 
   useEffect(
     () => () => {
@@ -408,11 +423,13 @@ export function useKangurSettings() {
   );
   const phoneSimulationSettingsDirty =
     phoneSimulationDraft.enabled !== persistedPhoneSimulationSettings.enabled;
+  const launchRouteSettingsDirty = launchRoute !== persistedLaunchRouteSettings.route;
   const isDirty =
     narratorDirty ||
     aiTutorSettingsDirty ||
     parentVerificationEmailSettingsDirty ||
-    phoneSimulationSettingsDirty;
+    phoneSimulationSettingsDirty ||
+    launchRouteSettingsDirty;
 
   const handleSave = async (): Promise<void> => {
     setIsSaving(true);
@@ -424,7 +441,11 @@ export function useKangurSettings() {
       },
       async () => {
         const savedSections: Array<
-          'narrator' | 'ai-tutor' | 'parent-verification' | 'phone-simulation'
+          | 'narrator'
+          | 'ai-tutor'
+          | 'parent-verification'
+          | 'phone-simulation'
+          | 'launch-route'
         > = [];
 
         if (narratorDirty) {
@@ -459,6 +480,14 @@ export function useKangurSettings() {
           savedSections.push('phone-simulation');
         }
 
+        if (launchRouteSettingsDirty) {
+          await updateSetting.mutateAsync({
+            key: KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
+            value: serializeSetting({ route: launchRoute }),
+          });
+          savedSections.push('launch-route');
+        }
+
         return savedSections;
       },
       {
@@ -484,6 +513,10 @@ export function useKangurSettings() {
         });
       } else if (saveResult[0] === 'phone-simulation') {
         toast('Kangur phone simulation settings saved.', {
+          variant: 'success',
+        });
+      } else if (saveResult[0] === 'launch-route') {
+        toast('Kangur launch route saved.', {
           variant: 'success',
         });
       }
@@ -518,6 +551,8 @@ export function useKangurSettings() {
     setParentVerificationNotificationsDisabledUntilInput,
     phoneSimulationEnabled,
     setPhoneSimulationEnabled,
+    launchRoute,
+    setLaunchRoute,
     copyStatus,
     narratorProbe,
     isProbingNarrator,
@@ -531,5 +566,6 @@ export function useKangurSettings() {
     parentVerificationNotificationsPausedUntil,
     persistedParentVerificationEmailSettings,
     persistedPhoneSimulationSettings,
+    persistedLaunchRouteSettings,
   };
 }

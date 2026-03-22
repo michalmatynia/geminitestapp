@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-22T10:14:25.926Z",
+  "generatedAt": "2026-03-22T15:42:08.620Z",
   "status": "warn",
   "summary": {
     "total": 7,
@@ -31,7 +31,7 @@
     {
       "severity": "warn",
       "ruleId": "context-oversized",
-      "message": "Context file is 508 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "message": "Context file is 517 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
       "file": "src/features/kangur/ui/context/KangurRouteTransitionContext.tsx",
       "line": null,
       "column": null,
@@ -103,5 +103,5 @@
       "infoCount": 5
     }
   ],
-  "durationMs": 355
+  "durationMs": 337
 }

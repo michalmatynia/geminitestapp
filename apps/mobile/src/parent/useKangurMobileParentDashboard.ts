@@ -263,7 +263,9 @@ export const useKangurMobileParentDashboard =
               en: 'Could not load learner results.',
               pl: 'Nie udało się pobrać wyników ucznia.',
             })
-          : recentResults.error,
+          : typeof recentResults.error === 'string'
+            ? recentResults.error
+            : null,
       selectLearner: async (learnerId: string) => {
         const normalizedLearnerId = learnerId.trim();
         if (!canAccessDashboard || !normalizedLearnerId || normalizedLearnerId === selectedLearnerId) {
@@ -271,6 +273,10 @@ export const useKangurMobileParentDashboard =
         }
 
         const previousLearnerId = storage.getItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY);
+        const normalizedPreviousLearnerId =
+          typeof previousLearnerId === 'string' && previousLearnerId.trim().length > 0
+            ? previousLearnerId
+            : null;
         setSelectionError(null);
         setSwitchingLearnerId(normalizedLearnerId);
 
@@ -278,8 +284,11 @@ export const useKangurMobileParentDashboard =
           storage.setItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY, normalizedLearnerId);
           await refreshSession();
         } catch {
-          if (previousLearnerId) {
-            storage.setItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY, previousLearnerId);
+          if (normalizedPreviousLearnerId) {
+            storage.setItem(
+              KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY,
+              normalizedPreviousLearnerId,
+            );
           } else {
             storage.removeItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY);
           }

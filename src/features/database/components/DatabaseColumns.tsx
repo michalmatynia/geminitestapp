@@ -47,25 +47,21 @@ type DatabaseActionsRuntimeValue = {
   handleDeleteRequest: (backupName: string) => void;
 };
 
-const DatabaseActionsRuntimeContext = React.createContext<DatabaseActionsRuntimeValue | null>(null);
-
-function useDatabaseActionsRuntime(): DatabaseActionsRuntimeValue {
-  const runtime = React.useContext(DatabaseActionsRuntimeContext);
-  if (!runtime) {
-    throw new Error(
-      'useDatabaseActionsRuntime must be used within DatabaseActionsRuntimeContext.Provider'
-    );
-  }
-  return runtime;
-}
-
-function DatabaseActionsPreviewItem(): React.JSX.Element {
-  const { backup, handlePreview } = useDatabaseActionsRuntime();
+function DatabaseActionsPreviewItem({
+  backup,
+  handlePreview,
+}: Pick<DatabaseActionsRuntimeValue, 'backup' | 'handlePreview'>): React.JSX.Element {
   return <DropdownMenuItem onClick={() => handlePreview(backup.name)}>Preview</DropdownMenuItem>;
 }
 
-function DatabaseActionsRestoreItem(): React.JSX.Element {
-  const { backup, backupMaintenanceAllowed, handleRestoreRequest } = useDatabaseActionsRuntime();
+function DatabaseActionsRestoreItem({
+  backup,
+  backupMaintenanceAllowed,
+  handleRestoreRequest,
+}: Pick<
+  DatabaseActionsRuntimeValue,
+  'backup' | 'backupMaintenanceAllowed' | 'handleRestoreRequest'
+>): React.JSX.Element {
   return (
     <DropdownMenuItem
       disabled={!backupMaintenanceAllowed}
@@ -79,8 +75,11 @@ function DatabaseActionsRestoreItem(): React.JSX.Element {
   );
 }
 
-function DatabaseActionsDeleteItem(): React.JSX.Element {
-  const { backup, backupMaintenanceAllowed, handleDeleteRequest } = useDatabaseActionsRuntime();
+function DatabaseActionsDeleteItem({
+  backup,
+  backupMaintenanceAllowed,
+  handleDeleteRequest,
+}: Pick<DatabaseActionsRuntimeValue, 'backup' | 'backupMaintenanceAllowed' | 'handleDeleteRequest'>): React.JSX.Element {
   return (
     <DropdownMenuItem
       className='text-destructive focus:text-destructive'
@@ -100,27 +99,22 @@ function DatabaseActionsCell({ backup }: { backup: DatabaseInfo }): React.JSX.El
   const { handlePreview, handleRestoreRequest, handleDeleteRequest } =
     useDatabaseBackupsActionsContext();
 
-  const runtimeValue = React.useMemo<DatabaseActionsRuntimeValue>(
-    () => ({
-      backup,
-      backupMaintenanceAllowed,
-      handlePreview,
-      handleRestoreRequest,
-      handleDeleteRequest,
-    }),
-    [backup, backupMaintenanceAllowed, handlePreview, handleRestoreRequest, handleDeleteRequest]
-  );
-
   return (
     <div className='flex justify-end'>
-      <DatabaseActionsRuntimeContext.Provider value={runtimeValue}>
-        <ActionMenu>
-          <DatabaseActionsPreviewItem />
-          <DatabaseActionsRestoreItem />
-          <DropdownMenuSeparator />
-          <DatabaseActionsDeleteItem />
-        </ActionMenu>
-      </DatabaseActionsRuntimeContext.Provider>
+      <ActionMenu>
+        <DatabaseActionsPreviewItem backup={backup} handlePreview={handlePreview} />
+        <DatabaseActionsRestoreItem
+          backup={backup}
+          backupMaintenanceAllowed={backupMaintenanceAllowed}
+          handleRestoreRequest={handleRestoreRequest}
+        />
+        <DropdownMenuSeparator />
+        <DatabaseActionsDeleteItem
+          backup={backup}
+          backupMaintenanceAllowed={backupMaintenanceAllowed}
+          handleDeleteRequest={handleDeleteRequest}
+        />
+      </ActionMenu>
     </div>
   );
 }

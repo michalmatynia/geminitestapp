@@ -17,6 +17,14 @@ import { KangurAssignmentSpotlight } from '@/features/kangur/ui/components/Kangu
 import { KangurPriorityAssignments } from '@/features/kangur/ui/components/KangurPriorityAssignments';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
+import {
+  GAME_HOME_ACTIONS_COLUMN_CLASSNAME,
+  GAME_HOME_CENTERED_SECTION_CLASSNAME,
+  GAME_HOME_LAYOUT_CLASSNAME,
+  GAME_HOME_PROGRESS_GRID_CLASSNAME,
+  GAME_HOME_SECTION_CLASSNAME,
+  GAME_PAGE_STANDARD_CONTAINER_CLASSNAME,
+} from '@/features/kangur/ui/pages/GameHome.constants';
 const Leaderboard = dynamic(() => import('@/features/kangur/ui/components/Leaderboard'));
 const PlayerProgressCard = dynamic(() => import('@/features/kangur/ui/components/PlayerProgressCard'));
 const XpToast = dynamic(() => import('@/features/kangur/ui/components/XpToast'));
@@ -514,12 +522,14 @@ function GameContent(): React.JSX.Element {
     screenKey: KangurGameScreen,
     className: string,
     children: React.ReactNode,
-    screenRef?: RefObject<HTMLDivElement | null>
+    screenRef?: RefObject<HTMLDivElement | null>,
+    testId?: string
   ): React.JSX.Element => (
     <motion.div
       key={screenKey}
       {...screenMotionProps}
       className={cn('w-full min-w-0 max-w-full', className)}
+      data-testid={testId}
       ref={screenRef}
     >
       <h2 id={GAME_SCREEN_TITLE_ID} ref={screenHeadingRef} tabIndex={-1} className='sr-only'>
@@ -564,7 +574,7 @@ function GameContent(): React.JSX.Element {
           className: shouldUseGameMobileChrome
             ? `flex ${KANGUR_SHELL_MINUS_TOP_BAR_HEIGHT_CLASSNAME} min-h-0 flex-col items-center py-3 sm:py-4 ${KANGUR_PANEL_GAP_CLASSNAME}`
             : cn(
-                `flex flex-col items-center pb-[calc(var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px)] pt-8 sm:pt-10 ${KANGUR_PANEL_GAP_CLASSNAME}`,
+                GAME_PAGE_STANDARD_CONTAINER_CLASSNAME,
                 shouldUseStandardMobileScroll
                   ? 'flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y'
                   : null
@@ -627,11 +637,11 @@ function GameContent(): React.JSX.Element {
             {screen === 'home' ? (
               renderScreen(
                 'home',
-                `flex w-full flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`,
+                GAME_HOME_LAYOUT_CLASSNAME,
                 <>
                   {canAccessParentAssignments ? (
                     <section
-                      className='w-full max-w-[900px]'
+                      className={GAME_HOME_SECTION_CLASSNAME}
                       id='kangur-home-parent-spotlight'
                       aria-labelledby='kangur-home-parent-assignment-heading'
                     >
@@ -644,7 +654,10 @@ function GameContent(): React.JSX.Element {
                       />
                     </section>
                   ) : null}
-                  <div className='w-full max-w-[560px] space-y-8 sm:space-y-10'>
+                  <div
+                    className={GAME_HOME_ACTIONS_COLUMN_CLASSNAME}
+                    data-testid='kangur-home-actions-column'
+                  >
                     <div id='kangur-home-actions' ref={homeActionsRef}>
                       <KangurGameHomeActionsWidget hideWhenScreenMismatch={false} />
                     </div>
@@ -682,7 +695,7 @@ function GameContent(): React.JSX.Element {
                   {!hideLearnerWidgetsForParent ? (
                     <section
                       ref={homeQuestRef}
-                      className='mx-auto w-full max-w-[900px]'
+                      className={GAME_HOME_CENTERED_SECTION_CLASSNAME}
                       id='kangur-home-quest'
                       aria-labelledby='kangur-home-quest-heading'
                     >
@@ -695,7 +708,7 @@ function GameContent(): React.JSX.Element {
 
                   {!hideLearnerWidgetsForParent && hasMeaningfulProgress ? (
                     <section
-                      className='w-full max-w-[900px]'
+                      className={GAME_HOME_SECTION_CLASSNAME}
                       id='kangur-home-summary'
                       aria-labelledby='kangur-home-hero-heading'
                     >
@@ -713,7 +726,7 @@ function GameContent(): React.JSX.Element {
                   {canAccessParentAssignments ? (
                     <section
                       ref={homeAssignmentsRef}
-                      className='mx-auto w-full max-w-[900px]'
+                      className={GAME_HOME_CENTERED_SECTION_CLASSNAME}
                       id='kangur-home-priority-assignments'
                       aria-labelledby='kangur-home-assignments-heading'
                     >
@@ -731,7 +744,7 @@ function GameContent(): React.JSX.Element {
 
                   {!hideLearnerWidgetsForParent ? (
                     <section
-                      className={`mx-auto grid w-full max-w-[900px] items-start xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] ${KANGUR_PANEL_GAP_CLASSNAME}`}
+                      className={GAME_HOME_PROGRESS_GRID_CLASSNAME}
                       id='kangur-home-progress'
                       aria-labelledby='kangur-home-progress-heading'
                     >
@@ -754,7 +767,9 @@ function GameContent(): React.JSX.Element {
                       </div>
                     </section>
                   ) : null}
-                </>
+                </>,
+                undefined,
+                'kangur-game-home-layout'
               )
             ) : null}
 

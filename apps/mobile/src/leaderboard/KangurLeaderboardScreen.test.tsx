@@ -153,7 +153,53 @@ describe('KangurLeaderboardScreen', () => {
     expect(screen.getByText('Przywracamy sesję ucznia i ranking...')).toBeTruthy();
   });
 
-  it('shows the pending mobile duel snapshot when the learner rank is not visible yet', () => {
+  it('shows the empty duel table when no duels are completed yet', () => {
+    render(<KangurLeaderboardScreen />);
+
+    expect(screen.getByText('Mobilna tabela rywali')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Nie ma jeszcze zakończonych pojedynków w tym oknie. Pierwsze skończone mecze od razu wypełnią tutaj tabelę rywali.',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('shows signed-out duel guidance when standings are available', () => {
+    useKangurMobileLeaderboardDuelsMock.mockReturnValue({
+      actionError: null,
+      challengeLearner: vi.fn(),
+      currentEntry: null,
+      currentRank: null,
+      entries: [
+        {
+          displayName: 'Maja Sprint',
+          lastPlayedAt: '2026-03-21T08:10:00.000Z',
+          learnerId: 'learner-2',
+          losses: 1,
+          matches: 5,
+          ties: 0,
+          winRate: 0.8,
+          wins: 4,
+        },
+      ],
+      error: null,
+      isActionPending: false,
+      isAuthenticated: false,
+      isLoading: false,
+      pendingLearnerId: null,
+      refresh: vi.fn(),
+    });
+
+    render(<KangurLeaderboardScreen />);
+
+    expect(
+      screen.getByText(
+        'Zaloguj sesję ucznia, aby wyróżnić tutaj Twoją pozycję w tym stanie pojedynków.',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('shows the pending duel standing when the learner rank is not visible yet', () => {
     useKangurMobileLeaderboardDuelsMock.mockReturnValue({
       actionError: null,
       challengeLearner: vi.fn(),
@@ -217,7 +263,7 @@ describe('KangurLeaderboardScreen', () => {
     expect(screen.getByText('Czeka na widoczność')).toBeTruthy();
     expect(
       screen.getByText(
-        'Twojego konta nie widać jeszcze w tej mobilnej migawce rankingu. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
+        'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
       ),
     ).toBeTruthy();
     expect(screen.getAllByText('Maja Sprint').length).toBeGreaterThanOrEqual(1);

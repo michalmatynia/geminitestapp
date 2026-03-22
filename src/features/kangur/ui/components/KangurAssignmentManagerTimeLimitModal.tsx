@@ -13,6 +13,7 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
 import { KangurDialogHeader } from '@/features/kangur/ui/components/KangurDialogHeader';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
 export type KangurAssignmentManagerTimeLimitModalTarget = {
   title: string;
@@ -49,6 +50,10 @@ export function KangurAssignmentManagerTimeLimitModal({
   maxMinutes,
 }: KangurAssignmentManagerTimeLimitModalProps): React.JSX.Element {
   const translations = useTranslations('KangurAssignmentManager');
+  const isCoarsePointer = useKangurCoarsePointer();
+  const actionClassName = isCoarsePointer
+    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+    : 'w-full sm:w-auto';
 
   return (
     <KangurDialog
@@ -129,7 +134,7 @@ export function KangurAssignmentManagerTimeLimitModal({
 
         <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-center sm:justify-end`}>
           <KangurButton
-            className='w-full sm:w-auto'
+            className={actionClassName}
             size='sm'
             type='button'
             variant='ghost'
@@ -138,7 +143,7 @@ export function KangurAssignmentManagerTimeLimitModal({
             {translations('actions.cancel')}
           </KangurButton>
           <KangurButton
-            className='w-full sm:w-auto'
+            className={actionClassName}
             size='sm'
             type='button'
             variant='surface'

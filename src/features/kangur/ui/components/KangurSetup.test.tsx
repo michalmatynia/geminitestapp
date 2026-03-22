@@ -27,6 +27,10 @@ vi.mock('framer-motion', () => ({
   },
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 import KangurSetup from '@/features/kangur/ui/components/KangurSetup';
 
 describe('KangurSetup', () => {
@@ -42,6 +46,12 @@ describe('KangurSetup', () => {
     );
 
     fireEvent.click(screen.getByTestId('kangur-setup-edition-2024'));
+
+    expect(screen.getByRole('button', { name: 'Wróć do listy edycji' })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
 
     expect(screen.getByTestId('kangur-setup-recommendation-card')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-setup-recommendation-label')).toHaveTextContent('Mocny krok');

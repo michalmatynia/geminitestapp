@@ -24,6 +24,10 @@ vi.mock('next-auth/react', () => ({
   useSession: useSessionMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 import KangurExam from '@/features/kangur/ui/components/KangurExam';
 
 describe('KangurExam', () => {
@@ -67,11 +71,17 @@ describe('KangurExam', () => {
     );
     expect(screen.getByRole('button', { name: /brak poprzedniego pytania/i })).toHaveClass(
       'kangur-cta-pill',
-      'surface-cta'
+      'surface-cta',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
     expect(screen.getByRole('button', { name: /zakończ test/i })).toHaveClass(
       'kangur-cta-pill',
-      'surface-cta'
+      'surface-cta',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
 
     await userEvent.click(screen.getByRole('button', { name: /odpowiedź b\. 4/i }));
@@ -85,7 +95,10 @@ describe('KangurExam', () => {
       await screen.findByRole('button', { name: 'Wróć do menu' })
     ).toHaveClass(
       'kangur-cta-pill',
-      'surface-cta'
+      'surface-cta',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
     expect(screen.getByTestId('kangur-exam-summary-shell')).toHaveClass('glass-panel', 'kangur-panel-soft');
     expect(screen.getByText('Wynik: 1/1')).toHaveClass('[color:var(--kangur-page-text)]');
@@ -112,7 +125,10 @@ describe('KangurExam', () => {
 
     expect(screen.getByRole('button', { name: /podsumowanie/i })).toHaveClass(
       'kangur-cta-pill',
-      'surface-cta'
+      'surface-cta',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
     expect(screen.getByRole('button', { name: /poprzednie pytanie w podglądzie/i })).toHaveClass(
       'kangur-cta-pill',

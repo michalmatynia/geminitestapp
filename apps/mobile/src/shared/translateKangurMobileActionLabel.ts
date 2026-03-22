@@ -113,9 +113,9 @@ const KANGUR_MOBILE_ACTION_LABEL_MAP: Record<
     pl: 'Odśwież podgląd',
   },
   'Sign in demo session': {
-    de: 'Demo-Sitzung anmelden',
-    en: 'Sign in demo session',
-    pl: 'Zaloguj sesję demo',
+    de: 'Demo starten',
+    en: 'Start demo',
+    pl: 'Uruchom demo',
   },
   'Start mixed practice': {
     de: 'Gemischtes Training starten',

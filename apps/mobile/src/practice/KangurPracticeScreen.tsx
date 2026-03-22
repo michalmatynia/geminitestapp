@@ -310,9 +310,9 @@ const getPracticeSyncPreview = ({
   if (isLoadingAuth) {
     return {
       body: {
-        de: 'Die mobile App prüft gerade, ob das Ergebnis nach der Runde auch an die Kangur-API gesendet werden kann.',
-        en: 'The mobile app is checking whether the result can also be sent to the Kangur API after the run.',
-        pl: 'Mobilna aplikacja sprawdza, czy wynik po serii będzie można także wysłać do API Kangura.',
+        de: 'Es wird gerade geprüft, ob das Ergebnis nach der Runde auch mit der Kangur-API synchronisiert werden kann.',
+        en: 'Checking whether the result can also sync with the Kangur API after the run.',
+        pl: 'Sprawdzamy, czy wynik po serii będzie można także zsynchronizować z API Kangura.',
       }[locale],
       label: {
         de: 'Synchronisierung wird geprüft',
@@ -326,9 +326,9 @@ const getPracticeSyncPreview = ({
   if (sessionStatus === 'authenticated') {
     return {
       body: {
-        de: 'Nach der Runde wird das Ergebnis lokal gespeichert und an die Kangur-API gesendet, damit Ranglisten und Verlauf schneller aktualisiert werden.',
-        en: 'After the run, the result will be saved locally and sent to the Kangur API so leaderboards and history update faster.',
-        pl: 'Po zakończeniu serii wynik zapisze się lokalnie i wyśle do API Kangura, aby szybciej odświeżyć rankingi oraz historię.',
+        de: 'Nach der Runde wird das Ergebnis lokal gespeichert und mit der Kangur-API synchronisiert, damit Ranglisten und Verlauf schneller aktualisiert werden.',
+        en: 'After the run, the result will be saved locally and synced with the Kangur API so leaderboards and history update faster.',
+        pl: 'Po zakończeniu serii wynik zapisze się lokalnie i zsynchronizuje z API Kangura, aby szybciej odświeżyć rankingi oraz historię.',
       }[locale],
       label: {
         de: 'Lokal + API',

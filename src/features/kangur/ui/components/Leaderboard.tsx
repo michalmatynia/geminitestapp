@@ -16,6 +16,7 @@ import {
   KANGUR_STACK_COMPACT_CLASSNAME,
   KANGUR_STACK_TIGHT_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   useKangurLeaderboardState,
   type KangurLeaderboardUserFilterIcon,
@@ -36,9 +37,13 @@ const renderUserFilterIcon = (icon: KangurLeaderboardUserFilterIcon): React.Reac
 
 export default function Leaderboard(): React.JSX.Element {
   const translations = useTranslations('KangurGameWidgets.leaderboard');
+  const isCoarsePointer = useKangurCoarsePointer();
   const { entry: leaderboardContent } = useKangurPageContentEntry('game-home-leaderboard');
   const { emptyStateLabel, items, loading, operationFilters, userFilters } =
     useKangurLeaderboardState();
+  const segmentedItemClassName = isCoarsePointer
+    ? 'min-h-11 flex-1 justify-center px-4 text-xs touch-manipulation select-none active:scale-[0.97] sm:flex-none'
+    : 'h-10 flex-1 justify-center px-3 text-xs sm:flex-none';
 
   return (
     <KangurGlassPanel
@@ -67,7 +72,7 @@ export default function Leaderboard(): React.JSX.Element {
               onClick={filter.select}
               aria-pressed={filter.selected}
               aria-label={filter.label}
-              className='h-10 flex-1 justify-center px-3 text-xs sm:flex-none'
+              className={segmentedItemClassName}
               data-testid={`leaderboard-operation-filter-${filter.id}`}
               size='sm'
               variant={filter.selected ? 'segmentActive' : 'segment'}
@@ -90,7 +95,7 @@ export default function Leaderboard(): React.JSX.Element {
               type='button'
               onClick={filter.select}
               aria-pressed={filter.selected}
-              className='h-10 flex-1 justify-center px-3 text-xs sm:flex-none'
+              className={segmentedItemClassName}
               data-testid={`leaderboard-user-filter-${filter.id}`}
               size='sm'
               variant={filter.selected ? 'segmentActive' : 'segment'}

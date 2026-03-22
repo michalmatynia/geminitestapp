@@ -23,6 +23,7 @@ import {
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_TIGHT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
@@ -58,6 +59,7 @@ export function KangurTestSuitePlayer({
   const questionMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const tutor = useOptionalKangurAiTutor();
   const tutorContent = useKangurAiTutorContent();
+  const isCoarsePointer = useKangurCoarsePointer();
   const publishedQuestions = useMemo(
     () => questions.filter((question) => isPublishedKangurTestQuestion(question)),
     [questions]
@@ -118,6 +120,12 @@ export function KangurTestSuitePlayer({
     return total;
   }, 0);
   const maxScore = publishedQuestions.reduce((total, q) => total + q.pointValue, 0);
+  const compactActionClassName = isCoarsePointer
+    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+    : 'w-full sm:w-auto';
+  const summaryActionClassName = isCoarsePointer
+    ? 'touch-manipulation select-none active:scale-[0.97]'
+    : undefined;
   const scorePercent = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
   const totalQuestions = publishedQuestions.length;
   const activeTutorContext = useMemo(
@@ -347,6 +355,7 @@ export function KangurTestSuitePlayer({
                 type='button'
                 onClick={handleRestart}
                 fullWidth
+                className={summaryActionClassName}
                 size='lg'
                 variant='surface'
                 data-doc-id='tests_suite_player'
@@ -407,7 +416,7 @@ export function KangurTestSuitePlayer({
               type='button'
               onClick={handlePrev}
               disabled={currentIndex === 0}
-              className='w-full sm:w-auto'
+              className={compactActionClassName}
               size='sm'
               variant='surface'
               data-doc-id='tests_suite_player'
@@ -424,7 +433,7 @@ export function KangurTestSuitePlayer({
                     void handleAskAboutSelectedChoice();
                   }}
                   disabled={tutor?.isLoading}
-                  className='w-full sm:w-auto'
+                  className={compactActionClassName}
                   size='sm'
                   variant='surface'
                   data-doc-id='tests_suite_player'
@@ -438,7 +447,7 @@ export function KangurTestSuitePlayer({
                 <KangurButton
                   type='button'
                   onClick={showAnswer ? handleNext : handleRevealAnswer}
-                  className='w-full sm:w-auto'
+                  className={compactActionClassName}
                   size='sm'
                   variant='primary'
                   data-doc-id='tests_suite_player'

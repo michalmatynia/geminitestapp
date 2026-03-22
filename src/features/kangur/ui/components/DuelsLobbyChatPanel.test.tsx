@@ -13,6 +13,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLobbyChat', () => ({
   useKangurLobbyChat: useKangurLobbyChatMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 import { DuelsLobbyChatPanel } from '@/features/kangur/ui/components/DuelsLobbyChatPanel';
 
 describe('DuelsLobbyChatPanel', () => {
@@ -60,7 +64,16 @@ describe('DuelsLobbyChatPanel', () => {
     expect(screen.getByText('Czat lobby')).toBeInTheDocument();
     expect(screen.getByText('Ty')).toBeInTheDocument();
     expect(screen.getByText('Cześć!')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Wyslij' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Odswiez czat lobby' })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
+    expect(screen.getByRole('button', { name: 'Wyslij' })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
   });
 
   it('shows login prompt when posting is disabled', () => {
@@ -92,6 +105,7 @@ describe('DuelsLobbyChatPanel', () => {
     );
 
     const loginButton = screen.getByRole('button', { name: 'Zaloguj sie' });
+    expect(loginButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
     fireEvent.click(loginButton);
     expect(onRequireLogin).toHaveBeenCalledTimes(1);
   });

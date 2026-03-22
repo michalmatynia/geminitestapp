@@ -294,7 +294,7 @@ describe('HomeScreen', () => {
     expect(screen.queryByText('Login ucznia')).toBeNull();
   });
 
-  it('shows mobile duel snapshot fallbacks when the learner is not yet visible on home', () => {
+  it('shows duel standing fallbacks when the learner is not yet visible on home', () => {
     useKangurMobileAuthMock.mockReturnValue({
       authError: null,
       authMode: 'learner-session',
@@ -358,7 +358,7 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Aktywni rywale w lobby')).toBeTruthy();
     expect(
       screen.getByText(
-        'To mobilna migawka aktywnych rywali. Otwórz lobby pojedynków, aby inni zobaczyli tu również Ciebie.',
+        'To aktywni rywale z lobby pojedynków. Otwórz lobby pojedynków, aby inni zobaczyli tu również Ciebie.',
       ),
     ).toBeTruthy();
     expect(screen.getByText('Iga Lobby')).toBeTruthy();
@@ -366,7 +366,7 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Ranking pojedynków')).toBeTruthy();
     expect(
       screen.getByText(
-        'Twojego konta nie widać jeszcze w tej mobilnej migawce rankingu. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
+        'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
       ),
     ).toBeTruthy();
     expect(screen.getByText(/#1 Maja Sprint/)).toBeTruthy();
@@ -999,5 +999,27 @@ describe('HomeScreen', () => {
         'Die letzten synchronisierten Sitzungen bleiben hier griffbereit, damit du vom Startbildschirm direkt wieder ins Training oder in den vollständigen Verlauf springen kannst.',
       ),
     ).toBeTruthy();
+  });
+
+  it('shows the demo CTA when learner credentials are unavailable on home', () => {
+    useKangurMobileAuthMock.mockReturnValue({
+      authError: null,
+      authMode: 'demo',
+      developerAutoSignInEnabled: false,
+      hasAttemptedDeveloperAutoSignIn: false,
+      isLoadingAuth: false,
+      session: {
+        status: 'anonymous',
+        user: null,
+      },
+      signIn: vi.fn(),
+      signInWithLearnerCredentials: vi.fn(),
+      signOut: vi.fn(),
+      supportsLearnerCredentials: false,
+    });
+
+    renderHomeScreen('de');
+
+    expect(screen.getByText('Demo starten')).toBeTruthy();
   });
 });

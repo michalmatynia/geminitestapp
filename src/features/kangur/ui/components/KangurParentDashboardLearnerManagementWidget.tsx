@@ -47,6 +47,9 @@ const PROFILE_MODAL_TABS: Array<{ id: ProfileModalTabId; label: string; docId: s
 
 export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Element | null {
   const isCoarsePointer = useKangurCoarsePointer();
+  const compactActionClassName = isCoarsePointer
+    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+    : 'w-full sm:w-auto';
   const {
     activeLearner,
     canAccessDashboard,
@@ -498,7 +501,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
 
               <KangurPanelRow className='sm:flex-wrap sm:items-center'>
                 <KangurButton
-                  className='w-full sm:w-auto'
+                  className={compactActionClassName}
                   disabled={isSubmitting}
                   onClick={() => void handleCreateLearner()}
                   size='sm'
@@ -630,7 +633,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                   </div>
                   <KangurPanelRow className='sm:flex-wrap sm:items-center'>
                     <KangurButton
-                      className='w-full sm:w-auto'
+                      className={compactActionClassName}
                       disabled={isSubmitting}
                       onClick={() => void handleEditSave()}
                       size='sm'
@@ -640,7 +643,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                       Zapisz ucznia
                     </KangurButton>
                     <KangurButton
-                      className='w-full sm:w-auto text-rose-600 hover:text-rose-700'
+                      className={cn(compactActionClassName, 'text-rose-600 hover:text-rose-700')}
                       disabled={isSubmitting}
                       onClick={() => setPendingRemovalId(activeLearner.id)}
                       size='sm'
@@ -664,7 +667,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                       </p>
                       <div className={`mt-3 ${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-center`}>
                         <KangurButton
-                          className='w-full sm:w-auto'
+                          className={compactActionClassName}
                           disabled={isSubmitting}
                           onClick={() => setPendingRemovalId(null)}
                           size='sm'
@@ -831,7 +834,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                         {hasMoreSessions ? (
                           <div className='mt-3 flex justify-center'>
                             <KangurButton
-                              className='w-full sm:w-auto'
+                              className={compactActionClassName}
                               disabled={isLoadingMoreSessions}
                               onClick={() => void handleLoadMoreSessions()}
                               size='sm'

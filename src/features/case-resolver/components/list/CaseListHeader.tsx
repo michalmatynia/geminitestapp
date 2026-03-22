@@ -4,7 +4,6 @@ import { PlusIcon } from 'lucide-react';
 import { memo, useMemo, type ReactNode } from 'react';
 
 import { FolderTreeSearchBar } from '@/features/foldertree/public';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { AdminCaseResolverBreadcrumbs, Button, Pagination } from '@/shared/ui';
 
 import { useOptionalCaseListPanelControlsContext } from './CaseListPanelControlsContext';
@@ -23,7 +22,7 @@ type CaseListHeaderProps = {
   onSearchChange?: ((q: string) => void) | undefined;
 };
 
-type CaseListHeaderRuntimeValue = {
+type CaseListHeaderResolvedProps = {
   onCreateCase: () => void;
   page: number;
   totalPages: number;
@@ -34,15 +33,11 @@ type CaseListHeaderRuntimeValue = {
   onSearchChange?: (q: string) => void;
 };
 
-const { Context: CaseListHeaderRuntimeContext, useStrictContext: useCaseListHeaderRuntime } =
-  createStrictContext<CaseListHeaderRuntimeValue>({
-    hookName: 'useCaseListHeaderRuntime',
-    providerName: 'CaseListHeaderRuntimeProvider',
-    displayName: 'CaseListHeaderRuntimeContext',
-  });
-
-function CaseListHeaderPaginationControl(): React.JSX.Element {
-  const { page, totalPages, onPageChange, pageSize, onPageSizeChange } = useCaseListHeaderRuntime();
+function CaseListHeaderPaginationControl(props: Pick<
+  CaseListHeaderResolvedProps,
+  'page' | 'totalPages' | 'onPageChange' | 'pageSize' | 'onPageSizeChange'
+>): React.JSX.Element {
+  const { page, totalPages, onPageChange, pageSize, onPageSizeChange } = props;
   return (
     <Pagination
       page={page}
@@ -58,8 +53,11 @@ function CaseListHeaderPaginationControl(): React.JSX.Element {
   );
 }
 
-function CaseListHeaderSearchBar(): React.JSX.Element | null {
-  const { onSearchChange, searchQuery } = useCaseListHeaderRuntime();
+function CaseListHeaderSearchBar(props: Pick<
+  CaseListHeaderResolvedProps,
+  'onSearchChange' | 'searchQuery'
+>): React.JSX.Element | null {
+  const { onSearchChange, searchQuery } = props;
   if (!onSearchChange) return null;
   return (
     <FolderTreeSearchBar
@@ -70,8 +68,8 @@ function CaseListHeaderSearchBar(): React.JSX.Element | null {
   );
 }
 
-function CaseListHeaderCreateButton(): React.JSX.Element {
-  const { onCreateCase } = useCaseListHeaderRuntime();
+function CaseListHeaderCreateButton(props: Pick<CaseListHeaderResolvedProps, 'onCreateCase'>): React.JSX.Element {
+  const { onCreateCase } = props;
   return (
     <Button onClick={onCreateCase} size='icon-lg' variant='outline' aria-label='Create new case' title={'Create new case'}>
       <PlusIcon className='h-6 w-6' />
@@ -119,7 +117,7 @@ export const CaseListHeader = memo(function CaseListHeader({
     );
   }
 
-  const runtimeValue = useMemo(
+  const resolvedProps = useMemo<CaseListHeaderResolvedProps>(
     () => ({
       onCreateCase: resolvedOnCreateCase,
       page: resolvedPage,
@@ -144,7 +142,7 @@ export const CaseListHeader = memo(function CaseListHeader({
 
   const renderCreateActions = (): React.JSX.Element => (
     <div className='flex flex-wrap items-center gap-2'>
-      <CaseListHeaderCreateButton />
+      <CaseListHeaderCreateButton onCreateCase={resolvedProps.onCreateCase} />
       <span className='text-xs text-muted-foreground'>
         {resolvedFilteredCount} matches / {resolvedTotalCount} total
       </span>
@@ -152,38 +150,54 @@ export const CaseListHeader = memo(function CaseListHeader({
   );
 
   return (
-    <CaseListHeaderRuntimeContext.Provider value={runtimeValue}>
-      <div className='space-y-4'>
-        <div className='space-y-3 lg:hidden'>
-          <div>
-            <h1 className='text-3xl font-bold tracking-tight text-white'>Cases</h1>
-            <AdminCaseResolverBreadcrumbs current='Cases' className='mt-1' />
-            <div className='mt-3'>{renderCreateActions()}</div>
-          </div>
-          <div className='space-y-3'>
-            <div className='flex justify-center'>
-              <CaseListHeaderPaginationControl />
-            </div>
-            <CaseListHeaderSearchBar />
-            <div className='w-full'>{filtersContent}</div>
-          </div>
+    <div className='space-y-4'>
+      <div className='space-y-3 lg:hidden'>
+        <div>
+          <h1 className='text-3xl font-bold tracking-tight text-white'>Cases</h1>
+          <AdminCaseResolverBreadcrumbs current='Cases' className='mt-1' />
+          <div className='mt-3'>{renderCreateActions()}</div>
         </div>
-
-        <div className='hidden grid-cols-[minmax(0,1fr)_auto_minmax(0,1.5fr)] items-start gap-3 lg:grid'>
-          <div>
-            <h1 className='text-3xl font-bold tracking-tight text-white'>Cases</h1>
-            <AdminCaseResolverBreadcrumbs current='Cases' className='mt-1' />
-            <div className='mt-3'>{renderCreateActions()}</div>
+        <div className='space-y-3'>
+          <div className='flex justify-center'>
+            <CaseListHeaderPaginationControl
+              page={resolvedProps.page}
+              totalPages={resolvedProps.totalPages}
+              onPageChange={resolvedProps.onPageChange}
+              pageSize={resolvedProps.pageSize}
+              onPageSizeChange={resolvedProps.onPageSizeChange}
+            />
           </div>
-          <div className='flex justify-center pt-1'>
-            <CaseListHeaderPaginationControl />
-          </div>
-          <div className='flex w-full flex-col gap-3 pt-1'>
-            <CaseListHeaderSearchBar />
-            <div className='w-full'>{filtersContent}</div>
-          </div>
+          <CaseListHeaderSearchBar
+            onSearchChange={resolvedProps.onSearchChange}
+            searchQuery={resolvedProps.searchQuery}
+          />
+          <div className='w-full'>{filtersContent}</div>
         </div>
       </div>
-    </CaseListHeaderRuntimeContext.Provider>
+
+      <div className='hidden grid-cols-[minmax(0,1fr)_auto_minmax(0,1.5fr)] items-start gap-3 lg:grid'>
+        <div>
+          <h1 className='text-3xl font-bold tracking-tight text-white'>Cases</h1>
+          <AdminCaseResolverBreadcrumbs current='Cases' className='mt-1' />
+          <div className='mt-3'>{renderCreateActions()}</div>
+        </div>
+        <div className='flex justify-center pt-1'>
+          <CaseListHeaderPaginationControl
+            page={resolvedProps.page}
+            totalPages={resolvedProps.totalPages}
+            onPageChange={resolvedProps.onPageChange}
+            pageSize={resolvedProps.pageSize}
+            onPageSizeChange={resolvedProps.onPageSizeChange}
+          />
+        </div>
+        <div className='flex w-full flex-col gap-3 pt-1'>
+          <CaseListHeaderSearchBar
+            onSearchChange={resolvedProps.onSearchChange}
+            searchQuery={resolvedProps.searchQuery}
+          />
+          <div className='w-full'>{filtersContent}</div>
+        </div>
+      </div>
+    </div>
   );
 });

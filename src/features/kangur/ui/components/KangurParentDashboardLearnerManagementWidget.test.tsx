@@ -284,6 +284,7 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
     const loadMoreButton = await screen.findByRole('button', {
       name: 'Pokaż starsze sesje',
     });
+    expect(loadMoreButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
     fireEvent.click(loadMoreButton);
 
     await waitFor(() => {
@@ -303,6 +304,48 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
       'h-11',
       'w-11',
       'p-0'
+    );
+  });
+
+  it('widens learner management modal actions on coarse pointers', async () => {
+    runtimeState.value = {
+      ...runtimeState.value,
+      isCreateLearnerModalOpen: true,
+    };
+
+    const { rerender } = render(<KangurParentDashboardLearnerManagementWidget />);
+
+    expect(screen.getByRole('button', { name: 'Dodaj ucznia' })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
+
+    runtimeState.value = {
+      ...runtimeState.value,
+      isCreateLearnerModalOpen: false,
+    };
+    rerender(<KangurParentDashboardLearnerManagementWidget />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ustawienia profilu ucznia' }));
+
+    const saveButton = screen.getByRole('button', { name: 'Zapisz ucznia' });
+    const removeButton = screen.getByRole('button', { name: 'Usuń profil ucznia' });
+    expect(saveButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+    expect(removeButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+
+    fireEvent.click(removeButton);
+
+    await screen.findByRole('alert');
+    expect(screen.getByRole('button', { name: 'Anuluj' })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
+    expect(screen.getByRole('button', { name: 'Potwierdź usunięcie' })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
   });
 

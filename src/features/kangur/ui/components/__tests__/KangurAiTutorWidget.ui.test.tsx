@@ -176,7 +176,7 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
-  useKangurAiTutorContent: () => DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+  useKangurAiTutorContent: () => DEFAULT_KANGUR_AI_TUTOR_CONTENT, useActivateKangurAiTutorContent: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({

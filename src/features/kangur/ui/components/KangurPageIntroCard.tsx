@@ -8,6 +8,7 @@ import {
   KangurHeadline,
   KangurPanelRow,
 } from '@/features/kangur/ui/design/primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -123,6 +124,7 @@ function KangurPageIntroDescription(): React.JSX.Element | null {
 }
 
 function KangurPageIntroBackButton(): React.JSX.Element | null {
+  const isCoarsePointer = useKangurCoarsePointer();
   const { backButtonLabel, backButtonTestId, onBack, showBackButton } =
     useKangurPageIntroCardContext();
 
@@ -132,7 +134,12 @@ function KangurPageIntroBackButton(): React.JSX.Element | null {
 
   return (
     <KangurButton
-      className='mt-4 w-full sm:w-auto'
+      className={cn(
+        'mt-4 w-full',
+        isCoarsePointer
+          ? 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+          : 'sm:w-auto'
+      )}
       data-testid={backButtonTestId}
       onClick={onBack}
       size='sm'

@@ -31,7 +31,23 @@ describe('KangurPageTransitionSkeleton', () => {
     vi.clearAllMocks();
   });
 
-  it('uses a fixed full-viewport overlay for standalone non-lessons routes', () => {
+  it('uses a fixed full-viewport overlay for standalone non-home non-lessons routes', () => {
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+    });
+
+    renderWithIntl(<KangurPageTransitionSkeleton pageKey='LearnerProfile' />);
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass('fixed', 'inset-0');
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).not.toHaveClass('absolute');
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-kangur-skeleton-variant',
+      'learner-profile'
+    );
+  });
+
+  it('offsets the standalone game-home overlay below the top navigation host', () => {
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
       embedded: false,
@@ -39,8 +55,13 @@ describe('KangurPageTransitionSkeleton', () => {
 
     renderWithIntl(<KangurPageTransitionSkeleton pageKey='Game' />);
 
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass('fixed', 'inset-0');
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).not.toHaveClass('absolute');
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass(
+      'fixed',
+      'inset-x-0',
+      'bottom-0',
+      'top-[var(--kangur-top-bar-height,88px)]'
+    );
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).not.toHaveClass('inset-0');
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
       'data-kangur-skeleton-variant',
       'game-home'
@@ -148,6 +169,9 @@ describe('KangurPageTransitionSkeleton', () => {
       'items-start',
       'xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]'
     );
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-game-home-actions-column')
+    ).toHaveClass('w-full', 'max-w-[560px]', 'space-y-8', 'sm:space-y-10');
   });
 
   it('uses a softer blurred overlay for locale-switch skeletons', () => {

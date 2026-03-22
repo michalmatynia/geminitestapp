@@ -139,9 +139,9 @@ function LessonsLoadingDetailCard(): React.JSX.Element {
       </View>
       <Text style={{ color: '#64748b', fontSize: 13, lineHeight: 18 }}>
         {copy({
-          de: 'Die ausgewählte Lektion und ihre Abschnitte werden vorbereitet.',
-          en: 'Preparing the selected lesson and reading sections.',
-          pl: 'Przygotowujemy wybraną lekcję i sekcje do czytania.',
+          de: 'Die Lektion und ihre Abschnitte werden vorbereitet.',
+          en: 'Preparing the lesson and its reading sections.',
+          pl: 'Przygotowujemy lekcję i sekcje do czytania.',
         })}
       </Text>
     </Card>
@@ -946,9 +946,9 @@ export function KangurLessonsScreen(): React.JSX.Element {
             </Text>
             <Text style={{ color: '#475569', fontSize: 15, lineHeight: 22 }}>
               {copy({
-                de: 'Die mobile Lektionsansicht verbindet den Themenkatalog mit gespeicherten Checkpoints, passendem Training und schnellen Wegen zurück zu Verlauf sowie Tagesplan.',
-                en: 'The mobile lessons view connects the topic catalog with saved checkpoints, matching practice, and quick routes back to history and the daily plan.',
-                pl: 'Mobilny widok lekcji łączy katalog tematów z zapisanymi checkpointami, pasującym treningiem oraz szybkim powrotem do historii i planu dnia.',
+                de: 'Hier verbindest du den Themenkatalog mit gespeicherten Checkpoints, passendem Training und schnellen Wegen zurück zu Verlauf sowie Tagesplan.',
+                en: 'Here you connect the topic catalog with saved checkpoints, matching practice, and quick routes back to history and the daily plan.',
+                pl: 'Tutaj połączysz katalog tematów z zapisanymi checkpointami, pasującym treningiem oraz szybkim powrotem do historii i planu dnia.',
               })}
             </Text>
 

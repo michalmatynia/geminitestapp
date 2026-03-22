@@ -618,4 +618,51 @@ describe('KangurProfileScreen', () => {
     ).toBeTruthy();
     expect(screen.getByText('🎮 Erstes Spiel')).toBeTruthy();
   });
+
+  it('shows the demo CTA when learner credentials are unavailable', () => {
+    useKangurMobileLearnerProfileMock.mockReturnValue({
+      assignments: [],
+      authError: null,
+      authMode: 'demo',
+      canNavigateToRecommendation: vi.fn(() => true),
+      displayName: 'Ada Learner',
+      getActionHref: vi.fn(() => '/lessons'),
+      isAuthenticated: false,
+      isLoadingAuth: false,
+      isLoadingScores: false,
+      recommendationsNote: 'Notatka',
+      refreshScores: vi.fn(),
+      scoresError: null,
+      signIn: vi.fn(),
+      supportsLearnerCredentials: false,
+      snapshot: {
+        level: {
+          level: 1,
+          title: 'Liczmistrz',
+        },
+        nextLevel: {
+          level: 2,
+          minXp: 100,
+        },
+        totalXp: 30,
+        levelProgressPercent: 30,
+        averageAccuracy: 0,
+        bestAccuracy: 0,
+        currentStreakDays: 0,
+        longestStreakDays: 0,
+        todayGames: 0,
+        dailyGoalGames: 5,
+        dailyGoalPercent: 0,
+        unlockedBadges: 0,
+        totalBadges: 9,
+        unlockedBadgeIds: [],
+        recommendations: [],
+        recentSessions: [],
+      },
+    });
+
+    renderProfileScreen('de');
+
+    expect(screen.getByText('Demo starten')).toBeTruthy();
+  });
 });

@@ -46,6 +46,10 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: () => ({
     user: {
@@ -142,18 +146,36 @@ describe('Leaderboard', () => {
     expect(allOperationFilter).toHaveClass(
       'kangur-segmented-control-item',
       'kangur-segmented-control-item-active',
-      'rounded-[18px]'
+      'rounded-[18px]',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
-    expect(divisionOperationFilter).toHaveClass('kangur-segmented-control-item', 'rounded-[18px]');
+    expect(divisionOperationFilter).toHaveClass(
+      'kangur-segmented-control-item',
+      'rounded-[18px]',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
     expect(divisionOperationFilter).not.toHaveClass('kangur-segmented-control-item-active');
     expect(allOperationFilter).toHaveAttribute('aria-pressed', 'true');
     expect(divisionOperationFilter).toHaveAttribute('aria-pressed', 'false');
     expect(allUserFilter).toHaveClass(
       'kangur-segmented-control-item',
       'kangur-segmented-control-item-active',
-      'rounded-[18px]'
+      'rounded-[18px]',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
-    expect(anonymousUserFilter).toHaveClass('kangur-segmented-control-item', 'rounded-[18px]');
+    expect(anonymousUserFilter).toHaveClass(
+      'kangur-segmented-control-item',
+      'rounded-[18px]',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
     expect(anonymousUserFilter).not.toHaveClass('kangur-segmented-control-item-active');
     expect(await screen.findByTestId('leaderboard-row-score-1')).toHaveClass(
       'soft-card'
@@ -200,7 +222,7 @@ describe('Leaderboard', () => {
       'border-dashed',
       'border'
     );
-    expect(screen.getByText('Brak wyników dla tych filtrów.')).toBeInTheDocument();
+    expect(screen.getByText('Brak wynikow dla tych filtrow.')).toBeInTheDocument();
   });
 
   it('uses Mongo-backed page-content titles when available', async () => {

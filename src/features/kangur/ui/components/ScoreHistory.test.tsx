@@ -40,6 +40,10 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 import ScoreHistory from '@/features/kangur/ui/components/ScoreHistory';
 
 const getParagraphByTextContent = (scope: HTMLElement, snippet: string): HTMLElement =>
@@ -291,6 +295,7 @@ describe('ScoreHistory', () => {
 
     const followUpLink = await screen.findByRole('link', { name: 'Powtórz lekcję' });
     expect(followUpLink).toHaveAttribute('href', '/kangur/lessons?focus=division');
+    expect(followUpLink).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
   });
 
   it('renders an embedded cms follow-up link when using a host page base path', async () => {
@@ -351,5 +356,6 @@ describe('ScoreHistory', () => {
       'href',
       '/home?preview=1&kangur-cms-home-kangur=lessons&kangur-cms-home-kangur-focus=division'
     );
+    expect(followUpLink).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
   });
 });

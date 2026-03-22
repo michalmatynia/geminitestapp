@@ -1217,9 +1217,9 @@ export default function HomeScreen(): React.JSX.Element {
           ) : session.status === 'authenticated' ? (
             <PrimaryButton
               hint={copy({
-                de: 'Meldet die aktuelle Schulersitzung in der mobilen App ab.',
-                en: 'Signs out the current learner session from the mobile app.',
-                pl: 'Wylogowuje aktualną sesję ucznia z aplikacji mobilnej.',
+                de: 'Meldet die aktuelle Schulersitzung ab.',
+                en: 'Signs out the current learner session.',
+                pl: 'Wylogowuje aktualną sesję ucznia.',
               })}
               label={copy({
                 de: 'Abmelden',
@@ -1231,14 +1231,14 @@ export default function HomeScreen(): React.JSX.Element {
           ) : (
             <PrimaryButton
               hint={copy({
-                de: 'Meldet eine Demo-Sitzung in der mobilen App an.',
-                en: 'Signs in a demo session in the mobile app.',
-                pl: 'Loguje przykładową sesję demo w aplikacji mobilnej.',
+                de: 'Startet die Demo.',
+                en: 'Starts the demo.',
+                pl: 'Uruchamia demo.',
               })}
               label={copy({
-                de: 'Demo-Sitzung anmelden',
-                en: 'Sign in demo session',
-                pl: 'Zaloguj sesję demo',
+                de: 'Demo starten',
+                en: 'Start demo',
+                pl: 'Uruchom demo',
               })}
               onPress={signIn}
             />
@@ -1684,9 +1684,9 @@ export default function HomeScreen(): React.JSX.Element {
             <View style={{ gap: 10 }}>
               <Text style={{ color: '#475569', lineHeight: 20 }}>
                 {copy({
-                  de: 'Nach der Anmeldung erscheint hier eine mobile Momentaufnahme aktiver Rivalen aus der Duell-Lobby zusammen mit einer direkten privaten Herausforderungsaktion.',
-                  en: 'After signing in, this section shows a mobile snapshot of active rivals from the duels lobby together with a direct private challenge action.',
-                  pl: 'Po zalogowaniu zobaczysz tutaj mobilną migawkę aktywnych rywali z lobby pojedynków razem z bezpośrednią akcją prywatnego wyzwania.',
+                  de: 'Nach der Anmeldung erscheinen hier aktive Rivalen aus der Duell-Lobby zusammen mit einer direkten privaten Herausforderungsaktion.',
+                  en: 'After signing in, this section shows active rivals from the duels lobby together with a direct private challenge action.',
+                  pl: 'Po zalogowaniu zobaczysz tutaj aktywnych rywali z lobby pojedynków razem z bezpośrednią akcją prywatnego wyzwania.',
                 })}
               </Text>
               <OutlineLink
@@ -1763,9 +1763,9 @@ export default function HomeScreen(): React.JSX.Element {
                       pl: 'Twoje konto jest teraz widoczne w lobby. Możesz od razu wysłać prywatne wyzwanie aktywnemu rywalowi.',
                     })
                   : copy({
-                      de: 'Das ist eine mobile Momentaufnahme aktiver Rivalen. Öffne die Duell-Lobby, damit andere auch dich in dieser Liste sehen.',
-                      en: 'This is a mobile snapshot of active rivals. Open the duels lobby so others can also see you in this list.',
-                      pl: 'To mobilna migawka aktywnych rywali. Otwórz lobby pojedynków, aby inni zobaczyli tu również Ciebie.',
+                      de: 'Das sind aktive Rivalen aus der Duell-Lobby. Öffne die Duell-Lobby, damit andere auch dich in dieser Liste sehen.',
+                      en: 'These are active rivals from the duels lobby. Open the duels lobby so others can also see you in this list.',
+                      pl: 'To aktywni rywale z lobby pojedynków. Otwórz lobby pojedynków, aby inni zobaczyli tu również Ciebie.',
                     })}
               </Text>
               {duelPresence.actionError ? (
@@ -2248,9 +2248,9 @@ export default function HomeScreen(): React.JSX.Element {
             <View style={{ gap: 10 }}>
               <Text style={{ color: '#475569', lineHeight: 20 }}>
                 {copy({
-                  de: 'Noch keine abgeschlossenen Duelle in diesem Fenster. Die ersten beendeten Serien füllen hier sofort die mobile Ranglisten-Momentaufnahme.',
-                  en: 'There are no completed duels in this window yet. The first finished series will fill this mobile leaderboard snapshot right away.',
-                  pl: 'W tym oknie nie ma jeszcze zakończonych pojedynków. Pierwsze skończone serie od razu wypełnią tutaj mobilną migawkę rankingu.',
+                  de: 'Noch keine abgeschlossenen Duelle in diesem Fenster. Die ersten beendeten Serien füllen hier sofort diesen Duellstand.',
+                  en: 'There are no completed duels in this window yet. The first finished series will fill this duel standing right away.',
+                  pl: 'W tym oknie nie ma jeszcze zakończonych pojedynków. Pierwsze skończone serie od razu wypełnią tutaj ten stan pojedynków.',
                 })}
               </Text>
               <OutlineLink
@@ -2323,9 +2323,9 @@ export default function HomeScreen(): React.JSX.Element {
               ) : session.status === 'authenticated' ? (
                 <Text style={{ color: '#64748b', lineHeight: 20 }}>
                   {copy({
-                    de: 'Dein Konto ist in dieser mobilen Ranglisten-Momentaufnahme noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
-                    en: 'Your account is not visible in this mobile leaderboard snapshot yet. Finish another duel or open the lobby so your rank appears here.',
-                    pl: 'Twojego konta nie widać jeszcze w tej mobilnej migawce rankingu. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
+                    de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
+                    en: 'Your account is not visible in this duel standing yet. Finish another duel or open the lobby so your rank appears here.',
+                    pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
                   })}
                 </Text>
               ) : null}
@@ -2813,9 +2813,9 @@ export default function HomeScreen(): React.JSX.Element {
               <OutlineLink
                 href={RESULTS_ROUTE}
                 hint={copy({
-                  de: 'Öffnet den vollständigen mobilen Ergebnisverlauf.',
-                  en: 'Opens the full mobile score history.',
-                  pl: 'Otwiera pełną mobilną historię wyników.',
+                  de: 'Öffnet den vollständigen Ergebnisverlauf.',
+                  en: 'Opens the full results history.',
+                  pl: 'Otwiera pełną historię wyników.',
                 })}
                 label={copy({
                   de: 'Vollständigen Verlauf öffnen',

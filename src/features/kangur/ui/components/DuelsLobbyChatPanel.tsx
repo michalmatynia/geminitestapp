@@ -19,6 +19,7 @@ import {
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
   KANGUR_START_ROW_SPACED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
 import { formatRelativeAge, resolveLobbyHostInitial } from '@/features/kangur/ui/pages/duels/duels-helpers';
 import { useKangurLobbyChat } from '@/features/kangur/ui/hooks/useKangurLobbyChat';
@@ -41,6 +42,7 @@ type DuelsLobbyChatPanelProps = {
 export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.Element {
   const chatTranslations = useTranslations('KangurDuels.chat');
   const commonTranslations = useTranslations('KangurDuels.common');
+  const isCoarsePointer = useKangurCoarsePointer();
   const { enabled, isOnline, canPost, relativeNow, activeLearnerId, onRequireLogin } = props;
   const {
     messages,
@@ -80,6 +82,9 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
     !isSending &&
     draft.trim().length > 0 &&
     draft.trim().length <= maxMessageLength;
+  const compactActionClassName = isCoarsePointer
+    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+    : 'w-full sm:w-auto';
 
   const resolveIsAtBottom = useCallback((container: HTMLDivElement | null): boolean => {
     if (!container) {
@@ -233,7 +238,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
                 setIsAtBottom(true);
               }}
               variant='secondary'
-              className='w-full sm:w-auto'
+              className={compactActionClassName}
             >
               {chatTranslations('unreadButton', { count: unreadCount })}
             </KangurButton>
@@ -266,7 +271,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
             disabled={isLoading}
             aria-busy={isLoading}
             aria-label={chatTranslations('refreshAria')}
-            className='w-full sm:w-auto'
+            className={compactActionClassName}
           >
             {isLoading ? chatTranslations('refreshing') : chatTranslations('refresh')}
           </KangurButton>
@@ -411,7 +416,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
             <KangurButton
               onClick={onRequireLogin}
               variant='secondary'
-              className='w-full sm:w-auto'
+              className={compactActionClassName}
             >
               {chatTranslations('loginButton')}
             </KangurButton>
@@ -451,7 +456,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
             variant='primary'
             disabled={!canSend}
             aria-busy={isSending}
-            className='w-full sm:w-auto'
+            className={compactActionClassName}
           >
             {isSending ? chatTranslations('sending') : chatTranslations('send')}
           </KangurButton>

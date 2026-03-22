@@ -26,6 +26,7 @@ import {
   KANGUR_WRAP_ROW_CLASSNAME,
   KANGUR_WRAP_ROW_TIGHT_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   LOBBY_MODE_ACCENTS,
   formatDurationLabel,
@@ -97,6 +98,7 @@ type DuelsLobbyPanelsProps = {
 export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Element {
   const lobbyTranslations = useTranslations('KangurDuels.lobby');
   const commonTranslations = useTranslations('KangurDuels.common');
+  const isCoarsePointer = useKangurCoarsePointer();
   const {
     inviteLobbyEntries,
     inviteHeadingId,
@@ -138,6 +140,9 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
     lobbyFreshWindowMs,
   } = props;
   const isGuest = !canJoinLobby;
+  const compactActionClassName = isCoarsePointer
+    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+    : 'w-full sm:w-auto';
   const showPausedChip = !isPageActive;
   const showOfflineChip = !isOnline;
   const showStaleChip = isLobbyStale && !lobbyError && isPageActive && isOnline;
@@ -272,7 +277,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                                 name: entry.host.displayName,
                               })
                         }
-                        className='w-full sm:w-auto'
+                        className={compactActionClassName}
                       >
                         {canJoinLobby
                           ? isJoining
@@ -414,7 +419,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
               aria-label={lobbyTranslations('buttons.refreshAria')}
               aria-busy={isLobbyLoading}
               aria-live='polite'
-              className='w-full sm:w-auto'
+              className={compactActionClassName}
             >
               {isLobbyLoading
                 ? lobbyTranslations('buttons.refreshing')
@@ -444,7 +449,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                   onRequireLogin();
                 }}
                 variant='secondary'
-                className='w-full sm:w-auto'
+                className={compactActionClassName}
               >
                 {lobbyTranslations('buttons.loginToPlay')}
               </KangurButton>
@@ -606,7 +611,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                 variant='secondary'
                 disabled={isLobbyLoading || !isOnline}
                 aria-busy={isLobbyLoading}
-                className='w-full sm:w-auto'
+                className={compactActionClassName}
               >
                 {lobbyTranslations('buttons.retry')}
               </KangurButton>
@@ -668,7 +673,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                 }}
                 variant='secondary'
                 disabled={isBusy}
-                className='w-full sm:w-auto'
+                className={compactActionClassName}
               >
                 {canJoinLobby
                   ? lobbyTranslations('buttons.createChallenge')
@@ -697,7 +702,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                 }}
                 variant='ghost'
                 disabled={isBusy}
-                className='w-full sm:w-auto'
+                className={compactActionClassName}
               >
                 {lobbyTranslations('buttons.showAll')}
               </KangurButton>
@@ -803,7 +808,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                                 name: entry.host.displayName,
                               })
                         }
-                        className='w-full sm:w-auto'
+                        className={compactActionClassName}
                       >
                         {canJoinLobby
                           ? isJoining

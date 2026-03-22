@@ -267,6 +267,11 @@ describe('KangurPracticeScreen', () => {
     expect(screen.getByText('Lokalnie + API')).toBeTruthy();
     expect(
       screen.getByText(
+        'Po zakończeniu serii wynik zapisze się lokalnie i zsynchronizuje z API Kangura, aby szybciej odświeżyć rankingi oraz historię.',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
         'Na starcie widzisz tutaj rozmiar serii, sposób zapisu oraz najszybsze przejścia do lekcji, historii i planu dnia.',
       ),
     ).toBeTruthy();
@@ -299,6 +304,11 @@ describe('KangurPracticeScreen', () => {
     expect(screen.getByText('1 question')).toBeTruthy();
     expect(screen.getByText('Time and calendar')).toBeTruthy();
     expect(screen.getByText('Local + API')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'After the run, the result will be saved locally and synced with the Kangur API so leaderboards and history update faster.',
+      ),
+    ).toBeTruthy();
     expect(
       screen.getByText(
         'At the start, this shows the run size, the save path, and the quickest routes back to lessons, history, and the daily plan.',

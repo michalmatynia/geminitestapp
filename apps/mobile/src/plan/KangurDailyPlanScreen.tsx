@@ -890,9 +890,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                 >
                   <Text style={{ color: '#ffffff', fontWeight: '700' }}>
                     {copy({
-                      de: 'Demo-Sitzung anmelden',
-                      en: 'Sign in demo session',
-                      pl: 'Zaloguj sesję demo',
+                      de: 'Demo starten',
+                      en: 'Start demo',
+                      pl: 'Uruchom demo',
                     })}
                   </Text>
                 </Pressable>

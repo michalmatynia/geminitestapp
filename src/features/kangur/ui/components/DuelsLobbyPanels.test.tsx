@@ -18,6 +18,10 @@ vi.mock('@/features/kangur/observability/client', () => ({
   withKangurClientErrorSync,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 import { DuelsLobbyPanels } from '@/features/kangur/ui/components/DuelsLobbyPanels';
 
 const buildEntry = (overrides: Partial<KangurDuelLobbyEntry> = {}): KangurDuelLobbyEntry => ({
@@ -119,7 +123,9 @@ describe('DuelsLobbyPanels', () => {
     });
     expect(setLobbySort).toHaveBeenCalledWith('time_fast');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Odswiez lobby pojedynkow' }));
+    const refreshButton = screen.getByRole('button', { name: 'Odswiez lobby pojedynkow' });
+    expect(refreshButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+    fireEvent.click(refreshButton);
     expect(loadLobby).toHaveBeenCalledWith({ showLoading: true });
   });
 
@@ -219,7 +225,9 @@ describe('DuelsLobbyPanels', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Zaloguj sie, aby zagrac' }));
+    const loginButton = screen.getByRole('button', { name: 'Zaloguj sie, aby zagrac' });
+    expect(loginButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+    fireEvent.click(loginButton);
     expect(onRequireLogin).toHaveBeenCalledTimes(1);
     expect(trackKangurClientEventMock).toHaveBeenCalledWith(
       'kangur_duels_lobby_login_clicked',
@@ -274,7 +282,9 @@ describe('DuelsLobbyPanels', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dolacz do pojedynku z Ada' }));
+    const joinButton = screen.getByRole('button', { name: 'Dolacz do pojedynku z Ada' });
+    expect(joinButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+    fireEvent.click(joinButton);
     expect(handleJoinLobbySession).toHaveBeenCalledWith('duel-join');
   });
 
@@ -327,7 +337,9 @@ describe('DuelsLobbyPanels', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Pokaz wszystkie' }));
+    const showAllButton = screen.getByRole('button', { name: 'Pokaz wszystkie' });
+    expect(showAllButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+    fireEvent.click(showAllButton);
     expect(setLobbyModeFilter).toHaveBeenCalledWith('all');
     expect(setLobbyOperationFilter).toHaveBeenCalledWith('all');
     expect(setLobbyDifficultyFilter).toHaveBeenCalledWith('all');
@@ -380,7 +392,9 @@ describe('DuelsLobbyPanels', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Stworz wlasne wyzwanie' }));
+    const createButton = screen.getByRole('button', { name: 'Stworz wlasne wyzwanie' });
+    expect(createButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+    fireEvent.click(createButton);
     expect(handleCreateChallenge).toHaveBeenCalledTimes(1);
     expect(trackKangurClientEventMock).toHaveBeenCalledWith(
       'kangur_duels_lobby_create_clicked',

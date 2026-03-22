@@ -271,15 +271,18 @@ describe('KangurLessonsScreen', () => {
 
     expect(screen.getByText('Lekcje')).toBeTruthy();
     expect(screen.getByText('Nauka i powtórki')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Tutaj połączysz katalog tematów z zapisanymi checkpointami, pasującym treningiem oraz szybkim powrotem do historii i planu dnia.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('Śledzone 0')).toBeTruthy();
     expect(screen.getByText('Opanowane 0')).toBeTruthy();
     expect(screen.getByText('Do powtórki 0')).toBeTruthy();
     expect(screen.getByText('Otwórz pełną historię')).toBeTruthy();
     expect(screen.getByText('Otwórz plan dnia')).toBeTruthy();
     expect(screen.getByText('Ładowanie lekcji')).toBeTruthy();
-    expect(
-      screen.getByText('Przygotowujemy wybraną lekcję i sekcje do czytania.'),
-    ).toBeTruthy();
+    expect(screen.getByText('Przygotowujemy lekcję i sekcje do czytania.')).toBeTruthy();
     expect(screen.getByText('Wczytujemy listę tematów i stan opanowania.')).toBeTruthy();
     expect(screen.queryByText('Wybrana lekcja')).toBeNull();
   });

@@ -10,6 +10,8 @@ const ROUTE_INITIAL_GOTO_TIMEOUT_MS = 90_000;
 const HOME_LESSONS_ACTION_SOURCE_ID = 'game-home-action:lessons';
 const PRIMARY_NAV_HOME_SOURCE_ID = 'kangur-primary-nav:home';
 const PRIMARY_NAV_LESSONS_SOURCE_ID = 'kangur-primary-nav:lessons';
+const HOME_ROUTE_PATH_PATTERN = /^\/(?:kangur|[a-z]{2})$/;
+const HOME_ROUTE_URL_PATTERN = /\/(?:kangur|[a-z]{2})$/;
 const LESSONS_ROUTE_PATH_PATTERN = /^\/(?:[a-z]{2}\/)?lessons$/;
 const LESSONS_ROUTE_URL_PATTERN = /\/(?:[a-z]{2}\/)?lessons$/;
 const LESSONS_HEADING_PATTERN = /^(?:Lekcje|Lessons)$/;
@@ -64,11 +66,13 @@ type RouteScrollMonitorSample = {
   scrollY: number;
   hasSkeleton: boolean;
   skeletonTop: number | null;
+  skeletonHomeLayoutTop: number | null;
   topBarBottom: number | null;
   hasAppLoader: boolean;
   transitionPhase: string | null;
   activeTransitionSourceId: string | null;
   homeLessonsNavState: string | null;
+  homeLayoutTop: number | null;
 };
 
 type TopNavLayoutSnapshot = {
@@ -603,20 +607,28 @@ const startRouteScrollMonitor = async (page: Page): Promise<void> => {
       const routeContent = document.querySelector('[data-testid="kangur-route-content"]');
       const homeLessonsAction = document.querySelector('[data-testid="kangur-home-action-lessons"]');
       const skeleton = document.querySelector('[data-testid="kangur-page-transition-skeleton"]');
+      const skeletonHomeLayout = document.querySelector(
+        '[data-testid="kangur-page-transition-skeleton-game-home-layout"]'
+      );
+      const homeLayout = document.querySelector('[data-testid="kangur-game-home-layout"]');
       const topBar = document.querySelector('[data-testid="kangur-page-top-bar"]');
       const skeletonRect = skeleton?.getBoundingClientRect() ?? null;
+      const skeletonHomeLayoutRect = skeletonHomeLayout?.getBoundingClientRect() ?? null;
+      const homeLayoutRect = homeLayout?.getBoundingClientRect() ?? null;
       const topBarRect = topBar?.getBoundingClientRect() ?? null;
       samples.push({
         path: `${window.location.pathname}${window.location.search}`,
         scrollY: window.scrollY,
         hasSkeleton: Boolean(skeletonRect),
         skeletonTop: skeletonRect?.top ?? null,
+        skeletonHomeLayoutTop: skeletonHomeLayoutRect?.top ?? null,
         topBarBottom: topBarRect?.bottom ?? null,
         hasAppLoader: Boolean(document.querySelector('[data-testid="kangur-app-loader"]')),
         transitionPhase: routeContent?.getAttribute('data-route-transition-phase') ?? null,
         activeTransitionSourceId:
           routeContent?.getAttribute('data-route-transition-source-id') ?? null,
         homeLessonsNavState: homeLessonsAction?.getAttribute('data-nav-state') ?? null,
+        homeLayoutTop: homeLayoutRect?.top ?? null,
       });
 
       if (running) {
@@ -690,6 +702,41 @@ const expectLessonsSkeletonToStartBelowTopBar = (
     ),
     `${stepLabel}: lessons skeleton rendered above the top bar before settling`
   ).toBe(true);
+};
+
+const expectHomeSkeletonToAlignWithLoadedHomeLayout = (
+  samples: RouteScrollMonitorSample[],
+  stepLabel: string,
+  tolerance = 4
+): void => {
+  const skeletonSamples = samples.filter(
+    (sample) =>
+      sample.hasSkeleton &&
+      sample.skeletonHomeLayoutTop !== null &&
+      sample.topBarBottom !== null
+  );
+  const firstSkeletonTop = skeletonSamples[0]?.skeletonHomeLayoutTop ?? null;
+  const finalHomeLayoutTop =
+    [...samples].reverse().find((sample) => sample.homeLayoutTop !== null)?.homeLayoutTop ?? null;
+
+  expect(
+    skeletonSamples.length,
+    `${stepLabel}: expected geometry samples while the home skeleton was visible`
+  ).toBeGreaterThan(0);
+  expect(
+    skeletonSamples.every(
+      (sample) =>
+        (sample.skeletonHomeLayoutTop ?? Number.NEGATIVE_INFINITY) >=
+        (sample.topBarBottom ?? 0) - tolerance
+    ),
+    `${stepLabel}: home skeleton rendered above the top bar before settling`
+  ).toBe(true);
+  expect(firstSkeletonTop, `${stepLabel}: missing the first home skeleton layout sample`).not.toBeNull();
+  expect(finalHomeLayoutTop, `${stepLabel}: missing the final loaded home layout sample`).not.toBeNull();
+  expect(
+    Math.abs((firstSkeletonTop ?? 0) - (finalHomeLayoutTop ?? 0)),
+    `${stepLabel}: home skeleton layout did not align with the loaded home layout`
+  ).toBeLessThanOrEqual(tolerance);
 };
 
 const expectHomeActionSkeletonHandoff = (
@@ -1396,6 +1443,7 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
       targetPath: '/kangur',
     });
     expectNoAppLoaderFlash(lessonsToHomeSamples, 'lessons -> home');
+    expectHomeSkeletonToAlignWithLoadedHomeLayout(lessonsToHomeSamples, 'lessons -> home');
   });
 
   test('keeps game entry screens and quick-practice flows on the same route with consistent back navigation', async ({

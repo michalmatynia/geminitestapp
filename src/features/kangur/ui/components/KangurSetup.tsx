@@ -19,6 +19,7 @@ import {
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
   KANGUR_CENTER_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurMode } from '@/features/kangur/ui/types';
 
 type KangurSet = {
@@ -143,9 +144,13 @@ export default function KangurSetup({
   const recommendationDescription = recommendedDescription;
   const recommendationLabel = recommendedLabel ?? 'Polecamy teraz';
   const recommendationTitle = recommendedTitle;
+  const isCoarsePointer = useKangurCoarsePointer();
   const [selectedEdition, setSelectedEdition] = useState<KangurEdition | null>(null);
   const editionsHeadingId = useId();
   const setsHeadingId = useId();
+  const compactActionClassName = isCoarsePointer
+    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] self-stretch sm:w-auto sm:self-start'
+    : 'w-full self-stretch sm:w-auto sm:self-start';
 
   if (!selectedEdition) {
     return (
@@ -239,7 +244,7 @@ export default function KangurSetup({
       <KangurButton
         aria-label='Wróć do listy edycji'
         onClick={() => setSelectedEdition(null)}
-        className='w-full self-stretch sm:w-auto sm:self-start'
+        className={compactActionClassName}
         size='sm'
         type='button'
         variant='surface'

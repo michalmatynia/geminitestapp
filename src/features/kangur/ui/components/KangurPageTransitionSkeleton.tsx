@@ -7,6 +7,12 @@ import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/Kan
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
 import {
+  GAME_HOME_ACTIONS_COLUMN_CLASSNAME,
+  GAME_HOME_PROGRESS_GRID_CLASSNAME,
+  GAME_HOME_SECTION_CLASSNAME,
+  GAME_PAGE_STANDARD_CONTAINER_CLASSNAME,
+} from '@/features/kangur/ui/pages/GameHome.constants';
+import {
   LESSONS_ACTIVE_LAYOUT_CLASSNAME,
   LESSONS_ACTIVE_SECTION_CLASSNAME,
   LESSONS_LIBRARY_LAYOUT_CLASSNAME,
@@ -107,8 +113,14 @@ const SkeletonLine = ({ className }: { className?: string }): React.JSX.Element 
 };
 
 const GameHomeSkeleton = (): React.JSX.Element => (
-  <div className={cn('flex w-full flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}>
-    <div className='w-full max-w-[560px]'>
+  <div
+    className={cn('flex w-full flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
+    data-testid='kangur-page-transition-skeleton-game-home-layout'
+  >
+    <div
+      className={GAME_HOME_ACTIONS_COLUMN_CLASSNAME}
+      data-testid='kangur-page-transition-skeleton-game-home-actions-column'
+    >
       <SkeletonPanel className='min-h-[340px] sm:min-h-[352px]'>
         <div className='grid grid-cols-1 kangur-panel-gap'>
           <SkeletonBlock className='h-16 rounded-full bg-slate-200/76' />
@@ -119,7 +131,10 @@ const GameHomeSkeleton = (): React.JSX.Element => (
       </SkeletonPanel>
     </div>
 
-    <div className='w-full max-w-[900px]'>
+    <div
+      className={GAME_HOME_SECTION_CLASSNAME}
+      data-testid='kangur-page-transition-skeleton-game-home-summary'
+    >
       <SkeletonPanel className='min-h-[240px]'>
         <div className='space-y-4'>
           <div className={KANGUR_WRAP_ROW_CLASSNAME}>
@@ -141,7 +156,7 @@ const GameHomeSkeleton = (): React.JSX.Element => (
       </SkeletonPanel>
     </div>
 
-    <div className='w-full max-w-[900px] space-y-4'>
+    <div className={cn(GAME_HOME_SECTION_CLASSNAME, 'space-y-4')}>
       <div className='space-y-2'>
         <SkeletonLine className='h-4 w-32' />
         <SkeletonLine className='h-7 w-2/3 max-w-[420px]' />
@@ -161,11 +176,7 @@ const GameHomeSkeleton = (): React.JSX.Element => (
     </div>
 
     <div
-      className={cn(
-        'mx-auto grid w-full max-w-[900px] items-start',
-        KANGUR_PANEL_GAP_CLASSNAME,
-        'xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]'
-      )}
+      className={GAME_HOME_PROGRESS_GRID_CLASSNAME}
       data-testid='kangur-page-transition-skeleton-game-home-progress-grid'
     >
       <SkeletonPanel className='min-h-[320px]'>
@@ -516,14 +527,15 @@ export function KangurPageTransitionSkeleton({
       pageKey,
     });
   const resolvedPageKey = resolveSkeletonPageKey(resolvedVariant);
-  const shouldOffsetStandaloneLessonsOverlay = !embedded && resolvedPageKey === 'Lessons';
+  const shouldOffsetStandaloneRouteOverlay =
+    !embedded && (resolvedPageKey === 'Lessons' || resolvedVariant === 'game-home');
 
   return (
     <div
       className={cn(
         embedded
           ? 'absolute inset-0'
-          : shouldOffsetStandaloneLessonsOverlay
+          : shouldOffsetStandaloneRouteOverlay
             ? cn('fixed inset-x-0 bottom-0', KANGUR_TOP_BAR_OFFSET_CLASSNAME)
             : 'fixed inset-0',
         'z-30 cursor-progress overflow-hidden',
@@ -556,7 +568,9 @@ export function KangurPageTransitionSkeleton({
           className: cn(
             'flex flex-col items-center',
             KANGUR_PANEL_GAP_CLASSNAME,
-            resolvedPageKey === 'Lessons'
+            resolvedVariant === 'game-home'
+              ? GAME_PAGE_STANDARD_CONTAINER_CLASSNAME
+              : resolvedPageKey === 'Lessons'
               ? null
               : resolvedPageKey === 'Game'
                 ? KANGUR_TOP_BAR_PADDED_OFFSET_CLASSNAME

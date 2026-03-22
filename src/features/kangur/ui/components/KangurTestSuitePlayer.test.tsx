@@ -31,6 +31,10 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useOptionalKangurAiTutor: useOptionalKangurAiTutorMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 import { render, screen } from '@/__tests__/test-utils';
 import { KangurTestSuitePlayer } from '@/features/kangur/ui/components/KangurTestSuitePlayer';
 import type { KangurTestQuestion, KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
@@ -111,19 +115,34 @@ describe('KangurTestSuitePlayer', () => {
     );
     expect(screen.getByRole('button', { name: /previous/i })).toHaveClass(
       'kangur-cta-pill',
-      'surface-cta'
+      'surface-cta',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
     );
     expect(screen.getByRole('button', { name: /previous/i })).toBeDisabled();
 
     await userEvent.click(screen.getByRole('button', { name: /A.*4/i }));
 
     const checkAnswerButton = screen.getByRole('button', { name: /check answer/i });
-    expect(checkAnswerButton).toHaveClass('kangur-cta-pill', 'primary-cta');
+    expect(checkAnswerButton).toHaveClass(
+      'kangur-cta-pill',
+      'primary-cta',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
 
     await userEvent.click(checkAnswerButton);
 
     const finishButton = screen.getByRole('button', { name: /finish/i });
-    expect(finishButton).toHaveClass('kangur-cta-pill', 'primary-cta');
+    expect(finishButton).toHaveClass(
+      'kangur-cta-pill',
+      'primary-cta',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
 
     await userEvent.click(finishButton);
 
@@ -137,7 +156,11 @@ describe('KangurTestSuitePlayer', () => {
     expect(screen.getByTestId('kangur-test-suite-summary')).toHaveClass(
       'soft-card'
     );
-    expect(restartButton).toHaveClass('kangur-cta-pill', 'surface-cta');
+    expect(restartButton).toHaveClass(
+      'kangur-cta-pill',
+      'surface-cta',
+      'touch-manipulation'
+    );
     expect(onFinish).toHaveBeenCalledWith(3, 3, { 'question-1': 'A' });
   });
 
@@ -192,7 +215,13 @@ describe('KangurTestSuitePlayer', () => {
     await userEvent.click(screen.getByRole('button', { name: /A.*4/i }));
 
     const askAboutChoiceButton = screen.getByTestId('kangur-test-suite-selected-choice-tutor-cta');
-    expect(askAboutChoiceButton).toHaveClass('kangur-cta-pill', 'surface-cta');
+    expect(askAboutChoiceButton).toHaveClass(
+      'kangur-cta-pill',
+      'surface-cta',
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
 
     await userEvent.click(askAboutChoiceButton);
 

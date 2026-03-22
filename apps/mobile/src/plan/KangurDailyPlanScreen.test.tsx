@@ -211,6 +211,27 @@ describe('KangurDailyPlanScreen', () => {
     ).toBeTruthy();
   });
 
+  it('shows the demo CTA when learner credentials are unavailable', () => {
+    useKangurMobileDailyPlanMock.mockReturnValue({
+      authError: null,
+      displayName: 'Ada Learner',
+      isAuthenticated: false,
+      isLoadingAuth: false,
+      isLoading: false,
+      recentResultItems: [],
+      refresh: vi.fn(),
+      scoreError: null,
+      signIn: vi.fn(),
+      strongestFocus: null,
+      supportsLearnerCredentials: false,
+      weakestFocus: null,
+    });
+
+    render(<KangurDailyPlanScreen />);
+
+    expect(screen.getByText('Uruchom demo')).toBeTruthy();
+  });
+
   it('renders focus, assignments, recent results, and duel actions for an authenticated learner', async () => {
     const createRematchMock = vi.fn().mockResolvedValue('duel-plan-1');
     useKangurMobileDailyPlanAssignmentsMock.mockReturnValue({

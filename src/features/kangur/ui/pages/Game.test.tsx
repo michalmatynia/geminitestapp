@@ -344,6 +344,29 @@ describe('Game page', () => {
     );
   });
 
+  it('keeps the home actions column aligned with the shared home shell contract', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildRuntime('home'),
+      canAccessParentAssignments: true,
+      progress: { totalXp: 1 },
+    });
+
+    render(<Game />);
+
+    expect(screen.getByTestId('kangur-game-home-layout')).toHaveClass(
+      'flex',
+      'w-full',
+      'flex-col',
+      'items-center'
+    );
+    expect(screen.getByTestId('kangur-home-actions-column')).toHaveClass(
+      'w-full',
+      'max-w-[560px]',
+      'space-y-8',
+      'sm:space-y-10'
+    );
+  });
+
   it('forwards the full xp toast state on the live game page path', () => {
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildRuntime('home'),

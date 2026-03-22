@@ -666,6 +666,23 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Co najmniej 2 znaki')).toBeTruthy();
   });
 
+  it('shows signed-out guidance for the active learners card', () => {
+    useKangurMobileDuelsLobbyMock.mockReturnValue({
+      ...createDefaultDuelsLobbyMock(),
+      isAuthenticated: false,
+    });
+
+    renderDuelsScreen();
+
+    expect(screen.getByText('Aktywni uczniowie')).toBeTruthy();
+    expect(screen.getByText('Lista aktywnych uczniów wymaga logowania')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Po zalogowaniu będziesz też widoczny w lobby i szybciej wrócisz tam do aktywnych rywali.',
+      ),
+    ).toBeTruthy();
+  });
+
   it('renders the waiting-room session shell for an active duel route', () => {
     useLocalSearchParamsMock.mockReturnValue({
       sessionId: 'duel-1',

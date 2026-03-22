@@ -29,46 +29,34 @@ vi.mock('@/features/notesapp/hooks/NotesAppContext', () => ({
 }));
 
 vi.mock('@/features/notesapp/components/list/NoteCardHeader', async () => {
-  const ReactModule = await import('react');
-
-  const NoteCardHeaderRuntimeContext =
-    ReactModule.createContext<{
-      note: NoteWithRelations;
-      onSelectNote: (note: NoteWithRelations) => void;
-    } | null>(null);
-
-  function NoteCardHeader(): React.JSX.Element | null {
-    const value = ReactModule.useContext(NoteCardHeaderRuntimeContext);
-
-    if (!value) {
-      return null;
-    }
-
+  function NoteCardHeader(props: {
+    note: NoteWithRelations;
+    onSelectNote: (note: NoteWithRelations) => void;
+  }): React.JSX.Element {
     return (
       <div>
-        <button type='button' onClick={() => value.onSelectNote(value.note)}>
-          Open note {value.note.title}
+        <button type='button' onClick={() => props.onSelectNote(props.note)}>
+          Open note {props.note.title}
         </button>
         <button type='button' onClick={nestedActionMock}>
           Nested action
         </button>
-        <span>{value.note.title}</span>
+        <span>{props.note.title}</span>
       </div>
     );
   }
 
   return {
     NoteCardHeader,
-    NoteCardHeaderRuntimeContext,
   };
 });
 
 vi.mock('@/features/notesapp/components/list/NoteCardContent', () => ({
-  NoteCardContent: () => <div>content</div>,
+  NoteCardContent: ({ note }: { note: NoteWithRelations }) => <div>content {note.title}</div>,
 }));
 
 vi.mock('@/features/notesapp/components/list/NoteCardFooter', () => ({
-  NoteCardFooter: () => <div>footer</div>,
+  NoteCardFooter: ({ note }: { note: NoteWithRelations }) => <div>footer {note.title}</div>,
 }));
 
 import { NoteCard } from '@/features/notesapp/components/NoteCard';
@@ -107,6 +95,9 @@ describe('NoteCard', () => {
 
     const card = container.firstElementChild as HTMLElement;
     const openButton = screen.getByRole('button', { name: 'Open note Test note' });
+
+    expect(screen.getByText('content Test note')).toBeInTheDocument();
+    expect(screen.getByText('footer Test note')).toBeInTheDocument();
 
     fireEvent.click(card);
     fireEvent.click(openButton);

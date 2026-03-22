@@ -5,6 +5,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 
 describe('KangurPageIntroCard', () => {
@@ -30,6 +34,7 @@ describe('KangurPageIntroCard', () => {
     expect(heading).toHaveClass('flex', 'justify-center');
     expect(screen.getByText('Lekcje', { selector: 'span' })).toHaveClass('sr-only');
     expect(heading.compareDocumentPosition(backButton)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(backButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
 
     fireEvent.click(backButton);
 

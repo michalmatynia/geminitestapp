@@ -5,6 +5,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 import { KangurLessonLibraryCard } from '@/features/kangur/ui/components/KangurLessonLibraryCard';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import type { LessonMasteryPresentation } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
@@ -79,6 +83,11 @@ describe('KangurLessonLibraryCard', () => {
     );
 
     expect(screen.getByTestId('lesson-library-item')).toHaveClass('soft-card', 'border');
+    expect(screen.getByTestId('lesson-library-item')).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
     expect(screen.getByTestId('lesson-library-icon')).toHaveClass('kangur-gradient-icon-tile-lg');
     expect(screen.getByText('Wlasna zawartosc')).toHaveClass('rounded-full', 'border');
     expect(screen.getAllByText('Priorytet rodzica')[0]).toHaveClass('rounded-full', 'border');
@@ -111,7 +120,7 @@ describe('KangurLessonLibraryCard', () => {
       />
     );
 
-    expect(screen.getByText('Ukończone dla rodzica')).toBeInTheDocument();
+    expect(screen.getByText('Ukonczone dla rodzica')).toBeInTheDocument();
     expect(screen.getByText('Zadanie zamkniete')).toBeInTheDocument();
     expect(screen.getByText('Zadanie od rodzica zostalo juz wykonane. Powtórki: 1/1')).toBeInTheDocument();
   });

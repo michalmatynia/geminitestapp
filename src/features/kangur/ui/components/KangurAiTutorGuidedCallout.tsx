@@ -6,6 +6,7 @@ import { AnimatePresence, motion, type Transition } from 'framer-motion';
 import { resolveKangurPageContentFragment } from '@/features/kangur/page-content-fragments';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurButton, KangurPanelRow } from '@/features/kangur/ui/design/primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { KANGUR_PAGE_CONTENT_COLLECTION } from '@/features/kangur/shared/contracts/kangur-page-content';
 import { cn } from '@/features/kangur/shared/utils';
@@ -98,6 +99,7 @@ export function KangurAiTutorGuidedCallout({
   transitionEase,
 }: Props): JSX.Element {
   const tutorContent = useKangurAiTutorContent();
+  const isCoarsePointer = useKangurCoarsePointer();
   const calloutLabelId = useId();
   const calloutDescriptionId = useId();
   const {
@@ -160,6 +162,9 @@ export function KangurAiTutorGuidedCallout({
   );
   const isMobileHomeOnboardingSheet =
     mode === 'home_onboarding' && style?.bottom !== undefined && style?.top === undefined;
+  const compactActionClassName = isCoarsePointer
+    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+    : 'w-full sm:w-auto';
   const resolvedSelectedKnowledgeReference =
     selectionConversationContext?.knowledgeReference ??
     activeFocus.conversationFocus.knowledgeReference ??
@@ -473,6 +478,7 @@ export function KangurAiTutorGuidedCallout({
                         <KangurButton
                           data-testid='kangur-ai-tutor-selection-hint-followup-cta'
                           type='button'
+                          className={compactActionClassName}
                           size='sm'
                           variant='primary'
                           disabled={isLoading || !canSendMessages}
@@ -500,7 +506,7 @@ export function KangurAiTutorGuidedCallout({
                         type='button'
                         size='sm'
                         variant='surface'
-                        className='w-full sm:w-auto'
+                        className={compactActionClassName}
                         onClick={handleGoBackHomeOnboarding}
                       >
                         {tutorContent.guidedCallout.buttons.back}
@@ -510,7 +516,7 @@ export function KangurAiTutorGuidedCallout({
                       type='button'
                       size='sm'
                       variant='surface'
-                      className='w-full sm:w-auto'
+                      className={compactActionClassName}
                       onClick={handleFinishHomeOnboarding}
                     >
                       {tutorContent.guidedCallout.buttons.finish}
@@ -519,7 +525,7 @@ export function KangurAiTutorGuidedCallout({
                       type='button'
                       size='sm'
                       variant='primary'
-                      className='w-full sm:w-auto'
+                      className={compactActionClassName}
                       onClick={handleAdvanceHomeOnboarding}
                     >
                       {tutorContent.guidedCallout.buttons.understand}
@@ -532,7 +538,7 @@ export function KangurAiTutorGuidedCallout({
                       type='button'
                       size='sm'
                       variant='surface'
-                      className='w-full sm:w-auto'
+                      className={compactActionClassName}
                       onClick={handleCloseCallout}
                     >
                       {tutorContent.guidedCallout.buttons.understand}
@@ -553,7 +559,7 @@ export function KangurAiTutorGuidedCallout({
                     type='button'
                     size='sm'
                     variant='surface'
-                    className='w-full sm:w-auto'
+                    className={compactActionClassName}
                     onClick={handleCloseCallout}
                   >
                     {tutorContent.guidedCallout.buttons.understand}

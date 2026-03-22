@@ -49,6 +49,7 @@ import {
   KANGUR_TIGHT_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { getKangurQuestions } from '@/features/kangur/ui/services/kangur-questions';
 import type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/ui/types';
@@ -284,6 +285,7 @@ function ExamQuestion({
 function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
   const { onBack } = useKangurGameContext();
+  const isCoarsePointer = useKangurCoarsePointer();
   const [reviewing, setReviewing] = useState<number | null>(null);
   const questionCount = questions.length;
   const score = questions.reduce(
@@ -294,6 +296,9 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
   const emoji = pct === 100 ? '🏆' : pct >= 70 ? '🌟' : pct >= 40 ? '👍' : '💪';
   const reviewQuestionCount = questionCount;
   const summaryTitle = getKangurMiniGameScoreLabel(translations, score, questionCount);
+  const compactActionClassName = isCoarsePointer
+    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+    : 'w-full sm:w-auto';
 
   if (reviewing !== null) {
     const question = questions[reviewing];
@@ -334,6 +339,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
         <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
           <KangurButton
             onClick={handleExitReview}
+            className={compactActionClassName}
             size='sm'
             type='button'
             variant='surface'
@@ -480,7 +486,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
       <div className='flex w-full justify-center'>
         <KangurButton
           onClick={onBack}
-          className='w-full sm:w-auto'
+          className={compactActionClassName}
           size='lg'
           type='button'
           variant='surface'

@@ -74,4 +74,38 @@ describe('CaseListHeader runtime context', () => {
     });
     expect(onSearchChange).toHaveBeenCalledWith('invoice-2');
   });
+
+  it('supports the explicit props path without the panel context', () => {
+    const onCreateCase = vi.fn();
+    const onPageChange = vi.fn();
+    const onPageSizeChange = vi.fn();
+    const onSearchChange = vi.fn();
+
+    render(
+      <CaseListHeader
+        filtersContent={<div>Direct filters</div>}
+        onCreateCase={onCreateCase}
+        totalCount={9}
+        filteredCount={4}
+        page={1}
+        totalPages={3}
+        onPageChange={onPageChange}
+        pageSize={12}
+        onPageSizeChange={onPageSizeChange}
+        searchQuery='report'
+        onSearchChange={onSearchChange}
+      />
+    );
+
+    expect(screen.getAllByText('4 matches / 9 total')).toHaveLength(2);
+    expect(screen.getAllByText('Direct filters')).toHaveLength(2);
+
+    fireEvent.click(screen.getAllByLabelText('Create new case')[0]);
+    expect(onCreateCase).toHaveBeenCalledTimes(1);
+
+    fireEvent.change(screen.getAllByPlaceholderText('Search cases & files…')[0], {
+      target: { value: 'report-2' },
+    });
+    expect(onSearchChange).toHaveBeenCalledWith('report-2');
+  });
 });

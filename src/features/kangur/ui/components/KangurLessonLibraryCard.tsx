@@ -19,6 +19,7 @@ import {
   KANGUR_WRAP_ROW_CLASSNAME,
   KANGUR_WRAP_START_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import { cn } from '@/features/kangur/utils/cn';
 
@@ -158,6 +159,7 @@ type KangurLessonLibraryCardProps = {
 export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): React.JSX.Element {
   const locale = useLocale();
   const translations = useTranslations('KangurLessonsWidgets.libraryCard');
+  const isCoarsePointer = useKangurCoarsePointer();
   const {
     ariaCurrent,
     buttonClassName,
@@ -184,7 +186,11 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
   return (
     <KangurIconSummaryOptionCard
       accent='indigo'
-      buttonClassName={cn('w-full text-left', buttonClassName)}
+      buttonClassName={cn(
+        'w-full text-left',
+        isCoarsePointer && 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]',
+        buttonClassName
+      )}
       aria-label={translations('ariaLabel', { title: localizedTitle })}
       aria-current={ariaCurrent}
       data-doc-id={dataDocId}

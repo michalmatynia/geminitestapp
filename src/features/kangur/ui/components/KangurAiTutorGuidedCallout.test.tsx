@@ -104,6 +104,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: () => pageContentQueryMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
 vi.mock('@/features/kangur/ui/design/primitives', () => ({
   KangurButton: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
@@ -199,8 +203,16 @@ describe('KangurAiTutorGuidedCallout', () => {
       'Poznaj mobilny tryb Kangura'
     );
     expect(screen.getByText('Krok 2 z 3')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Wstecz' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Rozumiem' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wstecz' })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
+    expect(screen.getByRole('button', { name: 'Rozumiem' })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
   });
 
   it('keeps the guided selection shell and injects the saved source plus resolved answer inline', () => {
@@ -323,7 +335,11 @@ describe('KangurAiTutorGuidedCallout', () => {
     ).toHaveAttribute('aria-live', 'polite');
     expect(screen.queryByText('Za chwilę otworzę wyjaśnienie dokładnie dla zaznaczonego tekstu.')).not.toBeInTheDocument();
     expect(screen.queryByText('Już przygotowuję wyjaśnienie…')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Rozumiem' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Rozumiem' })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
   });
 
   it('replaces the resolved page-content answer with a hint follow-up on test surfaces', () => {
@@ -432,7 +448,11 @@ describe('KangurAiTutorGuidedCallout', () => {
     expect(screen.getByTestId('kangur-ai-tutor-selection-hint-followup')).toHaveTextContent(
       'Potrzebujesz kolejnej podpowiedzi?'
     );
-    expect(screen.getByRole('button', { name: 'Tak, pomóż mi' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Tak, pomóż mi' })).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
     expect(screen.queryByRole('button', { name: 'Rozumiem' })).not.toBeInTheDocument();
   });
 

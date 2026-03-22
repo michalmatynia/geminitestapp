@@ -3782,9 +3782,9 @@ export function KangurDuelsScreen(): React.JSX.Element {
                 pl: 'Lista aktywnych uczniów wymaga logowania',
               })}
               description={copy({
-                de: 'Nach der Anmeldung beginnt die mobile App auch, Präsenz in der Lobby zu senden.',
-                en: 'After sign-in, the mobile app will also start pinging presence in the lobby.',
-                pl: 'Po zalogowaniu mobilna aplikacja zacznie też pingować obecność w lobby.',
+                de: 'Nach der Anmeldung wirst du auch in der Lobby sichtbar und kannst dort schneller zu aktiven Rivalen zurückkehren.',
+                en: 'After sign-in, you will also become visible in the lobby and can return to active rivals faster there.',
+                pl: 'Po zalogowaniu będziesz też widoczny w lobby i szybciej wrócisz tam do aktywnych rywali.',
               })}
             />
           ) : lobby.presenceError ? (

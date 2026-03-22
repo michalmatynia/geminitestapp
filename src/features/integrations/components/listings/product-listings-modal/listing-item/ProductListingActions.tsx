@@ -13,16 +13,21 @@ import {
   useProductListingsModals,
   useProductListingsUIState,
 } from '@/features/integrations/context/ProductListingsContext';
-import type { ImageRetryPreset } from '@/shared/contracts/integrations';
+import type {
+  ImageRetryPreset,
+  ProductListingWithDetails,
+} from '@/shared/contracts/integrations';
 import { Button, ActionMenu, DropdownMenuItem, Label, Input } from '@/shared/ui';
-
-import { useProductListingItemRuntime } from './ProductListingItemRuntimeContext';
 
 const normalizeIntegrationSlug = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
 
-export function ProductListingActions(): React.JSX.Element {
-  const { listing } = useProductListingItemRuntime();
+export type ProductListingActionsProps = {
+  listing: ProductListingWithDetails;
+};
+
+export function ProductListingActions(props: ProductListingActionsProps): React.JSX.Element {
+  const { listing } = props;
   const {
     exportingListing,
     inventoryOverrides,

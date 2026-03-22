@@ -27,6 +27,7 @@ import {
   KANGUR_STACK_TIGHT_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { loadScopedKangurScores } from '@/features/kangur/ui/services/learner-profile-scores';
 import {
   SCORE_INSIGHT_WINDOW_DAYS,
@@ -215,9 +216,13 @@ export default function ScoreHistory({
   const locale = useLocale();
   const translations = useTranslations('KangurScoreHistory');
   const operationTranslations = useTranslations('KangurScoreHistory.operations');
+  const isCoarsePointer = useKangurCoarsePointer();
   const { subject } = useKangurSubjectFocus();
   const [scores, setScores] = useState<KangurScoreRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const weakestLessonActionClassName = isCoarsePointer
+    ? 'mt-3 w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+    : 'mt-3 w-full sm:w-auto';
 
   useEffect(() => {
     let isActive = true;
@@ -521,7 +526,12 @@ export default function ScoreHistory({
                   )}
                 </p>
                 {weakestLessonHref && (
-                  <KangurButton asChild className='mt-3 w-full sm:w-auto' size='sm' variant='surface'>
+                  <KangurButton
+                    asChild
+                    className={weakestLessonActionClassName}
+                    size='sm'
+                    variant='surface'
+                  >
                     <Link
                       href={weakestLessonHref}
                       targetPageKey='Lessons'

@@ -453,7 +453,7 @@ export function useKangurAiTutorGuidedDisplayState(input: {
       : null;
 
   const guidedSelectionPreview = showSelectionGuidanceCallout
-    ? (isSelectionGuidedTutorMode
+    ? (isSelectionGuidedTutorTargetActive
       ? guidedTutorTarget.selectedText
       : (selectionResponsePending?.selectedText ?? selectionResponseComplete?.selectedText ?? '')
     ).slice(0, 120)

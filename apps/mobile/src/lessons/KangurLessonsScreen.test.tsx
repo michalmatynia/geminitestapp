@@ -539,7 +539,7 @@ describe('KangurLessonsScreen', () => {
     expect(screen.getByText('Priorytet wysoki')).toBeTruthy();
     expect(screen.getByText('Cel: 1 lekcja')).toBeTruthy();
     expect(screen.getAllByText('Otwórz lekcję').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Ostatni lokalny checkpoint')).toBeTruthy();
+    expect(screen.getByText('Ostatni checkpoint')).toBeTruthy();
     expect(screen.getByText('Wynik 90% • najlepszy 100%')).toBeTruthy();
     expect(screen.getByText('Otwórz lekcję: Nauka zegara')).toBeTruthy();
     expect(screen.getAllByText('Uruchom trening: Nauka zegara').length).toBeGreaterThanOrEqual(2);
@@ -585,13 +585,13 @@ describe('KangurLessonsScreen', () => {
 
     expect(
       screen.getByText(
-        'Zaloguj sesję ucznia, aby zobaczyć tutaj wyniki.',
+        'Zaloguj się, aby zobaczyć tutaj wyniki.',
       ),
     ).toBeTruthy();
     expect(screen.getByText('Szybki powrót do rywali')).toBeTruthy();
     expect(
       screen.getByText(
-        'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże.',
+        'Zaloguj się, aby zobaczyć tutaj stan w pojedynkach, ostatnich rywali i szybkie rewanże.',
       ),
     ).toBeTruthy();
   });

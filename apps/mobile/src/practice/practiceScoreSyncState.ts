@@ -19,19 +19,19 @@ const getPracticeScoreSyncCopy = (
   string
 > => ({
   awaitingAuth: {
-    de: 'Das Ergebnis ist lokal gespeichert. Wir warten auf die Wiederherstellung der Lernenden-Sitzung, um es an Kangur zu senden.',
-    en: 'The result is saved locally. Waiting for the learner session to be restored so it can be sent to Kangur.',
-    pl: 'Wynik zapisany lokalnie. Czekamy na odtworzenie sesji ucznia, aby dosłać go do Kangura.',
+    de: 'Das Ergebnis ist lokal gespeichert. Sobald die Anmeldung wieder da ist, senden wir es an Kangur.',
+    en: 'The result is saved locally. Once sign-in is back, we will send it to Kangur.',
+    pl: 'Wynik zapisany lokalnie. Gdy logowanie wróci, wyślemy go do Kangura.',
   }[locale],
   localOnlyAuth: {
-    de: 'Das Ergebnis wurde nur lokal gespeichert. Melde eine Lernenden-Sitzung an, um Ergebnisse an Kangur zu senden.',
-    en: 'The result was saved only locally. Sign in the learner session to send results to Kangur.',
-    pl: 'Wynik zapisano tylko lokalnie. Zaloguj sesję ucznia, aby wysyłać wyniki do Kangura.',
+    de: 'Das Ergebnis wurde nur lokal gespeichert. Melde dich an, um Ergebnisse an Kangur zu senden.',
+    en: 'The result was saved only locally. Sign in to send results to Kangur.',
+    pl: 'Wynik zapisano tylko lokalnie. Zaloguj się, aby wysyłać wyniki do Kangura.',
   }[locale],
   localOnlyExpectedError: {
-    de: 'Das Ergebnis wurde nur lokal gespeichert. Die Server-Sitzung war noch nicht bereit fuer die Synchronisierung, deshalb ist das Ergebnis noch nicht bei Kangur angekommen.',
-    en: 'The result was saved only locally. The server session was not ready for sync yet, so the result has not reached Kangur.',
-    pl: 'Wynik zapisano tylko lokalnie. Sesja serwera nie była gotowa do synchronizacji, więc wynik nie trafił jeszcze do Kangura.',
+    de: 'Das Ergebnis wurde nur lokal gespeichert. Der Server war noch nicht bereit fuer die Synchronisierung, deshalb ist das Ergebnis noch nicht bei Kangur angekommen.',
+    en: 'The result was saved only locally. The server was not ready for sync yet, so the result has not reached Kangur.',
+    pl: 'Wynik zapisano tylko lokalnie. Serwer nie był jeszcze gotowy do synchronizacji, więc wynik nie trafił jeszcze do Kangura.',
   }[locale],
   synced: {
     de: 'Das Ergebnis wurde in der Kangur-API gespeichert. Es sollte sofort im Profil, in der Rangliste und in den letzten Ergebnissen sichtbar sein.',
@@ -39,9 +39,9 @@ const getPracticeScoreSyncCopy = (
     pl: 'Wynik zapisano w API Kangura. Powinien być od razu widoczny w profilu, rankingu i ostatnich wynikach.',
   }[locale],
   syncFailed: {
-    de: 'Das Ergebnis wurde lokal gespeichert, aber der Schreibvorgang in die Kangur-API ist fehlgeschlagen. Aktualisiere die Sitzung und versuche es erneut.',
-    en: 'The result was saved locally, but writing to the Kangur API failed. Refresh the session and try again.',
-    pl: 'Wynik zapisano lokalnie, ale zapis do API Kangura nie udał się. Odśwież sesję i spróbuj ponownie.',
+    de: 'Das Ergebnis wurde lokal gespeichert, aber der Schreibvorgang in die Kangur-API ist fehlgeschlagen. Aktualisiere die Anmeldung und versuche es erneut.',
+    en: 'The result was saved locally, but writing to the Kangur API failed. Refresh sign-in and try again.',
+    pl: 'Wynik zapisano lokalnie, ale zapis do API Kangura nie udał się. Odśwież logowanie i spróbuj ponownie.',
   }[locale],
   syncing: {
     de: 'Das Ergebnis ist lokal gespeichert. Wir schreiben es jetzt in die Kangur-API.',

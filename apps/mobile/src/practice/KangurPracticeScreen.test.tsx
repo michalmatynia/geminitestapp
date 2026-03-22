@@ -336,7 +336,7 @@ describe('KangurPracticeScreen', () => {
     expect(screen.getByText('Local only')).toBeTruthy();
     expect(
       screen.getByText(
-        'After the run, the result will be saved locally. Sign in the learner session so it also syncs with the Kangur API.',
+        'After the run, the result will be saved locally. Sign in so it also syncs with the Kangur API.',
       ),
     ).toBeTruthy();
   });
@@ -355,13 +355,13 @@ describe('KangurPracticeScreen', () => {
     ).toBeTruthy();
     expect(
       screen.getByText(
-        'Zaloguj sesję ucznia, aby zobaczyć tutaj wyniki.',
+        'Zaloguj się, aby zobaczyć tutaj wyniki.',
       ),
     ).toBeTruthy();
     expect(screen.getByText('Szybki powrót do rywali')).toBeTruthy();
     expect(
       screen.getByText(
-        'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże.',
+        'Zaloguj się, aby zobaczyć tutaj swój stan w pojedynkach, ostatnich rywali i szybkie rewanże.',
       ),
     ).toBeTruthy();
   });

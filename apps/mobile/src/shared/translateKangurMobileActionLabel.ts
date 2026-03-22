@@ -8,9 +8,9 @@ const KANGUR_MOBILE_ACTION_LABEL_MAP: Record<
   KangurMobileLocalizedValue<string>
 > = {
   'All sessions': {
-    de: 'Alle Sitzungen',
-    en: 'All sessions',
-    pl: 'Wszystkie sesje',
+    de: 'Alle Ergebnisse',
+    en: 'All results',
+    pl: 'Wszystkie wyniki',
   },
   Arithmetic: {
     de: 'Arithmetik',

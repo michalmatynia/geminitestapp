@@ -58,6 +58,7 @@ import {
   KangurEmptyState,
 } from '@/features/kangur/ui/design/primitives';
 import {
+  KANGUR_LESSON_PANEL_GAP_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_SHELL_MINUS_TOP_BAR_HEIGHT_CLASSNAME,
   KANGUR_TIGHT_ROW_CLASSNAME,
@@ -572,7 +573,7 @@ function GameContent(): React.JSX.Element {
           id: GAME_MAIN_ID,
           'aria-labelledby': `${GAME_TITLE_ID} ${GAME_SCREEN_TITLE_ID}`,
           className: shouldUseGameMobileChrome
-            ? `flex ${KANGUR_SHELL_MINUS_TOP_BAR_HEIGHT_CLASSNAME} min-h-0 flex-col items-center py-3 sm:py-4 ${KANGUR_PANEL_GAP_CLASSNAME}`
+            ? `flex ${KANGUR_SHELL_MINUS_TOP_BAR_HEIGHT_CLASSNAME} min-h-0 flex-col items-center py-3 sm:py-4`
             : cn(
                 GAME_PAGE_STANDARD_CONTAINER_CLASSNAME,
                 shouldUseStandardMobileScroll
@@ -584,7 +585,7 @@ function GameContent(): React.JSX.Element {
         <div
           className={cn(
             shouldUseGameMobileChrome
-              ? 'flex h-full min-h-0 w-full flex-1 flex-col gap-3'
+              ? `flex h-full min-h-0 w-full flex-1 flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`
               : 'w-full'
           )}
         >
@@ -621,7 +622,7 @@ function GameContent(): React.JSX.Element {
             ref={shouldUseGameMobileChrome ? gameScrollRef : undefined}
             className={cn(
               shouldUseGameMobileChrome
-                ? `flex-1 min-h-0 w-full overflow-y-auto overscroll-contain touch-pan-y ${KANGUR_PANEL_GAP_CLASSNAME}`
+                ? 'flex-1 min-h-0 w-full overflow-y-auto overscroll-contain touch-pan-y'
                 : undefined
             )}
             data-testid={

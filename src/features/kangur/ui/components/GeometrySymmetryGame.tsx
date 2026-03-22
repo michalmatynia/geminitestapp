@@ -247,6 +247,7 @@ export default function GeometrySymmetryGame({
       redrawCanvas([], currentRound);
       return [];
     });
+    setFeedback(null);
     setKeyboardDrawing(false);
     setKeyboardStatus(
       translateWithFallback(
@@ -266,8 +267,11 @@ export default function GeometrySymmetryGame({
   );
 
   const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    if (done || feedback) return;
+    if (done || feedback?.kind === 'success' || feedback?.kind === 'error') return;
     event.preventDefault();
+    if (feedback?.kind === 'info') {
+      setFeedback(null);
+    }
     const canvas = canvasRef.current;
     if (!canvas) return;
     const point = resolvePoint(event);
@@ -278,7 +282,14 @@ export default function GeometrySymmetryGame({
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    if (!isDrawingRef.current || done || feedback) return;
+    if (
+      !isDrawingRef.current ||
+      done ||
+      feedback?.kind === 'success' ||
+      feedback?.kind === 'error'
+    ) {
+      return;
+    }
     event.preventDefault();
     const point = resolvePoint(event);
     updateStrokes((current) => {
@@ -351,7 +362,7 @@ export default function GeometrySymmetryGame({
   ]);
 
   const handleCanvasKeyDown = (event: React.KeyboardEvent<HTMLCanvasElement>): void => {
-    if (done || feedback) return;
+    if (done || feedback?.kind === 'success' || feedback?.kind === 'error') return;
 
     const key = event.key;
     if (
@@ -367,6 +378,10 @@ export default function GeometrySymmetryGame({
     }
 
     event.preventDefault();
+
+    if (feedback?.kind === 'info') {
+      setFeedback(null);
+    }
 
     if (key === 'Enter' || key === ' ') {
       if (keyboardDrawing) {
@@ -525,6 +540,7 @@ export default function GeometrySymmetryGame({
         : feedback?.kind === 'info'
           ? 'amber'
           : 'emerald';
+  const isResultLocked = feedback?.kind === 'success' || feedback?.kind === 'error';
 
   if (done) {
     const percent = Math.round((score / totalRounds) * 100);
@@ -673,7 +689,7 @@ export default function GeometrySymmetryGame({
                   size='sm'
                   type='button'
                   variant='surface'
-                  disabled={feedback !== null}
+                  disabled={isResultLocked}
                   onClick={() => setShowMirrorHint((current) => !current)}
                 >
                   {showMirrorHint
@@ -781,7 +797,7 @@ export default function GeometrySymmetryGame({
           <KangurPanelRow className='w-full'>
             <KangurButton
               className={cn('w-full sm:flex-1', isCoarsePointer && 'min-h-11')}
-              disabled={feedback !== null || points.length === 0}
+              disabled={isResultLocked || points.length === 0}
               onClick={clearDrawing}
               type='button'
               size='lg'
@@ -802,7 +818,7 @@ export default function GeometrySymmetryGame({
                       : 'bg-amber-500 border-amber-500 text-white'
                   : '[background:var(--kangur-soft-card-background)] [border-color:var(--kangur-soft-card-border)] [color:var(--kangur-page-text)]'
               )}
-              disabled={feedback !== null}
+              disabled={isResultLocked}
               onClick={handleCheck}
               type='button'
               size='lg'

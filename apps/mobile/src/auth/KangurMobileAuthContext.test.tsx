@@ -138,7 +138,7 @@ describe('KangurMobileAuthProvider', () => {
     });
 
     expect(result.current.authError).toBe(
-      'Die Lernenden-Sitzung konnte nicht aktualisiert werden.',
+      'Die Anmeldung konnte nicht aktualisiert werden.',
     );
   });
 
@@ -201,7 +201,7 @@ describe('KangurMobileAuthProvider', () => {
     });
 
     expect(result.current.authError).toBe(
-      'Die Lernenden-Sitzung konnte auf diesem Gerät nicht gespeichert werden. Prüfe die Cookie- und Sitzungsunterstützung der aktuellen Laufzeit.',
+      'Die Anmeldung konnte auf diesem Gerät nicht gespeichert werden. Prüfe Cookie- und Login-Unterstützung der aktuellen Laufzeit.',
     );
   });
 

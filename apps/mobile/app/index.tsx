@@ -375,9 +375,9 @@ function FocusCard({
       </Text>
       <Text style={{ color: '#475569', lineHeight: 20 }}>
         {copy({
-          de: `Trefferquote ${averageAccuracyPercent}% in ${sessions} Sitzungen.`,
-          en: `Accuracy ${averageAccuracyPercent}% across ${sessions} sessions.`,
-          pl: `Skuteczność ${averageAccuracyPercent}% przez ${sessions} sesji.`,
+          de: `Trefferquote ${averageAccuracyPercent}% in ${sessions} Versuchen.`,
+          en: `Accuracy ${averageAccuracyPercent}% across ${sessions} attempts.`,
+          pl: `Skuteczność ${averageAccuracyPercent}% w ${sessions} podejściach.`,
         })}
       </Text>
       <View style={{ flexDirection: 'column', gap: 8 }}>
@@ -963,9 +963,9 @@ export default function HomeScreen(): React.JSX.Element {
             >
               <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
                 {copy({
-                  de: `Sitzungen ${recentResults.results.length}`,
-                  en: `Sessions ${recentResults.results.length}`,
-                  pl: `Sesje ${recentResults.results.length}`,
+                  de: `Ergebnisse ${recentResults.results.length}`,
+                  en: `Results ${recentResults.results.length}`,
+                  pl: `Wyniki ${recentResults.results.length}`,
                 })}
               </Text>
             </View>
@@ -1117,9 +1117,9 @@ export default function HomeScreen(): React.JSX.Element {
 
         <SectionCard
           title={copy({
-            de: 'Sitzung und Verbindung',
-            en: 'Session and connection',
-            pl: 'Sesja i połączenie',
+            de: 'Konto und Verbindung',
+            en: 'Account and connection',
+            pl: 'Konto i połączenie',
           })}
         >
           <Text accessibilityLiveRegion='polite' style={{ color: '#0f172a' }}>
@@ -2517,9 +2517,9 @@ export default function HomeScreen(): React.JSX.Element {
           {lessonMastery.trackedLessons === 0 ? (
             <Text style={{ color: '#475569', lineHeight: 20 }}>
               {copy({
-                de: 'Es gibt noch keine gespeicherten Lektionsversuche. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
-                en: 'There are no saved lesson attempts yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.',
-                pl: 'Nie ma jeszcze zapisanych prób lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.',
+                de: 'Es gibt noch keine Lektions-Checkpoints. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
+                en: 'There are no lesson checkpoints yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.',
+                pl: 'Nie ma jeszcze checkpointów lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.',
               })}
             </Text>
           ) : (

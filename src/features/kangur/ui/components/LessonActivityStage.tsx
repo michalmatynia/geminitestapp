@@ -110,7 +110,7 @@ function LessonActivityStageTopBar(): React.JSX.Element {
               aria-label={openSecretPanelLabel}
               className={cn(
                 'kangur-cta-pill cursor-pointer justify-center bg-gradient-to-r kangur-gradient-accent-amber kangur-gradient-with-mid font-black text-amber-950 shadow-sm ring-1 ring-amber-300/90 touch-manipulation select-none active:scale-[0.97]',
-                isCoarsePointer ? 'h-9 min-w-[52px] px-3 text-sm' : 'h-[14px] min-w-[40px] text-[10px]'
+                isCoarsePointer ? 'h-11 min-w-[56px] px-4 text-sm' : 'h-[14px] min-w-[40px] text-[10px]'
               )}
               data-testid='lesson-activity-secret-indicator'
               title={secretPanelTitle}

@@ -314,9 +314,9 @@ function OperationInsightCard({
         >
           <Text style={{ color: '#475569', fontSize: 12, fontWeight: '700' }}>
             {copy({
-              de: `Sitzungen ${operation.sessions}`,
-              en: `Sessions ${operation.sessions}`,
-              pl: `Sesje ${operation.sessions}`,
+              de: `Ergebnisse ${operation.sessions}`,
+              en: `Results ${operation.sessions}`,
+              pl: `Wyniki ${operation.sessions}`,
             })}
           </Text>
         </View>
@@ -874,9 +874,9 @@ export function KangurResultsScreen(): React.JSX.Element {
             </Text>
             <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
               {copy({
-                de: 'Ein Ort für letzte Ergebnisse, Genauigkeit und die Aufteilung in arithmetische, zeitbezogene und logische Sitzungen.',
-                en: 'One place for recent results, accuracy, and the split across arithmetic, time, and logic sessions.',
-                pl: 'Jedno miejsce dla ostatnich wyników, skuteczności oraz podziału na sesje arytmetyczne, czasowe i logiczne.',
+                de: 'Ein Ort für letzte Ergebnisse, Trefferquote und die Verteilung auf Arithmetik, Zeit und Logik.',
+                en: 'One place for recent results, accuracy, and how they split across arithmetic, time, and logic.',
+                pl: 'Jedno miejsce dla ostatnich wyników, skuteczności i tego, jak rozkładają się na arytmetykę, czas i logikę.',
               })}
             </Text>
             <Link href={createKangurPlanHref()} asChild>
@@ -917,9 +917,9 @@ export function KangurResultsScreen(): React.JSX.Element {
             <Card>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Melde den Schuler an, um Ergebnisse zu sehen.',
-                  en: 'Sign in the learner to see results.',
-                  pl: 'Zaloguj ucznia, aby zobaczyć wyniki.',
+                  de: 'Melde dich an, um Ergebnisse zu sehen.',
+                  en: 'Sign in to see results.',
+                  pl: 'Zaloguj się, aby zobaczyć wyniki.',
                 })}
               </Text>
               <Link href={RESULTS_HOME_ROUTE} asChild>
@@ -955,9 +955,9 @@ export function KangurResultsScreen(): React.JSX.Element {
               >
                 <Metric
                   label={copy({
-                    de: 'Sitzungen',
-                    en: 'Sessions',
-                    pl: 'Sesje',
+                    de: 'Ergebnisse',
+                    en: 'Results',
+                    pl: 'Wyniki',
                   })}
                   value={`${results.summary.totalSessions}`}
                   description={copy({
@@ -1343,9 +1343,9 @@ export function KangurResultsScreen(): React.JSX.Element {
                 {lessonMastery.trackedLessons === 0 ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Es gibt noch keine gespeicherten Lektionsversuche. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
-                      en: 'There are no saved lesson attempts yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.',
-                      pl: 'Nie ma jeszcze zapisanych prób lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.',
+                      de: 'Es gibt noch keine Lektions-Checkpoints. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
+                      en: 'There are no lesson checkpoints yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.',
+                      pl: 'Nie ma jeszcze checkpointów lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.',
                     })}
                   </Text>
                 ) : (
@@ -1835,9 +1835,9 @@ export function KangurResultsScreen(): React.JSX.Element {
                       })}
                       isActive={filterFamily === 'all' && !filterOperation}
                       label={copy({
-                        de: 'Alle Sitzungen',
-                        en: 'All sessions',
-                        pl: 'Wszystkie sesje',
+                        de: 'Alle Ergebnisse',
+                        en: 'All results',
+                        pl: 'Wszystkie wyniki',
                       })}
                     />
                     <FilterPill

@@ -45,6 +45,7 @@ describe('KangurAiTutorDrawingCanvas', () => {
       '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
     );
     expect(screen.getByRole('button', { name: 'Zamknij' })).toHaveClass(
+      'focus-visible:ring-amber-200/70',
       '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]',
       'hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
     );

@@ -212,10 +212,15 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         <button
           type='button'
           onClick={onCancel}
-          className='cursor-pointer rounded-full p-1 [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
+          className={cn(
+            'cursor-pointer rounded-full [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
+            isCoarsePointer
+              ? 'h-11 w-11 touch-manipulation select-none active:scale-[0.97]'
+              : 'p-1'
+          )}
           aria-label={tutorContent.common.closeAria}
           title={tutorContent.common.closeAria}>
-          <X aria-hidden='true' className='h-3.5 w-3.5' />
+          <X aria-hidden='true' className={isCoarsePointer ? 'h-4 w-4' : 'h-3.5 w-3.5'} />
         </button>
       </div>
 

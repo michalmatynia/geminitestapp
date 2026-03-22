@@ -8,6 +8,8 @@ import { KangurStandardPageLayout } from '@/features/kangur/ui/components/Kangur
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
 import {
   GAME_HOME_ACTIONS_COLUMN_CLASSNAME,
+  GAME_HOME_CENTERED_SECTION_CLASSNAME,
+  GAME_HOME_LAYOUT_CLASSNAME,
   GAME_HOME_PROGRESS_GRID_CLASSNAME,
   GAME_HOME_SECTION_CLASSNAME,
   GAME_PAGE_STANDARD_CONTAINER_CLASSNAME,
@@ -114,14 +116,31 @@ const SkeletonLine = ({ className }: { className?: string }): React.JSX.Element 
 
 const GameHomeSkeleton = (): React.JSX.Element => (
   <div
-    className={cn('flex w-full flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
+    className={GAME_HOME_LAYOUT_CLASSNAME}
     data-testid='kangur-page-transition-skeleton-game-home-layout'
   >
+    <section
+      className={GAME_HOME_SECTION_CLASSNAME}
+      data-testid='kangur-page-transition-skeleton-game-home-parent-spotlight'
+    >
+      <SkeletonPanel className='min-h-[200px]'>
+        <div className='space-y-4'>
+          <SkeletonChip className='h-7 w-40' />
+          <SkeletonLine className='h-8 w-3/4 max-w-[520px]' />
+          <SkeletonLine className='w-full max-w-[640px]' />
+          <div className='grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'>
+            <SkeletonBlock className='h-20 rounded-[24px] bg-slate-200/76' />
+            <SkeletonBlock className='h-20 rounded-[24px] bg-slate-200/76' />
+          </div>
+        </div>
+      </SkeletonPanel>
+    </section>
+
     <div
       className={GAME_HOME_ACTIONS_COLUMN_CLASSNAME}
       data-testid='kangur-page-transition-skeleton-game-home-actions-column'
     >
-      <SkeletonPanel className='min-h-[340px] sm:min-h-[352px]'>
+      <SkeletonPanel className='min-h-[248px]'>
         <div className='grid grid-cols-1 kangur-panel-gap'>
           <SkeletonBlock className='h-16 rounded-full bg-slate-200/76' />
           <SkeletonBlock className='h-16 rounded-full bg-slate-200/76' />
@@ -129,9 +148,39 @@ const GameHomeSkeleton = (): React.JSX.Element => (
           <SkeletonBlock className='h-16 rounded-full bg-slate-200/76' />
         </div>
       </SkeletonPanel>
+      <SkeletonPanel className='min-h-[176px]'>
+        <div className='space-y-4'>
+          <SkeletonChip className='h-7 w-36' />
+          <SkeletonLine className='h-7 w-2/3 max-w-[360px]' />
+          <SkeletonLine className='w-full max-w-[420px]' />
+          <SkeletonLine className='w-5/6 max-w-[320px]' />
+          <SkeletonBlock className='h-11 w-full max-w-[220px] rounded-[20px] bg-slate-200/76' />
+        </div>
+      </SkeletonPanel>
     </div>
 
-    <div
+    <section
+      className={GAME_HOME_CENTERED_SECTION_CLASSNAME}
+      data-testid='kangur-page-transition-skeleton-game-home-quest'
+    >
+      <SkeletonPanel className='min-h-[240px]'>
+        <div className='space-y-4'>
+          <SkeletonChip className='h-7 w-28' />
+          <SkeletonChip className='h-7 w-24' />
+          <SkeletonLine className='h-8 w-2/3 max-w-[460px]' />
+          <SkeletonLine className='w-full max-w-[640px]' />
+          <SkeletonLine className='w-2/3 max-w-[420px]' />
+          <SkeletonBlock className='h-3 w-full rounded-full bg-slate-200/72' />
+          <div className={KANGUR_WRAP_ROW_CLASSNAME}>
+            <SkeletonChip className='h-6 w-24' />
+            <SkeletonChip className='h-6 w-28' />
+            <SkeletonChip className='h-6 w-20' />
+          </div>
+        </div>
+      </SkeletonPanel>
+    </section>
+
+    <section
       className={GAME_HOME_SECTION_CLASSNAME}
       data-testid='kangur-page-transition-skeleton-game-home-summary'
     >
@@ -154,56 +203,64 @@ const GameHomeSkeleton = (): React.JSX.Element => (
           <SkeletonBlock className='h-11 w-full max-w-[220px] rounded-[20px] bg-slate-200/76' />
         </div>
       </SkeletonPanel>
-    </div>
+    </section>
 
-    <div className={cn(GAME_HOME_SECTION_CLASSNAME, 'space-y-4')}>
-      <div className='space-y-2'>
-        <SkeletonLine className='h-4 w-32' />
-        <SkeletonLine className='h-7 w-2/3 max-w-[420px]' />
-      </div>
-      <SkeletonPanel className='min-h-[180px]'>
+    <section
+      className={GAME_HOME_CENTERED_SECTION_CLASSNAME}
+      data-testid='kangur-page-transition-skeleton-game-home-assignments'
+    >
+      <SkeletonPanel className='min-h-[240px]'>
         <div className='space-y-4'>
-          <SkeletonChip className='h-7 w-36' />
-          <SkeletonLine className='h-9 w-3/4 max-w-[520px]' />
+          <SkeletonLine className='h-4 w-32' />
+          <SkeletonLine className='h-7 w-2/3 max-w-[420px]' />
           <SkeletonLine className='w-full max-w-[640px]' />
-          <SkeletonLine className='w-2/3 max-w-[420px]' />
+          <div className='space-y-3 pt-2'>
+            <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
+            <SkeletonBlock className='h-24 rounded-[24px] bg-slate-200/76' />
+          </div>
         </div>
       </SkeletonPanel>
-      <div className='grid kangur-panel-gap min-[420px]:grid-cols-2'>
-        <SkeletonPanel className='min-h-[160px]' />
-        <SkeletonPanel className='min-h-[160px]' />
-      </div>
-    </div>
+    </section>
 
-    <div
+    <section
       className={GAME_HOME_PROGRESS_GRID_CLASSNAME}
       data-testid='kangur-page-transition-skeleton-game-home-progress-grid'
     >
-      <SkeletonPanel className='min-h-[320px]'>
-        <div className='space-y-4'>
-          <SkeletonChip className='h-7 w-32' />
-          <SkeletonLine className='h-6 w-1/2' />
-          <SkeletonLine className='w-full' />
-          <SkeletonLine className='w-5/6' />
-          <SkeletonLine className='w-4/6' />
-          <div className='space-y-3 pt-3'>
-            <SkeletonBlock className='h-16 rounded-[22px] bg-slate-200/78' />
-            <SkeletonBlock className='h-16 rounded-[22px] bg-slate-200/78' />
-            <SkeletonBlock className='h-16 rounded-[22px] bg-slate-200/78' />
+      <div
+        className='order-2 flex w-full justify-center xl:order-1'
+        data-testid='kangur-page-transition-skeleton-game-home-leaderboard'
+      >
+        <SkeletonPanel className='min-h-[320px]'>
+          <div className='space-y-4'>
+            <SkeletonChip className='h-7 w-32' />
+            <SkeletonLine className='h-6 w-1/2' />
+            <SkeletonLine className='w-full' />
+            <SkeletonLine className='w-5/6' />
+            <SkeletonLine className='w-4/6' />
+            <div className='space-y-3 pt-3'>
+              <SkeletonBlock className='h-16 rounded-[22px] bg-slate-200/78' />
+              <SkeletonBlock className='h-16 rounded-[22px] bg-slate-200/78' />
+              <SkeletonBlock className='h-16 rounded-[22px] bg-slate-200/78' />
+            </div>
           </div>
-        </div>
-      </SkeletonPanel>
-      <SkeletonPanel className='min-h-[320px]'>
-        <div className='space-y-4'>
-          <SkeletonChip className='h-7 w-28' />
-          <SkeletonBlock className='h-44 rounded-[28px] bg-slate-200/80' />
-          <div className='grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'>
-            <SkeletonBlock className='h-20 rounded-[22px] bg-slate-200/76' />
-            <SkeletonBlock className='h-20 rounded-[22px] bg-slate-200/76' />
+        </SkeletonPanel>
+      </div>
+      <div
+        className='order-1 flex w-full justify-center xl:order-2'
+        data-testid='kangur-page-transition-skeleton-game-home-player-progress'
+      >
+        <SkeletonPanel className='min-h-[320px]'>
+          <div className='space-y-4'>
+            <SkeletonChip className='h-7 w-28' />
+            <SkeletonBlock className='h-44 rounded-[28px] bg-slate-200/80' />
+            <div className='grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'>
+              <SkeletonBlock className='h-20 rounded-[22px] bg-slate-200/76' />
+              <SkeletonBlock className='h-20 rounded-[22px] bg-slate-200/76' />
+            </div>
           </div>
-        </div>
-      </SkeletonPanel>
-    </div>
+        </SkeletonPanel>
+      </div>
+    </section>
   </div>
 );
 

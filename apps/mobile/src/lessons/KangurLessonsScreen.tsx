@@ -1750,9 +1750,9 @@ export function KangurLessonsScreen(): React.JSX.Element {
               ) : !lessonRecentResults.isEnabled ? (
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                   {copy({
-                    de: 'Melde die Schülersitzung an, um hier Ergebnisse zu sehen.',
-                    en: 'Sign in the learner session to see results here.',
-                    pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wyniki.',
+                    de: 'Melde dich an, um hier Ergebnisse zu sehen.',
+                    en: 'Sign in to see results here.',
+                    pl: 'Zaloguj się, aby zobaczyć tutaj wyniki.',
                   })}
                 </Text>
               ) : lessonRecentResults.error ? (
@@ -1944,9 +1944,9 @@ export function KangurLessonsScreen(): React.JSX.Element {
               {lessonMastery.trackedLessons === 0 ? (
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                   {copy({
-                    de: 'Es gibt noch keine gespeicherten Lektionsversuche. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
-                    en: 'There are no saved lesson attempts yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.',
-                    pl: 'Nie ma jeszcze zapisanych prób lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.',
+                    de: 'Es gibt noch keine Lektions-Checkpoints. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
+                    en: 'There are no lesson checkpoints yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.',
+                    pl: 'Nie ma jeszcze checkpointów lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.',
                   })}
                 </Text>
               ) : (
@@ -2116,18 +2116,18 @@ export function KangurLessonsScreen(): React.JSX.Element {
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Wandle das Lesen der Lektionen direkt in die nächsten lokalen Schritte um, ohne den Lernfluss zu verlieren.',
-                  en: 'Turn lesson reading directly into the next local actions without losing the study flow.',
-                  pl: 'Zamień czytanie lekcji od razu w kolejne lokalne kroki, bez gubienia rytmu nauki.',
+                  de: 'Wandle das Lesen der Lektionen direkt in die nächsten Schritte um, ohne den Lernfluss zu verlieren.',
+                  en: 'Turn lesson reading directly into the next steps without losing the study flow.',
+                  pl: 'Zamień czytanie lekcji od razu w kolejne kroki, bez gubienia rytmu nauki.',
                 })}
               </Text>
 
               {lessonsAssignments.assignmentItems.length === 0 ? (
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                   {copy({
-                    de: 'Es gibt noch keine lokalen Aufgaben. Öffne weitere Lektionen oder absolviere weitere Trainings, um den nächsten Plan aufzubauen.',
-                    en: 'There are no local tasks yet. Open more lessons or complete more practice to build the next plan.',
-                    pl: 'Nie ma jeszcze lokalnych zadań. Otwórz kolejne lekcje albo wykonaj więcej treningów, aby zbudować następny plan.',
+                    de: 'Es gibt noch keine nächsten Schritte. Öffne weitere Lektionen oder absolviere weitere Trainings, um den nächsten Plan aufzubauen.',
+                    en: 'There are no next steps yet. Open more lessons or complete more practice to build the next plan.',
+                    pl: 'Nie ma jeszcze kolejnych kroków. Otwórz kolejne lekcje albo wykonaj więcej treningów, aby zbudować następny plan.',
                   })}
                 </Text>
               ) : (
@@ -2234,9 +2234,9 @@ export function KangurLessonsScreen(): React.JSX.Element {
               ) : !lessonDuels.isAuthenticated ? (
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                   {copy({
-                    de: 'Melde die Schulersitzung an, um hier deinen Duellstand, letzte Rivalen und schnelle Rückkämpfe zu sehen.',
-                    en: 'Sign in the learner session to see duel standing, recent rivals, and quick rematches here.',
-                    pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże.',
+                    de: 'Melde dich an, um hier deinen Duellstand, letzte Rivalen und schnelle Rückkämpfe zu sehen.',
+                    en: 'Sign in to see duel standing, recent rivals, and quick rematches here.',
+                    pl: 'Zaloguj się, aby zobaczyć tutaj stan w pojedynkach, ostatnich rywali i szybkie rewanże.',
                   })}
                 </Text>
               ) : (
@@ -2507,9 +2507,9 @@ export function KangurLessonsScreen(): React.JSX.Element {
                                 style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '700' }}
                               >
                                 {copy({
-                                  de: 'Letzter lokaler Checkpoint',
-                                  en: 'Latest local checkpoint',
-                                  pl: 'Ostatni lokalny checkpoint',
+                                  de: 'Letzter Checkpoint',
+                                  en: 'Latest checkpoint',
+                                  pl: 'Ostatni checkpoint',
                                 })}
                               </Text>
                               <Text style={{ color: '#0f172a', fontSize: 13, lineHeight: 18 }}>

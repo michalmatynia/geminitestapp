@@ -391,22 +391,16 @@ const setViewport = ({ width, matches }: { width: number; matches: boolean }): v
   });
 };
 
-const openLanguageMenu = (trigger?: HTMLElement): void => {
-  fireEvent.keyDown(trigger ?? screen.getByTestId('kangur-language-switcher-trigger'), {
+const openLanguageMenu = async (trigger?: HTMLElement): Promise<void> => {
+  fireEvent.keyDown(trigger ?? await screen.findByTestId('kangur-language-switcher-trigger'), {
     key: 'ArrowDown',
   });
 };
 
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
-import {
-  KANGUR_DAILY_THEME_SETTINGS_KEY,
-  KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
-} from '@/features/kangur/theme-settings';
+import { KANGUR_DAILY_THEME_SETTINGS_KEY } from '@/features/kangur/theme-settings';
 import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
-import {
-  loadPersistedTutorVisibilityHidden,
-  persistTutorVisibilityHidden,
-} from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
+import { persistTutorVisibilityHidden } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 
 describe('KangurPrimaryNavigation', () => {
@@ -461,6 +455,7 @@ describe('KangurPrimaryNavigation', () => {
       writable: true,
       value: {
         ...originalLocation,
+        assign: vi.fn(),
         hash: '',
         replace: vi.fn(),
       },
@@ -789,12 +784,12 @@ describe('KangurPrimaryNavigation', () => {
     );
 
     const utilityActions = screen.getByTestId('kangur-primary-nav-utility-actions');
-    const trigger = screen.getByTestId('kangur-language-switcher-trigger');
+    const trigger = await screen.findByTestId('kangur-language-switcher-trigger');
 
     expect(utilityActions).toContainElement(trigger);
     expect(trigger).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
 
-    openLanguageMenu(trigger);
+    await openLanguageMenu(trigger);
 
     const activeOption = await screen.findByTestId('kangur-language-switcher-option-de');
 
@@ -818,7 +813,7 @@ describe('KangurPrimaryNavigation', () => {
     );
 
     prefetchMock.mockClear();
-    openLanguageMenu();
+    await openLanguageMenu();
     expect(prefetchMock).not.toHaveBeenCalled();
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-en'));
 
@@ -850,7 +845,7 @@ describe('KangurPrimaryNavigation', () => {
     );
 
     prefetchMock.mockClear();
-    openLanguageMenu();
+    await openLanguageMenu();
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-pl'));
 
     expect(prefetchMock).toHaveBeenCalledWith('/duels');
@@ -879,7 +874,7 @@ describe('KangurPrimaryNavigation', () => {
     prefetchMock.mockClear();
     replaceMock.mockClear();
 
-    openLanguageMenu();
+    await openLanguageMenu();
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-pl'));
 
     expect(replaceMock).not.toHaveBeenCalled();
@@ -906,7 +901,7 @@ describe('KangurPrimaryNavigation', () => {
     prefetchMock.mockClear();
     prefetchKangurPageContentStoreMock.mockClear();
 
-    openLanguageMenu();
+    await openLanguageMenu();
     await screen.findByRole('menu');
 
     await waitFor(() => {
@@ -934,7 +929,7 @@ describe('KangurPrimaryNavigation', () => {
       </QueryClientContext.Provider>
     );
 
-    openLanguageMenu();
+    await openLanguageMenu();
     const englishOption = await screen.findByTestId('kangur-language-switcher-option-en');
     prefetchMock.mockClear();
     prefetchKangurPageContentStoreMock.mockClear();
@@ -955,7 +950,7 @@ describe('KangurPrimaryNavigation', () => {
     });
   });
 
-  it('keeps the language trigger enabled after the locale route has committed', () => {
+  it('keeps the language trigger enabled after the locale route has committed', async () => {
     localeMock.mockReturnValue('en');
     pathnameMock.mockReturnValue('/lessons');
     routeTransitionStateMock.mockReturnValue({
@@ -981,7 +976,7 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
-    expect(screen.getByTestId('kangur-language-switcher-trigger')).toBeEnabled();
+    expect(await screen.findByTestId('kangur-language-switcher-trigger')).toBeEnabled();
   });
 
   it('pins the language switcher to the pending target locale until the new locale route mounts', async () => {
@@ -1010,12 +1005,12 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
-    const trigger = screen.getByTestId('kangur-language-switcher-trigger');
+    const trigger = await screen.findByTestId('kangur-language-switcher-trigger');
 
     expect(trigger).toHaveTextContent('Deutsch');
     expect(trigger).toHaveAttribute('title', 'Language: Deutsch');
 
-    openLanguageMenu(trigger);
+    await openLanguageMenu(trigger);
 
     const activeOption = await screen.findByTestId('kangur-language-switcher-option-de');
 
@@ -1090,7 +1085,7 @@ describe('KangurPrimaryNavigation', () => {
       </CmsStorefrontAppearanceProvider>
     );
 
-    openLanguageMenu();
+    await openLanguageMenu();
 
     const menu = await screen.findByTestId('kangur-language-switcher-menu');
     const menuContainer = await screen.findByTestId('kangur-language-switcher-menu-container');
@@ -1142,7 +1137,7 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
-    const trigger = screen.getByTestId('kangur-language-switcher-trigger');
+    const trigger = await screen.findByTestId('kangur-language-switcher-trigger');
     const triggerLabel = within(trigger).getByText('Polski');
     const triggerFlagShell = trigger.querySelector('span[aria-hidden="true"]');
     const triggerChevron = trigger.querySelector('svg.lucide-chevron-down');
@@ -1165,7 +1160,7 @@ describe('KangurPrimaryNavigation', () => {
     expect(triggerChevron).not.toBeNull();
     expect(triggerChevron).not.toHaveClass('ml-auto');
 
-    openLanguageMenu(trigger);
+    await openLanguageMenu(trigger);
 
     const menu = await screen.findByTestId('kangur-language-switcher-menu');
     const menuContainer = await screen.findByTestId('kangur-language-switcher-menu-container');

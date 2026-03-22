@@ -101,6 +101,7 @@ vi.mock('@/features/kangur/ui/design/tokens', async (importOriginal) => {
   return {
     ...actual,
     KANGUR_PANEL_GAP_CLASSNAME: 'gap',
+    KANGUR_LESSON_PANEL_GAP_CLASSNAME: 'lesson-gap',
   };
 });
 
@@ -177,9 +178,13 @@ describe('ActiveLessonView mobile scroll controls', () => {
     await act(async () => {});
 
     const scrollContainer = screen.getByTestId('kangur-lesson-scroll-container') as HTMLDivElement;
+    const activeLessonTransition = screen.getByTestId('lessons-active-transition');
     expect(scrollContainer.parentElement?.className).toContain(
       'var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px)'
     );
+    expect(scrollContainer.parentElement?.className).toContain('lesson-gap');
+    expect(activeLessonTransition.className).toContain('lesson-gap');
+    expect(scrollContainer.className).toContain('lesson-gap');
     expect(scrollContainer.className).toContain('touch-pan-y');
     expect(scrollContainer.className).not.toContain('touch-none');
     Object.defineProperty(scrollContainer, 'clientHeight', { value: 100, configurable: true });

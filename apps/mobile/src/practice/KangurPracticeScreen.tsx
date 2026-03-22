@@ -341,9 +341,9 @@ const getPracticeSyncPreview = ({
 
   return {
     body: {
-      de: 'Nach der Runde wird das Ergebnis lokal gespeichert. Melde die Lernenden-Sitzung an, damit es auch mit der Kangur-API synchronisiert wird.',
-      en: 'After the run, the result will be saved locally. Sign in the learner session so it also syncs with the Kangur API.',
-      pl: 'Po zakończeniu serii wynik zapisze się lokalnie. Zaloguj sesję ucznia, aby zsynchronizować go także z API Kangura.',
+      de: 'Nach der Runde wird das Ergebnis lokal gespeichert. Melde dich an, damit es auch mit der Kangur-API synchronisiert wird.',
+      en: 'After the run, the result will be saved locally. Sign in so it also syncs with the Kangur API.',
+      pl: 'Po zakończeniu serii wynik zapisze się lokalnie. Zaloguj się, aby zsynchronizować go także z API Kangura.',
     }[locale],
     label: {
       de: 'Nur lokal',
@@ -1800,9 +1800,9 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 ) : !practiceDuels.isAuthenticated ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Melde eine Lernenden-Sitzung an, um hier dein Duellergebnis, letzte Rivalen und schnelle Rueckspiele zu sehen.',
-                      en: 'Sign in the learner session to see your duel result, recent rivals, and quick rematches here.',
-                      pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże.',
+                      de: 'Melde dich an, um hier deinen Duellstand, letzte Rivalen und schnelle Rueckspiele zu sehen.',
+                      en: 'Sign in to see your duel standing, recent rivals, and quick rematches here.',
+                      pl: 'Zaloguj się, aby zobaczyć tutaj swój stan w pojedynkach, ostatnich rywali i szybkie rewanże.',
                     })}
                   </Text>
                 ) : (
@@ -2067,9 +2067,9 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 {lessonMastery.trackedLessons === 0 ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Es gibt noch keine gespeicherten Lektionsversuche. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
-                      en: 'There are no saved lesson attempts yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.',
-                      pl: 'Nie ma jeszcze zapisanych prób lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.',
+                      de: 'Es gibt noch keine Lektions-Checkpoints. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
+                      en: 'There are no lesson checkpoints yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.',
+                      pl: 'Nie ma jeszcze checkpointów lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.',
                     })}
                   </Text>
                 ) : (
@@ -2342,9 +2342,9 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 ) : !practiceRecentResults.isEnabled ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Melde die Schülersitzung an, um hier Ergebnisse zu sehen.',
-                      en: 'Sign in the learner session to see results here.',
-                      pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wyniki.',
+                      de: 'Melde dich an, um hier Ergebnisse zu sehen.',
+                      en: 'Sign in to see results here.',
+                      pl: 'Zaloguj się, aby zobaczyć tutaj wyniki.',
                     })}
                   </Text>
                 ) : practiceRecentResults.error ? (

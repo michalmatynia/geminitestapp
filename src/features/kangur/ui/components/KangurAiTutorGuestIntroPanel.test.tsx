@@ -254,6 +254,7 @@ describe('KangurAiTutorGuestIntroPanel', () => {
 
     const backdrop = screen.getByTestId('kangur-ai-tutor-guest-intro-backdrop');
     expect(backdrop.className).toContain('bg-transparent');
+    expect(backdrop).toHaveClass('touch-manipulation', 'active:opacity-95');
 
     fireEvent.click(backdrop);
     expect(onClose).toHaveBeenCalledTimes(1);

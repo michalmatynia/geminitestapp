@@ -466,8 +466,10 @@ export function KangurLanguageSwitcher({
                 currentLocale !== DEFAULT_SITE_LOCALE &&
                 getPathLocale(currentPathname) === null;
 
-              if (shouldForceDocumentReplace && typeof window !== 'undefined') {
-                window.location.replace(target.href);
+              if (shouldForceDocumentReplace) {
+                if (typeof window !== 'undefined' && typeof window.location.replace === 'function') {
+                  window.location.replace(target.href);
+                }
                 return;
               }
 

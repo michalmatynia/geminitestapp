@@ -55,9 +55,9 @@ export const buildKangurHomeDebugProofViewModel = (input: {
         {
           detail: getKangurMobileLocalizedValue(
             {
-              de: 'Die Schülersitzung und die Ergebnisdaten für den Start werden wiederhergestellt.',
-              en: 'We are restoring the learner session and results data for home.',
-              pl: 'Przywracamy sesję ucznia i dane wyników dla startu.',
+              de: 'Die Anmeldung und die Ergebnisdaten für den Start werden wiederhergestellt.',
+              en: 'We are restoring sign-in and results data for home.',
+              pl: 'Przywracamy logowanie i dane wyników dla startu.',
             },
             locale,
           ),
@@ -83,9 +83,9 @@ export const buildKangurHomeDebugProofViewModel = (input: {
         {
           detail: getKangurMobileLocalizedValue(
             {
-              de: 'Die Ergebnisse zum Start sind für die Lernenden-Sitzung noch nicht aktiviert.',
-              en: 'Home results are not enabled yet for the learner session.',
-              pl: 'Wyniki na starcie nie są jeszcze włączone dla sesji ucznia.',
+              de: 'Die Ergebnisse zum Start sind für dieses Konto noch nicht aktiviert.',
+              en: 'Home results are not enabled yet for this account.',
+              pl: 'Wyniki na starcie nie są jeszcze włączone dla tego konta.',
             },
             locale,
           ),
@@ -156,9 +156,9 @@ export const buildKangurHomeDebugProofViewModel = (input: {
         ? {
             detail: getKangurMobileLocalizedValue(
               {
-                de: `Stärkster Modus hier: ${strongestOperation.averageAccuracyPercent}% in ${strongestOperation.sessions} Sitzungen.`,
-                en: `Strongest mode here: ${strongestOperation.averageAccuracyPercent}% across ${strongestOperation.sessions} sessions.`,
-                pl: `Najmocniejszy tryb tutaj: ${strongestOperation.averageAccuracyPercent}% w ${strongestOperation.sessions} sesjach.`,
+                de: `Stärkster Modus hier: ${strongestOperation.averageAccuracyPercent}% in ${strongestOperation.sessions} Versuchen.`,
+                en: `Strongest mode here: ${strongestOperation.averageAccuracyPercent}% across ${strongestOperation.sessions} attempts.`,
+                pl: `Najmocniejszy tryb tutaj: ${strongestOperation.averageAccuracyPercent}% w ${strongestOperation.sessions} podejściach.`,
               },
               locale,
             ),
@@ -176,9 +176,9 @@ export const buildKangurHomeDebugProofViewModel = (input: {
           ? {
               detail: getKangurMobileLocalizedValue(
                 {
-                  de: `Wiederholungsmodus hier: ${weakestOperation.averageAccuracyPercent}% in ${weakestOperation.sessions} Sitzungen.`,
-                  en: `Review mode here: ${weakestOperation.averageAccuracyPercent}% across ${weakestOperation.sessions} sessions.`,
-                  pl: `Tryb do powtórki tutaj: ${weakestOperation.averageAccuracyPercent}% w ${weakestOperation.sessions} sesjach.`,
+                  de: `Wiederholungsmodus hier: ${weakestOperation.averageAccuracyPercent}% in ${weakestOperation.sessions} Versuchen.`,
+                  en: `Review mode here: ${weakestOperation.averageAccuracyPercent}% across ${weakestOperation.sessions} attempts.`,
+                  pl: `Tryb do powtórki tutaj: ${weakestOperation.averageAccuracyPercent}% w ${weakestOperation.sessions} podejściach.`,
                 },
                 locale,
               ),

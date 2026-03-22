@@ -169,7 +169,7 @@ describe('KangurResultsScreen', () => {
 
     render(<KangurResultsScreen />);
 
-    expect(screen.getByText('Zaloguj ucznia, aby zobaczyć wyniki.')).toBeTruthy();
+    expect(screen.getByText('Zaloguj się, aby zobaczyć wyniki.')).toBeTruthy();
     expect(screen.getByText('Przejdź do logowania')).toBeTruthy();
   });
 
@@ -408,7 +408,7 @@ describe('KangurResultsScreen', () => {
 
     render(<KangurResultsScreen />);
 
-    expect(screen.getByText('Sesje')).toBeTruthy();
+    expect(screen.getByText('Wyniki')).toBeTruthy();
     expect(screen.getByText('Ta sekcja obejmuje 40 ostatnich podejść.')).toBeTruthy();
     expect(screen.getAllByText('Arytmetyka').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Czas').length).toBeGreaterThanOrEqual(1);

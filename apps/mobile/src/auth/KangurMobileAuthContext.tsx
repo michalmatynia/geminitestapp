@@ -63,9 +63,9 @@ const toAuthErrorMessage = (
 ): string => {
   if (!(error instanceof Error)) {
     return {
-      de: 'Die Lernenden-Sitzung konnte nicht aktualisiert werden.',
-      en: 'Could not refresh the learner session.',
-      pl: 'Nie udało się odświeżyć sesji ucznia.',
+      de: 'Die Anmeldung konnte nicht aktualisiert werden.',
+      en: 'Could not refresh sign-in.',
+      pl: 'Nie udało się odświeżyć logowania.',
     }[locale];
   }
 
@@ -73,9 +73,9 @@ const toAuthErrorMessage = (
   const errorCode = resolveAuthErrorCode(error);
   if (!message) {
     return {
-      de: 'Die Lernenden-Sitzung konnte nicht aktualisiert werden.',
-      en: 'Could not refresh the learner session.',
-      pl: 'Nie udało się odświeżyć sesji ucznia.',
+      de: 'Die Anmeldung konnte nicht aktualisiert werden.',
+      en: 'Could not refresh sign-in.',
+      pl: 'Nie udało się odświeżyć logowania.',
     }[locale];
   }
 
@@ -89,9 +89,9 @@ const toAuthErrorMessage = (
 
   if (errorCode === KANGUR_MOBILE_AUTH_ERROR_CODES.missingPersistedSession) {
     return {
-      de: 'Die Lernenden-Sitzung konnte auf diesem Gerät nicht gespeichert werden. Prüfe die Cookie- und Sitzungsunterstützung der aktuellen Laufzeit.',
-      en: 'The learner session could not be persisted on this device. Check cookie and session support for the current runtime.',
-      pl: 'Sesja ucznia nie została zapisana na tym urządzeniu. Sprawdź obsługę cookies i sesji w aktualnym środowisku.',
+      de: 'Die Anmeldung konnte auf diesem Gerät nicht gespeichert werden. Prüfe Cookie- und Login-Unterstützung der aktuellen Laufzeit.',
+      en: 'Sign-in could not be saved on this device. Check cookie and sign-in support for the current runtime.',
+      pl: 'Logowanie nie zostało zapisane na tym urządzeniu. Sprawdź obsługę cookies i logowania w aktualnym środowisku.',
     }[locale];
   }
 

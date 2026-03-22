@@ -474,7 +474,7 @@ export default function LessonSlideSection({
                 className={cn(
                   KANGUR_STEP_PILL_CLASSNAME,
                   'cursor-pointer touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white active:scale-[0.97]',
-                  isCoarsePointer ? 'h-9 min-w-9 px-3' : 'h-[14px] w-6',
+                  isCoarsePointer ? 'h-11 min-w-11 px-4' : 'h-[14px] w-6',
                   i === slide
                     ? ['scale-[1.04]', dotActiveClass]
                     : i < slide
@@ -495,7 +495,7 @@ export default function LessonSlideSection({
                   KANGUR_STEP_PILL_CLASSNAME,
                   'cursor-pointer justify-center font-black shadow-sm touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white active:scale-[0.97]',
                   isCoarsePointer
-                    ? 'h-9 min-w-[52px] px-3 text-sm'
+                    ? 'h-11 min-w-[56px] px-4 text-sm'
                     : 'h-[14px] min-w-[40px] text-[10px]'
                 )}
                 style={{

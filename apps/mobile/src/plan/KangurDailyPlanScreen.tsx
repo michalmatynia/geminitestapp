@@ -177,9 +177,9 @@ function FocusCard({
         />
         <Pill
           label={copy({
-            de: `Sitzungen ${operation.sessions}`,
-            en: `Sessions ${operation.sessions}`,
-            pl: `Sesje ${operation.sessions}`,
+            de: `Ergebnisse ${operation.sessions}`,
+            en: `Results ${operation.sessions}`,
+            pl: `Wyniki ${operation.sessions}`,
           })}
           tone={{
             backgroundColor: '#f1f5f9',
@@ -742,9 +742,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             <Text style={{ color: '#475569', fontSize: 15, lineHeight: 22 }}>
               {isLoadingAuth && !isAuthenticated
                 ? copy({
-                    de: 'Die Schulersitzung und der letzte Plan auf Basis von Ergebnissen und Fortschritt werden wiederhergestellt.',
-                    en: 'Restoring the learner session and the latest plan based on scores and progress.',
-                    pl: 'Przywracamy sesję ucznia oraz ostatni plan oparty na wynikach i postępie.',
+                    de: 'Die Anmeldung und der letzte Plan auf Basis von Ergebnissen und Fortschritt werden wiederhergestellt.',
+                    en: 'Restoring sign-in and the latest plan based on results and progress.',
+                    pl: 'Przywracamy logowanie oraz ostatni plan oparty na wynikach i postępie.',
                   })
                 : copy({
                     de: `Ein fokussierter Lernplan für ${displayName} aus Training, Lektionen und den wichtigsten Ergebnissen.`,
@@ -850,9 +850,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             {isLoadingAuth && !isAuthenticated ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Die Schulersitzung wird wiederhergestellt. Sobald sie bereit ist, lädt der Plan Ergebnisse und Trainingshinweise.',
-                  en: 'Restoring the learner session. Once it is ready, the plan will load results and training guidance.',
-                  pl: 'Przywracamy sesję ucznia. Gdy będzie gotowa, plan pobierze wyniki i wskazówki treningowe.',
+                  de: 'Die Anmeldung wird wiederhergestellt. Sobald sie bereit ist, lädt der Plan Ergebnisse und Trainingshinweise.',
+                  en: 'Restoring sign-in. Once it is ready, the plan will load results and training guidance.',
+                  pl: 'Przywracamy logowanie. Gdy będzie gotowe, plan pobierze wyniki i wskazówki treningowe.',
                 })}
               </Text>
             ) : !isAuthenticated ? (
@@ -860,9 +860,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                 <View style={{ gap: 10 }}>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Melde eine Lernenden-Sitzung an, um Ergebnisse, Trainingsfokus und letzte Fortschritte zu laden.',
-                      en: 'Sign in the learner session to load results, training focus, and recent progress.',
-                      pl: 'Zaloguj sesję ucznia, aby pobrać wyniki, fokus treningowy i ostatnie postępy.',
+                      de: 'Melde dich an, um Ergebnisse, Trainingsfokus und letzte Fortschritte zu laden.',
+                      en: 'Sign in to load results, training focus, and recent progress.',
+                      pl: 'Zaloguj się, aby pobrać wyniki, fokus treningowy i ostatnie postępy.',
                     })}
                   </Text>
                   <LinkButton
@@ -925,9 +925,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             ) : !isAuthenticated ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
                 {copy({
-                  de: 'Melde den Schuler an, um Hinweise für den stärksten und schwächsten Modus freizuschalten.',
-                  en: 'Sign in the learner to unlock guidance for the strongest and weakest modes.',
-                  pl: 'Zaloguj ucznia, aby odblokować wskazówki dla najmocniejszego i najsłabszego trybu.',
+                  de: 'Melde dich an, um Hinweise für den stärksten und schwächsten Modus freizuschalten.',
+                  en: 'Sign in to unlock guidance for the strongest and weakest modes.',
+                  pl: 'Zaloguj się, aby odblokować wskazówki dla najmocniejszego i najsłabszego trybu.',
                 })}
               </Text>
             ) : !weakestFocus && !strongestFocus ? (
@@ -1165,9 +1165,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             ) : !duelPlan.isAuthenticated ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
                 {copy({
-                  de: 'Melde die Schulersitzung an, um hier deinen Duellstand, letzte Rivalen und schnelle Rückkämpfe zu sehen.',
-                  en: 'Sign in the learner session to see duel standing, recent rivals, and quick rematches here.',
-                  pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże.',
+                  de: 'Melde dich an, um hier deinen Duellstand, letzte Rivalen und schnelle Rückkämpfe zu sehen.',
+                  en: 'Sign in to see duel standing, recent rivals, and quick rematches here.',
+                  pl: 'Zaloguj się, aby zobaczyć tutaj stan w pojedynkach, ostatnich rywali i szybkie rewanże.',
                 })}
               </Text>
             ) : (
@@ -1443,9 +1443,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             {lessonMastery.trackedLessons === 0 ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
                 {copy({
-                  de: 'Es gibt noch keine gespeicherten Lektionsversuche. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
-                  en: 'There are no saved lesson attempts yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.',
-                  pl: 'Nie ma jeszcze zapisanych prób lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.',
+                  de: 'Es gibt noch keine Lektions-Checkpoints. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
+                  en: 'There are no lesson checkpoints yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.',
+                  pl: 'Nie ma jeszcze checkpointów lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.',
                 })}
               </Text>
             ) : (
@@ -1586,9 +1586,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             ) : !isAuthenticated ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
                 {copy({
-                  de: 'Melde die Schulersitzung an, um hier Ergebnisse zu sehen.',
-                  en: 'Sign in the learner session to see results here.',
-                  pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wyniki.',
+                  de: 'Melde dich an, um hier Ergebnisse zu sehen.',
+                  en: 'Sign in to see results here.',
+                  pl: 'Zaloguj się, aby zobaczyć tutaj wyniki.',
                 })}
               </Text>
             ) : scoreError ? (

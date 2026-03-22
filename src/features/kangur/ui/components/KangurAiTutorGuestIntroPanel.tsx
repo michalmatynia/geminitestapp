@@ -63,7 +63,7 @@ export function KangurAiTutorGuestIntroPanel({
         exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
         transition={prefersReducedMotion ? { duration: 0 } : undefined}
         onClick={onClose}
-        className='fixed inset-0 z-[74] cursor-pointer border-0 bg-transparent p-0'
+        className='fixed inset-0 z-[74] cursor-pointer border-0 bg-transparent p-0 touch-manipulation active:opacity-95'
       />
       <motion.div
         data-kangur-ai-tutor-root='true'

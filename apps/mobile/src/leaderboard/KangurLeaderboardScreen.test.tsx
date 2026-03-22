@@ -517,7 +517,7 @@ describe('KangurLeaderboardScreen', () => {
     expect(screen.getByText('📚 Bohater lekcji')).toBeTruthy();
     expect(screen.getByText('Otwórz profil i odznaki')).toBeTruthy();
     expect(screen.getByText('Po rankingu')).toBeTruthy();
-    expect(screen.getByText('Lokalne zadania po rankingu')).toBeTruthy();
+    expect(screen.getByText('Plan po rankingu')).toBeTruthy();
     expect(screen.getByText('Domknij zegar')).toBeTruthy();
     expect(screen.getByText('Priorytet wysoki')).toBeTruthy();
     expect(screen.getByText('Cel: 1 lekcja')).toBeTruthy();

@@ -26,8 +26,8 @@ describe('LessonActivityStage touch mode', () => {
     );
 
     expect(screen.getByTestId('lesson-activity-secret-indicator')).toHaveClass(
-      'h-9',
-      'min-w-[52px]',
+      'h-11',
+      'min-w-[56px]',
       'touch-manipulation',
       'select-none'
     );

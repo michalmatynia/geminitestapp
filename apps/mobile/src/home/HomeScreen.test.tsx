@@ -276,7 +276,7 @@ describe('HomeScreen', () => {
     renderHomeScreen();
 
     expect(screen.getByText('Kangur mobilnie')).toBeTruthy();
-    expect(screen.getByText('Sesje 0')).toBeTruthy();
+    expect(screen.getByText('Wyniki 0')).toBeTruthy();
     expect(screen.getByText('Checkpointy 0')).toBeTruthy();
     expect(screen.getByText('Fokus treningowy: Trening mieszany')).toBeTruthy();
     expect(screen.getByText('Plan dnia teraz')).toBeTruthy();
@@ -828,7 +828,7 @@ describe('HomeScreen', () => {
         'Witaj ponownie, Ada Learner. Zacznij od fokusu treningowego, wróć do ostatniej lekcji albo od razu otwórz plan dnia.',
       ),
     ).toBeTruthy();
-    expect(screen.getByText('Sesje 1')).toBeTruthy();
+    expect(screen.getByText('Wyniki 1')).toBeTruthy();
     expect(screen.getByText('Ostatni wynik 7/8')).toBeTruthy();
     expect(screen.getByText('Ostatnia lekcja Dodawanie')).toBeTruthy();
     expect(screen.getByText('Fokus treningowy: Dodawanie')).toBeTruthy();
@@ -970,7 +970,7 @@ describe('HomeScreen', () => {
     renderHomeScreen('de');
 
     expect(screen.getByText('Kangur mobil')).toBeTruthy();
-    expect(screen.getByText('Sitzungen 0')).toBeTruthy();
+    expect(screen.getByText('Ergebnisse 0')).toBeTruthy();
     expect(screen.getByText('Trainingsfokus: Gemischtes Training')).toBeTruthy();
     expect(screen.getByText('Status: anonym')).toBeTruthy();
     expect(screen.getByText('Schuler-Login')).toBeTruthy();

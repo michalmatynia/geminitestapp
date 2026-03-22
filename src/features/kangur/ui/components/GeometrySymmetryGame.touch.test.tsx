@@ -94,4 +94,63 @@ describe('GeometrySymmetryGame touch interactions', () => {
     expect(canvas).toHaveAttribute('data-drawing-active', 'true');
     expect(board).toHaveClass('ring-2');
   });
+
+  it('allows drawing immediately after the too-short warning', () => {
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <GeometrySymmetryGame onFinish={() => undefined} />
+      </NextIntlClientProvider>
+    );
+
+    const board = screen.getByTestId('geometry-symmetry-board');
+    const canvas = screen.getByTestId('geometry-symmetry-canvas');
+    const checkButton = screen.getByRole('button', { name: 'Check' });
+
+    fireEvent.click(checkButton);
+
+    expect(screen.getByTestId('geometry-symmetry-feedback')).toHaveTextContent(
+      'Make a few strokes so there is a line to check.'
+    );
+
+    fireEvent.pointerDown(canvas, {
+      pointerId: 4,
+      clientX: 112,
+      clientY: 84,
+    });
+
+    expect(canvas).toHaveAttribute('data-drawing-active', 'true');
+    expect(board).toHaveClass('ring-2');
+    expect(screen.queryByTestId('geometry-symmetry-feedback')).not.toBeInTheDocument();
+  });
+
+  it('clears the too-short warning when the board is cleared', () => {
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <GeometrySymmetryGame onFinish={() => undefined} />
+      </NextIntlClientProvider>
+    );
+
+    const canvas = screen.getByTestId('geometry-symmetry-canvas');
+    const clearButton = screen.getByRole('button', { name: 'Clear' });
+    const checkButton = screen.getByRole('button', { name: 'Check' });
+
+    fireEvent.pointerDown(canvas, {
+      pointerId: 6,
+      clientX: 108,
+      clientY: 84,
+    });
+    fireEvent.pointerUp(canvas, { pointerId: 6 });
+
+    expect(clearButton).not.toBeDisabled();
+
+    fireEvent.click(checkButton);
+
+    expect(screen.getByTestId('geometry-symmetry-feedback')).toHaveTextContent(
+      'Make a few strokes so there is a line to check.'
+    );
+
+    fireEvent.click(clearButton);
+
+    expect(screen.queryByTestId('geometry-symmetry-feedback')).not.toBeInTheDocument();
+  });
 });

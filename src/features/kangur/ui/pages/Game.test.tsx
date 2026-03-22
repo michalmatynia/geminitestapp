@@ -562,12 +562,16 @@ describe('Game page', () => {
     render(<Game />);
 
     const gameMain = document.getElementById('kangur-game-main');
+    const phoneSimulationControls = screen.getByTestId('kangur-game-phone-simulation-top-controls');
     const scrollContainer = screen.getByTestId('kangur-game-phone-simulation-scroll-container');
 
     expect(gameMain).not.toBeNull();
     expect(gameMain?.className).toContain(
       'var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px)'
     );
+    expect(gameMain?.className).not.toContain('kangur-lesson-panel-gap');
+    expect(phoneSimulationControls.parentElement?.className).toContain('kangur-lesson-panel-gap');
+    expect(scrollContainer.className).not.toContain('kangur-lesson-panel-gap');
     expect(scrollContainer.className).toContain('touch-pan-y');
     expect(scrollContainer.className).not.toContain('touch-none');
 

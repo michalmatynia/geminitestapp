@@ -1094,9 +1094,9 @@ function LessonMasteryCard({
       {lessonMastery.trackedLessons === 0 ? (
         <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
           {copy({
-            de: 'Es gibt noch keine gespeicherten Lektionsversuche. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
-            en: 'There are no saved lesson attempts yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.',
-            pl: 'Nie ma jeszcze zapisanych prób lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.',
+            de: 'Es gibt noch keine Lektions-Checkpoints. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
+            en: 'There are no lesson checkpoints yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.',
+            pl: 'Nie ma jeszcze checkpointów lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.',
           })}
         </Text>
       ) : (
@@ -1298,14 +1298,14 @@ function NextStepsCard({
         <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
           {context === 'session'
             ? copy({
-                de: 'Auch während einer Duellsitzung kannst du schon den nächsten lokalen Schritt aus Lektionen und Training vorbereiten, sobald das Match endet.',
-                en: 'Even during a duel session, you can line up the next local step from lessons and practice for when the match ends.',
-                pl: 'Nawet w trakcie sesji pojedynku możesz już ustawić kolejny lokalny krok z lekcji i treningu na moment po zakończeniu meczu.',
+                de: 'Auch während einer Duellsitzung kannst du schon den nächsten Schritt aus Lektionen und Training vorbereiten, sobald das Match endet.',
+                en: 'Even during a duel session, you can line up the next step from lessons and practice for when the match ends.',
+                pl: 'Nawet w trakcie sesji pojedynku możesz już ustawić kolejny krok z lekcji i treningu na moment po zakończeniu meczu.',
               })
             : copy({
-                de: 'Aus der Lobby heraus kannst du direkt den nächsten lokalen Schritt aus deinem Fortschritt öffnen, bevor du wieder nach einem Match suchst.',
-                en: 'From the lobby, you can open the next local step from your progress before you search for another match.',
-                pl: 'Z lobby możesz od razu otworzyć kolejny lokalny krok wynikający z postępu, zanim znowu zaczniesz szukać meczu.',
+                de: 'Aus der Lobby heraus kannst du direkt den nächsten Schritt aus deinem Fortschritt öffnen, bevor du wieder nach einem Match suchst.',
+                en: 'From the lobby, you can open the next step from your progress before you search for another match.',
+                pl: 'Z lobby możesz od razu otworzyć kolejny krok wynikający z postępu, zanim znowu zaczniesz szukać meczu.',
               })}
         </Text>
       </View>
@@ -1313,9 +1313,9 @@ function NextStepsCard({
       {duelAssignments.assignmentItems.length === 0 ? (
         <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
           {copy({
-            de: 'Es gibt noch keine lokalen Aufgaben. Öffne Lektionen oder absolviere weitere Trainings, um den nächsten Plan aufzubauen.',
-            en: 'There are no local tasks yet. Open lessons or complete more practice to build the next plan.',
-            pl: 'Nie ma jeszcze lokalnych zadań. Otwórz lekcje albo wykonaj kolejne treningi, aby zbudować następny plan.',
+            de: 'Es gibt noch keine nächsten Schritte. Öffne Lektionen oder absolviere weitere Trainings, um den nächsten Plan aufzubauen.',
+            en: 'There are no next steps yet. Open lessons or complete more practice to build the next plan.',
+            pl: 'Nie ma jeszcze kolejnych kroków. Otwórz lekcje albo wykonaj kolejne treningi, aby zbudować następny plan.',
           })}
         </Text>
       ) : (

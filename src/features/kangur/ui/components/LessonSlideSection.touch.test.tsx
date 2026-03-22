@@ -81,14 +81,14 @@ describe('LessonSlideSection touch mode', () => {
     );
 
     expect(screen.getByTestId('lesson-slide-indicator-0')).toHaveClass(
-      'h-9',
-      'min-w-9',
+      'h-11',
+      'min-w-11',
       'touch-manipulation',
       'select-none'
     );
     expect(screen.getByTestId('lesson-slide-secret-indicator')).toHaveClass(
-      'h-9',
-      'min-w-[52px]',
+      'h-11',
+      'min-w-[56px]',
       'touch-manipulation',
       'select-none'
     );

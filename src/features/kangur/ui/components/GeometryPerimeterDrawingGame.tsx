@@ -344,8 +344,11 @@ export default function GeometryPerimeterDrawingGame({
   );
 
   const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    if (done || feedback) return;
+    if (done || isLocked || drawingValidated) return;
     event.preventDefault();
+    if (feedback?.kind === 'info') {
+      setFeedback(null);
+    }
     const canvas = canvasRef.current;
     if (!canvas) return;
     const point = resolvePoint(event);
@@ -356,7 +359,7 @@ export default function GeometryPerimeterDrawingGame({
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    if (!isDrawingRef.current || done || feedback) return;
+    if (!isDrawingRef.current || done || isLocked || drawingValidated) return;
     event.preventDefault();
     const point = resolvePoint(event);
     updateStrokes((current) => {
@@ -414,7 +417,7 @@ export default function GeometryPerimeterDrawingGame({
   }, [appendKeyboardPoint, keyboardCursor, keyboardDrawing, translations]);
 
   const handleCanvasKeyDown = (event: React.KeyboardEvent<HTMLCanvasElement>): void => {
-    if (done || feedback) return;
+    if (done || isLocked || drawingValidated) return;
 
     const key = event.key;
     if (
@@ -430,6 +433,10 @@ export default function GeometryPerimeterDrawingGame({
     }
 
     event.preventDefault();
+
+    if (feedback?.kind === 'info') {
+      setFeedback(null);
+    }
 
     if (key === 'Enter' || key === ' ') {
       if (keyboardDrawing) {
@@ -527,7 +534,7 @@ export default function GeometryPerimeterDrawingGame({
     setSelected(value);
   };
 
-  const evaluateDrawing = (): { accepted: boolean; message: string } => {
+  const evaluateDrawing = (): { accepted: boolean; message: string; retryable?: boolean } => {
     if (!currentRound) {
       return { accepted: false, message: translations('geometryPerimeter.inRound.errors.noTask') };
     }
@@ -535,6 +542,7 @@ export default function GeometryPerimeterDrawingGame({
       return {
         accepted: false,
         message: translations('geometryPerimeter.inRound.errors.tooShort'),
+        retryable: true,
       };
     }
     const shapeId: GeometryShapeId =
@@ -620,8 +628,13 @@ export default function GeometryPerimeterDrawingGame({
     if (!drawingValidated) {
       const drawingResult = evaluateDrawing();
       if (!drawingResult.accepted) {
-        setFeedback({ kind: 'error', text: drawingResult.message });
-        moveToNextRound(false);
+        setFeedback({
+          kind: drawingResult.retryable ? 'info' : 'error',
+          text: drawingResult.message,
+        });
+        if (!drawingResult.retryable) {
+          moveToNextRound(false);
+        }
         return;
       }
       setDrawingValidated(true);

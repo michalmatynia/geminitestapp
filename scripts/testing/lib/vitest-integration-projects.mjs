@@ -23,6 +23,8 @@ export const dbSpecificUnitTestFiles = [
   'src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-create-action.test.ts',
   'src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-delete-action.test.ts',
   'src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-read-action.test.ts',
+  'src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-collection-executor.test.ts',
+  'src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-entity-executor.test.ts',
   'src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-action.test.ts',
   'src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-plan.legacy.test.ts',
   'src/shared/lib/db/mongo-write-retry.test.ts',

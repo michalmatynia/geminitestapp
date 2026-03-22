@@ -60,7 +60,7 @@ describe('buildKangurHomeDebugProofViewModel', () => {
           status: 'ready',
         },
         {
-          detail: 'Najmocniejszy tryb tutaj: 100% w 4 sesjach.',
+          detail: 'Najmocniejszy tryb tutaj: 100% w 4 podejściach.',
           label: 'Fokus treningowy',
           status: 'ready',
         },
@@ -83,7 +83,7 @@ describe('buildKangurHomeDebugProofViewModel', () => {
     ).toEqual({
       checks: [
         {
-          detail: 'Przywracamy sesję ucznia i dane wyników dla startu.',
+          detail: 'Przywracamy logowanie i dane wyników dla startu.',
           label: 'Wyniki na starcie',
           status: 'info',
         },

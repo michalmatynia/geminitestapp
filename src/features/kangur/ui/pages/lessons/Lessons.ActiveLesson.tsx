@@ -16,7 +16,6 @@ import {
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
 import {
-  KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_SHELL_MINUS_TOP_BAR_HEIGHT_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { LESSON_COMPONENTS } from '@/features/kangur/lessons/lesson-ui-registry';
@@ -26,6 +25,7 @@ import {
   LESSON_NAV_ANCHOR_ID,
   LESSONS_ACTIVE_LAYOUT_CLASSNAME,
   LESSONS_ACTIVE_SECTION_CLASSNAME,
+  LESSONS_ACTIVE_STACK_GAP_CLASSNAME,
 } from './Lessons.constants';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { lockKangurLessonScroll, unlockKangurLessonScroll } from './lessons-scroll-lock';
@@ -278,7 +278,7 @@ export function ActiveLessonView() {
   const lessonContentSection = (
     <div
       ref={activeLessonContentRef}
-      className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
+      className={`w-full flex flex-col items-center ${LESSONS_ACTIVE_STACK_GAP_CLASSNAME}`}
     >
       {isSecretLessonHostActive ? (
         <KangurGlassPanel
@@ -380,11 +380,11 @@ export function ActiveLessonView() {
       >
         {shouldLockScroll ? (
           <div
-            className={`${LESSONS_ACTIVE_SECTION_CLASSNAME} flex ${KANGUR_SHELL_MINUS_TOP_BAR_HEIGHT_CLASSNAME} flex-col gap-3`}
+            className={`${LESSONS_ACTIVE_SECTION_CLASSNAME} flex ${KANGUR_SHELL_MINUS_TOP_BAR_HEIGHT_CLASSNAME} flex-col ${LESSONS_ACTIVE_STACK_GAP_CLASSNAME}`}
           >
             <div
               ref={activeLessonScrollRef}
-              className={`flex-1 min-h-0 w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME} overflow-y-auto overscroll-contain touch-pan-y`}
+              className={`flex-1 min-h-0 w-full flex flex-col items-center ${LESSONS_ACTIVE_STACK_GAP_CLASSNAME} overflow-y-auto overscroll-contain touch-pan-y`}
               data-testid='kangur-lesson-scroll-container'
             >
               {topControlsSection}

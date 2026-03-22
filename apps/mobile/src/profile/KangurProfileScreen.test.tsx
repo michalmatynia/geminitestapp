@@ -554,7 +554,7 @@ describe('KangurProfileScreen', () => {
         'Ostatnie wyniki są tutaj pod ręką, aby można było z profilu od razu wrócić do treningu, pasującej lekcji albo pełnej historii.',
       ),
     ).toBeTruthy();
-    expect(screen.getByText('Sesje 1')).toBeTruthy();
+    expect(screen.getByText('Wyniki 1')).toBeTruthy();
     expect(screen.getByText('Najlepsza skuteczność 88%')).toBeTruthy();
     expect(screen.getByText('Ostatni tryb Zegar')).toBeTruthy();
     expect(screen.getByText('Trenuj ponownie')).toBeTruthy();

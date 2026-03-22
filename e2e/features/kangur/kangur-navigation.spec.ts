@@ -11,12 +11,12 @@ const HOME_LESSONS_ACTION_SOURCE_ID = 'game-home-action:lessons';
 const PRIMARY_NAV_HOME_SOURCE_ID = 'kangur-primary-nav:home';
 const PRIMARY_NAV_LESSONS_SOURCE_ID = 'kangur-primary-nav:lessons';
 const LESSONS_LIST_BACK_SOURCE_ID = 'lessons:list-back';
-const HOME_ROUTE_PATH_PATTERN = /^\/(?:kangur|[a-z]{2})$/;
-const HOME_ROUTE_URL_PATTERN = /\/(?:kangur|[a-z]{2})$/;
-const HOME_HISTORY_RETURN_ROUTE_URL_PATTERN = /\/(?:kangur(?:\/game)?|[a-z]{2})$/;
+const HOME_ROUTE_PATH_PATTERN = /^\/(?:[a-z]{2}(?:\/kangur)?|kangur)$/;
+const HOME_ROUTE_URL_PATTERN = /\/(?:[a-z]{2}(?:\/kangur)?|kangur)$/;
+const HOME_HISTORY_RETURN_ROUTE_URL_PATTERN = /\/(?:[a-z]{2}(?:\/kangur(?:\/game)?)?|kangur(?:\/game)?)$/;
 const PROFILE_ROUTE_URL_PATTERN = /\/(?:kangur|[a-z]{2})\/profile$/;
-const LESSONS_ROUTE_PATH_PATTERN = /^\/(?:[a-z]{2}\/)?lessons$/;
-const LESSONS_ROUTE_URL_PATTERN = /\/(?:[a-z]{2}\/)?lessons$/;
+const LESSONS_ROUTE_PATH_PATTERN = /^\/(?:(?:[a-z]{2})\/)?(?:kangur\/)?lessons$/;
+const LESSONS_ROUTE_URL_PATTERN = /\/(?:(?:[a-z]{2})\/)?(?:kangur\/)?lessons$/;
 const LESSONS_HEADING_PATTERN = /^(?:Lekcje|Lessons)$/;
 const PAGE_BACK_BUTTON_LABEL_PATTERN = /(?:wróć do poprzedniej strony|go back to previous page)/i;
 

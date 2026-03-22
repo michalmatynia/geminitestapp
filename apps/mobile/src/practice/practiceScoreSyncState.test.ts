@@ -17,8 +17,7 @@ describe('practiceScoreSyncState', () => {
     });
     expect(buildAwaitingAuthRetryState()).toEqual({
       status: 'awaiting-auth',
-      message:
-        'Wynik zapisany lokalnie. Czekamy na odtworzenie sesji ucznia, aby dosłać go do Kangura.',
+      message: 'Wynik zapisany lokalnie. Gdy logowanie wróci, wyślemy go do Kangura.',
     });
     expect(buildSyncedState()).toEqual({
       status: 'synced',
@@ -39,18 +38,15 @@ describe('practiceScoreSyncState', () => {
   it('marks local-only as a fallback instead of a neutral state', () => {
     expect(buildLocalOnlySyncState('auth')).toEqual({
       status: 'local-only',
-      message:
-        'Wynik zapisano tylko lokalnie. Zaloguj sesję ucznia, aby wysyłać wyniki do Kangura.',
+      message: 'Wynik zapisano tylko lokalnie. Zaloguj się, aby wysyłać wyniki do Kangura.',
     });
     expect(buildLocalOnlySyncState('expected-error')).toEqual({
       status: 'local-only',
-      message:
-        'Wynik zapisano tylko lokalnie. Sesja serwera nie była gotowa do synchronizacji, więc wynik nie trafił jeszcze do Kangura.',
+      message: 'Wynik zapisano tylko lokalnie. Serwer nie był jeszcze gotowy do synchronizacji, więc wynik nie trafił jeszcze do Kangura.',
     });
     expect(buildLocalOnlySyncState('auth', 'en')).toEqual({
       status: 'local-only',
-      message:
-        'The result was saved only locally. Sign in the learner session to send results to Kangur.',
+      message: 'The result was saved only locally. Sign in to send results to Kangur.',
     });
   });
 
@@ -72,13 +68,12 @@ describe('practiceScoreSyncState', () => {
     });
     expect(buildUnexpectedSyncFailureState()).toEqual({
       status: 'sync-failed',
-      message:
-        'Wynik zapisano lokalnie, ale zapis do API Kangura nie udał się. Odśwież sesję i spróbuj ponownie.',
+      message: 'Wynik zapisano lokalnie, ale zapis do API Kangura nie udał się. Odśwież logowanie i spróbuj ponownie.',
     });
     expect(buildUnexpectedSyncFailureState('de')).toEqual({
       status: 'sync-failed',
       message:
-        'Das Ergebnis wurde lokal gespeichert, aber der Schreibvorgang in die Kangur-API ist fehlgeschlagen. Aktualisiere die Sitzung und versuche es erneut.',
+        'Das Ergebnis wurde lokal gespeichert, aber der Schreibvorgang in die Kangur-API ist fehlgeschlagen. Aktualisiere die Anmeldung und versuche es erneut.',
     });
   });
 });

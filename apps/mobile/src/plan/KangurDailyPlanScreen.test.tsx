@@ -134,7 +134,7 @@ describe('KangurDailyPlanScreen', () => {
     expect(screen.getByText('Jedno miejsce na dziś')).toBeTruthy();
     expect(
       screen.getByText(
-        'Przywracamy sesję ucznia oraz ostatni plan oparty na wynikach i postępie.',
+        'Przywracamy logowanie oraz ostatni plan oparty na wynikach i postępie.',
       ),
     ).toBeTruthy();
     expect(screen.getByText('Zadania 0')).toBeTruthy();
@@ -144,7 +144,7 @@ describe('KangurDailyPlanScreen', () => {
     expect(screen.getAllByText('Otwórz pojedynki').length).toBeGreaterThanOrEqual(1);
     expect(
       screen.getByText(
-        'Przywracamy sesję ucznia. Gdy będzie gotowa, plan pobierze wyniki i wskazówki treningowe.',
+        'Przywracamy logowanie. Gdy będzie gotowe, plan pobierze wyniki i wskazówki treningowe.',
       ),
     ).toBeTruthy();
     expect(screen.getByText('Ładujemy fokus oparty na wynikach...')).toBeTruthy();
@@ -211,14 +211,14 @@ describe('KangurDailyPlanScreen', () => {
 
     expect(
       screen.getByText(
-        'Zaloguj sesję ucznia, aby pobrać wyniki, fokus treningowy i ostatnie postępy.',
+        'Zaloguj się, aby pobrać wyniki, fokus treningowy i ostatnie postępy.',
       ),
     ).toBeTruthy();
-    expect(screen.getByText('Zaloguj sesję ucznia, aby zobaczyć tutaj wyniki.')).toBeTruthy();
+    expect(screen.getByText('Zaloguj się, aby zobaczyć tutaj wyniki.')).toBeTruthy();
     expect(screen.getByText('Szybki powrót do rywali')).toBeTruthy();
     expect(
       screen.getByText(
-        'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże.',
+        'Zaloguj się, aby zobaczyć tutaj stan w pojedynkach, ostatnich rywali i szybkie rewanże.',
       ),
     ).toBeTruthy();
   });

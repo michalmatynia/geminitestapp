@@ -26,14 +26,36 @@ const canvasContextStub = {
 };
 
 describe('GeometryDrawingGame', () => {
+  const originalGetBoundingClientRect = HTMLCanvasElement.prototype.getBoundingClientRect;
+
   beforeEach(() => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
       canvasContextStub as unknown as CanvasRenderingContext2D
     );
+    HTMLCanvasElement.prototype.getBoundingClientRect = vi.fn(() => ({
+      width: 320,
+      height: 220,
+      top: 0,
+      left: 0,
+      bottom: 220,
+      right: 320,
+      x: 0,
+      y: 0,
+      toJSON: () => {},
+    })) as unknown as typeof HTMLCanvasElement.prototype.getBoundingClientRect;
+    Object.defineProperty(HTMLCanvasElement.prototype, 'setPointerCapture', {
+      configurable: true,
+      value: vi.fn(),
+    });
+    Object.defineProperty(HTMLCanvasElement.prototype, 'releasePointerCapture', {
+      configurable: true,
+      value: vi.fn(),
+    });
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    HTMLCanvasElement.prototype.getBoundingClientRect = originalGetBoundingClientRect;
   });
 
   it('renders the difficulty switch with shared Kangur button variants', () => {
@@ -127,5 +149,56 @@ describe('GeometryDrawingGame', () => {
         translate: expect.any(Function),
       })
     );
+  });
+
+  it('lets the learner start drawing after the too-short warning', () => {
+    render(<GeometryDrawingGame onFinish={() => undefined} />);
+
+    const canvas = screen.getByTestId('geometry-drawing-canvas');
+    const board = screen.getByTestId('geometry-drawing-board');
+    const checkButton = screen.getByRole('button', { name: /sprawdź/i });
+
+    fireEvent.click(checkButton);
+
+    expect(screen.getByTestId('geometry-drawing-feedback')).toHaveTextContent(
+      'Narysuj figurę trochę dłużej, żeby można było ją ocenić.'
+    );
+
+    fireEvent.pointerDown(canvas, {
+      pointerId: 3,
+      clientX: 96,
+      clientY: 80,
+    });
+
+    expect(canvas).toHaveAttribute('data-drawing-active', 'true');
+    expect(board).toHaveClass('ring-2');
+    expect(screen.queryByTestId('geometry-drawing-feedback')).not.toBeInTheDocument();
+  });
+
+  it('clears the too-short warning when the learner wipes the board', () => {
+    render(<GeometryDrawingGame onFinish={() => undefined} />);
+
+    const canvas = screen.getByTestId('geometry-drawing-canvas');
+    const clearButton = screen.getByRole('button', { name: /wyczyść/i });
+    const checkButton = screen.getByRole('button', { name: /sprawdź/i });
+
+    fireEvent.pointerDown(canvas, {
+      pointerId: 4,
+      clientX: 90,
+      clientY: 76,
+    });
+    fireEvent.pointerUp(canvas, { pointerId: 4 });
+
+    expect(clearButton).not.toBeDisabled();
+
+    fireEvent.click(checkButton);
+
+    expect(screen.getByTestId('geometry-drawing-feedback')).toHaveTextContent(
+      'Narysuj figurę trochę dłużej, żeby można było ją ocenić.'
+    );
+
+    fireEvent.click(clearButton);
+
+    expect(screen.queryByTestId('geometry-drawing-feedback')).not.toBeInTheDocument();
   });
 });

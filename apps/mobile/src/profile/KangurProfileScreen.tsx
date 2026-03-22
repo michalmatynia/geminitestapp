@@ -1085,9 +1085,9 @@ export function KangurProfileScreen(): React.JSX.Element {
               })}
               value={`${snapshot.averageAccuracy}%`}
               description={copy({
-                de: `Beste Sitzung: ${snapshot.bestAccuracy}%`,
-                en: `Best session: ${snapshot.bestAccuracy}%`,
-                pl: `Najlepsza sesja: ${snapshot.bestAccuracy}%`,
+                de: `Bestes Ergebnis: ${snapshot.bestAccuracy}%`,
+                en: `Best result: ${snapshot.bestAccuracy}%`,
+                pl: `Najlepszy wynik: ${snapshot.bestAccuracy}%`,
               })}
             />
             <Metric
@@ -1195,8 +1195,8 @@ export function KangurProfileScreen(): React.JSX.Element {
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
                   de: 'Melde dich an, um hier Duellstand, letzte Rivalen und schnelle Rückkämpfe aus dem Profil zu sehen.',
-                  en: 'Sign in to see duel standing, recent rivals, and quick rematches from the profile here.',
-                  pl: 'Zaloguj się, aby zobaczyć tutaj wynik w pojedynkach, ostatnich rywali i szybkie rewanże z profilu.',
+                  en: 'Sign in to see duel standing, recent rivals, and quick rematches here in the profile.',
+                  pl: 'Zaloguj się, aby zobaczyć tutaj w profilu stan w pojedynkach, ostatnich rywali i szybkie rewanże.',
                 })}
               </Text>
             ) : duelProfile.isRestoringAuth || duelProfile.isLoading ? (
@@ -1485,9 +1485,9 @@ export function KangurProfileScreen(): React.JSX.Element {
             {profileLessonMastery.trackedLessons === 0 ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Es gibt keine gespeicherten Lektionsversuche. Schließe eine beliebige Lektion ab, um Stärken und Wiederholungsbereiche zu sehen.',
-                  en: 'There are no saved lesson attempts. Complete any lesson to see strengths and review areas.',
-                  pl: 'Brak zapisanych prób lekcji. Ukończ dowolną lekcję, aby zobaczyć mocne strony i obszary do powtórki.',
+                  de: 'Es gibt noch keine Lektions-Checkpoints. Schließe eine beliebige Lektion ab, um Stärken und Wiederholungsbereiche zu sehen.',
+                  en: 'There are no lesson checkpoints yet. Complete any lesson to see strengths and review areas.',
+                  pl: 'Nie ma jeszcze checkpointów lekcji. Ukończ dowolną lekcję, aby zobaczyć mocne strony i obszary do powtórki.',
                 })}
               </Text>
             ) : (
@@ -1939,9 +1939,9 @@ export function KangurProfileScreen(): React.JSX.Element {
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 <Pill
                   label={copy({
-                    de: `Sitzungen ${recentProfileSessionCount}`,
-                    en: `Sessions ${recentProfileSessionCount}`,
-                    pl: `Sesje ${recentProfileSessionCount}`,
+                    de: `Ergebnisse ${recentProfileSessionCount}`,
+                    en: `Results ${recentProfileSessionCount}`,
+                    pl: `Wyniki ${recentProfileSessionCount}`,
                   })}
                   tone={{
                     backgroundColor: '#eef2ff',

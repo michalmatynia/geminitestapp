@@ -1172,9 +1172,9 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
                         pl: 'Czeka na widoczność',
                       })
                     : copy({
-                        de: 'Lernersitzung anmelden',
-                        en: 'Sign in learner',
-                        pl: 'Zaloguj ucznia',
+                        de: 'Anmelden',
+                        en: 'Sign in',
+                        pl: 'Zaloguj się',
                       })
               }
               backgroundColor='#ecfdf5'
@@ -1543,9 +1543,9 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
           {lessonMastery.trackedLessons === 0 ? (
             <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
               {copy({
-                de: 'Es gibt noch keine gespeicherten Lektionsversuche. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
-                en: 'There are no saved lesson attempts yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.',
-                pl: 'Nie ma jeszcze zapisanych prób lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.',
+                de: 'Es gibt noch keine Lektions-Checkpoints. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
+                en: 'There are no lesson checkpoints yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.',
+                pl: 'Nie ma jeszcze checkpointów lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.',
               })}
             </Text>
           ) : (
@@ -1733,16 +1733,16 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
             </Text>
             <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
               {copy({
-                de: 'Lokale Aufgaben nach der Rangliste',
-                en: 'Local tasks after leaderboard',
-                pl: 'Lokalne zadania po rankingu',
+                de: 'Plan nach der Rangliste',
+                en: 'Post-leaderboard plan',
+                pl: 'Plan po rankingu',
               })}
             </Text>
             <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
               {copy({
-                de: 'Wandle den Blick auf die Rangliste direkt in die nächsten lokalen Schritte um, ohne den Trainingsfluss zu verlieren.',
-                en: 'Turn the leaderboard check directly into the next local actions without losing the training flow.',
-                pl: 'Zamień sprawdzenie rankingu od razu w kolejne lokalne kroki, bez gubienia rytmu treningu.',
+                de: 'Wandle den Blick auf die Rangliste direkt in die nächsten Schritte um, ohne den Trainingsfluss zu verlieren.',
+                en: 'Turn the leaderboard check directly into the next steps without losing the training flow.',
+                pl: 'Zamień sprawdzenie rankingu od razu w kolejne kroki, bez gubienia rytmu treningu.',
               })}
             </Text>
           </View>
@@ -1750,9 +1750,9 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
           {leaderboardAssignments.assignmentItems.length === 0 ? (
             <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
               {copy({
-                de: 'Es gibt noch keine lokalen Aufgaben. Öffne Lektionen oder absolviere weitere Trainings, um den nächsten Plan aufzubauen.',
-                en: 'There are no local tasks yet. Open lessons or complete more practice to build the next plan.',
-                pl: 'Nie ma jeszcze lokalnych zadań. Otwórz lekcje albo wykonaj kolejne treningi, aby zbudować następny plan.',
+                de: 'Es gibt noch keine nächsten Schritte. Öffne Lektionen oder absolviere weitere Trainings, um den nächsten Plan aufzubauen.',
+                en: 'There are no next steps yet. Open lessons or complete more practice to build the next plan.',
+                pl: 'Nie ma jeszcze kolejnych kroków. Otwórz lekcje albo wykonaj kolejne treningi, aby zbudować następny plan.',
               })}
             </Text>
           ) : (

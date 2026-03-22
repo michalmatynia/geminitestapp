@@ -200,4 +200,10 @@ describe('Duels page', () => {
       })
     );
   });
+
+  it('uses the shared Kangur main content id for accessibility contracts', () => {
+    render(<Duels />);
+
+    expect(document.getElementById('kangur-main-content')).toBeInTheDocument();
+  });
 });

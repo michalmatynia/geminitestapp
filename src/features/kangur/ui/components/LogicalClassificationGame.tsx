@@ -35,6 +35,7 @@ import {
   KANGUR_WRAP_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   addXp,
   createLessonPracticeReward,
@@ -142,19 +143,22 @@ const buildTokenClassName = ({
   isSelected,
   isDragging,
   isDisabled,
+  isCoarsePointer,
   size,
 }: {
   accent: KangurAccent;
   isSelected: boolean;
   isDragging: boolean;
   isDisabled: boolean;
+  isCoarsePointer: boolean;
   size?: ClassificationItem['size'];
 }): string => {
   const sizeClass =
     size === 'lg' ? 'text-2xl px-4 py-2' : size === 'sm' ? 'text-lg px-3 py-1.5' : 'text-xl px-3.5 py-2';
   return cn(
-    'inline-flex items-center justify-center gap-2 rounded-[18px] border font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+    'inline-flex items-center justify-center gap-2 rounded-[18px] border font-semibold transition touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
     sizeClass,
+    isCoarsePointer && 'min-h-[3.75rem] min-w-[3.75rem] active:scale-[0.98] active:shadow-sm',
     KANGUR_ACCENT_STYLES[accent].badge,
     !isDisabled && KANGUR_ACCENT_STYLES[accent].hoverCard,
     isSelected && 'ring-2 ring-teal-400/70 ring-offset-1 ring-offset-transparent',
@@ -216,6 +220,7 @@ function DraggableToken({
   className,
   showStatus,
   isCorrect,
+  isCoarsePointer,
 }: {
   item: ClassificationItem;
   index: number;
@@ -225,6 +230,7 @@ function DraggableToken({
   className?: string;
   showStatus?: boolean;
   isCorrect?: boolean;
+  isCoarsePointer: boolean;
 }): React.ReactElement | React.ReactPortal {
   return (
     <Draggable
@@ -246,6 +252,7 @@ function DraggableToken({
                 isSelected,
                 isDragging: snapshot.isDragging,
                 isDisabled: isDragDisabled,
+                isCoarsePointer,
                 size: item.size,
               }),
               showStatus &&
@@ -283,6 +290,7 @@ export default function LogicalClassificationGame({
   onFinish,
 }: KangurMiniGameFinishProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const isCoarsePointer = useKangurCoarsePointer();
   const summaryFinishLabel =
     finishLabel === 'Wróć do tematów'
       ? getKangurMiniGameFinishLabel(translations, 'topics')
@@ -301,6 +309,16 @@ export default function LogicalClassificationGame({
   const sessionStartedAtRef = useRef(Date.now());
 
   const round = LOGICAL_CLASSIFICATION_ROUNDS[roundIndex] ?? FIRST_ROUND;
+  const selectedToken = selectedTokenId
+    ? [...roundState.pool, ...Object.values(roundState.bins).flat()].find((item) => item.id === selectedTokenId) ??
+      null
+    : null;
+  const sortTouchHint =
+    round.type === 'sort'
+      ? selectedToken
+        ? translations('logicalClassification.touch.selected', { label: selectedToken.label })
+        : translations('logicalClassification.touch.idle')
+      : null;
 
   const expectedByBin = useMemo(() => {
     if (!isSortRound(round)) return {};
@@ -590,6 +608,15 @@ export default function LogicalClassificationGame({
               padding='md'
               tone='neutral'
             >
+              {isCoarsePointer ? (
+                <div
+                  className='mb-3 rounded-2xl border border-teal-200/80 bg-teal-50/80 px-4 py-3 text-sm font-semibold text-teal-950 shadow-sm'
+                  data-testid='logical-classification-touch-hint'
+                  aria-live='polite'
+                >
+                  {sortTouchHint}
+                </div>
+              ) : null}
               <p className='text-xs font-semibold text-teal-700 mb-2 text-center'>
                 Elementy do posortowania
               </p>
@@ -599,9 +626,11 @@ export default function LogicalClassificationGame({
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                     className={cn(
-                      'flex flex-wrap items-center justify-center gap-2 rounded-[18px] border border-dashed border-teal-300/70 p-3 min-h-[64px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
-                      snapshot.isDraggingOver && 'bg-teal-50'
+                      'flex flex-wrap items-center justify-center gap-2 rounded-[18px] border border-dashed border-teal-300/70 p-3 min-h-[64px] touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+                      snapshot.isDraggingOver && 'bg-teal-50',
+                      isCoarsePointer && selectedTokenId && 'ring-2 ring-teal-300/70 ring-offset-2 ring-offset-white'
                     )}
+                    data-testid='logical-classification-pool-zone'
                     onClick={handleReturnToPool}
                     role='button'
                     tabIndex={checked ? -1 : 0}
@@ -621,6 +650,7 @@ export default function LogicalClassificationGame({
                         index={index}
                         isDragDisabled={checked}
                         isSelected={selectedTokenId === item.id}
+                        isCoarsePointer={isCoarsePointer}
                         onClick={() =>
                           setSelectedTokenId((current) => (current === item.id ? null : item.id))
                         }
@@ -652,6 +682,7 @@ export default function LogicalClassificationGame({
                           ref={provided.innerRef}
                           {...provided.droppableProps}
                           className={surface.className}
+                          data-testid={`logical-classification-bin-${bin.id}`}
                           onClick={() => handleAssignToken(bin.id)}
                           role='button'
                           tabIndex={checked ? -1 : 0}
@@ -683,6 +714,7 @@ export default function LogicalClassificationGame({
                                 index={index}
                                 isDragDisabled={checked}
                                 isSelected={selectedTokenId === item.id}
+                                isCoarsePointer={isCoarsePointer}
                                 onClick={() =>
                                   setSelectedTokenId((current) =>
                                     current === item.id ? null : item.id
@@ -725,7 +757,8 @@ export default function LogicalClassificationGame({
                     onClick={() => handleIntruderSelect(item.id)}
                     disabled={checked}
                     className={cn(
-                      'flex flex-col items-center justify-center gap-2 rounded-[18px] border px-3 py-3 text-lg font-semibold transition',
+                      'flex flex-col items-center justify-center gap-2 rounded-[18px] border px-3 py-3 text-lg font-semibold transition touch-manipulation select-none',
+                      isCoarsePointer && 'min-h-[5rem] active:scale-[0.98] active:shadow-sm',
                       KANGUR_ACCENT_STYLES[item.accent].badge,
                       !checked && KANGUR_ACCENT_STYLES[item.accent].hoverCard,
                       isSelected && 'ring-2 ring-teal-400/70 ring-offset-1 ring-offset-transparent',

@@ -3,6 +3,7 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import * as React from 'react';
 
+import { RadixOverlayContentShell } from '@/shared/ui/radix-overlay-content-shell';
 import { cn } from '@/shared/utils';
 
 const Dialog = DialogPrimitive.Root;
@@ -35,16 +36,20 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content
-      className={cn(dialogContentClasses, className)}
-      {...props}
-      ref={ref}
-    >
-      {children}
-    </DialogPrimitive.Content>
-  </DialogPortal>
+  <RadixOverlayContentShell
+    Portal={DialogPortal}
+    Overlay={DialogPrimitive.Overlay}
+    Content={DialogPrimitive.Content}
+    overlayBaseClassName={dialogOverlayClasses}
+    contentBaseClassName={dialogContentClasses}
+    contentRef={ref}
+    contentProps={{
+      ...props,
+      className,
+    }}
+  >
+    {children}
+  </RadixOverlayContentShell>
 ));
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 

@@ -7,6 +7,8 @@ import {
 } from '@/shared/contracts/products/catalogs';
 import {
   type ProductCategory,
+  type ProductCategoryCreateInput,
+  type ProductCategoryUpdateInput,
   type ProductCategoryWithChildren,
   type ReorderProductCategory as ReorderCategoryPayload,
 } from '@/shared/contracts/products/categories';
@@ -68,6 +70,41 @@ const STABLE_SETTINGS_QUERY_OPTIONS = {
   refetchOnMount: false as const,
   refetchOnWindowFocus: false as const,
   refetchOnReconnect: false as const,
+};
+
+const toCategoryUpdatePayload = (
+  data: Partial<ProductCategory>
+): ProductCategoryUpdateInput => {
+  const payload: ProductCategoryUpdateInput = {};
+
+  if (data.name !== undefined) payload.name = data.name;
+  if (data.description !== undefined) payload.description = data.description;
+  if (data.color !== undefined) payload.color = data.color;
+  if (data.parentId !== undefined) payload.parentId = data.parentId;
+  if (data.catalogId !== undefined) payload.catalogId = data.catalogId;
+  if (data.sortIndex !== undefined && data.sortIndex !== null) payload.sortIndex = data.sortIndex;
+
+  return payload;
+};
+
+const toCategoryCreatePayload = (
+  data: Partial<ProductCategory>
+): ProductCategoryCreateInput => {
+  const name = data.name?.trim();
+  const catalogId = data.catalogId?.trim();
+
+  if (!name) {
+    throw new Error('Category name is required');
+  }
+  if (!catalogId) {
+    throw new Error('Category catalogId is required');
+  }
+
+  return {
+    ...toCategoryUpdatePayload(data),
+    name,
+    catalogId,
+  };
 };
 
 export function usePriceGroups(): ListQuery<PriceGroup> {
@@ -281,7 +318,9 @@ export function useSaveCategoryMutation(): SaveMutation<
   const mutationKey = productSettingsKeys.all;
   return createMutationV2({
     mutationFn: ({ id, data }: { id: string | undefined; data: Partial<ProductCategory> }) =>
-      id ? api.updateCategory(id, data) : api.createCategory(data),
+      id
+        ? api.updateCategory(id, toCategoryUpdatePayload(data))
+        : api.createCategory(toCategoryCreatePayload(data)),
     mutationKey,
     meta: {
       source: 'products.hooks.useSaveCategoryMutation',

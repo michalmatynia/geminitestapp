@@ -4,6 +4,7 @@ import React from 'react';
 
 import type { ModalStateProps } from '@/shared/contracts/ui';
 import { AppModal } from '@/shared/ui/app-modal';
+import { cn } from '@/shared/utils';
 
 export interface DetailModalProps extends ModalStateProps {
   title: React.ReactNode;
@@ -50,70 +51,27 @@ export function DetailModal({
   closeOnEscape,
   onInteractOutside,
   onEscapeKeyDown,
-}: DetailModalProps) {
-  const appModalRuntime = React.useMemo(
-    () => ({
-      open: isOpen,
-      onOpenChange: onClose,
-      onClose,
-      title,
-      subtitle,
-      header,
-      headerActions,
-      size,
-      padding,
-      footer,
-      className,
-      contentClassName,
-      showClose,
-      closeOnOutside,
-      closeOnEscape,
-      onInteractOutside,
-      onEscapeKeyDown,
-      bodyClassName: `${maxHeight} overflow-y-auto ${bodyClassName ?? ''}`.trim(),
-    }),
-    [
-      isOpen,
-      onClose,
-      title,
-      subtitle,
-      header,
-      headerActions,
-      size,
-      padding,
-      footer,
-      className,
-      contentClassName,
-      showClose,
-      closeOnOutside,
-      closeOnEscape,
-      onInteractOutside,
-      onEscapeKeyDown,
-      maxHeight,
-      bodyClassName,
-    ]
-  );
-
+}: DetailModalProps): React.JSX.Element {
   return (
     <AppModal
-      open={appModalRuntime.open}
-      onOpenChange={appModalRuntime.onOpenChange}
-      onClose={appModalRuntime.onClose}
-      title={appModalRuntime.title}
-      subtitle={appModalRuntime.subtitle}
-      header={appModalRuntime.header}
-      headerActions={appModalRuntime.headerActions}
-      size={appModalRuntime.size}
-      padding={appModalRuntime.padding}
-      footer={appModalRuntime.footer}
-      className={appModalRuntime.className}
-      contentClassName={appModalRuntime.contentClassName}
-      showClose={appModalRuntime.showClose}
-      closeOnOutside={appModalRuntime.closeOnOutside}
-      closeOnEscape={appModalRuntime.closeOnEscape}
-      onInteractOutside={appModalRuntime.onInteractOutside}
-      onEscapeKeyDown={appModalRuntime.onEscapeKeyDown}
-      bodyClassName={appModalRuntime.bodyClassName}
+      open={isOpen}
+      onOpenChange={onClose}
+      onClose={onClose}
+      title={title}
+      subtitle={subtitle}
+      header={header}
+      headerActions={headerActions}
+      size={size}
+      padding={padding}
+      footer={footer}
+      className={className}
+      contentClassName={contentClassName}
+      bodyClassName={cn(maxHeight, 'overflow-y-auto', bodyClassName)}
+      showClose={showClose}
+      closeOnOutside={closeOnOutside}
+      closeOnEscape={closeOnEscape}
+      onInteractOutside={onInteractOutside}
+      onEscapeKeyDown={onEscapeKeyDown}
     >
       {children}
     </AppModal>

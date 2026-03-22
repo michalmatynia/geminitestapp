@@ -16,6 +16,7 @@ import {
   KANGUR_STACK_SPACED_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { cn } from '@/features/kangur/shared/utils';
 
 type HierarchyItem = {
@@ -30,6 +31,7 @@ type AgenticDocsHierarchyGameProps = {
   accent?: KangurAccent;
   prompt?: string;
   helperText?: string;
+  touchSelectedTemplate?: string;
 };
 
 const dragPortal = typeof document === 'undefined' ? null : document.body;
@@ -50,7 +52,9 @@ export default function AgenticDocsHierarchyGame({
   accent = 'emerald',
   prompt = 'Ułóż hierarchię trosk w dokumentacji.',
   helperText = 'Najważniejsze u góry, najbardziej operacyjne na dole.',
+  touchSelectedTemplate = 'Wybrana karta: {title}. Dotknij innej pozycji, aby przenieść kartę.',
 }: AgenticDocsHierarchyGameProps): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const droppableId = useId().replace(/[:]/g, '');
   const resolvedOrder = useMemo(
     () => (correctOrder.length === items.length ? correctOrder : items.map((item) => item.id)),
@@ -59,11 +63,13 @@ export default function AgenticDocsHierarchyGame({
   const [order, setOrder] = useState<HierarchyItem[]>(() => shuffle(items));
   const [checked, setChecked] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   useEffect(() => {
     setOrder(shuffle(items));
     setChecked(false);
     setAttempts(0);
+    setSelectedItemId(null);
   }, [items]);
 
   const correctCount = useMemo(
@@ -77,6 +83,7 @@ export default function AgenticDocsHierarchyGame({
       if (!result.destination) return;
       const next = reorder(order, result.source.index, result.destination.index);
       setOrder(next);
+      setSelectedItemId(null);
       if (checked) {
         setChecked(false);
       }
@@ -92,7 +99,22 @@ export default function AgenticDocsHierarchyGame({
   const handleReset = (): void => {
     setOrder(shuffle(items));
     setChecked(false);
+    setSelectedItemId(null);
   };
+
+  const moveSelectedToIndex = (targetIndex: number): void => {
+    if (checked || !selectedItemId) return;
+    setOrder((prev) => {
+      const currentIndex = prev.findIndex((item) => item.id === selectedItemId);
+      if (currentIndex < 0 || currentIndex === targetIndex) return prev;
+      return reorder(prev, currentIndex, targetIndex);
+    });
+    setSelectedItemId(null);
+  };
+
+  const selectedItem = selectedItemId
+    ? order.find((item) => item.id === selectedItemId) ?? null
+    : null;
 
   const statusLabel = checked
     ? isComplete
@@ -109,18 +131,34 @@ export default function AgenticDocsHierarchyGame({
         </KangurStatusChip>
       </div>
       <KangurLessonCaption className='mt-2 text-left'>{helperText}</KangurLessonCaption>
+      {isCoarsePointer || selectedItem ? (
+        <KangurLessonCaption
+          className='mt-2 text-left font-semibold text-emerald-700'
+          data-testid='agentic-docs-hierarchy-touch-hint'
+          role='status'
+          aria-live='polite'
+          aria-atomic='true'
+        >
+          {selectedItem
+            ? touchSelectedTemplate.replaceAll('{title}', selectedItem.title)
+            : helperText}
+        </KangurLessonCaption>
+      ) : null}
       <KangurDragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId={`docs-hierarchy-${droppableId}`}>
           {(droppableProvided, snapshot) => (
             <div
               ref={droppableProvided.innerRef}
               {...droppableProvided.droppableProps}
+              data-testid='agentic-docs-hierarchy-list'
               className={cn(
                 KANGUR_STACK_SPACED_CLASSNAME,
-                'mt-3 rounded-[20px] border border-dashed px-3 py-3 transition',
+                'mt-3 rounded-[20px] border border-dashed px-3 py-3 transition touch-manipulation',
                 snapshot.isDraggingOver
                   ? 'border-emerald-300 bg-emerald-50/60'
-                  : 'border-slate-200'
+                  : selectedItemId && !checked && isCoarsePointer
+                    ? 'border-emerald-200 bg-emerald-50/35'
+                    : 'border-slate-200'
               )}
             >
               {order.map((item, index) => (
@@ -141,14 +179,31 @@ export default function AgenticDocsHierarchyGame({
                         {...provided.dragHandleProps}
                         type='button'
                         className={cn(
-                          'flex w-full items-start gap-3 rounded-[18px] border px-3 py-2 text-left shadow-[0_12px_24px_-20px_rgba(15,23,42,0.35)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+                          'flex w-full items-start gap-3 rounded-[18px] border text-left shadow-[0_12px_24px_-20px_rgba(15,23,42,0.35)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white touch-manipulation',
+                          isCoarsePointer ? 'min-h-[5rem] px-4 py-3' : 'px-3 py-2',
                           KANGUR_ACCENT_STYLES[accent].hoverCard,
                           isCorrect && 'border-emerald-200 bg-emerald-50',
                           isIncorrect && 'border-rose-200 bg-rose-50',
                           !checked && 'border-slate-200 bg-white/80',
-                          snapshot.isDragging && 'scale-[1.01] shadow-[0_18px_32px_-20px_rgba(5,150,105,0.35)]'
+                          snapshot.isDragging && 'scale-[1.01] shadow-[0_18px_32px_-20px_rgba(5,150,105,0.35)]',
+                          selectedItemId === item.id &&
+                            !snapshot.isDragging &&
+                            'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white'
                         )}
+                        data-testid={`agentic-docs-hierarchy-item-${item.id}`}
                         aria-label={`Pozycja ${index + 1}: ${item.title}`}
+                        aria-pressed={selectedItemId === item.id}
+                        disabled={isComplete}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          if (isComplete) return;
+                          if (isCoarsePointer && selectedItemId && selectedItemId !== item.id) {
+                            moveSelectedToIndex(index);
+                            return;
+                          }
+                          setSelectedItemId((current) => (current === item.id ? null : item.id));
+                        }}
                       >
                         <span
                           className={cn(

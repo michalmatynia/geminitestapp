@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import {
   KANGUR_BASE_PATH,
@@ -47,6 +47,17 @@ const getManagedPathnameFromHref = (href: string): string | null => {
   );
 };
 
+let queuedManagedNavigationTimeoutId: number | null = null;
+
+const clearQueuedManagedNavigation = (): void => {
+  if (queuedManagedNavigationTimeoutId === null || typeof window === 'undefined') {
+    return;
+  }
+
+  window.clearTimeout(queuedManagedNavigationTimeoutId);
+  queuedManagedNavigationTimeoutId = null;
+};
+
 export function useKangurRouteNavigator(): {
   back: (options?: KangurBackNavigationOptions) => void;
   prefetch: (href: string) => void;
@@ -60,7 +71,6 @@ export function useKangurRouteNavigator(): {
   const routing = useOptionalKangurRouting();
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
   const requestedHref = routing?.requestedHref ?? routing?.requestedPath;
-  const queuedNavigationTimeoutRef = useRef<number | null>(null);
 
   const startManagedTransition = useCallback(
     (
@@ -142,19 +152,8 @@ export function useKangurRouteNavigator(): {
   );
 
   const clearQueuedNavigation = useCallback((): void => {
-    if (queuedNavigationTimeoutRef.current === null || typeof window === 'undefined') {
-      return;
-    }
-
-    window.clearTimeout(queuedNavigationTimeoutRef.current);
-    queuedNavigationTimeoutRef.current = null;
+    clearQueuedManagedNavigation();
   }, []);
-
-  useEffect(() => {
-    return () => {
-      clearQueuedNavigation();
-    };
-  }, [clearQueuedNavigation]);
 
   const scheduleManagedNavigation = useCallback(
     (acknowledgeMs: number, navigate: () => void): boolean => {
@@ -163,8 +162,8 @@ export function useKangurRouteNavigator(): {
       }
 
       clearQueuedNavigation();
-      queuedNavigationTimeoutRef.current = window.setTimeout(() => {
-        queuedNavigationTimeoutRef.current = null;
+      queuedManagedNavigationTimeoutId = window.setTimeout(() => {
+        queuedManagedNavigationTimeoutId = null;
         navigate();
       }, acknowledgeMs);
 

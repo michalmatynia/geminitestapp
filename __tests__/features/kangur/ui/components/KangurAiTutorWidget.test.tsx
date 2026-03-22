@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { useLayoutEffect, useRef } from 'react';
+import { createContext, useLayoutEffect, useRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
@@ -175,11 +175,26 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreMock,
 }));
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
+  KangurAiTutorActivationContext: createContext(null),
   useKangurAiTutor: useKangurAiTutorMock,
   useOptionalKangurAiTutor: useKangurAiTutorMock,
 }));
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
   useKangurAiTutorContent: () => DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+  useActivateKangurAiTutorContent: () => {},
+}));
+vi.mock('@/features/kangur/ui/context/KangurAiTutorRuntime.hook', () => ({
+  useKangurAiTutorRuntime: () => ({
+    value: useKangurAiTutorMock(),
+    sessionRegistryValue: {},
+  }),
+}));
+vi.mock('@/shared/hooks/useAgentPersonaVisuals', () => ({
+  useAgentPersonaVisuals: () => ({
+    data: [],
+    isLoading: false,
+    error: null,
+  }),
 }));
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: useOptionalKangurAuthMock,
@@ -2249,7 +2264,9 @@ describe('KangurAiTutorWidget', () => {
       'data-guidance-motion',
       'gentle'
     );
-    const createAccountTexts = screen.getAllByText('U góry kliknij „Utwórz konto”.');
+    const createAccountTexts = screen.getAllByText(
+      'U góry kliknij „Utwórz konto”, aby otworzyć logowanie.'
+    );
     const visibleCreateAccountText = createAccountTexts.find((el) => {
       try {
         expect(el).toBeVisible();

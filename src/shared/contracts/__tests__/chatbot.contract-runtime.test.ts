@@ -1,16 +1,25 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  chatbotAgentRunActionRouteParamsSchema,
   chatbotJobActionRequestSchema,
   chatbotJobDeleteQuerySchema,
   chatbotJobResponseSchema,
   chatbotJobsDeleteQuerySchema,
+  chatbotJsonRequestSchema,
+  chatbotMemoryQuerySchema,
+  chatbotSessionMessageCreateRequestSchema,
+  chatbotSessionMessageResponseSchema,
+  chatbotSessionMessagesResponseSchema,
+  chatbotSessionsDeleteBodySchema,
   chatbotContextUploadResponseSchema,
   chatbotMemoryResponseSchema,
+  chatbotSettingsQuerySchema,
   chatbotSessionCreateResponseSchema,
   chatbotSessionDeleteResponseSchema,
   chatbotSessionIdsResponseSchema,
   chatbotSessionResponseSchema,
+  chatbotSettingsSaveRequestSchema,
   chatbotSessionsResponseSchema,
   chatbotSettingsResponseSchema,
   chatbotSettingsSaveResponseSchema,
@@ -150,5 +159,102 @@ describe('chatbot contract runtime', () => {
     expect(chatbotJobsDeleteQuerySchema.parse({ scope: 'terminal' }).scope).toBe('terminal');
     expect(chatbotJobDeleteQuerySchema.parse({ force: 'true' }).force).toBe(true);
     expect(chatbotJobActionRequestSchema.parse({ action: 'cancel' }).action).toBe('cancel');
+  });
+
+  it('parses chatbot settings and memory request/query DTOs', () => {
+    expect(chatbotSettingsQuerySchema.parse({ key: 'default' }).key).toBe('default');
+    expect(
+      chatbotSettingsSaveRequestSchema.parse({
+        key: 'default',
+        settings: { model: 'gpt-4o-mini' },
+      }).settings
+    ).toEqual({ model: 'gpt-4o-mini' });
+    expect(
+      chatbotMemoryQuerySchema.parse({
+        memoryKey: 'summary',
+        tag: 'important',
+        q: 'deploy',
+        limit: '25',
+      })
+    ).toMatchObject({
+      memoryKey: 'summary',
+      tag: 'important',
+      q: 'deploy',
+      limit: 25,
+    });
+  });
+
+  it('parses chatbot session message and delete-body DTOs', () => {
+    expect(
+      chatbotSessionMessageCreateRequestSchema.parse({
+        role: 'user',
+        content: ' Hello ',
+      })
+    ).toMatchObject({
+      role: 'user',
+      content: 'Hello',
+    });
+
+    expect(
+      chatbotSessionMessagesResponseSchema.parse({
+        messages: [
+          {
+            id: 'message-1',
+            sessionId: 'session-1',
+            role: 'user',
+            content: 'Hello',
+            timestamp: '2026-03-22T10:00:00.000Z',
+          },
+        ],
+      }).messages
+    ).toHaveLength(1);
+
+    expect(
+      chatbotSessionMessageResponseSchema.parse({
+        message: {
+          id: 'message-1',
+          sessionId: 'session-1',
+          role: 'assistant',
+          content: 'Hi',
+          timestamp: '2026-03-22T10:01:00.000Z',
+        },
+      }).message.role
+    ).toBe('assistant');
+
+    expect(chatbotSessionsDeleteBodySchema.parse({ sessionId: 'session-1' })).toEqual({
+      sessionId: 'session-1',
+    });
+    expect(chatbotSessionsDeleteBodySchema.parse({ sessionIds: ['session-1', 'session-2'] })).toEqual({
+      sessionIds: ['session-1', 'session-2'],
+    });
+  });
+
+  it('parses chatbot JSON chat requests and agent action route params', () => {
+    expect(
+      chatbotJsonRequestSchema.parse({
+        sessionId: 'session-1',
+        messages: [
+          {
+            role: 'user',
+            content: 'Hello',
+          },
+        ],
+        extra: 'allowed',
+      })
+    ).toMatchObject({
+      sessionId: 'session-1',
+      messages: [{ role: 'user', content: 'Hello' }],
+      extra: 'allowed',
+    });
+
+    expect(
+      chatbotAgentRunActionRouteParamsSchema.parse({
+        runId: 'run-1',
+        action: 'logs',
+      })
+    ).toEqual({
+      runId: 'run-1',
+      action: 'logs',
+    });
   });
 });

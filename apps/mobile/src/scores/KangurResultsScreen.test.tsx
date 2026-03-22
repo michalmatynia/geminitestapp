@@ -360,22 +360,35 @@ describe('KangurResultsScreen', () => {
     expect(screen.getByText('Leo Mentor')).toBeTruthy();
     expect(screen.getByText('Szybki rewanż')).toBeTruthy();
     expect(screen.getByText('Następne kroki')).toBeTruthy();
-    expect(screen.getByText('Lokalne zadania po wynikach')).toBeTruthy();
+    expect(screen.getByText('Plan po wynikach')).toBeTruthy();
     expect(screen.getByText('Domknij zegar')).toBeTruthy();
     expect(screen.getByText('Priorytet wysoki')).toBeTruthy();
     expect(screen.getByText('Cel: Powtorka zegara')).toBeTruthy();
     expect(screen.getAllByText('Otwórz lekcję').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Opanowanie lekcji')).toBeTruthy();
+    expect(screen.getByText('Plan lekcji po wynikach')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Fokus po wynikach: Dodawanie potrzebuje jeszcze szybkiej powtórki, zanim znowu wejdziesz w tempo.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText('Skup się: Dodawanie')).toBeTruthy();
+    expect(screen.getByText('Podtrzymaj: Zegar')).toBeTruthy();
     expect(screen.getByText('Śledzone 3')).toBeTruthy();
     expect(screen.getAllByText('Do powtórki').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Najmocniejsza lekcja')).toBeTruthy();
     expect(screen.getByText('Odznaki')).toBeTruthy();
+    expect(screen.getByText('Centrum odznak')).toBeTruthy();
     expect(screen.getByText('Odblokowane 2/9')).toBeTruthy();
     expect(screen.getByText('Do zdobycia 7')).toBeTruthy();
     expect(screen.getByText('Ostatnio odblokowane')).toBeTruthy();
     expect(screen.getByText('🕐 Mistrz zegara')).toBeTruthy();
     expect(screen.getByText('📚 Bohater lekcji')).toBeTruthy();
     expect(screen.getByText('Otwórz profil i odznaki')).toBeTruthy();
+    expect(screen.getByText('Szybki powrót do rywali')).toBeTruthy();
+    expect(screen.getByText('Rywale 1')).toBeTruthy();
+    expect(screen.getByText('Twoja pozycja #2')).toBeTruthy();
+    expect(screen.getByText('Odśwież pojedynki')).toBeTruthy();
     expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
     expect(screen.getByText('Ostatni wynik 70% • opanowanie 68%')).toBeTruthy();
     expect(screen.getByText('Wróć do lekcji: Dodawanie')).toBeTruthy();

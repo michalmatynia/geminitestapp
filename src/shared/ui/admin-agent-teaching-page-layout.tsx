@@ -1,6 +1,7 @@
-import { AdminAgentTeachingBreadcrumbs } from './admin-agent-teaching-breadcrumbs';
-import { createAdminPageLayout } from './create-admin-page-layout';
+import { ADMIN_AGENT_TEACHING_SECTION } from './admin-section-configs';
+import { createAdminSectionPageLayout } from './create-admin-page-layout';
 
-export const AdminAgentTeachingPageLayout = createAdminPageLayout({
-  Breadcrumbs: AdminAgentTeachingBreadcrumbs,
+export const AdminAgentTeachingPageLayout = createAdminSectionPageLayout({
+  section: ADMIN_AGENT_TEACHING_SECTION,
+  displayName: 'AdminAgentTeachingPageLayout',
 });

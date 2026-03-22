@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
+import { portablePathTrendSnapshotsQuerySchema } from '@/shared/contracts/ai-paths-portable-engine';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION } from '@/shared/lib/ai-paths/portable-engine';
@@ -27,7 +27,6 @@ import {
   resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment,
 } from '@/shared/lib/ai-paths/portable-engine/server';
-import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
@@ -42,13 +41,7 @@ const DEFAULT_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES = 200;
 const DEAD_LETTER_ERROR_BREAKDOWN_LIMIT = 5;
 const RUN_EXECUTION_RECENT_FAILURE_LIMIT = 10;
 
-export const querySchema = z.object({
-  limit: optionalTrimmedQueryString(),
-  trigger: optionalTrimmedQueryString(),
-  from: optionalTrimmedQueryString(),
-  to: optionalTrimmedQueryString(),
-  cursor: optionalTrimmedQueryString(),
-});
+export const querySchema = portablePathTrendSnapshotsQuerySchema;
 
 const resolveTrendSnapshotsQueryInput = (
   req: Request,

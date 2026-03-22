@@ -364,6 +364,9 @@ const LOGICAL_THINKING_LESSON_COPY_PL = {
           selectTokenAriaTemplate: 'Wybierz symbol {token}',
           selectedTemplate: 'Wybrany kafelek: {token}',
           idle: 'Wybierz kafelek, aby przenieść go klawiaturą.',
+          touchIdle: 'Dotknij kafelek, a potem dotknij Pole 1, Pole 2 albo pulę.',
+          touchSelectedTemplate:
+            'Wybrany kafelek: {token}. Dotknij Pole 1, Pole 2 albo pulę.',
           moveToFirst: 'Do pola 1',
           moveToSecond: 'Do pola 2',
           moveToPool: 'Do puli',
@@ -377,6 +380,10 @@ const LOGICAL_THINKING_LESSON_COPY_PL = {
           selectItemAriaTemplate: 'Wybierz obrazek {item}',
           selectedTemplate: 'Wybrany obrazek: {item}',
           idle: 'Wybierz obrazek, aby przenieść go klawiaturą.',
+          touchIdle:
+            'Dotknij obrazek, a potem dotknij strefę „ma skrzydła”, „nie ma skrzydeł” albo pulę.',
+          touchSelectedTemplate:
+            'Wybrany obrazek: {item}. Dotknij strefę „ma skrzydła”, „nie ma skrzydeł” albo pulę.',
           moveToYes: 'Do „ma skrzydła”',
           moveToNo: 'Do „nie ma skrzydeł”',
           moveToPool: 'Do puli',
@@ -536,6 +543,8 @@ const buildLabGameCopy = (copy: LogicalThinkingLessonCopy): LogicalThinkingLabGa
     selectTokenAriaTemplate: copy.games.lab.ui.pattern.selectTokenAriaTemplate,
     selectedTemplate: copy.games.lab.ui.pattern.selectedTemplate,
     idle: copy.games.lab.ui.pattern.idle,
+    touchIdle: copy.games.lab.ui.pattern.touchIdle,
+    touchSelectedTemplate: copy.games.lab.ui.pattern.touchSelectedTemplate,
     moveToFirst: copy.games.lab.ui.pattern.moveToFirst,
     moveToSecond: copy.games.lab.ui.pattern.moveToSecond,
     moveToPool: copy.games.lab.ui.pattern.moveToPool,
@@ -549,6 +558,8 @@ const buildLabGameCopy = (copy: LogicalThinkingLessonCopy): LogicalThinkingLabGa
     selectItemAriaTemplate: copy.games.lab.ui.classify.selectItemAriaTemplate,
     selectedTemplate: copy.games.lab.ui.classify.selectedTemplate,
     idle: copy.games.lab.ui.classify.idle,
+    touchIdle: copy.games.lab.ui.classify.touchIdle,
+    touchSelectedTemplate: copy.games.lab.ui.classify.touchSelectedTemplate,
     moveToYes: copy.games.lab.ui.classify.moveToYes,
     moveToNo: copy.games.lab.ui.classify.moveToNo,
     moveToPool: copy.games.lab.ui.classify.moveToPool,

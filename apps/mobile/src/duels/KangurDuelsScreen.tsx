@@ -1452,6 +1452,41 @@ function formatSpectatorQuestionProgress(
       : `Runda ${currentQuestion}/${session.questionCount}`;
 }
 
+function resolveRoundProgress(
+  session: KangurDuelSession,
+  player: KangurDuelPlayer | null,
+  isSpectating: boolean,
+): { current: number; percent: number; total: number } {
+  const total = Math.max(session.questionCount, 1);
+  const current =
+    session.status === 'completed' || session.status === 'aborted'
+      ? total
+      : session.status === 'in_progress'
+        ? isSpectating
+          ? Math.min((session.currentQuestionIndex ?? 0) + 1, total)
+          : Math.min((player?.currentQuestionIndex ?? 0) + 1, total)
+        : isSpectating
+          ? Math.min(session.currentQuestionIndex ?? 0, total)
+          : Math.min(player?.currentQuestionIndex ?? 0, total);
+
+  return {
+    current,
+    percent: Math.max(0, Math.min(100, Math.round((current / total) * 100))),
+    total,
+  };
+}
+
+function formatRoundProgressLabel(
+  progress: { current: number; percent: number; total: number },
+  locale: KangurMobileLocale,
+): string {
+  return locale === 'de'
+    ? `Rundenfortschritt ${progress.current}/${progress.total}`
+    : locale === 'en'
+      ? `Round progress ${progress.current}/${progress.total}`
+      : `Postęp rundy ${progress.current}/${progress.total}`;
+}
+
 function resolveWinnerSummary(
   players: KangurDuelPlayer[],
   locale: KangurMobileLocale,
@@ -1815,9 +1850,63 @@ export function KangurDuelsScreen(): React.JSX.Element {
         en: 'Auto refresh (Off)',
         pl: 'Auto odświeżanie (Wyłączone)',
       });
+  const trimmedSearchQuery = lobby.searchQuery.trim();
+  const trimmedSearchSubmittedQuery = lobby.searchSubmittedQuery.trim();
+  const searchStatusTone: Tone = lobby.isSearchLoading
+    ? {
+        backgroundColor: '#fffbeb',
+        borderColor: '#fde68a',
+        textColor: '#b45309',
+      }
+    : trimmedSearchSubmittedQuery.length >= 2 || trimmedSearchQuery.length >= 2
+      ? {
+          backgroundColor: '#eff6ff',
+          borderColor: '#bfdbfe',
+          textColor: '#1d4ed8',
+        }
+      : {
+          backgroundColor: '#f8fafc',
+          borderColor: '#cbd5e1',
+          textColor: '#475569',
+        };
+  const searchStatusLabel = lobby.isSearchLoading
+    ? copy({
+        de: 'Suche läuft',
+        en: 'Searching',
+        pl: 'Trwa wyszukiwanie',
+      })
+    : trimmedSearchSubmittedQuery.length >= 2
+      ? copy({
+          de: `Suche: ${trimmedSearchSubmittedQuery}`,
+          en: `Search: ${trimmedSearchSubmittedQuery}`,
+          pl: `Szukano: ${trimmedSearchSubmittedQuery}`,
+        })
+      : trimmedSearchQuery.length >= 2
+        ? copy({
+            de: `Bereit: ${trimmedSearchQuery}`,
+            en: `Ready: ${trimmedSearchQuery}`,
+            pl: `Gotowe: ${trimmedSearchQuery}`,
+          })
+        : lobby.isAuthenticated
+          ? copy({
+              de: 'Mindestens 2 Zeichen',
+              en: 'At least 2 characters',
+              pl: 'Co najmniej 2 znaki',
+            })
+          : copy({
+              de: 'Anmeldung erforderlich',
+              en: 'Sign-in required',
+              pl: 'Wymaga logowania',
+            });
   const hasWaitingSession = duel.session
     ? isWaitingSessionStatus(duel.session.status)
     : false;
+  const isFinishedSession = duel.session
+    ? duel.session.status === 'completed' || duel.session.status === 'aborted'
+    : false;
+  const roundProgress = duel.session
+    ? resolveRoundProgress(duel.session, duel.player, duel.isSpectating)
+    : null;
   const activePlayersCount =
     duel.session?.players.filter((player) => player.status !== 'left').length ?? 0;
   const hasPendingInvitedPlayer =
@@ -1847,6 +1936,34 @@ export function KangurDuelsScreen(): React.JSX.Element {
       en: 'the other player',
       pl: 'drugiej osoby',
     });
+  const sessionTimelineItems = duel.session
+    ? [
+        copy({
+          de: `Erstellt ${formatKangurMobileScoreDateTime(duel.session.createdAt, locale)}`,
+          en: `Created ${formatKangurMobileScoreDateTime(duel.session.createdAt, locale)}`,
+          pl: `Utworzono ${formatKangurMobileScoreDateTime(duel.session.createdAt, locale)}`,
+        }),
+        duel.session.startedAt
+          ? copy({
+              de: `Gestartet ${formatKangurMobileScoreDateTime(duel.session.startedAt, locale)}`,
+              en: `Started ${formatKangurMobileScoreDateTime(duel.session.startedAt, locale)}`,
+              pl: `Rozpoczęto ${formatKangurMobileScoreDateTime(duel.session.startedAt, locale)}`,
+            })
+          : null,
+        copy({
+          de: `Zuletzt aktualisiert ${formatKangurMobileScoreDateTime(duel.session.updatedAt, locale)}`,
+          en: `Last updated ${formatKangurMobileScoreDateTime(duel.session.updatedAt, locale)}`,
+          pl: `Ostatnia aktualizacja ${formatKangurMobileScoreDateTime(duel.session.updatedAt, locale)}`,
+        }),
+        duel.session.endedAt
+          ? copy({
+              de: `Beendet ${formatKangurMobileScoreDateTime(duel.session.endedAt, locale)}`,
+              en: `Ended ${formatKangurMobileScoreDateTime(duel.session.endedAt, locale)}`,
+              pl: `Zakończenie ${formatKangurMobileScoreDateTime(duel.session.endedAt, locale)}`,
+            })
+          : null,
+      ].filter((item): item is string => Boolean(item))
+    : [];
 
   const createLoginCallToAction = (label: string): React.JSX.Element =>
     supportsLearnerCredentials ? (
@@ -2423,6 +2540,67 @@ export function KangurDuelsScreen(): React.JSX.Element {
                   ) : null}
                 </View>
 
+                {roundProgress && !hasWaitingSession ? (
+                  <View style={{ gap: 6 }}>
+                    <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                      {formatRoundProgressLabel(roundProgress, locale)}
+                    </Text>
+                    <View
+                      style={{
+                        height: 10,
+                        width: '100%',
+                        borderRadius: 999,
+                        backgroundColor: '#e2e8f0',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <View
+                        style={{
+                          height: '100%',
+                          width: `${roundProgress.percent}%`,
+                          borderRadius: 999,
+                          backgroundColor:
+                            duel.session.status === 'completed' ||
+                            duel.session.status === 'aborted'
+                              ? '#16a34a'
+                              : '#1d4ed8',
+                        }}
+                      />
+                    </View>
+                  </View>
+                ) : null}
+
+                {sessionTimelineItems.length > 0 ? (
+                  <View
+                    style={{
+                      borderRadius: 18,
+                      borderWidth: 1,
+                      borderColor: '#e2e8f0',
+                      backgroundColor: '#f8fafc',
+                      padding: 14,
+                      gap: 8,
+                    }}
+                  >
+                    <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                      {copy({
+                        de: 'Zeitachse der Sitzung',
+                        en: 'Session timeline',
+                        pl: 'Oś sesji',
+                      })}
+                    </Text>
+                    <View style={{ gap: 6 }}>
+                      {sessionTimelineItems.map((item) => (
+                        <Text
+                          key={item}
+                          style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}
+                        >
+                          {item}
+                        </Text>
+                      ))}
+                    </View>
+                  </View>
+                ) : null}
+
                 {duel.isSpectating ? (
                   <MessageCard
                     title={copy({
@@ -2502,10 +2680,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
                     >
                       <View
                         style={{
-                          flexDirection: 'row',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          gap: 12,
+                          gap: 8,
                         }}
                       >
                         <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
@@ -2516,13 +2691,18 @@ export function KangurDuelsScreen(): React.JSX.Element {
                           tone={getPlayerStatusTone(player.status)}
                         />
                       </View>
-                      <Text style={{ color: '#475569', lineHeight: 20 }}>
-                        {locale === 'de'
-                          ? `Punktzahl ${player.score}${player.bonusPoints ? ` + ${player.bonusPoints} Bonus` : ''} · ${formatQuestionProgress(duel.session!, player, locale)}`
-                          : locale === 'en'
-                            ? `Score ${player.score}${player.bonusPoints ? ` + ${player.bonusPoints} bonus` : ''} · ${formatQuestionProgress(duel.session!, player, locale)}`
-                            : `Wynik ${player.score}${player.bonusPoints ? ` + ${player.bonusPoints} bonus` : ''} · ${formatQuestionProgress(duel.session!, player, locale)}`}
-                      </Text>
+                      <View style={{ gap: 4 }}>
+                        <Text style={{ color: '#475569', lineHeight: 20 }}>
+                          {locale === 'de'
+                            ? `Punktzahl ${player.score}${player.bonusPoints ? ` + ${player.bonusPoints} Bonus` : ''}`
+                            : locale === 'en'
+                              ? `Score ${player.score}${player.bonusPoints ? ` + ${player.bonusPoints} bonus` : ''}`
+                              : `Wynik ${player.score}${player.bonusPoints ? ` + ${player.bonusPoints} bonus` : ''}`}
+                        </Text>
+                        <Text style={{ color: '#64748b', fontSize: 13, lineHeight: 18 }}>
+                          {formatQuestionProgress(duel.session!, player, locale)}
+                        </Text>
+                      </View>
                       {duel.session!.series ? (
                         <Text style={{ color: '#64748b', fontSize: 13, lineHeight: 18 }}>
                           {copy({
@@ -2796,7 +2976,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
                 </Card>
               ) : null}
 
-              {duel.session.status === 'completed' || duel.session.status === 'aborted' ? (
+              {isFinishedSession ? (
                 <Card>
                   <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
                     {copy({
@@ -2827,33 +3007,18 @@ export function KangurDuelsScreen(): React.JSX.Element {
                         onPress={handleRematch}
                         stretch
                       />
+                      <ActionButton
+                        label={copy({
+                          de: 'Zurück zur Lobby',
+                          en: 'Back to lobby',
+                          pl: 'Wróć do lobby',
+                        })}
+                        onPress={openLobby}
+                        stretch
+                        tone='secondary'
+                      />
                     </View>
-                  ) : null}
-                </Card>
-              ) : null}
-
-              <Card>
-                <View style={{ gap: 8 }}>
-                  <ActionButton
-                    disabled={duel.isMutating}
-                    label={
-                      duel.isSpectating
-                        ? copy({
-                            de: 'Duellansicht aktualisieren',
-                            en: 'Refresh duel view',
-                            pl: 'Odśwież podgląd pojedynku',
-                          })
-                        : copy({
-                            de: 'Duellstatus aktualisieren',
-                            en: 'Refresh duel state',
-                            pl: 'Odśwież stan pojedynku',
-                          })
-                    }
-                    onPress={duel.refresh}
-                    stretch
-                    tone='secondary'
-                  />
-                  {duel.isSpectating ? (
+                  ) : (
                     <ActionButton
                       label={copy({
                         de: 'Zurück zur Lobby',
@@ -2863,25 +3028,62 @@ export function KangurDuelsScreen(): React.JSX.Element {
                       onPress={openLobby}
                       stretch
                     />
-                  ) : (
+                  )}
+                </Card>
+              ) : null}
+
+              {!isFinishedSession ? (
+                <Card>
+                  <View style={{ gap: 8 }}>
                     <ActionButton
                       disabled={duel.isMutating}
-                      label={copy({
-                        de: 'Duell verlassen',
-                        en: 'Leave duel',
-                        pl: 'Opuść pojedynek',
-                      })}
-                      onPress={async () => {
-                        const didLeave = await duel.leaveSession();
-                        if (didLeave) {
-                          openLobby();
-                        }
-                      }}
+                      label={
+                        duel.isSpectating
+                          ? copy({
+                              de: 'Duellansicht aktualisieren',
+                              en: 'Refresh duel view',
+                              pl: 'Odśwież podgląd pojedynku',
+                            })
+                          : copy({
+                              de: 'Duellstatus aktualisieren',
+                              en: 'Refresh duel state',
+                              pl: 'Odśwież stan pojedynku',
+                            })
+                      }
+                      onPress={duel.refresh}
                       stretch
+                      tone='secondary'
                     />
-                  )}
-                </View>
-              </Card>
+                    {duel.isSpectating ? (
+                      <ActionButton
+                        label={copy({
+                          de: 'Zurück zur Lobby',
+                          en: 'Back to lobby',
+                          pl: 'Wróć do lobby',
+                        })}
+                        onPress={openLobby}
+                        stretch
+                      />
+                    ) : (
+                      <ActionButton
+                        disabled={duel.isMutating}
+                        label={copy({
+                          de: hasWaitingSession ? 'Duell absagen' : 'Duell verlassen',
+                          en: hasWaitingSession ? 'Cancel duel' : 'Leave duel',
+                          pl: hasWaitingSession ? 'Anuluj pojedynek' : 'Opuść pojedynek',
+                        })}
+                        onPress={async () => {
+                          const didLeave = await duel.leaveSession();
+                          if (didLeave) {
+                            openLobby();
+                          }
+                        }}
+                        stretch
+                      />
+                    )}
+                  </View>
+                </Card>
+              ) : null}
 
               <LessonCheckpointsCard context='session' />
               <LessonMasteryCard context='session' />
@@ -3559,13 +3761,16 @@ export function KangurDuelsScreen(): React.JSX.Element {
         </Card>
 
         <Card>
-          <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-            {copy({
-              de: 'Lernende suchen',
-              en: 'Search learners',
-              pl: 'Szukaj uczniów',
-            })}
-          </Text>
+          <View style={{ gap: 8 }}>
+            <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+              {copy({
+                de: 'Lernende suchen',
+                en: 'Search learners',
+                pl: 'Szukaj uczniów',
+              })}
+            </Text>
+            <Pill label={searchStatusLabel} tone={searchStatusTone} />
+          </View>
           {!lobby.isAuthenticated ? (
             <MessageCard
               title={copy({

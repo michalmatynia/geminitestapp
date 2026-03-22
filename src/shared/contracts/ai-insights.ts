@@ -1,7 +1,10 @@
 import { z } from 'zod';
 
 import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
-import { aiPathRuntimeAnalyticsRangeSchema } from './ai-paths';
+import {
+  aiPathRuntimeAnalyticsRangeQuerySchema,
+  aiPathRuntimeAnalyticsRangeSchema,
+} from './ai-paths';
 import { namedDtoSchema } from './base';
 
 /**
@@ -150,6 +153,12 @@ export const analyticsInsightRunRequestSchema = z.object({
 
 export type AnalyticsInsightRunRequest = z.infer<typeof analyticsInsightRunRequestSchema>;
 
+export const aiInsightsListQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().max(50).optional(),
+});
+
+export type AiInsightsListQuery = z.infer<typeof aiInsightsListQuerySchema>;
+
 export const runtimeAnalyticsInsightRunRequestSchema = z.object({
   range: aiPathRuntimeAnalyticsRangeSchema.optional(),
   contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
@@ -157,4 +166,12 @@ export const runtimeAnalyticsInsightRunRequestSchema = z.object({
 
 export type RuntimeAnalyticsInsightRunRequest = z.infer<
   typeof runtimeAnalyticsInsightRunRequestSchema
+>;
+
+export const runtimeAnalyticsInsightsListQuerySchema = aiInsightsListQuerySchema.merge(
+  aiPathRuntimeAnalyticsRangeQuerySchema
+);
+
+export type RuntimeAnalyticsInsightsListQuery = z.infer<
+  typeof runtimeAnalyticsInsightsListQuerySchema
 >;

@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { aiPathsPlaywrightEnqueueRequestSchema } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const {
@@ -136,6 +137,11 @@ describe('AI Paths Playwright routes', () => {
     const response = await POST_handler(createPostRequest(), mockContext);
     const body = (await response.json()) as Record<string, unknown>;
 
+    expect(parseJsonBodyMock).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      aiPathsPlaywrightEnqueueRequestSchema,
+      expect.objectContaining({ logPrefix: 'ai-paths.playwright.enqueue' })
+    );
     expect(enforceAiPathsActionRateLimitMock).toHaveBeenCalledWith(
       expect.objectContaining({ userId: 'user-1' }),
       'playwright-enqueue'

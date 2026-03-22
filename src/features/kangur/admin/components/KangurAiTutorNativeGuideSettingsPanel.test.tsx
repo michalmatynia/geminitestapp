@@ -75,11 +75,11 @@ describe('KangurAiTutorNativeGuideSettingsPanel', () => {
       'Główna treść lekcji',
       'Nagłówek lekcji',
     ]);
-    expect(screen.getByLabelText('Native guide sort order')).toHaveValue(20);
+    expect(screen.getByLabelText('Native guide sort order')).toHaveValue(30);
     expect(screen.getByLabelText('Native guide entry title')).toHaveValue(
       'Nagłówek lekcji'
     );
-    expect(screen.getByLabelText('Native guide sort order')).toHaveValue(20);
+    expect(screen.getByLabelText('Native guide sort order')).toHaveValue(30);
   });
 
   it('shows a clean manifest coverage report for the seeded Mongo guide store', async () => {

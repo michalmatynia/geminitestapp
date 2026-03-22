@@ -1,6 +1,7 @@
-import { AdminProductsBreadcrumbs } from './admin-products-breadcrumbs';
-import { createAdminPageLayout } from './create-admin-page-layout';
+import { ADMIN_PRODUCTS_SECTION } from './admin-section-configs';
+import { createAdminSectionPageLayout } from './create-admin-page-layout';
 
-export const AdminProductsPageLayout = createAdminPageLayout({
-  Breadcrumbs: AdminProductsBreadcrumbs,
+export const AdminProductsPageLayout = createAdminSectionPageLayout({
+  section: ADMIN_PRODUCTS_SECTION,
+  displayName: 'AdminProductsPageLayout',
 });

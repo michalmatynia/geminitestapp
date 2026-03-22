@@ -1,19 +1,7 @@
-import * as React from 'react';
+import { ADMIN_AGENT_CREATOR_SECTION } from './admin-section-configs';
+import { createAdminSectionBreadcrumbs } from './admin-section-breadcrumbs';
 
-import type { AdminSectionBreadcrumbWrapperProps } from '@/shared/contracts/ui';
-
-import { AdminSectionBreadcrumbs } from './admin-section-breadcrumbs';
-
-export function AdminAgentCreatorBreadcrumbs({
-  current,
-  parent,
-  className,
-}: AdminSectionBreadcrumbWrapperProps): React.JSX.Element {
-  const breadcrumbProps = { current, parent, className };
-  return (
-    <AdminSectionBreadcrumbs
-      section={{ label: 'Agent Creator', href: '/admin/agentcreator' }}
-      {...breadcrumbProps}
-    />
-  );
-}
+export const AdminAgentCreatorBreadcrumbs = createAdminSectionBreadcrumbs({
+  section: ADMIN_AGENT_CREATOR_SECTION,
+  displayName: 'AdminAgentCreatorBreadcrumbs',
+});

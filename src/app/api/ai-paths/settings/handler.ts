@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   deleteAiPathsSettings,
@@ -8,35 +7,15 @@ import {
   upsertAiPathsSettingsBulk,
 } from '@/features/ai/ai-paths/server';
 import { AI_PATHS_CONFIG_KEY_PREFIX } from '@/features/ai/ai-paths/server/settings-store.constants';
+import {
+  aiPathsSettingsBulkWriteRequestSchema,
+  aiPathsSettingsDeleteRequestSchema,
+  aiPathsSettingWriteSchema,
+} from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-
-const settingPayloadSchema = z.object({
-  key: z
-    .string()
-    .trim()
-    .min(1)
-    .refine((value) => value.startsWith('ai_paths_'), {
-      message: 'AI Paths setting keys must start with "ai_paths_".',
-    }),
-  value: z.string(),
-});
-
-const settingsBulkPayloadSchema = z.object({
-  items: z.array(settingPayloadSchema).min(1),
-});
-
-const deletePayloadSchema = z
-  .object({
-    key: z.string().trim().min(1).optional(),
-    keys: z.array(z.string().trim().min(1)).min(1).optional(),
-  })
-  .refine((value) => Boolean(value.key) || Boolean(value.keys && value.keys.length > 0), {
-    message: 'Provide "key" or non-empty "keys".',
-  });
 
 const MAX_SETTINGS_QUERY_KEYS = 500;
 const MAX_SETTINGS_QUERY_KEY_LENGTH = 200;
@@ -122,14 +101,14 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     }
   }
 
-  const parsedBulk = settingsBulkPayloadSchema.safeParse(body);
+  const parsedBulk = aiPathsSettingsBulkWriteRequestSchema.safeParse(body);
   if (parsedBulk.success) {
     parsedBulk.data.items.forEach((item) => assertCanonicalAiPathsKey(item.key));
     await upsertAiPathsSettingsBulk(parsedBulk.data.items);
     return NextResponse.json(parsedBulk.data.items);
   }
 
-  const parsedSingle = settingPayloadSchema.safeParse(body);
+  const parsedSingle = aiPathsSettingWriteSchema.safeParse(body);
   if (parsedSingle.success) {
     assertCanonicalAiPathsKey(parsedSingle.data.key);
     await upsertAiPathsSetting(parsedSingle.data.key, parsedSingle.data.value);
@@ -152,7 +131,7 @@ export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext):
     }
   }
 
-  const parsed = deletePayloadSchema.safeParse(body);
+  const parsed = aiPathsSettingsDeleteRequestSchema.safeParse(body);
   if (!parsed.success) {
     throw badRequestError('Invalid AI Paths settings delete payload.');
   }

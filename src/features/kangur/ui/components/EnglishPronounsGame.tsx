@@ -33,6 +33,7 @@ import {
   KANGUR_STACK_SPACED_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   addXp,
   createLessonPracticeReward,
@@ -114,6 +115,7 @@ export default function EnglishPronounsGame({
   onFinish,
 }: KangurMiniGameFinishProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const isCoarsePointer = useKangurCoarsePointer();
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -264,13 +266,27 @@ export default function EnglishPronounsGame({
           <KangurStatusChip accent='slate' className='text-[10px] uppercase tracking-[0.16em]'>
             {translateKangurMiniGameWithFallback(
               translations,
-              'englishPronouns.inRound.modeLabel',
-              'Click'
+              isCoarsePointer
+                ? 'englishPronouns.inRound.modeLabelTouch'
+                : 'englishPronouns.inRound.modeLabel',
+              isCoarsePointer ? 'Tap' : 'Click'
             )}
           </KangurStatusChip>
         </div>
 
         <div className={KANGUR_STACK_SPACED_CLASSNAME}>
+          {isCoarsePointer ? (
+            <p
+              data-testid='english-pronouns-touch-hint'
+              className='text-center text-xs font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'
+            >
+              {translateKangurMiniGameWithFallback(
+                translations,
+                'englishPronouns.inRound.touchHint',
+                'Tap a pronoun, then tap Check.'
+              )}
+            </p>
+          ) : null}
           <div id='pronouns-question' className='rounded-[20px] border border-slate-200/80 bg-white px-4 py-3 text-sm font-semibold text-slate-700'>
             {round.question}
           </div>
@@ -283,7 +299,8 @@ export default function EnglishPronounsGame({
                   key={option}
                   type='button'
                   className={cn(
-                    'rounded-[20px] border px-3 py-2 text-base font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+                    'rounded-[20px] border px-3 py-2 text-base font-semibold transition touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+                    isCoarsePointer && 'min-h-[4.25rem] active:scale-[0.98]',
                     KANGUR_ACCENT_STYLES[accent].badge,
                     KANGUR_ACCENT_STYLES[accent].hoverCard,
                     isSelected && 'ring-2 ring-emerald-400/70 ring-offset-1 ring-offset-transparent'

@@ -103,7 +103,7 @@ describe('KangurRouteAccessibilityAnnouncer', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent('Przelaczanie jezyka: Lekcje');
+      expect(screen.getByRole('status')).toHaveTextContent('Przełączanie języka: Lekcje');
     });
   });
 });

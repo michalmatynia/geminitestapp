@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 
 import { Button } from './button';
@@ -36,73 +35,48 @@ type AppModalProps = {
   bodyClassName?: string | undefined;
 };
 
-type AppModalDefaultHeaderRuntimeValue = {
+type AppModalDefaultHeaderProps = {
   title: React.ReactNode;
   subtitle?: React.ReactNode;
   titleHidden: boolean;
   headerActions?: React.ReactNode;
   showClose: boolean;
   canClose: boolean;
-  handleClose: () => void;
+  onClose: () => void;
 };
 
-type AppModalDialogContentRuntimeValue = {
-  modalContentClassName?: string;
-  handleInteractOutside: (event: Event) => void;
-  handleEscapeKeyDown: (event: KeyboardEvent) => void;
-};
-
-const {
-  Context: AppModalDefaultHeaderRuntimeContext,
-  useStrictContext: useAppModalDefaultHeaderRuntime,
-} = createStrictContext<AppModalDefaultHeaderRuntimeValue>({
-  hookName: 'useAppModalDefaultHeaderRuntime',
-  providerName: 'AppModalDefaultHeaderRuntimeProvider',
-  displayName: 'AppModalDefaultHeaderRuntimeContext',
-});
-
-const {
-  Context: AppModalDialogContentRuntimeContext,
-  useStrictContext: useAppModalDialogContentRuntime,
-} = createStrictContext<AppModalDialogContentRuntimeValue>({
-  hookName: 'useAppModalDialogContentRuntime',
-  providerName: 'AppModalDialogContentRuntimeProvider',
-  displayName: 'AppModalDialogContentRuntimeContext',
-});
-
-type AppModalDefaultHeaderRuntimeProviderProps = {
-  value: AppModalDefaultHeaderRuntimeValue;
+type AppModalDialogContentShellProps = {
+  title: React.ReactNode;
+  dialogDescription: React.ReactNode;
   children: React.ReactNode;
+  modalContentClassName?: string;
+  onInteractOutside: (event: Event) => void;
+  onEscapeKeyDown: (event: KeyboardEvent) => void;
 };
 
-function AppModalDefaultHeaderRuntimeProvider({
-  value,
-  children,
-}: AppModalDefaultHeaderRuntimeProviderProps): React.JSX.Element {
-  return (
-    <AppModalDefaultHeaderRuntimeContext.Provider value={value}>
-      {children}
-    </AppModalDefaultHeaderRuntimeContext.Provider>
-  );
-}
-
-function AppModalDefaultHeader(): React.JSX.Element {
-  const runtime = useAppModalDefaultHeaderRuntime();
-
+function AppModalDefaultHeader({
+  title,
+  subtitle,
+  titleHidden,
+  headerActions,
+  showClose,
+  canClose,
+  onClose,
+}: AppModalDefaultHeaderProps): React.JSX.Element {
   return (
     <SectionHeader
-      title={runtime.title}
-      subtitle={runtime.subtitle}
+      title={title}
+      subtitle={subtitle}
       size='md'
-      titleClassName={cn(runtime.titleHidden && 'sr-only')}
+      titleClassName={cn(titleHidden && 'sr-only')}
       actions={
         <div className='flex items-center gap-2'>
-          {runtime.headerActions}
-          {runtime.showClose ? (
+          {headerActions}
+          {showClose ? (
             <Button
               type='button'
-              onClick={runtime.handleClose}
-              disabled={!runtime.canClose}
+              onClick={onClose}
+              disabled={!canClose}
               variant='outline'
               size='sm'
             >
@@ -119,20 +93,18 @@ function AppModalDialogContentShell({
   title,
   dialogDescription,
   children,
-}: {
-  title: React.ReactNode;
-  dialogDescription: React.ReactNode;
-  children: React.ReactNode;
-}): React.JSX.Element {
-  const runtime = useAppModalDialogContentRuntime();
+  modalContentClassName,
+  onInteractOutside,
+  onEscapeKeyDown,
+}: AppModalDialogContentShellProps): React.JSX.Element {
   return (
     <DialogContent
       className={cn(
         'max-w-none w-auto p-0 border-none bg-transparent shadow-none',
-        runtime.modalContentClassName ?? ''
+        modalContentClassName ?? ''
       )}
-      onInteractOutside={runtime.handleInteractOutside}
-      onEscapeKeyDown={runtime.handleEscapeKeyDown}
+      onInteractOutside={onInteractOutside}
+      onEscapeKeyDown={onEscapeKeyDown}
     >
       <DialogTitle className='sr-only'>{title}</DialogTitle>
       <DialogDescription className='sr-only'>{dialogDescription}</DialogDescription>
@@ -219,72 +191,62 @@ export function AppModal({
     (typeof title === 'string' && title.trim().length > 0
       ? `${title} dialog`
       : 'Modal dialog content');
-  const defaultHeaderRuntimeValue = React.useMemo<AppModalDefaultHeaderRuntimeValue>(
-    () => ({
-      title,
-      subtitle,
-      titleHidden,
-      headerActions,
-      showClose,
-      canClose,
-      handleClose: () => handleOpenChange(false),
-    }),
-    [title, subtitle, titleHidden, headerActions, showClose, canClose, handleOpenChange]
-  );
-  const dialogContentRuntimeValue = React.useMemo<AppModalDialogContentRuntimeValue>(
-    () => ({
-      modalContentClassName,
-      handleInteractOutside,
-      handleEscapeKeyDown,
-    }),
-    [modalContentClassName, handleInteractOutside, handleEscapeKeyDown]
-  );
   const modalTitle = title;
 
   return (
     <Dialog open={isCurrentlyOpen} onOpenChange={handleOpenChange}>
-      <AppModalDialogContentRuntimeContext.Provider value={dialogContentRuntimeValue}>
-        <AppModalDialogContentShell title={modalTitle} dialogDescription={dialogDescription}>
+      <AppModalDialogContentShell
+        title={modalTitle}
+        dialogDescription={dialogDescription}
+        modalContentClassName={modalContentClassName}
+        onInteractOutside={handleInteractOutside}
+        onEscapeKeyDown={handleEscapeKeyDown}
+      >
+        <div
+          className={cn(
+            'pointer-events-auto w-full rounded-lg border flex flex-col',
+            isGlass ? 'bg-card/40 backdrop-blur-md border-white/10' : 'bg-card border-border',
+            sizeClasses[size],
+            className
+          )}
+        >
+          {/* Header */}
+          <div className='p-6 pb-4 border-b border-white/5'>
+            {header ? (
+              header
+            ) : (
+              <AppModalDefaultHeader
+                title={title}
+                subtitle={subtitle}
+                titleHidden={titleHidden}
+                headerActions={headerActions}
+                showClose={showClose}
+                canClose={canClose}
+                onClose={() => handleOpenChange(false)}
+              />
+            )}
+          </div>
+
+          {/* Body */}
           <div
             className={cn(
-              'pointer-events-auto w-full rounded-lg border flex flex-col',
-              isGlass ? 'bg-card/40 backdrop-blur-md border-white/10' : 'bg-card border-border',
-              sizeClasses[size],
-              className
+              bodyHeightClass,
+              'overflow-y-auto',
+              padding === 'default' && 'p-6',
+              bodyClassName ?? ''
             )}
           >
-            {/* Header */}
-            <div className='p-6 pb-4 border-b border-white/5'>
-              {header ? (
-                header
-              ) : (
-                <AppModalDefaultHeaderRuntimeProvider value={defaultHeaderRuntimeValue}>
-                  <AppModalDefaultHeader />
-                </AppModalDefaultHeaderRuntimeProvider>
-              )}
-            </div>
-
-            {/* Body */}
-            <div
-              className={cn(
-                bodyHeightClass,
-                'overflow-y-auto',
-                padding === 'default' && 'p-6',
-                bodyClassName ?? ''
-              )}
-            >
-              {children}
-            </div>
-
-            {/* Footer */}
-            {footer ? (
-              <div className='p-6 pt-4 border-t border-white/5 flex justify-end gap-2'>
-                {footer}
-              </div>
-            ) : null}
+            {children}
           </div>
-        </AppModalDialogContentShell>
-      </AppModalDialogContentRuntimeContext.Provider>
+
+          {/* Footer */}
+          {footer ? (
+            <div className='p-6 pt-4 border-t border-white/5 flex justify-end gap-2'>
+              {footer}
+            </div>
+          ) : null}
+        </div>
+      </AppModalDialogContentShell>
     </Dialog>
   );
 }

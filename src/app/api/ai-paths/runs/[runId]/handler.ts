@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   assertAiPathRunAccess,
@@ -8,6 +7,7 @@ import {
   requireAiPathsRunAccess,
 } from '@/features/ai/ai-paths/server';
 import { deletePathRunWithRepository } from '@/features/ai/ai-paths/server';
+import { aiPathRunRouteParamsSchema } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 import { buildAiPathRunErrorSummary } from '@/shared/lib/ai-paths/error-reporting';
@@ -17,12 +17,8 @@ import {
   resolvePathRunRepository,
 } from '@/shared/lib/ai-paths/services/path-run-repository';
 
-const paramsSchema = z.object({
-  runId: z.string().trim().min(1, 'Run id is required'),
-});
-
 const parseRunId = (params: { runId: string }): string => {
-  const parsed = paramsSchema.safeParse(params);
+  const parsed = aiPathRunRouteParamsSchema.safeParse(params);
   if (!parsed.success) {
     throw validationError('Invalid route parameters', {
       issues: parsed.error.flatten(),

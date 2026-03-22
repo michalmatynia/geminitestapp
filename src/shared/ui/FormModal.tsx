@@ -1,10 +1,8 @@
 'use client';
 
 import { type VariantProps } from 'class-variance-authority';
-import { useMemo } from 'react';
 
 import type { ModalStateProps } from '@/shared/contracts/ui';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { AppModal } from './app-modal';
 import { buttonVariants } from './button';
@@ -39,83 +37,73 @@ interface FormModalProps extends Partial<ModalStateProps> {
   className?: string;
 }
 
-type FormModalHeaderRuntimeValue = {
+type FormModalHeaderProps = {
   title: string;
   titleTestId?: string;
   subtitle?: string;
   showSaveButton: boolean;
-  handleSave: () => void;
+  onSave: () => void;
   saveText: string;
-  resolvedSaveVariant: VariantProps<typeof buttonVariants>['variant'];
+  saveVariant: VariantProps<typeof buttonVariants>['variant'];
   saveIcon?: ReactNode;
   isSaving: boolean;
   isSaveButtonDisabled: boolean;
   actions?: ReactNode;
   showCancelButton: boolean;
-  handleRequestClose: () => void;
+  onClose: () => void;
   cancelText: string;
   isCloseLocked: boolean;
 };
 
-const { Context: FormModalHeaderRuntimeContext, useStrictContext: useFormModalHeaderRuntime } =
-  createStrictContext<FormModalHeaderRuntimeValue>({
-    hookName: 'useFormModalHeaderRuntime',
-    providerName: 'FormModalHeaderRuntimeProvider',
-    displayName: 'FormModalHeaderRuntimeContext',
-  });
-
-type FormModalHeaderRuntimeProviderProps = {
-  value: FormModalHeaderRuntimeValue;
-  children: ReactNode;
-};
-
-function FormModalHeaderRuntimeProvider(
-  props: FormModalHeaderRuntimeProviderProps
-): React.JSX.Element {
-  const { value, children } = props;
-
-  return (
-    <FormModalHeaderRuntimeContext.Provider value={value}>
-      {children}
-    </FormModalHeaderRuntimeContext.Provider>
-  );
-}
-
-function FormModalHeaderContent(): React.JSX.Element {
-  const runtime = useFormModalHeaderRuntime();
-
+function FormModalHeaderContent({
+  title,
+  titleTestId,
+  subtitle,
+  showSaveButton,
+  onSave,
+  saveText,
+  saveVariant,
+  saveIcon,
+  isSaving,
+  isSaveButtonDisabled,
+  actions,
+  showCancelButton,
+  onClose,
+  cancelText,
+  isCloseLocked,
+}: FormModalHeaderProps): React.JSX.Element {
   return (
     <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
       <div className='min-w-0'>
         <div className='flex min-w-0 items-center gap-2'>
-          {runtime.showSaveButton ? (
+          {showSaveButton ? (
             <FormActions
-              onSave={runtime.handleSave}
-              saveText={runtime.saveText}
-              saveVariant={runtime.resolvedSaveVariant}
-              saveIcon={runtime.saveIcon}
-              isSaving={runtime.isSaving}
-              isDisabled={runtime.isSaveButtonDisabled}
+              onSave={onSave}
+              saveText={saveText}
+              saveVariant={saveVariant}
+              saveIcon={saveIcon}
+              isSaving={isSaving}
+              isDisabled={isSaveButtonDisabled}
               className='mr-2'
             />
           ) : null}
           <h2
-            data-testid={runtime.titleTestId}
+            data-testid={titleTestId}
             className='truncate text-2xl font-bold tracking-tight text-white'
           >
-            {runtime.title}
+            {title}
           </h2>
         </div>
-        {runtime.subtitle ? <p className='mt-1 text-sm text-gray-400'>{runtime.subtitle}</p> : null}
+        {subtitle ? <p className='mt-1 text-sm text-gray-400'>{subtitle}</p> : null}
       </div>
       <div className='flex flex-wrap items-center justify-end gap-2'>
-        {runtime.actions}
-        {runtime.showCancelButton ? (
+        {actions}
+        {showCancelButton ? (
           <FormActions
-            onCancel={runtime.handleRequestClose}
-            cancelText={runtime.cancelText}
-            isSaving={runtime.isSaving}
-            isDisabled={runtime.isCloseLocked}
+            onCancel={onClose}
+            cancelText={cancelText}
+            isSaving={isSaving}
+            isDisabled={isCloseLocked}
           />
         ) : null}
       </div>
@@ -177,59 +165,34 @@ export function FormModal(props: FormModalProps): React.JSX.Element | null {
     }
   };
 
-  const headerRuntimeValue = useMemo<FormModalHeaderRuntimeValue>(
-    () => ({
-      title,
-      titleTestId,
-      subtitle,
-      showSaveButton,
-      handleSave,
-      saveText,
-      resolvedSaveVariant,
-      saveIcon,
-      isSaving,
-      isSaveButtonDisabled,
-      actions,
-      showCancelButton,
-      handleRequestClose,
-      cancelText,
-      isCloseLocked,
-    }),
-    [
-      title,
-      titleTestId,
-      subtitle,
-      showSaveButton,
-      handleSave,
-      saveText,
-      resolvedSaveVariant,
-      saveIcon,
-      isSaving,
-      isSaveButtonDisabled,
-      actions,
-      showCancelButton,
-      handleRequestClose,
-      cancelText,
-      isCloseLocked,
-    ]
-  );
-
-  const header = (
-    <FormModalHeaderRuntimeProvider value={headerRuntimeValue}>
-      <FormModalHeaderContent />
-    </FormModalHeaderRuntimeProvider>
-  );
-
   return (
     <AppModal
       open={isCurrentlyOpen}
       onOpenChange={handleOpenChange}
-      title={headerRuntimeValue.title}
-      subtitle={headerRuntimeValue.subtitle}
+      title={title}
+      subtitle={subtitle}
       size={size}
       variant={variant}
       padding={padding}
-      header={header}
+      header={
+        <FormModalHeaderContent
+          title={title}
+          titleTestId={titleTestId}
+          subtitle={subtitle}
+          showSaveButton={showSaveButton}
+          onSave={handleSave}
+          saveText={saveText}
+          saveVariant={resolvedSaveVariant}
+          saveIcon={saveIcon}
+          isSaving={isSaving}
+          isSaveButtonDisabled={isSaveButtonDisabled}
+          actions={actions}
+          showCancelButton={showCancelButton}
+          onClose={handleRequestClose}
+          cancelText={cancelText}
+          isCloseLocked={isCloseLocked}
+        />
+      }
       showClose={false}
       lockClose={isCloseLocked}
       closeOnOutside={!isCloseLocked}

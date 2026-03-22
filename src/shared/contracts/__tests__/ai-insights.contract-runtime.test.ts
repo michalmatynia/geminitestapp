@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  aiInsightsListQuerySchema,
   aiInsightResponseSchema,
   aiInsightsResponseSchema,
+  runtimeAnalyticsInsightsListQuerySchema,
 } from '@/shared/contracts/ai-insights';
 
 const sampleInsight = {
@@ -35,5 +37,13 @@ describe('ai insights contract runtime', () => {
         insight: sampleInsight,
       }).insight?.id
     ).toBe('insight-1');
+  });
+
+  it('parses insights list query DTOs', () => {
+    expect(aiInsightsListQuerySchema.parse({ limit: '5' }).limit).toBe(5);
+    expect(runtimeAnalyticsInsightsListQuerySchema.parse({ range: '7d', limit: '3' })).toMatchObject({
+      range: '7d',
+      limit: 3,
+    });
   });
 });

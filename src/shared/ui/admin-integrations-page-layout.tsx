@@ -1,7 +1,8 @@
-import { AdminIntegrationsBreadcrumbs } from './admin-integrations-breadcrumbs';
-import { createAdminPageLayout } from './create-admin-page-layout';
+import { ADMIN_INTEGRATIONS_SECTION } from './admin-section-configs';
+import { createAdminSectionPageLayout } from './create-admin-page-layout';
 
-export const AdminIntegrationsPageLayout = createAdminPageLayout({
-  Breadcrumbs: AdminIntegrationsBreadcrumbs,
+export const AdminIntegrationsPageLayout = createAdminSectionPageLayout({
+  section: ADMIN_INTEGRATIONS_SECTION,
   containerClassName: 'page-section max-w-5xl',
+  displayName: 'AdminIntegrationsPageLayout',
 });

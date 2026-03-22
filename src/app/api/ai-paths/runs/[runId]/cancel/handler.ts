@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   assertAiPathRunAccess,
@@ -8,15 +7,12 @@ import {
 } from '@/features/ai/ai-paths/server';
 import { cancelPathRunWithRepository } from '@/features/ai/ai-paths/server';
 import { removePathRunQueueEntries } from '@/features/ai/server';
-import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import { aiPathRunRouteParamsSchema, type AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { validationError } from '@/shared/errors/app-error';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 
 const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
-const paramsSchema = z.object({
-  runId: z.string().trim().min(1, 'Run id is required'),
-});
 
 export async function POST_handler(
   _req: NextRequest,
@@ -25,7 +21,7 @@ export async function POST_handler(
 ): Promise<Response> {
   const access = await requireAiPathsAccess();
   await enforceAiPathsActionRateLimit(access, 'run-cancel');
-  const parsedParams = paramsSchema.safeParse(params);
+  const parsedParams = aiPathRunRouteParamsSchema.safeParse(params);
   if (!parsedParams.success) {
     throw validationError('Invalid route parameters', {
       issues: parsedParams.error.flatten(),

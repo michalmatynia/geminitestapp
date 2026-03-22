@@ -1074,9 +1074,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                 ) : (
                   <Text style={{ color: '#475569', lineHeight: 22 }}>
                     {copy({
-                      de: 'Dein Konto ist im sichtbaren Ausschnitt der Duell-Rangliste noch nicht vertreten.',
-                      en: 'Your account is not yet visible in the current duel leaderboard snapshot.',
-                      pl: 'Twojego konta nie ma jeszcze w widocznym wycinku rankingu pojedynków.',
+                      de: 'Dein Konto ist in diesem Ausschnitt der Duell-Rangliste noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit du hier erscheinst.',
+                      en: 'Your account is not visible in this duel leaderboard snapshot yet. Finish another duel or open the lobby so it shows up here.',
+                      pl: 'Twojego konta nie widać jeszcze w tym wycinku rankingu pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawić się tutaj.',
                     })}
                   </Text>
                 )}

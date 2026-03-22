@@ -538,6 +538,10 @@ describe('KangurProfileScreen', () => {
     expect(screen.getByText('Lokalne zadania w profilu')).toBeTruthy();
     expect(screen.getByText('Plan na dziś')).toBeTruthy();
     expect(screen.getByText('Ostatnie sesje')).toBeTruthy();
+    expect(screen.getByText('Centrum historii')).toBeTruthy();
+    expect(screen.getByText('Sesje 1')).toBeTruthy();
+    expect(screen.getByText('Najlepsza skuteczność 88%')).toBeTruthy();
+    expect(screen.getByText('Ostatni tryb Zegar')).toBeTruthy();
     expect(screen.getByText('Trenuj ponownie')).toBeTruthy();
     expect(screen.getByText('Historia trybu')).toBeTruthy();
     expect(screen.getByText('Odblokowane 5/9')).toBeTruthy();
@@ -551,7 +555,8 @@ describe('KangurProfileScreen', () => {
     expect(screen.getByText('Powtórka dodawania')).toBeTruthy();
     expect(screen.getAllByText('Priorytet wysoki').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Cel: 1 lekcja')).toBeTruthy();
-    expect(screen.getByText('Otwórz całą historię')).toBeTruthy();
+    expect(screen.getAllByText('Otwórz całą historię').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText('Otwórz plan dnia').length).toBeGreaterThanOrEqual(2);
 
     fireEvent.click(screen.getByText('Szybki rewanż'));
 
@@ -589,6 +594,7 @@ describe('KangurProfileScreen', () => {
     expect(screen.getByText('Plan für heute')).toBeTruthy();
     expect(screen.getByText('Nächste Schritte')).toBeTruthy();
     expect(screen.getByText('Ergebnisverlauf')).toBeTruthy();
+    expect(screen.getByText('Historienzentrum')).toBeTruthy();
     expect(screen.getByText('🎮 Erstes Spiel')).toBeTruthy();
   });
 });

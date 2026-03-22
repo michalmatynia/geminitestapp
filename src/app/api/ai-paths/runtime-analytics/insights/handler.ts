@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import { resolveAiInsightsContextRegistryEnvelope } from '@/features/ai/insights/context-registry/server';
@@ -7,6 +6,7 @@ import { generateRuntimeAnalyticsInsight } from '@/features/ai/insights/server';
 import { listAiInsights } from '@/features/ai/insights/server';
 import { startAiInsightsQueue } from '@/features/jobs/server';
 import {
+  runtimeAnalyticsInsightsListQuerySchema,
   runtimeAnalyticsInsightRunRequestSchema,
   type AiInsightResponse,
   type AiInsightsResponse,
@@ -18,10 +18,7 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const RANGE_VALUES: readonly AiPathRuntimeAnalyticsRange[] = ['1h', '24h', '7d', '30d'];
 
-const listSchema = z.object({
-  limit: z.coerce.number().int().positive().max(50).optional(),
-  range: z.string().optional(),
-});
+export { runtimeAnalyticsInsightsListQuerySchema as listSchema };
 
 const resolveRange = (rangeRaw: string | undefined): AiPathRuntimeAnalyticsRange => {
   const value = (rangeRaw ?? '24h') as AiPathRuntimeAnalyticsRange;
@@ -33,7 +30,9 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   await requireAiPathsAccess();
   startAiInsightsQueue();
 
-  const parsed = listSchema.parse(Object.fromEntries(getQueryParams(req).entries()));
+  const parsed = runtimeAnalyticsInsightsListQuerySchema.parse(
+    Object.fromEntries(getQueryParams(req).entries())
+  );
   const insights = await listAiInsights('runtime_analytics', parsed.limit ?? 10);
   const response: AiInsightsResponse = { insights };
   return NextResponse.json(response);
@@ -43,7 +42,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   await requireAiPathsAccess();
   startAiInsightsQueue();
 
-  const query = listSchema.parse(Object.fromEntries(getQueryParams(req).entries()));
+  const query = runtimeAnalyticsInsightsListQuerySchema.parse(
+    Object.fromEntries(getQueryParams(req).entries())
+  );
   const parsed = await parseJsonBody(req, runtimeAnalyticsInsightRunRequestSchema, {
     logPrefix: 'ai-paths.runtime-analytics.insights.POST',
     allowEmpty: true,

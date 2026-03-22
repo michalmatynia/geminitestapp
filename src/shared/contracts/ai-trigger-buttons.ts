@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+import { PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_QUERY_PARAM } from '@/shared/lib/ai-paths/playwright-fixture-scope';
+import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
+
 import { dtoBaseSchema } from './base';
 
 /**
@@ -147,6 +150,12 @@ export const aiTriggerButtonReorderPayloadSchema = z
 export type AiTriggerButtonCreatePayload = z.infer<typeof aiTriggerButtonCreatePayloadSchema>;
 export type AiTriggerButtonUpdatePayload = z.infer<typeof aiTriggerButtonUpdatePayloadSchema>;
 export type AiTriggerButtonReorderPayload = z.infer<typeof aiTriggerButtonReorderPayloadSchema>;
+
+export const aiTriggerButtonsQuerySchema = z.object({
+  [PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_QUERY_PARAM]: optionalBooleanQuerySchema(),
+});
+
+export type AiTriggerButtonsQuery = z.infer<typeof aiTriggerButtonsQuerySchema>;
 
 /**
  * Trigger Event Arguments

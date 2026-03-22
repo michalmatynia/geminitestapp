@@ -27,7 +27,7 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   requireAiPathsAccess: requireAiPathsAccessMock,
 }));
 
-vi.mock('@/shared/lib/observability/system-logger', () => ({
+vi.mock('@/shared/lib/observability/system-log-repository', () => ({
   listSystemLogs: listSystemLogsMock,
 }));
 

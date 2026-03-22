@@ -1,19 +1,7 @@
-import * as React from 'react';
+import { ADMIN_DATABASE_SECTION } from './admin-section-configs';
+import { createAdminSectionBreadcrumbs } from './admin-section-breadcrumbs';
 
-import type { AdminSectionBreadcrumbWrapperProps } from '@/shared/contracts/ui';
-
-import { AdminSectionBreadcrumbs } from './admin-section-breadcrumbs';
-
-export function AdminDatabaseBreadcrumbs({
-  current,
-  parent,
-  className,
-}: AdminSectionBreadcrumbWrapperProps): React.JSX.Element {
-  const breadcrumbProps = { current, parent, className };
-  return (
-    <AdminSectionBreadcrumbs
-      section={{ label: 'Databases', href: '/admin/databases/engine' }}
-      {...breadcrumbProps}
-    />
-  );
-}
+export const AdminDatabaseBreadcrumbs = createAdminSectionBreadcrumbs({
+  section: ADMIN_DATABASE_SECTION,
+  displayName: 'AdminDatabaseBreadcrumbs',
+});

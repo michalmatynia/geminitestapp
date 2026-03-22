@@ -645,6 +645,13 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Duell beobachten')).toBeTruthy();
   });
 
+  it('renders a search status chip in the lobby header', () => {
+    renderDuelsScreen();
+
+    expect(screen.getByText('Szukaj uczniów')).toBeTruthy();
+    expect(screen.getByText('Co najmniej 2 znaki')).toBeTruthy();
+  });
+
   it('renders the waiting-room session shell for an active duel route', () => {
     useLocalSearchParamsMock.mockReturnValue({
       sessionId: 'duel-1',
@@ -857,9 +864,14 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Prowadzi Ada 1:0.')).toBeTruthy();
     expect(screen.getByText('Wygrane gry w serii: 1')).toBeTruthy();
     expect(screen.getByText('Wygrane gry w serii: 0')).toBeTruthy();
+    expect(screen.getAllByText('Wynik 0').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText('0/5 pytań').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Reakcje')).toBeTruthy();
     expect(screen.getByText('Wyślij szybką reakcję bez opuszczania pojedynku.')).toBeTruthy();
     expect(screen.getByText('Minimalna liczba graczy do startu: 2')).toBeTruthy();
+    expect(screen.getByText('Oś sesji')).toBeTruthy();
+    expect(screen.getByText(/Utworzono/)).toBeTruthy();
+    expect(screen.getByText(/Ostatnia aktualizacja/)).toBeTruthy();
     expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
     expect(screen.getByText('Wróć do lekcji: Dodawanie w pamięci')).toBeTruthy();
     expect(screen.getByText('Potem trenuj: Dodawanie w pamięci')).toBeTruthy();
@@ -881,7 +893,7 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Domknij dodawanie')).toBeTruthy();
     expect(screen.getByText('Cel: 1 lekcja')).toBeTruthy();
     expect(screen.getAllByText('Otwórz lekcję').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Opuść pojedynek')).toBeTruthy();
+    expect(screen.getByText('Anuluj pojedynek')).toBeTruthy();
   });
 
   it('shares a private waiting-room invite link for the missing player', async () => {
@@ -1159,6 +1171,9 @@ describe('KangurDuelsScreen', () => {
       ),
     ).toBeTruthy();
     expect(screen.getByText('Widownia 3')).toBeTruthy();
+    expect(screen.getByText('Postęp rundy 1/5')).toBeTruthy();
+    expect(screen.getByText('Oś sesji')).toBeTruthy();
+    expect(screen.getByText(/Rozpoczęto/)).toBeTruthy();
     expect(screen.getByText('Podgląd pytania')).toBeTruthy();
     expect(screen.getByText('Opcja 1: 4')).toBeTruthy();
     expect(screen.getByText('Odśwież podgląd pojedynku')).toBeTruthy();
@@ -1362,6 +1377,11 @@ describe('KangurDuelsScreen', () => {
         'Rewanż zachowa ten sam tryb, działanie, poziom i format serii.',
       ),
     ).toBeTruthy();
+    expect(screen.getAllByText('Wróć do lobby').length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByText('Opuść pojedynek')).toBeNull();
+    expect(screen.getByText('Oś sesji')).toBeTruthy();
+    expect(screen.getByText(/Rozpoczęto/)).toBeTruthy();
+    expect(screen.getByText(/Zakończenie/)).toBeTruthy();
 
     fireEvent.click(screen.getByText('Zagraj rewanż'));
 

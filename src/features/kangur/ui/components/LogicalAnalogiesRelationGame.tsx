@@ -36,6 +36,7 @@ import {
   KANGUR_WRAP_ROW_CLASSNAME,
   KANGUR_STACK_TIGHT_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   addXp,
   createLessonPracticeReward,
@@ -113,18 +114,26 @@ const buildTokenClassName = ({
   isDragging,
   isCompact,
   isDisabled,
+  isCoarsePointer,
 }: {
   isSelected: boolean;
   isDragging: boolean;
   isCompact: boolean;
   isDisabled: boolean;
+  isCoarsePointer: boolean;
 }): string =>
   cn(
     'flex w-full items-center justify-center gap-2 rounded-full border bg-white/90 font-semibold shadow-[0_14px_30px_-22px_rgba(15,23,42,0.35)] transition',
-    isCompact ? 'px-3 py-1.5 text-[11px]' : 'px-4 py-2 text-sm',
+    isCompact
+      ? isCoarsePointer
+        ? 'min-h-[3.5rem] px-4 py-2.5 text-xs'
+        : 'px-3 py-1.5 text-[11px]'
+      : isCoarsePointer
+        ? 'min-h-[4rem] px-5 py-3 text-base'
+        : 'px-4 py-2 text-sm',
     isSelected && 'ring-2 ring-rose-400 ring-offset-1',
     isDragging && 'scale-[1.02] shadow-[0_18px_40px_-24px_rgba(190,24,93,0.35)]',
-    isDisabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer',
+    isDisabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer touch-manipulation',
     !isDisabled && KANGUR_ACCENT_STYLES.rose.hoverCard
   );
 
@@ -133,6 +142,7 @@ export default function LogicalAnalogiesRelationGame({
   onFinish,
 }: KangurMiniGameFinishProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const isCoarsePointer = useKangurCoarsePointer();
   const t = (
     key: string,
     fallback: string,
@@ -582,6 +592,29 @@ export default function LogicalAnalogiesRelationGame({
           </div>
         </KangurInfoCard>
 
+        {isCoarsePointer || selectedTokenId ? (
+          <KangurInfoCard
+            accent='slate'
+            className='w-full'
+            data-testid='logical-analogies-touch-hint'
+            padding='sm'
+            tone='neutral'
+          >
+            <p
+              className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500'
+              role='status'
+              aria-live='polite'
+              aria-atomic='true'
+            >
+              {selectedTokenId
+                ? t('touchSelected', 'Wybrana relacja: {label}. Dotknij parę, aby ją przypisać.', {
+                    label: localizedTokens[selectedTokenId]?.label ?? selectedTokenId,
+                  })
+                : t('touchIdle', 'Dotknij relację, a potem dotknij parę, aby ją przypisać.')}
+            </p>
+          </KangurInfoCard>
+        ) : null}
+
         <div className='grid w-full kangur-panel-gap lg:grid-cols-[1fr,1.35fr]'>
           <div className='flex flex-col kangur-panel-gap'>
             <div className='flex items-center justify-between'>
@@ -597,14 +630,18 @@ export default function LogicalAnalogiesRelationGame({
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
+                  data-testid='logical-analogies-pool'
                   aria-describedby={`${instructionsId} ${hintId}`}
                   aria-label={t('poolAriaLabel', 'Pula relacji do przeciągania')}
                   role='list'
                   className={cn(
-                    'flex min-h-[72px] flex-wrap items-center justify-center gap-2 rounded-[22px] border border-dashed px-3 py-3 text-center text-xs',
+                    'flex flex-wrap items-center justify-center gap-2 rounded-[22px] border border-dashed px-3 py-3 text-center text-xs touch-manipulation',
+                    isCoarsePointer ? 'min-h-[92px]' : 'min-h-[72px]',
                     roundState.pool.length === 0
                       ? 'text-rose-600/70'
-                      : '[color:var(--kangur-page-muted-text)]'
+                      : selectedTokenId && !checked && isCoarsePointer
+                        ? 'border-rose-200 bg-rose-50/30 [color:var(--kangur-page-muted-text)]'
+                        : '[color:var(--kangur-page-muted-text)]'
                   )}
                 >
                   {roundState.pool.length === 0 ? (
@@ -630,6 +667,7 @@ export default function LogicalAnalogiesRelationGame({
                               isDragging: snapshot.isDragging,
                               isCompact: false,
                               isDisabled: checked,
+                              isCoarsePointer,
                             })}
                             disabled={checked}
                             aria-pressed={selectedTokenId === token.id}
@@ -721,10 +759,16 @@ export default function LogicalAnalogiesRelationGame({
                           accent={accent}
                           emphasis={emphasis}
                           buttonClassName={cn(
-                            'flex w-full flex-col gap-2 text-left min-h-[110px]',
+                            'flex w-full flex-col gap-2 text-left touch-manipulation',
+                            isCoarsePointer ? 'min-h-[132px]' : 'min-h-[110px]',
                             showFeedback && isCorrect && KANGUR_ACCENT_STYLES.emerald.activeText,
-                            showFeedback && !isCorrect && KANGUR_ACCENT_STYLES.rose.activeText
+                            showFeedback && !isCorrect && KANGUR_ACCENT_STYLES.rose.activeText,
+                            selectedTokenId &&
+                              !checked &&
+                              isCoarsePointer &&
+                              'ring-2 ring-amber-200/80 ring-offset-2 ring-offset-white'
                           )}
+                          data-testid={`logical-analogies-target-${target.id}`}
                           interactive={!checked}
                           disabled={checked}
                           aria-disabled={checked}
@@ -772,6 +816,7 @@ export default function LogicalAnalogiesRelationGame({
                                         isDragging: tokenSnapshot.isDragging,
                                         isCompact: true,
                                         isDisabled: checked,
+                                        isCoarsePointer,
                                       })}
                                       onMouseEnter={() => setHoveredRelationId(assigned.id)}
                                       onMouseLeave={() => setHoveredRelationId(null)}

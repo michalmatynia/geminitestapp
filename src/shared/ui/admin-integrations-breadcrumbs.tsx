@@ -1,19 +1,7 @@
-import * as React from 'react';
+import { ADMIN_INTEGRATIONS_SECTION } from './admin-section-configs';
+import { createAdminSectionBreadcrumbs } from './admin-section-breadcrumbs';
 
-import type { AdminSectionBreadcrumbWrapperProps } from '@/shared/contracts/ui';
-
-import { AdminSectionBreadcrumbs } from './admin-section-breadcrumbs';
-
-export function AdminIntegrationsBreadcrumbs({
-  current,
-  parent,
-  className,
-}: AdminSectionBreadcrumbWrapperProps): React.JSX.Element {
-  const breadcrumbProps = { current, parent, className };
-  return (
-    <AdminSectionBreadcrumbs
-      section={{ label: 'Integrations', href: '/admin/integrations' }}
-      {...breadcrumbProps}
-    />
-  );
-}
+export const AdminIntegrationsBreadcrumbs = createAdminSectionBreadcrumbs({
+  section: ADMIN_INTEGRATIONS_SECTION,
+  displayName: 'AdminIntegrationsBreadcrumbs',
+});

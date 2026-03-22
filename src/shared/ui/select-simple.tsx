@@ -3,7 +3,6 @@
 import React from 'react';
 
 import type { SelectSimpleOption } from '@/shared/contracts/ui';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
 
 import {
@@ -44,7 +43,7 @@ type SelectSimpleGroupedOptions = {
   hasVisibleGroupLabels: boolean;
 };
 
-type SelectSimpleRuntimeValue = {
+type SelectSimpleControlProps = {
   safeValue: string;
   onValueChange: (value: string) => void;
   disabled: boolean;
@@ -64,70 +63,74 @@ type SelectSimpleRuntimeValue = {
   groupedOptions: SelectSimpleGroupedOptions;
 };
 
-const { Context: SelectSimpleRuntimeContext, useStrictContext: useSelectSimpleRuntime } =
-  createStrictContext<SelectSimpleRuntimeValue>({
-    hookName: 'useSelectSimpleRuntime',
-    providerName: 'SelectSimpleRuntimeProvider',
-    displayName: 'SelectSimpleRuntimeContext',
-  });
-
 const toOptionArray = <T,>(option: T): T[] => [option];
 
-function SelectSimpleControl(): React.JSX.Element {
-  const runtime = useSelectSimpleRuntime();
-  const allowFallbackLabel = !runtime.id;
+function SelectSimpleControl({
+  safeValue,
+  onValueChange,
+  disabled,
+  placeholder,
+  triggerClassName,
+  contentClassName,
+  id,
+  ariaLabel,
+  ariaDescribedBy,
+  ariaInvalid,
+  ariaErrorMessage,
+  title,
+  size,
+  variant,
+  dataDocId,
+  dataDocAlias,
+  groupedOptions,
+}: SelectSimpleControlProps): React.JSX.Element {
+  const allowFallbackLabel = !id;
   const { ariaLabel: resolvedAriaLabel, hasAccessibleLabel } = resolveAccessibleLabel({
     children: null,
-    ariaLabel: runtime.ariaLabel,
+    ariaLabel,
     ariaLabelledBy: undefined,
-    title: allowFallbackLabel ? runtime.title : undefined,
+    title: allowFallbackLabel ? title : undefined,
     fallbackLabel: allowFallbackLabel
-      ? runtime.placeholder ??
-        runtime.dataDocAlias ??
-        runtime.dataDocId
+      ? placeholder ?? dataDocAlias ?? dataDocId
       : undefined,
   });
-  const hasLabel = hasAccessibleLabel || Boolean(runtime.id);
+  const hasLabel = hasAccessibleLabel || Boolean(id);
   if (!hasLabel) {
     warnMissingAccessibleLabel({ componentName: 'SelectSimple', hasAccessibleLabel: hasLabel });
   }
 
   return (
-    <Select
-      value={runtime.safeValue}
-      onValueChange={runtime.onValueChange}
-      disabled={runtime.disabled}
-    >
+    <Select value={safeValue} onValueChange={onValueChange} disabled={disabled}>
       <SelectTrigger
-        id={runtime.id}
+        id={id}
         className={cn(
           'w-full [&>span]:max-w-[calc(100%-1.5rem)] [&>span]:truncate [&>span]:text-left',
-          runtime.size === 'sm' && 'h-8 text-xs',
-          runtime.size === 'xs' && 'h-7 text-[10px]',
-          runtime.variant === 'subtle' &&
+          size === 'sm' && 'h-8 text-xs',
+          size === 'xs' && 'h-7 text-[10px]',
+          variant === 'subtle' &&
             'border-border/40 bg-card/40 hover:bg-card/60 hover:border-border/60',
-          runtime.triggerClassName
+          triggerClassName
         )}
         aria-label={resolvedAriaLabel}
-        aria-describedby={runtime.ariaDescribedBy}
-        aria-invalid={runtime.ariaInvalid || undefined}
-        aria-errormessage={runtime.ariaErrorMessage}
-        title={runtime.title}
-        data-doc-id={runtime.dataDocId}
-        data-doc-alias={runtime.dataDocAlias}
+        aria-describedby={ariaDescribedBy}
+        aria-invalid={ariaInvalid || undefined}
+        aria-errormessage={ariaErrorMessage}
+        title={title}
+        data-doc-id={dataDocId}
+        data-doc-alias={dataDocAlias}
       >
-        <SelectValue placeholder={runtime.placeholder} />
+        <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent
         position='popper'
         className={cn(
           'min-w-[var(--radix-select-trigger-width)] max-w-[min(34rem,calc(100vw-2rem))]',
-          runtime.contentClassName
+          contentClassName
         )}
       >
-        {runtime.groupedOptions.groups.map((group) => (
+        {groupedOptions.groups.map((group) => (
           <SelectGroup key={group.key}>
-            {runtime.groupedOptions.hasVisibleGroupLabels && group.label ? (
+            {groupedOptions.hasVisibleGroupLabels && group.label ? (
               <SelectLabel className='px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500'>
                 {group.label}
               </SelectLabel>
@@ -221,52 +224,28 @@ export function SelectSimple({
     }
     return resolvedAriaLabel;
   }, [resolvedAriaLabel, title]);
-  const runtimeValue = React.useMemo<SelectSimpleRuntimeValue>(
-    () => ({
-      safeValue,
-      onValueChange,
-      disabled,
-      placeholder,
-      triggerClassName,
-      contentClassName,
-      id,
-      ariaLabel: resolvedAriaLabel,
-      ariaDescribedBy,
-      ariaInvalid,
-      ariaErrorMessage,
-      title: resolvedTitle,
-      size,
-      variant,
-      dataDocId,
-      dataDocAlias,
-      groupedOptions,
-    }),
-    [
-      safeValue,
-      onValueChange,
-      disabled,
-      placeholder,
-      triggerClassName,
-      contentClassName,
-      id,
-      resolvedAriaLabel,
-      ariaDescribedBy,
-      ariaInvalid,
-      ariaErrorMessage,
-      resolvedTitle,
-      size,
-      variant,
-      dataDocId,
-      dataDocAlias,
-      groupedOptions,
-    ]
-  );
 
   return (
     <div className={cn('w-full', className)}>
-      <SelectSimpleRuntimeContext.Provider value={runtimeValue}>
-        <SelectSimpleControl />
-      </SelectSimpleRuntimeContext.Provider>
+      <SelectSimpleControl
+        safeValue={safeValue}
+        onValueChange={onValueChange}
+        disabled={disabled}
+        placeholder={placeholder}
+        triggerClassName={triggerClassName}
+        contentClassName={contentClassName}
+        id={id}
+        ariaLabel={resolvedAriaLabel}
+        ariaDescribedBy={ariaDescribedBy}
+        ariaInvalid={ariaInvalid}
+        ariaErrorMessage={ariaErrorMessage}
+        title={resolvedTitle}
+        size={size}
+        variant={variant}
+        dataDocId={dataDocId}
+        dataDocAlias={dataDocAlias}
+        groupedOptions={groupedOptions}
+      />
     </div>
   );
 }

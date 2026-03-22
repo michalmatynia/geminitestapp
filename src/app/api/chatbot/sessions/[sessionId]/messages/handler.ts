@@ -1,19 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 import { parseJsonBody } from '@/features/products/server';
-import { chatMessageRoleSchema } from '@/shared/contracts/chatbot';
+import {
+  chatbotSessionMessageCreateRequestSchema,
+  chatbotSessionMessageResponseSchema,
+  chatbotSessionMessagesResponseSchema,
+  type ChatbotSessionMessageResponse,
+  type ChatbotSessionMessagesResponse,
+} from '@/shared/contracts/chatbot';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, internalError, notFoundError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
-const messageSchema = z.object({
-  role: chatMessageRoleSchema,
-  content: z.string().trim().min(1),
-});
+export { chatbotSessionMessageCreateRequestSchema as messageSchema };
 
 export async function GET_handler(
   _req: NextRequest,
@@ -38,14 +40,12 @@ export async function GET_handler(
       },
     });
   }
-  return NextResponse.json(
-    { messages },
-    {
-      headers: {
-        'Cache-Control': 'no-store',
-      },
-    }
-  );
+  const response: ChatbotSessionMessagesResponse = { messages };
+  return NextResponse.json(chatbotSessionMessagesResponseSchema.parse(response), {
+    headers: {
+      'Cache-Control': 'no-store',
+    },
+  });
 }
 
 export async function POST_handler(
@@ -55,7 +55,7 @@ export async function POST_handler(
 ): Promise<Response> {
   const requestStart = Date.now();
   const { sessionId } = params;
-  const parsed = await parseJsonBody(req, messageSchema, {
+  const parsed = await parseJsonBody(req, chatbotSessionMessageCreateRequestSchema, {
     logPrefix: 'chatbot.sessions.messages.POST',
   });
   if (!parsed.ok) {
@@ -98,5 +98,6 @@ export async function POST_handler(
       },
     });
   }
-  return NextResponse.json({ message });
+  const response: ChatbotSessionMessageResponse = { message };
+  return NextResponse.json(chatbotSessionMessageResponseSchema.parse(response));
 }

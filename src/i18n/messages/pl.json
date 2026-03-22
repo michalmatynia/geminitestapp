@@ -1540,6 +1540,9 @@
       }
     },
     "subtraction": {
+      "inRound": {
+        "touchHint": "Dotknij odpowiedź, a potem dotknij Sprawdź."
+      },
       "summary": {
         "perfect": "Idealnie! Mistrz odejmowania!",
         "good": "Świetna robota!",
@@ -1547,6 +1550,9 @@
       }
     },
     "multiplication": {
+      "inRound": {
+        "touchHint": "Dotknij odpowiedź, a potem dotknij Sprawdź."
+      },
       "summary": {
         "perfect": "Idealnie! Mistrz tabliczki!",
         "good": "Świetna robota!",
@@ -1629,6 +1635,7 @@
         "done": "Zrobione",
         "confirmMonth": "Kliknij, gdy uważasz, że jesteś na właściwym miesiącu.",
         "chooseSeason": "Przeciągnij lub wybierz właściwą porę roku poniżej.",
+        "touchChooseSeason": "Dotknij karty pory roku albo przeciągnij kartę miesiąca.",
         "monthAria": "Miesiąc {monthName}"
       },
       "months": {
@@ -1729,6 +1736,8 @@
         "relationIconsLabel": "Ikony relacji",
         "relationHintPrefix": "Podpowiedź: {hint}",
         "relationHintIdle": "Najedź lub dotknij ikonę, aby zobaczyć podpowiedź.",
+        "touchIdle": "Dotknij relację, a potem dotknij parę, aby ją przypisać.",
+        "touchSelected": "Wybrana relacja: {label}. Dotknij parę, aby ją przypisać.",
         "relationsHeading": "Relacje",
         "poolCount": "{count} w puli",
         "poolAriaLabel": "Pula relacji do przeciągania",
@@ -1856,12 +1865,18 @@
       "feedback": {
         "correct": "Brawo!",
         "wrong": "To nie ten intruz."
+      },
+      "touch": {
+        "idle": "Dotknij elementu, a potem odpowiedniej grupy albo puli.",
+        "selected": "Wybrany element: {label}. Dotknij odpowiedniej grupy albo puli."
       }
     },
     "englishPronouns": {
       "inRound": {
         "roundLabel": "Runda {current}/{total}",
         "modeLabel": "Klikanie",
+        "modeLabelTouch": "Dotyk",
+        "touchHint": "Dotknij zaimka, a potem dotknij Sprawdź.",
         "check": "Sprawdź ✓"
       },
       "feedback": {
@@ -2079,9 +2094,12 @@
         },
         "order": {
           "modeLabel": "Szyk wyrazów",
+          "modeLabelTouch": "Dotknij lub przeciągnij",
           "buildLabel": "Ułóż: {sentence}",
           "dragInstruction": "Przeciągnij słowa, aby ustawić zdanie",
           "sentenceAria": "Układanie zdania",
+          "touchIdle": "Dotknij zwrotu, a potem dotknij innego zwrotu, aby przenieść go w to miejsce.",
+          "touchSelected": "Wybrany zwrot: {token}. Dotknij innego zwrotu, aby przenieść go w to miejsce.",
           "shuffle": "Tasuj ponownie",
           "feedback": {
             "perfect": "Perfekcyjnie! Zdanie gotowe.",
@@ -2122,11 +2140,14 @@
         },
         "sort": {
           "modeLabel": "Przeciągnij i upuść",
+          "modeLabelTouch": "Dotknij lub przeciągnij",
           "poolLabel": "Pula zwrotów",
           "poolAria": "Pula zwrotów do sortowania",
           "poolEmpty": "Pula pusta",
           "binAria": "Koszyk {label}",
           "missingPhrases": "Brakuje zwrotów",
+          "touchIdle": "Dotknij zwrotu, a potem dotknij koszyka z przyimkiem albo puli.",
+          "touchSelected": "Wybrany zwrot: {label}. Dotknij koszyka z przyimkiem albo puli.",
           "clearRound": "Wyczyść rundę",
           "feedback": {
             "perfect": "Perfekcyjnie! Wszystko na miejscu.",
@@ -2185,6 +2206,10 @@
         "fillPlaceholder": "Wpisz odpowiedź",
         "fillAria": "Uzupełnij brakujące słowo",
         "fillHelp": "Wpisz brakujące słowo, a potem kliknij „Sprawdź”.",
+        "touch": {
+          "idle": "Dotknij słowa, a potem innego słowa, aby przenieść je w to miejsce.",
+          "selected": "Wybrane słowo: {token}. Dotknij innego słowa, aby przenieść je w to miejsce."
+        },
         "check": "Sprawdź",
         "checking": "Sprawdzam...",
         "feedback": {
@@ -2457,6 +2482,10 @@
         "missionTitle": "Geo-misja: punkt, odcinek, bok, kąt",
         "roundLabel": "Runda {current}/{total}",
         "instruction": "Przeciągnij etykietę na oznaczone miejsce albo kliknij etykietę i potem planszę.",
+        "touch": {
+          "idle": "Dotknij etykiety, a potem zaznaczonego miejsca na planszy.",
+          "selected": "Wybrana etykieta: {label}. Dotknij zaznaczonego miejsca na planszy."
+        },
         "boardLabel": "Plansza",
         "boardFilledAria": "Plansza: etykieta {label}",
         "boardEmptyAria": "Plansza: upuść etykietę",
@@ -2663,6 +2692,10 @@
       "feedback": {
         "correct": "Brawo! Zostało"
       },
+      "touch": {
+        "idle": "Dotknij świecący punkt, a potem dotknij koszyk albo chmurę. Nadal możesz też przeciągać.",
+        "selected": "Wybrany punkt: {emoji}. Dotknij koszyk albo chmurę."
+      },
       "summary": {
         "perfect": "Idealnie! Odejmowanie masz w jednym palcu.",
         "good": "Świetna robota!",
@@ -2681,6 +2714,7 @@
         "collectedLabel": "Zebrane",
         "targetLabel": "Cel",
         "celebrationDetail": "{a} grup po {b} = {total} razem",
+        "touchHint": "Dotknij kolejną grupę, aby ją zebrać. Wszystkich grup: {total}.",
         "progress": "Zebrane: {collected}/{total} grup — dotknij kolejną!"
       }
     },
@@ -2728,6 +2762,10 @@
         "targetLabel": "Cel: {target}",
         "sumLabel": "Suma: {sum}",
         "instruction": "Przeciągnij liczby do obu stron, aby zgadzały się z celami.",
+        "touch": {
+          "idle": "Dotknij kafelka, a potem lewej strony, prawej strony albo tacy.",
+          "selected": "Wybrana liczba: {value}. Dotknij lewej strony, prawej strony albo tacy."
+        },
         "aria": {
           "leftSide": "Lewa strona wagi",
           "rightSide": "Prawa strona wagi",

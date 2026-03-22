@@ -1540,6 +1540,9 @@
       }
     },
     "subtraction": {
+      "inRound": {
+        "touchHint": "Tippe eine Antwort an und danach auf Prüfen."
+      },
       "summary": {
         "perfect": "Perfekt! Subtraktion sitzt.",
         "good": "Starke Leistung!",
@@ -1547,6 +1550,9 @@
       }
     },
     "multiplication": {
+      "inRound": {
+        "touchHint": "Tippe eine Antwort an und danach auf Prüfen."
+      },
       "summary": {
         "perfect": "Perfekt! Das Einmaleins sitzt.",
         "good": "Starke Leistung!",
@@ -1629,6 +1635,7 @@
         "done": "Fertig",
         "confirmMonth": "Klicke, wenn du denkst, dass du beim richtigen Monat bist.",
         "chooseSeason": "Ziehe oder wähle unten die richtige Jahreszeit.",
+        "touchChooseSeason": "Tippe auf eine Jahreszeitenkarte oder ziehe die Monatskarte.",
         "monthAria": "Monat {monthName}"
       },
       "months": {
@@ -1729,6 +1736,8 @@
         "relationIconsLabel": "Beziehungssymbole",
         "relationHintPrefix": "Hinweis: {hint}",
         "relationHintIdle": "Fahre ueber ein Symbol oder tippe es an, um einen Hinweis zu sehen.",
+        "touchIdle": "Tippe eine Beziehung an und danach ein Paar, um sie zuzuordnen.",
+        "touchSelected": "Ausgewaehlte Beziehung: {label}. Tippe ein Paar an, um sie zuzuordnen.",
         "relationsHeading": "Beziehungen",
         "poolCount": "{count} im Pool",
         "poolAriaLabel": "Pool mit Beziehungen zum Ziehen",
@@ -1856,12 +1865,18 @@
       "feedback": {
         "correct": "Gut gemacht!",
         "wrong": "Das ist nicht der Ausreißer."
+      },
+      "touch": {
+        "idle": "Tippe ein Element an und danach die passende Gruppe oder den Vorrat.",
+        "selected": "Gewähltes Element: {label}. Tippe die passende Gruppe oder den Vorrat an."
       }
     },
     "englishPronouns": {
       "inRound": {
         "roundLabel": "Runde {current}/{total}",
         "modeLabel": "Klicken",
+        "modeLabelTouch": "Tippen",
+        "touchHint": "Tippe ein Pronomen an und danach auf Prüfen.",
         "check": "Prüfen ✓"
       },
       "feedback": {
@@ -2079,9 +2094,12 @@
         },
         "order": {
           "modeLabel": "Wortstellung",
+          "modeLabelTouch": "Tippen oder ziehen",
           "buildLabel": "Bilde: {sentence}",
           "dragInstruction": "Ziehe die Wörter, um den Satz zu ordnen",
           "sentenceAria": "Satzbau",
+          "touchIdle": "Tippe auf eine Wendung und dann auf eine andere, um sie dorthin zu verschieben.",
+          "touchSelected": "Ausgewählte Wendung: {token}. Tippe auf eine andere, um sie dorthin zu verschieben.",
           "shuffle": "Neu mischen",
           "feedback": {
             "perfect": "Perfekt! Satz vollständig.",
@@ -2122,11 +2140,14 @@
         },
         "sort": {
           "modeLabel": "Ziehen und ablegen",
+          "modeLabelTouch": "Tippen oder ziehen",
           "poolLabel": "Pool mit Wendungen",
           "poolAria": "Pool mit Wendungen zum Sortieren",
           "poolEmpty": "Pool leer",
           "binAria": "{label}-Bereich",
           "missingPhrases": "Wendungen fehlen",
+          "touchIdle": "Tippe auf eine Wendung und dann auf einen Präpositionsbereich oder den Pool.",
+          "touchSelected": "Ausgewählte Wendung: {label}. Tippe auf einen Präpositionsbereich oder den Pool.",
           "clearRound": "Runde leeren",
           "feedback": {
             "perfect": "Perfekt! Alles ist am richtigen Platz.",
@@ -2185,6 +2206,10 @@
         "fillPlaceholder": "Antwort eingeben",
         "fillAria": "Fehlendes Wort ergänzen",
         "fillHelp": "Gib das fehlende Wort ein und klicke dann auf „Prüfen“.",
+        "touch": {
+          "idle": "Tippe ein Wort an und danach ein anderes Wort, um es dorthin zu verschieben.",
+          "selected": "Gewähltes Wort: {token}. Tippe ein anderes Wort an, um es dorthin zu verschieben."
+        },
         "check": "Prüfen",
         "checking": "Wird geprüft...",
         "feedback": {
@@ -2457,6 +2482,10 @@
         "missionTitle": "Geo-Mission: Punkt, Strecke, Seite, Winkel",
         "roundLabel": "Runde {current}/{total}",
         "instruction": "Ziehe ein Label auf die markierte Stelle oder klicke erst ein Label und dann das Brett an.",
+        "touch": {
+          "idle": "Tippe ein Label an und danach die markierte Stelle auf dem Brett.",
+          "selected": "Gewähltes Label: {label}. Tippe die markierte Stelle auf dem Brett an."
+        },
         "boardLabel": "Brett",
         "boardFilledAria": "Brett: Label {label}",
         "boardEmptyAria": "Brett: Label ablegen",
@@ -2663,6 +2692,10 @@
       "feedback": {
         "correct": "Gut gemacht! Übrig:"
       },
+      "touch": {
+        "idle": "Tippe einen leuchtenden Punkt an und danach den Korb oder die Wolke. Ziehen geht weiterhin auch.",
+        "selected": "Ausgewählter Punkt: {emoji}. Tippe den Korb oder die Wolke an."
+      },
       "summary": {
         "perfect": "Perfekt! Subtraktion sitzt.",
         "good": "Starke Leistung!",
@@ -2681,6 +2714,7 @@
         "collectedLabel": "Gesammelt",
         "targetLabel": "Ziel",
         "celebrationDetail": "{a} Gruppen mit je {b} = {total} insgesamt",
+        "touchHint": "Tippe die nächste Gruppe an, um sie einzusammeln. Insgesamt Gruppen: {total}.",
         "progress": "Gesammelt: {collected}/{total} Gruppen — tippe die nächste an!"
       }
     },
@@ -2728,6 +2762,10 @@
         "targetLabel": "Ziel: {target}",
         "sumLabel": "Summe: {sum}",
         "instruction": "Ziehe die Zahlen auf beide Seiten, damit sie zu den Zielen passen.",
+        "touch": {
+          "idle": "Tippe eine Zahl an und danach die linke Seite, rechte Seite oder Ablage.",
+          "selected": "Gewählte Zahl: {value}. Tippe die linke Seite, rechte Seite oder Ablage an."
+        },
         "aria": {
           "leftSide": "Linke Seite der Waage",
           "rightSide": "Rechte Seite der Waage",

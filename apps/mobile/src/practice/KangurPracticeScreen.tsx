@@ -180,6 +180,36 @@ type Tone = {
   textColor: string;
 };
 
+const PRACTICE_COUNT_TONE: Tone = {
+  backgroundColor: '#f1f5f9',
+  borderColor: '#cbd5e1',
+  textColor: '#475569',
+};
+
+const PRACTICE_KIND_TONE: Tone = {
+  backgroundColor: '#eef2ff',
+  borderColor: '#c7d2fe',
+  textColor: '#4338ca',
+};
+
+const PRACTICE_LOADING_TONE: Tone = {
+  backgroundColor: '#eff6ff',
+  borderColor: '#bfdbfe',
+  textColor: '#1d4ed8',
+};
+
+const PRACTICE_SYNCED_TONE: Tone = {
+  backgroundColor: '#ecfdf5',
+  borderColor: '#a7f3d0',
+  textColor: '#047857',
+};
+
+const PRACTICE_LOCAL_ONLY_TONE: Tone = {
+  backgroundColor: '#fffbeb',
+  borderColor: '#fde68a',
+  textColor: '#b45309',
+};
+
 const formatPracticeAnswerFeedback = (
   isChoiceCorrect: boolean,
   answer: string,
@@ -211,30 +241,143 @@ const formatPracticeDuelRecord = (
     pl: `Wygrane ${entry.wins} • Porażki ${entry.losses} • Remisy ${entry.ties}`,
   })[locale];
 
+const formatPracticeQuestionCountLabel = (
+  questionCount: number,
+  locale: KangurMobileLocale,
+): string => {
+  if (locale === 'de') {
+    return questionCount === 1 ? '1 Frage' : `${questionCount} Fragen`;
+  }
+
+  if (locale === 'en') {
+    return questionCount === 1 ? '1 question' : `${questionCount} questions`;
+  }
+
+  if (questionCount === 1) {
+    return '1 pytanie';
+  }
+
+  const lastDigit = questionCount % 10;
+  const lastTwoDigits = questionCount % 100;
+  if (
+    lastDigit >= 2 &&
+    lastDigit <= 4 &&
+    (lastTwoDigits < 12 || lastTwoDigits > 14)
+  ) {
+    return `${questionCount} pytania`;
+  }
+
+  return `${questionCount} pytań`;
+};
+
+const getPracticeKindChipLabel = (
+  kind: 'arithmetic' | 'logic' | 'time',
+  locale: KangurMobileLocale,
+): string =>
+  ({
+    arithmetic: {
+      de: 'Arithmetik',
+      en: 'Arithmetic',
+      pl: 'Arytmetyka',
+    },
+    logic: {
+      de: 'Logik',
+      en: 'Logic',
+      pl: 'Logika',
+    },
+    time: {
+      de: 'Zeit und Kalender',
+      en: 'Time and calendar',
+      pl: 'Czas i kalendarz',
+    },
+  })[kind][locale];
+
+type PracticeSyncPreview = {
+  body: string;
+  label: string;
+  tone: Tone;
+};
+
+const getPracticeSyncPreview = ({
+  isLoadingAuth,
+  locale,
+  sessionStatus,
+}: {
+  isLoadingAuth: boolean;
+  locale: KangurMobileLocale;
+  sessionStatus: string;
+}): PracticeSyncPreview => {
+  if (isLoadingAuth) {
+    return {
+      body: {
+        de: 'Die mobile App prüft gerade, ob das Ergebnis nach der Runde auch an die Kangur-API gesendet werden kann.',
+        en: 'The mobile app is checking whether the result can also be sent to the Kangur API after the run.',
+        pl: 'Mobilna aplikacja sprawdza, czy wynik po serii będzie można także wysłać do API Kangura.',
+      }[locale],
+      label: {
+        de: 'Synchronisierung wird geprüft',
+        en: 'Checking sync',
+        pl: 'Sprawdzanie zapisu',
+      }[locale],
+      tone: PRACTICE_LOADING_TONE,
+    };
+  }
+
+  if (sessionStatus === 'authenticated') {
+    return {
+      body: {
+        de: 'Nach der Runde wird das Ergebnis lokal gespeichert und an die Kangur-API gesendet, damit Ranglisten und Verlauf schneller aktualisiert werden.',
+        en: 'After the run, the result will be saved locally and sent to the Kangur API so leaderboards and history update faster.',
+        pl: 'Po zakończeniu serii wynik zapisze się lokalnie i wyśle do API Kangura, aby szybciej odświeżyć rankingi oraz historię.',
+      }[locale],
+      label: {
+        de: 'Lokal + API',
+        en: 'Local + API',
+        pl: 'Lokalnie + API',
+      }[locale],
+      tone: PRACTICE_SYNCED_TONE,
+    };
+  }
+
+  return {
+    body: {
+      de: 'Nach der Runde wird das Ergebnis lokal gespeichert. Melde die Lernenden-Sitzung an, damit die mobile App es auch mit der Kangur-API synchronisiert.',
+      en: 'After the run, the result will be saved locally. Sign in the learner session so the mobile app can also sync it with the Kangur API.',
+      pl: 'Po zakończeniu serii wynik zapisze się lokalnie. Zaloguj sesję ucznia, aby aplikacja mobilna mogła zsynchronizować go także z API Kangura.',
+    }[locale],
+    label: {
+      de: 'Nur lokal',
+      en: 'Local only',
+      pl: 'Tylko lokalnie',
+    }[locale],
+    tone: PRACTICE_LOCAL_ONLY_TONE,
+  };
+};
+
 const getPracticeKindDescription = (
   kind: 'arithmetic' | 'logic' | 'time',
   locale: KangurMobileLocale,
 ): string => {
   if (kind === 'logic') {
     return {
-      de: 'Dies ist das erste mobile Logikquiz in der App. Es nutzt textbasierte Multiple-Choice-Fragen und denselben Fortschritts- und Ergebnisweg wie das Arithmetiktraining.',
-      en: 'This is the first mobile logic quiz in the app. It uses text-based multiple-choice questions and the same progress and score path as arithmetic practice.',
-      pl: 'To pierwszy mobilny quiz logiczny w aplikacji. Korzysta z tekstowych pytań wielokrotnego wyboru i tej samej ścieżki zapisu postępu oraz wyników co trening arytmetyczny.',
+      de: 'Das mobile Logiktraining nutzt textbasierte Multiple-Choice-Fragen und dieselbe Ergebnis-, Verlaufs- und Folgelektionsstrecke wie die übrigen Trainingsmodi.',
+      en: 'Mobile logic practice uses text-based multiple-choice questions and the same score, history, and follow-up lesson flow as the other practice modes.',
+      pl: 'Mobilny trening logiki korzysta z tekstowych pytań wielokrotnego wyboru i z tej samej ścieżki wyników, historii oraz dalszych lekcji co pozostałe tryby treningu.',
     }[locale];
   }
 
   if (kind === 'time') {
     return {
-      de: 'Dies ist ein leichtes mobiles Zeit- und Kalendertraining. Es verwendet weiterhin einfache Multiple-Choice-Fragen und denselben Fortschritts- sowie Ergebnisweg.',
-      en: 'This is a lightweight mobile time and calendar practice mode. It still uses simple multiple-choice questions and the same progress and score path.',
-      pl: 'To lekki mobilny trening czasu i kalendarza. Nadal korzysta z prostych pytań wielokrotnego wyboru oraz tej samej ścieżki postępu i wyników.',
+      de: 'Das mobile Zeit- und Kalendertraining bündelt kurze Fragen, lokale Fortschritte und direkte Wege zurück zu Lektionen, Verlauf und Tagesplan.',
+      en: 'Mobile time and calendar practice combines short questions, local progress, and direct routes back to lessons, history, and the daily plan.',
+      pl: 'Mobilny trening czasu i kalendarza łączy krótkie pytania, lokalny postęp oraz bezpośrednie przejścia do lekcji, historii i planu dnia.',
     }[locale];
   }
 
   return {
-    de: 'Dies ist der erste mobile Ersatz fuer den Hauptspielmodus. Im Moment umfasst er ein leichtes Multiple-Choice-Training fuer die Grundoperationen.',
-    en: 'This is the first mobile fallback for the main game mode. For now it covers lightweight multiple-choice practice for the basic operations.',
-    pl: 'To pierwszy mobilny zamiennik głównego trybu gry. Na razie obejmuje lekki trening pytań wielokrotnego wyboru dla podstawowych operacji.',
+    de: 'Das mobile Arithmetiktraining deckt die Grundoperationen mit kurzen Serien ab und verbindet Ergebnisse direkt mit Verlauf, Lektionen und den nächsten Aufgaben.',
+    en: 'Mobile arithmetic practice covers the core operations in short runs and connects results directly with history, lessons, and the next tasks.',
+    pl: 'Mobilny trening arytmetyki obejmuje podstawowe działania w krótkich seriach i od razu łączy wynik z historią, lekcjami oraz kolejnymi zadaniami.',
   }[locale];
 };
 
@@ -1106,6 +1249,9 @@ export function KangurPracticeScreen(): React.JSX.Element {
     ? resolvePracticeScoreSyncAppearance(scoreSyncState.status)
     : null;
   const lessonHref = createKangurLessonHrefForPracticeOperation(operation);
+  const practiceModeHistoryHref = createKangurResultsHref({
+    operation,
+  });
   const practiceDuels = useKangurMobilePracticeDuels();
   const practiceSyncProof = useKangurPracticeSyncProof({
     enabled: __DEV__ && scoreSyncState?.status === 'synced',
@@ -1192,6 +1338,12 @@ export function KangurPracticeScreen(): React.JSX.Element {
   const openDuelSession = (sessionId: string): void => {
     router.replace(createKangurDuelsHref({ sessionId }));
   };
+  const practiceSyncPreview = getPracticeSyncPreview({
+    isLoadingAuth,
+    locale,
+    sessionStatus: session.status,
+  });
+  const shouldShowPreparationCard = completion === null && currentIndex === 0;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
@@ -1237,6 +1389,126 @@ export function KangurPracticeScreen(): React.JSX.Element {
               {getPracticeKindDescription(operationConfig.kind, locale)}
             </Text>
           </Card>
+
+          {shouldShowPreparationCard ? (
+            <Card>
+              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                {copy({
+                  de: 'Vor dem Start',
+                  en: 'Before you start',
+                  pl: 'Przed startem',
+                })}
+              </Text>
+              <Text style={{ color: '#0f172a', fontSize: 22, fontWeight: '800' }}>
+                {copy({
+                  de: 'Trainingsplan',
+                  en: 'Session plan',
+                  pl: 'Plan sesji',
+                })}
+              </Text>
+              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {copy({
+                  de: 'Vor dem ersten Tipp siehst du hier den Umfang der Serie, die Speicherstrategie und die schnellsten Wege zurück zu Lektionen, Verlauf und Tagesplan.',
+                  en: 'Before the first tap, this shows the run size, the save path, and the quickest routes back to lessons, history, and the daily plan.',
+                  pl: 'Przed pierwszym kliknięciem widzisz tutaj rozmiar serii, sposób zapisu oraz najszybsze przejścia do lekcji, historii i planu dnia.',
+                })}
+              </Text>
+
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                <Pill
+                  label={formatPracticeQuestionCountLabel(questions.length, locale)}
+                  tone={PRACTICE_COUNT_TONE}
+                />
+                <Pill
+                  label={getPracticeKindChipLabel(operationConfig.kind, locale)}
+                  tone={PRACTICE_KIND_TONE}
+                />
+                <Pill label={practiceSyncPreview.label} tone={practiceSyncPreview.tone} />
+              </View>
+
+              <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
+                {practiceSyncPreview.body}
+              </Text>
+
+              <View style={{ gap: 10 }}>
+                {lessonHref ? (
+                  <Link href={lessonHref} asChild>
+                    <Pressable
+                      accessibilityRole='button'
+                      style={{
+                        alignSelf: 'stretch',
+                        width: '100%',
+                        borderRadius: 16,
+                        backgroundColor: '#0f172a',
+                        paddingHorizontal: 14,
+                        paddingVertical: 12,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: '#ffffff',
+                          fontWeight: '700',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {translateKangurMobileActionLabel('Open matching lesson', locale)}
+                      </Text>
+                    </Pressable>
+                  </Link>
+                ) : null}
+                <Link href={practiceModeHistoryHref} asChild>
+                  <Pressable
+                    accessibilityRole='button'
+                    style={{
+                      alignSelf: 'stretch',
+                      width: '100%',
+                      borderRadius: 16,
+                      borderWidth: 1,
+                      borderColor: '#cbd5e1',
+                      backgroundColor: '#ffffff',
+                      paddingHorizontal: 14,
+                      paddingVertical: 12,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: '#0f172a',
+                        fontWeight: '700',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {translateKangurMobileActionLabel('View mode history', locale)}
+                    </Text>
+                  </Pressable>
+                </Link>
+                <Link href={createKangurPlanHref()} asChild>
+                  <Pressable
+                    accessibilityRole='button'
+                    style={{
+                      alignSelf: 'stretch',
+                      width: '100%',
+                      borderRadius: 16,
+                      borderWidth: 1,
+                      borderColor: '#cbd5e1',
+                      backgroundColor: '#ffffff',
+                      paddingHorizontal: 14,
+                      paddingVertical: 12,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: '#0f172a',
+                        fontWeight: '700',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {translateKangurMobileActionLabel('Open daily plan', locale)}
+                    </Text>
+                  </Pressable>
+                </Link>
+              </View>
+            </Card>
+          ) : null}
 
           {completion ? (
             <Card>
@@ -2096,9 +2368,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                   </Text>
                 </Pressable>
                 <Link
-                  href={createKangurResultsHref({
-                    operation,
-                  })}
+                  href={practiceModeHistoryHref}
                   asChild
                 >
                   <Pressable

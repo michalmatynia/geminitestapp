@@ -68,7 +68,7 @@ describe('PlayerProgressCard', () => {
   it('uses shared metric styling and grouped badge tracks for player progress', () => {
     render(<PlayerProgressCard progress={progress} />);
 
-    expect(screen.getByTestId('player-progress-copy')).toHaveTextContent('Postepy ucznia');
+    expect(screen.getByTestId('player-progress-copy')).toHaveTextContent('Postępy ucznia');
     expect(screen.getByTestId('player-progress-shell')).toHaveClass(
       'glass-panel',
       'kangur-panel-soft'
@@ -76,7 +76,7 @@ describe('PlayerProgressCard', () => {
     expect(screen.getByTestId('player-progress-level-bar')).toHaveAttribute('aria-valuenow', '92');
     expect(screen.getByText('Gier').parentElement).toHaveClass('soft-card', 'border');
     expect(screen.getByText('Lekcji').parentElement).toHaveClass('soft-card', 'border');
-    expect(screen.getByText('Skutecznosc').parentElement).toHaveClass('soft-card', 'border');
+    expect(screen.getByText('Skuteczność').parentElement).toHaveClass('soft-card', 'border');
     expect(screen.getByText('Seria').parentElement).toHaveClass('soft-card', 'border');
     expect(screen.getByText('XP / grę').parentElement).toHaveClass('soft-card', 'border');
     expect(screen.getByText('XP / grę').parentElement).toHaveTextContent('27');
@@ -85,7 +85,7 @@ describe('PlayerProgressCard', () => {
     );
     expect(screen.getByTestId('player-progress-top-activity')).toHaveClass('soft-card', 'border');
     expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent(
-      'Najczesciej cwiczysz'
+      'Najczęściej ćwiczysz'
     );
     expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent('112 XP');
     expect(screen.getByTestId('player-progress-next-badge')).toHaveTextContent(

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { resolveAiInsightsContextRegistryEnvelope } from '@/features/ai/insights/context-registry/server';
 import { generateAnalyticsInsight } from '@/features/ai/insights/server';
 import { listAiInsights } from '@/features/ai/insights/server';
 import { startAiInsightsQueue } from '@/features/jobs/server';
 import {
+  aiInsightsListQuerySchema,
   analyticsInsightRunRequestSchema,
   type AiInsightResponse,
   type AiInsightsResponse,
@@ -13,14 +13,12 @@ import {
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
-const listSchema = z.object({
-  limit: z.coerce.number().int().positive().max(50).optional(),
-});
+export { aiInsightsListQuerySchema as listSchema };
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   startAiInsightsQueue();
   const url = new URL(req.url);
-  const parsed = listSchema.parse(Object.fromEntries(url.searchParams.entries()));
+  const parsed = aiInsightsListQuerySchema.parse(Object.fromEntries(url.searchParams.entries()));
   const insights = await listAiInsights('analytics', parsed.limit ?? 10);
   const response: AiInsightsResponse = { insights };
   return NextResponse.json(response);

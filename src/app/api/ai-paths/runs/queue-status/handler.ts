@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { canAccessGlobalAiPathRuns, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
 import { getAiPathRunQueueStatus } from '@/features/jobs/server';
+import { aiPathRunQueueStatusQuerySchema } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
-import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
 
 const parseEnvNumber = (value: string | undefined, fallback: number): number => {
   const parsed = Number.parseInt(value ?? '', 10);
@@ -24,16 +23,7 @@ export const __testOnly = {
   },
 };
 
-export const querySchema = z.object({
-  visibility: z.preprocess((value) => {
-    const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
-    return normalized === 'global' ? 'global' : 'scoped';
-  }, z.enum(['scoped', 'global'])).default('scoped'),
-  fresh: z.preprocess((value) => {
-    const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
-    return normalized === '1' || normalized === 'true' || normalized === 'yes';
-  }, z.boolean()).default(false),
-});
+export const querySchema = aiPathRunQueueStatusQuerySchema;
 
 const resolveQueueStatusQueryInput = (
   req: Request,

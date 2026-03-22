@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
+import { portablePathJsonSchemaKindQuerySchema } from '@/shared/contracts/ai-paths-portable-engine';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
@@ -11,19 +11,13 @@ import {
   buildPortablePathJsonSchemaDiffReport,
   getPortableNodeCodeObjectContractsHash,
 } from '@/shared/lib/ai-paths/portable-engine';
-import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
 
 const SCHEMA_DIFF_KIND_VALUES = ['all', ...PORTABLE_PATH_JSON_SCHEMA_KINDS] as const;
 type SchemaDiffKindQueryValue = (typeof SCHEMA_DIFF_KIND_VALUES)[number];
 const SCHEMA_DIFF_KIND_VALUE_SET = new Set<string>(SCHEMA_DIFF_KIND_VALUES);
 const SCHEMA_DIFF_CACHE_CONTROL = 'private, max-age=300, stale-while-revalidate=900';
 
-export const querySchema = z.object({
-  kind: z.preprocess(
-    (value: unknown) => normalizeOptionalQueryString(value)?.toLowerCase(),
-    z.enum(SCHEMA_DIFF_KIND_VALUES).optional()
-  ),
-});
+export { portablePathJsonSchemaKindQuerySchema as querySchema };
 
 const buildSchemaDiffEtag = (payload: unknown): string => {
   const serialized = JSON.stringify(payload);
@@ -55,8 +49,8 @@ const resolveSchemaDiffQueryInput = (
   ...((ctx.query ?? {}) as Record<string, unknown>),
 });
 
-const parseSchemaDiffKindQuery = (value: unknown): SchemaDiffKindQueryValue => {
-  const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
+const parseSchemaDiffKindQuery = (value: string | undefined): SchemaDiffKindQueryValue => {
+  const normalized = value?.toLowerCase();
   if (!normalized) {
     return 'all';
   }
@@ -69,7 +63,9 @@ const parseSchemaDiffKindQuery = (value: unknown): SchemaDiffKindQueryValue => {
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
 
-  const query = resolveSchemaDiffQueryInput(req, _ctx) as z.infer<typeof querySchema>;
+  const query = portablePathJsonSchemaKindQuerySchema.parse(
+    resolveSchemaDiffQueryInput(req, _ctx)
+  );
   const kindRaw = parseSchemaDiffKindQuery(query.kind);
 
   const diff = buildPortablePathJsonSchemaDiffReport();

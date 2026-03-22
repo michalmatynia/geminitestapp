@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   enforceAiPathsActionRateLimit,
   requireAiPathsAccessOrInternal,
 } from '@/features/ai/ai-paths/server';
+import { aiPathsPlaywrightRunRouteParamsSchema } from '@/shared/contracts/ai-paths';
 import {
   readPlaywrightNodeRun,
   type PlaywrightNodeRunRecord,
@@ -21,10 +21,6 @@ const toPublicRun = (
   return rest;
 };
 
-const paramsSchema = z.object({
-  runId: z.string().trim().min(1, 'Run id is required'),
-});
-
 export async function GET_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
@@ -35,7 +31,7 @@ export async function GET_handler(
     await enforceAiPathsActionRateLimit(access, 'playwright-poll');
   }
 
-  const parsedParams = paramsSchema.safeParse(params);
+  const parsedParams = aiPathsPlaywrightRunRouteParamsSchema.safeParse(params);
   if (!parsedParams.success) {
     throw validationError('Invalid route parameters', {
       issues: parsedParams.error.flatten(),

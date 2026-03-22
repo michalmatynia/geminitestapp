@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-22T08:42:57.285Z",
+  "generatedAt": "2026-03-22T10:14:24.005Z",
   "status": "passed",
   "summary": {
     "total": 58,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 58,
     "status": "passed",
-    "fileCount": 5653
+    "fileCount": 5669
   },
   "scope": {
     "root": "src",
@@ -45,7 +45,7 @@
       "ruleId": "non-null-assertion",
       "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
       "file": "src/app/api/ai-paths/runs/enqueue/handler.ts",
-      "line": 172,
+      "line": 145,
       "column": null,
       "snippet": null,
       "context": null
@@ -641,5 +641,5 @@
       "infoCount": 8
     }
   ],
-  "durationMs": 2149
+  "durationMs": 1493
 }

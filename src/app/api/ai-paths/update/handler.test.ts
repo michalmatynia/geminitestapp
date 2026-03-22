@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { aiPathEntityUpdateRequestSchema } from '@/shared/contracts/ai-paths';
+
 const {
   requireAiPathsAccessOrInternalMock,
   enforceAiPathsActionRateLimitMock,
@@ -143,6 +145,11 @@ describe('ai-paths update handler', () => {
     );
 
     expect(response.status).toBe(200);
+    expect(parseJsonBodyMock).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      aiPathEntityUpdateRequestSchema,
+      expect.objectContaining({ logPrefix: 'ai-paths.update' })
+    );
     expect(productUpdateSafeParseMock).toHaveBeenCalledWith({ parameters: [] });
     expect(productUpdateMock).toHaveBeenCalledWith('product-1', { parameters: [] });
     expect(getProductRepositoryMock).not.toHaveBeenCalled();

@@ -11,6 +11,7 @@ import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
 import type { DropResult } from '@hello-pangea/dnd';
 
@@ -62,6 +63,8 @@ export type LogicalThinkingLabGameCopy = {
     selectTokenAriaTemplate: string;
     selectedTemplate: string;
     idle: string;
+    touchIdle: string;
+    touchSelectedTemplate: string;
     moveToFirst: string;
     moveToSecond: string;
     moveToPool: string;
@@ -75,6 +78,8 @@ export type LogicalThinkingLabGameCopy = {
     selectItemAriaTemplate: string;
     selectedTemplate: string;
     idle: string;
+    touchIdle: string;
+    touchSelectedTemplate: string;
     moveToYes: string;
     moveToNo: string;
     moveToPool: string;
@@ -175,6 +180,7 @@ export default function LogicalThinkingLabGame({
   analogyRounds,
   copy,
 }: LogicalThinkingLabGameProps): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const [stageIndex, setStageIndex] = useState(0);
   const [patternState, setPatternState] = useState(buildPatternState);
   const [patternChecked, setPatternChecked] = useState(false);
@@ -485,9 +491,15 @@ export default function LogicalThinkingLabGame({
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
+                        data-testid={`logical-thinking-pattern-slot-${slotId.replace('pattern-slot-', '')}`}
                         className={cn(
-                          'flex h-12 w-12 items-center justify-center rounded-xl border-2 border-dashed text-xl',
-                          snapshot.isDraggingOver ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200'
+                          'flex items-center justify-center rounded-xl border-2 border-dashed text-xl transition touch-manipulation select-none',
+                          isCoarsePointer ? 'h-16 w-16 text-2xl' : 'h-12 w-12',
+                          snapshot.isDraggingOver
+                            ? 'border-indigo-400 bg-indigo-50'
+                            : patternSelectedTokenId
+                              ? 'border-indigo-300 bg-indigo-50/70'
+                              : 'border-slate-200'
                         )}
                         role='button'
                         tabIndex={patternChecked ? -1 : 0}
@@ -543,7 +555,8 @@ export default function LogicalThinkingLabGame({
                                 {...dragProvided.draggableProps}
                                 {...dragProvided.dragHandleProps}
                                 className={cn(
-                                  'rounded-md px-1 text-2xl',
+                                  'rounded-md px-1 text-2xl touch-manipulation select-none transition',
+                                  isCoarsePointer && 'min-h-[3.75rem] min-w-[3.75rem] active:scale-[0.98]',
                                   patternSelectedTokenId === token.id &&
                                     'ring-2 ring-indigo-300/80 ring-offset-2 ring-offset-white'
                                 )}
@@ -578,9 +591,14 @@ export default function LogicalThinkingLabGame({
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
+                  data-testid='logical-thinking-pattern-pool'
                   className={cn(
-                    'flex flex-wrap items-center justify-center gap-2 rounded-2xl border px-3 py-3',
-                    snapshot.isDraggingOver ? 'border-indigo-300 bg-indigo-50/70' : 'border-slate-200/70'
+                    'flex flex-wrap items-center justify-center gap-2 rounded-2xl border px-3 py-3 transition',
+                    snapshot.isDraggingOver
+                      ? 'border-indigo-300 bg-indigo-50/70'
+                      : patternSelectedToken
+                        ? 'border-indigo-200 bg-indigo-50/50'
+                        : 'border-slate-200/70'
                   )}
                 >
                   {patternState['pattern-pool'].map((token, index) => (
@@ -598,7 +616,8 @@ export default function LogicalThinkingLabGame({
                           {...dragProvided.draggableProps}
                           {...dragProvided.dragHandleProps}
                           className={cn(
-                            'rounded-xl bg-white px-3 py-2 text-2xl shadow-sm',
+                            'rounded-xl bg-white px-3 py-2 text-2xl shadow-sm touch-manipulation select-none transition',
+                            isCoarsePointer && 'min-h-[3.75rem] min-w-[3.75rem] active:scale-[0.98]',
                             patternSelectedTokenId === token.id &&
                               'ring-2 ring-indigo-300/80 ring-offset-2 ring-offset-white'
                           )}
@@ -625,16 +644,22 @@ export default function LogicalThinkingLabGame({
             </Droppable>
             <div className='flex flex-wrap items-center justify-center gap-2 text-xs'>
               <span
+                data-testid='logical-thinking-pattern-touch-hint'
                 className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500'
                 role='status'
                 aria-live='polite'
                 aria-atomic='true'
               >
                 {patternSelectedToken
-                  ? formatTemplate(copy.pattern.selectedTemplate, {
-                      token: patternSelectedToken.label,
-                    })
-                  : copy.pattern.idle}
+                  ? formatTemplate(
+                      isCoarsePointer ? copy.pattern.touchSelectedTemplate : copy.pattern.selectedTemplate,
+                      {
+                        token: patternSelectedToken.label,
+                      }
+                    )
+                  : isCoarsePointer
+                    ? copy.pattern.touchIdle
+                    : copy.pattern.idle}
               </span>
               <KangurButton
                 size='sm'
@@ -679,12 +704,19 @@ export default function LogicalThinkingLabGame({
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
+                      data-testid={`logical-thinking-classify-zone-${zoneId.replace('classify-', '')}`}
                       className={cn(
-                        'flex min-h-[120px] flex-col gap-2 rounded-2xl border px-3 py-3',
+                        'flex min-h-[120px] flex-col gap-2 rounded-2xl border px-3 py-3 transition touch-manipulation select-none',
                         zoneId === 'classify-yes'
                           ? 'border-emerald-200/70'
                           : 'border-rose-200/70',
-                        snapshot.isDraggingOver && 'bg-amber-50/70'
+                        snapshot.isDraggingOver && 'bg-amber-50/70',
+                        isCoarsePointer && 'min-h-[144px]',
+                        classifySelectedItem &&
+                          !snapshot.isDraggingOver &&
+                          (zoneId === 'classify-yes'
+                            ? 'bg-emerald-50/60'
+                            : 'bg-rose-50/50')
                       )}
                       role='button'
                       tabIndex={classifyChecked ? -1 : 0}
@@ -728,7 +760,8 @@ export default function LogicalThinkingLabGame({
                                 {...dragProvided.draggableProps}
                                 {...dragProvided.dragHandleProps}
                                 className={cn(
-                                  'rounded-xl bg-white px-3 py-2 shadow-sm',
+                                  'rounded-xl bg-white px-3 py-2 shadow-sm touch-manipulation select-none transition',
+                                  isCoarsePointer && 'min-h-[3.75rem] min-w-[3.75rem] active:scale-[0.98]',
                                   classifySelectedTokenId === item.id &&
                                     'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white'
                                 )}
@@ -762,9 +795,14 @@ export default function LogicalThinkingLabGame({
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
+                  data-testid='logical-thinking-classify-pool'
                   className={cn(
-                    'flex flex-wrap items-center justify-center gap-2 rounded-2xl border px-3 py-3',
-                    snapshot.isDraggingOver ? 'border-emerald-200 bg-emerald-50/60' : 'border-slate-200/70'
+                    'flex flex-wrap items-center justify-center gap-2 rounded-2xl border px-3 py-3 transition',
+                    snapshot.isDraggingOver
+                      ? 'border-emerald-200 bg-emerald-50/60'
+                      : classifySelectedItem
+                        ? 'border-emerald-200/80 bg-emerald-50/40'
+                        : 'border-slate-200/70'
                   )}
                 >
                   {classifyState['classify-pool'].map((item, index) => (
@@ -782,7 +820,8 @@ export default function LogicalThinkingLabGame({
                           {...dragProvided.draggableProps}
                           {...dragProvided.dragHandleProps}
                           className={cn(
-                            'rounded-xl bg-white px-3 py-2 text-2xl shadow-sm',
+                            'rounded-xl bg-white px-3 py-2 text-2xl shadow-sm touch-manipulation select-none transition',
+                            isCoarsePointer && 'min-h-[3.75rem] min-w-[3.75rem] active:scale-[0.98]',
                             classifySelectedTokenId === item.id &&
                               'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white'
                           )}
@@ -809,16 +848,24 @@ export default function LogicalThinkingLabGame({
             </Droppable>
             <div className='flex flex-wrap items-center justify-center gap-2 text-xs'>
               <span
+                data-testid='logical-thinking-classify-touch-hint'
                 className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500'
                 role='status'
                 aria-live='polite'
                 aria-atomic='true'
               >
                 {classifySelectedItem
-                  ? formatTemplate(copy.classify.selectedTemplate, {
-                      item: classifySelectedItem.label,
-                    })
-                  : copy.classify.idle}
+                  ? formatTemplate(
+                      isCoarsePointer
+                        ? copy.classify.touchSelectedTemplate
+                        : copy.classify.selectedTemplate,
+                      {
+                        item: classifySelectedItem.label,
+                      }
+                    )
+                  : isCoarsePointer
+                    ? copy.classify.touchIdle
+                    : copy.classify.idle}
               </span>
               <KangurButton
                 size='sm'
@@ -874,7 +921,8 @@ export default function LogicalThinkingLabGame({
                     setFeedback(null);
                   }}
                   className={cn(
-                    'rounded-2xl border px-3 py-2 text-sm font-semibold transition',
+                    'rounded-2xl border px-3 py-2 text-sm font-semibold transition touch-manipulation select-none',
+                    isCoarsePointer && 'min-h-[3.75rem] active:scale-[0.98]',
                     isSelected ? 'border-violet-300 bg-violet-50' : 'border-slate-200/70 bg-white',
                     isCorrect && 'border-emerald-300 bg-emerald-50',
                     isWrong && 'border-rose-300 bg-rose-50'

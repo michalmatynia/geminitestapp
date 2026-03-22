@@ -1,12 +1,12 @@
 import { ObjectId, Sort } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   enforceAiPathsActionRateLimit,
   isCollectionAllowed,
   requireAiPathsAccessOrInternal,
 } from '@/features/ai/ai-paths/server';
+import { aiPathsDbActionRequestSchema } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import {
@@ -17,45 +17,6 @@ import { getUnsupportedProviderActionMessage } from '@/shared/lib/ai-paths/core/
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-
-const actionSchema = z.object({
-  provider: z.enum(['auto', 'mongodb']).optional(),
-  collection: z.string().trim().min(1),
-  collectionMap: z.record(z.string(), z.string()).optional(),
-  action: z.enum([
-    'insertOne',
-    'insertMany',
-    'find',
-    'findOne',
-    'countDocuments',
-    'distinct',
-    'aggregate',
-    'updateOne',
-    'updateMany',
-    'replaceOne',
-    'findOneAndUpdate',
-    'deleteOne',
-    'deleteMany',
-    'findOneAndDelete',
-  ]),
-  filter: z.record(z.string(), z['unknown']()).optional(),
-  query: z.never().optional(),
-  update: z
-    .union([z.record(z.string(), z['unknown']()), z.array(z.record(z.string(), z['unknown']()))])
-    .optional(),
-  updates: z.never().optional(),
-  pipeline: z.array(z.record(z.string(), z['unknown']())).optional(),
-  document: z.record(z.string(), z['unknown']()).optional(),
-  documents: z.array(z.record(z.string(), z['unknown']())).optional(),
-  projection: z.record(z.string(), z['unknown']()).optional(),
-  sort: z.record(z.string(), z.union([z.number(), z.literal('asc'), z.literal('desc')])).optional(),
-  limit: z.number().int().min(1).max(200).optional(),
-  idType: z.enum(['string', 'objectId']).optional(),
-  distinctField: z.string().optional(),
-  upsert: z.boolean().optional(),
-  returnDocument: z.enum(['before', 'after']).optional(),
-});
 
 const coerceQuery = (value: unknown): Record<string, unknown> => {
   if (!value) return {};
@@ -202,7 +163,7 @@ export async function postAiPathsDbActionHandler(
   if (!isInternal) {
     await enforceAiPathsActionRateLimit(access, 'db-action');
   }
-  const parsed = await parseJsonBody(req, actionSchema, {
+  const parsed = await parseJsonBody(req, aiPathsDbActionRequestSchema, {
     logPrefix: 'ai-paths.db-action',
   });
   if (!parsed.ok) return parsed.response;

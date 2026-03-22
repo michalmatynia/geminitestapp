@@ -5,10 +5,12 @@ const {
   startAiInsightsQueueMock,
   resolveAiInsightsContextRegistryEnvelopeMock,
   generateAnalyticsInsightMock,
+  listAiInsightsMock,
 } = vi.hoisted(() => ({
   startAiInsightsQueueMock: vi.fn(),
   resolveAiInsightsContextRegistryEnvelopeMock: vi.fn(),
   generateAnalyticsInsightMock: vi.fn(),
+  listAiInsightsMock: vi.fn(),
 }));
 
 vi.mock('@/features/jobs/server', () => ({
@@ -20,13 +22,30 @@ vi.mock('@/features/ai/insights/context-registry/server', () => ({
 }));
 
 vi.mock('@/features/ai/insights/server', () => ({
-  listAiInsights: vi.fn(),
+  listAiInsights: listAiInsightsMock,
   generateAnalyticsInsight: generateAnalyticsInsightMock,
 }));
 
 describe('analytics insights handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('lists analytics insights with shared limit query parsing', async () => {
+    const { GET_handler } = await import('./handler');
+    listAiInsightsMock.mockResolvedValue([{ id: 'insight-list-1', type: 'analytics' }]);
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/analytics/insights?limit=5'),
+      {} as never
+    );
+    const data = await response.json();
+
+    expect(startAiInsightsQueueMock).toHaveBeenCalledTimes(1);
+    expect(listAiInsightsMock).toHaveBeenCalledWith('analytics', 5);
+    expect(data).toEqual({
+      insights: [{ id: 'insight-list-1', type: 'analytics' }],
+    });
   });
 
   it('resolves registry context before generating an analytics insight', async () => {

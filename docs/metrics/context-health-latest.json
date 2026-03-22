@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-22T08:42:59.330Z",
+  "generatedAt": "2026-03-22T10:14:25.926Z",
   "status": "warn",
   "summary": {
     "total": 7,
@@ -103,5 +103,5 @@
       "infoCount": 5
     }
   ],
-  "durationMs": 441
+  "durationMs": 355
 }

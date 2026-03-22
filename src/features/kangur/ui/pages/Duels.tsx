@@ -18,7 +18,6 @@ import { KangurTopNavigationController } from '@/features/kangur/ui/components/K
 import { LOBBY_FRESH_WINDOW_MS, LOBBY_POLL_INTERVAL_MS } from './duels/constants';
 
 type LobbySort = 'recent' | 'time_fast' | 'time_slow' | 'questions_low' | 'questions_high';
-const DUELS_MAIN_ID = 'kangur-duels-main';
 
 /**
  * Duels Page
@@ -110,10 +109,8 @@ function DuelsContent(): React.JSX.Element {
     <KangurStandardPageLayout
       tone='play'
       id='kangur-duels-page'
-      skipLinkTargetId={DUELS_MAIN_ID}
       navigation={<KangurTopNavigationController navigation={navigation} />}
       containerProps={{
-        id: DUELS_MAIN_ID,
         className: cn('w-full max-w-5xl pb-10 pt-6', KANGUR_PANEL_GAP_CLASSNAME),
       }}
     >

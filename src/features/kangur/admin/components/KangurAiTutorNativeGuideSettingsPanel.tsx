@@ -123,6 +123,17 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
   const [debouncedEditorValue, setDebouncedEditorValue] = useState(editorValue);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const setSerializedEditorState = (
+    serialized: string,
+    options?: { persistAsSaved?: boolean }
+  ): void => {
+    setEditorValue(serialized);
+    setDebouncedEditorValue(serialized);
+    if (options?.persistAsSaved) {
+      setPersistedEditorValue(serialized);
+    }
+  };
+
   useEffect(() => {
     // Clear previous timer if user is still typing
     if (debounceTimerRef.current) {
@@ -389,8 +400,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
 
     if (store) {
       const serialized = stringifyNativeGuideStore(store);
-      setEditorValue(serialized);
-      setPersistedEditorValue(serialized);
+      setSerializedEditorState(serialized, { persistAsSaved: true });
       setSelectedEntryId(store.entries[0]?.id ?? null);
     }
     setTranslationStoresByLocale(localizedStores);
@@ -404,7 +414,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
 
   const applyStore = (nextStore: KangurAiTutorNativeGuideStore): void => {
     const normalized = parseKangurAiTutorNativeGuideStore(nextStore);
-    setEditorValue(stringifyNativeGuideStore(normalized));
+    setSerializedEditorState(stringifyNativeGuideStore(normalized));
   };
 
   const updateSelectedEntry = (
@@ -500,7 +510,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
 
   const handleResetToDefaults = (): void => {
     const serialized = stringifyNativeGuideStore(DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE);
-    setEditorValue(serialized);
+    setSerializedEditorState(serialized);
     setSelectedEntryId(DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE.entries[0]?.id ?? null);
   };
 
@@ -543,8 +553,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
 
     if (savedStore) {
       const normalized = stringifyNativeGuideStore(savedStore);
-      setEditorValue(normalized);
-      setPersistedEditorValue(normalized);
+      setSerializedEditorState(normalized, { persistAsSaved: true });
       toast('Kangur AI Tutor native guides saved.', {
         variant: 'success',
       });

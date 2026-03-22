@@ -1,7 +1,7 @@
 {
   "sharedBase": {
-    "maxBytes": 300000,
-    "maxChunkCount": 3
+    "maxBytes": 540000,
+    "maxChunkCount": 6
   },
   "routes": [
     {

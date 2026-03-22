@@ -1,19 +1,7 @@
-import * as React from 'react';
+import { ADMIN_CHATBOT_SECTION } from './admin-section-configs';
+import { createAdminSectionBreadcrumbs } from './admin-section-breadcrumbs';
 
-import type { AdminSectionBreadcrumbWrapperProps } from '@/shared/contracts/ui';
-
-import { AdminSectionBreadcrumbs } from './admin-section-breadcrumbs';
-
-export function AdminChatbotBreadcrumbs({
-  current,
-  parent,
-  className,
-}: AdminSectionBreadcrumbWrapperProps): React.JSX.Element {
-  const breadcrumbProps = { current, parent, className };
-  return (
-    <AdminSectionBreadcrumbs
-      section={{ label: 'Chatbot', href: '/admin/chatbot' }}
-      {...breadcrumbProps}
-    />
-  );
-}
+export const AdminChatbotBreadcrumbs = createAdminSectionBreadcrumbs({
+  section: ADMIN_CHATBOT_SECTION,
+  displayName: 'AdminChatbotBreadcrumbs',
+});

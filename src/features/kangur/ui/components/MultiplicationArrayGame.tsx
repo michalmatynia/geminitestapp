@@ -35,6 +35,7 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { getKangurMiniGameFinishLabel } from '@/features/kangur/ui/constants/mini-game-i18n';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
@@ -88,6 +89,7 @@ export default function MultiplicationArrayGame({
   onFinish,
 }: MultiplicationArrayGameProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const isCoarsePointer = useKangurCoarsePointer();
   const finishLabel = getKangurMiniGameFinishLabel(
     translations,
     finishLabelVariant === 'topics' ? 'topics' : 'done'
@@ -286,6 +288,16 @@ export default function MultiplicationArrayGame({
 
             {/* Groups grid */}
             <div className={`${KANGUR_STACK_TIGHT_CLASSNAME} w-full`}>
+              {isCoarsePointer ? (
+                <p
+                  data-testid='multiplication-array-touch-hint'
+                  className='text-center text-xs font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'
+                >
+                  {translations('multiplicationArray.inRound.touchHint', {
+                    total: a,
+                  })}
+                </p>
+              ) : null}
               {Array.from({ length: a }).map((_, groupIndex) => {
                 const isCollected = collected.has(groupIndex);
                 const color = ROW_COLORS[groupIndex % ROW_COLORS.length];
@@ -296,7 +308,8 @@ export default function MultiplicationArrayGame({
                     accent={accent}
                     aria-pressed={isCollected}
                     buttonClassName={cn(
-                      'flex items-center kangur-panel-gap px-4 py-3 duration-300',
+                      'flex items-center kangur-panel-gap px-4 py-3 duration-300 touch-manipulation select-none',
+                      isCoarsePointer && 'min-h-[4.5rem] active:scale-[0.98]',
                       isCollected
                         ? KANGUR_ACCENT_STYLES.violet.activeText
                         : '[color:var(--kangur-page-text)]',

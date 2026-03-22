@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   getAiPathsSetting,
@@ -18,7 +17,10 @@ import {
   parseAiTriggerButtonsRaw,
   serializeAiTriggerButtonsRaw,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
-import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
+import {
+  aiTriggerButtonsQuerySchema,
+  type AiTriggerButtonRecord,
+} from '@/shared/contracts/ai-trigger-buttons';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { AppErrorCodes, badRequestError, isAppError } from '@/shared/errors/app-error';
 import {
@@ -29,16 +31,13 @@ import {
 } from '@/shared/lib/ai-paths/playwright-fixture-scope';
 import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 
 import { assertTriggerButtonPathExists } from './path-validation';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
 const AI_PATHS_TRIGGER_BUTTONS_KEY = 'ai_paths_trigger_buttons';
-export const querySchema = z.object({
-  [PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_QUERY_PARAM]: optionalBooleanQuerySchema(),
-});
+export { aiTriggerButtonsQuerySchema as querySchema };
 const readTriggerButtonsRaw = async (): Promise<string | null> =>
   await getAiPathsSetting(AI_PATHS_TRIGGER_BUTTONS_KEY);
 
@@ -156,7 +155,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       },
     });
   }
-  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const query = aiTriggerButtonsQuerySchema.parse(_ctx.query ?? {});
   const fixtureCookieValue = readRequestCookie(req, PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_COOKIE_NAME);
   const includeFixtureButtons =
     shouldIncludePlaywrightAiPathsFixtureButtons(fixtureCookieValue) ||

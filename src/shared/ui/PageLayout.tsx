@@ -1,9 +1,8 @@
 'use client';
 
-import { useMemo, type JSX, type ReactNode } from 'react';
+import type { JSX, ReactNode } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 
 import { FormActions } from './FormActions';
@@ -23,28 +22,29 @@ interface PageLayoutProps {
       }
     | undefined;
   children: ReactNode;
-
-  // Tabs configuration (optional)
   tabs?: {
     activeTab: string;
     onTabChange: (value: string) => void;
     tabsList: Array<LabeledOptionDto<string>>;
   };
-
-  // Content wrapping (optional)
   wrapInPanel?: boolean;
   panelClassName?: string;
-
-  // Save button configuration (optional)
   onSave?: () => Promise<void> | void;
   isSaving?: boolean;
   saveText?: string;
   stickyFooter?: boolean;
-
   containerClassName?: string;
 }
 
-type PageLayoutRuntimeValue = {
+type PageLayoutTabsProps = {
+  tabs?: {
+    activeTab: string;
+    onTabChange: (value: string) => void;
+    tabsList: Array<LabeledOptionDto<string>>;
+  };
+};
+
+type PageLayoutHeaderProps = {
   title: string;
   description?: string | undefined;
   eyebrow?: ReactNode;
@@ -56,33 +56,32 @@ type PageLayoutRuntimeValue = {
         isRefreshing: boolean;
       }
     | undefined;
+};
+
+type PageLayoutContentProps = {
   children: ReactNode;
-  tabs?:
-    | {
-        activeTab: string;
-        onTabChange: (value: string) => void;
-        tabsList: Array<LabeledOptionDto<string>>;
-      }
-    | undefined;
   wrapInPanel: boolean;
   panelClassName?: string | undefined;
+};
+
+type PageLayoutSaveFooterProps = {
   onSave?: (() => Promise<void> | void) | undefined;
+  isSaving: boolean;
+  saveText: string;
+  stickyFooter: boolean;
+};
+
+type PageLayoutRuntimeProps = PageLayoutProps & {
+  wrapInPanel: boolean;
   isSaving: boolean;
   saveText: string;
   stickyFooter: boolean;
   containerClassName: string;
 };
 
-const { Context: PageLayoutRuntimeContext, useStrictContext: usePageLayoutRuntime } =
-  createStrictContext<PageLayoutRuntimeValue>({
-    hookName: 'usePageLayoutRuntime',
-    providerName: 'PageLayoutRuntimeProvider',
-    displayName: 'PageLayoutRuntimeContext',
-  });
-
-function PageLayoutTabs(): JSX.Element | null {
-  const { tabs } = usePageLayoutRuntime();
+function PageLayoutTabs({ tabs }: PageLayoutTabsProps): JSX.Element | null {
   if (!tabs) return null;
+
   return (
     <Tabs value={tabs.activeTab} onValueChange={tabs.onTabChange} className='mb-6'>
       <TabsList
@@ -99,8 +98,14 @@ function PageLayoutTabs(): JSX.Element | null {
   );
 }
 
-function PageLayoutHeader(): JSX.Element {
-  const { title, description, eyebrow, icon, headerActions, refresh } = usePageLayoutRuntime();
+function PageLayoutHeader({
+  title,
+  description,
+  eyebrow,
+  icon,
+  headerActions,
+  refresh,
+}: PageLayoutHeaderProps): JSX.Element {
   return (
     <SectionHeader
       title={title}
@@ -114,11 +119,15 @@ function PageLayoutHeader(): JSX.Element {
   );
 }
 
-function PageLayoutContent(): JSX.Element {
-  const { children, panelClassName, wrapInPanel } = usePageLayoutRuntime();
+function PageLayoutContent({
+  children,
+  panelClassName,
+  wrapInPanel,
+}: PageLayoutContentProps): JSX.Element {
   if (!wrapInPanel) {
     return <>{children}</>;
   }
+
   return (
     <div className={cn('rounded-lg border border-border bg-card p-4 sm:p-6', panelClassName)}>
       {children}
@@ -126,9 +135,14 @@ function PageLayoutContent(): JSX.Element {
   );
 }
 
-function PageLayoutSaveFooter(): JSX.Element | null {
-  const { isSaving, onSave, saveText, stickyFooter } = usePageLayoutRuntime();
+function PageLayoutSaveFooter({
+  isSaving,
+  onSave,
+  saveText,
+  stickyFooter,
+}: PageLayoutSaveFooterProps): JSX.Element | null {
   if (!onSave) return null;
+
   return (
     <div
       className={cn(
@@ -149,14 +163,45 @@ function PageLayoutSaveFooter(): JSX.Element | null {
   );
 }
 
-function PageLayoutRuntime(): JSX.Element {
-  const { containerClassName, stickyFooter } = usePageLayoutRuntime();
+function PageLayoutRuntime({
+  title,
+  description,
+  eyebrow,
+  icon,
+  headerActions,
+  refresh,
+  children,
+  tabs,
+  wrapInPanel,
+  panelClassName,
+  onSave,
+  isSaving,
+  saveText,
+  stickyFooter,
+  containerClassName,
+}: PageLayoutRuntimeProps): JSX.Element {
   return (
     <div className={cn(containerClassName, stickyFooter && 'pb-32')}>
-      <PageLayoutTabs />
-      <PageLayoutHeader />
-      <PageLayoutContent />
-      <PageLayoutSaveFooter />
+      <PageLayoutTabs tabs={tabs} />
+      <PageLayoutHeader
+        title={title}
+        description={description}
+        eyebrow={eyebrow}
+        icon={icon}
+        headerActions={headerActions}
+        refresh={refresh}
+      />
+      <PageLayoutContent
+        children={children}
+        panelClassName={panelClassName}
+        wrapInPanel={wrapInPanel}
+      />
+      <PageLayoutSaveFooter
+        isSaving={isSaving}
+        onSave={onSave}
+        saveText={saveText}
+        stickyFooter={stickyFooter}
+      />
     </div>
   );
 }
@@ -177,47 +222,24 @@ export function PageLayout({
   saveText = 'Save Configuration',
   stickyFooter = false,
   containerClassName = 'page-section',
-}: PageLayoutProps): React.JSX.Element {
-  const runtimeValue = useMemo<PageLayoutRuntimeValue>(
-    () => ({
-      title,
-      description,
-      eyebrow,
-      icon,
-      headerActions,
-      refresh,
-      children,
-      tabs,
-      wrapInPanel,
-      panelClassName,
-      onSave,
-      isSaving,
-      saveText,
-      stickyFooter,
-      containerClassName,
-    }),
-    [
-      title,
-      description,
-      eyebrow,
-      icon,
-      headerActions,
-      refresh,
-      children,
-      tabs,
-      wrapInPanel,
-      panelClassName,
-      onSave,
-      isSaving,
-      saveText,
-      stickyFooter,
-      containerClassName,
-    ]
-  );
-
+}: PageLayoutProps): JSX.Element {
   return (
-    <PageLayoutRuntimeContext.Provider value={runtimeValue}>
-      <PageLayoutRuntime />
-    </PageLayoutRuntimeContext.Provider>
+    <PageLayoutRuntime
+      title={title}
+      description={description}
+      eyebrow={eyebrow}
+      icon={icon}
+      headerActions={headerActions}
+      refresh={refresh}
+      children={children}
+      tabs={tabs}
+      wrapInPanel={wrapInPanel}
+      panelClassName={panelClassName}
+      onSave={onSave}
+      isSaving={isSaving}
+      saveText={saveText}
+      stickyFooter={stickyFooter}
+      containerClassName={containerClassName}
+    />
   );
 }

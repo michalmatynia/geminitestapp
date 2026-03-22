@@ -13,6 +13,7 @@ import {
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type {
   BallItem,
   GroupSlotId,
@@ -37,6 +38,7 @@ export function GroupSum({
   round: GroupSumRound;
   onResult: (correct: boolean) => void;
 }): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const total = round.a + round.b;
   const [state, setState] = useState<GroupSumState>(() => ({
     pool: createBalls(total),
@@ -155,11 +157,17 @@ export function GroupSum({
                       accent={surface.accent}
                       className={cn(
                         surface.className,
-                        'min-h-[52px] min-w-[80px] w-full max-w-[160px]'
+                        'min-h-[52px] min-w-[80px] w-full max-w-[160px] touch-manipulation select-none transition',
+                        isCoarsePointer && 'min-h-[88px] min-w-[120px]',
+                        selectedBall && 'bg-amber-50/60'
                       )}
                       data-testid={`adding-ball-${group.id}`}
                       padding='sm'
                       tone={surface.tone}
+                      onClick={() => {
+                        if (!isCoarsePointer || checked || !selectedBall) return;
+                        moveSelectedBallTo(group.id);
+                      }}
                       {...provided.droppableProps}
                     >
                       {state[group.id].map((ball, i) => (
@@ -189,10 +197,18 @@ export function GroupSum({
             <KangurInfoCard
               ref={provided.innerRef}
               accent='slate'
-              className={BALL_POOL_CLASSNAME}
+              className={cn(
+                BALL_POOL_CLASSNAME,
+                'touch-manipulation select-none transition',
+                selectedBall && 'border border-amber-200 bg-amber-50/50'
+              )}
               data-testid='adding-ball-pool'
               padding='sm'
               tone='neutral'
+              onClick={() => {
+                if (!isCoarsePointer || checked || !selectedBall) return;
+                moveSelectedBallTo('pool');
+              }}
               {...provided.droppableProps}
             >
               {state.pool.map((ball, i) => (
@@ -214,14 +230,19 @@ export function GroupSum({
 
         <div className='flex flex-wrap items-center justify-center gap-2 text-xs'>
           <span
+            data-testid='adding-ball-group-touch-hint'
             className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500'
             role='status'
             aria-live='polite'
             aria-atomic='true'
           >
             {selectedBall
-              ? `Wybrana piłka: ${selectedBall.num}`
-              : 'Wybierz piłkę, aby przenieść ją klawiaturą.'}
+              ? isCoarsePointer
+                ? `Wybrana piłka: ${selectedBall.num}. Dotknij grupę 1, grupę 2 albo pulę.`
+                : `Wybrana piłka: ${selectedBall.num}`
+              : isCoarsePointer
+                ? 'Dotknij piłkę, a potem grupę 1, grupę 2 albo pulę.'
+                : 'Wybierz piłkę, aby przenieść ją klawiaturą.'}
           </span>
           <KangurButton
             size='sm'

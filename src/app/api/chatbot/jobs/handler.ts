@@ -11,7 +11,6 @@ import { enqueueChatbotJob, startChatbotJobQueue } from '@/features/jobs/server'
 import type {
   ChatbotJobDto as ChatbotJob,
   EnqueueChatbotJobRequestDto as EnqueueJobRequest,
-  ChatbotJobsDeleteQueryDto as ChatbotJobsDeleteQuery,
 } from '@/shared/contracts/chatbot';
 import {
   chatbotJobsDeleteQuerySchema,
@@ -24,7 +23,6 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { logger } from '@/shared/utils/logger';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 const DEFAULT_CHATBOT_SYSTEM_PROMPT = 'You are a helpful assistant.';
@@ -146,8 +144,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
 
 export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   void _req;
-  const scope =
-    (chatbotJobsDeleteQuerySchema.parse(ctx.query ?? {}) as ChatbotJobsDeleteQuery).scope ?? null;
+  const scope = chatbotJobsDeleteQuerySchema.parse(ctx.query ?? {}).scope ?? null;
   void scope;
   const terminalStatuses: Array<ChatbotJob['status']> = ['completed', 'failed', 'canceled'];
 

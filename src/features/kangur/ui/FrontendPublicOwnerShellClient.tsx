@@ -2,18 +2,21 @@
 
 import '@/app/(frontend)/kangur/kangur.css';
 
+import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 
-import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRouteShell';
-import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
-import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
-import { KangurMainRoleProvider } from '@/features/kangur/ui/design/primitives/KangurPageContainer';
 import type {
   KangurStorefrontAppearanceMode,
   KangurStorefrontThemeSettingsSnapshot,
 } from '@/features/kangur/storefront-appearance-settings';
 
 import type { JSX, ReactNode } from 'react';
+
+const FrontendPublicOwnerKangurShell = dynamic(() =>
+  import('@/features/kangur/ui/FrontendPublicOwnerKangurShell').then((mod) => ({
+    default: mod.FrontendPublicOwnerKangurShell,
+  }))
+);
 
 export type FrontendPublicOwnerShellProps = {
   publicOwner: 'cms' | 'kangur';
@@ -36,20 +39,11 @@ export default function FrontendPublicOwnerShellClient({
 
   if (publicOwner === 'kangur' && !isKangurAliasRoute) {
     return (
-      <KangurStorefrontAppearanceProvider
+      <FrontendPublicOwnerKangurShell
+        embedded={isHomeRoute}
         initialMode={kangurInitialMode}
         initialThemeSettings={kangurInitialThemeSettings}
-      >
-        <KangurSurfaceClassSync>
-          <KangurMainRoleProvider suppressMainRole>
-            <KangurFeatureRouteShell
-              basePath='/'
-              embedded={isHomeRoute}
-              forceBodyScrollLock={false}
-            />
-          </KangurMainRoleProvider>
-        </KangurSurfaceClassSync>
-      </KangurStorefrontAppearanceProvider>
+      />
     );
   }
 

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   buildContextRegistryConsumerEnvelope,
@@ -15,11 +14,9 @@ import {
 import { upsertAiPathsSettings } from '@/features/ai/ai-paths/server/settings-store';
 import { assertAiPathRunQueueReadyForEnqueue } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
-import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
 import {
-  aiNodeSchema,
+  aiPathRunEnqueueRequestSchema,
   aiPathRunEnqueueResponseSchema,
-  edgeSchema,
   type AiNode,
   type Edge,
   type PathConfig,
@@ -44,30 +41,6 @@ import {
 import { resolvePathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-
-const enqueueSchema = z.object({
-  pathId: z.string().trim().min(1),
-  pathName: z.string().trim().optional(),
-  nodes: z.array(aiNodeSchema).optional(),
-  edges: z.array(edgeSchema).optional(),
-  triggerEvent: z.string().trim().optional(),
-  triggerNodeId: z.string().trim().optional(),
-  triggerContext: z.record(z.string(), z.unknown()).optional().nullable(),
-  entityId: z.string().trim().optional().nullable(),
-  entityType: z.string().trim().optional().nullable(),
-  maxAttempts: z.number().int().min(1).max(50).optional(),
-  backoffMs: z.number().int().min(0).max(60_000).optional(),
-  backoffMaxMs: z
-    .number()
-    .int()
-    .min(0)
-    .max(10 * 60_000)
-    .optional(),
-  requestId: z.string().trim().min(1).max(200).optional(),
-  meta: z.record(z.string(), z.unknown()).optional().nullable(),
-  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
-});
 
 const QUEUE_PREFLIGHT_TIMEOUT_MS = Number.parseInt(
   process.env['AI_PATHS_ENQUEUE_QUEUE_PREFLIGHT_TIMEOUT_MS'] ?? '10000',
@@ -151,7 +124,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   ctx.userId = access.userId;
   await withTiming('rateLimitMs', async () => await enforceAiPathsRunRateLimit(access));
   const parsed = await withTiming('parseBodyMs', async () => {
-    return await parseJsonBody(req, enqueueSchema, {
+    return await parseJsonBody(req, aiPathRunEnqueueRequestSchema, {
       logPrefix: 'ai-paths.runs.enqueue',
     });
   });

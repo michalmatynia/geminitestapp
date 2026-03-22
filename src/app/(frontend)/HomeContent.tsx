@@ -4,7 +4,7 @@ import { auth } from '@/features/auth/auth';
 import { getCmsMenuSettings } from '@/features/cms/server';
 import { getCmsRepository } from '@/features/cms/server';
 import { getCmsThemeSettings } from '@/features/cms/server';
-import { productService } from '@/features/products/server';
+import { productService } from '@/shared/lib/products/services/productService';
 import type { Page, PageComponent, Slug } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';

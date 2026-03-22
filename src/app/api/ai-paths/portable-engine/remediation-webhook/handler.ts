@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
+import { portablePathRemediationWebhookQuerySchema } from '@/shared/contracts/ai-paths-portable-engine';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, serviceUnavailableError } from '@/shared/errors/app-error';
 import {
@@ -11,22 +11,18 @@ import {
   resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironment,
 } from '@/shared/lib/ai-paths/portable-engine/server';
-import {
-  normalizeOptionalQueryString,
-  optionalIntegerQuerySchema,
-} from '@/shared/lib/api/query-schema';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
 const DEFAULT_MAX_SKEW_SECONDS = 300;
-const MAX_MAX_SKEW_SECONDS = 3600;
+export const querySchema = portablePathRemediationWebhookQuerySchema;
 
-export const querySchema = z.object({
-  channel: z.preprocess(
-    (value: unknown) => normalizeOptionalQueryString(value)?.toLowerCase(),
-    z.enum(['webhook', 'email']).optional()
-  ),
-  maxSkewSeconds: optionalIntegerQuerySchema(z.number().int().min(1).max(MAX_MAX_SKEW_SECONDS)),
+const resolveRemediationWebhookQueryInput = (
+  req: Request,
+  ctx: ApiHandlerContext
+): Record<string, unknown> => ({
+  ...Object.fromEntries(new URL(req.url).searchParams.entries()),
+  ...((ctx.query ?? {}) as Record<string, unknown>),
 });
 
 const replayGuardStore = new Map<string, number>();
@@ -54,7 +50,7 @@ const toParsedJsonPayload = (rawBody: string): unknown => {
 };
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const query = querySchema.parse(resolveRemediationWebhookQueryInput(req, _ctx));
   const channel = query.channel ?? 'webhook';
   const maxSkewSeconds = query.maxSkewSeconds ?? DEFAULT_MAX_SKEW_SECONDS;
   const now = new Date().toISOString();

@@ -22,18 +22,36 @@ import {
   type KangurMobileLessonsAssignmentItem,
 } from './useKangurMobileLessonsAssignments';
 import {
+  useKangurMobileLessonsBadges,
+  type KangurMobileLessonsBadgeItem,
+} from './useKangurMobileLessonsBadges';
+import {
   useKangurMobileLessonsLessonMastery,
   type KangurMobileLessonsLessonMasteryItem,
 } from './useKangurMobileLessonsLessonMastery';
+import {
+  useKangurMobileLessonsRecentResults,
+  type KangurMobileLessonsRecentResultItem,
+} from './useKangurMobileLessonsRecentResults';
 import { useKangurMobileLessonsDuels } from './useKangurMobileLessonsDuels';
 import { useKangurMobileLessons } from './useKangurMobileLessons';
 import { useLessonsScreenBootState } from './useLessonsScreenBootState';
+import {
+  formatKangurMobileScoreDateTime,
+  formatKangurMobileScoreOperation,
+  getKangurMobileScoreAccuracyPercent,
+} from '../scores/mobileScoreSummary';
+import { createKangurResultsHref } from '../scores/resultsHref';
 
 type Tone = {
   backgroundColor: string;
   borderColor: string;
   textColor: string;
 };
+
+const PROFILE_ROUTE = '/profile' as const;
+const PLAN_ROUTE = '/plan' as const;
+const RESULTS_ROUTE = createKangurResultsHref();
 
 function Card({
   children,
@@ -604,12 +622,171 @@ function LessonMasteryRow({
   );
 }
 
+function LessonBadgeChip({
+  item,
+}: {
+  item: KangurMobileLessonsBadgeItem;
+}): React.JSX.Element {
+  return (
+    <View
+      style={{
+        borderRadius: 999,
+        borderWidth: 1,
+        borderColor: '#c7d2fe',
+        backgroundColor: '#eef2ff',
+        paddingHorizontal: 12,
+        paddingVertical: 7,
+      }}
+    >
+      <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
+        {item.emoji} {item.name}
+      </Text>
+    </View>
+  );
+}
+
+function LessonRecentResultRow({
+  item,
+}: {
+  item: KangurMobileLessonsRecentResultItem;
+}): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+  const accuracyPercent = getKangurMobileScoreAccuracyPercent(item.result);
+
+  return (
+    <View
+      style={{
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        backgroundColor: '#f8fafc',
+        padding: 14,
+        gap: 8,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 12,
+        }}
+      >
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
+            {formatKangurMobileScoreOperation(item.result.operation, locale)}
+          </Text>
+          <Text style={{ color: '#64748b', fontSize: 12 }}>
+            {formatKangurMobileScoreDateTime(item.result.created_date, locale)}
+          </Text>
+        </View>
+        <Pill
+          label={`${item.result.correct_answers}/${item.result.total_questions}`}
+          tone={{
+            backgroundColor: '#ecfdf5',
+            borderColor: '#a7f3d0',
+            textColor: '#047857',
+          }}
+        />
+      </View>
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <Pill
+          label={copy({
+            de: `Trefferquote ${accuracyPercent}%`,
+            en: `Accuracy ${accuracyPercent}%`,
+            pl: `Skuteczność ${accuracyPercent}%`,
+          })}
+          tone={{
+            backgroundColor: '#f1f5f9',
+            borderColor: '#cbd5e1',
+            textColor: '#475569',
+          }}
+        />
+      </View>
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <Link href={item.practiceHref} asChild>
+          <Pressable
+            accessibilityRole='button'
+            style={{
+              alignSelf: 'flex-start',
+              borderRadius: 999,
+              backgroundColor: '#0f172a',
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+            }}
+          >
+            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+              {copy({
+                de: 'Erneut trainieren',
+                en: 'Train again',
+                pl: 'Trenuj ponownie',
+              })}
+            </Text>
+          </Pressable>
+        </Link>
+
+        {item.lessonHref ? (
+          <Link href={item.lessonHref} asChild>
+            <Pressable
+              accessibilityRole='button'
+              style={{
+                alignSelf: 'flex-start',
+                borderRadius: 999,
+                borderWidth: 1,
+                borderColor: '#cbd5e1',
+                backgroundColor: '#ffffff',
+                paddingHorizontal: 14,
+                paddingVertical: 10,
+              }}
+            >
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                {copy({
+                  de: 'Lektion öffnen',
+                  en: 'Open lesson',
+                  pl: 'Otwórz lekcję',
+                })}
+              </Text>
+            </Pressable>
+          </Link>
+        ) : null}
+
+        <Link href={item.historyHref} asChild>
+          <Pressable
+            accessibilityRole='button'
+            style={{
+              alignSelf: 'flex-start',
+              borderRadius: 999,
+              borderWidth: 1,
+              borderColor: '#cbd5e1',
+              backgroundColor: '#ffffff',
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+            }}
+          >
+            <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+              {copy({
+                de: 'Modusverlauf',
+                en: 'Mode history',
+                pl: 'Historia trybu',
+              })}
+            </Text>
+          </Pressable>
+        </Link>
+      </View>
+    </View>
+  );
+}
+
 export function KangurLessonsScreen(): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const router = useRouter();
   const params = useLocalSearchParams<{ focus?: string | string[] }>();
   const lessonCheckpoints = useKangurMobileLessonCheckpoints({ limit: 2 });
+  const lessonBadges = useKangurMobileLessonsBadges();
   const lessonMastery = useKangurMobileLessonsLessonMastery();
+  const lessonRecentResults = useKangurMobileLessonsRecentResults();
   const lessonsAssignments = useKangurMobileLessonsAssignments();
   const rawFocusParam = Array.isArray(params.focus) ? params.focus[0] : params.focus;
   const normalizedRouteFocusToken =
@@ -747,11 +924,164 @@ export function KangurLessonsScreen(): React.JSX.Element {
             </Text>
             <Text style={{ color: '#475569', fontSize: 15, lineHeight: 22 }}>
               {copy({
-                de: 'Das ist der erste mobile Lektionskatalog. Empfehlungen und Aufgaben aus dem Profil können bereits gezielte Themen über den Parameter focus öffnen.',
-                en: 'This is the first mobile lesson catalog. Profile recommendations and tasks can already open specific topics through the focus parameter.',
-                pl: 'To pierwszy mobilny katalog lekcji. Rekomendacje i zadania z profilu mogą już otwierać konkretne tematy przez parametr focus.',
+                de: 'Die mobile Lektionsansicht verbindet den Themenkatalog mit gespeicherten Checkpoints, passendem Training und schnellen Wegen zurück zu Verlauf sowie Tagesplan.',
+                en: 'The mobile lessons view connects the topic catalog with saved checkpoints, matching practice, and quick routes back to history and the daily plan.',
+                pl: 'Mobilny widok lekcji łączy katalog tematów z zapisanymi checkpointami, pasującym treningiem oraz szybkim powrotem do historii i planu dnia.',
               })}
             </Text>
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              <Pill
+                label={copy({
+                  de: `Verfolgt ${lessonMastery.trackedLessons}`,
+                  en: `Tracked ${lessonMastery.trackedLessons}`,
+                  pl: `Śledzone ${lessonMastery.trackedLessons}`,
+                })}
+                tone={{
+                  backgroundColor: '#eef2ff',
+                  borderColor: '#c7d2fe',
+                  textColor: '#4338ca',
+                }}
+              />
+              <Pill
+                label={copy({
+                  de: `Beherrscht ${lessonMastery.masteredLessons}`,
+                  en: `Mastered ${lessonMastery.masteredLessons}`,
+                  pl: `Opanowane ${lessonMastery.masteredLessons}`,
+                })}
+                tone={{
+                  backgroundColor: '#ecfdf5',
+                  borderColor: '#a7f3d0',
+                  textColor: '#047857',
+                }}
+              />
+              <Pill
+                label={copy({
+                  de: `Zum Wiederholen ${lessonMastery.lessonsNeedingPractice}`,
+                  en: `Needs review ${lessonMastery.lessonsNeedingPractice}`,
+                  pl: `Do powtórki ${lessonMastery.lessonsNeedingPractice}`,
+                })}
+                tone={{
+                  backgroundColor: '#fffbeb',
+                  borderColor: '#fde68a',
+                  textColor: '#b45309',
+                }}
+              />
+            </View>
+
+            {!isPreparingLessonsView && selectedLesson ? (
+              <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
+                {copy({
+                  de: `Aktuell geöffnet: ${selectedLesson.lesson.title}. Du kannst direkt weiterlesen oder in das passende Training springen.`,
+                  en: `Currently open: ${selectedLesson.lesson.title}. You can continue reading right away or jump into matching practice.`,
+                  pl: `Aktualnie otwarte: ${selectedLesson.lesson.title}. Możesz od razu czytać dalej albo przejść do pasującego treningu.`,
+                })}
+              </Text>
+            ) : !isPreparingLessonsView && focusToken ? (
+              <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
+                {copy({
+                  de: `Es wurde nach "${focusToken}" gesucht. Wenn es keinen Treffer gibt, kannst du unten zum Katalog zurückkehren.`,
+                  en: `The route searched for "${focusToken}". If there is no match, you can return to the catalog below.`,
+                  pl: `Trasa wyszukała "${focusToken}". Jeśli nie ma dopasowania, niżej możesz wrócić do katalogu.`,
+                })}
+              </Text>
+            ) : (
+              <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
+                {copy({
+                  de: 'Öffne ein Thema aus dem Katalog oder kehre über den Tagesplan zu den letzten Wiederholungen zurück.',
+                  en: 'Open a topic from the catalog or use the daily plan to return to your latest reviews.',
+                  pl: 'Otwórz temat z katalogu albo wróć do ostatnich powtórek przez plan dnia.',
+                })}
+              </Text>
+            )}
+
+            <View style={{ gap: 10 }}>
+              {!isPreparingLessonsView && selectedLesson?.practiceHref ? (
+                <Link href={selectedLesson.practiceHref} asChild>
+                  <Pressable
+                    accessibilityRole='button'
+                    style={{
+                      alignSelf: 'stretch',
+                      width: '100%',
+                      borderRadius: 16,
+                      backgroundColor: '#0f172a',
+                      paddingHorizontal: 14,
+                      paddingVertical: 12,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: '#ffffff',
+                        fontWeight: '700',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {copy({
+                        de: `Training starten: ${selectedLesson.lesson.title}`,
+                        en: `Start practice: ${selectedLesson.lesson.title}`,
+                        pl: `Uruchom trening: ${selectedLesson.lesson.title}`,
+                      })}
+                    </Text>
+                  </Pressable>
+                </Link>
+              ) : null}
+
+              <Link href={RESULTS_ROUTE} asChild>
+                <Pressable
+                  accessibilityRole='button'
+                  style={{
+                    alignSelf: 'stretch',
+                    width: '100%',
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: '#cbd5e1',
+                    backgroundColor: '#ffffff',
+                    paddingHorizontal: 14,
+                    paddingVertical: 12,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: '#0f172a',
+                      fontWeight: '700',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {copy({
+                      de: 'Ergebnisverlauf öffnen',
+                      en: 'Open score history',
+                      pl: 'Otwórz historię wyników',
+                    })}
+                  </Text>
+                </Pressable>
+              </Link>
+
+              <Link href={PLAN_ROUTE} asChild>
+                <Pressable
+                  accessibilityRole='button'
+                  style={{
+                    alignSelf: 'stretch',
+                    width: '100%',
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: '#cbd5e1',
+                    backgroundColor: '#ffffff',
+                    paddingHorizontal: 14,
+                    paddingVertical: 12,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: '#0f172a',
+                      fontWeight: '700',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {translateKangurMobileActionLabel('Open daily plan', locale)}
+                  </Text>
+                </Pressable>
+              </Link>
+            </View>
           </Card>
 
           {isPreparingLessonsView ? (
@@ -781,9 +1111,9 @@ export function KangurLessonsScreen(): React.JSX.Element {
                 />
                 <Pill
                   label={copy({
-                    de: 'Aus Empfehlung geöffnet',
-                    en: 'Opened from recommendation',
-                    pl: 'Widok z rekomendacji',
+                    de: 'Über Shortcut geöffnet',
+                    en: 'Opened from shortcut',
+                    pl: 'Otwarte ze skrótu',
                   })}
                   tone={{
                     backgroundColor: '#eef2ff',
@@ -1157,13 +1487,98 @@ export function KangurLessonsScreen(): React.JSX.Element {
                   ) : null}
                 </View>
               ) : (
-                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                  {copy({
-                    de: 'Der eigentliche Inhalt dieser Lektion wurde noch nicht in die mobile App übertragen. Dieser Screen schließt aber bereits die Navigationslücke und zeigt den korrekten Beherrschungsstand.',
-                    en: 'The main content of this lesson has not been ported to the mobile app yet. This screen already closes the navigation gap and shows the correct mastery state.',
-                    pl: 'Właściwa treść tej lekcji nie jest jeszcze przeniesiona do mobilnej aplikacji. Ten ekran zamyka za to lukę nawigacyjną i pokazuje prawidłowy stan opanowania.',
-                  })}
-                </Text>
+                <View
+                  style={{
+                    borderRadius: 18,
+                    borderWidth: 1,
+                    borderColor: '#e2e8f0',
+                    backgroundColor: '#f8fafc',
+                    padding: 14,
+                    gap: 10,
+                  }}
+                >
+                  <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                    {copy({
+                      de: 'Mobiler Kurzbrief',
+                      en: 'Mobile lesson brief',
+                      pl: 'Mobilny skrót lekcji',
+                    })}
+                  </Text>
+                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({
+                      de: 'Diese Lektion hat noch keine tragbaren mobilen Abschnitte. Du siehst hier aber bereits den Beherrschungsstand, den letzten gespeicherten Stand und den schnellsten Weg zurück ins passende Training.',
+                      en: 'This lesson does not have portable mobile sections yet. You can already see the mastery state, the latest saved checkpoint, and the fastest route back to matching practice here.',
+                      pl: 'Ta lekcja nie ma jeszcze przenośnych sekcji mobilnych. Widzisz tu jednak stan opanowania, ostatni zapis oraz najszybszy powrót do pasującego treningu.',
+                    })}
+                  </Text>
+
+                  {selectedLesson.checkpointSummary ? (
+                    <>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                        <Pill
+                          label={copy({
+                            de: `Versuche ${selectedLesson.checkpointSummary.attempts}`,
+                            en: `Attempts ${selectedLesson.checkpointSummary.attempts}`,
+                            pl: `Próby ${selectedLesson.checkpointSummary.attempts}`,
+                          })}
+                          tone={{
+                            backgroundColor: '#f1f5f9',
+                            borderColor: '#cbd5e1',
+                            textColor: '#475569',
+                          }}
+                        />
+                        <Pill
+                          label={copy({
+                            de: `Bestes Ergebnis ${selectedLesson.checkpointSummary.bestScorePercent}%`,
+                            en: `Best score ${selectedLesson.checkpointSummary.bestScorePercent}%`,
+                            pl: `Najlepszy wynik ${selectedLesson.checkpointSummary.bestScorePercent}%`,
+                          })}
+                          tone={{
+                            backgroundColor: '#eef2ff',
+                            borderColor: '#c7d2fe',
+                            textColor: '#4338ca',
+                          }}
+                        />
+                        <Pill
+                          label={copy({
+                            de: `Letztes Ergebnis ${selectedLesson.checkpointSummary.lastScorePercent}%`,
+                            en: `Last score ${selectedLesson.checkpointSummary.lastScorePercent}%`,
+                            pl: `Ostatni wynik ${selectedLesson.checkpointSummary.lastScorePercent}%`,
+                          })}
+                          tone={{
+                            backgroundColor: '#ecfdf5',
+                            borderColor: '#a7f3d0',
+                            textColor: '#047857',
+                          }}
+                        />
+                      </View>
+                      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+                        {copy({
+                          de: `Zuletzt gespeichert ${formatKangurMobileScoreDateTime(
+                            selectedLesson.checkpointSummary.lastCompletedAt,
+                            locale,
+                          )}`,
+                          en: `Last saved ${formatKangurMobileScoreDateTime(
+                            selectedLesson.checkpointSummary.lastCompletedAt,
+                            locale,
+                          )}`,
+                          pl: `Ostatni zapis ${formatKangurMobileScoreDateTime(
+                            selectedLesson.checkpointSummary.lastCompletedAt,
+                            locale,
+                          )}`,
+                        })}
+                      </Text>
+                    </>
+                  ) : (
+                    <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                      {copy({
+                        de: 'Es gibt noch keinen gespeicherten Checkpoint für diese Lektion. Nutze das passende Training oder kehre später aus dem Katalog zurück.',
+                        en: 'There is no saved checkpoint for this lesson yet. Use the matching practice or return later from the catalog.',
+                        pl: 'Nie ma jeszcze zapisanego checkpointu tej lekcji. Skorzystaj z pasującego treningu albo wróć tutaj później z katalogu.',
+                      })}
+                    </Text>
+                  )}
+                </View>
               )}
               <Pressable
                 accessibilityRole='button'
@@ -1234,6 +1649,192 @@ export function KangurLessonsScreen(): React.JSX.Element {
                   pl: 'Pokazujemy pełny katalog, aby można było przejść dalej ręcznie.',
                 })}
               </Text>
+            </Card>
+          ) : null}
+
+          {!isPreparingLessonsView ? (
+            <Card>
+              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                {copy({
+                  de: 'Ergebnisverlauf',
+                  en: 'Score history',
+                  pl: 'Historia wyników',
+                })}
+              </Text>
+              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+                {copy({
+                  de: 'Letzte mobile Sitzungen',
+                  en: 'Recent mobile sessions',
+                  pl: 'Ostatnie sesje mobilne',
+                })}
+              </Text>
+              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {copy({
+                  de: 'Die zuletzt synchronisierten Sitzungen bleiben hier griffbereit, damit du direkt wieder ins Training, die passende Lektion oder die Modus-Historie springen kannst.',
+                  en: 'The latest synchronized sessions stay close here so you can jump right back into practice, the matching lesson, or the mode history.',
+                  pl: 'Ostatnie zsynchronizowane sesje są tutaj pod ręką, aby można było od razu wrócić do treningu, pasującej lekcji albo historii trybu.',
+                })}
+              </Text>
+
+              <Link href={RESULTS_ROUTE} asChild>
+                <Pressable
+                  accessibilityRole='button'
+                  style={{
+                    alignSelf: 'flex-start',
+                    borderRadius: 999,
+                    borderWidth: 1,
+                    borderColor: '#cbd5e1',
+                    backgroundColor: '#ffffff',
+                    paddingHorizontal: 14,
+                    paddingVertical: 10,
+                  }}
+                >
+                  <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                    {copy({
+                      de: 'Ergebnisverlauf öffnen',
+                      en: 'Open score history',
+                      pl: 'Otwórz historię wyników',
+                    })}
+                  </Text>
+                </Pressable>
+              </Link>
+
+              {lessonRecentResults.isLoading || lessonRecentResults.isRestoringAuth ? (
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                  {copy({
+                    de: 'Die letzten Ergebnisse werden geladen.',
+                    en: 'Loading recent results.',
+                    pl: 'Ładujemy ostatnie wyniki.',
+                  })}
+                </Text>
+              ) : !lessonRecentResults.isEnabled ? (
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                  {copy({
+                    de: 'Melde die Schülersitzung an, um hier die synchronisierten Sitzungen zu sehen.',
+                    en: 'Sign in the learner session to see synchronized sessions here.',
+                    pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj zsynchronizowane sesje.',
+                  })}
+                </Text>
+              ) : lessonRecentResults.error ? (
+                <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
+                  {lessonRecentResults.error}
+                </Text>
+              ) : lessonRecentResults.recentResultItems.length === 0 ? (
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                  {copy({
+                    de: 'Es gibt noch keine synchronisierten Ergebnisse. Beende einen Lauf, damit er hier erscheint.',
+                    en: 'There are no synchronized results yet. Finish a run so it appears here.',
+                    pl: 'Nie ma jeszcze zsynchronizowanych wyników. Ukończ serię, aby pojawiła się tutaj.',
+                  })}
+                </Text>
+              ) : (
+                <View style={{ gap: 10 }}>
+                  {lessonRecentResults.recentResultItems.map((item) => (
+                    <LessonRecentResultRow key={item.result.id} item={item} />
+                  ))}
+                </View>
+              )}
+            </Card>
+          ) : null}
+
+          {!isPreparingLessonsView ? (
+            <Card>
+              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                {copy({
+                  de: 'Abzeichen',
+                  en: 'Badges',
+                  pl: 'Odznaki',
+                })}
+              </Text>
+              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+                {copy({
+                  de: 'Nach den Lektionen',
+                  en: 'After lessons',
+                  pl: 'Po lekcjach',
+                })}
+              </Text>
+              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {copy({
+                  de: 'Nach dem Lesen kannst du sehen, welche lokalen Abzeichen bereits freigeschaltet wurden.',
+                  en: 'After reading you can see which local badges are already unlocked.',
+                  pl: 'Po czytaniu możesz zobaczyć, które lokalne odznaki są już odblokowane.',
+                })}
+              </Text>
+
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                <Pill
+                  label={copy({
+                    de: `Freigeschaltet ${lessonBadges.unlockedBadges}/${lessonBadges.totalBadges}`,
+                    en: `Unlocked ${lessonBadges.unlockedBadges}/${lessonBadges.totalBadges}`,
+                    pl: `Odblokowane ${lessonBadges.unlockedBadges}/${lessonBadges.totalBadges}`,
+                  })}
+                  tone={{
+                    backgroundColor: '#eef2ff',
+                    borderColor: '#c7d2fe',
+                    textColor: '#4338ca',
+                  }}
+                />
+                <Pill
+                  label={copy({
+                    de: `Offen ${lessonBadges.remainingBadges}`,
+                    en: `Remaining ${lessonBadges.remainingBadges}`,
+                    pl: `Do zdobycia ${lessonBadges.remainingBadges}`,
+                  })}
+                  tone={{
+                    backgroundColor: '#fffbeb',
+                    borderColor: '#fde68a',
+                    textColor: '#b45309',
+                  }}
+                />
+              </View>
+
+              {lessonBadges.recentBadges.length === 0 ? (
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                  {copy({
+                    de: 'Es gibt noch keine lokal freigeschalteten Abzeichen. Schließe Lektionen, Trainings oder Spiele ab, damit sie hier erscheinen.',
+                    en: 'There are no locally unlocked badges yet. Finish lessons, practice runs, or games so they appear here.',
+                    pl: 'Nie ma jeszcze lokalnie odblokowanych odznak. Ukończ lekcje, treningi albo gry, aby pojawiły się tutaj.',
+                  })}
+                </Text>
+              ) : (
+                <View style={{ gap: 10 }}>
+                  <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
+                    {copy({
+                      de: 'Zuletzt freigeschaltet',
+                      en: 'Recently unlocked',
+                      pl: 'Ostatnio odblokowane',
+                    })}
+                  </Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {lessonBadges.recentBadges.map((item) => (
+                      <LessonBadgeChip key={item.id} item={item} />
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              <Link href={PROFILE_ROUTE} asChild>
+                <Pressable
+                  accessibilityRole='button'
+                  style={{
+                    alignSelf: 'flex-start',
+                    borderRadius: 999,
+                    borderWidth: 1,
+                    borderColor: '#cbd5e1',
+                    backgroundColor: '#ffffff',
+                    paddingHorizontal: 14,
+                    paddingVertical: 10,
+                  }}
+                >
+                  <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                    {copy({
+                      de: 'Profil und Abzeichen öffnen',
+                      en: 'Open profile and badges',
+                      pl: 'Otwórz profil i odznaki',
+                    })}
+                  </Text>
+                </Pressable>
+              </Link>
             </Card>
           ) : null}
 
@@ -1540,9 +2141,9 @@ export function KangurLessonsScreen(): React.JSX.Element {
                   ) : (
                     <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                       {copy({
-                        de: 'Dein Konto ist im sichtbaren Ausschnitt der Duell-Rangliste noch nicht vertreten.',
-                        en: 'Your account is not yet visible in the current duel leaderboard snapshot.',
-                        pl: 'Twojego konta nie ma jeszcze w widocznym wycinku rankingu pojedynków.',
+                        de: 'Dein Konto ist in diesem Ausschnitt der Duell-Rangliste noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit du hier erscheinst.',
+                        en: 'Your account is not visible in this duel leaderboard snapshot yet. Finish another duel or open the lobby so it shows up here.',
+                        pl: 'Twojego konta nie widać jeszcze w tym wycinku rankingu pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawić się tutaj.',
                       })}
                     </Text>
                   )}

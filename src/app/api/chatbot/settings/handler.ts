@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import {
   parseChatbotSettingsPayload,
-  type ChatbotSettingsDto,
+  type ChatbotSettingsResponseDto,
+  type ChatbotSettingsSaveResponseDto,
+  type ChatbotStoredSettingsDto,
+  chatbotSettingsQuerySchema,
+  chatbotSettingsSaveRequestSchema,
 } from '@/shared/contracts/chatbot';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
-import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logger } from '@/shared/utils/logger';
 
@@ -16,14 +18,8 @@ const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 const DEFAULT_SETTINGS_KEY = 'default';
 const CHATBOT_SETTINGS_COLLECTION = 'chatbot_settings';
 
-const settingsSchema = z.object({
-  key: z.string().trim().optional(),
-  settings: z.record(z.string(), z.unknown()).optional(),
-});
-
-export const querySchema = z.object({
-  key: optionalTrimmedQueryString(),
-});
+export { chatbotSettingsSaveRequestSchema as settingsSchema };
+export { chatbotSettingsQuerySchema as querySchema };
 
 const resolveChatbotSettingsQueryInput = (
   req: Request,
@@ -42,14 +38,6 @@ type ChatbotSettingsRecord = {
   updatedAt?: Date | string;
 };
 
-type ChatbotSettingsResponse = {
-  id: string;
-  key: string;
-  settings: ChatbotSettingsDto;
-  createdAt: string;
-  updatedAt: string;
-};
-
 const toIsoString = (value: Date | string | undefined, fallback: string): string => {
   if (value instanceof Date) return value.toISOString();
   if (typeof value === 'string') {
@@ -59,7 +47,7 @@ const toIsoString = (value: Date | string | undefined, fallback: string): string
   return fallback;
 };
 
-const toChatbotSettingsResponse = (record: ChatbotSettingsRecord): ChatbotSettingsResponse => {
+const toChatbotSettingsResponse = (record: ChatbotSettingsRecord): ChatbotStoredSettingsDto => {
   const nowIso = new Date().toISOString();
   return {
     id: String(record.id ?? record._id ?? record.key),
@@ -80,7 +68,7 @@ const getChatbotSettingsCollection = async () => {
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
-  const query = querySchema.parse(resolveChatbotSettingsQueryInput(req, _ctx));
+  const query = chatbotSettingsQuerySchema.parse(resolveChatbotSettingsQueryInput(req, _ctx));
   const key = query.key ?? DEFAULT_SETTINGS_KEY;
   const collection = await getChatbotSettingsCollection();
   const settings = await collection.findOne({ key });
@@ -93,14 +81,16 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     });
   }
 
-  return NextResponse.json({
+  const response: ChatbotSettingsResponseDto = {
     settings: settings ? toChatbotSettingsResponse(settings) : null,
-  });
+  };
+
+  return NextResponse.json(response);
 }
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
-  const parsed = await parseJsonBody(req, settingsSchema, {
+  const parsed = await parseJsonBody(req, chatbotSettingsSaveRequestSchema, {
     logPrefix: 'chatbot.settings.POST',
   });
   if (!parsed.ok) {
@@ -143,5 +133,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     });
   }
 
-  return NextResponse.json({ settings: toChatbotSettingsResponse(saved) });
+  const response: ChatbotSettingsSaveResponseDto = {
+    settings: toChatbotSettingsResponse(saved),
+  };
+
+  return NextResponse.json(response);
 }

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-22T08:42:57.938Z",
+  "generatedAt": "2026-03-22T10:14:24.631Z",
   "status": "warn",
   "summary": {
     "total": 12,
@@ -7,7 +7,7 @@
     "warningCount": 12,
     "infoCount": 0,
     "status": "warn",
-    "fileCount": 5653,
+    "fileCount": 5669,
     "featureCount": 10,
     "circularDependencyCount": 0
   },
@@ -203,5 +203,5 @@
       "infoCount": 0
     }
   ],
-  "durationMs": 413
+  "durationMs": 441
 }

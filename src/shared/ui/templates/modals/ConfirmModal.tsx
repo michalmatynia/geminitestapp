@@ -2,7 +2,6 @@
 
 import React from 'react';
 
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +18,6 @@ import { Label } from '@/shared/ui/label';
 import { cn } from '@/shared/utils';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
-
 
 export interface ConfirmModalProps {
   isOpen: boolean;
@@ -41,90 +39,106 @@ export interface ConfirmModalProps {
   children?: React.ReactNode;
 }
 
-type ConfirmModalRuntimeValue = {
+type ConfirmModalPasswordFieldProps = {
   loading: boolean;
-  onClose: () => void;
-  handleConfirm: (event: React.MouseEvent) => void;
-  cancelText: string;
-  confirmText: string;
-  isDangerous: boolean;
-  isConfirmDisabled: boolean;
-  extraAction?: React.ReactNode;
   onConfirmPasswordChange?: (value: string) => void;
   confirmPassword?: string;
   confirmPasswordLabel: string;
-  resolvedDescription: string;
-  hasSubtitle: boolean;
-  confirmDisabled: boolean;
 };
 
-const { Context: ConfirmModalRuntimeContext, useStrictContext: useConfirmModalRuntime } =
-  createStrictContext<ConfirmModalRuntimeValue>({
-    hookName: 'useConfirmModalRuntime',
-    providerName: 'ConfirmModalRuntimeProvider',
-    displayName: 'ConfirmModalRuntimeContext',
-  });
+type ConfirmModalFooterActionsProps = {
+  extraAction?: React.ReactNode;
+  onClose: () => void;
+  cancelText: string;
+  loading: boolean;
+  handleConfirm: (event: React.MouseEvent) => void;
+  isDangerous: boolean;
+  isConfirmDisabled: boolean;
+  confirmText: string;
+};
 
-function ConfirmModalPasswordField(): React.JSX.Element | null {
-  const runtime = useConfirmModalRuntime();
+type ConfirmModalDescriptionProps = {
+  description: string;
+  hasSubtitle: boolean;
+};
+
+function ConfirmModalPasswordField({
+  loading,
+  onConfirmPasswordChange,
+  confirmPassword,
+  confirmPasswordLabel,
+}: ConfirmModalPasswordFieldProps): React.JSX.Element | null {
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const inputId = React.useId().replace(/:/g, '');
+
   React.useEffect(() => {
-    if (!runtime.loading) {
+    if (!loading) {
       inputRef.current?.focus();
     }
-  }, [runtime.loading]);
-  if (!runtime.onConfirmPasswordChange) return null;
+  }, [loading]);
+
+  if (!onConfirmPasswordChange) return null;
 
   return (
     <div className='space-y-2'>
       <Label htmlFor={inputId} className='text-xs font-medium text-gray-300'>
-        {runtime.confirmPasswordLabel}
+        {confirmPasswordLabel}
       </Label>
       <Input
         id={inputId}
         ref={inputRef}
         type='password'
-        value={runtime.confirmPassword}
-        onChange={(event) => runtime.onConfirmPasswordChange?.(event.target.value)}
+        value={confirmPassword}
+        onChange={(event) => onConfirmPasswordChange(event.target.value)}
         placeholder='Enter your password'
-        disabled={runtime.loading}
-       aria-label='Enter your password' title='Enter your password'/>
+        disabled={loading}
+        aria-label='Enter your password'
+        title='Enter your password'
+      />
     </div>
   );
 }
 
-function ConfirmModalFooterActions(): React.JSX.Element {
-  const runtime = useConfirmModalRuntime();
-
+function ConfirmModalFooterActions({
+  extraAction,
+  onClose,
+  cancelText,
+  loading,
+  handleConfirm,
+  isDangerous,
+  isConfirmDisabled,
+  confirmText,
+}: ConfirmModalFooterActionsProps): React.JSX.Element {
   return (
-    <div className='flex gap-2 w-full'>
-      {runtime.extraAction}
+    <div className='flex w-full gap-2'>
+      {extraAction}
       <div className='flex-1' />
       <AlertDialogCancel asChild>
-        <Button variant='outline' disabled={runtime.loading} onClick={runtime.onClose}>
-          {runtime.cancelText}
+        <Button variant='outline' disabled={loading} onClick={onClose}>
+          {cancelText}
         </Button>
       </AlertDialogCancel>
       <AlertDialogAction asChild>
         <Button
-          onClick={(event) => runtime.handleConfirm(event)}
-          variant={runtime.isDangerous ? 'destructive' : 'primary'}
-          disabled={runtime.isConfirmDisabled}
-          loading={runtime.loading}
+          onClick={handleConfirm}
+          variant={isDangerous ? 'destructive' : 'primary'}
+          disabled={isConfirmDisabled}
+          loading={loading}
         >
-          {runtime.confirmText}
+          {confirmText}
         </Button>
       </AlertDialogAction>
     </div>
   );
 }
 
-function ConfirmModalDescription(): React.JSX.Element {
-  const runtime = useConfirmModalRuntime();
+function ConfirmModalDescription({
+  description,
+  hasSubtitle,
+}: ConfirmModalDescriptionProps): React.JSX.Element {
   return (
-    <AlertDialogDescription className={runtime.hasSubtitle ? undefined : 'sr-only'}>
-      {runtime.resolvedDescription}
+    <AlertDialogDescription className={hasSubtitle ? undefined : 'sr-only'}>
+      {description}
     </AlertDialogDescription>
   );
 }
@@ -152,9 +166,10 @@ export function ConfirmModal({
   onConfirmPasswordChange,
   confirmPasswordLabel = 'Confirm with your user password',
   children,
-}: ConfirmModalProps) {
-  const handleConfirm = async (e: React.MouseEvent) => {
-    e.preventDefault();
+}: ConfirmModalProps): React.JSX.Element {
+  const handleConfirm = async (event: React.MouseEvent): Promise<void> => {
+    event.preventDefault();
+
     try {
       await Promise.resolve(onConfirm());
       onClose();
@@ -174,79 +189,62 @@ export function ConfirmModal({
   };
 
   const isConfirmDisabled =
-    loading || confirmDisabled || (onConfirmPasswordChange !== undefined && !confirmPassword?.trim());
+    loading ||
+    confirmDisabled ||
+    (onConfirmPasswordChange !== undefined && !confirmPassword?.trim());
   const resolvedDescription =
     modalSubtitle ??
     (typeof message === 'string' && message.trim().length > 0 ? message : 'Confirm this action.');
-
   const sizeClasses = {
     sm: 'sm:max-w-[425px]',
     md: 'sm:max-w-[600px]',
     lg: 'sm:max-w-[800px]',
     xl: 'sm:max-w-[1000px]',
   }[size];
-  const runtimeValue = React.useMemo<ConfirmModalRuntimeValue>(
-    () => ({
-      loading,
-      onClose,
-      handleConfirm: (event: React.MouseEvent): void => {
-        void handleConfirm(event);
-      },
-      cancelText,
-      confirmText,
-      isDangerous,
-      isConfirmDisabled,
-      extraAction,
-      onConfirmPasswordChange,
-      confirmPassword,
-      confirmPasswordLabel,
-      resolvedDescription,
-      hasSubtitle: Boolean(modalSubtitle),
-      confirmDisabled,
-    }),
-    [
-      loading,
-      onClose,
-      cancelText,
-      confirmText,
-      isDangerous,
-      isConfirmDisabled,
-      extraAction,
-      onConfirmPasswordChange,
-      confirmPassword,
-      confirmPasswordLabel,
-      resolvedDescription,
-      modalSubtitle,
-      confirmDisabled,
-    ]
-  );
 
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <ConfirmModalRuntimeContext.Provider value={runtimeValue}>
-        <AlertDialogContent className={cn(sizeClasses)}>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{title}</AlertDialogTitle>
-            <ConfirmModalDescription />
-          </AlertDialogHeader>
+      <AlertDialogContent className={cn(sizeClasses)}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <ConfirmModalDescription
+            description={resolvedDescription}
+            hasSubtitle={Boolean(modalSubtitle)}
+          />
+        </AlertDialogHeader>
 
-          <div className='py-4 space-y-4'>
-            {message && (
-              <div className='text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed'>
-                {message}
-              </div>
-            )}
+        <div className='space-y-4 py-4'>
+          {message ? (
+            <div className='whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground'>
+              {message}
+            </div>
+          ) : null}
 
-            <ConfirmModalPasswordField />
+          <ConfirmModalPasswordField
+            loading={loading}
+            onConfirmPasswordChange={onConfirmPasswordChange}
+            confirmPassword={confirmPassword}
+            confirmPasswordLabel={confirmPasswordLabel}
+          />
 
-            {children}
-          </div>
+          {children}
+        </div>
 
-          <AlertDialogFooter>
-            <ConfirmModalFooterActions />
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </ConfirmModalRuntimeContext.Provider>
+        <AlertDialogFooter>
+          <ConfirmModalFooterActions
+            extraAction={extraAction}
+            onClose={onClose}
+            cancelText={cancelText}
+            loading={loading}
+            handleConfirm={(event) => {
+              void handleConfirm(event);
+            }}
+            isDangerous={isDangerous}
+            isConfirmDisabled={isConfirmDisabled}
+            confirmText={confirmText}
+          />
+        </AlertDialogFooter>
+      </AlertDialogContent>
     </AlertDialog>
   );
 }

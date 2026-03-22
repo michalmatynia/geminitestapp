@@ -1,6 +1,7 @@
 'use client';
 
 import type { BlockInstance } from '@/features/cms/types/page-builder';
+import { resolveAlignItems, resolveJustifyContent } from '@/features/cms/components/shared/layout-utils';
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 
 import { getSectionContainerClass, getSectionStyles, getTextAlign } from '../theme-styles';
@@ -8,27 +9,6 @@ import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useCmsPageContext } from '../CmsPageContext';
 import { useSectionBlockData } from './SectionBlockContext';
 import { SectionDataProvider } from './SectionDataContext';
-
-
-const resolveJustifyContent = (
-  value: unknown
-): React.CSSProperties['justifyContent'] | undefined => {
-  if (value === 'center') return 'center';
-  if (value === 'end') return 'flex-end';
-  if (value === 'space-between') return 'space-between';
-  if (value === 'space-around') return 'space-around';
-  if (value === 'space-evenly') return 'space-evenly';
-  if (value === 'start') return 'flex-start';
-  return undefined;
-};
-
-const resolveAlignItems = (value: unknown): React.CSSProperties['alignItems'] | undefined => {
-  if (value === 'center') return 'center';
-  if (value === 'end') return 'flex-end';
-  if (value === 'stretch') return 'stretch';
-  if (value === 'start') return 'flex-start';
-  return undefined;
-};
 
 const resolveAlignmentToJustify = (alignment: string): React.CSSProperties['justifyContent'] =>
   alignment === 'center' ? 'center' : alignment === 'right' ? 'flex-end' : 'flex-start';

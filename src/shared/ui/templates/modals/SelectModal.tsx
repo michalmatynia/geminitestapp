@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import type { SelectOption } from '@/shared/contracts/ui';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { FormModal } from '@/shared/ui/FormModal';
 import { UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui/layout';
 import { SearchInput } from '@/shared/ui/search-input';
@@ -24,39 +23,22 @@ export interface SelectModalProps<T> {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-type SelectModalRuntimeValue = {
-  open: boolean;
-  onClose: () => void;
-  title: string;
-  subtitle?: string;
-  options: SelectOption<unknown>[];
-  onSelect: (option: SelectOption<unknown> | SelectOption<unknown>[]) => void;
-  loading: boolean;
-  searchable: boolean;
-  multiple: boolean;
-  modalSize: 'sm' | 'md' | 'lg' | 'xl';
-};
-
-const { Context: SelectModalRuntimeContext, useStrictContext: useSelectModalRuntime } =
-  createStrictContext<SelectModalRuntimeValue>({
-    hookName: 'useSelectModalRuntime',
-    providerName: 'SelectModalRuntimeProvider',
-    displayName: 'SelectModalRuntimeContext',
-  });
-
-function SelectModalRuntime(): React.JSX.Element {
-  const {
-    open,
-    onClose,
-    title,
-    subtitle,
-    options,
-    onSelect,
-    loading,
-    searchable,
-    multiple,
-    modalSize,
-  } = useSelectModalRuntime();
+/**
+ * Reusable modal template for single/multi-select operations.
+ * Refactored to leverage FormModal and SearchInput for consistent UX.
+ */
+export function SelectModal<T>({
+  open,
+  onClose,
+  title,
+  subtitle,
+  options,
+  onSelect,
+  loading = false,
+  searchable = true,
+  multiple = false,
+  size: modalSize = 'md',
+}: SelectModalProps<T>): React.JSX.Element {
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set());
 
@@ -70,30 +52,33 @@ function SelectModalRuntime(): React.JSX.Element {
   }, [options, search, searchable]);
 
   const handleSelect = useCallback(
-    (option: SelectOption<unknown>) => {
+    (option: SelectOption<T>) => {
       if (multiple) {
-        const next = new Set(selectedIds);
-        if (next.has(option.id)) {
-          next.delete(option.id);
-        } else {
-          next.add(option.id);
-        }
-        setSelectedIds(next);
-      } else {
-        onSelect(option);
-        onClose();
+        setSelectedIds((current) => {
+          const next = new Set(current);
+          if (next.has(option.id)) {
+            next.delete(option.id);
+          } else {
+            next.add(option.id);
+          }
+          return next;
+        });
+        return;
       }
+
+      onSelect(option);
+      onClose();
     },
-    [multiple, selectedIds, onSelect, onClose]
+    [multiple, onClose, onSelect]
   );
 
   const handleConfirm = useCallback(() => {
-    if (multiple) {
-      const selectedOptions = options.filter((opt) => selectedIds.has(opt.id));
-      onSelect(selectedOptions);
-      onClose();
-    }
-  }, [multiple, selectedIds, options, onSelect, onClose]);
+    if (!multiple) return;
+
+    const selectedOptions = options.filter((opt) => selectedIds.has(opt.id));
+    onSelect(selectedOptions);
+    onClose();
+  }, [multiple, onClose, onSelect, options, selectedIds]);
 
   return (
     <FormModal
@@ -109,17 +94,17 @@ function SelectModalRuntime(): React.JSX.Element {
       isSaving={loading}
     >
       <div className={UI_STACK_RELAXED_CLASSNAME}>
-        {searchable && (
+        {searchable ? (
           <SearchInput
             placeholder='Search options...'
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(event) => setSearch(event.target.value)}
             onClear={() => setSearch('')}
             aria-label='Search options'
             disabled={loading}
             size='sm'
           />
-        )}
+        ) : null}
 
         {loading ? (
           <div className='flex items-center justify-center py-12'>
@@ -139,61 +124,22 @@ function SelectModalRuntime(): React.JSX.Element {
                 disabled={option.disabled || loading}
                 aria-label={option.label}
                 className={cn(
-                  'w-full p-3 text-left rounded-md border transition-all duration-200',
+                  'w-full rounded-md border p-3 text-left transition-all duration-200',
                   selectedIds.has(option.id)
-                    ? 'bg-primary/10 border-primary text-primary'
-                    : 'bg-card/40 border-border/60 hover:border-border hover:bg-muted/20 text-gray-300',
-                  option.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border/60 bg-card/40 text-gray-300 hover:border-border hover:bg-muted/20',
+                  option.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
                 )}
               >
-                <div className='font-medium text-sm'>{option.label}</div>
-                {option.description && (
-                  <div className='text-xs opacity-70 mt-0.5'>{option.description}</div>
-                )}
+                <div className='text-sm font-medium'>{option.label}</div>
+                {option.description ? (
+                  <div className='mt-0.5 text-xs opacity-70'>{option.description}</div>
+                ) : null}
               </button>
             ))}
           </div>
         )}
       </div>
     </FormModal>
-  );
-}
-
-/**
- * Reusable modal template for single/multi-select operations.
- * Refactored to leverage FormModal and SearchInput for consistent UX.
- */
-export function SelectModal<T>({
-  open,
-  onClose,
-  title,
-  subtitle,
-  options,
-  onSelect,
-  loading = false,
-  searchable = true,
-  multiple = false,
-  size: modalSize = 'md',
-}: SelectModalProps<T>) {
-  const runtimeValue = useMemo<SelectModalRuntimeValue>(
-    () => ({
-      open,
-      onClose,
-      title,
-      subtitle,
-      options: options as SelectOption<unknown>[],
-      onSelect: onSelect as (option: SelectOption<unknown> | SelectOption<unknown>[]) => void,
-      loading,
-      searchable,
-      multiple,
-      modalSize,
-    }),
-    [loading, modalSize, multiple, onClose, onSelect, open, options, searchable, subtitle, title]
-  );
-
-  return (
-    <SelectModalRuntimeContext.Provider value={runtimeValue}>
-      <SelectModalRuntime />
-    </SelectModalRuntimeContext.Provider>
   );
 }

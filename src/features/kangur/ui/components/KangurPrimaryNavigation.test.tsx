@@ -4,7 +4,7 @@
 
 import { QueryClientContext } from '@tanstack/react-query';
 import React from 'react';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
@@ -620,6 +620,36 @@ describe('KangurPrimaryNavigation', () => {
     fireEvent.click(screen.getByRole('button', { name: /wyloguj/i }));
 
     expect(onLogout).toHaveBeenCalledTimes(1);
+  });
+
+  it('navigates to lessons on the first tap from the mobile menu', async () => {
+    setViewport({ width: 390, matches: true });
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Game'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    vi.useFakeTimers();
+    startRouteTransitionMock.mockReturnValueOnce({
+      acknowledgeMs: 110,
+      started: true,
+    });
+
+    fireEvent.click(screen.getByTestId('kangur-primary-nav-mobile-toggle'));
+    fireEvent.click(screen.getByRole('link', { name: /lekcje/i }));
+
+    await act(async () => {
+      vi.advanceTimersByTime(110);
+    });
+
+    expect(pushMock).toHaveBeenCalledWith('/kangur/lessons', { scroll: false });
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
   });
 
   it('disables the logout action while auth logout is already pending', () => {

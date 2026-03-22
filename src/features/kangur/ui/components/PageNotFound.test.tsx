@@ -65,7 +65,7 @@ describe('PageNotFound', () => {
   it('renders the home action as a hallmark pill CTA', async () => {
     render(<PageNotFound />, { wrapper: createWrapper() });
 
-    const homeButton = await screen.findByRole('button', { name: 'Wroc do strony glownej' });
+    const homeButton = await screen.findByRole('button', { name: 'Wróć do strony głównej' });
 
     expect(screen.getByTestId('page-not-found-shell')).toHaveClass('kangur-premium-bg');
     expect(homeButton).toHaveClass('kangur-cta-pill', 'primary-cta');
@@ -76,7 +76,7 @@ describe('PageNotFound', () => {
   it('routes home through the app router instead of forcing a document reload', async () => {
     render(<PageNotFound />, { wrapper: createWrapper() });
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Wroc do strony glownej' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Wróć do strony głównej' }));
 
     expect(routerPushMock).toHaveBeenCalledWith('/kangur', { scroll: false });
   });

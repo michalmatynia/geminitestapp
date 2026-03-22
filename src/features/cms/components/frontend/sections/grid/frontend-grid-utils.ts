@@ -1,81 +1,25 @@
 import React from 'react';
+import {
+  CMS_SECTION_BLOCK_TYPE_SET,
+  DEFAULT_BLOCK_MIN_HEIGHT,
+  getBlockMinHeight,
+  getGapClass,
+  getGapStyle,
+  resolveAlignItems,
+  resolveGapValue,
+  resolveJustifyContent,
+} from '@/features/cms/components/shared/layout-utils';
 
-export const SECTION_BLOCK_TYPES = new Set([
-  'ImageWithText',
-  'Hero',
-  'RichText',
-  'Block',
-  'TextAtom',
-  'Carousel',
-  'Slideshow',
-  'Repeater',
-]);
-
-export const getGapClass = (gap?: string): string => {
-  if (gap === 'none') return 'gap-0';
-  if (gap === 'small') return 'gap-4';
-  if (gap === 'large') return 'gap-12';
-  return 'gap-8';
+export const SECTION_BLOCK_TYPES = CMS_SECTION_BLOCK_TYPE_SET;
+export {
+  DEFAULT_BLOCK_MIN_HEIGHT,
+  getBlockMinHeight,
+  getGapClass,
+  getGapStyle,
+  resolveAlignItems,
+  resolveGapValue,
+  resolveJustifyContent,
 };
-
-export const resolveGapValue = (gap: unknown, fallback: string): string => {
-  if (typeof gap === 'string' && gap !== 'inherit') return gap;
-  return fallback;
-};
-
-export const getGapStyle = (gapPx: unknown): React.CSSProperties | undefined => {
-  if (typeof gapPx === 'number' && Number.isFinite(gapPx) && gapPx > 0) {
-    return { gap: `${gapPx}px` };
-  }
-  return undefined;
-};
-
-export const resolveJustifyContent = (
-  value: unknown
-): React.CSSProperties['justifyContent'] | undefined => {
-  if (value === 'center') return 'center';
-  if (value === 'end') return 'flex-end';
-  if (value === 'space-between') return 'space-between';
-  if (value === 'space-around') return 'space-around';
-  if (value === 'space-evenly') return 'space-evenly';
-  if (value === 'start') return 'flex-start';
-  return undefined;
-};
-
-export const resolveAlignItems = (
-  value: unknown
-): React.CSSProperties['alignItems'] | undefined => {
-  if (value === 'center') return 'center';
-  if (value === 'end') return 'flex-end';
-  if (value === 'stretch') return 'stretch';
-  if (value === 'start') return 'flex-start';
-  return undefined;
-};
-
-export const DEFAULT_BLOCK_MIN_HEIGHT: Record<string, number> = {
-  Heading: 48,
-  Text: 64,
-  TextElement: 32,
-  TextAtom: 48,
-  Announcement: 32,
-  Button: 44,
-  Input: 44,
-  Progress: 28,
-  Repeater: 120,
-  ImageElement: 140,
-  Image: 140,
-  VideoEmbed: 160,
-  Divider: 12,
-  SocialLinks: 40,
-  Icon: 40,
-  AppEmbed: 180,
-  RichText: 140,
-  ImageWithText: 200,
-  Hero: 240,
-  Block: 0,
-};
-
-export const getBlockMinHeight = (type: string): number => DEFAULT_BLOCK_MIN_HEIGHT[type] ?? 40;
 
 export const clampNumber = (value: unknown, min: number, max: number, fallback: number): number => {
   if (typeof value !== 'number' || Number.isNaN(value)) return fallback;

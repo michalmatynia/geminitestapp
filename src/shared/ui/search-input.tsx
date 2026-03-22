@@ -3,7 +3,6 @@
 import { Search, X } from 'lucide-react';
 import React from 'react';
 
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 
 import { Button } from './button';
@@ -22,7 +21,7 @@ type SearchInputNativeProps = Omit<
   'value' | 'onClear' | 'containerClassName' | 'className' | 'variant' | 'size'
 >;
 
-type SearchInputRuntimeValue = {
+type SearchInputContentProps = {
   value: string;
   onClear?: () => void;
   containerClassName?: string;
@@ -32,15 +31,11 @@ type SearchInputRuntimeValue = {
   inputProps: SearchInputNativeProps;
 };
 
-const { Context: SearchInputRuntimeContext, useStrictContext: useSearchInputRuntime } =
-  createStrictContext<SearchInputRuntimeValue>({
-    hookName: 'useSearchInputRuntime',
-    providerName: 'SearchInputRuntimeProvider',
-    displayName: 'SearchInputRuntimeContext',
-  });
-
-const SearchInputContent = React.forwardRef<HTMLInputElement>(function SearchInputContent(_, ref) {
-  const runtime = useSearchInputRuntime();
+const SearchInputContent = React.forwardRef<HTMLInputElement, SearchInputContentProps>(
+  function SearchInputContent(
+    { value, onClear, containerClassName, className, variant, size, inputProps },
+    ref
+  ) {
   const {
     'aria-label': ariaLabel,
     'aria-labelledby': ariaLabelledBy,
@@ -48,14 +43,14 @@ const SearchInputContent = React.forwardRef<HTMLInputElement>(function SearchInp
     placeholder,
     type,
     ...rest
-  } = runtime.inputProps;
+  } = inputProps;
   const resolvedAriaLabel =
     ariaLabel ?? (ariaLabelledBy || id ? undefined : placeholder ?? 'Search');
   const resolvedContainerLabel =
     ariaLabel ?? (ariaLabelledBy ? undefined : placeholder ?? 'Search');
   return (
     <div
-      className={cn('relative flex items-center', runtime.containerClassName)}
+      className={cn('relative flex items-center', containerClassName)}
       role='search'
       {...(ariaLabelledBy
         ? { 'aria-labelledby': ariaLabelledBy }
@@ -66,32 +61,35 @@ const SearchInputContent = React.forwardRef<HTMLInputElement>(function SearchInp
       <Search className='absolute left-3 size-4 text-gray-500' aria-hidden='true' />
       <Input
         ref={ref}
-        value={runtime.value}
-        variant={runtime.variant}
-        size={runtime.size}
-        className={cn('pl-9 pr-9', runtime.className)}
+        value={value}
+        variant={variant}
+        size={size}
+        className={cn('pl-9 pr-9', className)}
         id={id}
         type={type ?? 'search'}
         placeholder={placeholder}
         aria-label={resolvedAriaLabel}
         aria-labelledby={ariaLabelledBy}
         {...rest}
-       title={placeholder}/>
-      {runtime.value && runtime.onClear && (
+        title={placeholder}
+      />
+      {value && onClear ? (
         <Button
           type='button'
           variant='ghost'
           size='icon'
-          onClick={runtime.onClear}
+          onClick={onClear}
           className='absolute right-1 size-7 text-gray-500 hover:text-gray-300'
           aria-label='Clear search'
-          title={'Clear search'}>
+          title='Clear search'
+        >
           <X className='size-3.5' aria-hidden='true' />
         </Button>
-      )}
+      ) : null}
     </div>
   );
-});
+  }
+);
 
 export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
   (
@@ -105,26 +103,18 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
       ...props
     },
     ref
-  ) => {
-    const runtimeValue = React.useMemo<SearchInputRuntimeValue>(
-      () => ({
-        value,
-        onClear,
-        containerClassName,
-        className,
-        variant,
-        size,
-        inputProps: props,
-      }),
-      [value, onClear, containerClassName, className, variant, size, props]
-    );
-
-    return (
-      <SearchInputRuntimeContext.Provider value={runtimeValue}>
-        <SearchInputContent ref={ref} />
-      </SearchInputRuntimeContext.Provider>
-    );
-  }
+  ) => (
+    <SearchInputContent
+      ref={ref}
+      value={value}
+      onClear={onClear}
+      containerClassName={containerClassName}
+      className={className}
+      variant={variant}
+      size={size}
+      inputProps={props}
+    />
+  )
 );
 
 SearchInputContent.displayName = 'SearchInputContent';

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import {
@@ -11,21 +10,15 @@ import type {
   AiPathRuntimeAnalyticsRange,
   AiPathRuntimeAnalyticsSummaryResponse,
 } from '@/shared/contracts/ai-paths';
+import {
+  aiPathRuntimeAnalyticsRangeQuerySchema,
+  aiPathRuntimeAnalyticsRangeSchema,
+} from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { AppErrorCodes, isAppError } from '@/shared/errors/app-error';
-import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
-const RANGE_VALUES: readonly AiPathRuntimeAnalyticsRange[] = ['1h', '24h', '7d', '30d'];
-const RANGE_VALUE_SET = new Set<string>(RANGE_VALUES);
-
-export const querySchema = z.object({
-  range: z.preprocess(
-    (value: unknown) => normalizeOptionalQueryString(value),
-    z.enum(RANGE_VALUES).optional()
-  ),
-});
+export { aiPathRuntimeAnalyticsRangeQuerySchema as querySchema };
 
 const resolveRuntimeAnalyticsQueryInput = (
   req: Request,
@@ -35,17 +28,28 @@ const resolveRuntimeAnalyticsQueryInput = (
   ...((ctx.query ?? {}) as Record<string, unknown>),
 });
 
-const parseRuntimeAnalyticsRange = (value: unknown): AiPathRuntimeAnalyticsRange => {
-  const normalized = normalizeOptionalQueryString(value) ?? '24h';
-  if (RANGE_VALUE_SET.has(normalized)) {
-    return normalized as AiPathRuntimeAnalyticsRange;
+const parseRuntimeAnalyticsRange = (
+  input: Record<string, unknown>
+): AiPathRuntimeAnalyticsRange => {
+  const parsed = aiPathRuntimeAnalyticsRangeQuerySchema.safeParse(input);
+  if (!parsed.success) {
+    throw new Error('Invalid range.');
   }
+  if (parsed.data.range === undefined) {
+    return '24h';
+  }
+
+  const range = aiPathRuntimeAnalyticsRangeSchema.safeParse(parsed.data.range);
+  if (range.success) {
+    return range.data;
+  }
+
   throw new Error('Invalid range.');
 };
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = resolveRuntimeAnalyticsQueryInput(req, _ctx);
-  const rangeRaw = parseRuntimeAnalyticsRange(query['range']);
+  const rangeRaw = parseRuntimeAnalyticsRange(query);
   const { from, to } = resolveRuntimeAnalyticsRangeWindow(rangeRaw);
   try {
     await requireAiPathsAccess();

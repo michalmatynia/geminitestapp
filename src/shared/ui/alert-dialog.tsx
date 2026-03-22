@@ -2,6 +2,7 @@ import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog';
 import * as React from 'react';
 
 import { buttonVariants } from '@/shared/ui';
+import { RadixOverlayContentShell } from '@/shared/ui/radix-overlay-content-shell';
 import { dialogContentClasses, dialogOverlayClasses } from '@/shared/ui/dialog';
 import { cn } from '@/shared/utils';
 
@@ -27,14 +28,18 @@ const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
 >(({ className, ...props }, ref) => (
-  <AlertDialogPortal>
-    <AlertDialogOverlay />
-    <AlertDialogPrimitive.Content
-      ref={ref}
-      className={cn(dialogContentClasses, className)}
-      {...props}
-    />
-  </AlertDialogPortal>
+  <RadixOverlayContentShell
+    Portal={AlertDialogPortal}
+    Overlay={AlertDialogPrimitive.Overlay}
+    Content={AlertDialogPrimitive.Content}
+    overlayBaseClassName={dialogOverlayClasses}
+    contentBaseClassName={dialogContentClasses}
+    contentRef={ref}
+    contentProps={{
+      ...props,
+      className,
+    }}
+  />
 ));
 AlertDialogContent.displayName = AlertDialogPrimitive.Content.displayName;
 

@@ -31,6 +31,7 @@ import {
   KANGUR_STACK_ROOMY_CLASSNAME,
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   createNumberBalancePuzzle,
   evaluateNumberBalancePlacement,
@@ -145,12 +146,14 @@ function NumberTile({
   index,
   isDragDisabled,
   isSelected,
+  isCoarsePointer,
   onClick,
 }: {
   tile: NumberBalanceTile;
   index: number;
   isDragDisabled: boolean;
   isSelected: boolean;
+  isCoarsePointer: boolean;
   onClick: () => void;
 }): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
@@ -169,7 +172,10 @@ function NumberTile({
             {...provided.dragHandleProps}
             type='button'
             className={cn(
-              'flex h-16 w-16 items-center justify-center rounded-2xl border border-white/70 text-xl font-extrabold shadow-[0_12px_28px_-20px_rgba(15,23,42,0.45)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+              'flex items-center justify-center rounded-2xl border border-white/70 font-extrabold shadow-[0_12px_28px_-20px_rgba(15,23,42,0.45)] transition touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+              isCoarsePointer
+                ? 'h-20 w-20 text-2xl active:scale-[0.98] active:shadow-sm'
+                : 'h-16 w-16 text-xl',
               TILE_STYLES[index % TILE_STYLES.length],
               snapshot.isDragging ? 'scale-105 shadow-[0_18px_36px_-18px_rgba(15,23,42,0.55)]' : '',
               isSelected ? 'ring-2 ring-amber-400/80 ring-offset-1 ring-offset-white' : ''
@@ -202,6 +208,7 @@ export default function NumberBalanceRushGame(
   props: NumberBalanceRushGameProps
 ): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const isCoarsePointer = useKangurCoarsePointer();
   const {
     durationMs = 15_000,
     tier = 'tier1',
@@ -588,6 +595,12 @@ export default function NumberBalanceRushGame(
   };
 
   const canInteract = phase === 'running' && !celebrating && !isSubmitting;
+  const selectedTile = selectedTileId
+    ? [...trayTiles, ...leftTiles, ...rightTiles].find((tile) => tile.id === selectedTileId) ?? null
+    : null;
+  const touchHint = selectedTile
+    ? translations('numberBalance.inRound.touch.selected', { value: selectedTile.value })
+    : translations('numberBalance.inRound.touch.idle');
 
   useEffect(() => {
     if (!canInteract) {
@@ -893,6 +906,15 @@ export default function NumberBalanceRushGame(
         {error ? (
           <div className='text-xs font-semibold text-rose-600'>{error}</div>
         ) : null}
+        {isCoarsePointer ? (
+          <div
+            className='rounded-2xl border border-amber-200/80 bg-white/80 px-4 py-3 text-sm font-semibold text-amber-950 shadow-sm'
+            data-testid='number-balance-touch-hint'
+            aria-live='polite'
+          >
+            {touchHint}
+          </div>
+        ) : null}
 
         <KangurGlassPanel
           className={cn(
@@ -915,9 +937,11 @@ export default function NumberBalanceRushGame(
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                       className={cn(
-                        'flex min-h-[120px] w-full flex-wrap items-center justify-center gap-2 rounded-3xl border-2 border-dashed p-3 transition',
-                        snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/80' : 'border-amber-200'
+                        'flex min-h-[120px] w-full flex-wrap items-center justify-center gap-2 rounded-3xl border-2 border-dashed p-3 transition touch-manipulation',
+                        snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/80' : 'border-amber-200',
+                        isCoarsePointer && selectedTileId && 'ring-2 ring-amber-200/80 ring-offset-2 ring-offset-white'
                       )}
+                      data-testid='number-balance-left-zone'
                       onClick={() => moveSelectedTileTo('left')}
                       role='button'
                       tabIndex={canInteract ? 0 : -1}
@@ -937,6 +961,7 @@ export default function NumberBalanceRushGame(
                           index={index}
                           isDragDisabled={!canInteract}
                           isSelected={selectedTileId === tile.id}
+                          isCoarsePointer={isCoarsePointer}
                           onClick={() => {
                             if (!canInteract) return;
                             setSelectedTileId((current) => (current === tile.id ? null : tile.id));
@@ -977,9 +1002,11 @@ export default function NumberBalanceRushGame(
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                       className={cn(
-                        'flex min-h-[120px] w-full flex-wrap items-center justify-center gap-2 rounded-3xl border-2 border-dashed p-3 transition',
-                        snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/80' : 'border-amber-200'
+                        'flex min-h-[120px] w-full flex-wrap items-center justify-center gap-2 rounded-3xl border-2 border-dashed p-3 transition touch-manipulation',
+                        snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/80' : 'border-amber-200',
+                        isCoarsePointer && selectedTileId && 'ring-2 ring-amber-200/80 ring-offset-2 ring-offset-white'
                       )}
+                      data-testid='number-balance-right-zone'
                       onClick={() => moveSelectedTileTo('right')}
                       role='button'
                       tabIndex={canInteract ? 0 : -1}
@@ -999,6 +1026,7 @@ export default function NumberBalanceRushGame(
                           index={index}
                           isDragDisabled={!canInteract}
                           isSelected={selectedTileId === tile.id}
+                          isCoarsePointer={isCoarsePointer}
                           onClick={() => {
                             if (!canInteract) return;
                             setSelectedTileId((current) => (current === tile.id ? null : tile.id));
@@ -1036,9 +1064,11 @@ export default function NumberBalanceRushGame(
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                     className={cn(
-                      'flex min-h-[88px] flex-wrap items-center justify-center kangur-panel-gap rounded-[28px] border-2 border-dashed p-3 transition',
-                      snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/70' : 'border-amber-200'
+                      'flex min-h-[88px] flex-wrap items-center justify-center kangur-panel-gap rounded-[28px] border-2 border-dashed p-3 transition touch-manipulation',
+                      snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/70' : 'border-amber-200',
+                      isCoarsePointer && selectedTileId && 'ring-2 ring-amber-200/80 ring-offset-2 ring-offset-white'
                     )}
+                    data-testid='number-balance-tray-zone'
                     onClick={() => moveSelectedTileTo('tray')}
                     role='button'
                     tabIndex={canInteract ? 0 : -1}
@@ -1058,6 +1088,7 @@ export default function NumberBalanceRushGame(
                         index={index}
                         isDragDisabled={!canInteract}
                         isSelected={selectedTileId === tile.id}
+                        isCoarsePointer={isCoarsePointer}
                         onClick={() => {
                           if (!canInteract) return;
                           setSelectedTileId((current) => (current === tile.id ? null : tile.id));

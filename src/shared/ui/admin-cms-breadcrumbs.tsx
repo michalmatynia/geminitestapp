@@ -1,19 +1,7 @@
-import * as React from 'react';
+import { ADMIN_CMS_SECTION } from './admin-section-configs';
+import { createAdminSectionBreadcrumbs } from './admin-section-breadcrumbs';
 
-import type { AdminSectionBreadcrumbWrapperProps } from '@/shared/contracts/ui';
-
-import { AdminSectionBreadcrumbs } from './admin-section-breadcrumbs';
-
-export function AdminCmsBreadcrumbs({
-  current,
-  parent,
-  className,
-}: AdminSectionBreadcrumbWrapperProps): React.JSX.Element {
-  const breadcrumbProps = { current, parent, className };
-  return (
-    <AdminSectionBreadcrumbs
-      section={{ label: 'CMS', href: '/admin/cms' }}
-      {...breadcrumbProps}
-    />
-  );
-}
+export const AdminCmsBreadcrumbs = createAdminSectionBreadcrumbs({
+  section: ADMIN_CMS_SECTION,
+  displayName: 'AdminCmsBreadcrumbs',
+});

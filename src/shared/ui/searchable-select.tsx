@@ -3,13 +3,12 @@
 import * as React from 'react';
 
 import type { SearchableSelectProps } from '@/shared/contracts/ui';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { MultiSelect, type MultiSelectOption } from './multi-select';
 
 export type { SearchableSelectProps };
 
-type SearchableSelectRuntimeValue = {
+type SearchableSelectControlProps = {
   options: ReadonlyArray<MultiSelectOption>;
   selected: string[];
   onChange: (values: string[]) => void;
@@ -22,28 +21,31 @@ type SearchableSelectRuntimeValue = {
   emptyMessage?: string;
 };
 
-const { Context: SearchableSelectRuntimeContext, useStrictContext: useSearchableSelectRuntime } =
-  createStrictContext<SearchableSelectRuntimeValue>({
-    hookName: 'useSearchableSelectRuntime',
-    providerName: 'SearchableSelectRuntimeProvider',
-    displayName: 'SearchableSelectRuntimeContext',
-  });
-
-function SearchableSelectControl(): React.JSX.Element {
-  const runtime = useSearchableSelectRuntime();
+function SearchableSelectControl({
+  options,
+  selected,
+  onChange,
+  placeholder,
+  searchPlaceholder,
+  label,
+  disabled,
+  className,
+  loading,
+  emptyMessage,
+}: SearchableSelectControlProps): React.JSX.Element {
   return (
     <MultiSelect
-      options={runtime.options}
-      selected={runtime.selected}
-      onChange={runtime.onChange}
+      options={options}
+      selected={selected}
+      onChange={onChange}
       single
-      placeholder={runtime.placeholder}
-      searchPlaceholder={runtime.searchPlaceholder}
-      label={runtime.label}
-      disabled={runtime.disabled}
-      className={runtime.className}
-      loading={runtime.loading}
-      emptyMessage={runtime.emptyMessage}
+      placeholder={placeholder}
+      searchPlaceholder={searchPlaceholder}
+      label={label}
+      disabled={disabled}
+      className={className}
+      loading={loading}
+      emptyMessage={emptyMessage}
     />
   );
 }
@@ -68,36 +70,19 @@ export function SearchableSelect({
     },
     [onChange]
   );
-  const runtimeValue = React.useMemo<SearchableSelectRuntimeValue>(
-    () => ({
-      options,
-      selected,
-      onChange: handleChange,
-      placeholder,
-      searchPlaceholder,
-      label,
-      disabled,
-      className,
-      loading,
-      emptyMessage,
-    }),
-    [
-      options,
-      selected,
-      handleChange,
-      placeholder,
-      searchPlaceholder,
-      label,
-      disabled,
-      className,
-      loading,
-      emptyMessage,
-    ]
-  );
 
   return (
-    <SearchableSelectRuntimeContext.Provider value={runtimeValue}>
-      <SearchableSelectControl />
-    </SearchableSelectRuntimeContext.Provider>
+    <SearchableSelectControl
+      options={options}
+      selected={selected}
+      onChange={handleChange}
+      placeholder={placeholder}
+      searchPlaceholder={searchPlaceholder}
+      label={label}
+      disabled={disabled}
+      className={className}
+      loading={loading}
+      emptyMessage={emptyMessage}
+    />
   );
 }

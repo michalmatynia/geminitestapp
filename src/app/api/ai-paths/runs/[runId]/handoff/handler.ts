@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   assertAiPathRunAccess,
@@ -8,14 +7,10 @@ import {
   requireAiPathsAccess,
 } from '@/features/ai/ai-paths/server';
 import { parseJsonBody } from '@/features/products/server';
+import { aiPathRunHandoffRequestSchema } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-
-const handoffSchema = z.object({
-  reason: z.string().trim().min(1).max(500).optional(),
-  checkpointLineageId: z.string().trim().min(1).max(200).optional(),
-});
 
 export async function POST_handler(
   req: NextRequest,
@@ -24,7 +19,7 @@ export async function POST_handler(
 ): Promise<Response> {
   const access = await requireAiPathsAccess();
   await enforceAiPathsActionRateLimit(access, 'run-handoff');
-  const parsed = await parseJsonBody(req, handoffSchema, {
+  const parsed = await parseJsonBody(req, aiPathRunHandoffRequestSchema, {
     logPrefix: 'ai-paths.runs.handoff',
   });
   if (!parsed.ok) return parsed.response;

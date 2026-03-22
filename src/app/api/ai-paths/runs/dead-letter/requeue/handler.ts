@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   assertAiPathRunAccess,
@@ -8,24 +7,16 @@ import {
 } from '@/features/ai/ai-paths/server';
 import { resumePathRun } from '@/features/ai/ai-paths/server';
 import { assertAiPathRunQueueReady } from '@/features/jobs/server';
+import { aiPathRunDeadLetterRequeueRequestSchema } from '@/shared/contracts/ai-paths';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
-const requeueSchema = z.object({
-  runIds: z.array(z.string().trim().min(1)).optional(),
-  pathId: z.string().trim().optional().nullable(),
-  query: z.string().trim().optional(),
-  mode: z.enum(['resume', 'replay']).optional(),
-  limit: z.number().int().min(1).max(1000).optional(),
-});
-
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const access = await requireAiPathsAccess();
   await enforceAiPathsActionRateLimit(access, 'run-requeue');
-  const parsed = await parseJsonBody(req, requeueSchema, {
+  const parsed = await parseJsonBody(req, aiPathRunDeadLetterRequeueRequestSchema, {
     logPrefix: 'ai-paths.runs.dead-letter.requeue',
   });
   if (!parsed.ok) return parsed.response;

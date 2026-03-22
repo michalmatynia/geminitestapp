@@ -756,6 +756,16 @@ export function KangurProfileScreen(): React.JSX.Element {
   const profileBadges = useKangurMobileProfileBadges({
     unlockedBadgeIds: snapshot.unlockedBadgeIds,
   });
+  const recentProfileSessionCount = profileRecentResults.recentResultItems.length;
+  const recentProfileBestAccuracy =
+    recentProfileSessionCount > 0
+      ? Math.max(
+          ...profileRecentResults.recentResultItems.map((item) =>
+            getKangurMobileScoreAccuracyPercent(item.result),
+          ),
+        )
+      : null;
+  const latestProfileResult = profileRecentResults.recentResultItems[0] ?? null;
 
   const xpToNextLevel = snapshot.nextLevel
     ? Math.max(0, snapshot.nextLevel.minXp - snapshot.totalXp)
@@ -1135,9 +1145,9 @@ export function KangurProfileScreen(): React.JSX.Element {
                 ) : (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Dein Konto ist noch nicht im aktuellen Kurz-Ranking der Duelle sichtbar.',
-                      en: 'Your account is not yet visible in the current compact duel ranking.',
-                      pl: 'Twojego konta nie ma jeszcze w bieżącym skrócie rankingu pojedynków.',
+                      de: 'Dein Konto ist in diesem Duell-Ausschnitt noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit du hier erscheinst.',
+                      en: 'Your account is not visible in this duel snapshot yet. Finish another duel or open the lobby so it shows up here.',
+                      pl: 'Twojego konta nie widać jeszcze w tym widoku pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawić się tutaj.',
                     })}
                   </Text>
                 )}
@@ -1544,9 +1554,9 @@ export function KangurProfileScreen(): React.JSX.Element {
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Eine Übersicht der letzten Versuche und des Lernrhythmus. Sie ersetzt die ausführlichere Historie, bis weitere Screens portiert sind.',
-                  en: 'A view of the latest attempts and the learner rhythm. This replaces the more advanced history until the remaining screens are ported.',
-                  pl: 'Widok ostatnich prób i rytmu pracy ucznia. To zastąpi bardziej rozbudowaną historię po porcie kolejnych ekranów.',
+                  de: 'Die letzten synchronisierten Sitzungen bleiben hier griffbereit, damit du direkt wieder ins Training, die passende Lektion oder den vollständigen Verlauf springen kannst.',
+                  en: 'The latest synchronized sessions stay close here so you can jump straight back into practice, the matching lesson, or the full history.',
+                  pl: 'Ostatnie zsynchronizowane sesje są tutaj pod ręką, aby można było od razu wrócić do treningu, pasującej lekcji albo pełnej historii.',
                 })}
               </Text>
             </View>
@@ -1769,56 +1779,116 @@ export function KangurProfileScreen(): React.JSX.Element {
           </Card>
 
           <Card>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <View style={{ gap: 4, flex: 1 }}>
-                <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                  {copy({
-                    de: 'Ergebnisverlauf',
-                    en: 'Score history',
-                    pl: 'Historia wyników',
-                  })}
-                </Text>
-                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                  {profileRecentResults.isLoading ||
-                  profileRecentResults.isRestoringAuth
+            <View style={{ gap: 4 }}>
+              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                {copy({
+                  de: 'Ergebnisverlauf',
+                  en: 'Score history',
+                  pl: 'Historia wyników',
+                })}
+              </Text>
+              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+                {copy({
+                  de: 'Historienzentrum',
+                  en: 'History hub',
+                  pl: 'Centrum historii',
+                })}
+              </Text>
+              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {profileRecentResults.isLoading || profileRecentResults.isRestoringAuth
+                  ? copy({
+                      de: 'Die gespeicherten Versuche für das Profil werden geladen.',
+                      en: 'Loading saved attempts for the profile.',
+                      pl: 'Pobieramy zapisane podejścia dla profilu.',
+                    })
+                  : !profileRecentResults.isEnabled
                     ? copy({
-                        de: 'Die gespeicherten Versuche für das Profil werden geladen.',
-                        en: 'Loading saved attempts for the profile.',
-                        pl: 'Pobieramy zapisane podejścia dla profilu.',
+                        de: 'Melde die Schulersitzung an, um den mobilen Ergebnisverlauf im Profil zu sehen.',
+                        en: 'Sign in the learner session to see mobile score history in the profile.',
+                        pl: 'Zaloguj sesję ucznia, aby zobaczyć mobilną historię wyników w profilu.',
                       })
-                    : !profileRecentResults.isEnabled
-                      ? copy({
-                          de: 'Melde die Schulersitzung an, um den mobilen Ergebnisverlauf im Profil zu sehen.',
-                          en: 'Sign in the learner session to see mobile score history in the profile.',
-                          pl: 'Zaloguj sesję ucznia, aby zobaczyć mobilną historię wyników w profilu.',
-                        })
-                      : profileRecentResults.error ??
-                        copy({
-                          de: 'In dieser mobilen Version ist der Ergebnisverlauf nur eine Ergänzung zum lokalen Fortschritt.',
-                          en: 'In this mobile version the score history is only a supplement to local progress.',
-                          pl: 'W tej wersji mobilnej historia wyników jest tylko dodatkiem do lokalnego postępu.',
+                    : profileRecentResults.error
+                      ? profileRecentResults.error
+                      : copy({
+                          de: 'Von hier aus kannst du den Verlauf aktualisieren, die vollständige Historie öffnen und direkt in den nächsten Lernschritt springen.',
+                          en: 'From here you can refresh the history, open the full results view, and jump straight into the next study step.',
+                          pl: 'Stąd możesz odświeżyć historię, otworzyć pełny widok wyników i od razu przejść do kolejnego kroku nauki.',
                         })}
-                </Text>
+              </Text>
+            </View>
+
+            {profileRecentResults.isEnabled &&
+            !profileRecentResults.isLoading &&
+            !profileRecentResults.isRestoringAuth &&
+            !profileRecentResults.error &&
+            recentProfileSessionCount > 0 ? (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                <Pill
+                  label={copy({
+                    de: `Sitzungen ${recentProfileSessionCount}`,
+                    en: `Sessions ${recentProfileSessionCount}`,
+                    pl: `Sesje ${recentProfileSessionCount}`,
+                  })}
+                  tone={{
+                    backgroundColor: '#eef2ff',
+                    borderColor: '#c7d2fe',
+                    textColor: '#4338ca',
+                  }}
+                />
+                {recentProfileBestAccuracy !== null ? (
+                  <Pill
+                    label={copy({
+                      de: `Bestes Ergebnis ${recentProfileBestAccuracy}%`,
+                      en: `Best accuracy ${recentProfileBestAccuracy}%`,
+                      pl: `Najlepsza skuteczność ${recentProfileBestAccuracy}%`,
+                    })}
+                    tone={getSessionScoreTone(recentProfileBestAccuracy)}
+                  />
+                ) : null}
+                {latestProfileResult ? (
+                  <Pill
+                    label={copy({
+                      de: `Letzter Modus ${formatKangurMobileScoreOperation(
+                        latestProfileResult.result.operation,
+                        locale,
+                      )}`,
+                      en: `Latest mode ${formatKangurMobileScoreOperation(
+                        latestProfileResult.result.operation,
+                        locale,
+                      )}`,
+                      pl: `Ostatni tryb ${formatKangurMobileScoreOperation(
+                        latestProfileResult.result.operation,
+                        locale,
+                      )}`,
+                    })}
+                    tone={getSessionAccentTone(latestProfileResult.result.operation)}
+                  />
+                ) : null}
               </View>
+            ) : null}
+
+            <View style={{ gap: 10 }}>
               <Pressable
                 accessibilityRole='button'
                 onPress={() => {
                   void profileRecentResults.refresh();
                 }}
                 style={{
-                  borderRadius: 999,
+                  alignSelf: 'stretch',
+                  width: '100%',
+                  borderRadius: 16,
                   backgroundColor: '#0f172a',
                   paddingHorizontal: 14,
-                  paddingVertical: 10,
+                  paddingVertical: 12,
                 }}
               >
-                <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                <Text
+                  style={{
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    textAlign: 'center',
+                  }}
+                >
                   {copy({
                     de: 'Aktualisieren',
                     en: 'Refresh',
@@ -1826,6 +1896,66 @@ export function KangurProfileScreen(): React.JSX.Element {
                   })}
                 </Text>
               </Pressable>
+
+              <Link href={RESULTS_ROUTE} asChild>
+                <Pressable
+                  accessibilityRole='button'
+                  style={{
+                    alignSelf: 'stretch',
+                    width: '100%',
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: '#cbd5e1',
+                    backgroundColor: '#ffffff',
+                    paddingHorizontal: 14,
+                    paddingVertical: 12,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: '#0f172a',
+                      fontWeight: '700',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {copy({
+                      de: 'Gesamte Historie öffnen',
+                      en: 'Open full history',
+                      pl: 'Otwórz całą historię',
+                    })}
+                  </Text>
+                </Pressable>
+              </Link>
+
+              <Link href={createKangurPlanHref()} asChild>
+                <Pressable
+                  accessibilityRole='button'
+                  style={{
+                    alignSelf: 'stretch',
+                    width: '100%',
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: '#cbd5e1',
+                    backgroundColor: '#ffffff',
+                    paddingHorizontal: 14,
+                    paddingVertical: 12,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: '#0f172a',
+                      fontWeight: '700',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {copy({
+                      de: 'Tagesplan öffnen',
+                      en: 'Open daily plan',
+                      pl: 'Otwórz plan dnia',
+                    })}
+                  </Text>
+                </Pressable>
+              </Link>
             </View>
           </Card>
         </View>

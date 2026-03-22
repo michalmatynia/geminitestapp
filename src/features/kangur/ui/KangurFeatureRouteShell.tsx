@@ -3,9 +3,7 @@
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
 
-import {
-  useOptionalCmsStorefrontAppearance,
-} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
 import {
   KANGUR_BASE_PATH,
   normalizeKangurBasePath,

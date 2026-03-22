@@ -60,6 +60,32 @@ describe('ai-paths portable-engine remediation webhook receiver handler', () => 
     expect(payload['replayKey']).toMatch(/^[a-f0-9]{64}$/);
   });
 
+  it('accepts email channel signatures when channel is provided via URL query', async () => {
+    const timestamp = new Date().toISOString();
+    const body = JSON.stringify({ event: 'portable_audit_sink_auto_remediation_email' });
+    const signature = buildSignatureHeader(timestamp, body, 'receiver-email-secret');
+    const response = await POST_handler(
+      new NextRequest(
+        'http://localhost/api/ai-paths/portable-engine/remediation-webhook?channel=email',
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-ai-paths-signature': signature,
+            'x-ai-paths-signature-timestamp': timestamp,
+          },
+          body,
+        }
+      ),
+      {} as Parameters<typeof POST_handler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    const payload = (await response.json()) as Record<string, unknown>;
+    expect(payload['channel']).toBe('email');
+    expect(payload['accepted']).toBe(true);
+  });
+
   it('rejects skewed timestamps when maxSkewSeconds is exceeded', async () => {
     const timestamp = '2026-03-05T00:00:00.000Z';
     const body = JSON.stringify({ event: 'portable_audit_sink_auto_remediation' });

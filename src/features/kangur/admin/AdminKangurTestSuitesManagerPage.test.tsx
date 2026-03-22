@@ -31,6 +31,10 @@ vi.mock('next/link', () => ({
   ),
 }));
 
+vi.mock('next-intl', () => ({
+  useLocale: () => 'en',
+}));
+
 vi.mock('@/features/foldertree/public', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/foldertree/public')>();
   return {
@@ -352,14 +356,16 @@ describe('AdminKangurTestSuitesManagerPage', () => {
     });
   });
 
-  it('can launch directly into the first fix-needed question', () => {
+  it('can launch directly into the first fix-needed question', async () => {
     render(<AdminKangurTestSuitesManagerPage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Open first fix' }));
 
     expect(screen.getByText('Kangur Questions')).toBeInTheDocument();
-    expect(screen.getByText('Question review')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Save Question' })).toBeDisabled();
+    await waitFor(() => {
+      expect(screen.getByText('Question review')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Save Question' })).toBeDisabled();
+    });
   });
 
   it('publishes only structurally ready questions from the ready queue', async () => {

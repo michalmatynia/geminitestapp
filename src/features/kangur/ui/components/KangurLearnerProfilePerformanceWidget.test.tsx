@@ -127,25 +127,25 @@ describe('KangurLearnerProfilePerformanceWidget', () => {
     render(<KangurLearnerProfilePerformanceWidget />);
 
     expect(screen.getByTestId('learner-profile-xp-summary-today')).toHaveTextContent(
-      'Dzis: +28 XP'
+      'Dziś: +28 XP'
     );
     expect(screen.getByTestId('learner-profile-xp-summary-weekly')).toHaveTextContent(
       '7 dni: +112 XP'
     );
     expect(screen.getByTestId('learner-profile-xp-summary-average')).toHaveTextContent(
-      'Srednio: 120 XP na sesje'
+      'Średnio: 120 XP na sesję'
     );
     expect(screen.queryByTestId('learner-profile-xp-summary-guided')).toBeNull();
     expect(screen.getByTestId('learner-profile-weekly-activity-2026-03-08')).toHaveAttribute(
       'title',
-      '1 gier, srednia 100%'
+      '1 gier, średnia 100%'
     );
     expect(screen.getByTestId('learner-profile-operation-progress-clock')).toHaveAttribute(
       'aria-valuenow',
       '83'
     );
     expect(
-      screen.getByText('Proby: 3 · XP na sesje: 28 · Lacznie: 84 XP · Najlepsza skutecznosc: 100%')
+      screen.getByText('Próby: 3 · XP na sesję: 28 · Łącznie: 84 XP · Najlepsza skuteczność: 100%')
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: performanceMessages.train })).toHaveAttribute(
       'href',

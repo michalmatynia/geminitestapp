@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { resolveAiPathsContextRegistryEnvelope } from '@/features/ai/ai-paths/context-registry/server';
 import {
@@ -11,35 +10,8 @@ import {
   type PlaywrightNodeRunRecord,
 } from '@/features/ai/ai-paths/services/playwright-node-runner';
 import { parseJsonBody } from '@/features/products/server';
-import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
+import { aiPathsPlaywrightEnqueueRequestSchema } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-
-const captureSchema = z.object({
-  screenshot: z.boolean().optional(),
-  html: z.boolean().optional(),
-  video: z.boolean().optional(),
-  trace: z.boolean().optional(),
-});
-
-const enqueueSchema = z.object({
-  script: z.string().trim().min(1),
-  input: z.record(z.string(), z.unknown()).optional(),
-  startUrl: z.string().trim().optional(),
-  timeoutMs: z
-    .number()
-    .int()
-    .min(1000)
-    .max(30 * 60 * 1000)
-    .optional(),
-  waitForResult: z.boolean().optional(),
-  browserEngine: z.enum(['chromium', 'firefox', 'webkit']).optional(),
-  personaId: z.string().trim().optional(),
-  settingsOverrides: z.record(z.string(), z.unknown()).optional(),
-  launchOptions: z.record(z.string(), z.unknown()).optional(),
-  contextOptions: z.record(z.string(), z.unknown()).optional(),
-  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
-  capture: captureSchema.optional(),
-});
 
 type CapturePayload = {
   screenshot?: boolean;
@@ -49,7 +21,14 @@ type CapturePayload = {
 };
 
 const normalizeCaptureConfig = (
-  capture: z.infer<typeof captureSchema> | undefined
+  capture:
+    | {
+        screenshot?: boolean;
+        html?: boolean;
+        video?: boolean;
+        trace?: boolean;
+      }
+    | undefined
 ): CapturePayload | undefined => {
   if (!capture) return undefined;
   const normalized: CapturePayload = {};
@@ -73,7 +52,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     await enforceAiPathsActionRateLimit(access, 'playwright-enqueue');
   }
 
-  const parsed = await parseJsonBody(req, enqueueSchema, {
+  const parsed = await parseJsonBody(req, aiPathsPlaywrightEnqueueRequestSchema, {
     logPrefix: 'ai-paths.playwright.enqueue',
   });
   if (!parsed.ok) return parsed.response;

@@ -94,6 +94,34 @@ function Metric({
   );
 }
 
+function SummaryChip({
+  label,
+  backgroundColor = '#eef2ff',
+  borderColor = '#c7d2fe',
+  textColor = '#4338ca',
+}: {
+  label: string;
+  backgroundColor?: string;
+  borderColor?: string;
+  textColor?: string;
+}): React.JSX.Element {
+  return (
+    <View
+      style={{
+        alignSelf: 'flex-start',
+        borderRadius: 999,
+        borderWidth: 1,
+        borderColor,
+        backgroundColor,
+        paddingHorizontal: 12,
+        paddingVertical: 7,
+      }}
+    >
+      <Text style={{ color: textColor, fontSize: 12, fontWeight: '700' }}>{label}</Text>
+    </View>
+  );
+}
+
 const getAccuracyTone = (
   accuracyPercent: number,
 ): {
@@ -777,6 +805,21 @@ export function KangurResultsScreen(): React.JSX.Element {
     results.operationPerformance.length > 1
       ? results.operationPerformance[results.operationPerformance.length - 1]
       : null;
+  const weakestLesson = lessonMastery.weakest[0] ?? null;
+  const strongestLesson = lessonMastery.strongest[0] ?? null;
+  const lessonFocusSummary = weakestLesson
+    ? copy({
+        de: `Fokus nach den Ergebnissen: ${weakestLesson.title} braucht noch eine schnelle Wiederholung, bevor du wieder Tempo aufbaust.`,
+        en: `Post-results focus: ${weakestLesson.title} still needs a quick review before you build momentum again.`,
+        pl: `Fokus po wynikach: ${weakestLesson.title} potrzebuje jeszcze szybkiej powtórki, zanim znowu wejdziesz w tempo.`,
+      })
+    : strongestLesson
+      ? copy({
+          de: `Stabile Stärke: ${strongestLesson.title} hält das Niveau und eignet sich für einen kurzen sicheren Einstieg.`,
+          en: `Stable strength: ${strongestLesson.title} is holding its level and works well for a short confidence run.`,
+          pl: `Stabilna mocna strona: ${strongestLesson.title} trzyma poziom i nadaje się na krótkie, pewne wejście.`,
+        })
+      : null;
   const openDuelSession = (sessionId: string): void => {
     router.replace(createKangurDuelsHref({ sessionId }));
   };
@@ -1071,16 +1114,16 @@ export function KangurResultsScreen(): React.JSX.Element {
                   </Text>
                   <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
                     {copy({
-                      de: 'Lokale Aufgaben nach den Ergebnissen',
-                      en: 'Local tasks after results',
-                      pl: 'Lokalne zadania po wynikach',
+                      de: 'Plan nach den Ergebnissen',
+                      en: 'Post-results plan',
+                      pl: 'Plan po wynikach',
                     })}
                   </Text>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Nach dem Blick auf die letzten Ergebnisse kannst du direkt in die nächsten lokalen Aufgaben aus deinem Fortschritt wechseln.',
-                      en: 'After reviewing recent results, you can jump straight into the next local tasks from your progress.',
-                      pl: 'Po sprawdzeniu ostatnich wyników możesz od razu przejść do kolejnych lokalnych zadań wynikających z Twojego postępu.',
+                      de: 'Verwandle die letzten Ergebnisse direkt in die nächsten lokalen Schritte, ohne den Trainingsfluss zu verlieren.',
+                      en: 'Turn the latest results directly into the next local actions without losing the training flow.',
+                      pl: 'Zamień ostatnie wyniki od razu w kolejne lokalne kroki, bez gubienia rytmu treningu.',
                     })}
                   </Text>
                 </View>
@@ -1111,11 +1154,18 @@ export function KangurResultsScreen(): React.JSX.Element {
                       pl: 'Odznaki',
                     })}
                   </Text>
+                  <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+                    {copy({
+                      de: 'Abzeichen-Zentrale',
+                      en: 'Badge hub',
+                      pl: 'Centrum odznak',
+                    })}
+                  </Text>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Nach dem Blick auf die letzten Ergebnisse kannst du sehen, welche lokalen Abzeichen bereits freigeschaltet wurden.',
-                      en: 'After reviewing recent results, you can see which local badges are already unlocked.',
-                      pl: 'Po sprawdzeniu ostatnich wyników możesz zobaczyć, które lokalne odznaki są już odblokowane.',
+                      de: 'Behalte im Blick, was schon freigeschaltet ist und welches lokale Ziel am nächsten an der nächsten Abzeichenstufe liegt.',
+                      en: 'Keep track of what is already unlocked and which local goal is closest to the next badge threshold.',
+                      pl: 'Śledź, co jest już odblokowane i który lokalny cel jest najbliżej kolejnego progu odznaki.',
                     })}
                   </Text>
                 </View>
@@ -1217,11 +1267,18 @@ export function KangurResultsScreen(): React.JSX.Element {
                       pl: 'Opanowanie lekcji',
                     })}
                   </Text>
+                  <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+                    {copy({
+                      de: 'Lektionsplan nach den Ergebnissen',
+                      en: 'Post-results lesson plan',
+                      pl: 'Plan lekcji po wynikach',
+                    })}
+                  </Text>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Die Ergebnisse kannst du direkt mit lokal gespeicherten Lektionsständen verbinden, um Wiederholungen schneller zu planen.',
-                      en: 'You can connect results directly with locally saved lesson mastery so review is easier to plan.',
-                      pl: 'Wyniki możesz od razu połączyć z lokalnie zapisanym opanowaniem lekcji, aby łatwiej zaplanować powtórki.',
+                      de: 'Verbinde die letzten Ergebnisse direkt mit lokal gespeicherten Lektionsständen und entscheide sofort, was wiederholt und was nur gehalten werden soll.',
+                      en: 'Connect the latest results directly with saved lesson progress and decide right away what needs review and what only needs maintaining.',
+                      pl: 'Połącz ostatnie wyniki z zapisanym opanowaniem lekcji i od razu zdecyduj, co powtórzyć, a co tylko podtrzymać.',
                     })}
                   </Text>
                 </View>
@@ -1293,6 +1350,76 @@ export function KangurResultsScreen(): React.JSX.Element {
                   </Text>
                 ) : (
                   <View style={{ gap: 10 }}>
+                    {lessonFocusSummary ? (
+                      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                        {lessonFocusSummary}
+                      </Text>
+                    ) : null}
+
+                    <View style={{ alignSelf: 'stretch', gap: 10 }}>
+                      {weakestLesson ? (
+                        <Link href={weakestLesson.lessonHref} asChild>
+                          <Pressable
+                            accessibilityRole='button'
+                            style={{
+                              alignSelf: 'stretch',
+                              width: '100%',
+                              borderRadius: 999,
+                              backgroundColor: '#0f172a',
+                              paddingHorizontal: 14,
+                              paddingVertical: 10,
+                            }}
+                          >
+                            <Text
+                              style={{
+                                color: '#ffffff',
+                                fontWeight: '700',
+                                textAlign: 'center',
+                              }}
+                            >
+                              {copy({
+                                de: `Fokus: ${weakestLesson.title}`,
+                                en: `Focus: ${weakestLesson.title}`,
+                                pl: `Skup się: ${weakestLesson.title}`,
+                              })}
+                            </Text>
+                          </Pressable>
+                        </Link>
+                      ) : null}
+
+                      {strongestLesson ? (
+                        <Link href={strongestLesson.lessonHref} asChild>
+                          <Pressable
+                            accessibilityRole='button'
+                            style={{
+                              alignSelf: 'stretch',
+                              width: '100%',
+                              borderRadius: 999,
+                              borderWidth: 1,
+                              borderColor: '#cbd5e1',
+                              backgroundColor: '#ffffff',
+                              paddingHorizontal: 14,
+                              paddingVertical: 10,
+                            }}
+                          >
+                            <Text
+                              style={{
+                                color: '#0f172a',
+                                fontWeight: '700',
+                                textAlign: 'center',
+                              }}
+                            >
+                              {copy({
+                                de: `Stärke halten: ${strongestLesson.title}`,
+                                en: `Maintain strength: ${strongestLesson.title}`,
+                                pl: `Podtrzymaj: ${strongestLesson.title}`,
+                              })}
+                            </Text>
+                          </Pressable>
+                        </Link>
+                      ) : null}
+                    </View>
+
                     {lessonMastery.weakest[0] ? (
                       <LessonMasteryRow
                         insight={lessonMastery.weakest[0]}
@@ -1326,13 +1453,51 @@ export function KangurResultsScreen(): React.JSX.Element {
                       pl: 'Pojedynki',
                     })}
                   </Text>
-                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                  <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
                     {copy({
-                      de: 'Nach dem Blick auf die letzten Ergebnisse kannst du hier direkt zu deinen Duellrivalen zurückkehren.',
-                      en: 'After reviewing recent scores, you can jump straight back to duel rivals here.',
-                      pl: 'Po sprawdzeniu ostatnich wyników możesz tutaj od razu wrócić do rywali z pojedynków.',
+                      de: 'Schneller Rückweg zu Rivalen',
+                      en: 'Quick return to rivals',
+                      pl: 'Szybki powrót do rywali',
                     })}
                   </Text>
+                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({
+                      de: 'Prüfe den aktuellen Duellstand, sieh die letzten Rivalen und starte einen Rückkampf, ohne den Ergebnisverlauf zu verlassen.',
+                      en: 'Check the current duel standing, see recent rivals, and jump into a rematch without leaving score history.',
+                      pl: 'Sprawdź aktualny stan pojedynków, zobacz ostatnich rywali i wejdź w rewanż bez wychodzenia z historii wyników.',
+                    })}
+                  </Text>
+                </View>
+
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  <SummaryChip
+                    label={copy({
+                      de: `Rivalen ${duelResults.opponents.length}`,
+                      en: `Rivals ${duelResults.opponents.length}`,
+                      pl: `Rywale ${duelResults.opponents.length}`,
+                    })}
+                    backgroundColor='#eff6ff'
+                    borderColor='#bfdbfe'
+                    textColor='#1d4ed8'
+                  />
+                  <SummaryChip
+                    label={
+                      duelResults.currentRank
+                        ? copy({
+                            de: `Deine Position #${duelResults.currentRank}`,
+                            en: `Your rank #${duelResults.currentRank}`,
+                            pl: `Twoja pozycja #${duelResults.currentRank}`,
+                          })
+                        : copy({
+                            de: 'Wartet auf Sichtbarkeit',
+                            en: 'Waiting for visibility',
+                            pl: 'Czeka na widoczność',
+                          })
+                    }
+                    backgroundColor='#ecfdf5'
+                    borderColor='#a7f3d0'
+                    textColor='#047857'
+                  />
                 </View>
 
                 {duelResults.isRestoringAuth || duelResults.isLoading ? (
@@ -1411,9 +1576,9 @@ export function KangurResultsScreen(): React.JSX.Element {
                     ) : (
                       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                         {copy({
-                          de: 'Dein Konto ist noch nicht im aktuellen Kurz-Ranking der Duelle sichtbar.',
-                          en: 'Your account is not yet visible in the current compact duel ranking.',
-                          pl: 'Twojego konta nie ma jeszcze w bieżącym skrócie rankingu pojedynków.',
+                          de: 'Dein Konto ist in diesem Duell-Ausschnitt noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit du hier erscheinst.',
+                          en: 'Your account is not visible in this duel snapshot yet. Finish another duel or open the lobby so it shows up here.',
+                          pl: 'Twojego konta nie widać jeszcze w tym widoku pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawić się tutaj.',
                         })}
                       </Text>
                     )}
@@ -1500,11 +1665,15 @@ export function KangurResultsScreen(): React.JSX.Element {
                       </View>
                     )}
 
-                    <Link href={DUELS_ROUTE} asChild>
+                    <View style={{ alignSelf: 'stretch', gap: 10 }}>
                       <Pressable
                         accessibilityRole='button'
+                        onPress={() => {
+                          void duelResults.refresh();
+                        }}
                         style={{
-                          alignSelf: 'flex-start',
+                          alignSelf: 'stretch',
+                          width: '100%',
                           borderRadius: 999,
                           borderWidth: 1,
                           borderColor: '#cbd5e1',
@@ -1513,15 +1682,41 @@ export function KangurResultsScreen(): React.JSX.Element {
                           paddingVertical: 10,
                         }}
                       >
-                        <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                        <Text style={{ color: '#0f172a', fontWeight: '700', textAlign: 'center' }}>
                           {copy({
-                            de: 'Duelle öffnen',
-                            en: 'Open duels',
-                            pl: 'Otwórz pojedynki',
+                            de: 'Duelle aktualisieren',
+                            en: 'Refresh duels',
+                            pl: 'Odśwież pojedynki',
                           })}
                         </Text>
                       </Pressable>
-                    </Link>
+
+                      <Link href={DUELS_ROUTE} asChild>
+                        <Pressable
+                          accessibilityRole='button'
+                          style={{
+                            alignSelf: 'stretch',
+                            width: '100%',
+                            borderRadius: 999,
+                            borderWidth: 1,
+                            borderColor: '#cbd5e1',
+                            backgroundColor: '#ffffff',
+                            paddingHorizontal: 14,
+                            paddingVertical: 10,
+                          }}
+                        >
+                          <Text
+                            style={{ color: '#0f172a', fontWeight: '700', textAlign: 'center' }}
+                          >
+                            {copy({
+                              de: 'Duelle öffnen',
+                              en: 'Open duels',
+                              pl: 'Otwórz pojedynki',
+                            })}
+                          </Text>
+                        </Pressable>
+                      </Link>
+                    </View>
                   </View>
                 )}
               </Card>
@@ -1537,9 +1732,9 @@ export function KangurResultsScreen(): React.JSX.Element {
                   </Text>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Nach dem Blick auf die letzten Ergebnisse kannst du direkt zu den zuletzt gespeicherten Lektionen zurückspringen.',
-                      en: 'After reviewing the latest results, you can jump straight back to the most recently saved lessons.',
-                      pl: 'Po sprawdzeniu ostatnich wyników możesz od razu wrócić do ostatnio zapisanych lekcji.',
+                      de: 'Springe direkt zu den zuletzt gespeicherten Lektionen zurück, solange die letzte Sitzung noch frisch im Kopf ist.',
+                      en: 'Jump back to the most recently saved lessons while the latest session is still fresh in mind.',
+                      pl: 'Wróć do ostatnio zapisanych lekcji, dopóki ostatnia sesja jest jeszcze świeża w pamięci.',
                     })}
                   </Text>
                 </View>

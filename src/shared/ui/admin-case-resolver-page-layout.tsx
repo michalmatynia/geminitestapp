@@ -1,7 +1,8 @@
-import { AdminCaseResolverBreadcrumbs } from './admin-case-resolver-breadcrumbs';
-import { createAdminPageLayout } from './create-admin-page-layout';
+import { ADMIN_CASE_RESOLVER_SECTION } from './admin-section-configs';
+import { createAdminSectionPageLayout } from './create-admin-page-layout';
 
-export const AdminCaseResolverPageLayout = createAdminPageLayout({
-  Breadcrumbs: AdminCaseResolverBreadcrumbs,
+export const AdminCaseResolverPageLayout = createAdminSectionPageLayout({
+  section: ADMIN_CASE_RESOLVER_SECTION,
   breadcrumbClassName: 'mb-2',
+  displayName: 'AdminCaseResolverPageLayout',
 });

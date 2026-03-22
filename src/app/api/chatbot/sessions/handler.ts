@@ -6,19 +6,16 @@ import { parseJsonBody } from '@/features/products/server';
 import {
   chatbotSessionCreateRequestSchema,
   chatbotSessionCreateResponseSchema,
-  chatbotSessionDeleteRequestSchema,
   chatbotSessionDeleteResponseSchema,
   chatbotSessionIdsResponseSchema,
   chatbotSessionResponseSchema,
-  chatbotSessionsDeleteRequestSchema,
+  chatbotSessionsDeleteBodySchema,
   chatbotSessionsQuerySchema,
   chatbotSessionsResponseSchema,
   chatbotSessionUpdateRequestSchema,
   type ChatbotSessionCreateResponse,
-  type ChatbotSessionDeleteRequest,
   type ChatbotSessionDeleteResponse,
   type ChatbotSessionDto as ChatSession,
-  type ChatbotSessionsDeleteRequest,
   type ChatbotSessionsQuery,
   type ChatbotSessionsResponse,
   type UpdateChatSessionDto as UpdateSessionInput,
@@ -29,8 +26,6 @@ import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
-
-type DeleteSessionBody = ChatbotSessionDeleteRequest | ChatbotSessionsDeleteRequest;
 
 const matchesSessionQuery = (session: ChatSession, query: string): boolean => {
   const normalizedQuery = query.trim().toLowerCase();
@@ -217,13 +212,13 @@ export async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): 
   const parsed = await parseBody(
     req,
     ctx,
-    chatbotSessionDeleteRequestSchema.or(chatbotSessionsDeleteRequestSchema),
+    chatbotSessionsDeleteBodySchema,
     'chatbot.sessions.DELETE'
   );
   if (!parsed.ok) {
     return parsed.response;
   }
-  const body = parsed.data as DeleteSessionBody;
+  const body = parsed.data;
 
   if (DEBUG_CHATBOT) {
     await logSystemEvent({

@@ -55,11 +55,13 @@ export type SlotZoneProps = {
   correct: boolean;
   selectedBallId?: string | null;
   onSelectBall?: (id: string) => void;
+  onActivateZone?: () => void;
 };
 
 export type BallProps = {
   ball: BallItem;
   small?: boolean;
+  isCoarsePointer?: boolean;
 };
 
 export type DraggableBallProps = {

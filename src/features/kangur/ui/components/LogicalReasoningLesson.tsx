@@ -316,6 +316,9 @@ const LOGICAL_REASONING_LESSON_COPY_PL = {
       selection: {
         selectedTemplate: 'Wybrana karta: {conclusion}',
         idle: 'Wybierz kartę, aby przenieść ją klawiaturą.',
+        touchIdle: 'Dotknij kartę, a potem dotknij strefy „wynika”, „nie wynika” albo puli.',
+        touchSelectedTemplate:
+          'Wybrana karta: {conclusion} Dotknij strefy „wynika”, „nie wynika” albo puli.',
       },
       moveButtons: {
         toValid: 'Do „wynika”',
@@ -439,6 +442,8 @@ const buildLogicalReasoningGameCopy = (
   selection: {
     selectedTemplate: copy.game.ui.selection.selectedTemplate,
     idle: copy.game.ui.selection.idle,
+    touchIdle: copy.game.ui.selection.touchIdle,
+    touchSelectedTemplate: copy.game.ui.selection.touchSelectedTemplate,
   },
   moveButtons: {
     toValid: copy.game.ui.moveButtons.toValid,

@@ -1,10 +1,19 @@
 import { z } from 'zod';
 
+import {
+  normalizeOptionalQueryString,
+  optionalIntegerQuerySchema,
+  optionalTrimmedQueryString,
+} from '@/shared/lib/api/query-schema';
+
 export * from './ai-paths-core';
+import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import {
   aiNodeSchema,
   edgeSchema,
   aiPathsValidationConfigSchema,
+  playwrightBrowserEngineSchema,
+  playwrightCaptureConfigSchema,
   type AiNode,
   type Edge,
   type AiPathsValidationRule,
@@ -76,6 +85,29 @@ const nonEmptyTrimmedStringSchema = z
   .string()
   .transform((value) => value.trim())
   .pipe(z.string().min(1));
+export const aiPathRunEnqueueRequestSchema = z.object({
+  pathId: z.string().trim().min(1),
+  pathName: z.string().trim().optional(),
+  nodes: z.array(aiNodeSchema).optional(),
+  edges: z.array(edgeSchema).optional(),
+  triggerEvent: z.string().trim().optional(),
+  triggerNodeId: z.string().trim().optional(),
+  triggerContext: z.record(z.string(), z.unknown()).optional().nullable(),
+  entityId: z.string().trim().optional().nullable(),
+  entityType: z.string().trim().optional().nullable(),
+  maxAttempts: z.number().int().min(1).max(50).optional(),
+  backoffMs: z.number().int().min(0).max(60_000).optional(),
+  backoffMaxMs: z
+    .number()
+    .int()
+    .min(0)
+    .max(10 * 60_000)
+    .optional(),
+  requestId: z.string().trim().min(1).max(200).optional(),
+  meta: z.record(z.string(), z.unknown()).optional().nullable(),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
+});
+export type AiPathRunEnqueueRequest = z.infer<typeof aiPathRunEnqueueRequestSchema>;
 const aiPathRunEnqueueRunObjectSchema = z
   .object({
     id: nonEmptyTrimmedStringSchema.optional(),
@@ -159,6 +191,13 @@ export const parseAiPathRunEnqueuedEventPayload = (
   const parsed = aiPathRunEnqueuedEventSchema.safeParse(value);
   return parsed.success ? parsed.data : null;
 };
+export const aiPathEntityUpdateRequestSchema = z.object({
+  entityType: z.enum(['product', 'note', 'custom']),
+  entityId: z.string().trim().optional(),
+  updates: z.record(z.string(), z.unknown()).optional(),
+  mode: z.enum(['replace', 'append']).optional(),
+});
+export type AiPathEntityUpdateRequest = z.infer<typeof aiPathEntityUpdateRequestSchema>;
 export const aiPathRunDetailSchema = z.object({
   run: aiPathRunRecordSchema,
   nodes: z.array(z.lazy(() => aiPathRunNodeSchema)),
@@ -249,6 +288,12 @@ export type AiPathRunEventCreateInput = z.infer<typeof aiPathRunEventCreateInput
  */
 export const aiPathRuntimeAnalyticsRangeSchema = z.enum(['1h', '24h', '7d', '30d']);
 export type AiPathRuntimeAnalyticsRange = z.infer<typeof aiPathRuntimeAnalyticsRangeSchema>;
+export const aiPathRuntimeAnalyticsRangeQuerySchema = z.object({
+  range: optionalTrimmedQueryString(),
+});
+export type AiPathRuntimeAnalyticsRangeQuery = z.infer<
+  typeof aiPathRuntimeAnalyticsRangeQuerySchema
+>;
 export const aiPathRuntimeAnalyticsSlowestSpanSchema = z.object({
   runId: z.string(),
   spanId: z.string(),
@@ -553,6 +598,43 @@ export const aiPathsMaintenanceApplyResultSchema = z.object({
   report: aiPathsMaintenanceReportSchema,
 });
 export type AiPathsMaintenanceApplyResult = z.infer<typeof aiPathsMaintenanceApplyResultSchema>;
+const aiPathsSettingKeySchema = z
+  .string()
+  .trim()
+  .min(1)
+  .refine((value) => value.startsWith('ai_paths_'), {
+    message: 'AI Paths setting keys must start with "ai_paths_".',
+  });
+export const aiPathsSettingWriteSchema = z.object({
+  key: aiPathsSettingKeySchema,
+  value: z.string(),
+});
+export type AiPathsSettingWrite = z.infer<typeof aiPathsSettingWriteSchema>;
+export const aiPathsSettingsBulkWriteRequestSchema = z.object({
+  items: z.array(aiPathsSettingWriteSchema).min(1),
+});
+export type AiPathsSettingsBulkWriteRequest = z.infer<typeof aiPathsSettingsBulkWriteRequestSchema>;
+export const aiPathsSettingsDeleteRequestSchema = z
+  .object({
+    key: z.string().trim().min(1).optional(),
+    keys: z.array(z.string().trim().min(1)).min(1).optional(),
+  })
+  .refine((value) => Boolean(value.key) || Boolean(value.keys && value.keys.length > 0), {
+    message: 'Provide "key" or non-empty "keys".',
+  });
+export type AiPathsSettingsDeleteRequest = z.infer<typeof aiPathsSettingsDeleteRequestSchema>;
+export const AI_PATHS_MAINTENANCE_COMPAT_ACTION_IDS = ['normalize_runtime_kernel_mode'] as const;
+export type AiPathsMaintenanceCompatActionId =
+  (typeof AI_PATHS_MAINTENANCE_COMPAT_ACTION_IDS)[number];
+export const aiPathsMaintenanceCompatActionIdSchema = z.enum(
+  AI_PATHS_MAINTENANCE_COMPAT_ACTION_IDS
+);
+export const aiPathsMaintenanceApplyRequestSchema = z.object({
+  actionIds: z.array(
+    z.union([aiPathsMaintenanceActionIdSchema, aiPathsMaintenanceCompatActionIdSchema])
+  ).optional(),
+});
+export type AiPathsMaintenanceApplyRequest = z.infer<typeof aiPathsMaintenanceApplyRequestSchema>;
 export const pathBlockedRunPolicySchema = z.enum(['fail_run', 'complete_with_warning']);
 export type PathBlockedRunPolicy = z.infer<typeof pathBlockedRunPolicySchema>;
 export const pathConfigSchema = z.object({
@@ -631,6 +713,200 @@ export const connectionValidationSchema = z.object({
   message: z.string().optional(),
 });
 export type ConnectionValidation = z.infer<typeof connectionValidationSchema>;
+const AI_PATH_RUN_STATUS_SET: ReadonlySet<AiPathRunStatus> = new Set(aiPathRunStatusSchema.options);
+
+const aiPathRunVisibilityQueryValueSchema = z
+  .preprocess((value) => {
+    const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
+    return normalized === 'global' ? 'global' : 'scoped';
+  }, z.enum(['scoped', 'global']))
+  .default('scoped');
+
+const aiPathRunSourceModeQueryValueSchema = z
+  .preprocess((value) => {
+    const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
+    return normalized === 'exclude' ? 'exclude' : 'include';
+  }, z.enum(['include', 'exclude']))
+  .default('include');
+
+const aiPathRunFreshQueryValueSchema = z
+  .preprocess((value) => {
+    const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
+    return normalized === '1' || normalized === 'true' || normalized === 'yes';
+  }, z.boolean())
+  .default(false);
+
+const aiPathRunStatusQueryValueSchema = z.preprocess((value) => {
+  const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
+  return normalized && AI_PATH_RUN_STATUS_SET.has(normalized as AiPathRunStatus)
+    ? normalized
+    : undefined;
+}, aiPathRunStatusSchema.optional());
+
+export const AI_PATH_RUN_TERMINAL_STATUSES: readonly AiPathRunStatus[] = [
+  'completed',
+  'failed',
+  'canceled',
+  'dead_lettered',
+];
+
+export const aiPathRunRouteParamsSchema = z.object({
+  runId: z.string().trim().min(1, 'Run id is required'),
+});
+export type AiPathRunRouteParams = z.infer<typeof aiPathRunRouteParamsSchema>;
+
+export const aiPathRunsListQuerySchema = z.object({
+  visibility: aiPathRunVisibilityQueryValueSchema,
+  pathId: optionalTrimmedQueryString(),
+  nodeId: optionalTrimmedQueryString(),
+  requestId: optionalTrimmedQueryString(),
+  query: optionalTrimmedQueryString(),
+  source: optionalTrimmedQueryString(),
+  sourceMode: aiPathRunSourceModeQueryValueSchema,
+  status: aiPathRunStatusQueryValueSchema,
+  limit: optionalIntegerQuerySchema(z.number().int().min(1).max(500)),
+  offset: optionalIntegerQuerySchema(z.number().int().min(0)),
+  includeTotal: z
+    .preprocess((value) => {
+      const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
+      return !(normalized === '0' || normalized === 'false' || normalized === 'no');
+    }, z.boolean())
+    .default(true),
+  fresh: aiPathRunFreshQueryValueSchema,
+});
+export type AiPathRunsListQuery = z.infer<typeof aiPathRunsListQuerySchema>;
+
+export const aiPathRunsDeleteQuerySchema = z.object({
+  scope: z
+    .preprocess((value) => {
+      const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
+      return normalized === 'all' ? 'all' : 'terminal';
+    }, z.enum(['terminal', 'all']))
+    .default('terminal'),
+  pathId: optionalTrimmedQueryString(),
+  source: optionalTrimmedQueryString(),
+  sourceMode: aiPathRunSourceModeQueryValueSchema,
+});
+export type AiPathRunsDeleteQuery = z.infer<typeof aiPathRunsDeleteQuerySchema>;
+
+export const aiPathRunQueueStatusQuerySchema = z.object({
+  visibility: aiPathRunVisibilityQueryValueSchema,
+  fresh: aiPathRunFreshQueryValueSchema,
+});
+export type AiPathRunQueueStatusQuery = z.infer<typeof aiPathRunQueueStatusQuerySchema>;
+
+export const aiPathRunStreamQuerySchema = z.object({
+  since: optionalTrimmedQueryString(),
+});
+export type AiPathRunStreamQuery = z.infer<typeof aiPathRunStreamQuerySchema>;
+
+export const aiPathRunResumeRequestSchema = z.object({
+  mode: z.enum(['resume', 'replay']).optional(),
+});
+export type AiPathRunResumeRequest = z.infer<typeof aiPathRunResumeRequestSchema>;
+
+export const aiPathRunRetryNodeRequestSchema = z.object({
+  nodeId: z.string().trim().min(1),
+});
+export type AiPathRunRetryNodeRequest = z.infer<typeof aiPathRunRetryNodeRequestSchema>;
+
+export const aiPathRunDeadLetterRequeueRequestSchema = z.object({
+  runIds: z.array(z.string().trim().min(1)).optional(),
+  pathId: z.string().trim().optional().nullable(),
+  query: z.string().trim().optional(),
+  mode: z.enum(['resume', 'replay']).optional(),
+  limit: z.number().int().min(1).max(1000).optional(),
+});
+export type AiPathRunDeadLetterRequeueRequest = z.infer<
+  typeof aiPathRunDeadLetterRequeueRequestSchema
+>;
+
+export const aiPathRunHandoffRequestSchema = z.object({
+  reason: z.string().trim().min(1).max(500).optional(),
+  checkpointLineageId: z.string().trim().min(1).max(200).optional(),
+});
+export type AiPathRunHandoffRequest = z.infer<typeof aiPathRunHandoffRequestSchema>;
+
+export const aiPathsPlaywrightEnqueueRequestSchema = z.object({
+  script: z.string().trim().min(1),
+  input: z.record(z.string(), z.unknown()).optional(),
+  startUrl: z.string().trim().optional(),
+  timeoutMs: z
+    .number()
+    .int()
+    .min(1000)
+    .max(30 * 60 * 1000)
+    .optional(),
+  waitForResult: z.boolean().optional(),
+  browserEngine: playwrightBrowserEngineSchema.optional(),
+  personaId: z.string().trim().optional(),
+  settingsOverrides: z.record(z.string(), z.unknown()).optional(),
+  launchOptions: z.record(z.string(), z.unknown()).optional(),
+  contextOptions: z.record(z.string(), z.unknown()).optional(),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
+  capture: playwrightCaptureConfigSchema.optional(),
+});
+export type AiPathsPlaywrightEnqueueRequest = z.infer<
+  typeof aiPathsPlaywrightEnqueueRequestSchema
+>;
+
+export const aiPathsPlaywrightRunRouteParamsSchema = z.object({
+  runId: z.string().trim().min(1, 'Run id is required'),
+});
+export type AiPathsPlaywrightRunRouteParams = z.infer<
+  typeof aiPathsPlaywrightRunRouteParamsSchema
+>;
+
+export const aiPathsPlaywrightArtifactRouteParamsSchema = z.object({
+  runId: z.string().trim().min(1, 'Run id is required'),
+  file: z.string().trim().min(1, 'File is required'),
+});
+export type AiPathsPlaywrightArtifactRouteParams = z.infer<
+  typeof aiPathsPlaywrightArtifactRouteParamsSchema
+>;
+
+export const AI_PATHS_DB_ACTION_VALUES = [
+  'insertOne',
+  'insertMany',
+  'find',
+  'findOne',
+  'countDocuments',
+  'distinct',
+  'aggregate',
+  'updateOne',
+  'updateMany',
+  'replaceOne',
+  'findOneAndUpdate',
+  'deleteOne',
+  'deleteMany',
+  'findOneAndDelete',
+] as const;
+export const aiPathsDbActionSchema = z.enum(AI_PATHS_DB_ACTION_VALUES);
+export type AiPathsDbAction = z.infer<typeof aiPathsDbActionSchema>;
+
+export const aiPathsDbActionRequestSchema = z.object({
+  provider: z.enum(['auto', 'mongodb']).optional(),
+  collection: z.string().trim().min(1),
+  collectionMap: z.record(z.string(), z.string()).optional(),
+  action: aiPathsDbActionSchema,
+  filter: z.record(z.string(), z.unknown()).optional(),
+  query: z.never().optional(),
+  update: z
+    .union([z.record(z.string(), z.unknown()), z.array(z.record(z.string(), z.unknown()))])
+    .optional(),
+  updates: z.never().optional(),
+  pipeline: z.array(z.record(z.string(), z.unknown())).optional(),
+  document: z.record(z.string(), z.unknown()).optional(),
+  documents: z.array(z.record(z.string(), z.unknown())).optional(),
+  projection: z.record(z.string(), z.unknown()).optional(),
+  sort: z.record(z.string(), z.union([z.number(), z.literal('asc'), z.literal('desc')])).optional(),
+  limit: z.number().int().min(1).max(200).optional(),
+  idType: z.enum(['string', 'objectId']).optional(),
+  distinctField: z.string().optional(),
+  upsert: z.boolean().optional(),
+  returnDocument: z.enum(['before', 'after']).optional(),
+});
+export type AiPathsDbActionRequest = z.infer<typeof aiPathsDbActionRequestSchema>;
 /**
  * AI Path Run List Options Contract
  */

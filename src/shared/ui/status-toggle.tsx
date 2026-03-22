@@ -1,17 +1,16 @@
 'use client';
 
 import { type VariantProps } from 'class-variance-authority';
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import type { StatusToggleProps } from '@/shared/contracts/ui';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 
 import { badgeVariants } from './badge';
 
 export type { StatusToggleProps };
 
-type StatusToggleRuntimeValue = {
+type StatusToggleBadgeProps = {
   variant: VariantProps<typeof badgeVariants>['variant'];
   onClick: (() => void) | undefined;
   className: string;
@@ -20,25 +19,24 @@ type StatusToggleRuntimeValue = {
   pressed: boolean;
 };
 
-const { Context: StatusToggleRuntimeContext, useStrictContext: useStatusToggleRuntime } =
-  createStrictContext<StatusToggleRuntimeValue>({
-    hookName: 'useStatusToggleRuntime',
-    providerName: 'StatusToggleRuntimeProvider',
-    displayName: 'StatusToggleRuntimeContext',
-  });
-
-function StatusToggleBadge(): React.JSX.Element {
-  const runtime = useStatusToggleRuntime();
+function StatusToggleBadge({
+  variant,
+  onClick,
+  className,
+  label,
+  disabled,
+  pressed,
+}: StatusToggleBadgeProps): React.JSX.Element {
   return (
     <button
       type='button'
-      className={cn(badgeVariants({ variant: runtime.variant }), runtime.className)}
-      onClick={runtime.onClick}
-      disabled={runtime.disabled}
-      aria-pressed={runtime.pressed}
-      aria-label={runtime.label}
+      className={cn(badgeVariants({ variant }), className)}
+      onClick={onClick}
+      disabled={disabled}
+      aria-pressed={pressed}
+      aria-label={label}
     >
-      {runtime.label}
+      {label}
     </button>
   );
 }
@@ -81,26 +79,19 @@ export function StatusToggle({
     }
   };
 
-  const runtimeValue = useMemo<StatusToggleRuntimeValue>(
-    () => ({
-      variant: getBadgeVariant(),
-      onClick: disabled ? undefined : () => onToggle(!enabled),
-      className: cn(
+  return (
+    <StatusToggleBadge
+      variant={getBadgeVariant()}
+      onClick={disabled ? undefined : () => onToggle(!enabled)}
+      className={cn(
         'cursor-pointer select-none font-bold transition-all border',
         size === 'sm' ? 'h-6 px-2 text-[9px]' : 'h-7 px-2.5 text-[10px]',
         disabled && 'cursor-not-allowed opacity-50',
         className
-      ),
-      label: enabled ? enabledLabel : disabledLabel,
-      disabled: Boolean(disabled),
-      pressed: enabled,
-    }),
-    [className, disabled, enabled, enabledLabel, disabledLabel, onToggle, size]
-  );
-
-  return (
-    <StatusToggleRuntimeContext.Provider value={runtimeValue}>
-      <StatusToggleBadge />
-    </StatusToggleRuntimeContext.Provider>
+      )}
+      label={enabled ? enabledLabel : disabledLabel}
+      disabled={Boolean(disabled)}
+      pressed={enabled}
+    />
   );
 }

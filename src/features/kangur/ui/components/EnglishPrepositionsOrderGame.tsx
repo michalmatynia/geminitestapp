@@ -41,6 +41,7 @@ import {
   getKangurMiniGameScoreLabel,
   type KangurMiniGameTranslate,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type {
   KangurMiniGameFeedbackState,
@@ -218,6 +219,7 @@ export default function EnglishPrepositionsOrderGame({
   onFinish,
 }: KangurMiniGameFinishProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const isCoarsePointer = useKangurCoarsePointer();
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const [roundIndex, setRoundIndex] = useState(0);
   const [orderTokens, setOrderTokens] = useState<OrderToken[]>(() => buildRoundState(ROUNDS[0]!));
@@ -253,6 +255,19 @@ export default function EnglishPrepositionsOrderGame({
       return reorderWithinList(prev, currentIndex, targetIndex);
     });
     if (nextIndex >= 0) {
+      setSelectedTokenId(tokenId);
+    }
+  };
+
+  const moveTokenToIndex = (tokenId: string, targetIndex: number): void => {
+    let moved = false;
+    setOrderTokens((prev) => {
+      const currentIndex = prev.findIndex((token) => token.id === tokenId);
+      if (currentIndex < 0 || currentIndex === targetIndex) return prev;
+      moved = true;
+      return reorderWithinList(prev, currentIndex, targetIndex);
+    });
+    if (moved) {
       setSelectedTokenId(tokenId);
     }
   };
@@ -406,7 +421,11 @@ export default function EnglishPrepositionsOrderGame({
                   })}
                 </KangurStatusChip>
                 <KangurStatusChip accent='slate' className='text-[10px] uppercase tracking-[0.16em]'>
-                  {translations('englishPrepositions.inRound.order.modeLabel')}
+                  {translations(
+                    isCoarsePointer
+                      ? 'englishPrepositions.inRound.order.modeLabelTouch'
+                      : 'englishPrepositions.inRound.order.modeLabel'
+                  )}
                 </KangurStatusChip>
               </div>
               <div>
@@ -432,14 +451,37 @@ export default function EnglishPrepositionsOrderGame({
             <p className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 text-center'>
               {translations('englishPrepositions.inRound.order.dragInstruction')}
             </p>
+            {isCoarsePointer || selectedTokenId ? (
+              <p
+                className='mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 text-center'
+                role='status'
+                aria-live='polite'
+                aria-atomic='true'
+                data-testid='english-prepositions-order-selection-hint'
+              >
+                {selectedTokenId
+                  ? translations('englishPrepositions.inRound.order.touchSelected', {
+                      token:
+                        orderTokens.find((token) => token.id === selectedTokenId)?.label ??
+                        selectedTokenId,
+                    })
+                  : translations('englishPrepositions.inRound.order.touchIdle')}
+              </p>
+            ) : null}
             <Droppable droppableId='sentence' direction='horizontal'>
               {(provided, snapshot) => (
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
+                  data-testid='english-prepositions-order-preview'
                   className={cn(
-                    'mt-3 flex min-h-[80px] flex-wrap items-center justify-center gap-2 rounded-[20px] border-2 border-dashed px-3 py-3 transition',
-                    snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/70' : 'border-slate-200'
+                    'mt-3 flex flex-wrap items-center justify-center gap-2 rounded-[20px] border-2 border-dashed px-3 py-3 transition touch-manipulation',
+                    isCoarsePointer ? 'min-h-[96px]' : 'min-h-[80px]',
+                    snapshot.isDraggingOver
+                      ? 'border-amber-300 bg-amber-50/70'
+                      : selectedTokenId && !checked && isCoarsePointer
+                        ? 'border-amber-200 bg-amber-50/40'
+                        : 'border-slate-200'
                   )}
                   aria-label={translations('englishPrepositions.inRound.order.sentenceAria')}
                 >
@@ -453,9 +495,14 @@ export default function EnglishPrepositionsOrderGame({
                       isCorrect={round.answer[index] === token.id}
                       isDragDisabled={checked}
                       isSelected={selectedTokenId === token.id}
-                      onSelect={() =>
-                        setSelectedTokenId((current) => (current === token.id ? null : token.id))
-                      }
+                      isCoarsePointer={isCoarsePointer}
+                      onSelect={() => {
+                        if (isCoarsePointer && selectedTokenId && selectedTokenId !== token.id) {
+                          moveTokenToIndex(selectedTokenId, index);
+                          return;
+                        }
+                        setSelectedTokenId((current) => (current === token.id ? null : token.id));
+                      }}
                       onMove={(offset) => moveTokenByOffset(token.id, offset)}
                     />
                   ))}
@@ -511,6 +558,7 @@ function DraggableToken({
   isCorrect,
   isDragDisabled,
   isSelected,
+  isCoarsePointer,
   onSelect,
   onMove,
 }: {
@@ -521,6 +569,7 @@ function DraggableToken({
   isCorrect: boolean;
   isDragDisabled: boolean;
   isSelected: boolean;
+  isCoarsePointer: boolean;
   onSelect: () => void;
   onMove: (offset: number) => void;
 }): React.JSX.Element {
@@ -545,6 +594,7 @@ function DraggableToken({
             type='button'
             className={cn(
               'rounded-[16px] border px-3 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+              isCoarsePointer ? 'min-h-[4rem] px-4 py-3 touch-manipulation' : undefined,
               KANGUR_ACCENT_STYLES[accent].badge,
               snapshot.isDragging && 'scale-[1.02] shadow-lg',
               statusClass,

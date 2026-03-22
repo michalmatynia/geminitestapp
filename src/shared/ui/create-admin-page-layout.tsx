@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import type { AdminBreadcrumbNode } from '@/shared/contracts/ui';
+import { createAdminSectionBreadcrumbs } from './admin-section-breadcrumbs';
 import { PageLayout } from './PageLayout';
 
 export type AdminPageBreadcrumbNode = AdminBreadcrumbNode;
@@ -22,17 +23,26 @@ type CreateAdminPageLayoutConfig = {
   containerClassName?: string;
 };
 
+type CreateAdminSectionPageLayoutConfig = {
+  section: AdminPageBreadcrumbNode;
+  breadcrumbClassName?: string;
+  baseBreadcrumbClassName?: string;
+  containerClassName?: string;
+  breadcrumbDisplayName?: string;
+  displayName?: string;
+};
+
 export function createAdminPageLayout({
   Breadcrumbs,
   breadcrumbClassName,
   containerClassName,
-}: CreateAdminPageLayoutConfig): (props: AdminPageLayoutProps) => React.JSX.Element {
-  return function AdminPageLayout({
+}: CreateAdminPageLayoutConfig): React.FC<AdminPageLayoutProps> {
+  const AdminPageLayout: React.FC<AdminPageLayoutProps> = ({
     current,
     parent,
     containerClassName: containerClassNameProp,
     ...props
-  }: AdminPageLayoutProps): React.JSX.Element {
+  }): React.JSX.Element => {
     const eyebrow = (
       <Breadcrumbs
         current={current}
@@ -53,4 +63,32 @@ export function createAdminPageLayout({
       <PageLayout {...pageLayoutProps} />
     );
   };
+
+  AdminPageLayout.displayName = 'AdminPageLayout';
+
+  return AdminPageLayout;
+}
+
+export function createAdminSectionPageLayout({
+  section,
+  breadcrumbClassName,
+  baseBreadcrumbClassName,
+  containerClassName,
+  breadcrumbDisplayName,
+  displayName,
+}: CreateAdminSectionPageLayoutConfig): React.FC<AdminPageLayoutProps> {
+  const Breadcrumbs = createAdminSectionBreadcrumbs({
+    section,
+    baseClassName: baseBreadcrumbClassName,
+    displayName: breadcrumbDisplayName,
+  });
+  const AdminSectionPageLayout = createAdminPageLayout({
+    Breadcrumbs,
+    breadcrumbClassName,
+    containerClassName,
+  });
+
+  AdminSectionPageLayout.displayName = displayName ?? 'AdminSectionPageLayout';
+
+  return AdminSectionPageLayout;
 }

@@ -34,7 +34,7 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({
 }));
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
-  logClientError: (...args: unknown[]) => mockState.logClientError(...args),
+  logClientCatch: (...args: unknown[]) => mockState.logClientCatch(...args),
 }));
 
 vi.mock('../../utils', () => ({
@@ -105,7 +105,7 @@ describe('useLocalRunOutcome', () => {
     mockState.runtimeActions.setPathDebugSnapshots.mockReset();
     mockState.appendLocalRun.mockReset().mockResolvedValue(undefined);
     mockState.updateAiPathsSetting.mockReset().mockResolvedValue(undefined);
-    mockState.logClientError.mockReset();
+    mockState.logClientCatch.mockReset();
     mockState.buildActivePathConfig.mockReset().mockImplementation((args: Record<string, unknown>) => ({
       id: args.activePathId,
       built: true,
@@ -201,13 +201,10 @@ describe('useLocalRunOutcome', () => {
       await result.current.persistDebugSnapshot('path-1', '2026-03-19T16:59:00.000Z', {} as never);
     });
 
-    expect(mockState.logClientError).toHaveBeenNthCalledWith(1, failure);
-    expect(mockState.logClientError).toHaveBeenNthCalledWith(2, failure, {
-      context: {
-        source: 'useAiPathsLocalExecution',
-        action: 'persistDebugSnapshot',
-        pathId: 'path-1',
-      },
+    expect(mockState.logClientCatch).toHaveBeenCalledWith(failure, {
+      source: 'useAiPathsLocalExecution',
+      action: 'persistDebugSnapshot',
+      pathId: 'path-1',
     });
   });
 

@@ -17,6 +17,7 @@ import {
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { cn } from '@/features/kangur/shared/utils';
 
 import type { DropResult } from '@hello-pangea/dnd';
@@ -55,6 +56,8 @@ export type LogicalReasoningIfThenGameCopy = {
   selection: {
     selectedTemplate: string;
     idle: string;
+    touchIdle: string;
+    touchSelectedTemplate: string;
   };
   moveButtons: {
     toValid: string;
@@ -174,6 +177,7 @@ function DraggableCase({
   zoneId,
   checked,
   isSelected,
+  isCoarsePointer,
   onSelect,
   copy,
 }: {
@@ -182,6 +186,7 @@ function DraggableCase({
   zoneId: ZoneId;
   checked: boolean;
   isSelected: boolean;
+  isCoarsePointer: boolean;
   onSelect: () => void;
   copy: LogicalReasoningIfThenGameCopy;
 }): React.ReactElement | React.ReactPortal {
@@ -248,7 +253,8 @@ function DraggableCase({
             {...provided.draggableProps}
             {...provided.dragHandleProps}
             className={cn(
-              'w-full cursor-grab text-left active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+              'w-full cursor-grab text-left active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white touch-manipulation',
+              !checked && isCoarsePointer && 'min-h-[4.5rem]',
               isSelected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white'
             )}
             aria-pressed={isSelected}
@@ -280,6 +286,7 @@ export default function LogicalReasoningIfThenGame({
   cases,
   copy,
 }: LogicalReasoningIfThenGameProps): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const [state, setState] = useState<GameState>(() => buildInitialState(cases));
   const [checked, setChecked] = useState(false);
   const [score, setScore] = useState(0);
@@ -420,10 +427,13 @@ export default function LogicalReasoningIfThenGame({
                     padding='sm'
                     dashed
                     className={cn(
-                      'min-h-[170px] w-full transition-all',
+                      'w-full transition-all touch-manipulation',
+                      isCoarsePointer ? 'min-h-[196px]' : 'min-h-[170px]',
                       zoneBorder[zoneId],
-                      snapshot.isDraggingOver && 'scale-[1.01]'
+                      snapshot.isDraggingOver && 'scale-[1.01]',
+                      selectedCaseId && !checked && isCoarsePointer && 'border-amber-200 bg-amber-50/35'
                     )}
+                    data-testid={`logical-ifthen-zone-${zoneId}`}
                     role='button'
                     tabIndex={checked ? -1 : 0}
                     aria-disabled={checked}
@@ -466,6 +476,7 @@ export default function LogicalReasoningIfThenGame({
                           zoneId={zoneId}
                           checked={checked}
                           isSelected={selectedCaseId === item.id}
+                          isCoarsePointer={isCoarsePointer}
                           onSelect={() =>
                             setSelectedCaseId((current) => (current === item.id ? null : item.id))
                           }
@@ -489,7 +500,13 @@ export default function LogicalReasoningIfThenGame({
               tone={snapshot.isDraggingOver ? 'accent' : 'muted'}
               padding='sm'
               dashed
-              className={cn('min-h-[150px] w-full', zoneBorder.pool)}
+              className={cn(
+                'w-full touch-manipulation',
+                isCoarsePointer ? 'min-h-[174px]' : 'min-h-[150px]',
+                zoneBorder.pool,
+                selectedCaseId && !checked && isCoarsePointer && 'border-amber-200 bg-amber-50/35'
+              )}
+              data-testid='logical-ifthen-zone-pool'
               role='button'
               tabIndex={checked ? -1 : 0}
               aria-disabled={checked}
@@ -532,6 +549,7 @@ export default function LogicalReasoningIfThenGame({
                     zoneId='pool'
                     checked={checked}
                     isSelected={selectedCaseId === item.id}
+                    isCoarsePointer={isCoarsePointer}
                     onSelect={() =>
                       setSelectedCaseId((current) => (current === item.id ? null : item.id))
                     }
@@ -550,12 +568,20 @@ export default function LogicalReasoningIfThenGame({
             role='status'
             aria-live='polite'
             aria-atomic='true'
+            data-testid='logical-ifthen-touch-hint'
           >
             {selectedCase
-              ? formatTemplate(copy.selection.selectedTemplate, {
-                  conclusion: selectedCase.conclusion,
-                })
-              : copy.selection.idle}
+              ? formatTemplate(
+                  isCoarsePointer
+                    ? copy.selection.touchSelectedTemplate
+                    : copy.selection.selectedTemplate,
+                  {
+                    conclusion: selectedCase.conclusion,
+                  }
+                )
+              : isCoarsePointer
+                ? copy.selection.touchIdle
+                : copy.selection.idle}
           </span>
           <KangurButton
             size='sm'

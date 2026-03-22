@@ -3,6 +3,11 @@
 import React from 'react';
 
 import type { BlockInstance } from '@/shared/contracts/cms';
+import {
+  CMS_SECTION_BLOCK_TYPES,
+  resolveAlignItems,
+  resolveJustifyContent,
+} from '@/features/cms/components/shared/layout-utils';
 
 import {
   CmsRuntimeScopeProvider,
@@ -14,35 +19,9 @@ import { FrontendBlockRenderer } from '../sections/FrontendBlockRenderer';
 import { SectionBlockRenderer } from '../sections/grid/SectionBlockRenderer';
 
 
-const CONTAINER_BLOCK_TYPES = new Set([
-  'ImageWithText',
-  'Hero',
-  'RichText',
-  'Block',
-  'TextAtom',
-  'Carousel',
-  'Slideshow',
-]);
-
-const resolveJustifyContent = (
-  value: unknown
-): React.CSSProperties['justifyContent'] | undefined => {
-  if (value === 'center') return 'center';
-  if (value === 'end') return 'flex-end';
-  if (value === 'space-between') return 'space-between';
-  if (value === 'space-around') return 'space-around';
-  if (value === 'space-evenly') return 'space-evenly';
-  if (value === 'start') return 'flex-start';
-  return undefined;
-};
-
-const resolveAlignItems = (value: unknown): React.CSSProperties['alignItems'] | undefined => {
-  if (value === 'center') return 'center';
-  if (value === 'end') return 'flex-end';
-  if (value === 'stretch') return 'stretch';
-  if (value === 'start') return 'flex-start';
-  return undefined;
-};
+const CONTAINER_BLOCK_TYPES = new Set(
+  CMS_SECTION_BLOCK_TYPES.filter((type) => type !== 'Repeater')
+);
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;

@@ -13,6 +13,7 @@ import {
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type {
   BallItem,
   PickAnswerRound,
@@ -31,6 +32,7 @@ export function PickAnswer({
   round: PickAnswerRound;
   onResult: (correct: boolean) => void;
 }): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const [dropped, setDropped] = useState<BallItem | null>(null);
   const [checked, setChecked] = useState(false);
   const [selectedBallId, setSelectedBallId] = useState<string | null>(null);
@@ -90,10 +92,19 @@ export function PickAnswer({
               <KangurInfoCard
                 ref={provided.innerRef}
                 accent={surface.accent}
-                className={surface.className}
+                className={cn(
+                  surface.className,
+                  'touch-manipulation select-none transition',
+                  isCoarsePointer && 'h-28 w-28',
+                  selectedBall && !dropped && 'border-amber-200 bg-amber-50/50'
+                )}
                 data-testid='adding-ball-answer-slot'
                 padding='sm'
                 tone={surface.tone}
+                onClick={() => {
+                  if (!isCoarsePointer || checked || dropped || !selectedBall) return;
+                  applySelectedBall();
+                }}
                 {...provided.droppableProps}
               >
                 {dropped ? (
@@ -123,14 +134,19 @@ export function PickAnswer({
 
         <div className='flex flex-wrap items-center justify-center gap-2 text-xs'>
           <span
+            data-testid='adding-ball-answer-touch-hint'
             className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500'
             role='status'
             aria-live='polite'
             aria-atomic='true'
           >
             {selectedBall
-              ? `Wybrana piłka: ${selectedBall.num}`
-              : 'Wybierz piłkę, aby ustawić odpowiedź klawiaturą.'}
+              ? isCoarsePointer
+                ? `Wybrana piłka: ${selectedBall.num}. Dotknij pole odpowiedzi, aby ją ustawić.`
+                : `Wybrana piłka: ${selectedBall.num}`
+              : isCoarsePointer
+                ? 'Dotknij piłkę, a potem pole odpowiedzi.'
+                : 'Wybierz piłkę, aby ustawić odpowiedź klawiaturą.'}
           </span>
           <KangurButton
             size='sm'
@@ -148,7 +164,11 @@ export function PickAnswer({
             <KangurInfoCard
               ref={provided.innerRef}
               accent='slate'
-              className={cn(BALL_POOL_CLASSNAME, 'kangur-panel-gap')}
+              className={cn(
+                BALL_POOL_CLASSNAME,
+                'kangur-panel-gap touch-manipulation select-none transition',
+                selectedBall && 'border border-amber-200 bg-amber-50/50'
+              )}
               data-testid='adding-ball-balls-pool'
               padding='sm'
               tone='neutral'

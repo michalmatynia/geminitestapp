@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
+import { portablePathJsonSchemaKindQuerySchema } from '@/shared/contracts/ai-paths-portable-engine';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
@@ -11,19 +11,13 @@ import {
   buildPortablePathJsonSchemaCatalog,
   getPortableNodeCodeObjectContractsCatalog,
 } from '@/shared/lib/ai-paths/portable-engine';
-import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
 
 const SCHEMA_KIND_VALUES = ['all', ...PORTABLE_PATH_JSON_SCHEMA_KINDS] as const;
 type SchemaKindQueryValue = (typeof SCHEMA_KIND_VALUES)[number];
 const SCHEMA_KIND_VALUE_SET = new Set<string>(SCHEMA_KIND_VALUES);
 const SCHEMA_CACHE_CONTROL = 'private, max-age=300, stale-while-revalidate=900';
 
-export const querySchema = z.object({
-  kind: z.preprocess(
-    (value: unknown) => normalizeOptionalQueryString(value)?.toLowerCase(),
-    z.enum(SCHEMA_KIND_VALUES).optional()
-  ),
-});
+export { portablePathJsonSchemaKindQuerySchema as querySchema };
 
 const buildSchemaEtag = (payload: unknown): string => {
   const serialized = JSON.stringify(payload);
@@ -55,8 +49,8 @@ const resolveSchemaQueryInput = (
   ...((ctx.query ?? {}) as Record<string, unknown>),
 });
 
-const parseSchemaKindQuery = (value: unknown): SchemaKindQueryValue => {
-  const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
+const parseSchemaKindQuery = (value: string | undefined): SchemaKindQueryValue => {
+  const normalized = value?.toLowerCase();
   if (!normalized) {
     return 'all';
   }
@@ -69,7 +63,7 @@ const parseSchemaKindQuery = (value: unknown): SchemaKindQueryValue => {
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
 
-  const query = resolveSchemaQueryInput(req, _ctx) as z.infer<typeof querySchema>;
+  const query = portablePathJsonSchemaKindQuerySchema.parse(resolveSchemaQueryInput(req, _ctx));
   const kindRaw = parseSchemaKindQuery(query.kind);
 
   const schemas = buildPortablePathJsonSchemaCatalog();

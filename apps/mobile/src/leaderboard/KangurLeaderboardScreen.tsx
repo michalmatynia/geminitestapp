@@ -8,6 +8,7 @@ import {
   useKangurMobileLessonCheckpoints,
   type KangurMobileLessonCheckpointItem,
 } from '../lessons/useKangurMobileLessonCheckpoints';
+import { createKangurPlanHref } from '../plan/planHref';
 import { formatKangurMobileScoreDateTime } from '../scores/mobileScoreSummary';
 import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
 import { useKangurMobileLeaderboard } from './useKangurMobileLeaderboard';
@@ -30,6 +31,7 @@ const FILTER_SCROLL_STYLE = {
   paddingBottom: 4,
 } as const;
 const LESSONS_ROUTE = '/lessons' as Href;
+const PLAN_ROUTE = createKangurPlanHref();
 const PROFILE_ROUTE = '/profile' as Href;
 
 function FilterChip({
@@ -94,6 +96,34 @@ function SectionTitle({
       >
         {subtitle}
       </Text>
+    </View>
+  );
+}
+
+function SummaryChip({
+  label,
+  backgroundColor = '#eef2ff',
+  borderColor = '#c7d2fe',
+  textColor = '#4338ca',
+}: {
+  label: string;
+  backgroundColor?: string;
+  borderColor?: string;
+  textColor?: string;
+}): React.JSX.Element {
+  return (
+    <View
+      style={{
+        alignSelf: 'flex-start',
+        borderRadius: 999,
+        borderWidth: 1,
+        borderColor,
+        backgroundColor,
+        paddingHorizontal: 12,
+        paddingVertical: 7,
+      }}
+    >
+      <Text style={{ color: textColor, fontSize: 12, fontWeight: '700' }}>{label}</Text>
     </View>
   );
 }
@@ -534,6 +564,23 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
   const lessonMastery = useKangurMobileLeaderboardLessonMastery();
   const leaderboardBadges = useKangurMobileLeaderboardBadges();
   const lessonCheckpoints = useKangurMobileLessonCheckpoints({ limit: 2 });
+  const weakestLesson = lessonMastery.weakest[0] ?? null;
+  const strongestLesson = lessonMastery.strongest[0] ?? null;
+  const topDuelEntry = duelLeaderboard.entries[0] ?? null;
+  const duelTopWinRatePercent = topDuelEntry ? Math.round(topDuelEntry.winRate * 100) : null;
+  const lessonFocusSummary = weakestLesson
+    ? copy({
+        de: `Fokus nach der Rangliste: ${weakestLesson.title} braucht noch eine kurze Wiederholung vor dem nächsten Training.`,
+        en: `Post-leaderboard focus: ${weakestLesson.title} needs one short review before the next practice run.`,
+        pl: `Fokus po rankingu: ${weakestLesson.title} potrzebuje jeszcze krótkiej powtórki przed kolejnym treningiem.`,
+      })
+    : strongestLesson
+      ? copy({
+          de: `Stabile Stärke: ${strongestLesson.title} hält das Niveau und braucht nur ein kurzes Auffrischen.`,
+          en: `Stable strength: ${strongestLesson.title} is holding its level and only needs a short refresh.`,
+          pl: `Stabilna mocna strona: ${strongestLesson.title} trzyma poziom i wymaga tylko krótkiego odświeżenia.`,
+        })
+      : null;
   const openDuelSession = (sessionId: string): void => {
     router.replace(createKangurDuelsHref({ sessionId }));
   };
@@ -582,11 +629,97 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
               pl: 'Ranking',
             })}
             subtitle={copy({
-              de: 'Die mobile Rangliste nutzt dieselben Ergebnisverträge und dieselbe Zuordnungslogik wie der gemeinsame Kangur.',
-              en: 'The mobile leaderboard uses the same score contracts and leaderboard mapping logic as shared Kangur.',
-              pl: 'Mobilny ranking korzysta z tych samych kontraktów wyników i logiki mapowania rankingu co wspólny Kangur.',
+              de: 'Prüfe die letzten Ergebnisse, vergleiche das Duelltempo und springe direkt zurück in die nächsten mobilen Lernschritte.',
+              en: 'Check the latest results, compare duel momentum, and jump straight back into the next mobile study steps.',
+              pl: 'Sprawdź ostatnie wyniki, porównaj tempo w pojedynkach i od razu wróć do kolejnych mobilnych kroków nauki.',
             })}
           />
+
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <SummaryChip
+              label={copy({
+                de: `Ergebnisse ${visibleCount}`,
+                en: `Results ${visibleCount}`,
+                pl: `Wyniki ${visibleCount}`,
+              })}
+            />
+            <SummaryChip
+              label={
+                duelLeaderboard.isLoading
+                  ? copy({
+                      de: 'Duelle werden geladen',
+                      en: 'Duels loading',
+                      pl: 'Pojedynki wczytywane',
+                    })
+                  : copy({
+                      de: `Duelle ${duelLeaderboard.entries.length}`,
+                      en: `Duels ${duelLeaderboard.entries.length}`,
+                      pl: `Pojedynki ${duelLeaderboard.entries.length}`,
+                    })
+              }
+              backgroundColor='#eff6ff'
+              borderColor='#bfdbfe'
+              textColor='#1d4ed8'
+            />
+            <SummaryChip
+              label={copy({
+                de: `Lektionen ${lessonMastery.trackedLessons}`,
+                en: `Lessons ${lessonMastery.trackedLessons}`,
+                pl: `Lekcje ${lessonMastery.trackedLessons}`,
+              })}
+              backgroundColor='#ecfdf5'
+              borderColor='#a7f3d0'
+              textColor='#047857'
+            />
+          </View>
+
+          <View style={{ alignSelf: 'stretch', gap: 10 }}>
+            <Link href={PLAN_ROUTE} asChild>
+              <Pressable
+                accessibilityRole='button'
+                style={{
+                  alignSelf: 'stretch',
+                  width: '100%',
+                  borderRadius: 999,
+                  borderWidth: 1,
+                  borderColor: '#cbd5e1',
+                  backgroundColor: '#ffffff',
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                }}
+              >
+                <Text style={{ color: '#0f172a', fontWeight: '700', textAlign: 'center' }}>
+                  {copy({
+                    de: 'Tagesplan jetzt',
+                    en: 'Daily plan now',
+                    pl: 'Plan dnia teraz',
+                  })}
+                </Text>
+              </Pressable>
+            </Link>
+
+            <Link href={createKangurDuelsHref()} asChild>
+              <Pressable
+                accessibilityRole='button'
+                style={{
+                  alignSelf: 'stretch',
+                  width: '100%',
+                  borderRadius: 999,
+                  backgroundColor: '#0f172a',
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                }}
+              >
+                <Text style={{ color: '#ffffff', fontWeight: '700', textAlign: 'center' }}>
+                  {copy({
+                    de: 'Duell-Lobby öffnen',
+                    en: 'Open duel lobby',
+                    pl: 'Otwórz lobby pojedynków',
+                  })}
+                </Text>
+              </Pressable>
+            </Link>
+          </View>
         </View>
 
         <View
@@ -610,11 +743,18 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
                 pl: 'Odznaki',
               })}
             </Text>
+            <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
+              {copy({
+                de: 'Abzeichen-Zentrale',
+                en: 'Badge hub',
+                pl: 'Centrum odznak',
+              })}
+            </Text>
             <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
               {copy({
-                de: 'Nach dem Blick auf die Rangliste kannst du sehen, welche lokalen Abzeichen bereits freigeschaltet wurden.',
-                en: 'After checking the leaderboard, you can see which local badges are already unlocked.',
-                pl: 'Po sprawdzeniu rankingu możesz zobaczyć, które lokalne odznaki są już odblokowane.',
+                de: 'Verfolge, was bereits freigeschaltet ist und welches lokale Ziel am nächsten an der nächsten Abzeichenstufe liegt.',
+                en: 'Track what is already unlocked and which local goal is closest to the next badge threshold.',
+                pl: 'Śledź, co jest już odblokowane i który lokalny cel jest najbliżej kolejnego progu odznaki.',
               })}
             </Text>
           </View>
@@ -972,13 +1112,75 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
                 pl: 'Ranking pojedynków',
               })}
             </Text>
-            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+            <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
               {copy({
-                de: 'Ein öffentlicher Blick auf die stärksten Duellspieler aus demselben mobilen Backend.',
-                en: 'A public view of the strongest duel players from the same mobile backend.',
-                pl: 'Publiczny podgląd najsilniejszych graczy pojedynków z tego samego mobilnego backendu.',
+                de: 'Mobile Rivalentabelle',
+                en: 'Mobile rivals board',
+                pl: 'Mobilna tabela rywali',
               })}
             </Text>
+            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+              {copy({
+                de: 'Vergleiche die aktuelle Form, prüfe ob dein Stand schon sichtbar ist und fordere Rivalen heraus, ohne den mobilen Ablauf zu verlassen.',
+                en: 'Compare current form, check whether your standing is already visible, and challenge a rival without leaving the mobile flow.',
+                pl: 'Porównaj bieżącą formę, sprawdź czy Twój wynik jest już widoczny i rzuć wyzwanie bez wychodzenia z mobilnego flow.',
+              })}
+            </Text>
+          </View>
+
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <SummaryChip
+              label={copy({
+                de: `Spieler ${duelLeaderboard.entries.length}`,
+                en: `Players ${duelLeaderboard.entries.length}`,
+                pl: `Gracze ${duelLeaderboard.entries.length}`,
+              })}
+              backgroundColor='#eff6ff'
+              borderColor='#bfdbfe'
+              textColor='#1d4ed8'
+            />
+            <SummaryChip
+              label={
+                duelTopWinRatePercent === null
+                  ? copy({
+                      de: 'Top-Quote wartet',
+                      en: 'Top win rate pending',
+                      pl: 'Top win rate czeka',
+                    })
+                  : copy({
+                      de: `Top-Quote ${duelTopWinRatePercent}%`,
+                      en: `Top win rate ${duelTopWinRatePercent}%`,
+                      pl: `Top win rate ${duelTopWinRatePercent}%`,
+                    })
+              }
+              backgroundColor='#fffbeb'
+              borderColor='#fde68a'
+              textColor='#b45309'
+            />
+            <SummaryChip
+              label={
+                duelLeaderboard.currentRank
+                  ? copy({
+                      de: `Deine Position #${duelLeaderboard.currentRank}`,
+                      en: `Your rank #${duelLeaderboard.currentRank}`,
+                      pl: `Twoja pozycja #${duelLeaderboard.currentRank}`,
+                    })
+                  : duelLeaderboard.isAuthenticated
+                    ? copy({
+                        de: 'Wartet auf Sichtbarkeit',
+                        en: 'Waiting for visibility',
+                        pl: 'Czeka na widoczność',
+                      })
+                    : copy({
+                        de: 'Lernersitzung anmelden',
+                        en: 'Sign in learner',
+                        pl: 'Zaloguj ucznia',
+                      })
+              }
+              backgroundColor='#ecfdf5'
+              borderColor='#a7f3d0'
+              textColor='#047857'
+            />
           </View>
 
           {duelLeaderboard.isLoading ? (
@@ -1059,9 +1261,9 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
                 ) : (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Dein Konto ist im sichtbaren Ausschnitt der Duell-Rangliste noch nicht vertreten.',
-                      en: 'Your account is not yet visible in the current duel leaderboard snapshot.',
-                      pl: 'Twojego konta nie ma jeszcze w widocznym wycinku rankingu pojedynków.',
+                      de: 'Dein Konto ist in diesem Ausschnitt der Duell-Rangliste noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit du hier erscheinst.',
+                      en: 'Your account is not visible in this duel leaderboard snapshot yet. Finish another duel or open the lobby so it shows up here.',
+                      pl: 'Twojego konta nie widać jeszcze w tym wycinku rankingu pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawić się tutaj.',
                     })}
                   </Text>
                 )
@@ -1192,11 +1394,15 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
                 })}
               </View>
 
-              <Link href={createKangurDuelsHref()} asChild>
+              <View style={{ alignSelf: 'stretch', gap: 10 }}>
                 <Pressable
                   accessibilityRole='button'
+                  onPress={() => {
+                    void duelLeaderboard.refresh();
+                  }}
                   style={{
-                    alignSelf: 'flex-start',
+                    alignSelf: 'stretch',
+                    width: '100%',
                     borderRadius: 999,
                     borderWidth: 1,
                     borderColor: '#cbd5e1',
@@ -1205,15 +1411,37 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
                     paddingVertical: 10,
                   }}
                 >
-                  <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                  <Text style={{ color: '#0f172a', fontWeight: '700', textAlign: 'center' }}>
                     {copy({
-                      de: 'Duelle öffnen',
-                      en: 'Open duels',
-                      pl: 'Otwórz pojedynki',
+                      de: 'Duelle aktualisieren',
+                      en: 'Refresh duels',
+                      pl: 'Odśwież pojedynki',
                     })}
                   </Text>
                 </Pressable>
-              </Link>
+
+                <Link href={createKangurDuelsHref()} asChild>
+                  <Pressable
+                    accessibilityRole='button'
+                    style={{
+                      alignSelf: 'stretch',
+                      width: '100%',
+                      borderRadius: 999,
+                      backgroundColor: '#0f172a',
+                      paddingHorizontal: 14,
+                      paddingVertical: 10,
+                    }}
+                  >
+                    <Text style={{ color: '#ffffff', fontWeight: '700', textAlign: 'center' }}>
+                      {copy({
+                        de: 'Duelle öffnen',
+                        en: 'Open duels',
+                        pl: 'Otwórz pojedynki',
+                      })}
+                    </Text>
+                  </Pressable>
+                </Link>
+              </View>
             </View>
           )}
         </View>
@@ -1239,11 +1467,18 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
                 pl: 'Opanowanie lekcji',
               })}
             </Text>
+            <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
+              {copy({
+                de: 'Lektionsplan nach der Rangliste',
+                en: 'Post-leaderboard lesson plan',
+                pl: 'Plan lekcji po rankingu',
+              })}
+            </Text>
             <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
               {copy({
-                de: 'Nach dem Blick auf die Rangliste kannst du lokal gespeicherte Lektionen direkt mit Wiederholungen und Stärken verbinden.',
-                en: 'After checking the leaderboard, you can connect locally saved lessons directly with review and strength snapshots.',
-                pl: 'Po sprawdzeniu rankingu możesz od razu połączyć lokalnie zapisane lekcje z przeglądem powtórek i mocnych stron.',
+                de: 'Nutze den Stand aus der Rangliste als Kontrollpunkt und entscheide sofort, was wiederholt und was nur warm gehalten werden soll.',
+                en: 'Use the leaderboard state as a checkpoint and decide right away what needs review and what only needs to stay warm.',
+                pl: 'Wykorzystaj stan z rankingu jako checkpoint i od razu zdecyduj, co wymaga powtórki, a co trzeba tylko podtrzymać.',
               })}
             </Text>
           </View>
@@ -1315,6 +1550,64 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
             </Text>
           ) : (
             <View style={{ gap: 10 }}>
+              {lessonFocusSummary ? (
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                  {lessonFocusSummary}
+                </Text>
+              ) : null}
+
+              <View style={{ alignSelf: 'stretch', gap: 10 }}>
+                {weakestLesson ? (
+                  <Link href={weakestLesson.lessonHref} asChild>
+                    <Pressable
+                      accessibilityRole='button'
+                      style={{
+                        alignSelf: 'stretch',
+                        width: '100%',
+                        borderRadius: 999,
+                        backgroundColor: '#0f172a',
+                        paddingHorizontal: 14,
+                        paddingVertical: 10,
+                      }}
+                    >
+                      <Text style={{ color: '#ffffff', fontWeight: '700', textAlign: 'center' }}>
+                        {copy({
+                          de: `Fokus: ${weakestLesson.title}`,
+                          en: `Focus: ${weakestLesson.title}`,
+                          pl: `Skup się: ${weakestLesson.title}`,
+                        })}
+                      </Text>
+                    </Pressable>
+                  </Link>
+                ) : null}
+
+                {strongestLesson ? (
+                  <Link href={strongestLesson.lessonHref} asChild>
+                    <Pressable
+                      accessibilityRole='button'
+                      style={{
+                        alignSelf: 'stretch',
+                        width: '100%',
+                        borderRadius: 999,
+                        borderWidth: 1,
+                        borderColor: '#cbd5e1',
+                        backgroundColor: '#ffffff',
+                        paddingHorizontal: 14,
+                        paddingVertical: 10,
+                      }}
+                    >
+                      <Text style={{ color: '#0f172a', fontWeight: '700', textAlign: 'center' }}>
+                        {copy({
+                          de: `Stärke halten: ${strongestLesson.title}`,
+                          en: `Maintain strength: ${strongestLesson.title}`,
+                          pl: `Podtrzymaj: ${strongestLesson.title}`,
+                        })}
+                      </Text>
+                    </Pressable>
+                  </Link>
+                ) : null}
+              </View>
+
               {lessonMastery.weakest[0] ? (
                 <LessonMasteryRow
                   insight={lessonMastery.weakest[0]}
@@ -1362,9 +1655,9 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
             </Text>
             <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
               {copy({
-                de: 'Nach dem Blick auf die Rangliste kannst du direkt zu den zuletzt gespeicherten Lektionen zurückspringen.',
-                en: 'After checking the leaderboard, you can jump straight back to the most recently saved lessons.',
-                pl: 'Po sprawdzeniu rankingu możesz od razu wrócić do ostatnio zapisanych lekcji.',
+                de: 'Springe direkt zu den zuletzt gespeicherten Lektionen zurück, solange der Vergleich mit der Rangliste noch frisch ist.',
+                en: 'Jump back to the most recently saved lessons while the leaderboard comparison is still fresh.',
+                pl: 'Wróć od razu do ostatnio zapisanych lekcji, dopóki porównanie z rankingiem jest jeszcze świeże.',
               })}
             </Text>
           </View>
@@ -1447,9 +1740,9 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
             </Text>
             <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
               {copy({
-                de: 'Nach dem Blick auf die Rangliste kannst du direkt in die nächsten lokalen Aufgaben aus deinem Fortschritt springen.',
-                en: 'After checking the leaderboard, you can jump straight into the next local tasks from your progress.',
-                pl: 'Po sprawdzeniu rankingu możesz od razu wejść w kolejne lokalne zadania wynikające z Twojego postępu.',
+                de: 'Wandle den Blick auf die Rangliste direkt in die nächsten lokalen Schritte um, ohne den Trainingsfluss zu verlieren.',
+                en: 'Turn the leaderboard check directly into the next local actions without losing the training flow.',
+                pl: 'Zamień sprawdzenie rankingu od razu w kolejne lokalne kroki, bez gubienia rytmu treningu.',
               })}
             </Text>
           </View>

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   assertAiPathRunAccess,
@@ -8,14 +7,11 @@ import {
 } from '@/features/ai/ai-paths/server';
 import { retryPathRunNode } from '@/features/ai/ai-paths/server';
 import { assertAiPathRunQueueReady } from '@/features/jobs/server';
+import { aiPathRunRetryNodeRequestSchema } from '@/shared/contracts/ai-paths';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-
-const retrySchema = z.object({
-  nodeId: z.string().trim().min(1),
-});
 
 export async function POST_handler(
   req: NextRequest,
@@ -24,7 +20,7 @@ export async function POST_handler(
 ): Promise<Response> {
   const access = await requireAiPathsAccess();
   await enforceAiPathsActionRateLimit(access, 'run-retry');
-  const parsed = await parseJsonBody(req, retrySchema, {
+  const parsed = await parseJsonBody(req, aiPathRunRetryNodeRequestSchema, {
     logPrefix: 'ai-paths.runs.retry-node',
   });
   if (!parsed.ok) return parsed.response;

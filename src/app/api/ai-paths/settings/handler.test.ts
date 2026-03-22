@@ -20,7 +20,7 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   deleteAiPathsSettings: deleteAiPathsSettingsMock,
 }));
 
-import { GET_handler, POST_handler } from './handler';
+import { DELETE_handler, GET_handler, POST_handler } from './handler';
 
 describe('ai-paths settings handler', () => {
   beforeEach(() => {
@@ -146,5 +146,29 @@ describe('ai-paths settings handler', () => {
       key: 'ai_paths_config_path_base_export_blwo_v1',
       value: '{"id":"path_base_export_blwo_v1"}',
     });
+  });
+
+  it('deletes merged single and batch keys from the delete payload', async () => {
+    deleteAiPathsSettingsMock.mockResolvedValue(3);
+
+    const response = await DELETE_handler(
+      new NextRequest('http://localhost/api/ai-paths/settings', {
+        method: 'DELETE',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          key: 'ai_paths_index',
+          keys: ['ai_paths_ui_state', 'ai_paths_recent_runs'],
+        }),
+      }),
+      {} as Parameters<typeof DELETE_handler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    expect(deleteAiPathsSettingsMock).toHaveBeenCalledWith([
+      'ai_paths_index',
+      'ai_paths_ui_state',
+      'ai_paths_recent_runs',
+    ]);
+    await expect(response.json()).resolves.toEqual({ deletedCount: 3 });
   });
 });

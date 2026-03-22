@@ -2,7 +2,6 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   buildPersonaChatMemoryContext,
@@ -18,9 +17,8 @@ import type {
   ChatMessageDto as ChatMessage,
   ChatbotChatRequest,
   ChatbotChatResponseDto,
-  ChatbotChatRequestDto,
 } from '@/shared/contracts/chatbot';
-import { chatbotChatMessageSchema, chatbotChatRequestSchema } from '@/shared/contracts/chatbot';
+import { chatbotJsonRequestSchema } from '@/shared/contracts/chatbot';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { runChatbotModel } from '@/shared/lib/ai/chatbot/server-model-runtime';
@@ -39,14 +37,6 @@ const chatbotTempRoot = path.join(uploadsRoot, 'chatbot', 'temp');
 const TEMP_CLEANUP_TTL_MS = 1000 * 60 * 60 * 24;
 const TEMP_CLEANUP_INTERVAL_MS = 1000 * 60 * 10;
 const DEFAULT_CHATBOT_SYSTEM_PROMPT = 'You are a helpful assistant.';
-const chatbotJsonRequestSchema = z
-  .object({
-    messages: z.array(chatbotChatMessageSchema).optional(),
-    sessionId: chatbotChatRequestSchema.shape.sessionId,
-    contextRegistry: chatbotChatRequestSchema.shape.contextRegistry,
-    model: z.unknown().optional(),
-  })
-  .passthrough();
 
 let lastTempCleanupAt = 0;
 
@@ -277,7 +267,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
         return parsed.response;
       }
 
-      const body = parsed.data as ChatbotChatRequestDto & { model?: unknown };
+      const body = parsed.data;
       if (Object.prototype.hasOwnProperty.call(body, 'model')) {
         throw badRequestError('Chatbot payload contains unsupported model override.');
       }

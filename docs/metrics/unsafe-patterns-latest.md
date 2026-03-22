@@ -8,12 +8,12 @@ canonical: true
 ---
 # Unsafe Patterns Check
 
-Generated at: 2026-03-22T08:42:57.285Z
+Generated at: 2026-03-22T10:14:24.005Z
 
 ## Summary
 
 - Status: PASSED
-- Files scanned: 5653
+- Files scanned: 5669
 - Errors: 0
 - Warnings: 0
 - Info: 58
@@ -61,7 +61,7 @@ Generated at: 2026-03-22T08:42:57.285Z
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
-| INFO | non-null-assertion | src/app/api/ai-paths/runs/enqueue/handler.ts:172 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
+| INFO | non-null-assertion | src/app/api/ai-paths/runs/enqueue/handler.ts:145 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
 | INFO | non-null-assertion | src/features/cms/context-registry/page-builder.ts:231 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
 | INFO | non-null-assertion | src/features/kangur/admin/admin-kangur-social/hooks/useSocialPipelineRunner.ts:331 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |
 | INFO | non-null-assertion | src/features/kangur/duels/server.db.ts:545 | Non-null assertion operator `!`. Consider using optional chaining or a null check. |

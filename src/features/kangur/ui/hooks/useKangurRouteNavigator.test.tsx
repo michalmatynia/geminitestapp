@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   startRouteTransitionMock,
@@ -12,6 +12,7 @@ const {
   useOptionalKangurRoutingMock,
   usePathnameMock,
   routerPrefetchMock,
+  routerPushMock,
   routerReplaceMock,
 } = vi.hoisted(() => ({
   startRouteTransitionMock: vi.fn(),
@@ -19,6 +20,7 @@ const {
   useOptionalKangurRoutingMock: vi.fn(),
   usePathnameMock: vi.fn(),
   routerPrefetchMock: vi.fn(),
+  routerPushMock: vi.fn(),
   routerReplaceMock: vi.fn(),
 }));
 
@@ -27,7 +29,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({
     back: vi.fn(),
     prefetch: routerPrefetchMock,
-    push: vi.fn(),
+    push: routerPushMock,
     replace: routerReplaceMock,
   }),
 }));
@@ -59,6 +61,26 @@ const NavigatorProbe = ({ href }: { href: string }): React.JSX.Element => {
   );
 };
 
+const NavigatorPushProbe = ({
+  acknowledgeMs,
+  href,
+}: {
+  acknowledgeMs: number;
+  href: string;
+}): React.JSX.Element => {
+  const routeNavigator = useKangurRouteNavigator();
+
+  return (
+    <button
+      data-testid='navigator-push'
+      onClick={() => routeNavigator.push(href, { acknowledgeMs })}
+      type='button'
+    >
+      Push
+    </button>
+  );
+};
+
 describe('useKangurRouteNavigator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -75,6 +97,10 @@ describe('useKangurRouteNavigator', () => {
       acknowledgeMs: 0,
       started: true,
     });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('resolves the correct page key from localized public routes', () => {
@@ -108,5 +134,21 @@ describe('useKangurRouteNavigator', () => {
       pageKey: 'Tests',
     });
     expect(routerReplaceMock).toHaveBeenCalledWith('/de/kangur/tests', { scroll: false });
+  });
+
+  it('keeps an acknowledged push alive after the calling component unmounts', () => {
+    vi.useFakeTimers();
+    startRouteTransitionMock.mockReturnValueOnce({
+      acknowledgeMs: 110,
+      started: true,
+    });
+
+    const { unmount } = render(<NavigatorPushProbe acknowledgeMs={110} href='/lessons' />);
+
+    fireEvent.click(screen.getByTestId('navigator-push'));
+    unmount();
+    vi.advanceTimersByTime(110);
+
+    expect(routerPushMock).toHaveBeenCalledWith('/lessons', { scroll: false });
   });
 });

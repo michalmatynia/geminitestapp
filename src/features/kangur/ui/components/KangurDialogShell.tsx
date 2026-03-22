@@ -2,16 +2,17 @@
 
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 
+import { RadixOverlayContentShell } from '@/shared/ui/radix-overlay-content-shell';
 import { cn } from '@/features/kangur/shared/utils';
 
 import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 
-const DEFAULT_OVERLAY_CLASSNAME = cn(
+export const KANGUR_DIALOG_OVERLAY_BASE_CLASSNAME = cn(
   'fixed inset-0 z-50 backdrop-blur-[2px]',
   'data-[state=open]:animate-in data-[state=closed]:animate-out',
   'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0'
 );
-const DEFAULT_CONTENT_CLASSNAME = cn(
+export const KANGUR_DIALOG_CONTENT_BASE_CLASSNAME = cn(
   'fixed left-1/2 top-1/2 z-50',
   'kangur-max-h-screen-2 -translate-x-1/2 -translate-y-1/2 overflow-y-auto',
   'outline-none'
@@ -28,25 +29,17 @@ export function KangurDialogShell({
   overlayProps,
   contentProps,
 }: KangurDialogShellProps): React.JSX.Element {
-  const { className: overlayClassName, style: overlayStyle, ...overlayRest } =
-    overlayProps ?? {};
-  const { className: contentClassName, style: contentStyle, ...contentRest } =
-    contentProps ?? {};
-
   return (
-    <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay
-        className={cn(DEFAULT_OVERLAY_CLASSNAME, overlayClassName)}
-        style={overlayStyle}
-        {...overlayRest}
-      />
-      <DialogPrimitive.Content
-        className={cn(DEFAULT_CONTENT_CLASSNAME, contentClassName)}
-        style={contentStyle}
-        {...contentRest}
-      >
-        {children}
-      </DialogPrimitive.Content>
-    </DialogPrimitive.Portal>
+    <RadixOverlayContentShell
+      Portal={DialogPrimitive.Portal}
+      Overlay={DialogPrimitive.Overlay}
+      Content={DialogPrimitive.Content}
+      overlayBaseClassName={KANGUR_DIALOG_OVERLAY_BASE_CLASSNAME}
+      contentBaseClassName={KANGUR_DIALOG_CONTENT_BASE_CLASSNAME}
+      overlayProps={overlayProps}
+      contentProps={contentProps}
+    >
+      {children}
+    </RadixOverlayContentShell>
   );
 }

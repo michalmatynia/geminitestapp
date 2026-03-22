@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   enforceAiPathsActionRateLimit,
@@ -14,6 +13,7 @@ import {
   getProductDataProvider,
   productService,
 } from '@/features/products/server';
+import { aiPathEntityUpdateRequestSchema } from '@/shared/contracts/ai-paths';
 import { NoteUpdateInput } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
@@ -24,13 +24,6 @@ import {
 } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { removeUndefined } from '@/shared/utils';
-
-const updateSchema = z.object({
-  entityType: z.enum(['product', 'note', 'custom']),
-  entityId: z.string().trim().optional(),
-  updates: z.record(z.string(), z['unknown']()).optional(),
-  mode: z.enum(['replace', 'append']).optional(),
-});
 
 const mergeAppendValue = (current: unknown, next: unknown): unknown => {
   if (next === undefined) return undefined;
@@ -83,7 +76,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   if (!isInternal) {
     await enforceAiPathsActionRateLimit(access, 'entity-update');
   }
-  const parsed = await parseJsonBody(req, updateSchema, {
+  const parsed = await parseJsonBody(req, aiPathEntityUpdateRequestSchema, {
     logPrefix: 'ai-paths.update',
   });
   if (!parsed.ok) return parsed.response;

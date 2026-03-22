@@ -1,19 +1,7 @@
-import * as React from 'react';
+import { ADMIN_AI_PATHS_SECTION } from './admin-section-configs';
+import { createAdminSectionBreadcrumbs } from './admin-section-breadcrumbs';
 
-import type { AdminSectionBreadcrumbWrapperProps } from '@/shared/contracts/ui';
-
-import { AdminSectionBreadcrumbs } from './admin-section-breadcrumbs';
-
-export function AdminAiPathsBreadcrumbs({
-  current,
-  parent,
-  className,
-}: AdminSectionBreadcrumbWrapperProps): React.JSX.Element {
-  const breadcrumbProps = { current, parent, className };
-  return (
-    <AdminSectionBreadcrumbs
-      section={{ label: 'AI Paths', href: '/admin/ai-paths' }}
-      {...breadcrumbProps}
-    />
-  );
-}
+export const AdminAiPathsBreadcrumbs = createAdminSectionBreadcrumbs({
+  section: ADMIN_AI_PATHS_SECTION,
+  displayName: 'AdminAiPathsBreadcrumbs',
+});

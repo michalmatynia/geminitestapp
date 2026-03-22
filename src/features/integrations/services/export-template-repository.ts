@@ -11,14 +11,14 @@ import {
   stringifyScopedActiveTemplateMap,
   type ActiveTemplateScopeInput,
 } from '@/features/integrations/services/active-template-preference';
-import { type ImageRetryPreset } from '@/shared/contracts/integrations/base';
-import { type Template, type TemplateMapping } from '@/shared/contracts/integrations/templates';
-import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
-import { badRequestError } from '@/shared/errors/app-error';
 import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
 } from '@/features/data-import-export/public';
+import { type ImageRetryPreset } from '@/shared/contracts/integrations/base';
+import { type Template, type TemplateMapping } from '@/shared/contracts/integrations/templates';
+import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
+import { badRequestError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

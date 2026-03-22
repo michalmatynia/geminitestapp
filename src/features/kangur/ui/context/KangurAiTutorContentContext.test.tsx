@@ -32,6 +32,7 @@ import {
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import {
   KangurAiTutorContentProvider,
+  useActivateKangurAiTutorContent,
   useKangurAiTutorContent,
 } from './KangurAiTutorContentContext';
 
@@ -51,6 +52,11 @@ function Harness(): React.JSX.Element {
       </div>
     </div>
   );
+}
+
+function ActivatorHarness(): React.JSX.Element {
+  useActivateKangurAiTutorContent();
+  return <Harness />;
 }
 
 describe('KangurAiTutorContentContext', () => {
@@ -99,7 +105,7 @@ describe('KangurAiTutorContentContext', () => {
 
     render(
       <KangurAiTutorContentProvider>
-        <Harness />
+        <ActivatorHarness />
       </KangurAiTutorContentProvider>
     );
 

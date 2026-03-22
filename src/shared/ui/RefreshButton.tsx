@@ -3,7 +3,6 @@
 import { RefreshCcw } from 'lucide-react';
 import React from 'react';
 
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 
 import { Button } from './button';
@@ -17,7 +16,7 @@ interface RefreshButtonProps {
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
 }
 
-type RefreshButtonRuntimeValue = {
+type RefreshButtonControlProps = {
   onRefresh: () => void;
   isRefreshing: boolean;
   label: string;
@@ -26,28 +25,26 @@ type RefreshButtonRuntimeValue = {
   variant: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
 };
 
-const { Context: RefreshButtonRuntimeContext, useStrictContext: useRefreshButtonRuntime } =
-  createStrictContext<RefreshButtonRuntimeValue>({
-    hookName: 'useRefreshButtonRuntime',
-    providerName: 'RefreshButtonRuntimeProvider',
-    displayName: 'RefreshButtonRuntimeContext',
-  });
-
-function RefreshButtonControl(): React.JSX.Element {
-  const runtime = useRefreshButtonRuntime();
-  const ariaLabel =
-    runtime.size === 'icon' || !runtime.label ? runtime.label || 'Refresh' : undefined;
+function RefreshButtonControl({
+  onRefresh,
+  isRefreshing,
+  label,
+  className,
+  size,
+  variant,
+}: RefreshButtonControlProps): React.JSX.Element {
+  const ariaLabel = size === 'icon' || !label ? label || 'Refresh' : undefined;
   return (
     <Button
-      variant={runtime.variant}
-      size={runtime.size}
-      onClick={runtime.onRefresh}
-      disabled={runtime.isRefreshing}
-      className={cn('gap-2', runtime.className)}
+      variant={variant}
+      size={size}
+      onClick={onRefresh}
+      disabled={isRefreshing}
+      className={cn('gap-2', className)}
       aria-label={ariaLabel}
     >
-      <RefreshCcw className={cn('size-4', runtime.isRefreshing && 'animate-spin')} />
-      {runtime.label && <span>{runtime.label}</span>}
+      <RefreshCcw className={cn('size-4', isRefreshing && 'animate-spin')} />
+      {label ? <span>{label}</span> : null}
     </Button>
   );
 }
@@ -63,21 +60,14 @@ export function RefreshButton({
   size = 'sm',
   variant = 'outline',
 }: RefreshButtonProps): React.JSX.Element {
-  const runtimeValue = React.useMemo<RefreshButtonRuntimeValue>(
-    () => ({
-      onRefresh,
-      isRefreshing,
-      label,
-      className,
-      size,
-      variant,
-    }),
-    [onRefresh, isRefreshing, label, className, size, variant]
-  );
-
   return (
-    <RefreshButtonRuntimeContext.Provider value={runtimeValue}>
-      <RefreshButtonControl />
-    </RefreshButtonRuntimeContext.Provider>
+    <RefreshButtonControl
+      onRefresh={onRefresh}
+      isRefreshing={isRefreshing}
+      label={label}
+      className={className}
+      size={size}
+      variant={variant}
+    />
   );
 }

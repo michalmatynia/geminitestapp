@@ -861,6 +861,20 @@ export default function HomeScreen(): React.JSX.Element {
       en: 'the Kangur learner account',
       pl: 'konta ucznia Kangura',
     });
+  const homeHeroLearnerName =
+    session.user?.activeLearner?.displayName?.trim() || session.user?.full_name?.trim() || null;
+  const homeHeroRecentResult = recentResults.results[0] ?? null;
+  const homeHeroRecentCheckpoint = lessonCheckpoints.recentCheckpoints[0] ?? null;
+  const homeHeroFocusHref = trainingFocus.weakestOperation
+    ? createKangurPracticeHref(trainingFocus.weakestOperation.operation)
+    : PRACTICE_ROUTE;
+  const homeHeroFocusLabel = trainingFocus.weakestOperation
+    ? formatKangurMobileScoreOperation(trainingFocus.weakestOperation.operation, locale)
+    : copy({
+        de: 'Gemischtes Training',
+        en: 'Mixed practice',
+        pl: 'Trening mieszany',
+      });
   const activeDuelLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
   const currentLearnerDuelRank = activeDuelLearnerId
     ? duelLeaderboard.entries.findIndex((entry) => entry.learnerId === activeDuelLearnerId)
@@ -916,12 +930,121 @@ export default function HomeScreen(): React.JSX.Element {
             })}
           </Text>
           <Text style={{ color: '#475569', fontSize: 16, lineHeight: 24 }}>
-            {copy({
-              de: 'Die mobile Version des gemeinsamen Kangur-Lernpfads. Diese App verbindet bereits Lektionen, Profil, Ergebnisse, Tagesplan, Rangliste und Duelle.',
-              en: 'The mobile version of the shared Kangur learning path. This app already connects lessons, profile, results, daily plan, leaderboard, and duels.',
-              pl: 'Mobilna wersja wspólnej ścieżki nauki Kangura. W tej aplikacji są już podpięte lekcje, profil, wyniki, plan dnia, ranking i pojedynki.',
-            })}
+            {isLoadingAuth && session.status !== 'authenticated'
+              ? copy({
+                  de: 'Der Startbildschirm stellt gerade die Schulersitzung, Ergebnisse und Trainingshinweise wieder her.',
+                  en: 'The home dashboard is restoring the learner session, recent results, and training cues.',
+                  pl: 'Pulpit startowy przywraca teraz sesję ucznia, ostatnie wyniki i wskazówki treningowe.',
+                })
+              : session.status === 'authenticated' && homeHeroLearnerName
+                ? copy({
+                    de: `Willkommen, ${homeHeroLearnerName}. Starte mit dem Trainingsfokus, kehre zur letzten Lektion zurück oder öffne direkt den Tagesplan.`,
+                    en: `Welcome back, ${homeHeroLearnerName}. Start with the training focus, return to the latest lesson, or jump straight into the daily plan.`,
+                    pl: `Witaj ponownie, ${homeHeroLearnerName}. Zacznij od fokusu treningowego, wróć do ostatniej lekcji albo od razu otwórz plan dnia.`,
+                  })
+                : copy({
+                    de: 'Von hier aus kannst du Lektionen, Training, Ergebnisse und Duelle durchsuchen. Nach der Anmeldung synchronisiert der Startbildschirm auch Verlauf und Tagesplan.',
+                    en: 'From here you can browse lessons, practice, results, and duels. After sign-in, the home dashboard also syncs history and the daily plan.',
+                    pl: 'Stąd możesz przeglądać lekcje, trening, wyniki i pojedynki. Po zalogowaniu pulpit startowy synchronizuje także historię oraz plan dnia.',
+                  })}
           </Text>
+
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <View
+              style={{
+                alignSelf: 'flex-start',
+                borderRadius: 999,
+                borderWidth: 1,
+                borderColor: '#c7d2fe',
+                backgroundColor: '#eef2ff',
+                paddingHorizontal: 12,
+                paddingVertical: 7,
+              }}
+            >
+              <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
+                {copy({
+                  de: `Sitzungen ${recentResults.results.length}`,
+                  en: `Sessions ${recentResults.results.length}`,
+                  pl: `Sesje ${recentResults.results.length}`,
+                })}
+              </Text>
+            </View>
+            {homeHeroRecentResult ? (
+              <View
+                style={{
+                  alignSelf: 'flex-start',
+                  borderRadius: 999,
+                  borderWidth: 1,
+                  borderColor: '#a7f3d0',
+                  backgroundColor: '#ecfdf5',
+                  paddingHorizontal: 12,
+                  paddingVertical: 7,
+                }}
+              >
+                <Text style={{ color: '#047857', fontSize: 12, fontWeight: '700' }}>
+                  {copy({
+                    de: `Letztes Ergebnis ${homeHeroRecentResult.correct_answers}/${homeHeroRecentResult.total_questions}`,
+                    en: `Latest score ${homeHeroRecentResult.correct_answers}/${homeHeroRecentResult.total_questions}`,
+                    pl: `Ostatni wynik ${homeHeroRecentResult.correct_answers}/${homeHeroRecentResult.total_questions}`,
+                  })}
+                </Text>
+              </View>
+            ) : null}
+            <View
+              style={{
+                alignSelf: 'flex-start',
+                borderRadius: 999,
+                borderWidth: 1,
+                borderColor: '#fde68a',
+                backgroundColor: '#fffbeb',
+                paddingHorizontal: 12,
+                paddingVertical: 7,
+              }}
+            >
+              <Text style={{ color: '#b45309', fontSize: 12, fontWeight: '700' }}>
+                {homeHeroRecentCheckpoint
+                  ? copy({
+                      de: `Letzte Lektion ${homeHeroRecentCheckpoint.title}`,
+                      en: `Latest lesson ${homeHeroRecentCheckpoint.title}`,
+                      pl: `Ostatnia lekcja ${homeHeroRecentCheckpoint.title}`,
+                    })
+                  : copy({
+                      de: `Checkpoints ${lessonCheckpoints.recentCheckpoints.length}`,
+                      en: `Checkpoints ${lessonCheckpoints.recentCheckpoints.length}`,
+                      pl: `Checkpointy ${lessonCheckpoints.recentCheckpoints.length}`,
+                    })}
+              </Text>
+            </View>
+          </View>
+
+          <View style={{ gap: 10 }}>
+            <OutlineLink
+              href={homeHeroFocusHref}
+              label={copy({
+                de: `Trainingsfokus: ${homeHeroFocusLabel}`,
+                en: `Training focus: ${homeHeroFocusLabel}`,
+                pl: `Fokus treningowy: ${homeHeroFocusLabel}`,
+              })}
+            />
+            {homeHeroRecentCheckpoint ? (
+              <OutlineLink
+                href={homeHeroRecentCheckpoint.lessonHref}
+                label={copy({
+                  de: `Letzte Lektion: ${homeHeroRecentCheckpoint.title}`,
+                  en: `Latest lesson: ${homeHeroRecentCheckpoint.title}`,
+                  pl: `Ostatnia lekcja: ${homeHeroRecentCheckpoint.title}`,
+                })}
+              />
+            ) : null}
+            <OutlineLink
+              href={PLAN_ROUTE}
+              label={copy({
+                de: 'Tagesplan jetzt',
+                en: 'Daily plan now',
+                pl: 'Plan dnia teraz',
+              })}
+            />
+          </View>
         </View>
 
         {__DEV__ && homeDebugProof ? (
@@ -2200,9 +2323,9 @@ export default function HomeScreen(): React.JSX.Element {
               ) : session.status === 'authenticated' ? (
                 <Text style={{ color: '#64748b', lineHeight: 20 }}>
                   {copy({
-                    de: 'Dein Konto ist noch nicht im aktuellen Kurz-Ranking sichtbar.',
-                    en: 'Your account is not yet visible in the current compact ranking.',
-                    pl: 'Twojego konta nie ma jeszcze w bieżącym skrócie rankingu.',
+                    de: 'Dein Konto ist in diesem Ausschnitt noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit du hier erscheinst.',
+                    en: 'Your account is not visible in this snapshot yet. Finish another duel or open the lobby so it shows up here.',
+                    pl: 'Twojego konta nie widać jeszcze w tym widoku. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawić się tutaj.',
                   })}
                 </Text>
               ) : null}

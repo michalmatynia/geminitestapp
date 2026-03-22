@@ -138,12 +138,21 @@ vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
+  KangurAiTutorActivationContext: React.createContext(null),
   useKangurAiTutor: mocks.useKangurAiTutorMock,
   useOptionalKangurAiTutor: mocks.useKangurAiTutorMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
   useKangurAiTutorContent: () => DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+  useActivateKangurAiTutorContent: () => {},
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAiTutorRuntime.hook', () => ({
+  useKangurAiTutorRuntime: () => ({
+    value: mocks.useKangurAiTutorMock(),
+    sessionRegistryValue: {},
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
@@ -164,6 +173,14 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useOptionalKangurRouting: mocks.useOptionalKangurRoutingMock,
+}));
+
+vi.mock('@/shared/hooks/useAgentPersonaVisuals', () => ({
+  useAgentPersonaVisuals: () => ({
+    data: [],
+    isLoading: false,
+    error: null,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () => ({

@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import {
   optionalBooleanQuerySchema,
+  optionalIntegerQuerySchema,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
 
@@ -85,6 +86,19 @@ export const chatbotSettingsSaveResponseSchema = z.object({
 
 export type ChatbotSettingsSaveResponseDto = z.infer<typeof chatbotSettingsSaveResponseSchema>;
 export type ChatbotSettingsSaveResponse = ChatbotSettingsSaveResponseDto;
+
+export const chatbotSettingsQuerySchema = z.object({
+  key: optionalTrimmedQueryString(),
+});
+
+export type ChatbotSettingsQueryDto = z.infer<typeof chatbotSettingsQuerySchema>;
+
+export const chatbotSettingsSaveRequestSchema = z.object({
+  key: z.string().trim().optional(),
+  settings: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type ChatbotSettingsSaveRequestDto = z.infer<typeof chatbotSettingsSaveRequestSchema>;
 
 const UNSUPPORTED_CHATBOT_AGENT_MODEL_KEYS = [
   'memoryValidationModel',
@@ -276,6 +290,14 @@ export const chatbotSessionsDeleteRequestSchema = z.object({
 export type ChatbotSessionsDeleteRequestDto = z.infer<typeof chatbotSessionsDeleteRequestSchema>;
 export type ChatbotSessionsDeleteRequest = ChatbotSessionsDeleteRequestDto;
 
+export const chatbotSessionsDeleteBodySchema = z.union([
+  chatbotSessionDeleteRequestSchema,
+  chatbotSessionsDeleteRequestSchema,
+]);
+
+export type ChatbotSessionsDeleteBodyDto = z.infer<typeof chatbotSessionsDeleteBodySchema>;
+export type ChatbotSessionsDeleteBody = ChatbotSessionsDeleteBodyDto;
+
 export const chatbotSessionDeleteResponseSchema = z.object({
   success: z.literal(true),
   deletedCount: z.number().int().nonnegative().optional(),
@@ -307,6 +329,34 @@ export const sendMessageSchema = z.object({
 
 export type SendMessageDto = z.infer<typeof sendMessageSchema>;
 
+export const chatbotSessionMessageCreateRequestSchema = z.object({
+  role: chatMessageRoleSchema,
+  content: z.string().trim().min(1),
+});
+
+export type ChatbotSessionMessageCreateRequestDto = z.infer<
+  typeof chatbotSessionMessageCreateRequestSchema
+>;
+export type ChatbotSessionMessageCreateRequest = ChatbotSessionMessageCreateRequestDto;
+
+export const chatbotSessionMessagesResponseSchema = z.object({
+  messages: z.array(chatMessageSchema),
+});
+
+export type ChatbotSessionMessagesResponseDto = z.infer<
+  typeof chatbotSessionMessagesResponseSchema
+>;
+export type ChatbotSessionMessagesResponse = ChatbotSessionMessagesResponseDto;
+
+export const chatbotSessionMessageResponseSchema = z.object({
+  message: chatMessageSchema,
+});
+
+export type ChatbotSessionMessageResponseDto = z.infer<
+  typeof chatbotSessionMessageResponseSchema
+>;
+export type ChatbotSessionMessageResponse = ChatbotSessionMessageResponseDto;
+
 export const chatbotChatMessageSchema = z.object({
   role: chatMessageRoleSchema,
   content: z.string(),
@@ -324,6 +374,17 @@ export const chatbotChatRequestSchema = z.object({
 
 export type ChatbotChatRequestDto = z.infer<typeof chatbotChatRequestSchema>;
 export type ChatbotChatRequest = ChatbotChatRequestDto;
+
+export const chatbotJsonRequestSchema = z
+  .object({
+    messages: z.array(chatbotChatMessageSchema).optional(),
+    sessionId: chatbotChatRequestSchema.shape.sessionId,
+    contextRegistry: chatbotChatRequestSchema.shape.contextRegistry,
+    model: z.unknown().optional(),
+  })
+  .passthrough();
+
+export type ChatbotJsonRequestDto = z.infer<typeof chatbotJsonRequestSchema>;
 
 export const chatbotChatResponseSchema = z.object({
   message: z.string().optional(),
@@ -478,6 +539,15 @@ export const chatbotMemoryResponseSchema = z.object({
 
 export type ChatbotMemoryResponseDto = z.infer<typeof chatbotMemoryResponseSchema>;
 export type ChatbotMemoryResponse = ChatbotMemoryResponseDto;
+
+export const chatbotMemoryQuerySchema = z.object({
+  memoryKey: optionalTrimmedQueryString(),
+  tag: optionalTrimmedQueryString(),
+  q: optionalTrimmedQueryString(),
+  limit: optionalIntegerQuerySchema(z.number().int().positive().max(100)).default(50),
+});
+
+export type ChatbotMemoryQueryDto = z.infer<typeof chatbotMemoryQuerySchema>;
 
 export const createChatbotMemoryItemSchema = chatbotMemoryItemSchema.omit({
   id: true,
@@ -784,6 +854,16 @@ export const agentSettingsPayloadSchema = z.object({
 
 export type AgentSettingsPayloadDto = z.infer<typeof agentSettingsPayloadSchema>;
 export type AgentSettingsPayload = AgentSettingsPayloadDto;
+
+export const chatbotAgentRunActionRouteParamsSchema = z.object({
+  runId: z.string().trim().min(1, 'Run id is required'),
+  action: z.string().trim().min(1, 'Action is required'),
+});
+
+export type ChatbotAgentRunActionRouteParamsDto = z.infer<
+  typeof chatbotAgentRunActionRouteParamsSchema
+>;
+export type ChatbotAgentRunActionRouteParams = ChatbotAgentRunActionRouteParamsDto;
 
 export const DEFAULT_AGENT_SETTINGS: AgentSettingsPayload = {
   agentBrowser: 'chromium',

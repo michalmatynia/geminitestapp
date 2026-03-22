@@ -2,9 +2,9 @@ import { createHmac } from 'crypto';
 import { gzipSync } from 'zlib';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
+import { portablePathRemediationDeadLetterReplayHistoryQuerySchema } from '@/shared/contracts/ai-paths-portable-engine';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION } from '@/shared/lib/ai-paths/portable-engine';
@@ -17,8 +17,7 @@ import {
   resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportSecretFromEnvironment,
   type PortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionMode,
 } from '@/shared/lib/ai-paths/portable-engine/server';
-import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
-import { listSystemLogs } from '@/shared/lib/observability/system-log-repository';;
+import { listSystemLogs } from '@/shared/lib/observability/system-log-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
@@ -118,15 +117,7 @@ type ReplayHistoryExportFormat = 'json' | 'ndjson' | 'csv';
 
 const REPLAY_HISTORY_EXPORT_FORMATS: ReplayHistoryExportFormat[] = ['json', 'ndjson', 'csv'];
 
-export const querySchema = z.object({
-  limit: optionalTrimmedQueryString(),
-  from: optionalTrimmedQueryString(),
-  to: optionalTrimmedQueryString(),
-  includeAttempts: optionalTrimmedQueryString(),
-  signed: optionalTrimmedQueryString(),
-  format: optionalTrimmedQueryString(),
-  cursor: optionalTrimmedQueryString(),
-});
+export { portablePathRemediationDeadLetterReplayHistoryQuerySchema as querySchema };
 
 const resolveReplayHistoryQueryInput = (
   req: Request,
@@ -548,7 +539,9 @@ const toReplayHistoryNdjson = (
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
 
-  const query = querySchema.parse(resolveReplayHistoryQueryInput(req, _ctx));
+  const query = portablePathRemediationDeadLetterReplayHistoryQuerySchema.parse(
+    resolveReplayHistoryQueryInput(req, _ctx)
+  );
   const limit = parseHistoryLimit(query.limit ?? null);
   const from = parseHistoryTimestamp('from', query.from ?? null);
   const to = parseHistoryTimestamp('to', query.to ?? null);

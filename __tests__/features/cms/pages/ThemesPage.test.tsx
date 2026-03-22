@@ -53,7 +53,7 @@ describe('ThemesPage Component', () => {
   it('should render empty state when no themes exist', () => {
     (useCmsThemes as any).mockReturnValue({ data: [], isLoading: false });
     renderWithProviders(<ThemesPage />);
-    expect(screen.getByText('emptyDescription')).toBeInTheDocument();
+    expect(screen.getByText('No themes defined')).toBeInTheDocument();
   });
 
   it('should render themes list', () => {
@@ -73,7 +73,7 @@ describe('ThemesPage Component', () => {
     (useCmsThemes as any).mockReturnValue({ data: [], isLoading: false });
     renderWithProviders(<ThemesPage />);
 
-    const createBtn = screen.getByRole('button', { name: /createAction/i });
+    const createBtn = screen.getByRole('button', { name: /Create Theme/i });
     await user.click(createBtn);
 
     expect(mockPush).toHaveBeenCalledWith('/admin/cms/themes/create');
@@ -91,15 +91,15 @@ describe('ThemesPage Component', () => {
     renderWithProviders(<ThemesPage />);
 
     // 1. Open the ActionMenu
-    const actionsBtn = screen.getByLabelText(/actionsLabel/i);
+    const actionsBtn = screen.getByLabelText(/Actions for theme Dark/i);
     await user.click(actionsBtn);
 
     // 2. Click the Delete item in dropdown
-    const deleteItem = screen.getByText('deleteAction');
+    const deleteItem = screen.getByText('Delete');
     await user.click(deleteItem);
 
     // 3. Confirm in the modal
-    const confirmBtn = screen.getByRole('button', { name: /destroyAction/i });
+    const confirmBtn = screen.getByRole('button', { name: /Destroy Theme/i });
     await user.click(confirmBtn);
 
     expect(mockDelete).toHaveBeenCalledWith('t1');

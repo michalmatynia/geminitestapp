@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-03-22T08:43:06.748Z",
+  "generatedAt": "2026-03-22T10:14:33.967Z",
   "status": "passed",
   "summary": {
-    "total": 18,
+    "total": 17,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 18,
+    "infoCount": 17,
     "status": "passed",
     "routeFileCount": 285,
     "methodCount": 215,
-    "methodsWithTests": 187,
+    "methodsWithTests": 188,
     "mutationValidationCount": 37,
     "queryValidationCount": 10
   },
@@ -417,14 +417,16 @@
       "route": "analytics/summary",
       "method": "GET",
       "expectedAccess": "session",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/analytics/summary/route.ts",
         "src/app/api/analytics/summary/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/analytics/summary/handler.test.ts"
+      ]
     },
     {
       "route": "assets3d/[id]/file",
@@ -3169,22 +3171,6 @@
     {
       "severity": "info",
       "ruleId": "api-contract-route-missing-tests",
-      "message": "GET analytics/summary has no adjacent route/handler test coverage.",
-      "file": "src/app/api/analytics/summary/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "session",
-        "sourceFiles": [
-          "src/app/api/analytics/summary/route.ts",
-          "src/app/api/analytics/summary/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
       "message": "GET assets3d/categories has no adjacent route/handler test coverage.",
       "file": "src/app/api/assets3d/categories/route.ts",
       "line": 7,
@@ -3427,8 +3413,8 @@
       "ruleId": "api-contract-route-missing-tests",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 18
+      "infoCount": 17
     }
   ],
-  "durationMs": 217
+  "durationMs": 305
 }

@@ -1,8 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
-import { aiPathRuntimeAnalyticsSummaryResponseSchema } from '@/shared/contracts/ai-paths';
+import {
+  aiPathRuntimeAnalyticsRangeQuerySchema,
+  aiPathRuntimeAnalyticsSummaryResponseSchema,
+} from '@/shared/contracts/ai-paths';
 
 describe('ai paths runtime analytics summary contract runtime', () => {
+  it('parses runtime analytics range query DTOs', () => {
+    expect(aiPathRuntimeAnalyticsRangeQuerySchema.parse({ range: '7d' }).range).toBe('7d');
+    expect(aiPathRuntimeAnalyticsRangeQuerySchema.parse({})).toEqual({});
+  });
+
   it('parses runtime analytics summary responses', () => {
     const parsed = aiPathRuntimeAnalyticsSummaryResponseSchema.parse({
       summary: {

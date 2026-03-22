@@ -4,6 +4,7 @@ import type {
   AdminBreadcrumbNode,
   AdminSectionBreadcrumbsConfig,
   AdminSectionBreadcrumbsProps,
+  AdminSectionBreadcrumbWrapperProps,
 } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
@@ -40,6 +41,36 @@ export function AdminSectionBreadcrumbs({
       <Breadcrumbs items={items} className={resolvedClassName} />
     </AdminFavoriteBreadcrumbRow>
   );
+}
+
+type CreateAdminSectionBreadcrumbsConfig = {
+  section: AdminBreadcrumbNode;
+  baseClassName?: string;
+  displayName?: string;
+};
+
+export function createAdminSectionBreadcrumbs({
+  section,
+  baseClassName,
+  displayName,
+}: CreateAdminSectionBreadcrumbsConfig): React.FC<AdminSectionBreadcrumbWrapperProps> {
+  const AdminSectionBreadcrumbsWrapper: React.FC<AdminSectionBreadcrumbWrapperProps> = ({
+    current,
+    parent,
+    className,
+  }) => (
+    <AdminSectionBreadcrumbs
+      section={section}
+      current={current}
+      parent={parent}
+      className={className}
+      baseClassName={baseClassName}
+    />
+  );
+
+  AdminSectionBreadcrumbsWrapper.displayName = displayName ?? 'AdminSectionBreadcrumbsWrapper';
+
+  return AdminSectionBreadcrumbsWrapper;
 }
 
 export type { AdminSectionBreadcrumbsConfig, AdminSectionBreadcrumbsProps };

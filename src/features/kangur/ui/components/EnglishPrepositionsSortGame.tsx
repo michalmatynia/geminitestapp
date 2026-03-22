@@ -43,6 +43,7 @@ import {
   getKangurMiniGameScoreLabel,
   type KangurMiniGameTranslate,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type {
   KangurMiniGameFeedbackState,
@@ -260,6 +261,7 @@ export default function EnglishPrepositionsSortGame({
   onFinish,
 }: KangurMiniGameFinishProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const isCoarsePointer = useKangurCoarsePointer();
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const [roundIndex, setRoundIndex] = useState(0);
   const [roundState, setRoundState] = useState<RoundState>(() => buildRoundState(ROUNDS[0]!));
@@ -275,6 +277,16 @@ export default function EnglishPrepositionsSortGame({
 
   const round = ROUNDS[roundIndex] ?? ROUNDS[0]!;
   const expectedCounts = useMemo(() => buildExpectedCounts(round), [round]);
+  const selectedToken = useMemo(() => {
+    if (!selectedTokenId) return null;
+    return (
+      roundState.pool.find((token) => token.id === selectedTokenId) ??
+      Object.values(roundState.bins)
+        .flatMap((items) => items ?? [])
+        .find((token) => token.id === selectedTokenId) ??
+      null
+    );
+  }, [roundState.bins, roundState.pool, selectedTokenId]);
 
   useEffect(() => {
     setRoundState(buildRoundState(round));
@@ -529,7 +541,11 @@ export default function EnglishPrepositionsSortGame({
                   })}
                 </KangurStatusChip>
                 <KangurStatusChip accent='slate' className='text-[10px] uppercase tracking-[0.16em]'>
-                  {translations('englishPrepositions.inRound.sort.modeLabel')}
+                  {translations(
+                    isCoarsePointer
+                      ? 'englishPrepositions.inRound.sort.modeLabelTouch'
+                      : 'englishPrepositions.inRound.sort.modeLabel'
+                  )}
                 </KangurStatusChip>
               </div>
               <div className={`${KANGUR_GRID_SPACED_CLASSNAME} sm:grid-cols-[1.1fr_0.9fr] sm:items-center`}>
@@ -560,9 +576,15 @@ export default function EnglishPrepositionsSortGame({
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
+                  data-testid='english-prepositions-sort-pool-zone'
                   className={cn(
-                    'mt-3 flex min-h-[72px] flex-wrap items-center justify-center gap-2 rounded-[20px] border-2 border-dashed px-3 py-3 transition',
-                    snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/70' : 'border-slate-200'
+                    'mt-3 flex flex-wrap items-center justify-center gap-2 rounded-[20px] border-2 border-dashed px-3 py-3 transition touch-manipulation',
+                    isCoarsePointer ? 'min-h-[92px]' : 'min-h-[72px]',
+                    snapshot.isDraggingOver
+                      ? 'border-amber-300 bg-amber-50/70'
+                      : selectedToken && !checked && isCoarsePointer
+                        ? 'border-amber-200 bg-amber-50/40'
+                        : 'border-slate-200'
                   )}
                   onClick={handleReturnToPool}
                   role='button'
@@ -583,6 +605,7 @@ export default function EnglishPrepositionsSortGame({
                       index={index}
                       isDragDisabled={checked}
                       isSelected={selectedTokenId === token.id}
+                      isCoarsePointer={isCoarsePointer}
                       onClick={() =>
                         setSelectedTokenId((current) => (current === token.id ? null : token.id))
                       }
@@ -617,9 +640,14 @@ export default function EnglishPrepositionsSortGame({
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
+                      data-testid={`english-prepositions-sort-bin-${binId}`}
                       className={cn(
-                        'min-h-[150px] rounded-[20px] border p-3 transition',
+                        'rounded-[20px] border p-3 transition touch-manipulation',
+                        isCoarsePointer ? 'min-h-[172px]' : 'min-h-[150px]',
                         surfaceClass,
+                        selectedToken && !checked && isCoarsePointer
+                          ? 'border-amber-200 bg-amber-50/35'
+                          : undefined,
                         snapshot.isDraggingOver && !checked
                           ? KANGUR_ACCENT_STYLES[bin.accent].activeCard
                           : undefined
@@ -662,6 +690,7 @@ export default function EnglishPrepositionsSortGame({
                             index={index}
                             isDragDisabled={checked}
                             isSelected={selectedTokenId === item.id}
+                            isCoarsePointer={isCoarsePointer}
                             onClick={() =>
                               setSelectedTokenId((current) => (current === item.id ? null : item.id))
                             }
@@ -683,6 +712,24 @@ export default function EnglishPrepositionsSortGame({
               );
             })}
           </div>
+
+          {isCoarsePointer || selectedToken ? (
+            <KangurInfoCard accent='slate' className='w-full' padding='sm' tone='neutral'>
+              <p
+                className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'
+                role='status'
+                aria-live='polite'
+                aria-atomic='true'
+                data-testid='english-prepositions-sort-selection-hint'
+              >
+                {selectedToken
+                  ? translations('englishPrepositions.inRound.sort.touchSelected', {
+                      label: selectedToken.label,
+                    })
+                  : translations('englishPrepositions.inRound.sort.touchIdle')}
+              </p>
+            </KangurInfoCard>
+          ) : null}
 
           {feedback ? (
             <KangurInfoCard accent={feedbackAccent} tone='accent' padding='sm' className='text-sm'>
@@ -730,6 +777,7 @@ function DraggableToken({
   showStatus = false,
   isCorrect = true,
   isSelected = false,
+  isCoarsePointer = false,
   onClick,
 }: {
   token: PrepositionToken;
@@ -739,6 +787,7 @@ function DraggableToken({
   showStatus?: boolean;
   isCorrect?: boolean;
   isSelected?: boolean;
+  isCoarsePointer?: boolean;
   onClick?: () => void;
 }): React.JSX.Element {
   const statusClass = showStatus ? (isCorrect ? 'border-emerald-300' : 'border-rose-300') : '';
@@ -760,6 +809,7 @@ function DraggableToken({
           type='button'
           className={cn(
             'rounded-[16px] border px-3 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+            isCoarsePointer ? 'min-h-[3.75rem] px-4 py-3 touch-manipulation' : undefined,
             KANGUR_ACCENT_STYLES[accent].badge,
             snapshot.isDragging && 'scale-[1.02] shadow-lg',
             statusClass,

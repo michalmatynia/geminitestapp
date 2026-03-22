@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 
 import { Badge } from './badge';
@@ -16,7 +15,7 @@ interface TagProps {
   onClick?: () => void;
 }
 
-type TagRuntimeValue = {
+type TagBadgeProps = {
   label: string;
   color?: string | null;
   className?: string;
@@ -25,34 +24,33 @@ type TagRuntimeValue = {
   onClick?: () => void;
 };
 
-const { Context: TagRuntimeContext, useStrictContext: useTagRuntime } =
-  createStrictContext<TagRuntimeValue>({
-    hookName: 'useTagRuntime',
-    providerName: 'TagRuntimeProvider',
-    displayName: 'TagRuntimeContext',
-  });
-
-function TagBadge(): React.JSX.Element {
-  const runtime = useTagRuntime();
+function TagBadge({
+  label,
+  color,
+  className,
+  dot,
+  onRemove,
+  onClick,
+}: TagBadgeProps): React.JSX.Element {
   return (
     <Badge
       variant='outline'
-      onClick={runtime.onClick}
-      onRemove={runtime.onRemove}
-      removeLabel={`Remove ${runtime.label}`}
+      onClick={onClick}
+      onRemove={onRemove}
+      removeLabel={`Remove ${label}`}
       className={cn(
         'gap-1.5 px-2.5 py-0.5 font-medium transition-colors border-none',
-        runtime.color ? 'text-white' : 'bg-primary/10 text-primary',
-        runtime.className
+        color ? 'text-white' : 'bg-primary/10 text-primary',
+        className
       )}
-      style={runtime.color ? { backgroundColor: runtime.color } : undefined}
+      style={color ? { backgroundColor: color } : undefined}
       icon={
-        runtime.dot ? (
+        dot ? (
           <span className='size-1.5 rounded-full bg-current' aria-hidden='true' />
         ) : undefined
       }
     >
-      {runtime.label}
+      {label}
     </Badge>
   );
 }
@@ -69,21 +67,14 @@ export function Tag({
   onRemove,
   onClick,
 }: TagProps): React.JSX.Element {
-  const runtimeValue = useMemo<TagRuntimeValue>(
-    () => ({
-      label,
-      color,
-      className,
-      dot,
-      onRemove,
-      onClick,
-    }),
-    [label, color, className, dot, onRemove, onClick]
-  );
-
   return (
-    <TagRuntimeContext.Provider value={runtimeValue}>
-      <TagBadge />
-    </TagRuntimeContext.Provider>
+    <TagBadge
+      label={label}
+      color={color}
+      className={className}
+      dot={dot}
+      onRemove={onRemove}
+      onClick={onClick}
+    />
   );
 }

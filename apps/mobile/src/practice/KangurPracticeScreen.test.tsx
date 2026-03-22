@@ -256,6 +256,13 @@ describe('KangurPracticeScreen', () => {
 
     expect(screen.getByText('Trening mobilny')).toBeTruthy();
     expect(screen.getByText('Zegar')).toBeTruthy();
+    expect(screen.getByText('Plan sesji')).toBeTruthy();
+    expect(screen.getByText('1 pytanie')).toBeTruthy();
+    expect(screen.getByText('Czas i kalendarz')).toBeTruthy();
+    expect(screen.getByText('Lokalnie + API')).toBeTruthy();
+    expect(screen.getByText('Otwórz pasującą lekcję')).toBeTruthy();
+    expect(screen.getByText('Zobacz historię trybu')).toBeTruthy();
+    expect(screen.getByText('Otwórz plan dnia')).toBeTruthy();
     expect(screen.getByText('Pytanie 1 z 1')).toBeTruthy();
     expect(
       screen.getByText('Ktora godzina pasuje do pelnej godziny sniadania?'),
@@ -273,10 +280,33 @@ describe('KangurPracticeScreen', () => {
 
     expect(screen.getByText('Mobile practice')).toBeTruthy();
     expect(screen.getByText('Clock')).toBeTruthy();
+    expect(screen.getByText('Session plan')).toBeTruthy();
+    expect(screen.getByText('1 question')).toBeTruthy();
+    expect(screen.getByText('Time and calendar')).toBeTruthy();
+    expect(screen.getByText('Local + API')).toBeTruthy();
     expect(screen.getByText('Question 1 of 1')).toBeTruthy();
     expect(
       screen.getByText(
         'Choose one answer. The result will be saved locally after the whole run finishes.',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('shows a local-only save preview before the run when the learner session is signed out', () => {
+    useKangurMobileAuthMock.mockReturnValue({
+      isLoadingAuth: false,
+      session: {
+        status: 'anonymous',
+        user: null,
+      },
+    });
+
+    renderPracticeScreen('en');
+
+    expect(screen.getByText('Local only')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'After the run, the result will be saved locally. Sign in the learner session so the mobile app can also sync it with the Kangur API.',
       ),
     ).toBeTruthy();
   });

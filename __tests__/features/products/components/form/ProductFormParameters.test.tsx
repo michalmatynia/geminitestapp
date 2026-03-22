@@ -132,6 +132,7 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+  insetPanelVariants: () => '',
 }));
 
 describe('ProductFormParameters multilingual values', () => {

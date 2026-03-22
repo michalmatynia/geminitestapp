@@ -34,6 +34,7 @@ import {
   KANGUR_STACK_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurMiniGameBinaryFeedbackState } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -361,6 +362,7 @@ export default function CalendarInteractiveGame({
   section = 'mixed',
 }: CalendarInteractiveGameProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const isCoarsePointer = useKangurCoarsePointer();
   const YEAR = 2025;
   const TOTAL = 6;
 
@@ -832,13 +834,17 @@ export default function CalendarInteractiveGame({
                           {...dragProvided.draggableProps}
                           {...dragProvided.dragHandleProps}
                           className={cn(
-                            'bg-green-400 text-white font-extrabold px-6 py-3 rounded-2xl shadow-lg cursor-grab active:cursor-grabbing select-none text-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+                            'bg-green-400 text-white font-extrabold rounded-2xl shadow-lg cursor-grab active:cursor-grabbing select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white touch-manipulation',
+                            isCoarsePointer
+                              ? 'min-h-[4.5rem] px-7 py-4 text-xl'
+                              : 'px-6 py-3 text-lg',
                             snapshot.isDragging ? 'scale-[1.02] shadow-xl' : undefined
                           )}
                           aria-label={translations('calendarInteractive.inRound.monthAria', {
                             monthName: task.monthName,
                           })}
                           aria-disabled={feedback !== null}
+                          data-testid='calendar-season-month-chip'
                         >
                           📅 {task.monthName}
                         </div>
@@ -858,6 +864,24 @@ export default function CalendarInteractiveGame({
             <p className='text-xs [color:var(--kangur-page-muted-text)]'>
               {translations('calendarInteractive.inRound.chooseSeason')}
             </p>
+            {isCoarsePointer ? (
+              <KangurInfoCard
+                accent='slate'
+                className='w-full'
+                data-testid='calendar-interactive-touch-hint'
+                padding='sm'
+                tone='neutral'
+              >
+                <p
+                  className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'
+                  role='status'
+                  aria-live='polite'
+                  aria-atomic='true'
+                >
+                  {translations('calendarInteractive.inRound.touchChooseSeason')}
+                </p>
+              </KangurInfoCard>
+            ) : null}
 
             <div className='grid w-full grid-cols-1 gap-2 min-[420px]:grid-cols-2'>
               {SEASONS.map((seasonMeta, index) => {
@@ -894,7 +918,8 @@ export default function CalendarInteractiveGame({
                               isCorrectSeason ? 'emerald' : isWrongSelectedSeason ? 'rose' : accent
                             }
                             buttonClassName={cn(
-                              'flex min-h-[108px] flex-col items-center justify-center gap-1 text-center',
+                              'flex flex-col items-center justify-center gap-1 text-center touch-manipulation',
+                              isCoarsePointer ? 'min-h-[124px]' : 'min-h-[108px]',
                               isCorrectSeason
                                 ? KANGUR_ACCENT_STYLES.emerald.activeText
                                 : isWrongSelectedSeason

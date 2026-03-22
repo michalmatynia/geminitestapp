@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Droppable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import { motion } from 'framer-motion';
+import { cn } from '@/features/kangur/shared/utils';
 import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
 import {
   KangurButton,
@@ -12,6 +13,7 @@ import {
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type {
   BallItem,
   CompleteEquationRound,
@@ -35,6 +37,7 @@ export function CompleteEquation({
   round: CompleteEquationRound;
   onResult: (correct: boolean) => void;
 }): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const [state, setState] = useState<CompleteEquationState>(() => ({
     pool: createBalls(round.a + round.b),
     slotA: [],
@@ -134,6 +137,7 @@ export function CompleteEquation({
             checked={checked}
             correct={correct}
             selectedBallId={selectedBallId}
+            onActivateZone={() => moveSelectedBallTo('slotA')}
             onSelectBall={(id) =>
               setSelectedBallId((current) => (current === id ? null : id))
             }
@@ -148,6 +152,7 @@ export function CompleteEquation({
             checked={checked}
             correct={correct}
             selectedBallId={selectedBallId}
+            onActivateZone={() => moveSelectedBallTo('slotB')}
             onSelectBall={(id) =>
               setSelectedBallId((current) => (current === id ? null : id))
             }
@@ -162,10 +167,18 @@ export function CompleteEquation({
             <KangurInfoCard
               ref={provided.innerRef}
               accent='slate'
-              className={BALL_POOL_CLASSNAME}
+              className={cn(
+                BALL_POOL_CLASSNAME,
+                'touch-manipulation select-none transition',
+                selectedBall && 'border border-amber-200 bg-amber-50/50'
+              )}
               data-testid='adding-ball-pool'
               padding='sm'
               tone='neutral'
+              onClick={() => {
+                if (!isCoarsePointer || checked || !selectedBall) return;
+                moveSelectedBallTo('pool');
+              }}
               {...provided.droppableProps}
             >
               {state.pool.map((ball, i) => (
@@ -186,14 +199,19 @@ export function CompleteEquation({
         </Droppable>
         <div className='flex flex-wrap items-center justify-center gap-2 text-xs'>
           <span
+            data-testid='adding-ball-complete-touch-hint'
             className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500'
             role='status'
             aria-live='polite'
             aria-atomic='true'
           >
             {selectedBall
-              ? `Wybrana piłka: ${selectedBall.num}`
-              : 'Wybierz piłkę, aby przenieść ją klawiaturą.'}
+              ? isCoarsePointer
+                ? `Wybrana piłka: ${selectedBall.num}. Dotknij ${slotALabel}, ${slotBLabel} albo pulę.`
+                : `Wybrana piłka: ${selectedBall.num}`
+              : isCoarsePointer
+                ? `Dotknij piłkę, a potem ${slotALabel}, ${slotBLabel} albo pulę.`
+                : 'Wybierz piłkę, aby przenieść ją klawiaturą.'}
           </span>
           <KangurButton
             size='sm'

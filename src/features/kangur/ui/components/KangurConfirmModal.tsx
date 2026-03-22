@@ -2,6 +2,12 @@ import * as AlertDialog from '@radix-ui/react-alert-dialog';
 
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_TIGHT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { RadixOverlayContentShell } from '@/shared/ui/radix-overlay-content-shell';
+
+import {
+  KANGUR_DIALOG_CONTENT_BASE_CLASSNAME,
+  KANGUR_DIALOG_OVERLAY_BASE_CLASSNAME,
+} from './KangurDialogShell';
 
 type KangurConfirmModalProps = {
   cancelText?: string;
@@ -38,46 +44,56 @@ export function KangurConfirmModal({
 
   return (
     <AlertDialog.Root open={isOpen} onOpenChange={handleOpenChange}>
-      <AlertDialog.Portal>
-        <AlertDialog.Overlay className='fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0' />
-        <AlertDialog.Content className='fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-2rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] kangur-panel-gap rounded-lg border border-border bg-card p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:max-w-[425px]'>
-          <div className='flex flex-col space-y-2 text-center sm:text-left'>
-            <AlertDialog.Title className='text-lg font-semibold'>{title}</AlertDialog.Title>
-            <AlertDialog.Description className='text-sm text-muted-foreground sr-only'>
-              {message}
-            </AlertDialog.Description>
+      <RadixOverlayContentShell
+        Portal={AlertDialog.Portal}
+        Overlay={AlertDialog.Overlay}
+        Content={AlertDialog.Content}
+        overlayBaseClassName={KANGUR_DIALOG_OVERLAY_BASE_CLASSNAME}
+        contentBaseClassName={KANGUR_DIALOG_CONTENT_BASE_CLASSNAME}
+        overlayProps={{
+          className: 'bg-black/80 !backdrop-blur-0',
+        }}
+        contentProps={{
+          className:
+            'grid w-[calc(100%-2rem)] max-w-lg kangur-panel-gap rounded-lg border border-border bg-card p-6 shadow-lg duration-200 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:max-w-[425px]',
+        }}
+      >
+        <div className='flex flex-col space-y-2 text-center sm:text-left'>
+          <AlertDialog.Title className='text-lg font-semibold'>{title}</AlertDialog.Title>
+          <AlertDialog.Description className='text-sm text-muted-foreground sr-only'>
+            {message}
+          </AlertDialog.Description>
+        </div>
+        <div className='space-y-4 py-4'>
+          <div className='whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground'>
+            {message}
           </div>
-          <div className='space-y-4 py-4'>
-            <div className='whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground'>
-              {message}
-            </div>
-          </div>
-          <div className={`w-full ${KANGUR_TIGHT_ROW_CLASSNAME} sm:justify-end`}>
-            {showCancel ? (
-              <AlertDialog.Cancel asChild>
-                <KangurButton
-                  className='w-full sm:w-auto'
-                  onClick={handleCancel}
-                  type='button'
-                  variant='secondary'
-                >
-                  {cancelText}
-                </KangurButton>
-              </AlertDialog.Cancel>
-            ) : null}
-            <AlertDialog.Action asChild>
+        </div>
+        <div className={`w-full ${KANGUR_TIGHT_ROW_CLASSNAME} sm:justify-end`}>
+          {showCancel ? (
+            <AlertDialog.Cancel asChild>
               <KangurButton
                 className='w-full sm:w-auto'
-                onClick={handleConfirm}
+                onClick={handleCancel}
                 type='button'
-                variant='primary'
+                variant='secondary'
               >
-                {confirmText}
+                {cancelText}
               </KangurButton>
-            </AlertDialog.Action>
-          </div>
-        </AlertDialog.Content>
-      </AlertDialog.Portal>
+            </AlertDialog.Cancel>
+          ) : null}
+          <AlertDialog.Action asChild>
+            <KangurButton
+              className='w-full sm:w-auto'
+              onClick={handleConfirm}
+              type='button'
+              variant='primary'
+            >
+              {confirmText}
+            </KangurButton>
+          </AlertDialog.Action>
+        </div>
+      </RadixOverlayContentShell>
     </AlertDialog.Root>
   );
 }

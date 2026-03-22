@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   AgentCreatorAgentRunAuditsGET,
@@ -9,6 +8,10 @@ import {
   AgentCreatorAgentRunStreamGET,
   AgentCreatorAgentSnapshotGET,
 } from '@/features/ai/agentcreator/server';
+import {
+  chatbotAgentRunActionRouteParamsSchema,
+  type ChatbotAgentRunActionRouteParams,
+} from '@/shared/contracts/chatbot';
 import { type ApiHandlerContext } from '@/shared/contracts/ui';
 import { validationError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
@@ -16,18 +19,12 @@ import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-type RouteParams = {
-  runId: string;
-  action: string;
-};
+type RouteParams = ChatbotAgentRunActionRouteParams;
 
-const paramsSchema = z.object({
-  runId: z.string().trim().min(1, 'Run id is required'),
-  action: z.string().trim().min(1, 'Action is required'),
-});
+export { chatbotAgentRunActionRouteParamsSchema as paramsSchema };
 
 const parseRouteParams = (params: RouteParams): RouteParams => {
-  const parsed = paramsSchema.safeParse(params);
+  const parsed = chatbotAgentRunActionRouteParamsSchema.safeParse(params);
   if (!parsed.success) {
     throw validationError('Invalid route parameters', {
       issues: parsed.error.flatten(),

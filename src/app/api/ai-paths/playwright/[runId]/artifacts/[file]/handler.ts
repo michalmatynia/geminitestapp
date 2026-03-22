@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { assertPlaywrightRunAccess } from '@/app/api/ai-paths/playwright/access';
 import {
   enforceAiPathsActionRateLimit,
   requireAiPathsAccessOrInternal,
 } from '@/features/ai/ai-paths/server';
+import {
+  aiPathsPlaywrightArtifactRouteParamsSchema,
+} from '@/shared/contracts/ai-paths';
 import {
   readPlaywrightNodeArtifact,
   readPlaywrightNodeRun,
@@ -30,11 +32,6 @@ const toInlineDisposition = (fileName: string): string => {
   return `inline; filename="${safe}"`;
 };
 
-const paramsSchema = z.object({
-  runId: z.string().trim().min(1, 'Run id is required'),
-  file: z.string().trim().min(1, 'File is required'),
-});
-
 export async function GET_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
@@ -45,7 +42,7 @@ export async function GET_handler(
     await enforceAiPathsActionRateLimit(access, 'playwright-artifact');
   }
 
-  const parsedParams = paramsSchema.safeParse(params);
+  const parsedParams = aiPathsPlaywrightArtifactRouteParamsSchema.safeParse(params);
   if (!parsedParams.success) {
     throw validationError('Invalid route parameters', {
       issues: parsedParams.error.flatten(),

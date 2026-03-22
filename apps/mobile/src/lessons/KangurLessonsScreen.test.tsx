@@ -271,6 +271,11 @@ describe('KangurLessonsScreen', () => {
 
     expect(screen.getByText('Lekcje')).toBeTruthy();
     expect(screen.getByText('Nauka i powtórki')).toBeTruthy();
+    expect(screen.getByText('Śledzone 0')).toBeTruthy();
+    expect(screen.getByText('Opanowane 0')).toBeTruthy();
+    expect(screen.getByText('Do powtórki 0')).toBeTruthy();
+    expect(screen.getByText('Otwórz historię wyników')).toBeTruthy();
+    expect(screen.getByText('Otwórz plan dnia')).toBeTruthy();
     expect(screen.getByText('Ładowanie lekcji')).toBeTruthy();
     expect(
       screen.getByText('Przygotowujemy wybraną lekcję i sekcje do czytania.'),
@@ -478,6 +483,12 @@ describe('KangurLessonsScreen', () => {
     expect(screen.getByText('Sekcje lekcji')).toBeTruthy();
     expect(
       screen.getByText(
+        'Aktualnie otwarte: Nauka zegara. Możesz od razu czytać dalej albo przejść do pasującego treningu.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText('Otwarte ze skrótu')).toBeTruthy();
+    expect(
+      screen.getByText(
         'Zacznij od nowych tematów albo wróć do obszarów wymagających powtórki.',
       ),
     ).toBeTruthy();
@@ -492,7 +503,7 @@ describe('KangurLessonsScreen', () => {
     expect(screen.getByText('Ostatnie sesje mobilne')).toBeTruthy();
     expect(screen.getByText('Trenuj ponownie')).toBeTruthy();
     expect(screen.getByText('Historia trybu')).toBeTruthy();
-    expect(screen.getByText('Otwórz historię wyników')).toBeTruthy();
+    expect(screen.getAllByText('Otwórz historię wyników').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Opanowanie lekcji')).toBeTruthy();
     expect(screen.getByText('Odznaki')).toBeTruthy();
     expect(screen.getByText('Odblokowane 2/9')).toBeTruthy();
@@ -501,9 +512,9 @@ describe('KangurLessonsScreen', () => {
     expect(screen.getByText('📚 Bohater lekcji')).toBeTruthy();
     expect(screen.getByText('🕒 Mistrz zegara')).toBeTruthy();
     expect(screen.getByText('Otwórz profil i odznaki')).toBeTruthy();
-    expect(screen.getByText('Śledzone 2')).toBeTruthy();
-    expect(screen.getByText('Opanowane 1')).toBeTruthy();
-    expect(screen.getByText('Do powtórki 1')).toBeTruthy();
+    expect(screen.getAllByText('Śledzone 2').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText('Opanowane 1').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText('Do powtórki 1').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Najmocniejsza lekcja')).toBeTruthy();
     expect(screen.getByText('Próby 4 • ostatni wynik 94%')).toBeTruthy();
     expect(screen.getByText('Następne kroki')).toBeTruthy();
@@ -515,7 +526,7 @@ describe('KangurLessonsScreen', () => {
     expect(screen.getByText('Ostatni lokalny checkpoint')).toBeTruthy();
     expect(screen.getByText('Wynik 90% • najlepszy 100%')).toBeTruthy();
     expect(screen.getByText('Otwórz lekcję: Nauka zegara')).toBeTruthy();
-    expect(screen.getByText('Uruchom trening: Nauka zegara')).toBeTruthy();
+    expect(screen.getAllByText('Uruchom trening: Nauka zegara').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('TWÓJ WYNIK W POJEDYNKACH')).toBeTruthy();
     expect(screen.getByText('#2 Ada Learner')).toBeTruthy();
     expect(screen.getByText('Leo Mentor')).toBeTruthy();
@@ -556,6 +567,22 @@ describe('KangurLessonsScreen', () => {
     expect(screen.getByText('Schau zuerst, wie sich die Zeiger bewegen.')).toBeTruthy();
     expect(screen.getByText('Volle Stunden')).toBeTruthy();
     expect(screen.getByText('Nach der Lektion kannst du direkt in das kuerzere Uhrtraining wechseln.')).toBeTruthy();
+  });
+
+  it('renders a mobile lesson brief when the focused lesson has no portable body yet', () => {
+    useLessonsScreenBootStateMock.mockReturnValue(false);
+    getKangurPortableLessonBodyMock.mockReturnValue(null);
+
+    renderLessonsScreen();
+
+    expect(screen.getByText('Mobilny skrót lekcji')).toBeTruthy();
+    expect(screen.getByText('Próby 4')).toBeTruthy();
+    expect(screen.getByText('Najlepszy wynik 100%')).toBeTruthy();
+    expect(screen.getByText('Ostatni wynik 90%')).toBeTruthy();
+    expect(screen.getAllByText(/Ostatni zapis/).length).toBeGreaterThanOrEqual(2);
+    expect(
+      screen.queryByText(/Właściwa treść tej lekcji nie jest jeszcze przeniesiona/),
+    ).toBeNull();
   });
 
   it('saves a local lesson checkpoint from the current section coverage', () => {

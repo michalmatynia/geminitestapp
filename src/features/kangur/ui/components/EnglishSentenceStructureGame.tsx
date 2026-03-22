@@ -35,6 +35,7 @@ import {
   KANGUR_WRAP_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   addXp,
   createLessonPracticeReward,
@@ -219,6 +220,7 @@ export default function EnglishSentenceStructureGame({
   onFinish,
 }: KangurMiniGameFinishProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const isCoarsePointer = useKangurCoarsePointer();
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'play');
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -238,6 +240,16 @@ export default function EnglishSentenceStructureGame({
   const timerRef = useRef<SafeTimerId | null>(null);
 
   const round = ROUNDS[roundIndex] ?? ROUNDS[0]!;
+  const selectedOrderToken =
+    round.kind === 'order' && selectedOrderIndex !== null ? orderTokens[selectedOrderIndex] ?? null : null;
+  const orderTouchHint =
+    round.kind === 'order'
+      ? selectedOrderToken
+        ? translations('englishSentenceStructure.inRound.touch.selected', {
+            token: selectedOrderToken,
+          })
+        : translations('englishSentenceStructure.inRound.touch.idle')
+      : null;
 
   useEffect(() => {
     setFeedback(null);
@@ -291,6 +303,18 @@ export default function EnglishSentenceStructureGame({
     if (nextIndex >= 0) {
       setSelectedOrderIndex(nextIndex);
     }
+  };
+
+  const moveSelectedOrderTokenToIndex = (targetIndex: number): void => {
+    if (round.kind !== 'order' || isChecking || selectedOrderIndex === null) return;
+    let nextIndex = selectedOrderIndex;
+    setOrderTokens((prev) => {
+      const safeIndex = Math.min(Math.max(targetIndex, 0), prev.length - 1);
+      if (safeIndex === selectedOrderIndex) return prev;
+      nextIndex = safeIndex;
+      return reorderWithinList(prev, selectedOrderIndex, safeIndex);
+    });
+    setSelectedOrderIndex(nextIndex);
   };
 
   const handleCheck = (options?: { auto?: boolean }): void => {
@@ -483,7 +507,10 @@ export default function EnglishSentenceStructureGame({
                 type='button'
                 onClick={() => setSelection(option)}
                 className={cn(
-                  'rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition',
+                  'rounded-2xl border text-left text-sm font-semibold transition touch-manipulation select-none',
+                  isCoarsePointer
+                    ? 'min-h-[4rem] px-4 py-3.5 active:scale-[0.99] active:shadow-sm'
+                    : 'px-4 py-3',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
                   selection === option
                     ? KANGUR_ACCENT_STYLES[round.accent].activeCard
@@ -517,7 +544,19 @@ export default function EnglishSentenceStructureGame({
 
         {round.kind === 'order' ? (
           <div className='space-y-3'>
-            <div className='rounded-2xl border border-slate-200/70 bg-white/70 px-4 py-3 text-sm font-semibold text-slate-800'>
+            {isCoarsePointer ? (
+              <div
+                aria-live='polite'
+                className='rounded-2xl border border-sky-200/80 bg-sky-50/80 px-4 py-3 text-sm font-semibold text-sky-950 shadow-sm'
+                data-testid='english-structure-touch-hint'
+              >
+                {orderTouchHint}
+              </div>
+            ) : null}
+            <div
+              className='rounded-2xl border border-slate-200/70 bg-white/70 px-4 py-3 text-sm font-semibold text-slate-800'
+              data-testid='english-structure-order-preview'
+            >
               {orderTokens.join(' ')}
             </div>
             <KangurDragDropContext onDragEnd={handleOrderDragEnd}>
@@ -546,7 +585,10 @@ export default function EnglishSentenceStructureGame({
                               type='button'
                               className={cn(
                                 KANGUR_CENTER_ROW_SPACED_CLASSNAME,
-                                'rounded-2xl border px-4 py-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+                                'rounded-2xl border text-sm font-semibold transition touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+                                isCoarsePointer
+                                  ? 'min-h-[4rem] px-4 py-3.5 active:scale-[0.99] active:shadow-sm'
+                                  : 'px-4 py-3',
                                 snapshot.isDragging
                                   ? 'border-violet-300 bg-violet-50 shadow-lg'
                                   : 'border-slate-200 bg-white/70 hover:-translate-y-[1px]',
@@ -563,6 +605,14 @@ export default function EnglishSentenceStructureGame({
                               title={token}
                               onClick={() => {
                                 if (isChecking) return;
+                                if (
+                                  isCoarsePointer &&
+                                  selectedOrderIndex !== null &&
+                                  selectedOrderIndex !== index
+                                ) {
+                                  moveSelectedOrderTokenToIndex(index);
+                                  return;
+                                }
                                 setSelectedOrderIndex((current) =>
                                   current === index ? null : index
                                 );

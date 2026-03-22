@@ -5,18 +5,30 @@ import { createPortal } from 'react-dom';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { cn } from '@/features/kangur/shared/utils';
 import { KangurInfoCard } from '@/features/kangur/ui/design/primitives';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { DraggableBallProps, BallProps, SlotZoneProps } from './types';
 import { getRectDropZoneSurface } from './utils';
 
 const dragPortal = typeof document === 'undefined' ? null : document.body;
 
-export function Ball({ ball, small = false, isSelected = false }: BallProps & { isSelected?: boolean }): React.JSX.Element {
-  const sizeClass = small ? 'w-9 h-9 text-sm' : 'w-14 h-14 text-lg';
+export function Ball({
+  ball,
+  small = false,
+  isSelected = false,
+  isCoarsePointer = false,
+}: BallProps & { isSelected?: boolean }): React.JSX.Element {
+  const sizeClass = small
+    ? isCoarsePointer
+      ? 'h-12 w-12 text-base'
+      : 'h-9 w-9 text-sm'
+    : isCoarsePointer
+      ? 'h-16 w-16 text-xl'
+      : 'h-14 w-14 text-lg';
 
   return (
     <div
       className={cn(
-        `${sizeClass} rounded-full ${ball.color} flex items-center justify-center shadow-md select-none`,
+        `${sizeClass} rounded-full ${ball.color} flex items-center justify-center shadow-md select-none transition`,
         isSelected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white'
       )}
     >
@@ -33,6 +45,7 @@ export function DraggableBall({
   isSelected = false,
   onSelect,
 }: DraggableBallProps): React.ReactElement | React.ReactPortal {
+  const isCoarsePointer = useKangurCoarsePointer();
   const draggableBall = ball;
   const dragDisabled = isDragDisabled;
   const selected = isSelected;
@@ -53,7 +66,8 @@ export function DraggableBall({
             {...draggableProvided.draggableProps}
             {...draggableProvided.dragHandleProps}
             className={cn(
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+              'touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+              isCoarsePointer && 'active:scale-[0.98]',
               selected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white',
               dragDisabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'
             )}
@@ -62,11 +76,17 @@ export function DraggableBall({
             disabled={dragDisabled}
             onClick={(event) => {
               event.preventDefault();
+              event.stopPropagation();
               if (dragDisabled || !onSelect) return;
               onSelect();
             }}
           >
-            <Ball ball={draggableBall} small={compact} isSelected={selected} />
+            <Ball
+              ball={draggableBall}
+              small={compact}
+              isSelected={selected}
+              isCoarsePointer={isCoarsePointer}
+            />
           </button>
         );
 
@@ -88,7 +108,9 @@ export function SlotZone({
   correct,
   selectedBallId,
   onSelectBall,
+  onActivateZone,
 }: SlotZoneProps): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const slotZoneTestId = `adding-ball-${id}`;
   const dragDisabled = checked;
   const selectedId = selectedBallId;
@@ -113,11 +135,17 @@ export function SlotZone({
               accent={surface.accent}
               className={cn(
                 surface.className,
-                'min-h-[52px] min-w-[60px] w-full max-w-[160px]'
+                'min-h-[52px] min-w-[60px] w-full max-w-[160px] touch-manipulation select-none transition',
+                isCoarsePointer && 'min-h-[88px] min-w-[104px]',
+                selectedId && 'bg-amber-50/60'
               )}
               data-testid={slotZoneTestId}
               padding='sm'
               tone={surface.tone}
+              onClick={() => {
+                if (!isCoarsePointer || checked || !selectedId || !onActivateZone) return;
+                onActivateZone();
+              }}
               {...provided.droppableProps}
             >
               {items.map((ball, i) => (

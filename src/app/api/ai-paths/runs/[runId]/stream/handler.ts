@@ -1,15 +1,16 @@
 import { NextRequest } from 'next/server';
-import { z } from 'zod';
 
 import { assertAiPathRunAccess, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
-import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import {
+  aiPathRunStreamQuerySchema,
+  type AiPathRunRecord,
+} from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 import {
   resolvePathRunRepository,
 } from '@/shared/lib/ai-paths/services/path-run-repository';
-import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { getRedisSubscriber, isSubscriberConnected } from '@/shared/lib/redis-pubsub';
 import { safeClearInterval, safeSetInterval } from '@/shared/lib/timers';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -35,9 +36,7 @@ const POLL_INTERVAL_MAX_MS = 2_000;
 const POLL_BACKOFF_MULTIPLIER = 1.5;
 const STREAM_KEEPALIVE_INTERVAL_MS = 15_000;
 
-export const querySchema = z.object({
-  since: optionalTrimmedQueryString(),
-});
+export const querySchema = aiPathRunStreamQuerySchema;
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -337,7 +336,7 @@ export async function getAiPathRunStreamHandler(
   assertAiPathRunAccess(access, initialRun);
 
   const encoder = new TextEncoder();
-  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const query = querySchema.parse((_ctx.query ?? {}) as Record<string, unknown>);
   const initialSince = parseSinceParam(query.since ?? null);
 
   let cancelled = false;

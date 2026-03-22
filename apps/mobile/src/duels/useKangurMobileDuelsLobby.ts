@@ -42,7 +42,7 @@ type KangurMobileDuelCreateOverrides = {
   seriesBestOf?: KangurMobileDuelSeriesBestOf;
 };
 
-type UseKangurMobileDuelsLobbyResult = {
+export type UseKangurMobileDuelsLobbyResult = {
   actionError: string | null;
   createPrivateChallenge: (
     opponentLearnerId: string,

@@ -1540,6 +1540,9 @@
       }
     },
     "subtraction": {
+      "inRound": {
+        "touchHint": "Tap an answer, then tap Check."
+      },
       "summary": {
         "perfect": "Perfect! Subtraction master!",
         "good": "Great job!",
@@ -1547,6 +1550,9 @@
       }
     },
     "multiplication": {
+      "inRound": {
+        "touchHint": "Tap an answer, then tap Check."
+      },
       "summary": {
         "perfect": "Perfect! Times-table master!",
         "good": "Great job!",
@@ -1629,6 +1635,7 @@
         "done": "Done",
         "confirmMonth": "Click when you think you are on the correct month.",
         "chooseSeason": "Drag or choose the correct season below.",
+        "touchChooseSeason": "Tap a season card or drag the month card.",
         "monthAria": "Month {monthName}"
       },
       "months": {
@@ -1729,6 +1736,8 @@
         "relationIconsLabel": "Relation icons",
         "relationHintPrefix": "Hint: {hint}",
         "relationHintIdle": "Hover or tap an icon to see a hint.",
+        "touchIdle": "Tap a relation, then tap a pair to assign it.",
+        "touchSelected": "Selected relation: {label}. Tap a pair to assign it.",
         "relationsHeading": "Relations",
         "poolCount": "{count} in the pool",
         "poolAriaLabel": "Pool of relations to drag",
@@ -1856,12 +1865,18 @@
       "feedback": {
         "correct": "Nice work!",
         "wrong": "That is not the odd one out."
+      },
+      "touch": {
+        "idle": "Tap an item, then tap a matching group or the pool.",
+        "selected": "Selected item: {label}. Tap a matching group or the pool."
       }
     },
     "englishPronouns": {
       "inRound": {
         "roundLabel": "Round {current}/{total}",
         "modeLabel": "Click",
+        "modeLabelTouch": "Tap",
+        "touchHint": "Tap a pronoun, then tap Check.",
         "check": "Check ✓"
       },
       "feedback": {
@@ -2079,9 +2094,12 @@
         },
         "order": {
           "modeLabel": "Word order",
+          "modeLabelTouch": "Tap or drag",
           "buildLabel": "Build: {sentence}",
           "dragInstruction": "Drag the words to arrange the sentence",
           "sentenceAria": "Sentence builder",
+          "touchIdle": "Tap a phrase, then tap another phrase to move it there.",
+          "touchSelected": "Selected phrase: {token}. Tap another phrase to move it there.",
           "shuffle": "Shuffle again",
           "feedback": {
             "perfect": "Perfect! Sentence complete.",
@@ -2122,11 +2140,14 @@
         },
         "sort": {
           "modeLabel": "Drag and drop",
+          "modeLabelTouch": "Tap or drag",
           "poolLabel": "Pool of phrases",
           "poolAria": "Pool of phrases to sort",
           "poolEmpty": "Pool empty",
           "binAria": "{label} bin",
           "missingPhrases": "Missing phrases",
+          "touchIdle": "Tap a phrase, then tap a preposition basket or the pool.",
+          "touchSelected": "Selected phrase: {label}. Tap a preposition basket or the pool.",
           "clearRound": "Clear round",
           "feedback": {
             "perfect": "Perfect! Everything is in the right place.",
@@ -2185,6 +2206,10 @@
         "fillPlaceholder": "Type the answer",
         "fillAria": "Fill in the missing word",
         "fillHelp": "Type the missing word, then click \"Check\".",
+        "touch": {
+          "idle": "Tap a word, then tap another word to move it there.",
+          "selected": "Selected word: {token}. Tap another word to move it there."
+        },
         "check": "Check",
         "checking": "Checking...",
         "feedback": {
@@ -2457,6 +2482,10 @@
         "missionTitle": "Geo mission: point, segment, side, angle",
         "roundLabel": "Round {current}/{total}",
         "instruction": "Drag a label onto the marked spot or click a label and then the board.",
+        "touch": {
+          "idle": "Tap a label, then tap the marked spot on the board.",
+          "selected": "Selected label: {label}. Tap the marked spot on the board."
+        },
         "boardLabel": "Board",
         "boardFilledAria": "Board: label {label}",
         "boardEmptyAria": "Board: drop a label",
@@ -2663,6 +2692,10 @@
       "feedback": {
         "correct": "Nice work! Left:"
       },
+      "touch": {
+        "idle": "Tap a glowing point, then tap the basket or the cloud. You can still drag too.",
+        "selected": "Selected point: {emoji}. Tap the basket or the cloud."
+      },
       "summary": {
         "perfect": "Perfect! Subtraction is at your fingertips.",
         "good": "Great job!",
@@ -2681,6 +2714,7 @@
         "collectedLabel": "Collected",
         "targetLabel": "Target",
         "celebrationDetail": "{a} groups of {b} = {total} altogether",
+        "touchHint": "Tap the next group to collect it. Total groups: {total}.",
         "progress": "Collected: {collected}/{total} groups — tap the next one!"
       }
     },
@@ -2728,6 +2762,10 @@
         "targetLabel": "Target: {target}",
         "sumLabel": "Sum: {sum}",
         "instruction": "Drag the numbers to both sides so they match the targets.",
+        "touch": {
+          "idle": "Tap a tile, then tap the left side, right side, or tray.",
+          "selected": "Selected number: {value}. Tap the left side, right side, or tray."
+        },
         "aria": {
           "leftSide": "Left side of the scale",
           "rightSide": "Right side of the scale",

@@ -2,7 +2,6 @@
 
 import React from 'react';
 
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button } from '@/shared/ui/button';
 import { FormField } from '@/shared/ui/form-section';
 import { Textarea } from '@/shared/ui/textarea';
@@ -29,56 +28,6 @@ export interface JSONImportModalProps {
   children?: React.ReactNode;
   value?: string;
   onChange?: (value: string) => void;
-}
-
-type JSONImportModalRuntimeValue = {
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
-  subtitle?: string;
-  footer: React.ReactNode;
-  label: string;
-  value: string;
-  onValueChange: (value: string) => void;
-  placeholder: string;
-  isLoading: boolean;
-  children?: React.ReactNode;
-};
-
-const { Context: JSONImportModalRuntimeContext, useStrictContext: useJSONImportModalRuntime } =
-  createStrictContext<JSONImportModalRuntimeValue>({
-    hookName: 'useJSONImportModalRuntime',
-    providerName: 'JSONImportModalRuntimeProvider',
-    displayName: 'JSONImportModalRuntimeContext',
-  });
-
-function JSONImportModalShell(): React.JSX.Element {
-  const runtime = useJSONImportModalRuntime();
-
-  return (
-    <DetailModal
-      isOpen={runtime.isOpen}
-      onClose={runtime.onClose}
-      title={runtime.title}
-      subtitle={runtime.subtitle}
-      size='lg'
-      footer={runtime.footer}
-    >
-      <div className='space-y-4'>
-        <FormField label={runtime.label}>
-          <Textarea
-            value={runtime.value}
-            onChange={(event) => runtime.onValueChange(event.target.value)}
-            placeholder={runtime.placeholder}
-            className='min-h-[320px] font-mono text-xs'
-            spellCheck={false}
-            disabled={runtime.isLoading}
-           aria-label={runtime.placeholder} title={runtime.placeholder}/>
-        </FormField>
-        {runtime.children}
-      </div>
-    </DetailModal>
-  );
 }
 
 /**
@@ -172,38 +121,31 @@ export function JSONImportModal(props: JSONImportModalProps): React.JSX.Element 
       </div>
     </div>
   );
-  const runtimeValue = React.useMemo<JSONImportModalRuntimeValue>(
-    () => ({
-      isOpen,
-      onClose,
-      title,
-      subtitle,
-      footer,
-      label,
-      value,
-      onValueChange: handleChange,
-      placeholder,
-      isLoading,
-      children,
-    }),
-    [
-      isOpen,
-      onClose,
-      title,
-      subtitle,
-      footer,
-      label,
-      value,
-      handleChange,
-      placeholder,
-      isLoading,
-      children,
-    ]
-  );
 
   return (
-    <JSONImportModalRuntimeContext.Provider value={runtimeValue}>
-      <JSONImportModalShell />
-    </JSONImportModalRuntimeContext.Provider>
+    <DetailModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      subtitle={subtitle}
+      size='lg'
+      footer={footer}
+    >
+      <div className='space-y-4'>
+        <FormField label={label}>
+          <Textarea
+            value={value}
+            onChange={(event) => handleChange(event.target.value)}
+            placeholder={placeholder}
+            className='min-h-[320px] font-mono text-xs'
+            spellCheck={false}
+            disabled={isLoading}
+            aria-label={placeholder}
+            title={placeholder}
+          />
+        </FormField>
+        {children}
+      </div>
+    </DetailModal>
   );
 }

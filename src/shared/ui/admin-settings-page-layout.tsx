@@ -1,6 +1,8 @@
-import { AdminSettingsBreadcrumbs } from './admin-settings-breadcrumbs';
-import { createAdminPageLayout } from './create-admin-page-layout';
+import { ADMIN_SETTINGS_SECTION } from './admin-section-configs';
+import { createAdminSectionPageLayout } from './create-admin-page-layout';
 
-export const AdminSettingsPageLayout = createAdminPageLayout({
-  Breadcrumbs: AdminSettingsBreadcrumbs,
+export const AdminSettingsPageLayout = createAdminSectionPageLayout({
+  section: ADMIN_SETTINGS_SECTION,
+  baseBreadcrumbClassName: 'mb-2',
+  displayName: 'AdminSettingsPageLayout',
 });

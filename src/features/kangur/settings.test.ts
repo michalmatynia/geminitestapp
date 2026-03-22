@@ -5,7 +5,9 @@ import {
   appendMissingLogicalThinkingKangurLessons,
   createDefaultKangurLessons,
   DEFAULT_KANGUR_LAUNCH_ROUTE,
+  KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
   KANGUR_PHONE_SIMULATION_DEFAULT_ENABLED,
+  KANGUR_PHONE_SIMULATION_SETTINGS_KEY,
   KANGUR_LESSON_LIBRARY,
   KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS,
   parseKangurLaunchRouteSettings,
@@ -17,6 +19,13 @@ import {
 import { KANGUR_TTS_DEFAULT_VOICE } from '@/features/kangur/tts/contracts';
 
 describe('kangur lesson settings', () => {
+  it('exports the persisted launch-route and phone-simulation setting keys', () => {
+    expect(KANGUR_LAUNCH_ROUTE_SETTINGS_KEY).toBe('kangur_launch_route_settings_v1');
+    expect(KANGUR_PHONE_SIMULATION_SETTINGS_KEY).toBe(
+      'kangur_phone_simulation_settings_v1'
+    );
+  });
+
   it('describes the clock lesson as segmented hour and minute reading', () => {
     expect(KANGUR_LESSON_LIBRARY.clock.description).toBe(
       'Godziny, minuty i pełny czas na zegarze analogowym'

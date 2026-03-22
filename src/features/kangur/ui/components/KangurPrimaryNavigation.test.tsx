@@ -17,6 +17,10 @@ const { routeTransitionStateMock } = vi.hoisted(() => ({
   routeTransitionStateMock: vi.fn(),
 }));
 
+const { frontendPublicOwnerMock } = vi.hoisted(() => ({
+  frontendPublicOwnerMock: vi.fn(),
+}));
+
 const { locationAssignSpy } = vi.hoisted(() => ({
   locationAssignSpy: vi.fn(),
 }));
@@ -305,6 +309,10 @@ vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
   useOptionalKangurRouteTransitionState: () => routeTransitionStateMock(),
 }));
 
+vi.mock('@/features/kangur/ui/FrontendPublicOwnerContext', () => ({
+  useOptionalFrontendPublicOwner: () => frontendPublicOwnerMock(),
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: () => optionalAuthMock(),
 }));
@@ -413,6 +421,7 @@ describe('KangurPrimaryNavigation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     routeTransitionStateMock.mockReturnValue(null);
+    frontendPublicOwnerMock.mockReturnValue(null);
     localeMock.mockReturnValue('pl');
     setViewport({ width: 1024, matches: false });
     pathnameMock.mockReturnValue('/kangur');
@@ -844,6 +853,31 @@ describe('KangurPrimaryNavigation', () => {
     expect(startRouteTransitionMock).not.toHaveBeenCalled();
     expect(replaceMock).not.toHaveBeenCalled();
     expect(document.cookie).toContain('NEXT_LOCALE=en');
+  });
+
+  it('canonicalizes /kangur alias routes when Kangur owns the public frontend', async () => {
+    frontendPublicOwnerMock.mockReturnValue({ publicOwner: 'kangur' });
+    localeMock.mockReturnValue('pl');
+    pathnameMock.mockReturnValue('/kangur/lessons');
+    searchParamsMock.mockReturnValue(new URLSearchParams('mode=solo'));
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    prefetchMock.mockClear();
+    await openLanguageMenu();
+    fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-en'));
+
+    expect(prefetchMock).toHaveBeenCalledWith('/en/lessons?mode=solo');
+    expect(locationAssignSpy).toHaveBeenCalledWith('/en/lessons?mode=solo');
+    expect(startRouteTransitionMock).not.toHaveBeenCalled();
+    expect(replaceMock).not.toHaveBeenCalled();
   });
 
   it('drops the locale prefix when switching back to the default locale', async () => {

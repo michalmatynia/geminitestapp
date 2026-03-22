@@ -87,6 +87,15 @@ describe('KangurParentDashboardScreen', () => {
     useKangurMobileParentDashboardMock.mockReturnValue({
       activeLearner: null,
       assignmentItems: [],
+      assignmentMonitoring: {
+        completedCount: 0,
+        highPriorityCount: 0,
+        inProgressCount: 0,
+        lessonCount: 0,
+        notStartedCount: 0,
+        practiceCount: 0,
+        totalCount: 0,
+      },
       assignmentsError: null,
       canAccessDashboard: false,
       isAuthenticated: false,
@@ -146,6 +155,15 @@ describe('KangurParentDashboardScreen', () => {
           href: '/practice',
         },
       ],
+      assignmentMonitoring: {
+        completedCount: 1,
+        highPriorityCount: 1,
+        inProgressCount: 1,
+        lessonCount: 1,
+        notStartedCount: 0,
+        practiceCount: 1,
+        totalCount: 2,
+      },
       assignmentsError: null,
       canAccessDashboard: true,
       isAuthenticated: true,
@@ -206,10 +224,27 @@ describe('KangurParentDashboardScreen', () => {
     renderParentDashboardScreen();
 
     expect(screen.getByText('Przegląd postępu: Maja Uczennica')).toBeTruthy();
+    expect(screen.getByText('Zakładki rodzica')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Wyniki'));
+
     expect(screen.getByText('2/3 poprawnych odpowiedzi')).toBeTruthy();
-    expect(screen.getByText('Trening mnożenia')).toBeTruthy();
     expect(screen.getByText('Otwórz pełną historię')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Monitorowanie'));
+
+    expect(screen.getByText('Przegląd realizacji')).toBeTruthy();
+    expect(screen.getByText('Aktywne')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Zadania'));
+
+    expect(screen.getByText('Trening mnożenia')).toBeTruthy();
     expect(screen.getByText('Otwórz trening')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('AI Tutor'));
+
+    expect(screen.getByText('Kontekst AI Tutora ucznia')).toBeTruthy();
+    expect(screen.getByText('AI Tutor Card')).toBeTruthy();
 
     fireEvent.click(screen.getByText('Olek Uczeń'));
 

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '@/app/(frontend)/home-helpers';
-import { getKangurCanonicalPublicHref } from '@/features/kangur/config/routing';
+import { getKangurConfiguredLaunchHref } from '@/features/kangur/server/launch-route';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
 type KangurAliasPageProps = {
@@ -19,7 +19,7 @@ export default async function Page({
     if (getFrontPagePublicOwner(frontPageSetting) === 'kangur') {
       const { slug = [] } = await params;
       const resolvedSearchParams = searchParams ? await searchParams : undefined;
-      redirect(getKangurCanonicalPublicHref(slug, resolvedSearchParams));
+      redirect(await getKangurConfiguredLaunchHref(slug, resolvedSearchParams));
     }
   }
 

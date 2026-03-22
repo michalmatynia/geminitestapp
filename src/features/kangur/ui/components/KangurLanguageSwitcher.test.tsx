@@ -31,6 +31,10 @@ const { routeTransitionStateMock } = vi.hoisted(() => ({
   routeTransitionStateMock: vi.fn(),
 }));
 
+const { frontendPublicOwnerMock } = vi.hoisted(() => ({
+  frontendPublicOwnerMock: vi.fn(),
+}));
+
 const { prefetchKangurPageContentStoreMock } = vi.hoisted(() => ({
   prefetchKangurPageContentStoreMock: vi.fn(),
 }));
@@ -131,6 +135,10 @@ vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
   useOptionalKangurRouteTransitionState: () => routeTransitionStateMock(),
 }));
 
+vi.mock('@/features/kangur/ui/FrontendPublicOwnerContext', () => ({
+  useOptionalFrontendPublicOwner: () => frontendPublicOwnerMock(),
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => false,
 }));
@@ -214,6 +222,7 @@ describe('KangurLanguageSwitcher', () => {
     pathnameMock.mockReturnValue('/kangur/lessons');
     searchParamsMock.mockReturnValue(new URLSearchParams());
     routeTransitionStateMock.mockReturnValue(null);
+    frontendPublicOwnerMock.mockReturnValue(null);
     prefetchMock.mockReset();
     replaceMock.mockReset();
     prefetchKangurPageContentStoreMock.mockReset();
@@ -633,6 +642,46 @@ describe('KangurLanguageSwitcher', () => {
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-de'));
 
     expect(locationAssignSpy).toHaveBeenCalledWith('/de/kangur/duels');
+    expect(replaceMock).not.toHaveBeenCalled();
+  });
+
+  it('canonicalizes /kangur alias lesson routes when Kangur owns the public frontend', async () => {
+    frontendPublicOwnerMock.mockReturnValue({ publicOwner: 'kangur' });
+    pathnameMock.mockReturnValue('/kangur/lessons');
+
+    render(<KangurLanguageSwitcher basePath='/kangur' currentPage='Lessons' />);
+
+    openLanguageMenu();
+    fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-en'));
+
+    expect(locationAssignSpy).toHaveBeenCalledWith('/en/lessons');
+    expect(replaceMock).not.toHaveBeenCalled();
+  });
+
+  it('canonicalizes localized /kangur alias home routes when Kangur owns the public frontend', async () => {
+    frontendPublicOwnerMock.mockReturnValue({ publicOwner: 'kangur' });
+    localeMock.mockReturnValue('en');
+    pathnameMock.mockReturnValue('/en/kangur');
+
+    render(<KangurLanguageSwitcher basePath='/en/kangur' currentPage='Game' />);
+
+    openLanguageMenu();
+    fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-de'));
+
+    expect(locationAssignSpy).toHaveBeenCalledWith('/de');
+    expect(replaceMock).not.toHaveBeenCalled();
+  });
+
+  it('uses the canonical public fallback when pathname is unavailable in the Kangur-owned frontend shell', async () => {
+    frontendPublicOwnerMock.mockReturnValue({ publicOwner: 'kangur' });
+    pathnameMock.mockReturnValue(null);
+
+    render(<KangurLanguageSwitcher basePath='/kangur' currentPage='Lessons' />);
+
+    openLanguageMenu();
+    fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-en'));
+
+    expect(locationAssignSpy).toHaveBeenCalledWith('/en/lessons');
     expect(replaceMock).not.toHaveBeenCalled();
   });
 

@@ -333,24 +333,24 @@ export function KangurParentDashboardScreen(): React.JSX.Element {
         })
       : activeTab === 'results'
         ? copy({
-            de: 'Przejrzyj najnowsze Ergebnisse und öffne bei Bedarf den vollständigen Verlauf.',
+            de: 'Prüfe die neuesten Ergebnisse und öffne bei Bedarf den vollständigen Verlauf.',
             en: 'Review the latest results and open the full history when needed.',
             pl: 'Przejrzyj najnowsze wyniki i otwórz pełną historię, gdy będzie potrzebna.',
           })
         : activeTab === 'assignments'
           ? copy({
-              de: 'Otwórz bieżące priorytety i przejdź od razu do lekcji albo treningu.',
+              de: 'Öffne aktuelle Prioritäten und springe direkt in Lektionen oder Training.',
               en: 'Open current priorities and jump straight into lessons or practice.',
               pl: 'Otwórz bieżące priorytety i przejdź od razu do lekcji albo treningu.',
             })
           : activeTab === 'monitoring'
             ? copy({
-                de: 'Vergleiche den Status aktueller Aufgaben und überprüfe, gdzie Lernende Unterstützung brauchen.',
+                de: 'Vergleiche den Status aktueller Aufgaben und prüfe, wo Lernende Unterstützung brauchen.',
                 en: 'Compare current assignment status and see where learners need support.',
                 pl: 'Porównaj status bieżących zadań i sprawdź, gdzie uczeń potrzebuje wsparcia.',
               })
             : copy({
-                de: 'Öffne den aktuellen Tutor-Kontext des ausgewählten Lernenden.',
+                de: 'Öffne den aktuellen AI-Tutor-Kontext des ausgewählten Lernenden.',
                 en: 'Open the current tutor context for the selected learner.',
                 pl: 'Otwórz bieżący kontekst AI Tutora dla wybranego ucznia.',
               });
@@ -620,6 +620,80 @@ export function KangurParentDashboardScreen(): React.JSX.Element {
               <Card>
                 <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                   {copy({
+                    de: 'Eltern-Tabs',
+                    en: 'Parent tabs',
+                    pl: 'Zakładki rodzica',
+                  })}
+                </Text>
+                <Text style={{ color: '#0f172a', fontSize: 22, fontWeight: '800' }}>
+                  {copy({
+                    de: 'Ansicht auswählen',
+                    en: 'Choose a view',
+                    pl: 'Wybierz widok',
+                  })}
+                </Text>
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                  {activeTabDescription}
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  <TabButton
+                    active={activeTab === 'progress'}
+                    label={copy({
+                      de: 'Fortschritt',
+                      en: 'Progress',
+                      pl: 'Postęp',
+                    })}
+                    onPress={() => {
+                      setActiveTab('progress');
+                    }}
+                  />
+                  <TabButton
+                    active={activeTab === 'results'}
+                    label={copy({
+                      de: 'Ergebnisse',
+                      en: 'Results',
+                      pl: 'Wyniki',
+                    })}
+                    onPress={() => {
+                      setActiveTab('results');
+                    }}
+                  />
+                  <TabButton
+                    active={activeTab === 'assignments'}
+                    label={copy({
+                      de: 'Aufgaben',
+                      en: 'Assignments',
+                      pl: 'Zadania',
+                    })}
+                    onPress={() => {
+                      setActiveTab('assignments');
+                    }}
+                  />
+                  <TabButton
+                    active={activeTab === 'monitoring'}
+                    label={copy({
+                      de: 'Überwachung',
+                      en: 'Monitoring',
+                      pl: 'Monitorowanie',
+                    })}
+                    onPress={() => {
+                      setActiveTab('monitoring');
+                    }}
+                  />
+                  <TabButton
+                    active={activeTab === 'aiTutor'}
+                    label='AI Tutor'
+                    onPress={() => {
+                      setActiveTab('aiTutor');
+                    }}
+                  />
+                </View>
+              </Card>
+
+              {activeTab === 'progress' ? (
+              <Card>
+                <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                  {copy({
                     de: 'Lernfortschritt',
                     en: 'Learner progress',
                     pl: 'Postęp ucznia',
@@ -756,7 +830,9 @@ export function KangurParentDashboardScreen(): React.JSX.Element {
                   </Text>
                 )}
               </Card>
+              ) : null}
 
+              {activeTab === 'results' ? (
               <Card>
                 <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                   {copy({
@@ -853,7 +929,9 @@ export function KangurParentDashboardScreen(): React.JSX.Element {
                   </View>
                 )}
               </Card>
+              ) : null}
 
+              {activeTab === 'assignments' ? (
               <Card>
                 <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                   {copy({
@@ -953,6 +1031,215 @@ export function KangurParentDashboardScreen(): React.JSX.Element {
                   </View>
                 )}
               </Card>
+              ) : null}
+
+              {activeTab === 'monitoring' ? (
+                <Card>
+                  <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                    {copy({
+                      de: 'Aufgabenüberwachung',
+                      en: 'Assignment monitoring',
+                      pl: 'Monitorowanie zadań',
+                    })}
+                  </Text>
+                  <Text style={{ color: '#0f172a', fontSize: 22, fontWeight: '800' }}>
+                    {copy({
+                      de: 'Stand der Umsetzung',
+                      en: 'Completion overview',
+                      pl: 'Przegląd realizacji',
+                    })}
+                  </Text>
+
+                  {dashboard.isLoadingAssignments ? (
+                    <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                      {copy({
+                        de: 'Die aktuellen Aufgabenstände des gewählten Lernenden werden geladen.',
+                        en: 'Loading assignment status for the selected learner.',
+                        pl: 'Pobieramy status zadań wybranego ucznia.',
+                      })}
+                    </Text>
+                  ) : dashboard.assignmentsError ? (
+                    <View style={{ gap: 10 }}>
+                      <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
+                        {dashboard.assignmentsError}
+                      </Text>
+                      <ActionButton
+                        label={copy({
+                          de: 'Aufgaben aktualisieren',
+                          en: 'Refresh assignments',
+                          pl: 'Odśwież zadania',
+                        })}
+                        onPress={() => {
+                          void dashboard.refreshDashboard();
+                        }}
+                        tone='secondary'
+                      />
+                    </View>
+                  ) : dashboard.assignmentMonitoring.totalCount === 0 ? (
+                    <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                      {copy({
+                        de: 'Es gibt noch keine Aufgaben, die überwacht werden können.',
+                        en: 'There are no assignments to monitor yet.',
+                        pl: 'Nie ma jeszcze zadań do monitorowania.',
+                      })}
+                    </Text>
+                  ) : (
+                    <>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          flexWrap: 'wrap',
+                          justifyContent: 'space-between',
+                          gap: 12,
+                        }}
+                      >
+                        <Metric
+                          description={copy({
+                            de: `${dashboard.assignmentMonitoring.totalCount} Aufgaben insgesamt`,
+                            en: `${dashboard.assignmentMonitoring.totalCount} assignments total`,
+                            pl: `${dashboard.assignmentMonitoring.totalCount} zadań łącznie`,
+                          })}
+                          label={copy({
+                            de: 'Aktiv',
+                            en: 'Active',
+                            pl: 'Aktywne',
+                          })}
+                          value={`${activeAssignmentCount}`}
+                        />
+                        <Metric
+                          description={copy({
+                            de: `${dashboard.assignmentMonitoring.notStartedCount} noch nicht begonnen`,
+                            en: `${dashboard.assignmentMonitoring.notStartedCount} not started yet`,
+                            pl: `${dashboard.assignmentMonitoring.notStartedCount} jeszcze nie rozpoczęto`,
+                          })}
+                          label={copy({
+                            de: 'Im Gange',
+                            en: 'In progress',
+                            pl: 'W toku',
+                          })}
+                          value={`${dashboard.assignmentMonitoring.inProgressCount}`}
+                        />
+                        <Metric
+                          description={copy({
+                            de: `${dashboard.assignmentMonitoring.highPriorityCount} mit hoher Priorität`,
+                            en: `${dashboard.assignmentMonitoring.highPriorityCount} marked as high priority`,
+                            pl: `${dashboard.assignmentMonitoring.highPriorityCount} z wysokim priorytetem`,
+                          })}
+                          label={copy({
+                            de: 'Abgeschlossen',
+                            en: 'Completed',
+                            pl: 'Ukończone',
+                          })}
+                          value={`${dashboard.assignmentMonitoring.completedCount}`}
+                        />
+                        <Metric
+                          description={copy({
+                            de: `${dashboard.assignmentMonitoring.lessonCount} Lektionen · ${dashboard.assignmentMonitoring.practiceCount} Trainings`,
+                            en: `${dashboard.assignmentMonitoring.lessonCount} lessons · ${dashboard.assignmentMonitoring.practiceCount} practice tasks`,
+                            pl: `${dashboard.assignmentMonitoring.lessonCount} lekcji · ${dashboard.assignmentMonitoring.practiceCount} treningów`,
+                          })}
+                          label={copy({
+                            de: 'Hohe Priorität',
+                            en: 'High priority',
+                            pl: 'Wysoki priorytet',
+                          })}
+                          value={`${dashboard.assignmentMonitoring.highPriorityCount}`}
+                        />
+                      </View>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                        <Pill
+                          label={copy({
+                            de: `Nicht begonnen ${dashboard.assignmentMonitoring.notStartedCount}`,
+                            en: `Not started ${dashboard.assignmentMonitoring.notStartedCount}`,
+                            pl: `Nie rozpoczęto ${dashboard.assignmentMonitoring.notStartedCount}`,
+                          })}
+                          tone={BASE_TONE}
+                        />
+                        <Pill
+                          label={copy({
+                            de: `Lektionen ${dashboard.assignmentMonitoring.lessonCount}`,
+                            en: `Lessons ${dashboard.assignmentMonitoring.lessonCount}`,
+                            pl: `Lekcje ${dashboard.assignmentMonitoring.lessonCount}`,
+                          })}
+                          tone={INDIGO_TONE}
+                        />
+                        <Pill
+                          label={copy({
+                            de: `Training ${dashboard.assignmentMonitoring.practiceCount}`,
+                            en: `Practice ${dashboard.assignmentMonitoring.practiceCount}`,
+                            pl: `Treningi ${dashboard.assignmentMonitoring.practiceCount}`,
+                          })}
+                          tone={SUCCESS_TONE}
+                        />
+                      </View>
+                      <View style={{ gap: 10 }}>
+                        <ActionButton
+                          label={copy({
+                            de: 'Aufgabenstatus aktualisieren',
+                            en: 'Refresh assignment status',
+                            pl: 'Odśwież status zadań',
+                          })}
+                          onPress={() => {
+                            void dashboard.refreshDashboard();
+                          }}
+                          tone='secondary'
+                        />
+                        <OutlineLink
+                          href={PLAN_ROUTE}
+                          label={copy({
+                            de: 'Tagesplan des Lernenden öffnen',
+                            en: 'Open learner daily plan',
+                            pl: 'Otwórz plan dnia ucznia',
+                          })}
+                        />
+                      </View>
+                    </>
+                  )}
+                </Card>
+              ) : null}
+
+              {activeTab === 'aiTutor' ? (
+                <>
+                  <KangurMobileAiTutorCard context={tutorContext} />
+                  <Card>
+                    <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                      AI Tutor
+                    </Text>
+                    <Text style={{ color: '#0f172a', fontSize: 22, fontWeight: '800' }}>
+                      {copy({
+                        de: 'Tutor-Kontext des Lernenden',
+                        en: 'Learner tutor context',
+                        pl: 'Kontekst AI Tutora ucznia',
+                      })}
+                    </Text>
+                    <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                      {copy({
+                        de: 'Diese mobile Ansicht zeigt die aktuellen Tutor-Hinweise für den ausgewählten Lernenden. Ausführlichere Guardrails bleiben vorerst in der Web-Version.',
+                        en: 'This mobile view keeps the current tutor guidance for the selected learner visible. More detailed guardrails remain on the web for now.',
+                        pl: 'Ten mobilny widok pokazuje aktualne wskazówki AI Tutora dla wybranego ucznia. Bardziej szczegółowe ustawienia guardrails pozostają na razie w wersji webowej.',
+                      })}
+                    </Text>
+                    <View style={{ gap: 10 }}>
+                      <OutlineLink
+                        href={PROFILE_ROUTE}
+                        label={copy({
+                          de: 'Lernprofil öffnen',
+                          en: 'Open learner profile',
+                          pl: 'Otwórz profil ucznia',
+                        })}
+                      />
+                      <OutlineLink
+                        href={PLAN_ROUTE}
+                        label={copy({
+                          de: 'Tagesplan des Lernenden öffnen',
+                          en: 'Open learner daily plan',
+                          pl: 'Otwórz plan dnia ucznia',
+                        })}
+                      />
+                    </View>
+                  </Card>
+                </>
+              ) : null}
             </>
           ) : null}
         </View>

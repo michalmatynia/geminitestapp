@@ -20,6 +20,7 @@ import {
   buildLocalizedPathname,
   getPathLocale,
   normalizeSiteLocale,
+  stripSiteLocalePrefix,
 } from '@/shared/lib/i18n/site-locale';
 import {
   DropdownMenu,
@@ -30,10 +31,12 @@ import {
 } from '@/shared/ui/dropdown-menu';
 
 import {
+  getKangurCanonicalPublicHref,
   getKangurHomeHref,
   getKangurPageHref,
   isKangurEmbeddedBasePath,
 } from '@/features/kangur/config/routing';
+import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
@@ -174,6 +177,22 @@ const buildCurrentPageFallbackPath = (
   return getKangurPageHref(currentPage, basePath);
 };
 
+const canonicalizeKangurPublicAliasPath = (pathname: string): string => {
+  const normalizedPathname = stripSiteLocalePrefix(pathname);
+
+  if (normalizedPathname !== '/kangur' && !normalizedPathname.startsWith('/kangur/')) {
+    return pathname;
+  }
+
+  const slugSegments = normalizedPathname
+    .split('/')
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .slice(1);
+
+  return getKangurCanonicalPublicHref(slugSegments);
+};
+
 const buildLocalizedHref = ({
   hash,
   locale,
@@ -244,6 +263,7 @@ export function KangurLanguageSwitcher({
   const isCoarsePointer = useKangurCoarsePointer();
   const kangurAppearance = useKangurStorefrontAppearance();
   const routeNavigator = useKangurRouteNavigator();
+  const frontendPublicOwner = useOptionalFrontendPublicOwner();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const queryClient = useContext(QueryClientContext);
   const [open, setOpen] = useState(false);
@@ -255,7 +275,11 @@ export function KangurLanguageSwitcher({
   const currentLocale = normalizeSiteLocale(locale);
   const search = searchParams?.toString() ?? '';
   const fallbackPath = buildCurrentPageFallbackPath(currentPage, basePath);
-  const currentPathname = pathname?.trim() || fallbackPath;
+  const rawCurrentPathname = pathname?.trim() || fallbackPath;
+  const currentPathname =
+    frontendPublicOwner?.publicOwner === 'kangur'
+      ? canonicalizeKangurPublicAliasPath(rawCurrentPathname)
+      : rawCurrentPathname;
   const currentHash = typeof window === 'undefined' ? '' : window.location.hash;
 
   const palette = useMemo(

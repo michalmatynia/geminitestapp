@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '@/app/(frontend)/home-helpers';
-import { getKangurCanonicalPublicHref } from '@/features/kangur/config/routing';
+import { getKangurConfiguredLaunchHref } from '@/features/kangur/server/launch-route';
 import {
   buildLocalizedPathname,
   normalizeSiteLocale,
@@ -22,12 +22,12 @@ export default async function LocalizedKangurAliasPage({
 
     if (getFrontPagePublicOwner(frontPageSetting) === 'kangur') {
       const { locale, slug = [] } = await params;
+      const resolvedLocale = normalizeSiteLocale(locale);
       const resolvedSearchParams = searchParams ? await searchParams : undefined;
       redirect(
-        buildLocalizedPathname(
-          getKangurCanonicalPublicHref(slug, resolvedSearchParams),
-          normalizeSiteLocale(locale)
-        )
+        await getKangurConfiguredLaunchHref(slug, resolvedSearchParams, {
+          localizeFallbackHref: (href) => buildLocalizedPathname(href, resolvedLocale),
+        })
       );
     }
   }

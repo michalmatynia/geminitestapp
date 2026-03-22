@@ -178,6 +178,115 @@ describe('useKangurMobileParentDashboard', () => {
     );
   });
 
+  it('builds assignment monitoring counts from the full learner task list', async () => {
+    listAssignmentsMock.mockResolvedValue([
+      {
+        archived: false,
+        assignedByEmail: 'parent@example.com',
+        assignedByName: 'Ada Parent',
+        createdAt: '2026-03-20T10:00:00.000Z',
+        description: 'Powtórz dodawanie.',
+        id: 'assignment-1',
+        learnerKey: 'learner-1',
+        priority: 'high',
+        progress: {
+          attemptsCompleted: 0,
+          attemptsRequired: 2,
+          completedAt: null,
+          lastActivityAt: null,
+          percent: 0,
+          status: 'not_started',
+          summary: '0 z 2 ukończone',
+        },
+        target: {
+          minAccuracyPercent: null,
+          operation: 'addition',
+          requiredAttempts: 2,
+          type: 'practice',
+        },
+        timeLimitMinutes: null,
+        title: 'Trening dodawania',
+        updatedAt: '2026-03-20T10:00:00.000Z',
+      },
+      {
+        archived: false,
+        assignedByEmail: 'parent@example.com',
+        assignedByName: 'Ada Parent',
+        createdAt: '2026-03-20T11:00:00.000Z',
+        description: 'Czytaj lekcję o zegarze.',
+        id: 'assignment-2',
+        learnerKey: 'learner-1',
+        priority: 'medium',
+        progress: {
+          attemptsCompleted: 1,
+          attemptsRequired: 2,
+          completedAt: null,
+          lastActivityAt: '2026-03-20T12:00:00.000Z',
+          percent: 50,
+          status: 'in_progress',
+          summary: '1 z 2 ukończone',
+        },
+        target: {
+          baselineCompletions: 0,
+          lessonComponentId: 'clock',
+          requiredCompletions: 2,
+          type: 'lesson',
+        },
+        timeLimitMinutes: null,
+        title: 'Lekcja o zegarze',
+        updatedAt: '2026-03-20T12:00:00.000Z',
+      },
+      {
+        archived: false,
+        assignedByEmail: 'parent@example.com',
+        assignedByName: 'Ada Parent',
+        createdAt: '2026-03-20T13:00:00.000Z',
+        description: 'Powtórz tabliczkę.',
+        id: 'assignment-3',
+        learnerKey: 'learner-1',
+        priority: 'low',
+        progress: {
+          attemptsCompleted: 1,
+          attemptsRequired: 1,
+          completedAt: '2026-03-20T14:00:00.000Z',
+          lastActivityAt: '2026-03-20T14:00:00.000Z',
+          percent: 100,
+          status: 'completed',
+          summary: 'Ukończone',
+        },
+        target: {
+          minAccuracyPercent: null,
+          operation: 'multiplication',
+          requiredAttempts: 1,
+          type: 'practice',
+        },
+        timeLimitMinutes: null,
+        title: 'Trening mnożenia',
+        updatedAt: '2026-03-20T14:00:00.000Z',
+      },
+    ]);
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(() => useKangurMobileParentDashboard(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => {
+      expect(result.current.assignmentMonitoring.totalCount).toBe(3);
+    });
+
+    expect(result.current.assignmentMonitoring).toMatchObject({
+      completedCount: 1,
+      highPriorityCount: 1,
+      inProgressCount: 1,
+      lessonCount: 1,
+      notStartedCount: 1,
+      practiceCount: 2,
+      totalCount: 3,
+    });
+    expect(result.current.assignmentItems).toHaveLength(2);
+  });
+
   it('switches the active learner and refreshes the parent session', async () => {
     const storage = createStorage();
     useKangurMobileRuntimeMock.mockReturnValue({

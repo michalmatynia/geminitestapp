@@ -24,10 +24,19 @@ import {
 import { Button, FormModal, IntegrationSelector, Skeleton } from '@/shared/ui';
 
 export { buildTriggeredProductEntityJson };
-const ProductForm = dynamic(() => import('./ProductForm'), {
+const productFormImport = (): Promise<typeof import('./ProductForm')> => import('./ProductForm');
+const ProductForm = dynamic(productFormImport, {
   ssr: false,
   loading: () => <EditProductSkeletonContent />,
 });
+
+/** Call from hover/prefetch handlers to start downloading the ProductForm chunk early. */
+let _productFormPreloaded = false;
+export function preloadProductFormChunk(): void {
+  if (_productFormPreloaded) return;
+  _productFormPreloaded = true;
+  void productFormImport();
+}
 
 const FileManager = dynamic(() => import('@/features/files/public'), {
   ssr: false,
@@ -297,6 +306,8 @@ type ProductEditorModalProps = {
   initialCatalogId?: string;
   requireHydratedEditProduct?: boolean;
   showSkeleton?: boolean;
+  /** Override to disable save button (e.g. while hydrating fresh data). */
+  isSaveDisabledOverride?: boolean;
   validationInstanceScopeOverride?: ProductFormScope;
 };
 
@@ -317,6 +328,7 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
     initialCatalogId,
     requireHydratedEditProduct = false,
     showSkeleton = false,
+    isSaveDisabledOverride = false,
     validationInstanceScopeOverride,
   } = props;
 
@@ -348,7 +360,7 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
       onSave={() => formSubmitRef.current?.()}
       isSaving={formIsSaving}
       disableCloseWhileSaving
-      isSaveDisabled={showSkeleton || formIsSaving}
+      isSaveDisabled={showSkeleton || formIsSaving || isSaveDisabledOverride}
       hasUnsavedChanges={formHasUnsavedChanges}
       saveText={saveText}
       cancelText='Close'
@@ -417,14 +429,18 @@ export function ProductModals(): React.JSX.Element {
 
   const hydratedEditingProduct =
     editingProduct && isEditingProductHydrated(editingProduct) ? editingProduct : null;
-  const showEditSkeleton = isEditHydrating || (Boolean(editingProduct) && !hydratedEditingProduct);
-  const isEditOpen = showEditSkeleton || Boolean(hydratedEditingProduct);
+  // Show the form immediately with list-level data while hydrating, instead of a skeleton.
+  // The save button stays disabled until hydration completes (showSkeleton controls that).
+  const showEditSkeleton = false;
+  const isEditOpen = Boolean(editingProduct);
 
   const createProviderKey = createDraft
     ? ['create', createDraft.id, createDraft.updatedAt ?? ''].join(':')
     : 'create';
-  const editProviderKey = hydratedEditingProduct
-    ? ['edit', hydratedEditingProduct.id].join(':')
+  // Include hydration state in the key so the form remounts with full data
+  // (list-level data may lack descriptions, etc.)
+  const editProviderKey = editingProduct
+    ? ['edit', editingProduct.id, hydratedEditingProduct ? 'h' : 'p'].join(':')
     : 'edit';
 
   return (
@@ -448,16 +464,17 @@ export function ProductModals(): React.JSX.Element {
         isOpen={isEditOpen}
         onClose={onCloseEdit}
         title='Edit Product'
-        subtitle={showEditSkeleton ? 'Loading full product details before editing.' : undefined}
+        subtitle={isEditHydrating ? 'Loading full product details…' : undefined}
         saveText='Update'
         submitButtonText='Update'
         providerKey={editProviderKey}
-        product={hydratedEditingProduct ?? undefined}
+        product={hydratedEditingProduct ?? editingProduct ?? undefined}
         onSuccess={onEditSuccess}
         onEditSave={onEditSave}
         requireHydratedEditProduct
         validationInstanceScopeOverride='product_edit'
         showSkeleton={showEditSkeleton}
+        isSaveDisabledOverride={isEditHydrating}
       />
 
       {integrationsProduct && !showListProductModal && (

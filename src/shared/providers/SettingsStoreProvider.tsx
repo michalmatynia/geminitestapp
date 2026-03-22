@@ -17,7 +17,14 @@ export type SettingsStoreValue = {
   refetch: () => void;
 };
 
+// Stable context — only changes when map data, error, or loading state changes.
+// Does NOT change when isFetching toggles during background re-validation.
 const SettingsStoreContext = createContext<SettingsStoreValue | null>(null);
+
+// Volatile context — changes on every fetch cycle. Only subscribe if you need
+// real-time fetching state (e.g. a "refreshing" spinner).
+const SettingsStoreFetchingContext = createContext<boolean>(false);
+
 const emptyMap = new Map<string, string>();
 const fallbackStore: SettingsStoreValue = {
   map: emptyMap,
@@ -83,12 +90,17 @@ export function SettingsStoreProvider({
   const error = settingsQuery.error ?? null;
   const refetch = settingsQuery.refetch;
 
+  // Stable value — excludes isFetching so background re-validation doesn't
+  // trigger re-renders in the ~50+ consumers that only read settings data.
   const value = useMemo<SettingsStoreValue>(() => {
     const map = mapData instanceof Map ? mapData : new Map<string, string>();
     return {
       map,
       isLoading,
-      isFetching,
+      // isFetching is included for type compatibility but reads from the
+      // snapshot at memo-creation time. Consumers needing live isFetching
+      // should use useSettingsStoreFetching() instead.
+      isFetching: false,
       error,
       get: (key: string): string | undefined => map.get(key),
       getBoolean: (key: string, fallback: boolean = false): boolean =>
@@ -99,9 +111,13 @@ export function SettingsStoreProvider({
         void refetch();
       },
     };
-  }, [error, isFetching, isLoading, mapData, refetch]);
+  }, [error, isLoading, mapData, refetch]);
 
-  return <SettingsStoreContext.Provider value={value}>{children}</SettingsStoreContext.Provider>;
+  return (
+    <SettingsStoreFetchingContext.Provider value={isFetching}>
+      <SettingsStoreContext.Provider value={value}>{children}</SettingsStoreContext.Provider>
+    </SettingsStoreFetchingContext.Provider>
+  );
 }
 
 export function useSettingsStore(): SettingsStoreValue {
@@ -115,4 +131,12 @@ export function useSettingsStore(): SettingsStoreValue {
     return fallbackStore;
   }
   return context;
+}
+
+/**
+ * Subscribe to real-time fetching state. Only use this if you need to show
+ * a "refreshing" indicator — most consumers should use useSettingsStore() instead.
+ */
+export function useSettingsStoreFetching(): boolean {
+  return useContext(SettingsStoreFetchingContext);
 }

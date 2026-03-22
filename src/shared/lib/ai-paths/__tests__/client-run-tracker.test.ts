@@ -219,7 +219,7 @@ describe('client-run-tracker', () => {
     });
 
     await act(async () => {
-      vi.advanceTimersByTime(2_000);
+      vi.advanceTimersByTime(5_000);
       await Promise.resolve();
     });
 
@@ -317,7 +317,7 @@ describe('client-run-tracker', () => {
     });
 
     await act(async () => {
-      vi.advanceTimersByTime(2_000);
+      vi.advanceTimersByTime(5_000);
       await Promise.resolve();
     });
 
@@ -377,7 +377,7 @@ describe('client-run-tracker', () => {
     });
 
     await act(async () => {
-      vi.advanceTimersByTime(2_000);
+      vi.advanceTimersByTime(5_000);
       await Promise.resolve();
     });
 
@@ -518,7 +518,7 @@ describe('client-run-tracker', () => {
     // 3 poll failures (MAX_RUN_DETAIL_POLL_FAILURES = 3)
     for (let i = 0; i < 3; i++) {
       await act(async () => {
-        vi.advanceTimersByTime(2_000);
+        vi.advanceTimersByTime(5_000);
         await Promise.resolve();
       });
     }

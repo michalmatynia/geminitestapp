@@ -3,6 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
+import { preloadProductFormChunk } from '@/features/products/components/ProductModals';
 import {
   isEditingProductHydrated,
   markEditingProductHydrated,
@@ -34,6 +35,8 @@ const getSearchServerSnapshot = (): string => '';
 const PRODUCT_DETAIL_TIMEOUT_MS = 60_000;
 const PRODUCT_DETAIL_PREFETCH_DEBOUNCE_MS = 120;
 const PRODUCT_DETAIL_PREFETCH_STALE_MS = 20_000;
+// If cached data is younger than this, use it instantly and background-refetch instead of blocking.
+const PRODUCT_DETAIL_CACHE_FRESH_MS = 10_000;
 
 export const shouldAdoptIncomingEditProductDetail = (input: {
   currentProduct: ProductWithImages;
@@ -100,6 +103,9 @@ export function useProductEditHydration({
       const normalizedProductId = productId.trim();
       if (!normalizedProductId) return;
 
+      // Start downloading the ProductForm JS chunk in parallel with data.
+      preloadProductFormChunk();
+
       pendingPrefetchProductIdRef.current = normalizedProductId;
 
       if (prefetchTimerRef.current !== null) {
@@ -158,10 +164,29 @@ export function useProductEditHydration({
       editOpenRequestTokenRef.current += 1;
       const requestToken = editOpenRequestTokenRef.current;
 
+      const queryKey = normalizeQueryKey(getProductDetailQueryKey(product.id));
+
+      // Use cached data instantly if the hover-prefetch populated it recently.
+      const cachedState = queryClient.getQueryState<ProductWithImages>(queryKey);
+      const cacheAge =
+        typeof cachedState?.dataUpdatedAt === 'number'
+          ? Date.now() - cachedState.dataUpdatedAt
+          : Infinity;
+      const cachedData = cacheAge < PRODUCT_DETAIL_CACHE_FRESH_MS
+        ? queryClient.getQueryData<ProductWithImages>(queryKey)
+        : undefined;
+
+      if (cachedData) {
+        // Open immediately with cached data, then background-refetch for freshness.
+        setEditingProduct(markEditingProductHydrated(cachedData));
+        setIsEditHydrating(false);
+        void queryClient.refetchQueries({ queryKey });
+        return;
+      }
+
       setEditingProduct(product);
       setIsEditHydrating(true);
 
-      const queryKey = normalizeQueryKey(getProductDetailQueryKey(product.id));
       void fetchQueryV2(queryClient, {
         queryKey,
         queryFn: ({ signal }) =>

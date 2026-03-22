@@ -6,11 +6,13 @@ import { parseAiPathRunErrorSummary } from '@/shared/lib/ai-paths/error-reportin
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
-const RUN_DETAIL_POLL_INTERVAL_MS = 2_000;
+const RUN_DETAIL_POLL_INTERVAL_MS = 5_000;
 const RUN_DETAIL_TRANSIENT_RETRY_DELAY_MS = 5_000;
 const RUN_DETAIL_REQUEST_TIMEOUT_MS = 60_000;
 const MAX_RUN_DETAIL_POLL_FAILURES = 3;
 const RUN_DETAIL_NOT_FOUND_GRACE_MS = 15_000;
+// Stop tracking runs older than 10 minutes to prevent stale persisted runs from polling forever.
+const MAX_RUN_TRACKING_AGE_MS = 10 * 60 * 1_000;
 
 const TERMINAL_RUN_STATUSES = new Set<AiPathRunRecord['status']>([
   'completed',
@@ -392,6 +394,13 @@ const handlePollFailure = (record: TrackRecord, message: string): void => {
 const pollRecord = async (runId: string): Promise<void> => {
   const record = trackRecords.get(runId);
   if (!record) return;
+
+  // Stop polling runs that have been tracked too long — they likely stalled or
+  // were persisted from a previous session and never reached a terminal state.
+  if (Date.now() - record.trackedAtMs > MAX_RUN_TRACKING_AGE_MS) {
+    finalizeRecord(record, { errorMessage: 'Run tracking timed out.' });
+    return;
+  }
 
   try {
     const response = await getAiPathRun(runId, {

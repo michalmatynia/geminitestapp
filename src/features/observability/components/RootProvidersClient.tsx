@@ -31,7 +31,7 @@ export function RootProvidersClient({
           <SettingsStoreProvider mode='lite'>
             <AppFontProvider />
             <BackgroundSyncProvider>
-              <SessionProvider>
+              <SessionProvider refetchOnWindowFocus={false}>
                 <ThemeProvider
                   attribute='class'
                   defaultTheme='system'

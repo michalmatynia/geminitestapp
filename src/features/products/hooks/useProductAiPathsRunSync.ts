@@ -25,7 +25,10 @@ import {
   subscribeToTrackedAiPathRun,
 } from '@/shared/lib/ai-paths/client-run-tracker';
 import { getRecentAiPathRunEnqueue } from '@/shared/lib/query-invalidation';
-import { listTriggerButtonRunFeedback } from '@/shared/lib/ai-paths/trigger-button-run-feedback';
+import {
+  listTriggerButtonRunFeedback,
+  markPersistedRunTerminal,
+} from '@/shared/lib/ai-paths/trigger-button-run-feedback';
 import { safeSetInterval, safeClearInterval, type SafeTimerId } from '@/shared/lib/timers';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -74,10 +77,11 @@ const areFeedbackMapsEqual = (
   for (const [key, nextFeedback] of next) {
     const prevFeedback = prev.get(key);
     if (!prevFeedback) return false;
+    // Only compare identity and status — updatedAt changes on every server
+    // response even when nothing meaningful changed, causing needless re-renders.
     if (
       prevFeedback.runId !== nextFeedback.runId ||
-      prevFeedback.status !== nextFeedback.status ||
-      prevFeedback.updatedAt !== nextFeedback.updatedAt
+      prevFeedback.status !== nextFeedback.status
     ) {
       return false;
     }
@@ -150,6 +154,11 @@ export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeed
 
     const finalizeRun = (runId: string, productId: string): void => {
       const trackedRun = trackedRunsRef.current.get(runId);
+      // Mark as terminal in persisted storage so it won't be re-tracked on next mount.
+      const terminalStatus = trackedRun?.latestSnapshot?.status;
+      if (terminalStatus && isTrackedAiPathRunTerminal(trackedRun.latestSnapshot!)) {
+        markPersistedRunTerminal(runId, terminalStatus);
+      }
       trackedRun?.unsubscribe();
       trackedRunsRef.current.delete(runId);
       void invalidateProductDetail(queryClient, productId);
@@ -261,11 +270,19 @@ export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeed
       handlePayload((event as CustomEvent<unknown>).detail);
     };
 
+    // Only rehydrate persisted runs that are recent enough to still be active.
+    // Stale runs (>10 min) are likely from a previous session and would just
+    // create unnecessary polling traffic.
+    const MAX_PERSISTED_RUN_AGE_MS = 10 * 60 * 1_000;
     listTriggerButtonRunFeedback({
       entityType: 'product',
       activeOnly: true,
     }).forEach((persistedRun) => {
       if (!persistedRun.entityId) return;
+      const runAge = persistedRun.updatedAt
+        ? Date.now() - new Date(persistedRun.updatedAt).getTime()
+        : Infinity;
+      if (runAge > MAX_PERSISTED_RUN_AGE_MS) return;
       const initialStatus = persistedRun.status === 'waiting' ? 'queued' : persistedRun.status;
       trackRun(persistedRun.runId, persistedRun.entityId, {
         runId: persistedRun.runId,

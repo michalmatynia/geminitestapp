@@ -301,7 +301,7 @@ export function AdminLayout({
   const menuCollapsedDefault = initialMenuCollapsed;
 
   return (
-    <SessionProvider session={session}>
+    <SessionProvider session={session} refetchOnWindowFocus={false}>
       <QueryProvider>
         <ToastProvider>
           <AdminLayoutProvider initialMenuCollapsed={menuCollapsedDefault}>

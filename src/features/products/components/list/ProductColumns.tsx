@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowUpDown, Download, Eye, EyeOff } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';
@@ -168,31 +168,32 @@ const ImageCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function Image
   const product: ProductWithImages = row.original;
   const { thumbnailSource, imageExternalBaseUrl } = useProductListRowVisualsContext();
 
-  const firstFileImage: string | undefined = product.images
-    ?.map((img) => getImageFilepath(img.imageFile))
-    .find((filepath): filepath is string => typeof filepath === 'string');
+  const imageUrl = useMemo(() => {
+    const firstFileImage: string | undefined = product.images
+      ?.map((img) => getImageFilepath(img.imageFile))
+      .find((filepath): filepath is string => typeof filepath === 'string');
 
-  const firstLinkImage: string | undefined = product.imageLinks?.find(
-    (link: string) => link && link.trim().length > 0
-  );
+    const firstLinkImage: string | undefined = product.imageLinks?.find(
+      (link: string) => link && link.trim().length > 0
+    );
 
-  const firstBase64Image: string | undefined = product.imageBase64s?.find(
-    (link: string) => link && link.trim().length > 0
-  );
+    const firstBase64Image: string | undefined = product.imageBase64s?.find(
+      (link: string) => link && link.trim().length > 0
+    );
 
-  const resolvedFileImage =
-    resolveProductImageUrl(firstFileImage, imageExternalBaseUrl) ?? undefined;
-  const resolvedLinkImage =
-    resolveProductImageUrl(firstLinkImage, imageExternalBaseUrl) ?? undefined;
+    const resolvedFileImage =
+      resolveProductImageUrl(firstFileImage, imageExternalBaseUrl) ?? undefined;
+    const resolvedLinkImage =
+      resolveProductImageUrl(firstLinkImage, imageExternalBaseUrl) ?? undefined;
 
-  let imageUrl: string | undefined;
-  if (thumbnailSource === 'link') {
-    imageUrl = resolvedLinkImage || resolvedFileImage || firstBase64Image;
-  } else if (thumbnailSource === 'base64') {
-    imageUrl = firstBase64Image || resolvedFileImage || resolvedLinkImage;
-  } else {
-    imageUrl = resolvedFileImage || resolvedLinkImage || firstBase64Image;
-  }
+    if (thumbnailSource === 'link') {
+      return resolvedLinkImage || resolvedFileImage || firstBase64Image;
+    }
+    if (thumbnailSource === 'base64') {
+      return firstBase64Image || resolvedFileImage || resolvedLinkImage;
+    }
+    return resolvedFileImage || resolvedLinkImage || firstBase64Image;
+  }, [product.images, product.imageLinks, product.imageBase64s, thumbnailSource, imageExternalBaseUrl]);
 
   return (
     <ProductImageCell imageUrl={imageUrl || null} productName={getProductDisplayName(product)} />

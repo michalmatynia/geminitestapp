@@ -100,9 +100,9 @@ export function useIntegrationOperations(productIds: readonly string[] = []): {
           (status) => typeof status === 'string' && activeStatuses.has(status.trim().toLowerCase())
         )
       );
-      return hasInFlight ? 2500 : false;
+      return hasInFlight ? 10_000 : false;
     },
-    refetchIntervalInBackground: true,
+    refetchIntervalInBackground: false,
     meta: {
       source: 'integrations.hooks.useIntegrationOperations.listingBadges',
       operation: 'polling',
@@ -114,27 +114,39 @@ export function useIntegrationOperations(productIds: readonly string[] = []): {
   });
 
   const payload = listingsBadgeQuery.data || {};
-  const integrationBadgeStatuses = new Map<string, string>();
-  const integrationBadgeIds = new Set<string>();
-  const traderaBadgeStatuses = new Map<string, string>();
-  const traderaBadgeIds = new Set<string>();
+  const { integrationBadgeIds, integrationBadgeStatuses, traderaBadgeIds, traderaBadgeStatuses } =
+    useMemo(() => {
+      const nextIntegrationBadgeStatuses = new Map<string, string>();
+      const nextIntegrationBadgeIds = new Set<string>();
+      const nextTraderaBadgeStatuses = new Map<string, string>();
+      const nextTraderaBadgeIds = new Set<string>();
 
-  for (const [productId, rawMarketplaces] of Object.entries(payload)) {
-    const marketplaces = toMarketplaceEntry(rawMarketplaces);
-    const baseStatus =
-      typeof marketplaces?.base === 'string' ? marketplaces.base.trim().toLowerCase() : '';
-    if (baseStatus) {
-      integrationBadgeIds.add(productId);
-      integrationBadgeStatuses.set(productId, baseStatus);
-    }
+      for (const [productId, rawMarketplaces] of Object.entries(payload)) {
+        const marketplaces = toMarketplaceEntry(rawMarketplaces);
+        const baseStatus =
+          typeof marketplaces?.base === 'string' ? marketplaces.base.trim().toLowerCase() : '';
+        if (baseStatus) {
+          nextIntegrationBadgeIds.add(productId);
+          nextIntegrationBadgeStatuses.set(productId, baseStatus);
+        }
 
-    const traderaStatus =
-      typeof marketplaces?.tradera === 'string' ? marketplaces.tradera.trim().toLowerCase() : '';
-    if (traderaStatus) {
-      traderaBadgeIds.add(productId);
-      traderaBadgeStatuses.set(productId, traderaStatus);
-    }
-  }
+        const traderaStatus =
+          typeof marketplaces?.tradera === 'string'
+            ? marketplaces.tradera.trim().toLowerCase()
+            : '';
+        if (traderaStatus) {
+          nextTraderaBadgeIds.add(productId);
+          nextTraderaBadgeStatuses.set(productId, traderaStatus);
+        }
+      }
+
+      return {
+        integrationBadgeIds: nextIntegrationBadgeIds,
+        integrationBadgeStatuses: nextIntegrationBadgeStatuses,
+        traderaBadgeIds: nextTraderaBadgeIds,
+        traderaBadgeStatuses: nextTraderaBadgeStatuses,
+      };
+    }, [payload]);
 
   const refreshListingBadges = useCallback(async (): Promise<void> => {
     await invalidateListingBadges(queryClient);

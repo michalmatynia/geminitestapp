@@ -501,6 +501,35 @@ export const clearTriggerButtonRunFeedback = (input: {
   writePersistedFeedbackMap(currentMap);
 };
 
+/**
+ * Mark a persisted run as terminal so `listTriggerButtonRunFeedback({activeOnly: true})`
+ * won't return it on the next mount. This prevents completed runs from being re-tracked
+ * and re-polled after component remounts.
+ */
+export const markPersistedRunTerminal = (
+  runId: string,
+  terminalStatus: AiPathRunRecord['status']
+): void => {
+  if (!TERMINAL_RUN_STATUSES.has(terminalStatus)) return;
+  const currentMap = readPersistedFeedbackMap();
+  let found = false;
+  for (const [key, value] of Object.entries(currentMap)) {
+    const normalized = normalizePersistedFeedback(value);
+    if (normalized && normalized.runId === runId) {
+      currentMap[key] = {
+        ...normalized,
+        status: terminalStatus,
+        finishedAt: normalized.finishedAt ?? new Date().toISOString(),
+        expiresAt: Date.now() + TERMINAL_FEEDBACK_TTL_MS,
+      };
+      found = true;
+    }
+  }
+  if (found) {
+    writePersistedFeedbackMap(currentMap);
+  }
+};
+
 export const __resetTriggerButtonRunFeedbackForTests = (): void => {
   if (!canUseLocalStorage()) return;
   try {

@@ -85,9 +85,9 @@ export function useAiPathsTriggerButtonsQuery(): SingleQuery<AiTriggerButtonReco
     },
     id: 'trigger-buttons',
     staleTime: 30_000,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     meta: {
       source: 'aiPaths.hooks.useAiPathsTriggerButtonsQuery',
       operation: 'detail',

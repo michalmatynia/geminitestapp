@@ -500,7 +500,9 @@ export function KangurParentDashboardScreen(): React.JSX.Element {
             </View>
           </Card>
 
-          <KangurMobileAiTutorCard context={tutorContext} />
+          {!dashboard.canAccessDashboard ? (
+            <KangurMobileAiTutorCard context={tutorContext} />
+          ) : null}
 
           {dashboard.canAccessDashboard ? (
             <>

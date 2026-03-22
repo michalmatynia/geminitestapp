@@ -179,7 +179,7 @@ describe('KangurLessonDocumentEditor', () => {
     expect(nextDocument.blocks[1]?.type).toBe('grid');
   });
 
-  it('inserts a blank page after the active page and inherits its section metadata', () => {
+  it('inserts a blank page after the active page and inherits its section metadata', async () => {
     const handleChange = vi.fn();
 
     render(
@@ -237,6 +237,7 @@ describe('KangurLessonDocumentEditor', () => {
       />
     );
 
+    await screen.findByTestId('mock-wysiwyg-editor');
     fireEvent.click(screen.getByRole('button', { name: /^new page$/i }));
 
     const nextDocument = handleChange.mock.calls.at(-1)?.[0] as {
@@ -258,7 +259,7 @@ describe('KangurLessonDocumentEditor', () => {
     expect(nextDocument.pages?.[2]?.sectionTitle).toBe('Practice');
   });
 
-  it('inherits the active section when adding a templated page', () => {
+  it('inherits the active section when adding a templated page', async () => {
     const handleChange = vi.fn();
 
     render(
@@ -295,6 +296,7 @@ describe('KangurLessonDocumentEditor', () => {
       />
     );
 
+    await screen.findByTestId('mock-wysiwyg-editor');
     fireEvent.click(screen.getByRole('button', { name: /add svg image page/i }));
 
     const nextDocument = handleChange.mock.calls.at(-1)?.[0] as {

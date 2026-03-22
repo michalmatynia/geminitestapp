@@ -6,6 +6,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useMemo, useState } from 'react';
 
+import { KangurMobileAiTutorCard } from '../ai-tutor/KangurMobileAiTutorCard';
 import { useKangurMobileI18n, type KangurMobileLocale } from '../i18n/kangurMobileI18n';
 import { createKangurLessonsCatalogHref } from '../lessons/lessonHref';
 import { createKangurPlanHref } from '../plan/planHref';
@@ -481,132 +482,170 @@ function KangurMobileTestPlayer({
 
   if (item.questions.length === 0) {
     return (
-      <SectionCard
-        title={copy({
-          de: 'Keine veroffentlichten Fragen',
-          en: 'No published questions',
-          pl: 'Brak opublikowanych pytań',
-        })}
-      >
-        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-          {copy({
-            de: 'Dieser Testsatz ist live, aber hat noch keine veroffentlichten Fragen fur Lernende.',
-            en: 'This live test suite does not have any published learner questions yet.',
-            pl: 'Ten aktywny zestaw nie ma jeszcze opublikowanych pytań dla ucznia.',
-          })}
-        </Text>
-        <PrimaryButton
-          label={copy({
-            de: 'Zuruck zur Liste',
-            en: 'Back to the list',
-            pl: 'Wróć do listy',
-          })}
-          onPress={onBackToCatalog}
-          tone={BASE_TONE}
+      <>
+        <KangurMobileAiTutorCard
+          context={{
+            contentId: item.suite.id,
+            focusId: `kangur-test-empty-state:${item.suite.id}`,
+            focusKind: 'empty_state',
+            surface: 'test',
+            title: item.suite.title,
+          }}
         />
-      </SectionCard>
+        <SectionCard
+          title={copy({
+            de: 'Keine veroffentlichten Fragen',
+            en: 'No published questions',
+            pl: 'Brak opublikowanych pytań',
+          })}
+        >
+          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+            {copy({
+              de: 'Dieser Testsatz ist live, aber hat noch keine veroffentlichten Fragen fur Lernende.',
+              en: 'This live test suite does not have any published learner questions yet.',
+              pl: 'Ten aktywny zestaw nie ma jeszcze opublikowanych pytań dla ucznia.',
+            })}
+          </Text>
+          <PrimaryButton
+            label={copy({
+              de: 'Zuruck zur Liste',
+              en: 'Back to the list',
+              pl: 'Wróć do listy',
+            })}
+            onPress={onBackToCatalog}
+            tone={BASE_TONE}
+          />
+        </SectionCard>
+      </>
     );
   }
 
   if (finished) {
     return (
-      <SectionCard
-        title={copy({
-          de: 'Testergebnis',
-          en: 'Test summary',
-          pl: 'Wynik testu',
-        })}
-      >
-        <StatusPill
-          label={
-            {
+      <>
+        <KangurMobileAiTutorCard
+          context={{
+            contentId: item.suite.id,
+            description: item.suite.description,
+            focusId: `kangur-test-summary:${item.suite.id}`,
+            focusKind: 'summary',
+            masterySummary: {
               de: `${score}/${maxScore} Pkt · ${scorePercent}%`,
               en: `${score}/${maxScore} pts · ${scorePercent}%`,
               pl: `${score}/${maxScore} pkt · ${scorePercent}%`,
-            }[locale]
-          }
-          tone={summaryTone}
+            }[locale],
+            surface: 'test',
+            title: item.suite.title,
+          }}
         />
-        <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '700' }}>
-          {copy({
-            de: 'Du hast den ganzen Testsatz abgeschlossen.',
-            en: 'You completed the full test suite.',
-            pl: 'Ukończyłeś cały zestaw testowy.',
+        <SectionCard
+          title={copy({
+            de: 'Testergebnis',
+            en: 'Test summary',
+            pl: 'Wynik testu',
           })}
-        </Text>
-        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-          {copy({
-            de: 'Wiederhole den Satz, kehre zur Liste zuruck oder springe direkt in die Ergebnisse und den Tagesplan.',
-            en: 'Restart the suite, go back to the catalog, or jump straight into results and the daily plan.',
-            pl: 'Powtórz zestaw, wróć do katalogu albo przejdź od razu do wyników i planu dnia.',
-          })}
-        </Text>
-        <View style={{ flexDirection: 'column', gap: 10 }}>
-          <PrimaryButton
-            label={copy({
-              de: 'Test wiederholen',
-              en: 'Restart the test',
-              pl: 'Powtórz test',
-            })}
-            onPress={handleRestart}
+        >
+          <StatusPill
+            label={
+              {
+                de: `${score}/${maxScore} Pkt · ${scorePercent}%`,
+                en: `${score}/${maxScore} pts · ${scorePercent}%`,
+                pl: `${score}/${maxScore} pkt · ${scorePercent}%`,
+              }[locale]
+            }
+            tone={summaryTone}
           />
-          <PrimaryButton
-            label={copy({
-              de: 'Zuruck do Tests',
-              en: 'Back to tests',
-              pl: 'Wróć do testów',
+          <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '700' }}>
+            {copy({
+              de: 'Du hast den ganzen Testsatz abgeschlossen.',
+              en: 'You completed the full test suite.',
+              pl: 'Ukończyłeś cały zestaw testowy.',
             })}
-            onPress={onBackToCatalog}
-            tone={BASE_TONE}
-          />
-          <OutlineLink
-            href={RESULTS_ROUTE}
-            hint={copy({
-              de: 'Öffnet die Ergebnisse.',
-              en: 'Opens results.',
-              pl: 'Otwiera wyniki.',
+          </Text>
+          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+            {copy({
+              de: 'Wiederhole den Satz, kehre zur Liste zuruck oder springe direkt in die Ergebnisse und den Tagesplan.',
+              en: 'Restart the suite, go back to the catalog, or jump straight into results and the daily plan.',
+              pl: 'Powtórz zestaw, wróć do katalogu albo przejdź od razu do wyników i planu dnia.',
             })}
-            label={copy({
-              de: 'Ergebnisse öffnen',
-              en: 'Open results',
-              pl: 'Otwórz wyniki',
-            })}
-          />
-          <OutlineLink
-            href={PLAN_ROUTE}
-            hint={copy({
-              de: 'Öffnet den Tagesplan.',
-              en: 'Opens the daily plan.',
-              pl: 'Otwiera plan dnia.',
-            })}
-            label={copy({
-              de: 'Zum Tagesplan',
-              en: 'Go to daily plan',
-              pl: 'Przejdź do planu dnia',
-            })}
-          />
-        </View>
-      </SectionCard>
+          </Text>
+          <View style={{ flexDirection: 'column', gap: 10 }}>
+            <PrimaryButton
+              label={copy({
+                de: 'Test wiederholen',
+                en: 'Restart the test',
+                pl: 'Powtórz test',
+              })}
+              onPress={handleRestart}
+            />
+            <PrimaryButton
+              label={copy({
+                de: 'Zuruck do Tests',
+                en: 'Back to tests',
+                pl: 'Wróć do testów',
+              })}
+              onPress={onBackToCatalog}
+              tone={BASE_TONE}
+            />
+            <OutlineLink
+              href={RESULTS_ROUTE}
+              hint={copy({
+                de: 'Öffnet die Ergebnisse.',
+                en: 'Opens results.',
+                pl: 'Otwiera wyniki.',
+              })}
+              label={copy({
+                de: 'Ergebnisse öffnen',
+                en: 'Open results',
+                pl: 'Otwórz wyniki',
+              })}
+            />
+            <OutlineLink
+              href={PLAN_ROUTE}
+              hint={copy({
+                de: 'Öffnet den Tagesplan.',
+                en: 'Opens the daily plan.',
+                pl: 'Otwiera plan dnia.',
+              })}
+              label={copy({
+                de: 'Zum Tagesplan',
+                en: 'Go to daily plan',
+                pl: 'Przejdź do planu dnia',
+              })}
+            />
+          </View>
+        </SectionCard>
+      </>
     );
   }
 
   if (!currentQuestion) {
     return (
-      <SectionCard
-        title={copy({
-          de: 'Test wird vorbereitet',
-          en: 'Preparing the test',
-          pl: 'Przygotowujemy test',
-        })}
-      >
-        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-          {copy({
-            de: 'Die Fragen werden gerade geladen. Probiere es gleich noch einmal.',
-            en: 'Questions are still loading. Try again in a moment.',
-            pl: 'Pytania jeszcze się ładują. Spróbuj ponownie za chwilę.',
+      <>
+        <KangurMobileAiTutorCard
+          context={{
+            contentId: item.suite.id,
+            focusKind: 'screen',
+            surface: 'test',
+            title: item.suite.title,
+          }}
+        />
+        <SectionCard
+          title={copy({
+            de: 'Test wird vorbereitet',
+            en: 'Preparing the test',
+            pl: 'Przygotowujemy test',
           })}
-        </Text>
-      </SectionCard>
+        >
+          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+            {copy({
+              de: 'Die Fragen werden gerade geladen. Probiere es gleich noch einmal.',
+              en: 'Questions are still loading. Try again in a moment.',
+              pl: 'Pytania jeszcze się ładują. Spróbuj ponownie za chwilę.',
+            })}
+          </Text>
+        </SectionCard>
+      </>
     );
   }
 
@@ -618,172 +657,230 @@ function KangurMobileTestPlayer({
     currentQuestion.choices.find(
       (choice) => choice.label === currentQuestion.correctChoiceLabel,
     ) ?? null;
+  const tutorContext =
+    showAnswer
+      ? {
+          answerRevealed: true,
+          contentId: item.suite.id,
+          currentQuestion: currentQuestion.prompt,
+          focusId: `kangur-test-question:${currentQuestion.id}`,
+          focusKind: 'review' as const,
+          focusLabel: currentQuestion.prompt,
+          questionId: currentQuestion.id,
+          questionProgressLabel: formatQuestionProgress(
+            currentIndex + 1,
+            item.questions.length,
+            locale,
+          ),
+          selectedChoiceLabel: selectedChoice?.label,
+          selectedChoiceText: selectedChoice?.text,
+          surface: 'test' as const,
+          title: item.suite.title,
+        }
+      : selectedChoice
+        ? {
+            answerRevealed: false,
+            contentId: item.suite.id,
+            currentQuestion: currentQuestion.prompt,
+            focusId: `kangur-test-selection:${currentQuestion.id}`,
+            focusKind: 'selection' as const,
+            focusLabel: selectedChoice.text,
+            questionId: currentQuestion.id,
+            questionProgressLabel: formatQuestionProgress(
+              currentIndex + 1,
+              item.questions.length,
+              locale,
+            ),
+            selectedChoiceLabel: selectedChoice.label,
+            selectedChoiceText: selectedChoice.text,
+            surface: 'test' as const,
+            title: item.suite.title,
+          }
+        : {
+            answerRevealed: false,
+            contentId: item.suite.id,
+            currentQuestion: currentQuestion.prompt,
+            focusId: `kangur-test-question:${currentQuestion.id}`,
+            focusKind: 'question' as const,
+            focusLabel: currentQuestion.prompt,
+            questionId: currentQuestion.id,
+            questionProgressLabel: formatQuestionProgress(
+              currentIndex + 1,
+              item.questions.length,
+              locale,
+            ),
+            surface: 'test' as const,
+            title: item.suite.title,
+          };
 
   return (
-    <SectionCard
-      title={formatQuestionProgress(currentIndex + 1, item.questions.length, locale)}
-    >
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <StatusPill
-          label={formatPointsLabel(currentQuestion.pointValue, locale)}
-          tone={WARNING_TONE}
-        />
-        <StatusPill
-          label={copy({
-            de:
-              currentQuestion.presentation.choiceStyle === 'grid'
-                ? 'Antwortkarten'
-                : 'Antwortliste',
-            en:
-              currentQuestion.presentation.choiceStyle === 'grid'
-                ? 'Answer cards'
-                : 'Answer list',
-            pl:
-              currentQuestion.presentation.choiceStyle === 'grid'
-                ? 'Karty odpowiedzi'
-                : 'Lista odpowiedzi',
-          })}
-          tone={INDIGO_TONE}
-        />
-        {currentQuestion.illustration.type !== 'none' ? (
+    <>
+      <KangurMobileAiTutorCard context={tutorContext} />
+      <SectionCard
+        title={formatQuestionProgress(currentIndex + 1, item.questions.length, locale)}
+      >
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          <StatusPill
+            label={formatPointsLabel(currentQuestion.pointValue, locale)}
+            tone={WARNING_TONE}
+          />
           <StatusPill
             label={copy({
-              de: 'Mit Illustration',
-              en: 'Illustration included',
-              pl: 'Z ilustracją',
+              de:
+                currentQuestion.presentation.choiceStyle === 'grid'
+                  ? 'Antwortkarten'
+                  : 'Antwortliste',
+              en:
+                currentQuestion.presentation.choiceStyle === 'grid'
+                  ? 'Answer cards'
+                  : 'Answer list',
+              pl:
+                currentQuestion.presentation.choiceStyle === 'grid'
+                  ? 'Karty odpowiedzi'
+                  : 'Lista odpowiedzi',
             })}
-            tone={BASE_TONE}
+            tone={INDIGO_TONE}
           />
-        ) : null}
-      </View>
-      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700', lineHeight: 24 }}>
-        {currentQuestion.prompt}
-      </Text>
-      {currentQuestion.illustration.type !== 'none' ? (
-        <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
-          {copy({
-            de: 'Diese Frage nutzt zusatzliche Bildinhalte. Auf Mobil wird dazu die Textfassung gezeigt.',
-            en: 'This question uses extra illustration content. Mobile shows the text-first version here.',
-            pl: 'To pytanie korzysta z dodatkowej ilustracji. W mobile pokazujemy tutaj wersję tekstową.',
-          })}
-        </Text>
-      ) : null}
-      <View style={{ flexDirection: 'column', gap: 10 }}>
-        {currentQuestion.choices.map((choice) => (
-          <ChoiceButton
-            choice={choice}
-            disabled={showAnswer}
-            isCorrect={choice.label === currentQuestion.correctChoiceLabel}
-            isRevealed={showAnswer}
-            isSelected={choice.label === selectedLabel}
-            key={choice.label}
-            label={choice.label}
-            locale={locale}
-            onPress={() => handleSelect(choice.label)}
-          />
-        ))}
-      </View>
-      {showAnswer ? (
-        <View
-          style={{
-            backgroundColor: '#f8fafc',
-            borderColor: '#cbd5e1',
-            borderRadius: 20,
-            borderWidth: 1,
-            gap: 8,
-            padding: 16,
-          }}
-        >
-          <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '700' }}>
-            {selectedChoice?.label === currentQuestion.correctChoiceLabel
-              ? copy({
-                  de: 'Richtige Antwort',
-                  en: 'Correct answer',
-                  pl: 'Dobra odpowiedź',
-                })
-              : copy({
-                  de: 'Antwort geprüft',
-                  en: 'Answer reviewed',
-                  pl: 'Sprawdzona odpowiedź',
-                })}
-          </Text>
-          {selectedChoice ? (
-            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-              {
-                {
-                  de: `Gewahlt: ${selectedChoice.label}. ${selectedChoice.text}`,
-                  en: `Selected: ${selectedChoice.label}. ${selectedChoice.text}`,
-                  pl: `Wybrano: ${selectedChoice.label}. ${selectedChoice.text}`,
-                }[locale]
-              }
-            </Text>
-          ) : null}
-          {correctChoice ? (
-            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-              {
-                {
-                  de: `Richtig: ${correctChoice.label}. ${correctChoice.text}`,
-                  en: `Correct: ${correctChoice.label}. ${correctChoice.text}`,
-                  pl: `Poprawnie: ${correctChoice.label}. ${correctChoice.text}`,
-                }[locale]
-              }
-            </Text>
-          ) : null}
-          {currentQuestion.explanation?.trim() ? (
-            <Text style={{ color: '#334155', fontSize: 14, lineHeight: 20 }}>
-              {currentQuestion.explanation.trim()}
-            </Text>
-          ) : null}
-        </View>
-      ) : null}
-      <View style={{ flexDirection: 'column', gap: 10 }}>
-        <PrimaryButton
-          disabled={!isAnswered || showAnswer}
-          label={copy({
-            de: 'Antwort prüfen',
-            en: 'Reveal answer',
-            pl: 'Sprawdź odpowiedź',
-          })}
-          onPress={handleRevealAnswer}
-        />
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <View style={{ flex: 1 }}>
-            <PrimaryButton
-              disabled={currentIndex === 0}
+          {currentQuestion.illustration.type !== 'none' ? (
+            <StatusPill
               label={copy({
-                de: 'Poprzednie',
-                en: 'Previous',
-                pl: 'Poprzednie',
+                de: 'Mit Illustration',
+                en: 'Illustration included',
+                pl: 'Z ilustracją',
               })}
-              onPress={() => {
-                setCurrentIndex((previous) => Math.max(0, previous - 1));
-              }}
               tone={BASE_TONE}
             />
-          </View>
-          <View style={{ flex: 1 }}>
-            <PrimaryButton
-              disabled={!showAnswer}
-              label={
-                currentIndex === item.questions.length - 1
-                  ? copy({
-                      de: 'Test beenden',
-                      en: 'Finish the test',
-                      pl: 'Zakończ test',
-                    })
-                  : copy({
-                      de: 'Nächstes',
-                      en: 'Next question',
-                      pl: 'Następne pytanie',
-                    })
-              }
-              onPress={handleNext}
-              tone={SUCCESS_TONE}
+          ) : null}
+        </View>
+        <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700', lineHeight: 24 }}>
+          {currentQuestion.prompt}
+        </Text>
+        {currentQuestion.illustration.type !== 'none' ? (
+          <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
+            {copy({
+              de: 'Diese Frage nutzt zusatzliche Bildinhalte. Auf Mobil wird dazu die Textfassung gezeigt.',
+              en: 'This question uses extra illustration content. Mobile shows the text-first version here.',
+              pl: 'To pytanie korzysta z dodatkowej ilustracji. W mobile pokazujemy tutaj wersję tekstową.',
+            })}
+          </Text>
+        ) : null}
+        <View style={{ flexDirection: 'column', gap: 10 }}>
+          {currentQuestion.choices.map((choice) => (
+            <ChoiceButton
+              choice={choice}
+              disabled={showAnswer}
+              isCorrect={choice.label === currentQuestion.correctChoiceLabel}
+              isRevealed={showAnswer}
+              isSelected={choice.label === selectedLabel}
+              key={choice.label}
+              label={choice.label}
+              locale={locale}
+              onPress={() => handleSelect(choice.label)}
             />
+          ))}
+        </View>
+        {showAnswer ? (
+          <View
+            style={{
+              backgroundColor: '#f8fafc',
+              borderColor: '#cbd5e1',
+              borderRadius: 20,
+              borderWidth: 1,
+              gap: 8,
+              padding: 16,
+            }}
+          >
+            <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '700' }}>
+              {selectedChoice?.label === currentQuestion.correctChoiceLabel
+                ? copy({
+                    de: 'Richtige Antwort',
+                    en: 'Correct answer',
+                    pl: 'Dobra odpowiedź',
+                  })
+                : copy({
+                    de: 'Antwort geprüft',
+                    en: 'Answer reviewed',
+                    pl: 'Sprawdzona odpowiedź',
+                  })}
+            </Text>
+            {selectedChoice ? (
+              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {
+                  {
+                    de: `Gewahlt: ${selectedChoice.label}. ${selectedChoice.text}`,
+                    en: `Selected: ${selectedChoice.label}. ${selectedChoice.text}`,
+                    pl: `Wybrano: ${selectedChoice.label}. ${selectedChoice.text}`,
+                  }[locale]
+                }
+              </Text>
+            ) : null}
+            {correctChoice ? (
+              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {
+                  {
+                    de: `Richtig: ${correctChoice.label}. ${correctChoice.text}`,
+                    en: `Correct: ${correctChoice.label}. ${correctChoice.text}`,
+                    pl: `Poprawnie: ${correctChoice.label}. ${correctChoice.text}`,
+                  }[locale]
+                }
+              </Text>
+            ) : null}
+            {currentQuestion.explanation?.trim() ? (
+              <Text style={{ color: '#334155', fontSize: 14, lineHeight: 20 }}>
+                {currentQuestion.explanation.trim()}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
+        <View style={{ flexDirection: 'column', gap: 10 }}>
+          <PrimaryButton
+            disabled={!isAnswered || showAnswer}
+            label={copy({
+              de: 'Antwort prüfen',
+              en: 'Reveal answer',
+              pl: 'Sprawdź odpowiedź',
+            })}
+            onPress={handleRevealAnswer}
+          />
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flex: 1 }}>
+              <PrimaryButton
+                disabled={currentIndex === 0}
+                label={copy({
+                  de: 'Poprzednie',
+                  en: 'Previous',
+                  pl: 'Poprzednie',
+                })}
+                onPress={() => {
+                  setCurrentIndex((previous) => Math.max(0, previous - 1));
+                }}
+                tone={BASE_TONE}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <PrimaryButton
+                disabled={!showAnswer}
+                label={
+                  currentIndex === item.questions.length - 1
+                    ? copy({
+                        de: 'Test beenden',
+                        en: 'Finish the test',
+                        pl: 'Zakończ test',
+                      })
+                    : copy({
+                        de: 'Nächstes',
+                        en: 'Next question',
+                        pl: 'Następne pytanie',
+                      })
+                }
+                onPress={handleNext}
+                tone={SUCCESS_TONE}
+              />
+            </View>
           </View>
         </View>
-      </View>
-    </SectionCard>
+      </SectionCard>
+    </>
   );
 }
 
@@ -816,6 +913,16 @@ export function KangurTestsScreen(): React.JSX.Element {
   const activeSuite = suites.find((entry) => entry.suite.id === activeSuiteId) ?? null;
   const missingFocusedSuite =
     focusToken !== null && focusedSuiteId === null && activeSuite === null && !isLoading;
+  const catalogTutorContext = {
+    contentId: 'test:catalog',
+    focusKind: 'screen' as const,
+    surface: 'test' as const,
+    title: copy({
+      de: 'Tests',
+      en: 'Tests',
+      pl: 'Testy',
+    }),
+  };
 
   return (
     <SafeAreaView
@@ -900,6 +1007,8 @@ export function KangurTestsScreen(): React.JSX.Element {
             />
           </View>
         </SectionCard>
+
+        {!activeSuite ? <KangurMobileAiTutorCard context={catalogTutorContext} /> : null}
 
         {missingFocusedSuite ? (
           <SectionCard

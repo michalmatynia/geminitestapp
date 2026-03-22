@@ -1,7 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState, type KeyboardEventHandler } from 'react';
 
@@ -23,6 +23,12 @@ import { useKangurLessonPanelCtaSync } from '@/features/kangur/ui/hooks/useKangu
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
+import {
+  LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME,
+  LESSONS_SELECTOR_NAV_ICON_BUTTON_CLASSNAME,
+  LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME,
+  LESSONS_SELECTOR_NAV_PILLS_ROW_CLASSNAME,
+} from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 import { cn } from '@/features/kangur/shared/utils';
 
 export type LessonSlide = {
@@ -374,70 +380,60 @@ export default function LessonSlideSection({
       size='sm'
       variant='surface'
       className={cn(
-        'hidden w-full justify-center sm:inline-flex sm:w-auto sm:justify-start sm:justify-self-start',
+        'hidden sm:inline-flex',
+        LESSONS_SELECTOR_NAV_ICON_BUTTON_CLASSNAME,
+        isCoarsePointer && 'min-h-11 min-w-11 px-5',
         className
       )}
+      data-testid='lesson-slide-back-button'
       data-kangur-lesson-back='true'
       data-kangur-lesson-back-label={backToTopicsLabel}
+      aria-label={backToTopicsLabel}
+      title={backToTopicsLabel}
     >
-      <ChevronLeft className='w-4 h-4' aria-hidden='true' />
-      {backToTopicsLabel}
+      <ChevronsLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
     </KangurButton>
   );
-  const renderArrowNavigation = (className?: string): React.JSX.Element | null => {
-    if (!shouldRenderArrowNavigation) {
-      return null;
-    }
-
-    return (
-      <div
-        className={cn(
-          'flex w-full items-center justify-center gap-2 sm:w-auto sm:justify-self-center',
-          className
-        )}
-        role='group'
-        aria-label={panelsNavigationLabel}
+  const navigationIconButtonClassName = cn(
+    LESSONS_SELECTOR_NAV_ICON_BUTTON_CLASSNAME,
+    'disabled:opacity-20',
+    isCoarsePointer && 'min-h-11 min-w-11 px-5'
+  );
+  const arrowNavigationButtons = shouldRenderArrowNavigation ? (
+    <>
+      <KangurButton
+        onClick={handlePreviousSlideCta}
+        disabled={isPrevDisabled}
+        aria-label={previousPanelLabel}
+        aria-keyshortcuts='ArrowLeft PageUp'
+        aria-controls={slidePanelId}
+        className={navigationIconButtonClassName}
+        data-testid='lesson-slide-prev-button'
+        size='sm'
+        type='button'
+        title={previousPanelLabel}
+        variant='surface'
       >
-        <KangurButton
-          onClick={handlePreviousSlideCta}
-          disabled={isPrevDisabled}
-          aria-label={previousPanelLabel}
-          aria-keyshortcuts='ArrowLeft PageUp'
-          aria-controls={slidePanelId}
-          className={cn(
-            'justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-20',
-            isCoarsePointer && 'min-h-11 min-w-11 px-5'
-          )}
-          data-testid='lesson-slide-prev-button'
-          size='sm'
-          type='button'
-          title={previousPanelLabel}
-          variant='surface'
-        >
-          <ChevronLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-        </KangurButton>
+        <ChevronLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+      </KangurButton>
 
-        <KangurButton
-          onClick={handleNextSlideCta}
-          disabled={isNextDisabled}
-          aria-label={nextPanelLabel}
-          aria-keyshortcuts='ArrowRight PageDown'
-          aria-controls={slidePanelId}
-          className={cn(
-            'justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-20',
-            isCoarsePointer && 'min-h-11 min-w-11 px-5'
-          )}
-          data-testid='lesson-slide-next-button'
-          size='sm'
-          type='button'
-          title={nextPanelLabel}
-          variant='surface'
-        >
-          <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-        </KangurButton>
-      </div>
-    );
-  };
+      <KangurButton
+        onClick={handleNextSlideCta}
+        disabled={isNextDisabled}
+        aria-label={nextPanelLabel}
+        aria-keyshortcuts='ArrowRight PageDown'
+        aria-controls={slidePanelId}
+        className={navigationIconButtonClassName}
+        data-testid='lesson-slide-next-button'
+        size='sm'
+        type='button'
+        title={nextPanelLabel}
+        variant='surface'
+      >
+        <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+      </KangurButton>
+    </>
+  ) : null;
 
   return (
     <div
@@ -448,14 +444,21 @@ export default function LessonSlideSection({
       )}
       onKeyDownCapture={handleKeyDownCapture}
     >
-      <div className='flex w-full flex-col kangur-panel-gap sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center'>
-        {renderBackButton()}
-
-        {shouldRenderArrowNavigation ? renderArrowNavigation() : <div className='hidden sm:block' />}
-
+      <div
+        className={LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME}
+        data-testid='lesson-slide-navigation-shell'
+      >
+        <div
+          className={cn(LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME, 'hidden sm:flex')}
+          role='group'
+          aria-label={panelsNavigationLabel}
+        >
+          {renderBackButton()}
+          {arrowNavigationButtons}
+        </div>
         {shouldRenderNavigationPills ? (
           <nav
-            className='flex w-full flex-wrap items-center justify-center gap-2'
+            className={LESSONS_SELECTOR_NAV_PILLS_ROW_CLASSNAME}
             aria-label='Nawigacja slajdów'
             aria-describedby={slideKeyboardHintId}
           >
@@ -563,7 +566,13 @@ export default function LessonSlideSection({
 
       {isMobile && shouldRenderArrowNavigation ? (
         <div className='flex w-full flex-col items-center gap-2'>
-          {renderArrowNavigation()}
+          <div
+            className={LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME}
+            role='group'
+            aria-label={panelsNavigationLabel}
+          >
+            {arrowNavigationButtons}
+          </div>
         </div>
       ) : null}
     </div>

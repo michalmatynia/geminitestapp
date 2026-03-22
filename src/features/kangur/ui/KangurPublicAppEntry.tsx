@@ -6,6 +6,7 @@ import type {
   KangurStorefrontThemeSettingsSnapshot,
 } from '@/features/kangur/storefront-appearance-settings';
 import { KangurAppLoader } from '@/features/kangur/ui/components/KangurAppLoader';
+import { KangurTopNavigationSkeleton } from '@/features/kangur/ui/components/KangurTopNavigationSkeleton';
 
 const LazyKangurPublicApp = React.lazy(() =>
   import('./KangurPublicApp').then((mod) => ({
@@ -25,7 +26,12 @@ export function KangurPublicAppEntry({
 
   return (
     <React.Suspense
-      fallback={<KangurAppLoader visible={true} />}
+      fallback={(
+        <>
+          <KangurTopNavigationSkeleton />
+          <KangurAppLoader offsetTopBar visible={true} />
+        </>
+      )}
     >
       <LazyKangurPublicApp
         basePath={basePath}

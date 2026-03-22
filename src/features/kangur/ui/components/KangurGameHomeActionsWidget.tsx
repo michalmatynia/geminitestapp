@@ -25,7 +25,6 @@ type HomeAction = {
   tone: HomeActionTone;
   href?: string;
   targetPageKey?: string;
-  transitionAcknowledgeMs?: number;
   transitionSourceId?: string;
   onClick?: () => void;
   disabled?: boolean;
@@ -117,7 +116,6 @@ function KangurHomeActionCard({
   const actionLabel = action.label;
   const actionOnClick = action.onClick;
   const actionSymbol = action.symbol;
-  const actionTransitionAcknowledgeMs = action.transitionAcknowledgeMs;
   const actionTransitionSourceId = action.transitionSourceId;
   const actionTargetPageKey = action.targetPageKey;
   const actionTone = action.tone;
@@ -239,7 +237,6 @@ function KangurHomeActionCard({
           data-doc-id={docId}
           aria-label={actionLabel}
           targetPageKey={actionTargetPageKey}
-          transitionAcknowledgeMs={actionTransitionAcknowledgeMs}
           transitionSourceId={actionTransitionSourceId}
         >
           {content}
@@ -283,7 +280,6 @@ export function KangurGameHomeActionsWidget({
       tone: 'neutral',
       href: createPageUrl('Lessons', basePath),
       targetPageKey: 'Lessons',
-      transitionAcknowledgeMs: 110,
       transitionSourceId: 'game-home-action:lessons',
     },
     {
@@ -303,7 +299,6 @@ export function KangurGameHomeActionsWidget({
       tone: 'sky',
       href: createPageUrl('Duels', basePath),
       targetPageKey: 'Duels',
-      transitionAcknowledgeMs: 110,
       transitionSourceId: 'game-home-action:duels',
     },
     {

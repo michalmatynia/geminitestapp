@@ -14,6 +14,7 @@ import { cn } from '@/features/kangur/shared/utils';
 
 type KangurPageIntroCardProps = {
   accent?: KangurAccent;
+  backButtonContent?: ReactNode;
   backButtonLabel?: string;
   backButtonTestId?: string;
   className?: string;
@@ -35,6 +36,7 @@ type KangurPageIntroCardProps = {
 
 type KangurPageIntroCardContextValue = {
   accent: KangurAccent;
+  backButtonContent?: ReactNode;
   backButtonLabel: string;
   backButtonTestId?: string;
   description?: ReactNode;
@@ -125,11 +127,15 @@ function KangurPageIntroDescription(): React.JSX.Element | null {
 
 function KangurPageIntroBackButton(): React.JSX.Element | null {
   const isCoarsePointer = useKangurCoarsePointer();
-  const { backButtonLabel, backButtonTestId, onBack, showBackButton } =
+  const { backButtonContent, backButtonLabel, backButtonTestId, onBack, showBackButton } =
     useKangurPageIntroCardContext();
 
   if (!showBackButton) {
     return null;
+  }
+
+  if (backButtonContent) {
+    return <div className='mt-4'>{backButtonContent}</div>;
   }
 
   return (
@@ -153,6 +159,7 @@ function KangurPageIntroBackButton(): React.JSX.Element | null {
 
 export function KangurPageIntroCard({
   accent = 'slate',
+  backButtonContent,
   backButtonLabel = 'Wróć do poprzedniej strony',
   backButtonTestId,
   className,
@@ -175,6 +182,7 @@ export function KangurPageIntroCard({
   const panelTestId = testId;
   const contextValue: KangurPageIntroCardContextValue = {
     accent,
+    backButtonContent,
     backButtonLabel,
     backButtonTestId,
     description,

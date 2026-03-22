@@ -7,6 +7,10 @@ import { useKangurLessonSubsectionNavigationActive } from '@/features/kangur/ui/
 import { useOptionalKangurLessonsRuntime } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { KangurButton, KangurPanelIntro } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import {
+  LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME,
+  LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME,
+} from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -44,14 +48,14 @@ export function KangurLessonNavigationWidget({
   }
 
   const navClassName = cn(
-    'flex w-full flex-col gap-2',
+    LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME,
     align === 'start' ? 'kangur-lesson-nav-inline' : null
   );
   const buttonGroupClassName = cn(
-    'flex w-full flex-col items-stretch gap-2 sm:flex-row sm:items-center',
+    LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME,
     align === 'start'
-      ? 'justify-start'
-      : 'justify-center sm:w-fit sm:self-center'
+      ? 'justify-start sm:w-full sm:self-auto'
+      : null
   );
 
   return (

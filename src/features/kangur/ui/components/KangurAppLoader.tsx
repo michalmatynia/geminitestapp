@@ -8,6 +8,7 @@ import type { CSSProperties } from 'react';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
 
 type KangurAppLoaderProps = {
+  offsetTopBar?: boolean;
   visible: boolean;
   title?: string;
   status?: string;
@@ -16,6 +17,7 @@ type KangurAppLoaderProps = {
 };
 
 export function KangurAppLoader({
+  offsetTopBar = false,
   visible,
   title,
   status,
@@ -204,8 +206,11 @@ export function KangurAppLoader({
           aria-live='polite'
           aria-atomic='true'
           role='status'
-          className='pointer-events-none fixed inset-0 z-[90] flex items-center justify-center overflow-hidden px-4'
+          className={offsetTopBar
+            ? 'pointer-events-none fixed inset-x-0 bottom-0 top-[var(--kangur-top-bar-height,88px)] z-[90] flex items-center justify-center overflow-hidden px-4'
+            : 'pointer-events-none fixed inset-0 z-[90] flex items-center justify-center overflow-hidden px-4'}
           data-testid='kangur-app-loader'
+          data-loader-offset-top-bar={offsetTopBar ? 'true' : 'false'}
           initial={allowIntroAnimation ? { opacity: 0 } : { opacity: 1 }}
           animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1 }}
           exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}

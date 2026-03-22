@@ -33,7 +33,6 @@ import {
 import { useKangurLessonTemplates } from '@/features/kangur/ui/hooks/useKangurLessonTemplates';
 import {
   ACTIVE_LESSON_HEADER_SCROLL_MAX_FRAMES,
-  LESSONS_ROUTE_ACKNOWLEDGE_MS,
 } from './Lessons.constants';
 import {
   getLessonAssignmentTimestamp,
@@ -280,7 +279,6 @@ export function useLessonsLogic() {
 
   const handleGoBack = (): void => {
     routeNavigator.back({
-      acknowledgeMs: LESSONS_ROUTE_ACKNOWLEDGE_MS,
       fallbackHref: getKangurHomeHref(basePath),
       fallbackPageKey: 'Game',
       sourceId: 'lessons:list-back',

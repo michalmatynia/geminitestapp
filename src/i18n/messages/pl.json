@@ -1332,9 +1332,9 @@
       "new": "Nowa",
       "noSavedPractice": "Brak zapisanej praktyki",
       "mastered": "Opanowane {percent}%",
-      "completedBest": "Ukonczono {completions}× · najlepszy wynik {percent}%",
+      "completedBest": "Ukończono {completions}× · najlepszy wynik {percent}%",
       "inProgress": "W trakcie {percent}%",
-      "completedLast": "Ukonczono {completions}× · ostatni wynik {percent}%",
+      "completedLast": "Ukończono {completions}× · ostatni wynik {percent}%",
       "revisit": "Powtorz {percent}%"
     },
     "libraryCard": {

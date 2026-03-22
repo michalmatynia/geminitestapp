@@ -10,7 +10,6 @@ export const LESSONS_CARD_TRANSITION = {
   ease: LESSONS_CARD_EASE,
 } as const;
 export const LESSONS_CARD_STAGGER_DELAY = 0.06;
-export const LESSONS_ROUTE_ACKNOWLEDGE_MS = 110;
 export const ACTIVE_LESSON_HEADER_SCROLL_MAX_FRAMES = 18;
 export const LESSON_NAV_ANCHOR_ID = 'kangur-lesson-navigation';
 
@@ -32,3 +31,14 @@ export const LESSONS_ACTIVE_LAYOUT_CLASSNAME = cn(
 export const LESSONS_ACTIVE_SECTION_CLASSNAME = 'w-full max-w-5xl';
 
 export const LESSONS_ACTIVE_STACK_GAP_CLASSNAME = KANGUR_LESSON_PANEL_GAP_CLASSNAME;
+
+export const LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME = 'flex w-full flex-col items-center gap-2';
+
+export const LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME =
+  'flex w-full flex-wrap items-center justify-center gap-2 sm:w-fit sm:self-center';
+
+export const LESSONS_SELECTOR_NAV_PILLS_ROW_CLASSNAME =
+  'flex w-full flex-wrap items-center justify-center gap-2';
+
+export const LESSONS_SELECTOR_NAV_ICON_BUTTON_CLASSNAME =
+  'justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)]';

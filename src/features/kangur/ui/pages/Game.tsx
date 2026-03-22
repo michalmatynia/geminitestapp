@@ -18,15 +18,13 @@ import { KangurPriorityAssignments } from '@/features/kangur/ui/components/Kangu
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import {
-  GAME_HOME_ACTIONS_COLUMN_CLASSNAME,
-  GAME_HOME_CENTERED_SECTION_CLASSNAME,
   GAME_HOME_LAYOUT_CLASSNAME,
-  GAME_HOME_LEADERBOARD_COLUMN_CLASSNAME,
-  GAME_HOME_PLAYER_PROGRESS_COLUMN_CLASSNAME,
-  GAME_HOME_PROGRESS_GRID_CLASSNAME,
-  GAME_HOME_SECTION_CLASSNAME,
   GAME_PAGE_STANDARD_CONTAINER_CLASSNAME,
 } from '@/features/kangur/ui/pages/GameHome.constants';
+import {
+  KangurGameHomeSections,
+  resolveKangurGameHomeVisibility,
+} from '@/features/kangur/ui/pages/GameHome.layout';
 const Leaderboard = dynamic(() => import('@/features/kangur/ui/components/Leaderboard'));
 const PlayerProgressCard = dynamic(() => import('@/features/kangur/ui/components/PlayerProgressCard'));
 const XpToast = dynamic(() => import('@/features/kangur/ui/components/XpToast'));
@@ -119,8 +117,6 @@ const GAME_MOBILE_CHROME_SCREENS = new Set<KangurGameScreen>([
   'playing',
   'result',
 ]);
-const GAME_MOBILE_BACK_TO_LESSONS_ACKNOWLEDGE_MS = 110;
-
 const focusGameScreenHeading = (heading: HTMLHeadingElement | null): void => {
   if (!heading) {
     return;
@@ -152,12 +148,15 @@ function GameContent(): React.JSX.Element {
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const canAccessParentAssignments =
     runtime.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
-  const hideLearnerWidgetsForParent = user?.actorType === 'parent' && !user?.activeLearner?.id;
-  const hasMeaningfulProgress =
-    progress.totalXp > 0 ||
-    progress.gamesPlayed > 0 ||
-    progress.lessonsCompleted > 0 ||
-    (progress.dailyQuestsCompleted ?? 0) > 0;
+  const homeVisibility = useMemo(
+    () =>
+      resolveKangurGameHomeVisibility({
+        canAccessParentAssignments,
+        progress,
+        user,
+      }),
+    [canAccessParentAssignments, progress, user]
+  );
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('home');
   const routeNavigator = useKangurRouteNavigator();
   const prefersReducedMotion = useReducedMotion();
@@ -330,6 +329,10 @@ function GameContent(): React.JSX.Element {
     },
     enabled: user?.actorType === 'learner',
   });
+  const homeScreenMotionProps = useMemo(
+    () => createKangurPageTransitionMotionProps(true),
+    []
+  );
   const screenMotionProps = useMemo(
     () => createKangurPageTransitionMotionProps(prefersReducedMotion),
     [prefersReducedMotion]
@@ -469,7 +472,6 @@ function GameContent(): React.JSX.Element {
 
   const handleBackToLessons = useCallback((): void => {
     routeNavigator.push(lessonsHref, {
-      acknowledgeMs: GAME_MOBILE_BACK_TO_LESSONS_ACKNOWLEDGE_MS,
       pageKey: 'Lessons',
       sourceId: 'game-phone-simulation:back-to-lessons',
     });
@@ -530,7 +532,7 @@ function GameContent(): React.JSX.Element {
   ): React.JSX.Element => (
     <motion.div
       key={screenKey}
-      {...screenMotionProps}
+      {...(screenKey === 'home' ? homeScreenMotionProps : screenMotionProps)}
       className={cn('w-full min-w-0 max-w-full', className)}
       data-testid={testId}
       ref={screenRef}
@@ -641,136 +643,105 @@ function GameContent(): React.JSX.Element {
               renderScreen(
                 'home',
                 GAME_HOME_LAYOUT_CLASSNAME,
-                <>
-                  {canAccessParentAssignments ? (
-                    <section
-                      className={GAME_HOME_SECTION_CLASSNAME}
-                      id='kangur-home-parent-spotlight'
-                      aria-labelledby='kangur-home-parent-assignment-heading'
-                    >
-                      <h3 id='kangur-home-parent-assignment-heading' className='sr-only'>
-                        {translations('home.parentSuggestionsHeading')}
-                      </h3>
-                      <KangurAssignmentSpotlight
-                        basePath={basePath}
-                        enabled={canAccessParentAssignments}
-                      />
-                    </section>
-                  ) : null}
-                  <div
-                    className={GAME_HOME_ACTIONS_COLUMN_CLASSNAME}
-                    data-testid='kangur-home-actions-column'
-                  >
-                    <div id='kangur-home-actions' ref={homeActionsRef}>
-                      <KangurGameHomeActionsWidget hideWhenScreenMismatch={false} />
-                    </div>
-                    <KangurGameHomeDuelsInvitesWidget hideWhenScreenMismatch={false} />
-                    {hideLearnerWidgetsForParent ? (
-                      <KangurEmptyState
-                        align='left'
-                        className='text-left'
-                        padding='md'
-                        title={translations('home.missingLearnerTitle')}
-                        description={translations('home.missingLearnerDescription')}
-                      >
-                        <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} w-full sm:items-center`}>
-                          <KangurButton
-                            asChild
-                            className='w-full sm:w-auto'
-                            size='sm'
-                            variant='primary'
-                            data-doc-id='home_parent_add_learner'
-                          >
-                            <Link
-                              href={createPageUrl('ParentDashboard', basePath)}
-                              targetPageKey='ParentDashboard'
-                              transitionAcknowledgeMs={110}
-                              transitionSourceId='game-home-parent-add-learner'
+                <KangurGameHomeSections
+                  visibility={homeVisibility}
+                  parentSpotlight={(
+                    <KangurAssignmentSpotlight
+                      basePath={basePath}
+                      enabled={canAccessParentAssignments}
+                    />
+                  )}
+                  parentSpotlightSectionProps={{
+                    headingId: 'kangur-home-parent-assignment-heading',
+                    headingLabel: translations('home.parentSuggestionsHeading'),
+                    id: 'kangur-home-parent-spotlight',
+                  }}
+                  actionsColumn={(
+                    <>
+                      <div id='kangur-home-actions' ref={homeActionsRef}>
+                        <KangurGameHomeActionsWidget hideWhenScreenMismatch={false} />
+                      </div>
+                      <KangurGameHomeDuelsInvitesWidget hideWhenScreenMismatch={false} />
+                      {homeVisibility.hideLearnerWidgetsForParent ? (
+                        <KangurEmptyState
+                          align='left'
+                          className='text-left'
+                          padding='md'
+                          title={translations('home.missingLearnerTitle')}
+                          description={translations('home.missingLearnerDescription')}
+                        >
+                          <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} w-full sm:items-center`}>
+                            <KangurButton
+                              asChild
+                              className='w-full sm:w-auto'
+                              size='sm'
+                              variant='primary'
+                              data-doc-id='home_parent_add_learner'
                             >
-                              {translations('home.addLearner')}
-                            </Link>
-                          </KangurButton>
-                        </div>
-                      </KangurEmptyState>
-                    ) : null}
-                  </div>
-
-                  {!hideLearnerWidgetsForParent ? (
-                    <section
-                      ref={homeQuestRef}
-                      className={GAME_HOME_CENTERED_SECTION_CLASSNAME}
-                      id='kangur-home-quest'
-                      aria-labelledby='kangur-home-quest-heading'
-                    >
-                      <h3 id='kangur-home-quest-heading' className='sr-only'>
-                        {translations('home.questHeading')}
-                      </h3>
-                      <KangurGameHomeQuestWidget hideWhenScreenMismatch={false} />
-                    </section>
-                  ) : null}
-
-                  {!hideLearnerWidgetsForParent && hasMeaningfulProgress ? (
-                    <section
-                      className={GAME_HOME_SECTION_CLASSNAME}
-                      id='kangur-home-summary'
-                      aria-labelledby='kangur-home-hero-heading'
-                    >
-                      <h3 id='kangur-home-hero-heading' className='sr-only'>
-                        {translations('home.summaryHeading')}
-                      </h3>
-                      <KangurGameHomeHeroWidget
-                        hideWhenScreenMismatch={false}
-                        showIntro={false}
-                        showAssignmentSpotlight={false}
-                      />
-                    </section>
-                  ) : null}
-
-                  {canAccessParentAssignments ? (
-                    <section
-                      ref={homeAssignmentsRef}
-                      className={GAME_HOME_CENTERED_SECTION_CLASSNAME}
-                      id='kangur-home-priority-assignments'
-                      aria-labelledby='kangur-home-assignments-heading'
-                    >
-                      <h3 id='kangur-home-assignments-heading' className='sr-only'>
-                        {translations('home.priorityAssignmentsHeading')}
-                      </h3>
-                      <KangurPriorityAssignments
-                        basePath={basePath}
-                        enabled={canAccessParentAssignments}
-                        title={translations('home.priorityAssignmentsTitle')}
-                        emptyLabel={translations('home.priorityAssignmentsEmpty')}
-                      />
-                    </section>
-                  ) : null}
-
-                  {!hideLearnerWidgetsForParent ? (
-                    <section
-                      className={GAME_HOME_PROGRESS_GRID_CLASSNAME}
-                      id='kangur-home-progress'
-                      aria-labelledby='kangur-home-progress-heading'
-                    >
-                      <h3 id='kangur-home-progress-heading' className='sr-only'>
-                        {translations('home.progressHeading')}
-                      </h3>
-                      <div
-                        ref={homeLeaderboardRef}
-                        id='kangur-home-leaderboard'
-                        className={GAME_HOME_LEADERBOARD_COLUMN_CLASSNAME}
-                      >
-                        <Leaderboard />
-                      </div>
-                      <div
-                        ref={homeProgressRef}
-                        id='kangur-home-player-progress'
-                        className={GAME_HOME_PLAYER_PROGRESS_COLUMN_CLASSNAME}
-                      >
-                        <PlayerProgressCard progress={progress} />
-                      </div>
-                    </section>
-                  ) : null}
-                </>,
+                              <Link
+                                href={createPageUrl('ParentDashboard', basePath)}
+                                targetPageKey='ParentDashboard'
+                                transitionAcknowledgeMs={110}
+                                transitionSourceId='game-home-parent-add-learner'
+                              >
+                                {translations('home.addLearner')}
+                              </Link>
+                            </KangurButton>
+                          </div>
+                        </KangurEmptyState>
+                      ) : null}
+                    </>
+                  )}
+                  actionsColumnProps={{ testId: 'kangur-home-actions-column' }}
+                  quest={<KangurGameHomeQuestWidget hideWhenScreenMismatch={false} />}
+                  questSectionProps={{
+                    headingId: 'kangur-home-quest-heading',
+                    headingLabel: translations('home.questHeading'),
+                    id: 'kangur-home-quest',
+                    ref: homeQuestRef,
+                  }}
+                  summary={(
+                    <KangurGameHomeHeroWidget
+                      hideWhenScreenMismatch={false}
+                      showIntro={false}
+                      showAssignmentSpotlight={false}
+                    />
+                  )}
+                  summarySectionProps={{
+                    headingId: 'kangur-home-hero-heading',
+                    headingLabel: translations('home.summaryHeading'),
+                    id: 'kangur-home-summary',
+                  }}
+                  assignments={(
+                    <KangurPriorityAssignments
+                      basePath={basePath}
+                      enabled={canAccessParentAssignments}
+                      title={translations('home.priorityAssignmentsTitle')}
+                      emptyLabel={translations('home.priorityAssignmentsEmpty')}
+                    />
+                  )}
+                  assignmentsSectionProps={{
+                    headingId: 'kangur-home-assignments-heading',
+                    headingLabel: translations('home.priorityAssignmentsHeading'),
+                    id: 'kangur-home-priority-assignments',
+                    ref: homeAssignmentsRef,
+                  }}
+                  leaderboard={<Leaderboard />}
+                  leaderboardColumnProps={{
+                    id: 'kangur-home-leaderboard',
+                    ref: homeLeaderboardRef,
+                  }}
+                  playerProgress={<PlayerProgressCard progress={progress} />}
+                  playerProgressColumnProps={{
+                    id: 'kangur-home-player-progress',
+                    ref: homeProgressRef,
+                  }}
+                  progressSectionProps={{
+                    headingId: 'kangur-home-progress-heading',
+                    headingLabel: translations('home.progressHeading'),
+                    id: 'kangur-home-progress',
+                  }}
+                />,
                 undefined,
                 'kangur-game-home-layout'
               )

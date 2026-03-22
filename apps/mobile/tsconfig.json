@@ -5,7 +5,12 @@
       "react",
       "react-native"
     ],
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "../../src/*"
+      ]
+    }
   },
   "include": [
     "app/**/*",

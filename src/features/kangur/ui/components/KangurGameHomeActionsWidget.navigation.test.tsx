@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   localeMock,
@@ -96,11 +96,10 @@ import { KangurGameHomeActionsWidget } from './KangurGameHomeActionsWidget';
 describe('KangurGameHomeActionsWidget navigation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
     localeMock.mockReturnValue('en');
     pathnameMock.mockReturnValue('/en/kangur');
     startRouteTransitionMock.mockReturnValue({
-      acknowledgeMs: 110,
+      acknowledgeMs: 0,
       started: true,
     });
     useOptionalKangurRouteTransitionStateMock.mockReturnValue(null);
@@ -125,25 +124,16 @@ describe('KangurGameHomeActionsWidget navigation', () => {
     });
   });
 
-  afterEach(() => {
-    vi.runOnlyPendingTimers();
-    vi.useRealTimers();
-  });
-
   it('navigates the lessons home action to the locale-prefixed Lessons route on the first click', () => {
     render(<KangurGameHomeActionsWidget />);
 
     fireEvent.click(screen.getByRole('link', { name: 'Lessons' }));
 
     expect(startRouteTransitionMock).toHaveBeenCalledWith({
-      acknowledgeMs: 110,
       href: '/en/kangur/lessons',
       pageKey: 'Lessons',
       sourceId: 'game-home-action:lessons',
     });
-    expect(routerPushMock).not.toHaveBeenCalled();
-
-    vi.advanceTimersByTime(110);
 
     expect(routerPushMock).toHaveBeenCalledWith('/en/kangur/lessons', { scroll: false });
   });

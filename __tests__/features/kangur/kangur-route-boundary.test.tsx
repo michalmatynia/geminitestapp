@@ -14,6 +14,10 @@ vi.mock('@/features/kangur/ui/KangurFeatureRouteShell', () => ({
 
 vi.mock('@/features/kangur/server/storefront-appearance', () => ({
   getKangurStorefrontDefaultMode: async () => 'default',
+  getKangurStorefrontInitialState: async () => ({
+    initialMode: 'default',
+    initialThemeSettings: null,
+  }),
 }));
 
 import KangurLayout from '@/app/(frontend)/kangur/layout';

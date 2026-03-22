@@ -54,7 +54,6 @@ import {
   parseKangurTestQuestionStore,
 } from '@/features/kangur/test-questions';
 
-const TESTS_ROUTE_ACKNOWLEDGE_MS = 110;
 const TESTS_MAIN_ID = 'kangur-tests-main';
 const ACTIVE_TESTS_SCROLL_MAX_FRAMES = 18;
 const ACTIVE_TESTS_ANCHOR_ID = 'kangur-tests-active-intro';
@@ -320,7 +319,6 @@ export default function Tests(): React.JSX.Element {
 
   const handleGoBack = (): void => {
     routeNavigator.back({
-      acknowledgeMs: TESTS_ROUTE_ACKNOWLEDGE_MS,
       fallbackHref: getKangurHomeHref(basePath),
       fallbackPageKey: 'Game',
       sourceId: 'tests:list-back',

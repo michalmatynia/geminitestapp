@@ -43,6 +43,7 @@ import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurSto
 
 const LANGUAGE_SWITCHER_SOURCE_ID = 'kangur-language-switcher';
 const LANGUAGE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
+const HARD_NAVIGATION_RECOVERY_TIMEOUT_MS = 1_500;
 const ENABLED_LOCALES = DEFAULT_SITE_I18N_CONFIG.locales.filter((locale) => locale.enabled);
 const DEFAULT_SITE_LOCALE = normalizeSiteLocale(DEFAULT_SITE_I18N_CONFIG.defaultLocale);
 
@@ -247,7 +248,9 @@ export function KangurLanguageSwitcher({
   const queryClient = useContext(QueryClientContext);
   const [open, setOpen] = useState(false);
   const [announcement, setAnnouncement] = useState<string | null>(null);
+  const [hardNavigationPendingLocale, setHardNavigationPendingLocale] = useState<string | null>(null);
   const warmedLocaleCodesRef = useRef<Set<string>>(new Set());
+  const hardNavigationRecoveryTimeoutRef = useRef<number | null>(null);
 
   const currentLocale = normalizeSiteLocale(locale);
   const search = searchParams?.toString() ?? '';
@@ -293,11 +296,36 @@ export function KangurLanguageSwitcher({
     routeTransitionState?.activeTransitionSourceId,
   ]);
 
-  const selectedLocale = transitionPendingLocale ?? currentLocale;
+  const clearHardNavigationRecoveryTimeout = useCallback((): void => {
+    if (hardNavigationRecoveryTimeoutRef.current === null || typeof window === 'undefined') {
+      return;
+    }
+
+    window.clearTimeout(hardNavigationRecoveryTimeoutRef.current);
+    hardNavigationRecoveryTimeoutRef.current = null;
+  }, []);
+
+  const pendingLocale = hardNavigationPendingLocale ?? transitionPendingLocale;
+  const selectedLocale = pendingLocale ?? currentLocale;
 
   useEffect(() => {
     warmedLocaleCodesRef.current.clear();
   }, [currentHash, currentPage, currentPathname, search]);
+
+  useEffect(() => {
+    if (!hardNavigationPendingLocale || hardNavigationPendingLocale !== currentLocale) {
+      return;
+    }
+
+    clearHardNavigationRecoveryTimeout();
+    setHardNavigationPendingLocale(null);
+  }, [clearHardNavigationRecoveryTimeout, currentLocale, hardNavigationPendingLocale]);
+
+  useEffect(() => {
+    return () => {
+      clearHardNavigationRecoveryTimeout();
+    };
+  }, [clearHardNavigationRecoveryTimeout]);
 
   const warmLocaleTarget = useCallback(
     (targetLocaleCode: string): void => {
@@ -361,7 +389,7 @@ export function KangurLanguageSwitcher({
   const optionActionClassName = isCoarsePointer
     ? 'min-h-[3.5rem] touch-manipulation select-none active:scale-[0.985]'
     : null;
-  const isPending = transitionPendingLocale !== null;
+  const isPending = pendingLocale !== null;
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -448,6 +476,25 @@ export function KangurLanguageSwitcher({
                 path: '/',
                 sameSite: 'Lax',
               });
+
+              if (typeof window !== 'undefined' && typeof window.location.assign === 'function') {
+                clearHardNavigationRecoveryTimeout();
+                setHardNavigationPendingLocale(target.code);
+                hardNavigationRecoveryTimeoutRef.current = window.setTimeout(() => {
+                  hardNavigationRecoveryTimeoutRef.current = null;
+                  setHardNavigationPendingLocale((currentPendingLocale) =>
+                    currentPendingLocale === target.code ? null : currentPendingLocale
+                  );
+                }, HARD_NAVIGATION_RECOVERY_TIMEOUT_MS);
+
+                try {
+                  window.location.assign(target.href);
+                  return;
+                } catch {
+                  clearHardNavigationRecoveryTimeout();
+                  setHardNavigationPendingLocale(null);
+                }
+              }
 
               routeNavigator.replace(target.href, {
                 pageKey: currentPage,

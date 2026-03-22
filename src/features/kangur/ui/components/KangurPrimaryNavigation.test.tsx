@@ -17,6 +17,10 @@ const { routeTransitionStateMock } = vi.hoisted(() => ({
   routeTransitionStateMock: vi.fn(),
 }));
 
+const { locationAssignSpy } = vi.hoisted(() => ({
+  locationAssignSpy: vi.fn(),
+}));
+
 const {
   pathnameMock,
   prefetchMock,
@@ -448,6 +452,7 @@ describe('KangurPrimaryNavigation', () => {
     });
     prefetchKangurPageContentStoreMock.mockReset();
     prefetchKangurPageContentStoreMock.mockResolvedValue(undefined);
+    locationAssignSpy.mockReset();
     window.sessionStorage.clear();
     document.cookie = 'NEXT_LOCALE=; Max-Age=0; Path=/';
     Object.defineProperty(window, 'location', {
@@ -455,7 +460,7 @@ describe('KangurPrimaryNavigation', () => {
       writable: true,
       value: {
         ...originalLocation,
-        assign: vi.fn(),
+        assign: locationAssignSpy,
         hash: '',
         replace: vi.fn(),
       },
@@ -539,6 +544,7 @@ describe('KangurPrimaryNavigation', () => {
     fireEvent.click(screen.getByRole('link', { name: /strona główna/i }));
 
     expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      acknowledgeMs: 110,
       href: '/kangur',
       pageKey: 'Game',
       sourceId: 'kangur-primary-nav:home',
@@ -638,6 +644,36 @@ describe('KangurPrimaryNavigation', () => {
     fireEvent.click(screen.getByRole('link', { name: /lekcje/i }));
 
     expect(pushMock).toHaveBeenCalledWith('/kangur/lessons', { scroll: false });
+  });
+
+  it('marks the lessons nav action as transitioning while the managed route handoff is in flight', () => {
+    routeTransitionStateMock.mockReturnValue({
+      activeTransitionKind: 'navigation',
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/kangur/lessons',
+      activeTransitionSkeletonVariant: 'lessons-library',
+      activeTransitionSourceId: 'kangur-primary-nav:lessons',
+      isRouteAcknowledging: false,
+      isRoutePending: true,
+      isRouteRevealing: false,
+      isRouteWaitingForReady: false,
+      pendingPageKey: 'Lessons',
+      transitionPhase: 'pending',
+    });
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Game'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('kangur-primary-nav-lessons')).toHaveAttribute(
+      'data-nav-state',
+      'transitioning'
+    );
   });
 
   it('closes the mobile menu when the current Kangur page changes', async () => {
@@ -804,15 +840,9 @@ describe('KangurPrimaryNavigation', () => {
 
     expect(prefetchMock).toHaveBeenCalledTimes(1);
     expect(prefetchMock).toHaveBeenCalledWith('/en/lessons?mode=solo&difficulty=hard');
-    expect(startRouteTransitionMock).toHaveBeenCalledWith({
-      href: '/en/lessons?mode=solo&difficulty=hard',
-      pageKey: 'Lessons',
-      sourceId: 'kangur-language-switcher',
-      transitionKind: 'locale-switch',
-    });
-    expect(replaceMock).toHaveBeenCalledWith('/en/lessons?mode=solo&difficulty=hard', {
-      scroll: false,
-    });
+    expect(locationAssignSpy).toHaveBeenCalledWith('/en/lessons?mode=solo&difficulty=hard');
+    expect(startRouteTransitionMock).not.toHaveBeenCalled();
+    expect(replaceMock).not.toHaveBeenCalled();
     expect(document.cookie).toContain('NEXT_LOCALE=en');
   });
 
@@ -834,16 +864,12 @@ describe('KangurPrimaryNavigation', () => {
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-pl'));
 
     expect(prefetchMock).toHaveBeenCalledWith('/duels');
-    expect(startRouteTransitionMock).toHaveBeenCalledWith({
-      href: '/duels',
-      pageKey: 'Duels',
-      sourceId: 'kangur-language-switcher',
-      transitionKind: 'locale-switch',
-    });
-    expect(replaceMock).toHaveBeenCalledWith('/duels', { scroll: false });
+    expect(locationAssignSpy).toHaveBeenCalledWith('/duels');
+    expect(startRouteTransitionMock).not.toHaveBeenCalled();
+    expect(replaceMock).not.toHaveBeenCalled();
   });
 
-  it('uses the managed locale transition when switching back to Polish from an unprefixed English lessons route', async () => {
+  it('uses hard navigation when switching back to Polish from an unprefixed English lessons route', async () => {
     localeMock.mockReturnValue('en');
     pathnameMock.mockReturnValue('/lessons');
 
@@ -862,13 +888,9 @@ describe('KangurPrimaryNavigation', () => {
     await openLanguageMenu();
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-pl'));
 
-    expect(startRouteTransitionMock).toHaveBeenCalledWith({
-      href: '/lessons',
-      pageKey: 'Lessons',
-      sourceId: 'kangur-language-switcher',
-      transitionKind: 'locale-switch',
-    });
-    expect(replaceMock).toHaveBeenCalledWith('/lessons', { scroll: false });
+    expect(locationAssignSpy).toHaveBeenCalledWith('/lessons');
+    expect(startRouteTransitionMock).not.toHaveBeenCalled();
+    expect(replaceMock).not.toHaveBeenCalled();
     expect(document.cookie).toContain('NEXT_LOCALE=pl');
   });
 
@@ -932,13 +954,9 @@ describe('KangurPrimaryNavigation', () => {
     expect(prefetchMock).toHaveBeenCalledWith('/en/lessons');
     expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledTimes(1);
     expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledWith(queryClient, 'en');
-    expect(startRouteTransitionMock).toHaveBeenCalledWith({
-      href: '/en/lessons',
-      pageKey: 'Lessons',
-      sourceId: 'kangur-language-switcher',
-      transitionKind: 'locale-switch',
-    });
-    expect(replaceMock).toHaveBeenCalledWith('/en/lessons', { scroll: false });
+    expect(locationAssignSpy).toHaveBeenCalledWith('/en/lessons');
+    expect(startRouteTransitionMock).not.toHaveBeenCalled();
+    expect(replaceMock).not.toHaveBeenCalled();
   });
 
   it('keeps the language trigger pinned to the pending locale while the locale route is still resolving', async () => {

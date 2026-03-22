@@ -57,4 +57,19 @@ describe('KangurPageIntroCard', () => {
     ).toBeNull();
     expect(handleBack).not.toHaveBeenCalled();
   });
+
+  it('renders custom back-button content in the live back-button slot', () => {
+    render(
+      <KangurPageIntroCard
+        backButtonContent={<div data-testid='intro-card-back-button-skeleton' />}
+        onBack={vi.fn()}
+        title='Lekcje'
+      />
+    );
+
+    expect(screen.getByTestId('intro-card-back-button-skeleton')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Wróć do poprzedniej strony' })
+    ).toBeNull();
+  });
 });

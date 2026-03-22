@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -139,13 +139,20 @@ vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => (
 
 vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
   KangurPageIntroCard: ({
+    onBack,
     title,
     visualTitle,
   }: {
+    onBack?: () => void;
     title: string;
     visualTitle?: React.ReactNode;
   }) => (
     <div data-testid='tests-intro-card'>
+      {onBack ? (
+        <button aria-label='mock-tests-back' onClick={onBack} type='button'>
+          Back
+        </button>
+      ) : null}
       <span>{title}</span>
       {visualTitle}
     </div>
@@ -272,5 +279,17 @@ describe('Tests page', () => {
     expect(screen.getByTestId('kangur-tests-heading-art').querySelector('text')).toHaveTextContent(
       'Prüfungen'
     );
+  });
+
+  it('routes the tests intro back action directly to the Kangur home page', () => {
+    render(<Tests />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'mock-tests-back' }));
+
+    expect(routeNavigatorBackMock).toHaveBeenCalledWith({
+      fallbackHref: '/kangur',
+      fallbackPageKey: 'Game',
+      sourceId: 'tests:list-back',
+    });
   });
 });

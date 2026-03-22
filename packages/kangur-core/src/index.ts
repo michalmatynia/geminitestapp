@@ -1,5 +1,11 @@
 export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
 export {
+  KANGUR_COMPETITION_MODES,
+  getKangurCompetitionQuestions,
+  isKangurCompetitionExamMode,
+  type KangurCompetitionMode,
+} from './competition';
+export {
   buildKangurAssignments,
   type KangurAssignmentAction,
   type KangurAssignmentPlan,

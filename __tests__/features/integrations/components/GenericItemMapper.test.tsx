@@ -1,7 +1,9 @@
-import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { GenericMapper as GenericItemMapper } from '@/shared/ui/templates/mappers/GenericMapper';
+import { ToastProvider } from '@/shared/ui/toast';
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 
 // Mock the context hook
@@ -71,16 +73,35 @@ describe('GenericItemMapper', () => {
     ...overrides,
   });
 
+  const renderMapper = (config: ReturnType<typeof createConfig>) =>
+    {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: false,
+          },
+        },
+      });
+
+      return render(
+        <QueryClientProvider client={queryClient}>
+          <ToastProvider>
+            <GenericItemMapper<MockInternalItem, MockExternalItem, MockMapping> config={config} />
+          </ToastProvider>
+        </QueryClientProvider>
+      );
+    };
+
   it('renders mapper with title', () => {
     const config = createConfig();
-    render(<GenericItemMapper<MockInternalItem, MockExternalItem, MockMapping> config={config} />);
+    renderMapper(config);
 
     expect(screen.getByText('Test Mapper')).toBeInTheDocument();
   });
 
   it('renders internal items', () => {
     const config = createConfig();
-    render(<GenericItemMapper<MockInternalItem, MockExternalItem, MockMapping> config={config} />);
+    renderMapper(config);
 
     expect(screen.getByText('Item 1')).toBeInTheDocument();
     expect(screen.getByText('Item 2')).toBeInTheDocument();
@@ -90,7 +111,7 @@ describe('GenericItemMapper', () => {
     const onFetch = vi.fn().mockResolvedValue({ message: 'Fetched' });
     const config = createConfig({ onFetch });
 
-    render(<GenericItemMapper<MockInternalItem, MockExternalItem, MockMapping> config={config} />);
+    renderMapper(config);
 
     const fetchButton = screen.getByText('Fetch');
     fireEvent.click(fetchButton);
@@ -102,7 +123,7 @@ describe('GenericItemMapper', () => {
 
   it('displays stats correctly', () => {
     const config = createConfig();
-    render(<GenericItemMapper<MockInternalItem, MockExternalItem, MockMapping> config={config} />);
+    renderMapper(config);
 
     expect(screen.getByText(/Total/)).toBeInTheDocument();
     expect(screen.getByText(/Mapped/)).toBeInTheDocument();
@@ -110,7 +131,7 @@ describe('GenericItemMapper', () => {
 
   it('shows loading state when isLoadingInternal is true', () => {
     const config = createConfig({ isLoadingInternal: true });
-    render(<GenericItemMapper<MockInternalItem, MockExternalItem, MockMapping> config={config} />);
+    renderMapper(config);
 
     expect(screen.getByText(/Loading/)).toBeInTheDocument();
   });
@@ -121,14 +142,14 @@ describe('GenericItemMapper', () => {
       getInternalAdditionalLabel: (item: MockInternalItem) => item.catalogId || '',
     });
 
-    render(<GenericItemMapper<MockInternalItem, MockExternalItem, MockMapping> config={config} />);
+    renderMapper(config);
 
     expect(screen.getByText('Catalog')).toBeInTheDocument();
   });
 
   it('disables fetch button when isFetching is true', () => {
     const config = createConfig({ isFetching: true });
-    render(<GenericItemMapper<MockInternalItem, MockExternalItem, MockMapping> config={config} />);
+    renderMapper(config);
 
     const fetchButton = screen.getByRole('button', { name: /Fetch/i });
     expect(fetchButton).toBeDisabled();
@@ -136,7 +157,7 @@ describe('GenericItemMapper', () => {
 
   it('disables save button when no pending mappings', () => {
     const config = createConfig();
-    render(<GenericItemMapper<MockInternalItem, MockExternalItem, MockMapping> config={config} />);
+    renderMapper(config);
 
     // The save button should show pending count
     expect(screen.getByText(/Save/)).toBeInTheDocument();

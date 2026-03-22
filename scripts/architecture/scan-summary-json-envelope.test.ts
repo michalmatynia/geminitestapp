@@ -10,6 +10,7 @@ import { accessibilityRouteCrawlRoutes } from '../testing/config/accessibility-r
 import {
   buildAccessibilityRouteCrawlTitle,
   normalizeAccessibilityRouteEntries,
+  resolveAccessibilityRouteCrawlChunkSize,
 } from '../testing/lib/accessibility-route-crawl.mjs';
 
 const tempRoots: string[] = [];
@@ -1024,6 +1025,11 @@ describe('scanner summary-json envelope', () => {
     const expectedRouteCount = normalizeAccessibilityRouteEntries(
       accessibilityRouteCrawlRoutes
     ).length;
+    const expectedChunkSize =
+      resolveAccessibilityRouteCrawlChunkSize({ env, totalRoutes: expectedRouteCount }) ??
+      expectedRouteCount;
+    const expectedChunkCount = Math.ceil(expectedRouteCount / expectedChunkSize);
+    const expectedPlaywrightDurationMs = expectedChunkCount * 1_250;
 
     const accessibilityRouteCrawl = await runSummaryJsonAsync(
       root,
@@ -1042,7 +1048,7 @@ describe('scanner summary-json envelope', () => {
       totalRoutes: expectedRouteCount,
       passedRoutes: expectedRouteCount,
       failedRoutes: 0,
-      playwrightDurationMs: 1250,
+      playwrightDurationMs: expectedPlaywrightDurationMs,
       totalDurationMs: expect.any(Number),
       unexpectedResults: 0,
       flakyResults: 0,

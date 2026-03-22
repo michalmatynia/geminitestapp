@@ -92,9 +92,35 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   }),
 }));
 
-// Removed manual useKangurLessonSections and useKangurLessonTemplates mocks
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
+  useKangurLessonTemplates: () => ({
+    data: [],
+    isLoading: false,
+    isPending: false,
+    isFetching: false,
+    error: null,
+  }),
+}));
 
-// Removed manual useKangurLessonSections and useKangurLessonTemplates mocks
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
+  useKangurLessonSections: () => ({
+    data: [],
+    isLoading: false,
+    isPending: false,
+    isFetching: false,
+    error: null,
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: () => ({
+    entry: null,
+    data: undefined,
+    isLoading: false,
+    isError: false,
+    error: null,
+  }),
+}));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   KangurAiTutorSessionSync: () => null,
@@ -375,7 +401,8 @@ describe('Lessons page mastery list', () => {
     expect(
       screen.queryByText('Wybierz temat i przejdz od razu do praktyki lub powtórki.')
     ).not.toBeInTheDocument();
-    expect(screen.queryByTestId('lessons-list-transition')).not.toBeInTheDocument();
+    expect(screen.getByTestId('lessons-list-transition')).toBeInTheDocument();
+    expect(screen.getByTestId('lessons-catalog-skeleton')).toBeInTheDocument();
 
     act(() => {
       frameCallbacks[0](0);

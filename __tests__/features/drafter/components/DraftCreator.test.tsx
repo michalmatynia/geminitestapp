@@ -9,6 +9,9 @@ vi.mock('next/navigation', () => ({
   useParams: () => ({ id: '1' }),
   usePathname: () => '/',
   useSearchParams: () => new URLSearchParams(),
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
+  notFound: vi.fn(),
 }));
 
 // Mock useToast

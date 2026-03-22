@@ -3,8 +3,8 @@
  */
 
 import React from 'react';
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
@@ -237,6 +237,26 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
+  useKangurLessonTemplates: () => ({
+    data: [],
+    isLoading: false,
+    isPending: false,
+    isFetching: false,
+    error: null,
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
+  useKangurLessonSections: () => ({
+    data: [],
+    isLoading: false,
+    isPending: false,
+    isFetching: false,
+    error: null,
+  }),
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
   useKangurProgressState: () => progressState.value,
 }));
@@ -281,6 +301,10 @@ const renderLessonsPage = async () => {
   await screen.findByTestId('lessons-list-transition');
   return result;
 };
+
+afterEach(() => {
+  cleanup();
+});
 
 const createLesson = (overrides: Partial<Record<string, unknown>> = {}) => ({
   id: 'kangur-lesson-clock',
@@ -397,11 +421,13 @@ describe('Lessons', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /shapes with svg/i }));
 
+    const activeLessonView = screen.getByTestId('lessons-active-transition');
+
     expect(screen.getByTestId('lesson-document-renderer')).toBeInTheDocument();
     expect(screen.getByTestId('lessons-document-summary')).toHaveClass(
       'soft-card'
     );
-    expect(screen.queryByTestId('legacy-lesson')).not.toBeInTheDocument();
+    expect(within(activeLessonView).queryAllByTestId('legacy-lesson')).toHaveLength(0);
     expect(screen.getByRole('button', { name: 'Wróć do listy lekcji' })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
@@ -533,7 +559,9 @@ describe('Lessons', () => {
 
     await waitFor(() => expect(screen.getByTestId('lessons-secret-panel')).toBeInTheDocument());
 
-    expect(screen.queryByTestId('legacy-lesson')).toBeNull();
+    expect(
+      within(screen.getByTestId('lessons-active-transition')).queryAllByTestId('legacy-lesson')
+    ).toHaveLength(0);
     expect(screen.getByTestId('lessons-secret-pill-chip')).toHaveTextContent(
       'Sekret odblokowany'
     );
@@ -634,6 +662,7 @@ describe('Lessons', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /classic clock/i }));
 
+    const activeLessonView = screen.getByTestId('lessons-active-transition');
     const headerActions = screen.getByTestId('active-lesson-header-icon-actions');
 
     expect(screen.getByTestId('active-lesson-header')).toHaveClass('glass-panel', 'kangur-panel-soft', 'kangur-panel-padding-md');
@@ -646,7 +675,7 @@ describe('Lessons', () => {
       'kangur-cta-pill',
       'surface-cta'
     );
-    expect(screen.getByTestId('legacy-lesson')).toBeInTheDocument();
+    expect(within(activeLessonView).queryAllByTestId('legacy-lesson').length).toBeGreaterThan(0);
     expect(screen.queryByTestId('lesson-document-renderer')).not.toBeInTheDocument();
   });
 
@@ -698,8 +727,10 @@ describe('Lessons', () => {
     fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do listy lekcji' }));
 
+    await waitFor(() =>
+      expect(screen.queryByTestId('lessons-active-transition')).not.toBeInTheDocument()
+    );
     expect(screen.getByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
-    expect(screen.queryByTestId('legacy-lesson')).not.toBeInTheDocument();
   });
 
   it('uses the smoother motion preset for lessons list and active lesson transitions', async () => {
@@ -777,6 +808,8 @@ describe('Lessons', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /patterns draft/i }));
 
+    const activeLessonView = screen.getByTestId('lessons-active-transition');
+
     expect(
       screen.getByText('Ta lekcja ma włączony tryb dokumentu, ale nie zapisano jeszcze bloków treści.')
     ).toBeInTheDocument();
@@ -784,7 +817,7 @@ describe('Lessons', () => {
       'soft-card'
     );
     expect(screen.getByText('Lesson document')).toHaveClass('rounded-full', 'border');
-    expect(screen.queryByTestId('legacy-lesson')).not.toBeInTheDocument();
+    expect(within(activeLessonView).queryAllByTestId('legacy-lesson')).toHaveLength(0);
     expect(screen.queryByTestId('lesson-document-renderer')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Wróć do listy lekcji' })).toHaveClass(
       'kangur-cta-pill',

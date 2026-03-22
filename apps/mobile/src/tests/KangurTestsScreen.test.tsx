@@ -66,6 +66,10 @@ vi.mock('./useKangurMobileTests', () => ({
   useKangurMobileTests: useKangurMobileTestsMock,
 }));
 
+vi.mock('../ai-tutor/KangurMobileAiTutorCard', () => ({
+  KangurMobileAiTutorCard: () => React.createElement('div', {}, 'AI Tutor Card'),
+}));
+
 import { KangurTestsScreen } from './KangurTestsScreen';
 
 const renderTestsScreen = (locale?: 'pl' | 'en' | 'de') =>
@@ -230,6 +234,7 @@ describe('KangurTestsScreen', () => {
   it('renders the suite list and opens the selected suite player', () => {
     renderTestsScreen();
 
+    expect(screen.getByText('AI Tutor Card')).toBeTruthy();
     expect(screen.getByText('Test startowy')).toBeTruthy();
     expect(screen.getByText('2 pytania')).toBeTruthy();
     expect(screen.getByText('Rok 2025')).toBeTruthy();

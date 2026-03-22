@@ -1,9 +1,11 @@
-import { screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { ComponentTreePanel } from '@/features/cms/components/page-builder/ComponentTreePanel';
 import { useCmsPages, useCmsPage } from '@/features/cms/hooks/useCmsQueries';
+import { ToastProvider } from '@/shared/ui/toast';
 
 // Define shared mocks
 const { usePageBuilderStateMock, usePageBuilderDispatchMock } = vi.hoisted(() => ({
@@ -104,6 +106,25 @@ describe('ComponentTreePanel Component', () => {
     vi.mocked(useCmsPage).mockReturnValue({ data: null, isLoading: false } as any);
   });
 
+  const renderPanel = () =>
+    {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: false,
+          },
+        },
+      });
+
+      return render(
+        <QueryClientProvider client={queryClient}>
+          <ToastProvider>
+            <ComponentTreePanel />
+          </ToastProvider>
+        </QueryClientProvider>
+      );
+    };
+
   it('should render empty when no page is selected', () => {
     usePageBuilderStateMock.mockReturnValue({
       pages: mockPages,
@@ -112,7 +133,7 @@ describe('ComponentTreePanel Component', () => {
     });
     usePageBuilderDispatchMock.mockReturnValue(mockDispatch);
 
-    render(<ComponentTreePanel />);
+    renderPanel();
     expect(screen.getByTestId('empty-page-state')).toBeInTheDocument();
   });
 
@@ -132,7 +153,7 @@ describe('ComponentTreePanel Component', () => {
     });
     usePageBuilderDispatchMock.mockReturnValue(mockDispatch);
 
-    render(<ComponentTreePanel />);
+    renderPanel();
 
     // Check zones
     expect(screen.getByText('Header')).toBeInTheDocument();
@@ -155,7 +176,7 @@ describe('ComponentTreePanel Component', () => {
     });
     usePageBuilderDispatchMock.mockReturnValue(mockDispatch);
 
-    render(<ComponentTreePanel />);
+    renderPanel();
 
     // Initially visible
     expect(screen.getByText('Hero')).toBeInTheDocument();

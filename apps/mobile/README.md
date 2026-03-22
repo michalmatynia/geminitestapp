@@ -9,7 +9,8 @@ This workspace is no longer a scaffold. It contains a real mobile shell with:
 - shared Kangur runtime and auth providers
 - learner-session and development auth adapters
 - persistent mobile development storage
-- home, lessons, tests, practice, profile, results, leaderboard, daily-plan, and duels routes
+- home, lessons, tests, competition, practice, profile, results, leaderboard, daily-plan, and duels routes
+- AI Tutor v1 cards on tests and competition, backed by the shared tutor content/native-guide APIs plus mobile follow-up routing
 - home dashboard shortcuts for private duel invites, outgoing challenge re-sharing, active lobby rivals with direct challenges, live public duel matches, recent-opponent rematches, series-aware duel cards, a duel leaderboard snapshot, a home lesson-mastery section with review shortcuts, a home badge summary, a home recent-lesson-checkpoints section, a compact home next-steps task section, a profile duel summary, a profile badge surface with recent unlocks, a profile lesson-mastery section, a profile recent-lesson-checkpoints section, a profile recent-results section, a profile next-steps task section, a results duel recap, a results badge summary, a results lesson-mastery section, a results recent-lesson-checkpoints section, a results next-steps task section, a leaderboard duel section with direct challenges, a leaderboard badge summary, a leaderboard lesson-mastery section, a leaderboard recent-lesson-checkpoints section, a leaderboard next-steps task section, a daily-plan duel section, a daily-plan badge summary, a daily-plan lesson-mastery section, a daily-plan recent-lesson-checkpoints section, a daily-plan next-steps task section, a lessons duel section, a lessons badge summary, a lessons lesson-mastery section, a lessons recent-lesson-checkpoints section, a lessons recent-results section, a lessons next-steps task section, checkpoint-aware lesson catalog cards, a practice duel section, a practice badge summary, a practice lesson-mastery section, a practice recent-lesson-checkpoints section, a practice recent-results section, a practice next-steps task section, a duels badge summary, a duels lesson-mastery section, a duels recent-lesson-checkpoints section, a duels next-steps task section, and local lesson checkpoints that immediately update profile/day-plan mastery
 - visible lesson skeleton loading on the lessons screen instead of a hero-only freeze
 - native/export tooling under `scripts/mobile`
@@ -30,6 +31,7 @@ This workspace is no longer a scaffold. It contains a real mobile shell with:
 - `/`
 - `/lessons`
 - `/tests`
+- `/competition`
 - `/practice`
 - `/profile`
 - `/results`
@@ -71,6 +73,7 @@ npm run check:mobile:native:runtime:android
 npm run prepare:mobile:runtime:android
 npx vitest run apps/mobile/src/practice/KangurPracticeScreen.test.tsx apps/mobile/src/home/HomeScreen.test.tsx apps/mobile/src/plan/KangurDailyPlanScreen.test.tsx apps/mobile/src/scores/KangurResultsScreen.test.tsx apps/mobile/src/lessons/KangurLessonsScreen.test.tsx apps/mobile/src/profile/KangurProfileScreen.test.tsx apps/mobile/src/leaderboard/KangurLeaderboardScreen.test.tsx
 npx vitest run apps/mobile/src/tests/KangurTestsScreen.test.tsx
+npx vitest run apps/mobile/src/competition/KangurCompetitionScreen.test.tsx
 npm run config:mobile
 npm run export:mobile:web
 npm run dev:mobile:ios:local
@@ -100,6 +103,7 @@ Notes from that route sweep:
   - `apps/mobile/src/profile/KangurProfileScreen.test.tsx`
   - `apps/mobile/src/leaderboard/KangurLeaderboardScreen.test.tsx`
   - `apps/mobile/src/tests/KangurTestsScreen.test.tsx`
+  - `apps/mobile/src/competition/KangurCompetitionScreen.test.tsx`
 - the lessons routes still settle correctly for both `/lessons` and `/lessons?focus=clock`
 - the lessons loading state is now covered by screen-level regression tests in `apps/mobile/src/lessons/KangurLessonsScreen.test.tsx`
 - `/lessons` now shows the catalog skeleton during initial boot, while `/lessons?focus=clock` shows both the focused-lesson skeleton and the catalog skeleton before settled content appears

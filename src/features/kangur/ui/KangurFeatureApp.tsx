@@ -286,8 +286,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
       );
     }
   }
-  const topNavigationFallback =
-    !embedded && routeContent ? <KangurTopNavigationSkeleton /> : null;
+  const topNavigationFallback = !embedded ? <KangurTopNavigationSkeleton /> : null;
 
   return (
     <>
@@ -297,7 +296,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
       ) : (
         <KangurTopNavigationHost fallback={topNavigationFallback} />
       )}
-      <KangurAppLoader visible={isBootSkeletonVisible} />
+      <KangurAppLoader offsetTopBar={!embedded} visible={isBootSkeletonVisible} />
       <AnimatePresence mode='wait'>
         {routeContent ? (
           <motion.div

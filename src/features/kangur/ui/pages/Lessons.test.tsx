@@ -15,6 +15,7 @@ const {
   openLoginModalMock,
   localeState,
   routeTransitionStateState,
+  routeNavigatorBackMock,
   topNavigationPropsMock,
   tutorSessionSyncPropsMock,
   lessonsState,
@@ -34,6 +35,7 @@ const {
   routeTransitionStateState: {
     value: null as null | Record<string, unknown>,
   },
+  routeNavigatorBackMock: vi.fn(),
   topNavigationPropsMock: vi.fn(),
   tutorSessionSyncPropsMock: vi.fn(),
   lessonsState: {
@@ -129,15 +131,22 @@ vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
   KangurPageIntroCard: ({
     title,
     description,
+    onBack,
     visualTitle,
   }: {
     title: string;
     description?: string;
+    onBack?: () => void;
     visualTitle?: React.ReactNode;
   }) => (
     <div data-testid='mock-lessons-intro'>
       <span>{title}</span>
       {description ? <span>{description}</span> : null}
+      {onBack ? (
+        <button aria-label='mock-lessons-back' onClick={onBack} type='button'>
+          Back
+        </button>
+      ) : null}
       {visualTitle}
     </div>
   ),
@@ -282,7 +291,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
-  useKangurRouteNavigator: () => ({ back: vi.fn() }),
+  useKangurRouteNavigator: () => ({ back: routeNavigatorBackMock }),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurRoutePageReady', () => ({
@@ -373,6 +382,7 @@ describe('Lessons page subject filtering', () => {
     });
     lessonCardPropsMock.mockClear();
     openLoginModalMock.mockClear();
+    routeNavigatorBackMock.mockClear();
     topNavigationPropsMock.mockClear();
     tutorSessionSyncPropsMock.mockClear();
     useKangurRoutePageReadyMock.mockClear();
@@ -395,6 +405,21 @@ describe('Lessons page subject filtering', () => {
     expect(lessonCardPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'lesson-english', subject: 'english' })
     );
+  });
+
+  it('routes the catalog intro back action directly to the Kangur home page', () => {
+    render(<Lessons />);
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'mock-lessons-back' }));
+
+    expect(routeNavigatorBackMock).toHaveBeenCalledWith({
+      fallbackHref: '/kangur',
+      fallbackPageKey: 'Game',
+      sourceId: 'lessons:list-back',
+    });
   });
 
   it('keeps the lessons library transition waiting until the catalog loading state settles', () => {

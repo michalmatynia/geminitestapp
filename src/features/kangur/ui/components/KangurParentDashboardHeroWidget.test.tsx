@@ -258,6 +258,90 @@ describe('KangurParentDashboardHeroWidget', () => {
 
   });
 
+  it('routes the restricted hero action directly to the learner profile', () => {
+    useKangurParentDashboardRuntimeMock.mockReturnValue({
+      activeLearner: { id: 'learner-1', displayName: 'Maja' },
+      basePath: '/kangur',
+      canManageLearners: false,
+      isAuthenticated: true,
+      logout: vi.fn(),
+      navigateToLogin: vi.fn(),
+      progress: {
+        totalXp: 0,
+        gamesPlayed: 0,
+        perfectGames: 0,
+        lessonsCompleted: 0,
+        clockPerfect: 0,
+        calendarPerfect: 0,
+        geometryPerfect: 0,
+        badges: [],
+        operationsPlayed: [],
+        totalCorrectAnswers: 0,
+        totalQuestionsAnswered: 0,
+        bestWinStreak: 0,
+        activityStats: {},
+        lessonMastery: {},
+        openedTasks: [],
+        lessonPanelProgress: {},
+      },
+      setCreateLearnerModalOpen: vi.fn(),
+      viewerName: 'parent@example.com',
+      viewerRoleLabel: 'Rodzic',
+    });
+
+    render(<KangurParentDashboardHeroWidget showActions={false} />);
+
+    fireEvent.click(screen.getByRole('button', { name: heroMessages.backToLearnerProfile }));
+
+    expect(routeNavigatorPushMock).toHaveBeenCalledWith('/kangur/profile', {
+      pageKey: 'LearnerProfile',
+      sourceId: 'parent-dashboard-hero:back-profile',
+    });
+  });
+
+  it('routes the quick lessons action directly from the dashboard hero nav', () => {
+    useKangurParentDashboardRuntimeMock.mockReturnValue({
+      activeLearner: { id: 'learner-1', displayName: 'Maja' },
+      basePath: '/kangur',
+      canManageLearners: true,
+      isAuthenticated: true,
+      logout: vi.fn(),
+      navigateToLogin: vi.fn(),
+      progress: {
+        totalXp: 480,
+        gamesPlayed: 4,
+        perfectGames: 1,
+        lessonsCompleted: 2,
+        clockPerfect: 0,
+        calendarPerfect: 0,
+        geometryPerfect: 0,
+        badges: [],
+        operationsPlayed: [],
+        totalCorrectAnswers: 20,
+        totalQuestionsAnswered: 25,
+        dailyQuestsCompleted: 1,
+        bestWinStreak: 2,
+        activityStats: {},
+        lessonMastery: {},
+        openedTasks: [],
+        lessonPanelProgress: {},
+      },
+      setCreateLearnerModalOpen: vi.fn(),
+      viewerName: 'parent@example.com',
+      viewerRoleLabel: 'Rodzic',
+    });
+
+    render(<KangurParentDashboardHeroWidget />);
+
+    fireEvent.click(screen.getByRole('link', { name: heroMessages.nav.lessons }));
+
+    expect(routeNavigatorPushMock).toHaveBeenCalledWith('/kangur/lessons', {
+      pageKey: 'Lessons',
+      scroll: false,
+      sourceId: 'parent-dashboard-nav:lessons',
+    });
+  });
+
   it('renders the add-learner action in the header when learner management is enabled', () => {
     const setCreateLearnerModalOpen = vi.fn();
     useKangurParentDashboardRuntimeMock.mockReturnValue({

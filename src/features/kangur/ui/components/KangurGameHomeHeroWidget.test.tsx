@@ -119,7 +119,7 @@ describe('KangurGameHomeHeroWidget', () => {
 
     expect(screen.getByTestId('kangur-home-hero-shell')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-home-hero-shell')).toHaveClass(
-      ...GAME_HOME_HERO_SHELL_CLASSNAME.split(' ')
+      ...(GAME_HOME_HERO_SHELL_CLASSNAME?.split(' ') ?? [])
     );
     expect(screen.getByText('spotlight:/kangur')).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Wpisz swoje imie...')).toBeNull();

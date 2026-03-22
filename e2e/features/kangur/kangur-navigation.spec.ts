@@ -71,12 +71,14 @@ type RouteScrollMonitorSample = {
   hasSkeleton: boolean;
   skeletonTop: number | null;
   skeletonHomeLayoutTop: number | null;
+  skeletonHomeActionsTop: number | null;
   topBarBottom: number | null;
   hasAppLoader: boolean;
   transitionPhase: string | null;
   activeTransitionSourceId: string | null;
   homeLessonsNavState: string | null;
   homeLayoutTop: number | null;
+  homeActionsTop: number | null;
 };
 
 type TopNavLayoutSnapshot = {
@@ -623,11 +625,17 @@ const startRouteScrollMonitor = async (page: Page): Promise<void> => {
       const skeletonHomeLayout = document.querySelector(
         '[data-testid="kangur-page-transition-skeleton-game-home-layout"]'
       );
+      const skeletonHomeActions = document.querySelector(
+        '[data-testid="kangur-page-transition-skeleton-game-home-actions-shell"]'
+      );
       const homeLayout = document.querySelector('[data-testid="kangur-game-home-layout"]');
+      const homeActions = document.querySelector('[data-testid="kangur-home-actions-shell"]');
       const topBar = document.querySelector('[data-testid="kangur-page-top-bar"]');
       const skeletonRect = skeleton?.getBoundingClientRect() ?? null;
       const skeletonHomeLayoutRect = skeletonHomeLayout?.getBoundingClientRect() ?? null;
+      const skeletonHomeActionsRect = skeletonHomeActions?.getBoundingClientRect() ?? null;
       const homeLayoutRect = homeLayout?.getBoundingClientRect() ?? null;
+      const homeActionsRect = homeActions?.getBoundingClientRect() ?? null;
       const topBarRect = topBar?.getBoundingClientRect() ?? null;
       samples.push({
         path: `${window.location.pathname}${window.location.search}`,
@@ -635,6 +643,7 @@ const startRouteScrollMonitor = async (page: Page): Promise<void> => {
         hasSkeleton: Boolean(skeletonRect),
         skeletonTop: skeletonRect?.top ?? null,
         skeletonHomeLayoutTop: skeletonHomeLayoutRect?.top ?? null,
+        skeletonHomeActionsTop: skeletonHomeActionsRect?.top ?? null,
         topBarBottom: topBarRect?.bottom ?? null,
         hasAppLoader: Boolean(document.querySelector('[data-testid="kangur-app-loader"]')),
         transitionPhase: routeContent?.getAttribute('data-route-transition-phase') ?? null,
@@ -642,6 +651,7 @@ const startRouteScrollMonitor = async (page: Page): Promise<void> => {
           routeContent?.getAttribute('data-route-transition-source-id') ?? null,
         homeLessonsNavState: homeLessonsAction?.getAttribute('data-nav-state') ?? null,
         homeLayoutTop: homeLayoutRect?.top ?? null,
+        homeActionsTop: homeActionsRect?.top ?? null,
       });
 
       if (running) {
@@ -767,6 +777,37 @@ const expectHomeSkeletonToAlignWithLoadedHomeLayout = (
   ).toBeLessThanOrEqual(tolerance);
 };
 
+const expectHomeSkeletonToHandoffWithoutPanelJump = (
+  samples: RouteScrollMonitorSample[],
+  stepLabel: string,
+  tolerance = 4
+): void => {
+  const lastSkeletonActionsTop =
+    [...samples]
+      .reverse()
+      .find((sample) => sample.hasSkeleton && sample.skeletonHomeActionsTop !== null)
+      ?.skeletonHomeActionsTop ?? null;
+  const firstVisibleHomeActionsTop =
+    samples.find((sample) => !sample.hasSkeleton && sample.homeActionsTop !== null)?.homeActionsTop ?? null;
+  const finalHomeActionsTop =
+    [...samples].reverse().find((sample) => sample.homeActionsTop !== null)?.homeActionsTop ?? null;
+
+  expect(lastSkeletonActionsTop, `${stepLabel}: missing the last home skeleton action sample`).not.toBeNull();
+  expect(
+    firstVisibleHomeActionsTop,
+    `${stepLabel}: missing the first revealed home action sample`
+  ).not.toBeNull();
+  expect(finalHomeActionsTop, `${stepLabel}: missing the final home action sample`).not.toBeNull();
+  expect(
+    Math.abs((lastSkeletonActionsTop ?? 0) - (firstVisibleHomeActionsTop ?? 0)),
+    `${stepLabel}: home actions jumped when the skeleton handed off to live content`
+  ).toBeLessThanOrEqual(tolerance);
+  expect(
+    Math.abs((firstVisibleHomeActionsTop ?? 0) - (finalHomeActionsTop ?? 0)),
+    `${stepLabel}: home actions continued shifting after the skeleton disappeared`
+  ).toBeLessThanOrEqual(tolerance);
+};
+
 const expectHomeActionSkeletonHandoff = (
   samples: RouteScrollMonitorSample[],
   targetPath: string | RegExp,
@@ -813,23 +854,38 @@ const expectRouteSkeletonHandoff = ({
   sourceId,
   stepLabel,
   targetPath,
+  requireAcknowledgement = true,
 }: {
   samples: RouteScrollMonitorSample[];
   sourceId: string;
   stepLabel: string;
   targetPath: string | RegExp;
+  requireAcknowledgement?: boolean;
 }): void => {
   const acknowledgeIndex = samples.findIndex(
     (sample) =>
       sample.activeTransitionSourceId === sourceId && sample.transitionPhase === 'acknowledging'
   );
+  const transitionStartIndex = samples.findIndex(
+    (sample) =>
+      sample.activeTransitionSourceId === sourceId &&
+      sample.transitionPhase !== null &&
+      sample.transitionPhase !== 'idle'
+  );
   const skeletonIndex = samples.findIndex((sample) => sample.hasSkeleton);
   const targetRouteIndex = samples.findIndex((sample) => matchesRoutePath(sample.path, targetPath));
 
-  expect(
-    acknowledgeIndex,
-    `${stepLabel}: navigation never entered the acknowledgement phase for the clicked control`
-  ).toBeGreaterThan(-1);
+  if (requireAcknowledgement) {
+    expect(
+      acknowledgeIndex,
+      `${stepLabel}: navigation never entered the acknowledgement phase for the clicked control`
+    ).toBeGreaterThan(-1);
+  } else {
+    expect(
+      transitionStartIndex,
+      `${stepLabel}: navigation never entered a tracked transition phase for the clicked control`
+    ).toBeGreaterThan(-1);
+  }
   expect(
     skeletonIndex,
     `${stepLabel}: navigation never handed off through the page skeleton`
@@ -837,8 +893,10 @@ const expectRouteSkeletonHandoff = ({
   expect(targetRouteIndex, `${stepLabel}: route never committed to the target page`).toBeGreaterThan(-1);
   expect(
     skeletonIndex,
-    `${stepLabel}: page skeleton appeared before the acknowledgement phase`
-  ).toBeGreaterThan(acknowledgeIndex);
+    requireAcknowledgement
+      ? `${stepLabel}: page skeleton appeared before the acknowledgement phase`
+      : `${stepLabel}: page skeleton appeared before the tracked transition phase`
+  ).toBeGreaterThan(requireAcknowledgement ? acknowledgeIndex : transitionStartIndex);
   expect(
     targetRouteIndex,
     `${stepLabel}: target route committed before the page skeleton handoff appeared`
@@ -849,29 +907,46 @@ const expectRouteSkeletonAcknowledgement = ({
   samples,
   sourceId,
   stepLabel,
+  requireAcknowledgement = true,
 }: {
   samples: RouteScrollMonitorSample[];
   sourceId: string;
   stepLabel: string;
+  requireAcknowledgement?: boolean;
 }): void => {
   const acknowledgeIndex = samples.findIndex(
     (sample) =>
       sample.activeTransitionSourceId === sourceId && sample.transitionPhase === 'acknowledging'
   );
+  const transitionStartIndex = samples.findIndex(
+    (sample) =>
+      sample.activeTransitionSourceId === sourceId &&
+      sample.transitionPhase !== null &&
+      sample.transitionPhase !== 'idle'
+  );
   const skeletonIndex = samples.findIndex((sample) => sample.hasSkeleton);
 
-  expect(
-    acknowledgeIndex,
-    `${stepLabel}: navigation never entered the acknowledgement phase for the clicked control`
-  ).toBeGreaterThan(-1);
+  if (requireAcknowledgement) {
+    expect(
+      acknowledgeIndex,
+      `${stepLabel}: navigation never entered the acknowledgement phase for the clicked control`
+    ).toBeGreaterThan(-1);
+  } else {
+    expect(
+      transitionStartIndex,
+      `${stepLabel}: navigation never entered a tracked transition phase for the clicked control`
+    ).toBeGreaterThan(-1);
+  }
   expect(
     skeletonIndex,
     `${stepLabel}: navigation never handed off through the page skeleton`
   ).toBeGreaterThan(-1);
   expect(
     skeletonIndex,
-    `${stepLabel}: page skeleton appeared before the acknowledgement phase`
-  ).toBeGreaterThan(acknowledgeIndex);
+    requireAcknowledgement
+      ? `${stepLabel}: page skeleton appeared before the acknowledgement phase`
+      : `${stepLabel}: page skeleton appeared before the tracked transition phase`
+  ).toBeGreaterThan(requireAcknowledgement ? acknowledgeIndex : transitionStartIndex);
 };
 
 const waitForAnimationFrames = async (page: Page, frameCount: number): Promise<void> => {
@@ -1472,6 +1547,7 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
       sourceId: PRIMARY_NAV_LESSONS_SOURCE_ID,
       stepLabel: 'game -> lessons',
       targetPath: LESSONS_ROUTE_PATH_PATTERN,
+      requireAcknowledgement: false,
     });
     expectNoAppLoaderFlash(gameToLessonsSamples, 'game -> lessons');
 
@@ -1505,6 +1581,54 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     });
     expectNoAppLoaderFlash(lessonsToHomeSamples, 'lessons -> home');
     expectHomeSkeletonToAlignWithLoadedHomeLayout(lessonsToHomeSamples, 'lessons -> home');
+    expectHomeSkeletonToHandoffWithoutPanelJump(lessonsToHomeSamples, 'lessons -> home');
+  });
+
+  test('keeps the focused lesson -> Home skeleton aligned when leaving an active lesson through the top nav', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 560 });
+    await gotoKangurPath(page, '/kangur/game');
+    await expectGameRouteReady(page, 'kangur-primary-nav-lessons');
+
+    await getVisibleTopBarNavAction(page, 'kangur-primary-nav-lessons').click();
+    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN);
+    await expect(page.getByTestId('lessons-list-transition')).toBeVisible();
+
+    await page.locator('[data-doc-id="lessons_library_entry"]').first().click();
+    await expect(page.getByTestId('lessons-active-transition')).toBeVisible();
+    await expect(page.getByTestId('active-lesson-header')).toBeVisible();
+    await expect(page.getByTestId('kangur-page-transition-skeleton')).toHaveCount(0);
+    await expect(page.getByTestId('kangur-app-loader')).toHaveCount(0);
+
+    await startRouteScrollMonitor(page);
+    await getVisibleTopBarNavAction(page, 'kangur-primary-nav-home').click();
+    await expect(page).toHaveURL(HOME_ROUTE_URL_PATTERN);
+    await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
+    await waitForAnimationFrames(page, 24);
+
+    const focusedLessonToHomeSamples = await stopRouteScrollMonitor(page);
+
+    expectRouteToResetScrollAfterCommit(
+      focusedLessonToHomeSamples,
+      HOME_ROUTE_PATH_PATTERN,
+      'focused lesson -> home'
+    );
+    expectRouteSkeletonHandoff({
+      samples: focusedLessonToHomeSamples,
+      sourceId: PRIMARY_NAV_HOME_SOURCE_ID,
+      stepLabel: 'focused lesson -> home',
+      targetPath: HOME_ROUTE_PATH_PATTERN,
+    });
+    expectNoAppLoaderFlash(focusedLessonToHomeSamples, 'focused lesson -> home');
+    expectHomeSkeletonToAlignWithLoadedHomeLayout(
+      focusedLessonToHomeSamples,
+      'focused lesson -> home'
+    );
+    expectHomeSkeletonToHandoffWithoutPanelJump(
+      focusedLessonToHomeSamples,
+      'focused lesson -> home'
+    );
   });
 
   test('keeps the Lessons -> Home skeleton aligned on a mobile viewport', async ({ page }) => {
@@ -1542,9 +1666,14 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
       samples: lessonsToHomeSamples,
       sourceId: LESSONS_LIST_BACK_SOURCE_ID,
       stepLabel: 'mobile lessons -> home',
+      requireAcknowledgement: false,
     });
     expectNoAppLoaderFlash(lessonsToHomeSamples, 'mobile lessons -> home');
     expectHomeSkeletonToAlignWithLoadedHomeLayout(lessonsToHomeSamples, 'mobile lessons -> home');
+    expectHomeSkeletonToHandoffWithoutPanelJump(
+      lessonsToHomeSamples,
+      'mobile lessons -> home'
+    );
   });
 
   test('keeps game entry screens and quick-practice flows on the same route with consistent back navigation', async ({

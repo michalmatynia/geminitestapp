@@ -92,6 +92,7 @@ describe('LessonSlideSection touch mode', () => {
       'touch-manipulation',
       'select-none'
     );
+    expect(screen.getByTestId('lesson-slide-back-button')).toHaveClass('min-h-11', 'min-w-11');
     expect(screen.getByTestId('lesson-slide-prev-button')).toHaveClass('min-h-11', 'min-w-11');
     expect(screen.getByTestId('lesson-slide-next-button')).toHaveClass('min-h-11', 'min-w-11');
   });

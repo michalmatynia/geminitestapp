@@ -107,9 +107,16 @@ describe('LessonSlideSection', () => {
     expect(firstIndicator).toHaveClass('kangur-cta-pill', 'bg-orange-400');
     expect(firstIndicator).toHaveClass('cursor-pointer');
     expect(firstIndicator).toHaveAttribute('aria-current', 'step');
-    expect(screen.getByRole('button', { name: 'Wróć do tematów' })).toHaveClass(
+    const backButton = screen.getByRole('button', { name: 'Wróć do tematów' });
+    expect(backButton).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
+    );
+    expect(backButton).not.toHaveTextContent('Wróć do tematów');
+    expect(backButton).toHaveAttribute('title', 'Wróć do tematów');
+    expect(backButton).toHaveAttribute('data-testid', 'lesson-slide-back-button');
+    expect(screen.getByTestId('lesson-slide-navigation-shell')).toHaveClass(
+      'items-center'
     );
     expect(screen.getByTestId('lesson-slide-prev-button')).toBeDisabled();
     expect(screen.getByTestId('lesson-slide-next-button')).toHaveAttribute(
@@ -155,12 +162,15 @@ describe('LessonSlideSection', () => {
       </KangurLessonNavigationProvider>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Wróć do tematów' }));
+    const backButton = screen.getByRole('button', { name: 'Wróć do tematów' });
 
-    expect(screen.getByRole('button', { name: 'Wróć do tematów' })).toHaveClass(
+    fireEvent.click(backButton);
+
+    expect(backButton).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );
+    expect(backButton).not.toHaveTextContent('Wróć do tematów');
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 

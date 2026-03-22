@@ -9,12 +9,26 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import enMessages from '@/i18n/messages/en.json';
 
-const { useOptionalKangurRoutingMock } = vi.hoisted(() => ({
+const {
+  useKangurProgressStateMock,
+  useOptionalKangurAuthMock,
+  useOptionalKangurRoutingMock,
+} = vi.hoisted(() => ({
+  useKangurProgressStateMock: vi.fn(),
+  useOptionalKangurAuthMock: vi.fn(),
   useOptionalKangurRoutingMock: vi.fn(),
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useOptionalKangurAuth: useOptionalKangurAuthMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useOptionalKangurRouting: useOptionalKangurRoutingMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
+  useKangurProgressState: useKangurProgressStateMock,
 }));
 
 import { KangurPageTransitionSkeleton } from '@/features/kangur/ui/components/KangurPageTransitionSkeleton';
@@ -29,6 +43,20 @@ const renderWithIntl = (element: ReactElement) =>
 describe('KangurPageTransitionSkeleton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useOptionalKangurAuthMock.mockReturnValue({
+      canAccessParentAssignments: true,
+      isAuthenticated: true,
+      user: {
+        activeLearner: { id: 'learner-1' },
+        actorType: 'learner',
+      },
+    });
+    useKangurProgressStateMock.mockReturnValue({
+      dailyQuestsCompleted: 0,
+      gamesPlayed: 0,
+      lessonsCompleted: 0,
+      totalXp: 1,
+    });
   });
 
   it('uses a fixed full-viewport overlay for standalone non-home non-lessons routes', () => {
@@ -148,6 +176,16 @@ describe('KangurPageTransitionSkeleton', () => {
       screen.getByTestId('kangur-page-transition-skeleton-lessons-library-intro')
     ).toHaveClass('w-full');
     expect(
+      screen.getByTestId('kangur-page-transition-skeleton-lessons-library-intro-card')
+    ).toHaveClass('w-full', 'text-center');
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-lessons-library-intro-art')
+    ).toHaveClass('relative', 'w-full', 'max-w-[272px]', 'sm:max-w-[356px]');
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-lessons-library-intro-back-button')
+        .firstElementChild
+    ).toHaveClass('relative', 'mx-auto', 'w-full', 'max-w-fit');
+    expect(
       screen.getByTestId('kangur-page-transition-skeleton-lessons-library-list')
     ).toHaveClass('w-full', 'flex-col');
   });
@@ -243,6 +281,45 @@ describe('KangurPageTransitionSkeleton', () => {
     expect(quest.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
     expect(summary.compareDocumentPosition(assignments) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
     expect(assignments.compareDocumentPosition(progressGrid) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+  });
+
+  it('matches the live parent-without-learner home section set instead of rendering hidden learner panels', () => {
+    useOptionalKangurAuthMock.mockReturnValue({
+      canAccessParentAssignments: false,
+      isAuthenticated: true,
+      user: {
+        activeLearner: null,
+        actorType: 'parent',
+      },
+    });
+    useKangurProgressStateMock.mockReturnValue({
+      dailyQuestsCompleted: 0,
+      gamesPlayed: 0,
+      lessonsCompleted: 0,
+      totalXp: 0,
+    });
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+    });
+
+    renderWithIntl(<KangurPageTransitionSkeleton pageKey='Game' />);
+
+    expect(
+      screen.queryByTestId('kangur-page-transition-skeleton-game-home-parent-spotlight')
+    ).toBeNull();
+    expect(screen.getByTestId('kangur-page-transition-skeleton-game-home-actions-column')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-game-home-missing-learner-shell')
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-page-transition-skeleton-game-home-quest')).toBeNull();
+    expect(screen.queryByTestId('kangur-page-transition-skeleton-game-home-summary')).toBeNull();
+    expect(
+      screen.queryByTestId('kangur-page-transition-skeleton-game-home-assignments')
+    ).toBeNull();
+    expect(
+      screen.queryByTestId('kangur-page-transition-skeleton-game-home-progress-grid')
+    ).toBeNull();
   });
 
   it('uses a softer blurred overlay for locale-switch skeletons', () => {

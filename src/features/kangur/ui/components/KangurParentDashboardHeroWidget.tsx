@@ -37,7 +37,6 @@ import {
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 
-const PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS = 110;
 const LEARNER_ACTIVITY_REFRESH_MS = 10_000;
 
 export function KangurParentDashboardHeroWidget({
@@ -109,14 +108,12 @@ export function KangurParentDashboardHeroWidget({
     : 'w-full sm:w-auto';
   const handleGoHome = (): void => {
     routeNavigator.push(getKangurHomeHref(basePath), {
-      acknowledgeMs: PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS,
       pageKey: 'Game',
       sourceId: 'parent-dashboard-hero:back-home',
     });
   };
   const handleGoToProfile = (): void => {
     routeNavigator.push(createPageUrl('LearnerProfile', basePath), {
-      acknowledgeMs: PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS,
       pageKey: 'LearnerProfile',
       sourceId: 'parent-dashboard-hero:back-profile',
     });
@@ -300,9 +297,8 @@ export function KangurParentDashboardHeroWidget({
         >
           {shouldShowActivityLink ? (
             <KangurButton asChild className={compactWideActionClassName} size='sm' variant='surface'>
-              <Link
-                href={activityHref ?? createPageUrl('Game', basePath)}
-                transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
+            <Link
+              href={activityHref ?? createPageUrl('Game', basePath)}
                 transitionSourceId='parent-dashboard-hero:learner-activity'
               >
                 {translations('hero.openActivity')}
@@ -318,7 +314,6 @@ export function KangurParentDashboardHeroWidget({
             <Link
               href={createPageUrl('LearnerProfile', basePath)}
               targetPageKey='LearnerProfile'
-              transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
               transitionSourceId='parent-dashboard-hero:profile'
               data-doc-id='top_nav_profile'
             >
@@ -343,7 +338,6 @@ export function KangurParentDashboardHeroWidget({
                 size='sm'
                 targetPageKey='Game'
                 transition={{
-                  acknowledgeMs: PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS,
                   sourceId: 'parent-dashboard-nav:home',
                 }}
                 variant='navigation'
@@ -357,7 +351,6 @@ export function KangurParentDashboardHeroWidget({
                 size='sm'
                 targetPageKey='Lessons'
                 transition={{
-                  acknowledgeMs: PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS,
                   sourceId: 'parent-dashboard-nav:lessons',
                 }}
                 variant='navigation'
@@ -371,7 +364,6 @@ export function KangurParentDashboardHeroWidget({
                 size='sm'
                 targetPageKey='LearnerProfile'
                 transition={{
-                  acknowledgeMs: PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS,
                   sourceId: 'parent-dashboard-nav:profile',
                 }}
                 variant='navigation'
@@ -385,7 +377,6 @@ export function KangurParentDashboardHeroWidget({
                 size='sm'
                 targetPageKey='ParentDashboard'
                 transition={{
-                  acknowledgeMs: PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS,
                   sourceId: 'parent-dashboard-nav:dashboard',
                 }}
                 variant='navigationActive'

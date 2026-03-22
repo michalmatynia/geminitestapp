@@ -66,7 +66,6 @@ function CompetitionContent(): React.JSX.Element {
 
   const handleBack = useCallback(() => {
     routeNavigator.back({
-      acknowledgeMs: 110,
       fallbackHref: getKangurHomeHref(basePath),
       fallbackPageKey: 'Game',
       sourceId: 'competition:back',

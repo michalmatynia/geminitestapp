@@ -5,6 +5,7 @@ import { useState } from 'react';
 import type { KangurDuelSeries } from '@kangur/contracts';
 
 import { useKangurMobileAuth } from '../src/auth/KangurMobileAuthContext';
+import { createKangurCompetitionHref } from '../src/competition/competitionHref';
 import { createKangurDuelsHref } from '../src/duels/duelsHref';
 import {
   MOBILE_DUEL_DEFAULT_DIFFICULTY,
@@ -63,6 +64,7 @@ const LEADERBOARD_ROUTE = '/leaderboard' as Href;
 const LESSONS_ROUTE = '/lessons' as Href;
 const PRACTICE_ROUTE = createKangurPracticeHref('mixed');
 const TESTS_ROUTE = createKangurTestsHref();
+const COMPETITION_ROUTE = createKangurCompetitionHref();
 const PLAN_ROUTE = createKangurPlanHref();
 const DUELS_ROUTE = createKangurDuelsHref();
 
@@ -1299,6 +1301,19 @@ export default function HomeScreen(): React.JSX.Element {
                 de: 'Tests',
                 en: 'Tests',
                 pl: 'Testy',
+              })}
+            />
+            <OutlineLink
+              href={COMPETITION_ROUTE}
+              hint={copy({
+                de: 'Öffnet den Wettbewerb.',
+                en: 'Opens the competition.',
+                pl: 'Otwiera konkurs.',
+              })}
+              label={copy({
+                de: 'Wettbewerb',
+                en: 'Competition',
+                pl: 'Konkurs',
               })}
             />
             <OutlineLink

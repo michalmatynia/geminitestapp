@@ -110,6 +110,7 @@ vi.mock('@/features/kangur/ui/design/primitives', () => ({
 
 vi.mock('@/features/kangur/ui/design/tokens', () => ({
   KANGUR_LESSON_PANEL_GAP_CLASSNAME: 'gap-4',
+  KANGUR_PANEL_GAP_CLASSNAME: 'gap-6',
   KANGUR_PANEL_ROW_CLASSNAME: 'panel-row',
 }));
 

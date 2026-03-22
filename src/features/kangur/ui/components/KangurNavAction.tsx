@@ -5,7 +5,7 @@ import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { cn } from '@/features/kangur/shared/utils';
 
-import { memo, type ComponentProps, type ReactNode, type Ref } from 'react';
+import { memo, type ComponentProps, type ReactNode, type Ref, useCallback, useState } from 'react';
 
 type KangurButtonProps = ComponentProps<typeof KangurButton>;
 
@@ -49,15 +49,41 @@ export const KangurNavAction = memo(function KangurNavAction({
   children,
 }: KangurNavActionProps): React.JSX.Element {
   const isCoarsePointer = useKangurCoarsePointer();
+  const [isPressed, setIsPressed] = useState(false);
   const transitionActive = transition?.active ?? false;
+  const navState = transitionActive ? 'transitioning' : isPressed ? 'pressed' : 'idle';
   const resolvedVariant =
-    variant ?? (active || transitionActive ? 'navigationActive' : 'navigation');
+    variant ?? (active || navState !== 'idle' ? 'navigationActive' : 'navigation');
   const resolvedClassName = cn(
     isCoarsePointer &&
       (size === 'sm' || size === 'md') &&
       'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]',
     className
   );
+  const handlePressStart = useCallback(() => {
+    if (disabled || transitionActive) {
+      return;
+    }
+
+    setIsPressed(true);
+  }, [disabled, transitionActive]);
+  const handlePressEnd = useCallback(() => {
+    setIsPressed(false);
+  }, []);
+  const handleActionClick = useCallback(() => {
+    handlePressEnd();
+    onClick?.();
+  }, [handlePressEnd, onClick]);
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      handlePressStart();
+    }
+  }, [handlePressStart]);
+  const handleKeyUp = useCallback((event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      handlePressEnd();
+    }
+  }, [handlePressEnd]);
 
   if (href) {
     return (
@@ -67,9 +93,16 @@ export const KangurNavAction = memo(function KangurNavAction({
         aria-label={ariaLabel}
         className={resolvedClassName}
         data-doc-id={docId}
-        data-nav-state={transitionActive ? 'transitioning' : 'idle'}
+        data-nav-state={navState}
         data-testid={testId}
-        onClick={onClick}
+        onBlur={handlePressEnd}
+        onClick={handleActionClick}
+        onKeyDown={handleKeyDown}
+        onKeyUp={handleKeyUp}
+        onMouseLeave={handlePressEnd}
+        onPointerCancel={handlePressEnd}
+        onPointerDown={handlePressStart}
+        onPointerUp={handlePressEnd}
         disabled={disabled}
         size={size}
         title={title}
@@ -93,10 +126,17 @@ export const KangurNavAction = memo(function KangurNavAction({
       aria-label={ariaLabel}
       className={resolvedClassName}
       data-doc-id={docId}
-      data-nav-state={transitionActive ? 'transitioning' : 'idle'}
+      data-nav-state={navState}
       data-testid={testId}
       disabled={disabled}
-      onClick={onClick}
+      onBlur={handlePressEnd}
+      onClick={handleActionClick}
+      onKeyDown={handleKeyDown}
+      onKeyUp={handleKeyUp}
+      onMouseLeave={handlePressEnd}
+      onPointerCancel={handlePressEnd}
+      onPointerDown={handlePressStart}
+      onPointerUp={handlePressEnd}
       ref={elementRef}
       size={size}
       title={title}

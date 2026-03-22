@@ -290,6 +290,35 @@ describe('Game page', () => {
     expect(screen.getByTestId('kangur-game-navigation-widget')).toBeInTheDocument();
   });
 
+  it('keeps the home screen motion static so the skeleton handoff does not jump vertically', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildRuntime('home'),
+      canAccessParentAssignments: true,
+      progress: { totalXp: 1 },
+    });
+
+    render(<Game />);
+
+    const homeLayout = screen.getByTestId('kangur-game-home-layout');
+
+    expect(homeLayout).toHaveAttribute(
+      'data-motion-initial',
+      JSON.stringify({ opacity: 1, y: 0 })
+    );
+    expect(homeLayout).toHaveAttribute(
+      'data-motion-animate',
+      JSON.stringify({ opacity: 1, y: 0 })
+    );
+    expect(homeLayout).toHaveAttribute(
+      'data-motion-exit',
+      JSON.stringify({ opacity: 1, y: 0 })
+    );
+    expect(homeLayout).toHaveAttribute(
+      'data-motion-transition',
+      JSON.stringify({ duration: 0 })
+    );
+  });
+
   it('shows the parent add-learner prompt under the home actions when no learner is selected', () => {
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildRuntime('home'),
@@ -309,6 +338,11 @@ describe('Game page', () => {
       'href',
       '/kangur/parent-dashboard'
     );
+    expect(screen.queryByTestId('kangur-home-quest-widget')).toBeNull();
+    expect(screen.queryByTestId('kangur-home-hero-widget')).toBeNull();
+    expect(screen.queryByTestId('kangur-priority-assignments-widget')).toBeNull();
+    expect(screen.queryByTestId('leaderboard-widget')).toBeNull();
+    expect(screen.queryByTestId('player-progress-widget')).toBeNull();
   });
 
   it('keeps the home leaderboard and progress columns centered within the same 900px section', async () => {
@@ -533,7 +567,6 @@ describe('Game page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do lekcji' }));
 
     expect(routeNavigatorPushMock).toHaveBeenCalledWith('/kangur/lessons', {
-      acknowledgeMs: 110,
       pageKey: 'Lessons',
       sourceId: 'game-phone-simulation:back-to-lessons',
     });

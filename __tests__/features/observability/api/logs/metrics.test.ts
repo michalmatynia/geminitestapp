@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { GET } from '@/app/api/system/logs/metrics/route';
-import { getSystemLogMetrics } from '@/shared/lib/observability/system-logger';
+import { getSystemLogMetrics } from '@/shared/lib/observability/system-log-repository';
 
 vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandler:
@@ -17,7 +17,7 @@ vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
   assertSettingsManageAccess: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/shared/lib/observability/system-logger', () => ({
+vi.mock('@/shared/lib/observability/system-log-repository', () => ({
   getSystemLogMetrics: vi.fn(),
 }));
 

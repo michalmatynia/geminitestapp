@@ -277,6 +277,35 @@ describe('KangurFeatureApp', () => {
     );
   });
 
+  it('keeps the navbar skeleton mounted while a pending route skeleton is visible and the shared host is still unresolved', async () => {
+    topNavigationHostVisibleMock.mockReturnValue(false);
+    routeTransitionStateMock.mockReturnValue({
+      isRouteAcknowledging: false,
+      isRoutePending: true,
+      isRouteWaitingForReady: false,
+      isRouteRevealing: false,
+      transitionPhase: 'pending',
+      activeTransitionSourceId: null,
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/kangur/lessons',
+      activeTransitionSkeletonVariant: 'lessons-library',
+      pendingPageKey: 'Lessons',
+      startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
+    });
+
+    render(<KangurFeatureApp />);
+
+    await act(async () => {
+      vi.advanceTimersByTime(140);
+    });
+
+    expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Lessons:lessons-library'
+    );
+  });
+
   it('keeps the target route hidden while the destination is still loading', () => {
     routeTransitionStateMock.mockReturnValue({
       isRouteAcknowledging: false,

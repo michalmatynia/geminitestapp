@@ -4,7 +4,9 @@ import {
   appendKangurUrlParams,
   buildKangurEmbeddedBasePath,
   getKangurCanonicalPublicHref,
+  getKangurDedicatedAppHref,
   getKangurHomeHref,
+  getKangurLaunchTarget,
   getKangurLoginHref,
   getKangurPageHref,
   getKangurInternalQueryParamKeys,
@@ -72,6 +74,36 @@ describe('kangur routing config', () => {
     expect(getKangurCanonicalPublicHref(['login'], 'callbackUrl=%2Fkangur%2Flessons')).toBe(
       '/login?callbackUrl=%2Fkangur%2Flessons'
     );
+  });
+
+  it('maps supported public routes to dedicated app deep links', () => {
+    expect(getKangurDedicatedAppHref()).toBe('kangur://');
+    expect(getKangurDedicatedAppHref(['lessons'], { focus: 'division' })).toBe(
+      'kangur://lessons?focus=division'
+    );
+    expect(getKangurDedicatedAppHref(['parent-dashboard'])).toBe('kangur://parent');
+  });
+
+  it('falls back to the public web route when a dedicated app route is unavailable', () => {
+    expect(getKangurDedicatedAppHref(['social-updates'])).toBeNull();
+    expect(getKangurLaunchTarget('dedicated_app', ['social-updates'])).toEqual({
+      route: 'dedicated_app',
+      href: '/social-updates',
+      fallbackHref: '/social-updates',
+    });
+  });
+
+  it('resolves launch targets for both mobile web and dedicated app modes', () => {
+    expect(getKangurLaunchTarget('web_mobile_view', ['lessons'], { focus: 'division' })).toEqual({
+      route: 'web_mobile_view',
+      href: '/lessons?focus=division',
+      fallbackHref: '/lessons?focus=division',
+    });
+    expect(getKangurLaunchTarget('dedicated_app', ['duels'], { join: 'invite-1' })).toEqual({
+      route: 'dedicated_app',
+      href: 'kangur://duels?join=invite-1',
+      fallbackHref: '/duels?join=invite-1',
+    });
   });
 
   it('resolves the public kangur base path from a return href', () => {

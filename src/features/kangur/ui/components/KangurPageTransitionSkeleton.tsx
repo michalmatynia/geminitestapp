@@ -11,6 +11,7 @@ import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageI
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
 import { KangurLessonsWordmark } from '@/features/kangur/ui/components/KangurLessonsWordmark';
+import { KangurTopNavigationSkeleton } from '@/features/kangur/ui/components/KangurTopNavigationSkeleton';
 import {
   GAME_HOME_ACTIONS_LIST_CLASSNAME,
   GAME_HOME_ACTIONS_SHELL_CLASSNAME,
@@ -1050,16 +1051,20 @@ const renderSkeletonVariant = (
 export function KangurPageTransitionSkeleton({
   pageKey,
   reason = 'navigation',
+  renderInlineTopNavigationSkeleton = false,
   variant,
 }: {
   pageKey?: string | null;
   reason?: 'boot' | 'navigation' | 'locale-switch';
+  renderInlineTopNavigationSkeleton?: boolean;
   variant?: KangurRouteTransitionSkeletonVariant | null;
 }): React.JSX.Element {
   const translations = useTranslations('KangurPublic');
   const routing = useOptionalKangurRouting();
   const embedded = routing?.embedded ?? false;
   const isLocaleSwitch = reason === 'locale-switch';
+  const shouldRenderInlineTopNavigationSkeleton =
+    renderInlineTopNavigationSkeleton && !embedded;
   const resolvedVariant =
     variant ??
     resolveKangurRouteTransitionSkeletonVariant({
@@ -1067,7 +1072,12 @@ export function KangurPageTransitionSkeleton({
       pageKey,
     });
   const resolvedPageKey = resolveSkeletonPageKey(resolvedVariant);
-  const shouldOffsetStandaloneRouteOverlay = !embedded;
+  const shouldOffsetStandaloneRouteOverlay =
+    !embedded && !shouldRenderInlineTopNavigationSkeleton;
+  const shouldApplyStandaloneTopBarPadding =
+    !embedded &&
+    !shouldOffsetStandaloneRouteOverlay &&
+    !shouldRenderInlineTopNavigationSkeleton;
 
   return (
     <div
@@ -1098,6 +1108,7 @@ export function KangurPageTransitionSkeleton({
             ? translations('loadingLanguage')
             : translations('loadingPage')}
       </div>
+      {shouldRenderInlineTopNavigationSkeleton ? <KangurTopNavigationSkeleton /> : null}
       <KangurStandardPageLayout
         tone={SKELETON_TONE_BY_PAGE[resolvedPageKey]}
         shellClassName='pointer-events-none'
@@ -1112,9 +1123,9 @@ export function KangurPageTransitionSkeleton({
               : resolvedPageKey === 'Lessons'
               ? null
               : resolvedPageKey === 'Game'
-                ? shouldOffsetStandaloneRouteOverlay
-                  ? 'pt-24 sm:pt-28'
-                  : KANGUR_TOP_BAR_PADDED_OFFSET_CLASSNAME
+                ? shouldApplyStandaloneTopBarPadding
+                  ? KANGUR_TOP_BAR_PADDED_OFFSET_CLASSNAME
+                  : 'pt-24 sm:pt-28'
                 : 'pt-24 sm:pt-28'
           ),
           'data-kangur-route-main': false,

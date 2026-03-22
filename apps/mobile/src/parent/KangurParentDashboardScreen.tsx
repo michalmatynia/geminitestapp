@@ -1,4 +1,5 @@
 import { Link, type Href } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -18,6 +19,13 @@ type Tone = {
   borderColor: string;
   textColor: string;
 };
+
+type ParentDashboardTabId =
+  | 'progress'
+  | 'results'
+  | 'assignments'
+  | 'monitoring'
+  | 'aiTutor';
 
 const BASE_TONE: Tone = {
   backgroundColor: '#f8fafc',
@@ -201,6 +209,44 @@ function OutlineLink({
   );
 }
 
+function TabButton({
+  active,
+  label,
+  onPress,
+}: {
+  active: boolean;
+  label: string;
+  onPress: () => void;
+}): React.JSX.Element {
+  return (
+    <Pressable
+      accessibilityRole='button'
+      onPress={onPress}
+      style={{
+        alignItems: 'center',
+        backgroundColor: active ? '#0f172a' : '#ffffff',
+        borderColor: active ? '#0f172a' : '#cbd5e1',
+        borderRadius: 999,
+        borderWidth: 1,
+        minHeight: 40,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+      }}
+    >
+      <Text
+        style={{
+          color: active ? '#ffffff' : '#0f172a',
+          fontSize: 13,
+          fontWeight: '700',
+          textAlign: 'center',
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 const formatAssignmentPriorityLabel = (
   priority: 'high' | 'low' | 'medium',
   locale: 'de' | 'en' | 'pl',
@@ -245,6 +291,7 @@ const getAssignmentTone = (
 export function KangurParentDashboardScreen(): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const dashboard = useKangurMobileParentDashboard();
+  const [activeTab, setActiveTab] = useState<ParentDashboardTabId>('progress');
   const tutorContext =
     dashboard.canAccessDashboard
       ? {
@@ -274,6 +321,39 @@ export function KangurParentDashboardScreen(): React.JSX.Element {
           surface: 'parent_dashboard' as const,
           title: dashboard.parentDisplayName,
         };
+  const activeAssignmentCount =
+    dashboard.assignmentMonitoring.notStartedCount +
+    dashboard.assignmentMonitoring.inProgressCount;
+  const activeTabDescription =
+    activeTab === 'progress'
+      ? copy({
+          de: 'Prüfe Level, Serie und Tagesziel des ausgewählten Lernenden.',
+          en: 'Review the selected learner level, streak, and daily goal.',
+          pl: 'Sprawdź poziom, serię i cel dnia wybranego ucznia.',
+        })
+      : activeTab === 'results'
+        ? copy({
+            de: 'Przejrzyj najnowsze Ergebnisse und öffne bei Bedarf den vollständigen Verlauf.',
+            en: 'Review the latest results and open the full history when needed.',
+            pl: 'Przejrzyj najnowsze wyniki i otwórz pełną historię, gdy będzie potrzebna.',
+          })
+        : activeTab === 'assignments'
+          ? copy({
+              de: 'Otwórz bieżące priorytety i przejdź od razu do lekcji albo treningu.',
+              en: 'Open current priorities and jump straight into lessons or practice.',
+              pl: 'Otwórz bieżące priorytety i przejdź od razu do lekcji albo treningu.',
+            })
+          : activeTab === 'monitoring'
+            ? copy({
+                de: 'Vergleiche den Status aktueller Aufgaben und überprüfe, gdzie Lernende Unterstützung brauchen.',
+                en: 'Compare current assignment status and see where learners need support.',
+                pl: 'Porównaj status bieżących zadań i sprawdź, gdzie uczeń potrzebuje wsparcia.',
+              })
+            : copy({
+                de: 'Öffne den aktuellen Tutor-Kontext des ausgewählten Lernenden.',
+                en: 'Open the current tutor context for the selected learner.',
+                pl: 'Otwórz bieżący kontekst AI Tutora dla wybranego ucznia.',
+              });
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>

@@ -25,7 +25,13 @@ export function KangurRouteLoadingFallback({
     href,
   });
 
-  const pageSkeleton = <KangurPageTransitionSkeleton reason='navigation' variant={variant} />;
+  const pageSkeleton = (
+    <KangurPageTransitionSkeleton
+      reason='navigation'
+      renderInlineTopNavigationSkeleton={!includeTopNavigationSkeleton}
+      variant={variant}
+    />
+  );
 
   if (!includeTopNavigationSkeleton) {
     return pageSkeleton;

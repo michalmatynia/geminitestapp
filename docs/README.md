@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-17'
+last_reviewed: '2026-03-22'
 status: 'active'
 doc_type: 'index'
 scope: 'repo'
@@ -58,6 +58,8 @@ avoid becoming another dumping ground.
 - Validator: [`docs/validator/README.md`](./validator/README.md)
 - Kangur: [`docs/kangur/README.md`](./kangur/README.md)
 - StudiQ app shell (Kangur integration): [`docs/kangur/studiq-application.md`](./kangur/studiq-application.md)
+- Kangur mobile app runtime and commands: [`apps/mobile/README.md`](../apps/mobile/README.md)
+- Kangur mobile-web workspace boundary: [`apps/mobile-web/README.md`](../apps/mobile-web/README.md)
 - Prompt Exploder: canonical feature docs under
   [`docs/prompt-exploder/README.md`](./prompt-exploder/README.md)
 

@@ -55,6 +55,7 @@ describe('KangurRouteLoadingFallback', () => {
     expect(kangurTopNavigationSkeletonMock).toHaveBeenCalledTimes(1);
     expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
       reason: 'navigation',
+      renderInlineTopNavigationSkeleton: false,
       variant: 'lessons-library',
     });
   });
@@ -66,6 +67,7 @@ describe('KangurRouteLoadingFallback', () => {
 
     expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
       reason: 'navigation',
+      renderInlineTopNavigationSkeleton: false,
       variant: 'lessons-focus',
     });
   });
@@ -78,6 +80,7 @@ describe('KangurRouteLoadingFallback', () => {
 
     expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
       reason: 'navigation',
+      renderInlineTopNavigationSkeleton: false,
       variant: 'game-session',
     });
   });
@@ -88,5 +91,10 @@ describe('KangurRouteLoadingFallback', () => {
     expect(screen.queryByTestId('kangur-top-navigation-skeleton-probe')).toBeNull();
     expect(screen.getByTestId('kangur-page-transition-skeleton-probe')).toBeInTheDocument();
     expect(kangurTopNavigationSkeletonMock).not.toHaveBeenCalled();
+    expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
+      reason: 'navigation',
+      renderInlineTopNavigationSkeleton: true,
+      variant: 'lessons-library',
+    });
   });
 });

@@ -117,6 +117,7 @@ import { AdminKangurSettingsPage } from '@/features/kangur/admin/AdminKangurSett
 import { DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 import {
   KANGUR_HELP_SETTINGS_KEY,
+  KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
   KANGUR_NARRATOR_SETTINGS_KEY,
   KANGUR_PHONE_SIMULATION_SETTINGS_KEY,
   KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
@@ -300,6 +301,33 @@ describe('AdminKangurSettingsPage', () => {
     });
   });
 
+  it('defaults to the mobile web launch route and saves the dedicated app selection', async () => {
+    render(<AdminKangurSettingsPage />);
+    await expectInitialNarratorProbe();
+
+    const mobileWebButton = screen.getByRole('button', { name: /mobile web view/i });
+    const dedicatedAppButton = screen.getByRole('button', { name: /dedicated app/i });
+
+    expect(mobileWebButton).toHaveAttribute('aria-pressed', 'true');
+    expect(dedicatedAppButton).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByText('Primary target')).toBeInTheDocument();
+    expect(screen.getByText('Open selected route')).toHaveAttribute('href', '/');
+
+    fireEvent.click(dedicatedAppButton);
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
+
+    await waitFor(() =>
+      expect(mutateAsyncMock).toHaveBeenCalledWith({
+        key: KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
+        value: JSON.stringify({ route: 'dedicated_app' }),
+      })
+    );
+
+    expect(toastMock).toHaveBeenCalledWith('Kangur launch route saved.', {
+      variant: 'success',
+    });
+  });
+
   it('renders the storefront theme editor shortcut and phone simulation section', async () => {
     render(<AdminKangurSettingsPage />);
     await expectInitialNarratorProbe();
@@ -315,6 +343,8 @@ describe('AdminKangurSettingsPage', () => {
     expect(
       screen.getByRole('switch', { name: 'Phone simulation' })
     ).toBeInTheDocument();
+    expect(screen.getByText('App launch route')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /dedicated app/i })).toBeInTheDocument();
     expect(
       screen.getByText(/full-width controls appear above and below the game viewport/i)
     ).toBeInTheDocument();

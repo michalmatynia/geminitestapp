@@ -26,6 +26,20 @@ public root route or be embedded inside CMS pages.
   - `packages/kangur-api-client` for `/api/kangur/*` transport.
   - `packages/kangur-platform` for auth session, storage, and app-facing platform ports.
 
+## Surface ownership matrix
+
+| Surface | Canonical location | Responsibility |
+| --- | --- | --- |
+| Public web shell | repository root Next.js app | Owns the public StudiQ frontend, front-page ownership, CMS embedding, and the canonical `/kangur/*` web routes. |
+| Kangur admin | `src/app/(admin)/admin/kangur/*` | Owns authoring, content management, settings, observability, social publishing, and test or lesson management. |
+| Kangur backend | `src/app/api/kangur/*` | Owns learner auth, parent auth, progress, lessons, assignments, scores, duels, AI Tutor, and supporting operational endpoints. |
+| Native learner app | `apps/mobile` | Owns Expo routing, native bootstrapping, mobile auth flow, device storage, and mobile learner UI. |
+| Future native web target | `apps/mobile-web` | Reserved only; does not currently own any production web traffic. |
+| Shared contracts | `packages/kangur-contracts` | Defines transport and domain types reused by web, mobile, and API clients. |
+| Shared domain logic | `packages/kangur-core` | Owns deterministic business logic such as lessons, progress, assignments, rewards, and profile helpers. |
+| Shared transport layer | `packages/kangur-api-client` | Owns portable request helpers for `/api/kangur/*`. |
+| Shared platform boundary | `packages/kangur-platform` | Owns auth session, storage, and app-facing port abstractions. |
+
 ## Public routing and ownership
 
 Kangur exposes a canonical base path at `/kangur` and can also own `/` when the
@@ -173,6 +187,17 @@ so they should be updated instead of hardcoding AI tutor copy in UI components.
 - `npm run typecheck:mobile`
 - `npm run test:mobile:tooling`
 - `npm run check:mobile:runtime:backend`
+
+## Primary commands by workflow
+
+- Web app shell: `npm run dev:web`
+- Mobile app shell: `npm run dev:mobile`
+- Mobile Expo web preview: `npm run dev:mobile:web`
+- Mobile iOS simulator flow: `npm run dev:mobile:ios:local`
+- Mobile Android emulator flow: `npm run dev:mobile:android:local`
+- Mobile config inspection: `npm run config:mobile`
+- Mobile typecheck: `npm run typecheck:mobile`
+- Docs structure validation: `npm run docs:structure:check`
 
 ## Current boundaries
 

@@ -30,6 +30,16 @@ export type KangurMobileParentAssignmentItem = {
   href: Href | null;
 };
 
+export type KangurMobileParentAssignmentMonitoring = {
+  completedCount: number;
+  highPriorityCount: number;
+  inProgressCount: number;
+  lessonCount: number;
+  notStartedCount: number;
+  practiceCount: number;
+  totalCount: number;
+};
+
 export type KangurMobileParentRecentResultItem = {
   historyHref: Href;
   lessonHref: Href | null;
@@ -40,6 +50,7 @@ export type KangurMobileParentRecentResultItem = {
 type UseKangurMobileParentDashboardResult = {
   activeLearner: KangurLearnerProfile | null;
   assignmentItems: KangurMobileParentAssignmentItem[];
+  assignmentMonitoring: KangurMobileParentAssignmentMonitoring;
   assignmentsError: string | null;
   canAccessDashboard: boolean;
   isAuthenticated: boolean;
@@ -98,6 +109,44 @@ const sortAssignments = (
 
     return Date.parse(right.updatedAt) - Date.parse(left.updatedAt);
   });
+
+const buildAssignmentMonitoring = (
+  assignments: KangurAssignmentSnapshot[],
+): KangurMobileParentAssignmentMonitoring =>
+  assignments.reduce<KangurMobileParentAssignmentMonitoring>(
+    (summary, assignment) => {
+      summary.totalCount += 1;
+
+      if (assignment.priority === 'high') {
+        summary.highPriorityCount += 1;
+      }
+
+      if (assignment.target.type === 'lesson') {
+        summary.lessonCount += 1;
+      } else if (assignment.target.type === 'practice') {
+        summary.practiceCount += 1;
+      }
+
+      if (assignment.progress.status === 'completed') {
+        summary.completedCount += 1;
+      } else if (assignment.progress.status === 'in_progress') {
+        summary.inProgressCount += 1;
+      } else {
+        summary.notStartedCount += 1;
+      }
+
+      return summary;
+    },
+    {
+      completedCount: 0,
+      highPriorityCount: 0,
+      inProgressCount: 0,
+      lessonCount: 0,
+      notStartedCount: 0,
+      practiceCount: 0,
+      totalCount: 0,
+    },
+  );
 
 export const useKangurMobileParentDashboard =
   (): UseKangurMobileParentDashboardResult => {
@@ -194,20 +243,28 @@ export const useKangurMobileParentDashboard =
       [recentResults.scores],
     );
 
+    const assignmentSnapshots = assignmentsQuery.data ?? [];
+    const assignmentMonitoring = useMemo(
+      () => buildAssignmentMonitoring(assignmentSnapshots),
+      [assignmentSnapshots],
+    );
+
     const assignmentItems = useMemo(
       () =>
-        sortAssignments(assignmentsQuery.data ?? [])
+        sortAssignments(assignmentSnapshots)
+          .filter((assignment) => assignment.progress.status !== 'completed')
           .slice(0, 3)
           .map((assignment) => ({
             assignment,
             href: resolveAssignmentHref(assignment),
           })),
-      [assignmentsQuery.data],
+      [assignmentSnapshots],
     );
 
     return {
       activeLearner,
       assignmentItems,
+      assignmentMonitoring,
       assignmentsError:
         assignmentsQuery.error instanceof Error
           ? copy({

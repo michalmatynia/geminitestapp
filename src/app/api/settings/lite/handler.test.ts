@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KANGUR_AI_TUTOR_APP_SETTINGS_KEY } from '@/shared/contracts/kangur-ai-tutor';
+import { KANGUR_LAUNCH_ROUTE_SETTINGS_KEY } from '@/shared/contracts/kangur';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const { getMongoDbMock, getMongoClientMock } = vi.hoisted(() => ({
@@ -48,6 +49,11 @@ describe('settings lite handler', () => {
         key: KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
         value: JSON.stringify({ agentPersonaId: 'persona-1' }),
       },
+      {
+        _id: KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
+        key: KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
+        value: JSON.stringify({ route: 'dedicated_app' }),
+      },
     ]);
     const toArraySettingsMock = vi.fn().mockResolvedValue([]);
     const createIndexMock = vi.fn().mockResolvedValue(undefined);
@@ -74,18 +80,27 @@ describe('settings lite handler', () => {
         $or: expect.arrayContaining([
           expect.objectContaining({
             key: expect.objectContaining({
-              $in: expect.arrayContaining([KANGUR_AI_TUTOR_APP_SETTINGS_KEY]),
+              $in: expect.arrayContaining([
+                KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
+                KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
+              ]),
             }),
           }),
         ]),
       }),
       expect.any(Object)
     );
-    await expect(response.json()).resolves.toEqual([
-      {
-        key: KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
-        value: JSON.stringify({ agentPersonaId: 'persona-1' }),
-      },
-    ]);
+    await expect(response.json()).resolves.toEqual(
+      expect.arrayContaining([
+        {
+          key: KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
+          value: JSON.stringify({ agentPersonaId: 'persona-1' }),
+        },
+        {
+          key: KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
+          value: JSON.stringify({ route: 'dedicated_app' }),
+        },
+      ])
+    );
   });
 });

@@ -123,6 +123,31 @@ describe('KangurPageTransitionSkeleton', () => {
     );
   });
 
+  it('can render an inline navbar placeholder for lazy page fallbacks without offsetting the overlay', () => {
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+    });
+
+    renderWithIntl(
+      <KangurPageTransitionSkeleton
+        pageKey='Lessons'
+        renderInlineTopNavigationSkeleton
+      />
+    );
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass(
+      'fixed',
+      'inset-0'
+    );
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).not.toHaveClass(
+      'inset-x-0',
+      'bottom-0',
+      'top-[var(--kangur-top-bar-height,88px)]'
+    );
+    expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
+  });
+
   it('keeps standalone game-session overlays below the top bar without adding a second top-bar offset', () => {
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',

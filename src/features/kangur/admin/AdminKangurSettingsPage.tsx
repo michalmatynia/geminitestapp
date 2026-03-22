@@ -21,6 +21,7 @@ import { KangurNarratorSettingsPanel } from './components/KangurNarratorSettings
 import { KangurPageContentSettingsPanel } from './components/KangurPageContentSettingsPanel';
 import { KangurParentVerificationSettingsPanel } from './components/KangurParentVerificationSettingsPanel';
 import { useKangurSettings } from './hooks/useKangurSettings';
+import { getKangurLaunchTarget } from '@/features/kangur/config/routing';
 import { KangurAppLoader } from '@/features/kangur/ui/components/KangurAppLoader';
 import {
   KANGUR_GRID_RELAXED_CLASSNAME,
@@ -28,6 +29,20 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 
 const SETTINGS_SECTION_CLASS_NAME = 'border-border/60 bg-card/35 shadow-sm';
+const KANGUR_LAUNCH_ROUTE_OPTIONS = [
+  {
+    value: 'web_mobile_view',
+    label: 'Mobile web view',
+    description:
+      'Opens the standard Kangur page in the browser. Responsive styling handles the mobile layout.',
+  },
+  {
+    value: 'dedicated_app',
+    label: 'Dedicated app',
+    description:
+      'Uses the native Kangur deep link so the installed mobile app can open directly.',
+  },
+] as const;
 
 export function AdminKangurSettingsPage(): ReactElement {
   const {
@@ -57,6 +72,8 @@ export function AdminKangurSettingsPage(): ReactElement {
     setParentVerificationNotificationsDisabledUntilInput,
     phoneSimulationEnabled,
     setPhoneSimulationEnabled,
+    launchRoute,
+    setLaunchRoute,
     copyStatus,
     narratorProbe,
     isProbingNarrator,
@@ -69,7 +86,11 @@ export function AdminKangurSettingsPage(): ReactElement {
     persistedNarratorSettings,
     parentVerificationNotificationsPausedUntil,
     persistedParentVerificationEmailSettings,
+    persistedLaunchRouteSettings,
   } = useKangurSettings();
+  const activeLaunchTarget = getKangurLaunchTarget(launchRoute);
+  const persistedLaunchRouteLabel =
+    persistedLaunchRouteSettings.route === 'dedicated_app' ? 'Dedicated app' : 'Mobile web view';
   const breadcrumbs = [
     { label: 'Admin', href: '/admin' },
     { label: 'Kangur', href: '/admin/kangur' },
@@ -86,8 +107,8 @@ export function AdminKangurSettingsPage(): ReactElement {
           </AdminFavoriteBreadcrumbRow>
           <span className='hidden h-4 w-px bg-white/12 md:block' />
           <span className='text-xs text-slate-300/80'>
-            Manage storefront theme, AI Tutor, narration, and parent verification behavior across
-            Kangur.
+            Manage launch routing, storefront theme, AI Tutor, narration, and parent verification
+            behavior across Kangur.
           </span>
         </div>
       }
@@ -134,6 +155,83 @@ export function AdminKangurSettingsPage(): ReactElement {
                 <Button asChild variant='outline' size='sm' className='shrink-0'>
                   <Link href='/admin/kangur/appearance'>Open theme editor</Link>
                 </Button>
+              </div>
+            </KangurAdminCard>
+          </FormSection>
+
+          <FormSection
+            title='App launch route'
+            description='Switch the default Kangur launch target between the responsive website and the dedicated mobile app.'
+            className={SETTINGS_SECTION_CLASS_NAME}
+          >
+            <KangurAdminCard>
+              <div className='space-y-4'>
+                <div className='flex flex-wrap items-center gap-2'>
+                  <div className='text-sm font-semibold text-foreground'>Default launch route</div>
+                  <Badge variant={launchRoute === 'dedicated_app' ? 'warning' : 'secondary'}>
+                    {launchRoute === 'dedicated_app' ? 'Dedicated app' : 'Mobile web view'}
+                  </Badge>
+                </div>
+
+                <div
+                  role='group'
+                  aria-label='Kangur launch route'
+                  className='grid gap-3 md:grid-cols-2'
+                >
+                  {KANGUR_LAUNCH_ROUTE_OPTIONS.map((option) => {
+                    const isActive = launchRoute === option.value;
+                    return (
+                      <Button
+                        key={option.value}
+                        type='button'
+                        variant={isActive ? 'secondary' : 'outline'}
+                        aria-pressed={isActive}
+                        className='h-auto min-h-28 w-full flex-col items-start justify-start gap-3 whitespace-normal px-4 py-4 text-left'
+                        onClick={() => setLaunchRoute(option.value)}
+                        data-doc-id={`settings_launch_route_${option.value}`}
+                      >
+                        <div className='flex w-full items-start justify-between gap-3'>
+                          <span className='text-sm font-semibold text-foreground'>
+                            {option.label}
+                          </span>
+                          {option.value === 'web_mobile_view' ? (
+                            <Badge variant='outline'>Default</Badge>
+                          ) : null}
+                        </div>
+                        <span className='text-xs leading-relaxed text-muted-foreground'>
+                          {option.description}
+                        </span>
+                      </Button>
+                    );
+                  })}
+                </div>
+
+                <div className='rounded-2xl border border-border/60 bg-background/50 px-4 py-3'>
+                  <div className='flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
+                    <span className='font-semibold text-foreground'>Primary target</span>
+                    <code className='rounded-md bg-background/80 px-2 py-1 text-[11px] text-foreground'>
+                      {activeLaunchTarget.href}
+                    </code>
+                    {activeLaunchTarget.href !== activeLaunchTarget.fallbackHref ? (
+                      <>
+                        <span className='font-semibold text-foreground'>Fallback web route</span>
+                        <code className='rounded-md bg-background/80 px-2 py-1 text-[11px] text-foreground'>
+                          {activeLaunchTarget.fallbackHref}
+                        </code>
+                      </>
+                    ) : null}
+                  </div>
+                  <div className='mt-3 flex flex-wrap gap-2'>
+                    <Button asChild variant='outline' size='sm'>
+                      <a href={activeLaunchTarget.href}>Open selected route</a>
+                    </Button>
+                    {activeLaunchTarget.href !== activeLaunchTarget.fallbackHref ? (
+                      <Button asChild variant='ghost' size='sm'>
+                        <a href={activeLaunchTarget.fallbackHref}>Open fallback web route</a>
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
               </div>
             </KangurAdminCard>
           </FormSection>
@@ -320,6 +418,7 @@ export function AdminKangurSettingsPage(): ReactElement {
               <Badge variant='outline'>
                 Parent email cooldown {persistedParentVerificationEmailSettings.resendCooldownSeconds}s
               </Badge>
+              <Badge variant='outline'>{persistedLaunchRouteLabel}</Badge>
             </div>
           </KangurAdminStatusCard>
         </div>

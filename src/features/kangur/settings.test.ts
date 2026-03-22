@@ -4,9 +4,11 @@ import {
   appendMissingGeometryKangurLessons,
   appendMissingLogicalThinkingKangurLessons,
   createDefaultKangurLessons,
+  DEFAULT_KANGUR_LAUNCH_ROUTE,
   KANGUR_PHONE_SIMULATION_DEFAULT_ENABLED,
   KANGUR_LESSON_LIBRARY,
   KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS,
+  parseKangurLaunchRouteSettings,
   parseKangurNarratorSettings,
   parseKangurPhoneSimulationSettings,
   parseKangurParentVerificationEmailSettings,
@@ -238,6 +240,21 @@ describe('kangur lesson settings', () => {
   it('parses persisted phone simulation settings', () => {
     expect(parseKangurPhoneSimulationSettings(JSON.stringify({ enabled: false }))).toEqual({
       enabled: false,
+    });
+  });
+
+  it('defaults launch route settings to the mobile web view', () => {
+    expect(parseKangurLaunchRouteSettings(undefined)).toEqual({
+      route: DEFAULT_KANGUR_LAUNCH_ROUTE,
+    });
+    expect(parseKangurLaunchRouteSettings(JSON.stringify({}))).toEqual({
+      route: DEFAULT_KANGUR_LAUNCH_ROUTE,
+    });
+  });
+
+  it('parses persisted dedicated app launch route settings', () => {
+    expect(parseKangurLaunchRouteSettings(JSON.stringify({ route: 'dedicated_app' }))).toEqual({
+      route: 'dedicated_app',
     });
   });
 

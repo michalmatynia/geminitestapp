@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import React from 'react';
 
 import type { CmsAppearanceTone } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
-import { UI_CENTER_ROW_SPACED_CLASSNAME, UI_STACK_LOOSE_CLASSNAME } from '@/shared/ui';
+import { UI_CENTER_ROW_SPACED_CLASSNAME, UI_STACK_LOOSE_CLASSNAME } from '@/shared/ui/layout';
 
 type HomeFallbackHeroProps = {
   appearanceTone?: CmsAppearanceTone;

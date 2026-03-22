@@ -1,12 +1,9 @@
 import {
-  KANGUR_BADGES,
   getLocalizedKangurCoreLessonTitle,
   getLocalizedKangurCoreLevelTitle,
-  getLocalizedKangurMetadataBadgeName,
   type KangurAssignmentPlan,
   type KangurAssignmentPriority,
   type KangurLessonMasteryInsight,
-  type KangurRecentSession,
 } from '@kangur/core';
 import { Link, type Href, useRouter } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -17,21 +14,25 @@ import {
   getKangurMobileLocaleTag,
   useKangurMobileI18n,
 } from '../i18n/kangurMobileI18n';
-import { createKangurLessonHrefForPracticeOperation } from '../lessons/lessonHref';
 import {
   useKangurMobileLessonCheckpoints,
   type KangurMobileLessonCheckpointItem,
 } from '../lessons/useKangurMobileLessonCheckpoints';
 import { createKangurPlanHref } from '../plan/planHref';
-import { createKangurPracticeHref } from '../practice/practiceHref';
 import {
   formatKangurMobileScoreOperation,
+  getKangurMobileScoreAccuracyPercent,
 } from '../scores/mobileScoreSummary';
 import { createKangurResultsHref } from '../scores/resultsHref';
 import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
 import { useKangurMobileProfileDuels } from './useKangurMobileProfileDuels';
 import { useKangurMobileProfileAssignments } from './useKangurMobileProfileAssignments';
+import { useKangurMobileProfileBadges } from './useKangurMobileProfileBadges';
 import { useKangurMobileProfileLessonMastery } from './useKangurMobileProfileLessonMastery';
+import {
+  useKangurMobileProfileRecentResults,
+  type KangurMobileProfileRecentResultItem,
+} from './useKangurMobileProfileRecentResults';
 import { useKangurMobileLearnerProfile } from './useKangurMobileLearnerProfile';
 
 const RESULTS_ROUTE = createKangurResultsHref();
@@ -498,13 +499,13 @@ function LessonCheckpointRow({
 }
 
 function SessionRow({
-  session,
+  item,
 }: {
-  session: KangurRecentSession;
+  item: KangurMobileProfileRecentResultItem;
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
-  const operationTone = getSessionAccentTone(session.operation);
-  const lessonHref = createKangurLessonHrefForPracticeOperation(session.operation);
+  const accuracyPercent = getKangurMobileScoreAccuracyPercent(item.result);
+  const operationTone = getSessionAccentTone(item.result.operation);
 
   return (
     <View
@@ -538,37 +539,37 @@ function SessionRow({
               backgroundColor: operationTone.backgroundColor,
             }}
           >
-            <Text style={{ fontSize: 18 }}>{session.operationEmoji}</Text>
+            <Text style={{ fontSize: 18 }}>•</Text>
           </View>
           <View style={{ flex: 1, gap: 4 }}>
             <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-              {formatKangurMobileScoreOperation(session.operation, locale)}
+              {formatKangurMobileScoreOperation(item.result.operation, locale)}
             </Text>
             <Text style={{ color: '#64748b', fontSize: 12 }}>
-              {formatProfileDateTime(session.createdAt, locale)}
+              {formatProfileDateTime(item.result.created_date, locale)}
             </Text>
           </View>
         </View>
         <Pill
-          label={`${session.score}/${session.totalQuestions}`}
-          tone={getSessionScoreTone(session.accuracyPercent)}
+          label={`${item.result.correct_answers}/${item.result.total_questions}`}
+          tone={getSessionScoreTone(accuracyPercent)}
         />
       </View>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <Pill
           label={copy({
-            de: `Trefferquote ${session.accuracyPercent}%`,
-            en: `Accuracy ${session.accuracyPercent}%`,
-            pl: `Skuteczność ${session.accuracyPercent}%`,
+            de: `Trefferquote ${accuracyPercent}%`,
+            en: `Accuracy ${accuracyPercent}%`,
+            pl: `Skuteczność ${accuracyPercent}%`,
           })}
           tone={operationTone}
         />
         <Pill
           label={copy({
-            de: `Zeit ${formatProfileDuration(session.timeTakenSeconds)}`,
-            en: `Time ${formatProfileDuration(session.timeTakenSeconds)}`,
-            pl: `Czas ${formatProfileDuration(session.timeTakenSeconds)}`,
+            de: `Zeit ${formatProfileDuration(item.result.time_taken)}`,
+            en: `Time ${formatProfileDuration(item.result.time_taken)}`,
+            pl: `Czas ${formatProfileDuration(item.result.time_taken)}`,
           })}
           tone={{
             backgroundColor: '#f1f5f9',
@@ -579,7 +580,7 @@ function SessionRow({
       </View>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Link href={createKangurPracticeHref(session.operation)} asChild>
+        <Link href={item.practiceHref} asChild>
           <Pressable
             accessibilityRole='button'
             style={{
@@ -600,8 +601,8 @@ function SessionRow({
           </Pressable>
         </Link>
 
-        {lessonHref ? (
-          <Link href={lessonHref} asChild>
+        {item.lessonHref ? (
+          <Link href={item.lessonHref} asChild>
             <Pressable
               accessibilityRole='button'
               style={{
@@ -625,12 +626,7 @@ function SessionRow({
           </Link>
         ) : null}
 
-        <Link
-          href={createKangurResultsHref({
-            operation: session.operation,
-          })}
-          asChild
-        >
+        <Link href={item.historyHref} asChild>
           <Pressable
             accessibilityRole='button'
             style={{
@@ -742,6 +738,7 @@ export function KangurProfileScreen(): React.JSX.Element {
   const lessonCheckpoints = useKangurMobileLessonCheckpoints({ limit: 3 });
   const profileAssignments = useKangurMobileProfileAssignments();
   const profileLessonMastery = useKangurMobileProfileLessonMastery();
+  const profileRecentResults = useKangurMobileProfileRecentResults();
   const {
     authError,
     authMode,
@@ -750,20 +747,19 @@ export function KangurProfileScreen(): React.JSX.Element {
     getActionHref,
     isAuthenticated,
     isLoadingAuth,
-    isLoadingScores,
     recommendationsNote,
-    refreshScores,
-    scoresError,
     signIn,
     supportsLearnerCredentials,
     snapshot,
   } = useKangurMobileLearnerProfile();
   const duelProfile = useKangurMobileProfileDuels();
+  const profileBadges = useKangurMobileProfileBadges({
+    unlockedBadgeIds: snapshot.unlockedBadgeIds,
+  });
 
   const xpToNextLevel = snapshot.nextLevel
     ? Math.max(0, snapshot.nextLevel.minXp - snapshot.totalXp)
     : 0;
-  const hasRecentSessions = snapshot.recentSessions.length > 0;
   const openDuelSession = (sessionId: string): void => {
     router.replace(createKangurDuelsHref({ sessionId }));
   };
@@ -1028,7 +1024,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                 en: 'Badges',
                 pl: 'Odznaki',
               })}
-              value={`${snapshot.unlockedBadges}/${snapshot.totalBadges}`}
+              value={`${profileBadges.unlockedBadges}/${profileBadges.totalBadges}`}
               description={copy({
                 de: 'Freigeschaltete Erfolge',
                 en: 'Unlocked achievements',
@@ -1555,7 +1551,7 @@ export function KangurProfileScreen(): React.JSX.Element {
               </Text>
             </View>
 
-            {isLoadingScores ? (
+            {profileRecentResults.isLoading || profileRecentResults.isRestoringAuth ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
                   de: 'Die letzten Versuche des Lernenden werden geladen.',
@@ -1563,9 +1559,19 @@ export function KangurProfileScreen(): React.JSX.Element {
                   pl: 'Sprawdzamy ostatnie podejścia ucznia.',
                 })}
               </Text>
-            ) : scoresError ? (
-              <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>{scoresError}</Text>
-            ) : !hasRecentSessions ? (
+            ) : !profileRecentResults.isEnabled ? (
+              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {copy({
+                  de: 'Melde die Schulersitzung an, um hier synchronisierte mobile Sitzungen zu sehen.',
+                  en: 'Sign in the learner session to see synchronized mobile sessions here.',
+                  pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj zsynchronizowane mobilne sesje.',
+                })}
+              </Text>
+            ) : profileRecentResults.error ? (
+              <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
+                {profileRecentResults.error}
+              </Text>
+            ) : profileRecentResults.recentResultItems.length === 0 ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
                   de: 'Es gibt noch keine gespielten Sitzungen. Die ersten Versuche erscheinen hier automatisch.',
@@ -1575,8 +1581,8 @@ export function KangurProfileScreen(): React.JSX.Element {
               </Text>
             ) : (
               <View style={{ gap: 10 }}>
-                {snapshot.recentSessions.map((session) => (
-                  <SessionRow key={session.id} session={session} />
+                {profileRecentResults.recentResultItems.map((item) => (
+                  <SessionRow key={item.result.id} item={item} />
                 ))}
 
                 <Link href={RESULTS_ROUTE} asChild>
@@ -1616,26 +1622,89 @@ export function KangurProfileScreen(): React.JSX.Element {
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Das vollständige Abzeichenraster ist bereits zwischen Web und Mobile geteilt, daher zeigen wir hier nur den Freischaltstatus ohne zusätzliche Plattformlogik.',
-                  en: 'The full badge grid is already shared between web and mobile, so this view only shows the unlock state without extra platform logic.',
-                  pl: 'Pełna siatka odznak jest już wspólna dla web i mobile, więc tutaj pokazujemy stan odblokowania bez dodatkowej logiki platformowej.',
+                  de: 'Das Profil zeigt die letzten lokalen Freischaltungen und das vollständige Abzeichenraster an einem Ort.',
+                  en: 'The profile shows the latest local unlocks and the full badge grid in one place.',
+                  pl: 'Profil pokazuje w jednym miejscu ostatnie lokalne odblokowania i pełną siatkę odznak.',
                 })}
               </Text>
             </View>
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {KANGUR_BADGES.map((badge) => {
-                const unlocked = snapshot.unlockedBadgeIds.includes(badge.id);
+              <Pill
+                label={copy({
+                  de: `Freigeschaltet ${profileBadges.unlockedBadges}/${profileBadges.totalBadges}`,
+                  en: `Unlocked ${profileBadges.unlockedBadges}/${profileBadges.totalBadges}`,
+                  pl: `Odblokowane ${profileBadges.unlockedBadges}/${profileBadges.totalBadges}`,
+                })}
+                tone={{
+                  backgroundColor: '#eef2ff',
+                  borderColor: '#c7d2fe',
+                  textColor: '#4338ca',
+                }}
+              />
+              <Pill
+                label={copy({
+                  de: `Offen ${profileBadges.remainingBadges}`,
+                  en: `Remaining ${profileBadges.remainingBadges}`,
+                  pl: `Do zdobycia ${profileBadges.remainingBadges}`,
+                })}
+                tone={{
+                  backgroundColor: '#fff7ed',
+                  borderColor: '#fdba74',
+                  textColor: '#c2410c',
+                }}
+              />
+            </View>
+
+            {profileBadges.recentBadges.length === 0 ? (
+              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {copy({
+                  de: 'Es gibt noch keine lokal freigeschalteten Abzeichen. Schließe Lektionen, Trainings oder Spiele ab, damit sie hier erscheinen.',
+                  en: 'There are no locally unlocked badges yet. Finish lessons, practice runs, or games so they appear here.',
+                  pl: 'Nie ma jeszcze lokalnie odblokowanych odznak. Ukończ lekcje, treningi albo gry, aby pojawiły się tutaj.',
+                })}
+              </Text>
+            ) : (
+              <View style={{ gap: 10 }}>
+                <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
+                  {copy({
+                    de: 'Zuletzt freigeschaltet',
+                    en: 'Recently unlocked',
+                    pl: 'Ostatnio odblokowane',
+                  })}
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {profileBadges.recentBadges.map((badge) => (
+                    <Pill
+                      key={badge.id}
+                      label={`${badge.emoji} ${badge.name}`}
+                      tone={{
+                        backgroundColor: '#fff7ed',
+                        borderColor: '#fdba74',
+                        textColor: '#c2410c',
+                      }}
+                    />
+                  ))}
+                </View>
+              </View>
+            )}
+
+            <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
+              {copy({
+                de: 'Alle Abzeichen',
+                en: 'All badges',
+                pl: 'Wszystkie odznaki',
+              })}
+            </Text>
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {profileBadges.allBadges.map((badge) => {
                 return (
                   <Pill
                     key={badge.id}
-                    label={`${badge.emoji} ${getLocalizedKangurMetadataBadgeName(
-                      badge.id,
-                      badge.name,
-                      locale,
-                    )}`}
+                    label={`${badge.emoji} ${badge.name}`}
                     tone={
-                      unlocked
+                      badge.unlocked
                         ? {
                             backgroundColor: '#eef2ff',
                             borderColor: '#c7d2fe',
@@ -1716,24 +1785,31 @@ export function KangurProfileScreen(): React.JSX.Element {
                   })}
                 </Text>
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                  {isLoadingScores
+                  {profileRecentResults.isLoading ||
+                  profileRecentResults.isRestoringAuth
                     ? copy({
                         de: 'Die gespeicherten Versuche für das Profil werden geladen.',
                         en: 'Loading saved attempts for the profile.',
                         pl: 'Pobieramy zapisane podejścia dla profilu.',
                       })
-                    : scoresError ??
-                      copy({
-                        de: 'In dieser mobilen Version ist der Ergebnisverlauf nur eine Ergänzung zum lokalen Fortschritt.',
-                        en: 'In this mobile version the score history is only a supplement to local progress.',
-                        pl: 'W tej wersji mobilnej historia wyników jest tylko dodatkiem do lokalnego postępu.',
-                      })}
+                    : !profileRecentResults.isEnabled
+                      ? copy({
+                          de: 'Melde die Schulersitzung an, um den mobilen Ergebnisverlauf im Profil zu sehen.',
+                          en: 'Sign in the learner session to see mobile score history in the profile.',
+                          pl: 'Zaloguj sesję ucznia, aby zobaczyć mobilną historię wyników w profilu.',
+                        })
+                      : profileRecentResults.error ??
+                        copy({
+                          de: 'In dieser mobilen Version ist der Ergebnisverlauf nur eine Ergänzung zum lokalen Fortschritt.',
+                          en: 'In this mobile version the score history is only a supplement to local progress.',
+                          pl: 'W tej wersji mobilnej historia wyników jest tylko dodatkiem do lokalnego postępu.',
+                        })}
                 </Text>
               </View>
               <Pressable
                 accessibilityRole='button'
                 onPress={() => {
-                  void refreshScores();
+                  void profileRecentResults.refresh();
                 }}
                 style={{
                   borderRadius: 999,

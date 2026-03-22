@@ -4,8 +4,6 @@ import { JSX } from 'react';
 
 import { getCmsRepository } from '@/features/cms/server';
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/server';
-import { getKangurStorefrontInitialState } from '@/features/kangur/server/storefront-appearance';
-import { KangurPublicAppEntry } from '@/features/kangur/ui/KangurPublicAppEntry';
 import {
   buildLocalizedPathname,
   normalizeSiteLocale,
@@ -29,7 +27,7 @@ const localizePublicPath = (pathname: string, locale: string): string => {
 
 export default async function LocalizedHome({
   params,
-}: LocalizedHomeProps): Promise<JSX.Element> {
+}: LocalizedHomeProps): Promise<JSX.Element | null> {
   const { locale } = await params;
   const resolvedLocale = normalizeSiteLocale(locale);
   const { withTiming, flush } = createHomeTimingRecorder();
@@ -47,15 +45,8 @@ export default async function LocalizedHome({
   }
 
   if (shouldApplyFrontPageSelection && publicOwner === 'kangur') {
-    const initialState = await getKangurStorefrontInitialState();
     await flush();
-    return (
-      <KangurPublicAppEntry
-        basePath={buildLocalizedPathname('/', resolvedLocale)}
-        initialMode={initialState.initialMode}
-        initialThemeSettings={initialState.initialThemeSettings}
-      />
-    );
+    return null;
   }
 
   const cmsRepository = await withTiming('cmsRepository', getCmsRepository);

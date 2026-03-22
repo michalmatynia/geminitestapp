@@ -7,7 +7,8 @@ import React from 'react';
 import { Link } from '@/i18n/navigation';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { normalizeSiteLocale, resolveLocalizedText } from '@/shared/lib/i18n/site-locale';
-import { MissingImagePlaceholder, ResourceCard } from '@/shared/ui';
+import MissingImagePlaceholder from '@/shared/ui/missing-image-placeholder';
+import { ResourceCard } from '@/shared/ui/ResourceCard';
 
 interface ProductCardProps {
   product: ProductWithImages;

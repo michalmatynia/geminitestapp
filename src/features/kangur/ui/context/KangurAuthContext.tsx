@@ -26,11 +26,22 @@ import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 const AUTH_CHECK_TIMEOUT_MS = 3_000;
 
-const raceWithTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T | null> =>
-  Promise.race([
-    promise,
-    new Promise<null>((resolve) => setTimeout(() => resolve(null), ms)),
-  ]);
+const raceWithTimeout = async <T,>(promise: Promise<T>, ms: number): Promise<T | null> => {
+  let timeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<null>((resolve) => {
+        timeoutId = globalThis.setTimeout(() => resolve(null), ms);
+      }),
+    ]);
+  } finally {
+    if (timeoutId !== null) {
+      globalThis.clearTimeout(timeoutId);
+    }
+  }
+};
 
 type KangurAuthError = {
   type: 'unknown' | 'auth_required' | 'user_not_registered';

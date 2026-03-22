@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import type { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   KangurAccentDot,
@@ -14,6 +14,7 @@ import {
   KANGUR_WRAP_ROW_SPACED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
+import { useKangurMobileInteractionScrollLock } from '@/features/kangur/ui/hooks/useKangurMobileInteractionScrollLock';
 import type { ClockTrainingTaskPoolId } from './types';
 import {
   CHALLENGE_TIME_LIMIT_SECONDS,
@@ -64,11 +65,15 @@ export function DraggableClock({
   const [activeHand, setActiveHand] = useState<Hand | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const dragging = useRef<Hand | null>(null);
+  const activePointerIdRef = useRef<number | null>(null);
+  const activePointerTargetRef = useRef<SVGElement | null>(null);
+  const { lock: lockMobileInteraction, unlock: unlockMobileInteraction } =
+    useKangurMobileInteractionScrollLock();
   const minuteStep = MINUTE_STEP_BY_MODE[minuteSnapMode];
   const hourHandEnabled = section !== 'minutes';
   const minuteHandEnabled = section !== 'hours';
 
-  const getAngle = useCallback((event: MouseEvent | TouchEvent): number => {
+  const getAngle = useCallback((event: MouseEvent | PointerEvent): number => {
     const svg = svgRef.current;
     if (!svg) {
       return 0;
@@ -78,20 +83,8 @@ export function DraggableClock({
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
 
-    let clientX = 0;
-    let clientY = 0;
-
-    if ('touches' in event) {
-      const touch = event.touches[0];
-      if (!touch) {
-        return 0;
-      }
-      clientX = touch.clientX;
-      clientY = touch.clientY;
-    } else {
-      clientX = event.clientX;
-      clientY = event.clientY;
-    }
+    const clientX = event.clientX;
+    const clientY = event.clientY;
 
     const dx = clientX - centerX;
     const dy = clientY - centerY;
@@ -100,9 +93,40 @@ export function DraggableClock({
     return angle;
   }, []);
 
-  const onMouseDown =
+  const releaseActivePointerCapture = useCallback((): void => {
+    const target = activePointerTargetRef.current;
+    const activePointerId = activePointerIdRef.current;
+
+    if (target && activePointerId !== null && target.hasPointerCapture?.(activePointerId)) {
+      try {
+        target.releasePointerCapture(activePointerId);
+      } catch {
+        // Ignore release failures from already-cleared pointer capture.
+      }
+    }
+
+    activePointerTargetRef.current = null;
+  }, []);
+
+  const stopDragging = useCallback(
+    (pointerId?: number): void => {
+      const activePointerId = activePointerIdRef.current;
+      if (pointerId !== undefined && activePointerId !== null && pointerId !== activePointerId) {
+        return;
+      }
+
+      releaseActivePointerCapture();
+      activePointerIdRef.current = null;
+      dragging.current = null;
+      setActiveHand(null);
+      unlockMobileInteraction();
+    },
+    [releaseActivePointerCapture, unlockMobileInteraction]
+  );
+
+  const onPointerDown =
     (hand: Hand) =>
-      (event: ReactMouseEvent<SVGElement> | ReactTouchEvent<SVGElement>): void => {
+      (event: ReactPointerEvent<SVGElement>): void => {
         if (submitLocked) {
           return;
         }
@@ -112,13 +136,17 @@ export function DraggableClock({
           return;
         }
         event.preventDefault();
+        activePointerIdRef.current = event.pointerId;
+        activePointerTargetRef.current = event.currentTarget;
+        event.currentTarget.setPointerCapture?.(event.pointerId);
         dragging.current = hand;
         setActiveHand(hand);
+        lockMobileInteraction();
       };
 
   const onMove = useCallback(
-    (event: MouseEvent | TouchEvent): void => {
-      if (!dragging.current) {
+    (event: PointerEvent): void => {
+      if (!dragging.current || activePointerIdRef.current !== event.pointerId) {
         return;
       }
       if (event.cancelable) {
@@ -136,24 +164,25 @@ export function DraggableClock({
     [getAngle, minuteStep]
   );
 
-  const onUp = useCallback((): void => {
-    dragging.current = null;
-    setActiveHand(null);
-  }, []);
+  const onUp = useCallback(
+    (event: PointerEvent): void => {
+      stopDragging(event.pointerId);
+    },
+    [stopDragging]
+  );
 
   useEffect(() => {
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-    window.addEventListener('touchmove', onMove, { passive: false });
-    window.addEventListener('touchend', onUp);
+    window.addEventListener('pointermove', onMove, { passive: false });
+    window.addEventListener('pointerup', onUp, { passive: false });
+    window.addEventListener('pointercancel', onUp, { passive: false });
 
     return () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-      window.removeEventListener('touchmove', onMove);
-      window.removeEventListener('touchend', onUp);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      stopDragging();
     };
-  }, [onMove, onUp]);
+  }, [onMove, onUp, stopDragging]);
 
   const displayMinutes = cycleMinutesToDisplayMinutes(cycleMinutes);
   const displayHour = cycleMinutesToDisplayHour(cycleMinutes);
@@ -319,7 +348,7 @@ export function DraggableClock({
         width='220'
         height='220'
         className='drop-shadow-lg select-none'
-        style={{ cursor: 'crosshair' }}
+        style={{ cursor: 'crosshair', touchAction: 'none' }}
       >
         {showChallengeRing && (
           <>
@@ -404,8 +433,7 @@ export function DraggableClock({
           strokeLinecap='round'
           pointerEvents='stroke'
           style={hourHandInteractionStyle}
-          onMouseDown={onMouseDown('hour')}
-          onTouchStart={onMouseDown('hour')}
+          onPointerDown={onPointerDown('hour')}
         />
         <line
           data-testid='clock-hour-hand'
@@ -417,8 +445,7 @@ export function DraggableClock({
           strokeWidth={activeHand === 'hour' ? '9' : '7'}
           strokeLinecap='round'
           style={hourHandInteractionStyle}
-          onMouseDown={onMouseDown('hour')}
-          onTouchStart={onMouseDown('hour')}
+          onPointerDown={onPointerDown('hour')}
         />
 
         <line
@@ -433,8 +460,7 @@ export function DraggableClock({
           strokeLinecap='round'
           pointerEvents='stroke'
           style={minuteHandInteractionStyle}
-          onMouseDown={onMouseDown('minute')}
-          onTouchStart={onMouseDown('minute')}
+          onPointerDown={onPointerDown('minute')}
         />
         <line
           data-testid='clock-minute-hand'
@@ -446,8 +472,7 @@ export function DraggableClock({
           strokeWidth={activeHand === 'minute' ? '7' : '5'}
           strokeLinecap='round'
           style={minuteHandInteractionStyle}
-          onMouseDown={onMouseDown('minute')}
-          onTouchStart={onMouseDown('minute')}
+          onPointerDown={onPointerDown('minute')}
         />
 
         <circle
@@ -457,8 +482,7 @@ export function DraggableClock({
           fill='#dc2626'
           fillOpacity='0.25'
           style={hourHandInteractionStyle}
-          onMouseDown={onMouseDown('hour')}
-          onTouchStart={onMouseDown('hour')}
+          onPointerDown={onPointerDown('hour')}
         />
         <circle
           cx={minuteHandX}
@@ -467,8 +491,7 @@ export function DraggableClock({
           fill='#16a34a'
           fillOpacity='0.25'
           style={minuteHandInteractionStyle}
-          onMouseDown={onMouseDown('minute')}
-          onTouchStart={onMouseDown('minute')}
+          onPointerDown={onPointerDown('minute')}
         />
         <circle cx='100' cy='100' r='5' fill='#6366f1' />
       </svg>

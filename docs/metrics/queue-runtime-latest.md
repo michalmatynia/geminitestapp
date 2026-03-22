@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-18'
+last_reviewed: '2026-03-22'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,16 +8,16 @@ canonical: true
 ---
 # Queue Runtime Health Report
 
-Generated at: 2026-03-18T19:19:50.237Z
+Generated at: 2026-03-22T08:43:15.218Z
 
 ## Summary
 
 - Status: PASSED
-- Queues discovered: 17
+- Queues discovered: 18
 - Queue init modules: 9
-- Explicit start calls: 13
+- Explicit start calls: 14
 - Gated queues: 9
-- Repeat-managed queues: 16
+- Repeat-managed queues: 17
 - Errors: 0
 - Warnings: 0
 
@@ -30,16 +30,17 @@ Generated at: 2026-03-18T19:19:50.237Z
 
 | Queue | File | Gated | Repeat-managed | Explicitly started | Start exports | Owner modules |
 | --- | --- | --- | --- | --- | --- | --- |
-| agent | src/features/ai/agent-runtime/workers/agentQueue.ts | yes | yes | yes | startAgentQueue, startAiInsightsQueue, startAiPathRunQueue, startChatbotJobQueue, startImageStudioRunQueue, startImageStudioSequenceQueue, startSystemLogAlertsQueue, startSystemLogAlertsWorker | src/server/queues/ai.ts, src/shared/lib/observability/workers/systemLogAlertsQueue.ts |
-| ai-insights | src/features/ai/insights/workers/aiInsightsQueue.ts | yes | yes | yes | startAgentQueue, startAiInsightsQueue, startAiPathRunQueue, startChatbotJobQueue, startImageStudioRunQueue, startImageStudioSequenceQueue, startSystemLogAlertsQueue, startSystemLogAlertsWorker | src/server/queues/ai.ts, src/shared/lib/observability/workers/systemLogAlertsQueue.ts |
-| ai-path-run | src/features/ai/ai-paths/workers/ai-path-run-queue/queue.ts | yes | yes | yes | startAgentQueue, startAiInsightsQueue, startAiPathRunQueue, startChatbotJobQueue, startImageStudioRunQueue, startImageStudioSequenceQueue, startSystemLogAlertsQueue, startSystemLogAlertsWorker | src/server/queues/ai.ts, src/shared/lib/observability/workers/systemLogAlertsQueue.ts |
+| agent | src/features/ai/agent-runtime/workers/agentQueue.ts | yes | yes | yes | startAgentQueue, startAiInsightsQueue, startAiPathRunQueue, startChatbotJobQueue, startImageStudioRunQueue, startImageStudioSequenceQueue, startKangurSocialPipelineQueue, startKangurSocialSchedulerQueue, startSystemLogAlertsQueue, startSystemLogAlertsWorker | src/server/queues/ai.ts, src/server/queues/kangur.ts, src/shared/lib/observability/workers/systemLogAlertsQueue.ts |
+| ai-insights | src/features/ai/insights/workers/aiInsightsQueue.ts | yes | yes | yes | startAgentQueue, startAiInsightsQueue, startAiPathRunQueue, startChatbotJobQueue, startImageStudioRunQueue, startImageStudioSequenceQueue, startKangurSocialPipelineQueue, startKangurSocialSchedulerQueue, startSystemLogAlertsQueue, startSystemLogAlertsWorker | src/server/queues/ai.ts, src/server/queues/kangur.ts, src/shared/lib/observability/workers/systemLogAlertsQueue.ts |
+| ai-path-run | src/features/ai/ai-paths/workers/ai-path-run-queue/queue.ts | yes | yes | yes | startAgentQueue, startAiInsightsQueue, startAiPathRunQueue, startChatbotJobQueue, startImageStudioRunQueue, startImageStudioSequenceQueue, startKangurSocialPipelineQueue, startKangurSocialSchedulerQueue, startSystemLogAlertsQueue, startSystemLogAlertsWorker | src/server/queues/ai.ts, src/server/queues/kangur.ts, src/shared/lib/observability/workers/systemLogAlertsQueue.ts |
 | base-import | src/features/integrations/workers/baseImportQueue.ts | no | yes | yes | startProductAiJobQueue, startProductSyncBackfillQueue, startProductSyncSchedulerQueue, startTraderaListingQueue, startTraderaRelistSchedulerQueue | src/server/queues/integrations.ts, src/server/queues/product-ai.ts, src/server/queues/product-sync.ts |
 | case-resolver-ocr | src/features/case-resolver/workers/caseResolverOcrQueue.ts | yes | no | yes | startCaseResolverOcrQueue | src/server/queues/case-resolver-ocr.ts |
-| chatbot | src/features/ai/chatbot/workers/chatbotJobQueue.ts | yes | yes | yes | startAgentQueue, startAiInsightsQueue, startAiPathRunQueue, startChatbotJobQueue, startImageStudioRunQueue, startImageStudioSequenceQueue, startSystemLogAlertsQueue, startSystemLogAlertsWorker | src/server/queues/ai.ts, src/shared/lib/observability/workers/systemLogAlertsQueue.ts |
+| chatbot | src/features/ai/chatbot/workers/chatbotJobQueue.ts | yes | yes | yes | startAgentQueue, startAiInsightsQueue, startAiPathRunQueue, startChatbotJobQueue, startImageStudioRunQueue, startImageStudioSequenceQueue, startKangurSocialPipelineQueue, startKangurSocialSchedulerQueue, startSystemLogAlertsQueue, startSystemLogAlertsWorker | src/server/queues/ai.ts, src/server/queues/kangur.ts, src/shared/lib/observability/workers/systemLogAlertsQueue.ts |
 | database-backup-scheduler | src/shared/lib/db/workers/databaseBackupSchedulerQueue.ts | no | yes | yes | startDatabaseBackupSchedulerQueue | src/shared/lib/db/workers/databaseBackupSchedulerQueue.ts |
-| image-studio-run | src/features/ai/image-studio/workers/imageStudioRunQueue.ts | yes | yes | yes | startAgentQueue, startAiInsightsQueue, startAiPathRunQueue, startChatbotJobQueue, startImageStudioRunQueue, startImageStudioSequenceQueue, startSystemLogAlertsQueue, startSystemLogAlertsWorker | src/server/queues/ai.ts, src/shared/lib/observability/workers/systemLogAlertsQueue.ts |
-| image-studio-sequence | src/features/ai/image-studio/workers/imageStudioSequenceQueue.ts | yes | yes | yes | startAgentQueue, startAiInsightsQueue, startAiPathRunQueue, startChatbotJobQueue, startImageStudioRunQueue, startImageStudioSequenceQueue, startSystemLogAlertsQueue, startSystemLogAlertsWorker | src/server/queues/ai.ts, src/shared/lib/observability/workers/systemLogAlertsQueue.ts |
-| kangur-social-scheduler | src/features/kangur/workers/kangurSocialSchedulerQueue.ts | no | yes | yes | startAgentQueue, startAiInsightsQueue, startAiPathRunQueue, startChatbotJobQueue, startImageStudioRunQueue, startImageStudioSequenceQueue, startKangurSocialSchedulerQueue, startSystemLogAlertsQueue, startSystemLogAlertsWorker | src/server/queues/ai.ts, src/server/queues/kangur.ts, src/shared/lib/observability/workers/systemLogAlertsQueue.ts |
+| image-studio-run | src/features/ai/image-studio/workers/imageStudioRunQueue.ts | yes | yes | yes | startAgentQueue, startAiInsightsQueue, startAiPathRunQueue, startChatbotJobQueue, startImageStudioRunQueue, startImageStudioSequenceQueue, startKangurSocialPipelineQueue, startKangurSocialSchedulerQueue, startSystemLogAlertsQueue, startSystemLogAlertsWorker | src/server/queues/ai.ts, src/server/queues/kangur.ts, src/shared/lib/observability/workers/systemLogAlertsQueue.ts |
+| image-studio-sequence | src/features/ai/image-studio/workers/imageStudioSequenceQueue.ts | yes | yes | yes | startAgentQueue, startAiInsightsQueue, startAiPathRunQueue, startChatbotJobQueue, startImageStudioRunQueue, startImageStudioSequenceQueue, startKangurSocialPipelineQueue, startKangurSocialSchedulerQueue, startSystemLogAlertsQueue, startSystemLogAlertsWorker | src/server/queues/ai.ts, src/server/queues/kangur.ts, src/shared/lib/observability/workers/systemLogAlertsQueue.ts |
+| kangur-social-pipeline | src/features/kangur/workers/kangurSocialPipelineQueue.ts | no | yes | yes | startAgentQueue, startAiInsightsQueue, startAiPathRunQueue, startChatbotJobQueue, startImageStudioRunQueue, startImageStudioSequenceQueue, startKangurSocialPipelineQueue, startKangurSocialSchedulerQueue, startSystemLogAlertsQueue, startSystemLogAlertsWorker | src/server/queues/ai.ts, src/server/queues/kangur.ts, src/shared/lib/observability/workers/systemLogAlertsQueue.ts |
+| kangur-social-scheduler | src/features/kangur/workers/kangurSocialSchedulerQueue.ts | no | yes | yes | startAgentQueue, startAiInsightsQueue, startAiPathRunQueue, startChatbotJobQueue, startImageStudioRunQueue, startImageStudioSequenceQueue, startKangurSocialPipelineQueue, startKangurSocialSchedulerQueue, startSystemLogAlertsQueue, startSystemLogAlertsWorker | src/server/queues/ai.ts, src/server/queues/kangur.ts, src/shared/lib/observability/workers/systemLogAlertsQueue.ts |
 | product-ai | src/features/products/workers/productAiQueue.ts | yes | yes | yes | startProductAiJobQueue, startProductSyncBackfillQueue, startProductSyncSchedulerQueue, startTraderaListingQueue, startTraderaRelistSchedulerQueue | src/server/queues/integrations.ts, src/server/queues/product-ai.ts, src/server/queues/product-sync.ts |
 | product-sync | src/features/product-sync/workers/productSyncQueue.ts | no | yes | yes | startProductSyncBackfillQueue, startProductSyncSchedulerQueue | src/server/queues/product-sync.ts |
 | product-sync-backfill | src/features/product-sync/workers/productSyncBackfillQueue.ts | no | yes | yes | startProductSyncBackfillQueue, startProductSyncSchedulerQueue | src/server/queues/product-sync.ts |

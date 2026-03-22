@@ -1,3 +1,12 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-22'
+status: 'active'
+doc_type: 'policy'
+scope: 'repository'
+canonical: true
+---
+
 # Agentic engineering contract
 
 This repository now exposes a machine-readable preparation layer for autonomous engineering runs.

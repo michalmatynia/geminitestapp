@@ -1,3 +1,12 @@
+---
+owner: 'Kangur Team'
+last_reviewed: '2026-03-22'
+status: 'active'
+doc_type: 'reference'
+scope: 'feature:kangur'
+canonical: true
+---
+
 **Overview**
 Number Balance Rush is a 15-second, drag-and-drop, two-player simultaneous game. Each player sees an identical board. The UI must emphasize speed, clarity, and large hit targets.
 

@@ -332,10 +332,20 @@ export const baseActiveTemplatePreferencePayloadSchema = z.object({
 
 export type BaseTemplatePreferencePayload = z.infer<typeof baseActiveTemplatePreferencePayloadSchema>;
 
-export const baseScopedTemplatePreferencePayloadSchema = baseActiveTemplatePreferencePayloadSchema.extend({
+export const basePreferenceScopeSchema = z.object({
   connectionId: z.string().trim().min(1).nullable().optional(),
   inventoryId: z.string().trim().min(1).nullable().optional(),
 });
+
+export type BasePreferenceScope = z.infer<typeof basePreferenceScopeSchema>;
+
+export const baseScopedPreferenceQuerySchema = basePreferenceScopeSchema;
+
+export type BaseScopedPreferenceQuery = z.infer<typeof baseScopedPreferenceQuerySchema>;
+
+export const baseScopedTemplatePreferencePayloadSchema = baseActiveTemplatePreferencePayloadSchema.merge(
+  basePreferenceScopeSchema
+);
 
 export type BaseActiveTemplatePreferencePayload = z.infer<
   typeof baseScopedTemplatePreferencePayloadSchema
@@ -363,6 +373,31 @@ export const baseDefaultInventoryPreferenceResponseSchema = z.object({
 
 export type BaseDefaultInventoryPreferenceResponse = z.infer<
   typeof baseDefaultInventoryPreferenceResponseSchema
+>;
+
+export const baseExportWarehousePreferencePayloadSchema = z.object({
+  warehouseId: z.string().trim().min(1).nullable().optional(),
+  inventoryId: z.string().trim().min(1),
+});
+
+export type BaseExportWarehousePreferencePayload = z.infer<
+  typeof baseExportWarehousePreferencePayloadSchema
+>;
+
+export const baseExportWarehousePreferenceQuerySchema = z.object({
+  inventoryId: z.string().trim().min(1).nullable().optional(),
+});
+
+export type BaseExportWarehousePreferenceQuery = z.infer<
+  typeof baseExportWarehousePreferenceQuerySchema
+>;
+
+export const baseExportWarehousePreferenceResponseSchema = z.object({
+  warehouseId: z.string().nullable(),
+});
+
+export type BaseExportWarehousePreferenceResponse = z.infer<
+  typeof baseExportWarehousePreferenceResponseSchema
 >;
 
 export const baseDefaultConnectionPreferencePayloadSchema = z.object({

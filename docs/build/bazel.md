@@ -1,3 +1,12 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-22'
+status: 'active'
+doc_type: 'overview'
+scope: 'repository'
+canonical: true
+---
+
 # Bazel rollout
 
 This repository now ships a first-wave Bazel bootstrap using Bazelisk.

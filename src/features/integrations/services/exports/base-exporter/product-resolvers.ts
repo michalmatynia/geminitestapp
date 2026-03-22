@@ -83,6 +83,8 @@ export const getProducerEntryId = (entry: ProducerEntry): string | null => {
   return (
     toTrimmedString(entry.producerId) ??
     toTrimmedString(entry.producer_id) ??
+    toTrimmedString(entry.manufacturerId) ??
+    toTrimmedString(entry.manufacturer_id) ??
     toTrimmedString(entry.id) ??
     toTrimmedString(entry.value) ??
     toTrimmedString(entry.producer?.id)
@@ -92,6 +94,8 @@ export const getProducerEntryId = (entry: ProducerEntry): string | null => {
 export const getProducerEntryName = (entry: ProducerEntry): string | null => {
   return (
     toTrimmedString(entry.producerName) ??
+    toTrimmedString(entry.manufacturerName) ??
+    toTrimmedString(entry.manufacturer_name) ??
     toTrimmedString(entry.name) ??
     toTrimmedString(entry.producer?.name)
   );

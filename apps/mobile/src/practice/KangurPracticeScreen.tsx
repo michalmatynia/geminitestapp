@@ -33,7 +33,11 @@ import {
 import { createKangurPlanHref } from '../plan/planHref';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 import { createKangurResultsHref } from '../scores/resultsHref';
-import { formatKangurMobileScoreDateTime } from '../scores/mobileScoreSummary';
+import {
+  formatKangurMobileScoreDateTime,
+  formatKangurMobileScoreOperation,
+  getKangurMobileScoreAccuracyPercent,
+} from '../scores/mobileScoreSummary';
 import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
 import {
   buildAwaitingAuthRetryState,
@@ -58,9 +62,18 @@ import {
   useKangurMobilePracticeLessonMastery,
   type KangurMobilePracticeLessonMasteryItem,
 } from './useKangurMobilePracticeLessonMastery';
+import {
+  useKangurMobilePracticeBadges,
+  type KangurMobilePracticeBadgeItem,
+} from './useKangurMobilePracticeBadges';
+import {
+  useKangurMobilePracticeRecentResults,
+  type KangurMobilePracticeRecentResultItem,
+} from './useKangurMobilePracticeRecentResults';
 import { useKangurPracticeSyncProof } from './useKangurPracticeSyncProof';
 
 const PRACTICE_QUESTION_COUNT = 8;
+const PROFILE_ROUTE = '/profile' as const;
 
 const resolvePracticePlayerName = (
   session: ReturnType<typeof useKangurMobileAuth>['session'],
@@ -126,6 +139,45 @@ const formatPracticeSummaryMeta = (
       pl: 'Perfekcyjna gra',
     }[locale]
   }`;
+};
+
+const formatPracticeDuration = (value: number | null | undefined): string => {
+  const safeValue = Math.max(0, Math.floor(value ?? 0));
+  if (safeValue < 60) {
+    return `${safeValue}s`;
+  }
+
+  const minutes = Math.floor(safeValue / 60);
+  const seconds = safeValue % 60;
+  return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
+};
+
+const getPracticeAccuracyTone = (accuracyPercent: number): Tone => {
+  if (accuracyPercent >= 80) {
+    return {
+      backgroundColor: '#ecfdf5',
+      borderColor: '#a7f3d0',
+      textColor: '#047857',
+    };
+  }
+  if (accuracyPercent >= 60) {
+    return {
+      backgroundColor: '#fffbeb',
+      borderColor: '#fde68a',
+      textColor: '#b45309',
+    };
+  }
+  return {
+    backgroundColor: '#fef2f2',
+    borderColor: '#fecaca',
+    textColor: '#b91c1c',
+  };
+};
+
+type Tone = {
+  backgroundColor: string;
+  borderColor: string;
+  textColor: string;
 };
 
 const formatPracticeAnswerFeedback = (
@@ -206,6 +258,30 @@ function Card({
       }}
     >
       {children}
+    </View>
+  );
+}
+
+function Pill({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: Tone;
+}): React.JSX.Element {
+  return (
+    <View
+      style={{
+        alignSelf: 'flex-start',
+        borderRadius: 999,
+        borderWidth: 1,
+        borderColor: tone.borderColor,
+        backgroundColor: tone.backgroundColor,
+        paddingHorizontal: 12,
+        paddingVertical: 7,
+      }}
+    >
+      <Text style={{ color: tone.textColor, fontSize: 12, fontWeight: '700' }}>{label}</Text>
     </View>
   );
 }
@@ -371,6 +447,168 @@ function LessonCheckpointRow({
             </Pressable>
           </Link>
         ) : null}
+      </View>
+    </View>
+  );
+}
+
+function PracticeBadgeChip({
+  item,
+}: {
+  item: KangurMobilePracticeBadgeItem;
+}): React.JSX.Element {
+  return (
+    <View
+      style={{
+        borderRadius: 999,
+        borderWidth: 1,
+        borderColor: '#fde68a',
+        backgroundColor: '#fff7ed',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+      }}
+    >
+      <Text style={{ color: '#9a3412', fontSize: 13, fontWeight: '700' }}>
+        {item.emoji} {item.name}
+      </Text>
+    </View>
+  );
+}
+
+function PracticeRecentResultRow({
+  item,
+}: {
+  item: KangurMobilePracticeRecentResultItem;
+}): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+  const accuracyPercent = getKangurMobileScoreAccuracyPercent(item.result);
+  const accuracyTone = getPracticeAccuracyTone(accuracyPercent);
+
+  return (
+    <View
+      style={{
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        backgroundColor: '#f8fafc',
+        padding: 14,
+        gap: 8,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 12,
+        }}
+      >
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
+            {formatKangurMobileScoreOperation(item.result.operation, locale)}
+          </Text>
+          <Text style={{ color: '#64748b', fontSize: 12 }}>
+            {formatKangurMobileScoreDateTime(item.result.created_date, locale)}
+          </Text>
+        </View>
+        <Pill
+          label={`${item.result.correct_answers}/${item.result.total_questions}`}
+          tone={accuracyTone}
+        />
+      </View>
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <Pill
+          label={copy({
+            de: `Trefferquote ${accuracyPercent}%`,
+            en: `Accuracy ${accuracyPercent}%`,
+            pl: `Skuteczność ${accuracyPercent}%`,
+          })}
+          tone={accuracyTone}
+        />
+        <Pill
+          label={copy({
+            de: `Zeit ${formatPracticeDuration(item.result.time_taken)}`,
+            en: `Time ${formatPracticeDuration(item.result.time_taken)}`,
+            pl: `Czas ${formatPracticeDuration(item.result.time_taken)}`,
+          })}
+          tone={{
+            backgroundColor: '#f1f5f9',
+            borderColor: '#cbd5e1',
+            textColor: '#475569',
+          }}
+        />
+      </View>
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <Link href={item.practiceHref} asChild>
+          <Pressable
+            accessibilityRole='button'
+            style={{
+              alignSelf: 'flex-start',
+              borderRadius: 999,
+              backgroundColor: '#0f172a',
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+            }}
+          >
+            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+              {copy({
+                de: 'Erneut trainieren',
+                en: 'Train again',
+                pl: 'Trenuj ponownie',
+              })}
+            </Text>
+          </Pressable>
+        </Link>
+
+        {item.lessonHref ? (
+          <Link href={item.lessonHref} asChild>
+            <Pressable
+              accessibilityRole='button'
+              style={{
+                alignSelf: 'flex-start',
+                borderRadius: 999,
+                borderWidth: 1,
+                borderColor: '#cbd5e1',
+                backgroundColor: '#ffffff',
+                paddingHorizontal: 14,
+                paddingVertical: 10,
+              }}
+            >
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                {copy({
+                  de: 'Lektion öffnen',
+                  en: 'Open lesson',
+                  pl: 'Otwórz lekcję',
+                })}
+              </Text>
+            </Pressable>
+          </Link>
+        ) : null}
+
+        <Link href={item.historyHref} asChild>
+          <Pressable
+            accessibilityRole='button'
+            style={{
+              alignSelf: 'flex-start',
+              borderRadius: 999,
+              borderWidth: 1,
+              borderColor: '#cbd5e1',
+              backgroundColor: '#ffffff',
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+            }}
+          >
+            <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+              {copy({
+                de: 'Modusverlauf',
+                en: 'Mode history',
+                pl: 'Historia trybu',
+              })}
+            </Text>
+          </Pressable>
+        </Link>
       </View>
     </View>
   );
@@ -665,7 +903,9 @@ export function KangurPracticeScreen(): React.JSX.Element {
   const localeTag = getKangurMobileLocaleTag(locale);
   const lessonCheckpoints = useKangurMobileLessonCheckpoints({ limit: 2 });
   const lessonMastery = useKangurMobilePracticeLessonMastery();
+  const practiceBadges = useKangurMobilePracticeBadges();
   const practiceAssignments = useKangurMobilePracticeAssignments();
+  const practiceRecentResults = useKangurMobilePracticeRecentResults();
   const params = useLocalSearchParams<{
     debugAutoComplete?: string | string[];
     debugRedirectTo?: string | string[];
@@ -1504,6 +1744,218 @@ export function KangurPracticeScreen(): React.JSX.Element {
                         })}
                       />
                     ) : null}
+                  </View>
+                )}
+              </View>
+
+              <View
+                style={{
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: '#e2e8f0',
+                  backgroundColor: '#f8fafc',
+                  padding: 14,
+                  gap: 10,
+                }}
+              >
+                <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                  {copy({
+                    de: 'Abzeichen',
+                    en: 'Badges',
+                    pl: 'Odznaki',
+                  })}
+                </Text>
+                <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+                  {copy({
+                    de: 'Nach dem Training',
+                    en: 'After practice',
+                    pl: 'Po treningu',
+                  })}
+                </Text>
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                  {copy({
+                    de: 'Nach der Runde kannst du sehen, welche lokalen Abzeichen bereits freigeschaltet wurden.',
+                    en: 'After the run you can see which local badges are already unlocked.',
+                    pl: 'Po zakończeniu serii możesz zobaczyć, które lokalne odznaki są już odblokowane.',
+                  })}
+                </Text>
+
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  <View
+                    style={{
+                      borderRadius: 999,
+                      borderWidth: 1,
+                      borderColor: '#c7d2fe',
+                      backgroundColor: '#eef2ff',
+                      paddingHorizontal: 12,
+                      paddingVertical: 7,
+                    }}
+                  >
+                    <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
+                      {copy({
+                        de: `Freigeschaltet ${practiceBadges.unlockedBadges}/${practiceBadges.totalBadges}`,
+                        en: `Unlocked ${practiceBadges.unlockedBadges}/${practiceBadges.totalBadges}`,
+                        pl: `Odblokowane ${practiceBadges.unlockedBadges}/${practiceBadges.totalBadges}`,
+                      })}
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      borderRadius: 999,
+                      borderWidth: 1,
+                      borderColor: '#fde68a',
+                      backgroundColor: '#fffbeb',
+                      paddingHorizontal: 12,
+                      paddingVertical: 7,
+                    }}
+                  >
+                    <Text style={{ color: '#b45309', fontSize: 12, fontWeight: '700' }}>
+                      {copy({
+                        de: `Offen ${practiceBadges.remainingBadges}`,
+                        en: `Remaining ${practiceBadges.remainingBadges}`,
+                        pl: `Do zdobycia ${practiceBadges.remainingBadges}`,
+                      })}
+                    </Text>
+                  </View>
+                </View>
+
+                {practiceBadges.recentBadges.length === 0 ? (
+                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({
+                      de: 'Es gibt noch keine lokal freigeschalteten Abzeichen. Schließe Lektionen, Trainings oder Spiele ab, damit sie hier erscheinen.',
+                      en: 'There are no locally unlocked badges yet. Finish lessons, practice runs, or games so they appear here.',
+                      pl: 'Nie ma jeszcze lokalnie odblokowanych odznak. Ukończ lekcje, treningi albo gry, aby pojawiły się tutaj.',
+                    })}
+                  </Text>
+                ) : (
+                  <View style={{ gap: 10 }}>
+                    <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
+                      {copy({
+                        de: 'Zuletzt freigeschaltet',
+                        en: 'Recently unlocked',
+                        pl: 'Ostatnio odblokowane',
+                      })}
+                    </Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                      {practiceBadges.recentBadges.map((item) => (
+                        <PracticeBadgeChip key={item.id} item={item} />
+                      ))}
+                    </View>
+                  </View>
+                )}
+
+                <Link href={PROFILE_ROUTE} asChild>
+                  <Pressable
+                    accessibilityRole='button'
+                    style={{
+                      alignSelf: 'flex-start',
+                      borderRadius: 999,
+                      borderWidth: 1,
+                      borderColor: '#cbd5e1',
+                      backgroundColor: '#ffffff',
+                      paddingHorizontal: 14,
+                      paddingVertical: 10,
+                    }}
+                  >
+                    <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                      {copy({
+                        de: 'Profil und Abzeichen öffnen',
+                        en: 'Open profile and badges',
+                        pl: 'Otwórz profil i odznaki',
+                      })}
+                    </Text>
+                  </Pressable>
+                </Link>
+              </View>
+
+              <View
+                style={{
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: '#e2e8f0',
+                  backgroundColor: '#f8fafc',
+                  padding: 14,
+                  gap: 10,
+                }}
+              >
+                <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                  {copy({
+                    de: 'Ergebnisverlauf',
+                    en: 'Score history',
+                    pl: 'Historia wyników',
+                  })}
+                </Text>
+                <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+                  {copy({
+                    de: 'Letzte mobile Sitzungen',
+                    en: 'Recent mobile sessions',
+                    pl: 'Ostatnie sesje mobilne',
+                  })}
+                </Text>
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                  {copy({
+                    de: 'Nach der Runde bleiben die zuletzt synchronisierten Sitzungen hier griffbereit, damit du direkt wieder ins Training, die passende Lektion oder die Modus-Historie springen kannst.',
+                    en: 'The latest synchronized sessions stay close here so you can jump right back into practice, the matching lesson, or the mode history.',
+                    pl: 'Ostatnie zsynchronizowane sesje są tutaj pod ręką, aby można było od razu wrócić do treningu, pasującej lekcji albo historii trybu.',
+                  })}
+                </Text>
+
+                <Link href={createKangurResultsHref()} asChild>
+                  <Pressable
+                    accessibilityRole='button'
+                    style={{
+                      alignSelf: 'flex-start',
+                      borderRadius: 999,
+                      borderWidth: 1,
+                      borderColor: '#cbd5e1',
+                      backgroundColor: '#ffffff',
+                      paddingHorizontal: 14,
+                      paddingVertical: 10,
+                    }}
+                  >
+                    <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                      {copy({
+                        de: 'Ergebnisverlauf öffnen',
+                        en: 'Open score history',
+                        pl: 'Otwórz historię wyników',
+                      })}
+                    </Text>
+                  </Pressable>
+                </Link>
+
+                {practiceRecentResults.isLoading || practiceRecentResults.isRestoringAuth ? (
+                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({
+                      de: 'Die letzten Ergebnisse werden geladen.',
+                      en: 'Loading recent results.',
+                      pl: 'Ładujemy ostatnie wyniki.',
+                    })}
+                  </Text>
+                ) : !practiceRecentResults.isEnabled ? (
+                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({
+                      de: 'Melde die Schulersitzung an, um hier die synchronisierten Sitzungen zu sehen.',
+                      en: 'Sign in the learner session to see synchronized sessions here.',
+                      pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj zsynchronizowane sesje.',
+                    })}
+                  </Text>
+                ) : practiceRecentResults.error ? (
+                  <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
+                    {practiceRecentResults.error}
+                  </Text>
+                ) : practiceRecentResults.recentResultItems.length === 0 ? (
+                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({
+                      de: 'Es gibt noch keine synchronisierten Ergebnisse. Beende einen Lauf, damit er hier erscheint.',
+                      en: 'There are no synchronized results yet. Finish a run so it appears here.',
+                      pl: 'Nie ma jeszcze zsynchronizowanych wyników. Ukończ serię, aby pojawiła się tutaj.',
+                    })}
+                  </Text>
+                ) : (
+                  <View style={{ gap: 10 }}>
+                    {practiceRecentResults.recentResultItems.map((item) => (
+                      <PracticeRecentResultRow key={item.result.id} item={item} />
+                    ))}
                   </View>
                 )}
               </View>

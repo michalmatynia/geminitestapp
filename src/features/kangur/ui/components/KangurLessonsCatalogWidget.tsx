@@ -1,12 +1,12 @@
 'use client';
 
-import { ChevronDown } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { hasKangurLessonDocumentContent } from '@/features/kangur/lesson-documents';
 import {
   getLocalizedKangurLessonSectionLabel,
   getLocalizedKangurLessonSectionTypeLabel,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
+import { KangurLessonGroupAccordion } from '@/features/kangur/ui/components/KangurLessonGroupAccordion';
 import { KangurLessonLibraryCard } from '@/features/kangur/ui/components/KangurLessonLibraryCard';
 import {
   useKangurLessonsRuntimeActions,
@@ -14,7 +14,7 @@ import {
 } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { getLessonMasteryPresentation } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
-import { KangurEmptyState, KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
+import { KangurEmptyState } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_LESSON_PANEL_GAP_CLASSNAME,
   KANGUR_PANEL_ROW_CLASSNAME,
@@ -211,56 +211,39 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
 
                   return (
                     <div key={groupKey} role='listitem' className='w-full'>
-                      <KangurGlassPanel className='w-full kangur-panel-hover-zoom' padding='lg' surface='playField'>
-                        <button
-                          type='button'
-                          onClick={() => setExpandedLessonGroupId(isExpanded ? null : groupKey)}
-                          className='flex w-full cursor-pointer items-center justify-between gap-3 text-left'
-                        >
-                          <div className='min-w-0'>
-                            <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500'>
-                              {entry.group.typeLabel ?? pageTranslations('groupTypeLabel')}
-                            </div>
-                            <div className='mt-1 text-lg font-semibold text-slate-900'>
-                              {entry.group.label}
-                            </div>
-                          </div>
-                          <ChevronDown
-                            aria-hidden='true'
-                            className={`h-5 w-5 text-slate-600 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                          />
-                        </button>
-                        {isExpanded && (
-                          <div
-                            className={`mt-4 flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}
-                            role='list'
-                          >
-                            {groupHasSubsections ? (
-                              entry.group.subsections?.map((subsection) => (
-                                <div
-                                  key={subsection.id}
-                                  className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}
-                                  role='listitem'
-                                >
-                                  <div className='min-w-0'>
-                                    <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500'>
-                                      {subsection.typeLabel ?? pageTranslations('subsectionTypeLabel')}
-                                    </div>
-                                    <div className='mt-1 text-base font-semibold text-slate-900'>
-                                      {subsection.label}
-                                    </div>
-                                  </div>
-                                  <div className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`} role='list'>
-                                    {subsection.lessons.map((lesson) => renderLessonCard(lesson))}
-                                  </div>
+                      <KangurLessonGroupAccordion
+                        accordionId={groupKey}
+                        fallbackTypeLabel={pageTranslations('groupTypeLabel')}
+                        isExpanded={isExpanded}
+                        label={entry.group.label}
+                        onToggle={() => setExpandedLessonGroupId(isExpanded ? null : groupKey)}
+                        typeLabel={entry.group.typeLabel}
+                        contentProps={{ role: 'list' }}
+                      >
+                        {groupHasSubsections ? (
+                          entry.group.subsections?.map((subsection) => (
+                            <div
+                              key={subsection.id}
+                              className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}
+                              role='listitem'
+                            >
+                              <div className='min-w-0'>
+                                <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500'>
+                                  {subsection.typeLabel ?? pageTranslations('subsectionTypeLabel')}
                                 </div>
-                              ))
-                            ) : (
-                              entry.group.lessons.map((lesson) => renderLessonCard(lesson))
-                            )}
-                          </div>
+                                <div className='mt-1 text-base font-semibold text-slate-900'>
+                                  {subsection.label}
+                                </div>
+                              </div>
+                              <div className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`} role='list'>
+                                {subsection.lessons.map((lesson) => renderLessonCard(lesson))}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          entry.group.lessons.map((lesson) => renderLessonCard(lesson))
                         )}
-                      </KangurGlassPanel>
+                      </KangurLessonGroupAccordion>
                     </div>
                   );
                 }

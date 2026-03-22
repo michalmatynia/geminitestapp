@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   useKangurMobileLeaderboardAssignmentsMock,
+  useKangurMobileLeaderboardBadgesMock,
   useKangurMobileLeaderboardLessonMasteryMock,
   replaceMock,
   useKangurMobileLeaderboardDuelsMock,
@@ -16,6 +17,7 @@ const {
   useRouterMock,
 } = vi.hoisted(() => ({
   useKangurMobileLeaderboardAssignmentsMock: vi.fn(),
+  useKangurMobileLeaderboardBadgesMock: vi.fn(),
   useKangurMobileLeaderboardLessonMasteryMock: vi.fn(),
   replaceMock: vi.fn(),
   useKangurMobileLeaderboardDuelsMock: vi.fn(),
@@ -35,6 +37,10 @@ vi.mock('./useKangurMobileLeaderboard', () => ({
 
 vi.mock('./useKangurMobileLeaderboardAssignments', () => ({
   useKangurMobileLeaderboardAssignments: useKangurMobileLeaderboardAssignmentsMock,
+}));
+
+vi.mock('./useKangurMobileLeaderboardBadges', () => ({
+  useKangurMobileLeaderboardBadges: useKangurMobileLeaderboardBadgesMock,
 }));
 
 vi.mock('./useKangurMobileLeaderboardLessonMastery', () => ({
@@ -96,6 +102,12 @@ describe('KangurLeaderboardScreen', () => {
     });
     useKangurMobileLeaderboardAssignmentsMock.mockReturnValue({
       assignmentItems: [],
+    });
+    useKangurMobileLeaderboardBadgesMock.mockReturnValue({
+      recentBadges: [],
+      remainingBadges: 9,
+      totalBadges: 9,
+      unlockedBadges: 0,
     });
     useKangurMobileLeaderboardLessonMasteryMock.mockReturnValue({
       masteredLessons: 0,
@@ -308,6 +320,23 @@ describe('KangurLeaderboardScreen', () => {
       ],
       lessonsNeedingPractice: 1,
     });
+    useKangurMobileLeaderboardBadgesMock.mockReturnValue({
+      recentBadges: [
+        {
+          emoji: '🕐',
+          id: 'clock_master',
+          name: 'Mistrz zegara',
+        },
+        {
+          emoji: '📚',
+          id: 'lesson_hero',
+          name: 'Bohater lekcji',
+        },
+      ],
+      remainingBadges: 7,
+      totalBadges: 9,
+      unlockedBadges: 2,
+    });
 
     render(<KangurLeaderboardScreen />);
 
@@ -332,6 +361,13 @@ describe('KangurLeaderboardScreen', () => {
     expect(screen.getByText('Śledzone 3')).toBeTruthy();
     expect(screen.getAllByText('Do powtórki').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Najmocniejsza lekcja')).toBeTruthy();
+    expect(screen.getByText('Odznaki')).toBeTruthy();
+    expect(screen.getByText('Odblokowane 2/9')).toBeTruthy();
+    expect(screen.getByText('Do zdobycia 7')).toBeTruthy();
+    expect(screen.getByText('Ostatnio odblokowane')).toBeTruthy();
+    expect(screen.getByText('🕐 Mistrz zegara')).toBeTruthy();
+    expect(screen.getByText('📚 Bohater lekcji')).toBeTruthy();
+    expect(screen.getByText('Otwórz profil i odznaki')).toBeTruthy();
     expect(screen.getByText('Następne kroki')).toBeTruthy();
     expect(screen.getByText('Lokalne zadania po rankingu')).toBeTruthy();
     expect(screen.getByText('Domknij zegar')).toBeTruthy();

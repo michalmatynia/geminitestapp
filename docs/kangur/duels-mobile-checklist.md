@@ -1,3 +1,12 @@
+---
+owner: 'Kangur Team'
+last_reviewed: '2026-03-22'
+status: 'active'
+doc_type: 'reference'
+scope: 'feature:kangur'
+canonical: true
+---
+
 # Duels Mobile UX Checklist
 
 Scope: Kangur Duels lobby, waiting room, and active duel flows on small screens.

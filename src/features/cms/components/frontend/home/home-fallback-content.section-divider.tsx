@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui';
+import { UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui/layout';
 
 export function SectionDivider({ label }: { label: string }): React.JSX.Element {
   const lineStyle: React.CSSProperties = {

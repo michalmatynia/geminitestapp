@@ -25,6 +25,8 @@ describe('KangurAnswerChoiceCard', () => {
     expect(choice).toHaveClass(
       'kangur-card-surface',
       'kangur-card-padding-md',
+      'touch-manipulation',
+      'active:scale-[0.995]',
       'transition-all',
       'cursor-pointer'
     );

@@ -78,6 +78,90 @@ describe('buildBaseProductData', () => {
     expect(result['producer_ids']).toBeUndefined();
   });
 
+  it('includes the mapped Base producer id when an explicit producer template mapping exists', async () => {
+    const result = await buildBaseProductData(
+      createProduct({
+        producers: [
+          {
+            productId: 'product-1',
+            producerId: 'producer-1',
+            assignedAt: '2026-03-01T00:00:00.000Z',
+          },
+        ],
+      }),
+      [
+        {
+          sourceKey: 'producer_id',
+          targetField: 'producerIds',
+        },
+      ],
+      null,
+      {
+        producerExternalIdByInternalId: {
+          'producer-1': 'base-producer-77',
+        },
+      }
+    );
+
+    expect(result['producer_id']).toBe('base-producer-77');
+  });
+
+  it('falls back to the mapped Base producer id when an explicit producer template mapping resolves empty', async () => {
+    const result = await buildBaseProductData(
+      createProduct({
+        producers: [
+          {
+            productId: 'product-1',
+            producerId: 'producer-1',
+            assignedAt: '2026-03-01T00:00:00.000Z',
+          },
+        ],
+      }),
+      [
+        {
+          sourceKey: 'producer_id',
+          targetField: 'missingProducerField',
+        },
+      ],
+      null,
+      {
+        producerExternalIdByInternalId: {
+          'producer-1': 'base-producer-77',
+        },
+      }
+    );
+
+    expect(result['producer_id']).toBe('base-producer-77');
+  });
+
+  it('supports legacy manufacturer aliases in explicit producer template mappings', async () => {
+    const result = await buildBaseProductData(
+      createProduct({
+        producers: [
+          {
+            productId: 'product-1',
+            producerId: 'producer-1',
+            assignedAt: '2026-03-01T00:00:00.000Z',
+          },
+        ],
+      }),
+      [
+        {
+          sourceKey: 'producer_id',
+          targetField: 'manufacturerId',
+        },
+      ],
+      null,
+      {
+        producerExternalIdByInternalId: {
+          'producer-1': 'base-producer-77',
+        },
+      }
+    );
+
+    expect(result['producer_id']).toBe('base-producer-77');
+  });
+
   it('does not include category_id during images-only exports', async () => {
     const result = await buildBaseProductData(createProduct(), [], null, {
       imagesOnly: true,

@@ -8,7 +8,7 @@ import {
   UI_CENTER_ROW_CLASSNAME,
   UI_STACK_RELAXED_CLASSNAME,
   UI_STACK_SPACED_CLASSNAME,
-} from '@/shared/ui';
+} from '@/shared/ui/layout';
 export type SocialLink = {
   id: string;
   label: string;

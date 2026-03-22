@@ -8,6 +8,7 @@ import { Button, StatusBadge, SelectSimple, Card } from '@/shared/ui';
 
 import { useRuntimeState, useRuntimeActions } from '../context';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { RuntimeEventEntry } from './runtime-event-entry';
 
 
 // ---------------------------------------------------------------------------
@@ -35,6 +36,77 @@ function formatTime(iso: string): string {
     logClientError(error);
     return iso;
   }
+}
+
+type RuntimeEventLogActionButtonProps = Pick<
+  React.ComponentProps<typeof Button>,
+  'children' | 'disabled' | 'onClick' | 'title'
+>;
+
+type RuntimeEventLogCountBadgeProps = {
+  count: number;
+  label: string;
+  variant: React.ComponentProps<typeof StatusBadge>['variant'];
+};
+
+type RuntimeEventLogEventRowProps = {
+  event: AiPathRuntimeEvent;
+};
+
+function RuntimeEventLogActionButton({
+  children,
+  disabled,
+  onClick,
+  title,
+}: RuntimeEventLogActionButtonProps): React.JSX.Element {
+  return (
+    <Button
+      type='button'
+      className='rounded border border-border/40 px-1.5 py-0.5 text-[10px] text-gray-300 hover:bg-card/70'
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+    >
+      {children}
+    </Button>
+  );
+}
+
+function RuntimeEventLogCountBadge({
+  count,
+  label,
+  variant,
+}: RuntimeEventLogCountBadgeProps): React.JSX.Element | null {
+  if (count <= 0) return null;
+  return (
+    <StatusBadge status={`${count} ${label}`} variant={variant} size='sm' className='font-bold h-4' />
+  );
+}
+
+function RuntimeEventLogEventRow({
+  event,
+}: RuntimeEventLogEventRowProps): React.JSX.Element {
+  return (
+    <RuntimeEventEntry
+      timestamp={formatTime(event.timestamp)}
+      level={event.level}
+      kind={event.kind}
+      message={event.message}
+      className='flex items-start gap-2 rounded px-2 py-1 text-[11px] hover:bg-card/70'
+      timeClassName='shrink-0 text-gray-500'
+      levelClassName='mt-[5px] size-1.5 min-w-0 rounded-full p-0'
+      kindClassName='h-4 px-1 font-mono'
+      hideLevelLabel
+      trailingMetadata={
+        event.source === 'server' ? (
+          <StatusBadge status='server' variant='processing' size='sm' className='h-4 px-1' />
+        ) : null
+      }
+      inlinePrefix={
+        event.nodeTitle ? <span className='shrink-0 text-gray-300'>[{event.nodeTitle}]</span> : null
+      }
+    />
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -91,6 +163,10 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
     () => runtimeEvents.filter((e) => e.level === 'warn').length,
     [runtimeEvents]
   );
+  const summaryBadges: RuntimeEventLogCountBadgeProps[] = [
+    { count: errorCount, label: 'err', variant: 'error' },
+    { count: warningCount, label: 'warn', variant: 'warning' },
+  ];
 
   return (
     <Card variant='subtle-compact' padding='none' className='bg-card/50'>
@@ -115,22 +191,14 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
           <span data-doc-id='runtime_events_count' className='text-[10px] text-gray-500'>
             {runtimeEvents.length}
           </span>
-          {errorCount > 0 && (
-            <StatusBadge
-              status={`${errorCount} err`}
-              variant='error'
-              size='sm'
-              className='font-bold h-4'
+          {summaryBadges.map((badge) => (
+            <RuntimeEventLogCountBadge
+              key={badge.label}
+              count={badge.count}
+              label={badge.label}
+              variant={badge.variant}
             />
-          )}
-          {warningCount > 0 && (
-            <StatusBadge
-              status={`${warningCount} warn`}
-              variant='warning'
-              size='sm'
-              className='font-bold h-4'
-            />
-          )}
+          ))}
         </div>
         <div className='flex items-center gap-1.5'>
           {/* Level filter */}
@@ -139,29 +207,25 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
             value={levelFilter}
             onValueChange={(value) => setLevelFilter(value as RuntimeEventLevelFilter)}
             options={LEVEL_OPTIONS}
-            ariaLabel='Event level filter'
+           ariaLabel='Event level filter'
             triggerClassName='h-6 min-w-[70px] px-2 bg-transparent border-border/40 text-[10px]'
            title='Select option'/>
           {/* Export */}
-          <Button
-            type='button'
-            className='rounded border border-border/40 px-1.5 py-0.5 text-[10px] text-gray-300 hover:bg-card/70'
+          <RuntimeEventLogActionButton
             onClick={handleExport}
             disabled={runtimeEvents.length === 0}
             title='Export events as JSON'
           >
             Export
-          </Button>
+          </RuntimeEventLogActionButton>
           {/* Clear */}
-          <Button
-            type='button'
-            className='rounded border border-border/40 px-1.5 py-0.5 text-[10px] text-gray-300 hover:bg-card/70'
+          <RuntimeEventLogActionButton
             onClick={clearRuntimeEvents}
             disabled={runtimeEvents.length === 0}
             title='Clear all events'
           >
             Clear
-          </Button>
+          </RuntimeEventLogActionButton>
         </div>
       </div>
 
@@ -177,54 +241,7 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
               No events{levelFilter !== 'all' ? ` matching "${levelFilter}"` : ''}
             </div>
           ) : (
-            filteredEvents.map((event) => {
-              const eventKind = event.kind ?? 'event';
-              return (
-                <div
-                  key={event.id}
-                  className='flex items-start gap-2 rounded px-2 py-1 text-[11px] hover:bg-card/70'
-                >
-                  <span className='shrink-0 text-gray-500'>{formatTime(event.timestamp)}</span>
-                  <StatusBadge
-                    status=''
-                    variant={
-                      event.level === 'error'
-                        ? 'error'
-                        : event.level === 'warn'
-                          ? 'warning'
-                          : 'neutral'
-                    }
-                    size='sm'
-                    hideLabel
-                    className='mt-[5px] size-1.5 min-w-0 p-0 rounded-full'
-                  />
-                  <StatusBadge
-                    status={eventKind}
-                    variant={
-                      eventKind.startsWith('run_')
-                        ? 'info'
-                        : eventKind.startsWith('node_')
-                          ? 'success'
-                          : 'neutral'
-                    }
-                    size='sm'
-                    className='h-4 px-1 font-mono'
-                  />
-                  {event.source === 'server' && (
-                    <StatusBadge
-                      status='server'
-                      variant='processing'
-                      size='sm'
-                      className='h-4 px-1'
-                    />
-                  )}
-                  {event.nodeTitle && (
-                    <span className='shrink-0 text-gray-300'>[{event.nodeTitle}]</span>
-                  )}
-                  <span className='truncate text-gray-200'>{event.message}</span>
-                </div>
-              );
-            })
+            filteredEvents.map((event) => <RuntimeEventLogEventRow key={event.id} event={event} />)
           )}
         </div>
       )}

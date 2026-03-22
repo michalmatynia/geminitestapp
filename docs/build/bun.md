@@ -1,3 +1,12 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-22'
+status: 'active'
+doc_type: 'overview'
+scope: 'repository'
+canonical: true
+---
+
 # Bun support
 
 This repository now treats Bun as a supported repo runtime lane for selected quality, architecture, docs, and toolchain checks.

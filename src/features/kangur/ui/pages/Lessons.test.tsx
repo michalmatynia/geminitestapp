@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
 
@@ -16,6 +16,7 @@ const {
   topNavigationPropsMock,
   tutorSessionSyncPropsMock,
   lessonsState,
+  lessonSectionsState,
 } = vi.hoisted(() => ({
   useKangurSubjectFocusMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
@@ -28,6 +29,9 @@ const {
   topNavigationPropsMock: vi.fn(),
   tutorSessionSyncPropsMock: vi.fn(),
   lessonsState: {
+    value: [] as Array<Record<string, unknown>>,
+  },
+  lessonSectionsState: {
     value: [] as Array<Record<string, unknown>>,
   },
 }));
@@ -231,7 +235,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
-  useKangurLessonSections: () => ({ data: [] }),
+  useKangurLessonSections: () => ({ data: lessonSectionsState.value }),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
@@ -320,6 +324,7 @@ describe('Lessons page subject filtering', () => {
       window.clearTimeout(handle);
     });
     lessonsState.value = lessonsFixture;
+    lessonSectionsState.value = [];
     useKangurSubjectFocusMock.mockReturnValue({
       subject: 'english',
       setSubject: vi.fn(),
@@ -406,5 +411,36 @@ describe('Lessons page subject filtering', () => {
     latestNavigation?.onLogin?.();
 
     expect(openLoginModalMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens a grouped lesson section on the first click', async () => {
+    lessonSectionsState.value = [
+      {
+        id: 'opening-section',
+        subject: 'english',
+        ageGroup: DEFAULT_KANGUR_AGE_GROUP,
+        enabled: true,
+        sortOrder: 1,
+        label: 'Opening Section',
+        typeLabel: 'featured',
+        componentIds: ['english_basics'],
+        subsections: [],
+      },
+    ];
+
+    render(<Lessons />);
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(screen.queryByTestId('lesson-card-lesson-english')).not.toBeInTheDocument();
+
+    const openingSectionButton = screen.getByRole('button', { name: /opening section/i });
+    expect(openingSectionButton).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(openingSectionButton);
+
+    expect(openingSectionButton).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('lesson-card-lesson-english')).toBeInTheDocument();
   });
 });

@@ -28,14 +28,27 @@ export const productCategoryWithChildrenSchema: z.ZodType<ProductCategoryWithChi
     children: z.array(z.lazy(() => productCategoryWithChildrenSchema)),
   });
 
-export const createProductCategorySchema = productCategorySchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const createProductCategorySchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().nullable().optional(),
+  color: z.string().nullable().optional(),
+  parentId: z.string().nullable().optional(),
+  catalogId: z.string().min(1, 'Catalog ID is required'),
+  sortIndex: z.number().int().min(0).optional(),
 });
 
 export type ProductCategoryCreateInput = z.infer<typeof createProductCategorySchema>;
-export type ProductCategoryUpdateInput = Partial<ProductCategoryCreateInput>;
+
+export const updateProductCategorySchema = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().nullable().optional(),
+  color: z.string().nullable().optional(),
+  parentId: z.string().nullable().optional(),
+  catalogId: z.string().min(1).optional(),
+  sortIndex: z.number().int().min(0).optional(),
+});
+
+export type ProductCategoryUpdateInput = z.infer<typeof updateProductCategorySchema>;
 export type ProductCategorySummaryDto = {
   id: string;
   name: string;

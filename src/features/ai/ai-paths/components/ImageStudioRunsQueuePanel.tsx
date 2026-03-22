@@ -28,6 +28,73 @@ const toDateLabel = (value: string | null): string => {
   return date.toLocaleString();
 };
 
+const getRunStatusVariant = (
+  status: ImageStudioRunStatus
+): 'processing' | 'warning' | 'success' | 'error' => {
+  if (status === 'running') return 'processing';
+  if (status === 'queued') return 'warning';
+  if (status === 'completed') return 'success';
+  return 'error';
+};
+
+const getDispatchModeBadge = (
+  dispatchMode: ImageStudioRunRecord['dispatchMode']
+): {
+  status: 'Inline' | 'Redis';
+  variant: 'error' | 'success';
+} =>
+  dispatchMode === 'inline'
+    ? { status: 'Inline', variant: 'error' }
+    : { status: 'Redis', variant: 'success' };
+
+type ImageStudioRunsHeaderActionButtonProps = Pick<
+  React.ComponentProps<typeof Button>,
+  'children' | 'disabled' | 'onClick'
+>;
+
+function ImageStudioRunsStatusCell({
+  run,
+}: {
+  run: ImageStudioRunRecord;
+}): React.JSX.Element {
+  return (
+    <StatusBadge
+      status={run.status}
+      variant={getRunStatusVariant(run.status)}
+      size='sm'
+      className='font-bold'
+    />
+  );
+}
+
+function ImageStudioRunsRuntimeCell({
+  run,
+}: {
+  run: ImageStudioRunRecord;
+}): React.JSX.Element {
+  const badge = getDispatchModeBadge(run.dispatchMode);
+  return (
+    <StatusBadge
+      status={badge.status}
+      variant={badge.variant}
+      size='sm'
+      className='font-medium'
+    />
+  );
+}
+
+function ImageStudioRunsHeaderActionButton({
+  children,
+  disabled,
+  onClick,
+}: ImageStudioRunsHeaderActionButtonProps): React.JSX.Element {
+  return (
+    <Button type='button' variant='outline' size='xs' disabled={disabled} onClick={onClick}>
+      {children}
+    </Button>
+  );
+}
+
 export function ImageStudioRunsQueuePanel(): React.JSX.Element {
   const {
     runs,
@@ -57,34 +124,12 @@ export function ImageStudioRunsQueuePanel(): React.JSX.Element {
       {
         accessorKey: 'status',
         header: 'Status',
-        cell: ({ row }) => (
-          <StatusBadge
-            status={row.original.status}
-            variant={
-              row.original.status === 'running'
-                ? 'processing'
-                : row.original.status === 'queued'
-                  ? 'warning'
-                  : row.original.status === 'completed'
-                    ? 'success'
-                    : 'error'
-            }
-            size='sm'
-            className='font-bold'
-          />
-        ),
+        cell: ({ row }) => <ImageStudioRunsStatusCell run={row.original} />,
       },
       {
         accessorKey: 'dispatchMode',
         header: 'Runtime',
-        cell: ({ row }) => (
-          <StatusBadge
-            status={row.original.dispatchMode === 'inline' ? 'Inline' : 'Redis'}
-            variant={row.original.dispatchMode === 'inline' ? 'error' : 'success'}
-            size='sm'
-            className='font-medium'
-          />
-        ),
+        cell: ({ row }) => <ImageStudioRunsRuntimeCell run={row.original} />,
       },
       {
         id: 'outputs',
@@ -124,23 +169,14 @@ export function ImageStudioRunsQueuePanel(): React.JSX.Element {
         description='Queue-backed generation runs persisted from Image Studio.'
         headerActions={
           <div className='flex items-center gap-2'>
-            <Button
-              type='button'
-              variant='outline'
-              size='xs'
+            <ImageStudioRunsHeaderActionButton
               onClick={() => setAutoRefreshEnabled((prev) => !prev)}
             >
               {autoRefreshEnabled ? 'Auto-refresh on' : 'Auto-refresh off'}
-            </Button>
-            <Button
-              type='button'
-              variant='outline'
-              size='xs'
-              onClick={refetch}
-              disabled={isFetching}
-            >
+            </ImageStudioRunsHeaderActionButton>
+            <ImageStudioRunsHeaderActionButton onClick={refetch} disabled={isFetching}>
               {isFetching ? 'Refreshing...' : 'Refresh'}
-            </Button>
+            </ImageStudioRunsHeaderActionButton>
           </div>
         }
         columns={columns}

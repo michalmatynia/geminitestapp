@@ -62,7 +62,16 @@ export const getProductValue = (
     normalized === 'producername' ||
     normalized === 'producer_name' ||
     normalized === 'producernames' ||
-    normalized === 'producer_names'
+    normalized === 'producer_names' ||
+    normalized === 'manufacturerids' ||
+    normalized === 'manufacturer_ids' ||
+    normalized === 'manufacturerid' ||
+    normalized === 'manufacturer_id' ||
+    normalized === 'manufacturer' ||
+    normalized === 'manufacturername' ||
+    normalized === 'manufacturer_name' ||
+    normalized === 'manufacturernames' ||
+    normalized === 'manufacturer_names'
   ) {
     const { producerIds, producerNames } = getProductProducerValues(
       product,
@@ -132,7 +141,11 @@ export const toProducerNameValueList = (
       const nested =
         toTrimmedString(record['producerId']) ??
         toTrimmedString(record['producer_id']) ??
+        toTrimmedString(record['manufacturerId']) ??
+        toTrimmedString(record['manufacturer_id']) ??
         toTrimmedString(record['producerName']) ??
+        toTrimmedString(record['manufacturerName']) ??
+        toTrimmedString(record['manufacturer_name']) ??
         toTrimmedString(record['name']) ??
         toTrimmedString(record['value']) ??
         toTrimmedString(record['id']);
@@ -183,9 +196,13 @@ export const toProducerIdValueList = (
       const nested =
         toTrimmedString(record['producerId']) ??
         toTrimmedString(record['producer_id']) ??
+        toTrimmedString(record['manufacturerId']) ??
+        toTrimmedString(record['manufacturer_id']) ??
         toTrimmedString(record['id']) ??
         toTrimmedString(record['value']) ??
         toTrimmedString(record['producerName']) ??
+        toTrimmedString(record['manufacturerName']) ??
+        toTrimmedString(record['manufacturer_name']) ??
         toTrimmedString(record['name']);
       if (nested) {
         pushValue(nested);

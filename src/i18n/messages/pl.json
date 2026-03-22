@@ -1571,7 +1571,9 @@
         "checkRemainder": "Sprawdź, ile zostaje w reszcie.",
         "equalGroups": "Upewnij się, że każda grupa ma tyle samo.",
         "correct": "Brawo! Podział jest równy.",
-        "idle": "Przeciągnij lub kliknij elementy, aby podzielić je na grupy."
+        "idle": "Przeciągnij lub kliknij elementy, aby podzielić je na grupy.",
+        "touchIdle": "Stuknij element, a potem stuknij grupę, pulę albo pole reszty. Nadal możesz też przeciągać.",
+        "touchSelected": "Wybrany element: {emoji}. Stuknij grupę, pulę albo pole reszty."
       }
     },
     "calendarTraining": {
@@ -2281,11 +2283,14 @@
       "inRound": {
         "roundLabel": "Runda {current}/{total}",
         "modeLabel": "Przeciągnij i upuść",
+        "modeLabelTouch": "Stuknij albo przeciągnij",
         "poolLabel": "Pula słów",
         "poolAria": "Pula słów do sortowania",
         "poolEmpty": "Pula pusta",
         "binAria": "Koszyk {label}",
         "missingWords": "Brakuje słów",
+        "touchIdle": "Stuknij słowo, a potem stuknij kategorię albo pulę.",
+        "touchSelected": "Wybrane słowo: {label}. Stuknij kategorię albo pulę.",
         "clearRound": "Wyczyść rundę",
         "hitsLabel": "{hits}/{total} trafień",
         "check": "Sprawdź",

@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-18T19:19:50.237Z",
-  "durationMs": 3619,
+  "generatedAt": "2026-03-22T08:43:15.218Z",
+  "durationMs": 5722,
   "status": "passed",
   "summary": {
-    "queueCount": 17,
+    "queueCount": 18,
     "queueInitModuleCount": 9,
     "gatedQueueCount": 9,
-    "explicitStartCallCount": 13,
-    "repeatQueueModuleCount": 16,
+    "explicitStartCallCount": 14,
+    "repeatQueueModuleCount": 17,
     "errorCount": 0,
     "warningCount": 0
   },
@@ -20,6 +20,7 @@
       "explicitlyStarted": true,
       "ownerModules": [
         "src/server/queues/ai.ts",
+        "src/server/queues/kangur.ts",
         "src/shared/lib/observability/workers/systemLogAlertsQueue.ts"
       ],
       "startExports": [
@@ -29,6 +30,8 @@
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
+        "startKangurSocialPipelineQueue",
+        "startKangurSocialSchedulerQueue",
         "startSystemLogAlertsQueue",
         "startSystemLogAlertsWorker"
       ]
@@ -41,6 +44,7 @@
       "explicitlyStarted": true,
       "ownerModules": [
         "src/server/queues/ai.ts",
+        "src/server/queues/kangur.ts",
         "src/shared/lib/observability/workers/systemLogAlertsQueue.ts"
       ],
       "startExports": [
@@ -50,6 +54,8 @@
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
+        "startKangurSocialPipelineQueue",
+        "startKangurSocialSchedulerQueue",
         "startSystemLogAlertsQueue",
         "startSystemLogAlertsWorker"
       ]
@@ -62,6 +68,7 @@
       "explicitlyStarted": true,
       "ownerModules": [
         "src/server/queues/ai.ts",
+        "src/server/queues/kangur.ts",
         "src/shared/lib/observability/workers/systemLogAlertsQueue.ts"
       ],
       "startExports": [
@@ -71,6 +78,8 @@
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
+        "startKangurSocialPipelineQueue",
+        "startKangurSocialSchedulerQueue",
         "startSystemLogAlertsQueue",
         "startSystemLogAlertsWorker"
       ]
@@ -115,6 +124,7 @@
       "explicitlyStarted": true,
       "ownerModules": [
         "src/server/queues/ai.ts",
+        "src/server/queues/kangur.ts",
         "src/shared/lib/observability/workers/systemLogAlertsQueue.ts"
       ],
       "startExports": [
@@ -124,6 +134,8 @@
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
+        "startKangurSocialPipelineQueue",
+        "startKangurSocialSchedulerQueue",
         "startSystemLogAlertsQueue",
         "startSystemLogAlertsWorker"
       ]
@@ -149,6 +161,7 @@
       "explicitlyStarted": true,
       "ownerModules": [
         "src/server/queues/ai.ts",
+        "src/server/queues/kangur.ts",
         "src/shared/lib/observability/workers/systemLogAlertsQueue.ts"
       ],
       "startExports": [
@@ -158,6 +171,8 @@
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
+        "startKangurSocialPipelineQueue",
+        "startKangurSocialSchedulerQueue",
         "startSystemLogAlertsQueue",
         "startSystemLogAlertsWorker"
       ]
@@ -170,6 +185,7 @@
       "explicitlyStarted": true,
       "ownerModules": [
         "src/server/queues/ai.ts",
+        "src/server/queues/kangur.ts",
         "src/shared/lib/observability/workers/systemLogAlertsQueue.ts"
       ],
       "startExports": [
@@ -179,6 +195,32 @@
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
+        "startKangurSocialPipelineQueue",
+        "startKangurSocialSchedulerQueue",
+        "startSystemLogAlertsQueue",
+        "startSystemLogAlertsWorker"
+      ]
+    },
+    {
+      "queueName": "kangur-social-pipeline",
+      "file": "src/features/kangur/workers/kangurSocialPipelineQueue.ts",
+      "gated": false,
+      "repeatManaged": true,
+      "explicitlyStarted": true,
+      "ownerModules": [
+        "src/server/queues/ai.ts",
+        "src/server/queues/kangur.ts",
+        "src/shared/lib/observability/workers/systemLogAlertsQueue.ts"
+      ],
+      "startExports": [
+        "startAgentQueue",
+        "startAiInsightsQueue",
+        "startAiPathRunQueue",
+        "startChatbotJobQueue",
+        "startImageStudioRunQueue",
+        "startImageStudioSequenceQueue",
+        "startKangurSocialPipelineQueue",
+        "startKangurSocialSchedulerQueue",
         "startSystemLogAlertsQueue",
         "startSystemLogAlertsWorker"
       ]
@@ -201,6 +243,7 @@
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
+        "startKangurSocialPipelineQueue",
         "startKangurSocialSchedulerQueue",
         "startSystemLogAlertsQueue",
         "startSystemLogAlertsWorker"

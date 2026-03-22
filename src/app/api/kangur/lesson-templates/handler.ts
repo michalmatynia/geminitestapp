@@ -1,27 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { getKangurLessonTemplateRepository } from '@/features/kangur/services/kangur-lesson-template-repository';
-import { kangurLessonSubjectSchema } from '@kangur/contracts';
-import { kangurLessonTemplatesSchema } from '@/shared/contracts/kangur-lesson-templates';
+import { kangurLessonSubjectSchema } from '@/shared/contracts/kangur';
+import {
+  kangurLessonTemplatesQuerySchema,
+  kangurLessonTemplatesReplacePayloadSchema,
+} from '@/shared/contracts/kangur-lesson-templates';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
-import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
-export const querySchema = z.object({
-  subject: optionalTrimmedQueryString(kangurLessonSubjectSchema),
-});
-
-const bodySchema = z.object({
-  templates: kangurLessonTemplatesSchema,
-});
+export { kangurLessonTemplatesQuerySchema as querySchema };
+export { kangurLessonTemplatesReplacePayloadSchema as bodySchema };
 
 export async function getKangurLessonTemplatesHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext,
 ): Promise<Response> {
-  const query = querySchema.parse(ctx.query ?? {});
+  const query = kangurLessonTemplatesQuerySchema.parse(ctx.query ?? {});
   const parsedSubject = kangurLessonSubjectSchema.safeParse(query.subject);
   const subject = parsedSubject.success ? parsedSubject.data : undefined;
   const repository = await getKangurLessonTemplateRepository();
@@ -43,7 +39,7 @@ export async function postKangurLessonTemplatesHandler(
     throw forbiddenError('Only admins can update Kangur lesson templates.');
   }
 
-  const parsed = bodySchema.parse(ctx.body ?? {});
+  const parsed = kangurLessonTemplatesReplacePayloadSchema.parse(ctx.body ?? {});
   const repository = await getKangurLessonTemplateRepository();
   const templates = await repository.replaceTemplates(parsed.templates);
 

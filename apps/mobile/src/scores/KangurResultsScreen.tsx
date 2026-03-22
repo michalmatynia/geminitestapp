@@ -36,6 +36,10 @@ import {
   useKangurMobileResultsLessonMastery,
   type KangurMobileResultsLessonMasteryItem,
 } from './useKangurMobileResultsLessonMastery';
+import {
+  useKangurMobileResultsBadges,
+  type KangurMobileResultsBadgeItem,
+} from './useKangurMobileResultsBadges';
 import { useKangurMobileResultsDuels } from './useKangurMobileResultsDuels';
 
 function Card({
@@ -149,6 +153,7 @@ const getOperationTone = (
 const RESULTS_HOME_ROUTE = '/' as const;
 const LESSONS_ROUTE = '/lessons' as Href;
 const DUELS_ROUTE = createKangurDuelsHref();
+const PROFILE_ROUTE = '/profile' as Href;
 
 const resolveResultsFilterFamily = (
   value: string | string[] | undefined,
@@ -478,6 +483,30 @@ function LessonCheckpointRow({
   );
 }
 
+function ResultsBadgeChip({
+  item,
+}: {
+  item: KangurMobileResultsBadgeItem;
+}): React.JSX.Element {
+  return (
+    <View
+      style={{
+        alignSelf: 'flex-start',
+        borderRadius: 999,
+        borderWidth: 1,
+        borderColor: '#c7d2fe',
+        backgroundColor: '#eef2ff',
+        paddingHorizontal: 12,
+        paddingVertical: 7,
+      }}
+    >
+      <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
+        {item.emoji} {item.name}
+      </Text>
+    </View>
+  );
+}
+
 function ResultsAssignmentRow({
   item,
 }: {
@@ -741,6 +770,7 @@ export function KangurResultsScreen(): React.JSX.Element {
   const duelResults = useKangurMobileResultsDuels();
   const resultsAssignments = useKangurMobileResultsAssignments();
   const lessonMastery = useKangurMobileResultsLessonMastery();
+  const resultsBadges = useKangurMobileResultsBadges();
   const lessonCheckpoints = useKangurMobileLessonCheckpoints({ limit: 2 });
   const strongestOperation = results.operationPerformance[0] ?? null;
   const weakestOperation =
@@ -1070,6 +1100,112 @@ export function KangurResultsScreen(): React.JSX.Element {
                     ))}
                   </View>
                 )}
+              </Card>
+
+              <Card>
+                <View style={{ gap: 4 }}>
+                  <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                    {copy({
+                      de: 'Abzeichen',
+                      en: 'Badges',
+                      pl: 'Odznaki',
+                    })}
+                  </Text>
+                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({
+                      de: 'Nach dem Blick auf die letzten Ergebnisse kannst du sehen, welche lokalen Abzeichen bereits freigeschaltet wurden.',
+                      en: 'After reviewing recent results, you can see which local badges are already unlocked.',
+                      pl: 'Po sprawdzeniu ostatnich wyników możesz zobaczyć, które lokalne odznaki są już odblokowane.',
+                    })}
+                  </Text>
+                </View>
+
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  <View
+                    style={{
+                      borderRadius: 999,
+                      borderWidth: 1,
+                      borderColor: '#c7d2fe',
+                      backgroundColor: '#eef2ff',
+                      paddingHorizontal: 12,
+                      paddingVertical: 7,
+                    }}
+                  >
+                    <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
+                      {copy({
+                        de: `Freigeschaltet ${resultsBadges.unlockedBadges}/${resultsBadges.totalBadges}`,
+                        en: `Unlocked ${resultsBadges.unlockedBadges}/${resultsBadges.totalBadges}`,
+                        pl: `Odblokowane ${resultsBadges.unlockedBadges}/${resultsBadges.totalBadges}`,
+                      })}
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      borderRadius: 999,
+                      borderWidth: 1,
+                      borderColor: '#fde68a',
+                      backgroundColor: '#fffbeb',
+                      paddingHorizontal: 12,
+                      paddingVertical: 7,
+                    }}
+                  >
+                    <Text style={{ color: '#b45309', fontSize: 12, fontWeight: '700' }}>
+                      {copy({
+                        de: `Offen ${resultsBadges.remainingBadges}`,
+                        en: `Remaining ${resultsBadges.remainingBadges}`,
+                        pl: `Do zdobycia ${resultsBadges.remainingBadges}`,
+                      })}
+                    </Text>
+                  </View>
+                </View>
+
+                {resultsBadges.recentBadges.length === 0 ? (
+                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({
+                      de: 'Es gibt noch keine lokal freigeschalteten Abzeichen. Schließe Lektionen, Trainings oder Spiele ab, damit sie hier erscheinen.',
+                      en: 'There are no locally unlocked badges yet. Finish lessons, practice runs, or games so they appear here.',
+                      pl: 'Nie ma jeszcze lokalnie odblokowanych odznak. Ukończ lekcje, treningi albo gry, aby pojawiły się tutaj.',
+                    })}
+                  </Text>
+                ) : (
+                  <View style={{ gap: 10 }}>
+                    <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
+                      {copy({
+                        de: 'Zuletzt freigeschaltet',
+                        en: 'Recently unlocked',
+                        pl: 'Ostatnio odblokowane',
+                      })}
+                    </Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                      {resultsBadges.recentBadges.map((item) => (
+                        <ResultsBadgeChip key={item.id} item={item} />
+                      ))}
+                    </View>
+                  </View>
+                )}
+
+                <Link href={PROFILE_ROUTE} asChild>
+                  <Pressable
+                    accessibilityRole='button'
+                    style={{
+                      alignSelf: 'flex-start',
+                      borderRadius: 999,
+                      borderWidth: 1,
+                      borderColor: '#cbd5e1',
+                      backgroundColor: '#ffffff',
+                      paddingHorizontal: 14,
+                      paddingVertical: 10,
+                    }}
+                  >
+                    <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                      {copy({
+                        de: 'Profil und Abzeichen öffnen',
+                        en: 'Open profile and badges',
+                        pl: 'Otwórz profil i odznaki',
+                      })}
+                    </Text>
+                  </Pressable>
+                </Link>
               </Card>
 
               <Card>

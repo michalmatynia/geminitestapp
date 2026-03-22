@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  loginSchema,
+  registerSchema,
   userPreferencesResponseSchema,
   userPreferencesUpdateSchema,
 } from '@/shared/contracts/auth';
@@ -37,5 +39,23 @@ describe('auth user preferences contract runtime', () => {
         productListDraftIconColor: '#fff',
       })
     ).toThrow();
+  });
+
+  it('parses shared auth request payload schemas used by auth routes', () => {
+    expect(
+      registerSchema.parse({
+        email: ' user@example.com ',
+        password: 'Secret123!',
+        name: ' Test User ',
+      }).email
+    ).toBe('user@example.com');
+
+    expect(
+      loginSchema.parse({
+        email: ' user@example.com ',
+        password: 'Secret123!',
+        authFlow: ' kangur_parent ',
+      }).authFlow
+    ).toBe('kangur_parent');
   });
 });

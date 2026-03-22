@@ -7,7 +7,7 @@ import type { DataAttributesDto } from '@/shared/contracts/ui';
 import { KANGUR_ACCENT_STYLES, KANGUR_OPTION_CARD_CLASSNAME, type KangurAccent } from '../tokens';
 
 export const kangurOptionCardButtonVariants = cva(
-  `${KANGUR_OPTION_CARD_CLASSNAME} relative text-left disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white`,
+  `${KANGUR_OPTION_CARD_CLASSNAME} relative touch-manipulation select-none text-left active:scale-[0.995] disabled:pointer-events-none disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white`,
   {
     variants: {
       emphasis: {

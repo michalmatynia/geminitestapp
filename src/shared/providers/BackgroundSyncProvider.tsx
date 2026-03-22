@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useMemo } from 'react';
 
 import { useSystemSync } from '@/shared/hooks/sync/useSystemSync';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { QueryDevPanel } from '@/shared/ui';
+import { QueryDevPanel } from '@/shared/ui/QueryDevPanel';
 
 type BackgroundSyncContextValue = {
   enabled: boolean;

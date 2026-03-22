@@ -1,12 +1,22 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { persistKangurSessionScoreMock } = vi.hoisted(() => ({
+const { persistKangurSessionScoreMock, mobileInteractionLockMock, mobileInteractionUnlockMock } =
+  vi.hoisted(() => ({
   persistKangurSessionScoreMock: vi.fn(),
+  mobileInteractionLockMock: vi.fn(),
+  mobileInteractionUnlockMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/services/session-score', () => ({
   persistKangurSessionScore: (...args: unknown[]) => persistKangurSessionScoreMock(...args),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurMobileInteractionScrollLock', () => ({
+  useKangurMobileInteractionScrollLock: () => ({
+    lock: mobileInteractionLockMock,
+    unlock: mobileInteractionUnlockMock,
+  }),
 }));
 
 import ClockTrainingGame from '../ClockTrainingGame';
@@ -50,29 +60,45 @@ const getMinuteHand = (container: HTMLElement): Element => {
 const dragHandToAngle = (hand: Element, angleDeg: number): void => {
   const point = getClockPoint(angleDeg);
   act(() => {
-    fireEvent.mouseDown(hand, {
+    fireEvent.pointerDown(hand, {
+      pointerId: 1,
+      pointerType: 'mouse',
       clientX: CLOCK_CENTER,
       clientY: CLOCK_CENTER,
     });
-    fireEvent.mouseMove(window, {
+    fireEvent.pointerMove(window, {
+      pointerId: 1,
+      pointerType: 'mouse',
       clientX: point.x,
       clientY: point.y,
     });
-    fireEvent.mouseUp(window);
+    fireEvent.pointerUp(window, {
+      pointerId: 1,
+      pointerType: 'mouse',
+    });
   });
 };
 
 const dragHandToAngleWithTouch = (hand: Element, angleDeg: number): void => {
   const point = getClockPoint(angleDeg);
   act(() => {
-    fireEvent.touchStart(hand, {
-      touches: [{ clientX: CLOCK_CENTER, clientY: CLOCK_CENTER }],
+    fireEvent.pointerDown(hand, {
+      pointerId: 7,
+      pointerType: 'touch',
+      clientX: CLOCK_CENTER,
+      clientY: CLOCK_CENTER,
     });
-    fireEvent.touchMove(window, {
+    fireEvent.pointerMove(window, {
+      pointerId: 7,
+      pointerType: 'touch',
       cancelable: true,
-      touches: [{ clientX: point.x, clientY: point.y }],
+      clientX: point.x,
+      clientY: point.y,
     });
-    fireEvent.touchEnd(window);
+    fireEvent.pointerUp(window, {
+      pointerId: 7,
+      pointerType: 'touch',
+    });
   });
 };
 
@@ -117,6 +143,8 @@ describe('ClockTrainingGame drag interactions', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
+    mobileInteractionLockMock.mockClear();
+    mobileInteractionUnlockMock.mockClear();
   });
 
   it('moves the hour hand when minute hand is dragged', async () => {
@@ -186,7 +214,7 @@ describe('ClockTrainingGame drag interactions', () => {
     const minuteHand = getMinuteHand(container);
 
     expect(clockSvg).not.toBeNull();
-    expect(clockSvg).not.toHaveClass('touch-none');
+    expect((clockSvg as SVGSVGElement).style.touchAction).toBe('none');
     expect((hourHand as SVGElement).style.touchAction).toBe('none');
     expect((minuteHand as SVGElement).style.touchAction).toBe('none');
 
@@ -196,6 +224,9 @@ describe('ClockTrainingGame drag interactions', () => {
     await waitFor(() => {
       expect(getClockDisplay()).toHaveTextContent('3:30');
     });
+
+    expect(mobileInteractionLockMock).toHaveBeenCalled();
+    expect(mobileInteractionUnlockMock).toHaveBeenCalled();
   });
 
   it('uses 1-minute precision when exact mode is selected', async () => {

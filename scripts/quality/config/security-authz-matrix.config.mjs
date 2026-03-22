@@ -12,6 +12,12 @@ export const authzRoutePolicies = [
     expectedAccess: 'public',
   },
   {
+    id: 'public-settings-lite',
+    pattern: /^settings\/lite$/,
+    methods: ['GET'],
+    expectedAccess: 'public',
+  },
+  {
     id: 'telemetry-ingest',
     pattern: /^(analytics\/events|query-telemetry|client-errors)$/,
     methods: ['POST'],

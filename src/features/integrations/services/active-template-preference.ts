@@ -1,10 +1,8 @@
+import type { BasePreferenceScope } from '@/shared/contracts/integrations';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 const ACTIVE_TEMPLATE_SCOPE_SEPARATOR = '::';
 
-export type ActiveTemplateScopeInput = {
-  connectionId?: string | null;
-  inventoryId?: string | null;
-};
+export type ActiveTemplateScopeInput = BasePreferenceScope;
 
 export type ScopedActiveTemplateMap = {
   defaultTemplateId: string | null;

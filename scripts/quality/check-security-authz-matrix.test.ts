@@ -72,6 +72,19 @@ describe('analyzeSecurityAuthzMatrix', () => {
     expect(report.summary.errorCount).toBe(0);
   });
 
+  it('allows lite settings reads without auth evidence', () => {
+    const root = createTempRoot();
+    writeRoute({
+      root,
+      routePath: 'settings/lite',
+      method: 'GET',
+    });
+
+    const report = analyzeSecurityAuthzMatrix({ root });
+
+    expect(report.summary.errorCount).toBe(0);
+  });
+
   it('accepts signed ingress routes with signature verification', () => {
     const root = createTempRoot();
     writeRoute({

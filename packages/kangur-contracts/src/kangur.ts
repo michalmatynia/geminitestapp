@@ -16,7 +16,25 @@ import {
 } from './kangur-ai-tutor-mood';
 import { activityLogSchema } from './system';
 
+const TRUE_QUERY_VALUES = new Set(['1', 'true', 'yes', 'on']);
+const FALSE_QUERY_VALUES = new Set(['0', 'false', 'no', 'off']);
 const nonEmptyTrimmedString = z.string().trim().min(1);
+
+const normalizeOptionalQueryString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
+const parseOptionalBooleanQueryValue = (value: unknown): boolean | undefined => {
+  if (typeof value === 'boolean') return value;
+  const normalized = normalizeOptionalQueryString(value);
+  if (normalized === undefined) return undefined;
+  const lowered = normalized.toLowerCase();
+  if (TRUE_QUERY_VALUES.has(lowered)) return true;
+  if (FALSE_QUERY_VALUES.has(lowered)) return false;
+  return undefined;
+};
 
 export {
   KANGUR_LEARNER_PASSWORD_MAX_LENGTH,
@@ -60,6 +78,18 @@ export type KangurLesson = z.infer<typeof kangurLessonSchema>;
 
 export const kangurLessonsSchema = z.array(kangurLessonSchema);
 export type KangurLessons = z.infer<typeof kangurLessonsSchema>;
+
+export const kangurLessonsQuerySchema = z.object({
+  subject: z.preprocess(normalizeOptionalQueryString, kangurLessonSubjectSchema.optional()),
+  ageGroup: z.preprocess(normalizeOptionalQueryString, kangurLessonAgeGroupSchema.optional()),
+  enabledOnly: z.preprocess(parseOptionalBooleanQueryValue, z.boolean().optional()),
+});
+export type KangurLessonsQuery = z.infer<typeof kangurLessonsQuerySchema>;
+
+export const kangurLessonsReplacePayloadSchema = z.object({
+  lessons: kangurLessonsSchema,
+});
+export type KangurLessonsReplacePayload = z.infer<typeof kangurLessonsReplacePayloadSchema>;
 
 const kangurLessonBlockIdSchema = nonEmptyTrimmedString.max(120);
 const kangurLessonBlockAlignSchema = z.enum(['left', 'center', 'right']);

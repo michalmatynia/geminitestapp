@@ -1,3 +1,12 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-22'
+status: 'active'
+doc_type: 'closeout'
+scope: 'repo'
+canonical: true
+---
+
 # ESLint 10 migration completed - 2026-03-10
 
 ## Status

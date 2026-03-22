@@ -34,7 +34,16 @@ export const getProducerRefId = (value: unknown): string => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return '';
   const record = value as Record<string, unknown>;
   const idValue =
-    record['producerId'] ?? record['producer_id'] ?? record['manufacturerId'] ?? record['id'];
+    record['producerId'] ??
+    record['producer_id'] ??
+    record['manufacturerId'] ??
+    record['manufacturer_id'] ??
+    record['id'] ??
+    (record['producer'] &&
+    typeof record['producer'] === 'object' &&
+    !Array.isArray(record['producer'])
+      ? (record['producer'] as Record<string, unknown>)['id']
+      : undefined);
   if (typeof idValue === 'string') return idValue.trim();
   if (typeof idValue === 'number') return String(idValue);
   return '';

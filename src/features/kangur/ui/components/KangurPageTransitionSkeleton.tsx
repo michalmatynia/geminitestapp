@@ -1,8 +1,17 @@
 import { useTranslations } from 'next-intl';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import { KangurPanelRow } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurGlassPanel,
+} from '@/features/kangur/ui/design/primitives';
+import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
-import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
+import {
+  KANGUR_LESSON_PANEL_GAP_CLASSNAME,
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_PANEL_ROW_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import {
   resolveKangurRouteTransitionSkeletonVariant,
   type KangurRouteTransitionSkeletonVariant,
@@ -205,61 +214,120 @@ const GameSessionSkeleton = (): React.JSX.Element => (
   </div>
 );
 
+const LessonsCatalogCardSkeleton = ({
+  chips = 2,
+}: {
+  chips?: number;
+}): React.JSX.Element => (
+  <KangurIconSummaryOptionCard
+    accent='indigo'
+    aria-label='Loading lesson'
+    buttonClassName='w-full cursor-default text-left'
+    disabled
+    emphasis='neutral'
+    state='muted'
+  >
+    <KangurIconSummaryCardContent
+      aside={
+        <div
+          className={cn(
+            KANGUR_WRAP_ROW_CLASSNAME,
+            'max-[480px]:flex-col sm:flex-col sm:items-end'
+          )}
+        >
+          {Array.from({ length: chips }).map((_, index) => (
+            <SkeletonChip key={index} className='h-7 w-24' />
+          ))}
+        </div>
+      }
+      asideClassName='w-full self-start sm:ml-auto sm:w-auto'
+      className='w-full max-[480px]:flex-col'
+      contentClassName='w-full'
+      description={
+        <div className='mt-1 space-y-2'>
+          <SkeletonLine className='w-full max-w-[28rem]' />
+          <SkeletonLine className='w-4/5 max-w-[20rem]' />
+        </div>
+      }
+      footer={
+        <div className='mt-2'>
+          <div className={KANGUR_WRAP_ROW_CLASSNAME}>
+            <SkeletonChip className='h-6 w-24' />
+            <SkeletonChip className='h-6 w-28' />
+          </div>
+          <div className='mt-3 space-y-2'>
+            <SkeletonLine className='w-1/2 max-w-[12rem]' />
+            <SkeletonLine className='w-2/3 max-w-[16rem]' />
+          </div>
+        </div>
+      }
+      headerClassName={cn(KANGUR_PANEL_ROW_CLASSNAME, 'sm:items-start sm:justify-between')}
+      icon={<SkeletonBlock className='h-14 w-14 shrink-0 rounded-[20px] bg-slate-200/80' />}
+      title={<SkeletonLine className='h-6 w-40 max-w-full sm:w-56' />}
+      titleClassName='text-lg sm:text-xl'
+      titleWrapperClassName='w-full'
+    />
+  </KangurIconSummaryOptionCard>
+);
+
+const LessonsLibraryGroupSkeleton = ({
+  showLessons = true,
+}: {
+  showLessons?: boolean;
+}): React.JSX.Element => (
+  <KangurGlassPanel
+    className='w-full kangur-panel-hover-zoom'
+    padding='lg'
+    surface='playField'
+  >
+    <div className='flex w-full items-center justify-between gap-3 text-left'>
+      <div className='min-w-0'>
+        <SkeletonLine className='h-3 w-28' />
+        <SkeletonLine className='mt-2 h-7 w-44 max-w-full sm:w-56' />
+      </div>
+      <SkeletonBlock className='h-5 w-5 shrink-0 rounded-full bg-slate-200/72' />
+    </div>
+    {showLessons ? (
+      <div className={cn('mt-4 flex w-full flex-col', KANGUR_LESSON_PANEL_GAP_CLASSNAME)}>
+        <div className='min-w-0'>
+          <SkeletonLine className='h-3 w-24' />
+          <SkeletonLine className='mt-2 h-5 w-32 max-w-full sm:w-40' />
+        </div>
+        <div className={cn('flex w-full flex-col', KANGUR_LESSON_PANEL_GAP_CLASSNAME)}>
+          <LessonsCatalogCardSkeleton chips={1} />
+          <LessonsCatalogCardSkeleton chips={2} />
+        </div>
+      </div>
+    ) : null}
+  </KangurGlassPanel>
+);
+
 const LessonsLibrarySkeleton = (): React.JSX.Element => (
   <div
-    className={cn('flex w-full max-w-lg flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
+    className={cn('flex w-full max-w-lg flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
     data-testid='kangur-page-transition-skeleton-lessons-library-layout'
   >
-    <SkeletonPanel className='min-h-[180px] w-full'>
-      <div className='space-y-4'>
-        <SkeletonChip className='h-8 w-40' />
-        <SkeletonLine className='h-10 w-2/3 max-w-[420px]' />
-        <SkeletonLine className='w-full max-w-[540px]' />
-        <SkeletonLine className='w-3/5 max-w-[320px]' />
-      </div>
-    </SkeletonPanel>
-    <div className={cn('flex w-full flex-col', KANGUR_PANEL_GAP_CLASSNAME)}>
-      <SkeletonPanel className='min-h-[180px] w-full'>
-        <div className='space-y-3'>
-          <SkeletonChip className='h-7 w-28' />
-          <SkeletonLine className='h-7 w-1/2' />
-          <SkeletonLine className='w-full' />
-          <SkeletonLine className='w-5/6' />
-          <div className='flex flex-wrap kangur-panel-gap pt-3'>
-            <SkeletonChip className='h-11 w-28' />
-            <SkeletonChip className='h-11 w-32' />
-          </div>
+    <div className='w-full' data-testid='kangur-page-transition-skeleton-lessons-library-intro'>
+      <KangurGlassPanel className='w-full text-center' padding='lg' surface='mistStrong' variant='soft'>
+        <div className='flex justify-center'>
+          <SkeletonBlock className='h-10 w-52 rounded-[22px] bg-slate-200/80' />
         </div>
-      </SkeletonPanel>
-      <SkeletonPanel className='min-h-[180px] w-full'>
-        <div className='space-y-3'>
-          <div className='flex items-start justify-between kangur-panel-gap'>
-            <SkeletonLine className='h-7 w-1/2' />
-            <SkeletonChip className='h-7 w-24 shrink-0' />
-          </div>
-          <SkeletonLine className='w-full' />
-          <SkeletonLine className='w-5/6' />
-          <div className={`${KANGUR_WRAP_ROW_CLASSNAME} pt-2`}>
-            <SkeletonChip className='h-8 w-24' />
-            <SkeletonChip className='h-8 w-28' />
-            <SkeletonChip className='h-8 w-20' />
-          </div>
+        <div className='mt-4 flex flex-col items-center gap-2'>
+          <SkeletonLine className='w-full max-w-[28rem]' />
+          <SkeletonLine className='w-4/5 max-w-[20rem]' />
         </div>
-      </SkeletonPanel>
-      <SkeletonPanel className='min-h-[180px] w-full'>
-        <div className='space-y-3'>
-          <div className='flex items-start justify-between kangur-panel-gap'>
-            <SkeletonLine className='h-7 w-1/2' />
-            <SkeletonChip className='h-7 w-24 shrink-0' />
-          </div>
-          <SkeletonLine className='w-full' />
-          <SkeletonLine className='w-4/5' />
-          <div className={`${KANGUR_WRAP_ROW_CLASSNAME} pt-2`}>
-            <SkeletonChip className='h-8 w-24' />
-            <SkeletonChip className='h-8 w-32' />
-          </div>
+        <div className='mt-4 flex justify-center'>
+          <SkeletonBlock className='h-10 w-full max-w-[13rem] rounded-full bg-slate-200/80' />
         </div>
-      </SkeletonPanel>
+      </KangurGlassPanel>
+    </div>
+    <div
+      className={cn('flex w-full flex-col', KANGUR_LESSON_PANEL_GAP_CLASSNAME)}
+      data-testid='kangur-page-transition-skeleton-lessons-library-list'
+    >
+      <LessonsLibraryGroupSkeleton />
+      <LessonsCatalogCardSkeleton />
+      <LessonsLibraryGroupSkeleton showLessons={false} />
     </div>
   </div>
 );
@@ -269,28 +337,56 @@ const LessonsFocusSkeleton = (): React.JSX.Element => (
     className={cn('flex w-full flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
     data-testid='kangur-page-transition-skeleton-lessons-focus-layout'
   >
-    <SkeletonPanel className='min-h-[160px] w-full max-w-5xl'>
-      <KangurPanelRow className='sm:items-center sm:justify-between'>
-        <div className='space-y-3'>
-          <SkeletonChip className='h-8 w-36' />
-          <SkeletonLine className='h-10 w-64 max-w-full' />
-          <SkeletonLine className='w-full max-w-[420px]' />
-        </div>
-        <SkeletonChip className='hidden h-12 w-28 sm:block' />
-      </KangurPanelRow>
-    </SkeletonPanel>
-    <SkeletonPanel className='min-h-[360px] w-full max-w-3xl'>
-      <div className='space-y-4'>
-        <SkeletonBlock className='h-12 rounded-[22px] bg-slate-200/76' />
-        <SkeletonBlock className='h-44 rounded-[28px] bg-slate-200/78' />
-        <SkeletonLine className='w-full' />
-        <SkeletonLine className='w-5/6' />
-        <SkeletonLine className='w-4/6' />
+    <div className='w-full max-w-5xl' data-testid='kangur-page-transition-skeleton-lessons-focus-header'>
+      <div className='w-full'>
+        <KangurGlassPanel className='w-full' data-testid='lessons-focus-header-panel' padding='md' surface='mistStrong' variant='soft'>
+          <div className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME, 'sm:flex-row sm:flex-wrap sm:items-center')}>
+            <SkeletonBlock className='h-10 w-full rounded-full bg-slate-200/80 sm:w-40' />
+            <SkeletonBlock className='h-10 w-10 shrink-0 rounded-full bg-slate-200/76' />
+            <div className='min-w-0 flex-1 space-y-3'>
+              <SkeletonLine className='h-7 w-3/5 max-w-[18rem]' />
+              <SkeletonLine className='w-full max-w-[24rem]' />
+              <div className={KANGUR_WRAP_ROW_CLASSNAME}>
+                <SkeletonChip className='h-7 w-28' />
+              </div>
+            </div>
+            <div className='order-first flex w-full justify-center sm:order-none sm:ml-auto sm:w-auto sm:justify-end'>
+              <SkeletonBlock className='h-16 w-16 rounded-[20px] bg-slate-200/80' />
+            </div>
+          </div>
+        </KangurGlassPanel>
       </div>
-    </SkeletonPanel>
-    <div className='grid w-full max-w-[44rem] grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'>
-      <SkeletonPanel className='min-h-[120px] w-full' />
-      <SkeletonPanel className='min-h-[120px] w-full' />
+    </div>
+    <div className='w-full max-w-5xl' data-testid='kangur-page-transition-skeleton-lessons-focus-navigation'>
+      <nav className='flex w-full flex-col gap-2'>
+        <div className='flex w-full flex-col items-stretch gap-2 sm:w-fit sm:self-center sm:flex-row sm:items-center'>
+          <SkeletonBlock className='h-10 w-full rounded-full bg-slate-200/78 sm:w-24' />
+          <SkeletonBlock className='h-10 w-full rounded-full bg-slate-200/78 sm:w-24' />
+        </div>
+      </nav>
+    </div>
+    <div
+      className={cn('w-full flex flex-col items-center', KANGUR_PANEL_GAP_CLASSNAME)}
+      data-testid='kangur-page-transition-skeleton-lessons-focus-content'
+    >
+      <div className='w-full max-w-5xl space-y-4'>
+        <KangurGlassPanel className='w-full' padding='lg' surface='mistStrong' variant='soft'>
+          <div className='space-y-3'>
+            <SkeletonChip className='h-7 w-32' />
+            <SkeletonLine className='h-7 w-48 max-w-full sm:w-64' />
+            <SkeletonLine className='w-full max-w-[28rem]' />
+          </div>
+        </KangurGlassPanel>
+        <KangurGlassPanel className='w-full' padding='lg' surface='playField' variant='soft'>
+          <div className='space-y-4'>
+            <SkeletonBlock className='h-12 rounded-[22px] bg-slate-200/76' />
+            <SkeletonBlock className='h-44 rounded-[28px] bg-slate-200/78' />
+            <SkeletonLine className='w-full' />
+            <SkeletonLine className='w-5/6' />
+            <SkeletonLine className='w-4/6' />
+          </div>
+        </KangurGlassPanel>
+      </div>
     </div>
   </div>
 );

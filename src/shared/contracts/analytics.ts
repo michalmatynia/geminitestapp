@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+import {
+  normalizeOptionalQueryString,
+  optionalIntegerQuerySchema,
+} from '@/shared/lib/api/query-schema';
+
 import { dtoBaseSchema } from './base';
 
 /**
@@ -120,6 +125,80 @@ export const createAnalyticsEventSchema = analyticsEventSchema.omit({
 });
 
 export type AnalyticsEventCreateInput = z.infer<typeof createAnalyticsEventSchema>;
+
+export const analyticsEventCreateRequestSchema = z.object({
+  type: analyticsEventTypeSchema,
+  scope: analyticsScopeSchema,
+  path: z.string().min(1),
+  search: z.string().optional().nullable(),
+  url: z.string().optional().nullable(),
+  title: z.string().optional().nullable(),
+  referrer: z.string().optional().nullable(),
+  visitorId: z.string().min(1),
+  sessionId: z.string().min(1),
+  utm: analyticsUtmSchema.optional().nullable(),
+  language: z.string().optional().nullable(),
+  languages: z.array(z.string()).optional().nullable(),
+  timeZone: z.string().optional().nullable(),
+  viewport: z
+    .object({
+      width: z.number().int().nonnegative(),
+      height: z.number().int().nonnegative(),
+    })
+    .optional()
+    .nullable(),
+  screen: z
+    .object({
+      width: z.number().int().nonnegative(),
+      height: z.number().int().nonnegative(),
+      dpr: z.number().nonnegative(),
+    })
+    .optional()
+    .nullable(),
+  connection: analyticsConnectionInfoSchema.optional().nullable(),
+  meta: z.record(z.string(), z.unknown()).optional().nullable(),
+  clientTs: z.string().optional().nullable(),
+});
+
+export type AnalyticsEventCreateRequest = z.infer<typeof analyticsEventCreateRequestSchema>;
+
+export const analyticsEventsQuerySchema = z.object({
+  page: optionalIntegerQuerySchema(z.number().int().min(1)).default(1),
+  pageSize: optionalIntegerQuerySchema(z.number().int().min(1).max(100)).default(20),
+  range: z.preprocess((value) => normalizeOptionalQueryString(value) ?? '24h', analyticsRangeSchema),
+  scope: z.preprocess(
+    (value) => normalizeOptionalQueryString(value) ?? 'all',
+    analyticsEventFilterScopeSchema
+  ),
+  type: z.preprocess(
+    (value) => normalizeOptionalQueryString(value) ?? 'all',
+    analyticsEventFilterTypeSchema
+  ),
+  search: z.preprocess((value) => normalizeOptionalQueryString(value) ?? '', z.string()),
+  country: z.preprocess((value) => normalizeOptionalQueryString(value) ?? '', z.string()),
+  referrerHost: z.preprocess(
+    (value) => normalizeOptionalQueryString(value) ?? '',
+    z.string()
+  ),
+  browser: z.preprocess((value) => normalizeOptionalQueryString(value) ?? '', z.string()),
+  device: z.preprocess((value) => normalizeOptionalQueryString(value) ?? '', z.string()),
+  bot: z.preprocess(
+    (value) => normalizeOptionalQueryString(value) ?? 'all',
+    analyticsEventFilterBotSchema
+  ),
+});
+
+export type AnalyticsEventsQuery = z.infer<typeof analyticsEventsQuerySchema>;
+
+export const analyticsSummaryQuerySchema = z.object({
+  range: z.preprocess((value) => normalizeOptionalQueryString(value) ?? '24h', analyticsRangeSchema),
+  scope: z.preprocess(
+    (value) => normalizeOptionalQueryString(value) ?? 'all',
+    analyticsEventFilterScopeSchema
+  ),
+});
+
+export type AnalyticsSummaryQuery = z.infer<typeof analyticsSummaryQuerySchema>;
 
 /**
  * Analytics Summary Contract

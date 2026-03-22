@@ -8,6 +8,7 @@ import {
   KangurButton,
   KangurGlassPanel,
   KangurHeadline,
+  KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
@@ -144,6 +145,13 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
         'drawHint.fine',
         'Rysuj palcem lub myszką'
       );
+  const touchHint = isPointerDrawing
+    ? translateAlphabetBasics(
+        translations,
+        'footer.traceHint',
+        'Rysuj po grubych liniach i nie spiesz się.'
+      )
+    : drawHint;
   const canvasSurfaceStyle = useMemo<CSSProperties>(
     () =>
       ({
@@ -187,7 +195,7 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
     canvasRef,
     redraw: () => redrawCanvas(strokes),
   });
-  useKangurCanvasTouchLock(canvasRef);
+  useKangurCanvasTouchLock(canvasRef, { enabled: isCoarsePointer });
 
   const updateStrokes = useCallback(
     (updater: (current: Point2d[][]) => Point2d[][]): void => {
@@ -363,9 +371,25 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
             </KangurStatusChip>
           </div>
 
+          {isCoarsePointer ? (
+            <KangurInfoCard accent='sky' className='w-full rounded-[20px] text-sm' padding='sm' tone='neutral'>
+              <p
+                className='font-semibold text-slate-600'
+                data-testid='alphabet-basics-touch-hint'
+                role='status'
+                aria-live='polite'
+              >
+                {touchHint}
+              </p>
+            </KangurInfoCard>
+          ) : null}
+
             <div
-              className='relative w-full overflow-hidden rounded-[28px] border border-slate-200/70 bg-white/80 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.45)]'
+              className={`relative w-full overflow-hidden rounded-[28px] border border-slate-200/70 bg-white/80 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.45)] ${
+                isPointerDrawing ? 'ring-2 ring-sky-300/70 ring-offset-2 ring-offset-white' : ''
+              }`}
               style={canvasSurfaceStyle}
+              data-testid='alphabet-basics-canvas-shell'
             >
             <svg
               viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
@@ -479,17 +503,35 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
             )}
           </div>
           <div className={KANGUR_WRAP_ROW_CLASSNAME}>
-            <KangurButton size='sm' type='button' variant='surface' onClick={clearDrawing}>
+            <KangurButton
+              className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
+              size='sm'
+              type='button'
+              variant='surface'
+              onClick={clearDrawing}
+            >
               {translateAlphabetBasics(translations, 'actions.clear', 'Wyczyść')}
             </KangurButton>
             {feedback?.kind === 'success' ? (
-              <KangurButton size='sm' type='button' variant='primary' onClick={handleNext}>
+              <KangurButton
+                className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
+                size='sm'
+                type='button'
+                variant='primary'
+                onClick={handleNext}
+              >
                 {roundIndex + 1 >= totalRounds
                   ? translateAlphabetBasics(translations, 'actions.restart', 'Zacznij od nowa')
                   : translateAlphabetBasics(translations, 'actions.next', 'Dalej')}
               </KangurButton>
             ) : (
-              <KangurButton size='sm' type='button' variant='primary' onClick={handleCheck}>
+              <KangurButton
+                className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
+                size='sm'
+                type='button'
+                variant='primary'
+                onClick={handleCheck}
+              >
                 {translateAlphabetBasics(translations, 'actions.check', 'Sprawdź')}
               </KangurButton>
             )}

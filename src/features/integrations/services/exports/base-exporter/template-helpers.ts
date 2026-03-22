@@ -70,6 +70,10 @@ export type ProducerEntry = {
   producerId?: string | null;
   producer_id?: string | null;
   producerName?: string | null;
+  manufacturerId?: string | null;
+  manufacturer_id?: string | null;
+  manufacturerName?: string | null;
+  manufacturer_name?: string | null;
   value?: string | null;
   id?: string | null;
   name?: string | null;

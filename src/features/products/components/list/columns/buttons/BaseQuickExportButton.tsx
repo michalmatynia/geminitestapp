@@ -210,10 +210,15 @@ export function BaseQuickExportButton(props: {
     }
 
     try {
-      await quickExportMutation.mutateAsync(payload);
+      const response = await quickExportMutation.mutateAsync(payload);
       prefetchListings();
       void invalidateProductListingsAndBadges(queryClient, product.id);
-      toast('Base.com export started.', { variant: 'success' });
+      toast(
+        response?.status === 'queued'
+          ? 'Base.com export queued.'
+          : 'Base.com export started.',
+        { variant: 'success' }
+      );
     } catch (error) {
       logClientError(error);
       const message = error instanceof Error ? error.message : 'Failed to export to Base.com.';

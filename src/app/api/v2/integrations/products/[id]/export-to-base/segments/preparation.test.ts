@@ -8,6 +8,10 @@ const mocks = vi.hoisted(() => ({
   getExportActiveTemplateIdMock: vi.fn(),
   listExportTemplatesMock: vi.fn(),
   listCategoryMappingsMock: vi.fn(),
+  listProducerMappingsMock: vi.fn(),
+  listTagMappingsMock: vi.fn(),
+  getProducerByIdMock: vi.fn(),
+  getTagByIdMock: vi.fn(),
   logInfoMock: vi.fn(),
   logWarningMock: vi.fn(),
 }));
@@ -16,10 +20,10 @@ vi.mock('@/features/integrations/server', () => ({
   getExportActiveTemplateId: (...args: unknown[]) => mocks.getExportActiveTemplateIdMock(...args),
   listExportTemplates: (...args: unknown[]) => mocks.listExportTemplatesMock(...args),
   getProducerMappingRepository: () => ({
-    listByInternalProducerIds: vi.fn().mockResolvedValue([]),
+    listByInternalProducerIds: (...args: unknown[]) => mocks.listProducerMappingsMock(...args),
   }),
   getTagMappingRepository: () => ({
-    listByInternalTagIds: vi.fn().mockResolvedValue([]),
+    listByInternalTagIds: (...args: unknown[]) => mocks.listTagMappingsMock(...args),
   }),
 }));
 
@@ -31,10 +35,10 @@ vi.mock('@/features/integrations/services/category-mapping-repository', () => ({
 
 vi.mock('@/features/products/server', () => ({
   getProducerRepository: () => ({
-    getProducerById: vi.fn(),
+    getProducerById: (...args: unknown[]) => mocks.getProducerByIdMock(...args),
   }),
   getTagRepository: () => ({
-    getTagById: vi.fn(),
+    getTagById: (...args: unknown[]) => mocks.getTagByIdMock(...args),
   }),
 }));
 
@@ -114,6 +118,11 @@ describe('prepareBaseExportMappingsAndProduct', () => {
         ],
       },
     ]);
+    mocks.listCategoryMappingsMock.mockResolvedValue([]);
+    mocks.listProducerMappingsMock.mockResolvedValue([]);
+    mocks.listTagMappingsMock.mockResolvedValue([]);
+    mocks.getProducerByIdMock.mockResolvedValue(null);
+    mocks.getTagByIdMock.mockResolvedValue(null);
   });
 
   it('resolves the mapped Base category for full export even when the template does not explicitly map category', async () => {
@@ -154,6 +163,116 @@ describe('prepareBaseExportMappingsAndProduct', () => {
       expect.objectContaining({
         productId: 'product-1',
         internalCategoryId: 'category-1',
+      })
+    );
+  });
+
+  it('loads producer lookups for active templates that explicitly map producer ids', async () => {
+    mocks.listExportTemplatesMock.mockResolvedValue([
+      {
+        id: 'template-1',
+        mappings: [
+          {
+            sourceKey: 'producer_id',
+            targetField: 'producerId',
+          },
+        ],
+      },
+    ]);
+    mocks.getProducerByIdMock.mockResolvedValue({
+      id: 'producer-1',
+      name: 'Acme',
+    });
+    mocks.listProducerMappingsMock.mockResolvedValue([
+      {
+        internalProducerId: 'producer-1',
+        externalProducer: {
+          externalId: 'base-producer-77',
+          name: 'Acme Base',
+        },
+      },
+    ]);
+
+    const result = await prepareBaseExportMappingsAndProduct({
+      data: baseRequest,
+      imagesOnly: false,
+      productId: 'product-1',
+      resolvedInventoryId: 'inventory-1',
+      product: createProduct({
+        producers: [
+          {
+            productId: 'product-1',
+            producerId: 'producer-1',
+            assignedAt: '2026-03-01T00:00:00.000Z',
+          },
+        ],
+      }),
+    });
+
+    expect(result.mappings).toEqual([
+      {
+        sourceKey: 'producer_id',
+        targetField: 'producerId',
+      },
+    ]);
+    expect(result.producerNameById).toEqual(
+      expect.objectContaining({
+        'producer-1': 'Acme',
+      })
+    );
+    expect(result.producerExternalIdByInternalId).toEqual(
+      expect.objectContaining({
+        'producer-1': 'base-producer-77',
+      })
+    );
+  });
+
+  it('resolves producer mappings from legacy manufacturer aliases during preparation', async () => {
+    mocks.listExportTemplatesMock.mockResolvedValue([
+      {
+        id: 'template-1',
+        mappings: [
+          {
+            sourceKey: 'manufacturer_id',
+            targetField: 'producerId',
+          },
+        ],
+      },
+    ]);
+    mocks.getProducerByIdMock.mockResolvedValue({
+      id: 'producer-1',
+      name: 'Acme',
+    });
+    mocks.listProducerMappingsMock.mockResolvedValue([
+      {
+        internalProducerId: 'producer-1',
+        externalProducer: {
+          externalId: 'base-producer-77',
+          name: 'Acme Base',
+        },
+      },
+    ]);
+
+    const result = await prepareBaseExportMappingsAndProduct({
+      data: baseRequest,
+      imagesOnly: false,
+      productId: 'product-1',
+      resolvedInventoryId: 'inventory-1',
+      product: createProduct({
+        producers: [
+          {
+            productId: 'product-1',
+            assignedAt: '2026-03-01T00:00:00.000Z',
+            manufacturer_id: 'producer-1',
+          } as unknown as NonNullable<ProductWithImages['producers']>[number],
+        ],
+      }),
+    });
+
+    expect(mocks.listProducerMappingsMock).toHaveBeenCalledWith('connection-1', ['producer-1']);
+    expect(result.producerExternalIdByInternalId).toEqual(
+      expect.objectContaining({
+        'producer-1': 'base-producer-77',
       })
     );
   });

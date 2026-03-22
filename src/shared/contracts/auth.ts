@@ -201,20 +201,25 @@ export const authSecurityPolicySchema = z.object({
 export type AuthSecurityPolicy = z.infer<typeof authSecurityPolicySchema>;
 
 export const loginSchema = z.object({
-  email: z.string(),
-  password: z.string(),
+  email: z.string().trim().email(),
+  password: z.string().min(1),
+  authFlow: z.string().trim().optional(),
 });
 
 export type Login = z.infer<typeof loginSchema>;
+export type VerifyCredentialsPayload = Login;
+export const verifyCredentialsPayloadSchema = loginSchema;
 
 export const registerSchema = z.object({
-  name: z.string().optional(),
-  email: z.string(),
-  password: z.string(),
+  name: z.string().trim().min(1).optional(),
+  email: z.string().trim().email(),
+  password: z.string().min(8),
   emailVerified: z.boolean().optional(),
 });
 
 export type Register = z.infer<typeof registerSchema>;
+export type RegisterPayload = Register;
+export const registerPayloadSchema = registerSchema;
 
 export const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
   z.union([

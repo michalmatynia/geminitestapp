@@ -21,6 +21,7 @@ import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_WRAP_ROW_SPACED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -147,6 +148,7 @@ const SurfaceOrbitVisual = (): JSX.Element => (
 export default function AgenticSurfaceMatchGame({
   onFinish,
 }: KangurMiniGameFinishActionProps): JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
   const [assignments, setAssignments] = useState<Record<string, string>>({});
   const [checked, setChecked] = useState(false);
@@ -160,6 +162,12 @@ export default function AgenticSurfaceMatchGame({
   );
 
   const isPerfect = score === SCENARIOS.length && assignedCount === SCENARIOS.length;
+  const activeScenario = activeScenarioId
+    ? SCENARIOS.find((scenario) => scenario.id === activeScenarioId) ?? null
+    : null;
+  const touchHint = activeScenario
+    ? `Selected scenario: ${activeScenario.text} Tap a surface.`
+    : 'Tap a scenario card, then tap a surface.';
 
   const handleAssign = (surfaceId: string) => {
     if (!activeScenarioId) return;
@@ -215,13 +223,24 @@ export default function AgenticSurfaceMatchGame({
             <div className='flex flex-wrap items-center justify-between gap-3'>
               <div>
                 <p className='text-sm font-semibold text-emerald-950'>Scenarios</p>
-                <KangurLessonCaption className='text-emerald-800'>Select, then match.</KangurLessonCaption>
+                <KangurLessonCaption className='text-emerald-800'>
+                  {isCoarsePointer ? 'Tap a scenario to focus it.' : 'Select, then match.'}
+                </KangurLessonCaption>
               </div>
               <KangurStatusChip accent='emerald' size='sm'>
                 {assignedCount}/{SCENARIOS.length} matched
               </KangurStatusChip>
             </div>
             <KangurProgressBar accent='emerald' value={progress} size='sm' />
+            {isCoarsePointer ? (
+              <div
+                aria-live='polite'
+                className='rounded-2xl border border-emerald-200/80 bg-white/80 px-4 py-3 text-sm font-semibold text-emerald-950 shadow-sm'
+                data-testid='agentic-surface-touch-hint'
+              >
+                {touchHint}
+              </div>
+            ) : null}
 
             <div className='grid gap-3' role='group' aria-label='Select a scenario to match'>
               {SCENARIOS.map((scenario) => {
@@ -236,8 +255,10 @@ export default function AgenticSurfaceMatchGame({
                     type='button'
                     onClick={() => setActiveScenarioId(scenario.id)}
                     className={cn(
-                      'w-full rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition-all',
-                      'bg-white/80 hover:-translate-y-0.5 hover:shadow-md',
+                      'w-full rounded-2xl border bg-white/80 text-left text-sm font-semibold transition-all touch-manipulation select-none',
+                      isCoarsePointer
+                        ? 'min-h-[5rem] px-4 py-4 active:scale-[0.99] active:shadow-sm'
+                        : 'px-4 py-3 hover:-translate-y-0.5 hover:shadow-md',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 ring-offset-white',
                       isActive && 'border-emerald-400 bg-emerald-50',
                       !isActive && 'border-emerald-100/80',
@@ -267,7 +288,9 @@ export default function AgenticSurfaceMatchGame({
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm font-semibold text-emerald-950'>Surfaces</p>
-                <KangurLessonCaption className='text-emerald-800'>Pick the best match.</KangurLessonCaption>
+                <KangurLessonCaption className='text-emerald-800'>
+                  {isCoarsePointer ? 'Tap to match the selected scenario.' : 'Pick the best match.'}
+                </KangurLessonCaption>
               </div>
               <SurfaceOrbitVisual />
             </div>
@@ -278,8 +301,10 @@ export default function AgenticSurfaceMatchGame({
                   type='button'
                   onClick={() => handleAssign(surface.id)}
                   className={cn(
-                    'rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition-all',
-                    'hover:-translate-y-0.5 hover:shadow-md',
+                    'rounded-2xl border text-left text-sm font-semibold transition-all touch-manipulation select-none',
+                    isCoarsePointer
+                      ? 'min-h-[5rem] px-4 py-4 active:scale-[0.99] active:shadow-sm'
+                      : 'px-4 py-3 hover:-translate-y-0.5 hover:shadow-md',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 ring-offset-white',
                     surface.colorClass,
                     activeScenarioId ? 'opacity-100' : 'opacity-60'

@@ -1,3 +1,12 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-22'
+status: 'active'
+doc_type: 'runbook'
+scope: 'repository'
+canonical: true
+---
+
 # General improvement operations
 
 This repository now exposes one repo-owned orchestration layer for broad improvement work.

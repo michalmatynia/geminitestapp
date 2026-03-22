@@ -7,6 +7,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KangurMobileI18nProvider } from '../i18n/kangurMobileI18n';
+import type { UseKangurMobileDuelsLobbyResult } from './useKangurMobileDuelsLobby';
 
 const {
   useLocalSearchParamsMock,
@@ -15,6 +16,7 @@ const {
   shareKangurDuelInviteMock,
   useKangurMobileAuthMock,
   useKangurMobileDuelsAssignmentsMock,
+  useKangurMobileDuelsBadgesMock,
   useKangurMobileDuelsLessonMasteryMock,
   useKangurMobileDuelLobbyChatMock,
   useKangurMobileDuelsLobbyMock,
@@ -27,6 +29,7 @@ const {
   shareKangurDuelInviteMock: vi.fn(),
   useKangurMobileAuthMock: vi.fn(),
   useKangurMobileDuelsAssignmentsMock: vi.fn(),
+  useKangurMobileDuelsBadgesMock: vi.fn(),
   useKangurMobileDuelsLessonMasteryMock: vi.fn(),
   useKangurMobileDuelLobbyChatMock: vi.fn(),
   useKangurMobileDuelsLobbyMock: vi.fn(),
@@ -60,6 +63,10 @@ vi.mock('./useKangurMobileDuelsAssignments', () => ({
   useKangurMobileDuelsAssignments: useKangurMobileDuelsAssignmentsMock,
 }));
 
+vi.mock('./useKangurMobileDuelsBadges', () => ({
+  useKangurMobileDuelsBadges: useKangurMobileDuelsBadgesMock,
+}));
+
 vi.mock('./useKangurMobileDuelsLessonMastery', () => ({
   useKangurMobileDuelsLessonMastery: useKangurMobileDuelsLessonMasteryMock,
 }));
@@ -80,6 +87,47 @@ const renderDuelsScreen = (locale: 'pl' | 'en' | 'de' = 'pl') =>
       <KangurDuelsScreen />
     </KangurMobileI18nProvider>,
   );
+
+const createDefaultDuelsLobbyMock = (): UseKangurMobileDuelsLobbyResult => ({
+  actionError: null,
+  createPrivateChallenge: vi.fn(),
+  createPublicChallenge: vi.fn(),
+  createQuickMatch: vi.fn(),
+  difficulty: 'easy',
+  inviteEntries: [],
+  isActionPending: false,
+  isAuthenticated: true,
+  isLoadingAuth: false,
+  isLobbyLoading: false,
+  isOpponentsLoading: false,
+  isPresenceLoading: false,
+  isRestoringAuth: false,
+  isSearchLoading: false,
+  joinDuel: vi.fn(),
+  leaderboardEntries: [],
+  leaderboardError: null,
+  lobbyError: null,
+  modeFilter: 'all',
+  operation: 'addition',
+  opponents: [],
+  presenceEntries: [],
+  presenceError: null,
+  publicEntries: [],
+  refresh: vi.fn(),
+  searchError: null,
+  searchQuery: '',
+  searchResults: [],
+  searchSubmittedQuery: '',
+  seriesBestOf: 1,
+  setDifficulty: vi.fn(),
+  setModeFilter: vi.fn(),
+  setOperation: vi.fn(),
+  setSeriesBestOf: vi.fn(),
+  setSearchQuery: vi.fn(),
+  submitSearch: vi.fn(),
+  clearSearch: vi.fn(),
+  visiblePublicEntries: [],
+});
 
 describe('KangurDuelsScreen', () => {
   beforeEach(() => {
@@ -114,46 +162,7 @@ describe('KangurDuelsScreen', () => {
       refresh: vi.fn(),
       sendMessage: vi.fn(),
     });
-    useKangurMobileDuelsLobbyMock.mockReturnValue({
-      actionError: null,
-      createPrivateChallenge: vi.fn(),
-      createPublicChallenge: vi.fn(),
-      createQuickMatch: vi.fn(),
-      difficulty: 'easy',
-      inviteEntries: [],
-      isActionPending: false,
-      isAuthenticated: true,
-      isLoadingAuth: false,
-      isLobbyLoading: false,
-      isOpponentsLoading: false,
-      isPresenceLoading: false,
-      isRestoringAuth: false,
-      isSearchLoading: false,
-      joinDuel: vi.fn(),
-      leaderboardEntries: [],
-      leaderboardError: null,
-      lobbyError: null,
-      modeFilter: 'all',
-      operation: 'addition',
-      opponents: [],
-      presenceEntries: [],
-      presenceError: null,
-      publicEntries: [],
-      refresh: vi.fn(),
-      searchError: null,
-      searchQuery: '',
-      searchResults: [],
-      searchSubmittedQuery: '',
-      seriesBestOf: 1,
-      setDifficulty: vi.fn(),
-      setModeFilter: vi.fn(),
-      setOperation: vi.fn(),
-      setSeriesBestOf: vi.fn(),
-      setSearchQuery: vi.fn(),
-      submitSearch: vi.fn(),
-      clearSearch: vi.fn(),
-      visiblePublicEntries: [],
-    });
+    useKangurMobileDuelsLobbyMock.mockReturnValue(createDefaultDuelsLobbyMock());
     useKangurMobileDuelSessionMock.mockReturnValue({
       actionError: null,
       currentQuestion: null,
@@ -176,6 +185,12 @@ describe('KangurDuelsScreen', () => {
     });
     useKangurMobileDuelsAssignmentsMock.mockReturnValue({
       assignmentItems: [],
+    });
+    useKangurMobileDuelsBadgesMock.mockReturnValue({
+      recentBadges: [],
+      remainingBadges: 9,
+      totalBadges: 9,
+      unlockedBadges: 0,
     });
     useKangurMobileDuelsLessonMasteryMock.mockReturnValue({
       lessonsNeedingPractice: 0,
@@ -600,6 +615,18 @@ describe('KangurDuelsScreen', () => {
         },
       ],
     });
+    useKangurMobileDuelsBadgesMock.mockReturnValue({
+      recentBadges: [
+        {
+          emoji: '⚔️',
+          id: 'duel_starter',
+          name: 'Początek pojedynku',
+        },
+      ],
+      remainingBadges: 8,
+      totalBadges: 9,
+      unlockedBadges: 1,
+    });
 
     renderDuelsScreen('de');
 
@@ -610,6 +637,9 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Einladungen')).toBeTruthy();
     expect(screen.getByText('Lobby-Chat')).toBeTruthy();
     expect(screen.getByText('Duellrangliste')).toBeTruthy();
+    expect(screen.getByText('Abzeichen')).toBeTruthy();
+    expect(screen.getByText('Zuletzt freigeschaltet')).toBeTruthy();
+    expect(screen.getByText('⚔️ Początek pojedynku')).toBeTruthy();
     expect(screen.getAllByText('BO3-Serie').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Spiel 2 von 3 · abgeschlossene Spiele: 1')).toBeTruthy();
     expect(screen.getByText('Duell beobachten')).toBeTruthy();
@@ -797,6 +827,23 @@ describe('KangurDuelsScreen', () => {
         },
       ],
     });
+    useKangurMobileDuelsBadgesMock.mockReturnValue({
+      recentBadges: [
+        {
+          emoji: '⚔️',
+          id: 'duel_starter',
+          name: 'Początek pojedynku',
+        },
+        {
+          emoji: '📚',
+          id: 'lesson_hero',
+          name: 'Bohater lekcji',
+        },
+      ],
+      remainingBadges: 7,
+      totalBadges: 9,
+      unlockedBadges: 2,
+    });
 
     renderDuelsScreen();
 
@@ -822,6 +869,13 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Do powtórki 1')).toBeTruthy();
     expect(screen.getByText('Najmocniejsza lekcja')).toBeTruthy();
     expect(screen.getByText('Próby 5 • ostatni wynik 93%')).toBeTruthy();
+    expect(screen.getByText('Odznaki')).toBeTruthy();
+    expect(screen.getByText('Odblokowane 2/9')).toBeTruthy();
+    expect(screen.getByText('Do zdobycia 7')).toBeTruthy();
+    expect(screen.getByText('Ostatnio odblokowane')).toBeTruthy();
+    expect(screen.getByText('⚔️ Początek pojedynku')).toBeTruthy();
+    expect(screen.getByText('📚 Bohater lekcji')).toBeTruthy();
+    expect(screen.getByText('Otwórz profil i odznaki')).toBeTruthy();
     expect(screen.getByText('Następne kroki')).toBeTruthy();
     expect(screen.getByText('Lokalne zadania obok pojedynku')).toBeTruthy();
     expect(screen.getByText('Domknij dodawanie')).toBeTruthy();
@@ -909,6 +963,30 @@ describe('KangurDuelsScreen', () => {
         sharerDisplayName: 'Ada',
       });
     });
+  });
+
+  it('toggles the auto refresh chip and re-enables polling when enabled', async () => {
+    const mockRefresh = vi.fn();
+    useKangurMobileDuelsLobbyMock.mockReturnValue({
+      ...createDefaultDuelsLobbyMock(),
+      refresh: mockRefresh,
+    });
+
+    renderDuelsScreen('pl');
+    const autoRefreshChip = await screen.findByText('Auto odświeżanie (Włączone)');
+    mockRefresh.mockClear();
+
+    fireEvent.click(autoRefreshChip);
+    await waitFor(() =>
+      expect(screen.getByText('Auto odświeżanie (Wyłączone)')).toBeTruthy(),
+    );
+    expect(mockRefresh).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByText('Auto odświeżanie (Wyłączone)'));
+    await waitFor(() =>
+      expect(screen.getByText('Auto odświeżanie (Włączone)')).toBeTruthy(),
+    );
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
   });
 
   it('shows a share error when invite-link sharing fails', async () => {

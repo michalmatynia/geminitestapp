@@ -1,22 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
+import {
+  chatbotJobActionRequestSchema,
+  chatbotJobDeleteQuerySchema,
+} from '@/shared/contracts/chatbot';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 import { logger } from '@/shared/utils/logger';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
-const jobActionSchema = z.object({
-  action: z.string().trim().optional(),
-});
-
-export const deleteQuerySchema = z.object({
-  force: optionalBooleanQuerySchema(),
-});
+export { chatbotJobActionRequestSchema as jobActionSchema };
+export { chatbotJobDeleteQuerySchema as deleteQuerySchema };
 
 export async function GET_handler(
   _req: NextRequest,
@@ -37,7 +34,7 @@ export async function POST_handler(
   params: { jobId: string }
 ): Promise<Response> {
   const { jobId } = params;
-  const result = await parseJsonBody(req, jobActionSchema, {
+  const result = await parseJsonBody(req, chatbotJobActionRequestSchema, {
     logPrefix: 'chatbot.jobs.POST',
   });
   if (!result.ok) {
@@ -78,7 +75,7 @@ export async function DELETE_handler(
   if (!job) {
     throw notFoundError('Job not found.');
   }
-  const query = (ctx.query ?? {}) as z.infer<typeof deleteQuerySchema>;
+  const query = chatbotJobDeleteQuerySchema.parse(ctx.query ?? {});
   const force = query.force === true;
   if (job.status === 'running' && !force) {
     throw conflictError('Job is running. Cancel it before deleting.');

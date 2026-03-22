@@ -258,6 +258,39 @@ const hasExplicitProducerTemplateMapping = (mappings: ExportTemplateMapping[]): 
     normalizeProducerTargetField(String(mapping.sourceKey ?? '')) !== null
   );
 
+const hasResolvedProducerExportValue = (data: Record<string, unknown>): boolean => {
+  const hasValue = (value: unknown): boolean => {
+    if (typeof value === 'string') {
+      return value.trim().length > 0;
+    }
+    if (typeof value === 'number') {
+      return Number.isFinite(value);
+    }
+    if (Array.isArray(value)) {
+      return value.some((entry: unknown) => hasValue(entry));
+    }
+    return false;
+  };
+
+  return hasValue(data['producer_id']) || hasValue(data['producer_ids']);
+};
+
+const applyDefaultMappedProducerIds = (
+  data: BaseProductRecord,
+  mappedProducerIds: string[]
+): void => {
+  if (mappedProducerIds.length === 1) {
+    data['producer_id'] = mappedProducerIds[0];
+    delete data['producer_ids'];
+    return;
+  }
+
+  if (mappedProducerIds.length > 1) {
+    data['producer_ids'] = mappedProducerIds;
+    delete data['producer_id'];
+  }
+};
+
 const resolveDefaultMappedProducerIds = (
   product: ProductWithImages,
   producerExternalIdByInternalId?: Record<string, string>
@@ -304,6 +337,9 @@ export async function buildBaseProductData(
     imageBase64Mode?: ImageBase64Mode | undefined;
     imageTransform?: ImageTransformOptions | null;
     imagesOnly?: boolean;
+    concurrencyLimit?: number | undefined;
+    signal?: AbortSignal | undefined;
+    cachedImages?: Record<string, string> | undefined;
   }
 ): Promise<BaseProductRecord> {
   // Start with default field mappings in Baselinker API format
@@ -324,18 +360,14 @@ export async function buildBaseProductData(
   if (!imagesOnly) {
     const categoryId = typeof product.categoryId === 'string' ? product.categoryId.trim() : '';
     const textFields: Record<string, string> = {};
-    const explicitProducerTemplateMapping = hasExplicitProducerTemplateMapping(mappings);
-    const mappedProducerIds = explicitProducerTemplateMapping
-      ? []
-      : resolveDefaultMappedProducerIds(product, options?.producerExternalIdByInternalId);
+    const mappedProducerIds = resolveDefaultMappedProducerIds(
+      product,
+      options?.producerExternalIdByInternalId
+    );
     if (product.name_en) textFields['name'] = product.name_en;
     if (product.description_en) textFields['description'] = product.description_en;
     if (categoryId) baseData['category_id'] = categoryId;
-    if (mappedProducerIds.length === 1) {
-      baseData['producer_id'] = mappedProducerIds[0];
-    } else if (mappedProducerIds.length > 1) {
-      baseData['producer_ids'] = mappedProducerIds;
-    }
+    applyDefaultMappedProducerIds(baseData, mappedProducerIds);
     if (Object.keys(textFields).length > 0) {
       baseData['text_fields'] = textFields;
     }
@@ -362,6 +394,9 @@ export async function buildBaseProductData(
       diagnostics: options.imageDiagnostics,
       outputMode: options.imageBase64Mode,
       transform: options.imageTransform ?? null,
+      concurrencyLimit: options.concurrencyLimit,
+      signal: options.signal,
+      cachedImages: options.cachedImages,
     });
     if (Object.keys(base64Images).length > 0) {
       baseData['images'] = base64Images;
@@ -379,6 +414,11 @@ export async function buildBaseProductData(
 
   // Apply template mappings (these override defaults)
   if (!imagesOnly && mappings.length > 0) {
+    const explicitProducerTemplateMapping = hasExplicitProducerTemplateMapping(mappings);
+    const mappedProducerIds = resolveDefaultMappedProducerIds(
+      product,
+      options?.producerExternalIdByInternalId
+    );
     // Templates are saved as Base -> product mappings, so invert for export.
     const exportMappings = mappings.map((mapping: ExportTemplateMapping) => ({
       sourceKey: mapping.targetField,
@@ -448,6 +488,14 @@ export async function buildBaseProductData(
     }
 
     Object.assign(baseData, templateData);
+
+    if (
+      explicitProducerTemplateMapping &&
+      mappedProducerIds.length > 0 &&
+      !hasResolvedProducerExportValue(baseData)
+    ) {
+      applyDefaultMappedProducerIds(baseData, mappedProducerIds);
+    }
   }
 
   return baseData;

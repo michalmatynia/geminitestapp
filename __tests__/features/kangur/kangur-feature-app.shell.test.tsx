@@ -7,6 +7,7 @@ const {
   useKangurRoutingMock,
   resolveKangurPageKeyMock,
   routeNavigatorMock,
+  settingsStoreStateMock,
 } = vi.hoisted(() => ({
   useKangurAuthMock: vi.fn(),
   useKangurRoutingMock: vi.fn(),
@@ -17,6 +18,7 @@ const {
     push: vi.fn(),
     replace: vi.fn(),
   },
+  settingsStoreStateMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
@@ -92,6 +94,10 @@ vi.mock('@/features/kangur/cms-builder/KangurCmsRuntimeScreen', () => ({
   KangurCmsRuntimeScreen: ({ fallback }: { fallback: ReactNode }) => <>{fallback}</>,
 }));
 
+vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+  useSettingsStore: () => settingsStoreStateMock(),
+}));
+
 import { KangurFeatureApp } from '@/features/kangur/ui/KangurFeatureApp';
 
 const buildAuthState = (overrides: Record<string, unknown> = {}) => ({
@@ -110,6 +116,16 @@ const buildAuthState = (overrides: Record<string, unknown> = {}) => ({
 describe('KangurFeatureApp shell behavior', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    settingsStoreStateMock.mockReturnValue({
+      map: new Map(),
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      get: vi.fn(),
+      getBoolean: vi.fn(),
+      getNumber: vi.fn(),
+      refetch: vi.fn(),
+    });
     useKangurRoutingMock.mockReturnValue({
       pageKey: 'Game',
       requestedPath: '/kangur/game',
@@ -120,17 +136,24 @@ describe('KangurFeatureApp shell behavior', () => {
     useKangurAuthMock.mockReturnValue(buildAuthState());
   });
 
-  it('renders a full-screen Kangur loading shell while auth state is loading', () => {
+  it('renders a full-screen Kangur loading shell while theme settings are loading', () => {
     useKangurRoutingMock.mockReturnValue({
       pageKey: 'ParentDashboard',
       requestedPath: '/kangur/parent',
+      basePath: '/kangur',
+      embedded: false,
     });
     resolveKangurPageKeyMock.mockReturnValue('ParentDashboard');
-    useKangurAuthMock.mockReturnValue(
-      buildAuthState({
-        isLoadingAuth: true,
-      })
-    );
+    settingsStoreStateMock.mockReturnValue({
+      map: new Map(),
+      isLoading: true,
+      isFetching: false,
+      error: null,
+      get: vi.fn(),
+      getBoolean: vi.fn(),
+      getNumber: vi.fn(),
+      refetch: vi.fn(),
+    });
 
     render(<KangurFeatureApp />);
 

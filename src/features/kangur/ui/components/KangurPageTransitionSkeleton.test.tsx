@@ -80,6 +80,15 @@ describe('KangurPageTransitionSkeleton', () => {
     expect(
       screen.getByTestId('kangur-page-transition-skeleton-lessons-focus-layout')
     ).toHaveClass('w-full');
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-lessons-focus-header')
+    ).toHaveClass('w-full', 'max-w-5xl');
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-lessons-focus-navigation')
+    ).toHaveClass('w-full', 'max-w-5xl');
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-lessons-focus-content')
+    ).toHaveClass('w-full');
   });
 
   it('keeps the lessons-library transition skeleton centered and narrow', () => {
@@ -92,7 +101,13 @@ describe('KangurPageTransitionSkeleton', () => {
 
     expect(
       screen.getByTestId('kangur-page-transition-skeleton-lessons-library-layout')
-    ).toHaveClass('max-w-lg');
+    ).toHaveClass('max-w-lg', 'items-center');
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-lessons-library-intro')
+    ).toHaveClass('w-full');
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-lessons-library-list')
+    ).toHaveClass('w-full', 'flex-col');
   });
 
   it('matches the centered home progress grid width for the Game transition skeleton', () => {

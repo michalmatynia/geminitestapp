@@ -27,6 +27,7 @@ export * from './services/product-listing-repository';
 export * from './services/tag-mapping-repository';
 export * from './services/tradera-listing-service';
 export * from './services/base-token-resolver';
+export * from './workers/baseExportQueue';
 export * from './workers/baseImportQueue';
 export * from './workers/traderaListingQueue';
 export * from './workers/traderaRelistSchedulerQueue';

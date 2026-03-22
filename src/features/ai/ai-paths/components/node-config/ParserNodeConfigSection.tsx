@@ -23,6 +23,7 @@ import {
   useAiPathRuntime,
   useAiPathSelection,
 } from '../AiPathConfigContext';
+import { AiPathsPillButton } from '../AiPathsPillButton';
 
 const PARSER_SAMPLE_ENTITY_TYPE_OPTIONS = [
   { value: 'product', label: 'Product' },
@@ -49,6 +50,47 @@ const PARSER_OUTPUT_MODE_OPTIONS = [
   { value: 'individual', label: 'Individual outputs' },
   { value: 'bundle', label: 'Single bundle output' },
 ] as const satisfies ReadonlyArray<LabeledOptionDto<'individual' | 'bundle'>>;
+
+const PARSER_QUICK_ADD_MAPPINGS = [
+  { key: 'title', label: 'Add title', path: '$.title' },
+  { key: 'images', label: 'Add images', path: '$.images' },
+  { key: 'productId', label: 'Add id', path: '$.id' },
+  { key: 'sku', label: 'Add sku', path: '$.sku' },
+  { key: 'price', label: 'Add price', path: '$.price' },
+] as const;
+
+const PARSER_IMAGE_HELPER_PATHS = [
+  { label: 'Use $.images', path: '$.images' },
+  { label: 'Use $.imageLinks', path: '$.imageLinks' },
+  { label: 'Use $.media', path: '$.media' },
+] as const;
+
+type ParserSampleUpdater =
+  | Partial<ParserSampleState>
+  | ((current: ParserSampleState) => ParserSampleState);
+
+type ParserActionButtonProps = {
+  children: React.ReactNode;
+  baseClassName?: string;
+  inactiveClassName?: string;
+} & Omit<React.ComponentProps<typeof AiPathsPillButton>, 'children'>;
+
+function ParserActionButton({
+  children,
+  baseClassName = 'rounded-md border px-2 py-1 text-[10px]',
+  inactiveClassName = 'text-gray-200 hover:bg-muted/60',
+  ...props
+}: ParserActionButtonProps): React.JSX.Element {
+  return (
+    <AiPathsPillButton
+      baseClassName={baseClassName}
+      inactiveClassName={inactiveClassName}
+      {...props}
+    >
+      {children}
+    </AiPathsPillButton>
+  );
+}
 
 export function ParserNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode } = useAiPathSelection();
@@ -148,6 +190,21 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
     [nodes]
   );
   const parsedSample = React.useMemo(() => safeParseJson(sampleState.json), [sampleState.json]);
+  const updateParserSample = (updater: ParserSampleUpdater): void => {
+    setParserSamples((prev: Record<string, ParserSampleState>) => {
+      const current = prev[selectedNode.id] ?? sampleState;
+      return {
+        ...prev,
+        [selectedNode.id]:
+          typeof updater === 'function'
+            ? updater(current)
+            : {
+                ...current,
+                ...updater,
+              },
+      };
+    });
+  };
   const simulationSelectOptions = React.useMemo(
     () => simulationOptions.map((opt: { id: string; label: string }) => ({ value: opt.id, label: opt.label })),
     [simulationOptions]
@@ -427,22 +484,20 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
           variant='subtle'
          title='Select preset'/>
         <div className='mt-3 flex flex-wrap gap-2'>
-          <Button
-            type='button'
+          <ParserActionButton
             variant='outline'
-            className='h-7 text-[10px]'
+            baseClassName='h-7 rounded-md border px-2 py-1 text-[10px]'
             onClick={() => applyPreset('replace')}
           >
             Replace mappings
-          </Button>
-          <Button
-            type='button'
+          </ParserActionButton>
+          <ParserActionButton
             variant='outline'
-            className='h-7 text-[10px]'
+            baseClassName='h-7 rounded-md border px-2 py-1 text-[10px]'
             onClick={() => applyPreset('merge')}
           >
             Add missing fields
-          </Button>
+          </ParserActionButton>
         </div>
       </FormField>
 
@@ -451,15 +506,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
           <SelectSimple
             size='sm'
             value={sampleState.entityType}
-            onValueChange={(value: string) =>
-              setParserSamples((prev: Record<string, ParserSampleState>) => ({
-                ...prev,
-                [selectedNode.id]: {
-                  ...sampleState,
-                  entityType: value,
-                },
-              }))
-            }
+            onValueChange={(value: string) => updateParserSample({ entityType: value })}
             options={PARSER_SAMPLE_ENTITY_TYPE_OPTIONS}
             placeholder='Entity type'
             ariaLabel='Sample entity type'
@@ -471,14 +518,10 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
               size='sm'
               value={sampleState.entityId}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setParserSamples((prev: Record<string, ParserSampleState>) => ({
-                  ...prev,
-                  [selectedNode.id]: {
-                    ...sampleState,
-                    entityId: event.target.value,
-                    simulationId: '',
-                  },
-                }))
+                updateParserSample({
+                  entityId: event.target.value,
+                  simulationId: '',
+                })
               }
               aria-label='Sample entity id'
               placeholder='Entity ID'
@@ -492,15 +535,11 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                     (item: { id: string }) => item.id === value
                   );
                   if (!option) return;
-                  setParserSamples((prev: Record<string, ParserSampleState>) => ({
-                    ...prev,
-                    [selectedNode.id]: {
-                      ...sampleState,
-                      entityType: option.entityType,
-                      entityId: option.entityId,
-                      simulationId: option.id,
-                    },
-                  }));
+                  updateParserSample({
+                    entityType: option.entityType,
+                    entityId: option.entityId,
+                    simulationId: option.id,
+                  });
                 }}
                 options={simulationSelectOptions}
                 placeholder='Use simulation ID'
@@ -510,10 +549,9 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                title='Use simulation ID'/>
             )}
           </div>
-          <Button
-            type='button'
+          <ParserActionButton
             variant='outline'
-            className='h-8 text-[10px]'
+            baseClassName='h-8 rounded-md border px-2 py-1 text-[10px]'
             disabled={parserSampleLoading}
             onClick={() =>
               void handleFetchParserSample(
@@ -524,7 +562,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             }
           >
             {parserSampleLoading ? 'Loading...' : 'Fetch sample'}
-          </Button>
+          </ParserActionButton>
         </div>
         <Textarea
           variant='subtle'
@@ -532,13 +570,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
           className='mt-2 min-h-[120px]'
           value={sampleState.json}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-            setParserSamples((prev: Record<string, ParserSampleState>) => ({
-              ...prev,
-              [selectedNode.id]: {
-                ...sampleState,
-                json: event.target.value,
-              },
-            }))
+            updateParserSample({ json: event.target.value })
           }
           aria-label='Sample JSON'
           placeholder='{ "id": "123", "title": "Sample" }'
@@ -549,13 +581,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             size='sm'
             value={sampleState.mappingMode}
             onValueChange={(value: string) =>
-              setParserSamples((prev: Record<string, ParserSampleState>) => ({
-                ...prev,
-                [selectedNode.id]: {
-                  ...sampleState,
-                  mappingMode: value as 'top' | 'flatten',
-                },
-              }))
+              updateParserSample({ mappingMode: value as ParserSampleState['mappingMode'] })
             }
             options={PARSER_SAMPLE_MAPPING_MODE_OPTIONS}
             ariaLabel='Sample mapping mode'
@@ -565,49 +591,30 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             size='sm'
             value={String(sampleState.depth)}
             onValueChange={(value: string) =>
-              setParserSamples((prev: Record<string, ParserSampleState>) => ({
-                ...prev,
-                [selectedNode.id]: {
-                  ...sampleState,
-                  depth: Number(value),
-                },
-              }))
+              updateParserSample({ depth: Number(value) })
             }
             options={PARSER_SAMPLE_DEPTH_OPTIONS}
             ariaLabel='Sample depth'
             className='w-[160px]'
            title='Sample JSON'/>
-          <Button
-            type='button'
-            className={`rounded-md border px-3 text-[10px] ${
-              sampleState.includeContainers
-                ? 'text-emerald-200 hover:bg-emerald-500/10'
-                : 'text-gray-300 hover:bg-muted/60'
-            }`}
+          <ParserActionButton
+            active={sampleState.includeContainers}
+            baseClassName='rounded-md border px-3 py-1 text-[10px]'
             onClick={() =>
-              setParserSamples((prev: Record<string, ParserSampleState>) => ({
-                ...prev,
-                [selectedNode.id]: {
-                  ...sampleState,
-                  includeContainers: !sampleState.includeContainers,
-                },
+              updateParserSample((current: ParserSampleState) => ({
+                ...current,
+                includeContainers: !current.includeContainers,
               }))
             }
           >
             {sampleState.includeContainers ? 'Containers: On' : 'Containers: Off'}
-          </Button>
+          </ParserActionButton>
           {sampleState.mappingMode === 'flatten' && (
             <SelectSimple
               size='sm'
               value={sampleState.keyStyle}
               onValueChange={(value: string) =>
-                setParserSamples((prev: Record<string, ParserSampleState>) => ({
-                  ...prev,
-                  [selectedNode.id]: {
-                    ...sampleState,
-                    keyStyle: value as 'path' | 'leaf',
-                  },
-                }))
+                updateParserSample({ keyStyle: value as ParserSampleState['keyStyle'] })
               }
               options={PARSER_SAMPLE_KEY_STYLE_OPTIONS}
               ariaLabel='Sample key style'
@@ -621,29 +628,17 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
         <div className='mt-3 flex flex-wrap gap-2'>
           {Object.keys(sampleMappings).length > 0 && (
             <>
-              <Button
-                type='button'
-                className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
-                onClick={() => applySampleMappings('replace')}
-              >
+              <ParserActionButton onClick={() => applySampleMappings('replace')}>
                 Auto-map from sample
-              </Button>
-              <Button
-                type='button'
-                className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
-                onClick={() => applySampleMappings('merge')}
-              >
+              </ParserActionButton>
+              <ParserActionButton onClick={() => applySampleMappings('merge')}>
                 Add missing from sample
-              </Button>
+              </ParserActionButton>
             </>
           )}
-          <Button
-            type='button'
-            className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
-            onClick={handleDetectImages}
-          >
+          <ParserActionButton onClick={handleDetectImages}>
             Detect images
-          </Button>
+          </ParserActionButton>
         </div>
       </FormField>
 
@@ -664,41 +659,14 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
       </FormField>
 
       <div className='flex flex-wrap gap-2'>
-        <Button
-          type='button'
-          className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
-          onClick={() => addMapping('title', '$.title')}
-        >
-          Add title
-        </Button>
-        <Button
-          type='button'
-          className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
-          onClick={() => addMapping('images', '$.images')}
-        >
-          Add images
-        </Button>
-        <Button
-          type='button'
-          className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
-          onClick={() => addMapping('productId', '$.id')}
-        >
-          Add id
-        </Button>
-        <Button
-          type='button'
-          className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
-          onClick={() => addMapping('sku', '$.sku')}
-        >
-          Add sku
-        </Button>
-        <Button
-          type='button'
-          className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
-          onClick={() => addMapping('price', '$.price')}
-        >
-          Add price
-        </Button>
+        {PARSER_QUICK_ADD_MAPPINGS.map((mapping) => (
+          <ParserActionButton
+            key={mapping.key}
+            onClick={() => addMapping(mapping.key, mapping.path)}
+          >
+            {mapping.label}
+          </ParserActionButton>
+        ))}
       </div>
 
       <div className='space-y-3'>
@@ -781,27 +749,14 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
         <div className='rounded-md border border-border/60 bg-card/30 p-3 text-[11px] text-gray-400'>
           <div className='text-gray-300'>Image helpers</div>
           <div className='mt-2 flex flex-wrap gap-2'>
-            <Button
-              type='button'
-              className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
-              onClick={() => updateMappingPath(imageEntryIndex, '$.images')}
-            >
-              Use $.images
-            </Button>
-            <Button
-              type='button'
-              className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
-              onClick={() => updateMappingPath(imageEntryIndex, '$.imageLinks')}
-            >
-              Use $.imageLinks
-            </Button>
-            <Button
-              type='button'
-              className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
-              onClick={() => updateMappingPath(imageEntryIndex, '$.media')}
-            >
-              Use $.media
-            </Button>
+            {PARSER_IMAGE_HELPER_PATHS.map((helper) => (
+              <ParserActionButton
+                key={helper.path}
+                onClick={() => updateMappingPath(imageEntryIndex, helper.path)}
+              >
+                {helper.label}
+              </ParserActionButton>
+            ))}
           </div>
         </div>
       )}

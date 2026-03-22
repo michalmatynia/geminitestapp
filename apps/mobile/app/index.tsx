@@ -33,6 +33,10 @@ import {
   useKangurMobileHomeLessonCheckpoints,
   type KangurMobileHomeLessonCheckpointItem,
 } from '../src/home/useKangurMobileHomeLessonCheckpoints';
+import {
+  useKangurMobileHomeBadges,
+  type KangurMobileHomeBadgeItem,
+} from '../src/home/useKangurMobileHomeBadges';
 import { useKangurMobileHomeDuelsSpotlight } from '../src/home/useKangurMobileHomeDuelsSpotlight';
 import { useKangurMobileRecentResults } from '../src/home/useKangurMobileRecentResults';
 import { useKangurMobileHomeDuelsInvites } from '../src/home/useKangurMobileHomeDuelsInvites';
@@ -212,18 +216,22 @@ function OutlineLink({
   href,
   hint,
   label,
+  fullWidth = true,
 }: {
   href: Href;
   hint?: string;
   label: string;
+  fullWidth?: boolean;
 }): React.JSX.Element {
   return (
     <Link href={href} asChild>
-      <Pressable
-        accessibilityHint={hint}
-        accessibilityLabel={label}
-        accessibilityRole='button'
+        <Pressable
+          accessibilityHint={hint}
+          accessibilityLabel={label}
+          accessibilityRole='button'
         style={{
+          alignSelf: fullWidth ? 'stretch' : 'flex-start',
+          width: fullWidth ? '100%' : undefined,
           backgroundColor: '#ffffff',
           borderColor: '#cbd5e1',
           borderRadius: 999,
@@ -232,7 +240,15 @@ function OutlineLink({
           paddingVertical: 10,
         }}
       >
-        <Text style={{ color: '#0f172a', fontWeight: '700' }}>{label}</Text>
+        <Text
+          style={{
+            color: '#0f172a',
+            fontWeight: '700',
+            textAlign: fullWidth ? 'center' : 'left',
+          }}
+        >
+          {label}
+        </Text>
       </Pressable>
     </Link>
   );
@@ -364,7 +380,7 @@ function FocusCard({
           pl: `Skuteczność ${averageAccuracyPercent}% przez ${sessions} sesji.`,
         })}
       </Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+      <View style={{ flexDirection: 'column', gap: 8 }}>
         <OutlineLink
           href={actionHref}
           hint={copy({
@@ -453,6 +469,30 @@ function SummaryChip({
     >
       <Text style={{ color: tone.textColor, fontSize: 12, fontWeight: '700' }}>
         {label}
+      </Text>
+    </View>
+  );
+}
+
+function BadgeChip({
+  item,
+}: {
+  item: KangurMobileHomeBadgeItem;
+}): React.JSX.Element {
+  return (
+    <View
+      style={{
+        alignSelf: 'flex-start',
+        backgroundColor: '#eef2ff',
+        borderColor: '#c7d2fe',
+        borderRadius: 999,
+        borderWidth: 1,
+        paddingHorizontal: 12,
+        paddingVertical: 7,
+      }}
+    >
+      <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
+        {item.emoji} {item.name}
       </Text>
     </View>
   );
@@ -593,7 +633,7 @@ function LessonMasteryCard({
           pl: `Najlepszy wynik ${insight.bestScorePercent}% • ostatnia lekcja ${lastLessonLabel}`,
         })}
       </Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+      <View style={{ flexDirection: 'column', gap: 8 }}>
         <OutlineLink
           href={insight.lessonHref}
           hint={copy({
@@ -669,7 +709,7 @@ function LessonCheckpointCard({
           pl: `Najlepszy wynik ${item.bestScorePercent}% • próby ${item.attempts}`,
         })}
       </Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+      <View style={{ flexDirection: 'column', gap: 8 }}>
         <OutlineLink
           href={item.lessonHref}
           hint={copy({
@@ -787,6 +827,7 @@ export default function HomeScreen(): React.JSX.Element {
   const homeAssignments = useKangurMobileHomeAssignments();
   const lessonCheckpoints = useKangurMobileHomeLessonCheckpoints();
   const lessonMastery = useKangurMobileHomeLessonMastery();
+  const homeBadges = useKangurMobileHomeBadges();
   const duelPresence = useKangurMobileHomeDuelsPresence();
   const duelRematches = useKangurMobileHomeDuelsRematches();
   const duelSpotlight = useKangurMobileHomeDuelsSpotlight();
@@ -1088,7 +1129,7 @@ export default function HomeScreen(): React.JSX.Element {
             pl: 'Nawigacja',
           })}
         >
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          <View style={{ flexDirection: 'column', gap: 8 }}>
             <OutlineLink
               href={LESSONS_ROUTE}
               hint={copy({
@@ -1302,7 +1343,7 @@ export default function HomeScreen(): React.JSX.Element {
                       {getHomeDuelSeriesLabel(invite.series, locale)}
                     </Text>
                   ) : null}
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  <View style={{ flexDirection: 'column', gap: 8 }}>
                     <OutlineLink
                       href={createKangurDuelsHref({ joinSessionId: invite.sessionId })}
                       hint={copy({
@@ -1464,7 +1505,7 @@ export default function HomeScreen(): React.JSX.Element {
                       {getHomeDuelSeriesLabel(entry.series, locale)}
                     </Text>
                   ) : null}
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  <View style={{ flexDirection: 'column', gap: 8 }}>
                     <PrimaryButton
                       disabled={sharingDuelSessionId === entry.sessionId}
                       hint={copy({
@@ -1835,7 +1876,7 @@ export default function HomeScreen(): React.JSX.Element {
                         {getHomeDuelSeriesLabel(entry.series, locale)}
                       </Text>
                     ) : null}
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    <View style={{ flexDirection: 'column', gap: 8 }}>
                       <OutlineLink
                         href={primaryHref}
                         hint={primaryHint}
@@ -1996,7 +2037,7 @@ export default function HomeScreen(): React.JSX.Element {
                       pl: `Ostatni pojedynek ${formatHomeRelativeAge(entry.lastPlayedAt, locale)}`,
                     })}
                   </Text>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  <View style={{ flexDirection: 'column', gap: 8 }}>
                     <PrimaryButton
                       disabled={duelRematches.isActionPending}
                       hint={copy({
@@ -2391,6 +2432,77 @@ export default function HomeScreen(): React.JSX.Element {
               ) : null}
             </View>
           )}
+        </SectionCard>
+
+        <SectionCard
+          title={copy({
+            de: 'Abzeichen',
+            en: 'Badges',
+            pl: 'Odznaki',
+          })}
+        >
+          <Text style={{ color: '#475569', lineHeight: 20 }}>
+            {copy({
+              de: 'Die zuletzt lokal freigeschalteten Abzeichen erscheinen hier sofort, damit Fortschritt auf dem Dashboard sichtbar bleibt.',
+              en: 'Recently unlocked local badges appear here right away so progress stays visible on the dashboard.',
+              pl: 'Ostatnio lokalnie odblokowane odznaki pojawiają się tutaj od razu, aby postęp był widoczny także na dashboardzie.',
+            })}
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <SummaryChip
+              accent='blue'
+              label={copy({
+                de: `Freigeschaltet ${homeBadges.unlockedBadges}/${homeBadges.totalBadges}`,
+                en: `Unlocked ${homeBadges.unlockedBadges}/${homeBadges.totalBadges}`,
+                pl: `Odblokowane ${homeBadges.unlockedBadges}/${homeBadges.totalBadges}`,
+              })}
+            />
+            <SummaryChip
+              accent='amber'
+              label={copy({
+                de: `Offen ${homeBadges.remainingBadges}`,
+                en: `Remaining ${homeBadges.remainingBadges}`,
+                pl: `Do zdobycia ${homeBadges.remainingBadges}`,
+              })}
+            />
+          </View>
+          {homeBadges.recentBadges.length === 0 ? (
+            <Text style={{ color: '#475569', lineHeight: 20 }}>
+              {copy({
+                de: 'Es gibt noch keine lokal freigeschalteten Abzeichen. Schließe Lektionen, Trainings oder Spiele ab, damit sie hier erscheinen.',
+                en: 'There are no locally unlocked badges yet. Finish lessons, practice runs, or games so they appear here.',
+                pl: 'Nie ma jeszcze lokalnie odblokowanych odznak. Ukończ lekcje, treningi albo gry, aby pojawiły się tutaj.',
+              })}
+            </Text>
+          ) : (
+            <View style={{ gap: 12 }}>
+              <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
+                {copy({
+                  de: 'Zuletzt freigeschaltet',
+                  en: 'Recently unlocked',
+                  pl: 'Ostatnio odblokowane',
+                })}
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {homeBadges.recentBadges.map((item) => (
+                  <BadgeChip key={item.id} item={item} />
+                ))}
+              </View>
+            </View>
+          )}
+          <OutlineLink
+            href={PROFILE_ROUTE}
+            hint={copy({
+              de: 'Öffnet das Profil mit der vollständigen Abzeichenübersicht.',
+              en: 'Opens the profile with the full badge overview.',
+              pl: 'Otwiera profil z pełnym przeglądem odznak.',
+            })}
+            label={copy({
+              de: 'Profil und Abzeichen öffnen',
+              en: 'Open profile and badges',
+              pl: 'Otwórz profil i odznaki',
+            })}
+          />
         </SectionCard>
 
         <SectionCard

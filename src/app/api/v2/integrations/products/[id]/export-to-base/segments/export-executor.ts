@@ -102,6 +102,8 @@ export async function executeBaseExport(args: {
     args;
   let existingProductIdForWrite = listingExternalId;
 
+  let cachedImages: Record<string, string> | undefined;
+
   const buildSharedOptions = (
     includeStockWithoutWarehouse: boolean
   ): BuildBaseProductDataOptions => ({
@@ -116,6 +118,7 @@ export async function executeBaseExport(args: {
     imageBase64Mode,
     imageTransform,
     imagesOnly,
+    ...(cachedImages ? { cachedImages } : {}),
   });
 
   const buildExportOptions = (
@@ -144,6 +147,11 @@ export async function executeBaseExport(args: {
       targetWarehouseId,
       buildSharedOptions(includeStockWithoutWarehouse)
     );
+    // Cache processed images after the first build so retries skip image processing
+    const exportedImages = exportData['images'];
+    if (!cachedImages && exportImagesAsBase64 && isRecord(exportedImages)) {
+      cachedImages = exportedImages as Record<string, string>;
+    }
     const exportFields = collectExportFields(exportData);
     return { exportData, exportFields };
   };

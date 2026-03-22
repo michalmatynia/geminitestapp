@@ -1,3 +1,12 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-22'
+status: 'active'
+doc_type: 'runbook'
+scope: 'repository'
+canonical: true
+---
+
 # Bazel remote cache with BuildBuddy
 
 This repo already supports optional remote-cache injection through the Bazel wrapper in `tools/bazel/run-bazel.sh`.

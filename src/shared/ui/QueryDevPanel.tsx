@@ -5,7 +5,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQueryDiagnostics } from '@/shared/hooks/query/useQueryDiagnostics';
 import { useQueryPerformance } from '@/shared/hooks/useQueryPerformance';
 
-import { Button, Card, CardContent, CardHeader, CardTitle, Input } from './';
+import { Button } from './button';
+import { Card, CardContent, CardHeader, CardTitle } from './card';
+import { Input } from './input';
 
 type QueryDevPanelProps = {
   isOnline: boolean;

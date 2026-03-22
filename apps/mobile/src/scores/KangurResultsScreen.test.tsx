@@ -11,6 +11,7 @@ const {
   useLocalSearchParamsMock,
   useKangurMobileLessonCheckpointsMock,
   useKangurMobileResultsAssignmentsMock,
+  useKangurMobileResultsBadgesMock,
   useKangurMobileResultsLessonMasteryMock,
   useKangurMobileResultsMock,
   useKangurMobileResultsDuelsMock,
@@ -20,6 +21,7 @@ const {
   useLocalSearchParamsMock: vi.fn(),
   useKangurMobileLessonCheckpointsMock: vi.fn(),
   useKangurMobileResultsAssignmentsMock: vi.fn(),
+  useKangurMobileResultsBadgesMock: vi.fn(),
   useKangurMobileResultsLessonMasteryMock: vi.fn(),
   useKangurMobileResultsMock: vi.fn(),
   useKangurMobileResultsDuelsMock: vi.fn(),
@@ -38,6 +40,10 @@ vi.mock('./useKangurMobileResults', () => ({
 
 vi.mock('./useKangurMobileResultsAssignments', () => ({
   useKangurMobileResultsAssignments: useKangurMobileResultsAssignmentsMock,
+}));
+
+vi.mock('./useKangurMobileResultsBadges', () => ({
+  useKangurMobileResultsBadges: useKangurMobileResultsBadgesMock,
 }));
 
 vi.mock('./useKangurMobileResultsLessonMastery', () => ({
@@ -98,6 +104,12 @@ describe('KangurResultsScreen', () => {
     });
     useKangurMobileResultsAssignmentsMock.mockReturnValue({
       assignmentItems: [],
+    });
+    useKangurMobileResultsBadgesMock.mockReturnValue({
+      recentBadges: [],
+      remainingBadges: 9,
+      totalBadges: 9,
+      unlockedBadges: 0,
     });
     useKangurMobileResultsLessonMasteryMock.mockReturnValue({
       masteredLessons: 0,
@@ -316,6 +328,23 @@ describe('KangurResultsScreen', () => {
       ],
       lessonsNeedingPractice: 1,
     });
+    useKangurMobileResultsBadgesMock.mockReturnValue({
+      recentBadges: [
+        {
+          emoji: '🕐',
+          id: 'clock_master',
+          name: 'Mistrz zegara',
+        },
+        {
+          emoji: '📚',
+          id: 'lesson_hero',
+          name: 'Bohater lekcji',
+        },
+      ],
+      remainingBadges: 7,
+      totalBadges: 9,
+      unlockedBadges: 2,
+    });
 
     render(<KangurResultsScreen />);
 
@@ -340,6 +369,13 @@ describe('KangurResultsScreen', () => {
     expect(screen.getByText('Śledzone 3')).toBeTruthy();
     expect(screen.getAllByText('Do powtórki').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Najmocniejsza lekcja')).toBeTruthy();
+    expect(screen.getByText('Odznaki')).toBeTruthy();
+    expect(screen.getByText('Odblokowane 2/9')).toBeTruthy();
+    expect(screen.getByText('Do zdobycia 7')).toBeTruthy();
+    expect(screen.getByText('Ostatnio odblokowane')).toBeTruthy();
+    expect(screen.getByText('🕐 Mistrz zegara')).toBeTruthy();
+    expect(screen.getByText('📚 Bohater lekcji')).toBeTruthy();
+    expect(screen.getByText('Otwórz profil i odznaki')).toBeTruthy();
     expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
     expect(screen.getByText('Ostatni wynik 70% • opanowanie 68%')).toBeTruthy();
     expect(screen.getByText('Wróć do lekcji: Dodawanie')).toBeTruthy();

@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { expectNoAxeViolations } from '@/testing/accessibility/axe';
 
-vi.mock('@/features/auth/', () => ({
+vi.mock('@/features/auth/public', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 

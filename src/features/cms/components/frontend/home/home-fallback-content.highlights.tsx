@@ -4,7 +4,7 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { LayoutGrid, ShieldCheck, Sparkles } from 'lucide-react';
 
-import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
+import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/layout';
 
 export function HomeFallbackHighlights(): React.JSX.Element {
   const translations = useTranslations('FallbackHome.Highlights');

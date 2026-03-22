@@ -5,16 +5,74 @@ import React from 'react';
 
 import {
   AdminAiPathsBreadcrumbs,
-  Badge,
-  Button,
   Card,
   Label,
   PanelHeader,
   SelectSimple,
   StatusBadge,
 } from '@/shared/ui';
+import type { StatusVariant } from '@/shared/contracts/ui';
 
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
+import { ValidationActionButton } from './ValidationActionButton';
+import { ValidationMetaBadge } from './ValidationMetaBadge';
+
+type ValidationHeaderStatusIndicatorProps = {
+  status: string;
+  variant?: StatusVariant;
+};
+
+type ValidationStatusIndicator = {
+  key: string;
+  status: string;
+  variant?: StatusVariant;
+};
+
+type ValidationHeaderFocusBadgeProps = {
+  label: string;
+  value: string;
+};
+
+const getValidationReportScoreVariant = (
+  validationReport: NonNullable<
+    ReturnType<typeof useAdminAiPathsValidationContext>['validationReport']
+  >
+): StatusVariant => {
+  if (validationReport.blocked) return 'error';
+  if (validationReport.shouldWarn) return 'warning';
+  return 'success';
+};
+
+const getDocsSyncStatusVariant = (
+  status: string | undefined
+): StatusVariant => {
+  if (status === 'error') return 'error';
+  if (status === 'warning') return 'warning';
+  if (status === 'success') return 'success';
+  return 'neutral';
+};
+
+const createValidationStatusIndicator = (
+  indicator: ValidationStatusIndicator
+): ValidationStatusIndicator => indicator;
+
+function ValidationHeaderStatusIndicator({
+  status,
+  variant,
+}: ValidationHeaderStatusIndicatorProps): React.JSX.Element {
+  return <StatusBadge status={status} variant={variant} size='sm' />;
+}
+
+function ValidationHeaderFocusBadge({
+  label,
+  value,
+}: ValidationHeaderFocusBadgeProps): React.JSX.Element {
+  return (
+    <ValidationMetaBadge>
+      {label}: {value}
+    </ValidationMetaBadge>
+  );
+}
 
 export function ValidationHeader(): React.JSX.Element {
   const {
@@ -32,6 +90,38 @@ export function ValidationHeader(): React.JSX.Element {
     focusNodeId,
     selectedPathConfig,
   } = useAdminAiPathsValidationContext();
+  const docsSyncStatus = validationDraft.docsSyncState?.lastSyncStatus ?? 'idle';
+  const statusIndicators: ValidationStatusIndicator[] = [
+    createValidationStatusIndicator({
+      key: 'dirty',
+      status: isDirty ? 'Unsaved changes' : 'Saved',
+      variant: isDirty ? 'warning' : 'success',
+    }),
+    ...(validationReport
+      ? [
+          createValidationStatusIndicator({
+            key: 'score',
+            status: `Score: ${validationReport.score}`,
+            variant: getValidationReportScoreVariant(validationReport),
+          }),
+          createValidationStatusIndicator({
+            key: 'failed-rules',
+            status: `Failed rules: ${validationReport.failedRules}`,
+            variant: validationReport.failedRules > 0 ? 'warning' : 'success',
+          }),
+        ]
+      : []),
+    createValidationStatusIndicator({
+      key: 'docs-sync',
+      status: `Docs sync: ${docsSyncStatus}`,
+      variant: getDocsSyncStatusVariant(docsSyncStatus),
+    }),
+    createValidationStatusIndicator({
+      key: 'candidates',
+      status: `Candidates: ${candidateRules.length}`,
+      variant: candidateRules.length > 0 ? 'warning' : 'neutral',
+    }),
+  ];
 
   return (
     <>
@@ -59,85 +149,39 @@ export function ValidationHeader(): React.JSX.Element {
               className='mt-2'
              title='Select option'/>
           </div>
-          <Button
-            type='button'
-            variant='outline'
-            size='sm'
+          <ValidationActionButton
             onClick={() => {
               void settingsQuery.refetch();
             }}
-            className='gap-2'
+            icon={<RefreshCw className='size-3.5' />}
           >
-            <RefreshCw className='size-3.5' />
             Reload
-          </Button>
-          <Button
-            type='button'
-            size='sm'
+          </ValidationActionButton>
+          <ValidationActionButton
             onClick={() => {
               void handleSave();
             }}
             loading={saving}
             disabled={!selectedPathConfig}
-            className='gap-2'
+            variant='default'
+            icon={<Save className='size-3.5' />}
           >
-            <Save className='size-3.5' />
             Save Node Validator
-          </Button>
+          </ValidationActionButton>
         </div>
         <div className='mt-3 flex flex-wrap items-center gap-2'>
-          <StatusBadge
-            status={isDirty ? 'Unsaved changes' : 'Saved'}
-            variant={isDirty ? 'warning' : 'success'}
-            size='sm'
-          />
-          {validationReport ? (
-            <>
-              <StatusBadge
-                status={`Score: ${validationReport.score}`}
-                variant={
-                  validationReport.blocked
-                    ? 'error'
-                    : validationReport.shouldWarn
-                      ? 'warning'
-                      : 'success'
-                }
-                size='sm'
-              />
-              <StatusBadge
-                status={`Failed rules: ${validationReport.failedRules}`}
-                variant={validationReport.failedRules > 0 ? 'warning' : 'success'}
-                size='sm'
-              />
-            </>
-          ) : null}
-          <StatusBadge
-            status={`Docs sync: ${validationDraft.docsSyncState?.lastSyncStatus ?? 'idle'}`}
-            variant={
-              validationDraft.docsSyncState?.lastSyncStatus === 'error'
-                ? 'error'
-                : validationDraft.docsSyncState?.lastSyncStatus === 'warning'
-                  ? 'warning'
-                  : validationDraft.docsSyncState?.lastSyncStatus === 'success'
-                    ? 'success'
-                    : 'neutral'
-            }
-            size='sm'
-          />
-          <StatusBadge
-            status={`Candidates: ${candidateRules.length}`}
-            variant={candidateRules.length > 0 ? 'warning' : 'neutral'}
-            size='sm'
-          />
+          {statusIndicators.map((indicator) => (
+            <ValidationHeaderStatusIndicator
+              key={indicator.key}
+              status={indicator.status}
+              variant={indicator.variant}
+            />
+          ))}
           {focusNodeType ? (
-            <Badge variant='outline' className='text-[10px]'>
-              Focus node type: {focusNodeType}
-            </Badge>
+            <ValidationHeaderFocusBadge label='Focus node type' value={focusNodeType} />
           ) : null}
           {focusNodeId ? (
-            <Badge variant='outline' className='text-[10px]'>
-              Focus node: {focusNodeId}
-            </Badge>
+            <ValidationHeaderFocusBadge label='Focus node' value={focusNodeId} />
           ) : null}
         </div>
       </Card>

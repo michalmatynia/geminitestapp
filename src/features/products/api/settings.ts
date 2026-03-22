@@ -5,6 +5,8 @@ import {
 } from '@/shared/contracts/products/catalogs';
 import {
   type ProductCategory,
+  type ProductCategoryCreateInput,
+  type ProductCategoryUpdateInput,
   type ProductCategoryWithChildren,
   type ReorderProductCategory as ReorderCategoryPayload,
 } from '@/shared/contracts/products/categories';
@@ -115,13 +117,13 @@ export async function getCategoriesFlat(catalogId: string | null): Promise<Produ
   }
 }
 
-export async function createCategory(data: Partial<ProductCategory>): Promise<ProductCategory> {
+export async function createCategory(data: ProductCategoryCreateInput): Promise<ProductCategory> {
   return api.post<ProductCategory>('/api/v2/products/categories', data);
 }
 
 export async function updateCategory(
   id: string,
-  data: Partial<ProductCategory>
+  data: ProductCategoryUpdateInput
 ): Promise<ProductCategory> {
   return api.put<ProductCategory>(`/api/v2/products/categories/${id}`, data);
 }

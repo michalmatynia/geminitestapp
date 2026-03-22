@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   baseActiveTemplatePreferencePayloadSchema,
+  baseExportWarehousePreferencePayloadSchema,
+  baseExportWarehousePreferenceQuerySchema,
+  baseExportWarehousePreferenceResponseSchema,
+  baseScopedPreferenceQuerySchema,
   createImportExportTemplateSchema,
   linkedInProfileResponseSchema,
   oauthTokenResponseSchema,
@@ -83,6 +87,34 @@ describe('integrations contract runtime', () => {
         },
       }).name
     ).toBe('Base Import');
+  });
+
+  it('parses shared Base preference scope and export-warehouse DTOs', () => {
+    expect(
+      baseScopedPreferenceQuerySchema.parse({
+        connectionId: 'conn-1',
+        inventoryId: 'inv-1',
+      }).inventoryId
+    ).toBe('inv-1');
+
+    expect(
+      baseExportWarehousePreferencePayloadSchema.parse({
+        inventoryId: 'inv-1',
+        warehouseId: 'wh-1',
+      }).warehouseId
+    ).toBe('wh-1');
+
+    expect(
+      baseExportWarehousePreferenceQuerySchema.parse({
+        inventoryId: 'inv-1',
+      }).inventoryId
+    ).toBe('inv-1');
+
+    expect(
+      baseExportWarehousePreferenceResponseSchema.parse({
+        warehouseId: null,
+      }).warehouseId
+    ).toBeNull();
   });
 
   it('parses shared OAuth token and LinkedIn profile response DTOs', () => {

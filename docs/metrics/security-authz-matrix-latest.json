@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-21T16:44:25.386Z",
+  "generatedAt": "2026-03-22T08:43:06.001Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -9,8 +9,8 @@
     "status": "passed",
     "routeFileCount": 285,
     "methodCount": 215,
-    "publicRouteCount": 14,
-    "protectedRouteCount": 200,
+    "publicRouteCount": 15,
+    "protectedRouteCount": 199,
     "signedRouteCount": 0,
     "actorRouteCount": 1
   },
@@ -1333,11 +1333,9 @@
     {
       "route": "settings/lite",
       "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
+      "policyId": "public-settings-lite",
+      "expectedAccess": "public",
+      "evidence": []
     },
     {
       "route": "settings/migrate/backfill-keys",
@@ -1642,5 +1640,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 166
+  "durationMs": 190
 }

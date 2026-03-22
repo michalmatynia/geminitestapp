@@ -165,29 +165,26 @@ function LearnerProfileContent(): React.JSX.Element {
           className={`grid w-full items-start ${KANGUR_PANEL_GAP_CLASSNAME} xl:grid-cols-[minmax(0,1.35fr)_minmax(22rem,28rem)]`}
         >
           <div className={`flex min-w-0 flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-          {activeTab === 'overview' ? (
-            <>
-              <div className='grid gap-6 sm:grid-cols-2'>
-                <KangurLearnerProfileLevelProgressWidget />
-                <KangurLearnerProfileQuestSummaryWidget />
-              </div>
-              <KangurLearnerProfileOverviewWidget />
-              <KangurLearnerProfileRecommendationsWidget />
-              <KangurLearnerProfileMasteryWidget />
-            </>
-          ) : (
-            <KangurLearnerProfileAiTutorMoodWidget />
-          )}
+            {activeTab === 'overview' ? (
+              <>
+                <div className='grid gap-6 sm:grid-cols-2'>
+                  <KangurLearnerProfileLevelProgressWidget />
+                  <KangurLearnerProfileQuestSummaryWidget />
+                </div>
+                <KangurLearnerProfileOverviewWidget />
+                <KangurLearnerProfileRecommendationsWidget />
+                <KangurLearnerProfileMasteryWidget />
+              </>
+            ) : (
+              <KangurLearnerProfileAiTutorMoodWidget />
+            )}
           </div>
 
-          <aside
-            className={`flex min-w-0 flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
-            aria-label={translations('statsHeading')}
-          >
+          <div className={`flex min-w-0 flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
             <KangurLearnerProfileAssignmentsWidget />
             <KangurLearnerProfilePerformanceWidget />
             <KangurLearnerProfileSessionsWidget />
-          </aside>
+          </div>
         </div>
       </section>
 

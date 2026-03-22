@@ -1,5 +1,5 @@
 import type { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
-import { hydrateLogRuntimeContext } from '@/features/observability/server/runtime-context/hydrate-system-log-runtime-context';
+import { hydrateLogRuntimeContext } from '@/features/observability/entry-server';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { ALERT_EVIDENCE_SAMPLE_LIMIT } from './config';

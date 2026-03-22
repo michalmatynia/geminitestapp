@@ -114,4 +114,168 @@ describe('executeBaseExport', () => {
       productId: 'base-new-1',
     });
   });
+
+  it('caches base64 images from the first build and reuses them on warehouse mismatch retry', async () => {
+    const imageData = { '0': 'data:image/jpeg;base64,img0', '1': 'data:image/jpeg;base64,img1' };
+
+    mocks.buildBaseProductDataMock
+      .mockResolvedValueOnce({
+        sku: 'SKU-001',
+        images: imageData,
+        stock: { 'wh-1': 5 },
+      })
+      .mockResolvedValueOnce({
+        sku: 'SKU-001',
+        images: imageData,
+      });
+
+    mocks.getExportStockFallbackEnabledMock.mockResolvedValue(true);
+
+    mocks.exportProductToBaseMock
+      .mockResolvedValueOnce({
+        success: false,
+        error: 'Warehouse wh-1 is not included in inventory',
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        productId: 'base-1',
+      });
+
+    const result = await executeBaseExport({
+      imagesOnly: false,
+      token: 'token-1',
+      targetInventoryId: 'inv-main',
+      exportProduct: createProduct(),
+      effectiveMappings: [],
+      warehouseId: 'wh-1',
+      listingExternalId: null,
+      imageBaseUrl: 'http://localhost',
+      stockWarehouseAliases: undefined,
+      producerNameById: undefined,
+      producerExternalIdByInternalId: undefined,
+      tagNameById: undefined,
+      tagExternalIdByInternalId: undefined,
+      exportImagesAsBase64: true,
+      imageBase64Mode: 'base-only',
+      imageTransform: null,
+      baseImageDiagnostics: undefined,
+      product: { id: 'product-1', stock: 5 },
+      canRetryWrite: false,
+    });
+
+    expect(result.result.success).toBe(true);
+    expect(mocks.buildBaseProductDataMock).toHaveBeenCalledTimes(2);
+
+    // The second build call should include cachedImages from the first build
+    const secondBuildOptions = mocks.buildBaseProductDataMock.mock.calls[1]?.[3];
+    expect(secondBuildOptions).toEqual(
+      expect.objectContaining({
+        cachedImages: imageData,
+      })
+    );
+  });
+
+  it('does not cache images when exportImagesAsBase64 is false', async () => {
+    mocks.buildBaseProductDataMock.mockResolvedValue({
+      sku: 'SKU-001',
+      images: ['http://localhost/img0.jpg'],
+    });
+
+    mocks.getExportStockFallbackEnabledMock.mockResolvedValue(true);
+
+    mocks.exportProductToBaseMock
+      .mockResolvedValueOnce({
+        success: false,
+        error: 'Warehouse wh-1 is not included in inventory',
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        productId: 'base-1',
+      });
+
+    await executeBaseExport({
+      imagesOnly: false,
+      token: 'token-1',
+      targetInventoryId: 'inv-main',
+      exportProduct: createProduct(),
+      effectiveMappings: [],
+      warehouseId: 'wh-1',
+      listingExternalId: null,
+      imageBaseUrl: 'http://localhost',
+      stockWarehouseAliases: undefined,
+      producerNameById: undefined,
+      producerExternalIdByInternalId: undefined,
+      tagNameById: undefined,
+      tagExternalIdByInternalId: undefined,
+      exportImagesAsBase64: false,
+      imageBase64Mode: 'base-only',
+      imageTransform: null,
+      baseImageDiagnostics: undefined,
+      product: { id: 'product-1', stock: 5 },
+      canRetryWrite: false,
+    });
+
+    // Second build should NOT have cachedImages since we're using URL mode
+    const secondBuildOptions = mocks.buildBaseProductDataMock.mock.calls[1]?.[3];
+    expect(secondBuildOptions).not.toHaveProperty('cachedImages');
+  });
+
+  it('caches base64 images on stock mismatch retry path', async () => {
+    const imageData = { '0': 'data:image/jpeg;base64,stockRetryImg' };
+
+    mocks.buildBaseProductDataMock
+      .mockResolvedValueOnce({
+        sku: 'SKU-001',
+        images: imageData,
+        stock: 5,
+      })
+      .mockResolvedValueOnce({
+        sku: 'SKU-001',
+        images: imageData,
+      });
+
+    mocks.getExportStockFallbackEnabledMock.mockResolvedValue(false);
+
+    mocks.exportProductToBaseMock
+      .mockResolvedValueOnce({
+        success: false,
+        error: 'Invalid stock quantity',
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        productId: 'base-stock-retry',
+      });
+
+    const result = await executeBaseExport({
+      imagesOnly: false,
+      token: 'token-1',
+      targetInventoryId: 'inv-main',
+      exportProduct: createProduct(),
+      effectiveMappings: [],
+      warehouseId: null,
+      listingExternalId: 'existing-1',
+      imageBaseUrl: 'http://localhost',
+      stockWarehouseAliases: undefined,
+      producerNameById: undefined,
+      producerExternalIdByInternalId: undefined,
+      tagNameById: undefined,
+      tagExternalIdByInternalId: undefined,
+      exportImagesAsBase64: true,
+      imageBase64Mode: 'base-only',
+      imageTransform: null,
+      baseImageDiagnostics: undefined,
+      product: { id: 'product-1', stock: 5 },
+      canRetryWrite: true,
+    });
+
+    expect(result.result.success).toBe(true);
+    expect(mocks.buildBaseProductDataMock).toHaveBeenCalledTimes(2);
+
+    const secondBuildOptions = mocks.buildBaseProductDataMock.mock.calls[1]?.[3];
+    expect(secondBuildOptions).toEqual(
+      expect.objectContaining({
+        cachedImages: imageData,
+      })
+    );
+  });
 });

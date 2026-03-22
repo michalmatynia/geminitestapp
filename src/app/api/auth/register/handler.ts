@@ -1,6 +1,5 @@
 import { hash } from 'bcryptjs';
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { normalizeAuthEmail } from '@/features/auth/server';
 import { getAuthSecurityPolicy, validatePasswordStrength } from '@/features/auth/server';
@@ -8,6 +7,10 @@ import { getAuthUserPageSettings } from '@/features/auth/server';
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
 import { ActivityTypes } from '@/shared/constants/observability';
+import {
+  registerPayloadSchema,
+  type RegisterPayload,
+} from '@/shared/contracts/auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   conflictError,
@@ -19,12 +22,7 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logger } from '@/shared/utils/logger';
 import { logActivity } from '@/shared/utils/observability/activity-service';
 
-export const registerSchema = z.object({
-  email: z.string().trim().email(),
-  password: z.string().min(8),
-  name: z.string().trim().min(1).optional(),
-  emailVerified: z.boolean().optional(),
-});
+export const registerSchema = registerPayloadSchema;
 
 type MongoUserDoc = {
   email: string;
@@ -37,7 +35,7 @@ type MongoUserDoc = {
 };
 
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const data = ctx.body as z.infer<typeof registerSchema> | undefined;
+  const data = ctx.body as RegisterPayload | undefined;
   if (!data) throw badRequestError('Invalid payload');
   await logAuthEvent({
     req,

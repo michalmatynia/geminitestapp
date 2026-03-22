@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 
 import type { AiPathRuntimeEvent } from '@/shared/lib/ai-paths';
-import { CompactEmptyState, StatusBadge } from '@/shared/ui';
+import { CompactEmptyState } from '@/shared/ui';
+import { RuntimeEventEntry } from '../runtime-event-entry';
 
 type AiPathsRuntimeEventLogProps = {
   events: AiPathRuntimeEvent[];
@@ -29,31 +30,18 @@ export function AiPathsRuntimeEventLog({
       <div className='max-h-[280px] space-y-2 overflow-y-auto pr-1'>
         {runtimeLogEvents.length > 0 ? (
           runtimeLogEvents.map((event) => (
-            <div
+            <RuntimeEventEntry
               key={event.id}
+              timestamp={new Date(event.timestamp).toLocaleTimeString()}
+              level={event.level}
+              kind={event.nodeType ?? event.type}
+              message={event.message}
               className='rounded-md border border-border/60 bg-card/60 px-2 py-1.5 text-[11px] text-gray-300'
-            >
-              <div className='flex flex-wrap items-center gap-1.5 text-[10px]'>
-                <span className='text-gray-500'>
-                  {new Date(event.timestamp).toLocaleTimeString()}
-                </span>
-                <StatusBadge
-                  status={event.level ?? 'info'}
-                  variant={
-                    event.level === 'error' ? 'error' : event.level === 'warn' ? 'warning' : 'info'
-                  }
-                  size='sm'
-                  className='font-bold'
-                />
-                <StatusBadge
-                  status={event.nodeType ?? event.type ?? 'event'}
-                  variant='neutral'
-                  size='sm'
-                  className='border-border/60 text-gray-400'
-                />
-              </div>
-              <div className='mt-1 text-gray-200'>{event.message}</div>
-            </div>
+              timeClassName='text-gray-500'
+              levelClassName='font-bold'
+              kindClassName='border-border/60 text-gray-400'
+              stacked
+            />
           ))
         ) : (
           <CompactEmptyState

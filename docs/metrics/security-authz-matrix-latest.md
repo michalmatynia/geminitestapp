@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-21'
+last_reviewed: '2026-03-22'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,15 +8,15 @@ canonical: true
 ---
 # Security Authorization Matrix Report
 
-Generated at: 2026-03-21T16:44:25.386Z
+Generated at: 2026-03-22T08:43:06.001Z
 
 ## Summary
 
 - Status: PASSED
 - Route files scanned: 285
 - Route methods scanned: 215
-- Public methods: 14
-- Protected methods: 200
+- Public methods: 15
+- Protected methods: 199
 - Signed ingress methods: 0
 - Actor-scoped methods: 1
 - Errors: 0
@@ -203,7 +203,7 @@ Generated at: 2026-03-21T16:44:25.386Z
 | settings/cache | GET | protected | `access helper` |
 | settings/database/sync | POST | protected | `auth()`, `session.user`, `permission/isElevated` |
 | settings/heavy | GET | protected | `access helper` |
-| settings/lite | GET | protected | `access helper` |
+| settings/lite | GET | public | - |
 | settings/migrate/backfill-keys | POST | protected | `auth()`, `session.user`, `permission/isElevated` |
 | settings/providers | GET | protected | `access helper` |
 | settings | GET | protected | `access helper` |

@@ -128,4 +128,125 @@ describe('resolveListingForExport', () => {
       },
     });
   });
+
+  it('runs both lookup queries in parallel for images-only exports', async () => {
+    const resolvedRepo = createRepositoryMock();
+    const primaryRepo = createRepositoryMock();
+    const existingListing = createListing({ inventoryId: 'inv-old' });
+
+    // Track call order to verify parallelism
+    const callOrder: string[] = [];
+
+    mocks.findByIdMock.mockImplementation(async () => {
+      callOrder.push('findById:start');
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      callOrder.push('findById:end');
+      return { listing: existingListing, repository: resolvedRepo };
+    });
+
+    mocks.findByProductAndConnectionMock.mockImplementation(async () => {
+      callOrder.push('findByConnection:start');
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      callOrder.push('findByConnection:end');
+      return { listing: existingListing, repository: resolvedRepo };
+    });
+
+    await resolveListingForExport({
+      productId: 'product-1',
+      connectionId: 'connection-1',
+      inventoryId: 'inv-main',
+      imagesOnly: true,
+      externalListingId: 'base-123',
+      listingIdFromData: 'listing-1',
+      baseIntegrationId: 'integration-base',
+      primaryListingRepo: primaryRepo,
+    });
+
+    // Both should start before either finishes (parallel execution)
+    expect(callOrder[0]).toBe('findById:start');
+    expect(callOrder[1]).toBe('findByConnection:start');
+    expect(mocks.findByIdMock).toHaveBeenCalledTimes(1);
+    expect(mocks.findByProductAndConnectionMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('prefers ID-based listing over connection-based for images-only', async () => {
+    const idRepo = createRepositoryMock();
+    const connectionRepo = createRepositoryMock();
+    const idListing = createListing({ id: 'id-listing', externalListingId: 'from-id' });
+    const connectionListing = createListing({ id: 'conn-listing', externalListingId: 'from-conn' });
+
+    mocks.findByIdMock.mockResolvedValue({
+      listing: idListing,
+      repository: idRepo,
+    });
+    mocks.findByProductAndConnectionMock.mockResolvedValue({
+      listing: connectionListing,
+      repository: connectionRepo,
+    });
+
+    const result = await resolveListingForExport({
+      productId: 'product-1',
+      connectionId: 'connection-1',
+      inventoryId: 'inv-main',
+      imagesOnly: true,
+      externalListingId: null,
+      listingIdFromData: 'id-listing',
+      baseIntegrationId: 'integration-base',
+      primaryListingRepo: createRepositoryMock(),
+    });
+
+    expect(result.listingRepo).toBe(idRepo);
+    expect(result.listingId).toBe('id-listing');
+    expect(result.listingExternalId).toBe('from-id');
+  });
+
+  it('falls back to connection-based listing when ID-based returns no match', async () => {
+    const connectionRepo = createRepositoryMock();
+    const connectionListing = createListing({ id: 'conn-listing', externalListingId: 'from-conn' });
+
+    mocks.findByIdMock.mockResolvedValue(null);
+    mocks.findByProductAndConnectionMock.mockResolvedValue({
+      listing: connectionListing,
+      repository: connectionRepo,
+    });
+
+    const result = await resolveListingForExport({
+      productId: 'product-1',
+      connectionId: 'connection-1',
+      inventoryId: 'inv-main',
+      imagesOnly: true,
+      externalListingId: null,
+      listingIdFromData: 'stale-id',
+      baseIntegrationId: 'integration-base',
+      primaryListingRepo: createRepositoryMock(),
+    });
+
+    expect(result.listingRepo).toBe(connectionRepo);
+    expect(result.listingId).toBe('conn-listing');
+    expect(result.listingExternalId).toBe('from-conn');
+  });
+
+  it('skips ID lookup when listingIdFromData is null for images-only', async () => {
+    const connectionRepo = createRepositoryMock();
+    const connectionListing = createListing({ externalListingId: 'ext-1' });
+
+    mocks.findByProductAndConnectionMock.mockResolvedValue({
+      listing: connectionListing,
+      repository: connectionRepo,
+    });
+
+    const result = await resolveListingForExport({
+      productId: 'product-1',
+      connectionId: 'connection-1',
+      inventoryId: 'inv-main',
+      imagesOnly: true,
+      externalListingId: null,
+      listingIdFromData: null,
+      baseIntegrationId: 'integration-base',
+      primaryListingRepo: createRepositoryMock(),
+    });
+
+    expect(mocks.findByIdMock).not.toHaveBeenCalled();
+    expect(result.listingExternalId).toBe('ext-1');
+  });
 });

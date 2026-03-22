@@ -44,6 +44,7 @@ import {
 } from '@/features/kangur/ui/services/progress';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -171,6 +172,7 @@ function DraggableToken({
   token,
   index,
   isDragDisabled,
+  isCoarsePointer,
   isSelected,
   onClick,
   onSelect,
@@ -178,6 +180,7 @@ function DraggableToken({
   token: TokenItem;
   index: number;
   isDragDisabled: boolean;
+  isCoarsePointer: boolean;
   isSelected: boolean;
   onClick: () => void;
   onSelect: () => void;
@@ -196,14 +199,22 @@ function DraggableToken({
             {...draggableProvided.draggableProps}
             {...draggableProvided.dragHandleProps}
             className={cn(
-              'flex h-10 w-10 items-center justify-center rounded-full text-base transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white sm:h-12 sm:w-12 sm:text-lg lg:h-14 lg:w-14',
+              'flex items-center justify-center rounded-full touch-manipulation select-none transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white active:scale-[0.97]',
+              isCoarsePointer
+                ? 'h-12 w-12 text-lg sm:h-14 sm:w-14 sm:text-xl lg:h-16 lg:w-16'
+                : 'h-10 w-10 text-base sm:h-12 sm:w-12 sm:text-lg lg:h-14 lg:w-14',
               token.style,
               isSelected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white',
               snapshot.isDragging ? 'scale-110' : null,
               isDragDisabled ? 'cursor-default opacity-80' : 'cursor-grab active:cursor-grabbing'
             )}
-            onClick={() => {
+            onClick={(event) => {
+              event.stopPropagation();
               if (!isDragDisabled) {
+                if (isCoarsePointer) {
+                  onSelect();
+                  return;
+                }
                 onClick();
               }
             }}
@@ -238,6 +249,7 @@ export default function DivisionGroupsGame({
   onFinish,
 }: DivisionGroupsGameProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const isCoarsePointer = useKangurCoarsePointer();
   const finishLabel = getKangurMiniGameFinishLabel(
     translations,
     finishLabelVariant === 'topics' ? 'topics' : 'lesson'
@@ -617,6 +629,13 @@ export default function DivisionGroupsGame({
       : status === 'wrong'
         ? wrongHint
         : translations('divisionGroups.feedback.idle');
+  const selectionHint = selectedToken
+    ? translations('divisionGroups.feedback.touchSelected', {
+        emoji: selectedToken.emoji,
+      })
+    : isCoarsePointer
+      ? translations('divisionGroups.feedback.touchIdle')
+      : 'Wybierz element, aby przenieść go klawiaturą.';
 
   return (
     <KangurPracticeGameStage className='w-full max-w-none'>
@@ -692,12 +711,22 @@ export default function DivisionGroupsGame({
                         <div
                           ref={provided.innerRef}
                           {...provided.droppableProps}
+                          data-testid='division-groups-pool-zone'
                           className={cn(
-                            'mt-3 flex min-h-[96px] flex-wrap items-center justify-center kangur-panel-gap rounded-[20px] border-2 border-dashed px-3 py-4 transition sm:min-h-[112px]',
+                            'mt-3 flex flex-wrap items-center justify-center rounded-[20px] border-2 border-dashed px-3 py-4 transition touch-manipulation',
+                            isCoarsePointer ? 'min-h-[112px] sm:min-h-[128px]' : 'min-h-[96px] sm:min-h-[112px]',
                             snapshot.isDraggingOver
                               ? 'border-amber-300 bg-amber-50/70'
-                              : 'border-white/60 bg-white/70'
+                              : selectedToken && isCoarsePointer && !isLocked
+                                ? 'border-amber-200 bg-amber-50/45'
+                                : 'border-white/60 bg-white/70',
+                            selectedToken && isCoarsePointer && !isLocked && 'cursor-pointer'
                           )}
+                          onClick={() => {
+                            if (isCoarsePointer && selectedToken) {
+                              moveSelectedToken('pool');
+                            }
+                          }}
                         >
                           {pool.map((token, index) => (
                             <DraggableToken
@@ -705,6 +734,7 @@ export default function DivisionGroupsGame({
                               token={token}
                               index={index}
                               isDragDisabled={isLocked}
+                              isCoarsePointer={isCoarsePointer}
                               isSelected={selectedTokenId === token.id}
                               onClick={() => moveFromPool(token)}
                               onSelect={() =>
@@ -747,12 +777,22 @@ export default function DivisionGroupsGame({
                             <div
                               ref={provided.innerRef}
                               {...provided.droppableProps}
+                              data-testid={`division-groups-group-zone-${groupIndex}`}
                               className={cn(
-                                'mt-3 flex min-h-[88px] flex-wrap items-center justify-center kangur-panel-gap rounded-[20px] border-2 border-dashed px-3 py-4 transition sm:min-h-[104px]',
+                                'mt-3 flex flex-wrap items-center justify-center rounded-[20px] border-2 border-dashed px-3 py-4 transition touch-manipulation',
+                                isCoarsePointer ? 'min-h-[104px] sm:min-h-[120px]' : 'min-h-[88px] sm:min-h-[104px]',
                                 snapshot.isDraggingOver
                                   ? 'border-teal-300 bg-teal-50/80'
-                                  : 'border-white/60 bg-white/70'
+                                  : selectedToken && isCoarsePointer && !isLocked
+                                    ? 'border-amber-200 bg-amber-50/45'
+                                    : 'border-white/60 bg-white/70',
+                                selectedToken && isCoarsePointer && !isLocked && 'cursor-pointer'
                               )}
+                              onClick={() => {
+                                if (isCoarsePointer && selectedToken) {
+                                  moveSelectedToken(groupId(groupIndex));
+                                }
+                              }}
                             >
                               {group.map((token, index) => (
                                 <DraggableToken
@@ -760,6 +800,7 @@ export default function DivisionGroupsGame({
                                   token={token}
                                   index={index}
                                   isDragDisabled={isLocked}
+                                  isCoarsePointer={isCoarsePointer}
                                   isSelected={selectedTokenId === token.id}
                                   onClick={() => moveFromGroup(token, groupIndex)}
                                   onSelect={() =>
@@ -801,12 +842,22 @@ export default function DivisionGroupsGame({
                         <div
                           ref={provided.innerRef}
                           {...provided.droppableProps}
+                          data-testid='division-groups-remainder-zone'
                           className={cn(
-                            'mt-3 flex min-h-[80px] flex-wrap items-center justify-center kangur-panel-gap rounded-[20px] border-2 border-dashed px-3 py-4 transition sm:min-h-[96px]',
+                            'mt-3 flex flex-wrap items-center justify-center rounded-[20px] border-2 border-dashed px-3 py-4 transition touch-manipulation',
+                            isCoarsePointer ? 'min-h-[96px] sm:min-h-[112px]' : 'min-h-[80px] sm:min-h-[96px]',
                             snapshot.isDraggingOver
                               ? 'border-amber-300 bg-amber-50/80'
-                              : 'border-white/60 bg-white/70'
+                              : selectedToken && isCoarsePointer && !isLocked
+                                ? 'border-amber-200 bg-amber-50/45'
+                                : 'border-white/60 bg-white/70',
+                            selectedToken && isCoarsePointer && !isLocked && 'cursor-pointer'
                           )}
+                          onClick={() => {
+                            if (isCoarsePointer && selectedToken) {
+                              moveSelectedToken('remainder');
+                            }
+                          }}
                         >
                           {remainder.map((token, index) => (
                             <DraggableToken
@@ -814,6 +865,7 @@ export default function DivisionGroupsGame({
                               token={token}
                               index={index}
                               isDragDisabled={isLocked}
+                              isCoarsePointer={isCoarsePointer}
                               isSelected={selectedTokenId === token.id}
                               onClick={() => moveFromRemainder(token)}
                               onSelect={() =>
@@ -845,10 +897,9 @@ export default function DivisionGroupsGame({
                         role='status'
                         aria-live='polite'
                         aria-atomic='true'
+                        data-testid='division-groups-selection-hint'
                       >
-                        {selectedToken
-                          ? `Wybrany element: ${selectedToken.emoji}`
-                          : 'Wybierz element, aby przenieść go klawiaturą.'}
+                        {selectionHint}
                       </p>
                       <div className={KANGUR_WRAP_ROW_CLASSNAME}>
                         <KangurButton

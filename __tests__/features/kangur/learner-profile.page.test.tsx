@@ -3,16 +3,13 @@
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { KangurScoreRecord, KangurUser } from '@kangur/platform';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 const {
-  logKangurClientErrorMock,
-  withKangurClientError,
-  withKangurClientErrorSync,
   useKangurRoutingMock,
   useOptionalKangurRoutingMock,
   useKangurAuthMock,
@@ -20,17 +17,12 @@ const {
   useKangurAuthActionsMock,
   useKangurLoginModalMock,
   useKangurSubjectFocusMock,
-  getKangurPlatformMock,
-  loadProgressMock,
-  scoreFilterMock,
   navigateToLoginMock,
   logoutMock,
   checkAppStateMock,
   useKangurPageContentEntryMock,
+  useKangurLearnerProfileRuntimeMock,
 } = vi.hoisted(() => ({
-  logKangurClientErrorMock: globalThis.__kangurClientErrorMocks().logKangurClientErrorMock,
-  withKangurClientError: globalThis.__kangurClientErrorMocks().withKangurClientError,
-  withKangurClientErrorSync: globalThis.__kangurClientErrorMocks().withKangurClientErrorSync,
   useKangurRoutingMock: vi.fn(),
   useOptionalKangurRoutingMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
@@ -38,13 +30,11 @@ const {
   useKangurAuthActionsMock: vi.fn(),
   useKangurLoginModalMock: vi.fn(),
   useKangurSubjectFocusMock: vi.fn(),
-  getKangurPlatformMock: vi.fn(),
-  loadProgressMock: vi.fn(),
-  scoreFilterMock: vi.fn(),
   navigateToLoginMock: vi.fn(),
   logoutMock: vi.fn(),
   checkAppStateMock: vi.fn(),
   useKangurPageContentEntryMock: vi.fn(),
+  useKangurLearnerProfileRuntimeMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
@@ -103,26 +93,22 @@ vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
     }),
 }));
 
-vi.mock('@/features/kangur/services/kangur-platform', () => ({
-  getKangurPlatform: getKangurPlatformMock,
-}));
+vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext')>();
 
-vi.mock('@/features/kangur/observability/client', () => ({
-  logKangurClientError: logKangurClientErrorMock,
-  withKangurClientError,
-  withKangurClientErrorSync,
-}));
-
-vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/kangur/ui/services/progress')>();
   return {
     ...actual,
-    loadProgress: loadProgressMock,
+    KangurLearnerProfileRuntimeBoundary: ({ children }: { children: React.ReactNode }) => (
+      <>{children}</>
+    ),
+    useKangurLearnerProfileRuntime: useKangurLearnerProfileRuntimeMock,
   };
 });
 
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import LearnerProfile from '@/features/kangur/ui/pages/LearnerProfile';
+import { buildKangurLearnerProfileSnapshot } from '@/features/kangur/ui/services/profile';
 
 const createTestQueryClient = (): QueryClient =>
   new QueryClient({
@@ -214,6 +200,47 @@ const createUser = (overrides: Partial<KangurUser> = {}): KangurUser => ({
   ...overrides,
 });
 
+const buildRuntimeValue = ({
+  user = createUser({
+    activeLearner: {
+      id: 'learner-jan',
+      displayName: 'Jan',
+    } as KangurUser['activeLearner'],
+  }),
+  progress = baseProgress,
+  scores = [],
+  isLoadingScores = false,
+  scoresError = null,
+}: {
+  user?: KangurUser | null;
+  progress?: KangurProgressState;
+  scores?: KangurScoreRecord[];
+  isLoadingScores?: boolean;
+  scoresError?: string | null;
+} = {}) => {
+  const snapshot = buildKangurLearnerProfileSnapshot({
+    progress,
+    scores,
+    dailyGoalGames: 3,
+    locale: 'pl',
+    now,
+    translate: (key) => key,
+  });
+
+  return {
+    basePath: '/kangur',
+    user,
+    progress,
+    scores,
+    isLoadingScores,
+    scoresError,
+    snapshot,
+    maxWeeklyGames: Math.max(1, ...snapshot.weeklyActivity.map((point) => point.games)),
+    xpToNextLevel: snapshot.nextLevel ? Math.max(0, snapshot.nextLevel.minXp - snapshot.totalXp) : 0,
+    navigateToLogin: navigateToLoginMock,
+  };
+};
+
 describe('LearnerProfile page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -222,12 +249,6 @@ describe('LearnerProfile page', () => {
       basePath: '/kangur',
     });
     useOptionalKangurRoutingMock.mockReturnValue(null);
-    loadProgressMock.mockReturnValue(baseProgress);
-    getKangurPlatformMock.mockReturnValue({
-      score: {
-        filter: scoreFilterMock,
-      },
-    });
     useKangurAuthMock.mockReturnValue({
       user: createUser(),
       navigateToLogin: navigateToLoginMock,
@@ -248,6 +269,15 @@ describe('LearnerProfile page', () => {
     useKangurPageContentEntryMock.mockReturnValue({
       entry: null,
     });
+    useKangurLearnerProfileRuntimeMock.mockReturnValue(
+      buildRuntimeValue({
+        scores: [
+          createScore({ id: 's1', operation: 'addition', correct_answers: 8 }),
+          createScore({ id: 's2', operation: 'multiplication', correct_answers: 10, score: 10 }),
+          createScore({ id: 's3', operation: 'division', correct_answers: 6, score: 6 }),
+        ],
+      })
+    );
     useKangurSubjectFocusMock.mockReturnValue({
       subject: 'maths',
       setSubject: vi.fn(),
@@ -256,37 +286,7 @@ describe('LearnerProfile page', () => {
   });
 
   it('loads user scores and renders profile metrics', async () => {
-    scoreFilterMock.mockImplementation(
-      (criteria: Partial<KangurScoreRecord>): Promise<KangurScoreRecord[]> => {
-        if (criteria.created_by) {
-          return Promise.resolve([
-            createScore({ id: 's1', operation: 'addition', correct_answers: 8 }),
-            createScore({ id: 's2', operation: 'multiplication', correct_answers: 10, score: 10 }),
-          ]);
-        }
-        if (criteria.player_name) {
-          return Promise.resolve([
-            createScore({ id: 's2', operation: 'multiplication', correct_answers: 10, score: 10 }),
-            createScore({ id: 's3', operation: 'division', correct_answers: 6, score: 6 }),
-          ]);
-        }
-        return Promise.resolve([]);
-      }
-    );
-
     renderLearnerProfilePage();
-
-    await waitFor(() => expect(scoreFilterMock).toHaveBeenCalledTimes(2));
-    expect(scoreFilterMock).toHaveBeenCalledWith(
-      { created_by: 'jan@example.com', subject: 'maths' },
-      '-created_date',
-      120
-    );
-    expect(scoreFilterMock).toHaveBeenCalledWith(
-      { player_name: 'Jan', subject: 'maths' },
-      '-created_date',
-      120
-    );
 
     expect(screen.getByRole('tab', { name: /Profil ucznia/ })).toBeInTheDocument();
     expect(screen.getByTestId('kangur-learner-profile-hero')).toBeInTheDocument();
@@ -373,9 +373,22 @@ describe('LearnerProfile page', () => {
   it('keeps profile in local mode when user is not authenticated', async () => {
     useKangurAuthMock.mockReturnValue({
       user: null,
+      isAuthenticated: false,
       navigateToLogin: navigateToLoginMock,
       logout: logoutMock,
     });
+    useOptionalKangurAuthMock.mockReturnValue({
+      user: null,
+      isAuthenticated: false,
+      navigateToLogin: navigateToLoginMock,
+      logout: logoutMock,
+    });
+    useKangurLearnerProfileRuntimeMock.mockReturnValue(
+      buildRuntimeValue({
+        user: null,
+        scores: [],
+      })
+    );
     const openLoginModal = vi.fn();
     useKangurLoginModalMock.mockReturnValue({
       openLoginModal,
@@ -383,7 +396,6 @@ describe('LearnerProfile page', () => {
 
     renderLearnerProfilePage();
 
-    expect(scoreFilterMock).not.toHaveBeenCalled();
     expect(screen.getByRole('tab', { name: /Profil ucznia/ })).toBeInTheDocument();
     expect(screen.getByTestId('learner-profile-operation-empty')).toHaveClass(
       'soft-card',
@@ -402,23 +414,31 @@ describe('LearnerProfile page', () => {
   });
 
   it('shows scores loading error when score provider fails', async () => {
-    scoreFilterMock.mockRejectedValue(new Error('Network unavailable'));
+    useKangurLearnerProfileRuntimeMock.mockReturnValue(
+      buildRuntimeValue({
+        scores: [],
+        scoresError: 'Nie udało się pobrać historii wyników.',
+      })
+    );
 
     renderLearnerProfilePage();
 
     expect(await screen.findByTestId('learner-profile-sessions-error')).toHaveTextContent(
       'Nie udało się pobrać historii wyników.'
     );
-    expect(logKangurClientErrorMock).toHaveBeenCalledTimes(1);
   });
 
   it('treats score authorization errors as expected local-mode fallback', async () => {
-    scoreFilterMock.mockRejectedValue({ status: 403 });
+    useKangurLearnerProfileRuntimeMock.mockReturnValue(
+      buildRuntimeValue({
+        scores: [],
+        scoresError: null,
+      })
+    );
 
     renderLearnerProfilePage();
 
     expect(await screen.findByText('Brak rozegranych sesji.')).toBeInTheDocument();
     expect(screen.queryByText('Nie udało się pobrać historii wyników.')).not.toBeInTheDocument();
-    expect(logKangurClientErrorMock).not.toHaveBeenCalled();
   });
 });

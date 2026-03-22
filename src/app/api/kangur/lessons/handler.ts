@@ -1,32 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { getKangurLessonRepository } from '@/features/kangur/services/kangur-lesson-repository';
 import {
   kangurLessonAgeGroupSchema,
+  kangurLessonsQuerySchema,
+  kangurLessonsReplacePayloadSchema,
   kangurLessonSubjectSchema,
-  kangurLessonsSchema,
-} from '@kangur/contracts';
+} from '@/shared/contracts/kangur';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
-import { optionalBooleanQuerySchema, optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
-export const querySchema = z.object({
-  subject: optionalTrimmedQueryString(kangurLessonSubjectSchema),
-  ageGroup: optionalTrimmedQueryString(kangurLessonAgeGroupSchema),
-  enabledOnly: optionalBooleanQuerySchema(),
-});
-
-const bodySchema = z.object({
-  lessons: kangurLessonsSchema,
-});
+export { kangurLessonsQuerySchema as querySchema };
+export { kangurLessonsReplacePayloadSchema as bodySchema };
 
 export async function getKangurLessonsHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
-  const query = querySchema.parse(ctx.query ?? {});
+  const query = kangurLessonsQuerySchema.parse(ctx.query ?? {});
   const parsedSubject = kangurLessonSubjectSchema.safeParse(query.subject);
   const parsedAgeGroup = kangurLessonAgeGroupSchema.safeParse(query.ageGroup);
   const subject = parsedSubject.success ? parsedSubject.data : undefined;
@@ -54,7 +46,7 @@ export async function postKangurLessonsHandler(
     throw forbiddenError('Only admins can update Kangur lessons.');
   }
 
-  const parsed = bodySchema.parse(ctx.body ?? {});
+  const parsed = kangurLessonsReplacePayloadSchema.parse(ctx.body ?? {});
   const repository = await getKangurLessonRepository();
   const lessons = await repository.replaceLessons(parsed.lessons);
 

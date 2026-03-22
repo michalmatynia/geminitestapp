@@ -46,6 +46,7 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type {
   KangurIntlTranslate,
   KangurMiniGameFeedbackState,
@@ -267,15 +268,18 @@ const buildTokenClassName = ({
   showStatus,
   isCorrect,
   isSelected,
+  isCoarsePointer,
 }: {
   isDragging: boolean;
   showStatus: boolean;
   isCorrect: boolean;
   isSelected: boolean;
+  isCoarsePointer: boolean;
 }): string =>
   cn(
     KANGUR_INLINE_CENTER_ROW_CLASSNAME,
-    'rounded-[18px] border px-3 py-2 text-base font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white cursor-grab select-none',
+    'rounded-[18px] border font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white cursor-grab select-none touch-manipulation active:scale-[0.985]',
+    isCoarsePointer ? 'min-h-[52px] px-4 py-3 text-[15px]' : 'px-3 py-2 text-base',
     KANGUR_ACCENT_STYLES.slate.badge,
     KANGUR_ACCENT_STYLES.slate.hoverCard,
     isDragging && 'scale-[1.02] shadow-[0_18px_40px_-26px_rgba(15,23,42,0.2)] cursor-grabbing',
@@ -291,17 +295,20 @@ const resolveBinStatus = ({
   isDraggingOver,
   isCorrect,
   accent,
+  isCoarsePointer,
 }: {
   checked: boolean;
   isDraggingOver: boolean;
   isCorrect: boolean;
   accent: KangurAccent;
+  isCoarsePointer: boolean;
 }): { className: string; statusAccent: KangurAccent } => {
   if (checked) {
     return {
       statusAccent: isCorrect ? 'emerald' : 'rose',
       className: cn(
-        'rounded-[22px] border px-3 py-3 transition min-h-[110px]',
+        'rounded-[22px] border px-3 py-3 transition touch-manipulation',
+        isCoarsePointer ? 'min-h-[132px]' : 'min-h-[110px]',
         isCorrect
           ? KANGUR_ACCENT_STYLES.emerald.activeCard
           : KANGUR_ACCENT_STYLES.rose.activeCard
@@ -313,7 +320,8 @@ const resolveBinStatus = ({
     return {
       statusAccent: accent,
       className: cn(
-        'rounded-[22px] border-2 border-dashed px-3 py-3 transition min-h-[110px] scale-[1.01]',
+        'rounded-[22px] border-2 border-dashed px-3 py-3 transition touch-manipulation scale-[1.01]',
+        isCoarsePointer ? 'min-h-[132px]' : 'min-h-[110px]',
         KANGUR_ACCENT_STYLES[accent].activeCard
       ),
     };
@@ -322,7 +330,8 @@ const resolveBinStatus = ({
   return {
     statusAccent: accent,
     className: cn(
-      'rounded-[22px] border-2 border-dashed px-3 py-3 transition min-h-[110px]',
+      'rounded-[22px] border-2 border-dashed px-3 py-3 transition touch-manipulation',
+      isCoarsePointer ? 'min-h-[132px]' : 'min-h-[110px]',
       KANGUR_ACCENT_STYLES[accent].badge,
       KANGUR_ACCENT_STYLES[accent].hoverCard
     ),
@@ -336,6 +345,7 @@ function DraggableToken({
   showStatus,
   isCorrect,
   isSelected,
+  isCoarsePointer,
   onClick,
 }: {
   token: SpeechToken;
@@ -344,6 +354,7 @@ function DraggableToken({
   showStatus: boolean;
   isCorrect: boolean;
   isSelected: boolean;
+  isCoarsePointer: boolean;
   onClick: () => void;
 }): React.ReactElement | React.ReactPortal {
   return (
@@ -364,6 +375,7 @@ function DraggableToken({
               showStatus,
               isCorrect,
               isSelected,
+              isCoarsePointer,
             })}
             aria-label={token.label}
             aria-pressed={isSelected}
@@ -395,6 +407,7 @@ export default function EnglishPartsOfSpeechGame({
   onFinish,
 }: KangurMiniGameFinishProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const isCoarsePointer = useKangurCoarsePointer();
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const [roundIndex, setRoundIndex] = useState(0);
   const [roundState, setRoundState] = useState<RoundState>(() =>
@@ -435,6 +448,13 @@ export default function EnglishPartsOfSpeechGame({
   }, [round.parts, round.tokens]);
 
   const isRoundComplete = roundState.pool.length === 0;
+  const selectedToken = selectedTokenId
+    ? roundState.pool.find((token) => token.id === selectedTokenId) ??
+      Object.values(roundState.bins)
+        .flatMap((items) => items ?? [])
+        .find((token) => token.id === selectedTokenId) ??
+      null
+    : null;
 
   const handleAssignToken = (part: PartOfSpeech): void => {
     if (checked || !selectedTokenId) return;
@@ -725,8 +745,10 @@ export default function EnglishPartsOfSpeechGame({
                 <KangurStatusChip accent='slate' className='text-[10px] uppercase tracking-[0.16em]'>
                   {translateKangurMiniGameWithFallback(
                     translations,
-                    'englishPartsOfSpeech.inRound.modeLabel',
-                    'Drag and drop'
+                    isCoarsePointer
+                      ? 'englishPartsOfSpeech.inRound.modeLabelTouch'
+                      : 'englishPartsOfSpeech.inRound.modeLabel',
+                    isCoarsePointer ? 'Tap or drag' : 'Drag and drop'
                   )}
                 </KangurStatusChip>
               </div>
@@ -759,8 +781,13 @@ export default function EnglishPartsOfSpeechGame({
                   ref={provided.innerRef}
                   {...provided.droppableProps}
                   className={cn(
-                    'mt-3 flex min-h-[72px] flex-wrap items-center justify-center gap-2 rounded-[20px] border-2 border-dashed px-3 py-3 transition',
-                    snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/70' : 'border-slate-200'
+                    'mt-3 flex flex-wrap items-center justify-center gap-2 rounded-[20px] border-2 border-dashed px-3 py-3 transition touch-manipulation',
+                    isCoarsePointer ? 'min-h-[92px]' : 'min-h-[72px]',
+                    snapshot.isDraggingOver
+                      ? 'border-amber-300 bg-amber-50/70'
+                      : selectedToken && !checked && isCoarsePointer
+                        ? 'border-amber-200 bg-amber-50/40'
+                        : 'border-slate-200'
                   )}
                   onClick={handleReturnToPool}
                   role='button'
@@ -783,6 +810,7 @@ export default function EnglishPartsOfSpeechGame({
                       showStatus={false}
                       isCorrect={false}
                       isSelected={selectedTokenId === token.id}
+                      isCoarsePointer={isCoarsePointer}
                       onClick={() =>
                         setSelectedTokenId((current) => (current === token.id ? null : token.id))
                       }
@@ -814,12 +842,16 @@ export default function EnglishPartsOfSpeechGame({
                       isDraggingOver: snapshot.isDraggingOver,
                       isCorrect,
                       accent: bin.accent,
+                      isCoarsePointer,
                     });
                     return (
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className={surface.className}
+                        className={cn(
+                          surface.className,
+                          selectedToken && !checked && isCoarsePointer && 'border-amber-200 bg-amber-50/35'
+                        )}
                         onClick={() => handleAssignToken(bin.id)}
                         role='button'
                         tabIndex={checked ? -1 : 0}
@@ -858,6 +890,7 @@ export default function EnglishPartsOfSpeechGame({
                               showStatus={checked}
                               isCorrect={item.part === bin.id}
                               isSelected={selectedTokenId === item.id}
+                              isCoarsePointer={isCoarsePointer}
                               onClick={() =>
                                 setSelectedTokenId((current) =>
                                   current === item.id ? null : item.id
@@ -879,6 +912,31 @@ export default function EnglishPartsOfSpeechGame({
               );
             })}
           </div>
+
+          {isCoarsePointer || selectedToken ? (
+            <KangurInfoCard accent='slate' className='w-full' padding='sm' tone='neutral'>
+              <p
+                className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'
+                role='status'
+                aria-live='polite'
+                aria-atomic='true'
+                data-testid='english-parts-of-speech-selection-hint'
+              >
+                {selectedToken
+                  ? translateKangurMiniGameWithFallback(
+                      translations,
+                      'englishPartsOfSpeech.inRound.touchSelected',
+                      `Selected word: ${selectedToken.label}. Tap a category or the pool.`,
+                      { label: selectedToken.label }
+                    )
+                  : translateKangurMiniGameWithFallback(
+                      translations,
+                      'englishPartsOfSpeech.inRound.touchIdle',
+                      'Tap a word, then tap a category or the pool.'
+                    )}
+              </p>
+            </KangurInfoCard>
+          ) : null}
 
           {feedback ? (
             <KangurInfoCard accent={feedbackAccent} tone='accent' padding='sm' className='text-sm'>

@@ -4,8 +4,8 @@ import { RefreshCcwIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Badge, Button, Card, Skeleton } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
 
 type TrendSnapshot = {
   at: string;
@@ -79,6 +79,9 @@ type TrendSnapshotsPayload = {
 };
 
 const TREND_SNAPSHOT_LIMIT = 12;
+const portableEngineOutlineBadgeClassName = 'border-white/10 text-gray-300';
+const portableEngineInfoPanelClassName =
+  'rounded-md border border-border/60 bg-black/20 p-2 text-xs text-gray-300';
 
 const formatTimestamp = (value: string | null): string => {
   if (!value) return 'n/a';
@@ -88,6 +91,137 @@ const formatTimestamp = (value: string | null): string => {
 };
 
 const formatPercent = (value: number): string => `${Math.round(value)}%`;
+
+type PortableEngineOutlineBadgeProps = {
+  children: React.ReactNode;
+  className?: string;
+} & Omit<React.ComponentProps<typeof Badge>, 'children'>;
+
+type PortableEngineInfoPanelProps = {
+  children: React.ReactNode;
+  className?: string;
+};
+
+type PortableEngineMutedLineProps = {
+  children: React.ReactNode;
+  className?: string;
+};
+
+type PortableEngineSummaryBadgeConfig = {
+  key: string;
+  label: React.ReactNode;
+};
+
+type PortableEngineReasonCountEntry = {
+  reason: string;
+  count: number;
+};
+
+type PortableEngineReasonBadgeListProps = {
+  entries: PortableEngineReasonCountEntry[];
+  emptyMessage: string;
+  maxItems?: number;
+};
+
+type PortableEngineRecordCardProps = {
+  title: React.ReactNode;
+  description: React.ReactNode;
+  className?: string;
+  titleClassName?: string;
+  descriptionClassName?: string;
+  stacked?: boolean;
+};
+
+function PortableEngineOutlineBadge({
+  children,
+  className,
+  variant = 'outline',
+  ...props
+}: PortableEngineOutlineBadgeProps): React.JSX.Element {
+  return (
+    <Badge
+      variant={variant}
+      className={cn(
+        variant === 'outline' ? portableEngineOutlineBadgeClassName : '',
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </Badge>
+  );
+}
+
+function PortableEngineInfoPanel({
+  children,
+  className,
+}: PortableEngineInfoPanelProps): React.JSX.Element {
+  return <div className={cn(portableEngineInfoPanelClassName, className)}>{children}</div>;
+}
+
+function PortableEngineMutedLine({
+  children,
+  className,
+}: PortableEngineMutedLineProps): React.JSX.Element {
+  return <div className={cn('mt-1 text-gray-400', className)}>{children}</div>;
+}
+
+function PortableEngineReasonBadgeList({
+  entries,
+  emptyMessage,
+  maxItems,
+}: PortableEngineReasonBadgeListProps): React.JSX.Element {
+  const visibleEntries = typeof maxItems === 'number' ? entries.slice(0, maxItems) : entries;
+
+  if (visibleEntries.length === 0) {
+    return <PortableEngineMutedLine>{emptyMessage}</PortableEngineMutedLine>;
+  }
+
+  return (
+    <div className='mt-1 flex flex-wrap gap-1.5'>
+      {visibleEntries.map((entry) => (
+        <PortableEngineOutlineBadge key={entry.reason}>
+          {entry.reason} ({entry.count})
+        </PortableEngineOutlineBadge>
+      ))}
+    </div>
+  );
+}
+
+function PortableEngineRecordCard({
+  title,
+  description,
+  className,
+  titleClassName,
+  descriptionClassName,
+  stacked = false,
+}: PortableEngineRecordCardProps): React.JSX.Element {
+  if (stacked) {
+    return (
+      <div
+        className={cn(
+          'rounded-md border border-border/50 bg-black/20 px-3 py-2 text-xs text-gray-300',
+          className
+        )}
+      >
+        <div className={cn('font-medium text-gray-200', titleClassName)}>{title}</div>
+        <PortableEngineMutedLine className={descriptionClassName}>{description}</PortableEngineMutedLine>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        'rounded border border-border/40 bg-black/30 px-2 py-1 text-[11px] text-gray-300',
+        className
+      )}
+    >
+      <span className={cn('font-medium text-gray-200', titleClassName)}>{title}</span>{' '}
+      <span className={descriptionClassName}>{description}</span>
+    </div>
+  );
+}
 
 export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
   const [data, setData] = useState<TrendSnapshotsPayload | null>(null);
@@ -150,6 +284,24 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
       validationMode: string | null;
     }>,
   };
+  const summaryBadges: PortableEngineSummaryBadgeConfig[] = [
+    {
+      key: 'snapshots',
+      label: <>snapshots {data?.snapshotCount ?? 0}</>,
+    },
+    {
+      key: 'drift-alerts',
+      label: <>drift alerts {data?.summary.driftAlertsTotal ?? 0}</>,
+    },
+    {
+      key: 'sink-failures',
+      label: <>sink failures {data?.summary.sinkWritesFailedTotal ?? 0}</>,
+    },
+    {
+      key: 'run-failures',
+      label: <>run failures {runExecution.totals.failures}</>,
+    },
+  ];
 
   return (
     <Card variant='subtle' className='border-border/60 bg-card/40 p-3 sm:p-4'>
@@ -206,27 +358,18 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
       {data ? (
         <div className='space-y-3'>
           <div className='flex flex-wrap gap-2'>
-            <Badge variant='outline' className='border-white/10 text-gray-300'>
-              snapshots {data.snapshotCount}
-            </Badge>
-            <Badge variant='outline' className='border-white/10 text-gray-300'>
-              drift alerts {data.summary.driftAlertsTotal}
-            </Badge>
-            <Badge variant='outline' className='border-white/10 text-gray-300'>
-              sink failures {data.summary.sinkWritesFailedTotal}
-            </Badge>
-            <Badge variant='outline' className='border-white/10 text-gray-300'>
-              run failures {runExecution.totals.failures}
-            </Badge>
-            <Badge
+            {summaryBadges.map((badge) => (
+              <PortableEngineOutlineBadge key={badge.key}>{badge.label}</PortableEngineOutlineBadge>
+            ))}
+            <PortableEngineOutlineBadge
               variant={data.autoRemediation.enabled ? 'success' : 'outline'}
               className={data.autoRemediation.enabled ? '' : 'border-white/10 text-gray-300'}
             >
               remediation {data.autoRemediation.enabled ? 'on' : 'off'}
-            </Badge>
+            </PortableEngineOutlineBadge>
           </div>
 
-          <div className='rounded-md border border-border/60 bg-black/20 p-2 text-xs text-gray-300'>
+          <PortableEngineInfoPanel>
             Latest snapshot: {formatTimestamp(data.summary.latestSnapshotAt)} | consecutive
             failures: {data.autoRemediation.state.consecutiveFailureCount} | remediations:{' '}
             {data.autoRemediation.state.remediationCount} | threshold:{' '}
@@ -240,88 +383,54 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
             {' | '}dead-letter queued: {data.autoRemediation.notifications.deadLetter.queuedCount}
             {' | '}policy skips:{' '}
             {data.autoRemediation.notifications.deadLetter.replayPolicySkipsTotal}
-          </div>
+          </PortableEngineInfoPanel>
 
-          <div className='rounded-md border border-border/60 bg-black/20 p-2 text-xs text-gray-300'>
+          <PortableEngineInfoPanel>
             <div className='font-medium text-gray-200'>Dead-letter replay policy skip reasons</div>
-            {data.autoRemediation.notifications.deadLetter.replayPolicySkipReasons.length > 0 ? (
-              <div className='mt-1 flex flex-wrap gap-1.5'>
-                {data.autoRemediation.notifications.deadLetter.replayPolicySkipReasons.map(
-                  (entry) => (
-                    <Badge
-                      key={entry.reason}
-                      variant='outline'
-                      className='border-white/10 text-gray-300'
-                    >
-                      {entry.reason} ({entry.count})
-                    </Badge>
-                  )
-                )}
-              </div>
-            ) : (
-              <div className='mt-1 text-gray-400'>
-                No replay-policy skip reasons in dead letters.
-              </div>
-            )}
-          </div>
+            <PortableEngineReasonBadgeList
+              entries={data.autoRemediation.notifications.deadLetter.replayPolicySkipReasons}
+              emptyMessage='No replay-policy skip reasons in dead letters.'
+            />
+          </PortableEngineInfoPanel>
 
-          <div className='rounded-md border border-border/60 bg-black/20 p-2 text-xs text-gray-300'>
+          <PortableEngineInfoPanel>
             <div className='font-medium text-gray-200'>Run execution telemetry</div>
-            <div className='mt-1 text-gray-400'>
+            <PortableEngineMutedLine>
               source={runExecution.source} attempts={runExecution.totals.attempts} success=
               {formatPercent(runExecution.totals.successRate)} failure=
               {formatPercent(runExecution.totals.failureRate)} stage(
               {runExecution.failureStageCounts.resolve}/{runExecution.failureStageCounts.validation}
               /{runExecution.failureStageCounts.runtime})
-            </div>
-            {runExecution.topFailureErrors.length > 0 ? (
-              <div className='mt-1 flex flex-wrap gap-1.5'>
-                {runExecution.topFailureErrors.slice(0, 4).map((entry) => (
-                  <Badge
-                    key={entry.reason}
-                    variant='outline'
-                    className='border-white/10 text-gray-300'
-                  >
-                    {entry.reason} ({entry.count})
-                  </Badge>
-                ))}
-              </div>
-            ) : (
-              <div className='mt-1 text-gray-400'>No recent runtime failures captured.</div>
-            )}
+            </PortableEngineMutedLine>
+            <PortableEngineReasonBadgeList
+              entries={runExecution.topFailureErrors}
+              maxItems={4}
+              emptyMessage='No recent runtime failures captured.'
+            />
             {runExecution.recentFailures.length > 0 ? (
               <div className='mt-2 space-y-1'>
                 {runExecution.recentFailures.slice(0, 3).map((entry) => (
-                  <div
+                  <PortableEngineRecordCard
                     key={`${entry.at}-${entry.runner}-${entry.stage}-${entry.error}`}
-                    className='rounded border border-border/40 bg-black/30 px-2 py-1 text-[11px] text-gray-300'
-                  >
-                    <span className='font-medium text-gray-200'>
-                      {entry.runner}/{entry.surface}/{entry.stage}
-                    </span>{' '}
-                    · {entry.error} · {entry.durationMs}ms · {formatTimestamp(entry.at)}
-                  </div>
+                    title={`${entry.runner}/${entry.surface}/${entry.stage}`}
+                    description={`· ${entry.error} · ${entry.durationMs}ms · ${formatTimestamp(entry.at)}`}
+                  />
                 ))}
               </div>
             ) : null}
-          </div>
+          </PortableEngineInfoPanel>
 
           {latestSnapshots.length === 0 ? (
             <p className='text-xs text-gray-400'>No snapshots captured yet.</p>
           ) : (
             <div className='space-y-2'>
               {latestSnapshots.map((snapshot) => (
-                <div
+                <PortableEngineRecordCard
                   key={`${snapshot.at}-${snapshot.trigger}`}
-                  className='rounded-md border border-border/50 bg-black/20 px-3 py-2 text-xs text-gray-300'
-                >
-                  <div className='font-medium text-gray-200'>{formatTimestamp(snapshot.at)}</div>
-                  <div className='mt-1 text-gray-400'>
-                    trigger={snapshot.trigger} uses={snapshot.usageTotals.uses} driftAlerts=
-                    {snapshot.driftAlerts.length} sinkFailed={snapshot.sinkTotals.writesFailed}/
-                    {snapshot.sinkTotals.writesAttempted}
-                  </div>
-                </div>
+                  title={formatTimestamp(snapshot.at)}
+                  description={`trigger=${snapshot.trigger} uses=${snapshot.usageTotals.uses} driftAlerts=${snapshot.driftAlerts.length} sinkFailed=${snapshot.sinkTotals.writesFailed}/${snapshot.sinkTotals.writesAttempted}`}
+                  stacked
+                />
               ))}
             </div>
           )}

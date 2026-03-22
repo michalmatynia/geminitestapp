@@ -5,7 +5,13 @@ import {
   kangurLearnerCreateInputSchema,
   kangurLearnerSignInInputSchema,
   kangurLessonImageBlockSchema,
+  kangurLessonsQuerySchema,
+  kangurLessonsReplacePayloadSchema,
 } from '@/shared/contracts/kangur';
+import {
+  kangurLessonTemplatesQuerySchema,
+  kangurLessonTemplatesReplacePayloadSchema,
+} from '@/shared/contracts/kangur-lesson-templates';
 
 describe('kangur contract runtime', () => {
   it('accepts empty and svg lesson image sources', () => {
@@ -78,5 +84,35 @@ describe('kangur contract runtime', () => {
         password: 'abc123!',
       })
     ).toThrow(/letters and numbers/i);
+  });
+
+  it('parses Kangur lesson route query and bulk-replace payload DTOs', () => {
+    expect(
+      kangurLessonsQuerySchema.parse({
+        subject: 'maths',
+        ageGroup: 'six_year_old',
+        enabledOnly: 'true',
+      }).enabledOnly
+    ).toBe(true);
+
+    expect(
+      kangurLessonsReplacePayloadSchema.parse({
+        lessons: [],
+      }).lessons
+    ).toEqual([]);
+  });
+
+  it('parses Kangur lesson-template route query and bulk-replace payload DTOs', () => {
+    expect(
+      kangurLessonTemplatesQuerySchema.parse({
+        subject: 'english',
+      }).subject
+    ).toBe('english');
+
+    expect(
+      kangurLessonTemplatesReplacePayloadSchema.parse({
+        templates: [],
+      }).templates
+    ).toEqual([]);
   });
 });

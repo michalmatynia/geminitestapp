@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import React from 'react';
 
-import { UI_STACK_ROOMY_CLASSNAME } from '@/shared/ui';
+import { UI_STACK_ROOMY_CLASSNAME } from '@/shared/ui/layout';
 export function HomeFallbackNextSteps(): React.JSX.Element {
   const translations = useTranslations('FallbackHome.NextSteps');
 

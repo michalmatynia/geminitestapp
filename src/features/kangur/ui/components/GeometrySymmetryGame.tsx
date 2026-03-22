@@ -229,7 +229,7 @@ export default function GeometrySymmetryGame({
     canvasRef,
     redraw: () => redrawCanvas(strokes, currentRound),
   });
-  useKangurCanvasTouchLock(canvasRef);
+  useKangurCanvasTouchLock(canvasRef, { enabled: isCoarsePointer });
 
   const updateStrokes = useCallback(
     (updater: (current: Point2d[][]) => Point2d[][]): void => {
@@ -702,7 +702,9 @@ export default function GeometrySymmetryGame({
             accent={boardAccent}
             className={cn(
               'relative w-full overflow-hidden rounded-[26px] p-0',
-              !feedback && KANGUR_ACCENT_STYLES.emerald.hoverCard
+              !feedback && KANGUR_ACCENT_STYLES.emerald.hoverCard,
+              isCoarsePointer && 'shadow-[0_18px_38px_-30px_rgba(16,185,129,0.35)]',
+              isPointerDrawing && 'ring-2 ring-emerald-300/70 ring-offset-2 ring-offset-white'
             )}
             data-testid='geometry-symmetry-board'
             padding='sm'
@@ -734,7 +736,8 @@ export default function GeometrySymmetryGame({
             <div
               aria-hidden='true'
               className={cn(
-                'pointer-events-none absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-emerald-400/80 bg-emerald-100/70 shadow-[0_0_0_3px_rgba(16,185,129,0.12)] transition-transform duration-75',
+                'pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-emerald-400/80 bg-emerald-100/70 shadow-[0_0_0_3px_rgba(16,185,129,0.12)] transition-transform duration-75',
+                isCoarsePointer ? 'h-5 w-5' : 'h-4 w-4',
                 keyboardDrawing ? 'scale-110' : 'scale-100'
               )}
               style={{
@@ -745,7 +748,11 @@ export default function GeometrySymmetryGame({
           </KangurInfoCard>
           <p
             id='geometry-symmetry-input-help'
-            className='hidden text-xs text-center [color:var(--kangur-page-muted-text)] sm:block'
+            className={cn(
+              'text-xs text-center [color:var(--kangur-page-muted-text)]',
+              isCoarsePointer ? 'block' : 'hidden sm:block'
+            )}
+            data-testid='geometry-symmetry-input-help'
           >
             {translateWithFallback(
               'geometrySymmetry.inRound.inputHelp',
@@ -773,7 +780,7 @@ export default function GeometrySymmetryGame({
 
           <KangurPanelRow className='w-full'>
             <KangurButton
-              className='w-full sm:flex-1'
+              className={cn('w-full sm:flex-1', isCoarsePointer && 'min-h-11')}
               disabled={feedback !== null || points.length === 0}
               onClick={clearDrawing}
               type='button'
@@ -786,6 +793,7 @@ export default function GeometrySymmetryGame({
             <KangurButton
               className={cn(
                 'w-full sm:flex-1',
+                isCoarsePointer && 'min-h-11',
                 feedback
                   ? feedback.kind === 'success'
                     ? 'bg-emerald-500 border-emerald-500 text-white'

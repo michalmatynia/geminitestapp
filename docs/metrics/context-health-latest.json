@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-18T20:02:35.108Z",
-  "status": "passed",
+  "generatedAt": "2026-03-22T08:42:59.330Z",
+  "status": "warn",
   "summary": {
-    "total": 6,
+    "total": 7,
     "errorCount": 0,
-    "warningCount": 0,
-    "infoCount": 6,
-    "status": "passed",
-    "contextFileCount": 240
+    "warningCount": 2,
+    "infoCount": 5,
+    "status": "warn",
+    "contextFileCount": 241
   },
   "scope": {
     "sourceDirs": [
@@ -18,6 +18,26 @@
     "oversizedLocThreshold": 500
   },
   "issues": [
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 505 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/kangur/ui/context/KangurGameRuntimeContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 508 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/kangur/ui/context/KangurRouteTransitionContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
     {
       "severity": "info",
       "ruleId": "context-missing-split",
@@ -62,16 +82,6 @@
       "severity": "info",
       "ruleId": "context-missing-split",
       "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
-      "file": "src/features/kangur/ui/context/KangurAiTutorContentContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "context-missing-split",
-      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
       "file": "src/features/kangur/ui/context/KangurSubjectFocusContext.tsx",
       "line": null,
       "column": null,
@@ -81,11 +91,17 @@
   ],
   "rules": [
     {
+      "ruleId": "context-oversized",
+      "errorCount": 0,
+      "warningCount": 2,
+      "infoCount": 0
+    },
+    {
       "ruleId": "context-missing-split",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 6
+      "infoCount": 5
     }
   ],
-  "durationMs": 542
+  "durationMs": 441
 }

@@ -1,6 +1,5 @@
 import bcrypt from 'bcryptjs';
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { findAuthUserByEmail } from '@/features/auth/server';
 import { getAuthSecurityProfile } from '@/features/auth/server';
@@ -8,19 +7,19 @@ import { checkLoginAllowed, extractClientIp, recordLoginFailure } from '@/featur
 import { getAuthUserPageSettings } from '@/features/auth/server';
 import { createLoginChallenge } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
+import {
+  verifyCredentialsPayloadSchema,
+  type VerifyCredentialsPayload,
+} from '@/shared/contracts/auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { getSiteTranslator } from '@/shared/lib/i18n/server-translator';
 
-export const payloadSchema = z.object({
-  email: z.string().trim().email(),
-  password: z.string().min(1),
-  authFlow: z.string().trim().optional(),
-});
+export const payloadSchema = verifyCredentialsPayloadSchema;
 
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const { t } = await getSiteTranslator({ request: req });
-  const data = ctx.body as z.infer<typeof payloadSchema> | undefined;
+  const data = ctx.body as VerifyCredentialsPayload | undefined;
   if (!data) throw badRequestError(t('AuthApi.invalidPayload'));
 
   const email = data.email;

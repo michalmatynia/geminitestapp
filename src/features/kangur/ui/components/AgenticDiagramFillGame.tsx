@@ -589,6 +589,7 @@ export function AgenticDiagramFillGame({
 
   const [strokes, setStrokes] = useState<Point2d[][]>([]);
   const [feedback, setFeedback] = useState<KangurMiniGameInformationalFeedback | null>(null);
+  const [isPointerDrawing, setIsPointerDrawing] = useState(false);
 
   const strokeWidth = isCoarsePointer ? 6 : 4;
   const minPointDistance = isCoarsePointer ? 4 : 2.5;
@@ -623,7 +624,7 @@ export function AgenticDiagramFillGame({
     canvasRef,
     redraw: () => redrawCanvas(strokes),
   });
-  useKangurCanvasTouchLock(canvasRef);
+  useKangurCanvasTouchLock(canvasRef, { enabled: isCoarsePointer });
 
   const updateStrokes = useCallback(
     (updater: (current: Point2d[][]) => Point2d[][]): void => {
@@ -660,6 +661,7 @@ export function AgenticDiagramFillGame({
     if (!canvas) return;
     const point = resolvePoint(event);
     isDrawingRef.current = true;
+    setIsPointerDrawing(true);
     canvas.setPointerCapture(event.pointerId);
     setFeedback(null);
     updateStrokes((current) => [...current, [point]]);
@@ -685,6 +687,7 @@ export function AgenticDiagramFillGame({
   const handlePointerUp = (event: React.PointerEvent<HTMLCanvasElement>): void => {
     if (!isDrawingRef.current) return;
     isDrawingRef.current = false;
+    setIsPointerDrawing(false);
     const canvas = canvasRef.current;
     if (canvas) {
       canvas.releasePointerCapture(event.pointerId);
@@ -701,45 +704,83 @@ export function AgenticDiagramFillGame({
     () => (isSolved ? config.success : feedback?.text ?? config.hint),
     [config.hint, config.success, feedback?.text, isSolved]
   );
+  const touchHint = isPointerDrawing
+    ? 'Kontynuuj jednym płynnym ruchem, aż zamkniesz brakujący element.'
+    : 'Rysuj palcem po brakującym fragmencie schematu. Możesz zacząć od zaznaczonego pola.';
 
   return (
     <KangurLessonStack align='start' className='w-full'>
       <KangurLessonLead align='left'>{config.prompt}</KangurLessonLead>
       <div className={`grid ${KANGUR_PANEL_GAP_CLASSNAME} lg:grid-cols-[minmax(0,1fr)_minmax(0,280px)]`}>
         <div className='rounded-[28px] border border-slate-200/70 bg-white/90 p-4 shadow-sm'>
+          {isCoarsePointer ? (
+            <KangurInfoCard
+              accent={resolvedAccent}
+              tone='neutral'
+              padding='sm'
+              className='mb-4 text-sm'
+            >
+              <p
+                className='font-semibold text-slate-600'
+                data-testid='agentic-diagram-touch-hint'
+                role='status'
+                aria-live='polite'
+              >
+                {touchHint}
+              </p>
+            </KangurInfoCard>
+          ) : null}
           <div
-            className='relative w-full overflow-hidden rounded-[22px] border border-slate-200 bg-white'
+            className={cn(
+              'relative w-full overflow-hidden rounded-[22px] border border-slate-200 bg-white',
+              isCoarsePointer && 'shadow-[0_18px_36px_-30px_rgba(15,23,42,0.22)]',
+              isPointerDrawing && 'ring-2 ring-amber-300/70 ring-offset-2 ring-offset-white'
+            )}
             style={{ aspectRatio: `${CANVAS_WIDTH} / ${CANVAS_HEIGHT}` }}
+            data-testid='agentic-diagram-board'
           >
             <div className='absolute inset-0'>
               {config.renderSvg()}
             </div>
             <canvas
               ref={canvasRef}
-              className='absolute inset-0 h-full w-full cursor-crosshair'
+              className='absolute inset-0 h-full w-full cursor-crosshair touch-none'
               height={CANVAS_HEIGHT}
               width={CANVAS_WIDTH}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
               onPointerLeave={handlePointerUp}
+              data-drawing-active={isPointerDrawing ? 'true' : 'false'}
+              data-testid='agentic-diagram-canvas'
               aria-label='Pole rysowania schematu'
             />
           </div>
           <div className={cn('mt-4 items-center justify-between', KANGUR_WRAP_ROW_SPACED_CLASSNAME)}>
-            <KangurButton size='sm' variant='surface' onClick={clearDrawing}>
+            <KangurButton
+              size='sm'
+              variant='surface'
+              className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
+              onClick={clearDrawing}
+            >
               Wyczyść
             </KangurButton>
             <KangurButton
               size='sm'
               variant='primary'
+              className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
               onClick={handleCheck}
               disabled={strokes.length === 0 || isSolved}
             >
               Sprawdź
             </KangurButton>
             {isSolved ? (
-              <KangurButton size='sm' variant='success' onClick={clearDrawing}>
+              <KangurButton
+                size='sm'
+                variant='success'
+                className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
+                onClick={clearDrawing}
+              >
                 Rysuj ponownie
               </KangurButton>
             ) : null}

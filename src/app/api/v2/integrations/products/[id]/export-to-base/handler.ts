@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import {
-  checkBaseSkuExists,
-  getExportWarehouseId,
   LogCapture,
 } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
+import { enqueueBaseExportJob } from '@/features/integrations/workers/baseExportQueue';
 import { parseJsonBody } from '@/features/products/server';
-import type { ProductListingExportEvent } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, externalServiceError } from '@/shared/errors/app-error';
@@ -21,17 +19,11 @@ import {
   type BaseExportRequestData,
 } from './helpers';
 import {
-  isBaseImageError,
-  buildImageDiagnosticsLogger,
-  logImageDiagnostics,
   prepareBaseExportMappingsAndProduct,
-  resolveWarehouseAndStockMappings,
   loadExportResources,
   createExportRun,
   updateRunStarted,
   resolveListingForExport,
-  executeBaseExport,
-  verifySkuUniqueness,
 } from './segments';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -157,15 +149,7 @@ export async function postExportToBaseHandler(
       product: preparedProduct,
     });
 
-    const { mappings, resolvedTemplateId, requestedTemplateId, exportProduct } =
-      preparedExportContext;
-    let { exportImagesAsBase64, imageBase64Mode, imageTransform } = preparedExportContext;
-    const {
-      producerNameById,
-      producerExternalIdByInternalId,
-      tagNameById,
-      tagExternalIdByInternalId,
-    } = preparedExportContext;
+    const { exportImagesAsBase64, imageBase64Mode, imageTransform } = preparedExportContext;
 
     const baseIntegration = integrations.find((integration) =>
       ['baselinker', 'base-com', 'base'].includes(integration.slug)
@@ -181,9 +165,8 @@ export async function postExportToBaseHandler(
         { connectionId: data.connectionId }
       );
     }
-    const token = tokenResolution.token;
 
-    const { listingRepo, listingId, listingExternalId, listingInventoryId } =
+    const { listingRepo, listingId } =
       await resolveListingForExport({
         productId,
         connectionId: data.connectionId,
@@ -199,8 +182,7 @@ export async function postExportToBaseHandler(
       const existingListing = await listingRepo.getListingById(listingId);
       const history = existingListing?.exportHistory ?? [];
       const prior = history.find(
-        (event: ProductListingExportEvent) =>
-          event.requestId === requestId && event.status === 'success'
+        (event) => event.requestId === requestId && event.status === 'success'
       );
       if (prior) {
         if (runId) {
@@ -239,201 +221,33 @@ export async function postExportToBaseHandler(
       }
     }
 
-    await verifySkuUniqueness({
-      allowDuplicateSku: imagesOnly ? true : (data.allowDuplicateSku ?? false),
-      listingExternalId,
-      sku: product.sku,
-      token,
-      inventoryId: resolvedInventoryId,
-    });
-
-    const targetInventoryId =
-      imagesOnly && listingInventoryId ? listingInventoryId : resolvedInventoryId;
-    const canRetryWrite = imagesOnly || Boolean(listingExternalId);
-
-    let warehouseId = imagesOnly ? null : await getExportWarehouseId(targetInventoryId);
-    const warehouseResolution = await resolveWarehouseAndStockMappings({
-      imagesOnly,
-      token,
-      targetInventoryId,
-      initialWarehouseId: warehouseId,
-      mappings,
+    // Enqueue the export job for background processing
+    const jobId = await enqueueBaseExportJob({
       productId,
-    });
-    warehouseId = warehouseResolution.warehouseId;
-
-    const baseImageDiagnostics = exportImagesAsBase64
-      ? buildImageDiagnosticsLogger({
-        productId,
-        connectionId: data.connectionId,
-        inventoryId: targetInventoryId,
-        exportImagesAsBase64,
-        imageBase64Mode,
-        imageTransform,
-      })
-      : undefined;
-
-    const exportExec = await executeBaseExport({
+      connectionId: data.connectionId,
+      inventoryId: resolvedInventoryId,
+      templateId: data.templateId ?? null,
       imagesOnly,
-      token,
-      targetInventoryId,
-      exportProduct,
-      effectiveMappings: warehouseResolution.effectiveMappings,
-      warehouseId,
-      listingExternalId,
-      imageBaseUrl,
-      stockWarehouseAliases: warehouseResolution.stockWarehouseAliases ?? undefined,
-      producerNameById: producerNameById ?? undefined,
-      producerExternalIdByInternalId: producerExternalIdByInternalId ?? undefined,
-      tagNameById: tagNameById ?? undefined,
-      tagExternalIdByInternalId: tagExternalIdByInternalId ?? undefined,
+      listingId: data.listingId ?? null,
+      externalListingId: data.externalListingId ?? null,
+      allowDuplicateSku: data.allowDuplicateSku ?? false,
       exportImagesAsBase64,
       imageBase64Mode,
       imageTransform,
-      baseImageDiagnostics,
-      product,
-      canRetryWrite,
+      imageBaseUrl,
+      requestId: requestId ?? null,
+      runId,
+      userId,
     });
 
-    let { result, exportFields } = exportExec;
-    warehouseId = exportExec.finalWarehouseId;
-    let effectiveMappings = exportExec.finalMappings;
-
-    if (!result.success && isBaseImageError(result.error)) {
-      await logImageDiagnostics({
-        product,
-        imageBaseUrl,
-        includeBase64: exportImagesAsBase64,
-        base64Mode: imageBase64Mode,
-        transform: imageTransform,
-        context: {
-          productId,
-          connectionId: data.connectionId,
-          inventoryId: targetInventoryId,
-          exportImagesAsBase64,
-          imageBase64Mode,
-        },
-      });
-
-      if (!exportImagesAsBase64 || !imageTransform) {
-        const retryImagesAsBase64 = true;
-        const retryImageBase64Mode = 'base-only';
-        const retryImageTransform = { forceJpeg: true, maxDimension: 1600, jpegQuality: 85 };
-        const imageDiagnostics = buildImageDiagnosticsLogger({
-          productId,
-          connectionId: data.connectionId,
-          inventoryId: targetInventoryId,
-          exportImagesAsBase64: retryImagesAsBase64,
-          imageBase64Mode: retryImageBase64Mode,
-          imageTransform: retryImageTransform,
-        });
-
-        const retryExec = await executeBaseExport({
-          imagesOnly,
-          token,
-          targetInventoryId,
-          exportProduct,
-          effectiveMappings,
-          warehouseId,
-          listingExternalId,
-          imageBaseUrl,
-          stockWarehouseAliases: warehouseResolution.stockWarehouseAliases ?? undefined,
-          producerNameById: producerNameById ?? undefined,
-          producerExternalIdByInternalId: producerExternalIdByInternalId ?? undefined,
-          tagNameById: tagNameById ?? undefined,
-          tagExternalIdByInternalId: tagExternalIdByInternalId ?? undefined,
-          exportImagesAsBase64: retryImagesAsBase64,
-          imageBase64Mode: retryImageBase64Mode,
-          imageTransform: retryImageTransform,
-          baseImageDiagnostics: imageDiagnostics,
-          product,
-          canRetryWrite,
-        });
-        result = retryExec.result;
-        exportFields = retryExec.exportFields;
-      }
-    }
-
-    if (!result.success && !imagesOnly && !canRetryWrite && product.sku) {
-      const createdAfterTimeout = await checkBaseSkuExists(token, targetInventoryId, product.sku);
-      if (createdAfterTimeout.exists) {
-        result = { success: true, productId: createdAfterTimeout.productId };
-      }
-    }
-
-    if (!result.success) {
-      if (listingId) {
-        await listingRepo.updateListingStatus(listingId, 'failed');
-        await listingRepo.appendExportHistory(listingId, {
-          exportedAt: new Date().toISOString(),
-          status: 'failed',
-          inventoryId: targetInventoryId,
-          templateId: resolvedTemplateId ?? (requestedTemplateId || null),
-          warehouseId,
-          externalListingId: result.productId || null,
-          fields: exportFields,
-          requestId: requestId ?? null,
-        });
-      }
-      throw externalServiceError(result.error || 'Failed to export product', {
-        productId,
-        inventoryId: targetInventoryId,
-      });
-    }
-
-    if (listingId) {
-      if (result.productId) await listingRepo.updateListingExternalId(listingId, result.productId);
-      await listingRepo.updateListingStatus(listingId, 'active');
-      await listingRepo.appendExportHistory(listingId, {
-        exportedAt: new Date().toISOString(),
-        status: 'success',
-        inventoryId: targetInventoryId,
-        templateId: resolvedTemplateId ?? (requestedTemplateId || null),
-        warehouseId,
-        externalListingId: result.productId || null,
-        fields: exportFields,
-        requestId: requestId ?? null,
-      });
-    }
-
     logCapture.stop();
-    const logs = logCapture.getLogs();
-    if (runId) {
-      await runRepository
-        .createRunEvent({
-          runId,
-          level: 'info',
-          message: 'Export to Base.com completed.',
-          metadata: {
-            productId,
-            inventoryId: targetInventoryId,
-            listingId,
-            externalProductId: result.productId ?? null,
-            imagesOnly,
-          },
-        })
-        .catch(() => undefined);
-      await runRepository
-        .updateRun(runId, {
-          status: 'completed',
-          finishedAt: new Date().toISOString(),
-          meta: {
-            ...runMeta,
-            listingId,
-            inventoryId: targetInventoryId,
-            externalProductId: result.productId ?? null,
-            completedAt: new Date().toISOString(),
-          },
-        })
-        .catch(() => undefined);
-    }
-
     return NextResponse.json({
       success: true,
-      message: 'Product successfully exported to Base.com',
-      externalProductId: result.productId,
+      message: 'Export queued for processing',
+      status: 'queued' as const,
       runId,
-      logs,
+      jobId,
+      logs: logCapture.getLogs(),
     });
   } catch (error) {
     void ErrorSystem.captureException(error);

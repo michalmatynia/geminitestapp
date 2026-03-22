@@ -38,6 +38,10 @@ import {
   useKangurMobileDuelsLessonMastery,
   type KangurMobileDuelsLessonMasteryItem,
 } from './useKangurMobileDuelsLessonMastery';
+import {
+  useKangurMobileDuelsBadges,
+  type KangurMobileDuelsBadgeItem,
+} from './useKangurMobileDuelsBadges';
 import { useKangurMobileDuelLobbyChat } from './useKangurMobileDuelLobbyChat';
 import { useKangurMobileDuelSession } from './useKangurMobileDuelSession';
 import { useKangurMobileDuelsLobby } from './useKangurMobileDuelsLobby';
@@ -50,6 +54,7 @@ type Tone = {
 
 const HOME_ROUTE = '/' as Href;
 const LESSONS_ROUTE = '/lessons' as Href;
+const PROFILE_ROUTE = '/profile' as Href;
 
 const localizeDuelText = (
   value: KangurMobileLocalizedValue<string>,
@@ -239,6 +244,7 @@ const DUEL_REACTION_OPTIONS: KangurDuelReactionType[] = [
   'thumbs_up',
 ];
 const LOBBY_CHAT_PREVIEW_LIMIT = 8;
+const AUTO_REFRESH_INTERVAL_MS = 15_000;
 
 const DUEL_REACTION_EMOJIS: Record<KangurDuelReactionType, string> = {
   cheer: '👏',
@@ -389,6 +395,7 @@ function ActionButton({
       }}
       style={{
         alignSelf: stretch ? 'stretch' : 'flex-start',
+        width: stretch ? '100%' : undefined,
         opacity: disabled ? 0.55 : 1,
         borderRadius: 999,
         borderWidth: isPrimary ? 0 : 1,
@@ -430,6 +437,7 @@ function LinkButton({
         accessibilityRole='button'
         style={{
           alignSelf: stretch ? 'stretch' : 'flex-start',
+          width: stretch ? '100%' : undefined,
           borderRadius: 999,
           borderWidth: isPrimary ? 0 : 1,
           borderColor: isPrimary ? 'transparent' : '#cbd5e1',
@@ -456,10 +464,12 @@ function FilterChip({
   label,
   onPress,
   selected,
+  fullWidth = false,
 }: {
   label: string;
   onPress: () => void;
   selected: boolean;
+  fullWidth?: boolean;
 }): React.JSX.Element {
   return (
     <Pressable
@@ -472,12 +482,54 @@ function FilterChip({
         backgroundColor: selected ? '#dbeafe' : '#ffffff',
         paddingHorizontal: 14,
         paddingVertical: 10,
+        alignSelf: fullWidth ? 'stretch' : 'flex-start',
+        width: fullWidth ? '100%' : undefined,
       }}
     >
       <Text
         style={{
           color: selected ? '#1d4ed8' : '#334155',
           fontSize: 13,
+          fontWeight: '700',
+          textAlign: fullWidth ? 'center' : 'left',
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function AutoRefreshChip({
+  enabled,
+  label,
+  onToggle,
+  fullWidth = false,
+}: {
+  enabled: boolean;
+  label: string;
+  onToggle: () => void;
+  fullWidth?: boolean;
+}): React.JSX.Element {
+  return (
+    <Pressable
+      accessibilityRole='button'
+      onPress={onToggle}
+      style={{
+        alignSelf: fullWidth ? 'stretch' : 'flex-start',
+        width: fullWidth ? '100%' : undefined,
+        borderRadius: 999,
+        borderWidth: 1,
+        borderColor: enabled ? '#22c55e' : '#cbd5e1',
+        backgroundColor: enabled ? '#dcfce7' : '#f8fafc',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+      }}
+    >
+      <Text
+        style={{
+          color: enabled ? '#15803d' : '#475569',
+          fontSize: 12,
           fontWeight: '700',
         }}
       >
@@ -616,6 +668,29 @@ function LessonCheckpointRow({
   );
 }
 
+function DuelsBadgeChip({
+  item,
+}: {
+  item: KangurMobileDuelsBadgeItem;
+}): React.JSX.Element {
+  return (
+    <View
+      style={{
+        borderRadius: 999,
+        borderWidth: 1,
+        borderColor: '#fde68a',
+        backgroundColor: '#fff7ed',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+      }}
+    >
+      <Text style={{ color: '#9a3412', fontSize: 13, fontWeight: '700' }}>
+        {item.emoji} {item.name}
+      </Text>
+    </View>
+  );
+}
+
 function LessonCheckpointsCard({
   context,
 }: {
@@ -679,6 +754,103 @@ function LessonCheckpointsCard({
           />
         </View>
       )}
+    </Card>
+  );
+}
+
+function BadgesCard({
+  context,
+}: {
+  context: 'lobby' | 'session';
+}): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+  const badges = useKangurMobileDuelsBadges();
+
+  return (
+    <Card>
+      <View style={{ gap: 4 }}>
+        <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+          {copy({
+            de: 'Abzeichen',
+            en: 'Badges',
+            pl: 'Odznaki',
+          })}
+        </Text>
+        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+          {context === 'session'
+            ? copy({
+                de: 'Auch während einer Duellsitzung kannst du sehen, welche lokalen Abzeichen bereits freigeschaltet wurden.',
+                en: 'Even during a duel session, you can see which local badges are already unlocked.',
+                pl: 'Nawet w trakcie sesji pojedynku możesz sprawdzić, które lokalne odznaki są już odblokowane.',
+              })
+            : copy({
+                de: 'Zwischen Lobby, Suche und Rangliste kannst du sehen, welche lokalen Abzeichen bereits freigeschaltet wurden.',
+                en: 'Between the lobby, search, and leaderboard, you can see which local badges are already unlocked.',
+                pl: 'Między lobby, wyszukiwaniem i rankingiem możesz sprawdzić, które lokalne odznaki są już odblokowane.',
+              })}
+        </Text>
+      </View>
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <Pill
+          label={copy({
+            de: `Freigeschaltet ${badges.unlockedBadges}/${badges.totalBadges}`,
+            en: `Unlocked ${badges.unlockedBadges}/${badges.totalBadges}`,
+            pl: `Odblokowane ${badges.unlockedBadges}/${badges.totalBadges}`,
+          })}
+          tone={{
+            backgroundColor: '#eef2ff',
+            borderColor: '#c7d2fe',
+            textColor: '#4338ca',
+          }}
+        />
+        <Pill
+          label={copy({
+            de: `Offen ${badges.remainingBadges}`,
+            en: `Remaining ${badges.remainingBadges}`,
+            pl: `Do zdobycia ${badges.remainingBadges}`,
+          })}
+          tone={{
+            backgroundColor: '#fffbeb',
+            borderColor: '#fde68a',
+            textColor: '#b45309',
+          }}
+        />
+      </View>
+
+      {badges.recentBadges.length === 0 ? (
+        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+          {copy({
+            de: 'Es gibt noch keine lokal freigeschalteten Abzeichen. Schließe Lektionen, Trainings oder Spiele ab, damit sie hier erscheinen.',
+            en: 'There are no locally unlocked badges yet. Finish lessons, practice runs, or games so they appear here.',
+            pl: 'Nie ma jeszcze lokalnie odblokowanych odznak. Ukończ lekcje, treningi albo gry, aby pojawiły się tutaj.',
+          })}
+        </Text>
+      ) : (
+        <View style={{ gap: 10 }}>
+          <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
+            {copy({
+              de: 'Zuletzt freigeschaltet',
+              en: 'Recently unlocked',
+              pl: 'Ostatnio odblokowane',
+            })}
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {badges.recentBadges.map((item) => (
+              <DuelsBadgeChip key={item.id} item={item} />
+            ))}
+          </View>
+        </View>
+      )}
+
+      <LinkButton
+        href={PROFILE_ROUTE}
+        label={copy({
+          de: 'Profil und Abzeichen öffnen',
+          en: 'Open profile and badges',
+          pl: 'Otwórz profil i odznaki',
+        })}
+      />
     </Card>
   );
 }
@@ -1631,6 +1803,18 @@ export function KangurDuelsScreen(): React.JSX.Element {
     !chat.isSending &&
     chatDraft.trim().length > 0 &&
     chatDraft.trim().length <= chat.maxMessageLength;
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
+  const autoRefreshChipLabel = autoRefreshEnabled
+    ? copy({
+        de: 'Auto-Refresh (Ein)',
+        en: 'Auto refresh (On)',
+        pl: 'Auto odświeżanie (Włączone)',
+      })
+    : copy({
+        de: 'Auto-Refresh (Aus)',
+        en: 'Auto refresh (Off)',
+        pl: 'Auto odświeżanie (Wyłączone)',
+      });
   const hasWaitingSession = duel.session
     ? isWaitingSessionStatus(duel.session.status)
     : false;
@@ -1795,6 +1979,21 @@ export function KangurDuelsScreen(): React.JSX.Element {
     lobby.isLoadingAuth,
     routeSessionId,
   ]);
+
+  useEffect(() => {
+    if (!autoRefreshEnabled) {
+      return undefined;
+    }
+
+    void lobby.refresh();
+    const intervalId = setInterval(() => {
+      void lobby.refresh();
+    }, AUTO_REFRESH_INTERVAL_MS);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [autoRefreshEnabled, lobby.refresh]);
 
   const handleLobbyChatSend = async (): Promise<void> => {
     setChatActionError(null);
@@ -2686,6 +2885,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
 
               <LessonCheckpointsCard context='session' />
               <LessonMasteryCard context='session' />
+              <BadgesCard context='session' />
               <NextStepsCard context='session' />
             </>
           )}
@@ -2776,10 +2976,11 @@ export function KangurDuelsScreen(): React.JSX.Element {
                 pl: 'Działanie',
               })}
             </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <View style={{ flexDirection: 'column', gap: 8 }}>
               {OPERATION_OPTIONS.map((option) => (
                 <FilterChip
                   key={option}
+                  fullWidth
                   label={formatOperationLabel(option, locale)}
                   onPress={() => {
                     lobby.setOperation(option);
@@ -2798,10 +2999,11 @@ export function KangurDuelsScreen(): React.JSX.Element {
                 pl: 'Poziom',
               })}
             </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <View style={{ flexDirection: 'column', gap: 8 }}>
               {DIFFICULTY_OPTIONS.map((option) => (
                 <FilterChip
                   key={option}
+                  fullWidth
                   label={formatDifficultyLabel(option, locale)}
                   onPress={() => {
                     lobby.setDifficulty(option);
@@ -2820,10 +3022,11 @@ export function KangurDuelsScreen(): React.JSX.Element {
                 pl: 'Format',
               })}
             </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <View style={{ flexDirection: 'column', gap: 8 }}>
               {SERIES_BEST_OF_OPTIONS.map((option) => (
                 <FilterChip
                   key={`series-best-of-${option}`}
+                  fullWidth
                   label={formatSeriesBestOfLabel(option, locale)}
                   onPress={() => {
                     lobby.setSeriesBestOf(option);
@@ -2905,15 +3108,8 @@ export function KangurDuelsScreen(): React.JSX.Element {
         </Card>
 
         <Card>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: 12,
-            }}
-          >
-            <View style={{ flex: 1, gap: 4 }}>
+          <View style={{ gap: 12 }}>
+            <View style={{ gap: 4 }}>
               <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
                 {copy({
                   de: 'Lobby',
@@ -2929,21 +3125,31 @@ export function KangurDuelsScreen(): React.JSX.Element {
                 })}
               </Text>
             </View>
-            <ActionButton
-              disabled={lobby.isActionPending}
-              label={copy({
-                de: 'Aktualisieren',
-                en: 'Refresh',
-                pl: 'Odśwież',
-              })}
-              onPress={lobby.refresh}
-              tone='secondary'
-            />
+            <View style={{ gap: 8, alignItems: 'stretch' }}>
+              <ActionButton
+                disabled={lobby.isActionPending}
+                label={copy({
+                  de: 'Aktualisieren',
+                  en: 'Refresh',
+                  pl: 'Odśwież',
+                })}
+                onPress={lobby.refresh}
+                stretch
+                tone='secondary'
+              />
+              <AutoRefreshChip
+                enabled={autoRefreshEnabled}
+                label={autoRefreshChipLabel}
+                onToggle={() => setAutoRefreshEnabled((prev) => !prev)}
+                fullWidth
+              />
+            </View>
           </View>
 
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          <View style={{ flexDirection: 'column', gap: 8 }}>
             {MODE_FILTER_OPTIONS.map((option) => (
               <FilterChip
+                fullWidth
                 key={option.value}
                 label={localizeDuelText(option.label, locale)}
                 onPress={() => {
@@ -3069,43 +3275,37 @@ export function KangurDuelsScreen(): React.JSX.Element {
         </Card>
 
         <Card>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: 12,
-            }}
-          >
-            <View style={{ flex: 1, gap: 4 }}>
-              <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-                {copy({
-                  de: 'Lobby-Chat',
-                  en: 'Lobby chat',
-                  pl: 'Czat lobby',
-                })}
-              </Text>
-              <Text style={{ color: '#64748b', fontSize: 13 }}>
-                {copy({
-                  de: 'Schnelle Abstimmung vor dem Duell und während du auf einen Gegner wartest.',
-                  en: 'Quick coordination before the duel and while waiting for an opponent.',
-                  pl: 'Szybka koordynacja przed pojedynkiem i w czasie oczekiwania na przeciwnika.',
-                })}
-              </Text>
-            </View>
-            {chat.isAuthenticated ? (
-              <ActionButton
-                disabled={chat.isLoading || chat.isSending}
-                label={copy({
-                  de: 'Aktualisieren',
-                  en: 'Refresh',
-                  pl: 'Odśwież',
-                })}
-                onPress={chat.refresh}
-                tone='secondary'
-              />
-            ) : null}
+        <View style={{ gap: 8 }}>
+          <View style={{ gap: 4 }}>
+            <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+              {copy({
+                de: 'Lobby-Chat',
+                en: 'Lobby chat',
+                pl: 'Czat lobby',
+              })}
+            </Text>
+            <Text style={{ color: '#64748b', fontSize: 13 }}>
+              {copy({
+                de: 'Schnelle Abstimmung vor dem Duell und während du auf einen Gegner wartest.',
+                en: 'Quick coordination before the duel and while waiting for an opponent.',
+                pl: 'Szybka koordynacja przed pojedynkiem i w czasie oczekiwania na przeciwnika.',
+              })}
+            </Text>
           </View>
+          {chat.isAuthenticated ? (
+            <ActionButton
+              disabled={chat.isLoading || chat.isSending}
+              label={copy({
+                de: 'Aktualisieren',
+                en: 'Refresh',
+                pl: 'Odśwież',
+              })}
+              onPress={chat.refresh}
+              tone='secondary'
+              stretch
+            />
+          ) : null}
+        </View>
 
           {!chat.isAuthenticated ? (
             <MessageCard
@@ -3381,7 +3581,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
             />
           ) : (
             <>
-              <View style={{ gap: 8 }}>
+              <View style={{ gap: 8, alignSelf: 'stretch' }}>
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                   {copy({
                     de: 'Gib mindestens 2 Zeichen des Logins oder Namens des Lernenden ein.',
@@ -3408,6 +3608,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
                     borderWidth: 1,
                     paddingHorizontal: 14,
                     paddingVertical: 12,
+                    width: '100%',
                   }}
                   value={lobby.searchQuery}
                 />
@@ -3486,6 +3687,8 @@ export function KangurDuelsScreen(): React.JSX.Element {
                         backgroundColor: '#f8fafc',
                         padding: 14,
                         gap: 8,
+                        alignSelf: 'stretch',
+                        width: '100%',
                       }}
                     >
                       <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
@@ -3524,13 +3727,28 @@ export function KangurDuelsScreen(): React.JSX.Element {
         </Card>
 
         <Card>
-          <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-            {copy({
-              de: 'Letzte Gegner',
-              en: 'Recent opponents',
-              pl: 'Ostatni przeciwnicy',
-            })}
-          </Text>
+          <View style={{ gap: 8 }}>
+            <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+              {copy({
+                de: 'Letzte Gegner',
+                en: 'Recent opponents',
+                pl: 'Ostatni przeciwnicy',
+              })}
+            </Text>
+            {lobby.isAuthenticated ? (
+              <ActionButton
+                disabled={lobby.isOpponentsLoading}
+                label={copy({
+                  de: 'Gegnerliste aktualisieren',
+                  en: 'Refresh opponents',
+                  pl: 'Odśwież przeciwników',
+                })}
+                onPress={lobby.refresh}
+                stretch
+                tone='secondary'
+              />
+            ) : null}
+          </View>
           {!lobby.isAuthenticated ? (
             <MessageCard
               title={copy({
@@ -3688,6 +3906,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
 
         <LessonCheckpointsCard context='lobby' />
         <LessonMasteryCard context='lobby' />
+        <BadgesCard context='lobby' />
         <NextStepsCard context='lobby' />
       </ScrollView>
     </SafeAreaView>

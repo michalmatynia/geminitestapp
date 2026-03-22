@@ -1571,7 +1571,9 @@
         "checkRemainder": "Prüfe, wie viel im Rest bleibt.",
         "equalGroups": "Achte darauf, dass jede Gruppe gleich groß ist.",
         "correct": "Gut gemacht! Die Gruppen sind gleich groß.",
-        "idle": "Ziehe oder klicke die Elemente, um sie in Gruppen aufzuteilen."
+        "idle": "Ziehe oder klicke die Elemente, um sie in Gruppen aufzuteilen.",
+        "touchIdle": "Tippe ein Element an und dann eine Gruppe, den Pool oder das Restfeld. Ziehen geht weiterhin auch.",
+        "touchSelected": "Ausgewähltes Element: {emoji}. Tippe eine Gruppe, den Pool oder das Restfeld an."
       }
     },
     "calendarTraining": {
@@ -2281,11 +2283,14 @@
       "inRound": {
         "roundLabel": "Runde {current}/{total}",
         "modeLabel": "Ziehen und ablegen",
+        "modeLabelTouch": "Tippen oder ziehen",
         "poolLabel": "Wortpool",
         "poolAria": "Wortpool zum Sortieren",
         "poolEmpty": "Pool leer",
         "binAria": "{label}-Bereich",
         "missingWords": "Wörter fehlen",
+        "touchIdle": "Tippe ein Wort an und dann eine Kategorie oder den Pool.",
+        "touchSelected": "Ausgewähltes Wort: {label}. Tippe eine Kategorie oder den Pool an.",
         "clearRound": "Runde leeren",
         "hitsLabel": "{hits}/{total} richtig",
         "check": "Prüfen",

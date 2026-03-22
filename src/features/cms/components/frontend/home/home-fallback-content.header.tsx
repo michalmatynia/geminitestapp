@@ -10,7 +10,10 @@ import {
   CmsStorefrontAppearanceButtons,
   type CmsAppearanceTone,
 } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
-import { UI_CENTER_ROW_CLASSNAME, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
+import {
+  UI_CENTER_ROW_CLASSNAME,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
+} from '@/shared/ui/layout';
 
 function MountainIcon(props: React.SVGProps<SVGSVGElement>) {
   return (

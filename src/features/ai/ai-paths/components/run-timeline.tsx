@@ -19,6 +19,7 @@ import {
   type RuntimeTraceDurationRow,
   type RuntimeTraceTimelineItem,
 } from './run-trace-utils';
+import { RuntimeEventEntry } from './runtime-event-entry';
 
 type TimelineFilter = 'run' | 'node' | 'event';
 
@@ -40,14 +41,6 @@ const statusToVariant = (status: string | null | undefined): StatusVariant => {
   ) {
     return 'processing';
   }
-  return 'neutral';
-};
-
-const levelToVariant = (level: string): StatusVariant => {
-  const l = level.toLowerCase();
-  if (l === 'error') return 'error';
-  if (l === 'warning') return 'warning';
-  if (l === 'info') return 'info';
   return 'neutral';
 };
 
@@ -633,25 +626,26 @@ export function RunTimeline(props: {
                 {sortedEvents.map((event: AiPathRunEventRecord): React.JSX.Element => {
                   const metadata = formatMetadata(event.metadata);
                   return (
-                    <div key={event.id} className='p-3'>
-                      <div className='flex flex-wrap items-center gap-2 text-xs text-gray-400'>
-                        <span>
-                          {event.createdAt ? new Date(event.createdAt).toLocaleString() : '-'}
-                        </span>
-                        <StatusBadge
-                          status={event.level}
-                          variant={levelToVariant(event.level)}
-                          size='sm'
-                          className='font-bold'
-                        />
-                      </div>
-                      <div className='mt-1 text-sm text-white'>{event.message}</div>
-                      {metadata ? (
-                        <pre className='mt-2 max-h-40 overflow-auto rounded-md border border-border bg-black/30 p-2 text-[11px] text-gray-200'>
-                          {metadata}
-                        </pre>
-                      ) : null}
-                    </div>
+                    <RuntimeEventEntry
+                      key={event.id}
+                      timestamp={event.createdAt ? new Date(event.createdAt).toLocaleString() : '-'}
+                      level={event.level}
+                      kind={null}
+                      message={event.message}
+                      className='p-3'
+                      timeClassName='text-gray-400'
+                      levelClassName='font-bold'
+                      messageClassName='text-sm text-white'
+                      stacked
+                      hideKindBadge
+                      details={
+                        metadata ? (
+                          <pre className='mt-2 max-h-40 overflow-auto rounded-md border border-border bg-black/30 p-2 text-[11px] text-gray-200'>
+                            {metadata}
+                          </pre>
+                        ) : null
+                      }
+                    />
                   );
                 })}
               </div>

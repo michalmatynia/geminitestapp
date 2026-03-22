@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-21'
+last_reviewed: '2026-03-22'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,15 +8,15 @@ canonical: true
 ---
 # Import Boundaries Check
 
-Generated at: 2026-03-21T16:23:31.886Z
+Generated at: 2026-03-22T08:42:57.938Z
 
 ## Summary
 
-- Status: FAILED
-- Files scanned: 5649
+- Status: WARN
+- Files scanned: 5653
 - Features tracked: 10
 - Circular dependencies: 0
-- Errors: 1
+- Errors: 0
 - Warnings: 12
 - Info: 0
 
@@ -39,14 +39,12 @@ Generated at: 2026-03-21T16:23:31.886Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| cross-feature-internal-import | 1 | 0 | 0 |
 | deep-relative-import | 0 | 12 | 0 |
 
 ## Issues
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
-| ERROR | cross-feature-internal-import | src/features/admin/components/Menu.tsx:20 | Imports internal path from feature "ai": @/features/ai/chatbot/public. Use the barrel export instead. |
 | WARN | deep-relative-import | src/app/[locale]/(frontend)/[...slug]/page.tsx:13 | Deep relative import (3 levels up). Consider using path aliases. |
 | WARN | deep-relative-import | src/app/[locale]/(frontend)/[...slug]/page.tsx:14 | Deep relative import (3 levels up). Consider using path aliases. |
 | WARN | deep-relative-import | src/app/[locale]/(frontend)/[...slug]/page.tsx:18 | Deep relative import (3 levels up). Consider using path aliases. |

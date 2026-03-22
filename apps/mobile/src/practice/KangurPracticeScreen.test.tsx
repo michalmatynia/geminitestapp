@@ -20,10 +20,12 @@ const {
   useKangurMobileAuthMock,
   useKangurMobileLessonCheckpointsMock,
   useKangurMobilePracticeAssignmentsMock,
+  useKangurMobilePracticeBadgesMock,
   useKangurMobilePracticeDuelsMock,
   useKangurMobilePracticeLessonMasteryMock,
   useKangurMobileRuntimeMock,
   useKangurPracticeSyncProofMock,
+  useKangurMobilePracticeRecentResultsMock,
 } = vi.hoisted(() => ({
   completeKangurPracticeSessionMock: vi.fn(),
   generateKangurLogicPracticeQuestionsMock: vi.fn(),
@@ -38,10 +40,12 @@ const {
   useKangurMobileAuthMock: vi.fn(),
   useKangurMobileLessonCheckpointsMock: vi.fn(),
   useKangurMobilePracticeAssignmentsMock: vi.fn(),
+  useKangurMobilePracticeBadgesMock: vi.fn(),
   useKangurMobilePracticeDuelsMock: vi.fn(),
   useKangurMobilePracticeLessonMasteryMock: vi.fn(),
   useKangurMobileRuntimeMock: vi.fn(),
   useKangurPracticeSyncProofMock: vi.fn(),
+  useKangurMobilePracticeRecentResultsMock: vi.fn(),
 }));
 
 vi.mock('@kangur/core', () => ({
@@ -52,6 +56,10 @@ vi.mock('@kangur/core', () => ({
   getKangurPracticeOperationConfig: getKangurPracticeOperationConfigMock,
   isKangurLogicPracticeOperation: isKangurLogicPracticeOperationMock,
   resolveKangurPracticeOperation: resolveKangurPracticeOperationMock,
+  getKangurLeaderboardOperationInfo: vi.fn((value: string) => ({
+    family: 'arithmetic',
+    label: value,
+  })),
 }));
 
 vi.mock('@tanstack/react-query', () => ({
@@ -96,12 +104,20 @@ vi.mock('./useKangurMobilePracticeAssignments', () => ({
   useKangurMobilePracticeAssignments: useKangurMobilePracticeAssignmentsMock,
 }));
 
+vi.mock('./useKangurMobilePracticeBadges', () => ({
+  useKangurMobilePracticeBadges: useKangurMobilePracticeBadgesMock,
+}));
+
 vi.mock('./useKangurMobilePracticeDuels', () => ({
   useKangurMobilePracticeDuels: useKangurMobilePracticeDuelsMock,
 }));
 
 vi.mock('./useKangurMobilePracticeLessonMastery', () => ({
   useKangurMobilePracticeLessonMastery: useKangurMobilePracticeLessonMasteryMock,
+}));
+
+vi.mock('./useKangurMobilePracticeRecentResults', () => ({
+  useKangurMobilePracticeRecentResults: useKangurMobilePracticeRecentResultsMock,
 }));
 
 import { KangurMobileI18nProvider } from '../i18n/kangurMobileI18n';
@@ -165,12 +181,26 @@ describe('KangurPracticeScreen', () => {
     useKangurMobilePracticeAssignmentsMock.mockReturnValue({
       assignmentItems: [],
     });
+    useKangurMobilePracticeBadgesMock.mockReturnValue({
+      recentBadges: [],
+      remainingBadges: 9,
+      totalBadges: 9,
+      unlockedBadges: 0,
+    });
     useKangurMobilePracticeLessonMasteryMock.mockReturnValue({
       lessonsNeedingPractice: 0,
       masteredLessons: 0,
       strongest: [],
       trackedLessons: 0,
       weakest: [],
+    });
+    useKangurMobilePracticeRecentResultsMock.mockReturnValue({
+      error: null,
+      isEnabled: false,
+      isLoading: false,
+      isRestoringAuth: false,
+      recentResultItems: [],
+      refresh: vi.fn(),
     });
     useKangurMobilePracticeDuelsMock.mockReturnValue({
       actionError: null,
@@ -338,6 +368,23 @@ describe('KangurPracticeScreen', () => {
         },
       ],
     });
+    useKangurMobilePracticeBadgesMock.mockReturnValue({
+      recentBadges: [
+        {
+          emoji: '🕐',
+          id: 'clock_master',
+          name: 'Mistrz zegara',
+        },
+        {
+          emoji: '📚',
+          id: 'lesson_hero',
+          name: 'Bohater lekcji',
+        },
+      ],
+      remainingBadges: 7,
+      totalBadges: 9,
+      unlockedBadges: 2,
+    });
     useKangurMobilePracticeLessonMasteryMock.mockReturnValue({
       lessonsNeedingPractice: 1,
       masteredLessons: 1,
@@ -388,8 +435,46 @@ describe('KangurPracticeScreen', () => {
             },
           },
           title: 'Dodawanie',
+          },
+        ],
+      });
+    useKangurMobilePracticeRecentResultsMock.mockReturnValue({
+      error: null,
+      isEnabled: true,
+      isLoading: false,
+      isRestoringAuth: false,
+      recentResultItems: [
+        {
+          historyHref: {
+            pathname: '/results',
+            params: {
+              operation: 'clock',
+            },
+          },
+          lessonHref: {
+            pathname: '/lessons',
+            params: {
+              focus: 'clock',
+            },
+          },
+          practiceHref: {
+            pathname: '/practice',
+            params: {
+              operation: 'clock',
+            },
+          },
+          result: {
+            correct_answers: 7,
+            created_date: '2026-03-21T08:00:00.000Z',
+            id: 'practice-result-1',
+            operation: 'clock',
+            score: 7,
+            time_taken: 33,
+            total_questions: 8,
+          },
         },
       ],
+      refresh: vi.fn(),
     });
 
     renderPracticeScreen();
@@ -416,6 +501,13 @@ describe('KangurPracticeScreen', () => {
     expect(screen.getByText('Następne kroki')).toBeTruthy();
     expect(screen.getByText('Powtorz zegar')).toBeTruthy();
     expect(screen.getByText('Cel: 1 lekcja')).toBeTruthy();
+    expect(screen.getByText('Odznaki')).toBeTruthy();
+    expect(screen.getByText('Odblokowane 2/9')).toBeTruthy();
+    expect(screen.getByText('Do zdobycia 7')).toBeTruthy();
+    expect(screen.getByText('Ostatnio odblokowane')).toBeTruthy();
+    expect(screen.getByText('🕐 Mistrz zegara')).toBeTruthy();
+    expect(screen.getByText('📚 Bohater lekcji')).toBeTruthy();
+    expect(screen.getByText('Otwórz profil i odznaki')).toBeTruthy();
     expect(screen.getByText('Opanowanie lekcji')).toBeTruthy();
     expect(screen.getByText('Śledzone 2')).toBeTruthy();
     expect(screen.getByText('Opanowane 1')).toBeTruthy();
@@ -426,6 +518,10 @@ describe('KangurPracticeScreen', () => {
     expect(screen.getByText('Zobacz historię trybu')).toBeTruthy();
     expect(screen.getByText('Otwórz plan dnia')).toBeTruthy();
     expect(screen.queryByText('Failed to fetch')).toBeNull();
+    expect(screen.getByText('Historia wyników')).toBeTruthy();
+    expect(screen.getByText('Ostatnie sesje mobilne')).toBeTruthy();
+    expect(screen.getAllByText('Trenuj ponownie').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText('Historia trybu')).toBeTruthy();
 
     await waitFor(() => {
       expect(

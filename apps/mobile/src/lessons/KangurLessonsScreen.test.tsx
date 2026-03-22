@@ -13,8 +13,10 @@ const {
   replaceMock,
   useLessonsScreenBootStateMock,
   useKangurMobileLessonsAssignmentsMock,
+  useKangurMobileLessonsBadgesMock,
   useKangurMobileLessonCheckpointsMock,
   useKangurMobileLessonsLessonMasteryMock,
+  useKangurMobileLessonsRecentResultsMock,
   useKangurMobileLessonsDuelsMock,
   useKangurMobileLessonsMock,
   useLocalSearchParamsMock,
@@ -24,8 +26,10 @@ const {
   replaceMock: vi.fn(),
   useLessonsScreenBootStateMock: vi.fn(),
   useKangurMobileLessonsAssignmentsMock: vi.fn(),
+  useKangurMobileLessonsBadgesMock: vi.fn(),
   useKangurMobileLessonCheckpointsMock: vi.fn(),
   useKangurMobileLessonsLessonMasteryMock: vi.fn(),
+  useKangurMobileLessonsRecentResultsMock: vi.fn(),
   useKangurMobileLessonsDuelsMock: vi.fn(),
   useKangurMobileLessonsMock: vi.fn(),
   useLocalSearchParamsMock: vi.fn(),
@@ -76,6 +80,10 @@ vi.mock('expo-router', () => ({
 
 vi.mock('@kangur/core', () => ({
   getLocalizedKangurMetadataBadgeName: vi.fn((badgeId: string) => badgeId),
+  getKangurLeaderboardOperationInfo: vi.fn((value: string) => ({
+    family: 'arithmetic',
+    label: value,
+  })),
   getKangurPortableLessonBody: getKangurPortableLessonBodyMock,
   getKangurPracticeOperationForLessonComponent: vi.fn(() => 'clock'),
 }));
@@ -96,8 +104,16 @@ vi.mock('./useKangurMobileLessonsAssignments', () => ({
   useKangurMobileLessonsAssignments: useKangurMobileLessonsAssignmentsMock,
 }));
 
+vi.mock('./useKangurMobileLessonsBadges', () => ({
+  useKangurMobileLessonsBadges: useKangurMobileLessonsBadgesMock,
+}));
+
 vi.mock('./useKangurMobileLessonsLessonMastery', () => ({
   useKangurMobileLessonsLessonMastery: useKangurMobileLessonsLessonMasteryMock,
+}));
+
+vi.mock('./useKangurMobileLessonsRecentResults', () => ({
+  useKangurMobileLessonsRecentResults: useKangurMobileLessonsRecentResultsMock,
 }));
 
 vi.mock('./useKangurMobileLessonsDuels', () => ({
@@ -211,12 +227,26 @@ describe('KangurLessonsScreen', () => {
     useKangurMobileLessonsAssignmentsMock.mockReturnValue({
       assignmentItems: [],
     });
+    useKangurMobileLessonsBadgesMock.mockReturnValue({
+      recentBadges: [],
+      remainingBadges: 9,
+      totalBadges: 9,
+      unlockedBadges: 0,
+    });
     useKangurMobileLessonsLessonMasteryMock.mockReturnValue({
       lessonsNeedingPractice: 0,
       masteredLessons: 0,
       strongest: [],
       trackedLessons: 0,
       weakest: [],
+    });
+    useKangurMobileLessonsRecentResultsMock.mockReturnValue({
+      error: null,
+      isEnabled: false,
+      isLoading: false,
+      isRestoringAuth: false,
+      recentResultItems: [],
+      refresh: vi.fn(),
     });
     useKangurMobileLessonsDuelsMock.mockReturnValue({
       actionError: null,
@@ -333,6 +363,23 @@ describe('KangurLessonsScreen', () => {
         },
       ],
     });
+    useKangurMobileLessonsBadgesMock.mockReturnValue({
+      recentBadges: [
+        {
+          emoji: '📚',
+          id: 'lesson_hero',
+          name: 'Bohater lekcji',
+        },
+        {
+          emoji: '🕒',
+          id: 'clock_master',
+          name: 'Mistrz zegara',
+        },
+      ],
+      remainingBadges: 7,
+      totalBadges: 9,
+      unlockedBadges: 2,
+    });
     useKangurMobileLessonsLessonMasteryMock.mockReturnValue({
       lessonsNeedingPractice: 1,
       masteredLessons: 1,
@@ -386,6 +433,42 @@ describe('KangurLessonsScreen', () => {
         },
       ],
     });
+    useKangurMobileLessonsRecentResultsMock.mockReturnValue({
+      error: null,
+      isEnabled: true,
+      isLoading: false,
+      isRestoringAuth: false,
+      recentResultItems: [
+        {
+          historyHref: {
+            pathname: '/results',
+            params: {
+              operation: 'addition',
+            },
+          },
+          lessonHref: {
+            pathname: '/lessons',
+            params: {
+              focus: 'adding',
+            },
+          },
+          practiceHref: {
+            pathname: '/practice',
+            params: {
+              operation: 'addition',
+            },
+          },
+          result: {
+            correct_answers: 7,
+            created_date: '2026-03-21T08:00:00.000Z',
+            id: 'score-1',
+            operation: 'addition',
+            total_questions: 8,
+          },
+        },
+      ],
+      refresh: vi.fn(),
+    });
 
     renderLessonsScreen();
 
@@ -405,7 +488,19 @@ describe('KangurLessonsScreen', () => {
     expect(screen.getByText('Wróć do lekcji: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Potem trenuj: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
+    expect(screen.getByText('Historia wyników')).toBeTruthy();
+    expect(screen.getByText('Ostatnie sesje mobilne')).toBeTruthy();
+    expect(screen.getByText('Trenuj ponownie')).toBeTruthy();
+    expect(screen.getByText('Historia trybu')).toBeTruthy();
+    expect(screen.getByText('Otwórz historię wyników')).toBeTruthy();
     expect(screen.getByText('Opanowanie lekcji')).toBeTruthy();
+    expect(screen.getByText('Odznaki')).toBeTruthy();
+    expect(screen.getByText('Odblokowane 2/9')).toBeTruthy();
+    expect(screen.getByText('Do zdobycia 7')).toBeTruthy();
+    expect(screen.getByText('Ostatnio odblokowane')).toBeTruthy();
+    expect(screen.getByText('📚 Bohater lekcji')).toBeTruthy();
+    expect(screen.getByText('🕒 Mistrz zegara')).toBeTruthy();
+    expect(screen.getByText('Otwórz profil i odznaki')).toBeTruthy();
     expect(screen.getByText('Śledzone 2')).toBeTruthy();
     expect(screen.getByText('Opanowane 1')).toBeTruthy();
     expect(screen.getByText('Do powtórki 1')).toBeTruthy();

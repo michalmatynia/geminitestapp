@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 
 import {
   useOptionalCmsStorefrontAppearance,
-} from '@/features/cms/public';
+} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import {
   KANGUR_BASE_PATH,
   normalizeKangurBasePath,
@@ -14,7 +14,7 @@ import {
 } from '@/features/kangur/config/routing';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeaturePageShell } from '@/features/kangur/ui/KangurFeaturePage';
-import { KangurMainRoleProvider } from '@/features/kangur/ui/design/primitives';
+import { KangurMainRoleProvider } from '@/features/kangur/ui/design/primitives/KangurPageContainer';
 import {
   getKangurSlugFromPathname,
 } from '@/features/kangur/ui/routing/managed-paths';

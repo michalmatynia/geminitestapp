@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   replaceMock,
   useKangurMobileDailyPlanAssignmentsMock,
+  useKangurMobileDailyPlanBadgesMock,
   useKangurMobileDailyPlanDuelsMock,
   useKangurMobileDailyPlanLessonMasteryMock,
   useKangurMobileDailyPlanMock,
@@ -17,6 +18,7 @@ const {
 } = vi.hoisted(() => ({
   replaceMock: vi.fn(),
   useKangurMobileDailyPlanAssignmentsMock: vi.fn(),
+  useKangurMobileDailyPlanBadgesMock: vi.fn(),
   useKangurMobileDailyPlanDuelsMock: vi.fn(),
   useKangurMobileDailyPlanLessonMasteryMock: vi.fn(),
   useKangurMobileDailyPlanMock: vi.fn(),
@@ -35,6 +37,10 @@ vi.mock('./useKangurMobileDailyPlan', () => ({
 
 vi.mock('./useKangurMobileDailyPlanAssignments', () => ({
   useKangurMobileDailyPlanAssignments: useKangurMobileDailyPlanAssignmentsMock,
+}));
+
+vi.mock('./useKangurMobileDailyPlanBadges', () => ({
+  useKangurMobileDailyPlanBadges: useKangurMobileDailyPlanBadgesMock,
 }));
 
 vi.mock('./useKangurMobileDailyPlanDuels', () => ({
@@ -59,6 +65,12 @@ describe('KangurDailyPlanScreen', () => {
     });
     useKangurMobileDailyPlanAssignmentsMock.mockReturnValue({
       assignmentItems: [],
+    });
+    useKangurMobileDailyPlanBadgesMock.mockReturnValue({
+      recentBadges: [],
+      remainingBadges: 9,
+      totalBadges: 9,
+      unlockedBadges: 0,
     });
     useKangurMobileDailyPlanMock.mockReturnValue({
       authError: null,
@@ -303,6 +315,23 @@ describe('KangurDailyPlanScreen', () => {
       ],
       lessonsNeedingPractice: 1,
     });
+    useKangurMobileDailyPlanBadgesMock.mockReturnValue({
+      recentBadges: [
+        {
+          emoji: '🕐',
+          id: 'clock_master',
+          name: 'Mistrz zegara',
+        },
+        {
+          emoji: '📚',
+          id: 'lesson_hero',
+          name: 'Bohater lekcji',
+        },
+      ],
+      remainingBadges: 7,
+      totalBadges: 9,
+      unlockedBadges: 2,
+    });
 
     render(<KangurDailyPlanScreen />);
 
@@ -328,6 +357,13 @@ describe('KangurDailyPlanScreen', () => {
     expect(screen.getByText('Śledzone 3')).toBeTruthy();
     expect(screen.getAllByText('Do powtórki').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Najmocniejsza lekcja')).toBeTruthy();
+    expect(screen.getByText('Odznaki')).toBeTruthy();
+    expect(screen.getByText('Odblokowane 2/9')).toBeTruthy();
+    expect(screen.getByText('Do zdobycia 7')).toBeTruthy();
+    expect(screen.getByText('Ostatnio odblokowane')).toBeTruthy();
+    expect(screen.getByText('🕐 Mistrz zegara')).toBeTruthy();
+    expect(screen.getByText('📚 Bohater lekcji')).toBeTruthy();
+    expect(screen.getByText('Otwórz profil i odznaki')).toBeTruthy();
     expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
     expect(screen.getByText('Ostatni wynik 70% • opanowanie 68%')).toBeTruthy();
     expect(screen.getByText('Wróć do lekcji: Dodawanie')).toBeTruthy();

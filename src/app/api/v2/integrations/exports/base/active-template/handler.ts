@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   getExportActiveTemplateId,
@@ -7,19 +6,16 @@ import {
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import {
+  baseScopedPreferenceQuerySchema,
   baseScopedTemplatePreferencePayloadSchema,
   type BaseActiveTemplatePreferenceResponse,
 } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
-export const querySchema = z.object({
-  connectionId: optionalTrimmedQueryString(),
-  inventoryId: optionalTrimmedQueryString(),
-});
+export { baseScopedPreferenceQuerySchema as querySchema };
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const query = baseScopedPreferenceQuerySchema.parse(_ctx.query ?? {});
   const templateId = await getExportActiveTemplateId({
     connectionId: query.connectionId ?? null,
     inventoryId: query.inventoryId ?? null,

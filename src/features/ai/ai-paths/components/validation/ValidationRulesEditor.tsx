@@ -4,9 +4,14 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { AiPathsValidationRule, AiPathsValidationStage } from '@/shared/lib/ai-paths';
-import { Badge, Button, Card, Checkbox, Input, Label, StatusBadge, Textarea } from '@/shared/ui';
+import { Checkbox, Input, Label, StatusBadge, Textarea } from '@/shared/ui';
 
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
+import { ValidationActionButton } from './ValidationActionButton';
+import { ValidationItemCard } from './ValidationItemCard';
+import { ValidationMetaBadge } from './ValidationMetaBadge';
+import { ValidationPanel } from './ValidationPanel';
+import { ValidationPanelHeader } from './ValidationPanelHeader';
 
 const VALIDATION_STAGE_OPTIONS: Array<LabeledOptionDto<AiPathsValidationStage>> = [
   { value: 'graph_parse', label: 'Parse' },
@@ -29,13 +34,15 @@ export function ValidationRulesEditor(): React.JSX.Element {
 
   return (
     <div className='space-y-6 xl:col-span-5'>
-      <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
-        <div className='mb-4 flex flex-wrap items-center justify-between gap-2'>
-          <h3 className='text-sm font-semibold text-white'>Validation Rules (JSON)</h3>
-          <Button type='button' variant='outline' size='sm' onClick={handleApplyRulesDraft}>
-            Apply JSON Rules
-          </Button>
-        </div>
+      <ValidationPanel>
+        <ValidationPanelHeader
+          title='Validation Rules (JSON)'
+          trailing={
+            <ValidationActionButton onClick={handleApplyRulesDraft}>
+              Apply JSON Rules
+            </ValidationActionButton>
+          }
+        />
         <Textarea
           className={`min-h-[320px] font-mono text-xs ${rulesDraftError ? 'border-rose-500/50' : ''}`}
           value={rulesDraft}
@@ -45,13 +52,13 @@ export function ValidationRulesEditor(): React.JSX.Element {
         {rulesDraftError ? (
           <div className='mt-2 text-xs font-medium text-rose-400'>{rulesDraftError}</div>
         ) : null}
-      </Card>
+      </ValidationPanel>
 
-      <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
-        <div className='mb-4 flex flex-wrap items-center justify-between gap-2'>
-          <h3 className='text-sm font-semibold text-white'>Rules Inventory</h3>
-          <div className='text-xs text-gray-500'>{filteredRules.length} rules</div>
-        </div>
+      <ValidationPanel>
+        <ValidationPanelHeader
+          title='Rules Inventory'
+          trailing={<div className='text-xs text-gray-500'>{filteredRules.length} rules</div>}
+        />
         <div className='space-y-3'>
           {filteredRules.map((rule: AiPathsValidationRule) => {
             const activeStages =
@@ -59,12 +66,7 @@ export function ValidationRulesEditor(): React.JSX.Element {
                 ? rule.appliesToStages
                 : (['graph_parse'] satisfies AiPathsValidationStage[]);
             return (
-              <Card
-                key={rule.id}
-                variant='subtle-compact'
-                padding='sm'
-                className='border-border/50 bg-card/40'
-              >
+              <ValidationItemCard key={rule.id}>
                 <div className='flex flex-wrap items-start justify-between gap-2'>
                   <div className='min-w-0 flex-1'>
                     <div className='flex items-center gap-2'>
@@ -80,22 +82,18 @@ export function ValidationRulesEditor(): React.JSX.Element {
                       {rule.description}
                     </div>
                     <div className='mt-2 flex flex-wrap items-center gap-1'>
-                      <Badge variant='outline' className='text-[10px] uppercase'>
+                      <ValidationMetaBadge uppercase>
                         {rule.severity}
-                      </Badge>
+                      </ValidationMetaBadge>
                       {rule.appliesToNodeTypes?.map((type: string) => (
-                        <Badge key={type} variant='outline' className='text-[10px]'>
+                        <ValidationMetaBadge key={type}>
                           {type}
-                        </Badge>
+                        </ValidationMetaBadge>
                       ))}
                       {rule.appliesToStages?.map((stage: string) => (
-                        <Badge
-                          key={`${rule.id}:${stage}`}
-                          variant='outline'
-                          className='text-[10px]'
-                        >
+                        <ValidationMetaBadge key={`${rule.id}:${stage}`}>
                           {stage}
-                        </Badge>
+                        </ValidationMetaBadge>
                       ))}
                     </div>
                     <div className='mt-2 flex flex-wrap items-center gap-3'>
@@ -133,22 +131,19 @@ export function ValidationRulesEditor(): React.JSX.Element {
                         aria-label='Sequence'
                        title='Input field'/>
                     </div>
-                    <Button
-                      type='button'
-                      variant='outline'
-                      size='sm'
+                    <ValidationActionButton
                       className='h-7 px-2 text-[11px]'
                       onClick={() => handleToggleRuleEnabled(rule.id)}
                     >
                       {rule.enabled === false ? 'Enable' : 'Disable'}
-                    </Button>
+                    </ValidationActionButton>
                   </div>
                 </div>
-              </Card>
+              </ValidationItemCard>
             );
           })}
         </div>
-      </Card>
+      </ValidationPanel>
     </div>
   );
 }

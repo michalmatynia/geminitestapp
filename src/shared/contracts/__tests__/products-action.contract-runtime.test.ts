@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  createProductCategorySchema,
   productBulkImagesBase64ResponseSchema,
   productCsvImportResponseSchema,
   productDuplicateRequestSchema,
   productImageBase64ResponseSchema,
   productPatchInputSchema,
+  updateProductCategorySchema,
 } from '@/shared/contracts/products';
 
 describe('product action contract runtime', () => {
@@ -55,5 +57,22 @@ describe('product action contract runtime', () => {
         },
       }).summary.failed
     ).toBe(2);
+  });
+
+  it('parses shared product category create and update payloads', () => {
+    expect(
+      createProductCategorySchema.parse({
+        name: 'Primary',
+        catalogId: 'catalog-1',
+        parentId: null,
+      }).catalogId
+    ).toBe('catalog-1');
+
+    expect(
+      updateProductCategorySchema.parse({
+        name: 'Renamed',
+        sortIndex: 4,
+      }).sortIndex
+    ).toBe(4);
   });
 });

@@ -43,6 +43,7 @@ import { resolveRunHistoryEntryAction } from './run-history-entry-actions';
 import { buildHistoryNodeOptions } from './run-history-utils';
 import { AiPathsPillButton } from './AiPathsPillButton';
 import { RunHistoryEntries } from './RunHistoryEntries';
+import { RuntimeEventEntry } from './runtime-event-entry';
 
 type HistoryOption = {
   id: string;
@@ -623,20 +624,26 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                 ) : (
                   <div className='mt-1 divide-y divide-border/70'>
                     {events.map((event: AiPathRunEventRecord) => (
-                      <div key={event.id} className='py-2'>
-                        <div className='flex flex-wrap items-center gap-2 text-[11px] text-gray-400'>
-                          <span>{formatDate(event.createdAt)}</span>
-                          <span className='rounded-full border px-2 py-0.5 text-[10px] text-gray-300'>
-                            {event.level}
-                          </span>
-                        </div>
-                        <div className='mt-1 text-sm text-white'>{event.message}</div>
-                        {event.metadata ? (
-                          <pre className='mt-2 max-h-40 overflow-auto rounded-md border border-border bg-black/30 p-2 text-[11px] text-gray-200'>
-                            {safePrettyJson(event.metadata)}
-                          </pre>
-                        ) : null}
-                      </div>
+                      <RuntimeEventEntry
+                        key={event.id}
+                        timestamp={formatDate(event.createdAt)}
+                        level={event.level}
+                        kind={null}
+                        message={event.message}
+                        className='py-2'
+                        timeClassName='text-gray-400'
+                        levelClassName='text-gray-300'
+                        messageClassName='text-sm text-white'
+                        stacked
+                        hideKindBadge
+                        details={
+                          event.metadata ? (
+                            <pre className='mt-2 max-h-40 overflow-auto rounded-md border border-border bg-black/30 p-2 text-[11px] text-gray-200'>
+                              {safePrettyJson(event.metadata)}
+                            </pre>
+                          ) : null
+                        }
+                      />
                     ))}
                   </div>
                 )}

@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2026-03-18T19:19:39.347Z",
+  "generatedAt": "2026-03-22T09:13:53.821Z",
   "status": "passed",
   "summary": {
-    "total": 34,
+    "total": 32,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 34,
+    "infoCount": 32,
     "status": "passed",
     "featureCount": 28,
     "featuresWithTestCount": 28,
     "featuresWithoutTestCount": 0,
     "featuresWithoutFastTestCount": 0,
-    "featuresWithoutNegativeTestCount": 2,
-    "totalTestFiles": 1750,
+    "featuresWithoutNegativeTestCount": 0,
+    "totalTestFiles": 1973,
     "onlyCount": 0,
     "skipCount": 32,
     "todoCount": 0
@@ -28,24 +28,24 @@
   "featuresWithTests": [
     {
       "feature": "kangur",
-      "testCount": 327,
-      "fastTestCount": 314,
+      "testCount": 434,
+      "fastTestCount": 421,
       "e2eTestCount": 13,
-      "negativePathTestCount": 66
+      "negativePathTestCount": 92
     },
     {
       "feature": "ai",
-      "testCount": 232,
-      "fastTestCount": 232,
+      "testCount": 290,
+      "fastTestCount": 290,
       "e2eTestCount": 0,
-      "negativePathTestCount": 86
+      "negativePathTestCount": 107
     },
     {
       "feature": "products",
-      "testCount": 83,
-      "fastTestCount": 76,
+      "testCount": 100,
+      "fastTestCount": 93,
       "e2eTestCount": 7,
-      "negativePathTestCount": 28
+      "negativePathTestCount": 32
     },
     {
       "feature": "case-resolver",
@@ -70,10 +70,10 @@
     },
     {
       "feature": "integrations",
-      "testCount": 40,
-      "fastTestCount": 39,
+      "testCount": 46,
+      "fastTestCount": 45,
       "e2eTestCount": 1,
-      "negativePathTestCount": 13
+      "negativePathTestCount": 16
     },
     {
       "feature": "foldertree",
@@ -84,17 +84,24 @@
     },
     {
       "feature": "observability",
-      "testCount": 21,
-      "fastTestCount": 20,
+      "testCount": 25,
+      "fastTestCount": 24,
       "e2eTestCount": 1,
-      "negativePathTestCount": 3
+      "negativePathTestCount": 4
     },
     {
       "feature": "admin",
-      "testCount": 14,
-      "fastTestCount": 12,
-      "e2eTestCount": 2,
+      "testCount": 17,
+      "fastTestCount": 14,
+      "e2eTestCount": 3,
       "negativePathTestCount": 4
+    },
+    {
+      "feature": "auth",
+      "testCount": 11,
+      "fastTestCount": 11,
+      "e2eTestCount": 0,
+      "negativePathTestCount": 6
     },
     {
       "feature": "database",
@@ -109,13 +116,6 @@
       "fastTestCount": 9,
       "e2eTestCount": 2,
       "negativePathTestCount": 3
-    },
-    {
-      "feature": "auth",
-      "testCount": 10,
-      "fastTestCount": 10,
-      "e2eTestCount": 0,
-      "negativePathTestCount": 6
     },
     {
       "feature": "filemaker",
@@ -181,6 +181,13 @@
       "negativePathTestCount": 1
     },
     {
+      "feature": "prompt-engine",
+      "testCount": 4,
+      "fastTestCount": 4,
+      "e2eTestCount": 0,
+      "negativePathTestCount": 1
+    },
+    {
       "feature": "playwright",
       "testCount": 3,
       "fastTestCount": 3,
@@ -188,11 +195,11 @@
       "negativePathTestCount": 3
     },
     {
-      "feature": "prompt-engine",
-      "testCount": 3,
-      "fastTestCount": 3,
+      "feature": "app-embeds",
+      "testCount": 2,
+      "fastTestCount": 2,
       "e2eTestCount": 0,
-      "negativePathTestCount": 0
+      "negativePathTestCount": 1
     },
     {
       "feature": "tooltip-engine",
@@ -200,13 +207,6 @@
       "fastTestCount": 2,
       "e2eTestCount": 0,
       "negativePathTestCount": 2
-    },
-    {
-      "feature": "app-embeds",
-      "testCount": 1,
-      "fastTestCount": 1,
-      "e2eTestCount": 0,
-      "negativePathTestCount": 0
     },
     {
       "feature": "gsap",
@@ -225,31 +225,8 @@
   ],
   "featuresWithoutTests": [],
   "featuresWithoutFastTests": [],
-  "featuresWithoutNegativeTests": [
-    "app-embeds",
-    "prompt-engine"
-  ],
+  "featuresWithoutNegativeTests": [],
   "issues": [
-    {
-      "severity": "info",
-      "ruleId": "feature-no-negative-tests",
-      "message": "Feature \"app-embeds\" has tests, but no negative-path signal was detected in its attributed test files.",
-      "file": null,
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": "src/features/app-embeds/"
-    },
-    {
-      "severity": "info",
-      "ruleId": "feature-no-negative-tests",
-      "message": "Feature \"prompt-engine\" has tests, but no negative-path signal was detected in its attributed test files.",
-      "file": null,
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": "src/features/prompt-engine/"
-    },
     {
       "severity": "info",
       "ruleId": "test-skip-left",
@@ -573,17 +550,11 @@
   ],
   "rules": [
     {
-      "ruleId": "feature-no-negative-tests",
-      "errorCount": 0,
-      "warningCount": 0,
-      "infoCount": 2
-    },
-    {
       "ruleId": "test-skip-left",
       "errorCount": 0,
       "warningCount": 0,
       "infoCount": 32
     }
   ],
-  "durationMs": 385
+  "durationMs": 453
 }

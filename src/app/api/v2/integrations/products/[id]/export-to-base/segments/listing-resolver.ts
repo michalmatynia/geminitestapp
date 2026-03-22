@@ -33,22 +33,19 @@ export async function resolveListingForExport(args: {
 
   if (imagesOnly) {
     let existingListing: ProductListing | null = null;
-    if (listingIdFromData) {
-      const resolvedById = await findProductListingByIdAcrossProviders(listingIdFromData);
-      if (resolvedById?.listing.productId === productId) {
-        existingListing = resolvedById.listing;
-        listingRepo = resolvedById.repository;
-      }
-    }
-    if (!existingListing) {
-      const resolvedByConnection = await findProductListingByProductAndConnectionAcrossProviders(
-        productId,
-        connectionId
-      );
-      if (resolvedByConnection) {
-        existingListing = resolvedByConnection.listing;
-        listingRepo = resolvedByConnection.repository;
-      }
+    // Run both lookups in parallel — use ID-based result if it matches, else fall back to connection
+    const [resolvedById, resolvedByConnection] = await Promise.all([
+      listingIdFromData
+        ? findProductListingByIdAcrossProviders(listingIdFromData)
+        : Promise.resolve(null),
+      findProductListingByProductAndConnectionAcrossProviders(productId, connectionId),
+    ]);
+    if (resolvedById?.listing.productId === productId) {
+      existingListing = resolvedById.listing;
+      listingRepo = resolvedById.repository;
+    } else if (resolvedByConnection) {
+      existingListing = resolvedByConnection.listing;
+      listingRepo = resolvedByConnection.repository;
     }
 
     if (existingListing) {

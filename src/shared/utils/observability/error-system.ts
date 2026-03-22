@@ -23,15 +23,15 @@ const logErrorSystemFailure = async (
   try {
     const { logger } = (await import('@/shared/utils/logger')) as {
       logger: {
-        error: (msg: string, error?: unknown) => void;
+        error: (msg: string, error?: unknown, context?: Record<string, unknown>) => void;
         warn: (msg: string, context?: Record<string, unknown>) => void;
       };
     };
     if (level === 'warn') {
-      logger.warn(message, { error });
+      logger.warn(message, { service: 'error-system', error });
       return;
     }
-    logger.error(message, error);
+    logger.error(message, error, { service: 'error-system' });
   } catch {
     if (level === 'warn') {
       console.warn(message, error);

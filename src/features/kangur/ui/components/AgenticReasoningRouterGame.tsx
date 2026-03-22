@@ -21,6 +21,7 @@ import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_WRAP_ROW_SPACED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -159,6 +160,7 @@ const ReasoningDialVisual = (): JSX.Element => (
 export default function AgenticReasoningRouterGame({
   onFinish,
 }: KangurMiniGameFinishActionProps): JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [assignments, setAssignments] = useState<Record<string, ReasoningLevelId>>({});
   const [checked, setChecked] = useState(false);
@@ -172,6 +174,12 @@ export default function AgenticReasoningRouterGame({
   );
 
   const isPerfect = score === ROUTER_TASKS.length && assignedCount === ROUTER_TASKS.length;
+  const activeTask = activeTaskId
+    ? ROUTER_TASKS.find((task) => task.id === activeTaskId) ?? null
+    : null;
+  const touchHint = activeTask
+    ? `Selected task: ${activeTask.text} Tap a reasoning level.`
+    : 'Tap a task card, then tap a reasoning level.';
 
   const handleAssign = (levelId: ReasoningLevelId) => {
     if (!activeTaskId) return;
@@ -227,13 +235,24 @@ export default function AgenticReasoningRouterGame({
             <div className='flex flex-wrap items-center justify-between gap-3'>
               <div>
                 <p className='text-sm font-semibold text-teal-950'>Routing Queue</p>
-                <KangurLessonCaption className='text-teal-800'>Choose the right effort.</KangurLessonCaption>
+                <KangurLessonCaption className='text-teal-800'>
+                  {isCoarsePointer ? 'Tap a task to focus it.' : 'Choose the right effort.'}
+                </KangurLessonCaption>
               </div>
               <KangurStatusChip accent='teal' size='sm'>
                 {assignedCount}/{ROUTER_TASKS.length} routed
               </KangurStatusChip>
             </div>
             <KangurProgressBar accent='teal' value={progress} size='sm' />
+            {isCoarsePointer ? (
+              <div
+                aria-live='polite'
+                className='rounded-2xl border border-teal-200/80 bg-white/80 px-4 py-3 text-sm font-semibold text-teal-950 shadow-sm'
+                data-testid='agentic-reasoning-touch-hint'
+              >
+                {touchHint}
+              </div>
+            ) : null}
 
             <div className='grid gap-3' role='group' aria-label='Select a task to route'>
               {ROUTER_TASKS.map((task) => {
@@ -248,8 +267,10 @@ export default function AgenticReasoningRouterGame({
                     type='button'
                     onClick={() => setActiveTaskId(task.id)}
                     className={cn(
-                      'w-full rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition-all',
-                      'bg-white/80 hover:-translate-y-0.5 hover:shadow-md',
+                      'w-full rounded-2xl border bg-white/80 text-left text-sm font-semibold transition-all touch-manipulation select-none',
+                      isCoarsePointer
+                        ? 'min-h-[5rem] px-4 py-4 active:scale-[0.99] active:shadow-sm'
+                        : 'px-4 py-3 hover:-translate-y-0.5 hover:shadow-md',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/70 focus-visible:ring-offset-2 ring-offset-white',
                       isActive && 'border-teal-400 bg-teal-50',
                       !isActive && 'border-teal-100/80',
@@ -279,7 +300,9 @@ export default function AgenticReasoningRouterGame({
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm font-semibold text-teal-950'>Reasoning Levels</p>
-                <KangurLessonCaption className='text-teal-800'>Click to route.</KangurLessonCaption>
+                <KangurLessonCaption className='text-teal-800'>
+                  {isCoarsePointer ? 'Tap to route the selected task.' : 'Click to route.'}
+                </KangurLessonCaption>
               </div>
               <ReasoningDialVisual />
             </div>
@@ -290,8 +313,10 @@ export default function AgenticReasoningRouterGame({
                   type='button'
                   onClick={() => handleAssign(level.id)}
                   className={cn(
-                    'rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition-all',
-                    'hover:-translate-y-0.5 hover:shadow-md',
+                    'rounded-2xl border text-left text-sm font-semibold transition-all touch-manipulation select-none',
+                    isCoarsePointer
+                      ? 'min-h-[5rem] px-4 py-4 active:scale-[0.99] active:shadow-sm'
+                      : 'px-4 py-3 hover:-translate-y-0.5 hover:shadow-md',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/70 focus-visible:ring-offset-2 ring-offset-white',
                     level.colorClass,
                     activeTaskId ? 'opacity-100' : 'opacity-60'

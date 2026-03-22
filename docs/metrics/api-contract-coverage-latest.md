@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-18'
+last_reviewed: '2026-03-22'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,25 +8,25 @@ canonical: true
 ---
 # API Contract Coverage Report
 
-Generated at: 2026-03-18T19:19:44.474Z
+Generated at: 2026-03-22T08:43:06.748Z
 
 ## Summary
 
 - Status: PASSED
-- Route files scanned: 283
-- Route methods scanned: 214
-- Methods with adjacent tests: 183
+- Route files scanned: 285
+- Route methods scanned: 215
+- Methods with adjacent tests: 187
 - Mutations with body validation: 37
 - Query routes with validation: 10
 - Errors: 0
 - Warnings: 0
-- Info: 20
+- Info: 18
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| api-contract-route-missing-tests | 0 | 0 | 20 |
+| api-contract-route-missing-tests | 0 | 0 | 18 |
 
 ## Issues
 
@@ -34,7 +34,6 @@ Generated at: 2026-03-18T19:19:44.474Z
 | --- | --- | --- | --- |
 | INFO | api-contract-route-missing-tests | src/app/api/ai/context/related/[id]/route.ts:9:14 | GET ai/context/related/[id] has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/ai/schema/[entity]/route.ts:9:14 | GET ai/schema/[entity] has no adjacent route/handler test coverage. |
-| INFO | api-contract-route-missing-tests | src/app/api/analytics/events/route.ts:13:14 | GET analytics/events has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/analytics/summary/route.ts:8:14 | GET analytics/summary has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/assets3d/categories/route.ts:7:14 | GET assets3d/categories has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/assets3d/tags/route.ts:7:14 | GET assets3d/tags has no adjacent route/handler test coverage. |
@@ -49,7 +48,6 @@ Generated at: 2026-03-18T19:19:44.474Z
 | INFO | api-contract-route-missing-tests | src/app/api/settings/cache/route.ts:7:14 | GET settings/cache has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/settings/heavy/route.ts:8:14 | GET settings/heavy has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/settings/providers/route.ts:7:14 | GET settings/providers has no adjacent route/handler test coverage. |
-| INFO | api-contract-route-missing-tests | src/app/api/system/activity/route.ts:9:14 | GET system/activity has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/system/logs/metrics/route.ts:8:14 | GET system/logs/metrics has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/system/upload-events/route.ts:7:14 | GET system/upload-events has no adjacent route/handler test coverage. |
 
@@ -81,8 +79,8 @@ Generated at: 2026-03-18T19:19:44.474Z
 | ai-paths/[[...path]] | PUT | protected | yes | - | - |
 | ai-paths/[[...path]] | PATCH | protected | yes | - | - |
 | ai-paths/[[...path]] | DELETE | protected | yes | - | - |
-| analytics/events | POST | public | no | - | - |
-| analytics/events | GET | session | no | - | - |
+| analytics/events | POST | public | yes | - | - |
+| analytics/events | GET | session | yes | - | - |
 | analytics/insights | GET | session | yes | - | yes |
 | analytics/insights | POST | session | yes | - | - |
 | analytics/summary | GET | session | no | - | - |
@@ -175,6 +173,7 @@ Generated at: 2026-03-18T19:19:44.474Z
 | kangur/[[...path]] | DELETE | protected | yes | - | - |
 | kangur/auth/learner-signin | POST | public | yes | yes | - |
 | kangur/auth/learner-signout | POST | public | yes | - | - |
+| kangur/auth/me | GET | actor | yes | - | - |
 | kangur/auth/parent-account/create | POST | protected | yes | yes | - |
 | kangur/auth/parent-account/resend | POST | protected | yes | yes | - |
 | kangur/auth/parent-email/verify | POST | protected | yes | yes | - |
@@ -233,12 +232,12 @@ Generated at: 2026-03-18T19:19:44.474Z
 | settings/cache | GET | protected | no | - | - |
 | settings/database/sync | POST | protected | yes | - | - |
 | settings/heavy | GET | protected | no | - | - |
-| settings/lite | GET | protected | yes | - | - |
+| settings/lite | GET | public | yes | - | - |
 | settings/migrate/backfill-keys | POST | protected | yes | - | - |
 | settings/providers | GET | protected | no | - | - |
 | settings | GET | protected | yes | - | - |
 | settings | POST | protected | yes | - | - |
-| system/activity | GET | protected | no | - | - |
+| system/activity | GET | protected | yes | - | - |
 | system/diagnostics/mongo-indexes | GET | protected | yes | - | - |
 | system/diagnostics/mongo-indexes | POST | protected | yes | - | - |
 | system/logs/insights | GET | protected | yes | - | yes |

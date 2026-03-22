@@ -1,3 +1,12 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-03-22'
+status: 'active'
+doc_type: 'runbook'
+scope: 'repository'
+canonical: true
+---
+
 # Agentic preflight CI lane
 
 The repository now exposes a dedicated preflight workflow in `.github/workflows/agentic-preflight.yml`.

@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/server';
 import { getCategoryRepository, getProductDataProvider } from '@/features/products/server';
+import { createProductCategorySchema } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
@@ -51,14 +52,7 @@ const attachTimingHeaders = (
   }
 };
 
-export const productCategoryCreateSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  description: z.string().nullable().optional(),
-  color: z.string().nullable().optional(),
-  parentId: z.string().nullable().optional(),
-  catalogId: z.string().min(1, 'Catalog ID is required'),
-  sortIndex: z.number().int().min(0).optional(),
-});
+export { createProductCategorySchema as productCategoryCreateSchema };
 
 /**
  * GET /api/v2/products/categories
@@ -108,7 +102,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
  * Creates a new product category.
  */
 export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const data = ctx.body as z.infer<typeof productCategoryCreateSchema>;
+  const data = ctx.body as z.infer<typeof createProductCategorySchema>;
   const { name, parentId, catalogId } = data;
   const normalizedName = name.trim();
   if (!normalizedName) {

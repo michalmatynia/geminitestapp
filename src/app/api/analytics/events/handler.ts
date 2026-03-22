@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { auth, extractClientIp } from '@/features/auth/server';
 import {
-  analyticsEventFilterBotSchema,
-  analyticsEventFilterScopeSchema,
-  analyticsEventFilterTypeSchema,
-  analyticsEventTypeSchema,
-  analyticsRangeSchema,
-  analyticsScopeSchema,
+  analyticsEventCreateRequestSchema,
+  analyticsEventsQuerySchema,
   type AnalyticsEventCreateInput,
   type AnalyticsEventType,
 } from '@/shared/contracts/analytics';
@@ -23,91 +18,13 @@ import {
   parseAnalyticsUserAgent,
 } from '@/shared/lib/analytics/server/enrichment';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import {
-  normalizeOptionalQueryString,
-  optionalIntegerQuerySchema,
-} from '@/shared/lib/api/query-schema';
 import { logger } from '@/shared/utils/logger';
 
 const BLOCKING_ANALYTICS_EVENTS_INGESTION =
   process.env['ANALYTICS_EVENTS_BLOCKING_INGESTION'] === 'true';
 
-const createEventSchema = z.object({
-  type: analyticsEventTypeSchema,
-  scope: analyticsScopeSchema,
-  path: z.string().min(1),
-  search: z.string().optional().nullable(),
-  url: z.string().optional().nullable(),
-  title: z.string().optional().nullable(),
-  referrer: z.string().optional().nullable(),
-  visitorId: z.string().min(1),
-  sessionId: z.string().min(1),
-  utm: z
-    .object({
-      source: z.string().optional().nullable(),
-      medium: z.string().optional().nullable(),
-      campaign: z.string().optional().nullable(),
-      term: z.string().optional().nullable(),
-      content: z.string().optional().nullable(),
-    })
-    .optional()
-    .nullable(),
-  language: z.string().optional().nullable(),
-  languages: z.array(z.string()).optional().nullable(),
-  timeZone: z.string().optional().nullable(),
-  viewport: z
-    .object({
-      width: z.number().int().nonnegative(),
-      height: z.number().int().nonnegative(),
-    })
-    .optional()
-    .nullable(),
-  screen: z
-    .object({
-      width: z.number().int().nonnegative(),
-      height: z.number().int().nonnegative(),
-      dpr: z.number().nonnegative(),
-    })
-    .optional()
-    .nullable(),
-  connection: z
-    .object({
-      effectiveType: z.string().optional().nullable(),
-      downlink: z.number().optional().nullable(),
-      rtt: z.number().optional().nullable(),
-      saveData: z.boolean().optional().nullable(),
-    })
-    .optional()
-    .nullable(),
-  meta: z.record(z.string(), z['unknown']()).optional().nullable(),
-  clientTs: z.string().optional().nullable(),
-});
-
-export const querySchema = z.object({
-  page: optionalIntegerQuerySchema(z.number().int().min(1)).default(1),
-  pageSize: optionalIntegerQuerySchema(z.number().int().min(1).max(100)).default(20),
-  range: z.preprocess((value) => normalizeOptionalQueryString(value) ?? '24h', analyticsRangeSchema),
-  scope: z.preprocess(
-    (value) => normalizeOptionalQueryString(value) ?? 'all',
-    analyticsEventFilterScopeSchema
-  ),
-  type: z.preprocess(
-    (value) => normalizeOptionalQueryString(value) ?? 'all',
-    analyticsEventFilterTypeSchema
-  ),
-  search: z.preprocess((value) => normalizeOptionalQueryString(value) ?? '', z.string()),
-  country: z.preprocess((value) => normalizeOptionalQueryString(value) ?? '', z.string()),
-  referrerHost: z.preprocess(
-    (value) => normalizeOptionalQueryString(value) ?? '',
-    z.string()
-  ),
-  browser: z.preprocess((value) => normalizeOptionalQueryString(value) ?? '', z.string()),
-  device: z.preprocess((value) => normalizeOptionalQueryString(value) ?? '', z.string()),
-  bot: z.preprocess(
-    (value) => normalizeOptionalQueryString(value) ?? 'all',
-    analyticsEventFilterBotSchema
-  ),
-});
+export { analyticsEventCreateRequestSchema as createEventSchema };
+export { analyticsEventsQuerySchema as querySchema };
 
 const resolveSessionUserId = async (): Promise<string | null> => {
   const session = await auth().catch(() => null);
@@ -134,7 +51,7 @@ const persistAnalyticsEvent = async (
 };
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const parsed = await parseJsonBody(req, createEventSchema, {
+  const parsed = await parseJsonBody(req, analyticsEventCreateRequestSchema, {
     logPrefix: 'analytics.events.POST',
   });
   if (!parsed.ok) return parsed.response;
@@ -216,7 +133,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   const session = await auth();
   if (!session?.user) throw authError('Unauthorized.');
 
-  const query = querySchema.parse(_ctx.query ?? {});
+  const query = analyticsEventsQuerySchema.parse(_ctx.query ?? {});
   const page = query.page;
   const pageSize = query.pageSize;
   const skip = (page - 1) * pageSize;

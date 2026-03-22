@@ -15,6 +15,10 @@ import {
   kangurAiTutorLearnerMoodSchema,
 } from './kangur-ai-tutor-mood';
 import { activityLogSchema } from './system';
+import {
+  optionalBooleanQuerySchema,
+  optionalTrimmedQueryString,
+} from '@/shared/lib/api/query-schema';
 
 const nonEmptyTrimmedString = z.string().trim().min(1);
 
@@ -60,6 +64,18 @@ export type KangurLesson = z.infer<typeof kangurLessonSchema>;
 
 export const kangurLessonsSchema = z.array(kangurLessonSchema);
 export type KangurLessons = z.infer<typeof kangurLessonsSchema>;
+
+export const kangurLessonsQuerySchema = z.object({
+  subject: optionalTrimmedQueryString(kangurLessonSubjectSchema),
+  ageGroup: optionalTrimmedQueryString(kangurLessonAgeGroupSchema),
+  enabledOnly: optionalBooleanQuerySchema(),
+});
+export type KangurLessonsQuery = z.infer<typeof kangurLessonsQuerySchema>;
+
+export const kangurLessonsReplacePayloadSchema = z.object({
+  lessons: kangurLessonsSchema,
+});
+export type KangurLessonsReplacePayload = z.infer<typeof kangurLessonsReplacePayloadSchema>;
 
 const kangurLessonBlockIdSchema = nonEmptyTrimmedString.max(120);
 const kangurLessonBlockAlignSchema = z.enum(['left', 'center', 'right']);

@@ -262,6 +262,7 @@ describe('Kangur shared primitives', () => {
       '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,var(--kangur-accent-emerald-end,#06b6d4))]'
     );
     expect(screen.getByTestId('kangur-option-neutral')).toHaveClass(
+      'touch-manipulation',
       '[border-color:var(--kangur-soft-card-border)]',
       '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_92%,var(--kangur-page-background))]',
       '[color:var(--kangur-page-text)]'
@@ -272,6 +273,7 @@ describe('Kangur shared primitives', () => {
       '[color:var(--kangur-page-muted-text)]'
     );
     expect(screen.getByTestId('kangur-button-surface')).toHaveClass(
+      'touch-manipulation',
       'surface-cta',
       'text-[var(--kangur-button-surface-text,#2f4db5)]'
     );
@@ -433,6 +435,8 @@ describe('Kangur shared primitives', () => {
       'soft-card',
       'kangur-card-surface',
       'kangur-card-padding-md',
+      'touch-manipulation',
+      'active:scale-[0.995]',
       '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,var(--kangur-accent-amber-end,#facc15))]',
       '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,var(--kangur-accent-amber-start,#fb923c))]',
       'cursor-pointer'
@@ -449,6 +453,8 @@ describe('Kangur shared primitives', () => {
       'kangur-button-shell',
       'kangur-button-size-md',
       'kangur-cta-pill',
+      'touch-manipulation',
+      'active:scale-[0.985]',
       'primary-cta',
       'focus-visible:ring-amber-300/70'
     );
@@ -456,6 +462,7 @@ describe('Kangur shared primitives', () => {
       'kangur-button-shell',
       'kangur-button-size-md',
       'kangur-cta-pill',
+      'touch-manipulation',
       'surface-cta',
       'focus-visible:ring-indigo-300/70'
     );

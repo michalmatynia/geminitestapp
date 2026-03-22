@@ -95,7 +95,7 @@ function LessonsLoadingDetailCard(): React.JSX.Element {
       <SkeletonBlock height={28} width='68%' radius={16} />
       <SkeletonBlock height={18} width='100%' />
       <SkeletonBlock height={18} width='92%' />
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+      <View style={{ flexDirection: 'column', gap: 8 }}>
         <SkeletonBlock height={34} width={132} radius={999} />
         <SkeletonBlock height={34} width={144} radius={999} />
       </View>
@@ -271,12 +271,13 @@ function LessonCheckpointRow({
         }).format(new Date(item.lastCompletedAt))}
       </Text>
 
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+      <View style={{ flexDirection: 'column', gap: 8 }}>
         <Link href={item.lessonHref} asChild>
           <Pressable
             accessibilityRole='button'
             style={{
-              alignSelf: 'flex-start',
+              alignSelf: 'stretch',
+              width: '100%',
               borderRadius: 999,
               backgroundColor: '#0f172a',
               paddingHorizontal: 14,
@@ -298,7 +299,8 @@ function LessonCheckpointRow({
             <Pressable
               accessibilityRole='button'
               style={{
-                alignSelf: 'flex-start',
+                alignSelf: 'stretch',
+                width: '100%',
                 borderRadius: 999,
                 borderWidth: 1,
                 borderColor: '#cbd5e1',
@@ -397,16 +399,17 @@ function LessonsAssignmentRow({
       </Text>
       {item.href ? (
         <Link href={item.href} asChild>
-          <Pressable
-            accessibilityRole='button'
-            style={{
-              alignSelf: 'flex-start',
-              borderRadius: 999,
-              backgroundColor: '#0f172a',
-              paddingHorizontal: 14,
-              paddingVertical: 10,
-            }}
-          >
+        <Pressable
+          accessibilityRole='button'
+          style={{
+            alignSelf: 'stretch',
+            width: '100%',
+            borderRadius: 999,
+            backgroundColor: '#0f172a',
+            paddingHorizontal: 14,
+            paddingVertical: 10,
+          }}
+        >
             <Text style={{ color: '#ffffff', fontWeight: '700' }}>
               {translateKangurMobileActionLabel(item.assignment.action.label, locale)}
             </Text>
@@ -549,12 +552,13 @@ function LessonMasteryRow({
         })}
       </Text>
 
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+      <View style={{ flexDirection: 'column', gap: 8 }}>
         <Link href={insight.lessonHref} asChild>
           <Pressable
             accessibilityRole='button'
             style={{
-              alignSelf: 'flex-start',
+              alignSelf: 'stretch',
+              width: '100%',
               borderRadius: 999,
               backgroundColor: '#0f172a',
               paddingHorizontal: 14,
@@ -575,7 +579,8 @@ function LessonMasteryRow({
             <Pressable
               accessibilityRole='button'
               style={{
-                alignSelf: 'flex-start',
+                alignSelf: 'stretch',
+                width: '100%',
                 borderRadius: 999,
                 borderWidth: 1,
                 borderColor: '#cbd5e1',
@@ -705,7 +710,8 @@ export function KangurLessonsScreen(): React.JSX.Element {
             <Pressable
               accessibilityRole='button'
               style={{
-                alignSelf: 'flex-start',
+                alignSelf: 'stretch',
+                width: '100%',
                 borderRadius: 999,
                 backgroundColor: '#ffffff',
                 borderWidth: 1,
@@ -768,7 +774,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {selectedLesson.lesson.description}
               </Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          <View style={{ flexDirection: 'column', gap: 8 }}>
                 <Pill
                   label={selectedLesson.mastery.statusLabel}
                   tone={getMasteryTone(selectedLesson.mastery.badgeAccent)}
@@ -803,7 +809,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
                           pl: 'Sekcje lekcji',
                         })}
                       </Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    <View style={{ flexDirection: 'column', gap: 8 }}>
                       {selectedLessonBody.sections.map((section, index) => (
                         <Pressable
                           key={section.id}
@@ -1070,7 +1076,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
                                 })}
                           </Text>
                           {savedLessonCheckpoint.newBadges.length > 0 ? (
-                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                            <View style={{ flexDirection: 'column', gap: 8 }}>
                               {savedLessonCheckpoint.newBadges.map((badgeId) => (
                                 <View
                                   key={badgeId}
@@ -1125,7 +1131,8 @@ export function KangurLessonsScreen(): React.JSX.Element {
                           setSavedLessonCheckpoint(savedCheckpoint);
                         }}
                         style={{
-                          alignSelf: 'flex-start',
+                          alignSelf: 'stretch',
+                          width: '100%',
                           borderRadius: 999,
                           backgroundColor: '#0f766e',
                           paddingHorizontal: 14,
@@ -1164,7 +1171,8 @@ export function KangurLessonsScreen(): React.JSX.Element {
                   setDismissedFocusToken(normalizedRouteFocusToken);
                 }}
                 style={{
-                  alignSelf: 'flex-start',
+                  alignSelf: 'stretch',
+                  width: '100%',
                   borderRadius: 999,
                   backgroundColor: '#0f172a',
                   paddingHorizontal: 14,
@@ -1184,7 +1192,8 @@ export function KangurLessonsScreen(): React.JSX.Element {
                   <Pressable
                     accessibilityRole='button'
                     style={{
-                      alignSelf: 'flex-start',
+                      alignSelf: 'stretch',
+                      width: '100%',
                       borderRadius: 999,
                       backgroundColor: '#1d4ed8',
                       paddingHorizontal: 14,
@@ -1252,7 +1261,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
                 })}
               </Text>
 
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              <View style={{ flexDirection: 'column', gap: 8 }}>
                 <Pill
                   label={copy({
                     de: `Verfolgt ${lessonMastery.trackedLessons}`,
@@ -1367,7 +1376,8 @@ export function KangurLessonsScreen(): React.JSX.Element {
                     <Pressable
                       accessibilityRole='button'
                       style={{
-                        alignSelf: 'flex-start',
+                        alignSelf: 'stretch',
+                        width: '100%',
                         borderRadius: 999,
                         borderWidth: 1,
                         borderColor: '#cbd5e1',
@@ -1471,7 +1481,8 @@ export function KangurLessonsScreen(): React.JSX.Element {
                       void lessonDuels.refresh();
                     }}
                     style={{
-                      alignSelf: 'flex-start',
+                      alignSelf: 'stretch',
+                      width: '100%',
                       borderRadius: 999,
                       backgroundColor: '#0f172a',
                       paddingHorizontal: 14,
@@ -1594,7 +1605,8 @@ export function KangurLessonsScreen(): React.JSX.Element {
                               });
                             }}
                             style={{
-                              alignSelf: 'flex-start',
+                              alignSelf: 'stretch',
+                              width: '100%',
                               borderRadius: 999,
                               backgroundColor: lessonDuels.isActionPending ? '#94a3b8' : '#1d4ed8',
                               paddingHorizontal: 14,
@@ -1624,7 +1636,8 @@ export function KangurLessonsScreen(): React.JSX.Element {
                     <Pressable
                       accessibilityRole='button'
                       style={{
-                        alignSelf: 'flex-start',
+                        alignSelf: 'stretch',
+                        width: '100%',
                         borderRadius: 999,
                         borderWidth: 1,
                         borderColor: '#cbd5e1',
@@ -1776,7 +1789,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
                         </Pressable>
                       </Link>
 
-                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                      <View style={{ flexDirection: 'column', gap: 8 }}>
                         <Link href={href} asChild>
                           <Pressable
                             accessibilityRole='button'
@@ -1784,7 +1797,8 @@ export function KangurLessonsScreen(): React.JSX.Element {
                               setDismissedFocusToken(null);
                             }}
                             style={{
-                              alignSelf: 'flex-start',
+                              alignSelf: 'stretch',
+                              width: '100%',
                               borderRadius: 999,
                               backgroundColor: '#0f172a',
                               paddingHorizontal: 14,
@@ -1802,18 +1816,19 @@ export function KangurLessonsScreen(): React.JSX.Element {
                         </Link>
                         {item.practiceHref ? (
                           <Link href={item.practiceHref} asChild>
-                            <Pressable
-                              accessibilityRole='button'
-                              style={{
-                                alignSelf: 'flex-start',
-                                borderRadius: 999,
-                                borderWidth: 1,
-                                borderColor: '#cbd5e1',
-                                backgroundColor: '#ffffff',
-                                paddingHorizontal: 14,
-                                paddingVertical: 10,
-                              }}
-                            >
+                          <Pressable
+                            accessibilityRole='button'
+                            style={{
+                              alignSelf: 'stretch',
+                              width: '100%',
+                              borderRadius: 999,
+                              borderWidth: 1,
+                              borderColor: '#cbd5e1',
+                              backgroundColor: '#ffffff',
+                              paddingHorizontal: 14,
+                              paddingVertical: 10,
+                            }}
+                          >
                               <Text style={{ color: '#0f172a', fontWeight: '700' }}>
                                 {`${copy({
                                   de: 'Training starten',

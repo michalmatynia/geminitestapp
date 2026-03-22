@@ -7,6 +7,7 @@ import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTu
 import { useKangurCanvasTouchLock } from '@/features/kangur/ui/hooks/useKangurCanvasTouchLock';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { KANGUR_WRAP_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { cn } from '@/features/kangur/shared/utils';
 
 import type { JSX, PointerEvent as ReactPointerEvent } from 'react';
 
@@ -129,7 +130,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
       strokeWidths.includes(current) ? current : (strokeWidths[1] ?? 8)
     );
   }, [strokeWidths]);
-  useKangurCanvasTouchLock(canvasRef);
+  useKangurCanvasTouchLock(canvasRef, { enabled: isCoarsePointer });
 
   const handlePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLCanvasElement>): void => {
@@ -218,12 +219,20 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         </button>
       </div>
 
-      <div className='relative'>
+      <div
+        className={cn(
+          'relative transition-shadow',
+          isCoarsePointer && 'shadow-[inset_0_0_0_1px_var(--kangur-soft-card-border)]',
+          activeStroke && 'ring-2 ring-amber-300/70 ring-offset-2 ring-offset-white'
+        )}
+        data-testid='kangur-ai-tutor-drawing-board'
+      >
         <canvas
           ref={canvasRef}
           width={320}
           height={240}
           aria-label={drawingContent?.canvasLabel ?? 'Plansza do rysowania'}
+          data-drawing-active={activeStroke ? 'true' : 'false'}
           className='kangur-drawing-canvas touch-none rounded-none'
           style={{ cursor: isEraser ? 'cell' : 'crosshair', width: '100%', height: 'auto' }}
           onPointerDown={handlePointerDown}
@@ -241,7 +250,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
               type='button'
               aria-label={`Kolor ${color}`}
               aria-pressed={selectedColor === color && !isEraser}
-              className={`h-5 w-5 cursor-pointer rounded-full border-2 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white ${
+              className={`${isCoarsePointer ? 'h-8 w-8 touch-manipulation active:scale-95' : 'h-5 w-5'} cursor-pointer rounded-full border-2 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white ${
                 selectedColor === color && !isEraser
                   ? 'scale-110 kangur-chat-accent-border'
                   : '[border-color:var(--kangur-soft-card-border)] hover:scale-105'
@@ -264,7 +273,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
               type='button'
               aria-label={`Grubość ${w}px`}
               aria-pressed={selectedWidth === w && !isEraser}
-              className={`flex h-6 w-6 cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white ${
+              className={`flex ${isCoarsePointer ? 'h-9 w-9 touch-manipulation active:scale-95' : 'h-6 w-6'} cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white ${
                 selectedWidth === w && !isEraser
                   ? '[background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
                   : '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
@@ -288,7 +297,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
           type='button'
           aria-label={drawingContent?.penLabel ?? 'Pióro'}
           aria-pressed={!isEraser}
-          className={`flex h-6 w-6 cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white ${
+          className={`flex ${isCoarsePointer ? 'h-9 w-9 touch-manipulation active:scale-95' : 'h-6 w-6'} cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white ${
             !isEraser
               ? '[background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
               : '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
@@ -301,7 +310,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
           type='button'
           aria-label={drawingContent?.eraserLabel ?? 'Gumka'}
           aria-pressed={isEraser}
-          className={`flex h-6 w-6 cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white ${
+          className={`flex ${isCoarsePointer ? 'h-9 w-9 touch-manipulation active:scale-95' : 'h-6 w-6'} cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white ${
             isEraser
               ? '[background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
               : '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
@@ -316,7 +325,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         <button
           type='button'
           aria-label={drawingContent?.undoLabel ?? 'Cofnij'}
-          className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))] disabled:opacity-30'
+          className={`flex ${isCoarsePointer ? 'h-9 w-9 touch-manipulation active:scale-95' : 'h-6 w-6'} cursor-pointer items-center justify-center rounded-full [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))] disabled:opacity-30`}
           disabled={strokes.length === 0}
           onClick={handleUndo}
           title={drawingContent?.undoLabel ?? 'Cofnij'}>
@@ -325,7 +334,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         <button
           type='button'
           aria-label={drawingContent?.clearLabel ?? 'Wyczyść'}
-          className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white hover:[background:var(--kangur-chat-danger-background,#fff1f2)] hover:[color:var(--kangur-chat-danger-text,#ef4444)] disabled:opacity-30'
+          className={`flex ${isCoarsePointer ? 'h-9 w-9 touch-manipulation active:scale-95' : 'h-6 w-6'} cursor-pointer items-center justify-center rounded-full [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white hover:[background:var(--kangur-chat-danger-background,#fff1f2)] hover:[color:var(--kangur-chat-danger-text,#ef4444)] disabled:opacity-30`}
           disabled={strokes.length === 0}
           onClick={handleClear}
           title={drawingContent?.clearLabel ?? 'Wyczyść'}>

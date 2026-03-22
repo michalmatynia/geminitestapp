@@ -1571,7 +1571,9 @@
         "checkRemainder": "Check how many items stay in the remainder.",
         "equalGroups": "Make sure every group has the same size.",
         "correct": "Nice work! The groups are even.",
-        "idle": "Drag or click the items to split them into groups."
+        "idle": "Drag or click the items to split them into groups.",
+        "touchIdle": "Tap an item, then tap a group, the pool, or the remainder area. You can still drag too.",
+        "touchSelected": "Selected item: {emoji}. Tap a group, the pool, or the remainder area."
       }
     },
     "calendarTraining": {
@@ -2281,11 +2283,14 @@
       "inRound": {
         "roundLabel": "Round {current}/{total}",
         "modeLabel": "Drag and drop",
+        "modeLabelTouch": "Tap or drag",
         "poolLabel": "Pool of words",
         "poolAria": "Pool of words to sort",
         "poolEmpty": "Pool empty",
         "binAria": "{label} bin",
         "missingWords": "Missing words",
+        "touchIdle": "Tap a word, then tap a category or the pool.",
+        "touchSelected": "Selected word: {label}. Tap a category or the pool.",
         "clearRound": "Clear round",
         "hitsLabel": "{hits}/{total} correct",
         "check": "Check",

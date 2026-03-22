@@ -3,17 +3,11 @@ import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/server';
 import { getCategoryRepository } from '@/features/products/server';
+import { updateProductCategorySchema } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 
-export const productCategoryUpdateSchema = z.object({
-  name: z.string().min(1).optional(),
-  description: z.string().nullable().optional(),
-  color: z.string().nullable().optional(),
-  parentId: z.string().nullable().optional(),
-  catalogId: z.string().min(1).optional(),
-  sortIndex: z.number().int().min(0).optional(),
-});
+export { updateProductCategorySchema as productCategoryUpdateSchema };
 
 /**
  * GET /api/v2/products/categories/[id]
@@ -43,7 +37,7 @@ export async function PUT_handler(
   ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  const data = ctx.body as z.infer<typeof productCategoryUpdateSchema>;
+  const data = ctx.body as z.infer<typeof updateProductCategorySchema>;
   const { parentId, catalogId } = data;
   const normalizedName = data.name !== undefined ? data.name.trim() : undefined;
   if (data.name !== undefined && !normalizedName) {

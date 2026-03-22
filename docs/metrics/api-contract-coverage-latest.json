@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-03-18T19:19:44.474Z",
+  "generatedAt": "2026-03-22T08:43:06.748Z",
   "status": "passed",
   "summary": {
-    "total": 20,
+    "total": 18,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 20,
+    "infoCount": 18,
     "status": "passed",
-    "routeFileCount": 283,
-    "methodCount": 214,
-    "methodsWithTests": 183,
+    "routeFileCount": 285,
+    "methodCount": 215,
+    "methodsWithTests": 187,
     "mutationValidationCount": 37,
     "queryValidationCount": 10
   },
@@ -357,27 +357,31 @@
       "route": "analytics/events",
       "method": "POST",
       "expectedAccess": "public",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/analytics/events/route.ts",
         "src/app/api/analytics/events/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/analytics/events/handler.test.ts"
+      ]
     },
     {
       "route": "analytics/events",
       "method": "GET",
       "expectedAccess": "session",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/analytics/events/route.ts",
         "src/app/api/analytics/events/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/analytics/events/handler.test.ts"
+      ]
     },
     {
       "route": "analytics/insights",
@@ -1713,6 +1717,21 @@
       ]
     },
     {
+      "route": "kangur/auth/me",
+      "method": "GET",
+      "expectedAccess": "actor",
+      "hasTests": true,
+      "bodyValidated": null,
+      "queryValidated": null,
+      "sourceFiles": [
+        "src/app/api/kangur/auth/me/route.ts",
+        "src/app/api/kangur/auth/me/handler.ts"
+      ],
+      "testFiles": [
+        "src/app/api/kangur/auth/me/handler.test.ts"
+      ]
+    },
+    {
       "route": "kangur/auth/parent-account/create",
       "method": "POST",
       "expectedAccess": "protected",
@@ -2564,7 +2583,7 @@
     {
       "route": "settings/lite",
       "method": "GET",
-      "expectedAccess": "protected",
+      "expectedAccess": "public",
       "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
@@ -2638,14 +2657,16 @@
       "route": "system/activity",
       "method": "GET",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/system/activity/route.ts",
         "src/app/api/system/activity/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/system/activity/handler.test.ts"
+      ]
     },
     {
       "route": "system/diagnostics/mongo-indexes",
@@ -3148,22 +3169,6 @@
     {
       "severity": "info",
       "ruleId": "api-contract-route-missing-tests",
-      "message": "GET analytics/events has no adjacent route/handler test coverage.",
-      "file": "src/app/api/analytics/events/route.ts",
-      "line": 13,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "session",
-        "sourceFiles": [
-          "src/app/api/analytics/events/route.ts",
-          "src/app/api/analytics/events/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
       "message": "GET analytics/summary has no adjacent route/handler test coverage.",
       "file": "src/app/api/analytics/summary/route.ts",
       "line": 8,
@@ -3387,22 +3392,6 @@
     {
       "severity": "info",
       "ruleId": "api-contract-route-missing-tests",
-      "message": "GET system/activity has no adjacent route/handler test coverage.",
-      "file": "src/app/api/system/activity/route.ts",
-      "line": 9,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/system/activity/route.ts",
-          "src/app/api/system/activity/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
       "message": "GET system/logs/metrics has no adjacent route/handler test coverage.",
       "file": "src/app/api/system/logs/metrics/route.ts",
       "line": 8,
@@ -3438,8 +3427,8 @@
       "ruleId": "api-contract-route-missing-tests",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 20
+      "infoCount": 18
     }
   ],
-  "durationMs": 179
+  "durationMs": 217
 }

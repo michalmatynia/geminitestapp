@@ -5,8 +5,10 @@ import { createContext, useCallback, useContext, useMemo, useRef, useState } fro
 
 import type { Toast, ToastVariant, ToastOptions } from '@/shared/contracts/ui';
 import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
-import { Button, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
+
+import { Button } from './button';
+import { UI_CENTER_ROW_SPACED_CLASSNAME } from './layout';
 
 export type { Toast, ToastVariant, ToastOptions };
 

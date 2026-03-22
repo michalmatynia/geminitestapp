@@ -5,13 +5,36 @@ import React from 'react';
 import type { ClusterPreset } from '@/shared/lib/ai-paths';
 import { Button, Input, Label, Textarea, SimpleSettingsList, Card } from '@/shared/ui';
 
-
 import { usePresetsState, usePresetsActions } from '../context';
 import { useClusterPresetsActions } from './hooks/useClusterPresetsActions';
+import { AiPathsPillButton } from './AiPathsPillButton';
 
 import type { ClusterPresetDraft } from '../context/PresetsContext';
 
 export type { ClusterPresetDraft };
+
+type ClusterPresetFieldProps = {
+  htmlFor: string;
+  label: string;
+  children: React.ReactNode;
+};
+
+const clusterPresetFieldLabelClassName = 'text-[10px] uppercase text-gray-500';
+
+function ClusterPresetField({
+  htmlFor,
+  label,
+  children,
+}: ClusterPresetFieldProps): React.JSX.Element {
+  return (
+    <div>
+      <Label htmlFor={htmlFor} className={clusterPresetFieldLabelClassName}>
+        {label}
+      </Label>
+      {children}
+    </div>
+  );
+}
 
 export function ClusterPresetsPanel(): React.JSX.Element {
   const nameFieldId = React.useId();
@@ -29,94 +52,84 @@ export function ClusterPresetsPanel(): React.JSX.Element {
     ConfirmationModal,
   } = useClusterPresetsActions();
 
+  const updatePresetDraftField = React.useCallback(
+    <Field extends keyof ClusterPresetDraft>(
+      field: Field,
+      value: ClusterPresetDraft[Field]
+    ) => {
+      setPresetDraft((prev: ClusterPresetDraft) => ({
+        ...prev,
+        [field]: value,
+      }));
+    },
+    [setPresetDraft]
+  );
+
   return (
     <>
       <Card variant='subtle' padding='md' className='bg-card/60'>
         <div className='mb-3 flex items-center justify-between text-sm font-semibold text-white'>
           <span>Cluster Presets</span>
           <div className='flex items-center gap-2'>
-            <Button
-              type='button'
-              className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
+            <AiPathsPillButton
+              className='text-gray-200'
               onClick={() => {
                 handlePresetFromSelection();
               }}
             >
               From Selection
-            </Button>
+            </AiPathsPillButton>
             {editingPresetId && (
-              <Button
-                type='button'
-                className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
-                onClick={resetPresetDraft}
-              >
+              <AiPathsPillButton className='text-gray-200' onClick={resetPresetDraft}>
                 New
-              </Button>
+              </AiPathsPillButton>
             )}
           </div>
         </div>
         <div className='space-y-3 text-xs text-gray-300'>
-          <div>
-            <Label htmlFor={nameFieldId} className='text-[10px] uppercase text-gray-500'>
-              Name
-            </Label>
+          <ClusterPresetField htmlFor={nameFieldId} label='Name'>
             <Input
               id={nameFieldId}
               className='mt-2 w-full rounded-md border border-border bg-card/70 px-3 py-2 text-xs text-white'
               value={presetDraft.name}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setPresetDraft((prev: ClusterPresetDraft) => ({ ...prev, name: event.target.value }))
+                updatePresetDraftField('name', event.target.value)
               }
              aria-label={nameFieldId} title={nameFieldId}/>
-          </div>
-          <div>
-            <Label htmlFor={descriptionFieldId} className='text-[10px] uppercase text-gray-500'>
-              Description
-            </Label>
+          </ClusterPresetField>
+          <ClusterPresetField htmlFor={descriptionFieldId} label='Description'>
             <Textarea
               id={descriptionFieldId}
               className='mt-2 min-h-[64px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
               value={presetDraft.description}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-                setPresetDraft((prev: ClusterPresetDraft) => ({
-                  ...prev,
-                  description: event.target.value,
-                }))
+                updatePresetDraftField('description', event.target.value)
               }
              aria-label={descriptionFieldId} title={descriptionFieldId}/>
-          </div>
-          <div>
-            <Label htmlFor={bundlePortsFieldId} className='text-[10px] uppercase text-gray-500'>
-              Bundle Ports (one per line)
-            </Label>
+          </ClusterPresetField>
+          <ClusterPresetField
+            htmlFor={bundlePortsFieldId}
+            label='Bundle Ports (one per line)'
+          >
             <Textarea
               id={bundlePortsFieldId}
               className='mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
               value={presetDraft.bundlePorts}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-                setPresetDraft((prev: ClusterPresetDraft) => ({
-                  ...prev,
-                  bundlePorts: event.target.value,
-                }))
+                updatePresetDraftField('bundlePorts', event.target.value)
               }
              aria-label={bundlePortsFieldId} title={bundlePortsFieldId}/>
-          </div>
-          <div>
-            <Label htmlFor={templateFieldId} className='text-[10px] uppercase text-gray-500'>
-              Template
-            </Label>
+          </ClusterPresetField>
+          <ClusterPresetField htmlFor={templateFieldId} label='Template'>
             <Textarea
               id={templateFieldId}
               className='mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
               value={presetDraft.template}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-                setPresetDraft((prev: ClusterPresetDraft) => ({
-                  ...prev,
-                  template: event.target.value,
-                }))
+                updatePresetDraftField('template', event.target.value)
               }
              aria-label={templateFieldId} title={templateFieldId}/>
-          </div>
+          </ClusterPresetField>
           <Button
             className='w-full rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10'
             type='button'
@@ -141,22 +154,20 @@ export function ClusterPresetsPanel(): React.JSX.Element {
             emptyMessage='No presets yet. Save a bundle + template pair to reuse across apps.'
             renderActions={(item) => (
               <div className='flex items-center gap-2'>
-                <Button
-                  type='button'
-                  className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
+                <AiPathsPillButton
+                  className='text-gray-200'
                   onClick={() => loadPresetIntoDraft(item.original)}
                 >
                   Edit
-                </Button>
-                <Button
-                  type='button'
-                  className='rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/10'
+                </AiPathsPillButton>
+                <AiPathsPillButton
+                  inactiveClassName='border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
                   onClick={() => {
                     handleApplyPreset(item.original);
                   }}
                 >
                   Apply
-                </Button>
+                </AiPathsPillButton>
               </div>
             )}
             onDelete={(item) => {

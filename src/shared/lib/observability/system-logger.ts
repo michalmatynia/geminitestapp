@@ -553,7 +553,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
         let hydratedContext = context;
         try {
           const hydrationModule = (await import(
-            '@/features/observability/server'
+            '@/features/observability/entry-server'
           )) as {
             hydrateLogRuntimeContext?: (
               ctx: Record<string, unknown> | null | undefined

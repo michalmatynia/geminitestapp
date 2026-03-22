@@ -12,7 +12,9 @@ const {
   replaceMock,
   useKangurMobileLessonCheckpointsMock,
   useKangurMobileProfileAssignmentsMock,
+  useKangurMobileProfileBadgesMock,
   useKangurMobileProfileLessonMasteryMock,
+  useKangurMobileProfileRecentResultsMock,
   useKangurMobileLearnerProfileMock,
   useKangurMobileProfileDuelsMock,
   useRouterMock,
@@ -20,7 +22,9 @@ const {
   replaceMock: vi.fn(),
   useKangurMobileLessonCheckpointsMock: vi.fn(),
   useKangurMobileProfileAssignmentsMock: vi.fn(),
+  useKangurMobileProfileBadgesMock: vi.fn(),
   useKangurMobileProfileLessonMasteryMock: vi.fn(),
+  useKangurMobileProfileRecentResultsMock: vi.fn(),
   useKangurMobileLearnerProfileMock: vi.fn(),
   useKangurMobileProfileDuelsMock: vi.fn(),
   useRouterMock: vi.fn(),
@@ -43,8 +47,16 @@ vi.mock('./useKangurMobileProfileAssignments', () => ({
   useKangurMobileProfileAssignments: useKangurMobileProfileAssignmentsMock,
 }));
 
+vi.mock('./useKangurMobileProfileBadges', () => ({
+  useKangurMobileProfileBadges: useKangurMobileProfileBadgesMock,
+}));
+
 vi.mock('./useKangurMobileProfileLessonMastery', () => ({
   useKangurMobileProfileLessonMastery: useKangurMobileProfileLessonMasteryMock,
+}));
+
+vi.mock('./useKangurMobileProfileRecentResults', () => ({
+  useKangurMobileProfileRecentResults: useKangurMobileProfileRecentResultsMock,
 }));
 
 vi.mock('../lessons/useKangurMobileLessonCheckpoints', () => ({
@@ -130,12 +142,30 @@ describe('KangurProfileScreen', () => {
     useKangurMobileProfileAssignmentsMock.mockReturnValue({
       assignmentItems: [],
     });
+    useKangurMobileProfileBadgesMock.mockReturnValue({
+      allBadges: [
+        { emoji: '🎮', id: 'first_game', name: 'Pierwsza gra', unlocked: false },
+        { emoji: '📚', id: 'lesson_hero', name: 'Bohater lekcji', unlocked: false },
+      ],
+      recentBadges: [],
+      remainingBadges: 9,
+      totalBadges: 9,
+      unlockedBadges: 0,
+    });
     useKangurMobileProfileLessonMasteryMock.mockReturnValue({
       trackedLessons: 0,
       masteredLessons: 0,
       lessonsNeedingPractice: 0,
       strongest: [],
       weakest: [],
+    });
+    useKangurMobileProfileRecentResultsMock.mockReturnValue({
+      error: null,
+      isEnabled: false,
+      isLoading: false,
+      isRestoringAuth: false,
+      recentResultItems: [],
+      refresh: vi.fn(),
     });
   });
 
@@ -179,6 +209,14 @@ describe('KangurProfileScreen', () => {
         recommendations: [],
         recentSessions: [],
       },
+    });
+    useKangurMobileProfileRecentResultsMock.mockReturnValue({
+      error: null,
+      isEnabled: false,
+      isLoading: true,
+      isRestoringAuth: true,
+      recentResultItems: [],
+      refresh: vi.fn(),
     });
 
     renderProfileScreen();
@@ -428,6 +466,58 @@ describe('KangurProfileScreen', () => {
         },
       ],
     });
+    useKangurMobileProfileBadgesMock.mockReturnValue({
+      allBadges: [
+        { emoji: '🎮', id: 'first_game', name: 'Pierwsza gra', unlocked: true },
+        { emoji: '📚', id: 'lesson_hero', name: 'Bohater lekcji', unlocked: true },
+        { emoji: '🕐', id: 'clock_master', name: 'Mistrz zegara', unlocked: false },
+      ],
+      recentBadges: [
+        { emoji: '🎮', id: 'first_game', name: 'Pierwsza gra' },
+        { emoji: '📚', id: 'lesson_hero', name: 'Bohater lekcji' },
+      ],
+      remainingBadges: 4,
+      totalBadges: 9,
+      unlockedBadges: 5,
+    });
+    useKangurMobileProfileRecentResultsMock.mockReturnValue({
+      error: null,
+      isEnabled: true,
+      isLoading: false,
+      isRestoringAuth: false,
+      recentResultItems: [
+        {
+          historyHref: {
+            pathname: '/results',
+            params: {
+              operation: 'clock',
+            },
+          },
+          lessonHref: {
+            pathname: '/lessons',
+            params: {
+              focus: 'clock',
+            },
+          },
+          practiceHref: {
+            pathname: '/practice',
+            params: {
+              operation: 'clock',
+            },
+          },
+          result: {
+            correct_answers: 7,
+            created_date: '2026-03-21T08:00:00.000Z',
+            id: 'score-1',
+            operation: 'clock',
+            score: 7,
+            time_taken: 33,
+            total_questions: 8,
+          },
+        },
+      ],
+      refresh: vi.fn(),
+    });
 
     renderProfileScreen();
 
@@ -448,6 +538,15 @@ describe('KangurProfileScreen', () => {
     expect(screen.getByText('Lokalne zadania w profilu')).toBeTruthy();
     expect(screen.getByText('Plan na dziś')).toBeTruthy();
     expect(screen.getByText('Ostatnie sesje')).toBeTruthy();
+    expect(screen.getByText('Trenuj ponownie')).toBeTruthy();
+    expect(screen.getByText('Historia trybu')).toBeTruthy();
+    expect(screen.getByText('Odblokowane 5/9')).toBeTruthy();
+    expect(screen.getByText('Do zdobycia 4')).toBeTruthy();
+    expect(screen.getByText('Ostatnio odblokowane')).toBeTruthy();
+    expect(screen.getAllByText('🎮 Pierwsza gra').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('📚 Bohater lekcji').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Wszystkie odznaki')).toBeTruthy();
+    expect(screen.getByText('🕐 Mistrz zegara')).toBeTruthy();
     expect(screen.getByText('Zegar')).toBeTruthy();
     expect(screen.getByText('Powtórka dodawania')).toBeTruthy();
     expect(screen.getAllByText('Priorytet wysoki').length).toBeGreaterThanOrEqual(1);
@@ -470,11 +569,22 @@ describe('KangurProfileScreen', () => {
   });
 
   it('renders German profile chrome when the locale provider is set to de', () => {
+    useKangurMobileProfileBadgesMock.mockReturnValue({
+      allBadges: [
+        { emoji: '🎮', id: 'first_game', name: 'Erstes Spiel', unlocked: false },
+      ],
+      recentBadges: [],
+      remainingBadges: 9,
+      totalBadges: 9,
+      unlockedBadges: 0,
+    });
+
     renderProfileScreen('de');
 
     expect(screen.getByText('Schülerprofil')).toBeTruthy();
     expect(screen.getByText('Anfaenger 🐣')).toBeTruthy();
     expect(screen.getByText('Duelle')).toBeTruthy();
+    expect(screen.getAllByText('Abzeichen').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Letzte Lektions-Checkpoints')).toBeTruthy();
     expect(screen.getByText('Plan für heute')).toBeTruthy();
     expect(screen.getByText('Nächste Schritte')).toBeTruthy();

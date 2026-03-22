@@ -2,7 +2,7 @@
 
 import { Award, BarChart2, Compass, Flame, Sparkles, Target } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { KANGUR_AVATAR_OPTIONS, getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
@@ -38,20 +38,18 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
   const { subject } = useKangurSubjectFocus();
   const { entry: overviewContent } = useKangurPageContentEntry('learner-profile-overview');
   const nextBadge = getNextLockedBadge(progress, { translate: runtimeTranslations });
-  const [dailyQuest, setDailyQuest] = useState<KangurDailyQuestState | null | undefined>(undefined);
   const [isSavingAvatar, setIsSavingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const activeLearner = user?.activeLearner ?? null;
   const selectedAvatar = getKangurAvatarById(activeLearner?.avatarId);
-
-  useEffect(() => {
-    setDailyQuest(
+  const dailyQuest = useMemo<KangurDailyQuestState | null | undefined>(
+    () =>
       getCurrentKangurDailyQuest(progress, {
         subject,
         translate: runtimeTranslations,
-      })
-    );
-  }, [progress, runtimeTranslations, subject]);
+      }),
+    [progress, runtimeTranslations, subject]
+  );
 
   const dailyQuestAccent =
     dailyQuest?.reward.status === 'claimed'

@@ -5,6 +5,7 @@ import {
   kangurLessonComponentIdSchema,
   kangurLessonSubjectSchema,
 } from './kangur-lesson-constants';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
 // ---------------------------------------------------------------------------
 // Lesson template — the catalog definition for a lesson type
@@ -26,3 +27,15 @@ export type KangurLessonTemplate = z.infer<typeof kangurLessonTemplateSchema>;
 
 export const kangurLessonTemplatesSchema = z.array(kangurLessonTemplateSchema);
 export type KangurLessonTemplates = z.infer<typeof kangurLessonTemplatesSchema>;
+
+export const kangurLessonTemplatesQuerySchema = z.object({
+  subject: optionalTrimmedQueryString(kangurLessonSubjectSchema),
+});
+export type KangurLessonTemplatesQuery = z.infer<typeof kangurLessonTemplatesQuerySchema>;
+
+export const kangurLessonTemplatesReplacePayloadSchema = z.object({
+  templates: kangurLessonTemplatesSchema,
+});
+export type KangurLessonTemplatesReplacePayload = z.infer<
+  typeof kangurLessonTemplatesReplacePayloadSchema
+>;

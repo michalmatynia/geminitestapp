@@ -50,6 +50,25 @@ const resolveUserProgressKey = (user: KangurUser | null): string | null => {
 
 const serializeProgress = (progress: KangurProgressState): string => JSON.stringify(progress);
 
+const scheduleDeferredCallback = (callback: () => void): (() => void) => {
+  if (typeof globalThis.requestIdleCallback === 'function') {
+    const idleCallbackId = globalThis.requestIdleCallback(() => {
+      callback();
+    });
+
+    return () => {
+      if (typeof globalThis.cancelIdleCallback === 'function') {
+        globalThis.cancelIdleCallback(idleCallbackId);
+      }
+    };
+  }
+
+  const timeoutId = globalThis.setTimeout(callback, 1);
+  return () => {
+    globalThis.clearTimeout(timeoutId);
+  };
+};
+
 export function KangurProgressSyncProvider({
   children,
 }: {
@@ -84,6 +103,7 @@ export function KangurProgressSyncProvider({
     }
 
     let cancelled = false;
+    let cancelDeferredRemoteUpdate: (() => void) | null = null;
 
     const hydrateProgress = async (): Promise<void> => {
       syncStateRef.current = 'loading';
@@ -168,11 +188,7 @@ export function KangurProgressSyncProvider({
         lastSyncedProgressRef.current = serializeProgress(result.mergedProgress);
 
         if (result.shouldUpdateRemote && !cancelled) {
-          const scheduleIdle =
-            typeof globalThis.requestIdleCallback === 'function'
-              ? globalThis.requestIdleCallback
-              : (cb: () => void) => setTimeout(cb, 1);
-          scheduleIdle(() => {
+          cancelDeferredRemoteUpdate = scheduleDeferredCallback(() => {
             if (cancelled) {
               return;
             }
@@ -190,6 +206,7 @@ export function KangurProgressSyncProvider({
 
     return () => {
       cancelled = true;
+      cancelDeferredRemoteUpdate?.();
     };
   }, [isAuthenticated, isLoadingAuth, subject, userKey]);
 

@@ -21,6 +21,7 @@ import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_WRAP_ROW_SPACED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -142,6 +143,7 @@ const ApprovalGateVisual = (): JSX.Element => (
 export default function AgenticApprovalGateGame({
   onFinish,
 }: KangurMiniGameFinishActionProps): JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
   const [assignments, setAssignments] = useState<Record<string, ApprovalDecision>>({});
   const [checked, setChecked] = useState(false);
@@ -155,6 +157,12 @@ export default function AgenticApprovalGateGame({
   );
 
   const isPerfect = score === APPROVAL_ACTIONS.length && assignedCount === APPROVAL_ACTIONS.length;
+  const activeAction = activeActionId
+    ? APPROVAL_ACTIONS.find((action) => action.id === activeActionId) ?? null
+    : null;
+  const touchHint = activeAction
+    ? `Selected action: ${activeAction.text} Tap a gate choice.`
+    : 'Tap an action card, then tap a gate choice.';
 
   const handleAssign = (decision: ApprovalDecision) => {
     if (!activeActionId) return;
@@ -210,13 +218,24 @@ export default function AgenticApprovalGateGame({
             <div className='flex flex-wrap items-center justify-between gap-3'>
               <div>
                 <p className='text-sm font-semibold text-slate-950'>Actions</p>
-                <KangurLessonCaption className='text-slate-800'>Route through the gate.</KangurLessonCaption>
+                <KangurLessonCaption className='text-slate-800'>
+                  {isCoarsePointer ? 'Tap a card to focus it.' : 'Route through the gate.'}
+                </KangurLessonCaption>
               </div>
               <KangurStatusChip accent='slate' size='sm'>
                 {assignedCount}/{APPROVAL_ACTIONS.length} decided
               </KangurStatusChip>
             </div>
             <KangurProgressBar accent='slate' value={progress} size='sm' />
+            {isCoarsePointer ? (
+              <div
+                aria-live='polite'
+                className='rounded-2xl border border-slate-200/80 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm'
+                data-testid='agentic-approval-touch-hint'
+              >
+                {touchHint}
+              </div>
+            ) : null}
 
             <div className='grid gap-3' role='group' aria-label='Select an action to review'>
               {APPROVAL_ACTIONS.map((action) => {
@@ -231,8 +250,10 @@ export default function AgenticApprovalGateGame({
                     type='button'
                     onClick={() => setActiveActionId(action.id)}
                     className={cn(
-                      'w-full rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition-all',
-                      'bg-white/80 hover:-translate-y-0.5 hover:shadow-md',
+                      'w-full rounded-2xl border bg-white/80 text-left text-sm font-semibold transition-all touch-manipulation select-none',
+                      isCoarsePointer
+                        ? 'min-h-[5rem] px-4 py-4 active:scale-[0.99] active:shadow-sm'
+                        : 'px-4 py-3 hover:-translate-y-0.5 hover:shadow-md',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70 focus-visible:ring-offset-2 ring-offset-white',
                       isActive && 'border-slate-400 bg-slate-50',
                       !isActive && 'border-slate-100/80',
@@ -262,7 +283,9 @@ export default function AgenticApprovalGateGame({
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm font-semibold text-slate-950'>Gate Choices</p>
-                <KangurLessonCaption className='text-slate-800'>Click to route.</KangurLessonCaption>
+                <KangurLessonCaption className='text-slate-800'>
+                  {isCoarsePointer ? 'Tap to route the selected action.' : 'Click to route.'}
+                </KangurLessonCaption>
               </div>
               <ApprovalGateVisual />
             </div>
@@ -273,8 +296,10 @@ export default function AgenticApprovalGateGame({
                   type='button'
                   onClick={() => handleAssign(option.id)}
                   className={cn(
-                    'rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition-all',
-                    'hover:-translate-y-0.5 hover:shadow-md',
+                    'rounded-2xl border text-left text-sm font-semibold transition-all touch-manipulation select-none',
+                    isCoarsePointer
+                      ? 'min-h-[5rem] px-4 py-4 active:scale-[0.99] active:shadow-sm'
+                      : 'px-4 py-3 hover:-translate-y-0.5 hover:shadow-md',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70 focus-visible:ring-offset-2 ring-offset-white',
                     option.colorClass,
                     activeActionId ? 'opacity-100' : 'opacity-60'

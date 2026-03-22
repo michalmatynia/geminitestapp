@@ -17,6 +17,7 @@ const {
   useKangurMobileHomeDuelsLeaderboardMock,
   useKangurMobileHomeDuelsInvitesMock,
   useKangurMobileHomeAssignmentsMock,
+  useKangurMobileHomeBadgesMock,
   useKangurMobileHomeLessonCheckpointsMock,
   useKangurMobileHomeLessonMasteryMock,
   useKangurMobileHomeDuelsPresenceMock,
@@ -34,6 +35,7 @@ const {
   useKangurMobileHomeDuelsLeaderboardMock: vi.fn(),
   useKangurMobileHomeDuelsInvitesMock: vi.fn(),
   useKangurMobileHomeAssignmentsMock: vi.fn(),
+  useKangurMobileHomeBadgesMock: vi.fn(),
   useKangurMobileHomeLessonCheckpointsMock: vi.fn(),
   useKangurMobileHomeLessonMasteryMock: vi.fn(),
   useKangurMobileHomeDuelsPresenceMock: vi.fn(),
@@ -76,6 +78,10 @@ vi.mock('./useKangurMobileHomeDuelsLeaderboard', () => ({
 
 vi.mock('./useKangurMobileHomeAssignments', () => ({
   useKangurMobileHomeAssignments: useKangurMobileHomeAssignmentsMock,
+}));
+
+vi.mock('./useKangurMobileHomeBadges', () => ({
+  useKangurMobileHomeBadges: useKangurMobileHomeBadgesMock,
 }));
 
 vi.mock('./useKangurMobileHomeLessonCheckpoints', () => ({
@@ -168,6 +174,12 @@ describe('HomeScreen', () => {
     });
     useKangurMobileHomeAssignmentsMock.mockReturnValue({
       assignmentItems: [],
+    });
+    useKangurMobileHomeBadgesMock.mockReturnValue({
+      recentBadges: [],
+      remainingBadges: 9,
+      totalBadges: 9,
+      unlockedBadges: 0,
     });
     useKangurMobileHomeLessonCheckpointsMock.mockReturnValue({
       recentCheckpoints: [],
@@ -554,6 +566,23 @@ describe('HomeScreen', () => {
         },
       ],
     });
+    useKangurMobileHomeBadgesMock.mockReturnValue({
+      recentBadges: [
+        {
+          emoji: '🕐',
+          id: 'clock_master',
+          name: 'Mistrz zegara',
+        },
+        {
+          emoji: '📚',
+          id: 'lesson_hero',
+          name: 'Bohater lekcji',
+        },
+      ],
+      remainingBadges: 7,
+      totalBadges: 9,
+      unlockedBadges: 2,
+    });
     useKangurMobileHomeLessonMasteryMock.mockReturnValue({
       lessonsNeedingPractice: 1,
       masteredLessons: 1,
@@ -683,6 +712,13 @@ describe('HomeScreen', () => {
     expect(screen.getAllByText('🕒 Zegar').length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText('Otwórz lekcję: Dodawanie').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Trenuj: Dodawanie')).toBeTruthy();
+    expect(screen.getByText('Odznaki')).toBeTruthy();
+    expect(screen.getByText('Odblokowane 2/9')).toBeTruthy();
+    expect(screen.getByText('Do zdobycia 7')).toBeTruthy();
+    expect(screen.getByText('Ostatnio odblokowane')).toBeTruthy();
+    expect(screen.getByText('🕐 Mistrz zegara')).toBeTruthy();
+    expect(screen.getByText('📚 Bohater lekcji')).toBeTruthy();
+    expect(screen.getByText('Otwórz profil i odznaki')).toBeTruthy();
     expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
     expect(screen.getByText('Ostatni wynik 70% • opanowanie 68%')).toBeTruthy();
     expect(screen.getByText('Najlepszy wynik 72% • próby 3')).toBeTruthy();

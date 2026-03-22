@@ -18,6 +18,10 @@ import {
 import { createKangurResultsHref } from '../scores/resultsHref';
 import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
 import { useKangurMobileDailyPlanAssignments } from './useKangurMobileDailyPlanAssignments';
+import {
+  useKangurMobileDailyPlanBadges,
+  type KangurMobileDailyPlanBadgeItem,
+} from './useKangurMobileDailyPlanBadges';
 import { useKangurMobileDailyPlanDuels } from './useKangurMobileDailyPlanDuels';
 import { useKangurMobileDailyPlan } from './useKangurMobileDailyPlan';
 import {
@@ -614,12 +618,38 @@ function LessonMasteryRow({
 
 const LESSONS_ROUTE = '/lessons' as Href;
 const DUELS_ROUTE = createKangurDuelsHref();
+const PROFILE_ROUTE = '/profile' as Href;
+
+function DailyPlanBadgeChip({
+  item,
+}: {
+  item: KangurMobileDailyPlanBadgeItem;
+}): React.JSX.Element {
+  return (
+    <View
+      style={{
+        alignSelf: 'flex-start',
+        borderRadius: 999,
+        borderWidth: 1,
+        borderColor: '#c7d2fe',
+        backgroundColor: '#eef2ff',
+        paddingHorizontal: 12,
+        paddingVertical: 7,
+      }}
+    >
+      <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
+        {item.emoji} {item.name}
+      </Text>
+    </View>
+  );
+}
 
 export function KangurDailyPlanScreen(): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const router = useRouter();
   const lessonCheckpoints = useKangurMobileLessonCheckpoints({ limit: 2 });
   const lessonMastery = useKangurMobileDailyPlanLessonMastery();
+  const dailyPlanBadges = useKangurMobileDailyPlanBadges();
   const dailyPlanAssignments = useKangurMobileDailyPlanAssignments();
   const {
     authError,
@@ -869,6 +899,86 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                 ) : null}
               </View>
             )}
+          </Card>
+
+          <Card>
+            <View style={{ gap: 4 }}>
+              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+                {copy({
+                  de: 'Abzeichen',
+                  en: 'Badges',
+                  pl: 'Odznaki',
+                })}
+              </Text>
+              <Text style={{ color: '#475569', lineHeight: 22 }}>
+                {copy({
+                  de: 'Der Tagesplan zeigt auch die zuletzt lokal freigeschalteten Abzeichen, damit Fortschritt und Ziele an einem Ort sichtbar bleiben.',
+                  en: 'The daily plan also shows the most recently unlocked local badges so progress and goals stay visible in one place.',
+                  pl: 'Plan dnia pokazuje także ostatnio lokalnie odblokowane odznaki, aby postęp i cele były widoczne w jednym miejscu.',
+                })}
+              </Text>
+            </View>
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              <Pill
+                label={copy({
+                  de: `Freigeschaltet ${dailyPlanBadges.unlockedBadges}/${dailyPlanBadges.totalBadges}`,
+                  en: `Unlocked ${dailyPlanBadges.unlockedBadges}/${dailyPlanBadges.totalBadges}`,
+                  pl: `Odblokowane ${dailyPlanBadges.unlockedBadges}/${dailyPlanBadges.totalBadges}`,
+                })}
+                tone={{
+                  backgroundColor: '#eef2ff',
+                  borderColor: '#c7d2fe',
+                  textColor: '#4338ca',
+                }}
+              />
+              <Pill
+                label={copy({
+                  de: `Offen ${dailyPlanBadges.remainingBadges}`,
+                  en: `Remaining ${dailyPlanBadges.remainingBadges}`,
+                  pl: `Do zdobycia ${dailyPlanBadges.remainingBadges}`,
+                })}
+                tone={{
+                  backgroundColor: '#fffbeb',
+                  borderColor: '#fde68a',
+                  textColor: '#b45309',
+                }}
+              />
+            </View>
+
+            {dailyPlanBadges.recentBadges.length === 0 ? (
+              <Text style={{ color: '#475569', lineHeight: 22 }}>
+                {copy({
+                  de: 'Es gibt noch keine lokal freigeschalteten Abzeichen. Schließe Lektionen, Trainings oder Spiele ab, damit sie hier erscheinen.',
+                  en: 'There are no locally unlocked badges yet. Finish lessons, practice runs, or games so they appear here.',
+                  pl: 'Nie ma jeszcze lokalnie odblokowanych odznak. Ukończ lekcje, treningi albo gry, aby pojawiły się tutaj.',
+                })}
+              </Text>
+            ) : (
+              <View style={{ gap: 12 }}>
+                <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
+                  {copy({
+                    de: 'Zuletzt freigeschaltet',
+                    en: 'Recently unlocked',
+                    pl: 'Ostatnio odblokowane',
+                  })}
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {dailyPlanBadges.recentBadges.map((item) => (
+                    <DailyPlanBadgeChip key={item.id} item={item} />
+                  ))}
+                </View>
+              </View>
+            )}
+
+            <LinkButton
+              href={PROFILE_ROUTE}
+              label={copy({
+                de: 'Profil und Abzeichen öffnen',
+                en: 'Open profile and badges',
+                pl: 'Otwórz profil i odznaki',
+              })}
+            />
           </Card>
 
           <Card>

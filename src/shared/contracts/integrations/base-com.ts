@@ -241,6 +241,8 @@ export type ExportResponse = {
   error?: string;
   skuExists?: boolean;
   runId?: string | null;
+  status?: 'queued' | 'completed' | 'failed' | undefined;
+  jobId?: string | null | undefined;
 };
 
 export const baseImportPreflightIssueSchema = z.object({

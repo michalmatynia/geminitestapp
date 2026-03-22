@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-21'
+last_reviewed: '2026-03-22'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,12 +8,12 @@ canonical: true
 ---
 # Unsafe Patterns Check
 
-Generated at: 2026-03-21T16:23:31.312Z
+Generated at: 2026-03-22T08:42:57.285Z
 
 ## Summary
 
 - Status: PASSED
-- Files scanned: 5649
+- Files scanned: 5653
 - Errors: 0
 - Warnings: 0
 - Info: 58

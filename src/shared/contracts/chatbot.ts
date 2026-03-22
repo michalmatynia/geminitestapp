@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+import {
+  optionalBooleanQuerySchema,
+  optionalTrimmedQueryString,
+} from '@/shared/lib/api/query-schema';
+
 import { agentPersonaMoodIdSchema } from './agents';
 import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import { dtoBaseSchema } from './base';
@@ -389,12 +394,37 @@ export const enqueueChatbotJobRequestSchema = z.object({
 
 export type EnqueueChatbotJobRequestDto = z.infer<typeof enqueueChatbotJobRequestSchema>;
 
+export const chatbotJobsDeleteQuerySchema = z.object({
+  scope: optionalTrimmedQueryString(z.enum(['terminal'])),
+});
+
+export type ChatbotJobsDeleteQueryDto = z.infer<typeof chatbotJobsDeleteQuerySchema>;
+
+export const chatbotJobActionRequestSchema = z.object({
+  action: z.string().trim().optional(),
+});
+
+export type ChatbotJobActionRequestDto = z.infer<typeof chatbotJobActionRequestSchema>;
+
+export const chatbotJobDeleteQuerySchema = z.object({
+  force: optionalBooleanQuerySchema(),
+});
+
+export type ChatbotJobDeleteQueryDto = z.infer<typeof chatbotJobDeleteQuerySchema>;
+
 export const chatbotJobsResponseSchema = z.object({
   jobs: z.array(chatbotJobSchema),
 });
 
 export type ChatbotJobsResponseDto = z.infer<typeof chatbotJobsResponseSchema>;
 export type ChatbotJobsResponse = ChatbotJobsResponseDto;
+
+export const chatbotJobResponseSchema = z.object({
+  job: chatbotJobSchema,
+});
+
+export type ChatbotJobResponseDto = z.infer<typeof chatbotJobResponseSchema>;
+export type ChatbotJobResponse = ChatbotJobResponseDto;
 
 export const chatbotJobEnqueueResponseSchema = z.object({
   jobId: z.string(),

@@ -310,7 +310,7 @@ export default function GeometryPerimeterDrawingGame({
     canvasRef,
     redraw: () => redrawCanvas(strokes),
   });
-  useKangurCanvasTouchLock(canvasRef);
+  useKangurCanvasTouchLock(canvasRef, { enabled: isCoarsePointer });
 
   const updateStrokes = useCallback(
     (updater: (current: Point2d[][]) => Point2d[][]): void => {
@@ -787,7 +787,9 @@ export default function GeometryPerimeterDrawingGame({
           accent={boardAccent}
           className={cn(
             'relative w-full overflow-hidden rounded-[26px] p-0',
-            !feedback && KANGUR_ACCENT_STYLES.amber.hoverCard
+            !feedback && KANGUR_ACCENT_STYLES.amber.hoverCard,
+            isCoarsePointer && 'shadow-[0_18px_38px_-30px_rgba(251,191,36,0.35)]',
+            isPointerDrawing && 'ring-2 ring-amber-300/70 ring-offset-2 ring-offset-white'
           )}
           data-testid='geometry-perimeter-board'
           padding='sm'
@@ -822,7 +824,8 @@ export default function GeometryPerimeterDrawingGame({
           <div
             aria-hidden='true'
             className={cn(
-              'pointer-events-none absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-400/80 bg-amber-100/70 shadow-[0_0_0_3px_rgba(251,191,36,0.15)] transition-transform duration-75',
+              'pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-400/80 bg-amber-100/70 shadow-[0_0_0_3px_rgba(251,191,36,0.15)] transition-transform duration-75',
+              isCoarsePointer ? 'h-5 w-5' : 'h-4 w-4',
               keyboardDrawing ? 'scale-110' : 'scale-100'
             )}
             style={{
@@ -839,7 +842,11 @@ export default function GeometryPerimeterDrawingGame({
         </KangurInfoCard>
         <p
           id='geometry-perimeter-input-help'
-          className='hidden text-xs text-center [color:var(--kangur-page-muted-text)] sm:block'
+          className={cn(
+            'text-xs text-center [color:var(--kangur-page-muted-text)]',
+            isCoarsePointer ? 'block' : 'hidden sm:block'
+          )}
+          data-testid='geometry-perimeter-input-help'
         >
           {translations('geometryPerimeter.inRound.inputHelp')}
         </p>

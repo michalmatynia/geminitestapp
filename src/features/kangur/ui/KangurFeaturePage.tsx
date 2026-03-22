@@ -5,7 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 
 import {
   useOptionalCmsStorefrontAppearance,
-} from '@/features/cms/public';
+} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import {
   KANGUR_BASE_PATH,
   KANGUR_MAIN_PAGE_KEY,

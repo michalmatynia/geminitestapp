@@ -1,4 +1,6 @@
 
+import '@/app/(frontend)/kangur/kangur.css';
+
 import {
   getKangurHomeHref,
   resolveKangurFeaturePageRoute,

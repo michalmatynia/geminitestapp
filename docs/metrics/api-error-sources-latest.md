@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-21'
+last_reviewed: '2026-03-22'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # API Error Sources Check
 
-Generated at: 2026-03-21T09:01:04.404Z
+Generated at: 2026-03-22T08:43:00.979Z
 
 ## Summary
 

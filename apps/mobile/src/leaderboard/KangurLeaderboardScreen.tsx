@@ -19,6 +19,10 @@ import {
   useKangurMobileLeaderboardLessonMastery,
   type KangurMobileLeaderboardLessonMasteryItem,
 } from './useKangurMobileLeaderboardLessonMastery';
+import {
+  useKangurMobileLeaderboardBadges,
+  type KangurMobileLeaderboardBadgeItem,
+} from './useKangurMobileLeaderboardBadges';
 import { useKangurMobileLeaderboardDuels } from './useKangurMobileLeaderboardDuels';
 
 const FILTER_SCROLL_STYLE = {
@@ -26,6 +30,7 @@ const FILTER_SCROLL_STYLE = {
   paddingBottom: 4,
 } as const;
 const LESSONS_ROUTE = '/lessons' as Href;
+const PROFILE_ROUTE = '/profile' as Href;
 
 function FilterChip({
   label,
@@ -332,6 +337,30 @@ function LeaderboardAssignmentRow({
   );
 }
 
+function LeaderboardBadgeChip({
+  item,
+}: {
+  item: KangurMobileLeaderboardBadgeItem;
+}): React.JSX.Element {
+  return (
+    <View
+      style={{
+        alignSelf: 'flex-start',
+        borderRadius: 999,
+        borderWidth: 1,
+        borderColor: '#c7d2fe',
+        backgroundColor: '#eef2ff',
+        paddingHorizontal: 12,
+        paddingVertical: 7,
+      }}
+    >
+      <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
+        {item.emoji} {item.name}
+      </Text>
+    </View>
+  );
+}
+
 const getMasteryTone = (
   masteryPercent: number,
 ): {
@@ -503,6 +532,7 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
   const duelLeaderboard = useKangurMobileLeaderboardDuels();
   const leaderboardAssignments = useKangurMobileLeaderboardAssignments();
   const lessonMastery = useKangurMobileLeaderboardLessonMastery();
+  const leaderboardBadges = useKangurMobileLeaderboardBadges();
   const lessonCheckpoints = useKangurMobileLessonCheckpoints({ limit: 2 });
   const openDuelSession = (sessionId: string): void => {
     router.replace(createKangurDuelsHref({ sessionId }));
@@ -557,6 +587,124 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
               pl: 'Mobilny ranking korzysta z tych samych kontraktów wyników i logiki mapowania rankingu co wspólny Kangur.',
             })}
           />
+        </View>
+
+        <View
+          style={{
+            borderRadius: 24,
+            backgroundColor: '#ffffff',
+            padding: 18,
+            gap: 14,
+            shadowColor: '#0f172a',
+            shadowOpacity: 0.08,
+            shadowRadius: 18,
+            shadowOffset: { width: 0, height: 10 },
+            elevation: 3,
+          }}
+        >
+          <View style={{ gap: 4 }}>
+            <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+              {copy({
+                de: 'Abzeichen',
+                en: 'Badges',
+                pl: 'Odznaki',
+              })}
+            </Text>
+            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+              {copy({
+                de: 'Nach dem Blick auf die Rangliste kannst du sehen, welche lokalen Abzeichen bereits freigeschaltet wurden.',
+                en: 'After checking the leaderboard, you can see which local badges are already unlocked.',
+                pl: 'Po sprawdzeniu rankingu możesz zobaczyć, które lokalne odznaki są już odblokowane.',
+              })}
+            </Text>
+          </View>
+
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <View
+              style={{
+                borderRadius: 999,
+                borderWidth: 1,
+                borderColor: '#c7d2fe',
+                backgroundColor: '#eef2ff',
+                paddingHorizontal: 12,
+                paddingVertical: 7,
+              }}
+            >
+              <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
+                {copy({
+                  de: `Freigeschaltet ${leaderboardBadges.unlockedBadges}/${leaderboardBadges.totalBadges}`,
+                  en: `Unlocked ${leaderboardBadges.unlockedBadges}/${leaderboardBadges.totalBadges}`,
+                  pl: `Odblokowane ${leaderboardBadges.unlockedBadges}/${leaderboardBadges.totalBadges}`,
+                })}
+              </Text>
+            </View>
+            <View
+              style={{
+                borderRadius: 999,
+                borderWidth: 1,
+                borderColor: '#fde68a',
+                backgroundColor: '#fffbeb',
+                paddingHorizontal: 12,
+                paddingVertical: 7,
+              }}
+            >
+              <Text style={{ color: '#b45309', fontSize: 12, fontWeight: '700' }}>
+                {copy({
+                  de: `Offen ${leaderboardBadges.remainingBadges}`,
+                  en: `Remaining ${leaderboardBadges.remainingBadges}`,
+                  pl: `Do zdobycia ${leaderboardBadges.remainingBadges}`,
+                })}
+              </Text>
+            </View>
+          </View>
+
+          {leaderboardBadges.recentBadges.length === 0 ? (
+            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+              {copy({
+                de: 'Es gibt noch keine lokal freigeschalteten Abzeichen. Schließe Lektionen, Trainings oder Spiele ab, damit sie hier erscheinen.',
+                en: 'There are no locally unlocked badges yet. Finish lessons, practice runs, or games so they appear here.',
+                pl: 'Nie ma jeszcze lokalnie odblokowanych odznak. Ukończ lekcje, treningi albo gry, aby pojawiły się tutaj.',
+              })}
+            </Text>
+          ) : (
+            <View style={{ gap: 10 }}>
+              <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
+                {copy({
+                  de: 'Zuletzt freigeschaltet',
+                  en: 'Recently unlocked',
+                  pl: 'Ostatnio odblokowane',
+                })}
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {leaderboardBadges.recentBadges.map((item) => (
+                  <LeaderboardBadgeChip key={item.id} item={item} />
+                ))}
+              </View>
+            </View>
+          )}
+
+          <Link href={PROFILE_ROUTE} asChild>
+            <Pressable
+              accessibilityRole='button'
+              style={{
+                alignSelf: 'flex-start',
+                borderRadius: 999,
+                borderWidth: 1,
+                borderColor: '#cbd5e1',
+                backgroundColor: '#ffffff',
+                paddingHorizontal: 14,
+                paddingVertical: 10,
+              }}
+            >
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                {copy({
+                  de: 'Profil und Abzeichen öffnen',
+                  en: 'Open profile and badges',
+                  pl: 'Otwórz profil i odznaki',
+                })}
+              </Text>
+            </Pressable>
+          </Link>
         </View>
 
         <View

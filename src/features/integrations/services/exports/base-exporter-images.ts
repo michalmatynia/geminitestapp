@@ -650,6 +650,28 @@ const imageToBase64DataUri = async (
   }
 };
 
+function createSemaphore(limit: number): {
+  acquire: () => Promise<void>;
+  release: () => void;
+} {
+  let running = 0;
+  const waiting: (() => void)[] = [];
+  return {
+    async acquire(): Promise<void> {
+      if (running >= limit) {
+        await new Promise<void>((resolve) => waiting.push(resolve));
+      }
+      running++;
+    },
+    release(): void {
+      running--;
+      waiting.shift()?.();
+    },
+  };
+}
+
+const DEFAULT_IMAGE_CONCURRENCY = 3;
+
 /**
  * Get product images as base64 data URIs
  */
@@ -659,25 +681,47 @@ export const getProductImagesAsBase64 = async (
     diagnostics?: ImageExportLogger | undefined;
     outputMode?: ImageBase64Mode | undefined;
     transform?: ImageTransformOptions | null;
+    concurrencyLimit?: number | undefined;
+    signal?: AbortSignal | undefined;
+    cachedImages?: Record<string, string> | undefined;
   }
 ): Promise<Record<string, string>> => {
+  if (options?.cachedImages) {
+    return options.cachedImages;
+  }
+
   const images: Record<string, string> = {};
   const imageSlots = product.images || [];
   const imageLinks = product.imageLinks || [];
+  const semaphore = createSemaphore(options?.concurrencyLimit ?? DEFAULT_IMAGE_CONCURRENCY);
+
+  const runWithLimit = async <T>(fn: () => Promise<T>): Promise<T> => {
+    if (options?.signal?.aborted) {
+      throw new Error('Image processing aborted');
+    }
+    await semaphore.acquire();
+    try {
+      return await fn();
+    } finally {
+      semaphore.release();
+    }
+  };
 
   const slotTasks = imageSlots.map(async (imageSlot, slotIndex) => {
     const filepath = imageSlot.imageFile?.filepath;
     if (!filepath) return null;
 
-    const base64 = await imageToBase64DataUri(filepath, {
-      contentTypeHint: imageSlot.imageFile?.mimetype ?? null,
-      diagnostics: options?.diagnostics,
-      sourceType: 'slot',
-      index: slotIndex,
-      ...(options?.outputMode ? { outputMode: options.outputMode } : {}),
-      ...(options?.transform ? { transform: options.transform } : {}),
+    return runWithLimit(async () => {
+      const base64 = await imageToBase64DataUri(filepath, {
+        contentTypeHint: imageSlot.imageFile?.mimetype ?? null,
+        diagnostics: options?.diagnostics,
+        sourceType: 'slot',
+        index: slotIndex,
+        ...(options?.outputMode ? { outputMode: options.outputMode } : {}),
+        ...(options?.transform ? { transform: options.transform } : {}),
+      });
+      return base64 ? { base64, originalIndex: slotIndex, type: 'slot' } : null;
     });
-    return base64 ? { base64, originalIndex: slotIndex, type: 'slot' } : null;
   });
 
   const linkTasks = imageLinks.map(async (link, linkIndex) => {
@@ -690,14 +734,16 @@ export const getProductImagesAsBase64 = async (
     );
     if (alreadyProcessed) return null;
 
-    const base64 = await imageToBase64DataUri(link, {
-      diagnostics: options?.diagnostics,
-      sourceType: 'link',
-      index: linkIndex,
-      ...(options?.outputMode ? { outputMode: options.outputMode } : {}),
-      ...(options?.transform ? { transform: options.transform } : {}),
+    return runWithLimit(async () => {
+      const base64 = await imageToBase64DataUri(link, {
+        diagnostics: options?.diagnostics,
+        sourceType: 'link',
+        index: linkIndex,
+        ...(options?.outputMode ? { outputMode: options.outputMode } : {}),
+        ...(options?.transform ? { transform: options.transform } : {}),
+      });
+      return base64 ? { base64, originalIndex: linkIndex, type: 'link' } : null;
     });
-    return base64 ? { base64, originalIndex: linkIndex, type: 'link' } : null;
   });
 
   const results = await Promise.all([...slotTasks, ...linkTasks]);

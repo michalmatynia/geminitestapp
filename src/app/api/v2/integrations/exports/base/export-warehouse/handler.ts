@@ -1,27 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { getExportWarehouseId, setExportWarehouseId } from '@/features/integrations/server';
+import {
+  baseExportWarehousePreferencePayloadSchema,
+  baseExportWarehousePreferenceQuerySchema,
+  type BaseExportWarehousePreferenceResponse,
+} from '@/shared/contracts/integrations';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const requestSchema = z.object({
-  warehouseId: z.string().trim().min(1).nullable().optional(),
-  inventoryId: z.string().trim().min(1),
-});
-type ExportWarehouseQuery = {
-  inventoryId?: string | null;
-};
+export { baseExportWarehousePreferencePayloadSchema as requestSchema };
+export { baseExportWarehousePreferenceQuerySchema as querySchema };
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const query = (_ctx.query ?? {}) as ExportWarehouseQuery;
+  const query = baseExportWarehousePreferenceQuerySchema.parse(_ctx.query ?? {});
   const inventoryId = query.inventoryId ?? null;
   const warehouseId = await getExportWarehouseId(inventoryId);
-  return NextResponse.json({ warehouseId });
+  const response: BaseExportWarehousePreferenceResponse = { warehouseId };
+  return NextResponse.json(response);
 }
 
 export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const parsed = await parseJsonBody(_req, requestSchema, {
+  const parsed = await parseJsonBody(_req, baseExportWarehousePreferencePayloadSchema, {
     logPrefix: 'exports.base.export-warehouse.POST',
   });
   if (!parsed.ok) {
@@ -29,5 +29,8 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): 
   }
   const data = parsed.data;
   await setExportWarehouseId(data.warehouseId ?? null, data.inventoryId);
-  return NextResponse.json({ warehouseId: data.warehouseId ?? null });
+  const response: BaseExportWarehousePreferenceResponse = {
+    warehouseId: data.warehouseId ?? null,
+  };
+  return NextResponse.json(response);
 }

@@ -4,10 +4,46 @@ import React from 'react';
 
 import { AI_PATHS_NODE_DOCS as NODE_DOCS_LIST } from '@/shared/lib/ai-paths/core/docs/node-docs';
 import { DEFAULT_AI_PATHS_VALIDATION_DOC_SOURCES } from '@/shared/lib/ai-paths/core/validation-engine';
-import { Button, Card, Hint, Label, SearchInput, Textarea, useToast } from '@/shared/ui';
+import { Hint, Label, SearchInput, Textarea, useToast } from '@/shared/ui';
 
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 import { parseDocsSourcesText } from '../../pages/AdminAiPathsValidationUtils';
+import { ValidationActionButton } from './ValidationActionButton';
+import { ValidationItemCard } from './ValidationItemCard';
+import { ValidationPanel } from './ValidationPanel';
+import { ValidationPanelHeader } from './ValidationPanelHeader';
+import { ValidationSubpanel } from './ValidationSubpanel';
+
+type NodeDocCatalogEntry = (typeof NODE_DOCS_LIST)[number];
+
+type DocsConnectionsCatalogCardProps = {
+  doc: NodeDocCatalogEntry;
+  connected: boolean;
+  onConnect: () => void;
+};
+
+function DocsConnectionsCatalogCard({
+  doc,
+  connected,
+  onConnect,
+}: DocsConnectionsCatalogCardProps): React.JSX.Element {
+  return (
+    <ValidationItemCard className='flex items-start justify-between gap-3'>
+      <div className='min-w-0'>
+        <div className='text-xs font-semibold text-gray-100'>
+          {doc.title}
+          <Hint size='xxs' uppercase className='ml-2 text-gray-400'>
+            {doc.type}
+          </Hint>
+        </div>
+        <div className='line-clamp-2 text-[11px] text-gray-400'>{doc.purpose}</div>
+      </div>
+      <ValidationActionButton className='h-7 px-2 text-[11px]' onClick={onConnect}>
+        {connected ? 'Connected' : 'Connect'}
+      </ValidationActionButton>
+    </ValidationItemCard>
+  );
+}
 
 export function DocsConnectionsPanel(): React.JSX.Element {
   const {
@@ -21,33 +57,46 @@ export function DocsConnectionsPanel(): React.JSX.Element {
   } = useAdminAiPathsValidationContext();
   const { toast } = useToast();
 
-  const applyDocsSources = (nextSources: string[]): void => {
+  const applyDocsSources = React.useCallback((nextSources: string[]): void => {
     const normalized = parseDocsSourcesText(nextSources.join('\n'));
     updateDraft({ docsSources: normalized });
     setDocsSourcesDraft(normalized.join('\n'));
-  };
+  }, [setDocsSourcesDraft, updateDraft]);
+  const docsSet = React.useMemo(
+    (): Set<string> => new Set(parseDocsSourcesText(docsSourcesDraft)),
+    [docsSourcesDraft]
+  );
+  const handleConnectDoc = React.useCallback(
+    (sourceId: string, connected: boolean): void => {
+      const nextSources = Array.from(docsSet);
+      if (!connected) {
+        nextSources.push(sourceId);
+      }
+      applyDocsSources(nextSources);
+    },
+    [applyDocsSources, docsSet]
+  );
 
   return (
-    <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
-      <div className='mb-4 flex flex-wrap items-center justify-between gap-2'>
-        <h3 className='text-sm font-semibold text-white'>Docs Connections</h3>
-        <div className='flex items-center gap-2'>
-          <Button
-            type='button'
-            variant='outline'
-            size='sm'
-            onClick={() => {
-              applyDocsSources([...DEFAULT_AI_PATHS_VALIDATION_DOC_SOURCES]);
-              toast('Loaded default AI-Paths docs sources.', { variant: 'info' });
-            }}
-          >
-            Load Defaults
-          </Button>
-          <Button type='button' variant='outline' size='sm' onClick={handleApplyDocsSources}>
-            Apply Docs Sources
-          </Button>
-        </div>
-      </div>
+    <ValidationPanel>
+      <ValidationPanelHeader
+        title='Docs Connections'
+        trailing={
+          <div className='flex items-center gap-2'>
+            <ValidationActionButton
+              onClick={() => {
+                applyDocsSources([...DEFAULT_AI_PATHS_VALIDATION_DOC_SOURCES]);
+                toast('Loaded default AI-Paths docs sources.', { variant: 'info' });
+              }}
+            >
+              Load Defaults
+            </ValidationActionButton>
+            <ValidationActionButton onClick={handleApplyDocsSources}>
+              Apply Docs Sources
+            </ValidationActionButton>
+          </div>
+        }
+      />
       <Label className='text-xs text-gray-400'>Docs Sources (one per line)</Label>
       <Textarea
         className='mt-2 min-h-[96px]'
@@ -69,50 +118,20 @@ export function DocsConnectionsPanel(): React.JSX.Element {
         placeholder='Search node docs by type, title, ports...'
         className='mt-2 h-9'
       />
-      <Card
-        variant='subtle-compact'
-        padding='sm'
-        className='mt-3 max-h-56 space-y-2 overflow-y-auto border-border/60 bg-card/30'
-      >
+      <ValidationSubpanel className='mt-3 max-h-56 space-y-2 overflow-y-auto'>
         {filteredNodeDocs.map((doc) => {
           const sourceId = `ai-paths:node-docs:${doc.type}`;
-          const docsSet = new Set(parseDocsSourcesText(docsSourcesDraft));
           const connected = docsSet.has(sourceId);
           return (
-            <Card
+            <DocsConnectionsCatalogCard
               key={doc.type}
-              variant='subtle-compact'
-              padding='sm'
-              className='flex items-start justify-between gap-3 border-border/50 bg-card/40'
-            >
-              <div className='min-w-0'>
-                <div className='text-xs font-semibold text-gray-100'>
-                  {doc.title}
-                  <Hint size='xxs' uppercase className='ml-2 text-gray-400'>
-                    {doc.type}
-                  </Hint>
-                </div>
-                <div className='line-clamp-2 text-[11px] text-gray-400'>{doc.purpose}</div>
-              </div>
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                className='h-7 px-2 text-[11px]'
-                onClick={() => {
-                  const nextSources = Array.from(docsSet);
-                  if (!connected) {
-                    nextSources.push(sourceId);
-                  }
-                  applyDocsSources(nextSources);
-                }}
-              >
-                {connected ? 'Connected' : 'Connect'}
-              </Button>
-            </Card>
+              doc={doc}
+              connected={connected}
+              onConnect={() => handleConnectDoc(sourceId, connected)}
+            />
           );
         })}
-      </Card>
-    </Card>
+      </ValidationSubpanel>
+    </ValidationPanel>
   );
 }

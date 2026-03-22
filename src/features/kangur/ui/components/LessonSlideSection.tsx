@@ -28,6 +28,7 @@ import {
   LESSONS_SELECTOR_NAV_ICON_BUTTON_CLASSNAME,
   LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME,
   LESSONS_SELECTOR_NAV_PILLS_ROW_CLASSNAME,
+  LESSONS_SELECTOR_NAV_TOUCH_ICON_BUTTON_CLASSNAME,
 } from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -382,7 +383,7 @@ export default function LessonSlideSection({
       className={cn(
         'hidden sm:inline-flex',
         LESSONS_SELECTOR_NAV_ICON_BUTTON_CLASSNAME,
-        isCoarsePointer && 'min-h-11 min-w-11 px-5',
+        isCoarsePointer && LESSONS_SELECTOR_NAV_TOUCH_ICON_BUTTON_CLASSNAME,
         className
       )}
       data-testid='lesson-slide-back-button'
@@ -397,7 +398,7 @@ export default function LessonSlideSection({
   const navigationIconButtonClassName = cn(
     LESSONS_SELECTOR_NAV_ICON_BUTTON_CLASSNAME,
     'disabled:opacity-20',
-    isCoarsePointer && 'min-h-11 min-w-11 px-5'
+    isCoarsePointer && LESSONS_SELECTOR_NAV_TOUCH_ICON_BUTTON_CLASSNAME
   );
   const arrowNavigationButtons = shouldRenderArrowNavigation ? (
     <>

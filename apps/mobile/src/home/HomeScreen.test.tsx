@@ -313,6 +313,36 @@ describe('HomeScreen', () => {
     expect(screen.queryByText('Kangur mobilnie')).toBeNull();
   });
 
+  it('shows the parent dashboard link for parent accounts', () => {
+    useKangurMobileAuthMock.mockReturnValue({
+      authError: null,
+      authMode: 'learner-session',
+      developerAutoSignInEnabled: false,
+      hasAttemptedDeveloperAutoSignIn: false,
+      isLoadingAuth: false,
+      session: {
+        status: 'authenticated',
+        user: {
+          activeLearner: {
+            displayName: 'Maja Uczennica',
+            id: 'learner-1',
+          },
+          actorType: 'parent',
+          canManageLearners: true,
+          full_name: 'Ada Rodzic',
+        },
+      },
+      signIn: vi.fn(),
+      signInWithLearnerCredentials: vi.fn(),
+      signOut: vi.fn(),
+      supportsLearnerCredentials: true,
+    });
+
+    renderHomeScreen();
+
+    expect(screen.getByText('Panel rodzica')).toBeTruthy();
+  });
+
   it('shows duel standing fallbacks when the learner is not yet visible on home', () => {
     useKangurMobileAuthMock.mockReturnValue({
       authError: null,

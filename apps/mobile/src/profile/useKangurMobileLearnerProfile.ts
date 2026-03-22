@@ -10,6 +10,7 @@ import { useMemo, useSyncExternalStore } from 'react';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import { createKangurParentDashboardHref } from '../parent/parentHref';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 import { useKangurMobileScoreHistory } from '../scores/useKangurMobileScoreHistory';
 
@@ -73,8 +74,12 @@ const createKangurMobileActionHref = (
     };
   }
 
-  if (action.page === 'LearnerProfile' || action.page === 'ParentDashboard') {
+  if (action.page === 'LearnerProfile') {
     return '/profile';
+  }
+
+  if (action.page === 'ParentDashboard') {
+    return createKangurParentDashboardHref();
   }
 
   return null;

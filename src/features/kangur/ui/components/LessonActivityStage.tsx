@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft } from 'lucide-react';
+import { ChevronsLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { createContext, useContext, useEffect, useId } from 'react';
 
@@ -18,6 +18,13 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import {
+  LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME,
+  LESSONS_SELECTOR_NAV_ICON_BUTTON_CLASSNAME,
+  LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME,
+  LESSONS_SELECTOR_NAV_PILLS_ROW_CLASSNAME,
+  LESSONS_SELECTOR_NAV_TOUCH_ICON_BUTTON_CLASSNAME,
+} from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -88,20 +95,32 @@ function LessonActivityStageTopBar(): React.JSX.Element {
   const secretPanelTitle = translateLessonChrome(lessonChrome, 'secretPanelTitle', 'Sekretny panel');
 
   return (
-    <nav className='flex w-full flex-wrap items-center justify-between kangur-panel-gap' aria-label={navigationLabel}>
-      <KangurButton
-        onClick={onBack}
-        size='sm'
-        type='button'
-        variant='surface'
-        className='hidden sm:inline-flex'
-        data-kangur-lesson-back='true'
-        data-kangur-lesson-back-label={backButtonLabel}
+    <nav className={LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME} aria-label={navigationLabel}>
+      <div
+        className={cn(LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME, 'hidden sm:flex')}
+        role='group'
+        aria-label={navigationLabel}
       >
-        <ArrowLeft className='w-4 h-4' aria-hidden='true' /> {backButtonLabel}
-      </KangurButton>
+        <KangurButton
+          onClick={onBack}
+          size='sm'
+          type='button'
+          variant='surface'
+          className={cn(
+            LESSONS_SELECTOR_NAV_ICON_BUTTON_CLASSNAME,
+            isCoarsePointer && LESSONS_SELECTOR_NAV_TOUCH_ICON_BUTTON_CLASSNAME
+          )}
+          data-testid='lesson-activity-back-button'
+          data-kangur-lesson-back='true'
+          data-kangur-lesson-back-label={backButtonLabel}
+          aria-label={backButtonLabel}
+          title={backButtonLabel}
+        >
+          <ChevronsLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+        </KangurButton>
+      </div>
       {navigationPills || secretLessonPill?.isUnlocked ? (
-        <div className='flex shrink-0 items-center gap-2'>
+        <div className={LESSONS_SELECTOR_NAV_PILLS_ROW_CLASSNAME}>
           {navigationPills}
           {secretLessonPill?.isUnlocked ? (
             <button

@@ -63,6 +63,10 @@ vi.mock('../lessons/useKangurMobileLessonCheckpoints', () => ({
   useKangurMobileLessonCheckpoints: useKangurMobileLessonCheckpointsMock,
 }));
 
+vi.mock('../ai-tutor/KangurMobileAiTutorCard', () => ({
+  KangurMobileAiTutorCard: () => React.createElement('div', {}, 'AI Tutor Card'),
+}));
+
 import { KangurProfileScreen } from './KangurProfileScreen';
 
 const renderProfileScreen = (locale?: 'pl' | 'en' | 'de') =>
@@ -222,6 +226,7 @@ describe('KangurProfileScreen', () => {
     renderProfileScreen();
 
     expect(screen.getByText('Profil ucznia')).toBeTruthy();
+    expect(screen.getByText('AI Tutor Card')).toBeTruthy();
     expect(screen.getByText('Przywracamy logowanie i zapisane statystyki.')).toBeTruthy();
     expect(
       screen.getByText(
@@ -521,6 +526,7 @@ describe('KangurProfileScreen', () => {
 
     renderProfileScreen();
 
+    expect(screen.getByText('AI Tutor Card')).toBeTruthy();
     expect(screen.getByText('Statystyki ucznia: Ada Learner.')).toBeTruthy();
     expect(screen.getByText('Uczeń ✏️')).toBeTruthy();
     expect(screen.getByText('Pojedynki')).toBeTruthy();

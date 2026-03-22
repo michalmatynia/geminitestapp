@@ -58,6 +58,14 @@ describe('resolveKangurMobileActionHref', () => {
       },
     });
   });
+
+  it('maps parent dashboard actions into the parent route', () => {
+    expect(
+      resolveKangurMobileActionHref({
+        page: 'ParentDashboard',
+      }),
+    ).toEqual('/parent');
+  });
 });
 
 describe('resolveKangurMobileWebsiteHelpHref', () => {
@@ -85,5 +93,13 @@ describe('resolveKangurMobileWebsiteHelpHref', () => {
         focus: 'clock',
       },
     });
+  });
+
+  it('maps parent dashboard help routes into the parent route', () => {
+    expect(
+      resolveKangurMobileWebsiteHelpHref({
+        route: '/parent-dashboard',
+      }),
+    ).toEqual('/parent');
   });
 });

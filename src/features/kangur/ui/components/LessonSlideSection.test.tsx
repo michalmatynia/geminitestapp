@@ -108,6 +108,8 @@ describe('LessonSlideSection', () => {
     expect(firstIndicator).toHaveClass('cursor-pointer');
     expect(firstIndicator).toHaveAttribute('aria-current', 'step');
     const backButton = screen.getByRole('button', { name: 'Wróć do tematów' });
+    const prevButton = screen.getByTestId('lesson-slide-prev-button');
+    const nextButton = screen.getByTestId('lesson-slide-next-button');
     expect(backButton).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
@@ -115,15 +117,21 @@ describe('LessonSlideSection', () => {
     expect(backButton).not.toHaveTextContent('Wróć do tematów');
     expect(backButton).toHaveAttribute('title', 'Wróć do tematów');
     expect(backButton).toHaveAttribute('data-testid', 'lesson-slide-back-button');
+    expect(backButton.className).toContain('justify-center');
+    expect(prevButton.className).toContain('justify-center');
+    expect(nextButton.className).toContain('justify-center');
+    expect(backButton.className).toContain('px-4');
+    expect(prevButton.className).toContain('px-4');
+    expect(nextButton.className).toContain('px-4');
     expect(screen.getByTestId('lesson-slide-navigation-shell')).toHaveClass(
       'items-center'
     );
-    expect(screen.getByTestId('lesson-slide-prev-button')).toBeDisabled();
-    expect(screen.getByTestId('lesson-slide-next-button')).toHaveAttribute(
+    expect(prevButton).toBeDisabled();
+    expect(nextButton).toHaveAttribute(
       'aria-label',
       'Następny panel'
     );
-    expect(screen.getByTestId('lesson-slide-next-button')).not.toBeDisabled();
+    expect(nextButton).not.toBeDisabled();
     expect(secondIndicator).toHaveClass(
       'kangur-cta-pill',
       'kangur-step-pill-pending',
@@ -140,12 +148,12 @@ describe('LessonSlideSection', () => {
     expect(onProgressChange).toHaveBeenLastCalledWith(2, 2);
     expect(onComplete).toHaveBeenCalledTimes(1);
     expect(await screen.findByText('Drugi')).toBeInTheDocument();
-    expect(screen.getByTestId('lesson-slide-prev-button')).toHaveAttribute(
+    expect(prevButton).toHaveAttribute(
       'aria-label',
       'Poprzedni panel'
     );
-    expect(screen.getByTestId('lesson-slide-prev-button')).not.toBeDisabled();
-    expect(screen.getByTestId('lesson-slide-next-button')).toBeDisabled();
+    expect(prevButton).not.toBeDisabled();
+    expect(nextButton).toBeDisabled();
   });
 
   it('uses the lesson navigation context for the top back action', () => {

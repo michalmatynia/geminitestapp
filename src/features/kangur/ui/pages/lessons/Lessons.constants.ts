@@ -42,3 +42,5 @@ export const LESSONS_SELECTOR_NAV_PILLS_ROW_CLASSNAME =
 
 export const LESSONS_SELECTOR_NAV_ICON_BUTTON_CLASSNAME =
   'justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)]';
+
+export const LESSONS_SELECTOR_NAV_TOUCH_ICON_BUTTON_CLASSNAME = 'min-h-11 min-w-11 px-5';

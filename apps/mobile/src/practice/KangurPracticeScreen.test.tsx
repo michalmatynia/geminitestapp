@@ -120,6 +120,10 @@ vi.mock('./useKangurMobilePracticeRecentResults', () => ({
   useKangurMobilePracticeRecentResults: useKangurMobilePracticeRecentResultsMock,
 }));
 
+vi.mock('../ai-tutor/KangurMobileAiTutorCard', () => ({
+  KangurMobileAiTutorCard: () => React.createElement('div', {}, 'AI Tutor Card'),
+}));
+
 import { KangurMobileI18nProvider } from '../i18n/kangurMobileI18n';
 import { KangurPracticeScreen } from './KangurPracticeScreen';
 
@@ -275,6 +279,7 @@ describe('KangurPracticeScreen', () => {
         'Na starcie widzisz tutaj rozmiar serii, sposób zapisu oraz najszybsze przejścia do lekcji, historii i planu dnia.',
       ),
     ).toBeTruthy();
+    expect(screen.getByText('AI Tutor Card')).toBeTruthy();
     expect(screen.getByText('Otwórz pasującą lekcję')).toBeTruthy();
     expect(screen.getByText('Zobacz historię trybu')).toBeTruthy();
     expect(screen.getByText('Otwórz plan dnia')).toBeTruthy();

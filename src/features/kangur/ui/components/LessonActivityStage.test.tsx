@@ -30,6 +30,20 @@ describe('LessonActivityStage', () => {
 
     fireEvent.click(screen.getByTestId('lesson-activity-secret-indicator'));
 
+    expect(screen.getByRole('button', { name: 'Wróć do tematów' })).toHaveAttribute(
+      'data-testid',
+      'lesson-activity-back-button'
+    );
+    expect(screen.getByRole('button', { name: 'Wróć do tematów' })).toHaveClass(
+      'justify-center',
+      'px-4'
+    );
+    expect(screen.getByRole('button', { name: 'Wróć do tematów' })).not.toHaveTextContent(
+      'Wróć do tematów'
+    );
+    expect(screen.getByRole('navigation', { name: 'Nawigacja lekcji' })).toHaveClass(
+      'items-center'
+    );
     expect(screen.getByTestId('lesson-activity-secret-indicator')).toHaveAttribute(
       'aria-label',
       'Otwórz sekretny panel'
@@ -81,6 +95,9 @@ describe('LessonActivityStage', () => {
     expect(screen.getByRole('heading', { name: 'Ćwiczenia' })).toBeInTheDocument();
     expect(screen.getByText('Przejdź przez szybkie zadania.')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
+    );
+    expect(screen.getByRole('button', { name: 'Wróć do tematów' })).not.toHaveTextContent(
+      'Wróć do tematów'
     );
   });
 });

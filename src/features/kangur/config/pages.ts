@@ -6,8 +6,11 @@ import { createElement, type ComponentType, type ReactElement } from 'react';
 
 import { KangurRouteLoadingFallback } from '@/features/kangur/ui/components/KangurRouteLoadingFallback';
 
+const KangurLazyPageLoadingFallback =
+  KangurRouteLoadingFallback as ComponentType<{ includeTopNavigationSkeleton?: boolean }>;
+
 const PageLoadingFallback = (): ReactElement =>
-  createElement(KangurRouteLoadingFallback, { includeTopNavigationSkeleton: false });
+  createElement(KangurLazyPageLoadingFallback, { includeTopNavigationSkeleton: false });
 
 const lazyPage = (loader: () => Promise<{ default: ComponentType }>) =>
   dynamic(loader, { loading: PageLoadingFallback });

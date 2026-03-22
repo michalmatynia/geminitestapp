@@ -366,9 +366,10 @@ export const useKangurMobileAiTutor = ({
     context.surface === 'test' &&
     (context.focusKind === 'question' || context.focusKind === 'selection') &&
     context.answerRevealed !== true;
+  const canLoadTutorCatalog = enabled && !isRestoringAuth;
 
   const contentQuery = useQuery({
-    enabled,
+    enabled: canLoadTutorCatalog,
     queryKey: ['kangur-mobile', 'ai-tutor', 'content', apiBaseUrl, locale],
     queryFn: async (): Promise<KangurAiTutorContent> => {
       const response = await fetch(
@@ -389,7 +390,7 @@ export const useKangurMobileAiTutor = ({
   });
 
   const nativeGuideQuery = useQuery({
-    enabled,
+    enabled: canLoadTutorCatalog,
     queryKey: ['kangur-mobile', 'ai-tutor', 'native-guide', apiBaseUrl, locale],
     queryFn: async (): Promise<KangurAiTutorNativeGuideStore> => {
       const response = await fetch(

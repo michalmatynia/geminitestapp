@@ -46,6 +46,7 @@ import { useKangurMobileTrainingFocus } from '../src/home/useKangurMobileTrainin
 import { useHomeScreenBootState } from '../src/home/useHomeScreenBootState';
 import { useKangurMobileI18n } from '../src/i18n/kangurMobileI18n';
 import { createKangurLessonHref } from '../src/lessons/lessonHref';
+import { createKangurParentDashboardHref } from '../src/parent/parentHref';
 import { createKangurPlanHref } from '../src/plan/planHref';
 import { createKangurPracticeHref } from '../src/practice/practiceHref';
 import { useKangurMobileRuntime } from '../src/providers/KangurRuntimeContext';
@@ -67,6 +68,7 @@ const TESTS_ROUTE = createKangurTestsHref();
 const COMPETITION_ROUTE = createKangurCompetitionHref();
 const PLAN_ROUTE = createKangurPlanHref();
 const DUELS_ROUTE = createKangurDuelsHref();
+const PARENT_ROUTE = createKangurParentDashboardHref();
 
 const getHomeDuelModeLabel = (
   value: 'challenge' | 'quick_match',
@@ -882,6 +884,8 @@ export default function HomeScreen(): React.JSX.Element {
         en: 'Mixed practice',
         pl: 'Trening mieszany',
       });
+  const canOpenParentDashboard =
+    session.status === 'authenticated' && Boolean(session.user?.canManageLearners);
   const activeDuelLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
   const currentLearnerDuelRank = activeDuelLearnerId
     ? duelLeaderboard.entries.findIndex((entry) => entry.learnerId === activeDuelLearnerId)
@@ -1355,6 +1359,21 @@ export default function HomeScreen(): React.JSX.Element {
                 pl: 'Profil',
               })}
             />
+            {canOpenParentDashboard ? (
+              <OutlineLink
+                href={PARENT_ROUTE}
+                hint={copy({
+                  de: 'Öffnet den Elternbereich.',
+                  en: 'Opens the parent dashboard.',
+                  pl: 'Otwiera panel rodzica.',
+                })}
+                label={copy({
+                  de: 'Elternbereich',
+                  en: 'Parent dashboard',
+                  pl: 'Panel rodzica',
+                })}
+              />
+            ) : null}
             <OutlineLink
               href={LEADERBOARD_ROUTE}
               hint={copy({

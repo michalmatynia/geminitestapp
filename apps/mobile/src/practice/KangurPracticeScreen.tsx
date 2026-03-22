@@ -18,6 +18,8 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import type { KangurAiTutorConversationContext } from '../../../../src/shared/contracts/kangur-ai-tutor';
+import { KangurMobileAiTutorCard } from '../ai-tutor/KangurMobileAiTutorCard';
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { createKangurDuelsHref } from '../duels/duelsHref';
 import {
@@ -1359,6 +1361,53 @@ export function KangurPracticeScreen(): React.JSX.Element {
     sessionStatus: session.status,
   });
   const shouldShowPreparationCard = completion === null && currentIndex === 0;
+  const practiceTutorContext: KangurAiTutorConversationContext = completion
+    ? {
+        contentId: 'game:result',
+        description: getPracticeKindDescription(operationConfig.kind, locale),
+        focusId: 'kangur-game-result-summary',
+        focusKind: 'summary',
+        masterySummary: formatPracticeResultLabel(correctAnswers, questions.length, locale),
+        surface: 'game',
+        title: operationConfig.label,
+      }
+    : shouldShowPreparationCard
+      ? {
+          contentId: 'game:training-setup',
+          description: getPracticeKindDescription(operationConfig.kind, locale),
+          focusId: 'kangur-game-training-setup',
+          focusKind: 'screen',
+          surface: 'game',
+          title: operationConfig.label,
+        }
+      : currentQuestion
+        ? {
+            answerRevealed: selectedChoice !== null,
+            contentId: `game:practice:${operation}`,
+            currentQuestion: currentQuestion.question,
+            focusId:
+              selectedChoice !== null
+                ? 'kangur-game-result-summary'
+                : 'kangur-game-question-anchor',
+            focusKind: selectedChoice !== null ? 'review' : 'question',
+            questionProgressLabel: formatPracticeProgressLabel(
+              currentIndex + 1,
+              questions.length,
+              locale,
+            ),
+            selectedChoiceText:
+              selectedChoice !== null ? String(selectedChoice) : undefined,
+            surface: 'game',
+            title: operationConfig.label,
+          }
+        : {
+            contentId: 'game:training-setup',
+            description: getPracticeKindDescription(operationConfig.kind, locale),
+            focusId: 'kangur-game-training-setup',
+            focusKind: 'screen',
+            surface: 'game',
+            title: operationConfig.label,
+          };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
@@ -1404,6 +1453,8 @@ export function KangurPracticeScreen(): React.JSX.Element {
               {getPracticeKindDescription(operationConfig.kind, locale)}
             </Text>
           </Card>
+
+          <KangurMobileAiTutorCard context={practiceTutorContext} />
 
           {shouldShowPreparationCard ? (
             <Card>

@@ -120,6 +120,10 @@ vi.mock('./useKangurMobileLessonsDuels', () => ({
   useKangurMobileLessonsDuels: useKangurMobileLessonsDuelsMock,
 }));
 
+vi.mock('../ai-tutor/KangurMobileAiTutorCard', () => ({
+  KangurMobileAiTutorCard: () => React.createElement('div', {}, 'AI Tutor Card'),
+}));
+
 import { KangurLessonsScreen } from './KangurLessonsScreen';
 
 const renderLessonsScreen = (locale?: 'pl' | 'en' | 'de') =>
@@ -281,6 +285,7 @@ describe('KangurLessonsScreen', () => {
     expect(screen.getByText('Do powtórki 0')).toBeTruthy();
     expect(screen.getByText('Otwórz pełną historię')).toBeTruthy();
     expect(screen.getByText('Otwórz plan dnia')).toBeTruthy();
+    expect(screen.getByText('AI Tutor Card')).toBeTruthy();
     expect(screen.getByText('Ładowanie lekcji')).toBeTruthy();
     expect(screen.getByText('Przygotowujemy lekcję i sekcje do czytania.')).toBeTruthy();
     expect(screen.getByText('Wczytujemy listę tematów i stan opanowania.')).toBeTruthy();
@@ -481,6 +486,7 @@ describe('KangurLessonsScreen', () => {
     renderLessonsScreen();
 
     expect(screen.getByText('Lekcje')).toBeTruthy();
+    expect(screen.getByText('AI Tutor Card')).toBeTruthy();
     expect(screen.getByText('Wybrana lekcja')).toBeTruthy();
     expect(screen.getAllByText('🕒 Nauka zegara').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Sekcje lekcji')).toBeTruthy();

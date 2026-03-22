@@ -7,6 +7,8 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 
+import type { KangurAiTutorConversationContext } from '../../../../src/shared/contracts/kangur-ai-tutor';
+import { KangurMobileAiTutorCard } from '../ai-tutor/KangurMobileAiTutorCard';
 import { createKangurDuelsHref } from '../duels/duelsHref';
 import {
   getKangurMobileLocaleTag,
@@ -894,6 +896,29 @@ export function KangurLessonsScreen(): React.JSX.Element {
           };
         })()
       : null;
+  const lessonsTutorContext: KangurAiTutorConversationContext = selectedLesson
+    ? {
+        contentId: selectedLesson.lesson.id,
+        description: selectedLesson.lesson.description,
+        focusId: selectedLessonBody ? 'kangur-lesson-document' : 'kangur-lesson-header',
+        focusKind: selectedLessonBody ? 'document' : 'lesson_header',
+        focusLabel: activeSection?.title ?? selectedLesson.lesson.title,
+        masterySummary: selectedLesson.mastery.summaryLabel,
+        surface: 'lesson',
+        title: selectedLesson.lesson.title,
+      }
+    : {
+        contentId: 'lesson:list',
+        focusId: 'kangur-lessons-library',
+        focusKind: 'library',
+        focusLabel: focusToken ?? undefined,
+        surface: 'lesson',
+        title: copy({
+          de: 'Lektionen',
+          en: 'Lessons',
+          pl: 'Lekcje',
+        }),
+      };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
@@ -1105,6 +1130,8 @@ export function KangurLessonsScreen(): React.JSX.Element {
               </Link>
             </View>
           </Card>
+
+          <KangurMobileAiTutorCard context={lessonsTutorContext} />
 
           {isPreparingLessonsView ? (
             <>

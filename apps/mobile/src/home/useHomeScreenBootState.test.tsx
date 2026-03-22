@@ -16,9 +16,9 @@ vi.mock('react-native', () => ({
   },
 }));
 
-import { useLessonsScreenBootState } from './useLessonsScreenBootState';
+import { useHomeScreenBootState } from './useHomeScreenBootState';
 
-describe('useLessonsScreenBootState', () => {
+describe('useHomeScreenBootState', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
@@ -57,7 +57,7 @@ describe('useLessonsScreenBootState', () => {
   });
 
   it('stays in a preparing state until interactions and the first frame finish', () => {
-    const { result } = renderHook(() => useLessonsScreenBootState('catalog'));
+    const { result } = renderHook(() => useHomeScreenBootState('home'));
 
     expect(result.current).toBe(true);
 
@@ -70,19 +70,19 @@ describe('useLessonsScreenBootState', () => {
   });
 
   it('cancels the pending interaction task on unmount', () => {
-    const { unmount } = renderHook(() => useLessonsScreenBootState('catalog'));
+    const { unmount } = renderHook(() => useHomeScreenBootState('home'));
 
     unmount();
 
     expect(cancelInteractionTaskMock).toHaveBeenCalledTimes(1);
   });
 
-  it('returns to the preparing state when the focused lesson key changes', () => {
+  it('returns to the preparing state when the boot key changes', () => {
     const { result, rerender } = renderHook(
-      ({ bootKey }) => useLessonsScreenBootState(bootKey),
+      ({ bootKey }) => useHomeScreenBootState(bootKey),
       {
         initialProps: {
-          bootKey: 'catalog',
+          bootKey: 'home',
         },
       },
     );
@@ -94,7 +94,7 @@ describe('useLessonsScreenBootState', () => {
     expect(result.current).toBe(false);
 
     rerender({
-      bootKey: 'clock',
+      bootKey: 'home:refresh',
     });
 
     expect(result.current).toBe(true);
@@ -111,7 +111,7 @@ describe('useLessonsScreenBootState', () => {
       cancel: cancelInteractionTaskMock,
     }));
 
-    const { result } = renderHook(() => useLessonsScreenBootState('catalog'));
+    const { result } = renderHook(() => useHomeScreenBootState('home'));
 
     expect(result.current).toBe(true);
 

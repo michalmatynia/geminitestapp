@@ -9,6 +9,8 @@ import { Link, type Href, useRouter } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import type { KangurAiTutorConversationContext } from '../../../../src/shared/contracts/kangur-ai-tutor';
+import { KangurMobileAiTutorCard } from '../ai-tutor/KangurMobileAiTutorCard';
 import { createKangurDuelsHref } from '../duels/duelsHref';
 import {
   getKangurMobileLocaleTag,
@@ -861,6 +863,31 @@ export function KangurProfileScreen(): React.JSX.Element {
   const openDuelSession = (sessionId: string): void => {
     router.replace(createKangurDuelsHref({ sessionId }));
   };
+  const profileTutorContext: KangurAiTutorConversationContext =
+    isAuthenticated && recommendationsNote
+      ? {
+          contentId: 'profile:overview',
+          description: recommendationsNote,
+          focusId: 'kangur-profile-recommendations',
+          focusKind: 'screen',
+          surface: 'profile',
+          title: displayName,
+        }
+      : {
+          contentId: 'profile:overview',
+          description: authError ?? undefined,
+          focusId: isAuthenticated ? 'kangur-profile-overview' : 'kangur-profile-hero',
+          focusKind: isAuthenticated ? 'summary' : 'hero',
+          masterySummary: isAuthenticated
+            ? copy({
+                de: `Level ${snapshot.level.level} · ${snapshot.totalXp} XP`,
+                en: `Level ${snapshot.level.level} · ${snapshot.totalXp} XP`,
+                pl: `Poziom ${snapshot.level.level} · ${snapshot.totalXp} XP`,
+              })
+            : undefined,
+          surface: 'profile',
+          title: displayName,
+        };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
@@ -1015,6 +1042,8 @@ export function KangurProfileScreen(): React.JSX.Element {
                 </Pressable>
               </Link>
           </Card>
+
+          <KangurMobileAiTutorCard context={profileTutorContext} />
 
           <Card>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>

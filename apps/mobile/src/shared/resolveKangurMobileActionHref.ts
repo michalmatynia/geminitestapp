@@ -4,6 +4,7 @@ import type { Href } from 'expo-router';
 import { createKangurCompetitionHref } from '../competition/competitionHref';
 import { createKangurDuelsHref } from '../duels/duelsHref';
 import { createKangurLessonHref } from '../lessons/lessonHref';
+import { createKangurParentDashboardHref } from '../parent/parentHref';
 import { createKangurPlanHref } from '../plan/planHref';
 import { createKangurPracticeHref } from '../practice/practiceHref';
 import { createKangurResultsHref } from '../scores/resultsHref';
@@ -81,8 +82,12 @@ export const resolveKangurMobileActionHref = (
     return createKangurPracticeHref(resolvedOperation);
   }
 
-  if (action.page === 'LearnerProfile' || action.page === 'ParentDashboard') {
+  if (action.page === 'LearnerProfile') {
     return '/profile' as Href;
+  }
+
+  if (action.page === 'ParentDashboard') {
+    return createKangurParentDashboardHref();
   }
 
   if (action.page === 'Duels') {
@@ -147,10 +152,13 @@ export const resolveKangurMobileWebsiteHelpHref = (
 
   if (
     leadSegment === 'profile' ||
-    leadSegment === 'learner-profile' ||
-    leadSegment === 'parent-dashboard'
+    leadSegment === 'learner-profile'
   ) {
     return '/profile' as Href;
+  }
+
+  if (leadSegment === 'parent-dashboard') {
+    return createKangurParentDashboardHref();
   }
 
   if (leadSegment === 'results' || leadSegment === 'scores') {

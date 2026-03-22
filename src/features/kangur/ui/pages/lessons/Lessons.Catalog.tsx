@@ -23,7 +23,6 @@ import type {
   KangurLesson,
 } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
-import { Skeleton } from '@/shared/ui';
 import {
   LESSONS_CARD_TRANSITION,
   LESSONS_CARD_STAGGER_DELAY,
@@ -52,6 +51,10 @@ type LessonGroup = {
 const LESSONS_SKELETON_SECTION_COUNT = 3;
 const LESSONS_SKELETON_CARD_COUNT = 2;
 
+function LessonsCatalogSkeletonBlock({ className }: { className: string }) {
+  return <div aria-hidden='true' className={className} />;
+}
+
 function LessonsCatalogSkeleton() {
   return (
     <div
@@ -67,10 +70,10 @@ function LessonsCatalogSkeleton() {
           <div className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}>
             <div className='flex items-start justify-between gap-4'>
               <div className={`min-w-0 flex-1 ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}>
-                <Skeleton className='h-3 w-24 rounded-full bg-slate-200/80' />
-                <Skeleton className='h-7 w-2/3 rounded-full bg-slate-200/80' />
+                <LessonsCatalogSkeletonBlock className='h-3 w-24 rounded-full bg-slate-200/80' />
+                <LessonsCatalogSkeletonBlock className='h-7 w-2/3 rounded-full bg-slate-200/80' />
               </div>
-              <Skeleton className='h-10 w-10 rounded-2xl bg-slate-200/80' />
+              <LessonsCatalogSkeletonBlock className='h-10 w-10 rounded-2xl bg-slate-200/80' />
             </div>
             {Array.from({ length: LESSONS_SKELETON_CARD_COUNT }, (_, cardIndex) => (
               <div
@@ -78,11 +81,11 @@ function LessonsCatalogSkeleton() {
                 className='w-full rounded-[24px] border border-slate-200/60 bg-slate-50/90 p-4'
               >
                 <div className='flex items-start gap-4'>
-                  <Skeleton className='h-12 w-12 shrink-0 rounded-2xl bg-slate-200/80' />
+                  <LessonsCatalogSkeletonBlock className='h-12 w-12 shrink-0 rounded-2xl bg-slate-200/80' />
                   <div className='flex min-w-0 flex-1 flex-col gap-2'>
-                    <Skeleton className='h-5 w-1/2 rounded-full bg-slate-200/80' />
-                    <Skeleton className='h-4 w-full rounded-full bg-slate-200/70' />
-                    <Skeleton className='h-4 w-5/6 rounded-full bg-slate-200/70' />
+                    <LessonsCatalogSkeletonBlock className='h-5 w-1/2 rounded-full bg-slate-200/80' />
+                    <LessonsCatalogSkeletonBlock className='h-4 w-full rounded-full bg-slate-200/70' />
+                    <LessonsCatalogSkeletonBlock className='h-4 w-5/6 rounded-full bg-slate-200/70' />
                   </div>
                 </div>
               </div>

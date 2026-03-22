@@ -165,6 +165,39 @@ describe('useKangurMobileAiTutor', () => {
     expect(result.current.canSendMessages).toBe(false);
   });
 
+  it('does not fetch tutor catalogs while auth is still restoring', async () => {
+    useKangurMobileAuthMock.mockReturnValue({
+      isLoadingAuth: true,
+      session: {
+        status: 'anonymous',
+        user: null,
+      },
+    });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () =>
+        useKangurMobileAiTutor({
+          context: {
+            focusId: 'kangur-profile-overview',
+            focusKind: 'summary',
+            surface: 'profile',
+            title: 'Learner profile',
+          },
+        }),
+      {
+        wrapper: createWrapper(queryClient),
+      },
+    );
+
+    await waitFor(() => {
+      expect(result.current.availabilityState).toBe('restoring_sign_in');
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result.current.canSendMessages).toBe(false);
+  });
+
   it('sends a tutor quick action and resolves follow-up navigation for competition', async () => {
     useKangurMobileAuthMock.mockReturnValue({
       isLoadingAuth: false,

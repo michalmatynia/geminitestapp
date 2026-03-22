@@ -2,11 +2,11 @@
 
 import { useMemo } from 'react';
 
-import { CatalogMultiSelectField } from '@/features/products';
-import { CategorySingleSelectField } from '@/features/products';
-import { ProducerMultiSelectField } from '@/features/products';
-import { ProductMetadataFieldProvider } from '@/features/products';
-import { TagMultiSelectField } from '@/features/products';
+import { CatalogMultiSelectField } from '@/features/products/public';
+import { CategorySingleSelectField } from '@/features/products/public';
+import { ProducerMultiSelectField } from '@/features/products/public';
+import { ProductMetadataFieldProvider } from '@/features/products/public';
+import { TagMultiSelectField } from '@/features/products/public';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ProductParameter, ProductParameterValue } from '@/shared/contracts/products';
 import {

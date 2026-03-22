@@ -4,7 +4,7 @@ import React, { createContext, useContext, useMemo, useCallback } from 'react';
 
 import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 import { getEventEffectsConfig } from '@/features/cms/utils/event-effects';
-import { DEFAULT_ANIMATION_CONFIG, type GsapAnimationConfig } from '@/features/gsap';
+import { DEFAULT_ANIMATION_CONFIG, type GsapAnimationConfig } from '@/features/gsap/public';
 import {
   DEFAULT_CUSTOM_CSS_AI_CONFIG,
   type CustomCssAiConfig,

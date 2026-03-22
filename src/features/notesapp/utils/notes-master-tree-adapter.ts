@@ -1,4 +1,4 @@
-import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree';
+import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree/public';
 import type { NotesMasterTreeOperations } from '@/shared/contracts/notes';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils';
 

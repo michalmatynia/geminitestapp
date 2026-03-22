@@ -225,7 +225,7 @@ vi.mock('@/shared/ui', () => ({
 }));
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
-  logClientError: vi.fn(),
+  logClientError: vi.fn(), logClientCatch: vi.fn(),
 }));
 
 vi.mock('@/features/products/hooks/product-list/useProductListSelection', () => ({

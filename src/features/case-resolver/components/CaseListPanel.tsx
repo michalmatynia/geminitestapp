@@ -18,7 +18,7 @@ import {
   resolveFolderTreeIconSet,
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
-} from '@/features/foldertree';
+} from '@/features/foldertree/public';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';

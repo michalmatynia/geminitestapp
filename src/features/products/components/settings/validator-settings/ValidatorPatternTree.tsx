@@ -6,8 +6,8 @@ import {
   createMasterFolderTreeTransactionAdapter,
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
-} from '@/features/foldertree';
-import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree';
+} from '@/features/foldertree/public';
+import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/public';
 import { useReorderValidationPatternsMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { SequenceGroupDraft } from '@/shared/contracts/products';
 import { Button, FolderTreePanel, FormField, Input } from '@/shared/ui';

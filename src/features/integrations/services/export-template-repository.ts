@@ -18,7 +18,7 @@ import { badRequestError } from '@/shared/errors/app-error';
 import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
-} from '@/features/data-import-export';
+} from '@/features/data-import-export/public';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

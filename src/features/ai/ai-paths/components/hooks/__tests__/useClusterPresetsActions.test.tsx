@@ -11,7 +11,7 @@ const mockState = vi.hoisted(() => ({
   ConfirmationModal: vi.fn(() => null),
   updateAiPathsSetting: vi.fn(),
   reportAiPathsError: vi.fn(),
-  logClientError: vi.fn(),
+  logClientError: vi.fn(), logClientCatch: vi.fn(),
   createPresetId: vi.fn(() => 'preset-generated'),
   parsePathList: vi.fn((value: string) =>
     value

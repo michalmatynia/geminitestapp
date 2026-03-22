@@ -4,8 +4,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useMemo, useRef, useEffect } from 'react';
 
 import { isPathWithinFolder } from '@/features/case-resolver/utils/caseResolverUtils';
-import type { FilemakerPartyKind } from '@/features/filemaker';
-import { resolveFilemakerPartyLabel } from '@/features/filemaker';
+import type { FilemakerPartyKind } from '@/features/filemaker/public';
+import { resolveFilemakerPartyLabel } from '@/features/filemaker/public';
 import { DEFAULT_CASE_RESOLVER_NODE_META } from '@/shared/contracts/case-resolver';
 import type {
   AiNode,

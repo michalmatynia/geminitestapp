@@ -1,7 +1,7 @@
 import {
   decodeFilemakerPartyReference,
   encodeFilemakerPartyReference,
-} from '@/features/filemaker';
+} from '@/features/filemaker/public';
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 
 type CaseResolverPartySelectOption = LabeledOptionWithDescriptionDto<string>;

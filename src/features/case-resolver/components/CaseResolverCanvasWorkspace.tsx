@@ -3,13 +3,13 @@
 import { Save, Sparkles } from 'lucide-react';
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 
-import { CanvasBoard } from '@/features/ai';
-import { AiPathsProvider } from '@/features/ai';
-import { useGraphState } from '@/features/ai';
+import { CanvasBoard } from '@/features/ai/public';
+import { AiPathsProvider } from '@/features/ai/public';
+import { useGraphState } from '@/features/ai/public';
 import {
   useSelectionActions,
   useSelectionState,
-} from '@/features/ai';
+} from '@/features/ai/public';
 import type { AiNode, CaseResolverEdge } from '@/shared/contracts/case-resolver';
 import {
   type CaseResolverNodeMeta,

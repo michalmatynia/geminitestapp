@@ -21,7 +21,7 @@ const mockState = vi.hoisted(() => ({
   toast: vi.fn(),
   routerPush: vi.fn(),
   apiPatch: vi.fn(),
-  logClientError: vi.fn(),
+  logClientError: vi.fn(), logClientCatch: vi.fn(),
   persistLegacyRepair: vi.fn(),
   triggerButtonsApi: {
     create: vi.fn(),

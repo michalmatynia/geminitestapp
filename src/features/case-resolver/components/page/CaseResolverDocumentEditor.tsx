@@ -21,7 +21,7 @@ import React, { useMemo } from 'react';
 import {
   encodeFilemakerPartyReference,
   decodeFilemakerPartyReference,
-} from '@/features/filemaker';
+} from '@/features/filemaker/public';
 import type { EditorDetailsTab } from '@/shared/contracts/case-resolver';
 import {
   Badge,
@@ -63,7 +63,7 @@ import { getCaseResolverDocTooltipWithFallback } from '../../relation-search/uti
 export type { EditorDetailsTab };
 
 const LazyDocumentWysiwygEditor = React.lazy(() =>
-  import('@/features/document-editor').then((mod) => ({
+  import('@/features/document-editor/public').then((mod) => ({
     default: mod.DocumentWysiwygEditor,
   }))
 );

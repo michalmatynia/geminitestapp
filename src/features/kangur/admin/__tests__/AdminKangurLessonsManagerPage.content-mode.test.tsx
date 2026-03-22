@@ -36,8 +36,8 @@ const {
   },
 }));
 
-vi.mock('@/features/foldertree', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/foldertree')>();
+vi.mock('@/features/foldertree/public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/foldertree/public')>();
   return {
     ...actual,
     createMasterFolderTreeTransactionAdapter: vi.fn(() => ({ apply: vi.fn() })),

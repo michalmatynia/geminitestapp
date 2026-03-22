@@ -10,7 +10,7 @@ import {
   useGraphState,
   useSelectionActions,
   useSelectionState,
-} from '@/features/ai';
+} from '@/features/ai/public';
 import type {
   AiNode,
   CaseResolverNodeMeta,

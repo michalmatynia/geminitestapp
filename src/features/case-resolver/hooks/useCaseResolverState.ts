@@ -7,11 +7,11 @@ import {
   CASE_RESOLVER_CAPTURE_SETTINGS_KEY,
   parseCaseResolverCaptureSettings,
   type CaseResolverCaptureSettings as CaseResolverCaptureSettingsType,
-} from '@/features/case-resolver-capture';
+} from '@/features/case-resolver-capture/public';
 import {
   FILEMAKER_DATABASE_KEY,
   parseFilemakerDatabase,
-} from '@/features/filemaker';
+} from '@/features/filemaker/public';
 import type {
   CaseResolverCategory,
   CaseResolverEditorNodeContext,

@@ -10,11 +10,11 @@ import {
 import type {
   CaseResolverCaptureProposalState,
   CaseResolverCaptureProposal,
-} from '@/features/case-resolver-capture';
-import { stripAcceptedCaptureContentFromTextWithReport } from '@/features/case-resolver-capture';
-import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver-capture';
-import { deriveDocumentContentSync, toStorageDocumentValue } from '@/features/document-editor';
-import { FILEMAKER_DATABASE_KEY, normalizeFilemakerDatabase } from '@/features/filemaker';
+} from '@/features/case-resolver-capture/public';
+import { stripAcceptedCaptureContentFromTextWithReport } from '@/features/case-resolver-capture/public';
+import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver-capture/public';
+import { deriveDocumentContentSync, toStorageDocumentValue } from '@/features/document-editor/public';
+import { FILEMAKER_DATABASE_KEY, normalizeFilemakerDatabase } from '@/features/filemaker/public';
 import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';

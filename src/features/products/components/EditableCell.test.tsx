@@ -10,7 +10,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   mutateAsync: vi.fn(),
   toast: vi.fn(),
-  logClientError: vi.fn(),
+  logClientError: vi.fn(), logClientCatch: vi.fn(),
 }));
 
 vi.mock('@/features/products/hooks/useProductsMutations', () => ({

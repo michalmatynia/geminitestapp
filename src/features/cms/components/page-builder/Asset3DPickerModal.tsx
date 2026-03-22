@@ -2,13 +2,13 @@
 
 import React, { useState, useMemo } from 'react';
 
-import { Viewer3D } from '@/features/viewer3d';
-import { Asset3DPreviewModal } from '@/features/viewer3d';
+import { Viewer3D } from '@/features/viewer3d/public';
+import { Asset3DPreviewModal } from '@/features/viewer3d/public';
 import {
   useAssets3D,
   useAsset3DCategories,
   useAsset3DTags,
-} from '@/features/viewer3d';
+} from '@/features/viewer3d/public';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import type { Asset3DListFilters, Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { FilterPanel, Button, FormSection, CompactEmptyState } from '@/shared/ui';

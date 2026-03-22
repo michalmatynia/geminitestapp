@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mockState = vi.hoisted(() => ({
   timelineItems: [] as Array<Record<string, unknown>>,
   durationRows: [] as Array<Record<string, unknown>>,
-  logClientError: vi.fn(),
+  logClientError: vi.fn(), logClientCatch: vi.fn(),
 }));
 
 vi.mock('../run-trace-utils', () => ({

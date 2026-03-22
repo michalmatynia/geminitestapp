@@ -17,7 +17,7 @@ import {
   handleMasterTreeDrop,
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
-} from '@/features/foldertree';
+} from '@/features/foldertree/public';
 import { internalError } from '@/shared/errors/app-error';
 import { Badge, Button, Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';

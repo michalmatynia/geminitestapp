@@ -1,4 +1,4 @@
-import type { GsapAnimationConfig } from '@/features/gsap';
+import type { GsapAnimationConfig } from '@/features/gsap/public';
 import type {
   CmsEventEffectsConfig,
   CssAnimationConfig,

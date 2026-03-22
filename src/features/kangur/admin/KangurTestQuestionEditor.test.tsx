@@ -357,6 +357,7 @@ describe('KangurTestQuestionEditor', () => {
       <StatefulQuestionEditorHarness
         initialValue={buildFormData({
           explanation: '',
+          presentation: { layout: 'classic', choiceStyle: 'grid' },
           editorial: {
             source: 'legacy-import',
             reviewStatus: 'needs-review',
@@ -374,7 +375,7 @@ describe('KangurTestQuestionEditor', () => {
     expect(screen.getByText('Остання публікація:', { exact: false })).toBeInTheDocument();
     expect(screen.getByText(/Додайте пояснення/)).toBeInTheDocument();
     expect(screen.getAllByText('Сітка варіантів').length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: 'Правильна відповідь' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Правильна відповідь' }).length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Компактний' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Додати варіант' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Синхронізувати позначки з варіантами' })).toBeInTheDocument();

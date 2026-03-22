@@ -8,7 +8,7 @@ import { api } from '@/shared/lib/api-client';
 import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
-} from '@/features/data-import-export';
+} from '@/features/data-import-export/public';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 

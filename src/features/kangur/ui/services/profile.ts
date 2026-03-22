@@ -52,7 +52,7 @@ export const translateKangurLearnerProfileWithFallback = (
   }
 
   const translated = translate(key, values);
-  return translated === key ? fallback : translated;
+  return translated === key || translated.endsWith(`.${key}`) ? fallback : translated;
 };
 
 const OPERATION_LABELS: Record<string, { label: string; emoji: string }> = {

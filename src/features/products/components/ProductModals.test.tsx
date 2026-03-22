@@ -104,7 +104,7 @@ vi.mock('@/features/products/components/ProductForm', () => ({
   default: () => <div data-testid='product-form' />,
 }));
 
-vi.mock('@/features/integrations', () => ({
+vi.mock('@/features/integrations/public', () => ({
   ListProductModal: () => null,
   MassListProductModal: () => null,
   ProductListingsModal: () => null,

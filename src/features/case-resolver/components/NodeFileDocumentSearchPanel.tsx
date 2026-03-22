@@ -3,7 +3,7 @@
 import { Sparkles } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 
-import { FolderTreeSearchBar } from '@/features/foldertree';
+import { FolderTreeSearchBar } from '@/features/foldertree/public';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS,
@@ -11,7 +11,7 @@ import {
   type AiNode,
   type CaseResolverFile,
 } from '@/shared/contracts/case-resolver';
-import { useFolderTreeProfile } from '@/features/foldertree';
+import { useFolderTreeProfile } from '@/features/foldertree/public';
 import { Button, SelectSimple, SegmentedControl } from '@/shared/ui';
 import { resolveFolderTreeSearchConfig } from '@/shared/utils/folder-tree-profiles-v2';
 

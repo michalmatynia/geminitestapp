@@ -39,7 +39,7 @@ const mockState = vi.hoisted(() => ({
   },
   updateAiPathsSetting: vi.fn(),
   fetchAiPathsSettingsCached: vi.fn(),
-  logClientError: vi.fn(),
+  logClientError: vi.fn(), logClientCatch: vi.fn(),
   createRegexTemplateId: vi.fn(),
   renderTemplate: vi.fn(),
   buildRegexItems: vi.fn(),

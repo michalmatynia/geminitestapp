@@ -52,7 +52,7 @@ vi.mock('@/shared/ui', () => ({
 }));
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
-  logClientError: vi.fn(),
+  logClientError: vi.fn(), logClientCatch: vi.fn(),
 }));
 
 const buildMethods = (

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildKangurLearnerProfileSnapshot,
   buildLessonMasteryInsights,
+  translateKangurLearnerProfileWithFallback,
 } from '@/features/kangur/ui/services/profile';
 import type { KangurScoreRecord } from '@kangur/platform';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
@@ -86,6 +87,16 @@ const createProfileTranslator =
   };
 
 describe('buildKangurLearnerProfileSnapshot', () => {
+  it('treats namespace-prefixed missing translation keys as missing', () => {
+    expect(
+      translateKangurLearnerProfileWithFallback(
+        () => 'KangurLearnerProfileRuntime.levels.1',
+        'levels.1',
+        'Raczkujący'
+      )
+    ).toBe('Raczkujący');
+  });
+
   it('summarizes strongest and weakest tracked lessons from mastery data', () => {
     const insights = buildLessonMasteryInsights({
       ...progress,

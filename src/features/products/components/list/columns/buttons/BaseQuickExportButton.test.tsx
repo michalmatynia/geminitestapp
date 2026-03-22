@@ -54,7 +54,7 @@ vi.mock('@/shared/lib/api-client', () => ({
   },
 }));
 
-vi.mock('@/features/integrations', () => ({
+vi.mock('@/features/integrations/public', () => ({
   fetchPreferredBaseConnection: () => Promise.resolve({ connectionId: 'conn-base-1' }),
   integrationSelectionQueryKeys: {
     defaultConnection: ['integrations', 'default-connection'],

@@ -72,6 +72,13 @@ vi.mock('@/app/(frontend)/[...slug]/slug-page-data', () => ({
   resolveSlugToPage: resolveSlugToPageMock,
 }));
 
+vi.mock('@/features/kangur/server/storefront-appearance', () => ({
+  getKangurStorefrontInitialState: vi.fn().mockResolvedValue({
+    initialMode: 'default',
+    initialThemeSettings: {},
+  }),
+}));
+
 describe('kangur public-owner frontend routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();

@@ -10,7 +10,7 @@ const mockState = vi.hoisted(() => ({
   },
   appendLocalRun: vi.fn(),
   updateAiPathsSetting: vi.fn(),
-  logClientError: vi.fn(),
+  logClientError: vi.fn(), logClientCatch: vi.fn(),
   buildActivePathConfig: vi.fn(),
   buildDebugSnapshot: vi.fn(),
   safeJsonStringify: vi.fn(),

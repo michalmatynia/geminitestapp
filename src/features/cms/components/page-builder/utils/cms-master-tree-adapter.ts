@@ -1,5 +1,5 @@
 import type { PageZone } from '@/features/cms/types/page-builder';
-import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree';
+import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree/public';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import { decodeCmsMasterNodeId, fromCmsSectionNodeId, fromCmsZoneNodeId } from './cms-master-tree';

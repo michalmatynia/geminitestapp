@@ -18,6 +18,7 @@ const KANGUR_ACTIVE_SURFACE_PREVIOUS_SCROLLBAR_GUTTER_DATA_KEY =
 const KANGUR_ACTIVE_SURFACE_PREVIOUS_BACKGROUND_DATA_KEY = 'kangurPrevSurfaceBackground';
 const KANGUR_ACTIVE_SURFACE_PREVIOUS_VARS_DATA_KEY = 'kangurPrevSurfaceVars';
 const KANGUR_ACTIVE_SURFACE_PREVIOUS_MODE_DATA_KEY = 'kangurPrevSurfaceAppearanceMode';
+const KANGUR_ROUTE_CSS_LINK_ATTRIBUTE = 'data-kangur-route-css-link';
 
 type KangurSurfaceTarget = {
   element: HTMLElement;
@@ -141,6 +142,38 @@ export function KangurSurfaceClassSync({
   const kangurAppearance = useKangurStorefrontAppearance();
   const appearanceMode = appearance?.mode ?? 'default';
   const debugRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const preloadLink = Array.from(document.head.querySelectorAll('link[rel="preload"][as="style"]'))
+      .find((link) => link instanceof HTMLLinkElement && link.href.includes('kangur'))
+      ?? null;
+
+    if (!(preloadLink instanceof HTMLLinkElement) || preloadLink.href.length === 0) {
+      return;
+    }
+
+    const existingStylesheet = Array.from(document.head.querySelectorAll('link[rel="stylesheet"]'))
+      .find((link) => link instanceof HTMLLinkElement && link.href === preloadLink.href)
+      ?? null;
+
+    if (existingStylesheet instanceof HTMLLinkElement) {
+      return;
+    }
+
+    const stylesheetLink = document.createElement('link');
+    stylesheetLink.rel = 'stylesheet';
+    stylesheetLink.href = preloadLink.href;
+    stylesheetLink.setAttribute(KANGUR_ROUTE_CSS_LINK_ATTRIBUTE, 'true');
+    document.head.appendChild(stylesheetLink);
+
+    return () => {
+      stylesheetLink.remove();
+    };
+  }, []);
 
   useEffect(() => {
     const targets = getKangurSurfaceTargets();

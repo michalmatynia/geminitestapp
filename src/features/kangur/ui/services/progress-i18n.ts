@@ -169,7 +169,7 @@ export const translateKangurProgressWithFallback = (
   }
 
   const translated = translate(key, values);
-  return translated === key
+  return translated === key || translated.endsWith(`.${key}`)
     ? interpolateFallbackTemplate(fallback, values)
     : interpolateFallbackTemplate(translated, values);
 };

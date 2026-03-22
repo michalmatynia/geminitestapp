@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { themeCreateSchema } from '@/features/notesapp';
+import { themeCreateSchema } from '@/features/notesapp/public';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ThemeCreateInput } from '@/shared/contracts/notes';

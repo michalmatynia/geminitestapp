@@ -4,7 +4,7 @@ import { PenLine, Trash2 } from 'lucide-react';
 import React from 'react';
 
 import type { VectorOverlayResult } from '@/features/cms/hooks/usePageBuilderContext';
-import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
+import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap/public';
 import { type VectorShape } from '@/shared/contracts/vector';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { getDocumentationTooltip } from '@/shared/lib/documentation';

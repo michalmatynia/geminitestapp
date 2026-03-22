@@ -4,14 +4,14 @@ import { Network } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import React from 'react';
 
-import { CanvasBoard } from '@/features/ai';
+import { CanvasBoard } from '@/features/ai/public';
 import {
   AiPathsProvider,
   useGraphActions,
   useGraphState,
   useSelectionActions,
   useSelectionState,
-} from '@/features/ai';
+} from '@/features/ai/public';
 import type { AiNode, CaseResolverEdge } from '@/shared/contracts/case-resolver';
 import type {
   CaseResolverAssetFile,

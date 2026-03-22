@@ -2,7 +2,7 @@
 
 import React, { useCallback } from 'react';
 
-import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
+import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap/public';
 import { FormSection, FormField, Card, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
 
 import { useAnimationConfigActions, useAnimationConfigState } from './AnimationConfigContext';

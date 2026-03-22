@@ -6,12 +6,12 @@ import {
 import {
   buildCaseResolverCaptureProposalState,
   type CaseResolverCaptureProposalState,
-} from '@/features/case-resolver-capture';
+} from '@/features/case-resolver-capture/public';
 import {
   deriveDocumentContentSync,
   ensureSafeDocumentHtml,
   toStorageDocumentValue,
-} from '@/features/document-editor';
+} from '@/features/document-editor/public';
 import type {
   CaseResolverFile,
   CaseResolverFileEditDraft,

@@ -49,7 +49,7 @@ vi.mock('@/features/case-resolver/workspace-persistence', () => ({
     persistCaseResolverNodeFileSnapshotMock(...args),
 }));
 
-vi.mock('@/features/ai', () => ({
+vi.mock('@/features/ai/public', () => ({
   CanvasBoard: () => <div data-testid='canvas-board'>Canvas</div>,
   AiPathsProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));

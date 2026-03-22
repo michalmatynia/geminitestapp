@@ -17,7 +17,7 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', async () => {
 });
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
-  logClientError: vi.fn(),
+  logClientError: vi.fn(), logClientCatch: vi.fn(),
 }));
 
 const mockedUpdateAiPathsSetting = vi.mocked(updateAiPathsSetting);

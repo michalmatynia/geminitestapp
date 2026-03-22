@@ -5,7 +5,7 @@ import React from 'react';
 import {
   MarkdownToolbar as DocumentMarkdownToolbar,
   MarkdownToolbarProvider,
-} from '@/features/document-editor';
+} from '@/features/document-editor/public';
 import {
   useNoteContentContext,
   useNoteEditorContext,

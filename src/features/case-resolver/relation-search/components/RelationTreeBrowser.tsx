@@ -7,9 +7,9 @@ import {
   useFolderTreeInstanceV2,
   useSharedMasterFolderTreeRuntime,
   type FolderTreeViewportRenderNodeInput,
-} from '@/features/foldertree';
-import { useMasterFolderTreeSearch } from '@/features/foldertree';
-import { useFolderTreeProfile } from '@/features/foldertree';
+} from '@/features/foldertree/public';
+import { useMasterFolderTreeSearch } from '@/features/foldertree/public';
+import { useFolderTreeProfile } from '@/features/foldertree/public';
 import {
   resolveFolderTreeMultiSelectConfig,
   resolveFolderTreeSearchConfig,

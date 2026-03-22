@@ -150,7 +150,7 @@ export function KangurCmsRuntimeDataProvider({
       levelSummary: translateKangurProgressWithFallback(
         progressRuntimeTranslate,
         'overview.levelDescription',
-        `Poziom ${currentLevel.level} · ${progress.totalXp} XP lacznie`,
+        `Poziom ${currentLevel.level} · ${progress.totalXp} XP łącznie`,
         {
           level: currentLevel.level,
           xp: progress.totalXp,
@@ -160,7 +160,7 @@ export function KangurCmsRuntimeDataProvider({
       totalXpLabel: translateKangurCmsRuntimeWithFallback(
         cmsRuntimeTranslate,
         'progress.totalXpLabel',
-        '{xp} XP lacznie',
+        '{xp} XP łącznie',
         {
           xp: progress.totalXp,
         }

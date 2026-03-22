@@ -39,7 +39,7 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   requireAiPathsAccessOrInternal: requireAiPathsAccessOrInternalMock,
 }));
 
-vi.mock('@/features/notesapp', () => ({
+vi.mock('@/features/notesapp/public', () => ({
   noteUpdateSchema: {
     safeParse: noteUpdateSafeParseMock,
   },

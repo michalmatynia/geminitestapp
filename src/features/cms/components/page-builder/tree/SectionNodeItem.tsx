@@ -9,7 +9,7 @@ import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 import { useTreeActions } from '@/features/cms/hooks/useTreeActionsContext';
 import { readSectionDragData, setSectionDragData } from '@/features/cms/utils/page-builder-dnd';
 import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
-import { setMasterTreeDragNodeData } from '@/features/foldertree';
+import { setMasterTreeDragNodeData } from '@/features/foldertree/public';
 import { Button, Badge, TreeCaret } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

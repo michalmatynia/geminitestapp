@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 const LazyDocumentWysiwygEditor = React.lazy(() =>
-  import('@/features/document-editor').then((mod) => ({
+  import('@/features/document-editor/public').then((mod) => ({
     default: mod.DocumentWysiwygEditor,
   }))
 );

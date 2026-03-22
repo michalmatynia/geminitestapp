@@ -1,19 +1,19 @@
 'use client';
 
+import type { IdDataDto } from '@/shared/contracts/base';
 import type {
-  ProductDraft,
   CreateProductDraftInput,
+  ProductDraft,
   UpdateProductDraftInput,
 } from '@/shared/contracts/products';
-import type { IdDataDto } from '@/shared/contracts/base';
-import type { ListQuery, SingleQuery, MutationResult } from '@/shared/contracts/ui';
+import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
+  createCreateMutationV2,
+  createDeleteMutationV2,
   createListQueryV2,
   createSingleQueryV2,
-  createCreateMutationV2,
   createUpdateMutationV2,
-  createDeleteMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { draftKeys } from '@/shared/lib/query-key-exports';
 
@@ -24,6 +24,7 @@ export { draftKeys };
 
 export function useDraftQueries(notebookId?: string): ListQuery<ProductDraft> {
   const queryKey = draftListKey(notebookId);
+
   return createListQueryV2<ProductDraft>({
     queryKey,
     queryFn: () =>
@@ -44,6 +45,7 @@ export function useDraftQueries(notebookId?: string): ListQuery<ProductDraft> {
 
 export function useDraft(id: string | null): SingleQuery<ProductDraft> {
   const queryKey = draftKeys.detail(id ?? 'none');
+
   return createSingleQueryV2<ProductDraft>({
     id,
     queryKey: (draftId) => draftKeys.detail(draftId),

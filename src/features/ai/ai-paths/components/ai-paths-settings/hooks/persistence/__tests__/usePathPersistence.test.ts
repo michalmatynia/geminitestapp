@@ -42,7 +42,7 @@ const mockState = vi.hoisted(() => ({
   resolvePathSaveBlockedMessage: vi.fn(() => null),
   shouldExposePathSaveRawMessage: vi.fn(() => false),
   stripNodeConfig: vi.fn((nodes: unknown) => nodes),
-  logClientError: vi.fn(),
+  logClientError: vi.fn(), logClientCatch: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-paths/components/AiPathsSettingsUtils', () => ({

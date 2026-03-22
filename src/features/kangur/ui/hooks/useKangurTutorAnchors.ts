@@ -77,7 +77,6 @@ export function useKangurTutorAnchors(anchors: KangurTutorAnchorConfig[]): void 
     };
     // We intentionally depend on the serialized anchor state to avoid
     // re-running the effect on every render while still picking up changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [registerAnchor, serializeAnchors(anchors)]);
 }
 

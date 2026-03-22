@@ -8,7 +8,7 @@ import {
 } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import { buildHierarchyIndexes } from '@/features/cms/hooks/page-builder/section-hierarchy';
 import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
-import type { GsapAnimationConfig } from '@/features/gsap';
+import type { GsapAnimationConfig } from '@/features/gsap/public';
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import type {
   PageComponentInput,

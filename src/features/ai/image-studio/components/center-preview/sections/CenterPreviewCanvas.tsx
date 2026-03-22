@@ -7,7 +7,7 @@ import { useMaskingState } from '@/features/ai/image-studio/context/MaskingConte
 import { useSlotsState } from '@/features/ai/image-studio/context/SlotsContext';
 import { useUiState, useUiActions } from '@/features/ai/image-studio/context/UiContext';
 import { useVersionGraphState } from '@/features/ai/image-studio/context/VersionGraphContext';
-import { Viewer3D } from '@/features/viewer3d';
+import { Viewer3D } from '@/features/viewer3d/public';
 import { VectorDrawingCanvas, VectorDrawingProvider } from '@/shared/lib/vector-drawing';
 import { Button, LoadingState } from '@/shared/ui';
 import { cn } from '@/shared/utils';

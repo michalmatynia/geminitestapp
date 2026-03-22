@@ -281,8 +281,8 @@
       "aiMood": "Relacja z AI Tutorem",
       "aiMoodMobile": "AI Tutor"
     },
-    "loadError": "Nie udalo sie zaladowac profilu.",
-    "backToHome": "Wroc do strony glownej",
+    "loadError": "Nie udało się załadować profilu.",
+    "backToHome": "Wróć do strony głównej",
     "statsHeading": "Statystyki ucznia",
     "tabListLabel": "Profil ucznia"
   },
@@ -671,7 +671,7 @@
     "description": "Nie udalo sie znalezc strony \"{pageName}\" w tej aplikacji.",
     "adminNoteLabel": "Notatka administratora",
     "adminNoteDescription": "To moze oznaczac, ze AI nie zaimplementowalo jeszcze tej strony.",
-    "goHome": "Wroc do strony glownej"
+    "goHome": "Wróć do strony głównej"
   },
   "KangurUserAccess": {
     "restricted": "Dostep ograniczony",
@@ -976,8 +976,8 @@
     }
   },
   "KangurLoginModal": {
-    "title": "Zaloguj sie",
-    "description": "Zaloguj rodzica emailem albo ucznia nickiem bez opuszczania strony.",
+    "title": "Zaloguj się",
+    "description": "Zaloguj rodzica e-mailem albo ucznia nickiem bez opuszczania strony.",
     "closeAriaLabel": "Zamknij logowanie"
   },
   "KangurNavigation": {
@@ -1016,23 +1016,23 @@
   "KangurTests": {
     "activityTitleWithSuite": "Test: {title}",
     "activityTitleDefault": "Testy",
-    "emptyAdultTitle": "Testy dla doroslych w przygotowaniu",
-    "emptyAdultDescription": "Aktualnie dostepne sa testy dla 10-latkow.",
-    "emptyTitle": "Brak aktywnych testow",
-    "emptyDescription": "Wlacz testy w panelu admina, aby pojawily sie tutaj.",
-    "introDescription": "Wybierz zestaw testowy i przejdz przez pytania krok po kroku.",
+    "emptyAdultTitle": "Testy dla dorosłych w przygotowaniu",
+    "emptyAdultDescription": "Aktualnie dostępne są testy dla 10-latków.",
+    "emptyTitle": "Brak aktywnych testów",
+    "emptyDescription": "Włącz testy w panelu admina, aby pojawiły się tutaj.",
+    "introDescription": "Wybierz zestaw testowy i przejdź przez pytania krok po kroku.",
     "title": "Testy",
-    "listAria": "Lista testow",
+    "listAria": "Lista testów",
     "summary": {
       "year": "Rok {year}",
       "gradeLevel": "Poziom: {value}",
       "category": "Kategoria: {value}"
     },
-    "questionsCount": "{count} pytan",
-    "noQuestions": "Brak pytan",
+    "questionsCount": "{count} pytań",
+    "noQuestions": "Brak pytań",
     "startTest": "Rozpocznij test",
-    "activeDescriptionFallback": "Przejdz przez pytania testowe i sprawdz wynik koncowy.",
-    "backToList": "Wroc do listy testow"
+    "activeDescriptionFallback": "Przejdź przez pytania testowe i sprawdź wynik końcowy.",
+    "backToList": "Wróć do listy testów"
   },
   "KangurOperationSelector": {
     "recommendedNow": "Polecamy teraz",
@@ -1095,21 +1095,21 @@
     }
   },
   "KangurPlayerProgress": {
-    "fallbackTitle": "Postepy ucznia",
-    "fallbackSummary": "Zobacz poziom, serie, skutecznosc i najblizsze odznaki w jednym miejscu.",
-    "totalXpLine": "Poziom {level} · {xp} XP lacznie",
+    "fallbackTitle": "Postępy ucznia",
+    "fallbackSummary": "Zobacz poziom, serie, skuteczność i najbliższe odznaki w jednym miejscu.",
+    "totalXpLine": "Poziom {level} · {xp} XP łącznie",
     "nextLevel": "do poz. {level}: {xp} XP",
     "maxLevel": "Maksymalny poziom!",
     "metrics": {
       "games": "Gier",
       "lessons": "Lekcji",
-      "accuracy": "Skutecznosc",
+      "accuracy": "Skuteczność",
       "streak": "Seria",
       "xpPerGame": "XP / grę"
     },
     "topActivityDescription": "{sessions} sesji · {xp} XP / grę",
-    "topActivityEyebrow": "Najczesciej cwiczysz",
-    "nextBadgeEyebrow": "Nastepna odznaka",
+    "topActivityEyebrow": "Najczęściej ćwiczysz",
+    "nextBadgeEyebrow": "Następna odznaka",
     "guidedMomentumDescriptionWithBadge": "Do odznaki {badge}: {summary}",
     "guidedMomentumDescriptionUnlocked": "Wszystkie odznaki polecanego kierunku odblokowane.",
     "guidedMomentumEyebrow": "Polecony kierunek",
@@ -1153,8 +1153,8 @@
     "hero": {
       "title": "Profil ucznia",
       "avatarLabel": "Avatar ucznia",
-      "signIn": "Zaloguj sie, aby synchronizowac postep",
-      "createParentAccount": "Utworz konto rodzica"
+      "signIn": "Zaloguj się, aby synchronizować postęp",
+      "createParentAccount": "Utwórz konto rodzica"
     },
     "levelProgress": {
       "title": "Postęp poziomu",
@@ -1165,93 +1165,93 @@
     },
     "lessonMastery": {
       "title": "Opanowanie lekcji",
-      "summary": "Sprawdz tematy do powtorki i najmocniejsze obszary na podstawie zapisanych lekcji.",
+      "summary": "Sprawdź tematy do powtórki i najmocniejsze obszary na podstawie zapisanych lekcji.",
       "dateMissing": "brak daty",
-      "attemptsLine": "Proby: {attempts} · ostatni wynik {lastScore}%",
-      "bestScoreLine": "Najlepszy wynik: {bestScore}% · Ostatnia proba: {date}",
-      "trackedSummary": "Sledzone: {tracked} · opanowane: {mastered} · do powtorki: {review}",
+      "attemptsLine": "Próby: {attempts} · ostatni wynik {lastScore}%",
+      "bestScoreLine": "Najlepszy wynik: {bestScore}% · Ostatnia próba: {date}",
+      "trackedSummary": "Śledzone: {tracked} · opanowane: {mastered} · do powtórki: {review}",
       "trackedBadge": "{count} lekcji z zapisem",
-      "emptyDescription": "Brak zapisanych prob lekcji. Ukoncz dowolna lekcje, aby zobaczyc mocne strony i obszary do powtorki.",
-      "reviewTitle": "Do powtorki",
-      "reviewEmpty": "Wszystkie sledzone lekcje sa na bezpiecznym poziomie.",
+      "emptyDescription": "Brak zapisanych prób lekcji. Ukończ dowolną lekcję, aby zobaczyć mocne strony i obszary do powtórki.",
+      "reviewTitle": "Do powtórki",
+      "reviewEmpty": "Wszystkie śledzone lekcje są na bezpiecznym poziomie.",
       "strongestTitle": "Najmocniejsze lekcje",
-      "strongestEmpty": "Najpierw ukoncz kilka lekcji, aby zobaczyc najmocniejsze obszary."
+      "strongestEmpty": "Najpierw ukończ kilka lekcji, aby zobaczyć najmocniejsze obszary."
     },
     "overview": {
-      "title": "Przeglad wynikow",
-      "summary": "Najwazniejsze wskazniki dnia: skutecznosc, misja, cel i odznaki w jednym widoku.",
-      "avatarSaveError": "Nie udalo sie zapisac avatara.",
+      "title": "Przegląd wyników",
+      "summary": "Najważniejsze wskaźniki dnia: skuteczność, misja, cel i odznaki w jednym widoku.",
+      "avatarSaveError": "Nie udało się zapisać avatara.",
       "avatarTitle": "Avatar ucznia",
-      "avatarDescription": "Wybierz bohatera, ktory bedzie widoczny w profilu ucznia.",
+      "avatarDescription": "Wybierz bohatera, który będzie widoczny w profilu ucznia.",
       "avatarGroupLabel": "Wybierz avatar",
       "averageAccuracyDescription": "Najlepsza sesja: {value}%",
-      "averageAccuracyLabel": "Srednia skutecznosc",
-      "streakDescription": "Najdluzsza: {value} dni",
+      "averageAccuracyLabel": "Średnia skuteczność",
+      "streakDescription": "Najdłuższa: {value} dni",
       "streakLabel": "Seria dni",
-      "xpTodayDescription": "7 dni: +{weeklyXp} XP · srednio {averageXp} XP na sesje",
+      "xpTodayDescription": "7 dni: +{weeklyXp} XP · średnio {averageXp} XP na sesję",
       "xpTodayLabel": "XP dzisiaj",
       "guidedRoundsDescription": "Do odznaki: {badge} · {summary}",
       "guidedRoundsUnlocked": "Wszystkie odznaki polecanego kierunku odblokowane.",
       "guidedRoundsLabel": "Polecone rundy",
-      "dailyQuestMissing": "Nowa misja pojawi sie wraz z postepem.",
-      "dailyQuestLoading": "Trwa ladowanie misji dnia...",
+      "dailyQuestMissing": "Nowa misja pojawi się wraz z postępem.",
+      "dailyQuestLoading": "Trwa ładowanie misji dnia...",
       "dailyQuestLabel": "Misja dnia",
-      "dailyGoalDescription": "Wypelnienie: {value}%",
+      "dailyGoalDescription": "Wypełnienie: {value}%",
       "dailyGoalLabel": "Cel dzienny",
-      "badgesDescription": "Nastepna: {badge} · {summary}",
+      "badgesDescription": "Następna: {badge} · {summary}",
       "badgesUnlocked": "Wszystkie odznaki odblokowane",
       "badgesLabel": "Odznaki"
     },
     "performance": {
-      "title": "Skutecznosc ucznia",
-      "summary": "Zobacz rytm ostatnich siedmiu dni i skutecznosc dla poszczegolnych operacji.",
-      "activityHeading": "Aktywnosc 7 dni",
-      "todayChip": "Dzis: +{xp} XP",
+      "title": "Skuteczność ucznia",
+      "summary": "Zobacz rytm ostatnich siedmiu dni i skuteczność dla poszczególnych operacji.",
+      "activityHeading": "Aktywność 7 dni",
+      "todayChip": "Dziś: +{xp} XP",
       "weeklyChip": "7 dni: +{xp} XP",
-      "averageChip": "Srednio: {xp} XP na sesje",
+      "averageChip": "Średnio: {xp} XP na sesję",
       "guidedChipPrefix": "Polecone: {count} ·",
       "guidedChipUnlocked": "wszystkie odznaki kierunku odblokowane",
-      "activityBarTitle": "{count} gier, srednia {accuracy}%",
+      "activityBarTitle": "{count} gier, średnia {accuracy}%",
       "operationsHeading": "Wyniki wg operacji",
       "emptyTitle": "Brak danych o operacjach.",
-      "emptyDescription": "Rozegraj kilka zadan, aby zobaczyc skutecznosc dla poszczegolnych operacji.",
+      "emptyDescription": "Rozegraj kilka zadań, aby zobaczyć skuteczność dla poszczególnych operacji.",
       "train": "Trenuj",
-      "operationStats": "Proby: {attempts} · XP na sesje: {averageXp} · Lacznie: {totalXp} XP · Najlepsza skutecznosc: {bestScore}%"
+      "operationStats": "Próby: {attempts} · XP na sesję: {averageXp} · Łącznie: {totalXp} XP · Najlepsza skuteczność: {bestScore}%"
     },
     "questSummary": {
       "defaultQuestLabel": "Misja dnia",
-      "tracksHeading": "Sciezki postepu ucznia"
+      "tracksHeading": "Ścieżki postępu ucznia"
     },
     "recommendations": {
-      "title": "Plan na dzis",
-      "summary": "Krotka lista kolejnych krokow na podstawie ostatnich wynikow i aktywnosci.",
-      "emptyDescription": "Brak rekomendacji do wyswietlenia."
+      "title": "Plan na dziś",
+      "summary": "Krótka lista kolejnych kroków na podstawie ostatnich wyników i aktywności.",
+      "emptyDescription": "Brak rekomendacji do wyświetlenia."
     },
     "sessions": {
       "title": "Historia sesji",
-      "summary": "Sprawdz ostatnie podejscia oraz sciezki odznak budowane przez regularna gre.",
+      "summary": "Sprawdź ostatnie podejścia oraz ścieżki odznak budowane przez regularną grę.",
       "recentSessionsHeading": "Ostatnie sesje",
-      "loadingTitle": "Ladowanie historii...",
-      "loadingDescription": "Sprawdzamy ostatnie podejscia ucznia.",
-      "errorDescription": "Sprobuj odswiezyc profil za chwile.",
+      "loadingTitle": "Ładowanie historii...",
+      "loadingDescription": "Sprawdzamy ostatnie podejścia ucznia.",
+      "errorDescription": "Spróbuj odświeżyć profil za chwilę.",
       "emptyTitle": "Brak rozegranych sesji.",
-      "emptyDescription": "Pierwsze sesje pojawia sie tutaj automatycznie.",
-      "badgeTracksHeading": "Sciezki odznak"
+      "emptyDescription": "Pierwsze sesje pojawią się tutaj automatycznie.",
+      "badgeTracksHeading": "Ścieżki odznak"
     }
   },
   "KangurLearnerProfileRuntime": {
     "localMode": "Tryb lokalny",
     "dateMissing": "Brak daty",
     "errors": {
-      "loadScores": "Nie udalo sie pobrac historii wynikow."
+      "loadScores": "Nie udało się pobrać historii wyników."
     },
     "activityLabels": {
       "addition": "Dodawanie",
       "subtraction": "Odejmowanie",
-      "multiplication": "Mnozenie",
+      "multiplication": "Mnożenie",
       "division": "Dzielenie",
-      "decimals": "Ulamki",
-      "powers": "Potegi",
+      "decimals": "Ułamki",
+      "powers": "Potęgi",
       "roots": "Pierwiastki",
       "clock": "Zegar",
       "calendar": "Kalendarz",
@@ -1259,7 +1259,7 @@
       "logical": "Logika",
       "mixed": "Mieszane",
       "english_basics": "Podstawy",
-      "english_parts_of_speech": "Czesci mowy",
+      "english_parts_of_speech": "Części mowy",
       "english_sentence_structure": "Szyk zdania",
       "english_subject_verb_agreement": "Zgoda podmiotu",
       "english_articles": "Przedimki",
@@ -1282,46 +1282,46 @@
       "summary": {
         "guidedStep": "{completed}/1 runda",
         "guidedKeeper": "{completed}/3 rundy",
-        "complete": "Wszystkie cele osiagniete!"
+        "complete": "Wszystkie cele osiągnięte!"
       }
     },
     "recommendations": {
       "actions": {
-        "openLesson": "Otworz lekcje",
+        "openLesson": "Otwórz lekcję",
         "startTraining": "Uruchom trening",
         "playNow": "Zagraj teraz",
-        "playToday": "Zagraj dzis"
+        "playToday": "Zagraj dziś"
       },
       "focusWeakestOperation": {
-        "title": "Skup sie na: {operation}",
-        "description": "Wykonaj 2 krotkie sesje {operation} i celuj w min. 80% poprawnosci."
+        "title": "Skup się na: {operation}",
+        "description": "Wykonaj 2 krótkie sesje {operation} i celuj w min. 80% poprawności."
       },
       "improveAccuracy": {
-        "title": "Stabilizuj skutecznosc",
-        "description": "Przez 3 gry wybieraj tryb sredni i skup sie na dokladnosci zamiast na czasie."
+        "title": "Stabilizuj skuteczność",
+        "description": "Przez 3 gry wybieraj tryb średni i skup się na dokładności zamiast na czasie."
       },
       "strengthenLessonMastery": {
-        "title": "Powtorz lekcje: {lessonTitle}",
-        "description": "Aktualne opanowanie to {masteryPercent}%. Jedna powtorka tej lekcji podniesie stabilnosc."
+        "title": "Powtórz lekcję: {lessonTitle}",
+        "description": "Aktualne opanowanie to {masteryPercent}%. Jedna powtórka tej lekcji podniesie stabilność."
       },
       "dailyGoal": {
         "title": "Domknij dzienny cel",
-        "descriptionSingle": "Brakuje tylko 1 gry do dziennego celu. Dzis masz juz +{todayXpEarned} XP.",
-        "descriptionMultiple": "Brakuje {remainingGames} gier do dziennego celu. Dzis masz juz +{todayXpEarned} XP."
+        "descriptionSingle": "Brakuje tylko 1 gry do dziennego celu. Dziś masz już +{todayXpEarned} XP.",
+        "descriptionMultiple": "Brakuje {remainingGames} gier do dziennego celu. Dziś masz już +{todayXpEarned} XP."
       },
       "boostXpMomentum": {
-        "title": "Podkrec dzisiejsze XP",
-        "descriptionWithOperation": "Cel gier jest juz zamkniety, ale dzis wpadlo tylko +{todayXpEarned} XP. Jedna mocniejsza sesja {operation} zwykle daje okolo {averageXpPerSession} XP na probe.",
-        "descriptionFallback": "Cel gier jest juz zamkniety, ale dzis wpadlo tylko +{todayXpEarned} XP. Jedna mocniejsza sesja treningowa powinna dowiezc ponad {xpMomentumTarget} XP."
+        "title": "Podkręć dzisiejsze XP",
+        "descriptionWithOperation": "Cel gier jest już zamknięty, ale dziś wpadło tylko +{todayXpEarned} XP. Jedna mocniejsza sesja {operation} zwykle daje około {averageXpPerSession} XP na próbę.",
+        "descriptionFallback": "Cel gier jest już zamknięty, ale dziś wpadło tylko +{todayXpEarned} XP. Jedna mocniejsza sesja treningowa powinna dowieźć ponad {xpMomentumTarget} XP."
       },
       "streakBootstrap": {
-        "title": "Zbuduj serie",
-        "description": "Zagraj takze jutro, aby uruchomic serie kolejnych dni."
+        "title": "Zbuduj serię",
+        "description": "Zagraj także jutro, aby uruchomić serię kolejnych dni."
       },
       "maintainMomentum": {
         "title": "Utrzymaj tempo",
-        "descriptionWithOperation": "Swietna forma. W 7 dni zebrano +{weeklyXpEarned} XP. Dorzuc 1 sesje {operation} dla utrwalenia.",
-        "descriptionFallback": "Swietna forma. W 7 dni zebrano +{weeklyXpEarned} XP. Kontynuuj dzisiejszy rytm nauki."
+        "descriptionWithOperation": "Świetna forma. W 7 dni zebrano +{weeklyXpEarned} XP. Dorzuć 1 sesję {operation} dla utrwalenia.",
+        "descriptionFallback": "Świetna forma. W 7 dni zebrano +{weeklyXpEarned} XP. Kontynuuj dzisiejszy rytm nauki."
       }
     }
   },
@@ -7147,7 +7147,7 @@
       "playerFallback": "Graczu"
     },
     "progress": {
-      "totalXpLabel": "{xp} XP lacznie",
+      "totalXpLabel": "{xp} XP łącznie",
       "xpIntoLevelLabel": "{xp} XP"
     },
     "assignments": {

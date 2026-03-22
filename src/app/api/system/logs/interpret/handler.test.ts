@@ -21,7 +21,7 @@ vi.mock('@/features/jobs/server', () => ({
   startAiInsightsQueue: startAiInsightsQueueMock,
 }));
 
-vi.mock('@/shared/lib/observability/system-logger', () => ({
+vi.mock('@/shared/lib/observability/system-log-repository', () => ({
   getSystemLogById: getSystemLogByIdMock,
 }));
 

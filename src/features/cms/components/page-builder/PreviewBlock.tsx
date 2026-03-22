@@ -12,7 +12,7 @@ import {
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
-import type { GsapAnimationConfig } from '@/features/gsap';
+import type { GsapAnimationConfig } from '@/features/gsap/public';
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import type { SectionInstance, BlockInstance, PreviewBlockItemProps } from '@/shared/contracts/cms';
 import { DEFAULT_APP_EMBED_ID, getAppEmbedOption } from '@/shared/lib/app-embeds';

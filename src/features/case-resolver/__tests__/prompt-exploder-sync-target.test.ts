@@ -11,8 +11,8 @@ import {
   createCaseResolverFile,
   parseCaseResolverWorkspace,
 } from '@/features/case-resolver/settings';
-import { parseCaseResolverCaptureSettings } from '@/features/case-resolver-capture';
-import { parseFilemakerDatabase } from '@/features/filemaker';
+import { parseCaseResolverCaptureSettings } from '@/features/case-resolver-capture/public';
+import { parseFilemakerDatabase } from '@/features/filemaker/public';
 import { savePromptExploderApplyPromptForCaseResolver } from '@/shared/lib/prompt-exploder/bridge';
 import type {
   CaseResolverFile,

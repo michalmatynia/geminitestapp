@@ -355,6 +355,9 @@ describe('AdminKangurSettingsPage', () => {
             dailyMessageLimit: 20,
             guestIntroMode: 'every_visit',
             homeOnboardingMode: 'off',
+            contextRegistryMaxNodes: 24,
+            contextRegistryDepth: 1,
+            knowledgeGraphEnabled: true,
           }),
         })
       );

@@ -8,7 +8,7 @@ vi.mock('@/shared/lib/security/csrf-client', () => ({
 }));
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
-  logClientError: vi.fn(),
+  logClientError: vi.fn(), logClientCatch: vi.fn(),
   isLoggableObject: (error: unknown): boolean => typeof error === 'object' && error !== null,
 }));
 

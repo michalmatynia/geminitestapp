@@ -27,7 +27,7 @@ vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
 }));
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
-  logClientError: vi.fn(),
+  logClientError: vi.fn(), logClientCatch: vi.fn(),
 }));
 
 vi.mock('@/features/products/hooks/editingProductHydration', () => ({

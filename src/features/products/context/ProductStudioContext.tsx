@@ -15,7 +15,7 @@ import {
   useRegisterContextRegistryPageSource,
 } from '@/shared/lib/ai-context-registry/page-context';
 import { api } from '@/shared/lib/api-client';
-import { useStudioProjects } from '@/features/ai';
+import { useStudioProjects } from '@/features/ai/public';
 import { useToast } from '@/shared/ui';
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 

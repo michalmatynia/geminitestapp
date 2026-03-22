@@ -22,6 +22,10 @@ import {
   useExternalCategories,
   useCategoryMappings,
 } from '@/features/integrations/hooks/useMarketplaceQueries';
+import {
+  autoMatchCategoryMappingsByName,
+  formatAutoMatchCategoryMappingsByNameMessage,
+} from '@/features/integrations/components/marketplaces/category-mapper/category-table/auto-match-by-name';
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations';
 import type {
   InternalCategoryOption,
@@ -310,6 +314,41 @@ export function CategoryMapperProvider({
     [mappings]
   );
 
+  const handleAutoMatchByName = useCallback((): void => {
+    if (!selectedCatalogId) {
+      toast('Select a catalog before auto-matching categories.', { variant: 'info' });
+      return;
+    }
+
+    const result = autoMatchCategoryMappingsByName({
+      externalCategories,
+      internalCategories,
+      pendingMappings,
+      getCurrentMapping: getMappingForExternal,
+    });
+
+    if (result.matchedCount > 0) {
+      setPendingMappings((prev: Map<string, string | null>) => {
+        const next = new Map(prev);
+        for (const match of result.matches) {
+          next.set(match.externalCategoryId, match.internalCategoryId);
+        }
+        return next;
+      });
+    }
+
+    toast(formatAutoMatchCategoryMappingsByNameMessage(result), {
+      variant: result.matchedCount > 0 ? 'success' : 'info',
+    });
+  }, [
+    externalCategories,
+    getMappingForExternal,
+    internalCategories,
+    pendingMappings,
+    selectedCatalogId,
+    toast,
+  ]);
+
   const handleSave = async (): Promise<void> => {
     if (pendingMappings.size === 0 || !selectedCatalogId) {
       toast('No changes to save', { variant: 'info' });
@@ -365,7 +404,7 @@ export function CategoryMapperProvider({
   const stats = useMemo((): { total: number; mapped: number; pending: number } => {
     const total = externalCategories.length;
     const mapped = externalCategories.filter(
-      (c: ExternalCategory) => getMappingForExternal(c.id) !== null
+      (c: ExternalCategory) => getMappingForExternal(c.externalId) !== null
     ).length;
     const pending = pendingMappings.size;
     return { total, mapped, pending };
@@ -424,6 +463,7 @@ export function CategoryMapperProvider({
   const actionsValue = useMemo<CategoryMapperActions>(
     () => ({
       handleFetchFromBase,
+      handleAutoMatchByName,
       handleMappingChange,
       handleSave,
       getMappingForExternal,
@@ -432,6 +472,7 @@ export function CategoryMapperProvider({
     }),
     [
       handleFetchFromBase,
+      handleAutoMatchByName,
       handleMappingChange,
       handleSave,
       getMappingForExternal,

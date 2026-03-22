@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 
-import { NoteCreateData } from '@/features/notesapp';
+import { NoteCreateData } from '@/features/notesapp/public';
 
 import type { PathParams } from 'msw';
 

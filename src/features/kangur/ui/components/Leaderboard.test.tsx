@@ -46,6 +46,16 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useOptionalKangurAuth: () => ({
+    user: {
+      email: 'ada@example.com',
+      role: 'student',
+      display_name: 'Ada',
+    },
+  }),
+}));
+
 let Leaderboard: typeof import('@/features/kangur/ui/components/Leaderboard').default;
 
 const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord => ({

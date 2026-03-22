@@ -8,7 +8,7 @@ import {
   handleMasterTreeDrop,
   resolveFolderTreeIconSet,
   useMasterFolderTreeShell,
-} from '@/features/foldertree';
+} from '@/features/foldertree/public';
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import {
   buildMasterNodesFromNotesFolderTree,

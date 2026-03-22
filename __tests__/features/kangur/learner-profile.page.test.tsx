@@ -96,8 +96,11 @@ vi.mock('@/features/kangur/ui/hooks/useKangurRoutePageReady', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
   useKangurRouteNavigator: () => ({
-    push: vi.fn(),
-  }),
+      push: vi.fn(),
+      prefetch: vi.fn(),
+      back: vi.fn(),
+      replace: vi.fn(),
+    }),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({

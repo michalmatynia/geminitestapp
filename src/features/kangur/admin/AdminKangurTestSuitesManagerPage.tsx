@@ -7,8 +7,8 @@ import {
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
-} from '@/features/foldertree';
-import { FolderTreeSearchBar, useMasterFolderTreeSearch } from '@/features/foldertree';
+} from '@/features/foldertree/public';
+import { FolderTreeSearchBar, useMasterFolderTreeSearch } from '@/features/foldertree/public';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import {

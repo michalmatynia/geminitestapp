@@ -29,12 +29,12 @@ vi.mock('next-intl', () => ({
         'KangurTests.activeDescriptionFallback': {
           de: 'Gehe die Testfragen durch und prufe das Endergebnis.',
           en: 'Go through the test questions and check the final score.',
-          pl: 'Przejdz pytania testowe i sprawdz wynik koncowy.',
+          pl: 'Przejdź pytania testowe i sprawdź wynik końcowy.',
         },
         'KangurTests.backToList': {
           de: 'Zuruck zur Testliste',
           en: 'Back to tests list',
-          pl: 'Wroc do listy testow',
+          pl: 'Wróć do listy testów',
         },
         'KangurTests.emptyAdultDescription': {
           de: 'Aktuell sind nur Tests fur 10-Jahrige verfugbar.',
@@ -49,32 +49,32 @@ vi.mock('next-intl', () => ({
         'KangurTests.emptyDescription': {
           de: 'Aktiviere Tests im Admin-Bereich, damit sie hier erscheinen.',
           en: 'Enable tests in the admin panel to make them appear here.',
-          pl: 'Aktywuj testy w panelu admina, aby pojawily sie tutaj.',
+          pl: 'Włącz testy w panelu admina, aby pojawiły się tutaj.',
         },
         'KangurTests.emptyTitle': {
           de: 'Keine aktiven Tests',
           en: 'No active tests',
-          pl: 'Brak aktywnych testow',
+          pl: 'Brak aktywnych testów',
         },
         'KangurTests.introDescription': {
           de: 'Wahle ein Testset und gehe die Fragen Schritt fur Schritt durch.',
           en: 'Choose a test set and go through the questions step by step.',
-          pl: 'Wybierz zestaw testowy i przejdz pytania krok po kroku.',
+          pl: 'Wybierz zestaw testowy i przejdź pytania krok po kroku.',
         },
         'KangurTests.listAria': {
           de: 'Testliste',
           en: 'Tests list',
-          pl: 'Lista testow',
+          pl: 'Lista testów',
         },
         'KangurTests.noQuestions': {
           de: 'Keine Fragen',
           en: 'No questions',
-          pl: 'Brak pytan',
+          pl: 'Brak pytań',
         },
         'KangurTests.questionsCount': {
           de: '{count} Fragen',
           en: '{count} questions',
-          pl: '{count} pytan',
+          pl: '{count} pytań',
         },
         'KangurTests.startTest': {
           de: 'Test starten',

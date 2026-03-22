@@ -9,11 +9,11 @@ import {
 } from '@/features/drafter/hooks/useDraftQueries';
 import { draftSubmitSchema } from '@/features/drafter/validations/draft-form';
 import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
-import { getCategoriesFlat, getParameters, getTags } from '@/features/products';
-import { ProductImagesTabContent } from '@/features/products';
-import { ProductImagesTabProvider } from '@/features/products';
-import { useProductImages } from '@/features/products';
-import { useCatalogs, useProducers } from '@/features/products';
+import { getCategoriesFlat, getParameters, getTags } from '@/features/products/public';
+import { ProductImagesTabContent } from '@/features/products/public';
+import { ProductImagesTabProvider } from '@/features/products/public';
+import { useProductImages } from '@/features/products/public';
+import { useCatalogs, useProducers } from '@/features/products/public';
 import type {
   ProductCategory,
   ProductTag,

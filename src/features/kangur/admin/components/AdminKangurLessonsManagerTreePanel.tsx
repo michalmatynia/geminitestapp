@@ -7,7 +7,7 @@ import {
   type FolderTreeViewportRenderNodeInput,
   type MasterFolderTreeSearchState,
   type MasterFolderTreeShell,
-} from '@/features/foldertree';
+} from '@/features/foldertree/public';
 import { KANGUR_AGE_GROUPS } from '@/features/kangur/lessons/lesson-catalog';
 import type { KangurLessonAgeGroup } from '@/features/kangur/shared/contracts/kangur';
 import { Button, FolderTreePanel, Skeleton } from '@/features/kangur/shared/ui';

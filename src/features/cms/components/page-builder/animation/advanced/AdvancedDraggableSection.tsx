@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { DEFAULT_ANIMATION_CONFIG, DRAG_AXES, type DragAxis } from '@/features/gsap';
+import { DEFAULT_ANIMATION_CONFIG, DRAG_AXES, type DragAxis } from '@/features/gsap/public';
 import { Input, Checkbox, SelectSimple, FormSection, FormField } from '@/shared/ui';
 
 import { useAnimationConfigActions, useAnimationConfigState } from '../AnimationConfigContext';

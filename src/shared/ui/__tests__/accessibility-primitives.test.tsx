@@ -50,7 +50,7 @@ describe('shared accessibility primitives', () => {
 
     expect(screen.getByRole('link', { name: 'Skip to content' })).toHaveAttribute(
       'href',
-      '#app-content'
+      '#kangur-main-content'
     );
   });
 
@@ -58,7 +58,7 @@ describe('shared accessibility primitives', () => {
     render(
       <>
         <SkipToContentLink />
-        <main id='app-content' tabIndex={-1}>
+        <main id='kangur-main-content' tabIndex={-1}>
           Content
         </main>
       </>
@@ -77,7 +77,7 @@ describe('shared accessibility primitives', () => {
     render(
       <>
         <SkipToContentLink />
-        <main id='app-content' tabIndex={-1}>
+        <main id='kangur-main-content' tabIndex={-1}>
           Content
         </main>
       </>
@@ -88,7 +88,7 @@ describe('shared accessibility primitives', () => {
     fireEvent.keyDown(link, { key: 'Enter' });
 
     expect(screen.getByRole('main')).toHaveFocus();
-    expect(window.location.hash).toBe('#app-content');
+    expect(window.location.hash).toBe('#kangur-main-content');
     expect(windowKeyDown).not.toHaveBeenCalled();
 
     window.removeEventListener('keydown', windowKeyDown);

@@ -16,7 +16,7 @@ import {
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
-} from '@/features/foldertree';
+} from '@/features/foldertree/public';
 import { Badge, Button, Input, Label } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

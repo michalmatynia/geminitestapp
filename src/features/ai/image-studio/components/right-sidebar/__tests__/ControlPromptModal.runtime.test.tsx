@@ -161,7 +161,7 @@ vi.mock('@/shared/lib/prompt-engine', () => ({
 }));
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
-  logClientError: vi.fn(),
+  logClientError: vi.fn(), logClientCatch: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/prompt-exploder/bridge', () => ({

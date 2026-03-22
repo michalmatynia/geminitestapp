@@ -11,7 +11,7 @@ import {
   ensureSafeDocumentHtml,
   stripHtmlToPlainText,
   toStorageDocumentValue,
-} from '@/features/document-editor';
+} from '@/features/document-editor/public';
 import type {
   CaseResolverEditorNodeContext,
   CaseResolverFile,

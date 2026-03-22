@@ -158,7 +158,7 @@ vi.mock('@/shared/lib/api-client', () => ({
 }));
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
-  logClientError: vi.fn(),
+  logClientError: vi.fn(), logClientCatch: vi.fn(),
 }));
 
 import { useProductFormValidator } from '@/features/products/hooks/useProductFormValidator';

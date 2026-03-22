@@ -89,15 +89,15 @@ describe('KangurLearnerProfileHeroWidget', () => {
       )
     ).toBeNull();
     expect(
-      screen.getByRole('button', { name: 'Zaloguj sie, aby synchronizowac postep' })
+      screen.getByRole('button', { name: 'Zaloguj się, aby synchronizować postęp' })
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Utworz konto rodzica' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Utwórz konto rodzica' })).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Wróć do poprzedniej strony' })
     ).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Zaloguj sie, aby synchronizowac postep' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Utworz konto rodzica' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zaloguj się, aby synchronizować postęp' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Utwórz konto rodzica' }));
 
     expect(openLoginModal).toHaveBeenCalledTimes(2);
     expect(openLoginModal).toHaveBeenLastCalledWith(null, {
@@ -161,7 +161,7 @@ describe('KangurLearnerProfileHeroWidget', () => {
       screen.getByTestId('kangur-learner-profile-hero-milestone-track-mastery')
     ).toHaveTextContent('Mistrzostwo');
     expect(
-      screen.queryByRole('button', { name: 'Zaloguj sie, aby synchronizowac postep' })
+      screen.queryByRole('button', { name: 'Zaloguj się, aby synchronizować postęp' })
     ).not.toBeInTheDocument();
   });
 });

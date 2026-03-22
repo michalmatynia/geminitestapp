@@ -17,7 +17,7 @@ import type {
   PromptExploderSegment,
   PromptExploderSubsection,
 } from '@/features/prompt-exploder/types';
-import type { FolderTreeViewportV2Props } from '@/features/foldertree';
+import type { FolderTreeViewportV2Props } from '@/features/foldertree/public';
 
 const {
   useMasterFolderTreeShellMock,
@@ -33,9 +33,9 @@ const {
   viewportPropsMock: vi.fn(),
 }));
 
-vi.mock('@/features/foldertree', async () => {
-  const actual = await vi.importActual<typeof import('@/features/foldertree')>(
-    '@/features/foldertree'
+vi.mock('@/features/foldertree/public', async () => {
+  const actual = await vi.importActual<typeof import('@/features/foldertree/public')>(
+    '@/features/foldertree/public'
   );
   return {
     ...actual,

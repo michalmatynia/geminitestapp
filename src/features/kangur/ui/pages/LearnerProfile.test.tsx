@@ -172,9 +172,9 @@ describe('LearnerProfile page', () => {
 
     render(<LearnerProfilePage />);
 
-    expect(screen.getByText('Nie udalo sie zaladowac profilu.')).toBeInTheDocument();
+    expect(screen.getByText('Nie udało się załadować profilu.')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Wroc do strony glownej' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Wróć do strony głównej' }));
 
     expect(pushMock).toHaveBeenCalledWith('/pl/kangur');
   });

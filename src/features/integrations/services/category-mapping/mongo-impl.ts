@@ -107,24 +107,117 @@ const deactivateCompetingMongoMappings = async (
   return result.modifiedCount ?? 0;
 };
 
+type CanonicalExternalCategoryRef = {
+  canonicalExternalCategoryId: string;
+  aliases: string[];
+  category: ExternalCategory;
+};
+
+const buildExternalCategoryLookupFilter = (
+  connectionId: string,
+  externalCategoryIds: string[]
+): Filter<MongoExternalCategoryDoc> | null => {
+  const uniqueIds = [...new Set(externalCategoryIds.map((id) => id.trim()).filter(Boolean))];
+  if (uniqueIds.length === 0) {
+    return null;
+  }
+
+  const objectIds = uniqueIds
+    .filter((id) => ObjectId.isValid(id))
+    .map((id) => new ObjectId(id));
+
+  const orConditions: Filter<MongoExternalCategoryDoc>[] = [
+    { externalId: { $in: uniqueIds } } as Filter<MongoExternalCategoryDoc>,
+    { _id: { $in: uniqueIds } } as Filter<MongoExternalCategoryDoc>,
+  ];
+
+  if (objectIds.length > 0) {
+    orConditions.push({ _id: { $in: objectIds } } as Filter<MongoExternalCategoryDoc>);
+  }
+
+  return {
+    connectionId,
+    $or: orConditions,
+  } as Filter<MongoExternalCategoryDoc>;
+};
+
+const loadCanonicalExternalCategoryRefs = async (
+  collection: Collection<MongoExternalCategoryDoc>,
+  connectionId: string,
+  externalCategoryIds: string[]
+): Promise<Map<string, CanonicalExternalCategoryRef>> => {
+  const filter = buildExternalCategoryLookupFilter(connectionId, externalCategoryIds);
+  if (!filter) {
+    return new Map();
+  }
+
+  const records = await collection.find(filter).toArray();
+  const refs = new Map<string, CanonicalExternalCategoryRef>();
+
+  for (const record of records) {
+    const category = mapMongoExternalCategory(record);
+    const aliases = [...new Set([category.externalId, category.id].map((id) => id.trim()).filter(Boolean))];
+    const ref: CanonicalExternalCategoryRef = {
+      canonicalExternalCategoryId: category.externalId,
+      aliases,
+      category,
+    };
+
+    for (const alias of aliases) {
+      refs.set(alias, ref);
+    }
+  }
+
+  return refs;
+};
+
+const buildCanonicalExternalCategoryFilter = (
+  connectionId: string,
+  catalogId: string,
+  aliases: string[]
+): Filter<MongoCategoryMappingDoc> => {
+  const uniqueAliases = [...new Set(aliases.map((alias) => alias.trim()).filter(Boolean))];
+  if (uniqueAliases.length <= 1) {
+    return {
+      connectionId,
+      catalogId,
+      externalCategoryId: uniqueAliases[0] ?? '',
+    };
+  }
+
+  return {
+    connectionId,
+    catalogId,
+    externalCategoryId: { $in: uniqueAliases },
+  } as Filter<MongoCategoryMappingDoc>;
+};
+
 export const mongoCategoryMappingImpl = {
   async create(input: CategoryMappingCreateInput): Promise<CategoryMapping> {
     await ensureMongoCategoryMappingIndexes();
     const db = await getMongoDb();
     const collection = db.collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION);
+    const externalCategoryCollection = db.collection<MongoExternalCategoryDoc>(
+      EXTERNAL_CATEGORY_COLLECTION
+    );
+    const refs = await loadCanonicalExternalCategoryRefs(externalCategoryCollection, input.connectionId, [
+      input.externalCategoryId,
+    ]);
+    const canonicalExternalCategoryId =
+      refs.get(input.externalCategoryId)?.canonicalExternalCategoryId ?? input.externalCategoryId;
 
     await deactivateCompetingMongoMappings(collection, {
       connectionId: input.connectionId,
       catalogId: input.catalogId,
       internalCategoryId: input.internalCategoryId,
-      excludeExternalCategoryId: input.externalCategoryId,
+      excludeExternalCategoryId: canonicalExternalCategoryId,
     });
 
     const now = new Date();
     const doc: MongoCategoryMappingDoc = {
       _id: randomUUID(),
       connectionId: input.connectionId,
-      externalCategoryId: input.externalCategoryId,
+      externalCategoryId: canonicalExternalCategoryId,
       internalCategoryId: input.internalCategoryId,
       catalogId: input.catalogId,
       isActive: true,
@@ -210,23 +303,11 @@ export const mongoCategoryMappingImpl = {
       ),
     ];
 
-    const [externalCategories, internalCategories] = await Promise.all([
-      db
-        .collection<MongoExternalCategoryDoc>(EXTERNAL_CATEGORY_COLLECTION)
-        .find({
-          connectionId,
-          $or: [
-            {
-              _id: {
-                $in: externalCategoryIds
-                  .filter((id) => ObjectId.isValid(id))
-                  .map((id) => new ObjectId(id)),
-              },
-            },
-            { externalId: { $in: externalCategoryIds } },
-          ],
-        } as Filter<MongoExternalCategoryDoc>)
-        .toArray(),
+    const externalCategoryCollection = db.collection<MongoExternalCategoryDoc>(
+      EXTERNAL_CATEGORY_COLLECTION
+    );
+    const [externalRefs, internalCategories] = await Promise.all([
+      loadCanonicalExternalCategoryRefs(externalCategoryCollection, connectionId, externalCategoryIds),
       db
         .collection<MongoProductCategoryDoc>(PRODUCT_CATEGORY_COLLECTION)
         .find({
@@ -239,25 +320,16 @@ export const mongoCategoryMappingImpl = {
         .toArray(),
     ]);
 
-    const externalMap = new Map<string, ExternalCategory>(
-      externalCategories.map(
-        (c) =>
-          [c.externalId || c._id.toString(), mapMongoExternalCategory(c)] as [
-            string,
-            ExternalCategory,
-          ]
-      )
-    );
     const internalMap = new Map<string, InternalCategory>(
       internalCategories.map(
         (c) => [c._id.toString(), mapMongoInternalCategory(c)] as [string, InternalCategory]
       )
     );
 
-    return mappings.map((mapping) => ({
-      ...mapMongoCategoryMappingToRecord(mapping),
-      externalCategory:
-        externalMap.get(mapping.externalCategoryId) ||
+    return mappings.map((mapping) => {
+      const resolvedExternal = externalRefs.get(mapping.externalCategoryId);
+      const externalCategory =
+        resolvedExternal?.category ||
         ({
           id: mapping.externalCategoryId,
           connectionId: mapping.connectionId,
@@ -271,20 +343,27 @@ export const mongoCategoryMappingImpl = {
           fetchedAt: mapping.updatedAt.toISOString(),
           createdAt: mapping.createdAt.toISOString(),
           updatedAt: mapping.updatedAt.toISOString(),
-        } as ExternalCategory),
-      internalCategory:
-        internalMap.get(mapping.internalCategoryId || '') ||
-        ({
-          id: mapping.internalCategoryId || '',
-          name: `[Missing internal category: ${mapping.internalCategoryId}]`,
-          description: null,
-          color: null,
-          parentId: null,
-          catalogId: mapping.catalogId,
-          createdAt: mapping.createdAt.toISOString(),
-          updatedAt: mapping.updatedAt.toISOString(),
-        } as InternalCategory),
-    }));
+        } as ExternalCategory);
+
+      return {
+        ...mapMongoCategoryMappingToRecord(mapping),
+        externalCategoryId:
+          resolvedExternal?.canonicalExternalCategoryId ?? mapping.externalCategoryId,
+        externalCategory,
+        internalCategory:
+          internalMap.get(mapping.internalCategoryId || '') ||
+          ({
+            id: mapping.internalCategoryId || '',
+            name: `[Missing internal category: ${mapping.internalCategoryId}]`,
+            description: null,
+            color: null,
+            parentId: null,
+            catalogId: mapping.catalogId,
+            createdAt: mapping.createdAt.toISOString(),
+            updatedAt: mapping.updatedAt.toISOString(),
+          } as InternalCategory),
+      };
+    });
   },
 
   async getByExternalCategory(
@@ -294,12 +373,39 @@ export const mongoCategoryMappingImpl = {
   ): Promise<CategoryMapping | null> {
     const db = await getMongoDb();
     const collection = db.collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION);
-    const doc = await collection.findOne({
-      connectionId,
+    const externalCategoryCollection = db.collection<MongoExternalCategoryDoc>(
+      EXTERNAL_CATEGORY_COLLECTION
+    );
+    const refs = await loadCanonicalExternalCategoryRefs(externalCategoryCollection, connectionId, [
       externalCategoryId,
-      catalogId,
-    });
-    return doc ? mapMongoCategoryMappingToRecord(doc) : null;
+    ]);
+    const resolvedRef = refs.get(externalCategoryId);
+    const canonicalExternalCategoryId =
+      resolvedRef?.canonicalExternalCategoryId ?? externalCategoryId;
+    const aliases = resolvedRef?.aliases ?? [canonicalExternalCategoryId];
+    const doc = await collection.findOne(
+      buildCanonicalExternalCategoryFilter(connectionId, catalogId, aliases),
+      {
+        sort: { updatedAt: -1, createdAt: -1 },
+      }
+    );
+    if (!doc) return null;
+
+    if (doc.externalCategoryId !== canonicalExternalCategoryId) {
+      const migrated = await collection.findOneAndUpdate(
+        buildMongoIdFilter(doc._id.toString()),
+        {
+          $set: {
+            externalCategoryId: canonicalExternalCategoryId,
+            updatedAt: new Date(),
+          },
+        },
+        { returnDocument: 'after' }
+      );
+      return migrated ? mapMongoCategoryMappingToRecord(migrated) : mapMongoCategoryMappingToRecord(doc);
+    }
+
+    return mapMongoCategoryMappingToRecord(doc);
   },
 
   async bulkUpsert(
@@ -311,13 +417,27 @@ export const mongoCategoryMappingImpl = {
     await ensureMongoCategoryMappingIndexes();
     const db = await getMongoDb();
     const collection = db.collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION);
+    const externalCategoryCollection = db.collection<MongoExternalCategoryDoc>(
+      EXTERNAL_CATEGORY_COLLECTION
+    );
+    const refs = await loadCanonicalExternalCategoryRefs(
+      externalCategoryCollection,
+      connectionId,
+      mappings.map((mapping) => mapping.externalCategoryId)
+    );
 
     const now = new Date();
     const ops: AnyBulkWriteOperation<MongoCategoryMappingDoc>[] = mappings.map((m) => ({
       updateOne: {
-        filter: { connectionId, externalCategoryId: m.externalCategoryId, catalogId },
+        filter: buildCanonicalExternalCategoryFilter(
+          connectionId,
+          catalogId,
+          refs.get(m.externalCategoryId)?.aliases ?? [m.externalCategoryId]
+        ),
         update: {
           $set: {
+            externalCategoryId:
+              refs.get(m.externalCategoryId)?.canonicalExternalCategoryId ?? m.externalCategoryId,
             internalCategoryId: m.internalCategoryId,
             isActive: true,
             updatedAt: now,

@@ -1,6 +1,6 @@
 'use client';
 
-import type { CaseResolverCaptureProposalState } from '@/features/case-resolver-capture';
+import type { CaseResolverCaptureProposalState } from '@/features/case-resolver-capture/public';
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 

@@ -1,188 +1,99 @@
 /*
-  Local font-face declarations.
+  App font-face declarations.
 
-  Put your .woff2 files in public/fonts and keep these URLs in sync.
-  Nothing here is required for builds to pass: missing files will simply fall back at runtime.
+  The original public/fonts binaries are not present in this repository.
+  To keep named font families stable across the app and Kangur themes, we map
+  them to the bundled local Geist face that ships with Next in node_modules.
 */
 
-/* Bebas Neue */
+/* Bundled sans fallback used for all named UI families below. */
 @font-face {
   font-family: 'Bebas Neue';
-  src: url('/fonts/BebasNeue-Regular.woff2') format('woff2');
-  font-weight: 400;
+  src:
+    local('Bebas Neue'),
+    url('../../node_modules/next/dist/next-devtools/server/font/geist-latin-ext.woff2')
+      format('woff2'),
+    url('../../node_modules/next/dist/next-devtools/server/font/geist-latin.woff2')
+      format('woff2');
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
-/* DM Sans */
 @font-face {
   font-family: 'DM Sans';
-  src: url('/fonts/DMSans-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'DM Sans';
-  src: url('/fonts/DMSans-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'DM Sans';
-  src: url('/fonts/DMSans-Bold.woff2') format('woff2');
-  font-weight: 700;
+  src:
+    local('DM Sans'),
+    url('../../node_modules/next/dist/next-devtools/server/font/geist-latin-ext.woff2')
+      format('woff2'),
+    url('../../node_modules/next/dist/next-devtools/server/font/geist-latin.woff2')
+      format('woff2');
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
-/* Manrope */
 @font-face {
   font-family: 'Manrope';
-  src: url('/fonts/Manrope-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Manrope';
-  src: url('/fonts/Manrope-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Manrope';
-  src: url('/fonts/Manrope-SemiBold.woff2') format('woff2');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Manrope';
-  src: url('/fonts/Manrope-Bold.woff2') format('woff2');
-  font-weight: 700;
+  src:
+    local('Manrope'),
+    url('../../node_modules/next/dist/next-devtools/server/font/geist-latin-ext.woff2')
+      format('woff2'),
+    url('../../node_modules/next/dist/next-devtools/server/font/geist-latin.woff2')
+      format('woff2');
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
-/* Outfit */
 @font-face {
   font-family: 'Outfit';
-  src: url('/fonts/Outfit-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Outfit';
-  src: url('/fonts/Outfit-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Outfit';
-  src: url('/fonts/Outfit-SemiBold.woff2') format('woff2');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Outfit';
-  src: url('/fonts/Outfit-Bold.woff2') format('woff2');
-  font-weight: 700;
+  src:
+    local('Outfit'),
+    url('../../node_modules/next/dist/next-devtools/server/font/geist-latin-ext.woff2')
+      format('woff2'),
+    url('../../node_modules/next/dist/next-devtools/server/font/geist-latin.woff2')
+      format('woff2');
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
-/* Plus Jakarta Sans */
 @font-face {
   font-family: 'Plus Jakarta Sans';
-  src: url('/fonts/PlusJakartaSans-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Plus Jakarta Sans';
-  src: url('/fonts/PlusJakartaSans-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Plus Jakarta Sans';
-  src: url('/fonts/PlusJakartaSans-SemiBold.woff2') format('woff2');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Plus Jakarta Sans';
-  src: url('/fonts/PlusJakartaSans-Bold.woff2') format('woff2');
-  font-weight: 700;
+  src:
+    local('Plus Jakarta Sans'),
+    url('../../node_modules/next/dist/next-devtools/server/font/geist-latin-ext.woff2')
+      format('woff2'),
+    url('../../node_modules/next/dist/next-devtools/server/font/geist-latin.woff2')
+      format('woff2');
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
-/* Space Grotesk */
 @font-face {
   font-family: 'Space Grotesk';
-  src: url('/fonts/SpaceGrotesk-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Space Grotesk';
-  src: url('/fonts/SpaceGrotesk-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Space Grotesk';
-  src: url('/fonts/SpaceGrotesk-SemiBold.woff2') format('woff2');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Space Grotesk';
-  src: url('/fonts/SpaceGrotesk-Bold.woff2') format('woff2');
-  font-weight: 700;
+  src:
+    local('Space Grotesk'),
+    url('../../node_modules/next/dist/next-devtools/server/font/geist-latin-ext.woff2')
+      format('woff2'),
+    url('../../node_modules/next/dist/next-devtools/server/font/geist-latin.woff2')
+      format('woff2');
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
-/* Sora */
 @font-face {
   font-family: 'Sora';
-  src: url('/fonts/Sora-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Sora';
-  src: url('/fonts/Sora-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Sora';
-  src: url('/fonts/Sora-SemiBold.woff2') format('woff2');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Sora';
-  src: url('/fonts/Sora-Bold.woff2') format('woff2');
-  font-weight: 700;
+  src:
+    local('Sora'),
+    url('../../node_modules/next/dist/next-devtools/server/font/geist-latin-ext.woff2')
+      format('woff2'),
+    url('../../node_modules/next/dist/next-devtools/server/font/geist-latin.woff2')
+      format('woff2');
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }

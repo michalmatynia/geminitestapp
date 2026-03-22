@@ -33,6 +33,7 @@ export function CategoryMapperTable(): React.JSX.Element {
     getMappingForExternal,
     handleMappingChange,
     handleFetchFromBase,
+    handleAutoMatchByName,
     handleSave,
     fetchMutation,
     saveMutation,
@@ -41,6 +42,15 @@ export function CategoryMapperTable(): React.JSX.Element {
   const isFetchPending = fetchMutation.isPending;
   const isSavePending = saveMutation.isPending;
   const pendingCount = pendingMappings.size;
+  const isAutoMatchDisabled =
+    isFetchPending ||
+    isSavePending ||
+    externalCategoriesLoading ||
+    mappingsLoading ||
+    internalCategoriesLoading ||
+    !selectedCatalogId ||
+    externalCategories.length === 0 ||
+    internalCategoryOptions.length === 0;
 
   const columns = useMemo<ColumnDef<CategoryRow>[]>(
     () => [
@@ -48,8 +58,9 @@ export function CategoryMapperTable(): React.JSX.Element {
         accessorKey: 'name',
         header: 'External Category',
         cell: ({ row }) => {
-          const currentMapping = getMappingForExternal(row.original.id);
-          const hasPendingChange = pendingMappings.has(row.original.id);
+          const mappingKey = row.original.externalId;
+          const currentMapping = getMappingForExternal(mappingKey);
+          const hasPendingChange = pendingMappings.has(mappingKey);
 
           return (
             <CategoryMapperNameCell
@@ -68,12 +79,13 @@ export function CategoryMapperTable(): React.JSX.Element {
         id: 'mapping',
         header: 'Internal Category',
         cell: ({ row }) => {
-          const currentMapping = getMappingForExternal(row.original.id);
+          const mappingKey = row.original.externalId;
+          const currentMapping = getMappingForExternal(mappingKey);
 
           return (
             <CategoryMapperSelectCell
               value={currentMapping}
-              onChange={(value) => handleMappingChange(row.original.id, value)}
+              onChange={(value) => handleMappingChange(mappingKey, value)}
               options={internalCategoryOptions}
               disabled={internalCategoriesLoading || !selectedCatalogId}
             />
@@ -117,6 +129,8 @@ export function CategoryMapperTable(): React.JSX.Element {
         <CategoryMapperTableHeaderActions
           onFetch={() => void handleFetchFromBase()}
           isFetching={isFetchPending}
+          onAutoMatchByName={handleAutoMatchByName}
+          autoMatchDisabled={isAutoMatchDisabled}
           onSave={() => void handleSave()}
           isSaving={isSavePending}
           pendingCount={pendingCount}

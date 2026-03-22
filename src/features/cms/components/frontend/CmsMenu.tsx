@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Link as LocaleLink } from '@/i18n/navigation';
-import { getGsapFromVars } from '@/features/gsap';
+import { getGsapFromVars } from '@/features/gsap/public';
 import {
   CmsStorefrontAppearanceButtons,
   resolveStorefrontAppearanceTone,

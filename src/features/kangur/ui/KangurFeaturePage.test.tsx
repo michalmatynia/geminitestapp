@@ -109,6 +109,9 @@ describe('KangurFeaturePage', () => {
     setEnvValue('NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED', originalCustomCssEnv);
     delete document.body.dataset.kangurShell;
     document.body.style.overflow = '';
+    document.head
+      .querySelectorAll('link[data-kangur-route-css-link], link[rel="preload"][as="style"]')
+      .forEach((node) => node.remove());
     Object.defineProperty(window, 'innerHeight', {
       configurable: true,
       value: 900,
@@ -129,6 +132,9 @@ describe('KangurFeaturePage', () => {
     setEnvValue('NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED', originalCustomCssEnv);
     delete document.body.dataset.kangurShell;
     document.body.style.overflow = '';
+    document.head
+      .querySelectorAll('link[data-kangur-route-css-link], link[rel="preload"][as="style"]')
+      .forEach((node) => node.remove());
     document.documentElement.style.removeProperty('--kangur-shell-viewport-height');
     document.documentElement.style.removeProperty('--kangur-mobile-bottom-clearance');
     document.body.style.removeProperty('--kangur-shell-viewport-height');
@@ -222,6 +228,28 @@ describe('KangurFeaturePage', () => {
       basePath: '/kangur',
       embedded: false,
     });
+  });
+
+  it('promotes the Kangur preload stylesheet into an active stylesheet link', () => {
+    const preload = document.createElement('link');
+    preload.rel = 'preload';
+    preload.as = 'style';
+    preload.href = 'https://example.test/_next/static/chunks/src_app_(frontend)_kangur_kangur_test.css';
+    document.head.appendChild(preload);
+
+    const { unmount } = renderWithIntl(<KangurFeaturePage slug={['tests']} basePath='/kangur' />);
+
+    const stylesheet = document.head.querySelector(
+      'link[data-kangur-route-css-link="true"]'
+    ) as HTMLLinkElement | null;
+
+    expect(stylesheet).not.toBeNull();
+    expect(stylesheet?.rel).toBe('stylesheet');
+    expect(stylesheet?.href).toBe(preload.href);
+
+    unmount();
+
+    expect(document.head.querySelector('link[data-kangur-route-css-link="true"]')).toBeNull();
   });
 
   it('supports direct root-mounted Kangur page mounts', () => {

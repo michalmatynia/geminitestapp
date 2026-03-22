@@ -6,9 +6,9 @@ import type {
   CaseResolverCaptureProposalState,
   CaseResolverCaptureProposal,
   CaseResolverCaptureDocumentDateAction,
-} from '@/features/case-resolver-capture';
-import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture';
-import { decodeFilemakerPartyReference } from '@/features/filemaker';
+} from '@/features/case-resolver-capture/public';
+import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture/public';
+import { decodeFilemakerPartyReference } from '@/features/filemaker/public';
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import { useToast } from '@/shared/ui';
 

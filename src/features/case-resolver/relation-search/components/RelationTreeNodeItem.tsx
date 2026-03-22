@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
-import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree';
+import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/public';
 import { Button, Checkbox, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

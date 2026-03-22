@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
-import { buildFilemakerPartyOptions } from '@/features/filemaker';
+import { buildFilemakerPartyOptions } from '@/features/filemaker/public';
 import type {
   CaseResolverCategory,
   CaseResolverFile,

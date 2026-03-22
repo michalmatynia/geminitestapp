@@ -26,7 +26,7 @@ vi.mock('@/shared/ui', async () => {
   };
 });
 
-vi.mock('@/features/cms', () => ({
+vi.mock('@/features/cms/public', () => ({
   CmsDomainSelector: () => null,
 }));
 

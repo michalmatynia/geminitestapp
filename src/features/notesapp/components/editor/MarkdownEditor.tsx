@@ -2,8 +2,8 @@
 
 import React from 'react';
 
-import { MarkdownSplitEditor } from '@/features/document-editor';
-import { MarkdownSplitEditorProvider } from '@/features/document-editor';
+import { MarkdownSplitEditor } from '@/features/document-editor/public';
+import { MarkdownSplitEditorProvider } from '@/features/document-editor/public';
 import {
   useNoteContentContext,
   useNoteEditorContext,

@@ -7,7 +7,7 @@ import { useProductSettings } from '@/features/products/hooks/useProductSettings
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { type ProductStudioSequenceGenerationMode } from '@/shared/contracts/products';
 import { useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { useStudioProjects } from '@/features/ai';
+import { useStudioProjects } from '@/features/ai/public';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,

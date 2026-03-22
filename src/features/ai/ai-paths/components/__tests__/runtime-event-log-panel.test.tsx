@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mockState = vi.hoisted(() => ({
   runtimeEvents: [] as Array<Record<string, unknown>>,
   clearRuntimeEvents: vi.fn(),
-  logClientError: vi.fn(),
+  logClientError: vi.fn(), logClientCatch: vi.fn(),
 }));
 
 vi.mock('../../context', () => ({

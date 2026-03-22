@@ -32,7 +32,7 @@ vi.mock('./validator-documentation-clipboard', () => ({
 }));
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
-  logClientError: vi.fn(),
+  logClientError: vi.fn(), logClientCatch: vi.fn(),
 }));
 
 vi.mock('@/shared/ui', () => ({

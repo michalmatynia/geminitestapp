@@ -6,8 +6,8 @@ import {
   createMasterFolderTreeTransactionAdapter,
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
-} from '@/features/foldertree';
-import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree';
+} from '@/features/foldertree/public';
+import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/public';
 import type { ValidatorPatternList } from '@/shared/contracts/admin';
 import { FolderTreePanel } from '@/shared/ui';
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useLocale, useTranslations } from 'next-intl';
+import { useLocale, useMessages, useTranslations } from 'next-intl';
 import {
   createContext,
   useCallback,
@@ -48,6 +48,26 @@ import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 
 export const KANGUR_LEARNER_PROFILE_DAILY_GOAL_GAMES = 3;
+
+const getScopedMessageValue = (
+  messages: Record<string, unknown> | undefined,
+  namespace: string,
+  key: string
+): unknown => {
+  const scopedPath = [...namespace.split('.'), ...key.split('.')];
+  return scopedPath.reduce<unknown>((current, segment) => {
+    if (!current || typeof current !== 'object' || !(segment in current)) {
+      return undefined;
+    }
+    return (current as Record<string, unknown>)[segment];
+  }, messages);
+};
+
+export const hasScopedMessage = (
+  messages: Record<string, unknown> | undefined,
+  namespace: string,
+  key: string
+): boolean => getScopedMessageValue(messages, namespace, key) !== undefined;
 
 const QUICK_START_OPERATIONS = new Set<KangurOperation>([
   'addition',
@@ -187,6 +207,7 @@ export function KangurLearnerProfileRuntimeProvider({
   children: ReactNode;
 }): JSX.Element {
   const locale = normalizeSiteLocale(useLocale());
+  const messages = useMessages() as Record<string, unknown>;
   const runtimeTranslations = useTranslations('KangurLearnerProfileRuntime');
   const progressRuntimeTranslations = useTranslations('KangurProgressRuntime');
   const { basePath } = useKangurRouting();
@@ -199,12 +220,17 @@ export function KangurLearnerProfileRuntimeProvider({
   const [scoresError, setScoresError] = useState<string | null>(null);
   const translateRuntime = useCallback(
     (key: string, values?: Record<string, string | number>) => {
-      const translated = runtimeTranslations(key as never, values as never);
-      return translated === key
-        ? progressRuntimeTranslations(key as never, values as never)
-        : translated;
+      if (hasScopedMessage(messages, 'KangurLearnerProfileRuntime', key)) {
+        return runtimeTranslations(key as never, values as never);
+      }
+
+      if (hasScopedMessage(messages, 'KangurProgressRuntime', key)) {
+        return progressRuntimeTranslations(key as never, values as never);
+      }
+
+      return key;
     },
-    [progressRuntimeTranslations, runtimeTranslations]
+    [messages, progressRuntimeTranslations, runtimeTranslations]
   );
   const loadScoresErrorLabel = translateKangurLearnerProfileWithFallback(
     translateRuntime,

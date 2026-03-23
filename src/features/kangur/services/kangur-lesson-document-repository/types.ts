@@ -4,6 +4,7 @@ import type {
 } from '@kangur/contracts';
 
 export type KangurLessonDocumentRepository = {
+  getLessonDocument: (lessonId: string) => Promise<KangurLessonDocument | null>;
   listLessonDocuments: () => Promise<KangurLessonDocumentStore>;
   replaceLessonDocuments: (store: KangurLessonDocumentStore) => Promise<KangurLessonDocumentStore>;
   saveLessonDocument: (lessonId: string, document: KangurLessonDocument) => Promise<void>;

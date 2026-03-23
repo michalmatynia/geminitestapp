@@ -1,7 +1,6 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
 import { useId, useState, type HTMLAttributes, type ReactNode } from 'react';
 
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
@@ -25,8 +24,8 @@ type KangurLessonGroupAccordionProps = {
 export function KangurLessonGroupAccordion({
   accordionId,
   label,
-  typeLabel,
-  fallbackTypeLabel,
+  typeLabel: _typeLabel,
+  fallbackTypeLabel: _fallbackTypeLabel,
   isExpanded,
   onToggle,
   children,
@@ -55,8 +54,10 @@ export function KangurLessonGroupAccordion({
         aria-controls={panelId}
         aria-expanded={isExpanded}
         className={cn(
-          'kangur-lesson-group-trigger flex w-full items-center justify-between gap-3 text-left',
-          isCoarsePointer && 'min-h-12 touch-manipulation select-none'
+          'kangur-lesson-group-trigger kangur-button-shell kangur-cta-pill surface-cta inline-flex w-full items-center justify-center gap-2 border border-transparent px-4 py-3 text-center font-bold tracking-tight shadow-sm transition-all duration-200',
+          isCoarsePointer
+            ? 'min-h-12 touch-manipulation select-none active:scale-[0.97]'
+            : 'active:scale-[0.985]'
         )}
         data-pressed={isPressed ? 'true' : 'false'}
         data-state={isExpanded ? 'open' : 'closed'}
@@ -68,16 +69,7 @@ export function KangurLessonGroupAccordion({
         onPointerLeave={() => setIsPressed(false)}
         onPointerUp={() => setIsPressed(false)}
       >
-        <div className='min-w-0'>
-          <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500'>
-            {typeLabel ?? fallbackTypeLabel}
-          </div>
-          <div className='mt-1 text-lg font-semibold text-slate-900'>{label}</div>
-        </div>
-        <ChevronDown
-          aria-hidden='true'
-          className='kangur-lesson-group-chevron h-5 w-5 text-slate-600 transition-transform'
-        />
+        <span className='min-w-0 text-lg font-semibold text-current'>{label}</span>
       </motion.button>
 
       <AnimatePresence initial={false}>
@@ -95,7 +87,7 @@ export function KangurLessonGroupAccordion({
           >
             <div
               className={cn(
-                `mt-4 flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`,
+                `mt-4 flex w-full flex-col items-center ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`,
                 contentClassName
               )}
               {...contentRestProps}

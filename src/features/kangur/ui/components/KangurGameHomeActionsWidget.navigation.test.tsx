@@ -132,12 +132,15 @@ describe('KangurGameHomeActionsWidget navigation', () => {
   it('navigates the lessons home action to the locale-prefixed Lessons route on the first click', () => {
     render(<KangurGameHomeActionsWidget />);
 
-    expect(screen.getByRole('link', { name: 'Lessons' })).toHaveAttribute(
+    const lessonsLink = screen.getByRole('link', { name: 'Lessons' });
+
+    expect(lessonsLink).toHaveAttribute(
       'href',
       '/en/kangur/lessons'
     );
 
-    fireEvent.click(screen.getByRole('link', { name: 'Lessons' }));
+    fireEvent.pointerDown(lessonsLink, { button: 0 });
+    fireEvent.click(lessonsLink);
 
     expect(startRouteTransitionMock).toHaveBeenCalledWith({
       href: '/en/kangur/lessons',

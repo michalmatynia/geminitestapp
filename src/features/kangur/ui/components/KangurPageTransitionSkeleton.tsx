@@ -34,6 +34,7 @@ import {
 import {
   LESSONS_ACTIVE_LAYOUT_CLASSNAME,
   LESSONS_ACTIVE_SECTION_CLASSNAME,
+  LESSONS_LIBRARY_COLUMN_CLASSNAME,
   LESSONS_LIBRARY_LAYOUT_CLASSNAME,
   LESSONS_LIBRARY_LIST_CLASSNAME,
 } from '@/features/kangur/ui/pages/lessons/Lessons.constants';
@@ -941,7 +942,7 @@ const LessonsLibrarySkeleton = ({
       <LessonsLibraryIntroSkeleton lessonsTitle={lessonsTitle} locale={locale} />
     </div>
     <div
-      className={LESSONS_LIBRARY_LIST_CLASSNAME}
+      className={LESSONS_LIBRARY_COLUMN_CLASSNAME}
       data-testid='kangur-page-transition-skeleton-lessons-library-list'
     >
       <LessonsLibraryGroupSkeleton />
@@ -1243,7 +1244,7 @@ export function KangurPageTransitionSkeleton({
           : 'var(--kangur-page-background, radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%))',
         WebkitBackdropFilter: isLocaleSwitch ? 'blur(14px) saturate(1.08)' : undefined,
         backdropFilter: isLocaleSwitch ? 'blur(14px) saturate(1.08)' : undefined,
-      }}
+      } as React.CSSProperties}
     >
       <div className='sr-only' role='status' aria-live='polite'>
         {reason === 'boot'

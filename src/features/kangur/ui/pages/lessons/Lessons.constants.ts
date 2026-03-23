@@ -14,12 +14,17 @@ export const ACTIVE_LESSON_HEADER_SCROLL_MAX_FRAMES = 18;
 export const LESSON_NAV_ANCHOR_ID = 'kangur-lesson-navigation';
 
 export const LESSONS_LIBRARY_LAYOUT_CLASSNAME = cn(
-  'flex w-full max-w-lg flex-col items-center',
+  'mx-auto flex w-full min-w-0 max-w-lg flex-col items-center',
+  KANGUR_PANEL_GAP_CLASSNAME
+);
+
+export const LESSONS_LIBRARY_COLUMN_CLASSNAME = cn(
+  'mx-auto flex w-full min-w-0 max-w-lg flex-col items-center',
   KANGUR_PANEL_GAP_CLASSNAME
 );
 
 export const LESSONS_LIBRARY_LIST_CLASSNAME = cn(
-  'flex w-full flex-col',
+  'mx-auto flex w-full min-w-0 flex-col items-center',
   KANGUR_LESSON_PANEL_GAP_CLASSNAME
 );
 

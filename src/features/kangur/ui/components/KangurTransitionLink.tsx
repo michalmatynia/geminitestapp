@@ -126,19 +126,6 @@ export function KangurTransitionLink({
           publishPendingSnapshot();
         }
       }}
-      onPointerDownCapture={(event) => {
-        if (
-          event.button === 0 &&
-          !event.metaKey &&
-          !event.ctrlKey &&
-          !event.shiftKey &&
-          !event.altKey &&
-          target !== '_blank' &&
-          managedLocalHref
-        ) {
-          publishPendingSnapshot();
-        }
-      }}
       onClick={(event) => {
         if (onClick) {
           onClick(event);

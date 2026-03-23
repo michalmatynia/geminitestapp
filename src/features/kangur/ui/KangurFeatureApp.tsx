@@ -40,6 +40,7 @@ import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTu
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import type { KangurRouteTransitionSkeletonVariant } from '@/features/kangur/ui/routing/route-transition-skeletons';
+import { useKangurPendingRouteLoadingSnapshot } from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
 import { resolveManagedKangurEmbeddedFromHref } from '@/features/kangur/ui/routing/managed-paths';
 import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import { cn } from '@/features/kangur/shared/utils';
@@ -75,7 +76,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
     activeTransitionSkeletonVariant,
   } = useKangurRouteTransitionState();
   const routeNavigator = useKangurRouteNavigator();
-  const { pageKey, embedded, requestedPath, basePath } = useKangurRouting();
+  const pendingRouteLoadingSnapshot = useKangurPendingRouteLoadingSnapshot();
+  const { pageKey, embedded, requestedPath, requestedHref, basePath } = useKangurRouting();
   const authErrorType = authError?.type;
   const resolvedPageKey = resolveKangurPageKey(pageKey, kangurPages, KANGUR_MAIN_PAGE);
   const homeHref = getKangurHomeHref(basePath);
@@ -88,6 +90,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const prefersReducedMotion = useReducedMotion();
   const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
+  const currentRequestedHref = requestedHref ?? requestedPath ?? null;
   const isBootLoading = isLoadingPublicSettings || isLoadingAuth;
   const isThemeBootLoading = isLoadingSettings;
   const shouldShowBootLoader = isThemeBootLoading;
@@ -114,23 +117,45 @@ const AuthenticatedApp = (): JSX.Element | null => {
       href: activeTransitionRequestedHref,
       basePath,
     }) ?? embedded;
-  const isRouteSkeletonVisible = isNavigationSkeletonVisible;
+  const isPendingRouteSnapshotVisible =
+    !isNavigationTransitionActive &&
+    pendingRouteLoadingSnapshot !== null &&
+    pendingRouteLoadingSnapshot.href !== null &&
+    pendingRouteLoadingSnapshot.href !== currentRequestedHref;
+  const snapshotTransitionPageKey =
+    pendingRouteLoadingSnapshot?.pageKey ?? resolvedPageKey ?? KANGUR_MAIN_PAGE;
+  const snapshotTransitionEmbedded =
+    resolveManagedKangurEmbeddedFromHref({
+      href: pendingRouteLoadingSnapshot?.href ?? null,
+      basePath,
+    }) ?? embedded;
+  const snapshotTransitionTopBarHeightCssValue =
+    pendingRouteLoadingSnapshot?.topBarHeightCssValue ?? null;
+  const isRouteSkeletonVisible = isNavigationSkeletonVisible || isPendingRouteSnapshotVisible;
   const visibleTransitionSkeletonPageKey =
-    isRouteSkeletonVisible
+    isPendingRouteSnapshotVisible
+      ? snapshotTransitionPageKey
+      : isRouteSkeletonVisible
       ? latchedNavigationSkeletonRef.current?.pageKey ?? transitionPageKey
       : transitionPageKey;
   const visibleTransitionSkeletonVariant =
-    isRouteSkeletonVisible
+    isPendingRouteSnapshotVisible
+      ? pendingRouteLoadingSnapshot?.skeletonVariant ?? activeTransitionSkeletonVariant
+      : isRouteSkeletonVisible
       ? latchedNavigationSkeletonRef.current?.variant ?? activeTransitionSkeletonVariant
       : activeTransitionSkeletonVariant;
-  const visibleTransitionSkeletonEmbedded = isRouteSkeletonVisible
+  const visibleTransitionSkeletonEmbedded = isPendingRouteSnapshotVisible
+    ? snapshotTransitionEmbedded
+    : isRouteSkeletonVisible
     ? latchedNavigationSkeletonRef.current?.embedded ?? (embedded && transitionEmbedded)
     : embedded;
   const currentNavigationTopBarHeightCssValue =
     isNavigationTransitionActive || isRouteSkeletonVisible
       ? readKangurTopBarHeightCssValue()
       : null;
-  const visibleTransitionSkeletonTopBarHeightCssValue = isRouteSkeletonVisible
+  const visibleTransitionSkeletonTopBarHeightCssValue = isPendingRouteSnapshotVisible
+    ? snapshotTransitionTopBarHeightCssValue ?? currentNavigationTopBarHeightCssValue
+    : isRouteSkeletonVisible
     ? latchedNavigationTopBarHeightCssValue ?? currentNavigationTopBarHeightCssValue
     : null;
   const isBootLoaderBlockingNavigation = isBootSkeletonVisible && !isRouteSkeletonVisible;
@@ -144,11 +169,12 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const shouldKeepRouteContentVisibleDuringTransition =
     isLanguageSwitcherTransition && isRouteSkeletonVisible;
   const isRouteContentVisuallyHidden =
-    !shouldKeepRouteContentVisibleDuringTransition &&
+    isPendingRouteSnapshotVisible ||
+    (!shouldKeepRouteContentVisibleDuringTransition &&
     (transitionPhase === 'waiting_for_ready' ||
       ((transitionPhase === 'pending' ||
         (transitionPhase === 'acknowledging' && isLanguageSwitcherTransition)) &&
-        isRouteSkeletonVisible));
+        isRouteSkeletonVisible)));
   const isRouteContentInteractionBlocked = isRouteSkeletonVisible;
 
   useEffect(() => {
@@ -360,7 +386,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
           <motion.div
             key={routeTransitionKey}
             {...routeContentMotionProps}
-            aria-busy={isNavigationTransitionActive}
+            aria-busy={isNavigationTransitionActive || isPendingRouteSnapshotVisible}
             aria-hidden={isRouteContentVisuallyHidden ? 'true' : undefined}
             className={cn(
               'w-full min-w-0 kangur-shell-viewport-height',

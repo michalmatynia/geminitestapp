@@ -18,7 +18,10 @@ import {
 } from '@/features/kangur/config/routing';
 import { hasKangurLessonDocumentContent } from '@/features/kangur/lesson-documents';
 import type { KangurAssignmentSnapshot } from '@kangur/platform';
-import { useKangurLessonDocuments, useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
+import {
+  useKangurLessonDocument,
+  useKangurLessons,
+} from '@/features/kangur/ui/hooks/useKangurLessons';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
@@ -73,15 +76,10 @@ export function KangurLessonsRuntimeProvider({
     [lessonTemplates],
   );
   const lessonsQuery = useKangurLessons({ subject, ageGroup, enabledOnly: true });
-  const lessonDocumentsQuery = useKangurLessonDocuments();
   const lessons = useMemo((): KangurLesson[] => lessonsQuery.data ?? [], [lessonsQuery.data]);
   const lessonComponentIds = useMemo(
     () => new Set(lessons.map((lesson) => lesson.componentId)),
     [lessons]
-  );
-  const lessonDocuments = useMemo(
-    () => lessonDocumentsQuery.data ?? {},
-    [lessonDocumentsQuery.data]
   );
   const lessonAssignmentsByComponent = useMemo(() => {
     const nextMap = new Map<KangurLessonComponentId, KangurAssignmentSnapshot>();
@@ -168,6 +166,9 @@ export function KangurLessonsRuntimeProvider({
   }, [lessonAssignmentsByComponent, lessons]);
 
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
+  const activeLessonDocumentQuery = useKangurLessonDocument(activeLessonId, {
+    enabled: activeLessonId !== null,
+  });
   const activeLessonContentRef = useRef<HTMLDivElement | null>(null);
   const selectLesson = useCallback((lessonId: string): void => {
     setActiveLessonId(lessonId);
@@ -240,7 +241,14 @@ export function KangurLessonsRuntimeProvider({
       ? orderedLessons[activeIdx + 1] ?? null
       : null;
   const ActiveLessonComponent = activeLesson ? LESSON_COMPONENTS[activeLesson.componentId] : null;
-  const activeLessonDocument = activeLesson ? lessonDocuments[activeLesson.id] ?? null : null;
+  const activeLessonDocument = activeLessonDocumentQuery.data ?? null;
+  const lessonDocuments = useMemo(
+    () =>
+      activeLessonId && activeLessonDocument
+        ? { [activeLessonId]: activeLessonDocument }
+        : {},
+    [activeLessonDocument, activeLessonId]
+  );
   const hasActiveLessonDocumentContent = hasKangurLessonDocumentContent(activeLessonDocument);
   const shouldRenderLessonDocument =
     activeLesson?.contentMode === 'document' && hasActiveLessonDocumentContent;

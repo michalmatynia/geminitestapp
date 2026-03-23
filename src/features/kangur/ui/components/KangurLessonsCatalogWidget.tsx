@@ -23,7 +23,6 @@ import {
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { KangurEmptyState } from '@/features/kangur/ui/design/primitives';
 import {
-  KANGUR_LESSON_PANEL_GAP_CLASSNAME,
   KANGUR_PANEL_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { KangurSubjectGroupSection } from '@/features/kangur/ui/components/KangurSubjectGroupSection';
@@ -31,6 +30,7 @@ import { getKangurSubjectGroups } from '@/features/kangur/ui/constants/subject-g
 import { useKangurLessonSections } from '@/features/kangur/ui/hooks/useKangurLessonSections';
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
+import { LESSONS_LIBRARY_LIST_CLASSNAME } from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 
 import { useState, type JSX } from 'react';
 
@@ -159,7 +159,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
   );
 
   return (
-    <div className={`flex flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`} aria-label='Lista lekcji'>
+    <div className={LESSONS_LIBRARY_LIST_CLASSNAME} aria-label='Lista lekcji'>
       {subjectGroups.map((group) => {
         const groupLessons = lessonsBySubject.get(group.value) ?? [];
         if (groupLessons.length === 0) {
@@ -229,7 +229,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
               )
             }
           >
-            <div className={`flex flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`} role='list'>
+            <div className={LESSONS_LIBRARY_LIST_CLASSNAME} role='list'>
               {lessonEntries.map((entry) => {
                 if (entry.kind === 'group') {
                   const groupKey = `${group.value}:${entry.group.id}`;
@@ -297,7 +297,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                           entry.group.subsections?.map((subsection) => (
                             <div
                               key={subsection.id}
-                              className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}
+                              className={LESSONS_LIBRARY_LIST_CLASSNAME}
                               role='listitem'
                             >
                               <div className='min-w-0'>
@@ -339,7 +339,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                                   </>
                                 )}
                               </div>
-                              <div className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`} role='list'>
+                              <div className={LESSONS_LIBRARY_LIST_CLASSNAME} role='list'>
                                 {subsection.lessons.map((lesson) => renderLessonCard(lesson))}
                               </div>
                             </div>

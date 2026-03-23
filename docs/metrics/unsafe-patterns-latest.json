@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-03-23T13:32:41.309Z",
+  "generatedAt": "2026-03-23T15:37:00.493Z",
   "status": "passed",
   "summary": {
-    "total": 13,
+    "total": 15,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 13,
+    "infoCount": 15,
     "status": "passed",
     "fileCount": 5707
   },
@@ -16,7 +16,7 @@
   },
   "trendCounters": {
     "doubleAssertionCount": 0,
-    "anyCount": 11,
+    "anyCount": 13,
     "eslintDisableCount": 2,
     "nonNullAssertionCount": 0,
     "tsIgnoreCount": 0,
@@ -37,6 +37,26 @@
     "shapes.": 1
   },
   "issues": [
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx",
+      "line": 1834,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx",
+      "line": 1247,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
     {
       "severity": "info",
       "ruleId": "explicit-any",
@@ -179,8 +199,8 @@
       "ruleId": "explicit-any",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 11
+      "infoCount": 13
     }
   ],
-  "durationMs": 12464
+  "durationMs": 1126
 }

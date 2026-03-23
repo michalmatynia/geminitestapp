@@ -8,7 +8,7 @@ canonical: true
 ---
 # Unsafe Patterns Check
 
-Generated at: 2026-03-23T13:32:41.309Z
+Generated at: 2026-03-23T15:37:00.493Z
 
 ## Summary
 
@@ -16,14 +16,14 @@ Generated at: 2026-03-23T13:32:41.309Z
 - Files scanned: 5707
 - Errors: 0
 - Warnings: 0
-- Info: 13
+- Info: 15
 
 ## Trend Counters
 
 | Metric | Count |
 | --- | ---: |
 | doubleAssertionCount | 0 |
-| anyCount | 11 |
+| anyCount | 13 |
 | eslintDisableCount | 2 |
 | nonNullAssertionCount | 0 |
 | tsIgnoreCount | 0 |
@@ -51,12 +51,14 @@ Generated at: 2026-03-23T13:32:41.309Z
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
 | eslint-disable | 0 | 0 | 2 |
-| explicit-any | 0 | 0 | 11 |
+| explicit-any | 0 | 0 | 13 |
 
 ## Issues
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
+| INFO | explicit-any | src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx:1834 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
+| INFO | explicit-any | src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx:1247 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
 | INFO | explicit-any | src/features/kangur/ui/components/KangurSubjectGroupSection.tsx:19 | Explicit `any` type usage. Consider using a specific type or `unknown`. |
 | INFO | eslint-disable | src/features/products/performance/monitoring.ts:294 | eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call |
 | INFO | eslint-disable | src/shared/lib/api/catch-all-router.ts:14 | eslint-disable comment disabling: @typescript-eslint/no-explicit-any -- catch-all route modules define their own param shapes. |

@@ -115,7 +115,6 @@ export function LessonsCatalog() {
     lessonSections,
     orderedLessons,
     handleSelectLesson,
-    handleGoBack,
     progress,
     lessonAssignmentsByComponent,
     completedLessonAssignmentsByComponent,
@@ -214,9 +213,7 @@ export function LessonsCatalog() {
   });
 
   const lessonListIntroDescriptionLabel =
-    !shouldShowLessonsCatalogSkeleton
-      ? (lessonListIntroContent?.summary ?? translations('introDescription'))
-      : translations('loadingDescription');
+    lessonListIntroContent?.summary ?? translations('introDescription');
   const lessonListIntroDescription = isSixYearOld ? (
     <KangurVisualCueContent
       className='text-lg'
@@ -249,6 +246,7 @@ export function LessonsCatalog() {
     let lessonIndex = 0;
     const renderLessonCard = (lesson: KangurLesson, index: number) => (
       <motion.div
+        className='w-full'
         key={lesson.id}
         data-testid={`lesson-library-motion-${lesson.id}`}
         initial={{ opacity: 0, y: 16 }}
@@ -331,7 +329,10 @@ export function LessonsCatalog() {
           >
             {groupHasSubsections ? (
               entry.group.subsections?.map((subsection) => (
-                <div key={subsection.id} className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}>
+                <div
+                  key={subsection.id}
+                  className={LESSONS_LIBRARY_LIST_CLASSNAME}
+                >
                   <div className='min-w-0'>
                     {isSixYearOld ? (
                       <>
@@ -371,7 +372,7 @@ export function LessonsCatalog() {
                       </>
                     )}
                   </div>
-                  <div className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}>
+                  <div className={LESSONS_LIBRARY_LIST_CLASSNAME}>
                     {subsection.lessons.map((lesson) => {
                       const index = groupLessonIndex;
                       groupLessonIndex += 1;
@@ -405,7 +406,7 @@ export function LessonsCatalog() {
           description={lessonListIntroDescription}
           headingAs='h1'
           headingTestId='kangur-lessons-list-heading'
-          onBack={handleGoBack}
+          showBackButton={false}
           testId='lessons-list-intro-card'
           title={lessonListIntroContent?.title ?? translations('pageTitle')}
           visualTitle={

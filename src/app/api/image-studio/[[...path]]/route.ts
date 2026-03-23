@@ -101,25 +101,25 @@ const ROUTER_OPTIONS = {
 export const GET = apiHandlerWithParams<RouteParams>(
   (request: NextRequest) =>
     handleCatchAllRequest('GET', request, getPathSegments(request, BASE_PATH), ROUTES, SOURCE_BASE),
-  { ...ROUTER_OPTIONS, source: `${SOURCE_BASE}.[[...path]].GET`, requireAuth: true }
+  { ...ROUTER_OPTIONS, source: 'image-studio.[[...path]].GET', requireAuth: true }
 );
 export const POST = apiHandlerWithParams<RouteParams>(
   (request: NextRequest) =>
     handleCatchAllRequest('POST', request, getPathSegments(request, BASE_PATH), ROUTES, SOURCE_BASE),
-  { ...ROUTER_OPTIONS, source: `${SOURCE_BASE}.[[...path]].POST`, requireAuth: true }
+  { ...ROUTER_OPTIONS, source: 'image-studio.[[...path]].POST', requireAuth: true }
 );
 export const PUT = apiHandlerWithParams<RouteParams>(
   (request: NextRequest) =>
     handleCatchAllRequest('PUT', request, getPathSegments(request, BASE_PATH), ROUTES, SOURCE_BASE),
-  { ...ROUTER_OPTIONS, source: `${SOURCE_BASE}.[[...path]].PUT`, requireAuth: true }
+  { ...ROUTER_OPTIONS, source: 'image-studio.[[...path]].PUT', requireAuth: true }
 );
 export const PATCH = apiHandlerWithParams<RouteParams>(
   (request: NextRequest) =>
     handleCatchAllRequest('PATCH', request, getPathSegments(request, BASE_PATH), ROUTES, SOURCE_BASE),
-  { ...ROUTER_OPTIONS, source: `${SOURCE_BASE}.[[...path]].PATCH`, requireAuth: true }
+  { ...ROUTER_OPTIONS, source: 'image-studio.[[...path]].PATCH', requireAuth: true }
 );
 export const DELETE = apiHandlerWithParams<RouteParams>(
   (request: NextRequest) =>
     handleCatchAllRequest('DELETE', request, getPathSegments(request, BASE_PATH), ROUTES, SOURCE_BASE),
-  { ...ROUTER_OPTIONS, source: `${SOURCE_BASE}.[[...path]].DELETE`, requireAuth: true }
+  { ...ROUTER_OPTIONS, source: 'image-studio.[[...path]].DELETE', requireAuth: true }
 );

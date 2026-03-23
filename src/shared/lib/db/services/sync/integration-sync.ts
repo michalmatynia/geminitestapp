@@ -6,7 +6,7 @@ export const syncIntegrations: DatabaseSyncHandler = async ({ mongo, prisma, nor
   const warnings: string[] = [];
   const seenSlugs = new Set<string>();
   const data = docs
-    .map((doc: any): Prisma.IntegrationCreateManyInput | null => {
+    .map((doc: Record<string, unknown>): Prisma.IntegrationCreateManyInput | null => {
       const id = normalizeId(doc);
       if (!id) return null;
       const rawName =
@@ -67,8 +67,8 @@ export const syncIntegrationConnections: DatabaseSyncHandler = async ({
   );
   const docs = await mongo.collection('integration_connections').find({}).toArray();
   const warnings: string[] = [];
-  const byIntegration = new Map<string, { doc: any; updatedAt: Date }>();
-  docs.forEach((doc: any) => {
+  const byIntegration = new Map<string, { doc: Record<string, unknown>; updatedAt: Date }>();
+  docs.forEach((doc: Record<string, unknown>) => {
     const id = normalizeId(doc);
     const integrationId = (doc.integrationId as string) ?? '';
     if (!id || !integrationId) {
@@ -188,8 +188,8 @@ export const syncProductListings: DatabaseSyncHandler = async ({
   );
   const docs = await mongo.collection('product_listings').find({}).toArray();
   const warnings: string[] = [];
-  const byKey = new Map<string, { doc: any; updatedAt: Date }>();
-  docs.forEach((doc: any) => {
+  const byKey = new Map<string, { doc: Record<string, unknown>; updatedAt: Date }>();
+  docs.forEach((doc: Record<string, unknown>) => {
     const id = normalizeId(doc);
     const productId = (doc.productId as string) ?? '';
     const connectionId = (doc.connectionId as string) ?? '';
@@ -262,7 +262,7 @@ export const syncProductListings: DatabaseSyncHandler = async ({
 
 export const syncIntegrationsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.integration.findMany();
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row: Prisma.IntegrationGetPayload<{}>) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -282,7 +282,7 @@ export const syncIntegrationsPrismaToMongo: DatabaseSyncHandler = async ({ mongo
 
 export const syncIntegrationConnectionsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.integrationConnection.findMany();
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row: Prisma.IntegrationConnectionGetPayload<{}>) => ({
     _id: row.id,
     id: row.id,
     integrationId: row.integrationId,
@@ -334,7 +334,7 @@ export const syncIntegrationConnectionsPrismaToMongo: DatabaseSyncHandler = asyn
 
 export const syncProductListingsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.productListing.findMany();
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row: Prisma.ProductListingGetPayload<{}>) => ({
     _id: row.id,
     id: row.id,
     productId: row.productId,

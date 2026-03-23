@@ -15,7 +15,10 @@ import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingCont
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurLessonSections } from '@/features/kangur/ui/hooks/useKangurLessonSections';
-import { useKangurLessonDocuments, useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
+import {
+  useKangurLessonDocument,
+  useKangurLessons,
+} from '@/features/kangur/ui/hooks/useKangurLessons';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
@@ -60,6 +63,8 @@ export function useLessonsLogic() {
 
   const [isDeferredContentReady, setIsDeferredContentReady] = useState(false);
   const [isActiveLessonComponentReady, setIsActiveLessonComponentReady] = useState(false);
+  const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
+  const [isSecretLessonActive, setIsSecretLessonActive] = useState(false);
   const progress = useKangurProgressState();
   
   const activeLessonNavigationRef = useRef<HTMLDivElement | null>(null);
@@ -92,20 +97,29 @@ export function useLessonsLogic() {
     enabledOnly: true,
     enabled: isDeferredContentReady,
   });
-  const lessonDocumentsQuery = useKangurLessonDocuments({ enabled: isDeferredContentReady });
+  const shouldLoadLessonDocument = isDeferredContentReady && activeLessonId !== null;
+  const activeLessonDocumentQuery = useKangurLessonDocument(activeLessonId, {
+    enabled: shouldLoadLessonDocument,
+  });
+  const isLessonsDataMissing = typeof lessonsQuery.data === 'undefined';
+  const isLessonSectionsDataMissing = typeof lessonSectionsQuery.data === 'undefined';
   const isLessonsCatalogLoading =
     isDeferredContentReady &&
     Boolean(
-      lessonsQuery.isPending ||
+      (lessonsQuery.isPending ||
         lessonsQuery.isLoading ||
-        (lessonsQuery.isFetching && typeof lessonsQuery.data === 'undefined')
+        lessonsQuery.isFetching ||
+        lessonsQuery.isRefetching) &&
+        isLessonsDataMissing
     );
   const isLessonSectionsLoading =
     isDeferredContentReady &&
     Boolean(
-      lessonSectionsQuery.isPending ||
+      (lessonSectionsQuery.isPending ||
         lessonSectionsQuery.isLoading ||
-        (lessonSectionsQuery.isFetching && typeof lessonSectionsQuery.data === 'undefined')
+        lessonSectionsQuery.isFetching ||
+        lessonSectionsQuery.isRefetching) &&
+        isLessonSectionsDataMissing
     );
   const shouldShowLessonsCatalogSkeleton = !isDeferredContentReady || isLessonsCatalogLoading || isLessonSectionsLoading;
   
@@ -122,9 +136,16 @@ export function useLessonsLogic() {
     () => (isDeferredContentReady ? lessonSectionsQuery.data ?? [] : []),
     [isDeferredContentReady, lessonSectionsQuery.data]
   );
+  const activeLessonDocument = useMemo(
+    () => (isDeferredContentReady ? activeLessonDocumentQuery.data ?? null : null),
+    [activeLessonDocumentQuery.data, isDeferredContentReady]
+  );
   const lessonDocuments = useMemo(
-    () => (isDeferredContentReady ? lessonDocumentsQuery.data ?? {} : {}),
-    [isDeferredContentReady, lessonDocumentsQuery.data]
+    () =>
+      isDeferredContentReady && activeLessonId && activeLessonDocument
+        ? { [activeLessonId]: activeLessonDocument }
+        : {},
+    [activeLessonDocument, activeLessonId, isDeferredContentReady]
   );
 
   const lessonAssignmentsByComponent = useMemo(() => {
@@ -185,8 +206,6 @@ export function useLessonsLogic() {
     });
   }, [lessonAssignmentsByComponent, lessons]);
 
-  const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
-  const [isSecretLessonActive, setIsSecretLessonActive] = useState(false);
   const clearFocusedLessonParam = useCallback((): void => {
     if (typeof window === 'undefined') return;
     const currentUrl = new URL(window.location.href);
@@ -250,16 +269,23 @@ export function useLessonsLogic() {
   const activeIdx = orderedLessons.findIndex((lesson) => lesson.id === activeLessonId);
   const activeLesson = activeIdx >= 0 ? orderedLessons[activeIdx] : null;
   const ActiveLessonComponent = activeLesson ? LESSON_COMPONENTS[activeLesson.componentId] : null;
-  const activeLessonDocument = activeLesson ? (lessonDocuments[activeLesson.id] ?? null) : null;
   const hasActiveLessonDocContent = hasKangurLessonDocumentContent(activeLessonDocument);
+  const isActiveLessonDocumentLoading =
+    Boolean(activeLesson && activeLesson.contentMode === 'document' && shouldLoadLessonDocument) &&
+    Boolean(
+      (activeLessonDocumentQuery.isPending ||
+        activeLessonDocumentQuery.isLoading ||
+        activeLessonDocumentQuery.isFetching ||
+        activeLessonDocumentQuery.isRefetching) &&
+        typeof activeLessonDocumentQuery.data === 'undefined'
+    );
   
   const isActiveLessonSurfaceReady =
     !activeLesson ||
     isSecretLessonActive ||
-    (activeLesson.contentMode === 'document' && hasActiveLessonDocContent) ||
-    (activeLesson.contentMode === 'document' && !hasActiveLessonDocContent) ||
-    !ActiveLessonComponent ||
-    isActiveLessonComponentReady;
+    (activeLesson.contentMode === 'document' && !isActiveLessonDocumentLoading) ||
+    (activeLesson.contentMode !== 'document' &&
+      (!ActiveLessonComponent || isActiveLessonComponentReady));
   const isLocaleSwitchTransition =
     routeTransitionState?.activeTransitionKind === 'locale-switch';
   const shouldHoldLessonsLibraryTransition =
@@ -352,6 +378,7 @@ export function useLessonsLogic() {
     handleSelectLesson,
     isDeferredContentReady,
     isLessonsPageReady,
+    isActiveLessonDocumentLoading,
     handleGoBack,
     progress,
     lessonAssignmentsByComponent,

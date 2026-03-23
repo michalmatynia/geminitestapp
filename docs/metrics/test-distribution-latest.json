@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-23T13:32:53.377Z",
+  "generatedAt": "2026-03-23T15:37:02.836Z",
   "status": "passed",
   "summary": {
     "total": 32,
@@ -12,7 +12,7 @@
     "featuresWithoutTestCount": 0,
     "featuresWithoutFastTestCount": 0,
     "featuresWithoutNegativeTestCount": 0,
-    "totalTestFiles": 2182,
+    "totalTestFiles": 2191,
     "onlyCount": 0,
     "skipCount": 32,
     "todoCount": 0
@@ -28,8 +28,8 @@
   "featuresWithTests": [
     {
       "feature": "kangur",
-      "testCount": 512,
-      "fastTestCount": 496,
+      "testCount": 516,
+      "fastTestCount": 500,
       "e2eTestCount": 16,
       "negativePathTestCount": 96
     },
@@ -63,10 +63,10 @@
     },
     {
       "feature": "integrations",
-      "testCount": 49,
-      "fastTestCount": 48,
+      "testCount": 51,
+      "fastTestCount": 50,
       "e2eTestCount": 1,
-      "negativePathTestCount": 16
+      "negativePathTestCount": 18
     },
     {
       "feature": "prompt-exploder",
@@ -91,8 +91,8 @@
     },
     {
       "feature": "admin",
-      "testCount": 17,
-      "fastTestCount": 14,
+      "testCount": 18,
+      "fastTestCount": 15,
       "e2eTestCount": 3,
       "negativePathTestCount": 4
     },
@@ -195,25 +195,25 @@
       "negativePathTestCount": 1
     },
     {
-      "feature": "tooltip-engine",
+      "feature": "gsap",
+      "testCount": 2,
+      "fastTestCount": 2,
+      "e2eTestCount": 0,
+      "negativePathTestCount": 1
+    },
+    {
+      "feature": "product-sync",
       "testCount": 2,
       "fastTestCount": 2,
       "e2eTestCount": 0,
       "negativePathTestCount": 2
     },
     {
-      "feature": "gsap",
-      "testCount": 1,
-      "fastTestCount": 1,
+      "feature": "tooltip-engine",
+      "testCount": 2,
+      "fastTestCount": 2,
       "e2eTestCount": 0,
-      "negativePathTestCount": 1
-    },
-    {
-      "feature": "product-sync",
-      "testCount": 1,
-      "fastTestCount": 1,
-      "e2eTestCount": 0,
-      "negativePathTestCount": 1
+      "negativePathTestCount": 2
     }
   ],
   "featuresWithoutTests": [],
@@ -549,5 +549,5 @@
       "infoCount": 32
     }
   ],
-  "durationMs": 2662
+  "durationMs": 277
 }

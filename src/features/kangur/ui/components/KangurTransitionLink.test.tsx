@@ -232,7 +232,7 @@ describe('KangurTransitionLink', () => {
     );
   });
 
-  it('publishes the pending target snapshot on pointer-down before the router transition starts', () => {
+  it('does not publish the pending target snapshot on pointer-down alone', () => {
     useLocaleMock.mockReturnValue('en');
     usePathnameMock.mockReturnValue('/en');
     useOptionalKangurRoutingMock.mockReturnValue({
@@ -252,6 +252,28 @@ describe('KangurTransitionLink', () => {
     fireEvent.pointerDown(screen.getByRole('link', { name: 'Lessons' }), {
       button: 0,
     });
+
+    expect(getKangurPendingRouteLoadingSnapshot()).toBeNull();
+  });
+
+  it('publishes the pending target snapshot on click before the router transition starts', () => {
+    useLocaleMock.mockReturnValue('en');
+    usePathnameMock.mockReturnValue('/en');
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/',
+      embedded: true,
+      pageKey: 'Game',
+      requestedHref: '/en',
+      requestedPath: '/',
+    });
+
+    render(
+      <KangurTransitionLink href='/lessons' targetPageKey='Lessons'>
+        Lessons
+      </KangurTransitionLink>
+    );
+
+    fireEvent.click(screen.getByRole('link', { name: 'Lessons' }));
 
     expect(getKangurPendingRouteLoadingSnapshot()).toMatchObject({
       fromHref: '/en',
@@ -307,6 +329,24 @@ describe('KangurTransitionLink', () => {
 
     vi.advanceTimersByTime(110);
 
+    expect(routerPushMock).toHaveBeenCalledWith('/kangur/lessons', { scroll: false });
+  });
+
+  it('still pushes the route after a real pointer-down plus click sequence', () => {
+    render(
+      <KangurTransitionLink href='/kangur/lessons' targetPageKey='Lessons'>
+        Lekcje
+      </KangurTransitionLink>
+    );
+
+    const lessonsLink = screen.getByRole('link', { name: 'Lekcje' });
+    fireEvent.pointerDown(lessonsLink, { button: 0 });
+    fireEvent.click(lessonsLink);
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/kangur/lessons',
+      pageKey: 'Lessons',
+    });
     expect(routerPushMock).toHaveBeenCalledWith('/kangur/lessons', { scroll: false });
   });
 

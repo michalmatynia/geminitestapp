@@ -213,10 +213,23 @@ describe('LessonsCatalog', () => {
 
     render(<LessonsCatalog />);
 
+    expect(screen.getByTestId('lessons-shell-transition')).toHaveClass(
+      'mx-auto',
+      'w-full',
+      'min-w-0',
+      'max-w-lg',
+      'items-center'
+    );
+    expect(screen.getByTestId('lessons-list-transition')).toHaveClass('items-center');
     expect(screen.getByTestId('lessons-intro-description-icon')).toHaveTextContent('🎵');
 
     fireEvent.click(screen.getByRole('button', { name: /skala/i }));
 
+    expect(screen.getByTestId('lesson-library-motion-lesson-music-diatonic-scale')).toHaveClass(
+      'w-full'
+    );
+    expect(screen.queryByText('Grupa')).not.toBeInTheDocument();
+    expect(document.querySelector('.kangur-lesson-group-chevron')).not.toBeInTheDocument();
     expect(screen.getByTestId('lessons-page-group-icon-music_scale')).toHaveTextContent('🧩');
     expect(screen.getByTestId('lessons-page-group-type-icon-music_scale')).toHaveTextContent(
       '🎵'

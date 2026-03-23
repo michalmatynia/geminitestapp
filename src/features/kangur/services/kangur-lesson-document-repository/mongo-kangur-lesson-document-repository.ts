@@ -47,6 +47,15 @@ const toNormalizedDocument = (document: KangurLessonDocument): KangurLessonDocum
   normalizeKangurLessonDocument(document);
 
 export const mongoKangurLessonDocumentRepository: KangurLessonDocumentRepository = {
+  async getLessonDocument(lessonId: string): Promise<KangurLessonDocument | null> {
+    const db = await getMongoDb();
+    await ensureIndexes(db);
+    const doc = await db
+      .collection<MongoKangurLessonDocument>(COLLECTION)
+      .findOne({ _id: lessonId });
+    return doc ? toNormalizedDocument(doc.document) : null;
+  },
+
   async listLessonDocuments(): Promise<KangurLessonDocumentStore> {
     const db = await getMongoDb();
     await ensureIndexes(db);

@@ -136,25 +136,25 @@ const SOURCE_BASE = 'v2.products';
 export const GET = apiHandlerWithParams<RouteParams>(
   (request: NextRequest) =>
     handleCatchAllRequest('GET', request, getPathSegments(request, BASE_PATH), ROUTES, SOURCE_BASE),
-  { source: `${SOURCE_BASE}.[[...path]].GET`, requireAuth: true }
+  { source: 'v2.products.[[...path]].GET', requireAuth: true }
 );
 export const POST = apiHandlerWithParams<RouteParams>(
   (request: NextRequest) =>
     handleCatchAllRequest('POST', request, getPathSegments(request, BASE_PATH), ROUTES, SOURCE_BASE),
-  { source: `${SOURCE_BASE}.[[...path]].POST`, requireAuth: true }
+  { source: 'v2.products.[[...path]].POST', requireAuth: true }
 );
 export const PUT = apiHandlerWithParams<RouteParams>(
   (request: NextRequest) =>
     handleCatchAllRequest('PUT', request, getPathSegments(request, BASE_PATH), ROUTES, SOURCE_BASE),
-  { source: `${SOURCE_BASE}.[[...path]].PUT`, requireAuth: true }
+  { source: 'v2.products.[[...path]].PUT', requireAuth: true }
 );
 export const PATCH = apiHandlerWithParams<RouteParams>(
   (request: NextRequest) =>
     handleCatchAllRequest('PATCH', request, getPathSegments(request, BASE_PATH), ROUTES, SOURCE_BASE),
-  { source: `${SOURCE_BASE}.[[...path]].PATCH`, requireAuth: true }
+  { source: 'v2.products.[[...path]].PATCH', requireAuth: true }
 );
 export const DELETE = apiHandlerWithParams<RouteParams>(
   (request: NextRequest) =>
     handleCatchAllRequest('DELETE', request, getPathSegments(request, BASE_PATH), ROUTES, SOURCE_BASE),
-  { source: `${SOURCE_BASE}.[[...path]].DELETE`, requireAuth: true }
+  { source: 'v2.products.[[...path]].DELETE', requireAuth: true }
 );

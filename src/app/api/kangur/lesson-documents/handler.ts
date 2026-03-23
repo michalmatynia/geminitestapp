@@ -22,6 +22,21 @@ export async function getKangurLessonDocumentsHandler(): Promise<Response> {
   });
 }
 
+export async function getKangurLessonDocumentHandler(
+  _req: NextRequest,
+  ctx: ApiHandlerContext
+): Promise<Response> {
+  const lessonId = String(ctx.params?.['lessonId'] ?? '').trim();
+  const repository = await getKangurLessonDocumentRepository();
+  const document = lessonId ? await repository.getLessonDocument(lessonId) : null;
+
+  return NextResponse.json(document, {
+    headers: {
+      'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',
+    },
+  });
+}
+
 export async function postKangurLessonDocumentsHandler(
   req: NextRequest,
   ctx: ApiHandlerContext

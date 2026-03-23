@@ -9,6 +9,7 @@ import { clearLatchedKangurTopBarHeightCssValue } from '@/features/kangur/ui/uti
 
 const {
   authStateMock,
+  pendingRouteLoadingSnapshotMock,
   routingStateMock,
   routeTransitionStateMock,
   routeNavigatorMock,
@@ -16,6 +17,7 @@ const {
   topNavigationHostVisibleMock,
 } = vi.hoisted(() => ({
   authStateMock: vi.fn(),
+  pendingRouteLoadingSnapshotMock: vi.fn(),
   routingStateMock: vi.fn(),
   routeTransitionStateMock: vi.fn(),
   routeNavigatorMock: {
@@ -160,6 +162,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
   useKangurRouteNavigator: () => routeNavigatorMock,
 }));
 
+vi.mock('@/features/kangur/ui/routing/pending-route-loading-snapshot', () => ({
+  useKangurPendingRouteLoadingSnapshot: () => pendingRouteLoadingSnapshotMock(),
+}));
+
 vi.mock('@/features/kangur/config/pages', () => ({
   KANGUR_MAIN_PAGE: 'Game',
   kangurPages: {
@@ -227,8 +233,10 @@ describe('KangurFeatureApp', () => {
       pageKey: 'Lessons',
       embedded: false,
       requestedPath: '/kangur/lessons',
+      requestedHref: '/kangur/lessons',
       basePath: '/kangur',
     });
+    pendingRouteLoadingSnapshotMock.mockReturnValue(null);
     routeTransitionStateMock.mockReturnValue({
       isRouteAcknowledging: false,
       isRoutePending: false,
@@ -307,6 +315,36 @@ describe('KangurFeatureApp', () => {
     );
     expect(screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Game:game-home');
+  });
+
+  it('shows the pending route snapshot skeleton immediately on the first click handoff', () => {
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: false,
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      basePath: '/kangur',
+    });
+    pendingRouteLoadingSnapshotMock.mockReturnValue({
+      fromHref: '/kangur',
+      href: '/kangur/lessons',
+      pageKey: 'Lessons',
+      skeletonVariant: 'lessons-library',
+      startedAt: Date.now(),
+      topBarHeightCssValue: '136px',
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Lessons:lessons-library'
+    );
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-inline-top-navigation-skeleton',
+      'true'
+    );
+    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-busy', 'true');
   });
 
   it('moves the navbar skeleton inline into the pending route skeleton while the shared host is unresolved', async () => {

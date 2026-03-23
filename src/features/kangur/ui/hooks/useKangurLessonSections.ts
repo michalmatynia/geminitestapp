@@ -78,6 +78,7 @@ export const useKangurLessonSections = (
     ],
     queryFn: async (): Promise<KangurLessonSection[]> => await fetchLessonSections(options),
     select: (sections) => filterSections(sections, options),
+    placeholderData: () => buildSectionsFallback(options),
     enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,

@@ -2,9 +2,9 @@
 
 import '@/app/(frontend)/kangur/kangur.css';
 
-import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 
+import { FrontendPublicOwnerKangurShell } from '@/features/kangur/ui/FrontendPublicOwnerKangurShell';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 
 import type {
@@ -13,12 +13,6 @@ import type {
 } from '@/features/kangur/storefront-appearance-settings';
 
 import type { JSX, ReactNode } from 'react';
-
-const FrontendPublicOwnerKangurShell = dynamic(() =>
-  import('@/features/kangur/ui/FrontendPublicOwnerKangurShell').then((mod) => ({
-    default: mod.FrontendPublicOwnerKangurShell,
-  }))
-);
 
 export type FrontendPublicOwnerShellProps = {
   publicOwner: 'cms' | 'kangur';

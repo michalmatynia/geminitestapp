@@ -8,7 +8,7 @@ canonical: true
 ---
 # Test Distribution Check
 
-Generated at: 2026-03-23T13:32:53.377Z
+Generated at: 2026-03-23T15:37:02.836Z
 
 ## Summary
 
@@ -18,7 +18,7 @@ Generated at: 2026-03-23T13:32:53.377Z
 - Features without tests: 0
 - Features without fast tests: 0
 - Features without negative-path tests: 0
-- Total test files: 2182
+- Total test files: 2191
 - .only() occurrences: 0
 - .skip() occurrences: 32
 - .todo() occurrences: 0
@@ -27,16 +27,16 @@ Generated at: 2026-03-23T13:32:53.377Z
 
 | Feature | Test Files | Fast | E2E | Negative |
 | --- | ---: | ---: | ---: | ---: |
-| kangur | 512 | 496 | 16 | 96 |
+| kangur | 516 | 500 | 16 | 96 |
 | ai | 294 | 294 | 0 | 108 |
 | products | 108 | 101 | 7 | 33 |
 | case-resolver | 81 | 80 | 1 | 34 |
 | cms | 70 | 69 | 1 | 15 |
-| integrations | 49 | 48 | 1 | 16 |
+| integrations | 51 | 50 | 1 | 18 |
 | prompt-exploder | 47 | 47 | 0 | 24 |
 | foldertree | 28 | 26 | 2 | 7 |
 | observability | 26 | 25 | 1 | 4 |
-| admin | 17 | 14 | 3 | 4 |
+| admin | 18 | 15 | 3 | 4 |
 | database | 13 | 12 | 1 | 8 |
 | notesapp | 12 | 10 | 2 | 3 |
 | auth | 11 | 11 | 0 | 6 |
@@ -51,9 +51,9 @@ Generated at: 2026-03-23T13:32:53.377Z
 | prompt-engine | 4 | 4 | 0 | 1 |
 | playwright | 3 | 3 | 0 | 3 |
 | app-embeds | 2 | 2 | 0 | 1 |
+| gsap | 2 | 2 | 0 | 1 |
+| product-sync | 2 | 2 | 0 | 2 |
 | tooltip-engine | 2 | 2 | 0 | 2 |
-| gsap | 1 | 1 | 0 | 1 |
-| product-sync | 1 | 1 | 0 | 1 |
 
 ## Rule Breakdown
 

@@ -92,9 +92,7 @@ describe('KangurFeatureRouteShell', () => {
       'kangur-shell-viewport-height',
       'kangur-premium-bg'
     );
-    expect(screen.getByTestId('kangur-route-shell')).toHaveStyle({
-      '--kangur-top-bar-height': '88px',
-    });
+    expect(screen.getByTestId('kangur-route-shell').style.getPropertyValue('--kangur-top-bar-height')).toBe('');
     expect(screen.getByTestId('kangur-route-shell')).not.toHaveClass('text-slate-800');
     expect(screen.getByTestId('kangur-feature-app')).toBeInTheDocument();
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({

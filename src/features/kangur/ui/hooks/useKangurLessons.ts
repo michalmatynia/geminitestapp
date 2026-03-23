@@ -2,10 +2,12 @@
 
 import type {
   KangurLesson,
+  KangurLessonDocument,
   KangurLessonCollectionFilterDto,
   KangurLessonDocumentStore,
 } from '@/features/kangur/shared/contracts/kangur';
 import {
+  kangurLessonDocumentSchema,
   kangurLessonsSchema,
   kangurLessonDocumentStoreSchema,
 } from '@/features/kangur/shared/contracts/kangur';
@@ -80,6 +82,25 @@ const fetchLessonDocuments = async (): Promise<KangurLessonDocumentStore> =>
     { fallback: () => ({}) }
   );
 
+const fetchLessonDocument = async (lessonId: string): Promise<KangurLessonDocument | null> =>
+  await withKangurClientError(
+    () => ({
+      source: 'kangur.hooks.useKangurLessonDocument',
+      action: 'fetch-document',
+      description: 'Loads a single Kangur lesson document from the API.',
+      context: {
+        lessonId,
+      },
+    }),
+    async () => {
+      const payload = await api.get<KangurLessonDocument | null>(
+        `/api/kangur/lesson-documents/${encodeURIComponent(lessonId)}`
+      );
+      return payload ? kangurLessonDocumentSchema.parse(payload) : null;
+    },
+    { fallback: () => null }
+  );
+
 export const useKangurLessons = (
   options?: LessonsQueryOptions
 ): ListQuery<KangurLesson, KangurLesson[]> =>
@@ -94,6 +115,7 @@ export const useKangurLessons = (
     ],
     queryFn: async (): Promise<KangurLesson[]> => await fetchLessons(options),
     select: (lessons) => filterLessons(lessons, options),
+    placeholderData: () => buildLessonsFallback(options),
     enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
@@ -117,6 +139,7 @@ export const useKangurLessonDocuments = (options?: { enabled?: boolean }): ListQ
   createListQueryV2<KangurLessonDocumentStore, KangurLessonDocumentStore>({
     queryKey: QUERY_KEYS.kangur.lessonDocuments(),
     queryFn: fetchLessonDocuments,
+    placeholderData: () => ({}),
     enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
@@ -130,6 +153,30 @@ export const useKangurLessonDocuments = (options?: { enabled?: boolean }): ListQ
       domain: 'kangur',
       tags: ['kangur', 'lesson-documents'],
       description: 'Loads Kangur lesson documents from Mongo.',
+    },
+  });
+
+export const useKangurLessonDocument = (
+  lessonId: string | null,
+  options?: { enabled?: boolean }
+): ListQuery<KangurLessonDocument | null, KangurLessonDocument | null> =>
+  createListQueryV2<KangurLessonDocument | null, KangurLessonDocument | null>({
+    queryKey: QUERY_KEYS.kangur.lessonDocument(lessonId),
+    queryFn: async (): Promise<KangurLessonDocument | null> =>
+      lessonId ? await fetchLessonDocument(lessonId) : null,
+    enabled: Boolean(lessonId) && (options?.enabled ?? true),
+    staleTime: 1000 * 60 * 5,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
+    meta: {
+      source: 'kangur.hooks.useKangurLessonDocument',
+      operation: 'detail',
+      resource: 'kangur.lesson-document',
+      domain: 'kangur',
+      tags: ['kangur', 'lesson-document'],
+      description: 'Loads a single Kangur lesson document from Mongo.',
     },
   });
 

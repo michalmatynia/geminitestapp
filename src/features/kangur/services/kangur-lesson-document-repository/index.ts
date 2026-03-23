@@ -15,6 +15,19 @@ export const getKangurLessonDocumentRepository =
     const repository = mongoKangurLessonDocumentRepository;
 
     return {
+      getLessonDocument: async (lessonId) => {
+        try {
+          return await repository.getLessonDocument(lessonId);
+        } catch (error) {
+          void ErrorSystem.captureException(error, {
+            service: KANGUR_LESSON_DOCUMENT_REPOSITORY_SERVICE,
+            action: 'getLessonDocument',
+            provider,
+            lessonId,
+          });
+          throw error;
+        }
+      },
       listLessonDocuments: async () => {
         try {
           return await repository.listLessonDocuments();

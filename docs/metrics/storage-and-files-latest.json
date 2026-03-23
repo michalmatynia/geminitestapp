@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-23T09:44:44.923Z",
+  "generatedAt": "2026-03-23T15:37:17.424Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "fileCount": 5661,
+    "fileCount": 5682,
     "codeUploadRootCount": 10,
     "runtimeUploadRootCount": 9,
     "dynamicReadRiskCount": 0
@@ -19481,6 +19481,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/lessons/subjects/art/catalog.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/lessons/subjects/english/catalog.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -19494,6 +19500,12 @@
     },
     {
       "file": "src/features/kangur/lessons/subjects/maths/catalog.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/lessons/subjects/music/catalog.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -21263,6 +21275,42 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/ArtColorsHarmonyLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/ArtShapesBasicLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/ArtShapesBasicLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/ArtShapesRotationGapGame.data.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/ArtShapesRotationGapGame.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/ArtShapesRotationGapGame.visuals.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/AssignmentPanel.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -22643,6 +22691,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/KangurVisualCueContent.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/KangurWordmarkBase.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -22800,6 +22854,18 @@
     },
     {
       "file": "src/features/kangur/ui/components/MultiplicationLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/MusicDiatonicScaleLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/MusicDiatonicScaleLesson.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -23471,7 +23537,49 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/music/MusicMelodyRepeatGame.data.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/music/MusicMelodyRepeatGame.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/music/music-theory.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/music/music-waveform-icons.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/music/useKangurMusicSynth.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/constants/mini-game-i18n.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/constants/six-year-old-visuals.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24089,6 +24197,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/hooks/useKangurRouteActivity.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/hooks/useKangurRouteNavigator.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -24353,6 +24467,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/routing/pending-route-loading-snapshot.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/routing/route-transition-skeletons.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -24528,6 +24648,12 @@
     },
     {
       "file": "src/features/kangur/ui/useKangurStorefrontAppearance.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/utils/readKangurTopBarHeightCssValue.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -31007,7 +31133,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/api/catch-all-route-types.ts",
+      "file": "src/shared/lib/api/catch-all-router.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -34009,5 +34135,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 2303
+  "durationMs": 2242
 }

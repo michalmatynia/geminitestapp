@@ -11,9 +11,12 @@ const {
   useKangurAuthMock,
   useKangurRoutePageReadyMock,
   lessonCardPropsMock,
+  lessonDocumentsHookCallsMock,
   lessonsWordmarkPropsMock,
   openLoginModalMock,
   localeState,
+  lessonSectionsRetainDataWhileLoadingState,
+  lessonsRetainDataWhileLoadingState,
   routeTransitionStateState,
   routeNavigatorBackMock,
   topNavigationPropsMock,
@@ -27,10 +30,17 @@ const {
   useKangurAuthMock: vi.fn(),
   useKangurRoutePageReadyMock: vi.fn(),
   lessonCardPropsMock: vi.fn(),
+  lessonDocumentsHookCallsMock: vi.fn(),
   lessonsWordmarkPropsMock: vi.fn(),
   openLoginModalMock: vi.fn(),
   localeState: {
     value: 'pl' as 'de' | 'en' | 'pl',
+  },
+  lessonSectionsRetainDataWhileLoadingState: {
+    value: false,
+  },
+  lessonsRetainDataWhileLoadingState: {
+    value: false,
   },
   routeTransitionStateState: {
     value: null as null | Record<string, unknown>,
@@ -124,10 +134,18 @@ vi.mock('@/features/kangur/ui/components/KangurActiveLessonHeader', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurLessonLibraryCard', () => ({
-  KangurLessonLibraryCard: ({ lesson }: { lesson: { id: string; title: string } }) => {
+  KangurLessonLibraryCard: ({
+    lesson,
+    onSelect,
+  }: {
+    lesson: { id: string; title: string };
+    onSelect?: () => void;
+  }) => {
     lessonCardPropsMock(lesson);
     return (
-      <div data-testid={`lesson-card-${lesson.id}`}>{lesson.title}</div>
+      <button data-testid={`lesson-card-${lesson.id}`} onClick={onSelect} type='button'>
+        {lesson.title}
+      </button>
     );
   },
 }));
@@ -239,6 +257,13 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
+vi.mock('@/features/kangur/lessons/lesson-ui-registry', () => ({
+  LESSON_COMPONENTS: {
+    adding: () => <div data-testid='mock-lesson-component-adding' />,
+    english_basics: () => <div data-testid='mock-lesson-component-english' />,
+  },
+}));
+
 vi.mock('@/features/kangur/ui/design/primitives', () => ({
   KangurEmptyState: ({ title }: { title: string }) => <div>{title}</div>,
   KangurButton: ({ children, ...props }: { children: React.ReactNode }) => (
@@ -260,6 +285,8 @@ vi.mock('@/features/kangur/ui/design/tokens', () => ({
   KANGUR_PANEL_GAP_CLASSNAME: 'gap',
   KANGUR_SEGMENTED_CONTROL_CLASSNAME: 'segmented',
   KANGUR_STACK_SPACED_CLASSNAME: 'stack',
+  KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX: 72,
+  KANGUR_TOP_BAR_HEIGHT_VAR_NAME: '--kangur-top-bar-height',
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLearnerActivity', () => ({
@@ -273,6 +300,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
 vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   useKangurLessons: (options: { subject?: string; enabledOnly?: boolean } = {}) => {
     let data = lessonsState.value;
+    const hasRetainedData = lessonsLoadingState.value && lessonsRetainDataWhileLoadingState.value;
     if (options.enabledOnly) {
       data = data.filter((lesson) => lesson.enabled !== false);
     }
@@ -280,11 +308,21 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
       data = data.filter((lesson) => (lesson.subject ?? 'maths') === options.subject);
     }
     return {
-      data: lessonsLoadingState.value ? undefined : data,
+      data: lessonsLoadingState.value && !hasRetainedData ? undefined : data,
       isFetching: lessonsLoadingState.value,
-      isLoading: lessonsLoadingState.value,
-      isPending: lessonsLoadingState.value,
+      isLoading: lessonsLoadingState.value && !hasRetainedData,
+      isPending: lessonsLoadingState.value && !hasRetainedData,
+      isRefetching: hasRetainedData,
       refetch: vi.fn(),
+    };
+  },
+  useKangurLessonDocument: (
+    lessonId: string | null,
+    options?: { enabled?: boolean }
+  ) => {
+    lessonDocumentsHookCallsMock({ lessonId, ...(options ?? {}) });
+    return {
+      data: {},
     };
   },
   useKangurLessonDocuments: () => ({
@@ -297,12 +335,17 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
-  useKangurLessonSections: () => ({
-    data: lessonSectionsLoadingState.value ? undefined : lessonSectionsState.value,
-    isFetching: lessonSectionsLoadingState.value,
-    isLoading: lessonSectionsLoadingState.value,
-    isPending: lessonSectionsLoadingState.value,
-  }),
+  useKangurLessonSections: () => {
+    const hasRetainedData =
+      lessonSectionsLoadingState.value && lessonSectionsRetainDataWhileLoadingState.value;
+    return {
+      data: lessonSectionsLoadingState.value && !hasRetainedData ? undefined : lessonSectionsState.value,
+      isFetching: lessonSectionsLoadingState.value,
+      isLoading: lessonSectionsLoadingState.value && !hasRetainedData,
+      isPending: lessonSectionsLoadingState.value && !hasRetainedData,
+      isRefetching: hasRetainedData,
+    };
+  },
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
@@ -392,8 +435,10 @@ describe('Lessons page subject filtering', () => {
     });
     lessonsState.value = lessonsFixture;
     lessonsLoadingState.value = false;
+    lessonsRetainDataWhileLoadingState.value = false;
     lessonSectionsState.value = [];
     lessonSectionsLoadingState.value = false;
+    lessonSectionsRetainDataWhileLoadingState.value = false;
     routeTransitionStateState.value = null;
     useKangurSubjectFocusMock.mockReturnValue({
       subject: 'english',
@@ -415,6 +460,7 @@ describe('Lessons page subject filtering', () => {
     topNavigationPropsMock.mockClear();
     tutorSessionSyncPropsMock.mockClear();
     useKangurRoutePageReadyMock.mockClear();
+    lessonDocumentsHookCallsMock.mockClear();
   });
 
   afterEach(() => {
@@ -436,19 +482,14 @@ describe('Lessons page subject filtering', () => {
     );
   });
 
-  it('routes the catalog intro back action directly to the Kangur home page', () => {
+  it('keeps the catalog intro on the built-in lessons navigation without a back button', () => {
     render(<Lessons />);
     act(() => {
       vi.runAllTimers();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'mock-lessons-back' }));
-
-    expect(routeNavigatorBackMock).toHaveBeenCalledWith({
-      fallbackHref: '/kangur',
-      fallbackPageKey: 'Game',
-      sourceId: 'lessons:list-back',
-    });
+    expect(screen.queryByRole('button', { name: 'mock-lessons-back' })).not.toBeInTheDocument();
+    expect(routeNavigatorBackMock).not.toHaveBeenCalled();
   });
 
   it('keeps the lessons library transition waiting until the catalog loading state settles', () => {
@@ -484,6 +525,33 @@ describe('Lessons page subject filtering', () => {
     );
 
     view.unmount();
+  });
+
+  it('marks the lessons page ready when catalog queries are refetching with retained data', () => {
+    routeTransitionStateState.value = {
+      transitionPhase: 'waiting_for_ready',
+      activeTransitionKind: 'navigation',
+      activeTransitionSkeletonVariant: 'lessons-library',
+    };
+    lessonsLoadingState.value = true;
+    lessonSectionsLoadingState.value = true;
+    lessonsRetainDataWhileLoadingState.value = true;
+    lessonSectionsRetainDataWhileLoadingState.value = true;
+
+    render(<Lessons />);
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(useKangurRoutePageReadyMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        pageKey: 'Lessons',
+        ready: true,
+      })
+    );
+    expect(screen.queryByTestId('lessons-catalog-skeleton')).not.toBeInTheDocument();
+    expect(screen.getByTestId('lesson-card-lesson-english')).toBeInTheDocument();
   });
 
   it('keeps focused lesson transitions waiting until the lesson surface is ready', () => {
@@ -534,7 +602,7 @@ describe('Lessons page subject filtering', () => {
     expect(screen.getByTestId('lessons-intro-loading-state')).toBeInTheDocument();
     expect(screen.getByTestId('lessons-list-transition')).toBeInTheDocument();
     expect(screen.getByTestId('lessons-catalog-skeleton')).toBeInTheDocument();
-    expect(screen.getByText('Lekcje zaraz beda gotowe.')).toBeInTheDocument();
+    expect(screen.getByText('Wybierz lekcje i zacznij nauke.')).toBeInTheDocument();
     expect(screen.getByText('Ładowanie lekcji')).toBeInTheDocument();
     expect(
       screen.getByText('Przygotowujemy bibliotekę lekcji i dopasowujemy ją do wybranego tematu.')
@@ -552,7 +620,7 @@ describe('Lessons page subject filtering', () => {
 
     expect(screen.getByTestId('lessons-catalog-skeleton')).toBeInTheDocument();
     expect(screen.getByTestId('lessons-intro-loading-state')).toBeInTheDocument();
-    expect(screen.getByText('Lekcje zaraz beda gotowe.')).toBeInTheDocument();
+    expect(screen.getByText('Wybierz lekcje i zacznij nauke.')).toBeInTheDocument();
     expect(screen.getByText('Ładowanie sekcji')).toBeInTheDocument();
     expect(
       screen.getByText('Porządkujemy sekcje lekcji, aby zaraz pokazać pełną listę tematów.')
@@ -572,6 +640,27 @@ describe('Lessons page subject filtering', () => {
     expect(screen.queryByTestId('lessons-intro-loading-state')).not.toBeInTheDocument();
     expect(screen.queryByTestId('lessons-catalog-skeleton')).not.toBeInTheDocument();
     expect(screen.getByText('Brak aktywnych lekcji')).toBeInTheDocument();
+  });
+
+  it('defers lesson document loading until a lesson is selected', () => {
+    render(<Lessons />);
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(lessonDocumentsHookCallsMock).toHaveBeenLastCalledWith({
+      enabled: false,
+      lessonId: null,
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByTestId('lesson-card-lesson-english'));
+    });
+
+    expect(lessonDocumentsHookCallsMock).toHaveBeenLastCalledWith({
+      enabled: true,
+      lessonId: 'lesson-english',
+    });
   });
 
   it('uses the translated page title in the tutor session context when no lesson is active', () => {

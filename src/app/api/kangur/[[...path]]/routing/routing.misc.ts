@@ -16,6 +16,7 @@ import {
   querySchema as lessonsQuerySchema,
 } from '../../lessons/handler';
 import {
+  getKangurLessonDocumentHandler,
   getKangurLessonDocumentsHandler,
   postKangurLessonDocumentsHandler,
 } from '../../lesson-documents/handler';
@@ -166,6 +167,13 @@ export const lessonDocumentsGetHandler: SimpleRouteHandler = apiHandler(
     service: 'kangur.api',
   }
 );
+
+export const lessonDocumentGetHandler: ParamRouteHandler = apiHandlerWithParams<{
+  lessonId: string;
+}>(getKangurLessonDocumentHandler, {
+  source: 'kangur.lesson-documents.[lessonId].GET',
+  service: 'kangur.api',
+});
 
 export const lessonDocumentsPostHandler: SimpleRouteHandler = apiHandler(
   postKangurLessonDocumentsHandler,
@@ -456,8 +464,16 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
   if (segments[0] === 'lesson-templates' && segments.length === 1) {
     return handleGetPost(request, lessonTemplatesGetHandler, lessonTemplatesPostHandler);
   }
-  if (segments[0] === 'lesson-documents' && segments.length === 1) {
-    return handleGetPost(request, lessonDocumentsGetHandler, lessonDocumentsPostHandler);
+  if (segments[0] === 'lesson-documents') {
+    if (segments.length === 1) {
+      return handleGetPost(request, lessonDocumentsGetHandler, lessonDocumentsPostHandler);
+    }
+    const lessonId = segments[1];
+    if (!lessonId) return null;
+    if (segments.length === 2) {
+      if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
+      return lessonDocumentGetHandler(request, { params: { lessonId } });
+    }
   }
   if (segments[0] === 'social-posts') {
     if (segments.length === 1) {

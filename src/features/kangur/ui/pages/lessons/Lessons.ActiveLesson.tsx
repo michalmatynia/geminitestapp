@@ -37,6 +37,7 @@ export function ActiveLessonView() {
     lessonAssignmentsByComponent,
     completedLessonAssignmentsByComponent,
     setIsActiveLessonComponentReady,
+    isActiveLessonDocumentLoading,
     activeLessonHeaderRef,
     activeLessonNavigationRef,
     activeLessonContentRef,
@@ -196,6 +197,19 @@ export function ActiveLessonView() {
             tone='accent'
           />
           <KangurLessonDocumentRenderer document={activeLessonDocument!} />
+        </div>
+      ) : activeLesson.contentMode === 'document' && isActiveLessonDocumentLoading ? (
+        <div className='w-full min-w-0 max-w-5xl space-y-4'>
+          <KangurSummaryPanel
+            accent='sky'
+            align='center'
+            data-testid='lessons-loading-document-summary'
+            description='Ładujemy treść lekcji i przygotowujemy materiał.'
+            label='Lesson document'
+            labelAccent='sky'
+            title='Ładowanie materiału'
+            tone='accent'
+          />
         </div>
       ) : activeLesson.contentMode === 'document' && !hasActiveLessonDocContent ? (
         <div className='w-full min-w-0 max-w-5xl space-y-4'>

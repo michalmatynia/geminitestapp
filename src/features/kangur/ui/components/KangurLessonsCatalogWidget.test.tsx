@@ -155,6 +155,7 @@ describe('KangurLessonsCatalogWidget', () => {
     ageGroupState.value = 'ten_year_old';
     render(<KangurLessonsCatalogWidget />);
 
+    expect(screen.getByLabelText('Lista lekcji')).toHaveClass('items-center');
     expect(screen.queryByTestId('lesson-card-lesson-english')).not.toBeInTheDocument();
 
     const trigger = screen.getByRole('button', { name: /opening section/i });
@@ -164,6 +165,10 @@ describe('KangurLessonsCatalogWidget', () => {
     fireEvent.click(trigger);
 
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    const accordionRegion = screen
+      .getAllByRole('region')
+      .find((region) => region.id.includes('kangur-lesson-group-panel'));
+    expect(accordionRegion?.firstElementChild).toHaveClass('w-full', 'items-center');
     expect(screen.getByTestId('lesson-card-lesson-english')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('lesson-card-lesson-english'));
@@ -191,7 +196,7 @@ describe('KangurLessonsCatalogWidget', () => {
       '📚'
     );
     expect(
-      screen.getByTestId('lessons-catalog-group-type-icon-english:opening-section')
-    ).toHaveTextContent('🔤');
+      screen.queryByTestId('lessons-catalog-group-type-icon-english:opening-section')
+    ).not.toBeInTheDocument();
   });
 });

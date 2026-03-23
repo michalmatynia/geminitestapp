@@ -40,6 +40,9 @@ describe('KangurLessonGroupAccordion', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
     expect(trigger).toHaveAttribute('data-state', 'closed');
     expect(trigger).toHaveClass('min-h-12', 'touch-manipulation', 'select-none');
+    expect(trigger).toHaveClass('justify-center', 'text-center');
+    expect(screen.queryByText('Grupa')).not.toBeInTheDocument();
+    expect(document.querySelector('.kangur-lesson-group-chevron')).not.toBeInTheDocument();
     expect(screen.queryByText('Grouped lesson')).not.toBeInTheDocument();
 
     fireEvent.pointerDown(trigger);
@@ -53,6 +56,7 @@ describe('KangurLessonGroupAccordion', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
     expect(trigger).toHaveAttribute('data-state', 'open');
     expect(screen.getByText('Grouped lesson')).toBeInTheDocument();
+    expect(screen.getByRole('region').firstElementChild).toHaveClass('w-full', 'items-center');
 
     await user.click(trigger);
 

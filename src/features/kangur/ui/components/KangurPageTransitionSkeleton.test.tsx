@@ -168,9 +168,7 @@ describe('KangurPageTransitionSkeleton', () => {
     ).toHaveClass('shrink-0', 'overflow-hidden');
     expect(
       screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')
-    ).toHaveStyle({
-      height: '88px',
-    });
+    ).not.toHaveAttribute('style');
     expect(screen.getByTestId('kangur-page-transition-skeleton-body')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-transition-skeleton-shell')).toHaveClass(
       'h-full',

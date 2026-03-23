@@ -856,14 +856,14 @@ describe('KangurPrimaryNavigation', () => {
     const trigger = await screen.findByTestId('kangur-language-switcher-trigger');
 
     expect(utilityActions).toContainElement(trigger);
-    expect(trigger).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+    expect(trigger).toHaveClass('min-h-12', 'px-4', 'touch-manipulation');
 
     await openLanguageMenu(trigger);
 
     const activeOption = await screen.findByTestId('kangur-language-switcher-option-de');
 
     expect(activeOption).toHaveAttribute('data-state', 'checked');
-    expect(activeOption).toHaveClass('min-h-[3.5rem]', 'touch-manipulation');
+    expect(activeOption).toHaveClass('min-h-[3.75rem]', 'touch-manipulation');
     expect(screen.getByRole('menu')).toBeInTheDocument();
   });
 
@@ -1281,7 +1281,7 @@ describe('KangurPrimaryNavigation', () => {
       'shrink-0',
       'overflow-hidden',
       'gap-2',
-      'min-h-11',
+      'min-h-12',
       'px-4',
       'touch-manipulation'
     );
@@ -1324,7 +1324,7 @@ describe('KangurPrimaryNavigation', () => {
       const flagShell = row.querySelector('div > span[aria-hidden="true"]');
 
       expect(row).toHaveClass(
-        'min-h-[3.5rem]',
+        'min-h-[3.75rem]',
         'rounded-[18px]',
         'py-2.5',
         'pl-3.5',

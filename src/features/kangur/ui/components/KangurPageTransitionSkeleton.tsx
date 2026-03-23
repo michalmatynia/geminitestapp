@@ -1153,23 +1153,31 @@ export function KangurPageTransitionSkeleton({
     !effectiveEmbedded &&
     !shouldOffsetStandaloneRouteOverlay &&
     !shouldRenderInlineTopNavigationSkeleton;
+  const measuredTopBarHeightCssValue =
+    topBarHeightCssValue ?? readKangurTopBarHeightCssValue();
   const resolvedTopBarHeightCssValue =
-    topBarHeightCssValue ??
-    readKangurTopBarHeightCssValue() ??
-    `${KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX}px`;
+    measuredTopBarHeightCssValue ?? `${KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX}px`;
+  const shouldLockInlineTopNavigationSkeletonHeight =
+    shouldRenderInlineTopNavigationSkeleton && measuredTopBarHeightCssValue !== null;
   const inlineTopNavigationSkeleton = shouldRenderInlineTopNavigationSkeleton ? (
     <div
       className='shrink-0 overflow-hidden'
       data-testid='kangur-page-transition-skeleton-inline-top-navigation'
-      style={{
-        height: resolvedTopBarHeightCssValue,
-        minHeight: resolvedTopBarHeightCssValue,
-        maxHeight: resolvedTopBarHeightCssValue,
-      }}
+      style={
+        shouldLockInlineTopNavigationSkeletonHeight
+          ? {
+              height: resolvedTopBarHeightCssValue,
+              minHeight: resolvedTopBarHeightCssValue,
+              maxHeight: resolvedTopBarHeightCssValue,
+            }
+          : undefined
+      }
     >
       <KangurTopNavigationSkeleton
         publishHeight={false}
-        topBarHeightCssValue={resolvedTopBarHeightCssValue}
+        topBarHeightCssValue={
+          shouldLockInlineTopNavigationSkeletonHeight ? resolvedTopBarHeightCssValue : undefined
+        }
       />
     </div>
   ) : null;

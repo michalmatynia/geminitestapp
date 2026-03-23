@@ -10,9 +10,9 @@ import { EditableCell } from '@/features/products/components/EditableCell';
 import {
   useProductListHeaderActionsContext,
   useProductListRowActionsContext,
+  useProductListRowRuntime,
   useProductListRowVisualsContext,
 } from '@/features/products/context/ProductListContext';
-import { resolveProductAiRunFeedbackForList } from '@/features/products/lib/product-ai-run-feedback';
 import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
 import {
   loadProductIntegrationsAdapter,
@@ -203,18 +203,16 @@ const ImageCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function Image
 const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCell({ row }) {
   const product: ProductWithImages = row.original;
   const { onProductNameClick } = useProductListRowActionsContext();
-  const { productNameKey, queuedProductIds, productAiRunStatusByProductId, categoryNameById } =
-    useProductListRowVisualsContext();
+  const { productNameKey, categoryNameById } = useProductListRowVisualsContext();
+  const { productAiRunFeedback } = useProductListRowRuntime(
+    product.id,
+    product.baseProductId
+  );
 
   const nameKey = productNameKey ?? 'name_en';
   const nameValue = getProductListDisplayName(product, nameKey);
 
   const isImported: boolean = !!product.baseProductId;
-  const productRunFeedback = resolveProductAiRunFeedbackForList({
-    productId: product.id,
-    queuedProductIds,
-    productAiRunStatusByProductId,
-  });
   const normalizedSku = (product.sku ?? '').trim();
   const categoryLabel = resolveProductCategoryLabel(
     product,
@@ -284,12 +282,12 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
             </button>
           </Tooltip>
         )}
-        {productRunFeedback && (
+        {productAiRunFeedback && (
           <Badge
-            variant={productRunFeedback.variant}
-            className={cn('ml-1', productRunFeedback.badgeClassName)}
+            variant={productAiRunFeedback.variant}
+            className={cn('ml-1', productAiRunFeedback.badgeClassName)}
           >
-            {productRunFeedback.label}
+            {productAiRunFeedback.label}
           </Badge>
         )}
       </div>
@@ -380,24 +378,17 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
     onIntegrationsClick: handleClick,
     onExportSettingsClick,
   } = useProductListRowActionsContext();
+  const { showTriggerRunFeedback } = useProductListRowVisualsContext();
   const {
-    integrationBadgeIds,
-    integrationBadgeStatuses,
-    traderaBadgeIds,
-    traderaBadgeStatuses,
-    showTriggerRunFeedback,
-  } = useProductListRowVisualsContext();
+    showMarketplaceBadge,
+    integrationStatus: status,
+    showTraderaBadge,
+    traderaStatus,
+  } = useProductListRowRuntime(product.id, product.baseProductId);
 
   const queryClient = useQueryClient();
 
   if (!handleClick) return null;
-  const showMarketplaceBadge: boolean =
-    (integrationBadgeIds?.has(product.id) ?? false) || Boolean(product.baseProductId?.trim());
-  const status: string =
-    integrationBadgeStatuses?.get(product.id) ??
-    (product.baseProductId?.trim() ? 'active' : 'not_started');
-  const showTraderaBadge: boolean = traderaBadgeIds?.has(product.id) ?? false;
-  const traderaStatus: string = traderaBadgeStatuses?.get(product.id) ?? 'not_started';
   const prefetchListings = (): void => {
     void loadProductIntegrationsAdapter().then(({ fetchProductListings, productListingsQueryKey }) => {
       const queryKey = productListingsQueryKey(product.id);

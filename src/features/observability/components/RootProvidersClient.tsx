@@ -4,10 +4,6 @@ import { useSearchParams } from 'next/navigation';
 import { SessionProvider } from 'next-auth/react';
 import { Suspense } from 'react';
 
-import {
-  KANGUR_CAPTURE_MODE_QUERY_PARAM,
-  KANGUR_CAPTURE_MODE_SOCIAL_BATCH,
-} from '@/features/kangur/shared/capture-mode';
 import ClientErrorReporter from '@/features/observability/components/ClientErrorReporter';
 import PageAnalyticsTracker from '@/shared/lib/analytics/components/PageAnalyticsTracker';
 import { AppFontProvider } from '@/shared/providers/AppFontProvider';
@@ -21,6 +17,9 @@ import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary';
 import { RouteAccessibilityAnnouncer } from '@/shared/ui/RouteAccessibilityAnnouncer';
 import { SkipToContentLink } from '@/shared/ui/SkipToContentLink';
 import { ToastProvider } from '@/shared/ui/toast';
+
+const KANGUR_CAPTURE_MODE_QUERY_PARAM = 'kangurCapture';
+const KANGUR_CAPTURE_MODE_SOCIAL_BATCH = 'social-batch';
 
 export function RootProvidersClient({
   children,

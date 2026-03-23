@@ -1133,7 +1133,7 @@
     {
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
-      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver-capture/proposals. Use the barrel export instead.",
+      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver/capture/proposals. Use the barrel export instead.",
       "file": "src/features/case-resolver/components/CaseResolverViewContext.tsx",
       "line": 16,
       "column": null,
@@ -1143,7 +1143,7 @@
     {
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
-      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver-capture/settings. Use the barrel export instead.",
+      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver/capture/settings. Use the barrel export instead.",
       "file": "src/features/case-resolver/components/CaseResolverViewContext.tsx",
       "line": 20,
       "column": null,
@@ -1203,7 +1203,7 @@
     {
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
-      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver-capture/proposals. Use the barrel export instead.",
+      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver/capture/proposals. Use the barrel export instead.",
       "file": "src/features/case-resolver/components/PromptExploderCaptureMappingModal.tsx",
       "line": 3,
       "column": null,
@@ -1213,7 +1213,7 @@
     {
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
-      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver-capture/settings. Use the barrel export instead.",
+      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver/capture/settings. Use the barrel export instead.",
       "file": "src/features/case-resolver/components/PromptExploderCaptureMappingModal.tsx",
       "line": 7,
       "column": null,
@@ -1233,7 +1233,7 @@
     {
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
-      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver-capture/proposals. Use the barrel export instead.",
+      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver/capture/proposals. Use the barrel export instead.",
       "file": "src/features/case-resolver/components/PromptExploderCaptureMappingModalRuntimeContext.tsx",
       "line": 5,
       "column": null,
@@ -1243,7 +1243,7 @@
     {
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
-      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver-capture/settings. Use the barrel export instead.",
+      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver/capture/settings. Use the barrel export instead.",
       "file": "src/features/case-resolver/components/PromptExploderCaptureMappingModalRuntimeContext.tsx",
       "line": 9,
       "column": null,
@@ -1273,7 +1273,7 @@
     {
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
-      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver-capture/proposals. Use the barrel export instead.",
+      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver/capture/proposals. Use the barrel export instead.",
       "file": "src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts",
       "line": 5,
       "column": null,
@@ -1283,7 +1283,7 @@
     {
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
-      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver-capture/proposals. Use the barrel export instead.",
+      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver/capture/proposals. Use the barrel export instead.",
       "file": "src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts",
       "line": 9,
       "column": null,
@@ -1303,7 +1303,7 @@
     {
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
-      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver-capture/filemaker-upsert. Use the barrel export instead.",
+      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver/capture/filemaker-upsert. Use the barrel export instead.",
       "file": "src/features/case-resolver/hooks/capture-actions/useApplyCaptureProposal.ts",
       "line": 29,
       "column": null,
@@ -1313,7 +1313,7 @@
     {
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
-      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver-capture/proposals. Use the barrel export instead.",
+      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver/capture/proposals. Use the barrel export instead.",
       "file": "src/features/case-resolver/hooks/capture-actions/useCaptureProposalState.ts",
       "line": 4,
       "column": null,
@@ -1323,7 +1323,7 @@
     {
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
-      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver-capture/settings. Use the barrel export instead.",
+      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver/capture/settings. Use the barrel export instead.",
       "file": "src/features/case-resolver/hooks/capture-actions/useCaptureProposalState.ts",
       "line": 9,
       "column": null,
@@ -1343,7 +1343,7 @@
     {
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
-      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver-capture/proposals. Use the barrel export instead.",
+      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver/capture/proposals. Use the barrel export instead.",
       "file": "src/features/case-resolver/hooks/useAdminCaseResolverCaptureActions.ts",
       "line": 3,
       "column": null,
@@ -1423,7 +1423,7 @@
     {
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
-      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver-capture/proposals. Use the barrel export instead.",
+      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver/capture/proposals. Use the barrel export instead.",
       "file": "src/features/case-resolver/hooks/useCaseResolverState.prompt-exploder-actions.ts",
       "line": 7,
       "column": null,
@@ -1443,7 +1443,7 @@
     {
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
-      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver-capture/proposals. Use the barrel export instead.",
+      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver/capture/proposals. Use the barrel export instead.",
       "file": "src/features/case-resolver/hooks/useCaseResolverState.prompt-exploder-sync.ts",
       "line": 1,
       "column": null,
@@ -1483,7 +1483,7 @@
     {
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
-      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver-capture/settings. Use the barrel export instead.",
+      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver/capture/settings. Use the barrel export instead.",
       "file": "src/features/case-resolver/hooks/useCaseResolverState.ts",
       "line": 10,
       "column": null,
@@ -1583,7 +1583,7 @@
     {
       "severity": "error",
       "ruleId": "cross-feature-internal-import",
-      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver-capture/proposals. Use the barrel export instead.",
+      "message": "Imports internal path from feature \"case-resolver-capture\": @/features/case-resolver/capture/proposals. Use the barrel export instead.",
       "file": "src/features/case-resolver/types.ts",
       "line": 1,
       "column": null,

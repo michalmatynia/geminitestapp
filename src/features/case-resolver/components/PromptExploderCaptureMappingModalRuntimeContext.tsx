@@ -6,8 +6,8 @@ import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type {
   CaseResolverCaptureDocumentDateAction,
   CaseResolverCaptureProposalState,
-} from '@/features/case-resolver-capture/public';
-import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture/public';
+} from '@/features/case-resolver/capture/public';
+import type { CaseResolverCaptureAction } from '@/features/case-resolver/capture/public';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type PromptExploderCaptureMappingDiagnostics = {

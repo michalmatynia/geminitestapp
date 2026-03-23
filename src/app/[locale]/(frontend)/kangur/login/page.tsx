@@ -10,7 +10,7 @@ import {
 } from '@/shared/lib/i18n/site-locale';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
-import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../../../../(frontend)/home-helpers';
+import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '@/app/(frontend)/home-helpers';
 
 type LocalizedKangurAliasLoginPageProps = {
   params: Promise<{ locale: string }>;

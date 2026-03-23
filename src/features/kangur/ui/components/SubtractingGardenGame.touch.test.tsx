@@ -99,6 +99,7 @@ describe('SubtractingGardenGame touch interactions', () => {
     const tokenEmoji = firstToken.textContent ?? '';
 
     expect(firstToken).toHaveClass('touch-manipulation');
+    expect(firstToken).toHaveStyle({ touchAction: 'none' });
     expect(firstToken).toHaveClass('h-14');
 
     fireEvent.click(firstToken);

@@ -6,7 +6,10 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
+import {
+  KangurDragDropContext,
+  getKangurMobileDragHandleStyle,
+} from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import {
@@ -843,6 +846,10 @@ export default function CalendarInteractiveGame({
                           ref={dragProvided.innerRef}
                           {...dragProvided.draggableProps}
                           {...dragProvided.dragHandleProps}
+                          style={getKangurMobileDragHandleStyle(
+                            dragProvided.draggableProps.style,
+                            isCoarsePointer
+                          )}
                           className={cn(
                             'bg-green-400 text-white font-extrabold rounded-2xl shadow-lg cursor-grab active:cursor-grabbing select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white touch-manipulation',
                             isCoarsePointer

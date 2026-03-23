@@ -7,6 +7,7 @@ import {
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
@@ -286,7 +287,7 @@ export default function LogicalIfThenStepsGame({
       ) : null}
 
       <div className={KANGUR_WRAP_ROW_CLASSNAME}>
-        <KangurButton
+        <KangurCheckButton
           onClick={handleCheck}
           size='sm'
           type='button'
@@ -295,9 +296,10 @@ export default function LogicalIfThenStepsGame({
             'px-4 touch-manipulation select-none',
             isCoarsePointer && 'min-h-11 active:scale-[0.98]'
           )}
+          feedbackTone={feedback === 'success' ? 'success' : feedback === 'error' ? 'error' : null}
         >
           {copy.actions.check}
-        </KangurButton>
+        </KangurCheckButton>
         {checked ? (
           <>
             <KangurButton

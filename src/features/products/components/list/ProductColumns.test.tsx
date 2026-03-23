@@ -9,6 +9,7 @@ const {
   useProductListActionsContextMock,
   useProductListHeaderActionsContextMock,
   useProductListRowActionsContextMock,
+  useProductListRowRuntimeMock,
   useProductListRowVisualsContextMock,
 } = vi.hoisted(() => ({
   baseQuickExportButtonMock: vi.fn(),
@@ -16,6 +17,7 @@ const {
   useProductListActionsContextMock: vi.fn(),
   useProductListHeaderActionsContextMock: vi.fn(),
   useProductListRowActionsContextMock: vi.fn(),
+  useProductListRowRuntimeMock: vi.fn(),
   useProductListRowVisualsContextMock: vi.fn(),
 }));
 
@@ -27,6 +29,7 @@ vi.mock('@/features/products/context/ProductListContext', async (importOriginal)
     useProductListActionsContext: () => useProductListActionsContextMock(),
     useProductListHeaderActionsContext: () => useProductListHeaderActionsContextMock(),
     useProductListRowActionsContext: () => useProductListRowActionsContextMock(),
+    useProductListRowRuntime: () => useProductListRowRuntimeMock(),
     useProductListRowVisualsContext: () => useProductListRowVisualsContextMock(),
   };
 });
@@ -97,14 +100,49 @@ const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithI
     ...overrides,
   }) as ProductWithImages;
 
+const createRowVisualsContext = (
+  overrides: Record<string, unknown> = {}
+): Record<string, unknown> => ({
+  productNameKey: 'name_en',
+  priceGroups: [],
+  currencyCode: 'USD',
+  categoryNameById: new Map([['category-1', 'Keychains']]),
+  thumbnailSource: 'file',
+  showTriggerRunFeedback: true,
+  imageExternalBaseUrl: null,
+  ...overrides,
+});
+
+const createRowRuntimeContext = (
+  overrides: Record<string, unknown> = {}
+): Record<string, unknown> => ({
+  showMarketplaceBadge: false,
+  integrationStatus: 'not_started',
+  showTraderaBadge: false,
+  traderaStatus: 'not_started',
+  productAiRunFeedback: null,
+  ...overrides,
+});
+
 describe('ProductColumns queued badge', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     vi.resetModules();
+    useProductListActionsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+    });
     useProductListHeaderActionsContextMock.mockReturnValue({
       showTriggerRunFeedback: true,
       setShowTriggerRunFeedback: vi.fn(),
     });
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+      onIntegrationsClick: vi.fn(),
+      onExportSettingsClick: vi.fn(),
+    });
+    useProductListRowRuntimeMock.mockReturnValue(createRowRuntimeContext());
+    useProductListRowVisualsContextMock.mockReturnValue(createRowVisualsContext());
     ({ getProductColumns } = await import('./ProductColumns'));
   });
 
@@ -118,11 +156,24 @@ describe('ProductColumns queued badge', () => {
     useProductListRowActionsContextMock.mockReturnValue({
       onProductNameClick: vi.fn(),
     });
-    useProductListRowVisualsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set(['product-1']),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-    });
+    useProductListRowVisualsContextMock.mockReturnValue(
+      createRowVisualsContext({
+        categoryNameById: new Map([['category-1', 'Keychains']]),
+      })
+    );
+    useProductListRowRuntimeMock.mockReturnValue(
+      createRowRuntimeContext({
+        productAiRunFeedback: {
+          runId: '',
+          status: 'queued',
+          updatedAt: null,
+          label: 'Queued',
+          variant: 'warning',
+          badgeClassName:
+            'border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/25',
+        },
+      })
+    );
 
     const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
     if (!nameColumn || typeof nameColumn.cell !== 'function') {
@@ -145,25 +196,24 @@ describe('ProductColumns queued badge', () => {
     useProductListRowActionsContextMock.mockReturnValue({
       onProductNameClick: vi.fn(),
     });
-    useProductListRowVisualsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set(['product-1']),
-      productAiRunStatusByProductId: new Map([
-        [
-          'product-1',
-          {
-            runId: 'run-1',
-            status: 'running',
-            updatedAt: '2026-03-21T10:00:00.000Z',
-            label: 'Running',
-            variant: 'processing',
-            badgeClassName:
-              'border-cyan-500/40 bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/25',
-          },
-        ],
-      ]),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-    });
+    useProductListRowVisualsContextMock.mockReturnValue(
+      createRowVisualsContext({
+        categoryNameById: new Map([['category-1', 'Keychains']]),
+      })
+    );
+    useProductListRowRuntimeMock.mockReturnValue(
+      createRowRuntimeContext({
+        productAiRunFeedback: {
+          runId: 'run-1',
+          status: 'running',
+          updatedAt: '2026-03-21T10:00:00.000Z',
+          label: 'Running',
+          variant: 'processing',
+          badgeClassName:
+            'border-cyan-500/40 bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/25',
+        },
+      })
+    );
 
     const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
     if (!nameColumn || typeof nameColumn.cell !== 'function') {
@@ -187,11 +237,11 @@ describe('ProductColumns queued badge', () => {
     useProductListRowActionsContextMock.mockReturnValue({
       onProductNameClick: vi.fn(),
     });
-    useProductListRowVisualsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set<string>(),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-    });
+    useProductListRowVisualsContextMock.mockReturnValue(
+      createRowVisualsContext({
+        categoryNameById: new Map([['category-1', 'Keychains']]),
+      })
+    );
 
     const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
     if (!nameColumn || typeof nameColumn.cell !== 'function') {
@@ -226,11 +276,11 @@ describe('ProductColumns queued badge', () => {
     useProductListRowActionsContextMock.mockReturnValue({
       onProductNameClick: vi.fn(),
     });
-    useProductListRowVisualsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set<string>(),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-    });
+    useProductListRowVisualsContextMock.mockReturnValue(
+      createRowVisualsContext({
+        categoryNameById: new Map([['category-1', 'Keychains']]),
+      })
+    );
 
     const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
     if (!nameColumn || typeof nameColumn.cell !== 'function') {
@@ -258,11 +308,11 @@ describe('ProductColumns queued badge', () => {
     useProductListRowActionsContextMock.mockReturnValue({
       onProductNameClick: vi.fn(),
     });
-    useProductListRowVisualsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set<string>(),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-    });
+    useProductListRowVisualsContextMock.mockReturnValue(
+      createRowVisualsContext({
+        categoryNameById: new Map([['category-1', 'Keychains']]),
+      })
+    );
 
     const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
     if (!nameColumn || typeof nameColumn.cell !== 'function') {
@@ -668,16 +718,13 @@ describe('ProductColumns queued badge', () => {
       onIntegrationsClick,
       onExportSettingsClick,
     });
-    useProductListRowVisualsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set<string>(),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-      integrationBadgeIds: new Set<string>(),
-      integrationBadgeStatuses: new Map<string, string>(),
-      traderaBadgeIds: new Set<string>(),
-      traderaBadgeStatuses: new Map<string, string>(),
-      showTriggerRunFeedback: true,
-    });
+    useProductListRowVisualsContextMock.mockReturnValue(
+      createRowVisualsContext({
+        categoryNameById: new Map([['category-1', 'Keychains']]),
+        showTriggerRunFeedback: true,
+      })
+    );
+    useProductListRowRuntimeMock.mockReturnValue(createRowRuntimeContext());
 
     const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
     if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
@@ -712,16 +759,13 @@ describe('ProductColumns queued badge', () => {
       onIntegrationsClick,
       onExportSettingsClick,
     });
-    useProductListRowVisualsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set<string>(),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-      integrationBadgeIds: new Set<string>(),
-      integrationBadgeStatuses: new Map<string, string>(),
-      traderaBadgeIds: new Set<string>(),
-      traderaBadgeStatuses: new Map<string, string>(),
-      showTriggerRunFeedback: true,
-    });
+    useProductListRowVisualsContextMock.mockReturnValue(
+      createRowVisualsContext({
+        categoryNameById: new Map([['category-1', 'Keychains']]),
+        showTriggerRunFeedback: true,
+      })
+    );
+    useProductListRowRuntimeMock.mockReturnValue(createRowRuntimeContext());
 
     const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
     if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
@@ -772,16 +816,18 @@ describe('ProductColumns queued badge', () => {
       onIntegrationsClick,
       onExportSettingsClick,
     });
-    useProductListRowVisualsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set<string>(),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-      integrationBadgeIds: new Set<string>(['product-1']),
-      integrationBadgeStatuses: new Map<string, string>([['product-1', 'active']]),
-      traderaBadgeIds: new Set<string>(),
-      traderaBadgeStatuses: new Map<string, string>(),
-      showTriggerRunFeedback: true,
-    });
+    useProductListRowVisualsContextMock.mockReturnValue(
+      createRowVisualsContext({
+        categoryNameById: new Map([['category-1', 'Keychains']]),
+        showTriggerRunFeedback: true,
+      })
+    );
+    useProductListRowRuntimeMock.mockReturnValue(
+      createRowRuntimeContext({
+        showMarketplaceBadge: true,
+        integrationStatus: 'active',
+      })
+    );
 
     const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
     if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {

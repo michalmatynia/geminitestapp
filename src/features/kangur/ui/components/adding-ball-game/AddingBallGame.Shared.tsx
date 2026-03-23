@@ -4,6 +4,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { cn } from '@/features/kangur/shared/utils';
+import { getKangurMobileDragHandleStyle } from '@/features/kangur/ui/components/KangurDragDropContext';
 import { KangurInfoCard } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { DraggableBallProps, BallProps, SlotZoneProps } from './types';
@@ -65,6 +66,10 @@ export function DraggableBall({
             ref={draggableProvided.innerRef}
             {...draggableProvided.draggableProps}
             {...draggableProvided.dragHandleProps}
+            style={getKangurMobileDragHandleStyle(
+              draggableProvided.draggableProps.style,
+              isCoarsePointer
+            )}
             className={cn(
               'touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
               isCoarsePointer && 'active:scale-[0.98]',

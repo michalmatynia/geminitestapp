@@ -78,6 +78,7 @@ describe('EnglishSentenceStructureGame touch interactions', () => {
     const previewBefore = screen.getByTestId('english-structure-order-preview').textContent;
     const myToken = screen.getByRole('button', { name: 'Word: My' });
     expect(myToken).toHaveClass('touch-manipulation');
+    expect(myToken).toHaveStyle({ touchAction: 'none' });
     expect(myToken).toHaveClass('min-h-[4rem]');
 
     fireEvent.click(myToken);

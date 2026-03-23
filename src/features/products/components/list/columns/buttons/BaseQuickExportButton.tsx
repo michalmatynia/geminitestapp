@@ -19,8 +19,8 @@ import { api } from '@/shared/lib/api-client';
 import {
   fetchPreferredBaseConnection,
   integrationSelectionQueryKeys,
-} from '@/features/integrations/product-integrations-adapter';
-import { useGenericExportToBaseMutation } from '@/features/integrations/product-integrations-adapter';
+} from '@/features/integrations/public';
+import { useGenericExportToBaseMutation } from '@/features/integrations/public';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';

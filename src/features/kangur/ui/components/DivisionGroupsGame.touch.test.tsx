@@ -77,6 +77,7 @@ describe('DivisionGroupsGame touch interactions', () => {
 
     const token = screen.getAllByRole('button', { name: 'Przenieś element' })[0];
     expect(token).toHaveClass('touch-manipulation');
+    expect(token).toHaveStyle({ touchAction: 'none' });
 
     const emoji = token?.textContent?.trim() ?? '';
     expect(emoji).not.toBe('');

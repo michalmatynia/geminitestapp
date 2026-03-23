@@ -120,6 +120,7 @@ describe('LogicalReasoningIfThenGame touch interactions', () => {
     const pool = screen.getByTestId('logical-ifthen-zone-pool');
     const card = within(pool).getByRole('button', { name: 'Wybierz kartę: Biorę parasol.' });
     expect(card).toHaveClass('touch-manipulation');
+    expect(card).toHaveStyle({ touchAction: 'none' });
     expect(card).toHaveClass('min-h-[4.5rem]');
 
     fireEvent.click(card);

@@ -4,7 +4,10 @@ import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
 import { createPortal } from 'react-dom';
 import { useMemo, useRef, useState } from 'react';
-import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
+import {
+  KangurDragDropContext,
+  getKangurMobileDragHandleStyle,
+} from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import {
   KangurPracticeGameProgress,
@@ -370,6 +373,10 @@ function DraggableToken({
             ref={draggableProvided.innerRef}
             {...draggableProvided.draggableProps}
             {...draggableProvided.dragHandleProps}
+            style={getKangurMobileDragHandleStyle(
+              draggableProvided.draggableProps.style,
+              isCoarsePointer
+            )}
             className={buildTokenClassName({
               isDragging: snapshot.isDragging,
               showStatus,

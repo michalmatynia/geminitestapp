@@ -88,7 +88,7 @@ export const KANGUR_PANEL_CLASSNAMES = {
 } as const;
 
 export const KANGUR_TOP_NAV_GROUP_CLASSNAME =
-  'kangur-nav-group flex w-full min-w-0 max-w-full flex-col items-stretch gap-2 rounded-[30px] border p-2 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap';
+  'kangur-nav-group flex w-full min-w-0 max-w-full flex-col items-stretch gap-2 border p-2 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap';
 
 export const KANGUR_TOP_NAV_ITEM_CLASSNAME =
   'kangur-nav-item group relative inline-flex min-w-0 items-center justify-center gap-2 border font-semibold tracking-[-0.02em] transition-all duration-200';

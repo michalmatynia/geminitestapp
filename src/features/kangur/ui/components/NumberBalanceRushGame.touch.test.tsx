@@ -130,6 +130,7 @@ describe('NumberBalanceRushGame touch interactions', () => {
     expect(tileValue).not.toBe('');
     expect(tile).toHaveClass('touch-manipulation');
     expect(tile).toHaveClass('h-20');
+    expect(tile).toHaveStyle({ touchAction: 'none' });
 
     fireEvent.click(tile);
 

@@ -76,6 +76,7 @@ describe('EnglishPrepositionsOrderGame touch interactions', () => {
     const previewBefore = screen.getByTestId('english-prepositions-order-preview').textContent;
     const token = screen.getByRole('button', { name: 'Word: We' });
     expect(token).toHaveClass('touch-manipulation');
+    expect(token).toHaveStyle({ touchAction: 'none' });
     expect(token).toHaveClass('min-h-[4rem]');
 
     fireEvent.click(token);

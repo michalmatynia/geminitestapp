@@ -619,7 +619,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/case-resolver-capture/"
+        "@/features/case-resolver/capture/"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -10414,7 +10414,7 @@
       "useClient": true,
       "imports": [
         "react",
-        "@/features/case-resolver-capture",
+        "@/features/case-resolver/capture",
         "@/shared/contracts/case-resolver",
         "@/shared/errors/app-error",
         "../types"
@@ -10557,7 +10557,7 @@
       "imports": [
         "react",
         "@/shared/contracts/base",
-        "@/features/case-resolver-capture",
+        "@/features/case-resolver/capture",
         "@/features/filemaker",
         "@/shared/ui",
         "@/shared/ui/confirm-dialog",
@@ -10581,7 +10581,7 @@
       "imports": [
         "react",
         "@/shared/contracts/base",
-        "@/features/case-resolver-capture",
+        "@/features/case-resolver/capture",
         "@/shared/lib/react/createStrictContext"
       ],
       "templateImports": 0,

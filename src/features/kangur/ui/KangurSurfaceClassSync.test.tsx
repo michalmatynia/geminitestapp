@@ -236,6 +236,7 @@ describe('KangurSurfaceClassSync', () => {
     expect(document.body.style.getPropertyValue('--kangur-button-font-size')).toBe('15px');
     expect(document.body.style.getPropertyValue('--kangur-button-height')).toBe('53px');
     expect(document.body.style.getPropertyValue('--kangur-button-radius')).toBe('28px');
+    expect(document.body.style.getPropertyValue('--kangur-nav-group-radius')).toBe('28px');
     expect(document.body.style.getPropertyValue('--kangur-nav-item-radius')).toBe('18px');
     expect(document.body.style.getPropertyValue('--kangur-menu-item-radius')).toBe('14px');
     expect(document.body.style.getPropertyValue('--kangur-pill-padding-x')).toBe('18px');

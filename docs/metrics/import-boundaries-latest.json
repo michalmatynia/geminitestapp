@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-22T15:42:07.455Z",
-  "status": "warn",
+  "generatedAt": "2026-03-23T08:53:09.386Z",
+  "status": "passed",
   "summary": {
-    "total": 12,
+    "total": 0,
     "errorCount": 0,
-    "warningCount": 12,
+    "warningCount": 0,
     "infoCount": 0,
-    "status": "warn",
-    "fileCount": 5674,
+    "status": "passed",
+    "fileCount": 5680,
     "featureCount": 10,
     "circularDependencyCount": 0
   },
@@ -30,7 +30,6 @@
     ],
     "case-resolver": [
       "ai",
-      "case-resolver-capture",
       "document-editor",
       "filemaker",
       "foldertree"
@@ -47,8 +46,7 @@
     ],
     "integrations": [
       "data-import-export",
-      "product-sync",
-      "products"
+      "product-sync"
     ],
     "kangur": [
       "ai",
@@ -66,6 +64,7 @@
       "ai",
       "files",
       "foldertree",
+      "integrations",
       "internationalization"
     ],
     "prompt-exploder": [
@@ -73,135 +72,7 @@
     ]
   },
   "circularDependencies": [],
-  "issues": [
-    {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (3 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/(frontend)/[...slug]/page.tsx",
-      "line": 13,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (3 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/(frontend)/[...slug]/page.tsx",
-      "line": 14,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (3 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/(frontend)/[...slug]/page.tsx",
-      "line": 18,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (4 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/(frontend)/kangur/(app)/layout.tsx",
-      "line": 1,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (3 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/(frontend)/kangur/error.tsx",
-      "line": 3,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (3 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/(frontend)/kangur/layout.tsx",
-      "line": 1,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (4 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/(frontend)/kangur/login/page.tsx",
-      "line": 13,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (4 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/(frontend)/preview/[id]/page.tsx",
-      "line": 1,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (4 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/(frontend)/preview/foldertree-shell-runtime/page.tsx",
-      "line": 1,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (4 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/(frontend)/products/[id]/page.tsx",
-      "line": 5,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (3 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/auth/register/page.tsx",
-      "line": 1,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (3 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/auth/signin/page.tsx",
-      "line": 1,
-      "column": null,
-      "snippet": null,
-      "context": null
-    }
-  ],
-  "rules": [
-    {
-      "ruleId": "deep-relative-import",
-      "errorCount": 0,
-      "warningCount": 12,
-      "infoCount": 0
-    }
-  ],
-  "durationMs": 402
+  "issues": [],
+  "rules": [],
+  "durationMs": 302
 }

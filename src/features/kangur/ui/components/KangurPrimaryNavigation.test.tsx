@@ -609,7 +609,11 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
-    expect(screen.getByTestId('kangur-primary-nav-mobile-toggle')).toBeInTheDocument();
+    const mobileToggle = screen.getByTestId('kangur-primary-nav-mobile-toggle');
+
+    expect(mobileToggle).toBeInTheDocument();
+    expect(mobileToggle).not.toHaveClass('glass-panel');
+    expect(screen.getByRole('navigation', { name: /główna nawigacja kangur/i })).toHaveClass('p-2');
     expect(screen.queryByRole('link', { name: /lekcje/i })).toBeNull();
   });
 
@@ -1306,7 +1310,12 @@ describe('KangurPrimaryNavigation', () => {
       'var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px'
     );
     expect(within(utilityActions).queryByTestId('kangur-language-switcher-trigger')).toBeNull();
-    expect(headerScope.getByRole('button', { name: /zamknij menu/i })).toBeInTheDocument();
+    expect(headerScope.getByRole('button', { name: /zamknij menu/i })).toHaveClass(
+      'inline-flex',
+      'items-center',
+      'justify-center',
+      'leading-none'
+    );
   });
 
   it('keeps the parent dashboard and logout actions inside the navbar and aligned right', () => {

@@ -4,11 +4,18 @@
 
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { FrontendPublicOwnerProvider } from '@/features/kangur/ui/FrontendPublicOwnerContext';
 
-const kangurRouteLoadingFallbackMock = vi.fn();
+const { kangurRouteLoadingFallbackMock, usePathnameMock } = vi.hoisted(() => ({
+  kangurRouteLoadingFallbackMock: vi.fn(),
+  usePathnameMock: vi.fn(),
+}));
+
+vi.mock('next/navigation', () => ({
+  usePathname: usePathnameMock,
+}));
 
 vi.mock('@/features/kangur/ui/components/KangurRouteLoadingFallback', () => ({
   KangurRouteLoadingFallback: (props: Record<string, unknown>) => {
@@ -20,10 +27,61 @@ vi.mock('@/features/kangur/ui/components/KangurRouteLoadingFallback', () => ({
 import { FrontendRouteLoadingFallback } from '@/features/kangur/ui/FrontendRouteLoadingFallback';
 
 describe('FrontendRouteLoadingFallback', () => {
-  it('renders the Kangur loading fallback when Kangur owns the public frontend', () => {
+  beforeEach(() => {
+    kangurRouteLoadingFallbackMock.mockReset();
+    usePathnameMock.mockReturnValue('/en');
+  });
+
+  it('suppresses the navbar skeleton for the Kangur main page by default', () => {
     render(
       <FrontendPublicOwnerProvider publicOwner='kangur'>
         <FrontendRouteLoadingFallback />
+      </FrontendPublicOwnerProvider>
+    );
+
+    expect(screen.getByTestId('kangur-route-loading-fallback-probe')).toBeInTheDocument();
+    expect(kangurRouteLoadingFallbackMock).toHaveBeenCalledTimes(1);
+    expect(kangurRouteLoadingFallbackMock).toHaveBeenCalledWith({
+      includeTopNavigationSkeleton: false,
+    });
+  });
+
+  it('enables the navbar skeleton for non-main Kangur routes by default', () => {
+    usePathnameMock.mockReturnValue('/en/lessons');
+
+    render(
+      <FrontendPublicOwnerProvider publicOwner='kangur'>
+        <FrontendRouteLoadingFallback />
+      </FrontendPublicOwnerProvider>
+    );
+
+    expect(screen.getByTestId('kangur-route-loading-fallback-probe')).toBeInTheDocument();
+    expect(kangurRouteLoadingFallbackMock).toHaveBeenCalledTimes(1);
+    expect(kangurRouteLoadingFallbackMock).toHaveBeenCalledWith({
+      includeTopNavigationSkeleton: true,
+    });
+  });
+
+  it('treats the explicit /kangur alias main page as a no-navbar loader by default', () => {
+    usePathnameMock.mockReturnValue('/en/kangur');
+
+    render(
+      <FrontendPublicOwnerProvider publicOwner='kangur'>
+        <FrontendRouteLoadingFallback />
+      </FrontendPublicOwnerProvider>
+    );
+
+    expect(screen.getByTestId('kangur-route-loading-fallback-probe')).toBeInTheDocument();
+    expect(kangurRouteLoadingFallbackMock).toHaveBeenCalledTimes(1);
+    expect(kangurRouteLoadingFallbackMock).toHaveBeenCalledWith({
+      includeTopNavigationSkeleton: false,
+    });
+  });
+
+  it('can still override the auto-detected navbar skeleton mode', () => {
+    render(
+      <FrontendPublicOwnerProvider publicOwner='kangur'>
+        <FrontendRouteLoadingFallback includeTopNavigationSkeleton={false} />
       </FrontendPublicOwnerProvider>
     );
 

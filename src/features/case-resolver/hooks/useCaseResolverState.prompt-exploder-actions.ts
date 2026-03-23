@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { CaseResolverCaptureProposalState } from '@/features/case-resolver-capture/public';
+import type { CaseResolverCaptureProposalState } from '@/features/case-resolver/capture/public';
 import type {
   CaseResolverWorkspace,
   CaseResolverFile,

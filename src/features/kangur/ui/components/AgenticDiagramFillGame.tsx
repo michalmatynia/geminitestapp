@@ -14,6 +14,7 @@ import {
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_WRAP_ROW_SPACED_CLASSNAME,
@@ -765,15 +766,18 @@ export function AgenticDiagramFillGame({
             >
               Wyczyść
             </KangurButton>
-            <KangurButton
+            <KangurCheckButton
               size='sm'
               variant='primary'
               className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
+              feedbackTone={
+                feedback?.kind === 'success' ? 'success' : feedback?.kind === 'error' ? 'error' : null
+              }
               onClick={handleCheck}
               disabled={strokes.length === 0 || isSolved}
             >
               Sprawdź
-            </KangurButton>
+            </KangurCheckButton>
             {isSolved ? (
               <KangurButton
                 size='sm'

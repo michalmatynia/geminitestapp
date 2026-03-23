@@ -75,6 +75,7 @@ describe('LogicalClassificationGame touch interactions', () => {
     const pool = screen.getByTestId('logical-classification-pool-zone');
     const token = within(pool).getAllByRole('button', { name: 'Czerwony' })[0];
     expect(token).toHaveClass('touch-manipulation');
+    expect(token).toHaveStyle({ touchAction: 'none' });
     expect(token).toHaveClass('min-h-[3.75rem]');
 
     fireEvent.click(token);

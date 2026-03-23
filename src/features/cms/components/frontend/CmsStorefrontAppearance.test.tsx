@@ -134,6 +134,8 @@ describe('CmsStorefrontAppearance', () => {
     expect(appearance.vars['--kangur-page-padding-bottom']).toBe('80px');
     expect(appearance.vars['--kangur-page-padding-left']).toBe('32px');
     expect(appearance.vars['--kangur-grid-gutter']).toBe('24px');
+    expect(appearance.vars['--kangur-nav-group-radius']).toBe('20px');
+    expect(appearance.vars['--kangur-nav-item-radius']).toBe('18px');
     expect(appearance.vars['--kangur-card-radius']).toBe('26px');
     expect(appearance.vars['--kangur-lesson-callout-radius']).toBe('24px');
     expect(appearance.vars['--kangur-lesson-inset-radius']).toBe('18px');
@@ -286,6 +288,7 @@ describe('CmsStorefrontAppearance', () => {
     expect(appearance.vars['--kangur-button-font-size']).toBe('16px');
     expect(appearance.vars['--kangur-button-height']).toBe('56px');
     expect(appearance.vars['--kangur-button-radius']).toBe('32px');
+    expect(appearance.vars['--kangur-nav-group-radius']).toBe('28px');
     expect(appearance.vars['--kangur-nav-item-radius']).toBe('18px');
     expect(appearance.vars['--kangur-menu-item-radius']).toBe('14px');
     expect(appearance.vars['--kangur-pill-padding-x']).toBe('20px');

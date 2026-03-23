@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-22T15:42:09.629Z",
+  "generatedAt": "2026-03-23T08:53:11.436Z",
   "status": "passed",
   "summary": {
     "total": 32,
@@ -7,12 +7,12 @@
     "warningCount": 0,
     "infoCount": 32,
     "status": "passed",
-    "featureCount": 28,
-    "featuresWithTestCount": 28,
+    "featureCount": 27,
+    "featuresWithTestCount": 27,
     "featuresWithoutTestCount": 0,
     "featuresWithoutFastTestCount": 0,
     "featuresWithoutNegativeTestCount": 0,
-    "totalTestFiles": 2151,
+    "totalTestFiles": 2160,
     "onlyCount": 0,
     "skipCount": 32,
     "todoCount": 0
@@ -28,8 +28,8 @@
   "featuresWithTests": [
     {
       "feature": "kangur",
-      "testCount": 499,
-      "fastTestCount": 483,
+      "testCount": 500,
+      "fastTestCount": 484,
       "e2eTestCount": 16,
       "negativePathTestCount": 96
     },
@@ -42,17 +42,17 @@
     },
     {
       "feature": "products",
-      "testCount": 102,
-      "fastTestCount": 95,
+      "testCount": 103,
+      "fastTestCount": 96,
       "e2eTestCount": 7,
       "negativePathTestCount": 32
     },
     {
       "feature": "case-resolver",
-      "testCount": 78,
-      "fastTestCount": 77,
+      "testCount": 81,
+      "fastTestCount": 80,
       "e2eTestCount": 1,
-      "negativePathTestCount": 32
+      "negativePathTestCount": 34
     },
     {
       "feature": "cms",
@@ -63,8 +63,8 @@
     },
     {
       "feature": "integrations",
-      "testCount": 48,
-      "fastTestCount": 47,
+      "testCount": 49,
+      "fastTestCount": 48,
       "e2eTestCount": 1,
       "negativePathTestCount": 16
     },
@@ -84,8 +84,8 @@
     },
     {
       "feature": "observability",
-      "testCount": 25,
-      "fastTestCount": 24,
+      "testCount": 26,
+      "fastTestCount": 25,
       "e2eTestCount": 1,
       "negativePathTestCount": 4
     },
@@ -133,8 +133,8 @@
     },
     {
       "feature": "jobs",
-      "testCount": 6,
-      "fastTestCount": 6,
+      "testCount": 7,
+      "fastTestCount": 7,
       "e2eTestCount": 0,
       "negativePathTestCount": 3
     },
@@ -151,13 +151,6 @@
       "fastTestCount": 5,
       "e2eTestCount": 0,
       "negativePathTestCount": 4
-    },
-    {
-      "feature": "case-resolver-capture",
-      "testCount": 4,
-      "fastTestCount": 4,
-      "e2eTestCount": 0,
-      "negativePathTestCount": 3
     },
     {
       "feature": "data-import-export",
@@ -556,5 +549,5 @@
       "infoCount": 32
     }
   ],
-  "durationMs": 257
+  "durationMs": 463
 }

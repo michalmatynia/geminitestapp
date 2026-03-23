@@ -11,16 +11,16 @@ import {
 } from '@/shared/lib/i18n/site-locale';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
-import { renderCmsPage } from '../../../(frontend)/cms-render';
+import { renderCmsPage } from '@/app/(frontend)/cms-render';
 import {
   getFrontPageSetting,
   shouldApplyFrontPageAppSelection,
-} from '../../../(frontend)/home-helpers';
+} from '@/app/(frontend)/home-helpers';
 import {
   buildSlugMetadata,
   loadSlugRenderData,
   resolveSlugToPage,
-} from '../../../(frontend)/[...slug]/slug-page-data';
+} from '@/app/(frontend)/[...slug]/slug-page-data';
 
 import type { Metadata } from 'next';
 

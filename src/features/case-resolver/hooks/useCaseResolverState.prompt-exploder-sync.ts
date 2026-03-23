@@ -6,7 +6,7 @@ import {
 import {
   buildCaseResolverCaptureProposalState,
   type CaseResolverCaptureProposalState,
-} from '@/features/case-resolver-capture/public';
+} from '@/features/case-resolver/capture/public';
 import {
   deriveDocumentContentSync,
   ensureSafeDocumentHtml,

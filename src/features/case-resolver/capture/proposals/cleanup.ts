@@ -3,7 +3,7 @@ import {
   normalizeCaseResolverComparable,
   composeCandidateStreetNumber,
   extractCaseResolverDocumentDate,
-} from '@/features/case-resolver-capture/case-resolver-capture-adapter';
+} from '@/features/case-resolver/public';
 
 import type { CaseResolverCaptureProposalState, CaseResolverCaptureCleanupResult } from './types';
 

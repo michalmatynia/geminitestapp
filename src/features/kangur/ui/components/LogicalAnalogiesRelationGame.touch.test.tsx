@@ -80,6 +80,7 @@ describe('LogicalAnalogiesRelationGame touch interactions', () => {
     const pool = screen.getByTestId('logical-analogies-pool');
     const token = within(pool).getByRole('listitem', { name: 'Relation: opposite' });
     expect(token).toHaveClass('touch-manipulation');
+    expect(token).toHaveStyle({ touchAction: 'none' });
     expect(token).toHaveClass('min-h-[4rem]');
 
     fireEvent.click(token);

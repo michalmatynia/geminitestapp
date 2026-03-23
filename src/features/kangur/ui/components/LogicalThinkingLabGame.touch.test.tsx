@@ -139,6 +139,7 @@ describe('LogicalThinkingLabGame touch interactions', () => {
 
     const triangle = screen.getByRole('button', { name: 'Select symbol 🔺' });
     expect(triangle).toHaveClass('touch-manipulation');
+    expect(triangle).toHaveStyle({ touchAction: 'none' });
     expect(triangle).toHaveClass('min-h-[3.75rem]');
 
     fireEvent.click(triangle);

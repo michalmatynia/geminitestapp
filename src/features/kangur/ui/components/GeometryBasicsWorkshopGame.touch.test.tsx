@@ -75,6 +75,7 @@ describe('GeometryBasicsWorkshopGame touch interactions', () => {
     const pool = screen.getByTestId('geometry-basics-pool');
     const pointLabel = within(pool).getByRole('button', { name: 'Label: Point' });
     expect(pointLabel).toHaveClass('touch-manipulation');
+    expect(pointLabel).toHaveStyle({ touchAction: 'none' });
     expect(pointLabel).toHaveClass('min-h-[4rem]');
 
     fireEvent.click(pointLabel);

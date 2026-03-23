@@ -32,6 +32,15 @@ export {
 export * from '@/shared/contracts/products';
 
 // Performance & Caching
+import { productCacheEvents } from '@/shared/events/products';
+
+import { CachedProductService } from './performance';
+
+// Listen to shared events to break circular dependencies with integrations
+productCacheEvents.on('invalidate-all', () => {
+  CachedProductService.invalidateAll();
+});
+
 export * from './performance';
 
 // Validations & Utils

@@ -32,7 +32,10 @@ import {
   KANGUR_WRAP_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
-import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
+import {
+  KangurDragDropContext,
+  getKangurMobileDragHandleStyle,
+} from '@/features/kangur/ui/components/KangurDragDropContext';
 import {
   addXp,
   createLessonPracticeReward,
@@ -806,6 +809,10 @@ function DraggableToken({
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
+          style={getKangurMobileDragHandleStyle(
+            provided.draggableProps.style,
+            isCoarsePointer
+          )}
           type='button'
           className={cn(
             'rounded-[16px] border px-3 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',

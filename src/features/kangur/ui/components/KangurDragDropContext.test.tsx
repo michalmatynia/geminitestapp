@@ -9,6 +9,7 @@ import { KangurDragDropContext } from './KangurDragDropContext';
 
 let capturedDragStart: ((...args: unknown[]) => void) | null = null;
 let capturedDragEnd: ((...args: unknown[]) => void) | null = null;
+let capturedBeforeDragStart: ((...args: unknown[]) => void) | null = null;
 
 const lockMock = vi.fn();
 const unlockMock = vi.fn();
@@ -25,13 +26,16 @@ vi.mock('@/features/kangur/ui/hooks/useKangurMobileInteractionScrollLock', () =>
 vi.mock('@hello-pangea/dnd', () => ({
   DragDropContext: ({
     children,
+    onBeforeDragStart,
     onDragStart,
     onDragEnd,
   }: {
     children: React.ReactNode;
+    onBeforeDragStart?: (...args: unknown[]) => void;
     onDragStart?: (...args: unknown[]) => void;
     onDragEnd?: (...args: unknown[]) => void;
   }) => {
+    capturedBeforeDragStart = onBeforeDragStart || null;
     capturedDragStart = onDragStart || null;
     capturedDragEnd = onDragEnd || null;
     return <div>{children}</div>;
@@ -42,25 +46,37 @@ describe('KangurDragDropContext', () => {
   beforeEach(() => {
     lockMock.mockClear();
     unlockMock.mockClear();
+    capturedBeforeDragStart = null;
     capturedDragStart = null;
     capturedDragEnd = null;
   });
 
-  it('locks mobile scroll while dragging and unlocks after drop', () => {
+  it('locks mobile scroll before dragging begins and unlocks after drop', () => {
+    const customBeforeDragStart = vi.fn();
     const customDragStart = vi.fn();
     const customDragEnd = vi.fn();
 
     render(
-      <KangurDragDropContext onDragStart={customDragStart} onDragEnd={customDragEnd}>
+      <KangurDragDropContext
+        onBeforeDragStart={customBeforeDragStart}
+        onDragStart={customDragStart}
+        onDragEnd={customDragEnd}
+      >
         <div data-testid='child' />
       </KangurDragDropContext>
     );
 
     act(() => {
-      capturedDragStart?.({});
+      capturedBeforeDragStart?.({});
     });
 
     expect(lockMock).toHaveBeenCalledTimes(1);
+    expect(customBeforeDragStart).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      capturedDragStart?.({});
+    });
+
     expect(customDragStart).toHaveBeenCalledTimes(1);
 
     act(() => {

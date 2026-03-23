@@ -78,6 +78,7 @@ describe('EnglishPartsOfSpeechGame touch interactions', () => {
 
     const token = screen.getByRole('button', { name: 'equation' });
     expect(token).toHaveClass('touch-manipulation');
+    expect(token).toHaveStyle({ touchAction: 'none' });
 
     fireEvent.click(token);
 

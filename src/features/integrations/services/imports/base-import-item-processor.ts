@@ -3,7 +3,7 @@ import path from 'path';
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
 import { mapBaseProduct } from '@/features/integrations/services/imports/base-mapper';
 import { applyBaseParameterImport } from '@/features/integrations/services/imports/parameter-import/apply';
-import { CachedProductService } from '@/features/products/server';
+import { emitProductCacheInvalidation } from '@/shared/events/products';
 import {
   findProductListingByProductAndConnectionAcrossProviders,
   getProductListingRepository,

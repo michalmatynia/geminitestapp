@@ -4,7 +4,10 @@ import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
+import {
+  KangurDragDropContext,
+  getKangurMobileDragHandleStyle,
+} from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import {
   KangurPracticeGameProgress,
@@ -26,6 +29,7 @@ import {
   KangurStatusChip,
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
+import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_CENTER_ROW_SPACED_CLASSNAME,
@@ -582,6 +586,10 @@ export default function EnglishSentenceStructureGame({
                               ref={draggableProvided.innerRef}
                               {...draggableProvided.draggableProps}
                               {...draggableProvided.dragHandleProps}
+                              style={getKangurMobileDragHandleStyle(
+                                draggableProvided.draggableProps.style,
+                                isCoarsePointer
+                              )}
                               type='button'
                               className={cn(
                                 KANGUR_CENTER_ROW_SPACED_CLASSNAME,
@@ -666,15 +674,18 @@ export default function EnglishSentenceStructureGame({
           </KangurInfoCard>
         )}
         <div className={KANGUR_WRAP_ROW_CLASSNAME}>
-          <KangurButton
+          <KangurCheckButton
             onClick={() => handleCheck()}
             disabled={!isReady || isChecking}
             aria-busy={isChecking}
+            feedbackTone={
+              feedback?.kind === 'success' ? 'success' : feedback?.kind === 'error' ? 'error' : null
+            }
           >
             {isChecking
               ? translations('englishSentenceStructure.inRound.checking')
               : translations('englishSentenceStructure.inRound.check')}
-          </KangurButton>
+          </KangurCheckButton>
           <KangurButton onClick={handleRestart} variant='ghost'>
             {translations('shared.restart')}
           </KangurButton>

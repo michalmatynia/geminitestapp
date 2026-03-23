@@ -1,39 +1,21 @@
 {
-  "generatedAt": "2026-03-22T15:42:07.796Z",
-  "status": "warn",
+  "generatedAt": "2026-03-23T08:53:09.682Z",
+  "status": "passed",
   "summary": {
-    "total": 1,
+    "total": 0,
     "errorCount": 0,
-    "warningCount": 1,
+    "warningCount": 0,
     "infoCount": 0,
-    "status": "warn",
-    "fileCount": 941,
-    "totalHandlers": 893,
-    "validatedHandlers": 893,
+    "status": "passed",
+    "fileCount": 943,
+    "totalHandlers": 895,
+    "validatedHandlers": 895,
     "coveragePercent": 100
   },
   "scope": {
     "root": "src/app/api"
   },
-  "issues": [
-    {
-      "severity": "warn",
-      "ruleId": "url-param-unvalidated",
-      "message": "Dynamic route param \"id\" is used without Zod validation.",
-      "file": "src/app/api/v2/products/categories/[id]/handler.ts",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    }
-  ],
-  "rules": [
-    {
-      "ruleId": "url-param-unvalidated",
-      "errorCount": 0,
-      "warningCount": 1,
-      "infoCount": 0
-    }
-  ],
-  "durationMs": 82
+  "issues": [],
+  "rules": [],
+  "durationMs": 64
 }

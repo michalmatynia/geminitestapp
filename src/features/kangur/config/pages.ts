@@ -9,15 +9,31 @@ import { KangurRouteLoadingFallback } from '@/features/kangur/ui/components/Kang
 const KangurLazyPageLoadingFallback =
   KangurRouteLoadingFallback as ComponentType<{ includeTopNavigationSkeleton?: boolean }>;
 
-const PageLoadingFallback = (): ReactElement =>
+const MainPageLoadingFallback = (): ReactElement =>
   createElement(KangurLazyPageLoadingFallback, { includeTopNavigationSkeleton: false });
 
-const lazyPage = (loader: () => Promise<{ default: ComponentType }>) =>
-  dynamic(loader, { loading: PageLoadingFallback });
+const SecondaryPageLoadingFallback = (): ReactElement =>
+  createElement(KangurLazyPageLoadingFallback, { includeTopNavigationSkeleton: true });
+
+const lazyPage = (
+  loader: () => Promise<{ default: ComponentType }>,
+  {
+    includeTopNavigationSkeleton = true,
+  }: {
+    includeTopNavigationSkeleton?: boolean;
+  } = {}
+) =>
+  dynamic(loader, {
+    loading: includeTopNavigationSkeleton
+      ? SecondaryPageLoadingFallback
+      : MainPageLoadingFallback,
+  });
 
 export const kangurPages: Readonly<Record<string, ComponentType>> = Object.freeze({
   Competition: lazyPage(() => import('@/features/kangur/ui/pages/Competition')),
-  Game: lazyPage(() => import('@/features/kangur/ui/pages/Game')),
+  Game: lazyPage(() => import('@/features/kangur/ui/pages/Game'), {
+    includeTopNavigationSkeleton: false,
+  }),
   Duels: lazyPage(() => import('@/features/kangur/ui/pages/Duels')),
   LearnerProfile: lazyPage(() => import('@/features/kangur/ui/pages/LearnerProfile')),
   Lessons: lazyPage(() => import('@/features/kangur/ui/pages/Lessons')),

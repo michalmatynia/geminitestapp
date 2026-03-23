@@ -11,11 +11,18 @@ describe('KangurPanelCloseButton', () => {
   it('uses a touch-friendly icon close target', () => {
     render(<KangurPanelCloseButton aria-label='Zamknij panel' />);
 
-    expect(screen.getByRole('button', { name: 'Zamknij panel' })).toHaveClass(
+    const closeButton = screen.getByRole('button', { name: 'Zamknij panel' });
+
+    expect(closeButton).toHaveClass(
+      'inline-flex',
+      'items-center',
+      'justify-center',
+      'leading-none',
       'touch-manipulation',
       'select-none',
       'min-h-11',
       'min-w-11'
     );
+    expect(closeButton.firstElementChild).toHaveClass('block');
   });
 });

@@ -1,7 +1,11 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
+
+import { KANGUR_BASE_PATH, KANGUR_MAIN_PAGE_KEY } from '@/features/kangur/config/routing';
 import { KangurRouteLoadingFallback } from '@/features/kangur/ui/components/KangurRouteLoadingFallback';
 import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
+import { resolveManagedKangurPageKeyFromHref } from '@/features/kangur/ui/routing/managed-paths';
 
 const GenericFrontendLoadingFallback = (): React.JSX.Element => (
   <div
@@ -23,11 +27,43 @@ const GenericFrontendLoadingFallback = (): React.JSX.Element => (
   </div>
 );
 
-export function FrontendRouteLoadingFallback(): React.JSX.Element {
+const resolveKangurBasePath = (pathname: string | null): string => {
+  if (typeof pathname !== 'string') {
+    return '/';
+  }
+
+  const trimmed = pathname.trim();
+  if (!trimmed) {
+    return '/';
+  }
+
+  return trimmed === KANGUR_BASE_PATH || trimmed.startsWith(`${KANGUR_BASE_PATH}/`)
+    ? KANGUR_BASE_PATH
+    : '/';
+};
+
+const resolveAutoIncludeTopNavigationSkeleton = (pathname: string | null): boolean => {
+  const basePath = resolveKangurBasePath(pathname);
+  const resolvedPageKey = resolveManagedKangurPageKeyFromHref(pathname ?? '/', basePath);
+  return (resolvedPageKey ?? KANGUR_MAIN_PAGE_KEY) !== KANGUR_MAIN_PAGE_KEY;
+};
+
+export function FrontendRouteLoadingFallback({
+  includeTopNavigationSkeleton,
+}: {
+  includeTopNavigationSkeleton?: boolean;
+} = {}): React.JSX.Element {
   const publicOwnerContext = useOptionalFrontendPublicOwner();
+  const pathname = usePathname();
+  const resolvedIncludeTopNavigationSkeleton =
+    includeTopNavigationSkeleton ?? resolveAutoIncludeTopNavigationSkeleton(pathname);
 
   if (publicOwnerContext?.publicOwner === 'kangur') {
-    return <KangurRouteLoadingFallback includeTopNavigationSkeleton={false} />;
+    return (
+      <KangurRouteLoadingFallback
+        includeTopNavigationSkeleton={resolvedIncludeTopNavigationSkeleton}
+      />
+    );
   }
 
   return <GenericFrontendLoadingFallback />;

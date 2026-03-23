@@ -1,4 +1,4 @@
-import KangurAppLayout from '../../../../(frontend)/kangur/(app)/layout';
+import KangurAppLayout from '@/app/(frontend)/kangur/(app)/layout';
 
 type LocalizedKangurAppLayoutProps = {
   children: React.ReactNode;

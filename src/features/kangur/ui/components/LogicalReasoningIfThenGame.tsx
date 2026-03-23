@@ -4,12 +4,16 @@ import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
+import {
+  KangurDragDropContext,
+  getKangurMobileDragHandleStyle,
+} from '@/features/kangur/ui/components/KangurDragDropContext';
 import {
   KangurButton,
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_STACK_TIGHT_CLASSNAME,
@@ -252,6 +256,10 @@ function DraggableCase({
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
+            style={getKangurMobileDragHandleStyle(
+              provided.draggableProps.style,
+              isCoarsePointer
+            )}
             className={cn(
               'w-full cursor-grab text-left active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white touch-manipulation',
               !checked && isCoarsePointer && 'min-h-[4.5rem]',
@@ -613,14 +621,15 @@ export default function LogicalReasoningIfThenGame({
         </div>
 
         <div className='flex flex-wrap items-center kangur-panel-gap'>
-          <KangurButton
+          <KangurCheckButton
             disabled={!allPlaced || checked}
             onClick={evaluate}
             size='sm'
             variant='primary'
+            feedbackTone={attempted ? (score === total ? 'success' : 'error') : null}
           >
             {copy.actions.check}
-          </KangurButton>
+          </KangurCheckButton>
           <KangurButton onClick={reset} size='sm' type='button' variant='surface'>
             {copy.actions.reset}
           </KangurButton>

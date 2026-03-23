@@ -839,16 +839,15 @@ export function KangurPrimaryNavigation({
     />
   );
   const mobileNav = (
-    <KangurTopNavGroup label={navigationLabel} className='border-0 p-0'>
+    <KangurTopNavGroup label={navigationLabel}>
       <KangurButton
         aria-label={mobileMenuLabel}
         aria-controls={mobileMenuId}
         aria-haspopup='dialog'
         aria-expanded={isMobileMenuOpen}
-        className={`glass-panel w-full justify-center rounded-[30px] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] ${
-          isCoarsePointer ? 'min-h-12' : ''
-        }`}
+        className={isCoarsePointer ? 'min-h-12 px-4 py-3' : 'px-4 py-3'}
         data-testid='kangur-primary-nav-mobile-toggle'
+        fullWidth
         onClick={toggleMobileMenu}
         size='md'
         type='button'

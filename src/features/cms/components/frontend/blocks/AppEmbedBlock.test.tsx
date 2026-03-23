@@ -5,7 +5,7 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildKangurEmbeddedBasePath } from '@/features/kangur/public';
+import { buildKangurEmbeddedBasePath } from '@/shared/lib/kangur-bridge';
 
 const { kangurAdapterTestDouble, usePathnameMock, useSearchParamsMock } = vi.hoisted(() => ({
   kangurAdapterTestDouble: {
@@ -86,7 +86,7 @@ vi.mock('next/navigation', () => ({
   useSearchParams: useSearchParamsMock,
 }));
 
-vi.mock('@/features/kangur/public', async () => {
+vi.mock('@/shared/lib/kangur-bridge', async () => {
   return {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     ...kangurAdapterTestDouble,

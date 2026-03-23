@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-22'
+last_reviewed: '2026-03-23'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,16 +8,16 @@ canonical: true
 ---
 # Import Boundaries Check
 
-Generated at: 2026-03-22T15:42:07.455Z
+Generated at: 2026-03-23T08:53:09.386Z
 
 ## Summary
 
-- Status: WARN
-- Files scanned: 5674
+- Status: PASSED
+- Files scanned: 5680
 - Features tracked: 10
 - Circular dependencies: 0
 - Errors: 0
-- Warnings: 12
+- Warnings: 0
 - Info: 0
 
 ## Feature Dependency Graph
@@ -25,12 +25,12 @@ Generated at: 2026-03-22T15:42:07.455Z
 | Feature | Dependencies | Count |
 | --- | --- | ---: |
 | kangur | ai, cms, document-editor, files, foldertree, integrations | 6 |
-| case-resolver | ai, case-resolver-capture, document-editor, filemaker, foldertree | 5 |
 | cms | files, foldertree, gsap, products, viewer3d | 5 |
+| products | ai, files, foldertree, integrations, internationalization | 5 |
 | admin | ai, foldertree, products, prompt-engine | 4 |
 | ai | files, foldertree, observability, viewer3d | 4 |
-| products | ai, files, foldertree, internationalization | 4 |
-| integrations | data-import-export, product-sync, products | 3 |
+| case-resolver | ai, document-editor, filemaker, foldertree | 4 |
+| integrations | data-import-export, product-sync | 2 |
 | notesapp | document-editor, foldertree | 2 |
 | drafter | products | 1 |
 | prompt-exploder | foldertree | 1 |
@@ -39,24 +39,10 @@ Generated at: 2026-03-22T15:42:07.455Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| deep-relative-import | 0 | 12 | 0 |
 
 ## Issues
 
-| Severity | Rule | Location | Message |
-| --- | --- | --- | --- |
-| WARN | deep-relative-import | src/app/[locale]/(frontend)/[...slug]/page.tsx:13 | Deep relative import (3 levels up). Consider using path aliases. |
-| WARN | deep-relative-import | src/app/[locale]/(frontend)/[...slug]/page.tsx:14 | Deep relative import (3 levels up). Consider using path aliases. |
-| WARN | deep-relative-import | src/app/[locale]/(frontend)/[...slug]/page.tsx:18 | Deep relative import (3 levels up). Consider using path aliases. |
-| WARN | deep-relative-import | src/app/[locale]/(frontend)/kangur/(app)/layout.tsx:1 | Deep relative import (4 levels up). Consider using path aliases. |
-| WARN | deep-relative-import | src/app/[locale]/(frontend)/kangur/error.tsx:3 | Deep relative import (3 levels up). Consider using path aliases. |
-| WARN | deep-relative-import | src/app/[locale]/(frontend)/kangur/layout.tsx:1 | Deep relative import (3 levels up). Consider using path aliases. |
-| WARN | deep-relative-import | src/app/[locale]/(frontend)/kangur/login/page.tsx:13 | Deep relative import (4 levels up). Consider using path aliases. |
-| WARN | deep-relative-import | src/app/[locale]/(frontend)/preview/[id]/page.tsx:1 | Deep relative import (4 levels up). Consider using path aliases. |
-| WARN | deep-relative-import | src/app/[locale]/(frontend)/preview/foldertree-shell-runtime/page.tsx:1 | Deep relative import (4 levels up). Consider using path aliases. |
-| WARN | deep-relative-import | src/app/[locale]/(frontend)/products/[id]/page.tsx:5 | Deep relative import (4 levels up). Consider using path aliases. |
-| WARN | deep-relative-import | src/app/[locale]/auth/register/page.tsx:1 | Deep relative import (3 levels up). Consider using path aliases. |
-| WARN | deep-relative-import | src/app/[locale]/auth/signin/page.tsx:1 | Deep relative import (3 levels up). Consider using path aliases. |
+No import boundary issues detected.
 
 ## Notes
 

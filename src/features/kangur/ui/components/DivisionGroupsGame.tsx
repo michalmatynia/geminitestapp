@@ -5,7 +5,10 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
+import {
+  KangurDragDropContext,
+  getKangurMobileDragHandleStyle,
+} from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import {
   KangurPracticeGameProgress,
@@ -31,6 +34,7 @@ import {
   KangurInfoCard,
   KangurPanelRow,
 } from '@/features/kangur/ui/design/primitives';
+import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_STACK_TIGHT_CLASSNAME,
@@ -198,6 +202,10 @@ function DraggableToken({
             ref={draggableProvided.innerRef}
             {...draggableProvided.draggableProps}
             {...draggableProvided.dragHandleProps}
+            style={getKangurMobileDragHandleStyle(
+              draggableProvided.draggableProps.style,
+              isCoarsePointer
+            )}
             className={cn(
               'flex items-center justify-center rounded-full touch-manipulation select-none transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white active:scale-[0.97]',
               isCoarsePointer
@@ -936,16 +944,19 @@ export default function DivisionGroupsGame({
                     </div>
                   </KangurInfoCard>
                   <KangurPanelRow className='items-center sm:justify-between'>
-                    <KangurButton
+                    <KangurCheckButton
                       className='w-full sm:w-auto sm:min-w-[180px]'
                       onClick={handleCheck}
                       size='md'
                       type='button'
                       variant='surface'
+                      feedbackTone={
+                        status === 'correct' ? 'success' : status === 'wrong' ? 'error' : null
+                      }
                       disabled={isLocked}
                     >
                       Sprawdź
-                    </KangurButton>
+                    </KangurCheckButton>
                     <p
                       className={cn(
                         'text-sm font-semibold sm:text-base sm:text-left sm:max-w-md',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, type QueryCacheNotifyEvent } from '@tanstack/react-query';
 import { useEffect, useCallback, useRef } from 'react';
 
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
@@ -51,10 +51,9 @@ export function useQuerySync(configs: SyncConfig[]): void {
   // Sync data to localStorage when query cache changes (not on every render)
   useEffect((): (() => void) => {
     const queryCache = queryClient.getQueryCache();
-    const unsubscribe = queryCache.subscribe((event) => {
+    const unsubscribe = queryCache.subscribe((event: QueryCacheNotifyEvent) => {
       if (event.type !== 'updated' || event.action.type !== 'success') return;
-      const updatedKey = event.query.queryKey;
-      const updatedKeyStr = JSON.stringify(updatedKey);
+      const updatedKeyStr = JSON.stringify(event.query.queryKey);
       const matchingConfig = configsRef.current.find(
         (config: SyncConfig) =>
           config.enabled !== false && JSON.stringify(config.queryKey) === updatedKeyStr

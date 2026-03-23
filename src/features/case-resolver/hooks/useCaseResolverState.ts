@@ -7,7 +7,7 @@ import {
   CASE_RESOLVER_CAPTURE_SETTINGS_KEY,
   parseCaseResolverCaptureSettings,
   type CaseResolverCaptureSettings as CaseResolverCaptureSettingsType,
-} from '@/features/case-resolver-capture/public';
+} from '@/features/case-resolver/capture/public';
 import {
   FILEMAKER_DATABASE_KEY,
   parseFilemakerDatabase,

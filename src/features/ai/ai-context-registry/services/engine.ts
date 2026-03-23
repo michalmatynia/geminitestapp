@@ -51,11 +51,21 @@ const dedupeNodes = (nodes: ContextNode[]): ContextNode[] => {
 };
 
 export class ContextRegistryEngine {
+  private readonly runtimeProviders: RuntimeContextProvider[];
+
   constructor(
     private readonly backend: ContextRegistryBackend,
     private readonly retrievalService: ContextRetrievalService,
-    private readonly runtimeProviders: readonly RuntimeContextProvider[]
-  ) {}
+    initialProviders: readonly RuntimeContextProvider[] = []
+  ) {
+    this.runtimeProviders = [...initialProviders];
+  }
+
+  registerProvider(provider: RuntimeContextProvider): void {
+    if (!this.runtimeProviders.find((p) => p.id === provider.id)) {
+      this.runtimeProviders.push(provider);
+    }
+  }
 
   getVersion(): string {
     const providerVersions = this.runtimeProviders

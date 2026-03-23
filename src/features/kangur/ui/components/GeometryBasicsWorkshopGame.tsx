@@ -4,7 +4,10 @@ import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
 import { useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
+import {
+  KangurDragDropContext,
+  getKangurMobileDragHandleStyle,
+} from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import {
   KangurPracticeGameProgress,
@@ -251,6 +254,10 @@ function DraggableTile({
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
+            style={getKangurMobileDragHandleStyle(
+              provided.draggableProps.style,
+              isCoarsePointer
+            )}
             className={buildTileClassName({
               accent: tile.accent,
               isSelected,

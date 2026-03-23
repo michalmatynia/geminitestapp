@@ -75,6 +75,7 @@ describe('LogicalPatternsWorkshopGame touch interactions', () => {
     const pool = screen.getByTestId('logical-patterns-pool');
     const diamondTile = within(pool).getByRole('button', { name: 'Kafelek: symbol 🔷' });
     expect(diamondTile).toHaveClass('touch-manipulation');
+    expect(diamondTile).toHaveStyle({ touchAction: 'none' });
     expect(diamondTile).toHaveClass('min-h-[4rem]');
 
     fireEvent.click(diamondTile);

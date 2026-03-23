@@ -5,8 +5,8 @@ import React, { createContext, useContext, useMemo } from 'react';
 import type {
   CaseResolverCaptureProposalState,
   CaseResolverCaptureDocumentDateAction,
-} from '@/features/case-resolver-capture/public';
-import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture/public';
+} from '@/features/case-resolver/capture/public';
+import type { CaseResolverCaptureAction } from '@/features/case-resolver/capture/public';
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type {
   CaseResolverGraph,

@@ -46,7 +46,7 @@ describe('kangur page config', () => {
     expect(KANGUR_MAIN_PAGE).toBe('Game');
   });
 
-  it('uses the Kangur route loading fallback for every lazy page', () => {
+  it('uses the inline main-page loader only for Game and the navbar skeleton for the rest', () => {
     expect(Object.keys(kangurPages)).toEqual([
       'Competition',
       'Game',
@@ -59,21 +59,47 @@ describe('kangur page config', () => {
     ]);
     expect(dynamicCalls).toHaveLength(8);
 
-    const sharedLoadingFallback = dynamicCalls[0]?.loading;
-    expect(sharedLoadingFallback).toBeTypeOf('function');
-    expect(dynamicCalls.every((call) => call.loading === sharedLoadingFallback)).toBe(true);
+    const competitionLoadingFallback = dynamicCalls[0]?.loading;
+    const gameLoadingFallback = dynamicCalls[1]?.loading;
 
-    const SharedLoadingFallback = sharedLoadingFallback;
-    if (!SharedLoadingFallback) {
-      throw new Error('Expected a shared loading fallback component.');
+    expect(competitionLoadingFallback).toBeTypeOf('function');
+    expect(gameLoadingFallback).toBeTypeOf('function');
+    expect(gameLoadingFallback).not.toBe(competitionLoadingFallback);
+
+    const nonMainPageLoadingFallbacks = dynamicCalls
+      .filter((_call, index) => index !== 1)
+      .map((call) => call.loading);
+    expect(nonMainPageLoadingFallbacks.every((loading) => loading === competitionLoadingFallback)).toBe(
+      true
+    );
+
+    const MainPageLoadingFallback = gameLoadingFallback;
+    if (!MainPageLoadingFallback) {
+      throw new Error('Expected the Game loading fallback component.');
     }
 
-    render(<SharedLoadingFallback />);
+    render(<MainPageLoadingFallback />);
 
     expect(screen.getByTestId('kangur-route-loading-fallback-probe')).toBeInTheDocument();
     expect(routeLoadingFallbackMock).toHaveBeenCalledTimes(1);
     expect(routeLoadingFallbackMock).toHaveBeenCalledWith({
       includeTopNavigationSkeleton: false,
+    });
+
+    cleanup();
+    routeLoadingFallbackMock.mockReset();
+
+    const NonMainPageLoadingFallback = competitionLoadingFallback;
+    if (!NonMainPageLoadingFallback) {
+      throw new Error('Expected the shared non-main loading fallback component.');
+    }
+
+    render(<NonMainPageLoadingFallback />);
+
+    expect(screen.getByTestId('kangur-route-loading-fallback-probe')).toBeInTheDocument();
+    expect(routeLoadingFallbackMock).toHaveBeenCalledTimes(1);
+    expect(routeLoadingFallbackMock).toHaveBeenCalledWith({
+      includeTopNavigationSkeleton: true,
     });
   });
 });

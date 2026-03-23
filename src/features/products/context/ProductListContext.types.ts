@@ -226,11 +226,6 @@ export interface ProductListActionsContextType {
   onDuplicateProduct: (row: ProductWithImages) => void;
   onIntegrationsClick: (row: ProductWithImages) => void;
   onExportSettingsClick: (row: ProductWithImages) => void;
-  integrationBadgeIds: Set<string>;
-  integrationBadgeStatuses: Map<string, string>;
-  traderaBadgeIds: Set<string>;
-  traderaBadgeStatuses: Map<string, string>;
-  queuedProductIds: Set<string>;
   categoryNameById: ReadonlyMap<string, string>;
   thumbnailSource: 'file' | 'link' | 'base64';
   imageExternalBaseUrl: string | null;
@@ -258,16 +253,18 @@ export interface ProductListRowVisualsContextType {
   productNameKey: 'name_en' | 'name_pl' | 'name_de';
   priceGroups: PriceGroupWithDetails[];
   currencyCode: string;
-  integrationBadgeIds: Set<string>;
-  integrationBadgeStatuses: Map<string, string>;
-  traderaBadgeIds: Set<string>;
-  traderaBadgeStatuses: Map<string, string>;
-  queuedProductIds: Set<string>;
-  productAiRunStatusByProductId?: ReadonlyMap<string, ProductAiRunFeedback> | undefined;
   categoryNameById: ReadonlyMap<string, string>;
   thumbnailSource: 'file' | 'link' | 'base64';
   showTriggerRunFeedback: boolean;
   imageExternalBaseUrl: string | null;
+}
+
+export interface ProductListRowRuntimeContextType {
+  showMarketplaceBadge: boolean;
+  integrationStatus: string;
+  showTraderaBadge: boolean;
+  traderaStatus: string;
+  productAiRunFeedback: ProductAiRunFeedback | null;
 }
 
 export interface ProductListModalsContextType {

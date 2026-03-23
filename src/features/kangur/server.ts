@@ -1,3 +1,5 @@
+import { contextRegistryEngine } from '@/features/ai/server';
+import { kangurRuntimeContextProvider } from '@/features/kangur/server/context-registry/kangur-ai-context-provider';
 import { registerSettingsProvider } from '@/shared/lib/db/settings-registry';
 import {
   deleteKangurSettingValue,
@@ -13,6 +15,9 @@ registerSettingsProvider({
   upsertValue: async (key, value) => Boolean(await upsertKangurSettingValue(key, value)),
   deleteValue: deleteKangurSettingValue,
 });
+
+// Register Kangur-specific context provider to shared AI Context Registry without circular dependencies
+contextRegistryEngine.registerProvider(kangurRuntimeContextProvider);
 
 export * from '@/features/kangur/services/kangur-progress-repository';
 export * from '@/features/kangur/services/kangur-score-repository';

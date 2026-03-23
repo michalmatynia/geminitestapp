@@ -4,7 +4,11 @@ import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useEffect, useMemo, useState } from 'react';
 
 import { cn } from '@/features/kangur/shared/utils';
-import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
+import {
+  KangurDragDropContext,
+  getKangurMobileDragHandleStyle,
+} from '@/features/kangur/ui/components/KangurDragDropContext';
+import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
 import { KangurButton, KangurInfoCard, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_GRID_TIGHT_CLASSNAME,
@@ -554,6 +558,10 @@ export default function LogicalThinkingLabGame({
                                 ref={dragProvided.innerRef}
                                 {...dragProvided.draggableProps}
                                 {...dragProvided.dragHandleProps}
+                                style={getKangurMobileDragHandleStyle(
+                                  dragProvided.draggableProps.style,
+                                  isCoarsePointer
+                                )}
                                 className={cn(
                                   'rounded-md px-1 text-2xl touch-manipulation select-none transition',
                                   isCoarsePointer && 'min-h-[3.75rem] min-w-[3.75rem] active:scale-[0.98]',
@@ -615,6 +623,10 @@ export default function LogicalThinkingLabGame({
                           ref={dragProvided.innerRef}
                           {...dragProvided.draggableProps}
                           {...dragProvided.dragHandleProps}
+                          style={getKangurMobileDragHandleStyle(
+                            dragProvided.draggableProps.style,
+                            isCoarsePointer
+                          )}
                           className={cn(
                             'rounded-xl bg-white px-3 py-2 text-2xl shadow-sm touch-manipulation select-none transition',
                             isCoarsePointer && 'min-h-[3.75rem] min-w-[3.75rem] active:scale-[0.98]',
@@ -759,6 +771,10 @@ export default function LogicalThinkingLabGame({
                                 ref={dragProvided.innerRef}
                                 {...dragProvided.draggableProps}
                                 {...dragProvided.dragHandleProps}
+                                style={getKangurMobileDragHandleStyle(
+                                  dragProvided.draggableProps.style,
+                                  isCoarsePointer
+                                )}
                                 className={cn(
                                   'rounded-xl bg-white px-3 py-2 shadow-sm touch-manipulation select-none transition',
                                   isCoarsePointer && 'min-h-[3.75rem] min-w-[3.75rem] active:scale-[0.98]',
@@ -819,6 +835,10 @@ export default function LogicalThinkingLabGame({
                           ref={dragProvided.innerRef}
                           {...dragProvided.draggableProps}
                           {...dragProvided.dragHandleProps}
+                          style={getKangurMobileDragHandleStyle(
+                            dragProvided.draggableProps.style,
+                            isCoarsePointer
+                          )}
                           className={cn(
                             'rounded-xl bg-white px-3 py-2 text-2xl shadow-sm touch-manipulation select-none transition',
                             isCoarsePointer && 'min-h-[3.75rem] min-w-[3.75rem] active:scale-[0.98]',
@@ -962,9 +982,15 @@ export default function LogicalThinkingLabGame({
       ) : null}
 
       <div className={KANGUR_WRAP_ROW_CLASSNAME}>
-        <KangurButton onClick={handleCheck} size='sm' type='button' variant='primary'>
+        <KangurCheckButton
+          onClick={handleCheck}
+          size='sm'
+          type='button'
+          variant='primary'
+          feedbackTone={feedback === 'success' ? 'success' : feedback === 'error' ? 'error' : null}
+        >
           {copy.actions.check}
-        </KangurButton>
+        </KangurCheckButton>
         {stage === 'pattern' && patternChecked ? (
           <>
             <KangurButton onClick={resetPattern} size='sm' type='button' variant='surface'>

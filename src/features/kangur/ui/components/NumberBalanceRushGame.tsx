@@ -4,7 +4,10 @@ import { Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
+import {
+  KangurDragDropContext,
+  getKangurMobileDragHandleStyle,
+} from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
@@ -170,6 +173,10 @@ function NumberTile({
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
+            style={getKangurMobileDragHandleStyle(
+              provided.draggableProps.style,
+              isCoarsePointer
+            )}
             type='button'
             className={cn(
               'flex items-center justify-center rounded-2xl border border-white/70 font-extrabold shadow-[0_12px_28px_-20px_rgba(15,23,42,0.45)] transition touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',

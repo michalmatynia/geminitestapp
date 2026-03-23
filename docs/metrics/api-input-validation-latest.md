@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-22'
+last_reviewed: '2026-03-23'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,29 +8,26 @@ canonical: true
 ---
 # API Input Validation Check
 
-Generated at: 2026-03-22T15:42:07.796Z
+Generated at: 2026-03-23T08:53:09.682Z
 
 ## Summary
 
-- Status: WARN
-- Files scanned: 941
-- Total handlers: 893
-- Validated handlers: 893
+- Status: PASSED
+- Files scanned: 943
+- Total handlers: 895
+- Validated handlers: 895
 - **Coverage: 100%**
 - Errors: 0
-- Warnings: 1
+- Warnings: 0
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| url-param-unvalidated | 0 | 1 | 0 |
 
 ## Issues
 
-| Severity | Rule | Location | Message |
-| --- | --- | --- | --- |
-| WARN | url-param-unvalidated | src/app/api/v2/products/categories/[id]/handler.ts | Dynamic route param "id" is used without Zod validation. |
+All API handlers have proper input validation.
 
 ## Notes
 

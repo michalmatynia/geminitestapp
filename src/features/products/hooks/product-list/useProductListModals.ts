@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 
 import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
 import type { Toast } from '@/shared/contracts/ui';
-import { useIntegrationOperations } from '@/features/integrations/product-integrations-adapter';
+import { useIntegrationOperations } from '@/features/integrations/public';
 
 export function useProductListModals({
   handleOpenCreateModal,

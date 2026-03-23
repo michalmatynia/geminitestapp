@@ -9,6 +9,10 @@ import { badRequestError, conflictError, notFoundError } from '@/shared/errors/a
 
 export { updateProductCategorySchema as productCategoryUpdateSchema };
 
+export const paramsSchema = z.object({
+  id: z.string(),
+});
+
 /**
  * GET /api/v2/products/categories/[id]
  * Fetches a single product category by ID.

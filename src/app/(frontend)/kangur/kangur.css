@@ -1254,9 +1254,16 @@ body[data-kangur-shell='true'] {
       --kangur-pill-font-size: 13px;
       --kangur-pill-padding-y: 8px;
       --kangur-pill-padding-x: 12px;
-      --kangur-nav-group-radius: 26px;
       --kangur-segmented-control-radius: 24px;
       --kangur-segmented-item-radius: 16px;
+    }
+
+    .kangur-nav-group {
+      border-radius: min(var(--kangur-nav-group-radius, 20px), 22px);
+    }
+
+    .kangur-nav-item {
+      border-radius: min(var(--kangur-nav-item-radius, 18px), 18px);
     }
 
     .kangur-chat-panel-surface {

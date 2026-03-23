@@ -4,7 +4,10 @@ import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
+import {
+  KangurDragDropContext,
+  getKangurMobileDragHandleStyle,
+} from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import {
   KangurPracticeGameProgress,
@@ -665,6 +668,10 @@ export default function LogicalAnalogiesRelationGame({
                             ref={draggableProvided.innerRef}
                             {...draggableProvided.draggableProps}
                             {...draggableProvided.dragHandleProps}
+                            style={getKangurMobileDragHandleStyle(
+                              draggableProvided.draggableProps.style,
+                              isCoarsePointer
+                            )}
                             className={buildTokenClassName({
                               isSelected: selectedTokenId === token.id,
                               isDragging: snapshot.isDragging,
@@ -814,6 +821,10 @@ export default function LogicalAnalogiesRelationGame({
                                       ref={tokenProvided.innerRef}
                                       {...tokenProvided.draggableProps}
                                       {...tokenProvided.dragHandleProps}
+                                      style={getKangurMobileDragHandleStyle(
+                                        tokenProvided.draggableProps.style,
+                                        isCoarsePointer
+                                      )}
                                       className={buildTokenClassName({
                                         isSelected: false,
                                         isDragging: tokenSnapshot.isDragging,

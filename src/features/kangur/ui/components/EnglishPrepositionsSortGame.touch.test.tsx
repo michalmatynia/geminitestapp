@@ -77,6 +77,7 @@ describe('EnglishPrepositionsSortGame touch interactions', () => {
     const token = within(pool).getByRole('button', { name: '7:30' });
     expect(token).toHaveClass('touch-manipulation');
     expect(token).toHaveClass('min-h-[3.75rem]');
+    expect(token).toHaveStyle({ touchAction: 'none' });
 
     fireEvent.click(token);
 

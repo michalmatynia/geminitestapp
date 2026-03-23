@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import {
   parseCaseResolverCaptureSettings,
   DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS,
-} from '@/features/case-resolver-capture/settings';
+} from '@/features/case-resolver/capture/settings';
 
 describe('case-resolver-capture settings', () => {
   describe('parseCaseResolverCaptureSettings', () => {

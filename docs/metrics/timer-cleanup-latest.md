@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-22'
+last_reviewed: '2026-03-23'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,12 +8,12 @@ canonical: true
 ---
 # Timer Cleanup Check
 
-Generated at: 2026-03-22T15:42:09.093Z
+Generated at: 2026-03-23T08:53:10.743Z
 
 ## Summary
 
 - Status: PASSED
-- Files scanned: 2530
+- Files scanned: 2529
 - Errors: 0
 - Warnings: 0
 

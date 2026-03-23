@@ -80,6 +80,7 @@ describe('CalendarInteractiveGame touch interactions', () => {
 
     const monthChip = screen.getByTestId('calendar-season-month-chip');
     expect(monthChip).toHaveClass('touch-manipulation');
+    expect(monthChip).toHaveStyle({ touchAction: 'none' });
     expect(monthChip).toHaveClass('min-h-[4.5rem]');
 
     const winterButton = screen.getByTestId('calendar-season-3');

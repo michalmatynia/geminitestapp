@@ -27,6 +27,7 @@ import {
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_PANEL_GAP_CLASSNAME,
@@ -336,11 +337,14 @@ export default function EnglishPronounsWarmupGame({
           </KangurInfoCard>
         ) : null}
 
-        <KangurButton
+        <KangurCheckButton
           type='button'
           size='lg'
           variant='primary'
           className='w-full'
+          feedbackTone={
+            feedback?.kind === 'success' ? 'success' : feedback?.kind === 'error' ? 'error' : null
+          }
           disabled={!isReady || isChecking}
           onClick={handleCheck}
           data-testid='english-pronouns-warmup-check'
@@ -350,7 +354,7 @@ export default function EnglishPronounsWarmupGame({
             'englishPronounsWarmup.inRound.check',
             'Check ✓'
           )}
-        </KangurButton>
+        </KangurCheckButton>
       </KangurGlassPanel>
     </KangurPracticeGameStage>
   );

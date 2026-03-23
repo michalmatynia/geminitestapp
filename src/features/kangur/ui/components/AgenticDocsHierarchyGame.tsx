@@ -3,7 +3,11 @@
 import { Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { createPortal } from 'react-dom';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
-import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
+import {
+  KangurDragDropContext,
+  getKangurMobileDragHandleStyle,
+} from '@/features/kangur/ui/components/KangurDragDropContext';
+import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
 
 import { KangurButton, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import {
@@ -177,6 +181,10 @@ export default function AgenticDocsHierarchyGame({
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
+                        style={getKangurMobileDragHandleStyle(
+                          provided.draggableProps.style,
+                          isCoarsePointer
+                        )}
                         type='button'
                         className={cn(
                           'flex w-full items-start gap-3 rounded-[18px] border text-left shadow-[0_12px_24px_-20px_rgba(15,23,42,0.35)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white touch-manipulation',
@@ -237,9 +245,15 @@ export default function AgenticDocsHierarchyGame({
         </Droppable>
       </KangurDragDropContext>
       <div className={cn(KANGUR_CENTER_ROW_CLASSNAME, 'mt-3 flex-wrap justify-start gap-2')}>
-        <KangurButton size='sm' variant='primary' onClick={handleCheck} disabled={isComplete}>
+        <KangurCheckButton
+          size='sm'
+          variant='primary'
+          onClick={handleCheck}
+          disabled={isComplete}
+          feedbackTone={checked ? (isComplete ? 'success' : 'error') : null}
+        >
           Sprawdź
-        </KangurButton>
+        </KangurCheckButton>
         <KangurButton size='sm' variant='ghost' onClick={handleReset}>
           Reset
         </KangurButton>

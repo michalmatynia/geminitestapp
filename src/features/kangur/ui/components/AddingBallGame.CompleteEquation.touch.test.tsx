@@ -72,6 +72,7 @@ describe('CompleteEquation touch interactions', () => {
     const firstBall = within(pool).getAllByRole('button', { name: /Piłka:/i })[0];
 
     expect(firstBall).toHaveClass('touch-manipulation');
+    expect(firstBall).toHaveStyle({ touchAction: 'none' });
     fireEvent.click(firstBall);
 
     expect(screen.getByTestId('adding-ball-complete-touch-hint')).toHaveTextContent(

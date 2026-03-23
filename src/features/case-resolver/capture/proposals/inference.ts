@@ -11,7 +11,7 @@ import {
   findExistingFilemakerPartyReference,
   normalizeCaseResolverComparable,
   extractCaseResolverDocumentDate,
-} from '@/features/case-resolver-capture/case-resolver-capture-adapter';
+} from '@/features/case-resolver/public';
 
 import type {
   CaseResolverCaptureAction,

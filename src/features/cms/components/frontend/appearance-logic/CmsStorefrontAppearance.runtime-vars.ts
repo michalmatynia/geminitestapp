@@ -15,6 +15,12 @@ import {
   resolveChatRadius,
 } from './CmsStorefrontAppearance.chat-resolvers';
 
+const resolveKangurNavGroupRadius = (theme: ThemeSettings): number =>
+  Math.max(0, Math.min(theme.pillRadius + 10, theme.containerRadius + 8));
+
+const resolveKangurNavItemRadius = (theme: ThemeSettings): number =>
+  Math.max(0, Math.min(theme.pillRadius, theme.containerRadius + 6));
+
 export const resolveKangurRuntimeThemeVars = (theme: ThemeSettings): Record<string, string> => {
   const pagePadding = resolvePagePadding(theme);
   const panelPadding = resolvePanelPadding(theme);
@@ -25,6 +31,8 @@ export const resolveKangurRuntimeThemeVars = (theme: ThemeSettings): Record<stri
   const chatPadding = resolveChatPadding(theme);
   const chatHeaderPadding = resolveChatHeaderPadding(theme);
   const stackGap = resolveStackGap(theme);
+  const navGroupRadius = resolveKangurNavGroupRadius(theme);
+  const navItemRadius = resolveKangurNavItemRadius(theme);
 
   return {
     '--kangur-font-heading': theme.headingFont,
@@ -77,8 +85,8 @@ export const resolveKangurRuntimeThemeVars = (theme: ThemeSettings): Record<stri
     '--kangur-stack-gap-sm': toCssPx(stackGap.sm),
     '--kangur-stack-gap-md': toCssPx(stackGap.md),
     '--kangur-stack-gap-lg': toCssPx(stackGap.lg),
-    '--kangur-nav-group-radius': toCssPx(theme.pillRadius + 10),
-    '--kangur-nav-item-radius': toCssPx(theme.pillRadius),
+    '--kangur-nav-group-radius': toCssPx(navGroupRadius),
+    '--kangur-nav-item-radius': toCssPx(navItemRadius),
     '--kangur-segmented-control-radius': toCssPx(theme.pillRadius + 8),
     '--kangur-segmented-item-radius': toCssPx(Math.max(theme.pillRadius - 2, 0)),
     '--kangur-menu-item-radius': toCssPx(Math.max(theme.pillRadius - 4, 0)),

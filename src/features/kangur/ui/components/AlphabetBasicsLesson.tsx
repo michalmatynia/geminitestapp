@@ -11,6 +11,7 @@ import {
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KANGUR_STACK_ROOMY_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
@@ -525,15 +526,16 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
                   : translateAlphabetBasics(translations, 'actions.next', 'Dalej')}
               </KangurButton>
             ) : (
-              <KangurButton
+              <KangurCheckButton
                 className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
                 size='sm'
                 type='button'
                 variant='primary'
                 onClick={handleCheck}
+                feedbackTone={feedback?.kind === 'error' ? 'error' : null}
               >
                 {translateAlphabetBasics(translations, 'actions.check', 'Sprawdź')}
-              </KangurButton>
+              </KangurCheckButton>
             )}
           </div>
         </div>

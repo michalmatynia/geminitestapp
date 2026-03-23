@@ -1,8 +1,17 @@
 'use client';
 
-import { createContext, useContext, useMemo, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { resolveProductAiRunFeedbackForList } from '@/features/products/lib/product-ai-run-feedback';
 
 import type {
   ProductListActionsContextType,
@@ -12,6 +21,7 @@ import type {
   ProductListHeaderActionsContextType,
   ProductListModalsContextType,
   ProductListRowActionsContextType,
+  ProductListRowRuntimeContextType,
   ProductListRowVisualsContextType,
   ProductListSelectionContextType,
   ProductListTableContextType,
@@ -25,6 +35,7 @@ export type {
   ProductListHeaderActionsContextType,
   ProductListModalsContextType,
   ProductListRowActionsContextType,
+  ProductListRowRuntimeContextType,
   ProductListRowVisualsContextType,
   ProductListSelectionContextType,
   ProductListTableContextType,
@@ -40,7 +51,128 @@ const ProductListHeaderActionsContext = createContext<ProductListHeaderActionsCo
 );
 const ProductListRowActionsContext = createContext<ProductListRowActionsContextType | null>(null);
 const ProductListRowVisualsContext = createContext<ProductListRowVisualsContextType | null>(null);
+type ProductListRowRuntimeStoreState = Pick<
+  ProductListContextType,
+  | 'integrationBadgeIds'
+  | 'integrationBadgeStatuses'
+  | 'traderaBadgeIds'
+  | 'traderaBadgeStatuses'
+  | 'queuedProductIds'
+  | 'productAiRunStatusByProductId'
+>;
+
+type ProductListRowRuntimeStore = {
+  subscribe: (listener: () => void) => () => void;
+  getSnapshot: (
+    productId: string,
+    baseProductId: string | null | undefined
+  ) => ProductListRowRuntimeContextType;
+  setState: (nextState: ProductListRowRuntimeStoreState) => void;
+};
+
+const EMPTY_PRODUCT_LIST_ROW_RUNTIME_SNAPSHOT: ProductListRowRuntimeContextType = Object.freeze({
+  showMarketplaceBadge: false,
+  integrationStatus: 'not_started',
+  showTraderaBadge: false,
+  traderaStatus: 'not_started',
+  productAiRunFeedback: null,
+});
+
+const ProductListRowRuntimeStoreContext = createContext<ProductListRowRuntimeStore | null>(null);
 const ProductListModalsContext = createContext<ProductListModalsContextType | null>(null);
+
+const areProductAiRunFeedbacksEqual = (
+  left: ProductListRowRuntimeContextType['productAiRunFeedback'],
+  right: ProductListRowRuntimeContextType['productAiRunFeedback']
+): boolean => {
+  if (left === right) return true;
+  if (!left || !right) return false;
+
+  return (
+    left.runId === right.runId &&
+    left.status === right.status &&
+    left.updatedAt === right.updatedAt &&
+    left.label === right.label &&
+    left.variant === right.variant &&
+    left.badgeClassName === right.badgeClassName
+  );
+};
+
+const areProductListRowRuntimeSnapshotsEqual = (
+  left: ProductListRowRuntimeContextType,
+  right: ProductListRowRuntimeContextType
+): boolean =>
+  left.showMarketplaceBadge === right.showMarketplaceBadge &&
+  left.integrationStatus === right.integrationStatus &&
+  left.showTraderaBadge === right.showTraderaBadge &&
+  left.traderaStatus === right.traderaStatus &&
+  areProductAiRunFeedbacksEqual(left.productAiRunFeedback, right.productAiRunFeedback);
+
+const areProductListRowRuntimeStoreStatesEqual = (
+  left: ProductListRowRuntimeStoreState,
+  right: ProductListRowRuntimeStoreState
+): boolean =>
+  left.integrationBadgeIds === right.integrationBadgeIds &&
+  left.integrationBadgeStatuses === right.integrationBadgeStatuses &&
+  left.traderaBadgeIds === right.traderaBadgeIds &&
+  left.traderaBadgeStatuses === right.traderaBadgeStatuses &&
+  left.queuedProductIds === right.queuedProductIds &&
+  left.productAiRunStatusByProductId === right.productAiRunStatusByProductId;
+
+const createProductListRowRuntimeStore = (
+  initialState: ProductListRowRuntimeStoreState
+): ProductListRowRuntimeStore => {
+  let state = initialState;
+  const listeners = new Set<() => void>();
+  const snapshotCache = new Map<string, ProductListRowRuntimeContextType>();
+
+  return {
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    getSnapshot: (
+      productId: string,
+      baseProductId: string | null | undefined
+    ): ProductListRowRuntimeContextType => {
+      if (!productId) return EMPTY_PRODUCT_LIST_ROW_RUNTIME_SNAPSHOT;
+
+      const normalizedBaseProductId =
+        typeof baseProductId === 'string' && baseProductId.trim().length > 0
+          ? baseProductId.trim()
+          : '';
+      const cacheKey = `${productId}::${normalizedBaseProductId}`;
+
+      const nextSnapshot: ProductListRowRuntimeContextType = {
+        showMarketplaceBadge:
+          state.integrationBadgeIds.has(productId) || normalizedBaseProductId.length > 0,
+        integrationStatus:
+          state.integrationBadgeStatuses.get(productId) ??
+          (normalizedBaseProductId.length > 0 ? 'active' : 'not_started'),
+        showTraderaBadge: state.traderaBadgeIds.has(productId),
+        traderaStatus: state.traderaBadgeStatuses.get(productId) ?? 'not_started',
+        productAiRunFeedback: resolveProductAiRunFeedbackForList({
+          productId,
+          queuedProductIds: state.queuedProductIds,
+          productAiRunStatusByProductId: state.productAiRunStatusByProductId,
+        }),
+      };
+
+      const cachedSnapshot = snapshotCache.get(cacheKey);
+      if (cachedSnapshot && areProductListRowRuntimeSnapshotsEqual(cachedSnapshot, nextSnapshot)) {
+        return cachedSnapshot;
+      }
+
+      snapshotCache.set(cacheKey, nextSnapshot);
+      return nextSnapshot;
+    },
+    setState: (nextState: ProductListRowRuntimeStoreState) => {
+      if (areProductListRowRuntimeStoreStatesEqual(state, nextState)) return;
+      state = nextState;
+      listeners.forEach((listener: () => void) => listener());
+    },
+  };
+};
 
 export const useProductListFiltersContext = (): ProductListFiltersContextType => {
   const context = useContext(ProductListFiltersContext);
@@ -112,6 +244,22 @@ export const useProductListRowVisualsContext = (): ProductListRowVisualsContextT
   return context;
 };
 
+export const useProductListRowRuntime = (
+  productId: string,
+  baseProductId: string | null | undefined
+): ProductListRowRuntimeContextType => {
+  const store = useContext(ProductListRowRuntimeStoreContext);
+  if (!store) {
+    throw internalError('useProductListRowRuntime must be used within a ProductListProvider');
+  }
+
+  return useSyncExternalStore(
+    store.subscribe,
+    () => store.getSnapshot(productId, baseProductId),
+    () => store.getSnapshot(productId, baseProductId)
+  );
+};
+
 export const useProductListModalsContext = (): ProductListModalsContextType => {
   const context = useContext(ProductListModalsContext);
   if (!context) {
@@ -127,6 +275,38 @@ export function ProductListProvider({
   children: ReactNode;
   value: ProductListContextType;
 }) {
+  const rowRuntimeStoreRef = useRef<ProductListRowRuntimeStore | null>(null);
+  if (!rowRuntimeStoreRef.current) {
+    rowRuntimeStoreRef.current = createProductListRowRuntimeStore({
+      integrationBadgeIds: value.integrationBadgeIds,
+      integrationBadgeStatuses: value.integrationBadgeStatuses,
+      traderaBadgeIds: value.traderaBadgeIds,
+      traderaBadgeStatuses: value.traderaBadgeStatuses,
+      queuedProductIds: value.queuedProductIds,
+      productAiRunStatusByProductId: value.productAiRunStatusByProductId,
+    });
+  }
+  const rowRuntimeStore = rowRuntimeStoreRef.current;
+
+  useEffect(() => {
+    rowRuntimeStore.setState({
+      integrationBadgeIds: value.integrationBadgeIds,
+      integrationBadgeStatuses: value.integrationBadgeStatuses,
+      traderaBadgeIds: value.traderaBadgeIds,
+      traderaBadgeStatuses: value.traderaBadgeStatuses,
+      queuedProductIds: value.queuedProductIds,
+      productAiRunStatusByProductId: value.productAiRunStatusByProductId,
+    });
+  }, [
+    rowRuntimeStore,
+    value.integrationBadgeIds,
+    value.integrationBadgeStatuses,
+    value.traderaBadgeIds,
+    value.traderaBadgeStatuses,
+    value.queuedProductIds,
+    value.productAiRunStatusByProductId,
+  ]);
+
   const filtersValue = useMemo<ProductListFiltersContextType>(
     () => ({
       page: value.page,
@@ -299,11 +479,6 @@ export function ProductListProvider({
       onDuplicateProduct: value.onDuplicateProduct,
       onIntegrationsClick: value.onIntegrationsClick,
       onExportSettingsClick: value.onExportSettingsClick,
-      integrationBadgeIds: value.integrationBadgeIds,
-      integrationBadgeStatuses: value.integrationBadgeStatuses,
-      traderaBadgeIds: value.traderaBadgeIds,
-      traderaBadgeStatuses: value.traderaBadgeStatuses,
-      queuedProductIds: value.queuedProductIds,
       categoryNameById: value.categoryNameById,
       thumbnailSource: value.thumbnailSource,
       imageExternalBaseUrl: value.imageExternalBaseUrl,
@@ -323,11 +498,6 @@ export function ProductListProvider({
       value.onDuplicateProduct,
       value.onIntegrationsClick,
       value.onExportSettingsClick,
-      value.integrationBadgeIds,
-      value.integrationBadgeStatuses,
-      value.traderaBadgeIds,
-      value.traderaBadgeStatuses,
-      value.queuedProductIds,
       value.categoryNameById,
       value.thumbnailSource,
       value.imageExternalBaseUrl,
@@ -377,12 +547,6 @@ export function ProductListProvider({
       productNameKey: value.productNameKey,
       priceGroups: value.priceGroups,
       currencyCode: value.currencyCode,
-      integrationBadgeIds: value.integrationBadgeIds,
-      integrationBadgeStatuses: value.integrationBadgeStatuses,
-      traderaBadgeIds: value.traderaBadgeIds,
-      traderaBadgeStatuses: value.traderaBadgeStatuses,
-      queuedProductIds: value.queuedProductIds,
-      productAiRunStatusByProductId: value.productAiRunStatusByProductId,
       categoryNameById: value.categoryNameById,
       thumbnailSource: value.thumbnailSource,
       showTriggerRunFeedback: value.showTriggerRunFeedback,
@@ -392,12 +556,6 @@ export function ProductListProvider({
       value.productNameKey,
       value.priceGroups,
       value.currencyCode,
-      value.integrationBadgeIds,
-      value.integrationBadgeStatuses,
-      value.traderaBadgeIds,
-      value.traderaBadgeStatuses,
-      value.queuedProductIds,
-      value.productAiRunStatusByProductId,
       value.categoryNameById,
       value.thumbnailSource,
       value.showTriggerRunFeedback,
@@ -482,11 +640,13 @@ export function ProductListProvider({
             <ProductListActionsContext.Provider value={actionsValue}>
               <ProductListHeaderActionsContext.Provider value={headerActionsValue}>
                 <ProductListRowActionsContext.Provider value={rowActionsValue}>
-                  <ProductListRowVisualsContext.Provider value={rowVisualsValue}>
-                    <ProductListModalsContext.Provider value={modalsValue}>
-                      {children}
-                    </ProductListModalsContext.Provider>
-                  </ProductListRowVisualsContext.Provider>
+                  <ProductListRowRuntimeStoreContext.Provider value={rowRuntimeStore}>
+                    <ProductListRowVisualsContext.Provider value={rowVisualsValue}>
+                      <ProductListModalsContext.Provider value={modalsValue}>
+                        {children}
+                      </ProductListModalsContext.Provider>
+                    </ProductListRowVisualsContext.Provider>
+                  </ProductListRowRuntimeStoreContext.Provider>
                 </ProductListRowActionsContext.Provider>
               </ProductListHeaderActionsContext.Provider>
             </ProductListActionsContext.Provider>

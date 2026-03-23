@@ -10,9 +10,9 @@ import {
 import type {
   CaseResolverCaptureProposalState,
   CaseResolverCaptureProposal,
-} from '@/features/case-resolver-capture/public';
-import { stripAcceptedCaptureContentFromTextWithReport } from '@/features/case-resolver-capture/public';
-import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver-capture/public';
+} from '@/features/case-resolver/capture/public';
+import { stripAcceptedCaptureContentFromTextWithReport } from '@/features/case-resolver/capture/public';
+import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver/capture/public';
 import { deriveDocumentContentSync, toStorageDocumentValue } from '@/features/document-editor/public';
 import { FILEMAKER_DATABASE_KEY, normalizeFilemakerDatabase } from '@/features/filemaker/public';
 import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';

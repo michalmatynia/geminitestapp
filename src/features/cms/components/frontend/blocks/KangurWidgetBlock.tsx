@@ -48,7 +48,7 @@ import {
   useOptionalKangurLessonsRuntime,
   useOptionalKangurParentDashboardRuntime,
   useOptionalKangurRouting,
-} from '@/features/kangur/kangur-cms-adapter';
+} from '@/shared/lib/kangur-bridge';
 import { Card } from '@/shared/ui';
 
 import { useRequiredBlockSettings } from './BlockContext';

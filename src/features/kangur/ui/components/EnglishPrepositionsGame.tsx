@@ -27,6 +27,7 @@ import {
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_PANEL_GAP_CLASSNAME,
@@ -362,18 +363,6 @@ export default function EnglishPrepositionsGame({
         </KangurInfoCard>
 
         <div className={KANGUR_STACK_SPACED_CLASSNAME}>
-          {isCoarsePointer ? (
-            <p
-              data-testid='english-prepositions-touch-hint'
-              className='text-center text-xs font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'
-            >
-              {translateKangurMiniGameWithFallback(
-                translations,
-                'englishPrepositions.inRound.click.touchHint',
-                'Tap the preposition, then tap Check.'
-              )}
-            </p>
-          ) : null}
           <div className='rounded-[20px] border border-slate-200/80 bg-white px-4 py-3 text-sm font-semibold text-slate-700'>
             {round.question}
           </div>
@@ -389,7 +378,12 @@ export default function EnglishPrepositionsGame({
                     isCoarsePointer && 'min-h-[4.25rem] active:scale-[0.98]',
                     KANGUR_ACCENT_STYLES[round.accent].badge,
                     KANGUR_ACCENT_STYLES[round.accent].hoverCard,
-                    isSelected && 'ring-2 ring-emerald-400/70 ring-offset-1 ring-offset-transparent'
+                    isSelected &&
+                      cn(
+                        KANGUR_ACCENT_STYLES[round.accent].activeCard,
+                        KANGUR_ACCENT_STYLES[round.accent].activeText,
+                        'ring-2 ring-emerald-400/70 ring-offset-1 ring-offset-transparent'
+                      )
                   )}
                   aria-pressed={isSelected}
                   onClick={() => {
@@ -409,17 +403,20 @@ export default function EnglishPrepositionsGame({
           </KangurInfoCard>
         ) : null}
 
-        <KangurButton
+        <KangurCheckButton
           type='button'
           size='lg'
           variant='primary'
           className='w-full'
+          feedbackTone={
+            feedback?.kind === 'success' ? 'success' : feedback?.kind === 'error' ? 'error' : null
+          }
           disabled={!isReady || isChecking}
           onClick={handleCheck}
           data-testid='english-prepositions-check'
         >
           {translations('englishPrepositions.inRound.check')}
-        </KangurButton>
+        </KangurCheckButton>
       </KangurGlassPanel>
     </KangurPracticeGameStage>
   );

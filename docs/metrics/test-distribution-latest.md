@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-22'
+last_reviewed: '2026-03-23'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,17 +8,17 @@ canonical: true
 ---
 # Test Distribution Check
 
-Generated at: 2026-03-22T15:42:09.629Z
+Generated at: 2026-03-23T08:53:11.436Z
 
 ## Summary
 
 - Status: PASSED
-- Total features: 28
-- Features with tests: 28
+- Total features: 27
+- Features with tests: 27
 - Features without tests: 0
 - Features without fast tests: 0
 - Features without negative-path tests: 0
-- Total test files: 2151
+- Total test files: 2160
 - .only() occurrences: 0
 - .skip() occurrences: 32
 - .todo() occurrences: 0
@@ -27,25 +27,24 @@ Generated at: 2026-03-22T15:42:09.629Z
 
 | Feature | Test Files | Fast | E2E | Negative |
 | --- | ---: | ---: | ---: | ---: |
-| kangur | 499 | 483 | 16 | 96 |
+| kangur | 500 | 484 | 16 | 96 |
 | ai | 293 | 293 | 0 | 107 |
-| products | 102 | 95 | 7 | 32 |
-| case-resolver | 78 | 77 | 1 | 32 |
+| products | 103 | 96 | 7 | 32 |
+| case-resolver | 81 | 80 | 1 | 34 |
 | cms | 70 | 69 | 1 | 15 |
-| integrations | 48 | 47 | 1 | 16 |
+| integrations | 49 | 48 | 1 | 16 |
 | prompt-exploder | 47 | 47 | 0 | 24 |
 | foldertree | 28 | 26 | 2 | 7 |
-| observability | 25 | 24 | 1 | 4 |
+| observability | 26 | 25 | 1 | 4 |
 | admin | 17 | 14 | 3 | 4 |
 | database | 13 | 12 | 1 | 8 |
 | notesapp | 12 | 10 | 2 | 3 |
 | auth | 11 | 11 | 0 | 6 |
 | viewer3d | 8 | 7 | 1 | 3 |
 | filemaker | 7 | 7 | 0 | 3 |
-| jobs | 6 | 6 | 0 | 3 |
+| jobs | 7 | 7 | 0 | 3 |
 | files | 5 | 4 | 1 | 2 |
 | internationalization | 5 | 5 | 0 | 4 |
-| case-resolver-capture | 4 | 4 | 0 | 3 |
 | data-import-export | 4 | 3 | 1 | 1 |
 | document-editor | 4 | 4 | 0 | 1 |
 | drafter | 4 | 3 | 1 | 1 |

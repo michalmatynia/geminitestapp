@@ -95,7 +95,7 @@ function isoHomeLooksInitialized() {
 
 function buildGeminiArgs(model) {
   const canResume = resumeEnabledThisRun && isoHomeLooksInitialized();
-  const args = ["--approval-mode", "yolo", "-m", model];
+  const args = [model];
   if (canResume) args.push("--resume", "latest");
   if (RAW_OUTPUT) args.push("--raw-output", "--accept-raw-output-risk");
   return { args, canResume };

@@ -1,0 +1,1 @@
+import { EventEmitter } from 'events';\n\nexport const productCacheEvents = new EventEmitter();\n\nexport const emitProductCacheInvalidation = () => {\n  productCacheEvents.emit('invalidate-all');\n};

@@ -79,6 +79,7 @@ describe('AgenticDocsHierarchyGame touch interactions', () => {
     const previewBefore = screen.getByTestId('agentic-docs-hierarchy-list').textContent;
     const goalCard = screen.getByTestId('agentic-docs-hierarchy-item-goal');
     expect(goalCard).toHaveClass('touch-manipulation');
+    expect(goalCard).toHaveStyle({ touchAction: 'none' });
     expect(goalCard).toHaveClass('min-h-[5rem]');
 
     fireEvent.click(goalCard);

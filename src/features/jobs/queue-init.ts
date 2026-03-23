@@ -22,6 +22,33 @@ const STARTUP_GATED_QUEUE_NAMES = [
   'ai-insights',
   'tradera-relist-scheduler',
 ] as const;
+const KANGUR_SOCIAL_QUEUE_NAMES = [
+  'kangur-social-scheduler',
+  'kangur-social-pipeline',
+] as const;
+
+const parseEnvBoolean = (value: string | undefined): boolean | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+  return null;
+};
+
+export const shouldStartKangurSocialQueues = (
+  env: NodeJS.ProcessEnv = process.env
+): boolean => {
+  if (parseEnvBoolean(env['DISABLE_KANGUR_SOCIAL_WORKERS']) === true) {
+    return false;
+  }
+
+  const explicitEnable = parseEnvBoolean(env['ENABLE_KANGUR_SOCIAL_WORKERS']);
+  if (explicitEnable !== null) {
+    return explicitEnable;
+  }
+
+  return env['NODE_ENV'] === 'production';
+};
 
 const runStartupBackupSchedulerCatchup = (): void => {
   void (async (): Promise<void> => {
@@ -103,6 +130,11 @@ export const initializeQueues = (): void => {
       return;
     }
 
+    const shouldStartKangurSocial = shouldStartKangurSocialQueues();
+    const excludedQueueNames = shouldStartKangurSocial
+      ? [...STARTUP_GATED_QUEUE_NAMES]
+      : [...STARTUP_GATED_QUEUE_NAMES, ...KANGUR_SOCIAL_QUEUE_NAMES];
+
     // Import all queue modules to trigger registration via createManagedQueue
     const queueModules = await Promise.all([
       import('@/server/queues/product-ai'),
@@ -144,23 +176,35 @@ export const initializeQueues = (): void => {
         | (() => void)
         | undefined
     )?.();
-    (
-      (queueModules[15] as Record<string, unknown>)['startKangurSocialSchedulerQueue'] as
-        | (() => void)
-        | undefined
-    )?.();
-    (
-      (queueModules[15] as Record<string, unknown>)['startKangurSocialPipelineQueue'] as
-        | (() => void)
-        | undefined
-    )?.();
+    if (shouldStartKangurSocial) {
+      (
+        (queueModules[15] as Record<string, unknown>)['startKangurSocialSchedulerQueue'] as
+          | (() => void)
+          | undefined
+      )?.();
+      (
+        (queueModules[15] as Record<string, unknown>)['startKangurSocialPipelineQueue'] as
+          | (() => void)
+          | undefined
+      )?.();
+    } else {
+      void logSystemEvent({
+        level: 'info',
+        source: LOG_SOURCE,
+        message:
+          'Kangur social workers are disabled for this environment. Set ENABLE_KANGUR_SOCIAL_WORKERS=true to enable them.',
+        context: {
+          queueNames: [...KANGUR_SOCIAL_QUEUE_NAMES],
+        },
+      });
+    }
 
     void logSystemEvent({
       level: 'info',
       source: LOG_SOURCE,
       message: 'Starting BullMQ workers...',
     });
-    startAllWorkers({ excludeQueueNames: STARTUP_GATED_QUEUE_NAMES });
+    startAllWorkers({ excludeQueueNames: excludedQueueNames });
 
     // AI workers are started with feature-aware gates to avoid running disabled capabilities.
     (

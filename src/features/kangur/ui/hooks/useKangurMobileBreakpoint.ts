@@ -4,8 +4,16 @@ import { useEffect, useState } from 'react';
 
 const KANGUR_MOBILE_MEDIA_QUERY = '(max-width: 639px)';
 
+const resolveMobileViewport = (): boolean => {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return false;
+  }
+
+  return window.matchMedia(KANGUR_MOBILE_MEDIA_QUERY).matches && window.innerWidth <= 639;
+};
+
 export const useKangurMobileBreakpoint = (): boolean => {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean>(() => resolveMobileViewport());
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -14,8 +22,7 @@ export const useKangurMobileBreakpoint = (): boolean => {
 
     const media = window.matchMedia(KANGUR_MOBILE_MEDIA_QUERY);
     const applyBreakpoint = (matches: boolean): void => {
-      const width = typeof window !== 'undefined' ? window.innerWidth : 0;
-      setIsMobile(matches && width <= 639);
+      setIsMobile(matches && window.innerWidth <= 639);
     };
 
     applyBreakpoint(media.matches);

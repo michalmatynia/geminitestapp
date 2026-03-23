@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { KangurProgressState } from '@/features/kangur/ui/types';
@@ -299,10 +299,13 @@ describe('Game branding', () => {
     expect(await screen.findByTestId('kangur-home-actions-shell')).toBeInTheDocument();
 
     fireEvent.click(getFeaturedHomeAction('Kangur Matematyczny'));
+    const kangurSetupTopSection = await screen.findByTestId('kangur-game-kangur-setup-top-section');
+    expect(kangurSetupTopSection).toBeInTheDocument();
     expect(
-      await screen.findByRole('heading', { name: 'Konfiguracja sesji Kangura Matematycznego' })
+      within(kangurSetupTopSection).getByRole('heading', {
+        name: 'Konfiguracja sesji Kangura Matematycznego',
+      })
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
   });
 
   it('keeps the same back-navigation pattern for quick-practice screens inside Grajmy', async () => {

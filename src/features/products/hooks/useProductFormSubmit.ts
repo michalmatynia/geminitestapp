@@ -195,6 +195,11 @@ export function useProductFormSubmit({
   const { confirm, ConfirmationModal } = useConfirm();
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  // Track submitting state explicitly instead of relying on mutation.isPending.
+  // In TanStack Query v5, isPending stays true during async onSuccess callbacks
+  // (invalidation, cache patching) which can delay the UI from exiting "saving" state.
+  // The finally block guarantees this resets even if onSuccess hangs.
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const createMutation = useCreateProductMutation();
@@ -230,17 +235,18 @@ export function useProductFormSubmit({
       });
 
       const performSubmit = async () => {
+        setIsSubmitting(true);
         setUploadError(null);
         setUploadSuccess(false);
 
-        if (product && requireHydratedEditProduct && !isEditingProductHydrated(product)) {
-          const message = 'Product details are still loading. Wait a moment and try again.';
-          setUploadError(message);
-          toast(message, { variant: 'warning' });
-          return;
-        }
-
         try {
+          if (product && requireHydratedEditProduct && !isEditingProductHydrated(product)) {
+            const message = 'Product details are still loading. Wait a moment and try again.';
+            setUploadError(message);
+            toast(message, { variant: 'warning' });
+            return;
+          }
+
           const formData = buildFormData(
             data,
             imageSlots,
@@ -298,6 +304,8 @@ export function useProductFormSubmit({
           } else {
             setUploadError('An unknown error occurred');
           }
+        } finally {
+          setIsSubmitting(false);
         }
       };
 
@@ -338,7 +346,7 @@ export function useProductFormSubmit({
 
   return {
     handleSubmit: submitHandler,
-    uploading: createMutation.isPending || updateMutation.isPending,
+    uploading: isSubmitting,
     uploadError,
     uploadSuccess,
     ConfirmationModal,

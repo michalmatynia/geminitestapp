@@ -96,6 +96,28 @@ const fetchLiteSettings = async (): Promise<SettingRecord[]> => {
   return Array.from(merged.entries()).map(([key, value]) => ({ key, value }));
 };
 
+const createLiteSettingsInflight = (): Promise<SettingRecord[]> =>
+  fetchLiteSettings()
+    .then((rows: SettingRecord[]) => {
+      const safeRows = cloneLiteSettings(rows);
+      setLiteSettingsCache({ data: safeRows, ts: Date.now() });
+      return safeRows;
+    })
+    .finally(() => {
+      setLiteSettingsInflight(null);
+    });
+
+const getOrCreateLiteSettingsInflight = (): Promise<SettingRecord[]> => {
+  const existingInflight = getLiteSettingsInflight();
+  if (existingInflight) {
+    return existingInflight;
+  }
+
+  const nextInflight = createLiteSettingsInflight();
+  setLiteSettingsInflight(nextInflight);
+  return nextInflight;
+};
+
 export const clearLiteSettingsServerCache = (): void => {
   setLiteSettingsCache(null);
   setLiteSettingsInflight(null);
@@ -109,6 +131,23 @@ export const isLiteSettingsKey = (key: string): boolean => {
 export const querySchema = z.object({
   fresh: optionalBooleanQuerySchema(),
 });
+
+export const prewarmLiteSettingsServerCache = async (): Promise<void> => {
+  const now = Date.now();
+  const currentCache = getLiteSettingsCache();
+  if (currentCache && now - currentCache.ts <= LITE_SETTINGS_CACHE_TTL_MS) {
+    return;
+  }
+
+  try {
+    await getOrCreateLiteSettingsInflight();
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'api/settings/lite',
+      action: 'prewarmLiteSettingsServerCache',
+    });
+  }
+};
 
 export const GET_handler = async (
   _req: NextRequest,
@@ -144,20 +183,9 @@ export const GET_handler = async (
     return response;
   }
 
-  const nextInflight = fetchLiteSettings()
-    .then((rows: SettingRecord[]) => {
-      const safeRows = cloneLiteSettings(rows);
-      setLiteSettingsCache({ data: safeRows, ts: Date.now() });
-      return safeRows;
-    })
-    .finally(() => {
-      setLiteSettingsInflight(null);
-    });
-  setLiteSettingsInflight(nextInflight);
-
   const fetchStart = performance.now();
   try {
-    const data = await nextInflight;
+    const data = await getOrCreateLiteSettingsInflight();
     const response = NextResponse.json(cloneLiteSettings(data), {
       headers: { 'Cache-Control': 'no-store', 'X-Cache': forceFresh ? 'fresh' : 'miss' },
     });

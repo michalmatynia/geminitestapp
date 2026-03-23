@@ -72,6 +72,7 @@ type TrackRecord = {
 };
 
 const trackRecords = new Map<string, TrackRecord>();
+let stopTrackingEnvironmentListeners: (() => void) | null = null;
 
 const asTrimmedString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
@@ -192,6 +193,20 @@ const emitSnapshot = (record: TrackRecord): void => {
   });
 };
 
+const isTrackingDocumentVisible = (): boolean => {
+  if (typeof document === 'undefined') return true;
+  return document.visibilityState === 'visible';
+};
+
+const isTrackingWindowFocused = (): boolean => {
+  if (typeof document === 'undefined') return true;
+  if (typeof document.hasFocus !== 'function') return true;
+  return document.hasFocus();
+};
+
+const isTrackingEnvironmentActive = (): boolean =>
+  isTrackingDocumentVisible() && isTrackingWindowFocused();
+
 const clearPollTimer = (record: TrackRecord): void => {
   if (record.pollTimerId !== null) {
     clearTimeout(record.pollTimerId);
@@ -220,6 +235,10 @@ const cleanupRecord = (runId: string): void => {
   teardownStream(record);
   record.started = false;
   trackRecords.delete(runId);
+  if (trackRecords.size === 0) {
+    stopTrackingEnvironmentListeners?.();
+    stopTrackingEnvironmentListeners = null;
+  }
 };
 
 const finalizeRecord = (
@@ -510,6 +529,58 @@ const startStreaming = (record: TrackRecord): void => {
   }
 };
 
+const pauseRecord = (record: TrackRecord): void => {
+  clearPollTimer(record);
+  teardownStream(record);
+  record.started = false;
+};
+
+const resumeRecord = (record: TrackRecord): void => {
+  if (record.started || record.listeners.size === 0 || record.snapshot.trackingState === 'stopped') {
+    return;
+  }
+
+  if (typeof window !== 'undefined' && typeof window.EventSource === 'function') {
+    startStreaming(record);
+    return;
+  }
+
+  startPolling(record, 0);
+};
+
+const syncTrackingEnvironmentState = (): void => {
+  if (isTrackingEnvironmentActive()) {
+    trackRecords.forEach((record: TrackRecord) => {
+      resumeRecord(record);
+    });
+    return;
+  }
+
+  trackRecords.forEach((record: TrackRecord) => {
+    pauseRecord(record);
+  });
+};
+
+const ensureTrackingEnvironmentListeners = (): void => {
+  if (stopTrackingEnvironmentListeners !== null) return;
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+  const handleTrackingEnvironmentChange = (): void => {
+    syncTrackingEnvironmentState();
+  };
+
+  document.addEventListener('visibilitychange', handleTrackingEnvironmentChange);
+  window.addEventListener('focus', handleTrackingEnvironmentChange);
+  window.addEventListener('blur', handleTrackingEnvironmentChange);
+
+  stopTrackingEnvironmentListeners = (): void => {
+    document.removeEventListener('visibilitychange', handleTrackingEnvironmentChange);
+    window.removeEventListener('focus', handleTrackingEnvironmentChange);
+    window.removeEventListener('blur', handleTrackingEnvironmentChange);
+    stopTrackingEnvironmentListeners = null;
+  };
+};
+
 const ensureRecord = (
   runId: string,
   initialSnapshot?: Partial<TrackedAiPathRunSnapshot> | undefined
@@ -546,8 +617,13 @@ export const subscribeToTrackedAiPathRun = (
   const record = ensureRecord(normalizedRunId, options?.initialSnapshot);
   record.listeners.add(listener);
   listener(cloneSnapshot(record.snapshot));
+  ensureTrackingEnvironmentListeners();
 
-  if (!record.started && record.snapshot.trackingState !== 'stopped') {
+  if (
+    !record.started &&
+    record.snapshot.trackingState !== 'stopped' &&
+    isTrackingEnvironmentActive()
+  ) {
     if (typeof window !== 'undefined' && typeof window.EventSource === 'function') {
       startStreaming(record);
     } else {
@@ -578,4 +654,6 @@ export const __resetTrackedAiPathRunClientStateForTests = (): void => {
   Array.from(trackRecords.keys()).forEach((runId: string) => {
     cleanupRecord(runId);
   });
+  stopTrackingEnvironmentListeners?.();
+  stopTrackingEnvironmentListeners = null;
 };

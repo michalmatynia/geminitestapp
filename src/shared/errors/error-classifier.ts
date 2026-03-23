@@ -21,7 +21,10 @@ const ERROR_PATTERNS = [
   [/not found/i, ERROR_CATEGORY.VALIDATION],
   [/validation|invalid|missing|required|wrong format|bad request/i, ERROR_CATEGORY.VALIDATION],
   [/database|mongo|sql|query failed|migration|foreign key/i, ERROR_CATEGORY.DATABASE],
-  [/ai|openai|ollama|llm|token limit|embedding|vision|prompt/i, ERROR_CATEGORY.AI],
+  [
+    /\b(ai|openai|ollama|llm)\b|\btoken limit\b|\bembedding(?:s)?\b|\bvision\b|\bprompt(?:s)?\b/i,
+    ERROR_CATEGORY.AI,
+  ],
 ] satisfies ReadonlyArray<readonly [RegExp, ErrorCategory]>;
 
 const ERROR_CATEGORY_VALUES = Object.values(ERROR_CATEGORY);

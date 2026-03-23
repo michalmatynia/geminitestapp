@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { notifyErrorEnrichers } from '@/shared/utils/observability/error-enricher-registry';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 // Mock dependencies — ErrorSystem imports from lib/system-logger, not server barrel
@@ -10,8 +10,8 @@ vi.mock('@/shared/lib/observability/system-logger', () => ({
   logSystemError: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/features/ai/agent-runtime/audit', () => ({
-  logAgentAudit: vi.fn(),
+vi.mock('@/shared/utils/observability/error-enricher-registry', () => ({
+  notifyErrorEnrichers: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe('ErrorSystem', () => {
@@ -47,24 +47,24 @@ describe('ErrorSystem', () => {
     );
   });
 
-  it('logs to agent audit if runId is provided', async () => {
+  it('notifies error enrichers if runId is provided', async () => {
     const error = new Error('Agent failed');
     const context = { service: 'agent', runId: 'run-123', errorId: 'err-456' };
 
     await ErrorSystem.captureException(error, context);
 
-    expect(logAgentAudit).toHaveBeenCalledWith(
-      'run-123',
-      'error',
-      'Agent failed',
+    expect(notifyErrorEnrichers).toHaveBeenCalledWith(
+      error,
       expect.objectContaining({
+        level: 'error',
+        message: 'Agent failed',
         errorId: 'err-456',
         runId: 'run-123',
       })
     );
   });
 
-  it('logs warnings and optionally to agent audit', async () => {
+  it('logs warnings and notifies enrichers with warning context', async () => {
     await ErrorSystem.logWarning('Low disk space', { service: 'disk' });
     expect(logSystemEvent).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -75,11 +75,13 @@ describe('ErrorSystem', () => {
 
     const agentContext = { service: 'agent', runId: 'run-123' };
     await ErrorSystem.logWarning('Retry limit reached', agentContext);
-    expect(logAgentAudit).toHaveBeenCalledWith(
-      'run-123',
-      'warning',
+    expect(notifyErrorEnrichers).toHaveBeenCalledWith(
       'Retry limit reached',
-      agentContext
+      expect.objectContaining({
+        ...agentContext,
+        level: 'warn',
+        message: 'Retry limit reached',
+      })
     );
   });
 

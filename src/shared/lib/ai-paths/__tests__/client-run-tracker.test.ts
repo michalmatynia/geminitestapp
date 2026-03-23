@@ -70,12 +70,30 @@ class MockEventSource {
   }
 }
 
+let mockVisibilityState: DocumentVisibilityState = 'visible';
+let mockHasFocus = true;
+
+const setDocumentVisibilityState = (value: DocumentVisibilityState): void => {
+  mockVisibilityState = value;
+};
+
+const setWindowFocus = (value: boolean): void => {
+  mockHasFocus = value;
+};
+
 describe('client-run-tracker', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     getAiPathRunMock.mockReset();
     streamAiPathRunMock.mockReset();
     __resetTrackedAiPathRunClientStateForTests();
+    mockVisibilityState = 'visible';
+    mockHasFocus = true;
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      get: () => mockVisibilityState,
+    });
+    vi.spyOn(document, 'hasFocus').mockImplementation(() => mockHasFocus);
     vi.stubGlobal('EventSource', MockEventSource as unknown as typeof EventSource);
   });
 
@@ -250,6 +268,88 @@ describe('client-run-tracker', () => {
 
     unsubscribeSecond();
     expect(eventSource.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('waits until the tab becomes active before starting the run stream', () => {
+    setDocumentVisibilityState('hidden');
+    setWindowFocus(false);
+
+    const eventSource = new MockEventSource();
+    streamAiPathRunMock.mockReturnValue(eventSource as unknown as EventSource);
+
+    const listener = vi.fn();
+    subscribeToTrackedAiPathRun('run-hidden', listener);
+
+    expect(listener).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runId: 'run-hidden',
+        status: 'queued',
+        trackingState: 'active',
+      })
+    );
+    expect(streamAiPathRunMock).not.toHaveBeenCalled();
+
+    act(() => {
+      setDocumentVisibilityState('visible');
+      setWindowFocus(true);
+      document.dispatchEvent(new Event('visibilitychange'));
+      window.dispatchEvent(new Event('focus'));
+    });
+
+    expect(streamAiPathRunMock).toHaveBeenCalledTimes(1);
+    expect(streamAiPathRunMock).toHaveBeenCalledWith('run-hidden');
+  });
+
+  it('pauses active streams while the tab is unfocused and resumes them on focus', () => {
+    const firstEventSource = new MockEventSource();
+    const secondEventSource = new MockEventSource();
+    streamAiPathRunMock
+      .mockReturnValueOnce(firstEventSource as unknown as EventSource)
+      .mockReturnValueOnce(secondEventSource as unknown as EventSource);
+
+    const snapshots: TrackedAiPathRunSnapshot[] = [];
+    subscribeToTrackedAiPathRun('run-focus-pause', (snapshot: TrackedAiPathRunSnapshot) => {
+      snapshots.push(snapshot);
+    });
+
+    expect(streamAiPathRunMock).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      setWindowFocus(false);
+      window.dispatchEvent(new Event('blur'));
+    });
+
+    expect(firstEventSource.close).toHaveBeenCalledTimes(1);
+    expect(streamAiPathRunMock).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      setWindowFocus(true);
+      window.dispatchEvent(new Event('focus'));
+    });
+
+    expect(streamAiPathRunMock).toHaveBeenCalledTimes(2);
+    expect(streamAiPathRunMock).toHaveBeenNthCalledWith(2, 'run-focus-pause');
+
+    act(() => {
+      secondEventSource.emit(
+        'run',
+        new MessageEvent('message', {
+          data: JSON.stringify(
+            createRunRecord({
+              id: 'run-focus-pause',
+              status: 'running',
+              updatedAt: '2026-03-09T12:00:07.000Z',
+            })
+          ),
+        })
+      );
+    });
+
+    expect(snapshots.at(-1)).toMatchObject({
+      runId: 'run-focus-pause',
+      status: 'running',
+      trackingState: 'active',
+    });
   });
 
   it('retries transient poll timeouts without stopping the tracked run', async () => {
@@ -582,6 +682,13 @@ describe('readTrackedAiPathRunSnapshot', () => {
     getAiPathRunMock.mockReset();
     streamAiPathRunMock.mockReset();
     __resetTrackedAiPathRunClientStateForTests();
+    mockVisibilityState = 'visible';
+    mockHasFocus = true;
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      get: () => mockVisibilityState,
+    });
+    vi.spyOn(document, 'hasFocus').mockImplementation(() => mockHasFocus);
     vi.stubGlobal('EventSource', MockEventSource as unknown as typeof EventSource);
   });
 

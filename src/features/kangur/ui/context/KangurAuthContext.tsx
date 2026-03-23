@@ -20,6 +20,7 @@ import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurUser } from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { getKangurLoginHref, KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
+import { isKangurSocialBatchCaptureHref } from '@/features/kangur/shared/capture-mode';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
@@ -125,6 +126,10 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
   const routing = useOptionalKangurRouting();
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
   const fallbackCallbackUrl = routing?.requestedPath ?? basePath;
+  const requestedHref =
+    routing?.requestedHref ??
+    (typeof window !== 'undefined' ? window.location.href : fallbackCallbackUrl);
+  const skipAuthBootstrap = isKangurSocialBatchCaptureHref(requestedHref);
   const authRequestVersionRef = useRef(0);
   const logoutInFlightRef = useRef(false);
   const [user, setUser] = useState<KangurUser | null>(null);
@@ -189,8 +194,17 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
   }, []);
 
   useEffect(() => {
+    if (skipAuthBootstrap) {
+      authRequestVersionRef.current += 1;
+      setUser(null);
+      setIsAuthenticated(false);
+      setAuthError(null);
+      setIsLoadingAuth(false);
+      return;
+    }
+
     void checkAppState();
-  }, [checkAppState]);
+  }, [checkAppState, skipAuthBootstrap]);
 
   const logout = useCallback((shouldRedirect = true): void => {
     if (logoutInFlightRef.current) {

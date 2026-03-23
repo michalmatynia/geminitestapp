@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
-import { ChevronDown, ChevronUp, ChevronsLeft } from 'lucide-react';
+import { ChevronsLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import {
   hasKangurLessonDocumentContent,
 } from '@/features/kangur/lesson-documents';
@@ -15,9 +15,6 @@ import {
   KangurStatusChip,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
-import {
-  KANGUR_SHELL_MINUS_TOP_BAR_HEIGHT_CLASSNAME,
-} from '@/features/kangur/ui/design/tokens';
 import { LESSON_COMPONENTS } from '@/features/kangur/lessons/lesson-ui-registry';
 import { useLessons } from './LessonsContext';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
@@ -28,7 +25,6 @@ import {
   LESSONS_ACTIVE_STACK_GAP_CLASSNAME,
 } from './Lessons.constants';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
-import { lockKangurLessonScroll, unlockKangurLessonScroll } from './lessons-scroll-lock';
 
 export function ActiveLessonView() {
   const translations = useTranslations('KangurLessonsPage');
@@ -42,7 +38,6 @@ export function ActiveLessonView() {
     activeLessonHeaderRef,
     activeLessonNavigationRef,
     activeLessonContentRef,
-    activeLessonScrollRef,
     orderedLessons,
     isSecretLessonActive,
     progress,
@@ -56,13 +51,7 @@ export function ActiveLessonView() {
   const { entry: activeLessonSecretPanelContent } = useKangurPageContentEntry('lessons-active-secret-panel');
 
   const isMobile = useKangurMobileBreakpoint();
-  const [canScrollUp, setCanScrollUp] = useState(false);
-  const [canScrollDown, setCanScrollDown] = useState(false);
-  const [isHubListActive, setIsHubListActive] = useState(false);
   const backToLessonsLabel = translations('mobileControls.backToLessons');
-  const scrollUpLabel = translations('mobileControls.scrollUp');
-  const scrollDownLabel = translations('mobileControls.scrollDown');
-  const activeLessonId = activeLesson?.id ?? null;
 
   const secretHostLesson = orderedLessons.at(-1) ?? null;
   const masteryByComponent = progress?.lessonMastery ?? {};
@@ -82,118 +71,6 @@ export function ActiveLessonView() {
     'Ta lekcja ma włączony tryb dokumentu, ale nie zapisano jeszcze bloków treści.';
 
   void activeLessonNavigationContent;
-
-  const updateLessonContentState = useCallback((): void => {
-    const container = activeLessonContentRef.current;
-    if (!container) return;
-    const hubNode = container.querySelector('[data-kangur-lesson-hub="true"]');
-    const nextIsHubActive = Boolean(hubNode);
-    setIsHubListActive((prev) => (prev === nextIsHubActive ? prev : nextIsHubActive));
-  }, [activeLessonContentRef]);
-
-  useEffect(() => {
-    if (!activeLesson || !isMobile) {
-      setIsHubListActive(false);
-      return;
-    }
-
-    const container = activeLessonContentRef.current;
-    if (!container) return;
-
-    updateLessonContentState();
-
-    let mutationObserver: MutationObserver | null = null;
-    if (typeof MutationObserver !== 'undefined') {
-      mutationObserver = new MutationObserver(() => {
-        window.requestAnimationFrame(updateLessonContentState);
-      });
-      mutationObserver.observe(container, { childList: true, subtree: true });
-    }
-
-    const frameId = window.requestAnimationFrame(updateLessonContentState);
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-      mutationObserver?.disconnect();
-    };
-  }, [activeLesson, activeLessonContentRef, isMobile, updateLessonContentState]);
-
-  const shouldLockScroll = Boolean(activeLesson) && isMobile && !isHubListActive;
-
-  useEffect(() => {
-    if (!shouldLockScroll) {
-      unlockKangurLessonScroll();
-      return;
-    }
-    lockKangurLessonScroll();
-    return () => {
-      unlockKangurLessonScroll();
-    };
-  }, [shouldLockScroll, activeLessonId]);
-
-  const updateScrollButtons = useCallback((): void => {
-    const container = activeLessonScrollRef.current;
-    if (!container) return;
-    const maxScrollTop = container.scrollHeight - container.clientHeight;
-    const nextCanScrollUp = container.scrollTop > 0;
-    const nextCanScrollDown = container.scrollTop < maxScrollTop - 1;
-    setCanScrollUp((prev) => (prev === nextCanScrollUp ? prev : nextCanScrollUp));
-    setCanScrollDown((prev) => (prev === nextCanScrollDown ? prev : nextCanScrollDown));
-  }, [activeLessonScrollRef]);
-
-  useEffect(() => {
-    if (!shouldLockScroll) {
-      setCanScrollUp(false);
-      setCanScrollDown(false);
-      return;
-    }
-
-    const container = activeLessonScrollRef.current;
-    if (!container) return;
-
-    const handleUpdate = (): void => {
-      updateScrollButtons();
-    };
-
-    handleUpdate();
-    container.addEventListener('scroll', handleUpdate, { passive: true });
-
-    let resizeObserver: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(() => handleUpdate());
-      resizeObserver.observe(container);
-    }
-
-    let mutationObserver: MutationObserver | null = null;
-    if (typeof MutationObserver !== 'undefined') {
-      mutationObserver = new MutationObserver(() => {
-        window.requestAnimationFrame(handleUpdate);
-      });
-      mutationObserver.observe(container, { childList: true, subtree: true });
-    }
-
-    const frameId = window.requestAnimationFrame(handleUpdate);
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-      container.removeEventListener('scroll', handleUpdate);
-      resizeObserver?.disconnect();
-      mutationObserver?.disconnect();
-    };
-  }, [activeLessonId, activeLessonScrollRef, shouldLockScroll, updateScrollButtons]);
-
-  const handleScrollBy = useCallback(
-    (direction: 'up' | 'down'): void => {
-      const container = activeLessonScrollRef.current;
-      if (!container) return;
-      const step = Math.max(240, Math.round(container.clientHeight * 0.7));
-      const delta = direction === 'up' ? -step : step;
-      container.scrollBy({ top: delta, left: 0, behavior: 'smooth' });
-      window.requestAnimationFrame(updateScrollButtons);
-    },
-    [activeLessonScrollRef, updateScrollButtons]
-  );
-
   const handleReturnToLessonList = useCallback((): void => {
     handleSelectLesson(null);
   }, [handleSelectLesson]);
@@ -349,18 +226,6 @@ export function ActiveLessonView() {
         <ChevronsLeft className='h-4 w-4' aria-hidden='true' />
         {backToLessonsLabel}
       </KangurButton>
-      {canScrollUp ? (
-        <KangurButton
-          size='sm'
-          variant='surface'
-          className='flex-1 justify-center shadow-sm [border-color:var(--kangur-soft-card-border)]'
-          onClick={() => handleScrollBy('up')}
-          aria-label={scrollUpLabel}
-        >
-          <ChevronUp className='h-4 w-4' aria-hidden='true' />
-          {scrollUpLabel}
-        </KangurButton>
-      ) : null}
     </div>
   ) : null;
 
@@ -378,42 +243,12 @@ export function ActiveLessonView() {
         onBack={handleReturnToLessonList}
         secretLessonPill={{ isUnlocked: isSecretLessonUnlocked, onOpen: handleOpenSecretLesson }}
       >
-        {shouldLockScroll ? (
-          <div
-            className={`${LESSONS_ACTIVE_SECTION_CLASSNAME} flex ${KANGUR_SHELL_MINUS_TOP_BAR_HEIGHT_CLASSNAME} flex-col ${LESSONS_ACTIVE_STACK_GAP_CLASSNAME}`}
-          >
-            <div
-              ref={activeLessonScrollRef}
-              className={`flex-1 min-h-0 w-full flex flex-col items-center ${LESSONS_ACTIVE_STACK_GAP_CLASSNAME} overflow-y-auto overscroll-contain touch-pan-y`}
-              data-testid='kangur-lesson-scroll-container'
-            >
-              {topControlsSection}
-              {headerSection}
-              {navigationSection}
-              {lessonContentSection}
-            </div>
-            {canScrollDown ? (
-              <KangurButton
-                fullWidth
-                size='sm'
-                variant='surface'
-                className='justify-center shadow-sm [border-color:var(--kangur-soft-card-border)] pb-[calc(10px+var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom)))]'
-                onClick={() => handleScrollBy('down')}
-                aria-label={scrollDownLabel}
-              >
-                <ChevronDown className='h-4 w-4' aria-hidden='true' />
-                {scrollDownLabel}
-              </KangurButton>
-            ) : null}
-          </div>
-        ) : (
-          <>
-            {topControlsSection}
-            {headerSection}
-            {navigationSection}
-            {lessonContentSection}
-          </>
-        )}
+        <>
+          {topControlsSection}
+          {headerSection}
+          {navigationSection}
+          {lessonContentSection}
+        </>
       </KangurLessonNavigationProvider>
     </motion.div>
   );

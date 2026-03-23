@@ -126,6 +126,7 @@ describe('v2 products route migration', () => {
       'tags/route-handler.ts',
       'validation/route-handler.ts',
       'validator-config/route-handler.ts',
+      'validator-decisions/batch/route-handler.ts',
       'validator-decisions/route-handler.ts',
       'validator-patterns/[id]/route-handler.ts',
       'validator-patterns/import/route-handler.ts',

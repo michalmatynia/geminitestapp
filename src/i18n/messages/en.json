@@ -263,6 +263,10 @@
     "pageTitle": "Lessons",
     "introDescription": "Choose a topic and jump straight into practice or review.",
     "loadingDescription": "Lessons will be ready shortly.",
+    "loadingLessonsStatus": "Loading lessons",
+    "loadingLessonsDetails": "Preparing the lesson library and matching it to the selected topic.",
+    "loadingSectionsStatus": "Loading sections",
+    "loadingSectionsDetails": "Organising lesson sections so the full topic list can appear next.",
     "emptyTitle": "No active lessons",
     "emptyDescription": "No active lessons for the {ageGroup} group.",
     "groupTypeLabel": "Group",
@@ -270,8 +274,7 @@
     "mobileControls": {
       "backToLessons": "Back to lessons",
       "backToTopics": "Back to topics",
-      "scrollUp": "Scroll up",
-      "scrollDown": "Scroll down"
+      "scrollUp": "Scroll up"
     }
   },
   "KangurLearnerProfilePage": {
@@ -293,8 +296,7 @@
     "statusAnnouncement": "View: {label}",
     "phoneSimulation": {
       "backToLessons": "Back to lessons",
-      "scrollUp": "Scroll up",
-      "scrollDown": "Scroll down"
+      "scrollUp": "Scroll up"
     },
     "screens": {
       "home": {

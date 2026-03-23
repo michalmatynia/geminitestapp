@@ -5,6 +5,7 @@ import type { ProductWithImages } from '@/shared/contracts/products';
 
 import {
   applyProductListAdvancedFilterState,
+  shouldEnableProductListBackgroundSync,
   shouldAdoptIncomingEditProductDetail,
 } from './useProductListState';
 
@@ -153,5 +154,34 @@ describe('applyProductListAdvancedFilterState', () => {
 
     expect(localCalls).toEqual([{ value: '', presetId: null }]);
     expect(persistedCalls).toEqual([{ advancedFilter: '', presetId: null }]);
+  });
+});
+
+describe('shouldEnableProductListBackgroundSync', () => {
+  it('disables idle background sync when there is no active product work', () => {
+    expect(
+      shouldEnableProductListBackgroundSync({
+        queuedProductIdsCount: 0,
+        activeTrackedProductAiRunsCount: 0,
+      })
+    ).toBe(false);
+  });
+
+  it('keeps background sync enabled while queued product work remains', () => {
+    expect(
+      shouldEnableProductListBackgroundSync({
+        queuedProductIdsCount: 1,
+        activeTrackedProductAiRunsCount: 0,
+      })
+    ).toBe(true);
+  });
+
+  it('keeps background sync enabled while tracked AI runs remain active', () => {
+    expect(
+      shouldEnableProductListBackgroundSync({
+        queuedProductIdsCount: 0,
+        activeTrackedProductAiRunsCount: 1,
+      })
+    ).toBe(true);
   });
 });

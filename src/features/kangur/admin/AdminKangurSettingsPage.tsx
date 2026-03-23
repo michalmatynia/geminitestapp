@@ -9,7 +9,6 @@ import {
   Breadcrumbs,
   Button,
   FormSection,
-  Switch,
 } from '@/features/kangur/shared/ui';
 
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
@@ -70,8 +69,6 @@ export function AdminKangurSettingsPage(): ReactElement {
     setParentVerificationRequireCaptcha,
     parentVerificationNotificationsDisabledUntilInput,
     setParentVerificationNotificationsDisabledUntilInput,
-    phoneSimulationEnabled,
-    setPhoneSimulationEnabled,
     launchRoute,
     setLaunchRoute,
     copyStatus,
@@ -236,35 +233,6 @@ export function AdminKangurSettingsPage(): ReactElement {
             </KangurAdminCard>
           </FormSection>
 
-          <FormSection
-            title='Phone simulation'
-            description='Mobile Game mode can replace direct vertical scrolling with explicit top and bottom scroll controls.'
-            className={SETTINGS_SECTION_CLASS_NAME}
-          >
-            <KangurAdminCard>
-              <div className='flex items-center justify-between gap-4'>
-                <div>
-                  <div className='flex items-center gap-2'>
-                    <div className='text-sm font-semibold text-foreground'>Phone simulation</div>
-                    <Badge variant={phoneSimulationEnabled ? 'secondary' : 'outline'}>
-                      {phoneSimulationEnabled ? 'Enabled' : 'Disabled'}
-                    </Badge>
-                  </div>
-                  <p className='mt-1 text-sm text-muted-foreground'>
-                    When enabled, mobile users on the Game page cannot vertically scroll with
-                    touch. Instead, full-width controls appear above and below the game viewport to
-                    scroll the content step by step.
-                  </p>
-                </div>
-                <Switch
-                  checked={phoneSimulationEnabled}
-                  onCheckedChange={setPhoneSimulationEnabled}
-                  aria-label='Phone simulation'
-                  data-doc-id='settings_phone_simulation_toggle'
-                />
-              </div>
-            </KangurAdminCard>
-          </FormSection>
         </div>
 
         <KangurNarratorSettingsPanel

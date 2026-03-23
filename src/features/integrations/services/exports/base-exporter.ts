@@ -67,17 +67,24 @@ const normalizeExportTargetField = (targetField: string): string => {
   if (normalized === 'producerid') {
     return 'producer_id';
   }
-  if (normalized === 'producerids') {
+  if (normalized === 'producerids' || normalized === 'producers') {
     return 'producer_ids';
   }
   if (
-    normalized === 'producers' ||
+    normalized === 'producername' ||
+    normalized === 'producer_name' ||
+    normalized === 'manufacturername' ||
+    normalized === 'manufacturer_name'
+  ) {
+    return 'producer_name';
+  }
+  if (
     normalized === 'producernames' ||
     normalized === 'producer_names' ||
-    normalized === 'producername' ||
-    normalized === 'producer_name'
+    normalized === 'manufacturernames' ||
+    normalized === 'manufacturer_names'
   ) {
-    return 'producer_ids';
+    return 'producer_names';
   }
   if (
     normalized === 'producer' ||

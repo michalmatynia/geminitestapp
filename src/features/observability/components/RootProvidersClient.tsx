@@ -1,8 +1,13 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
 import { SessionProvider } from 'next-auth/react';
 import { Suspense } from 'react';
 
+import {
+  KANGUR_CAPTURE_MODE_QUERY_PARAM,
+  KANGUR_CAPTURE_MODE_SOCIAL_BATCH,
+} from '@/features/kangur/shared/capture-mode';
 import ClientErrorReporter from '@/features/observability/components/ClientErrorReporter';
 import PageAnalyticsTracker from '@/shared/lib/analytics/components/PageAnalyticsTracker';
 import { AppFontProvider } from '@/shared/providers/AppFontProvider';
@@ -22,16 +27,23 @@ export function RootProvidersClient({
 }: {
   children: React.ReactNode;
 }): React.JSX.Element {
+  const searchParams = useSearchParams();
+  const isSyntheticKangurCapture =
+    searchParams?.get(KANGUR_CAPTURE_MODE_QUERY_PARAM) === KANGUR_CAPTURE_MODE_SOCIAL_BATCH;
+
   return (
     <>
       <SkipToContentLink />
       <RouteAccessibilityAnnouncer />
       <ToastProvider>
         <QueryProvider>
-          <SettingsStoreProvider mode='lite'>
+          <SettingsStoreProvider mode='lite' suppressOwnQuery={isSyntheticKangurCapture}>
             <AppFontProvider />
             <BackgroundSyncProvider>
-              <SessionProvider refetchOnWindowFocus={false}>
+              <SessionProvider
+                refetchOnWindowFocus={false}
+                session={isSyntheticKangurCapture ? null : undefined}
+              >
                 <ThemeProvider
                   attribute='class'
                   defaultTheme='system'
@@ -40,12 +52,16 @@ export function RootProvidersClient({
                 >
                   <CsrfProvider />
                   <UrlGuardProvider />
-                  <Suspense fallback={<></>}>
-                    <ClientErrorReporter />
-                  </Suspense>
-                  <Suspense fallback={<></>}>
-                    <PageAnalyticsTracker />
-                  </Suspense>
+                  {!isSyntheticKangurCapture ? (
+                    <>
+                      <Suspense fallback={<></>}>
+                        <ClientErrorReporter />
+                      </Suspense>
+                      <Suspense fallback={<></>}>
+                        <PageAnalyticsTracker />
+                      </Suspense>
+                    </>
+                  ) : null}
                   <AppErrorBoundary source='RootLayout'>{children}</AppErrorBoundary>
                 </ThemeProvider>
               </SessionProvider>

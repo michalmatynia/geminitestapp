@@ -116,6 +116,18 @@ export async function registerNodeInstrumentation() {
     })();
   });
 
+  void import('@/app/api/settings/lite/handler')
+    .then(({ prewarmLiteSettingsServerCache }) => prewarmLiteSettingsServerCache())
+    .catch((error) => {
+      logClientError(error);
+    });
+
+  void import('@/features/kangur/server/storefront-appearance')
+    .then(({ getKangurStorefrontInitialState }) => getKangurStorefrontInitialState())
+    .catch((error) => {
+      logClientError(error);
+    });
+
   const { initializeQueues } = await import('@/features/jobs/queue-init');
   initializeQueues();
 

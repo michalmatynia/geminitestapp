@@ -597,6 +597,22 @@ describe('KangurPrimaryNavigation', () => {
     );
   });
 
+  it('renders the mobile toggle immediately on small viewports', () => {
+    setViewport({ width: 390, matches: true });
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('kangur-primary-nav-mobile-toggle')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /lekcje/i })).toBeNull();
+  });
+
   it('shows logout as a separate action and calls the logout handler', () => {
     const onLogout = vi.fn();
 
@@ -627,7 +643,7 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
-    fireEvent.click(await screen.findByTestId('kangur-primary-nav-mobile-toggle'));
+    fireEvent.click(screen.getByTestId('kangur-primary-nav-mobile-toggle'));
     expect(screen.getByRole('button', { name: 'Close navigation menu' })).toHaveClass(
       'touch-manipulation',
       'active:opacity-95'
@@ -697,7 +713,7 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
-    fireEvent.click(await screen.findByTestId('kangur-primary-nav-mobile-toggle'));
+    fireEvent.click(screen.getByTestId('kangur-primary-nav-mobile-toggle'));
     expect(screen.getByRole('dialog', { name: /menu kangur/i })).toBeVisible();
 
     rerender(
@@ -1100,7 +1116,7 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
-    fireEvent.click(await screen.findByTestId('kangur-primary-nav-mobile-toggle'));
+    fireEvent.click(screen.getByTestId('kangur-primary-nav-mobile-toggle'));
 
     expect(screen.getByRole('link', { name: 'Startseite' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Lektionen' })).toBeInTheDocument();
@@ -1267,17 +1283,17 @@ describe('KangurPrimaryNavigation', () => {
       </CmsStorefrontAppearanceProvider>
     );
 
-    fireEvent.click(await screen.findByTestId('kangur-primary-nav-mobile-toggle'));
+    fireEvent.click(screen.getByTestId('kangur-primary-nav-mobile-toggle'));
 
     const header = screen.getByTestId('kangur-primary-nav-mobile-header');
     const headerActions = screen.getByTestId('kangur-primary-nav-mobile-header-actions');
-    const utilityActions = screen.getByTestId('kangur-primary-nav-utility-actions');
+    const utilityActions = screen.getByTestId('kangur-primary-nav-mobile-utility-actions');
     const mobileMenuDialog = screen.getByRole('dialog');
     const headerScope = within(header);
     const mobileToggle = screen.getByTestId('kangur-primary-nav-mobile-toggle');
     const trigger = within(headerActions).getByTestId('kangur-language-switcher-trigger');
     const themeToggle = headerScope.getByRole('button', { name: 'Switch to Dawn theme' });
-    const lessonsAction = screen.getByTestId('kangur-primary-nav-lessons');
+    const lessonsAction = within(mobileMenuDialog).getByTestId('kangur-primary-nav-lessons');
 
     expect(trigger).toBeInTheDocument();
     expect(themeToggle).toBeInTheDocument();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 
 import { createProduct, updateProduct, deleteProduct } from '@/features/products/api';
@@ -91,6 +91,21 @@ const patchProductListCacheValue = (
     };
   }
   return cacheValue;
+};
+
+const refreshUpdatedProductCaches = (
+  queryClient: QueryClient,
+  savedProduct: ProductWithImages
+): void => {
+  void invalidateProductsAndDetail(queryClient, savedProduct.id).catch((error) => {
+    logClientError(error, {
+      context: {
+        source: 'products.hooks.useUpdateProductMutation',
+        action: 'refreshUpdatedProductCaches',
+        productId: savedProduct.id,
+      },
+    });
+  });
 };
 
 const isValidAdvancedFilterPayload = (payload: string): boolean => {
@@ -256,7 +271,7 @@ export function useUpdateProductMutation(): UseMutationResult<
         data: Partial<ProductWithImages> | FormData;
         originalSku?: string | null;
       }) => [productsCountsQueryKey, getProductDetailQueryKey(variables.id)],
-      invalidate: async (queryClient, savedProduct) => {
+      invalidate: (queryClient, savedProduct) => {
         if (!savedProduct) return;
         // Synchronously patch the detail caches
         queryClient.setQueryData(
@@ -272,7 +287,7 @@ export function useUpdateProductMutation(): UseMutationResult<
           );
         }, 0);
 
-        await invalidateProductsAndDetail(queryClient, savedProduct.id);
+        refreshUpdatedProductCaches(queryClient, savedProduct);
       },
       queuedMessage: 'Product update queued in runtime queue.',
       processedMessage: 'Queued product update completed.',

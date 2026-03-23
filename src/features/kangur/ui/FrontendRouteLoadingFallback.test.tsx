@@ -11,8 +11,8 @@ import { FrontendPublicOwnerProvider } from '@/features/kangur/ui/FrontendPublic
 const kangurRouteLoadingFallbackMock = vi.fn();
 
 vi.mock('@/features/kangur/ui/components/KangurRouteLoadingFallback', () => ({
-  KangurRouteLoadingFallback: () => {
-    kangurRouteLoadingFallbackMock();
+  KangurRouteLoadingFallback: (props: Record<string, unknown>) => {
+    kangurRouteLoadingFallbackMock(props);
     return <div data-testid='kangur-route-loading-fallback-probe' />;
   },
 }));
@@ -29,6 +29,9 @@ describe('FrontendRouteLoadingFallback', () => {
 
     expect(screen.getByTestId('kangur-route-loading-fallback-probe')).toBeInTheDocument();
     expect(kangurRouteLoadingFallbackMock).toHaveBeenCalledTimes(1);
+    expect(kangurRouteLoadingFallbackMock).toHaveBeenCalledWith({
+      includeTopNavigationSkeleton: false,
+    });
   });
 
   it('renders the generic frontend loading fallback when CMS owns the public frontend', () => {

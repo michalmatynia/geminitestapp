@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const authMock = vi.fn(async () => ({ user: { id: 'user-1' } }));
+const getSessionUserMock = vi.fn(async () => ({ id: 'user-1' }));
 const getActiveOtelContextAttributesMock = vi.fn(() => ({}));
 const mockedLogSystemEvent = vi.fn().mockResolvedValue(undefined);
 
 const loadApiHandler = async () => {
   vi.resetModules();
   vi.unmock('@/shared/lib/api/api-handler');
-  vi.doMock('@/features/auth/auth', () => ({
-    auth: authMock,
+  vi.doMock('@/shared/lib/api/session-registry', () => ({
+    getSessionUser: getSessionUserMock,
   }));
   vi.doMock('@/shared/lib/observability/otel-context', () => ({
     getActiveOtelContextAttributes: getActiveOtelContextAttributesMock,
@@ -43,7 +43,7 @@ describe('apiHandler session resolution', () => {
 
     await handler(new NextRequest('http://localhost/api/test', { method: 'GET' }));
 
-    expect(authMock).toHaveBeenCalledTimes(1);
+    expect(getSessionUserMock).toHaveBeenCalledTimes(1);
     expect(observedUserId).toBe('user-1');
   });
 
@@ -64,7 +64,7 @@ describe('apiHandler session resolution', () => {
 
     await handler(new NextRequest('http://localhost/api/test', { method: 'GET' }));
 
-    expect(authMock).not.toHaveBeenCalled();
+    expect(getSessionUserMock).not.toHaveBeenCalled();
     expect(observedUserId).toBeNull();
   });
 });

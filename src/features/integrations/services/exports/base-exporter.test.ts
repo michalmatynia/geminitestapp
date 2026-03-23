@@ -162,6 +162,72 @@ describe('buildBaseProductData', () => {
     expect(result['producer_id']).toBe('base-producer-77');
   });
 
+  it('supports producer_name template mappings without coercing names to producer ids', async () => {
+    const result = await buildBaseProductData(
+      createProduct({
+        producers: [
+          {
+            productId: 'product-1',
+            producerId: 'producer-1',
+            assignedAt: '2026-03-01T00:00:00.000Z',
+          },
+        ],
+      }),
+      [
+        {
+          sourceKey: 'producer_name',
+          targetField: 'producerName',
+        },
+      ],
+      null,
+      {
+        producerNameById: {
+          'producer-1': 'Acme',
+        },
+        producerExternalIdByInternalId: {
+          'producer-1': 'base-producer-77',
+        },
+      }
+    );
+
+    expect(result['producer_name']).toBe('Acme');
+    expect(result['producer_id']).toBe('base-producer-77');
+    expect(result['producer_ids']).toBeUndefined();
+  });
+
+  it('supports producer_names template mappings without coercing names to producer ids', async () => {
+    const result = await buildBaseProductData(
+      createProduct({
+        producers: [
+          {
+            productId: 'product-1',
+            producerId: 'producer-1',
+            assignedAt: '2026-03-01T00:00:00.000Z',
+          },
+        ],
+      }),
+      [
+        {
+          sourceKey: 'producer_names',
+          targetField: 'producerNames',
+        },
+      ],
+      null,
+      {
+        producerNameById: {
+          'producer-1': 'Acme',
+        },
+        producerExternalIdByInternalId: {
+          'producer-1': 'base-producer-77',
+        },
+      }
+    );
+
+    expect(result['producer_names']).toEqual(['Acme']);
+    expect(result['producer_id']).toBe('base-producer-77');
+    expect(result['producer_ids']).toBeUndefined();
+  });
+
   it('does not include category_id during images-only exports', async () => {
     const result = await buildBaseProductData(createProduct(), [], null, {
       imagesOnly: true,

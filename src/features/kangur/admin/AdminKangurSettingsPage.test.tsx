@@ -119,7 +119,6 @@ import {
   KANGUR_HELP_SETTINGS_KEY,
   KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
   KANGUR_NARRATOR_SETTINGS_KEY,
-  KANGUR_PHONE_SIMULATION_SETTINGS_KEY,
   KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
 } from '@/features/kangur/settings';
 import {
@@ -276,31 +275,6 @@ describe('AdminKangurSettingsPage', () => {
     });
   });
 
-  it('saves the phone simulation toggle', async () => {
-    render(<AdminKangurSettingsPage />);
-    await expectInitialNarratorProbe();
-
-    const phoneSimulationSwitch = screen.getByRole('switch', {
-      name: 'Phone simulation',
-    });
-
-    expect(phoneSimulationSwitch).toHaveAttribute('data-state', 'checked');
-
-    fireEvent.click(phoneSimulationSwitch);
-    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
-
-    await waitFor(() =>
-      expect(mutateAsyncMock).toHaveBeenCalledWith({
-        key: KANGUR_PHONE_SIMULATION_SETTINGS_KEY,
-        value: JSON.stringify({ enabled: false }),
-      })
-    );
-
-    expect(toastMock).toHaveBeenCalledWith('Kangur phone simulation settings saved.', {
-      variant: 'success',
-    });
-  });
-
   it('defaults to the mobile web launch route and saves the dedicated app selection', async () => {
     render(<AdminKangurSettingsPage />);
     await expectInitialNarratorProbe();
@@ -328,7 +302,7 @@ describe('AdminKangurSettingsPage', () => {
     });
   });
 
-  it('renders the storefront theme editor shortcut and phone simulation section', async () => {
+  it('renders the storefront theme editor shortcut and launch route section', async () => {
     render(<AdminKangurSettingsPage />);
     await expectInitialNarratorProbe();
 
@@ -340,14 +314,8 @@ describe('AdminKangurSettingsPage', () => {
       'href',
       '/admin/kangur/appearance'
     );
-    expect(
-      screen.getByRole('switch', { name: 'Phone simulation' })
-    ).toBeInTheDocument();
     expect(screen.getByText('App launch route')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /dedicated app/i })).toBeInTheDocument();
-    expect(
-      screen.getByText(/full-width controls appear above and below the game viewport/i)
-    ).toBeInTheDocument();
   });
 
   it(

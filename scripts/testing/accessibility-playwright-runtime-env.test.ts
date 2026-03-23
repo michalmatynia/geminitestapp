@@ -128,6 +128,7 @@ describe('buildAccessibilityBrokerLeaseRequest', () => {
       env: {
         DISABLE_QUEUE_WORKERS: 'true',
       },
+      preserveManagedDistDir: false,
     });
   });
 
@@ -154,6 +155,7 @@ describe('buildAccessibilityBrokerLeaseRequest', () => {
       env: {
         DISABLE_QUEUE_WORKERS: 'false',
       },
+      preserveManagedDistDir: false,
     });
   });
 });

@@ -28,7 +28,7 @@ describe('ProductImageCell', () => {
     imagePropsSpy.mockClear();
   });
 
-  it('renders both the thumbnail and hover preview as unoptimized images', async () => {
+  it('keeps local product thumbnails and hover previews on the optimized image path', async () => {
     const { container } = render(
       <ProductImageCell imageUrl='/uploads/products/example.png' productName='Test product' />
     );
@@ -40,7 +40,7 @@ describe('ProductImageCell', () => {
 
       expect(thumbnailCalls.length).toBeGreaterThan(0);
       thumbnailCalls.forEach((props) => {
-        expect(props['unoptimized']).toBe(true);
+        expect(props['unoptimized']).toBe(false);
       });
     });
 
@@ -53,7 +53,7 @@ describe('ProductImageCell', () => {
 
       expect(previewCalls.length).toBeGreaterThan(0);
       previewCalls.forEach((props) => {
-        expect(props['unoptimized']).toBe(true);
+        expect(props['unoptimized']).toBe(false);
         expect(props).not.toHaveProperty('priority');
       });
     });

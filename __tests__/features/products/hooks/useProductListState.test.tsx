@@ -20,6 +20,9 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({
     fetchQuery: mocks.fetchQuery,
     prefetchQuery: vi.fn(),
+    getQueryState: vi.fn(() => undefined),
+    getQueryData: vi.fn(() => undefined),
+    refetchQueries: vi.fn(),
   }),
   useQuery: () => ({ data: undefined }),
 }));

@@ -167,6 +167,7 @@ const AuthProbe = (): React.JSX.Element => {
 describe('KangurAuthContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.history.replaceState({}, '', '/kangur');
     useRouterMock.mockReturnValue({
       push: routerPushMock,
       refresh: routerRefreshMock,
@@ -178,7 +179,7 @@ describe('KangurAuthContext', () => {
     );
   });
 
-it('exposes assignment access only when auth resolves an active learner session', async () => {
+  it('exposes assignment access only when auth resolves an active learner session', async () => {
     render(
       <KangurAuthProvider>
         <AuthProbe />
@@ -270,6 +271,28 @@ it('exposes assignment access only when auth resolves an active learner session'
     });
 
     expect(logKangurClientErrorMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips auth bootstrap during synthetic social batch captures', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/kangur/lessons?kangurCapture=social-batch'
+    );
+
+    render(
+      <KangurAuthProvider>
+        <AuthProbe />
+      </KangurAuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+      expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('false');
+    });
+
+    expect(meMock).not.toHaveBeenCalled();
+    expect(logKangurClientErrorMock).not.toHaveBeenCalled();
   });
 
   it('drops parent-assignment access immediately after logout', async () => {

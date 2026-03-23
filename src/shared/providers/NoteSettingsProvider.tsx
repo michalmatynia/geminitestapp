@@ -13,7 +13,7 @@ import {
 
 import type { NoteSettings } from '@/shared/contracts/notes';
 import { internalError } from '@/shared/errors/app-error';
-import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useLiteSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export const DEFAULT_NOTE_SETTINGS: NoteSettings = {
@@ -62,7 +62,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
   const previousAutoformatRef = useRef<boolean>(false);
   const previousEditorModeRef = useRef<NoteSettings['editorMode']>('markdown');
 
-  const settingsQuery = useSettingsMap({ scope: 'light' });
+  const settingsQuery = useLiteSettingsMap();
   const updateSetting = useUpdateSetting();
 
   useEffect((): void => {

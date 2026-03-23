@@ -105,18 +105,41 @@ vi.mock('@/shared/ui', () => ({
     </div>
   ),
   Label: ({ children }: { children: React.ReactNode }) => <label>{children}</label>,
-  UI_CENTER_ROW_RELAXED_CLASSNAME: 'relaxed-row',
+  SelectSimple: ({
+    value,
+    onValueChange,
+    options,
+    placeholder,
+    disabled,
+    ariaLabel,
+    title,
+  }: {
+    value: string | undefined;
+    onValueChange: (value: string) => void;
+    options: Array<{ value: string; label: string }>;
+    placeholder?: string;
+    disabled?: boolean;
+    ariaLabel?: string;
+    title?: string;
+  }) => (
+    <select
+      aria-label={ariaLabel}
+      title={title}
+      value={value ?? ''}
+      disabled={disabled}
+      onChange={(event) => onValueChange(event.target.value)}
+    >
+      <option value=''>{placeholder ?? 'Select catalog'}</option>
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  ),
   useToast: () => ({
     toast: mocks.toast,
   }),
-}));
-
-vi.mock('@/shared/ui/templates/pickers', () => ({
-  GenericPickerDropdown: ({
-    triggerContent,
-  }: {
-    triggerContent: React.ReactNode;
-  }) => <div>{triggerContent}</div>,
 }));
 
 vi.mock('@/features/integrations/hooks/useIntegrationProductQueries', () => ({

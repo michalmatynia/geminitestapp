@@ -23,7 +23,11 @@ vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
   assertSettingsManageAccess: vi.fn(async () => undefined),
 }));
 
-import { GET_handler, clearLiteSettingsServerCache } from './handler';
+import {
+  GET_handler,
+  clearLiteSettingsServerCache,
+  prewarmLiteSettingsServerCache,
+} from './handler';
 
 const createRequestContext = (query: Record<string, unknown> = {}): ApiHandlerContext =>
   ({
@@ -96,6 +100,48 @@ describe('settings lite handler', () => {
           key: KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
           value: JSON.stringify({ agentPersonaId: 'persona-1' }),
         },
+        {
+          key: KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
+          value: JSON.stringify({ route: 'dedicated_app' }),
+        },
+      ])
+    );
+  });
+
+  it('prewarms the lite settings cache so the next request can serve from memory', async () => {
+    const toArrayKangurMock = vi.fn().mockResolvedValue([
+      {
+        _id: KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
+        key: KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
+        value: JSON.stringify({ route: 'dedicated_app' }),
+      },
+    ]);
+    const toArraySettingsMock = vi.fn().mockResolvedValue([]);
+    const createIndexMock = vi.fn().mockResolvedValue(undefined);
+    const findKangurMock = vi.fn().mockReturnValue({ toArray: toArrayKangurMock });
+    const findSettingsMock = vi.fn().mockReturnValue({ toArray: toArraySettingsMock });
+    const collectionMock = vi.fn((name: string) => {
+      if (name === 'kangur_settings') {
+        return { find: findKangurMock, createIndex: createIndexMock };
+      }
+      return { find: findSettingsMock };
+    });
+    getMongoDbMock.mockResolvedValue({ collection: collectionMock });
+
+    await prewarmLiteSettingsServerCache();
+
+    const dbCallsAfterPrewarm = getMongoDbMock.mock.calls.length;
+    expect(dbCallsAfterPrewarm).toBeGreaterThan(0);
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/settings/lite'),
+      createRequestContext()
+    );
+
+    expect(response.headers.get('X-Cache')).toBe('hit');
+    expect(getMongoDbMock).toHaveBeenCalledTimes(dbCallsAfterPrewarm);
+    await expect(response.json()).resolves.toEqual(
+      expect.arrayContaining([
         {
           key: KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
           value: JSON.stringify({ route: 'dedicated_app' }),

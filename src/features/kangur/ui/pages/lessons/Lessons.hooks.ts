@@ -288,10 +288,7 @@ export function useLessonsLogic() {
   useLayoutEffect(() => {
     if (!activeLesson) return;
     if (isMobile) {
-      const scrollContainer = activeLessonScrollRef.current;
-      if (scrollContainer) {
-        scrollContainer.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-      }
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
       return;
     }
     let frameId: number | null = null;

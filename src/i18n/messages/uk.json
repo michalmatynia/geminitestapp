@@ -309,8 +309,7 @@
     "statusAnnouncement": "Перегляд: {label}",
     "phoneSimulation": {
       "backToLessons": "Назад до уроків",
-      "scrollUp": "Прокрутити вгору",
-      "scrollDown": "Прокрутити вниз"
+      "scrollUp": "Прокрутити вгору"
     },
     "screens": {
       "home": {
@@ -454,6 +453,10 @@
     "pageTitle": "Уроки",
     "introDescription": "Виберіть тему й одразу переходьте до практики або повторення.",
     "loadingDescription": "Уроки скоро будуть готові.",
+    "loadingLessonsStatus": "Завантаження уроків",
+    "loadingLessonsDetails": "Готуємо бібліотеку уроків і підлаштовуємо її під обрану тему.",
+    "loadingSectionsStatus": "Завантаження розділів",
+    "loadingSectionsDetails": "Упорядковуємо розділи уроків, щоб незабаром показати повний список тем.",
     "emptyTitle": "Немає активних уроків",
     "emptyDescription": "Немає активних уроків для групи {ageGroup}.",
     "groupTypeLabel": "Група",
@@ -461,8 +464,7 @@
     "mobileControls": {
       "backToLessons": "Назад до уроків",
       "backToTopics": "Назад до тем",
-      "scrollUp": "Прокрутити вгору",
-      "scrollDown": "Прокрутити вниз"
+      "scrollUp": "Прокрутити вгору"
     }
   },
   "KangurLearnerProfilePage": {

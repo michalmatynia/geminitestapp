@@ -13,7 +13,7 @@ import {
   saveCentralLogDeadLetters,
 } from '@/shared/lib/observability/central-log-dead-letter-store';
 import { createSystemLog } from '@/shared/lib/observability/system-log-repository';
-import { hydrateLogRuntimeContext } from '@/features/observability/entry-server';
+import { hydrateLogContext } from '@/shared/lib/observability/log-hydration-registry';
 import {
   logSystemEvent,
   logSystemError,
@@ -31,8 +31,8 @@ vi.mock('@/shared/lib/observability/critical-error-notifier', () => ({
   notifyCriticalError: vi.fn().mockResolvedValue({ delivered: true, throttled: false }),
 }));
 
-vi.mock('@/features/observability/entry-server', () => ({
-  hydrateLogRuntimeContext: vi.fn().mockImplementation(async (context) => context),
+vi.mock('@/shared/lib/observability/log-hydration-registry', () => ({
+  hydrateLogContext: vi.fn().mockImplementation(async (context) => context),
 }));
 
 vi.mock('@/shared/lib/observability/otel-log-bridge', () => ({
@@ -50,7 +50,7 @@ describe('system-logger', () => {
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
-    vi.mocked(hydrateLogRuntimeContext).mockImplementation(async (context) => context);
+    vi.mocked(hydrateLogContext).mockImplementation(async (context) => context);
     vi.mocked(loadCentralLogDeadLetters).mockResolvedValue([]);
     vi.mocked(saveCentralLogDeadLetters).mockResolvedValue(true);
     vi.unstubAllGlobals();
@@ -273,7 +273,7 @@ describe('system-logger', () => {
     });
 
     it('should enrich persisted context with canonical context-registry refs when runId is present', async () => {
-      vi.mocked(hydrateLogRuntimeContext).mockResolvedValue({
+      vi.mocked(hydrateLogContext).mockResolvedValue({
         runId: 'run-1',
         fingerprint: 'fp-1',
         contextRegistry: {
@@ -300,7 +300,7 @@ describe('system-logger', () => {
       });
 
       await vi.waitFor(() => {
-        expect(hydrateLogRuntimeContext).toHaveBeenCalledWith(
+        expect(hydrateLogContext).toHaveBeenCalledWith(
           expect.objectContaining({
             runId: 'run-1',
             fingerprint: expect.any(String),
@@ -325,7 +325,7 @@ describe('system-logger', () => {
     });
 
     it('should continue persisting logs when AI path static context enrichment fails', async () => {
-      vi.mocked(hydrateLogRuntimeContext).mockRejectedValue(new Error('Static context builder failed'));
+      vi.mocked(hydrateLogContext).mockRejectedValue(new Error('Static context builder failed'));
 
       await logSystemEvent({
         message: 'Run failed',
@@ -354,7 +354,7 @@ describe('system-logger', () => {
       process.env['CENTRAL_LOG_WEBHOOK_URL'] = 'https://logs.example.test/webhook';
       const beforeStats = getCentralLoggingRuntimeStats();
 
-      vi.mocked(hydrateLogRuntimeContext).mockResolvedValue({
+      vi.mocked(hydrateLogContext).mockResolvedValue({
         runId: 'run-1',
         fingerprint: 'fp-1',
         contextRegistry: {
@@ -476,7 +476,7 @@ describe('system-logger', () => {
         context: { runId: 'run-1' },
       });
 
-      expect(hydrateLogRuntimeContext).not.toHaveBeenCalled();
+      expect(hydrateLogContext).not.toHaveBeenCalled();
       expect(createSystemLog).not.toHaveBeenCalled();
     });
   });

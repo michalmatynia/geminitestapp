@@ -91,19 +91,6 @@ export type TagEntry = {
 
 export const IMAGE_TARGET_FIELDS = new Set(['images', 'image', 'image_urls']);
 
-export const PRODUCER_TARGET_FIELDS = new Set([
-  'producer',
-  'producers',
-  'producer_id',
-  'producer_ids',
-  'producer_name',
-  'producer_names',
-  'producernames',
-  'manufacturer',
-  'manufacturer_id',
-  'manufacturer_ids',
-]);
-
 export const TAG_TARGET_FIELDS = new Set(['tag', 'tags', 'tag_id', 'tag_ids']);
 
 export const NUMERIC_TARGET_FIELDS = new Set(['weight', 'length', 'width', 'height']);
@@ -122,10 +109,6 @@ export const normalizeProducerTargetField = (targetField: string): string | null
   }
   if (
     normalized === 'producers' ||
-    normalized === 'producernames' ||
-    normalized === 'producer_names' ||
-    normalized === 'producername' ||
-    normalized === 'producer_name' ||
     normalized === 'producerids' ||
     normalized === 'producer_ids' ||
     normalized === 'manufacturerids' ||
@@ -133,7 +116,22 @@ export const normalizeProducerTargetField = (targetField: string): string | null
   ) {
     return 'producer_ids';
   }
-  if (PRODUCER_TARGET_FIELDS.has(normalized)) return 'producer_id';
+  if (
+    normalized === 'producername' ||
+    normalized === 'producer_name' ||
+    normalized === 'manufacturername' ||
+    normalized === 'manufacturer_name'
+  ) {
+    return 'producer_name';
+  }
+  if (
+    normalized === 'producernames' ||
+    normalized === 'producer_names' ||
+    normalized === 'manufacturernames' ||
+    normalized === 'manufacturer_names'
+  ) {
+    return 'producer_names';
+  }
   return null;
 };
 

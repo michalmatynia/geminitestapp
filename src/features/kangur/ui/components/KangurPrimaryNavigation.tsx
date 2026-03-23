@@ -67,6 +67,7 @@ import {
   getLocalizedKangurAgeGroupLabel,
   getLocalizedKangurSubjectLabel,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
+import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
@@ -215,7 +216,6 @@ export function KangurPrimaryNavigation({
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const mobileMenuPreviousFocusRef = useRef<HTMLElement | null>(null);
   const [isTutorHidden, setIsTutorHidden] = useState(() => loadPersistedTutorVisibilityHidden());
-  const [isMobile, setIsMobile] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
   const [isAgeGroupModalOpen, setIsAgeGroupModalOpen] = useState(false);
@@ -223,6 +223,7 @@ export function KangurPrimaryNavigation({
   const navTranslations = useTranslations('KangurNavigation');
   const { subject, setSubject } = useKangurSubjectFocus();
   const { ageGroup, setAgeGroup } = useKangurAgeGroupFocus();
+  const isMobileViewport = useKangurMobileBreakpoint();
   const enableTutorLabel =
     tutorContent.common.enableTutorLabel ?? tutorContent.navigation.restoreTutorLabel;
   const disableTutorLabel = tutorContent.common.disableTutorAria ?? 'Wyłącz AI Tutora';
@@ -287,41 +288,11 @@ export function KangurPrimaryNavigation({
 
   useEffect(() => subscribeToTutorVisibilityChanges(setIsTutorHidden), []);
 
-  useEffect((): (() => void) | void => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      return undefined;
-    }
-
-    const media = window.matchMedia('(max-width: 639px)');
-    const applyBreakpoint = (matches: boolean): void => {
-      const width = typeof window !== 'undefined' ? window.innerWidth : 0;
-      setIsMobile(matches && width <= 639);
-    };
-
-    applyBreakpoint(media.matches);
-
-    const handler = (event: MediaQueryListEvent): void => {
-      applyBreakpoint(event.matches);
-    };
-
-    if (typeof media.addEventListener === 'function') {
-      media.addEventListener('change', handler);
-      return (): void => {
-        media.removeEventListener('change', handler);
-      };
-    }
-
-    media.addListener(handler);
-    return (): void => {
-      media.removeListener(handler);
-    };
-  }, []);
-
   useEffect(() => {
-    if (!isMobile) {
+    if (!isMobileViewport) {
       setIsMobileMenuOpen(false);
     }
-  }, [isMobile]);
+  }, [isMobileViewport]);
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -796,8 +767,15 @@ export function KangurPrimaryNavigation({
     wrapperClassName?: string;
     hideAppearanceControls?: boolean;
     hideLanguageSwitcher?: boolean;
+    testId?: string;
   }): React.ReactNode => {
-    const { onActionClick, wrapperClassName, hideAppearanceControls, hideLanguageSwitcher } =
+    const {
+      onActionClick,
+      wrapperClassName,
+      hideAppearanceControls,
+      hideLanguageSwitcher,
+      testId = 'kangur-primary-nav-utility-actions',
+    } =
       options ?? {};
     const authActions = renderAuthActions(onActionClick);
     const resolvedAppearanceControls = hideAppearanceControls ? null : appearanceControls;
@@ -821,7 +799,7 @@ export function KangurPrimaryNavigation({
           wrapperClassName ??
           `ml-auto ${KANGUR_TIGHT_ROW_CLASSNAME} items-stretch justify-end max-sm:ml-0 max-sm:justify-start sm:w-auto sm:flex-wrap sm:items-center`
         }
-        data-testid='kangur-primary-nav-utility-actions'
+        data-testid={testId}
       >
         {resolvedShouldRenderLanguageSwitcher ? (
           <KangurLanguageSwitcher
@@ -891,14 +869,23 @@ export function KangurPrimaryNavigation({
       {renderUtilityActions()}
     </KangurTopNavGroup>
   );
-  const leftContent = isMobile ? mobileNav : desktopNav;
+  const leftContent = (
+    <>
+      <div aria-hidden={isMobileViewport} className='hidden w-full min-w-0 sm:block'>
+        {desktopNav}
+      </div>
+      <div aria-hidden={!isMobileViewport} className='w-full min-w-0 sm:hidden'>
+        {mobileNav}
+      </div>
+    </>
+  );
   const shouldRenderMobileAppearanceHeader = Boolean(appearanceControlsInline);
   const shouldRenderMobileLanguageHeader = shouldRenderLanguageSwitcher;
   const shouldHideMobileAppearanceControls = shouldRenderMobileAppearanceHeader;
   const shouldHideMobileLanguageSwitcher = shouldRenderMobileLanguageHeader;
-  const mobileMenuOverlay = isMobile ? (
+  const mobileMenuOverlay = isMobileViewport || isMobileMenuOpen ? (
     <div
-      className={`fixed inset-0 z-50 transition-opacity duration-200 ${
+      className={`fixed inset-0 z-50 transition-opacity duration-200 sm:hidden ${
         isMobileMenuOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
       }`}
       aria-hidden={!isMobileMenuOpen}
@@ -955,6 +942,7 @@ export function KangurPrimaryNavigation({
             wrapperClassName: 'flex w-full flex-col gap-2',
             hideAppearanceControls: shouldHideMobileAppearanceControls,
             hideLanguageSwitcher: shouldHideMobileLanguageSwitcher,
+            testId: 'kangur-primary-nav-mobile-utility-actions',
           })}
         </KangurTopNavGroup>
       </div>

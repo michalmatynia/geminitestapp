@@ -22,10 +22,10 @@ export type {
   AiPathsMaintenanceApplyResult,
 };
 
-const AI_PATHS_SETTINGS_STALE_MS = 10_000;
+const AI_PATHS_SETTINGS_STALE_MS = 60_000;
 const AI_PATHS_SETTINGS_BACKUP_KEY = 'ai_paths_settings_backup';
 const AI_PATHS_SETTINGS_RETRY_DELAYS_MS = [500, 1500];
-const AI_PATHS_SETTINGS_BACKUP_MAX_AGE_MS = 60_000;
+const AI_PATHS_SETTINGS_BACKUP_MAX_AGE_MS = 300_000;
 const AI_PATHS_SETTINGS_REQUEST_TIMEOUT_MS = 25_000;
 const AI_PATHS_SETTINGS_SELECTIVE_REQUEST_TIMEOUT_MS = 8_000;
 const AI_PATHS_SETTINGS_WRITE_TIMEOUT_MS = 90_000;
@@ -117,13 +117,15 @@ const sleep = async (ms: number): Promise<void> => {
 
 const shouldRetrySettingsFetch = (error: unknown): boolean => {
   if (!(error instanceof Error)) return false;
-  // Don't retry explicit client-side timeouts — if MongoDB was slow once it'll be slow again
+  // Don't retry client-side timeouts — if MongoDB was slow once it'll be slow again.
   if (error.name === 'TimeoutError') return false;
   const message = error.message.toLowerCase();
+  // Don't retry generic network failures — they're usually caused by page
+  // re-renders / HMR aborting in-flight requests and retrying just generates
+  // error spam. Only retry explicit server 5xx (handled in the response check).
+  if (message.includes('failed to fetch') || message.includes('load failed')) return false;
   return (
-    message.includes('failed to fetch') ||
     message.includes('network') ||
-    message.includes('load failed') ||
     message.includes('aborted') ||
     message.includes('abort')
   );

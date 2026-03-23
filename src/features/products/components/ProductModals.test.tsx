@@ -218,30 +218,38 @@ describe('ProductModals edit hydration guard', () => {
     });
   });
 
-  it('renders a blocking loading modal while edit hydration is in progress', () => {
-    useProductListModalsContextMock.mockReturnValue(buildContext({ isEditHydrating: true }));
+  it('renders the edit modal shell while hydration is in progress', () => {
+    useProductListModalsContextMock.mockReturnValue(
+      buildContext({
+        editingProduct: createProduct(),
+        isEditHydrating: true,
+      })
+    );
 
     render(<ProductModals />);
 
     expect(screen.getByTestId('loading-form-modal')).toBeInTheDocument();
+    expect(screen.getByTestId('product-form-provider')).toBeInTheDocument();
     expect(
       screen.getByText('Please wait while complete product data is loaded.')
     ).toBeInTheDocument();
     expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0);
-    // Form provider and its content must not be rendered during loading
-    expect(screen.queryByTestId('product-form-provider')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('product-form')).not.toBeInTheDocument();
   });
 
   it('disables save while hydration is in progress', () => {
-    useProductListModalsContextMock.mockReturnValue(buildContext({ isEditHydrating: true }));
+    useProductListModalsContextMock.mockReturnValue(
+      buildContext({
+        editingProduct: createProduct(),
+        isEditHydrating: true,
+      })
+    );
 
     render(<ProductModals />);
 
     expect(screen.getByRole('button', { name: 'Update' })).toBeDisabled();
   });
 
-  it('does not render edit form for non-hydrated edit product snapshots', () => {
+  it('renders edit form for non-hydrated edit product snapshots while keeping save enabled state external', () => {
     useProductListModalsContextMock.mockReturnValue(
       buildContext({
         editingProduct: createProduct(),
@@ -251,8 +259,8 @@ describe('ProductModals edit hydration guard', () => {
     render(<ProductModals />);
 
     expect(screen.getByTestId('loading-form-modal')).toBeInTheDocument();
-    expect(screen.queryByTestId('product-form-provider')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('product-form')).not.toBeInTheDocument();
+    expect(screen.getByTestId('product-form-provider')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Update' })).not.toBeDisabled();
   });
 
   it('renders edit form when the editing product is hydrated', () => {

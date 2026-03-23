@@ -15,6 +15,8 @@ import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageI
 import { KangurLessonsWordmark } from '@/features/kangur/ui/components/KangurLessonsWordmark';
 import {
   KangurEmptyState,
+  KangurInfoCard,
+  KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_LESSON_PANEL_GAP_CLASSNAME,
@@ -113,6 +115,8 @@ export function LessonsCatalog() {
     completedLessonAssignmentsByComponent,
     lessonDocuments,
     activeLessonId,
+    isLessonsCatalogLoading,
+    isLessonSectionsLoading,
     shouldShowLessonsCatalogSkeleton,
   } = useLessons();
 
@@ -205,6 +209,14 @@ export function LessonsCatalog() {
     !shouldShowLessonsCatalogSkeleton
       ? (lessonListIntroContent?.summary ?? translations('introDescription'))
       : translations('loadingDescription');
+  const loadingStatusLabel = isLessonSectionsLoading
+    ? translations('loadingSectionsStatus')
+    : translations('loadingLessonsStatus');
+  const loadingStatusDescription = isLessonSectionsLoading
+    ? translations('loadingSectionsDetails')
+    : translations('loadingLessonsDetails');
+  const shouldShowIntroLoadingState =
+    shouldShowLessonsCatalogSkeleton || isLessonsCatalogLoading || isLessonSectionsLoading;
 
   const renderLessonEntries = () => {
     let lessonIndex = 0;
@@ -301,9 +313,44 @@ export function LessonsCatalog() {
               locale={locale}
             />
           }
-        />
+        >
+          {shouldShowIntroLoadingState ? (
+            <div className='w-full' data-testid='lessons-intro-loading-state'>
+              <KangurInfoCard
+                accent='indigo'
+                aria-live='polite'
+                className='mx-auto w-full max-w-2xl text-left'
+                data-testid='lessons-intro-loading-card'
+                padding='md'
+                role='status'
+                tone='accent'
+              >
+                <div className='flex items-start gap-3 sm:items-center'>
+                  <div
+                    aria-hidden='true'
+                    className='mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-white/80 text-indigo-500 sm:mt-0'
+                  >
+                    <span className='size-3 rounded-full bg-current animate-pulse' />
+                  </div>
+                  <div className='min-w-0 flex-1'>
+                    <KangurStatusChip accent='indigo' labelStyle='caps' size='sm'>
+                      {loadingStatusLabel}
+                    </KangurStatusChip>
+                    <p className='mt-2 text-sm leading-6 text-current/90'>
+                      {loadingStatusDescription}
+                    </p>
+                  </div>
+                </div>
+              </KangurInfoCard>
+            </div>
+          ) : null}
+        </KangurPageIntroCard>
       </div>
-      <div className={LESSONS_LIBRARY_LIST_CLASSNAME} data-testid='lessons-list-transition'>
+      <div
+        aria-busy={shouldShowLessonsCatalogSkeleton}
+        className={LESSONS_LIBRARY_LIST_CLASSNAME}
+        data-testid='lessons-list-transition'
+      >
         {shouldShowLessonsCatalogSkeleton ? (
           <LessonsCatalogSkeleton />
         ) : orderedLessons.length === 0 ? (

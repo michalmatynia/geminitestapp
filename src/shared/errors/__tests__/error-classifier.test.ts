@@ -64,4 +64,20 @@ describe('error-classifier', () => {
     expect(actions[0]?.label).toBe('Repair AI Path');
     expect(actions.some((action) => action.label === 'Retry')).toBe(false);
   });
+
+  it('does not classify generic retry-later errors as AI because of incidental "ai" substrings', () => {
+    const error = new Error('An unexpected error occurred. Please try again later.');
+    const actions = getSuggestedActions(classifyError(error), error);
+
+    expect(classifyError(error)).toBe(ERROR_CATEGORY.SYSTEM);
+    expect(actions.some((action) => action.label === 'Adjust Prompt')).toBe(false);
+  });
+
+  it('still classifies standalone AI product errors as AI', () => {
+    const error = new Error('AI Tutor chat request failed.');
+    const actions = getSuggestedActions(classifyError(error), error);
+
+    expect(classifyError(error)).toBe(ERROR_CATEGORY.AI);
+    expect(actions.some((action) => action.label === 'Adjust Prompt')).toBe(true);
+  });
 });

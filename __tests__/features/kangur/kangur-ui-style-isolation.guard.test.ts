@@ -10,7 +10,8 @@ const KANGUR_VISUAL_CONTRACTS = [
   {
     file: 'src/features/kangur/ui/KangurFeatureApp.tsx',
     requiredTokens: [
-      'offsetTopBar={!embedded} visible={isBootSkeletonVisible}',
+      'shouldHideTopNavigationDuringBoot ? null',
+      'offsetTopBar={shouldReserveTopBarOffset} visible={isBootSkeletonVisible}',
       'data-testid=\'kangur-route-content\'',
     ],
   },

@@ -43,6 +43,28 @@ const VALIDATION_DENIED_ISSUES_SESSION_KEY = 'product_validation_denied_issues';
 const VALIDATION_ACCEPTED_ISSUES_SESSION_KEY = 'product_validation_accepted_issues';
 const VALIDATION_DENY_SESSION_ID_KEY = 'product_validation_decision_session_id';
 
+// Module-level auto-accept tracking: survives component remount caused by
+// the ProductFormProvider key changing from 'p' (partial) to 'h' (hydrated).
+// Without this, the ref resets on remount and all issues are re-accepted,
+// firing duplicate POST calls that saturate the browser connection pool.
+const AUTO_ACCEPT_MAX_TRACKED_ENTITIES = 10;
+const autoAcceptedByEntity = new Map<string, Set<string>>();
+
+const getOrCreateAutoAcceptedSet = (entityIdentity: string): Set<string> => {
+  const existing = autoAcceptedByEntity.get(entityIdentity);
+  if (existing) return existing;
+  const fresh = new Set<string>();
+  autoAcceptedByEntity.set(entityIdentity, fresh);
+  // Evict oldest entries if too many tracked entities
+  if (autoAcceptedByEntity.size > AUTO_ACCEPT_MAX_TRACKED_ENTITIES) {
+    const firstKey = autoAcceptedByEntity.keys().next().value;
+    if (firstKey !== undefined && firstKey !== entityIdentity) {
+      autoAcceptedByEntity.delete(firstKey);
+    }
+  }
+  return fresh;
+};
+
 const resolveBooleanStateAction = (next: SetStateAction<boolean>, current: boolean): boolean =>
   typeof next === 'function' ? (next as (prev: boolean) => boolean)(current) : next;
 
@@ -414,7 +436,12 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
 
   useEffect(() => {
     if (lastEntityIdentityRef.current === entityIdentity) return;
+    const prevIdentity = lastEntityIdentityRef.current;
     lastEntityIdentityRef.current = entityIdentity;
+    // Clean up previous entity's module-level auto-accept tracking
+    if (prevIdentity) {
+      autoAcceptedByEntity.delete(prevIdentity);
+    }
     setValidatorEnabledState(defaultValidatorEnabled);
     setFormatterEnabledState(defaultFormatterEnabled);
     setValidatorInitialized(typeof configEnabledByDefault === 'boolean');
@@ -445,7 +472,10 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
   const denyBehaviorWriteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deniedIssuesWriteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const acceptedIssuesWriteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const autoAcceptedIssueKeysRef = useRef<Set<string>>(new Set());
+  const autoAcceptTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Use module-level tracking (survives p→h remount). The ref points to
+  // the same Set object stored in autoAcceptedByEntity.
+  const autoAcceptedIssueKeysRef = useRef<Set<string>>(getOrCreateAutoAcceptedSet(entityIdentity));
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -751,52 +781,126 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
 
   useEffect(() => {
     if (!validatorEnabled || !formatterEnabled) {
+      if (autoAcceptTimerRef.current) {
+        clearTimeout(autoAcceptTimerRef.current);
+        autoAcceptTimerRef.current = null;
+      }
       if (autoAcceptedIssueKeysRef.current.size > 0) {
         autoAcceptedIssueKeysRef.current.clear();
       }
       return;
     }
-    const nextVisibleIssueKeys = new Set<string>();
-    for (const [fieldName, issues] of Object.entries(visibleFieldIssues)) {
-      for (const issue of issues) {
-        const issueKey = buildIssueDecisionKey(fieldName, issue.patternId);
-        nextVisibleIssueKeys.add(issueKey);
-        if (autoAcceptedIssueKeysRef.current.has(issueKey)) continue;
-        const issuePattern = validatorPatternById.get(issue.patternId);
-        const shouldAutoApplyRuntimeReplacement =
-          issuePattern?.runtimeEnabled === true &&
-          issuePattern.replacementAutoApply === true &&
-          typeof issue.replacementValue === 'string' &&
-          issue.replacementValue.trim().length > 0;
-        if (shouldAutoApplyRuntimeReplacement) {
-          const applied = applyAutoReplacementToField(fieldName, issue.replacementValue ?? '');
-          if (!applied) continue;
+
+    // Debounce: collapses rapid re-fires from unstable deps into one execution.
+    if (autoAcceptTimerRef.current) clearTimeout(autoAcceptTimerRef.current);
+    autoAcceptTimerRef.current = setTimeout(() => {
+      autoAcceptTimerRef.current = null;
+
+      const nextVisibleIssueKeys = new Set<string>();
+      const pendingAccepts: Array<{
+        fieldName: string;
+        patternId: string;
+        postAcceptBehavior: string | null | undefined;
+        message: string | null | undefined;
+        replacementValue: string | null | undefined;
+        issueKey: string;
+      }> = [];
+
+      for (const [fieldName, issues] of Object.entries(visibleFieldIssues)) {
+        for (const issue of issues) {
+          const issueKey = buildIssueDecisionKey(fieldName, issue.patternId);
+          nextVisibleIssueKeys.add(issueKey);
+          if (autoAcceptedIssueKeysRef.current.has(issueKey)) continue;
+          const issuePattern = validatorPatternById.get(issue.patternId);
+          const shouldAutoApplyReplacement =
+            issuePattern?.replacementAutoApply === true &&
+            typeof issue.replacementValue === 'string' &&
+            issue.replacementValue.trim().length > 0 &&
+            (issuePattern.runtimeEnabled === true || fieldName === 'categoryId');
+          if (shouldAutoApplyReplacement) {
+            const applied = applyAutoReplacementToField(fieldName, issue.replacementValue ?? '');
+            if (!applied) continue;
+          }
+          pendingAccepts.push({
+            fieldName,
+            patternId: issue.patternId,
+            postAcceptBehavior: issue.postAcceptBehavior,
+            message: issue.message,
+            replacementValue: issue.replacementValue,
+            issueKey,
+          });
+          autoAcceptedIssueKeysRef.current.add(issueKey);
         }
-        void acceptIssue({
-          fieldName,
-          patternId: issue.patternId,
-          postAcceptBehavior: issue.postAcceptBehavior,
-          message: issue.message,
-          replacementValue: issue.replacementValue,
+      }
+
+      // Batch-send all pending accepts in a single POST instead of N individual calls.
+      // This prevents saturating the browser's 6-connection-per-origin limit.
+      if (pendingAccepts.length > 0) {
+        setAcceptedIssueKeys((prev: Set<string>) => {
+          const next = new Set(prev);
+          for (const accept of pendingAccepts) {
+            if (accept.postAcceptBehavior === 'stop_after_accept') {
+              next.add(accept.issueKey);
+            }
+          }
+          return next;
         });
-        autoAcceptedIssueKeysRef.current.add(issueKey);
+
+        void api
+          .post<Record<string, unknown>>(
+            '/api/v2/products/validator-decisions/batch',
+            {
+              decisions: pendingAccepts.map((a) => ({
+                action: 'accept' as const,
+                productId: product?.id ?? null,
+                draftId: draft?.id ?? null,
+                patternId: a.patternId,
+                fieldName: a.fieldName,
+                denyBehavior: null,
+                message: a.message ?? null,
+                replacementValue: a.replacementValue ?? null,
+                sessionId: validationSessionId || null,
+              })),
+            },
+            { logError: false }
+          )
+          .catch((error: unknown) => {
+            logClientError(error instanceof Error ? error : new Error(String(error)), {
+              context: {
+                source: 'ProductForm',
+                action: 'batchAutoAcceptValidatorIssues',
+                count: pendingAccepts.length,
+              },
+            });
+          });
       }
-    }
-    if (autoAcceptedIssueKeysRef.current.size === 0) return;
-    const staleKeys: string[] = [];
-    for (const issueKey of autoAcceptedIssueKeysRef.current) {
-      if (!nextVisibleIssueKeys.has(issueKey)) {
-        staleKeys.push(issueKey);
+
+      // Evict stale keys that are no longer visible
+      if (autoAcceptedIssueKeysRef.current.size === 0) return;
+      const staleKeys: string[] = [];
+      for (const issueKey of autoAcceptedIssueKeysRef.current) {
+        if (!nextVisibleIssueKeys.has(issueKey)) {
+          staleKeys.push(issueKey);
+        }
       }
-    }
-    staleKeys.forEach((issueKey) => {
-      autoAcceptedIssueKeysRef.current.delete(issueKey);
-    });
+      staleKeys.forEach((issueKey) => {
+        autoAcceptedIssueKeysRef.current.delete(issueKey);
+      });
+    }, 200);
+
+    return () => {
+      if (autoAcceptTimerRef.current) {
+        clearTimeout(autoAcceptTimerRef.current);
+        autoAcceptTimerRef.current = null;
+      }
+    };
   }, [
-    acceptIssue,
     applyAutoReplacementToField,
     buildIssueDecisionKey,
+    draft?.id,
     formatterEnabled,
+    product?.id,
+    validationSessionId,
     validatorPatternById,
     validatorEnabled,
     visibleFieldIssues,

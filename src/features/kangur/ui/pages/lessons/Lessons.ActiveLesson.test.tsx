@@ -95,16 +95,6 @@ vi.mock('@/features/kangur/ui/design/primitives', () => ({
   KangurSummaryPanel: ({ title }: { title: string }) => <div>{title}</div>,
 }));
 
-vi.mock('@/features/kangur/ui/design/tokens', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/kangur/ui/design/tokens')>();
-
-  return {
-    ...actual,
-    KANGUR_PANEL_GAP_CLASSNAME: 'gap',
-    KANGUR_LESSON_PANEL_GAP_CLASSNAME: 'lesson-gap',
-  };
-});
-
 vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
   useKangurMobileBreakpoint: () => useKangurMobileBreakpointMock(),
 }));
@@ -133,7 +123,7 @@ const nextLesson = {
   contentMode: 'document',
 };
 
-describe('ActiveLessonView mobile scroll controls', () => {
+describe('ActiveLessonView mobile controls', () => {
   let activeLessonContentRef: React.RefObject<HTMLDivElement>;
   let handleSelectLesson: ReturnType<typeof vi.fn>;
 
@@ -172,76 +162,26 @@ describe('ActiveLessonView mobile scroll controls', () => {
     vi.clearAllMocks();
   });
 
-  it('locks vertical scroll and toggles arrow controls on mobile', async () => {
+  it('keeps native page scroll on mobile while showing the back control', async () => {
     const { unmount } = render(<ActiveLessonView />);
 
     await act(async () => {});
 
-    const scrollContainer = screen.getByTestId('kangur-lesson-scroll-container') as HTMLDivElement;
-    const activeLessonTransition = screen.getByTestId('lessons-active-transition');
-    expect(scrollContainer.parentElement?.className).toContain(
-      'var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px)'
-    );
-    expect(scrollContainer.parentElement?.className).toContain('lesson-gap');
-    expect(activeLessonTransition.className).toContain('lesson-gap');
-    expect(scrollContainer.className).toContain('lesson-gap');
-    expect(scrollContainer.className).toContain('touch-pan-y');
-    expect(scrollContainer.className).not.toContain('touch-none');
-    Object.defineProperty(scrollContainer, 'clientHeight', { value: 100, configurable: true });
-    Object.defineProperty(scrollContainer, 'scrollHeight', { value: 400, configurable: true });
-    scrollContainer.scrollTop = 0;
-
-    await act(async () => {
-      scrollContainer.dispatchEvent(new Event('scroll'));
-    });
-
-    const scrollByMock = vi.fn();
-    const scrollToMock = vi.fn();
-    scrollContainer.scrollBy = scrollByMock;
-    scrollContainer.scrollTo = scrollToMock;
-
     const backToLessonsButton = screen.getByRole('button', { name: 'Wróć do lekcji' });
-    const downButton = screen.getByRole('button', { name: 'Przewiń w dół' });
-    expect(downButton.className).toContain(
-      'var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))'
-    );
+
     expect(backToLessonsButton).toBeInTheDocument();
-
-    fireEvent.click(downButton);
-
-    expect(scrollByMock).toHaveBeenCalledWith(
-      expect.objectContaining({ top: 240, behavior: 'smooth' })
-    );
-
     expect(screen.queryByRole('button', { name: 'Przewiń w górę' })).toBeNull();
-
-    scrollContainer.scrollTop = 200;
-    await act(async () => {
-      scrollContainer.dispatchEvent(new Event('scroll'));
-    });
-
-    const upButton = screen.getByRole('button', { name: 'Przewiń w górę' });
     const topControls = screen.getByTestId('kangur-lesson-top-controls');
+    const activeLessonTransition = screen.getByTestId('lessons-active-transition');
 
-    expect(scrollContainer.contains(topControls)).toBe(true);
-
-    fireEvent.click(upButton);
-    expect(scrollByMock).toHaveBeenCalledWith(
-      expect.objectContaining({ top: -240, behavior: 'smooth' })
-    );
+    expect(activeLessonTransition.contains(topControls)).toBe(true);
+    expect(screen.queryByTestId('kangur-lesson-scroll-container')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Przewiń w dół' })).toBeNull();
+    expect(document.documentElement.style.overflow).toBe('');
+    expect(document.body.style.overflow).toBe('');
 
     fireEvent.click(backToLessonsButton);
     expect(handleSelectLesson).toHaveBeenCalledWith(null);
-
-    scrollContainer.scrollTop = 300;
-    await act(async () => {
-      scrollContainer.dispatchEvent(new Event('scroll'));
-    });
-
-    expect(screen.queryByRole('button', { name: 'Przewiń w dół' })).toBeNull();
-
-    expect(document.documentElement.style.overflow).toBe('hidden');
-    expect(document.body.style.overflow).toBe('hidden');
 
     unmount();
 

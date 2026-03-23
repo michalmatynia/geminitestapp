@@ -31,7 +31,8 @@ const hookMocks = vi.hoisted(() => {
     product: null as Record<string, unknown> | null,
     selectedCategoryId: null as string | null,
     selectedCatalogIds: [] as string[],
-    categories: [] as Array<{ id: string; name: string }>,
+    categories: [] as Array<Record<string, unknown>>,
+    visibleFieldIssues: {} as Record<string, Array<Record<string, unknown>>>,
     validatorConfig: {
       enabledByDefault: true,
       formatterEnabledByDefault: false,
@@ -137,7 +138,7 @@ vi.mock('@/features/products/hooks/useProductSettingsQueries', () => ({
 
 vi.mock('@/features/products/hooks/useProductValidatorIssues', () => ({
   useProductValidatorIssues: () => ({
-    visibleFieldIssues: {},
+    visibleFieldIssues: hookMocks.visibleFieldIssues,
   }),
 }));
 
@@ -162,6 +163,7 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
 }));
 
 import { useProductFormValidator } from '@/features/products/hooks/useProductFormValidator';
+import { api } from '@/shared/lib/api-client';
 
 describe('useProductFormValidator', () => {
   beforeEach(() => {
@@ -172,6 +174,7 @@ describe('useProductFormValidator', () => {
     hookMocks.selectedCategoryId = null;
     hookMocks.selectedCatalogIds = [];
     hookMocks.categories = [];
+    hookMocks.visibleFieldIssues = {};
     hookMocks.validatorConfig = {
       enabledByDefault: true,
       formatterEnabledByDefault: false,
@@ -227,5 +230,57 @@ describe('useProductFormValidator', () => {
     rerender();
 
     await waitFor(() => expect(result.current.formatterEnabled).toBe(false));
+  });
+
+  it('auto-applies category replacements when formatter is enabled', async () => {
+    hookMocks.categories = [
+      {
+        id: 'category-2',
+        name: 'Wallets',
+        name_en: 'Wallets',
+        name_pl: 'Portfele',
+        name_de: 'Geldborsen',
+      },
+    ];
+    hookMocks.validatorConfig = {
+      enabledByDefault: true,
+      formatterEnabledByDefault: true,
+      instanceDenyBehavior: null,
+      patterns: [
+        {
+          id: 'category-pattern',
+          runtimeEnabled: false,
+          replacementAutoApply: true,
+        },
+      ],
+    };
+    hookMocks.visibleFieldIssues = {
+      categoryId: [
+        {
+          patternId: 'category-pattern',
+          postAcceptBehavior: 'continue',
+          message: 'Assign category from inferred value',
+          replacementValue: 'Portfele',
+        },
+      ],
+    };
+
+    renderHook(() => useProductFormValidator());
+
+    await waitFor(() => {
+      expect(hookMocks.setCategoryId).toHaveBeenCalledWith('category-2');
+    });
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith(
+        '/api/v2/products/validator-decisions',
+        expect.objectContaining({
+          action: 'accept',
+          fieldName: 'categoryId',
+          patternId: 'category-pattern',
+          replacementValue: 'Portfele',
+        }),
+        { logError: false }
+      );
+    });
   });
 });

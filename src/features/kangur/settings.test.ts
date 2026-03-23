@@ -6,24 +6,18 @@ import {
   createDefaultKangurLessons,
   DEFAULT_KANGUR_LAUNCH_ROUTE,
   KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
-  KANGUR_PHONE_SIMULATION_DEFAULT_ENABLED,
-  KANGUR_PHONE_SIMULATION_SETTINGS_KEY,
   KANGUR_LESSON_LIBRARY,
   KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS,
   parseKangurLaunchRouteSettings,
   parseKangurNarratorSettings,
-  parseKangurPhoneSimulationSettings,
   parseKangurParentVerificationEmailSettings,
   normalizeKangurLessons,
 } from '@/features/kangur/settings';
 import { KANGUR_TTS_DEFAULT_VOICE } from '@/features/kangur/tts/contracts';
 
 describe('kangur lesson settings', () => {
-  it('exports the persisted launch-route and phone-simulation setting keys', () => {
+  it('exports the persisted launch-route setting key', () => {
     expect(KANGUR_LAUNCH_ROUTE_SETTINGS_KEY).toBe('kangur_launch_route_settings_v1');
-    expect(KANGUR_PHONE_SIMULATION_SETTINGS_KEY).toBe(
-      'kangur_phone_simulation_settings_v1'
-    );
   });
 
   it('describes the clock lesson as segmented hour and minute reading', () => {
@@ -234,21 +228,6 @@ describe('kangur lesson settings', () => {
       notificationsDisabledUntil: '2026-03-20T10:00:00.000Z',
       requireEmailVerification: true,
       requireCaptcha: true,
-    });
-  });
-
-  it('defaults phone simulation settings to enabled', () => {
-    expect(parseKangurPhoneSimulationSettings(undefined)).toEqual({
-      enabled: KANGUR_PHONE_SIMULATION_DEFAULT_ENABLED,
-    });
-    expect(parseKangurPhoneSimulationSettings(JSON.stringify({}))).toEqual({
-      enabled: KANGUR_PHONE_SIMULATION_DEFAULT_ENABLED,
-    });
-  });
-
-  it('parses persisted phone simulation settings', () => {
-    expect(parseKangurPhoneSimulationSettings(JSON.stringify({ enabled: false }))).toEqual({
-      enabled: false,
     });
   });
 

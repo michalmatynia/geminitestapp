@@ -9,7 +9,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   useKangurGameRuntimeMock,
   useKangurMobileBreakpointMock,
-  useKangurPhoneSimulationMock,
   routeNavigatorPushMock,
   homeHeroPropsMock,
   assignmentSpotlightPropsMock,
@@ -17,12 +16,9 @@ const {
   homeDuelsInvitesPropsMock,
   tutorSessionSyncPropsMock,
   xpToastPropsMock,
-  lockKangurPageVerticalScrollMock,
-  unlockKangurPageVerticalScrollMock,
 } = vi.hoisted(() => ({
   useKangurGameRuntimeMock: vi.fn(),
   useKangurMobileBreakpointMock: vi.fn(),
-  useKangurPhoneSimulationMock: vi.fn(),
   routeNavigatorPushMock: vi.fn(),
   homeHeroPropsMock: vi.fn(),
   assignmentSpotlightPropsMock: vi.fn(),
@@ -30,8 +26,6 @@ const {
   homeDuelsInvitesPropsMock: vi.fn(),
   tutorSessionSyncPropsMock: vi.fn(),
   xpToastPropsMock: vi.fn(),
-  lockKangurPageVerticalScrollMock: vi.fn(),
-  unlockKangurPageVerticalScrollMock: vi.fn(),
 }));
 
 vi.mock('framer-motion', () => {
@@ -82,10 +76,6 @@ vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
   useKangurMobileBreakpoint: () => useKangurMobileBreakpointMock(),
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurPhoneSimulation', () => ({
-  useKangurPhoneSimulation: () => useKangurPhoneSimulationMock(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
@@ -216,11 +206,6 @@ vi.mock('@/features/kangur/docs/tooltips', () => ({
   useKangurDocsTooltips: () => ({ enabled: false }),
 }));
 
-vi.mock('@/features/kangur/ui/scroll/kangur-page-scroll-lock', () => ({
-  lockKangurPageVerticalScroll: () => lockKangurPageVerticalScrollMock(),
-  unlockKangurPageVerticalScroll: () => unlockKangurPageVerticalScrollMock(),
-}));
-
 import Game from '@/features/kangur/ui/pages/Game';
 
 describe('Game page', () => {
@@ -253,7 +238,6 @@ describe('Game page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useKangurMobileBreakpointMock.mockReturnValue(false);
-    useKangurPhoneSimulationMock.mockReturnValue({ enabled: true });
     Object.defineProperty(window, 'scrollTo', {
       configurable: true,
       value: vi.fn(),
@@ -452,9 +436,8 @@ describe('Game page', () => {
     });
   });
 
-  it('keeps the home screen on the standard mobile layout when phone simulation is enabled', () => {
+  it('keeps the home screen on the standard mobile layout', () => {
     useKangurMobileBreakpointMock.mockReturnValue(true);
-    useKangurPhoneSimulationMock.mockReturnValue({ enabled: true });
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildRuntime('home'),
       progress: { totalXp: 1 },
@@ -475,12 +458,11 @@ describe('Game page', () => {
     expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-container')).toBeNull();
     expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-up')).toBeNull();
     expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-down')).toBeNull();
-    expect(lockKangurPageVerticalScrollMock).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Przewiń w dół' })).toBeNull();
   });
 
-  it('keeps the operation screen on the standard mobile layout when phone simulation is enabled', () => {
+  it('keeps the operation screen on the standard mobile layout', () => {
     useKangurMobileBreakpointMock.mockReturnValue(true);
-    useKangurPhoneSimulationMock.mockReturnValue({ enabled: true });
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildRuntime('operation'),
       progress: { totalXp: 1 },
@@ -495,145 +477,35 @@ describe('Game page', () => {
     expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-container')).toBeNull();
     expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-up')).toBeNull();
     expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-down')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Przewiń w dół' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Wróć do lekcji' })).not.toBeInTheDocument();
-    expect(lockKangurPageVerticalScrollMock).not.toHaveBeenCalled();
   });
 
-  it('shows mobile phone simulation scroll controls when an active gameplay screen overflows', async () => {
+  it('keeps active gameplay screens on the standard mobile layout', () => {
     useKangurMobileBreakpointMock.mockReturnValue(true);
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildRuntime('playing'),
       progress: { totalXp: 1 },
     });
-
-    render(<Game />);
-
-    expect(screen.getByTestId('kangur-game-navigation-widget')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Wróć do lekcji' })).toBeInTheDocument();
-
-    const scrollContainer = screen.getByTestId('kangur-game-phone-simulation-scroll-container');
-    expect(scrollContainer.className).toContain('touch-pan-y');
-    expect(scrollContainer.className).not.toContain('touch-none');
-
-    Object.defineProperty(scrollContainer, 'clientHeight', {
-      configurable: true,
-      value: 320,
-    });
-    Object.defineProperty(scrollContainer, 'scrollHeight', {
-      configurable: true,
-      value: 960,
-    });
-    Object.defineProperty(scrollContainer, 'scrollTop', {
-      configurable: true,
-      value: 0,
-      writable: true,
-    });
-
-    fireEvent.scroll(scrollContainer);
-
-    expect(
-      screen.queryByTestId('kangur-game-phone-simulation-scroll-up')
-    ).not.toBeInTheDocument();
-
-    await waitFor(() => {
-      expect(
-        screen.getByTestId('kangur-game-phone-simulation-scroll-down')
-      ).toBeInTheDocument();
-    });
-
-    Object.defineProperty(scrollContainer, 'scrollTop', {
-      configurable: true,
-      value: 180,
-      writable: true,
-    });
-    fireEvent.scroll(scrollContainer);
-
-    await waitFor(() => {
-      expect(
-        screen.getByTestId('kangur-game-phone-simulation-scroll-up')
-      ).toBeInTheDocument();
-    });
-  });
-
-  it('returns to lessons from the mobile game controls', () => {
-    useKangurMobileBreakpointMock.mockReturnValue(true);
-    useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('playing'),
-      progress: { totalXp: 1 },
-    });
-
-    render(<Game />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Wróć do lekcji' }));
-
-    expect(routeNavigatorPushMock).toHaveBeenCalledWith('/kangur/lessons', {
-      pageKey: 'Lessons',
-      sourceId: 'game-phone-simulation:back-to-lessons',
-    });
-  });
-
-  it('uses the shared mobile bottom clearance for the standard game page layout', () => {
-    useKangurMobileBreakpointMock.mockReturnValue(true);
-    useKangurPhoneSimulationMock.mockReturnValue({ enabled: false });
-    useKangurGameRuntimeMock.mockReturnValue(buildRuntime('home'));
 
     render(<Game />);
 
     const gameMain = document.getElementById('kangur-game-main');
 
     expect(gameMain).not.toBeNull();
+    expect(gameMain?.className).toContain('overflow-y-auto');
     expect(gameMain?.className).toContain(
       'var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px'
     );
-  });
-
-  it('uses the shared shell viewport height and bottom clearance for phone simulation chrome', async () => {
-    useKangurMobileBreakpointMock.mockReturnValue(true);
-    useKangurPhoneSimulationMock.mockReturnValue({ enabled: true });
-    useKangurGameRuntimeMock.mockReturnValue(buildRuntime('playing'));
-
-    render(<Game />);
-
-    const gameMain = document.getElementById('kangur-game-main');
-    const phoneSimulationControls = screen.getByTestId('kangur-game-phone-simulation-top-controls');
-    const scrollContainer = screen.getByTestId('kangur-game-phone-simulation-scroll-container');
-
-    expect(gameMain).not.toBeNull();
-    expect(gameMain?.className).toContain(
+    expect(gameMain?.className).not.toContain(
       'var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px)'
     );
-    expect(gameMain?.className).not.toContain('kangur-lesson-panel-gap');
-    expect(phoneSimulationControls.parentElement?.className).toContain('kangur-lesson-panel-gap');
-    expect(scrollContainer.className).not.toContain('kangur-lesson-panel-gap');
-    expect(scrollContainer.className).toContain('touch-pan-y');
-    expect(scrollContainer.className).not.toContain('touch-none');
-
-    Object.defineProperty(scrollContainer, 'clientHeight', {
-      configurable: true,
-      value: 320,
-    });
-    Object.defineProperty(scrollContainer, 'scrollHeight', {
-      configurable: true,
-      value: 960,
-    });
-    Object.defineProperty(scrollContainer, 'scrollTop', {
-      configurable: true,
-      value: 0,
-      writable: true,
-    });
-
-    fireEvent.scroll(scrollContainer);
-
-    await waitFor(() => {
-      expect(
-        screen.getByTestId('kangur-game-phone-simulation-scroll-down')
-      ).toBeInTheDocument();
-    });
-
-    expect(screen.getByTestId('kangur-game-phone-simulation-scroll-down').className).toContain(
-      'var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))'
-    );
-    expect(lockKangurPageVerticalScrollMock).toHaveBeenCalled();
+    expect(screen.getByTestId('kangur-game-navigation-widget')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Wróć do lekcji' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-container')).toBeNull();
+    expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-up')).toBeNull();
+    expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-down')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Przewiń w dół' })).toBeNull();
   });
 
   it('scrolls back to the top and focuses the next screen heading without re-scrolling when entering a quiz', () => {

@@ -130,3 +130,34 @@ export async function appendProductValidationDecision(
   await writeDecisionLogValue(JSON.stringify(next));
   return record;
 }
+
+export async function appendProductValidationDecisionsBatch(
+  inputs: AppendProductValidationDecisionInput[]
+): Promise<ProductValidationDecisionRecord[]> {
+  const existing = parseDecisionLog(await readDecisionLogValue());
+  const now = new Date().toISOString();
+  const records: ProductValidationDecisionRecord[] = inputs.map(
+    (input): ProductValidationDecisionRecord => ({
+      id:
+        typeof globalThis.crypto !== 'undefined' &&
+        typeof globalThis.crypto.randomUUID === 'function'
+          ? globalThis.crypto.randomUUID()
+          : randomUUID(),
+      action: input.action,
+      productId: normalizeTrimmedString(input.productId ?? null),
+      draftId: normalizeTrimmedString(input.draftId ?? null),
+      patternId: input.patternId.trim(),
+      fieldName: input.fieldName.trim(),
+      denyBehavior: input.denyBehavior ?? null,
+      message: normalizeTrimmedString(input.message ?? null),
+      replacementValue: normalizeTrimmedString(input.replacementValue ?? null),
+      sessionId: normalizeTrimmedString(input.sessionId ?? null),
+      userId: normalizeTrimmedString(input.userId ?? null),
+      createdAt: now,
+    })
+  );
+
+  const next = [...records, ...existing].slice(0, DECISION_LOG_MAX_ENTRIES);
+  await writeDecisionLogValue(JSON.stringify(next));
+  return records;
+}

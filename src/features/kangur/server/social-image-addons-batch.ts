@@ -21,6 +21,10 @@ import {
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import { operationFailedError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
+import {
+  KANGUR_CAPTURE_MODE_QUERY_PARAM,
+  KANGUR_CAPTURE_MODE_SOCIAL_BATCH,
+} from '@/features/kangur/shared/capture-mode';
 import { KANGUR_SOCIAL_CAPTURE_PRESETS } from '@/features/kangur/shared/social-capture-presets';
 
 import {
@@ -164,7 +168,21 @@ const toImageSelection = (params: {
 const buildCaptureUrl = (baseUrl: string, pathValue: string): string => {
   const trimmedBase = baseUrl.trim().replace(/\/+$/, '');
   const normalizedPath = pathValue.startsWith('/') ? pathValue : `/${pathValue}`;
-  return `${trimmedBase}${normalizedPath}`;
+  const href = `${trimmedBase}${normalizedPath}`;
+
+  try {
+    const parsed = new URL(href);
+    parsed.searchParams.set(
+      KANGUR_CAPTURE_MODE_QUERY_PARAM,
+      KANGUR_CAPTURE_MODE_SOCIAL_BATCH
+    );
+    return parsed.toString();
+  } catch {
+    const separator = href.includes('?') ? '&' : '?';
+    return `${href}${separator}${KANGUR_CAPTURE_MODE_QUERY_PARAM}=${encodeURIComponent(
+      KANGUR_CAPTURE_MODE_SOCIAL_BATCH
+    )}`;
+  }
 };
 
 const parseCookiesForPlaywright = (

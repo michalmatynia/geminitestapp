@@ -3,45 +3,34 @@
 import React, { useMemo } from 'react';
 
 import { useCategoryMapperData } from '@/features/integrations/context/CategoryMapperContext';
-import type { CatalogRecord } from '@/shared/contracts/products';
-import type { PickerGroup, PickerOption } from '@/shared/contracts/ui';
-import { Label, UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui';
-import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
+import { Label, SelectSimple } from '@/shared/ui';
 
 export function CategoryMapperCatalogSelector(): React.JSX.Element {
   const { selectedCatalogId, setSelectedCatalogId, catalogsLoading, catalogs, internalCategories } =
     useCategoryMapperData();
 
-  const groups = useMemo<PickerGroup[]>(
-    () => [
-      {
-        label: 'Available Catalogs',
-        options: catalogs.map((catalog: CatalogRecord) => ({
-          key: catalog.id,
-          label: catalog.name,
-        })),
-      },
-    ],
+  const catalogOptions = useMemo(
+    () =>
+      catalogs.map((catalog) => ({
+        value: catalog.id,
+        label: catalog.name,
+      })),
     [catalogs]
   );
 
   return (
-    <div className={UI_CENTER_ROW_RELAXED_CLASSNAME}>
-      <Label className='text-sm text-gray-400'>Target Catalog:</Label>
-      <div className='w-[200px]'>
-        <GenericPickerDropdown
-          groups={groups}
-          selectedKey={selectedCatalogId ?? ''}
-          onSelect={(opt: PickerOption) => setSelectedCatalogId(opt.key)}
-          triggerContent={
-            <span className='text-sm truncate'>
-              {catalogsLoading
-                ? 'Loading...'
-                : catalogs.find((c) => c.id === selectedCatalogId)?.name || 'Select catalog'}
-            </span>
-          }
-          searchable={catalogs.length > 5}
-          ariaLabel='Select target catalog'
+    <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3'>
+      <Label className='text-sm font-medium text-foreground'>Target Catalog</Label>
+      <div className='w-full sm:w-[260px]'>
+        <SelectSimple
+          size='sm'
+          value={selectedCatalogId ?? undefined}
+          onValueChange={setSelectedCatalogId}
+          options={catalogOptions}
+          placeholder={catalogsLoading ? 'Loading catalogs...' : 'Select catalog'}
+          disabled={catalogsLoading || catalogOptions.length === 0}
+          ariaLabel='Target catalog'
+          title='Target catalog'
         />
       </div>
 

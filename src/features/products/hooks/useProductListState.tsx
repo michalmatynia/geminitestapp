@@ -64,6 +64,13 @@ export function applyProductListAdvancedFilterState(args: {
   });
 }
 
+export function shouldEnableProductListBackgroundSync(args: {
+  queuedProductIdsCount: number;
+  activeTrackedProductAiRunsCount: number;
+}): boolean {
+  return args.queuedProductIdsCount > 0 || args.activeTrackedProductAiRunsCount > 0;
+}
+
 export function useProductListState(): ProductListContextType & {
   isDebugOpen: boolean;
   isMounted: boolean;
@@ -180,6 +187,11 @@ export function useProductListState(): ProductListContextType & {
     nameLocale: preferences.nameLocale,
   });
 
+  const shouldEnableListBackgroundSync = shouldEnableProductListBackgroundSync({
+    queuedProductIdsCount: queuedProductIds.size,
+    activeTrackedProductAiRunsCount: productAiRunStatusByProductId.size,
+  });
+
   useProductListSync(
     {
       search,
@@ -198,7 +210,7 @@ export function useProductListState(): ProductListContextType & {
       page,
       pageSize,
     },
-    !isLoading
+    !isLoading && shouldEnableListBackgroundSync
   );
 
   const {

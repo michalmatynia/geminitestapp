@@ -77,12 +77,12 @@ export const resolveBaseExporterTemplateMappings = (
       );
       continue;
     }
-    if (targetField.toLowerCase() === 'producer_name') {
+    if (producerTarget === 'producer_name') {
       const values = toProducerNameValueList(sourceValue, options?.producerNameById);
       result[targetField] = values[0] ?? null;
       continue;
     }
-    if (targetField.toLowerCase() === 'producer_names') {
+    if (producerTarget === 'producer_names') {
       result[targetField] = toProducerNameValueList(sourceValue, options?.producerNameById);
       continue;
     }

@@ -27,7 +27,7 @@ export function FrontendRouteLoadingFallback(): React.JSX.Element {
   const publicOwnerContext = useOptionalFrontendPublicOwner();
 
   if (publicOwnerContext?.publicOwner === 'kangur') {
-    return <KangurRouteLoadingFallback />;
+    return <KangurRouteLoadingFallback includeTopNavigationSkeleton={false} />;
   }
 
   return <GenericFrontendLoadingFallback />;

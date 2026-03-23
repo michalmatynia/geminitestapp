@@ -263,6 +263,10 @@
     "pageTitle": "Lekcje",
     "introDescription": "Wybierz temat i przejdz od razu do praktyki lub powtorki.",
     "loadingDescription": "Lekcje zaraz beda gotowe.",
+    "loadingLessonsStatus": "Ładowanie lekcji",
+    "loadingLessonsDetails": "Przygotowujemy bibliotekę lekcji i dopasowujemy ją do wybranego tematu.",
+    "loadingSectionsStatus": "Ładowanie sekcji",
+    "loadingSectionsDetails": "Porządkujemy sekcje lekcji, aby zaraz pokazać pełną listę tematów.",
     "emptyTitle": "Brak aktywnych lekcji",
     "emptyDescription": "Brak aktywnych lekcji dla grupy {ageGroup}.",
     "groupTypeLabel": "Grupa",
@@ -270,8 +274,7 @@
     "mobileControls": {
       "backToLessons": "Wróć do lekcji",
       "backToTopics": "Wróć do tematów",
-      "scrollUp": "Przewiń w górę",
-      "scrollDown": "Przewiń w dół"
+      "scrollUp": "Przewiń w górę"
     }
   },
   "KangurLearnerProfilePage": {
@@ -293,8 +296,7 @@
     "statusAnnouncement": "Widok: {label}",
     "phoneSimulation": {
       "backToLessons": "Wróć do lekcji",
-      "scrollUp": "Przewiń w górę",
-      "scrollDown": "Przewiń w dół"
+      "scrollUp": "Przewiń w górę"
     },
     "screens": {
       "home": {

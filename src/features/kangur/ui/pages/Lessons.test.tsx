@@ -69,6 +69,26 @@ vi.mock('next-intl', () => ({
             en: 'The lessons will be ready in a moment.',
             pl: 'Lekcje zaraz beda gotowe.',
           },
+          'KangurLessonsPage.loadingLessonsStatus': {
+            de: 'Lektionen werden geladen',
+            en: 'Loading lessons',
+            pl: 'Ładowanie lekcji',
+          },
+          'KangurLessonsPage.loadingLessonsDetails': {
+            de: 'Die Lektionsbibliothek wird vorbereitet und an das gewahlte Thema angepasst.',
+            en: 'Preparing the lesson library and matching it to the selected topic.',
+            pl: 'Przygotowujemy bibliotekę lekcji i dopasowujemy ją do wybranego tematu.',
+          },
+          'KangurLessonsPage.loadingSectionsStatus': {
+            de: 'Abschnitte werden geladen',
+            en: 'Loading sections',
+            pl: 'Ładowanie sekcji',
+          },
+          'KangurLessonsPage.loadingSectionsDetails': {
+            de: 'Die Lektionsabschnitte werden geordnet, damit die Themenliste gleich angezeigt werden kann.',
+            en: 'Organising lesson sections so the full topic list can appear next.',
+            pl: 'Porządkujemy sekcje lekcji, aby zaraz pokazać pełną listę tematów.',
+          },
           'KangurLessonsPage.introDescription': {
             de: 'Wahle eine Lektion und starte mit dem Lernen.',
             en: 'Choose a lesson and start learning.',
@@ -133,11 +153,13 @@ vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
     description,
     onBack,
     visualTitle,
+    children,
   }: {
     title: string;
     description?: string;
     onBack?: () => void;
     visualTitle?: React.ReactNode;
+    children?: React.ReactNode;
   }) => (
     <div data-testid='mock-lessons-intro'>
       <span>{title}</span>
@@ -148,6 +170,7 @@ vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
         </button>
       ) : null}
       {visualTitle}
+      {children}
     </div>
   ),
 }));
@@ -222,6 +245,12 @@ vi.mock('@/features/kangur/ui/design/primitives', () => ({
     <button {...props}>{children}</button>
   ),
   KangurGlassPanel: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  KangurInfoCard: ({
+    children,
+    ...props
+  }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) => (
+    <div {...props}>{children}</div>
+  ),
   KangurStatusChip: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   KangurSummaryPanel: ({ title }: { title: string }) => <div>{title}</div>,
 }));
@@ -502,9 +531,14 @@ describe('Lessons page subject filtering', () => {
 
     render(<Lessons />);
 
+    expect(screen.getByTestId('lessons-intro-loading-state')).toBeInTheDocument();
     expect(screen.getByTestId('lessons-list-transition')).toBeInTheDocument();
     expect(screen.getByTestId('lessons-catalog-skeleton')).toBeInTheDocument();
     expect(screen.getByText('Lekcje zaraz beda gotowe.')).toBeInTheDocument();
+    expect(screen.getByText('Ładowanie lekcji')).toBeInTheDocument();
+    expect(
+      screen.getByText('Przygotowujemy bibliotekę lekcji i dopasowujemy ją do wybranego tematu.')
+    ).toBeInTheDocument();
   });
 
   it('shows a lesson-section skeleton while the catalog data is loading', () => {
@@ -517,7 +551,12 @@ describe('Lessons page subject filtering', () => {
     });
 
     expect(screen.getByTestId('lessons-catalog-skeleton')).toBeInTheDocument();
+    expect(screen.getByTestId('lessons-intro-loading-state')).toBeInTheDocument();
     expect(screen.getByText('Lekcje zaraz beda gotowe.')).toBeInTheDocument();
+    expect(screen.getByText('Ładowanie sekcji')).toBeInTheDocument();
+    expect(
+      screen.getByText('Porządkujemy sekcje lekcji, aby zaraz pokazać pełną listę tematów.')
+    ).toBeInTheDocument();
     expect(screen.queryByText('Brak aktywnych lekcji')).not.toBeInTheDocument();
   });
 
@@ -530,6 +569,7 @@ describe('Lessons page subject filtering', () => {
       vi.runAllTimers();
     });
 
+    expect(screen.queryByTestId('lessons-intro-loading-state')).not.toBeInTheDocument();
     expect(screen.queryByTestId('lessons-catalog-skeleton')).not.toBeInTheDocument();
     expect(screen.getByText('Brak aktywnych lekcji')).toBeInTheDocument();
   });

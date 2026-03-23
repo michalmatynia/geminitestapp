@@ -263,6 +263,10 @@
     "pageTitle": "Lektionen",
     "introDescription": "Wahle ein Thema und springe direkt in die Ubung oder Wiederholung.",
     "loadingDescription": "Die Lektionen sind gleich bereit.",
+    "loadingLessonsStatus": "Lektionen werden geladen",
+    "loadingLessonsDetails": "Die Lektionsbibliothek wird vorbereitet und an das gewahlte Thema angepasst.",
+    "loadingSectionsStatus": "Abschnitte werden geladen",
+    "loadingSectionsDetails": "Die Lektionsabschnitte werden geordnet, damit die Themenliste gleich angezeigt werden kann.",
     "emptyTitle": "Keine aktiven Lektionen",
     "emptyDescription": "Keine aktiven Lektionen fur die Gruppe {ageGroup}.",
     "groupTypeLabel": "Gruppe",
@@ -270,8 +274,7 @@
     "mobileControls": {
       "backToLessons": "Zurück zu den Lektionen",
       "backToTopics": "Zurück zu den Themen",
-      "scrollUp": "Nach oben scrollen",
-      "scrollDown": "Nach unten scrollen"
+      "scrollUp": "Nach oben scrollen"
     }
   },
   "KangurLearnerProfilePage": {
@@ -293,8 +296,7 @@
     "statusAnnouncement": "Ansicht: {label}",
     "phoneSimulation": {
       "backToLessons": "Zurück zu den Lektionen",
-      "scrollUp": "Nach oben scrollen",
-      "scrollDown": "Nach unten scrollen"
+      "scrollUp": "Nach oben scrollen"
     },
     "screens": {
       "home": {

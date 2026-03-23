@@ -30,6 +30,7 @@ import * as productsTagsId from '../tags/[id]/route-handler';
 import * as productsValidation from '../validation/route-handler';
 import * as productsValidatorConfig from '../validator-config/route-handler';
 import * as productsValidatorDecisions from '../validator-decisions/route-handler';
+import * as productsValidatorDecisionsBatch from '../validator-decisions/batch/route-handler';
 import * as productsValidatorSettings from '../validator-settings/route-handler';
 import * as productsValidatorPatterns from '../validator-patterns/route-handler';
 import * as productsValidatorPatternsImport from '../validator-patterns/import/route-handler';
@@ -190,6 +191,7 @@ const ROUTES: RouteDefinition[] = [
   { pattern: ['tags', param('id')], module: productsTagsId },
   { pattern: ['validation'], module: productsValidation },
   { pattern: ['validator-config'], module: productsValidatorConfig },
+  { pattern: ['validator-decisions', 'batch'], module: productsValidatorDecisionsBatch },
   { pattern: ['validator-decisions'], module: productsValidatorDecisions },
   { pattern: ['validator-settings'], module: productsValidatorSettings },
   { pattern: ['validator-patterns'], module: productsValidatorPatterns },

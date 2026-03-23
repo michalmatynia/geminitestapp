@@ -2,7 +2,6 @@
 
 import { AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { useEffect } from 'react';
 import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
@@ -12,7 +11,6 @@ import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginMod
 import { useLessons, LessonsProvider } from './lessons/LessonsContext';
 import { LessonsCatalog } from './lessons/Lessons.Catalog';
 import { ActiveLessonView } from './lessons/Lessons.ActiveLesson';
-import { unlockKangurLessonScroll } from './lessons/lessons-scroll-lock';
 
 function LessonsContent() {
   const pageTranslations = useTranslations('KangurLessonsPage');
@@ -56,12 +54,6 @@ function LessonsContent() {
     onLogin: openLoginModal,
     onLogout: () => logout(false),
   };
-
-  useEffect(() => {
-    if (!activeLesson) {
-      unlockKangurLessonScroll();
-    }
-  }, [activeLesson]);
 
   return (
     <>

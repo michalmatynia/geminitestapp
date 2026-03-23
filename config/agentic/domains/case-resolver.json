@@ -4,7 +4,7 @@
   "riskLevel": "high",
   "sourceRoots": [
     "src/features/case-resolver",
-    "src/features/case-resolver-capture",
+    "src/features/case-resolver/capture",
     "src/app/api/case-resolver"
   ],
   "ownedDocs": [

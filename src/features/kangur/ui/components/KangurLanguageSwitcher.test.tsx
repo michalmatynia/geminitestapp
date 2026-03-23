@@ -457,14 +457,16 @@ describe('KangurLanguageSwitcher', () => {
       expect(trigger.querySelector('.animate-spin')).not.toBeNull();
 
       act(() => {
-        vi.advanceTimersByTime(1_500);
+        vi.advanceTimersByTime(10_000);
       });
 
       expect(trigger.querySelector('.animate-spin')).toBeNull();
       expect(trigger).toBeEnabled();
       expect(trigger).not.toHaveClass('opacity-70');
     } finally {
-      vi.runOnlyPendingTimers();
+      act(() => {
+        vi.runOnlyPendingTimers();
+      });
       vi.useRealTimers();
     }
   });

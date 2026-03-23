@@ -5,16 +5,14 @@ import type { ProductRecord } from '@/shared/contracts/products';
 const applyBaseParameterImportMock = vi.hoisted(() => vi.fn());
 const validateProductCreateMock = vi.hoisted(() => vi.fn());
 const validateProductUpdateMock = vi.hoisted(() => vi.fn());
-const invalidateAllMock = vi.hoisted(() => vi.fn());
+const emitProductCacheInvalidationMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/integrations/services/imports/parameter-import/apply', () => ({
   applyBaseParameterImport: applyBaseParameterImportMock,
 }));
 
-vi.mock('@/features/products/server', () => ({
-  CachedProductService: {
-    invalidateAll: invalidateAllMock,
-  },
+vi.mock('@/shared/events/products', () => ({
+  emitProductCacheInvalidation: emitProductCacheInvalidationMock,
 }));
 
 vi.mock('@/shared/lib/products/validations', () => ({
@@ -160,7 +158,7 @@ describe('base import item processor', () => {
     expect(result.payloadSnapshot?.parameters).toEqual([
       { parameterId: 'param-1', value: 'from-template' },
     ]);
-    expect(invalidateAllMock).not.toHaveBeenCalled();
+    expect(emitProductCacheInvalidationMock).not.toHaveBeenCalled();
   });
 
   it('invalidates cached product lists after a successful imported create', async () => {
@@ -186,7 +184,7 @@ describe('base import item processor', () => {
     expect(productRepository.replaceProductCatalogs).toHaveBeenCalledWith('product-1', [
       'catalog-1',
     ]);
-    expect(invalidateAllMock).toHaveBeenCalledTimes(1);
+    expect(emitProductCacheInvalidationMock).toHaveBeenCalledTimes(1);
   });
 
   it('invalidates cached product lists after a successful imported update', async () => {
@@ -220,6 +218,6 @@ describe('base import item processor', () => {
         sku: 'SKU-2',
       })
     );
-    expect(invalidateAllMock).toHaveBeenCalledTimes(1);
+    expect(emitProductCacheInvalidationMock).toHaveBeenCalledTimes(1);
   });
 });

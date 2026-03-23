@@ -185,11 +185,26 @@ describe('MusicMelodyRepeatGame', () => {
     expect(screen.getByTestId('music-melody-repeat-actions')).toHaveClass(
       'flex',
       'w-full',
-      'gap-3',
       'px-1',
       'pt-1'
     );
     expect(screen.getByTestId('music-melody-repeat-actions')).toHaveClass('justify-center');
+    expect(screen.getByTestId('music-melody-repeat-actions-group')).toHaveClass(
+      'inline-grid',
+      'grid-cols-[auto_auto_auto]',
+      'items-center',
+      'max-[340px]:grid-cols-[auto]',
+      'max-[340px]:gap-y-2'
+    );
+    expect(screen.getByTestId('music-melody-repeat-actions-left-slot')).toHaveClass(
+      'max-[340px]:hidden'
+    );
+    expect(screen.getByTestId('music-melody-repeat-actions-left-slot')).toBeEmptyDOMElement();
+    expect(screen.getByTestId('music-melody-repeat-actions-right-slot')).toHaveClass(
+      'max-[340px]:justify-center',
+      'max-[340px]:pl-0'
+    );
+    expect(screen.getByTestId('music-melody-repeat-actions-right-slot')).toBeEmptyDOMElement();
     expect(screen.getByTestId('music-melody-repeat-actions')).not.toHaveClass(
       'rounded-[24px]',
       'border',
@@ -363,15 +378,16 @@ describe('MusicMelodyRepeatGame', () => {
 
     expect(screen.queryByTestId('music-melody-repeat-listen-glow')).not.toBeInTheDocument();
     const replayButton = screen.getByRole('button', { name: 'Zagraj od poczatku' });
-    expect(screen.getByTestId('music-melody-repeat-actions')).toHaveClass('justify-center');
-    expect(screen.getByTestId('music-melody-repeat-listen-button-shell')).toHaveClass('relative');
-    expect(replayButton).not.toHaveClass('col-start-3', 'justify-self-end');
-    expect(replayButton).toHaveClass(
-      'absolute',
-      'left-full',
-      'top-1/2',
-      'ml-3',
-      '-translate-y-1/2'
+    expect(screen.getByTestId('music-melody-repeat-actions-group')).toHaveClass(
+      'inline-grid',
+      'grid-cols-[auto_auto_auto]'
+    );
+    expect(screen.getByTestId('music-melody-repeat-actions-left-slot').firstElementChild).toHaveClass(
+      'pointer-events-none',
+      'invisible'
+    );
+    expect(screen.getByTestId('music-melody-repeat-actions-right-slot')).toContainElement(
+      replayButton
     );
 
     fireEvent.click(replayButton);

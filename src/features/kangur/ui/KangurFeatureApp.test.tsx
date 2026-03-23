@@ -592,6 +592,55 @@ describe('KangurFeatureApp', () => {
     ).toBeInTheDocument();
   });
 
+  it('lets the route skeleton take over the header even if the boot loader is still visible', () => {
+    settingsStoreStateMock.mockReturnValue({
+      map: new Map(),
+      isLoading: true,
+      isFetching: false,
+      error: null,
+      get: vi.fn(),
+      getBoolean: vi.fn(),
+      getNumber: vi.fn(),
+      refetch: vi.fn(),
+    });
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: true,
+      requestedPath: '/',
+      basePath: '/',
+    });
+    topNavigationHostVisibleMock.mockReturnValue(false);
+    routeTransitionStateMock.mockReturnValue({
+      isRouteAcknowledging: false,
+      isRoutePending: true,
+      isRouteWaitingForReady: false,
+      isRouteRevealing: false,
+      transitionPhase: 'pending',
+      activeTransitionSourceId: 'game-home-action:lessons',
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/lessons',
+      activeTransitionSkeletonVariant: 'lessons-library',
+      pendingPageKey: 'Lessons',
+      startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-embedded-override',
+      'false'
+    );
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-inline-top-navigation-skeleton',
+      'true'
+    );
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
+  });
+
   it('keeps standalone skeleton geometry when transitioning from lessons back to the embedded home route', () => {
     routingStateMock.mockReturnValue({
       pageKey: 'Lessons',

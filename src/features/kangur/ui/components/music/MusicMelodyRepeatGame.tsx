@@ -109,6 +109,10 @@ export default function MusicMelodyRepeatGame({
     accent: 'sky',
     message: buildRoundStartMessage(),
   });
+  const replayButtonClassName = cn(
+    'shrink-0 whitespace-nowrap',
+    isCoarsePointer ? 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]' : undefined
+  );
   const outcomeShellClassName =
     attemptOutcome === 'success'
       ? 'border-emerald-200/80 bg-emerald-50/55 shadow-[0_28px_68px_-42px_rgba(16,185,129,0.34)]'
@@ -651,55 +655,78 @@ export default function MusicMelodyRepeatGame({
           />
 
           <div
-            className='flex w-full max-w-full items-center justify-center gap-3 px-1 pt-1 sm:px-2'
+            className='flex w-full max-w-full justify-center px-1 pt-1 sm:px-2'
             data-testid='music-melody-repeat-actions'
           >
             <div
-              className='relative flex items-center justify-center p-1'
-              data-testid='music-melody-repeat-listen-button-shell'
+              className='inline-grid max-w-full grid-cols-[auto_auto_auto] items-center max-[340px]:grid-cols-[auto] max-[340px]:gap-y-2'
+              data-testid='music-melody-repeat-actions-group'
             >
-              <button
-                aria-label='Posluchaj melodii'
-                className={cn(
-                  'relative z-10 flex h-14 w-14 cursor-pointer items-center justify-center rounded-[22px] border border-sky-200/70 bg-[linear-gradient(160deg,rgba(224,242,254,0.9),rgba(186,230,253,0.74)_48%,rgba(224,231,255,0.64)_100%)] text-sky-700 shadow-[0_18px_34px_-26px_rgba(14,116,144,0.42)] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/70',
-                  isCoarsePointer
-                    ? 'touch-manipulation select-none active:scale-[0.97]'
-                    : 'hover:scale-[1.03]'
-                )}
-                data-testid='music-melody-repeat-listen-button'
-                onClick={() => {
-                  void handleListen();
-                }}
-                type='button'
+              <div
+                className='flex justify-end pr-3 max-[340px]:hidden'
+                data-testid='music-melody-repeat-actions-left-slot'
               >
-                <svg
-                  aria-hidden='true'
-                  className='relative z-10 translate-x-[2px] size-8 drop-shadow-[0_2px_4px_rgba(255,255,255,0.22)]'
-                  data-testid='music-melody-repeat-listen-icon'
-                  fill='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path d='M7.25 4.75v14.5L18.9 12 7.25 4.75Z' />
-                </svg>
-              </button>
-              {phase === 'repeat' ? (
-                <KangurButton
+                {phase === 'repeat' ? (
+                  <KangurButton
+                    aria-hidden='true'
+                    className={cn('pointer-events-none invisible', replayButtonClassName)}
+                    disabled
+                    size='lg'
+                    tabIndex={-1}
+                    type='button'
+                    variant='surface'
+                  >
+                    Zagraj od poczatku
+                  </KangurButton>
+                ) : null}
+              </div>
+              <div
+                className='flex items-center justify-center p-1'
+                data-testid='music-melody-repeat-listen-button-shell'
+              >
+                <button
+                  aria-label='Posluchaj melodii'
                   className={cn(
-                    'absolute left-full top-1/2 ml-3 -translate-y-1/2 whitespace-nowrap',
+                    'relative z-10 flex h-14 w-14 cursor-pointer items-center justify-center rounded-[22px] border border-sky-200/70 bg-[linear-gradient(160deg,rgba(224,242,254,0.9),rgba(186,230,253,0.74)_48%,rgba(224,231,255,0.64)_100%)] text-sky-700 shadow-[0_18px_34px_-26px_rgba(14,116,144,0.42)] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/70',
                     isCoarsePointer
-                      ? 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
-                      : undefined
+                      ? 'touch-manipulation select-none active:scale-[0.97]'
+                      : 'hover:scale-[1.03]'
                   )}
+                  data-testid='music-melody-repeat-listen-button'
                   onClick={() => {
                     void handleListen();
                   }}
-                  size='lg'
                   type='button'
-                  variant='surface'
                 >
-                  Zagraj od poczatku
-                </KangurButton>
-              ) : null}
+                  <svg
+                    aria-hidden='true'
+                    className='relative z-10 translate-x-[2px] size-8 drop-shadow-[0_2px_4px_rgba(255,255,255,0.22)]'
+                    data-testid='music-melody-repeat-listen-icon'
+                    fill='currentColor'
+                    viewBox='0 0 24 24'
+                  >
+                    <path d='M7.25 4.75v14.5L18.9 12 7.25 4.75Z' />
+                  </svg>
+                </button>
+              </div>
+              <div
+                className='flex justify-start pl-3 max-[340px]:justify-center max-[340px]:pl-0'
+                data-testid='music-melody-repeat-actions-right-slot'
+              >
+                {phase === 'repeat' ? (
+                  <KangurButton
+                    className={replayButtonClassName}
+                    onClick={() => {
+                      void handleListen();
+                    }}
+                    size='lg'
+                    type='button'
+                    variant='surface'
+                  >
+                    Zagraj od poczatku
+                  </KangurButton>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>

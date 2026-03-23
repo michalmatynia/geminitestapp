@@ -93,6 +93,7 @@ export function KangurTransitionLink({
       targetPageKey ?? resolveManagedKangurPageKeyFromHref(renderedHref, basePath);
 
     setKangurPendingRouteLoadingSnapshot({
+      fromHref: pathname,
       href: renderedHref,
       pageKey: resolvedPageKey ?? null,
       skeletonVariant: resolveKangurRouteTransitionSkeletonVariant({

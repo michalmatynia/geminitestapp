@@ -168,7 +168,7 @@ describe('agentic domain manifests', () => {
   it('classifies Case Resolver changes into the dedicated regression lane', async () => {
     const manifests = await loadDomainManifests();
     const classification = classifyChangedFiles(
-      ['src/features/case-resolver-capture/index.ts'],
+      ['src/features/case-resolver/capture/proposals.ts'],
       manifests,
     );
 

@@ -154,6 +154,7 @@ describe('KangurRouteTransitionProvider', () => {
     });
 
     expect(getKangurPendingRouteLoadingSnapshot()).toMatchObject({
+      fromHref: '/kangur',
       href: '/kangur/lessons',
       pageKey: 'Lessons',
       skeletonVariant: 'lessons-library',

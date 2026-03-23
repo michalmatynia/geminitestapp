@@ -528,7 +528,7 @@ describe('trend report scripts summary-json mode', () => {
       '--suite=unit-domain-timings',
       '--summary-json',
       '--no-write',
-      '--days=14',
+      '--days=30',
       '--max-runs=5',
     ]);
 

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS,
   parseCaseResolverCaptureSettings,
-} from '@/features/case-resolver-capture/settings';
+} from '@/features/case-resolver/capture/settings';
 
 describe('case-resolver-capture settings', () => {
   it('falls back to defaults for invalid payloads', () => {

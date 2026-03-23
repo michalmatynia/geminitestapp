@@ -129,7 +129,14 @@ describe('mongoKangurScoreRepository', () => {
             { subject: null },
           ],
         },
-        { operation: { $not: /^english_/i } },
+        {
+          $nor: [
+            { operation: /^english_/i },
+            { operation: /^alphabet_/i },
+            { operation: /^art_/i },
+            { operation: /^music_/i },
+          ],
+        },
       ],
     });
   });

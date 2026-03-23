@@ -8,10 +8,12 @@ const {
   resolveKangurActorMock,
   contextRegistryResolveRefsMock,
   previewKangurWebsiteHelpGraphContextMock,
+  resolveKangurAiTutorRuntimeDocumentsMock,
 } = vi.hoisted(() => ({
   resolveKangurActorMock: vi.fn(),
   contextRegistryResolveRefsMock: vi.fn(),
   previewKangurWebsiteHelpGraphContextMock: vi.fn(),
+  resolveKangurAiTutorRuntimeDocumentsMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/services/kangur-actor', () => ({
@@ -28,6 +30,10 @@ vi.mock('@/features/ai/ai-context-registry/server', () => ({
 vi.mock('@/features/kangur/server/knowledge-graph/retrieval', () => ({
   previewKangurAiTutorSemanticGraphContext: previewKangurWebsiteHelpGraphContextMock,
   previewKangurWebsiteHelpGraphContext: previewKangurWebsiteHelpGraphContextMock,
+}));
+
+vi.mock('@/features/kangur/server/context-registry', () => ({
+  resolveKangurAiTutorRuntimeDocuments: resolveKangurAiTutorRuntimeDocumentsMock,
 }));
 
 import { postKangurAiTutorKnowledgeGraphPreviewHandler } from './handler';
@@ -91,6 +97,16 @@ describe('kangur ai tutor knowledge graph preview handler', () => {
       ],
       truncated: false,
       engineVersion: 'test-engine',
+    });
+    resolveKangurAiTutorRuntimeDocumentsMock.mockReturnValue({
+      learnerSnapshot: {
+        id: 'runtime:kangur:learner:learner-1',
+        kind: 'runtime_document',
+        entityType: 'kangur_learner_snapshot',
+      },
+      loginActivity: null,
+      surfaceContext: null,
+      assignmentContext: null,
     });
     previewKangurWebsiteHelpGraphContextMock.mockResolvedValue({
       status: 'hit',
@@ -184,6 +200,7 @@ describe('kangur ai tutor knowledge graph preview handler', () => {
         ]),
       })
     );
+    expect(resolveKangurAiTutorRuntimeDocumentsMock).toHaveBeenCalled();
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(

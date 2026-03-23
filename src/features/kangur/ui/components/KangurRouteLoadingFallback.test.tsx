@@ -125,6 +125,7 @@ describe('KangurRouteLoadingFallback', () => {
   it('prefers the pending transition snapshot over the current pathname', () => {
     usePathnameMock.mockReturnValue('/en/kangur');
     setKangurPendingRouteLoadingSnapshot({
+      fromHref: '/en/kangur',
       href: '/en/kangur/lessons',
       pageKey: 'Lessons',
       skeletonVariant: 'lessons-library',
@@ -162,6 +163,7 @@ describe('KangurRouteLoadingFallback', () => {
   it('keeps standalone geometry when a lessons route is transitioning back to the home page', () => {
     usePathnameMock.mockReturnValue('/en/lessons');
     setKangurPendingRouteLoadingSnapshot({
+      fromHref: '/en/lessons',
       href: '/en',
       pageKey: 'Game',
       skeletonVariant: 'game-home',

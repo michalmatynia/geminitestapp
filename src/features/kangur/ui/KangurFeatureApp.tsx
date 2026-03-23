@@ -133,7 +133,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const visibleTransitionSkeletonTopBarHeightCssValue = isRouteSkeletonVisible
     ? latchedNavigationTopBarHeightCssValue ?? currentNavigationTopBarHeightCssValue
     : null;
-  const shouldHideTopNavigationDuringBoot = isBootSkeletonVisible;
+  const isBootLoaderBlockingNavigation = isBootSkeletonVisible && !isRouteSkeletonVisible;
+  const shouldHideTopNavigationDuringBoot = isBootLoaderBlockingNavigation;
   const shouldRenderInlineRouteSkeletonTopNavigation =
     !visibleTransitionSkeletonEmbedded &&
     !shouldHideTopNavigationDuringBoot &&
@@ -350,7 +351,10 @@ const AuthenticatedApp = (): JSX.Element | null => {
       ) : (
         <KangurTopNavigationHost fallback={topNavigationFallback} />
       )}
-      <KangurAppLoader offsetTopBar={shouldReserveTopBarOffset} visible={isBootSkeletonVisible} />
+      <KangurAppLoader
+        offsetTopBar={shouldReserveTopBarOffset}
+        visible={isBootLoaderBlockingNavigation}
+      />
       <AnimatePresence mode='wait'>
         {routeContent ? (
           <motion.div

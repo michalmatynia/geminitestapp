@@ -254,6 +254,7 @@ describe('KangurTransitionLink', () => {
     });
 
     expect(getKangurPendingRouteLoadingSnapshot()).toMatchObject({
+      fromHref: '/en',
       href: '/en/lessons',
       pageKey: 'Lessons',
       skeletonVariant: 'lessons-library',

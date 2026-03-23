@@ -6,11 +6,11 @@ import {
   stripAcceptedCaptureContentFromTextWithReport,
   stripAcceptedDateLineFromText,
   stripCapturedAddressLinesFromText,
-} from '@/features/case-resolver-capture/proposals';
+} from '@/features/case-resolver/capture/proposals';
 import {
   DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS,
   type CaseResolverCaptureSettings,
-} from '@/features/case-resolver-capture/settings';
+} from '@/features/case-resolver/capture/settings';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import type {
   PromptExploderCaseResolverPartyBundle,

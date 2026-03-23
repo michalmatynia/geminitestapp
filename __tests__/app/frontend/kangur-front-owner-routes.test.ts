@@ -6,6 +6,7 @@ const {
   kangurFeatureRouteShellMock,
   getFrontPagePublicOwnerMock,
   getFrontPageSettingMock,
+  getKangurConfiguredLaunchTargetMock,
   kangurPublicAppMock,
   loadSlugRenderDataMock,
   notFoundMock,
@@ -17,6 +18,7 @@ const {
   kangurFeatureRouteShellMock: vi.fn(),
   getFrontPagePublicOwnerMock: vi.fn(),
   getFrontPageSettingMock: vi.fn(),
+  getKangurConfiguredLaunchTargetMock: vi.fn(),
   kangurPublicAppMock: vi.fn(),
   loadSlugRenderDataMock: vi.fn(),
   notFoundMock: vi.fn(),
@@ -46,8 +48,16 @@ vi.mock('@/shared/lib/front-page-app', () => ({
   getFrontPagePublicOwner: getFrontPagePublicOwnerMock,
 }));
 
-vi.mock('@/features/kangur/ui/KangurPublicApp', () => ({
+vi.mock('@/features/kangur/public', () => ({
   KangurPublicApp: kangurPublicAppMock,
+}));
+
+vi.mock('@/features/kangur/server/launch-route', () => ({
+  getKangurConfiguredLaunchTarget: getKangurConfiguredLaunchTargetMock,
+  getKangurConfiguredLaunchHref: vi.fn(async (slug, searchParams) => {
+    const resolved = await getKangurConfiguredLaunchTargetMock(slug, searchParams);
+    return resolved.href;
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/KangurFeatureRouteShell', () => ({
@@ -89,6 +99,29 @@ describe('kangur public-owner frontend routes', () => {
       value === 'kangur' ? 'kangur' : 'cms'
     );
     shouldApplyFrontPageAppSelectionMock.mockReturnValue(true);
+    getKangurConfiguredLaunchTargetMock.mockImplementation(
+      async (slug: string[] = [], searchParams?: Record<string, string | string[] | undefined>) => {
+        const pathname = `/${slug.join('/') || ''}`.replace(/\/+$/, '') || '/';
+        const query = new URLSearchParams();
+        Object.entries(searchParams ?? {}).forEach(([key, value]) => {
+          if (Array.isArray(value)) {
+            value.forEach((entry) => {
+              if (typeof entry === 'string') query.append(key, entry);
+            });
+            return;
+          }
+          if (typeof value === 'string') {
+            query.set(key, value);
+          }
+        });
+        const serializedQuery = query.toString();
+        const href = serializedQuery ? `${pathname}?${serializedQuery}` : pathname;
+        return {
+          href,
+          fallbackHref: pathname,
+        };
+      }
+    );
     redirectMock.mockImplementation((target: string) => {
       throw new Error(`redirect:${target}`);
     });
@@ -105,7 +138,7 @@ describe('kangur public-owner frontend routes', () => {
 
     expect(result).toMatchObject({
       type: kangurPublicAppMock,
-      props: { slug: ['tests'], basePath: '/' },
+      props: expect.objectContaining({ slug: ['tests'], basePath: '/' }),
     });
     expect(resolveSlugToPageMock).not.toHaveBeenCalled();
     expect(notFoundMock).not.toHaveBeenCalled();

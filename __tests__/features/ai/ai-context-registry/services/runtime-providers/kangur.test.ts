@@ -28,7 +28,7 @@ vi.mock('@/features/kangur/server', () => ({
     buildKangurAssignmentContextRuntimeDocumentMock,
 }));
 
-import { kangurRuntimeContextProvider } from '@/features/ai/ai-context-registry/services/runtime-providers/kangur';
+import { kangurRuntimeContextProvider } from '@/features/kangur/server/context-registry/kangur-ai-context-provider-adapter';
 import {
   createKangurAssignmentContextRef,
   createKangurLearnerSnapshotRef,

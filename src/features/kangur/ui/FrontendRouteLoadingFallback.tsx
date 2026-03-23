@@ -89,7 +89,7 @@ export function FrontendRouteLoadingFallback({
   const resolvedIncludeTopNavigationSkeleton =
     includeTopNavigationSkeleton ??
     resolveAutoIncludeTopNavigationSkeleton({
-      currentHref: pathname,
+      currentHref: pendingRouteLoadingSnapshot?.fromHref ?? pathname,
       targetHref: pendingRouteLoadingSnapshot?.href ?? pathname,
       hasPendingTransition: pendingRouteLoadingSnapshot !== null,
       pageKey: pendingRouteLoadingSnapshot?.pageKey,

@@ -272,12 +272,16 @@ describe('useProductFormValidator', () => {
     });
     await waitFor(() => {
       expect(api.post).toHaveBeenCalledWith(
-        '/api/v2/products/validator-decisions',
+        '/api/v2/products/validator-decisions/batch',
         expect.objectContaining({
-          action: 'accept',
-          fieldName: 'categoryId',
-          patternId: 'category-pattern',
-          replacementValue: 'Portfele',
+          decisions: [
+            expect.objectContaining({
+              action: 'accept',
+              fieldName: 'categoryId',
+              patternId: 'category-pattern',
+              replacementValue: 'Portfele',
+            }),
+          ],
         }),
         { logError: false }
       );

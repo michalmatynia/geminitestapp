@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver-capture/filemaker-upsert';
+import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver/capture/filemaker-upsert';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import type { PromptExploderCaseResolverPartyCandidate } from '@/shared/contracts/prompt-exploder';
 

@@ -30,25 +30,10 @@ vi.mock('@/shared/lib/queue/registry');
 vi.mock('@/shared/lib/observability/system-logger');
 vi.mock('@/shared/lib/db/services/database-backup-scheduler');
 
-// Mock dynamic imports
-vi.mock('@/features/products/workers/productAiQueue', () => ({}));
-vi.mock('@/features/ai/ai-paths/workers/aiPathRunQueue', () => ({ startAiPathRunQueue: vi.fn() }));
-vi.mock('@/features/ai/chatbot/workers/chatbotJobQueue', () => ({ startChatbotJobQueue: vi.fn() }));
-vi.mock('@/features/ai/agent-runtime/workers/agentQueue', () => ({ startAgentQueue: vi.fn() }));
-vi.mock('@/shared/lib/db/workers/databaseBackupSchedulerQueue', () => ({ startDatabaseBackupSchedulerQueue: vi.fn() }));
-vi.mock('@/features/ai/image-studio/workers/imageStudioRunQueue', () => ({ startImageStudioRunQueue: vi.fn() }));
-vi.mock('@/features/ai/image-studio/workers/imageStudioSequenceQueue', () => ({ startImageStudioSequenceQueue: vi.fn() }));
-vi.mock('@/features/integrations/workers/traderaListingQueue', () => ({}));
-vi.mock('@/features/integrations/workers/traderaRelistSchedulerQueue', () => ({ startTraderaRelistSchedulerQueue: vi.fn() }));
-vi.mock('@/features/integrations/workers/baseImportQueue', () => ({}));
-vi.mock('@/features/product-sync/workers/productSyncQueue', () => ({}));
-vi.mock('@/features/product-sync/workers/productSyncBackfillQueue', () => ({}));
-vi.mock('@/features/product-sync/workers/productSyncSchedulerQueue', () => ({ startProductSyncSchedulerQueue: vi.fn() }));
-vi.mock('@/features/case-resolver/workers/caseResolverOcrQueue', () => ({ startCaseResolverOcrQueue: vi.fn() }));
-vi.mock('@/shared/lib/observability/workers/systemLogAlertsQueue', () => ({ startSystemLogAlertsQueue: vi.fn() }));
-vi.mock('@/features/ai/insights/workers/aiInsightsQueue', () => ({ startAiInsightsQueue: vi.fn() }));
-vi.mock('@/features/products/server', () => ({}));
-vi.mock('@/features/ai/server', () => ({
+vi.mock('@/server/queues/product-ai', () => ({
+  startProductAiJobQueue: vi.fn(),
+}));
+vi.mock('@/server/queues/ai', () => ({
   startAgentQueue: vi.fn(),
   startAiInsightsQueue: vi.fn(),
   startAiPathRunQueue: vi.fn(),
@@ -56,14 +41,24 @@ vi.mock('@/features/ai/server', () => ({
   startImageStudioRunQueue: vi.fn(),
   startImageStudioSequenceQueue: vi.fn(),
 }));
-vi.mock('@/features/integrations/server', () => ({
+vi.mock('@/shared/lib/db/workers/databaseBackupSchedulerQueue', () => ({
+  startDatabaseBackupSchedulerQueue: vi.fn(),
+}));
+vi.mock('@/server/queues/integrations', () => ({
   startTraderaRelistSchedulerQueue: vi.fn(),
 }));
-vi.mock('@/features/product-sync/server', () => ({
+vi.mock('@/server/queues/product-sync', () => ({
   startProductSyncSchedulerQueue: vi.fn(),
 }));
-vi.mock('@/features/case-resolver/server', () => ({
+vi.mock('@/server/queues/case-resolver-ocr', () => ({
   startCaseResolverOcrQueue: vi.fn(),
+}));
+vi.mock('@/shared/lib/observability/workers/systemLogAlertsQueue', () => ({
+  startSystemLogAlertsQueue: vi.fn(),
+}));
+vi.mock('@/server/queues/kangur', () => ({
+  startKangurSocialSchedulerQueue: vi.fn(),
+  startKangurSocialPipelineQueue: vi.fn(),
 }));
 
 describe('queue-init', () => {

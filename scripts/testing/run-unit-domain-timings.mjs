@@ -48,8 +48,8 @@ const domains = [
     name: 'Case Resolver',
     filters: [
       'src/features/case-resolver',
-      'src/features/case-resolver-capture',
-      '__tests__/features/case-resolver-capture',
+      'src/features/case-resolver/capture',
+      'src/features/case-resolver/capture/__tests__',
       'src/features/prompt-exploder/__tests__/case-resolver',
     ],
   },

@@ -82,7 +82,7 @@ export function KangurRouteLoadingFallback({
   const topBarHeightCssValue =
     pendingRouteLoadingSnapshot?.topBarHeightCssValue ?? readKangurTopBarHeightCssValue();
   const embeddedOverride = resolveTransitionEmbeddedOverride({
-    currentHref,
+    currentHref: pendingRouteLoadingSnapshot?.fromHref ?? currentHref,
     targetHref: href,
   });
 

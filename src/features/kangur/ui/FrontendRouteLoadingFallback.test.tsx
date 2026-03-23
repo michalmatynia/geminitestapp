@@ -102,6 +102,7 @@ describe('FrontendRouteLoadingFallback', () => {
   it('uses the pending transition target instead of the current main-page pathname', () => {
     usePathnameMock.mockReturnValue('/en/kangur');
     setKangurPendingRouteLoadingSnapshot({
+      fromHref: '/en/kangur',
       href: '/en/kangur/lessons',
       pageKey: 'Lessons',
       skeletonVariant: 'lessons-library',
@@ -125,6 +126,7 @@ describe('FrontendRouteLoadingFallback', () => {
   it('keeps the navbar skeleton when returning from lessons to the main page', () => {
     usePathnameMock.mockReturnValue('/en/lessons');
     setKangurPendingRouteLoadingSnapshot({
+      fromHref: '/en/lessons',
       href: '/en',
       pageKey: 'Game',
       skeletonVariant: 'game-home',

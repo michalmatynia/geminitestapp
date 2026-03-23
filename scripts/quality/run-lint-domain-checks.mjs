@@ -49,8 +49,8 @@ const domains = [
   {
     id: 'case-resolver',
     name: 'Case Resolver',
-    targets: ['src/features/case-resolver', 'src/features/case-resolver-capture', 'src/app/api/case-resolver'],
-    testTreeTargets: ['src/features/case-resolver/__tests__', 'src/features/case-resolver-capture/__tests__'],
+    targets: ['src/features/case-resolver', 'src/features/case-resolver/capture', 'src/app/api/case-resolver'],
+    testTreeTargets: ['src/features/case-resolver/__tests__', 'src/features/case-resolver/capture/__tests__'],
     testProbes: ['src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx'],
   },
 ];

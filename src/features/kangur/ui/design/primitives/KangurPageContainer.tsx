@@ -9,6 +9,7 @@ import { KANGUR_PAGE_CONTAINER_CLASSNAME } from '../tokens';
 
 export type KangurPageContainerProps = React.HTMLAttributes<HTMLElement> & {
   as?: 'div' | 'main' | 'section';
+  embeddedOverride?: boolean | null;
   'data-kangur-route-main'?: boolean | 'true' | 'false';
 };
 
@@ -32,6 +33,7 @@ export const KangurPageContainer = ({
   as: Comp = 'main',
   className,
   children,
+  embeddedOverride,
   tabIndex,
   role,
   id,
@@ -39,7 +41,8 @@ export const KangurPageContainer = ({
 }: KangurPageContainerProps): React.JSX.Element => {
   const routing = useOptionalKangurRouting();
   const suppressMainRole = React.useContext(KangurMainRoleContext);
-  const shouldSuppressMain = Boolean(routing?.embedded) || suppressMainRole;
+  const effectiveEmbedded = embeddedOverride ?? routing?.embedded ?? false;
+  const shouldSuppressMain = effectiveEmbedded || suppressMainRole;
   const shouldSuppressMainTag = shouldSuppressMain && Comp === 'main';
   const ResolvedComp = shouldSuppressMainTag ? 'div' : Comp;
   const explicitRouteMain =

@@ -111,6 +111,7 @@ describe('KangurMusicPianoRoll', () => {
     expect(screen.getByTestId('music-roll-key-re')).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByTestId('music-roll-key-high_do')).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByTestId('music-roll-key-do')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('music-roll-key-do')).toHaveClass('cursor-pointer');
     expect(scrollIntoViewMock).toHaveBeenCalledWith({
       behavior: 'smooth',
       block: 'nearest',
@@ -164,9 +165,15 @@ describe('KangurMusicPianoRoll', () => {
       'aria-pressed',
       'true'
     );
+    expect(screen.getByTestId('music-roll-synth-step-keyboard-mode-piano')).toHaveClass(
+      'cursor-pointer'
+    );
     expect(screen.getByTestId('music-roll-synth-step-synth-waveform-sine')).toHaveAttribute(
       'aria-label',
       'Brzmienie: Sine'
+    );
+    expect(screen.getByTestId('music-roll-synth-step-synth-waveform-sine')).toHaveClass(
+      'cursor-pointer'
     );
     expect(screen.getByTestId('music-roll-synth-step-synth-waveform-sine')).toHaveTextContent('');
     expect(
@@ -198,6 +205,7 @@ describe('KangurMusicPianoRoll', () => {
     const secondKey = screen.getByTestId('music-roll-synth-key-re');
     mockKeyRect(key);
     mockKeyRect(secondKey);
+    expect(key).toHaveClass('cursor-pointer');
 
     fireEvent.pointerDown(key, {
       clientY: 120,

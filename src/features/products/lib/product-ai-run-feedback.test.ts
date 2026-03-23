@@ -75,4 +75,46 @@ describe('product-ai-run-feedback', () => {
       })
     ).toBeNull();
   });
+
+  it('can build terminal feedback from a stopped snapshot when explicitly allowed', () => {
+    expect(
+      buildProductAiRunFeedbackFromSnapshot(
+        {
+          runId: 'run-2',
+          status: 'completed',
+          updatedAt: '2026-03-21T10:00:00.000Z',
+          finishedAt: '2026-03-21T10:00:01.000Z',
+          errorMessage: null,
+          entityId: 'product-1',
+          entityType: 'product',
+          trackingState: 'stopped',
+        },
+        { allowStopped: true }
+      )
+    ).toMatchObject({
+      runId: 'run-2',
+      status: 'completed',
+      label: 'Completed',
+      variant: 'success',
+    });
+  });
+
+  it('prefers terminal tracker feedback over the queued fallback for list pills', () => {
+    const trackerFeedback: ProductAiRunFeedback = {
+      runId: 'run-3',
+      status: 'completed',
+      updatedAt: '2026-03-21T10:00:00.000Z',
+      label: 'Completed',
+      variant: 'success',
+      badgeClassName: 'tracker-terminal',
+    };
+
+    expect(
+      resolveProductAiRunFeedbackForList({
+        productId: 'product-1',
+        queuedProductIds: new Set(['product-1']),
+        productAiRunStatusByProductId: new Map([['product-1', trackerFeedback]]),
+      })
+    ).toEqual(trackerFeedback);
+  });
 });

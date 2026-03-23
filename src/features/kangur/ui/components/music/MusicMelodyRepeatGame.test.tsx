@@ -177,22 +177,49 @@ describe('MusicMelodyRepeatGame', () => {
       'px-2',
       'sm:px-3'
     );
+    expect(screen.getByTestId('music-melody-repeat-outcome-shell')).toHaveAttribute(
+      'data-outcome',
+      'idle'
+    );
+    expect(screen.queryByTestId('music-melody-repeat-outcome-banner')).not.toBeInTheDocument();
     expect(screen.getByTestId('music-melody-repeat-actions')).toHaveClass(
+      'flex',
+      'w-full',
+      'gap-3',
+      'px-1',
+      'pt-1'
+    );
+    expect(screen.getByTestId('music-melody-repeat-actions')).toHaveClass('justify-center');
+    expect(screen.getByTestId('music-melody-repeat-actions')).not.toHaveClass(
       'rounded-[24px]',
       'border',
-      'bg-white/60',
-      'px-2.5',
-      'py-2'
+      'bg-white/60'
     );
-    expect(screen.getByTestId('music-melody-repeat-listen-button')).toHaveAttribute(
-      'data-attention',
-      'true'
+    expect(screen.getByTestId('music-melody-repeat-listen-button-shell')).toBeInTheDocument();
+    expect(screen.getByTestId('music-melody-repeat-listen-button')).not.toHaveClass(
+      'ring-offset-white/75'
     );
-    expect(screen.getByTestId('music-melody-repeat-listen-glow')).toBeInTheDocument();
+    expect(screen.getByTestId('music-melody-repeat-listen-button')).toHaveClass(
+      'cursor-pointer',
+      'relative',
+      'z-10',
+      'flex',
+      'h-14',
+      'w-14',
+      'rounded-[22px]'
+    );
+    expect(screen.queryByTestId('music-melody-repeat-listen-glow')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('music-melody-repeat-listen-ring')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('music-melody-repeat-listen-disc')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('music-melody-repeat-listen-badge')).not.toBeInTheDocument();
     expect(screen.getByTestId('music-melody-repeat-listen-icon')).toBeInTheDocument();
     expect(screen.getByTestId('music-melody-repeat-listen-icon')).toHaveAttribute(
       'fill',
       'currentColor'
+    );
+    expect(screen.getByTestId('music-melody-repeat-listen-icon')).toHaveClass(
+      'translate-x-[2px]',
+      'size-8'
     );
     expect(screen.queryByTestId('music-melody-repeat-feedback')).not.toBeInTheDocument();
 
@@ -201,11 +228,8 @@ describe('MusicMelodyRepeatGame', () => {
       await vi.advanceTimersByTimeAsync(1_200);
     });
 
-    expect(screen.getByTestId('music-melody-repeat-listen-button')).toHaveAttribute(
-      'data-attention',
-      'false'
-    );
     expect(screen.queryByTestId('music-melody-repeat-listen-glow')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('music-melody-repeat-listen-ring')).not.toBeInTheDocument();
     expect(screen.getByTestId('music-melody-repeat-feedback')).toHaveTextContent(
       'Twoja kolej. Zacznij od dzwieku do.'
     );
@@ -233,6 +257,16 @@ describe('MusicMelodyRepeatGame', () => {
       'aria-label',
       'Poprawnie'
     );
+    expect(screen.getByTestId('music-melody-repeat-outcome-shell')).toHaveAttribute(
+      'data-outcome',
+      'success'
+    );
+    expect(screen.getByTestId('music-melody-repeat-outcome-banner')).toHaveAttribute(
+      'aria-label',
+      'Melodia poprawna'
+    );
+    expect(screen.getByTestId('music-melody-repeat-outcome-banner-icon')).toHaveTextContent('✅');
+    expect(screen.getByTestId('music-melody-repeat-outcome-banner')).toHaveTextContent('Brawo!');
     expect(screen.getByTestId('music-melody-repeat-status-outcome-icon')).toHaveTextContent('✅');
     expect(screen.getByTestId('music-melody-repeat-feedback')).toHaveTextContent(
       'Brawo! Cala melodia zabrzmiala poprawnie.'
@@ -274,6 +308,18 @@ describe('MusicMelodyRepeatGame', () => {
       'aria-label',
       'Sprobuj jeszcze raz'
     );
+    expect(screen.getByTestId('music-melody-repeat-outcome-shell')).toHaveAttribute(
+      'data-outcome',
+      'error'
+    );
+    expect(screen.getByTestId('music-melody-repeat-outcome-banner')).toHaveAttribute(
+      'aria-label',
+      'Melodia do powtorzenia'
+    );
+    expect(screen.getByTestId('music-melody-repeat-outcome-banner-icon')).toHaveTextContent('❌');
+    expect(screen.getByTestId('music-melody-repeat-outcome-banner')).toHaveTextContent(
+      'Jeszcze raz'
+    );
     expect(screen.getByTestId('music-melody-repeat-status-outcome-icon')).toHaveTextContent('❌');
     expect(screen.getByTestId('music-melody-repeat-feedback')).toHaveTextContent(
       'Ups. Posluchaj jeszcze raz i powtorz melodie od poczatku.'
@@ -289,6 +335,11 @@ describe('MusicMelodyRepeatGame', () => {
     });
 
     expect(screen.queryByTestId('music-melody-repeat-summary-shell')).not.toBeInTheDocument();
+    expect(screen.getByTestId('music-melody-repeat-outcome-shell')).toHaveAttribute(
+      'data-outcome',
+      'idle'
+    );
+    expect(screen.queryByTestId('music-melody-repeat-outcome-banner')).not.toBeInTheDocument();
     expect(screen.queryByTestId('music-melody-repeat-status-outcome')).not.toBeInTheDocument();
     expect(screen.getByTestId('music-melody-repeat-feedback')).toHaveTextContent(
       'Twoja kolej. Zacznij od dzwieku do.'
@@ -299,37 +350,50 @@ describe('MusicMelodyRepeatGame', () => {
     );
   });
 
-  it('brings the play glow back when the round resets to listen mode', async () => {
+  it('keeps the play button centered and restarts playback immediately from the beginning', async () => {
     render(<MusicMelodyRepeatGame onFinish={() => undefined} />);
 
-    expect(screen.getByTestId('music-melody-repeat-listen-button')).toHaveAttribute(
-      'data-attention',
-      'true'
-    );
-    expect(screen.getByTestId('music-melody-repeat-listen-glow')).toBeInTheDocument();
+    expect(screen.getByTestId('music-melody-repeat-listen-button')).toHaveClass('cursor-pointer');
+    expect(screen.queryByTestId('music-melody-repeat-listen-glow')).not.toBeInTheDocument();
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Posluchaj melodii' }));
       await vi.advanceTimersByTimeAsync(1_200);
     });
 
-    expect(screen.getByTestId('music-melody-repeat-listen-button')).toHaveAttribute(
-      'data-attention',
-      'false'
-    );
     expect(screen.queryByTestId('music-melody-repeat-listen-glow')).not.toBeInTheDocument();
+    const replayButton = screen.getByRole('button', { name: 'Zagraj od poczatku' });
+    expect(screen.getByTestId('music-melody-repeat-actions')).toHaveClass('justify-center');
+    expect(screen.getByTestId('music-melody-repeat-listen-button-shell')).toHaveClass('relative');
+    expect(replayButton).not.toHaveClass('col-start-3', 'justify-self-end');
+    expect(replayButton).toHaveClass(
+      'absolute',
+      'left-full',
+      'top-1/2',
+      'ml-3',
+      '-translate-y-1/2'
+    );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Zagraj od poczatku' }));
+    fireEvent.click(replayButton);
 
     expect(screen.getByTestId('music-melody-repeat-status-phase')).toHaveAttribute(
       'aria-label',
-      'Start'
+      'Sluchaj'
     );
-    expect(screen.getByTestId('music-melody-repeat-listen-button')).toHaveAttribute(
-      'data-attention',
-      'true'
+    expect(screen.getByTestId('music-melody-repeat-listen-button')).toHaveClass('cursor-pointer');
+    expect(screen.queryByTestId('music-melody-repeat-listen-glow')).not.toBeInTheDocument();
+    expect(screen.getByTestId('music-melody-repeat-feedback')).toHaveTextContent(
+      'Sluchaj i patrz, ktore kolory zapalaja sie po kolei.'
     );
-    expect(screen.getByTestId('music-melody-repeat-listen-glow')).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_200);
+    });
+
+    expect(screen.getByTestId('music-melody-repeat-status-phase')).toHaveAttribute(
+      'aria-label',
+      'Twoja kolej'
+    );
   });
 
   it('supports synth-mode repetition without breaking melody scoring', async () => {

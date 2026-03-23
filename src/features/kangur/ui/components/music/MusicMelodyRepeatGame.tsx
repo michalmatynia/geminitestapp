@@ -109,7 +109,12 @@ export default function MusicMelodyRepeatGame({
     accent: 'sky',
     message: buildRoundStartMessage(),
   });
-  const shouldGlowListenButton = phase === 'listen' && !isPlayingSequence && !done;
+  const outcomeShellClassName =
+    attemptOutcome === 'success'
+      ? 'border-emerald-200/80 bg-emerald-50/55 shadow-[0_28px_68px_-42px_rgba(16,185,129,0.34)]'
+      : attemptOutcome === 'error'
+        ? 'border-rose-200/80 bg-rose-50/55 shadow-[0_28px_68px_-42px_rgba(244,63,94,0.3)]'
+        : 'border-transparent bg-transparent shadow-none';
 
   const round = MUSIC_MELODY_REPEAT_ROUNDS[roundIndex] ?? MUSIC_MELODY_REPEAT_ROUNDS[0];
   const melodyPlayback = useMemo(
@@ -580,88 +585,123 @@ export default function MusicMelodyRepeatGame({
           </div>
         </div>
 
-        <KangurMusicPianoRoll
-          activeStepIndex={activeStepIndex}
-          completedStepCount={enteredNotes.length}
-          disabled={phase !== 'repeat' || isPlayingSequence}
-          expectedStepIndex={phase === 'repeat' ? enteredNotes.length : null}
-          interactive
-          keyTestIdPrefix='music-melody-repeat-key'
-          keyboardMode={keyboardMode}
-          keys={DIATONIC_PIANO_KEYS}
-          melody={round?.notes ?? []}
-          className='!overflow-visible !border-0 !bg-transparent !px-1.5 !py-2.5 !shadow-none sm:!px-2.5 sm:!py-3'
-          onKeyboardModeChange={handleKeyboardModeChange}
-          onKeyPress={handleKeyPress}
-          onSynthGlideModeChange={handleSynthGlideModeChange}
-          onSynthGestureChange={handleSynthGestureChange}
-          onSynthGestureEnd={handleSynthGestureEnd}
-          onSynthGestureStart={handleSynthGestureStart}
-          onSynthWaveformChange={handleSynthWaveformChange}
-          pressedNoteId={pressedNoteId}
-          pressedVelocity={pressedVelocity}
-          shellTestId='music-melody-repeat-piano-roll'
-          showKeyboardModeSwitch
-          showSynthGlideModeSwitch
-          showSynthWaveformSwitch
-          synthGlideMode={synthGlideMode}
-          stepTestIdPrefix='music-melody-repeat-step'
-          synthWaveform={synthWaveform}
-          visualCueMode='six_year_old'
-        />
-
         <div
-          className='flex w-fit max-w-full flex-wrap items-center gap-3 rounded-[24px] border border-white/65 bg-white/60 px-2.5 py-2 shadow-[0_22px_52px_-36px_rgba(14,116,144,0.42)] backdrop-blur-[10px]'
-          data-testid='music-melody-repeat-actions'
+          className={cn(
+            'relative flex w-full flex-col gap-3 rounded-[30px] border px-2 py-2.5 transition-all duration-300 sm:px-3',
+            attemptOutcome ? 'ring-1' : undefined,
+            attemptOutcome === 'success' ? 'ring-emerald-200/75' : undefined,
+            attemptOutcome === 'error' ? 'ring-rose-200/75' : undefined,
+            outcomeShellClassName
+          )}
+          data-outcome={attemptOutcome ?? 'idle'}
+          data-testid='music-melody-repeat-outcome-shell'
         >
-          <KangurButton
-            aria-label='Posluchaj melodii'
-            className={cn(
-              'relative isolate h-12 w-12 overflow-visible rounded-full p-0 shadow-[0_18px_34px_-24px_rgba(37,99,235,0.7)]',
-              shouldGlowListenButton &&
-                'ring-2 ring-amber-300/85 ring-offset-4 ring-offset-white/75',
-              isCoarsePointer ? 'touch-manipulation select-none active:scale-[0.97]' : undefined
-            )}
-            data-attention={shouldGlowListenButton ? 'true' : 'false'}
-            data-testid='music-melody-repeat-listen-button'
-            onClick={() => {
-              void handleListen();
-            }}
-            type='button'
-            variant='primary'
-          >
-            {shouldGlowListenButton ? (
+          {attemptOutcome ? (
+            <div
+              aria-label={attemptOutcome === 'success' ? 'Melodia poprawna' : 'Melodia do powtorzenia'}
+              className={cn(
+                'flex items-center justify-center gap-2 rounded-[22px] border px-3 py-2.5 text-center shadow-[0_18px_40px_-30px_rgba(15,23,42,0.34)] motion-reduce:animate-none',
+                attemptOutcome === 'success'
+                  ? 'border-emerald-200/85 bg-emerald-100/90 text-emerald-800 motion-safe:animate-pulse'
+                  : 'border-rose-200/85 bg-rose-100/92 text-rose-800 motion-safe:animate-pulse'
+              )}
+              data-testid='music-melody-repeat-outcome-banner'
+            >
               <span
                 aria-hidden='true'
-                className='pointer-events-none absolute inset-[-6px] -z-[1] rounded-full border border-amber-200/80 bg-amber-200/28 shadow-[0_0_0_8px_rgba(253,230,138,0.22),0_24px_48px_-26px_rgba(245,158,11,0.78)] motion-reduce:animate-none motion-safe:animate-pulse'
-                data-testid='music-melody-repeat-listen-glow'
-              />
-            ) : null}
-            <svg
-              aria-hidden='true'
-              className='ml-0.5 size-5 text-white drop-shadow-[0_2px_4px_rgba(15,23,42,0.28)]'
-              data-testid='music-melody-repeat-listen-icon'
-              fill='currentColor'
-              viewBox='0 0 24 24'
-            >
-              <path d='M8 5.5v13L18 12 8 5.5Z' />
-            </svg>
-          </KangurButton>
-          {phase === 'repeat' ? (
-            <KangurButton
-              className={cn(
-                isCoarsePointer
-                  ? 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
-                  : undefined
-              )}
-              onClick={() => resetRoundAttempt('Posluchaj jeszcze raz i zacznij melodie od poczatku.')}
-              size='lg'
-              type='button'
-              variant='surface'
-            >
-              Zagraj od poczatku
-            </KangurButton>
+                className='text-lg leading-none'
+                data-testid='music-melody-repeat-outcome-banner-icon'
+              >
+                {attemptOutcome === 'success' ? '✅' : '❌'}
+              </span>
+              <span className='text-sm font-black uppercase tracking-[0.18em]'>
+                {attemptOutcome === 'success' ? 'Brawo!' : 'Jeszcze raz'}
+              </span>
+            </div>
           ) : null}
+
+          <KangurMusicPianoRoll
+            activeStepIndex={activeStepIndex}
+            completedStepCount={enteredNotes.length}
+            disabled={phase !== 'repeat' || isPlayingSequence}
+            expectedStepIndex={phase === 'repeat' ? enteredNotes.length : null}
+            interactive
+            keyTestIdPrefix='music-melody-repeat-key'
+            keyboardMode={keyboardMode}
+            keys={DIATONIC_PIANO_KEYS}
+            melody={round?.notes ?? []}
+            className='!overflow-visible !border-0 !bg-transparent !px-1.5 !py-2.5 !shadow-none sm:!px-2.5 sm:!py-3'
+            onKeyboardModeChange={handleKeyboardModeChange}
+            onKeyPress={handleKeyPress}
+            onSynthGlideModeChange={handleSynthGlideModeChange}
+            onSynthGestureChange={handleSynthGestureChange}
+            onSynthGestureEnd={handleSynthGestureEnd}
+            onSynthGestureStart={handleSynthGestureStart}
+            onSynthWaveformChange={handleSynthWaveformChange}
+            pressedNoteId={pressedNoteId}
+            pressedVelocity={pressedVelocity}
+            shellTestId='music-melody-repeat-piano-roll'
+            showKeyboardModeSwitch
+            showSynthGlideModeSwitch
+            showSynthWaveformSwitch
+            synthGlideMode={synthGlideMode}
+            stepTestIdPrefix='music-melody-repeat-step'
+            synthWaveform={synthWaveform}
+            visualCueMode='six_year_old'
+          />
+
+          <div
+            className='flex w-full max-w-full items-center justify-center gap-3 px-1 pt-1 sm:px-2'
+            data-testid='music-melody-repeat-actions'
+          >
+            <div
+              className='relative flex items-center justify-center p-1'
+              data-testid='music-melody-repeat-listen-button-shell'
+            >
+              <button
+                aria-label='Posluchaj melodii'
+                className={cn(
+                  'relative z-10 flex h-14 w-14 cursor-pointer items-center justify-center rounded-[22px] border border-sky-200/70 bg-[linear-gradient(160deg,rgba(224,242,254,0.9),rgba(186,230,253,0.74)_48%,rgba(224,231,255,0.64)_100%)] text-sky-700 shadow-[0_18px_34px_-26px_rgba(14,116,144,0.42)] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/70',
+                  isCoarsePointer
+                    ? 'touch-manipulation select-none active:scale-[0.97]'
+                    : 'hover:scale-[1.03]'
+                )}
+                data-testid='music-melody-repeat-listen-button'
+                onClick={() => {
+                  void handleListen();
+                }}
+                type='button'
+              >
+                <svg
+                  aria-hidden='true'
+                  className='relative z-10 translate-x-[2px] size-8 drop-shadow-[0_2px_4px_rgba(255,255,255,0.22)]'
+                  data-testid='music-melody-repeat-listen-icon'
+                  fill='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path d='M7.25 4.75v14.5L18.9 12 7.25 4.75Z' />
+                </svg>
+              </button>
+              {phase === 'repeat' ? (
+                <KangurButton
+                  className={cn(
+                    'absolute left-full top-1/2 ml-3 -translate-y-1/2 whitespace-nowrap',
+                    isCoarsePointer
+                      ? 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
+                      : undefined
+                  )}
+                  onClick={() => {
+                    void handleListen();
+                  }}
+                  size='lg'
+                  type='button'
+                  variant='surface'
+                >
+                  Zagraj od poczatku
+                </KangurButton>
+              ) : null}
+            </div>
+          </div>
         </div>
 
         {feedback.message ? (

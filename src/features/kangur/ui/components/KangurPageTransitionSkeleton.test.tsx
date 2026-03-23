@@ -193,6 +193,31 @@ describe('KangurPageTransitionSkeleton', () => {
     ).not.toBe(0);
   });
 
+  it('can force a standalone lessons transition shell even while the current Kangur route is embedded', () => {
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/',
+      embedded: true,
+    });
+
+    renderWithIntl(
+      <KangurPageTransitionSkeleton
+        embeddedOverride={false}
+        pageKey='Lessons'
+        renderInlineTopNavigationSkeleton
+      />
+    );
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass(
+      'fixed',
+      'inset-0',
+      'flex',
+      'flex-col'
+    );
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')
+    ).toBeInTheDocument();
+  });
+
   it('uses an explicit top-bar height override for inline navbar skeletons', () => {
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
@@ -269,6 +294,26 @@ describe('KangurPageTransitionSkeleton', () => {
       'inset-0'
     );
     expect(screen.getByTestId('kangur-page-transition-skeleton')).not.toHaveClass('fixed');
+  });
+
+  it('can force an embedded overlay even while the current Kangur route is standalone', () => {
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/',
+      embedded: false,
+    });
+
+    renderWithIntl(
+      <KangurPageTransitionSkeleton embeddedOverride pageKey='Game' variant='game-home' />
+    );
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass(
+      'absolute',
+      'inset-0'
+    );
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).not.toHaveClass('fixed');
+    expect(screen.getByTestId('kangur-page-transition-skeleton-shell')).toHaveClass(
+      'min-h-full'
+    );
   });
 
   it('renders the focused-lesson skeleton variant when requested', () => {

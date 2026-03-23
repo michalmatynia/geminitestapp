@@ -3,6 +3,7 @@
 import {
   createContext,
   useContext,
+  useMemo,
   type CSSProperties,
   type MouseEvent,
   type PointerEvent,
@@ -28,7 +29,7 @@ import type {
 import type { TutorGuidedMode } from './KangurAiTutorWidget.types';
 import type { Transition } from 'framer-motion';
 
-export type KangurAiTutorPortalContextValue = {
+export type KangurAiTutorPortalStateContextValue = {
   avatar: {
     ariaLabel: string;
     avatarAnchorKind: string;
@@ -51,13 +52,6 @@ export type KangurAiTutorPortalContextValue = {
     rimColor: string;
     showFloatingAvatar: boolean;
     uiMode: string;
-    onClick: () => void;
-    onMouseDown: (event: MouseEvent<HTMLButtonElement>) => void;
-    onMouseUp: (event: MouseEvent<HTMLButtonElement>) => void;
-    onPointerCancel: (event: PointerEvent<HTMLButtonElement>) => void;
-    onPointerDown: (event: PointerEvent<HTMLButtonElement>) => void;
-    onPointerMove: (event: PointerEvent<HTMLButtonElement>) => void;
-    onPointerUp: (event: PointerEvent<HTMLButtonElement>) => void;
   };
   diagnostics: {
     canonicalTutorModalVisible: boolean;
@@ -75,8 +69,6 @@ export type KangurAiTutorPortalContextValue = {
     style: CSSProperties | null;
     prefersReducedMotion: boolean;
     hint: string | undefined;
-    onClose: () => void;
-    onComplete: (dataUrl: string) => void;
   };
   guestIntro: {
     guestIntroDescription: string;
@@ -86,10 +78,6 @@ export type KangurAiTutorPortalContextValue = {
     panelStyle: CSSProperties;
     prefersReducedMotion: boolean;
     shouldRender: boolean;
-    onAccept: () => void;
-    onClose: () => void;
-    onDismiss: () => void;
-    onStartChat: () => void;
   };
   guidedCallout: {
     avatarPlacement: TutorEdgePlacement | null;
@@ -113,10 +101,6 @@ export type KangurAiTutorPortalContextValue = {
     title: string;
     transitionDuration: number;
     transitionEase: [number, number, number, number];
-    onAdvanceHomeOnboarding: () => void;
-    onBackHomeOnboarding: () => void;
-    onClose: () => void;
-    onFinishHomeOnboarding: () => void;
   };
   panel: {
     attachedAvatarStyle: CSSProperties;
@@ -164,6 +148,52 @@ export type KangurAiTutorPortalContextValue = {
     showAttachedAvatarShell: boolean;
     suppressPanelSurface: boolean;
     uiMode: string;
+  };
+  selectionAction: {
+    placement: TutorEdgePlacement;
+    prefersReducedMotion: boolean;
+    shouldRender: boolean;
+    style: CSSProperties | null;
+  };
+  spotlights: {
+    guidedMode: TutorGuidedMode;
+    prefersReducedMotion: boolean;
+    reducedMotionTransitions: TutorReducedMotionStableTransitions;
+    sectionContextSpotlightStyle: CSSProperties | null;
+    sectionDropHighlightStyle: CSSProperties | null;
+    selectionGlowStyles: CSSProperties[];
+    selectionContextSpotlightStyle: CSSProperties | null;
+    selectionSpotlightStyle: CSSProperties | null;
+  };
+};
+
+export type KangurAiTutorPortalActionsContextValue = {
+  avatar: {
+    onClick: () => void;
+    onMouseDown: (event: MouseEvent<HTMLButtonElement>) => void;
+    onMouseUp: (event: MouseEvent<HTMLButtonElement>) => void;
+    onPointerCancel: (event: PointerEvent<HTMLButtonElement>) => void;
+    onPointerDown: (event: PointerEvent<HTMLButtonElement>) => void;
+    onPointerMove: (event: PointerEvent<HTMLButtonElement>) => void;
+    onPointerUp: (event: PointerEvent<HTMLButtonElement>) => void;
+  };
+  drawingPanel: {
+    onClose: () => void;
+    onComplete: (dataUrl: string) => void;
+  };
+  guestIntro: {
+    onAccept: () => void;
+    onClose: () => void;
+    onDismiss: () => void;
+    onStartChat: () => void;
+  };
+  guidedCallout: {
+    onAdvanceHomeOnboarding: () => void;
+    onBackHomeOnboarding: () => void;
+    onClose: () => void;
+    onFinishHomeOnboarding: () => void;
+  };
+  panel: {
     onAttachedAvatarClick: () => void;
     onAttachedAvatarPointerCancel: (event: PointerEvent<HTMLButtonElement>) => void;
     onAttachedAvatarPointerDown: (event: PointerEvent<HTMLButtonElement>) => void;
@@ -181,26 +211,24 @@ export type KangurAiTutorPortalContextValue = {
     onHeaderPointerUp: (event: PointerEvent<HTMLDivElement>) => void;
   };
   selectionAction: {
-    placement: TutorEdgePlacement;
-    prefersReducedMotion: boolean;
-    shouldRender: boolean;
-    style: CSSProperties | null;
     onAskAbout: () => void;
     onSelectionActionMouseDown: (event: MouseEvent<HTMLButtonElement>) => void;
   };
-  spotlights: {
-    guidedMode: TutorGuidedMode;
-    prefersReducedMotion: boolean;
-    reducedMotionTransitions: TutorReducedMotionStableTransitions;
-    sectionContextSpotlightStyle: CSSProperties | null;
-    sectionDropHighlightStyle: CSSProperties | null;
-    selectionGlowStyles: CSSProperties[];
-    selectionContextSpotlightStyle: CSSProperties | null;
-    selectionSpotlightStyle: CSSProperties | null;
-  };
 };
 
-const KangurAiTutorPortalContext = createContext<KangurAiTutorPortalContextValue | null>(null);
+export type KangurAiTutorPortalContextValue = {
+  avatar: KangurAiTutorPortalStateContextValue['avatar'] & KangurAiTutorPortalActionsContextValue['avatar'];
+  diagnostics: KangurAiTutorPortalStateContextValue['diagnostics'];
+  drawingPanel: KangurAiTutorPortalStateContextValue['drawingPanel'] & KangurAiTutorPortalActionsContextValue['drawingPanel'];
+  guestIntro: KangurAiTutorPortalStateContextValue['guestIntro'] & KangurAiTutorPortalActionsContextValue['guestIntro'];
+  guidedCallout: KangurAiTutorPortalStateContextValue['guidedCallout'] & KangurAiTutorPortalActionsContextValue['guidedCallout'];
+  panel: KangurAiTutorPortalStateContextValue['panel'] & KangurAiTutorPortalActionsContextValue['panel'];
+  selectionAction: KangurAiTutorPortalStateContextValue['selectionAction'] & KangurAiTutorPortalActionsContextValue['selectionAction'];
+  spotlights: KangurAiTutorPortalStateContextValue['spotlights'];
+};
+
+const KangurAiTutorPortalStateContext = createContext<KangurAiTutorPortalStateContextValue | null>(null);
+const KangurAiTutorPortalActionsContext = createContext<KangurAiTutorPortalActionsContextValue | null>(null);
 
 export function KangurAiTutorPortalProvider({
   children,
@@ -209,20 +237,115 @@ export function KangurAiTutorPortalProvider({
   children: ReactNode;
   value: KangurAiTutorPortalContextValue;
 }) {
+  const state = useMemo<KangurAiTutorPortalStateContextValue>(() => {
+    const { onClick: _avatar_onClick, onMouseDown: _avatar_onMouseDown, onMouseUp: _avatar_onMouseUp, onPointerCancel: _avatar_onPointerCancel, onPointerDown: _avatar_onPointerDown, onPointerMove: _avatar_onPointerMove, onPointerUp: _avatar_onPointerUp, ...avatarState } = value.avatar;
+    const { onClose: _drawingPanel_onClose, onComplete: _drawingPanel_onComplete, ...drawingPanelState } = value.drawingPanel;
+    const { onAccept: _guestIntro_onAccept, onClose: _guestIntro_onClose, onDismiss: _guestIntro_onDismiss, onStartChat: _guestIntro_onStartChat, ...guestIntroState } = value.guestIntro;
+    const { onAdvanceHomeOnboarding: _guidedCallout_onAdvanceHomeOnboarding, onBackHomeOnboarding: _guidedCallout_onBackHomeOnboarding, onClose: _guidedCallout_onClose, onFinishHomeOnboarding: _guidedCallout_onFinishHomeOnboarding, ...guidedCalloutState } = value.guidedCallout;
+    const { onAttachedAvatarClick: _panel_onAttachedAvatarClick, onAttachedAvatarPointerCancel: _panel_onAttachedAvatarPointerCancel, onAttachedAvatarPointerDown: _panel_onAttachedAvatarPointerDown, onAttachedAvatarPointerMove: _panel_onAttachedAvatarPointerMove, onAttachedAvatarPointerUp: _panel_onAttachedAvatarPointerUp, onBackdropClose: _panel_onBackdropClose, onClose: _panel_onClose, onDetachPanelFromContext: _panel_onDetachPanelFromContext, onDisableTutor: _panel_onDisableTutor, onMovePanelToContext: _panel_onMovePanelToContext, onResetPanelPosition: _panel_onResetPanelPosition, onHeaderPointerCancel: _panel_onHeaderPointerCancel, onHeaderPointerDown: _panel_onHeaderPointerDown, onHeaderPointerMove: _panel_onHeaderPointerMove, onHeaderPointerUp: _panel_onHeaderPointerUp, ...panelState } = value.panel;
+    const { onAskAbout: _selectionAction_onAskAbout, onSelectionActionMouseDown: _selectionAction_onSelectionActionMouseDown, ...selectionActionState } = value.selectionAction;
+
+    return {
+      avatar: avatarState,
+      diagnostics: value.diagnostics,
+      drawingPanel: drawingPanelState,
+      guestIntro: guestIntroState,
+      guidedCallout: guidedCalloutState,
+      panel: panelState,
+      selectionAction: selectionActionState,
+      spotlights: value.spotlights,
+    };
+  }, [value]);
+
+  const actions = useMemo<KangurAiTutorPortalActionsContextValue>(() => ({
+    avatar: {
+      onClick: value.avatar.onClick,
+      onMouseDown: value.avatar.onMouseDown,
+      onMouseUp: value.avatar.onMouseUp,
+      onPointerCancel: value.avatar.onPointerCancel,
+      onPointerDown: value.avatar.onPointerDown,
+      onPointerMove: value.avatar.onPointerMove,
+      onPointerUp: value.avatar.onPointerUp,
+    },
+    drawingPanel: {
+      onClose: value.drawingPanel.onClose,
+      onComplete: value.drawingPanel.onComplete,
+    },
+    guestIntro: {
+      onAccept: value.guestIntro.onAccept,
+      onClose: value.guestIntro.onClose,
+      onDismiss: value.guestIntro.onDismiss,
+      onStartChat: value.guestIntro.onStartChat,
+    },
+    guidedCallout: {
+      onAdvanceHomeOnboarding: value.guidedCallout.onAdvanceHomeOnboarding,
+      onBackHomeOnboarding: value.guidedCallout.onBackHomeOnboarding,
+      onClose: value.guidedCallout.onClose,
+      onFinishHomeOnboarding: value.guidedCallout.onFinishHomeOnboarding,
+    },
+    panel: {
+      onAttachedAvatarClick: value.panel.onAttachedAvatarClick,
+      onAttachedAvatarPointerCancel: value.panel.onAttachedAvatarPointerCancel,
+      onAttachedAvatarPointerDown: value.panel.onAttachedAvatarPointerDown,
+      onAttachedAvatarPointerMove: value.panel.onAttachedAvatarPointerMove,
+      onAttachedAvatarPointerUp: value.panel.onAttachedAvatarPointerUp,
+      onBackdropClose: value.panel.onBackdropClose,
+      onClose: value.panel.onClose,
+      onDetachPanelFromContext: value.panel.onDetachPanelFromContext,
+      onDisableTutor: value.panel.onDisableTutor,
+      onMovePanelToContext: value.panel.onMovePanelToContext,
+      onResetPanelPosition: value.panel.onResetPanelPosition,
+      onHeaderPointerCancel: value.panel.onHeaderPointerCancel,
+      onHeaderPointerDown: value.panel.onHeaderPointerDown,
+      onHeaderPointerMove: value.panel.onHeaderPointerMove,
+      onHeaderPointerUp: value.panel.onHeaderPointerUp,
+    },
+    selectionAction: {
+      onAskAbout: value.selectionAction.onAskAbout,
+      onSelectionActionMouseDown: value.selectionAction.onSelectionActionMouseDown,
+    },
+  }), [value]);
+
   return (
-    <KangurAiTutorPortalContext.Provider value={value}>
-      {children}
-    </KangurAiTutorPortalContext.Provider>
+    <KangurAiTutorPortalActionsContext.Provider value={actions}>
+      <KangurAiTutorPortalStateContext.Provider value={state}>
+        {children}
+      </KangurAiTutorPortalStateContext.Provider>
+    </KangurAiTutorPortalActionsContext.Provider>
   );
 }
 
-export function useKangurAiTutorPortalContext(): KangurAiTutorPortalContextValue {
-  const ctx = useContext(KangurAiTutorPortalContext);
+export function useKangurAiTutorPortalState(): KangurAiTutorPortalStateContextValue {
+  const ctx = useContext(KangurAiTutorPortalStateContext);
   if (!ctx) {
     throw internalError(
-      'useKangurAiTutorPortalContext must be used within a KangurAiTutorPortalProvider'
+      'useKangurAiTutorPortalState must be used within a KangurAiTutorPortalProvider'
     );
   }
-
   return ctx;
+}
+
+export function useKangurAiTutorPortalActions(): KangurAiTutorPortalActionsContextValue {
+  const ctx = useContext(KangurAiTutorPortalActionsContext);
+  if (!ctx) {
+    throw internalError(
+      'useKangurAiTutorPortalActions must be used within a KangurAiTutorPortalProvider'
+    );
+  }
+  return ctx;
+}
+
+export function useKangurAiTutorPortalContext(): KangurAiTutorPortalContextValue {
+  const state = useKangurAiTutorPortalState();
+  const actions = useKangurAiTutorPortalActions();
+  return useMemo(() => ({
+    avatar: { ...state.avatar, ...actions.avatar },
+    diagnostics: state.diagnostics,
+    drawingPanel: { ...state.drawingPanel, ...actions.drawingPanel },
+    guestIntro: { ...state.guestIntro, ...actions.guestIntro },
+    guidedCallout: { ...state.guidedCallout, ...actions.guidedCallout },
+    panel: { ...state.panel, ...actions.panel },
+    selectionAction: { ...state.selectionAction, ...actions.selectionAction },
+    spotlights: state.spotlights,
+  }), [state, actions]);
 }

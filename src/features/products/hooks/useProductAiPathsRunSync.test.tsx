@@ -10,17 +10,21 @@ import {
 import type { TrackedAiPathRunSnapshot } from '@/shared/lib/ai-paths/client-run-tracker';
 
 const {
+  getQueuedProductSourcesMock,
   invalidateProductsAndDetailMock,
   getRecentAiPathRunEnqueueMock,
   listTriggerButtonRunFeedbackMock,
   markQueuedProductSourceMock,
+  queuedSourcesByProduct,
   removeQueuedProductSourceMock,
   subscribeToTrackedAiPathRunMock,
 } = vi.hoisted(() => ({
+  getQueuedProductSourcesMock: vi.fn(),
   invalidateProductsAndDetailMock: vi.fn(),
   getRecentAiPathRunEnqueueMock: vi.fn(),
   listTriggerButtonRunFeedbackMock: vi.fn(),
   markQueuedProductSourceMock: vi.fn(),
+  queuedSourcesByProduct: new Map<string, Set<string>>(),
   removeQueuedProductSourceMock: vi.fn(),
   subscribeToTrackedAiPathRunMock: vi.fn(),
 }));
@@ -32,6 +36,7 @@ vi.mock('@/features/products/hooks/productCache', () => ({
 
 vi.mock('@/features/products/state/queued-product-ops', () => ({
   buildQueuedProductAiRunSource: (runId: string) => `ai-run:${runId.trim()}`,
+  getQueuedProductSources: (...args: unknown[]) => getQueuedProductSourcesMock(...args),
   markQueuedProductSource: (...args: unknown[]) => markQueuedProductSourceMock(...args),
   removeQueuedProductSource: (...args: unknown[]) => removeQueuedProductSourceMock(...args),
 }));
@@ -105,13 +110,32 @@ describe('useProductAiPathsRunSync', () => {
     invalidateProductsAndDetailMock.mockReset();
     getRecentAiPathRunEnqueueMock.mockReset();
     listTriggerButtonRunFeedbackMock.mockReset();
+    getQueuedProductSourcesMock.mockReset();
     markQueuedProductSourceMock.mockReset();
     removeQueuedProductSourceMock.mockReset();
     subscribeToTrackedAiPathRunMock.mockReset();
     trackedRunListeners.clear();
     trackedRunUnsubscribes.clear();
+    queuedSourcesByProduct.clear();
     getRecentAiPathRunEnqueueMock.mockReturnValue(null);
     listTriggerButtonRunFeedbackMock.mockReturnValue([]);
+    getQueuedProductSourcesMock.mockImplementation((productId: string) => {
+      return new Set(queuedSourcesByProduct.get(productId) ?? []);
+    });
+    markQueuedProductSourceMock.mockImplementation((productId: string, source: string) => {
+      const current = new Set(queuedSourcesByProduct.get(productId) ?? []);
+      current.add(source);
+      queuedSourcesByProduct.set(productId, current);
+    });
+    removeQueuedProductSourceMock.mockImplementation((productId: string, source: string) => {
+      const current = new Set(queuedSourcesByProduct.get(productId) ?? []);
+      current.delete(source);
+      if (current.size === 0) {
+        queuedSourcesByProduct.delete(productId);
+        return;
+      }
+      queuedSourcesByProduct.set(productId, current);
+    });
 
     subscribeToTrackedAiPathRunMock.mockImplementation(
       (
@@ -139,8 +163,11 @@ describe('useProductAiPathsRunSync', () => {
     );
   });
 
-  afterEach(() => {
-    vi.runOnlyPendingTimers();
+  afterEach(async () => {
+    await act(async () => {
+      vi.runOnlyPendingTimers();
+      await Promise.resolve();
+    });
     vi.useRealTimers();
     vi.unstubAllGlobals();
   });
@@ -185,7 +212,7 @@ describe('useProductAiPathsRunSync', () => {
     expect(invalidateProductsAndDetailMock).toHaveBeenCalledWith(queryClient, 'product-1');
   });
 
-  it('exposes the active tracked status for the product list and clears it when the run finishes', async () => {
+  it('exposes the tracked status for the product list and briefly shows the terminal result when the run finishes', async () => {
     const queryClient = createQueryClient();
     const view = renderHook(() => useProductAiPathsRunSync(), {
       wrapper: createWrapper(queryClient),
@@ -227,7 +254,84 @@ describe('useProductAiPathsRunSync', () => {
       });
     });
 
+    expect(view.result.current.get('product-1')).toMatchObject({
+      runId: 'run-status',
+      status: 'completed',
+      label: 'Completed',
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(15_000);
+      await Promise.resolve();
+    });
+
     expect(view.result.current.has('product-1')).toBe(false);
+  });
+
+  it('clears the previous terminal badge when a new run starts for the same product', async () => {
+    const queryClient = createQueryClient();
+    const view = renderHook(() => useProductAiPathsRunSync(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent(AI_PATH_RUN_ENQUEUED_EVENT_NAME, {
+          detail: { runId: 'run-old', entityType: 'product', entityId: 'product-1' },
+        })
+      );
+    });
+    await flushAsync();
+
+    act(() => {
+      emitTrackedRunSnapshot('run-old', {
+        status: 'completed',
+        finishedAt: '2026-03-09T12:00:05.000Z',
+        trackingState: 'stopped',
+      });
+    });
+
+    expect(view.result.current.get('product-1')).toMatchObject({
+      runId: 'run-old',
+      status: 'completed',
+      label: 'Completed',
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent(AI_PATH_RUN_ENQUEUED_EVENT_NAME, {
+          detail: { runId: 'run-new', entityType: 'product', entityId: 'product-1' },
+        })
+      );
+    });
+    await flushAsync();
+
+    expect(view.result.current.get('product-1')).toMatchObject({
+      runId: 'run-new',
+      status: 'queued',
+      label: 'Queued',
+    });
+  });
+
+  it('removes stale queued ai-run sources that are no longer backed by tracked runs', async () => {
+    queuedSourcesByProduct.set('product-1', new Set(['ai-run:stale-run']));
+
+    const queryClient = createQueryClient();
+    renderHook(() => useProductAiPathsRunSync(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent(AI_PATH_RUN_ENQUEUED_EVENT_NAME, {
+          detail: { runId: 'run-live', entityType: 'product', entityId: 'product-1' },
+        })
+      );
+    });
+    await flushAsync();
+
+    expect(removeQueuedProductSourceMock).toHaveBeenCalledWith('product-1', 'ai-run:stale-run');
+    expect(queuedSourcesByProduct.get('product-1')).toEqual(new Set(['ai-run:run-live']));
   });
 
   it('replays the most recent product enqueue on mount so queued badges survive remounts', async () => {

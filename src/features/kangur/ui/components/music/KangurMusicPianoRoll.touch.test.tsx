@@ -81,6 +81,7 @@ describe('KangurMusicPianoRoll touch mode', () => {
     expect(screen.queryByTestId('kangur-music-piano-step-lane-labels')).not.toBeInTheDocument();
     expect(screen.queryByTestId('kangur-music-piano-step-measure-1')).not.toBeInTheDocument();
     expect(fastKey).toHaveClass(
+      'cursor-pointer',
       'min-h-[64px]',
       'min-w-[72px]',
       'touch-manipulation',
@@ -138,6 +139,7 @@ describe('KangurMusicPianoRoll touch mode', () => {
     mockKeyRect(secondKey);
 
     expect(key).toHaveClass('touch-none', 'select-none');
+    expect(key).toHaveClass('cursor-pointer');
     expect(key).not.toHaveClass('touch-manipulation');
     expect(key).toHaveStyle({ touchAction: 'none' });
     expect(screen.getByTestId('music-roll-touch-synth-step-controls-rail')).toHaveClass(
@@ -146,6 +148,9 @@ describe('KangurMusicPianoRoll touch mode', () => {
     expect(screen.getByTestId('music-roll-touch-synth-step-synth-waveform-sawtooth')).toHaveAttribute(
       'aria-label',
       'Brzmienie: Saw'
+    );
+    expect(screen.getByTestId('music-roll-touch-synth-step-synth-waveform-sawtooth')).toHaveClass(
+      'cursor-pointer'
     );
     expect(screen.getByTestId('music-roll-touch-synth-step-synth-waveform-sawtooth')).toHaveTextContent(
       ''

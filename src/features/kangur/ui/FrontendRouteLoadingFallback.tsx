@@ -8,6 +8,7 @@ import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPub
 import { useKangurPendingRouteLoadingSnapshot } from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
 import {
   normalizeManagedKangurPathname,
+  resolveManagedKangurEmbeddedFromHref,
   resolveManagedKangurPageKeyFromHref,
 } from '@/features/kangur/ui/routing/managed-paths';
 
@@ -45,14 +46,35 @@ const resolveKangurBasePath = (pathname: string | null): string => {
 };
 
 const resolveAutoIncludeTopNavigationSkeleton = ({
-  href,
+  currentHref,
+  targetHref,
+  hasPendingTransition,
   pageKey,
 }: {
-  href: string | null;
+  currentHref: string | null;
+  targetHref: string | null;
+  hasPendingTransition: boolean;
   pageKey?: string | null;
 }): boolean => {
-  const basePath = resolveKangurBasePath(href);
-  const resolvedPageKey = pageKey ?? resolveManagedKangurPageKeyFromHref(href ?? '/', basePath);
+  const targetBasePath = resolveKangurBasePath(targetHref);
+  const resolvedPageKey =
+    pageKey ?? resolveManagedKangurPageKeyFromHref(targetHref ?? '/', targetBasePath);
+
+  if (hasPendingTransition && currentHref !== null && targetHref !== null) {
+    const currentEmbedded = resolveManagedKangurEmbeddedFromHref({
+      href: currentHref,
+      basePath: resolveKangurBasePath(currentHref),
+    });
+    const targetEmbedded = resolveManagedKangurEmbeddedFromHref({
+      href: targetHref,
+      basePath: targetBasePath,
+    });
+
+    if (currentEmbedded === false || targetEmbedded === false) {
+      return true;
+    }
+  }
+
   return (resolvedPageKey ?? KANGUR_MAIN_PAGE_KEY) !== KANGUR_MAIN_PAGE_KEY;
 };
 
@@ -67,7 +89,9 @@ export function FrontendRouteLoadingFallback({
   const resolvedIncludeTopNavigationSkeleton =
     includeTopNavigationSkeleton ??
     resolveAutoIncludeTopNavigationSkeleton({
-      href: pendingRouteLoadingSnapshot?.href ?? pathname,
+      currentHref: pathname,
+      targetHref: pendingRouteLoadingSnapshot?.href ?? pathname,
+      hasPendingTransition: pendingRouteLoadingSnapshot !== null,
       pageKey: pendingRouteLoadingSnapshot?.pageKey,
     });
 

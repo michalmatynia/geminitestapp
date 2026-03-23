@@ -1,9 +1,12 @@
 import { BaseInventory, BaseWarehouse } from '@/shared/contracts/integrations';
+import { isAppError } from '@/shared/errors/app-error';
 
 import { callBaseApi, callBaseApiRaw, BaseApiRawResult } from './core';
 import { extractInventoryList, extractWarehouseList } from '../base-client-parsers';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+const isUnknownMethodError = (error: unknown): boolean =>
+  isAppError(error) && error.meta?.['errorCode'] === 'ERROR_UNKNOWN_METHOD';
 
 export async function fetchBaseInventories(token: string): Promise<BaseInventory[]> {
   const methods = ['getInventories', 'getInventory', 'getInventoryList'];
@@ -17,7 +20,13 @@ export async function fetchBaseInventories(token: string): Promise<BaseInventory
       }
     } catch (error: unknown) {
       logClientError(error);
-      lastError = error instanceof Error ? error : new Error('Base API error.');
+      const resolvedError = error instanceof Error ? error : new Error('Base API error.');
+      if (isAppError(error) && error.expected && !isUnknownMethodError(error)) {
+        throw resolvedError;
+      }
+      if (!isUnknownMethodError(error) || lastError === null) {
+        lastError = resolvedError;
+      }
     }
   }
   if (lastError) {

@@ -122,6 +122,29 @@ describe('FrontendRouteLoadingFallback', () => {
     });
   });
 
+  it('keeps the navbar skeleton when returning from lessons to the main page', () => {
+    usePathnameMock.mockReturnValue('/en/lessons');
+    setKangurPendingRouteLoadingSnapshot({
+      href: '/en',
+      pageKey: 'Game',
+      skeletonVariant: 'game-home',
+      startedAt: Date.now(),
+      topBarHeightCssValue: '136px',
+    });
+
+    render(
+      <FrontendPublicOwnerProvider publicOwner='kangur'>
+        <FrontendRouteLoadingFallback />
+      </FrontendPublicOwnerProvider>
+    );
+
+    expect(screen.getByTestId('kangur-route-loading-fallback-probe')).toBeInTheDocument();
+    expect(kangurRouteLoadingFallbackMock).toHaveBeenCalledTimes(1);
+    expect(kangurRouteLoadingFallbackMock).toHaveBeenCalledWith({
+      includeTopNavigationSkeleton: true,
+    });
+  });
+
   it('can still override the auto-detected navbar skeleton mode', () => {
     render(
       <FrontendPublicOwnerProvider publicOwner='kangur'>

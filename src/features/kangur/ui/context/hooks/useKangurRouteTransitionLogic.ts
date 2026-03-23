@@ -328,6 +328,7 @@ export function useKangurRouteTransitionLogic({
       };
 
       setKangurPendingRouteLoadingSnapshot({
+        fromHref: currentRequestedHref,
         href: normalizedHref,
         pageKey: nextPageKey,
         skeletonVariant: nextState.skeletonVariant,

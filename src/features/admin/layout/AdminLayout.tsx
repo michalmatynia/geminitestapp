@@ -17,6 +17,7 @@ import { useUpdateUserPreferences, useUserPreferences } from '@/shared/hooks/use
 import { setClientCookie } from '@/shared/lib/browser/client-cookies';
 import { NoteSettingsProvider } from '@/shared/providers/NoteSettingsProvider';
 import { QueryProvider } from '@/shared/providers/QueryProvider';
+import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
 import { Button, ToastProvider } from '@/shared/ui';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -293,23 +294,27 @@ export function AdminLayout({
   children,
   initialMenuCollapsed = false,
   session = null,
+  canReadAdminSettings = true,
 }: {
   children: React.ReactNode;
   initialMenuCollapsed?: boolean;
   session?: Session | null;
+  canReadAdminSettings?: boolean;
 }): React.ReactNode {
   const menuCollapsedDefault = initialMenuCollapsed;
 
   return (
     <SessionProvider session={session} refetchOnWindowFocus={false}>
       <QueryProvider>
-        <ToastProvider>
-          <AdminLayoutProvider initialMenuCollapsed={menuCollapsedDefault}>
-            <NoteSettingsProvider>
-              <AdminLayoutContent>{children}</AdminLayoutContent>
-            </NoteSettingsProvider>
-          </AdminLayoutProvider>
-        </ToastProvider>
+        <SettingsStoreProvider mode='admin' canReadAdminSettings={canReadAdminSettings}>
+          <ToastProvider>
+            <AdminLayoutProvider initialMenuCollapsed={menuCollapsedDefault}>
+              <NoteSettingsProvider>
+                <AdminLayoutContent>{children}</AdminLayoutContent>
+              </NoteSettingsProvider>
+            </AdminLayoutProvider>
+          </ToastProvider>
+        </SettingsStoreProvider>
       </QueryProvider>
     </SessionProvider>
   );

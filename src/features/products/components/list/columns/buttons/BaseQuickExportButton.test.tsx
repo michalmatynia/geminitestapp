@@ -4,12 +4,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductWithImages } from '@/shared/contracts/products';
+import { ApiError } from '@/shared/lib/api-client';
 
 const {
   toastMock,
   apiGetMock,
   apiPostMock,
   mutateAsyncMock,
+  fetchPreferredBaseConnectionMock,
+  fetchIntegrationsWithConnectionsMock,
   invalidateProductListingsAndBadgesMock,
   subscribeToTrackedAiPathRunMock,
   trackedRunListeners,
@@ -18,6 +21,8 @@ const {
   apiGetMock: vi.fn(),
   apiPostMock: vi.fn(),
   mutateAsyncMock: vi.fn(),
+  fetchPreferredBaseConnectionMock: vi.fn(),
+  fetchIntegrationsWithConnectionsMock: vi.fn(),
   invalidateProductListingsAndBadgesMock: vi.fn(),
   subscribeToTrackedAiPathRunMock: vi.fn(),
   trackedRunListeners: new Map<string, (snapshot: Record<string, unknown>) => void>(),
@@ -51,18 +56,28 @@ vi.mock('@/shared/ui', () => ({
   useToast: () => ({ toast: toastMock }),
 }));
 
-vi.mock('@/shared/lib/api-client', () => ({
-  api: {
-    get: (...args: unknown[]) => apiGetMock(...args) as Promise<unknown>,
-    post: (...args: unknown[]) => apiPostMock(...args) as Promise<unknown>,
-  },
-}));
+vi.mock('@/shared/lib/api-client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/lib/api-client')>();
+  return {
+    ...actual,
+    api: {
+      get: (...args: unknown[]) => apiGetMock(...args) as Promise<unknown>,
+      post: (...args: unknown[]) => apiPostMock(...args) as Promise<unknown>,
+    },
+  };
+});
 
 vi.mock('@/features/integrations/public', () => ({
-  fetchPreferredBaseConnection: () => Promise.resolve({ connectionId: 'conn-base-1' }),
+  fetchPreferredBaseConnection: (...args: unknown[]) =>
+    fetchPreferredBaseConnectionMock(...args) as Promise<unknown>,
+  fetchIntegrationsWithConnections: (...args: unknown[]) =>
+    fetchIntegrationsWithConnectionsMock(...args) as Promise<unknown>,
   integrationSelectionQueryKeys: {
     defaultConnection: ['integrations', 'default-connection'],
+    withConnections: ['integrations', 'with-connections'],
   },
+  isBaseIntegrationSlug: (value: string | null | undefined) =>
+    ['baselinker', 'base-com', 'base'].includes((value ?? '').trim().toLowerCase()),
   useGenericExportToBaseMutation: () => ({
     isPending: false,
     mutateAsync: mutateAsyncMock,
@@ -169,6 +184,21 @@ describe('BaseQuickExportButton', () => {
     vi.clearAllMocks();
     trackedRunListeners.clear();
     window.sessionStorage.clear();
+    fetchPreferredBaseConnectionMock.mockResolvedValue({ connectionId: 'conn-base-1' });
+    fetchIntegrationsWithConnectionsMock.mockResolvedValue([
+      {
+        id: 'integration-base-1',
+        name: 'Base.com',
+        slug: 'base-com',
+        connections: [
+          {
+            id: 'conn-base-1',
+            name: 'Base connection',
+            integrationId: 'integration-base-1',
+          },
+        ],
+      },
+    ]);
     setupDefaultApiMocks();
     subscribeToTrackedAiPathRunMock.mockImplementation(
       (
@@ -475,6 +505,226 @@ describe('BaseQuickExportButton', () => {
         }
       );
     });
+  });
+
+  it('continues export when loading the scoped active template fails', async () => {
+    apiGetMock.mockImplementation((url: string) => {
+      if (url.startsWith('/api/v2/integrations/exports/base/default-inventory')) {
+        return Promise.resolve({ inventoryId: 'inv-main' });
+      }
+      if (url.startsWith('/api/v2/integrations/exports/base/active-template')) {
+        return Promise.reject(new Error('Active template unavailable'));
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`));
+    });
+
+    apiPostMock.mockImplementation((url: string) => {
+      if (url === '/api/v2/integrations/imports/base') {
+        return Promise.resolve({
+          inventories: [{ id: 'inv-main', name: 'Main inventory', is_default: true }],
+        });
+      }
+      if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
+        return Promise.resolve({
+          sku: 'SKU-001',
+          exists: false,
+          existingProductId: null,
+        });
+      }
+      return Promise.reject(new Error(`Unexpected POST ${url}`));
+    });
+
+    renderButton();
+
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          productId: 'product-1',
+          connectionId: 'conn-base-1',
+          inventoryId: 'inv-main',
+        })
+      );
+    });
+
+    expect(mutateAsyncMock).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        templateId: expect.any(String),
+      })
+    );
+    expect(toastMock).toHaveBeenCalledWith('Base.com export started.', {
+      variant: 'success',
+    });
+  });
+
+  it('repairs a missing default Base.com connection when only one valid Base connection exists', async () => {
+    fetchPreferredBaseConnectionMock.mockResolvedValue({ connectionId: null });
+
+    apiPostMock.mockImplementation((url: string) => {
+      if (url === '/api/v2/integrations/exports/base/default-connection') {
+        return Promise.resolve({ connectionId: 'conn-base-1' });
+      }
+      if (url === '/api/v2/integrations/imports/base') {
+        return Promise.resolve({
+          inventories: [{ id: 'inv-main', name: 'Main inventory', is_default: true }],
+        });
+      }
+      if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
+        return Promise.resolve({
+          sku: 'SKU-001',
+          exists: false,
+          existingProductId: null,
+        });
+      }
+      return Promise.reject(new Error(`Unexpected POST ${url}`));
+    });
+
+    renderButton();
+
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
+
+    await waitFor(() => {
+      expect(apiPostMock).toHaveBeenCalledWith(
+        '/api/v2/integrations/exports/base/default-connection',
+        {
+          connectionId: 'conn-base-1',
+        }
+      );
+    });
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          productId: 'product-1',
+          connectionId: 'conn-base-1',
+          inventoryId: 'inv-main',
+        })
+      );
+    });
+  });
+
+  it('continues export when integrations-with-connections fallback lookup fails', async () => {
+    fetchIntegrationsWithConnectionsMock.mockRejectedValue(
+      new Error('Integrations list temporarily unavailable')
+    );
+
+    apiPostMock.mockImplementation((url: string) => {
+      if (url === '/api/v2/integrations/imports/base') {
+        return Promise.resolve({
+          inventories: [{ id: 'inv-main', name: 'Main inventory', is_default: true }],
+        });
+      }
+      if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
+        return Promise.resolve({
+          sku: 'SKU-001',
+          exists: false,
+          existingProductId: null,
+        });
+      }
+      return Promise.reject(new Error(`Unexpected POST ${url}`));
+    });
+
+    renderButton();
+
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          productId: 'product-1',
+          connectionId: 'conn-base-1',
+          inventoryId: 'inv-main',
+        })
+      );
+    });
+  });
+
+  it('continues export when inventory lookup fails but a saved inventory is already configured', async () => {
+    apiGetMock.mockImplementation((url: string) => {
+      if (url.startsWith('/api/v2/integrations/exports/base/default-inventory')) {
+        return Promise.resolve({ inventoryId: 'inv-main' });
+      }
+      if (url.startsWith('/api/v2/integrations/exports/base/active-template')) {
+        return Promise.resolve({ templateId: null });
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`));
+    });
+
+    apiPostMock.mockImplementation((url: string) => {
+      if (url === '/api/v2/integrations/imports/base') {
+        return Promise.reject(new Error('A connected service did not respond. Try again shortly.'));
+      }
+      if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
+        return Promise.resolve({
+          sku: 'SKU-001',
+          exists: false,
+          existingProductId: null,
+        });
+      }
+      return Promise.reject(new Error(`Unexpected POST ${url}`));
+    });
+
+    renderButton();
+
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          productId: 'product-1',
+          connectionId: 'conn-base-1',
+          inventoryId: 'inv-main',
+        })
+      );
+    });
+
+    expect(toastMock).toHaveBeenCalledWith('Base.com export started.', {
+      variant: 'success',
+    });
+  });
+
+  it('stops export and surfaces a blocked Base account when inventory lookup reports it', async () => {
+    apiGetMock.mockImplementation((url: string) => {
+      if (url.startsWith('/api/v2/integrations/exports/base/default-inventory')) {
+        return Promise.resolve({ inventoryId: 'inv-main' });
+      }
+      if (url.startsWith('/api/v2/integrations/exports/base/active-template')) {
+        return Promise.resolve({ templateId: null });
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`));
+    });
+
+    const blockedAccountError = new ApiError(
+      'Base.com account for this connection is blocked. Unblock it in Base.com and retry.',
+      400
+    );
+    blockedAccountError.payload = {
+      code: 'INTEGRATION_ERROR',
+      details: {
+        errorCode: 'ERROR_USER_ACCOUNT_BLOCKED',
+      },
+    };
+
+    apiPostMock.mockImplementation((url: string) => {
+      if (url === '/api/v2/integrations/imports/base') {
+        return Promise.reject(blockedAccountError);
+      }
+      return Promise.reject(new Error(`Unexpected POST ${url}`));
+    });
+
+    renderButton();
+
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
+
+    await waitFor(() => {
+      expect(toastMock).toHaveBeenCalledWith(
+        'Base.com account for this connection is blocked. Unblock it in Base.com and retry.',
+        { variant: 'error' }
+      );
+    });
+
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
   });
 
   it('opens Base export settings instead of re-exporting when the product is already exported', () => {

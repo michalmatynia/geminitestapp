@@ -13,6 +13,7 @@ type KangurPageShellDataAttributes = {
 
 export type KangurPageShellProps = React.HTMLAttributes<HTMLDivElement> &
   KangurPageShellDataAttributes & {
+  embeddedOverride?: boolean | null;
   tone?: KangurPageTone;
   skipLinkTargetId?: string;
   skipLinkLabel?: string;
@@ -20,6 +21,7 @@ export type KangurPageShellProps = React.HTMLAttributes<HTMLDivElement> &
 
 export const KangurPageShell = ({
   tone = 'play',
+  embeddedOverride,
   className,
   children,
   skipLinkTargetId,
@@ -29,7 +31,7 @@ export const KangurPageShell = ({
 }: KangurPageShellProps): React.JSX.Element => {
   const commonTranslations = useTranslations('Common');
   const routing = useOptionalKangurRouting();
-  const embedded = routing?.embedded ?? false;
+  const embedded = embeddedOverride ?? routing?.embedded ?? false;
   const resolvedSkipLinkTargetId = skipLinkTargetId ?? KANGUR_MAIN_CONTENT_ID;
   const resolvedSkipLinkLabel = skipLinkLabel ?? commonTranslations('skipToMainContent');
   const shouldRenderSkipLink =

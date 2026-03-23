@@ -1,5 +1,9 @@
 import type { BaseApiResponse, BaseApiRawResult } from '@/shared/contracts/integrations';
-import { externalServiceError } from '@/shared/errors/app-error';
+import {
+  AppErrorCodes,
+  createAppError,
+  externalServiceError,
+} from '@/shared/errors/app-error';
 import { withTransientRecovery } from '@/shared/lib/observability/transient-recovery/with-recovery';
 
 import {
@@ -16,6 +20,43 @@ export type { BaseApiRawResult };
 export type BaseApiCallOptions = {
   timeoutMs?: number;
   maxAttempts?: number;
+};
+
+const mapBaseApiError = (
+  method: string,
+  payload: BaseApiResponse
+): ReturnType<typeof externalServiceError> => {
+  const errorCode = typeof payload.error_code === 'string' ? payload.error_code : undefined;
+  const message =
+    (typeof payload.error_message === 'string' && payload.error_message) ||
+    errorCode ||
+    'Base API error.';
+
+  if (errorCode === 'ERROR_USER_ACCOUNT_BLOCKED') {
+    return createAppError(
+      'Base.com account for this connection is blocked. Unblock it in Base.com and retry.',
+      {
+        code: AppErrorCodes.integrationError,
+        httpStatus: 400,
+        expected: true,
+        meta: { method, errorCode },
+      }
+    );
+  }
+
+  if (errorCode === 'ERROR_UNKNOWN_METHOD') {
+    return createAppError(`Base.com does not support the API method "${method}".`, {
+      code: AppErrorCodes.integrationError,
+      httpStatus: 400,
+      expected: true,
+      meta: { method, errorCode },
+    });
+  }
+
+  return externalServiceError(message, {
+    method,
+    errorCode,
+  });
 };
 
 export const isProductWriteMethod = (method: string): boolean =>
@@ -163,14 +204,7 @@ export async function callBaseApi(
   );
   const payload = (await response.json()) as BaseApiResponse;
   if (payload.status === 'ERROR') {
-    const message =
-      (typeof payload.error_message === 'string' && payload.error_message) ||
-      (typeof payload.error_code === 'string' && payload.error_code) ||
-      'Base API error.';
-    throw externalServiceError(message, {
-      method,
-      errorCode: payload.error_code,
-    });
+    throw mapBaseApiError(method, payload);
   }
   return payload;
 }

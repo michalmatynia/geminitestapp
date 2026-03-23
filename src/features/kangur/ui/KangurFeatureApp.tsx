@@ -40,6 +40,7 @@ import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTu
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import type { KangurRouteTransitionSkeletonVariant } from '@/features/kangur/ui/routing/route-transition-skeletons';
+import { resolveManagedKangurEmbeddedFromHref } from '@/features/kangur/ui/routing/managed-paths';
 import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import { cn } from '@/features/kangur/shared/utils';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -51,6 +52,7 @@ const NAVIGATION_SKELETON_DELAY_MS = 60;
 const LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID = 'kangur-language-switcher';
 
 type LatchedNavigationSkeletonState = {
+  embedded: boolean;
   pageKey: string;
   variant: KangurRouteTransitionSkeletonVariant | null;
 };
@@ -69,6 +71,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     activeTransitionKind,
     pendingPageKey,
     activeTransitionPageKey,
+    activeTransitionRequestedHref,
     activeTransitionSkeletonVariant,
   } = useKangurRouteTransitionState();
   const routeNavigator = useKangurRouteNavigator();
@@ -106,6 +109,11 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const latchedNavigationSkeletonRef = useRef<LatchedNavigationSkeletonState | null>(null);
   const transitionPageKey =
     pendingPageKey ?? activeTransitionPageKey ?? resolvedPageKey ?? KANGUR_MAIN_PAGE;
+  const transitionEmbedded =
+    resolveManagedKangurEmbeddedFromHref({
+      href: activeTransitionRequestedHref,
+      basePath,
+    }) ?? embedded;
   const isRouteSkeletonVisible = isNavigationSkeletonVisible;
   const visibleTransitionSkeletonPageKey =
     isRouteSkeletonVisible
@@ -115,6 +123,9 @@ const AuthenticatedApp = (): JSX.Element | null => {
     isRouteSkeletonVisible
       ? latchedNavigationSkeletonRef.current?.variant ?? activeTransitionSkeletonVariant
       : activeTransitionSkeletonVariant;
+  const visibleTransitionSkeletonEmbedded = isRouteSkeletonVisible
+    ? latchedNavigationSkeletonRef.current?.embedded ?? (embedded && transitionEmbedded)
+    : embedded;
   const currentNavigationTopBarHeightCssValue =
     isNavigationTransitionActive || isRouteSkeletonVisible
       ? readKangurTopBarHeightCssValue()
@@ -124,8 +135,11 @@ const AuthenticatedApp = (): JSX.Element | null => {
     : null;
   const shouldHideTopNavigationDuringBoot = isBootSkeletonVisible;
   const shouldRenderInlineRouteSkeletonTopNavigation =
-    !embedded && !shouldHideTopNavigationDuringBoot && isRouteSkeletonVisible;
-  const shouldHideTopNavigationHost = shouldRenderInlineRouteSkeletonTopNavigation;
+    !visibleTransitionSkeletonEmbedded &&
+    !shouldHideTopNavigationDuringBoot &&
+    isRouteSkeletonVisible;
+  const shouldHideTopNavigationHost =
+    !shouldHideTopNavigationDuringBoot && isRouteSkeletonVisible;
   const shouldKeepRouteContentVisibleDuringTransition =
     isLanguageSwitcherTransition && isRouteSkeletonVisible;
   const isRouteContentVisuallyHidden =
@@ -183,9 +197,16 @@ const AuthenticatedApp = (): JSX.Element | null => {
     if (isNavigationTransitionActive) {
       const nextTransitionPageKey = pendingPageKey ?? activeTransitionPageKey ?? null;
       const nextTransitionSkeletonVariant = activeTransitionSkeletonVariant ?? null;
+      const nextTransitionEmbedded = embedded && transitionEmbedded;
 
-      if (nextTransitionPageKey !== null || nextTransitionSkeletonVariant !== null) {
+      if (
+        latchedNavigationSkeletonRef.current === null ||
+        nextTransitionPageKey !== null ||
+        nextTransitionSkeletonVariant !== null
+      ) {
         latchedNavigationSkeletonRef.current = {
+          embedded:
+            latchedNavigationSkeletonRef.current?.embedded ?? nextTransitionEmbedded,
           pageKey:
             nextTransitionPageKey ??
             latchedNavigationSkeletonRef.current?.pageKey ??
@@ -206,7 +227,9 @@ const AuthenticatedApp = (): JSX.Element | null => {
     isNavigationTransitionActive,
     isRouteSkeletonVisible,
     pendingPageKey,
+    transitionEmbedded,
     transitionPageKey,
+    embedded,
   ]);
 
   useEffect(() => {
@@ -360,6 +383,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.18, ease: 'easeOut' }}
           >
             <KangurPageTransitionSkeleton
+              embeddedOverride={visibleTransitionSkeletonEmbedded}
               pageKey={visibleTransitionSkeletonPageKey}
               reason={isLanguageSwitcherTransition ? 'locale-switch' : 'navigation'}
               renderInlineTopNavigationSkeleton={shouldRenderInlineRouteSkeletonTopNavigation}

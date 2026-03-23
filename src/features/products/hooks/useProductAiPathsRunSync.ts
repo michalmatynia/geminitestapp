@@ -12,6 +12,7 @@ import {
 } from '@/features/products/lib/product-ai-run-feedback';
 import {
   buildQueuedProductAiRunSource,
+  getQueuedProductSources,
   markQueuedProductSource,
   removeQueuedProductSource,
 } from '@/features/products/state/queued-product-ops';
@@ -37,6 +38,7 @@ import { logClientCatch, logClientError } from '@/shared/utils/observability/cli
 // Keep the badge visible longer than the last scheduled product refresh (9 s).
 const AI_PATH_RUN_BADGE_TTL_MS = 30_000;
 const AI_PATH_RUN_BADGE_REFRESH_INTERVAL_MS = 10_000;
+const TERMINAL_PRODUCT_AI_RUN_BADGE_TTL_MS = 15_000;
 const EMPTY_PRODUCT_AI_RUN_STATUS_BY_PRODUCT_ID = new Map<string, ProductAiRunFeedback>();
 
 type TrackedProductRun = {
@@ -113,6 +115,20 @@ const buildProductAiRunStatusByProductId = (
   return next;
 };
 
+const mergeProductAiRunFeedbackMaps = (args: {
+  activeByProductId: ReadonlyMap<string, ProductAiRunFeedback>;
+  terminalByProductId: ReadonlyMap<string, ProductAiRunFeedback>;
+}): ReadonlyMap<string, ProductAiRunFeedback> => {
+  const next = new Map<string, ProductAiRunFeedback>(args.terminalByProductId);
+  args.activeByProductId.forEach((feedback: ProductAiRunFeedback, productId: string) => {
+    const current = next.get(productId);
+    if (!current || compareProductAiRunFeedback(feedback, current) >= 0) {
+      next.set(productId, feedback);
+    }
+  });
+  return next;
+};
+
 /**
  * Listens for AI-Paths runs triggered on individual products and reflects their
  * in-progress state in the product list's run badge + completion highlight.
@@ -123,6 +139,10 @@ const buildProductAiRunStatusByProductId = (
 export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeedback> {
   const queryClient = useQueryClient();
   const trackedRunsRef = useRef<Map<string, TrackedProductRun>>(new Map());
+  const terminalProductAiRunStatusByProductIdRef = useRef<Map<string, ProductAiRunFeedback>>(
+    new Map()
+  );
+  const terminalBadgeTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const badgeRefreshIntervalRef = useRef<SafeTimerId | null>(null);
   const disposedRef = useRef(false);
   const [productAiRunStatusByProductId, setProductAiRunStatusByProductId] = useState<
@@ -132,9 +152,39 @@ export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeed
   useEffect(() => {
     disposedRef.current = false;
 
+    const clearTerminalBadgeTimer = (productId: string): void => {
+      const existingTimer = terminalBadgeTimersRef.current.get(productId);
+      if (!existingTimer) return;
+      clearTimeout(existingTimer);
+      terminalBadgeTimersRef.current.delete(productId);
+    };
+
+    const clearTerminalFeedback = (productId: string): boolean => {
+      clearTerminalBadgeTimer(productId);
+      return terminalProductAiRunStatusByProductIdRef.current.delete(productId);
+    };
+
+    const setTerminalFeedback = (
+      productId: string,
+      feedback: ProductAiRunFeedback
+    ): void => {
+      terminalProductAiRunStatusByProductIdRef.current.set(productId, feedback);
+      clearTerminalBadgeTimer(productId);
+      const timer = setTimeout(() => {
+        terminalBadgeTimersRef.current.delete(productId);
+        if (clearTerminalFeedback(productId)) {
+          syncProductAiRunStatuses();
+        }
+      }, TERMINAL_PRODUCT_AI_RUN_BADGE_TTL_MS);
+      terminalBadgeTimersRef.current.set(productId, timer);
+    };
+
     const syncProductAiRunStatuses = (): void => {
       setProductAiRunStatusByProductId((prev) => {
-        const next = buildProductAiRunStatusByProductId(trackedRunsRef.current);
+        const next = mergeProductAiRunFeedbackMaps({
+          activeByProductId: buildProductAiRunStatusByProductId(trackedRunsRef.current),
+          terminalByProductId: terminalProductAiRunStatusByProductIdRef.current,
+        });
         if (next.size === 0 && prev.size === 0) return prev;
         if (areFeedbackMapsEqual(prev, next)) return prev;
         logProductListDebug(
@@ -170,12 +220,36 @@ export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeed
       markQueuedProductSource(productId, source, AI_PATH_RUN_BADGE_TTL_MS);
     };
 
+    const syncQueuedSourcesForProduct = (productId: string): void => {
+      const activeQueuedSources = new Set<string>();
+      trackedRunsRef.current.forEach((candidate: TrackedProductRun, trackedRunId: string) => {
+        if (candidate.productId !== productId) return;
+        const source = buildQueuedProductAiRunSource(trackedRunId);
+        if (source) {
+          activeQueuedSources.add(source);
+        }
+      });
+
+      getQueuedProductSources(productId).forEach((source: string) => {
+        if (!source.startsWith('ai-run:')) return;
+        if (activeQueuedSources.has(source)) return;
+        removeQueuedProductSource(productId, source);
+      });
+    };
+
     const finalizeRun = (runId: string, productId: string): void => {
       const trackedRun = trackedRunsRef.current.get(runId);
       // Mark as terminal in persisted storage so it won't be re-tracked on next mount.
-      const terminalStatus = trackedRun?.latestSnapshot?.status;
-      if (terminalStatus && isTrackedAiPathRunTerminal(trackedRun.latestSnapshot!)) {
+      const latestSnapshot = trackedRun?.latestSnapshot ?? null;
+      const terminalStatus = latestSnapshot?.status;
+      if (latestSnapshot && terminalStatus && isTrackedAiPathRunTerminal(latestSnapshot)) {
         markPersistedRunTerminal(runId, terminalStatus);
+        const terminalFeedback = buildProductAiRunFeedbackFromSnapshot(latestSnapshot, {
+          allowStopped: true,
+        });
+        if (terminalFeedback) {
+          setTerminalFeedback(productId, terminalFeedback);
+        }
       }
       trackedRun?.unsubscribe();
       trackedRunsRef.current.delete(runId);
@@ -184,6 +258,7 @@ export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeed
       if (source) {
         removeQueuedProductSource(productId, source);
       }
+      syncQueuedSourcesForProduct(productId);
       if (hasTrackedProductRuns(trackedRunsRef.current, productId)) {
         trackedRunsRef.current.forEach((candidate: TrackedProductRun, trackedRunId: string) => {
           if (candidate.productId !== productId) return;
@@ -244,6 +319,7 @@ export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeed
       productId: string,
       initialSnapshot?: Partial<TrackedAiPathRunSnapshot> | undefined
     ): void => {
+      clearTerminalFeedback(productId);
       const existingTrackedRun = trackedRunsRef.current.get(runId);
       if (existingTrackedRun) {
         existingTrackedRun.productId = productId;
@@ -259,6 +335,7 @@ export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeed
           }
         );
         refreshQueuedBadge(runId, productId);
+        syncQueuedSourcesForProduct(productId);
         ensureBadgeRefresh();
         syncProductAiRunStatuses();
         return;
@@ -312,6 +389,7 @@ export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeed
           }
 
           refreshQueuedBadge(runId, activeTrackedRun.productId);
+          syncQueuedSourcesForProduct(activeTrackedRun.productId);
           syncProductAiRunStatuses();
         },
         {
@@ -424,6 +502,11 @@ export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeed
     return () => {
       disposedRef.current = true;
       stopBadgeRefresh();
+      terminalBadgeTimersRef.current.forEach((timer: ReturnType<typeof setTimeout>) =>
+        clearTimeout(timer)
+      );
+      terminalBadgeTimersRef.current.clear();
+      terminalProductAiRunStatusByProductIdRef.current.clear();
       trackedRunsRef.current.forEach((trackedRun: TrackedProductRun) => trackedRun.unsubscribe());
       trackedRunsRef.current.clear();
       window.removeEventListener(AI_PATH_RUN_ENQUEUED_EVENT_NAME, handler);

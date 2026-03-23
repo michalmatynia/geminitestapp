@@ -38,17 +38,22 @@ vi.mock('framer-motion', () => ({
 
 vi.mock('@/features/kangur/ui/components/KangurPageTransitionSkeleton', () => ({
   KangurPageTransitionSkeleton: ({
+    embeddedOverride,
     pageKey,
     renderInlineTopNavigationSkeleton,
     topBarHeightCssValue,
     variant,
   }: {
+    embeddedOverride?: boolean | null;
     pageKey?: string | null;
     renderInlineTopNavigationSkeleton?: boolean;
     topBarHeightCssValue?: string | null;
     variant?: string | null;
   }) => (
     <div
+      data-embedded-override={
+        typeof embeddedOverride === 'boolean' ? String(embeddedOverride) : ''
+      }
       data-inline-top-navigation-skeleton={renderInlineTopNavigationSkeleton ? 'true' : 'false'}
       data-top-bar-height={topBarHeightCssValue ?? ''}
       data-testid='kangur-page-transition-skeleton'
@@ -167,6 +172,14 @@ vi.mock('@/features/kangur/config/pages', () => ({
 }));
 
 vi.mock('@/features/kangur/config/routing', () => ({
+  normalizeKangurBasePath: (basePath: string | null | undefined) => {
+    if (typeof basePath !== 'string') {
+      return '/kangur';
+    }
+
+    const trimmed = basePath.trim();
+    return trimmed.length > 0 ? trimmed : '/kangur';
+  },
   resolveKangurPageKey: (
     pageKey: string | null | undefined,
     pages: Record<string, React.ComponentType>,
@@ -529,11 +542,92 @@ describe('KangurFeatureApp', () => {
 
     expect(screen.queryByTestId('kangur-top-navigation-host')).toBeNull();
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-embedded-override',
+      'false'
+    );
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
       'data-inline-top-navigation-skeleton',
       'true'
     );
     expect(screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Lessons:lessons-library');
+  });
+
+  it('renders the very first home-to-lessons skeleton frame in standalone mode', async () => {
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: true,
+      requestedPath: '/',
+      basePath: '/',
+    });
+    topNavigationHostVisibleMock.mockReturnValue(false);
+    routeTransitionStateMock.mockReturnValue({
+      isRouteAcknowledging: false,
+      isRoutePending: true,
+      isRouteWaitingForReady: false,
+      isRouteRevealing: false,
+      transitionPhase: 'pending',
+      activeTransitionSourceId: 'game-home-action:lessons',
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/lessons',
+      activeTransitionSkeletonVariant: 'lessons-library',
+      pendingPageKey: 'Lessons',
+      startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.queryByTestId('kangur-top-navigation-host')).toBeNull();
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-embedded-override',
+      'false'
+    );
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-inline-top-navigation-skeleton',
+      'true'
+    );
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')
+    ).toBeInTheDocument();
+  });
+
+  it('keeps standalone skeleton geometry when transitioning from lessons back to the embedded home route', () => {
+    routingStateMock.mockReturnValue({
+      pageKey: 'Lessons',
+      embedded: false,
+      requestedPath: '/lessons',
+      basePath: '/',
+    });
+    routeTransitionStateMock.mockReturnValue({
+      isRouteAcknowledging: false,
+      isRoutePending: true,
+      isRouteWaitingForReady: false,
+      isRouteRevealing: false,
+      transitionPhase: 'pending',
+      activeTransitionSourceId: 'lessons:list-back',
+      activeTransitionPageKey: 'Game',
+      activeTransitionRequestedHref: '/',
+      activeTransitionSkeletonVariant: 'game-home',
+      pendingPageKey: 'Game',
+      startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.queryByTestId('kangur-top-navigation-host')).toBeNull();
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-embedded-override',
+      'false'
+    );
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-inline-top-navigation-skeleton',
+      'true'
+    );
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')
+    ).toBeInTheDocument();
   });
 
   it('latches the live top-bar height for the first visible route skeleton frame', async () => {

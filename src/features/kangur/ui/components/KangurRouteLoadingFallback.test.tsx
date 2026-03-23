@@ -53,6 +53,7 @@ describe('KangurRouteLoadingFallback', () => {
 
     expect(screen.getByTestId('kangur-page-transition-skeleton-probe')).toBeInTheDocument();
     expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
+      embeddedOverride: false,
       pageKey: undefined,
       reason: 'navigation',
       renderInlineTopNavigationSkeleton: true,
@@ -67,6 +68,7 @@ describe('KangurRouteLoadingFallback', () => {
     render(<KangurRouteLoadingFallback />);
 
     expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
+      embeddedOverride: false,
       pageKey: undefined,
       reason: 'navigation',
       renderInlineTopNavigationSkeleton: true,
@@ -82,6 +84,7 @@ describe('KangurRouteLoadingFallback', () => {
     render(<KangurRouteLoadingFallback />);
 
     expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
+      embeddedOverride: true,
       pageKey: undefined,
       reason: 'navigation',
       renderInlineTopNavigationSkeleton: true,
@@ -95,6 +98,7 @@ describe('KangurRouteLoadingFallback', () => {
 
     expect(screen.getByTestId('kangur-page-transition-skeleton-probe')).toBeInTheDocument();
     expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
+      embeddedOverride: false,
       pageKey: undefined,
       reason: 'navigation',
       renderInlineTopNavigationSkeleton: false,
@@ -109,6 +113,7 @@ describe('KangurRouteLoadingFallback', () => {
     render(<KangurRouteLoadingFallback />);
 
     expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
+      embeddedOverride: false,
       pageKey: undefined,
       reason: 'navigation',
       renderInlineTopNavigationSkeleton: true,
@@ -130,11 +135,49 @@ describe('KangurRouteLoadingFallback', () => {
     render(<KangurRouteLoadingFallback />);
 
     expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
+      embeddedOverride: false,
       pageKey: 'Lessons',
       reason: 'navigation',
       renderInlineTopNavigationSkeleton: true,
       topBarHeightCssValue: '136px',
       variant: 'lessons-library',
+    });
+  });
+
+  it('forces the first home-route fallback to stay embedded while loading the home page', () => {
+    usePathnameMock.mockReturnValue('/en');
+
+    render(<KangurRouteLoadingFallback />);
+
+    expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
+      embeddedOverride: true,
+      pageKey: undefined,
+      reason: 'navigation',
+      renderInlineTopNavigationSkeleton: true,
+      topBarHeightCssValue: null,
+      variant: 'game-home',
+    });
+  });
+
+  it('keeps standalone geometry when a lessons route is transitioning back to the home page', () => {
+    usePathnameMock.mockReturnValue('/en/lessons');
+    setKangurPendingRouteLoadingSnapshot({
+      href: '/en',
+      pageKey: 'Game',
+      skeletonVariant: 'game-home',
+      startedAt: Date.now(),
+      topBarHeightCssValue: '136px',
+    });
+
+    render(<KangurRouteLoadingFallback />);
+
+    expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
+      embeddedOverride: false,
+      pageKey: 'Game',
+      reason: 'navigation',
+      renderInlineTopNavigationSkeleton: true,
+      topBarHeightCssValue: '136px',
+      variant: 'game-home',
     });
   });
 });

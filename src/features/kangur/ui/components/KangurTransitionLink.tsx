@@ -3,10 +3,22 @@
 import NextLink from 'next/link';
 import { useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 
+import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
-import { localizeManagedKangurHref } from '@/features/kangur/ui/routing/managed-paths';
+import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import {
+  localizeManagedKangurHref,
+  resolveManagedKangurPageKeyFromHref,
+} from '@/features/kangur/ui/routing/managed-paths';
+import {
+  resolveKangurRouteTransitionSkeletonVariant,
+} from '@/features/kangur/ui/routing/route-transition-skeletons';
+import {
+  setKangurPendingRouteLoadingSnapshot,
+} from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
+import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import { cn } from '@/features/kangur/shared/utils';
 
 import type { MouseEvent } from 'react';
@@ -54,8 +66,10 @@ export function KangurTransitionLink({
   ...props
 }: KangurTransitionLinkProps): React.JSX.Element {
   const routeNavigator = useKangurRouteNavigator();
+  const routing = useOptionalKangurRouting();
   const locale = useLocale();
   const pathname = usePathname();
+  const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
   const managedLocalHref =
     typeof href === 'string' && href.startsWith('/') && target !== '_blank' ? href : null;
   const isManagedLocalHref = managedLocalHref !== null;
@@ -70,6 +84,26 @@ export function KangurTransitionLink({
         locale,
         pathname,
       });
+  const publishPendingSnapshot = useCallback((): void => {
+    if (managedLocalHref === null || typeof renderedHref !== 'string') {
+      return;
+    }
+
+    const resolvedPageKey =
+      targetPageKey ?? resolveManagedKangurPageKeyFromHref(renderedHref, basePath);
+
+    setKangurPendingRouteLoadingSnapshot({
+      href: renderedHref,
+      pageKey: resolvedPageKey ?? null,
+      skeletonVariant: resolveKangurRouteTransitionSkeletonVariant({
+        basePath,
+        href: renderedHref,
+        pageKey: resolvedPageKey ?? null,
+      }),
+      startedAt: Date.now(),
+      topBarHeightCssValue: readKangurTopBarHeightCssValue(),
+    });
+  }, [basePath, managedLocalHref, renderedHref, targetPageKey]);
 
   useEffect(() => {
     if (!managedLocalHref || !shouldPrefetch) {
@@ -86,6 +120,24 @@ export function KangurTransitionLink({
       prefetch={prefetch}
       scroll={resolvedScroll}
       target={target}
+      onClickCapture={(event) => {
+        if (shouldStartTransition(event, href, target)) {
+          publishPendingSnapshot();
+        }
+      }}
+      onPointerDownCapture={(event) => {
+        if (
+          event.button === 0 &&
+          !event.metaKey &&
+          !event.ctrlKey &&
+          !event.shiftKey &&
+          !event.altKey &&
+          target !== '_blank' &&
+          managedLocalHref
+        ) {
+          publishPendingSnapshot();
+        }
+      }}
       onClick={(event) => {
         if (onClick) {
           onClick(event);

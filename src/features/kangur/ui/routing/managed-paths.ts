@@ -102,6 +102,44 @@ export const resolveManagedKangurPageKeyFromHref = (
   );
 };
 
+export const resolveManagedKangurEmbeddedFromHref = ({
+  href,
+  basePath,
+}: {
+  href: string | null | undefined;
+  basePath: string;
+}): boolean | null => {
+  const normalizedBasePath = normalizeKangurBasePath(basePath);
+
+  if (normalizedBasePath !== '/') {
+    return false;
+  }
+
+  if (typeof href !== 'string' || !href.trim() || !isManagedLocalHref(href.trim())) {
+    return null;
+  }
+
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'resolve-embedded-from-href',
+      description: 'Resolves whether a managed Kangur href should render in embedded mode.',
+      context: { href, basePath: normalizedBasePath },
+    },
+    () => {
+      const parsed = new URL(href, 'https://kangur.local');
+      const normalizedPathname = normalizeManagedKangurPathname(parsed.pathname);
+
+      if (!normalizedPathname) {
+        return null;
+      }
+
+      return normalizedPathname === '/';
+    },
+    { fallback: null }
+  );
+};
+
 export const localizeManagedKangurHref = ({
   href,
   locale,

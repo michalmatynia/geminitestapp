@@ -11,7 +11,11 @@ export type ProductAiRunFeedbackStatus =
   | 'running'
   | 'blocked_on_lease'
   | 'handoff_ready'
-  | 'paused';
+  | 'paused'
+  | 'completed'
+  | 'failed'
+  | 'canceled'
+  | 'dead_lettered';
 
 export type ProductAiRunFeedback = TriggerButtonRunFeedbackPresentation & {
   runId: string;
@@ -19,15 +23,23 @@ export type ProductAiRunFeedback = TriggerButtonRunFeedbackPresentation & {
   updatedAt: string | null;
 };
 
-const ACTIVE_PRODUCT_AI_RUN_STATUSES = new Set<ProductAiRunFeedbackStatus>([
+const PRODUCT_AI_RUN_FEEDBACK_STATUSES = new Set<ProductAiRunFeedbackStatus>([
   'queued',
   'running',
   'blocked_on_lease',
   'handoff_ready',
   'paused',
+  'completed',
+  'failed',
+  'canceled',
+  'dead_lettered',
 ]);
 
 const PRODUCT_AI_RUN_STATUS_PRIORITY: Record<ProductAiRunFeedbackStatus, number> = {
+  completed: 0,
+  failed: 0,
+  canceled: 0,
+  dead_lettered: 0,
   queued: 1,
   handoff_ready: 2,
   paused: 3,
@@ -42,7 +54,8 @@ const resolveUpdatedAtMs = (value: ProductAiRunFeedback): number => {
 
 const isProductAiRunFeedbackStatus = (
   value: TrackedAiPathRunSnapshot['status']
-): value is ProductAiRunFeedbackStatus => ACTIVE_PRODUCT_AI_RUN_STATUSES.has(value as ProductAiRunFeedbackStatus);
+): value is ProductAiRunFeedbackStatus =>
+  PRODUCT_AI_RUN_FEEDBACK_STATUSES.has(value as ProductAiRunFeedbackStatus);
 
 export const resolveProductAiRunFeedback = (
   status: ProductAiRunFeedbackStatus
@@ -70,9 +83,15 @@ export const resolveProductAiRunFeedbackForList = (args: {
 };
 
 export const buildProductAiRunFeedbackFromSnapshot = (
-  snapshot: TrackedAiPathRunSnapshot
+  snapshot: TrackedAiPathRunSnapshot,
+  options?: {
+    allowStopped?: boolean | undefined;
+  }
 ): ProductAiRunFeedback | null => {
-  if (snapshot.trackingState === 'stopped' || !isProductAiRunFeedbackStatus(snapshot.status)) {
+  if (
+    (!options?.allowStopped && snapshot.trackingState === 'stopped') ||
+    !isProductAiRunFeedbackStatus(snapshot.status)
+  ) {
     return null;
   }
 

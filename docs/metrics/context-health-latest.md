@@ -8,7 +8,7 @@ canonical: true
 ---
 # Context Health Check
 
-Generated at: 2026-03-23T13:32:47.942Z
+Generated at: 2026-03-23T13:44:07.763Z
 
 ## Summary
 
@@ -16,23 +16,16 @@ Generated at: 2026-03-23T13:32:47.942Z
 - Context files scanned: 241
 - Errors: 0
 - Warnings: 0
-- Info: 5
+- Info: 0
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| context-missing-split | 0 | 0 | 5 |
 
 ## Issues
 
-| Severity | Rule | Location | Message |
-| --- | --- | --- | --- |
-| INFO | context-missing-split | src/features/ai/ai-paths/context/AiPathsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
-| INFO | context-missing-split | src/features/cms/components/frontend/CmsStorefrontAppearance.context.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
-| INFO | context-missing-split | src/features/kangur/ui/components/KangurAiTutorPanelBody.context.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
-| INFO | context-missing-split | src/features/kangur/ui/components/KangurAiTutorPortal.context.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
-| INFO | context-missing-split | src/features/kangur/ui/context/KangurSubjectFocusContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
+All contexts are healthy.
 
 ## Notes
 

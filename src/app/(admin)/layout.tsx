@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation';
 import { AdminLayout } from '@/features/admin/layout/AdminLayout';
 import { auth, getUserPreferences } from '@/features/auth/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
 
 import type { JSX } from 'react';
 
@@ -78,10 +77,12 @@ export default async function Layout({
   }
   const shouldEnableAdminSettingsStore = canReadAdminSettings || isPlaywrightRuntime;
   return (
-    <SettingsStoreProvider mode='admin' canReadAdminSettings={shouldEnableAdminSettingsStore}>
-      <AdminLayout session={session} initialMenuCollapsed={initialMenuCollapsed}>
-        {children}
-      </AdminLayout>
-    </SettingsStoreProvider>
+    <AdminLayout
+      session={session}
+      initialMenuCollapsed={initialMenuCollapsed}
+      canReadAdminSettings={shouldEnableAdminSettingsStore}
+    >
+      {children}
+    </AdminLayout>
   );
 }

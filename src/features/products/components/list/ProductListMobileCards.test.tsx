@@ -219,4 +219,27 @@ describe('ProductListMobileCards', () => {
       })
     );
   });
+
+  it('renders the terminal completed run badge on mobile cards', () => {
+    useProductListRowRuntimeMock.mockReturnValue({
+      showMarketplaceBadge: true,
+      integrationStatus: 'completed',
+      showTraderaBadge: false,
+      traderaStatus: 'not_started',
+      productAiRunFeedback: {
+        runId: 'run-completed',
+        status: 'completed',
+        updatedAt: '2026-03-21T10:00:00.000Z',
+        label: 'Completed',
+        variant: 'success',
+        badgeClassName:
+          'border-emerald-500/40 bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/25',
+      },
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByText('Completed')).toBeInTheDocument();
+    expect(screen.queryByText('Queued')).not.toBeInTheDocument();
+  });
 });

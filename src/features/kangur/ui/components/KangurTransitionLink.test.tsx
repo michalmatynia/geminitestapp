@@ -5,6 +5,10 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  clearKangurPendingRouteLoadingSnapshot,
+  getKangurPendingRouteLoadingSnapshot,
+} from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
 
 const {
   nextLinkPropsMock,
@@ -78,6 +82,7 @@ import { KangurTransitionLink } from '@/features/kangur/ui/components/KangurTran
 describe('KangurTransitionLink', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearKangurPendingRouteLoadingSnapshot();
     useLocaleMock.mockReturnValue('pl');
     usePathnameMock.mockReturnValue('/kangur');
     useOptionalKangurRouteTransitionStateMock.mockReturnValue(null);
@@ -89,6 +94,7 @@ describe('KangurTransitionLink', () => {
   });
 
   afterEach(() => {
+    clearKangurPendingRouteLoadingSnapshot();
     vi.useRealTimers();
   });
 
@@ -224,6 +230,34 @@ describe('KangurTransitionLink', () => {
       'href',
       '/en/kangur/lessons'
     );
+  });
+
+  it('publishes the pending target snapshot on pointer-down before the router transition starts', () => {
+    useLocaleMock.mockReturnValue('en');
+    usePathnameMock.mockReturnValue('/en');
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/',
+      embedded: true,
+      pageKey: 'Game',
+      requestedHref: '/en',
+      requestedPath: '/',
+    });
+
+    render(
+      <KangurTransitionLink href='/lessons' targetPageKey='Lessons'>
+        Lessons
+      </KangurTransitionLink>
+    );
+
+    fireEvent.pointerDown(screen.getByRole('link', { name: 'Lessons' }), {
+      button: 0,
+    });
+
+    expect(getKangurPendingRouteLoadingSnapshot()).toMatchObject({
+      href: '/en/lessons',
+      pageKey: 'Lessons',
+      skeletonVariant: 'lessons-library',
+    });
   });
 
   it('honors prefetch={false} for managed local links', () => {

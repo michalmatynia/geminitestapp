@@ -17,15 +17,23 @@ export const KangurPageTopBar = ({
   right,
   className,
   contentClassName,
+  fixedHeightCssValue,
+  publishHeight = true,
 }: {
   left: React.ReactNode;
   right?: React.ReactNode;
   className?: string;
   contentClassName?: string;
+  fixedHeightCssValue?: string | null;
+  publishHeight?: boolean;
 }): React.JSX.Element => {
   const topBarRef = useRef<HTMLDivElement | null>(null);
 
   useLayoutEffect(() => {
+    if (!publishHeight) {
+      return undefined;
+    }
+
     const node = topBarRef.current;
     if (!node || typeof document === 'undefined') {
       return undefined;
@@ -65,6 +73,16 @@ export const KangurPageTopBar = ({
       ref={topBarRef}
       className={cn(KANGUR_TOP_BAR_CLASSNAME, className)}
       data-testid='kangur-page-top-bar'
+      style={
+        fixedHeightCssValue
+          ? {
+              height: fixedHeightCssValue,
+              minHeight: fixedHeightCssValue,
+              maxHeight: fixedHeightCssValue,
+              overflow: 'hidden',
+            }
+          : undefined
+      }
     >
       <div
         className={cn(

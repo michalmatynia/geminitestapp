@@ -15,10 +15,12 @@ import type {
   BaseProductSkuCheckResponse,
 } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
-import { api } from '@/shared/lib/api-client';
+import { ApiError, api } from '@/shared/lib/api-client';
 import {
+  fetchIntegrationsWithConnections,
   fetchPreferredBaseConnection,
   integrationSelectionQueryKeys,
+  isBaseIntegrationSlug,
 } from '@/features/integrations/public';
 import { useGenericExportToBaseMutation } from '@/features/integrations/public';
 import {
@@ -65,6 +67,74 @@ const resolveFallbackInventoryId = (
     return normalizedInventories[0]?.id ?? '';
   }
   return '';
+};
+
+const resolveBaseConnectionCandidates = (
+  integrations: Awaited<ReturnType<typeof fetchIntegrationsWithConnections>> | null | undefined
+): string[] => {
+  const seen = new Set<string>();
+  const candidates: string[] = [];
+
+  for (const integration of Array.isArray(integrations) ? integrations : []) {
+    if (!isBaseIntegrationSlug(integration?.slug)) continue;
+    for (const connection of Array.isArray(integration.connections) ? integration.connections : []) {
+      const connectionId = connection?.id?.trim() || '';
+      if (!connectionId || seen.has(connectionId)) continue;
+      seen.add(connectionId);
+      candidates.push(connectionId);
+    }
+  }
+
+  return candidates;
+};
+
+const readApiErrorPayload = (error: unknown): Record<string, unknown> | null => {
+  if (!(error instanceof ApiError)) return null;
+  if (!error.payload || typeof error.payload !== 'object' || Array.isArray(error.payload)) {
+    return null;
+  }
+  return error.payload as Record<string, unknown>;
+};
+
+const readApiErrorCode = (error: unknown): string | null => {
+  const payload = readApiErrorPayload(error);
+  const code = payload?.['code'];
+  return typeof code === 'string' ? code : null;
+};
+
+const readApiErrorDetails = (error: unknown): Record<string, unknown> | null => {
+  const payload = readApiErrorPayload(error);
+  const details = payload?.['details'];
+  if (!details || typeof details !== 'object' || Array.isArray(details)) return null;
+  return details as Record<string, unknown>;
+};
+
+const readBaseApiErrorCode = (error: unknown): string | null => {
+  const details = readApiErrorDetails(error);
+  const errorCode = details?.['errorCode'];
+  return typeof errorCode === 'string' ? errorCode : null;
+};
+
+const shouldIgnoreInventoryLookupError = (
+  error: unknown,
+  configuredInventoryId: string
+): boolean => {
+  if (!configuredInventoryId) return false;
+
+  const baseErrorCode = readBaseApiErrorCode(error);
+  if (baseErrorCode === 'ERROR_USER_ACCOUNT_BLOCKED') return false;
+  if (baseErrorCode === 'ERROR_UNKNOWN_METHOD') return true;
+
+  const apiErrorCode = readApiErrorCode(error);
+  if (apiErrorCode === 'TIMEOUT' || apiErrorCode === 'SERVICE_UNAVAILABLE') return true;
+  if (apiErrorCode === 'INTEGRATION_ERROR' || apiErrorCode === 'API_KEY_INVALID') return false;
+  if (apiErrorCode === 'UNAUTHORIZED' || apiErrorCode === 'FORBIDDEN') return false;
+
+  if (error instanceof ApiError) {
+    return error.status >= 500;
+  }
+
+  return true;
 };
 
 type QuickExportContext = {
@@ -312,7 +382,8 @@ export function BaseQuickExportButton(props: {
 
   const resolveQuickExportContext = async (): Promise<QuickExportContext | null> => {
     try {
-      const [preferredConnection, defaultInventory] = await Promise.all([
+      const [preferredConnection, defaultInventory, integrationsWithConnections] =
+        await Promise.all([
         fetchQueryV2<BaseDefaultConnectionPreferenceResponse>(queryClient, {
           queryKey: normalizeQueryKey(integrationSelectionQueryKeys.defaultConnection),
           queryFn: () => fetchPreferredBaseConnection(),
@@ -342,29 +413,77 @@ export function BaseQuickExportButton(props: {
             tags: ['integrations', 'default-inventory', 'fetch'],
             description: 'Loads integrations default inventory.'},
         })(),
-      ]);
+        fetchQueryV2<Awaited<ReturnType<typeof fetchIntegrationsWithConnections>>>(queryClient, {
+          queryKey: normalizeQueryKey(integrationSelectionQueryKeys.withConnections),
+          queryFn: () => fetchIntegrationsWithConnections(),
+          staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
+          meta: {
+            source: 'products.columns.buttons.BaseQuickExport.resolveContext.integrationsWithConnections',
+            operation: 'list',
+            resource: 'integrations.with-connections',
+            domain: 'integrations',
+            queryKey: normalizeQueryKey(integrationSelectionQueryKeys.withConnections),
+            tags: ['integrations', 'with-connections', 'fetch'],
+            description: 'Loads integrations with connections for one-click export fallback.',
+          },
+        })().catch(() => {
+          return null;
+        }),
+        ]);
 
-      const connectionId = preferredConnection?.connectionId?.trim() || '';
+      const preferredConnectionId = preferredConnection?.connectionId?.trim() || '';
+      const availableBaseConnectionIds = resolveBaseConnectionCandidates(integrationsWithConnections);
+      let connectionId = preferredConnectionId;
+
+      if (!connectionId) {
+        connectionId =
+          availableBaseConnectionIds.length === 1 ? availableBaseConnectionIds[0] ?? '' : '';
+      } else if (
+        availableBaseConnectionIds.length > 0 &&
+        !availableBaseConnectionIds.includes(connectionId)
+      ) {
+        connectionId =
+          availableBaseConnectionIds.length === 1 ? availableBaseConnectionIds[0] ?? '' : '';
+      }
 
       if (!connectionId) {
         toast('Set a default Base.com connection first.', { variant: 'error' });
         return null;
       }
 
-      const inventoriesResponse = await api.post<BaseImportInventoriesResponse>(
-        '/api/v2/integrations/imports/base',
-        {
-          action: 'inventories',
-          connectionId,
-        } satisfies BaseImportInventoriesPayload
-      );
+      if (connectionId !== preferredConnectionId) {
+        void api
+          .post<BaseDefaultConnectionPreferenceResponse>(
+            '/api/v2/integrations/exports/base/default-connection',
+            { connectionId }
+          )
+          .catch(() => undefined);
+      }
+
       const configuredInventoryId = normalizeInventoryId(defaultInventory?.inventoryId);
-      const fallbackInventoryId = resolveFallbackInventoryId(inventoriesResponse.inventories);
-      const availableInventoryIds = new Set(
-        (Array.isArray(inventoriesResponse.inventories) ? inventoriesResponse.inventories : [])
-          .map((entry) => normalizeInventoryId(entry.id))
-          .filter((value) => value.length > 0)
-      );
+      let fallbackInventoryId = '';
+      let availableInventoryIds = new Set<string>();
+
+      try {
+        const inventoriesResponse = await api.post<BaseImportInventoriesResponse>(
+          '/api/v2/integrations/imports/base',
+          {
+            action: 'inventories',
+            connectionId,
+          } satisfies BaseImportInventoriesPayload
+        );
+        fallbackInventoryId = resolveFallbackInventoryId(inventoriesResponse.inventories);
+        availableInventoryIds = new Set(
+          (Array.isArray(inventoriesResponse.inventories) ? inventoriesResponse.inventories : [])
+            .map((entry) => normalizeInventoryId(entry.id))
+            .filter((value) => value.length > 0)
+        );
+      } catch (error) {
+        if (!shouldIgnoreInventoryLookupError(error, configuredInventoryId)) {
+          throw error;
+        }
+      }
+
       let inventoryId = configuredInventoryId;
 
       if (!inventoryId) {
@@ -390,10 +509,15 @@ export function BaseQuickExportButton(props: {
           .catch(() => undefined);
       }
 
-      const scopedTemplate = await api.get<BaseActiveTemplatePreferenceResponse>(
-        `/api/v2/integrations/exports/base/active-template?connectionId=${encodeURIComponent(connectionId)}&inventoryId=${encodeURIComponent(inventoryId)}`
-      );
-      const templateId = scopedTemplate?.templateId?.trim() || '';
+      let templateId = '';
+      try {
+        const scopedTemplate = await api.get<BaseActiveTemplatePreferenceResponse>(
+          `/api/v2/integrations/exports/base/active-template?connectionId=${encodeURIComponent(connectionId)}&inventoryId=${encodeURIComponent(inventoryId)}`
+        );
+        templateId = scopedTemplate?.templateId?.trim() || '';
+      } catch {
+        // Best-effort only. Export can proceed without a scoped template.
+      }
 
       return {
         connectionId,
@@ -402,7 +526,12 @@ export function BaseQuickExportButton(props: {
       };
     } catch (error) {
       logClientError(error);
-      toast('Failed to load Base.com export defaults.', { variant: 'error' });
+      toast(
+        error instanceof Error && error.message.trim().length > 0
+          ? error.message
+          : 'Failed to load Base.com export defaults.',
+        { variant: 'error' }
+      );
       return null;
     }
   };

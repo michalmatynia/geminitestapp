@@ -13,6 +13,7 @@ import type { KangurPageTone } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
 
 export type KangurStandardPageLayoutProps = {
+  embeddedOverride?: boolean | null;
   tone?: KangurPageTone;
   id?: string;
   shellClassName?: string;
@@ -29,6 +30,7 @@ export type KangurStandardPageLayoutProps = {
 };
 
 export function KangurStandardPageLayout({
+  embeddedOverride,
   tone = 'play',
   id,
   shellClassName,
@@ -61,6 +63,7 @@ export function KangurStandardPageLayout({
 
   return (
     <KangurPageShell
+      embeddedOverride={embeddedOverride}
       tone={tone}
       id={resolvedShellId}
       skipLinkTargetId={resolvedSkipLinkTargetId}
@@ -74,7 +77,9 @@ export function KangurStandardPageLayout({
       {beforeNavigation}
       {navigation}
       {afterNavigation}
-      <KangurPageContainer {...resolvedContainerProps}>{children}</KangurPageContainer>
+      <KangurPageContainer embeddedOverride={embeddedOverride} {...resolvedContainerProps}>
+        {children}
+      </KangurPageContainer>
     </KangurPageShell>
   );
 }

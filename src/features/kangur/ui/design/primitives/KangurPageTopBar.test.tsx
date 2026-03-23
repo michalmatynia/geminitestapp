@@ -120,4 +120,23 @@ describe('KangurPageTopBar', () => {
 
     expect(document.documentElement.style.getPropertyValue(TOP_BAR_HEIGHT_VAR)).toBe('108px');
   });
+
+  it('can render at a fixed height without publishing a new top-bar CSS variable', () => {
+    render(
+      <KangurPageTopBar
+        fixedHeightCssValue='92px'
+        left={<div>Navigation</div>}
+        publishHeight={false}
+      />
+    );
+
+    expect(screen.getByTestId('kangur-page-top-bar')).toHaveStyle({
+      height: '92px',
+      minHeight: '92px',
+      maxHeight: '92px',
+      overflow: 'hidden',
+    });
+    expect(document.documentElement.style.getPropertyValue(TOP_BAR_HEIGHT_VAR)).toBe('');
+    expect(resizeObservers).toHaveLength(0);
+  });
 });

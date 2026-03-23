@@ -227,6 +227,47 @@ describe('ProductColumns queued badge', () => {
     expect(screen.queryByText('Queued')).not.toBeInTheDocument();
   });
 
+  it('renders the terminal completed badge when the tracker reports the finished run status', () => {
+    const product = createProduct();
+    useProductListActionsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set(['product-1']),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+    });
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue(
+      createRowVisualsContext({
+        categoryNameById: new Map([['category-1', 'Keychains']]),
+      })
+    );
+    useProductListRowRuntimeMock.mockReturnValue(
+      createRowRuntimeContext({
+        productAiRunFeedback: {
+          runId: 'run-completed',
+          status: 'completed',
+          updatedAt: '2026-03-21T10:00:00.000Z',
+          label: 'Completed',
+          variant: 'success',
+          badgeClassName:
+            'border-emerald-500/40 bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/25',
+        },
+      })
+    );
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(screen.getByText('Completed')).toBeInTheDocument();
+    expect(screen.queryByText('Queued')).not.toBeInTheDocument();
+  });
+
   it('does not render the queued badge when the product id is not queued', () => {
     const product = createProduct();
     useProductListActionsContextMock.mockReturnValue({

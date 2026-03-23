@@ -19,12 +19,19 @@ const SkeletonPill = ({ className }: { className?: string }): React.JSX.Element 
   />
 );
 
-export function KangurTopNavigationSkeleton(): React.JSX.Element {
+export function KangurTopNavigationSkeleton({
+  topBarHeightCssValue,
+  publishHeight = true,
+}: {
+  topBarHeightCssValue?: string | null;
+  publishHeight?: boolean;
+} = {}): React.JSX.Element {
   return (
     <div data-testid='kangur-top-navigation-skeleton'>
       <KangurPageTopBar
         className='pointer-events-none'
         contentClassName='cursor-progress'
+        fixedHeightCssValue={topBarHeightCssValue}
         left={(
           <KangurTopNavGroup
             aria-hidden='true'
@@ -50,6 +57,7 @@ export function KangurTopNavigationSkeleton(): React.JSX.Element {
             </div>
           </KangurTopNavGroup>
         )}
+        publishHeight={publishHeight}
       />
     </div>
   );

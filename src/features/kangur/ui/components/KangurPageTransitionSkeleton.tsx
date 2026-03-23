@@ -1117,12 +1117,14 @@ const renderSkeletonVariant = (
 };
 
 export function KangurPageTransitionSkeleton({
+  embeddedOverride,
   pageKey,
   reason = 'navigation',
   renderInlineTopNavigationSkeleton = false,
   topBarHeightCssValue,
   variant,
 }: {
+  embeddedOverride?: boolean | null;
   pageKey?: string | null;
   reason?: 'boot' | 'navigation' | 'locale-switch';
   renderInlineTopNavigationSkeleton?: boolean;
@@ -1134,9 +1136,10 @@ export function KangurPageTransitionSkeleton({
   const skeletonCopy = KANGUR_SKELETON_COPY_BY_LOCALE[skeletonLocale];
   const routing = useOptionalKangurRouting();
   const embedded = routing?.embedded ?? false;
+  const effectiveEmbedded = embeddedOverride ?? embedded;
   const isLocaleSwitch = reason === 'locale-switch';
   const shouldRenderInlineTopNavigationSkeleton =
-    renderInlineTopNavigationSkeleton && !embedded;
+    renderInlineTopNavigationSkeleton && !effectiveEmbedded;
   const resolvedVariant =
     variant ??
     resolveKangurRouteTransitionSkeletonVariant({
@@ -1145,9 +1148,9 @@ export function KangurPageTransitionSkeleton({
     });
   const resolvedPageKey = resolveSkeletonPageKey(resolvedVariant);
   const shouldOffsetStandaloneRouteOverlay =
-    !embedded && !shouldRenderInlineTopNavigationSkeleton;
+    !effectiveEmbedded && !shouldRenderInlineTopNavigationSkeleton;
   const shouldApplyStandaloneTopBarPadding =
-    !embedded &&
+    !effectiveEmbedded &&
     !shouldOffsetStandaloneRouteOverlay &&
     !shouldRenderInlineTopNavigationSkeleton;
   const resolvedTopBarHeightCssValue =
@@ -1160,13 +1163,19 @@ export function KangurPageTransitionSkeleton({
       data-testid='kangur-page-transition-skeleton-inline-top-navigation'
       style={{
         height: resolvedTopBarHeightCssValue,
+        minHeight: resolvedTopBarHeightCssValue,
+        maxHeight: resolvedTopBarHeightCssValue,
       }}
     >
-      <KangurTopNavigationSkeleton />
+      <KangurTopNavigationSkeleton
+        publishHeight={false}
+        topBarHeightCssValue={resolvedTopBarHeightCssValue}
+      />
     </div>
   ) : null;
   const skeletonContent = (
     <KangurStandardPageLayout
+      embeddedOverride={effectiveEmbedded}
       tone={SKELETON_TONE_BY_PAGE[resolvedPageKey]}
       shellClassName={cn(
         'pointer-events-none',
@@ -1207,7 +1216,7 @@ export function KangurPageTransitionSkeleton({
   return (
     <div
       className={cn(
-        embedded
+        effectiveEmbedded
           ? 'absolute inset-0'
           : shouldOffsetStandaloneRouteOverlay
             ? 'fixed inset-x-0 bottom-0'

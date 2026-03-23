@@ -5,6 +5,7 @@ import { useSyncExternalStore } from 'react';
 import type { KangurRouteTransitionSkeletonVariant } from '@/features/kangur/ui/routing/route-transition-skeletons';
 
 export type KangurPendingRouteLoadingSnapshot = {
+  fromHref: string | null;
   href: string | null;
   pageKey: string | null;
   skeletonVariant: KangurRouteTransitionSkeletonVariant;

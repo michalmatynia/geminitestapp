@@ -77,9 +77,11 @@ describe('KangurPageTransitionSkeleton', () => {
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass(
       'fixed',
       'inset-x-0',
-      'bottom-0',
-      'top-[var(--kangur-top-bar-height,88px)]'
+      'bottom-0'
     );
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveStyle({
+      top: '88px',
+    });
     expect(screen.getByTestId('kangur-page-transition-skeleton')).not.toHaveClass('absolute');
     expect(screen.getByTestId('kangur-page-transition-skeleton')).not.toHaveClass('inset-0');
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
@@ -99,9 +101,11 @@ describe('KangurPageTransitionSkeleton', () => {
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass(
       'fixed',
       'inset-x-0',
-      'bottom-0',
-      'top-[var(--kangur-top-bar-height,88px)]'
+      'bottom-0'
     );
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveStyle({
+      top: '88px',
+    });
     expect(screen.getByTestId('kangur-page-transition-skeleton')).not.toHaveClass('inset-0');
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
       'data-kangur-skeleton-variant',
@@ -120,9 +124,11 @@ describe('KangurPageTransitionSkeleton', () => {
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass(
       'fixed',
       'inset-x-0',
-      'bottom-0',
-      'top-[var(--kangur-top-bar-height,88px)]'
+      'bottom-0'
     );
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveStyle({
+      top: '88px',
+    });
     expect(screen.getByTestId('kangur-page-transition-skeleton')).not.toHaveClass('inset-0');
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
       'data-kangur-skeleton-variant',
@@ -152,7 +158,6 @@ describe('KangurPageTransitionSkeleton', () => {
     expect(screen.getByTestId('kangur-page-transition-skeleton')).not.toHaveClass(
       'inset-x-0',
       'bottom-0',
-      'top-[var(--kangur-top-bar-height,88px)]'
     );
     expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
     expect(
@@ -164,7 +169,7 @@ describe('KangurPageTransitionSkeleton', () => {
     expect(
       screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')
     ).toHaveStyle({
-      height: 'var(--kangur-top-bar-height, 88px)',
+      height: '88px',
     });
     expect(screen.getByTestId('kangur-page-transition-skeleton-body')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-transition-skeleton-shell')).toHaveClass(
@@ -208,7 +213,7 @@ describe('KangurPageTransitionSkeleton', () => {
     expect(
       screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')
     ).toHaveStyle({
-      height: 'var(--kangur-top-bar-height, 88px)',
+      height: '136px',
     });
   });
 
@@ -236,9 +241,11 @@ describe('KangurPageTransitionSkeleton', () => {
     expect(skeleton).toHaveClass(
       'fixed',
       'inset-x-0',
-      'bottom-0',
-      'top-[var(--kangur-top-bar-height,88px)]'
+      'bottom-0'
     );
+    expect(skeleton).toHaveStyle({
+      top: '88px',
+    });
 
     const container = skeleton.querySelector('[data-kangur-route-main="false"]');
     if (!container) {

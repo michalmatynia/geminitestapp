@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-23T09:46:40.506Z",
+  "generatedAt": "2026-03-23T13:32:53.377Z",
   "status": "passed",
   "summary": {
     "total": 32,
@@ -12,7 +12,7 @@
     "featuresWithoutTestCount": 0,
     "featuresWithoutFastTestCount": 0,
     "featuresWithoutNegativeTestCount": 0,
-    "totalTestFiles": 2163,
+    "totalTestFiles": 2182,
     "onlyCount": 0,
     "skipCount": 32,
     "todoCount": 0
@@ -28,24 +28,24 @@
   "featuresWithTests": [
     {
       "feature": "kangur",
-      "testCount": 501,
-      "fastTestCount": 485,
+      "testCount": 512,
+      "fastTestCount": 496,
       "e2eTestCount": 16,
       "negativePathTestCount": 96
     },
     {
       "feature": "ai",
-      "testCount": 293,
-      "fastTestCount": 293,
+      "testCount": 294,
+      "fastTestCount": 294,
       "e2eTestCount": 0,
-      "negativePathTestCount": 107
+      "negativePathTestCount": 108
     },
     {
       "feature": "products",
-      "testCount": 105,
-      "fastTestCount": 98,
+      "testCount": 108,
+      "fastTestCount": 101,
       "e2eTestCount": 7,
-      "negativePathTestCount": 32
+      "negativePathTestCount": 33
     },
     {
       "feature": "case-resolver",
@@ -139,6 +139,13 @@
       "negativePathTestCount": 3
     },
     {
+      "feature": "data-import-export",
+      "testCount": 5,
+      "fastTestCount": 4,
+      "e2eTestCount": 1,
+      "negativePathTestCount": 1
+    },
+    {
       "feature": "files",
       "testCount": 5,
       "fastTestCount": 4,
@@ -151,13 +158,6 @@
       "fastTestCount": 5,
       "e2eTestCount": 0,
       "negativePathTestCount": 4
-    },
-    {
-      "feature": "data-import-export",
-      "testCount": 4,
-      "fastTestCount": 3,
-      "e2eTestCount": 1,
-      "negativePathTestCount": 1
     },
     {
       "feature": "document-editor",
@@ -549,5 +549,5 @@
       "infoCount": 32
     }
   ],
-  "durationMs": 257
+  "durationMs": 2662
 }

@@ -1,6 +1,5 @@
 'use client';
 
-import { Play } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -58,12 +57,13 @@ type MusicRoundFeedback = {
   accent: KangurAccent;
   message: string;
 };
+type MusicRoundOutcome = 'success' | 'error' | null;
 
 const LESSON_KEY = 'music_diatonic_scale';
 const TOTAL_ROUNDS = MUSIC_MELODY_REPEAT_ROUNDS.length;
 const PLAYBACK_DURATION_MS = 420;
 
-const buildRoundStartMessage = (): string => 'Dotknij play i posluchaj melodii.';
+const buildRoundStartMessage = (): string => '';
 
 const resolveExpectedNoteMessage = (noteId: DiatonicNoteId): string =>
   `Teraz dotknij dzwieku ${DIATONIC_PIANO_KEYS_BY_ID[noteId].spokenLabel}.`;
@@ -100,15 +100,16 @@ export default function MusicMelodyRepeatGame({
   const [pressedVelocity, setPressedVelocity] = useState<number | null>(null);
   const [activeStepIndex, setActiveStepIndex] = useState<number | null>(null);
   const [phase, setPhase] = useState<'listen' | 'repeat' | 'summary'>('listen');
-  const [roundMistakes, setRoundMistakes] = useState(0);
   const [perfectRounds, setPerfectRounds] = useState(0);
   const [done, setDone] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
+  const [attemptOutcome, setAttemptOutcome] = useState<MusicRoundOutcome>(null);
   const [feedback, setFeedback] = useState<MusicRoundFeedback>({
     accent: 'sky',
     message: buildRoundStartMessage(),
   });
+  const shouldGlowListenButton = phase === 'listen' && !isPlayingSequence && !done;
 
   const round = MUSIC_MELODY_REPEAT_ROUNDS[roundIndex] ?? MUSIC_MELODY_REPEAT_ROUNDS[0];
   const melodyPlayback = useMemo(
@@ -141,7 +142,7 @@ export default function MusicMelodyRepeatGame({
       setEnteredNotes([]);
       setPressedNoteId(null);
       setPressedVelocity(null);
-      setRoundMistakes(0);
+      setAttemptOutcome(null);
       setFeedback({
         accent: round?.accent ?? 'sky',
         message: nextMessage ?? buildRoundStartMessage(),
@@ -185,9 +186,8 @@ export default function MusicMelodyRepeatGame({
     []
   );
 
-  const queueNextRound = useCallback(
-    (wasPerfect: boolean): void => {
-      const nextPerfectRounds = perfectRounds + (wasPerfect ? 1 : 0);
+  const queueNextRound = useCallback((): void => {
+      const nextPerfectRounds = perfectRounds + 1;
       setPerfectRounds(nextPerfectRounds);
 
       if (roundIndex + 1 >= TOTAL_ROUNDS) {
@@ -211,11 +211,12 @@ export default function MusicMelodyRepeatGame({
 
     clearTransientTimeouts();
     stop();
+    stopAllSustainedNotes({ immediate: true });
     setPhase('listen');
     setEnteredNotes([]);
     setPressedNoteId(null);
     setPressedVelocity(null);
-    setRoundMistakes(0);
+    setAttemptOutcome(null);
     setFeedback({
       accent: round.accent,
       message: isAudioSupported
@@ -239,6 +240,7 @@ export default function MusicMelodyRepeatGame({
           ? 'Przegladarka zatrzymala dzwiek. Dotknij przycisku jeszcze raz.'
           : 'Nie udalo sie uruchomic melodii. Sprobuj ponownie.',
       });
+      setAttemptOutcome('error');
       return;
     }
 
@@ -258,6 +260,7 @@ export default function MusicMelodyRepeatGame({
     melodyPlayback,
     playSequence,
     round,
+    stopAllSustainedNotes,
     stop,
   ]);
 
@@ -295,11 +298,19 @@ export default function MusicMelodyRepeatGame({
       }
 
       if (noteId !== expectedNote) {
-        setRoundMistakes((current) => current + 1);
+        clearTransientTimeouts();
+        stopAllSustainedNotes({ immediate: true });
+        setAttemptOutcome('error');
+        setPhase('listen');
+        setActiveStepIndex(null);
+        setEnteredNotes([]);
         setFeedback({
           accent: 'rose',
-          message: `To jeszcze nie ten kolor. ${resolveExpectedNoteMessage(expectedNote)}`,
+          message: 'Ups. Posluchaj jeszcze raz i powtorz melodie od poczatku.',
         });
+        feedbackTimeoutRef.current = scheduleKangurRoundFeedback(() => {
+          void handleListen();
+        }, 720);
         return;
       }
 
@@ -307,15 +318,16 @@ export default function MusicMelodyRepeatGame({
       setEnteredNotes(nextEnteredNotes);
 
       if (nextEnteredNotes.length >= round.notes.length) {
-        const wasPerfect = roundMistakes === 0;
+        clearTransientTimeouts();
+        stopAllSustainedNotes({ immediate: true });
+        setAttemptOutcome('success');
         setPhase('listen');
+        setActiveStepIndex(null);
         setFeedback({
-          accent: wasPerfect ? 'emerald' : 'amber',
-          message: wasPerfect
-            ? 'Brawo! Cala melodia zabrzmiala bez pomylki.'
-            : 'Melodia gotowa. W nastepnej rundzie posluchaj jeszcze uwazniej.',
+          accent: 'emerald',
+          message: 'Brawo! Cala melodia zabrzmiala poprawnie.',
         });
-        queueNextRound(wasPerfect);
+        queueNextRound();
         return;
       }
 
@@ -327,7 +339,18 @@ export default function MusicMelodyRepeatGame({
           : 'Dobrze! Dokoncz melodie.',
       });
     },
-    [done, enteredNotes, isPlayingSequence, phase, playNote, queueNextRound, round, roundMistakes]
+    [
+      clearTransientTimeouts,
+      done,
+      enteredNotes,
+      handleListen,
+      isPlayingSequence,
+      phase,
+      playNote,
+      queueNextRound,
+      round,
+      stopAllSustainedNotes,
+    ]
   );
 
   const handleKeyboardModeChange = useCallback(
@@ -406,11 +429,11 @@ export default function MusicMelodyRepeatGame({
     setPressedVelocity(null);
     setActiveStepIndex(null);
     setPhase('listen');
-    setRoundMistakes(0);
     setPerfectRounds(0);
     setDone(false);
     setXpEarned(0);
     setXpBreakdown([]);
+    setAttemptOutcome(null);
     setFeedback({
       accent: MUSIC_MELODY_REPEAT_ROUNDS[0]?.accent ?? 'sky',
       message: buildRoundStartMessage(),
@@ -537,6 +560,23 @@ export default function MusicMelodyRepeatGame({
                 label={`Tryb: ${keyboardMode === 'synth' ? 'synth' : 'piano'}`}
               />
             </KangurStatusChip>
+            {attemptOutcome ? (
+              <KangurStatusChip
+                aria-label={attemptOutcome === 'success' ? 'Poprawnie' : 'Sprobuj jeszcze raz'}
+                className={
+                  attemptOutcome === 'success'
+                    ? 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200/80'
+                    : 'bg-rose-100 text-rose-800 ring-1 ring-rose-200/80'
+                }
+                data-testid='music-melody-repeat-status-outcome'
+              >
+                <KangurVisualCueContent
+                  icon={attemptOutcome === 'success' ? '✅' : '❌'}
+                  iconTestId='music-melody-repeat-status-outcome-icon'
+                  label={attemptOutcome === 'success' ? 'Poprawnie' : 'Sprobuj jeszcze raz'}
+                />
+              </KangurStatusChip>
+            ) : null}
           </div>
         </div>
 
@@ -577,9 +617,12 @@ export default function MusicMelodyRepeatGame({
           <KangurButton
             aria-label='Posluchaj melodii'
             className={cn(
-              'h-12 w-12 rounded-full p-0 shadow-[0_18px_34px_-24px_rgba(37,99,235,0.7)]',
+              'relative isolate h-12 w-12 overflow-visible rounded-full p-0 shadow-[0_18px_34px_-24px_rgba(37,99,235,0.7)]',
+              shouldGlowListenButton &&
+                'ring-2 ring-amber-300/85 ring-offset-4 ring-offset-white/75',
               isCoarsePointer ? 'touch-manipulation select-none active:scale-[0.97]' : undefined
             )}
+            data-attention={shouldGlowListenButton ? 'true' : 'false'}
             data-testid='music-melody-repeat-listen-button'
             onClick={() => {
               void handleListen();
@@ -587,13 +630,22 @@ export default function MusicMelodyRepeatGame({
             type='button'
             variant='primary'
           >
-            <Play
+            {shouldGlowListenButton ? (
+              <span
+                aria-hidden='true'
+                className='pointer-events-none absolute inset-[-6px] -z-[1] rounded-full border border-amber-200/80 bg-amber-200/28 shadow-[0_0_0_8px_rgba(253,230,138,0.22),0_24px_48px_-26px_rgba(245,158,11,0.78)] motion-reduce:animate-none motion-safe:animate-pulse'
+                data-testid='music-melody-repeat-listen-glow'
+              />
+            ) : null}
+            <svg
               aria-hidden='true'
               className='ml-0.5 size-5 text-white drop-shadow-[0_2px_4px_rgba(15,23,42,0.28)]'
               data-testid='music-melody-repeat-listen-icon'
               fill='currentColor'
-              strokeWidth={2.35}
-            />
+              viewBox='0 0 24 24'
+            >
+              <path d='M8 5.5v13L18 12 8 5.5Z' />
+            </svg>
           </KangurButton>
           {phase === 'repeat' ? (
             <KangurButton
@@ -612,15 +664,17 @@ export default function MusicMelodyRepeatGame({
           ) : null}
         </div>
 
-        <KangurInfoCard
-          accent={feedback.accent}
-          className='w-full rounded-[24px] text-sm leading-relaxed'
-          data-testid='music-melody-repeat-feedback'
-          padding='md'
-          tone='accent'
-        >
-          {feedback.message}
-        </KangurInfoCard>
+        {feedback.message ? (
+          <KangurInfoCard
+            accent={feedback.accent}
+            className='w-full rounded-[24px] text-sm leading-relaxed'
+            data-testid='music-melody-repeat-feedback'
+            padding='md'
+            tone='accent'
+          >
+            {feedback.message}
+          </KangurInfoCard>
+        ) : null}
       </div>
     </div>
   );

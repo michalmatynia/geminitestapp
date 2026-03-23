@@ -200,4 +200,35 @@ describe('apiHandler observability propagation', () => {
       })
     );
   });
+
+  it('does not emit success logs for handled 4xx responses', async () => {
+    const { apiHandler, mockedLogSystemEvent } = await loadApiHandler();
+    const handler = apiHandler(
+      async () =>
+        NextResponse.json(
+          {
+            error: 'Authentication required.',
+            code: 'UNAUTHORIZED',
+          },
+          { status: 401 }
+        ),
+      {
+        source: 'handled.unauthorized.GET',
+        successLogging: 'all',
+      }
+    );
+
+    const response = await handler(
+      new NextRequest('http://localhost/api/handled-unauthorized', {
+        method: 'GET',
+        headers: new Headers({
+          'x-request-id': 'req-handled-401',
+        }),
+      })
+    );
+
+    expect(response.status).toBe(401);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(mockedLogSystemEvent).not.toHaveBeenCalled();
+  });
 });

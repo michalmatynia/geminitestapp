@@ -10,9 +10,18 @@ import {
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { internalError } from '@/shared/errors/app-error';
 
+type CmsStorefrontAppearanceStateContextValue = {
+  mode: CmsStorefrontAppearanceMode;
+};
 
-const CmsStorefrontAppearanceContext =
-  createContext<CmsStorefrontAppearanceContextValue | null>(null);
+type CmsStorefrontAppearanceActionsContextValue = {
+  setMode: (mode: CmsStorefrontAppearanceMode) => void;
+};
+
+const CmsStorefrontAppearanceStateContext =
+  createContext<CmsStorefrontAppearanceStateContextValue | null>(null);
+const CmsStorefrontAppearanceActionsContext =
+  createContext<CmsStorefrontAppearanceActionsContextValue | null>(null);
 
 const canUseLocalStorage = (): boolean =>
   typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
@@ -87,27 +96,51 @@ export function CmsStorefrontAppearanceProvider({
     lastInitialModeRef.current = initialMode;
   }, [hydrated, initialMode, mode]);
 
-  const value = useMemo(() => ({ mode, setMode }), [mode]);
+  const stateValue = useMemo(() => ({ mode }), [mode]);
+  const actionsValue = useMemo(() => ({ setMode }), []);
 
   return (
-    <CmsStorefrontAppearanceContext.Provider value={value}>
-      {children}
-    </CmsStorefrontAppearanceContext.Provider>
+    <CmsStorefrontAppearanceActionsContext.Provider value={actionsValue}>
+      <CmsStorefrontAppearanceStateContext.Provider value={stateValue}>
+        {children}
+      </CmsStorefrontAppearanceStateContext.Provider>
+    </CmsStorefrontAppearanceActionsContext.Provider>
   );
 }
 
-export function useCmsStorefrontAppearance(): CmsStorefrontAppearanceContextValue {
-  const context = useContext(CmsStorefrontAppearanceContext);
+export function useCmsStorefrontAppearanceState(): CmsStorefrontAppearanceStateContextValue {
+  const context = useContext(CmsStorefrontAppearanceStateContext);
   if (!context) {
     throw internalError(
-      'useCmsStorefrontAppearance must be used within a CmsStorefrontAppearanceProvider'
+      'useCmsStorefrontAppearanceState must be used within a CmsStorefrontAppearanceProvider'
     );
   }
   return context;
 }
 
+export function useCmsStorefrontAppearanceActions(): CmsStorefrontAppearanceActionsContextValue {
+  const context = useContext(CmsStorefrontAppearanceActionsContext);
+  if (!context) {
+    throw internalError(
+      'useCmsStorefrontAppearanceActions must be used within a CmsStorefrontAppearanceProvider'
+    );
+  }
+  return context;
+}
+
+export function useCmsStorefrontAppearance(): CmsStorefrontAppearanceContextValue {
+  const state = useCmsStorefrontAppearanceState();
+  const actions = useCmsStorefrontAppearanceActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
+}
+
 export function useOptionalCmsStorefrontAppearance():
   | CmsStorefrontAppearanceContextValue
   | null {
-  return useContext(CmsStorefrontAppearanceContext);
+  const state = useContext(CmsStorefrontAppearanceStateContext);
+  const actions = useContext(CmsStorefrontAppearanceActionsContext);
+  return useMemo(() => {
+    if (!state || !actions) return null;
+    return { ...state, ...actions };
+  }, [state, actions]);
 }

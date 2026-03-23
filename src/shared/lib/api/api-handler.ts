@@ -466,8 +466,9 @@ export function apiHandler(
           const slowSuccessThresholdMs =
             options.slowSuccessThresholdMs ?? DEFAULT_SLOW_SUCCESS_THRESHOLD_MS;
           const shouldLogSuccess =
-            successPolicy === 'all' ||
-            (successPolicy === 'slow' && durationMs >= slowSuccessThresholdMs);
+            response.status < 400 &&
+            (successPolicy === 'all' ||
+              (successPolicy === 'slow' && durationMs >= slowSuccessThresholdMs));
 
           if (shouldLogSuccess) {
             const otelContext = getActiveOtelContextAttributes();
@@ -629,8 +630,9 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
           const slowSuccessThresholdMs =
             options.slowSuccessThresholdMs ?? DEFAULT_SLOW_SUCCESS_THRESHOLD_MS;
           const shouldLogSuccess =
-            successPolicy === 'all' ||
-            (successPolicy === 'slow' && durationMs >= slowSuccessThresholdMs);
+            response.status < 400 &&
+            (successPolicy === 'all' ||
+              (successPolicy === 'slow' && durationMs >= slowSuccessThresholdMs));
 
           if (shouldLogSuccess) {
             const otelContext = getActiveOtelContextAttributes();

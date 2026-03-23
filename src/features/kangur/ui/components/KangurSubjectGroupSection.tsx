@@ -16,7 +16,7 @@ export function KangurSubjectGroupSection({
   className,
 }: KangurSubjectGroupSectionProps): React.JSX.Element {
   return (
-    <section aria-label={ariaLabel ?? label} className={className}>
+    <section aria-label={(ariaLabel ?? label) as any} className={className}>
       <KangurPanelSectionHeading>{label}</KangurPanelSectionHeading>
       {children}
     </section>

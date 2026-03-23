@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-23T12:16:12.333Z",
+  "generatedAt": "2026-03-23T13:32:41.309Z",
   "status": "passed",
   "summary": {
-    "total": 4,
+    "total": 13,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 4,
+    "infoCount": 13,
     "status": "passed",
-    "fileCount": 5703
+    "fileCount": 5707
   },
   "scope": {
     "root": "src",
@@ -16,7 +16,7 @@
   },
   "trendCounters": {
     "doubleAssertionCount": 0,
-    "anyCount": 2,
+    "anyCount": 11,
     "eslintDisableCount": 2,
     "nonNullAssertionCount": 0,
     "tsIgnoreCount": 0,
@@ -39,6 +39,16 @@
   "issues": [
     {
       "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/kangur/ui/components/KangurSubjectGroupSection.tsx",
+      "line": 19,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
       "ruleId": "eslint-disable",
       "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call",
       "file": "src/features/products/performance/monitoring.ts",
@@ -51,8 +61,8 @@
       "severity": "info",
       "ruleId": "eslint-disable",
       "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any -- catch-all route modules define their own param shapes.",
-      "file": "src/shared/lib/api/catch-all-route-types.ts",
-      "line": 12,
+      "file": "src/shared/lib/api/catch-all-router.ts",
+      "line": 14,
       "column": null,
       "snippet": null,
       "context": null
@@ -76,6 +86,86 @@
       "column": null,
       "snippet": null,
       "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/integration-sync.ts",
+      "line": 9,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/integration-sync.ts",
+      "line": 70,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/integration-sync.ts",
+      "line": 71,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/integration-sync.ts",
+      "line": 191,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/integration-sync.ts",
+      "line": 192,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/integration-sync.ts",
+      "line": 265,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/integration-sync.ts",
+      "line": 285,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/integration-sync.ts",
+      "line": 337,
+      "column": null,
+      "snippet": null,
+      "context": null
     }
   ],
   "rules": [
@@ -89,8 +179,8 @@
       "ruleId": "explicit-any",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 2
+      "infoCount": 11
     }
   ],
-  "durationMs": 2226
+  "durationMs": 12464
 }

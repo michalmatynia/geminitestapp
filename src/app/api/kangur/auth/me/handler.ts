@@ -3,12 +3,32 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { resolveKangurActor, toKangurAuthUser } from '@/features/kangur/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { AppErrorCodes, isAppError } from '@/shared/errors/app-error';
 
 export async function getKangurAuthMeHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
-  const actor = await resolveKangurActor(req);
+  let actor;
+  try {
+    actor = await resolveKangurActor(req);
+  } catch (error) {
+    if (isAppError(error) && error.code === AppErrorCodes.unauthorized) {
+      return NextResponse.json(
+        {
+          error: 'Authentication required.',
+          code: AppErrorCodes.unauthorized,
+        },
+        {
+          status: 401,
+          headers: {
+            'Cache-Control': 'no-store',
+          },
+        }
+      );
+    }
+    throw error;
+  }
   const authUser = toKangurAuthUser(actor);
 
   void logKangurServerEvent({

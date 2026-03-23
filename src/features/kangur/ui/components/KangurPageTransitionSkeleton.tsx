@@ -45,7 +45,6 @@ import {
   KANGUR_TIGHT_ROW_CLASSNAME,
   KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX,
   KANGUR_TOP_BAR_HEIGHT_VAR_NAME,
-  KANGUR_TOP_BAR_OFFSET_CLASSNAME,
   KANGUR_TOP_BAR_PADDED_OFFSET_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
@@ -54,6 +53,7 @@ import {
   resolveKangurRouteTransitionSkeletonVariant,
   type KangurRouteTransitionSkeletonVariant,
 } from '@/features/kangur/ui/routing/route-transition-skeletons';
+import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import { cn } from '@/features/kangur/shared/utils';
 import { getPathLocale, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
@@ -1150,12 +1150,16 @@ export function KangurPageTransitionSkeleton({
     !embedded &&
     !shouldOffsetStandaloneRouteOverlay &&
     !shouldRenderInlineTopNavigationSkeleton;
+  const resolvedTopBarHeightCssValue =
+    topBarHeightCssValue ??
+    readKangurTopBarHeightCssValue() ??
+    `${KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX}px`;
   const inlineTopNavigationSkeleton = shouldRenderInlineTopNavigationSkeleton ? (
     <div
       className='shrink-0 overflow-hidden'
       data-testid='kangur-page-transition-skeleton-inline-top-navigation'
       style={{
-        height: `var(--kangur-top-bar-height, ${KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX}px)`,
+        height: resolvedTopBarHeightCssValue,
       }}
     >
       <KangurTopNavigationSkeleton />
@@ -1206,7 +1210,7 @@ export function KangurPageTransitionSkeleton({
         embedded
           ? 'absolute inset-0'
           : shouldOffsetStandaloneRouteOverlay
-            ? cn('fixed inset-x-0 bottom-0', KANGUR_TOP_BAR_OFFSET_CLASSNAME)
+            ? 'fixed inset-x-0 bottom-0'
             : 'fixed inset-0 flex flex-col',
         'z-30 cursor-progress overflow-hidden',
         isLocaleSwitch ? 'backdrop-blur-md' : null
@@ -1215,7 +1219,8 @@ export function KangurPageTransitionSkeleton({
       data-kangur-skeleton-variant={resolvedVariant}
       data-testid='kangur-page-transition-skeleton'
       style={{
-        [KANGUR_TOP_BAR_HEIGHT_VAR_NAME]: topBarHeightCssValue ?? undefined,
+        [KANGUR_TOP_BAR_HEIGHT_VAR_NAME]: resolvedTopBarHeightCssValue,
+        top: shouldOffsetStandaloneRouteOverlay ? resolvedTopBarHeightCssValue : undefined,
         background: isLocaleSwitch
           ? 'color-mix(in srgb, var(--kangur-page-background, #f8fafc) 68%, transparent)'
           : 'var(--kangur-page-background, radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%))',

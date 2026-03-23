@@ -22,13 +22,20 @@ import { setProgressSubject } from '@/features/kangur/ui/services/progress';
 import type { KangurLessonSubject } from '@/shared/contracts/kangur';
 import { internalError } from '@/shared/errors/app-error';
 
-type KangurSubjectFocusContextValue = {
+type KangurSubjectFocusStateContextValue = {
   subject: KangurLessonSubject;
-  setSubject: (subject: KangurLessonSubject) => void;
   subjectKey: string | null;
 };
 
-const KangurSubjectFocusContext = createContext<KangurSubjectFocusContextValue | null>(null);
+type KangurSubjectFocusActionsContextValue = {
+  setSubject: (subject: KangurLessonSubject) => void;
+};
+
+const KangurSubjectFocusStateContext = createContext<KangurSubjectFocusStateContextValue | null>(
+  null
+);
+const KangurSubjectFocusActionsContext =
+  createContext<KangurSubjectFocusActionsContextValue | null>(null);
 
 const resolveSubjectFocusKey = (user: ReturnType<typeof useKangurAuth>['user']): string | null => {
   const activeLearnerId = user?.activeLearner?.id?.trim();
@@ -107,26 +114,53 @@ export function KangurSubjectFocusProvider({
     [canSyncRemote, storageKey]
   );
 
-  const value = useMemo<KangurSubjectFocusContextValue>(
+  const stateValue = useMemo<KangurSubjectFocusStateContextValue>(
     () => ({
       subject,
-      setSubject,
       subjectKey,
     }),
-    [subject, setSubject, subjectKey]
+    [subject, subjectKey]
+  );
+
+  const actionsValue = useMemo<KangurSubjectFocusActionsContextValue>(
+    () => ({
+      setSubject,
+    }),
+    [setSubject]
   );
 
   return (
-    <KangurSubjectFocusContext.Provider value={value}>
-      {children}
-    </KangurSubjectFocusContext.Provider>
+    <KangurSubjectFocusActionsContext.Provider value={actionsValue}>
+      <KangurSubjectFocusStateContext.Provider value={stateValue}>
+        {children}
+      </KangurSubjectFocusStateContext.Provider>
+    </KangurSubjectFocusActionsContext.Provider>
   );
 }
 
-export const useKangurSubjectFocus = (): KangurSubjectFocusContextValue => {
-  const context = useContext(KangurSubjectFocusContext);
+export const useKangurSubjectFocusState = (): KangurSubjectFocusStateContextValue => {
+  const context = useContext(KangurSubjectFocusStateContext);
   if (!context) {
-    throw internalError('useKangurSubjectFocus must be used within a KangurSubjectFocusProvider');
+    throw internalError(
+      'useKangurSubjectFocusState must be used within a KangurSubjectFocusProvider'
+    );
   }
   return context;
+};
+
+export const useKangurSubjectFocusActions = (): KangurSubjectFocusActionsContextValue => {
+  const context = useContext(KangurSubjectFocusActionsContext);
+  if (!context) {
+    throw internalError(
+      'useKangurSubjectFocusActions must be used within a KangurSubjectFocusProvider'
+    );
+  }
+  return context;
+};
+
+export const useKangurSubjectFocus = (): KangurSubjectFocusStateContextValue &
+  KangurSubjectFocusActionsContextValue => {
+  const state = useKangurSubjectFocusState();
+  const actions = useKangurSubjectFocusActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 };

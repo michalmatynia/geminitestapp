@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { authError } from '@/shared/errors/app-error';
 
 const { resolveKangurActorMock, toKangurAuthUserMock, logKangurServerEventMock } = vi.hoisted(
   () => ({
@@ -75,5 +76,23 @@ describe('kangur auth me handler', () => {
         actorType: 'parent',
       })
     );
+  });
+
+  it('returns a quiet 401 response when no Kangur actor is authenticated', async () => {
+    resolveKangurActorMock.mockRejectedValue(authError('Authentication required.'));
+
+    const response = await getKangurAuthMeHandler(
+      new NextRequest('http://localhost/api/kangur/auth/me'),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    await expect(response.json()).resolves.toEqual({
+      error: 'Authentication required.',
+      code: 'UNAUTHORIZED',
+    });
+    expect(toKangurAuthUserMock).not.toHaveBeenCalled();
+    expect(logKangurServerEventMock).not.toHaveBeenCalled();
   });
 });

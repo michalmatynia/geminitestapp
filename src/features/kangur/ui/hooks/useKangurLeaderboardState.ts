@@ -97,6 +97,7 @@ const ENGLISH_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> 
   english_sentence_structure: { label: 'Szyk zdania', emoji: '🧩' },
   english_subject_verb_agreement: { label: 'Zgoda podmiotu', emoji: '🤝' },
   english_articles: { label: 'Przedimki', emoji: '📰' },
+  english_adjectives: { label: 'Przymiotniki', emoji: '🎨' },
   english_prepositions_time_place: { label: 'Przyimki czasu i miejsca', emoji: '🧭' },
 };
 
@@ -219,6 +220,7 @@ const TRANSLATED_OPERATION_IDS = new Set([
   'english_sentence_structure',
   'english_subject_verb_agreement',
   'english_articles',
+  'english_adjectives',
   'english_prepositions_time_place',
   'alphabet_basics',
   'alphabet_copy',

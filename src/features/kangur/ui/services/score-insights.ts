@@ -28,6 +28,7 @@ const OPERATION_LABELS: Record<string, { label: string; emoji: string }> = {
   english_sentence_structure: { label: 'Szyk zdania', emoji: '🧩' },
   english_subject_verb_agreement: { label: 'Zgoda podmiotu', emoji: '🤝' },
   english_articles: { label: 'Przedimki', emoji: '📰' },
+  english_adjectives: { label: 'Przymiotniki', emoji: '🎨' },
   english_prepositions_time_place: { label: 'Przyimki czasu i miejsca', emoji: '🧭' },
 };
 

@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
+import EnglishArticlesDragDropGame from '@/features/kangur/ui/components/EnglishArticlesDragDropGame';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   EnglishArticleFocusAnimation,
@@ -18,9 +19,7 @@ import {
   KangurLessonStack,
   KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
-import {
-  KangurEquationDisplay,
-} from '@/features/kangur/ui/design/primitives';
+import { KangurEquationDisplay } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
@@ -28,11 +27,22 @@ import {
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 
-type SectionId = 'intro' | 'a_an' | 'the' | 'zero' | 'practice' | 'summary';
+const LESSON_KEY = 'english_articles';
+
+type SectionId =
+  | 'intro'
+  | 'a_an'
+  | 'the'
+  | 'zero'
+  | 'practice'
+  | 'game_articles_drag'
+  | 'summary';
+
+type SlideSectionId = Exclude<SectionId, 'game_articles_drag'>;
 
 const buildEnglishArticlesSlides = (
   translations: KangurIntlTranslate
-): Record<SectionId, LessonSlide[]> => ({
+): Record<SlideSectionId, LessonSlide[]> => ({
   intro: [
     {
       title: translations('slides.intro.overview.title'),
@@ -57,6 +67,32 @@ const buildEnglishArticlesSlides = (
               the board.
             </p>
           </KangurLessonInset>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: translations('slides.intro.storyTrail.title'),
+      content: (
+        <KangurLessonStack align='start'>
+          <KangurLessonLead align='left'>
+            {translations('slides.intro.storyTrail.lead')}
+          </KangurLessonLead>
+          <KangurLessonCallout accent='amber' padding='sm'>
+            <div className='space-y-2 text-sm text-slate-700'>
+              <p>
+                1) I saw <strong>a</strong> cat in the garden.
+              </p>
+              <p>
+                2) <strong>The</strong> cat jumped onto the fence.
+              </p>
+              <p>
+                3) We watched <strong>the</strong> cat from the window.
+              </p>
+            </div>
+            <KangurLessonCaption className='mt-3'>
+              {translations('slides.intro.storyTrail.caption')}
+            </KangurLessonCaption>
+          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
@@ -109,6 +145,24 @@ const buildEnglishArticlesSlides = (
         </KangurLessonStack>
       ),
     },
+    {
+      title: translations('slides.aAn.soundCheck.title'),
+      content: (
+        <KangurLessonStack align='start'>
+          <KangurLessonLead align='left'>
+            {translations('slides.aAn.soundCheck.lead')}
+          </KangurLessonLead>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm`}>
+            {['a unicorn', 'an hour', 'a European map', 'an orange'].map((text) => (
+              <KangurLessonInset key={text} accent='amber' className='text-left'>
+                <p className='font-semibold text-amber-700'>{text}</p>
+              </KangurLessonInset>
+            ))}
+          </div>
+          <KangurLessonCaption>{translations('slides.aAn.soundCheck.caption')}</KangurLessonCaption>
+        </KangurLessonStack>
+      ),
+    },
   ],
   the: [
     {
@@ -135,6 +189,32 @@ const buildEnglishArticlesSlides = (
               </KangurLessonInset>
             ))}
           </div>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: translations('slides.the.secondMention.title'),
+      content: (
+        <KangurLessonStack align='start'>
+          <KangurLessonLead align='left'>
+            {translations('slides.the.secondMention.lead')}
+          </KangurLessonLead>
+          <KangurLessonCallout accent='indigo' padding='sm'>
+            <div className='space-y-2 text-sm text-slate-700'>
+              <p>
+                I found <strong>a</strong> shell on the beach.
+              </p>
+              <p>
+                <strong>The</strong> shell was wet and shiny.
+              </p>
+              <p>
+                I showed <strong>the</strong> shell to my brother.
+              </p>
+            </div>
+          </KangurLessonCallout>
+          <KangurLessonCaption>
+            {translations('slides.the.secondMention.caption')}
+          </KangurLessonCaption>
         </KangurLessonStack>
       ),
     },
@@ -168,6 +248,29 @@ const buildEnglishArticlesSlides = (
         </KangurLessonStack>
       ),
     },
+    {
+      title: translations('slides.zero.everyday.title'),
+      content: (
+        <KangurLessonStack align='start'>
+          <KangurLessonLead align='left'>
+            {translations('slides.zero.everyday.lead')}
+          </KangurLessonLead>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
+            {[
+              'Children love music.',
+              'We study English after lunch.',
+              'Cats drink milk.',
+              'Summer starts in June.',
+            ].map((text) => (
+              <KangurLessonInset key={text} accent='slate' className='text-left'>
+                <p className='font-semibold text-slate-700'>{text}</p>
+              </KangurLessonInset>
+            ))}
+          </div>
+          <KangurLessonCaption>{translations('slides.zero.everyday.caption')}</KangurLessonCaption>
+        </KangurLessonStack>
+      ),
+    },
   ],
   practice: [
     {
@@ -187,6 +290,73 @@ const buildEnglishArticlesSlides = (
             </div>
             <KangurLessonCaption className='mt-3'>
               {translations('slides.practice.quick.answersCaption')}
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: translations('slides.practice.chooseAnswer.title'),
+      content: (
+        <KangurLessonStack align='start'>
+          <KangurLessonLead align='left'>
+            {translations('slides.practice.chooseAnswer.lead')}
+          </KangurLessonLead>
+          <KangurLessonCallout accent='amber' padding='sm'>
+            <div className='space-y-2 text-sm text-slate-700'>
+              <p>1) She has ___ orange kite. (an)</p>
+              <p>2) We can see ___ moon tonight. (the)</p>
+              <p>3) He bought ___ comic after school. (a)</p>
+              <p>4) They study ___ history on Tuesday. (—)</p>
+            </div>
+            <KangurLessonCaption className='mt-3'>
+              {translations('slides.practice.chooseAnswer.caption')}
+            </KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: translations('slides.practice.makeItRight.title'),
+      content: (
+        <KangurLessonStack align='start'>
+          <KangurLessonLead align='left'>
+            {translations('slides.practice.makeItRight.lead')}
+          </KangurLessonLead>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
+            {[
+              'an unicorn → a unicorn',
+              'a salt on the table → the salt on the table',
+              'the English at school → English at school',
+              'a hour later → an hour later',
+            ].map((text) => (
+              <KangurLessonInset key={text} accent='amber' className='text-left'>
+                <p className='font-semibold text-amber-700'>{text}</p>
+              </KangurLessonInset>
+            ))}
+          </div>
+          <KangurLessonCaption>
+            {translations('slides.practice.makeItRight.caption')}
+          </KangurLessonCaption>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: translations('slides.practice.mixedRules.title'),
+      content: (
+        <KangurLessonStack align='start'>
+          <KangurLessonLead align='left'>
+            {translations('slides.practice.mixedRules.lead')}
+          </KangurLessonLead>
+          <KangurLessonCallout accent='amber' padding='sm'>
+            <div className='space-y-2 text-sm text-slate-700'>
+              <p>1) We spotted ___ owl in the tree. (an)</p>
+              <p>2) ___ owl blinked at us and flew away. (the)</p>
+              <p>3) Children need ___ sleep after a busy day. (—)</p>
+              <p>4) He packed ___ backpack with snacks. (a)</p>
+            </div>
+            <KangurLessonCaption className='mt-3'>
+              {translations('slides.practice.mixedRules.caption')}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -219,18 +389,21 @@ const ARTICLES_SECTION_META: Array<{
   id: SectionId;
   emoji: string;
   key: string;
+  isGame?: boolean;
 }> = [
   { id: 'intro', emoji: '📌', key: 'intro' },
   { id: 'a_an', emoji: '🎯', key: 'aAn' },
   { id: 'the', emoji: '🔎', key: 'the' },
   { id: 'zero', emoji: '⭕', key: 'zero' },
-  { id: 'practice', emoji: '✅', key: 'practice' },
+  { id: 'practice', emoji: '📝', key: 'practice' },
+  { id: 'game_articles_drag', emoji: '🧲', key: 'gameArticlesDrag', isGame: true },
   { id: 'summary', emoji: '🧠', key: 'summary' },
 ];
 
 export default function EnglishArticlesLesson(): React.JSX.Element {
   const shellTranslations = useTranslations('KangurStaticLessons.englishArticlesShell');
   const contentTranslations = useTranslations('KangurStaticLessons.englishArticles');
+
   const localizedSections = useMemo(
     () =>
       ARTICLES_SECTION_META.map((section) => ({
@@ -238,6 +411,7 @@ export default function EnglishArticlesLesson(): React.JSX.Element {
         emoji: section.emoji,
         title: shellTranslations(`sections.${section.key}.title`),
         description: shellTranslations(`sections.${section.key}.description`),
+        isGame: section.isGame,
       })),
     [shellTranslations]
   );
@@ -245,11 +419,26 @@ export default function EnglishArticlesLesson(): React.JSX.Element {
     () => buildEnglishArticlesSlides(contentTranslations),
     [contentTranslations]
   );
+  const sectionTitles = useMemo(
+    () =>
+      Object.fromEntries(localizedSections.map((section) => [section.id, section.title])) as Record<
+        SectionId,
+        string
+      >,
+    [localizedSections]
+  );
+  const sectionDescriptions = useMemo(
+    () =>
+      Object.fromEntries(
+        localizedSections.map((section) => [section.id, section.description ?? ''])
+      ) as Record<SectionId, string>,
+    [localizedSections]
+  );
 
   return (
     <KangurUnifiedLesson
       progressMode='panel'
-      lessonId='english_articles'
+      lessonId={LESSON_KEY}
       lessonEmoji='📚'
       lessonTitle={shellTranslations('lessonTitle')}
       sections={localizedSections}
@@ -261,6 +450,21 @@ export default function EnglishArticlesLesson(): React.JSX.Element {
       completionSectionId='summary'
       autoRecordComplete
       scorePercent={120}
+      skipMarkFor={['game_articles_drag']}
+      games={[
+        {
+          sectionId: 'game_articles_drag',
+          stage: {
+            accent: 'amber',
+            title: sectionTitles.game_articles_drag,
+            icon: '🧲',
+            description: sectionDescriptions.game_articles_drag,
+            maxWidthClassName: 'max-w-3xl',
+            shellTestId: 'english-articles-drag-game-shell',
+          },
+          render: ({ onFinish }) => <EnglishArticlesDragDropGame onFinish={onFinish} />,
+        },
+      ]}
     />
   );
 }

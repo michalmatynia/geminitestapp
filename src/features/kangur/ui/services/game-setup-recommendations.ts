@@ -406,7 +406,8 @@ const resolveTrainingCategoryFromActivity = (activityKey: string | null | undefi
     return null;
   }
 
-  const [, primary = ''] = activityKey.split(':');
+  const parts = activityKey.split(':');
+  const primary = (parts[1] ?? parts[0] ?? '').trim();
   return TRAINING_CATEGORY_SET.has(primary as KangurOperation) ? (primary as KangurOperation) : null;
 };
 

@@ -8,7 +8,10 @@ import type { Session } from 'next-auth';
 
 
 const FRONT_PAGE_SETTING_KEY = 'front_page_app';
+const FRONT_PAGE_SETTING_RETRY_COOLDOWN_MS = 30_000;
 export { FRONT_PAGE_ALLOWED };
+
+let frontPageSettingRetryBlockedUntil = 0;
 
 const isAdminSession = (session: Session | null): boolean => {
   if (!session?.user) return false;
@@ -44,8 +47,32 @@ export const shouldApplyFrontPageAppSelection = (): boolean => {
   return value !== 'false' && value !== '0';
 };
 
+const isTransientMongoFrontPageReadError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const constructorName = error.constructor?.name ?? '';
+  const normalized = `${constructorName} ${error.name} ${error.message}`.toLowerCase();
+
+  return (
+    constructorName === 'MongoServerSelectionError' ||
+    constructorName === 'MongoNetworkError' ||
+    constructorName === 'MongoTopologyClosedError' ||
+    constructorName === 'MongoServerClosedError' ||
+    normalized.includes('server selection') ||
+    normalized.includes('topology closed') ||
+    normalized.includes('econn') ||
+    normalized.includes('connection refused') ||
+    normalized.includes('connection closed') ||
+    (normalized.includes('connection') && normalized.includes('timed out'))
+  );
+};
+
 const readMongoFrontPageSetting = async (): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
+  if (Date.now() < frontPageSettingRetryBlockedUntil) return null;
+
   try {
     const mongo = await getMongoDb();
     const doc = await mongo
@@ -53,6 +80,11 @@ const readMongoFrontPageSetting = async (): Promise<string | null> => {
       .findOne({ _id: FRONT_PAGE_SETTING_KEY });
     if (doc?.value) return doc.value;
   } catch (error) {
+    if (isTransientMongoFrontPageReadError(error)) {
+      frontPageSettingRetryBlockedUntil = Date.now() + FRONT_PAGE_SETTING_RETRY_COOLDOWN_MS;
+      return null;
+    }
+
     void ErrorSystem.captureException(error, {
       service: 'frontend.home-helpers',
       source: 'frontend.home-helpers',

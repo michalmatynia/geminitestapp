@@ -73,6 +73,7 @@ const OPERATION_LABELS: Record<string, { label: string; emoji: string }> = {
   english_sentence_structure: { label: 'Szyk zdania', emoji: '🧩' },
   english_subject_verb_agreement: { label: 'Zgoda podmiotu', emoji: '🤝' },
   english_articles: { label: 'Przedimki', emoji: '📰' },
+  english_adjectives: { label: 'Przymiotniki', emoji: '🎨' },
   english_prepositions_time_place: { label: 'Przyimki czasu i miejsca', emoji: '🧭' },
 };
 
@@ -142,6 +143,8 @@ const ACTIVITY_PRIMARY_TO_OPERATION: Record<string, string> = {
   english_pronouns_warmup: 'english_parts_of_speech',
   english_sentence_structure_quiz: 'english_sentence_structure',
   english_subject_verb_agreement_quiz: 'english_subject_verb_agreement',
+  english_articles_drag_drop: 'english_articles',
+  english_adjectives_scene_studio: 'english_adjectives',
   english_prepositions_quiz: 'english_prepositions_time_place',
   english_prepositions_sort: 'english_prepositions_time_place',
   english_prepositions_order: 'english_prepositions_time_place',

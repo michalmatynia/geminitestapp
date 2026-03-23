@@ -116,6 +116,15 @@ describe('kangur contract runtime', () => {
     ).toBe('music');
   });
 
+  it('resolves English score subjects from adjective-prefixed operations', () => {
+    expect(
+      resolveKangurScoreSubject({
+        operation: 'english_adjectives',
+        subject: null,
+      })
+    ).toBe('english');
+  });
+
   it('parses Kangur lesson-template route query and bulk-replace payload DTOs', () => {
     expect(
       kangurLessonTemplatesQuerySchema.parse({

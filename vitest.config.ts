@@ -40,6 +40,17 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'json-summary'],
+      all: true,
+      include: ['src/**/*.ts', 'src/**/*.tsx'],
+      exclude: [
+        'src/**/*.test.ts',
+        'src/**/*.test.tsx',
+        'src/**/*.spec.ts',
+        'src/**/*.spec.tsx',
+        'src/**/*.d.ts',
+        'src/**/types.ts',
+        'src/**/types/**/*.ts',
+      ],
     },
     projects: [
       {

@@ -8,25 +8,25 @@ canonical: true
 ---
 # API Contract Coverage Report
 
-Generated at: 2026-03-23T16:32:23.754Z
+Generated at: 2026-03-23T21:12:57.338Z
 
 ## Summary
 
 - Status: PASSED
 - Route files scanned: 285
 - Route methods scanned: 215
-- Methods with adjacent tests: 189
+- Methods with adjacent tests: 196
 - Mutations with body validation: 37
 - Query routes with validation: 10
 - Errors: 0
 - Warnings: 0
-- Info: 16
+- Info: 9
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| api-contract-route-missing-tests | 0 | 0 | 16 |
+| api-contract-route-missing-tests | 0 | 0 | 9 |
 
 ## Issues
 
@@ -34,20 +34,13 @@ Generated at: 2026-03-23T16:32:23.754Z
 | --- | --- | --- | --- |
 | INFO | api-contract-route-missing-tests | src/app/api/ai/context/related/[id]/route.ts:9:14 | GET ai/context/related/[id] has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/ai/schema/[entity]/route.ts:9:14 | GET ai/schema/[entity] has no adjacent route/handler test coverage. |
-| INFO | api-contract-route-missing-tests | src/app/api/assets3d/categories/route.ts:7:14 | GET assets3d/categories has no adjacent route/handler test coverage. |
-| INFO | api-contract-route-missing-tests | src/app/api/assets3d/tags/route.ts:7:14 | GET assets3d/tags has no adjacent route/handler test coverage. |
-| INFO | api-contract-route-missing-tests | src/app/api/auth/users/route.ts:8:14 | GET auth/users has no adjacent route/handler test coverage. |
-| INFO | api-contract-route-missing-tests | src/app/api/case-resolver/ocr/models/route.ts:8:14 | GET case-resolver/ocr/models has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/case-resolver/ocr/observability/route.ts:8:14 | GET case-resolver/ocr/observability has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/files/preview/route.ts:7:14 | GET files/preview has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/files/route.ts:9:14 | GET files has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/marketplace/[resource]/route.ts:29:14 | GET marketplace/[resource] has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/notes/categories/tree/route.ts:7:14 | GET notes/categories/tree has no adjacent route/handler test coverage. |
-| INFO | api-contract-route-missing-tests | src/app/api/notes/lookup/route.ts:7:14 | GET notes/lookup has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/settings/cache/route.ts:7:14 | GET settings/cache has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/settings/heavy/route.ts:8:14 | GET settings/heavy has no adjacent route/handler test coverage. |
-| INFO | api-contract-route-missing-tests | src/app/api/settings/providers/route.ts:7:14 | GET settings/providers has no adjacent route/handler test coverage. |
-| INFO | api-contract-route-missing-tests | src/app/api/system/upload-events/route.ts:7:14 | GET system/upload-events has no adjacent route/handler test coverage. |
 
 ## Route Inventory
 
@@ -86,11 +79,11 @@ Generated at: 2026-03-23T16:32:23.754Z
 | assets3d/[id] | GET | protected | yes | - | - |
 | assets3d/[id] | PATCH | protected | yes | yes | - |
 | assets3d/[id] | DELETE | protected | yes | - | - |
-| assets3d/categories | GET | protected | no | - | - |
+| assets3d/categories | GET | protected | yes | - | - |
 | assets3d/reindex | POST | protected | yes | - | - |
 | assets3d | GET | protected | yes | - | - |
 | assets3d | POST | protected | yes | - | - |
-| assets3d/tags | GET | protected | no | - | - |
+| assets3d/tags | GET | protected | yes | - | - |
 | auth/[...nextauth] | GET | public | no | - | - |
 | auth/[...nextauth] | POST | public | no | - | - |
 | auth/mfa/disable | POST | protected | yes | yes | - |
@@ -104,7 +97,7 @@ Generated at: 2026-03-23T16:32:23.754Z
 | auth/users/[id] | DELETE | protected | yes | yes | - |
 | auth/users/[id]/security | GET | protected | yes | - | - |
 | auth/users/[id]/security | PATCH | protected | yes | yes | - |
-| auth/users | GET | protected | no | - | - |
+| auth/users | GET | protected | yes | - | - |
 | auth/verify-credentials | POST | public | no | yes | - |
 | brain/models | GET | protected | yes | - | - |
 | brain/operations/overview | GET | protected | yes | - | - |
@@ -114,7 +107,7 @@ Generated at: 2026-03-23T16:32:23.754Z
 | case-resolver/ocr/jobs/[jobId] | GET | protected | yes | - | - |
 | case-resolver/ocr/jobs/[jobId] | POST | protected | yes | yes | - |
 | case-resolver/ocr/jobs | POST | protected | yes | yes | - |
-| case-resolver/ocr/models | GET | protected | no | - | - |
+| case-resolver/ocr/models | GET | protected | yes | - | - |
 | case-resolver/ocr/observability | GET | protected | no | - | - |
 | chatbot/[[...path]] | GET | protected | yes | - | - |
 | chatbot/[[...path]] | POST | protected | yes | - | - |
@@ -205,7 +198,7 @@ Generated at: 2026-03-23T16:32:23.754Z
 | notes/categories | POST | protected | yes | - | - |
 | notes/categories/tree | GET | protected | no | - | - |
 | notes/import-folder | POST | protected | yes | - | - |
-| notes/lookup | GET | protected | no | - | - |
+| notes/lookup | GET | protected | yes | - | - |
 | notes/notebooks/[id] | PATCH | protected | yes | - | - |
 | notes/notebooks/[id] | DELETE | protected | yes | - | - |
 | notes/notebooks | GET | protected | yes | - | - |
@@ -232,7 +225,7 @@ Generated at: 2026-03-23T16:32:23.754Z
 | settings/heavy | GET | protected | no | - | - |
 | settings/lite | GET | public | yes | - | - |
 | settings/migrate/backfill-keys | POST | protected | yes | - | - |
-| settings/providers | GET | protected | no | - | - |
+| settings/providers | GET | protected | yes | - | - |
 | settings | GET | protected | yes | - | - |
 | settings | POST | protected | yes | - | - |
 | system/activity | GET | protected | yes | - | - |
@@ -245,7 +238,7 @@ Generated at: 2026-03-23T16:32:23.754Z
 | system/logs | GET | protected | yes | - | yes |
 | system/logs | POST | protected | yes | - | - |
 | system/logs | DELETE | protected | yes | - | - |
-| system/upload-events | GET | protected | no | - | - |
+| system/upload-events | GET | protected | yes | - | - |
 | user/preferences | GET | session | yes | - | - |
 | user/preferences | PATCH | session | yes | yes | - |
 | user/preferences | POST | session | yes | yes | - |

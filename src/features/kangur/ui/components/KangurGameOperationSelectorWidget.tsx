@@ -938,7 +938,8 @@ const resolveActivityRecommendationTarget = (
     return null;
   }
 
-  const [, primary = ''] = activityKey.split(':');
+  const parts = activityKey.split(':');
+  const primary = (parts[1] ?? parts[0] ?? '').trim();
   if (!primary) {
     return null;
   }

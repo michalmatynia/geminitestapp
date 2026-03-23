@@ -238,7 +238,8 @@ export default function LessonActivityStage({
         className={cn(
           'flex w-full min-w-0 flex-col items-center',
           KANGUR_PANEL_GAP_CLASSNAME,
-          maxWidthClassName
+          maxWidthClassName,
+          'mx-auto'
         )}
       >
         <LessonActivityStageTopBar />

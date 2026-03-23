@@ -187,6 +187,7 @@ describe('ActiveLessonView mobile controls', () => {
     const activeLessonTransition = screen.getByTestId('lessons-active-transition');
 
     expect(activeLessonTransition.contains(topControls)).toBe(true);
+    expect(screen.getByTestId('mock-lesson-navigation').parentElement).toHaveClass('mx-auto');
     expect(screen.queryByTestId('kangur-lesson-scroll-container')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Przewiń w dół' })).toBeNull();
     expect(document.documentElement.style.overflow).toBe('');

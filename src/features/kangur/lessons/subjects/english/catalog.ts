@@ -7,6 +7,7 @@ export const ENGLISH_LESSON_COMPONENT_ORDER = [
   'english_sentence_structure',
   'english_subject_verb_agreement',
   'english_articles',
+  'english_adjectives',
   'english_prepositions_time_place',
 ] as const satisfies readonly KangurLessonComponentId[];
 
@@ -68,6 +69,17 @@ export const ENGLISH_LESSON_TEMPLATES: Record<EnglishLessonComponentId, KangurLe
     emoji: '📚',
     color: 'kangur-gradient-accent-amber',
     activeBg: 'bg-amber-500',
+  },
+  english_adjectives: {
+    componentId: 'english_adjectives',
+    subject: 'english',
+    ageGroup: 'ten_year_old',
+    label: 'English Adjectives Lesson',
+    title: 'English: Adjectives',
+    description: 'Opisywanie osób, miejsc i rzeczy oraz kolejność przymiotników',
+    emoji: '🎨',
+    color: 'kangur-gradient-accent-indigo',
+    activeBg: 'bg-indigo-500',
   },
   english_prepositions_time_place: {
     componentId: 'english_prepositions_time_place',

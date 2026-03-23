@@ -1,4 +1,5 @@
 import { KangurPanelSectionHeading } from '@/features/kangur/ui/components/KangurPanelSectionHeading';
+import { LESSONS_LIBRARY_COLUMN_CLASSNAME } from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 import { cn } from '@/features/kangur/shared/utils';
 
 import type { ReactNode } from 'react';
@@ -24,7 +25,7 @@ export function KangurSubjectGroupSection({
       <KangurPanelSectionHeading className='w-full text-center'>
         {label}
       </KangurPanelSectionHeading>
-      <div className='flex w-full flex-col items-center'>{children}</div>
+      <div className={LESSONS_LIBRARY_COLUMN_CLASSNAME}>{children}</div>
     </section>
   );
 }

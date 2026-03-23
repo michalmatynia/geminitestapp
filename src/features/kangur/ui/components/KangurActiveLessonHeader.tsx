@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { createContext, useContext, useEffect, useRef, type RefObject } from 'react';
+import { createContext, useContext, type RefObject } from 'react';
 
 import {
   getLocalizedKangurLessonDescription,
@@ -9,10 +9,6 @@ import {
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import type { KangurAssignmentSnapshot } from '@kangur/platform';
 import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
-import {
-  useKangurLessonSubsectionSummary,
-  type KangurLessonSubsectionSummary,
-} from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import {
   KangurButton,
   KangurGlassPanel,
@@ -60,8 +56,6 @@ type KangurActiveLessonHeaderContextValue = {
   backButtonLabel: string;
   displayTitle: string;
   displayDescription: string;
-  subsectionSummary: KangurLessonSubsectionSummary | null;
-  subsectionTypeLabel: string;
 };
 
 const KangurActiveLessonHeaderContext = createContext<KangurActiveLessonHeaderContextValue | null>(null);
@@ -123,8 +117,6 @@ function KangurActiveLessonHeaderBody(): React.JSX.Element {
   const {
     displayTitle,
     displayDescription,
-    subsectionSummary,
-    subsectionTypeLabel,
     activeLessonAssignment,
     completedActiveLessonAssignment,
     assignmentSectionSummary,
@@ -155,42 +147,12 @@ function KangurActiveLessonHeaderBody(): React.JSX.Element {
 
   return (
     <div className='min-w-0 flex-1'>
-      {subsectionSummary ? (
-        <div className='flex min-w-0 items-start gap-2.5 sm:items-center'>
-          <div
-            className='soft-card flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border text-lg shadow-sm'
-            style={{ borderColor: 'var(--kangur-soft-card-border)' }}
-          >
-            {subsectionSummary.emoji}
-          </div>
-          <div className='min-w-0'>
-            <div className='flex min-w-0 flex-wrap items-center gap-2'>
-              <KangurStatusChip
-                accent={subsectionSummary.isGame ? 'amber' : 'sky'}
-                className='uppercase tracking-[0.12em]'
-                size='sm'
-              >
-                {subsectionTypeLabel}
-              </KangurStatusChip>
-              <KangurHeadline accent='slate' as='h2' size='sm'>
-                {displayTitle}
-              </KangurHeadline>
-            </div>
-            <p className='mt-0.5 break-words text-xs [color:var(--kangur-page-muted-text)]'>
-              {displayDescription}
-            </p>
-          </div>
-        </div>
-      ) : (
-        <>
-          <KangurHeadline accent='slate' as='h2' size='md'>
-            {displayTitle}
-          </KangurHeadline>
-          <p className='mt-1 break-words text-sm [color:var(--kangur-page-muted-text)]'>
-            {displayDescription}
-          </p>
-        </>
-      )}
+      <KangurHeadline accent='slate' as='h2' size='md'>
+        {displayTitle}
+      </KangurHeadline>
+      <p className='mt-1 break-words text-sm [color:var(--kangur-page-muted-text)]'>
+        {displayDescription}
+      </p>
       {assignmentStateChip ? (
         <div ref={assignmentRef} className='mt-3 flex max-w-xl flex-col items-start gap-1.5'>
           {assignmentSectionTitle ? (
@@ -249,7 +211,6 @@ export function KangurActiveLessonHeader({
 }: KangurActiveLessonHeaderProps): React.JSX.Element {
   const locale = useLocale();
   const translations = useTranslations('KangurLessonsWidgets.activeHeader');
-  const subsectionSummary: KangurLessonSubsectionSummary | null = useKangurLessonSubsectionSummary();
   const localizedLessonTitle = getLocalizedKangurLessonTitle(lesson.componentId, locale, lesson.title);
   const localizedLessonDescription = getLocalizedKangurLessonDescription(
     lesson.componentId,
@@ -259,22 +220,13 @@ export function KangurActiveLessonHeader({
   const lessonHeaderTestId = headerTestId;
   const resolvedBackButtonLabel = backButtonLabel ?? translations('backToLessons');
   const displayTitle =
-    resolveHeaderCopy(subsectionSummary?.title) ??
     resolveHeaderCopy(localizedLessonTitle) ??
     resolveHeaderCopy(titleOverride) ??
     translations('fallbackTitle');
   const displayDescription =
-    resolveHeaderCopy(subsectionSummary?.description) ??
     resolveHeaderCopy(localizedLessonDescription) ??
     resolveHeaderCopy(descriptionOverride) ??
     '';
-  const subsectionTypeLabel = subsectionSummary?.isGame
-    ? translations('subsectionType.game')
-    : translations('subsectionType.lesson');
-  const headerAnchorRef = useRef<HTMLDivElement | null>(null);
-  const subsectionAnchorKey = subsectionSummary
-    ? `${subsectionSummary.isGame ? 'game' : 'lesson'}:${subsectionSummary.title}:${subsectionSummary.description}`
-    : null;
   const contextValue: KangurActiveLessonHeaderContextValue = {
     lesson,
     lessonDocument,
@@ -292,29 +244,10 @@ export function KangurActiveLessonHeader({
     backButtonLabel: resolvedBackButtonLabel,
     displayTitle,
     displayDescription,
-    subsectionSummary,
-    subsectionTypeLabel,
   };
 
-  useEffect(() => {
-    if (!subsectionAnchorKey) {
-      return;
-    }
-
-    const frameId = window.requestAnimationFrame(() => {
-      headerAnchorRef.current?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
-    });
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-    };
-  }, [subsectionAnchorKey]);
-
   return (
-    <div ref={headerAnchorRef} className='w-full'>
+    <div className='w-full'>
       <KangurActiveLessonHeaderContext.Provider value={contextValue}>
         <KangurGlassPanel
           className='w-full'

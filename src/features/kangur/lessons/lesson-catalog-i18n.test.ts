@@ -23,6 +23,9 @@ describe('lesson-catalog-i18n', () => {
     expect(getLocalizedKangurLessonTitle('english_articles', 'uk', 'English: Articles')).toBe(
       'Англійська: артиклі'
     );
+    expect(getLocalizedKangurLessonTitle('english_adjectives', 'de', 'English: Adjectives')).toBe(
+      'Englisch: Adjektive'
+    );
   });
 
   it('keeps custom lesson titles intact instead of overwriting Mongo-edited copy', () => {
@@ -71,6 +74,13 @@ describe('lesson-catalog-i18n', () => {
         'Poznaj siedem dźwięków skali diatonicznej, śpiewaj je po kolei i wskaż, czy melodia idzie w górę czy w dół.'
       )
     ).toContain('diatonischen Tonleiter');
+    expect(
+      getLocalizedKangurLessonDescription(
+        'english_adjectives',
+        'en',
+        'Opisywanie osób, miejsc i rzeczy oraz kolejność przymiotników'
+      )
+    ).toContain('adjective order');
   });
 
   it('returns Ukrainian technical lesson metadata for grown-ups lesson catalogs', () => {

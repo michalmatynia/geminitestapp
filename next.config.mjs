@@ -34,6 +34,7 @@ const csp = [
   "form-action 'self'",
   "frame-ancestors 'self'",
   "img-src 'self' data: blob: https:",
+  "media-src 'self' data: blob:",
   "font-src 'self' data:",
   "style-src 'self' 'unsafe-inline'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,

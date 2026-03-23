@@ -104,6 +104,7 @@ describe('LessonSlideSection', () => {
       'kangur-panel-soft',
       'kangur-glass-surface-solid'
     );
+    expect(screen.getByTestId('lesson-slide-stage-root')).toHaveClass('mx-auto');
     expect(firstIndicator).toHaveClass('kangur-cta-pill', 'bg-orange-400');
     expect(firstIndicator).toHaveClass('cursor-pointer');
     expect(firstIndicator).toHaveAttribute('aria-current', 'step');

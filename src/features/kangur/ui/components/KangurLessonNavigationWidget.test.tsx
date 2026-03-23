@@ -104,6 +104,11 @@ describe('KangurLessonNavigationWidget', () => {
       </KangurLessonNavigationProvider>
     );
 
+    expect(screen.getByRole('navigation', { name: /nawigacja/i })).toHaveClass(
+      'w-full',
+      'gap-2',
+      'items-center'
+    );
     expect(screen.getByRole('button', { name: /Poprzednia lekcja/i })).toHaveClass(
       'min-h-11',
       'touch-manipulation'

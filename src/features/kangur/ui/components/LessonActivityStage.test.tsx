@@ -74,6 +74,7 @@ describe('LessonActivityStage', () => {
 
     expect(screen.queryByTestId('lesson-activity-header')).not.toBeInTheDocument();
     expect(screen.getByTestId('lesson-activity-shell')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-activity-shell').parentElement).toHaveClass('mx-auto');
   });
 
   it('keeps the inner title block for standalone stages without a subsection header', () => {
@@ -96,6 +97,7 @@ describe('LessonActivityStage', () => {
     expect(screen.getByText('Przejdź przez szybkie zadania.')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
+    expect(screen.getByTestId('lesson-activity-shell').parentElement).toHaveClass('mx-auto');
     expect(screen.getByRole('button', { name: 'Wróć do tematów' })).not.toHaveTextContent(
       'Wróć do tematów'
     );
@@ -116,6 +118,7 @@ describe('LessonActivityStage', () => {
     );
 
     expect(screen.getByTestId('lesson-activity-plain-shell')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-activity-plain-shell').parentElement).toHaveClass('mx-auto');
     expect(screen.getByTestId('lesson-activity-plain-shell').className).toContain('flex w-full flex-col');
     expect(screen.getByText('Gra muzyczna')).toBeInTheDocument();
   });

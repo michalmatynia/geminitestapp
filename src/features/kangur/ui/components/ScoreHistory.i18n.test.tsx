@@ -70,6 +70,12 @@ describe('ScoreHistory i18n', () => {
   });
 
   it('renders English history headings and operation labels', async () => {
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'english',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+
     scoreFilterMock.mockResolvedValue([
       createScore({ id: 'score-1', operation: 'division' }),
       createScore({
@@ -78,6 +84,12 @@ describe('ScoreHistory i18n', () => {
         correct_answers: 10,
         score: 10,
         created_date: '2026-03-05T12:00:00.000Z',
+      }),
+      createScore({
+        id: 'score-3',
+        operation: 'english_adjectives',
+        subject: 'english',
+        created_date: '2026-03-04T12:00:00.000Z',
       }),
     ]);
 
@@ -94,7 +106,7 @@ describe('ScoreHistory i18n', () => {
     expect(screen.getByText('Overview of the last 7 days')).toBeInTheDocument();
     expect(screen.getByText('Weekly trend')).toBeInTheDocument();
     expect(screen.getByText('Recent games')).toBeInTheDocument();
-    expect(screen.getAllByText('Division').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Adjectives').length).toBeGreaterThan(0);
     expect(screen.getByText('Games total')).toBeInTheDocument();
   });
 });

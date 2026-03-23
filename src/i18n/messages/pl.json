@@ -843,6 +843,7 @@
         "english_sentence_structure": "Szyk zdania",
         "english_subject_verb_agreement": "Zgoda podmiotu",
         "english_articles": "Przedimki",
+        "english_adjectives": "Przymiotniki",
         "english_prepositions_time_place": "Przyimki czasu i miejsca",
         "alphabet_basics": "Alfabet",
         "alphabet_copy": "Przepisz litery",
@@ -1266,6 +1267,7 @@
       "english_sentence_structure": "Szyk zdania",
       "english_subject_verb_agreement": "Zgoda podmiotu",
       "english_articles": "Przedimki",
+      "english_adjectives": "Przymiotniki",
       "english_prepositions_time_place": "Przyimki czasu i miejsca"
     },
     "weeklyActivity": {
@@ -2218,6 +2220,157 @@
           }
         },
         "wordAria": "Słowo: {token}"
+      }
+    },
+    "englishArticles": {
+      "summary": {
+        "perfect": "Perfekcyjnie! Articles są na właściwych miejscach.",
+        "good": "Dobra robota! Coraz lepiej słychać ten wzór.",
+        "retry": "Zrób jeszcze jedną rundę i posłuchaj pierwszego dźwięku."
+      },
+      "inRound": {
+        "roundLabel": "Runda {current}/{total}",
+        "hitsLabel": "{hits}/{total} trafień",
+        "check": "Sprawdź",
+        "next": "Dalej",
+        "seeResult": "Zobacz wynik",
+        "drag": {
+          "topicLabel": "Przedimki",
+          "modeLabel": "Przeciągnij i upuść",
+          "modeLabelTouch": "Dotknij lub przeciągnij",
+          "poolLabel": "Bank przedimków",
+          "poolAria": "Bank przedimków",
+          "poolEmpty": "Bank pusty",
+          "slotAria": "Zdanie {index}",
+          "sentenceLabel": "Zdanie {current}",
+          "missingArticle": "W tym zdaniu wciąż brakuje przedimka.",
+          "touchIdle": "Dotknij przedimek, a potem dotknij zdanie albo bank.",
+          "touchSelected": "Wybrany przedimek: {article}. Dotknij zdanie albo bank.",
+          "clearRound": "Wyczyść rundę",
+          "feedback": {
+            "perfect": "Perfekcyjnie! Każdy article pasuje do zdania.",
+            "retry": "Sprawdź rzeczownik i pierwszy dźwięk jeszcze raz."
+          },
+          "rounds": {
+            "school-bag": {
+              "prompt": "Przeciągnij a, an i the do szkolnych zdań.",
+              "hint": "Jedna nowa rzecz, jeden dźwięk samogłoski i jedna znana rzecz.",
+              "title": "Szkolna torba"
+            },
+            "zoo-day": {
+              "prompt": "Uzupełnij zdania z wycieczki do zoo właściwymi przedimkami.",
+              "hint": "Pierwsza wzmianka używa a/an. Znane miejsce często bierze the.",
+              "title": "Dzień w zoo"
+            },
+            "sound-detective": {
+              "prompt": "Posłuchaj pierwszego dźwięku, zanim wybierzesz przedimek.",
+              "hint": "a unicorn, ale an hour.",
+              "title": "Detektyw dźwięków"
+            },
+            "trip-day": {
+              "prompt": "Spakuj właściwe przedimki do zdań o wycieczce.",
+              "hint": "Sprawdź, czy rzecz jest nowa, konkretna albo zaczyna się od dźwięku samogłoski.",
+              "title": "Dzień wycieczki"
+            },
+            "museum-day": {
+              "prompt": "Uzupełnij muzealne zdania właściwymi przedimkami.",
+              "hint": "Posłuchaj słowa audio i zauważ konkretne entrance.",
+              "title": "Dzień w muzeum"
+            },
+            "picnic-time": {
+              "prompt": "Wybierz przedimki do zdań o pikniku.",
+              "hint": "Jedna kanapka, jedno jabłko i jeden znany kosz.",
+              "title": "Czas na piknik"
+            }
+          },
+          "articles": {
+            "a": {
+              "description": "jeden przykład, dźwięk spółgłoski"
+            },
+            "an": {
+              "description": "jeden przykład, dźwięk samogłoski"
+            },
+            "the": {
+              "description": "jedna konkretna rzecz"
+            }
+          }
+        }
+      }
+    },
+    "englishAdjectives": {
+      "summary": {
+        "perfect": "Perfekcyjnie! Cała scena pasuje do adjectives.",
+        "good": "Dobra robota! Większość sceny już się zgadza.",
+        "retry": "Spróbuj jeszcze raz i zobacz, jak każdy adjective zmienia obiekt."
+      },
+      "inRound": {
+        "roundLabel": "Runda {current}/{total}",
+        "hitsLabel": "{hits}/{total} trafień",
+        "check": "Sprawdź",
+        "next": "Dalej",
+        "seeResult": "Zobacz wynik",
+        "scene": {
+          "modeLabel": "Przeciągnij adjective cards",
+          "modeLabelTouch": "Dotknij lub przeciągnij karty",
+          "ideaLabel": "Scena docelowa",
+          "studioLabel": "Adjective Studio",
+          "watchLabel": "Zobacz zmianę",
+          "poolLabel": "Bank adjectives",
+          "poolAria": "Bank adjectives",
+          "objectSlotAria": "Pole obiektu {object}",
+          "dropLabel": "Upuść albo dotknij adjective tutaj.",
+          "touchIdle": "Dotknij adjective, a potem dotknij obiekt albo bank.",
+          "touchSelected": "Wybrany adjective: {adjective}. Dotknij obiekt albo bank.",
+          "clearRound": "Wyczyść rundę",
+          "feedback": {
+            "perfect": "Perfekcyjnie! Scena zgadza się z opisem.",
+            "retry": "Spróbuj jeszcze raz i sprawdź, który adjective zmienia dany obiekt."
+          },
+          "rounds": {
+            "bedroom": {
+              "title": "Metamorfoza sypialni",
+              "prompt": "Dopasuj adjective cards, aby odbudować scenę sypialni.",
+              "hint": "Szukaj big yellow cupboard, soft rug i long blue curtains."
+            },
+            "toy_shelf": {
+              "title": "Półka z zabawkami",
+              "prompt": "Ubierz zabawki w odpowiednie describing words.",
+              "hint": "Jedna kolejka jest red, jeden miś jest small blue, a gry są new."
+            },
+            "portrait": {
+              "title": "Szczegóły portretu",
+              "prompt": "Dodaj właściwe adjectives do portretu.",
+              "hint": "Brown eyes, long black hair i beautiful picture."
+            }
+          },
+          "tokens": {
+            "big_yellow": "big yellow",
+            "soft": "soft",
+            "long_blue": "long blue",
+            "red": "red",
+            "small_blue": "small blue",
+            "new": "new",
+            "brown": "brown",
+            "long_black": "long black",
+            "beautiful": "beautiful"
+          },
+          "objects": {
+            "cupboard": "cupboard",
+            "curtains": "curtains",
+            "rug": "rug",
+            "train": "train",
+            "teddy": "teddy",
+            "games": "games",
+            "eyes": "eyes",
+            "hair": "hair",
+            "picture": "picture"
+          },
+          "sceneAria": {
+            "bedroom": "Animowana scena sypialni",
+            "toyShelf": "Animowana scena półki z zabawkami",
+            "portrait": "Animowana scena portretu"
+          }
+        }
       }
     },
     "englishSentenceStructure": {
@@ -3348,6 +3501,8 @@
         "english_parts_of_speech": "Czesci mowy",
         "english_sentence_structure": "Skladnia zdania",
         "english_subject_verb_agreement": "Zgodnosc podmiotu z czasownikiem",
+        "english_articles": "Przedimki",
+        "english_adjectives": "Przymiotniki",
         "english_prepositions_time_place": "Przyimki czasu i miejsca"
       }
     },
@@ -3489,6 +3644,8 @@
       "english_parts_of_speech": "Czesci mowy",
       "english_sentence_structure": "Skladnia zdania",
       "english_subject_verb_agreement": "Zgodnosc podmiotu z czasownikiem",
+      "english_articles": "Przedimki",
+      "english_adjectives": "Przymiotniki",
       "english_prepositions_time_place": "Przyimki czasu i miejsca"
     }
   },
@@ -5590,6 +5747,11 @@
             "title": "Przedimki w skrócie",
             "lead": "Przedimki to krótkie słowa przed rzeczownikiem. Pokazują, czy mówimy o dowolnym przykładzie, czymś konkretnym czy bez przedimka.",
             "caption": "a/an = dowolny przykład, the = coś konkretnego, zero article = brak przedimka"
+          },
+          "storyTrail": {
+            "title": "Od pierwszej wzmianki do znanej rzeczy",
+            "lead": "W krótkiej historii a albo an często wprowadza nowy rzeczownik. Gdy rzecz jest już znana, w następnym zdaniu zwykle pojawia się the.",
+            "caption": "Pierwszy raz = a cat. Znany kot = the cat."
           }
         },
         "aAn": {
@@ -5608,6 +5770,11 @@
             "title": "Przykład z zadania",
             "lead": "Zwracaj uwagę na dźwięk na początku słowa, a nie tylko na zapis.",
             "caption": "Mówimy an equation, bo equation zaczyna się od dźwięku samogłoski."
+          },
+          "soundCheck": {
+            "title": "Sprawdź dźwięk",
+            "lead": "O wyborze a albo an decyduje pierwszy dźwięk. Dlatego mówimy a unicorn, ale an hour.",
+            "caption": "Słuchaj dźwięku, a nie tylko pierwszej litery."
           }
         },
         "the": {
@@ -5615,6 +5782,11 @@
             "title": "The dla czegoś konkretnego",
             "lead": "Użyj the, gdy obie osoby dokładnie wiedzą, o jaki obiekt chodzi.",
             "caption": "Ten przedimek wskazuje na konkretny wykres, wynik albo kąt."
+          },
+          "secondMention": {
+            "title": "The przy drugiej wzmiance",
+            "lead": "Po wprowadzeniu czegoś przez a albo an kolejne zdanie często używa the, bo rzecz jest już znana.",
+            "caption": "A shell staje się the shell w następnym zdaniu."
           }
         },
         "zero": {
@@ -5622,6 +5794,11 @@
             "title": "Zero article",
             "lead": "Czasem po angielsku nie używa się żadnego przedimka, szczególnie przy przedmiotach szkolnych, ogólnych stwierdzeniach i niektórych liczbach mnogich.",
             "caption": "Bez przedimka przed ogólnymi nazwami przedmiotów i ogólnymi liczbami mnogimi"
+          },
+          "everyday": {
+            "title": "Zero article na co dzień",
+            "lead": "Przed nazwami przedmiotów szkolnych, posiłków, pór roku i ogólnych liczb mnogich często nie ma żadnego przedimka.",
+            "caption": "English, lunch, summer, cats."
           }
         },
         "practice": {
@@ -5629,6 +5806,21 @@
             "title": "Szybkie ćwiczenie",
             "lead": "Wstaw a, an, the albo brak przedimka.",
             "answersCaption": "Odpowiedzi: an, the, —, the, a"
+          },
+          "chooseAnswer": {
+            "title": "Wybierz odpowiedź",
+            "lead": "To wygląda jak test z karty pracy: przeczytaj szybko i wybierz przedimek, który brzmi poprawnie.",
+            "caption": "Pomyśl: pierwszy przykład, coś konkretnego czy brak przedimka?"
+          },
+          "makeItRight": {
+            "title": "Popraw zdanie",
+            "lead": "Znajdź błąd i napraw wybór przedimka.",
+            "caption": "Zły przedimek, brak przedimka albo zero article?"
+          },
+          "mixedRules": {
+            "title": "Mini test z przedimków",
+            "lead": "Połącz pierwszą wzmiankę, znane rzeczowniki i zero article w jednym krótkim zestawie.",
+            "caption": "Zapytaj: nowa rzecz, znana rzecz, dźwięk samogłoski czy brak przedimka?"
           }
         },
         "summary": {
@@ -5668,9 +5860,90 @@
           "title": "Practice",
           "description": "Szybkie uzupełnianie"
         },
+        "gameArticlesDrag": {
+          "title": "Article Builder",
+          "description": "Przeciągnij a, an i the do zdań"
+        },
         "summary": {
           "title": "Summary",
           "description": "Skrót zasad"
+        }
+      }
+    },
+    "englishAdjectives": {
+      "slides": {
+        "intro": {
+          "overview": {
+            "title": "Adjectives malują obraz",
+            "lead": "Adjectives opisują osoby, miejsca i rzeczy. Dodają rzeczownikowi kolor, rozmiar, wrażenie i szczegół.",
+            "caption": "big yellow cupboard, soft rug, long blue curtains"
+          }
+        },
+        "order": {
+          "beforeNoun": {
+            "title": "Stawiaj adjective przed rzeczownikiem",
+            "lead": "W języku angielskim adjective zwykle stoi przed rzeczownikiem: red train, brown eyes, small blue teddy.",
+            "caption": "adjective + adjective + noun"
+          }
+        },
+        "repair": {
+          "makeItRight": {
+            "title": "Napraw adjective",
+            "lead": "Nie dodawaj do adjectives końcówki liczby mnogiej i trzymaj je przed rzeczownikiem.",
+            "caption": "two red shoes, a small car, long brown hair"
+          }
+        },
+        "describe": {
+          "roomStory": {
+            "title": "Opisz pokój",
+            "lead": "Przeczytaj krótką historyjkę o pokoju i zobacz, jak adjectives robią wyraźniejszy obraz.",
+            "caption": "Każdy adjective dodaje scenie jeszcze jeden szczegół."
+          },
+          "wordBank": {
+            "title": "Bank słów",
+            "lead": "Te adjectives pomogą Ci budować jasne połączenia adjective + noun."
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Szybka powtórka",
+            "lead": "Zapamiętaj te reguły o adjectives, kiedy opisujesz sceny i obiekty.",
+            "items": {
+              "describe": "Adjectives opisują osoby, miejsca i rzeczy.",
+              "beforeNoun": "Zwykle stoją przed rzeczownikiem.",
+              "order": "Kilka adjectives może razem zbudować jeden wyraźny obraz.",
+              "fix": "Adjectives nie dostają w angielskim końcówki -s."
+            }
+          }
+        }
+      }
+    },
+    "englishAdjectivesShell": {
+      "lessonTitle": "Angielski: przymiotniki",
+      "sections": {
+        "intro": {
+          "title": "Wstęp",
+          "description": "Co robią adjectives"
+        },
+        "order": {
+          "title": "Szyk",
+          "description": "Adjective przed rzeczownikiem"
+        },
+        "repair": {
+          "title": "Napraw",
+          "description": "Popraw końcówki i kolejność"
+        },
+        "describe": {
+          "title": "Opis",
+          "description": "Zmieniaj zwykłą scenę w dokładny opis"
+        },
+        "gameAdjectiveStudio": {
+          "title": "Adjective Studio",
+          "description": "Ożyw scenę kartami z adjectives"
+        },
+        "summary": {
+          "title": "Podsumowanie",
+          "description": "Najważniejsze reguły"
         }
       }
     },
@@ -7353,6 +7626,7 @@
       "english_sentence_structure": "Szyk zdania",
       "english_subject_verb_agreement": "Zgoda podmiotu",
       "english_articles": "Przedimki",
+      "english_adjectives": "Przymiotniki",
       "english_prepositions_time_place": "Przyimki czasu i miejsca"
     }
   },

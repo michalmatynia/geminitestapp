@@ -475,6 +475,235 @@ export function EnglishZeroArticleAnimation(): React.JSX.Element {
   );
 }
 
+export function EnglishAdjectiveRoomAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animacja: zwykły pokój zamienia się w pokój opisany przymiotnikami.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 420 190'
+    >
+      <style>{`
+        .wall {
+          fill: #f8fafc;
+          stroke: #dbeafe;
+          stroke-width: 2;
+        }
+        .floor {
+          fill: #e2e8f0;
+        }
+        .label {
+          font: 700 12px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+          fill: #3730a3;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+        .text {
+          font: 600 12px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+          fill: #0f172a;
+        }
+        .cupboard {
+          animation: cupboardGrow 4.2s ease-in-out infinite;
+          transform-origin: 90px 122px;
+        }
+        .curtains {
+          animation: curtainsStretch 4.2s ease-in-out infinite;
+          transform-origin: 304px 46px;
+        }
+        .rug {
+          animation: rugWave 4.2s ease-in-out infinite;
+          transform-origin: 208px 150px;
+        }
+        .sparkle {
+          animation: sparkleBlink 2.2s ease-in-out infinite;
+        }
+        @keyframes cupboardGrow {
+          0%, 20% { transform: scale(1); fill: #d6b89b; }
+          45%, 100% { transform: scale(1.15, 1.08); fill: #facc15; }
+        }
+        @keyframes curtainsStretch {
+          0%, 20% { transform: scaleY(1); fill: #cbd5f5; }
+          45%, 100% { transform: scaleY(1.26); fill: #60a5fa; }
+        }
+        @keyframes rugWave {
+          0%, 20% { transform: scaleX(1); }
+          45%, 100% { transform: scaleX(1.06); }
+        }
+        @keyframes sparkleBlink {
+          0%, 100% { opacity: 0.3; transform: scale(0.92); }
+          50% { opacity: 1; transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .cupboard, .curtains, .rug, .sparkle { animation: none; }
+        }
+      `}</style>
+      <rect className='wall' height='140' rx='22' width='382' x='19' y='18' />
+      <rect className='floor' height='42' rx='16' width='382' x='19' y='126' />
+
+      <text className='label' x='36' y='40'>plain room</text>
+      <text className='text' x='36' y='58'>add adjectives and the room changes</text>
+
+      <g className='cupboard'>
+        <rect x='56' y='74' width='72' height='78' rx='14' fill='#d6b89b' stroke='#8b5e3c' strokeWidth='2' />
+        <line x1='92' y1='84' x2='92' y2='142' stroke='#78350f' strokeWidth='2' />
+      </g>
+
+      <g className='curtains'>
+        <rect x='258' y='46' width='92' height='10' rx='5' fill='#94a3b8' />
+        <rect x='264' y='56' width='28' height='64' rx='10' fill='#cbd5f5' />
+        <rect x='316' y='56' width='28' height='64' rx='10' fill='#cbd5f5' />
+      </g>
+
+      <g className='rug'>
+        <ellipse cx='206' cy='142' rx='64' ry='18' fill='#cbd5e1' opacity='0.45' />
+        <ellipse cx='206' cy='138' rx='60' ry='18' fill='#fed7aa' stroke='#fb923c' strokeWidth='2' />
+      </g>
+
+      <g className='sparkle'>
+        <circle cx='144' cy='62' r='5' fill='#f59e0b' />
+        <circle cx='338' cy='36' r='4' fill='#a855f7' />
+        <circle cx='258' cy='150' r='4' fill='#38bdf8' />
+      </g>
+    </svg>
+  );
+}
+
+export function EnglishAdjectiveOrderAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animacja: przymiotniki ustawiają się przed rzeczownikiem.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 420 150'
+    >
+      <style>{`
+        .panel {
+          fill: #f8fafc;
+          stroke: #dbeafe;
+          stroke-width: 2;
+        }
+        .card {
+          stroke-width: 2;
+        }
+        .adj {
+          fill: #e0e7ff;
+          stroke: #818cf8;
+          animation: slideAdj 4.4s ease-in-out infinite;
+        }
+        .adj-2 {
+          animation-delay: 0.3s;
+        }
+        .noun {
+          fill: #fef3c7;
+          stroke: #f59e0b;
+        }
+        .label {
+          font: 700 12px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+          fill: #1e293b;
+        }
+        .hint {
+          font: 600 11px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+          fill: #64748b;
+        }
+        @keyframes slideAdj {
+          0%, 18% { transform: translateX(108px); opacity: 0.55; }
+          38%, 100% { transform: translateX(0); opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .adj, .adj-2 { animation: none; opacity: 1; transform: translateX(0); }
+        }
+      `}</style>
+      <rect className='panel' height='112' rx='20' width='388' x='16' y='18' />
+      <text className='hint' x='36' y='42'>Adjectives come before the noun.</text>
+
+      <g transform='translate(48,66)'>
+        <g className='adj'>
+          <rect className='card adj' x='0' y='0' width='84' height='34' rx='12' />
+          <text className='label' x='22' y='22'>small</text>
+        </g>
+        <g className='adj adj-2' transform='translate(92,0)'>
+          <rect className='card adj' x='0' y='0' width='80' height='34' rx='12' />
+          <text className='label' x='24' y='22'>blue</text>
+        </g>
+        <g transform='translate(184,0)'>
+          <rect className='card noun' x='0' y='0' width='98' height='34' rx='12' />
+          <text className='label' x='25' y='22'>teddy</text>
+        </g>
+      </g>
+
+      <text className='hint' x='48' y='118'>small blue teddy</text>
+    </svg>
+  );
+}
+
+export function EnglishAdjectiveRepairAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animacja: błędny zapis przymiotnika zamienia się w poprawny.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 420 150'
+    >
+      <style>{`
+        .panel {
+          fill: #fff7ed;
+          stroke: #fdba74;
+          stroke-width: 2;
+        }
+        .bad {
+          animation: badFade 4.6s ease-in-out infinite;
+        }
+        .good {
+          animation: goodFade 4.6s ease-in-out infinite;
+        }
+        .line {
+          font: 700 13px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+        }
+        .line-bad {
+          fill: #be123c;
+        }
+        .line-good {
+          fill: #15803d;
+        }
+        .cross {
+          stroke: #e11d48;
+          stroke-width: 3;
+          stroke-linecap: round;
+        }
+        .hint {
+          font: 600 11px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+          fill: #7c2d12;
+        }
+        @keyframes badFade {
+          0%, 42% { opacity: 1; }
+          52%, 100% { opacity: 0; }
+        }
+        @keyframes goodFade {
+          0%, 46% { opacity: 0; }
+          56%, 100% { opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .bad, .good { animation: none; opacity: 1; }
+        }
+      `}</style>
+      <rect className='panel' height='112' rx='20' width='388' x='16' y='18' />
+      <text className='hint' x='34' y='42'>Fix the ending and the order.</text>
+
+      <g className='bad'>
+        <text className='line line-bad' x='34' y='78'>two reds shoes</text>
+        <line className='cross' x1='30' y1='84' x2='180' y2='58' />
+        <text className='line line-bad' x='222' y='78'>a car small</text>
+        <line className='cross' x1='218' y1='84' x2='344' y2='58' />
+      </g>
+
+      <g className='good'>
+        <text className='line line-good' x='34' y='78'>two red shoes</text>
+        <text className='line line-good' x='222' y='78'>a small car</text>
+      </g>
+    </svg>
+  );
+}
+
 export function EnglishSentenceBlueprintAnimation(): React.JSX.Element {
   return (
     <svg

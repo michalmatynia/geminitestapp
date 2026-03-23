@@ -51,7 +51,6 @@ export const useKangurRoutePageReady = ({
       return;
     }
 
-    let animationFrameId: number | null = null;
     const markReady = (): void => {
       routeTransitionActions.markRouteTransitionReady({
         pageKey,
@@ -60,18 +59,7 @@ export const useKangurRoutePageReady = ({
       reportedTransitionRef.current = transitionKey;
     };
 
-    if (typeof window === 'undefined') {
-      markReady();
-      return;
-    }
-
-    animationFrameId = window.requestAnimationFrame(markReady);
-
-    return () => {
-      if (animationFrameId !== null) {
-        window.cancelAnimationFrame(animationFrameId);
-      }
-    };
+    markReady();
   }, [
     pageKey,
     ready,

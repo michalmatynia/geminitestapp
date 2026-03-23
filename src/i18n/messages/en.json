@@ -843,6 +843,7 @@
         "english_sentence_structure": "Sentence structure",
         "english_subject_verb_agreement": "Subject-verb agreement",
         "english_articles": "Articles",
+        "english_adjectives": "Adjectives",
         "english_prepositions_time_place": "Time and place prepositions",
         "alphabet_basics": "Alphabet",
         "alphabet_copy": "Copy letters",
@@ -1266,6 +1267,7 @@
       "english_sentence_structure": "Sentence structure",
       "english_subject_verb_agreement": "Subject-verb agreement",
       "english_articles": "Articles",
+      "english_adjectives": "Adjectives",
       "english_prepositions_time_place": "Time and place prepositions"
     },
     "weeklyActivity": {
@@ -2218,6 +2220,157 @@
           }
         },
         "wordAria": "Word: {token}"
+      }
+    },
+    "englishArticles": {
+      "summary": {
+        "perfect": "Perfect! Articles are in the right places.",
+        "good": "Good job! You can hear the pattern already.",
+        "retry": "Try one more round and listen to the first sound."
+      },
+      "inRound": {
+        "roundLabel": "Round {current}/{total}",
+        "hitsLabel": "{hits}/{total} correct",
+        "check": "Check",
+        "next": "Next",
+        "seeResult": "See result",
+        "drag": {
+          "topicLabel": "Articles",
+          "modeLabel": "Drag and drop",
+          "modeLabelTouch": "Tap or drag",
+          "poolLabel": "Article bank",
+          "poolAria": "Article bank",
+          "poolEmpty": "Article bank empty",
+          "slotAria": "Sentence {index}",
+          "sentenceLabel": "Sentence {current}",
+          "missingArticle": "This sentence still needs an article.",
+          "touchIdle": "Tap an article, then tap a sentence or the bank.",
+          "touchSelected": "Selected article: {article}. Tap a sentence or the bank.",
+          "clearRound": "Clear round",
+          "feedback": {
+            "perfect": "Perfect! Each article fits the sentence.",
+            "retry": "Check the specific noun and the first sound again."
+          },
+          "rounds": {
+            "school-bag": {
+              "prompt": "Drag a, an, and the into the school sentences.",
+              "hint": "One new thing, one vowel sound, one known thing.",
+              "title": "School bag"
+            },
+            "zoo-day": {
+              "prompt": "Fill the zoo trip sentences with the correct articles.",
+              "hint": "First mention uses a/an. A known place often uses the.",
+              "title": "Zoo day"
+            },
+            "sound-detective": {
+              "prompt": "Listen to the first sound before you choose the article.",
+              "hint": "a unicorn, but an hour.",
+              "title": "Sound detective"
+            },
+            "trip-day": {
+              "prompt": "Pack the correct articles into the trip sentences.",
+              "hint": "Check if the noun is new, specific, or starts with a vowel sound.",
+              "title": "Trip day"
+            },
+            "museum-day": {
+              "prompt": "Fill the museum sentences with the right articles.",
+              "hint": "Listen to audio, and notice the specific entrance.",
+              "title": "Museum day"
+            },
+            "picnic-time": {
+              "prompt": "Choose the articles for the picnic sentences.",
+              "hint": "One sandwich, one apple, one known basket.",
+              "title": "Picnic time"
+            }
+          },
+          "articles": {
+            "a": {
+              "description": "one example, consonant sound"
+            },
+            "an": {
+              "description": "one example, vowel sound"
+            },
+            "the": {
+              "description": "one specific thing"
+            }
+          }
+        }
+      }
+    },
+    "englishAdjectives": {
+      "summary": {
+        "perfect": "Perfect! The whole scene matches the adjectives.",
+        "good": "Good job! Most of the scene matches already.",
+        "retry": "Try again and watch how each adjective changes the object."
+      },
+      "inRound": {
+        "roundLabel": "Round {current}/{total}",
+        "hitsLabel": "{hits}/{total} correct",
+        "check": "Check",
+        "next": "Next",
+        "seeResult": "See result",
+        "scene": {
+          "modeLabel": "Drag adjective cards",
+          "modeLabelTouch": "Tap or drag cards",
+          "ideaLabel": "Target scene",
+          "studioLabel": "Adjective studio",
+          "watchLabel": "Watch it change",
+          "poolLabel": "Adjective bank",
+          "poolAria": "Adjective bank",
+          "objectSlotAria": "Object slot for {object}",
+          "dropLabel": "Drop or tap an adjective here.",
+          "touchIdle": "Tap an adjective, then tap an object or the bank.",
+          "touchSelected": "Selected adjective: {adjective}. Tap an object or the bank.",
+          "clearRound": "Clear round",
+          "feedback": {
+            "perfect": "Perfect! The scene matches the description.",
+            "retry": "Try again and check which adjective changes each object."
+          },
+          "rounds": {
+            "bedroom": {
+              "title": "Bedroom makeover",
+              "prompt": "Match the adjective cards to rebuild the bedroom scene.",
+              "hint": "Look for the big yellow cupboard, soft rug, and long blue curtains."
+            },
+            "toy_shelf": {
+              "title": "Toy shelf",
+              "prompt": "Dress the toys with the right describing words.",
+              "hint": "One train is red, one teddy is small and blue, and the games are new."
+            },
+            "portrait": {
+              "title": "Portrait details",
+              "prompt": "Add the right adjectives to the portrait.",
+              "hint": "Brown eyes, long black hair, and a beautiful picture."
+            }
+          },
+          "tokens": {
+            "big_yellow": "big yellow",
+            "soft": "soft",
+            "long_blue": "long blue",
+            "red": "red",
+            "small_blue": "small blue",
+            "new": "new",
+            "brown": "brown",
+            "long_black": "long black",
+            "beautiful": "beautiful"
+          },
+          "objects": {
+            "cupboard": "cupboard",
+            "curtains": "curtains",
+            "rug": "rug",
+            "train": "train",
+            "teddy": "teddy",
+            "games": "games",
+            "eyes": "eyes",
+            "hair": "hair",
+            "picture": "picture"
+          },
+          "sceneAria": {
+            "bedroom": "Animated bedroom scene",
+            "toyShelf": "Animated toy shelf scene",
+            "portrait": "Animated portrait scene"
+          }
+        }
       }
     },
     "englishSentenceStructure": {
@@ -3348,6 +3501,8 @@
         "english_parts_of_speech": "Parts of speech",
         "english_sentence_structure": "Sentence structure",
         "english_subject_verb_agreement": "Subject-verb agreement",
+        "english_articles": "Articles",
+        "english_adjectives": "Adjectives",
         "english_prepositions_time_place": "Time and place prepositions"
       }
     },
@@ -3489,6 +3644,8 @@
       "english_parts_of_speech": "Parts of speech",
       "english_sentence_structure": "Sentence structure",
       "english_subject_verb_agreement": "Subject-verb agreement",
+      "english_articles": "Articles",
+      "english_adjectives": "Adjectives",
       "english_prepositions_time_place": "Time and place prepositions"
     }
   },
@@ -5453,6 +5610,11 @@
             "title": "Articles at a glance",
             "lead": "Articles are short words before a noun. They show whether we mean any example, one specific thing, or no article at all.",
             "caption": "a/an = any example, the = a specific one, zero article = no article"
+          },
+          "storyTrail": {
+            "title": "From first mention to the known thing",
+            "lead": "In a short story, a or an often introduces a new noun. When the noun becomes known, the story usually changes to the.",
+            "caption": "First time = a cat. Known cat = the cat."
           }
         },
         "aAn": {
@@ -5471,6 +5633,11 @@
             "title": "Task example",
             "lead": "Listen to the sound at the start of the word, not only the spelling.",
             "caption": "We say an equation because equation starts with a vowel sound."
+          },
+          "soundCheck": {
+            "title": "Sound check",
+            "lead": "The first sound decides between a and an. That is why we say a unicorn but an hour.",
+            "caption": "Listen for the sound, not only for the first letter."
           }
         },
         "the": {
@@ -5478,6 +5645,11 @@
             "title": "The for something specific",
             "lead": "Use the when both people know exactly which object you mean.",
             "caption": "The article points to one exact graph, solution, or angle."
+          },
+          "secondMention": {
+            "title": "The on second mention",
+            "lead": "After you introduce something with a or an, the next sentence often uses the because the noun is already known.",
+            "caption": "A shell becomes the shell in the next sentence."
           }
         },
         "zero": {
@@ -5485,6 +5657,11 @@
             "title": "Zero article",
             "lead": "Sometimes English uses no article, especially with school subjects, general statements, and general plurals.",
             "caption": "No article before general subjects or general plural nouns"
+          },
+          "everyday": {
+            "title": "Zero article in everyday English",
+            "lead": "School subjects, meals, seasons, and general plural nouns often use no article.",
+            "caption": "English, lunch, summer, cats."
           }
         },
         "practice": {
@@ -5492,6 +5669,21 @@
             "title": "Quick practice",
             "lead": "Fill the gap with a, an, the, or no article.",
             "answersCaption": "Answers: an, the, —, the, a"
+          },
+          "chooseAnswer": {
+            "title": "Choose the answer",
+            "lead": "This looks like a worksheet test: read fast and choose the article that sounds right.",
+            "caption": "Think: first example, specific thing, or no article?"
+          },
+          "makeItRight": {
+            "title": "Make it right",
+            "lead": "Find the mistake and repair the article choice.",
+            "caption": "Wrong article, missing article, or zero article?"
+          },
+          "mixedRules": {
+            "title": "Mini article test",
+            "lead": "Mix first mention, known nouns, and zero article in one short set.",
+            "caption": "Ask: new thing, known thing, vowel sound, or no article?"
           }
         },
         "summary": {
@@ -5531,9 +5723,90 @@
           "title": "Practice",
           "description": "Quick gap filling"
         },
+        "gameArticlesDrag": {
+          "title": "Article Builder",
+          "description": "Drag a, an, and the into the sentences"
+        },
         "summary": {
           "title": "Summary",
           "description": "Rule summary"
+        }
+      }
+    },
+    "englishAdjectives": {
+      "slides": {
+        "intro": {
+          "overview": {
+            "title": "Adjectives paint the picture",
+            "lead": "Adjectives describe people, places, and things. They add colour, size, feeling, and detail to a noun.",
+            "caption": "big yellow cupboard, soft rug, long blue curtains"
+          }
+        },
+        "order": {
+          "beforeNoun": {
+            "title": "Put adjectives before the noun",
+            "lead": "In English, adjectives usually stand before the noun: red train, brown eyes, small blue teddy.",
+            "caption": "adjective + adjective + noun"
+          }
+        },
+        "repair": {
+          "makeItRight": {
+            "title": "Fix the adjective",
+            "lead": "Do not add plural endings to adjectives and keep them before the noun.",
+            "caption": "two red shoes, a small car, long brown hair"
+          }
+        },
+        "describe": {
+          "roomStory": {
+            "title": "Describe a room",
+            "lead": "Read the little room story and spot how adjectives make the picture clearer.",
+            "caption": "Each adjective adds one more detail to the scene."
+          },
+          "wordBank": {
+            "title": "Word bank",
+            "lead": "These adjectives can help you build clear noun phrases."
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Quick recap",
+            "lead": "Remember these adjective rules while you describe scenes and objects.",
+            "items": {
+              "describe": "Adjectives describe people, places, and things.",
+              "beforeNoun": "They usually come before the noun.",
+              "order": "More than one adjective can build one clear picture.",
+              "fix": "Adjectives do not take plural -s in English."
+            }
+          }
+        }
+      }
+    },
+    "englishAdjectivesShell": {
+      "lessonTitle": "English: Adjectives",
+      "sections": {
+        "intro": {
+          "title": "Intro",
+          "description": "What adjectives do"
+        },
+        "order": {
+          "title": "Order",
+          "description": "Put adjectives before nouns"
+        },
+        "repair": {
+          "title": "Repair",
+          "description": "Fix endings and word order"
+        },
+        "describe": {
+          "title": "Describe",
+          "description": "Turn a plain scene into a detailed one"
+        },
+        "gameAdjectiveStudio": {
+          "title": "Adjective Studio",
+          "description": "Animate the scene with adjective cards"
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "Rule recap"
         }
       }
     },
@@ -7216,6 +7489,7 @@
       "english_sentence_structure": "Sentence structure",
       "english_subject_verb_agreement": "Subject-verb agreement",
       "english_articles": "Articles",
+      "english_adjectives": "Adjectives",
       "english_prepositions_time_place": "Time and place prepositions"
     }
   },

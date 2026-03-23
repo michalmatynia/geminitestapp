@@ -36,6 +36,12 @@ const ENGLISH_LESSON_SECTION_LABELS: Record<string, string> = {
   maths_logic: 'Logical thinking',
   english_basics_section: 'Basics',
   english_grammar: 'Grammar',
+  english_grammar_pronouns: 'Pronouns',
+  english_grammar_sentence_structure: 'Sentence structure',
+  english_grammar_subject_verb_agreement: 'Subject-verb agreement',
+  english_grammar_articles: 'Articles',
+  english_grammar_adjectives: 'Adjectives',
+  english_grammar_prepositions: 'Prepositions',
 };
 
 const GERMAN_LESSON_SECTION_LABELS: Record<string, string> = {
@@ -57,6 +63,12 @@ const GERMAN_LESSON_SECTION_LABELS: Record<string, string> = {
   maths_logic: 'Logisches Denken',
   english_basics_section: 'Grundlagen',
   english_grammar: 'Grammatik',
+  english_grammar_pronouns: 'Pronomen',
+  english_grammar_sentence_structure: 'Satzbau',
+  english_grammar_subject_verb_agreement: 'Subjekt-Verb-Kongruenz',
+  english_grammar_articles: 'Artikel',
+  english_grammar_adjectives: 'Adjektive',
+  english_grammar_prepositions: 'Praepositionen',
 };
 
 const UKRAINIAN_LESSON_SECTION_LABELS: Record<string, string> = {
@@ -78,6 +90,12 @@ const UKRAINIAN_LESSON_SECTION_LABELS: Record<string, string> = {
   maths_logic: 'Логічне мислення',
   english_basics_section: 'Основи',
   english_grammar: 'Граматика',
+  english_grammar_pronouns: 'Займенники',
+  english_grammar_sentence_structure: 'Будова речення',
+  english_grammar_subject_verb_agreement: 'Узгодження підмета і присудка',
+  english_grammar_articles: 'Артиклі',
+  english_grammar_adjectives: 'Прикметники',
+  english_grammar_prepositions: 'Прийменники',
 };
 
 const ENGLISH_LESSON_SECTION_TYPE_LABELS: Record<string, string> = {
@@ -281,6 +299,10 @@ const ENGLISH_LESSON_COPY_OVERRIDES: Partial<
   },
   english_articles: {
     description: 'A, an, the, and the zero article in English.',
+  },
+  english_adjectives: {
+    title: 'English: Adjectives',
+    description: 'Describe people, places, and things with adjective order and detail.',
   },
   english_prepositions_time_place: {
     description: 'Time and place prepositions in practical examples.',
@@ -558,6 +580,10 @@ const GERMAN_LESSON_COPY_OVERRIDES: Partial<
   },
   english_articles: {
     description: 'A, an, the und der Nullartikel im Englischen.',
+  },
+  english_adjectives: {
+    title: 'Englisch: Adjektive',
+    description: 'Beschreibe Personen, Orte und Dinge mit Adjektiven und der richtigen Wortstellung.',
   },
   english_prepositions_time_place: {
     description: 'Praepositionen fuer Zeit und Ort in praktischen Beispielen.',
@@ -837,6 +863,10 @@ const UKRAINIAN_LESSON_COPY_OVERRIDES: Partial<
   english_articles: {
     title: 'Англійська: артиклі',
     description: 'A, an, the та нульовий артикль в англійській.',
+  },
+  english_adjectives: {
+    title: 'Англійська: прикметники',
+    description: 'Описуй людей, місця й речі за допомогою прикметників і правильного порядку слів.',
   },
   english_prepositions_time_place: {
     title: 'Англійська: прийменники',

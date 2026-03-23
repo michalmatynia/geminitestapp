@@ -22,9 +22,30 @@ const { translationState } = vi.hoisted(() => ({
 vi.mock('next-intl', () => ({
   useLocale: () => localeState.value,
   useTranslations:
-    () =>
-    (key: string) =>
-      translationState.missing ? key : key,
+    (namespace?: string) =>
+    (key: string) => {
+      if (translationState.missing) {
+        return key;
+      }
+
+      const resolvedKey = `${namespace}.${key}`;
+      return (
+        ({
+          'KangurGameRecommendations.activityLabels.english_adjectives': {
+            de: 'Adjektive',
+            en: 'Adjectives',
+            pl: 'Przymiotniki',
+            uk: 'Прикметники',
+          },
+          'KangurProgressRuntime.activityLabels.english_adjectives': {
+            de: 'Adjektive',
+            en: 'Adjectives',
+            pl: 'Przymiotniki',
+            uk: 'Прикметники',
+          },
+        } as const)[resolvedKey]?.[localeState.value] ?? key
+      );
+    },
 }));
 
 import KangurGameHomeMomentumWidget from '@/features/kangur/ui/components/KangurGameHomeMomentumWidget';
@@ -100,7 +121,7 @@ describe('KangurGameHomeMomentumWidget i18n fallbacks', () => {
     );
     expect(screen.getByRole('link', { name: 'Open lesson' })).toHaveAttribute(
       'href',
-      '/kangur/lessons?focus=division'
+      '/en/kangur/lessons?focus=division'
     );
   });
 
@@ -136,7 +157,47 @@ describe('KangurGameHomeMomentumWidget i18n fallbacks', () => {
     );
     expect(screen.getByRole('link', { name: 'Training starten' })).toHaveAttribute(
       'href',
-      '/kangur/game?quickStart=operation&operation=division&difficulty=medium'
+      '/de/kangur/game?quickStart=operation&operation=division&difficulty=medium'
+    );
+  });
+
+  it('localizes bare adjective activity labels inside the track recommendation copy', () => {
+    localeState.value = 'en';
+
+    render(
+      <KangurGameHomeMomentumWidget
+        basePath='/kangur'
+        progress={buildProgress({
+          currentWinStreak: 3,
+          dailyQuestsCompleted: 1,
+          lessonMastery: {
+            division: {
+              attempts: 3,
+              completions: 3,
+              masteryPercent: 92,
+              bestScorePercent: 96,
+              lastScorePercent: 94,
+              lastCompletedAt: '2026-03-10T09:00:00.000Z',
+            },
+          },
+          activityStats: {
+            english_adjectives_scene_studio: {
+              sessionsPlayed: 4,
+              perfectSessions: 2,
+              totalXpEarned: 210,
+              totalCorrectAnswers: 19,
+              totalQuestionsAnswered: 20,
+              bestScorePercent: 100,
+              currentStreak: 3,
+              bestStreak: 4,
+            },
+          },
+        })}
+      />
+    );
+
+    expect(screen.getByTestId('kangur-home-momentum-description')).toHaveTextContent(
+      'adjectives'
     );
   });
 });

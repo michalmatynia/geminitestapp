@@ -51,9 +51,19 @@ describe('EnglishArticlesLesson i18n', () => {
       title: 'Nullartikel',
       description: 'Ohne Artikel',
     });
+    expect(sections.find((section) => section.id === 'game_articles_drag')).toMatchObject({
+      title: 'Artikel-Baukasten',
+      description: 'Ziehe a, an und the in die Sätze',
+    });
     expect(sections.find((section) => section.id === 'summary')).toMatchObject({
       title: 'Zusammenfassung',
       description: 'Kurzfassung der Regeln',
+    });
+
+    const games = (capturedProps?.games as Array<Record<string, unknown>>) ?? [];
+    expect(games).toHaveLength(1);
+    expect(games[0]).toMatchObject({
+      sectionId: 'game_articles_drag',
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};

@@ -75,7 +75,11 @@ describe('LessonHub', () => {
 
     const lessonCard = screen.getByTestId('lesson-hub-section-days');
     const gameCard = screen.getByTestId('lesson-hub-section-game');
+    const lessonHub = document.querySelector('[data-kangur-lesson-hub="true"]');
+    const lessonHubList = screen.getByRole('list');
 
+    expect(lessonHub).toHaveClass('w-full', 'min-w-0');
+    expect(lessonHubList).toHaveClass('mx-auto', 'w-full', 'max-w-md', 'items-center');
     expect(lessonCard).toHaveClass('soft-card', 'min-h-[11rem]', 'px-5', 'py-5');
     expect(gameCard).toHaveClass(
       'soft-card',

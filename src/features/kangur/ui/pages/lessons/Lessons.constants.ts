@@ -24,12 +24,7 @@ export const LESSONS_LIBRARY_COLUMN_CLASSNAME = cn(
 );
 
 export const LESSONS_LIBRARY_LIST_CLASSNAME = cn(
-  'flex w-full min-w-0 flex-col items-center',
-  KANGUR_LESSON_PANEL_GAP_CLASSNAME
-);
-
-export const LESSONS_LIBRARY_STACK_CLASSNAME = cn(
-  'flex w-full min-w-0 flex-col items-center',
+  'mx-auto flex w-full min-w-0 flex-col items-center',
   KANGUR_LESSON_PANEL_GAP_CLASSNAME
 );
 
@@ -38,7 +33,12 @@ export const LESSONS_ACTIVE_LAYOUT_CLASSNAME = cn(
   KANGUR_LESSON_PANEL_GAP_CLASSNAME
 );
 
-export const LESSONS_ACTIVE_SECTION_CLASSNAME = 'w-full max-w-5xl';
+export const LESSONS_ACTIVE_SECTION_CLASSNAME = 'mx-auto w-full max-w-5xl';
+
+export const LESSONS_ACTIVE_HUB_COLUMN_CLASSNAME = cn(
+  'mx-auto flex w-full min-w-0 max-w-md flex-col items-center',
+  KANGUR_LESSON_PANEL_GAP_CLASSNAME
+);
 
 export const LESSONS_ACTIVE_STACK_GAP_CLASSNAME = KANGUR_LESSON_PANEL_GAP_CLASSNAME;
 

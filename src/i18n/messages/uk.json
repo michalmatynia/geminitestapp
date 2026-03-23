@@ -835,6 +835,7 @@
         "english_sentence_structure": "Структура речення",
         "english_subject_verb_agreement": "Узгодження підмета і присудка",
         "english_articles": "Артиклі",
+        "english_adjectives": "Прикметники",
         "english_prepositions_time_place": "Прийменники часу і місця",
         "alphabet_basics": "Абетка",
         "alphabet_copy": "Копіювання літер",
@@ -1212,6 +1213,7 @@
       "english_sentence_structure": "Будова речення",
       "english_subject_verb_agreement": "Узгодження підмета і присудка",
       "english_articles": "Артиклі",
+      "english_adjectives": "Прикметники",
       "english_prepositions_time_place": "Прийменники часу й місця"
     },
     "weeklyActivity": {
@@ -1567,6 +1569,7 @@
       "english_sentence_structure": "Будова речення",
       "english_subject_verb_agreement": "Узгодження підмета і присудка",
       "english_articles": "Артиклі",
+      "english_adjectives": "Прикметники",
       "english_prepositions_time_place": "Прийменники часу й місця"
     }
   },
@@ -1765,6 +1768,8 @@
         "english_parts_of_speech": "Частини мови",
         "english_sentence_structure": "Будова речення",
         "english_subject_verb_agreement": "Узгодження підмета і присудка",
+        "english_articles": "Артиклі",
+        "english_adjectives": "Прикметники",
         "english_prepositions_time_place": "Прийменники часу й місця"
       }
     },
@@ -1906,6 +1911,8 @@
       "english_parts_of_speech": "Частини мови",
       "english_sentence_structure": "Будова речення",
       "english_subject_verb_agreement": "Узгодження підмета і присудка",
+      "english_articles": "Артиклі",
+      "english_adjectives": "Прикметники",
       "english_prepositions_time_place": "Прийменники часу й місця"
     }
   },

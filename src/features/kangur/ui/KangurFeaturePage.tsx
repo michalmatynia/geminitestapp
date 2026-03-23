@@ -76,8 +76,6 @@ export function KangurFeaturePageShell({
   );
   const initialTopBarHeightCssValue = readKangurTopBarHeightCssValue();
   const shellStyle: CSSProperties = {
-    background: kangurAppearance.background,
-    color: kangurAppearance.tone.text,
     ...kangurAppearance.vars,
   };
   if (initialTopBarHeightCssValue) {

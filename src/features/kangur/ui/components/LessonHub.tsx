@@ -11,6 +11,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { LessonHubSectionProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
+import { LESSONS_ACTIVE_HUB_COLUMN_CLASSNAME } from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 
 export type HubSection = {
   id: string;
@@ -51,7 +52,7 @@ export default function LessonHub({
 
   return (
     <div
-      className='flex w-full max-w-full flex-col items-center sm:max-w-md'
+      className='w-full min-w-0'
       role='region'
       aria-label={hubLabel}
       data-kangur-lesson-hub='true'
@@ -59,7 +60,7 @@ export default function LessonHub({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className='flex w-full flex-col kangur-lesson-panel-gap'
+        className={LESSONS_ACTIVE_HUB_COLUMN_CLASSNAME}
         role={hasSections ? 'list' : undefined}
       >
         {sections.map((section, i) => {

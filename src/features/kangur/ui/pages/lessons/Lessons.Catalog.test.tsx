@@ -68,24 +68,25 @@ vi.mock('@/features/kangur/ui/components/KangurLessonLibraryCard', () => ({
 vi.mock('@/features/kangur/ui/components/KangurLessonGroupAccordion', () => ({
   KangurLessonGroupAccordion: ({
     label,
+    typeLabel,
+    fallbackTypeLabel,
     isExpanded,
     onToggle,
     children,
   }: {
     label: React.ReactNode;
+    typeLabel?: React.ReactNode;
+    fallbackTypeLabel: React.ReactNode;
     isExpanded: boolean;
     onToggle: () => void;
     children: React.ReactNode;
   }) => (
-    <div className='w-full'>
-      <button type='button' aria-expanded={isExpanded} onClick={onToggle}>
+    <div>
+      <button type='button' onClick={onToggle}>
+        {typeLabel ?? fallbackTypeLabel}
         {label}
       </button>
-      {isExpanded ? (
-        <div role='region'>
-          <div className='w-full items-center'>{children}</div>
-        </div>
-      ) : null}
+      {isExpanded ? children : null}
     </div>
   ),
 }));
@@ -118,12 +119,6 @@ vi.mock('@/features/kangur/ui/components/KangurLessonsWordmark', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/design/primitives', () => ({
-  KangurButton: ({
-    children,
-    ...props
-  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children: React.ReactNode }) => (
-    <button {...props}>{children}</button>
-  ),
   KangurEmptyState: ({
     title,
     description,
@@ -143,10 +138,6 @@ vi.mock('@/features/kangur/ui/design/primitives', () => ({
   }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) => (
     <div {...props}>{children}</div>
   ),
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
-  useKangurCoarsePointer: () => false,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
@@ -229,30 +220,26 @@ describe('LessonsCatalog', () => {
       'max-w-lg',
       'items-center'
     );
-    expect(screen.getByTestId('lessons-list-transition')).toHaveClass(
-      'max-w-lg',
-      'items-center'
-    );
+    expect(screen.getByTestId('lessons-list-transition')).toHaveClass('items-center');
     expect(screen.getByTestId('lessons-intro-description-icon')).toHaveTextContent('🎵');
 
-    expect(screen.queryByTestId('lesson-library-motion-lesson-music-diatonic-scale')).not.toBeInTheDocument();
-    expect(document.querySelector('.kangur-lesson-group-chevron')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /skala/i }));
 
-    const trigger = screen.getByRole('button', { name: /skala/i });
-    fireEvent.click(trigger);
-
-    expect(trigger).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('region').firstElementChild).toHaveClass('w-full', 'items-center');
     expect(screen.getByTestId('lesson-library-motion-lesson-music-diatonic-scale')).toHaveClass(
       'w-full'
     );
-    expect(screen.getByTestId('lessons-page-group-label-music_scale')).toHaveTextContent('Skala');
+    expect(screen.queryByText('Grupa')).not.toBeInTheDocument();
+    expect(document.querySelector('.kangur-lesson-group-chevron')).not.toBeInTheDocument();
     expect(screen.getByTestId('lessons-page-group-icon-music_scale')).toHaveTextContent('🧩');
-    expect(
-      screen.getByTestId('lessons-page-subsection-type-icon-music_diatonic_scale')
-    ).toHaveTextContent('🪄');
-    expect(screen.getByTestId('lessons-page-subsection-icon-music_diatonic_scale')).toHaveTextContent(
+    expect(screen.getByTestId('lessons-page-group-type-icon-music_scale')).toHaveTextContent(
       '🎵'
     );
+    expect(
+      screen.queryByTestId('lessons-page-subsection-label-music_diatonic_scale')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('lessons-page-subsection-icon-music_diatonic_scale')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Podgrupa')).not.toBeInTheDocument();
   });
 });

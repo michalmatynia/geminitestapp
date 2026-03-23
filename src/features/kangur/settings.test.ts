@@ -69,6 +69,18 @@ describe('kangur lesson settings', () => {
     });
   });
 
+  it('includes English adjectives with grammar subsection references in the default library', () => {
+    const lessons = createDefaultKangurLessons();
+    const adjectives = lessons.find((lesson) => lesson.componentId === 'english_adjectives');
+
+    expect(adjectives).toMatchObject({
+      subject: 'english',
+      ageGroup: 'ten_year_old',
+      sectionId: 'english_grammar',
+      subsectionId: 'english_grammar_adjectives',
+    });
+  });
+
   it('defines the Art subject sections for six-year-old lessons', () => {
     const sections = createDefaultKangurSections().filter((section) => section.subject === 'art');
 
@@ -93,6 +105,25 @@ describe('kangur lesson settings', () => {
       id: 'music_diatonic_scale',
       componentIds: ['music_diatonic_scale'],
     });
+  });
+
+  it('defines English grammar subsections, including adjectives', () => {
+    const grammarSection = createDefaultKangurSections().find(
+      (section) => section.id === 'english_grammar'
+    );
+
+    expect(grammarSection?.subsections.map((subsection) => subsection.id)).toEqual([
+      'english_grammar_pronouns',
+      'english_grammar_sentence_structure',
+      'english_grammar_subject_verb_agreement',
+      'english_grammar_articles',
+      'english_grammar_adjectives',
+      'english_grammar_prepositions',
+    ]);
+    expect(grammarSection?.subsections.find((subsection) => subsection.id === 'english_grammar_adjectives'))
+      .toMatchObject({
+        componentIds: ['english_adjectives'],
+      });
   });
 
   it('includes logical thinking lessons in default library', () => {

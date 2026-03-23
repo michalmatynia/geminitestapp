@@ -338,11 +338,16 @@ const buildPracticeRecommendationAction = (
 };
 
 const resolveActivityOperation = (activityKey: string): string | null => {
-  const [kind = '', primary = ''] = activityKey.split(':');
-  const normalizedPrimary = primary.trim();
+  const parts = activityKey.split(':');
+  const kind = (parts[0] ?? '').trim();
+  const normalizedPrimary = (parts[1] ?? parts[0] ?? '').trim();
 
   if (!normalizedPrimary) {
     return null;
+  }
+
+  if (parts.length === 1) {
+    return normalizedPrimary;
   }
 
   if (

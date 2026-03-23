@@ -93,7 +93,6 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const currentRequestedHref = requestedHref ?? requestedPath ?? null;
   const isBootLoading = isLoadingPublicSettings || isLoadingAuth;
   const isThemeBootLoading = isLoadingSettings;
-  const shouldShowBootLoader = isThemeBootLoading;
   const isNavigationTransitionActive =
     isRouteAcknowledging || isRoutePending || isRouteWaitingForReady || isRouteRevealing;
   const isLanguageSwitcherTransition =
@@ -101,6 +100,23 @@ const AuthenticatedApp = (): JSX.Element | null => {
     activeTransitionSourceId === LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID;
   const shouldSkipNavigationSkeletonDelay = activeTransitionSourceId !== null;
   const shouldBlockRouteContent = shouldRedirectToHome;
+  let routeContent: JSX.Element | null = null;
+  if (authErrorType !== 'auth_required') {
+    if (shouldBlockRouteContent) {
+      routeContent = null;
+    } else if (!resolvedPageKey) {
+      routeContent = <PageNotFound />;
+    } else {
+      const ResolvedPage = kangurPages[resolvedPageKey];
+      routeContent = ResolvedPage ? (
+        <KangurCmsRuntimeScreen pageKey={resolvedPageKey} fallback={<ResolvedPage />} />
+      ) : (
+        <PageNotFound />
+      );
+    }
+  }
+  const [hasPresentedInteractiveShell, setHasPresentedInteractiveShell] = useState(false);
+  const shouldShowBootLoader = isThemeBootLoading && !hasPresentedInteractiveShell;
   const [isBootSkeletonVisible, setIsBootSkeletonVisible] = useState<boolean>(shouldShowBootLoader);
   const [isNavigationSkeletonVisible, setIsNavigationSkeletonVisible] = useState<boolean>(false);
   const [latchedNavigationTopBarHeightCssValue, setLatchedNavigationTopBarHeightCssValue] =
@@ -158,14 +174,6 @@ const AuthenticatedApp = (): JSX.Element | null => {
     : isRouteSkeletonVisible
     ? latchedNavigationTopBarHeightCssValue ?? currentNavigationTopBarHeightCssValue
     : null;
-  const isBootLoaderBlockingNavigation = isBootSkeletonVisible && !isRouteSkeletonVisible;
-  const shouldHideTopNavigationDuringBoot = isBootLoaderBlockingNavigation;
-  const shouldRenderInlineRouteSkeletonTopNavigation =
-    !visibleTransitionSkeletonEmbedded &&
-    !shouldHideTopNavigationDuringBoot &&
-    isRouteSkeletonVisible;
-  const shouldHideTopNavigationHost =
-    !shouldHideTopNavigationDuringBoot && isRouteSkeletonVisible;
   const shouldKeepRouteContentVisibleDuringTransition =
     isLanguageSwitcherTransition && isRouteSkeletonVisible;
   const isRouteContentVisuallyHidden =
@@ -175,7 +183,48 @@ const AuthenticatedApp = (): JSX.Element | null => {
       ((transitionPhase === 'pending' ||
         (transitionPhase === 'acknowledging' && isLanguageSwitcherTransition)) &&
         isRouteSkeletonVisible)));
-  const isRouteContentInteractionBlocked = isRouteSkeletonVisible;
+  const isRouteContentInteractionBlocked =
+    isPendingRouteSnapshotVisible ||
+    (isRouteSkeletonVisible && transitionPhase !== 'revealing');
+  const hasVisibleRouteContent = routeContent !== null && !isRouteContentVisuallyHidden;
+  const isBootLoaderBlockingNavigation =
+    isBootSkeletonVisible && !isRouteSkeletonVisible && !hasVisibleRouteContent;
+  const shouldHideTopNavigationDuringBoot = isBootLoaderBlockingNavigation;
+  const shouldRenderInlineRouteSkeletonTopNavigation =
+    !visibleTransitionSkeletonEmbedded &&
+    !shouldHideTopNavigationDuringBoot &&
+    isRouteSkeletonVisible;
+  const shouldHideTopNavigationHost =
+    !shouldHideTopNavigationDuringBoot && isRouteSkeletonVisible;
+
+  useEffect(() => {
+    if (hasPresentedInteractiveShell) {
+      return;
+    }
+
+    if (!isThemeBootLoading) {
+      setHasPresentedInteractiveShell(true);
+      return;
+    }
+
+    if (
+      isBootLoading ||
+      isRouteSkeletonVisible ||
+      isRouteContentVisuallyHidden ||
+      routeContent === null
+    ) {
+      return;
+    }
+
+    setHasPresentedInteractiveShell(true);
+  }, [
+    hasPresentedInteractiveShell,
+    isBootLoading,
+    isRouteContentVisuallyHidden,
+    isRouteSkeletonVisible,
+    isThemeBootLoading,
+    routeContent,
+  ]);
 
   useEffect(() => {
     if (authErrorType === 'auth_required') {
@@ -351,21 +400,6 @@ const AuthenticatedApp = (): JSX.Element | null => {
     return <UserNotRegisteredError />;
   }
 
-  let routeContent: JSX.Element | null = null;
-  if (authErrorType !== 'auth_required') {
-    if (shouldBlockRouteContent) {
-      routeContent = null;
-    } else if (!resolvedPageKey) {
-      routeContent = <PageNotFound />;
-    } else {
-      const ResolvedPage = kangurPages[resolvedPageKey];
-      routeContent = ResolvedPage ? (
-        <KangurCmsRuntimeScreen pageKey={resolvedPageKey} fallback={<ResolvedPage />} />
-      ) : (
-        <PageNotFound />
-      );
-    }
-  }
   const topNavigationFallback = !embedded ? <KangurTopNavigationSkeleton /> : null;
   const shouldReserveTopBarOffset = !embedded && !shouldHideTopNavigationDuringBoot;
 
@@ -408,6 +442,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
           <motion.div
             key='kangur-page-transition-skeleton:navigation'
             animate={{ opacity: 1 }}
+            className={transitionPhase === 'revealing' ? 'pointer-events-none' : undefined}
             exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.18, ease: 'easeOut' }}

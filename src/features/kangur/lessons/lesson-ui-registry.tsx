@@ -178,6 +178,9 @@ const EnglishSubjectVerbAgreementLesson = loadLessonComponent(
 const EnglishArticlesLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/EnglishArticlesLesson')
 );
+const EnglishAdjectivesLesson = loadLessonComponent(
+  () => import('../ui/components/EnglishAdjectivesLesson')
+);
 const WebDevelopmentReactComponentsLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/WebDevelopmentReactComponentsLesson')
 );
@@ -361,6 +364,7 @@ export const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<Le
   english_sentence_structure: EnglishSentenceStructureLesson,
   english_subject_verb_agreement: EnglishSubjectVerbAgreementLesson,
   english_articles: EnglishArticlesLesson,
+  english_adjectives: EnglishAdjectivesLesson,
   webdev_react_components: WebDevelopmentReactComponentsLesson,
   webdev_react_dom_components: WebDevelopmentReactDomComponentsLesson,
   webdev_react_hooks: WebDevelopmentReactHooksLesson,
@@ -507,6 +511,7 @@ export const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
   english_sentence_structure: 'english_sentence_structure',
   english_subject_verb_agreement: 'english_subject_verb_agreement',
   english_articles: 'english_articles',
+  english_adjectives: 'english_adjectives',
   angielski: 'english_basics',
   pronouns: 'english_parts_of_speech',
   pronoun: 'english_parts_of_speech',
@@ -555,6 +560,16 @@ export const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
   przedimki: 'english_articles',
   przedimki_angielski: 'english_articles',
   'przedimki-angielski': 'english_articles',
+  adjectives: 'english_adjectives',
+  adjective: 'english_adjectives',
+  adjective_order: 'english_adjectives',
+  'adjective-order': 'english_adjectives',
+  describing: 'english_adjectives',
+  opisywanie: 'english_adjectives',
+  przymiotnik: 'english_adjectives',
+  przymiotniki: 'english_adjectives',
+  przymiotniki_angielski: 'english_adjectives',
+  'przymiotniki-angielski': 'english_adjectives',
   prepositions: 'english_prepositions_time_place',
   preposition: 'english_prepositions_time_place',
   prepositions_of_time: 'english_prepositions_time_place',

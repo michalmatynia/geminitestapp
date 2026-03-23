@@ -130,6 +130,41 @@ describe('game setup recommendations', () => {
     expect(recommendation.description).toContain('A gentle start');
   });
 
+  it('accepts bare activity keys when deriving the strongest training category', () => {
+    const recommendation = getRecommendedTrainingSetup(
+      buildProgress({
+        lessonMastery: {
+          division: {
+            attempts: 3,
+            completions: 3,
+            masteryPercent: 92,
+            bestScorePercent: 96,
+            lastScorePercent: 94,
+            lastCompletedAt: '2026-03-10T09:00:00.000Z',
+          },
+        },
+        activityStats: {
+          addition: {
+            sessionsPlayed: 4,
+            perfectSessions: 1,
+            totalXpEarned: 180,
+            totalCorrectAnswers: 16,
+            totalQuestionsAnswered: 20,
+            bestScorePercent: 90,
+            currentStreak: 1,
+            bestStreak: 3,
+          },
+        },
+      })
+    );
+
+    expect(recommendation.selection).toEqual({
+      categories: ['addition'],
+      count: 10,
+      difficulty: 'medium',
+    });
+  });
+
   it('chooses the full kangur test only for truly competition-ready learners', () => {
     const recommendation = getRecommendedKangurMode(
       buildProgress({

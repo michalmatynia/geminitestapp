@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-23T16:32:32.869Z",
+  "generatedAt": "2026-03-23T21:13:06.458Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "fileCount": 5682,
+    "fileCount": 5687,
     "codeUploadRootCount": 10,
     "runtimeUploadRootCount": 9,
     "dynamicReadRiskCount": 0
@@ -21437,6 +21437,36 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/EnglishAdjectivesLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/EnglishAdjectivesSceneGame.data.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/EnglishArticlesDragDropGame.data.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/EnglishArticlesDragDropGame.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/EnglishArticlesLesson.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -34135,5 +34165,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 2244
+  "durationMs": 2189
 }

@@ -40,6 +40,7 @@ const ENGLISH_PROFILE_MESSAGES = {
   activityLabels: {
     calendar: 'Calendar',
     geometry: 'Geometry',
+    english_adjectives: 'Adjectives',
   },
   guidedMomentum: {
     badges: {
@@ -323,6 +324,45 @@ describe('buildKangurLearnerProfileSnapshot', () => {
         averageAccuracy: 90,
         totalXpEarned: 112,
         averageXpPerSession: 28,
+      }),
+    ]);
+  });
+
+  it('maps bare english adjective activity keys to the adjectives operation label', () => {
+    const snapshot = buildKangurLearnerProfileSnapshot({
+      progress: {
+        ...progress,
+        totalCorrectAnswers: 9,
+        totalQuestionsAnswered: 12,
+        activityStats: {
+          english_adjectives_scene_studio: {
+            sessionsPlayed: 3,
+            perfectSessions: 1,
+            totalCorrectAnswers: 9,
+            totalQuestionsAnswered: 12,
+            totalXpEarned: 54,
+            bestScorePercent: 100,
+            lastScorePercent: 75,
+            currentStreak: 1,
+            bestStreak: 2,
+            lastPlayedAt: '2026-03-12T10:00:00.000Z',
+          },
+        },
+      },
+      scores: [],
+      dailyGoalGames: 3,
+      now: new Date('2026-03-12T15:00:00.000Z'),
+      locale: 'en',
+      translate: createProfileTranslator(ENGLISH_PROFILE_MESSAGES),
+    });
+
+    expect(snapshot.operationPerformance).toEqual([
+      expect.objectContaining({
+        operation: 'english_adjectives',
+        label: 'Adjectives',
+        averageAccuracy: 75,
+        totalXpEarned: 54,
+        averageXpPerSession: 18,
       }),
     ]);
   });

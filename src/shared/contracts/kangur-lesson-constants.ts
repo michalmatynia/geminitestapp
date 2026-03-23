@@ -31,6 +31,7 @@ export const kangurLessonComponentIdSchema = z.enum([
   'english_sentence_structure',
   'english_subject_verb_agreement',
   'english_articles',
+  'english_adjectives',
   'english_prepositions_time_place',
   'webdev_react_components',
   'webdev_react_hooks',

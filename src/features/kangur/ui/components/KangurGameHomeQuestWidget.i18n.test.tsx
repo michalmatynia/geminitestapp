@@ -197,7 +197,7 @@ describe('KangurGameHomeQuestWidget i18n fallbacks', () => {
     );
     expect(screen.getByRole('link', { name: 'Open lesson' })).toHaveAttribute(
       'href',
-      '/kangur/lessons?focus=division'
+      '/en/kangur/lessons?focus=division'
     );
   });
 
@@ -235,7 +235,7 @@ describe('KangurGameHomeQuestWidget i18n fallbacks', () => {
     );
     expect(screen.getByRole('link', { name: 'Lektion offnen' })).toHaveAttribute(
       'href',
-      '/kangur/lessons?focus=division'
+      '/de/kangur/lessons?focus=division'
     );
   });
 });

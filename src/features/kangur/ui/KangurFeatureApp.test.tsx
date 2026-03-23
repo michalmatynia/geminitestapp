@@ -451,6 +451,10 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
       'Lessons:lessons-library'
     );
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('pointer-events-none');
+    expect(screen.getByTestId('kangur-page-transition-skeleton').parentElement).toHaveClass(
+      'pointer-events-none'
+    );
   });
 
   it('keeps the last visible Home skeleton target latched if transition metadata momentarily drops during reveal', async () => {
@@ -820,7 +824,7 @@ describe('KangurFeatureApp', () => {
     });
   });
 
-  it('keeps the app loader visible while still rendering route content during theme loading', () => {
+  it('does not render the app loader over visible route content during theme loading', () => {
     settingsStoreStateMock.mockReturnValue({
       map: new Map(),
       isLoading: true,
@@ -834,18 +838,14 @@ describe('KangurFeatureApp', () => {
 
     render(<KangurFeatureApp />);
 
-    expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-app-loader')).toHaveAttribute(
-      'data-loader-offset-top-bar',
-      'false'
-    );
+    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
     expect(screen.queryByTestId('kangur-top-navigation-skeleton')).toBeNull();
-    expect(screen.queryByTestId('kangur-top-navigation-host')).toBeNull();
+    expect(screen.getByTestId('kangur-top-navigation-host')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-lessons')).toBeInTheDocument();
   });
 
-  it('does not render the navbar skeleton while the boot loader runs and top navigation is still unregistered', () => {
+  it('renders the navbar skeleton instead of the app loader when top navigation is still unregistered during theme loading', () => {
     topNavigationHostVisibleMock.mockReturnValue(false);
     settingsStoreStateMock.mockReturnValue({
       map: new Map(),
@@ -860,12 +860,9 @@ describe('KangurFeatureApp', () => {
 
     render(<KangurFeatureApp />);
 
-    expect(screen.queryByTestId('kangur-top-navigation-skeleton')).toBeNull();
+    expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-top-navigation-host')).toBeNull();
-    expect(screen.getByTestId('kangur-app-loader')).toHaveAttribute(
-      'data-loader-offset-top-bar',
-      'false'
-    );
+    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
     expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
   });
 

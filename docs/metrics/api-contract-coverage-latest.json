@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-03-23T16:32:23.754Z",
+  "generatedAt": "2026-03-23T21:12:57.338Z",
   "status": "passed",
   "summary": {
-    "total": 16,
+    "total": 9,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 16,
+    "infoCount": 9,
     "status": "passed",
     "routeFileCount": 285,
     "methodCount": 215,
-    "methodsWithTests": 189,
+    "methodsWithTests": 196,
     "mutationValidationCount": 37,
     "queryValidationCount": 10
   },
@@ -492,14 +492,16 @@
       "route": "assets3d/categories",
       "method": "GET",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/assets3d/categories/route.ts",
         "src/app/api/assets3d/categories/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/assets3d/categories/handler.test.ts"
+      ]
     },
     {
       "route": "assets3d/reindex",
@@ -550,14 +552,16 @@
       "route": "assets3d/tags",
       "method": "GET",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/assets3d/tags/route.ts",
         "src/app/api/assets3d/tags/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/assets3d/tags/handler.test.ts"
+      ]
     },
     {
       "route": "auth/[...nextauth]",
@@ -752,14 +756,16 @@
       "route": "auth/users",
       "method": "GET",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/auth/users/route.ts",
         "src/app/api/auth/users/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/auth/users/handler.test.ts"
+      ]
     },
     {
       "route": "auth/verify-credentials",
@@ -898,14 +904,16 @@
       "route": "case-resolver/ocr/models",
       "method": "GET",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/case-resolver/ocr/models/route.ts",
         "src/app/api/case-resolver/ocr/models/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/case-resolver/ocr/models/handler.test.ts"
+      ]
     },
     {
       "route": "case-resolver/ocr/observability",
@@ -2225,14 +2233,16 @@
       "route": "notes/lookup",
       "method": "GET",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/notes/lookup/route.ts",
         "src/app/api/notes/lookup/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/notes/lookup/handler.test.ts"
+      ]
     },
     {
       "route": "notes/notebooks/[id]",
@@ -2616,14 +2626,16 @@
       "route": "settings/providers",
       "method": "GET",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/settings/providers/route.ts",
         "src/app/api/settings/providers/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/settings/providers/handler.test.ts"
+      ]
     },
     {
       "route": "settings",
@@ -2809,14 +2821,16 @@
       "route": "system/upload-events",
       "method": "GET",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/system/upload-events/route.ts",
         "src/app/api/system/upload-events/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/system/upload-events/handler.test.ts"
+      ]
     },
     {
       "route": "user/preferences",
@@ -3173,70 +3187,6 @@
     {
       "severity": "info",
       "ruleId": "api-contract-route-missing-tests",
-      "message": "GET assets3d/categories has no adjacent route/handler test coverage.",
-      "file": "src/app/api/assets3d/categories/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/assets3d/categories/route.ts",
-          "src/app/api/assets3d/categories/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
-      "message": "GET assets3d/tags has no adjacent route/handler test coverage.",
-      "file": "src/app/api/assets3d/tags/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/assets3d/tags/route.ts",
-          "src/app/api/assets3d/tags/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
-      "message": "GET auth/users has no adjacent route/handler test coverage.",
-      "file": "src/app/api/auth/users/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/auth/users/route.ts",
-          "src/app/api/auth/users/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
-      "message": "GET case-resolver/ocr/models has no adjacent route/handler test coverage.",
-      "file": "src/app/api/case-resolver/ocr/models/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/case-resolver/ocr/models/route.ts",
-          "src/app/api/case-resolver/ocr/models/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
       "message": "GET case-resolver/ocr/observability has no adjacent route/handler test coverage.",
       "file": "src/app/api/case-resolver/ocr/observability/route.ts",
       "line": 8,
@@ -3316,22 +3266,6 @@
     {
       "severity": "info",
       "ruleId": "api-contract-route-missing-tests",
-      "message": "GET notes/lookup has no adjacent route/handler test coverage.",
-      "file": "src/app/api/notes/lookup/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/notes/lookup/route.ts",
-          "src/app/api/notes/lookup/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
       "message": "GET settings/cache has no adjacent route/handler test coverage.",
       "file": "src/app/api/settings/cache/route.ts",
       "line": 7,
@@ -3360,38 +3294,6 @@
           "src/app/api/settings/heavy/handler.ts"
         ]
       }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
-      "message": "GET settings/providers has no adjacent route/handler test coverage.",
-      "file": "src/app/api/settings/providers/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/settings/providers/route.ts",
-          "src/app/api/settings/providers/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
-      "message": "GET system/upload-events has no adjacent route/handler test coverage.",
-      "file": "src/app/api/system/upload-events/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/system/upload-events/route.ts",
-          "src/app/api/system/upload-events/handler.ts"
-        ]
-      }
     }
   ],
   "rules": [
@@ -3399,8 +3301,8 @@
       "ruleId": "api-contract-route-missing-tests",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 16
+      "infoCount": 9
     }
   ],
-  "durationMs": 190
+  "durationMs": 179
 }

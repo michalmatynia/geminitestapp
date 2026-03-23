@@ -18,7 +18,6 @@ import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGr
 import {
   getKangurSixYearOldLessonGroupIcon,
   getKangurSixYearOldSubjectVisual,
-  KANGUR_SIX_YEAR_OLD_SUBSECTION_ICON,
 } from '@/features/kangur/ui/constants/six-year-old-visuals';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { KangurEmptyState } from '@/features/kangur/ui/design/primitives';
@@ -30,10 +29,7 @@ import { getKangurSubjectGroups } from '@/features/kangur/ui/constants/subject-g
 import { useKangurLessonSections } from '@/features/kangur/ui/hooks/useKangurLessonSections';
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
-import {
-  LESSONS_LIBRARY_COLUMN_CLASSNAME,
-  LESSONS_LIBRARY_STACK_CLASSNAME,
-} from '@/features/kangur/ui/pages/lessons/Lessons.constants';
+import { LESSONS_LIBRARY_LIST_CLASSNAME } from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 
 import { useState, type JSX } from 'react';
 
@@ -162,7 +158,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
   );
 
   return (
-    <div className={LESSONS_LIBRARY_COLUMN_CLASSNAME} aria-label='Lista lekcji'>
+    <div className={LESSONS_LIBRARY_LIST_CLASSNAME} aria-label='Lista lekcji'>
       {subjectGroups.map((group) => {
         const groupLessons = lessonsBySubject.get(group.value) ?? [];
         if (groupLessons.length === 0) {
@@ -171,7 +167,6 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
 
         const subjectSections = allSections.filter((s) => s.subject === group.value);
         const displayLessonGroups = buildLessonGroups(subjectSections, groupLessons, locale);
-        const subjectVisual = getKangurSixYearOldSubjectVisual(group.value);
 
         type LessonEntry =
           | { kind: 'group'; group: (typeof displayLessonGroups)[number] }
@@ -213,7 +208,6 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
           <KangurSubjectGroupSection
             key={group.value}
             ariaLabel={`${group.label} lessons`}
-            className='w-full'
             label={
               isSixYearOld ? (
                 <span
@@ -234,18 +228,18 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
               )
             }
           >
-            <div className={LESSONS_LIBRARY_STACK_CLASSNAME} role='list'>
+            <div className={LESSONS_LIBRARY_LIST_CLASSNAME} role='list'>
               {lessonEntries.map((entry) => {
                 if (entry.kind === 'group') {
                   const groupKey = `${group.value}:${entry.group.id}`;
                   const isExpanded = expandedLessonGroupId === groupKey;
                   const groupHasSubsections = Boolean(entry.group.subsections?.length);
+                  const subjectVisual = getKangurSixYearOldSubjectVisual(group.value);
 
                   return (
                     <div key={groupKey} role='listitem' className='w-full'>
                       <KangurLessonGroupAccordion
                         accordionId={groupKey}
-                        className='mx-auto w-full'
                         fallbackTypeLabel={
                           isSixYearOld ? (
                             <KangurVisualCueContent
@@ -262,7 +256,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                         label={
                           isSixYearOld ? (
                             <span
-                              className='inline-flex items-center justify-center gap-2'
+                              className='inline-flex items-center gap-2'
                               data-testid={`lessons-catalog-group-label-${groupKey}`}
                             >
                               <span
@@ -302,49 +296,10 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                           entry.group.subsections?.map((subsection) => (
                             <div
                               key={subsection.id}
-                              className={LESSONS_LIBRARY_STACK_CLASSNAME}
+                              className={LESSONS_LIBRARY_LIST_CLASSNAME}
                               role='listitem'
                             >
-                              <div className='min-w-0 text-center sm:text-left'>
-                                {isSixYearOld ? (
-                                  <>
-                                    <div data-testid={`lessons-catalog-subsection-type-${subsection.id}`}>
-                                      <KangurVisualCueContent
-                                        detail={subjectVisual.detail}
-                                        detailClassName='text-sm'
-                                        detailTestId={`lessons-catalog-subsection-type-detail-${subsection.id}`}
-                                        icon={KANGUR_SIX_YEAR_OLD_SUBSECTION_ICON}
-                                        iconClassName='text-base'
-                                        iconTestId={`lessons-catalog-subsection-type-icon-${subsection.id}`}
-                                        label={subsection.typeLabel ?? pageTranslations('subsectionTypeLabel')}
-                                      />
-                                    </div>
-                                    <div
-                                      className='mt-1 inline-flex items-center justify-center gap-2 text-base font-semibold text-slate-900 sm:justify-start'
-                                      data-testid={`lessons-catalog-subsection-label-${subsection.id}`}
-                                    >
-                                      <span
-                                        aria-hidden='true'
-                                        className='text-lg leading-none'
-                                        data-testid={`lessons-catalog-subsection-icon-${subsection.id}`}
-                                      >
-                                        {subjectVisual.icon}
-                                      </span>
-                                      <span>{subsection.label}</span>
-                                    </div>
-                                  </>
-                                ) : (
-                                  <>
-                                    <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500'>
-                                      {subsection.typeLabel ?? pageTranslations('subsectionTypeLabel')}
-                                    </div>
-                                    <div className='mt-1 text-base font-semibold text-slate-900'>
-                                      {subsection.label}
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                              <div className={LESSONS_LIBRARY_STACK_CLASSNAME} role='list'>
+                              <div className={LESSONS_LIBRARY_LIST_CLASSNAME} role='list'>
                                 {subsection.lessons.map((lesson) => renderLessonCard(lesson))}
                               </div>
                             </div>

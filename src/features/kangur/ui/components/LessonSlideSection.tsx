@@ -441,8 +441,10 @@ export default function LessonSlideSection({
       className={cn(
         'flex w-full max-w-md flex-col items-center',
         KANGUR_PANEL_GAP_CLASSNAME,
-        activeSlide.containerClassName
+        activeSlide.containerClassName,
+        'mx-auto'
       )}
+      data-testid='lesson-slide-stage-root'
       onKeyDownCapture={handleKeyDownCapture}
     >
       <div

@@ -843,6 +843,7 @@
         "english_sentence_structure": "Satzbau",
         "english_subject_verb_agreement": "Subjekt-Verb-Ubereinstimmung",
         "english_articles": "Artikel",
+        "english_adjectives": "Adjektive",
         "english_prepositions_time_place": "Zeit- und Ortspräpositionen",
         "alphabet_basics": "Alphabet-Grundlagen",
         "alphabet_copy": "Buchstaben abschreiben",
@@ -1266,6 +1267,7 @@
       "english_sentence_structure": "Satzbau",
       "english_subject_verb_agreement": "Subjekt-Verb-Ubereinstimmung",
       "english_articles": "Artikel",
+      "english_adjectives": "Adjektive",
       "english_prepositions_time_place": "Praepositionen fuer Zeit und Ort"
     },
     "weeklyActivity": {
@@ -2218,6 +2220,157 @@
           }
         },
         "wordAria": "Wort: {token}"
+      }
+    },
+    "englishArticles": {
+      "summary": {
+        "perfect": "Perfekt! Die Artikel sitzen an der richtigen Stelle.",
+        "good": "Gute Arbeit! Du hörst das Muster schon gut.",
+        "retry": "Mach noch eine Runde und achte auf den Anfangslaut."
+      },
+      "inRound": {
+        "roundLabel": "Runde {current}/{total}",
+        "hitsLabel": "{hits}/{total} richtig",
+        "check": "Prüfen",
+        "next": "Weiter",
+        "seeResult": "Ergebnis ansehen",
+        "drag": {
+          "topicLabel": "Artikel",
+          "modeLabel": "Ziehen und ablegen",
+          "modeLabelTouch": "Tippen oder ziehen",
+          "poolLabel": "Artikelbank",
+          "poolAria": "Artikelbank",
+          "poolEmpty": "Artikelbank leer",
+          "slotAria": "Satz {index}",
+          "sentenceLabel": "Satz {current}",
+          "missingArticle": "In diesem Satz fehlt noch ein Artikel.",
+          "touchIdle": "Tippe einen Artikel an und dann einen Satz oder die Bank.",
+          "touchSelected": "Ausgewählter Artikel: {article}. Tippe einen Satz oder die Bank an.",
+          "clearRound": "Runde leeren",
+          "feedback": {
+            "perfect": "Perfekt! Jeder Artikel passt zum Satz.",
+            "retry": "Prüfe das Nomen und den ersten Laut noch einmal."
+          },
+          "rounds": {
+            "school-bag": {
+              "prompt": "Ziehe a, an und the in die Schulsätze.",
+              "hint": "Eine neue Sache, ein Vokallaut und eine bekannte Sache.",
+              "title": "Schultasche"
+            },
+            "zoo-day": {
+              "prompt": "Ergänze die Zoo-Sätze mit den richtigen Artikeln.",
+              "hint": "Die erste Erwähnung nimmt a/an. Ein bekannter Ort nimmt oft the.",
+              "title": "Tag im Zoo"
+            },
+            "sound-detective": {
+              "prompt": "Hör auf den ersten Laut, bevor du den Artikel auswählst.",
+              "hint": "a unicorn, aber an hour.",
+              "title": "Laut-Detektiv"
+            },
+            "trip-day": {
+              "prompt": "Packe die richtigen Artikel in die Reisesätze.",
+              "hint": "Prüfe, ob das Nomen neu, konkret oder mit Vokallaut beginnt.",
+              "title": "Ausflugstag"
+            },
+            "museum-day": {
+              "prompt": "Ergänze die Museumssätze mit den richtigen Artikeln.",
+              "hint": "Hör auf audio und beachte den bestimmten entrance.",
+              "title": "Tag im Museum"
+            },
+            "picnic-time": {
+              "prompt": "Wähle die Artikel für die Picknick-Sätze.",
+              "hint": "Ein Sandwich, ein Apfel und ein bekannter Korb.",
+              "title": "Picknickzeit"
+            }
+          },
+          "articles": {
+            "a": {
+              "description": "ein Beispiel, Konsonantenlaut"
+            },
+            "an": {
+              "description": "ein Beispiel, Vokallaut"
+            },
+            "the": {
+              "description": "eine konkrete Sache"
+            }
+          }
+        }
+      }
+    },
+    "englishAdjectives": {
+      "summary": {
+        "perfect": "Perfekt! Die ganze Szene passt zu den Adjektiven.",
+        "good": "Gute Arbeit! Der größte Teil der Szene stimmt schon.",
+        "retry": "Versuche es noch einmal und achte darauf, wie jedes Adjektiv das Objekt verändert."
+      },
+      "inRound": {
+        "roundLabel": "Runde {current}/{total}",
+        "hitsLabel": "{hits}/{total} richtig",
+        "check": "Prüfen",
+        "next": "Weiter",
+        "seeResult": "Ergebnis ansehen",
+        "scene": {
+          "modeLabel": "Adjektivkarten ziehen",
+          "modeLabelTouch": "Tippen oder ziehen",
+          "ideaLabel": "Zielszene",
+          "studioLabel": "Adjektiv-Studio",
+          "watchLabel": "Veränderung ansehen",
+          "poolLabel": "Adjektivbank",
+          "poolAria": "Adjektivbank",
+          "objectSlotAria": "Objektfeld für {object}",
+          "dropLabel": "Lege hier ein Adjektiv ab oder tippe es an.",
+          "touchIdle": "Tippe ein Adjektiv an und dann ein Objekt oder die Bank.",
+          "touchSelected": "Ausgewähltes Adjektiv: {adjective}. Tippe ein Objekt oder die Bank an.",
+          "clearRound": "Runde leeren",
+          "feedback": {
+            "perfect": "Perfekt! Die Szene passt zur Beschreibung.",
+            "retry": "Versuche es noch einmal und prüfe, welches Adjektiv welches Objekt verändert."
+          },
+          "rounds": {
+            "bedroom": {
+              "title": "Schlafzimmer-Makeover",
+              "prompt": "Ordne die Adjektivkarten zu, um die Schlafzimmerszene wieder aufzubauen.",
+              "hint": "Achte auf den big yellow cupboard, den soft rug und die long blue curtains."
+            },
+            "toy_shelf": {
+              "title": "Spielzeugregal",
+              "prompt": "Gib den Spielsachen die richtigen describing words.",
+              "hint": "Ein Zug ist red, ein Teddy ist small blue und die Spiele sind new."
+            },
+            "portrait": {
+              "title": "Porträt-Details",
+              "prompt": "Füge dem Porträt die richtigen Adjektive hinzu.",
+              "hint": "Brown eyes, long black hair und beautiful picture."
+            }
+          },
+          "tokens": {
+            "big_yellow": "big yellow",
+            "soft": "soft",
+            "long_blue": "long blue",
+            "red": "red",
+            "small_blue": "small blue",
+            "new": "new",
+            "brown": "brown",
+            "long_black": "long black",
+            "beautiful": "beautiful"
+          },
+          "objects": {
+            "cupboard": "cupboard",
+            "curtains": "curtains",
+            "rug": "rug",
+            "train": "train",
+            "teddy": "teddy",
+            "games": "games",
+            "eyes": "eyes",
+            "hair": "hair",
+            "picture": "picture"
+          },
+          "sceneAria": {
+            "bedroom": "Animierte Schlafzimmerszene",
+            "toyShelf": "Animierte Spielzeugregal-Szene",
+            "portrait": "Animierte Porträtszene"
+          }
+        }
       }
     },
     "englishSentenceStructure": {
@@ -3348,6 +3501,8 @@
         "english_parts_of_speech": "Wortarten",
         "english_sentence_structure": "Satzbau",
         "english_subject_verb_agreement": "Subjekt-Verb-Ubereinstimmung",
+        "english_articles": "Artikel",
+        "english_adjectives": "Adjektive",
         "english_prepositions_time_place": "Zeit- und Ortsprapositionen"
       }
     },
@@ -3489,6 +3644,8 @@
       "english_parts_of_speech": "Wortarten",
       "english_sentence_structure": "Satzbau",
       "english_subject_verb_agreement": "Subjekt-Verb-Ubereinstimmung",
+      "english_articles": "Artikel",
+      "english_adjectives": "Adjektive",
       "english_prepositions_time_place": "Zeit- und Ortsprapositionen"
     }
   },
@@ -5590,6 +5747,11 @@
             "title": "Artikel im Überblick",
             "lead": "Artikel sind kurze Wörter vor einem Nomen. Sie zeigen, ob wir irgendein Beispiel, etwas Bestimmtes oder gar keinen Artikel meinen.",
             "caption": "a/an = irgendein Beispiel, the = etwas Bestimmtes, zero article = kein Artikel"
+          },
+          "storyTrail": {
+            "title": "Von der ersten Erwähnung zur bekannten Sache",
+            "lead": "In einer kurzen Geschichte führen a oder an oft ein neues Nomen ein. Wenn das Nomen bekannt wird, wechselt der Satz oft zu the.",
+            "caption": "Erstes Mal = a cat. Bekannte Katze = the cat."
           }
         },
         "aAn": {
@@ -5608,6 +5770,11 @@
             "title": "Beispiel aus einer Aufgabe",
             "lead": "Achte auf den Laut am Anfang des Wortes, nicht nur auf die Schreibweise.",
             "caption": "Wir sagen an equation, weil equation mit einem Vokallaut beginnt."
+          },
+          "soundCheck": {
+            "title": "Laut-Check",
+            "lead": "Der erste Laut entscheidet zwischen a und an. Darum sagen wir a unicorn, aber an hour.",
+            "caption": "Achte auf den Laut, nicht nur auf den ersten Buchstaben."
           }
         },
         "the": {
@@ -5615,6 +5782,11 @@
             "title": "The für etwas Bestimmtes",
             "lead": "Benutze the, wenn beide genau wissen, welches Objekt gemeint ist.",
             "caption": "Der Artikel zeigt auf genau einen Graphen, eine Lösung oder einen Winkel."
+          },
+          "secondMention": {
+            "title": "The bei der zweiten Erwähnung",
+            "lead": "Nachdem du etwas mit a oder an eingeführt hast, benutzt der nächste Satz oft the, weil das Nomen schon bekannt ist.",
+            "caption": "A shell wird im nächsten Satz zu the shell."
           }
         },
         "zero": {
@@ -5622,6 +5794,11 @@
             "title": "Nullartikel",
             "lead": "Manchmal steht im Englischen gar kein Artikel, besonders bei Fächern, allgemeinen Aussagen und allgemeinen Mehrzahlformen.",
             "caption": "Kein Artikel vor allgemeinen Fächern oder allgemeinen Mehrzahlformen"
+          },
+          "everyday": {
+            "title": "Nullartikel im Alltag",
+            "lead": "Vor Schulfächern, Mahlzeiten, Jahreszeiten und allgemeinen Mehrzahlformen steht oft gar kein Artikel.",
+            "caption": "English, lunch, summer, cats."
           }
         },
         "practice": {
@@ -5629,6 +5806,21 @@
             "title": "Schnelles Training",
             "lead": "Ergänze a, an, the oder keinen Artikel.",
             "answersCaption": "Lösungen: an, the, —, the, a"
+          },
+          "chooseAnswer": {
+            "title": "Wähle die Antwort",
+            "lead": "Das sieht wie ein Arbeitsblatt-Test aus: Lies schnell und wähle den Artikel, der richtig klingt.",
+            "caption": "Denk: erstes Beispiel, etwas Bestimmtes oder kein Artikel?"
+          },
+          "makeItRight": {
+            "title": "Mach es richtig",
+            "lead": "Finde den Fehler und verbessere die Artikelwahl.",
+            "caption": "Falscher Artikel, fehlender Artikel oder Nullartikel?"
+          },
+          "mixedRules": {
+            "title": "Mini-Artikeltest",
+            "lead": "Mische erste Erwähnung, bekannte Nomen und Nullartikel in einer kurzen Runde.",
+            "caption": "Frag dich: neue Sache, bekannte Sache, Vokallaut oder kein Artikel?"
           }
         },
         "summary": {
@@ -5668,9 +5860,90 @@
           "title": "Ubung",
           "description": "Schnelles Ergänzen"
         },
+        "gameArticlesDrag": {
+          "title": "Artikel-Baukasten",
+          "description": "Ziehe a, an und the in die Sätze"
+        },
         "summary": {
           "title": "Zusammenfassung",
           "description": "Kurzfassung der Regeln"
+        }
+      }
+    },
+    "englishAdjectives": {
+      "slides": {
+        "intro": {
+          "overview": {
+            "title": "Adjektive malen ein Bild",
+            "lead": "Adjektive beschreiben Personen, Orte und Dinge. Sie geben einem Nomen Farbe, Größe, Gefühl und Detail.",
+            "caption": "big yellow cupboard, soft rug, long blue curtains"
+          }
+        },
+        "order": {
+          "beforeNoun": {
+            "title": "Setze Adjektive vor das Nomen",
+            "lead": "Im Englischen stehen Adjektive meistens vor dem Nomen: red train, brown eyes, small blue teddy.",
+            "caption": "adjective + adjective + noun"
+          }
+        },
+        "repair": {
+          "makeItRight": {
+            "title": "Adjektiv reparieren",
+            "lead": "Adjektive bekommen keine Pluralendung und bleiben vor dem Nomen.",
+            "caption": "two red shoes, a small car, long brown hair"
+          }
+        },
+        "describe": {
+          "roomStory": {
+            "title": "Beschreibe ein Zimmer",
+            "lead": "Lies die kleine Zimmergeschichte und entdecke, wie Adjektive das Bild klarer machen.",
+            "caption": "Jedes Adjektiv fügt der Szene ein weiteres Detail hinzu."
+          },
+          "wordBank": {
+            "title": "Wortbank",
+            "lead": "Diese Adjektive helfen dir, klare adjective + noun-Gruppen zu bauen."
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Kurze Wiederholung",
+            "lead": "Merke dir diese Adjektivregeln, wenn du Szenen und Objekte beschreibst.",
+            "items": {
+              "describe": "Adjektive beschreiben Personen, Orte und Dinge.",
+              "beforeNoun": "Sie stehen meistens vor dem Nomen.",
+              "order": "Mehrere Adjektive können zusammen ein klares Bild bauen.",
+              "fix": "Adjektive bekommen im Englischen kein Plural-s."
+            }
+          }
+        }
+      }
+    },
+    "englishAdjectivesShell": {
+      "lessonTitle": "Englisch: Adjektive",
+      "sections": {
+        "intro": {
+          "title": "Einführung",
+          "description": "Was Adjektive tun"
+        },
+        "order": {
+          "title": "Reihenfolge",
+          "description": "Adjektive vor Nomen setzen"
+        },
+        "repair": {
+          "title": "Reparieren",
+          "description": "Endungen und Wortstellung korrigieren"
+        },
+        "describe": {
+          "title": "Beschreiben",
+          "description": "Eine einfache Szene in eine detailreiche Szene verwandeln"
+        },
+        "gameAdjectiveStudio": {
+          "title": "Adjektiv-Studio",
+          "description": "Belebe die Szene mit Adjektivkarten"
+        },
+        "summary": {
+          "title": "Zusammenfassung",
+          "description": "Regeln im Überblick"
         }
       }
     },
@@ -7353,6 +7626,7 @@
       "english_sentence_structure": "Satzbau",
       "english_subject_verb_agreement": "Subjekt-Verb-Ubereinstimmung",
       "english_articles": "Artikel",
+      "english_adjectives": "Adjektive",
       "english_prepositions_time_place": "Präpositionen für Zeit und Ort"
     }
   },

@@ -17,7 +17,6 @@ import { KangurLessonsWordmark } from '@/features/kangur/ui/components/KangurLes
 import {
   getKangurSixYearOldLessonGroupIcon,
   getKangurSixYearOldSubjectVisual,
-  KANGUR_SIX_YEAR_OLD_SUBSECTION_ICON,
 } from '@/features/kangur/ui/constants/six-year-old-visuals';
 import {
   KangurEmptyState,
@@ -34,10 +33,8 @@ import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-secti
 import {
   LESSONS_CARD_TRANSITION,
   LESSONS_CARD_STAGGER_DELAY,
-  LESSONS_LIBRARY_COLUMN_CLASSNAME,
   LESSONS_LIBRARY_LAYOUT_CLASSNAME,
   LESSONS_LIBRARY_LIST_CLASSNAME,
-  LESSONS_LIBRARY_STACK_CLASSNAME,
 } from './Lessons.constants';
 import { getLessonMasteryPresentation } from './Lessons.utils';
 import { useLessons } from './LessonsContext';
@@ -274,126 +271,84 @@ export function LessonsCatalog() {
         const isExpanded = expandedLessonGroupId === entry.group.id;
         const groupHasSubsections = Boolean(entry.group.subsections?.length);
         let groupLessonIndex = 0;
-
         return (
-          <div key={entry.group.id} className='w-full' role='listitem'>
-            <KangurLessonGroupAccordion
-              accordionId={entry.group.id}
-              className='mx-auto w-full'
-              fallbackTypeLabel={
-                isSixYearOld ? (
-                  <KangurVisualCueContent
-                    icon={getKangurSixYearOldLessonGroupIcon(groupHasSubsections)}
-                    iconClassName='text-base'
-                    iconTestId={`lessons-page-group-type-icon-${entry.group.id}`}
-                    label={translations('groupTypeLabel')}
-                  />
-                ) : (
-                  translations('groupTypeLabel')
-                )
-              }
-              isExpanded={isExpanded}
-              label={
-                isSixYearOld ? (
-                  <span
-                    className='inline-flex items-center justify-center gap-2'
-                    data-testid={`lessons-page-group-label-${entry.group.id}`}
-                  >
-                    <span
-                      aria-hidden='true'
-                      className='text-lg leading-none'
-                      data-testid={`lessons-page-group-icon-${entry.group.id}`}
-                    >
-                      {getKangurSixYearOldLessonGroupIcon(groupHasSubsections)}
-                    </span>
-                    <span>{entry.group.label}</span>
-                  </span>
-                ) : (
-                  entry.group.label
-                )
-              }
-              onToggle={() => setExpandedLessonGroupId(isExpanded ? null : entry.group.id)}
-              typeLabel={
-                entry.group.typeLabel
-                  ? isSixYearOld
-                    ? (
-                        <KangurVisualCueContent
-                          detail={subjectVisual.detail}
-                          detailClassName='text-sm'
-                          detailTestId={`lessons-page-group-type-detail-${entry.group.id}`}
-                          icon={subjectVisual.icon}
-                          iconClassName='text-base'
-                          iconTestId={`lessons-page-group-type-icon-${entry.group.id}`}
-                          label={entry.group.typeLabel}
-                        />
-                      )
-                    : entry.group.typeLabel
-                  : undefined
-              }
-            >
-              {groupHasSubsections ? (
-                entry.group.subsections?.map((subsection) => (
-                  <div
-                    key={subsection.id}
-                    className={LESSONS_LIBRARY_STACK_CLASSNAME}
-                  >
-                    <div className='min-w-0 text-center'>
-                      {isSixYearOld ? (
-                        <>
-                          <div data-testid={`lessons-page-subsection-type-${subsection.id}`}>
-                            <KangurVisualCueContent
-                              detail={subjectVisual.detail}
-                              detailClassName='text-sm'
-                              detailTestId={`lessons-page-subsection-type-detail-${subsection.id}`}
-                              icon={KANGUR_SIX_YEAR_OLD_SUBSECTION_ICON}
-                              iconClassName='text-base'
-                              iconTestId={`lessons-page-subsection-type-icon-${subsection.id}`}
-                              label={subsection.typeLabel ?? translations('subsectionTypeLabel')}
-                            />
-                          </div>
-                          <div
-                            className='mt-1 inline-flex items-center justify-center gap-2 text-base font-semibold text-slate-900'
-                            data-testid={`lessons-page-subsection-label-${subsection.id}`}
-                          >
-                            <span
-                              aria-hidden='true'
-                              className='text-lg leading-none'
-                              data-testid={`lessons-page-subsection-icon-${subsection.id}`}
-                            >
-                              {subjectVisual.icon}
-                            </span>
-                            <span>{subsection.label}</span>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500'>
-                            {subsection.typeLabel ?? translations('subsectionTypeLabel')}
-                          </div>
-                          <div className='mt-1 text-base font-semibold text-slate-900'>
-                            {subsection.label}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    <div className={LESSONS_LIBRARY_STACK_CLASSNAME}>
-                      {subsection.lessons.map((lesson) => {
-                        const index = groupLessonIndex;
-                        groupLessonIndex += 1;
-                        return renderLessonCard(lesson, index);
-                      })}
-                    </div>
-                  </div>
-                ))
+          <KangurLessonGroupAccordion
+            accordionId={entry.group.id}
+            fallbackTypeLabel={
+              isSixYearOld ? (
+                <KangurVisualCueContent
+                  icon={getKangurSixYearOldLessonGroupIcon(groupHasSubsections)}
+                  iconClassName='text-base'
+                  iconTestId={`lessons-page-group-type-icon-${entry.group.id}`}
+                  label={translations('groupTypeLabel')}
+                />
               ) : (
-                entry.group.lessons.map((lesson) => {
-                  const index = groupLessonIndex;
-                  groupLessonIndex += 1;
-                  return renderLessonCard(lesson, index);
-                })
-              )}
-            </KangurLessonGroupAccordion>
-          </div>
+                translations('groupTypeLabel')
+              )
+            }
+            isExpanded={isExpanded}
+            key={entry.group.id}
+            label={
+              isSixYearOld ? (
+                <span
+                  className='inline-flex items-center gap-2'
+                  data-testid={`lessons-page-group-label-${entry.group.id}`}
+                >
+                  <span
+                    aria-hidden='true'
+                    className='text-lg leading-none'
+                    data-testid={`lessons-page-group-icon-${entry.group.id}`}
+                  >
+                    {getKangurSixYearOldLessonGroupIcon(groupHasSubsections)}
+                  </span>
+                  <span>{entry.group.label}</span>
+                </span>
+              ) : (
+                entry.group.label
+              )
+            }
+            onToggle={() => setExpandedLessonGroupId(isExpanded ? null : entry.group.id)}
+            typeLabel={
+              entry.group.typeLabel
+                ? isSixYearOld
+                  ? (
+                      <KangurVisualCueContent
+                        detail={subjectVisual.detail}
+                        detailClassName='text-sm'
+                        detailTestId={`lessons-page-group-type-detail-${entry.group.id}`}
+                        icon={subjectVisual.icon}
+                        iconClassName='text-base'
+                        iconTestId={`lessons-page-group-type-icon-${entry.group.id}`}
+                        label={entry.group.typeLabel}
+                      />
+                    )
+                  : entry.group.typeLabel
+                : undefined
+            }
+          >
+            {groupHasSubsections ? (
+              entry.group.subsections?.map((subsection) => (
+                <div
+                  key={subsection.id}
+                  className={LESSONS_LIBRARY_LIST_CLASSNAME}
+                >
+                  <div className={LESSONS_LIBRARY_LIST_CLASSNAME}>
+                    {subsection.lessons.map((lesson) => {
+                      const index = groupLessonIndex;
+                      groupLessonIndex += 1;
+                      return renderLessonCard(lesson, index);
+                    })}
+                  </div>
+                </div>
+              ))
+            ) : (
+              entry.group.lessons.map((lesson) => {
+                const index = groupLessonIndex;
+                groupLessonIndex += 1;
+                return renderLessonCard(lesson, index);
+              })
+            )}
+          </KangurLessonGroupAccordion>
         );
       }
 
@@ -466,7 +421,7 @@ export function LessonsCatalog() {
       </div>
       <div
         aria-busy={shouldShowLessonsCatalogSkeleton}
-        className={LESSONS_LIBRARY_COLUMN_CLASSNAME}
+        className={LESSONS_LIBRARY_LIST_CLASSNAME}
         data-testid='lessons-list-transition'
       >
         {shouldShowLessonsCatalogSkeleton ? (
@@ -481,7 +436,7 @@ export function LessonsCatalog() {
             title={lessonListEmptyStateContent?.title ?? translations('emptyTitle')}
           />
         ) : (
-          <div className={LESSONS_LIBRARY_STACK_CLASSNAME}>
+          <div className={LESSONS_LIBRARY_LIST_CLASSNAME}>
             {renderLessonEntries()}
           </div>
         )}

@@ -201,6 +201,8 @@ describe('KangurFeaturePage', () => {
       'kangur-premium-bg',
       'min-h-full'
     );
+    expect(screen.getByTestId('kangur-feature-page-shell').style.background).toBe('');
+    expect(screen.getByTestId('kangur-feature-page-shell').style.color).toBe('');
     expect(screen.getByTestId('kangur-feature-page-shell')).not.toHaveClass('text-slate-800');
     expect(screen.getByTestId('kangur-feature-page-shell')).toHaveAttribute('lang', 'pl');
     expect(screen.getByRole('link', { name: 'Przejdź do głównej treści' })).toBeInTheDocument();
@@ -228,6 +230,8 @@ describe('KangurFeaturePage', () => {
     expect(
       screen.getByTestId('kangur-feature-page-shell').style.getPropertyValue('--kangur-top-bar-height')
     ).toBe('');
+    expect(screen.getByTestId('kangur-feature-page-shell').style.background).toBe('');
+    expect(screen.getByTestId('kangur-feature-page-shell').style.color).toBe('');
     expect(screen.getByTestId('kangur-feature-page-shell')).not.toHaveClass('text-slate-800');
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
       pageKey: 'Tests',

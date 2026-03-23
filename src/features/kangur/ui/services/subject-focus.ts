@@ -9,6 +9,7 @@ import {
   withKangurClientError,
   withKangurClientErrorSync,
 } from '@/features/kangur/observability/client';
+import { isAbortLikeError } from '@/features/kangur/shared/utils/observability/is-abort-like-error';
 import { KANGUR_SUBJECT_FOCUS_ENDPOINT } from '@/features/kangur/services/local-kangur-platform-endpoints';
 import { createActorAwareHeaders, trackReadFailure, trackWriteFailure } from '@/features/kangur/services/local-kangur-platform-shared';
 import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
@@ -134,7 +135,28 @@ const isSubjectFocusChangeDetail = (
   return record['key'] === key && normalizeSubject(record['subject']) !== null;
 };
 
-const requestSubjectFocusFromApi = async (): Promise<KangurLessonSubject | null> =>
+const isTransientSubjectFocusReadError = (
+  error: unknown,
+  signal?: AbortSignal
+): boolean => {
+  if (isAbortLikeError(error, signal)) {
+    return true;
+  }
+
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.trim().toLowerCase();
+  return (
+    error.name === 'TypeError' &&
+    (message === 'failed to fetch' || message.includes('load failed'))
+  );
+};
+
+const requestSubjectFocusFromApi = async (
+  signal?: AbortSignal
+): Promise<KangurLessonSubject | null> =>
   await withKangurClientError(
     (error) => ({
       source: 'kangur.subject-focus',
@@ -147,7 +169,7 @@ const requestSubjectFocusFromApi = async (): Promise<KangurLessonSubject | null>
       },
     }),
     async () => {
-      const payload = await kangurSubjectFocusApiClient.getSubjectFocus();
+      const payload = await kangurSubjectFocusApiClient.getSubjectFocus({ signal });
       const parsed = kangurSubjectFocusSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur subject focus payload validation failed.');
@@ -156,8 +178,10 @@ const requestSubjectFocusFromApi = async (): Promise<KangurLessonSubject | null>
     },
     {
       fallback: null,
+      shouldReport: (error) =>
+        !isTransientSubjectFocusReadError(error, signal) && !isKangurAuthStatusError(error),
       onError: (error) => {
-        if (isKangurAuthStatusError(error)) {
+        if (isTransientSubjectFocusReadError(error, signal) || isKangurAuthStatusError(error)) {
           return;
         }
         trackReadFailure('subject-focus.get', error, {
@@ -217,8 +241,10 @@ export const loadPersistedSubjectFocus = (key: string | null): KangurLessonSubje
   return store.entries[key] ?? DEFAULT_SUBJECT;
 };
 
-export const loadRemoteSubjectFocus = async (): Promise<KangurLessonSubject | null> =>
-  requestSubjectFocusFromApi();
+export const loadRemoteSubjectFocus = async (
+  signal?: AbortSignal
+): Promise<KangurLessonSubject | null> =>
+  requestSubjectFocusFromApi(signal);
 
 export const persistSubjectFocus = (
   key: string | null,

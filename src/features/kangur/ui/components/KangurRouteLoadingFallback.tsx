@@ -3,7 +3,6 @@
 import { usePathname, useSearchParams } from 'next/navigation';
 
 import { KangurPageTransitionSkeleton } from '@/features/kangur/ui/components/KangurPageTransitionSkeleton';
-import { KangurTopNavigationSkeleton } from '@/features/kangur/ui/components/KangurTopNavigationSkeleton';
 import { resolveKangurRouteTransitionSkeletonVariant } from '@/features/kangur/ui/routing/route-transition-skeletons';
 
 export function KangurRouteLoadingFallback({
@@ -25,22 +24,11 @@ export function KangurRouteLoadingFallback({
     href,
   });
 
-  const pageSkeleton = (
+  return (
     <KangurPageTransitionSkeleton
       reason='navigation'
-      renderInlineTopNavigationSkeleton={!includeTopNavigationSkeleton}
+      renderInlineTopNavigationSkeleton={includeTopNavigationSkeleton}
       variant={variant}
     />
-  );
-
-  if (!includeTopNavigationSkeleton) {
-    return pageSkeleton;
-  }
-
-  return (
-    <>
-      <KangurTopNavigationSkeleton />
-      {pageSkeleton}
-    </>
   );
 }

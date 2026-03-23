@@ -107,9 +107,20 @@ const ALPHABET_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel>
   alphabet_syllables: { label: 'Sylaby', emoji: '🗣️' },
 };
 
+const ART_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
+  all: { label: 'Wszystkie', emoji: '🏆' },
+  art_colors_harmony: { label: 'Harmonia kolorów', emoji: '🎨' },
+  art_shapes_basic: { label: 'Podstawowe kształty', emoji: '🧩' },
+};
+
 const GEOMETRY_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
   all: { label: 'Wszystkie', emoji: '🏆' },
   geometry_shape_recognition: { label: 'Geometria', emoji: '🔷' },
+};
+
+const MUSIC_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
+  all: { label: 'Wszystkie', emoji: '🏆' },
+  music_diatonic_scale: { label: 'Skala diatoniczna', emoji: '🎵' },
 };
 
 const AGENTIC_CODING_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
@@ -150,6 +161,8 @@ const OPERATION_LABELS_BY_SUBJECT: Record<
   maths: MATH_OPERATION_LABELS,
   english: ENGLISH_OPERATION_LABELS,
   alphabet: ALPHABET_OPERATION_LABELS,
+  art: ART_OPERATION_LABELS,
+  music: MUSIC_OPERATION_LABELS,
   geometry: GEOMETRY_OPERATION_LABELS,
   web_development: {
     all: { label: 'Wszystkie', emoji: '🏆' },
@@ -182,6 +195,8 @@ const ALL_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
   ...MATH_OPERATION_LABELS,
   ...ENGLISH_OPERATION_LABELS,
   ...ALPHABET_OPERATION_LABELS,
+  ...ART_OPERATION_LABELS,
+  ...MUSIC_OPERATION_LABELS,
   ...GEOMETRY_OPERATION_LABELS,
   ...AGENTIC_CODING_OPERATION_LABELS,
 };

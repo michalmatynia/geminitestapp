@@ -5,7 +5,10 @@ import { usePathname } from 'next/navigation';
 import { KANGUR_BASE_PATH, KANGUR_MAIN_PAGE_KEY } from '@/features/kangur/config/routing';
 import { KangurRouteLoadingFallback } from '@/features/kangur/ui/components/KangurRouteLoadingFallback';
 import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
-import { resolveManagedKangurPageKeyFromHref } from '@/features/kangur/ui/routing/managed-paths';
+import {
+  normalizeManagedKangurPathname,
+  resolveManagedKangurPageKeyFromHref,
+} from '@/features/kangur/ui/routing/managed-paths';
 
 const GenericFrontendLoadingFallback = (): React.JSX.Element => (
   <div
@@ -28,16 +31,14 @@ const GenericFrontendLoadingFallback = (): React.JSX.Element => (
 );
 
 const resolveKangurBasePath = (pathname: string | null): string => {
-  if (typeof pathname !== 'string') {
+  const normalizedPathname = normalizeManagedKangurPathname(pathname);
+
+  if (!normalizedPathname) {
     return '/';
   }
 
-  const trimmed = pathname.trim();
-  if (!trimmed) {
-    return '/';
-  }
-
-  return trimmed === KANGUR_BASE_PATH || trimmed.startsWith(`${KANGUR_BASE_PATH}/`)
+  return normalizedPathname === KANGUR_BASE_PATH ||
+    normalizedPathname.startsWith(`${KANGUR_BASE_PATH}/`)
     ? KANGUR_BASE_PATH
     : '/';
 };

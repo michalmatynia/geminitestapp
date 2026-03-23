@@ -99,6 +99,43 @@ describe('subject-focus remote API client integration', () => {
     );
   });
 
+  it('ignores aborted subject focus hydration requests', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(
+      Object.assign(new Error('Operation was aborted'), { name: 'AbortError' })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const controller = new AbortController();
+    controller.abort();
+
+    const { loadRemoteSubjectFocus } = await import(
+      '@/features/kangur/ui/services/subject-focus'
+    );
+
+    await expect(loadRemoteSubjectFocus(controller.signal)).resolves.toBeNull();
+    expect(trackReadFailureMock).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/kangur/subject-focus',
+      expect.objectContaining({
+        method: 'GET',
+        credentials: 'same-origin',
+        signal: controller.signal,
+      }),
+    );
+  });
+
+  it('ignores transient browser fetch failures during subject focus hydration', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { loadRemoteSubjectFocus } = await import(
+      '@/features/kangur/ui/services/subject-focus'
+    );
+
+    await expect(loadRemoteSubjectFocus()).resolves.toBeNull();
+    expect(trackReadFailureMock).not.toHaveBeenCalled();
+  });
+
   it('updates remote subject focus via the shared API client', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

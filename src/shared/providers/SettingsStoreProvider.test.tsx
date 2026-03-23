@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { render, screen } from '@testing-library/react';
+import { useEffect } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -57,6 +58,20 @@ function SettingsProbe(): React.JSX.Element {
   );
 }
 
+function SettingsMapProbe({
+  onMapChange,
+}: {
+  onMapChange: (map: Map<string, string>) => void;
+}): React.JSX.Element {
+  const store = useSettingsStore();
+
+  useEffect(() => {
+    onMapChange(store.map);
+  }, [onMapChange, store.map]);
+
+  return null;
+}
+
 describe('SettingsStoreProvider', () => {
   beforeEach(() => {
     pathnameRef.current = '/';
@@ -109,5 +124,81 @@ describe('SettingsStoreProvider', () => {
 
     expect(screen.getByTestId('value')).toHaveTextContent('empty');
     expect(screen.getByTestId('loading')).toHaveTextContent('false');
+  });
+
+  it('preserves the previous map reference when refetched settings are unchanged', () => {
+    const onMapChange = vi.fn();
+    const initialMap = new Map<string, string>([['feature_flag', 'true']]);
+
+    liteQueryResultRef.current = {
+      data: initialMap,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    };
+
+    const { rerender } = render(
+      <SettingsStoreProvider mode='lite'>
+        <SettingsMapProbe onMapChange={onMapChange} />
+      </SettingsStoreProvider>
+    );
+
+    expect(onMapChange).toHaveBeenCalledTimes(1);
+    expect(onMapChange).toHaveBeenLastCalledWith(initialMap);
+
+    liteQueryResultRef.current = {
+      data: new Map<string, string>([['feature_flag', 'true']]),
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    };
+
+    rerender(
+      <SettingsStoreProvider mode='lite'>
+        <SettingsMapProbe onMapChange={onMapChange} />
+      </SettingsStoreProvider>
+    );
+
+    expect(onMapChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('publishes a new map reference when a refetch changes settings values', () => {
+    const onMapChange = vi.fn();
+    const initialMap = new Map<string, string>([['feature_flag', 'true']]);
+
+    liteQueryResultRef.current = {
+      data: initialMap,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    };
+
+    const { rerender } = render(
+      <SettingsStoreProvider mode='lite'>
+        <SettingsMapProbe onMapChange={onMapChange} />
+      </SettingsStoreProvider>
+    );
+
+    liteQueryResultRef.current = {
+      data: new Map<string, string>([['feature_flag', 'false']]),
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    };
+
+    rerender(
+      <SettingsStoreProvider mode='lite'>
+        <SettingsMapProbe onMapChange={onMapChange} />
+      </SettingsStoreProvider>
+    );
+
+    expect(onMapChange).toHaveBeenCalledTimes(2);
+    expect(onMapChange.mock.calls[0]?.[0]).toBe(initialMap);
+    expect(onMapChange.mock.calls[1]?.[0]).not.toBe(initialMap);
+    expect(onMapChange.mock.calls[1]?.[0].get('feature_flag')).toBe('false');
   });
 });

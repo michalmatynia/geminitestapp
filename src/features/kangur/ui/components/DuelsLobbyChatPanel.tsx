@@ -33,6 +33,7 @@ const LOBBY_CHAT_UNREAD_CAP = 99;
 type DuelsLobbyChatPanelProps = {
   enabled: boolean;
   isOnline: boolean;
+  isPageActive?: boolean;
   canPost: boolean;
   relativeNow: number;
   activeLearnerId?: string | null;
@@ -43,7 +44,16 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
   const chatTranslations = useTranslations('KangurDuels.chat');
   const commonTranslations = useTranslations('KangurDuels.common');
   const isCoarsePointer = useKangurCoarsePointer();
-  const { enabled, isOnline, canPost, relativeNow, activeLearnerId, onRequireLogin } = props;
+  const {
+    enabled,
+    isOnline,
+    isPageActive = true,
+    canPost,
+    relativeNow,
+    activeLearnerId,
+    onRequireLogin,
+  } = props;
+  const chatEnabled = enabled && isPageActive;
   const {
     messages,
     isLoading,
@@ -58,7 +68,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
     sendMessage,
     maxMessageLength,
   } = useKangurLobbyChat({
-    enabled,
+    enabled: chatEnabled,
     isOnline,
     streamEnabled: true,
   });
@@ -76,7 +86,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
   const hasMessages = messages.length > 0;
   const canLoadOlder = Boolean(nextCursor) && isOnline;
   const canSend =
-    enabled &&
+    chatEnabled &&
     isOnline &&
     canPost &&
     !isSending &&

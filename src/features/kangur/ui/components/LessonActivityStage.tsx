@@ -42,6 +42,7 @@ type LessonActivityStageProps = {
   sectionHeader?: KangurLessonSubsectionSummary | null;
   shellClassName?: string;
   shellTestId?: string;
+  shellVariant?: 'panel' | 'plain';
   title: string;
 };
 
@@ -188,6 +189,7 @@ export default function LessonActivityStage({
   sectionHeader = null,
   shellClassName,
   shellTestId,
+  shellVariant = 'panel',
   title,
 }: LessonActivityStageProps): React.JSX.Element {
   const lessonChrome = useTranslations('KangurLessonChrome');
@@ -240,19 +242,33 @@ export default function LessonActivityStage({
         )}
       >
         <LessonActivityStageTopBar />
-        <KangurGlassPanel
-          className={shellPanelClassName}
-          data-testid={shellPanelTestId}
-          role='region'
-          aria-label={panelAriaLabel}
-          aria-labelledby={panelLabelledBy}
-          aria-describedby={panelDescribedBy}
-          padding='xl'
-          surface='solid'
-        >
-          {shouldRenderStageHeader ? <LessonActivityStageHeader /> : null}
-          {children}
-        </KangurGlassPanel>
+        {shellVariant === 'plain' ? (
+          <div
+            className={shellPanelClassName}
+            data-testid={shellPanelTestId}
+            role='region'
+            aria-label={panelAriaLabel}
+            aria-labelledby={panelLabelledBy}
+            aria-describedby={panelDescribedBy}
+          >
+            {shouldRenderStageHeader ? <LessonActivityStageHeader /> : null}
+            {children}
+          </div>
+        ) : (
+          <KangurGlassPanel
+            className={shellPanelClassName}
+            data-testid={shellPanelTestId}
+            role='region'
+            aria-label={panelAriaLabel}
+            aria-labelledby={panelLabelledBy}
+            aria-describedby={panelDescribedBy}
+            padding='xl'
+            surface='solid'
+          >
+            {shouldRenderStageHeader ? <LessonActivityStageHeader /> : null}
+            {children}
+          </KangurGlassPanel>
+        )}
         {footerNavigation ? <div className='w-full'>{footerNavigation}</div> : null}
       </div>
     </LessonActivityStageContext.Provider>

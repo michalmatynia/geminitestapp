@@ -37,6 +37,8 @@ type KangurScoreDocument = {
 
 const ENGLISH_OPERATION_REGEX = /^english_/i;
 const ALPHABET_OPERATION_REGEX = /^alphabet_/i;
+const ART_OPERATION_REGEX = /^art_/i;
+const MUSIC_OPERATION_REGEX = /^music_/i;
 
 const toDto = (doc: KangurScoreDocument): KangurScore => ({
   id: doc._id.toString(),
@@ -83,7 +85,12 @@ const toMongoFilters = (input?: KangurScoreListInput): Filter<KangurScoreDocumen
         ],
       };
       const operationMatch: Filter<KangurScoreDocument> = {
-        operation: { $not: ENGLISH_OPERATION_REGEX },
+        $nor: [
+          { operation: ENGLISH_OPERATION_REGEX },
+          { operation: ALPHABET_OPERATION_REGEX },
+          { operation: ART_OPERATION_REGEX },
+          { operation: MUSIC_OPERATION_REGEX },
+        ],
       };
       query.$and = Array.isArray(query.$and)
         ? [...query.$and, subjectMatch, operationMatch]
@@ -97,6 +104,16 @@ const toMongoFilters = (input?: KangurScoreListInput): Filter<KangurScoreDocumen
       query.$or = [
         { subject: filters.subject },
         { operation: { $regex: ENGLISH_OPERATION_REGEX } },
+      ];
+    } else if (filters.subject === 'art') {
+      query.$or = [
+        { subject: filters.subject },
+        { operation: { $regex: ART_OPERATION_REGEX } },
+      ];
+    } else if (filters.subject === 'music') {
+      query.$or = [
+        { subject: filters.subject },
+        { operation: { $regex: MUSIC_OPERATION_REGEX } },
       ];
     } else {
       query.subject = filters.subject;

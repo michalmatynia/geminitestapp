@@ -17,19 +17,19 @@ const { useDuelsLobbyMock, useDuelStateMock, authState, navigationSpy } = vi.hoi
   navigationSpy: vi.fn(),
 }));
 
+const routingState = {
+  basePath: '/kangur',
+  embedded: false,
+  pageKey: 'Duels',
+};
+
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: () => authState,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
-  useKangurRouting: () => ({
-    basePath: '/kangur',
-    embedded: false,
-  }),
-  useOptionalKangurRouting: () => ({
-    basePath: '/kangur',
-    embedded: false,
-  }),
+  useKangurRouting: () => routingState,
+  useOptionalKangurRouting: () => routingState,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurGuestPlayerContext', () => ({
@@ -75,9 +75,18 @@ vi.mock('./duels/DuelsLobbyPanel', () => ({
 
 import Duels from '@/features/kangur/ui/pages/Duels';
 
+const setDocumentVisibility = (value: DocumentVisibilityState): void => {
+  Object.defineProperty(document, 'visibilityState', {
+    configurable: true,
+    value,
+  });
+};
+
 describe('Duels page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    routingState.pageKey = 'Duels';
+    setDocumentVisibility('visible');
     authState.isAuthenticated = false;
     authState.user = null;
     useDuelsLobbyMock.mockReturnValue({
@@ -116,6 +125,12 @@ describe('Duels page', () => {
       expect.objectContaining({
         canPlay: false,
         isGuest: true,
+        isPageActive: true,
+      })
+    );
+    expect(useDuelStateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isPageActive: true,
       })
     );
   });
@@ -185,6 +200,40 @@ describe('Duels page', () => {
     expect(useDuelsLobbyMock).toHaveBeenCalledWith(
       expect.objectContaining({
         canPlay: false,
+      })
+    );
+  });
+
+  it('pauses duel polling when the document is hidden', () => {
+    setDocumentVisibility('hidden');
+
+    render(<Duels />);
+
+    expect(useDuelsLobbyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isPageActive: false,
+      })
+    );
+    expect(useDuelStateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isPageActive: false,
+      })
+    );
+  });
+
+  it('pauses duel polling when the current route is not the Duels page', () => {
+    routingState.pageKey = 'Game';
+
+    render(<Duels />);
+
+    expect(useDuelsLobbyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isPageActive: false,
+      })
+    );
+    expect(useDuelStateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isPageActive: false,
       })
     );
   });

@@ -6,13 +6,22 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+const { routeNavigatorPrefetchMock } = vi.hoisted(() => ({
+  routeNavigatorPrefetchMock: vi.fn(),
+}));
+
 vi.mock('next/link', () => ({
   default: ({
     children,
     href,
+    prefetch: _prefetch,
     scroll: _scroll,
     ...rest
-  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; scroll?: boolean }) => (
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+    href: string;
+    prefetch?: boolean;
+    scroll?: boolean;
+  }) => (
     <a href={href} {...rest}>
       {children}
     </a>
@@ -21,7 +30,7 @@ vi.mock('next/link', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
   useKangurRouteNavigator: () => ({
-    prefetch: vi.fn(),
+    prefetch: routeNavigatorPrefetchMock,
     push: vi.fn(),
     replace: vi.fn(),
   }),
@@ -46,6 +55,22 @@ describe('KangurNavAction', () => {
       'px-4',
       'touch-manipulation'
     );
+    expect(routeNavigatorPrefetchMock).toHaveBeenCalledWith('/kangur/lessons');
+  });
+
+  it('can disable managed prefetch for linked navigation actions', () => {
+    render(
+      <KangurNavAction
+        href='/kangur/duels'
+        prefetch={false}
+        size='sm'
+        targetPageKey='Duels'
+      >
+        Pojedynki
+      </KangurNavAction>
+    );
+
+    expect(routeNavigatorPrefetchMock).not.toHaveBeenCalledWith('/kangur/duels');
   });
 
   it('adds touch-friendly sizing to button navigation actions on coarse pointers', () => {

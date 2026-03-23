@@ -5,6 +5,7 @@ const { Redis } = require('ioredis');
 const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
+const { resolveWebSocketUpgradeTarget } = require('./scripts/runtime/server-upgrade-routing.cjs');
 
 const dev = process.env.NODE_ENV !== 'production';
 const nodeVersion = process.versions.node || '';
@@ -128,6 +129,7 @@ const SCRAPER_GUARD = createScraperGuard({
 
 app.prepare().then(async () => {
   const { ErrorSystem, logSystemEvent } = await getLoggingTools();
+  const handleUpgrade = app.getUpgradeHandler();
   const server = createServer(async (req, res) => {
     const debugResponseHeaders = process.env.DEBUG_RESPONSE_HEADERS === 'true';
     const debugUrlNormalize = process.env.DEBUG_URL_NORMALIZE === 'true';
@@ -421,15 +423,23 @@ app.prepare().then(async () => {
   });
 
   server.on('upgrade', (req, socket, head) => {
-    try {
-      const host = req.headers.host || 'localhost';
-      const url = new URL(req.url || '/', `http://${host}`);
-      if (url.pathname !== DUELS_LOBBY_WS_PATH) {
-        socket.destroy();
-        return;
-      }
-    } catch (err) {
+    const upgradeTarget = resolveWebSocketUpgradeTarget(req, DUELS_LOBBY_WS_PATH);
+
+    if (upgradeTarget === 'reject') {
       socket.destroy();
+      return;
+    }
+
+    if (upgradeTarget === 'next') {
+      void handleUpgrade(req, socket, head).catch((err) => {
+        void ErrorSystem.captureException(err, {
+          source: 'server',
+          context: { action: 'upgrade-handler-failed', url: req.url ?? null },
+        });
+        if (!socket.destroyed) {
+          socket.destroy();
+        }
+      });
       return;
     }
 

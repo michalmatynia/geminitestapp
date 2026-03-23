@@ -3,6 +3,7 @@
 import type { KangurAssignmentSnapshot } from '@kangur/platform';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import type {
+  KangurLessonAgeGroup,
   KangurLesson,
   KangurLessonComponentId,
   KangurLessonDocument,
@@ -74,16 +75,47 @@ export const resolveFocusedLessonSubject = (
   focusToken: string,
   templateMap?: Map<string, KangurLessonTemplate>,
 ): KangurLessonSubject | null => {
+  return resolveFocusedLessonScope(focusToken, templateMap)?.subject ?? null;
+};
+
+export type KangurFocusedLessonScope = {
+  componentId: KangurLessonComponentId;
+  subject: KangurLessonSubject;
+  ageGroup: KangurLessonAgeGroup | null;
+};
+
+export const resolveFocusedLessonScope = (
+  focusToken: string,
+  templateMap?: Map<string, KangurLessonTemplate>,
+): KangurFocusedLessonScope | null => {
   const componentId = resolveFocusedLessonComponentId(focusToken, templateMap);
   if (!componentId) {
     return null;
   }
 
   if (templateMap) {
-    return templateMap.get(componentId)?.subject ?? null;
+    const template = templateMap.get(componentId);
+    if (!template) {
+      return null;
+    }
+
+    return {
+      componentId,
+      subject: template.subject,
+      ageGroup: template.ageGroup ?? null,
+    };
   }
 
-  return KANGUR_LESSON_LIBRARY[componentId]?.subject ?? null;
+  const template = KANGUR_LESSON_LIBRARY[componentId];
+  if (!template) {
+    return null;
+  }
+
+  return {
+    componentId,
+    subject: template.subject,
+    ageGroup: template.ageGroup ?? null,
+  };
 };
 
 export const getLessonAssignmentTimestamp = (

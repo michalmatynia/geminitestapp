@@ -210,4 +210,26 @@ describe('queued-product-ops', () => {
     });
     expect(result.current.size).toBe(0);
   });
+
+  it('keeps queued ai-run hook state stable when only source expiry is refreshed', async () => {
+    const { renderHook, act } = await import('@testing-library/react');
+    vi.useFakeTimers();
+    const aiRunSource = ops.buildQueuedProductAiRunSource('run-stable');
+    if (!aiRunSource) throw new Error('Expected ai-run source');
+
+    const { result } = renderHook(() => ops.useQueuedAiRunProductIds());
+
+    act(() => {
+      ops.markQueuedProductSource('product-1', aiRunSource, 5_000);
+    });
+    const stableReference = result.current;
+
+    act(() => {
+      vi.advanceTimersByTime(1_000);
+      ops.markQueuedProductSource('product-1', aiRunSource, 5_000);
+    });
+
+    expect(result.current).toBe(stableReference);
+    expect(result.current).toEqual(new Set(['product-1']));
+  });
 });

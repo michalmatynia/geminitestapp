@@ -14,6 +14,12 @@ describe('lesson-catalog-i18n', () => {
     expect(getLocalizedKangurLessonTitle('clock', 'en', 'Nauka zegara')).toBe('Clock');
     expect(getLocalizedKangurLessonTitle('clock', 'de', 'Nauka zegara')).toBe('Uhr');
     expect(getLocalizedKangurLessonTitle('clock', 'uk', 'Nauka zegara')).toBe('Годинник');
+    expect(getLocalizedKangurLessonTitle('art_shapes_basic', 'de', 'Basic shapes')).toBe(
+      'Grundformen'
+    );
+    expect(getLocalizedKangurLessonTitle('music_diatonic_scale', 'en', 'Skala diatoniczna')).toBe(
+      'Diatonic scale'
+    );
     expect(getLocalizedKangurLessonTitle('english_articles', 'uk', 'English: Articles')).toBe(
       'Англійська: артиклі'
     );
@@ -57,6 +63,14 @@ describe('lesson-catalog-i18n', () => {
         'Godziny, minuty i pełny czas na zegarze analogowym'
       )
     ).toBe('Години, хвилини й точний час на аналоговому годиннику.');
+
+    expect(
+      getLocalizedKangurLessonDescription(
+        'music_diatonic_scale',
+        'de',
+        'Poznaj siedem dźwięków skali diatonicznej, śpiewaj je po kolei i wskaż, czy melodia idzie w górę czy w dół.'
+      )
+    ).toContain('diatonischen Tonleiter');
   });
 
   it('returns Ukrainian technical lesson metadata for grown-ups lesson catalogs', () => {
@@ -83,6 +97,12 @@ describe('lesson-catalog-i18n', () => {
 
   it('returns localized subject labels for English, German, and Ukrainian locales', () => {
     expect(getLocalizedKangurSubjectLabel('maths', 'en')).toBe('Maths');
+    expect(getLocalizedKangurSubjectLabel('art', 'en')).toBe('Art');
+    expect(getLocalizedKangurSubjectLabel('art', 'de')).toBe('Kunst');
+    expect(getLocalizedKangurSubjectLabel('art', 'uk')).toBe('Мистецтво');
+    expect(getLocalizedKangurSubjectLabel('music', 'en')).toBe('Music');
+    expect(getLocalizedKangurSubjectLabel('music', 'de')).toBe('Musik');
+    expect(getLocalizedKangurSubjectLabel('music', 'uk')).toBe('Музика');
     expect(getLocalizedKangurSubjectLabel('geometry', 'en')).toBe('Shapes');
     expect(getLocalizedKangurSubjectLabel('geometry', 'de')).toBe('Formen');
     expect(getLocalizedKangurSubjectLabel('geometry', 'uk')).toBe('Фігури');
@@ -97,6 +117,17 @@ describe('lesson-catalog-i18n', () => {
   });
 
   it('returns localized lesson section labels while keeping Polish in pl', () => {
+    expect(getLocalizedKangurLessonSectionLabel('art_colors', 'en', 'Colors')).toBe('Colors');
+    expect(getLocalizedKangurLessonSectionLabel('art_shapes_basic', 'de', 'Basic shapes')).toBe(
+      'Grundformen'
+    );
+    expect(
+      getLocalizedKangurLessonSectionLabel('art_colors_harmony', 'uk', 'Harmony of colors')
+    ).toBe('Гармонія кольорів');
+    expect(getLocalizedKangurLessonSectionLabel('music_scale', 'en', 'Skala')).toBe('Scale');
+    expect(
+      getLocalizedKangurLessonSectionLabel('music_diatonic_scale', 'de', 'Skala diatoniczna')
+    ).toBe('Diatonische Tonleiter');
     expect(getLocalizedKangurLessonSectionLabel('maths_geometry', 'en', 'Geometria')).toBe(
       'Geometry'
     );

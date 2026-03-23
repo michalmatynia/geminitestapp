@@ -191,11 +191,13 @@ export const resolveProductCategoryLabel = (
 export const normalizeMarketplaceStatus = (value: string): string => value.trim().toLowerCase();
 
 export const SUCCESS_STATUSES = new Set(['active', 'success', 'completed', 'listed', 'ok']);
-export const WARNING_STATUSES = new Set([
+export const PENDING_STATUSES = new Set([
   'warning',
   'pending',
   'queued',
   'queued_relist',
+]);
+export const PROCESSING_STATUSES = new Set([
   'processing',
   'in_progress',
   'running',
@@ -213,8 +215,11 @@ export const getStatusToneClass = (value: string): string => {
   if (SUCCESS_STATUSES.has(normalized)) {
     return 'border-emerald-400/60 text-emerald-200 hover:border-emerald-300/70 hover:text-emerald-100';
   }
-  if (WARNING_STATUSES.has(normalized)) {
+  if (PENDING_STATUSES.has(normalized)) {
     return 'border-amber-400/60 text-amber-200 hover:border-amber-300/70 hover:text-amber-100';
+  }
+  if (PROCESSING_STATUSES.has(normalized)) {
+    return 'border-cyan-400/60 text-cyan-200 hover:border-cyan-300/70 hover:text-cyan-100';
   }
   if (FAILURE_STATUSES.has(normalized)) {
     return 'border-rose-400/60 text-rose-200 hover:border-rose-300/70 hover:text-rose-100';
@@ -234,8 +239,11 @@ export const getMarketplaceButtonClass = (
   if (SUCCESS_STATUSES.has(normalized)) {
     return 'border-emerald-400/70 bg-emerald-500/15 text-emerald-100 hover:border-emerald-300/80 hover:bg-emerald-500/25';
   }
-  if (WARNING_STATUSES.has(normalized)) {
+  if (PENDING_STATUSES.has(normalized)) {
     return 'border-amber-400/70 bg-amber-500/15 text-amber-100 hover:border-amber-300/80 hover:bg-amber-500/25';
+  }
+  if (PROCESSING_STATUSES.has(normalized)) {
+    return 'border-cyan-400/70 bg-cyan-500/15 text-cyan-100 hover:border-cyan-300/80 hover:bg-cyan-500/25';
   }
   if (FAILURE_STATUSES.has(normalized)) {
     return 'border-rose-400/70 bg-rose-500/15 text-rose-100 hover:border-rose-300/80 hover:bg-rose-500/25';

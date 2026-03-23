@@ -74,6 +74,9 @@ const truncateMiddle = (value: string, start = 8, end = 6): string => {
 const resolveCompactInlineLimit = (location: AiTriggerButtonLocation): number | null =>
   COMPACT_TRIGGER_BUTTON_INLINE_LIMITS[location] ?? null;
 
+const resolveInlineRunProgressScale = (progress: number): number =>
+  Math.max(0.14, Math.min(1, progress));
+
 const resolveRunRecency = (run: TriggerButtonLastRun): number => {
   const timestamp = Date.parse(run.updatedAt ?? run.finishedAt ?? '');
   return Number.isFinite(timestamp) ? timestamp : 0;
@@ -235,7 +238,7 @@ function TriggerButtonToggleControl(): React.JSX.Element {
           aria-hidden
           className='pointer-events-none absolute inset-0 z-0 origin-left bg-emerald-500/10 transition-transform duration-200 ease-linear'
           style={{
-            transform: `scaleX(${Math.max(0.02, progress)})`,
+            transform: `scaleX(${resolveInlineRunProgressScale(progress)})`,
             pointerEvents: 'none',
           }}
         />
@@ -375,13 +378,15 @@ export function TriggerButtonBar({
         variant='outline'
         size={showLabel ? 'xs' : 'icon'}
         aria-label={button.name}
-        disabled={isRunning}
+        aria-busy={isRunning || undefined}
+        loading={isRunning}
         onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
           void handleTrigger(button, { mode: 'click', event });
         }}
         className={cn(
           'relative overflow-hidden text-gray-200',
           showLabel ? 'gap-2' : null,
+          isRunning ? 'border-emerald-500/40 bg-emerald-500/10 disabled:opacity-100' : null,
           isRunning ? 'cursor-wait' : null
         )}
       >
@@ -389,7 +394,7 @@ export function TriggerButtonBar({
           <span
             aria-hidden
             className='pointer-events-none absolute inset-0 z-0 origin-left bg-emerald-500/10 transition-transform duration-200 ease-linear'
-            style={{ transform: `scaleX(${Math.max(0.02, progress)})` }}
+            style={{ transform: `scaleX(${resolveInlineRunProgressScale(progress)})` }}
           />
         ) : null}
         {renderButtonIcon(button, showLabel, textOpacity)}
@@ -399,6 +404,11 @@ export function TriggerButtonBar({
             style={{ opacity: textOpacity }}
           >
             {button.name}
+          </span>
+        ) : null}
+        {showLabel && isRunning ? (
+          <span className='relative z-10 shrink-0 rounded-full border border-emerald-400/30 bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-medium text-emerald-50'>
+            Running...
           </span>
         ) : null}
       </Button>

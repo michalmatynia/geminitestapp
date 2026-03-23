@@ -17,6 +17,7 @@ import {
   fetchAiPathsSettingsCached,
   fetchAiPathsSettingsByKeysCached,
   updateAiPathsSetting,
+  updateAiPathsSettingsBulk,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
@@ -194,6 +195,7 @@ export const loadPathConfigsFromSettings = async (
   const configs: Record<string, PathConfig> = {};
   const retainedMetas: PathMeta[] = [];
   let removedMissingConfigEntries = false;
+  const pendingRepairs: Array<{ key: string; value: string }> = [];
 
   normalizedMetas.forEach((meta: PathMeta): void => {
     if (!meta?.id) return;
@@ -211,8 +213,9 @@ export const loadPathConfigsFromSettings = async (
     });
     const normalizedConfig = resolvedConfig.config;
     if (resolvedConfig.changed) {
-      void updateAiPathsSetting(configKey, JSON.stringify(normalizedConfig)).catch(() => {
-        // Best-effort repair only. Trigger loading should remain usable even if persistence fails.
+      pendingRepairs.push({
+        key: configKey,
+        value: JSON.stringify(normalizedConfig),
       });
     }
     void persistLegacyTriggerContextModeRepair({
@@ -228,7 +231,21 @@ export const loadPathConfigsFromSettings = async (
   });
 
   if (removedMissingConfigEntries) {
-    void updateAiPathsSetting(PATH_INDEX_KEY, JSON.stringify(retainedMetas)).catch(() => {
+    pendingRepairs.push({
+      key: PATH_INDEX_KEY,
+      value: JSON.stringify(retainedMetas),
+    });
+  }
+
+  if (pendingRepairs.length === 1) {
+    const [repair] = pendingRepairs;
+    if (repair) {
+      void updateAiPathsSetting(repair.key, repair.value).catch(() => {
+        // Best-effort repair only. Trigger loading should remain usable even if persistence fails.
+      });
+    }
+  } else if (pendingRepairs.length > 1) {
+    void updateAiPathsSettingsBulk(pendingRepairs).catch(() => {
       // Best-effort repair only. Trigger loading should remain usable even if persistence fails.
     });
   }

@@ -40,6 +40,8 @@ type KangurAssignmentSpotlightProps = {
 
 const SUBJECT_ACCENTS: Record<KangurLessonSubject, KangurAccent> = {
   alphabet: 'amber',
+  art: 'rose',
+  music: 'sky',
   geometry: 'emerald',
   english: 'sky',
   maths: 'violet',

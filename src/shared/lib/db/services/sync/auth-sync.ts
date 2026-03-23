@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 import { ObjectId } from 'mongodb';
 
 import type {
@@ -13,7 +11,7 @@ import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
 
 export const syncUsers: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
-  const docs = await mongo.collection('users').find({}).toArray();
+  const docs = (await mongo.collection('users').find({}).toArray()) as MongoUserDoc[];
   const data: Prisma.UserCreateManyInput[] = docs
     .map((doc: MongoUserDoc) => {
       const id = normalizeId(doc as Record<string, unknown>);
@@ -27,10 +25,10 @@ export const syncUsers: DatabaseSyncHandler = async ({ mongo, prisma, normalizeI
         passwordHash: doc.passwordHash ?? null,
       };
     })
-    .filter(Boolean) as Prisma.UserCreateManyInput[];
+    .filter((item): item is any => item !== null);
 
   const deleted = await prisma.user.deleteMany();
-  const created = data.length ? await prisma.user.createMany({ data }) : { count: 0 };
+  const created = data.length ? await (prisma.user as any).createMany({ data }) : { count: 0 };
 
   return {
     sourceCount: data.length,
@@ -40,7 +38,7 @@ export const syncUsers: DatabaseSyncHandler = async ({ mongo, prisma, normalizeI
 };
 
 export const syncAccounts: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
-  const docs = await mongo.collection('accounts').find({}).toArray();
+  const docs = (await mongo.collection('accounts').find({}).toArray()) as MongoAccountDoc[];
   const data: Prisma.AccountCreateManyInput[] = docs
     .map((doc: MongoAccountDoc) => {
       const id = normalizeId(doc as Record<string, unknown>);
@@ -62,10 +60,10 @@ export const syncAccounts: DatabaseSyncHandler = async ({ mongo, prisma, normali
         session_state: doc.session_state ?? null,
       };
     })
-    .filter(Boolean) as Prisma.AccountCreateManyInput[];
+    .filter((item): item is any => item !== null);
 
   const deleted = await prisma.account.deleteMany();
-  const created = data.length ? await prisma.account.createMany({ data }) : { count: 0 };
+  const created = data.length ? await (prisma.account as any).createMany({ data }) : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
@@ -75,7 +73,7 @@ export const syncSessions: DatabaseSyncHandler = async ({ mongo, prisma, normali
     .find({})
     .toArray()) as MongoSessionDoc[];
   const data = docs
-    .map((doc: MongoSessionDoc): Prisma.SessionCreateManyInput | null => {
+    .map((doc: MongoSessionDoc): any => {
       const id = normalizeId(doc as Record<string, unknown>);
       const userIdRaw = doc.userId;
       const userId = userIdRaw instanceof ObjectId ? userIdRaw.toString() : String(userIdRaw ?? '');
@@ -89,10 +87,10 @@ export const syncSessions: DatabaseSyncHandler = async ({ mongo, prisma, normali
         expires,
       };
     })
-    .filter((item): item is Prisma.SessionCreateManyInput => item !== null);
+    .filter((item): item is any => item !== null);
 
   const deleted = await prisma.session.deleteMany();
-  const created = data.length ? await prisma.session.createMany({ data }) : { count: 0 };
+  const created = data.length ? await (prisma.session as any).createMany({ data }) : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
@@ -102,17 +100,19 @@ export const syncVerificationTokens: DatabaseSyncHandler = async ({ mongo, prism
     .find({})
     .toArray()) as MongoVerificationTokenDoc[];
   const data = docs
-    .map((doc: MongoVerificationTokenDoc): Prisma.VerificationTokenCreateManyInput | null => {
+    .map((doc: MongoVerificationTokenDoc): any => {
       const identifier = doc.identifier;
       const token = doc.token;
       const expires = toDate(doc.expires);
       if (!identifier || !token || !expires) return null;
       return { identifier, token, expires };
     })
-    .filter((item): item is Prisma.VerificationTokenCreateManyInput => item !== null);
+    .filter((item): item is any => item !== null);
 
   const deleted = await prisma.verificationToken.deleteMany();
-  const created = data.length ? await prisma.verificationToken.createMany({ data }) : { count: 0 };
+  const created = data.length
+    ? await (prisma.verificationToken as any).createMany({ data })
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
@@ -122,9 +122,9 @@ export const syncAuthSecurityProfiles: DatabaseSyncHandler = async ({
   normalizeId,
   toDate,
 }) => {
-  const docs = await mongo.collection('auth_security_profiles').find({}).toArray();
+  const docs = (await mongo.collection('auth_security_profiles').find({}).toArray()) as MongoAuthSecurityProfileDoc[];
   const data = docs
-    .map((doc: MongoAuthSecurityProfileDoc): Prisma.AuthSecurityProfileCreateManyInput | null => {
+    .map((doc: MongoAuthSecurityProfileDoc): any => {
       const id = normalizeId(doc as Record<string, unknown>);
       const userId = doc.userId ?? id;
       if (!userId) return null;
@@ -141,11 +141,11 @@ export const syncAuthSecurityProfiles: DatabaseSyncHandler = async ({
         updatedAt: toDate(doc.updatedAt) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.AuthSecurityProfileCreateManyInput => item !== null);
+    .filter((item): item is any => item !== null);
 
   const deleted = await prisma.authSecurityProfile.deleteMany();
   const created = data.length
-    ? await prisma.authSecurityProfile.createMany({ data })
+    ? await (prisma.authSecurityProfile as any).createMany({ data })
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };

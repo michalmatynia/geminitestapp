@@ -811,6 +811,10 @@ const isEnglishScoreOperation = (operation: string): boolean =>
   operation.trim().toLowerCase().startsWith('english_');
 const isAlphabetScoreOperation = (operation: string): boolean =>
   operation.trim().toLowerCase().startsWith('alphabet_');
+const isArtScoreOperation = (operation: string): boolean =>
+  operation.trim().toLowerCase().startsWith('art_');
+const isMusicScoreOperation = (operation: string): boolean =>
+  operation.trim().toLowerCase().startsWith('music_');
 
 export const resolveKangurScoreSubject = (input: {
   operation: string;
@@ -821,6 +825,12 @@ export const resolveKangurScoreSubject = (input: {
   }
   if (isAlphabetScoreOperation(input.operation)) {
     return 'alphabet';
+  }
+  if (isArtScoreOperation(input.operation)) {
+    return 'art';
+  }
+  if (isMusicScoreOperation(input.operation)) {
+    return 'music';
   }
   return input.subject ?? 'maths';
 };

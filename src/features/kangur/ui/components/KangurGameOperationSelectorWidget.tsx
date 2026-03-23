@@ -96,6 +96,8 @@ type OperationSelectorFallbackCopy = {
   intro: {
     maths: string;
     alphabet: string;
+    art: string;
+    music: string;
     geometry: string;
     language: string;
   };
@@ -164,6 +166,8 @@ const getOperationSelectorFallbackCopy = (
       intro: {
         maths: 'Виберіть тип гри й переходьте просто до математичної забави.',
         alphabet: 'Виберіть літерну забаву й тренуйте алфавіт.',
+        art: 'Виберіть урок мистецтва й досліджуйте кольори та форми.',
+        music: 'Виберіть музичний урок і співайте звуки діатонічної гами крок за кроком.',
         geometry: 'Виберіть забаву з формами й тренуйте геометрію.',
         language: 'Виберіть тип мовної гри й переходьте просто до вправ.',
       },
@@ -333,6 +337,8 @@ const getOperationSelectorFallbackCopy = (
       intro: {
         maths: 'Wahle einen Spieltyp und starte direkt mit dem Mathematiktraining.',
         alphabet: 'Wahle ein Buchstabenspiel und ube das Alphabet.',
+        art: 'Wahle eine Kunstlektion und entdecke Farben und Formen.',
+        music: 'Wahle eine Musiklektion und singe die Toene der diatonischen Tonleiter Schritt fur Schritt.',
         geometry: 'Wahle ein Formenspiel und ube Geometrie.',
         language: 'Wahle einen Sprachspieltyp und starte direkt ins Uben.',
       },
@@ -502,6 +508,8 @@ const getOperationSelectorFallbackCopy = (
       intro: {
         maths: 'Choose a game type and jump straight into maths practice.',
         alphabet: 'Choose a letter game and practise the alphabet.',
+        art: 'Choose an art lesson and explore colors and shapes.',
+        music: 'Choose a music lesson and sing the notes of the diatonic scale step by step.',
         geometry: 'Choose a shapes game and practise geometry.',
         language: 'Choose a language game type and jump straight into practice.',
       },
@@ -669,6 +677,8 @@ const getOperationSelectorFallbackCopy = (
     intro: {
       maths: 'Wybierz rodzaj gry i przejdź od razu do matematycznej zabawy.',
       alphabet: 'Wybierz literową zabawę i ćwicz alfabet.',
+      art: 'Wybierz lekcję plastyczną i odkrywaj kolory oraz kształty.',
+      music: 'Wybierz lekcję muzyki i śpiewaj dźwięki skali diatonicznej krok po kroku.',
       geometry: 'Wybierz zabawę z kształtami i ćwicz geometrię.',
       language: 'Wybierz typ gry językowej i przejdź od razu do ćwiczeń.',
     },
@@ -838,6 +848,7 @@ const OPERATION_LESSON_QUIZ_SCREENS: Partial<Record<KangurOperation, KangurGameS
 
 type KangurRecommendedSelectorScreen = Extract<
   KangurGameScreen,
+  | 'operation'
   | 'calendar_quiz'
   | 'geometry_quiz'
   | 'subtraction_quiz'
@@ -908,6 +919,10 @@ const resolveLessonRecommendationTarget = (
     case 'geometry_symmetry':
     case 'geometry_perimeter':
       return { kind: 'screen', screen: 'geometry_quiz' };
+    case 'art_colors_harmony':
+    case 'art_shapes_basic':
+    case 'music_diatonic_scale':
+      return { kind: 'screen', screen: 'operation' };
     default:
       return { kind: 'training' };
   }
@@ -1560,6 +1575,18 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
             'operationSelector.intro.alphabet',
             fallbackCopy.intro.alphabet
           )
+        : subject === 'art'
+          ? translateRecommendationWithFallback(
+              gamePageTranslations,
+              'operationSelector.intro.art',
+              fallbackCopy.intro.art
+            )
+          : subject === 'music'
+            ? translateRecommendationWithFallback(
+                gamePageTranslations,
+                'operationSelector.intro.music',
+                fallbackCopy.intro.music
+              )
         : subject === 'geometry'
           ? translateRecommendationWithFallback(
               gamePageTranslations,

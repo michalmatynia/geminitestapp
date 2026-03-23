@@ -5,8 +5,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
-  useState,
   type JSX,
   type ReactNode,
 } from 'react';
@@ -33,13 +31,10 @@ import {
 } from '@/features/kangur/ui/services/delegated-assignments';
 import type {
   KangurDifficulty,
-  KangurGameScreen,
   KangurMode,
   KangurOperation,
-  KangurQuestion,
   KangurSessionStartOptions,
   KangurTrainingSelection,
-  KangurXpToastState,
 } from '@/features/kangur/ui/types';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 import { resolveKangurScoreSubject } from '@/shared/contracts/kangur';
@@ -55,6 +50,7 @@ import type {
   KangurGameRuntimeContextValue,
   KangurGameRuntimeStateContextValue,
 } from './KangurGameRuntimeContext.shared';
+import { useKangurGameCore } from './hooks/useKangurGameCore';
 
 const kangurPlatform = getKangurPlatform();
 
@@ -80,31 +76,38 @@ export function KangurGameRuntimeProvider({
   const canAccessParentAssignments =
     auth.canAccessParentAssignments ?? (isAuthenticated && Boolean(user?.activeLearner?.id));
   const progress = useKangurProgressState();
-  const xpToastTimeoutRef = useRef<number | null>(null);
-  const [screen, setScreen] = useState<KangurGameScreen>('home');
-  const [sessionPlayerName, setSessionPlayerName] = useState('');
+
+  const {
+    screen,
+    setScreen,
+    sessionPlayerName,
+    setSessionPlayerName,
+    operation,
+    setOperation,
+    difficulty,
+    setDifficulty,
+    questions,
+    setQuestions,
+    currentQuestionIndex,
+    setCurrentQuestionIndex,
+    score,
+    setScore,
+    startTime,
+    setStartTime,
+    timeTaken,
+    setTimeTaken,
+    kangurMode,
+    setKangurMode,
+    activeSessionRecommendation,
+    setActiveSessionRecommendation,
+    xpToast,
+    setXpToast,
+    showXpToast,
+    runGameLoopTimer,
+  } = useKangurGameCore();
+
   const playerName = user?.full_name?.trim() || sessionPlayerName || guestPlayerName;
   const setPlayerName = setGuestPlayerName;
-  const [operation, setOperation] = useState<KangurOperation | null>(null);
-  const [difficulty, setDifficulty] = useState<KangurDifficulty>('medium');
-  const [questions, setQuestions] = useState<KangurQuestion[]>([]);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [score, setScore] = useState(0);
-  const [startTime, setStartTime] = useState<number | null>(null);
-  const [timeTaken, setTimeTaken] = useState(0);
-  const [kangurMode, setKangurMode] = useState<KangurMode | null>(null);
-  const [activeSessionRecommendation, setActiveSessionRecommendation] = useState<
-    KangurGameRuntimeStateContextValue['activeSessionRecommendation']
-  >(null);
-  const [xpToast, setXpToast] = useState<KangurXpToastState>({
-    visible: false,
-    xpGained: 0,
-    newBadges: [],
-    breakdown: [],
-    nextBadge: null,
-    dailyQuest: null,
-    recommendation: null,
-  });
 
   const { assignments: delegatedAssignments, refresh: refreshAssignments } = useKangurAssignments({
     enabled: canAccessParentAssignments,
@@ -116,15 +119,6 @@ export function KangurGameRuntimeProvider({
   const subjectAssignments = useMemo(
     () => filterKangurAssignmentsBySubject(delegatedAssignments, subject),
     [delegatedAssignments, subject]
-  );
-
-  useEffect(
-    () => () => {
-      if (xpToastTimeoutRef.current) {
-        window.clearTimeout(xpToastTimeoutRef.current);
-      }
-    },
-    []
   );
 
   useEffect(() => {
@@ -140,43 +134,15 @@ export function KangurGameRuntimeProvider({
       dailyQuest: null,
       recommendation: null,
     });
-  }, [canEarnRewards]);
+  }, [canEarnRewards, setXpToast]);
 
   useEffect(() => {
     const fullName = user?.full_name?.trim();
     if (!fullName || sessionPlayerName === fullName) {
       return;
     }
-
     setSessionPlayerName(fullName);
-  }, [sessionPlayerName, user?.full_name]);
-
-  const showXpToast = (
-    xpGained: number,
-    newBadges: string[],
-    breakdown: KangurXpToastState['breakdown'] = [],
-    nextBadge: KangurXpToastState['nextBadge'] = null,
-    dailyQuest: KangurXpToastState['dailyQuest'] = null,
-    recommendation: KangurXpToastState['recommendation'] = null
-  ): void => {
-    if (xpToastTimeoutRef.current) {
-      window.clearTimeout(xpToastTimeoutRef.current);
-    }
-
-    setXpToast({
-      visible: true,
-      xpGained,
-      newBadges,
-      breakdown,
-      nextBadge,
-      dailyQuest,
-      recommendation,
-    });
-    xpToastTimeoutRef.current = window.setTimeout(() => {
-      setXpToast((current) => ({ ...current, visible: false }));
-      xpToastTimeoutRef.current = null;
-    }, 2800);
-  };
+  }, [sessionPlayerName, user?.full_name, setSessionPlayerName]);
 
   const ensureSessionPlayerName = (): string => {
     const nextPlayerName = guestPlayerName.trim() || user?.full_name?.trim() || 'Gracz';
@@ -315,11 +281,11 @@ export function KangurGameRuntimeProvider({
         );
       }
 
-      window.setTimeout(() => setScreen('result'), 1000);
+      runGameLoopTimer(() => setScreen('result'), 1000);
       return;
     }
 
-    window.setTimeout(() => {
+    runGameLoopTimer(() => {
       setCurrentQuestionIndex((current) => current + 1);
     }, 1000);
   };
@@ -440,6 +406,8 @@ export function KangurGameRuntimeProvider({
       handleStartTraining,
       logout,
       navigateToLogin,
+      setPlayerName,
+      setScreen,
     ]
   );
 

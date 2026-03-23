@@ -31,18 +31,21 @@ vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({
   KangurTransitionLink: ({
     children,
     href,
+    prefetch,
     targetPageKey,
     transitionAcknowledgeMs,
     transitionSourceId,
     ...rest
   }: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
     href: string;
+    prefetch?: boolean;
     targetPageKey?: string | null;
     transitionAcknowledgeMs?: number;
     transitionSourceId?: string | null;
   }) => {
     kangurTransitionLinkPropsMock({
       href,
+      prefetch,
       targetPageKey,
       transitionAcknowledgeMs,
       transitionSourceId,
@@ -112,6 +115,26 @@ describe('KangurGameHomeActionsWidget', () => {
     render(<KangurGameHomeActionsWidget />);
 
     expect(screen.queryByRole('link', { name: /obserwowalność/i })).not.toBeInTheDocument();
+  });
+
+  it('leaves the Duels home action as user-initiated navigation without prefetch', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      basePath: '/kangur',
+      canStartFromHome: true,
+      handleStartGame: vi.fn(),
+      screen: 'home',
+      setScreen: vi.fn(),
+    });
+
+    render(<KangurGameHomeActionsWidget />);
+
+    expect(kangurTransitionLinkPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        href: '/kangur/duels',
+        prefetch: false,
+        targetPageKey: 'Duels',
+      })
+    );
   });
 
   it('uses the warm amber focus ring for home action cards', () => {

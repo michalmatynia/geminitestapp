@@ -706,7 +706,7 @@ export const importSingleItem = async (input: {
       baseProductId: mappedBaseProductId,
       existingListing: input.prefetchedListings?.get(updated.id) ?? null,
     });
-    CachedProductService.invalidateAll();
+    emitProductCacheInvalidation();
 
     return {
       status: 'updated',
@@ -869,7 +869,7 @@ export const importSingleItem = async (input: {
     baseProductId: mappedBaseProductId,
     existingListing: input.prefetchedListings?.get(created.id) ?? null,
   });
-  CachedProductService.invalidateAll();
+  emitProductCacheInvalidation();
 
   return {
     status: 'imported',

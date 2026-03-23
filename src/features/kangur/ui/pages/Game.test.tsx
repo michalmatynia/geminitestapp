@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   useKangurGameRuntimeMock,
   useKangurMobileBreakpointMock,
+  routeNavigatorPrefetchMock,
   routeNavigatorPushMock,
   homeHeroPropsMock,
   assignmentSpotlightPropsMock,
@@ -19,6 +20,7 @@ const {
 } = vi.hoisted(() => ({
   useKangurGameRuntimeMock: vi.fn(),
   useKangurMobileBreakpointMock: vi.fn(),
+  routeNavigatorPrefetchMock: vi.fn(),
   routeNavigatorPushMock: vi.fn(),
   homeHeroPropsMock: vi.fn(),
   assignmentSpotlightPropsMock: vi.fn(),
@@ -81,7 +83,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
 vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
   useKangurRouteNavigator: () => ({
     back: vi.fn(),
-    prefetch: vi.fn(),
+    prefetch: routeNavigatorPrefetchMock,
     push: routeNavigatorPushMock,
     replace: vi.fn(),
   }),
@@ -135,11 +137,12 @@ vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({
   KangurTransitionLink: ({
     children,
     href,
+    prefetch: _prefetch,
     targetPageKey: _targetPageKey,
     transitionAcknowledgeMs: _transitionAcknowledgeMs,
     transitionSourceId: _transitionSourceId,
     ...rest
-  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; prefetch?: boolean }) => (
     <a href={href} {...rest}>
       {children}
     </a>
@@ -272,6 +275,21 @@ describe('Game page', () => {
       expect.objectContaining({ hideWhenScreenMismatch: false })
     );
     expect(screen.getByTestId('kangur-game-navigation-widget')).toBeInTheDocument();
+  });
+
+  it('prefetches Lessons from the home shell but leaves Duels user-initiated', async () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildRuntime('home'),
+      canAccessParentAssignments: true,
+      progress: { totalXp: 1 },
+    });
+
+    render(<Game />);
+
+    await waitFor(() => {
+      expect(routeNavigatorPrefetchMock).toHaveBeenCalledWith('/kangur/lessons');
+    });
+    expect(routeNavigatorPrefetchMock).not.toHaveBeenCalledWith('/kangur/duels');
   });
 
   it('keeps the home screen motion static so the skeleton handoff does not jump vertically', () => {

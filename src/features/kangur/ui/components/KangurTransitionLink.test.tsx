@@ -36,10 +36,15 @@ vi.mock('next/link', () => ({
   default: ({
     children,
     href,
+    prefetch,
     scroll,
     ...props
-  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; scroll?: boolean }) => {
-    nextLinkPropsMock({ href, scroll, ...props });
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+    href: string;
+    prefetch?: boolean;
+    scroll?: boolean;
+  }) => {
+    nextLinkPropsMock({ href, prefetch, scroll, ...props });
     return (
       <a href={href} data-scroll={scroll === undefined ? 'unset' : String(scroll)} {...props}>
         {children}
@@ -193,6 +198,22 @@ describe('KangurTransitionLink', () => {
     );
 
     expect(routerPrefetchMock).toHaveBeenCalledWith('/kangur/lessons');
+  });
+
+  it('honors prefetch={false} for managed local links', () => {
+    render(
+      <KangurTransitionLink href='/kangur/duels' prefetch={false} targetPageKey='Duels'>
+        Pojedynki
+      </KangurTransitionLink>
+    );
+
+    expect(nextLinkPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        href: '/kangur/duels',
+        prefetch: false,
+      })
+    );
+    expect(routerPrefetchMock).not.toHaveBeenCalled();
   });
 
   it('delays the router push until the button acknowledgement window ends', () => {

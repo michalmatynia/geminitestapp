@@ -371,7 +371,6 @@ function GameContent(): React.JSX.Element {
         : (cb: () => void) => setTimeout(cb, 1);
     const handle = schedule(() => {
       routeNavigator.prefetch(createPageUrl('Lessons', basePath));
-      routeNavigator.prefetch(createPageUrl('Duels', basePath));
     });
     return () => {
       if (typeof globalThis.cancelIdleCallback === 'function') {

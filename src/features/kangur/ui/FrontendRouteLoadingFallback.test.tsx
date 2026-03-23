@@ -78,6 +78,22 @@ describe('FrontendRouteLoadingFallback', () => {
     });
   });
 
+  it('enables the navbar skeleton for localized /kangur secondary routes by default', () => {
+    usePathnameMock.mockReturnValue('/en/kangur/lessons');
+
+    render(
+      <FrontendPublicOwnerProvider publicOwner='kangur'>
+        <FrontendRouteLoadingFallback />
+      </FrontendPublicOwnerProvider>
+    );
+
+    expect(screen.getByTestId('kangur-route-loading-fallback-probe')).toBeInTheDocument();
+    expect(kangurRouteLoadingFallbackMock).toHaveBeenCalledTimes(1);
+    expect(kangurRouteLoadingFallbackMock).toHaveBeenCalledWith({
+      includeTopNavigationSkeleton: true,
+    });
+  });
+
   it('can still override the auto-detected navbar skeleton mode', () => {
     render(
       <FrontendPublicOwnerProvider publicOwner='kangur'>

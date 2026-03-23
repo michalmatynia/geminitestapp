@@ -18,6 +18,7 @@ export type KangurNavActionProps = {
   elementRef?: Ref<HTMLButtonElement>;
   href?: string;
   onClick?: () => void;
+  prefetch?: boolean;
   targetPageKey?: string;
   testId?: string;
   title?: string;
@@ -40,6 +41,7 @@ export const KangurNavAction = memo(function KangurNavAction({
   elementRef,
   href,
   onClick,
+  prefetch,
   targetPageKey,
   testId,
   title,
@@ -110,6 +112,7 @@ export const KangurNavAction = memo(function KangurNavAction({
       >
         <Link
           href={href}
+          prefetch={prefetch}
           targetPageKey={targetPageKey}
           transitionAcknowledgeMs={transition?.acknowledgeMs}
           transitionSourceId={transition?.sourceId}

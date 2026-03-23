@@ -3509,6 +3509,11 @@
       "alphabetWords": "Erste Wörter",
       "alphabetMatching": "Buchstaben zuordnen",
       "alphabetSequence": "Buchstabenreihenfolge",
+      "art": "Kunst",
+      "artColorsHarmony": "Farbharmonie",
+      "artShapesBasic": "Grundformen",
+      "music": "Musik",
+      "musicDiatonicScale": "Diatonische Tonleiter",
       "geometry": "Geometrie",
       "geometryShapeRecognition": "Geometrie",
       "addition": "Addieren",
@@ -4629,6 +4634,143 @@
       },
       "game": {
         "stageTitle": "Formen zeichnen"
+      }
+    },
+    "artShapesBasic": {
+      "lessonTitle": "Grundformen",
+      "sections": {
+        "meetShapes": {
+          "title": "Lerne die Grundformen kennen",
+          "description": "Lerne vier Formen, die dir überall begegnen."
+        },
+        "compareShapes": {
+          "title": "Vergleiche ihre Seiten",
+          "description": "Achte darauf, was jede Form besonders macht."
+        },
+        "findShapes": {
+          "title": "Finde Formen im Alltag",
+          "description": "Verbinde Formen mit Dingen, die du schon kennst."
+        },
+        "rotationPuzzle": {
+          "title": "Vervollständige das Drehmuster",
+          "description": "Wähle die animierte Kachel, die in das fehlende Sechstel des Musters passt."
+        },
+        "summary": {
+          "title": "Formenforscher-Rückblick",
+          "description": "Merke dir die Hinweise, mit denen du Formen benennen kannst."
+        }
+      },
+      "slides": {
+        "meetShapes": {
+          "title": "Vier Formen zum Merken",
+          "lead": "Formen helfen Künstlern beim Zeichnen, Bauen und Dekorieren. Starte mit vier Klassikern.",
+          "shapes": {
+            "circle": {
+              "label": "Kreis",
+              "clue": "Rund, glatt und ohne Ecken."
+            },
+            "square": {
+              "label": "Quadrat",
+              "clue": "Vier gleich lange Seiten und vier Ecken."
+            },
+            "triangle": {
+              "label": "Dreieck",
+              "clue": "Drei Seiten und drei Ecken."
+            },
+            "rectangle": {
+              "label": "Rechteck",
+              "clue": "Zwei lange und zwei kurze Seiten."
+            }
+          }
+        },
+        "compareShapes": {
+          "title": "Worin unterscheiden sie sich?",
+          "chips": {
+            "circle": "Kreis: keine Ecken",
+            "square": "Quadrat: alle Seiten gleich lang",
+            "triangle": "Dreieck: drei Seiten",
+            "rectangle": "Rechteck: lange und kurze Seiten"
+          },
+          "detective": {
+            "title": "Formendetektiv-Trick",
+            "caption": "Zähle zuerst die Ecken. Dann vergleiche die Seitenlängen. So findest du meistens schon die richtige Antwort."
+          }
+        },
+        "findShapes": {
+          "examples": {
+            "title": "Formen in der Welt um dich herum",
+            "circle": {
+              "label": "Kreis",
+              "caption": "Ein Ball, ein Teller oder ein Zifferblatt."
+            },
+            "window": {
+              "label": "Quadrat oder Rechteck",
+              "caption": "Fenster, Schachteln und Bücher haben oft gerade Seiten."
+            },
+            "pizza": {
+              "label": "Dreieck",
+              "caption": "Pizzastücke, Dächer und Warnschilder können dreieckig aussehen."
+            },
+            "rectangle": {
+              "label": "Rechteck",
+              "caption": "Türen, Bildschirme und Ziegel sind gute Beispiele."
+            }
+          },
+          "puzzleClues": {
+            "title": "Achte im Rätsel auf zwei Hinweise",
+            "lead": "Im Spiel verrät jede Kachel zwei Dinge: zu welcher Formenfamilie sie gehört und wie schnell sie sich dreht.",
+            "familyTitle": "Formenfamilie",
+            "familyCaption": "Kreis und Ball passen zusammen. Quadrat und Fenster auch. Dreieck und Pizzastück ebenso.",
+            "speedTitle": "Drehgeschwindigkeit",
+            "speedCaption": "Langsame, mittlere und schnelle Drehungen wiederholen sich im Muster. Achte auf Familie und Tempo."
+          }
+        },
+        "summary": {
+          "title": "Das weißt du jetzt",
+          "facts": {
+            "circle": "Ein Kreis ist rund und hat keine Ecken.",
+            "square": "Ein Quadrat hat vier gleich lange Seiten.",
+            "triangle": "Ein Dreieck hat drei Seiten.",
+            "rectangle": "Ein Rechteck hat vier Ecken und zwei Paare gleich langer Seiten."
+          }
+        }
+      },
+      "game": {
+        "stageTitle": "Vervollständige das Drehmuster",
+        "progress": {
+          "round": "Runde {current}/{total}",
+          "score": "Punkte: {score}"
+        },
+        "missingTileLabel": "Fehlende Kachel",
+        "tileLabel": "{glyph}, {tempo}",
+        "chooseOption": "Wähle {tile}",
+        "glyphs": {
+          "circle": "Kreis",
+          "ball": "Ball",
+          "square": "Quadrat",
+          "window": "Fenster",
+          "triangle": "Dreieck",
+          "pizza": "Pizzastück",
+          "rectangle": "Rechteck",
+          "book": "Buch"
+        },
+        "tempos": {
+          "slow": "langsame Drehung",
+          "medium": "mittlere Drehung",
+          "fast": "schnelle Drehung"
+        },
+        "optionFeedback": {
+          "correct": "Richtig",
+          "incorrect": "Nicht das",
+          "answer": "Das passt"
+        },
+        "finished": {
+          "status": "Puzzle abgeschlossen",
+          "title": "Du hast {score} von {total} Drehmustern gelöst.",
+          "subtitle": "Du hast die fehlenden Kacheln nach Familie und Tempo gefunden.",
+          "backToLesson": "Zurück zur Lektion",
+          "playAgain": "Noch einmal spielen"
+        }
       }
     },
     "geometryShapeRecognition": {

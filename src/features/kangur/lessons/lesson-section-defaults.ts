@@ -70,6 +70,83 @@ const ALPHABET_SECTIONS: KangurLessonSection[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Art sections (six_year_old)
+// ---------------------------------------------------------------------------
+
+const ART_SECTIONS: KangurLessonSection[] = [
+  {
+    id: 'art_colors',
+    subject: 'art',
+    ageGroup: 'six_year_old',
+    label: 'Colors',
+    typeLabel: 'Section',
+    emoji: '🎨',
+    sortOrder: 1 * SORT_GAP,
+    enabled: true,
+    componentIds: [],
+    subsections: [
+      {
+        id: 'art_colors_harmony',
+        label: 'Harmony of colors',
+        typeLabel: 'Subsection',
+        sortOrder: 1 * SORT_GAP,
+        enabled: true,
+        componentIds: ['art_colors_harmony'],
+      },
+    ],
+  },
+  {
+    id: 'art_shapes',
+    subject: 'art',
+    ageGroup: 'six_year_old',
+    label: 'Shapes',
+    typeLabel: 'Section',
+    emoji: '🧩',
+    sortOrder: 2 * SORT_GAP,
+    enabled: true,
+    componentIds: [],
+    subsections: [
+      {
+        id: 'art_shapes_basic',
+        label: 'Basic shapes',
+        typeLabel: 'Subsection',
+        sortOrder: 1 * SORT_GAP,
+        enabled: true,
+        componentIds: ['art_shapes_basic'],
+      },
+    ],
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Music sections (six_year_old)
+// ---------------------------------------------------------------------------
+
+const MUSIC_SECTIONS: KangurLessonSection[] = [
+  {
+    id: 'music_scale',
+    subject: 'music',
+    ageGroup: 'six_year_old',
+    label: 'Skala',
+    typeLabel: 'Section',
+    emoji: '🎵',
+    sortOrder: 1 * SORT_GAP,
+    enabled: true,
+    componentIds: [],
+    subsections: [
+      {
+        id: 'music_diatonic_scale',
+        label: 'Skala diatoniczna',
+        typeLabel: 'Subsection',
+        sortOrder: 1 * SORT_GAP,
+        enabled: true,
+        componentIds: ['music_diatonic_scale'],
+      },
+    ],
+  },
+];
+
+// ---------------------------------------------------------------------------
 // Geometry sections (six_year_old)
 // ---------------------------------------------------------------------------
 
@@ -636,6 +713,8 @@ const AGENTIC_CODING_SECTIONS: KangurLessonSection[] = [
  */
 export const createDefaultKangurSections = (): KangurLessonSection[] => [
   ...ALPHABET_SECTIONS,
+  ...ART_SECTIONS,
+  ...MUSIC_SECTIONS,
   ...GEOMETRY_SECTIONS,
   ...MATHS_SECTIONS,
   ...ENGLISH_SECTIONS,

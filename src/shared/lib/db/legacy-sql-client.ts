@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
 const removedLegacyDatabaseHandler: ProxyHandler<Record<string, never>> = {
   get(_target, prop): unknown {
     if (
-      process.env['NODE_ENV'] === 'test'
-      && (prop === '$disconnect' || prop === '$connect' || prop === '$resetAll')
+      process.env['NODE_ENV'] === 'test' &&
+      (prop === '$disconnect' || prop === '$connect' || prop === '$resetAll')
     ) {
       return async (): Promise<void> => undefined;
     }
@@ -14,6 +13,13 @@ const removedLegacyDatabaseHandler: ProxyHandler<Record<string, never>> = {
   },
 };
 
-const legacyDatabaseClient = new Proxy({}, removedLegacyDatabaseHandler) as any;
+/**
+ * A proxy that throws an error when any property is accessed,
+ * representing the removed legacy SQL client.
+ */
+const legacyDatabaseClient = new Proxy(
+  {},
+  removedLegacyDatabaseHandler
+) as Record<string, unknown>;
 
 export default legacyDatabaseClient;

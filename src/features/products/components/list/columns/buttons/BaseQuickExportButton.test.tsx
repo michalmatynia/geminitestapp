@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -11,12 +11,16 @@ const {
   apiPostMock,
   mutateAsyncMock,
   invalidateProductListingsAndBadgesMock,
+  subscribeToTrackedAiPathRunMock,
+  trackedRunListeners,
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
   apiGetMock: vi.fn(),
   apiPostMock: vi.fn(),
   mutateAsyncMock: vi.fn(),
   invalidateProductListingsAndBadgesMock: vi.fn(),
+  subscribeToTrackedAiPathRunMock: vi.fn(),
+  trackedRunListeners: new Map<string, (snapshot: Record<string, unknown>) => void>(),
 }));
 
 vi.mock('@/shared/ui', () => ({
@@ -68,6 +72,11 @@ vi.mock('@/features/integrations/public', () => ({
 vi.mock('@/shared/lib/query-invalidation', () => ({
   invalidateProductListingsAndBadges: (...args: unknown[]) =>
     invalidateProductListingsAndBadgesMock(...args) as Promise<void>,
+}));
+
+vi.mock('@/shared/lib/ai-paths/client-run-tracker', () => ({
+  subscribeToTrackedAiPathRun: (...args: unknown[]) =>
+    subscribeToTrackedAiPathRunMock(...args),
 }));
 
 import { BaseQuickExportButton } from './BaseQuickExportButton';
@@ -158,7 +167,31 @@ const setupDefaultApiMocks = (): void => {
 describe('BaseQuickExportButton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    trackedRunListeners.clear();
     setupDefaultApiMocks();
+    subscribeToTrackedAiPathRunMock.mockImplementation(
+      (
+        runId: string,
+        listener: (snapshot: Record<string, unknown>) => void,
+        options?: { initialSnapshot?: Record<string, unknown> }
+      ) => {
+        trackedRunListeners.set(runId, listener);
+        if (options?.initialSnapshot) {
+          listener({
+            trackingState: 'active',
+            updatedAt: '2026-03-23T12:00:00.000Z',
+            finishedAt: null,
+            errorMessage: null,
+            entityId: product.id,
+            entityType: 'product',
+            ...options.initialSnapshot,
+          });
+        }
+        return () => {
+          trackedRunListeners.delete(runId);
+        };
+      }
+    );
   });
 
   it('opens decision modal when SKU already exists in Base.com', async () => {
@@ -460,5 +493,90 @@ describe('BaseQuickExportButton', () => {
       '/api/v2/integrations/products/product-1/base/sku-check',
       expect.anything()
     );
+  });
+
+  it('reflects queued, running, and completed export run states on the button', async () => {
+    mutateAsyncMock.mockResolvedValue({
+      success: true,
+      status: 'queued',
+      runId: 'run-export-1',
+    });
+    apiPostMock.mockImplementation((url: string) => {
+      if (url === '/api/v2/integrations/imports/base') {
+        return Promise.resolve({
+          inventories: [{ id: 'inv-main', name: 'Main inventory', is_default: true }],
+        });
+      }
+      if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
+        return Promise.resolve({
+          sku: 'SKU-001',
+          exists: false,
+          existingProductId: null,
+        });
+      }
+      return Promise.reject(new Error(`Unexpected POST ${url}`));
+    });
+
+    renderButton();
+
+    const button = screen.getByRole('button', { name: 'One-click export to Base.com' });
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          productId: 'product-1',
+          connectionId: 'conn-base-1',
+          inventoryId: 'inv-main',
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Base.com export queued.' })).toHaveClass(
+        'border-amber-400/70'
+      );
+    });
+    expect(screen.getByRole('button', { name: 'Base.com export queued.' })).toBeDisabled();
+
+    act(() => {
+      trackedRunListeners.get('run-export-1')?.({
+        runId: 'run-export-1',
+        status: 'running',
+        trackingState: 'active',
+        updatedAt: '2026-03-23T12:00:05.000Z',
+        finishedAt: null,
+        errorMessage: null,
+        entityId: product.id,
+        entityType: 'product',
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Base.com export running.' })).toHaveClass(
+        'border-cyan-400/70'
+      );
+    });
+    expect(screen.getByRole('button', { name: 'Base.com export running.' })).toBeDisabled();
+
+    act(() => {
+      trackedRunListeners.get('run-export-1')?.({
+        runId: 'run-export-1',
+        status: 'completed',
+        trackingState: 'stopped',
+        updatedAt: '2026-03-23T12:00:10.000Z',
+        finishedAt: '2026-03-23T12:00:10.000Z',
+        errorMessage: null,
+        entityId: product.id,
+        entityType: 'product',
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Base.com export completed.' })).toHaveClass(
+        'border-emerald-400/70'
+      );
+    });
+    expect(screen.getByRole('button', { name: 'Base.com export completed.' })).not.toBeDisabled();
   });
 });

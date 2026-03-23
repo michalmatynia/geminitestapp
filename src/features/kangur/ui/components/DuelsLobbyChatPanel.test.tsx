@@ -109,4 +109,41 @@ describe('DuelsLobbyChatPanel', () => {
     fireEvent.click(loginButton);
     expect(onRequireLogin).toHaveBeenCalledTimes(1);
   });
+
+  it('disables lobby chat polling when the duel page is inactive', () => {
+    useKangurLobbyChatMock.mockReturnValue({
+      messages: [],
+      isLoading: false,
+      isLoadingOlder: false,
+      isSending: false,
+      isStreaming: false,
+      error: null,
+      lastUpdatedAt: null,
+      nextCursor: null,
+      refresh: vi.fn(),
+      loadOlder: vi.fn(),
+      sendMessage: vi.fn(),
+      maxMessageLength: 280,
+    });
+
+    render(
+      <DuelsLobbyChatPanel
+        enabled
+        isOnline
+        isPageActive={false}
+        canPost
+        relativeNow={Date.now()}
+        activeLearnerId='learner-1'
+        onRequireLogin={vi.fn()}
+      />
+    );
+
+    expect(useKangurLobbyChatMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: false,
+        isOnline: true,
+        streamEnabled: true,
+      })
+    );
+  });
 });

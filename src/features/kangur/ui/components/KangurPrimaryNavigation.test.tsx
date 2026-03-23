@@ -188,9 +188,14 @@ vi.mock('next/link', () => ({
   default: ({
     children,
     href,
+    prefetch: _prefetch,
     scroll: _scroll,
     ...rest
-  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; scroll?: boolean }) => (
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+    href: string;
+    prefetch?: boolean;
+    scroll?: boolean;
+  }) => (
     <a href={href} {...rest}>
       {children}
     </a>
@@ -1103,6 +1108,23 @@ describe('KangurPrimaryNavigation', () => {
 
     expect(subjectButton).toHaveAttribute('title', 'Current subject: Maths');
     expect(ageGroupButton).toHaveAttribute('title', 'Current age group: Age 10');
+  });
+
+  it('does not prefetch the Duels route from the primary navigation before entry', () => {
+    localeMock.mockReturnValue('en');
+    pathnameMock.mockReturnValue('/en/lessons');
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/en'
+        canManageLearners
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(prefetchMock).not.toHaveBeenCalledWith('/en/duels');
   });
 
   it('translates the mobile section labels for German locale', async () => {

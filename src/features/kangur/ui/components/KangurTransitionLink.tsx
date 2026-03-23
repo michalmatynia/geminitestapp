@@ -42,6 +42,7 @@ export function KangurTransitionLink({
   href,
   className,
   onClick,
+  prefetch,
   scroll,
   target,
   targetPageKey,
@@ -53,21 +54,23 @@ export function KangurTransitionLink({
   const managedLocalHref =
     typeof href === 'string' && href.startsWith('/') && target !== '_blank' ? href : null;
   const isManagedLocalHref = managedLocalHref !== null;
+  const shouldPrefetch = prefetch !== false;
   const shouldUseManagedScroll = isManagedLocalHref;
   const resolvedScroll = scroll ?? (shouldUseManagedScroll ? false : undefined);
 
   useEffect(() => {
-    if (!managedLocalHref) {
+    if (!managedLocalHref || !shouldPrefetch) {
       return;
     }
 
     routeNavigator.prefetch(managedLocalHref);
-  }, [managedLocalHref, routeNavigator]);
+  }, [managedLocalHref, routeNavigator, shouldPrefetch]);
 
   return (
     <NextLink
       href={href}
       className={cn('touch-manipulation select-none', className)}
+      prefetch={prefetch}
       scroll={resolvedScroll}
       target={target}
       onClick={(event) => {

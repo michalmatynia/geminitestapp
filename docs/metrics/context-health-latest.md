@@ -8,30 +8,26 @@ canonical: true
 ---
 # Context Health Check
 
-Generated at: 2026-03-23T08:53:10.377Z
+Generated at: 2026-03-23T09:46:39.704Z
 
 ## Summary
 
-- Status: WARN
+- Status: PASSED
 - Context files scanned: 241
 - Errors: 0
-- Warnings: 3
+- Warnings: 0
 - Info: 5
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| context-oversized | 0 | 3 | 0 |
 | context-missing-split | 0 | 0 | 5 |
 
 ## Issues
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
-| WARN | context-oversized | src/features/kangur/ui/context/KangurGameRuntimeContext.tsx | Context file is 505 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
-| WARN | context-oversized | src/features/kangur/ui/context/KangurRouteTransitionContext.tsx | Context file is 517 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
-| WARN | context-oversized | src/features/products/context/ProductListContext.tsx | Context file is 659 lines (threshold: 500). Consider extracting logic into hooks or splitting the context. |
 | INFO | context-missing-split | src/features/ai/ai-paths/context/AiPathsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
 | INFO | context-missing-split | src/features/cms/components/frontend/CmsStorefrontAppearance.context.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
 | INFO | context-missing-split | src/features/kangur/ui/components/KangurAiTutorPanelBody.context.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |

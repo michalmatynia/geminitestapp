@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import type {
   BaseActiveTemplatePreferenceResponse,
@@ -21,6 +21,14 @@ import {
   integrationSelectionQueryKeys,
 } from '@/features/integrations/public';
 import { useGenericExportToBaseMutation } from '@/features/integrations/public';
+import {
+  subscribeToTrackedAiPathRun,
+  type TrackedAiPathRunSnapshot,
+} from '@/shared/lib/ai-paths/client-run-tracker';
+import {
+  resolveTriggerButtonRunFeedbackPresentation,
+  type TriggerButtonRunFeedbackStatus,
+} from '@/shared/lib/ai-paths/trigger-button-run-feedback';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
@@ -35,6 +43,9 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 const INTEGRATION_SELECTION_STALE_TIME_MS = 5 * 60 * 1000;
 const defaultExportInventoryQueryKey = QUERY_KEYS.integrations.defaultExportInventory();
 const oneClickExportInFlight = new Set<string>();
+const BASE_QUICK_EXPORT_FEEDBACK_STORAGE_KEY = 'base-quick-export-feedback';
+const ACTIVE_EXPORT_FEEDBACK_TTL_MS = 15 * 60 * 1000;
+const TERMINAL_EXPORT_FEEDBACK_TTL_MS = 30 * 60 * 1000;
 
 const normalizeInventoryId = (value: string | null | undefined): string => value?.trim() || '';
 
@@ -67,6 +78,117 @@ type ExistingSkuDecisionState = QuickExportContext & {
   existingProductId: string | null;
 };
 
+type PersistedBaseQuickExportFeedback = {
+  productId: string;
+  runId: string | null;
+  status: TriggerButtonRunFeedbackStatus;
+  expiresAt: number;
+};
+
+const TERMINAL_EXPORT_RUN_STATUSES = new Set<TriggerButtonRunFeedbackStatus>([
+  'completed',
+  'failed',
+  'canceled',
+  'dead_lettered',
+]);
+
+const canUseSessionStorage = (): boolean =>
+  typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined';
+
+const resolveExportFeedbackTtlMs = (status: TriggerButtonRunFeedbackStatus): number =>
+  TERMINAL_EXPORT_RUN_STATUSES.has(status)
+    ? TERMINAL_EXPORT_FEEDBACK_TTL_MS
+    : ACTIVE_EXPORT_FEEDBACK_TTL_MS;
+
+const readPersistedBaseQuickExportFeedbackMap = (): Record<string, PersistedBaseQuickExportFeedback> => {
+  if (!canUseSessionStorage()) return {};
+  try {
+    const raw = window.sessionStorage.getItem(BASE_QUICK_EXPORT_FEEDBACK_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {};
+    }
+
+    const next: Record<string, PersistedBaseQuickExportFeedback> = {};
+    const now = Date.now();
+
+    Object.entries(parsed as Record<string, unknown>).forEach(([productId, value]) => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+      const record = value as Record<string, unknown>;
+      const status =
+        typeof record['status'] === 'string'
+          ? (record['status'] as TriggerButtonRunFeedbackStatus)
+          : null;
+      const expiresAt =
+        typeof record['expiresAt'] === 'number' && Number.isFinite(record['expiresAt'])
+          ? record['expiresAt']
+          : 0;
+      if (!status || expiresAt <= now) return;
+      next[productId] = {
+        productId,
+        runId: typeof record['runId'] === 'string' && record['runId'].trim().length > 0
+          ? record['runId'].trim()
+          : null,
+        status,
+        expiresAt,
+      };
+    });
+
+    return next;
+  } catch {
+    return {};
+  }
+};
+
+const writePersistedBaseQuickExportFeedbackMap = (
+  nextMap: Record<string, PersistedBaseQuickExportFeedback>
+): void => {
+  if (!canUseSessionStorage()) return;
+  try {
+    if (Object.keys(nextMap).length === 0) {
+      window.sessionStorage.removeItem(BASE_QUICK_EXPORT_FEEDBACK_STORAGE_KEY);
+      return;
+    }
+    window.sessionStorage.setItem(BASE_QUICK_EXPORT_FEEDBACK_STORAGE_KEY, JSON.stringify(nextMap));
+  } catch {
+    // Best-effort UI persistence only.
+  }
+};
+
+const readPersistedBaseQuickExportFeedback = (
+  productId: string
+): PersistedBaseQuickExportFeedback | null => {
+  const nextMap = readPersistedBaseQuickExportFeedbackMap();
+  const record = nextMap[productId];
+  writePersistedBaseQuickExportFeedbackMap(nextMap);
+  return record ?? null;
+};
+
+const persistBaseQuickExportFeedback = (
+  productId: string,
+  runId: string | null,
+  status: TriggerButtonRunFeedbackStatus
+): void => {
+  if (!productId.trim()) return;
+  const nextMap = readPersistedBaseQuickExportFeedbackMap();
+  nextMap[productId] = {
+    productId,
+    runId,
+    status,
+    expiresAt: Date.now() + resolveExportFeedbackTtlMs(status),
+  };
+  writePersistedBaseQuickExportFeedbackMap(nextMap);
+};
+
+const clearPersistedBaseQuickExportFeedback = (productId: string): void => {
+  if (!productId.trim()) return;
+  const nextMap = readPersistedBaseQuickExportFeedbackMap();
+  if (!(productId in nextMap)) return;
+  delete nextMap[productId];
+  writePersistedBaseQuickExportFeedbackMap(nextMap);
+};
+
 export function BaseQuickExportButton(props: {
   product: ProductWithImages;
   status: string;
@@ -88,11 +210,105 @@ export function BaseQuickExportButton(props: {
   const queryClient = useQueryClient();
   const quickExportMutation = useGenericExportToBaseMutation();
   const quickExportLockRef = useRef(false);
+  const trackedExportRunIdRef = useRef<string | null>(null);
+  const trackedExportRunUnsubscribeRef = useRef<(() => void) | null>(null);
   const [quickExportLocked, setQuickExportLocked] = useState(false);
   const [existingSkuDecision, setExistingSkuDecision] = useState<ExistingSkuDecisionState | null>(
     null
   );
   const [linkExistingPending, setLinkExistingPending] = useState(false);
+  const [trackedExportRunStatus, setTrackedExportRunStatus] =
+    useState<TriggerButtonRunFeedbackStatus | null>(null);
+
+  const stopTrackingExportRun = useCallback((): void => {
+    trackedExportRunUnsubscribeRef.current?.();
+    trackedExportRunUnsubscribeRef.current = null;
+    trackedExportRunIdRef.current = null;
+  }, []);
+
+  const setTrackedExportStatus = useCallback(
+    (status: TriggerButtonRunFeedbackStatus | null, runId?: string | null): void => {
+      setTrackedExportRunStatus(status);
+      if (!status) {
+        clearPersistedBaseQuickExportFeedback(product.id);
+        return;
+      }
+      persistBaseQuickExportFeedback(product.id, runId?.trim() || null, status);
+    },
+    [product.id]
+  );
+
+  useEffect(
+    () => () => {
+      stopTrackingExportRun();
+    },
+    [stopTrackingExportRun]
+  );
+
+  useEffect(() => {
+    const persistedFeedback = readPersistedBaseQuickExportFeedback(product.id);
+    if (!persistedFeedback) {
+      return;
+    }
+
+    setTrackedExportRunStatus(persistedFeedback.status);
+    if (
+      persistedFeedback.runId &&
+      !TERMINAL_EXPORT_RUN_STATUSES.has(persistedFeedback.status)
+    ) {
+      startTrackingExportRun(persistedFeedback.runId, persistedFeedback.status);
+    }
+  }, [product.id, startTrackingExportRun]);
+
+  const handleTrackedExportRunSnapshot = useCallback(
+    (runId: string, snapshot: TrackedAiPathRunSnapshot): void => {
+      if (trackedExportRunIdRef.current !== runId) return;
+      setTrackedExportStatus(snapshot.status, runId);
+      if (
+        snapshot.trackingState === 'stopped' ||
+        TERMINAL_EXPORT_RUN_STATUSES.has(snapshot.status)
+      ) {
+        stopTrackingExportRun();
+      }
+    },
+    [setTrackedExportStatus, stopTrackingExportRun]
+  );
+
+  const startTrackingExportRun = useCallback(
+    (runId: string, initialStatus: TriggerButtonRunFeedbackStatus): void => {
+      const normalizedRunId = runId.trim();
+      if (!normalizedRunId) {
+        setTrackedExportStatus(initialStatus, null);
+        return;
+      }
+
+      if (trackedExportRunIdRef.current !== normalizedRunId) {
+        stopTrackingExportRun();
+        trackedExportRunIdRef.current = normalizedRunId;
+      }
+
+      setTrackedExportStatus(initialStatus, normalizedRunId);
+      if (TERMINAL_EXPORT_RUN_STATUSES.has(initialStatus)) {
+        stopTrackingExportRun();
+        return;
+      }
+      trackedExportRunUnsubscribeRef.current = subscribeToTrackedAiPathRun(
+        normalizedRunId,
+        (snapshot: TrackedAiPathRunSnapshot): void => {
+          handleTrackedExportRunSnapshot(normalizedRunId, snapshot);
+        },
+        {
+          initialSnapshot: {
+            runId: normalizedRunId,
+            status: initialStatus === 'waiting' ? 'queued' : initialStatus,
+            entityId: product.id,
+            entityType: 'product',
+          },
+        }
+      );
+    },
+    [handleTrackedExportRunSnapshot, product.id, setTrackedExportStatus, stopTrackingExportRun]
+  );
 
   const resolveQuickExportContext = async (): Promise<QuickExportContext | null> => {
     try {
@@ -211,6 +427,18 @@ export function BaseQuickExportButton(props: {
 
     try {
       const response = await quickExportMutation.mutateAsync(payload);
+      const normalizedRunId = response?.runId?.trim() || '';
+      const initialRunStatus: TriggerButtonRunFeedbackStatus =
+        response?.status === 'completed' || response?.status === 'failed'
+          ? response.status
+          : 'queued';
+
+      if (normalizedRunId) {
+        startTrackingExportRun(normalizedRunId, initialRunStatus);
+      } else if (response?.status) {
+        setTrackedExportStatus(initialRunStatus, null);
+      }
+
       prefetchListings();
       toast(
         response?.status === 'queued'
@@ -342,7 +570,17 @@ export function BaseQuickExportButton(props: {
     ? `Open Base.com listing actions (${status}).`
     : 'One-click export to Base.com';
 
-  const quickExportPending = quickExportMutation.isPending || quickExportLocked;
+  const trackedExportPresentation = trackedExportRunStatus
+    ? resolveTriggerButtonRunFeedbackPresentation(trackedExportRunStatus)
+    : null;
+  const trackedExportInFlight =
+    trackedExportRunStatus !== null && !TERMINAL_EXPORT_RUN_STATUSES.has(trackedExportRunStatus);
+  const quickExportPending = quickExportMutation.isPending || quickExportLocked || trackedExportInFlight;
+  const resolvedButtonStatus = trackedExportRunStatus ?? status;
+  const shouldUseFilledMarketplaceTone = showMarketplaceBadge || trackedExportRunStatus !== null;
+  const resolvedLabel = trackedExportPresentation
+    ? `Base.com export ${trackedExportPresentation.label.toLowerCase()}.`
+    : label;
 
   return (
     <>
@@ -360,12 +598,12 @@ export function BaseQuickExportButton(props: {
         onFocus={prefetchListings}
         variant='ghost'
         size='icon'
-        aria-label={label}
-        title={label}
+        aria-label={resolvedLabel}
+        title={resolvedLabel}
         className={cn(
           'size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
           !showMarketplaceBadge && quickExportPending && 'cursor-not-allowed opacity-60',
-          getMarketplaceButtonClass(status, showMarketplaceBadge, 'base')
+          getMarketplaceButtonClass(resolvedButtonStatus, shouldUseFilledMarketplaceTone, 'base')
         )}
       >
         <span

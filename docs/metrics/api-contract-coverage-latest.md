@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-22'
+last_reviewed: '2026-03-23'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,25 +8,25 @@ canonical: true
 ---
 # API Contract Coverage Report
 
-Generated at: 2026-03-22T10:14:33.967Z
+Generated at: 2026-03-23T09:44:34.758Z
 
 ## Summary
 
 - Status: PASSED
 - Route files scanned: 285
 - Route methods scanned: 215
-- Methods with adjacent tests: 188
+- Methods with adjacent tests: 189
 - Mutations with body validation: 37
 - Query routes with validation: 10
 - Errors: 0
 - Warnings: 0
-- Info: 17
+- Info: 16
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| api-contract-route-missing-tests | 0 | 0 | 17 |
+| api-contract-route-missing-tests | 0 | 0 | 16 |
 
 ## Issues
 
@@ -47,7 +47,6 @@ Generated at: 2026-03-22T10:14:33.967Z
 | INFO | api-contract-route-missing-tests | src/app/api/settings/cache/route.ts:7:14 | GET settings/cache has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/settings/heavy/route.ts:8:14 | GET settings/heavy has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/settings/providers/route.ts:7:14 | GET settings/providers has no adjacent route/handler test coverage. |
-| INFO | api-contract-route-missing-tests | src/app/api/system/logs/metrics/route.ts:8:14 | GET system/logs/metrics has no adjacent route/handler test coverage. |
 | INFO | api-contract-route-missing-tests | src/app/api/system/upload-events/route.ts:7:14 | GET system/upload-events has no adjacent route/handler test coverage. |
 
 ## Route Inventory
@@ -242,7 +241,7 @@ Generated at: 2026-03-22T10:14:33.967Z
 | system/logs/insights | GET | protected | yes | - | yes |
 | system/logs/insights | POST | protected | yes | - | - |
 | system/logs/interpret | POST | protected | yes | - | - |
-| system/logs/metrics | GET | protected | no | - | yes |
+| system/logs/metrics | GET | protected | yes | - | yes |
 | system/logs | GET | protected | yes | - | yes |
 | system/logs | POST | protected | yes | - | - |
 | system/logs | DELETE | protected | yes | - | - |

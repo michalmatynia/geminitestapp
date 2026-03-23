@@ -374,6 +374,49 @@ describe('KangurGameOperationSelectorWidget', () => {
     expect(runtime.setScreen).toHaveBeenCalledWith('geometry_quiz');
   });
 
+  it('renders the music intro without the maths-only recommendation card', () => {
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'music',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+    lessonsState.value = [
+      {
+        id: 'kangur-lesson-music-diatonic-scale',
+        componentId: 'music_diatonic_scale',
+        title: 'Skala diatoniczna',
+        description: 'Poznaj dźwięki do re mi fa sol la si.',
+        emoji: '🎵',
+        color: 'kangur-gradient-accent-sky',
+        activeBg: 'bg-sky-500',
+        sortOrder: 4000,
+        enabled: true,
+        subject: 'music',
+      },
+    ];
+    const progress = buildProgress({
+      lessonMastery: {
+        music_diatonic_scale: {
+          attempts: 2,
+          completions: 2,
+          masteryPercent: 38,
+          bestScorePercent: 56,
+          lastScorePercent: 42,
+          lastCompletedAt: '2026-03-10T09:00:00.000Z',
+        },
+      },
+    });
+    const runtime = buildRuntime(progress);
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.getByTestId('mock-operation-intro')).toHaveTextContent(
+      'Wybierz lekcję muzyki i śpiewaj dźwięki skali diatonicznej krok po kroku.'
+    );
+    expect(screen.queryByTestId('kangur-operation-recommendation-title')).not.toBeInTheDocument();
+  });
+
   it('falls back to the hottest badge-track lane when lessons are stable', () => {
     const progress = buildProgress({
       lessonMastery: {

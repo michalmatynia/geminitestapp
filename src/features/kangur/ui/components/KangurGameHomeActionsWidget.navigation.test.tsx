@@ -50,9 +50,14 @@ vi.mock('next/link', () => ({
   default: ({
     children,
     href,
+    prefetch: _prefetch,
     scroll: _scroll,
     ...rest
-  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; scroll?: boolean }) => (
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+    href: string;
+    prefetch?: boolean;
+    scroll?: boolean;
+  }) => (
     <a href={href} {...rest}>
       {children}
     </a>
@@ -136,5 +141,12 @@ describe('KangurGameHomeActionsWidget navigation', () => {
     });
 
     expect(routerPushMock).toHaveBeenCalledWith('/en/kangur/lessons', { scroll: false });
+  });
+
+  it('prefetches Lessons but not Duels from the home actions shell', () => {
+    render(<KangurGameHomeActionsWidget />);
+
+    expect(routerPrefetchMock).toHaveBeenCalledWith('/en/kangur/lessons');
+    expect(routerPrefetchMock).not.toHaveBeenCalledWith('/en/kangur/duels');
   });
 });

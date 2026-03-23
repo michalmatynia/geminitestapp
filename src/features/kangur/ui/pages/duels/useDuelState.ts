@@ -51,6 +51,18 @@ export function useDuelState(options: DuelStateOptions) {
 
   const activeSession = duelState?.session ?? null;
 
+  const abortDuelStateRequest = useCallback(() => {
+    duelAbortRef.current?.abort();
+    duelAbortRef.current = null;
+    duelPollingRef.current = false;
+  }, []);
+
+  const abortHeartbeatRequest = useCallback(() => {
+    duelHeartbeatAbortRef.current?.abort();
+    duelHeartbeatAbortRef.current = null;
+    duelHeartbeatRef.current = false;
+  }, []);
+
   const runAction = useCallback(
     async <T>(
       name: NonNullable<typeof action>,
@@ -81,7 +93,7 @@ export function useDuelState(options: DuelStateOptions) {
       return;
     }
 
-    duelAbortRef.current?.abort();
+    abortDuelStateRequest();
     const controller = new AbortController();
     duelAbortRef.current = controller;
     duelPollingRef.current = true;
@@ -122,14 +134,14 @@ export function useDuelState(options: DuelStateOptions) {
       duelAbortRef.current = null;
       duelPollingRef.current = false;
     }
-  }, [activeSession, isGuest, isOnline, isPageActive]);
+  }, [abortDuelStateRequest, activeSession, isGuest, isOnline, isPageActive]);
 
   const sendHeartbeat = useCallback(async () => {
-    if (!activeSession || duelHeartbeatRef.current || !isOnline) {
+    if (!activeSession || duelHeartbeatRef.current || !isOnline || !isPageActive) {
       return;
     }
 
-    duelHeartbeatAbortRef.current?.abort();
+    abortHeartbeatRequest();
     const controller = new AbortController();
     duelHeartbeatAbortRef.current = controller;
     duelHeartbeatRef.current = true;
@@ -149,7 +161,7 @@ export function useDuelState(options: DuelStateOptions) {
         duelHeartbeatRef.current = false;
       }
     }
-  }, [activeSession, isOnline]);
+  }, [abortHeartbeatRequest, activeSession, isOnline, isPageActive]);
 
   const handleReaction = useCallback(
     async (type: KangurDuelReactionType) => {
@@ -188,7 +200,11 @@ export function useDuelState(options: DuelStateOptions) {
   );
 
   useEffect(() => {
-    if (!activeSession || !isOnline || !isPageActive) return;
+    if (!activeSession || !isOnline || !isPageActive) {
+      abortDuelStateRequest();
+      abortHeartbeatRequest();
+      return;
+    }
 
     const pollInterval = Math.min(
       DUEL_POLL_INTERVAL_MS * Math.pow(1.5, duelFailureCount),
@@ -206,8 +222,19 @@ export function useDuelState(options: DuelStateOptions) {
     return () => {
       safeClearInterval(intervalId);
       safeClearInterval(heartbeatId);
+      abortDuelStateRequest();
+      abortHeartbeatRequest();
     };
-  }, [activeSession, duelFailureCount, fetchDuelState, isOnline, isPageActive, sendHeartbeat]);
+  }, [
+    abortDuelStateRequest,
+    abortHeartbeatRequest,
+    activeSession,
+    duelFailureCount,
+    fetchDuelState,
+    isOnline,
+    isPageActive,
+    sendHeartbeat,
+  ]);
 
   return {
     duelState,

@@ -10,6 +10,7 @@ import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { useKangurRouteActivity } from '@/features/kangur/ui/hooks/useKangurRouteActivity';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { cn } from '@/features/kangur/shared/utils';
@@ -31,6 +32,7 @@ function DuelsContent(): React.JSX.Element {
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
   const { openLoginModal } = useKangurLoginModal();
   const isGuest = !isAuthenticated;
+  const isDuelsRouteActive = useKangurRouteActivity('Duels');
   const [lobbyModeFilter, setLobbyModeFilter] = useState<'all' | KangurDuelMode>('all');
   const [lobbySort, setLobbySort] = useState<LobbySort>('recent');
   
@@ -46,13 +48,13 @@ function DuelsContent(): React.JSX.Element {
     canPlay: hasActiveLearner,
     isGuest,
     isOnline: true,
-    isPageActive: true,
+    isPageActive: isDuelsRouteActive,
   });
 
   useDuelState({
     isGuest,
     isOnline: true,
-    isPageActive: true,
+    isPageActive: isDuelsRouteActive,
   });
 
   const navigation = useMemo(

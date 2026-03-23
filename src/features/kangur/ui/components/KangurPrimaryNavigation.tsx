@@ -94,6 +94,7 @@ type KangurNavActionConfig = {
   elementRef?: React.Ref<HTMLButtonElement>;
   href?: string;
   onClick?: () => void;
+  prefetch?: boolean;
   targetPageKey?: KangurPrimaryNavigationPage;
   testId?: string;
   title?: string;
@@ -645,6 +646,7 @@ export function KangurPrimaryNavigation({
     ),
     docId: 'top_nav_duels',
     href: duelsHref,
+    prefetch: false,
     targetPageKey: 'Duels',
     testId: 'kangur-primary-nav-duels',
     transition: {

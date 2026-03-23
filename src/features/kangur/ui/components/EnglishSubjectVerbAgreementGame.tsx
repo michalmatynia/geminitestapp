@@ -17,7 +17,6 @@ import {
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import { EnglishAgreementBalanceAnimation } from '@/features/kangur/ui/components/LessonAnimations';
 import {
-  KangurButton,
   KangurGlassPanel,
   KangurHeadline,
   KangurInfoCard,

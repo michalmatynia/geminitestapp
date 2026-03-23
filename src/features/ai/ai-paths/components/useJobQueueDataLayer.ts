@@ -18,13 +18,14 @@ import {
   previewAiPathQueuePayloadWithOptimisticRuns,
   rememberOptimisticAiPathRun,
 } from '@/shared/lib/ai-paths/optimistic-run-queue';
-import { fetchAiPathsSettingsCached } from '@/shared/lib/ai-paths/settings-store-client';
+import { fetchAiPathsSettingsByKeysCached } from '@/shared/lib/ai-paths/settings-store-client';
 import {
   createDeleteMutationV2,
   createListQueryV2,
   createMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { QueueStatus } from './job-queue-panel-utils';
 
@@ -106,7 +107,20 @@ export function useJobQueueDataLayer({
     Array<{ key: string; value: string }>
   >({
     queryKey: QUERY_KEYS.ai.aiPaths.settings(),
-    queryFn: async () => await fetchAiPathsSettingsCached(),
+    queryFn: async () => {
+      try {
+        return await fetchAiPathsSettingsByKeysCached([JOB_QUEUE_LAG_THRESHOLD_KEY]);
+      } catch (error) {
+        logClientCatch(error, {
+          source: 'ai-paths.job-queue',
+          action: 'loadLagThreshold',
+          settingsKey: JOB_QUEUE_LAG_THRESHOLD_KEY,
+          level: 'warn',
+        });
+        return [];
+      }
+    },
+    enabled: isPanelActive,
     staleTime: 60_000,
     meta: {
       source: 'ai-paths.job-queue',

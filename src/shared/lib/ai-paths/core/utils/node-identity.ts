@@ -2,7 +2,6 @@ import type { AiNode, NodeDefinition, PathConfig } from '@/shared/contracts/ai-p
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { hashString, stableStringify } from './runtime';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
 type NodeIdentityLike = Pick<AiNode, 'type' | 'title'> &
@@ -303,11 +302,10 @@ const remapRuntimeState = (
         runtimeState: JSON.stringify(remapped.runtimeState),
         changed: true,
       };
-    } catch (error) {
-      logClientError(error);
+    } catch (_error) {
       return {
-        runtimeState: runtimeState as string | Record<string, unknown> | undefined,
-        changed: false,
+        runtimeState: undefined,
+        changed: true,
       };
     }
   }
@@ -359,8 +357,7 @@ const parseRuntimeStateRecord = (runtimeState: unknown): Record<string, unknown>
   try {
     const parsed = JSON.parse(runtimeState) as unknown;
     return isObjectRecord(parsed) ? parsed : null;
-  } catch (error) {
-    logClientError(error);
+  } catch {
     return null;
   }
 };

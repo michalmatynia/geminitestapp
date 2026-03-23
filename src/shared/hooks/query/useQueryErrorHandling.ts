@@ -3,6 +3,8 @@
 import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 
+import { ERROR_CATEGORY } from '@/shared/contracts/observability';
+import { classifyError } from '@/shared/errors/error-classifier';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 import { useToast } from '@/shared/ui';
@@ -132,6 +134,24 @@ const pruneErrorToastSignatures = (
 export const buildQueryErrorSignature = (queryKey: unknown[], message: string): string =>
   `${toQueryKeySignature(queryKey)}::${message.trim().toLowerCase()}`;
 
+export const buildErrorToastSignature = (
+  queryKey: unknown[],
+  message: string,
+  error?: unknown
+): string => {
+  const normalizedMessage = message.trim().toLowerCase();
+  if (!normalizedMessage) {
+    return buildQueryErrorSignature(queryKey, message);
+  }
+
+  const category = classifyError(error ?? message);
+  if (category === ERROR_CATEGORY.AUTH) {
+    return `${ERROR_CATEGORY.AUTH}::${normalizedMessage}`;
+  }
+
+  return buildQueryErrorSignature(queryKey, message);
+};
+
 export const shouldEmitDedupedErrorToast = (args: {
   signature: string;
   dedupeWindowMs: number;
@@ -247,7 +267,7 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
         // Show toast notification
         if (showToast && toast) {
           const shouldShowToast = shouldEmitDedupedErrorToast({
-            signature: buildQueryErrorSignature(queryKey, message),
+            signature: buildErrorToastSignature(queryKey, message, error),
             dedupeWindowMs: toastDedupeWindowMs,
             nowMs: Date.now(),
             lastShownAtBySignature: errorToastSignaturesRef.current,

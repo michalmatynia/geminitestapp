@@ -193,4 +193,32 @@ describe('repairPathNodeIdentities', () => {
     expect(Object.keys(repairedRuntimeState['inputs'] ?? {})).toEqual([repairedNode?.id]);
     expect(repaired.warnings.some((warning) => warning.code === 'missing_node_id')).toBe(true);
   });
+
+  it('drops malformed persisted string runtime state during identity repair', () => {
+    const parserDefinition = palette.find(
+      (definition) => definition.type === 'parser' && definition.title === 'JSON Parser'
+    );
+    if (!parserDefinition?.nodeTypeId) {
+      throw new Error('Expected JSON Parser node type id in palette.');
+    }
+
+    const config = buildPathConfig({
+      nodes: [
+        buildNode({
+          id: 'node-111111111111111111111111',
+          instanceId: 'node-111111111111111111111111',
+          nodeTypeId: parserDefinition.nodeTypeId,
+          type: 'parser',
+          title: 'JSON Parser',
+          outputs: ['value'],
+        }),
+      ],
+      runtimeState: '{"inputs":',
+    });
+
+    const repaired = repairPathNodeIdentities(config, { palette });
+
+    expect(repaired.changed).toBe(true);
+    expect(repaired.config.runtimeState).toBeUndefined();
+  });
 });

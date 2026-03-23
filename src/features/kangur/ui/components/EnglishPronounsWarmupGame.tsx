@@ -21,7 +21,6 @@ import {
   translateKangurMiniGameWithFallback,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
-  KangurButton,
   KangurGlassPanel,
   KangurHeadline,
   KangurInfoCard,

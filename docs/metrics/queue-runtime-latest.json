@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-22T08:43:15.218Z",
-  "durationMs": 5722,
+  "generatedAt": "2026-03-23T09:44:42.126Z",
+  "durationMs": 4184,
   "status": "passed",
   "summary": {
-    "queueCount": 18,
+    "queueCount": 19,
     "queueInitModuleCount": 9,
     "gatedQueueCount": 9,
     "explicitStartCallCount": 14,
-    "repeatQueueModuleCount": 17,
+    "repeatQueueModuleCount": 18,
     "errorCount": 0,
     "warningCount": 0
   },
@@ -85,6 +85,26 @@
       ]
     },
     {
+      "queueName": "base-export",
+      "file": "src/features/integrations/workers/baseExportQueue.ts",
+      "gated": false,
+      "repeatManaged": true,
+      "explicitlyStarted": true,
+      "ownerModules": [
+        "src/server/queues/integrations.ts",
+        "src/server/queues/product-ai.ts",
+        "src/server/queues/product-sync.ts"
+      ],
+      "startExports": [
+        "startBaseExportQueue",
+        "startProductAiJobQueue",
+        "startProductSyncBackfillQueue",
+        "startProductSyncSchedulerQueue",
+        "startTraderaListingQueue",
+        "startTraderaRelistSchedulerQueue"
+      ]
+    },
+    {
       "queueName": "base-import",
       "file": "src/features/integrations/workers/baseImportQueue.ts",
       "gated": false,
@@ -96,6 +116,7 @@
         "src/server/queues/product-sync.ts"
       ],
       "startExports": [
+        "startBaseExportQueue",
         "startProductAiJobQueue",
         "startProductSyncBackfillQueue",
         "startProductSyncSchedulerQueue",
@@ -208,21 +229,11 @@
       "repeatManaged": true,
       "explicitlyStarted": true,
       "ownerModules": [
-        "src/server/queues/ai.ts",
-        "src/server/queues/kangur.ts",
-        "src/shared/lib/observability/workers/systemLogAlertsQueue.ts"
+        "src/server/queues/kangur.ts"
       ],
       "startExports": [
-        "startAgentQueue",
-        "startAiInsightsQueue",
-        "startAiPathRunQueue",
-        "startChatbotJobQueue",
-        "startImageStudioRunQueue",
-        "startImageStudioSequenceQueue",
         "startKangurSocialPipelineQueue",
-        "startKangurSocialSchedulerQueue",
-        "startSystemLogAlertsQueue",
-        "startSystemLogAlertsWorker"
+        "startKangurSocialSchedulerQueue"
       ]
     },
     {
@@ -232,21 +243,11 @@
       "repeatManaged": true,
       "explicitlyStarted": true,
       "ownerModules": [
-        "src/server/queues/ai.ts",
-        "src/server/queues/kangur.ts",
-        "src/shared/lib/observability/workers/systemLogAlertsQueue.ts"
+        "src/server/queues/kangur.ts"
       ],
       "startExports": [
-        "startAgentQueue",
-        "startAiInsightsQueue",
-        "startAiPathRunQueue",
-        "startChatbotJobQueue",
-        "startImageStudioRunQueue",
-        "startImageStudioSequenceQueue",
         "startKangurSocialPipelineQueue",
-        "startKangurSocialSchedulerQueue",
-        "startSystemLogAlertsQueue",
-        "startSystemLogAlertsWorker"
+        "startKangurSocialSchedulerQueue"
       ]
     },
     {
@@ -256,16 +257,10 @@
       "repeatManaged": true,
       "explicitlyStarted": true,
       "ownerModules": [
-        "src/server/queues/integrations.ts",
-        "src/server/queues/product-ai.ts",
-        "src/server/queues/product-sync.ts"
+        "src/server/queues/product-ai.ts"
       ],
       "startExports": [
-        "startProductAiJobQueue",
-        "startProductSyncBackfillQueue",
-        "startProductSyncSchedulerQueue",
-        "startTraderaListingQueue",
-        "startTraderaRelistSchedulerQueue"
+        "startProductAiJobQueue"
       ]
     },
     {
@@ -336,6 +331,7 @@
         "src/server/queues/product-sync.ts"
       ],
       "startExports": [
+        "startBaseExportQueue",
         "startProductAiJobQueue",
         "startProductSyncBackfillQueue",
         "startProductSyncSchedulerQueue",
@@ -355,6 +351,7 @@
         "src/server/queues/product-sync.ts"
       ],
       "startExports": [
+        "startBaseExportQueue",
         "startProductAiJobQueue",
         "startProductSyncBackfillQueue",
         "startProductSyncSchedulerQueue",

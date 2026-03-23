@@ -18,9 +18,17 @@ vi.mock('@/shared/ui', () => ({
   Button: ({
     children,
     onClick,
+    loading,
+    loadingText,
+    disabled,
     ...props
-  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode }) => (
-    <button type='button' onClick={onClick} {...props}>
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    children?: React.ReactNode;
+    loading?: boolean;
+    loadingText?: string;
+  }) => (
+    <button type='button' onClick={onClick} disabled={loading || disabled} {...props}>
+      {loading ? <span data-testid='mock-button-spinner'>{loadingText ?? 'Loading'}</span> : null}
       {children}
     </button>
   ),
@@ -266,6 +274,27 @@ describe('TriggerButtonBar', () => {
       'data-class-name',
       expect.stringContaining('border-cyan-500/40')
     );
+  });
+
+  it('renders an explicit loading state for running inline click buttons', () => {
+    useTriggerButtonsMock.mockReturnValue({
+      buttons: [{ ...BUTTON, locations: ['product_modal'] }],
+      toggleMap: {},
+      successMap: {},
+      runStates: {
+        [BUTTON.id]: { status: 'running', progress: 0.1 },
+      },
+      lastRuns: {},
+      handleTrigger: vi.fn(),
+      isLoading: false,
+    });
+
+    render(<TriggerButtonBar location='product_modal' entityType='product' entityId='product-1' />);
+
+    expect(screen.getByRole('button', { name: /Trigger/i })).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('button', { name: /Trigger/i })).toBeDisabled();
+    expect(screen.getByTestId('mock-button-spinner')).toBeInTheDocument();
+    expect(screen.getByText('Running...')).toBeInTheDocument();
   });
 
   it('does not render inline run feedback outside product row and modal locations', () => {

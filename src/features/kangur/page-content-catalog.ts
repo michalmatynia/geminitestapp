@@ -736,6 +736,22 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
     explanation: 'Ułóż litery w poprawnej kolejności. Gra dla 6-latków.',
     triggerPhrases: ['kolejnosc', 'alfabet'],
   },
+  art_colors_harmony: {
+    explanation:
+      'Pokazuje ciepłe i chłodne kolory oraz uczy prostych, przyjaznych połączeń kolorystycznych. Dobra lekcja na start z plastyką.',
+    triggerPhrases: ['kolory', 'barwy', 'harmonia kolorów', 'malarstwo', 'plastyka'],
+  },
+  art_shapes_basic: {
+    explanation:
+      'Wprowadza koło, kwadrat, trójkąt i prostokąt oraz pomaga znajdować te kształty w codziennych przedmiotach.',
+    triggerPhrases: ['kształty', 'figury podstawowe', 'koło', 'kwadrat', 'trójkąt', 'prostokąt'],
+  },
+  music_diatonic_scale: {
+    explanation:
+      'Lekcja wprowadza siedem dźwięków skali diatonicznej, śpiewanie skali w górę i w dół oraz rozpoznawanie małych kroków między mi-fa i si-do.',
+    triggerPhrases: ['muzyka', 'skala', 'skala diatoniczna', 'do re mi', 'dźwięki'],
+    aliases: ['music', 'diatonic scale', 'do re mi'],
+  },
   webdev_react_components: {
     explanation: 'Buduj interaktywne komponenty w React. Lekcja dla dorosłych.',
     triggerPhrases: ['react', 'komponenty', 'programowanie'],

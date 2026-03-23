@@ -8,8 +8,11 @@ import {
   useProductListTableContext,
 } from '@/features/products/context/ProductListContext';
 import { useProductsTableProps } from '@/features/products/hooks/useProductsTableProps';
+import { logProductListDebug } from '@/features/products/lib/product-list-observability';
 import type { ProductWithImages } from '@/shared/contracts/products';
+import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary';
 import { Alert, Button, DataTable, EmptyState, StandardDataTablePanel } from '@/shared/ui';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { Row } from '@tanstack/react-table';
 
@@ -116,27 +119,59 @@ const ProductListTableSurface = memo(function ProductListTableSurface() {
   const alertsContent = useMemo(() => <ProductListAlerts />, []);
 
   const updateTableMaxHeight = useCallback(() => {
-    const mainElement = document.getElementById('app-content');
-    const tableElement = desktopTableRef.current;
-    if (!mainElement || !tableElement) return;
+    try {
+      const mainElement = document.getElementById('app-content');
+      const tableElement = desktopTableRef.current;
+      if (!mainElement || !tableElement) return;
 
-    const availableHeight = Math.floor(
-      mainElement.getBoundingClientRect().bottom -
-        tableElement.getBoundingClientRect().top -
-        PRODUCT_LIST_BOTTOM_GAP
-    );
-    const nextMaxHeight = Math.max(0, availableHeight);
-    setResolvedTableMaxHeight((currentValue) =>
-      currentValue === nextMaxHeight ? currentValue : nextMaxHeight
-    );
-  }, []);
+      const availableHeight = Math.floor(
+        mainElement.getBoundingClientRect().bottom -
+          tableElement.getBoundingClientRect().top -
+          PRODUCT_LIST_BOTTOM_GAP
+      );
+      const nextMaxHeight = Math.max(0, availableHeight);
+      setResolvedTableMaxHeight((currentValue) => {
+        if (currentValue === nextMaxHeight) return currentValue;
+
+        logProductListDebug(
+          'table-max-height-change',
+          {
+            previous: currentValue ?? null,
+            next: nextMaxHeight,
+            availableHeight,
+            dataCount: tableProps.data.length,
+            isLoading: tableProps.isLoading,
+          },
+          {
+            dedupeKey: 'table-max-height-change',
+            throttleMs: 250,
+          }
+        );
+        return nextMaxHeight;
+      });
+    } catch (error) {
+      logClientCatch(error, {
+        source: 'ProductListPanel',
+        action: 'updateTableMaxHeight',
+        level: 'warn',
+      });
+    }
+  }, [tableProps.data.length, tableProps.isLoading]);
 
   useEffect(() => {
     const mainElement = document.getElementById('app-content');
     if (!mainElement || typeof ResizeObserver === 'undefined') return;
 
     const resizeObserver = new ResizeObserver(() => {
-      updateTableMaxHeight();
+      try {
+        updateTableMaxHeight();
+      } catch (error) {
+        logClientCatch(error, {
+          source: 'ProductListPanel',
+          action: 'resizeObserverUpdateTableMaxHeight',
+          level: 'warn',
+        });
+      }
     });
     resizeObserver.observe(mainElement);
     if (desktopTableRef.current) {
@@ -153,14 +188,35 @@ const ProductListTableSurface = memo(function ProductListTableSurface() {
   }, [updateTableMaxHeight]);
 
   useEffect(() => {
+    logProductListDebug(
+      'table-layout-raf-scheduled',
+      {
+        dataCount: tableProps.data.length,
+        isLoading: tableProps.isLoading,
+        resolvedTableMaxHeight:
+          typeof resolvedTableMaxHeight === 'number' ? resolvedTableMaxHeight : null,
+      },
+      {
+        dedupeKey: 'table-layout-raf-scheduled',
+        throttleMs: 500,
+      }
+    );
     const frameId = window.requestAnimationFrame(() => {
-      updateTableMaxHeight();
+      try {
+        updateTableMaxHeight();
+      } catch (error) {
+        logClientCatch(error, {
+          source: 'ProductListPanel',
+          action: 'animationFrameUpdateTableMaxHeight',
+          level: 'warn',
+        });
+      }
     });
 
     return (): void => {
       window.cancelAnimationFrame(frameId);
     };
-  });
+  }, [updateTableMaxHeight]);
 
   const headerContent = useMemo(() => {
     return <ProductListHeader filtersContent={<ProductFilters />} />;
@@ -226,9 +282,9 @@ const ProductListTableSurface = memo(function ProductListTableSurface() {
 
 export const ProductListPanel = memo(function ProductListPanel() {
   return (
-    <>
+    <AppErrorBoundary source='products.ProductListPanel'>
       <ProductListTableSurface />
       <ProductCreatePromptModal />
-    </>
+    </AppErrorBoundary>
   );
 });

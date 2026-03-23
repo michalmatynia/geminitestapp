@@ -113,8 +113,9 @@ const AuthenticatedApp = (): JSX.Element | null => {
       ? latchedNavigationSkeletonRef.current?.variant ?? activeTransitionSkeletonVariant
       : activeTransitionSkeletonVariant;
   const shouldHideTopNavigationDuringBoot = isBootSkeletonVisible;
-  const shouldHideTopNavigationHost =
-    !shouldHideTopNavigationDuringBoot && isLanguageSwitcherTransition && isRouteSkeletonVisible;
+  const shouldRenderInlineRouteSkeletonTopNavigation =
+    !embedded && !shouldHideTopNavigationDuringBoot && isRouteSkeletonVisible;
+  const shouldHideTopNavigationHost = shouldRenderInlineRouteSkeletonTopNavigation;
   const shouldKeepRouteContentVisibleDuringTransition =
     isLanguageSwitcherTransition && isRouteSkeletonVisible;
   const isRouteContentVisuallyHidden =
@@ -295,7 +296,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     <>
       <KangurRouteAccessibilityAnnouncer />
       {shouldHideTopNavigationDuringBoot ? null : shouldHideTopNavigationHost ? (
-        topNavigationFallback
+        null
       ) : (
         <KangurTopNavigationHost fallback={topNavigationFallback} />
       )}
@@ -334,6 +335,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
             <KangurPageTransitionSkeleton
               pageKey={visibleTransitionSkeletonPageKey}
               reason={isLanguageSwitcherTransition ? 'locale-switch' : 'navigation'}
+              renderInlineTopNavigationSkeleton={shouldRenderInlineRouteSkeletonTopNavigation}
               variant={visibleTransitionSkeletonVariant}
             />
           </motion.div>

@@ -107,6 +107,15 @@ const AlphabetMatchingLesson = loadLessonComponent(
 const AlphabetSequenceLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/AlphabetSequenceLesson')
 );
+const ArtColorsHarmonyLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/ArtColorsHarmonyLesson')
+);
+const ArtShapesBasicLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/ArtShapesBasicLesson')
+);
+const MusicDiatonicScaleLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/MusicDiatonicScaleLesson')
+);
 const ClockLesson = loadLessonComponent(() => import('@/features/kangur/ui/components/ClockLesson'));
 const CalendarLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/CalendarLesson')
@@ -327,6 +336,9 @@ export const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<Le
   alphabet_words: AlphabetWordsLesson,
   alphabet_matching: AlphabetMatchingLesson,
   alphabet_sequence: AlphabetSequenceLesson,
+  art_colors_harmony: ArtColorsHarmonyLesson,
+  art_shapes_basic: ArtShapesBasicLesson,
+  music_diatonic_scale: MusicDiatonicScaleLesson,
   geometry_shape_recognition: GeometryShapeRecognitionLesson,
   clock: ClockLesson,
   calendar: CalendarLesson,
@@ -454,6 +466,25 @@ export const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
   clock: 'clock',
   calendar: 'calendar',
   geometry: 'geometry_shapes',
+  art: 'art_colors_harmony',
+  music: 'music_diatonic_scale',
+  scale: 'music_diatonic_scale',
+  diatonic_scale: 'music_diatonic_scale',
+  'diatonic-scale': 'music_diatonic_scale',
+  diatonic: 'music_diatonic_scale',
+  skala: 'music_diatonic_scale',
+  skala_diatoniczna: 'music_diatonic_scale',
+  'skala-diatoniczna': 'music_diatonic_scale',
+  music_diatonic_scale: 'music_diatonic_scale',
+  colors: 'art_colors_harmony',
+  colour: 'art_colors_harmony',
+  color: 'art_colors_harmony',
+  harmony: 'art_colors_harmony',
+  art_colors_harmony: 'art_colors_harmony',
+  art_shapes: 'art_shapes_basic',
+  basic_shapes: 'art_shapes_basic',
+  'basic-shapes': 'art_shapes_basic',
+  art_shapes_basic: 'art_shapes_basic',
   geometry_basics: 'geometry_basics',
   geometry_shapes: 'geometry_shapes',
   geometry_symmetry: 'geometry_symmetry',

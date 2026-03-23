@@ -100,6 +100,14 @@ describe('kangur progress mastery helpers', () => {
     ).toBe('Spiel: Geometrie');
   });
 
+  it('localizes music lesson activity labels through the progress runtime translator', () => {
+    expect(
+      formatKangurProgressActivityLabel('lesson_completion:music_diatonic_scale', {
+        translate: translateDeProgressMessage,
+      })
+    ).toBe('Lektion: Diatonische Tonleiter');
+  });
+
   it('creates a standard lesson practice reward with mastery and lesson completion updates', () => {
     const progress = createDefaultKangurProgressState();
 

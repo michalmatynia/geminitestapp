@@ -6,6 +6,7 @@ import {
   upgradeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
+import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
 
 import { normalizeLoadedPathName, sanitizeTriggerPathConfig } from './trigger-normalization';
@@ -279,6 +280,17 @@ const normalizeResolvedTriggerConfig = (args: {
   };
 };
 
+const didStoredTriggerConfigPersistedValueChange = (
+  rawParsedConfig: PathConfig | null,
+  normalizedConfig: PathConfig
+): boolean => {
+  if (!rawParsedConfig) {
+    return true;
+  }
+
+  return stableStringify(rawParsedConfig) !== stableStringify(normalizedConfig);
+};
+
 export const materializeStoredTriggerPathConfig = (args: {
   pathId: string;
   rawConfig: string;
@@ -376,14 +388,16 @@ export const materializeStoredTriggerPathConfig = (args: {
       });
     }
 
+    const normalizedConfig = normalizeResolvedTriggerConfig({
+      pathId,
+      fallbackName,
+      config: mergedConfig,
+      selectedNodeIdOverride: resolveSelectedNodeIdOverride(rawParsedConfig as Record<string, unknown> | null),
+    });
+
     return {
-      config: normalizeResolvedTriggerConfig({
-        pathId,
-        fallbackName,
-        config: mergedConfig,
-        selectedNodeIdOverride: resolveSelectedNodeIdOverride(rawParsedConfig as Record<string, unknown> | null),
-      }),
-      changed: Boolean(rawStarterUpgrade?.changed || providerAliasRepair?.changed),
+      config: normalizedConfig,
+      changed: didStoredTriggerConfigPersistedValueChange(rawParsedConfig, normalizedConfig),
     };
   } catch (error) {
     logClientError(error);

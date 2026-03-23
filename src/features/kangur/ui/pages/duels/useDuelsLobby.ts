@@ -57,28 +57,62 @@ export function useDuelsLobby(options: DuelsLobbyOptions) {
   const lastLobbyHashRef = useRef('');
   const lastLobbyPresenceHashRef = useRef('');
 
+  const abortLobbyLoad = useCallback(() => {
+    lobbyAbortRef.current?.abort();
+    lobbyAbortRef.current = null;
+    lobbyPollingRef.current = false;
+    lobbyRefreshQueuedRef.current = false;
+  }, []);
+
+  const abortLobbyPresenceLoad = useCallback(() => {
+    lobbyPresenceAbortRef.current?.abort();
+    lobbyPresenceAbortRef.current = null;
+    lobbyPresencePollingRef.current = false;
+  }, []);
+
+  const resetLobbyState = useCallback(
+    ({ clearEntries = false }: { clearEntries?: boolean } = {}) => {
+      abortLobbyLoad();
+      lastLobbyHashRef.current = '';
+      setLobbyError(null);
+      setIsLobbyLoading(false);
+      if (!clearEntries) {
+        return;
+      }
+      lobbySeenRef.current.clear();
+      lobbyFreshRef.current.clear();
+      setLobbyEntries([]);
+      setLobbyLastUpdatedAt(null);
+      setLobbyFailureCount(0);
+      setRelativeNow(Date.now());
+    },
+    [abortLobbyLoad]
+  );
+
+  const resetLobbyPresenceState = useCallback(
+    ({ clearEntries = false }: { clearEntries?: boolean } = {}) => {
+      abortLobbyPresenceLoad();
+      lastLobbyPresenceHashRef.current = '';
+      setLobbyPresenceError(null);
+      setIsLobbyPresenceLoading(false);
+      if (!clearEntries) {
+        return;
+      }
+      setLobbyPresenceEntries([]);
+      setLobbyPresenceLastUpdatedAt(null);
+    },
+    [abortLobbyPresenceLoad]
+  );
+
   const loadLobby = useCallback(
     async ({ showLoading = false }: { showLoading?: boolean } = {}) => {
       if (!canBrowseLobby) {
-        lobbyAbortRef.current?.abort();
-        lobbyAbortRef.current = null;
-        lobbyPollingRef.current = false;
-        lastLobbyHashRef.current = '';
-        lobbySeenRef.current.clear();
-        lobbyFreshRef.current.clear();
-        setLobbyEntries([]);
-        setLobbyError(null);
-        setIsLobbyLoading(false);
-        setLobbyLastUpdatedAt(null);
-        setLobbyFailureCount(0);
-        setRelativeNow(Date.now());
+        resetLobbyState({ clearEntries: true });
         return;
       }
 
       if (!isOnline) {
-        lobbyAbortRef.current?.abort();
-        lobbyAbortRef.current = null;
-        lobbyPollingRef.current = false;
+        abortLobbyLoad();
         setIsLobbyLoading(false);
         setLobbyError('Brak połączenia z internetem.');
         return;
@@ -166,27 +200,18 @@ export function useDuelsLobby(options: DuelsLobbyOptions) {
         void loadLobby();
       }
     },
-    [canBrowseLobby, isGuest, isOnline]
+    [abortLobbyLoad, canBrowseLobby, isGuest, isOnline, resetLobbyState]
   );
 
   const loadLobbyPresence = useCallback(
     async ({ showLoading = false }: { showLoading?: boolean } = {}) => {
       if (!canBrowseLobby || !canPlay) {
-        lobbyPresenceAbortRef.current?.abort();
-        lobbyPresenceAbortRef.current = null;
-        lobbyPresencePollingRef.current = false;
-        lastLobbyPresenceHashRef.current = '';
-        setLobbyPresenceEntries([]);
-        setLobbyPresenceError(null);
-        setIsLobbyPresenceLoading(false);
-        setLobbyPresenceLastUpdatedAt(null);
+        resetLobbyPresenceState({ clearEntries: true });
         return;
       }
 
       if (!isOnline) {
-        lobbyPresenceAbortRef.current?.abort();
-        lobbyPresenceAbortRef.current = null;
-        lobbyPresencePollingRef.current = false;
+        abortLobbyPresenceLoad();
         setIsLobbyPresenceLoading(false);
         setLobbyPresenceError('Brak połączenia z internetem.');
         return;
@@ -254,28 +279,69 @@ export function useDuelsLobby(options: DuelsLobbyOptions) {
         }
       }
     },
-    [canBrowseLobby, canPlay, isOnline]
+    [abortLobbyPresenceLoad, canBrowseLobby, canPlay, isOnline, resetLobbyPresenceState]
   );
 
   useEffect(() => {
-    if (!canBrowseLobby || !isOnline || !isPageActive) return;
+    if (!canBrowseLobby) {
+      resetLobbyState({ clearEntries: true });
+      resetLobbyPresenceState({ clearEntries: true });
+      return;
+    }
+
+    if (!isOnline || !isPageActive) {
+      abortLobbyLoad();
+      abortLobbyPresenceLoad();
+      setIsLobbyLoading(false);
+      setIsLobbyPresenceLoading(false);
+      if (!isOnline) {
+        setLobbyError('Brak połączenia z internetem.');
+        if (canPlay) {
+          setLobbyPresenceError('Brak połączenia z internetem.');
+        }
+      }
+      return;
+    }
 
     const intervalId = safeSetInterval(() => {
       void loadLobby();
     }, LOBBY_POLL_INTERVAL_MS);
 
-    const presenceIntervalId = safeSetInterval(() => {
-      void loadLobbyPresence();
-    }, LOBBY_PRESENCE_POLL_INTERVAL_MS);
-
     void loadLobby({ showLoading: true });
-    void loadLobbyPresence({ showLoading: true });
+
+    const presenceIntervalId =
+      canPlay
+        ? safeSetInterval(() => {
+            void loadLobbyPresence();
+          }, LOBBY_PRESENCE_POLL_INTERVAL_MS)
+        : null;
+
+    if (canPlay) {
+      void loadLobbyPresence({ showLoading: true });
+    } else {
+      resetLobbyPresenceState({ clearEntries: true });
+    }
 
     return () => {
       safeClearInterval(intervalId);
-      safeClearInterval(presenceIntervalId);
+      if (presenceIntervalId !== null) {
+        safeClearInterval(presenceIntervalId);
+      }
+      abortLobbyLoad();
+      abortLobbyPresenceLoad();
     };
-  }, [canBrowseLobby, isOnline, isPageActive, loadLobby, loadLobbyPresence]);
+  }, [
+    abortLobbyLoad,
+    abortLobbyPresenceLoad,
+    canBrowseLobby,
+    canPlay,
+    isOnline,
+    isPageActive,
+    loadLobby,
+    loadLobbyPresence,
+    resetLobbyPresenceState,
+    resetLobbyState,
+  ]);
 
   return {
     lobbyEntries,

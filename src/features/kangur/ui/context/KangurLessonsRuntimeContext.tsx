@@ -34,7 +34,7 @@ import {
   LESSON_ASSIGNMENT_PRIORITY_ORDER,
   LESSON_COMPONENTS,
   resolveFocusedLessonId,
-  resolveFocusedLessonSubject,
+  resolveFocusedLessonScope,
 } from './KangurLessonsRuntimeContext.shared';
 
 import type {
@@ -59,7 +59,7 @@ export function KangurLessonsRuntimeProvider({
   const canAccessParentAssignments =
     auth.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
   const { subject, setSubject } = useKangurSubjectFocus();
-  const { ageGroup } = useKangurAgeGroupFocus();
+  const { ageGroup, setAgeGroup } = useKangurAgeGroupFocus();
   const progress = useKangurProgressState();
   const { assignments } = useKangurAssignments({
     enabled: canAccessParentAssignments,
@@ -197,9 +197,14 @@ export function KangurLessonsRuntimeProvider({
       return;
     }
 
-    const focusSubject = resolveFocusedLessonSubject(focusToken, lessonTemplateMap);
-    if (focusSubject && focusSubject !== subject) {
-      setSubject(focusSubject);
+    const focusScope = resolveFocusedLessonScope(focusToken, lessonTemplateMap);
+    if (focusScope?.ageGroup && focusScope.ageGroup !== ageGroup) {
+      setAgeGroup(focusScope.ageGroup);
+      return;
+    }
+
+    if (focusScope?.subject && focusScope.subject !== subject) {
+      setSubject(focusScope.subject);
       return;
     }
 
@@ -216,7 +221,16 @@ export function KangurLessonsRuntimeProvider({
     currentUrl.searchParams.delete(getKangurInternalQueryParamName('focus', basePath));
     const nextHref = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
     window.history.replaceState({}, '', nextHref);
-  }, [activeLessonId, basePath, lessons, lessonTemplateMap, setSubject, subject]);
+  }, [
+    activeLessonId,
+    ageGroup,
+    basePath,
+    lessons,
+    lessonTemplateMap,
+    setAgeGroup,
+    setSubject,
+    subject,
+  ]);
 
   const activeIdx = orderedLessons.findIndex((lesson) => lesson.id === activeLessonId);
   const activeLesson = activeIdx >= 0 ? orderedLessons[activeIdx] ?? null : null;

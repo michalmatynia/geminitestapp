@@ -23,6 +23,12 @@ const ENGLISH_LESSON_SECTION_LABELS: Record<string, string> = {
   alphabet_first_words: 'First words',
   alphabet_matching: 'Match the letters',
   alphabet_sequence: 'Letter order',
+  art_colors: 'Colors',
+  art_colors_harmony: 'Harmony of colors',
+  art_shapes: 'Shapes',
+  art_shapes_basic: 'Basic shapes',
+  music_scale: 'Scale',
+  music_diatonic_scale: 'Diatonic scale',
   geometry_shapes: 'Geometric shapes',
   maths_time: 'Time',
   maths_arithmetic: 'Arithmetic',
@@ -38,6 +44,12 @@ const GERMAN_LESSON_SECTION_LABELS: Record<string, string> = {
   alphabet_first_words: 'Erste Woerter',
   alphabet_matching: 'Buchstaben zuordnen',
   alphabet_sequence: 'Buchstabenreihenfolge',
+  art_colors: 'Farben',
+  art_colors_harmony: 'Farbharmonie',
+  art_shapes: 'Formen',
+  art_shapes_basic: 'Grundformen',
+  music_scale: 'Tonleiter',
+  music_diatonic_scale: 'Diatonische Tonleiter',
   geometry_shapes: 'Geometrische Formen',
   maths_time: 'Zeit',
   maths_arithmetic: 'Arithmetik',
@@ -53,6 +65,12 @@ const UKRAINIAN_LESSON_SECTION_LABELS: Record<string, string> = {
   alphabet_first_words: 'Перші слова',
   alphabet_matching: 'Добери літери',
   alphabet_sequence: 'Порядок літер',
+  art_colors: 'Кольори',
+  art_colors_harmony: 'Гармонія кольорів',
+  art_shapes: 'Форми',
+  art_shapes_basic: 'Базові форми',
+  music_scale: 'Гама',
+  music_diatonic_scale: 'Діатонічна гама',
   geometry_shapes: 'Геометричні фігури',
   maths_time: 'Час',
   maths_arithmetic: 'Арифметика',
@@ -85,6 +103,8 @@ const UKRAINIAN_LESSON_SECTION_TYPE_LABELS: Record<string, string> = {
 
 const ENGLISH_SUBJECT_LABELS: Record<KangurLessonSubject, string> = {
   alphabet: 'Alphabet',
+  art: 'Art',
+  music: 'Music',
   geometry: 'Shapes',
   maths: 'Maths',
   english: 'English',
@@ -94,6 +114,8 @@ const ENGLISH_SUBJECT_LABELS: Record<KangurLessonSubject, string> = {
 
 const GERMAN_SUBJECT_LABELS: Record<KangurLessonSubject, string> = {
   alphabet: 'Alphabet',
+  art: 'Kunst',
+  music: 'Musik',
   geometry: 'Formen',
   maths: 'Mathe',
   english: 'Englisch',
@@ -103,6 +125,8 @@ const GERMAN_SUBJECT_LABELS: Record<KangurLessonSubject, string> = {
 
 const UKRAINIAN_SUBJECT_LABELS: Record<KangurLessonSubject, string> = {
   alphabet: 'Абетка',
+  art: 'Мистецтво',
+  music: 'Музика',
   geometry: 'Фігури',
   maths: 'Математика',
   english: 'Англійська',
@@ -162,6 +186,19 @@ const ENGLISH_LESSON_COPY_OVERRIDES: Partial<
   alphabet_sequence: {
     title: 'Letter order',
     description: 'Arrange letters in the correct order.',
+  },
+  art_colors_harmony: {
+    title: 'Harmony of colors',
+    description: 'Discover warm and cool colors, then practice choosing colors that look good together.',
+  },
+  art_shapes_basic: {
+    title: 'Basic shapes',
+    description: 'Meet circles, squares, triangles, and rectangles, then spot them in everyday objects.',
+  },
+  music_diatonic_scale: {
+    title: 'Diatonic scale',
+    description:
+      'Learn the seven notes of the diatonic scale, sing them in order, and hear when the melody moves up or down.',
   },
   geometry_shape_recognition: {
     title: 'Geometry',
@@ -427,6 +464,19 @@ const GERMAN_LESSON_COPY_OVERRIDES: Partial<
     title: 'Buchstabenreihenfolge',
     description: 'Ordne Buchstaben in der richtigen Reihenfolge an.',
   },
+  art_colors_harmony: {
+    title: 'Farbharmonie',
+    description: 'Entdecke warme und kuehle Farben und uebe dann, Farben zu waehlen, die gut zusammenpassen.',
+  },
+  art_shapes_basic: {
+    title: 'Grundformen',
+    description: 'Lerne Kreise, Quadrate, Dreiecke und Rechtecke kennen und entdecke sie in Alltagsgegenstaenden.',
+  },
+  music_diatonic_scale: {
+    title: 'Diatonische Tonleiter',
+    description:
+      'Lerne die sieben Toene der diatonischen Tonleiter, singe sie der Reihe nach und hoere, wann die Melodie steigt oder faellt.',
+  },
   geometry_shape_recognition: {
     title: 'Geometrie',
     description: 'Uebe, Kreise, Quadrate, Dreiecke, Rechtecke, Ovale und Rauten zu erkennen.',
@@ -690,6 +740,19 @@ const UKRAINIAN_LESSON_COPY_OVERRIDES: Partial<
   alphabet_sequence: {
     title: 'Порядок літер',
     description: 'Розставляй літери в правильному порядку.',
+  },
+  art_colors_harmony: {
+    title: 'Гармонія кольорів',
+    description: 'Познайомтеся з теплими й холодними кольорами, а потім потренуйтеся добирати кольори, що гарно поєднуються.',
+  },
+  art_shapes_basic: {
+    title: 'Базові форми',
+    description: 'Познайомтеся з колом, квадратом, трикутником і прямокутником та знаходьте їх у повсякденних речах.',
+  },
+  music_diatonic_scale: {
+    title: 'Діатонічна гама',
+    description:
+      'Вивчіть сім звуків діатонічної гами, проспівайте їх по черзі та почуйте, коли мелодія рухається вгору або вниз.',
   },
   geometry_shape_recognition: {
     title: 'Розпізнавання фігур',

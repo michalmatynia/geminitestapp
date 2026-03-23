@@ -41,11 +41,15 @@ export function useDuelSpectator(options: DuelSpectatorOptions) {
   const spectatorPollingRef = useRef(false);
   const spectatorIdRef = useRef<string | null>(null);
 
+  const abortSpectatorRequest = (): void => {
+    spectatorAbortRef.current?.abort();
+    spectatorAbortRef.current = null;
+    spectatorPollingRef.current = false;
+  };
+
   useEffect(() => {
     if (!spectateSessionId || isInSession) {
-      spectatorAbortRef.current?.abort();
-      spectatorAbortRef.current = null;
-      spectatorPollingRef.current = false;
+      abortSpectatorRequest();
       setSpectatorState(null);
       setSpectatorError(null);
       setIsSpectatorLoading(false);
@@ -53,6 +57,8 @@ export function useDuelSpectator(options: DuelSpectatorOptions) {
     }
     
     if (!isOnline || !isPageActive || typeof window === 'undefined') {
+      abortSpectatorRequest();
+      setIsSpectatorLoading(false);
       return;
     }
 
@@ -63,7 +69,7 @@ export function useDuelSpectator(options: DuelSpectatorOptions) {
     const fetchSpectatorState = async (showLoading = false): Promise<void> => {
       if (spectatorPollingRef.current) return;
       
-      spectatorAbortRef.current?.abort();
+      abortSpectatorRequest();
       const controller = new AbortController();
       spectatorAbortRef.current = controller;
       spectatorPollingRef.current = true;
@@ -109,9 +115,7 @@ export function useDuelSpectator(options: DuelSpectatorOptions) {
 
     return () => {
       safeClearInterval(intervalId);
-      spectatorAbortRef.current?.abort();
-      spectatorAbortRef.current = null;
-      spectatorPollingRef.current = false;
+      abortSpectatorRequest();
     };
   }, [isInSession, isOnline, isPageActive, resolveSpectatorId, spectateSessionId]);
 

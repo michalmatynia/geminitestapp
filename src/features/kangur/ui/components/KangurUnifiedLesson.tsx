@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ComponentProps,
   type ReactNode,
@@ -22,15 +23,22 @@ import {
   createLessonHubSelectHandler,
   resolveLessonSectionHeader,
 } from '@/features/kangur/ui/components/lesson-utils';
+import {
+  KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX,
+  KANGUR_TOP_BAR_HEIGHT_VAR_NAME,
+} from '@/features/kangur/ui/design/tokens';
+import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   useKangurLessonSubsectionProgress,
   useLessonTimeTracking,
 } from '@/features/kangur/ui/learner-activity/hooks';
+import { getMotionSafeScrollBehavior } from '@/shared/utils/motion-accessibility';
 
 const DEFAULT_DESCRIPTION = '';
 
 type LessonActivityAccent = ComponentProps<typeof LessonActivityStage>['accent'];
+type LessonActivityShellVariant = ComponentProps<typeof LessonActivityStage>['shellVariant'];
 
 type KangurUnifiedLessonContextValue = {
   returnToHub: () => void;
@@ -76,6 +84,7 @@ export type KangurUnifiedLessonGameConfig<SectionId extends string> = {
     shellTestId?: string;
     maxWidthClassName?: string;
     shellClassName?: string;
+    shellVariant?: LessonActivityShellVariant;
     navigationPills?: ReactNode;
     footerNavigation?: ReactNode;
   };
@@ -162,6 +171,9 @@ function KangurUnifiedLessonBase<SectionId extends string>({
   progressAdapter,
 }: KangurUnifiedLessonBaseProps<SectionId>): JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
+  const isMobileViewport = useKangurMobileBreakpoint();
+  const contentScrollRef = useRef<HTMLDivElement | null>(null);
+  const hasMountedScrollEffectRef = useRef(false);
   const handleReturnToHub = useCallback(() => setActiveSection(null), []);
   const contextValue = useMemo(
     () => ({
@@ -176,6 +188,49 @@ function KangurUnifiedLessonBase<SectionId extends string>({
   useEffect(() => {
     onSectionProgress?.(sectionProgress);
   }, [onSectionProgress, sectionProgress]);
+
+  useEffect(() => {
+    if (!isMobileViewport || typeof window === 'undefined') {
+      return;
+    }
+
+    if (!hasMountedScrollEffectRef.current) {
+      hasMountedScrollEffectRef.current = true;
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      const contentElement = contentScrollRef.current;
+      if (!contentElement) {
+        return;
+      }
+
+      const styles = window.getComputedStyle(document.documentElement);
+      let topBarHeight = Number.parseFloat(styles.getPropertyValue(KANGUR_TOP_BAR_HEIGHT_VAR_NAME));
+      if (!topBarHeight) {
+        const topBar = document.querySelector('[data-testid="kangur-page-top-bar"]');
+        if (topBar instanceof HTMLElement) {
+          topBarHeight = topBar.getBoundingClientRect().height;
+        }
+      }
+
+      const rect = contentElement.getBoundingClientRect();
+      const nextTop = Math.max(
+        0,
+        window.scrollY + rect.top - (topBarHeight || KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX) - 12
+      );
+
+      window.scrollTo({
+        top: nextTop,
+        left: 0,
+        behavior: getMotionSafeScrollBehavior('smooth'),
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [activeSection, isMobileViewport]);
 
   const sectionList = useMemo(
     () =>
@@ -225,6 +280,7 @@ function KangurUnifiedLessonBase<SectionId extends string>({
           sectionHeader={sectionHeader}
           shellClassName={stage.shellClassName}
           shellTestId={stage.shellTestId}
+          shellVariant={stage.shellVariant}
           title={stage.title}
         >
           {gameConfig.render(gameHelpers)}
@@ -279,7 +335,7 @@ function KangurUnifiedLessonBase<SectionId extends string>({
 
   return (
     <KangurUnifiedLessonContext.Provider value={contextValue}>
-      {content}
+      <div ref={contentScrollRef}>{content}</div>
     </KangurUnifiedLessonContext.Provider>
   );
 }

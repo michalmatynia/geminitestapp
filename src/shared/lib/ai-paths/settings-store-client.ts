@@ -26,6 +26,7 @@ const AI_PATHS_SETTINGS_STALE_MS = 60_000;
 const AI_PATHS_SETTINGS_BACKUP_KEY = 'ai_paths_settings_backup';
 const AI_PATHS_SETTINGS_RETRY_DELAYS_MS = [500, 1500];
 const AI_PATHS_SETTINGS_BACKUP_MAX_AGE_MS = 300_000;
+const AI_PATHS_SETTINGS_BACKUP_MAX_BYTES = 1_000_000;
 const AI_PATHS_SETTINGS_REQUEST_TIMEOUT_MS = 25_000;
 const AI_PATHS_SETTINGS_SELECTIVE_REQUEST_TIMEOUT_MS = 8_000;
 const AI_PATHS_SETTINGS_WRITE_TIMEOUT_MS = 90_000;
@@ -62,6 +63,24 @@ const dispatchAiPathsSettingsUpdatedEvent = (): void => {
 
 const aiPathsSettingRecordsSchema = settingRecordSchema.array();
 
+const estimateUtf8Bytes = (value: string): number => {
+  if (typeof TextEncoder !== 'undefined') {
+    return new TextEncoder().encode(value).byteLength;
+  }
+  return value.length;
+};
+
+const isQuotaExceededStorageError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+  const normalizedName = error.name.trim().toLowerCase();
+  const normalizedMessage = error.message.trim().toLowerCase();
+  return (
+    normalizedName.includes('quota') ||
+    normalizedMessage.includes('quota') ||
+    normalizedMessage.includes('exceeded the quota')
+  );
+};
+
 const readBackupSettings = (): AiPathsSettingRecord[] | null => {
   if (typeof window === 'undefined') return null;
   try {
@@ -94,12 +113,16 @@ const readBackupSettings = (): AiPathsSettingRecord[] | null => {
 
 const writeBackupSettings = (records: AiPathsSettingRecord[]): void => {
   if (typeof window === 'undefined') return;
+  const payload = JSON.stringify({ savedAt: Date.now(), records });
+  if (estimateUtf8Bytes(payload) > AI_PATHS_SETTINGS_BACKUP_MAX_BYTES) {
+    return;
+  }
   try {
-    window.localStorage.setItem(
-      AI_PATHS_SETTINGS_BACKUP_KEY,
-      JSON.stringify({ savedAt: Date.now(), records })
-    );
+    window.localStorage.setItem(AI_PATHS_SETTINGS_BACKUP_KEY, payload);
   } catch (error) {
+    if (isQuotaExceededStorageError(error)) {
+      return;
+    }
     logClientCatch(error, {
       source: 'ai-paths-settings-client',
       action: 'writeBackupSettings',
@@ -220,7 +243,7 @@ const fetchAiPathsSettingsFromApi = async (options?: {
   const parsedSettings = aiPathsSettingRecordsSchema.safeParse(await res.json());
   if (!parsedSettings.success) return [];
   const normalized = parsedSettings.data;
-  if (normalized.length > 0) {
+  if (normalized.length > 0 && (!options?.keys || options.keys.length === 0)) {
     writeBackupSettings(normalized);
   }
   return normalized;

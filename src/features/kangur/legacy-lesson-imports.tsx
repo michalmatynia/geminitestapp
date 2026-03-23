@@ -238,6 +238,18 @@ const createClockDefinition = (): LegacyImportDefinition => ({
 });
 
 const LEGACY_IMPORTERS: Record<KangurLessonComponentId, LegacyImportDefinition> = {
+  art_colors_harmony: {
+    kind: 'flat',
+    slides: [],
+  },
+  art_shapes_basic: {
+    kind: 'flat',
+    slides: [],
+  },
+  music_diatonic_scale: {
+    kind: 'flat',
+    slides: [],
+  },
   adding: createSectionedDefinition(ADDING_HUB_SECTIONS, ADDING_SLIDES, {
     game: 'adding-ball',
     synthesis: 'adding-synthesis',

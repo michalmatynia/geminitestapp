@@ -3,6 +3,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  fetchAiPathsSettingsByKeysCached,
   fetchAiPathsSettingsCached,
   invalidateAiPathsSettingsCache,
 } from '@/shared/lib/ai-paths/settings-store-client';
@@ -57,5 +58,59 @@ describe('ai-paths settings-store backup parsing', () => {
     await expect(fetchAiPathsSettingsCached({ bypassCache: true })).rejects.toThrow(
       'Failed to load AI Paths settings (400)'
     );
+  });
+
+  it('does not overwrite the full backup when a selective fetch succeeds', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          {
+            key: 'ai_paths_index',
+            value: '{"pathIds":["path_1"]}',
+          },
+        ]),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
+    );
+
+    const existingBackup = JSON.stringify({
+      savedAt: Date.now(),
+      records: [
+        {
+          key: 'ai_paths_index',
+          value: '{"pathIds":["path_existing"]}',
+        },
+      ],
+    });
+    window.localStorage.setItem(BACKUP_KEY, existingBackup);
+
+    await fetchAiPathsSettingsByKeysCached(['ai_paths_index'], { bypassCache: true });
+
+    expect(window.localStorage.getItem(BACKUP_KEY)).toBe(existingBackup);
+  });
+
+  it('skips oversized full backups instead of writing them to localStorage', async () => {
+    const oversizedValue = 'x'.repeat(1_100_000);
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          {
+            key: 'ai_paths_index',
+            value: oversizedValue,
+          },
+        ]),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
+    );
+
+    const records = await fetchAiPathsSettingsCached({ bypassCache: true });
+
+    expect(records).toEqual([
+      {
+        key: 'ai_paths_index',
+        value: oversizedValue,
+      },
+    ]);
+    expect(window.localStorage.getItem(BACKUP_KEY)).toBeNull();
   });
 });

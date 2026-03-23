@@ -1146,6 +1146,11 @@ export function KangurPageTransitionSkeleton({
     !embedded &&
     !shouldOffsetStandaloneRouteOverlay &&
     !shouldRenderInlineTopNavigationSkeleton;
+  const inlineTopNavigationSkeleton = shouldRenderInlineTopNavigationSkeleton ? (
+    <div data-testid='kangur-page-transition-skeleton-inline-top-navigation'>
+      <KangurTopNavigationSkeleton />
+    </div>
+  ) : null;
 
   return (
     <div
@@ -1176,11 +1181,11 @@ export function KangurPageTransitionSkeleton({
             ? skeletonCopy.loadingLanguage
             : skeletonCopy.loadingPage}
       </div>
-      {shouldRenderInlineTopNavigationSkeleton ? <KangurTopNavigationSkeleton /> : null}
       <KangurStandardPageLayout
         tone={SKELETON_TONE_BY_PAGE[resolvedPageKey]}
         shellClassName='pointer-events-none'
         shellProps={{ 'aria-hidden': true }}
+        navigation={inlineTopNavigationSkeleton}
         containerProps={{
           as: 'div',
           className: cn(

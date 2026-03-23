@@ -1,6 +1,6 @@
 'use client';
 import { useQueryClient } from '@tanstack/react-query';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { Dispatch, SetStateAction } from 'react';
 
 import {
@@ -16,6 +16,21 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 
 const listingBadgesQueryKey = QUERY_KEYS.integrations.productListingsBadges();
+const EMPTY_LISTING_BADGES_PAYLOAD: ListingBadgesPayload = Object.freeze({});
+
+type IntegrationListingBadgeState = {
+  integrationBadgeIds: Set<string>;
+  integrationBadgeStatuses: Map<string, string>;
+  traderaBadgeIds: Set<string>;
+  traderaBadgeStatuses: Map<string, string>;
+};
+
+const EMPTY_INTEGRATION_LISTING_BADGE_STATE: IntegrationListingBadgeState = {
+  integrationBadgeIds: new Set<string>(),
+  integrationBadgeStatuses: new Map<string, string>(),
+  traderaBadgeIds: new Set<string>(),
+  traderaBadgeStatuses: new Map<string, string>(),
+};
 
 const toMarketplaceEntry = (value: unknown): MarketplaceBadgeEntry =>
   value && typeof value === 'object' ? (value as MarketplaceBadgeEntry) : {};
@@ -27,45 +42,80 @@ const normalizeProductIds = (productIds: readonly string[]): string[] =>
     )
   ).sort();
 
-export function useIntegrationOperations(productIds: readonly string[] = []): {
-  integrationsProduct: ProductWithImages | null;
-  setIntegrationsProduct: Dispatch<SetStateAction<ProductWithImages | null>>;
-  showListProductModal: boolean;
-  setShowListProductModal: Dispatch<SetStateAction<boolean>>;
-  listProductPreset: { integrationId: string; connectionId: string } | null;
-  setListProductPreset: Dispatch<
-    SetStateAction<{ integrationId: string; connectionId: string } | null>
-  >;
-  integrationBadgeIds: Set<string>;
-  integrationBadgeStatuses: Map<string, string>;
-  traderaBadgeIds: Set<string>;
-  traderaBadgeStatuses: Map<string, string>;
-  exportSettingsProduct: ProductWithImages | null;
-  setExportSettingsProduct: Dispatch<SetStateAction<ProductWithImages | null>>;
-  refreshListingBadges: () => Promise<void>;
-  handleListProductSuccess: () => void;
-} {
-  const queryClient = useQueryClient();
+const areStringSetsEqual = (
+  previous: ReadonlySet<string>,
+  next: ReadonlySet<string>
+): boolean => {
+  if (previous.size !== next.size) return false;
+  for (const value of next) {
+    if (!previous.has(value)) return false;
+  }
+  return true;
+};
 
-  // Integrations state
-  const [integrationsProduct, setIntegrationsProduct] = useState<ProductWithImages | null>(null);
-  const [showListProductModal, setShowListProductModal] = useState(false);
-  const [listProductPreset, setListProductPreset] = useState<{
-    integrationId: string;
-    connectionId: string;
-  } | null>(null);
+const areStringMapsEqual = (
+  previous: ReadonlyMap<string, string>,
+  next: ReadonlyMap<string, string>
+): boolean => {
+  if (previous.size !== next.size) return false;
+  for (const [key, value] of next) {
+    if (previous.get(key) !== value) return false;
+  }
+  return true;
+};
 
-  // Export settings state - opens ListProductModal directly for products with existing listings
-  const [exportSettingsProduct, setExportSettingsProduct] = useState<ProductWithImages | null>(
-    null
-  );
+const areIntegrationListingBadgeStatesEqual = (
+  previous: IntegrationListingBadgeState,
+  next: IntegrationListingBadgeState
+): boolean =>
+  areStringSetsEqual(previous.integrationBadgeIds, next.integrationBadgeIds) &&
+  areStringMapsEqual(previous.integrationBadgeStatuses, next.integrationBadgeStatuses) &&
+  areStringSetsEqual(previous.traderaBadgeIds, next.traderaBadgeIds) &&
+  areStringMapsEqual(previous.traderaBadgeStatuses, next.traderaBadgeStatuses);
+
+const buildIntegrationListingBadgeState = (
+  payload: ListingBadgesPayload
+): IntegrationListingBadgeState => {
+  const nextIntegrationBadgeStatuses = new Map<string, string>();
+  const nextIntegrationBadgeIds = new Set<string>();
+  const nextTraderaBadgeStatuses = new Map<string, string>();
+  const nextTraderaBadgeIds = new Set<string>();
+
+  for (const [productId, rawMarketplaces] of Object.entries(payload)) {
+    const marketplaces = toMarketplaceEntry(rawMarketplaces);
+    const baseStatus =
+      typeof marketplaces?.base === 'string' ? marketplaces.base.trim().toLowerCase() : '';
+    if (baseStatus) {
+      nextIntegrationBadgeIds.add(productId);
+      nextIntegrationBadgeStatuses.set(productId, baseStatus);
+    }
+
+    const traderaStatus =
+      typeof marketplaces?.tradera === 'string' ? marketplaces.tradera.trim().toLowerCase() : '';
+    if (traderaStatus) {
+      nextTraderaBadgeIds.add(productId);
+      nextTraderaBadgeStatuses.set(productId, traderaStatus);
+    }
+  }
+
+  return {
+    integrationBadgeIds: nextIntegrationBadgeIds,
+    integrationBadgeStatuses: nextIntegrationBadgeStatuses,
+    traderaBadgeIds: nextTraderaBadgeIds,
+    traderaBadgeStatuses: nextTraderaBadgeStatuses,
+  };
+};
+
+export function useIntegrationListingBadges(
+  productIds: readonly string[] = []
+): IntegrationListingBadgeState {
   const scopedProductIds = useMemo(() => normalizeProductIds(productIds), [productIds]);
   const scopedListingBadgesQueryKey = useMemo(
     () => [...listingBadgesQueryKey, { productIds: scopedProductIds }] as const,
     [scopedProductIds]
   );
+  const badgeStateRef = useRef<IntegrationListingBadgeState>(EMPTY_INTEGRATION_LISTING_BADGE_STATE);
 
-  // Load listing badges using query factory
   const listingsBadgeQuery = createListQueryV2<MarketplaceBadgeEntry, ListingBadgesPayload>({
     queryKey: scopedListingBadgesQueryKey,
     queryFn: async (): Promise<ListingBadgesPayload> => {
@@ -104,7 +154,7 @@ export function useIntegrationOperations(productIds: readonly string[] = []): {
     },
     refetchIntervalInBackground: false,
     meta: {
-      source: 'integrations.hooks.useIntegrationOperations.listingBadges',
+      source: 'integrations.hooks.useIntegrationListingBadges',
       operation: 'polling',
       resource: 'integrations.product-listings.badges',
       domain: 'integrations',
@@ -113,49 +163,53 @@ export function useIntegrationOperations(productIds: readonly string[] = []): {
       description: 'Polls integrations product listings badges.'},
   });
 
-  const payload = listingsBadgeQuery.data || {};
-  const { integrationBadgeIds, integrationBadgeStatuses, traderaBadgeIds, traderaBadgeStatuses } =
-    useMemo(() => {
-      const nextIntegrationBadgeStatuses = new Map<string, string>();
-      const nextIntegrationBadgeIds = new Set<string>();
-      const nextTraderaBadgeStatuses = new Map<string, string>();
-      const nextTraderaBadgeIds = new Set<string>();
+  return useMemo(() => {
+    const nextState = buildIntegrationListingBadgeState(
+      listingsBadgeQuery.data ?? EMPTY_LISTING_BADGES_PAYLOAD
+    );
+    if (areIntegrationListingBadgeStatesEqual(badgeStateRef.current, nextState)) {
+      return badgeStateRef.current;
+    }
 
-      for (const [productId, rawMarketplaces] of Object.entries(payload)) {
-        const marketplaces = toMarketplaceEntry(rawMarketplaces);
-        const baseStatus =
-          typeof marketplaces?.base === 'string' ? marketplaces.base.trim().toLowerCase() : '';
-        if (baseStatus) {
-          nextIntegrationBadgeIds.add(productId);
-          nextIntegrationBadgeStatuses.set(productId, baseStatus);
-        }
+    badgeStateRef.current = nextState;
+    return nextState;
+  }, [listingsBadgeQuery.data]);
+}
 
-        const traderaStatus =
-          typeof marketplaces?.tradera === 'string'
-            ? marketplaces.tradera.trim().toLowerCase()
-            : '';
-        if (traderaStatus) {
-          nextTraderaBadgeIds.add(productId);
-          nextTraderaBadgeStatuses.set(productId, traderaStatus);
-        }
-      }
+export function useIntegrationModalOperations(): {
+  integrationsProduct: ProductWithImages | null;
+  setIntegrationsProduct: Dispatch<SetStateAction<ProductWithImages | null>>;
+  showListProductModal: boolean;
+  setShowListProductModal: Dispatch<SetStateAction<boolean>>;
+  listProductPreset: { integrationId: string; connectionId: string } | null;
+  setListProductPreset: Dispatch<
+    SetStateAction<{ integrationId: string; connectionId: string } | null>
+  >;
+  exportSettingsProduct: ProductWithImages | null;
+  setExportSettingsProduct: Dispatch<SetStateAction<ProductWithImages | null>>;
+  refreshListingBadges: () => Promise<void>;
+  handleListProductSuccess: () => void;
+} {
+  const queryClient = useQueryClient();
 
-      return {
-        integrationBadgeIds: nextIntegrationBadgeIds,
-        integrationBadgeStatuses: nextIntegrationBadgeStatuses,
-        traderaBadgeIds: nextTraderaBadgeIds,
-        traderaBadgeStatuses: nextTraderaBadgeStatuses,
-      };
-    }, [payload]);
+  const [integrationsProduct, setIntegrationsProduct] = useState<ProductWithImages | null>(null);
+  const [showListProductModal, setShowListProductModal] = useState(false);
+  const [listProductPreset, setListProductPreset] = useState<{
+    integrationId: string;
+    connectionId: string;
+  } | null>(null);
+  const [exportSettingsProduct, setExportSettingsProduct] = useState<ProductWithImages | null>(
+    null
+  );
 
   const refreshListingBadges = useCallback(async (): Promise<void> => {
     await invalidateListingBadges(queryClient);
   }, [queryClient]);
 
-  const handleListProductSuccess = (): void => {
+  const handleListProductSuccess = useCallback((): void => {
     setShowListProductModal(false);
     void refreshListingBadges();
-  };
+  }, [refreshListingBadges]);
 
   return {
     integrationsProduct,
@@ -164,13 +218,36 @@ export function useIntegrationOperations(productIds: readonly string[] = []): {
     setShowListProductModal,
     listProductPreset,
     setListProductPreset,
-    integrationBadgeIds,
-    integrationBadgeStatuses,
-    traderaBadgeIds,
-    traderaBadgeStatuses,
     exportSettingsProduct,
     setExportSettingsProduct,
     refreshListingBadges,
     handleListProductSuccess,
+  };
+}
+
+export function useIntegrationOperations(productIds: readonly string[] = []): {
+  integrationsProduct: ProductWithImages | null;
+  setIntegrationsProduct: Dispatch<SetStateAction<ProductWithImages | null>>;
+  showListProductModal: boolean;
+  setShowListProductModal: Dispatch<SetStateAction<boolean>>;
+  listProductPreset: { integrationId: string; connectionId: string } | null;
+  setListProductPreset: Dispatch<
+    SetStateAction<{ integrationId: string; connectionId: string } | null>
+  >;
+  integrationBadgeIds: Set<string>;
+  integrationBadgeStatuses: Map<string, string>;
+  traderaBadgeIds: Set<string>;
+  traderaBadgeStatuses: Map<string, string>;
+  exportSettingsProduct: ProductWithImages | null;
+  setExportSettingsProduct: Dispatch<SetStateAction<ProductWithImages | null>>;
+  refreshListingBadges: () => Promise<void>;
+  handleListProductSuccess: () => void;
+} {
+  const badgeState = useIntegrationListingBadges(productIds);
+  const modalOperations = useIntegrationModalOperations();
+
+  return {
+    ...modalOperations,
+    ...badgeState,
   };
 }

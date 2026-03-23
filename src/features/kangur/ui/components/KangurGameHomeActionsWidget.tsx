@@ -26,6 +26,7 @@ type HomeAction = {
   href?: string;
   targetPageKey?: string;
   transitionSourceId?: string;
+  prefetch?: boolean;
   onClick?: () => void;
   disabled?: boolean;
 };
@@ -115,6 +116,7 @@ function KangurHomeActionCard({
   const actionHref = action.href;
   const actionLabel = action.label;
   const actionOnClick = action.onClick;
+  const actionPrefetch = action.prefetch;
   const actionSymbol = action.symbol;
   const actionTransitionSourceId = action.transitionSourceId;
   const actionTargetPageKey = action.targetPageKey;
@@ -236,6 +238,7 @@ function KangurHomeActionCard({
           className={sharedClassName}
           data-doc-id={docId}
           aria-label={actionLabel}
+          prefetch={actionPrefetch}
           targetPageKey={actionTargetPageKey}
           transitionSourceId={actionTransitionSourceId}
         >
@@ -298,6 +301,7 @@ export function KangurGameHomeActionsWidget({
       trailingSymbol: '🏆',
       tone: 'sky',
       href: createPageUrl('Duels', basePath),
+      prefetch: false,
       targetPageKey: 'Duels',
       transitionSourceId: 'game-home-action:duels',
     },

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { logProductListDebug } from '@/features/products/lib/product-list-observability';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -48,7 +49,27 @@ const clearAllTimers = (): void => {
   removalTimers.clear();
 };
 
+const areSetsEqual = (left: ReadonlySet<string>, right: ReadonlySet<string>): boolean => {
+  if (left === right) return true;
+  if (left.size !== right.size) return false;
+  for (const value of left) {
+    if (!right.has(value)) return false;
+  }
+  return true;
+};
+
 const emitChange = (): void => {
+  logProductListDebug(
+    'queued-product-ops-change',
+    {
+      queuedProductIdsCount: cachedSources?.size ?? 0,
+      listenerCount: listeners.size,
+    },
+    {
+      dedupeKey: 'queued-product-ops-change',
+      throttleMs: 300,
+    }
+  );
   listeners.forEach((listener: () => void) => listener());
 };
 
@@ -109,6 +130,17 @@ const scheduleQueuedSourceExpiry = (
   const delayMs = Math.max(MIN_QUEUED_PRODUCT_TTL_MS, expiresAt - Date.now());
   const timer = setTimeout(() => {
     removalTimers.delete(sourceTimerKey(productId, source));
+    logProductListDebug(
+      'queued-product-source-expired',
+      {
+        productId,
+        source,
+      },
+      {
+        dedupeKey: `queued-product-source-expired:${productId}:${source}`,
+        throttleMs: 250,
+      }
+    );
     removeQueuedProductSource(productId, source);
   }, delayMs);
   removalTimers.set(sourceTimerKey(productId, source), timer);
@@ -129,6 +161,19 @@ const upsertQueuedProductSourceInternal = (
 
   sources.set(source, { expiresAt });
   scheduleQueuedSourceExpiry(productId, source, expiresAt);
+  logProductListDebug(
+    'queued-product-source-upserted',
+    {
+      productId,
+      source,
+      expiresAt,
+      queuedProductIdsCount: cachedSources?.size ?? 0,
+    },
+    {
+      dedupeKey: `queued-product-source-upserted:${productId}:${source}`,
+      throttleMs: 250,
+    }
+  );
   saveToStorage();
   if (emit) emitChange();
 };
@@ -150,6 +195,18 @@ const removeQueuedProductSourceInternal = (
     cachedSources.delete(productId);
   }
 
+  logProductListDebug(
+    'queued-product-source-removed',
+    {
+      productId,
+      source,
+      queuedProductIdsCount: cachedSources?.size ?? 0,
+    },
+    {
+      dedupeKey: `queued-product-source-removed:${productId}:${source}`,
+      throttleMs: 250,
+    }
+  );
   saveToStorage();
   if (emit) emitChange();
   return true;
@@ -162,6 +219,17 @@ const clearQueuedProductIdInternal = (productId: string, emit: boolean): boolean
 
   Array.from(sources.keys()).forEach((source: string) => clearSourceTimer(productId, source));
   cachedSources.delete(productId);
+  logProductListDebug(
+    'queued-product-cleared',
+    {
+      productId,
+      queuedProductIdsCount: cachedSources?.size ?? 0,
+    },
+    {
+      dedupeKey: `queued-product-cleared:${productId}`,
+      throttleMs: 250,
+    }
+  );
   saveToStorage();
   if (emit) emitChange();
   return true;
@@ -228,6 +296,17 @@ const refreshFromStorage = (): void => {
   clearAllTimers();
   cachedSources = null;
   loadFromStorage();
+  const queuedProductIdsCount = (cachedSources as QueuedProductState | null)?.size ?? 0;
+  logProductListDebug(
+    'queued-product-storage-refreshed',
+    {
+      queuedProductIdsCount,
+    },
+    {
+      dedupeKey: 'queued-product-storage-refreshed',
+      throttleMs: 250,
+    }
+  );
   emitChange();
 };
 
@@ -328,12 +407,26 @@ export const useQueuedProductIds = (): Set<string> => {
 
   useEffect(() => {
     const handleChange = (): void => {
-      setIds(getQueuedProductIds());
+      setIds((currentIds) => {
+        const nextIds = getQueuedProductIds();
+        return areSetsEqual(currentIds, nextIds) ? currentIds : nextIds;
+      });
     };
 
     listeners.add(handleChange);
     const handleStorage = (event: StorageEvent): void => {
       if (event.key === STORAGE_KEY) {
+        logProductListDebug(
+          'queued-product-storage-event',
+          {
+            hook: 'useQueuedProductIds',
+            storageKey: event.key,
+          },
+          {
+            dedupeKey: 'queued-product-storage-event:ids',
+            throttleMs: 250,
+          }
+        );
         refreshFromStorage();
       }
     };
@@ -353,12 +446,26 @@ export const useQueuedAiRunProductIds = (): Set<string> => {
 
   useEffect(() => {
     const handleChange = (): void => {
-      setIds(getQueuedAiRunProductIds());
+      setIds((currentIds) => {
+        const nextIds = getQueuedAiRunProductIds();
+        return areSetsEqual(currentIds, nextIds) ? currentIds : nextIds;
+      });
     };
 
     listeners.add(handleChange);
     const handleStorage = (event: StorageEvent): void => {
       if (event.key === STORAGE_KEY) {
+        logProductListDebug(
+          'queued-product-storage-event',
+          {
+            hook: 'useQueuedAiRunProductIds',
+            storageKey: event.key,
+          },
+          {
+            dedupeKey: 'queued-product-storage-event:ai-runs',
+            throttleMs: 250,
+          }
+        );
         refreshFromStorage();
       }
     };

@@ -153,6 +153,22 @@ describe('KangurPageTransitionSkeleton', () => {
       'top-[var(--kangur-top-bar-height,88px)]'
     );
     expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')
+    ).toBeInTheDocument();
+
+    const routeMainContainer = screen
+      .getByTestId('kangur-page-transition-skeleton')
+      .querySelector('[data-kangur-route-main="false"]');
+    if (!routeMainContainer) {
+      throw new Error('Expected the inline-navbar transition skeleton to render a route-main container.');
+    }
+
+    expect(
+      screen
+        .getByTestId('kangur-page-transition-skeleton-inline-top-navigation')
+        .compareDocumentPosition(routeMainContainer) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).not.toBe(0);
   });
 
   it('renders with path-based fallback copy when next-intl context is unavailable', () => {

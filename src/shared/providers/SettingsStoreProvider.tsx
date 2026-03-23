@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useMemo, useRef } from 'react';
 
 import { useLiteSettingsMap, useSettingsMap } from '@/shared/hooks/use-settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -57,6 +57,20 @@ const resolveCurrentPathname = (pathname: string | null): string => {
   return pathname ?? '';
 };
 
+const areSettingsMapsEqual = (
+  left: ReadonlyMap<string, string>,
+  right: ReadonlyMap<string, string>
+): boolean => {
+  if (left === right) return true;
+  if (left.size !== right.size) return false;
+
+  for (const [key, value] of right) {
+    if (left.get(key) !== value) return false;
+  }
+
+  return true;
+};
+
 export function SettingsStoreProvider({
   children,
   mode = 'lite',
@@ -89,11 +103,21 @@ export function SettingsStoreProvider({
   const isFetching = settingsQuery.isFetching;
   const error = settingsQuery.error ?? null;
   const refetch = settingsQuery.refetch;
+  const stableMapRef = useRef<Map<string, string>>(emptyMap);
+  const stableMap = useMemo(() => {
+    const nextMap = mapData instanceof Map ? mapData : emptyMap;
+    if (areSettingsMapsEqual(stableMapRef.current, nextMap)) {
+      return stableMapRef.current;
+    }
+
+    stableMapRef.current = nextMap;
+    return nextMap;
+  }, [mapData]);
 
   // Stable value — excludes isFetching so background re-validation doesn't
   // trigger re-renders in the ~50+ consumers that only read settings data.
   const value = useMemo<SettingsStoreValue>(() => {
-    const map = mapData instanceof Map ? mapData : new Map<string, string>();
+    const map = stableMap;
     return {
       map,
       isLoading,
@@ -111,7 +135,7 @@ export function SettingsStoreProvider({
         void refetch();
       },
     };
-  }, [error, isLoading, mapData, refetch]);
+  }, [error, isLoading, refetch, stableMap]);
 
   return (
     <SettingsStoreFetchingContext.Provider value={isFetching}>

@@ -13,6 +13,7 @@ import {
   parseKangurParentVerificationEmailSettings,
   normalizeKangurLessons,
 } from '@/features/kangur/settings';
+import { createDefaultKangurSections } from '@/features/kangur/lessons/lesson-section-defaults';
 import { KANGUR_TTS_DEFAULT_VOICE } from '@/features/kangur/tts/contracts';
 
 describe('kangur lesson settings', () => {
@@ -35,6 +36,63 @@ describe('kangur lesson settings', () => {
     expect(componentIds).toContain('geometry_symmetry');
     expect(componentIds).toContain('geometry_perimeter');
     expect(lessons.every((lesson) => lesson.contentMode === 'component')).toBe(true);
+  });
+
+  it('includes art lessons with subsection references in the default library', () => {
+    const lessons = createDefaultKangurLessons();
+    const artHarmony = lessons.find((lesson) => lesson.componentId === 'art_colors_harmony');
+    const artShapes = lessons.find((lesson) => lesson.componentId === 'art_shapes_basic');
+
+    expect(artHarmony).toMatchObject({
+      subject: 'art',
+      ageGroup: 'six_year_old',
+      sectionId: 'art_colors',
+      subsectionId: 'art_colors_harmony',
+    });
+    expect(artShapes).toMatchObject({
+      subject: 'art',
+      ageGroup: 'six_year_old',
+      sectionId: 'art_shapes',
+      subsectionId: 'art_shapes_basic',
+    });
+  });
+
+  it('includes music lessons with subsection references in the default library', () => {
+    const lessons = createDefaultKangurLessons();
+    const diatonicScale = lessons.find((lesson) => lesson.componentId === 'music_diatonic_scale');
+
+    expect(diatonicScale).toMatchObject({
+      subject: 'music',
+      ageGroup: 'six_year_old',
+      sectionId: 'music_scale',
+      subsectionId: 'music_diatonic_scale',
+    });
+  });
+
+  it('defines the Art subject sections for six-year-old lessons', () => {
+    const sections = createDefaultKangurSections().filter((section) => section.subject === 'art');
+
+    expect(sections).toHaveLength(2);
+    expect(sections.map((section) => section.id)).toEqual(['art_colors', 'art_shapes']);
+    expect(sections[0]?.subsections[0]).toMatchObject({
+      id: 'art_colors_harmony',
+      componentIds: ['art_colors_harmony'],
+    });
+    expect(sections[1]?.subsections[0]).toMatchObject({
+      id: 'art_shapes_basic',
+      componentIds: ['art_shapes_basic'],
+    });
+  });
+
+  it('defines the Music subject section and subsection for six-year-old lessons', () => {
+    const sections = createDefaultKangurSections().filter((section) => section.subject === 'music');
+
+    expect(sections).toHaveLength(1);
+    expect(sections[0]?.id).toBe('music_scale');
+    expect(sections[0]?.subsections[0]).toMatchObject({
+      id: 'music_diatonic_scale',
+      componentIds: ['music_diatonic_scale'],
+    });
   });
 
   it('includes logical thinking lessons in default library', () => {

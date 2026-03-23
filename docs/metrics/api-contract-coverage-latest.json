@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-03-22T10:14:33.967Z",
+  "generatedAt": "2026-03-23T09:44:34.758Z",
   "status": "passed",
   "summary": {
-    "total": 17,
+    "total": 16,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 17,
+    "infoCount": 16,
     "status": "passed",
     "routeFileCount": 285,
     "methodCount": 215,
-    "methodsWithTests": 188,
+    "methodsWithTests": 189,
     "mutationValidationCount": 37,
     "queryValidationCount": 10
   },
@@ -2749,14 +2749,16 @@
       "route": "system/logs/metrics",
       "method": "GET",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": true,
       "sourceFiles": [
         "src/app/api/system/logs/metrics/route.ts",
         "src/app/api/system/logs/metrics/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/system/logs/metrics/handler.test.ts"
+      ]
     },
     {
       "route": "system/logs",
@@ -3378,22 +3380,6 @@
     {
       "severity": "info",
       "ruleId": "api-contract-route-missing-tests",
-      "message": "GET system/logs/metrics has no adjacent route/handler test coverage.",
-      "file": "src/app/api/system/logs/metrics/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/system/logs/metrics/route.ts",
-          "src/app/api/system/logs/metrics/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
       "message": "GET system/upload-events has no adjacent route/handler test coverage.",
       "file": "src/app/api/system/upload-events/route.ts",
       "line": 7,
@@ -3413,8 +3399,8 @@
       "ruleId": "api-contract-route-missing-tests",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 17
+      "infoCount": 16
     }
   ],
-  "durationMs": 305
+  "durationMs": 222
 }

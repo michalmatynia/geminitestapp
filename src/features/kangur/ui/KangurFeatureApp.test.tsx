@@ -38,12 +38,20 @@ vi.mock('framer-motion', () => ({
 vi.mock('@/features/kangur/ui/components/KangurPageTransitionSkeleton', () => ({
   KangurPageTransitionSkeleton: ({
     pageKey,
+    renderInlineTopNavigationSkeleton,
     variant,
   }: {
     pageKey?: string | null;
+    renderInlineTopNavigationSkeleton?: boolean;
     variant?: string | null;
   }) => (
-    <div data-testid='kangur-page-transition-skeleton'>
+    <div
+      data-inline-top-navigation-skeleton={renderInlineTopNavigationSkeleton ? 'true' : 'false'}
+      data-testid='kangur-page-transition-skeleton'
+    >
+      {renderInlineTopNavigationSkeleton ? (
+        <div data-testid='kangur-page-transition-skeleton-inline-top-navigation' />
+      ) : null}
       {pageKey ?? 'none'}:{variant ?? 'default'}
     </div>
   ),
@@ -272,12 +280,15 @@ describe('KangurFeatureApp', () => {
       vi.advanceTimersByTime(140);
     });
 
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
-      'Game:game-home'
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-inline-top-navigation-skeleton',
+      'true'
     );
+    expect(screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Game:game-home');
   });
 
-  it('keeps the navbar skeleton mounted while a pending route skeleton is visible and the shared host is still unresolved', async () => {
+  it('moves the navbar skeleton inline into the pending route skeleton while the shared host is unresolved', async () => {
     topNavigationHostVisibleMock.mockReturnValue(false);
     routeTransitionStateMock.mockReturnValue({
       isRouteAcknowledging: false,
@@ -300,10 +311,13 @@ describe('KangurFeatureApp', () => {
       vi.advanceTimersByTime(140);
     });
 
-    expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
-      'Lessons:lessons-library'
+    expect(screen.queryByTestId('kangur-top-navigation-skeleton')).toBeNull();
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-inline-top-navigation-skeleton',
+      'true'
     );
+    expect(screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Lessons:lessons-library');
   });
 
   it('keeps the target route hidden while the destination is still loading', () => {
@@ -476,15 +490,18 @@ describe('KangurFeatureApp', () => {
     render(<KangurFeatureApp />);
 
     expect(screen.queryByTestId('kangur-top-navigation-host')).toBeNull();
-    expect(screen.getByTestId('kangur-top-navigation-skeleton')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
-      'Lessons:lessons-library'
+    expect(screen.queryByTestId('kangur-top-navigation-skeleton')).toBeNull();
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-inline-top-navigation-skeleton',
+      'true'
     );
+    expect(screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Lessons:lessons-library');
     expect(screen.getByTestId('kangur-route-content')).toHaveClass('pointer-events-none');
     expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('opacity-0');
   });
 
-  it('shows the page skeleton immediately once a button-led route handoff becomes pending', () => {
+  it('shows the route skeleton with inline navbar immediately once a button-led handoff becomes pending', () => {
     routeTransitionStateMock.mockReturnValue({
       isRouteAcknowledging: false,
       isRoutePending: true,
@@ -502,10 +519,13 @@ describe('KangurFeatureApp', () => {
 
     render(<KangurFeatureApp />);
 
-    expect(screen.getByTestId('kangur-top-navigation-host')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
-      'Lessons:lessons-library'
+    expect(screen.queryByTestId('kangur-top-navigation-host')).toBeNull();
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-inline-top-navigation-skeleton',
+      'true'
     );
+    expect(screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Lessons:lessons-library');
   });
 
   it('keeps core routes visible during boot loading states', () => {

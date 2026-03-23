@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-03-23T08:53:10.377Z",
-  "status": "warn",
+  "generatedAt": "2026-03-23T09:46:39.704Z",
+  "status": "passed",
   "summary": {
-    "total": 8,
+    "total": 5,
     "errorCount": 0,
-    "warningCount": 3,
+    "warningCount": 0,
     "infoCount": 5,
-    "status": "warn",
+    "status": "passed",
     "contextFileCount": 241
   },
   "scope": {
@@ -18,36 +18,6 @@
     "oversizedLocThreshold": 500
   },
   "issues": [
-    {
-      "severity": "warn",
-      "ruleId": "context-oversized",
-      "message": "Context file is 505 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
-      "file": "src/features/kangur/ui/context/KangurGameRuntimeContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-oversized",
-      "message": "Context file is 517 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
-      "file": "src/features/kangur/ui/context/KangurRouteTransitionContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "context-oversized",
-      "message": "Context file is 659 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
-      "file": "src/features/products/context/ProductListContext.tsx",
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
     {
       "severity": "info",
       "ruleId": "context-missing-split",
@@ -101,17 +71,11 @@
   ],
   "rules": [
     {
-      "ruleId": "context-oversized",
-      "errorCount": 0,
-      "warningCount": 3,
-      "infoCount": 0
-    },
-    {
       "ruleId": "context-missing-split",
       "errorCount": 0,
       "warningCount": 0,
       "infoCount": 5
     }
   ],
-  "durationMs": 248
+  "durationMs": 238
 }

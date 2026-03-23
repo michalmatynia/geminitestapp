@@ -72,9 +72,10 @@ export function KangurSubjectFocusProvider({
     }
 
     let cancelled = false;
+    const controller = new AbortController();
 
     const hydrate = async (): Promise<void> => {
-      const remoteSubject = await loadRemoteSubjectFocus();
+      const remoteSubject = await loadRemoteSubjectFocus(controller.signal);
       if (cancelled || remoteSubject === null) {
         return;
       }
@@ -87,6 +88,7 @@ export function KangurSubjectFocusProvider({
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [canSyncRemote, storageKey]);
 

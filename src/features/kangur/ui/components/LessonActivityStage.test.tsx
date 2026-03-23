@@ -100,4 +100,23 @@ describe('LessonActivityStage', () => {
       'Wróć do tematów'
     );
   });
+
+  it('can render a plain shell without the shared glass panel wrapper', () => {
+    render(
+      <LessonActivityStage
+        accent='sky'
+        icon='🎹'
+        onBack={vi.fn()}
+        shellTestId='lesson-activity-plain-shell'
+        shellVariant='plain'
+        title='Powtorz melodie'
+      >
+        <div>Gra muzyczna</div>
+      </LessonActivityStage>
+    );
+
+    expect(screen.getByTestId('lesson-activity-plain-shell')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-activity-plain-shell').className).toContain('flex w-full flex-col');
+    expect(screen.getByText('Gra muzyczna')).toBeInTheDocument();
+  });
 });

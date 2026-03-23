@@ -3509,6 +3509,11 @@
       "alphabetWords": "Pierwsze słowa",
       "alphabetMatching": "Dopasuj litery",
       "alphabetSequence": "Kolejność liter",
+      "art": "Sztuka",
+      "artColorsHarmony": "Harmonia kolorów",
+      "artShapesBasic": "Podstawowe kształty",
+      "music": "Muzyka",
+      "musicDiatonicScale": "Skala diatoniczna",
       "geometry": "Geometria",
       "geometryShapeRecognition": "Geometria",
       "addition": "Dodawanie",
@@ -4629,6 +4634,143 @@
       },
       "game": {
         "stageTitle": "Rysuj figury"
+      }
+    },
+    "artShapesBasic": {
+      "lessonTitle": "Podstawowe kształty",
+      "sections": {
+        "meetShapes": {
+          "title": "Poznaj podstawowe kształty",
+          "description": "Naucz się czterech kształtów, które są wszędzie wokół ciebie."
+        },
+        "compareShapes": {
+          "title": "Porównaj ich boki",
+          "description": "Zauważ, co wyróżnia każdy kształt."
+        },
+        "findShapes": {
+          "title": "Znajdź kształty w prawdziwym świecie",
+          "description": "Połącz kształty z rzeczami, które już znasz."
+        },
+        "rotationPuzzle": {
+          "title": "Uzupełnij wirujący wzór",
+          "description": "Wybierz animowany kafelek, który pasuje do brakującej jednej szóstej wzoru."
+        },
+        "summary": {
+          "title": "Powtórka odkrywcy kształtów",
+          "description": "Zapamiętaj wskazówki, które pomagają nazywać kształty."
+        }
+      },
+      "slides": {
+        "meetShapes": {
+          "title": "Cztery kształty do zapamiętania",
+          "lead": "Kształty pomagają artystom rysować, budować i ozdabiać. Zacznij od czterech klasyków.",
+          "shapes": {
+            "circle": {
+              "label": "Koło",
+              "clue": "Okrągłe, gładkie i bez rogów."
+            },
+            "square": {
+              "label": "Kwadrat",
+              "clue": "Cztery równe boki i cztery rogi."
+            },
+            "triangle": {
+              "label": "Trójkąt",
+              "clue": "Trzy boki i trzy rogi."
+            },
+            "rectangle": {
+              "label": "Prostokąt",
+              "clue": "Dwa długie i dwa krótkie boki."
+            }
+          }
+        },
+        "compareShapes": {
+          "title": "Czym się różnią?",
+          "chips": {
+            "circle": "koło: bez rogów",
+            "square": "kwadrat: wszystkie boki równe",
+            "triangle": "trójkąt: trzy boki",
+            "rectangle": "prostokąt: długie i krótkie boki"
+          },
+          "detective": {
+            "title": "Sztuczka detektywa kształtów",
+            "caption": "Najpierw policz rogi. Potem porównaj długość boków. To zwykle wystarcza, by znaleźć odpowiedź."
+          }
+        },
+        "findShapes": {
+          "examples": {
+            "title": "Kształty w świecie wokół ciebie",
+            "circle": {
+              "label": "Koło",
+              "caption": "Piłka, talerz albo tarcza zegara."
+            },
+            "window": {
+              "label": "Kwadrat lub prostokąt",
+              "caption": "Okna, pudełka i książki często mają proste boki."
+            },
+            "pizza": {
+              "label": "Trójkąt",
+              "caption": "Kawałki pizzy, dachy i znaki ostrzegawcze mogą wyglądać jak trójkąty."
+            },
+            "rectangle": {
+              "label": "Prostokąt",
+              "caption": "Drzwi, ekrany i cegły to świetne przykłady."
+            }
+          },
+          "puzzleClues": {
+            "title": "Wypatruj dwóch wskazówek w zagadce",
+            "lead": "W grze każdy kafelek daje dwie wskazówki: do jakiej rodziny kształtów należy i jak szybko się obraca.",
+            "familyTitle": "Rodzina kształtów",
+            "familyCaption": "Koło i piłka pasują do siebie. Kwadrat i okno też. Trójkąt i kawałek pizzy również.",
+            "speedTitle": "Prędkość obrotu",
+            "speedCaption": "Wolne, średnie i szybkie obroty wracają w rytmie. Dopasuj rodzinę i tempo."
+          }
+        },
+        "summary": {
+          "title": "Co już wiesz",
+          "facts": {
+            "circle": "Koło jest okrągłe i nie ma rogów.",
+            "square": "Kwadrat ma cztery równe boki.",
+            "triangle": "Trójkąt ma trzy boki.",
+            "rectangle": "Prostokąt ma cztery rogi i dwie pary równych boków."
+          }
+        }
+      },
+      "game": {
+        "stageTitle": "Uzupełnij wirujący wzór",
+        "progress": {
+          "round": "Runda {current}/{total}",
+          "score": "Wynik: {score}"
+        },
+        "missingTileLabel": "Brakujący kafelek",
+        "tileLabel": "{glyph}, {tempo}",
+        "chooseOption": "Wybierz {tile}",
+        "glyphs": {
+          "circle": "Koło",
+          "ball": "Piłka",
+          "square": "Kwadrat",
+          "window": "Okno",
+          "triangle": "Trójkąt",
+          "pizza": "Kawałek pizzy",
+          "rectangle": "Prostokąt",
+          "book": "Książka"
+        },
+        "tempos": {
+          "slow": "wolny obrót",
+          "medium": "średni obrót",
+          "fast": "szybki obrót"
+        },
+        "optionFeedback": {
+          "correct": "Dobrze",
+          "incorrect": "Nie to",
+          "answer": "To ten"
+        },
+        "finished": {
+          "status": "Zadanie ukończone",
+          "title": "Udało ci się rozwiązać {score} z {total} wirujących wzorów.",
+          "subtitle": "Dopasowywałeś brakujące kafelki po rodzinie i po tempie.",
+          "backToLesson": "Wróć do lekcji",
+          "playAgain": "Zagraj jeszcze raz"
+        }
       }
     },
     "geometryShapeRecognition": {

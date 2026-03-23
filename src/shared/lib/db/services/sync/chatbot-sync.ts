@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 import type { DatabaseSyncHandler } from './types';
 import type {
   MongoChatbotSessionDoc,
@@ -19,8 +17,8 @@ export const syncChatbotSessions: DatabaseSyncHandler = async ({ mongo, prisma, 
       return {
         id,
         title: doc.title ?? null,
-        createdAt: doc.createdAt ?? new Date(),
-        updatedAt: doc.updatedAt ?? new Date(),
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
     .filter((item): item is Prisma.ChatbotSessionCreateManyInput => item !== null);
@@ -32,7 +30,7 @@ export const syncChatbotSessions: DatabaseSyncHandler = async ({ mongo, prisma, 
       sessionId,
       role: message.role,
       content: message.content,
-      createdAt: message.createdAt ?? doc.createdAt ?? new Date(),
+      createdAt: (message.createdAt as Date) ?? (doc.createdAt as Date) ?? new Date(),
     }));
   });
 
@@ -66,7 +64,7 @@ export const syncChatbotJobs: DatabaseSyncHandler = async ({
         payload: toJsonValue(doc.payload) as Prisma.InputJsonValue,
         resultText: doc.resultText ?? null,
         errorMessage: doc.errorMessage ?? null,
-        createdAt: doc.createdAt ?? new Date(),
+        createdAt: (doc.createdAt as Date) ?? new Date(),
         startedAt: toDate(doc.startedAt),
         finishedAt: toDate(doc.finishedAt),
       };
@@ -83,11 +81,11 @@ export const syncChatbotSessionsPrismaToMongo: DatabaseSyncHandler = async ({ mo
   const rows = await prisma.chatbotSession.findMany({
     include: { messages: true },
   });
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     title: row.title,
-    messages: row.messages.map((msg: any) => ({
+    messages: row.messages.map((msg) => ({
       role: msg.role,
       content: msg.content,
       createdAt: msg.createdAt,
@@ -109,7 +107,7 @@ export const syncChatbotSessionsPrismaToMongo: DatabaseSyncHandler = async ({ mo
 
 export const syncChatbotJobsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.chatbotJob.findMany();
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     sessionId: row.sessionId,

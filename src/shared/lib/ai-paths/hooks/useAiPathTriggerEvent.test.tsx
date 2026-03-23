@@ -26,7 +26,39 @@ vi.mock('@/shared/ui', async () => {
   };
 });
 
-import { useAiPathTriggerEvent } from '@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent';
+import {
+  resolveCurrentActivePathId,
+  useAiPathTriggerEvent,
+} from '@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent';
+
+describe('resolveCurrentActivePathId', () => {
+  it('prefers the query-backed active path id when available', () => {
+    expect(
+      resolveCurrentActivePathId({
+        preferredActivePathId: ' path-query ',
+        uiState: { activePathId: 'path-ui' },
+      })
+    ).toBe('path-query');
+  });
+
+  it('falls back to AI Paths ui state when query-backed active path id is absent', () => {
+    expect(
+      resolveCurrentActivePathId({
+        preferredActivePathId: null,
+        uiState: { activePathId: ' path-ui ' },
+      })
+    ).toBe('path-ui');
+  });
+
+  it('returns null when neither source has an active path id', () => {
+    expect(
+      resolveCurrentActivePathId({
+        preferredActivePathId: '   ',
+        uiState: { activePathId: '   ' },
+      })
+    ).toBeNull();
+  });
+});
 
 describe('useAiPathTriggerEvent', () => {
   it('shows an error toast and exits when the trigger id is empty', async () => {

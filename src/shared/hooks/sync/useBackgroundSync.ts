@@ -10,6 +10,17 @@ interface BackgroundSyncOptions {
   interval?: number; // milliseconds
   enabled?: boolean;
   onUpdate?: (data: unknown) => void;
+  onSyncEvent?: (event: BackgroundSyncEvent) => void;
+}
+
+export interface BackgroundSyncEvent {
+  reason: 'interval' | 'visibility' | 'force';
+  status: 'skipped' | 'completed' | 'error';
+  enabled: boolean;
+  isVisible: boolean;
+  dataChanged?: boolean;
+  queryKey: QueryKey;
+  errorMessage?: string;
 }
 
 // Minimum time (ms) between visibility-triggered syncs to avoid tab-switch storms.
@@ -20,6 +31,7 @@ export function useBackgroundSync({
   interval = 30000, // 30 seconds default
   enabled = true,
   onUpdate,
+  onSyncEvent,
 }: BackgroundSyncOptions): { forceSync: () => Promise<void> } {
   const queryClient = useQueryClient();
   const intervalRef = useRef<SafeTimerId | undefined>(undefined);
@@ -30,39 +42,100 @@ export function useBackgroundSync({
   queryKeyRef.current = queryKey;
   const onUpdateRef = useRef(onUpdate);
   onUpdateRef.current = onUpdate;
+  const onSyncEventRef = useRef(onSyncEvent);
+  onSyncEventRef.current = onSyncEvent;
 
-  const syncData = useCallback(async (): Promise<void> => {
-    if (!isVisibleRef.current || !enabled) return;
-
-    try {
-      await queryClient.refetchQueries({ queryKey: queryKeyRef.current });
-      lastSyncAtRef.current = Date.now();
-      const currentData = queryClient.getQueryData(queryKeyRef.current);
-
-      if (currentData !== previousDataRef.current) {
-        onUpdateRef.current?.(currentData);
-        previousDataRef.current = currentData;
+  const emitSyncEvent = useCallback(
+    (event: BackgroundSyncEvent): void => {
+      try {
+        onSyncEventRef.current?.(event);
+      } catch (error: unknown) {
+        logClientCatch(error, {
+          source: 'useBackgroundSync',
+          action: 'emitSyncEvent',
+          level: 'warn',
+        });
       }
-    } catch (error: unknown) {
-      logClientCatch(error, {
-        source: 'useBackgroundSync',
-        action: 'backgroundSyncFailed',
-        level: 'warn',
-      });
-    }
-  }, [enabled, queryClient]);
+    },
+    []
+  );
+
+  const syncData = useCallback(
+    async (
+      reason: BackgroundSyncEvent['reason'],
+      options?: { ignoreVisibility?: boolean; ignoreEnabled?: boolean }
+    ): Promise<void> => {
+      const shouldSkipForVisibility = !options?.ignoreVisibility && !isVisibleRef.current;
+      const shouldSkipForEnabled = !options?.ignoreEnabled && !enabled;
+
+      if (shouldSkipForVisibility || shouldSkipForEnabled) {
+        emitSyncEvent({
+          reason,
+          status: 'skipped',
+          enabled,
+          isVisible: isVisibleRef.current,
+          queryKey: queryKeyRef.current,
+        });
+        return;
+      }
+
+      try {
+        await queryClient.refetchQueries({ queryKey: queryKeyRef.current });
+        lastSyncAtRef.current = Date.now();
+        const currentData = queryClient.getQueryData(queryKeyRef.current);
+        const dataChanged = currentData !== previousDataRef.current;
+
+        if (dataChanged) {
+          onUpdateRef.current?.(currentData);
+          previousDataRef.current = currentData;
+        }
+
+        emitSyncEvent({
+          reason,
+          status: 'completed',
+          enabled,
+          isVisible: isVisibleRef.current,
+          dataChanged,
+          queryKey: queryKeyRef.current,
+        });
+      } catch (error: unknown) {
+        emitSyncEvent({
+          reason,
+          status: 'error',
+          enabled,
+          isVisible: isVisibleRef.current,
+          queryKey: queryKeyRef.current,
+          errorMessage: error instanceof Error ? error.message : String(error),
+        });
+        logClientCatch(error, {
+          source: 'useBackgroundSync',
+          action: 'backgroundSyncFailed',
+          level: 'warn',
+        });
+      }
+    },
+    [emitSyncEvent, enabled, queryClient]
+  );
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
 
     const handleVisibilityChange = (): void => {
-      isVisibleRef.current = document.visibilityState === 'visible';
-      if (isVisibleRef.current && enabled) {
-        // Only sync if enough time has passed since the last sync
-        const elapsed = Date.now() - lastSyncAtRef.current;
-        if (elapsed >= VISIBILITY_SYNC_DEBOUNCE_MS) {
-          void syncData();
+      try {
+        isVisibleRef.current = document.visibilityState === 'visible';
+        if (isVisibleRef.current && enabled) {
+          // Only sync if enough time has passed since the last sync
+          const elapsed = Date.now() - lastSyncAtRef.current;
+          if (elapsed >= VISIBILITY_SYNC_DEBOUNCE_MS) {
+            void syncData('visibility');
+          }
         }
+      } catch (error: unknown) {
+        logClientCatch(error, {
+          source: 'useBackgroundSync',
+          action: 'handleVisibilityChange',
+          level: 'warn',
+        });
       }
     };
 
@@ -76,7 +149,7 @@ export function useBackgroundSync({
     if (!enabled) return;
 
     intervalRef.current = safeSetInterval(() => {
-      void syncData();
+      void syncData('interval');
     }, interval);
 
     return (): void => {
@@ -88,7 +161,7 @@ export function useBackgroundSync({
 
   return {
     forceSync: async (): Promise<void> => {
-      await queryClient.refetchQueries({ queryKey: queryKeyRef.current });
+      await syncData('force', { ignoreVisibility: true, ignoreEnabled: true });
     },
   };
 }
@@ -96,11 +169,13 @@ export function useBackgroundSync({
 // Hook for product list updates
 export function useProductListSync(
   filters: Record<string, unknown>,
-  enabled: boolean = true
+  enabled: boolean = true,
+  options?: Pick<BackgroundSyncOptions, 'onSyncEvent'>
 ): { forceSync: () => Promise<void> } {
   return useBackgroundSync({
     queryKey: getProductListQueryKey(filters),
     interval: 60000, // 1 minute for products
     enabled,
+    onSyncEvent: options?.onSyncEvent,
   });
 }

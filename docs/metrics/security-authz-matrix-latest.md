@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-22'
+last_reviewed: '2026-03-23'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Security Authorization Matrix Report
 
-Generated at: 2026-03-22T10:14:33.241Z
+Generated at: 2026-03-23T09:44:34.044Z
 
 ## Summary
 

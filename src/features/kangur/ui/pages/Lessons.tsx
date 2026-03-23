@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
@@ -28,6 +29,9 @@ function LessonsContent() {
 
   const { user, logout } = auth;
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('lessons');
+  const handleLogout = useCallback(() => {
+    logout(false);
+  }, [logout]);
 
   const activeLessonAssignment = activeLesson
     ? (lessonAssignmentsByComponent.get(activeLesson.componentId) ?? null)
@@ -44,16 +48,26 @@ function LessonsContent() {
     assignmentId: activeLessonAssignment?.id ?? completedActiveLessonAssignment?.id,
   };
 
-  const navigation: KangurPrimaryNavigationProps = {
-    basePath,
-    canManageLearners: Boolean(user?.canManageLearners),
-    currentPage: 'Lessons' as const,
-    guestPlayerName: user ? undefined : guestPlayerName,
-    isAuthenticated: Boolean(user),
-    onGuestPlayerNameChange: user ? undefined : setGuestPlayerName,
-    onLogin: openLoginModal,
-    onLogout: () => logout(false),
-  };
+  const navigation = useMemo<KangurPrimaryNavigationProps>(
+    () => ({
+      basePath,
+      canManageLearners: Boolean(user?.canManageLearners),
+      currentPage: 'Lessons' as const,
+      guestPlayerName: user ? undefined : guestPlayerName,
+      isAuthenticated: Boolean(user),
+      onGuestPlayerNameChange: user ? undefined : setGuestPlayerName,
+      onLogin: openLoginModal,
+      onLogout: handleLogout,
+    }),
+    [
+      basePath,
+      guestPlayerName,
+      handleLogout,
+      openLoginModal,
+      setGuestPlayerName,
+      user,
+    ]
+  );
 
   return (
     <>

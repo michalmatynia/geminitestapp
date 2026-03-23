@@ -17,7 +17,11 @@ vi.mock('@/shared/lib/query-invalidation', () => ({
   invalidateListingBadges: vi.fn(),
 }));
 
-import { useIntegrationOperations } from './useIntegrationOperations';
+import {
+  useIntegrationListingBadges,
+  useIntegrationModalOperations,
+  useIntegrationOperations,
+} from './useIntegrationOperations';
 
 const createQueryClient = (): QueryClient =>
   new QueryClient({
@@ -40,6 +44,37 @@ describe('useIntegrationOperations listing badges query', () => {
     );
 
     renderHook(() => useIntegrationOperations([' product-2 ', 'product-1', 'product-2']), {
+      wrapper,
+    });
+
+    await waitFor(() => {
+      expect(apiGetMock).toHaveBeenCalledWith(
+        '/api/v2/integrations/product-listings?productIds=product-1%2Cproduct-2',
+        { cache: 'no-store' }
+      );
+    });
+  });
+
+  it('keeps modal operations detached from the listing badges query', async () => {
+    const queryClient = createQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    renderHook(() => useIntegrationModalOperations(), { wrapper });
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(apiGetMock).not.toHaveBeenCalled();
+  });
+
+  it('exposes listing badges directly for provider-side runtime polling', async () => {
+    const queryClient = createQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    renderHook(() => useIntegrationListingBadges([' product-2 ', 'product-1', 'product-2']), {
       wrapper,
     });
 

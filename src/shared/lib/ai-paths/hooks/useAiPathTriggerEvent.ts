@@ -51,6 +51,21 @@ import {
 
 const TRIGGER_ENQUEUE_TIMEOUT_MS = 90_000;
 
+export const resolveCurrentActivePathId = (args: {
+  preferredActivePathId: string | null;
+  uiState: Record<string, unknown> | null;
+}): string | null => {
+  const preferredActivePathId =
+    typeof args.preferredActivePathId === 'string' ? args.preferredActivePathId.trim() : '';
+  if (preferredActivePathId.length > 0) {
+    return preferredActivePathId;
+  }
+
+  const uiStateActivePathId =
+    typeof args.uiState?.['activePathId'] === 'string' ? args.uiState['activePathId'].trim() : '';
+  return uiStateActivePathId.length > 0 ? uiStateActivePathId : null;
+};
+
 export function useAiPathTriggerEvent(): {
   fireAiPathTriggerEvent: (args: FireAiPathTriggerEventArgs) => Promise<void>;
   } {
@@ -499,7 +514,12 @@ export function useAiPathTriggerEvent(): {
           entityId: effectiveQueuedEntityId,
         });
 
-        if (selectedConfig.id !== preferredActivePathId) {
+        const currentActivePathId = resolveCurrentActivePathId({
+          preferredActivePathId,
+          uiState,
+        });
+
+        if (selectedConfig.id !== currentActivePathId) {
           const nextUiState = {
             ...(uiState ?? {}),
             activePathId: selectedConfig.id,

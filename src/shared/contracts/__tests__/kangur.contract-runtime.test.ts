@@ -7,6 +7,7 @@ import {
   kangurLessonImageBlockSchema,
   kangurLessonsQuerySchema,
   kangurLessonsReplacePayloadSchema,
+  resolveKangurScoreSubject,
 } from '@/shared/contracts/kangur';
 import {
   kangurLessonTemplatesQuerySchema,
@@ -89,17 +90,30 @@ describe('kangur contract runtime', () => {
   it('parses Kangur lesson route query and bulk-replace payload DTOs', () => {
     expect(
       kangurLessonsQuerySchema.parse({
-        subject: 'maths',
+        subject: 'music',
         ageGroup: 'six_year_old',
         enabledOnly: 'true',
-      }).enabledOnly
-    ).toBe(true);
+      })
+    ).toMatchObject({
+      subject: 'music',
+      ageGroup: 'six_year_old',
+      enabledOnly: true,
+    });
 
     expect(
       kangurLessonsReplacePayloadSchema.parse({
         lessons: [],
       }).lessons
     ).toEqual([]);
+  });
+
+  it('resolves music score subjects from music-prefixed operations', () => {
+    expect(
+      resolveKangurScoreSubject({
+        operation: 'music_diatonic_scale',
+        subject: null,
+      })
+    ).toBe('music');
   });
 
   it('parses Kangur lesson-template route query and bulk-replace payload DTOs', () => {

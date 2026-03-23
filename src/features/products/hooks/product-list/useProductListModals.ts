@@ -2,16 +2,15 @@
 
 import { useCallback, useState } from 'react';
 
+import { useIntegrationModalOperations } from '@/features/integrations/public';
 import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
 import type { Toast } from '@/shared/contracts/ui';
-import { useIntegrationOperations } from '@/features/integrations/public';
 
 export function useProductListModals({
   handleOpenCreateModal,
   prefetchIntegrationSelectionData,
   prefetchProductListingsData,
   refreshProductListingsData,
-  visibleProductIds,
   rowSelection,
   toast,
 }: {
@@ -19,7 +18,6 @@ export function useProductListModals({
   prefetchIntegrationSelectionData: () => void;
   prefetchProductListingsData: (productId: string) => void;
   refreshProductListingsData: (productId: string) => void;
-  visibleProductIds: string[];
   rowSelection: Record<string, boolean>;
   toast: Toast;
 }) {
@@ -32,15 +30,11 @@ export function useProductListModals({
     setShowListProductModal,
     listProductPreset,
     setListProductPreset,
-    integrationBadgeIds,
-    integrationBadgeStatuses,
-    traderaBadgeIds,
-    traderaBadgeStatuses,
     exportSettingsProduct,
     setExportSettingsProduct,
     refreshListingBadges,
     handleListProductSuccess: baseHandleListProductSuccess,
-  } = useIntegrationOperations(visibleProductIds);
+  } = useIntegrationModalOperations();
 
   const handleOpenCreate = useCallback(() => {
     setCreateDraft(null);
@@ -155,10 +149,6 @@ export function useProductListModals({
     integrationsProduct,
     showListProductModal,
     listProductPreset,
-    integrationBadgeIds,
-    integrationBadgeStatuses,
-    traderaBadgeIds,
-    traderaBadgeStatuses,
     exportSettingsProduct,
     setExportSettingsProduct,
     refreshListingBadges,

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 import type { DatabaseSyncHandler } from './types';
 import type {
   MongoProductAiJobDoc,
@@ -31,7 +29,7 @@ export const syncProductAiJobs: DatabaseSyncHandler = async ({ mongo, prisma, no
         payload: (doc.payload ?? {}) as Prisma.InputJsonValue,
         result: (doc.result ?? null) as Prisma.InputJsonValue,
         errorMessage: doc.errorMessage ?? null,
-        createdAt: doc.createdAt ?? new Date(),
+        createdAt: (doc.createdAt as Date) ?? new Date(),
         startedAt: toDate(doc.startedAt),
         finishedAt: toDate(doc.finishedAt),
       };
@@ -75,8 +73,8 @@ export const syncAiPathRuns: DatabaseSyncHandler = async ({
         deadLetteredAt: toDate(doc.deadLetteredAt),
         startedAt: toDate(doc.startedAt),
         finishedAt: toDate(doc.finishedAt),
-        createdAt: doc.createdAt ?? new Date(),
-        updatedAt: doc.updatedAt ?? new Date(),
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
     .filter((item): item is Prisma.AiPathRunCreateManyInput => item !== null);
@@ -111,8 +109,8 @@ export const syncAiPathRunNodes: DatabaseSyncHandler = async ({
         inputs: toJsonValue(doc.inputs ?? null) as Prisma.InputJsonValue,
         outputs: toJsonValue(doc.outputs ?? null) as Prisma.InputJsonValue,
         errorMessage: doc.errorMessage ?? null,
-        createdAt: doc.createdAt ?? new Date(),
-        updatedAt: doc.updatedAt ?? new Date(),
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
         startedAt: toDate(doc.startedAt),
         finishedAt: toDate(doc.finishedAt),
       };
@@ -144,7 +142,7 @@ export const syncAiPathRunEvents: DatabaseSyncHandler = async ({
         level: (doc.level as AiPathRunEventLevel) ?? 'info',
         message: doc.message ?? '',
         metadata: toJsonValue(doc.metadata ?? null) as Prisma.InputJsonValue,
-        createdAt: doc.createdAt ?? new Date(),
+        createdAt: (doc.createdAt as Date) ?? new Date(),
       };
     })
     .filter((item): item is Prisma.AiPathRunEventCreateManyInput => item !== null);
@@ -157,7 +155,7 @@ export const syncAiPathRunEvents: DatabaseSyncHandler = async ({
 
 export const syncProductAiJobsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.productAiJob.findMany();
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     productId: row.productId,
@@ -184,7 +182,7 @@ export const syncProductAiJobsPrismaToMongo: DatabaseSyncHandler = async ({ mong
 
 export const syncAiPathRunsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.aiPathRun.findMany();
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     userId: row.userId ?? null,
@@ -223,7 +221,7 @@ export const syncAiPathRunsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, 
 
 export const syncAiPathRunNodesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.aiPathRunNode.findMany();
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     runId: row.runId,
@@ -254,7 +252,7 @@ export const syncAiPathRunNodesPrismaToMongo: DatabaseSyncHandler = async ({ mon
 
 export const syncAiPathRunEventsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.aiPathRunEvent.findMany();
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     runId: row.runId,

@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { ProductListPanel } from '@/features/products/components/ProductListPanel';
 import { ProductListProvider } from '@/features/products/context/ProductListContext';
 import { useProductListState } from '@/features/products/hooks/useProductListState';
+import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary';
 
 const ProductFormDebugPanel = dynamic(
   () => import('@/features/products/components/ProductFormDebugPanel'),
@@ -27,7 +28,7 @@ const ConfirmModal = dynamic(
   { ssr: false }
 );
 
-export function AdminProductsPageView(): React.JSX.Element {
+function AdminProductsPageContent(): React.JSX.Element {
   const state = useProductListState();
   const shouldRenderProductModals =
     state.isCreateOpen ||
@@ -71,5 +72,13 @@ export function AdminProductsPageView(): React.JSX.Element {
         {shouldRenderProductModals ? <ProductModals /> : null}
       </ProductListProvider>
     </>
+  );
+}
+
+export function AdminProductsPageView(): React.JSX.Element {
+  return (
+    <AppErrorBoundary source='products.AdminProductsPageView'>
+      <AdminProductsPageContent />
+    </AppErrorBoundary>
   );
 }

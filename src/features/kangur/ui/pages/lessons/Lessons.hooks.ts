@@ -25,7 +25,7 @@ import type {
   KangurLessonComponentId,
 } from '@/features/kangur/shared/contracts/kangur';
 import { LESSON_COMPONENTS } from '@/features/kangur/lessons/lesson-ui-registry';
-import { resolveFocusedLessonSubject } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
+import { resolveFocusedLessonScope } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
 import {
   KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX,
   KANGUR_TOP_BAR_HEIGHT_VAR_NAME,
@@ -221,9 +221,13 @@ export function useLessonsLogic() {
     const currentUrl = new URL(window.location.href);
     const focusToken = readKangurUrlParam(currentUrl.searchParams, 'focus', basePath)?.trim().toLowerCase();
     if (!focusToken) return;
-    const focusSubject = resolveFocusedLessonSubject(focusToken, lessonTemplateMap);
-    if (focusSubject && focusSubject !== subject) {
-      setSubject(focusSubject);
+    const focusScope = resolveFocusedLessonScope(focusToken, lessonTemplateMap);
+    if (focusScope?.ageGroup && focusScope.ageGroup !== ageGroup) {
+      setAgeGroup(focusScope.ageGroup);
+      return;
+    }
+    if (focusScope?.subject && focusScope.subject !== subject) {
+      setSubject(focusScope.subject);
       return;
     }
     if (lessons.length === 0) return;
@@ -232,7 +236,16 @@ export function useLessonsLogic() {
     setActiveLessonId(focusedLessonId);
     currentUrl.searchParams.delete(getKangurInternalQueryParamName('focus', basePath));
     window.history.replaceState({}, '', `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
-  }, [activeLessonId, basePath, lessons, lessonTemplateMap, setSubject, subject]);
+  }, [
+    activeLessonId,
+    ageGroup,
+    basePath,
+    lessons,
+    lessonTemplateMap,
+    setAgeGroup,
+    setSubject,
+    subject,
+  ]);
 
   const activeIdx = orderedLessons.findIndex((lesson) => lesson.id === activeLessonId);
   const activeLesson = activeIdx >= 0 ? orderedLessons[activeIdx] : null;

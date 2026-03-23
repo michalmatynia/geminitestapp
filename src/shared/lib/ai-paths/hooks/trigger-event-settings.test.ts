@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiNode } from '@/shared/contracts/ai-paths';
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
+import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import {
   getStarterWorkflowTemplateById,
   materializeStarterWorkflowPathConfig,
@@ -11,6 +12,7 @@ import {
   fetchAiPathsSettingsByKeysCached,
   fetchAiPathsSettingsCached,
   updateAiPathsSetting,
+  updateAiPathsSettingsBulk,
 } from '@/shared/lib/ai-paths/settings-store-client';
 
 import {
@@ -29,6 +31,7 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', async () => {
   return {
     ...actual,
     updateAiPathsSetting: vi.fn(async (key: string, value: string) => ({ key, value })),
+    updateAiPathsSettingsBulk: vi.fn(async (items: Array<{ key: string; value: string }>) => items),
     fetchAiPathsSettingsCached: vi.fn(async () => []),
     fetchAiPathsSettingsByKeysCached: vi.fn(async () => []),
   };
@@ -127,11 +130,13 @@ const makeBrokenLiveParameterInferenceConfig = (pathId: string): string => {
 };
 
 const mockedUpdateAiPathsSetting = vi.mocked(updateAiPathsSetting);
+const mockedUpdateAiPathsSettingsBulk = vi.mocked(updateAiPathsSettingsBulk);
 const mockedFetchByKeys = vi.mocked(fetchAiPathsSettingsByKeysCached);
 const mockedFetchAll = vi.mocked(fetchAiPathsSettingsCached);
 
 beforeEach(() => {
   mockedUpdateAiPathsSetting.mockClear();
+  mockedUpdateAiPathsSettingsBulk.mockClear();
   mockedFetchByKeys.mockClear();
   mockedFetchAll.mockClear();
 });
@@ -269,11 +274,16 @@ describe('loadPathConfigsFromSettings', () => {
       },
     ];
     const result = await loadPathConfigsFromSettings(data);
+    const repairedIndexViaSingleWrite = mockedUpdateAiPathsSetting.mock.calls.find(
+      ([key]) => key === PATH_INDEX_KEY
+    )?.[1];
+    const repairedIndexViaBulkWrite = mockedUpdateAiPathsSettingsBulk.mock.calls
+      .flatMap(([items]) => items)
+      .find((item) => item.key === PATH_INDEX_KEY)?.value;
 
     expect(result.settingsPathOrder).toEqual(['path-valid']);
     expect(Object.keys(result.configs)).toEqual(['path-valid']);
-    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
-      PATH_INDEX_KEY,
+    expect(repairedIndexViaSingleWrite ?? repairedIndexViaBulkWrite).toBe(
       makeIndex([{ id: 'path-valid', name: 'Valid' }])
     );
   });
@@ -646,6 +656,107 @@ describe('loadPathConfigsFromSettings', () => {
     const { configs } = await loadPathConfigsFromSettings(data);
     // normalizeLoadedPathName generates a name from the id when both are empty
     expect(configs['path-1']?.name).toBeTruthy();
+  });
+
+  it('repairs malformed persisted runtimeState strings and persists the healed config', async () => {
+    const parserDefinition = palette.find(
+      (definition) => definition.type === 'parser' && definition.title === 'JSON Parser'
+    );
+    if (!parserDefinition?.nodeTypeId) {
+      throw new Error('Expected JSON Parser node type id in palette.');
+    }
+
+    const pathId = 'path-corrupt-runtime-state';
+    const data: Array<{ key: string; value: string }> = [
+      {
+        key: PATH_INDEX_KEY,
+        value: makeIndex([{ id: pathId, name: 'Corrupt Runtime State' }]),
+      },
+      {
+        key: `${PATH_CONFIG_PREFIX}${pathId}`,
+        value: makeConfig(pathId, 'Corrupt Runtime State', {
+          nodes: [
+            {
+              id: 'node-111111111111111111111111',
+              instanceId: 'node-111111111111111111111111',
+              nodeTypeId: parserDefinition.nodeTypeId,
+              type: 'parser',
+              title: 'JSON Parser',
+              description: '',
+              position: { x: 0, y: 0 },
+              data: {},
+              inputs: [],
+              outputs: ['value'],
+              config: {},
+              createdAt: TS,
+              updatedAt: null,
+            },
+          ] satisfies AiNode[],
+          edges: [],
+          runtimeState: '{"inputs":',
+        }),
+      },
+    ];
+
+    const loaded = await loadPathConfigsFromSettings(data);
+    const repairedPayload = mockedUpdateAiPathsSetting.mock.calls.find(
+      ([key]) => key === `${PATH_CONFIG_PREFIX}${pathId}`
+    )?.[1];
+
+    expect(loaded.configs[pathId]?.runtimeState).toEqual({
+      inputs: {},
+      outputs: {},
+    });
+    expect(typeof repairedPayload).toBe('string');
+    const repairedConfig = JSON.parse(repairedPayload as string) as {
+      runtimeState?: unknown;
+    };
+    expect(repairedConfig.runtimeState).toEqual({
+      inputs: {},
+      outputs: {},
+    });
+  });
+
+  it('batches best-effort config and index repairs into a single bulk settings write', async () => {
+    const pathId = 'path-corrupt-runtime-state';
+    const data: Array<{ key: string; value: string }> = [
+      {
+        key: PATH_INDEX_KEY,
+        value: makeIndex([
+          { id: pathId, name: 'Corrupt Runtime State' },
+          { id: 'path-missing', name: 'Missing Path' },
+        ]),
+      },
+      {
+        key: `${PATH_CONFIG_PREFIX}${pathId}`,
+        value: makeConfig(pathId, 'Corrupt Runtime State', {
+          runtimeState: '{"inputs":',
+        }),
+      },
+    ];
+
+    const loaded = await loadPathConfigsFromSettings(data);
+
+    expect(loaded.settingsPathOrder).toEqual([pathId]);
+    expect(mockedUpdateAiPathsSettingsBulk).toHaveBeenCalledTimes(1);
+    expect(mockedUpdateAiPathsSettingsBulk).toHaveBeenCalledWith([
+      {
+        key: `${PATH_CONFIG_PREFIX}${pathId}`,
+        value: expect.any(String),
+      },
+      {
+        key: PATH_INDEX_KEY,
+        value: makeIndex([{ id: pathId, name: 'Corrupt Runtime State' }]),
+      },
+    ]);
+    expect(mockedUpdateAiPathsSetting).not.toHaveBeenCalledWith(
+      `${PATH_CONFIG_PREFIX}${pathId}`,
+      expect.any(String)
+    );
+    expect(mockedUpdateAiPathsSetting).not.toHaveBeenCalledWith(
+      PATH_INDEX_KEY,
+      expect.any(String)
+    );
   });
 });
 

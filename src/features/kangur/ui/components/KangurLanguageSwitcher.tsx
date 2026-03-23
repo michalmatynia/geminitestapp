@@ -424,10 +424,10 @@ export function KangurLanguageSwitcher({
     language: currentLanguageLabel,
   });
   const triggerActionClassName = isCoarsePointer
-    ? 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
+    ? 'min-h-12 px-4 touch-manipulation select-none active:scale-[0.985]'
     : null;
   const optionActionClassName = isCoarsePointer
-    ? 'min-h-[3.5rem] touch-manipulation select-none active:scale-[0.985]'
+    ? 'min-h-[3.75rem] touch-manipulation select-none active:scale-[0.985]'
     : null;
   const isPending = pendingLocale !== null;
 

@@ -154,7 +154,7 @@ describe('KangurGameHomeActionsWidget', () => {
     expect(screen.getByRole('link', { name: 'Lekcje' })).toHaveClass(
       'touch-manipulation',
       'select-none',
-      'min-h-[4.75rem]'
+      'min-h-[5rem]'
     );
     expect(screen.getByRole('button', { name: 'Grajmy!' })).toHaveClass(
       'focus-visible:ring-amber-300/70'
@@ -162,7 +162,7 @@ describe('KangurGameHomeActionsWidget', () => {
     expect(screen.getByRole('button', { name: 'Grajmy!' })).toHaveClass(
       'touch-manipulation',
       'select-none',
-      'min-h-[4.75rem]'
+      'min-h-[5rem]'
     );
   });
 

@@ -472,7 +472,7 @@ export default function QuestionCard({
               aria-pressed={selected === choice}
               buttonClassName={cn(
                 'flex items-center justify-center px-3 py-3 text-center text-lg font-bold shadow sm:px-4 sm:py-4 sm:text-xl md:text-2xl',
-                isCoarsePointer && 'min-h-[4.25rem] touch-manipulation select-none active:scale-[0.98]',
+                isCoarsePointer && 'min-h-[4.5rem] touch-manipulation select-none active:scale-[0.98]',
                 cardClass,
                 showResult ? 'cursor-default' : 'cursor-pointer'
               )}

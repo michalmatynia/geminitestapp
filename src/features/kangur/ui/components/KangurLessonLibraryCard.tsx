@@ -273,7 +273,7 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
       accent='indigo'
       buttonClassName={cn(
         'w-full text-left',
-        isCoarsePointer && 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]',
+        isCoarsePointer && 'min-h-12 px-4 touch-manipulation select-none active:scale-[0.985]',
         buttonClassName
       )}
       aria-label={translations('ariaLabel', { title: localizedTitle })}

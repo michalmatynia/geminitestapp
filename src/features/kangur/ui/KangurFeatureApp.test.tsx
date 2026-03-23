@@ -638,6 +638,10 @@ describe('KangurFeatureApp', () => {
     expect(
       screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')
     ).toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+
     expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
   });
 

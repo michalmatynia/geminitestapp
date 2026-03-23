@@ -26,6 +26,7 @@ describe('KangurAnswerChoiceCard', () => {
       'kangur-card-surface',
       'kangur-card-padding-md',
       'touch-manipulation',
+      '[@media(pointer:coarse)]:min-h-11',
       'active:scale-[0.995]',
       'transition-all',
       'cursor-pointer'

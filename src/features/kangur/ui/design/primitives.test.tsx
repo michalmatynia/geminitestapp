@@ -258,6 +258,15 @@ describe('Kangur shared primitives', () => {
       'tracking-[0.16em]'
     );
     expect(screen.getByTestId('kangur-dot')).toHaveClass('h-4', 'w-4', 'bg-rose-500');
+    expect(screen.getByTestId('kangur-button-primary')).toHaveClass(
+      'cursor-pointer',
+      'touch-manipulation',
+      '[@media(pointer:coarse)]:min-h-11'
+    );
+    expect(screen.getByTestId('kangur-button-primary-sm')).toHaveClass(
+      '[@media(pointer:coarse)]:min-h-11',
+      '[@media(pointer:coarse)]:min-w-[3rem]'
+    );
     expect(screen.getByTestId('kangur-icon-badge')).toHaveClass(
       'h-9',
       'w-9',

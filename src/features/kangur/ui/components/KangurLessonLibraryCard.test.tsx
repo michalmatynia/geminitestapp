@@ -98,7 +98,7 @@ describe('KangurLessonLibraryCard', () => {
 
     expect(screen.getByTestId('lesson-library-item')).toHaveClass('soft-card', 'border');
     expect(screen.getByTestId('lesson-library-item')).toHaveClass(
-      'min-h-11',
+      'min-h-12',
       'px-4',
       'touch-manipulation'
     );

@@ -53,9 +53,10 @@ describe('KangurLessonDocumentRenderer touch mode', () => {
     const firstChoice = screen.getByTestId('lesson-quiz-choice-choice-1');
 
     expect(firstChoice).toHaveClass(
+      'cursor-pointer',
       'touch-manipulation',
       'select-none',
-      'min-h-[4rem]',
+      'min-h-[4.25rem]',
       'rounded-2xl'
     );
 

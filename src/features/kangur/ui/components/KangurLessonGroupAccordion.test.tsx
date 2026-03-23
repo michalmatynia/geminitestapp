@@ -5,7 +5,11 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
 
 import { KangurLessonGroupAccordion } from './KangurLessonGroupAccordion';
 
@@ -35,6 +39,7 @@ describe('KangurLessonGroupAccordion', () => {
 
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
     expect(trigger).toHaveAttribute('data-state', 'closed');
+    expect(trigger).toHaveClass('min-h-12', 'touch-manipulation', 'select-none');
     expect(screen.queryByText('Grouped lesson')).not.toBeInTheDocument();
 
     fireEvent.pointerDown(trigger);

@@ -14,7 +14,7 @@ export function KangurMusicWaveformIcon({
   ...props
 }: KangurMusicWaveformIconProps): React.JSX.Element {
   const sharedProps = {
-    'aria-hidden': 'true',
+    'aria-hidden': true,
     className: cn('h-4 w-7 shrink-0', className),
     fill: 'none',
     stroke: 'currentColor',

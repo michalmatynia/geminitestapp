@@ -56,7 +56,7 @@ describe('QuestionCard', () => {
       'border',
       'kangur-card-surface',
       'kangur-card-padding-md',
-      'min-h-[4.25rem]',
+      'min-h-[4.5rem]',
       'touch-manipulation'
     );
     expect(wrongChoice).toHaveClass(
@@ -64,7 +64,7 @@ describe('QuestionCard', () => {
       'border',
       'kangur-card-surface',
       'kangur-card-padding-md',
-      'min-h-[4.25rem]',
+      'min-h-[4.5rem]',
       'touch-manipulation'
     );
 

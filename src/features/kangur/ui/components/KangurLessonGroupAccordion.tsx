@@ -6,6 +6,7 @@ import { useId, useState, type HTMLAttributes, type ReactNode } from 'react';
 
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_LESSON_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { cn } from '@/features/kangur/shared/utils';
 import { LESSONS_CARD_TRANSITION } from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 
@@ -32,6 +33,7 @@ export function KangurLessonGroupAccordion({
   className,
   contentProps,
 }: KangurLessonGroupAccordionProps): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
   const reactId = useId().replace(/:/g, '');
   const triggerId = `kangur-lesson-group-trigger-${accordionId}-${reactId}`;
   const panelId = `kangur-lesson-group-panel-${accordionId}-${reactId}`;
@@ -52,7 +54,10 @@ export function KangurLessonGroupAccordion({
         id={triggerId}
         aria-controls={panelId}
         aria-expanded={isExpanded}
-        className='kangur-lesson-group-trigger flex items-center justify-between gap-3 text-left'
+        className={cn(
+          'kangur-lesson-group-trigger flex w-full items-center justify-between gap-3 text-left',
+          isCoarsePointer && 'min-h-12 touch-manipulation select-none'
+        )}
         data-pressed={isPressed ? 'true' : 'false'}
         data-state={isExpanded ? 'open' : 'closed'}
         type='button'

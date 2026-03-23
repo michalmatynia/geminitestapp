@@ -141,7 +141,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
   } = props;
   const isGuest = !canJoinLobby;
   const compactActionClassName = isCoarsePointer
-    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+    ? 'w-full min-h-12 px-4 touch-manipulation select-none active:scale-[0.985] sm:w-auto'
     : 'w-full sm:w-auto';
   const showPausedChip = !isPageActive;
   const showOfflineChip = !isOnline;

@@ -426,9 +426,9 @@ function KangurLessonQuizBlockView(
           const isSelected = state.selectedId === choice.id;
           const isCorrect = choice.id === block.correctChoiceId;
           let choiceClass =
-            'w-full break-words rounded-lg border px-4 py-2 text-left text-sm transition touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white active:scale-[0.985]';
+            'w-full cursor-pointer break-words rounded-lg border px-4 py-2 text-left text-sm transition touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white active:scale-[0.985] disabled:cursor-default';
           if (isCoarsePointer) {
-            choiceClass += ' min-h-[4rem] rounded-2xl py-3 text-base';
+            choiceClass += ' min-h-[4.25rem] rounded-2xl py-3 text-base';
           }
           if (!state.revealed) {
             choiceClass +=

@@ -56,7 +56,7 @@ export function KangurProfileMenu({
   const navigationActive = isActive ?? profile?.isActive ?? false;
   const buttonClassName = [
     triggerClassName,
-    isCoarsePointer ? 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]' : null,
+    isCoarsePointer ? 'min-h-12 px-4 touch-manipulation select-none active:scale-[0.985]' : null,
   ]
     .filter(Boolean)
     .join(' ');

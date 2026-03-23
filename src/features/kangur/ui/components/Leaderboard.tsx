@@ -43,7 +43,7 @@ export default function Leaderboard(): React.JSX.Element {
   const { emptyStateLabel, items, loading, operationFilters, userFilters } =
     useKangurLeaderboardState();
   const segmentedItemClassName = isCoarsePointer
-    ? 'min-h-11 flex-1 justify-center px-4 text-xs touch-manipulation select-none active:scale-[0.97] sm:flex-none'
+    ? 'min-h-12 min-w-[4.75rem] flex-1 justify-center px-4 text-xs touch-manipulation select-none active:scale-[0.985] sm:flex-none'
     : 'h-10 flex-1 justify-center px-3 text-xs sm:flex-none';
 
   return (

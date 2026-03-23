@@ -210,11 +210,11 @@ export function KangurPrimaryNavigation({
   const isCoarsePointer = useKangurCoarsePointer();
   const mobileNavItemClassName =
     `max-sm:col-span-1 max-sm:min-w-0 max-sm:w-full max-sm:justify-center ${
-      isCoarsePointer ? 'max-sm:min-h-11 max-sm:px-4' : 'max-sm:px-3'
+      isCoarsePointer ? 'max-sm:min-h-12 max-sm:px-4' : 'max-sm:px-3'
     }`;
   const mobileWideNavItemClassName =
     `max-sm:col-span-2 max-sm:min-w-0 max-sm:w-full max-sm:justify-center ${
-      isCoarsePointer ? 'max-sm:min-h-11 max-sm:px-4' : 'max-sm:px-3'
+      isCoarsePointer ? 'max-sm:min-h-12 max-sm:px-4' : 'max-sm:px-3'
     }`;
   const mobileAuthActionClassName = mobileNavItemClassName;
   const { entry: loginActionContent } = useKangurPageContentEntry('shared-nav-login-action');

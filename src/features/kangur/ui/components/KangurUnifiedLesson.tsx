@@ -335,7 +335,9 @@ function KangurUnifiedLessonBase<SectionId extends string>({
 
   return (
     <KangurUnifiedLessonContext.Provider value={contextValue}>
-      <div ref={contentScrollRef}>{content}</div>
+      <div ref={contentScrollRef} className='w-full min-w-0 max-w-full overflow-x-clip'>
+        {content}
+      </div>
     </KangurUnifiedLessonContext.Provider>
   );
 }

@@ -124,7 +124,7 @@ describe('DuelsLobbyPanels', () => {
     expect(setLobbySort).toHaveBeenCalledWith('time_fast');
 
     const refreshButton = screen.getByRole('button', { name: 'Odswiez lobby pojedynkow' });
-    expect(refreshButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+    expect(refreshButton).toHaveClass('min-h-12', 'px-4', 'touch-manipulation');
     fireEvent.click(refreshButton);
     expect(loadLobby).toHaveBeenCalledWith({ showLoading: true });
   });
@@ -226,7 +226,7 @@ describe('DuelsLobbyPanels', () => {
     );
 
     const loginButton = screen.getByRole('button', { name: 'Zaloguj sie, aby zagrac' });
-    expect(loginButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+    expect(loginButton).toHaveClass('min-h-12', 'px-4', 'touch-manipulation');
     fireEvent.click(loginButton);
     expect(onRequireLogin).toHaveBeenCalledTimes(1);
     expect(trackKangurClientEventMock).toHaveBeenCalledWith(
@@ -283,7 +283,7 @@ describe('DuelsLobbyPanels', () => {
     );
 
     const joinButton = screen.getByRole('button', { name: 'Dolacz do pojedynku z Ada' });
-    expect(joinButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+    expect(joinButton).toHaveClass('min-h-12', 'px-4', 'touch-manipulation');
     fireEvent.click(joinButton);
     expect(handleJoinLobbySession).toHaveBeenCalledWith('duel-join');
   });
@@ -338,7 +338,7 @@ describe('DuelsLobbyPanels', () => {
     );
 
     const showAllButton = screen.getByRole('button', { name: 'Pokaz wszystkie' });
-    expect(showAllButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+    expect(showAllButton).toHaveClass('min-h-12', 'px-4', 'touch-manipulation');
     fireEvent.click(showAllButton);
     expect(setLobbyModeFilter).toHaveBeenCalledWith('all');
     expect(setLobbyOperationFilter).toHaveBeenCalledWith('all');
@@ -393,7 +393,7 @@ describe('DuelsLobbyPanels', () => {
     );
 
     const createButton = screen.getByRole('button', { name: 'Stworz wlasne wyzwanie' });
-    expect(createButton).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+    expect(createButton).toHaveClass('min-h-12', 'px-4', 'touch-manipulation');
     fireEvent.click(createButton);
     expect(handleCreateChallenge).toHaveBeenCalledTimes(1);
     expect(trackKangurClientEventMock).toHaveBeenCalledWith(

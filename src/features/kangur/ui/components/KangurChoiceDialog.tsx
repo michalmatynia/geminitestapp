@@ -86,7 +86,7 @@ export function KangurChoiceDialog({
               <KangurButton
                 aria-label={option.ariaLabel}
                 key={option.id}
-                className='h-10 flex-1 text-xs sm:text-sm touch-manipulation select-none min-h-11 active:scale-[0.98]'
+                className='h-10 flex-1 text-xs sm:text-sm touch-manipulation select-none min-h-12 active:scale-[0.985]'
                 onClick={option.onSelect}
                 size='sm'
                 type='button'
@@ -101,7 +101,7 @@ export function KangurChoiceDialog({
             <span>Aktualny wybór: {currentChoiceLabel}.</span>
             <KangurButton
               aria-label={doneAriaLabel}
-              className='w-full touch-manipulation select-none min-h-11 active:scale-[0.98]'
+              className='w-full touch-manipulation select-none min-h-12 active:scale-[0.985]'
               onClick={() => onOpenChange(false)}
               size='sm'
               type='button'

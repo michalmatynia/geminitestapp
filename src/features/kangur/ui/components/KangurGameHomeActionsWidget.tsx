@@ -136,7 +136,7 @@ function KangurHomeActionCard({
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
     'disabled:cursor-not-allowed',
     'home-action-featured',
-    isCoarsePointer ? 'touch-manipulation select-none min-h-[4.75rem] active:scale-[0.98]' : null
+    isCoarsePointer ? 'touch-manipulation select-none min-h-[5rem] active:scale-[0.985]' : null
   );
 
   const content = (

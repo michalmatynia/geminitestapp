@@ -159,7 +159,7 @@ export function ActiveLessonView() {
   const lessonContentSection = (
     <div
       ref={activeLessonContentRef}
-      className={`w-full flex flex-col items-center ${LESSONS_ACTIVE_STACK_GAP_CLASSNAME}`}
+      className={`flex w-full min-w-0 flex-col items-center ${LESSONS_ACTIVE_STACK_GAP_CLASSNAME}`}
     >
       {isSecretLessonHostActive ? (
         <KangurGlassPanel
@@ -185,7 +185,7 @@ export function ActiveLessonView() {
           </p>
         </KangurGlassPanel>
       ) : activeLesson.contentMode === 'document' && hasActiveLessonDocContent ? (
-        <div className='w-full max-w-5xl space-y-4'>
+        <div className='w-full min-w-0 max-w-5xl space-y-4'>
           <KangurSummaryPanel
             accent='sky'
             data-testid='lessons-document-summary'
@@ -198,7 +198,7 @@ export function ActiveLessonView() {
           <KangurLessonDocumentRenderer document={activeLessonDocument!} />
         </div>
       ) : activeLesson.contentMode === 'document' && !hasActiveLessonDocContent ? (
-        <div className='w-full max-w-5xl space-y-4'>
+        <div className='w-full min-w-0 max-w-5xl space-y-4'>
           <KangurSummaryPanel
             accent='amber'
             align='center'
@@ -217,7 +217,7 @@ export function ActiveLessonView() {
   );
 
   const topControlsSection = isMobile ? (
-    <div data-testid='kangur-lesson-top-controls' className='flex w-full gap-2'>
+    <div data-testid='kangur-lesson-top-controls' className='flex w-full min-w-0 gap-2'>
       <KangurButton
         size='sm'
         variant='surface'

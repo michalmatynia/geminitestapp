@@ -1,5 +1,5 @@
-import { KangurRouteLoadingFallback } from '@/features/kangur/ui/components/KangurRouteLoadingFallback';
+import { FrontendRouteLoadingFallback } from '@/features/kangur/ui/FrontendRouteLoadingFallback';
 
 export default function Loading(): React.JSX.Element {
-  return <KangurRouteLoadingFallback includeTopNavigationSkeleton={false} />;
+  return <FrontendRouteLoadingFallback />;
 }

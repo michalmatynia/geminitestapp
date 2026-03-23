@@ -34,17 +34,17 @@ describe('KangurChoiceDialog', () => {
     expect(screen.getByRole('button', { name: 'Domyślny' })).toHaveClass(
       'touch-manipulation',
       'select-none',
-      'min-h-11'
+      'min-h-12'
     );
     expect(screen.getByRole('button', { name: 'Alternatywny' })).toHaveClass(
       'touch-manipulation',
       'select-none',
-      'min-h-11'
+      'min-h-12'
     );
     expect(screen.getByRole('button', { name: 'Gotowe' })).toHaveClass(
       'touch-manipulation',
       'select-none',
-      'min-h-11'
+      'min-h-12'
     );
     expect(screen.getByRole('button', { name: 'Zamknij dialog' })).toHaveClass(
       'touch-manipulation',

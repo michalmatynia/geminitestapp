@@ -1378,7 +1378,7 @@ describe('KangurPrimaryNavigation', () => {
     expect(trigger).toBeInTheDocument();
     expect(themeToggle).toBeInTheDocument();
     expect(mobileToggle).toHaveClass('min-h-12');
-    expect(lessonsAction).toHaveClass('max-sm:min-h-11', 'max-sm:px-4');
+    expect(lessonsAction).toHaveClass('max-sm:min-h-12', 'max-sm:px-4');
     expect(headerActions.firstElementChild).toBe(trigger);
     expect(headerActions).toContainElement(trigger);
     expect(headerActions).toContainElement(themeToggle);

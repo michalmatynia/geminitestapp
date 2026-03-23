@@ -466,6 +466,9 @@ describe('Game page', () => {
     const gameMain = document.getElementById('kangur-game-main');
 
     expect(gameMain).not.toBeNull();
+    expect(gameMain?.className).toContain('w-full');
+    expect(gameMain?.className).toContain('min-w-0');
+    expect(gameMain?.className).toContain('overflow-x-clip');
     expect(gameMain?.className).toContain(
       'var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px'
     );
@@ -491,6 +494,8 @@ describe('Game page', () => {
     const gameMain = document.getElementById('kangur-game-main');
 
     expect(gameMain).not.toBeNull();
+    expect(gameMain?.className).toContain('min-w-0');
+    expect(gameMain?.className).toContain('overflow-x-clip');
     expect(gameMain?.className).toContain('overflow-y-auto');
     expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-container')).toBeNull();
     expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-up')).toBeNull();
@@ -511,6 +516,8 @@ describe('Game page', () => {
     const gameMain = document.getElementById('kangur-game-main');
 
     expect(gameMain).not.toBeNull();
+    expect(gameMain?.className).toContain('min-w-0');
+    expect(gameMain?.className).toContain('overflow-x-clip');
     expect(gameMain?.className).toContain('overflow-y-auto');
     expect(gameMain?.className).toContain(
       'var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px'

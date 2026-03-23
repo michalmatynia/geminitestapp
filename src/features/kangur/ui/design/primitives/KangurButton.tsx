@@ -47,9 +47,9 @@ export const kangurButtonVariants = cva(
       },
       size: {
         sm: 'kangur-button-size-sm [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-[3rem]',
-        md: 'kangur-button-size-md',
-        lg: 'kangur-button-size-lg',
-        xl: 'kangur-button-size-xl',
+        md: 'kangur-button-size-md [@media(pointer:coarse)]:min-h-11',
+        lg: 'kangur-button-size-lg [@media(pointer:coarse)]:min-h-12',
+        xl: 'kangur-button-size-xl [@media(pointer:coarse)]:min-h-12',
       },
       fullWidth: {
         true: 'w-full',

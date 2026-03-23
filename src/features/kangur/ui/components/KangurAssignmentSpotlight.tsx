@@ -188,7 +188,7 @@ export function KangurAssignmentSpotlight({
           asChild
           className={cn(
             'mt-5 rounded-[22px] py-3.5 text-lg font-extrabold shadow-[0_24px_58px_-30px_rgba(255,133,72,0.56)]',
-            isCoarsePointer && 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
+            isCoarsePointer && 'min-h-12 px-4 touch-manipulation select-none active:scale-[0.985]'
           )}
           fullWidth
           variant='primary'

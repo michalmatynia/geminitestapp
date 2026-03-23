@@ -47,7 +47,7 @@ describe('KangurProfileMenu', () => {
     );
 
     expect(screen.getByRole('link', { name: 'Profil ucznia' })).toHaveClass(
-      'min-h-11',
+      'min-h-12',
       'px-4',
       'touch-manipulation'
     );

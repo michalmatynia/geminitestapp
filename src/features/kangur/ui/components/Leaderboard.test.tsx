@@ -150,14 +150,16 @@ describe('Leaderboard', () => {
       'kangur-segmented-control-item',
       'kangur-segmented-control-item-active',
       'rounded-[18px]',
-      'min-h-11',
+      'min-h-12',
+      'min-w-[4.75rem]',
       'px-4',
       'touch-manipulation'
     );
     expect(divisionOperationFilter).toHaveClass(
       'kangur-segmented-control-item',
       'rounded-[18px]',
-      'min-h-11',
+      'min-h-12',
+      'min-w-[4.75rem]',
       'px-4',
       'touch-manipulation'
     );
@@ -168,14 +170,16 @@ describe('Leaderboard', () => {
       'kangur-segmented-control-item',
       'kangur-segmented-control-item-active',
       'rounded-[18px]',
-      'min-h-11',
+      'min-h-12',
+      'min-w-[4.75rem]',
       'px-4',
       'touch-manipulation'
     );
     expect(anonymousUserFilter).toHaveClass(
       'kangur-segmented-control-item',
       'rounded-[18px]',
-      'min-h-11',
+      'min-h-12',
+      'min-w-[4.75rem]',
       'px-4',
       'touch-manipulation'
     );

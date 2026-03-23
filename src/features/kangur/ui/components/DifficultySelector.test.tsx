@@ -60,7 +60,12 @@ describe('DifficultySelector', () => {
 
     expect(easyOption).toHaveClass('soft-card', 'border', 'kangur-card-surface', 'kangur-card-padding-lg');
     expect(mediumOption).toHaveClass('soft-card', 'border', 'kangur-card-surface', 'kangur-card-padding-lg');
-    expect(easyOption).toHaveClass('touch-manipulation', 'select-none', 'min-h-[10.5rem]');
+    expect(easyOption).toHaveClass(
+      'touch-manipulation',
+      'select-none',
+      'min-h-[11rem]',
+      'rounded-[2rem]'
+    );
     expect(easyOption).toHaveAttribute('aria-pressed', 'false');
     expect(mediumOption).toHaveAttribute('aria-pressed', 'true');
     expect(within(easyOption).getByText('Łatwy')).toHaveClass('[color:var(--kangur-page-text)]');

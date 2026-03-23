@@ -1819,7 +1819,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
           headingAs='h3'
           headingSize='sm'
           title={
-            isSixYearOld ? (
+            (isSixYearOld ? (
               <KangurVisualCueContent
                 detail='🎮'
                 detailClassName='text-lg'
@@ -1831,7 +1831,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
               />
             ) : (
               quickPracticeTitle
-            )
+            )) as any
           }
           titleId='kangur-game-quick-practice-heading'
         />

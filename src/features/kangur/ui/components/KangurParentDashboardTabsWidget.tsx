@@ -145,7 +145,7 @@ export function KangurParentDashboardTabsWidget({
   }
 
   const tabActionClassName = isCoarsePointer
-    ? 'min-h-11 min-w-0 flex-1 justify-center gap-1.5 px-4 text-center text-xs touch-manipulation select-none active:scale-[0.97] sm:flex-none sm:px-4'
+    ? 'min-h-12 min-w-[5rem] flex-1 justify-center gap-1.5 px-4 text-center text-xs touch-manipulation select-none active:scale-[0.985] sm:flex-none sm:px-4'
     : 'min-w-0 flex-1 justify-center gap-1.5 px-2 text-center sm:px-4';
 
   return (

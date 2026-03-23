@@ -122,7 +122,7 @@ describe('KangurAssignmentSpotlight', () => {
 
     const action = screen.getByRole('link', { name: 'Uruchom trening' });
 
-    expect(action).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+    expect(action).toHaveClass('min-h-12', 'px-4', 'touch-manipulation');
     expect(action).toHaveAttribute(
       'href',
       '/kangur/game?quickStart=training&categories=addition%2Csubtraction%2Cmultiplication%2Cdivision%2Cdecimals%2Cpowers%2Croots&count=10&difficulty=medium'

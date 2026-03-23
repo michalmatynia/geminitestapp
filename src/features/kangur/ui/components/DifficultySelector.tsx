@@ -89,8 +89,10 @@ export default function DifficultySelector({
               aria-label={`${config.label}. Limit ${config.timeLimit} sekund. Zakres od 1 do ${config.range}.`}
               aria-pressed={isSelected}
               buttonClassName={cn(
-                'flex w-full flex-col items-center kangur-panel-gap kangur-card-padding-lg text-center',
-                isCoarsePointer ? 'min-h-[10.5rem] touch-manipulation select-none active:scale-[0.98]' : null
+                'flex w-full min-w-0 flex-col items-center kangur-panel-gap kangur-card-padding-lg text-center',
+                isCoarsePointer
+                  ? 'min-h-[11rem] rounded-[2rem] touch-manipulation select-none active:scale-[0.985]'
+                  : null
               )}
               data-testid={`difficulty-option-${difficulty.id}`}
               emphasis={isSelected ? 'accent' : 'neutral'}

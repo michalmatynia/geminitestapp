@@ -62,7 +62,7 @@ describe('KangurParentDashboardTabsWidget', () => {
     fireEvent(progressTab, mouseDown);
     fireEvent.click(progressTab);
 
-    expect(progressTab).toHaveClass('min-h-11', 'px-4', 'touch-manipulation');
+    expect(progressTab).toHaveClass('min-h-12', 'min-w-[5rem]', 'px-4', 'touch-manipulation');
     expect(mouseDown.defaultPrevented).toBe(true);
     expect(onBeforeTabChange).toHaveBeenCalledWith('progress');
     expect(runtimeState.value.setActiveTab).toHaveBeenCalledWith('progress');

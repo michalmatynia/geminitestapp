@@ -2,7 +2,7 @@ import { cn } from '@/features/kangur/shared/utils';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 export const GAME_PAGE_STANDARD_CONTAINER_CLASSNAME = cn(
-  'flex flex-col items-center',
+  'flex w-full min-w-0 max-w-full flex-col items-center overflow-x-clip',
   KANGUR_PANEL_GAP_CLASSNAME,
   'pb-[calc(var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px)]',
   'pt-8 sm:pt-10'

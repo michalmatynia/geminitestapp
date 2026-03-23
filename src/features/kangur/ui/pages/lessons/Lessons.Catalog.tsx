@@ -12,7 +12,13 @@ import {
 import { KangurLessonLibraryCard } from '@/features/kangur/ui/components/KangurLessonLibraryCard';
 import { KangurLessonGroupAccordion } from '@/features/kangur/ui/components/KangurLessonGroupAccordion';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
+import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
 import { KangurLessonsWordmark } from '@/features/kangur/ui/components/KangurLessonsWordmark';
+import {
+  getKangurSixYearOldLessonGroupIcon,
+  getKangurSixYearOldSubjectVisual,
+  KANGUR_SIX_YEAR_OLD_SUBSECTION_ICON,
+} from '@/features/kangur/ui/constants/six-year-old-visuals';
 import {
   KangurEmptyState,
   KangurInfoCard,
@@ -124,6 +130,8 @@ export function LessonsCatalog() {
   const { entry: lessonListEmptyStateContent } = useKangurPageContentEntry('lessons-list-empty-state');
 
   const ageGroupLabel = getLocalizedKangurAgeGroupLabel(ageGroup, locale);
+  const isSixYearOld = ageGroup === 'six_year_old';
+  const subjectVisual = getKangurSixYearOldSubjectVisual(subject);
 
   const sections = lessonSections;
   const [expandedLessonGroupId, setExpandedLessonGroupId] = useState<string | null>(null);
@@ -205,10 +213,29 @@ export function LessonsCatalog() {
     lessonEntries.push({ kind: 'lesson', lesson });
   });
 
-  const lessonListIntroDescription =
+  const lessonListIntroDescriptionLabel =
     !shouldShowLessonsCatalogSkeleton
       ? (lessonListIntroContent?.summary ?? translations('introDescription'))
       : translations('loadingDescription');
+  const lessonListIntroDescription = isSixYearOld ? (
+    <KangurVisualCueContent
+      className='text-lg'
+      detail={
+        <span className='inline-flex items-center gap-1.5 text-lg'>
+          {subjectVisual.introSteps.map((stepIcon, index) => (
+            <span key={`lessons-intro-step-${subject}-${index}`}>{stepIcon}</span>
+          ))}
+        </span>
+      }
+      detailTestId='lessons-intro-description-detail'
+      icon={subjectVisual.icon}
+      iconClassName='text-xl'
+      iconTestId='lessons-intro-description-icon'
+      label={lessonListIntroDescriptionLabel}
+    />
+  ) : (
+    lessonListIntroDescriptionLabel
+  );
   const loadingStatusLabel = isLessonSectionsLoading
     ? translations('loadingSectionsStatus')
     : translations('loadingLessonsStatus');
@@ -250,23 +277,99 @@ export function LessonsCatalog() {
         return (
           <KangurLessonGroupAccordion
             accordionId={entry.group.id}
-            fallbackTypeLabel={translations('groupTypeLabel')}
+            fallbackTypeLabel={
+              isSixYearOld ? (
+                <KangurVisualCueContent
+                  icon={getKangurSixYearOldLessonGroupIcon(groupHasSubsections)}
+                  iconClassName='text-base'
+                  iconTestId={`lessons-page-group-type-icon-${entry.group.id}`}
+                  label={translations('groupTypeLabel')}
+                />
+              ) : (
+                translations('groupTypeLabel')
+              )
+            }
             isExpanded={isExpanded}
             key={entry.group.id}
-            label={entry.group.label}
+            label={
+              isSixYearOld ? (
+                <span
+                  className='inline-flex items-center gap-2'
+                  data-testid={`lessons-page-group-label-${entry.group.id}`}
+                >
+                  <span
+                    aria-hidden='true'
+                    className='text-lg leading-none'
+                    data-testid={`lessons-page-group-icon-${entry.group.id}`}
+                  >
+                    {getKangurSixYearOldLessonGroupIcon(groupHasSubsections)}
+                  </span>
+                  <span>{entry.group.label}</span>
+                </span>
+              ) : (
+                entry.group.label
+              )
+            }
             onToggle={() => setExpandedLessonGroupId(isExpanded ? null : entry.group.id)}
-            typeLabel={entry.group.typeLabel}
+            typeLabel={
+              entry.group.typeLabel
+                ? isSixYearOld
+                  ? (
+                      <KangurVisualCueContent
+                        detail={subjectVisual.detail}
+                        detailClassName='text-sm'
+                        detailTestId={`lessons-page-group-type-detail-${entry.group.id}`}
+                        icon={subjectVisual.icon}
+                        iconClassName='text-base'
+                        iconTestId={`lessons-page-group-type-icon-${entry.group.id}`}
+                        label={entry.group.typeLabel}
+                      />
+                    )
+                  : entry.group.typeLabel
+                : undefined
+            }
           >
             {groupHasSubsections ? (
               entry.group.subsections?.map((subsection) => (
                 <div key={subsection.id} className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}>
                   <div className='min-w-0'>
-                    <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500'>
-                      {subsection.typeLabel ?? translations('subsectionTypeLabel')}
-                    </div>
-                    <div className='mt-1 text-base font-semibold text-slate-900'>
-                      {subsection.label}
-                    </div>
+                    {isSixYearOld ? (
+                      <>
+                        <div data-testid={`lessons-page-subsection-type-${subsection.id}`}>
+                          <KangurVisualCueContent
+                            detail={subjectVisual.detail}
+                            detailClassName='text-sm'
+                            detailTestId={`lessons-page-subsection-type-detail-${subsection.id}`}
+                            icon={KANGUR_SIX_YEAR_OLD_SUBSECTION_ICON}
+                            iconClassName='text-base'
+                            iconTestId={`lessons-page-subsection-type-icon-${subsection.id}`}
+                            label={subsection.typeLabel ?? translations('subsectionTypeLabel')}
+                          />
+                        </div>
+                        <div
+                          className='mt-1 inline-flex items-center gap-2 text-base font-semibold text-slate-900'
+                          data-testid={`lessons-page-subsection-label-${subsection.id}`}
+                        >
+                          <span
+                            aria-hidden='true'
+                            className='text-lg leading-none'
+                            data-testid={`lessons-page-subsection-icon-${subsection.id}`}
+                          >
+                            {subjectVisual.icon}
+                          </span>
+                          <span>{subsection.label}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500'>
+                          {subsection.typeLabel ?? translations('subsectionTypeLabel')}
+                        </div>
+                        <div className='mt-1 text-base font-semibold text-slate-900'>
+                          {subsection.label}
+                        </div>
+                      </>
+                    )}
                   </div>
                   <div className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}>
                     {subsection.lessons.map((lesson) => {
@@ -334,7 +437,16 @@ export function LessonsCatalog() {
                   </div>
                   <div className='min-w-0 flex-1'>
                     <KangurStatusChip accent='indigo' labelStyle='caps' size='sm'>
-                      {loadingStatusLabel}
+                      {isSixYearOld ? (
+                        <KangurVisualCueContent
+                          icon='⏳'
+                          iconClassName='text-base'
+                          iconTestId='lessons-intro-loading-icon'
+                          label={loadingStatusLabel}
+                        />
+                      ) : (
+                        loadingStatusLabel
+                      )}
                     </KangurStatusChip>
                     <p className='mt-2 text-sm leading-6 text-current/90'>
                       {loadingStatusDescription}

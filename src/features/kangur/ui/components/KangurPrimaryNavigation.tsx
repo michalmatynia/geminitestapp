@@ -39,6 +39,7 @@ const KangurChoiceDialog = dynamic(() =>
 );
 import { KangurDialogHeader } from '@/features/kangur/ui/components/KangurDialogHeader';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
+import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
 const KangurLanguageSwitcher = dynamic(() =>
   import('@/features/kangur/ui/components/KangurLanguageSwitcher').then(m => ({ default: m.KangurLanguageSwitcher }))
 );
@@ -67,6 +68,10 @@ import {
   getLocalizedKangurAgeGroupLabel,
   getLocalizedKangurSubjectLabel,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
+import {
+  getKangurSixYearOldAgeGroupVisual,
+  getKangurSixYearOldSubjectVisual,
+} from '@/features/kangur/ui/constants/six-year-old-visuals';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
@@ -248,6 +253,7 @@ export function KangurPrimaryNavigation({
   const duelsTransitionSourceId = 'kangur-primary-nav:duels';
   const profileTransitionSourceId = 'kangur-primary-nav:profile';
   const parentDashboardTransitionSourceId = 'kangur-primary-nav:parent-dashboard';
+  const isSixYearOld = ageGroup === 'six_year_old';
   const subjectChoiceLabel = getLocalizedKangurSubjectLabel(subject, locale);
   const ageGroupChoiceLabel = getLocalizedKangurAgeGroupLabel(ageGroup, locale);
   const defaultSubjectLabel = getLocalizedKangurSubjectLabel(
@@ -259,26 +265,54 @@ export function KangurPrimaryNavigation({
       KANGUR_AGE_GROUPS.find((group) => group.default)?.id ?? DEFAULT_KANGUR_AGE_GROUP,
       locale
     );
+  const subjectVisual = getKangurSixYearOldSubjectVisual(subject);
+  const ageGroupVisual = getKangurSixYearOldAgeGroupVisual(ageGroup);
   const availableSubjects = useMemo(() => getKangurSubjectsForAgeGroup(ageGroup), [ageGroup]);
   const subjectOptions = useMemo(
     () =>
       availableSubjects.map((item) => ({
+        ariaLabel: getLocalizedKangurSubjectLabel(item.id, locale, item.label),
         id: item.id,
-        label: getLocalizedKangurSubjectLabel(item.id, locale, item.label),
+        label: isSixYearOld ? (
+          <KangurVisualCueContent
+            detail={getKangurSixYearOldSubjectVisual(item.id).detail}
+            detailClassName='text-sm font-bold'
+            detailTestId={`kangur-primary-nav-subject-option-detail-${item.id}`}
+            icon={getKangurSixYearOldSubjectVisual(item.id).icon}
+            iconClassName='text-lg'
+            iconTestId={`kangur-primary-nav-subject-option-icon-${item.id}`}
+            label={getLocalizedKangurSubjectLabel(item.id, locale, item.label)}
+          />
+        ) : (
+          getLocalizedKangurSubjectLabel(item.id, locale, item.label)
+        ),
         isActive: subject === item.id,
         onSelect: () => setSubject(item.id),
       })),
-    [availableSubjects, locale, setSubject, subject]
+    [availableSubjects, isSixYearOld, locale, setSubject, subject]
   );
   const ageGroupOptions = useMemo(
     () =>
       KANGUR_AGE_GROUPS.map((group) => ({
+        ariaLabel: getLocalizedKangurAgeGroupLabel(group.id, locale, group.label),
         id: group.id,
-        label: getLocalizedKangurAgeGroupLabel(group.id, locale, group.label),
+        label: isSixYearOld ? (
+          <KangurVisualCueContent
+            detail={getKangurSixYearOldAgeGroupVisual(group.id).detail}
+            detailClassName='text-sm font-bold'
+            detailTestId={`kangur-primary-nav-age-group-option-detail-${group.id}`}
+            icon={getKangurSixYearOldAgeGroupVisual(group.id).icon}
+            iconClassName='text-lg'
+            iconTestId={`kangur-primary-nav-age-group-option-icon-${group.id}`}
+            label={getLocalizedKangurAgeGroupLabel(group.id, locale, group.label)}
+          />
+        ) : (
+          getLocalizedKangurAgeGroupLabel(group.id, locale, group.label)
+        ),
         isActive: ageGroup === group.id,
         onSelect: () => setAgeGroup(group.id),
       })),
-    [ageGroup, locale, setAgeGroup]
+    [ageGroup, isSixYearOld, locale, setAgeGroup]
   );
   const yellowPillActionClassName =
     `border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] px-4 text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 ${mobileWideNavItemClassName}`;
@@ -587,8 +621,15 @@ export function KangurPrimaryNavigation({
   };
   const lessonsAction: KangurNavActionConfig = {
     active: currentPage === 'Lessons',
+    ariaLabel: navTranslations('lessons'),
     className: mobileNavItemClassName,
-    content: (
+    content: isSixYearOld ? (
+      <KangurVisualCueContent
+        icon={<BookOpen aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />}
+        iconTestId='kangur-primary-nav-lessons-icon'
+        label={navTranslations('lessons')}
+      />
+    ) : (
       <>
         <BookOpen aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
         <span className='truncate'>{navTranslations('lessons')}</span>
@@ -610,7 +651,17 @@ export function KangurPrimaryNavigation({
   const subjectAction: KangurNavActionConfig = {
     ariaLabel: navTranslations('subject.label'),
     className: yellowPillActionClassName,
-    content: (
+    content: isSixYearOld ? (
+      <KangurVisualCueContent
+        detail={subjectVisual.detail}
+        detailClassName='text-sm font-bold'
+        detailTestId='kangur-primary-nav-subject-detail'
+        icon={subjectVisual.icon}
+        iconClassName='text-lg'
+        iconTestId='kangur-primary-nav-subject-icon'
+        label={subjectChoiceLabel}
+      />
+    ) : (
       <>
         <BookCheck aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
         <span className='truncate'>{subjectChoiceLabel}</span>
@@ -624,7 +675,17 @@ export function KangurPrimaryNavigation({
   const ageGroupAction: KangurNavActionConfig = {
     ariaLabel: navTranslations('ageGroup.label'),
     className: amberPillActionClassName,
-    content: (
+    content: isSixYearOld ? (
+      <KangurVisualCueContent
+        detail={ageGroupVisual.detail}
+        detailClassName='text-sm font-bold'
+        detailTestId='kangur-primary-nav-age-group-detail'
+        icon={ageGroupVisual.icon}
+        iconClassName='text-lg'
+        iconTestId='kangur-primary-nav-age-group-icon'
+        label={ageGroupChoiceLabel}
+      />
+    ) : (
       <>
         <Users aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
         <span className='truncate'>{ageGroupChoiceLabel}</span>
@@ -637,8 +698,15 @@ export function KangurPrimaryNavigation({
   };
   const duelsAction: KangurNavActionConfig = {
     active: currentPage === 'Duels',
+    ariaLabel: navTranslations('duels'),
     className: mobileNavItemClassName,
-    content: (
+    content: isSixYearOld ? (
+      <KangurVisualCueContent
+        icon={<Trophy aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />}
+        iconTestId='kangur-primary-nav-duels-icon'
+        label={navTranslations('duels')}
+      />
+    ) : (
       <>
         <Trophy aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
         <span className='truncate'>{navTranslations('duels')}</span>
@@ -661,11 +729,20 @@ export function KangurPrimaryNavigation({
   const parentDashboardAction: KangurNavActionConfig | null = effectiveShowParentDashboard
     ? {
       active: currentPage === 'ParentDashboard',
+      ariaLabel: navTranslations('parent'),
       content: (
-        <>
-          <LayoutGrid aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
-          <span className='truncate'>{navTranslations('parent')}</span>
-        </>
+        isSixYearOld ? (
+          <KangurVisualCueContent
+            icon={<LayoutGrid aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />}
+            iconTestId='kangur-primary-nav-parent-dashboard-icon'
+            label={navTranslations('parent')}
+          />
+        ) : (
+          <>
+            <LayoutGrid aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
+            <span className='truncate'>{navTranslations('parent')}</span>
+          </>
+        )
       ),
       docId: 'top_nav_parent_dashboard',
       href: parentDashboardHref,
@@ -959,12 +1036,65 @@ export function KangurPrimaryNavigation({
           description={navTranslations('subject.dialogDescription')}
         />
       }
-      title={navTranslations('subject.label')}
-      defaultChoiceLabel={defaultSubjectLabel}
-      currentChoiceLabel={subjectChoiceLabel}
+      title={
+        isSixYearOld ? (
+          <KangurVisualCueContent
+            detail='👆'
+            detailClassName='text-sm'
+            detailTestId='kangur-primary-nav-subject-modal-title-detail'
+            icon='📚'
+            iconClassName='text-lg'
+            iconTestId='kangur-primary-nav-subject-modal-title-icon'
+            label={navTranslations('subject.label')}
+          />
+        ) : (
+          navTranslations('subject.label')
+        )
+      }
+      defaultChoiceLabel={
+        isSixYearOld ? (
+          <KangurVisualCueContent
+            detail={getKangurSixYearOldSubjectVisual(getKangurDefaultSubjectForAgeGroup(ageGroup)).detail}
+            detailClassName='text-sm font-bold'
+            detailTestId='kangur-primary-nav-subject-modal-default-detail'
+            icon={getKangurSixYearOldSubjectVisual(getKangurDefaultSubjectForAgeGroup(ageGroup)).icon}
+            iconClassName='text-lg'
+            iconTestId='kangur-primary-nav-subject-modal-default-icon'
+            label={defaultSubjectLabel}
+          />
+        ) : (
+          defaultSubjectLabel
+        )
+      }
+      currentChoiceLabel={
+        isSixYearOld ? (
+          <KangurVisualCueContent
+            detail={subjectVisual.detail}
+            detailClassName='text-sm font-bold'
+            detailTestId='kangur-primary-nav-subject-modal-current-detail'
+            icon={subjectVisual.icon}
+            iconClassName='text-lg'
+            iconTestId='kangur-primary-nav-subject-modal-current-icon'
+            label={subjectChoiceLabel}
+          />
+        ) : (
+          subjectChoiceLabel
+        )
+      }
       closeAriaLabel={navTranslations('subject.closeAriaLabel')}
       groupAriaLabel={navTranslations('subject.groupAriaLabel')}
       options={subjectOptions}
+      doneAriaLabel='Gotowe'
+      doneLabel={
+        isSixYearOld ? (
+          <KangurVisualCueContent
+            icon='✅'
+            iconClassName='text-lg'
+            iconTestId='kangur-primary-nav-subject-modal-done-icon'
+            label='Gotowe'
+          />
+        ) : undefined
+      }
     />
   );
   const ageGroupModal = (
@@ -977,12 +1107,69 @@ export function KangurPrimaryNavigation({
           description={navTranslations('ageGroup.dialogDescription')}
         />
       }
-      title={navTranslations('ageGroup.label')}
-      defaultChoiceLabel={defaultAgeGroupLabel}
-      currentChoiceLabel={ageGroupChoiceLabel}
+      title={
+        isSixYearOld ? (
+          <KangurVisualCueContent
+            detail='👆'
+            detailClassName='text-sm'
+            detailTestId='kangur-primary-nav-age-group-modal-title-detail'
+            icon='👥'
+            iconClassName='text-lg'
+            iconTestId='kangur-primary-nav-age-group-modal-title-icon'
+            label={navTranslations('ageGroup.label')}
+          />
+        ) : (
+          navTranslations('ageGroup.label')
+        )
+      }
+      defaultChoiceLabel={
+        isSixYearOld ? (
+          <KangurVisualCueContent
+            detail={getKangurSixYearOldAgeGroupVisual(
+              KANGUR_AGE_GROUPS.find((group) => group.default)?.id ?? DEFAULT_KANGUR_AGE_GROUP
+            ).detail}
+            detailClassName='text-sm font-bold'
+            detailTestId='kangur-primary-nav-age-group-modal-default-detail'
+            icon={getKangurSixYearOldAgeGroupVisual(
+              KANGUR_AGE_GROUPS.find((group) => group.default)?.id ?? DEFAULT_KANGUR_AGE_GROUP
+            ).icon}
+            iconClassName='text-lg'
+            iconTestId='kangur-primary-nav-age-group-modal-default-icon'
+            label={defaultAgeGroupLabel}
+          />
+        ) : (
+          defaultAgeGroupLabel
+        )
+      }
+      currentChoiceLabel={
+        isSixYearOld ? (
+          <KangurVisualCueContent
+            detail={ageGroupVisual.detail}
+            detailClassName='text-sm font-bold'
+            detailTestId='kangur-primary-nav-age-group-modal-current-detail'
+            icon={ageGroupVisual.icon}
+            iconClassName='text-lg'
+            iconTestId='kangur-primary-nav-age-group-modal-current-icon'
+            label={ageGroupChoiceLabel}
+          />
+        ) : (
+          ageGroupChoiceLabel
+        )
+      }
       closeAriaLabel={navTranslations('ageGroup.closeAriaLabel')}
       groupAriaLabel={navTranslations('ageGroup.groupAriaLabel')}
       options={ageGroupOptions}
+      doneAriaLabel='Gotowe'
+      doneLabel={
+        isSixYearOld ? (
+          <KangurVisualCueContent
+            icon='✅'
+            iconClassName='text-lg'
+            iconTestId='kangur-primary-nav-age-group-modal-done-icon'
+            label='Gotowe'
+          />
+        ) : undefined
+      }
     />
   );
 

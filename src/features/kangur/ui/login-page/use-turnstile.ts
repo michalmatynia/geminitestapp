@@ -99,12 +99,18 @@ export const useTurnstile = (options: {
   }, []);
 
   useEffect(() => {
-    if (!isReady || !containerRef.current || widgetIdRef.current || !KANGUR_PARENT_CAPTCHA_SITE_KEY) {
+    if (
+      !isReady ||
+      !containerRef.current ||
+      widgetIdRef.current ||
+      !KANGUR_PARENT_CAPTCHA_SITE_KEY ||
+      !window.turnstile
+    ) {
       return;
     }
 
     try {
-      widgetIdRef.current = window.turnstile!.render(containerRef.current, {
+      widgetIdRef.current = window.turnstile.render(containerRef.current, {
         sitekey: KANGUR_PARENT_CAPTCHA_SITE_KEY,
         callback: options.onVerify,
         'error-callback': options.onError,

@@ -143,6 +143,16 @@ describe('KangurMusicPianoRoll touch mode', () => {
     expect(screen.getByTestId('music-roll-touch-synth-step-controls-rail')).toHaveClass(
       'overflow-x-auto'
     );
+    expect(screen.getByTestId('music-roll-touch-synth-step-synth-waveform-sawtooth')).toHaveAttribute(
+      'aria-label',
+      'Brzmienie: Saw'
+    );
+    expect(screen.getByTestId('music-roll-touch-synth-step-synth-waveform-sawtooth')).toHaveTextContent(
+      ''
+    );
+    expect(
+      screen.getByTestId('music-roll-touch-synth-step-synth-waveform-icon-sawtooth')
+    ).toBeInTheDocument();
     expect(screen.getByTestId('music-roll-touch-synth-step-keyboard-rail')).toHaveClass(
       'overflow-x-auto'
     );
@@ -161,6 +171,9 @@ describe('KangurMusicPianoRoll touch mode', () => {
     fireEvent.click(screen.getByTestId('music-roll-touch-synth-step-synth-waveform-square'));
     fireEvent.click(screen.getByTestId('music-roll-touch-synth-step-synth-glide-mode-semitone'));
 
+    expect(
+      screen.getByTestId('music-roll-touch-synth-step-synth-waveform-icon-square')
+    ).toBeInTheDocument();
     expect(screen.getByTestId('music-roll-touch-synth-step-transport-waveform')).toHaveTextContent(
       'Brzmienie: Square'
     );
@@ -215,6 +228,42 @@ describe('KangurMusicPianoRoll touch mode', () => {
         noteId: 'do',
         pitchSemitoneOffset: 1,
       })
+    );
+  });
+
+  it('supports six-year-old icon cues on coarse-pointer synth controls', () => {
+    render(
+      <KangurMusicPianoRoll
+        expectedStepIndex={0}
+        keyboardMode='synth'
+        keys={DIATONIC_PIANO_KEYS}
+        melody={['do', 're']}
+        showKeyboardModeSwitch
+        showSynthGlideModeSwitch
+        showSynthWaveformSwitch
+        stepTestIdPrefix='music-roll-touch-kid-step'
+        visualCueMode='six_year_old'
+      />
+    );
+
+    expect(screen.getByTestId('music-roll-touch-kid-step-keyboard-mode-icon-piano')).toHaveTextContent(
+      '🎹'
+    );
+    expect(screen.getByTestId('music-roll-touch-kid-step-keyboard-mode-icon-synth')).toHaveTextContent(
+      '✨'
+    );
+    expect(screen.getByTestId('music-roll-touch-kid-step-transport-waveform')).toHaveAttribute(
+      'aria-label',
+      'Brzmienie: Saw'
+    );
+    expect(screen.getByTestId('music-roll-touch-kid-step-transport-waveform-cue')).toHaveTextContent(
+      '👂'
+    );
+    expect(
+      screen.getByTestId('music-roll-touch-kid-step-transport-waveform-icon')
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('music-roll-touch-kid-step-transport-glide-mode-detail')).toHaveTextContent(
+      '∿'
     );
   });
 });

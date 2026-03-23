@@ -87,6 +87,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             melody={PREVIEW_PIANO_ROLL}
             shellTestId='music-diatonic-scale-preview-roll'
             title='Podglad piano rollu'
+            visualCueMode='six_year_old'
           />
           <KangurLessonCaption align='left'>
             W grze najpierw posluchasz melodii, a potem szybko odtworzysz ja tymi samymi

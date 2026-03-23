@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
 import { KangurLessonProgressDots } from '@/features/kangur/ui/components/KangurLessonProgressDots';
+import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
+import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import {
   KangurIconBadge,
   KangurStatusChip,
@@ -38,6 +40,8 @@ export default function LessonHub({
   onSelect,
 }: LessonHubProps): React.JSX.Element {
   const isCoarsePointer = useKangurCoarsePointer();
+  const { ageGroup } = useKangurAgeGroupFocus();
+  const isSixYearOld = ageGroup === 'six_year_old';
   const activeProgressDotClassName = progressDotClassName;
   const hubLabel = lessonTitle ? `Tematy lekcji ${lessonTitle}` : 'Tematy lekcji';
   const hasSections = sections.length > 0;
@@ -63,6 +67,10 @@ export default function LessonHub({
           const resolvedProgress =
             section.progress ?? (section.isGame ? { totalCount: 1, viewedCount: 0 } : undefined);
           const sectionKindLabel = section.isGame ? 'Gra' : 'Lekcja';
+          const resolvedKindLabel = section.locked
+            ? (section.lockedLabel ?? 'Zablokowane')
+            : sectionKindLabel;
+          const sectionKindIcon = section.locked ? '🔒' : section.isGame ? '🎮' : '📘';
           const sectionAriaLabel = `${sectionKindLabel}: ${section.title}${
             section.locked ? ' (zablokowane)' : ''
           }`;
@@ -98,13 +106,24 @@ export default function LessonHub({
                   <KangurIconSummaryCardContent
                     aside={
                       <div className='flex flex-col items-end gap-2'>
-                        <KangurStatusChip accent={accent} className='uppercase tracking-[0.14em]' size='sm'>
-                          {section.locked
-                            ? (section.lockedLabel ?? 'Zablokowane')
-                          : section.isGame
-                            ? 'Gra'
-                            : 'Lekcja'}
-                      </KangurStatusChip>
+                        <KangurStatusChip
+                          accent={accent}
+                          aria-label={resolvedKindLabel}
+                          className='uppercase tracking-[0.14em]'
+                          data-testid={`lesson-hub-kind-${section.id}`}
+                          size='sm'
+                        >
+                          {isSixYearOld ? (
+                            <KangurVisualCueContent
+                              icon={sectionKindIcon}
+                              iconClassName='text-base'
+                              iconTestId={`lesson-hub-kind-icon-${section.id}`}
+                              label={resolvedKindLabel}
+                            />
+                          ) : (
+                            resolvedKindLabel
+                          )}
+                        </KangurStatusChip>
                       {resolvedProgress && resolvedProgress.totalCount > 0 ? (
                         <KangurLessonProgressDots
                           activeDotClassName={activeProgressDotClassName}

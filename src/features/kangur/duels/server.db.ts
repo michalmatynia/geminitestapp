@@ -542,7 +542,10 @@ export async function joinKangurDuelSession(
   learner: KangurLearnerProfile,
   input: KangurDuelJoinInput
 ): Promise<KangurDuelStateResponse> {
-  const sessionId = input.sessionId!.trim();
+  const sessionId = input.sessionId?.trim();
+  if (!sessionId) {
+    throw badRequestError('Session ID is required');
+  }
   const collection = await getDuelCollection();
   
   const joinedAt = now();

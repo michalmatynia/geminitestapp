@@ -112,10 +112,10 @@ export const EXPORT_PARAMETER_DOCS: ExportParameterDoc[] = [
     description: 'Price for a specific price group.',
   },
   { key: 'stock', description: 'Inventory-level stock (no warehouse).' },
-  { key: 'producer', description: 'Producer value (normalized to producer_id on export).' },
-  { key: 'producer_id', description: 'Producer identifier.' },
-  { key: 'producer_ids', description: 'Producer identifiers.' },
-  { key: 'manufacturer_id', description: 'Manufacturer alias (normalized to producer_id).' },
+  {
+    key: 'manufacturer_id',
+    description: 'Canonical Base.com manufacturer identifier used in the export payload.',
+  },
   {
     key: 'stock.<warehouse_id>',
     description: 'Stock for a specific warehouse.',

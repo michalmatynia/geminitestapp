@@ -40,6 +40,7 @@ import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTu
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import type { KangurRouteTransitionSkeletonVariant } from '@/features/kangur/ui/routing/route-transition-skeletons';
+import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import { cn } from '@/features/kangur/shared/utils';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
@@ -96,6 +97,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const shouldBlockRouteContent = shouldRedirectToHome;
   const [isBootSkeletonVisible, setIsBootSkeletonVisible] = useState<boolean>(shouldShowBootLoader);
   const [isNavigationSkeletonVisible, setIsNavigationSkeletonVisible] = useState<boolean>(false);
+  const [latchedNavigationTopBarHeightCssValue, setLatchedNavigationTopBarHeightCssValue] =
+    useState<string | null>(null);
   const bootSkeletonShownAtRef = useRef<number | null>(
     shouldShowBootLoader ? Date.now() : null
   );
@@ -112,6 +115,13 @@ const AuthenticatedApp = (): JSX.Element | null => {
     isRouteSkeletonVisible
       ? latchedNavigationSkeletonRef.current?.variant ?? activeTransitionSkeletonVariant
       : activeTransitionSkeletonVariant;
+  const currentNavigationTopBarHeightCssValue =
+    isNavigationTransitionActive || isRouteSkeletonVisible
+      ? readKangurTopBarHeightCssValue()
+      : null;
+  const visibleTransitionSkeletonTopBarHeightCssValue = isRouteSkeletonVisible
+    ? latchedNavigationTopBarHeightCssValue ?? currentNavigationTopBarHeightCssValue
+    : null;
   const shouldHideTopNavigationDuringBoot = isBootSkeletonVisible;
   const shouldRenderInlineRouteSkeletonTopNavigation =
     !embedded && !shouldHideTopNavigationDuringBoot && isRouteSkeletonVisible;
@@ -198,6 +208,23 @@ const AuthenticatedApp = (): JSX.Element | null => {
     pendingPageKey,
     transitionPageKey,
   ]);
+
+  useEffect(() => {
+    if (!isNavigationTransitionActive) {
+      setLatchedNavigationTopBarHeightCssValue(null);
+      return;
+    }
+
+    const nextTopBarHeightCssValue =
+      currentNavigationTopBarHeightCssValue ?? readKangurTopBarHeightCssValue();
+    if (!nextTopBarHeightCssValue) {
+      return;
+    }
+
+    setLatchedNavigationTopBarHeightCssValue(
+      current => current ?? nextTopBarHeightCssValue
+    );
+  }, [currentNavigationTopBarHeightCssValue, isNavigationTransitionActive]);
 
   useEffect(() => {
     if (isBootLoading) {
@@ -336,6 +363,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
               pageKey={visibleTransitionSkeletonPageKey}
               reason={isLanguageSwitcherTransition ? 'locale-switch' : 'navigation'}
               renderInlineTopNavigationSkeleton={shouldRenderInlineRouteSkeletonTopNavigation}
+              topBarHeightCssValue={visibleTransitionSkeletonTopBarHeightCssValue}
               variant={visibleTransitionSkeletonVariant}
             />
           </motion.div>

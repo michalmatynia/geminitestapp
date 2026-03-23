@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { clearLatchedKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 
 const {
   setKangurClientObservabilityContextMock,
@@ -76,6 +77,8 @@ import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRoute
 describe('KangurFeatureRouteShell', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearLatchedKangurTopBarHeightCssValue();
+    document.documentElement.style.removeProperty('--kangur-top-bar-height');
     usePathnameMock.mockReturnValue('/kangur');
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
@@ -89,6 +92,9 @@ describe('KangurFeatureRouteShell', () => {
       'kangur-shell-viewport-height',
       'kangur-premium-bg'
     );
+    expect(screen.getByTestId('kangur-route-shell')).toHaveStyle({
+      '--kangur-top-bar-height': '88px',
+    });
     expect(screen.getByTestId('kangur-route-shell')).not.toHaveClass('text-slate-800');
     expect(screen.getByTestId('kangur-feature-app')).toBeInTheDocument();
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
@@ -101,6 +107,16 @@ describe('KangurFeatureRouteShell', () => {
     expect(setKangurClientObservabilityContextMock).toHaveBeenCalledWith({
       pageKey: 'Lessons',
       requestedPath: '/kangur/lessons',
+    });
+  });
+
+  it('preserves the last measured top-bar height instead of resetting to the default fallback', () => {
+    document.documentElement.style.setProperty('--kangur-top-bar-height', '136px');
+
+    render(<KangurFeatureRouteShell />);
+
+    expect(screen.getByTestId('kangur-route-shell')).toHaveStyle({
+      '--kangur-top-bar-height': '136px',
     });
   });
 

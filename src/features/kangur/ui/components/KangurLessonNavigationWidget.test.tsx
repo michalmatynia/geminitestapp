@@ -11,10 +11,14 @@ const {
   useKangurLessonsRuntimeStateMock,
   useKangurLessonsRuntimeActionsMock,
   useOptionalKangurLessonsRuntimeMock,
+  ageGroupState,
 } = vi.hoisted(() => ({
   useKangurLessonsRuntimeStateMock: vi.fn(),
   useKangurLessonsRuntimeActionsMock: vi.fn(),
   useOptionalKangurLessonsRuntimeMock: vi.fn(),
+  ageGroupState: {
+    value: 'ten_year_old' as 'six_year_old' | 'ten_year_old' | 'grown_ups',
+  },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLessonsRuntimeContext', () => ({
@@ -24,6 +28,13 @@ vi.mock('@/features/kangur/ui/context/KangurLessonsRuntimeContext', () => ({
 }));
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
+  useKangurAgeGroupFocus: () => ({
+    ageGroup: ageGroupState.value,
+    setAgeGroup: vi.fn(),
+  }),
 }));
 
 import { KangurLessonNavigationWidget } from '@/features/kangur/ui/components/KangurLessonNavigationWidget';
@@ -45,6 +56,7 @@ const SubsectionNavigationMarker = (): React.JSX.Element => {
 
 describe('KangurLessonNavigationWidget', () => {
   it('hides lesson-to-lesson navigation while a subsection panel flow is active', () => {
+    ageGroupState.value = 'ten_year_old';
     useOptionalKangurLessonsRuntimeMock.mockReturnValue(null);
     useKangurLessonsRuntimeStateMock.mockReturnValue({
       prevLesson: null,
@@ -70,6 +82,7 @@ describe('KangurLessonNavigationWidget', () => {
   });
 
   it('widens previous and next lesson buttons on coarse pointers', () => {
+    ageGroupState.value = 'ten_year_old';
     const selectLesson = vi.fn();
     useOptionalKangurLessonsRuntimeMock.mockReturnValue({
       prevLesson: {
@@ -99,5 +112,31 @@ describe('KangurLessonNavigationWidget', () => {
       'min-h-11',
       'touch-manipulation'
     );
+  });
+
+  it('uses icon-first previous and next cues for six-year-old learners', () => {
+    ageGroupState.value = 'six_year_old';
+    useOptionalKangurLessonsRuntimeMock.mockReturnValue({
+      prevLesson: {
+        id: 'lesson-adding',
+        emoji: '➕',
+        title: 'Dodawanie',
+      },
+      nextLesson: {
+        id: 'lesson-calendar',
+        emoji: '📅',
+        title: 'Kalendarz',
+      },
+      selectLesson: vi.fn(),
+    });
+
+    render(
+      <KangurLessonNavigationProvider onBack={vi.fn()}>
+        <KangurLessonNavigationWidget />
+      </KangurLessonNavigationProvider>
+    );
+
+    expect(screen.getByTestId('kangur-lesson-nav-prev-icon')).toHaveTextContent('🔙');
+    expect(screen.getByTestId('kangur-lesson-nav-next-icon')).toHaveTextContent('🔜');
   });
 });

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-22'
+last_reviewed: '2026-03-23'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-03-22T15:42:19.713Z
+Generated at: 2026-03-23T13:07:40.931Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -16,7 +16,7 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 277 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 279 |
 | `src/app/api/image-studio/[[...path]]/route.ts` | 232 |
 | `src/app/api/v2/integrations/[[...path]]/route.ts` | 228 |
 | `src/app/api/agentcreator/[[...path]]/route.ts` | 225 |
@@ -41,12 +41,12 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 | Page | LOC |
 | --- | ---: |
-| `src/app/[locale]/(frontend)/[...slug]/page.tsx` | 95 |
-| `src/app/[locale]/(frontend)/page.tsx` | 72 |
-| `src/app/(frontend)/[...slug]/page.tsx` | 71 |
+| `src/app/[locale]/(frontend)/[...slug]/page.tsx` | 104 |
+| `src/app/[locale]/(frontend)/page.tsx` | 87 |
+| `src/app/(frontend)/[...slug]/page.tsx` | 82 |
+| `src/app/(frontend)/page.tsx` | 62 |
 | `src/app/[locale]/(frontend)/kangur/login/page.tsx` | 53 |
 | `src/app/(admin)/admin/agentcreator/teaching/page.tsx` | 48 |
-| `src/app/(frontend)/page.tsx` | 47 |
 | `src/app/(admin)/admin/agentcreator/page.tsx` | 45 |
 | `src/app/(frontend)/preview/[id]/page.tsx` | 40 |
 | `src/app/(frontend)/kangur/login/page.tsx` | 37 |

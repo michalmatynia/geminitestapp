@@ -1,4 +1,4 @@
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 
 import type { KangurAssignmentSnapshot } from '@kangur/platform';
@@ -12,7 +12,7 @@ type KangurAssignmentPriorityChipProps = Omit<
   ComponentProps<typeof KangurStatusChip>,
   'children'
 > & {
-  labelOverride?: string;
+  labelOverride?: ReactNode;
   priority: KangurAssignmentSnapshot['priority'];
 };
 

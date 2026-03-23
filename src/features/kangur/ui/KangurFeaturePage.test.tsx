@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildKangurEmbeddedBasePath } from '@/features/kangur/config/routing';
+import { clearLatchedKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import enMessages from '@/i18n/messages/en.json';
 
 const {
@@ -106,6 +107,8 @@ const renderWithIntl = (ui: ReactElement) =>
 describe('KangurFeaturePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearLatchedKangurTopBarHeightCssValue();
+    document.documentElement.style.removeProperty('--kangur-top-bar-height');
     setEnvValue('NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED', originalCustomCssEnv);
     delete document.body.dataset.kangurShell;
     document.body.style.overflow = '';
@@ -129,6 +132,8 @@ describe('KangurFeaturePage', () => {
   });
 
   afterEach(() => {
+    clearLatchedKangurTopBarHeightCssValue();
+    document.documentElement.style.removeProperty('--kangur-top-bar-height');
     setEnvValue('NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED', originalCustomCssEnv);
     delete document.body.dataset.kangurShell;
     document.body.style.overflow = '';
@@ -220,6 +225,9 @@ describe('KangurFeaturePage', () => {
       'kangur-premium-bg',
       'kangur-shell-viewport-height'
     );
+    expect(screen.getByTestId('kangur-feature-page-shell')).toHaveStyle({
+      '--kangur-top-bar-height': '88px',
+    });
     expect(screen.getByTestId('kangur-feature-page-shell')).not.toHaveClass('text-slate-800');
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
       pageKey: 'Tests',
@@ -227,6 +235,16 @@ describe('KangurFeaturePage', () => {
       requestedHref: '/kangur/tests',
       basePath: '/kangur',
       embedded: false,
+    });
+  });
+
+  it('preserves the measured top-bar height when mounting a direct Kangur page shell', () => {
+    document.documentElement.style.setProperty('--kangur-top-bar-height', '136px');
+
+    renderWithIntl(<KangurFeaturePage slug={['tests']} basePath='/kangur' />);
+
+    expect(screen.getByTestId('kangur-feature-page-shell')).toHaveStyle({
+      '--kangur-top-bar-height': '136px',
     });
   });
 

@@ -368,9 +368,8 @@ export const materializeStoredTriggerPathConfig = (args: {
               ...baseConfig,
               ...(configForResolution as Partial<PathConfig>),
               id:
-                typeof (configForResolution as { id?: unknown }).id === 'string' &&
-                (configForResolution as { id?: string }).id!.trim().length > 0
-                  ? (configForResolution as { id: string }).id.trim()
+                typeof (configForResolution as { id?: unknown }).id === 'string'
+                  ? ((configForResolution as { id: string }).id.trim() || pathId)
                   : pathId,
               name:
                 typeof (configForResolution as { name?: unknown }).name === 'string'

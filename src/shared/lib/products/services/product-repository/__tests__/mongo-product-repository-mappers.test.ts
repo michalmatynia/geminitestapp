@@ -190,6 +190,49 @@ describe('mongo product repository mappers', () => {
     ).toThrowError(/Invalid product localized scalar field payload/);
   });
 
+  it('reconstructs canonical producer relations from legacy top-level producerIds arrays', () => {
+    const result = toProductResponse(asProductDocument({
+      _id: 'product-legacy-producer-ids',
+      id: 'product-legacy-producer-ids',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+      catalogId: 'catalog-1',
+      published: false,
+      producerIds: ['producer-1', 'producer-1'],
+    }));
+
+    expect(result.producers).toEqual([
+      {
+        productId: 'product-legacy-producer-ids',
+        producerId: 'producer-1',
+        assignedAt: '2026-01-02T00:00:00.000Z',
+      },
+    ]);
+  });
+
+  it('reconstructs canonical producer relations from a legacy top-level producer object', () => {
+    const result = toProductResponse(asProductDocument({
+      _id: 'product-legacy-producer-object',
+      id: 'product-legacy-producer-object',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-03T00:00:00.000Z'),
+      catalogId: 'catalog-1',
+      published: false,
+      producer: {
+        id: 'producer-2',
+        name: 'Acme',
+      },
+    }));
+
+    expect(result.producers).toEqual([
+      {
+        productId: 'product-legacy-producer-object',
+        producerId: 'producer-2',
+        assignedAt: '2026-01-03T00:00:00.000Z',
+      },
+    ]);
+  });
+
   it('rejects legacy producer relation keys instead of reconstructing producer relations', () => {
     expect(() =>
       toProductResponse(asProductDocument({

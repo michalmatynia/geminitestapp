@@ -76,7 +76,6 @@ describe('KangurMusicPianoRoll', () => {
         pressedNoteId='do'
         shellTestId='music-roll-shell'
         stepTestIdPrefix='music-roll-step'
-        title='Kolorowy piano roll'
       />
     );
 
@@ -165,6 +164,14 @@ describe('KangurMusicPianoRoll', () => {
       'aria-pressed',
       'true'
     );
+    expect(screen.getByTestId('music-roll-synth-step-synth-waveform-sine')).toHaveAttribute(
+      'aria-label',
+      'Brzmienie: Sine'
+    );
+    expect(screen.getByTestId('music-roll-synth-step-synth-waveform-sine')).toHaveTextContent('');
+    expect(
+      screen.getByTestId('music-roll-synth-step-synth-waveform-icon-sine')
+    ).toBeInTheDocument();
     expect(screen.getByTestId('music-roll-synth-step-transport-mode')).toHaveTextContent('Synth');
     expect(screen.getByTestId('music-roll-synth-step-transport-waveform')).toHaveTextContent(
       'Brzmienie: Saw'
@@ -180,6 +187,9 @@ describe('KangurMusicPianoRoll', () => {
       'aria-pressed',
       'true'
     );
+    expect(
+      screen.getByTestId('music-roll-synth-step-synth-waveform-icon-triangle')
+    ).toBeInTheDocument();
     expect(screen.getByTestId('music-roll-synth-step-transport-waveform')).toHaveTextContent(
       'Brzmienie: Triangle'
     );
@@ -298,6 +308,49 @@ describe('KangurMusicPianoRoll', () => {
     );
     expect(screen.getByTestId('music-roll-synth-step-transport-glide')).toHaveTextContent(
       'Glide: +2.0 st'
+    );
+  });
+
+  it('can render six-year-old icon cues for synth transport and switches', () => {
+    render(
+      <KangurMusicPianoRoll
+        expectedStepIndex={0}
+        keyboardMode='synth'
+        keys={DIATONIC_PIANO_KEYS}
+        melody={['do', 're']}
+        showKeyboardModeSwitch
+        showSynthGlideModeSwitch
+        showSynthWaveformSwitch
+        stepTestIdPrefix='music-roll-kid-step'
+        visualCueMode='six_year_old'
+      />
+    );
+
+    expect(screen.getByTestId('music-roll-kid-step-keyboard-mode-icon-piano')).toHaveTextContent(
+      '🎹'
+    );
+    expect(screen.getByTestId('music-roll-kid-step-keyboard-mode-icon-synth')).toHaveTextContent(
+      '✨'
+    );
+    expect(screen.getByTestId('music-roll-kid-step-synth-waveform-sine')).toHaveAttribute(
+      'aria-label',
+      'Brzmienie: Sine'
+    );
+    expect(screen.getByTestId('music-roll-kid-step-synth-glide-mode-icon-semitone')).toHaveTextContent(
+      '↕'
+    );
+    expect(
+      screen.getByTestId('music-roll-kid-step-synth-glide-mode-detail-semitone')
+    ).toHaveTextContent('#');
+    expect(screen.getByTestId('music-roll-kid-step-transport-mode')).toHaveAttribute(
+      'aria-label',
+      'Tryb: synth'
+    );
+    expect(screen.getByTestId('music-roll-kid-step-transport-waveform-cue')).toHaveTextContent(
+      '👂'
+    );
+    expect(screen.getByTestId('music-roll-kid-step-transport-glide-mode-icon')).toHaveTextContent(
+      '↕'
     );
   });
 });

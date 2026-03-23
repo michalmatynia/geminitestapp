@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
 import { ObjectId } from 'mongodb';
 
 import type { DatabaseSyncHandler } from './types';
@@ -12,7 +11,7 @@ export const syncNotebooks: DatabaseSyncHandler = async ({ mongo, prisma, normal
     .map((doc: Record<string, unknown>): Prisma.NotebookCreateManyInput | null => {
       const id = normalizeId(doc);
       if (!id) return null;
-      const name = (doc as { name?: string }).name ?? id;
+      const name = (doc.name as string) ?? id;
       if (seenNames.has(name)) {
         warnings.push(`Skipped duplicate notebook name: ${name}`);
         return null;
@@ -21,10 +20,10 @@ export const syncNotebooks: DatabaseSyncHandler = async ({ mongo, prisma, normal
       return {
         id,
         name,
-        color: (doc as { color?: string | null }).color ?? null,
-        defaultThemeId: (doc as { defaultThemeId?: string | null }).defaultThemeId ?? null,
-        createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-        updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+        color: (doc.color as string | null) ?? null,
+        defaultThemeId: (doc.defaultThemeId as string | null) ?? null,
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
     .filter((item): item is Prisma.NotebookCreateManyInput => item !== null);
@@ -50,7 +49,7 @@ export const syncThemes: DatabaseSyncHandler = async ({ mongo, prisma, normalize
     .map((doc: Record<string, unknown>): Prisma.ThemeCreateManyInput | null => {
       const id = normalizeId(doc);
       if (!id) return null;
-      const rawNotebookId = (doc as { notebookId?: string | null }).notebookId ?? null;
+      const rawNotebookId = (doc.notebookId as string | null) ?? null;
       const resolvedNotebookId =
         rawNotebookId && availableNotebookIds.has(rawNotebookId) ? rawNotebookId : null;
       if (rawNotebookId && !resolvedNotebookId) {
@@ -58,26 +57,26 @@ export const syncThemes: DatabaseSyncHandler = async ({ mongo, prisma, normalize
       }
       return {
         id,
-        name: (doc as { name?: string }).name ?? id,
+        name: (doc.name as string) ?? id,
         notebookId: resolvedNotebookId,
-        textColor: (doc as { textColor?: string }).textColor ?? '#e5e7eb',
-        backgroundColor: (doc as { backgroundColor?: string }).backgroundColor ?? '#111827',
+        textColor: (doc.textColor as string) ?? '#e5e7eb',
+        backgroundColor: (doc.backgroundColor as string) ?? '#111827',
         markdownHeadingColor:
-          (doc as { markdownHeadingColor?: string }).markdownHeadingColor ?? '#ffffff',
-        markdownLinkColor: (doc as { markdownLinkColor?: string }).markdownLinkColor ?? '#60a5fa',
+          (doc.markdownHeadingColor as string) ?? '#ffffff',
+        markdownLinkColor: (doc.markdownLinkColor as string) ?? '#60a5fa',
         markdownCodeBackground:
-          (doc as { markdownCodeBackground?: string }).markdownCodeBackground ?? '#1f2937',
-        markdownCodeText: (doc as { markdownCodeText?: string }).markdownCodeText ?? '#e5e7eb',
+          (doc.markdownCodeBackground as string) ?? '#1f2937',
+        markdownCodeText: (doc.markdownCodeText as string) ?? '#e5e7eb',
         relatedNoteBorderWidth:
-          (doc as { relatedNoteBorderWidth?: number }).relatedNoteBorderWidth ?? 1,
+          (doc.relatedNoteBorderWidth as number) ?? 1,
         relatedNoteBorderColor:
-          (doc as { relatedNoteBorderColor?: string }).relatedNoteBorderColor ?? '#374151',
+          (doc.relatedNoteBorderColor as string) ?? '#374151',
         relatedNoteBackgroundColor:
-          (doc as { relatedNoteBackgroundColor?: string }).relatedNoteBackgroundColor ?? '#1f2937',
+          (doc.relatedNoteBackgroundColor as string) ?? '#1f2937',
         relatedNoteTextColor:
-          (doc as { relatedNoteTextColor?: string }).relatedNoteTextColor ?? '#e5e7eb',
-        createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-        updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+          (doc.relatedNoteTextColor as string) ?? '#e5e7eb',
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
     .filter((item): item is Prisma.ThemeCreateManyInput => item !== null);
@@ -104,8 +103,8 @@ export const syncTags: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId
     .map((doc: Record<string, unknown>): Prisma.TagCreateManyInput | null => {
       const id = normalizeId(doc);
       if (!id) return null;
-      const name = (doc as { name?: string }).name ?? id;
-      const rawNotebookId = (doc as { notebookId?: string | null }).notebookId ?? null;
+      const name = (doc.name as string) ?? id;
+      const rawNotebookId = (doc.notebookId as string | null) ?? null;
       const resolvedNotebookId =
         rawNotebookId && availableNotebookIds.has(rawNotebookId) ? rawNotebookId : null;
       if (rawNotebookId && !resolvedNotebookId) {
@@ -120,10 +119,10 @@ export const syncTags: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId
       return {
         id,
         name,
-        color: (doc as { color?: string | null }).color ?? null,
+        color: (doc.color as string | null) ?? null,
         notebookId: resolvedNotebookId,
-        createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-        updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
     .filter((item): item is Prisma.TagCreateManyInput => item !== null);
@@ -154,15 +153,15 @@ export const syncCategories: DatabaseSyncHandler = async ({ mongo, prisma, norma
       if (!id) return null;
       return {
         id,
-        name: (doc as { name?: string }).name ?? id,
-        description: (doc as { description?: string | null }).description ?? null,
-        color: (doc as { color?: string | null }).color ?? null,
-        parentId: (doc as { parentId?: string | null }).parentId ?? null,
-        themeId: (doc as { themeId?: string | null }).themeId ?? null,
-        notebookId: (doc as { notebookId?: string | null }).notebookId ?? null,
-        sortIndex: (doc as { sortIndex?: number | null }).sortIndex ?? 0,
-        createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-        updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+        name: (doc.name as string) ?? id,
+        description: (doc.description as string | null) ?? null,
+        color: (doc.color as string | null) ?? null,
+        parentId: (doc.parentId as string | null) ?? null,
+        themeId: (doc.themeId as string | null) ?? null,
+        notebookId: (doc.notebookId as string | null) ?? null,
+        sortIndex: (doc.sortIndex as number | null) ?? 0,
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
     .filter((item): item is Prisma.CategoryCreateManyInput => item !== null);
@@ -293,9 +292,7 @@ export const syncNotes: DatabaseSyncHandler = async ({ mongo, prisma }) => {
     ? await prisma.note.createMany({ data: noteData as Prisma.NoteCreateManyInput[] })
     : { count: 0 };
 
-  type SyncedNote = (typeof data)[number];
-
-  const tagRows = data.flatMap((note: SyncedNote) =>
+  const tagRows = data.flatMap((note) =>
     note.tags.map((tag: { tagId: string; assignedAt?: Date | string }) => ({
       noteId: note.id,
       tagId: tag.tagId,
@@ -304,7 +301,7 @@ export const syncNotes: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   ) as Prisma.NoteTagCreateManyInput[];
   if (tagRows.length) await prisma.noteTag.createMany({ data: tagRows });
 
-  const categoryRows = data.flatMap((note: SyncedNote) =>
+  const categoryRows = data.flatMap((note) =>
     note.categories.map((cat: { categoryId: string; assignedAt?: Date | string }) => ({
       noteId: note.id,
       categoryId: cat.categoryId,
@@ -313,7 +310,7 @@ export const syncNotes: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   ) as Prisma.NoteCategoryCreateManyInput[];
   if (categoryRows.length) await prisma.noteCategory.createMany({ data: categoryRows });
 
-  const relationRows = data.flatMap((note: SyncedNote) =>
+  const relationRows = data.flatMap((note) =>
     note.relationsFrom
       .filter((rel: { targetNoteId?: string; assignedAt?: Date | string }): rel is {
         targetNoteId: string;
@@ -340,20 +337,20 @@ export const syncNoteFiles: DatabaseSyncHandler = async ({ mongo, prisma, normal
   const data = docs
     .map((doc: Record<string, unknown>): Prisma.NoteFileCreateManyInput | null => {
       const id = normalizeId(doc);
-      const noteId = (doc as { noteId?: string }).noteId;
+      const noteId = doc.noteId as string;
       if (!id || !noteId || !availableNoteIds.has(noteId)) return null;
       return {
         id,
         noteId,
-        slotIndex: (doc as { slotIndex?: number }).slotIndex ?? 0,
-        filename: (doc as { filename?: string }).filename ?? '',
-        filepath: (doc as { filepath?: string }).filepath ?? '',
-        mimetype: (doc as { mimetype?: string }).mimetype ?? '',
-        size: (doc as { size?: number }).size ?? 0,
-        width: (doc as { width?: number | null }).width ?? null,
-        height: (doc as { height?: number | null }).height ?? null,
-        createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-        updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+        slotIndex: (doc.slotIndex as number) ?? 0,
+        filename: (doc.filename as string) ?? '',
+        filepath: (doc.filepath as string) ?? '',
+        mimetype: (doc.mimetype as string) ?? '',
+        size: (doc.size as number) ?? 0,
+        width: (doc.width as number | null) ?? null,
+        height: (doc.height as number | null) ?? null,
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
     .filter((item): item is Prisma.NoteFileCreateManyInput => item !== null);
@@ -377,22 +374,15 @@ export const syncNotesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prism
     prisma.tag.findMany(),
     prisma.category.findMany(),
   ]);
-  type PersistedNote = (typeof notes)[number];
-  type PersistedTag = (typeof tags)[number];
-  type PersistedCategory = (typeof categories)[number];
-  type PersistedNoteTag = PersistedNote['tags'][number];
-  type PersistedNoteCategory = PersistedNote['categories'][number];
-  type PersistedNoteRelation = PersistedNote['relationsFrom'][number];
-  type PersistedNoteFile = PersistedNote['files'][number];
 
-  const tagMap = new Map<string, PersistedTag>(tags.map((tag: PersistedTag) => [tag.id, tag]));
-  const categoryMap = new Map<string, PersistedCategory>(
-    categories.map((category: PersistedCategory) => [category.id, category])
+  const tagMap = new Map(tags.map((tag) => [tag.id, tag]));
+  const categoryMap = new Map(
+    categories.map((category) => [category.id, category])
   );
-  const noteMap = new Map<string, PersistedNote>(notes.map((note: PersistedNote) => [note.id, note]));
+  const noteMap = new Map(notes.map((note) => [note.id, note]));
 
-  const docs = notes.map((note: PersistedNote) => {
-    const tagEntries = note.tags.map((entry: PersistedNoteTag) => {
+  const docs = notes.map((note) => {
+    const tagEntries = note.tags.map((entry) => {
       const tag = tagMap.get(entry.tagId);
       return {
         noteId: entry.noteId,
@@ -417,7 +407,7 @@ export const syncNotesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prism
           },
       };
     });
-    const categoryEntries = note.categories.map((entry: PersistedNoteCategory) => {
+    const categoryEntries = note.categories.map((entry) => {
       const category = categoryMap.get(entry.categoryId);
       return {
         noteId: entry.noteId,
@@ -450,7 +440,7 @@ export const syncNotesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prism
           },
       };
     });
-    const relationsFrom = note.relationsFrom.map((entry: PersistedNoteRelation) => {
+    const relationsFrom = note.relationsFrom.map((entry) => {
       const target = noteMap.get(entry.targetNoteId);
       return {
         sourceNoteId: entry.sourceNoteId,
@@ -477,7 +467,7 @@ export const syncNotesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prism
       tags: tagEntries,
       categories: categoryEntries,
       relationsFrom,
-      files: note.files.map((file: PersistedNoteFile) => ({
+      files: note.files.map((file) => ({
         noteId: file.noteId,
         slotIndex: file.slotIndex,
         filename: file.filename,
@@ -503,21 +493,8 @@ export const syncNotesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prism
 };
 
 export const syncNoteFilesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  type PersistedNoteFileRow = {
-    id: string;
-    noteId: string;
-    slotIndex: number;
-    filename: string;
-    filepath: string;
-    mimetype: string;
-    size: number;
-    width: number | null;
-    height: number | null;
-    createdAt: Date;
-    updatedAt: Date;
-  };
-  const files = (await prisma.noteFile.findMany()) as PersistedNoteFileRow[];
-  const docs = files.map((file: PersistedNoteFileRow) => ({
+  const files = await prisma.noteFile.findMany();
+  const docs = files.map((file) => ({
     _id: file.id,
     id: file.id,
     noteId: file.noteId,
@@ -542,16 +519,8 @@ export const syncNoteFilesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, p
 };
 
 export const syncTagsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  type PersistedTagRow = {
-    id: string;
-    name: string;
-    color: string | null;
-    notebookId: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-  };
-  const rows = (await prisma.tag.findMany()) as PersistedTagRow[];
-  const docs = rows.map((row: PersistedTagRow) => ({
+  const rows = await prisma.tag.findMany();
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -571,20 +540,8 @@ export const syncTagsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma
 };
 
 export const syncCategoriesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  type PersistedCategoryRow = {
-    id: string;
-    name: string;
-    description: string | null;
-    color: string | null;
-    parentId: string | null;
-    themeId: string | null;
-    notebookId: string | null;
-    sortIndex: number;
-    createdAt: Date;
-    updatedAt: Date;
-  };
-  const rows = (await prisma.category.findMany()) as PersistedCategoryRow[];
-  const docs = rows.map((row: PersistedCategoryRow) => ({
+  const rows = await prisma.category.findMany();
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -608,16 +565,8 @@ export const syncCategoriesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, 
 };
 
 export const syncNotebooksPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  type PersistedNotebookRow = {
-    id: string;
-    name: string;
-    color: string | null;
-    defaultThemeId: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-  };
-  const rows = (await prisma.notebook.findMany()) as PersistedNotebookRow[];
-  const docs = rows.map((row: PersistedNotebookRow) => ({
+  const rows = await prisma.notebook.findMany();
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -637,25 +586,8 @@ export const syncNotebooksPrismaToMongo: DatabaseSyncHandler = async ({ mongo, p
 };
 
 export const syncThemesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  type PersistedThemeRow = {
-    id: string;
-    name: string;
-    textColor: string;
-    backgroundColor: string;
-    markdownHeadingColor: string;
-    markdownLinkColor: string;
-    markdownCodeBackground: string;
-    markdownCodeText: string;
-    relatedNoteBorderWidth: number;
-    relatedNoteBorderColor: string;
-    relatedNoteBackgroundColor: string;
-    relatedNoteTextColor: string;
-    notebookId: string;
-    createdAt: Date;
-    updatedAt: Date;
-  };
-  const rows = (await prisma.theme.findMany()) as PersistedThemeRow[];
-  const docs = rows.map((row: PersistedThemeRow) => ({
+  const rows = await prisma.theme.findMany();
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     name: row.name,

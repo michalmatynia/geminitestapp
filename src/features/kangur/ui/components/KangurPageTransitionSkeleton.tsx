@@ -43,6 +43,8 @@ import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_PANEL_ROW_CLASSNAME,
   KANGUR_TIGHT_ROW_CLASSNAME,
+  KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX,
+  KANGUR_TOP_BAR_HEIGHT_VAR_NAME,
   KANGUR_TOP_BAR_OFFSET_CLASSNAME,
   KANGUR_TOP_BAR_PADDED_OFFSET_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
@@ -1118,11 +1120,13 @@ export function KangurPageTransitionSkeleton({
   pageKey,
   reason = 'navigation',
   renderInlineTopNavigationSkeleton = false,
+  topBarHeightCssValue,
   variant,
 }: {
   pageKey?: string | null;
   reason?: 'boot' | 'navigation' | 'locale-switch';
   renderInlineTopNavigationSkeleton?: boolean;
+  topBarHeightCssValue?: string | null;
   variant?: KangurRouteTransitionSkeletonVariant | null;
 }): React.JSX.Element {
   const pathname = usePathname();
@@ -1147,10 +1151,54 @@ export function KangurPageTransitionSkeleton({
     !shouldOffsetStandaloneRouteOverlay &&
     !shouldRenderInlineTopNavigationSkeleton;
   const inlineTopNavigationSkeleton = shouldRenderInlineTopNavigationSkeleton ? (
-    <div data-testid='kangur-page-transition-skeleton-inline-top-navigation'>
+    <div
+      className='shrink-0 overflow-hidden'
+      data-testid='kangur-page-transition-skeleton-inline-top-navigation'
+      style={{
+        height: `var(--kangur-top-bar-height, ${KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX}px)`,
+      }}
+    >
       <KangurTopNavigationSkeleton />
     </div>
   ) : null;
+  const skeletonContent = (
+    <KangurStandardPageLayout
+      tone={SKELETON_TONE_BY_PAGE[resolvedPageKey]}
+      shellClassName={cn(
+        'pointer-events-none',
+        shouldRenderInlineTopNavigationSkeleton
+          ? 'h-full min-h-full [&>div]:h-full [&>div]:!min-h-full'
+          : null
+      )}
+      shellProps={{
+        'aria-hidden': true,
+        'data-testid': 'kangur-page-transition-skeleton-shell',
+      }}
+      navigation={shouldRenderInlineTopNavigationSkeleton ? undefined : inlineTopNavigationSkeleton}
+      containerProps={{
+        as: 'div',
+        className: cn(
+          'flex flex-col items-center',
+          KANGUR_PANEL_GAP_CLASSNAME,
+          resolvedVariant === 'game-home'
+            ? GAME_PAGE_STANDARD_CONTAINER_CLASSNAME
+            : resolvedPageKey === 'Lessons'
+            ? null
+            : resolvedPageKey === 'Game'
+              ? shouldApplyStandaloneTopBarPadding
+                ? KANGUR_TOP_BAR_PADDED_OFFSET_CLASSNAME
+                : 'pt-24 sm:pt-28'
+              : 'pt-24 sm:pt-28'
+        ),
+        'data-kangur-route-main': false,
+      }}
+    >
+      {renderSkeletonVariant(resolvedVariant, {
+        lessonsTitle: skeletonCopy.lessonsPageTitle,
+        locale: skeletonLocale,
+      })}
+    </KangurStandardPageLayout>
+  );
 
   return (
     <div
@@ -1159,7 +1207,7 @@ export function KangurPageTransitionSkeleton({
           ? 'absolute inset-0'
           : shouldOffsetStandaloneRouteOverlay
             ? cn('fixed inset-x-0 bottom-0', KANGUR_TOP_BAR_OFFSET_CLASSNAME)
-            : 'fixed inset-0',
+            : 'fixed inset-0 flex flex-col',
         'z-30 cursor-progress overflow-hidden',
         isLocaleSwitch ? 'backdrop-blur-md' : null
       )}
@@ -1167,6 +1215,7 @@ export function KangurPageTransitionSkeleton({
       data-kangur-skeleton-variant={resolvedVariant}
       data-testid='kangur-page-transition-skeleton'
       style={{
+        [KANGUR_TOP_BAR_HEIGHT_VAR_NAME]: topBarHeightCssValue ?? undefined,
         background: isLocaleSwitch
           ? 'color-mix(in srgb, var(--kangur-page-background, #f8fafc) 68%, transparent)'
           : 'var(--kangur-page-background, radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%))',
@@ -1181,34 +1230,19 @@ export function KangurPageTransitionSkeleton({
             ? skeletonCopy.loadingLanguage
             : skeletonCopy.loadingPage}
       </div>
-      <KangurStandardPageLayout
-        tone={SKELETON_TONE_BY_PAGE[resolvedPageKey]}
-        shellClassName='pointer-events-none'
-        shellProps={{ 'aria-hidden': true }}
-        navigation={inlineTopNavigationSkeleton}
-        containerProps={{
-          as: 'div',
-          className: cn(
-            'flex flex-col items-center',
-            KANGUR_PANEL_GAP_CLASSNAME,
-            resolvedVariant === 'game-home'
-              ? GAME_PAGE_STANDARD_CONTAINER_CLASSNAME
-              : resolvedPageKey === 'Lessons'
-              ? null
-              : resolvedPageKey === 'Game'
-                ? shouldApplyStandaloneTopBarPadding
-                  ? KANGUR_TOP_BAR_PADDED_OFFSET_CLASSNAME
-                  : 'pt-24 sm:pt-28'
-                : 'pt-24 sm:pt-28'
-          ),
-          'data-kangur-route-main': false,
-        }}
-      >
-        {renderSkeletonVariant(resolvedVariant, {
-          lessonsTitle: skeletonCopy.lessonsPageTitle,
-          locale: skeletonLocale,
-        })}
-      </KangurStandardPageLayout>
+      {shouldRenderInlineTopNavigationSkeleton ? (
+        <>
+          {inlineTopNavigationSkeleton}
+          <div
+            className='min-h-0 flex-1 overflow-hidden'
+            data-testid='kangur-page-transition-skeleton-body'
+          >
+            {skeletonContent}
+          </div>
+        </>
+      ) : (
+        skeletonContent
+      )}
     </div>
   );
 }

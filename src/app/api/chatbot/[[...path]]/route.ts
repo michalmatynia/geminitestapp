@@ -12,7 +12,7 @@ import type {
   CatchAllRouteParams as Params,
   CatchAllRoutePathParams as RouteParams,
   CatchAllRoutePatternToken as PatternToken,
-} from '@/shared/lib/api/catch-all-route-types';
+} from '@/shared/lib/api/catch-all-router';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 
 import * as chatbotIndex from '../route-handler';

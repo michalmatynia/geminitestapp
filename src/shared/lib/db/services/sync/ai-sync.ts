@@ -155,7 +155,7 @@ export const syncAiPathRunEvents: DatabaseSyncHandler = async ({
 
 export const syncProductAiJobsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.productAiJob.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: Prisma.ProductAiJobGetPayload<{}>) => ({
     _id: row.id,
     id: row.id,
     productId: row.productId,
@@ -182,7 +182,7 @@ export const syncProductAiJobsPrismaToMongo: DatabaseSyncHandler = async ({ mong
 
 export const syncAiPathRunsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.aiPathRun.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: Prisma.AiPathRunGetPayload<{}>) => ({
     _id: row.id,
     id: row.id,
     userId: row.userId ?? null,
@@ -221,7 +221,7 @@ export const syncAiPathRunsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, 
 
 export const syncAiPathRunNodesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.aiPathRunNode.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: Prisma.AiPathRunNodeGetPayload<{}>) => ({
     _id: row.id,
     id: row.id,
     runId: row.runId,
@@ -252,7 +252,7 @@ export const syncAiPathRunNodesPrismaToMongo: DatabaseSyncHandler = async ({ mon
 
 export const syncAiPathRunEventsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.aiPathRunEvent.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: Prisma.AiPathRunEventGetPayload<{}>) => ({
     _id: row.id,
     id: row.id,
     runId: row.runId,

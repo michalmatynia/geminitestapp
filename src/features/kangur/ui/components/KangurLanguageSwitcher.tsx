@@ -46,7 +46,7 @@ import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurSto
 
 const LANGUAGE_SWITCHER_SOURCE_ID = 'kangur-language-switcher';
 const LANGUAGE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
-const HARD_NAVIGATION_RECOVERY_TIMEOUT_MS = 1_500;
+const HARD_NAVIGATION_RECOVERY_TIMEOUT_MS = 10_000;
 const ENABLED_LOCALES = DEFAULT_SITE_I18N_CONFIG.locales.filter((locale) => locale.enabled);
 const DEFAULT_SITE_LOCALE = normalizeSiteLocale(DEFAULT_SITE_I18N_CONFIG.defaultLocale);
 
@@ -271,6 +271,7 @@ export function KangurLanguageSwitcher({
   const [hardNavigationPendingLocale, setHardNavigationPendingLocale] = useState<string | null>(null);
   const warmedLocaleCodesRef = useRef<Set<string>>(new Set());
   const hardNavigationRecoveryTimeoutRef = useRef<number | null>(null);
+  const hardNavigationCommittedRef = useRef(false);
 
   const currentLocale = normalizeSiteLocale(locale);
   const search = searchParams?.toString() ?? '';
@@ -350,6 +351,21 @@ export function KangurLanguageSwitcher({
       clearHardNavigationRecoveryTimeout();
     };
   }, [clearHardNavigationRecoveryTimeout]);
+
+  useEffect(() => {
+    if (!hardNavigationPendingLocale) {
+      hardNavigationCommittedRef.current = false;
+      return;
+    }
+
+    const onBeforeUnload = (): void => {
+      hardNavigationCommittedRef.current = true;
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload);
+    };
+  }, [hardNavigationPendingLocale]);
 
   const warmLocaleTarget = useCallback(
     (targetLocaleCode: string): void => {
@@ -502,10 +518,14 @@ export function KangurLanguageSwitcher({
               });
 
               if (typeof window !== 'undefined' && typeof window.location.assign === 'function') {
+                hardNavigationCommittedRef.current = false;
                 clearHardNavigationRecoveryTimeout();
                 setHardNavigationPendingLocale(target.code);
                 hardNavigationRecoveryTimeoutRef.current = window.setTimeout(() => {
                   hardNavigationRecoveryTimeoutRef.current = null;
+                  // If the browser has committed to unloading (beforeunload fired),
+                  // the navigation is in progress — do NOT clear the pending state.
+                  if (hardNavigationCommittedRef.current) return;
                   setHardNavigationPendingLocale((currentPendingLocale) =>
                     currentPendingLocale === target.code ? null : currentPendingLocale
                   );

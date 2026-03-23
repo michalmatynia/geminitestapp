@@ -245,21 +245,6 @@ export function BaseQuickExportButton(props: {
     [stopTrackingExportRun]
   );
 
-  useEffect(() => {
-    const persistedFeedback = readPersistedBaseQuickExportFeedback(product.id);
-    if (!persistedFeedback) {
-      return;
-    }
-
-    setTrackedExportRunStatus(persistedFeedback.status);
-    if (
-      persistedFeedback.runId &&
-      !TERMINAL_EXPORT_RUN_STATUSES.has(persistedFeedback.status)
-    ) {
-      startTrackingExportRun(persistedFeedback.runId, persistedFeedback.status);
-    }
-  }, [product.id, startTrackingExportRun]);
-
   const handleTrackedExportRunSnapshot = useCallback(
     (runId: string, snapshot: TrackedAiPathRunSnapshot): void => {
       if (trackedExportRunIdRef.current !== runId) return;
@@ -309,6 +294,21 @@ export function BaseQuickExportButton(props: {
     },
     [handleTrackedExportRunSnapshot, product.id, setTrackedExportStatus, stopTrackingExportRun]
   );
+
+  useEffect(() => {
+    const persistedFeedback = readPersistedBaseQuickExportFeedback(product.id);
+    if (!persistedFeedback) {
+      return;
+    }
+
+    setTrackedExportRunStatus(persistedFeedback.status);
+    if (
+      persistedFeedback.runId &&
+      !TERMINAL_EXPORT_RUN_STATUSES.has(persistedFeedback.status)
+    ) {
+      startTrackingExportRun(persistedFeedback.runId, persistedFeedback.status);
+    }
+  }, [product.id, startTrackingExportRun]);
 
   const resolveQuickExportContext = async (): Promise<QuickExportContext | null> => {
     try {

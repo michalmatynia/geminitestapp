@@ -1,9 +1,12 @@
 'use client';
 
 import NextLink from 'next/link';
+import { useLocale } from 'next-intl';
+import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
+import { localizeManagedKangurHref } from '@/features/kangur/ui/routing/managed-paths';
 import { cn } from '@/features/kangur/shared/utils';
 
 import type { MouseEvent } from 'react';
@@ -51,12 +54,22 @@ export function KangurTransitionLink({
   ...props
 }: KangurTransitionLinkProps): React.JSX.Element {
   const routeNavigator = useKangurRouteNavigator();
+  const locale = useLocale();
+  const pathname = usePathname();
   const managedLocalHref =
     typeof href === 'string' && href.startsWith('/') && target !== '_blank' ? href : null;
   const isManagedLocalHref = managedLocalHref !== null;
   const shouldPrefetch = prefetch !== false;
   const shouldUseManagedScroll = isManagedLocalHref;
   const resolvedScroll = scroll ?? (shouldUseManagedScroll ? false : undefined);
+  const renderedHref =
+    managedLocalHref === null
+      ? href
+      : localizeManagedKangurHref({
+        href: managedLocalHref,
+        locale,
+        pathname,
+      });
 
   useEffect(() => {
     if (!managedLocalHref || !shouldPrefetch) {
@@ -68,7 +81,7 @@ export function KangurTransitionLink({
 
   return (
     <NextLink
-      href={href}
+      href={renderedHref}
       className={cn('touch-manipulation select-none', className)}
       prefetch={prefetch}
       scroll={resolvedScroll}

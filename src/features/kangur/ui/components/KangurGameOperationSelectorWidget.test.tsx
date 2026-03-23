@@ -21,6 +21,12 @@ const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
   useKangurSubjectFocusMock: vi.fn(),
 }));
 
+const { ageGroupState } = vi.hoisted(() => ({
+  ageGroupState: {
+    value: 'ten_year_old' as 'six_year_old' | 'ten_year_old' | 'grown_ups',
+  },
+}));
+
 const { localeState } = vi.hoisted(() => ({
   localeState: {
     value: 'pl' as 'de' | 'en' | 'pl' | 'uk',
@@ -71,6 +77,13 @@ vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
+  useKangurAgeGroupFocus: () => ({
+    ageGroup: ageGroupState.value,
+    setAgeGroup: vi.fn(),
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
@@ -188,6 +201,7 @@ const buildRuntime = (progress: KangurProgressState, overrides: Record<string, u
 describe('KangurGameOperationSelectorWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    ageGroupState.value = 'ten_year_old';
     localeState.value = 'pl';
     translationState.missing = false;
     getCurrentKangurDailyQuestMock.mockReturnValue(null);
@@ -415,6 +429,41 @@ describe('KangurGameOperationSelectorWidget', () => {
       'Wybierz lekcję muzyki i śpiewaj dźwięki skali diatonicznej krok po kroku.'
     );
     expect(screen.queryByTestId('kangur-operation-recommendation-title')).not.toBeInTheDocument();
+  });
+
+  it('renders icon-first quick practice cues for six-year-old geometry learners', () => {
+    ageGroupState.value = 'six_year_old';
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'geometry',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+    lessonsState.value = [
+      {
+        id: 'kangur-lesson-geometry-shapes',
+        componentId: 'geometry_shapes',
+        title: 'Figury geometryczne',
+        description: 'Rozpoznawaj figury',
+        emoji: '🔷',
+        color: 'kangur-gradient-accent-violet',
+        activeBg: 'bg-violet-500',
+        sortOrder: 3000,
+        enabled: true,
+        subject: 'geometry',
+      },
+    ];
+    useKangurGameRuntimeMock.mockReturnValue(buildRuntime(buildProgress()));
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.getByTestId('kangur-game-operation-intro-icon')).toHaveTextContent('🔷');
+    expect(screen.getByTestId('kangur-quick-practice-heading-icon')).toHaveTextContent('⚡');
+    expect(screen.getByTestId('kangur-quick-practice-group-icon-geometry')).toHaveTextContent(
+      '🔷'
+    );
+    expect(
+      screen.getByTestId('kangur-quick-practice-game-chip-icon-geometry_quiz')
+    ).toHaveTextContent('🎮');
   });
 
   it('falls back to the hottest badge-track lane when lessons are stable', () => {

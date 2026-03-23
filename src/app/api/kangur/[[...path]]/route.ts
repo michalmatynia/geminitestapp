@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 import { type NextRequest } from 'next/server';
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { CatchAllRoutePathParams as RouteParams } from '@/shared/lib/api/catch-all-route-types';
+import type { CatchAllRoutePathParams as RouteParams } from '@/shared/lib/api/catch-all-router';
 import { resolveKangurApiPathSegments } from '../route-utils';
 import { notFound } from './routing/routing.utils';
 import { handleAuthRouting } from './routing/routing.auth';

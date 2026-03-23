@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { KANGUR_BASE_PATH, KANGUR_MAIN_PAGE_KEY } from '@/features/kangur/config/routing';
 import { KangurRouteLoadingFallback } from '@/features/kangur/ui/components/KangurRouteLoadingFallback';
 import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
+import { useKangurPendingRouteLoadingSnapshot } from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
 import {
   normalizeManagedKangurPathname,
   resolveManagedKangurPageKeyFromHref,
@@ -43,9 +44,15 @@ const resolveKangurBasePath = (pathname: string | null): string => {
     : '/';
 };
 
-const resolveAutoIncludeTopNavigationSkeleton = (pathname: string | null): boolean => {
-  const basePath = resolveKangurBasePath(pathname);
-  const resolvedPageKey = resolveManagedKangurPageKeyFromHref(pathname ?? '/', basePath);
+const resolveAutoIncludeTopNavigationSkeleton = ({
+  href,
+  pageKey,
+}: {
+  href: string | null;
+  pageKey?: string | null;
+}): boolean => {
+  const basePath = resolveKangurBasePath(href);
+  const resolvedPageKey = pageKey ?? resolveManagedKangurPageKeyFromHref(href ?? '/', basePath);
   return (resolvedPageKey ?? KANGUR_MAIN_PAGE_KEY) !== KANGUR_MAIN_PAGE_KEY;
 };
 
@@ -56,8 +63,13 @@ export function FrontendRouteLoadingFallback({
 } = {}): React.JSX.Element {
   const publicOwnerContext = useOptionalFrontendPublicOwner();
   const pathname = usePathname();
+  const pendingRouteLoadingSnapshot = useKangurPendingRouteLoadingSnapshot();
   const resolvedIncludeTopNavigationSkeleton =
-    includeTopNavigationSkeleton ?? resolveAutoIncludeTopNavigationSkeleton(pathname);
+    includeTopNavigationSkeleton ??
+    resolveAutoIncludeTopNavigationSkeleton({
+      href: pendingRouteLoadingSnapshot?.href ?? pathname,
+      pageKey: pendingRouteLoadingSnapshot?.pageKey,
+    });
 
   if (publicOwnerContext?.publicOwner === 'kangur') {
     return (

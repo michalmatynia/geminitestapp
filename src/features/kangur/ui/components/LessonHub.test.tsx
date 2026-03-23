@@ -31,10 +31,21 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
 }));
 
+let ageGroupMock: 'six_year_old' | 'ten_year_old' | 'grown_ups' = 'ten_year_old';
+
+vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
+  useKangurAgeGroupFocus: () => ({
+    ageGroup: ageGroupMock,
+    setAgeGroup: vi.fn(),
+    ageGroupKey: null,
+  }),
+}));
+
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 
 describe('LessonHub', () => {
   it('uses shared option cards and chips for lesson and game entries', () => {
+    ageGroupMock = 'ten_year_old';
     const onSelect = vi.fn();
 
     render(
@@ -103,6 +114,7 @@ describe('LessonHub', () => {
   });
 
   it('renders a compact read-only progress strip under lesson pills', () => {
+    ageGroupMock = 'ten_year_old';
     render(
       <LessonHub
         gradientClass='kangur-gradient-accent-emerald'
@@ -137,6 +149,7 @@ describe('LessonHub', () => {
   });
 
   it('uses explicit game progress instead of the generic one-pill fallback', () => {
+    ageGroupMock = 'ten_year_old';
     render(
       <LessonHub
         gradientClass='kangur-gradient-accent-emerald'
@@ -171,5 +184,39 @@ describe('LessonHub', () => {
     expect(screen.getByTestId('lesson-hub-progress-dot-game_clock-2')).toHaveClass(
       'kangur-step-pill-pending'
     );
+  });
+
+  it('switches six-year-old lesson kind chips to icon-first cues', () => {
+    ageGroupMock = 'six_year_old';
+
+    render(
+      <LessonHub
+        gradientClass='kangur-gradient-accent-sky'
+        lessonEmoji='🎵'
+        lessonTitle='Skala diatoniczna'
+        onBack={vi.fn()}
+        onSelect={vi.fn()}
+        sections={[
+          {
+            id: 'notes',
+            emoji: '🎼',
+            title: 'Dzwieki',
+            description: 'Poznaj kolejnosc dzwiekow i kolory klawiszy.',
+          },
+          {
+            id: 'game_repeat',
+            emoji: '🎹',
+            title: 'Powtorz melodie',
+            description: 'Najpierw posluchaj, potem zagraj te same kolory.',
+            isGame: true,
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByTestId('lesson-hub-kind-notes')).toHaveAttribute('aria-label', 'Lekcja');
+    expect(screen.getByTestId('lesson-hub-kind-game_repeat')).toHaveAttribute('aria-label', 'Gra');
+    expect(screen.getByTestId('lesson-hub-kind-icon-notes')).toHaveTextContent('📘');
+    expect(screen.getByTestId('lesson-hub-kind-icon-game_repeat')).toHaveTextContent('🎮');
   });
 });

@@ -11,6 +11,10 @@ import {
   KangurRouteTransitionProvider,
   useKangurRouteTransition,
 } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
+import {
+  clearKangurPendingRouteLoadingSnapshot,
+  getKangurPendingRouteLoadingSnapshot,
+} from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
 
 function RouteTransitionProbe({
   acknowledgeMs,
@@ -127,12 +131,33 @@ function renderRouteTransitionHarness({
 describe('KangurRouteTransitionProvider', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    clearKangurPendingRouteLoadingSnapshot();
   });
 
   afterEach(() => {
     cleanup();
+    clearKangurPendingRouteLoadingSnapshot();
     vi.useRealTimers();
     vi.restoreAllMocks();
+  });
+
+  it('publishes the target route snapshot immediately when a managed transition starts', async () => {
+    renderRouteTransitionHarness({
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+      targetHref: '/kangur/lessons',
+      targetPageKey: 'Lessons',
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
+    });
+
+    expect(getKangurPendingRouteLoadingSnapshot()).toMatchObject({
+      href: '/kangur/lessons',
+      pageKey: 'Lessons',
+      skeletonVariant: 'lessons-library',
+    });
   });
 
   it('resets scroll after a Kangur route transition commits to a new requested path', async () => {

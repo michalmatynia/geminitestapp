@@ -6,6 +6,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { clearLatchedKangurTopBarHeightCssValue } from '../../utils/readKangurTopBarHeightCssValue';
 import { KangurPageTopBar } from './KangurPageTopBar';
 
 const TOP_BAR_HEIGHT_VAR = '--kangur-top-bar-height';
@@ -17,6 +18,7 @@ describe('KangurPageTopBar', () => {
 
   beforeEach(() => {
     resizeObservers.length = 0;
+    clearLatchedKangurTopBarHeightCssValue();
     document.documentElement.style.removeProperty(TOP_BAR_HEIGHT_VAR);
 
     globalThis.ResizeObserver = class ResizeObserverMock {
@@ -68,6 +70,7 @@ describe('KangurPageTopBar', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    clearLatchedKangurTopBarHeightCssValue();
     document.documentElement.style.removeProperty(TOP_BAR_HEIGHT_VAR);
     globalThis.ResizeObserver = originalResizeObserver;
   });

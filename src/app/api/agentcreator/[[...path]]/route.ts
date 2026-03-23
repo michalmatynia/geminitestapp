@@ -12,7 +12,7 @@ import type {
   CatchAllRouteModule as RouteModule,
   CatchAllRouteParams as Params,
   CatchAllRoutePathParams as RouteParams,
-} from '@/shared/lib/api/catch-all-route-types';
+} from '@/shared/lib/api/catch-all-router';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 
 import * as agentIndex from '../agent/route-handler';

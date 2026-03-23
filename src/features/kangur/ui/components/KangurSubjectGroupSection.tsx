@@ -3,7 +3,7 @@ import { KangurPanelSectionHeading } from '@/features/kangur/ui/components/Kangu
 import type { ReactNode } from 'react';
 
 type KangurSubjectGroupSectionProps = {
-  label: string;
+  label: ReactNode;
   ariaLabel?: string;
   children: ReactNode;
   className?: string;

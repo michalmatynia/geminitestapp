@@ -145,7 +145,9 @@ describe('KangurPageTransitionSkeleton', () => {
 
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass(
       'fixed',
-      'inset-0'
+      'inset-0',
+      'flex',
+      'flex-col'
     );
     expect(screen.getByTestId('kangur-page-transition-skeleton')).not.toHaveClass(
       'inset-x-0',
@@ -156,6 +158,21 @@ describe('KangurPageTransitionSkeleton', () => {
     expect(
       screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')
     ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')
+    ).toHaveClass('shrink-0', 'overflow-hidden');
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')
+    ).toHaveStyle({
+      height: 'var(--kangur-top-bar-height, 88px)',
+    });
+    expect(screen.getByTestId('kangur-page-transition-skeleton-body')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-page-transition-skeleton-shell')).toHaveClass(
+      'h-full',
+      'min-h-full',
+      '[&>div]:h-full',
+      '[&>div]:!min-h-full'
+    );
 
     const routeMainContainer = screen
       .getByTestId('kangur-page-transition-skeleton')
@@ -169,6 +186,30 @@ describe('KangurPageTransitionSkeleton', () => {
         .getByTestId('kangur-page-transition-skeleton-inline-top-navigation')
         .compareDocumentPosition(routeMainContainer) & Node.DOCUMENT_POSITION_FOLLOWING
     ).not.toBe(0);
+  });
+
+  it('uses an explicit top-bar height override for inline navbar skeletons', () => {
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+    });
+
+    renderWithIntl(
+      <KangurPageTransitionSkeleton
+        pageKey='Lessons'
+        renderInlineTopNavigationSkeleton
+        topBarHeightCssValue='136px'
+      />
+    );
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveStyle({
+      '--kangur-top-bar-height': '136px',
+    });
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')
+    ).toHaveStyle({
+      height: 'var(--kangur-top-bar-height, 88px)',
+    });
   });
 
   it('renders with path-based fallback copy when next-intl context is unavailable', () => {

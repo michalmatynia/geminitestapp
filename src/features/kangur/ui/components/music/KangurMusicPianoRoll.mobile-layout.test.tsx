@@ -26,16 +26,23 @@ describe('KangurMusicPianoRoll mobile viewport layout', () => {
         shellTestId='music-roll-mobile-shell'
         showKeyboardModeSwitch
         stepTestIdPrefix='music-roll-mobile-step'
-        title='Kolorowy piano roll'
       />
     );
 
     expect(screen.getByTestId('music-roll-mobile-shell')).toHaveAttribute('data-layout', 'compact');
-    expect(screen.getByTestId('music-roll-mobile-step-controls-rail')).toHaveClass('overflow-x-auto');
-    expect(screen.getByTestId('music-roll-mobile-step-keyboard-rail')).toHaveClass('overflow-x-auto');
+    expect(screen.getByTestId('music-roll-mobile-shell')).toHaveClass('p-3.5');
+    expect(screen.getByTestId('music-roll-mobile-step-controls-rail')).toHaveClass(
+      'overflow-x-auto',
+      'px-1'
+    );
+    expect(screen.getByTestId('music-roll-mobile-step-keyboard-rail')).toHaveClass(
+      'overflow-x-auto',
+      'px-1.5'
+    );
     expect(screen.getByTestId('music-roll-mobile-step-keyboard-rail').firstElementChild).toHaveClass(
       'flex',
-      'min-w-max'
+      'min-w-max',
+      'gap-3'
     );
     expect(screen.queryByTestId('music-roll-mobile-step-lane-labels')).not.toBeInTheDocument();
     expect(screen.queryByTestId('music-roll-mobile-step-measure-1')).not.toBeInTheDocument();

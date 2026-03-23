@@ -229,6 +229,58 @@ const normalizeProducerRelations = (
   return normalized;
 };
 
+const resolveLegacyProducerRefId = (value: unknown): string | null => {
+  if (typeof value === 'string') return toTrimmedString(value);
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const record = value as Record<string, unknown>;
+  return (
+    toTrimmedString(record['producerId']) ??
+    toTrimmedString(record['producer_id']) ??
+    toTrimmedString(record['manufacturerId']) ??
+    toTrimmedString(record['manufacturer_id']) ??
+    toTrimmedString(record['id']) ??
+    (record['producer'] && typeof record['producer'] === 'object'
+      ? toTrimmedString((record['producer'] as Record<string, unknown>)['id'])
+      : null)
+  );
+};
+
+const normalizeLegacyTopLevelProducerRelations = (
+  doc: ProductDocument,
+  rootProductId: string
+): NonNullable<ProductWithImages['producers']> => {
+  const record = doc as Record<string, unknown>;
+  const legacyProducerIds = Array.isArray(record['producerIds'])
+    ? (record['producerIds'] as unknown[])
+    : [];
+  const assignedAtSource =
+    doc.updatedAt instanceof Date
+      ? doc.updatedAt.toISOString()
+      : doc.createdAt instanceof Date
+        ? doc.createdAt.toISOString()
+        : null;
+  if (!assignedAtSource) return [];
+
+  const candidateIds = [
+    ...legacyProducerIds,
+    record['producerId'],
+    record['producer_id'],
+    record['manufacturerId'],
+    record['manufacturer_id'],
+    record['producer'],
+    record['manufacturer'],
+  ]
+    .map((candidate: unknown) => resolveLegacyProducerRefId(candidate))
+    .filter((candidate): candidate is string => Boolean(candidate));
+
+  return Array.from(new Set(candidateIds)).map((producerId: string) => ({
+    productId: rootProductId,
+    producerId,
+    assignedAt: assignedAtSource,
+  }));
+};
+
 const normalizeTagRelations = (
   tags: unknown,
   rootProductId: string
@@ -321,7 +373,11 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
     de: doc.description_de,
   });
   const tags = normalizeTagRelations(doc.tags, productId);
-  const producers = normalizeProducerRelations(doc.producers, productId);
+  const canonicalProducers = normalizeProducerRelations(doc.producers, productId);
+  const producers =
+    canonicalProducers.length > 0
+      ? canonicalProducers
+      : normalizeLegacyTopLevelProducerRelations(doc, productId);
   const noteIds = Array.isArray(doc.noteIds) ? doc.noteIds : [];
 
   return {
@@ -387,7 +443,11 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
   });
   const noteIds = Array.isArray(doc.noteIds) ? doc.noteIds : [];
   const tags = normalizeTagRelations(doc.tags, productId);
-  const producers = normalizeProducerRelations(doc.producers, productId);
+  const canonicalProducers = normalizeProducerRelations(doc.producers, productId);
+  const producers =
+    canonicalProducers.length > 0
+      ? canonicalProducers
+      : normalizeLegacyTopLevelProducerRelations(doc, productId);
 
   return {
     id: productId,

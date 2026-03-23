@@ -8,6 +8,8 @@ import {
 import { KangurActiveLessonHeader } from '@/features/kangur/ui/components/KangurActiveLessonHeader';
 import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
 import { KangurLessonNavigationWidget } from '@/features/kangur/ui/components/KangurLessonNavigationWidget';
+import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
+import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import {
   KangurButton,
@@ -51,7 +53,9 @@ export function ActiveLessonView() {
   const { entry: activeLessonSecretPanelContent } = useKangurPageContentEntry('lessons-active-secret-panel');
 
   const isMobile = useKangurMobileBreakpoint();
+  const { ageGroup } = useKangurAgeGroupFocus();
   const backToLessonsLabel = translations('mobileControls.backToLessons');
+  const isSixYearOld = ageGroup === 'six_year_old';
 
   const secretHostLesson = orderedLessons.at(-1) ?? null;
   const masteryByComponent = progress?.lessonMastery ?? {};
@@ -223,8 +227,21 @@ export function ActiveLessonView() {
         aria-label={backToLessonsLabel}
         title={backToLessonsLabel}
       >
-        <ChevronsLeft className='h-4 w-4' aria-hidden='true' />
-        {backToLessonsLabel}
+        {isSixYearOld ? (
+          <KangurVisualCueContent
+            detail='🏠'
+            detailClassName='text-base'
+            detailTestId='kangur-lesson-back-to-lessons-detail'
+            icon={<ChevronsLeft className='h-4 w-4' aria-hidden='true' />}
+            iconTestId='kangur-lesson-back-to-lessons-icon'
+            label={backToLessonsLabel}
+          />
+        ) : (
+          <>
+            <ChevronsLeft className='h-4 w-4' aria-hidden='true' />
+            {backToLessonsLabel}
+          </>
+        )}
       </KangurButton>
     </div>
   ) : null;

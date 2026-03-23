@@ -3,7 +3,12 @@ import {
   resolveKangurPageKeyFromSlug,
 } from '@/features/kangur/config/routing';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
-import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
+import {
+  buildLocalizedPathname,
+  getPathLocale,
+  normalizeSiteLocale,
+  stripSiteLocalePrefix,
+} from '@/shared/lib/i18n/site-locale';
 
 export const isManagedLocalHref = (href: string): boolean =>
   href.startsWith('/') && !href.startsWith('//');
@@ -94,5 +99,61 @@ export const resolveManagedKangurPageKeyFromHref = (
       return resolveKangurPageKeyFromSlug(slug[0] ?? null);
     },
     { fallback: null }
+  );
+};
+
+export const localizeManagedKangurHref = ({
+  href,
+  locale,
+  pathname,
+  transitionKind,
+}: {
+  href: string;
+  locale: string;
+  pathname: string | null;
+  transitionKind?: 'navigation' | 'locale-switch' | null;
+}): string => {
+  if (!isManagedLocalHref(href)) {
+    return href;
+  }
+
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'localize-managed-href',
+      description: 'Localizes managed Kangur hrefs to the active route locale.',
+      context: {
+        href,
+        locale,
+        pathname,
+      },
+    },
+    () => {
+      const parsed = new URL(href, 'https://kangur.local');
+      const hrefLocale = getPathLocale(parsed.pathname);
+      if (hrefLocale) {
+        return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      }
+
+      if (transitionKind === 'locale-switch') {
+        return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      }
+
+      const explicitPathLocale = getPathLocale(pathname);
+      const normalizedPathname = stripSiteLocalePrefix(parsed.pathname);
+      const normalizedCurrentPathname = stripSiteLocalePrefix(pathname);
+      if (explicitPathLocale && normalizedCurrentPathname === normalizedPathname) {
+        return `${normalizedPathname}${parsed.search}${parsed.hash}`;
+      }
+
+      const localizedPathname = explicitPathLocale
+        ? normalizedPathname === '/'
+          ? `/${explicitPathLocale}`
+          : `/${explicitPathLocale}${normalizedPathname}`
+        : buildLocalizedPathname(normalizedPathname, normalizeSiteLocale(locale));
+
+      return `${localizedPathname}${parsed.search}${parsed.hash}`;
+    },
+    { fallback: href }
   );
 };

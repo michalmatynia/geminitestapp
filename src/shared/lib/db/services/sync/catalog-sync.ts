@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 import type {
   MongoPriceGroupDoc,
   MongoCatalogDoc,
@@ -58,8 +57,8 @@ export const syncPriceGroups: DatabaseSyncHandler = async ({ mongo, prisma, norm
         sourceGroupId: resolvedSourceGroupId,
         priceMultiplier: doc.priceMultiplier ?? 1,
         addToPrice: doc.addToPrice ?? 0,
-        createdAt: doc.createdAt ?? new Date(),
-        updatedAt: doc.updatedAt ?? new Date(),
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
     .filter((item): item is Prisma.PriceGroupCreateManyInput => item !== null);
@@ -135,8 +134,8 @@ export const syncCatalogs: DatabaseSyncHandler = async ({ mongo, prisma, normali
         defaultLanguageId: resolvedDefaultLanguageId,
         defaultPriceGroupId: resolvedDefaultPriceGroupId,
         priceGroupIds,
-        createdAt: doc.createdAt ?? new Date(),
-        updatedAt: doc.updatedAt ?? new Date(),
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
         languageIds,
       };
     })
@@ -148,7 +147,7 @@ export const syncCatalogs: DatabaseSyncHandler = async ({ mongo, prisma, normali
     })
     : { count: 0 };
 
-  const catalogLanguages = data.flatMap((catalog: { id: string; languageIds: string[] }) =>
+  const catalogLanguages = data.flatMap((catalog) =>
     catalog.languageIds.map((languageId: string, index: number) => ({
       catalogId: catalog.id,
       languageId,
@@ -184,8 +183,8 @@ export const syncProductCategories: DatabaseSyncHandler = async ({ mongo, prisma
         color: null,
         parentId: doc.parentId ?? null,
         catalogId: doc.catalogId ?? '',
-        createdAt: doc.createdAt ?? new Date(),
-        updatedAt: doc.updatedAt ?? new Date(),
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
     .filter((item): item is Prisma.ProductCategoryCreateManyInput => item !== null);
@@ -208,8 +207,8 @@ export const syncProductTags: DatabaseSyncHandler = async ({ mongo, prisma, norm
         name: doc.name ?? id,
         color: null,
         catalogId: '',
-        createdAt: doc.createdAt ?? new Date(),
-        updatedAt: doc.updatedAt ?? new Date(),
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
     .filter((item): item is Prisma.ProductTagCreateManyInput => item !== null);
@@ -229,7 +228,7 @@ export const syncProductProducers: DatabaseSyncHandler = async ({ mongo, prisma,
     .map((doc: MongoProducerDoc): Prisma.ProducerCreateManyInput | null => {
       const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
-      const rawName = typeof doc.name === 'string' ? (doc.name?.trim() ?? '') : '';
+      const rawName = typeof doc.name === 'string' ? (doc.name.trim() ?? '') : '';
       const name = rawName || id;
       const nameKey = name.toLowerCase();
       if (seenNames.has(nameKey)) {
@@ -274,8 +273,8 @@ export const syncProductParameters: DatabaseSyncHandler = async ({ mongo, prisma
         name_de: doc.name_de ?? null,
         selectorType: doc.selectorType ?? 'text',
         optionLabels: doc.optionLabels ?? [],
-        createdAt: doc.createdAt ?? new Date(),
-        updatedAt: doc.updatedAt ?? new Date(),
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
     .filter((item): item is Prisma.ProductParameterCreateManyInput => item !== null);
@@ -287,23 +286,8 @@ export const syncProductParameters: DatabaseSyncHandler = async ({ mongo, prisma
 // --- Prisma to Mongo handlers ---
 
 export const syncPriceGroupsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  type PersistedPriceGroupRow = {
-    id: string;
-    groupId: string;
-    isDefault: boolean;
-    name: string;
-    description: string | null;
-    currencyId: string;
-    type: string;
-    basePriceField: string;
-    sourceGroupId: string | null;
-    priceMultiplier: number;
-    addToPrice: number;
-    createdAt: Date;
-    updatedAt: Date;
-  };
-  const rows = (await prisma.priceGroup.findMany()) as PersistedPriceGroupRow[];
-  const docs = rows.map((row: PersistedPriceGroupRow) => ({
+  const rows = await prisma.priceGroup.findMany();
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     groupId: row.groupId,
@@ -330,26 +314,10 @@ export const syncPriceGroupsPrismaToMongo: DatabaseSyncHandler = async ({ mongo,
 };
 
 export const syncCatalogsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  type PersistedCatalogLanguageRow = {
-    languageId: string;
-    position: number;
-  };
-  type PersistedCatalogRow = {
-    id: string;
-    name: string;
-    description: string | null;
-    isDefault: boolean;
-    defaultLanguageId: string | null;
-    defaultPriceGroupId: string | null;
-    priceGroupIds: string[];
-    languages: PersistedCatalogLanguageRow[];
-    createdAt: Date;
-    updatedAt: Date;
-  };
-  const rows = (await prisma.catalog.findMany({
+  const rows = await prisma.catalog.findMany({
     include: { languages: true },
-  })) as PersistedCatalogRow[];
-  const docs = rows.map((row: PersistedCatalogRow) => ({
+  });
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -359,8 +327,8 @@ export const syncCatalogsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, pr
     defaultPriceGroupId: row.defaultPriceGroupId ?? null,
     priceGroupIds: row.priceGroupIds ?? [],
     languageIds: row.languages
-      .sort((a: { position: number }, b: { position: number }) => a.position - b.position)
-      .map((entry: { languageId: string }) => entry.languageId),
+      .sort((a, b) => a.position - b.position)
+      .map((entry) => entry.languageId),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }));
@@ -375,18 +343,8 @@ export const syncCatalogsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, pr
 };
 
 export const syncProductCategoriesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  type PersistedProductCategoryRow = {
-    id: string;
-    name: string;
-    description: string | null;
-    color: string | null;
-    parentId: string | null;
-    catalogId: string;
-    createdAt: Date;
-    updatedAt: Date;
-  };
-  const rows = (await prisma.productCategory.findMany()) as PersistedProductCategoryRow[];
-  const docs = rows.map((row: PersistedProductCategoryRow) => ({
+  const rows = await prisma.productCategory.findMany();
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -408,16 +366,8 @@ export const syncProductCategoriesPrismaToMongo: DatabaseSyncHandler = async ({ 
 };
 
 export const syncProductTagsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  type PersistedProductTagRow = {
-    id: string;
-    name: string;
-    color: string | null;
-    catalogId: string;
-    createdAt: Date;
-    updatedAt: Date;
-  };
-  const rows = (await prisma.productTag.findMany()) as PersistedProductTagRow[];
-  const docs = rows.map((row: PersistedProductTagRow) => ({
+  const rows = await prisma.productTag.findMany();
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -437,15 +387,8 @@ export const syncProductTagsPrismaToMongo: DatabaseSyncHandler = async ({ mongo,
 };
 
 export const syncProductProducersPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  type PersistedProducerRow = {
-    id: string;
-    name: string;
-    website: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-  };
-  const rows = (await prisma.producer.findMany()) as PersistedProducerRow[];
-  const docs = rows.map((row: PersistedProducerRow) => ({
+  const rows = await prisma.producer.findMany();
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -464,19 +407,8 @@ export const syncProductProducersPrismaToMongo: DatabaseSyncHandler = async ({ m
 };
 
 export const syncProductParametersPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  type PersistedProductParameterRow = {
-    id: string;
-    catalogId: string;
-    name_en: string;
-    name_pl: string | null;
-    name_de: string | null;
-    selectorType: string;
-    optionLabels: string[];
-    createdAt: Date;
-    updatedAt: Date;
-  };
-  const rows = (await prisma.productParameter.findMany()) as PersistedProductParameterRow[];
-  const docs = rows.map((row: PersistedProductParameterRow) => ({
+  const rows = await prisma.productParameter.findMany();
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     catalogId: row.catalogId,

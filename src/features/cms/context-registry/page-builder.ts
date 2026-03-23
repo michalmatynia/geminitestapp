@@ -222,13 +222,14 @@ export const buildCmsPageBuilderRuntimeDocument = (
 export const buildCmsPageBuilderContextBundle = (
   input: BuildCmsPageBuilderContextBundleInput
 ): ContextRegistryResolutionBundle | null => {
+  const pageId = input.state.currentPage?.id;
   const document = buildCmsPageBuilderRuntimeDocument(input);
-  if (!document) {
+  if (!document || !pageId) {
     return null;
   }
 
   return {
-    refs: [createCmsPageBuilderStateRef(input.state.currentPage!.id)],
+    refs: [createCmsPageBuilderStateRef(pageId)],
     nodes: [],
     documents: [document],
     truncated: false,

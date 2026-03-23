@@ -4,6 +4,11 @@ import {
   resolveKangurRouteTransitionSkeletonVariant,
   type KangurRouteTransitionSkeletonVariant,
 } from '../../routing/route-transition-skeletons';
+import {
+  clearKangurPendingRouteLoadingSnapshot,
+  setKangurPendingRouteLoadingSnapshot,
+} from '../../routing/pending-route-loading-snapshot';
+import { readKangurTopBarHeightCssValue } from '../../utils/readKangurTopBarHeightCssValue';
 
 type KangurRouteTransitionPhase =
   | 'acknowledging'
@@ -126,6 +131,12 @@ export function useKangurRouteTransitionLogic({
 
   useEffect(() => {
     transitionStateRef.current = transitionState;
+  }, [transitionState]);
+
+  useEffect(() => {
+    if (!transitionState) {
+      clearKangurPendingRouteLoadingSnapshot();
+    }
   }, [transitionState]);
 
   useEffect(() => {
@@ -316,6 +327,13 @@ export function useKangurRouteTransitionLogic({
         phase: requestedAcknowledgeMs > 0 ? 'acknowledging' : 'pending',
       };
 
+      setKangurPendingRouteLoadingSnapshot({
+        href: normalizedHref,
+        pageKey: nextPageKey,
+        skeletonVariant: nextState.skeletonVariant,
+        startedAt: nextState.startedAt,
+        topBarHeightCssValue: readKangurTopBarHeightCssValue(),
+      });
       setNextTransitionState(nextState);
 
       if (requestedAcknowledgeMs > 0 && typeof window !== 'undefined') {

@@ -11,9 +11,9 @@ import { LESSONS_CARD_TRANSITION } from '@/features/kangur/ui/pages/lessons/Less
 
 type KangurLessonGroupAccordionProps = {
   accordionId: string;
-  label: string;
-  typeLabel?: string;
-  fallbackTypeLabel: string;
+  label: ReactNode;
+  typeLabel?: ReactNode;
+  fallbackTypeLabel: ReactNode;
   isExpanded: boolean;
   onToggle: () => void;
   children: ReactNode;

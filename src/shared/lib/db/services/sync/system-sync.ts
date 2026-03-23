@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 import type {
   MongoSettingDoc,
   MongoUserPreferencesDoc,
@@ -11,7 +9,7 @@ import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
 
 export const syncSettings: DatabaseSyncHandler = async ({ mongo, prisma, toDate }) => {
-  const docs = await mongo.collection('settings').find({}).toArray();
+  const docs = (await mongo.collection('settings').find({}).toArray()) as MongoSettingDoc[];
   const byKey = new Map<string, { key: string; value: string; createdAt: Date; updatedAt: Date }>();
   docs.forEach((doc: MongoSettingDoc) => {
     const key = doc.key ?? doc._id?.toString() ?? '';
@@ -195,7 +193,7 @@ export const syncAiConfigurations: DatabaseSyncHandler = async ({ mongo, prisma,
 
 export const syncSettingsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.setting.findMany();
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row) => ({
     _id: row.key,
     key: row.key,
     value: row.value,
@@ -214,7 +212,7 @@ export const syncSettingsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, pr
 
 export const syncUserPreferencesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.userPreferences.findMany();
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     userId: row.userId,
@@ -239,7 +237,7 @@ export const syncUserPreferencesPrismaToMongo: DatabaseSyncHandler = async ({ mo
 
 export const syncSystemLogsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.systemLog.findMany();
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row) => ({
     _id: row.id,
     level: row.level,
     message: row.message,
@@ -265,7 +263,7 @@ export const syncSystemLogsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, 
 
 export const syncFileUploadEventsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.fileUploadEvent.findMany();
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     status: row.status,
@@ -295,7 +293,7 @@ export const syncFileUploadEventsPrismaToMongo: DatabaseSyncHandler = async ({ m
 
 export const syncAiConfigurationsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.aiConfiguration.findMany();
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     type: row.type ?? null,

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 import { ObjectId } from 'mongodb';
 
 import type { DatabaseSyncHandler } from './types';
@@ -13,10 +11,10 @@ export const syncCmsSlugs: DatabaseSyncHandler = async ({ mongo, prisma, normali
       if (!id) return null;
       return {
         id,
-        slug: (doc as { slug?: string }).slug ?? '',
-        isDefault: Boolean((doc as { isDefault?: boolean }).isDefault),
-        createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-        updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+        slug: (doc.slug as string) ?? '',
+        isDefault: Boolean(doc.isDefault),
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
     .filter((item): item is Prisma.SlugCreateManyInput => item !== null);
@@ -33,13 +31,13 @@ export const syncCmsThemes: DatabaseSyncHandler = async ({ mongo, prisma, normal
       if (!id) return null;
       return {
         id,
-        name: (doc as { name?: string }).name ?? id,
-        colors: ((doc as { colors?: unknown }).colors ?? {}) as Prisma.InputJsonValue,
-        typography: ((doc as { typography?: unknown }).typography ?? {}) as Prisma.InputJsonValue,
-        spacing: ((doc as { spacing?: unknown }).spacing ?? {}) as Prisma.InputJsonValue,
-        customCss: (doc as { customCss?: string | null }).customCss ?? null,
-        createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-        updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+        name: (doc.name as string) ?? id,
+        colors: (doc.colors ?? {}) as Prisma.InputJsonValue,
+        typography: (doc.typography ?? {}) as Prisma.InputJsonValue,
+        spacing: (doc.spacing ?? {}) as Prisma.InputJsonValue,
+        customCss: (doc.customCss as string | null) ?? null,
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
     .filter((item): item is Prisma.CmsThemeCreateManyInput => item !== null);
@@ -56,22 +54,21 @@ export const syncCmsPages: DatabaseSyncHandler = async ({ mongo, prisma, normali
       if (!id) return null;
       return {
         id,
-        name: (doc as { name?: string }).name ?? id,
-        status: (doc as { status?: string }).status ?? 'draft',
-        publishedAt: toDate((doc as { publishedAt?: Date | string | null }).publishedAt),
-        seoTitle: (doc as { seoTitle?: string | null }).seoTitle ?? null,
-        seoDescription: (doc as { seoDescription?: string | null }).seoDescription ?? null,
-        seoOgImage: (doc as { seoOgImage?: string | null }).seoOgImage ?? null,
-        seoCanonical: (doc as { seoCanonical?: string | null }).seoCanonical ?? null,
-        robotsMeta: (doc as { robotsMeta?: string | null }).robotsMeta ?? null,
-        themeId: (doc as { themeId?: string | null }).themeId ?? null,
-        showMenu: (doc as { showMenu?: boolean | null }).showMenu ?? true,
-        components: Array.isArray((doc as { components?: unknown[] }).components)
-          ? ((doc as { components?: Array<{ type: string; content: Record<string, unknown> }> })
-            .components ?? [])
+        name: (doc.name as string) ?? id,
+        status: (doc.status as string) ?? 'draft',
+        publishedAt: toDate(doc.publishedAt as Date | string | null),
+        seoTitle: (doc.seoTitle as string | null) ?? null,
+        seoDescription: (doc.seoDescription as string | null) ?? null,
+        seoOgImage: (doc.seoOgImage as string | null) ?? null,
+        seoCanonical: (doc.seoCanonical as string | null) ?? null,
+        robotsMeta: (doc.robotsMeta as string | null) ?? null,
+        themeId: (doc.themeId as string | null) ?? null,
+        showMenu: (doc.showMenu as boolean | null) ?? true,
+        components: Array.isArray(doc.components)
+          ? (doc.components as Array<{ type: string; content: Record<string, unknown> }>)
           : [],
-        createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-        updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
     .filter((item): item is NonNullable<typeof item> => item !== null);
@@ -108,13 +105,13 @@ export const syncCmsPageSlugs: DatabaseSyncHandler = async ({ mongo, prisma }) =
   const docs = await mongo.collection('cms_page_slugs').find({}).toArray();
   const data = docs
     .map((doc: Record<string, unknown>): Prisma.PageSlugCreateManyInput | null => {
-      const pageId = (doc as { pageId?: string }).pageId;
-      const slugId = (doc as { slugId?: string }).slugId;
+      const pageId = doc.pageId as string;
+      const slugId = doc.slugId as string;
       if (!pageId || !slugId) return null;
       return {
         pageId,
         slugId,
-        assignedAt: (doc as { assignedAt?: Date }).assignedAt ?? new Date(),
+        assignedAt: (doc.assignedAt as Date) ?? new Date(),
       };
     })
     .filter((item): item is Prisma.PageSlugCreateManyInput => item !== null);
@@ -131,10 +128,10 @@ export const syncCmsDomains: DatabaseSyncHandler = async ({ mongo, prisma, norma
       if (!id) return null;
       return {
         id,
-        domain: (doc as { domain?: string }).domain ?? '',
-        aliasOf: (doc as { aliasOf?: string | null }).aliasOf ?? null,
-        createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-        updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+        domain: (doc.domain as string) ?? '',
+        aliasOf: (doc.aliasOf as string | null) ?? null,
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
     .filter((item): item is Prisma.CmsDomainCreateManyInput => item !== null);
@@ -147,15 +144,15 @@ export const syncCmsDomainSlugs: DatabaseSyncHandler = async ({ mongo, prisma })
   const docs = await mongo.collection('cms_domain_slugs').find({}).toArray();
   const data = docs
     .map((doc: Record<string, unknown>): Prisma.CmsDomainSlugCreateManyInput | null => {
-      const domainId = (doc as { domainId?: string }).domainId;
-      const slugId = (doc as { slugId?: string }).slugId;
+      const domainId = doc.domainId as string;
+      const slugId = doc.slugId as string;
       if (!domainId || !slugId) return null;
       return {
         domainId,
         slugId,
-        assignedAt: (doc as { assignedAt?: Date }).assignedAt ?? new Date(),
-        isDefault: Boolean((doc as { isDefault?: boolean }).isDefault),
-        updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+        assignedAt: (doc.assignedAt as Date) ?? new Date(),
+        isDefault: Boolean(doc.isDefault),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
     .filter((item): item is Prisma.CmsDomainSlugCreateManyInput => item !== null);
@@ -168,7 +165,7 @@ export const syncCmsDomainSlugs: DatabaseSyncHandler = async ({ mongo, prisma })
 
 export const syncCmsSlugsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.slug.findMany();
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     slug: row.slug,
@@ -188,7 +185,7 @@ export const syncCmsSlugsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, pr
 
 export const syncCmsThemesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.cmsTheme.findMany();
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -211,7 +208,7 @@ export const syncCmsThemesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, p
 
 export const syncCmsPagesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.page.findMany({ include: { components: true } });
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -225,10 +222,10 @@ export const syncCmsPagesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, pr
     themeId: row.themeId ?? null,
     showMenu: row.showMenu ?? true,
     components: row.components
-      .sort((a: { order: number }, b: { order: number }) => a.order - b.order)
-      .map((component: { type: string; content: unknown }) => ({
+      .sort((a, b) => a.order - b.order)
+      .map((component) => ({
         type: component.type,
-        content: component.content ?? {},
+        content: (component.content as Record<string, unknown>) ?? {},
       })),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -245,7 +242,7 @@ export const syncCmsPagesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, pr
 
 export const syncCmsPageSlugsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.pageSlug.findMany();
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row) => ({
     pageId: row.pageId,
     slugId: row.slugId,
     assignedAt: row.assignedAt,
@@ -266,7 +263,7 @@ export const syncCmsDomainsPrismaToMongo: DatabaseSyncHandler = async ({
   toObjectIdMaybe,
 }) => {
   const rows = await prisma.cmsDomain.findMany();
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row) => ({
     _id: toObjectIdMaybe(row.id),
     id: row.id,
     domain: row.domain,
@@ -286,7 +283,7 @@ export const syncCmsDomainsPrismaToMongo: DatabaseSyncHandler = async ({
 
 export const syncCmsDomainSlugsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.cmsDomainSlug.findMany();
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row) => ({
     _id: new ObjectId(),
     domainId: row.domainId,
     slugId: row.slugId,

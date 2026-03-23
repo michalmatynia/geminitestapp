@@ -174,10 +174,11 @@ const loadRecentFeaturesContext = async (): Promise<string | null> => {
     const ref = createKangurRecentFeaturesRef();
     const docs = await kangurRecentFeaturesContextProvider.resolveRefs([ref]);
     if (docs.length === 0) return null;
-    const doc = docs[0]!;
+    const doc = docs[0];
+    if (!doc) return null;
     const textSections = (doc.sections ?? [])
       .filter((s) => s.kind === 'text' && s.text)
-      .map((s) => s.text!.trim())
+      .map((s) => s.text?.trim() ?? '')
       .filter(Boolean);
     if (textSections.length === 0) return null;
     return `### Recent Feature Updates (Context Registry)\n${textSections.join('\n\n')}`;
@@ -207,9 +208,9 @@ export const buildKangurDocContext = async (
 
   const summary = buildSummary(entries);
   const excerpts = excerptEntries
-    .filter(Boolean)
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
     .map((entry) =>
-      `### ${entry!.title}${entry!.docPath ? ` (${entry!.docPath})` : ''}\n${entry!.excerpt}`
+      `### ${entry.title}${entry.docPath ? ` (${entry.docPath})` : ''}\n${entry.excerpt}`
     )
     .join('\n\n');
 

@@ -3,6 +3,7 @@ import type { ProductWithImages } from '@/shared/contracts/products';
 import {
   getProducerNameFromLookup,
   getProducerExternalIdFromLookup,
+  buildProducerNameToExternalIdLookup,
   getTagNameFromLookup,
   getTagExternalIdFromLookup,
   ProducerNameLookup,
@@ -11,6 +12,17 @@ import {
   TagExternalIdLookup,
 } from './lookup-resolvers';
 import { toTrimmedString, ProducerEntry, TagEntry } from './template-helpers';
+
+const toScalarProducerValue = (value: unknown): string | null => {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+  return null;
+};
 
 export const getLocalizedParameterValue = (
   valuesByLanguage: Record<string, unknown>,
@@ -139,31 +151,75 @@ export const getProductProducerValues = (
   producerNameById?: ProducerNameLookup,
   producerExternalIdByInternalId?: ProducerExternalIdLookup
 ): { producerIds: string[]; producerNames: string[] } => {
-  const entries = Array.isArray(product.producers)
-    ? (product.producers as ProducerEntry[])
-    : [];
   const producerIds: string[] = [];
   const producerNames: string[] = [];
   const seenIds = new Set<string>();
   const seenNames = new Set<string>();
+  const productRecord = product as Record<string, unknown>;
 
+  const pushProducerId = (candidate: string | null): void => {
+    if (!candidate || seenIds.has(candidate)) return;
+    seenIds.add(candidate);
+    producerIds.push(candidate);
+  };
   const pushProducerName = (candidate: string | null): void => {
     if (!candidate || seenNames.has(candidate)) return;
     seenNames.add(candidate);
     producerNames.push(candidate);
   };
 
-  for (const entry of entries) {
-    if (!entry || typeof entry !== 'object') continue;
-    const producerId = getProducerEntryId(entry);
-    const producerName = getProducerEntryName(entry);
-
-    if (producerId && !seenIds.has(producerId)) {
-      seenIds.add(producerId);
-      producerIds.push(producerId);
+  const pushScalarProducer = (candidate: unknown): void => {
+    const value = toScalarProducerValue(candidate);
+    if (!value) return;
+    pushProducerId(value);
+    pushProducerName(value);
+  };
+  const pushProducerLike = (candidate: unknown): void => {
+    if (candidate && typeof candidate === 'object' && !Array.isArray(candidate)) {
+      const producerEntry = candidate as ProducerEntry;
+      pushProducerId(getProducerEntryId(producerEntry));
+      pushProducerName(getProducerEntryName(producerEntry));
+      return;
     }
+    pushScalarProducer(candidate);
+  };
+
+  const relationEntries = Array.isArray(productRecord['producers'])
+    ? (productRecord['producers'] as unknown[])
+    : [];
+  for (const entry of relationEntries) {
+    if (!entry) continue;
+    if (typeof entry !== 'object' || Array.isArray(entry)) {
+      pushScalarProducer(entry);
+      continue;
+    }
+    const producerId = getProducerEntryId(entry as ProducerEntry);
+    const producerName = getProducerEntryName(entry as ProducerEntry);
+    pushProducerId(producerId);
     pushProducerName(producerName);
   }
+
+  const legacyProducerIds = Array.isArray(productRecord['producerIds'])
+    ? (productRecord['producerIds'] as unknown[])
+    : [];
+  legacyProducerIds.forEach(pushScalarProducer);
+  pushScalarProducer(productRecord['producerId']);
+  pushScalarProducer(productRecord['producer_id']);
+  pushScalarProducer(productRecord['manufacturerId']);
+  pushScalarProducer(productRecord['manufacturer_id']);
+  pushProducerLike(productRecord['producer']);
+  pushProducerLike(productRecord['manufacturer']);
+
+  const legacyProducerNames = Array.isArray(productRecord['producerNames'])
+    ? (productRecord['producerNames'] as unknown[])
+    : [];
+  legacyProducerNames.forEach((candidate: unknown) => {
+    pushProducerName(toScalarProducerValue(candidate));
+  });
+  pushProducerName(toScalarProducerValue(productRecord['producerName']));
+  pushProducerName(toScalarProducerValue(productRecord['producer_name']));
+  pushProducerName(toScalarProducerValue(productRecord['manufacturerName']));
+  pushProducerName(toScalarProducerValue(productRecord['manufacturer_name']));
 
   producerIds.forEach((producerId: string, index: number) => {
     const resolvedExternalId = getProducerExternalIdFromLookup(
@@ -176,7 +232,21 @@ export const getProductProducerValues = (
     pushProducerName(getProducerNameFromLookup(producerId, producerNameById));
   });
 
-  return { producerIds, producerNames };
+  const producerNameToExternalId = buildProducerNameToExternalIdLookup(
+    producerNameById,
+    producerExternalIdByInternalId
+  );
+  producerNames.forEach((producerName: string) => {
+    const resolvedExternalId = producerNameToExternalId.get(producerName.toLowerCase());
+    if (resolvedExternalId) {
+      pushProducerId(resolvedExternalId);
+    }
+  });
+
+  return {
+    producerIds: Array.from(new Set(producerIds)),
+    producerNames,
+  };
 };
 
 export const getProductTagValues = (

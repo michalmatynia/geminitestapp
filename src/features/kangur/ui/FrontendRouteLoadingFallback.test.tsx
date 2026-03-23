@@ -7,6 +7,10 @@ import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { FrontendPublicOwnerProvider } from '@/features/kangur/ui/FrontendPublicOwnerContext';
+import {
+  clearKangurPendingRouteLoadingSnapshot,
+  setKangurPendingRouteLoadingSnapshot,
+} from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
 
 const { kangurRouteLoadingFallbackMock, usePathnameMock } = vi.hoisted(() => ({
   kangurRouteLoadingFallbackMock: vi.fn(),
@@ -29,6 +33,7 @@ import { FrontendRouteLoadingFallback } from '@/features/kangur/ui/FrontendRoute
 describe('FrontendRouteLoadingFallback', () => {
   beforeEach(() => {
     kangurRouteLoadingFallbackMock.mockReset();
+    clearKangurPendingRouteLoadingSnapshot();
     usePathnameMock.mockReturnValue('/en');
   });
 
@@ -80,6 +85,29 @@ describe('FrontendRouteLoadingFallback', () => {
 
   it('enables the navbar skeleton for localized /kangur secondary routes by default', () => {
     usePathnameMock.mockReturnValue('/en/kangur/lessons');
+
+    render(
+      <FrontendPublicOwnerProvider publicOwner='kangur'>
+        <FrontendRouteLoadingFallback />
+      </FrontendPublicOwnerProvider>
+    );
+
+    expect(screen.getByTestId('kangur-route-loading-fallback-probe')).toBeInTheDocument();
+    expect(kangurRouteLoadingFallbackMock).toHaveBeenCalledTimes(1);
+    expect(kangurRouteLoadingFallbackMock).toHaveBeenCalledWith({
+      includeTopNavigationSkeleton: true,
+    });
+  });
+
+  it('uses the pending transition target instead of the current main-page pathname', () => {
+    usePathnameMock.mockReturnValue('/en/kangur');
+    setKangurPendingRouteLoadingSnapshot({
+      href: '/en/kangur/lessons',
+      pageKey: 'Lessons',
+      skeletonVariant: 'lessons-library',
+      startedAt: Date.now(),
+      topBarHeightCssValue: '136px',
+    });
 
     render(
       <FrontendPublicOwnerProvider publicOwner='kangur'>

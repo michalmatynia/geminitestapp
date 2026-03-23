@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   listProducerMappingsMock: vi.fn(),
   listTagMappingsMock: vi.fn(),
   getProducerByIdMock: vi.fn(),
+  findProducerByNameMock: vi.fn(),
   getTagByIdMock: vi.fn(),
   logInfoMock: vi.fn(),
   logWarningMock: vi.fn(),
@@ -36,6 +37,7 @@ vi.mock('@/features/integrations/services/category-mapping-repository', () => ({
 vi.mock('@/features/products/server', () => ({
   getProducerRepository: () => ({
     getProducerById: (...args: unknown[]) => mocks.getProducerByIdMock(...args),
+    findByName: (...args: unknown[]) => mocks.findProducerByNameMock(...args),
   }),
   getTagRepository: () => ({
     getTagById: (...args: unknown[]) => mocks.getTagByIdMock(...args),
@@ -122,6 +124,7 @@ describe('prepareBaseExportMappingsAndProduct', () => {
     mocks.listProducerMappingsMock.mockResolvedValue([]);
     mocks.listTagMappingsMock.mockResolvedValue([]);
     mocks.getProducerByIdMock.mockResolvedValue(null);
+    mocks.findProducerByNameMock.mockResolvedValue(null);
     mocks.getTagByIdMock.mockResolvedValue(null);
   });
 
@@ -227,6 +230,78 @@ describe('prepareBaseExportMappingsAndProduct', () => {
     );
   });
 
+  it('loads producer lookups from legacy product producerIds arrays', async () => {
+    mocks.getProducerByIdMock.mockResolvedValue({
+      id: 'producer-1',
+      name: 'Acme',
+    });
+    mocks.listProducerMappingsMock.mockResolvedValue([
+      {
+        internalProducerId: 'producer-1',
+        externalProducer: {
+          externalId: 'base-producer-77',
+          name: 'Acme Base',
+        },
+      },
+    ]);
+
+    const result = await prepareBaseExportMappingsAndProduct({
+      data: baseRequest,
+      imagesOnly: false,
+      productId: 'product-1',
+      resolvedInventoryId: 'inventory-1',
+      product: {
+        ...createProduct({
+          producers: [],
+        }),
+        producerIds: ['producer-1'],
+      } as ProductWithImages,
+    });
+
+    expect(mocks.listProducerMappingsMock).toHaveBeenCalledWith('connection-1', ['producer-1']);
+    expect(result.producerExternalIdByInternalId).toEqual(
+      expect.objectContaining({
+        'producer-1': 'base-producer-77',
+      })
+    );
+  });
+
+  it('loads producer lookups from legacy top-level producer objects', async () => {
+    mocks.getProducerByIdMock.mockResolvedValue({
+      id: 'producer-1',
+      name: 'Acme',
+    });
+    mocks.listProducerMappingsMock.mockResolvedValue([
+      {
+        internalProducerId: 'producer-1',
+        externalProducer: {
+          externalId: 'base-producer-77',
+          name: 'Acme Base',
+        },
+      },
+    ]);
+
+    const result = await prepareBaseExportMappingsAndProduct({
+      data: baseRequest,
+      imagesOnly: false,
+      productId: 'product-1',
+      resolvedInventoryId: 'inventory-1',
+      product: {
+        ...createProduct({
+          producers: [],
+        }),
+        producer: { id: 'producer-1' },
+      } as ProductWithImages,
+    });
+
+    expect(mocks.listProducerMappingsMock).toHaveBeenCalledWith('connection-1', ['producer-1']);
+    expect(result.producerExternalIdByInternalId).toEqual(
+      expect.objectContaining({
+        'producer-1': 'base-producer-77',
+      })
+    );
+  });
+
   it('resolves producer mappings from legacy manufacturer aliases during preparation', async () => {
     mocks.listExportTemplatesMock.mockResolvedValue([
       {
@@ -269,6 +344,49 @@ describe('prepareBaseExportMappingsAndProduct', () => {
       }),
     });
 
+    expect(mocks.listProducerMappingsMock).toHaveBeenCalledWith('connection-1', ['producer-1']);
+    expect(result.producerExternalIdByInternalId).toEqual(
+      expect.objectContaining({
+        'producer-1': 'base-producer-77',
+      })
+    );
+  });
+
+  it('loads producer lookups from name-only producer payloads', async () => {
+    mocks.findProducerByNameMock.mockResolvedValue({
+      id: 'producer-1',
+      name: 'Acme',
+    });
+    mocks.listProducerMappingsMock.mockResolvedValue([
+      {
+        internalProducerId: 'producer-1',
+        externalProducer: {
+          externalId: 'base-producer-77',
+          name: 'Acme Base',
+        },
+      },
+    ]);
+
+    const result = await prepareBaseExportMappingsAndProduct({
+      data: baseRequest,
+      imagesOnly: false,
+      productId: 'product-1',
+      resolvedInventoryId: 'inventory-1',
+      product: createProduct({
+        producers: [
+          {
+            productId: 'product-1',
+            assignedAt: '2026-03-01T00:00:00.000Z',
+            producer: {
+              id: '',
+              name: 'Acme',
+            },
+          } as unknown as NonNullable<ProductWithImages['producers']>[number],
+        ],
+      }),
+    });
+
+    expect(mocks.findProducerByNameMock).toHaveBeenCalledWith('Acme');
     expect(mocks.listProducerMappingsMock).toHaveBeenCalledWith('connection-1', ['producer-1']);
     expect(result.producerExternalIdByInternalId).toEqual(
       expect.objectContaining({

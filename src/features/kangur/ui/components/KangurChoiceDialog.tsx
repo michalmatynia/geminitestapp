@@ -15,6 +15,7 @@ import {
 import type { ReactNode } from 'react';
 
 type KangurChoiceDialogOption = {
+  ariaLabel?: string;
   id: string;
   label: ReactNode;
   isActive: boolean;
@@ -25,13 +26,14 @@ type KangurChoiceDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   header: ReactNode;
-  title: string; // Used for the internal heading
-  defaultChoiceLabel: string;
-  currentChoiceLabel: string;
+  title: ReactNode;
+  defaultChoiceLabel: ReactNode;
+  currentChoiceLabel: ReactNode;
   closeAriaLabel: string;
   groupAriaLabel: string;
   options: KangurChoiceDialogOption[];
-  doneLabel?: string;
+  doneAriaLabel?: string;
+  doneLabel?: ReactNode;
 };
 
 export function KangurChoiceDialog({
@@ -44,6 +46,7 @@ export function KangurChoiceDialog({
   closeAriaLabel,
   groupAriaLabel,
   options,
+  doneAriaLabel,
   doneLabel = 'Gotowe',
 }: KangurChoiceDialogProps): React.JSX.Element {
   return (
@@ -81,6 +84,7 @@ export function KangurChoiceDialog({
           >
             {options.map((option) => (
               <KangurButton
+                aria-label={option.ariaLabel}
                 key={option.id}
                 className='h-10 flex-1 text-xs sm:text-sm touch-manipulation select-none min-h-11 active:scale-[0.98]'
                 onClick={option.onSelect}
@@ -96,6 +100,7 @@ export function KangurChoiceDialog({
           <div className='flex w-full flex-col gap-2 text-xs [color:var(--kangur-page-muted-text)]'>
             <span>Aktualny wybór: {currentChoiceLabel}.</span>
             <KangurButton
+              aria-label={doneAriaLabel}
               className='w-full touch-manipulation select-none min-h-11 active:scale-[0.98]'
               onClick={() => onOpenChange(false)}
               size='sm'

@@ -168,6 +168,7 @@ describe('BaseQuickExportButton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     trackedRunListeners.clear();
+    window.sessionStorage.clear();
     setupDefaultApiMocks();
     subscribeToTrackedAiPathRunMock.mockImplementation(
       (
@@ -578,5 +579,58 @@ describe('BaseQuickExportButton', () => {
       );
     });
     expect(screen.getByRole('button', { name: 'Base.com export completed.' })).not.toBeDisabled();
+  });
+
+  it('rehydrates the most recent export run after the button remounts', async () => {
+    mutateAsyncMock.mockResolvedValue({
+      success: true,
+      status: 'queued',
+      runId: 'run-export-remount',
+    });
+    apiPostMock.mockImplementation((url: string) => {
+      if (url === '/api/v2/integrations/imports/base') {
+        return Promise.resolve({
+          inventories: [{ id: 'inv-main', name: 'Main inventory', is_default: true }],
+        });
+      }
+      if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
+        return Promise.resolve({
+          sku: 'SKU-001',
+          exists: false,
+          existingProductId: null,
+        });
+      }
+      return Promise.reject(new Error(`Unexpected POST ${url}`));
+    });
+
+    const firstRender = renderButton();
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Base.com export queued.' })).toHaveClass(
+        'border-amber-400/70'
+      );
+    });
+
+    firstRender.unmount();
+    trackedRunListeners.clear();
+
+    renderButton();
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Base.com export queued.' })).toHaveClass(
+        'border-amber-400/70'
+      );
+    });
+    expect(subscribeToTrackedAiPathRunMock).toHaveBeenCalledWith(
+      'run-export-remount',
+      expect.any(Function),
+      expect.objectContaining({
+        initialSnapshot: expect.objectContaining({
+          runId: 'run-export-remount',
+          status: 'queued',
+        }),
+      })
+    );
   });
 });

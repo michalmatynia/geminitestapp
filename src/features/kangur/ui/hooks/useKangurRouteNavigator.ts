@@ -15,16 +15,11 @@ import {
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   isManagedLocalHref,
+  localizeManagedKangurHref,
   normalizeManagedKangurPathname,
   resolveManagedKangurPageKeyFromHref,
 } from '@/features/kangur/ui/routing/managed-paths';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
-import {
-  buildLocalizedPathname,
-  getPathLocale,
-  normalizeSiteLocale,
-  stripSiteLocalePrefix,
-} from '@/shared/lib/i18n/site-locale';
 
 type KangurRouteNavigationOptions = {
   pageKey?: string | null;
@@ -55,62 +50,6 @@ const getManagedPathnameFromHref = (href: string): string | null => {
   );
 };
 
-const localizeManagedHref = ({
-  href,
-  locale,
-  pathname,
-  transitionKind,
-}: {
-  href: string;
-  locale: string;
-  pathname: string | null;
-  transitionKind?: KangurRouteTransitionKind | null;
-}): string => {
-  if (!isManagedLocalHref(href)) {
-    return href;
-  }
-
-  return withKangurClientErrorSync(
-    {
-      source: 'kangur.routing',
-      action: 'localize-managed-href',
-      description: 'Localizes managed Kangur hrefs to the active route locale.',
-      context: {
-        href,
-        locale,
-        pathname,
-      },
-    },
-    () => {
-      const parsed = new URL(href, 'https://kangur.local');
-      const hrefLocale = getPathLocale(parsed.pathname);
-      if (hrefLocale) {
-        return `${parsed.pathname}${parsed.search}${parsed.hash}`;
-      }
-
-      if (transitionKind === 'locale-switch') {
-        return `${parsed.pathname}${parsed.search}${parsed.hash}`;
-      }
-
-      const explicitPathLocale = getPathLocale(pathname);
-      const normalizedPathname = stripSiteLocalePrefix(parsed.pathname);
-      const normalizedCurrentPathname = stripSiteLocalePrefix(pathname);
-      if (explicitPathLocale && normalizedCurrentPathname === normalizedPathname) {
-        return `${normalizedPathname}${parsed.search}${parsed.hash}`;
-      }
-
-      const localizedPathname = explicitPathLocale
-        ? normalizedPathname === '/'
-          ? `/${explicitPathLocale}`
-          : `/${explicitPathLocale}${normalizedPathname}`
-        : buildLocalizedPathname(normalizedPathname, normalizeSiteLocale(locale));
-
-      return `${localizedPathname}${parsed.search}${parsed.hash}`;
-    },
-    { fallback: href }
-  );
-};
-
 let queuedManagedNavigationTimeoutId: number | null = null;
 
 const clearQueuedManagedNavigation = (): void => {
@@ -138,7 +77,7 @@ export function useKangurRouteNavigator(): {
   const requestedHref = routing?.requestedHref ?? routing?.requestedPath;
   const resolveManagedHref = useCallback(
     (href: string, transitionKind?: KangurRouteTransitionKind | null): string =>
-      localizeManagedHref({
+      localizeManagedKangurHref({
         href,
         locale,
         pathname,

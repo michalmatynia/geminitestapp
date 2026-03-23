@@ -3,17 +3,14 @@ export const dynamic = 'force-dynamic';
 
 import type { NextRequest } from 'next/server';
 
-import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type {
-  CatchAllRouteDefinition as RouteDefinition,
-  CatchAllRouteMethod as HttpMethod,
-  CatchAllRouteModule as RouteModule,
-  CatchAllRouteParams as Params,
-  CatchAllRoutePathParams as RouteParams,
-  CatchAllRoutePatternToken as PatternToken,
-} from '@/shared/lib/api/catch-all-route-types';
-import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
+import {
+  handleCatchAllRequest,
+  getPathSegments,
+  type CatchAllRouteDefinition as RouteDefinition,
+  type CatchAllRoutePathParams as RouteParams,
+  type CatchAllOptionalRoutePatternToken as PatternToken,
+} from '@/shared/lib/api/catch-all-router';
 
 import * as cardsBackfill from '../cards/backfill/route-handler';
 import * as composite from '../composite/route-handler';
@@ -51,55 +48,9 @@ import * as projectVariantsDelete from '../projects/[projectId]/variants/delete/
 import * as uiExtractor from '../ui-extractor/route-handler';
 import * as validationPatternsLearn from '../validation-patterns/learn/route-handler';
 
-const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
-
-const notFound = async (request: NextRequest, source: string): Promise<Response> =>
-  createErrorResponse(notFoundError('Not Found'), { request, source });
-const methodNotAllowed = async (
-  request: NextRequest,
-  allowed: HttpMethod[],
-  source: string
-): Promise<Response> => {
-  const response = await createErrorResponse(methodNotAllowedError('Method not allowed', {
-    allowedMethods: allowed,
-  }), { request, source });
-  response.headers.set('Allow', allowed.join(', '));
-  return response;
-};
-
-const getAllowedMethods = (module: RouteModule): HttpMethod[] =>
-  HTTP_METHODS.filter((method) => typeof module[method] === 'function');
-
-const dispatch = async (
-  module: RouteModule,
-  method: HttpMethod,
-  request: NextRequest,
-  params: Params | undefined,
-  source: string
-): Promise<Response> => {
-  const handler = module[method];
-  if (!handler) {
-    const allowed = getAllowedMethods(module);
-    return allowed.length > 0
-      ? methodNotAllowed(request, allowed, source)
-      : notFound(request, source);
-  }
-  return handler(request, { params: Promise.resolve(params ?? ({} as Params)) });
-};
-
-const getPathSegments = (request: NextRequest): string[] => {
-  const basePath = '/api/image-studio';
-  const pathname = request.nextUrl.pathname;
-  if (!pathname.startsWith(basePath)) {
-    return [];
-  }
-  const remainder = pathname.slice(basePath.length).replace(/^\/+/, '');
-  return remainder ? remainder.split('/').filter(Boolean) : [];
-};
-
 const param = (name: string): PatternToken => ({ param: name });
 
-const ROUTE_TABLE: RouteDefinition[] = [
+const ROUTES: RouteDefinition[] = [
   { pattern: ['cards', 'backfill'], module: cardsBackfill },
   { pattern: ['composite'], module: composite },
   { pattern: ['mask', 'ai'], module: maskAi },
@@ -137,65 +88,8 @@ const ROUTE_TABLE: RouteDefinition[] = [
   { pattern: ['validation-patterns', 'learn'], module: validationPatternsLearn },
 ];
 
-const matchPattern = (pattern: PatternToken[], segments: string[]): Params | null => {
-  if (pattern.length !== segments.length) {
-    return null;
-  }
-  const params: Params = {};
-  for (let index = 0; index < pattern.length; index += 1) {
-    const token = pattern[index];
-    if (!token) {
-      return null;
-    }
-    const segment = segments[index];
-    if (!segment) {
-      return null;
-    }
-    if (typeof token === 'string') {
-      if (token !== segment) {
-        return null;
-      }
-      continue;
-    }
-    params[token.param] = segment;
-  }
-  return params;
-};
-
-const matchRouteEntry = (
-  segments: string[]
-): { module: RouteModule; params?: Params } | null => {
-  for (const entry of ROUTE_TABLE) {
-    const params = matchPattern(entry.pattern, segments);
-    if (!params) {
-      continue;
-    }
-
-    return {
-      module: entry.module,
-      params: Object.keys(params).length > 0 ? params : undefined,
-    };
-  }
-  return null;
-};
-
-const routeImageStudio = (
-  method: HttpMethod,
-  request: NextRequest,
-  segments: string[]
-): Promise<Response> => {
-  const source = `image-studio.[[...path]].${method}`;
-  if (segments.length === 0) {
-    return notFound(request, source);
-  }
-
-  const match = matchRouteEntry(segments);
-  if (!match) {
-    return notFound(request, source);
-  }
-
-  return dispatch(match.module, method, request, match.params, source);
-};
+const BASE_PATH = '/api/image-studio';
+const SOURCE_BASE = 'image-studio';
 
 const ROUTER_OPTIONS = {
   successLogging: 'off',
@@ -205,27 +99,27 @@ const ROUTER_OPTIONS = {
 } as const;
 
 export const GET = apiHandlerWithParams<RouteParams>(
-  (request: NextRequest, _ctx, _params) =>
-    routeImageStudio('GET', request, getPathSegments(request)),
-  { ...ROUTER_OPTIONS, source: 'image-studio.[[...path]].GET', requireAuth: true }
+  (request: NextRequest) =>
+    handleCatchAllRequest('GET', request, getPathSegments(request, BASE_PATH), ROUTES, SOURCE_BASE),
+  { ...ROUTER_OPTIONS, source: `${SOURCE_BASE}.[[...path]].GET`, requireAuth: true }
 );
 export const POST = apiHandlerWithParams<RouteParams>(
-  (request: NextRequest, _ctx, _params) =>
-    routeImageStudio('POST', request, getPathSegments(request)),
-  { ...ROUTER_OPTIONS, source: 'image-studio.[[...path]].POST', requireAuth: true }
+  (request: NextRequest) =>
+    handleCatchAllRequest('POST', request, getPathSegments(request, BASE_PATH), ROUTES, SOURCE_BASE),
+  { ...ROUTER_OPTIONS, source: `${SOURCE_BASE}.[[...path]].POST`, requireAuth: true }
 );
 export const PUT = apiHandlerWithParams<RouteParams>(
-  (request: NextRequest, _ctx, _params) =>
-    routeImageStudio('PUT', request, getPathSegments(request)),
-  { ...ROUTER_OPTIONS, source: 'image-studio.[[...path]].PUT', requireAuth: true }
+  (request: NextRequest) =>
+    handleCatchAllRequest('PUT', request, getPathSegments(request, BASE_PATH), ROUTES, SOURCE_BASE),
+  { ...ROUTER_OPTIONS, source: `${SOURCE_BASE}.[[...path]].PUT`, requireAuth: true }
 );
 export const PATCH = apiHandlerWithParams<RouteParams>(
-  (request: NextRequest, _ctx, _params) =>
-    routeImageStudio('PATCH', request, getPathSegments(request)),
-  { ...ROUTER_OPTIONS, source: 'image-studio.[[...path]].PATCH', requireAuth: true }
+  (request: NextRequest) =>
+    handleCatchAllRequest('PATCH', request, getPathSegments(request, BASE_PATH), ROUTES, SOURCE_BASE),
+  { ...ROUTER_OPTIONS, source: `${SOURCE_BASE}.[[...path]].PATCH`, requireAuth: true }
 );
 export const DELETE = apiHandlerWithParams<RouteParams>(
-  (request: NextRequest, _ctx, _params) =>
-    routeImageStudio('DELETE', request, getPathSegments(request)),
-  { ...ROUTER_OPTIONS, source: 'image-studio.[[...path]].DELETE', requireAuth: true }
+  (request: NextRequest) =>
+    handleCatchAllRequest('DELETE', request, getPathSegments(request, BASE_PATH), ROUTES, SOURCE_BASE),
+  { ...ROUTER_OPTIONS, source: `${SOURCE_BASE}.[[...path]].DELETE`, requireAuth: true }
 );

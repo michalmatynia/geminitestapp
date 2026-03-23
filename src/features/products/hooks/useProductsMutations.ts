@@ -21,7 +21,6 @@ import { delay } from '@/shared/utils';
 
 import {
   invalidateProductsAndCounts,
-  invalidateProductsAndDetail,
   getProductDetailQueryKey,
 } from './productCache';
 
@@ -59,6 +58,58 @@ const patchProductListCacheValue = (
     };
   }
   return cacheValue;
+};
+
+const mergeUpdatedProductIntoListCacheValue = (
+  cacheValue: ProductListCacheValue,
+  savedProduct: ProductWithImages
+): ProductListCacheValue => {
+  if (!cacheValue) return cacheValue;
+  if (Array.isArray(cacheValue)) {
+    return cacheValue.map((product: ProductWithImages) =>
+      product.id === savedProduct.id ? { ...product, ...savedProduct } : product
+    );
+  }
+  if (Array.isArray(cacheValue.items)) {
+    return {
+      ...cacheValue,
+      items: cacheValue.items.map((product: ProductWithImages) =>
+        product.id === savedProduct.id ? { ...product, ...savedProduct } : product
+      ),
+    };
+  }
+  return cacheValue;
+};
+
+const syncUpdatedProductAcrossCaches = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  savedProduct: ProductWithImages
+): void => {
+  queryClient.setQueriesData({ queryKey: QUERY_KEYS.products.lists() }, (old: ProductListCacheValue) =>
+    mergeUpdatedProductIntoListCacheValue(old, savedProduct)
+  );
+  queryClient.setQueryData(getProductDetailQueryKey(savedProduct.id), savedProduct);
+  queryClient.setQueryData(QUERY_KEYS.products.detailEdit(savedProduct.id), savedProduct);
+};
+
+const markUpdatedProductCachesStale = async (
+  queryClient: ReturnType<typeof useQueryClient>,
+  productId: string
+): Promise<void> => {
+  await Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.products.lists(),
+      refetchType: 'none',
+    }),
+    queryClient.invalidateQueries({
+      queryKey: getProductDetailQueryKey(productId),
+      refetchType: 'none',
+    }),
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.products.detailEdit(productId),
+      refetchType: 'none',
+    }),
+  ]);
 };
 
 // Retry only transient/network errors — not validation (400) or not-found (404)
@@ -213,7 +264,11 @@ export function useUpdateProductField(): UpdateMutation<
       field: ProductQuickField;
       value: number;
     },
-    { previousLists: unknown; previousDetail: unknown }
+    {
+      previousLists: Array<[readonly unknown[], ProductListCacheValue]>;
+      previousDetail: ProductWithImages | undefined;
+      previousDetailEdit: ProductWithImages | undefined;
+    }
   >({
     mutationFn: async ({ id, field, value }): Promise<ProductWithImages> =>
       await api.patch<ProductWithImages>(`/api/v2/products/${id}`, { [field]: value }),
@@ -221,16 +276,19 @@ export function useUpdateProductField(): UpdateMutation<
       // Optimistically update the list and detail caches
       const listKey = QUERY_KEYS.products.lists();
       const detailKey = getProductDetailQueryKey(id);
+      const detailEditKey = QUERY_KEYS.products.detailEdit(id);
 
       // Cancel any outgoing refetches so they don't overwrite our optimistic update
       await Promise.all([
         queryClient.cancelQueries({ queryKey: listKey }),
         queryClient.cancelQueries({ queryKey: detailKey }),
+        queryClient.cancelQueries({ queryKey: detailEditKey }),
       ]);
 
       // Snapshot the previous values
-      const previousLists = queryClient.getQueryData<unknown>(listKey);
+      const previousLists = queryClient.getQueriesData<ProductListCacheValue>({ queryKey: listKey });
       const previousDetail = queryClient.getQueryData<ProductWithImages>(detailKey);
+      const previousDetailEdit = queryClient.getQueryData<ProductWithImages>(detailEditKey);
 
       // Optimistically update lists
       queryClient.setQueriesData({ queryKey: listKey }, (old: ProductListCacheValue) =>
@@ -241,19 +299,22 @@ export function useUpdateProductField(): UpdateMutation<
       queryClient.setQueryData(detailKey, (old: ProductWithImages | undefined) =>
         old ? { ...old, [field]: value } : old
       );
+      queryClient.setQueryData(detailEditKey, (old: ProductWithImages | undefined) =>
+        old ? { ...old, [field]: value } : old
+      );
 
-      return { previousLists, previousDetail };
+      return { previousLists, previousDetail, previousDetailEdit };
     },
     onError: (_err, { id }, context) => {
       // Rollback on error
-      if (context?.previousLists) {
-        queryClient.setQueriesData(
-          { queryKey: QUERY_KEYS.products.lists() },
-          context.previousLists
-        );
-      }
-      if (context?.previousDetail) {
+      context?.previousLists.forEach(([queryKey, value]) => {
+        queryClient.setQueryData(queryKey, value);
+      });
+      if (context?.previousDetail !== undefined) {
         queryClient.setQueryData(getProductDetailQueryKey(id), context.previousDetail);
+      }
+      if (context?.previousDetailEdit !== undefined) {
+        queryClient.setQueryData(QUERY_KEYS.products.detailEdit(id), context.previousDetailEdit);
       }
     },
     mutationKey: QUERY_KEYS.products.all,
@@ -266,8 +327,11 @@ export function useUpdateProductField(): UpdateMutation<
       tags: ['products', 'field-update'],
       description: 'Updates a single product field with optimistic cache sync.',
     },
+    onSuccess: async (savedProduct) => {
+      syncUpdatedProductAcrossCaches(queryClient, savedProduct);
+    },
     invalidate: async (queryClient, _, variables) => {
-      await invalidateProductsAndDetail(queryClient, variables.id);
+      await markUpdatedProductCachesStale(queryClient, variables.id);
     },
   });
 }

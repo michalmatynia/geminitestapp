@@ -172,6 +172,12 @@ const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
   useKangurSubjectFocusMock: vi.fn(),
 }));
 
+const { ageGroupState } = vi.hoisted(() => ({
+  ageGroupState: {
+    value: 'ten_year_old' as 'six_year_old' | 'ten_year_old' | 'grown_ups',
+  },
+}));
+
 const { sessionMock } = vi.hoisted(() => ({
   sessionMock: vi.fn(),
 }));
@@ -326,6 +332,13 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
+  useKangurAgeGroupFocus: () => ({
+    ageGroup: ageGroupState.value,
+    setAgeGroup: vi.fn(),
+  }),
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useOptionalKangurAiTutor: () => optionalTutorMock(),
 }));
@@ -425,6 +438,7 @@ describe('KangurPrimaryNavigation', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    ageGroupState.value = 'ten_year_old';
     routeTransitionStateMock.mockReturnValue(null);
     frontendPublicOwnerMock.mockReturnValue(null);
     localeMock.mockReturnValue('pl');
@@ -1108,6 +1122,46 @@ describe('KangurPrimaryNavigation', () => {
 
     expect(subjectButton).toHaveAttribute('title', 'Current subject: Maths');
     expect(ageGroupButton).toHaveAttribute('title', 'Current age group: Age 10');
+  });
+
+  it('uses icon-first subject and age-group cues for six-year-old learners', async () => {
+    ageGroupState.value = 'six_year_old';
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'music',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('kangur-primary-nav-lessons-icon')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-primary-nav-subject-icon')).toHaveTextContent('🎵');
+    expect(screen.getByTestId('kangur-primary-nav-subject-detail')).toHaveTextContent('👂');
+    expect(screen.getByTestId('kangur-primary-nav-age-group-icon')).toHaveTextContent('🐣');
+    expect(screen.getByTestId('kangur-primary-nav-age-group-detail')).toHaveTextContent('6');
+
+    fireEvent.click(screen.getByTestId('kangur-primary-nav-subject'));
+
+    expect(
+      await screen.findByTestId('kangur-primary-nav-subject-option-icon-music')
+    ).toHaveTextContent(
+      '🎵'
+    );
+    expect(
+      screen.getByTestId('kangur-primary-nav-subject-option-detail-music')
+    ).toHaveTextContent(
+      '👂'
+    );
+    expect(screen.getByTestId('kangur-primary-nav-subject-modal-title-icon')).toHaveTextContent(
+      '📚'
+    );
   });
 
   it('does not prefetch the Duels route from the primary navigation before entry', () => {

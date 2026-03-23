@@ -31,6 +31,8 @@ import {
 } from './common';
 
 export const getProducerRefId = (value: unknown): string => {
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
   if (!value || typeof value !== 'object' || Array.isArray(value)) return '';
   const record = value as Record<string, unknown>;
   const idValue =
@@ -47,6 +49,74 @@ export const getProducerRefId = (value: unknown): string => {
   if (typeof idValue === 'string') return idValue.trim();
   if (typeof idValue === 'number') return String(idValue);
   return '';
+};
+
+export const getProducerRefName = (value: unknown): string => {
+  if (typeof value === 'string') return value.trim();
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return '';
+  const record = value as Record<string, unknown>;
+  const nameValue =
+    record['producerName'] ??
+    record['producer_name'] ??
+    record['manufacturerName'] ??
+    record['manufacturer_name'] ??
+    record['name'] ??
+    (record['producer'] &&
+    typeof record['producer'] === 'object' &&
+    !Array.isArray(record['producer'])
+      ? (record['producer'] as Record<string, unknown>)['name']
+      : undefined);
+  return typeof nameValue === 'string' ? nameValue.trim() : '';
+};
+
+const collectProducerRefIds = (product: BaseExportProductLike): string[] => {
+  const productRecord = product as Record<string, unknown>;
+  const producerEntries = Array.isArray(productRecord['producers'])
+    ? (productRecord['producers'] as unknown[])
+    : [];
+  const legacyProducerIds = Array.isArray(productRecord['producerIds'])
+    ? (productRecord['producerIds'] as unknown[])
+    : [];
+
+  return Array.from(
+    new Set(
+      [
+        ...producerEntries.map((producer) => getProducerRefId(producer)),
+        ...legacyProducerIds.map((producerId) => getProducerRefId(producerId)),
+        getProducerRefId(productRecord['producerId']),
+        getProducerRefId(productRecord['producer_id']),
+        getProducerRefId(productRecord['manufacturerId']),
+        getProducerRefId(productRecord['manufacturer_id']),
+        getProducerRefId(productRecord['producer']),
+        getProducerRefId(productRecord['manufacturer']),
+      ].filter((producerId): producerId is string => producerId.length > 0)
+    )
+  );
+};
+
+const collectProducerNames = (product: BaseExportProductLike): string[] => {
+  const productRecord = product as Record<string, unknown>;
+  const producerEntries = Array.isArray(productRecord['producers'])
+    ? (productRecord['producers'] as unknown[])
+    : [];
+  const legacyProducerNames = Array.isArray(productRecord['producerNames'])
+    ? (productRecord['producerNames'] as unknown[])
+    : [];
+
+  return Array.from(
+    new Set(
+      [
+        ...producerEntries.map((producer) => getProducerRefName(producer)),
+        ...legacyProducerNames.map((producerName) => getProducerRefName(producerName)),
+        getProducerRefName(productRecord['producerName']),
+        getProducerRefName(productRecord['producer_name']),
+        getProducerRefName(productRecord['manufacturerName']),
+        getProducerRefName(productRecord['manufacturer_name']),
+        getProducerRefName(productRecord['producer']),
+        getProducerRefName(productRecord['manufacturer']),
+      ].filter((producerName): producerName is string => producerName.length > 0)
+    )
+  );
 };
 
 const asRecord = (value: unknown): Record<string, unknown> | null =>
@@ -170,15 +240,8 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
     }
   }
 
-  const productProducerIds = !imagesOnly
-    ? Array.from(
-      new Set(
-        (product.producers ?? [])
-          .map((producer) => getProducerRefId(producer))
-          .filter((producerId): producerId is string => Boolean(producerId))
-      )
-    )
-    : [];
+  const productProducerIds = !imagesOnly ? collectProducerRefIds(product) : [];
+  const productProducerNames = !imagesOnly ? collectProducerNames(product) : [];
   const productTagIds = !imagesOnly
     ? Array.from(
       new Set(
@@ -193,10 +256,20 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
   let producerExternalIdByInternalId: Record<string, string> | null = null;
   let tagNameById: Record<string, string> | null = null;
   let tagExternalIdByInternalId: Record<string, string> | null = null;
+  let producerLookupIds = productProducerIds;
+  let unresolvedProducerNames: string[] = productProducerNames;
 
-  if (!imagesOnly && productProducerIds.length > 0) {
+  if (!imagesOnly && (productProducerIds.length > 0 || productProducerNames.length > 0)) {
     try {
       const producerRepository: ProducerRepository = await getProducerRepository();
+      const resolvedProducerMap = new Map<string, { id: string; name: string }>();
+      const addResolvedProducer = (producer: { id?: string | null; name?: string | null } | null): void => {
+        const id = typeof producer?.id === 'string' ? producer.id.trim() : '';
+        const name = typeof producer?.name === 'string' ? producer.name.trim() : '';
+        if (!id || !name || resolvedProducerMap.has(id)) return;
+        resolvedProducerMap.set(id, { id, name });
+      };
+
       const resolvedProducers = await Promise.all(
         productProducerIds.map(async (producerId: string) => {
           try {
@@ -207,25 +280,47 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
           }
         })
       );
-      const mappedEntries = resolvedProducers
-        .map((producer) => {
-          const id = typeof producer?.id === 'string' ? producer.id.trim() : '';
-          const name = typeof producer?.name === 'string' ? producer.name.trim() : '';
-          if (!id || !name) return null;
-          return [id, name] as const;
+
+      resolvedProducers.forEach(addResolvedProducer);
+
+      const resolvedProducersByName = await Promise.all(
+        productProducerNames.map(async (producerName: string) => {
+          try {
+            return await producerRepository.findByName(producerName);
+          } catch (error) {
+            void ErrorSystem.captureException(error);
+            return null;
+          }
         })
-        .filter((entry): entry is readonly [string, string] => entry !== null);
+      );
+
+      resolvedProducersByName.forEach(addResolvedProducer);
+
+      const mappedEntries = Array.from(resolvedProducerMap.values()).map(({ id, name }) => [id, name] as const);
       if (mappedEntries.length > 0) {
         producerNameById = Object.fromEntries([
           ...mappedEntries,
           ...mappedEntries.map(([id, name]) => [id.toLowerCase(), name] as const),
         ]);
       }
+
+      const resolvedProducerNameSet = new Set(
+        Array.from(resolvedProducerMap.values()).map(({ name }) => name.toLowerCase())
+      );
+      unresolvedProducerNames = productProducerNames.filter(
+        (producerName: string) => !resolvedProducerNameSet.has(producerName.toLowerCase())
+      );
+      producerLookupIds = Array.from(
+        new Set([
+          ...productProducerIds,
+          ...Array.from(resolvedProducerMap.keys()),
+        ])
+      );
     } catch (error) {
       void ErrorSystem.captureException(error);
       await ErrorSystem.logWarning('[export-to-base] Failed to resolve producer names for export', {
         productId,
-        producerCount: productProducerIds.length,
+        producerCount: productProducerIds.length + productProducerNames.length,
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -234,7 +329,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
       const producerMappingRepo = getProducerMappingRepository();
       const producerMappings = await producerMappingRepo.listByInternalProducerIds(
         data.connectionId,
-        productProducerIds
+        producerLookupIds
       );
       const mappedEntries = producerMappings
         .map((mapping) => {
@@ -266,7 +361,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
         '[export-to-base] Failed to resolve producer mappings for export',
         {
           productId,
-          producerCount: productProducerIds.length,
+          producerCount: producerLookupIds.length,
           error: error instanceof Error ? error.message : String(error),
         }
       );
@@ -353,8 +448,13 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
         matchesTemplateField(targetField, PRODUCER_ID_TEMPLATE_FIELDS)
       );
     });
-    if (hasProducerIdTemplateMapping && productProducerIds.length > 0) {
-      const missingProducerIds = productProducerIds.filter((producerId: string) => {
+    if (hasProducerIdTemplateMapping && unresolvedProducerNames.length > 0) {
+      throw badRequestError(
+        `No internal producer record found for: ${unresolvedProducerNames.join(', ')}. Re-select the producer on the product and retry.`
+      );
+    }
+    if (hasProducerIdTemplateMapping && producerLookupIds.length > 0) {
+      const missingProducerIds = producerLookupIds.filter((producerId: string) => {
         const direct = producerExternalIdByInternalId?.[producerId];
         const lowered = producerExternalIdByInternalId?.[producerId.toLowerCase()];
         return !direct && !lowered;

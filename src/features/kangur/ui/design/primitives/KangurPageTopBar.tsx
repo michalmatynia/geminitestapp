@@ -10,6 +10,7 @@ import {
   KANGUR_TOP_BAR_HEIGHT_VAR_NAME,
   KANGUR_TOP_BAR_INNER_CLASSNAME,
 } from '../tokens';
+import { rememberKangurTopBarHeightCssValue } from '../../utils/readKangurTopBarHeightCssValue';
 
 export const KangurPageTopBar = ({
   left,
@@ -31,10 +32,19 @@ export const KangurPageTopBar = ({
     }
 
     const updateHeight = (): void => {
-      const height = node.getBoundingClientRect().height;
+      const height = Math.round(node.getBoundingClientRect().height);
+      if (height <= 0) {
+        return;
+      }
+
+      const nextTopBarHeightCssValue = rememberKangurTopBarHeightCssValue(`${height}px`);
+      if (!nextTopBarHeightCssValue) {
+        return;
+      }
+
       document.documentElement.style.setProperty(
         KANGUR_TOP_BAR_HEIGHT_VAR_NAME,
-        `${Math.round(height)}px`
+        nextTopBarHeightCssValue
       );
     };
 

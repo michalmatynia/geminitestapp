@@ -3,6 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
+import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
+import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { useKangurLessonSubsectionNavigationActive } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { useOptionalKangurLessonsRuntime } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { KangurButton, KangurPanelIntro } from '@/features/kangur/ui/design/primitives';
@@ -37,11 +39,13 @@ export function KangurLessonNavigationWidget({
   const isCoarsePointer = useKangurCoarsePointer();
   const runtime = useOptionalKangurLessonsRuntime();
   const isSubsectionNavigationActive = useKangurLessonSubsectionNavigationActive();
+  const { ageGroup } = useKangurAgeGroupFocus();
   const prevLesson = overridePrevLesson ?? runtime?.prevLesson ?? null;
   const nextLesson = overrideNextLesson ?? runtime?.nextLesson ?? null;
   const handleSelectLesson = onSelectLesson ?? runtime?.selectLesson;
   const panelDescription = sectionSummary;
   const panelTitle = sectionTitle;
+  const isSixYearOld = ageGroup === 'six_year_old';
 
   if (isSubsectionNavigationActive || !handleSelectLesson) {
     return null;
@@ -98,7 +102,18 @@ export function KangurLessonNavigationWidget({
           }
         >
           <ChevronLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-          <span className='text-xs font-semibold text-slate-600 sm:hidden'>{translations('previousShort')}</span>
+          {isSixYearOld ? (
+            <KangurVisualCueContent
+              icon='🔙'
+              iconClassName='text-base'
+              iconTestId='kangur-lesson-nav-prev-icon'
+              label={translations('previousShort')}
+            />
+          ) : (
+            <span className='text-xs font-semibold text-slate-600 sm:hidden'>
+              {translations('previousShort')}
+            </span>
+          )}
           <span className='sr-only'>{prevLesson?.title ?? translations('noPreviousLesson')}</span>
         </KangurButton>
 
@@ -123,7 +138,18 @@ export function KangurLessonNavigationWidget({
               : translations('noNextLesson')
           }
         >
-          <span className='text-xs font-semibold text-slate-600 sm:hidden'>{translations('nextShort')}</span>
+          {isSixYearOld ? (
+            <KangurVisualCueContent
+              icon='🔜'
+              iconClassName='text-base'
+              iconTestId='kangur-lesson-nav-next-icon'
+              label={translations('nextShort')}
+            />
+          ) : (
+            <span className='text-xs font-semibold text-slate-600 sm:hidden'>
+              {translations('nextShort')}
+            </span>
+          )}
           <span className='sr-only'>{nextLesson?.title ?? translations('noNextLesson')}</span>
           <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
         </KangurButton>

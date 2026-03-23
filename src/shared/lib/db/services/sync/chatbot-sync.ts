@@ -81,11 +81,11 @@ export const syncChatbotSessionsPrismaToMongo: DatabaseSyncHandler = async ({ mo
   const rows = await prisma.chatbotSession.findMany({
     include: { messages: true },
   });
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: row.id,
     id: row.id,
     title: row.title,
-    messages: row.messages.map((msg) => ({
+    messages: row.messages.map((msg: any) => ({
       role: msg.role,
       content: msg.content,
       createdAt: msg.createdAt,
@@ -107,7 +107,7 @@ export const syncChatbotSessionsPrismaToMongo: DatabaseSyncHandler = async ({ mo
 
 export const syncChatbotJobsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.chatbotJob.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: Prisma.ChatbotJobGetPayload<{}>) => ({
     _id: row.id,
     id: row.id,
     sessionId: row.sessionId,

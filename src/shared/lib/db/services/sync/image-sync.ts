@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 import type { MongoImageFileDoc, MongoImageStudioSlotDoc } from '../database-sync-types';
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
@@ -22,8 +20,8 @@ export const syncImageFiles: DatabaseSyncHandler = async ({ mongo, prisma, norma
         width: doc.width ?? null,
         height: doc.height ?? null,
         tags: doc.tags ?? [],
-        createdAt: doc.createdAt ?? new Date(),
-        updatedAt: doc.updatedAt ?? new Date(),
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
     .filter((item): item is Prisma.ImageFileCreateManyInput => item !== null);
@@ -111,7 +109,7 @@ export const syncImageStudioSlots: DatabaseSyncHandler = async ({
 
 export const syncImageFilesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.imageFile.findMany();
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     filename: row.filename,
@@ -136,7 +134,7 @@ export const syncImageFilesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, 
 
 export const syncImageStudioSlotsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.imageStudioSlot.findMany();
-  const docs = rows.map((row: any) => ({
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     projectId: row.projectId,

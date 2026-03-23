@@ -142,7 +142,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   const resolvedContextRegistryBundle = data.contextRegistry?.refs.length
     ? await withTiming('contextRegistryMs', async () => {
       return await contextRegistryEngine.resolveRefs({
-        refs: data.contextRegistry!.refs,
+        refs: data.contextRegistry?.refs ?? [],
         maxNodes: 24,
         depth: 1,
       });

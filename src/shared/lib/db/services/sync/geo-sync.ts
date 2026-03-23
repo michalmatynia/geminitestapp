@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 import type { MongoCurrencyDoc, MongoCountryDoc, MongoLanguageDoc } from '../database-sync-types';
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma, CurrencyCode } from '@prisma/client';
@@ -25,8 +24,8 @@ export const syncCurrencies: DatabaseSyncHandler = async ({ mongo, prisma, curre
         code: code as CurrencyCode,
         name: doc.name ?? code,
         symbol: doc.symbol ?? null,
-        createdAt: doc.createdAt ?? new Date(),
-        updatedAt: doc.updatedAt ?? new Date(),
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
     .filter((item): item is Prisma.CurrencyCreateManyInput => item !== null);
@@ -58,8 +57,8 @@ export const syncCountries: DatabaseSyncHandler = async ({ mongo, prisma, countr
         id,
         code,
         name: doc.name ?? code,
-        createdAt: doc.createdAt ?? new Date(),
-        updatedAt: doc.updatedAt ?? new Date(),
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
         currencyIds: Array.isArray(doc.currencyIds) ? doc.currencyIds : [],
       };
     })
@@ -107,8 +106,8 @@ export const syncLanguages: DatabaseSyncHandler = async ({ mongo, prisma }) => {
         code,
         name: doc.name ?? code,
         nativeName: doc.nativeName ?? null,
-        createdAt: doc.createdAt ?? new Date(),
-        updatedAt: doc.updatedAt ?? new Date(),
+        createdAt: (doc.createdAt as Date) ?? new Date(),
+        updatedAt: (doc.updatedAt as Date) ?? new Date(),
         countries: Array.isArray(doc.countries) ? doc.countries : [],
       };
     })
@@ -138,16 +137,8 @@ export const syncLanguages: DatabaseSyncHandler = async ({ mongo, prisma }) => {
 // --- Prisma to Mongo handlers ---
 
 export const syncCurrenciesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  type PersistedCurrencyRow = {
-    id: string;
-    code: string;
-    name: string;
-    symbol: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-  };
-  const rows = (await prisma.currency.findMany()) as PersistedCurrencyRow[];
-  const docs = rows.map((row: PersistedCurrencyRow) => ({
+  const rows = await prisma.currency.findMany();
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     code: row.code,
@@ -167,26 +158,15 @@ export const syncCurrenciesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, 
 };
 
 export const syncCountriesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  type PersistedCountryCurrencyRow = {
-    currencyId: string;
-  };
-  type PersistedCountryRow = {
-    id: string;
-    code: string;
-    name: string;
-    currencies: PersistedCountryCurrencyRow[];
-    createdAt: Date;
-    updatedAt: Date;
-  };
-  const rows = (await prisma.country.findMany({
+  const rows = await prisma.country.findMany({
     include: { currencies: true },
-  })) as PersistedCountryRow[];
-  const docs = rows.map((row: PersistedCountryRow) => ({
+  });
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     code: row.code,
     name: row.name,
-    currencyIds: row.currencies.map((entry: { currencyId: string }) => entry.currencyId),
+    currencyIds: row.currencies.map((entry) => entry.currencyId),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }));
@@ -201,34 +181,17 @@ export const syncCountriesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, p
 };
 
 export const syncLanguagesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  type PersistedLanguageCountryRow = {
-    countryId: string;
-    country: {
-      id: string;
-      code: string;
-      name: string;
-    };
-  };
-  type PersistedLanguageRow = {
-    id: string;
-    code: string;
-    name: string;
-    nativeName: string | null;
-    countries: PersistedLanguageCountryRow[];
-    createdAt: Date;
-    updatedAt: Date;
-  };
-  const rows = (await prisma.language.findMany({
+  const rows = await prisma.language.findMany({
     include: { countries: { include: { country: true } } },
-  })) as PersistedLanguageRow[];
-  const docs = rows.map((row: PersistedLanguageRow) => ({
+  });
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     code: row.code,
     name: row.name,
     nativeName: row.nativeName ?? null,
     countries: row.countries.map(
-      (entry: { countryId: string; country: { id: string; code: string; name: string } }) => ({
+      (entry) => ({
         countryId: entry.countryId,
         country: {
           id: entry.country.id,

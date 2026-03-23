@@ -181,6 +181,16 @@ describe('KangurTransitionLink', () => {
       </KangurTransitionLink>
     );
 
+    expect(screen.getByRole('link', { name: 'Lekcje' })).toHaveAttribute(
+      'href',
+      '/en/kangur/lessons'
+    );
+    expect(nextLinkPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        href: '/en/kangur/lessons',
+      })
+    );
+
     fireEvent.click(screen.getByRole('link', { name: 'Lekcje' }));
 
     expect(startRouteTransitionMock).toHaveBeenCalledWith({
@@ -198,6 +208,22 @@ describe('KangurTransitionLink', () => {
     );
 
     expect(routerPrefetchMock).toHaveBeenCalledWith('/kangur/lessons');
+  });
+
+  it('renders a locale-prefixed href before hydration on localized routes', () => {
+    useLocaleMock.mockReturnValue('en');
+    usePathnameMock.mockReturnValue('/en/kangur');
+
+    render(
+      <KangurTransitionLink href='/kangur/lessons' targetPageKey='Lessons'>
+        Lessons
+      </KangurTransitionLink>
+    );
+
+    expect(screen.getByRole('link', { name: 'Lessons' })).toHaveAttribute(
+      'href',
+      '/en/kangur/lessons'
+    );
   });
 
   it('honors prefetch={false} for managed local links', () => {

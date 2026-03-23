@@ -9,6 +9,12 @@ const { selectLessonMock } = vi.hoisted(() => ({
   selectLessonMock: vi.fn(),
 }));
 
+const { ageGroupState } = vi.hoisted(() => ({
+  ageGroupState: {
+    value: 'ten_year_old' as 'six_year_old' | 'ten_year_old' | 'grown_ups',
+  },
+}));
+
 vi.mock('next-intl', () => ({
   useLocale: () => 'en',
   useTranslations:
@@ -27,6 +33,13 @@ vi.mock('next-intl', () => ({
 
 vi.mock('@/features/kangur/lesson-documents', () => ({
   hasKangurLessonDocumentContent: () => false,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
+  useKangurAgeGroupFocus: () => ({
+    ageGroup: ageGroupState.value,
+    setAgeGroup: vi.fn(),
+  }),
 }));
 
 vi.mock('@/features/kangur/lessons/lesson-catalog-i18n', () => ({
@@ -53,10 +66,10 @@ vi.mock('@/features/kangur/ui/components/KangurSubjectGroupSection', () => ({
     label,
     children,
   }: {
-    label: string;
+    label: React.ReactNode;
     children: React.ReactNode;
   }) => (
-    <section aria-label={label}>
+    <section aria-label='mock-subject-group'>
       <h2>{label}</h2>
       {children}
     </section>
@@ -139,6 +152,7 @@ import { KangurLessonsCatalogWidget } from './KangurLessonsCatalogWidget';
 
 describe('KangurLessonsCatalogWidget', () => {
   it('opens grouped sections on the first click', async () => {
+    ageGroupState.value = 'ten_year_old';
     render(<KangurLessonsCatalogWidget />);
 
     expect(screen.queryByTestId('lesson-card-lesson-english')).not.toBeInTheDocument();
@@ -161,5 +175,23 @@ describe('KangurLessonsCatalogWidget', () => {
     await waitFor(() => {
       expect(trigger).toHaveAttribute('aria-expanded', 'false');
     });
+  });
+
+  it('renders icon-first subject and subsection cues for six-year-old learners', async () => {
+    ageGroupState.value = 'six_year_old';
+
+    render(<KangurLessonsCatalogWidget />);
+
+    expect(screen.getByTestId('lessons-catalog-subject-icon-english')).toHaveTextContent('🔤');
+
+    const trigger = screen.getByRole('button', { name: /opening section/i });
+    fireEvent.click(trigger);
+
+    expect(screen.getByTestId('lessons-catalog-group-icon-english:opening-section')).toHaveTextContent(
+      '📚'
+    );
+    expect(
+      screen.getByTestId('lessons-catalog-group-type-icon-english:opening-section')
+    ).toHaveTextContent('🔤');
   });
 });

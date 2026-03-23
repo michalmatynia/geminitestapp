@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -35,6 +34,9 @@ import type {
   KangurMiniGameFinishActionProps,
   KangurRewardBreakdownEntry,
 } from '@/features/kangur/ui/types';
+import KangurVisualCueContent, {
+  KangurVisualCueDots,
+} from '@/features/kangur/ui/components/KangurVisualCueContent';
 import { cn } from '@/features/kangur/shared/utils';
 
 import KangurMusicPianoRoll, {
@@ -48,8 +50,6 @@ import { MUSIC_MELODY_REPEAT_ROUNDS } from './MusicMelodyRepeatGame.data';
 import {
   DIATONIC_PIANO_KEYS,
   DIATONIC_PIANO_KEYS_BY_ID,
-  KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS,
-  KANGUR_MUSIC_SYNTH_WAVEFORM_LABELS,
   type DiatonicNoteId,
 } from './music-theory';
 import { useKangurMusicSynth } from './useKangurMusicSynth';
@@ -111,7 +111,6 @@ export default function MusicMelodyRepeatGame({
   });
 
   const round = MUSIC_MELODY_REPEAT_ROUNDS[roundIndex] ?? MUSIC_MELODY_REPEAT_ROUNDS[0];
-  const expectedNoteId = phase === 'repeat' ? (round?.notes[enteredNotes.length] ?? null) : null;
   const melodyPlayback = useMemo(
     () =>
       (round?.notes ?? []).map((noteId) => ({
@@ -472,13 +471,16 @@ export default function MusicMelodyRepeatGame({
   }
 
   return (
-    <KangurPracticeGameStage className='!max-w-none !items-stretch'>
-      <div className='relative flex w-full flex-col gap-4 sm:gap-5'>
+    <div className='w-full' data-testid='music-melody-repeat-stage'>
+      <div className='relative flex w-full flex-col gap-4 px-2 sm:gap-5 sm:px-3'>
         <div className='pointer-events-none absolute -right-12 top-0 h-40 w-40 rounded-full bg-sky-200/30 blur-3xl' />
         <div className='pointer-events-none absolute -left-14 bottom-0 h-36 w-36 rounded-full bg-violet-200/25 blur-3xl' />
 
-        <div className='relative grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-3'>
-          <div className='min-w-0'>
+        <div
+          className='relative flex w-full min-w-0 items-center gap-3 overflow-hidden'
+          data-testid='music-melody-repeat-top-rail'
+        >
+          <div className='min-w-0 flex-1'>
             <KangurPracticeGameProgress
               accent={round?.accent ?? 'sky'}
               currentRound={roundIndex}
@@ -488,21 +490,52 @@ export default function MusicMelodyRepeatGame({
           </div>
           <div
             className={cn(
-              'flex min-w-0 gap-2',
+              'ml-auto flex shrink-0 items-center gap-2',
               isCompactMobile
-                ? 'max-w-[52vw] flex-nowrap overflow-x-auto pb-1 whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+                ? 'max-w-[58vw] flex-nowrap overflow-x-auto pb-1 whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
                 : 'max-w-full flex-wrap justify-end'
             )}
             data-testid='music-melody-repeat-status-rail'
           >
-            <KangurStatusChip className='bg-sky-100 text-sky-800'>
-              {isPlayingSequence ? 'Sluchaj' : phase === 'repeat' ? 'Twoja kolej' : 'Start'}
+            <KangurStatusChip
+              aria-label={isPlayingSequence ? 'Sluchaj' : phase === 'repeat' ? 'Twoja kolej' : 'Start'}
+              className='bg-sky-100 text-sky-800'
+              data-testid='music-melody-repeat-status-phase'
+            >
+              <KangurVisualCueContent
+                icon={isPlayingSequence ? '👂' : phase === 'repeat' ? '👉' : '▶'}
+                iconTestId='music-melody-repeat-status-phase-icon'
+                label={isPlayingSequence ? 'Sluchaj' : phase === 'repeat' ? 'Twoja kolej' : 'Start'}
+              />
             </KangurStatusChip>
-            <KangurStatusChip className='bg-white/80 text-slate-700'>
-              Nuty: {enteredNotes.length}/{round?.notes.length ?? 0}
+            <KangurStatusChip
+              aria-label={`Nuty: ${enteredNotes.length}/${round?.notes.length ?? 0}`}
+              className='bg-white/80 text-slate-700'
+              data-testid='music-melody-repeat-status-notes'
+            >
+              <KangurVisualCueContent
+                detail={
+                  <KangurVisualCueDots
+                    activeCount={enteredNotes.length}
+                    total={round?.notes.length ?? 0}
+                  />
+                }
+                detailTestId='music-melody-repeat-status-notes-dots'
+                icon='🎵'
+                iconTestId='music-melody-repeat-status-notes-icon'
+                label={`Nuty: ${enteredNotes.length}/${round?.notes.length ?? 0}`}
+              />
             </KangurStatusChip>
-            <KangurStatusChip className='bg-fuchsia-100 text-fuchsia-800'>
-              Tryb: {keyboardMode === 'synth' ? 'synth' : 'piano'}
+            <KangurStatusChip
+              aria-label={`Tryb: ${keyboardMode === 'synth' ? 'synth' : 'piano'}`}
+              className='bg-fuchsia-100 text-fuchsia-800'
+              data-testid='music-melody-repeat-status-mode'
+            >
+              <KangurVisualCueContent
+                icon={keyboardMode === 'synth' ? '✨' : '🎹'}
+                iconTestId='music-melody-repeat-status-mode-icon'
+                label={`Tryb: ${keyboardMode === 'synth' ? 'synth' : 'piano'}`}
+              />
             </KangurStatusChip>
           </div>
         </div>
@@ -517,6 +550,7 @@ export default function MusicMelodyRepeatGame({
           keyboardMode={keyboardMode}
           keys={DIATONIC_PIANO_KEYS}
           melody={round?.notes ?? []}
+          className='!overflow-visible !border-0 !bg-transparent !px-1.5 !py-2.5 !shadow-none sm:!px-2.5 sm:!py-3'
           onKeyboardModeChange={handleKeyboardModeChange}
           onKeyPress={handleKeyPress}
           onSynthGlideModeChange={handleSynthGlideModeChange}
@@ -533,24 +567,33 @@ export default function MusicMelodyRepeatGame({
           synthGlideMode={synthGlideMode}
           stepTestIdPrefix='music-melody-repeat-step'
           synthWaveform={synthWaveform}
+          visualCueMode='six_year_old'
         />
 
-        <div className='flex flex-wrap items-center gap-3'>
+        <div
+          className='flex w-fit max-w-full flex-wrap items-center gap-3 rounded-[24px] border border-white/65 bg-white/60 px-2.5 py-2 shadow-[0_22px_52px_-36px_rgba(14,116,144,0.42)] backdrop-blur-[10px]'
+          data-testid='music-melody-repeat-actions'
+        >
           <KangurButton
             aria-label='Posluchaj melodii'
             className={cn(
-              'h-12 w-12 rounded-full p-0',
+              'h-12 w-12 rounded-full p-0 shadow-[0_18px_34px_-24px_rgba(37,99,235,0.7)]',
               isCoarsePointer ? 'touch-manipulation select-none active:scale-[0.97]' : undefined
             )}
             data-testid='music-melody-repeat-listen-button'
             onClick={() => {
               void handleListen();
             }}
-            title='Posluchaj melodii'
             type='button'
             variant='primary'
           >
-            <Play aria-hidden='true' className='size-5 fill-current' />
+            <Play
+              aria-hidden='true'
+              className='ml-0.5 size-5 text-white drop-shadow-[0_2px_4px_rgba(15,23,42,0.28)]'
+              data-testid='music-melody-repeat-listen-icon'
+              fill='currentColor'
+              strokeWidth={2.35}
+            />
           </KangurButton>
           {phase === 'repeat' ? (
             <KangurButton
@@ -579,6 +622,6 @@ export default function MusicMelodyRepeatGame({
           {feedback.message}
         </KangurInfoCard>
       </div>
-    </KangurPracticeGameStage>
+    </div>
   );
 }

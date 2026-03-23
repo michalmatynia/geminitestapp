@@ -5,6 +5,7 @@
 import React, { type ReactNode } from 'react';
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { clearLatchedKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 
 const {
   authStateMock,
@@ -39,14 +40,17 @@ vi.mock('@/features/kangur/ui/components/KangurPageTransitionSkeleton', () => ({
   KangurPageTransitionSkeleton: ({
     pageKey,
     renderInlineTopNavigationSkeleton,
+    topBarHeightCssValue,
     variant,
   }: {
     pageKey?: string | null;
     renderInlineTopNavigationSkeleton?: boolean;
+    topBarHeightCssValue?: string | null;
     variant?: string | null;
   }) => (
     <div
       data-inline-top-navigation-skeleton={renderInlineTopNavigationSkeleton ? 'true' : 'false'}
+      data-top-bar-height={topBarHeightCssValue ?? ''}
       data-testid='kangur-page-transition-skeleton'
     >
       {renderInlineTopNavigationSkeleton ? (
@@ -186,6 +190,8 @@ describe('KangurFeatureApp', () => {
     vi.useFakeTimers();
     vi.clearAllMocks();
     vi.resetModules();
+    clearLatchedKangurTopBarHeightCssValue();
+    document.documentElement.style.removeProperty('--kangur-top-bar-height');
     settingsStoreStateMock.mockReturnValue({
       map: new Map(),
       isLoading: false,
@@ -232,6 +238,8 @@ describe('KangurFeatureApp', () => {
 
   afterEach(() => {
     cleanup();
+    clearLatchedKangurTopBarHeightCssValue();
+    document.documentElement.style.removeProperty('--kangur-top-bar-height');
     vi.useRealTimers();
     vi.restoreAllMocks();
   });
@@ -526,6 +534,56 @@ describe('KangurFeatureApp', () => {
     );
     expect(screen.getByTestId('kangur-page-transition-skeleton-inline-top-navigation')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Lessons:lessons-library');
+  });
+
+  it('latches the live top-bar height for the first visible route skeleton frame', async () => {
+    document.documentElement.style.setProperty('--kangur-top-bar-height', '136px');
+    routeTransitionStateMock.mockReturnValue({
+      isRouteAcknowledging: false,
+      isRoutePending: true,
+      isRouteWaitingForReady: false,
+      isRouteRevealing: false,
+      transitionPhase: 'pending',
+      activeTransitionSourceId: 'game-home-action:lessons',
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/kangur/lessons',
+      activeTransitionSkeletonVariant: 'lessons-library',
+      pendingPageKey: 'Lessons',
+      startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
+    });
+
+    const { rerender } = render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-top-bar-height',
+      '136px'
+    );
+
+    document.documentElement.style.setProperty('--kangur-top-bar-height', '104px');
+    routeTransitionStateMock.mockReturnValue({
+      isRouteAcknowledging: false,
+      isRoutePending: false,
+      isRouteWaitingForReady: true,
+      isRouteRevealing: false,
+      transitionPhase: 'waiting_for_ready',
+      activeTransitionSourceId: 'game-home-action:lessons',
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/kangur/lessons',
+      activeTransitionSkeletonVariant: 'lessons-library',
+      pendingPageKey: null,
+      startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
+    });
+
+    await act(async () => {
+      rerender(<KangurFeatureApp />);
+    });
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-top-bar-height',
+      '136px'
+    );
   });
 
   it('keeps core routes visible during boot loading states', () => {

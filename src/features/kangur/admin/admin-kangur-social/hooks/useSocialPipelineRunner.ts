@@ -328,7 +328,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       });
       queryClient.setQueryData<KangurSocialPost[]>(postsQueryKey, (current) =>
         (current ?? []).map((post) =>
-          post.id === result.generatedPost!.id ? result.generatedPost! : post
+          post.id === result.generatedPost.id ? result.generatedPost : post
         )
       );
       invalidateSocialQueries(queryClient);

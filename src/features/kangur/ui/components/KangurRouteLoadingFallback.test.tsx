@@ -6,6 +6,12 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  clearKangurPendingRouteLoadingSnapshot,
+  setKangurPendingRouteLoadingSnapshot,
+} from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
+import { clearLatchedKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
+
 const { usePathnameMock } = vi.hoisted(() => ({
   usePathnameMock: vi.fn(),
 }));
@@ -35,6 +41,9 @@ import { KangurRouteLoadingFallback } from '@/features/kangur/ui/components/Kang
 describe('KangurRouteLoadingFallback', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearKangurPendingRouteLoadingSnapshot();
+    clearLatchedKangurTopBarHeightCssValue();
+    document.documentElement.style.removeProperty('--kangur-top-bar-height');
     usePathnameMock.mockReturnValue('/en/lessons');
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
@@ -44,8 +53,10 @@ describe('KangurRouteLoadingFallback', () => {
 
     expect(screen.getByTestId('kangur-page-transition-skeleton-probe')).toBeInTheDocument();
     expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
+      pageKey: undefined,
       reason: 'navigation',
       renderInlineTopNavigationSkeleton: true,
+      topBarHeightCssValue: null,
       variant: 'lessons-library',
     });
   });
@@ -56,8 +67,10 @@ describe('KangurRouteLoadingFallback', () => {
     render(<KangurRouteLoadingFallback />);
 
     expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
+      pageKey: undefined,
       reason: 'navigation',
       renderInlineTopNavigationSkeleton: true,
+      topBarHeightCssValue: null,
       variant: 'lessons-focus',
     });
   });
@@ -69,8 +82,10 @@ describe('KangurRouteLoadingFallback', () => {
     render(<KangurRouteLoadingFallback />);
 
     expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
+      pageKey: undefined,
       reason: 'navigation',
       renderInlineTopNavigationSkeleton: true,
+      topBarHeightCssValue: null,
       variant: 'game-session',
     });
   });
@@ -80,8 +95,45 @@ describe('KangurRouteLoadingFallback', () => {
 
     expect(screen.getByTestId('kangur-page-transition-skeleton-probe')).toBeInTheDocument();
     expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
+      pageKey: undefined,
       reason: 'navigation',
       renderInlineTopNavigationSkeleton: false,
+      topBarHeightCssValue: null,
+      variant: 'lessons-library',
+    });
+  });
+
+  it('passes the current top-bar height through to the first route fallback frame', () => {
+    document.documentElement.style.setProperty('--kangur-top-bar-height', '136px');
+
+    render(<KangurRouteLoadingFallback />);
+
+    expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
+      pageKey: undefined,
+      reason: 'navigation',
+      renderInlineTopNavigationSkeleton: true,
+      topBarHeightCssValue: '136px',
+      variant: 'lessons-library',
+    });
+  });
+
+  it('prefers the pending transition snapshot over the current pathname', () => {
+    usePathnameMock.mockReturnValue('/en/kangur');
+    setKangurPendingRouteLoadingSnapshot({
+      href: '/en/kangur/lessons',
+      pageKey: 'Lessons',
+      skeletonVariant: 'lessons-library',
+      startedAt: Date.now(),
+      topBarHeightCssValue: '136px',
+    });
+
+    render(<KangurRouteLoadingFallback />);
+
+    expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
+      pageKey: 'Lessons',
+      reason: 'navigation',
+      renderInlineTopNavigationSkeleton: true,
+      topBarHeightCssValue: '136px',
       variant: 'lessons-library',
     });
   });

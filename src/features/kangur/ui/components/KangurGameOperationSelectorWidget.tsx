@@ -16,10 +16,12 @@ import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/Kan
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
+import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
 import { KangurTrainingSetupPanel } from '@/features/kangur/ui/components/KangurTrainingSetupPanel';
 import OperationSelector from '@/features/kangur/ui/components/OperationSelector';
 import { KangurSubjectGroupSection } from '@/features/kangur/ui/components/KangurSubjectGroupSection';
 import { KangurTreningWordmark } from '@/features/kangur/ui/components/KangurTreningWordmark';
+import { getKangurSixYearOldSubjectVisual } from '@/features/kangur/ui/constants/six-year-old-visuals';
 import { getKangurSubjectGroups } from '@/features/kangur/ui/constants/subject-groups';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
@@ -1559,10 +1561,11 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
       : null;
   const shouldRender = screen === 'operation' || screen === 'training';
   const showMathSections = subject === 'maths';
+  const isSixYearOld = ageGroup === 'six_year_old';
   const compactActionClassName = isCoarsePointer
     ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
     : 'w-full shrink-0 sm:w-auto';
-  const gameIntroDescription =
+  const gameIntroDescriptionLabel =
     subject === 'maths'
       ? translateRecommendationWithFallback(
           gamePageTranslations,
@@ -1598,6 +1601,41 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
             'operationSelector.intro.language',
             fallbackCopy.intro.language
           );
+  const subjectVisual = getKangurSixYearOldSubjectVisual(subject);
+  const quickPracticeTitle = translateRecommendationWithFallback(
+    gamePageTranslations,
+    'operationSelector.quickPractice.title',
+    fallbackCopy.quickPractice.title
+  );
+  const quickPracticeDescription = translateRecommendationWithFallback(
+    gamePageTranslations,
+    'operationSelector.quickPractice.description',
+    fallbackCopy.quickPractice.description
+  );
+  const quickPracticeGameChipLabel = translateRecommendationWithFallback(
+    gamePageTranslations,
+    'operationSelector.quickPractice.gameChip',
+    fallbackCopy.quickPractice.gameChip
+  );
+  const gameIntroDescription = isSixYearOld ? (
+    <KangurVisualCueContent
+      className='text-lg'
+      detail={
+        <span className='inline-flex items-center gap-1.5 text-lg'>
+          {subjectVisual.introSteps.map((stepIcon, index) => (
+            <span key={`six-year-old-intro-step-${subject}-${index}`}>{stepIcon}</span>
+          ))}
+        </span>
+      }
+      detailTestId='kangur-game-operation-intro-detail'
+      icon={subjectVisual.icon}
+      iconClassName='text-xl'
+      iconTestId='kangur-game-operation-intro-icon'
+      label={gameIntroDescriptionLabel}
+    />
+  ) : (
+    gameIntroDescriptionLabel
+  );
 
   useEffect(() => {
     if (!lessonsQuery.data) {
@@ -1758,18 +1796,43 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
         <KangurSectionHeading
           accent='violet'
           align='left'
-          description={translateRecommendationWithFallback(
-            gamePageTranslations,
-            'operationSelector.quickPractice.description',
-            fallbackCopy.quickPractice.description
-          )}
+          description={
+            isSixYearOld ? (
+              <KangurVisualCueContent
+                detail={
+                  <span className='inline-flex items-center gap-1.5 text-lg'>
+                    <span>🎮</span>
+                    <span>⚡</span>
+                    <span>🎯</span>
+                  </span>
+                }
+                detailTestId='kangur-quick-practice-description-detail'
+                icon='👆'
+                iconClassName='text-xl'
+                iconTestId='kangur-quick-practice-description-icon'
+                label={quickPracticeDescription}
+              />
+            ) : (
+              quickPracticeDescription
+            )
+          }
           headingAs='h3'
           headingSize='sm'
-          title={translateRecommendationWithFallback(
-            gamePageTranslations,
-            'operationSelector.quickPractice.title',
-            fallbackCopy.quickPractice.title
-          )}
+          title={
+            isSixYearOld ? (
+              <KangurVisualCueContent
+                detail='🎮'
+                detailClassName='text-lg'
+                detailTestId='kangur-quick-practice-heading-detail'
+                icon='⚡'
+                iconClassName='text-xl'
+                iconTestId='kangur-quick-practice-heading-icon'
+                label={quickPracticeTitle}
+              />
+            ) : (
+              quickPracticeTitle
+            )
+          }
           titleId='kangur-game-quick-practice-heading'
         />
         <div className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
@@ -1782,7 +1845,21 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
                 fallbackCopy.quickPractice.groupAria(group.label),
                 { group: group.label }
               )}
-              label={group.label}
+              label={
+                isSixYearOld ? (
+                  <KangurVisualCueContent
+                    detail={getKangurSixYearOldSubjectVisual(group.value).detail}
+                    detailClassName='text-base'
+                    detailTestId={`kangur-quick-practice-group-detail-${group.value}`}
+                    icon={getKangurSixYearOldSubjectVisual(group.value).icon}
+                    iconClassName='text-lg'
+                    iconTestId={`kangur-quick-practice-group-icon-${group.value}`}
+                    label={group.label}
+                  />
+                ) : (
+                  group.label
+                )
+              }
               className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
             >
               <div className='flex w-full flex-col kangur-panel-gap'>
@@ -1820,23 +1897,40 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
                           <>
                             <KangurStatusChip
                               accent={option.accent}
+                              aria-label={quickPracticeGameChipLabel}
                               className='uppercase tracking-[0.14em]'
+                              data-testid={`kangur-quick-practice-game-chip-${option.onSelectScreen}`}
                               size='sm'
                             >
-                              {translateRecommendationWithFallback(
-                                gamePageTranslations,
-                                'operationSelector.quickPractice.gameChip',
-                                fallbackCopy.quickPractice.gameChip
+                              {isSixYearOld ? (
+                                <KangurVisualCueContent
+                                  icon='🎮'
+                                  iconClassName='text-base'
+                                  iconTestId={`kangur-quick-practice-game-chip-icon-${option.onSelectScreen}`}
+                                  label={quickPracticeGameChipLabel}
+                                />
+                              ) : (
+                                quickPracticeGameChipLabel
                               )}
                             </KangurStatusChip>
                             {isRecommended && recommendation ? (
                               <KangurStatusChip
                                 accent={option.accent}
+                                aria-label={recommendation.label}
                                 className='text-[11px] font-semibold'
                                 data-testid={`kangur-quick-practice-recommendation-${option.onSelectScreen}`}
                                 size='sm'
                               >
-                                {recommendation.label}
+                                {isSixYearOld ? (
+                                  <KangurVisualCueContent
+                                    icon='🎯'
+                                    iconClassName='text-base'
+                                    iconTestId={`kangur-quick-practice-recommendation-icon-${option.onSelectScreen}`}
+                                    label={recommendation.label}
+                                  />
+                                ) : (
+                                  recommendation.label
+                                )}
                               </KangurStatusChip>
                             ) : null}
                           </>

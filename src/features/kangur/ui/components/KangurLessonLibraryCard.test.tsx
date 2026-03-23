@@ -5,8 +5,21 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+const { ageGroupState } = vi.hoisted(() => ({
+  ageGroupState: {
+    value: 'ten_year_old' as 'six_year_old' | 'ten_year_old' | 'grown_ups',
+  },
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
+  useKangurAgeGroupFocus: () => ({
+    ageGroup: ageGroupState.value,
+    setAgeGroup: vi.fn(),
+  }),
 }));
 
 import { KangurLessonLibraryCard } from '@/features/kangur/ui/components/KangurLessonLibraryCard';
@@ -65,6 +78,7 @@ const lessonAssignment = {
 
 describe('KangurLessonLibraryCard', () => {
   it('renders shared lesson state chips and selection handling', () => {
+    ageGroupState.value = 'ten_year_old';
     const handleSelect = vi.fn();
 
     render(
@@ -100,6 +114,7 @@ describe('KangurLessonLibraryCard', () => {
   });
 
   it('shows completed parent assignment state when no active assignment remains', () => {
+    ageGroupState.value = 'ten_year_old';
     const completedAssignment = {
       ...lessonAssignment,
       progress: {
@@ -123,5 +138,31 @@ describe('KangurLessonLibraryCard', () => {
     expect(screen.getByText('Ukończone dla rodzica')).toBeInTheDocument();
     expect(screen.getByText('Zadanie zamkniete')).toBeInTheDocument();
     expect(screen.getByText('Zadanie od rodzica zostalo juz wykonane. Powtórki: 1/1')).toBeInTheDocument();
+  });
+
+  it('uses icon-first state chips for six-year-old learners', () => {
+    ageGroupState.value = 'six_year_old';
+
+    render(
+      <KangurLessonLibraryCard
+        completedLessonAssignment={null}
+        hasDocumentContent
+        lesson={lesson}
+        lessonAssignment={lessonAssignment}
+        masteryPresentation={masteryPresentation}
+        onSelect={() => undefined}
+      />
+    );
+
+    expect(screen.getByTestId('lesson-library-mastery-chip')).toHaveAttribute(
+      'aria-label',
+      'Opanowane 92%'
+    );
+    expect(screen.getByTestId('lesson-library-mastery-chip-icon')).toHaveTextContent('⭐');
+    expect(screen.getByTestId('lesson-library-assignment-chip-icon')).toHaveTextContent('📌');
+    expect(screen.getByTestId('lesson-library-custom-content-chip-icon')).toHaveTextContent('📘');
+    expect(screen.getByTestId('lesson-library-footer-assignment-chip-icon')).toHaveTextContent(
+      '📌'
+    );
   });
 });

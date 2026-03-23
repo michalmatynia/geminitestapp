@@ -12,12 +12,16 @@ const {
   lessonDocumentBackButtonLabelMock,
   lessonDocumentBackClickMock,
   lessonComponentsMock,
+  ageGroupState,
 } = vi.hoisted(() => ({
   useLessonsMock: vi.fn(),
   useKangurMobileBreakpointMock: vi.fn(),
   lessonDocumentBackButtonLabelMock: vi.fn(() => null),
   lessonDocumentBackClickMock: vi.fn(),
   lessonComponentsMock: {} as Record<string, React.ComponentType<unknown>>,
+  ageGroupState: {
+    value: 'ten_year_old' as 'six_year_old' | 'ten_year_old' | 'grown_ups',
+  },
 }));
 
 vi.mock('@/features/kangur/lesson-documents', () => ({
@@ -103,6 +107,13 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: () => ({ entry: null }),
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
+  useKangurAgeGroupFocus: () => ({
+    ageGroup: ageGroupState.value,
+    setAgeGroup: vi.fn(),
+  }),
+}));
+
 vi.mock('@/features/kangur/ui/pages/lessons/LessonsContext', () => ({
   useLessons: () => useLessonsMock(),
 }));
@@ -128,6 +139,7 @@ describe('ActiveLessonView mobile controls', () => {
   let handleSelectLesson: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    ageGroupState.value = 'ten_year_old';
     useKangurMobileBreakpointMock.mockReturnValue(true);
     lessonDocumentBackButtonLabelMock.mockReturnValue(null);
     lessonDocumentBackClickMock.mockReset();
@@ -187,6 +199,17 @@ describe('ActiveLessonView mobile controls', () => {
 
     expect(document.documentElement.style.overflow).toBe('');
     expect(document.body.style.overflow).toBe('');
+  });
+
+  it('uses an icon-first back control for six-year-old mobile lessons', async () => {
+    ageGroupState.value = 'six_year_old';
+
+    render(<ActiveLessonView />);
+
+    await act(async () => {});
+
+    expect(screen.getByRole('button', { name: 'Wróć do lekcji' })).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-lesson-back-to-lessons-detail')).toHaveTextContent('🏠');
   });
 
   it('returns to the lessons list from the header even when in-content back is available', async () => {

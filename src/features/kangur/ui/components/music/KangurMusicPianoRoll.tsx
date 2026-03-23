@@ -12,6 +12,7 @@ import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurM
 import { cn } from '@/features/kangur/shared/utils';
 import { getMotionSafeScrollBehavior } from '@/shared/utils/motion-accessibility';
 
+import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
 import type {
   KangurMusicSynthGlideMode,
   KangurMusicKeyboardMode,
@@ -28,6 +29,7 @@ import {
   resolveFrequencyWithSemitoneOffset,
   resolveSynthGlideSemitoneOffset,
 } from './music-theory';
+import { KangurMusicWaveformIcon } from './music-waveform-icons';
 
 export type {
   KangurMusicKeyboardMode,
@@ -154,6 +156,7 @@ type KangurMusicPianoRollProps<NoteId extends string> = {
   synthWaveform?: KangurMusicSynthWaveform;
   title?: ReactNode;
   unitsPerMeasure?: number;
+  visualCueMode?: 'default' | 'six_year_old';
 };
 
 export default function KangurMusicPianoRoll<NoteId extends string>({
@@ -190,6 +193,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
   synthWaveform,
   title,
   unitsPerMeasure = 4,
+  visualCueMode = 'default',
 }: KangurMusicPianoRollProps<NoteId>): React.JSX.Element {
   const isCoarsePointer = useKangurCoarsePointer();
   const isMobileViewport = useKangurMobileBreakpoint();
@@ -212,6 +216,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
   const resolvedSynthWaveform = synthWaveform ?? uncontrolledSynthWaveform;
   const resolvedMinStepWidthPx = minStepWidthPx ?? (isCompactMobile ? 38 : 64);
   const resolvedUnitsPerMeasure = Math.max(1, Math.round(unitsPerMeasure));
+  const isSixYearOldVisualMode = visualCueMode === 'six_year_old';
   const resolvedShowLaneLabels = showLaneLabels && !isCompactMobile;
   const resolvedShowMeasureGuides = showMeasureGuides && !isCompactMobile;
   const resolvedLaneHeightPx = isCompactMobile ? 24 : 46;
@@ -452,7 +457,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
     <div
       className={cn(
         'relative w-full overflow-hidden rounded-[32px] border border-sky-100/90 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.96),rgba(224,242,254,0.92)_55%,rgba(186,230,253,0.78)_100%)] shadow-[0_30px_80px_-44px_rgba(14,116,144,0.4)]',
-        isCompactMobile ? 'p-2.5' : 'p-4 sm:p-5',
+        isCompactMobile ? 'p-3.5' : 'p-4 sm:p-5',
         className
       )}
       data-layout={isCompactMobile ? 'compact' : 'full'}
@@ -460,7 +465,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
     >
       <div className='pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-sky-300/35 blur-3xl' />
       <div className='pointer-events-none absolute -bottom-14 -left-10 h-32 w-32 rounded-full bg-violet-300/25 blur-3xl' />
-      <div className='relative flex w-full flex-col gap-4'>
+      <div className={cn('relative flex w-full flex-col', isCompactMobile ? 'gap-4' : 'gap-4')}>
         {title || description ? (
           <div className='flex flex-col gap-1'>
             {title ? (
@@ -486,9 +491,9 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
           (showSynthWaveformSwitch || showSynthGlideModeSwitch)) ? (
           <div
             className={cn(
-              'flex gap-2',
+              'flex gap-2 px-1',
               isCompactMobile
-                ? 'gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] snap-x snap-mandatory [&::-webkit-scrollbar]:hidden'
+                ? 'gap-1.5 overflow-x-auto pb-2 [scrollbar-width:none] snap-x snap-mandatory [&::-webkit-scrollbar]:hidden'
                 : 'flex-wrap'
             )}
             data-testid={`${stepTestIdPrefix}-controls-rail`}
@@ -510,7 +515,15 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                   type='button'
                   variant={resolvedKeyboardMode === 'piano' ? 'segmentActive' : 'segment'}
                 >
-                  Piano
+                  {isSixYearOldVisualMode ? (
+                    <KangurVisualCueContent
+                      icon='🎹'
+                      iconTestId={`${stepTestIdPrefix}-keyboard-mode-icon-piano`}
+                      label='Piano'
+                    />
+                  ) : (
+                    'Piano'
+                  )}
                 </KangurButton>
                 <KangurButton
                   aria-pressed={resolvedKeyboardMode === 'synth'}
@@ -520,7 +533,15 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                   type='button'
                   variant={resolvedKeyboardMode === 'synth' ? 'segmentActive' : 'segment'}
                 >
-                  Synth
+                  {isSixYearOldVisualMode ? (
+                    <KangurVisualCueContent
+                      icon='✨'
+                      iconTestId={`${stepTestIdPrefix}-keyboard-mode-icon-synth`}
+                      label='Synth'
+                    />
+                  ) : (
+                    'Synth'
+                  )}
                 </KangurButton>
               </div>
             ) : null}
@@ -537,14 +558,20 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                 {KANGUR_MUSIC_SYNTH_WAVEFORMS.map((waveform) => (
                   <KangurButton
                     key={waveform}
+                    aria-label={`Brzmienie: ${KANGUR_MUSIC_SYNTH_WAVEFORM_LABELS[waveform]}`}
                     aria-pressed={resolvedSynthWaveform === waveform}
+                    className='min-w-[3rem] px-3'
                     data-testid={`${stepTestIdPrefix}-synth-waveform-${waveform}`}
                     onClick={() => handleSynthWaveformChange(waveform)}
                     size='sm'
                     type='button'
                     variant={resolvedSynthWaveform === waveform ? 'segmentActive' : 'segment'}
                   >
-                    {KANGUR_MUSIC_SYNTH_WAVEFORM_LABELS[waveform]}
+                    <KangurMusicWaveformIcon
+                      className='h-4 w-7'
+                      data-testid={`${stepTestIdPrefix}-synth-waveform-icon-${waveform}`}
+                      waveform={waveform}
+                    />
                   </KangurButton>
                 ))}
               </div>
@@ -562,6 +589,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                 {KANGUR_MUSIC_SYNTH_GLIDE_MODES.map((glideMode) => (
                   <KangurButton
                     key={glideMode}
+                    aria-label={`Ruch: ${KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS[glideMode]}`}
                     aria-pressed={resolvedSynthGlideMode === glideMode}
                     data-testid={`${stepTestIdPrefix}-synth-glide-mode-${glideMode}`}
                     onClick={() => handleSynthGlideModeChange(glideMode)}
@@ -569,7 +597,17 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                     type='button'
                     variant={resolvedSynthGlideMode === glideMode ? 'segmentActive' : 'segment'}
                   >
-                    {KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS[glideMode]}
+                    {isSixYearOldVisualMode ? (
+                      <KangurVisualCueContent
+                        detail={glideMode === 'continuous' ? '∿' : '#'}
+                        detailTestId={`${stepTestIdPrefix}-synth-glide-mode-detail-${glideMode}`}
+                        icon='↕'
+                        iconTestId={`${stepTestIdPrefix}-synth-glide-mode-icon-${glideMode}`}
+                        label={`Ruch: ${KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS[glideMode]}`}
+                      />
+                    ) : (
+                      KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS[glideMode]
+                    )}
                   </KangurButton>
                 ))}
               </div>
@@ -580,7 +618,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
         <div
           className={cn(
             'relative overflow-hidden border border-slate-200/80 bg-slate-950/[0.05]',
-            isCompactMobile ? 'rounded-[20px] p-2' : 'rounded-[26px] p-3 sm:p-4'
+            isCompactMobile ? 'rounded-[24px] p-3' : 'rounded-[28px] p-3.5 sm:p-4'
           )}
         >
           <div className='pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.16),transparent_30%,rgba(15,23,42,0.02)_31%,rgba(15,23,42,0.02)_32%,transparent_33%,transparent_63%,rgba(15,23,42,0.03)_64%,rgba(15,23,42,0.03)_65%,transparent_66%)]' />
@@ -602,7 +640,12 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
             ) : null}
 
             <div className='min-w-0 flex-1'>
-              <div className={cn('flex items-center justify-between gap-3 px-1', isCompactMobile ? 'mb-1' : 'mb-2')}>
+              <div
+                className={cn(
+                  'flex items-center justify-between gap-3 px-1.5',
+                  isCompactMobile ? 'mb-2' : 'mb-2.5'
+                )}
+              >
                 <div className='text-[10px] font-black uppercase tracking-[0.3em] text-sky-700/80'>
                   Pitch / Time
                 </div>
@@ -612,12 +655,12 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
               </div>
               {activeTransportStep || expectedTransportStep ? (
                 <div
-                    className={cn(
-                      'flex gap-2 px-1',
-                      isCompactMobile
-                        ? 'mb-1 overflow-x-auto pb-1 [scrollbar-width:none] snap-x snap-mandatory whitespace-nowrap [&::-webkit-scrollbar]:hidden'
-                        : 'mb-2 flex-wrap'
-                    )}
+                  className={cn(
+                    'flex gap-2 px-2',
+                    isCompactMobile
+                      ? 'mb-2 overflow-x-auto pb-2 [scrollbar-width:none] snap-x snap-mandatory whitespace-nowrap [&::-webkit-scrollbar]:hidden'
+                      : 'mb-2.5 flex-wrap'
+                  )}
                   data-testid={`${stepTestIdPrefix}-transport-rail`}
                 >
                   {activeTransportStep ? (
@@ -644,26 +687,62 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                   </div>
                   {resolvedKeyboardMode === 'synth' ? (
                     <div
+                      aria-label={`Tryb: ${resolvedKeyboardMode}`}
                       className='shrink-0 rounded-full bg-fuchsia-100/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-fuchsia-800'
                       data-testid={`${stepTestIdPrefix}-transport-mode`}
                     >
-                      Synth
+                      {isSixYearOldVisualMode ? (
+                        <KangurVisualCueContent
+                          icon='✨'
+                          iconTestId={`${stepTestIdPrefix}-transport-mode-icon`}
+                          label={`Tryb: ${resolvedKeyboardMode}`}
+                        />
+                      ) : (
+                        'Synth'
+                      )}
                     </div>
                   ) : null}
                   {resolvedKeyboardMode === 'synth' ? (
                     <div
+                      aria-label={`Brzmienie: ${KANGUR_MUSIC_SYNTH_WAVEFORM_LABELS[resolvedSynthWaveform]}`}
                       className='shrink-0 rounded-full bg-white/85 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-fuchsia-700'
                       data-testid={`${stepTestIdPrefix}-transport-waveform`}
                     >
-                      Brzmienie: {KANGUR_MUSIC_SYNTH_WAVEFORM_LABELS[resolvedSynthWaveform]}
+                      {isSixYearOldVisualMode ? (
+                        <KangurVisualCueContent
+                          detail={
+                            <KangurMusicWaveformIcon
+                              className='h-3.5 w-6'
+                              data-testid={`${stepTestIdPrefix}-transport-waveform-icon`}
+                              waveform={resolvedSynthWaveform}
+                            />
+                          }
+                          icon='👂'
+                          iconTestId={`${stepTestIdPrefix}-transport-waveform-cue`}
+                          label={`Brzmienie: ${KANGUR_MUSIC_SYNTH_WAVEFORM_LABELS[resolvedSynthWaveform]}`}
+                        />
+                      ) : (
+                        <>Brzmienie: {KANGUR_MUSIC_SYNTH_WAVEFORM_LABELS[resolvedSynthWaveform]}</>
+                      )}
                     </div>
                   ) : null}
                   {resolvedKeyboardMode === 'synth' ? (
                     <div
+                      aria-label={`Ruch: ${KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS[resolvedSynthGlideMode]}`}
                       className='shrink-0 rounded-full bg-white/85 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-sky-700'
                       data-testid={`${stepTestIdPrefix}-transport-glide-mode`}
                     >
-                      Ruch: {KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS[resolvedSynthGlideMode]}
+                      {isSixYearOldVisualMode ? (
+                        <KangurVisualCueContent
+                          detail={resolvedSynthGlideMode === 'continuous' ? '∿' : '#'}
+                          detailTestId={`${stepTestIdPrefix}-transport-glide-mode-detail`}
+                          icon='↕'
+                          iconTestId={`${stepTestIdPrefix}-transport-glide-mode-icon`}
+                          label={`Ruch: ${KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS[resolvedSynthGlideMode]}`}
+                        />
+                      ) : (
+                        <>Ruch: {KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS[resolvedSynthGlideMode]}</>
+                      )}
                     </div>
                   ) : null}
                   {activeSynthGestureCount > 0 ? (
@@ -685,12 +764,15 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                   ) : null}
                 </div>
               ) : null}
-              <div className='relative overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+              <div className='relative overflow-x-auto px-1.5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
                 <div className='pointer-events-none absolute inset-y-0 left-0 z-[3] w-5 bg-gradient-to-r from-white/90 via-white/50 to-transparent' />
                 <div className='pointer-events-none absolute inset-y-0 right-0 z-[3] w-5 bg-gradient-to-l from-white/90 via-white/50 to-transparent' />
                 {resolvedShowMeasureGuides ? (
                   <div
-                    className={cn('relative grid', isCompactMobile ? 'mb-1 gap-1' : 'mb-2 gap-2 sm:gap-3')}
+                    className={cn(
+                      'relative grid',
+                      isCompactMobile ? 'mb-2 gap-1.5' : 'mb-2.5 gap-2 sm:gap-3'
+                    )}
                     style={{
                       gridTemplateColumns: `repeat(${resolvedStepCount}, minmax(0, 1fr))`,
                       width: `max(100%, ${resolvedStepCount * resolvedMinStepWidthPx}px)`,
@@ -717,7 +799,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                   </div>
                 ) : null}
                 <div
-                  className={cn('relative grid', isCompactMobile ? 'gap-1' : 'gap-2 sm:gap-3')}
+                  className={cn('relative grid', isCompactMobile ? 'gap-2' : 'gap-2 sm:gap-3')}
                   style={{
                     gridTemplateColumns: `repeat(${resolvedStepCount}, minmax(0, 1fr))`,
                     gridTemplateRows: `repeat(${laneKeys.length}, minmax(${resolvedLaneHeightPx}px, 1fr))`,
@@ -828,7 +910,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                 </div>
                 {resolvedShowMeasureGuides ? (
                   <div
-                    className='mt-3 grid gap-2'
+                    className='mt-4 grid gap-2'
                     style={{
                       gridTemplateColumns: `repeat(${measureCount}, minmax(0, 1fr))`,
                       width: `max(100%, ${resolvedStepCount * resolvedMinStepWidthPx}px)`,
@@ -872,7 +954,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
         <div
           className={cn(
             isCompactMobile
-              ? 'overflow-x-auto pb-1 [scrollbar-width:none] snap-x snap-mandatory [&::-webkit-scrollbar]:hidden'
+              ? 'overflow-x-auto px-1.5 pb-2 [scrollbar-width:none] snap-x snap-mandatory [&::-webkit-scrollbar]:hidden'
               : ''
           )}
           data-testid={`${stepTestIdPrefix}-keyboard-rail`}
@@ -880,7 +962,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
           <div
             className={cn(
               isCompactMobile
-                ? 'flex min-w-max gap-2'
+                ? 'flex min-w-max gap-3'
                 : 'grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8'
             )}
           >

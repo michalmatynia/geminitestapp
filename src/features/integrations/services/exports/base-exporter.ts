@@ -279,7 +279,12 @@ const hasResolvedProducerExportValue = (data: Record<string, unknown>): boolean 
     return false;
   };
 
-  return hasValue(data['producer_id']) || hasValue(data['producer_ids']);
+  return (
+    hasValue(data['producer_id']) ||
+    hasValue(data['producer_ids']) ||
+    hasValue(data['manufacturer_id']) ||
+    hasValue(data['manufacturer_ids'])
+  );
 };
 
 const applyDefaultMappedProducerIds = (
@@ -298,9 +303,53 @@ const applyDefaultMappedProducerIds = (
   }
 };
 
+const collectProducerExportIds = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value
+      .flatMap((entry: unknown) => collectProducerExportIds(entry))
+      .filter((entry: string): boolean => entry.length > 0);
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return [String(value)];
+  }
+  if (typeof value !== 'string') {
+    return [];
+  }
+  return value
+    .split(/[,;]+/g)
+    .map((entry: string) => entry.trim())
+    .filter((entry: string): boolean => entry.length > 0);
+};
+
+const normalizeProducerExportFields = (data: BaseProductRecord): void => {
+  const producerIds = Array.from(
+    new Set([
+      ...collectProducerExportIds(data['producer_id']),
+      ...collectProducerExportIds(data['producer_ids']),
+      ...collectProducerExportIds(data['manufacturer_id']),
+      ...collectProducerExportIds(data['manufacturer_ids']),
+    ])
+  );
+
+  delete data['producer_id'];
+  delete data['producer_ids'];
+  delete data['manufacturer_id'];
+  delete data['manufacturer_ids'];
+
+  if (producerIds.length === 0) {
+    return;
+  }
+
+  // BaseLinker addInventoryProduct documents a single manufacturer_id field.
+  // When internal data contains multiple producer ids, export the first stable
+  // mapped value instead of sending undocumented producer_* aliases.
+  data['manufacturer_id'] = producerIds[0]!;
+};
+
 const resolveDefaultMappedProducerIds = (
   product: ProductWithImages,
-  producerExternalIdByInternalId?: Record<string, string>
+  producerExternalIdByInternalId?: Record<string, string>,
+  producerNameById?: Record<string, string>
 ): string[] => {
   if (!producerExternalIdByInternalId) {
     return [];
@@ -315,7 +364,7 @@ const resolveDefaultMappedProducerIds = (
 
   const { producerIds } = getProductProducerValues(
     product,
-    undefined,
+    producerNameById,
     producerExternalIdByInternalId
   );
 
@@ -369,7 +418,8 @@ export async function buildBaseProductData(
     const textFields: Record<string, string> = {};
     const mappedProducerIds = resolveDefaultMappedProducerIds(
       product,
-      options?.producerExternalIdByInternalId
+      options?.producerExternalIdByInternalId,
+      options?.producerNameById
     );
     if (product.name_en) textFields['name'] = product.name_en;
     if (product.description_en) textFields['description'] = product.description_en;
@@ -424,7 +474,8 @@ export async function buildBaseProductData(
     const explicitProducerTemplateMapping = hasExplicitProducerTemplateMapping(mappings);
     const mappedProducerIds = resolveDefaultMappedProducerIds(
       product,
-      options?.producerExternalIdByInternalId
+      options?.producerExternalIdByInternalId,
+      options?.producerNameById
     );
     // Templates are saved as Base -> product mappings, so invert for export.
     const exportMappings = mappings.map((mapping: ExportTemplateMapping) => ({
@@ -495,6 +546,7 @@ export async function buildBaseProductData(
     }
 
     Object.assign(baseData, templateData);
+    normalizeProducerExportFields(baseData);
 
     if (
       explicitProducerTemplateMapping &&
@@ -503,6 +555,10 @@ export async function buildBaseProductData(
     ) {
       applyDefaultMappedProducerIds(baseData, mappedProducerIds);
     }
+  }
+
+  if (!imagesOnly) {
+    normalizeProducerExportFields(baseData);
   }
 
   return baseData;

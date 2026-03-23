@@ -3,17 +3,14 @@ export const dynamic = 'force-dynamic';
 
 import type { NextRequest } from 'next/server';
 
-import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type {
-  CatchAllRouteDefinition,
-  CatchAllOptionalRoutePatternToken as PatternToken,
-  CatchAllRouteMethod as HttpMethod,
-  CatchAllRouteModule as RouteModule,
-  CatchAllRouteParams as Params,
-  CatchAllRoutePathParams as RouteParams,
-} from '@/shared/lib/api/catch-all-route-types';
-import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
+import {
+  handleCatchAllRequest,
+  getPathSegments,
+  type CatchAllRouteDefinition,
+  type CatchAllOptionalRoutePatternToken as PatternToken,
+  type CatchAllRoutePathParams as RouteParams,
+} from '@/shared/lib/api/catch-all-router';
 
 import * as productsIndex from '../route-handler';
 import * as productsCount from '../count/route-handler';
@@ -72,111 +69,9 @@ import * as productImagesById from '../[id]/images/[imageFileId]/route-handler';
 import * as productStudio from '../[id]/studio/route-handler';
 import * as productStudioAction from '../[id]/studio/[action]/route-handler';
 
-type RouteDefinition = CatchAllRouteDefinition<PatternToken>;
-
-const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
-
-const buildSource = (method: HttpMethod): string => `v2.products.[[...path]].${method}`;
-
-const notFound = async (request: NextRequest, method: HttpMethod): Promise<Response> =>
-  createErrorResponse(notFoundError('Not Found'), { request, source: buildSource(method) });
-const methodNotAllowed = async (
-  request: NextRequest,
-  allowed: HttpMethod[],
-  method: HttpMethod
-): Promise<Response> => {
-  const response = await createErrorResponse(
-    methodNotAllowedError('Method not allowed', { allowedMethods: allowed }),
-    { request, source: buildSource(method) }
-  );
-  response.headers.set('Allow', allowed.join(', '));
-  return response;
-};
-
-const getAllowedMethods = (module: RouteModule): HttpMethod[] =>
-  HTTP_METHODS.filter((method) => typeof module[method] === 'function');
-
-const dispatch = async (
-  module: RouteModule,
-  method: HttpMethod,
-  request: NextRequest,
-  params?: Params
-): Promise<Response> => {
-  const handler = module[method];
-  if (!handler) {
-    const allowed = getAllowedMethods(module);
-    return allowed.length > 0
-      ? methodNotAllowed(request, allowed, method)
-      : notFound(request, method);
-  }
-  return handler(request, { params: Promise.resolve(params ?? ({} as Params)) });
-};
-
-const getPathSegments = (request: NextRequest): string[] => {
-  const basePath = '/api/v2/products';
-  const pathname = request.nextUrl.pathname;
-  if (!pathname.startsWith(basePath)) {
-    return [];
-  }
-  const remainder = pathname.slice(basePath.length).replace(/^\/+/, '');
-  return remainder ? remainder.split('/').filter(Boolean) : [];
-};
-
 const param = (name: string): PatternToken => ({ param: name });
 
-const normalizeToken = (
-  token: PatternToken
-): { isParam: boolean; key: string; optional: boolean } => {
-  if (typeof token === 'string') {
-    return { isParam: false, key: token, optional: false };
-  }
-  if ('literal' in token) {
-    return { isParam: false, key: token.literal, optional: Boolean(token.optional) };
-  }
-  return { isParam: true, key: token.param, optional: Boolean(token.optional) };
-};
-
-const matchPattern = (pattern: PatternToken[], segments: string[]): Params | null => {
-  const params: Params = {};
-  let segmentIndex = 0;
-  for (const token of pattern) {
-    const { isParam, key, optional } = normalizeToken(token);
-
-    if (segmentIndex >= segments.length) {
-      if (optional) {
-        continue;
-      }
-      return null;
-    }
-
-    const currentSegment = segments[segmentIndex];
-    if (!currentSegment) {
-      return null;
-    }
-
-    if (!isParam) {
-      if (key !== currentSegment) {
-        if (optional) {
-          continue;
-        }
-        return null;
-      }
-      segmentIndex += 1;
-      continue;
-    }
-
-    params[key] = currentSegment;
-    segmentIndex += 1;
-  }
-
-  if (segmentIndex !== segments.length) {
-    return null;
-  }
-
-  return params;
-};
-
-const ROUTES: RouteDefinition[] = [
+const ROUTES: CatchAllRouteDefinition<PatternToken>[] = [
   { pattern: [], module: productsIndex },
   { pattern: ['count'], module: productsCount },
   { pattern: ['paged'], module: productsPaged },
@@ -235,44 +130,31 @@ const ROUTES: RouteDefinition[] = [
   { pattern: [param('id'), 'studio', param('action')], module: productStudioAction },
 ];
 
-const routeProducts = (
-  method: HttpMethod,
-  request: NextRequest,
-  segments: string[]
-): Promise<Response> => {
-  for (const route of ROUTES) {
-    const params = matchPattern(route.pattern, segments);
-    if (!params) {
-      continue;
-    }
-    return dispatch(route.module, method, request, params);
-  }
-
-  return notFound(request, method);
-};
+const BASE_PATH = '/api/v2/products';
+const SOURCE_BASE = 'v2.products';
 
 export const GET = apiHandlerWithParams<RouteParams>(
-  (request: NextRequest, _ctx, _params) =>
-    routeProducts('GET', request, getPathSegments(request)),
-  { source: 'v2.products.[[...path]].GET', requireAuth: true }
+  (request: NextRequest) =>
+    handleCatchAllRequest('GET', request, getPathSegments(request, BASE_PATH), ROUTES, SOURCE_BASE),
+  { source: `${SOURCE_BASE}.[[...path]].GET`, requireAuth: true }
 );
 export const POST = apiHandlerWithParams<RouteParams>(
-  (request: NextRequest, _ctx, _params) =>
-    routeProducts('POST', request, getPathSegments(request)),
-  { source: 'v2.products.[[...path]].POST', requireAuth: true }
+  (request: NextRequest) =>
+    handleCatchAllRequest('POST', request, getPathSegments(request, BASE_PATH), ROUTES, SOURCE_BASE),
+  { source: `${SOURCE_BASE}.[[...path]].POST`, requireAuth: true }
 );
 export const PUT = apiHandlerWithParams<RouteParams>(
-  (request: NextRequest, _ctx, _params) =>
-    routeProducts('PUT', request, getPathSegments(request)),
-  { source: 'v2.products.[[...path]].PUT', requireAuth: true }
+  (request: NextRequest) =>
+    handleCatchAllRequest('PUT', request, getPathSegments(request, BASE_PATH), ROUTES, SOURCE_BASE),
+  { source: `${SOURCE_BASE}.[[...path]].PUT`, requireAuth: true }
 );
 export const PATCH = apiHandlerWithParams<RouteParams>(
-  (request: NextRequest, _ctx, _params) =>
-    routeProducts('PATCH', request, getPathSegments(request)),
-  { source: 'v2.products.[[...path]].PATCH', requireAuth: true }
+  (request: NextRequest) =>
+    handleCatchAllRequest('PATCH', request, getPathSegments(request, BASE_PATH), ROUTES, SOURCE_BASE),
+  { source: `${SOURCE_BASE}.[[...path]].PATCH`, requireAuth: true }
 );
 export const DELETE = apiHandlerWithParams<RouteParams>(
-  (request: NextRequest, _ctx, _params) =>
-    routeProducts('DELETE', request, getPathSegments(request)),
-  { source: 'v2.products.[[...path]].DELETE', requireAuth: true }
+  (request: NextRequest) =>
+    handleCatchAllRequest('DELETE', request, getPathSegments(request, BASE_PATH), ROUTES, SOURCE_BASE),
+  { source: `${SOURCE_BASE}.[[...path]].DELETE`, requireAuth: true }
 );

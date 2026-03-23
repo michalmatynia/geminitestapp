@@ -11,8 +11,8 @@ export type CatchAllRouteHandler<P extends CatchAllRouteParams = CatchAllRoutePa
   request: NextRequest,
   context: { params: P | Promise<P> }
 ) => Promise<Response>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- catch-all route modules define their own param shapes.
-export type CatchAllRouteModule = Partial<Record<CatchAllRouteMethod, CatchAllRouteHandler<any>>>;
+// catch-all route modules define their own param shapes.
+export type CatchAllRouteModule = Partial<Record<CatchAllRouteMethod, CatchAllRouteHandler>>;
 export type CatchAllRoutePatternParamToken = { param: string };
 export type CatchAllRoutePatternLiteralToken = { literal: string; optional?: boolean };
 export type CatchAllRoutePatternOptionalParamToken = { param: string; optional?: boolean };

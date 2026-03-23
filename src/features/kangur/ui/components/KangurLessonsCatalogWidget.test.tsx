@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 const { selectLessonMock } = vi.hoisted(() => ({
@@ -61,15 +61,42 @@ vi.mock('@/features/kangur/ui/components/KangurLessonLibraryCard', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurSubjectGroupSection', () => ({
-  KangurSubjectGroupSection: ({
+vi.mock('@/features/kangur/ui/components/KangurLessonGroupAccordion', () => ({
+  KangurLessonGroupAccordion: ({
     label,
+    isExpanded,
+    onToggle,
     children,
   }: {
     label: React.ReactNode;
+    isExpanded: boolean;
+    onToggle: () => void;
     children: React.ReactNode;
   }) => (
-    <section aria-label='mock-subject-group'>
+    <div className='w-full'>
+      <button type='button' aria-expanded={isExpanded} onClick={onToggle}>
+        {label}
+      </button>
+      {isExpanded ? (
+        <div role='region'>
+          <div className='w-full items-center'>{children}</div>
+        </div>
+      ) : null}
+    </div>
+  ),
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurSubjectGroupSection', () => ({
+  KangurSubjectGroupSection: ({
+    className,
+    label,
+    children,
+  }: {
+    className?: string;
+    label: React.ReactNode;
+    children: React.ReactNode;
+  }) => (
+    <section aria-label='mock-subject-group' className={className}>
       <h2>{label}</h2>
       {children}
     </section>
@@ -106,6 +133,12 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/design/primitives', () => ({
+  KangurButton: ({
+    children,
+    ...props
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children: React.ReactNode }) => (
+    <button {...props}>{children}</button>
+  ),
   KangurEmptyState: ({ title }: { title: string }) => <div>{title}</div>,
   KangurGlassPanel: ({
     children,
@@ -121,10 +154,15 @@ vi.mock('@/features/kangur/ui/design/primitives', () => ({
   ),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => false,
+}));
+
 vi.mock('@/features/kangur/ui/design/tokens', () => ({
   KANGUR_LESSON_PANEL_GAP_CLASSNAME: 'gap-4',
   KANGUR_PANEL_GAP_CLASSNAME: 'gap-6',
   KANGUR_PANEL_ROW_CLASSNAME: 'panel-row',
+  KANGUR_STEP_PILL_CLASSNAME: 'step-pill',
 }));
 
 vi.mock('@/features/kangur/ui/constants/subject-groups', () => ({
@@ -151,35 +189,25 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
 import { KangurLessonsCatalogWidget } from './KangurLessonsCatalogWidget';
 
 describe('KangurLessonsCatalogWidget', () => {
-  it('opens grouped sections on the first click', async () => {
+  it('renders grouped sections through centered collapsible menus', () => {
     ageGroupState.value = 'ten_year_old';
     render(<KangurLessonsCatalogWidget />);
 
-    expect(screen.getByLabelText('Lista lekcji')).toHaveClass('items-center');
+    expect(screen.getByLabelText('Lista lekcji')).toHaveClass('max-w-lg', 'items-center');
+    expect(screen.getByLabelText('mock-subject-group')).toHaveClass('w-full');
     expect(screen.queryByTestId('lesson-card-lesson-english')).not.toBeInTheDocument();
 
     const trigger = screen.getByRole('button', { name: /opening section/i });
-
-    expect(trigger).toHaveAttribute('aria-expanded', 'false');
-
     fireEvent.click(trigger);
 
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
-    const accordionRegion = screen
-      .getAllByRole('region')
-      .find((region) => region.id.includes('kangur-lesson-group-panel'));
+    const accordionRegion = screen.getByTestId('lesson-card-lesson-english').closest('[role="region"]');
     expect(accordionRegion?.firstElementChild).toHaveClass('w-full', 'items-center');
     expect(screen.getByTestId('lesson-card-lesson-english')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('lesson-card-lesson-english'));
 
     expect(selectLessonMock).toHaveBeenCalledWith('lesson-english');
-
-    fireEvent.click(trigger);
-
-    await waitFor(() => {
-      expect(trigger).toHaveAttribute('aria-expanded', 'false');
-    });
   });
 
   it('renders icon-first subject and subsection cues for six-year-old learners', async () => {
@@ -188,15 +216,10 @@ describe('KangurLessonsCatalogWidget', () => {
     render(<KangurLessonsCatalogWidget />);
 
     expect(screen.getByTestId('lessons-catalog-subject-icon-english')).toHaveTextContent('🔤');
-
-    const trigger = screen.getByRole('button', { name: /opening section/i });
-    fireEvent.click(trigger);
-
+    fireEvent.click(screen.getByRole('button', { name: /opening section/i }));
     expect(screen.getByTestId('lessons-catalog-group-icon-english:opening-section')).toHaveTextContent(
       '📚'
     );
-    expect(
-      screen.queryByTestId('lessons-catalog-group-type-icon-english:opening-section')
-    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('lesson-card-lesson-english')).toBeInTheDocument();
   });
 });

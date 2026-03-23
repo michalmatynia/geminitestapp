@@ -216,21 +216,23 @@ export function useLessonsLogic() {
   }, [basePath]);
   const handleSelectLesson = useCallback(
     (lessonId: string | null, options?: { secret?: boolean }): void => {
-      if (lessonId === null) {
-        setIsSecretLessonActive(false);
+      if (lessonId !== activeLessonId) {
         setIsActiveLessonComponentReady(false);
+      }
+      if (lessonId === null) {
         clearFocusedLessonParam();
       }
-      setIsSecretLessonActive(Boolean(options?.secret));
+      setIsSecretLessonActive(Boolean(lessonId && options?.secret));
       setActiveLessonId(lessonId);
     },
-    [clearFocusedLessonParam]
+    [activeLessonId, clearFocusedLessonParam]
   );
 
   useEffect((): void => {
     if (!activeLessonId) return;
     if (!lessons.some((lesson) => lesson.id === activeLessonId)) {
       setIsSecretLessonActive(false);
+      setIsActiveLessonComponentReady(false);
       setActiveLessonId(null);
     }
   }, [activeLessonId, lessons]);
@@ -252,6 +254,7 @@ export function useLessonsLogic() {
     if (lessons.length === 0) return;
     const focusedLessonId = resolveFocusedLessonId(focusToken, lessons);
     if (!focusedLessonId) return;
+    setIsActiveLessonComponentReady(false);
     setActiveLessonId(focusedLessonId);
     currentUrl.searchParams.delete(getKangurInternalQueryParamName('focus', basePath));
     window.history.replaceState({}, '', `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
@@ -262,6 +265,7 @@ export function useLessonsLogic() {
     lessons,
     lessonTemplateMap,
     setAgeGroup,
+    setIsActiveLessonComponentReady,
     setSubject,
     subject,
   ]);

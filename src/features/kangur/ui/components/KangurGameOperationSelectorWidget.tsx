@@ -1831,7 +1831,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
               />
             ) : (
               quickPracticeTitle
-            )) as any
+            ))
           }
           titleId='kangur-game-quick-practice-heading'
         />

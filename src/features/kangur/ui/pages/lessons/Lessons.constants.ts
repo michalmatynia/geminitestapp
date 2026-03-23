@@ -24,7 +24,12 @@ export const LESSONS_LIBRARY_COLUMN_CLASSNAME = cn(
 );
 
 export const LESSONS_LIBRARY_LIST_CLASSNAME = cn(
-  'mx-auto flex w-full min-w-0 flex-col items-center',
+  'flex w-full min-w-0 flex-col items-center',
+  KANGUR_LESSON_PANEL_GAP_CLASSNAME
+);
+
+export const LESSONS_LIBRARY_STACK_CLASSNAME = cn(
+  'flex w-full min-w-0 flex-col items-center',
   KANGUR_LESSON_PANEL_GAP_CLASSNAME
 );
 

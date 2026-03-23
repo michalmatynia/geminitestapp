@@ -150,6 +150,31 @@ vi.mock('@/features/kangur/ui/components/KangurLessonLibraryCard', () => ({
   },
 }));
 
+vi.mock('@/features/kangur/ui/components/KangurLessonGroupAccordion', () => ({
+  KangurLessonGroupAccordion: ({
+    label,
+    isExpanded,
+    onToggle,
+    children,
+  }: {
+    label: React.ReactNode;
+    isExpanded: boolean;
+    onToggle: () => void;
+    children: React.ReactNode;
+  }) => (
+    <div className='w-full'>
+      <button type='button' aria-expanded={isExpanded} onClick={onToggle}>
+        {label}
+      </button>
+      {isExpanded ? (
+        <div role='region'>
+          <div className='w-full items-center'>{children}</div>
+        </div>
+      ) : null}
+    </div>
+  ),
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurLessonDocumentRenderer', () => ({
   KangurLessonDocumentRenderer: () => <div data-testid='mock-lesson-document-renderer' />,
 }));
@@ -283,10 +308,15 @@ vi.mock('@/features/kangur/ui/design/primitives', () => ({
 vi.mock('@/features/kangur/ui/design/tokens', () => ({
   KANGUR_LESSON_PANEL_GAP_CLASSNAME: 'gap',
   KANGUR_PANEL_GAP_CLASSNAME: 'gap',
+  KANGUR_STEP_PILL_CLASSNAME: 'step-pill',
   KANGUR_SEGMENTED_CONTROL_CLASSNAME: 'segmented',
   KANGUR_STACK_SPACED_CLASSNAME: 'stack',
   KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX: 72,
   KANGUR_TOP_BAR_HEIGHT_VAR_NAME: '--kangur-top-bar-height',
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => false,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLearnerActivity', () => ({
@@ -712,7 +742,7 @@ describe('Lessons page subject filtering', () => {
     expect(openLoginModalMock).toHaveBeenCalledTimes(1);
   });
 
-  it('opens a grouped lesson section on the first click', async () => {
+  it('shows grouped lesson content through centered collapsible menus', async () => {
     lessonSectionsState.value = [
       {
         id: 'opening-section',
@@ -735,11 +765,10 @@ describe('Lessons page subject filtering', () => {
     expect(screen.queryByTestId('lesson-card-lesson-english')).not.toBeInTheDocument();
 
     const openingSectionButton = screen.getByRole('button', { name: /opening section/i });
-    expect(openingSectionButton).toHaveAttribute('aria-expanded', 'false');
-
     fireEvent.click(openingSectionButton);
 
     expect(openingSectionButton).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('region').firstElementChild).toHaveClass('w-full', 'items-center');
     expect(screen.getByTestId('lesson-card-lesson-english')).toBeInTheDocument();
   });
 });

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-23T15:37:02.836Z",
+  "generatedAt": "2026-03-23T16:32:18.270Z",
   "status": "passed",
   "summary": {
     "total": 32,
@@ -549,5 +549,5 @@
       "infoCount": 32
     }
   ],
-  "durationMs": 277
+  "durationMs": 452
 }

@@ -28,23 +28,47 @@ import {
 } from './Lessons.constants';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 
-export function ActiveLessonView() {
+type ActiveLessonRenderSnapshot = {
+  activeLesson: NonNullable<ReturnType<typeof useLessons>['activeLesson']>;
+  activeLessonId: string;
+  lessonDocuments: ReturnType<typeof useLessons>['lessonDocuments'];
+  lessonAssignmentsByComponent: ReturnType<typeof useLessons>['lessonAssignmentsByComponent'];
+  completedLessonAssignmentsByComponent: ReturnType<
+    typeof useLessons
+  >['completedLessonAssignmentsByComponent'];
+  orderedLessons: ReturnType<typeof useLessons>['orderedLessons'];
+  isSecretLessonActive: ReturnType<typeof useLessons>['isSecretLessonActive'];
+  progress: ReturnType<typeof useLessons>['progress'];
+  isActiveLessonDocumentLoading: ReturnType<typeof useLessons>['isActiveLessonDocumentLoading'];
+};
+
+export function ActiveLessonView({
+  snapshot,
+}: {
+  snapshot?: ActiveLessonRenderSnapshot;
+}) {
   const translations = useTranslations('KangurLessonsPage');
+  const lessons = useLessons();
   const {
-    activeLesson,
     handleSelectLesson,
-    lessonDocuments,
-    lessonAssignmentsByComponent,
-    completedLessonAssignmentsByComponent,
     setIsActiveLessonComponentReady,
-    isActiveLessonDocumentLoading,
     activeLessonHeaderRef,
     activeLessonNavigationRef,
     activeLessonContentRef,
-    orderedLessons,
-    isSecretLessonActive,
-    progress,
-  } = useLessons();
+  } = lessons;
+  const activeLesson = snapshot?.activeLesson ?? lessons.activeLesson;
+  const lessonDocuments = snapshot?.lessonDocuments ?? lessons.lessonDocuments;
+  const lessonAssignmentsByComponent =
+    snapshot?.lessonAssignmentsByComponent ?? lessons.lessonAssignmentsByComponent;
+  const completedLessonAssignmentsByComponent =
+    snapshot?.completedLessonAssignmentsByComponent ??
+    lessons.completedLessonAssignmentsByComponent;
+  const isActiveLessonDocumentLoading =
+    snapshot?.isActiveLessonDocumentLoading ?? lessons.isActiveLessonDocumentLoading;
+  const orderedLessons = snapshot?.orderedLessons ?? lessons.orderedLessons;
+  const isSecretLessonActive =
+    snapshot?.isSecretLessonActive ?? lessons.isSecretLessonActive;
+  const progress = snapshot?.progress ?? lessons.progress;
 
   const { entry: activeLessonHeaderContent } = useKangurPageContentEntry('lessons-active-header');
   const { entry: activeLessonAssignmentContent } = useKangurPageContentEntry('lessons-active-assignment');

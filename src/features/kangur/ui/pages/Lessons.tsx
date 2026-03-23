@@ -20,8 +20,13 @@ function LessonsContent() {
     basePath,
     activeLesson,
     activeLessonId,
+    lessonDocuments,
     lessonAssignmentsByComponent,
     completedLessonAssignmentsByComponent,
+    orderedLessons,
+    isSecretLessonActive,
+    isActiveLessonDocumentLoading,
+    progress,
     guestPlayerName,
     setGuestPlayerName,
   } = useLessons();
@@ -47,6 +52,34 @@ function LessonsContent() {
     title: activeLesson?.title ?? pageTranslations('pageTitle'),
     assignmentId: activeLessonAssignment?.id ?? completedActiveLessonAssignment?.id,
   };
+
+  const activeLessonRenderSnapshot = useMemo(
+    () =>
+      activeLesson
+        ? {
+            activeLesson,
+            activeLessonId: activeLessonId ?? activeLesson.id,
+            lessonDocuments,
+            lessonAssignmentsByComponent,
+            completedLessonAssignmentsByComponent,
+            orderedLessons,
+            isSecretLessonActive,
+            progress,
+            isActiveLessonDocumentLoading,
+          }
+        : undefined,
+    [
+      activeLesson,
+      activeLessonId,
+      completedLessonAssignmentsByComponent,
+      isActiveLessonDocumentLoading,
+      isSecretLessonActive,
+      lessonAssignmentsByComponent,
+      lessonDocuments,
+      orderedLessons,
+      progress,
+    ]
+  );
 
   const navigation = useMemo<KangurPrimaryNavigationProps>(
     () => ({
@@ -91,7 +124,10 @@ function LessonsContent() {
       >
         <AnimatePresence mode='wait'>
           {activeLesson ? (
-            <ActiveLessonView key={activeLessonId} />
+            <ActiveLessonView
+              key={activeLessonId ?? activeLesson.id}
+              snapshot={activeLessonRenderSnapshot}
+            />
           ) : (
             <LessonsCatalog key='catalog' />
           )}

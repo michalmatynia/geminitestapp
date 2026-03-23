@@ -274,6 +274,50 @@ describe('ActiveLessonView mobile controls', () => {
     }).not.toThrow();
   });
 
+  it('keeps rendering the latched lesson snapshot while the live active lesson clears', async () => {
+    useKangurMobileBreakpointMock.mockReturnValue(false);
+
+    let currentActiveLesson: typeof activeLesson | null = activeLesson;
+
+    useLessonsMock.mockImplementation(() => ({
+      activeLesson: currentActiveLesson,
+      handleSelectLesson,
+      lessonDocuments: {},
+      lessonAssignmentsByComponent: new Map(),
+      completedLessonAssignmentsByComponent: new Map(),
+      setIsActiveLessonComponentReady: vi.fn(),
+      activeLessonHeaderRef: React.createRef<HTMLDivElement>(),
+      activeLessonNavigationRef: React.createRef<HTMLDivElement>(),
+      activeLessonContentRef,
+      activeLessonScrollRef: React.createRef<HTMLDivElement>(),
+      orderedLessons: [activeLesson, nextLesson],
+      isSecretLessonActive: false,
+      progress: { lessonMastery: {} },
+      isActiveLessonDocumentLoading: false,
+    }));
+
+    const snapshot = {
+      activeLesson,
+      activeLessonId: activeLesson.id,
+      lessonDocuments: {},
+      lessonAssignmentsByComponent: new Map(),
+      completedLessonAssignmentsByComponent: new Map(),
+      orderedLessons: [activeLesson, nextLesson],
+      isSecretLessonActive: false,
+      progress: { lessonMastery: {} },
+      isActiveLessonDocumentLoading: false,
+    };
+
+    const { rerender } = render(<ActiveLessonView snapshot={snapshot} />);
+    await act(async () => {});
+
+    currentActiveLesson = null;
+    rerender(<ActiveLessonView snapshot={snapshot} />);
+
+    expect(screen.getByTestId('active-lesson-header')).toBeInTheDocument();
+    expect(screen.getByTestId('lessons-active-transition')).toBeInTheDocument();
+  });
+
   it('uses the in-content back action from the mobile lesson controls when available', async () => {
     activeLesson.contentMode = 'component';
     lessonComponentsMock[activeLesson.componentId] = () => (

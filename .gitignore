@@ -92,6 +92,6 @@ docker.md
 
 # Testing
 /docs/metrics
-/tmp
+/tmp/
 /output/playwright
 /.playwright-cli

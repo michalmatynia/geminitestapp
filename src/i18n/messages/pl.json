@@ -844,6 +844,7 @@
         "english_subject_verb_agreement": "Zgoda podmiotu",
         "english_articles": "Przedimki",
         "english_adjectives": "Przymiotniki",
+        "english_adverbs_frequency": "Przysłówki częstotliwości",
         "english_prepositions_time_place": "Przyimki czasu i miejsca",
         "alphabet_basics": "Alfabet",
         "alphabet_copy": "Przepisz litery",
@@ -1268,6 +1269,7 @@
       "english_subject_verb_agreement": "Zgoda podmiotu",
       "english_articles": "Przedimki",
       "english_adjectives": "Przymiotniki",
+      "english_adverbs_frequency": "Przysłówki częstotliwości",
       "english_prepositions_time_place": "Przyimki czasu i miejsca"
     },
     "weeklyActivity": {
@@ -2293,6 +2295,96 @@
             "the": {
               "description": "jedna konkretna rzecz"
             }
+          }
+        }
+      }
+    },
+    "englishAdverbsFrequency": {
+      "summary": {
+        "perfect": "Perfekcyjnie! Cały tygodniowy plan pasuje do przysłówków częstotliwości.",
+        "good": "Dobra robota! Większość tygodnia ma już właściwy rytm.",
+        "retry": "Spróbuj jeszcze raz i zobacz, jak często rozświetla się każda czynność."
+      },
+      "inRound": {
+        "roundLabel": "Runda {current}/{total}",
+        "hitsLabel": "{hits}/{total} trafień",
+        "check": "Sprawdź",
+        "next": "Dalej",
+        "seeResult": "Zobacz wynik",
+        "studio": {
+          "modeLabel": "Przeciągnij karty częstotliwości",
+          "modeLabelTouch": "Dotknij lub przeciągnij karty",
+          "targetLabel": "Rutyna docelowa",
+          "plannerLabel": "Plan tygodnia",
+          "watchLabel": "Zobacz tydzień w ruchu",
+          "poolLabel": "Bank częstotliwości",
+          "poolAria": "Bank częstotliwości",
+          "poolHint": "W każdej rundzie jedna karta może zostać niewykorzystana.",
+          "laneAria": "Pas rutyny dla czynności {action}",
+          "dropLabel": "Upuść albo dotknij kartę częstotliwości tutaj.",
+          "weekAria": "Tygodniowy plan dla {action}: {frequency}",
+          "touchIdle": "Dotknij kartę częstotliwości, a potem pas rutyny albo bank.",
+          "touchSelected": "Wybrana częstotliwość: {frequency}. Dotknij pas rutyny albo bank.",
+          "clearRound": "Wyczyść rundę",
+          "feedback": {
+            "perfect": "Perfekcyjnie! Plan zgadza się z rutyną docelową.",
+            "retry": "Spróbuj jeszcze raz i porównaj, ile dni powinna mieć każda czynność."
+          },
+          "rounds": {
+            "cinema-sunday": {
+              "title": "Niedzielne kino",
+              "prompt": "Odbuduj niedzielną rutynę, dopasowując karty częstotliwości do planu tygodnia.",
+              "hint": "Jedna rzecz dzieje się co tydzień, jedna przez większość tygodni, a jedna nigdy."
+            },
+            "school-week": {
+              "title": "Szkolny tydzień",
+              "prompt": "Dopasuj karty częstotliwości do szkolnych nawyków.",
+              "hint": "Pomyśl, co dzieje się codziennie, co często, a co nigdy nie powinno się zdarzać."
+            },
+            "weekend-club": {
+              "title": "Weekendowy klub",
+              "prompt": "Ustaw właściwy rytm tygodnia dla planu weekendowego klubu.",
+              "hint": "Jedna aktywność to stały zwyczaj, jedna dzieje się tylko czasami, a jedna nigdy."
+            },
+            "after-school": {
+              "title": "Po lekcjach",
+              "prompt": "Dopasuj karty do planu po lekcjach.",
+              "hint": "Praca domowa zdarza się codziennie, park tylko czasami, a pływanie nigdy."
+            },
+            "morning-check": {
+              "title": "Poranny plan",
+              "prompt": "Ułóż poranną rutynę na uważny dzień szkolny.",
+              "hint": "Wstawanie o siódmej zdarza się zwykle, spóźnianie nigdy, a telewizja tylko czasami."
+            }
+          },
+          "frequencies": {
+            "always": {
+              "label": "always",
+              "description": "codziennie albo za każdym razem"
+            },
+            "usually": {
+              "label": "usually",
+              "description": "przez większość dni"
+            },
+            "sometimes": {
+              "label": "sometimes",
+              "description": "tylko przez kilka dni"
+            },
+            "never": {
+              "label": "never",
+              "description": "zero dni"
+            }
+          },
+          "actions": {
+            "go_to_cinema": "go to the cinema",
+            "go_with_friends": "go with friends",
+            "eat_popcorn": "eat popcorn",
+            "do_homework": "do homework",
+            "get_up_at_seven": "get up at seven",
+            "be_late_for_school": "be late for school",
+            "go_to_park": "go to the park",
+            "watch_tv": "watch TV",
+            "go_swimming": "go swimming"
           }
         }
       }
@@ -3503,6 +3595,7 @@
         "english_subject_verb_agreement": "Zgodnosc podmiotu z czasownikiem",
         "english_articles": "Przedimki",
         "english_adjectives": "Przymiotniki",
+        "english_adverbs_frequency": "Przysłówki częstotliwości",
         "english_prepositions_time_place": "Przyimki czasu i miejsca"
       }
     },
@@ -3646,6 +3739,7 @@
       "english_subject_verb_agreement": "Zgodnosc podmiotu z czasownikiem",
       "english_articles": "Przedimki",
       "english_adjectives": "Przymiotniki",
+      "english_adverbs_frequency": "Przysłówki częstotliwości",
       "english_prepositions_time_place": "Przyimki czasu i miejsca"
     }
   },
@@ -5947,6 +6041,135 @@
         }
       }
     },
+    "englishAdverbsFrequency": {
+      "slides": {
+        "intro": {
+          "overview": {
+            "title": "Jak często to się dzieje?",
+            "lead": "Przysłówki częstotliwości mówią, jak często dzieje się dana czynność. Dzięki nim opowiadamy o rutynach i nawykach.",
+            "caption": "always = zawsze, usually = zazwyczaj, sometimes = czasami, never = nigdy"
+          }
+        },
+        "routine": {
+          "cinemaStory": {
+            "title": "Kinowa rutyna",
+            "lead": "Przeczytaj krótką rutynę i zobacz, jak przysłówki zmieniają obraz całego tygodnia.",
+            "caption": "Always, usually i never zmieniają liczbę świecących dni w tygodniu."
+          },
+          "frequencyStrip": {
+            "title": "Czytaj pasek tygodnia",
+            "lead": "Możesz wyobrazić sobie każdy przysłówek jako pasek siedmiu dni. Więcej światełek oznacza częstszą czynność.",
+            "items": {
+              "always": "always = 7 dni",
+              "usually": "usually = większość dni",
+              "sometimes": "sometimes = kilka dni",
+              "never": "never = 0 dni"
+            }
+          }
+        },
+        "position": {
+          "mainVerb": {
+            "title": "Wstaw przysłówek przed główny czasownik",
+            "lead": "Przy większości czasowników przysłówek częstotliwości stoi przed głównym czasownikiem.",
+            "caption": "She always checks her notes."
+          },
+          "beVerb": {
+            "title": "Wstaw przysłówek po be",
+            "lead": "Przy am, is i are przysłówek zwykle stoi po czasowniku be.",
+            "caption": "He is never late."
+          },
+          "repairOrder": {
+            "title": "Napraw szyk",
+            "lead": "Czasem przysłówek ląduje w złym miejscu. Przesuń go tam, gdzie angielski go oczekuje.",
+            "caption": "I always do my homework. He is never late."
+          }
+        },
+        "answer": {
+          "howOften": {
+            "title": "Odpowiedz na How often...?",
+            "lead": "Użyj przysłówka częstotliwości, żeby odpowiedzieć na pytania o rutyny i nawyki.",
+            "caption": "How often do you go to the park? I sometimes go after school."
+          },
+          "wordBank": {
+            "title": "Bank słów częstotliwości",
+            "lead": "Trzymaj te cztery słowa pod ręką, kiedy opisujesz swój tydzień."
+          },
+          "chooseWord": {
+            "title": "Wybierz najlepsze słowo częstotliwości",
+            "lead": "Dopasuj podpowiedź do przysłówka, który pasuje najlepiej, zanim ułożysz własną rutynę.",
+            "items": {
+              "homework": {
+                "clue": "Codziennie po szkole odrabiam pracę domową.",
+                "answer": "always"
+              },
+              "seven": {
+                "clue": "Ona wstaje o siódmej przez większość szkolnych dni.",
+                "answer": "usually"
+              },
+              "late": {
+                "clue": "On spóźnia się do szkoły przez zero dni.",
+                "answer": "never"
+              },
+              "tv": {
+                "clue": "Oglądamy telewizję w kilka wieczorów.",
+                "answer": "sometimes"
+              }
+            }
+          },
+          "myWeek": {
+            "title": "Zbuduj swój tydzień",
+            "lead": "Teraz zamień słowa częstotliwości we własną kartę nawyków. Wybierz proste czynności i powiedz, jak często się zdarzają.",
+            "caption": "I always do my homework. I sometimes go to the park. I never arrive late."
+          },
+          "favoritePlace": {
+            "title": "Powiedz o jednym miejscu",
+            "lead": "Wybierz jedno znane miejsce i powiedz, jak często tam chodzisz. Słowa częstotliwości sprawiają, że zdanie jest dużo jaśniejsze.",
+            "caption": "I usually go to the library. I sometimes go to the park. I never go to the swimming pool on school days."
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Szybka powtórka",
+            "lead": "Pamiętaj o tych regułach, gdy mówisz o rutynach.",
+            "items": {
+              "meaning": "Always, usually, sometimes i never pokazują, jak często coś się dzieje.",
+              "mainVerb": "Przed głównym czasownikiem: I always do my homework.",
+              "beVerb": "Po be: She is never late.",
+              "answer": "Używaj ich w odpowiedziach na pytania How often...?."
+            }
+          }
+        }
+      }
+    },
+    "englishAdverbsFrequencyShell": {
+      "lessonTitle": "Angielski: przysłówki częstotliwości",
+      "sections": {
+        "intro": {
+          "title": "Wstęp",
+          "description": "Co znaczą słowa częstotliwości"
+        },
+        "routine": {
+          "title": "Rutyna",
+          "description": "Zobacz częstotliwość na całym tygodniu"
+        },
+        "position": {
+          "title": "Pozycja",
+          "description": "Gdzie stoi przysłówek w zdaniu"
+        },
+        "answer": {
+          "title": "Odpowiedź",
+          "description": "Mów o swoich nawykach"
+        },
+        "gameFrequencyStudio": {
+          "title": "Frequency Studio",
+          "description": "Zbuduj animowany plan tygodnia"
+        },
+        "summary": {
+          "title": "Podsumowanie",
+          "description": "Najważniejsze reguły w jednym miejscu"
+        }
+      }
+    },
     "englishBasics": {
       "slides": {
         "greetings": {
@@ -7627,6 +7850,7 @@
       "english_subject_verb_agreement": "Zgoda podmiotu",
       "english_articles": "Przedimki",
       "english_adjectives": "Przymiotniki",
+      "english_adverbs_frequency": "Przysłówki częstotliwości",
       "english_prepositions_time_place": "Przyimki czasu i miejsca"
     }
   },

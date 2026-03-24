@@ -4,9 +4,6 @@ import {
   getKangurInternalQueryParamName,
   readKangurUrlParam,
 } from '@/features/kangur/config/routing';
-import {
-  hasKangurLessonDocumentContent,
-} from '@/features/kangur/lesson-documents';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
@@ -273,9 +270,8 @@ export function useLessonsLogic() {
   const activeIdx = orderedLessons.findIndex((lesson) => lesson.id === activeLessonId);
   const activeLesson = activeIdx >= 0 ? orderedLessons[activeIdx] : null;
   const ActiveLessonComponent = activeLesson ? LESSON_COMPONENTS[activeLesson.componentId] : null;
-  const hasActiveLessonDocContent = hasKangurLessonDocumentContent(activeLessonDocument);
   const isActiveLessonDocumentLoading =
-    Boolean(activeLesson && activeLesson.contentMode === 'document' && shouldLoadLessonDocument) &&
+    Boolean(activeLesson?.contentMode === 'document' && shouldLoadLessonDocument) &&
     Boolean(
       (activeLessonDocumentQuery.isPending ||
         activeLessonDocumentQuery.isLoading ||

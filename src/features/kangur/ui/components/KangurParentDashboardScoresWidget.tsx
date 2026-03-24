@@ -33,7 +33,7 @@ export function KangurParentDashboardScoresWidget({
   } = useKangurParentDashboardRuntime();
   const translations = useTranslations('KangurParentDashboard');
   const runtimeTranslations = useTranslations('KangurProgressRuntime');
-  const { subject } = useKangurSubjectFocus();
+  const { subject, subjectKey } = useKangurSubjectFocus();
   const { entry: scoresContent } = useKangurPageContentEntry('parent-dashboard-scores');
 
   if (!canAccessDashboard) {
@@ -49,6 +49,7 @@ export function KangurParentDashboardScoresWidget({
   }
 
   const dailyQuest = getCurrentKangurDailyQuest(progress, {
+    ownerKey: subjectKey,
     subject,
     translate: runtimeTranslations,
   });

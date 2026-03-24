@@ -133,8 +133,41 @@ const canUseStorage = (): boolean => typeof window !== 'undefined' && Boolean(wi
 const resolveQuestSubject = (options?: KangurDailyQuestOptions): KangurLessonSubject =>
   options?.subject ?? getProgressSubject();
 
-const buildDailyQuestStorageKey = (subject: KangurLessonSubject): string =>
+const normalizeQuestOwnerKey = (ownerKey: string | null | undefined): string | null => {
+  const normalized = typeof ownerKey === 'string' ? ownerKey.trim() : '';
+  return normalized.length > 0 ? normalized : null;
+};
+
+const buildDailyQuestStorageKey = (
+  subject: KangurLessonSubject,
+  ownerKey?: string | null
+): string => `${KANGUR_DAILY_QUEST_STORAGE_KEY}:${subject}:${normalizeQuestOwnerKey(ownerKey) ?? 'guest'}`;
+
+const buildLegacyDailyQuestStorageKey = (subject: KangurLessonSubject): string =>
   `${KANGUR_DAILY_QUEST_STORAGE_KEY}:${subject}`;
+
+const getDailyQuestStorageCandidates = (
+  subject: KangurLessonSubject,
+  ownerKey: string | null
+): string[] => {
+  const keys = [buildDailyQuestStorageKey(subject, ownerKey), buildLegacyDailyQuestStorageKey(subject)];
+  if (subject === 'maths') {
+    keys.push(KANGUR_DAILY_QUEST_STORAGE_KEY);
+  }
+
+  return Array.from(new Set(keys));
+};
+
+const clearLegacyDailyQuestStorageKeys = (subject: KangurLessonSubject): void => {
+  if (!canUseStorage()) {
+    return;
+  }
+
+  window.localStorage.removeItem(buildLegacyDailyQuestStorageKey(subject));
+  if (subject === 'maths') {
+    window.localStorage.removeItem(KANGUR_DAILY_QUEST_STORAGE_KEY);
+  }
+};
 
 const toLocalDateKey = (date: Date): string => {
   const year = date.getFullYear();
@@ -150,9 +183,8 @@ const buildQuestExpiry = (now: Date): string => {
 };
 
 const resolveQuestOwnerKey = (ownerKeyOverride?: string | null): string | null => {
-  if (typeof ownerKeyOverride === 'string') {
-    const normalized = ownerKeyOverride.trim();
-    return normalized.length > 0 ? normalized : null;
+  if (ownerKeyOverride !== undefined) {
+    return normalizeQuestOwnerKey(ownerKeyOverride);
   }
 
   return loadProgressOwnerKey();
@@ -200,6 +232,7 @@ const normalizeStoredQuest = (
 
 const loadStoredDailyQuest = (
   subject: KangurLessonSubject,
+  ownerKey: string | null,
   options?: { persist?: boolean }
 ): KangurDailyQuestStoredState | null => {
   if (!canUseStorage()) {
@@ -213,32 +246,37 @@ const loadStoredDailyQuest = (
       description: 'Loads the daily quest state from local storage.',
     },
     () => {
-      const subjectKey = buildDailyQuestStorageKey(subject);
-      const raw =
-        window.localStorage.getItem(subjectKey) ||
-        (subject === 'maths' ? window.localStorage.getItem(KANGUR_DAILY_QUEST_STORAGE_KEY) : null);
-      if (!raw) {
-        return null;
-      }
-
-      const parsed = JSON.parse(raw) as unknown;
-      if (!isStoredQuestState(parsed)) {
-        return null;
-      }
-
-      const normalized = normalizeStoredQuest(parsed, subject);
-      if (normalized.subject !== subject) {
-        return null;
-      }
-
-      if (options?.persist !== false) {
-        window.localStorage.setItem(subjectKey, JSON.stringify(normalized));
-        if (subject === 'maths') {
-          window.localStorage.removeItem(KANGUR_DAILY_QUEST_STORAGE_KEY);
+      const scopedStorageKey = buildDailyQuestStorageKey(subject, ownerKey);
+      for (const storageKey of getDailyQuestStorageCandidates(subject, ownerKey)) {
+        const raw = window.localStorage.getItem(storageKey);
+        if (!raw) {
+          continue;
         }
+
+        const parsed = JSON.parse(raw) as unknown;
+        if (!isStoredQuestState(parsed)) {
+          continue;
+        }
+
+        const normalized = normalizeStoredQuest(parsed, subject);
+        if (
+          normalized.subject !== subject ||
+          normalizeQuestOwnerKey(normalized.ownerKey) !== ownerKey
+        ) {
+          continue;
+        }
+
+        if (options?.persist !== false) {
+          window.localStorage.setItem(scopedStorageKey, JSON.stringify(normalized));
+          if (storageKey !== scopedStorageKey) {
+            clearLegacyDailyQuestStorageKeys(subject);
+          }
+        }
+
+        return normalized;
       }
 
-      return normalized;
+      return null;
     },
     { fallback: null }
   );
@@ -252,7 +290,7 @@ const saveStoredDailyQuest = (quest: KangurDailyQuestStoredState): void => {
   const subject = kangurLessonSubjectSchema.safeParse(quest.subject).success
     ? (quest.subject as KangurLessonSubject)
     : DEFAULT_KANGUR_SUBJECT;
-  const storageKey = buildDailyQuestStorageKey(subject);
+  const storageKey = buildDailyQuestStorageKey(subject, quest.ownerKey);
 
   withKangurClientErrorSync(
     {
@@ -462,7 +500,7 @@ export const getCurrentKangurDailyQuest = (
   const subject = resolveQuestSubject(options);
   const ownerKey = resolveQuestOwnerKey(options.ownerKey);
   const dateKey = toLocalDateKey(now);
-  const stored = loadStoredDailyQuest(subject, { persist });
+  const stored = loadStoredDailyQuest(subject, ownerKey, { persist });
 
   if (stored?.dateKey === dateKey && stored.ownerKey === ownerKey) {
     return toDailyQuestState(stored, progress, fallbackCopy, options.translate);
@@ -489,8 +527,9 @@ export const getCurrentKangurDailyQuest = (
 };
 
 export const getKangurDailyQuestStorageKey = (
-  subject?: KangurLessonSubject
-): string => buildDailyQuestStorageKey(subject ?? getProgressSubject());
+  subject?: KangurLessonSubject,
+  ownerKey?: string | null
+): string => buildDailyQuestStorageKey(subject ?? getProgressSubject(), resolveQuestOwnerKey(ownerKey));
 
 export const claimCurrentKangurDailyQuestReward = (
   progress: KangurProgressState,
@@ -501,7 +540,7 @@ export const claimCurrentKangurDailyQuestReward = (
   const subject = resolveQuestSubject(options);
   const ownerKey = resolveQuestOwnerKey(options.ownerKey);
   const dateKey = toLocalDateKey(now);
-  const stored = loadStoredDailyQuest(subject, { persist: options.persist });
+  const stored = loadStoredDailyQuest(subject, ownerKey, { persist: options.persist });
 
   if (stored?.dateKey !== dateKey || stored?.ownerKey !== ownerKey) {
     return {

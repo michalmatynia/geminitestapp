@@ -155,7 +155,7 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
     totalQuestions,
     xpToast,
   } = useKangurGameRuntime();
-  const { subject } = useKangurSubjectFocus();
+  const { subject, subjectKey } = useKangurSubjectFocus();
 
   if (screen !== 'result') {
     return null;
@@ -164,6 +164,7 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
   const progressLocalizer = { translate: progressTranslations };
   const currentQuest = getCurrentKangurDailyQuest(progress, {
     locale: normalizedLocale,
+    ownerKey: subjectKey,
     subject,
     translate: progressTranslations,
   });

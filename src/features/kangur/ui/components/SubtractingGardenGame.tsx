@@ -4,10 +4,10 @@ import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import {
   KangurDragDropContext,
   getKangurMobileDragHandleStyle,
+  renderKangurDragPreview,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import {
@@ -73,7 +73,6 @@ type Round = {
 type ZoneId = 'basket' | 'sky';
 
 const TOTAL_ROUNDS = 6;
-const dragPortal = typeof document === 'undefined' ? null : document.body;
 
 const TOKEN_STYLES = [
   'bg-gradient-to-br from-amber-200 via-orange-300 to-rose-300 shadow-[0_10px_26px_-12px_rgba(251,146,60,0.7)]',
@@ -209,10 +208,7 @@ function DraggableToken({
           </div>
         );
 
-        if (snapshot.isDragging && dragPortal) {
-          return createPortal(content, dragPortal);
-        }
-        return content;
+        return renderKangurDragPreview(content, snapshot.isDragging);
       }}
     </Draggable>
   );

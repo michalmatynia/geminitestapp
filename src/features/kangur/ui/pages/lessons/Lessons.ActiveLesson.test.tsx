@@ -5,6 +5,11 @@
 import React from 'react';
 import { act, fireEvent, render, screen } from '@/__tests__/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import LessonHub from '@/features/kangur/ui/components/LessonHub';
+import {
+  LESSONS_ACTIVE_HUB_COLUMN_CLASSNAME,
+  LESSONS_ACTIVE_SECTION_CLASSNAME,
+} from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 
 const {
   useLessonsMock,
@@ -95,6 +100,15 @@ vi.mock('@/features/kangur/ui/design/primitives', () => ({
     </button>
   ),
   KangurGlassPanel: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  KangurIconBadge: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  KangurOptionCardButton: ({
+    children,
+    ...props
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children: React.ReactNode }) => (
+    <button type='button' {...props}>
+      {children}
+    </button>
+  ),
   KangurStatusChip: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   KangurSummaryPanel: ({ title }: { title: string }) => <div>{title}</div>,
 }));
@@ -119,6 +133,8 @@ vi.mock('@/features/kangur/ui/pages/lessons/LessonsContext', () => ({
 }));
 
 import { ActiveLessonView } from '@/features/kangur/ui/pages/lessons/Lessons.ActiveLesson';
+
+const splitClasses = (className: string): string[] => className.trim().split(/\s+/);
 
 const activeLesson = {
   id: 'lesson-1',
@@ -187,7 +203,9 @@ describe('ActiveLessonView mobile controls', () => {
     const activeLessonTransition = screen.getByTestId('lessons-active-transition');
 
     expect(activeLessonTransition.contains(topControls)).toBe(true);
-    expect(screen.getByTestId('mock-lesson-navigation').parentElement).toHaveClass('mx-auto');
+    expect(screen.getByTestId('mock-lesson-navigation').parentElement).toHaveClass(
+      ...splitClasses(LESSONS_ACTIVE_SECTION_CLASSNAME)
+    );
     expect(screen.queryByTestId('kangur-lesson-scroll-container')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Przewiń w dół' })).toBeNull();
     expect(document.documentElement.style.overflow).toBe('');
@@ -340,5 +358,47 @@ describe('ActiveLessonView mobile controls', () => {
 
     expect(lessonDocumentBackClickMock).toHaveBeenCalledTimes(1);
     expect(handleSelectLesson).not.toHaveBeenCalled();
+  });
+
+  it('keeps lesson hubs centered on the same active lesson shell as the navigation', async () => {
+    activeLesson.contentMode = 'component';
+    activeLesson.componentId = 'hub_lesson';
+    lessonComponentsMock.hub_lesson = () => (
+      <LessonHub
+        gradientClass='kangur-gradient-accent-indigo'
+        lessonEmoji='🧩'
+        lessonTitle='Angielski: składnia zdania'
+        onBack={vi.fn()}
+        onSelect={vi.fn()}
+        sections={[
+          {
+            id: 'order',
+            emoji: '🔤',
+            title: 'Order',
+            description: 'Ćwicz szyk zdania.',
+          },
+          {
+            id: 'blue-print',
+            emoji: '🗂️',
+            title: 'Blue print',
+            description: 'Połącz pytania i odpowiedzi.',
+          },
+        ]}
+      />
+    );
+
+    render(<ActiveLessonView />);
+
+    await act(async () => {});
+
+    expect(screen.getByTestId('mock-lesson-navigation').parentElement).toHaveClass(
+      ...splitClasses(LESSONS_ACTIVE_SECTION_CLASSNAME)
+    );
+
+    const hubList = screen.getByRole('list');
+    expect(hubList).toHaveClass(...splitClasses(LESSONS_ACTIVE_HUB_COLUMN_CLASSNAME));
+    for (const item of screen.getAllByRole('listitem')) {
+      expect(item).toHaveClass('w-full');
+    }
   });
 });

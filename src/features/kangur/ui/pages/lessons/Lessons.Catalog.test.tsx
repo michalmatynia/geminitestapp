@@ -5,6 +5,10 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import {
+  LESSONS_LIBRARY_LAYOUT_CLASSNAME,
+  LESSONS_LIBRARY_LIST_CLASSNAME,
+} from './Lessons.constants';
 
 const { useLessonsMock } = vi.hoisted(() => ({
   useLessonsMock: vi.fn(),
@@ -158,6 +162,8 @@ vi.mock('./LessonsContext', () => ({
 
 import { LessonsCatalog } from './Lessons.Catalog';
 
+const splitClasses = (className: string): string[] => className.trim().split(/\s+/);
+
 describe('LessonsCatalog', () => {
   it('renders six-year-old icon cues in the intro and grouped lesson headers', () => {
     useLessonsMock.mockReturnValue({
@@ -214,13 +220,11 @@ describe('LessonsCatalog', () => {
     render(<LessonsCatalog />);
 
     expect(screen.getByTestId('lessons-shell-transition')).toHaveClass(
-      'mx-auto',
-      'w-full',
-      'min-w-0',
-      'max-w-lg',
-      'items-center'
+      ...splitClasses(LESSONS_LIBRARY_LAYOUT_CLASSNAME)
     );
-    expect(screen.getByTestId('lessons-list-transition')).toHaveClass('items-center');
+    expect(screen.getByTestId('lessons-list-transition')).toHaveClass(
+      ...splitClasses(LESSONS_LIBRARY_LIST_CLASSNAME)
+    );
     expect(screen.getByTestId('lessons-intro-description-icon')).toHaveTextContent('🎵');
 
     fireEvent.click(screen.getByRole('button', { name: /skala/i }));

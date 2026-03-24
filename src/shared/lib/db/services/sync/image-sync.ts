@@ -2,13 +2,48 @@ import type { MongoImageFileDoc, MongoImageStudioSlotDoc } from '../database-syn
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
 
+type BatchResult = { count: number };
+type EntityWithId = { id: string };
+
+type ImageFileSeed = {
+  id: string;
+  filename: string;
+  filepath: string;
+  mimetype: string;
+  size: number;
+  width: number | null;
+  height: number | null;
+  tags: string[];
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type ImageStudioSlotSeed = {
+  id: string;
+  projectId: string;
+  name: string;
+  folderPath: string;
+  position: number | null;
+  imageFileId: string | null;
+  imageUrl: string | null;
+  imageBase64: string | null;
+  asset3dId: string | null;
+  screenshotFileId: string | null;
+  metadata: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type ImageFileRow = ImageFileSeed;
+type ImageStudioSlotRow = ImageStudioSlotSeed;
+
 export const syncImageFiles: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
   const docs = (await mongo
     .collection('image_files')
     .find({})
     .toArray()) as MongoImageFileDoc[];
   const data = docs
-    .map((doc: MongoImageFileDoc): Prisma.ImageFileCreateManyInput | null => {
+    .map((doc: MongoImageFileDoc): ImageFileSeed | null => {
       const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       return {
@@ -24,9 +59,13 @@ export const syncImageFiles: DatabaseSyncHandler = async ({ mongo, prisma, norma
         updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.ImageFileCreateManyInput => item !== null);
-  const deleted = await prisma.imageFile.deleteMany();
-  const created = data.length ? await prisma.imageFile.createMany({ data }) : { count: 0 };
+    .filter((item): item is ImageFileSeed => item !== null);
+  const deleted = (await prisma.imageFile.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.imageFile.createMany({
+      data: data as Prisma.ImageFileCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
@@ -37,15 +76,17 @@ export const syncImageStudioSlots: DatabaseSyncHandler = async ({
   toDate,
   toJsonValue,
 }) => {
+  const imageFileRows = (await prisma.imageFile.findMany({
+    select: { id: true },
+  })) as EntityWithId[];
   const availableImageFileIds = new Set<string>(
-    (await prisma.imageFile.findMany({ select: { id: true } })).map(
-      (entry: { id: string }) => entry.id
-    )
+    imageFileRows.map((entry) => entry.id)
   );
+  const assetRows = (await prisma.asset3D.findMany({
+    select: { id: true },
+  })) as EntityWithId[];
   const availableAssetIds = new Set<string>(
-    (await prisma.asset3D.findMany({ select: { id: true } })).map(
-      (entry: { id: string }) => entry.id
-    )
+    assetRows.map((entry) => entry.id)
   );
   const docs = (await mongo
     .collection('image_studio_slots')
@@ -53,7 +94,7 @@ export const syncImageStudioSlots: DatabaseSyncHandler = async ({
     .toArray()) as MongoImageStudioSlotDoc[];
   const warnings: string[] = [];
   const data = docs
-    .map((doc: MongoImageStudioSlotDoc): Prisma.ImageStudioSlotCreateManyInput | null => {
+    .map((doc: MongoImageStudioSlotDoc): ImageStudioSlotSeed | null => {
       const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       const projectId = doc.projectId ?? '';
@@ -94,9 +135,13 @@ export const syncImageStudioSlots: DatabaseSyncHandler = async ({
         updatedAt: toDate(doc.updatedAt) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.ImageStudioSlotCreateManyInput => item !== null);
-  const deleted = await prisma.imageStudioSlot.deleteMany();
-  const created = data.length ? await prisma.imageStudioSlot.createMany({ data }) : { count: 0 };
+    .filter((item): item is ImageStudioSlotSeed => item !== null);
+  const deleted = (await prisma.imageStudioSlot.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.imageStudioSlot.createMany({
+      data: data as Prisma.ImageStudioSlotCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return {
     sourceCount: data.length,
     targetDeleted: deleted.count,
@@ -108,7 +153,7 @@ export const syncImageStudioSlots: DatabaseSyncHandler = async ({
 // --- Prisma to Mongo handlers ---
 
 export const syncImageFilesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.imageFile.findMany();
+  const rows = (await prisma.imageFile.findMany()) as ImageFileRow[];
   const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
@@ -133,7 +178,7 @@ export const syncImageFilesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, 
 };
 
 export const syncImageStudioSlotsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.imageStudioSlot.findMany();
+  const rows = (await prisma.imageStudioSlot.findMany()) as ImageStudioSlotRow[];
   const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,

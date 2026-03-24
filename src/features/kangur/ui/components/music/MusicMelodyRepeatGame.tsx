@@ -636,11 +636,15 @@ export default function MusicMelodyRepeatGame({
             melody={round?.notes ?? []}
             className='!overflow-visible !border-0 !bg-transparent !px-1.5 !py-2.5 !shadow-none sm:!px-2.5 sm:!py-3'
             onKeyboardModeChange={handleKeyboardModeChange}
-            onKeyPress={handleKeyPress}
+            onKeyPress={(details) => {
+              void handleKeyPress(details);
+            }}
             onSynthGlideModeChange={handleSynthGlideModeChange}
             onSynthGestureChange={handleSynthGestureChange}
             onSynthGestureEnd={handleSynthGestureEnd}
-            onSynthGestureStart={handleSynthGestureStart}
+            onSynthGestureStart={(details) => {
+              void handleSynthGestureStart(details);
+            }}
             onSynthWaveformChange={handleSynthWaveformChange}
             pressedNoteId={pressedNoteId}
             pressedVelocity={pressedVelocity}

@@ -3,12 +3,150 @@ import { ObjectId } from 'mongodb';
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
 
+type BatchResult = { count: number };
+
+type EntityWithId = { id: string };
+type RawMongoDoc = Record<string, unknown>;
+type NotebookDoc = RawMongoDoc & Partial<NotebookSeed>;
+type ThemeDoc = RawMongoDoc & Partial<ThemeSeed>;
+type TagDoc = RawMongoDoc & Partial<TagSeed>;
+type CategoryDoc = RawMongoDoc & Partial<CategorySeed>;
+type NoteFileDoc = RawMongoDoc & Partial<NoteFileSeed>;
+
+type NotebookSeed = {
+  id: string;
+  name: string;
+  color: string | null;
+  defaultThemeId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type ThemeSeed = {
+  id: string;
+  name: string;
+  notebookId: string | null;
+  textColor: string;
+  backgroundColor: string;
+  markdownHeadingColor: string;
+  markdownLinkColor: string;
+  markdownCodeBackground: string;
+  markdownCodeText: string;
+  relatedNoteBorderWidth: number;
+  relatedNoteBorderColor: string;
+  relatedNoteBackgroundColor: string;
+  relatedNoteTextColor: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type TagSeed = {
+  id: string;
+  name: string;
+  color: string | null;
+  notebookId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type CategorySeed = {
+  id: string;
+  name: string;
+  description: string | null;
+  color: string | null;
+  parentId: string | null;
+  themeId: string | null;
+  notebookId: string | null;
+  sortIndex: number;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+interface MongoNoteTag {
+  tagId: string;
+  assignedAt?: Date | string;
+}
+
+interface MongoNoteCategory {
+  categoryId: string;
+  assignedAt?: Date | string;
+}
+
+interface MongoNoteRelation {
+  targetNoteId: string;
+  assignedAt?: Date | string;
+}
+
+interface MongoNoteDoc {
+  _id?: ObjectId;
+  id?: string;
+  title?: string;
+  content?: string;
+  editorType?: string;
+  color?: string | null;
+  isPinned?: boolean;
+  isArchived?: boolean;
+  isFavorite?: boolean;
+  notebookId?: string | null;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+  tags?: MongoNoteTag[];
+  categories?: MongoNoteCategory[];
+  relationsFrom?: MongoNoteRelation[];
+}
+
+type NoteSeed = {
+  id: string;
+  title: string;
+  content: string;
+  editorType: string;
+  color: string | null;
+  isPinned: boolean;
+  isArchived: boolean;
+  isFavorite: boolean;
+  notebookId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  tags: MongoNoteTag[];
+  categories: MongoNoteCategory[];
+  relationsFrom: MongoNoteRelation[];
+};
+
+type NoteFileSeed = {
+  id: string;
+  noteId: string;
+  slotIndex: number;
+  filename: string;
+  filepath: string;
+  mimetype: string;
+  size: number;
+  width: number | null;
+  height: number | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type NotebookRow = NotebookSeed;
+type ThemeRow = ThemeSeed;
+type TagRow = TagSeed;
+type CategoryRow = CategorySeed;
+type NoteTagRow = { noteId: string; tagId: string; assignedAt: Date };
+type NoteCategoryRow = { noteId: string; categoryId: string; assignedAt: Date };
+type NoteRelationRow = { sourceNoteId: string; targetNoteId: string; assignedAt: Date };
+type NoteFileRow = NoteFileSeed;
+type NoteWithRelationsRow = Omit<NoteSeed, 'tags' | 'categories' | 'relationsFrom'> & {
+  tags: NoteTagRow[];
+  categories: NoteCategoryRow[];
+  relationsFrom: NoteRelationRow[];
+  files: NoteFileRow[];
+};
+
 export const syncNotebooks: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
-  const docs = await mongo.collection('notebooks').find({}).toArray();
+  const docs = (await mongo.collection('notebooks').find({}).toArray()) as NotebookDoc[];
   const warnings: string[] = [];
   const seenNames = new Set<string>();
   const data = docs
-    .map((doc: Record<string, unknown>): Prisma.NotebookCreateManyInput | null => {
+    .map((doc: NotebookDoc): NotebookSeed | null => {
       const id = normalizeId(doc);
       if (!id) return null;
       const name = (doc.name as string) ?? id;
@@ -26,9 +164,13 @@ export const syncNotebooks: DatabaseSyncHandler = async ({ mongo, prisma, normal
         updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.NotebookCreateManyInput => item !== null);
-  const deleted = await prisma.notebook.deleteMany();
-  const created = data.length ? await prisma.notebook.createMany({ data }) : { count: 0 };
+    .filter((item): item is NotebookSeed => item !== null);
+  const deleted = (await prisma.notebook.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.notebook.createMany({
+      data: data as Prisma.NotebookCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return {
     sourceCount: data.length,
     targetDeleted: deleted.count,
@@ -38,15 +180,16 @@ export const syncNotebooks: DatabaseSyncHandler = async ({ mongo, prisma, normal
 };
 
 export const syncThemes: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
+  const notebookRows = (await prisma.notebook.findMany({
+    select: { id: true },
+  })) as EntityWithId[];
   const availableNotebookIds = new Set<string>(
-    (await prisma.notebook.findMany({ select: { id: true } })).map(
-      (entry: { id: string }) => entry.id
-    )
+    notebookRows.map((entry) => entry.id)
   );
   const warnings: string[] = [];
-  const docs = await mongo.collection('themes').find({}).toArray();
+  const docs = (await mongo.collection('themes').find({}).toArray()) as ThemeDoc[];
   const data = docs
-    .map((doc: Record<string, unknown>): Prisma.ThemeCreateManyInput | null => {
+    .map((doc: ThemeDoc): ThemeSeed | null => {
       const id = normalizeId(doc);
       if (!id) return null;
       const rawNotebookId = (doc.notebookId as string | null) ?? null;
@@ -79,9 +222,13 @@ export const syncThemes: DatabaseSyncHandler = async ({ mongo, prisma, normalize
         updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.ThemeCreateManyInput => item !== null);
-  const deleted = await prisma.theme.deleteMany();
-  const created = data.length ? await prisma.theme.createMany({ data }) : { count: 0 };
+    .filter((item): item is ThemeSeed => item !== null);
+  const deleted = (await prisma.theme.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.theme.createMany({
+      data: data as Prisma.ThemeCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return {
     sourceCount: data.length,
     targetDeleted: deleted.count,
@@ -91,16 +238,17 @@ export const syncThemes: DatabaseSyncHandler = async ({ mongo, prisma, normalize
 };
 
 export const syncTags: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
+  const notebookRows = (await prisma.notebook.findMany({
+    select: { id: true },
+  })) as EntityWithId[];
   const availableNotebookIds = new Set<string>(
-    (await prisma.notebook.findMany({ select: { id: true } })).map(
-      (entry: { id: string }) => entry.id
-    )
+    notebookRows.map((entry) => entry.id)
   );
   const warnings: string[] = [];
-  const docs = await mongo.collection('tags').find({}).toArray();
+  const docs = (await mongo.collection('tags').find({}).toArray()) as TagDoc[];
   const seenTags = new Set<string>();
   const data = docs
-    .map((doc: Record<string, unknown>): Prisma.TagCreateManyInput | null => {
+    .map((doc: TagDoc): TagSeed | null => {
       const id = normalizeId(doc);
       if (!id) return null;
       const name = (doc.name as string) ?? id;
@@ -125,9 +273,13 @@ export const syncTags: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId
         updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.TagCreateManyInput => item !== null);
-  const deleted = await prisma.tag.deleteMany();
-  const created = data.length ? await prisma.tag.createMany({ data }) : { count: 0 };
+    .filter((item): item is TagSeed => item !== null);
+  const deleted = (await prisma.tag.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.tag.createMany({
+      data: data as Prisma.TagCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return {
     sourceCount: data.length,
     targetDeleted: deleted.count,
@@ -137,18 +289,22 @@ export const syncTags: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId
 };
 
 export const syncCategories: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
-  const docs = await mongo.collection('categories').find({}).toArray();
+  const docs = (await mongo.collection('categories').find({}).toArray()) as CategoryDoc[];
   const warnings: string[] = [];
+  const notebookRows = (await prisma.notebook.findMany({
+    select: { id: true },
+  })) as EntityWithId[];
   const availableNotebookIds = new Set<string>(
-    (await prisma.notebook.findMany({ select: { id: true } })).map(
-      (entry: { id: string }) => entry.id
-    )
+    notebookRows.map((entry) => entry.id)
   );
+  const themeRows = (await prisma.theme.findMany({
+    select: { id: true },
+  })) as EntityWithId[];
   const availableThemeIds = new Set<string>(
-    (await prisma.theme.findMany({ select: { id: true } })).map((entry: { id: string }) => entry.id)
+    themeRows.map((entry) => entry.id)
   );
   const raw = docs
-    .map((doc: Record<string, unknown>): Prisma.CategoryCreateManyInput | null => {
+    .map((doc: CategoryDoc): CategorySeed | null => {
       const id = normalizeId(doc);
       if (!id) return null;
       return {
@@ -164,7 +320,7 @@ export const syncCategories: DatabaseSyncHandler = async ({ mongo, prisma, norma
         updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.CategoryCreateManyInput => item !== null);
+    .filter((item): item is CategorySeed => item !== null);
   const seenCategories = new Set<string>();
   const deduped = raw.filter((entry) => {
     const key = `${entry.notebookId ?? 'none'}::${entry.name}`;
@@ -201,8 +357,10 @@ export const syncCategories: DatabaseSyncHandler = async ({ mongo, prisma, norma
       themeId: resolvedThemeId,
     };
   });
-  const deleted = await prisma.category.deleteMany();
-  const created = data.length ? await prisma.category.createMany({ data }) : { count: 0 };
+  const deleted = (await prisma.category.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.category.createMany({ data })) as BatchResult)
+    : { count: 0 };
   return {
     sourceCount: data.length,
     targetDeleted: deleted.count,
@@ -212,54 +370,15 @@ export const syncCategories: DatabaseSyncHandler = async ({ mongo, prisma, norma
 };
 
 export const syncNotes: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const docs = await mongo.collection('notes').find({}).toArray();
+  const docs = (await mongo.collection('notes').find({}).toArray()) as MongoNoteDoc[];
+  const notebookRows = (await prisma.notebook.findMany({
+    select: { id: true },
+  })) as EntityWithId[];
   const availableNotebookIds = new Set<string>(
-    (await prisma.notebook.findMany({ select: { id: true } })).map(
-      (entry: { id: string }) => entry.id
-    )
+    notebookRows.map((entry) => entry.id)
   );
-
-  interface MongoNoteTag {
-    tagId: string;
-    assignedAt?: Date | string;
-  }
-
-  interface MongoNoteCategory {
-    categoryId: string;
-    assignedAt?: Date | string;
-  }
-
-  interface MongoNoteRelation {
-    targetNoteId: string;
-    assignedAt?: Date | string;
-  }
-
-  interface MongoNoteDoc {
-    _id?: ObjectId;
-    id?: string;
-    title?: string;
-    content?: string;
-    editorType?: string;
-    color?: string | null;
-    isPinned?: boolean;
-    isArchived?: boolean;
-    isFavorite?: boolean;
-    notebookId?: string | null;
-    createdAt?: Date | string;
-    updatedAt?: Date | string;
-    tags?: MongoNoteTag[];
-    categories?: MongoNoteCategory[];
-    relationsFrom?: MongoNoteRelation[];
-  }
-
-  const data = (docs as MongoNoteDoc[]).map(
-    (
-      doc
-    ): Prisma.NoteCreateManyInput & {
-      tags: MongoNoteTag[];
-      categories: MongoNoteCategory[];
-      relationsFrom: MongoNoteRelation[];
-    } => {
+  const data = docs.map(
+    (doc): NoteSeed => {
       const id = doc.id || doc._id?.toString() || '';
       return {
         id,
@@ -285,11 +404,13 @@ export const syncNotes: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   await prisma.noteCategory.deleteMany();
   await prisma.noteRelation.deleteMany();
   await prisma.noteFile.deleteMany();
-  const deleted = await prisma.note.deleteMany();
+  const deleted = (await prisma.note.deleteMany()) as BatchResult;
 
   const noteData = data.map(({ tags: _t, categories: _c, relationsFrom: _r, ...rest }) => rest);
-  const created = noteData.length
-    ? await prisma.note.createMany({ data: noteData as Prisma.NoteCreateManyInput[] })
+  const created: BatchResult = noteData.length
+    ? ((await prisma.note.createMany({
+      data: noteData as Prisma.NoteCreateManyInput[],
+    })) as BatchResult)
     : { count: 0 };
 
   const tagRows = data.flatMap((note) =>
@@ -330,12 +451,15 @@ export const syncNotes: DatabaseSyncHandler = async ({ mongo, prisma }) => {
 };
 
 export const syncNoteFiles: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
-  const docs = await mongo.collection('noteFiles').find({}).toArray();
+  const docs = (await mongo.collection('noteFiles').find({}).toArray()) as NoteFileDoc[];
+  const noteRows = (await prisma.note.findMany({
+    select: { id: true },
+  })) as EntityWithId[];
   const availableNoteIds = new Set<string>(
-    (await prisma.note.findMany({ select: { id: true } })).map((entry: { id: string }) => entry.id)
+    noteRows.map((entry) => entry.id)
   );
   const data = docs
-    .map((doc: Record<string, unknown>): Prisma.NoteFileCreateManyInput | null => {
+    .map((doc: NoteFileDoc): NoteFileSeed | null => {
       const id = normalizeId(doc);
       const noteId = doc.noteId as string;
       if (!id || !noteId || !availableNoteIds.has(noteId)) return null;
@@ -353,16 +477,20 @@ export const syncNoteFiles: DatabaseSyncHandler = async ({ mongo, prisma, normal
         updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.NoteFileCreateManyInput => item !== null);
-  const deleted = await prisma.noteFile.deleteMany();
-  const created = data.length ? await prisma.noteFile.createMany({ data }) : { count: 0 };
+    .filter((item): item is NoteFileSeed => item !== null);
+  const deleted = (await prisma.noteFile.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.noteFile.createMany({
+      data: data as Prisma.NoteFileCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
 // --- Prisma to Mongo handlers ---
 
 export const syncNotesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const [notes, tags, categories] = await Promise.all([
+  const [notes, tags, categories] = (await Promise.all([
     prisma.note.findMany({
       include: {
         tags: true,
@@ -373,7 +501,7 @@ export const syncNotesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prism
     }),
     prisma.tag.findMany(),
     prisma.category.findMany(),
-  ]);
+  ])) as [NoteWithRelationsRow[], TagRow[], CategoryRow[]];
 
   const tagMap = new Map(tags.map((tag) => [tag.id, tag]));
   const categoryMap = new Map(
@@ -482,7 +610,7 @@ export const syncNotesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prism
     };
   });
 
-  const collection = mongo.collection('notes');
+  const collection = mongo.collection<Record<string, unknown>>('notes');
   const deleted = await collection.deleteMany({});
   if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
   return {
@@ -493,7 +621,7 @@ export const syncNotesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prism
 };
 
 export const syncNoteFilesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const files = await prisma.noteFile.findMany();
+  const files = (await prisma.noteFile.findMany()) as NoteFileRow[];
   const docs = files.map((file) => ({
     _id: file.id,
     id: file.id,
@@ -508,7 +636,7 @@ export const syncNoteFilesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, p
     createdAt: file.createdAt,
     updatedAt: file.updatedAt,
   }));
-  const collection = mongo.collection('noteFiles');
+  const collection = mongo.collection<Record<string, unknown>>('noteFiles');
   const deleted = await collection.deleteMany({});
   if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
   return {
@@ -519,7 +647,7 @@ export const syncNoteFilesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, p
 };
 
 export const syncTagsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.tag.findMany();
+  const rows = (await prisma.tag.findMany()) as TagRow[];
   const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
@@ -529,7 +657,7 @@ export const syncTagsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }));
-  const collection = mongo.collection('tags');
+  const collection = mongo.collection<Record<string, unknown>>('tags');
   const deleted = await collection.deleteMany({});
   if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
   return {
@@ -540,7 +668,7 @@ export const syncTagsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma
 };
 
 export const syncCategoriesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.category.findMany();
+  const rows = (await prisma.category.findMany()) as CategoryRow[];
   const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
@@ -554,7 +682,7 @@ export const syncCategoriesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, 
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }));
-  const collection = mongo.collection('categories');
+  const collection = mongo.collection<Record<string, unknown>>('categories');
   const deleted = await collection.deleteMany({});
   if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
   return {
@@ -565,7 +693,7 @@ export const syncCategoriesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, 
 };
 
 export const syncNotebooksPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.notebook.findMany();
+  const rows = (await prisma.notebook.findMany()) as NotebookRow[];
   const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
@@ -575,7 +703,7 @@ export const syncNotebooksPrismaToMongo: DatabaseSyncHandler = async ({ mongo, p
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }));
-  const collection = mongo.collection('notebooks');
+  const collection = mongo.collection<Record<string, unknown>>('notebooks');
   const deleted = await collection.deleteMany({});
   if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
   return {
@@ -586,7 +714,7 @@ export const syncNotebooksPrismaToMongo: DatabaseSyncHandler = async ({ mongo, p
 };
 
 export const syncThemesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.theme.findMany();
+  const rows = (await prisma.theme.findMany()) as ThemeRow[];
   const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
@@ -605,7 +733,7 @@ export const syncThemesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, pris
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }));
-  const collection = mongo.collection('themes');
+  const collection = mongo.collection<Record<string, unknown>>('themes');
   const deleted = await collection.deleteMany({});
   if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
   return {

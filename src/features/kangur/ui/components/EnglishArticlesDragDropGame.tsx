@@ -5,7 +5,11 @@ import type { DropResult } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { KangurDragDropContext, getKangurMobileDragHandleStyle } from '@/features/kangur/ui/components/KangurDragDropContext';
+import {
+  KangurDragDropContext,
+  getKangurMobileDragHandleStyle,
+  renderKangurDragPreview,
+} from '@/features/kangur/ui/components/KangurDragDropContext';
 import {
   KangurPracticeGameProgress,
   KangurPracticeGameStage,
@@ -56,7 +60,6 @@ import {
   ENGLISH_ARTICLES_DRAG_DROP_ROUNDS,
   type EnglishArticleId,
   type EnglishArticlesDragDropRound,
-  type EnglishArticlesDragDropSentence,
 } from './EnglishArticlesDragDropGame.data';
 
 type ArticleToken = {
@@ -132,14 +135,6 @@ const slotDroppableId = (slotId: string): string => `slot-${slotId}`;
 const isSlotDroppable = (value: string): boolean => value.startsWith('slot-');
 const getSlotIdFromDroppable = (value: string): string => value.replace('slot-', '');
 
-const moveWithinList = <T,>(items: T[], from: number, to: number): T[] => {
-  const updated = [...items];
-  const [moved] = updated.splice(from, 1);
-  if (moved === undefined) return updated;
-  updated.splice(to, 0, moved);
-  return updated;
-};
-
 const takeTokenFromState = (
   state: RoundState,
   tokenId: string
@@ -194,7 +189,7 @@ export default function EnglishArticlesDragDropGame({
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const [roundIndex, setRoundIndex] = useState(0);
   const [roundState, setRoundState] = useState<RoundState>(() =>
-    buildRoundState(ENGLISH_ARTICLES_DRAG_DROP_ROUNDS[0]!)
+    buildRoundState(ENGLISH_ARTICLES_DRAG_DROP_ROUNDS[0])
   );
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
@@ -206,7 +201,7 @@ export default function EnglishArticlesDragDropGame({
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const sessionStartedAtRef = useRef(Date.now());
 
-  const round = ENGLISH_ARTICLES_DRAG_DROP_ROUNDS[roundIndex] ?? ENGLISH_ARTICLES_DRAG_DROP_ROUNDS[0]!;
+  const round = ENGLISH_ARTICLES_DRAG_DROP_ROUNDS[roundIndex] ?? ENGLISH_ARTICLES_DRAG_DROP_ROUNDS[0];
   const selectedToken = useMemo(() => {
     if (!selectedTokenId) return null;
     return (
@@ -390,7 +385,7 @@ export default function EnglishArticlesDragDropGame({
 
   const handleRestart = (): void => {
     setRoundIndex(0);
-    setRoundState(buildRoundState(ENGLISH_ARTICLES_DRAG_DROP_ROUNDS[0]!));
+    setRoundState(buildRoundState(ENGLISH_ARTICLES_DRAG_DROP_ROUNDS[0]));
     setChecked(false);
     setRoundCorrect(0);
     setTotalCorrect(0);
@@ -498,7 +493,7 @@ export default function EnglishArticlesDragDropGame({
                         key={article}
                         className={cn(
                           'rounded-[16px] border px-3 py-2 text-xs shadow-sm',
-                          KANGUR_ACCENT_STYLES[ARTICLE_META[article].accent].softCard
+                          KANGUR_ACCENT_STYLES[ARTICLE_META[article].accent].activeCard
                         )}
                       >
                         <p className='font-black uppercase tracking-[0.16em] text-slate-700'>
@@ -754,7 +749,7 @@ function DraggableArticleToken({
   isSelected?: boolean;
   isCoarsePointer?: boolean;
   onClick?: () => void;
-}): React.JSX.Element {
+}): React.JSX.Element | React.ReactPortal {
   const articleMeta = ARTICLE_META[token.article];
   const selectedClass = isSelected ? 'ring-2 ring-amber-400/80 ring-offset-1 ring-offset-white' : '';
 
@@ -765,36 +760,42 @@ function DraggableArticleToken({
       isDragDisabled={isDragDisabled}
       disableInteractiveElementBlocking
     >
-      {(provided, snapshot) => (
-        <button
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          style={getKangurMobileDragHandleStyle(
-            provided.draggableProps.style,
-            isCoarsePointer
-          )}
-          type='button'
-          className={cn(
-            'rounded-[16px] border px-3 py-2 text-sm font-black uppercase tracking-[0.18em] shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
-            isCoarsePointer ? 'min-h-[3.75rem] min-w-[4.5rem] px-4 py-3 touch-manipulation' : 'min-w-[4rem]',
-            KANGUR_ACCENT_STYLES[articleMeta.accent].badge,
-            snapshot.isDragging && 'scale-[1.02] shadow-lg',
-            selectedClass
-          )}
-          aria-label={articleMeta.label}
-          aria-disabled={isDragDisabled}
-          aria-pressed={isSelected}
-          title={articleMeta.label}
-          onClick={(event) => {
-            event.stopPropagation();
-            if (snapshot.isDragging || isDragDisabled) return;
-            onClick?.();
-          }}
-        >
-          {articleMeta.label}
-        </button>
-      )}
+      {(provided, snapshot) => {
+        const content = (
+          <button
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            style={getKangurMobileDragHandleStyle(
+              provided.draggableProps.style,
+              isCoarsePointer
+            )}
+            type='button'
+            className={cn(
+              'rounded-[16px] border px-3 py-2 text-sm font-black uppercase tracking-[0.18em] shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+              isCoarsePointer
+                ? 'min-h-[3.75rem] min-w-[4.5rem] px-4 py-3 touch-manipulation'
+                : 'min-w-[4rem]',
+              KANGUR_ACCENT_STYLES[articleMeta.accent].badge,
+              snapshot.isDragging && 'scale-[1.02] shadow-lg',
+              selectedClass
+            )}
+            aria-label={articleMeta.label}
+            aria-disabled={isDragDisabled}
+            aria-pressed={isSelected}
+            title={articleMeta.label}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (snapshot.isDragging || isDragDisabled) return;
+              onClick?.();
+            }}
+          >
+            {articleMeta.label}
+          </button>
+        );
+
+        return renderKangurDragPreview(content, snapshot.isDragging);
+      }}
     </Draggable>
   );
 }

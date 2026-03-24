@@ -5,7 +5,11 @@ import type { DropResult } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { KangurDragDropContext, getKangurMobileDragHandleStyle } from '@/features/kangur/ui/components/KangurDragDropContext';
+import {
+  KangurDragDropContext,
+  getKangurMobileDragHandleStyle,
+  renderKangurDragPreview,
+} from '@/features/kangur/ui/components/KangurDragDropContext';
 import {
   KangurPracticeGameProgress,
   KangurPracticeGameStage,
@@ -223,7 +227,7 @@ export default function EnglishAdjectivesSceneGame({
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const [roundIndex, setRoundIndex] = useState(0);
   const [roundState, setRoundState] = useState<RoundState>(() =>
-    buildRoundState(ENGLISH_ADJECTIVES_SCENE_ROUNDS[0]!)
+    buildRoundState(ENGLISH_ADJECTIVES_SCENE_ROUNDS[0])
   );
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
@@ -235,7 +239,7 @@ export default function EnglishAdjectivesSceneGame({
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const sessionStartedAtRef = useRef(Date.now());
 
-  const round = ENGLISH_ADJECTIVES_SCENE_ROUNDS[roundIndex] ?? ENGLISH_ADJECTIVES_SCENE_ROUNDS[0]!;
+  const round = ENGLISH_ADJECTIVES_SCENE_ROUNDS[roundIndex] ?? ENGLISH_ADJECTIVES_SCENE_ROUNDS[0];
   const selectedToken = useMemo(() => {
     if (!selectedTokenId) return null;
     return (
@@ -412,7 +416,7 @@ export default function EnglishAdjectivesSceneGame({
 
   const handleRestart = (): void => {
     setRoundIndex(0);
-    setRoundState(buildRoundState(ENGLISH_ADJECTIVES_SCENE_ROUNDS[0]!));
+    setRoundState(buildRoundState(ENGLISH_ADJECTIVES_SCENE_ROUNDS[0]));
     setChecked(false);
     setRoundCorrect(0);
     setTotalCorrect(0);
@@ -520,7 +524,7 @@ export default function EnglishAdjectivesSceneGame({
                         key={`idea-${object.id}`}
                         className={cn(
                           'rounded-[16px] border px-3 py-2 text-xs shadow-sm',
-                          KANGUR_ACCENT_STYLES[round.accent].softCard
+                          KANGUR_ACCENT_STYLES[round.accent].activeCard
                         )}
                       >
                         <p className='font-black uppercase tracking-[0.14em] text-slate-700'>
@@ -785,7 +789,7 @@ function DraggableAdjectiveToken({
   isCoarsePointer?: boolean;
   onClick?: () => void;
   translate: KangurMiniGameTranslate;
-}): React.JSX.Element {
+}): React.JSX.Element | React.ReactPortal {
   const meta = ADJECTIVE_TOKEN_META[token.adjective];
   const selectedClass = isSelected ? 'ring-2 ring-indigo-400/80 ring-offset-1 ring-offset-white' : '';
 
@@ -796,39 +800,45 @@ function DraggableAdjectiveToken({
       isDragDisabled={isDragDisabled}
       disableInteractiveElementBlocking
     >
-      {(provided, snapshot) => (
-        <button
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          style={getKangurMobileDragHandleStyle(
-            provided.draggableProps.style,
-            isCoarsePointer
-          )}
-          type='button'
-          className={cn(
-            'rounded-[18px] border px-3 py-2 text-sm font-black shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70 focus-visible:ring-offset-2 ring-offset-white',
-            isCoarsePointer ? 'min-h-[3.75rem] min-w-[5.5rem] px-4 py-3 touch-manipulation' : 'min-w-[5rem]',
-            KANGUR_ACCENT_STYLES[meta.accent].badge,
-            snapshot.isDragging && 'scale-[1.02] shadow-lg',
-            selectedClass
-          )}
-          aria-label={getTokenLabel(translate, token.adjective)}
-          aria-disabled={isDragDisabled}
-          aria-pressed={isSelected}
-          title={getTokenLabel(translate, token.adjective)}
-          onClick={(event) => {
-            event.stopPropagation();
-            if (snapshot.isDragging || isDragDisabled) return;
-            onClick?.();
-          }}
-        >
-          <span className='flex items-center gap-1.5'>
-            <span aria-hidden='true'>{meta.emoji}</span>
-            <span>{getTokenLabel(translate, token.adjective)}</span>
-          </span>
-        </button>
-      )}
+      {(provided, snapshot) => {
+        const content = (
+          <button
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            style={getKangurMobileDragHandleStyle(
+              provided.draggableProps.style,
+              isCoarsePointer
+            )}
+            type='button'
+            className={cn(
+              'rounded-[18px] border px-3 py-2 text-sm font-black shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70 focus-visible:ring-offset-2 ring-offset-white',
+              isCoarsePointer
+                ? 'min-h-[3.75rem] min-w-[5.5rem] px-4 py-3 touch-manipulation'
+                : 'min-w-[5rem]',
+              KANGUR_ACCENT_STYLES[meta.accent].badge,
+              snapshot.isDragging && 'scale-[1.02] shadow-lg',
+              selectedClass
+            )}
+            aria-label={getTokenLabel(translate, token.adjective)}
+            aria-disabled={isDragDisabled}
+            aria-pressed={isSelected}
+            title={getTokenLabel(translate, token.adjective)}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (snapshot.isDragging || isDragDisabled) return;
+              onClick?.();
+            }}
+          >
+            <span className='flex items-center gap-1.5'>
+              <span aria-hidden='true'>{meta.emoji}</span>
+              <span>{getTokenLabel(translate, token.adjective)}</span>
+            </span>
+          </button>
+        );
+
+        return renderKangurDragPreview(content, snapshot.isDragging);
+      }}
     </Draggable>
   );
 }

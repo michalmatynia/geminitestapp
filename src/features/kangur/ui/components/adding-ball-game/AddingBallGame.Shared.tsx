@@ -1,16 +1,16 @@
 'use client';
 
 import React from 'react';
-import { createPortal } from 'react-dom';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { cn } from '@/features/kangur/shared/utils';
-import { getKangurMobileDragHandleStyle } from '@/features/kangur/ui/components/KangurDragDropContext';
+import {
+  getKangurMobileDragHandleStyle,
+  renderKangurDragPreview,
+} from '@/features/kangur/ui/components/KangurDragDropContext';
 import { KangurInfoCard } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { DraggableBallProps, BallProps, SlotZoneProps } from './types';
 import { getRectDropZoneSurface } from './utils';
-
-const dragPortal = typeof document === 'undefined' ? null : document.body;
 
 export function Ball({
   ball,
@@ -95,11 +95,7 @@ export function DraggableBall({
           </button>
         );
 
-        if (snapshot.isDragging && dragPortal) {
-          return createPortal(content, dragPortal);
-        }
-
-        return content;
+        return renderKangurDragPreview(content, snapshot.isDragging);
       }}
     </Draggable>
   );

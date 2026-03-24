@@ -3,10 +3,10 @@
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import {
   KangurDragDropContext,
   getKangurMobileDragHandleStyle,
+  renderKangurDragPreview,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import {
@@ -181,7 +181,6 @@ const ROUNDS: OrderRound[] = [
 
 const TOTAL_ROUNDS = ROUNDS.length;
 const TOTAL_TOKENS = ROUNDS.reduce((sum, round) => sum + round.tokens.length, 0);
-const dragPortal = typeof document === 'undefined' ? null : document.body;
 
 const getPrepositionsOrderPrompt = (
   translate: KangurMiniGameTranslate,
@@ -633,11 +632,7 @@ function DraggableToken({
           </button>
         );
 
-        if (snapshot.isDragging && dragPortal) {
-          return createPortal(content, dragPortal);
-        }
-
-        return content;
+        return renderKangurDragPreview(content, snapshot.isDragging);
       }}
     </Draggable>
   );

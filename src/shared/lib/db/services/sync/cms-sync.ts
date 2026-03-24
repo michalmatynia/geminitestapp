@@ -3,10 +3,95 @@ import { ObjectId } from 'mongodb';
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
 
+type BatchResult = { count: number };
+type RawMongoDoc = Record<string, unknown>;
+type SlugDoc = RawMongoDoc & Partial<SlugSeed>;
+type CmsThemeDoc = RawMongoDoc & Partial<CmsThemeSeed>;
+type PageDoc = RawMongoDoc &
+  Omit<Partial<PageSeed>, 'publishedAt' | 'components'> & {
+    publishedAt?: Date | string | null;
+    components?: Array<{ type: string; content: Record<string, unknown> }>;
+  };
+type PageSlugDoc = RawMongoDoc & Partial<PageSlugSeed>;
+type CmsDomainDoc = RawMongoDoc & Partial<CmsDomainSeed>;
+type CmsDomainSlugDoc = RawMongoDoc & Partial<CmsDomainSlugSeed>;
+
+type SlugSeed = {
+  id: string;
+  slug: string;
+  isDefault: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type CmsThemeSeed = {
+  id: string;
+  name: string;
+  colors: unknown;
+  typography: unknown;
+  spacing: unknown;
+  customCss: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type PageComponentSource = {
+  type: string;
+  content: Record<string, unknown>;
+};
+
+type PageSeed = {
+  id: string;
+  name: string;
+  status: string;
+  publishedAt: Date | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  seoOgImage: string | null;
+  seoCanonical: string | null;
+  robotsMeta: string | null;
+  themeId: string | null;
+  showMenu: boolean;
+  components: PageComponentSource[];
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type PageSlugSeed = {
+  pageId: string;
+  slugId: string;
+  assignedAt: Date;
+};
+
+type CmsDomainSeed = {
+  id: string;
+  domain: string;
+  aliasOf: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type CmsDomainSlugSeed = {
+  domainId: string;
+  slugId: string;
+  assignedAt: Date;
+  isDefault: boolean;
+  updatedAt: Date;
+};
+
+type SlugRow = SlugSeed;
+type CmsThemeRow = CmsThemeSeed;
+type PageRow = Omit<PageSeed, 'components'> & {
+  components: Array<{ type: string; order: number; content: unknown }>;
+};
+type PageSlugRow = PageSlugSeed;
+type CmsDomainRow = CmsDomainSeed;
+type CmsDomainSlugRow = CmsDomainSlugSeed;
+
 export const syncCmsSlugs: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
-  const docs = await mongo.collection('cms_slugs').find({}).toArray();
+  const docs = (await mongo.collection('cms_slugs').find({}).toArray()) as SlugDoc[];
   const data = docs
-    .map((doc: Record<string, unknown>): Prisma.SlugCreateManyInput | null => {
+    .map((doc: SlugDoc): SlugSeed | null => {
       const id = normalizeId(doc);
       if (!id) return null;
       return {
@@ -17,16 +102,20 @@ export const syncCmsSlugs: DatabaseSyncHandler = async ({ mongo, prisma, normali
         updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.SlugCreateManyInput => item !== null);
-  const deleted = await prisma.slug.deleteMany();
-  const created = data.length ? await prisma.slug.createMany({ data }) : { count: 0 };
+    .filter((item): item is SlugSeed => item !== null);
+  const deleted = (await prisma.slug.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.slug.createMany({
+      data: data as Prisma.SlugCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
 export const syncCmsThemes: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
-  const docs = await mongo.collection('cms_themes').find({}).toArray();
+  const docs = (await mongo.collection('cms_themes').find({}).toArray()) as CmsThemeDoc[];
   const data = docs
-    .map((doc: Record<string, unknown>): Prisma.CmsThemeCreateManyInput | null => {
+    .map((doc: CmsThemeDoc): CmsThemeSeed | null => {
       const id = normalizeId(doc);
       if (!id) return null;
       return {
@@ -40,16 +129,20 @@ export const syncCmsThemes: DatabaseSyncHandler = async ({ mongo, prisma, normal
         updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.CmsThemeCreateManyInput => item !== null);
-  const deleted = await prisma.cmsTheme.deleteMany();
-  const created = data.length ? await prisma.cmsTheme.createMany({ data }) : { count: 0 };
+    .filter((item): item is CmsThemeSeed => item !== null);
+  const deleted = (await prisma.cmsTheme.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.cmsTheme.createMany({
+      data: data as Prisma.CmsThemeCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
 export const syncCmsPages: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
-  const docs = await mongo.collection('cms_pages').find({}).toArray();
+  const docs = (await mongo.collection('cms_pages').find({}).toArray()) as PageDoc[];
   const data = docs
-    .map((doc: Record<string, unknown>) => {
+    .map((doc: PageDoc): PageSeed | null => {
       const id = normalizeId(doc);
       if (!id) return null;
       return {
@@ -71,16 +164,16 @@ export const syncCmsPages: DatabaseSyncHandler = async ({ mongo, prisma, normali
         updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
-    .filter((item): item is NonNullable<typeof item> => item !== null);
+    .filter((item): item is PageSeed => item !== null);
 
   await prisma.pageComponent.deleteMany();
-  const deleted = await prisma.page.deleteMany();
-  const created = data.length
-    ? await prisma.page.createMany({
+  const deleted = (await prisma.page.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.page.createMany({
       data: data.map(
         ({ components: _components, ...rest }) => rest
       ) as Prisma.PageCreateManyInput[],
-    })
+    })) as BatchResult)
     : { count: 0 };
 
   const componentRows = data.flatMap((page) =>
@@ -89,7 +182,7 @@ export const syncCmsPages: DatabaseSyncHandler = async ({ mongo, prisma, normali
       pageId: page.id,
       type: component.type,
       order: index,
-      content: (component.content ?? {}) as Prisma.InputJsonValue,
+      content: component.content ?? {},
       createdAt: page.createdAt,
       updatedAt: page.updatedAt,
     }))
@@ -102,9 +195,9 @@ export const syncCmsPages: DatabaseSyncHandler = async ({ mongo, prisma, normali
 };
 
 export const syncCmsPageSlugs: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const docs = await mongo.collection('cms_page_slugs').find({}).toArray();
+  const docs = (await mongo.collection('cms_page_slugs').find({}).toArray()) as PageSlugDoc[];
   const data = docs
-    .map((doc: Record<string, unknown>): Prisma.PageSlugCreateManyInput | null => {
+    .map((doc: PageSlugDoc): PageSlugSeed | null => {
       const pageId = doc.pageId as string;
       const slugId = doc.slugId as string;
       if (!pageId || !slugId) return null;
@@ -114,16 +207,20 @@ export const syncCmsPageSlugs: DatabaseSyncHandler = async ({ mongo, prisma }) =
         assignedAt: (doc.assignedAt as Date) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.PageSlugCreateManyInput => item !== null);
-  const deleted = await prisma.pageSlug.deleteMany();
-  const created = data.length ? await prisma.pageSlug.createMany({ data }) : { count: 0 };
+    .filter((item): item is PageSlugSeed => item !== null);
+  const deleted = (await prisma.pageSlug.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.pageSlug.createMany({
+      data: data as Prisma.PageSlugCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
 export const syncCmsDomains: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
-  const docs = await mongo.collection('cms_domains').find({}).toArray();
+  const docs = (await mongo.collection('cms_domains').find({}).toArray()) as CmsDomainDoc[];
   const data = docs
-    .map((doc: Record<string, unknown>): Prisma.CmsDomainCreateManyInput | null => {
+    .map((doc: CmsDomainDoc): CmsDomainSeed | null => {
       const id = normalizeId(doc);
       if (!id) return null;
       return {
@@ -134,16 +231,20 @@ export const syncCmsDomains: DatabaseSyncHandler = async ({ mongo, prisma, norma
         updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.CmsDomainCreateManyInput => item !== null);
-  const deleted = await prisma.cmsDomain.deleteMany();
-  const created = data.length ? await prisma.cmsDomain.createMany({ data }) : { count: 0 };
+    .filter((item): item is CmsDomainSeed => item !== null);
+  const deleted = (await prisma.cmsDomain.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.cmsDomain.createMany({
+      data: data as Prisma.CmsDomainCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
 export const syncCmsDomainSlugs: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const docs = await mongo.collection('cms_domain_slugs').find({}).toArray();
+  const docs = (await mongo.collection('cms_domain_slugs').find({}).toArray()) as CmsDomainSlugDoc[];
   const data = docs
-    .map((doc: Record<string, unknown>): Prisma.CmsDomainSlugCreateManyInput | null => {
+    .map((doc: CmsDomainSlugDoc): CmsDomainSlugSeed | null => {
       const domainId = doc.domainId as string;
       const slugId = doc.slugId as string;
       if (!domainId || !slugId) return null;
@@ -155,16 +256,20 @@ export const syncCmsDomainSlugs: DatabaseSyncHandler = async ({ mongo, prisma })
         updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.CmsDomainSlugCreateManyInput => item !== null);
-  const deleted = await prisma.cmsDomainSlug.deleteMany();
-  const created = data.length ? await prisma.cmsDomainSlug.createMany({ data }) : { count: 0 };
+    .filter((item): item is CmsDomainSlugSeed => item !== null);
+  const deleted = (await prisma.cmsDomainSlug.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.cmsDomainSlug.createMany({
+      data: data as Prisma.CmsDomainSlugCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
 // --- Prisma to Mongo handlers ---
 
 export const syncCmsSlugsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.slug.findMany();
+  const rows = (await prisma.slug.findMany()) as SlugRow[];
   const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
@@ -184,7 +289,7 @@ export const syncCmsSlugsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, pr
 };
 
 export const syncCmsThemesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.cmsTheme.findMany();
+  const rows = (await prisma.cmsTheme.findMany()) as CmsThemeRow[];
   const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
@@ -207,7 +312,7 @@ export const syncCmsThemesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, p
 };
 
 export const syncCmsPagesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.page.findMany({ include: { components: true } });
+  const rows = (await prisma.page.findMany({ include: { components: true } })) as PageRow[];
   const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
@@ -241,7 +346,7 @@ export const syncCmsPagesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, pr
 };
 
 export const syncCmsPageSlugsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.pageSlug.findMany();
+  const rows = (await prisma.pageSlug.findMany()) as PageSlugRow[];
   const docs = rows.map((row) => ({
     pageId: row.pageId,
     slugId: row.slugId,
@@ -262,7 +367,7 @@ export const syncCmsDomainsPrismaToMongo: DatabaseSyncHandler = async ({
   prisma,
   toObjectIdMaybe,
 }) => {
-  const rows = await prisma.cmsDomain.findMany();
+  const rows = (await prisma.cmsDomain.findMany()) as CmsDomainRow[];
   const docs = rows.map((row) => ({
     _id: toObjectIdMaybe(row.id),
     id: row.id,
@@ -282,7 +387,7 @@ export const syncCmsDomainsPrismaToMongo: DatabaseSyncHandler = async ({
 };
 
 export const syncCmsDomainSlugsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.cmsDomainSlug.findMany();
+  const rows = (await prisma.cmsDomainSlug.findMany()) as CmsDomainSlugRow[];
   const docs = rows.map((row) => ({
     _id: new ObjectId(),
     domainId: row.domainId,

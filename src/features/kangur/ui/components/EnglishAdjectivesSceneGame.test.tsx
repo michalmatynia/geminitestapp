@@ -5,7 +5,7 @@
 import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const addXpMock = vi.fn();
 const createLessonPracticeRewardMock = vi.fn(() => ({
@@ -15,6 +15,7 @@ const createLessonPracticeRewardMock = vi.fn(() => ({
 }));
 const loadProgressMock = vi.fn(() => ({}));
 const persistKangurSessionScoreMock = vi.fn();
+let draggableSnapshot = { isDragging: false };
 
 vi.mock('next-intl', async () => await vi.importActual<typeof import('next-intl')>('next-intl'));
 vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>('use-intl'));
@@ -59,7 +60,7 @@ vi.mock('@hello-pangea/dnd', () => ({
         draggableProps: {},
         dragHandleProps: {},
       },
-      { isDragging: false }
+      draggableSnapshot
     ),
 }));
 
@@ -122,6 +123,10 @@ const placeAdjective = (adjective: string, slotId: string): void => {
   fireEvent.click(screen.getByRole('button', { name: adjective }));
   fireEvent.click(screen.getByTestId(`english-adjectives-scene-slot-${slotId}`));
 };
+
+afterEach(() => {
+  draggableSnapshot = { isDragging: false };
+});
 
 describe('EnglishAdjectivesSceneGame', () => {
   it('plays through the rounds and shows the summary after a correct scene build', () => {
@@ -187,5 +192,16 @@ describe('EnglishAdjectivesSceneGame', () => {
         { name: 'red' }
       )
     ).toBeInTheDocument();
+  });
+
+  it('renders the active dragged adjective in a body portal during dragging', () => {
+    draggableSnapshot = { isDragging: true };
+
+    renderGame();
+
+    const pool = screen.getByTestId('english-adjectives-scene-pool-zone');
+
+    expect(within(pool).queryByRole('button', { name: 'big yellow' })).not.toBeInTheDocument();
+    expect(within(document.body).getByRole('button', { name: 'big yellow' })).toBeInTheDocument();
   });
 });

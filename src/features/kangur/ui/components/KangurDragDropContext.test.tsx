@@ -2,10 +2,10 @@
  * @vitest-environment jsdom
  */
 
-import { act, render } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { KangurDragDropContext } from './KangurDragDropContext';
+import { KangurDragDropContext, renderKangurDragPreview } from './KangurDragDropContext';
 
 let capturedDragStart: ((...args: unknown[]) => void) | null = null;
 let capturedDragEnd: ((...args: unknown[]) => void) | null = null;
@@ -85,5 +85,19 @@ describe('KangurDragDropContext', () => {
 
     expect(unlockMock).toHaveBeenCalledTimes(1);
     expect(customDragEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders a drag preview into document.body only while dragging', () => {
+    const PreviewHarness = ({ isDragging }: { isDragging: boolean }) =>
+      renderKangurDragPreview(<div>drag-preview</div>, isDragging);
+
+    const { container, rerender } = render(<PreviewHarness isDragging={false} />);
+
+    expect(within(container).getByText('drag-preview')).toBeInTheDocument();
+
+    rerender(<PreviewHarness isDragging />);
+
+    expect(within(container).queryByText('drag-preview')).not.toBeInTheDocument();
+    expect(within(document.body).getByText('drag-preview')).toBeInTheDocument();
   });
 });

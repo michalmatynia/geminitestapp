@@ -273,12 +273,14 @@ const getSetupFocus = (
   progress: KangurProgressState,
   locale: string,
   subject: KangurLessonSubject,
+  ownerKey: string | null,
   fallbackCopy: KangurSetupMomentumFallbackCopy,
   translate?: RecommendationTranslate,
   progressTranslate?: KangurProgressTranslate
 ): KangurGameSetupFocus | null => {
   const quest = getCurrentKangurDailyQuest(progress, {
     locale,
+    ownerKey,
     subject,
     translate: progressTranslate,
   });
@@ -503,7 +505,7 @@ export default function KangurGameSetupMomentumCard({
   const normalizedLocale = normalizeSiteLocale(locale);
   const translations = useTranslations('KangurGameRecommendations');
   const runtimeTranslations = useTranslations('KangurProgressRuntime');
-  const { subject } = useKangurSubjectFocus();
+  const { subject, subjectKey } = useKangurSubjectFocus();
   const modeKey = mode;
   const fallbackCopy = getSetupMomentumFallbackCopy(normalizedLocale);
   const focus = getSetupFocus(
@@ -511,6 +513,7 @@ export default function KangurGameSetupMomentumCard({
     progress,
     normalizedLocale,
     subject,
+    subjectKey,
     fallbackCopy,
     translations,
     runtimeTranslations

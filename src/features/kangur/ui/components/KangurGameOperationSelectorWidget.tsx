@@ -1405,7 +1405,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
     screen,
     setScreen,
   } = useKangurGameRuntime();
-  const { subject } = useKangurSubjectFocus();
+  const { subject, subjectKey } = useKangurSubjectFocus();
   const { ageGroup } = useKangurAgeGroupFocus();
   const subjectGroups = useMemo(() => getKangurSubjectGroups(locale), [locale]);
   const trainingSectionRef = useRef<HTMLElement | null>(null);
@@ -1426,10 +1426,11 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
     () =>
       getCurrentKangurDailyQuest(normalizedProgress, {
         locale: normalizedLocale,
+        ownerKey: subjectKey,
         subject,
         translate: runtimeTranslations,
       }),
-    [normalizedLocale, normalizedProgress, runtimeTranslations, subject]
+    [normalizedLocale, normalizedProgress, runtimeTranslations, subject, subjectKey]
   );
   const recommendation = useMemo(
     () =>

@@ -35,6 +35,7 @@ import {
 import {
   KangurDragDropContext,
   getKangurMobileDragHandleStyle,
+  renderKangurDragPreview,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
 import {
   addXp,
@@ -792,7 +793,7 @@ function DraggableToken({
   isSelected?: boolean;
   isCoarsePointer?: boolean;
   onClick?: () => void;
-}): React.JSX.Element {
+}): React.JSX.Element | React.ReactPortal {
   const statusClass = showStatus ? (isCorrect ? 'border-emerald-300' : 'border-rose-300') : '';
   const selectedClass = isSelected
     ? 'ring-2 ring-amber-400/80 ring-offset-1 ring-offset-white'
@@ -804,37 +805,41 @@ function DraggableToken({
       isDragDisabled={isDragDisabled}
       disableInteractiveElementBlocking
     >
-      {(provided, snapshot) => (
-        <button
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          style={getKangurMobileDragHandleStyle(
-            provided.draggableProps.style,
-            isCoarsePointer
-          )}
-          type='button'
-          className={cn(
-            'rounded-[16px] border px-3 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
-            isCoarsePointer ? 'min-h-[3.75rem] px-4 py-3 touch-manipulation' : undefined,
-            KANGUR_ACCENT_STYLES[accent].badge,
-            snapshot.isDragging && 'scale-[1.02] shadow-lg',
-            statusClass,
-            selectedClass
-          )}
-          aria-label={token.label}
-          aria-disabled={isDragDisabled}
-          aria-pressed={isSelected}
-          title={token.label}
-          onClick={(event) => {
-            event.stopPropagation();
-            if (snapshot.isDragging || isDragDisabled) return;
-            onClick?.();
-          }}
-        >
-          {token.label}
-        </button>
-      )}
+      {(provided, snapshot) => {
+        const content = (
+          <button
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            style={getKangurMobileDragHandleStyle(
+              provided.draggableProps.style,
+              isCoarsePointer
+            )}
+            type='button'
+            className={cn(
+              'rounded-[16px] border px-3 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+              isCoarsePointer ? 'min-h-[3.75rem] px-4 py-3 touch-manipulation' : undefined,
+              KANGUR_ACCENT_STYLES[accent].badge,
+              snapshot.isDragging && 'scale-[1.02] shadow-lg',
+              statusClass,
+              selectedClass
+            )}
+            aria-label={token.label}
+            aria-disabled={isDragDisabled}
+            aria-pressed={isSelected}
+            title={token.label}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (snapshot.isDragging || isDragDisabled) return;
+              onClick?.();
+            }}
+          >
+            {token.label}
+          </button>
+        );
+
+        return renderKangurDragPreview(content, snapshot.isDragging);
+      }}
     </Draggable>
   );
 }

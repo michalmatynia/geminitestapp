@@ -133,7 +133,9 @@ describe('getCurrentKangurDailyQuest', () => {
     expect(firstQuest?.dateKey).toBe('2026-03-10');
     expect(nextDayQuest?.dateKey).toBe('2026-03-11');
     expect(nextDayQuest?.assignment.id).not.toBe(firstQuest?.assignment.id);
-    expect(window.localStorage.getItem(getKangurDailyQuestStorageKey('maths'))).toContain('2026-03-11');
+    expect(
+      window.localStorage.getItem(getKangurDailyQuestStorageKey('maths', 'learner-1'))
+    ).toContain('2026-03-11');
   });
 
   it('awards the daily quest bonus only once after completion', () => {
@@ -157,6 +159,85 @@ describe('getCurrentKangurDailyQuest', () => {
     expect(firstClaim.quest?.reward.status).toBe('claimed');
     expect(secondClaim.xpAwarded).toBe(0);
     expect(secondClaim.quest?.reward.status).toBe('claimed');
+  });
+
+  it('retains separate same-day quest state for each learner', () => {
+    vi.setSystemTime(new Date('2026-03-10T09:00:00.000Z'));
+
+    getCurrentKangurDailyQuest(progressWithWeakLesson, {
+      ownerKey: 'learner-1',
+      subject: 'maths',
+    });
+    const learnerOneClaim = claimCurrentKangurDailyQuestReward(progressAfterRecovery, {
+      ownerKey: 'learner-1',
+      subject: 'maths',
+    });
+
+    getCurrentKangurDailyQuest(progressWithWeakLesson, {
+      ownerKey: 'learner-2',
+      subject: 'maths',
+    });
+    const learnerTwoQuest = getCurrentKangurDailyQuest(progressAfterRecovery, {
+      ownerKey: 'learner-2',
+      subject: 'maths',
+    });
+    const learnerOneQuest = getCurrentKangurDailyQuest(progressAfterRecovery, {
+      ownerKey: 'learner-1',
+      subject: 'maths',
+    });
+
+    expect(learnerOneClaim.quest?.reward.status).toBe('claimed');
+    expect(learnerOneQuest?.reward.status).toBe('claimed');
+    expect(learnerTwoQuest?.reward.status).toBe('ready');
+    expect(
+      window.localStorage.getItem(getKangurDailyQuestStorageKey('maths', 'learner-1'))
+    ).toContain('"claimedAt":"2026-03-10T09:00:00.000Z"');
+    expect(
+      window.localStorage.getItem(getKangurDailyQuestStorageKey('maths', 'learner-2'))
+    ).toContain('"claimedAt":null');
+  });
+
+  it('migrates a legacy subject quest into the matching learner scoped key', () => {
+    vi.setSystemTime(new Date('2026-03-10T09:00:00.000Z'));
+
+    window.localStorage.setItem(
+      'kangur_daily_quest_v1:maths',
+      JSON.stringify({
+        version: 1,
+        dateKey: '2026-03-10',
+        ownerKey: 'learner-legacy',
+        createdAt: '2026-03-10T08:00:00.000Z',
+        expiresAt: '2026-03-10T23:59:59.999Z',
+        claimedAt: null,
+        baselineGamesPlayed: 12,
+        baselineLessonsCompleted: 7,
+        subject: 'maths',
+        assignment: {
+          id: 'lesson-retry-division',
+          title: 'Powtórka: Dzielenie',
+          description: 'Powtórz dzielenie.',
+          target: '1 powtórka + wynik min. 75%',
+          priority: 'high',
+          rewardXp: 55,
+          questMetric: {
+            kind: 'lesson_mastery',
+            lessonComponentId: 'division',
+            targetPercent: 75,
+          },
+        },
+      })
+    );
+
+    const quest = getCurrentKangurDailyQuest(progressWithWeakLesson, {
+      ownerKey: 'learner-legacy',
+      subject: 'maths',
+    });
+
+    expect(quest?.assignment.id).toBe('lesson-retry-division');
+    expect(window.localStorage.getItem('kangur_daily_quest_v1:maths')).toBeNull();
+    expect(
+      window.localStorage.getItem(getKangurDailyQuestStorageKey('maths', 'learner-legacy'))
+    ).toContain('"ownerKey":"learner-legacy"');
   });
 
   it('localizes quest runtime labels when a translator is provided', () => {

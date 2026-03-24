@@ -181,6 +181,9 @@ const EnglishArticlesLesson = loadLessonComponent(
 const EnglishAdjectivesLesson = loadLessonComponent(
   () => import('../ui/components/EnglishAdjectivesLesson')
 );
+const EnglishAdverbsFrequencyLesson = loadLessonComponent(
+  () => import('../ui/components/EnglishAdverbsFrequencyLesson')
+);
 const WebDevelopmentReactComponentsLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/WebDevelopmentReactComponentsLesson')
 );
@@ -365,6 +368,7 @@ export const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<Le
   english_subject_verb_agreement: EnglishSubjectVerbAgreementLesson,
   english_articles: EnglishArticlesLesson,
   english_adjectives: EnglishAdjectivesLesson,
+  english_adverbs_frequency: EnglishAdverbsFrequencyLesson,
   webdev_react_components: WebDevelopmentReactComponentsLesson,
   webdev_react_dom_components: WebDevelopmentReactDomComponentsLesson,
   webdev_react_hooks: WebDevelopmentReactHooksLesson,
@@ -512,6 +516,7 @@ export const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
   english_subject_verb_agreement: 'english_subject_verb_agreement',
   english_articles: 'english_articles',
   english_adjectives: 'english_adjectives',
+  english_adverbs_frequency: 'english_adverbs_frequency',
   angielski: 'english_basics',
   pronouns: 'english_parts_of_speech',
   pronoun: 'english_parts_of_speech',
@@ -570,6 +575,25 @@ export const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
   przymiotniki: 'english_adjectives',
   przymiotniki_angielski: 'english_adjectives',
   'przymiotniki-angielski': 'english_adjectives',
+  adverbs_of_frequency: 'english_adverbs_frequency',
+  'adverbs-of-frequency': 'english_adverbs_frequency',
+  adverbs: 'english_adverbs_frequency',
+  adverb: 'english_adverbs_frequency',
+  frequency: 'english_adverbs_frequency',
+  always_usually_sometimes_never: 'english_adverbs_frequency',
+  'always-usually-sometimes-never': 'english_adverbs_frequency',
+  routine: 'english_adverbs_frequency',
+  routines: 'english_adverbs_frequency',
+  adverb_frequency: 'english_adverbs_frequency',
+  'adverb-frequency': 'english_adverbs_frequency',
+  adverbs_frequency: 'english_adverbs_frequency',
+  'adverbs-frequency': 'english_adverbs_frequency',
+  przyslowki: 'english_adverbs_frequency',
+  przysłówki: 'english_adverbs_frequency',
+  przyslowki_czestotliwosci: 'english_adverbs_frequency',
+  przysłówki_częstotliwości: 'english_adverbs_frequency',
+  'przyslowki-czestotliwosci': 'english_adverbs_frequency',
+  'przysłówki-częstotliwości': 'english_adverbs_frequency',
   prepositions: 'english_prepositions_time_place',
   preposition: 'english_prepositions_time_place',
   prepositions_of_time: 'english_prepositions_time_place',

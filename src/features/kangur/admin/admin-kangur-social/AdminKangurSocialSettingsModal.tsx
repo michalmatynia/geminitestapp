@@ -17,161 +17,76 @@ import {
 } from '@/features/kangur/shared/ui';
 import { KANGUR_SOCIAL_CAPTURE_PRESETS } from '@/features/kangur/shared/social-capture-presets';
 import { cn } from '@/shared/utils';
-import type {
-  KangurSocialDocUpdatePlan,
-  KangurSocialDocUpdatesResponse,
-  KangurSocialPost,
-} from '@/shared/contracts/kangur-social-posts';
-import type { KangurSocialImageAddonsBatchResult } from '@/shared/contracts/kangur-social-image-addons';
-import type { SelectSimpleOptionDto } from '@/shared/contracts/ui/controls';
 import {
   BRAIN_MODEL_DEFAULT_VALUE,
-  type AddonFormState,
 } from './AdminKangurSocialPage.Constants';
 import { KangurAdminCard } from '../components/KangurAdminCard';
+import { useSocialPostContext } from './SocialPostContext';
 
-type SelectOption = SelectSimpleOptionDto;
+type SocialSettingsTab = 'models' | 'project' | 'documentation' | 'publishing' | 'capture';
 
-type AdminKangurSocialSettingsModalProps = {
+export function AdminKangurSocialSettingsModal({
+  open,
+  onClose,
+  onSave,
+  isSaving,
+  hasUnsavedChanges,
+}: {
   open: boolean;
   onClose: () => void;
   onSave: () => void;
   isSaving: boolean;
   hasUnsavedChanges: boolean;
-  brainModelId: string | null;
-  visionModelId: string | null;
-  projectUrl: string;
-  brainModelBadgeLabel: string;
-  visionModelBadgeLabel: string;
-  brainModelSelectOptions: SelectOption[];
-  visionModelSelectOptions: SelectOption[];
-  brainModelLoading: boolean;
-  visionModelLoading: boolean;
-  linkedinConnectionId: string | null;
-  linkedInOptions: SelectOption[];
-  linkedinIntegration: { id: string } | null;
-  selectedLinkedInConnection: { id: string; hasLinkedInAccessToken?: boolean } | null;
-  linkedInExpiryStatus: 'expired' | 'warning' | 'ok' | null;
-  linkedInExpiryLabel: string | null;
-  linkedInDaysRemaining: number | null;
-  addonForm: AddonFormState;
-  setAddonForm: React.Dispatch<React.SetStateAction<AddonFormState>>;
-  createAddonPending: boolean;
-  batchCaptureBaseUrl: string;
-  batchCapturePresetIds: string[];
-  batchCapturePresetLimit: number | null;
-  effectiveBatchCapturePresetCount: number;
-  batchCapturePending: boolean;
-  batchCaptureResult: KangurSocialImageAddonsBatchResult | null;
-  activePost: KangurSocialPost | null;
-  contextSummary?: string | null;
-  contextLoading?: boolean;
-  docReferenceInput: string;
-  generationNotes: string;
-  docsUsed: string[];
-  hasVisualDocUpdates: boolean;
-  previewDocUpdatesPending: boolean;
-  applyDocUpdatesPending: boolean;
-  docUpdatesResult: KangurSocialDocUpdatesResponse | null;
-  docUpdatesAppliedAt: string | null;
-  docUpdatesAppliedBy: string | null;
-  docUpdatesAppliedCount: number;
-  docUpdatesSkippedCount: number;
-  docUpdatesPlan: KangurSocialDocUpdatePlan | null;
-  canGenerateDraft: boolean;
-  generateDraftBlockedReason: string | null;
-  socialVisionWarning: string | null;
-  onBrainModelChange: (value: string) => void;
-  onVisionModelChange: (value: string) => void;
-  onLinkedInConnectionChange: (value: string) => void;
-  onProjectUrlChange: (value: string) => void;
-  onDocReferenceInputChange: (value: string) => void;
-  onGenerationNotesChange: (value: string) => void;
-  onLoadContext: () => Promise<void>;
-  onGenerate: () => Promise<void>;
-  onPreviewDocUpdates: () => Promise<void>;
-  onApplyDocUpdates: () => Promise<void>;
-  onHandleCreateAddon: () => Promise<void>;
-  onBatchCaptureBaseUrlChange: (value: string) => void;
-  onBatchCapturePresetLimitChange: (value: string) => void;
-  onToggleCapturePreset: (id: string) => void;
-  onSelectAllCapturePresets: () => void;
-  onClearCapturePresets: () => void;
-  onHandleBatchCapture: () => Promise<void>;
-};
-
-type SocialSettingsTab = 'models' | 'project' | 'documentation' | 'publishing' | 'capture';
-
-export function AdminKangurSocialSettingsModal(
-  props: AdminKangurSocialSettingsModalProps
-): React.JSX.Element | null {
+}): React.JSX.Element | null {
   const {
-    open,
-    onClose,
-    onSave,
-    isSaving,
-    hasUnsavedChanges,
+    activePost,
     brainModelId,
     visionModelId,
     projectUrl,
-    brainModelBadgeLabel,
-    visionModelBadgeLabel,
-    brainModelSelectOptions,
-    visionModelSelectOptions,
-    brainModelLoading,
-    visionModelLoading,
+    setProjectUrl,
+    handleBrainModelChange,
+    handleVisionModelChange,
+    brainModelOptions,
+    visionModelOptions,
     linkedinConnectionId,
-    linkedInOptions,
+    handleLinkedInConnectionChange,
+    linkedinConnections,
     linkedinIntegration,
-    selectedLinkedInConnection,
-    linkedInExpiryStatus,
-    linkedInExpiryLabel,
-    linkedInDaysRemaining,
+    docReferenceInput,
+    setDocReferenceInput,
+    generationNotes,
+    setGenerationNotes,
+    contextLoading,
+    handleLoadContext,
+    handleGenerate,
+    canGenerateSocialDraft,
+    socialDraftBlockedReason,
+    socialVisionWarning,
+    resolveDocReferences,
+    hasVisualDocUpdates,
+    previewDocUpdatesMutation,
+    applyDocUpdatesMutation,
+    handlePreviewDocUpdates,
+    handleApplyDocUpdates,
+    docUpdatesResult,
     addonForm,
     setAddonForm,
-    createAddonPending,
+    createAddonMutation,
+    handleCreateAddon,
     batchCaptureBaseUrl,
+    setBatchCaptureBaseUrl,
     batchCapturePresetIds,
     batchCapturePresetLimit,
-    effectiveBatchCapturePresetCount,
-    batchCapturePending,
+    setBatchCapturePresetLimit,
+    handleToggleCapturePreset,
+    selectAllCapturePresets,
+    clearCapturePresets,
+    handleBatchCapture,
+    batchCaptureMutation,
     batchCaptureResult,
-    activePost,
-    contextSummary,
-    contextLoading,
-    docReferenceInput,
-    generationNotes,
-    docsUsed,
-    hasVisualDocUpdates,
-    previewDocUpdatesPending,
-    applyDocUpdatesPending,
-    docUpdatesResult,
-    docUpdatesAppliedAt,
-    docUpdatesAppliedBy,
-    docUpdatesAppliedCount,
-    docUpdatesSkippedCount,
-    docUpdatesPlan,
-    canGenerateDraft,
-    generateDraftBlockedReason,
-    socialVisionWarning,
-    onBrainModelChange,
-    onVisionModelChange,
-    onLinkedInConnectionChange,
-    onProjectUrlChange,
-    onDocReferenceInputChange,
-    onGenerationNotesChange,
-    onLoadContext,
-    onGenerate,
-    onPreviewDocUpdates,
-    onApplyDocUpdates,
-    onHandleCreateAddon,
-    onBatchCaptureBaseUrlChange,
-    onBatchCapturePresetLimitChange,
-    onToggleCapturePreset,
-    onSelectAllCapturePresets,
-    onClearCapturePresets,
-    onHandleBatchCapture,
-  } = props;
+    effectiveBatchCapturePresetCount,
+  } = useSocialPostContext();
+
   const [activeTab, setActiveTab] = React.useState<SocialSettingsTab>('models');
 
   React.useEffect(() => {
@@ -179,7 +94,97 @@ export function AdminKangurSocialSettingsModal(
     setActiveTab('models');
   }, [open]);
 
-  const resolvedContextSummary = contextSummary ?? activePost?.contextSummary ?? null;
+  const brainModelSelectOptions = React.useMemo(() => {
+    const defaultDescription = brainModelOptions.effectiveModelId
+      ? `Default: ${brainModelOptions.effectiveModelId}`
+      : 'Default model not configured';
+    return [
+      {
+        value: BRAIN_MODEL_DEFAULT_VALUE,
+        label: 'Use Brain routing',
+        description: defaultDescription,
+      },
+      ...brainModelOptions.models.map((modelId) => ({
+        value: modelId,
+        label: modelId,
+        description: modelId === brainModelOptions.effectiveModelId ? 'Routing default' : undefined,
+      })),
+    ];
+  }, [brainModelOptions.effectiveModelId, brainModelOptions.models]);
+
+  const visionModelSelectOptions = React.useMemo(() => {
+    const defaultDescription = visionModelOptions.effectiveModelId
+      ? `Default: ${visionModelOptions.effectiveModelId}`
+      : 'Default model not configured';
+    return [
+      {
+        value: BRAIN_MODEL_DEFAULT_VALUE,
+        label: 'Use Brain routing',
+        description: defaultDescription,
+      },
+      ...visionModelOptions.models.map((modelId) => ({
+        value: modelId,
+        label: modelId,
+        description: modelId === visionModelOptions.effectiveModelId ? 'Routing default' : undefined,
+      })),
+    ];
+  }, [visionModelOptions.effectiveModelId, visionModelOptions.models]);
+
+  const linkedInOptions = React.useMemo(
+    () =>
+      linkedinConnections.map((connection) => ({
+        value: connection.id,
+        label: connection.name || connection.username || 'LinkedIn connection',
+        description: connection.hasLinkedInAccessToken ? 'Connected' : 'Not connected',
+        disabled: connection.hasLinkedInAccessToken === false,
+      })),
+    [linkedinConnections]
+  );
+
+  const selectedLinkedInConnection = React.useMemo(
+    () =>
+      linkedinConnections.find((connection) => connection.id === linkedinConnectionId) ?? null,
+    [linkedinConnections, linkedinConnectionId]
+  );
+
+  const linkedInExpiry = selectedLinkedInConnection?.linkedinExpiresAt
+    ? new Date(selectedLinkedInConnection.linkedinExpiresAt)
+    : null;
+  const linkedInExpiryTime = linkedInExpiry ? linkedInExpiry.getTime() : null;
+  const linkedInDaysRemaining =
+    linkedInExpiryTime !== null
+      ? Math.ceil((linkedInExpiryTime - Date.now()) / (1000 * 60 * 60 * 24))
+      : null;
+  const linkedInExpiryLabel = linkedInExpiry ? linkedInExpiry.toLocaleString() : null;
+  const linkedInExpiryStatus =
+    linkedInDaysRemaining !== null && linkedInExpiryTime !== null
+      ? linkedInExpiryTime <= Date.now()
+        ? 'expired'
+        : linkedInDaysRemaining <= 7
+          ? 'warning'
+          : 'ok'
+      : null;
+
+  const brainModelBadgeLabel =
+    brainModelId ?? brainModelOptions.effectiveModelId ?? 'Not configured';
+  const visionModelBadgeLabel =
+    visionModelId ?? visionModelOptions.effectiveModelId ?? 'Not configured';
+
+  const docsUsed = resolveDocReferences();
+  const contextSummary = activePost?.contextSummary ?? null;
+  const docUpdatesAppliedAt =
+    docUpdatesResult?.post?.docUpdatesAppliedAt ?? activePost?.docUpdatesAppliedAt ?? null;
+  const docUpdatesAppliedBy =
+    docUpdatesResult?.post?.docUpdatesAppliedBy ?? activePost?.docUpdatesAppliedBy ?? null;
+  const docUpdatesPlan = docUpdatesResult?.plan ?? null;
+  const docUpdatesAppliedCount = docUpdatesPlan
+    ? docUpdatesPlan.items.filter((item) => item.applied).length
+    : 0;
+  const docUpdatesSkippedCount = docUpdatesPlan
+    ? docUpdatesPlan.items.length - docUpdatesAppliedCount
+    : 0;
+
+  const resolvedContextSummary = contextSummary;
   const selectedPostTitle =
     activePost?.titlePl?.trim() || activePost?.titleEn?.trim() || 'selected post';
   const suggestedDocUpdates = activePost?.visualDocUpdates ?? [];
@@ -252,11 +257,11 @@ export function AdminKangurSocialSettingsModal(
                 >
                   <SelectSimple
                     value={brainModelId ?? BRAIN_MODEL_DEFAULT_VALUE}
-                    onValueChange={onBrainModelChange}
+                    onValueChange={handleBrainModelChange}
                     options={brainModelSelectOptions}
                     ariaLabel='Selected brain model'
                     title='Selected brain model'
-                    disabled={brainModelLoading}
+                    disabled={brainModelOptions.isLoading}
                     variant='subtle'
                   />
                 </FormField>
@@ -294,11 +299,11 @@ export function AdminKangurSocialSettingsModal(
                 >
                   <SelectSimple
                     value={visionModelId ?? BRAIN_MODEL_DEFAULT_VALUE}
-                    onValueChange={onVisionModelChange}
+                    onValueChange={handleVisionModelChange}
                     options={visionModelSelectOptions}
                     ariaLabel='Selected vision model'
                     title='Selected vision model'
-                    disabled={visionModelLoading}
+                    disabled={visionModelOptions.isLoading}
                     variant='subtle'
                   />
                 </FormField>
@@ -329,7 +334,7 @@ export function AdminKangurSocialSettingsModal(
               <Input
                 type='url'
                 value={projectUrl}
-                onChange={(event) => onProjectUrlChange(event.target.value)}
+                onChange={(event) => setProjectUrl(event.target.value)}
                 placeholder='https://example.com/project'
                 size='sm'
                 aria-label='Project URL'
@@ -353,14 +358,14 @@ export function AdminKangurSocialSettingsModal(
               <Input
                 placeholder='e.g. overview, learner-navigation, lessons-and-activities'
                 value={docReferenceInput}
-                onChange={(event) => onDocReferenceInputChange(event.target.value)}
+                onChange={(event) => setDocReferenceInput(event.target.value)}
                 aria-label='Documentation references'
               />
               <Textarea
                 placeholder='Notes for the Brain generator'
                 rows={3}
                 value={generationNotes}
-                onChange={(event) => onGenerationNotesChange(event.target.value)}
+                onChange={(event) => setGenerationNotes(event.target.value)}
                 aria-label='Notes for the Brain generator'
               />
               <div className='flex flex-wrap items-center gap-2'>
@@ -368,7 +373,7 @@ export function AdminKangurSocialSettingsModal(
                   type='button'
                   variant='outline'
                   size='sm'
-                  onClick={() => void onLoadContext()}
+                  onClick={() => void handleLoadContext()}
                   disabled={!activePost || contextLoading}
                 >
                   {contextLoading ? 'Loading context...' : 'Load context'}
@@ -377,8 +382,8 @@ export function AdminKangurSocialSettingsModal(
                   type='button'
                   variant='outline'
                   size='sm'
-                  onClick={() => void onGenerate()}
-                  disabled={!activePost || !canGenerateDraft}
+                  onClick={() => void handleGenerate()}
+                  disabled={!activePost || !canGenerateSocialDraft}
                 >
                   Generate PL/EN draft
                 </Button>
@@ -388,9 +393,9 @@ export function AdminKangurSocialSettingsModal(
                     : 'Select a post in the list to use documentation generation.'}
                 </div>
               </div>
-              {!canGenerateDraft && generateDraftBlockedReason ? (
+              {!canGenerateSocialDraft && socialDraftBlockedReason ? (
                 <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-200'>
-                  {generateDraftBlockedReason}
+                  {socialDraftBlockedReason}
                 </div>
               ) : null}
               {socialVisionWarning ? (
@@ -495,19 +500,19 @@ export function AdminKangurSocialSettingsModal(
                 <Button
                   type='button'
                   size='sm'
-                  onClick={() => void onPreviewDocUpdates()}
-                  disabled={!activePost || previewDocUpdatesPending || !hasVisualDocUpdates}
+                  onClick={() => void handlePreviewDocUpdates()}
+                  disabled={!activePost || previewDocUpdatesMutation.isPending || !hasVisualDocUpdates}
                 >
-                  {previewDocUpdatesPending ? 'Previewing...' : 'Preview doc updates'}
+                  {previewDocUpdatesMutation.isPending ? 'Previewing...' : 'Preview doc updates'}
                 </Button>
                 <Button
                   type='button'
                   size='sm'
                   variant='outline'
-                  onClick={() => void onApplyDocUpdates()}
-                  disabled={!activePost || applyDocUpdatesPending || !hasVisualDocUpdates}
+                  onClick={() => void handleApplyDocUpdates()}
+                  disabled={!activePost || applyDocUpdatesMutation.isPending || !hasVisualDocUpdates}
                 >
-                  {applyDocUpdatesPending ? 'Applying...' : 'Apply doc updates'}
+                  {applyDocUpdatesMutation.isPending ? 'Applying...' : 'Apply doc updates'}
                 </Button>
               </div>
 
@@ -588,7 +593,7 @@ export function AdminKangurSocialSettingsModal(
             >
               <SelectSimple
                 value={linkedinConnectionId ?? undefined}
-                onValueChange={onLinkedInConnectionChange}
+                onValueChange={handleLinkedInConnectionChange}
                 options={linkedInOptions}
                 placeholder={
                   linkedinIntegration
@@ -686,14 +691,14 @@ export function AdminKangurSocialSettingsModal(
                   type='button'
                   variant='outline'
                   size='sm'
-                  onClick={() => void onHandleCreateAddon()}
+                  onClick={() => void handleCreateAddon()}
                   disabled={
-                    createAddonPending ||
+                    createAddonMutation.isPending ||
                     !addonForm.title.trim() ||
                     !addonForm.sourceUrl.trim()
                   }
                 >
-                  {createAddonPending ? 'Capturing...' : 'Capture with Playwright'}
+                  {createAddonMutation.isPending ? 'Capturing...' : 'Capture with Playwright'}
                 </Button>
                 <div className='text-xs text-muted-foreground'>
                   Captures a screenshot of the URL. Use a selector to focus on a specific section.
@@ -713,7 +718,7 @@ export function AdminKangurSocialSettingsModal(
               <Input
                 placeholder='Base URL (e.g. https://kangur.app)'
                 value={batchCaptureBaseUrl}
-                onChange={(event) => onBatchCaptureBaseUrlChange(event.target.value)}
+                onChange={(event) => setBatchCaptureBaseUrl(event.target.value)}
               />
               <FormField
                 label='Screenshots per run'
@@ -725,7 +730,7 @@ export function AdminKangurSocialSettingsModal(
                   inputMode='numeric'
                   placeholder='All selected presets'
                   value={batchCapturePresetLimit ?? ''}
-                  onChange={(event) => onBatchCapturePresetLimitChange(event.target.value)}
+                  onChange={(event) => setBatchCapturePresetLimit(event.target.value)}
                 />
               </FormField>
               <div className='flex flex-wrap items-center gap-2'>
@@ -733,7 +738,7 @@ export function AdminKangurSocialSettingsModal(
                   type='button'
                   size='xs'
                   variant='ghost'
-                  onClick={onSelectAllCapturePresets}
+                  onClick={selectAllCapturePresets}
                 >
                   Select all
                 </Button>
@@ -741,7 +746,7 @@ export function AdminKangurSocialSettingsModal(
                   type='button'
                   size='xs'
                   variant='ghost'
-                  onClick={onClearCapturePresets}
+                  onClick={clearCapturePresets}
                 >
                   Clear
                 </Button>
@@ -767,7 +772,7 @@ export function AdminKangurSocialSettingsModal(
                       <input
                         type='checkbox'
                         checked={isSelected}
-                        onChange={() => onToggleCapturePreset(preset.id)}
+                        onChange={() => handleToggleCapturePreset(preset.id)}
                         aria-label={preset.title}
                         className='mt-1 h-3 w-3'
                       />
@@ -789,14 +794,14 @@ export function AdminKangurSocialSettingsModal(
                   type='button'
                   variant='outline'
                   size='sm'
-                  onClick={() => void onHandleBatchCapture()}
+                  onClick={() => void handleBatchCapture()}
                   disabled={
-                    batchCapturePending ||
+                    batchCaptureMutation.isPending ||
                     !batchCaptureBaseUrl.trim() ||
                     batchCapturePresetIds.length === 0
                   }
                 >
-                  {batchCapturePending ? 'Capturing presets...' : 'Capture presets'}
+                  {batchCaptureMutation.isPending ? 'Capturing presets...' : 'Capture presets'}
                 </Button>
                 <div className='text-xs text-muted-foreground'>
                   Captures common Kangur screens and stores new add-ons using the configured preset limit.

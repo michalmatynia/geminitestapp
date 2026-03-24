@@ -9,6 +9,7 @@ import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProg
 import {
   KANGUR_PROGRESS_OWNER_STORAGE_KEY,
   saveProgress,
+  saveProgressOwnerKey,
   setProgressPersistenceEnabled,
 } from '@/features/kangur/ui/services/progress';
 
@@ -209,6 +210,86 @@ describe('KangurProgressSyncProvider', () => {
       )
     );
     expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('45');
+  });
+
+  it('hydrates the signed-in learner from that learner scoped cache even when another learner was viewed last', async () => {
+    act(() => {
+      saveProgressOwnerKey('learner-1');
+      saveProgress(
+        createProgress({
+          totalXp: 120,
+          gamesPlayed: 5,
+        }),
+        { ownerKey: 'learner-1' }
+      );
+      saveProgressOwnerKey('learner-2');
+      saveProgress(
+        createProgress({
+          totalXp: 45,
+          gamesPlayed: 2,
+        }),
+        { ownerKey: 'learner-2' }
+      );
+      saveProgressOwnerKey('learner-1');
+    });
+
+    useKangurAuthMock.mockReturnValue(
+      buildAuthState({
+        user: {
+          activeLearner: {
+            ...baseAuthState.user.activeLearner,
+            id: 'learner-2',
+            displayName: 'Ben',
+            loginName: 'ben-child',
+          },
+        },
+      })
+    );
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-2',
+    });
+
+    progressGetMock.mockResolvedValue(createProgress());
+
+    render(
+      <KangurProgressSyncProvider>
+        <ProgressProbe />
+      </KangurProgressSyncProvider>
+    );
+
+    await waitFor(() => expect(progressGetMock).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(progressUpdateMock).toHaveBeenCalledWith(
+        createProgress({
+          totalXp: 45,
+          gamesPlayed: 2,
+        }),
+        { subject: 'maths' }
+      )
+    );
+    expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('45');
+    expect(localStorage.getItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY)).toBe('learner-2');
+  });
+
+  it('clears the stored progress owner when auth resolves anonymous', async () => {
+    localStorage.setItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY, 'learner-stale');
+    useKangurAuthMock.mockReturnValue({
+      isAuthenticated: false,
+      isLoadingAuth: false,
+      user: null,
+    });
+
+    render(
+      <KangurProgressSyncProvider>
+        <ProgressProbe />
+      </KangurProgressSyncProvider>
+    );
+
+    await waitFor(() =>
+      expect(localStorage.getItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY)).toBeNull()
+    );
   });
 
   it('does not hydrate progress for parent accounts without an active learner', async () => {

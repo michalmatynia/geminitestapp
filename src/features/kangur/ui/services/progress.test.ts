@@ -4,6 +4,7 @@ import { createDefaultKangurProgressState } from '@/features/kangur/shared/contr
 import deMessages from '@/i18n/messages/de.json';
 
 let buildLessonMasteryUpdate: typeof import('./progress').buildLessonMasteryUpdate;
+let addXp: typeof import('./progress').addXp;
 let createGameSessionReward: typeof import('./progress').createGameSessionReward;
 let createLessonPracticeReward: typeof import('./progress').createLessonPracticeReward;
 let createLessonCompletionReward: typeof import('./progress').createLessonCompletionReward;
@@ -18,7 +19,10 @@ let getRecommendedSessionProjection: typeof import('./progress').getRecommendedS
 let getProgressTopActivities: typeof import('./progress').getProgressTopActivities;
 let getVisibleProgressBadges: typeof import('./progress').getVisibleProgressBadges;
 let getMasteredLessonCount: typeof import('./progress').getMasteredLessonCount;
+let loadProgress: typeof import('./progress').loadProgress;
 let mergeProgressStates: typeof import('./progress').mergeProgressStates;
+let saveProgress: typeof import('./progress').saveProgress;
+let setProgressOwnerKey: typeof import('./progress').setProgressOwnerKey;
 
 const resolveNestedMessage = (root: unknown, key: string): unknown =>
   key.split('.').reduce<unknown>((current, segment) => {
@@ -50,6 +54,7 @@ describe('kangur progress mastery helpers', () => {
   beforeEach(async () => {
     vi.resetModules();
     ({
+      addXp,
       buildLessonMasteryUpdate,
       createGameSessionReward,
       createLessonPracticeReward,
@@ -65,7 +70,10 @@ describe('kangur progress mastery helpers', () => {
       getProgressTopActivities,
       getVisibleProgressBadges,
       getMasteredLessonCount,
+      loadProgress,
       mergeProgressStates,
+      saveProgress,
+      setProgressOwnerKey,
     } = await vi.importActual<typeof import('./progress')>('./progress'));
   });
 
@@ -75,6 +83,26 @@ describe('kangur progress mastery helpers', () => {
 
     expect(firstSnapshot).toBe(secondSnapshot);
     expect(firstSnapshot).toEqual(createDefaultKangurProgressState());
+  });
+
+  it('applies xp to the active owner scoped snapshot by default', () => {
+    saveProgress(
+      createDefaultKangurProgressState(),
+      { ownerKey: 'learner-1' }
+    );
+    saveProgress(
+      createDefaultKangurProgressState(),
+      { ownerKey: 'learner-2' }
+    );
+
+    setProgressOwnerKey('learner-1');
+    addXp(12);
+
+    setProgressOwnerKey('learner-2');
+    addXp(5);
+
+    expect(loadProgress({ ownerKey: 'learner-1' }).totalXp).toBe(12);
+    expect(loadProgress({ ownerKey: 'learner-2' }).totalXp).toBe(5);
   });
 
   it('builds a lesson mastery entry from a completed lesson attempt', () => {

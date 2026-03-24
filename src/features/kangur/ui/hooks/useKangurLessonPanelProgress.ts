@@ -6,6 +6,7 @@ import {
   recordKangurLessonPanelProgress,
   recordKangurLessonPanelTime,
 } from '@/features/kangur/ui/services/progress';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 
 import { useLessonHubProgress, type LessonHubSectionProgress } from './useLessonHubProgress';
 
@@ -32,6 +33,7 @@ export const useKangurLessonPanelProgress = <SectionId extends string>({
   slideSections,
   sectionLabels,
 }: UseKangurLessonPanelProgressOptions<SectionId>): UseKangurLessonPanelProgressResult<SectionId> => {
+  const { subjectKey } = useKangurSubjectFocus();
   const { markSectionOpened, markSectionViewedCount, sectionProgress } =
     useLessonHubProgress(slideSections);
   const sessionIdRef = useRef<string>(
@@ -52,9 +54,9 @@ export const useKangurLessonPanelProgress = <SectionId extends string>({
         viewedCount,
         totalCount,
         label: sectionLabels?.[sectionId],
-      });
+      }, { ownerKey: subjectKey });
     },
-    [lessonKey, sectionLabels, slideSections]
+    [lessonKey, sectionLabels, slideSections, subjectKey]
   );
 
   const handleSectionViewedCount = useCallback(
@@ -83,9 +85,9 @@ export const useKangurLessonPanelProgress = <SectionId extends string>({
         seconds,
         sessionId: sessionIdRef.current,
         sessionStartedAt: sessionStartedAtRef.current,
-      });
+      }, { ownerKey: subjectKey });
     },
-    [lessonKey]
+    [lessonKey, subjectKey]
   );
 
   return {

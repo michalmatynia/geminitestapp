@@ -41,6 +41,7 @@ const ENGLISH_LESSON_SECTION_LABELS: Record<string, string> = {
   english_grammar_subject_verb_agreement: 'Subject-verb agreement',
   english_grammar_articles: 'Articles',
   english_grammar_adjectives: 'Adjectives',
+  english_grammar_adverbs_frequency: 'Adverbs of frequency',
   english_grammar_prepositions: 'Prepositions',
 };
 
@@ -68,6 +69,7 @@ const GERMAN_LESSON_SECTION_LABELS: Record<string, string> = {
   english_grammar_subject_verb_agreement: 'Subjekt-Verb-Kongruenz',
   english_grammar_articles: 'Artikel',
   english_grammar_adjectives: 'Adjektive',
+  english_grammar_adverbs_frequency: 'Adverbien der Haeufigkeit',
   english_grammar_prepositions: 'Praepositionen',
 };
 
@@ -95,6 +97,7 @@ const UKRAINIAN_LESSON_SECTION_LABELS: Record<string, string> = {
   english_grammar_subject_verb_agreement: 'Узгодження підмета і присудка',
   english_grammar_articles: 'Артиклі',
   english_grammar_adjectives: 'Прикметники',
+  english_grammar_adverbs_frequency: 'Прислівники частоти',
   english_grammar_prepositions: 'Прийменники',
 };
 
@@ -303,6 +306,10 @@ const ENGLISH_LESSON_COPY_OVERRIDES: Partial<
   english_adjectives: {
     title: 'English: Adjectives',
     description: 'Describe people, places, and things with adjective order and detail.',
+  },
+  english_adverbs_frequency: {
+    title: 'English: Adverbs of Frequency',
+    description: 'Always, usually, sometimes, and never in routines and sentence order.',
   },
   english_prepositions_time_place: {
     description: 'Time and place prepositions in practical examples.',
@@ -584,6 +591,10 @@ const GERMAN_LESSON_COPY_OVERRIDES: Partial<
   english_adjectives: {
     title: 'Englisch: Adjektive',
     description: 'Beschreibe Personen, Orte und Dinge mit Adjektiven und der richtigen Wortstellung.',
+  },
+  english_adverbs_frequency: {
+    title: 'Englisch: Adverbien der Haeufigkeit',
+    description: 'Always, usually, sometimes und never in Routinen und an der richtigen Satzposition.',
   },
   english_prepositions_time_place: {
     description: 'Praepositionen fuer Zeit und Ort in praktischen Beispielen.',
@@ -867,6 +878,10 @@ const UKRAINIAN_LESSON_COPY_OVERRIDES: Partial<
   english_adjectives: {
     title: 'Англійська: прикметники',
     description: 'Описуй людей, місця й речі за допомогою прикметників і правильного порядку слів.',
+  },
+  english_adverbs_frequency: {
+    title: 'Англійська: прислівники частоти',
+    description: 'Always, usually, sometimes і never у щоденних звичках та правильному порядку слів.',
   },
   english_prepositions_time_place: {
     title: 'Англійська: прийменники',

@@ -37,11 +37,16 @@ export function KangurLearnerProfileQuestSummaryWidget(): React.JSX.Element {
   const runtimeTranslations = useTranslations('KangurProgressRuntime');
   const { basePath, progress, user } = useKangurLearnerProfileRuntime();
   const isCoarsePointer = useKangurCoarsePointer();
-  const { subject } = useKangurSubjectFocus();
+  const { subject, subjectKey } = useKangurSubjectFocus();
   const activeLearner = user?.activeLearner ?? null;
   const dailyQuest = useMemo(
-    () => getCurrentKangurDailyQuest(progress, { subject, translate: runtimeTranslations }),
-    [progress, runtimeTranslations, subject]
+    () =>
+      getCurrentKangurDailyQuest(progress, {
+        ownerKey: subjectKey,
+        subject,
+        translate: runtimeTranslations,
+      }),
+    [progress, runtimeTranslations, subject, subjectKey]
   );
   const dailyQuestAccent =
     dailyQuest?.reward.status === 'claimed'

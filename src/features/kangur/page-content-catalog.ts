@@ -1132,6 +1132,26 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
     ],
     aliases: ['english articles', 'przedimki angielskie', 'articles lesson'],
   },
+  english_adverbs_frequency: {
+    explanation:
+      'Przysłówki częstotliwości always, usually, sometimes i never w szkolnych i domowych rutynach. Lekcja pomaga opisywać, jak często coś się dzieje.',
+    triggerPhrases: [
+      'adverbs of frequency',
+      'frequency adverbs',
+      'always usually sometimes never',
+      'always',
+      'usually',
+      'sometimes',
+      'never',
+      'how often',
+      'english adverbs',
+      'przysłówki częstotliwości',
+      'przyslowki czestotliwosci',
+      'jak często',
+      'jak czesto',
+    ],
+    aliases: ['english adverbs of frequency', 'frequency lesson', 'adverbs lesson'],
+  },
   english_prepositions_time_place: {
     explanation:
       'Przyimki czasu i miejsca (at/on/in) oraz relacje w przestrzeni: between, above, below. Lekcja pomaga poprawnie opisywać czas i położenie w kontekście szkolnym.',

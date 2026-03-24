@@ -13,6 +13,7 @@ import type {
   KangurLearnerActivityUpdateInput,
 } from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { recordKangurOpenedTask } from '@/features/kangur/ui/services/progress';
 import { kangurLearnerActivityStatusSchema } from '@/features/kangur/shared/contracts/kangur';
 
@@ -231,6 +232,7 @@ export const useKangurLearnerActivityPing = ({
   enabled = true,
   intervalMs = DEFAULT_PING_INTERVAL_MS,
 }: UseKangurLearnerActivityPingOptions): void => {
+  const { subjectKey } = useKangurSubjectFocus();
   const latestActivityRef = useRef<KangurLearnerActivityUpdateInput | null>(null);
   const lastRecordedKeyRef = useRef<string | null>(null);
   const activityPayload = useMemo<KangurLearnerActivityUpdateInput | null>(() => {
@@ -275,8 +277,8 @@ export const useKangurLearnerActivityPing = ({
       kind: activityPayload.kind,
       title: activityPayload.title,
       href: activityPayload.href,
-    });
-  }, [activityPayload, enabled]);
+    }, { ownerKey: subjectKey });
+  }, [activityPayload, enabled, subjectKey]);
 
   const ping = useCallback(async (): Promise<void> => {
     if (!enabled) {

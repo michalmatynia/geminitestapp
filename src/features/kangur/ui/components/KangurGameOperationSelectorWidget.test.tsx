@@ -52,6 +52,11 @@ vi.mock('next-intl', () => ({
         ? key
         : (
             {
+              'KangurGameRecommendations.activityLabels.english_adverbs_frequency': {
+                de: 'Adverbien der Häufigkeit',
+                en: 'Adverbs of frequency',
+                pl: 'Przysłówki częstotliwości',
+              },
               'KangurGameRecommendations.activityLabels.english_adjectives': {
                 de: 'Adjektive',
                 en: 'Adjectives',
@@ -76,6 +81,11 @@ vi.mock('next-intl', () => ({
                 de: 'Adjektive',
                 en: 'Adjectives',
                 pl: 'Przymiotniki',
+              },
+              'KangurProgressRuntime.activityLabels.english_adverbs_frequency': {
+                de: 'Adverbien der Häufigkeit',
+                en: 'Adverbs of frequency',
+                pl: 'Przysłówki częstotliwości',
               },
             } as const
           )[`${namespace}.${key}`]?.[localeState.value] ?? key,
@@ -302,6 +312,15 @@ describe('KangurGameOperationSelectorWidget', () => {
       expect.objectContaining({
         recommendedLabel: 'Misja dnia',
         recommendedOperation: 'division',
+      })
+    );
+    expect(getCurrentKangurDailyQuestMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        totalXp: 420,
+      }),
+      expect.objectContaining({
+        ownerKey: 'learner-1',
+        subject: 'maths',
       })
     );
     expect(screen.getByTestId('kangur-operation-recommendation-action')).toHaveClass(
@@ -841,6 +860,44 @@ describe('KangurGameOperationSelectorWidget', () => {
 
     expect(screen.getByTestId('kangur-operation-recommendation-description')).toHaveTextContent(
       'przymiotniki'
+    );
+  });
+
+  it('localizes bare adverbs-of-frequency activity labels inside badge-track recommendations', () => {
+    const progress = buildProgress({
+      lessonMastery: {
+        division: {
+          attempts: 3,
+          completions: 3,
+          masteryPercent: 92,
+          bestScorePercent: 98,
+          lastScorePercent: 96,
+          lastCompletedAt: '2026-03-10T09:00:00.000Z',
+        },
+      },
+      totalCorrectAnswers: 19,
+      totalQuestionsAnswered: 20,
+      currentWinStreak: 4,
+      activityStats: {
+        english_adverbs_frequency_routine_studio: {
+          sessionsPlayed: 4,
+          perfectSessions: 2,
+          totalXpEarned: 210,
+          totalCorrectAnswers: 19,
+          totalQuestionsAnswered: 20,
+          bestScorePercent: 100,
+          currentStreak: 3,
+          bestStreak: 4,
+        },
+      },
+    });
+    const runtime = buildRuntime(progress);
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.getByTestId('kangur-operation-recommendation-description')).toHaveTextContent(
+      'przysłówki częstotliwości'
     );
   });
 

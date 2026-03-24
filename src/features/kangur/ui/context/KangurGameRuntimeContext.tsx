@@ -69,7 +69,7 @@ export function KangurGameRuntimeProvider({
   const resultTranslations = useTranslations('KangurGameResult');
   const { basePath } = useKangurRouting();
   const auth = useKangurAuth();
-  const { subject } = useKangurSubjectFocus();
+  const { subject, subjectKey } = useKangurSubjectFocus();
   const { isAuthenticated, isLoadingAuth, logout, navigateToLogin, user } = auth;
   const canEarnRewards = !(user?.actorType === 'parent' && !user?.activeLearner?.id);
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
@@ -231,6 +231,8 @@ export function KangurGameRuntimeProvider({
         difficulty,
         nextScore,
         operation,
+        ownerKey: subjectKey,
+        subject,
         taken,
         totalQuestions,
         allowRewards: canEarnRewards,

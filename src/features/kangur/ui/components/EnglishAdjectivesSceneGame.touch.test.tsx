@@ -5,7 +5,9 @@
 import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+let draggableSnapshot = { isDragging: false };
 
 vi.mock('next-intl', async () => await vi.importActual<typeof import('next-intl')>('next-intl'));
 vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>('use-intl'));
@@ -50,7 +52,7 @@ vi.mock('@hello-pangea/dnd', () => ({
         draggableProps: {},
         dragHandleProps: {},
       },
-      { isDragging: false }
+      draggableSnapshot
     ),
 }));
 
@@ -76,6 +78,10 @@ vi.mock('@/features/kangur/ui/components/EnglishAdjectivesSceneGame.data', () =>
 
 import enMessages from '@/i18n/messages/en.json';
 import EnglishAdjectivesSceneGame from '@/features/kangur/ui/components/EnglishAdjectivesSceneGame';
+
+afterEach(() => {
+  draggableSnapshot = { isDragging: false };
+});
 
 describe('EnglishAdjectivesSceneGame touch interactions', () => {
   it('supports tap-to-slot placement and keeps mobile drag-handle styling', () => {
@@ -111,5 +117,21 @@ describe('EnglishAdjectivesSceneGame touch interactions', () => {
     expect(screen.getByTestId('english-adjectives-scene-selection-hint')).toHaveTextContent(
       'Tap an adjective, then tap an object or the bank.'
     );
+  });
+
+  it('keeps the coarse-pointer drag styling when the active adjective is portaled', () => {
+    draggableSnapshot = { isDragging: true };
+
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <EnglishAdjectivesSceneGame onFinish={vi.fn()} />
+      </NextIntlClientProvider>
+    );
+
+    const draggedToken = within(document.body).getByRole('button', { name: 'big yellow' });
+
+    expect(draggedToken).toHaveClass('touch-manipulation');
+    expect(draggedToken).toHaveClass('min-h-[3.75rem]');
+    expect(draggedToken).toHaveStyle({ touchAction: 'none' });
   });
 });

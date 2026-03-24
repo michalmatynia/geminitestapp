@@ -37,7 +37,7 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
     screen,
     totalQuestions,
   } = useKangurGameRuntime();
-  const { subject } = useKangurSubjectFocus();
+  const { subject, subjectKey } = useKangurSubjectFocus();
   const assignmentBannerRef = useRef<HTMLDivElement | null>(null);
   const questionAnchorRef = useRef<HTMLDivElement | null>(null);
   const answeredQuestions = Math.max(0, currentQuestionIndex);
@@ -45,6 +45,7 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
     answeredQuestions > 0 ? Math.round((score / answeredQuestions) * 100) : null;
   const perfectRunInProgress = answeredQuestions > 0 && score === answeredQuestions;
   const currentQuest = getCurrentKangurDailyQuest(progress, {
+    ownerKey: subjectKey,
     subject,
     translate: runtimeTranslations,
   });

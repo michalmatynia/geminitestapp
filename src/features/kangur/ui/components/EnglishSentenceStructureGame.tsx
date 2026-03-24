@@ -3,10 +3,10 @@
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import {
   KangurDragDropContext,
   getKangurMobileDragHandleStyle,
+  renderKangurDragPreview,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import {
@@ -146,7 +146,6 @@ const ROUNDS: Round[] = [
 ];
 
 const TOTAL_ROUNDS = ROUNDS.length;
-const dragPortal = typeof document === 'undefined' ? null : document.body;
 
 const getSentenceStructurePrompt = (
   translate: KangurMiniGameTranslate,
@@ -569,6 +568,7 @@ export default function EnglishSentenceStructureGame({
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
+                    data-testid='english-structure-order-list'
                     className={KANGUR_GRID_TIGHT_CLASSNAME}
                   >
                     {orderTokens.map((token, index) => (
@@ -644,11 +644,7 @@ export default function EnglishSentenceStructureGame({
                             </button>
                           );
 
-                          if (snapshot.isDragging && dragPortal) {
-                            return createPortal(content, dragPortal);
-                          }
-
-                          return content;
+                          return renderKangurDragPreview(content, snapshot.isDragging);
                         }}
                       </Draggable>
                     ))}

@@ -17,6 +17,16 @@ type KangurSubjectProgressStore = {
   subjects: Record<KangurLessonSubject, KangurProgressState>;
 };
 
+type KangurProgressStorageEnvelope = {
+  version: 2;
+  guest: KangurSubjectProgressStore;
+  owners: Record<string, KangurSubjectProgressStore>;
+};
+
+export type KangurProgressStorageOptions = {
+  ownerKey?: string | null;
+};
+
 const createDefaultProgressStore = (): KangurSubjectProgressStore => ({
   version: 1,
   subjects: {
@@ -33,12 +43,21 @@ const createDefaultProgressStore = (): KangurSubjectProgressStore => ({
 
 const DEFAULT_PROGRESS: KangurProgressState = createDefaultKangurProgressState();
 const DEFAULT_PROGRESS_STORE: KangurSubjectProgressStore = createDefaultProgressStore();
-const DEFAULT_PROGRESS_RAW = JSON.stringify(DEFAULT_PROGRESS_STORE);
+const createDefaultProgressEnvelope = (): KangurProgressStorageEnvelope => ({
+  version: 2,
+  guest: createDefaultProgressStore(),
+  owners: {},
+});
+const DEFAULT_PROGRESS_ENVELOPE: KangurProgressStorageEnvelope = createDefaultProgressEnvelope();
+const DEFAULT_PROGRESS_RAW = JSON.stringify(DEFAULT_PROGRESS_ENVELOPE);
 
 let currentProgressSubject: KangurLessonSubject = DEFAULT_KANGUR_SUBJECT;
+let currentProgressOwnerKey: string | null = null;
 let cachedProgressStore: KangurSubjectProgressStore = DEFAULT_PROGRESS_STORE;
 let cachedProgressSnapshot: KangurProgressState = cloneProgress(DEFAULT_PROGRESS);
 let cachedProgressSubject: KangurLessonSubject = currentProgressSubject;
+let cachedProgressOwnerKey: string | null = null;
+let cachedProgressEnvelope: KangurProgressStorageEnvelope = DEFAULT_PROGRESS_ENVELOPE;
 let cachedProgressRaw: string | null = DEFAULT_PROGRESS_RAW;
 const SERVER_PROGRESS_SNAPSHOT: KangurProgressState = cloneProgress(DEFAULT_PROGRESS);
 let progressPersistenceEnabled = true;
@@ -97,6 +116,24 @@ const cloneProgressStore = (store: KangurSubjectProgressStore): KangurSubjectPro
   },
 });
 
+const cloneProgressEnvelope = (
+  envelope: KangurProgressStorageEnvelope
+): KangurProgressStorageEnvelope => ({
+  version: 2,
+  guest: cloneProgressStore(envelope.guest ?? DEFAULT_PROGRESS_STORE),
+  owners: Object.fromEntries(
+    Object.entries(envelope.owners ?? {}).map(([ownerKey, store]) => [
+      ownerKey,
+      cloneProgressStore(store),
+    ])
+  ),
+});
+
+const normalizeOwnerKey = (ownerKey: string | null | undefined): string | null => {
+  const normalized = typeof ownerKey === 'string' ? ownerKey.trim() : '';
+  return normalized.length > 0 ? normalized : null;
+};
+
 const normalizeProgressStore = (value: unknown): KangurSubjectProgressStore => {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
     const record = value as Record<string, unknown>;
@@ -134,17 +171,114 @@ const normalizeProgressStore = (value: unknown): KangurSubjectProgressStore => {
   };
 };
 
-const updateCachedProgressStore = (store: KangurSubjectProgressStore): KangurProgressState => {
-  cachedProgressStore = cloneProgressStore(store);
+const normalizeProgressEnvelope = (
+  value: unknown,
+  legacyOwnerKey: string | null
+): KangurProgressStorageEnvelope => {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const record = value as Record<string, unknown>;
+    const rawOwners = record['owners'];
+    if (record['version'] === 2 && rawOwners && typeof rawOwners === 'object' && !Array.isArray(rawOwners)) {
+      const ownersRecord = rawOwners as Record<string, unknown>;
+      return {
+        version: 2,
+        guest: normalizeProgressStore(record['guest']),
+        owners: Object.fromEntries(
+          Object.entries(ownersRecord).map(([ownerKey, store]) => [
+            ownerKey,
+            normalizeProgressStore(store),
+          ])
+        ),
+      };
+    }
+  }
+
+  const legacyStore = normalizeProgressStore(value);
+  const normalizedLegacyOwnerKey = normalizeOwnerKey(legacyOwnerKey);
+  return normalizedLegacyOwnerKey
+    ? {
+        version: 2,
+        guest: createDefaultProgressStore(),
+        owners: {
+          [normalizedLegacyOwnerKey]: legacyStore,
+        },
+      }
+    : {
+        version: 2,
+        guest: legacyStore,
+        owners: {},
+      };
+};
+
+const getProgressStoreForOwner = (
+  envelope: KangurProgressStorageEnvelope,
+  ownerKey: string | null
+): KangurSubjectProgressStore => {
+  const normalizedOwnerKey = normalizeOwnerKey(ownerKey);
+  if (!normalizedOwnerKey) {
+    return envelope.guest ?? DEFAULT_PROGRESS_STORE;
+  }
+
+  return envelope.owners[normalizedOwnerKey] ?? DEFAULT_PROGRESS_STORE;
+};
+
+const setProgressStoreForOwner = (
+  envelope: KangurProgressStorageEnvelope,
+  ownerKey: string | null,
+  store: KangurSubjectProgressStore
+): KangurProgressStorageEnvelope => {
+  const normalizedOwnerKey = normalizeOwnerKey(ownerKey);
+  if (!normalizedOwnerKey) {
+    return {
+      ...envelope,
+      guest: cloneProgressStore(store),
+    };
+  }
+
+  return {
+    ...envelope,
+    owners: {
+      ...envelope.owners,
+      [normalizedOwnerKey]: cloneProgressStore(store),
+    },
+  };
+};
+
+const syncCachedProgressScope = (ownerKey: string | null): KangurProgressState => {
+  cachedProgressOwnerKey = ownerKey;
+  cachedProgressStore = cloneProgressStore(getProgressStoreForOwner(cachedProgressEnvelope, ownerKey));
   cachedProgressSnapshot = cloneProgress(
     cachedProgressStore.subjects[currentProgressSubject] ?? DEFAULT_PROGRESS
   );
   cachedProgressSubject = currentProgressSubject;
-  cachedProgressRaw = JSON.stringify(cachedProgressStore);
   return cachedProgressSnapshot;
 };
 
-const updateCachedProgressSnapshot = (progress: unknown): KangurProgressState => {
+const updateCachedProgressEnvelope = (
+  envelope: KangurProgressStorageEnvelope,
+  ownerKey: string | null
+): KangurProgressState => {
+  cachedProgressEnvelope = cloneProgressEnvelope(envelope);
+  cachedProgressRaw = JSON.stringify(cachedProgressEnvelope);
+  return syncCachedProgressScope(ownerKey);
+};
+
+const resolveProgressOwnerKey = (options?: KangurProgressStorageOptions): string | null => {
+  if (options && Object.prototype.hasOwnProperty.call(options, 'ownerKey')) {
+    return normalizeOwnerKey(options.ownerKey);
+  }
+
+  return currentProgressOwnerKey;
+};
+
+const updateCachedProgressSnapshot = (
+  progress: unknown,
+  options?: KangurProgressStorageOptions
+): KangurProgressState => {
+  const ownerKey = resolveProgressOwnerKey(options);
+  if (cachedProgressOwnerKey !== ownerKey) {
+    syncCachedProgressScope(ownerKey);
+  }
   const normalized = normalizeKangurProgressState(progress);
   const nextStore: KangurSubjectProgressStore = {
     version: 1,
@@ -153,12 +287,24 @@ const updateCachedProgressSnapshot = (progress: unknown): KangurProgressState =>
       [currentProgressSubject]: normalized,
     },
   };
-  return updateCachedProgressStore(nextStore);
+  return updateCachedProgressEnvelope(
+    setProgressStoreForOwner(cachedProgressEnvelope, ownerKey, nextStore),
+    ownerKey
+  );
 };
 
-const updateCachedProgressSnapshotFromStorageRaw = (raw: string): KangurProgressState => {
-  const snapshot = updateCachedProgressStore(normalizeProgressStore(JSON.parse(raw) as unknown));
-  cachedProgressRaw = raw;
+const updateCachedProgressSnapshotFromStorageRaw = (
+  raw: string,
+  options?: KangurProgressStorageOptions
+): KangurProgressState => {
+  const ownerKey = resolveProgressOwnerKey(options);
+  const legacyOwnerKey = loadProgressOwnerKey();
+  const envelope = normalizeProgressEnvelope(JSON.parse(raw) as unknown, legacyOwnerKey);
+  const snapshot = updateCachedProgressEnvelope(envelope, ownerKey);
+  const serializedEnvelope = JSON.stringify(cachedProgressEnvelope);
+  if (serializedEnvelope !== raw && typeof window !== 'undefined' && progressPersistenceEnabled) {
+    localStorage.setItem(KANGUR_PROGRESS_STORAGE_KEY, serializedEnvelope);
+  }
   return snapshot;
 };
 
@@ -170,9 +316,11 @@ export function emitProgressChange(progress: KangurProgressState): void {
 }
 
 export function setProgressSubject(subject: KangurLessonSubject): void {
-  if (currentProgressSubject === subject) {
+  const hasSubjectChanged = currentProgressSubject !== subject;
+  if (!hasSubjectChanged) {
     return;
   }
+
   currentProgressSubject = subject;
   const snapshot = loadProgress();
   emitProgressChange(snapshot);
@@ -180,6 +328,42 @@ export function setProgressSubject(subject: KangurLessonSubject): void {
 
 export function getProgressSubject(): KangurLessonSubject {
   return currentProgressSubject;
+}
+
+export function setProgressOwnerKey(ownerKey: string | null): void {
+  const normalizedOwnerKey = normalizeOwnerKey(ownerKey);
+  if (currentProgressOwnerKey === normalizedOwnerKey) {
+    return;
+  }
+
+  currentProgressOwnerKey = normalizedOwnerKey;
+  const snapshot = loadProgress({ ownerKey: normalizedOwnerKey });
+  emitProgressChange(snapshot);
+}
+
+export function getProgressOwnerKey(): string | null {
+  return currentProgressOwnerKey;
+}
+
+export function setProgressScope({
+  subject = currentProgressSubject,
+  ownerKey = currentProgressOwnerKey,
+}: {
+  subject?: KangurLessonSubject;
+  ownerKey?: string | null;
+}): void {
+  const normalizedOwnerKey = normalizeOwnerKey(ownerKey);
+  const hasSubjectChanged = currentProgressSubject !== subject;
+  const hasOwnerChanged = currentProgressOwnerKey !== normalizedOwnerKey;
+
+  if (!hasSubjectChanged && !hasOwnerChanged) {
+    return;
+  }
+
+  currentProgressSubject = subject;
+  currentProgressOwnerKey = normalizedOwnerKey;
+  const snapshot = loadProgress({ ownerKey: normalizedOwnerKey });
+  emitProgressChange(snapshot);
 }
 
 export function setProgressPersistenceEnabled(enabled: boolean): void {
@@ -198,12 +382,10 @@ export function isProgressPersistenceEnabled(): boolean {
   return progressPersistenceEnabled;
 }
 
-export function loadProgress(): KangurProgressState {
-  if (cachedProgressSubject !== currentProgressSubject) {
-    cachedProgressSnapshot = cloneProgress(
-      cachedProgressStore.subjects[currentProgressSubject] ?? DEFAULT_PROGRESS
-    );
-    cachedProgressSubject = currentProgressSubject;
+export function loadProgress(options?: KangurProgressStorageOptions): KangurProgressState {
+  const ownerKey = resolveProgressOwnerKey(options);
+  if (cachedProgressOwnerKey !== ownerKey || cachedProgressSubject !== currentProgressSubject) {
+    syncCachedProgressScope(ownerKey);
   }
 
   if (typeof window === 'undefined') {
@@ -224,17 +406,17 @@ export function loadProgress(): KangurProgressState {
       const raw = localStorage.getItem(KANGUR_PROGRESS_STORAGE_KEY);
       if (!raw) {
         if (cachedProgressRaw !== DEFAULT_PROGRESS_RAW) {
-          return updateCachedProgressStore(createDefaultProgressStore());
+          return updateCachedProgressEnvelope(createDefaultProgressEnvelope(), ownerKey);
         }
         return cachedProgressSnapshot;
       }
       if (raw !== cachedProgressRaw) {
-        return updateCachedProgressSnapshotFromStorageRaw(raw);
+        return updateCachedProgressSnapshotFromStorageRaw(raw, { ownerKey });
       }
       return cachedProgressSnapshot;
     },
     {
-      fallback: () => updateCachedProgressStore(createDefaultProgressStore()),
+      fallback: () => updateCachedProgressEnvelope(createDefaultProgressEnvelope(), ownerKey),
     }
   );
 }
@@ -243,8 +425,11 @@ export function getKangurProgressServerSnapshot(): KangurProgressState {
   return SERVER_PROGRESS_SNAPSHOT;
 }
 
-export function saveProgress(progress: KangurProgressState): void {
-  const normalized = updateCachedProgressSnapshot(progress);
+export function saveProgress(
+  progress: KangurProgressState,
+  options?: KangurProgressStorageOptions
+): void {
+  const normalized = updateCachedProgressSnapshot(progress, options);
   if (typeof window === 'undefined') {
     return;
   }
@@ -256,13 +441,17 @@ export function saveProgress(progress: KangurProgressState): void {
 
   localStorage.setItem(
     KANGUR_PROGRESS_STORAGE_KEY,
-    cachedProgressRaw ?? JSON.stringify(cachedProgressStore)
+    cachedProgressRaw ?? JSON.stringify(cachedProgressEnvelope)
   );
   emitProgressChange(normalized);
 }
 
-export function resetProgressStore(): void {
-  const normalized = updateCachedProgressStore(createDefaultProgressStore());
+export function resetProgressStore(options?: KangurProgressStorageOptions): void {
+  const ownerKey = resolveProgressOwnerKey(options);
+  const normalized = updateCachedProgressEnvelope(
+    setProgressStoreForOwner(cachedProgressEnvelope, ownerKey, createDefaultProgressStore()),
+    ownerKey
+  );
   if (typeof window === 'undefined') {
     return;
   }
@@ -274,7 +463,7 @@ export function resetProgressStore(): void {
 
   localStorage.setItem(
     KANGUR_PROGRESS_STORAGE_KEY,
-    cachedProgressRaw ?? JSON.stringify(cachedProgressStore)
+    cachedProgressRaw ?? JSON.stringify(cachedProgressEnvelope)
   );
   emitProgressChange(normalized);
 }

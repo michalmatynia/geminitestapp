@@ -148,7 +148,7 @@ export function KangurGameHomeQuestWidget({
   const runtimeTranslations = useTranslations('KangurProgressRuntime');
   const runtime = useKangurGameRuntime();
   const { basePath, progress, screen } = runtime;
-  const { subject } = useKangurSubjectFocus();
+  const { subject, subjectKey } = useKangurSubjectFocus();
   const progressLocalizer = { translate: runtimeTranslations };
   const fallbackCopy = useMemo(
     () => getHomeQuestFallbackCopy(normalizedLocale),
@@ -158,10 +158,11 @@ export function KangurGameHomeQuestWidget({
     () =>
       getCurrentKangurDailyQuest(progress, {
         locale: normalizedLocale,
+        ownerKey: subjectKey,
         subject,
         translate: runtimeTranslations,
       }),
-    [normalizedLocale, progress, runtimeTranslations, subject]
+    [normalizedLocale, progress, runtimeTranslations, subject, subjectKey]
   );
   const averageXpPerSession = useMemo(() => getProgressAverageXpPerSession(progress), [progress]);
   const guidedMomentum = useMemo(

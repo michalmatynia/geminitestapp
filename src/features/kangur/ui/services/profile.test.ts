@@ -41,6 +41,7 @@ const ENGLISH_PROFILE_MESSAGES = {
     calendar: 'Calendar',
     geometry: 'Geometry',
     english_adjectives: 'Adjectives',
+    english_adverbs_frequency: 'Adverbs of frequency',
   },
   guidedMomentum: {
     badges: {
@@ -363,6 +364,45 @@ describe('buildKangurLearnerProfileSnapshot', () => {
         averageAccuracy: 75,
         totalXpEarned: 54,
         averageXpPerSession: 18,
+      }),
+    ]);
+  });
+
+  it('maps bare adverbs-of-frequency activity keys to the adverbs operation label', () => {
+    const snapshot = buildKangurLearnerProfileSnapshot({
+      progress: {
+        ...progress,
+        totalCorrectAnswers: 8,
+        totalQuestionsAnswered: 12,
+        activityStats: {
+          english_adverbs_frequency_routine_studio: {
+            sessionsPlayed: 2,
+            perfectSessions: 1,
+            totalCorrectAnswers: 8,
+            totalQuestionsAnswered: 12,
+            totalXpEarned: 30,
+            bestScorePercent: 100,
+            lastScorePercent: 67,
+            currentStreak: 1,
+            bestStreak: 1,
+            lastPlayedAt: '2026-03-13T10:00:00.000Z',
+          },
+        },
+      },
+      scores: [],
+      dailyGoalGames: 3,
+      now: new Date('2026-03-13T15:00:00.000Z'),
+      locale: 'en',
+      translate: createProfileTranslator(ENGLISH_PROFILE_MESSAGES),
+    });
+
+    expect(snapshot.operationPerformance).toEqual([
+      expect.objectContaining({
+        operation: 'english_adverbs_frequency',
+        label: 'Adverbs of frequency',
+        averageAccuracy: 67,
+        totalXpEarned: 30,
+        averageXpPerSession: 15,
       }),
     ]);
   });

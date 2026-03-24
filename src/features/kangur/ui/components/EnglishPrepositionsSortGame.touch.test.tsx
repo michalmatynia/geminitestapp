@@ -4,7 +4,9 @@
 
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+let draggableSnapshot = { isDragging: false };
 
 vi.mock('next-intl', async () => await vi.importActual<typeof import('next-intl')>('next-intl'));
 vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>('use-intl'));
@@ -49,7 +51,7 @@ vi.mock('@hello-pangea/dnd', () => ({
         draggableProps: {},
         dragHandleProps: {},
       },
-      { isDragging: false }
+      draggableSnapshot
     ),
 }));
 
@@ -59,6 +61,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 
 import enMessages from '@/i18n/messages/en.json';
 import EnglishPrepositionsSortGame from '@/features/kangur/ui/components/EnglishPrepositionsSortGame';
+
+afterEach(() => {
+  draggableSnapshot = { isDragging: false };
+});
 
 describe('EnglishPrepositionsSortGame touch interactions', () => {
   it('shows touch guidance and supports tap-to-bin sorting', () => {
@@ -93,5 +99,20 @@ describe('EnglishPrepositionsSortGame touch interactions', () => {
     expect(screen.getByTestId('english-prepositions-sort-selection-hint')).toHaveTextContent(
       'Tap a phrase, then tap a preposition basket or the pool.'
     );
+  });
+
+  it('renders the active dragged phrase through the shared body portal preview', () => {
+    draggableSnapshot = { isDragging: true };
+
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <EnglishPrepositionsSortGame onFinish={vi.fn()} />
+      </NextIntlClientProvider>
+    );
+
+    const pool = screen.getByTestId('english-prepositions-sort-pool-zone');
+
+    expect(within(pool).queryByRole('button', { name: '7:30' })).not.toBeInTheDocument();
+    expect(within(document.body).getByRole('button', { name: '7:30' })).toBeInTheDocument();
   });
 });

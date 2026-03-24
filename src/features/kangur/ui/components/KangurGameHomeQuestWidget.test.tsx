@@ -209,11 +209,11 @@ describe('KangurGameHomeQuestWidget', () => {
 
   it('shows claimed reward state once the stored daily quest was already completed and paid out', () => {
     window.localStorage.setItem(
-      getKangurDailyQuestStorageKey('maths'),
+      getKangurDailyQuestStorageKey('maths', 'learner-1'),
       JSON.stringify({
         version: 1,
         dateKey: FIXED_LOCAL_DATE_KEY,
-        ownerKey: null,
+        ownerKey: 'learner-1',
         createdAt: `${FIXED_LOCAL_DATE_KEY}T08:00:00.000Z`,
         expiresAt: `${FIXED_LOCAL_DATE_KEY}T23:59:59.999Z`,
         claimedAt: `${FIXED_LOCAL_DATE_KEY}T10:15:00.000Z`,
@@ -264,6 +264,106 @@ describe('KangurGameHomeQuestWidget', () => {
     );
     expect(screen.getByTestId('kangur-home-quest-reward')).toHaveTextContent(
       'Nagroda odebrana +55 XP'
+    );
+  });
+
+  it('recomputes the visible quest when the active learner subject key changes', () => {
+    window.localStorage.setItem(
+      getKangurDailyQuestStorageKey('maths', 'learner-1'),
+      JSON.stringify({
+        version: 1,
+        dateKey: FIXED_LOCAL_DATE_KEY,
+        ownerKey: 'learner-1',
+        createdAt: `${FIXED_LOCAL_DATE_KEY}T08:00:00.000Z`,
+        expiresAt: `${FIXED_LOCAL_DATE_KEY}T23:59:59.999Z`,
+        claimedAt: `${FIXED_LOCAL_DATE_KEY}T10:15:00.000Z`,
+        baselineGamesPlayed: 12,
+        baselineLessonsCompleted: 7,
+        subject: 'maths',
+        assignment: {
+          id: 'quest-learner-1',
+          title: 'Quest learner 1',
+          description: 'Quest learner 1 description',
+          target: '1 powtórka + wynik min. 40%',
+          priority: 'high',
+          questLabel: 'Misja ratunkowa',
+          rewardXp: 55,
+          questMetric: {
+            kind: 'lesson_mastery',
+            lessonComponentId: 'division',
+            targetPercent: 40,
+          },
+          action: {
+            label: 'Otwórz lekcję',
+            page: 'Lessons',
+            query: { focus: 'division' },
+          },
+        },
+      })
+    );
+    window.localStorage.setItem(
+      getKangurDailyQuestStorageKey('maths', 'learner-2'),
+      JSON.stringify({
+        version: 1,
+        dateKey: FIXED_LOCAL_DATE_KEY,
+        ownerKey: 'learner-2',
+        createdAt: `${FIXED_LOCAL_DATE_KEY}T08:00:00.000Z`,
+        expiresAt: `${FIXED_LOCAL_DATE_KEY}T23:59:59.999Z`,
+        claimedAt: null,
+        baselineGamesPlayed: 12,
+        baselineLessonsCompleted: 7,
+        subject: 'maths',
+        assignment: {
+          id: 'quest-learner-2',
+          title: 'Quest learner 2',
+          description: 'Quest learner 2 description',
+          target: '1 powtórka + wynik min. 40%',
+          priority: 'high',
+          questLabel: 'Misja ratunkowa',
+          rewardXp: 55,
+          questMetric: {
+            kind: 'lesson_mastery',
+            lessonComponentId: 'division',
+            targetPercent: 40,
+          },
+          action: {
+            label: 'Otwórz lekcję',
+            page: 'Lessons',
+            query: { focus: 'division' },
+          },
+        },
+      })
+    );
+
+    useKangurGameRuntimeMock.mockReturnValue({
+      basePath: '/kangur',
+      progress,
+      screen: 'home',
+    });
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+
+    const { rerender } = render(<KangurGameHomeQuestWidget />);
+
+    expect(screen.getByTestId('kangur-home-quest-widget')).toHaveTextContent('Quest learner 1');
+    expect(screen.getByTestId('kangur-home-quest-reward')).toHaveTextContent(
+      'Nagroda odebrana +55 XP'
+    );
+
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-2',
+    });
+
+    rerender(<KangurGameHomeQuestWidget />);
+
+    expect(screen.getByTestId('kangur-home-quest-widget')).toHaveTextContent('Quest learner 2');
+    expect(screen.getByTestId('kangur-home-quest-reward')).toHaveTextContent(
+      'Nagroda gotowa +55 XP'
     );
   });
 

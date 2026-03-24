@@ -51,6 +51,7 @@ import {
 import {
   loadProgress,
   saveProgress,
+  type KangurProgressStorageOptions,
 } from './progress.persistence';
 
 // Re-export modular parts
@@ -340,9 +341,10 @@ export function checkNewBadges(progress: KangurProgressState): string[] {
 
 export function addXp(
   amount: number,
-  extraUpdates: Partial<KangurProgressState> = {}
+  extraUpdates: Partial<KangurProgressState> = {},
+  options?: KangurProgressStorageOptions
 ): KangurAddXpResult {
-  const progress = loadProgress();
+  const progress = loadProgress(options);
   const updated = normalizeKangurProgressState({
     ...progress,
     totalXp: progress.totalXp + amount,
@@ -350,7 +352,7 @@ export function addXp(
   });
   const newBadges = checkNewBadges(updated);
   updated.badges = mergeUniqueStrings([...updated.badges, ...newBadges]);
-  saveProgress(updated);
+  saveProgress(updated, options);
   return { updated, newBadges, xpGained: amount };
 }
 
@@ -420,7 +422,10 @@ type KangurOpenedTaskInput = {
   openedAt?: string | null;
 };
 
-export function recordKangurOpenedTask(input: KangurOpenedTaskInput): void {
+export function recordKangurOpenedTask(
+  input: KangurOpenedTaskInput,
+  options?: KangurProgressStorageOptions
+): void {
   const title = input.title.trim();
   const href = input.href.trim();
   if (!title || !href) {
@@ -428,7 +433,7 @@ export function recordKangurOpenedTask(input: KangurOpenedTaskInput): void {
   }
 
   const openedAt = input.openedAt?.trim() || new Date().toISOString();
-  const progress = loadProgress();
+  const progress = loadProgress(options);
   const current = progress.openedTasks ?? [];
   const key = `${input.kind}::${href}`;
 
@@ -441,7 +446,8 @@ export function recordKangurOpenedTask(input: KangurOpenedTaskInput): void {
     normalizeKangurProgressState({
       ...progress,
       openedTasks: next,
-    })
+    }),
+    options
   );
 }
 
@@ -466,7 +472,8 @@ type KangurLessonPanelTimeInput = {
 };
 
 export function recordKangurLessonPanelProgress(
-  input: KangurLessonPanelProgressInput
+  input: KangurLessonPanelProgressInput,
+  options?: KangurProgressStorageOptions
 ): void {
   const lessonKey = input.lessonKey.trim();
   const sectionId = input.sectionId.trim();
@@ -484,7 +491,7 @@ export function recordKangurLessonPanelProgress(
     return;
   }
 
-  const progress = loadProgress();
+  const progress = loadProgress(options);
   const existingLesson = progress.lessonPanelProgress?.[lessonKey] ?? {};
   const existingSection = existingLesson[sectionId];
   const lastViewedAt = input.viewedAt?.trim() || new Date().toISOString();
@@ -520,11 +527,15 @@ export function recordKangurLessonPanelProgress(
           [sectionId]: updatedSection,
         },
       },
-    })
+    }),
+    options
   );
 }
 
-export function recordKangurLessonPanelTime(input: KangurLessonPanelTimeInput): void {
+export function recordKangurLessonPanelTime(
+  input: KangurLessonPanelTimeInput,
+  options?: KangurProgressStorageOptions
+): void {
   const lessonKey = input.lessonKey.trim();
   const sectionId = input.sectionId.trim();
   const panelId = input.panelId.trim();
@@ -538,7 +549,7 @@ export function recordKangurLessonPanelTime(input: KangurLessonPanelTimeInput): 
     return;
   }
 
-  const progress = loadProgress();
+  const progress = loadProgress(options);
   const existingLesson = progress.lessonPanelProgress?.[lessonKey] ?? {};
   const existingSection = existingLesson[sectionId];
   const nowIso = new Date().toISOString();
@@ -578,6 +589,7 @@ export function recordKangurLessonPanelTime(input: KangurLessonPanelTimeInput): 
           },
         },
       },
-    })
+    }),
+    options
   );
 }

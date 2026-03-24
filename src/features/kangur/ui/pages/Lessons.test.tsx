@@ -5,6 +5,10 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
+import {
+  LESSONS_LIBRARY_LAYOUT_CLASSNAME,
+  LESSONS_LIBRARY_LIST_CLASSNAME,
+} from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 
 const {
   useKangurSubjectFocusMock,
@@ -61,6 +65,8 @@ const {
     value: false,
   },
 }));
+
+const splitClasses = (className: string): string[] => className.trim().split(/\s+/);
 
 vi.mock('next-intl', () => ({
   useLocale: () => localeState.value,
@@ -612,14 +618,10 @@ describe('Lessons page subject filtering', () => {
     });
 
     expect(screen.getByTestId('lessons-shell-transition')).toHaveClass(
-      'w-full',
-      'max-w-lg',
-      'flex-col',
-      'items-center'
+      ...splitClasses(LESSONS_LIBRARY_LAYOUT_CLASSNAME)
     );
     expect(screen.getByTestId('lessons-list-transition')).toHaveClass(
-      'w-full',
-      'flex-col'
+      ...splitClasses(LESSONS_LIBRARY_LIST_CLASSNAME)
     );
   });
 

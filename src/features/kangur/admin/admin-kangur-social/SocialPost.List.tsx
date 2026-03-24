@@ -23,6 +23,7 @@ import {
   statusLabel,
 } from './AdminKangurSocialPage.Constants';
 import { KANGUR_ADMIN_CARD_CLASS_NAME } from '../components/KangurAdminCard';
+import { useSocialPostContext } from './SocialPostContext';
 
 const PAGE_SIZE = 8;
 
@@ -52,29 +53,22 @@ const buildSearchText = (post: KangurSocialPost): string =>
     .join(' ')
     .toLowerCase();
 
-export function SocialPostList({
-  posts,
-  activePostId,
-  isLoading = false,
-  onSelectPost,
-  onOpenPost,
-  onPublishPost,
-  onUnpublishPost,
-  publishPendingId,
-  unpublishPendingId,
-  onDeletePost,
-}: {
-  posts: KangurSocialPost[];
-  activePostId: string | null;
-  isLoading?: boolean;
-  onSelectPost: (id: string) => void;
-  onOpenPost?: (id: string) => void;
-  onPublishPost?: (post: KangurSocialPost, options?: { skipImages?: boolean }) => void;
-  onUnpublishPost?: (post: KangurSocialPost, options?: { keepLocal?: boolean }) => void;
-  publishPendingId?: string | null;
-  unpublishPendingId?: string | null;
-  onDeletePost?: (post: KangurSocialPost) => void;
-}): React.JSX.Element {
+export function SocialPostList(): React.JSX.Element {
+  const {
+    posts,
+    activePostId,
+    setActivePostId,
+    postsQuery,
+    handleOpenPostEditor,
+    handleQuickPublishPost,
+    handleUnpublishPost,
+    publishingPostId,
+    unpublishingPostId,
+    setPostToDelete,
+    setPostToUnpublish,
+    clearDeleteError,
+  } = useSocialPostContext();
+
   const [searchValue, setSearchValue] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<SocialPostStatusFilter>('all');
   const [page, setPage] = React.useState(1);
@@ -166,7 +160,7 @@ export function SocialPostList({
       }
       className={KANGUR_ADMIN_CARD_CLASS_NAME}
       contentClassName='space-y-2'
-      isLoading={isLoading}
+      isLoading={postsQuery.isLoading}
       loadingMessage='Loading social posts...'
     >
       {posts.length === 0 ? (
@@ -190,8 +184,8 @@ export function SocialPostList({
           {paginatedPosts.map((post) => {
           const title = post.titlePl || post.titleEn || 'Untitled update';
           const handleOpen = (): void => {
-            onSelectPost(post.id);
-            onOpenPost?.(post.id);
+            setActivePostId(post.id);
+            handleOpenPostEditor?.(post.id);
           };
 
           return (
@@ -241,115 +235,117 @@ export function SocialPostList({
                   </Badge>
                 ) : null}
               </div>
-              {onPublishPost ? (
-                (() => {
-                  const isPublished = post.status === 'published';
-                  const canPublish = post.status === 'draft' || post.status === 'failed';
-                  const publishPending = publishPendingId === post.id;
-                  const unpublishPending = unpublishPendingId === post.id;
-                  const publishLabel = isPublished
-                    ? 'LinkedIn publication details'
-                    : 'Publish options';
-                  const button = (
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='icon'
-                      disabled={publishPending || unpublishPending || (!isPublished && !canPublish)}
-                      aria-label={publishLabel}
-                      title={publishLabel}
-                      className={cn(
-                        'size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
-                        isPublished
-                          ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-600'
-                          : 'text-muted-foreground hover:text-foreground',
-                        publishPending && 'cursor-not-allowed opacity-60'
-                      )}
+              
+              {(() => {
+                const isPublished = post.status === 'published';
+                const canPublish = post.status === 'draft' || post.status === 'failed';
+                const publishPending = publishingPostId === post.id;
+                const unpublishPending = unpublishingPostId === post.id;
+                const publishLabel = isPublished
+                  ? 'LinkedIn publication details'
+                  : 'Publish options';
+                const button = (
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='icon'
+                    disabled={publishPending || unpublishPending || (!isPublished && !canPublish)}
+                    aria-label={publishLabel}
+                    title={publishLabel}
+                    className={cn(
+                      'size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
+                      isPublished
+                        ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-600'
+                        : 'text-muted-foreground hover:text-foreground',
+                      publishPending && 'cursor-not-allowed opacity-60'
+                    )}
+                  >
+                    <span
+                      aria-hidden='true'
+                      className='text-[9px] font-black uppercase leading-none tracking-tight'
                     >
-                      <span
-                        aria-hidden='true'
-                        className='text-[9px] font-black uppercase leading-none tracking-tight'
-                      >
-                        {publishPending ? '...' : 'in'}
-                      </span>
-                    </Button>
-                  );
+                      {publishPending ? '...' : 'in'}
+                    </span>
+                  </Button>
+                );
 
-                  if (!isPublished) {
-                    return (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>{button}</DropdownMenuTrigger>
-                        <DropdownMenuContent align='end' className='w-56'>
-                          <DropdownMenuLabel>Publish options</DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onSelect={() => onPublishPost(post)}
-                            disabled={publishPending || unpublishPending || !canPublish}
-                          >
-                            Publish to LinkedIn
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onSelect={() => onPublishPost(post, { skipImages: true })}
-                            disabled={publishPending || unpublishPending || !canPublish}
-                          >
-                            Publish without images
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    );
-                  }
-
-                  if (!onUnpublishPost) {
-                    return button;
-                  }
-
-                  const publishedAt = formatDatetimeDisplay(post.publishedAt) || '—';
-                  const createdAt = formatDatetimeDisplay(post.createdAt) || '—';
-                  const postId = post.linkedinPostId ?? '—';
-                  const postUrl = post.linkedinUrl ?? null;
-
+                if (!isPublished) {
                   return (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>{button}</DropdownMenuTrigger>
-                      <DropdownMenuContent align='end' className='w-72'>
-                        <DropdownMenuLabel>LinkedIn publication</DropdownMenuLabel>
-                        <div className='space-y-1 px-3 py-2 text-xs text-muted-foreground'>
-                          <div>Published: {publishedAt}</div>
-                          <div>Created: {createdAt}</div>
-                          <div className='break-all'>Post ID: {postId}</div>
-                        </div>
-                        {postUrl ? (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onSelect={() =>
-                                window.open(postUrl, '_blank', 'noopener,noreferrer')
-                              }
-                            >
-                              Open on LinkedIn
-                            </DropdownMenuItem>
-                          </>
-                        ) : null}
+                      <DropdownMenuContent align='end' className='w-56'>
+                        <DropdownMenuLabel>Publish options</DropdownMenuLabel>
+                        <DropdownMenuItem
+                          onSelect={() => {
+                            void handleQuickPublishPost(post.id, 'published');
+                          }}
+                          disabled={publishPending || unpublishPending || !canPublish}
+                        >
+                          Publish to LinkedIn
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          onSelect={() => onUnpublishPost(post, { keepLocal: true })}
-                          disabled={unpublishPending || !post.linkedinPostId}
+                          onSelect={() => {
+                            void handleQuickPublishPost(post.id, 'published', { skipImages: true });
+                          }}
+                          disabled={publishPending || unpublishPending || !canPublish}
                         >
-                          Unpublish from LinkedIn
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={() => onUnpublishPost(post)}
-                          className='text-destructive focus:text-destructive'
-                          disabled={unpublishPending || !post.linkedinPostId}
-                        >
-                          Unpublish and delete
+                          Publish without images
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   );
-                })()
-              ) : null}
-              {post.status === 'draft' && onDeletePost ? (
+                }
+
+                const publishedAt = formatDatetimeDisplay(post.publishedAt) || '—';
+                const createdAt = formatDatetimeDisplay(post.createdAt) || '—';
+                const postId = post.linkedinPostId ?? '—';
+                const postUrl = post.linkedinUrl ?? null;
+
+                return (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>{button}</DropdownMenuTrigger>
+                    <DropdownMenuContent align='end' className='w-72'>
+                      <DropdownMenuLabel>LinkedIn publication</DropdownMenuLabel>
+                      <div className='space-y-1 px-3 py-2 text-xs text-muted-foreground'>
+                        <div>Published: {publishedAt}</div>
+                        <div>Created: {createdAt}</div>
+                        <div className='break-all'>Post ID: {postId}</div>
+                      </div>
+                      {postUrl ? (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              window.open(postUrl, '_blank', 'noopener,noreferrer')
+                            }
+                          >
+                            Open on LinkedIn
+                          </DropdownMenuItem>
+                        </>
+                      ) : null}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onSelect={() => {
+                          void handleUnpublishPost(post.id, { keepLocal: true });
+                        }}
+                        disabled={unpublishPending || !post.linkedinPostId}
+                      >
+                        Unpublish from LinkedIn
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={() => setPostToUnpublish(post)}
+                        className='text-destructive focus:text-destructive'
+                        disabled={unpublishPending || !post.linkedinPostId}
+                      >
+                        Unpublish and delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                );
+              })()}
+              
+              {post.status === 'draft' && (
                 <div className='flex justify-end'>
                   <ActionMenu
                     ariaLabel='Open post actions'
@@ -359,14 +355,15 @@ export function SocialPostList({
                       className='text-destructive focus:text-destructive'
                       onSelect={(event: Event): void => {
                         event.preventDefault();
-                        onDeletePost(post);
+                        clearDeleteError();
+                        setPostToDelete(post);
                       }}
                     >
                       Delete post permanently
                     </DropdownMenuItem>
                   </ActionMenu>
                 </div>
-              ) : null}
+              )}
             </div>
           );
         })}

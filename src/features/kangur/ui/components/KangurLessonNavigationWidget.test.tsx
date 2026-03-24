@@ -6,6 +6,10 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import {
+  LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME,
+  LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME,
+} from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 
 const {
   useKangurLessonsRuntimeStateMock,
@@ -42,6 +46,8 @@ import {
   KangurLessonNavigationProvider,
   useKangurRegisterLessonSubsectionNavigation,
 } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
+
+const splitClasses = (className: string): string[] => className.trim().split(/\s+/);
 
 const SubsectionNavigationMarker = (): React.JSX.Element => {
   const registerSubsectionNavigation = useKangurRegisterLessonSubsectionNavigation();
@@ -105,9 +111,10 @@ describe('KangurLessonNavigationWidget', () => {
     );
 
     expect(screen.getByRole('navigation', { name: /nawigacja/i })).toHaveClass(
-      'w-full',
-      'gap-2',
-      'items-center'
+      ...splitClasses(LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME)
+    );
+    expect(screen.getByRole('group', { name: /nawigacja/i })).toHaveClass(
+      ...splitClasses(LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME)
     );
     expect(screen.getByRole('button', { name: /Poprzednia lekcja/i })).toHaveClass(
       'min-h-11',

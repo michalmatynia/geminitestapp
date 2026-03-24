@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-23T21:12:51.104Z",
+  "generatedAt": "2026-03-24T00:25:11.319Z",
   "status": "passed",
   "summary": {
-    "total": 0,
+    "total": 1,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 0,
+    "infoCount": 1,
     "status": "passed",
-    "contextFileCount": 241
+    "contextFileCount": 242
   },
   "scope": {
     "sourceDirs": [
@@ -17,7 +17,25 @@
     "providerValueFieldThreshold": 15,
     "oversizedLocThreshold": 500
   },
-  "issues": [],
-  "rules": [],
-  "durationMs": 227
+  "issues": [
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/kangur/admin/admin-kangur-social/SocialPostContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "context-missing-split",
+      "errorCount": 0,
+      "warningCount": 0,
+      "infoCount": 1
+    }
+  ],
+  "durationMs": 239
 }

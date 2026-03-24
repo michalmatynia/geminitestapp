@@ -7,58 +7,20 @@ import {
   Input,
   Textarea,
 } from '@/features/kangur/shared/ui';
-import type {
-  KangurSocialPost,
-  KangurSocialPostEditorStateDto,
-} from '@/shared/contracts/kangur-social-posts';
-import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-image-addons';
-import type { ImageFileSelection } from '@/shared/contracts/files';
 import { SocialPostVisuals } from './SocialPost.Visuals';
+import { useSocialPostContext } from './SocialPostContext';
 
-export type SocialPostEditorProps = {
-  activePost: KangurSocialPost | null;
-  editorState: KangurSocialPostEditorStateDto;
-  setEditorState: React.Dispatch<React.SetStateAction<KangurSocialPostEditorStateDto>>;
-  scheduledAt: string;
-  setScheduledAt: React.Dispatch<React.SetStateAction<string>>;
-  imageAssets: ImageFileSelection[];
-  handleRemoveImage: (id: string) => void;
-  setShowMediaLibrary: React.Dispatch<React.SetStateAction<boolean>>;
-  showMediaLibrary: boolean;
-  handleAddImages: (filepaths: string[]) => void;
-  recentAddons: KangurSocialImageAddon[];
-  recentAddonsLoading: boolean;
-  selectedAddonSet: Set<string>;
-  handleSelectAddon: (addon: KangurSocialImageAddon) => void;
-  handleRemoveAddon: (id: string) => void;
-  handleSave: (status: KangurSocialPost['status']) => Promise<void>;
-  handlePublish: () => Promise<void>;
-  saveMutationPending: boolean;
-  patchMutationPending: boolean;
-  publishMutationPending: boolean;
-  showImagesPanel?: boolean;
-};
+export function SocialPostEditor({ showImagesPanel = true }: { showImagesPanel?: boolean }) {
+  const {
+    activePost,
+    editorState,
+    setEditorState,
+    handleSave,
+    handlePublish,
+    saveMutation,
+    publishMutation,
+  } = useSocialPostContext();
 
-export function SocialPostEditor({
-  activePost,
-  editorState,
-  setEditorState,
-  imageAssets,
-  handleRemoveImage,
-  setShowMediaLibrary,
-  showMediaLibrary,
-  handleAddImages,
-  recentAddons,
-  recentAddonsLoading,
-  selectedAddonSet,
-  handleSelectAddon,
-  handleRemoveAddon,
-  handleSave,
-  handlePublish,
-  saveMutationPending,
-  publishMutationPending,
-  showImagesPanel = true,
-}: SocialPostEditorProps) {
   return (
     <div className='space-y-4'>
       <div className='text-sm font-semibold text-foreground'>Post editor</div>
@@ -99,20 +61,7 @@ export function SocialPostEditor({
         />
       </FormSection>
 
-      <SocialPostVisuals
-        activePost={activePost}
-        recentAddons={recentAddons}
-        recentAddonsLoading={recentAddonsLoading}
-        selectedAddonSet={selectedAddonSet}
-        handleSelectAddon={handleSelectAddon}
-        handleRemoveAddon={handleRemoveAddon}
-        imageAssets={imageAssets}
-        handleRemoveImage={handleRemoveImage}
-        setShowMediaLibrary={setShowMediaLibrary}
-        showMediaLibrary={showMediaLibrary}
-        handleAddImages={handleAddImages}
-        showImagesPanel={showImagesPanel}
-      />
+      <SocialPostVisuals showImagesPanel={showImagesPanel} />
 
       <div className='flex flex-wrap items-center gap-2'>
         <Button
@@ -121,9 +70,9 @@ export function SocialPostEditor({
           onClick={() => {
             void handleSave('draft');
           }}
-          disabled={!activePost || saveMutationPending}
+          disabled={!activePost || saveMutation.isPending}
         >
-          {saveMutationPending ? 'Saving...' : 'Save draft'}
+          {saveMutation.isPending ? 'Saving...' : 'Save draft'}
         </Button>
         <Button
           type='button'
@@ -132,9 +81,9 @@ export function SocialPostEditor({
           onClick={() => {
             void handlePublish();
           }}
-          disabled={!activePost || publishMutationPending}
+          disabled={!activePost || publishMutation.isPending}
         >
-          {publishMutationPending ? 'Publishing...' : 'Publish to LinkedIn'}
+          {publishMutation.isPending ? 'Publishing...' : 'Publish to LinkedIn'}
         </Button>
       </div>
     </div>

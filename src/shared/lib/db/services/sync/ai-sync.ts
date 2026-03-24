@@ -13,10 +13,83 @@ import type {
   AiPathRunEventLevel,
 } from '@prisma/client';
 
+type BatchResult = { count: number };
+
+type MongoRecordWithStringId<TDoc> = Omit<TDoc, '_id'> & { _id: string };
+
+type ProductAiJobSeed = {
+  id: string;
+  productId: string;
+  status: ProductAiJobStatus;
+  type: string;
+  payload: unknown;
+  result: unknown;
+  errorMessage: string | null;
+  createdAt: Date;
+  startedAt: Date | null;
+  finishedAt: Date | null;
+};
+
+type AiPathRunSeed = {
+  id: string;
+  userId: string | null;
+  pathId: string;
+  pathName: string | null;
+  status: AiPathRunStatus;
+  triggerEvent: string | null;
+  triggerNodeId: string | null;
+  triggerContext: unknown;
+  graph: unknown;
+  runtimeState: unknown;
+  meta: unknown;
+  entityId: string | null;
+  entityType: string | null;
+  errorMessage: string | null;
+  retryCount: number;
+  maxAttempts: number;
+  nextRetryAt: Date | null;
+  deadLetteredAt: Date | null;
+  startedAt: Date | null;
+  finishedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type AiPathRunNodeSeed = {
+  id: string;
+  runId: string;
+  nodeId: string;
+  nodeType: string;
+  nodeTitle: string | null;
+  status: AiPathNodeStatus;
+  attempt: number;
+  inputs: unknown;
+  outputs: unknown;
+  errorMessage: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  startedAt: Date | null;
+  finishedAt: Date | null;
+};
+
+type AiPathRunEventSeed = {
+  id: string;
+  runId: string;
+  level: AiPathRunEventLevel;
+  message: string;
+  metadata: unknown;
+  createdAt: Date;
+};
+
+type ProductAiJobRow = ProductAiJobSeed;
+type AiPathRunRow = AiPathRunSeed;
+type AiPathRunNodeRow = AiPathRunNodeSeed;
+type AiPathRunEventRow = AiPathRunEventSeed;
+
 export const syncProductAiJobs: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
   const docs = await mongo.collection<MongoProductAiJobDoc>('product_ai_jobs').find({}).toArray();
   const data = docs
-    .map((doc): Prisma.ProductAiJobCreateManyInput | null => {
+    .map((doc): ProductAiJobSeed | null => {
       const id = normalizeId(doc as Record<string, unknown>);
       const productId = doc.productId;
       if (!id || !productId) return null;
@@ -34,9 +107,13 @@ export const syncProductAiJobs: DatabaseSyncHandler = async ({ mongo, prisma, no
         finishedAt: toDate(doc.finishedAt),
       };
     })
-    .filter((item): item is Prisma.ProductAiJobCreateManyInput => item !== null);
-  const deleted = await prisma.productAiJob.deleteMany();
-  const created = data.length ? await prisma.productAiJob.createMany({ data }) : { count: 0 };
+    .filter((item): item is ProductAiJobSeed => item !== null);
+  const deleted = (await prisma.productAiJob.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.productAiJob.createMany({
+      data: data as Prisma.ProductAiJobCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
@@ -49,7 +126,7 @@ export const syncAiPathRuns: DatabaseSyncHandler = async ({
 }) => {
   const docs = await mongo.collection<MongoAiPathRunDoc>('ai_path_runs').find({}).toArray();
   const data = docs
-    .map((doc): Prisma.AiPathRunCreateManyInput | null => {
+    .map((doc): AiPathRunSeed | null => {
       const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       return {
@@ -77,11 +154,15 @@ export const syncAiPathRuns: DatabaseSyncHandler = async ({
         updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.AiPathRunCreateManyInput => item !== null);
+    .filter((item): item is AiPathRunSeed => item !== null);
   await prisma.aiPathRunNode.deleteMany();
   await prisma.aiPathRunEvent.deleteMany();
-  const deleted = await prisma.aiPathRun.deleteMany();
-  const created = data.length ? await prisma.aiPathRun.createMany({ data }) : { count: 0 };
+  const deleted = (await prisma.aiPathRun.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.aiPathRun.createMany({
+      data: data as Prisma.AiPathRunCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
@@ -94,7 +175,7 @@ export const syncAiPathRunNodes: DatabaseSyncHandler = async ({
 }) => {
   const docs = await mongo.collection<MongoAiPathRunNodeDoc>('ai_path_run_nodes').find({}).toArray();
   const data = docs
-    .map((doc): Prisma.AiPathRunNodeCreateManyInput | null => {
+    .map((doc): AiPathRunNodeSeed | null => {
       const id = normalizeId(doc as Record<string, unknown>);
       const runId = doc.runId;
       if (!id || !runId) return null;
@@ -115,9 +196,13 @@ export const syncAiPathRunNodes: DatabaseSyncHandler = async ({
         finishedAt: toDate(doc.finishedAt),
       };
     })
-    .filter((item): item is Prisma.AiPathRunNodeCreateManyInput => item !== null);
-  const deleted = await prisma.aiPathRunNode.deleteMany();
-  const created = data.length ? await prisma.aiPathRunNode.createMany({ data }) : { count: 0 };
+    .filter((item): item is AiPathRunNodeSeed => item !== null);
+  const deleted = (await prisma.aiPathRunNode.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.aiPathRunNode.createMany({
+      data: data as Prisma.AiPathRunNodeCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
@@ -132,7 +217,7 @@ export const syncAiPathRunEvents: DatabaseSyncHandler = async ({
     .find({})
     .toArray();
   const data = docs
-    .map((doc): Prisma.AiPathRunEventCreateManyInput | null => {
+    .map((doc): AiPathRunEventSeed | null => {
       const id = normalizeId(doc as Record<string, unknown>);
       const runId = doc.runId;
       if (!id || !runId) return null;
@@ -145,17 +230,21 @@ export const syncAiPathRunEvents: DatabaseSyncHandler = async ({
         createdAt: (doc.createdAt as Date) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.AiPathRunEventCreateManyInput => item !== null);
-  const deleted = await prisma.aiPathRunEvent.deleteMany();
-  const created = data.length ? await prisma.aiPathRunEvent.createMany({ data }) : { count: 0 };
+    .filter((item): item is AiPathRunEventSeed => item !== null);
+  const deleted = (await prisma.aiPathRunEvent.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.aiPathRunEvent.createMany({
+      data: data as Prisma.AiPathRunEventCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
 // --- Prisma to Mongo handlers ---
 
 export const syncProductAiJobsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.productAiJob.findMany();
-  const docs = rows.map((row: Prisma.ProductAiJobGetPayload<{}>) => ({
+  const rows = (await prisma.productAiJob.findMany()) as ProductAiJobRow[];
+  const docs: MongoRecordWithStringId<MongoProductAiJobDoc>[] = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     productId: row.productId,
@@ -168,10 +257,12 @@ export const syncProductAiJobsPrismaToMongo: DatabaseSyncHandler = async ({ mong
     startedAt: row.startedAt ?? null,
     finishedAt: row.finishedAt ?? null,
   }));
-  const collection = mongo.collection<MongoProductAiJobDoc>('product_ai_jobs');
+  const collection = mongo.collection<MongoRecordWithStringId<MongoProductAiJobDoc>>(
+    'product_ai_jobs'
+  );
   const deleted = await collection.deleteMany({});
   if (docs.length) {
-    await collection.insertMany(docs as MongoProductAiJobDoc[]);
+    await collection.insertMany(docs);
   }
   return {
     sourceCount: rows.length,
@@ -181,8 +272,8 @@ export const syncProductAiJobsPrismaToMongo: DatabaseSyncHandler = async ({ mong
 };
 
 export const syncAiPathRunsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.aiPathRun.findMany();
-  const docs = rows.map((row: Prisma.AiPathRunGetPayload<{}>) => ({
+  const rows = (await prisma.aiPathRun.findMany()) as AiPathRunRow[];
+  const docs: MongoRecordWithStringId<MongoAiPathRunDoc>[] = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     userId: row.userId ?? null,
@@ -207,10 +298,10 @@ export const syncAiPathRunsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, 
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }));
-  const collection = mongo.collection<MongoAiPathRunDoc>('ai_path_runs');
+  const collection = mongo.collection<MongoRecordWithStringId<MongoAiPathRunDoc>>('ai_path_runs');
   const deleted = await collection.deleteMany({});
   if (docs.length) {
-    await collection.insertMany(docs as MongoAiPathRunDoc[]);
+    await collection.insertMany(docs);
   }
   return {
     sourceCount: rows.length,
@@ -220,8 +311,8 @@ export const syncAiPathRunsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, 
 };
 
 export const syncAiPathRunNodesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.aiPathRunNode.findMany();
-  const docs = rows.map((row: Prisma.AiPathRunNodeGetPayload<{}>) => ({
+  const rows = (await prisma.aiPathRunNode.findMany()) as AiPathRunNodeRow[];
+  const docs: MongoRecordWithStringId<MongoAiPathRunNodeDoc>[] = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     runId: row.runId,
@@ -238,10 +329,12 @@ export const syncAiPathRunNodesPrismaToMongo: DatabaseSyncHandler = async ({ mon
     startedAt: row.startedAt ?? null,
     finishedAt: row.finishedAt ?? null,
   }));
-  const collection = mongo.collection<MongoAiPathRunNodeDoc>('ai_path_run_nodes');
+  const collection = mongo.collection<MongoRecordWithStringId<MongoAiPathRunNodeDoc>>(
+    'ai_path_run_nodes'
+  );
   const deleted = await collection.deleteMany({});
   if (docs.length) {
-    await collection.insertMany(docs as MongoAiPathRunNodeDoc[]);
+    await collection.insertMany(docs);
   }
   return {
     sourceCount: rows.length,
@@ -251,8 +344,8 @@ export const syncAiPathRunNodesPrismaToMongo: DatabaseSyncHandler = async ({ mon
 };
 
 export const syncAiPathRunEventsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.aiPathRunEvent.findMany();
-  const docs = rows.map((row: Prisma.AiPathRunEventGetPayload<{}>) => ({
+  const rows = (await prisma.aiPathRunEvent.findMany()) as AiPathRunEventRow[];
+  const docs: MongoRecordWithStringId<MongoAiPathRunEventDoc>[] = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     runId: row.runId,
@@ -261,10 +354,12 @@ export const syncAiPathRunEventsPrismaToMongo: DatabaseSyncHandler = async ({ mo
     metadata: row.metadata ?? null,
     createdAt: row.createdAt,
   }));
-  const collection = mongo.collection<MongoAiPathRunEventDoc>('ai_path_run_events');
+  const collection = mongo.collection<MongoRecordWithStringId<MongoAiPathRunEventDoc>>(
+    'ai_path_run_events'
+  );
   const deleted = await collection.deleteMany({});
   if (docs.length) {
-    await collection.insertMany(docs as MongoAiPathRunEventDoc[]);
+    await collection.insertMany(docs);
   }
   return {
     sourceCount: rows.length,

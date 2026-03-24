@@ -1,46 +1,36 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
-  Badge,
   Button,
   FormSection,
   LoadingState,
-  Textarea,
 } from '@/features/kangur/shared/ui';
-import type { KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
-import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-image-addons';
-import type { ImageFileSelection } from '@/shared/contracts/files';
 import { resolveImagePreview } from './AdminKangurSocialPage.Constants';
 import { SocialPostImagesPanel } from './SocialPost.ImagesPanel';
+import { useSocialPostContext } from './SocialPostContext';
 
 export function SocialPostVisuals({
-  activePost,
-  recentAddons,
-  recentAddonsLoading,
-  selectedAddonSet,
-  handleSelectAddon,
-  handleRemoveAddon,
-  imageAssets,
-  handleRemoveImage,
-  setShowMediaLibrary,
-  showMediaLibrary,
-  handleAddImages,
   showImagesPanel = true,
 }: {
-  activePost: KangurSocialPost | null;
-  recentAddons: KangurSocialImageAddon[];
-  recentAddonsLoading: boolean;
-  selectedAddonSet: Set<string>;
-  handleSelectAddon: (addon: KangurSocialImageAddon) => void;
-  handleRemoveAddon: (id: string) => void;
-  imageAssets: ImageFileSelection[];
-  handleRemoveImage: (id: string) => void;
-  setShowMediaLibrary: React.Dispatch<React.SetStateAction<boolean>>;
-  showMediaLibrary: boolean;
-  handleAddImages: (filepaths: string[]) => void;
   showImagesPanel?: boolean;
 }): React.JSX.Element {
+  const {
+    recentAddons,
+    addonsQuery,
+    imageAddonIds,
+    handleSelectAddon,
+    handleRemoveAddon,
+    imageAssets,
+    handleRemoveImage,
+    setShowMediaLibrary,
+    showMediaLibrary,
+    handleAddImages,
+  } = useSocialPostContext();
+
+  const selectedAddonSet = useMemo(() => new Set(imageAddonIds), [imageAddonIds]);
+  const recentAddonsLoading = addonsQuery.isLoading;
+
   return (
     <>
       <FormSection title='Image add-ons' className='space-y-3'>
@@ -101,7 +91,7 @@ export function SocialPostVisuals({
                         </div>
                       </div>
                     </div>
-                  ) : preview ? (
+                  ) : (
                     <div className='overflow-hidden rounded-lg border border-border/50'>
                       <img
                         src={preview}
@@ -110,44 +100,25 @@ export function SocialPostVisuals({
                         loading='lazy'
                       />
                     </div>
-                  ) : (
-                    <div className='flex h-32 items-center justify-center rounded-lg border border-dashed border-border/60 text-xs text-muted-foreground'>
-                      Preview unavailable
-                    </div>
                   )}
-                  <div className='mt-2 flex items-start justify-between gap-2 text-xs text-muted-foreground'>
-                    <div className='min-w-0 space-y-1'>
-                      <div className='font-semibold text-foreground'>
-                        {addon.title || 'Untitled add-on'}
-                        {hasComparison ? (
-                          <Badge variant='outline' className='ml-2 text-[10px]'>
-                            Change detected
-                          </Badge>
-                        ) : null}
+                  <div className='mt-2 flex items-center justify-between gap-2'>
+                    <div className='min-w-0 flex-1 space-y-0.5'>
+                      <div className='truncate text-[10px] font-medium text-foreground/90'>
+                        {addon.title}
                       </div>
-                      {addon.description ? (
-                        <div className='text-muted-foreground'>{addon.description}</div>
-                      ) : null}
-                      {addon.sourceUrl ? (
-                        <a
-                          href={addon.sourceUrl}
-                          target='_blank'
-                          rel='noopener noreferrer'
-                          className='text-[11px] text-muted-foreground underline'
-                        >
-                          Source
-                        </a>
-                      ) : null}
+                      <div className='truncate text-[9px] text-muted-foreground'>
+                        {addon.createdAt ? new Date(addon.createdAt).toLocaleDateString() : ''}
+                      </div>
                     </div>
                     <Button
                       type='button'
+                      variant={isSelected ? 'secondary' : 'outline'}
                       size='xs'
-                      variant={isSelected ? 'ghost' : 'outline'}
                       onClick={() =>
                         isSelected ? handleRemoveAddon(addon.id) : handleSelectAddon(addon)
                       }
                     >
-                      {isSelected ? 'Added' : 'Add'}
+                      {isSelected ? 'Remove' : 'Select'}
                     </Button>
                   </div>
                 </div>
@@ -157,7 +128,7 @@ export function SocialPostVisuals({
         )}
       </FormSection>
 
-      {showImagesPanel ? (
+      {showImagesPanel && (
         <SocialPostImagesPanel
           imageAssets={imageAssets}
           handleRemoveImage={handleRemoveImage}
@@ -165,35 +136,7 @@ export function SocialPostVisuals({
           showMediaLibrary={showMediaLibrary}
           handleAddImages={handleAddImages}
         />
-      ) : null}
-
-      <FormSection title='Visual analysis' className='space-y-3'>
-        {activePost?.visualSummary ? (
-          <Textarea
-            value={activePost.visualSummary}
-            rows={4}
-            readOnly
-            className='text-xs'
-          />
-        ) : (
-          <div className='text-xs text-muted-foreground'>
-            Generate a draft with image add-ons to analyze visuals.
-          </div>
-        )}
-        {activePost?.visualHighlights && activePost.visualHighlights.length > 0 ? (
-          <div className='flex flex-wrap gap-2'>
-            {activePost.visualHighlights.map((highlight, index) => (
-              <Badge key={`${highlight}-${index}`} variant='outline'>
-                {highlight}
-              </Badge>
-            ))}
-          </div>
-        ) : (
-          <div className='text-xs text-muted-foreground'>
-            No visual highlights captured yet.
-          </div>
-        )}
-      </FormSection>
+      )}
     </>
   );
 }

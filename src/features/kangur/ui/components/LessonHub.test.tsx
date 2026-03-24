@@ -5,6 +5,7 @@
 import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { LESSONS_ACTIVE_HUB_COLUMN_CLASSNAME } from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 
 vi.mock('framer-motion', () => ({
   motion: {
@@ -43,6 +44,8 @@ vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
 
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 
+const splitClasses = (className: string): string[] => className.trim().split(/\s+/);
+
 describe('LessonHub', () => {
   it('uses shared option cards and chips for lesson and game entries', () => {
     ageGroupMock = 'ten_year_old';
@@ -79,7 +82,11 @@ describe('LessonHub', () => {
     const lessonHubList = screen.getByRole('list');
 
     expect(lessonHub).toHaveClass('w-full', 'min-w-0');
-    expect(lessonHubList).toHaveClass('mx-auto', 'w-full', 'max-w-md', 'items-center');
+    expect(lessonHub).not.toHaveClass('mx-auto', 'max-w-md');
+    expect(lessonHubList).toHaveClass(...splitClasses(LESSONS_ACTIVE_HUB_COLUMN_CLASSNAME));
+    for (const item of within(lessonHubList).getAllByRole('listitem')) {
+      expect(item).toHaveClass('w-full');
+    }
     expect(lessonCard).toHaveClass('soft-card', 'min-h-[11rem]', 'px-5', 'py-5');
     expect(gameCard).toHaveClass(
       'soft-card',

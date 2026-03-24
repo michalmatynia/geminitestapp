@@ -125,6 +125,15 @@ describe('kangur contract runtime', () => {
     ).toBe('english');
   });
 
+  it('resolves English score subjects from adverbs-of-frequency operations', () => {
+    expect(
+      resolveKangurScoreSubject({
+        operation: 'english_adverbs_frequency',
+        subject: null,
+      })
+    ).toBe('english');
+  });
+
   it('parses Kangur lesson-template route query and bulk-replace payload DTOs', () => {
     expect(
       kangurLessonTemplatesQuerySchema.parse({

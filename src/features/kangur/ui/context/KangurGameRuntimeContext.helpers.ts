@@ -24,6 +24,7 @@ import {
   translateKangurProgressWithFallback,
   type KangurProgressTranslate,
 } from '@/features/kangur/ui/services/progress-i18n';
+import type { KangurLessonSubject } from '@/features/kangur/shared/contracts/kangur';
 import type {
   KangurDifficulty,
   KangurGameScreen,
@@ -60,6 +61,8 @@ type BuildKangurCompletedGameOutcomeInput = {
   difficulty: KangurDifficulty;
   nextScore: number;
   operation: KangurOperation | null;
+  ownerKey?: string | null;
+  subject?: KangurLessonSubject;
   taken: number;
   totalQuestions: number;
   allowRewards?: boolean;
@@ -183,6 +186,8 @@ export const buildKangurCompletedGameOutcome = ({
   difficulty,
   nextScore,
   operation,
+  ownerKey,
+  subject: inputSubject,
   taken,
   totalQuestions,
   allowRewards = true,
@@ -208,8 +213,10 @@ export const buildKangurCompletedGameOutcome = ({
     };
   }
 
-  const storedProgress = loadProgress();
-  const subject = getProgressSubject();
+  const storedProgress = loadProgress(
+    ownerKey !== undefined ? { ownerKey } : undefined
+  );
+  const subject = inputSubject ?? getProgressSubject();
   const sessionReward = createGameSessionReward(storedProgress, {
     operation: selectedOperation,
     difficulty,
@@ -220,15 +227,21 @@ export const buildKangurCompletedGameOutcome = ({
   });
 
   const dailyQuestBefore = getCurrentKangurDailyQuest(storedProgress, {
+    ownerKey,
     persist: false,
     subject,
     translate: progressTranslate,
   });
-  const sessionRewardResult = addXp(sessionReward.xp, sessionReward.progressUpdates);
+  const sessionRewardResult = addXp(
+    sessionReward.xp,
+    sessionReward.progressUpdates,
+    ownerKey !== undefined ? { ownerKey } : undefined
+  );
   let awardedXp = sessionReward.xp;
   const awardedBreakdown = [...(sessionReward.breakdown ?? [])];
   let finalProgress = sessionRewardResult.updated;
   const questClaim = claimCurrentKangurDailyQuestReward(finalProgress, {
+    ownerKey,
     subject,
     translate: progressTranslate,
   });
@@ -236,9 +249,13 @@ export const buildKangurCompletedGameOutcome = ({
   let dailyQuestAfter = questClaim.quest;
 
   if (questClaim.xpAwarded > 0) {
-    const questBonusResult = addXp(questClaim.xpAwarded, {
-      dailyQuestsCompleted: (finalProgress.dailyQuestsCompleted ?? 0) + 1,
-    });
+    const questBonusResult = addXp(
+      questClaim.xpAwarded,
+      {
+        dailyQuestsCompleted: (finalProgress.dailyQuestsCompleted ?? 0) + 1,
+      },
+      ownerKey !== undefined ? { ownerKey } : undefined
+    );
     awardedXp += questClaim.xpAwarded;
     awardedBreakdown.push({
       kind: 'daily_quest',

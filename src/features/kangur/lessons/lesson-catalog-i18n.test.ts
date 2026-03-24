@@ -26,6 +26,13 @@ describe('lesson-catalog-i18n', () => {
     expect(getLocalizedKangurLessonTitle('english_adjectives', 'de', 'English: Adjectives')).toBe(
       'Englisch: Adjektive'
     );
+    expect(
+      getLocalizedKangurLessonTitle(
+        'english_adverbs_frequency',
+        'en',
+        'English: Adverbs of Frequency'
+      )
+    ).toBe('English: Adverbs of Frequency');
   });
 
   it('keeps custom lesson titles intact instead of overwriting Mongo-edited copy', () => {
@@ -81,6 +88,13 @@ describe('lesson-catalog-i18n', () => {
         'Opisywanie osób, miejsc i rzeczy oraz kolejność przymiotników'
       )
     ).toContain('adjective order');
+    expect(
+      getLocalizedKangurLessonDescription(
+        'english_adverbs_frequency',
+        'de',
+        'Always, usually, sometimes i never w codziennych rutynach'
+      )
+    ).toContain('Routinen');
   });
 
   it('returns Ukrainian technical lesson metadata for grown-ups lesson catalogs', () => {
@@ -141,6 +155,13 @@ describe('lesson-catalog-i18n', () => {
     expect(getLocalizedKangurLessonSectionLabel('maths_geometry', 'en', 'Geometria')).toBe(
       'Geometry'
     );
+    expect(
+      getLocalizedKangurLessonSectionLabel(
+        'english_grammar_adverbs_frequency',
+        'en',
+        'Przysłówki częstotliwości'
+      )
+    ).toBe('Adverbs of frequency');
     expect(
       getLocalizedKangurLessonSectionLabel('alphabet_matching', 'de', 'Dopasuj litery')
     ).toBe('Buchstaben zuordnen');

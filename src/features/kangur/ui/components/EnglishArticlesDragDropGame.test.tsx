@@ -5,7 +5,7 @@
 import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const addXpMock = vi.fn();
 const createLessonPracticeRewardMock = vi.fn(() => ({
@@ -15,6 +15,7 @@ const createLessonPracticeRewardMock = vi.fn(() => ({
 }));
 const loadProgressMock = vi.fn(() => ({}));
 const persistKangurSessionScoreMock = vi.fn();
+let draggableSnapshot = { isDragging: false };
 
 vi.mock('next-intl', async () => await vi.importActual<typeof import('next-intl')>('next-intl'));
 vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>('use-intl'));
@@ -59,7 +60,7 @@ vi.mock('@hello-pangea/dnd', () => ({
         draggableProps: {},
         dragHandleProps: {},
       },
-      { isDragging: false }
+      draggableSnapshot
     ),
 }));
 
@@ -149,6 +150,10 @@ const placeArticle = (article: 'a' | 'an' | 'the', slotId: string): void => {
   fireEvent.click(screen.getByTestId(`english-articles-drag-slot-${slotId}`));
 };
 
+afterEach(() => {
+  draggableSnapshot = { isDragging: false };
+});
+
 describe('EnglishArticlesDragDropGame', () => {
   it('plays through the rounds, scores the placements, and shows the summary', () => {
     renderGame();
@@ -211,5 +216,16 @@ describe('EnglishArticlesDragDropGame', () => {
         { name: 'the' }
       )
     ).toBeInTheDocument();
+  });
+
+  it('renders the active draggable article in a body portal during dragging', () => {
+    draggableSnapshot = { isDragging: true };
+
+    renderGame();
+
+    const pool = screen.getByTestId('english-articles-drag-pool-zone');
+
+    expect(within(pool).queryByRole('button', { name: 'a' })).not.toBeInTheDocument();
+    expect(within(document.body).getByRole('button', { name: 'a' })).toBeInTheDocument();
   });
 });

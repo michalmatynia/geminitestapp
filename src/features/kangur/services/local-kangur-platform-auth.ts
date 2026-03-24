@@ -8,6 +8,7 @@ import {
   clearStoredActiveLearnerId,
   setStoredActiveLearnerId,
 } from '@/features/kangur/services/kangur-active-learner';
+import { KANGUR_PROGRESS_OWNER_STORAGE_KEY } from '@/features/kangur/ui/services/progress.contracts';
 import { kangurAuthUserSchema } from '@kangur/contracts';
 
 import { clearScoreQueryCache } from './local-kangur-platform-score-cache';
@@ -38,6 +39,14 @@ const unauthorizedError = (): Error & { status: number } => {
   return error;
 };
 
+const clearStoredProgressOwnerKey = (): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.localStorage.removeItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY);
+};
+
 export const clearSessionUserCache = (): void => {
   sessionUserCacheEpoch += 1;
   sessionUserCache = null;
@@ -54,6 +63,7 @@ export const prepareLoginHref = (returnUrl: string): string => {
 const cacheResolvedUser = (user: KangurUser | null, anonymous = false): void => {
   if (!user || anonymous) {
     clearStoredActiveLearnerId();
+    clearStoredProgressOwnerKey();
   }
 
   sessionUserCache = {
@@ -70,6 +80,7 @@ const syncActiveLearnerStorage = (user: KangurUser): void => {
     return;
   }
   clearStoredActiveLearnerId();
+  clearStoredProgressOwnerKey();
 };
 
 export const resolveSessionUser = async (): Promise<KangurUser> => {

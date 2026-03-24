@@ -18,7 +18,7 @@ import {
   persistRemoteSubjectFocus,
   subscribeToSubjectFocusChanges,
 } from '@/features/kangur/ui/services/subject-focus';
-import { setProgressSubject } from '@/features/kangur/ui/services/progress';
+import { setProgressScope } from '@/features/kangur/ui/services/progress';
 import type { KangurLessonSubject } from '@/shared/contracts/kangur';
 import { internalError } from '@/shared/errors/app-error';
 
@@ -100,8 +100,11 @@ export function KangurSubjectFocusProvider({
   }, [canSyncRemote, storageKey]);
 
   useEffect(() => {
-    setProgressSubject(subject);
-  }, [subject]);
+    setProgressScope({
+      subject,
+      ownerKey: subjectKey,
+    });
+  }, [subject, subjectKey]);
 
   const setSubject = useCallback(
     (nextSubject: KangurLessonSubject): void => {

@@ -15,14 +15,12 @@ import {
   loadProgress,
   loadProgressOwnerKey,
   mergeProgressStates,
-  resetProgressStore,
   saveProgress,
   saveProgressOwnerKey,
   subscribeToProgress,
   setProgressPersistenceEnabled,
 } from '@/features/kangur/ui/services/progress';
 import {
-  createDefaultKangurProgressState,
   type KangurProgressState,
 } from '@/features/kangur/shared/contracts/kangur';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
@@ -97,6 +95,7 @@ export function KangurProgressSyncProvider({
     }
 
     if (!isAuthenticated || !userKey) {
+      saveProgressOwnerKey(null);
       syncStateRef.current = 'idle';
       lastSyncedProgressRef.current = null;
       return;
@@ -108,11 +107,6 @@ export function KangurProgressSyncProvider({
     const hydrateProgress = async (): Promise<void> => {
       syncStateRef.current = 'loading';
       const localOwnerKey = loadProgressOwnerKey();
-
-      if (localOwnerKey && localOwnerKey !== userKey) {
-        saveProgressOwnerKey(userKey);
-        resetProgressStore();
-      }
 
       try {
         const result = await withKangurClientError(
@@ -128,10 +122,12 @@ export function KangurProgressSyncProvider({
               return null;
             }
 
-            const localProgress =
-              localOwnerKey && localOwnerKey !== userKey
-                ? createDefaultKangurProgressState()
-                : loadProgress();
+            const scopedLocalProgress = loadProgress({ ownerKey: userKey });
+            const guestLocalProgress =
+              localOwnerKey === null ? loadProgress({ ownerKey: null }) : null;
+            const localProgress = guestLocalProgress
+              ? mergeProgressStates(scopedLocalProgress, guestLocalProgress)
+              : scopedLocalProgress;
             const mergedProgress = mergeProgressStates(remoteProgress, localProgress);
             const shouldUpdateLocal =
               !areProgressStatesEqual(localProgress, mergedProgress) || localOwnerKey !== userKey;
@@ -140,7 +136,7 @@ export function KangurProgressSyncProvider({
             saveProgressOwnerKey(userKey);
 
             if (shouldUpdateLocal) {
-              saveProgress(mergedProgress);
+              saveProgress(mergedProgress, { ownerKey: userKey });
             }
 
             return {
@@ -267,7 +263,7 @@ export function KangurProgressSyncProvider({
         const savedSerialized = serializeProgress(savedProgress);
         lastSyncedProgressRef.current = savedSerialized;
         if (!areProgressStatesEqual(progress, savedProgress)) {
-          saveProgress(savedProgress);
+          saveProgress(savedProgress, { ownerKey: userKey });
         }
       })();
     });

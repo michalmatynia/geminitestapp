@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-23'
+last_reviewed: '2026-03-24'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,12 +8,12 @@ canonical: true
 ---
 # Import Boundaries Check
 
-Generated at: 2026-03-23T21:12:50.171Z
+Generated at: 2026-03-24T00:25:10.401Z
 
 ## Summary
 
 - Status: PASSED
-- Files scanned: 5712
+- Files scanned: 5713
 - Features tracked: 10
 - Circular dependencies: 0
 - Errors: 0

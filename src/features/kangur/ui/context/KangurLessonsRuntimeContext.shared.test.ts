@@ -11,6 +11,8 @@ describe('KangurLessonsRuntimeContext.shared', () => {
     expect(resolveFocusedLessonSubject('english_basics')).toBe('english');
     expect(resolveFocusedLessonSubject('adjectives')).toBe('english');
     expect(resolveFocusedLessonSubject('przymiotniki')).toBe('english');
+    expect(resolveFocusedLessonSubject('adverbs')).toBe('english');
+    expect(resolveFocusedLessonSubject('always-usually-sometimes-never')).toBe('english');
     expect(resolveFocusedLessonSubject('addition')).toBe('maths');
     expect(resolveFocusedLessonSubject('adding')).toBe('maths');
   });

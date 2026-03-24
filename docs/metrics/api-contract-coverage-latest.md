@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-23'
+last_reviewed: '2026-03-24'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,39 +8,28 @@ canonical: true
 ---
 # API Contract Coverage Report
 
-Generated at: 2026-03-23T21:12:57.338Z
+Generated at: 2026-03-24T07:04:27.070Z
 
 ## Summary
 
 - Status: PASSED
 - Route files scanned: 285
 - Route methods scanned: 215
-- Methods with adjacent tests: 196
+- Methods with adjacent tests: 205
 - Mutations with body validation: 37
 - Query routes with validation: 10
 - Errors: 0
 - Warnings: 0
-- Info: 9
+- Info: 0
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| api-contract-route-missing-tests | 0 | 0 | 9 |
 
 ## Issues
 
-| Severity | Rule | Location | Message |
-| --- | --- | --- | --- |
-| INFO | api-contract-route-missing-tests | src/app/api/ai/context/related/[id]/route.ts:9:14 | GET ai/context/related/[id] has no adjacent route/handler test coverage. |
-| INFO | api-contract-route-missing-tests | src/app/api/ai/schema/[entity]/route.ts:9:14 | GET ai/schema/[entity] has no adjacent route/handler test coverage. |
-| INFO | api-contract-route-missing-tests | src/app/api/case-resolver/ocr/observability/route.ts:8:14 | GET case-resolver/ocr/observability has no adjacent route/handler test coverage. |
-| INFO | api-contract-route-missing-tests | src/app/api/files/preview/route.ts:7:14 | GET files/preview has no adjacent route/handler test coverage. |
-| INFO | api-contract-route-missing-tests | src/app/api/files/route.ts:9:14 | GET files has no adjacent route/handler test coverage. |
-| INFO | api-contract-route-missing-tests | src/app/api/marketplace/[resource]/route.ts:29:14 | GET marketplace/[resource] has no adjacent route/handler test coverage. |
-| INFO | api-contract-route-missing-tests | src/app/api/notes/categories/tree/route.ts:7:14 | GET notes/categories/tree has no adjacent route/handler test coverage. |
-| INFO | api-contract-route-missing-tests | src/app/api/settings/cache/route.ts:7:14 | GET settings/cache has no adjacent route/handler test coverage. |
-| INFO | api-contract-route-missing-tests | src/app/api/settings/heavy/route.ts:8:14 | GET settings/heavy has no adjacent route/handler test coverage. |
+No API contract coverage gaps detected.
 
 ## Route Inventory
 
@@ -59,10 +48,10 @@ Generated at: 2026-03-23T21:12:57.338Z
 | ai/actions/execute | POST | protected | yes | yes | - |
 | ai/actions/propose | POST | protected | yes | yes | - |
 | ai/context/bundle | POST | protected | yes | yes | - |
-| ai/context/related/[id] | GET | protected | no | - | - |
+| ai/context/related/[id] | GET | protected | yes | - | - |
 | ai/context/resolve | POST | protected | yes | yes | - |
 | ai/context/search | POST | protected | yes | yes | - |
-| ai/schema/[entity] | GET | protected | no | - | - |
+| ai/schema/[entity] | GET | protected | yes | - | - |
 | ai-insights/notifications | GET | protected | yes | - | yes |
 | ai-insights/notifications | DELETE | protected | yes | - | - |
 | ai-paths/[[...path]] | GET | protected | yes | - | - |
@@ -108,7 +97,7 @@ Generated at: 2026-03-23T21:12:57.338Z
 | case-resolver/ocr/jobs/[jobId] | POST | protected | yes | yes | - |
 | case-resolver/ocr/jobs | POST | protected | yes | yes | - |
 | case-resolver/ocr/models | GET | protected | yes | - | - |
-| case-resolver/ocr/observability | GET | protected | no | - | - |
+| case-resolver/ocr/observability | GET | protected | yes | - | - |
 | chatbot/[[...path]] | GET | protected | yes | - | - |
 | chatbot/[[...path]] | POST | protected | yes | - | - |
 | chatbot/[[...path]] | PUT | protected | yes | - | - |
@@ -150,8 +139,8 @@ Generated at: 2026-03-23T21:12:57.338Z
 | drafts | POST | protected | yes | - | - |
 | files/[id] | DELETE | protected | yes | - | - |
 | files/[id] | PATCH | protected | yes | - | - |
-| files/preview | GET | protected | no | - | - |
-| files | GET | protected | no | - | - |
+| files/preview | GET | protected | yes | - | - |
+| files | GET | protected | yes | - | - |
 | health | GET | public | no | - | - |
 | image-studio/[[...path]] | GET | protected | yes | - | - |
 | image-studio/[[...path]] | POST | protected | yes | - | - |
@@ -170,7 +159,7 @@ Generated at: 2026-03-23T21:12:57.338Z
 | kangur/auth/parent-email/verify | POST | protected | yes | yes | - |
 | kangur/auth/parent-magic-link/exchange | POST | protected | yes | - | - |
 | kangur/auth/parent-magic-link/request | POST | protected | yes | - | - |
-| marketplace/[resource] | GET | protected | no | - | - |
+| marketplace/[resource] | GET | protected | yes | - | - |
 | marketplace/categories/fetch | POST | protected | yes | yes | - |
 | marketplace/mappings/[id] | GET | protected | yes | - | - |
 | marketplace/mappings/[id] | PUT | protected | yes | yes | - |
@@ -196,7 +185,7 @@ Generated at: 2026-03-23T21:12:57.338Z
 | notes/categories/[id] | DELETE | protected | yes | - | - |
 | notes/categories | GET | protected | yes | - | - |
 | notes/categories | POST | protected | yes | - | - |
-| notes/categories/tree | GET | protected | no | - | - |
+| notes/categories/tree | GET | protected | yes | - | - |
 | notes/import-folder | POST | protected | yes | - | - |
 | notes/lookup | GET | protected | yes | - | - |
 | notes/notebooks/[id] | PATCH | protected | yes | - | - |
@@ -220,9 +209,9 @@ Generated at: 2026-03-23T21:12:57.338Z
 | public/products/parameters | GET | public | no | - | yes |
 | query-telemetry | POST | public | yes | yes | - |
 | search | POST | protected | yes | yes | - |
-| settings/cache | GET | protected | no | - | - |
+| settings/cache | GET | protected | yes | - | - |
 | settings/database/sync | POST | protected | yes | - | - |
-| settings/heavy | GET | protected | no | - | - |
+| settings/heavy | GET | protected | yes | - | - |
 | settings/lite | GET | public | yes | - | - |
 | settings/migrate/backfill-keys | POST | protected | yes | - | - |
 | settings/providers | GET | protected | yes | - | - |

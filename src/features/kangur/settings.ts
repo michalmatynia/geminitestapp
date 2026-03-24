@@ -133,6 +133,8 @@ const KANGUR_LEGACY_COMPONENT_ID_BY_ID: Record<string, KangurLessonComponentId> 
   english_sentence_structure: 'english_sentence_structure',
   english_subject_verb_agreement: 'english_subject_verb_agreement',
   english_articles: 'english_articles',
+  english_adjectives: 'english_adjectives',
+  english_adverbs_frequency: 'english_adverbs_frequency',
   english_prepositions_time_place: 'english_prepositions_time_place',
   webdev_react_components: 'webdev_react_components',
   webdev_react_dom_components: 'webdev_react_dom_components',

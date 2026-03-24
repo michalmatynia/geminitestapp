@@ -322,6 +322,7 @@ export function useAdminKangurSocialPage() {
     visionModelId: settings.visionModelId,
     canGenerateSocialDraft,
     socialDraftBlockedReason,
+    hasBatchCaptureConfig,
     canRunFreshCapturePipeline: canGenerateSocialDraft && hasBatchCaptureConfig,
     socialBatchCaptureBlockedReason,
     socialVisionWarning,

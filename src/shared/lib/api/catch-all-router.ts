@@ -12,7 +12,7 @@ export type CatchAllRouteHandler<P extends CatchAllRouteParams = CatchAllRoutePa
   context: { params: P | Promise<P> }
 ) => Promise<Response>;
 // catch-all route modules define their own param shapes.
-export type CatchAllRouteModule = Partial<Record<CatchAllRouteMethod, CatchAllRouteHandler>>;
+export type CatchAllRouteModule = Partial<Record<CatchAllRouteMethod, unknown>>;
 export type CatchAllRoutePatternParamToken = { param: string };
 export type CatchAllRoutePatternLiteralToken = { literal: string; optional?: boolean };
 export type CatchAllRoutePatternOptionalParamToken = { param: string; optional?: boolean };
@@ -60,14 +60,17 @@ const dispatch = async (
   params?: CatchAllRouteParams
 ): Promise<Response> => {
   const handler = module[method];
-  if (!handler) {
+  if (typeof handler !== 'function') {
     const allowed = getAllowedMethods(module);
     const source = 'catch-all-router.dispatch';
     return allowed.length > 0
       ? createMethodNotAllowed(request, allowed, source)
       : createNotFound(request, source);
   }
-  return handler(request, { params: Promise.resolve(params ?? ({} as CatchAllRouteParams)) });
+  return (handler as CatchAllRouteHandler)(
+    request,
+    { params: Promise.resolve(params ?? ({} as CatchAllRouteParams)) }
+  );
 };
 
 export const getPathSegments = (request: NextRequest, basePath: string): string[] => {

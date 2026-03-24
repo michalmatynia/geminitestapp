@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { cn } from '@/features/kangur/shared/utils';
+
 export function EnglishPronounSwapAnimation(): React.JSX.Element {
   return (
     <svg
@@ -1132,6 +1134,508 @@ export function EnglishPrepositionsRelationsDiagram(): React.JSX.Element {
         <text className='text' x='22' y='44'>above</text>
         <text className='text' x='22' y='94'>below</text>
       </g>
+    </svg>
+  );
+}
+
+export function EnglishAdverbFrequencyScaleAnimation(): React.JSX.Element {
+  const items = [
+    { key: 'always', label: 'always', count: 7, fill: '#22c55e' },
+    { key: 'usually', label: 'usually', count: 6, fill: '#38bdf8' },
+    { key: 'sometimes', label: 'sometimes', count: 3, fill: '#f59e0b' },
+    { key: 'never', label: 'never', count: 0, fill: '#fda4af' },
+  ] as const;
+
+  return (
+    <svg
+      aria-label='Animation: adverbs of frequency from always to never.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 420 170'
+    >
+      <style>{`
+        .panel {
+          fill: #f8fafc;
+          stroke: #dbeafe;
+          stroke-width: 2;
+        }
+        .label {
+          font: 700 12px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+          fill: #0f172a;
+        }
+        .hint {
+          font: 600 11px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+          fill: #64748b;
+        }
+        .day {
+          fill: #e2e8f0;
+          stroke: #cbd5e1;
+          stroke-width: 2;
+        }
+        .active {
+          animation: dotPulse 3s ease-in-out infinite;
+          transform-box: fill-box;
+          transform-origin: center;
+        }
+        @keyframes dotPulse {
+          0%, 100% { opacity: 0.78; transform: scale(0.92); }
+          50% { opacity: 1; transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .active { animation: none; }
+        }
+      `}</style>
+      <rect className='panel' x='16' y='16' width='388' height='138' rx='24' />
+      {items.map((item, index) => (
+        <g key={item.key} transform={`translate(34, ${36 + index * 28})`}>
+          <text className='label' x='0' y='10'>{item.label}</text>
+          <text className='hint' x='86' y='10'>{item.count}/7 days</text>
+          {Array.from({ length: 7 }).map((_, dayIndex) => (
+            <circle
+              key={`${item.key}-${dayIndex}`}
+              className={dayIndex < item.count ? 'day active' : 'day'}
+              cx={168 + dayIndex * 28}
+              cy='6'
+              r='8'
+              fill={dayIndex < item.count ? item.fill : undefined}
+            />
+          ))}
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+export function EnglishAdverbRoutineAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animation: a weekly routine with always, usually, and never.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 420 180'
+    >
+      <style>{`
+        .panel {
+          fill: #f8fafc;
+          stroke: #fde68a;
+          stroke-width: 2;
+        }
+        .label {
+          font: 700 11px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+          fill: #0f172a;
+        }
+        .tag {
+          font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+          fill: #92400e;
+          text-transform: uppercase;
+          letter-spacing: 0.14em;
+        }
+        .dot {
+          fill: #e2e8f0;
+          stroke: #cbd5e1;
+          stroke-width: 2;
+        }
+        .always { animation: rowPulse 2.8s ease-in-out infinite; }
+        .usually { animation: rowPulse 3.2s ease-in-out infinite; }
+        .never { animation: rowPulse 3.6s ease-in-out infinite; opacity: 0.55; }
+        @keyframes rowPulse {
+          0%, 100% { opacity: 0.78; transform: scale(0.94); }
+          50% { opacity: 1; transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .always, .usually, .never { animation: none; opacity: 1; }
+        }
+      `}</style>
+      <rect className='panel' x='16' y='16' width='388' height='148' rx='24' />
+      {[
+        { y: 50, tag: 'always', label: 'go to the cinema', fill: '#22c55e', count: 7, cls: 'always' },
+        { y: 92, tag: 'usually', label: 'go with friends', fill: '#38bdf8', count: 6, cls: 'usually' },
+        { y: 134, tag: 'never', label: 'eat popcorn', fill: '#fda4af', count: 0, cls: 'never' },
+      ].map((row) => (
+        <g key={row.tag} transform={`translate(34, ${row.y})`}>
+          <text className='tag' x='0' y='0'>{row.tag}</text>
+          <text className='label' x='84' y='0'>{row.label}</text>
+          {Array.from({ length: 7 }).map((_, index) => (
+            <circle
+              key={`${row.tag}-${index}`}
+              className={cn('dot', index < row.count && row.cls)}
+              cx={204 + index * 24}
+              cy='-4'
+              r='8'
+              fill={index < row.count ? row.fill : undefined}
+            />
+          ))}
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+export function EnglishAdverbWordOrderAnimation({
+  mode = 'mainVerb',
+}: {
+  mode?: 'mainVerb' | 'beVerb';
+}): React.JSX.Element {
+  const mainVerb = mode === 'mainVerb';
+  const leading = mainVerb ? 'She' : 'He';
+  const adverb = mainVerb ? 'always' : 'never';
+  const verb = mainVerb ? 'checks' : 'is';
+  const tail = mainVerb ? 'her notes.' : 'late.';
+
+  return (
+    <svg
+      aria-label='Animation: adverb position before the main verb or after be.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 400 150'
+    >
+      <style>{`
+        .panel {
+          fill: #f8fafc;
+          stroke: #ddd6fe;
+          stroke-width: 2;
+        }
+        .word {
+          font: 700 13px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+          fill: #0f172a;
+        }
+        .chip {
+          fill: #ede9fe;
+          stroke: #c4b5fd;
+          stroke-width: 2;
+        }
+        .tag {
+          font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+          fill: #6d28d9;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+        .pulse {
+          animation: chipPulse 3s ease-in-out infinite;
+          transform-box: fill-box;
+          transform-origin: center;
+        }
+        @keyframes chipPulse {
+          0%, 100% { opacity: 0.78; transform: scale(0.96); }
+          50% { opacity: 1; transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .pulse { animation: none; opacity: 1; }
+        }
+      `}</style>
+      <rect className='panel' x='18' y='18' width='364' height='114' rx='24' />
+      <text className='tag' x='34' y='42'>
+        {mainVerb ? 'before the main verb' : 'after be'}
+      </text>
+      <g transform='translate(34, 72)'>
+        <text className='word' x='0' y='0'>{leading}</text>
+        <rect className='chip pulse' x={mainVerb ? 54 : 44} y='-18' rx='12' width='74' height='30' />
+        <text className='word' x={mainVerb ? 70 : 60} y='0'>{mainVerb ? adverb : verb}</text>
+        <text className='word' x={mainVerb ? 142 : 130} y='0'>{mainVerb ? verb : adverb}</text>
+        <text className='word' x={mainVerb ? 210 : 208} y='0'>{tail}</text>
+      </g>
+    </svg>
+  );
+}
+
+export function EnglishAdverbSentenceRepairAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animation: fixing adverb position in a sentence.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 420 170'
+    >
+      <style>{`
+        .panel {
+          fill: #f8fafc;
+          stroke: #dbeafe;
+          stroke-width: 2;
+        }
+        .card {
+          fill: #ffffff;
+          stroke-width: 2;
+        }
+        .wrong-card {
+          stroke: #fda4af;
+        }
+        .right-card {
+          stroke: #86efac;
+        }
+        .word {
+          font: 700 13px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+          fill: #0f172a;
+        }
+        .tag {
+          font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+        .wrong-tag {
+          fill: #be123c;
+        }
+        .right-tag {
+          fill: #15803d;
+        }
+        .chip {
+          stroke-width: 2;
+        }
+        .wrong-chip {
+          fill: #ffe4e6;
+          stroke: #fda4af;
+        }
+        .right-chip {
+          fill: #dcfce7;
+          stroke: #86efac;
+        }
+        .arrow {
+          stroke: #38bdf8;
+          stroke-width: 4;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+          fill: none;
+        }
+        .wrong-line {
+          animation: wrongFade 4.6s ease-in-out infinite;
+        }
+        .right-line {
+          animation: rightFade 4.6s ease-in-out infinite;
+        }
+        @keyframes wrongFade {
+          0%, 42% { opacity: 1; }
+          55%, 100% { opacity: 0.28; }
+        }
+        @keyframes rightFade {
+          0%, 42% { opacity: 0.35; }
+          55%, 100% { opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .wrong-line, .right-line { animation: none; opacity: 1; }
+        }
+      `}</style>
+      <rect className='panel' x='16' y='16' width='388' height='138' rx='24' />
+      <g className='wrong-line' transform='translate(36, 38)'>
+        <rect className='card wrong-card' x='0' y='0' width='154' height='82' rx='18' />
+        <text className='tag wrong-tag' x='16' y='22'>
+          wrong order
+        </text>
+        <text className='word' x='16' y='50'>I do</text>
+        <rect className='chip wrong-chip' x='56' y='32' width='64' height='28' rx='12' />
+        <text className='word' x='69' y='50'>always</text>
+        <text className='word' x='16' y='70'>my homework.</text>
+      </g>
+      <path className='arrow' d='M 212 78 C 228 68, 246 68, 262 78' />
+      <path className='arrow' d='M 250 66 L 262 78 L 248 88' />
+      <g className='right-line' transform='translate(230, 38)'>
+        <rect className='card right-card' x='0' y='0' width='154' height='82' rx='18' />
+        <text className='tag right-tag' x='16' y='22'>
+          fix it
+        </text>
+        <text className='word' x='16' y='50'>I</text>
+        <rect className='chip right-chip' x='28' y='32' width='64' height='28' rx='12' />
+        <text className='word' x='41' y='50'>always</text>
+        <text className='word' x='101' y='50'>do</text>
+        <text className='word' x='16' y='70'>my homework.</text>
+      </g>
+    </svg>
+  );
+}
+
+export function EnglishAdverbHabitCardAnimation(): React.JSX.Element {
+  const rows = [
+    { label: 'always', fill: '#22c55e', icon: '📚', habit: 'do homework', count: 7 },
+    { label: 'sometimes', fill: '#f59e0b', icon: '🌳', habit: 'go to the park', count: 3 },
+    { label: 'never', fill: '#fda4af', icon: '⏰', habit: 'be late', count: 0 },
+  ] as const;
+
+  return (
+    <svg
+      aria-label='Animation: building a weekly habit card with adverbs of frequency.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 420 184'
+    >
+      <style>{`
+        .panel {
+          fill: #f8fafc;
+          stroke: #dbeafe;
+          stroke-width: 2;
+        }
+        .card {
+          fill: #ffffff;
+          stroke: #e2e8f0;
+          stroke-width: 2;
+        }
+        .tag {
+          font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+          fill: #0f172a;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+        .line {
+          font: 700 12px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+          fill: #0f172a;
+        }
+        .muted {
+          font: 600 11px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+          fill: #64748b;
+        }
+        .dot {
+          fill: #e2e8f0;
+          stroke: #cbd5e1;
+          stroke-width: 2;
+        }
+        .dot-active {
+          animation: habitPulse 3s ease-in-out infinite;
+          transform-box: fill-box;
+          transform-origin: center;
+        }
+        .badge {
+          stroke-width: 2;
+        }
+        @keyframes habitPulse {
+          0%, 100% { opacity: 0.78; transform: scale(0.92); }
+          50% { opacity: 1; transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .dot-active { animation: none; }
+        }
+      `}</style>
+      <rect className='panel' x='16' y='16' width='388' height='152' rx='24' />
+      {rows.map((row, index) => (
+        <g key={row.label} transform={`translate(34, ${40 + index * 40})`}>
+          <rect className='card' x='0' y='0' width='352' height='28' rx='14' />
+          <rect
+            className='badge'
+            x='8'
+            y='5'
+            width='82'
+            height='18'
+            rx='9'
+            fill={row.fill}
+            stroke={row.fill}
+          />
+          <text className='tag' x='20' y='18'>
+            {row.label}
+          </text>
+          <text className='line' x='108' y='18'>
+            {row.icon} {row.habit}
+          </text>
+          {Array.from({ length: 7 }).map((_, dotIndex) => (
+            <circle
+              key={`${row.label}-${dotIndex}`}
+              className={cn('dot', dotIndex < row.count && 'dot-active')}
+              cx={266 + dotIndex * 14}
+              cy='14'
+              r='5'
+              fill={dotIndex < row.count ? row.fill : undefined}
+              style={
+                dotIndex < row.count
+                  ? { animationDelay: `${dotIndex * 0.1}s` }
+                  : undefined
+              }
+            />
+          ))}
+        </g>
+      ))}
+      <text className='muted' x='34' y='158'>
+        Build your own week with always, usually, sometimes, and never.
+      </text>
+    </svg>
+  );
+}
+
+export function EnglishAdverbPlaceRoutineAnimation(): React.JSX.Element {
+  const places = [
+    { label: 'library', fill: '#38bdf8', icon: '📚', count: 6 },
+    { label: 'park', fill: '#22c55e', icon: '🌳', count: 3 },
+    { label: 'swimming pool', fill: '#fda4af', icon: '🏊', count: 0 },
+  ] as const;
+
+  return (
+    <svg
+      aria-label='Animation: describing how often you go to different places.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 420 188'
+    >
+      <style>{`
+        .panel {
+          fill: #f8fafc;
+          stroke: #dbeafe;
+          stroke-width: 2;
+        }
+        .card {
+          fill: #ffffff;
+          stroke: #e2e8f0;
+          stroke-width: 2;
+        }
+        .label {
+          font: 700 12px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+          fill: #0f172a;
+        }
+        .hint {
+          font: 600 11px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+          fill: #64748b;
+        }
+        .dot {
+          fill: #e2e8f0;
+          stroke: #cbd5e1;
+          stroke-width: 2;
+        }
+        .dot-active {
+          animation: placePulse 3.1s ease-in-out infinite;
+          transform-box: fill-box;
+          transform-origin: center;
+        }
+        .week-line {
+          stroke: #cbd5e1;
+          stroke-width: 2;
+          stroke-dasharray: 3 5;
+        }
+        @keyframes placePulse {
+          0%, 100% { opacity: 0.8; transform: scale(0.92); }
+          50% { opacity: 1; transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .dot-active { animation: none; }
+        }
+      `}</style>
+      <rect className='panel' x='16' y='16' width='388' height='156' rx='24' />
+      {places.map((place, index) => (
+        <g key={place.label} transform={`translate(${34 + index * 122}, 38)`}>
+          <rect className='card' x='0' y='0' width='110' height='108' rx='18' />
+          <text className='label' x='14' y='24'>
+            {place.icon} {place.label}
+          </text>
+          <text className='hint' x='14' y='42'>
+            {place.count === 0 ? 'never' : place.count >= 6 ? 'usually' : 'sometimes'}
+          </text>
+          <line className='week-line' x1='16' y1='68' x2='94' y2='68' />
+          {Array.from({ length: 7 }).map((_, dotIndex) => (
+            <circle
+              key={`${place.label}-${dotIndex}`}
+              className={cn('dot', dotIndex < place.count && 'dot-active')}
+              cx={16 + dotIndex * 13}
+              cy='68'
+              r='5'
+              fill={dotIndex < place.count ? place.fill : undefined}
+              style={
+                dotIndex < place.count
+                  ? { animationDelay: `${dotIndex * 0.08}s` }
+                  : undefined
+              }
+            />
+          ))}
+          <text className='hint' x='14' y='94'>
+            {place.count >= 6
+              ? 'I usually go here.'
+              : place.count >= 1
+                ? 'I sometimes go here.'
+                : 'I never go here.'}
+          </text>
+        </g>
+      ))}
     </svg>
   );
 }

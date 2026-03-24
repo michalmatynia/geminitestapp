@@ -1,12 +1,101 @@
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
 
+type BatchResult = { count: number };
+type EntityWithId = { id: string };
+type RawMongoDoc = Record<string, unknown>;
+type IntegrationDoc = RawMongoDoc & Partial<IntegrationSeed>;
+type IntegrationConnectionDoc = RawMongoDoc &
+  Omit<
+    Partial<IntegrationConnectionSeed>,
+    'playwrightStorageStateUpdatedAt' | 'allegroExpiresAt' | 'allegroTokenUpdatedAt' | 'baseTokenUpdatedAt' | 'createdAt' | 'updatedAt'
+  > & {
+    playwrightStorageStateUpdatedAt?: Date | string | null;
+    allegroExpiresAt?: Date | string | null;
+    allegroTokenUpdatedAt?: Date | string | null;
+    baseTokenUpdatedAt?: Date | string | null;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+  };
+type ProductListingDoc = RawMongoDoc &
+  Omit<Partial<ProductListingSeed>, 'listedAt' | 'createdAt' | 'updatedAt'> & {
+    listedAt?: Date | string | null;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+  };
+
+type IntegrationSeed = {
+  id: string;
+  name: string;
+  slug: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type IntegrationConnectionSeed = {
+  id: string;
+  integrationId: string;
+  name: string;
+  username: string;
+  password: string;
+  playwrightStorageState: string | null;
+  playwrightStorageStateUpdatedAt: Date | null;
+  playwrightHeadless: boolean;
+  playwrightSlowMo: number;
+  playwrightTimeout: number;
+  playwrightNavigationTimeout: number;
+  playwrightHumanizeMouse: boolean;
+  playwrightMouseJitter: number;
+  playwrightClickDelayMin: number;
+  playwrightClickDelayMax: number;
+  playwrightInputDelayMin: number;
+  playwrightInputDelayMax: number;
+  playwrightActionDelayMin: number;
+  playwrightActionDelayMax: number;
+  playwrightProxyEnabled: boolean;
+  playwrightProxyServer: string | null;
+  playwrightProxyUsername: string | null;
+  playwrightProxyPassword: string | null;
+  playwrightEmulateDevice: boolean;
+  playwrightDeviceName: string | null;
+  allegroAccessToken: string | null;
+  allegroRefreshToken: string | null;
+  allegroTokenType: string | null;
+  allegroScope: string | null;
+  allegroExpiresAt: Date | null;
+  allegroTokenUpdatedAt: Date | null;
+  allegroUseSandbox: boolean;
+  baseApiToken: string | null;
+  baseTokenUpdatedAt: Date | null;
+  baseLastInventoryId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type ProductListingSeed = {
+  id: string;
+  productId: string;
+  integrationId: string;
+  connectionId: string;
+  externalListingId: string | null;
+  inventoryId: string | null;
+  status: string;
+  listedAt: Date | null;
+  exportHistory: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type IntegrationRow = IntegrationSeed;
+type IntegrationConnectionRow = IntegrationConnectionSeed;
+type ProductListingRow = ProductListingSeed;
+
 export const syncIntegrations: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
-  const docs = await mongo.collection('integrations').find({}).toArray();
+  const docs = (await mongo.collection('integrations').find({}).toArray()) as IntegrationDoc[];
   const warnings: string[] = [];
   const seenSlugs = new Set<string>();
   const data = docs
-    .map((doc: Record<string, unknown>): Prisma.IntegrationCreateManyInput | null => {
+    .map((doc: IntegrationDoc): IntegrationSeed | null => {
       const id = normalizeId(doc);
       if (!id) return null;
       const rawName =
@@ -41,11 +130,15 @@ export const syncIntegrations: DatabaseSyncHandler = async ({ mongo, prisma, nor
         updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.IntegrationCreateManyInput => item !== null);
+    .filter((item): item is IntegrationSeed => item !== null);
   await prisma.productListing.deleteMany();
   await prisma.integrationConnection.deleteMany();
-  const deleted = await prisma.integration.deleteMany();
-  const created = data.length ? await prisma.integration.createMany({ data }) : { count: 0 };
+  const deleted = (await prisma.integration.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.integration.createMany({
+      data: data as Prisma.IntegrationCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return {
     sourceCount: data.length,
     targetDeleted: deleted.count,
@@ -60,15 +153,16 @@ export const syncIntegrationConnections: DatabaseSyncHandler = async ({
   normalizeId,
   toDate,
 }) => {
+  const integrationRows = (await prisma.integration.findMany({
+    select: { id: true },
+  })) as EntityWithId[];
   const availableIntegrationIds = new Set<string>(
-    (await prisma.integration.findMany({ select: { id: true } })).map(
-      (entry: { id: string }) => entry.id
-    )
+    integrationRows.map((entry) => entry.id)
   );
-  const docs = await mongo.collection('integration_connections').find({}).toArray();
+  const docs = (await mongo.collection('integration_connections').find({}).toArray()) as IntegrationConnectionDoc[];
   const warnings: string[] = [];
-  const byIntegration = new Map<string, { doc: Record<string, unknown>; updatedAt: Date }>();
-  docs.forEach((doc: Record<string, unknown>) => {
+  const byIntegration = new Map<string, { doc: IntegrationConnectionDoc; updatedAt: Date }>();
+  docs.forEach((doc: IntegrationConnectionDoc) => {
     const id = normalizeId(doc);
     const integrationId = (doc.integrationId as string) ?? '';
     if (!id || !integrationId) {
@@ -90,72 +184,76 @@ export const syncIntegrationConnections: DatabaseSyncHandler = async ({
     }
     byIntegration.set(integrationId, { doc, updatedAt });
   });
-  const data = Array.from(byIntegration.values()).map(({ doc }): Prisma.IntegrationConnectionCreateManyInput => ({
-    id: normalizeId(doc)!,
-    integrationId: (doc.integrationId as string) ?? '',
-    name: (doc.name as string) ?? 'Connection',
-    username: (doc.username as string) ?? '',
-    password: (doc.password as string) ?? '',
-    playwrightStorageState:
-      (doc.playwrightStorageState as string | null) ?? null,
-    playwrightStorageStateUpdatedAt: toDate(
-      doc.playwrightStorageStateUpdatedAt as Date | string | null
-    ),
-    playwrightHeadless: (doc.playwrightHeadless as boolean | null) ?? true,
-    playwrightSlowMo: (doc.playwrightSlowMo as number | null) ?? 50,
-    playwrightTimeout: (doc.playwrightTimeout as number | null) ?? 15000,
-    playwrightNavigationTimeout:
-      (doc.playwrightNavigationTimeout as number | null) ?? 30000,
-    playwrightHumanizeMouse:
-      (doc.playwrightHumanizeMouse as boolean | null) ?? false,
-    playwrightMouseJitter:
-      (doc.playwrightMouseJitter as number | null) ?? 6,
-    playwrightClickDelayMin:
-      (doc.playwrightClickDelayMin as number | null) ?? 30,
-    playwrightClickDelayMax:
-      (doc.playwrightClickDelayMax as number | null) ?? 120,
-    playwrightInputDelayMin:
-      (doc.playwrightInputDelayMin as number | null) ?? 20,
-    playwrightInputDelayMax:
-      (doc.playwrightInputDelayMax as number | null) ?? 120,
-    playwrightActionDelayMin:
-      (doc.playwrightActionDelayMin as number | null) ?? 200,
-    playwrightActionDelayMax:
-      (doc.playwrightActionDelayMax as number | null) ?? 900,
-    playwrightProxyEnabled:
-      (doc.playwrightProxyEnabled as boolean | null) ?? false,
-    playwrightProxyServer:
-      (doc.playwrightProxyServer as string | null) ?? null,
-    playwrightProxyUsername:
-      (doc.playwrightProxyUsername as string | null) ?? null,
-    playwrightProxyPassword:
-      (doc.playwrightProxyPassword as string | null) ?? null,
-    playwrightEmulateDevice:
-      (doc.playwrightEmulateDevice as boolean | null) ?? false,
-    playwrightDeviceName:
-      (doc.playwrightDeviceName as string | null) ?? null,
-    allegroAccessToken: (doc.allegroAccessToken as string | null) ?? null,
-    allegroRefreshToken:
-      (doc.allegroRefreshToken as string | null) ?? null,
-    allegroTokenType: (doc.allegroTokenType as string | null) ?? null,
-    allegroScope: (doc.allegroScope as string | null) ?? null,
-    allegroExpiresAt: toDate(doc.allegroExpiresAt as Date | string | null),
-    allegroTokenUpdatedAt: toDate(
-      doc.allegroTokenUpdatedAt as Date | string | null
-    ),
-    allegroUseSandbox: (doc.allegroUseSandbox as boolean | null) ?? false,
-    baseApiToken: (doc.baseApiToken as string | null) ?? null,
-    baseTokenUpdatedAt: toDate(
-      doc.baseTokenUpdatedAt as Date | string | null
-    ),
-    baseLastInventoryId:
-      (doc.baseLastInventoryId as string | null) ?? null,
-    createdAt: toDate(doc.createdAt as Date | string) ?? new Date(),
-    updatedAt: toDate(doc.updatedAt as Date | string) ?? new Date(),
-  }));
-  const deleted = await prisma.integrationConnection.deleteMany();
-  const created = data.length
-    ? await prisma.integrationConnection.createMany({ data })
+  const data = Array.from(byIntegration.values()).map(
+    ({ doc }): IntegrationConnectionSeed => ({
+      id: normalizeId(doc),
+      integrationId: (doc.integrationId as string) ?? '',
+      name: (doc.name as string) ?? 'Connection',
+      username: (doc.username as string) ?? '',
+      password: (doc.password as string) ?? '',
+      playwrightStorageState:
+        (doc.playwrightStorageState as string | null) ?? null,
+      playwrightStorageStateUpdatedAt: toDate(
+        doc.playwrightStorageStateUpdatedAt as Date | string | null
+      ),
+      playwrightHeadless: (doc.playwrightHeadless as boolean | null) ?? true,
+      playwrightSlowMo: (doc.playwrightSlowMo as number | null) ?? 50,
+      playwrightTimeout: (doc.playwrightTimeout as number | null) ?? 15000,
+      playwrightNavigationTimeout:
+        (doc.playwrightNavigationTimeout as number | null) ?? 30000,
+      playwrightHumanizeMouse:
+        (doc.playwrightHumanizeMouse as boolean | null) ?? false,
+      playwrightMouseJitter:
+        (doc.playwrightMouseJitter as number | null) ?? 6,
+      playwrightClickDelayMin:
+        (doc.playwrightClickDelayMin as number | null) ?? 30,
+      playwrightClickDelayMax:
+        (doc.playwrightClickDelayMax as number | null) ?? 120,
+      playwrightInputDelayMin:
+        (doc.playwrightInputDelayMin as number | null) ?? 20,
+      playwrightInputDelayMax:
+        (doc.playwrightInputDelayMax as number | null) ?? 120,
+      playwrightActionDelayMin:
+        (doc.playwrightActionDelayMin as number | null) ?? 200,
+      playwrightActionDelayMax:
+        (doc.playwrightActionDelayMax as number | null) ?? 900,
+      playwrightProxyEnabled:
+        (doc.playwrightProxyEnabled as boolean | null) ?? false,
+      playwrightProxyServer:
+        (doc.playwrightProxyServer as string | null) ?? null,
+      playwrightProxyUsername:
+        (doc.playwrightProxyUsername as string | null) ?? null,
+      playwrightProxyPassword:
+        (doc.playwrightProxyPassword as string | null) ?? null,
+      playwrightEmulateDevice:
+        (doc.playwrightEmulateDevice as boolean | null) ?? false,
+      playwrightDeviceName:
+        (doc.playwrightDeviceName as string | null) ?? null,
+      allegroAccessToken: (doc.allegroAccessToken as string | null) ?? null,
+      allegroRefreshToken:
+        (doc.allegroRefreshToken as string | null) ?? null,
+      allegroTokenType: (doc.allegroTokenType as string | null) ?? null,
+      allegroScope: (doc.allegroScope as string | null) ?? null,
+      allegroExpiresAt: toDate(doc.allegroExpiresAt as Date | string | null),
+      allegroTokenUpdatedAt: toDate(
+        doc.allegroTokenUpdatedAt as Date | string | null
+      ),
+      allegroUseSandbox: (doc.allegroUseSandbox as boolean | null) ?? false,
+      baseApiToken: (doc.baseApiToken as string | null) ?? null,
+      baseTokenUpdatedAt: toDate(
+        doc.baseTokenUpdatedAt as Date | string | null
+      ),
+      baseLastInventoryId:
+        (doc.baseLastInventoryId as string | null) ?? null,
+      createdAt: toDate(doc.createdAt as Date | string) ?? new Date(),
+      updatedAt: toDate(doc.updatedAt as Date | string) ?? new Date(),
+    })
+  );
+  const deleted = (await prisma.integrationConnection.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.integrationConnection.createMany({
+      data: data as Prisma.IntegrationConnectionCreateManyInput[],
+    })) as BatchResult)
     : { count: 0 };
   return {
     sourceCount: data.length,
@@ -172,24 +270,22 @@ export const syncProductListings: DatabaseSyncHandler = async ({
   toDate,
   toJsonValue,
 }) => {
+  const productRows = (await prisma.product.findMany({
+    select: { id: true },
+  })) as EntityWithId[];
   const productIds = new Set<string>(
-    (await prisma.product.findMany({ select: { id: true } })).map(
-      (entry: { id: string }) => entry.id
-    )
+    productRows.map((entry) => entry.id)
   );
-  const connections = await prisma.integrationConnection.findMany({
+  const connections = (await prisma.integrationConnection.findMany({
     select: { id: true, integrationId: true },
-  });
+  })) as Array<{ id: string; integrationId: string }>;
   const connectionMap = new Map<string, string>(
-    connections.map((entry: { id: string; integrationId: string }) => [
-      entry.id,
-      entry.integrationId,
-    ])
+    connections.map((entry) => [entry.id, entry.integrationId])
   );
-  const docs = await mongo.collection('product_listings').find({}).toArray();
+  const docs = (await mongo.collection('product_listings').find({}).toArray()) as ProductListingDoc[];
   const warnings: string[] = [];
-  const byKey = new Map<string, { doc: Record<string, unknown>; updatedAt: Date }>();
-  docs.forEach((doc: Record<string, unknown>) => {
+  const byKey = new Map<string, { doc: ProductListingDoc; updatedAt: Date }>();
+  docs.forEach((doc: ProductListingDoc) => {
     const id = normalizeId(doc);
     const productId = (doc.productId as string) ?? '';
     const connectionId = (doc.connectionId as string) ?? '';
@@ -220,7 +316,7 @@ export const syncProductListings: DatabaseSyncHandler = async ({
     }
     byKey.set(key, { doc, updatedAt });
   });
-  const data = Array.from(byKey.values()).map(({ doc }): Prisma.ProductListingCreateManyInput => {
+  const data = Array.from(byKey.values()).map(({ doc }): ProductListingSeed => {
     const connectionId = (doc.connectionId as string) ?? '';
     const resolvedIntegrationId =
       connectionMap.get(connectionId) ?? (doc.integrationId as string) ?? '';
@@ -233,7 +329,7 @@ export const syncProductListings: DatabaseSyncHandler = async ({
       );
     }
     return {
-      id: normalizeId(doc)!,
+      id: normalizeId(doc),
       productId: (doc.productId as string) ?? '',
       integrationId: resolvedIntegrationId,
       connectionId,
@@ -241,15 +337,17 @@ export const syncProductListings: DatabaseSyncHandler = async ({
       inventoryId: (doc.inventoryId as string | null) ?? null,
       status: (doc.status as string) ?? 'pending',
       listedAt: toDate(doc.listedAt as Date | string | null),
-      exportHistory: toJsonValue(
-        doc.exportHistory ?? null
-      ) as Prisma.InputJsonValue,
+      exportHistory: toJsonValue(doc.exportHistory ?? null),
       createdAt: (doc.createdAt as Date) ?? new Date(),
       updatedAt: (doc.updatedAt as Date) ?? new Date(),
     };
   });
-  const deleted = await prisma.productListing.deleteMany();
-  const created = data.length ? await prisma.productListing.createMany({ data }) : { count: 0 };
+  const deleted = (await prisma.productListing.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.productListing.createMany({
+      data: data as Prisma.ProductListingCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return {
     sourceCount: data.length,
     targetDeleted: deleted.count,
@@ -261,8 +359,8 @@ export const syncProductListings: DatabaseSyncHandler = async ({
 // --- Prisma to Mongo handlers ---
 
 export const syncIntegrationsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.integration.findMany();
-  const docs = rows.map((row: Prisma.IntegrationGetPayload<{}>) => ({
+  const rows = (await prisma.integration.findMany()) as IntegrationRow[];
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -281,8 +379,8 @@ export const syncIntegrationsPrismaToMongo: DatabaseSyncHandler = async ({ mongo
 };
 
 export const syncIntegrationConnectionsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.integrationConnection.findMany();
-  const docs = rows.map((row: Prisma.IntegrationConnectionGetPayload<{}>) => ({
+  const rows = (await prisma.integrationConnection.findMany()) as IntegrationConnectionRow[];
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     integrationId: row.integrationId,
@@ -333,8 +431,8 @@ export const syncIntegrationConnectionsPrismaToMongo: DatabaseSyncHandler = asyn
 };
 
 export const syncProductListingsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.productListing.findMany();
-  const docs = rows.map((row: Prisma.ProductListingGetPayload<{}>) => ({
+  const rows = (await prisma.productListing.findMany()) as ProductListingRow[];
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     productId: row.productId,

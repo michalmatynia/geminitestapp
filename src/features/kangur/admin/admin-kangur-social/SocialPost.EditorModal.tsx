@@ -3,7 +3,6 @@
 import React from 'react';
 import { CalendarClock } from 'lucide-react';
 
-import type { KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
 import {
   AppModal,
   Badge,
@@ -22,14 +21,12 @@ import {
 } from './AdminKangurSocialPage.Constants';
 import { SocialPostEditor } from './SocialPost.Editor';
 import { SocialPostImagesPanel } from './SocialPost.ImagesPanel';
+import { useSocialPostContext } from './SocialPostContext';
 
-type SocialPostEditorProps = React.ComponentProps<typeof SocialPostEditor>;
-type SocialPostImagesPanelProps = React.ComponentProps<typeof SocialPostImagesPanel>;
-
-const resolvePostTitle = (post: KangurSocialPost | null): string =>
+const resolvePostTitle = (post: { titlePl: string; titleEn: string } | null): string =>
   post?.titlePl.trim() || post?.titleEn.trim() || 'Untitled update';
 
-const resolvePostSubtitle = (post: KangurSocialPost | null): string => {
+const resolvePostSubtitle = (post: { status: string; publishedAt?: string | Date; scheduledAt?: string | Date } | null): string => {
   if (!post) return 'Edit copy and review attached images.';
   if (post.status === 'published' && post.publishedAt) {
     return `Published ${formatDatetimeDisplay(post.publishedAt)}`;
@@ -43,16 +40,19 @@ const resolvePostSubtitle = (post: KangurSocialPost | null): string => {
 export function SocialPostEditorModal({
   isOpen,
   onClose,
-  activePost,
-  editorProps,
-  imagesProps,
 }: {
   isOpen: boolean;
   onClose: () => void;
-  activePost: KangurSocialPost | null;
-  editorProps: SocialPostEditorProps;
-  imagesProps: SocialPostImagesPanelProps;
 }): React.JSX.Element {
+  const {
+    activePost,
+    scheduledAt,
+    setScheduledAt,
+    handleSave,
+    patchMutation,
+    imageAssets,
+  } = useSocialPostContext();
+
   const [activeTab, setActiveTab] = React.useState<'edit' | 'schedule' | 'images'>('edit');
 
   React.useEffect(() => {
@@ -102,7 +102,7 @@ export function SocialPostEditorModal({
 
         <TabsContent value='edit' className='mt-4 data-[state=inactive]:hidden' forceMount>
           {activePost ? (
-            <SocialPostEditor {...editorProps} showImagesPanel={false} />
+            <SocialPostEditor showImagesPanel={false} />
           ) : (
             <div className='rounded-xl border border-border/60 bg-background/40 p-4 text-sm text-muted-foreground'>
               Select a social post to edit it.
@@ -119,8 +119,8 @@ export function SocialPostEditorModal({
                   <Input
                     type='datetime-local'
                     aria-label='Scheduled publish date and time'
-                    value={editorProps.scheduledAt}
-                    onChange={(event) => editorProps.setScheduledAt(event.target.value)}
+                    value={scheduledAt}
+                    onChange={(event) => setScheduledAt(event.target.value)}
                   />
                 </div>
                 <div className='flex flex-wrap items-center gap-2'>
@@ -129,13 +129,13 @@ export function SocialPostEditorModal({
                     variant='outline'
                     size='sm'
                     onClick={() => {
-                      void editorProps.handleSave('scheduled');
+                      void handleSave('scheduled');
                     }}
                     disabled={
-                      !activePost || !editorProps.scheduledAt || editorProps.patchMutationPending
+                      !activePost || !scheduledAt || patchMutation.isPending
                     }
                   >
-                    {editorProps.patchMutationPending ? 'Scheduling...' : 'Schedule'}
+                    {patchMutation.isPending ? 'Scheduling...' : 'Schedule'}
                   </Button>
                   <div className='text-xs text-muted-foreground'>
                     Pick the LinkedIn publish date and time for this update.
@@ -152,7 +152,13 @@ export function SocialPostEditorModal({
 
         <TabsContent value='images' className='mt-4 data-[state=inactive]:hidden' forceMount>
           {activePost ? (
-            <SocialPostImagesPanel {...imagesProps} />
+            <SocialPostImagesPanel
+              imageAssets={imageAssets}
+              handleRemoveImage={useSocialPostContext().handleRemoveImage}
+              setShowMediaLibrary={useSocialPostContext().setShowMediaLibrary}
+              showMediaLibrary={useSocialPostContext().showMediaLibrary}
+              handleAddImages={useSocialPostContext().handleAddImages}
+            />
           ) : (
             <div className='rounded-xl border border-border/60 bg-background/40 p-4 text-sm text-muted-foreground'>
               Select a social post to review its images.

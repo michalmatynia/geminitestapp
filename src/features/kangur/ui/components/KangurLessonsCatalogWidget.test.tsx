@@ -4,6 +4,7 @@
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { LESSONS_LIBRARY_LIST_CLASSNAME } from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 
 const { selectLessonMock } = vi.hoisted(() => ({
   selectLessonMock: vi.fn(),
@@ -159,12 +160,16 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
 
 import { KangurLessonsCatalogWidget } from './KangurLessonsCatalogWidget';
 
+const splitClasses = (className: string): string[] => className.trim().split(/\s+/);
+
 describe('KangurLessonsCatalogWidget', () => {
   it('opens grouped sections on the first click', async () => {
     ageGroupState.value = 'ten_year_old';
     render(<KangurLessonsCatalogWidget />);
 
-    expect(screen.getByLabelText('Lista lekcji')).toHaveClass('items-center');
+    expect(screen.getByLabelText('Lista lekcji')).toHaveClass(
+      ...splitClasses(LESSONS_LIBRARY_LIST_CLASSNAME)
+    );
     expect(screen.queryByTestId('lesson-card-lesson-english')).not.toBeInTheDocument();
 
     const trigger = screen.getByRole('button', { name: /opening section/i });

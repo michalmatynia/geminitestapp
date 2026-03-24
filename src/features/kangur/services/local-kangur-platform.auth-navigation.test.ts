@@ -9,6 +9,7 @@ import {
   getGuestKangurScoreSessionKey,
   hasGuestKangurScores,
 } from '@/features/kangur/services/guest-kangur-scores';
+import { KANGUR_PROGRESS_OWNER_STORAGE_KEY } from '@/features/kangur/ui/services/progress.contracts';
 
 const {
   withCsrfHeadersMock,
@@ -190,6 +191,22 @@ describe('createLocalKangurPlatform auth navigation', () => {
     expect(window.localStorage.getItem(KANGUR_ACTIVE_LEARNER_STORAGE_KEY)).toBeNull();
   });
 
+  it('clears the stored progress owner when auth resolves anonymous', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    window.localStorage.setItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY, 'learner-stale');
+
+    const { createLocalKangurPlatform } = await loadLocalKangurPlatformModule();
+    const platform = createLocalKangurPlatform();
+
+    await expect(platform.auth.me()).rejects.toMatchObject({ status: 401 });
+    expect(window.localStorage.getItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY)).toBeNull();
+  });
+
   it('requests auth state with no-store caching so logout cannot reuse a stale session response', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
@@ -244,6 +261,22 @@ describe('createLocalKangurPlatform auth navigation', () => {
         credentials: 'same-origin',
       })
     );
+  });
+
+  it('clears the stored progress owner on logout', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    window.localStorage.setItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY, 'learner-stale');
+
+    const { createLocalKangurPlatform } = await loadLocalKangurPlatformModule();
+    const platform = createLocalKangurPlatform();
+
+    await platform.auth.logout();
+
+    expect(window.localStorage.getItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY)).toBeNull();
   });
 
   it('reloads the current Kangur page after server logout when a return URL is provided', async () => {

@@ -36,7 +36,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
   const runtimeTranslations = useTranslations('KangurProgressRuntime');
   const { progress, snapshot, user } = useKangurLearnerProfileRuntime();
   const { checkAppState } = useKangurAuthActions();
-  const { subject } = useKangurSubjectFocus();
+  const { subject, subjectKey } = useKangurSubjectFocus();
   const { entry: overviewContent } = useKangurPageContentEntry('learner-profile-overview');
   const nextBadge = getNextLockedBadge(progress, { translate: runtimeTranslations });
   const [isSavingAvatar, setIsSavingAvatar] = useState(false);
@@ -47,10 +47,11 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
   const dailyQuest = useMemo<KangurDailyQuestState | null | undefined>(
     () =>
       getCurrentKangurDailyQuest(progress, {
+        ownerKey: subjectKey,
         subject,
         translate: runtimeTranslations,
       }),
-    [progress, runtimeTranslations, subject]
+    [progress, runtimeTranslations, subject, subjectKey]
   );
 
   const dailyQuestAccent =

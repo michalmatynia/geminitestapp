@@ -836,6 +836,7 @@
         "english_subject_verb_agreement": "Узгодження підмета і присудка",
         "english_articles": "Артиклі",
         "english_adjectives": "Прикметники",
+        "english_adverbs_frequency": "Прислівники частоти",
         "english_prepositions_time_place": "Прийменники часу і місця",
         "alphabet_basics": "Абетка",
         "alphabet_copy": "Копіювання літер",
@@ -1214,6 +1215,7 @@
       "english_subject_verb_agreement": "Узгодження підмета і присудка",
       "english_articles": "Артиклі",
       "english_adjectives": "Прикметники",
+      "english_adverbs_frequency": "Прислівники частоти",
       "english_prepositions_time_place": "Прийменники часу й місця"
     },
     "weeklyActivity": {
@@ -1570,6 +1572,7 @@
       "english_subject_verb_agreement": "Узгодження підмета і присудка",
       "english_articles": "Артиклі",
       "english_adjectives": "Прикметники",
+      "english_adverbs_frequency": "Прислівники частоти",
       "english_prepositions_time_place": "Прийменники часу й місця"
     }
   },
@@ -1770,6 +1773,7 @@
         "english_subject_verb_agreement": "Узгодження підмета і присудка",
         "english_articles": "Артиклі",
         "english_adjectives": "Прикметники",
+        "english_adverbs_frequency": "Прислівники частоти",
         "english_prepositions_time_place": "Прийменники часу й місця"
       }
     },
@@ -1913,6 +1917,7 @@
       "english_subject_verb_agreement": "Узгодження підмета і присудка",
       "english_articles": "Артиклі",
       "english_adjectives": "Прикметники",
+      "english_adverbs_frequency": "Прислівники частоти",
       "english_prepositions_time_place": "Прийменники часу й місця"
     }
   },
@@ -2749,6 +2754,96 @@
           "pair-is": {
             "prompt": "Фраза \"pair of\" рахується як однина.",
             "hint": "Pair = один набір."
+          }
+        }
+      }
+    },
+    "englishAdverbsFrequency": {
+      "summary": {
+        "perfect": "Ідеально! Увесь тижневий план збігається зі словами частоти.",
+        "good": "Гарна робота! Більша частина тижня вже має правильний ритм.",
+        "retry": "Спробуй ще раз і подивися, як часто засвічується кожна дія."
+      },
+      "inRound": {
+        "roundLabel": "Раунд {current}/{total}",
+        "hitsLabel": "{hits}/{total} правильно",
+        "check": "Перевірити",
+        "next": "Далі",
+        "seeResult": "Подивитися результат",
+        "studio": {
+          "modeLabel": "Перетягни картки частоти",
+          "modeLabelTouch": "Торкнися або перетягни картки",
+          "targetLabel": "Цільова рутина",
+          "plannerLabel": "План тижня",
+          "watchLabel": "Подивись, як рухається тиждень",
+          "poolLabel": "Банк частоти",
+          "poolAria": "Банк частоти",
+          "poolHint": "У кожному раунді одна картка може залишитися невикористаною.",
+          "laneAria": "Смуга рутини для дії {action}",
+          "dropLabel": "Поклади сюди картку частоти або торкнися її.",
+          "weekAria": "Тижнева рутина для {action}: {frequency}",
+          "touchIdle": "Торкнися картки частоти, а потім смуги рутини або банку.",
+          "touchSelected": "Вибрана частота: {frequency}. Торкнися смуги рутини або банку.",
+          "clearRound": "Очистити раунд",
+          "feedback": {
+            "perfect": "Ідеально! План збігається з цільовою рутиною.",
+            "retry": "Спробуй ще раз і порівняй, скільки днів має бути в кожної дії."
+          },
+          "rounds": {
+            "cinema-sunday": {
+              "title": "Кінонеділя",
+              "prompt": "Віднови недільну рутину, зіставляючи картки частоти з тижневим планом.",
+              "hint": "Одна річ трапляється щотижня, одна — більшість тижнів, а одна — ніколи."
+            },
+            "school-week": {
+              "title": "Шкільний тиждень",
+              "prompt": "Зістав картки частоти зі шкільними звичками.",
+              "hint": "Подумай, що відбувається щодня, що часто, а що ніколи не повинно траплятися."
+            },
+            "weekend-club": {
+              "title": "Клуб вихідного дня",
+              "prompt": "Побудуй правильний ритм тижня для плану клубу вихідного дня.",
+              "hint": "Одна активність є звичкою, одна трапляється лише інколи, а одна — ніколи."
+            },
+            "after-school": {
+              "title": "Після школи",
+              "prompt": "Добери картки до розкладу після школи.",
+              "hint": "Домашнє завдання буває щодня, парк лише інколи, а плавання ніколи."
+            },
+            "morning-check": {
+              "title": "Ранковий план",
+              "prompt": "Склади ранкову рутину для уважного шкільного дня.",
+              "hint": "Прокидатися о сьомій буває зазвичай, запізнюватися ніколи, а телевізор лише інколи."
+            }
+          },
+          "frequencies": {
+            "always": {
+              "label": "always",
+              "description": "щодня або щоразу"
+            },
+            "usually": {
+              "label": "usually",
+              "description": "у більшість днів"
+            },
+            "sometimes": {
+              "label": "sometimes",
+              "description": "лише кілька днів"
+            },
+            "never": {
+              "label": "never",
+              "description": "жодного дня"
+            }
+          },
+          "actions": {
+            "go_to_cinema": "go to the cinema",
+            "go_with_friends": "go with friends",
+            "eat_popcorn": "eat popcorn",
+            "do_homework": "do homework",
+            "get_up_at_seven": "get up at seven",
+            "be_late_for_school": "be late for school",
+            "go_to_park": "go to the park",
+            "watch_tv": "watch TV",
+            "go_swimming": "go swimming"
           }
         }
       }
@@ -3726,8 +3821,7 @@
         },
         "wordAria": "Слово: {token}"
       }
-    }
-    ,
+    },
     "calendarInteractive": {
       "progressAriaLabel": "Точність в інтерактивній практиці з календарем",
       "summary": {
@@ -6800,6 +6894,135 @@
               "finish": "Завершити"
             }
           }
+        }
+      }
+    },
+    "englishAdverbsFrequency": {
+      "slides": {
+        "intro": {
+          "overview": {
+            "title": "Як часто це трапляється?",
+            "lead": "Прислівники частоти показують, як часто відбувається дія. Вони допомагають говорити про звички та щоденні рутини.",
+            "caption": "always = завжди, usually = зазвичай, sometimes = інколи, never = ніколи"
+          }
+        },
+        "routine": {
+          "cinemaStory": {
+            "title": "Кінорутина",
+            "lead": "Прочитай коротку рутину й подивися, як прислівники змінюють картину всього тижня.",
+            "caption": "Always, usually і never змінюють кількість днів, що засвічуються."
+          },
+          "frequencyStrip": {
+            "title": "Читай смужку тижня",
+            "lead": "Кожен прислівник можна уявити як смужку із семи днів. Більше вогників означає частішу дію.",
+            "items": {
+              "always": "always = 7 днів",
+              "usually": "usually = більшість днів",
+              "sometimes": "sometimes = кілька днів",
+              "never": "never = 0 днів"
+            }
+          }
+        },
+        "position": {
+          "mainVerb": {
+            "title": "Став прислівник перед головним дієсловом",
+            "lead": "З більшістю дієслів прислівник частоти стоїть перед головним дієсловом.",
+            "caption": "She always checks her notes."
+          },
+          "beVerb": {
+            "title": "Став прислівник після be",
+            "lead": "З am, is та are прислівник зазвичай стоїть після дієслова be.",
+            "caption": "He is never late."
+          },
+          "repairOrder": {
+            "title": "Полагодь порядок",
+            "lead": "Іноді прислівник опиняється не там. Пересунь його туди, де англійська його очікує.",
+            "caption": "I always do my homework. He is never late."
+          }
+        },
+        "answer": {
+          "howOften": {
+            "title": "Відповідай на How often...?",
+            "lead": "Використовуй прислівник частоти, щоб відповідати на запитання про звички та рутини.",
+            "caption": "How often do you go to the park? I sometimes go after school."
+          },
+          "wordBank": {
+            "title": "Банк слів частоти",
+            "lead": "Тримай ці чотири слова напохваті, коли описуєш свій тиждень."
+          },
+          "chooseWord": {
+            "title": "Обери найкраще слово частоти",
+            "lead": "Добери підказку до прислівника, який пасує найкраще, перш ніж складати власну рутину.",
+            "items": {
+              "homework": {
+                "clue": "Я щодня після школи роблю домашнє завдання.",
+                "answer": "always"
+              },
+              "seven": {
+                "clue": "Вона прокидається о сьомій у більшість шкільних днів.",
+                "answer": "usually"
+              },
+              "late": {
+                "clue": "Він запізнюється до школи нуль днів.",
+                "answer": "never"
+              },
+              "tv": {
+                "clue": "Ми дивимося телевізор у кілька вечорів.",
+                "answer": "sometimes"
+              }
+            }
+          },
+          "myWeek": {
+            "title": "Склади свій тиждень",
+            "lead": "Тепер перетвори слова частоти на власну картку звичок. Обери прості дії й скажи, як часто вони трапляються.",
+            "caption": "I always do my homework. I sometimes go to the park. I never arrive late."
+          },
+          "favoritePlace": {
+            "title": "Розкажи про одне місце",
+            "lead": "Обери місце, яке ти знаєш, і скажи, як часто ти туди ходиш. Слова частоти роблять речення набагато зрозумілішим.",
+            "caption": "I usually go to the library. I sometimes go to the park. I never go to the swimming pool on school days."
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Коротке повторення",
+            "lead": "Пам'ятай ці правила, коли говориш про рутини.",
+            "items": {
+              "meaning": "Always, usually, sometimes і never показують, як часто щось відбувається.",
+              "mainVerb": "Перед головним дієсловом: I always do my homework.",
+              "beVerb": "Після be: She is never late.",
+              "answer": "Використовуй їх у відповідях на запитання How often...?."
+            }
+          }
+        }
+      }
+    },
+    "englishAdverbsFrequencyShell": {
+      "lessonTitle": "Англійська: прислівники частоти",
+      "sections": {
+        "intro": {
+          "title": "Вступ",
+          "description": "Що означають слова частоти"
+        },
+        "routine": {
+          "title": "Рутина",
+          "description": "Побач частоту на цілому тижні"
+        },
+        "position": {
+          "title": "Позиція",
+          "description": "Де прислівник стоїть у реченні"
+        },
+        "answer": {
+          "title": "Відповідь",
+          "description": "Розкажи про свої звички"
+        },
+        "gameFrequencyStudio": {
+          "title": "Frequency Studio",
+          "description": "Побудуй анімований тижневий план"
+        },
+        "summary": {
+          "title": "Підсумок",
+          "description": "Головні правила в одному місці"
         }
       }
     },

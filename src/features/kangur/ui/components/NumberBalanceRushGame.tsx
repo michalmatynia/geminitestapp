@@ -3,10 +3,10 @@
 import { Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import {
   KangurDragDropContext,
   getKangurMobileDragHandleStyle,
+  renderKangurDragPreview,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
@@ -81,8 +81,6 @@ const TILE_STYLES = [
   'bg-gradient-to-br from-yellow-200 via-amber-200 to-orange-200 text-amber-900',
   'bg-gradient-to-br from-indigo-200 via-blue-200 to-sky-200 text-indigo-900',
 ] as const;
-
-const dragPortal = typeof document === 'undefined' ? null : document.body;
 
 const reorderWithinList = <T,>(list: T[], startIndex: number, endIndex: number): T[] => {
   const next = [...list];
@@ -202,10 +200,7 @@ function NumberTile({
           </button>
         );
 
-        if (snapshot.isDragging && dragPortal) {
-          return createPortal(content, dragPortal);
-        }
-        return content;
+        return renderKangurDragPreview(content, snapshot.isDragging);
       }}
     </Draggable>
   );

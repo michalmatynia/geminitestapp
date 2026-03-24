@@ -95,7 +95,7 @@ export function KangurParentDashboardProgressWidget({
   const runtimeTranslations = useTranslations('KangurProgressRuntime');
   const { activeLearner, activeTab, basePath, canAccessDashboard, progress } =
     useKangurParentDashboardRuntime();
-  const { subject } = useKangurSubjectFocus();
+  const { subject, subjectKey } = useKangurSubjectFocus();
   const { ageGroup } = useKangurAgeGroupFocus();
   const isCoarsePointer = useKangurCoarsePointer();
   const { entry: progressContent } = useKangurPageContentEntry('parent-dashboard-progress');
@@ -216,6 +216,7 @@ export function KangurParentDashboardProgressWidget({
   }
 
   const dailyQuest = getCurrentKangurDailyQuest(progress, {
+    ownerKey: subjectKey,
     subject,
     translate: runtimeTranslations,
   });

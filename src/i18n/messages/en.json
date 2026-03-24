@@ -844,6 +844,7 @@
         "english_subject_verb_agreement": "Subject-verb agreement",
         "english_articles": "Articles",
         "english_adjectives": "Adjectives",
+        "english_adverbs_frequency": "Adverbs of frequency",
         "english_prepositions_time_place": "Time and place prepositions",
         "alphabet_basics": "Alphabet",
         "alphabet_copy": "Copy letters",
@@ -1268,6 +1269,7 @@
       "english_subject_verb_agreement": "Subject-verb agreement",
       "english_articles": "Articles",
       "english_adjectives": "Adjectives",
+      "english_adverbs_frequency": "Adverbs of frequency",
       "english_prepositions_time_place": "Time and place prepositions"
     },
     "weeklyActivity": {
@@ -2293,6 +2295,96 @@
             "the": {
               "description": "one specific thing"
             }
+          }
+        }
+      }
+    },
+    "englishAdverbsFrequency": {
+      "summary": {
+        "perfect": "Perfect! The weekly routine matches every frequency word.",
+        "good": "Good job! Most of the week is in the right rhythm.",
+        "retry": "Try one more round and watch how often each action lights up."
+      },
+      "inRound": {
+        "roundLabel": "Round {current}/{total}",
+        "hitsLabel": "{hits}/{total} correct",
+        "check": "Check",
+        "next": "Next",
+        "seeResult": "See result",
+        "studio": {
+          "modeLabel": "Drag frequency cards",
+          "modeLabelTouch": "Tap or drag cards",
+          "targetLabel": "Target routine",
+          "plannerLabel": "Routine planner",
+          "watchLabel": "Watch the week move",
+          "poolLabel": "Frequency bank",
+          "poolAria": "Frequency bank",
+          "poolHint": "One card can stay unused in each round.",
+          "laneAria": "Routine lane for {action}",
+          "dropLabel": "Drop or tap a frequency card here.",
+          "weekAria": "Weekly routine for {action}: {frequency}",
+          "touchIdle": "Tap a frequency card, then tap a routine lane or the bank.",
+          "touchSelected": "Selected frequency: {frequency}. Tap a routine lane or the bank.",
+          "clearRound": "Clear round",
+          "feedback": {
+            "perfect": "Perfect! The planner matches the target routine.",
+            "retry": "Try again and compare how many days each action should happen."
+          },
+          "rounds": {
+            "cinema-sunday": {
+              "title": "Cinema Sunday",
+              "prompt": "Rebuild the Sunday routine by matching the frequency cards to the weekly planner.",
+              "hint": "One thing happens every week, one happens most weeks, and one never happens."
+            },
+            "school-week": {
+              "title": "School week",
+              "prompt": "Match the frequency cards to the school-week habits.",
+              "hint": "Think about what happens every day, what happens often, and what should never happen."
+            },
+            "weekend-club": {
+              "title": "Weekend club",
+              "prompt": "Set the right weekly rhythm for the weekend club plan.",
+              "hint": "One activity is a weekend habit, one happens only sometimes, and one never happens."
+            },
+            "after-school": {
+              "title": "After school",
+              "prompt": "Match the cards to the after-school routine.",
+              "hint": "Homework happens every day, the park only sometimes, and swimming never happens."
+            },
+            "morning-check": {
+              "title": "Morning check",
+              "prompt": "Build the morning routine for a careful school day.",
+              "hint": "Getting up at seven happens most days, being late never happens, and TV only happens sometimes."
+            }
+          },
+          "frequencies": {
+            "always": {
+              "label": "always",
+              "description": "every day or every time"
+            },
+            "usually": {
+              "label": "usually",
+              "description": "most days"
+            },
+            "sometimes": {
+              "label": "sometimes",
+              "description": "only a few days"
+            },
+            "never": {
+              "label": "never",
+              "description": "zero days"
+            }
+          },
+          "actions": {
+            "go_to_cinema": "go to the cinema",
+            "go_with_friends": "go with friends",
+            "eat_popcorn": "eat popcorn",
+            "do_homework": "do homework",
+            "get_up_at_seven": "get up at seven",
+            "be_late_for_school": "be late for school",
+            "go_to_park": "go to the park",
+            "watch_tv": "watch TV",
+            "go_swimming": "go swimming"
           }
         }
       }
@@ -3503,6 +3595,7 @@
         "english_subject_verb_agreement": "Subject-verb agreement",
         "english_articles": "Articles",
         "english_adjectives": "Adjectives",
+        "english_adverbs_frequency": "Adverbs of frequency",
         "english_prepositions_time_place": "Time and place prepositions"
       }
     },
@@ -3646,6 +3739,7 @@
       "english_subject_verb_agreement": "Subject-verb agreement",
       "english_articles": "Articles",
       "english_adjectives": "Adjectives",
+      "english_adverbs_frequency": "Adverbs of frequency",
       "english_prepositions_time_place": "Time and place prepositions"
     }
   },
@@ -5810,6 +5904,135 @@
         }
       }
     },
+    "englishAdverbsFrequency": {
+      "slides": {
+        "intro": {
+          "overview": {
+            "title": "How often does it happen?",
+            "lead": "Adverbs of frequency tell us how often an action happens. They help us talk about routines and habits.",
+            "caption": "always = all the time, usually = most of the time, sometimes = a few times, never = no times"
+          }
+        },
+        "routine": {
+          "cinemaStory": {
+            "title": "A cinema routine",
+            "lead": "Read the small routine and notice how the adverbs change the picture of the week.",
+            "caption": "Always, usually, and never change how many days light up in the week."
+          },
+          "frequencyStrip": {
+            "title": "Read the weekly strip",
+            "lead": "You can imagine each adverb as a row of seven days. More lights mean a more frequent action.",
+            "items": {
+              "always": "always = 7 days",
+              "usually": "usually = most days",
+              "sometimes": "sometimes = a few days",
+              "never": "never = 0 days"
+            }
+          }
+        },
+        "position": {
+          "mainVerb": {
+            "title": "Put the adverb before the main verb",
+            "lead": "With most verbs, the adverb of frequency goes before the main verb.",
+            "caption": "She always checks her notes."
+          },
+          "beVerb": {
+            "title": "Put the adverb after be",
+            "lead": "With am, is, and are, the adverb usually comes after the verb be.",
+            "caption": "He is never late."
+          },
+          "repairOrder": {
+            "title": "Fix the order",
+            "lead": "Sometimes the adverb lands in the wrong place. Move it back where English expects it.",
+            "caption": "I always do my homework. He is never late."
+          }
+        },
+        "answer": {
+          "howOften": {
+            "title": "Answer How often...?",
+            "lead": "Use an adverb of frequency to answer questions about routines and habits.",
+            "caption": "How often do you go to the park? I sometimes go after school."
+          },
+          "wordBank": {
+            "title": "Frequency word bank",
+            "lead": "Keep these four words ready when you describe your week."
+          },
+          "chooseWord": {
+            "title": "Choose the best frequency word",
+            "lead": "Match the clue with the adverb that fits best before you build your own routine.",
+            "items": {
+              "homework": {
+                "clue": "I do my homework every day after school.",
+                "answer": "always"
+              },
+              "seven": {
+                "clue": "She gets up at seven on most school days.",
+                "answer": "usually"
+              },
+              "late": {
+                "clue": "He is late for school on zero days.",
+                "answer": "never"
+              },
+              "tv": {
+                "clue": "We watch TV on a few evenings.",
+                "answer": "sometimes"
+              }
+            }
+          },
+          "myWeek": {
+            "title": "Build your own week",
+            "lead": "Now turn the frequency words into your own habit card. Pick simple actions and say how often they happen.",
+            "caption": "I always do my homework. I sometimes go to the park. I never arrive late."
+          },
+          "favoritePlace": {
+            "title": "Talk about one place",
+            "lead": "Pick one place you know and say how often you go there. Frequency words make your sentence much clearer.",
+            "caption": "I usually go to the library. I sometimes go to the park. I never go to the swimming pool on school days."
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Quick recap",
+            "lead": "Keep these rules in mind when you talk about routines.",
+            "items": {
+              "meaning": "Always, usually, sometimes, and never show how often something happens.",
+              "mainVerb": "Before the main verb: I always do my homework.",
+              "beVerb": "After be: She is never late.",
+              "answer": "Use them to answer How often...? questions."
+            }
+          }
+        }
+      }
+    },
+    "englishAdverbsFrequencyShell": {
+      "lessonTitle": "English: Adverbs of Frequency",
+      "sections": {
+        "intro": {
+          "title": "Intro",
+          "description": "What frequency words mean"
+        },
+        "routine": {
+          "title": "Routine",
+          "description": "See frequency across a whole week"
+        },
+        "position": {
+          "title": "Position",
+          "description": "Where the adverb sits in the sentence"
+        },
+        "answer": {
+          "title": "Answer",
+          "description": "Talk about your habits"
+        },
+        "gameFrequencyStudio": {
+          "title": "Frequency Studio",
+          "description": "Build an animated weekly planner"
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "Key rules in one place"
+        }
+      }
+    },
     "englishBasics": {
       "slides": {
         "greetings": {
@@ -7490,6 +7713,7 @@
       "english_subject_verb_agreement": "Subject-verb agreement",
       "english_articles": "Articles",
       "english_adjectives": "Adjectives",
+      "english_adverbs_frequency": "Adverbs of frequency",
       "english_prepositions_time_place": "Time and place prepositions"
     }
   },

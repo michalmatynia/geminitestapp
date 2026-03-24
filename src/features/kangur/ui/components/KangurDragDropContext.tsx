@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback } from 'react';
-import type { CSSProperties, JSX, ReactNode } from 'react';
+import type { CSSProperties, JSX, ReactNode, ReactPortal } from 'react';
+import { createPortal } from 'react-dom';
 
 import {
   DragDropContext,
@@ -31,6 +32,17 @@ export const getKangurMobileDragHandleStyle = (
     ...(style ?? {}),
     touchAction: 'none',
   };
+};
+
+export const renderKangurDragPreview = (
+  content: JSX.Element,
+  isDragging: boolean
+): JSX.Element | ReactPortal => {
+  if (!isDragging || typeof document === 'undefined') {
+    return content;
+  }
+
+  return createPortal(content, document.body);
 };
 
 type Props = Omit<DragDropContextProps, 'children'> & {

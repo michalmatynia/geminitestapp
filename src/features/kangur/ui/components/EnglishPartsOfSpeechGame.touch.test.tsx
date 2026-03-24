@@ -4,7 +4,9 @@
 
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+let draggableSnapshot = { isDragging: false };
 
 vi.mock('next-intl', async () => await vi.importActual<typeof import('next-intl')>('next-intl'));
 vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>('use-intl'));
@@ -49,7 +51,7 @@ vi.mock('@hello-pangea/dnd', () => ({
         draggableProps: {},
         dragHandleProps: {},
       },
-      { isDragging: false }
+      draggableSnapshot
     ),
 }));
 
@@ -66,6 +68,10 @@ const renderGame = () =>
       <EnglishPartsOfSpeechGame onFinish={vi.fn()} />
     </NextIntlClientProvider>
   );
+
+afterEach(() => {
+  draggableSnapshot = { isDragging: false };
+});
 
 describe('EnglishPartsOfSpeechGame touch interactions', () => {
   it('shows coarse-pointer guidance and supports tap-to-assign fallback', () => {
@@ -93,5 +99,16 @@ describe('EnglishPartsOfSpeechGame touch interactions', () => {
     expect(screen.getByTestId('english-parts-of-speech-selection-hint')).toHaveTextContent(
       'Tap a word, then tap a category or the pool.'
     );
+  });
+
+  it('renders the active dragged word through the shared body portal path', () => {
+    draggableSnapshot = { isDragging: true };
+
+    renderGame();
+
+    const pool = screen.getByRole('button', { name: 'Pool of words to sort' });
+
+    expect(within(pool).queryByRole('button', { name: 'equation' })).not.toBeInTheDocument();
+    expect(within(document.body).getByRole('button', { name: 'equation' })).toBeInTheDocument();
   });
 });

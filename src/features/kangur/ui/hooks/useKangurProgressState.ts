@@ -1,7 +1,8 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import {
   getKangurProgressServerSnapshot,
   loadProgress,
@@ -11,5 +12,12 @@ import {
 const subscribe = (onStoreChange: () => void): (() => void) =>
   subscribeToProgress(() => onStoreChange());
 
-export const useKangurProgressState = () =>
-  useSyncExternalStore(subscribe, loadProgress, getKangurProgressServerSnapshot);
+export const useKangurProgressState = () => {
+  const { subjectKey } = useKangurSubjectFocus();
+  const getSnapshot = useCallback(
+    () => loadProgress({ ownerKey: subjectKey }),
+    [subjectKey]
+  );
+
+  return useSyncExternalStore(subscribe, getSnapshot, getKangurProgressServerSnapshot);
+};

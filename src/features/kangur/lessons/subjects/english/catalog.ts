@@ -8,6 +8,7 @@ export const ENGLISH_LESSON_COMPONENT_ORDER = [
   'english_subject_verb_agreement',
   'english_articles',
   'english_adjectives',
+  'english_adverbs_frequency',
   'english_prepositions_time_place',
 ] as const satisfies readonly KangurLessonComponentId[];
 
@@ -80,6 +81,17 @@ export const ENGLISH_LESSON_TEMPLATES: Record<EnglishLessonComponentId, KangurLe
     emoji: '🎨',
     color: 'kangur-gradient-accent-indigo',
     activeBg: 'bg-indigo-500',
+  },
+  english_adverbs_frequency: {
+    componentId: 'english_adverbs_frequency',
+    subject: 'english',
+    ageGroup: 'ten_year_old',
+    label: 'English Adverbs of Frequency Lesson',
+    title: 'English: Adverbs of Frequency',
+    description: 'Always, usually, sometimes i never w codziennych rutynach',
+    emoji: '🔁',
+    color: 'kangur-gradient-accent-cyan',
+    activeBg: 'bg-cyan-500',
   },
   english_prepositions_time_place: {
     componentId: 'english_prepositions_time_place',

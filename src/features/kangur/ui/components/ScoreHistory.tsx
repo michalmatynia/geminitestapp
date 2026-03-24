@@ -68,6 +68,7 @@ const OP_ACCENTS: Record<string, KangurAccent> = {
   english_subject_verb_agreement: 'teal',
   english_articles: 'amber',
   english_adjectives: 'indigo',
+  english_adverbs_frequency: 'sky',
   english_prepositions_time_place: 'rose',
 };
 

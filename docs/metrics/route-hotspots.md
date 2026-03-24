@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-23'
+last_reviewed: '2026-03-24'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-03-23T13:07:40.931Z
+Generated at: 2026-03-24T23:07:29.938Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -16,13 +16,13 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 279 |
-| `src/app/api/image-studio/[[...path]]/route.ts` | 232 |
-| `src/app/api/v2/integrations/[[...path]]/route.ts` | 228 |
-| `src/app/api/agentcreator/[[...path]]/route.ts` | 225 |
-| `src/app/api/ai-paths/[[...path]]/route.ts` | 202 |
-| `src/app/api/databases/[[...path]]/route.ts` | 200 |
-| `src/app/api/chatbot/[[...path]]/route.ts` | 165 |
+| `src/app/api/v2/integrations/[[...path]]/route.ts` | 231 |
+| `src/app/api/agentcreator/[[...path]]/route.ts` | 228 |
+| `src/app/api/ai-paths/[[...path]]/route.ts` | 205 |
+| `src/app/api/databases/[[...path]]/route.ts` | 203 |
+| `src/app/api/chatbot/[[...path]]/route.ts` | 168 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 161 |
+| `src/app/api/image-studio/[[...path]]/route.ts` | 126 |
 | `src/app/api/agent/leases/route.ts` | 122 |
 | `src/app/api/kangur/[[...path]]/route.ts` | 62 |
 | `src/app/api/agent/resources/route.ts` | 59 |
@@ -32,10 +32,10 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | `src/app/api/kangur/auth/parent-magic-link/request/route.ts` | 33 |
 | `src/app/api/v2/metadata/[type]/[id]/route.ts` | 25 |
 | `src/app/api/cms/slugs/[id]/route.ts` | 24 |
+| `src/app/api/auth/roles/route.ts` | 23 |
 | `src/app/api/auth/users/[id]/route.ts` | 23 |
 | `src/app/api/drafts/[id]/route.ts` | 23 |
 | `src/app/api/kangur/auth/me/route.ts` | 23 |
-| `src/app/api/ai/schema/[entity]/route.ts` | 22 |
 
 ## Top App Pages by LOC
 
@@ -64,13 +64,13 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 ## Recommended First Runtime Profiling Targets
 
-- `src/app/api/v2/products/[[...path]]/route.ts`
-- `src/app/api/image-studio/[[...path]]/route.ts`
 - `src/app/api/v2/integrations/[[...path]]/route.ts`
 - `src/app/api/agentcreator/[[...path]]/route.ts`
 - `src/app/api/ai-paths/[[...path]]/route.ts`
 - `src/app/api/databases/[[...path]]/route.ts`
 - `src/app/api/chatbot/[[...path]]/route.ts`
+- `src/app/api/v2/products/[[...path]]/route.ts`
+- `src/app/api/image-studio/[[...path]]/route.ts`
 - `src/app/api/agent/leases/route.ts`
 - `src/app/api/kangur/[[...path]]/route.ts`
 - `src/app/api/agent/resources/route.ts`

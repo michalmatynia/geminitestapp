@@ -42,6 +42,7 @@ export function KangurLearnerProfileResultsWidget(): React.JSX.Element | null {
         learnerId={activeLearnerId}
         playerName={playerName}
         progress={progress}
+        showProgressOverview={false}
         summaryDescription={translations('widgets.scores.trackSummary.description')}
         summaryLabel={translations('widgets.scores.trackSummary.label')}
         summaryTestId='learner-profile-results-track-summary'

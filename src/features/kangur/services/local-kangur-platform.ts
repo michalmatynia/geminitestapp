@@ -1,4 +1,5 @@
 import {
+  isRecoverableKangurClientFetchError,
   withKangurClientError,
   withKangurClientErrorSync,
 } from '@/features/kangur/observability/client';
@@ -155,10 +156,14 @@ const requestProgressFromApi = async (
     },
     {
       fallback: createKangurClientFallback('progress.get'),
-      shouldReport: (error) => !isKangurAuthStatusError(error),
+      shouldReport: (error) =>
+        !isKangurAuthStatusError(error) && !isRecoverableKangurClientFetchError(error),
       shouldRethrow: () => true,
       onError: (error) => {
-        if (isKangurAuthStatusError(error)) {
+        if (
+          isKangurAuthStatusError(error) ||
+          isRecoverableKangurClientFetchError(error)
+        ) {
           return;
         }
         trackReadFailure('progress.get', error, {
@@ -257,10 +262,14 @@ const requestLearnerActivityStatus = async (): Promise<KangurLearnerActivityStat
     },
     {
       fallback: createKangurClientFallback('learnerActivity.get'),
-      shouldReport: (error) => !isKangurAuthStatusError(error),
+      shouldReport: (error) =>
+        !isKangurAuthStatusError(error) && !isRecoverableKangurClientFetchError(error),
       shouldRethrow: () => true,
       onError: (error) => {
-        if (isKangurAuthStatusError(error)) {
+        if (
+          isKangurAuthStatusError(error) ||
+          isRecoverableKangurClientFetchError(error)
+        ) {
           return;
         }
         trackReadFailure('learnerActivity.get', error, {

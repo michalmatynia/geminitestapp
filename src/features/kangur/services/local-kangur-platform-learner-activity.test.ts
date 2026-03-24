@@ -27,6 +27,11 @@ vi.mock('@/features/kangur/services/local-kangur-platform-shared', () => ({
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({
+  isRecoverableKangurClientFetchError: (error: unknown) =>
+    error instanceof Error &&
+    error.name === 'TypeError' &&
+    (error.message.trim().toLowerCase() === 'failed to fetch' ||
+      error.message.trim().toLowerCase().includes('load failed')),
   withKangurClientError: async (
     _report: unknown,
     task: () => Promise<unknown>,
@@ -162,5 +167,17 @@ describe('local-kangur-platform learner activity shared API client integration',
         kind: 'lesson',
       }),
     );
+  });
+
+  it('does not track recoverable fetch misses while loading learner activity', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+
+    const { createLocalKangurPlatform } = await import(
+      '@/features/kangur/services/local-kangur-platform'
+    );
+    const platform = createLocalKangurPlatform();
+
+    await expect(platform.learnerActivity.get()).rejects.toThrow('Failed to fetch');
+    expect(trackReadFailureMock).not.toHaveBeenCalled();
   });
 });

@@ -216,7 +216,10 @@ export function KangurAiTutorGuidedCallout({
     !isSelectionExplainPendingMode &&
     !isLoading &&
     resolvedSelectionAssistantMessage !== null;
-  const shouldHideResolvedSelectionAnswer = isResolvedSelectionCallout && isTestSurface;
+  const hasKnowledgeBackedSelectionAnswer =
+    resolvedSelectionAssistantMessage?.answerResolutionMode === 'page_content';
+  const shouldHideResolvedSelectionAnswer =
+    isResolvedSelectionCallout && isTestSurface && !hasKnowledgeBackedSelectionAnswer;
   const isHintResponseCandidate =
     resolvedSelectionAssistantMessage?.coachingFrame?.mode === 'hint_ladder' ||
     lastPromptMode === 'hint' ||
@@ -238,7 +241,7 @@ export function KangurAiTutorGuidedCallout({
   const selectedKnowledgeSummary =
     selectedKnowledgeFragment?.explanation ?? selectedKnowledgeEntry?.summary ?? null;
   const resolvedSelectionDetail =
-    resolvedSelectionAssistantMessage?.answerResolutionMode === 'page_content'
+    hasKnowledgeBackedSelectionAnswer
       ? 'Wyjaśnienie korzysta z zapisanej treści strony dla tego zaznaczenia.'
       : isResolvedSelectionCallout
         ? 'Wyjaśnienie jest już gotowe dla zaznaczonego fragmentu.'
@@ -247,8 +250,7 @@ export function KangurAiTutorGuidedCallout({
     !(mode === 'selection' && isResolvedSelectionCallout);
   const shouldShowSelectionDetail = Boolean(resolvedSelectionDetail);
   const shouldShowSelectionPageContentBadge =
-    resolvedSelectionAssistantMessage?.answerResolutionMode === 'page_content' &&
-    !shouldHideResolvedSelectionAnswer;
+    hasKnowledgeBackedSelectionAnswer && !shouldHideResolvedSelectionAnswer;
   const shouldShowSelectionPreparingBadge =
     mode === 'selection' && !isResolvedSelectionCallout && !shouldShowSelectedKnowledgeReference;
   const shouldAnnounceCallout =

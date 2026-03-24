@@ -1,50 +1,21 @@
 'use client';
 
-import { useId, useMemo, useState } from 'react';
+import { useId } from 'react';
 
+import {
+  AgenticAssignmentGame,
+  type AgenticAssignmentGameItem,
+  type AgenticAssignmentGameOption,
+} from '@/features/kangur/ui/components/AgenticAssignmentGame';
 import {
   renderSoftAtmosphereGradients,
   renderSoftAtmosphereOvals,
 } from '@/features/kangur/ui/components/animations/svgAtmosphere';
-import {
-  KangurLessonCallout,
-  KangurLessonCaption,
-  KangurLessonInset,
-  KangurLessonLead,
-  KangurLessonStack,
-} from '@/features/kangur/ui/design/lesson-primitives';
-import {
-  KangurButton,
-  KangurGradientHeading,
-  KangurInfoCard,
-  KangurProgressBar,
-  KangurStatusChip,
-} from '@/features/kangur/ui/design/primitives';
-import {
-  KANGUR_GRID_TIGHT_CLASSNAME,
-  KANGUR_PANEL_GAP_CLASSNAME,
-  KANGUR_WRAP_ROW_SPACED_CLASSNAME,
-} from '@/features/kangur/ui/design/tokens';
-import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';
-import { cn } from '@/features/kangur/shared/utils';
 
 type ReasoningLevelId = 'low' | 'medium' | 'high' | 'xhigh';
 
-type ReasoningLevel = {
-  id: ReasoningLevelId;
-  label: string;
-  description: string;
-  colorClass: string;
-};
-
-type RouterTask = {
-  id: string;
-  text: string;
-  answer: ReasoningLevelId;
-};
-
-const REASONING_LEVELS: ReasoningLevel[] = [
+const REASONING_LEVELS: AgenticAssignmentGameOption<ReasoningLevelId>[] = [
   {
     id: 'low',
     label: 'Low',
@@ -71,7 +42,7 @@ const REASONING_LEVELS: ReasoningLevel[] = [
   },
 ];
 
-const ROUTER_TASKS: RouterTask[] = [
+const ROUTER_TASKS: AgenticAssignmentGameItem<ReasoningLevelId>[] = [
   {
     id: 'typo-fix',
     text: 'Fix a typo in README and rerun lint.',
@@ -219,209 +190,71 @@ export const ReasoningDialVisual = (): JSX.Element => {
 export default function AgenticReasoningRouterGame({
   onFinish,
 }: KangurMiniGameFinishActionProps): JSX.Element {
-  const isCoarsePointer = useKangurCoarsePointer();
-  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
-  const [assignments, setAssignments] = useState<Record<string, ReasoningLevelId>>({});
-  const [checked, setChecked] = useState(false);
-
-  const assignedCount = Object.keys(assignments).length;
-  const progress = Math.round((assignedCount / ROUTER_TASKS.length) * 100);
-
-  const score = useMemo(
-    () => ROUTER_TASKS.filter((task) => assignments[task.id] === task.answer).length,
-    [assignments]
-  );
-
-  const isPerfect = score === ROUTER_TASKS.length && assignedCount === ROUTER_TASKS.length;
-  const activeTask = activeTaskId
-    ? ROUTER_TASKS.find((task) => task.id === activeTaskId) ?? null
-    : null;
-  const touchHint = activeTask
-    ? `Selected task: ${activeTask.text} Tap a reasoning level.`
-    : 'Tap a task card, then tap a reasoning level.';
-
-  const handleAssign = (levelId: ReasoningLevelId) => {
-    if (!activeTaskId) return;
-
-    setAssignments((prev) => ({
-      ...prev,
-      [activeTaskId]: levelId,
-    }));
-    setActiveTaskId(null);
-    setChecked(false);
-  };
-
-  const handleReset = () => {
-    setAssignments({});
-    setActiveTaskId(null);
-    setChecked(false);
-  };
-
-  const handleCheck = () => {
-    setChecked(true);
-  };
-
   return (
-    <KangurLessonStack align='start' className='w-full'>
-      <div className='relative w-full overflow-hidden rounded-[28px] border border-teal-200/80 bg-gradient-to-br from-teal-50 via-white to-sky-50 p-6'>
-        <div className='pointer-events-none absolute -right-14 top-4 h-36 w-36 rounded-full bg-teal-200/40 blur-3xl' />
-        <div className='pointer-events-none absolute -left-10 bottom-4 h-28 w-28 rounded-full bg-sky-200/40 blur-3xl' />
-        <div className='relative flex flex-col gap-4'>
-          <KangurStatusChip accent='teal' labelStyle='caps'>
-            Reasoning Router
-          </KangurStatusChip>
-          <KangurGradientHeading gradientClass='from-teal-500 via-cyan-500 to-sky-500' size='lg'>
-            Route Tasks by Reasoning Level
-          </KangurGradientHeading>
-          <KangurLessonLead align='left'>
-            Pick a task card, then assign the right reasoning level. Aim for the lightest
-            effort that still keeps quality high.
-          </KangurLessonLead>
-          <KangurLessonCallout accent='teal' padding='sm' className='text-left'>
-            <ul className='space-y-2 text-sm text-teal-950'>
-              <li>Select a task to focus it.</li>
-              <li>Click a reasoning level to route.</li>
-              <li>Check your routing once all tasks are set.</li>
-            </ul>
-          </KangurLessonCallout>
-        </div>
-      </div>
-
-      <div className={`grid ${KANGUR_PANEL_GAP_CLASSNAME} lg:grid-cols-[1.6fr_1fr]`}>
-        <KangurInfoCard tone='accent' accent='teal' className='relative overflow-hidden'>
-          <div className='pointer-events-none absolute inset-0 opacity-40 [background:radial-gradient(circle_at_top,_rgba(45,212,191,0.3),_transparent_55%)]' />
-          <div className='relative flex flex-col gap-4'>
-            <div className='flex flex-wrap items-center justify-between gap-3'>
-              <div>
-                <p className='text-sm font-semibold text-teal-950'>Routing Queue</p>
-                <KangurLessonCaption className='text-teal-800'>
-                  {isCoarsePointer ? 'Tap a task to focus it.' : 'Choose the right effort.'}
-                </KangurLessonCaption>
-              </div>
-              <KangurStatusChip accent='teal' size='sm'>
-                {assignedCount}/{ROUTER_TASKS.length} routed
-              </KangurStatusChip>
-            </div>
-            <KangurProgressBar accent='teal' value={progress} size='sm' />
-            {isCoarsePointer ? (
-              <div
-                aria-live='polite'
-                className='rounded-2xl border border-teal-200/80 bg-white/80 px-4 py-3 text-sm font-semibold text-teal-950 shadow-sm'
-                data-testid='agentic-reasoning-touch-hint'
-              >
-                {touchHint}
-              </div>
-            ) : null}
-
-            <div className='grid gap-3' role='group' aria-label='Select a task to route'>
-              {ROUTER_TASKS.map((task) => {
-                const assignedLevel = assignments[task.id];
-                const isActive = activeTaskId === task.id;
-                const isCorrect = checked && assignedLevel === task.answer;
-                const isWrong = checked && assignedLevel && assignedLevel !== task.answer;
-
-                return (
-                  <button
-                    key={task.id}
-                    type='button'
-                    onClick={() => setActiveTaskId(task.id)}
-                    className={cn(
-                      'w-full rounded-2xl border bg-white/80 text-left text-sm font-semibold transition-all touch-manipulation select-none',
-                      isCoarsePointer
-                        ? 'min-h-[5rem] px-4 py-4 active:scale-[0.99] active:shadow-sm'
-                        : 'px-4 py-3 hover:-translate-y-0.5 hover:shadow-md',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/70 focus-visible:ring-offset-2 ring-offset-white',
-                      isActive && 'border-teal-400 bg-teal-50',
-                      !isActive && 'border-teal-100/80',
-                      isCorrect && 'border-teal-400 bg-teal-50',
-                      isWrong && 'border-amber-300 bg-amber-50'
-                    )}
-                    aria-pressed={isActive}
-                  >
-                    <div className='flex flex-wrap items-center justify-between gap-2'>
-                      <span>{task.text}</span>
-                      {assignedLevel ? (
-                        <span className='rounded-full border border-teal-200/70 bg-teal-100 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-teal-700'>
-                          {REASONING_LEVELS.find((level) => level.id === assignedLevel)?.label ?? 'Selected'}
-                        </span>
-                      ) : null}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </KangurInfoCard>
-
-        <KangurLessonInset accent='teal' className='relative overflow-hidden'>
-          <div className='pointer-events-none absolute inset-0 opacity-40 [background:radial-gradient(circle_at_top,_rgba(14,116,144,0.25),_transparent_60%)]' />
-          <div className='relative flex h-full flex-col gap-4'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-sm font-semibold text-teal-950'>Reasoning Levels</p>
-                <KangurLessonCaption className='text-teal-800'>
-                  {isCoarsePointer ? 'Tap to route the selected task.' : 'Click to route.'}
-                </KangurLessonCaption>
-              </div>
-              <ReasoningDialVisual />
-            </div>
-            <div className={cn('grid gap-3', KANGUR_GRID_TIGHT_CLASSNAME)} role='group' aria-label='Choose a reasoning level'>
-              {REASONING_LEVELS.map((level) => (
-                <button
-                  key={level.id}
-                  type='button'
-                  onClick={() => handleAssign(level.id)}
-                  className={cn(
-                    'rounded-2xl border text-left text-sm font-semibold transition-all touch-manipulation select-none',
-                    isCoarsePointer
-                      ? 'min-h-[5rem] px-4 py-4 active:scale-[0.99] active:shadow-sm'
-                      : 'px-4 py-3 hover:-translate-y-0.5 hover:shadow-md',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/70 focus-visible:ring-offset-2 ring-offset-white',
-                    level.colorClass,
-                    activeTaskId ? 'opacity-100' : 'opacity-60'
-                  )}
-                  disabled={!activeTaskId}
-                  aria-disabled={!activeTaskId}
-                  aria-label={level.label}
-                >
-                  <div className='text-xs font-semibold uppercase tracking-[0.2em]'>{level.label}</div>
-                  <KangurLessonCaption className='mt-1 text-teal-900'>
-                    {level.description}
-                  </KangurLessonCaption>
-                </button>
-              ))}
-            </div>
-
-            {checked ? (
-              <div
-                className={cn(
-                  'rounded-2xl border px-4 py-3 text-xs font-semibold',
-                  isPerfect
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
-                    : 'border-amber-200 bg-amber-50 text-amber-900'
-                )}
-              >
-                {isPerfect
-                  ? 'Perfect routing. Your effort levels are spot on.'
-                  : `You routed ${score}/${ROUTER_TASKS.length} correctly. Adjust the mismatches and try again.`}
-              </div>
-            ) : null}
-
-            <div className={cn('mt-auto flex flex-wrap items-center gap-2', KANGUR_WRAP_ROW_SPACED_CLASSNAME)}>
-              <KangurButton size='sm' variant='surface' type='button' onClick={handleReset}>
-                Reset
-              </KangurButton>
-              <KangurButton size='sm' variant='primary' type='button' onClick={handleCheck}>
-                Check
-              </KangurButton>
-              <div className='flex-1' />
-              <KangurButton size='sm' variant='ghost' type='button' onClick={onFinish}>
-                Back to lesson
-              </KangurButton>
-            </div>
-          </div>
-        </KangurLessonInset>
-      </div>
-    </KangurLessonStack>
+    <AgenticAssignmentGame
+      copy={{
+        statusLabel: 'Reasoning Router',
+        heading: 'Route Tasks by Reasoning Level',
+        lead:
+          'Pick a task card, then assign the right reasoning level. Aim for the lightest effort that still keeps quality high.',
+        instructions: [
+          'Select a task to focus it.',
+          'Click a reasoning level to route.',
+          'Check your routing once all tasks are set.',
+        ],
+        leftPanelTitle: 'Routing Queue',
+        leftPanelCaption: {
+          coarsePointer: 'Tap a task to focus it.',
+          finePointer: 'Choose the right effort.',
+        },
+        leftPanelCountLabel: (assignedCount, total) => `${assignedCount}/${total} routed`,
+        leftPanelGroupLabel: 'Select a task to route',
+        leftPanelTouchHint: {
+          idle: 'Tap a task card, then tap a reasoning level.',
+          selected: (itemText) => `Selected task: ${itemText} Tap a reasoning level.`,
+          testId: 'agentic-reasoning-touch-hint',
+        },
+        rightPanelTitle: 'Reasoning Levels',
+        rightPanelCaption: {
+          coarsePointer: 'Tap to route the selected task.',
+          finePointer: 'Click to route.',
+        },
+        rightPanelGroupLabel: 'Choose a reasoning level',
+        successMessage: 'Perfect routing. Your effort levels are spot on.',
+        failureMessage: (score, total) =>
+          `You routed ${score}/${total} correctly. Adjust the mismatches and try again.`,
+      }}
+      items={ROUTER_TASKS}
+      onFinish={onFinish}
+      options={REASONING_LEVELS}
+      theme={{
+        accent: 'teal',
+        heroClassName:
+          'border border-teal-200/80 bg-gradient-to-br from-teal-50 via-white to-sky-50',
+        heroTopGlowClassName: '-right-14 top-4 bg-teal-200/40',
+        heroBottomGlowClassName: '-left-10 bottom-4 bg-sky-200/40',
+        headingGradientClass: 'from-teal-500 via-cyan-500 to-sky-500',
+        instructionListClassName: 'space-y-2 text-sm text-teal-950',
+        leftPanelGlowClassName:
+          '[background:radial-gradient(circle_at_top,_rgba(45,212,191,0.3),_transparent_55%)]',
+        leftPanelTitleClassName: 'text-teal-950',
+        leftPanelCaptionClassName: 'text-teal-800',
+        leftTouchHintClassName: 'border-teal-200/80 text-teal-950',
+        leftItemFocusRingClassName: 'focus-visible:ring-teal-400/70',
+        leftItemActiveClassName: 'border-teal-400 bg-teal-50',
+        leftItemInactiveClassName: 'border-teal-100/80',
+        leftItemCorrectClassName: 'border-teal-400 bg-teal-50',
+        leftItemWrongClassName: 'border-amber-300 bg-amber-50',
+        leftAssignedBadgeClassName:
+          'border-teal-200/70 bg-teal-100 text-teal-700',
+        rightPanelGlowClassName:
+          '[background:radial-gradient(circle_at_top,_rgba(14,116,144,0.25),_transparent_60%)]',
+        rightPanelTitleClassName: 'text-teal-950',
+        rightPanelCaptionClassName: 'text-teal-800',
+        rightOptionFocusRingClassName: 'focus-visible:ring-teal-400/70',
+        rightOptionDescriptionClassName: 'text-teal-900',
+      }}
+      visual={<ReasoningDialVisual />}
+    />
   );
 }

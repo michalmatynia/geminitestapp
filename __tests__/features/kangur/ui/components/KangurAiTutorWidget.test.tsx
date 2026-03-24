@@ -178,6 +178,7 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   KangurAiTutorActivationContext: createContext(null),
   useKangurAiTutor: useKangurAiTutorMock,
   useOptionalKangurAiTutor: useKangurAiTutorMock,
+  useKangurAiTutorDeferredActivationBridge: vi.fn(),
 }));
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
   useKangurAiTutorContent: () => DEFAULT_KANGUR_AI_TUTOR_CONTENT,

@@ -111,14 +111,8 @@ describe('KangurLearnerProfileResultsWidget', () => {
     render(<KangurLearnerProfileResultsWidget />);
 
     expect(screen.getByTestId('score-history-stub')).toBeInTheDocument();
-    expect(screen.getByTestId('progress-overview-stub')).toBeInTheDocument();
-    expect(getCurrentKangurDailyQuestMock).toHaveBeenCalledWith(
-      runtimeValue.progress,
-      expect.objectContaining({
-        subject: 'maths',
-        translate: expect.any(Function),
-      })
-    );
+    expect(screen.queryByTestId('progress-overview-stub')).toBeNull();
+    expect(getCurrentKangurDailyQuestMock).not.toHaveBeenCalled();
     expect(scoreHistoryMock).toHaveBeenCalledWith(
       expect.objectContaining({
         basePath: '/kangur',
@@ -127,12 +121,7 @@ describe('KangurLearnerProfileResultsWidget', () => {
         playerName: 'Ada',
       })
     );
-    expect(progressOverviewMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        progress: runtimeValue.progress,
-        dailyQuest: null,
-      })
-    );
+    expect(progressOverviewMock).not.toHaveBeenCalled();
   });
 
   it('renders learner-profile intro copy when a page-content entry exists', () => {

@@ -18,11 +18,11 @@ export const createKangurPageTransitionMotionProps = (
       transition: { duration: 0 },
     }
     : {
-      initial: { opacity: 0.92, y: 12 },
+      initial: { opacity: 0.94, y: 8 },
       animate: { opacity: 1, y: 0 },
-      exit: { opacity: 0.98, y: -4 },
+      exit: { opacity: 0.98, y: -3 },
       transition: {
-        duration: 0.32,
+        duration: 0.2,
         ease: KANGUR_PAGE_TRANSITION_EASE,
       },
     };

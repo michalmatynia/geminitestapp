@@ -193,6 +193,68 @@ describe('persistKangurSessionScore', () => {
     );
   });
 
+  it('stores guest scores quietly when auth resolves with a plain authentication-required error', async () => {
+    authMeMock.mockRejectedValue(new Error('Authentication required'));
+    window.sessionStorage.setItem('kangur.guest-player-name', 'Mila');
+
+    await persistKangurSessionScore({
+      operation: 'addition',
+      score: 5,
+      totalQuestions: 6,
+      correctAnswers: 5,
+      timeTakenSeconds: 19,
+      xpEarned: 24,
+    });
+
+    expect(createScoreMock).not.toHaveBeenCalled();
+    const [storedScore] = loadGuestKangurScores();
+    expect(storedScore).toEqual(
+      expect.objectContaining({
+        player_name: 'Mila',
+        score: 5,
+        operation: 'addition',
+        subject: 'maths',
+        total_questions: 6,
+        correct_answers: 5,
+        time_taken: 19,
+        xp_earned: 24,
+      })
+    );
+    expect(logKangurClientErrorMock).not.toHaveBeenCalled();
+  });
+
+  it('stores guest scores quietly when score creation requires authentication', async () => {
+    authMeMock.mockResolvedValue({
+      full_name: 'Ada Lovelace',
+      activeLearner: { displayName: 'Ada' },
+    });
+    createScoreMock.mockRejectedValue(new Error('Authentication required'));
+
+    await persistKangurSessionScore({
+      operation: 'clock',
+      score: 4,
+      totalQuestions: 6,
+      correctAnswers: 4,
+      timeTakenSeconds: 27,
+      xpEarned: 18,
+    });
+
+    const [storedScore] = loadGuestKangurScores();
+    expect(storedScore).toEqual(
+      expect.objectContaining({
+        player_name: 'Ada Lovelace',
+        score: 4,
+        operation: 'clock',
+        subject: 'maths',
+        total_questions: 6,
+        correct_answers: 4,
+        time_taken: 27,
+        xp_earned: 18,
+      })
+    );
+    expect(logKangurClientErrorMock).not.toHaveBeenCalled();
+  });
+
   it('skips score persistence for parent accounts without an active learner', async () => {
     authMeMock.mockResolvedValue({
       actorType: 'parent',

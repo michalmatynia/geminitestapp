@@ -125,6 +125,18 @@ export const reportKangurClientError = (
   });
 };
 
+export const isRecoverableKangurClientFetchError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.trim().toLowerCase();
+  return (
+    error.name === 'TypeError' &&
+    (message === 'failed to fetch' || message.includes('load failed'))
+  );
+};
+
 export const withKangurClientError = async <T>(
   report: KangurClientErrorReport | ((error: unknown) => KangurClientErrorReport),
   task: () => Promise<T>,

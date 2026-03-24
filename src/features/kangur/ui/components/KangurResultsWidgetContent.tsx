@@ -21,6 +21,7 @@ type KangurResultsWidgetContentProps = {
   summaryTestId: string;
   summaryDescription: string;
   summaryLabel: string;
+  showProgressOverview?: boolean;
 };
 
 export function KangurResultsWidgetContent({
@@ -33,14 +34,17 @@ export function KangurResultsWidgetContent({
   summaryTestId,
   summaryDescription,
   summaryLabel,
+  showProgressOverview = true,
 }: KangurResultsWidgetContentProps): React.JSX.Element {
   const runtimeTranslations = useTranslations('KangurProgressRuntime');
   const { subject, subjectKey } = useKangurSubjectFocus();
-  const dailyQuest = getCurrentKangurDailyQuest(progress, {
-    ownerKey: subjectKey,
-    subject,
-    translate: runtimeTranslations,
-  });
+  const dailyQuest = showProgressOverview
+    ? getCurrentKangurDailyQuest(progress, {
+        ownerKey: subjectKey,
+        subject,
+        translate: runtimeTranslations,
+      })
+    : null;
 
   return (
     <KangurPanelStack>
@@ -58,7 +62,9 @@ export function KangurResultsWidgetContent({
           />
         </div>
       </KangurSummaryPanel>
-      <ProgressOverview dailyQuest={dailyQuest} progress={progress} />
+      {showProgressOverview ? (
+        <ProgressOverview dailyQuest={dailyQuest} progress={progress} />
+      ) : null}
       <ScoreHistory
         basePath={basePath}
         createdBy={createdBy}

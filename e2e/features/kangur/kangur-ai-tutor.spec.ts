@@ -76,6 +76,20 @@ async function openLessonByTitle(
   return lessonBlock;
 }
 
+async function openTestQuestionFromSuite(page: Page, suiteId = 'suite-add-1'): Promise<string> {
+  const suiteCard = page.getByTestId(`kangur-test-suite-card-${suiteId}`);
+  await expect(suiteCard).toBeVisible();
+  await suiteCard.getByRole('button').click();
+
+  const questionAnchor = page.getByTestId('kangur-test-question-anchor');
+  await expect(questionAnchor).toBeVisible();
+
+  const questionPrompt = (await questionAnchor.getByRole('heading').textContent())?.trim() ?? '';
+  expect(questionPrompt.length).toBeGreaterThan(0);
+
+  return questionPrompt;
+}
+
 async function enableDarkTheme(page: Page): Promise<void> {
   const themeToggle = page.getByRole('button', { name: 'Switch to Dark theme' });
   if ((await themeToggle.count()) > 0) {
@@ -630,6 +644,48 @@ test.describe('Kangur AI Tutor', () => {
     ).toHaveCount(0);
     await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
     await expect(page.getByTestId('kangur-ai-tutor-selection-guided-callout')).toBeVisible();
+  });
+
+  test('shows the knowledge-backed selected-text answer on the test screen when the tutor returns page-content guidance', async ({
+    page,
+  }) => {
+    test.slow();
+
+    const questionPrompt =
+      'Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach?';
+    const testQuestionResponse =
+      'To zadanie sprawdza, czy po rozcięciu powstają dwie identyczne czy różne części.';
+    const { chatRequests } = await mockKangurTutorEnvironment(page, {
+      questionPrompt,
+      testQuestionResponse,
+      testQuestionAnswerResolutionMode: 'page_content',
+    });
+
+    await gotoTutorRoute(page, '/en/kangur/tests');
+    await expect(page.getByTestId('kangur-route-shell')).toBeVisible();
+    await expect(page.getByTestId('kangur-route-content')).toBeVisible();
+
+    const renderedQuestionPrompt = await openTestQuestionFromSuite(page);
+    expect(renderedQuestionPrompt).toBe(questionPrompt);
+
+    await selectTextInElement(page, '[data-testid="kangur-test-question-anchor"]', questionPrompt);
+    await openTutorFromSelection(page);
+
+    await expect.poll(() => chatRequests.length).toBe(1);
+    expect(chatRequests[0]?.context?.surface).toBe('test');
+    expect(chatRequests[0]?.context?.selectedText).toBe(questionPrompt);
+    expect(chatRequests[0]?.context?.focusKind).toBe('question');
+    expect(chatRequests[0]?.context?.promptMode).toBe('selected_text');
+    expect(chatRequests[0]?.context?.interactionIntent).toBe('explain');
+
+    await expect(
+      page.getByTestId('kangur-ai-tutor-selection-guided-page-content-badge')
+    ).toContainText('Zapisana treść strony');
+    await expect(page.getByTestId('kangur-ai-tutor-selection-guided-answer')).toContainText(
+      testQuestionResponse
+    );
+    await expect(page.getByTestId('kangur-ai-tutor-selection-hint-followup')).toHaveCount(0);
+    await expect(page.getByTestId('kangur-ai-tutor-panel')).toHaveCount(0);
   });
 
   test('shows the minimalist tutor modal from the avatar for a logged-in learner without resurfacing onboarding', async ({

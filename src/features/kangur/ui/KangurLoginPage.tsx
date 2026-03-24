@@ -446,10 +446,27 @@ export function KangurLoginPageContent(): React.JSX.Element {
     setCaptchaToken(null);
   }, []);
 
+  const handleCaptchaLoadError = useCallback(() => {
+    setCaptchaToken(null);
+    showFormError(translations('captchaVerificationFailed'));
+  }, [showFormError, translations]);
+
+  const showVerificationCard = Boolean(verificationCard);
+  const showForm = authMode !== 'create-account' || !showVerificationCard;
+  const isCaptchaRequired =
+    authMode === 'create-account' && Boolean(KANGUR_PARENT_CAPTCHA_SITE_KEY);
+  const isSubmitDisabled =
+    isLoading ||
+    !identifier.trim() ||
+    !password.trim() ||
+    (authMode === 'create-account' && isCaptchaRequired && !captchaToken);
+
   const { containerRef: captchaContainerRef } = useTurnstile({
+    enabled: isCaptchaRequired && showForm,
     onVerify: handleCaptchaVerify,
     onError: handleCaptchaReset,
     onExpire: handleCaptchaReset,
+    onLoadError: handleCaptchaLoadError,
   });
 
   const clearResendCooldown = useCallback(() => {
@@ -554,15 +571,6 @@ export function KangurLoginPageContent(): React.JSX.Element {
     authMode === 'create-account'
       ? translations('createAccountIdentifierPlaceholder')
       : translations('identifierPlaceholder');
-  const showVerificationCard = Boolean(verificationCard);
-  const showForm = authMode !== 'create-account' || !showVerificationCard;
-  const isCaptchaRequired =
-    authMode === 'create-account' && Boolean(KANGUR_PARENT_CAPTCHA_SITE_KEY);
-  const isSubmitDisabled =
-    isLoading ||
-    !identifier.trim() ||
-    !password.trim() ||
-    (authMode === 'create-account' && isCaptchaRequired && !captchaToken);
 
   useEffect(() => {
     return () => {

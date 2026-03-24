@@ -30,9 +30,37 @@ export const BALL_POOL_CLASSNAME =
 export function createBalls(count: number): BallItem[] {
   return Array.from({ length: count }, (_, i) => ({
     id: `ball-${i}`,
-    num: i + 1,
+    num: 1,
     color: BALL_COLORS[i % BALL_COLORS.length] ?? BALL_COLORS[0],
   }));
+}
+
+export function formatAcceptedEquationPair(a: number, b: number): string {
+  return a === b ? `${a} + ${b}` : `${a} + ${b} albo ${b} + ${a}`;
+}
+
+export function formatAcceptedGroupPair(a: number, b: number): string {
+  return a === b ? `po ${a}` : `${a} i ${b}`;
+}
+
+export function isAcceptedCountSplit(
+  firstCount: number,
+  secondCount: number,
+  a: number,
+  b: number
+): boolean {
+  return (
+    (firstCount === a && secondCount === b) ||
+    (firstCount === b && secondCount === a)
+  );
+}
+
+export function formatSubmittedEquationPair(firstCount: number, secondCount: number): string {
+  return `${firstCount} + ${secondCount}`;
+}
+
+export function formatSubmittedGroupPair(firstCount: number, secondCount: number): string {
+  return `${firstCount} i ${secondCount}`;
 }
 
 export function removeBallById(items: BallItem[], id: string): { updated: BallItem[]; ball: BallItem | null } {

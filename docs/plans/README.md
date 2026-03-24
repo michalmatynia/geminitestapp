@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-25'
 status: 'active'
 doc_type: 'index'
 scope: 'cross-feature'
@@ -24,6 +24,7 @@ Use this directory for cross-feature or repo-wide:
 
 ## Current Docs
 
+- [`repo-deep-scan-and-doc-refresh-plan-2026-03-25.md`](./repo-deep-scan-and-doc-refresh-plan-2026-03-25.md)
 - [`fastcomet-storage-plan.md`](./fastcomet-storage-plan.md)
 - [`image-studio-object-layout-improvement-plan.md`](./image-studio-object-layout-improvement-plan.md)
 - [`bazel-bun-repo-integration-closeout-2026-03-11.md`](./bazel-bun-repo-integration-closeout-2026-03-11.md)

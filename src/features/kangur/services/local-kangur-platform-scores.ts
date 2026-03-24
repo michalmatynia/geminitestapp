@@ -14,7 +14,11 @@ import { sortScores } from '@/features/kangur/services/kangur-score-repository/s
 import type { KangurScoreCreateInput, KangurScoreRecord } from '@kangur/platform';
 import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
 import { kangurScoreSchema, type KangurLessonSubject } from '@kangur/contracts';
-import { reportKangurClientError, withKangurClientError } from '@/features/kangur/observability/client';
+import {
+  isRecoverableKangurClientFetchError,
+  reportKangurClientError,
+  withKangurClientError,
+} from '@/features/kangur/observability/client';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 
 import { KANGUR_SCORES_ENDPOINT } from './local-kangur-platform-endpoints';
@@ -91,8 +95,10 @@ const syncGuestScoresToApiIfAuthenticated = async (): Promise<void> => {
     () => resolveSessionUser(),
     {
       fallback: null,
-      shouldReport: (error) => !isKangurAuthStatusError(error),
-      shouldRethrow: (error) => !isKangurAuthStatusError(error),
+      shouldReport: (error) =>
+        !isKangurAuthStatusError(error) && !isRecoverableKangurClientFetchError(error),
+      shouldRethrow: (error) =>
+        !isKangurAuthStatusError(error) && !isRecoverableKangurClientFetchError(error),
     }
   );
 
@@ -125,12 +131,14 @@ export const requestMergedScores = async (params: {
     try {
       await syncGuestScoresToApiIfAuthenticated();
     } catch (error: unknown) {
-      void ErrorSystem.captureException(error);
-      reportKangurClientError(error, {
-        source: 'kangur.local-platform',
-        action: 'score.syncGuest',
-        description: 'Guest score sync failed before listing scores.',
-      });
+      if (!isRecoverableKangurClientFetchError(error)) {
+        void ErrorSystem.captureException(error);
+        reportKangurClientError(error, {
+          source: 'kangur.local-platform',
+          action: 'score.syncGuest',
+          description: 'Guest score sync failed before listing scores.',
+        });
+      }
       syncError = error;
     }
   }
@@ -157,15 +165,17 @@ export const requestMergedScores = async (params: {
       limit: params.limit,
     });
   } catch (error: unknown) {
-    void ErrorSystem.captureException(error);
-    reportKangurClientError(error, {
-      source: 'kangur.local-platform',
-      action: 'score.list',
-      description: 'Failed to load remote scores while merging with guest scores.',
-      context: {
-        endpoint: url,
-      },
-    });
+    if (!isRecoverableKangurClientFetchError(error)) {
+      void ErrorSystem.captureException(error);
+      reportKangurClientError(error, {
+        source: 'kangur.local-platform',
+        action: 'score.list',
+        description: 'Failed to load remote scores while merging with guest scores.',
+        context: {
+          endpoint: url,
+        },
+      });
+    }
     if (localRows.length > 0) {
       return localRows;
     }
@@ -225,8 +235,12 @@ const requestScoresFromApi = async (
         },
         {
           fallback: [] as KangurScoreRecord[],
+          shouldReport: (error) => !isRecoverableKangurClientFetchError(error),
           shouldRethrow: () => true,
           onError: (error) => {
+            if (isRecoverableKangurClientFetchError(error)) {
+              return;
+            }
             trackReadFailure('score.list', error, {
               endpoint: url,
               method: 'GET',

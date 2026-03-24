@@ -5,6 +5,10 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import {
+  LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME,
+  LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME,
+} from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 
 const { useKangurGameContextMock, getKangurQuestionsMock, useSessionMock } = vi.hoisted(() => ({
   useKangurGameContextMock: vi.fn(),
@@ -30,6 +34,8 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 
 import KangurExam from '@/features/kangur/ui/components/KangurExam';
 import { KangurLessonPrintProvider } from '@/features/kangur/ui/context/KangurLessonPrintContext';
+
+const splitClasses = (className: string): string[] => className.trim().split(/\s+/);
 
 describe('KangurExam', () => {
   it('uses shared light utility actions and glass summary surfaces', async () => {
@@ -61,6 +67,12 @@ describe('KangurExam', () => {
     expect(screen.getByTestId('kangur-exam-question-print-panel')).toHaveAttribute(
       'data-kangur-print-panel-title',
       'Pytanie 1'
+    );
+    expect(screen.getByTestId('kangur-exam-question-print-panel')).toHaveClass(
+      'mx-auto',
+      'max-w-4xl',
+      'items-center',
+      'text-center'
     );
     expect(screen.getByTestId('kangur-exam-print-summary')).toHaveTextContent('Pytanie 1');
     expect(screen.getByTestId('kangur-exam-print-summary')).toHaveTextContent(
@@ -110,6 +122,11 @@ describe('KangurExam', () => {
       'px-4',
       'touch-manipulation'
     );
+    expect(screen.getByRole('group', { name: 'Pytanie 1' })).toHaveClass('w-full', 'max-w-2xl');
+    expect(screen.getByRole('button', { name: /odpowiedź b\. 4/i })).toHaveClass(
+      'justify-start',
+      'text-left'
+    );
 
     await userEvent.click(screen.getByRole('button', { name: /odpowiedź b\. 4/i }));
     expect(screen.getByRole('button', { name: /odpowiedź b\. 4/i })).toHaveAttribute(
@@ -126,6 +143,12 @@ describe('KangurExam', () => {
       'data-kangur-print-panel-id',
       'kangur-exam-summary'
     );
+    expect(
+      screen.getByRole('navigation', { name: 'Nawigacja podsumowania Kangur Matematyczny' })
+    ).toHaveClass(...splitClasses(LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME));
+    expect(
+      screen.getByRole('group', { name: 'Nawigacja podsumowania Kangur Matematyczny' })
+    ).toHaveClass(...splitClasses(LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME));
     expect(screen.getByTestId('kangur-exam-print-summary')).toHaveTextContent('Wynik 1/1');
     expect(screen.getByTestId('kangur-exam-print-summary')).toHaveTextContent(
       '100% poprawnych odpowiedzi'
@@ -179,6 +202,12 @@ describe('KangurExam', () => {
       'data-kangur-print-panel-title',
       'Pytanie 1'
     );
+    expect(screen.getAllByRole('navigation', { name: 'Nawigacja podglądu pytań' })[1]).toHaveClass(
+      ...splitClasses(LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME)
+    );
+    expect(screen.getAllByRole('group', { name: 'Nawigacja podglądu pytań' })[1]).toHaveClass(
+      ...splitClasses(LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME)
+    );
     expect(screen.getByTestId('kangur-exam-review-print-summary')).toHaveTextContent(
       'Ile to jest 2 + 2?'
     );
@@ -199,6 +228,10 @@ describe('KangurExam', () => {
     expect(screen.getByRole('button', { name: /następne pytanie w podglądzie/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
+    );
+    expect(screen.getByTestId('kangur-exam-review-choice-1')).toHaveClass(
+      'justify-start',
+      'text-left'
     );
     expect(screen.getByTestId('kangur-exam-review-shell')).toHaveClass(
       'soft-card',

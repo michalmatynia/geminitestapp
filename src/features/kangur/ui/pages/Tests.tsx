@@ -14,9 +14,9 @@ import {
 import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
+import { KangurTestSuitePlayer } from '@/features/kangur/ui/components/KangurTestSuitePlayer';
 import { KangurTestsWordmark } from '@/features/kangur/ui/components/KangurTestsWordmark';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
-import { KangurTestSuitePlayer } from '@/features/kangur/ui/components/KangurTestSuitePlayer';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
@@ -40,6 +40,10 @@ import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKang
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
+import {
+  LESSONS_LIBRARY_LAYOUT_CLASSNAME,
+  LESSONS_LIBRARY_LIST_CLASSNAME,
+} from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
 import {
@@ -367,7 +371,7 @@ export default function Tests(): React.JSX.Element {
           <motion.div
             key='tests-list'
             {...pageMotionProps}
-            className={`flex w-full max-w-lg flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
+            className={LESSONS_LIBRARY_LAYOUT_CLASSNAME}
             data-testid='tests-list-transition'
           >
             <div ref={testsListIntroRef} id='kangur-tests-intro' className='w-full'>
@@ -399,7 +403,7 @@ export default function Tests(): React.JSX.Element {
               />
             ) : (
               <ul
-                className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
+                className={LESSONS_LIBRARY_LIST_CLASSNAME}
                 id='kangur-tests-list'
                 ref={testsListRef}
                 role='list'
@@ -418,7 +422,7 @@ export default function Tests(): React.JSX.Element {
                   ].filter(Boolean);
 
                   return (
-                    <li key={suite.id} className='list-none' role='listitem'>
+                    <li key={suite.id} className='w-full list-none' role='listitem'>
                       <KangurInfoCard
                         className='flex w-full flex-col gap-3'
                         data-testid={`kangur-test-suite-card-${suite.id}`}
@@ -448,7 +452,9 @@ export default function Tests(): React.JSX.Element {
                             ))}
                           </div>
                         ) : null}
-                        <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} w-full sm:items-center`}>
+                        <div
+                          className={`${KANGUR_TIGHT_ROW_CLASSNAME} w-full justify-center sm:items-center sm:justify-center`}
+                        >
                           <KangurButton
                             className='w-full sm:w-auto'
                             onClick={() => handleSelectSuite(suite.id)}

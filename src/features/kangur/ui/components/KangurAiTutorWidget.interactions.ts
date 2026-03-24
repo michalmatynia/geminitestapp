@@ -12,10 +12,12 @@ import {
   persistTutorVisibilityHidden,
 } from './KangurAiTutorWidget.storage';
 
+import type { TutorConversationFocus } from './KangurAiTutorWidget.shared';
 import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
 import type { TutorPanelShellMode } from './KangurAiTutorWidget.types';
 
 type UseKangurAiTutorPanelInteractionsInput = {
+  activeConversationFocus: TutorConversationFocus;
   activeSelectedText: string | null;
   allowSelectedTextSupport: boolean;
   bubblePlacementMode: string;
@@ -79,6 +81,7 @@ type UseKangurAiTutorPanelInteractionsInput = {
 };
 
 export function useKangurAiTutorPanelInteractions({
+  activeConversationFocus,
   activeSelectedText,
   allowSelectedTextSupport,
   bubblePlacementMode,
@@ -159,13 +162,27 @@ export function useKangurAiTutorPanelInteractions({
       setDismissedSelectedText(null);
       setHighlightedText(trimmedSelectedText);
       setSelectionConversationContext({
+        assignmentId: activeConversationFocus.assignmentId,
+        contentId: activeConversationFocus.contentId,
+        focusId: activeConversationFocus.id,
+        focusKind: activeConversationFocus.kind,
+        focusLabel: activeConversationFocus.label,
+        knowledgeReference: activeConversationFocus.knowledgeReference,
         messageStartIndex: messageCount,
         selectedText: trimmedSelectedText,
+        surface: activeConversationFocus.surface,
       });
       persistSelectionGeometry();
       return trimmedSelectedText;
     },
     [
+      activeConversationFocus.assignmentId,
+      activeConversationFocus.contentId,
+      activeConversationFocus.id,
+      activeConversationFocus.kind,
+      activeConversationFocus.knowledgeReference,
+      activeConversationFocus.label,
+      activeConversationFocus.surface,
       allowSelectedTextSupport,
       messageCount,
       persistSelectionGeometry,

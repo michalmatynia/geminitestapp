@@ -39,6 +39,7 @@ export function SignupForm({
   const formRef = useRef<HTMLFormElement>(null);
 
   const { containerRef: captchaContainerRef } = useTurnstile({
+    enabled: isCaptchaRequired,
     onVerify: (token) => setCaptchaToken(token),
     onError: () => setCaptchaToken(null),
     onExpire: () => setCaptchaToken(null),

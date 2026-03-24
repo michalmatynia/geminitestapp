@@ -1,50 +1,21 @@
 'use client';
 
-import { useId, useMemo, useState } from 'react';
+import { useId } from 'react';
 
+import {
+  AgenticAssignmentGame,
+  type AgenticAssignmentGameItem,
+  type AgenticAssignmentGameOption,
+} from '@/features/kangur/ui/components/AgenticAssignmentGame';
 import {
   renderSoftAtmosphereGradients,
   renderSoftAtmosphereOvals,
 } from '@/features/kangur/ui/components/animations/svgAtmosphere';
-import {
-  KangurLessonCallout,
-  KangurLessonCaption,
-  KangurLessonInset,
-  KangurLessonLead,
-  KangurLessonStack,
-} from '@/features/kangur/ui/design/lesson-primitives';
-import {
-  KangurButton,
-  KangurGradientHeading,
-  KangurInfoCard,
-  KangurProgressBar,
-  KangurStatusChip,
-} from '@/features/kangur/ui/design/primitives';
-import {
-  KANGUR_GRID_TIGHT_CLASSNAME,
-  KANGUR_PANEL_GAP_CLASSNAME,
-  KANGUR_WRAP_ROW_SPACED_CLASSNAME,
-} from '@/features/kangur/ui/design/tokens';
-import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';
-import { cn } from '@/features/kangur/shared/utils';
 
 type ApprovalDecision = 'safe' | 'approval';
 
-type ApprovalOption = {
-  id: ApprovalDecision;
-  label: string;
-  description: string;
-  colorClass: string;
-};
-
-type ApprovalAction = {
-  id: string;
-  text: string;
-  answer: ApprovalDecision;
-};
-
-const APPROVAL_OPTIONS: ApprovalOption[] = [
+const APPROVAL_OPTIONS: AgenticAssignmentGameOption<ApprovalDecision>[] = [
   {
     id: 'safe',
     label: 'Safe without approval',
@@ -59,7 +30,7 @@ const APPROVAL_OPTIONS: ApprovalOption[] = [
   },
 ];
 
-const APPROVAL_ACTIONS: ApprovalAction[] = [
+const APPROVAL_ACTIONS: AgenticAssignmentGameItem<ApprovalDecision>[] = [
   {
     id: 'read-files',
     text: 'Read log files and summarize the issue.',
@@ -221,209 +192,71 @@ export const ApprovalGateVisual = (): JSX.Element => {
 export default function AgenticApprovalGateGame({
   onFinish,
 }: KangurMiniGameFinishActionProps): JSX.Element {
-  const isCoarsePointer = useKangurCoarsePointer();
-  const [activeActionId, setActiveActionId] = useState<string | null>(null);
-  const [assignments, setAssignments] = useState<Record<string, ApprovalDecision>>({});
-  const [checked, setChecked] = useState(false);
-
-  const assignedCount = Object.keys(assignments).length;
-  const progress = Math.round((assignedCount / APPROVAL_ACTIONS.length) * 100);
-
-  const score = useMemo(
-    () => APPROVAL_ACTIONS.filter((action) => assignments[action.id] === action.answer).length,
-    [assignments]
-  );
-
-  const isPerfect = score === APPROVAL_ACTIONS.length && assignedCount === APPROVAL_ACTIONS.length;
-  const activeAction = activeActionId
-    ? APPROVAL_ACTIONS.find((action) => action.id === activeActionId) ?? null
-    : null;
-  const touchHint = activeAction
-    ? `Selected action: ${activeAction.text} Tap a gate choice.`
-    : 'Tap an action card, then tap a gate choice.';
-
-  const handleAssign = (decision: ApprovalDecision) => {
-    if (!activeActionId) return;
-
-    setAssignments((prev) => ({
-      ...prev,
-      [activeActionId]: decision,
-    }));
-    setActiveActionId(null);
-    setChecked(false);
-  };
-
-  const handleReset = () => {
-    setAssignments({});
-    setActiveActionId(null);
-    setChecked(false);
-  };
-
-  const handleCheck = () => {
-    setChecked(true);
-  };
-
   return (
-    <KangurLessonStack align='start' className='w-full'>
-      <div className='relative w-full overflow-hidden rounded-[28px] border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-slate-100 p-6'>
-        <div className='pointer-events-none absolute -right-14 top-4 h-36 w-36 rounded-full bg-slate-200/40 blur-3xl' />
-        <div className='pointer-events-none absolute -left-10 bottom-4 h-28 w-28 rounded-full bg-slate-200/40 blur-3xl' />
-        <div className='relative flex flex-col gap-4'>
-          <KangurStatusChip accent='slate' labelStyle='caps'>
-            Approval Gate
-          </KangurStatusChip>
-          <KangurGradientHeading gradientClass='from-slate-500 via-slate-700 to-orange-500' size='lg'>
-            Decide What Needs Approval
-          </KangurGradientHeading>
-          <KangurLessonLead align='left'>
-            Each action must go through the gate. Select an action and decide if it needs user
-            approval or is safe to run.
-          </KangurLessonLead>
-          <KangurLessonCallout accent='slate' padding='sm' className='text-left'>
-            <ul className='space-y-2 text-sm text-slate-950'>
-              <li>Pick an action card to focus it.</li>
-              <li>Choose whether it needs approval or not.</li>
-              <li>Check to see if you kept the scope safe.</li>
-            </ul>
-          </KangurLessonCallout>
-        </div>
-      </div>
-
-      <div className={`grid ${KANGUR_PANEL_GAP_CLASSNAME} lg:grid-cols-[1.6fr_1fr]`}>
-        <KangurInfoCard tone='accent' accent='slate' className='relative overflow-hidden'>
-          <div className='pointer-events-none absolute inset-0 opacity-40 [background:radial-gradient(circle_at_top,_rgba(148,163,184,0.3),_transparent_55%)]' />
-          <div className='relative flex flex-col gap-4'>
-            <div className='flex flex-wrap items-center justify-between gap-3'>
-              <div>
-                <p className='text-sm font-semibold text-slate-950'>Actions</p>
-                <KangurLessonCaption className='text-slate-800'>
-                  {isCoarsePointer ? 'Tap a card to focus it.' : 'Route through the gate.'}
-                </KangurLessonCaption>
-              </div>
-              <KangurStatusChip accent='slate' size='sm'>
-                {assignedCount}/{APPROVAL_ACTIONS.length} decided
-              </KangurStatusChip>
-            </div>
-            <KangurProgressBar accent='slate' value={progress} size='sm' />
-            {isCoarsePointer ? (
-              <div
-                aria-live='polite'
-                className='rounded-2xl border border-slate-200/80 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm'
-                data-testid='agentic-approval-touch-hint'
-              >
-                {touchHint}
-              </div>
-            ) : null}
-
-            <div className='grid gap-3' role='group' aria-label='Select an action to review'>
-              {APPROVAL_ACTIONS.map((action) => {
-                const assignedDecision = assignments[action.id];
-                const isActive = activeActionId === action.id;
-                const isCorrect = checked && assignedDecision === action.answer;
-                const isWrong = checked && assignedDecision && assignedDecision !== action.answer;
-
-                return (
-                  <button
-                    key={action.id}
-                    type='button'
-                    onClick={() => setActiveActionId(action.id)}
-                    className={cn(
-                      'w-full rounded-2xl border bg-white/80 text-left text-sm font-semibold transition-all touch-manipulation select-none',
-                      isCoarsePointer
-                        ? 'min-h-[5rem] px-4 py-4 active:scale-[0.99] active:shadow-sm'
-                        : 'px-4 py-3 hover:-translate-y-0.5 hover:shadow-md',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70 focus-visible:ring-offset-2 ring-offset-white',
-                      isActive && 'border-slate-400 bg-slate-50',
-                      !isActive && 'border-slate-100/80',
-                      isCorrect && 'border-emerald-300 bg-emerald-50',
-                      isWrong && 'border-amber-300 bg-amber-50'
-                    )}
-                    aria-pressed={isActive}
-                  >
-                    <div className='flex flex-wrap items-center justify-between gap-2'>
-                      <span>{action.text}</span>
-                      {assignedDecision ? (
-                        <span className='rounded-full border border-slate-200/70 bg-slate-100 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-slate-700'>
-                          {APPROVAL_OPTIONS.find((option) => option.id === assignedDecision)?.label ?? 'Selected'}
-                        </span>
-                      ) : null}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </KangurInfoCard>
-
-        <KangurLessonInset accent='slate' className='relative overflow-hidden'>
-          <div className='pointer-events-none absolute inset-0 opacity-40 [background:radial-gradient(circle_at_top,_rgba(71,85,105,0.25),_transparent_60%)]' />
-          <div className='relative flex h-full flex-col gap-4'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-sm font-semibold text-slate-950'>Gate Choices</p>
-                <KangurLessonCaption className='text-slate-800'>
-                  {isCoarsePointer ? 'Tap to route the selected action.' : 'Click to route.'}
-                </KangurLessonCaption>
-              </div>
-              <ApprovalGateVisual />
-            </div>
-            <div className={cn('grid gap-3', KANGUR_GRID_TIGHT_CLASSNAME)} role='group' aria-label='Choose an approval decision'>
-              {APPROVAL_OPTIONS.map((option) => (
-                <button
-                  key={option.id}
-                  type='button'
-                  onClick={() => handleAssign(option.id)}
-                  className={cn(
-                    'rounded-2xl border text-left text-sm font-semibold transition-all touch-manipulation select-none',
-                    isCoarsePointer
-                      ? 'min-h-[5rem] px-4 py-4 active:scale-[0.99] active:shadow-sm'
-                      : 'px-4 py-3 hover:-translate-y-0.5 hover:shadow-md',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70 focus-visible:ring-offset-2 ring-offset-white',
-                    option.colorClass,
-                    activeActionId ? 'opacity-100' : 'opacity-60'
-                  )}
-                  disabled={!activeActionId}
-                  aria-disabled={!activeActionId}
-                  aria-label={option.label}
-                >
-                  <div className='text-xs font-semibold uppercase tracking-[0.2em]'>{option.label}</div>
-                  <KangurLessonCaption className='mt-1 text-slate-900'>
-                    {option.description}
-                  </KangurLessonCaption>
-                </button>
-              ))}
-            </div>
-
-            {checked ? (
-              <div
-                className={cn(
-                  'rounded-2xl border px-4 py-3 text-xs font-semibold',
-                  isPerfect
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
-                    : 'border-amber-200 bg-amber-50 text-amber-900'
-                )}
-              >
-                {isPerfect
-                  ? 'Great job. You kept the gate tight and safe.'
-                  : `You classified ${score}/${APPROVAL_ACTIONS.length}. Recheck what triggers approval.`}
-              </div>
-            ) : null}
-
-            <div className={cn('mt-auto flex flex-wrap items-center gap-2', KANGUR_WRAP_ROW_SPACED_CLASSNAME)}>
-              <KangurButton size='sm' variant='surface' type='button' onClick={handleReset}>
-                Reset
-              </KangurButton>
-              <KangurButton size='sm' variant='primary' type='button' onClick={handleCheck}>
-                Check
-              </KangurButton>
-              <div className='flex-1' />
-              <KangurButton size='sm' variant='ghost' type='button' onClick={onFinish}>
-                Back to lesson
-              </KangurButton>
-            </div>
-          </div>
-        </KangurLessonInset>
-      </div>
-    </KangurLessonStack>
+    <AgenticAssignmentGame
+      copy={{
+        statusLabel: 'Approval Gate',
+        heading: 'Decide What Needs Approval',
+        lead:
+          'Each action must go through the gate. Select an action and decide if it needs user approval or is safe to run.',
+        instructions: [
+          'Pick an action card to focus it.',
+          'Choose whether it needs approval or not.',
+          'Check to see if you kept the scope safe.',
+        ],
+        leftPanelTitle: 'Actions',
+        leftPanelCaption: {
+          coarsePointer: 'Tap a card to focus it.',
+          finePointer: 'Route through the gate.',
+        },
+        leftPanelCountLabel: (assignedCount, total) => `${assignedCount}/${total} decided`,
+        leftPanelGroupLabel: 'Select an action to review',
+        leftPanelTouchHint: {
+          idle: 'Tap an action card, then tap a gate choice.',
+          selected: (itemText) => `Selected action: ${itemText} Tap a gate choice.`,
+          testId: 'agentic-approval-touch-hint',
+        },
+        rightPanelTitle: 'Gate Choices',
+        rightPanelCaption: {
+          coarsePointer: 'Tap to route the selected action.',
+          finePointer: 'Click to route.',
+        },
+        rightPanelGroupLabel: 'Choose an approval decision',
+        successMessage: 'Great job. You kept the gate tight and safe.',
+        failureMessage: (score, total) =>
+          `You classified ${score}/${total}. Recheck what triggers approval.`,
+      }}
+      items={APPROVAL_ACTIONS}
+      onFinish={onFinish}
+      options={APPROVAL_OPTIONS}
+      theme={{
+        accent: 'slate',
+        heroClassName:
+          'border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-slate-100',
+        heroTopGlowClassName: '-right-14 top-4 bg-slate-200/40',
+        heroBottomGlowClassName: '-left-10 bottom-4 bg-slate-200/40',
+        headingGradientClass: 'from-slate-500 via-slate-700 to-orange-500',
+        instructionListClassName: 'space-y-2 text-sm text-slate-950',
+        leftPanelGlowClassName:
+          '[background:radial-gradient(circle_at_top,_rgba(148,163,184,0.3),_transparent_55%)]',
+        leftPanelTitleClassName: 'text-slate-950',
+        leftPanelCaptionClassName: 'text-slate-800',
+        leftTouchHintClassName: 'border-slate-200/80 text-slate-900',
+        leftItemFocusRingClassName: 'focus-visible:ring-indigo-400/70',
+        leftItemActiveClassName: 'border-slate-400 bg-slate-50',
+        leftItemInactiveClassName: 'border-slate-100/80',
+        leftItemCorrectClassName: 'border-emerald-300 bg-emerald-50',
+        leftItemWrongClassName: 'border-amber-300 bg-amber-50',
+        leftAssignedBadgeClassName:
+          'border-slate-200/70 bg-slate-100 text-slate-700',
+        rightPanelGlowClassName:
+          '[background:radial-gradient(circle_at_top,_rgba(71,85,105,0.25),_transparent_60%)]',
+        rightPanelTitleClassName: 'text-slate-950',
+        rightPanelCaptionClassName: 'text-slate-800',
+        rightOptionFocusRingClassName: 'focus-visible:ring-indigo-400/70',
+        rightOptionDescriptionClassName: 'text-slate-900',
+      }}
+      visual={<ApprovalGateVisual />}
+    />
   );
 }

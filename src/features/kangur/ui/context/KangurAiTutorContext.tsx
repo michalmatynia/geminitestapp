@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useLayoutEffect,
   useMemo,
   useState,
   type Dispatch,
@@ -26,7 +27,11 @@ import type {
   KangurAiTutorSessionRegistryContextValue,
   KangurAiTutorSessionSyncProps,
 } from './KangurAiTutorRuntime.types';
-import type { KangurAiTutorSessionRegistrationSetter } from './kangur-ai-tutor-runtime.helpers';
+import {
+  areSessionRegistrationsEqual,
+  type KangurAiTutorSessionRegistration,
+  type KangurAiTutorSessionRegistrationSetter,
+} from './kangur-ai-tutor-runtime.helpers';
 
 // ---------------------------------------------------------------------------
 // Contexts
@@ -39,9 +44,39 @@ const KangurAiTutorContext = createContext<KangurAiTutorContextValue | null>(nul
  * the real runtime value into the provider tree without the heavy hook being
  * part of the shell bundle.
  */
-export const KangurAiTutorActivationContext = createContext<
-  Dispatch<SetStateAction<KangurAiTutorContextValue | null>> | null
->(null);
+type KangurAiTutorActivationContextValue = {
+  activateRuntimeValue: Dispatch<SetStateAction<KangurAiTutorContextValue | null>>;
+  pendingSessionRegistration: KangurAiTutorSessionRegistration | null;
+};
+
+export const KangurAiTutorActivationContext =
+  createContext<KangurAiTutorActivationContextValue | null>(null);
+
+export function useKangurAiTutorDeferredActivationBridge(input: {
+  runtimeValue: KangurAiTutorContextValue;
+  sessionRegistryValue: KangurAiTutorSessionRegistryContextValue;
+}): void {
+  const activation = useContext(KangurAiTutorActivationContext);
+
+  useLayoutEffect(() => {
+    if (!activation) {
+      return undefined;
+    }
+
+    activation.activateRuntimeValue(input.runtimeValue);
+    return () => {
+      activation.activateRuntimeValue(null);
+    };
+  }, [activation, input.runtimeValue]);
+
+  useLayoutEffect(() => {
+    if (!activation) {
+      return;
+    }
+
+    input.sessionRegistryValue.setRegistration(activation.pendingSessionRegistration);
+  }, [activation, input.sessionRegistryValue]);
+}
 
 // ---------------------------------------------------------------------------
 // Dormant context value — returned until the widget chunk activates
@@ -87,12 +122,16 @@ export function KangurAiTutorDeferredProvider({
 }): JSX.Element {
   const [activeRuntimeValue, setActiveRuntimeValue] =
     useState<KangurAiTutorContextValue | null>(null);
+  const [pendingSessionRegistration, setPendingSessionRegistration] =
+    useState<KangurAiTutorSessionRegistration | null>(null);
 
   const setRegistration = useCallback(
-    (_registration: KangurAiTutorSessionRegistrationSetter): void => {
-      // In dormant mode, session registrations are accepted but discarded.
-      // Once the widget chunk loads and activates the full runtime, the
-      // runtime's own session registry takes over.
+    (registration: KangurAiTutorSessionRegistrationSetter): void => {
+      setPendingSessionRegistration((current) => {
+        const next =
+          typeof registration === 'function' ? registration(current) : registration;
+        return areSessionRegistrationsEqual(current, next) ? current : next;
+      });
     },
     []
   );
@@ -103,9 +142,16 @@ export function KangurAiTutorDeferredProvider({
   );
 
   const contextValue = activeRuntimeValue ?? DORMANT_VALUE;
+  const activationValue = useMemo<KangurAiTutorActivationContextValue>(
+    () => ({
+      activateRuntimeValue: setActiveRuntimeValue,
+      pendingSessionRegistration,
+    }),
+    [pendingSessionRegistration]
+  );
 
   return (
-    <KangurAiTutorActivationContext.Provider value={setActiveRuntimeValue}>
+    <KangurAiTutorActivationContext.Provider value={activationValue}>
       <KangurAiTutorSessionRegistryContext.Provider value={sessionRegistryValue}>
         <KangurAiTutorContext.Provider value={contextValue}>
           {children}

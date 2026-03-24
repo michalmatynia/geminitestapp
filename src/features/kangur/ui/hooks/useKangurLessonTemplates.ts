@@ -9,7 +9,10 @@ import {
   type KangurLessonTemplate,
 } from '@/shared/contracts/kangur-lesson-templates';
 import { createDefaultKangurLessonTemplates } from '@/features/kangur/lessons/lesson-template-defaults';
-import { withKangurClientError } from '@/features/kangur/observability/client';
+import {
+  isRecoverableKangurClientFetchError,
+  withKangurClientError,
+} from '@/features/kangur/observability/client';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -60,7 +63,10 @@ const fetchLessonTemplates = async (
       });
       return kangurLessonTemplatesSchema.parse(payload);
     },
-    { fallback: () => buildTemplatesFallback(options) },
+    {
+      fallback: () => buildTemplatesFallback(options),
+      shouldReport: (error) => !isRecoverableKangurClientFetchError(error),
+    },
   );
 
 export const useKangurLessonTemplates = (

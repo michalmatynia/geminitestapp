@@ -23,8 +23,11 @@ import type {
 import {
   BALL_POOL_CLASSNAME,
   createBalls,
+  formatAcceptedGroupPair,
+  formatSubmittedGroupPair,
   getRectDropZoneSurface,
   isGroupSlotId,
+  isAcceptedCountSplit,
   moveBetweenLists,
   removeBallById,
   reorderWithinList,
@@ -48,6 +51,8 @@ export function GroupSum({
   const [checked, setChecked] = useState(false);
   const [correct, setCorrect] = useState(false);
   const [selectedBallId, setSelectedBallId] = useState<string | null>(null);
+  const acceptedGroupPair = formatAcceptedGroupPair(round.a, round.b);
+  const submittedGroupPair = formatSubmittedGroupPair(state.group1.length, state.group2.length);
 
   const onDragEnd = (result: DropResult): void => {
     if (checked) return;
@@ -89,9 +94,7 @@ export function GroupSum({
   const check = (): void => {
     const group1Count = state.group1.length;
     const group2Count = state.group2.length;
-    const ok =
-      (group1Count === round.a && group2Count === round.b) ||
-      (group1Count === round.b && group2Count === round.a);
+    const ok = isAcceptedCountSplit(group1Count, group2Count, round.a, round.b);
     setCorrect(ok);
     setChecked(true);
     setSelectedBallId(null);
@@ -128,8 +131,21 @@ export function GroupSum({
     <KangurDragDropContext onDragEnd={onDragEnd}>
       <div className={`flex flex-col items-center w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}>
         <p className='text-lg font-bold [color:var(--kangur-page-text)]'>
-          Podziel {total} piłek na dwie grupy sumujące się do{' '}
-          <span className='text-orange-500'>{round.target}</span>
+          Podziel {total} piłek na dwie grupy: <span className='text-orange-500'>{acceptedGroupPair}</span>
+        </p>
+        <p
+          className='text-sm text-center [color:var(--kangur-page-muted-text)]'
+          data-testid='adding-ball-group-solution-hint'
+        >
+          {round.a !== round.b
+            ? `Kolejność nie ma znaczenia, więc ${round.a} i ${round.b} albo ${round.b} i ${round.a} są poprawne.`
+            : `Obie grupy powinny mieć po ${round.a} piłki.`}
+        </p>
+        <p
+          className='text-xs text-center font-semibold uppercase tracking-[0.18em] text-slate-500'
+          data-testid='adding-ball-group-unit-hint'
+        >
+          Każda piłka to 1.
         </p>
 
         <div className='flex kangur-panel-gap flex-wrap justify-center'>
@@ -289,7 +305,9 @@ export function GroupSum({
             animate={{ scale: 1 }}
             className={`text-xl font-extrabold ${correct ? 'text-green-600' : 'text-red-500'}`}
           >
-            {correct ? '🎉 Brawo!' : `❌ Nie tym razem! (${round.a} i ${round.b})`}
+            {correct
+              ? `🎉 Brawo! Pasują grupy ${round.a} i ${round.b}${round.a !== round.b ? ` albo ${round.b} i ${round.a}` : ''}.`
+              : `❌ Spróbuj jeszcze raz! Masz grupy ${submittedGroupPair}, a szukamy ${round.a} i ${round.b}${round.a !== round.b ? ` albo ${round.b} i ${round.a}` : ''}.`}
           </motion.div>
         )}
       </div>

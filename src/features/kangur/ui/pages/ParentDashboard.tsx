@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
@@ -369,14 +368,12 @@ function ParentDashboardResolvedContent({
           className: 'flex w-full flex-1 items-center justify-center py-12',
         }}
       >
-        <motion.div
+        <div
           ref={guestHeroAnchorRef}
-          initial={false}
-          animate={{ opacity: 1, y: 0 }}
           className='w-full max-w-lg'
         >
           <KangurParentDashboardHeroWidget />
-        </motion.div>
+        </div>
       </KangurStandardPageLayout>
     );
   }
@@ -395,13 +392,13 @@ function ParentDashboardResolvedContent({
         className: `w-full max-w-2xl flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`,
       }}
     >
-      <motion.div ref={heroAnchorRef} initial={false} animate={{ opacity: 1, y: 0 }}>
+      <div ref={heroAnchorRef}>
         <KangurParentDashboardHeroWidget
           showActions={false}
           showLearnerManagement
           learnerManagementAnchorRef={learnerManagementAnchorRef}
         />
-      </motion.div>
+      </div>
       {hasActiveLearner ? (
         <>
           <div ref={tabsAnchorRef}>

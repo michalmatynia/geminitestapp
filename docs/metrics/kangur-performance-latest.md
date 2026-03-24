@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-22'
+last_reviewed: '2026-03-24'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,27 +8,27 @@ canonical: true
 ---
 # Kangur Performance Baseline
 
-Generated at: 2026-03-22T08:43:45.995Z
+Generated at: 2026-03-24T23:08:45.205Z
 
 ## Execution Summary
 
-- Unit test suite status: PASS
-- Unit test suite duration: 22.8s
+- Unit test suite status: FAIL
+- Unit test suite duration: 19.8s
 - E2E suite: skipped
 
 ## Bundle Risk Snapshot
 
 | File | Lines | Bytes |
 | --- | ---: | ---: |
-| `src/features/kangur/ui/pages/Game.tsx` | 943 | 44423 |
+| `src/features/kangur/ui/pages/Game.tsx` | 847 | 36704 |
+| `src/features/kangur/ui/components/KangurGame.tsx` | 607 | 21670 |
 | `src/features/kangur/ui/services/kangur-questions-data.js` | 329 | 21289 |
-| `src/features/kangur/ui/components/KangurGame.tsx` | 478 | 15283 |
-| `src/features/kangur/ui/pages/LearnerProfile.tsx` | 237 | 9592 |
-| `src/features/kangur/ui/pages/Lessons.tsx` | 105 | 3614 |
+| `src/features/kangur/ui/pages/LearnerProfile.tsx` | 310 | 11036 |
+| `src/features/kangur/ui/pages/Lessons.tsx` | 152 | 4746 |
 | `src/features/kangur/ui/components/KangurIllustrations.ts` | 14 | 853 |
 
-- Total bytes (tracked files): 95054
-- Total lines (tracked files): 2106
+- Total bytes (tracked files): 96298
+- Total lines (tracked files): 2259
 
 ## Commands
 

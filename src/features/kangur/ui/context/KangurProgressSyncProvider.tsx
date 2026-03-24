@@ -89,6 +89,14 @@ export function KangurProgressSyncProvider({
     setProgressPersistenceEnabled(!isParentWithoutLearner);
   }, [isParentWithoutLearner]);
 
+  // Eagerly initialise guest progress owner key while auth is still loading,
+  // so localStorage reads resolve to the anonymous bucket immediately.
+  useEffect(() => {
+    if (isLoadingAuth && !userKey) {
+      saveProgressOwnerKey(null);
+    }
+  }, [isLoadingAuth, userKey]);
+
   useEffect(() => {
     if (isLoadingAuth) {
       return;

@@ -106,6 +106,12 @@ const normalizeSelectedTextMatch = (value: string | null | undefined): string =>
         .trim()
     : '';
 
+const tokenizeNormalizedSelectedText = (value: string): string[] =>
+  value
+    .split(' ')
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0);
+
 const scoreSelectedTextCandidate = (
   normalizedSelection: string,
   normalizedCandidate: string
@@ -118,8 +124,34 @@ const scoreSelectedTextCandidate = (
     return 1_000 + normalizedCandidate.length;
   }
 
+  const selectionTokens = tokenizeNormalizedSelectedText(normalizedSelection);
+  const candidateTokens = tokenizeNormalizedSelectedText(normalizedCandidate);
+  const selectionSingleToken = selectionTokens.length === 1 ? selectionTokens[0] ?? '' : '';
+  const candidateSingleToken = candidateTokens.length === 1 ? candidateTokens[0] ?? '' : '';
+
+  if (
+    selectionSingleToken.length >= 5 &&
+    candidateTokens.includes(selectionSingleToken)
+  ) {
+    return 760 + selectionSingleToken.length;
+  }
+
+  if (
+    candidateSingleToken.length >= 5 &&
+    selectionTokens.includes(candidateSingleToken)
+  ) {
+    return 740 + candidateSingleToken.length;
+  }
+
   const allowContains =
-    normalizedSelection.length >= 8 && normalizedCandidate.length >= 8;
+    (
+      normalizedSelection.length >= 8 &&
+      normalizedCandidate.length >= 8
+    ) ||
+    (
+      selectionTokens.length >= 2 &&
+      candidateTokens.length >= 2
+    );
   if (!allowContains) {
     return 0;
   }

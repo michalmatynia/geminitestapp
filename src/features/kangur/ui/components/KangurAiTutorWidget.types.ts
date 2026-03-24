@@ -1,5 +1,6 @@
 import type { KangurTutorAnchorKind } from '@/features/kangur/ui/context/kangur-tutor-types';
 import type {
+  KangurAiTutorFocusKind,
   KangurAiTutorGuestIntroStatus,
   KangurAiTutorHomeOnboardingStatus,
   KangurAiTutorKnowledgeReference,
@@ -90,6 +91,11 @@ export type PendingSelectionResponse = {
 };
 
 export type SelectionConversationContext = {
+  assignmentId?: string | null;
+  contentId?: string | null;
+  focusId?: string | null;
+  focusKind?: KangurAiTutorFocusKind | null;
+  surface?: TutorSurface | null;
   messageStartIndex: number;
   selectedText: string;
   knowledgeReference?: KangurAiTutorKnowledgeReference | null;

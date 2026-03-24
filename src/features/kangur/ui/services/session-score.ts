@@ -12,6 +12,22 @@ const KANGUR_GUEST_PLAYER_STORAGE_KEY = 'kangur.guest-player-name';
 
 const kangurPlatform = getKangurPlatform();
 
+const isKangurAnonymousSessionError = (error: unknown): boolean => {
+  if (isKangurAuthStatusError(error)) {
+    return true;
+  }
+
+  const message =
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as { message?: unknown }).message === 'string'
+      ? (error as { message: string }).message
+      : '';
+
+  return /authentication required/i.test(message);
+};
+
 type PersistKangurSessionScoreInput = {
   operation: string;
   score: number;
@@ -67,10 +83,11 @@ export async function persistKangurSessionScore({
     {
       fallback: null,
       onError: (error) => {
-        if (isKangurAuthStatusError(error)) {
+        if (isKangurAnonymousSessionError(error)) {
           isGuestSession = true;
         }
       },
+      shouldReport: (error) => !isKangurAnonymousSessionError(error),
     }
   );
 
@@ -97,6 +114,7 @@ export async function persistKangurSessionScore({
     return;
   }
 
+  let shouldStoreGuestScore = false;
   await withKangurClientError(
     {
       source: 'persistKangurSessionScore',
@@ -108,6 +126,18 @@ export async function persistKangurSessionScore({
       },
     },
     () => kangurPlatform.score.create(payload),
-    { fallback: undefined }
+    {
+      fallback: undefined,
+      onError: (error) => {
+        if (isKangurAnonymousSessionError(error)) {
+          shouldStoreGuestScore = true;
+        }
+      },
+      shouldReport: (error) => !isKangurAnonymousSessionError(error),
+    }
   );
+
+  if (shouldStoreGuestScore) {
+    createGuestKangurScore(payload);
+  }
 }

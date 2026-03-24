@@ -2,6 +2,10 @@ import { ChevronLeft, ChevronRight, Printer } from 'lucide-react';
 
 import { KangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
 import { KangurStatusChip } from '@/features/kangur/ui/design/primitives';
+import {
+  LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME,
+  LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME,
+} from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 
 export type ExamNavigationProps = {
   prevDisabled: boolean;
@@ -36,9 +40,16 @@ export function ExamNavigation({
     'justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-35 touch-manipulation select-none min-h-11 min-w-[3rem] active:scale-[0.98]';
 
   return (
-    <div className='grid w-full gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-center'>
-      <div className='hidden sm:block' />
-      <nav className='flex items-center justify-center gap-2' aria-label={ariaLabel}>
+    <nav
+      aria-label={ariaLabel}
+      className={LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME}
+      data-testid='kangur-exam-navigation'
+    >
+      <div
+        className={LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME}
+        role='group'
+        aria-label={ariaLabel}
+      >
         <KangurLessonNavigationIconButton
           onClick={prevDisabled ? undefined : onPrev}
           disabled={prevDisabled}
@@ -65,8 +76,8 @@ export function ExamNavigation({
             title={printLabel}
           />
         ) : null}
-      </nav>
-      <div className='flex justify-center sm:justify-end' aria-live='polite' aria-atomic='true'>
+      </div>
+      <div className='flex w-full justify-center' aria-live='polite' aria-atomic='true'>
         {progressLabel ? (
           <KangurStatusChip
             accent='amber'
@@ -78,6 +89,6 @@ export function ExamNavigation({
           </KangurStatusChip>
         ) : null}
       </div>
-    </div>
+    </nav>
   );
 }

@@ -335,6 +335,68 @@ describe('resolveKangurAiTutorNativeGuideResponse', () => {
     });
   });
 
+  it('prefers fragment-linked native guides when the page-content knowledge reference targets a fragment', async () => {
+    getKangurPageContentEntryMock.mockResolvedValueOnce({
+      id: 'tests-question',
+      pageKey: 'Tests',
+      screenKey: 'suite',
+      surface: 'test',
+      route: '/tests',
+      componentId: 'question',
+      widget: 'KangurTestQuestionRenderer',
+      sourcePath: 'src/features/kangur/ui/components/KangurTestSuitePlayer.tsx',
+      title: 'Pytanie testowe',
+      summary: 'Wybierz jedną odpowiedź.',
+      body: 'Pytanie testowe.',
+      anchorIdPrefix: 'kangur-test-question:',
+      focusKind: 'question',
+      contentIdPrefixes: ['suite-add-1'],
+      nativeGuideIds: ['test-question'],
+      triggerPhrases: ['pytanie'],
+      tags: ['page-content'],
+      fragments: [
+        {
+          id: 'kangur-q1-squares',
+          text: 'Który kwadrat został rozcięty wzdłuż pogrubionych linii?',
+          aliases: [],
+          explanation: 'Porównaj powstałe kształty.',
+          nativeGuideIds: ['test-kangur-q1-squares'],
+          triggerPhrases: [],
+          enabled: true,
+          sortOrder: 10,
+        },
+      ],
+      enabled: true,
+      sortOrder: 10,
+    });
+
+    const resolution = await resolveKangurAiTutorNativeGuideResolution({
+      latestUserMessage: 'Wyjaśnij zaznaczony fragment.',
+      context: {
+        surface: 'test',
+        promptMode: 'selected_text',
+        focusKind: 'question',
+        focusId: 'kangur-test-question:suite-add-1:question-add-1',
+        focusLabel:
+          'Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach?',
+        interactionIntent: 'explain',
+        knowledgeReference: {
+          sourceCollection: 'kangur_page_content',
+          sourceRecordId: 'tests-question',
+          sourcePath: 'entry:tests-question#fragment:kangur-q1-squares',
+        },
+      },
+      locale: 'pl',
+    });
+
+    expect(resolution).toMatchObject({
+      status: 'hit',
+      entryId: 'test-kangur-q1-squares',
+      coverageLevel: 'specific',
+      matchedSignals: ['knowledge_reference'],
+    });
+  });
+
   it('marks section-specific requests that fall back to an overview entry as a coverage gap', async () => {
     const resolution = await resolveKangurAiTutorNativeGuideResolution({
       latestUserMessage: 'Wyjaśnij ten fragment.',

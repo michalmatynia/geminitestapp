@@ -312,4 +312,528 @@ describe('resolveKangurAiTutorSectionKnowledgeBundle', () => {
       'Highlighted website fragment resolved from canonical page-content'
     );
   });
+
+  it('resolves selected-text fragments even when the request omits interactionIntent', async () => {
+    getKangurPageContentStoreMock.mockResolvedValue({
+      locale: 'pl',
+      version: 1,
+      entries: [
+        {
+          id: 'game-home-leaderboard',
+          pageKey: 'Game',
+          screenKey: 'home',
+          surface: 'game',
+          route: '/game',
+          componentId: 'leaderboard',
+          widget: 'Leaderboard',
+          sourcePath: 'src/features/kangur/ui/components/Leaderboard.tsx',
+          title: 'Ranking',
+          summary: 'Porównaj wynik z innymi graczami.',
+          body: 'To sekcja z najlepszymi wynikami i miejscem ucznia.',
+          anchorIdPrefix: 'kangur-game-leaderboard',
+          focusKind: 'leaderboard',
+          contentIdPrefixes: ['game:home'],
+          nativeGuideIds: ['shared-leaderboard'],
+          triggerPhrases: ['ranking'],
+          fragments: [
+            {
+              id: 'leaderboard-points',
+              text: 'Liczba punktów',
+              aliases: ['punkty w rankingu', 'punkty'],
+              explanation:
+                'Ten tekst pokazuje wynik używany do ustawienia pozycji ucznia w rankingu.',
+              nativeGuideIds: ['shared-leaderboard-points'],
+              triggerPhrases: ['liczba punktów', 'punkty'],
+              enabled: true,
+              sortOrder: 10,
+            },
+          ],
+          tags: ['page-content', 'leaderboard'],
+          notes: 'Ranking głównej planszy.',
+          enabled: true,
+          sortOrder: 10,
+        },
+      ],
+    });
+    getKangurAiTutorNativeGuideStoreMock.mockResolvedValue({
+      locale: 'pl',
+      version: 6,
+      entries: [
+        {
+          id: 'shared-leaderboard',
+          surface: 'game',
+          focusKind: 'leaderboard',
+          focusIdPrefixes: ['kangur-game-leaderboard'],
+          contentIdPrefixes: ['game:home'],
+          title: 'Ranking',
+          shortDescription: 'Wyjaśnia, jak działa ranking na planszy głównej.',
+          fullDescription: 'Sekcja pokazuje miejsce ucznia i najlepsze wyniki na planszy.',
+          hints: [],
+          relatedGames: [],
+          relatedTests: [],
+          followUpActions: [],
+          triggerPhrases: ['ranking'],
+          enabled: true,
+          sortOrder: 10,
+        },
+        {
+          id: 'shared-leaderboard-points',
+          surface: 'game',
+          focusKind: 'leaderboard',
+          focusIdPrefixes: ['kangur-game-leaderboard'],
+          contentIdPrefixes: ['game:home'],
+          title: 'Punkty w rankingu',
+          shortDescription: 'Wyjaśnia, jak czytać liczbę punktów na liście wyników.',
+          fullDescription: 'Liczba punktów pokazuje siłę wyniku, która wpływa na pozycję ucznia.',
+          hints: [],
+          relatedGames: [],
+          relatedTests: [],
+          followUpActions: [],
+          triggerPhrases: ['punkty'],
+          enabled: true,
+          sortOrder: 20,
+        },
+      ],
+    });
+
+    const bundle = await resolveKangurAiTutorSectionKnowledgeBundle({
+      latestUserMessage: 'Wyjaśnij ten fragment.',
+      context: {
+        surface: 'game',
+        contentId: 'game:home',
+        promptMode: 'selected_text',
+        selectedText: 'Liczba punktów',
+        focusKind: 'leaderboard',
+        focusId: 'kangur-game-leaderboard',
+        focusLabel: 'Ranking',
+        knowledgeReference: {
+          sourceCollection: 'kangur_page_content',
+          sourceRecordId: 'game-home-leaderboard',
+          sourcePath: 'entry:game-home-leaderboard',
+        },
+      },
+    });
+
+    expect(bundle).not.toBeNull();
+    expect(bundle?.section.id).toBe('game-home-leaderboard');
+    expect(bundle?.fragment?.id).toBe('leaderboard-points');
+    expect(bundle?.linkedNativeGuides.map((entry) => entry.id)).toEqual([
+      'shared-leaderboard',
+      'shared-leaderboard-points',
+    ]);
+    expect(bundle?.sources[0]).toMatchObject({
+      collectionId: 'kangur_page_content',
+      documentId: 'game-home-leaderboard#fragment:leaderboard-points',
+    });
+  });
+
+  it('falls back to selected-text fragment matching when explain context has no page-content reference', async () => {
+    getKangurPageContentStoreMock.mockResolvedValue({
+      locale: 'pl',
+      version: 1,
+      entries: [
+        {
+          id: 'tests-question',
+          pageKey: 'Tests',
+          screenKey: 'suite',
+          surface: 'test',
+          route: '/tests',
+          componentId: 'question',
+          widget: 'KangurTestQuestionRenderer',
+          sourcePath: 'src/features/kangur/ui/components/KangurTestSuitePlayer.tsx',
+          title: 'Pytanie testowe',
+          summary: 'Wybierz jedną odpowiedź, a potem sprawdź omówienie.',
+          body: 'Sekcja z treścią pytania konkursowego.',
+          anchorIdPrefix: 'kangur-test-question:',
+          focusKind: 'question',
+          contentIdPrefixes: [],
+          nativeGuideIds: ['test-question'],
+          triggerPhrases: ['pytanie testowe'],
+          fragments: [
+            {
+              id: 'kangur-q1-squares',
+              text: 'Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach?',
+              aliases: [
+                'Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach? (A–E)',
+              ],
+              explanation:
+                'To zadanie sprawdza, czy po rozcięciu powstają dwie identyczne czy różne części.',
+              nativeGuideIds: ['test-kangur-q1-squares'],
+              triggerPhrases: ['rozcięty kwadrat', 'różne kształty'],
+              enabled: true,
+              sortOrder: 10,
+            },
+          ],
+          tags: ['page-content', 'test-question'],
+          notes: 'Pytanie konkursowe.',
+          enabled: true,
+          sortOrder: 10,
+        },
+        {
+          id: 'game-kangur-session',
+          pageKey: 'Game',
+          screenKey: 'kangur',
+          surface: 'game',
+          route: '/game',
+          componentId: 'kangur-session',
+          widget: 'KangurCompetitionSession',
+          sourcePath: 'src/features/kangur/ui/pages/Game.tsx',
+          title: 'Sesja Kangura',
+          summary: 'Pytania konkursowe w trybie gry.',
+          body: 'Pytania konkursowe wyświetlane w grze.',
+          anchorIdPrefix: 'kangur-game-kangur-session',
+          focusKind: 'question',
+          contentIdPrefixes: ['game:kangur:'],
+          nativeGuideIds: ['game-kangur-session'],
+          triggerPhrases: ['sesja kangura'],
+          fragments: [
+            {
+              id: 'kangur-q1-squares',
+              text: 'Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach?',
+              aliases: [],
+              explanation: 'Gra Kangura używa tego samego pytania.',
+              nativeGuideIds: ['game-kangur-q1-squares'],
+              triggerPhrases: ['rozcięty kwadrat'],
+              enabled: true,
+              sortOrder: 10,
+            },
+          ],
+          tags: ['page-content', 'game-kangur-session'],
+          notes: 'Pytanie w grze.',
+          enabled: true,
+          sortOrder: 20,
+        },
+      ],
+    });
+    getKangurAiTutorNativeGuideStoreMock.mockResolvedValue({
+      locale: 'pl',
+      version: 6,
+      entries: [
+        {
+          id: 'test-question',
+          surface: 'test',
+          focusKind: 'question',
+          focusIdPrefixes: ['kangur-test-question:'],
+          contentIdPrefixes: [],
+          title: 'Pytanie testowe',
+          shortDescription: 'Wprowadzenie do pytania testowego.',
+          fullDescription: 'To pytanie wymaga wybrania poprawnej odpowiedzi.',
+          hints: [],
+          relatedGames: [],
+          relatedTests: [],
+          followUpActions: [],
+          triggerPhrases: ['pytanie testowe'],
+          enabled: true,
+          sortOrder: 10,
+        },
+        {
+          id: 'test-kangur-q1-squares',
+          surface: 'test',
+          focusKind: 'question',
+          focusIdPrefixes: ['kangur-test-question:'],
+          contentIdPrefixes: [],
+          title: 'Kwadrat rozcięty na różne kształty',
+          shortDescription: 'Pomaga porównać części po rozcięciu.',
+          fullDescription: 'Porównaj kształty po obrocie lub odbiciu, zamiast liczyć długości.',
+          hints: [],
+          relatedGames: [],
+          relatedTests: [],
+          followUpActions: [],
+          triggerPhrases: ['rozcięty kwadrat', 'różne kształty'],
+          enabled: true,
+          sortOrder: 20,
+        },
+      ],
+    });
+
+    const bundle = await resolveKangurAiTutorSectionKnowledgeBundle({
+      latestUserMessage: 'Wyjaśnij zaznaczony fragment.',
+      context: {
+        surface: 'test',
+        contentId: 'suite-add-1',
+        promptMode: 'selected_text',
+        selectedText:
+          'Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach?',
+        focusKind: 'selection',
+        focusId: 'selection',
+        focusLabel:
+          'Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach?',
+        interactionIntent: 'explain',
+      },
+    });
+
+    expect(bundle).not.toBeNull();
+    expect(bundle?.section.id).toBe('tests-question');
+    expect(bundle?.fragment?.id).toBe('kangur-q1-squares');
+    expect(bundle?.linkedNativeGuides.map((entry) => entry.id)).toEqual([
+      'test-question',
+      'test-kangur-q1-squares',
+    ]);
+    expect(bundle?.sources[0]).toMatchObject({
+      collectionId: 'kangur_page_content',
+      documentId: 'tests-question#fragment:kangur-q1-squares',
+      metadata: expect.objectContaining({
+        title:
+          'Pytanie testowe -> Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach?',
+      }),
+    });
+  });
+
+  it('upgrades a generic page-content reference to the matched selected-text fragment', async () => {
+    getKangurPageContentStoreMock.mockResolvedValue({
+      locale: 'pl',
+      version: 1,
+      entries: [
+        {
+          id: 'tests-question',
+          pageKey: 'Tests',
+          screenKey: 'suite',
+          surface: 'test',
+          route: '/tests',
+          componentId: 'question',
+          widget: 'KangurTestQuestionRenderer',
+          sourcePath: 'src/features/kangur/ui/components/KangurTestSuitePlayer.tsx',
+          title: 'Pytanie testowe',
+          summary: 'Wybierz jedną odpowiedź, a potem sprawdź omówienie.',
+          body: 'Sekcja z treścią pytania konkursowego.',
+          anchorIdPrefix: 'kangur-test-question:',
+          focusKind: 'question',
+          contentIdPrefixes: [],
+          nativeGuideIds: ['test-question'],
+          triggerPhrases: ['pytanie testowe'],
+          fragments: [
+            {
+              id: 'kangur-q1-squares',
+              text: 'Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach?',
+              aliases: [],
+              explanation:
+                'To zadanie sprawdza, czy po rozcięciu powstają dwie identyczne czy różne części.',
+              nativeGuideIds: ['test-kangur-q1-squares'],
+              triggerPhrases: ['rozcięty kwadrat', 'różne kształty'],
+              enabled: true,
+              sortOrder: 10,
+            },
+          ],
+          tags: ['page-content', 'test-question'],
+          notes: 'Pytanie konkursowe.',
+          enabled: true,
+          sortOrder: 10,
+        },
+      ],
+    });
+    getKangurAiTutorNativeGuideStoreMock.mockResolvedValue({
+      locale: 'pl',
+      version: 6,
+      entries: [
+        {
+          id: 'test-question',
+          surface: 'test',
+          focusKind: 'question',
+          focusIdPrefixes: ['kangur-test-question:'],
+          contentIdPrefixes: [],
+          title: 'Pytanie testowe',
+          shortDescription: 'Wprowadzenie do pytania testowego.',
+          fullDescription: 'To pytanie wymaga wybrania poprawnej odpowiedzi.',
+          hints: [],
+          relatedGames: [],
+          relatedTests: [],
+          followUpActions: [],
+          triggerPhrases: ['pytanie testowe'],
+          enabled: true,
+          sortOrder: 10,
+        },
+        {
+          id: 'test-kangur-q1-squares',
+          surface: 'test',
+          focusKind: 'question',
+          focusIdPrefixes: ['kangur-test-question:'],
+          contentIdPrefixes: [],
+          title: 'Kwadrat rozcięty na różne kształty',
+          shortDescription: 'Pomaga porównać części po rozcięciu.',
+          fullDescription: 'Porównaj kształty po obrocie lub odbiciu, zamiast liczyć długości.',
+          hints: [],
+          relatedGames: [],
+          relatedTests: [],
+          followUpActions: [],
+          triggerPhrases: ['rozcięty kwadrat', 'różne kształty'],
+          enabled: true,
+          sortOrder: 20,
+        },
+      ],
+    });
+
+    const bundle = await resolveKangurAiTutorSectionKnowledgeBundle({
+      latestUserMessage: 'Wyjaśnij zaznaczony fragment.',
+      context: {
+        surface: 'test',
+        contentId: 'suite-add-1',
+        promptMode: 'selected_text',
+        selectedText:
+          'Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach?',
+        focusKind: 'question',
+        focusId: 'kangur-test-question:suite-add-1:question-add-1',
+        focusLabel: 'Pytanie 1/1',
+        interactionIntent: 'explain',
+        knowledgeReference: {
+          sourceCollection: 'kangur_page_content',
+          sourceRecordId: 'tests-question',
+          sourcePath: 'entry:tests-question',
+        },
+      },
+    });
+
+    expect(bundle).not.toBeNull();
+    expect(bundle?.section.id).toBe('tests-question');
+    expect(bundle?.fragment?.id).toBe('kangur-q1-squares');
+    expect(bundle?.linkedNativeGuides.map((entry) => entry.id)).toEqual([
+      'test-question',
+      'test-kangur-q1-squares',
+    ]);
+    expect(bundle?.sources[0]).toMatchObject({
+      collectionId: 'kangur_page_content',
+      documentId: 'tests-question#fragment:kangur-q1-squares',
+    });
+  });
+
+  it('allows an exact selected-text fragment match to reuse test knowledge across surfaces when no better section exists', async () => {
+    getKangurPageContentStoreMock.mockResolvedValue({
+      locale: 'pl',
+      version: 1,
+      entries: [
+        {
+          id: 'tests-question',
+          pageKey: 'Tests',
+          screenKey: 'suite',
+          surface: 'test',
+          route: '/tests',
+          componentId: 'question',
+          widget: 'KangurTestQuestionRenderer',
+          sourcePath: 'src/features/kangur/ui/components/KangurTestSuitePlayer.tsx',
+          title: 'Pytanie testowe',
+          summary: 'Wybierz jedną odpowiedź, a potem sprawdź omówienie.',
+          body: 'Sekcja z treścią pytania konkursowego.',
+          anchorIdPrefix: 'kangur-test-question:',
+          focusKind: 'question',
+          contentIdPrefixes: [],
+          nativeGuideIds: ['test-question'],
+          triggerPhrases: ['pytanie testowe'],
+          fragments: [
+            {
+              id: 'kangur-q1-squares',
+              text: 'Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach?',
+              aliases: [],
+              explanation:
+                'To zadanie sprawdza, czy po rozcięciu powstają dwie identyczne czy różne części.',
+              nativeGuideIds: ['test-kangur-q1-squares'],
+              triggerPhrases: ['rozcięty kwadrat', 'różne kształty'],
+              enabled: true,
+              sortOrder: 10,
+            },
+          ],
+          tags: ['page-content', 'test-question'],
+          notes: 'Pytanie konkursowe.',
+          enabled: true,
+          sortOrder: 10,
+        },
+        {
+          id: 'game-kangur-session',
+          pageKey: 'Game',
+          screenKey: 'kangur',
+          surface: 'game',
+          route: '/game',
+          componentId: 'kangur-session',
+          widget: 'KangurCompetitionSession',
+          sourcePath: 'src/features/kangur/ui/pages/Game.tsx',
+          title: 'Sesja Kangura',
+          summary: 'Pytania konkursowe w trybie gry.',
+          body: 'Pytania konkursowe wyświetlane w grze.',
+          anchorIdPrefix: 'kangur-game-kangur-session',
+          focusKind: 'question',
+          contentIdPrefixes: ['game:kangur:'],
+          nativeGuideIds: ['game-kangur-session'],
+          triggerPhrases: ['sesja kangura'],
+          fragments: [
+            {
+              id: 'kangur-q1-squares',
+              text: 'Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach?',
+              aliases: [],
+              explanation: 'Gra Kangura używa tego samego pytania.',
+              nativeGuideIds: ['game-kangur-q1-squares'],
+              triggerPhrases: ['rozcięty kwadrat'],
+              enabled: true,
+              sortOrder: 10,
+            },
+          ],
+          tags: ['page-content', 'game-kangur-session'],
+          notes: 'Pytanie w grze.',
+          enabled: true,
+          sortOrder: 20,
+        },
+      ],
+    });
+    getKangurAiTutorNativeGuideStoreMock.mockResolvedValue({
+      locale: 'pl',
+      version: 6,
+      entries: [
+        {
+          id: 'test-question',
+          surface: 'test',
+          focusKind: 'question',
+          focusIdPrefixes: ['kangur-test-question:'],
+          contentIdPrefixes: [],
+          title: 'Pytanie testowe',
+          shortDescription: 'Wprowadzenie do pytania testowego.',
+          fullDescription: 'To pytanie wymaga wybrania poprawnej odpowiedzi.',
+          hints: [],
+          relatedGames: [],
+          relatedTests: [],
+          followUpActions: [],
+          triggerPhrases: ['pytanie testowe'],
+          enabled: true,
+          sortOrder: 10,
+        },
+        {
+          id: 'test-kangur-q1-squares',
+          surface: 'test',
+          focusKind: 'question',
+          focusIdPrefixes: ['kangur-test-question:'],
+          contentIdPrefixes: [],
+          title: 'Kwadrat rozcięty na różne kształty',
+          shortDescription: 'Pomaga porównać części po rozcięciu.',
+          fullDescription: 'Porównaj kształty po obrocie lub odbiciu, zamiast liczyć długości.',
+          hints: [],
+          relatedGames: [],
+          relatedTests: [],
+          followUpActions: [],
+          triggerPhrases: ['rozcięty kwadrat', 'różne kształty'],
+          enabled: true,
+          sortOrder: 20,
+        },
+      ],
+    });
+
+    const bundle = await resolveKangurAiTutorSectionKnowledgeBundle({
+      latestUserMessage: 'Wyjaśnij zaznaczony fragment.',
+      context: {
+        surface: 'lesson',
+        contentId: 'lesson-geometry-1',
+        promptMode: 'selected_text',
+        selectedText:
+          'Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach?',
+        focusKind: 'selection',
+        focusId: 'selection',
+        focusLabel:
+          'Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach?',
+        interactionIntent: 'explain',
+      },
+    });
+
+    expect(bundle).not.toBeNull();
+    expect(bundle?.section.id).toBe('tests-question');
+    expect(bundle?.fragment?.id).toBe('kangur-q1-squares');
+    expect(bundle?.linkedNativeGuides.map((entry) => entry.id)).toEqual([
+      'test-question',
+      'test-kangur-q1-squares',
+    ]);
+  });
 });

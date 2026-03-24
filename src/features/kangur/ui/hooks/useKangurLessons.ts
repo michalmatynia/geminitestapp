@@ -17,7 +17,10 @@ import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-fa
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { createDefaultKangurLessons } from '@/features/kangur/settings';
 import { normalizeKangurLessonDocumentStore } from '@/features/kangur/lesson-documents';
-import { withKangurClientError } from '@/features/kangur/observability/client';
+import {
+  isRecoverableKangurClientFetchError,
+  withKangurClientError,
+} from '@/features/kangur/observability/client';
 
 type LessonsQueryOptions = KangurLessonCollectionFilterDto & {
   enabled?: boolean;
@@ -64,7 +67,10 @@ const fetchLessons = async (options?: LessonsQueryOptions): Promise<KangurLesson
       const payload = await api.get<KangurLesson[]>('/api/kangur/lessons', { params });
       return kangurLessonsSchema.parse(payload);
     },
-    { fallback: () => buildLessonsFallback(options) }
+    {
+      fallback: () => buildLessonsFallback(options),
+      shouldReport: (error) => !isRecoverableKangurClientFetchError(error),
+    }
   );
 
 const fetchLessonDocuments = async (): Promise<KangurLessonDocumentStore> =>
@@ -79,7 +85,10 @@ const fetchLessonDocuments = async (): Promise<KangurLessonDocumentStore> =>
       const parsed = kangurLessonDocumentStoreSchema.parse(payload);
       return normalizeKangurLessonDocumentStore(parsed);
     },
-    { fallback: () => ({}) }
+    {
+      fallback: () => ({}),
+      shouldReport: (error) => !isRecoverableKangurClientFetchError(error),
+    }
   );
 
 const fetchLessonDocument = async (lessonId: string): Promise<KangurLessonDocument | null> =>
@@ -98,7 +107,10 @@ const fetchLessonDocument = async (lessonId: string): Promise<KangurLessonDocume
       );
       return payload ? kangurLessonDocumentSchema.parse(payload) : null;
     },
-    { fallback: () => null }
+    {
+      fallback: () => null,
+      shouldReport: (error) => !isRecoverableKangurClientFetchError(error),
+    }
   );
 
 export const useKangurLessons = (

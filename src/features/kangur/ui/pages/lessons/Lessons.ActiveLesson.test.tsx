@@ -15,6 +15,7 @@ import {
 const {
   useLessonsMock,
   useKangurMobileBreakpointMock,
+  useKangurTutorAnchorMock,
   hasKangurLessonDocumentContentMock,
   lessonDocumentBackButtonLabelMock,
   lessonDocumentBackClickMock,
@@ -22,6 +23,7 @@ const {
 } = vi.hoisted(() => ({
   useLessonsMock: vi.fn(),
   useKangurMobileBreakpointMock: vi.fn(),
+  useKangurTutorAnchorMock: vi.fn(),
   hasKangurLessonDocumentContentMock: vi.fn(() => true),
   lessonDocumentBackButtonLabelMock: vi.fn(() => null),
   lessonDocumentBackClickMock: vi.fn(),
@@ -136,6 +138,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: () => ({ entry: null }),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
+  useKangurTutorAnchor: (...args: unknown[]) => useKangurTutorAnchorMock(...args),
+}));
+
 vi.mock('@/features/kangur/ui/pages/lessons/LessonsContext', () => ({
   useLessons: () => useLessonsMock(),
 }));
@@ -164,6 +170,7 @@ describe('ActiveLessonView mobile controls', () => {
 
   beforeEach(() => {
     useKangurMobileBreakpointMock.mockReturnValue(true);
+    useKangurTutorAnchorMock.mockReset();
     hasKangurLessonDocumentContentMock.mockReturnValue(true);
     lessonDocumentBackButtonLabelMock.mockReturnValue(null);
     lessonDocumentBackClickMock.mockReset();
@@ -253,6 +260,78 @@ describe('ActiveLessonView mobile controls', () => {
 
     expect(document.documentElement.style.overflow).toBe('');
     expect(document.body.style.overflow).toBe('');
+  });
+
+  it('registers lesson tutor anchors so selected text can resolve to the lesson knowledge base', async () => {
+    useKangurMobileBreakpointMock.mockReturnValue(false);
+    useLessonsMock.mockReturnValue({
+      activeLesson,
+      handleSelectLesson,
+      lessonDocuments: {},
+      lessonAssignmentsByComponent: new Map([[activeLesson.componentId, { id: 'assignment-1' }]]),
+      completedLessonAssignmentsByComponent: new Map(),
+      setIsActiveLessonComponentReady: vi.fn(),
+      activeLessonHeaderRef: React.createRef<HTMLDivElement>(),
+      activeLessonNavigationRef: React.createRef<HTMLDivElement>(),
+      activeLessonContentRef,
+      activeLessonScrollRef: React.createRef<HTMLDivElement>(),
+      orderedLessons: [activeLesson, nextLesson],
+      isSecretLessonActive: false,
+      progress: { lessonMastery: {} },
+    });
+
+    render(<ActiveLessonView />);
+
+    await act(async () => {});
+
+    expect(useKangurTutorAnchorMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'kangur-lesson-header',
+        kind: 'lesson_header',
+        surface: 'lesson',
+        enabled: true,
+        metadata: expect.objectContaining({
+          contentId: 'lesson-1',
+          assignmentId: 'assignment-1',
+        }),
+      })
+    );
+    expect(useKangurTutorAnchorMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'kangur-lesson-assignment',
+        kind: 'assignment',
+        surface: 'lesson',
+        enabled: true,
+        metadata: expect.objectContaining({
+          contentId: 'lesson-1',
+          assignmentId: 'assignment-1',
+        }),
+      })
+    );
+    expect(useKangurTutorAnchorMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'kangur-lesson-navigation',
+        kind: 'navigation',
+        surface: 'lesson',
+        enabled: true,
+        metadata: expect.objectContaining({
+          contentId: 'lesson-1',
+          assignmentId: 'assignment-1',
+        }),
+      })
+    );
+    expect(useKangurTutorAnchorMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'kangur-lesson-document',
+        kind: 'document',
+        surface: 'lesson',
+        enabled: true,
+        metadata: expect.objectContaining({
+          contentId: 'lesson-1',
+          assignmentId: 'assignment-1',
+        }),
+      })
+    );
   });
 
   it('marks the lesson content as the printable root and only toggles print mode around lesson printing', async () => {

@@ -1243,7 +1243,6 @@ export function KangurPrimaryNavigation({
         className={topBarClassName}
         contentClassName={topBarContentClassName}
         left={leftContent}
-        role='banner'
       />
       {mobileMenuOverlay}
       {subjectModal}

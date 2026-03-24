@@ -5,20 +5,34 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  LESSONS_LIBRARY_LAYOUT_CLASSNAME,
+  LESSONS_LIBRARY_LIST_CLASSNAME,
+} from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 
 const {
   localeState,
+  parsedSuitesState,
+  publishedQuestionCountBySuiteState,
   routeNavigatorBackMock,
   settingsStoreMock,
 } = vi.hoisted(() => ({
   localeState: {
     value: 'de' as 'de' | 'en' | 'pl',
   },
+  parsedSuitesState: {
+    value: [] as Array<Record<string, unknown>>,
+  },
+  publishedQuestionCountBySuiteState: {
+    value: new Map<string, number>(),
+  },
   routeNavigatorBackMock: vi.fn(),
   settingsStoreMock: {
     get: vi.fn(),
   },
 }));
+
+const splitClasses = (className: string): string[] => className.trim().split(/\s+/);
 
 vi.mock('next-intl', () => ({
   useLocale: () => localeState.value,
@@ -252,12 +266,13 @@ vi.mock('@/features/kangur/test-suites', () => ({
   KANGUR_TEST_QUESTIONS_SETTING_KEY: 'kangur-test-questions',
   KANGUR_TEST_SUITES_SETTING_KEY: 'kangur-test-suites',
   isLiveKangurTestSuite: () => true,
-  parseKangurTestSuites: () => [],
+  parseKangurTestSuites: () => parsedSuitesState.value,
 }));
 
 vi.mock('@/features/kangur/test-questions', () => ({
   getQuestionsForSuite: () => [],
-  getPublishedQuestionsForSuite: () => [],
+  getPublishedQuestionsForSuite: (_store: unknown, suiteId: string) =>
+    Array.from({ length: publishedQuestionCountBySuiteState.value.get(suiteId) ?? 0 }),
   parseKangurTestQuestionStore: () => ({}),
 }));
 
@@ -267,6 +282,8 @@ describe('Tests page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localeState.value = 'de';
+    parsedSuitesState.value = [];
+    publishedQuestionCountBySuiteState.value = new Map();
     settingsStoreMock.get.mockReturnValue(undefined);
   });
 
@@ -291,5 +308,35 @@ describe('Tests page', () => {
       fallbackPageKey: 'Game',
       sourceId: 'tests:list-back',
     });
+  });
+
+  it('keeps the tests list aligned with the centered lessons library layout', () => {
+    parsedSuitesState.value = [
+      {
+        id: 'kangur-2026',
+        title: 'Kangur matematyczny 2026',
+        description: 'Zestaw konkursowy',
+        year: 2026,
+        gradeLevel: 'A',
+        category: 'Competition',
+        sortOrder: 1,
+      },
+    ];
+    publishedQuestionCountBySuiteState.value = new Map([['kangur-2026', 24]]);
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
+      callback(0);
+      return 1;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined);
+
+    render(<Tests />);
+
+    expect(screen.getByTestId('tests-list-transition')).toHaveClass(
+      ...splitClasses(LESSONS_LIBRARY_LAYOUT_CLASSNAME)
+    );
+    expect(screen.getByRole('list', { name: 'Testliste' })).toHaveClass(
+      ...splitClasses(LESSONS_LIBRARY_LIST_CLASSNAME)
+    );
+    expect(screen.getAllByRole('listitem')[0]).toHaveClass('w-full');
   });
 });

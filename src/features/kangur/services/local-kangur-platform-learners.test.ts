@@ -51,6 +51,11 @@ vi.mock('@/features/kangur/services/local-kangur-platform-shared', () => ({
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({
+  isRecoverableKangurClientFetchError: (error: unknown) =>
+    error instanceof Error &&
+    error.name === 'TypeError' &&
+    (error.message.trim().toLowerCase() === 'failed to fetch' ||
+      error.message.trim().toLowerCase().includes('load failed')),
   withKangurClientError: async (
     _report: unknown,
     task: () => Promise<unknown>,
@@ -299,5 +304,22 @@ describe('local-kangur-platform learners shared API client integration', () => {
         method: 'POST',
       }),
     );
+  });
+
+  it('does not track recoverable fetch misses while loading learner history', async () => {
+    const fetchError = new TypeError('Failed to fetch');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValueOnce(fetchError).mockRejectedValueOnce(fetchError)
+    );
+
+    const {
+      requestLearnerSessions,
+      requestLearnerInteractions,
+    } = await import('@/features/kangur/services/local-kangur-platform-learners');
+
+    await expect(requestLearnerSessions('learner-1')).rejects.toBe(fetchError);
+    await expect(requestLearnerInteractions('learner-1')).rejects.toBe(fetchError);
+    expect(trackReadFailureMock).not.toHaveBeenCalled();
   });
 });

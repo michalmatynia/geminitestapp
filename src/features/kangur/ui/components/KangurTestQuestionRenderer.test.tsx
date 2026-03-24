@@ -66,6 +66,10 @@ describe('KangurTestQuestionRenderer', () => {
     expect(screen.getByTestId('kangur-test-question-copy')).toHaveTextContent(
       /Wybierz jedną odpowiedź, a potem sprawdź omówienie i poprawny tok myślenia\./i
     );
+    expect(screen.getByTestId('kangur-test-question-copy')).toHaveClass(
+      'items-center',
+      'text-center'
+    );
     const correctChoiceButton = screen.getByRole('button', { name: /A.*4/i });
     const wrongChoiceButton = screen.getByRole('button', { name: /B.*5/i });
 

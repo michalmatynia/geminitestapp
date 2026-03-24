@@ -14,8 +14,8 @@ import { KangurTopNavigationSkeleton } from '@/features/kangur/ui/components/Kan
 const KangurAiTutorWidget = dynamic(() => import('@/features/kangur/ui/components/KangurAiTutorWidget').then(m => ({ default: m.KangurAiTutorWidget })), { ssr: false });
 const KangurLoginModal = dynamic(() => import('@/features/kangur/ui/components/KangurLoginModal').then(m => ({ default: m.KangurLoginModal })), { ssr: false });
 import { KangurRouteAccessibilityAnnouncer } from '@/features/kangur/ui/components/KangurRouteAccessibilityAnnouncer';
-import { PageNotFound } from '@/features/kangur/ui/components/PageNotFound';
-import UserNotRegisteredError from '@/features/kangur/ui/components/UserNotRegisteredError';
+const PageNotFound = dynamic(() => import('@/features/kangur/ui/components/PageNotFound').then(m => ({ default: m.PageNotFound })), { ssr: false });
+const UserNotRegisteredError = dynamic(() => import('@/features/kangur/ui/components/UserNotRegisteredError'), { ssr: false });
 import { KangurAiTutorContentProvider } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurAiTutorDeferredProvider } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurAuthProvider, useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
@@ -146,6 +146,13 @@ const AuthenticatedApp = (): JSX.Element | null => {
     pendingRouteLoadingSnapshot !== null &&
     pendingRouteLoadingSnapshot.href !== null &&
     pendingRouteLoadingSnapshot.href !== currentRequestedHref;
+  const hasCommittedTargetRoute =
+    (activeTransitionRequestedHref !== null &&
+      activeTransitionRequestedHref !== currentRequestedHref) ||
+    (activeTransitionPageKey !== null && activeTransitionPageKey !== resolvedPageKey) ||
+    (pendingPageKey !== null && pendingPageKey !== resolvedPageKey);
+  const shouldShowAcknowledgingNavigationSkeleton =
+    isRouteAcknowledging && (isLanguageSwitcherTransition || hasCommittedTargetRoute);
   const snapshotTransitionPageKey =
     pendingRouteLoadingSnapshot?.pageKey ?? resolvedPageKey ?? KANGUR_MAIN_PAGE;
   const snapshotTransitionEmbedded =
@@ -155,7 +162,10 @@ const AuthenticatedApp = (): JSX.Element | null => {
     }) ?? embedded;
   const snapshotTransitionTopBarHeightCssValue =
     pendingRouteLoadingSnapshot?.topBarHeightCssValue ?? null;
-  const isRouteSkeletonVisible = isNavigationSkeletonVisible || isPendingRouteSnapshotVisible;
+  const isRouteSkeletonVisible =
+    shouldShowAcknowledgingNavigationSkeleton ||
+    isNavigationSkeletonVisible ||
+    isPendingRouteSnapshotVisible;
   const visibleTransitionSkeletonPageKey =
     isPendingRouteSnapshotVisible
       ? snapshotTransitionPageKey
@@ -189,7 +199,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
     (!shouldKeepRouteContentVisibleDuringTransition &&
     (transitionPhase === 'waiting_for_ready' ||
       ((transitionPhase === 'pending' ||
-        (transitionPhase === 'acknowledging' && isLanguageSwitcherTransition)) &&
+        (transitionPhase === 'acknowledging' &&
+          shouldShowAcknowledgingNavigationSkeleton)) &&
         isRouteSkeletonVisible)));
   const isRouteContentInteractionBlocked =
     isPendingRouteSnapshotVisible ||
@@ -340,7 +351,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
       return;
     }
 
-    if (isRouteAcknowledging && isLanguageSwitcherTransition) {
+    if (shouldShowAcknowledgingNavigationSkeleton) {
       navigationSkeletonShownRef.current = true;
       setIsNavigationSkeletonVisible(true);
       return;
@@ -395,13 +406,13 @@ const AuthenticatedApp = (): JSX.Element | null => {
     return undefined;
   }, [
     isBootLoading,
-    isLanguageSwitcherTransition,
     isNavigationTransitionActive,
     isRouteAcknowledging,
     isRoutePending,
     isRouteWaitingForReady,
     isRouteRevealing,
     shouldSkipNavigationSkeletonDelay,
+    shouldShowAcknowledgingNavigationSkeleton,
   ]);
 
   if (authErrorType === 'user_not_registered') {

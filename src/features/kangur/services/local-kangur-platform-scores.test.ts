@@ -52,6 +52,11 @@ vi.mock('@/features/kangur/services/local-kangur-platform-shared', () => ({
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({
+  isRecoverableKangurClientFetchError: (error: unknown) =>
+    error instanceof Error &&
+    error.name === 'TypeError' &&
+    (error.message.trim().toLowerCase() === 'failed to fetch' ||
+      error.message.trim().toLowerCase().includes('load failed')),
   reportKangurClientError: reportKangurClientErrorMock,
   withKangurClientError: async (
     _report: unknown,
@@ -225,5 +230,19 @@ describe('local-kangur-platform scores shared API client integration', () => {
         score: 8,
       }),
     );
+  });
+
+  it('does not report recoverable fetch misses while listing scores', async () => {
+    const fetchError = new TypeError('Failed to fetch');
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(fetchError));
+
+    const { requestMergedScores } = await import(
+      '@/features/kangur/services/local-kangur-platform-scores'
+    );
+
+    await expect(requestMergedScores({ sort: '-created_date', limit: 10 })).rejects.toBe(fetchError);
+    expect(trackReadFailureMock).not.toHaveBeenCalled();
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(reportKangurClientErrorMock).not.toHaveBeenCalled();
   });
 });

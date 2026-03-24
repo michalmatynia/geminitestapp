@@ -52,11 +52,12 @@ const normalizeText = (value: string | null | undefined): string =>
 
 const resolveSelectedTextFragment = (input: {
   context: KangurAiTutorConversationContext;
+  knowledgeReference?: KangurAiTutorKnowledgeReference | null;
   section: KangurPageContentEntry;
 }) =>
   resolveKangurPageContentFragment({
     entry: input.section,
-    knowledgeReference: input.context.knowledgeReference,
+    knowledgeReference: input.knowledgeReference ?? input.context.knowledgeReference,
     selectedText: input.context.selectedText,
   });
 
@@ -254,7 +255,27 @@ const resolvePageContentReference = (input: {
   }
 
   if (context.knowledgeReference?.sourceCollection === 'kangur_page_content') {
-    return context.knowledgeReference;
+    const selectedText = context.selectedText?.trim();
+    if (context.promptMode === 'selected_text' && selectedText) {
+      const referencedEntry = input.pageContentEntries.find(
+        (entry) =>
+          entry.enabled && entry.id === context.knowledgeReference?.sourceRecordId
+      );
+      if (referencedEntry) {
+        const referencedFragment = resolveKangurPageContentFragment({
+          entry: referencedEntry,
+          selectedText,
+        });
+        if (referencedFragment) {
+          return {
+            ...context.knowledgeReference,
+            sourcePath: `entry:${referencedEntry.id}#fragment:${referencedFragment.id}`,
+          };
+        }
+      }
+    } else {
+      return context.knowledgeReference;
+    }
   }
 
   const resolvedFromNativeGuide = resolvePageContentReferenceFromNativeGuide({
@@ -263,6 +284,14 @@ const resolvePageContentReference = (input: {
   });
   if (resolvedFromNativeGuide) {
     return resolvedFromNativeGuide;
+  }
+
+  const resolvedFromSelectedText = resolvePageContentReferenceFromSelectedText({
+    context,
+    pageContentEntries: input.pageContentEntries,
+  });
+  if (resolvedFromSelectedText) {
+    return resolvedFromSelectedText;
   }
 
   if (!context.focusId || !context.focusKind) {
@@ -274,6 +303,144 @@ const resolvePageContentReference = (input: {
     contentId: context.contentId ?? null,
     focusKind: context.focusKind,
   });
+};
+
+const scoreSelectedTextReferenceCandidate = (input: {
+  context: KangurAiTutorConversationContext;
+  entry: KangurPageContentEntry;
+}): number | null => {
+  const { context, entry } = input;
+  let score = 1_000;
+  const normalizedContentId = normalizeText(context.contentId);
+  const normalizedFocusId = normalizeText(context.focusId);
+
+  if (entry.surface && context.surface) {
+    if (entry.surface !== context.surface) {
+      score -= 320;
+    } else {
+      score += 260;
+    }
+  } else if (entry.surface === null) {
+    score += 20;
+  }
+
+  if (normalizedContentId) {
+    const exactContentIdMatch = entry.contentIdPrefixes.some(
+      (prefix) => normalizeText(prefix) === normalizedContentId
+    );
+    if (exactContentIdMatch) {
+      score += 180;
+    } else {
+      const prefixedContentIdMatch = entry.contentIdPrefixes.some((prefix) =>
+        normalizedContentId.startsWith(normalizeText(prefix))
+      );
+      if (prefixedContentIdMatch) {
+        score += 120;
+      } else if (entry.contentIdPrefixes.length > 0) {
+        score -= 280;
+      }
+    }
+  }
+
+  if (entry.focusKind && context.focusKind) {
+    if (entry.focusKind === context.focusKind) {
+      score += 120;
+    } else if (
+      context.focusKind === 'selection' &&
+      (entry.focusKind === 'question' ||
+        entry.focusKind === 'review' ||
+        entry.focusKind === 'document')
+    ) {
+      score += 40;
+    }
+  }
+
+  if (normalizedFocusId && entry.anchorIdPrefix) {
+    const normalizedAnchorPrefix = normalizeText(entry.anchorIdPrefix);
+    if (normalizedFocusId === normalizedAnchorPrefix) {
+      score += 140;
+    } else if (normalizedFocusId.startsWith(normalizedAnchorPrefix)) {
+      score += 90;
+    }
+  }
+
+  if (score <= 0) {
+    return null;
+  }
+
+  return score;
+};
+
+const resolvePageContentReferenceFromSelectedText = (input: {
+  context: KangurAiTutorConversationContext;
+  pageContentEntries: KangurPageContentEntry[];
+}): KangurAiTutorKnowledgeReference | null => {
+  const selectedText = input.context.selectedText?.trim();
+  if (!selectedText) {
+    return null;
+  }
+
+  const candidates = input.pageContentEntries
+    .map((entry) => {
+      if (!entry.enabled) {
+        return null;
+      }
+
+      const fragment = resolveKangurPageContentFragment({
+        entry,
+        selectedText,
+      });
+      if (!fragment) {
+        return null;
+      }
+
+      const score = scoreSelectedTextReferenceCandidate({
+        context: input.context,
+        entry,
+      });
+      if (score === null) {
+        return null;
+      }
+
+      return { entry, fragment, score };
+    })
+    .filter(
+      (
+        candidate
+      ): candidate is {
+        entry: KangurPageContentEntry;
+        fragment: KangurPageContentFragment;
+        score: number;
+      } => candidate !== null
+    )
+    .sort((left, right) => {
+      if (left.score !== right.score) {
+        return right.score - left.score;
+      }
+      if (left.fragment.sortOrder !== right.fragment.sortOrder) {
+        return left.fragment.sortOrder - right.fragment.sortOrder;
+      }
+      if (left.entry.sortOrder !== right.entry.sortOrder) {
+        return left.entry.sortOrder - right.entry.sortOrder;
+      }
+      return left.entry.id.localeCompare(right.entry.id);
+    });
+
+  const bestMatch = candidates[0] ?? null;
+  const secondBestMatch = candidates[1] ?? null;
+  if (!bestMatch) {
+    return null;
+  }
+
+  if (secondBestMatch?.score === bestMatch.score) {
+    return null;
+  }
+
+  return {
+    sourceCollection: 'kangur_page_content',
+    sourceRecordId: bestMatch.entry.id,
+    sourcePath: `entry:${bestMatch.entry.id}#fragment:${bestMatch.fragment.id}`,
+  };
 };
 
 export async function resolveKangurAiTutorSectionKnowledgeBundle(input: {
@@ -318,9 +485,14 @@ export async function resolveKangurAiTutorSectionKnowledgeBundle(input: {
   }
 
   const resolvedFragment =
-    input.context.selectedText && input.context.interactionIntent === 'explain'
+    input.context.selectedText &&
+    (
+      input.context.interactionIntent === 'explain' ||
+      input.context.promptMode === 'selected_text'
+    )
       ? resolveSelectedTextFragment({
         context: input.context,
+        knowledgeReference: pageContentReference,
         section,
       })
       : null;

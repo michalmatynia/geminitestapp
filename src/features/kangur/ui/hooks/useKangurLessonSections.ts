@@ -6,7 +6,10 @@ import {
   type KangurLessonSection,
 } from '@/shared/contracts/kangur-lesson-sections';
 import { createDefaultKangurSections } from '@/features/kangur/lessons/lesson-section-defaults';
-import { withKangurClientError } from '@/features/kangur/observability/client';
+import {
+  isRecoverableKangurClientFetchError,
+  withKangurClientError,
+} from '@/features/kangur/observability/client';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -61,7 +64,10 @@ const fetchLessonSections = async (
       });
       return kangurLessonSectionsSchema.parse(payload);
     },
-    { fallback: () => buildSectionsFallback(options) }
+    {
+      fallback: () => buildSectionsFallback(options),
+      shouldReport: (error) => !isRecoverableKangurClientFetchError(error),
+    }
   );
 
 export const useKangurLessonSections = (

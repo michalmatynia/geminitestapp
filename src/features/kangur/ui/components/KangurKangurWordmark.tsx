@@ -1,9 +1,10 @@
-import { KangurWordmarkBase } from '@/features/kangur/ui/components/KangurWordmarkBase';
 import {
-  KANGUR_WORDMARK_DEFAULT_TEXT_PROPS,
-  type KangurLocalizedWordmarkProps,
-} from '@/features/kangur/ui/components/kangur-wordmark';
-import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
+  createNormalizedWordmarkLabelMatcher,
+  KangurLocalizedPathWordmark,
+} from '@/features/kangur/ui/components/KangurLocalizedPathWordmark';
+import type { KangurLocalizedWordmarkProps } from '@/features/kangur/ui/components/kangur-wordmark';
+
+const matchesPolishKangurWordmark = createNormalizedWordmarkLabelMatcher('kangur');
 
 export function KangurKangurWordmark({
   idPrefix = 'kangur-kangur-wordmark',
@@ -11,29 +12,18 @@ export function KangurKangurWordmark({
   locale = 'pl',
   ...props
 }: KangurLocalizedWordmarkProps): React.JSX.Element {
-  const normalizedLocale = normalizeSiteLocale(locale);
-  const resolvedLabel = label.trim() || 'Kangur';
-  const shouldUsePolishPathWordmark =
-    normalizedLocale === 'pl' &&
-    resolvedLabel
-      .toLocaleLowerCase('pl-PL')
-      .replace(/[!\s-]+/g, '') === 'kangur';
-
   return (
-    <KangurWordmarkBase
+    <KangurLocalizedPathWordmark
       arcPath='M98 118C194 140 306 140 435 112'
+      defaultLabel='Kangur'
       idPrefix={idPrefix}
-      textLabel={shouldUsePolishPathWordmark ? undefined : resolvedLabel}
-      textProps={
-        shouldUsePolishPathWordmark
-          ? undefined
-          : KANGUR_WORDMARK_DEFAULT_TEXT_PROPS
-      }
+      label={label}
+      locale={locale}
+      matchesPolishPathLabel={matchesPolishKangurWordmark}
       wordTransform='translate(95 111)'
       {...props}
     >
-      {shouldUsePolishPathWordmark ? (
-        <>
+      <>
           <path d='M459 1311V797L1042 1405Q1084 1449 1113.5 1470.0Q1143 1491 1192 1491Q1256 1491 1295.5 1453.5Q1335 1416 1335 1362Q1335 1297 1268 1233L907 891L1323 295Q1367 233 1389.0 186.5Q1411 140 1411 96Q1411 47 1372.5 11.0Q1334 -25 1268 -25Q1206 -25 1167.0 1.5Q1128 28 1101.0 72.0Q1074 116 1053 152L702 692L459 459V156Q459 64 417.0 19.5Q375 -25 309 -25Q271 -25 236.0 -5.0Q201 15 182 49Q168 77 165.0 114.0Q162 151 162 221V1311Q162 1401 201.5 1446.0Q241 1491 309 1491Q376 1491 417.5 1446.5Q459 1402 459 1311Z' />
           <path
             d='M831 129Q732 52 639.5 13.5Q547 -25 432 -25Q327 -25 247.5 16.5Q168 58 125.0 129.0Q82 200 82 283Q82 395 153.0 474.0Q224 553 348 580Q374 586 477.0 607.0Q580 628 653.5 645.5Q727 663 813 688Q808 796 769.5 846.5Q731 897 610 897Q506 897 453.5 868.0Q401 839 363.5 781.0Q326 723 310.5 704.5Q295 686 244 686Q198 686 164.5 715.5Q131 745 131 791Q131 863 182.0 931.0Q233 999 341.0 1043.0Q449 1087 610 1087Q790 1087 893.0 1044.5Q996 1002 1038.5 910.0Q1081 818 1081 666Q1081 570 1080.5 503.0Q1080 436 1079 354Q1079 277 1104.5 193.5Q1130 110 1130 86Q1130 44 1090.5 9.5Q1051 -25 1001 -25Q959 -25 918.0 14.5Q877 54 831 129ZM813 524Q753 502 638.5 477.5Q524 453 480.0 441.5Q436 430 396.0 396.5Q356 363 356 303Q356 241 403.0 197.5Q450 154 526 154Q607 154 675.5 189.5Q744 225 776 281Q813 343 813 485Z'
@@ -55,8 +45,7 @@ export function KangurKangurWordmark({
             d='M412 369V141Q412 58 373.0 16.5Q334 -25 274 -25Q215 -25 177.0 17.0Q139 59 139 141V901Q139 1085 272 1085Q340 1085 370.0 1042.0Q400 999 403 915Q452 999 503.5 1042.0Q555 1085 641 1085Q727 1085 808.0 1042.0Q889 999 889 928Q889 878 854.5 845.5Q820 813 780 813Q765 813 707.5 831.5Q650 850 606 850Q546 850 508.0 818.5Q470 787 449.0 725.0Q428 663 420.0 577.5Q412 492 412 369Z'
             transform='translate(6487 0)'
           />
-        </>
-      ) : null}
-    </KangurWordmarkBase>
+      </>
+    </KangurLocalizedPathWordmark>
   );
 }

@@ -758,6 +758,7 @@
     "cooldownSeconds": "{count} Sek.",
     "magicLinkDeprecatedNotice": "Die Anmeldung per E-Mail-Link ist nicht mehr verfügbar. Melden Sie sich mit E-Mail und Passwort an oder erstellen Sie ein Konto.",
     "verifyParentEmailFailed": "Die E-Mail der Eltern konnte nicht bestätigt werden.",
+    "captchaVerificationFailed": "Captcha konnte nicht verifiziert werden. Versuchen Sie es erneut.",
     "fillEmailAndPassword": "E-Mail und Passwort eingeben.",
     "invalidParentEmailNotice": "Geben Sie eine gültige E-Mail-Adresse der Eltern ein.",
     "completeSecurityVerification": "Sicherheitsprüfung abschließen.",

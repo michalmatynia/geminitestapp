@@ -330,6 +330,7 @@
     "docs/platform/architecture-guardrails.md",
     "docs/platform/tooltip-documentation-platform.md",
     "docs/platform/migration-checklist.md",
+    "docs/platform/repo-deep-scan-2026-03-25.md",
     "docs/platform/ai-paths-resume-vs-handoff.md",
     "docs/platform/agentic-coding-overview.md",
     "docs/platform/resource-leasing.md",
@@ -452,6 +453,7 @@
     "docs/plans/bazel-bun-repo-integration-closeout-2026-03-11.md",
     "docs/plans/image-studio-object-layout-improvement-plan.md",
     "docs/plans/canonical-closeout-2026-04-17.md",
+    "docs/plans/repo-deep-scan-and-doc-refresh-plan-2026-03-25.md",
     "docs/decisions/canonical-contract-matrix-2026-03-05.md",
     "docs/decisions/legacy-compatibility-exception-register-2026-03-05.md",
     "docs/plans/site-wide-canonical-migration-plan-2026-03-05.md"

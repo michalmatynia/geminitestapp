@@ -4,13 +4,23 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { buildDefaultKangurPageContentStore } from '@/features/kangur/page-content-catalog';
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+
+const { useKangurPageContentEntryMock } = vi.hoisted(() => ({
+  useKangurPageContentEntryMock: vi.fn(),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
 
 import { useKangurAiTutorGuidedFlow } from './KangurAiTutorWidget.guided';
 
 describe('useKangurAiTutorGuidedFlow', () => {
   it('starts loading the selection explanation without revealing the guided modal before the answer thread resolves', async () => {
     vi.useFakeTimers();
+    useKangurPageContentEntryMock.mockReturnValue({ entry: null });
 
     const activateSelectionGlowMock = vi.fn(() => true);
     const clearSelectionMock = vi.fn();
@@ -121,10 +131,15 @@ describe('useKangurAiTutorGuidedFlow', () => {
       })
     );
     expect(setSelectionConversationContextMock).toHaveBeenCalledWith({
+      assignmentId: 'assignment-1',
+      contentId: 'lesson-1',
+      focusId: 'selection',
+      focusKind: 'selection',
       focusLabel: '2 + 2',
       knowledgeReference: null,
       messageStartIndex: 4,
       selectedText: '2 + 2',
+      surface: 'lesson',
     });
     expect(handleOpenChatMock).not.toHaveBeenCalled();
 
@@ -146,6 +161,7 @@ describe('useKangurAiTutorGuidedFlow', () => {
 
   it('passes the owning section knowledge reference when the selected excerpt belongs to a tutor anchor', () => {
     vi.useFakeTimers();
+    useKangurPageContentEntryMock.mockReturnValue({ entry: null });
 
     const sendMessageMock = vi.fn(() => Promise.resolve());
     const setSelectionConversationContextMock = vi.fn();
@@ -237,6 +253,10 @@ describe('useKangurAiTutorGuidedFlow', () => {
       })
     );
     expect(setSelectionConversationContextMock).toHaveBeenCalledWith({
+      assignmentId: null,
+      contentId: 'game:home',
+      focusId: 'kangur-game-leaderboard',
+      focusKind: 'leaderboard',
       focusLabel: 'Ranking',
       knowledgeReference: {
         sourceCollection: 'kangur_page_content',
@@ -245,7 +265,114 @@ describe('useKangurAiTutorGuidedFlow', () => {
       },
       messageStartIndex: 2,
       selectedText: 'Ranking wyników',
+      surface: 'game',
     });
+
+    vi.useRealTimers();
+  });
+
+  it('attaches the matched page-content fragment to selected-text knowledge references', () => {
+    vi.useFakeTimers();
+
+    const sendMessageMock = vi.fn(() => Promise.resolve());
+    const setSelectionConversationContextMock = vi.fn();
+    const testsQuestionEntry =
+      buildDefaultKangurPageContentStore('pl').entries.find(
+        (candidate) => candidate.id === 'tests-question'
+      ) ?? null;
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: testsQuestionEntry,
+    });
+
+    const { result } = renderHook(() =>
+      useKangurAiTutorGuidedFlow({
+        activeSelectionPageRect: null,
+        activateSelectionGlow: vi.fn(() => true),
+        clearSelection: vi.fn(),
+        handleOpenChat: vi.fn(),
+        messageCount: 2,
+        motionProfile: {
+          guidedAvatarTransition: {
+            duration: 0.2,
+          },
+        },
+        prefersReducedMotion: true,
+        resetAskModalState: vi.fn(),
+        selectionConversationFocus: {
+          assignmentId: null,
+          contentId: 'suite-add-1',
+          id: 'kangur-test-question:suite-add-1:question-add-1',
+          kind: 'question',
+          knowledgeReference: {
+            sourceCollection: 'kangur_page_content',
+            sourceRecordId: 'tests-question',
+            sourcePath: 'entry:tests-question',
+          },
+          label: 'Pytanie 1/1',
+          surface: 'test',
+        },
+        selectionExplainTimeoutRef: { current: null },
+        selectionGuidanceRevealTimeoutRef: { current: null },
+        sendMessage: sendMessageMock,
+        setCanonicalTutorModalVisible: vi.fn(),
+        setContextualTutorMode: vi.fn(),
+        setDismissedSelectedText: vi.fn(),
+        setGuestIntroHelpVisible: vi.fn(),
+        setGuestIntroVisible: vi.fn(),
+        setGuidedTutorTarget: vi.fn(),
+        setHasNewMessage: vi.fn(),
+        setHighlightedSection: vi.fn(),
+        setHighlightedText: vi.fn(),
+        setHoveredSectionAnchorId: vi.fn(),
+        setPersistedSelectionContainerRect: vi.fn(),
+        setPersistedSelectionPageRect: vi.fn(),
+        setPersistedSelectionPageRects: vi.fn(),
+        setPersistedSelectionRect: vi.fn(),
+        setSelectionGuidanceCalloutVisibleText: vi.fn(),
+        setSelectionConversationContext: setSelectionConversationContextMock,
+        setSelectionGuidanceHandoffText: vi.fn(),
+        setSectionResponseComplete: vi.fn(),
+        setSectionResponsePending: vi.fn(),
+        setSelectionContextSpotlightTick: vi.fn(),
+        setSelectionResponseComplete: vi.fn(),
+        setSelectionResponsePending: vi.fn(),
+        setViewportTick: vi.fn(),
+        suppressAvatarClickRef: { current: false },
+        telemetryContext: {
+          contentId: 'suite-add-1',
+          surface: 'test',
+          title: 'Mini test dodawania',
+        },
+        tutorContent: DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+        viewportHeight: 900,
+      })
+    );
+
+    act(() => {
+      result.current.startGuidedSelectionExplanation(
+        'Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach?'
+      );
+    });
+
+    expect(sendMessageMock).toHaveBeenCalledWith(
+      'Wyjaśnij zaznaczony fragment krok po kroku.',
+      expect.objectContaining({
+        knowledgeReference: {
+          sourceCollection: 'kangur_page_content',
+          sourceRecordId: 'tests-question',
+          sourcePath: 'entry:tests-question#fragment:kangur-q1-squares',
+        },
+      })
+    );
+    expect(setSelectionConversationContextMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        knowledgeReference: {
+          sourceCollection: 'kangur_page_content',
+          sourceRecordId: 'tests-question',
+          sourcePath: 'entry:tests-question#fragment:kangur-q1-squares',
+        },
+      })
+    );
 
     vi.useRealTimers();
   });

@@ -14,9 +14,7 @@ import type { BaseExportJobData } from './baseExportQueue';
 
 async function loadSegments() {
   // Dynamic import to avoid circular dependency issues with the API route tree
-  const segments = await import(
-    '@/app/api/v2/integrations/products/[id]/export-to-base/segments'
-  );
+  const segments = await import('@/features/integrations/services/base-export-segments');
   return segments;
 }
 

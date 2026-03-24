@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-23'
+last_reviewed: '2026-03-24'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Accessibility Component Policy Report
 
-Generated at: 2026-03-23T21:12:59.001Z
+Generated at: 2026-03-24T23:08:27.500Z
 
 ## Summary
 

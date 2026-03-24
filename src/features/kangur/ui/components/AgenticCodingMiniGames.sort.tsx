@@ -35,6 +35,10 @@ export function AgenticSortGame({
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   const poolItems = config.items.filter((item) => assignments[item.id] === null);
+  const selectedItem =
+    selectedItemId !== null
+      ? config.items.find((item) => item.id === selectedItemId) ?? null
+      : null;
   const binsWithItems = config.bins.map((bin) => ({
     ...bin,
     items: config.items.filter((item) => assignments[item.id] === bin.id),
@@ -58,13 +62,16 @@ export function AgenticSortGame({
   };
 
   const handleBinActivate = (binId: string | null): void => {
-    if (!isCoarsePointer || !selectedItemId) return;
+    if (!selectedItemId) return;
     handleAssign(selectedItemId, binId);
   };
 
   const touchHint = selectedItemId
     ? 'Dotknij wybraną kategorię, aby odłożyć kartę.'
     : 'Dotknij kartę, a potem dotknij kategorię.';
+  const keyboardHint = selectedItem
+    ? `Wybrana karta: ${selectedItem.label}. Przejdź do kategorii i naciśnij Enter albo Spację.`
+    : 'Przeciągnij kartę albo wybierz ją klawiaturą i przenieś do kategorii Enterem albo Spacją.';
 
   return (
     <KangurLessonStack align='start' className='w-full'>
@@ -83,25 +90,35 @@ export function AgenticSortGame({
           </span>
         </div>
         <KangurLessonCaption className='mt-2 text-left'>{config.prompt}</KangurLessonCaption>
-        {isCoarsePointer ? (
-          <KangurLessonCaption className='mt-2 text-left' data-testid='agentic-sort-touch-hint'>
-            {touchHint}
-          </KangurLessonCaption>
-        ) : null}
+        <KangurLessonCaption
+          className='mt-2 text-left'
+          data-testid={isCoarsePointer ? 'agentic-sort-touch-hint' : 'agentic-sort-keyboard-hint'}
+        >
+          {isCoarsePointer ? touchHint : keyboardHint}
+        </KangurLessonCaption>
       </KangurLessonCallout>
       <div className={`grid ${KANGUR_PANEL_GAP_CLASSNAME} sm:grid-cols-2`}>
         {binsWithItems.map((bin) => (
           <div
             key={bin.id}
             className={cn(
-              'soft-card border border-slate-200/80 bg-white px-4 py-3',
+              'soft-card border border-slate-200/80 bg-white px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
               isCoarsePointer ? 'touch-manipulation transition-colors' : null,
-              isCoarsePointer && selectedItemId ? 'ring-2 ring-amber-300/70 ring-offset-2 ring-offset-white' : null
+              selectedItemId ? 'ring-2 ring-amber-300/70 ring-offset-2 ring-offset-white' : null
             )}
             onDragOver={(event) => event.preventDefault()}
             onDrop={(event) => handleDrop(bin.id, event)}
             onClick={() => handleBinActivate(bin.id)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                handleBinActivate(bin.id);
+              }
+            }}
             data-testid={`agentic-sort-bin-${bin.id}`}
+            role='button'
+            tabIndex={selectedItemId ? 0 : -1}
+            aria-label={`Przenieś wybraną kartę do kategorii ${bin.label}`}
           >
             <p className='text-sm font-semibold text-slate-900'>{bin.label}</p>
             <div className='mt-3 space-y-2'>
@@ -129,14 +146,23 @@ export function AgenticSortGame({
       <div className={`grid ${KANGUR_PANEL_GAP_CLASSNAME} sm:grid-cols-[1.4fr_1fr]`}>
         <div
           className={cn(
-            'soft-card border border-slate-200/80 bg-slate-50 px-4 py-3',
+            'soft-card border border-slate-200/80 bg-slate-50 px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
             isCoarsePointer ? 'touch-manipulation transition-colors' : null,
-            isCoarsePointer && selectedItemId ? 'ring-2 ring-amber-300/70 ring-offset-2 ring-offset-white' : null
+            selectedItemId ? 'ring-2 ring-amber-300/70 ring-offset-2 ring-offset-white' : null
           )}
           onDragOver={(event) => event.preventDefault()}
           onDrop={(event) => handleDrop('pool', event)}
           onClick={() => handleBinActivate(null)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              handleBinActivate(null);
+            }
+          }}
           data-testid='agentic-sort-pool'
+          role='button'
+          tabIndex={selectedItemId ? 0 : -1}
+          aria-label='Przenieś wybraną kartę z powrotem do puli'
         >
           <p className='text-sm font-semibold text-slate-900'>Pool</p>
           <div className='mt-3 flex flex-wrap gap-2'>
@@ -162,7 +188,7 @@ export function AgenticSortGame({
           <KangurLessonCaption className='text-left text-slate-700'>
             {isCoarsePointer
               ? 'Dotknij kartę, dotknij kategorię i dopiero potem sprawdź wynik.'
-              : 'Przeciągnij karty, a potem sprawdź wynik.'}
+              : 'Przeciągnij karty albo wybierz kartę i przenieś ją klawiaturą do kategorii, a potem sprawdź wynik.'}
           </KangurLessonCaption>
           <KangurButton
             variant={allCorrect && checked ? 'success' : 'surface'}
@@ -234,19 +260,38 @@ function DraggableToken({
     );
   }
   return (
-    <div
+    <button
+      type='button'
       draggable
       onDragStart={(event) => {
         event.dataTransfer.setData('text/plain', item.id);
         onDragStart(item.id);
       }}
       onDragEnd={onDragEnd}
-      className={cn(stateClassName, 'cursor-grab')}
+      onClick={(event) => {
+        event.stopPropagation();
+        if (isDragging) return;
+        onSelect(isSelected ? null : item.id);
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') {
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        if (isDragging) return;
+        onSelect(isSelected ? null : item.id);
+      }}
+      className={cn(
+        stateClassName,
+        'cursor-grab text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white'
+      )}
       style={{ touchAction: 'none' }}
       aria-label={item.label}
+      aria-pressed={isSelected}
     >
       {item.label}
-    </div>
+    </button>
   );
 }
 

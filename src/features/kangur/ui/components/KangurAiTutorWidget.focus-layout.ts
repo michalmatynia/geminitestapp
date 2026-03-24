@@ -733,14 +733,11 @@ export function useKangurAiTutorFocusLayoutState({
     }
 
     if (registeredAnchor) {
-      const registeredAnchorKnowledgeReference =
-        registeredAnchor.kind === 'selection'
-          ? resolveKangurTutorSectionKnowledgeReference({
-            anchorId: registeredAnchor.id,
-            contentId: registeredAnchor.metadata?.contentId ?? sessionContext.contentId ?? null,
-            focusKind: 'selection',
-          })
-          : null;
+      const registeredAnchorKnowledgeReference = resolveKangurTutorSectionKnowledgeReference({
+        anchorId: registeredAnchor.id,
+        contentId: registeredAnchor.metadata?.contentId ?? sessionContext.contentId ?? null,
+        focusKind: registeredAnchor.kind,
+      });
       const conversationFocus: TutorConversationFocus = {
         assignmentId: registeredAnchor.metadata?.assignmentId ?? null,
         contentId: registeredAnchor.metadata?.contentId ?? sessionContext.contentId ?? null,

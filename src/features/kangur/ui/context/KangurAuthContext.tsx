@@ -25,7 +25,7 @@ import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRou
 import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 
-const AUTH_CHECK_TIMEOUT_MS = 3_000;
+const AUTH_CHECK_TIMEOUT_MS = 1_500;
 
 type KangurAuthCheckAppStateOptions = {
   timeoutMs?: number | null;

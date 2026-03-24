@@ -512,7 +512,14 @@ describe('KangurFeatureApp', () => {
     );
   });
 
-  it('keeps the old page visible during the button acknowledgement phase', () => {
+  it('keeps the target lessons skeleton visible during the button acknowledgement phase', () => {
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: false,
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      basePath: '/kangur',
+    });
     routeTransitionStateMock.mockReturnValue({
       isRouteAcknowledging: true,
       isRoutePending: false,
@@ -530,8 +537,65 @@ describe('KangurFeatureApp', () => {
 
     render(<KangurFeatureApp />);
 
-    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
-    expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Lessons:lessons-library'
+    );
+    expect(screen.getByTestId('kangur-route-content')).toHaveClass(
+      'pointer-events-none',
+      'opacity-0'
+    );
+  });
+
+  it('keeps the lessons skeleton latched when the first-click handoff moves into acknowledgement', async () => {
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: false,
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      basePath: '/kangur',
+    });
+    pendingRouteLoadingSnapshotMock.mockReturnValue({
+      fromHref: '/kangur',
+      href: '/kangur/lessons',
+      pageKey: 'Lessons',
+      skeletonVariant: 'lessons-library',
+      startedAt: Date.now(),
+      topBarHeightCssValue: '136px',
+    });
+
+    const { rerender } = render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Lessons:lessons-library'
+    );
+    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-hidden', 'true');
+
+    routeTransitionStateMock.mockReturnValue({
+      isRouteAcknowledging: true,
+      isRoutePending: false,
+      isRouteWaitingForReady: false,
+      isRouteRevealing: false,
+      transitionPhase: 'acknowledging',
+      activeTransitionSourceId: 'game-home-action:lessons',
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/kangur/lessons',
+      activeTransitionSkeletonVariant: 'lessons-library',
+      pendingPageKey: null,
+      startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
+    });
+
+    await act(async () => {
+      rerender(<KangurFeatureApp />);
+    });
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Lessons:lessons-library'
+    );
+    expect(screen.getByTestId('kangur-route-content')).toHaveClass(
+      'pointer-events-none',
+      'opacity-0'
+    );
   });
 
   it('shows the page skeleton immediately during the language-switch acknowledgement phase', () => {

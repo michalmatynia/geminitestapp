@@ -13,11 +13,13 @@ import type { KangurAiTutorContextValue } from '@/features/kangur/ui/context/Kan
 import {
   resolveKangurTutorSectionKnowledgeReference,
 } from '@/features/kangur/ai-tutor-section-knowledge';
+import { resolveKangurPageContentFragment } from '@/features/kangur/page-content-fragments';
 import type { KangurAiTutorTelemetryContextDto } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import {
   formatKangurAiTutorTemplate,
   type KangurAiTutorContent,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { getMotionSafeScrollBehavior } from '@/features/kangur/shared/utils';
 
 import {
@@ -152,6 +154,43 @@ export function useKangurAiTutorGuidedFlow(input: {
     tutorContent,
     viewportHeight,
   } = input;
+  const selectionKnowledgeReference = selectionConversationFocus.knowledgeReference ?? null;
+  const selectionKnowledgeEntryId =
+    selectionKnowledgeReference?.sourceCollection === 'kangur_page_content'
+      ? selectionKnowledgeReference.sourceRecordId
+      : null;
+  const { entry: selectionKnowledgeEntry } = useKangurPageContentEntry(selectionKnowledgeEntryId);
+
+  const resolveSelectionKnowledgeReference = useCallback(
+    (selectionText: string) => {
+      if (
+        selectionKnowledgeReference?.sourceCollection !== 'kangur_page_content' ||
+        !selectionKnowledgeEntry
+      ) {
+        return selectionKnowledgeReference;
+      }
+
+      const resolvedFragment = resolveKangurPageContentFragment({
+        entry: selectionKnowledgeEntry,
+        knowledgeReference: selectionKnowledgeReference,
+        selectedText: selectionText,
+      });
+      if (!resolvedFragment) {
+        return selectionKnowledgeReference;
+      }
+
+      const fragmentSourcePath = `entry:${selectionKnowledgeReference.sourceRecordId}#fragment:${resolvedFragment.id}`;
+      if (selectionKnowledgeReference.sourcePath === fragmentSourcePath) {
+        return selectionKnowledgeReference;
+      }
+
+      return {
+        ...selectionKnowledgeReference,
+        sourcePath: fragmentSourcePath,
+      };
+    },
+    [selectionKnowledgeEntry, selectionKnowledgeReference]
+  );
 
   const focusSelectionPageRect = useCallback(
     (
@@ -367,6 +406,9 @@ export function useKangurAiTutorGuidedFlow(input: {
         selectionGuidanceRevealTimeoutRef.current = null;
       }
 
+      const resolvedSelectionKnowledgeReference =
+        resolveSelectionKnowledgeReference(selectionText);
+
       setSelectionGuidanceCalloutVisibleText(null);
       setSelectionGuidanceHandoffText(null);
       setCanonicalTutorModalVisible(false);
@@ -384,10 +426,15 @@ export function useKangurAiTutorGuidedFlow(input: {
       focusSelectionPageRect(activeSelectionPageRect);
       setHasNewMessage(false);
       setSelectionConversationContext({
+        assignmentId: selectionConversationFocus.assignmentId,
+        contentId: selectionConversationFocus.contentId,
+        focusId: selectionConversationFocus.id,
+        focusKind: selectionConversationFocus.kind,
         focusLabel: selectionConversationFocus.label ?? null,
-        knowledgeReference: selectionConversationFocus.knowledgeReference,
+        knowledgeReference: resolvedSelectionKnowledgeReference,
         messageStartIndex: messageCount,
         selectedText: selectionText,
+        surface: selectionConversationFocus.surface,
       });
       setSelectionResponseComplete(null);
       setSelectionResponsePending({
@@ -408,7 +455,7 @@ export function useKangurAiTutorGuidedFlow(input: {
         focusId: selectionConversationFocus.id ?? 'selection',
         focusLabel: selectionConversationFocus.label ?? selectionText,
         assignmentId: selectionConversationFocus.assignmentId,
-        knowledgeReference: selectionConversationFocus.knowledgeReference,
+        knowledgeReference: resolvedSelectionKnowledgeReference,
         interactionIntent: 'explain',
         surface: selectionConversationFocus.surface ?? undefined,
         suppressUserMessage: true,
@@ -430,6 +477,7 @@ export function useKangurAiTutorGuidedFlow(input: {
       motionProfile.guidedAvatarTransition.duration,
       prefersReducedMotion,
       resetAskModalState,
+      resolveSelectionKnowledgeReference,
       selectionConversationFocus,
       selectionExplainTimeoutRef,
       selectionGuidanceRevealTimeoutRef,

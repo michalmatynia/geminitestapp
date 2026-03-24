@@ -6,6 +6,7 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type { KangurAiTutorNativeGuideEntry } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 
+import { extractKangurPageContentFragmentId } from '@/features/kangur/page-content-fragments';
 import { getKangurAiTutorNativeGuideStore } from './ai-tutor-native-guide-repository';
 import { getKangurPageContentEntry } from './page-content-repository';
 
@@ -321,7 +322,18 @@ const selectGuideEntryFromKnowledgeReference = async (
     return null;
   }
 
-  const linkedGuideId = pageContentEntry.nativeGuideIds.find((guideId) =>
+  const explicitFragmentId = extractKangurPageContentFragmentId(knowledgeReference.sourcePath);
+  const explicitFragment =
+    explicitFragmentId !== null
+      ? pageContentEntry.fragments.find(
+          (candidate) => candidate.enabled && candidate.id === explicitFragmentId
+        ) ?? null
+      : null;
+  const linkedGuideCandidateIds =
+    explicitFragment?.nativeGuideIds.length
+      ? explicitFragment.nativeGuideIds
+      : pageContentEntry.nativeGuideIds;
+  const linkedGuideId = linkedGuideCandidateIds.find((guideId) =>
     entries.some((candidate) => candidate.enabled && candidate.id === guideId)
   );
   if (!linkedGuideId) {

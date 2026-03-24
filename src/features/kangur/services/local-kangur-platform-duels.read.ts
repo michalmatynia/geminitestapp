@@ -30,7 +30,10 @@ import {
   kangurDuelStateResponseSchema,
   kangurDuelLobbyChatListResponseSchema,
 } from '@kangur/contracts';
-import { withKangurClientError } from '@/features/kangur/observability/client';
+import {
+  isRecoverableKangurClientFetchError,
+  withKangurClientError,
+} from '@/features/kangur/observability/client';
 import { isAbortLikeError } from '@/features/kangur/shared/utils/observability/is-abort-like-error';
 
 import {
@@ -78,10 +81,16 @@ export const requestDuelStateFromApi = async (
     {
       fallback: createKangurClientFallback('duels.state'),
       shouldReport: (error) =>
-        !isAbortLikeError(error, options?.signal) && !isKangurAuthStatusError(error),
+        !isAbortLikeError(error, options?.signal) &&
+        !isKangurAuthStatusError(error) &&
+        !isRecoverableKangurClientFetchError(error),
       shouldRethrow: () => true,
       onError: (error) => {
-        if (isAbortLikeError(error, options?.signal) || isKangurAuthStatusError(error)) {
+        if (
+          isAbortLikeError(error, options?.signal) ||
+          isKangurAuthStatusError(error) ||
+          isRecoverableKangurClientFetchError(error)
+        ) {
           return;
         }
         trackReadFailure('duels.state', error, {
@@ -134,10 +143,16 @@ export const requestDuelSpectatorStateFromApi = async (
     {
       fallback: createKangurClientFallback('duels.spectate'),
       shouldReport: (error) =>
-        !isAbortLikeError(error, options?.signal) && !isKangurAuthStatusError(error),
+        !isAbortLikeError(error, options?.signal) &&
+        !isKangurAuthStatusError(error) &&
+        !isRecoverableKangurClientFetchError(error),
       shouldRethrow: () => true,
       onError: (error) => {
-        if (isAbortLikeError(error, options?.signal) || isKangurAuthStatusError(error)) {
+        if (
+          isAbortLikeError(error, options?.signal) ||
+          isKangurAuthStatusError(error) ||
+          isRecoverableKangurClientFetchError(error)
+        ) {
           return;
         }
         trackReadFailure('duels.spectate', error, {
@@ -185,10 +200,16 @@ export const requestDuelLobbyFromApi = async (
     {
       fallback: createKangurClientFallback('duels.lobby'),
       shouldReport: (error) =>
-        !isAbortLikeError(error, options?.signal) && !isKangurAuthStatusError(error),
+        !isAbortLikeError(error, options?.signal) &&
+        !isKangurAuthStatusError(error) &&
+        !isRecoverableKangurClientFetchError(error),
       shouldRethrow: () => true,
       onError: (error) => {
-        if (isAbortLikeError(error, options?.signal) || isKangurAuthStatusError(error)) {
+        if (
+          isAbortLikeError(error, options?.signal) ||
+          isKangurAuthStatusError(error) ||
+          isRecoverableKangurClientFetchError(error)
+        ) {
           return;
         }
         trackReadFailure('duels.lobby', error, {
@@ -238,10 +259,16 @@ export const requestDuelLobbyPresenceFromApi = async (
     {
       fallback: createKangurClientFallback('duels.lobby_presence'),
       shouldReport: (error) =>
-        !isAbortLikeError(error, options?.signal) && !isKangurAuthStatusError(error),
+        !isAbortLikeError(error, options?.signal) &&
+        !isKangurAuthStatusError(error) &&
+        !isRecoverableKangurClientFetchError(error),
       shouldRethrow: () => true,
       onError: (error) => {
-        if (isAbortLikeError(error, options?.signal) || isKangurAuthStatusError(error)) {
+        if (
+          isAbortLikeError(error, options?.signal) ||
+          isKangurAuthStatusError(error) ||
+          isRecoverableKangurClientFetchError(error)
+        ) {
           return;
         }
         trackReadFailure('duels.lobby_presence', error, {
@@ -294,10 +321,16 @@ export const requestDuelLeaderboardFromApi = async (
     {
       fallback: createKangurClientFallback('duels.leaderboard'),
       shouldReport: (error) =>
-        !isAbortLikeError(error, options?.signal) && !isKangurAuthStatusError(error),
+        !isAbortLikeError(error, options?.signal) &&
+        !isKangurAuthStatusError(error) &&
+        !isRecoverableKangurClientFetchError(error),
       shouldRethrow: () => true,
       onError: (error) => {
-        if (isAbortLikeError(error, options?.signal) || isKangurAuthStatusError(error)) {
+        if (
+          isAbortLikeError(error, options?.signal) ||
+          isKangurAuthStatusError(error) ||
+          isRecoverableKangurClientFetchError(error)
+        ) {
           return;
         }
         trackReadFailure('duels.leaderboard', error, {
@@ -353,10 +386,16 @@ export const requestDuelLobbyChatFromApi = async (
     {
       fallback: createKangurClientFallback('duels.lobby_chat'),
       shouldReport: (error) =>
-        !isAbortLikeError(error, options?.signal) && !isKangurAuthStatusError(error),
+        !isAbortLikeError(error, options?.signal) &&
+        !isKangurAuthStatusError(error) &&
+        !isRecoverableKangurClientFetchError(error),
       shouldRethrow: () => true,
       onError: (error) => {
-        if (isAbortLikeError(error, options?.signal) || isKangurAuthStatusError(error)) {
+        if (
+          isAbortLikeError(error, options?.signal) ||
+          isKangurAuthStatusError(error) ||
+          isRecoverableKangurClientFetchError(error)
+        ) {
           return;
         }
         trackReadFailure('duels.lobby_chat', error, {
@@ -406,10 +445,16 @@ export const requestDuelOpponentsFromApi = async (
     {
       fallback: createKangurClientFallback('duels.opponents'),
       shouldReport: (error) =>
-        !isAbortLikeError(error, options?.signal) && !isKangurAuthStatusError(error),
+        !isAbortLikeError(error, options?.signal) &&
+        !isKangurAuthStatusError(error) &&
+        !isRecoverableKangurClientFetchError(error),
       shouldRethrow: () => true,
       onError: (error) => {
-        if (isAbortLikeError(error, options?.signal) || isKangurAuthStatusError(error)) {
+        if (
+          isAbortLikeError(error, options?.signal) ||
+          isKangurAuthStatusError(error) ||
+          isRecoverableKangurClientFetchError(error)
+        ) {
           return;
         }
         trackReadFailure('duels.opponents', error, {
@@ -463,10 +508,16 @@ export const requestDuelSearchFromApi = async (
     {
       fallback: createKangurClientFallback('duels.search'),
       shouldReport: (error) =>
-        !isAbortLikeError(error, options?.signal) && !isKangurAuthStatusError(error),
+        !isAbortLikeError(error, options?.signal) &&
+        !isKangurAuthStatusError(error) &&
+        !isRecoverableKangurClientFetchError(error),
       shouldRethrow: () => true,
       onError: (error) => {
-        if (isAbortLikeError(error, options?.signal) || isKangurAuthStatusError(error)) {
+        if (
+          isAbortLikeError(error, options?.signal) ||
+          isKangurAuthStatusError(error) ||
+          isRecoverableKangurClientFetchError(error)
+        ) {
           return;
         }
         trackReadFailure('duels.search', error, {

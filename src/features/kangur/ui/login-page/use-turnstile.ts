@@ -64,7 +64,6 @@ const ensureTurnstileScript = (): Promise<void> => {
     script.onerror = () => reject(new Error('Turnstile script failed.'));
     document.head.appendChild(script);
   }).catch((error) => {
-    void ErrorSystem.captureException(error);
     turnstileScriptPromise = null;
     throw error;
   });
@@ -73,33 +72,43 @@ const ensureTurnstileScript = (): Promise<void> => {
 };
 
 export const useTurnstile = (options: {
+  enabled?: boolean;
   onVerify: (token: string) => void;
   onError?: () => void;
   onExpire?: () => void;
+  onLoadError?: () => void;
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
+    if (options.enabled === false || !KANGUR_PARENT_CAPTCHA_SITE_KEY) {
+      setIsReady(false);
+      return;
+    }
+
     let mounted = true;
 
     ensureTurnstileScript()
       .then(() => {
         if (mounted) setIsReady(true);
       })
-      .catch((error) => {
-        void ErrorSystem.captureException(error);
-        // Silent catch for script load failures
+      .catch(() => {
+        if (mounted) {
+          setIsReady(false);
+        }
+        options.onLoadError?.();
       });
 
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [options.enabled, options.onLoadError]);
 
   useEffect(() => {
     if (
+      options.enabled === false ||
       !isReady ||
       !containerRef.current ||
       widgetIdRef.current ||
@@ -133,7 +142,7 @@ export const useTurnstile = (options: {
         widgetIdRef.current = null;
       }
     };
-  }, [isReady, options.onVerify, options.onError, options.onExpire]);
+  }, [isReady, options.enabled, options.onVerify, options.onError, options.onExpire]);
 
   return { containerRef, isReady };
 };

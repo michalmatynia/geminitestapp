@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-23T21:13:06.458Z",
+  "generatedAt": "2026-03-24T23:06:22.368Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "fileCount": 5687,
+    "fileCount": 5710,
     "codeUploadRootCount": 10,
     "runtimeUploadRootCount": 9,
     "dynamicReadRiskCount": 0
@@ -18431,6 +18431,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/admin/admin-kangur-social/SocialPostContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/admin/admin-kangur-social/hooks/useSocialContext.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -20783,6 +20789,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/AgenticAssignmentGame.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/AgenticCodingCodex54AgentsMdLesson.data.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -21450,6 +21462,30 @@
     },
     {
       "file": "src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/EnglishAdverbsFrequencyLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/EnglishAdverbsFrequencyRoutineGame.data.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/EnglishAdverbsFrequencyRoutineGame.sentences.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/EnglishAdverbsFrequencyRoutineGame.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -22241,7 +22277,25 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/KangurGameOperationSelectorWidget.copy.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurGameOperationSelectorWidget.logic.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurGameOperationSelectorWidget.types.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -22409,6 +22463,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/KangurLearnerProfileResultsWidget.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/KangurLearnerProfileSessionsWidget.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -22445,6 +22505,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/KangurLessonNavigationIconButton.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/KangurLessonNavigationWidget.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -22464,6 +22530,18 @@
     },
     {
       "file": "src/features/kangur/ui/components/KangurLessonsWordmark.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurLocalizedPathWordmark.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurLocalizedTextWordmark.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -22608,6 +22686,12 @@
     },
     {
       "file": "src/features/kangur/ui/components/KangurRecommendationCard.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurResultsWidgetContent.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -23339,6 +23423,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/animations/AgenticAnimationSurface.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/animations/AgenticCodingAnimations.Primary.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -23357,6 +23447,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/animations/AgenticCodingAnimationsPrimary.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/animations/AgenticCodingAnimationsSecondary.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/animations/EnglishAnimations.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -23370,6 +23472,12 @@
     },
     {
       "file": "src/features/kangur/ui/components/animations/WebDevelopmentAnimations.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/animations/svgAtmosphere.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -23585,6 +23693,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/music/MusicPianoRollFreePlayGame.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/music/music-theory.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -23718,6 +23832,12 @@
     },
     {
       "file": "src/features/kangur/ui/context/KangurLessonNavigationContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/context/KangurLessonPrintContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24215,7 +24335,25 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/hooks/useKangurOptionalSubjectKey.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/hooks/useKangurPageContent.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/hooks/useKangurParentDashboardScores.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/hooks/useKangurProgressOwnerKey.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -34165,5 +34303,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 2189
+  "durationMs": 4150
 }

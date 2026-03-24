@@ -163,7 +163,9 @@ vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useKangurAiTutor: useKangurAiTutorMock,
-  useOptionalKangurAiTutor: useKangurAiTutorMock, KangurAiTutorActivationContext: { displayName: 'KangurAiTutorActivationContext' },
+  useOptionalKangurAiTutor: useKangurAiTutorMock,
+  useKangurAiTutorDeferredActivationBridge: vi.fn(),
+  KangurAiTutorActivationContext: { displayName: 'KangurAiTutorActivationContext' },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({

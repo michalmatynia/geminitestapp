@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-25'
 status: 'active'
 doc_type: 'index'
 scope: 'platform'
@@ -39,6 +39,9 @@ New cross-cutting platform docs should land here instead of directly under
 - [`tooltip-documentation-platform.md`](./tooltip-documentation-platform.md)
 - [`migration-checklist.md`](./migration-checklist.md)
 - [`bun-support.md`](./bun-support.md)
+
+### Scan Reports
+- [`repo-deep-scan-2026-03-25.md`](./repo-deep-scan-2026-03-25.md)
 
 ## Root Compatibility Stubs
 

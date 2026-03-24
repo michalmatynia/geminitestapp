@@ -20,6 +20,7 @@ const {
   useRouterMock,
   useSearchParamsMock,
   clearSessionUserCacheMock,
+  useTurnstileMock,
 } = vi.hoisted(() => ({
   signInMock: vi.fn().mockResolvedValue({ ok: true, url: '/kangur' }),
   signOutMock: vi.fn().mockResolvedValue(undefined),
@@ -31,6 +32,7 @@ const {
   useRouterMock: vi.fn(),
   useSearchParamsMock: vi.fn(),
   clearSessionUserCacheMock: vi.fn(),
+  useTurnstileMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -67,6 +69,10 @@ vi.mock('@/features/kangur/services/local-kangur-platform-auth', () => ({
   clearSessionUserCache: clearSessionUserCacheMock,
 }));
 
+vi.mock('@/features/kangur/ui/login-page/use-turnstile', () => ({
+  useTurnstile: useTurnstileMock,
+}));
+
 import { KangurLoginPage } from './KangurLoginPage';
 
 const renderWithIntl = (element: ReactElement) =>
@@ -86,6 +92,7 @@ describe('KangurLoginPage', () => {
     useKangurPageContentEntryMock.mockReturnValue({ entry: null });
     useKangurRouteNavigatorMock.mockReturnValue({ push: vi.fn() });
     useOptionalKangurAuthMock.mockReturnValue(null);
+    useTurnstileMock.mockReturnValue({ containerRef: { current: null }, isReady: false });
   });
 
   afterEach(() => {
@@ -137,6 +144,40 @@ describe('KangurLoginPage', () => {
         (plMessages as any).KangurLogin.createAccountPasswordHint
       );
     });
+  });
+
+  it('keeps the sign-in flow Turnstile-free and surfaces inline captcha load errors from the create-account hook', async () => {
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+
+    expect(useTurnstileMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        enabled: false,
+      })
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: (plMessages as any).KangurLogin.createAccount })
+    );
+
+    await waitFor(() => {
+      expect(useTurnstileMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          onLoadError: expect.any(Function),
+        })
+      );
+    });
+
+    const turnstileOptions = useTurnstileMock.mock.lastCall?.[0] as
+      | { onLoadError?: () => void }
+      | undefined;
+
+    act(() => {
+      turnstileOptions?.onLoadError?.();
+    });
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      (plMessages as any).KangurLogin.captchaVerificationFailed
+    );
   });
 
   it('can hide the auth mode tabs for a single-purpose login surface', () => {

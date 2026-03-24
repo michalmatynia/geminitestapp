@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-17T16:21:41.550Z",
+  "generatedAt": "2026-03-24T23:07:40.410Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -16,47 +16,409 @@
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 6515,
-    "exportedDeclarationsScanned": 4745,
-    "candidateDeclarationsScanned": 4719,
-    "exactShapeClusters": 6,
-    "nearShapeClusters": 2,
-    "clustersAfterFilters": 8,
-    "declarationsInClusters": 16,
-    "highestRiskScore": 10
+    "filesScanned": 7530,
+    "exportedDeclarationsScanned": 5040,
+    "candidateDeclarationsScanned": 5016,
+    "exactShapeClusters": 11,
+    "nearShapeClusters": 3,
+    "clustersAfterFilters": 14,
+    "declarationsInClusters": 31,
+    "highestRiskScore": 20
   },
   "clusters": [
+    {
+      "clusterId": "exact-0002",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 20,
+      "declarationCount": 3,
+      "domains": [
+        "shared",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "a38c2e730457",
+        "memberCount": 1,
+        "preview": "StringRecordDto"
+      },
+      "declarations": [
+        {
+          "name": "CatchAllRouteParams",
+          "kind": "type",
+          "path": "src/shared/lib/api/catch-all-router.ts",
+          "line": 8,
+          "domain": "shared",
+          "usageCount": 5
+        },
+        {
+          "name": "AiPathsCollectionMap",
+          "kind": "type",
+          "path": "src/shared/lib/ai-paths/core/utils/collection-mapping.ts",
+          "line": 3,
+          "domain": "shared",
+          "usageCount": 2
+        },
+        {
+          "name": "StringRecord",
+          "kind": "type",
+          "path": "src/shared/contracts/base.ts",
+          "line": 26,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0001",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 16,
+      "declarationCount": 3,
+      "domains": [
+        "feature:kangur",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "4ca7be7bf5a8",
+        "memberCount": 2,
+        "preview": "prop:kind:'success' | 'error'; prop:text:string"
+      },
+      "declarations": [
+        {
+          "name": "Segment",
+          "kind": "type",
+          "path": "src/shared/utils/prompt-params/scanner.ts",
+          "line": 17,
+          "domain": "shared",
+          "usageCount": 3
+        },
+        {
+          "name": "KangurMiniGameFeedbackDto",
+          "kind": "type",
+          "path": "src/features/kangur/ui/types.ts",
+          "line": 79,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        },
+        {
+          "name": "KangurMiniGameInformationalFeedbackDto",
+          "kind": "type",
+          "path": "src/features/kangur/ui/types.ts",
+          "line": 88,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
     {
       "clusterId": "exact-0001",
       "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
-      "riskScore": 10,
-      "declarationCount": 2,
+      "riskScore": 14,
+      "declarationCount": 3,
       "domains": [
-        "feature:ai",
-        "feature:prompt-exploder"
+        "feature:kangur",
+        "shared:contracts"
       ],
       "signature": {
         "shapeKind": "type-expression",
-        "normalizedShapeHash": "929d26139e48",
+        "normalizedShapeHash": "3e500a0ab2c2",
         "memberCount": 1,
-        "preview": "DocsTooltipsState"
+        "preview": "(typeof KANGUR_WIDGET_IDS)[number]"
       },
       "declarations": [
         {
-          "name": "AiPathsDocsTooltipsState",
+          "name": "KangurWidgetId",
           "kind": "type",
-          "path": "src/features/ai/ai-paths/hooks/useAiPathsDocsTooltips.ts",
-          "line": 10,
-          "domain": "feature:ai",
+          "path": "src/features/kangur/cms-builder/project-contracts.ts",
+          "line": 68,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        },
+        {
+          "name": "KangurWidgetId",
+          "kind": "type",
+          "path": "src/features/kangur/cms-builder/widget-options.ts",
+          "line": 42,
+          "domain": "feature:kangur",
           "usageCount": 0
         },
         {
-          "name": "PromptExploderDocsTooltipsState",
+          "name": "KangurWidgetId",
           "kind": "type",
-          "path": "src/features/prompt-exploder/hooks/usePromptExploderDocsTooltips.ts",
-          "line": 10,
-          "domain": "feature:prompt-exploder",
+          "path": "src/shared/contracts/kangur-cms.ts",
+          "line": 16,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0003",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 14,
+      "declarationCount": 2,
+      "domains": [
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "f29799e1c9b0",
+        "memberCount": 1,
+        "preview": "prop:type:'alert-tick'"
+      },
+      "declarations": [
+        {
+          "name": "ScheduledTickJobData",
+          "kind": "type",
+          "path": "src/shared/lib/queue/scheduler-queue-types.ts",
+          "line": 1,
+          "domain": "shared",
+          "usageCount": 5
+        },
+        {
+          "name": "SystemLogAlertsJobData",
+          "kind": "type",
+          "path": "src/shared/lib/observability/workers/system-log-alerts/types.ts",
+          "line": 4,
+          "domain": "shared",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0010",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 13,
+      "declarationCount": 2,
+      "domains": [
+        "shared",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "cabeb613a9ab",
+        "memberCount": 1,
+        "preview": "UnknownRecordDto"
+      },
+      "declarations": [
+        {
+          "name": "ClientErrorContext",
+          "kind": "type",
+          "path": "src/shared/utils/observability/client-error-logger.ts",
+          "line": 8,
+          "domain": "shared",
+          "usageCount": 2
+        },
+        {
+          "name": "UnknownRecord",
+          "kind": "type",
+          "path": "src/shared/contracts/base.ts",
+          "line": 24,
+          "domain": "shared:contracts",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0011",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 13,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "883a389768e1",
+        "memberCount": 1,
+        "preview": "CmsLookupOptionsDto"
+      },
+      "declarations": [
+        {
+          "name": "CmsSlugLookupOptions",
+          "kind": "type",
+          "path": "src/shared/contracts/cms.ts",
+          "line": 961,
+          "domain": "shared:contracts",
+          "usageCount": 3
+        },
+        {
+          "name": "CmsPageLookupOptions",
+          "kind": "type",
+          "path": "src/shared/contracts/cms.ts",
+          "line": 959,
+          "domain": "shared:contracts",
+          "usageCount": 2
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0004",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 12,
+      "declarationCount": 2,
+      "domains": [
+        "feature:case-resolver"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "4873ee998ebf",
+        "memberCount": 1,
+        "preview": "CaseResolverNamedColorParentFormData"
+      },
+      "declarations": [
+        {
+          "name": "CaseResolverIdentifierFormData",
+          "kind": "type",
+          "path": "src/features/case-resolver/entity-form-data.ts",
+          "line": 11,
+          "domain": "feature:case-resolver",
+          "usageCount": 2
+        },
+        {
+          "name": "CaseResolverTagFormData",
+          "kind": "type",
+          "path": "src/features/case-resolver/entity-form-data.ts",
+          "line": 12,
+          "domain": "feature:case-resolver",
+          "usageCount": 2
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0008",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 12,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "aaf7293f988a",
+        "memberCount": 1,
+        "preview": "KangurLessonCollectionFilterDto"
+      },
+      "declarations": [
+        {
+          "name": "KangurLessonListInput",
+          "kind": "type",
+          "path": "src/features/kangur/services/kangur-lesson-repository/types.ts",
+          "line": 6,
+          "domain": "feature:kangur",
+          "usageCount": 2
+        },
+        {
+          "name": "KangurLessonSectionListInput",
+          "kind": "type",
+          "path": "src/features/kangur/services/kangur-lesson-section-repository/types.ts",
+          "line": 6,
+          "domain": "feature:kangur",
+          "usageCount": 2
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0003",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "726ca3d63c38",
+        "memberCount": 1,
+        "preview": "LabeledOptionDto<string>"
+      },
+      "declarations": [
+        {
+          "name": "DatabaseTemplateSnippet",
+          "kind": "type",
+          "path": "src/features/ai/ai-paths/config/query-presets.ts",
+          "line": 5,
+          "domain": "feature:ai",
+          "usageCount": 1
+        },
+        {
+          "name": "LabelValueOptionDto",
+          "kind": "type",
+          "path": "src/shared/contracts/base.ts",
+          "line": 70,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0009",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "32b509c4d84b",
+        "memberCount": 1,
+        "preview": "IdLabelOptionDto<string>"
+      },
+      "declarations": [
+        {
+          "name": "AdminFavoriteCandidate",
+          "kind": "type",
+          "path": "src/shared/providers/AdminFavoritesProvider.tsx",
+          "line": 6,
+          "domain": "shared",
+          "usageCount": 1
+        },
+        {
+          "name": "SortGameBin",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/AgenticCodingMiniGames.types.ts",
+          "line": 14,
+          "domain": "feature:kangur",
           "usageCount": 0
         }
       ],
@@ -71,139 +433,28 @@
       "riskScore": 10,
       "declarationCount": 2,
       "domains": [
-        "shared:contracts"
+        "feature:kangur"
       ],
       "signature": {
         "shapeKind": "structural-members",
-        "normalizedShapeHash": "74b1290e03ed",
-        "memberCount": 6,
-        "preview": "method:canInferRefs(input:Record<string, unknown> | null):boolean; method:canResolveRef(ref:ContextRegistryRef):boolean; method:getVersion():string; method:inferRefs(input:Record<string, unknown>):ContextRegistryRef[]; method:resolveRefs(refs:ContextRegistryRef[],options:RuntimeContextProviderResolveOptions):Promise<ContextRuntimeDocument[]>; prop:id:string"
+        "normalizedShapeHash": "f6972c388778",
+        "memberCount": 8,
+        "preview": "prop:avatar:{ ariaLabel: string; avatarAnchorKind: string; avatarButtonClassName: string; avatarButtonStyle: CSSProperties; avatarStyle: TutorMotionPosition; floatingAvatarPlacement: string; guidedArrowheadTransition?: string; guidedAvatarArrowhead: TutorGuidedArrowhead | null; guidedAvatarArrowheadDisplayAngle: number | null; guidedAvatarArrowheadDisplayAngleLabel?: string; guidedAvatarPlacement: string; guidedTargetKind: string; isAskModalMode: boolean; isGuidedTutorMode: boolean; isOpen: boolean; motionProfile: TutorMotionProfile; prefersReducedMotion: boolean; reducedMotionTransitions: TutorReducedMotionAvatarTransitions; rimColor: string; showFloatingAvatar: boolean; uiMode: string; }; prop:diagnostics:{ canonicalTutorModalVisible: boolean; contextualTutorMode: string | null; guidedMode: TutorGuidedMode; guestIntroShouldRender: boolean; isMinimalPanelMode: boolean; isOpen: boolean; panelShellMode: string; suppressPanelSurface: boolean; tutorSurfaceMode: string; }; prop:drawingPanel:{ shouldRender: boolean; style: CSSProperties | null; prefersReducedMotion: boolean; hint: string | undefined; }; prop:guestIntro:{ guestIntroDescription: string; guestIntroHeadline: string; guestTutorLabel: string; isAnonymousVisitor: boolean; panelStyle: CSSProperties; prefersReducedMotion: boolean; shouldRender: boolean; }; prop:guidedCallout:{ avatarPlacement: TutorEdgePlacement | null; calloutKey: string; calloutTestId: string; detail: string; entryDirection: TutorHorizontalSide; headerLabel: string; mode: TutorGuidedMode; placement: TutorEdgePlacement; prefersReducedMotion: boolean; reducedMotionTransitions: TutorReducedMotionStableTransitions; sectionGuidanceLabel: string | null; sectionResponsePendingKind: string | null; selectionPreview: string | null; shouldRender: boolean; showSectionGuidanceCallout: boolean; showSelectionGuidanceCallout: boolean; stepLabel: string | null; style: CSSProperties | null; title: string; transitionDuration: number; transitionEase: [number, number, number, number]; }; prop:panel:{ attachedAvatarStyle: CSSProperties; attachedLaunchOffset: { x: number; y: number; }; avatarAnchorKind: string; avatarAttachmentSide: TutorHorizontalSide; avatarButtonClassName: string; avatarPointer: TutorAvatarPointer | null; bubbleEntryDirection: TutorHorizontalSide; bubbleLaunchOrigin: 'dock-bottom-right' | 'sheet'; bubbleMode: 'bubble' | 'sheet'; bubbleStrategy: string; bubbleStyle: Record<string, number | string | undefined>; bubbleTailPlacement: 'bottom' | 'dock' | 'top'; bubbleWidth?: number; canDetachPanelFromContext: boolean; canMovePanelToContext: boolean; chromeVariant: TutorPanelChromeVariant; compactDockedTutorPanelWidth: number; isAskModalMode: boolean; isCompactDockedTutorPanel: boolean; isGuidedTutorMode: boolean; isMinimalPanelMode: boolean; isOpen: boolean; canResetPanelPosition: boolean; isPanelDraggable: boolean; isPanelDragging: boolean; isFollowingContext: boolean; isTutorHidden: boolean; minimalPanelStyle: CSSProperties; motionProfile: TutorMotionProfile; panelAvatarPlacement: string; panelBodyContextValue: KangurAiTutorPanelBodyContextValue; panelEmptyStateMessage: string; panelOpenAnimation: 'dock-launch' | 'fade' | 'sheet'; panelSnapState: TutorPanelSnapState | 'none'; panelTransition: Transition; pointerMarkerId: string; prefersReducedMotion: boolean; reducedMotionTransitions: TutorReducedMotionPanelTransitions; sessionSurfaceLabel: string | null; showAttachedAvatarShell: boolean; suppressPanelSurface: boolean; uiMode: string; }; prop:selectionAction:{ placement: TutorEdgePlacement; prefersReducedMotion: boolean; shouldRender: boolean; style: CSSProperties | null; }; prop:spotlights:{ guidedMode: TutorGuidedMode; prefersReducedMotion: boolean; reducedMotionTransitions: TutorReducedMotionStableTransitions; sectionContextSpotlightStyle: CSSProperties | null; sectionDropHighlightStyle: CSSProperties | null; selectionGlowStyles: CSSProperties[]; selectionContextSpotlightStyle: CSSProperties | null; selectionSpotlightStyle: CSSProperties | null; }"
       },
       "declarations": [
         {
-          "name": "RuntimeContextProvider",
-          "kind": "interface",
-          "path": "src/shared/contracts/ai-context-registry.ts",
-          "line": 305,
-          "domain": "shared:contracts",
+          "name": "KangurAiTutorPortalContextValue",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/KangurAiTutorPortal.context.tsx",
+          "line": 219,
+          "domain": "feature:kangur",
           "usageCount": 2
         },
         {
-          "name": "IdDto",
+          "name": "KangurAiTutorPortalStateContextValue",
           "kind": "type",
-          "path": "src/shared/contracts/base.ts",
-          "line": 92,
-          "domain": "shared:contracts",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "exact-0002",
-      "clusterKind": "exact-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 8,
-      "declarationCount": 2,
-      "domains": [
-        "feature:kangur"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "9a4c8d0a50cd",
-        "memberCount": 5,
-        "preview": "prop:applied:boolean; prop:docPath:string; prop:proposedText:string; prop:section:string | null; prop:skipReason?:string"
-      },
-      "declarations": [
-        {
-          "name": "KangurSocialDocUpdateItemPlan",
-          "kind": "type",
-          "path": "src/features/kangur/server/social-posts-doc-updates.ts",
-          "line": 10,
-          "domain": "feature:kangur",
-          "usageCount": 0
-        },
-        {
-          "name": "KangurSocialDocUpdateItemPlan",
-          "kind": "type",
-          "path": "src/features/kangur/ui/hooks/useKangurSocialPosts.ts",
-          "line": 130,
-          "domain": "feature:kangur",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "exact-0003",
-      "clusterKind": "exact-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 8,
-      "declarationCount": 2,
-      "domains": [
-        "feature:kangur"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "970e72d90836",
-        "memberCount": 6,
-        "preview": "prop:after:string; prop:applied:boolean; prop:before:string; prop:diff:string; prop:docPath:string; prop:truncated:boolean"
-      },
-      "declarations": [
-        {
-          "name": "KangurSocialDocUpdateFilePlan",
-          "kind": "type",
-          "path": "src/features/kangur/server/social-posts-doc-updates.ts",
-          "line": 18,
-          "domain": "feature:kangur",
-          "usageCount": 0
-        },
-        {
-          "name": "KangurSocialDocUpdateFilePlan",
-          "kind": "type",
-          "path": "src/features/kangur/ui/hooks/useKangurSocialPosts.ts",
-          "line": 138,
-          "domain": "feature:kangur",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "exact-0004",
-      "clusterKind": "exact-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 8,
-      "declarationCount": 2,
-      "domains": [
-        "feature:kangur"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "51dc833deafb",
-        "memberCount": 2,
-        "preview": "prop:files:KangurSocialDocUpdateFilePlan[]; prop:items:KangurSocialDocUpdateItemPlan[]"
-      },
-      "declarations": [
-        {
-          "name": "KangurSocialDocUpdatePlan",
-          "kind": "type",
-          "path": "src/features/kangur/server/social-posts-doc-updates.ts",
-          "line": 27,
-          "domain": "feature:kangur",
-          "usageCount": 0
-        },
-        {
-          "name": "KangurSocialDocUpdatePlan",
-          "kind": "type",
-          "path": "src/features/kangur/ui/hooks/useKangurSocialPosts.ts",
-          "line": 147,
+          "path": "src/features/kangur/ui/components/KangurAiTutorPortal.context.tsx",
+          "line": 32,
           "domain": "feature:kangur",
           "usageCount": 0
         }
@@ -216,32 +467,32 @@
       "clusterId": "exact-0005",
       "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
-      "riskScore": 8,
+      "riskScore": 9,
       "declarationCount": 2,
       "domains": [
-        "feature:kangur"
+        "feature:cms"
       ],
       "signature": {
-        "shapeKind": "type-expression",
-        "normalizedShapeHash": "ffce0b078191",
-        "memberCount": 1,
-        "preview": "KangurPanelProps"
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "b59e2153b001",
+        "memberCount": 4,
+        "preview": "prop:blocks:BlockInstance[]; prop:sectionId:string; prop:settings:Record<string, unknown>; prop:type:string"
       },
       "declarations": [
         {
-          "name": "KangurPanelRowProps",
-          "kind": "type",
-          "path": "src/features/kangur/ui/design/primitives/KangurPanelRow.tsx",
-          "line": 8,
-          "domain": "feature:kangur",
-          "usageCount": 0
+          "name": "SectionRendererProps",
+          "kind": "interface",
+          "path": "src/features/cms/components/frontend/CmsPageRendererBase.tsx",
+          "line": 181,
+          "domain": "feature:cms",
+          "usageCount": 1
         },
         {
-          "name": "KangurPanelStackProps",
+          "name": "PreviewFrontendSectionProps",
           "kind": "type",
-          "path": "src/features/kangur/ui/design/primitives/KangurPanelStack.tsx",
-          "line": 8,
-          "domain": "feature:kangur",
+          "path": "src/features/cms/components/page-builder/PreviewFrontendSection.tsx",
+          "line": 9,
+          "domain": "feature:cms",
           "usageCount": 0
         }
       ],
@@ -256,29 +507,29 @@
       "riskScore": 8,
       "declarationCount": 2,
       "domains": [
-        "shared:contracts"
+        "feature:integrations"
       ],
       "signature": {
-        "shapeKind": "type-expression",
-        "normalizedShapeHash": "7861181d02fd",
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "807893788d98",
         "memberCount": 1,
-        "preview": "PositiveRectBoundsDto"
+        "preview": "prop:listing:ProductListingWithDetails"
       },
       "declarations": [
         {
-          "name": "VectorCanvasViewCropRectDto",
+          "name": "ProductListingActionsProps",
           "kind": "type",
-          "path": "src/shared/contracts/ui/canvas.ts",
-          "line": 4,
-          "domain": "shared:contracts",
+          "path": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx",
+          "line": 25,
+          "domain": "feature:integrations",
           "usageCount": 0
         },
         {
-          "name": "VectorCanvasImageContentFrameDto",
+          "name": "ProductListingDetailsProps",
           "kind": "type",
-          "path": "src/shared/contracts/ui/canvas.ts",
-          "line": 6,
-          "domain": "shared:contracts",
+          "path": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx",
+          "line": 29,
+          "domain": "feature:integrations",
           "usageCount": 0
         }
       ],
@@ -287,8 +538,8 @@
       ]
     },
     {
-      "clusterId": "near-0001",
-      "clusterKind": "near-shape",
+      "clusterId": "exact-0007",
+      "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 8,
       "declarationCount": 2,
@@ -296,25 +547,25 @@
         "feature:kangur"
       ],
       "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "e1ae499198fe",
-        "memberCount": 2,
-        "preview": "prop:get:(options?: KangurProgressRequestOptions) => Promise<KangurProgressState>; prop:update:( input: KangurProgressState, context?: KangurProgressUpdateContext & KangurProgressRequestOptions ) => Promise<KangurProgressState>"
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "13606baa639b",
+        "memberCount": 1,
+        "preview": "KangurAiTutorTranslationStatusDto"
       },
       "declarations": [
         {
-          "name": "KangurProgressPort",
-          "kind": "interface",
-          "path": "src/features/kangur/services/ports.ts",
-          "line": 117,
+          "name": "KangurAiTutorContentTranslationStatus",
+          "kind": "type",
+          "path": "src/features/kangur/server/ai-tutor-content-locale-scaffold.ts",
+          "line": 12,
           "domain": "feature:kangur",
           "usageCount": 0
         },
         {
-          "name": "KangurLearnerActivityPort",
-          "kind": "interface",
-          "path": "src/features/kangur/services/ports.ts",
-          "line": 132,
+          "name": "KangurAiTutorNativeGuideTranslationStatus",
+          "kind": "type",
+          "path": "src/features/kangur/server/ai-tutor-native-guide-locale-scaffold.ts",
+          "line": 43,
           "domain": "feature:kangur",
           "usageCount": 0
         }

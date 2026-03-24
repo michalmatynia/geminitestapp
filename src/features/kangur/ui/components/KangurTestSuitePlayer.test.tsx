@@ -4,6 +4,10 @@
 
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME,
+  LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME,
+} from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
 const {
@@ -22,6 +26,8 @@ const {
   useOptionalKangurAiTutorMock: vi.fn(),
 }));
 
+const splitClasses = (className: string): string[] => className.trim().split(/\s+/);
+
 vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
   KangurLessonNarrator: ({ readLabel }: { readLabel: string }) => <button>{readLabel}</button>,
 }));
@@ -29,6 +35,7 @@ vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useKangurAiTutorSessionSync: useKangurAiTutorSessionSyncMock,
   useOptionalKangurAiTutor: useOptionalKangurAiTutorMock,
+  useKangurAiTutorDeferredActivationBridge: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
@@ -112,6 +119,12 @@ describe('KangurTestSuitePlayer', () => {
     expect(screen.getByTestId('kangur-test-suite-progress-bar')).toHaveAttribute(
       'aria-valuenow',
       '100'
+    );
+    expect(screen.getByTestId('kangur-test-suite-navigation')).toHaveClass(
+      ...splitClasses(LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME)
+    );
+    expect(screen.getByRole('group', { name: /test suite navigation/i })).toHaveClass(
+      ...splitClasses(LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME)
     );
     expect(screen.getByRole('button', { name: /previous/i })).toHaveClass(
       'kangur-cta-pill',

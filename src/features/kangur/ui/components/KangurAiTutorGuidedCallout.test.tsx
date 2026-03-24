@@ -342,7 +342,7 @@ describe('KangurAiTutorGuidedCallout', () => {
     );
   });
 
-  it('replaces the resolved page-content answer with a hint follow-up on test surfaces', () => {
+  it('renders the resolved page-content answer on test surfaces for knowledge-backed selections', () => {
     pageContentQueryMock.entry = {
       fragments: [
         {
@@ -440,20 +440,19 @@ describe('KangurAiTutorGuidedCallout', () => {
     );
 
     expect(
-      screen.queryByTestId('kangur-ai-tutor-selection-guided-page-content-badge')
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByTestId('kangur-ai-tutor-selection-guided-answer')
-    ).not.toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-selection-hint-followup')).toHaveTextContent(
-      'Potrzebujesz kolejnej podpowiedzi?'
+      screen.getByTestId('kangur-ai-tutor-selection-guided-page-content-badge')
+    ).toHaveTextContent('Zapisana treść strony');
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-answer')).toHaveTextContent(
+      'To zadanie sprawdza, czy po rozcięciu powstają dwie identyczne części.'
     );
-    expect(screen.getByRole('button', { name: 'Tak, pomóż mi' })).toHaveClass(
+    expect(
+      screen.queryByTestId('kangur-ai-tutor-selection-hint-followup')
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Rozumiem' })).toHaveClass(
       'min-h-11',
       'px-4',
       'touch-manipulation'
     );
-    expect(screen.queryByRole('button', { name: 'Rozumiem' })).not.toBeInTheDocument();
   });
 
   it('shows the saved page-content fragment in the first guided modal before the answer resolves', () => {

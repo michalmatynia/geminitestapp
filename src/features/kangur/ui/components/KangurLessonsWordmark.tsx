@@ -1,9 +1,10 @@
-import { KangurWordmarkBase } from '@/features/kangur/ui/components/KangurWordmarkBase';
 import {
-  KANGUR_WORDMARK_DEFAULT_TEXT_PROPS,
-  type KangurLocalizedWordmarkProps,
-} from '@/features/kangur/ui/components/kangur-wordmark';
-import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
+  createNormalizedWordmarkLabelMatcher,
+  KangurLocalizedPathWordmark,
+} from '@/features/kangur/ui/components/KangurLocalizedPathWordmark';
+import type { KangurLocalizedWordmarkProps } from '@/features/kangur/ui/components/kangur-wordmark';
+
+const matchesPolishLessonsWordmark = createNormalizedWordmarkLabelMatcher('lekcje');
 
 export function KangurLessonsWordmark({
   idPrefix = 'kangur-lessons-wordmark',
@@ -11,26 +12,18 @@ export function KangurLessonsWordmark({
   locale = 'pl',
   ...props
 }: KangurLocalizedWordmarkProps): React.JSX.Element {
-  const normalizedLocale = normalizeSiteLocale(locale);
-  const resolvedLabel = label.trim() || 'Lekcje';
-  const shouldUsePolishPathWordmark =
-    normalizedLocale === 'pl' && resolvedLabel.toLowerCase() === 'lekcje';
-
   return (
-    <KangurWordmarkBase
+    <KangurLocalizedPathWordmark
       arcPath='M132 118C214 139 317 139 430 112'
+      defaultLabel='Lekcje'
       idPrefix={idPrefix}
-      textLabel={shouldUsePolishPathWordmark ? undefined : resolvedLabel}
-      textProps={
-        shouldUsePolishPathWordmark
-          ? undefined
-          : KANGUR_WORDMARK_DEFAULT_TEXT_PROPS
-      }
+      label={label}
+      locale={locale}
+      matchesPolishPathLabel={matchesPolishLessonsWordmark}
       wordTransform='translate(132 111)'
       {...props}
     >
-      {shouldUsePolishPathWordmark ? (
-        <>
+      <>
           <path d='M451 1311V244H1053Q1125 244 1163.5 209.0Q1202 174 1202 121Q1202 67 1164.0 33.5Q1126 0 1053 0H336Q239 0 196.5 43.0Q154 86 154 182V1311Q154 1401 194.5 1446.0Q235 1491 301 1491Q368 1491 409.5 1446.5Q451 1402 451 1311Z' />
           <path
             d='M903 463H369Q370 370 406.5 299.0Q443 228 503.5 192.0Q564 156 637 156Q686 156 726.5 167.5Q767 179 805.0 203.5Q843 228 875.0 256.0Q907 284 958 332Q979 350 1018 350Q1060 350 1086.0 327.0Q1112 304 1112 262Q1112 225 1083.0 175.5Q1054 126 995.5 80.5Q937 35 848.5 5.0Q760 -25 645 -25Q382 -25 236.0 125.0Q90 275 90 532Q90 653 126.0 756.5Q162 860 231.0 934.0Q300 1008 401.0 1047.5Q502 1087 625 1087Q785 1087 899.5 1019.5Q1014 952 1071.0 845.0Q1128 738 1128 627Q1128 524 1069.0 493.5Q1010 463 903 463ZM369 618H864Q854 758 788.5 827.5Q723 897 616 897Q514 897 448.5 826.5Q383 756 369 618Z'
@@ -52,8 +45,7 @@ export function KangurLessonsWordmark({
             d='M903 463H369Q370 370 406.5 299.0Q443 228 503.5 192.0Q564 156 637 156Q686 156 726.5 167.5Q767 179 805.0 203.5Q843 228 875.0 256.0Q907 284 958 332Q979 350 1018 350Q1060 350 1086.0 327.0Q1112 304 1112 262Q1112 225 1083.0 175.5Q1054 126 995.5 80.5Q937 35 848.5 5.0Q760 -25 645 -25Q382 -25 236.0 125.0Q90 275 90 532Q90 653 126.0 756.5Q162 860 231.0 934.0Q300 1008 401.0 1047.5Q502 1087 625 1087Q785 1087 899.5 1019.5Q1014 952 1071.0 845.0Q1128 738 1128 627Q1128 524 1069.0 493.5Q1010 463 903 463ZM369 618H864Q854 758 788.5 827.5Q723 897 616 897Q514 897 448.5 826.5Q383 756 369 618Z'
             transform='translate(4808 0)'
           />
-        </>
-      ) : null}
-    </KangurWordmarkBase>
+      </>
+    </KangurLocalizedPathWordmark>
   );
 }

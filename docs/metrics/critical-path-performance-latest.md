@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-21'
+last_reviewed: '2026-03-24'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Critical Path Performance Report
 
-Generated at: 2026-03-21T16:42:44.564Z
+Generated at: 2026-03-24T23:08:29.487Z
 
 ## Summary
 
@@ -86,28 +86,28 @@ Generated at: 2026-03-21T16:42:44.564Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx` | 1888 |
-| `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1701 |
+| `src/features/kangur/ui/components/music/useKangurMusicSynth.test.tsx` | 3348 |
+| `src/features/kangur/ui/components/animations/EnglishAnimations.tsx` | 2718 |
+| `src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx` | 2712 |
+| `src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx` | 2454 |
+| `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx` | 2016 |
+| `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 1856 |
+| `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1844 |
+| `src/features/kangur/ui/components/music/useKangurMusicSynth.ts` | 1793 |
+| `src/features/kangur/ui/components/EnglishAdverbsFrequencyRoutineGame.tsx` | 1701 |
 | `src/features/kangur/ui/components/AddingLesson.tsx` | 1681 |
-| `src/features/kangur/server/ai-tutor-content-locale-scaffold.ts` | 1617 |
-| `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 1549 |
-| `src/features/kangur/page-content-catalog.ts` | 1461 |
-| `src/features/kangur/admin/appearance/appearance.copy.ts` | 1396 |
-| `src/features/kangur/server/ai-tutor-native-guide-locale-scaffold.ts` | 1265 |
-| `src/features/kangur/ui/pages/Game.tsx` | 1152 |
-| `src/features/kangur/admin/components/KangurAiTutorContentSettingsPanel.tsx` | 1139 |
 
 ## Top API Route Hotspots (Reference)
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 277 |
-| `src/app/api/image-studio/[[...path]]/route.ts` | 232 |
-| `src/app/api/v2/integrations/[[...path]]/route.ts` | 228 |
-| `src/app/api/agentcreator/[[...path]]/route.ts` | 225 |
-| `src/app/api/ai-paths/[[...path]]/route.ts` | 202 |
-| `src/app/api/databases/[[...path]]/route.ts` | 200 |
-| `src/app/api/chatbot/[[...path]]/route.ts` | 165 |
+| `src/app/api/v2/integrations/[[...path]]/route.ts` | 231 |
+| `src/app/api/agentcreator/[[...path]]/route.ts` | 228 |
+| `src/app/api/ai-paths/[[...path]]/route.ts` | 205 |
+| `src/app/api/databases/[[...path]]/route.ts` | 203 |
+| `src/app/api/chatbot/[[...path]]/route.ts` | 168 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 161 |
+| `src/app/api/image-studio/[[...path]]/route.ts` | 126 |
 | `src/app/api/agent/leases/route.ts` | 122 |
 | `src/app/api/kangur/[[...path]]/route.ts` | 62 |
 | `src/app/api/agent/resources/route.ts` | 59 |

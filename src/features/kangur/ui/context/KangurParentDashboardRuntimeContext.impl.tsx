@@ -174,7 +174,7 @@ type KangurParentDashboardRuntimeContextValue = KangurParentDashboardRuntimeStat
 const kangurPlatform = getKangurPlatform();
 const ACTION_TIMEOUT_MS = 12_000;
 const REFRESH_TIMEOUT_MS = 8_000;
-const SCORES_LOAD_DEFER_MS = 900;
+const SCORES_LOAD_DEFER_MS = 200;
 
 async function withTimeout<T>(
   promise: Promise<T>,

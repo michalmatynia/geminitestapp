@@ -8,7 +8,10 @@ import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
-import { withKangurClientError } from '@/features/kangur/observability/client';
+import {
+  isRecoverableKangurClientFetchError,
+  withKangurClientError,
+} from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord } from '@kangur/platform';
 import { KangurPanelSectionHeading } from '@/features/kangur/ui/components/KangurPanelSectionHeading';
@@ -261,6 +264,7 @@ export default function ScoreHistory({
             }),
           {
             fallback: [],
+            shouldReport: (error) => !isRecoverableKangurClientFetchError(error),
             onError: () => {
               if (isActive) {
                 setScores([]);

@@ -1,8 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { withKangurClientError } from '@/features/kangur/observability/client';
+import {
+  isRecoverableKangurClientFetchError,
+  withKangurClientError,
+} from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type {
   KangurAssignmentCreateInput,
@@ -12,6 +16,7 @@ import type {
 } from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { KANGUR_PROGRESS_EVENT_NAME } from '@/features/kangur/ui/services/progress';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 
 const kangurPlatform = getKangurPlatform();
@@ -34,128 +39,126 @@ type UseKangurAssignmentsResult = {
   reassignAssignment: (id: string) => Promise<KangurAssignmentSnapshot>;
 };
 
+const fetchAssignments = async (
+  query?: KangurAssignmentListQuery
+): Promise<KangurAssignmentSnapshot[]> => {
+  const result = await withKangurClientError(
+    () => ({
+      source: 'kangur.hooks.useKangurAssignments',
+      action: 'refresh',
+      description: 'Loads learner assignments from the Kangur API.',
+      context: {
+        includeArchived: query?.includeArchived ?? false,
+      },
+    }),
+    async () => await kangurPlatform.assignments.list(query),
+    {
+      fallback: null,
+      shouldReport: (error) => !isRecoverableKangurClientFetchError(error),
+    }
+  );
+  return result ?? [];
+};
+
 export const useKangurAssignments = (
   options: UseKangurAssignmentsOptions = {}
 ): UseKangurAssignmentsResult => {
   const enabled = options.enabled ?? true;
   const query = options.query;
-  const [assignments, setAssignments] = useState<KangurAssignmentSnapshot[]>([]);
-  const [isLoading, setIsLoading] = useState(enabled);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const queryKey = QUERY_KEYS.kangur.assignments({ includeArchived: query?.includeArchived });
 
-  const refresh = useCallback(async (): Promise<void> => {
-    if (!enabled) {
-      setAssignments([]);
-      setError(null);
-      setIsLoading(false);
-      return;
-    }
+  const assignmentsQuery = useQuery<KangurAssignmentSnapshot[], Error>({
+    queryKey,
+    queryFn: () => fetchAssignments(query),
+    enabled,
+    staleTime: 1000 * 60 * 2,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    retry: (failureCount, error) => {
+      if (isKangurAuthStatusError(error)) return false;
+      return failureCount < 1;
+    },
+    meta: {
+      source: 'kangur.hooks.useKangurAssignments',
+      operation: 'list',
+      resource: 'kangur.assignments',
+      domain: 'kangur',
+      tags: ['kangur', 'assignments'],
+      description: 'Loads learner assignments from the Kangur API.',
+    },
+  });
 
-    setIsLoading(true);
-    setError(null);
+  const errorMessage =
+    assignmentsQuery.error && !isKangurAuthStatusError(assignmentsQuery.error)
+      ? 'Nie udało się pobrać zadań.'
+      : null;
 
-    try {
-      const nextAssignments = await withKangurClientError(
-        () => ({
-          source: 'kangur.hooks.useKangurAssignments',
-          action: 'refresh',
-          description: 'Loads learner assignments from the Kangur API.',
-          context: {
-            includeArchived: query?.includeArchived ?? false,
-          },
-        }),
-        async () => await kangurPlatform.assignments.list(query),
-        {
-          fallback: null,
-          onError: (error) => {
-            if (isKangurAuthStatusError(error)) {
-              setAssignments([]);
-              setError(null);
-              return;
-            }
-            setError('Nie udało się pobrać zadań.');
-          },
-        }
-      );
-      if (nextAssignments) {
-        setAssignments(nextAssignments);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [enabled, query?.includeArchived]);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  useEffect(() => {
-    if (!enabled) {
-      setAssignments([]);
-      setError(null);
-      setIsLoading(false);
-    }
-  }, [enabled]);
-
+  // Invalidate assignments when progress events fire (e.g. lesson completed)
   useEffect(() => {
     if (!enabled || typeof window === 'undefined') {
       return;
     }
 
     const handleRevalidate = (): void => {
-      void refresh();
+      void queryClient.invalidateQueries({ queryKey });
     };
 
     window.addEventListener(KANGUR_PROGRESS_EVENT_NAME, handleRevalidate);
-    window.addEventListener('focus', handleRevalidate);
 
     return () => {
       window.removeEventListener(KANGUR_PROGRESS_EVENT_NAME, handleRevalidate);
-      window.removeEventListener('focus', handleRevalidate);
     };
-  }, [enabled, refresh]);
+  }, [enabled, queryClient, queryKey]);
+
+  const refresh = useCallback(async (): Promise<void> => {
+    await queryClient.invalidateQueries({ queryKey });
+  }, [queryClient, queryKey]);
 
   const createAssignment = useCallback(
     async (input: KangurAssignmentCreateInput): Promise<KangurAssignmentSnapshot> => {
       const createdAssignment = await kangurPlatform.assignments.create(input);
-      setAssignments((prev) => [createdAssignment, ...prev]);
-      setError(null);
+      queryClient.setQueryData<KangurAssignmentSnapshot[]>(queryKey, (prev) =>
+        prev ? [createdAssignment, ...prev] : [createdAssignment]
+      );
       return createdAssignment;
     },
-    []
+    [queryClient, queryKey]
   );
 
   const updateAssignment = useCallback(
     async (id: string, input: KangurAssignmentUpdateInput): Promise<KangurAssignmentSnapshot> => {
       const updatedAssignment = await kangurPlatform.assignments.update(id, input);
-      setAssignments((prev) =>
-        prev.map((assignment) =>
-          assignment.id === updatedAssignment.id ? updatedAssignment : assignment
-        )
+      queryClient.setQueryData<KangurAssignmentSnapshot[]>(queryKey, (prev) =>
+        prev
+          ? prev.map((assignment) =>
+              assignment.id === updatedAssignment.id ? updatedAssignment : assignment
+            )
+          : [updatedAssignment]
       );
-      setError(null);
       return updatedAssignment;
     },
-    []
+    [queryClient, queryKey]
   );
 
   const reassignAssignment = useCallback(
     async (id: string): Promise<KangurAssignmentSnapshot> => {
       const reassignedAssignment = await kangurPlatform.assignments.reassign(id);
-      setAssignments((prev) => [
-        reassignedAssignment,
-        ...prev.filter((assignment) => assignment.id !== id),
-      ]);
-      setError(null);
+      queryClient.setQueryData<KangurAssignmentSnapshot[]>(queryKey, (prev) =>
+        prev
+          ? [reassignedAssignment, ...prev.filter((assignment) => assignment.id !== id)]
+          : [reassignedAssignment]
+      );
       return reassignedAssignment;
     },
-    []
+    [queryClient, queryKey]
   );
 
   return {
-    assignments: enabled ? assignments : [],
-    isLoading: enabled ? isLoading : false,
-    error: enabled ? error : null,
+    assignments: enabled ? (assignmentsQuery.data ?? []) : [],
+    isLoading: enabled ? assignmentsQuery.isLoading : false,
+    error: enabled ? errorMessage : null,
     refresh,
     createAssignment,
     updateAssignment,

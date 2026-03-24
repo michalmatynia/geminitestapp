@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-22'
+last_reviewed: '2026-03-24'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,12 +8,12 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-22T15:42:13.029Z
+Generated at: 2026-03-24T23:07:29.909Z
 
 ## Snapshot
 
-- Source files: 7349
-- Source lines: 1197056
+- Source files: 7544
+- Source lines: 1258927
 - use client files: 2
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
@@ -23,22 +23,22 @@ Generated at: 2026-03-22T15:42:13.029Z
 - API routes without apiHandler/delegation: 0
 - API explicit cache policy coverage: 285/29 (982.8%)
 - Cross-feature dependency pairs: 3
-- Shared -> features imports: 1
+- Shared -> features imports: 0
 - setInterval occurrences: 0
-- Prop-drilling chains (depth >= 3): 225
-- Prop-drilling chains (depth >= 4): 52
+- Prop-drilling chains (depth >= 3): 233
+- Prop-drilling chains (depth >= 4): 49
 
 ## Top API Hotspots (by LOC)
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 277 |
-| `src/app/api/image-studio/[[...path]]/route.ts` | 232 |
-| `src/app/api/v2/integrations/[[...path]]/route.ts` | 228 |
-| `src/app/api/agentcreator/[[...path]]/route.ts` | 225 |
-| `src/app/api/ai-paths/[[...path]]/route.ts` | 202 |
-| `src/app/api/databases/[[...path]]/route.ts` | 200 |
-| `src/app/api/chatbot/[[...path]]/route.ts` | 165 |
+| `src/app/api/v2/integrations/[[...path]]/route.ts` | 231 |
+| `src/app/api/agentcreator/[[...path]]/route.ts` | 228 |
+| `src/app/api/ai-paths/[[...path]]/route.ts` | 205 |
+| `src/app/api/databases/[[...path]]/route.ts` | 203 |
+| `src/app/api/chatbot/[[...path]]/route.ts` | 168 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 161 |
+| `src/app/api/image-studio/[[...path]]/route.ts` | 126 |
 | `src/app/api/agent/leases/route.ts` | 122 |
 | `src/app/api/kangur/[[...path]]/route.ts` | 62 |
 | `src/app/api/agent/resources/route.ts` | 59 |
@@ -60,23 +60,23 @@ Generated at: 2026-03-22T15:42:13.029Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx` | 1893 |
-| `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1701 |
+| `src/features/kangur/ui/components/music/useKangurMusicSynth.test.tsx` | 3348 |
+| `src/features/kangur/ui/components/animations/EnglishAnimations.tsx` | 2718 |
+| `src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx` | 2712 |
+| `src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx` | 2454 |
+| `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx` | 2016 |
+| `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 1856 |
+| `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1844 |
+| `src/features/kangur/ui/components/music/useKangurMusicSynth.ts` | 1793 |
+| `src/features/kangur/ui/components/EnglishAdverbsFrequencyRoutineGame.tsx` | 1701 |
 | `src/features/kangur/ui/components/AddingLesson.tsx` | 1681 |
-| `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 1624 |
 | `src/features/kangur/server/ai-tutor-content-locale-scaffold.ts` | 1617 |
-| `src/features/kangur/page-content-catalog.ts` | 1461 |
+| `src/features/kangur/page-content-catalog.ts` | 1531 |
 | `src/features/kangur/admin/appearance/appearance.copy.ts` | 1396 |
+| `src/features/kangur/ui/KangurLoginPage.tsx` | 1347 |
+| `src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx` | 1271 |
 | `src/features/kangur/server/ai-tutor-native-guide-locale-scaffold.ts` | 1265 |
-| `src/shared/contracts/ai-paths.ts` | 1165 |
-| `src/features/kangur/admin/components/KangurAiTutorContentSettingsPanel.tsx` | 1139 |
-| `src/features/kangur/lessons/lesson-catalog-i18n.ts` | 1138 |
-| `src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts` | 1128 |
-| `src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx` | 1128 |
-| `src/features/kangur/ui/components/NumberBalanceRushGame.tsx` | 1117 |
-| `src/features/kangur/ui/services/delegated-assignments.ts` | 1081 |
-| `src/features/kangur/ui/components/LogicalThinkingLesson.tsx` | 1074 |
-| `src/features/kangur/ui/components/GeometryDrawingGame.tsx` | 1057 |
-| `src/app/api/kangur/ai-tutor/chat/handler.ts` | 1046 |
-| `src/features/kangur/ui/components/animations/AddingAnimations.tsx` | 1041 |
-| `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts` | 1041 |
+| `src/features/kangur/ui/components/KangurPrimaryNavigation.tsx` | 1253 |
+| `src/features/kangur/ui/KangurLoginPage.test.tsx` | 1248 |
+| `src/features/kangur/ui/components/GeometryLessonAnimations.tsx` | 1248 |
+| `src/features/kangur/lessons/lesson-catalog-i18n.ts` | 1246 |

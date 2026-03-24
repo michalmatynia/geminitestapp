@@ -583,14 +583,11 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
         <KangurButton
           className={compactActionClassName}
           onClick={() => {
-            setEnabled((current) => {
-              const nextEnabled = !current;
-              if (nextEnabled) {
-                persistTutorVisibilityHidden(false);
-                setIsTutorHidden(false);
-              }
-              return nextEnabled;
-            });
+            const nextEnabled = !enabled;
+            setEnabled(nextEnabled);
+            if (nextEnabled) {
+              persistTutorVisibilityHidden(false);
+            }
           }}
           size='sm'
           variant={enabled ? 'surface' : 'primary'}

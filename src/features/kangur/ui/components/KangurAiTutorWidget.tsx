@@ -1,12 +1,11 @@
 import { useReducedMotion } from 'framer-motion';
-import { useContext, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 
 import {
   useActivateKangurAiTutorContent,
   useKangurAiTutorContent,
 } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
-import { KangurAiTutorActivationContext } from '@/features/kangur/ui/context/KangurAiTutorContext';
+import { useKangurAiTutorDeferredActivationBridge } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
 
@@ -27,20 +26,15 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   useActivateKangurAiTutorContent();
   const prefersReducedMotion = useReducedMotion();
   const tutorContent = useKangurAiTutorContent();
-  const { value: tutorRuntime } = useKangurAiTutorRuntime();
-  const activateRuntime = useContext(KangurAiTutorActivationContext);
+  const { value: tutorRuntime, sessionRegistryValue } = useKangurAiTutorRuntime();
   const authState = useOptionalKangurAuth();
   const loginModal = useKangurLoginModal();
   const widgetState = useKangurAiTutorWidgetState();
 
-  // Push the real runtime value into the deferred provider so sibling
-  // consumers (Navigation, ParentDashboard, etc.) see live state.
-  useLayoutEffect(() => {
-    activateRuntime?.(tutorRuntime);
-    return () => {
-      activateRuntime?.(null);
-    };
-  }, [activateRuntime, tutorRuntime]);
+  useKangurAiTutorDeferredActivationBridge({
+    runtimeValue: tutorRuntime,
+    sessionRegistryValue,
+  });
 
   const environment = useKangurAiTutorWidgetEnvironment({
     authState,

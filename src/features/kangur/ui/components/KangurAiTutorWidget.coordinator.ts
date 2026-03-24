@@ -238,6 +238,7 @@ export function useKangurAiTutorWidgetCoordinator({
         widgetState.sectionResponsePending !== null));
 
   const interactions = useKangurAiTutorPanelInteractions({
+    activeConversationFocus: activeFocus.conversationFocus,
     activeSelectedText,
     allowSelectedTextSupport,
     bubblePlacementMode: bubblePlacement.mode,

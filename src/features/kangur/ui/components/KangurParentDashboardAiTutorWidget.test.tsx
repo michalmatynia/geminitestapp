@@ -10,6 +10,7 @@ import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   KANGUR_AI_TUTOR_SETTINGS_KEY,
 } from '@/features/kangur/settings-ai-tutor';
+import { subscribeToTutorVisibilityChanges } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
 const {
@@ -109,9 +110,18 @@ const flushDeferredUsageLoad = async (): Promise<void> => {
   });
 };
 
+function TutorVisibilityProbe(): React.JSX.Element {
+  const [hidden, setHidden] = React.useState(true);
+
+  React.useEffect(() => subscribeToTutorVisibilityChanges(setHidden), []);
+
+  return <div data-testid='tutor-visibility-probe'>{hidden ? 'hidden' : 'visible'}</div>;
+}
+
 describe('KangurParentDashboardAiTutorWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.sessionStorage.clear();
     useKangurPageContentEntryMock.mockReturnValue({
       data: undefined,
       entry: null,
@@ -268,6 +278,63 @@ describe('KangurParentDashboardAiTutorWidget', () => {
       '[color:var(--kangur-page-muted-text)]'
     );
     expect(screen.queryByText(/wykorzystanie dzisiaj/i)).not.toBeInTheDocument();
+  });
+
+  it('enables the tutor without triggering cross-component render updates', async () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
+        return JSON.stringify({
+          'learner-1': {
+            enabled: false,
+            uiMode: 'anchored',
+            allowCrossPagePersistence: true,
+            allowLessons: true,
+            allowGames: true,
+            testAccessMode: 'guided',
+            showSources: true,
+            allowSelectedTextSupport: true,
+          },
+        });
+      }
+      if (key === KANGUR_AI_TUTOR_APP_SETTINGS_KEY) {
+        return JSON.stringify({
+          agentPersonaId: 'persona-1',
+          motionPresetId: 'tablet',
+          dailyMessageLimit: 12,
+        });
+      }
+      return undefined;
+    });
+
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    render(
+      <>
+        <TutorVisibilityProbe />
+        <KangurParentDashboardAiTutorWidget />
+      </>
+    );
+
+    expect(screen.getByTestId('tutor-visibility-probe')).toHaveTextContent('hidden');
+
+    fireEvent.click(screen.getByRole('button', { name: /włącz ai-tutora/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('tutor-visibility-probe')).toHaveTextContent('visible');
+    });
+
+    const hasRenderPhaseUpdateWarning = consoleErrorSpy.mock.calls.some((call) =>
+      call.some(
+        (value) =>
+          typeof value === 'string' &&
+          value.includes('Cannot update a component') &&
+          value.includes('AiTutorConfigPanel')
+      )
+    );
+
+    expect(hasRenderPhaseUpdateWarning).toBe(false);
+
+    consoleErrorSpy.mockRestore();
   });
 
   it('shows the learner-specific tutor mood summary for the active learner', () => {

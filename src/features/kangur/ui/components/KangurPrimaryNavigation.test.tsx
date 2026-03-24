@@ -368,6 +368,7 @@ vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useOptionalKangurAiTutor: () => optionalTutorMock(),
+  useKangurAiTutorDeferredActivationBridge: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
@@ -642,7 +643,7 @@ describe('KangurPrimaryNavigation', () => {
     );
 
     expect(screen.getByTestId('kangur-page-top-bar')).toHaveClass('sticky', 'top-0', 'w-full');
-    expect(screen.getByRole('banner')).toBe(screen.getByTestId('kangur-page-top-bar'));
+    expect(screen.getByTestId('kangur-page-top-bar')).not.toHaveAttribute('role');
     expect(screen.getByRole('navigation', { name: /główna nawigacja kangur/i })).toHaveClass(
       'kangur-nav-group',
       'w-full',

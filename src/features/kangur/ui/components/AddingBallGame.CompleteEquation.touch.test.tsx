@@ -65,7 +65,13 @@ describe('CompleteEquation touch interactions', () => {
     );
 
     expect(screen.getByTestId('adding-ball-complete-touch-hint')).toHaveTextContent(
-      'Dotknij piłkę, a potem Grupa A (2), Grupa B (3) albo pulę.'
+      'Dotknij piłkę, a potem Grupa A, Grupa B albo pulę.'
+    );
+    expect(screen.getByTestId('adding-ball-complete-solution-hint')).toHaveTextContent(
+      'Pasuje 2 + 3 albo 3 + 2. Kolejność grup nie ma znaczenia.'
+    );
+    expect(screen.getByTestId('adding-ball-complete-unit-hint')).toHaveTextContent(
+      'Każda piłka to 1.'
     );
 
     const pool = screen.getByTestId('adding-ball-pool');
@@ -76,12 +82,78 @@ describe('CompleteEquation touch interactions', () => {
     fireEvent.click(firstBall);
 
     expect(screen.getByTestId('adding-ball-complete-touch-hint')).toHaveTextContent(
-      'Wybrana piłka: 1. Dotknij Grupa A (2), Grupa B (3) albo pulę.'
+      'Wybrana piłka: 1. Dotknij Grupa A, Grupa B albo pulę.'
     );
 
     const slotA = screen.getByTestId('adding-ball-slotA');
     fireEvent.click(slotA);
 
     expect(within(slotA).getByRole('button', { name: 'Piłka: 1' })).toBeInTheDocument();
+  });
+
+  it('accepts swapped group sizes as a correct equation solution', () => {
+    vi.useFakeTimers();
+    const onResult = vi.fn();
+
+    render(
+      <CompleteEquation
+        round={{ mode: 'complete_equation', a: 2, b: 3, target: 5 }}
+        onResult={onResult}
+      />
+    );
+
+    const moveFirstPoolBallTo = (target: 'slotA' | 'slotB') => {
+      const pool = screen.getByTestId('adding-ball-pool');
+      const ball = within(pool).getAllByRole('button', { name: 'Piłka: 1' })[0];
+      fireEvent.click(ball);
+      fireEvent.click(screen.getByTestId(`adding-ball-${target}`));
+    };
+
+    moveFirstPoolBallTo('slotA');
+    moveFirstPoolBallTo('slotA');
+    moveFirstPoolBallTo('slotA');
+    moveFirstPoolBallTo('slotB');
+    moveFirstPoolBallTo('slotB');
+
+    fireEvent.click(screen.getByRole('button', { name: /sprawdź/i }));
+
+    expect(screen.getByText('🎉 Brawo! Pasuje 2 + 3 albo 3 + 2.')).toBeInTheDocument();
+    vi.advanceTimersByTime(1400);
+    expect(onResult).toHaveBeenCalledWith(true);
+    vi.useRealTimers();
+  });
+
+  it('shows the submitted split when the equation solution is wrong', () => {
+    vi.useFakeTimers();
+    const onResult = vi.fn();
+
+    render(
+      <CompleteEquation
+        round={{ mode: 'complete_equation', a: 2, b: 3, target: 5 }}
+        onResult={onResult}
+      />
+    );
+
+    const moveFirstPoolBallTo = (target: 'slotA' | 'slotB') => {
+      const pool = screen.getByTestId('adding-ball-pool');
+      const ball = within(pool).getAllByRole('button', { name: 'Piłka: 1' })[0];
+      fireEvent.click(ball);
+      fireEvent.click(screen.getByTestId(`adding-ball-${target}`));
+    };
+
+    moveFirstPoolBallTo('slotA');
+    moveFirstPoolBallTo('slotA');
+    moveFirstPoolBallTo('slotA');
+    moveFirstPoolBallTo('slotA');
+    moveFirstPoolBallTo('slotB');
+
+    fireEvent.click(screen.getByRole('button', { name: /sprawdź/i }));
+
+    expect(
+      screen.getByText('❌ Spróbuj jeszcze raz! Masz 4 + 1, a pasuje 2 + 3 albo 3 + 2.')
+    ).toBeInTheDocument();
+    vi.advanceTimersByTime(1400);
+    expect(onResult).toHaveBeenCalledWith(false);
+    vi.useRealTimers();
   });
 });

@@ -3,6 +3,7 @@
  */
 
 import { render, screen, waitFor, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -50,6 +51,13 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
+  useKangurAgeGroupFocus: () => ({
+    ageGroup: 'ten_years_old',
+    setAgeGroup: vi.fn(),
+  }),
+}));
+
 vi.mock('@/features/kangur/docs/tooltips', () => ({
   KangurDocsTooltipEnhancer: () => null,
   useKangurDocsTooltips: () => ({
@@ -85,6 +93,25 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
+  useKangurAssignments: () => ({
+    assignments: [],
+    isLoading: false,
+    error: null,
+    refresh: vi.fn(),
+    createAssignment: vi.fn(),
+    updateAssignment: vi.fn(),
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurParentDashboardScores', () => ({
+  useKangurParentDashboardScores: () => ({
+    scores: [],
+    scoresError: null,
+    isLoadingScores: false,
+  }),
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   useKangurLoginModal: () => ({
     openLoginModal: openLoginModalMock,
@@ -98,11 +125,26 @@ vi.mock('@/features/kangur/ui/components/KangurAssignmentManager', () => ({
 
 import ParentDashboard from '@/features/kangur/ui/pages/ParentDashboard';
 
+const createTestQueryClient = (): QueryClient =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: Infinity,
+      },
+      mutations: {
+        retry: false,
+      },
+    },
+  });
+
 const renderParentDashboardPage = () =>
   render(
-    <KangurGuestPlayerProvider>
-      <ParentDashboard />
-    </KangurGuestPlayerProvider>
+    <QueryClientProvider client={createTestQueryClient()}>
+      <KangurGuestPlayerProvider>
+        <ParentDashboard />
+      </KangurGuestPlayerProvider>
+    </QueryClientProvider>
   );
 
 const baseProgress = {

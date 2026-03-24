@@ -12,7 +12,10 @@ import type {
 
 import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
 import { kangurAssignmentSnapshotSchema } from '@kangur/contracts';
-import { withKangurClientError } from '@/features/kangur/observability/client';
+import {
+  isRecoverableKangurClientFetchError,
+  withKangurClientError,
+} from '@/features/kangur/observability/client';
 
 import { KANGUR_ASSIGNMENTS_ENDPOINT } from './local-kangur-platform-endpoints';
 import {
@@ -61,10 +64,14 @@ export const requestAssignmentsFromApi = async (
     },
     {
       fallback: [] as KangurAssignmentSnapshot[],
-      shouldReport: (error) => !isKangurAuthStatusError(error),
+      shouldReport: (error) =>
+        !isKangurAuthStatusError(error) && !isRecoverableKangurClientFetchError(error),
       shouldRethrow: () => true,
       onError: (error) => {
-        if (isKangurAuthStatusError(error)) {
+        if (
+          isKangurAuthStatusError(error) ||
+          isRecoverableKangurClientFetchError(error)
+        ) {
           return;
         }
         trackReadFailure('assignments.list', error, {

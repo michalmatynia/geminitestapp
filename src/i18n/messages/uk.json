@@ -790,6 +790,7 @@
     "cooldownSeconds": "{count} с",
     "magicLinkDeprecatedNotice": "Вхід за посиланням з електронного листа більше недоступний. Увійдіть за електронною поштою та паролем або створіть акаунт.",
     "verifyParentEmailFailed": "Не вдалося підтвердити електронну пошту батьків.",
+    "captchaVerificationFailed": "Не вдалося перевірити captcha. Спробуйте ще раз.",
     "fillEmailAndPassword": "Введіть електронну пошту та пароль.",
     "invalidParentEmailNotice": "Введіть коректну електронну пошту батьків.",
     "completeSecurityVerification": "Пройдіть перевірку безпеки.",

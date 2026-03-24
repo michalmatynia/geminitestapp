@@ -19,6 +19,11 @@ vi.mock('@/shared/lib/security/csrf-client', () => ({
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({
+  isRecoverableKangurClientFetchError: (error: unknown) =>
+    error instanceof Error &&
+    error.name === 'TypeError' &&
+    (error.message.trim().toLowerCase() === 'failed to fetch' ||
+      error.message.trim().toLowerCase().includes('load failed')),
   logKangurClientError: logKangurClientErrorMock,
   trackKangurClientEvent: trackKangurClientEventMock,
   reportKangurClientError: (

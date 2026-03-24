@@ -23,7 +23,10 @@ import type {
 import {
   BALL_POOL_CLASSNAME,
   createBalls,
+  formatAcceptedEquationPair,
+  formatSubmittedEquationPair,
   isCompleteSlotId,
+  isAcceptedCountSplit,
   moveBetweenLists,
   removeBallById,
   reorderWithinList,
@@ -46,8 +49,10 @@ export function CompleteEquation({
   const [checked, setChecked] = useState(false);
   const [correct, setCorrect] = useState(false);
   const [selectedBallId, setSelectedBallId] = useState<string | null>(null);
-  const slotALabel = `Grupa A (${round.a})`;
-  const slotBLabel = `Grupa B (${round.b})`;
+  const slotALabel = 'Grupa A';
+  const slotBLabel = 'Grupa B';
+  const acceptedEquationPair = formatAcceptedEquationPair(round.a, round.b);
+  const submittedEquationPair = formatSubmittedEquationPair(state.slotA.length, state.slotB.length);
 
   const onDragEnd = (result: DropResult): void => {
     if (checked) return;
@@ -90,7 +95,7 @@ export function CompleteEquation({
   };
 
   const check = (): void => {
-    const ok = state.slotA.length === round.a && state.slotB.length === round.b;
+    const ok = isAcceptedCountSplit(state.slotA.length, state.slotB.length, round.a, round.b);
     setCorrect(ok);
     setChecked(true);
     setSelectedBallId(null);
@@ -128,6 +133,19 @@ export function CompleteEquation({
       <div className={`flex flex-col items-center w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}>
         <p className='text-lg font-bold [color:var(--kangur-page-text)]'>
           Przeciągnij piłki tak, żeby uzupełnić równanie:
+        </p>
+        <p
+          className='text-sm text-center [color:var(--kangur-page-muted-text)]'
+          data-testid='adding-ball-complete-solution-hint'
+        >
+          Pasuje {acceptedEquationPair}
+          {round.a !== round.b ? '. Kolejność grup nie ma znaczenia.' : '.'}
+        </p>
+        <p
+          className='text-xs text-center font-semibold uppercase tracking-[0.18em] text-slate-500'
+          data-testid='adding-ball-complete-unit-hint'
+        >
+          Każda piłka to 1.
         </p>
         <div className='flex items-center kangur-panel-gap flex-wrap justify-center'>
           <SlotZone
@@ -258,7 +276,9 @@ export function CompleteEquation({
             animate={{ scale: 1 }}
             className={`text-xl font-extrabold ${correct ? 'text-green-600' : 'text-red-500'}`}
           >
-            {correct ? '🎉 Brawo!' : `❌ Nie tym razem! A=${round.a}, B=${round.b}`}
+            {correct
+              ? `🎉 Brawo! Pasuje ${acceptedEquationPair}.`
+              : `❌ Spróbuj jeszcze raz! Masz ${submittedEquationPair}, a pasuje ${acceptedEquationPair}.`}
           </motion.div>
         )}
       </div>

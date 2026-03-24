@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
+import { act, render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
@@ -128,7 +128,7 @@ vi.mock('@/features/kangur/ui/components/KangurLearnerProfileLevelProgressWidget
 vi.mock('@/features/kangur/ui/components/KangurLearnerProfileMasteryWidget', () => ({ KangurLearnerProfileMasteryWidget: () => <div /> }));
 vi.mock('@/features/kangur/ui/components/KangurLearnerProfilePerformanceWidget', () => ({ KangurLearnerProfilePerformanceWidget: () => <div /> }));
 vi.mock('@/features/kangur/ui/components/KangurLearnerProfileQuestSummaryWidget', () => ({ KangurLearnerProfileQuestSummaryWidget: () => <div /> }));
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfileRecommendationsWidget', () => ({ KangurLearnerProfileRecommendationsWidget: () => <div>Plan na dzis</div> }));
+vi.mock('@/features/kangur/ui/components/KangurLearnerProfileRecommendationsWidget', () => ({ KangurLearnerProfileRecommendationsWidget: () => <div>Plan na dziś</div> }));
 vi.mock('@/features/kangur/ui/components/KangurLearnerProfileSessionsWidget', () => ({ KangurLearnerProfileSessionsWidget: () => <div /> }));
 vi.mock('@/features/kangur/ui/components/KangurGameHomeActionsWidget', () => ({ 
   KangurGameHomeActionsWidget: () => (
@@ -171,7 +171,7 @@ import LearnerProfile from '@/features/kangur/ui/pages/LearnerProfile';
 import Game from '@/features/kangur/ui/pages/Game';
 import { expectNoAxeViolations } from '@/testing/accessibility/axe';
 
-const renderLearnerProfilePage = () => {
+const renderLearnerProfilePage = async () => {
   const commonProgress = { totalXp: 1200, gamesPlayed: 5, lessonsCompleted: 3, badges: [], lessonMastery: {}, operationsPlayed: [] };
   useKangurProgressStateMock.mockReturnValue({
     progress: commonProgress,
@@ -201,7 +201,12 @@ const renderLearnerProfilePage = () => {
     user: { id: 'u1', activeLearner: { id: 'l1', name: 'Jan' } } as any,
   });
 
-  return render(<LearnerProfile />);
+  let view: ReturnType<typeof render> | null = null;
+  await act(async () => {
+    view = render(<LearnerProfile />);
+  });
+
+  return view as ReturnType<typeof render>;
 };
 
 const renderGamePage = (screenState = 'home') => {
@@ -232,8 +237,11 @@ describe('Kangur accessibility smoke', () => {
     vi.clearAllMocks();
   });
 
-  it('exposes profile landmarks and action links by accessible role/name', () => {
-    renderLearnerProfilePage();
+  it('exposes profile landmarks and action links by accessible role/name', async () => {
+    await renderLearnerProfilePage();
+
+    expect(await screen.findByText('Plan na dziś')).toBeVisible();
+    expect(await screen.findByRole('link', { name: 'Zagraj teraz' })).toBeVisible();
 
     expect(screen.getByRole('link', { name: 'Przejdź do głównej treści', hidden: true })).toHaveAttribute(
       'href',
@@ -245,14 +253,13 @@ describe('Kangur accessibility smoke', () => {
     expect(screen.getByRole('link', { name: 'Lekcje' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Profil Jan' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Rodzic' })).toBeVisible();
-    expect(screen.getByText('Plan na dzis')).toBeVisible();
-
-    expect(screen.getByRole('link', { name: 'Zagraj teraz' })).toBeVisible();
+    expect(screen.getByText('Plan na dziś')).toBeVisible();
     expect(screen.getAllByRole('link', { name: 'Otwórz lekcję' }).length).toBeGreaterThan(0);
   });
 
   it('has no obvious accessibility violations in the learner profile shell', async () => {
-    const { container } = renderLearnerProfilePage();
+    const { container } = await renderLearnerProfilePage();
+    await screen.findByText('Plan na dziś');
     await expectNoAxeViolations(container);
   });
 
@@ -267,7 +274,7 @@ describe('Kangur accessibility smoke', () => {
       openLoginModal,
     });
 
-    renderLearnerProfilePage();
+    await renderLearnerProfilePage();
 
     const loginButton = screen.getByRole('button', {
       name: 'Zaloguj się, aby synchronizować postęp',

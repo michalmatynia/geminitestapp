@@ -758,6 +758,7 @@
     "cooldownSeconds": "{count} s",
     "magicLinkDeprecatedNotice": "Email link sign-in is no longer available. Sign in with email and password or create an account.",
     "verifyParentEmailFailed": "We couldn't verify the parent email.",
+    "captchaVerificationFailed": "Captcha verification failed. Try again.",
     "fillEmailAndPassword": "Enter an email and password.",
     "invalidParentEmailNotice": "Enter a valid parent email address.",
     "completeSecurityVerification": "Complete the security verification.",

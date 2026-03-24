@@ -758,6 +758,7 @@
     "cooldownSeconds": "{count} s",
     "magicLinkDeprecatedNotice": "Logowanie linkiem z e-maila nie jest już dostępne. Zaloguj się e-mailem i hasłem albo utwórz konto.",
     "verifyParentEmailFailed": "Nie udało się potwierdzić e-maila rodzica.",
+    "captchaVerificationFailed": "Nie udało się zweryfikować Captcha. Spróbuj ponownie.",
     "fillEmailAndPassword": "Wypełnij email i hasło.",
     "invalidParentEmailNotice": "Podaj prawidłowy email rodzica.",
     "completeSecurityVerification": "Uzupełnij weryfikację bezpieczeństwa.",

@@ -347,7 +347,10 @@ export async function postKangurAiTutorChatHandler(
     }
     const shouldAttemptPageContentAnswer =
       !learnerDrawingImageData &&
-      context?.interactionIntent === 'explain' &&
+      (
+        context?.interactionIntent === 'explain' ||
+        context?.promptMode === 'selected_text'
+      ) &&
       (
         context?.knowledgeReference?.sourceCollection === 'kangur_page_content' ||
         context?.promptMode === 'selected_text'

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { ChevronsLeft } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import {
   hasKangurLessonDocumentContent,
 } from '@/features/kangur/lesson-documents';
@@ -31,6 +31,7 @@ import {
   LESSONS_ACTIVE_STACK_GAP_CLASSNAME,
 } from './Lessons.constants';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
+import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 
 type ActiveLessonRenderSnapshot = {
   activeLesson: NonNullable<ReturnType<typeof useLessons>['activeLesson']>;
@@ -103,11 +104,97 @@ export function ActiveLessonView({
   const emptyDocumentDescription =
     activeLessonEmptyDocumentContent?.summary?.trim() ||
     'Ta lekcja ma włączony tryb dokumentu, ale nie zapisano jeszcze bloków treści.';
+  const activeLessonDocument = activeLesson ? lessonDocuments[activeLesson.id] ?? null : null;
+  const hasActiveLessonDocContent = hasKangurLessonDocumentContent(activeLessonDocument);
+  const activeLessonAssignment = activeLesson
+    ? (lessonAssignmentsByComponent.get(activeLesson.componentId) ?? null)
+    : null;
+  const completedActiveLessonAssignment =
+    activeLesson && !activeLessonAssignment
+      ? (completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null)
+      : null;
   const printableLessonTitle = activeLesson
     ? getLocalizedKangurLessonTitle(activeLesson.componentId, locale, activeLesson.title)
     : '';
+  const activeLessonAssignmentRef = useRef<HTMLDivElement | null>(null);
 
-  void activeLessonNavigationContent;
+  useKangurTutorAnchor({
+    id: 'kangur-lesson-header',
+    kind: 'lesson_header',
+    ref: activeLessonHeaderRef,
+    surface: 'lesson',
+    enabled: Boolean(activeLesson) && !isMobile,
+    priority: 120,
+    metadata: {
+      contentId: activeLesson?.id ?? null,
+      label: activeLessonHeaderContent?.title ?? activeLesson?.title ?? null,
+      assignmentId: activeLessonAssignment?.id ?? completedActiveLessonAssignment?.id ?? null,
+    },
+  });
+
+  useKangurTutorAnchor({
+    id: 'kangur-lesson-assignment',
+    kind: 'assignment',
+    ref: activeLessonAssignmentRef,
+    surface: 'lesson',
+    enabled:
+      Boolean(activeLesson) &&
+      !isMobile &&
+      Boolean(activeLessonAssignment ?? completedActiveLessonAssignment),
+    priority: 160,
+    metadata: {
+      contentId: activeLesson?.id ?? null,
+      label: activeLessonAssignmentContent?.title ?? activeLesson?.title ?? null,
+      assignmentId: activeLessonAssignment?.id ?? completedActiveLessonAssignment?.id ?? null,
+    },
+  });
+
+  useKangurTutorAnchor({
+    id: LESSON_NAV_ANCHOR_ID,
+    kind: 'navigation',
+    ref: activeLessonNavigationRef,
+    surface: 'lesson',
+    enabled: Boolean(activeLesson),
+    priority: 80,
+    metadata: {
+      contentId: activeLesson?.id ?? null,
+      label: activeLessonNavigationContent?.title ?? activeLesson?.title ?? null,
+      assignmentId: activeLessonAssignment?.id ?? completedActiveLessonAssignment?.id ?? null,
+    },
+  });
+
+  useKangurTutorAnchor({
+    id: 'kangur-lesson-document',
+    kind: 'document',
+    ref: activeLessonContentRef,
+    surface: 'lesson',
+    enabled: Boolean(activeLesson?.contentMode === 'document' && hasActiveLessonDocContent),
+    priority: 140,
+    metadata: {
+      contentId: activeLesson?.id ?? null,
+      label: activeLessonDocumentContent?.title ?? activeLesson?.title ?? null,
+      assignmentId: activeLessonAssignment?.id ?? completedActiveLessonAssignment?.id ?? null,
+    },
+  });
+
+  useKangurTutorAnchor({
+    id: 'kangur-lesson-empty-document',
+    kind: 'empty_state',
+    ref: activeLessonContentRef,
+    surface: 'lesson',
+    enabled: Boolean(
+      activeLesson?.contentMode === 'document' &&
+        !hasActiveLessonDocContent &&
+        !isActiveLessonDocumentLoading
+    ),
+    priority: 140,
+    metadata: {
+      contentId: activeLesson?.id ?? null,
+      label: activeLessonEmptyDocumentContent?.title ?? activeLesson?.title ?? null,
+      assignmentId: activeLessonAssignment?.id ?? completedActiveLessonAssignment?.id ?? null,
+    },
+  });
+
   const handleReturnToLessonList = useCallback((): void => {
     handleSelectLesson(null);
   }, [handleSelectLesson]);
@@ -232,8 +319,6 @@ export function ActiveLessonView({
     activeIdx >= 0 && activeIdx < orderedLessons.length - 1 ? orderedLessons[activeIdx + 1] : null;
 
   const ActiveLessonComponent = LESSON_COMPONENTS[activeLesson.componentId];
-  const activeLessonDocument = lessonDocuments[activeLesson.id] ?? null;
-  const hasActiveLessonDocContent = hasKangurLessonDocumentContent(activeLessonDocument);
   const localizedLessonTitle = getLocalizedKangurLessonTitle(
     activeLesson.componentId,
     locale,
@@ -244,11 +329,6 @@ export function ActiveLessonView({
     locale,
     activeLesson.description
   );
-
-  const activeLessonAssignment = lessonAssignmentsByComponent.get(activeLesson.componentId) ?? null;
-  const completedActiveLessonAssignment = !activeLessonAssignment
-    ? (completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null)
-    : null;
   const isPrintAvailable =
     isSecretLessonHostActive ||
     (activeLesson.contentMode === 'document'
@@ -268,6 +348,7 @@ export function ActiveLessonView({
         lessonContentRef={activeLessonContentRef}
         activeLessonAssignment={activeLessonAssignment}
         completedActiveLessonAssignment={completedActiveLessonAssignment}
+        assignmentRef={activeLessonAssignmentRef}
         onBack={handleReturnToLessonList}
         titleOverride={activeLessonHeaderContent?.title ?? 'Aktywna lekcja'}
         headerTestId='active-lesson-header'

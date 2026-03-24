@@ -48,11 +48,14 @@ import {
   KANGUR_ACCENT_STYLES,
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_STACK_TIGHT_CLASSNAME,
-  KANGUR_TIGHT_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
+import {
+  LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME,
+  LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME,
+} from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 import { getKangurQuestions } from '@/features/kangur/ui/services/kangur-questions';
 import type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/ui/types';
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
@@ -173,7 +176,7 @@ function ExamQuestion({
   return (
     <section
       aria-labelledby={headingId}
-      className={`flex flex-col w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}
+      className={`mx-auto flex w-full max-w-4xl flex-col items-center text-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
       data-kangur-print-panel='true'
       data-kangur-print-panel-id={printPanelId}
       data-kangur-print-panel-title={printPanelTitle}
@@ -202,19 +205,19 @@ function ExamQuestion({
       />
 
       <KangurInfoCard
-        className='flex flex-col kangur-panel-gap rounded-[24px]'
+        className='flex w-full flex-col items-center text-center kangur-panel-gap rounded-[24px]'
         data-testid='kangur-exam-question-shell'
         padding='lg'
         tone='neutral'
       >
-        <KangurPanelRow className='mb-1 sm:items-start sm:justify-between'>
+        <KangurPanelRow className='mb-1 items-center justify-center text-center'>
           <p
             id={headingId}
-            className='break-words text-sm font-bold uppercase tracking-wide text-orange-500'
+            className='break-words text-center text-sm font-bold uppercase tracking-wide text-orange-500'
           >
             Pytanie {questionNumber}
           </p>
-          <div className='flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end'>
+          <div className='flex w-full flex-wrap items-center justify-center gap-2 text-center'>
             <KangurLessonNarrator
               lesson={narratorLesson}
               lessonDocument={null}
@@ -237,7 +240,7 @@ function ExamQuestion({
         </KangurPanelRow>
         <p
           id={descriptionId}
-          className='break-words font-semibold leading-relaxed [color:var(--kangur-page-text)]'
+          className='mx-auto max-w-2xl break-words text-center font-semibold leading-relaxed [color:var(--kangur-page-text)]'
         >
           {q.question}
         </p>
@@ -257,7 +260,7 @@ function ExamQuestion({
       <div
         aria-describedby={descriptionId}
         aria-labelledby={headingId}
-        className={KANGUR_STACK_TIGHT_CLASSNAME}
+        className={cn(KANGUR_STACK_TIGHT_CLASSNAME, 'w-full max-w-2xl')}
         role='group'
       >
         {q.choices.map((choice, index) => {
@@ -271,7 +274,7 @@ function ExamQuestion({
               aria-label={`Odpowiedź ${String.fromCharCode(65 + index)}. ${String(choice)}`}
               aria-pressed={isSelected}
               buttonClassName={cn(
-                'flex items-center kangur-panel-gap px-4 py-3 font-semibold',
+                'flex items-center justify-start kangur-panel-gap px-4 py-3 text-left font-semibold',
                 isSelected
                   ? KANGUR_ACCENT_STYLES.amber.activeText
                   : '[color:var(--kangur-page-text)]'
@@ -283,16 +286,16 @@ function ExamQuestion({
               onClick={() => handleChoiceSelect(choice)}
               tapScale={0.98}
               type='button'
-            >
-              <KangurAnswerChoiceBadge
-                className={isSelected ? KANGUR_ACCENT_STYLES.amber.badge : KANGUR_ACCENT_STYLES.slate.badge}
               >
-                {String.fromCharCode(65 + index)}
-              </KangurAnswerChoiceBadge>
-              <span className='min-w-0 flex-1 break-words'>{choice}</span>
-            </KangurAnswerChoiceCard>
-          );
-        })}
+                <KangurAnswerChoiceBadge
+                  className={isSelected ? KANGUR_ACCENT_STYLES.amber.badge : KANGUR_ACCENT_STYLES.slate.badge}
+                >
+                  {String.fromCharCode(65 + index)}
+                </KangurAnswerChoiceBadge>
+                <span className='min-w-0 flex-1 break-words text-left'>{choice}</span>
+              </KangurAnswerChoiceCard>
+            );
+          })}
       </div>
     </section>
   );
@@ -347,7 +350,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
 
     return (
       <div
-        className={`w-full flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
+        className={`mx-auto flex w-full max-w-4xl flex-col items-center text-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
         data-kangur-print-panel='true'
         data-kangur-print-panel-id={reviewPanelId}
         data-kangur-print-panel-title={reviewPanelTitle}
@@ -405,27 +408,33 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
             progressLabel={`${reviewing + 1}/${reviewQuestionCount}`}
             progressAriaLabel={`Pytanie ${reviewing + 1} z ${reviewQuestionCount}`}
           />
-          <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
-            <KangurLessonNavigationIconButton
-              onClick={handleExitReview}
-              className={compactActionClassName}
-              aria-label='Podsumowanie'
-              icon={ChevronLeft}
-              title='Podsumowanie'
-            />
-            <span className='self-center break-words text-xs font-bold [color:var(--kangur-page-muted-text)]'>
+          <nav aria-label='Nawigacja podglądu pytań' className={LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME}>
+            <div
+              className={cn(LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME, 'pt-2')}
+              role='group'
+              aria-label='Nawigacja podglądu pytań'
+            >
+              <KangurLessonNavigationIconButton
+                onClick={handleExitReview}
+                className={compactActionClassName}
+                aria-label='Podsumowanie'
+                icon={ChevronLeft}
+                title='Podsumowanie'
+              />
+            </div>
+            <span className='break-words text-center text-xs font-bold [color:var(--kangur-page-muted-text)]'>
               {reviewing + 1}/{reviewQuestionCount}
             </span>
-          </div>
+          </nav>
 
           <KangurInfoCard
-            className='flex flex-col kangur-panel-gap rounded-[24px]'
+            className='flex w-full flex-col items-center text-center kangur-panel-gap rounded-[24px]'
             data-testid='kangur-exam-review-shell'
             padding='lg'
             tone='neutral'
           >
-            <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
-              <p className='break-words text-sm font-bold uppercase tracking-wide text-orange-500'>
+            <div className='flex w-full flex-col items-center justify-center gap-2 text-center sm:flex-row sm:flex-wrap sm:justify-center'>
+              <p className='break-words text-center text-sm font-bold uppercase tracking-wide text-orange-500'>
                 Pytanie {reviewing + 1}
               </p>
               {pointLabel ? (
@@ -438,7 +447,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
                 </KangurStatusChip>
               ) : null}
             </div>
-            <p className='break-words font-semibold leading-relaxed [color:var(--kangur-page-text)]'>
+            <p className='mx-auto max-w-2xl break-words text-center font-semibold leading-relaxed [color:var(--kangur-page-text)]'>
               {question.question}
             </p>
             {Illustration && (
@@ -454,7 +463,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
             )}
           </KangurInfoCard>
 
-          <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
+          <div className={cn(KANGUR_STACK_TIGHT_CLASSNAME, 'w-full max-w-2xl')}>
             {question.choices.map((choice, index) => {
               let accent: KangurAccent = 'slate';
               let emphasis: 'neutral' | 'accent' = 'neutral';
@@ -479,7 +488,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
                   accent={accent}
                   aria-disabled='true'
                   buttonClassName={cn(
-                    'flex items-center kangur-panel-gap px-4 py-3 font-semibold',
+                    'flex items-center justify-start kangur-panel-gap px-4 py-3 text-left font-semibold',
                     style
                   )}
                   data-testid={`kangur-exam-review-choice-${index}`}
@@ -493,7 +502,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
                   <KangurAnswerChoiceBadge className={badgeClassName}>
                     {String.fromCharCode(65 + index)}
                   </KangurAnswerChoiceBadge>
-                  <span className='min-w-0 flex-1 break-words'>{choice}</span>
+                  <span className='min-w-0 flex-1 break-words text-left'>{choice}</span>
                   {choice === question.answer && (
                     <>
                       <CheckCircle
@@ -549,37 +558,44 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`w-full flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
+      className={`mx-auto flex w-full max-w-4xl flex-col items-center text-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
     >
-      <div
-        className='flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'
+      <nav
+        aria-label='Nawigacja podsumowania Kangur Matematyczny'
+        className={LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME}
         data-kangur-print-exclude='true'
       >
-        <KangurButton
-          onClick={onBack}
-          className={compactActionClassName}
-          size='lg'
-          type='button'
-          variant='surface'
+        <div
+          className={LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME}
+          role='group'
+          aria-label='Nawigacja podsumowania Kangur Matematyczny'
         >
-          {translations('kangurExam.actions.backToMenu')}
-        </KangurButton>
-        {lessonPrint?.onPrintPanel ? (
           <KangurButton
-            onClick={() => lessonPrint.onPrintPanel?.(summaryPanelId)}
+            onClick={onBack}
             className={compactActionClassName}
-            data-testid='kangur-exam-summary-print-button'
-            size='sm'
+            size='lg'
             type='button'
             variant='surface'
-            aria-label={printPanelLabel}
-            title={printPanelLabel}
           >
-            <Printer className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-            <span className='sr-only'>{printPanelLabel}</span>
+            {translations('kangurExam.actions.backToMenu')}
           </KangurButton>
-        ) : null}
-      </div>
+          {lessonPrint?.onPrintPanel ? (
+            <KangurButton
+              onClick={() => lessonPrint.onPrintPanel?.(summaryPanelId)}
+              className={compactActionClassName}
+              data-testid='kangur-exam-summary-print-button'
+              size='sm'
+              type='button'
+              variant='surface'
+              aria-label={printPanelLabel}
+              title={printPanelLabel}
+            >
+              <Printer className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+              <span className='sr-only'>{printPanelLabel}</span>
+            </KangurButton>
+          ) : null}
+        </div>
+      </nav>
       <KangurPracticeGameSummary dataTestId='kangur-exam-summary-shell'>
         <KangurPracticeGameSummaryEmoji emoji={emoji} dataTestId='kangur-exam-summary-emoji' />
         <KangurPracticeGameSummaryTitle
@@ -721,7 +737,7 @@ export default function KangurExam(): React.JSX.Element {
 
     return (
       <div
-        className={`w-full flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
+        className={`mx-auto flex w-full max-w-4xl flex-col items-center text-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
         data-kangur-print-panel='true'
         data-kangur-print-panel-id='kangur-exam-summary'
         data-kangur-print-panel-title={summaryTitle}
@@ -764,7 +780,7 @@ export default function KangurExam(): React.JSX.Element {
   };
 
   return (
-    <div className={`w-full flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
+    <div className={`mx-auto flex w-full max-w-4xl flex-col items-center text-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <div
         className='kangur-print-only space-y-3 border-b border-slate-200 pb-4'
         data-testid='kangur-exam-print-summary'
@@ -794,7 +810,7 @@ export default function KangurExam(): React.JSX.Element {
           <motion.div
             key={current}
             {...questionMotionProps}
-            className={`w-full flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
+            className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
           >
             <ExamNavigationProvider value={navigationValue}>
               <ExamQuestion

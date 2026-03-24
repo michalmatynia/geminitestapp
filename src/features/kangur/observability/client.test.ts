@@ -23,6 +23,7 @@ vi.mock('@/features/kangur/shared/utils/observability/error-system-client', () =
 
 import {
   clearKangurClientObservabilityContext,
+  isRecoverableKangurClientFetchError,
   logKangurClientError,
   setKangurClientObservabilityContext,
   trackKangurClientEvent,
@@ -125,6 +126,15 @@ describe('kangur client observability', () => {
         }),
       })
     );
+  });
+
+  it('treats plain browser fetch failures as recoverable client load errors', () => {
+    expect(isRecoverableKangurClientFetchError(new TypeError('Failed to fetch'))).toBe(true);
+    expect(
+      isRecoverableKangurClientFetchError(new TypeError('Network load failed'))
+    ).toBe(true);
+    expect(isRecoverableKangurClientFetchError(new Error('Failed to fetch'))).toBe(false);
+    expect(isRecoverableKangurClientFetchError(new Error('Unexpected failure'))).toBe(false);
   });
 
   it('logs client errors with Kangur default context tags', () => {

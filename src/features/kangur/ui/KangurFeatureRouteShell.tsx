@@ -72,7 +72,7 @@ export function KangurFeatureRouteShell({
   }, [pathname, requestedPath, searchParams]);
   const isEmbedded = embedded;
   const initialTopBarHeightCssValue = readKangurTopBarHeightCssValue();
-  const shellStyle: CSSProperties = {
+  const shellStyle: CSSProperties & Record<string, string> = {
     ...kangurAppearance.vars,
   };
   if (initialTopBarHeightCssValue) {

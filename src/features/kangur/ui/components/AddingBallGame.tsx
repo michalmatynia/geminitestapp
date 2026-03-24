@@ -28,6 +28,7 @@ import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/moti
 import {
   addXp,
   createLessonPracticeReward,
+  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
@@ -82,9 +83,10 @@ export default function AddingBallGame({
   const handleResult = (correct: boolean): void => {
     const nextScore = correct ? score + 1 : score;
     if (roundIdx + 1 >= TOTAL_ROUNDS) {
-      const progress = loadProgress();
+      const ownerKey = getProgressOwnerKey();
+      const progress = loadProgress({ ownerKey });
       const reward = createLessonPracticeReward(progress, 'adding', nextScore, TOTAL_ROUNDS);
-      addXp(reward.xp, reward.progressUpdates);
+      addXp(reward.xp, reward.progressUpdates, { ownerKey });
       void persistKangurSessionScore({
         operation: 'addition',
         score: nextScore,

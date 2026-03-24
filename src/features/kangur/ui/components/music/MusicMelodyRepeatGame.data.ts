@@ -34,4 +34,19 @@ export const MUSIC_MELODY_REPEAT_ROUNDS: readonly MusicMelodyRepeatRound[] = [
     id: 'long_climb',
     notes: ['do', 're', 'mi', 'fa', 'sol', 'la'],
   },
+  {
+    accent: 'indigo',
+    id: 'high_climb',
+    notes: ['la', 'si', 'high_do'],
+  },
+  {
+    accent: 'teal',
+    id: 'arch_melody',
+    notes: ['do', 'mi', 'sol', 'mi', 'do'],
+  },
+  {
+    accent: 'slate',
+    id: 'folk_phrase',
+    notes: ['mi', 'sol', 'la', 'sol', 'mi', 're'],
+  },
 ] as const;

@@ -18,6 +18,7 @@ import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-compone
 import {
   addXp,
   createLessonCompletionReward,
+  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 
@@ -327,9 +328,10 @@ export default function GeometrySymmetryLesson(): React.JSX.Element {
   const slides = buildGeometrySymmetrySlides(translate);
 
   const handleComplete = (): void => {
-    const progress = loadProgress();
+    const ownerKey = getProgressOwnerKey();
+    const progress = loadProgress({ ownerKey });
     const reward = createLessonCompletionReward(progress, 'geometry_symmetry', 100);
-    addXp(reward.xp, reward.progressUpdates);
+    addXp(reward.xp, reward.progressUpdates, { ownerKey });
   };
 
   return (

@@ -46,6 +46,7 @@ import {
 import {
   addXp,
   createLessonPracticeReward,
+  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
@@ -554,7 +555,8 @@ export default function EnglishPartsOfSpeechGame({
 
   const handleNext = (): void => {
     if (roundIndex + 1 >= TOTAL_ROUNDS) {
-      const progress = loadProgress();
+      const ownerKey = getProgressOwnerKey();
+      const progress = loadProgress({ ownerKey });
       const reward = createLessonPracticeReward(progress, {
         activityKey: 'english_parts_of_speech_sort',
         lessonKey: 'english_parts_of_speech',
@@ -562,7 +564,7 @@ export default function EnglishPartsOfSpeechGame({
         totalQuestions: TOTAL_TOKENS,
         strongThresholdPercent: 75,
       });
-      addXp(reward.xp, reward.progressUpdates);
+      addXp(reward.xp, reward.progressUpdates, { ownerKey });
       void persistKangurSessionScore({
         operation: 'english_parts_of_speech',
         score: scoreRef.current,

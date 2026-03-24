@@ -1,5 +1,6 @@
 import { type FormEvent, type JSX, useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
+import { Eye, EyeOff } from 'lucide-react';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { useTurnstile } from './use-turnstile';
@@ -33,6 +34,7 @@ export function SignupForm({
 }: SignupFormProps): JSX.Element {
   const translations = useTranslations('KangurLogin');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -80,17 +82,28 @@ export function SignupForm({
         <label htmlFor='new-password' className='text-sm font-medium text-slate-700'>
           {translations('setPasswordLabel')}
         </label>
-        <input
-          id='new-password'
-          type='password'
-          aria-label={translations('setPasswordLabel')}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          disabled={isLoading}
-          className='rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
-          placeholder={translations('setPasswordPlaceholder')}
-          autoComplete='new-password'
-        />
+        <div className='relative'>
+          <input
+            id='new-password'
+            type={showPassword ? 'text' : 'password'}
+            aria-label={translations('setPasswordLabel')}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={isLoading}
+            className='w-full rounded-xl border border-slate-200 px-4 py-3 pr-11 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+            placeholder={translations('setPasswordPlaceholder')}
+            autoComplete='new-password'
+          />
+          <button
+            type='button'
+            onClick={() => setShowPassword((v) => !v)}
+            className='absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600'
+            aria-label={showPassword ? translations('hidePassword') : translations('showPassword')}
+            tabIndex={-1}
+          >
+            {showPassword ? <EyeOff className='h-4 w-4' aria-hidden='true' /> : <Eye className='h-4 w-4' aria-hidden='true' />}
+          </button>
+        </div>
         <p className='text-xs text-slate-500'>
           {translations('passwordRequirement')}
         </p>

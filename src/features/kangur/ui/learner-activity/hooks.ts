@@ -9,7 +9,7 @@ import {
   recordKangurLessonPanelProgress,
   recordKangurLessonPanelTime,
 } from '@/features/kangur/ui/services/progress';
-import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
+import * as KangurSubjectFocusContext from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useLessonHubProgress, type LessonHubSectionProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 
 type LessonSectionInput<SectionId extends string> = {
@@ -47,11 +47,26 @@ type UseLessonTimeTrackingResult = {
 
 const normalizeLessonKey = (lessonId: string): string => lessonId.trim().replace(/-/g, '_');
 
+const useLegacySubjectFocusState = (): { subjectKey: string | null } | null => {
+  const legacyFocus = KangurSubjectFocusContext.useKangurSubjectFocus?.();
+  return legacyFocus ? { subjectKey: legacyFocus.subjectKey ?? null } : null;
+};
+
+const useResolvedSubjectFocusState = Object.prototype.hasOwnProperty.call(
+  KangurSubjectFocusContext,
+  'useOptionalKangurSubjectFocusState'
+)
+  ? (KangurSubjectFocusContext as {
+      useOptionalKangurSubjectFocusState: () => { subjectKey: string | null } | null;
+    }).useOptionalKangurSubjectFocusState
+  : useLegacySubjectFocusState;
+
 export const useKangurLessonSubsectionProgress = <SectionId extends string>({
   lessonId,
   sections,
 }: UseKangurLessonSubsectionProgressOptions<SectionId>): UseKangurLessonSubsectionProgressResult<SectionId> => {
-  const { subjectKey } = useKangurSubjectFocus();
+  const subjectFocusState = useResolvedSubjectFocusState();
+  const subjectKey = subjectFocusState?.subjectKey ?? null;
   const lessonKey = useMemo(() => normalizeLessonKey(lessonId), [lessonId]);
   const sectionLabels = useMemo(
     () =>
@@ -123,7 +138,8 @@ export const useLessonTimeTracking = ({
   lessonId,
   scorePercent = 100,
 }: UseLessonTimeTrackingOptions): UseLessonTimeTrackingResult => {
-  const { subjectKey } = useKangurSubjectFocus();
+  const subjectFocusState = useResolvedSubjectFocusState();
+  const subjectKey = subjectFocusState?.subjectKey ?? null;
   const lessonKey = useMemo(() => normalizeLessonKey(lessonId), [lessonId]);
   const sessionIdRef = useRef<string>(
     `lesson-session-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`

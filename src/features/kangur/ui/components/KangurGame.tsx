@@ -53,6 +53,7 @@ import {
   KANGUR_STACK_TIGHT_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { getKangurQuestions, isExamMode } from '@/features/kangur/ui/services/kangur-questions';
@@ -392,6 +393,7 @@ function PracticeModeGame(): React.JSX.Element {
   const prefersReducedMotion = useReducedMotion();
   const questionMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const { mode } = useKangurGameContext();
+  const { subjectKey } = useKangurSubjectFocus();
   const runtime = useOptionalKangurGameRuntime();
   const questions = getKangurQuestions(mode);
   const [current, setCurrent] = useState(0);
@@ -409,7 +411,7 @@ function PracticeModeGame(): React.JSX.Element {
     }
 
     if (current + 1 >= questions.length) {
-      const progress = loadProgress();
+      const progress = loadProgress({ ownerKey: subjectKey });
       const reward = createGameSessionReward(progress, {
         operation: mode ?? 'mixed',
         difficulty: null,
@@ -418,7 +420,7 @@ function PracticeModeGame(): React.JSX.Element {
         totalQuestions: questions.length,
       });
 
-      addXp(reward.xp, reward.progressUpdates);
+      addXp(reward.xp, reward.progressUpdates, { ownerKey: subjectKey });
       setResultRewardXp(reward.xp);
       setResultRewardBreakdown(reward.breakdown ?? []);
       setScore(newScore);

@@ -1,5 +1,6 @@
 import { type FormEvent, type JSX, useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
+import { Eye, EyeOff } from 'lucide-react';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { useKangurLoginPageProps } from './login-context';
@@ -30,6 +31,7 @@ export function LoginForm({
   const { parentAuthMode } = useKangurLoginPageProps();
   const [identifier, setIdentifier] = useState(defaultIdentifier);
   const [password, setPassword] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const loginFormRef = useRef<HTMLFormElement>(null);
   const identifierInputRef = useRef<HTMLInputElement>(null);
   
@@ -64,7 +66,8 @@ export function LoginForm({
   };
 
   const isParentMode = parentAuthMode === 'sign-in' || parentAuthMode === 'create-account';
-  const showPassword = isParentMode || (identifier.trim().length > 0 && !KANGUR_LEARNER_LOGIN_PATTERN.test(identifier));
+  const shouldShowPasswordField =
+    isParentMode || (identifier.trim().length > 0 && !KANGUR_LEARNER_LOGIN_PATTERN.test(identifier));
 
   return (
     <form
@@ -93,22 +96,37 @@ export function LoginForm({
         />
       </div>
 
-      {showPassword && (
+      {shouldShowPasswordField && (
         <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
           <label htmlFor='password' className='text-sm font-medium text-slate-700'>
             {translations('passwordLabel')}
           </label>
-          <input
-            id='password'
-            type='password'
-            aria-label={translations('passwordLabel')}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={isLoading}
-            className='rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
-            placeholder={translations('passwordPlaceholder')}
-            autoComplete='current-password'
-          />
+          <div className='relative'>
+            <input
+              id='password'
+              type={isPasswordVisible ? 'text' : 'password'}
+              aria-label={translations('passwordLabel')}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
+              className='w-full rounded-xl border border-slate-200 px-4 py-3 pr-11 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+              placeholder={translations('passwordPlaceholder')}
+              autoComplete='current-password'
+            />
+            <button
+              type='button'
+              onClick={() => setIsPasswordVisible((v) => !v)}
+              className='absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600'
+              aria-label={isPasswordVisible ? translations('hidePassword') : translations('showPassword')}
+              tabIndex={-1}
+            >
+              {isPasswordVisible ? (
+                <EyeOff className='h-4 w-4' aria-hidden='true' />
+              ) : (
+                <Eye className='h-4 w-4' aria-hidden='true' />
+              )}
+            </button>
+          </div>
         </div>
       )}
 
@@ -128,7 +146,7 @@ export function LoginForm({
         type='submit'
         variant='primary'
         size='lg'
-        disabled={isLoading || !identifier.trim() || (showPassword && !password)}
+        disabled={isLoading || !identifier.trim() || (shouldShowPasswordField && !password)}
         className='mt-2 w-full justify-center rounded-xl font-bold'
       >
         {isLoading ? translations('loginSubmitting') : translations('loginSubmit')}

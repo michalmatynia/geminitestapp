@@ -253,7 +253,18 @@ export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeed
       }
       trackedRun?.unsubscribe();
       trackedRunsRef.current.delete(runId);
-      void invalidateProductsAndDetail(queryClient, productId);
+      invalidateProductsAndDetail(queryClient, productId).then(() => {
+        if (disposedRef.current) return;
+        if (clearTerminalFeedback(productId)) {
+          syncProductAiRunStatuses();
+        }
+      }).catch((err: unknown) => {
+        logClientCatch(err, {
+          source: 'useProductAiPathsRunSync',
+          action: 'finalizeRun',
+          level: 'warn',
+        });
+      });
       const source = buildQueuedProductAiRunSource(runId);
       if (source) {
         removeQueuedProductSource(productId, source);

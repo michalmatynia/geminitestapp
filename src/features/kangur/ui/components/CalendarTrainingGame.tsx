@@ -35,6 +35,7 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import {
   addXp,
   createTrainingReward,
+  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
@@ -179,7 +180,8 @@ export default function CalendarTrainingGame({
   };
 
   const handleDone = (finalScore: number) => {
-    const prog = loadProgress();
+    const ownerKey = getProgressOwnerKey();
+    const prog = loadProgress({ ownerKey });
     const reward = createTrainingReward(prog, {
       activityKey: 'training:calendar',
       lessonKey: 'calendar',
@@ -188,7 +190,7 @@ export default function CalendarTrainingGame({
       strongThresholdPercent: 65,
       perfectCounterKey: 'calendarPerfect',
     });
-    addXp(reward.xp, reward.progressUpdates);
+    addXp(reward.xp, reward.progressUpdates, { ownerKey });
     void persistKangurSessionScore({
       operation: 'calendar',
       score: finalScore,

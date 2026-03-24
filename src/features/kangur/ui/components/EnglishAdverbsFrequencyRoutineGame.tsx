@@ -45,6 +45,7 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import {
   addXp,
   createLessonPracticeReward,
+  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
@@ -61,6 +62,12 @@ import {
   type EnglishAdverbFrequencyId,
   type EnglishAdverbsFrequencyRoutineRound,
 } from './EnglishAdverbsFrequencyRoutineGame.data';
+import {
+  buildEnglishAdverbsFrequencySentence,
+  buildEnglishAdverbsFrequencySentenceParts,
+  buildEnglishAdverbsFrequencySentenceTemplate,
+  buildEnglishAdverbsFrequencySentenceTemplateParts,
+} from './EnglishAdverbsFrequencyRoutineGame.sentences';
 
 type FrequencyToken = {
   id: string;
@@ -155,6 +162,14 @@ const getFrequencyDescription = (
 ): string =>
   translate(`englishAdverbsFrequency.inRound.studio.frequencies.${frequency}.description`);
 
+const getFrequencyDaysLitLabel = (
+  translate: KangurMiniGameTranslate,
+  frequency: EnglishAdverbFrequencyId
+): string =>
+  `${translate('englishAdverbsFrequency.inRound.studio.daysLitLabel')}: ${countFrequencyActiveDays(
+    frequency
+  )}/7`;
+
 const getActionLabel = (
   translate: KangurMiniGameTranslate,
   actionId: EnglishAdverbFrequencyActionId
@@ -215,6 +230,33 @@ const countRoundCorrect = (
 ): number =>
   round.actions.reduce((sum, action) => {
     return sum + (state.slots[action.id]?.frequency === action.answer ? 1 : 0);
+  }, 0);
+
+const countFrequencyActiveDays = (frequency: EnglishAdverbFrequencyId): number =>
+  FREQUENCY_META[frequency].activeDays.filter(Boolean).length;
+
+const countFrequencyChangedDays = (
+  from: EnglishAdverbFrequencyId,
+  to: EnglishAdverbFrequencyId
+): number =>
+  FREQUENCY_META[from].activeDays.reduce((sum, active, index) => {
+    return sum + (active !== FREQUENCY_META[to].activeDays[index] ? 1 : 0);
+  }, 0);
+
+const countFrequencyTurnedOnDays = (
+  from: EnglishAdverbFrequencyId,
+  to: EnglishAdverbFrequencyId
+): number =>
+  FREQUENCY_META[from].activeDays.reduce((sum, active, index) => {
+    return sum + (!active && FREQUENCY_META[to].activeDays[index] ? 1 : 0);
+  }, 0);
+
+const countFrequencyTurnedOffDays = (
+  from: EnglishAdverbFrequencyId,
+  to: EnglishAdverbFrequencyId
+): number =>
+  FREQUENCY_META[from].activeDays.reduce((sum, active, index) => {
+    return sum + (active && !FREQUENCY_META[to].activeDays[index] ? 1 : 0);
   }, 0);
 
 export default function EnglishAdverbsFrequencyRoutineGame({
@@ -387,7 +429,8 @@ export default function EnglishAdverbsFrequencyRoutineGame({
     setTotalCorrect(nextTotal);
 
     if (roundIndex + 1 >= TOTAL_ROUNDS) {
-      const progress = loadProgress();
+      const ownerKey = getProgressOwnerKey();
+      const progress = loadProgress({ ownerKey });
       const reward = createLessonPracticeReward(progress, {
         activityKey: 'english_adverbs_frequency_routine_studio',
         lessonKey: 'english_adverbs_frequency',
@@ -395,7 +438,7 @@ export default function EnglishAdverbsFrequencyRoutineGame({
         totalQuestions: TOTAL_ACTIONS,
         strongThresholdPercent: 75,
       });
-      addXp(reward.xp, reward.progressUpdates);
+      addXp(reward.xp, reward.progressUpdates, { ownerKey });
       void persistKangurSessionScore({
         operation: 'english_adverbs_frequency',
         score: nextTotal,
@@ -450,6 +493,174 @@ export default function EnglishAdverbsFrequencyRoutineGame({
           itemDataTestIdPrefix='english-adverbs-frequency-summary-breakdown'
         />
         <KangurPracticeGameSummaryProgress accent='sky' percent={percent} />
+        <div
+          className='flex flex-wrap items-center justify-center gap-2'
+          data-testid='english-adverbs-frequency-summary-badges'
+        >
+          <KangurStatusChip accent='sky' size='sm'>
+            {translations('englishAdverbsFrequency.summary.badges.rounds', {
+              current: TOTAL_ROUNDS,
+              total: TOTAL_ROUNDS,
+            })}
+          </KangurStatusChip>
+          <KangurStatusChip accent='emerald' size='sm'>
+            {translations('englishAdverbsFrequency.summary.badges.patterns', {
+              current: totalCorrect,
+              total: TOTAL_ACTIONS,
+            })}
+          </KangurStatusChip>
+          <KangurStatusChip accent='amber' size='sm'>
+            {translations('englishAdverbsFrequency.summary.badges.studio', {
+              current: TOTAL_ROUNDS,
+              total: TOTAL_ROUNDS,
+            })}
+          </KangurStatusChip>
+        </div>
+        <div
+          className='w-full rounded-[24px] border border-sky-100 bg-white/80 px-4 py-4 shadow-sm'
+          data-testid='english-adverbs-frequency-summary-guide'
+        >
+          <div className='flex flex-col items-center gap-1 text-center'>
+            <p className='text-xs font-black uppercase tracking-[0.18em] text-sky-600'>
+              {translations('englishAdverbsFrequency.summary.guideLabel')}
+            </p>
+            <p className='text-sm text-slate-600'>
+              {translations('englishAdverbsFrequency.summary.guideHint')}
+            </p>
+          </div>
+          <div
+            className='mt-4 flex flex-wrap items-center justify-center gap-2'
+            data-testid='english-adverbs-frequency-summary-order'
+          >
+            <span className='text-[11px] font-black uppercase tracking-[0.16em] text-slate-500'>
+              {translations('englishAdverbsFrequency.summary.orderLabel')}
+            </span>
+            {(Object.keys(FREQUENCY_META) as EnglishAdverbFrequencyId[]).map((frequency, index) => (
+              <React.Fragment key={`summary-order-${frequency}`}>
+                <KangurStatusChip accent={FREQUENCY_META[frequency].accent} size='sm'>
+                  {getFrequencyLabel(translations, frequency)}
+                </KangurStatusChip>
+                {index < Object.keys(FREQUENCY_META).length - 1 ? (
+                  <span aria-hidden='true' className='text-sm font-black text-slate-400'>
+                    →
+                  </span>
+                ) : null}
+              </React.Fragment>
+            ))}
+          </div>
+          <div className='mt-4 grid gap-3 sm:grid-cols-2'>
+            {(Object.keys(FREQUENCY_META) as EnglishAdverbFrequencyId[]).map((frequency) => (
+              <SummaryFrequencyGuideCard
+                key={`summary-guide-${frequency}`}
+                dataTestId={`english-adverbs-frequency-summary-guide-${frequency}`}
+                frequency={frequency}
+                translate={translations}
+              />
+            ))}
+          </div>
+        </div>
+        <div
+          className='w-full rounded-[24px] border border-emerald-100 bg-white/80 px-4 py-4 shadow-sm'
+          data-testid='english-adverbs-frequency-summary-rules'
+        >
+          <div className='flex flex-col items-center gap-1 text-center'>
+            <p className='text-xs font-black uppercase tracking-[0.18em] text-emerald-600'>
+              {translations('englishAdverbsFrequency.summary.ruleGuideLabel')}
+            </p>
+            <p className='text-sm text-slate-600'>
+              {translations('englishAdverbsFrequency.summary.ruleGuideHint')}
+            </p>
+          </div>
+          <div className='mt-4 grid gap-3 sm:grid-cols-2'>
+            <SummaryPatternGuideCard
+              dataTestId='english-adverbs-frequency-summary-rule-main-verb'
+              accent='sky'
+              label={translations('englishAdverbsFrequency.summary.mainVerbLabel')}
+              sentence={buildEnglishAdverbsFrequencySentence('do_homework', 'always')}
+              parts={buildEnglishAdverbsFrequencySentenceParts('do_homework', 'always').parts}
+              pattern={buildEnglishAdverbsFrequencySentenceParts('do_homework', 'always').pattern}
+              translate={translations}
+            />
+            <SummaryPatternGuideCard
+              dataTestId='english-adverbs-frequency-summary-rule-be-verb'
+              accent='amber'
+              label={translations('englishAdverbsFrequency.summary.beVerbLabel')}
+              sentence={buildEnglishAdverbsFrequencySentence('be_late_for_school', 'never')}
+              parts={buildEnglishAdverbsFrequencySentenceParts('be_late_for_school', 'never').parts}
+              pattern={buildEnglishAdverbsFrequencySentenceParts('be_late_for_school', 'never').pattern}
+              translate={translations}
+            />
+          </div>
+        </div>
+        <div
+          className='w-full rounded-[24px] border border-amber-100 bg-white/80 px-4 py-4 shadow-sm'
+          data-testid='english-adverbs-frequency-summary-starters'
+        >
+          <div className='flex flex-col items-center gap-1 text-center'>
+            <p className='text-xs font-black uppercase tracking-[0.18em] text-amber-600'>
+              {translations('englishAdverbsFrequency.summary.starterLabel')}
+            </p>
+            <p className='text-sm text-slate-600'>
+              {translations('englishAdverbsFrequency.summary.starterHint')}
+            </p>
+          </div>
+          <div className='mt-4 grid gap-3 sm:grid-cols-3'>
+            <SummaryStarterCard
+              dataTestId='english-adverbs-frequency-summary-starter-always'
+              accent='emerald'
+              emoji='🟢'
+              text={translations('englishAdverbsFrequency.summary.starters.alwaysHabit')}
+            />
+            <SummaryStarterCard
+              dataTestId='english-adverbs-frequency-summary-starter-sometimes'
+              accent='amber'
+              emoji='🟡'
+              text={translations('englishAdverbsFrequency.summary.starters.sometimesPlace')}
+            />
+            <SummaryStarterCard
+              dataTestId='english-adverbs-frequency-summary-starter-never'
+              accent='rose'
+              emoji='⚪'
+              text={translations('englishAdverbsFrequency.summary.starters.neverLate')}
+            />
+          </div>
+        </div>
+        <div
+          className='w-full rounded-[24px] border border-violet-100 bg-white/80 px-4 py-4 shadow-sm'
+          data-testid='english-adverbs-frequency-summary-questions'
+        >
+          <div className='flex flex-col items-center gap-1 text-center'>
+            <p className='text-xs font-black uppercase tracking-[0.18em] text-violet-600'>
+              {translations('englishAdverbsFrequency.summary.questionLabel')}
+            </p>
+            <p className='text-sm text-slate-600'>
+              {translations('englishAdverbsFrequency.summary.questionHint')}
+            </p>
+          </div>
+          <div className='mt-4 grid gap-3 sm:grid-cols-3'>
+            <SummaryQuestionCard
+              accent='sky'
+              dataTestId='english-adverbs-frequency-summary-question-homework'
+              emoji='📚'
+              prompt={translations('englishAdverbsFrequency.summary.questions.homework.prompt')}
+              starter={translations('englishAdverbsFrequency.summary.questions.homework.starter')}
+            />
+            <SummaryQuestionCard
+              accent='emerald'
+              dataTestId='english-adverbs-frequency-summary-question-park'
+              emoji='🌳'
+              prompt={translations('englishAdverbsFrequency.summary.questions.park.prompt')}
+              starter={translations('englishAdverbsFrequency.summary.questions.park.starter')}
+            />
+            <SummaryQuestionCard
+              accent='rose'
+              dataTestId='english-adverbs-frequency-summary-question-late'
+              emoji='🏫'
+              prompt={translations('englishAdverbsFrequency.summary.questions.late.prompt')}
+              starter={translations('englishAdverbsFrequency.summary.questions.late.starter')}
+            />
+          </div>
+        </div>
         <KangurPracticeGameSummaryMessage>
           {percent === 100
             ? translations('englishAdverbsFrequency.summary.perfect')
@@ -523,22 +734,55 @@ export default function EnglishAdverbsFrequencyRoutineGame({
                     </KangurStatusChip>
                   </div>
                   <div className='mt-3 space-y-2'>
-                    {round.actions.map((action) => (
-                      <div
-                        key={`target-${action.id}`}
-                        className={cn(
-                          'rounded-[16px] border px-3 py-2 text-left shadow-sm',
-                          KANGUR_ACCENT_STYLES[round.accent].activeCard
-                        )}
-                      >
-                        <p className='text-xs font-black uppercase tracking-[0.14em] text-slate-700'>
-                          {ACTION_META[action.actionId].emoji} {getActionLabel(translations, action.actionId)}
-                        </p>
-                        <p className='mt-1 text-sm text-slate-600'>
-                          {getFrequencyLabel(translations, action.answer)}
-                        </p>
-                      </div>
-                    ))}
+                    {round.actions.map((action) => {
+                      const targetSentence = buildEnglishAdverbsFrequencySentence(
+                        action.actionId,
+                        action.answer
+                      );
+                      const targetParts = buildEnglishAdverbsFrequencySentenceParts(
+                        action.actionId,
+                        action.answer
+                      );
+
+                      return (
+                        <div
+                          key={`target-${action.id}`}
+                          className={cn(
+                            'rounded-[16px] border px-3 py-2 text-left shadow-sm',
+                            KANGUR_ACCENT_STYLES[round.accent].activeCard
+                          )}
+                          data-testid={`english-adverbs-frequency-target-${action.id}`}
+                        >
+                          <p className='text-xs font-black uppercase tracking-[0.14em] text-slate-700'>
+                            {ACTION_META[action.actionId].emoji} {getActionLabel(translations, action.actionId)}
+                          </p>
+                          <p className='mt-1 text-sm text-slate-600'>
+                            {getFrequencyLabel(translations, action.answer)}
+                          </p>
+                          <p className='mt-1 text-xs font-semibold text-slate-500'>
+                            {getFrequencyDaysLitLabel(translations, action.answer)}
+                          </p>
+                          <RoutineWeekStrip
+                            actionId={action.actionId}
+                            actionLabel={getActionLabel(translations, action.actionId)}
+                            dataTestId={`english-adverbs-frequency-target-week-${action.id}`}
+                            frequency={action.answer}
+                            translate={translations}
+                          />
+                          <p className='mt-2 text-sm font-semibold text-slate-700'>
+                            {targetSentence}
+                          </p>
+                          <p className='mt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500'>
+                            {translations('englishAdverbsFrequency.inRound.studio.patternLabel')}{' '}
+                            <span className='text-slate-700'>
+                              {translations(
+                                `englishAdverbsFrequency.inRound.studio.patterns.${targetParts.pattern}`
+                              )}
+                            </span>
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -558,6 +802,16 @@ export default function EnglishAdverbsFrequencyRoutineGame({
               {round.actions.map((action) => {
                 const assigned = roundState.slots[action.id];
                 const isCorrect = assigned?.frequency === action.answer;
+                const targetSentence = buildEnglishAdverbsFrequencySentence(
+                  action.actionId,
+                  action.answer
+                );
+                const sentencePreview = assigned
+                  ? buildEnglishAdverbsFrequencySentence(action.actionId, assigned.frequency)
+                  : buildEnglishAdverbsFrequencySentenceTemplate(action.actionId);
+                const sentenceParts = assigned
+                  ? buildEnglishAdverbsFrequencySentenceParts(action.actionId, assigned.frequency)
+                  : buildEnglishAdverbsFrequencySentenceTemplateParts(action.actionId);
                 const surfaceClass = checked
                   ? isCorrect
                     ? 'border-emerald-300 bg-emerald-50/80'
@@ -609,11 +863,167 @@ export default function EnglishAdverbsFrequencyRoutineGame({
                           {translations('englishAdverbsFrequency.inRound.studio.dropLabel')}
                         </p>
                         <RoutineWeekStrip
+                          actionId={action.actionId}
                           actionLabel={getActionLabel(translations, action.actionId)}
                           dataTestId={`english-adverbs-frequency-week-${action.id}`}
                           frequency={assigned?.frequency ?? null}
                           translate={translations}
                         />
+                        {assigned ? (
+                          <p className='mt-2 text-xs font-semibold text-slate-500'>
+                            {getFrequencyDaysLitLabel(translations, assigned.frequency)}
+                          </p>
+                        ) : null}
+                        <div
+                          className={cn(
+                            'mt-3 rounded-[16px] border px-3 py-2 text-left shadow-sm transition',
+                            assigned
+                              ? KANGUR_ACCENT_STYLES[FREQUENCY_META[assigned.frequency].accent].activeCard
+                              : 'border-slate-200 bg-white/85'
+                          )}
+                          data-testid={`english-adverbs-frequency-sentence-${action.id}`}
+                        >
+                          <p className='text-[10px] font-black uppercase tracking-[0.16em] text-slate-500'>
+                            {translations('englishAdverbsFrequency.inRound.studio.sentenceLabel')}
+                          </p>
+                          <p className='mt-1 text-sm font-semibold text-slate-700'>
+                            {sentencePreview}
+                          </p>
+                          {!assigned ? (
+                            <p className='mt-2 text-xs text-slate-500'>
+                              {translations('englishAdverbsFrequency.inRound.studio.previewEmpty')}
+                            </p>
+                          ) : null}
+                          <div className='mt-3 space-y-2'>
+                            <div className='flex flex-wrap items-center gap-2'>
+                              {sentenceParts.parts.map((part, index) => (
+                                <span
+                                  key={`${action.id}-part-${index}-${part}`}
+                                  className={cn(
+                                    'rounded-full border px-2.5 py-1 text-xs font-bold shadow-sm',
+                                    index === 1
+                                      ? assigned
+                                        ? KANGUR_ACCENT_STYLES[FREQUENCY_META[assigned.frequency].accent]
+                                            .badge
+                                        : 'border-sky-200 bg-sky-50 text-sky-700'
+                                      : 'border-slate-200 bg-white/90 text-slate-700'
+                                  )}
+                                >
+                                  {part}
+                                </span>
+                              ))}
+                            </div>
+                            <p className='text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500'>
+                              {translations('englishAdverbsFrequency.inRound.studio.patternLabel')}{' '}
+                              <span className='text-slate-700'>
+                                {translations(
+                                  `englishAdverbsFrequency.inRound.studio.patterns.${sentenceParts.pattern}`
+                                )}
+                              </span>
+                            </p>
+                          </div>
+                          {checked && assigned && !isCorrect ? (
+                            <div
+                              className='mt-3 rounded-[14px] border border-rose-200 bg-rose-50/80 px-3 py-2 text-left'
+                              data-testid={`english-adverbs-frequency-correction-${action.id}`}
+                            >
+                              <p className='text-[10px] font-black uppercase tracking-[0.16em] text-rose-500'>
+                                {translations(
+                                  'englishAdverbsFrequency.inRound.studio.currentSentenceLabel'
+                                )}
+                              </p>
+                              <p className='mt-1 text-sm font-semibold text-rose-700'>
+                                {sentencePreview}
+                              </p>
+                              <div className='mt-2 flex flex-wrap items-center gap-2'>
+                                <KangurStatusChip accent={FREQUENCY_META[assigned.frequency].accent} size='sm'>
+                                  {translations(
+                                    'englishAdverbsFrequency.inRound.studio.yourFrequencyLabel'
+                                  )}
+                                  : {getFrequencyLabel(translations, assigned.frequency)}
+                                </KangurStatusChip>
+                                <span aria-hidden='true' className='text-sm font-black text-rose-400'>
+                                  →
+                                </span>
+                                <KangurStatusChip accent={FREQUENCY_META[action.answer].accent} size='sm'>
+                                  {translations(
+                                    'englishAdverbsFrequency.inRound.studio.targetFrequencyLabel'
+                                  )}
+                                  : {getFrequencyLabel(translations, action.answer)}
+                                </KangurStatusChip>
+                              </div>
+                              <p className='mt-2 text-xs font-semibold text-rose-600'>
+                                {translations('englishAdverbsFrequency.inRound.studio.daysLitLabel')}:{' '}
+                                {countFrequencyActiveDays(assigned.frequency)}/7 →{' '}
+                                {countFrequencyActiveDays(action.answer)}/7
+                              </p>
+                              <div className='mt-3 space-y-2'>
+                                <CompactFrequencyDots
+                                  dataTestId={`english-adverbs-frequency-correction-current-week-${action.id}`}
+                                  frequency={assigned.frequency}
+                                  label={translations(
+                                    'englishAdverbsFrequency.inRound.studio.yourWeekLabel'
+                                  )}
+                                  compareAgainst={action.answer}
+                                />
+                                <CompactFrequencyDots
+                                  dataTestId={`english-adverbs-frequency-correction-target-week-${action.id}`}
+                                  frequency={action.answer}
+                                  label={translations(
+                                    'englishAdverbsFrequency.inRound.studio.targetWeekLabel'
+                                  )}
+                                  compareAgainst={assigned.frequency}
+                                />
+                              </div>
+                              <p className='mt-2 text-xs font-semibold text-rose-600'>
+                                {translations('englishAdverbsFrequency.inRound.studio.changeDaysLabel')}:{' '}
+                                {countFrequencyChangedDays(assigned.frequency, action.answer)}/7
+                              </p>
+                              <div className='mt-2 flex flex-wrap items-center gap-2'>
+                                <KangurStatusChip accent='emerald' size='sm'>
+                                  {translations('englishAdverbsFrequency.inRound.studio.turnOnLabel')}:{' '}
+                                  {countFrequencyTurnedOnDays(assigned.frequency, action.answer)}
+                                </KangurStatusChip>
+                                <KangurStatusChip accent='slate' size='sm'>
+                                  {translations('englishAdverbsFrequency.inRound.studio.turnOffLabel')}:{' '}
+                                  {countFrequencyTurnedOffDays(assigned.frequency, action.answer)}
+                                </KangurStatusChip>
+                              </div>
+                              <p className='text-[10px] font-black uppercase tracking-[0.16em] text-rose-500'>
+                                {translations(
+                                  'englishAdverbsFrequency.inRound.studio.targetFrequencyLabel'
+                                )}
+                              </p>
+                              <p className='mt-1 text-xs font-semibold text-rose-700'>
+                                {getFrequencyLabel(translations, action.answer)}
+                              </p>
+                              <p className='mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-rose-500'>
+                                {translations(
+                                  'englishAdverbsFrequency.inRound.studio.targetSentenceLabel'
+                                )}
+                              </p>
+                              <p className='mt-1 text-sm font-semibold text-rose-700'>
+                                {targetSentence}
+                              </p>
+                            </div>
+                          ) : null}
+                          {checked && assigned && isCorrect ? (
+                            <div
+                              className='mt-3 rounded-[14px] border border-emerald-200 bg-emerald-50/80 px-3 py-2 text-left'
+                              data-testid={`english-adverbs-frequency-match-${action.id}`}
+                            >
+                              <p className='text-[10px] font-black uppercase tracking-[0.16em] text-emerald-600'>
+                                {translations('englishAdverbsFrequency.inRound.studio.matchedLabel')}
+                              </p>
+                              <p className='mt-1 text-sm font-semibold text-emerald-700'>
+                                {sentencePreview}
+                              </p>
+                              <p className='mt-2 text-xs font-semibold text-emerald-600'>
+                                {getFrequencyDaysLitLabel(translations, assigned.frequency)}
+                              </p>
+                            </div>
+                          ) : null}
+                        </div>
                         <div
                           className={cn(
                             'mt-3 flex min-h-[4rem] items-center justify-center rounded-[18px] border-2 border-dashed bg-white/90 px-3 py-3',
@@ -801,6 +1211,7 @@ function DraggableFrequencyToken({
 }): React.JSX.Element | React.ReactPortal {
   const meta = FREQUENCY_META[token.frequency];
   const selectedClass = isSelected ? 'ring-2 ring-sky-400/80 ring-offset-1 ring-offset-white' : '';
+  const activeDays = countFrequencyActiveDays(token.frequency);
 
   return (
     <Draggable
@@ -843,6 +1254,22 @@ function DraggableFrequencyToken({
               <span aria-hidden='true'>{meta.emoji}</span>
               <span>{getFrequencyLabel(translate, token.frequency)}</span>
             </span>
+            <span className='mt-1.5 block text-[10px] font-semibold tracking-[0.08em] opacity-80'>
+              {getFrequencyDaysLitLabel(translate, token.frequency)}
+            </span>
+            <span className='mt-1.5 flex items-center justify-center gap-1'>
+              {meta.activeDays.map((isActive, index) => (
+                <span
+                  key={`${token.id}-preview-${index}`}
+                  aria-hidden='true'
+                  className={cn(
+                    'h-1.5 w-1.5 rounded-full border border-white/70 transition',
+                    isActive ? 'bg-current opacity-95' : 'bg-white/45 opacity-60'
+                  )}
+                  data-active={isActive ? 'true' : 'false'}
+                />
+              ))}
+            </span>
           </button>
         );
 
@@ -853,17 +1280,20 @@ function DraggableFrequencyToken({
 }
 
 function RoutineWeekStrip({
+  actionId,
   actionLabel,
   dataTestId,
   frequency,
   translate,
 }: {
+  actionId: EnglishAdverbFrequencyActionId;
   actionLabel: string;
   dataTestId: string;
   frequency: EnglishAdverbFrequencyId | null;
   translate: KangurMiniGameTranslate;
 }): React.JSX.Element {
   const meta = frequency ? FREQUENCY_META[frequency] : null;
+  const actionEmoji = ACTION_META[actionId].emoji;
   const activePointXs = WEEKDAY_LABELS.map((_, index) => ({
     active: meta?.activeDays[index] ?? false,
     x: 28 + index * 28,
@@ -924,6 +1354,10 @@ function RoutineWeekStrip({
           font: 700 12px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
           fill: #0f172a;
         }
+        .day-icon {
+          font: 700 11px/1 "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+          opacity: 0.95;
+        }
         @keyframes frequencyPulse {
           0%, 100% { opacity: 0.82; transform: scale(0.94); }
           50% { opacity: 1; transform: scale(1); }
@@ -951,7 +1385,12 @@ function RoutineWeekStrip({
         const isActive = meta?.activeDays[index] ?? false;
         const x = 28 + index * 28;
         return (
-          <g key={`${label}-${index}`} transform={`translate(${x}, 48)`}>
+          <g
+            key={`${label}-${index}`}
+            transform={`translate(${x}, 48)`}
+            data-testid={`${dataTestId}-day-${index}`}
+            data-active={isActive ? 'true' : 'false'}
+          >
             <rect
               className={cn('day-bar', isActive && 'day-bar-active')}
               x='-10'
@@ -981,9 +1420,227 @@ function RoutineWeekStrip({
                   : undefined
               }
             />
+            {isActive ? (
+              <text
+                aria-hidden='true'
+                className='day-icon'
+                textAnchor='middle'
+                dominantBaseline='middle'
+                x='0'
+                y='1'
+              >
+                {actionEmoji}
+              </text>
+            ) : null}
           </g>
         );
       })}
     </svg>
+  );
+}
+
+function CompactFrequencyDots({
+  dataTestId,
+  frequency,
+  label,
+  compareAgainst,
+}: {
+  dataTestId: string;
+  frequency: EnglishAdverbFrequencyId;
+  label: string;
+  compareAgainst?: EnglishAdverbFrequencyId;
+}): React.JSX.Element {
+  const meta = FREQUENCY_META[frequency];
+  const compareMeta = compareAgainst ? FREQUENCY_META[compareAgainst] : null;
+
+  return (
+    <div className='space-y-1' data-testid={dataTestId}>
+      <p className='text-[10px] font-black uppercase tracking-[0.16em] text-rose-500'>{label}</p>
+      <div className='flex items-center gap-1.5'>
+        {meta.activeDays.map((isActive, index) => {
+          const isChanged = compareMeta ? compareMeta.activeDays[index] !== isActive : false;
+          return (
+            <span
+              key={`${dataTestId}-${index}`}
+              className={cn(
+                'h-2.5 w-2.5 rounded-full border border-rose-200 transition',
+                isActive ? 'bg-rose-400' : 'bg-white/90',
+                isChanged ? 'ring-2 ring-rose-300/80 ring-offset-1 ring-offset-rose-50' : undefined
+              )}
+              data-testid={`${dataTestId}-day-${index}`}
+              data-active={isActive ? 'true' : 'false'}
+              data-changed={isChanged ? 'true' : 'false'}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function SummaryFrequencyGuideCard({
+  dataTestId,
+  frequency,
+  translate,
+}: {
+  dataTestId: string;
+  frequency: EnglishAdverbFrequencyId;
+  translate: KangurMiniGameTranslate;
+}): React.JSX.Element {
+  const meta = FREQUENCY_META[frequency];
+
+  return (
+    <div
+      className={cn(
+        'rounded-[18px] border px-3 py-3 text-left shadow-sm',
+        KANGUR_ACCENT_STYLES[meta.accent].activeCard
+      )}
+      data-testid={dataTestId}
+    >
+      <div className='flex items-center justify-between gap-2'>
+        <p className='text-sm font-black text-slate-800'>
+          <span aria-hidden='true' className='mr-1'>
+            {meta.emoji}
+          </span>
+          {getFrequencyLabel(translate, frequency)}
+        </p>
+        <KangurStatusChip accent={meta.accent} size='sm'>
+          {countFrequencyActiveDays(frequency)}/7
+        </KangurStatusChip>
+      </div>
+      <p className='mt-1 text-xs text-slate-600'>{getFrequencyDescription(translate, frequency)}</p>
+      <p className='mt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500'>
+        {getFrequencyDaysLitLabel(translate, frequency)}
+      </p>
+      <div className='mt-2 flex items-center gap-1.5'>
+        {meta.activeDays.map((isActive, index) => (
+          <span
+            key={`${dataTestId}-day-${index}`}
+            className={cn(
+              'h-2.5 w-2.5 rounded-full border border-white/80 shadow-sm transition',
+              isActive ? 'opacity-100' : 'bg-white/70 opacity-60'
+            )}
+            data-testid={`${dataTestId}-day-${index}`}
+            data-active={isActive ? 'true' : 'false'}
+            style={isActive ? { backgroundColor: meta.fill } : undefined}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SummaryPatternGuideCard({
+  accent,
+  dataTestId,
+  label,
+  sentence,
+  parts,
+  pattern,
+  translate,
+}: {
+  accent: KangurAccent;
+  dataTestId: string;
+  label: string;
+  sentence: string;
+  parts: string[];
+  pattern: 'mainVerb' | 'beVerb';
+  translate: KangurMiniGameTranslate;
+}): React.JSX.Element {
+  return (
+    <div
+      className={cn(
+        'rounded-[18px] border px-3 py-3 text-left shadow-sm',
+        KANGUR_ACCENT_STYLES[accent].activeCard
+      )}
+      data-testid={dataTestId}
+    >
+      <p className='text-[10px] font-black uppercase tracking-[0.16em] text-slate-500'>{label}</p>
+      <p className='mt-1 text-sm font-semibold text-slate-700'>{sentence}</p>
+      <div className='mt-3 flex flex-wrap items-center gap-2'>
+        {parts.map((part, index) => (
+          <span
+            key={`${dataTestId}-part-${index}-${part}`}
+            className={cn(
+              'rounded-full border px-2.5 py-1 text-xs font-bold shadow-sm',
+              index === 1
+                ? KANGUR_ACCENT_STYLES[accent].badge
+                : 'border-slate-200 bg-white/90 text-slate-700'
+            )}
+          >
+            {part}
+          </span>
+        ))}
+      </div>
+      <p className='mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500'>
+        {translate('englishAdverbsFrequency.inRound.studio.patternLabel')}{' '}
+        <span className='text-slate-700'>
+          {translate(`englishAdverbsFrequency.inRound.studio.patterns.${pattern}`)}
+        </span>
+      </p>
+    </div>
+  );
+}
+
+function SummaryStarterCard({
+  accent,
+  dataTestId,
+  emoji,
+  text,
+}: {
+  accent: KangurAccent;
+  dataTestId: string;
+  emoji: string;
+  text: string;
+}): React.JSX.Element {
+  return (
+    <div
+      className={cn(
+        'rounded-[18px] border px-3 py-3 text-left shadow-sm',
+        KANGUR_ACCENT_STYLES[accent].activeCard
+      )}
+      data-testid={dataTestId}
+    >
+      <p className='text-sm font-semibold text-slate-700'>
+        <span aria-hidden='true' className='mr-1.5'>
+          {emoji}
+        </span>
+        {text}
+      </p>
+    </div>
+  );
+}
+
+function SummaryQuestionCard({
+  accent,
+  dataTestId,
+  emoji,
+  prompt,
+  starter,
+}: {
+  accent: KangurAccent;
+  dataTestId: string;
+  emoji: string;
+  prompt: string;
+  starter: string;
+}): React.JSX.Element {
+  return (
+    <div
+      className={cn(
+        'rounded-[18px] border px-3 py-3 text-left shadow-sm',
+        KANGUR_ACCENT_STYLES[accent].activeCard
+      )}
+      data-testid={dataTestId}
+    >
+      <p className='text-sm font-semibold text-slate-700'>
+        <span aria-hidden='true' className='mr-1.5'>
+          {emoji}
+        </span>
+        {prompt}
+      </p>
+      <p className='mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500'>
+        {starter}
+      </p>
+    </div>
   );
 }

@@ -31,7 +31,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonPanelCtaSync', () => ({
-  useKangurLessonPanelCtaSync: () => undefined,
+  useKangurLessonPanelCtaSync: () => vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/learner-activity/hooks', async (importOriginal) => {

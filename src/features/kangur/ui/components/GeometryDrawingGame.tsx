@@ -51,6 +51,7 @@ import type { Point2d } from '@/shared/contracts/geometry';
 import {
   addXp,
   createTrainingReward,
+  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
@@ -511,7 +512,8 @@ export default function GeometryDrawingGame({
 
   const finishGame = useCallback(
     (finalScore: number): void => {
-      const progress = loadProgress();
+      const ownerKey = getProgressOwnerKey();
+      const progress = loadProgress({ ownerKey });
       const reward = createTrainingReward(progress, {
         activityKey: resolvedActivityKey,
         lessonKey,
@@ -521,7 +523,7 @@ export default function GeometryDrawingGame({
         strongThresholdPercent: 65,
         perfectCounterKey: 'geometryPerfect',
       });
-      addXp(reward.xp, reward.progressUpdates);
+      addXp(reward.xp, reward.progressUpdates, { ownerKey });
       void persistKangurSessionScore({
         operation,
         score: finalScore,

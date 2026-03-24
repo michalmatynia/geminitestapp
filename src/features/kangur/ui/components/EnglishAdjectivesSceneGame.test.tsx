@@ -74,7 +74,7 @@ vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
     ...actual,
     addXp: (...args: unknown[]) => addXpMock(...args),
     createLessonPracticeReward: (...args: unknown[]) => createLessonPracticeRewardMock(...args),
-    loadProgress: () => loadProgressMock(),
+    loadProgress: (...args: unknown[]) => loadProgressMock(...args),
   };
 });
 
@@ -162,7 +162,8 @@ describe('EnglishAdjectivesSceneGame', () => {
     expect(
       screen.getByText('Perfect! The whole scene matches the adjectives.')
     ).toBeInTheDocument();
-    expect(addXpMock).toHaveBeenCalledWith(15, {});
+    expect(loadProgressMock).toHaveBeenCalledWith({ ownerKey: null });
+    expect(addXpMock).toHaveBeenCalledWith(15, {}, { ownerKey: null });
     expect(persistKangurSessionScoreMock).toHaveBeenCalledWith(
       expect.objectContaining({
         correctAnswers: 6,

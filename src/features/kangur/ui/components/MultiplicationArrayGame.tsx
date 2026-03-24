@@ -32,6 +32,7 @@ import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/moti
 import {
   addXp,
   createLessonPracticeReward,
+  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { getKangurMiniGameFinishLabel } from '@/features/kangur/ui/constants/mini-game-i18n';
@@ -124,14 +125,15 @@ export default function MultiplicationArrayGame({
       advanceTimeoutRef.current = null;
       const newScore = score + 1;
       if (roundIndex + 1 >= TOTAL_ROUNDS) {
-        const progress = loadProgress();
+        const ownerKey = getProgressOwnerKey();
+        const progress = loadProgress({ ownerKey });
         const reward = createLessonPracticeReward(
           progress,
           'multiplication',
           newScore,
           TOTAL_ROUNDS
         );
-        addXp(reward.xp, reward.progressUpdates);
+        addXp(reward.xp, reward.progressUpdates, { ownerKey });
         void persistKangurSessionScore({
           operation: 'multiplication',
           score: newScore,

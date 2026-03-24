@@ -134,7 +134,8 @@ describe('KangurProgressSyncProvider', () => {
           totalXp: 120,
           gamesPlayed: 5,
           badges: ['first_game'],
-        })
+        }),
+        { ownerKey: 'learner-1' }
       );
     });
     progressGetMock.mockResolvedValue(
@@ -196,7 +197,8 @@ describe('KangurProgressSyncProvider', () => {
         createProgress({
           totalXp: 45,
           gamesPlayed: 2,
-        })
+        }),
+        { ownerKey: 'learner-1' }
       );
     });
 

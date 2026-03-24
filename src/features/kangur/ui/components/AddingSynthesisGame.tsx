@@ -45,6 +45,7 @@ import {
 import {
   addXp,
   createLessonPracticeReward,
+  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
@@ -200,9 +201,10 @@ export default function AddingSynthesisGame({
     finalPerfectHits: number,
     finalBestStreak: number
   ): void => {
-    const progress = loadProgress();
+    const ownerKey = getProgressOwnerKey();
+    const progress = loadProgress({ ownerKey });
     const reward = createLessonPracticeReward(progress, 'adding', finalScore, notes.length, 65);
-    addXp(reward.xp, reward.progressUpdates);
+    addXp(reward.xp, reward.progressUpdates, { ownerKey });
     void persistKangurSessionScore({
       operation: 'addition',
       score: finalScore,

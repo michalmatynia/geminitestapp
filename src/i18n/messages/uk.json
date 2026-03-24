@@ -767,7 +767,9 @@
     "createAccountSubmitting": "Створення акаунта...",
     "verificationSentTo": "Ми надіслали посилання для підтвердження на:",
     "verificationAction": "Натисніть посилання в листі, щоб активувати акаунт.",
-    "debugLinkLabel": "Налагоджувальне посилання (лише dev)"
+    "debugLinkLabel": "Налагоджувальне посилання (лише dev)",
+    "showPassword": "Показати пароль",
+    "hidePassword": "Приховати пароль"
   },
   "KangurGameWidgets": {
     "quizBackButton": "Назад на попередню сторінку",
@@ -2758,11 +2760,197 @@
         }
       }
     },
+    "englishArticles": {
+      "summary": {
+        "perfect": "Perfect! Articles are in the right places.",
+        "good": "Good job! You can hear the pattern already.",
+        "retry": "Try one more round and listen to the first sound."
+      },
+      "inRound": {
+        "roundLabel": "Round {current}/{total}",
+        "hitsLabel": "{hits}/{total} correct",
+        "check": "Check",
+        "next": "Next",
+        "seeResult": "See result",
+        "drag": {
+          "topicLabel": "Articles",
+          "modeLabel": "Drag and drop",
+          "modeLabelTouch": "Tap or drag",
+          "poolLabel": "Article bank",
+          "poolAria": "Article bank",
+          "poolEmpty": "Article bank empty",
+          "slotAria": "Sentence {index}",
+          "sentenceLabel": "Sentence {current}",
+          "missingArticle": "This sentence still needs an article.",
+          "touchIdle": "Tap an article, then tap a sentence or the bank.",
+          "touchSelected": "Selected article: {article}. Tap a sentence or the bank.",
+          "clearRound": "Clear round",
+          "feedback": {
+            "perfect": "Perfect! Each article fits the sentence.",
+            "retry": "Check the specific noun and the first sound again."
+          },
+          "rounds": {
+            "school-bag": {
+              "prompt": "Drag a, an, and the into the school sentences.",
+              "hint": "One new thing, one vowel sound, one known thing.",
+              "title": "School bag"
+            },
+            "zoo-day": {
+              "prompt": "Fill the zoo trip sentences with the correct articles.",
+              "hint": "First mention uses a/an. A known place often uses the.",
+              "title": "Zoo day"
+            },
+            "sound-detective": {
+              "prompt": "Listen to the first sound before you choose the article.",
+              "hint": "a unicorn, but an hour.",
+              "title": "Sound detective"
+            },
+            "trip-day": {
+              "prompt": "Pack the correct articles into the trip sentences.",
+              "hint": "Check if the noun is new, specific, or starts with a vowel sound.",
+              "title": "Trip day"
+            },
+            "museum-day": {
+              "prompt": "Fill the museum sentences with the right articles.",
+              "hint": "Listen to audio, and notice the specific entrance.",
+              "title": "Museum day"
+            },
+            "picnic-time": {
+              "prompt": "Choose the articles for the picnic sentences.",
+              "hint": "One sandwich, one apple, one known basket.",
+              "title": "Picnic time"
+            }
+          },
+          "articles": {
+            "a": {
+              "description": "one example, consonant sound"
+            },
+            "an": {
+              "description": "one example, vowel sound"
+            },
+            "the": {
+              "description": "one specific thing"
+            }
+          }
+        }
+      }
+    },
+    "englishAdjectives": {
+      "summary": {
+        "perfect": "Perfect! The whole scene matches the adjectives.",
+        "good": "Good job! Most of the scene matches already.",
+        "retry": "Try again and watch how each adjective changes the object."
+      },
+      "inRound": {
+        "roundLabel": "Round {current}/{total}",
+        "hitsLabel": "{hits}/{total} correct",
+        "check": "Check",
+        "next": "Next",
+        "seeResult": "See result",
+        "scene": {
+          "modeLabel": "Drag adjective cards",
+          "modeLabelTouch": "Tap or drag cards",
+          "ideaLabel": "Target scene",
+          "studioLabel": "Adjective studio",
+          "watchLabel": "Watch it change",
+          "poolLabel": "Adjective bank",
+          "poolAria": "Adjective bank",
+          "objectSlotAria": "Object slot for {object}",
+          "dropLabel": "Drop or tap an adjective here.",
+          "touchIdle": "Tap an adjective, then tap an object or the bank.",
+          "touchSelected": "Selected adjective: {adjective}. Tap an object or the bank.",
+          "clearRound": "Clear round",
+          "feedback": {
+            "perfect": "Perfect! The scene matches the description.",
+            "retry": "Try again and check which adjective changes each object."
+          },
+          "rounds": {
+            "bedroom": {
+              "title": "Bedroom makeover",
+              "prompt": "Match the adjective cards to rebuild the bedroom scene.",
+              "hint": "Look for the big yellow cupboard, soft rug, and long blue curtains."
+            },
+            "toy_shelf": {
+              "title": "Toy shelf",
+              "prompt": "Dress the toys with the right describing words.",
+              "hint": "One train is red, one teddy is small and blue, and the games are new."
+            },
+            "portrait": {
+              "title": "Portrait details",
+              "prompt": "Add the right adjectives to the portrait.",
+              "hint": "Brown eyes, long black hair, and a beautiful picture."
+            }
+          },
+          "tokens": {
+            "big_yellow": "big yellow",
+            "soft": "soft",
+            "long_blue": "long blue",
+            "red": "red",
+            "small_blue": "small blue",
+            "new": "new",
+            "brown": "brown",
+            "long_black": "long black",
+            "beautiful": "beautiful"
+          },
+          "objects": {
+            "cupboard": "cupboard",
+            "curtains": "curtains",
+            "rug": "rug",
+            "train": "train",
+            "teddy": "teddy",
+            "games": "games",
+            "eyes": "eyes",
+            "hair": "hair",
+            "picture": "picture"
+          },
+          "sceneAria": {
+            "bedroom": "Animated bedroom scene",
+            "toyShelf": "Animated toy shelf scene",
+            "portrait": "Animated portrait scene"
+          }
+        }
+      }
+    },
     "englishAdverbsFrequency": {
       "summary": {
         "perfect": "Ідеально! Увесь тижневий план збігається зі словами частоти.",
         "good": "Гарна робота! Більша частина тижня вже має правильний ритм.",
-        "retry": "Спробуй ще раз і подивися, як часто засвічується кожна дія."
+        "retry": "Спробуй ще раз і подивися, як часто засвічується кожна дія.",
+        "guideLabel": "Підказка з частоти",
+        "guideHint": "Читай кожне слово як тижневий шаблон.",
+        "orderLabel": "Від найчастіше до найрідше",
+        "ruleGuideLabel": "Підказка з порядку слів",
+        "ruleGuideHint": "Запам’ятай ці дві схеми речень.",
+        "mainVerbLabel": "Перед головним дієсловом",
+        "beVerbLabel": "Після am/is/are",
+        "starterLabel": "Скажи це про свій тиждень",
+        "starterHint": "Скористайся одним із цих шаблонів для власного речення.",
+        "starters": {
+          "alwaysHabit": "I always do my homework after school.",
+          "sometimesPlace": "I sometimes go to the park with my friends.",
+          "neverLate": "I am never late for school."
+        },
+        "questionLabel": "Як часто...?",
+        "questionHint": "Вибери одне запитання і дай відповідь словом частоти.",
+        "questions": {
+          "homework": {
+            "prompt": "How often do you do your homework?",
+            "starter": "Try: I always..."
+          },
+          "park": {
+            "prompt": "How often do you go to the park?",
+            "starter": "Try: I sometimes..."
+          },
+          "late": {
+            "prompt": "How often are you late for school?",
+            "starter": "Try: I am never..."
+          }
+        },
+        "badges": {
+          "rounds": "Раунди {current}/{total}",
+          "patterns": "Шаблони {current}/{total}",
+          "studio": "Студія {current}/{total}"
+        }
       },
       "inRound": {
         "roundLabel": "Раунд {current}/{total}",
@@ -2781,10 +2969,28 @@
           "poolHint": "У кожному раунді одна картка може залишитися невикористаною.",
           "laneAria": "Смуга рутини для дії {action}",
           "dropLabel": "Поклади сюди картку частоти або торкнися її.",
+          "currentSentenceLabel": "Твоє речення",
+          "yourFrequencyLabel": "Твоя частота",
+          "yourWeekLabel": "Твій тиждень",
+          "targetFrequencyLabel": "Цільова частота",
+          "targetSentenceLabel": "Цільове речення",
+          "targetWeekLabel": "Цільовий тиждень",
+          "changeDaysLabel": "Дні для зміни",
+          "turnOnLabel": "Увімкнути",
+          "turnOffLabel": "Вимкнути",
+          "daysLitLabel": "Активні дні",
+          "matchedLabel": "Збігається",
+          "sentenceLabel": "Речення",
+          "patternLabel": "Порядок слів:",
+          "previewEmpty": "Вибери картку частоти, щоб побудувати речення.",
           "weekAria": "Тижнева рутина для {action}: {frequency}",
           "touchIdle": "Торкнися картки частоти, а потім смуги рутини або банку.",
           "touchSelected": "Вибрана частота: {frequency}. Торкнися смуги рутини або банку.",
           "clearRound": "Очистити раунд",
+          "patterns": {
+            "mainVerb": "прислівник перед основним дієсловом",
+            "beVerb": "прислівник після am/is/are"
+          },
           "feedback": {
             "perfect": "Ідеально! План збігається з цільовою рутиною.",
             "retry": "Спробуй ще раз і порівняй, скільки днів має бути в кожної дії."
@@ -7095,6 +7301,11 @@
             "title": "Артиклі коротко",
             "lead": "Артиклі - це короткі слова перед іменником. Вони показують, чи маємо ми на увазі будь-який приклад, щось одне конкретне або взагалі без артикля.",
             "caption": "a/an = будь-який приклад, the = щось конкретне, нульовий артикль = без артикля"
+          },
+          "storyTrail": {
+            "title": "From first mention to the known thing",
+            "lead": "In a short story, a or an often introduces a new noun. When the noun becomes known, the story usually changes to the.",
+            "caption": "First time = a cat. Known cat = the cat."
           }
         },
         "aAn": {
@@ -7113,6 +7324,11 @@
             "title": "Приклад у завданні",
             "lead": "Слухай звук на початку слова, а не лише дивись на написання.",
             "caption": "Ми кажемо an equation, бо equation починається з голосного звуку."
+          },
+          "soundCheck": {
+            "title": "Sound check",
+            "lead": "The first sound decides between a and an. That is why we say a unicorn but an hour.",
+            "caption": "Listen for the sound, not only for the first letter."
           }
         },
         "the": {
@@ -7120,6 +7336,11 @@
             "title": "The для чогось конкретного",
             "lead": "Використовуй the, коли обидві людини точно знають, який саме об'єкт ти маєш на увазі.",
             "caption": "Цей артикль указує на один конкретний графік, розв'язок або кут."
+          },
+          "secondMention": {
+            "title": "The on second mention",
+            "lead": "After you introduce something with a or an, the next sentence often uses the because the noun is already known.",
+            "caption": "A shell becomes the shell in the next sentence."
           }
         },
         "zero": {
@@ -7127,6 +7348,11 @@
             "title": "Нульовий артикль",
             "lead": "Іноді в англійській артикль узагалі не використовується, особливо зі шкільними предметами, загальними твердженнями та загальними формами множини.",
             "caption": "Без артикля перед загальними назвами предметів або загальними іменниками в множині"
+          },
+          "everyday": {
+            "title": "Zero article in everyday English",
+            "lead": "School subjects, meals, seasons, and general plural nouns often use no article.",
+            "caption": "English, lunch, summer, cats."
           }
         },
         "practice": {
@@ -7134,6 +7360,21 @@
             "title": "Швидка вправа",
             "lead": "Заповни пропуск: a, an, the або без артикля.",
             "answersCaption": "Відповіді: an, the, —, the, a"
+          },
+          "chooseAnswer": {
+            "title": "Choose the answer",
+            "lead": "This looks like a worksheet test: read fast and choose the article that sounds right.",
+            "caption": "Think: first example, specific thing, or no article?"
+          },
+          "makeItRight": {
+            "title": "Make it right",
+            "lead": "Find the mistake and repair the article choice.",
+            "caption": "Wrong article, missing article, or zero article?"
+          },
+          "mixedRules": {
+            "title": "Mini article test",
+            "lead": "Mix first mention, known nouns, and zero article in one short set.",
+            "caption": "Ask: new thing, known thing, vowel sound, or no article?"
           }
         },
         "summary": {
@@ -7633,9 +7874,90 @@
           "title": "Вправа",
           "description": "Швидке заповнення пропусків"
         },
+        "gameArticlesDrag": {
+          "title": "Article Builder",
+          "description": "Drag a, an, and the into the sentences"
+        },
         "summary": {
           "title": "Підсумок",
           "description": "Короткий виклад правил"
+        }
+      }
+    },
+    "englishAdjectives": {
+      "slides": {
+        "intro": {
+          "overview": {
+            "title": "Adjectives paint the picture",
+            "lead": "Adjectives describe people, places, and things. They add colour, size, feeling, and detail to a noun.",
+            "caption": "big yellow cupboard, soft rug, long blue curtains"
+          }
+        },
+        "order": {
+          "beforeNoun": {
+            "title": "Put adjectives before the noun",
+            "lead": "In English, adjectives usually stand before the noun: red train, brown eyes, small blue teddy.",
+            "caption": "adjective + adjective + noun"
+          }
+        },
+        "repair": {
+          "makeItRight": {
+            "title": "Fix the adjective",
+            "lead": "Do not add plural endings to adjectives and keep them before the noun.",
+            "caption": "two red shoes, a small car, long brown hair"
+          }
+        },
+        "describe": {
+          "roomStory": {
+            "title": "Describe a room",
+            "lead": "Read the little room story and spot how adjectives make the picture clearer.",
+            "caption": "Each adjective adds one more detail to the scene."
+          },
+          "wordBank": {
+            "title": "Word bank",
+            "lead": "These adjectives can help you build clear noun phrases."
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Quick recap",
+            "lead": "Remember these adjective rules while you describe scenes and objects.",
+            "items": {
+              "describe": "Adjectives describe people, places, and things.",
+              "beforeNoun": "They usually come before the noun.",
+              "order": "More than one adjective can build one clear picture.",
+              "fix": "Adjectives do not take plural -s in English."
+            }
+          }
+        }
+      }
+    },
+    "englishAdjectivesShell": {
+      "lessonTitle": "English: Adjectives",
+      "sections": {
+        "intro": {
+          "title": "Intro",
+          "description": "What adjectives do"
+        },
+        "order": {
+          "title": "Order",
+          "description": "Put adjectives before nouns"
+        },
+        "repair": {
+          "title": "Repair",
+          "description": "Fix endings and word order"
+        },
+        "describe": {
+          "title": "Describe",
+          "description": "Turn a plain scene into a detailed one"
+        },
+        "gameAdjectiveStudio": {
+          "title": "Adjective Studio",
+          "description": "Animate the scene with adjective cards"
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "Rule recap"
         }
       }
     },

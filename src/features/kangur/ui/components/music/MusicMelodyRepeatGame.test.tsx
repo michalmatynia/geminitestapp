@@ -20,7 +20,7 @@ vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
     ...actual,
     addXp: (...args: unknown[]) => addXpMock(...args),
     createLessonPracticeReward: (...args: unknown[]) => createLessonPracticeRewardMock(...args),
-    loadProgress: () => loadProgressMock(),
+    loadProgress: (...args: unknown[]) => loadProgressMock(...args),
   };
 });
 
@@ -293,9 +293,10 @@ describe('MusicMelodyRepeatGame', () => {
 
     expect(screen.getByTestId('music-melody-repeat-summary-shell')).toBeInTheDocument();
     expect(screen.getByTestId('music-melody-repeat-summary-title')).toHaveTextContent(
-      'Powtorzone melodie: 1/1'
+      'Za pierwszym razem: 1/1'
     );
-    expect(addXpMock).toHaveBeenCalledWith(18, {});
+    expect(loadProgressMock).toHaveBeenCalledWith({ ownerKey: null });
+    expect(addXpMock).toHaveBeenCalledWith(18, {}, { ownerKey: null });
     expect(persistKangurSessionScoreMock).toHaveBeenCalledWith(
       expect.objectContaining({
         correctAnswers: 1,
@@ -516,7 +517,7 @@ describe('MusicMelodyRepeatGame', () => {
 
     expect(screen.getByTestId('music-melody-repeat-summary-shell')).toBeInTheDocument();
     expect(screen.getByTestId('music-melody-repeat-summary-title')).toHaveTextContent(
-      'Powtorzone melodie: 1/1'
+      'Za pierwszym razem: 1/1'
     );
   });
 });

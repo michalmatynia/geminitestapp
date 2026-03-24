@@ -15,7 +15,7 @@ type CmsStorefrontAppearanceStateContextValue = {
 };
 
 type CmsStorefrontAppearanceActionsContextValue = {
-  setMode: (mode: CmsStorefrontAppearanceMode) => void;
+  setMode: React.Dispatch<React.SetStateAction<CmsStorefrontAppearanceMode>>;
 };
 
 const CmsStorefrontAppearanceStateContext =

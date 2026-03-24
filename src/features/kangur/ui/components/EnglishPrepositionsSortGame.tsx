@@ -40,6 +40,7 @@ import {
 import {
   addXp,
   createLessonPracticeReward,
+  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import {
@@ -439,7 +440,8 @@ export default function EnglishPrepositionsSortGame({
     const nextTotal = totalCorrect + roundCorrect;
     setTotalCorrect(nextTotal);
     if (roundIndex + 1 >= TOTAL_ROUNDS) {
-      const progress = loadProgress();
+      const ownerKey = getProgressOwnerKey();
+      const progress = loadProgress({ ownerKey });
       const reward = createLessonPracticeReward(progress, {
         activityKey: 'english_prepositions_sort',
         lessonKey: 'english_prepositions_time_place',
@@ -447,7 +449,7 @@ export default function EnglishPrepositionsSortGame({
         totalQuestions: TOTAL_TOKENS,
         strongThresholdPercent: 75,
       });
-      addXp(reward.xp, reward.progressUpdates);
+      addXp(reward.xp, reward.progressUpdates, { ownerKey });
       void persistKangurSessionScore({
         operation: 'english_prepositions_time_place',
         score: nextTotal,

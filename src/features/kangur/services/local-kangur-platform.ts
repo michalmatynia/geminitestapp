@@ -11,7 +11,7 @@ import {
   resetGuestKangurScoreSession,
 } from '@/features/kangur/services/guest-kangur-scores';
 import { clearStoredActiveLearnerId } from '@/features/kangur/services/kangur-active-learner';
-import { KANGUR_PROGRESS_OWNER_STORAGE_KEY } from '@/features/kangur/ui/services/progress.contracts';
+import { saveProgressOwnerKey } from '@/features/kangur/ui/services/progress';
 import type {
   KangurAssignmentCreateInput,
   KangurAssignmentListQuery,
@@ -327,9 +327,7 @@ export const createLocalKangurPlatform = (): KangurPlatform => {
         clearSessionUserCache();
         clearScoreQueryCache();
         clearStoredActiveLearnerId();
-        if (typeof window !== 'undefined') {
-          window.localStorage.removeItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY);
-        }
+        saveProgressOwnerKey(null);
         resetGuestKangurScoreSession();
         await requestKangurLogout({
           headers: withCsrfHeaders(),

@@ -9,10 +9,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import plMessages from '@/i18n/messages/pl.json';
 
+const subjectFocusState = vi.hoisted(() => ({ subjectKey: 'learner-1' }));
+
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: () => ({
     isAuthenticated: true,
     user: { actorType: 'learner', ownerUserId: 'parent-1' },
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => ({
+    subject: 'maths',
+    setSubject: vi.fn(),
+    subjectKey: subjectFocusState.subjectKey,
   }),
 }));
 
@@ -57,7 +67,7 @@ vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
   return {
     ...actual,
     addXp: (...args: unknown[]): unknown => addXpMock(...args),
-    loadProgress: (): unknown => loadProgressMock(),
+    loadProgress: (...args: unknown[]): unknown => loadProgressMock(...args),
     createLessonCompletionReward: vi.fn(() => ({
       xp: 28,
       scorePercent: 60,
@@ -69,6 +79,7 @@ vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
 describe('CalendarLesson section hub layout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    subjectFocusState.subjectKey = 'learner-1';
   });
 
   it('renders calendar sections as a lesson hub with dedicated training cards', () => {
@@ -164,8 +175,9 @@ describe('CalendarLesson section hub layout', () => {
     ).toBeNull();
     expect(screen.getByTestId('mock-calendar-interactive-game')).toBeInTheDocument();
     expect(screen.getByTestId('mock-calendar-interactive-section')).toHaveTextContent('data');
-    expect(loadProgressMock).toHaveBeenCalledTimes(1);
+    expect(loadProgressMock).toHaveBeenCalledWith({ ownerKey: 'learner-1' });
     expect(addXpMock).toHaveBeenCalledTimes(1);
+    expect(addXpMock).toHaveBeenCalledWith(28, {}, { ownerKey: 'learner-1' });
     expect(screen.queryByTestId('calendar-lesson-training-prev-button')).toBeNull();
     expect(screen.queryByTestId('calendar-lesson-training-next-button')).toBeNull();
     expect(screen.queryByTestId('calendar-lesson-training-indicator-2')).toBeNull();
@@ -227,5 +239,25 @@ describe('CalendarLesson section hub layout', () => {
     });
 
     expect(addXpMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the rerendered learner key when opening a training card', async () => {
+    const view = renderWithIntl(<CalendarLesson />);
+
+    subjectFocusState.subjectKey = 'learner-2';
+    view.rerender(
+      <NextIntlClientProvider locale='pl' messages={plMessages}>
+        <CalendarLesson />
+      </NextIntlClientProvider>
+    );
+
+    fireEvent.click(screen.getByTestId('lesson-hub-section-game_days'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('calendar-lesson-game-shell')).toBeInTheDocument();
+    });
+
+    expect(loadProgressMock).toHaveBeenCalledWith({ ownerKey: 'learner-2' });
+    expect(addXpMock).toHaveBeenCalledWith(28, {}, { ownerKey: 'learner-2' });
   });
 });

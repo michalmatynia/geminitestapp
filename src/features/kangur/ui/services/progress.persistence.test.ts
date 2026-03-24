@@ -79,6 +79,17 @@ describe('progress persistence owner scoping', () => {
     expect(loadProgress().totalXp).toBe(0);
   });
 
+  it('keeps the live owner scope in sync when the persisted owner key changes', async () => {
+    const { getProgressOwnerKey, saveProgressOwnerKey } =
+      await import('@/features/kangur/ui/services/progress');
+
+    saveProgressOwnerKey('learner-1');
+    expect(getProgressOwnerKey()).toBe('learner-1');
+
+    saveProgressOwnerKey(null);
+    expect(getProgressOwnerKey()).toBeNull();
+  });
+
   it('migrates legacy shared progress into the previous owner slot without leaking it to another learner', async () => {
     localStorage.setItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY, 'learner-1');
     localStorage.setItem(

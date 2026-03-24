@@ -15,6 +15,11 @@ const createLessonPracticeRewardMock = vi.fn(() => ({
 }));
 const loadProgressMock = vi.fn(() => ({}));
 const persistKangurSessionScoreMock = vi.fn();
+const useKangurSubjectFocusMock = vi.fn(() => ({
+  subject: 'english',
+  setSubject: vi.fn(),
+  subjectKey: 'learner-1',
+}));
 let draggableSnapshot = { isDragging: false };
 
 vi.mock('next-intl', async () => await vi.importActual<typeof import('next-intl')>('next-intl'));
@@ -68,13 +73,17 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => false,
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+}));
+
 vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/kangur/ui/services/progress')>();
   return {
     ...actual,
     addXp: (...args: unknown[]) => addXpMock(...args),
     createLessonPracticeReward: (...args: unknown[]) => createLessonPracticeRewardMock(...args),
-    loadProgress: () => loadProgressMock(),
+    loadProgress: (...args: unknown[]) => loadProgressMock(...args),
   };
 });
 
@@ -152,6 +161,7 @@ const placeArticle = (article: 'a' | 'an' | 'the', slotId: string): void => {
 
 afterEach(() => {
   draggableSnapshot = { isDragging: false };
+  useKangurSubjectFocusMock.mockClear();
 });
 
 describe('EnglishArticlesDragDropGame', () => {
@@ -186,7 +196,8 @@ describe('EnglishArticlesDragDropGame', () => {
       'Score: 6/6'
     );
     expect(screen.getByText('Perfect! Articles are in the right places.')).toBeInTheDocument();
-    expect(addXpMock).toHaveBeenCalledWith(12, {});
+    expect(loadProgressMock).toHaveBeenCalledWith({ ownerKey: 'learner-1' });
+    expect(addXpMock).toHaveBeenCalledWith(12, {}, { ownerKey: 'learner-1' });
     expect(persistKangurSessionScoreMock).toHaveBeenCalledWith(
       expect.objectContaining({
         correctAnswers: 6,

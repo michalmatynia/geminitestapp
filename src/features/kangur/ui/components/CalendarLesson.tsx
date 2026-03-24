@@ -19,6 +19,7 @@ import {
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurDisplayEmoji } from '@/features/kangur/ui/design/primitives';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import {
   addXp,
   createLessonCompletionReward,
@@ -573,6 +574,7 @@ const CalendarGameBody = ({
 export default function CalendarLesson(): React.JSX.Element {
   const translations = useTranslations('KangurStaticLessons.calendar');
   const miniGameTranslations = useTranslations('KangurMiniGames');
+  const { subjectKey } = useKangurSubjectFocus();
   const lessonCompletionAwardedRef = useRef(false);
 
   const awardLessonCompletionOnce = useCallback(() => {
@@ -580,11 +582,11 @@ export default function CalendarLesson(): React.JSX.Element {
       return;
     }
 
-    const progress = loadProgress();
+    const progress = loadProgress({ ownerKey: subjectKey });
     const reward = createLessonCompletionReward(progress, 'calendar', 60);
-    addXp(reward.xp, reward.progressUpdates);
+    addXp(reward.xp, reward.progressUpdates, { ownerKey: subjectKey });
     lessonCompletionAwardedRef.current = true;
-  }, []);
+  }, [subjectKey]);
 
   const sections = buildCalendarHubSections(translations);
   const slides = buildCalendarSectionSlides(translations, miniGameTranslations);

@@ -22,6 +22,7 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import {
   addXp,
   createTrainingReward,
+  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
@@ -144,7 +145,8 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
 
   const handleDone = useCallback(
     (finalScore: number): void => {
-      const progress = loadProgress();
+      const ownerKey = getProgressOwnerKey();
+      const progress = loadProgress({ ownerKey });
       const reward = createTrainingReward(progress, {
         activityKey: `training:clock:${section}`,
         lessonKey: 'clock',
@@ -153,7 +155,7 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
         strongThresholdPercent: gameMode === 'challenge' ? 80 : 60,
         perfectCounterKey: 'clockPerfect',
       });
-      addXp(reward.xp, reward.progressUpdates);
+      addXp(reward.xp, reward.progressUpdates, { ownerKey });
       void persistKangurSessionScore({
         operation: 'clock',
         score: finalScore,

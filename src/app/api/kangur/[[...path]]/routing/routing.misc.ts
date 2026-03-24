@@ -95,7 +95,8 @@ export const assignmentsPostHandler: SimpleRouteHandler = apiHandler(postKangurA
   bodySchema: kangurAssignmentCreateInputSchema,
 });
 
-export const assignmentPatchHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
+export const assignmentPatchHandler: ParamRouteHandler<{ id: string }> =
+  apiHandlerWithParams<{ id: string }>(
   patchKangurAssignmentHandler,
   {
     source: 'kangur.assignments.[id].PATCH',
@@ -104,13 +105,11 @@ export const assignmentPatchHandler: ParamRouteHandler = apiHandlerWithParams<{ 
   }
 );
 
-export const assignmentReassignHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
-  postKangurAssignmentReassignHandler,
-  {
+export const assignmentReassignHandler: ParamRouteHandler<{ id: string }> =
+  apiHandlerWithParams<{ id: string }>(postKangurAssignmentReassignHandler, {
     source: 'kangur.assignments.[id].reassign.POST',
     service: 'kangur.api',
-  }
-);
+  });
 
 export const lessonsGetHandler: SimpleRouteHandler = apiHandler(getKangurLessonsHandler, {
   source: 'kangur.lessons.GET',
@@ -168,12 +167,11 @@ export const lessonDocumentsGetHandler: SimpleRouteHandler = apiHandler(
   }
 );
 
-export const lessonDocumentGetHandler: ParamRouteHandler = apiHandlerWithParams<{
-  lessonId: string;
-}>(getKangurLessonDocumentHandler, {
+export const lessonDocumentGetHandler: ParamRouteHandler<{ lessonId: string }> =
+  apiHandlerWithParams<{ lessonId: string }>(getKangurLessonDocumentHandler, {
   source: 'kangur.lesson-documents.[lessonId].GET',
   service: 'kangur.api',
-});
+  });
 
 export const lessonDocumentsPostHandler: SimpleRouteHandler = apiHandler(
   postKangurLessonDocumentsHandler,
@@ -250,7 +248,7 @@ export const socialImageAddonsServeHandler: SimpleRouteHandler = apiHandler(
   }
 );
 
-export const socialPostGetHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
+export const socialPostGetHandler: ParamRouteHandler<{ id: string }> = apiHandlerWithParams<{ id: string }>(
   getKangurSocialPostHandler,
   {
     source: 'kangur.social-posts.[id].GET',
@@ -258,49 +256,39 @@ export const socialPostGetHandler: ParamRouteHandler = apiHandlerWithParams<{ id
   }
 );
 
-export const socialPostPatchHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
-  patchKangurSocialPostHandler,
-  {
+export const socialPostPatchHandler: ParamRouteHandler<{ id: string }> =
+  apiHandlerWithParams<{ id: string }>(patchKangurSocialPostHandler, {
     source: 'kangur.social-posts.[id].PATCH',
     service: 'kangur.api',
     parseJsonBody: true,
-  }
-);
+  });
 
-export const socialPostDeleteHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
-  deleteKangurSocialPostHandler,
-  {
+export const socialPostDeleteHandler: ParamRouteHandler<{ id: string }> =
+  apiHandlerWithParams<{ id: string }>(deleteKangurSocialPostHandler, {
     source: 'kangur.social-posts.[id].DELETE',
     service: 'kangur.api',
-  }
-);
+  });
 
-export const socialPostPublishHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
-  postKangurSocialPostPublishHandler,
-  {
+export const socialPostPublishHandler: ParamRouteHandler<{ id: string }> =
+  apiHandlerWithParams<{ id: string }>(postKangurSocialPostPublishHandler, {
     source: 'kangur.social-posts.[id].publish.POST',
     service: 'kangur.api',
     parseJsonBody: true,
-  }
-);
+  });
 
-export const socialPostUnpublishHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
-  postKangurSocialPostUnpublishHandler,
-  {
+export const socialPostUnpublishHandler: ParamRouteHandler<{ id: string }> =
+  apiHandlerWithParams<{ id: string }>(postKangurSocialPostUnpublishHandler, {
     source: 'kangur.social-posts.[id].unpublish.POST',
     service: 'kangur.api',
     parseJsonBody: true,
-  }
-);
+  });
 
-export const socialPostDocUpdatesHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
-  postKangurSocialPostDocUpdatesHandler,
-  {
+export const socialPostDocUpdatesHandler: ParamRouteHandler<{ id: string }> =
+  apiHandlerWithParams<{ id: string }>(postKangurSocialPostDocUpdatesHandler, {
     source: 'kangur.social-posts.[id].doc-updates.POST',
     service: 'kangur.api',
     parseJsonBody: true,
-  }
-);
+  });
 
 export const socialPostGenerateHandler: SimpleRouteHandler = apiHandler(
   postKangurSocialPostGenerateHandler,

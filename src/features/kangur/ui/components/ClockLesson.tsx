@@ -19,6 +19,7 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import {
   addXp,
   createLessonCompletionReward,
+  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { cn } from '@/features/kangur/shared/utils';
@@ -184,9 +185,10 @@ export default function ClockLesson(): React.JSX.Element {
       return;
     }
 
-    const progress = loadProgress();
+    const ownerKey = getProgressOwnerKey();
+    const progress = loadProgress({ ownerKey });
     const reward = createLessonCompletionReward(progress, 'clock', 100);
-    addXp(reward.xp, reward.progressUpdates);
+    addXp(reward.xp, reward.progressUpdates, { ownerKey });
     lessonCompletionAwardedRef.current = true;
   }, [isClockLessonComplete]);
 

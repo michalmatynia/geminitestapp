@@ -5,6 +5,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const progressOwnerState = vi.hoisted(() => ({ current: null as string | null }));
 const addXpMock = vi.fn();
 const createLessonPracticeRewardMock = vi.fn(() => ({
   breakdown: [
@@ -26,6 +27,18 @@ const createLessonPracticeRewardMock = vi.fn(() => ({
       },
     },
   },
+}));
+const loadProgressMock = vi.fn(() => ({
+  totalXp: 0,
+  gamesPlayed: 0,
+  perfectGames: 0,
+  lessonsCompleted: 0,
+  clockPerfect: 0,
+  calendarPerfect: 0,
+  geometryPerfect: 0,
+  badges: [],
+  operationsPlayed: [],
+  lessonMastery: {},
 }));
 const persistKangurSessionScoreMock = vi.fn();
 
@@ -55,18 +68,8 @@ vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
 
   return {
     ...actual,
-    loadProgress: () => ({
-      totalXp: 0,
-      gamesPlayed: 0,
-      perfectGames: 0,
-      lessonsCompleted: 0,
-      clockPerfect: 0,
-      calendarPerfect: 0,
-      geometryPerfect: 0,
-      badges: [],
-      operationsPlayed: [],
-      lessonMastery: {},
-    }),
+    getProgressOwnerKey: () => progressOwnerState.current,
+    loadProgress: (...args: unknown[]) => loadProgressMock(...args),
     createLessonPracticeReward: (...args: Parameters<typeof actual.createLessonPracticeReward>) =>
       createLessonPracticeRewardMock(...args),
     addXp: (...args: unknown[]) => addXpMock(...args),
@@ -83,6 +86,7 @@ describe('AddingSynthesisGame', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.clearAllMocks();
+    progressOwnerState.current = null;
   });
 
   afterEach(() => {
@@ -201,6 +205,7 @@ describe('AddingSynthesisGame', () => {
       'kangur-cta-pill',
       'surface-cta'
     );
+    expect(loadProgressMock).toHaveBeenCalledWith({ ownerKey: null });
     expect(createLessonPracticeRewardMock).toHaveBeenCalledWith(
       expect.anything(),
       'adding',
@@ -216,7 +221,8 @@ describe('AddingSynthesisGame', () => {
             masteryPercent: 100,
           }),
         }),
-      })
+      }),
+      { ownerKey: null }
     );
     expect(persistKangurSessionScoreMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -231,5 +237,32 @@ describe('AddingSynthesisGame', () => {
     fireEvent.click(screen.getByRole('button', { name: /wróć do dodawania/i }));
 
     expect(onFinish).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the latest active owner key when the reward is awarded', async () => {
+    render(<AddingSynthesisGame onFinish={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /start syntezę/i }));
+
+    progressOwnerState.current = 'learner-2';
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tor 2: 5' }));
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_200);
+    });
+
+    expect(loadProgressMock).toHaveBeenCalledWith({ ownerKey: 'learner-2' });
+    expect(addXpMock).toHaveBeenCalledWith(
+      25,
+      expect.objectContaining({
+        lessonMastery: expect.objectContaining({
+          adding: expect.objectContaining({
+            masteryPercent: 100,
+          }),
+        }),
+      }),
+      { ownerKey: 'learner-2' }
+    );
   });
 });

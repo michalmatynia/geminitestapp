@@ -44,6 +44,7 @@ import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/moti
 import {
   addXp,
   createLessonPracticeReward,
+  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
@@ -349,9 +350,10 @@ export default function SubtractingGardenGame({
     const nextScore = score + 1;
     scheduleKangurRoundFeedback(() => {
       if (roundIndex + 1 >= TOTAL_ROUNDS) {
-        const progress = loadProgress();
+        const ownerKey = getProgressOwnerKey();
+        const progress = loadProgress({ ownerKey });
         const reward = createLessonPracticeReward(progress, 'subtracting', nextScore, TOTAL_ROUNDS);
-        addXp(reward.xp, reward.progressUpdates);
+        addXp(reward.xp, reward.progressUpdates, { ownerKey });
         void persistKangurSessionScore({
           operation: 'subtraction',
           score: nextScore,

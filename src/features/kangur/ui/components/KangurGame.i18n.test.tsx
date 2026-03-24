@@ -10,10 +10,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('next-intl', async () => await vi.importActual<typeof import('next-intl')>('next-intl'));
 vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>('use-intl'));
 
-const { useKangurGameContextMock, getKangurQuestionsMock, isExamModeMock } = vi.hoisted(() => ({
+const {
+  useKangurGameContextMock,
+  getKangurQuestionsMock,
+  isExamModeMock,
+  useKangurSubjectFocusMock,
+} = vi.hoisted(() => ({
   useKangurGameContextMock: vi.fn(),
   getKangurQuestionsMock: vi.fn(),
   isExamModeMock: vi.fn(),
+  useKangurSubjectFocusMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurGameContext', () => ({
@@ -22,6 +28,10 @@ vi.mock('@/features/kangur/ui/context/KangurGameContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
   useOptionalKangurGameRuntime: vi.fn(() => null),
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: useKangurSubjectFocusMock,
 }));
 
 vi.mock('@/features/kangur/ui/services/kangur-questions', () => ({
@@ -37,6 +47,11 @@ describe('KangurGame i18n', () => {
     vi.useFakeTimers();
     useKangurGameContextMock.mockReturnValue({ mode: 'addition', onBack: vi.fn() });
     isExamModeMock.mockReturnValue(false);
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
     getKangurQuestionsMock.mockReturnValue([
       {
         id: '2024_5pt_17',

@@ -1132,6 +1132,22 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
     ],
     aliases: ['english articles', 'przedimki angielskie', 'articles lesson'],
   },
+  english_adjectives: {
+    explanation:
+      'Przymiotniki do opisywania osób, miejsc i przedmiotów oraz ich kolejność w prostych zdaniach. Lekcja pomaga budować bogatsze opisy w codziennych sytuacjach.',
+    triggerPhrases: [
+      'adjectives',
+      'adjective',
+      'english adjectives',
+      'adjective order',
+      'describing words',
+      'przymiotniki',
+      'przymiotnik',
+      'przymiotniki angielski',
+      'opisywanie po angielsku',
+    ],
+    aliases: ['english adjectives', 'adjectives lesson', 'przymiotniki angielskie'],
+  },
   english_adverbs_frequency: {
     explanation:
       'Przysłówki częstotliwości always, usually, sometimes i never w szkolnych i domowych rutynach. Lekcja pomaga opisywać, jak często coś się dzieje.',

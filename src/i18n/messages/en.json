@@ -741,7 +741,9 @@
     "createAccountSubmitting": "Creating account...",
     "verificationSentTo": "We sent a verification link to:",
     "verificationAction": "Click the link in the email to activate the account.",
-    "debugLinkLabel": "Debug link (dev only)"
+    "debugLinkLabel": "Debug link (dev only)",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "AuthApi": {
     "invalidPayload": "Invalid payload.",
@@ -2303,7 +2305,42 @@
       "summary": {
         "perfect": "Perfect! The weekly routine matches every frequency word.",
         "good": "Good job! Most of the week is in the right rhythm.",
-        "retry": "Try one more round and watch how often each action lights up."
+        "retry": "Try one more round and watch how often each action lights up.",
+        "guideLabel": "Frequency guide",
+        "guideHint": "Read each word as a weekly pattern.",
+        "orderLabel": "Most to least often",
+        "ruleGuideLabel": "Word order guide",
+        "ruleGuideHint": "Keep these two sentence frames in mind.",
+        "mainVerbLabel": "Before the main verb",
+        "beVerbLabel": "After am/is/are",
+        "starterLabel": "Say it about your week",
+        "starterHint": "Use one of these frames to make your own sentence.",
+        "starters": {
+          "alwaysHabit": "I always do my homework after school.",
+          "sometimesPlace": "I sometimes go to the park with my friends.",
+          "neverLate": "I am never late for school."
+        },
+        "questionLabel": "How often...?",
+        "questionHint": "Pick one question and answer it with a frequency word.",
+        "questions": {
+          "homework": {
+            "prompt": "How often do you do your homework?",
+            "starter": "Try: I always..."
+          },
+          "park": {
+            "prompt": "How often do you go to the park?",
+            "starter": "Try: I sometimes..."
+          },
+          "late": {
+            "prompt": "How often are you late for school?",
+            "starter": "Try: I am never..."
+          }
+        },
+        "badges": {
+          "rounds": "Rounds {current}/{total}",
+          "patterns": "Patterns {current}/{total}",
+          "studio": "Studio {current}/{total}"
+        }
       },
       "inRound": {
         "roundLabel": "Round {current}/{total}",
@@ -2322,10 +2359,28 @@
           "poolHint": "One card can stay unused in each round.",
           "laneAria": "Routine lane for {action}",
           "dropLabel": "Drop or tap a frequency card here.",
+          "currentSentenceLabel": "Your sentence",
+          "yourFrequencyLabel": "Your frequency",
+          "yourWeekLabel": "Your week",
+          "targetFrequencyLabel": "Target frequency",
+          "targetSentenceLabel": "Target sentence",
+          "targetWeekLabel": "Target week",
+          "changeDaysLabel": "Change days",
+          "turnOnLabel": "Turn on",
+          "turnOffLabel": "Turn off",
+          "daysLitLabel": "Days lit",
+          "matchedLabel": "Matched",
+          "sentenceLabel": "Sentence",
+          "patternLabel": "Word order:",
+          "previewEmpty": "Choose a frequency card to build the sentence.",
           "weekAria": "Weekly routine for {action}: {frequency}",
           "touchIdle": "Tap a frequency card, then tap a routine lane or the bank.",
           "touchSelected": "Selected frequency: {frequency}. Tap a routine lane or the bank.",
           "clearRound": "Clear round",
+          "patterns": {
+            "mainVerb": "adverb before the main verb",
+            "beVerb": "adverb after am/is/are"
+          },
           "feedback": {
             "perfect": "Perfect! The planner matches the target routine.",
             "retry": "Try again and compare how many days each action should happen."

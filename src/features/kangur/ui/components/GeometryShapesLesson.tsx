@@ -23,6 +23,7 @@ import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-compone
 import {
   addXp,
   createLessonCompletionReward,
+  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-copy';
@@ -317,9 +318,10 @@ export default function GeometryShapesLesson(): React.JSX.Element {
 
   const handleGameStart = useCallback((): void => {
     if (rewarded) return;
-    const progress = loadProgress();
+    const ownerKey = getProgressOwnerKey();
+    const progress = loadProgress({ ownerKey });
     const reward = createLessonCompletionReward(progress, 'geometry_shapes', 60);
-    addXp(reward.xp, reward.progressUpdates);
+    addXp(reward.xp, reward.progressUpdates, { ownerKey });
     setRewarded(true);
   }, [rewarded]);
 

@@ -10,6 +10,14 @@ import { KangurProgressBar } from '@/features/kangur/ui/design/primitives';
 import { KangurAdminCard } from '../components/KangurAdminCard';
 import { useSocialPostContext } from './SocialPostContext';
 
+const PIPELINE_PROGRESS_VALUE_BY_STEP = {
+  loading_context: 18,
+  capturing: 42,
+  saving: 64,
+  generating: 82,
+  previewing: 96,
+} as const;
+
 export function SocialPostPipeline(): React.JSX.Element {
   const {
     activePostId,
@@ -32,8 +40,14 @@ export function SocialPostPipeline(): React.JSX.Element {
     hasBatchCaptureConfig,
   } = useSocialPostContext();
 
-  const canCaptureImagesOnly = Boolean(activePostId) && Boolean(batchCaptureBaseUrl.trim()) && batchCapturePresetIds.length > 0;
+  const canCaptureImagesOnly =
+    Boolean(activePostId) &&
+    Boolean((batchCaptureBaseUrl ?? '').trim()) &&
+    batchCapturePresetIds.length > 0;
   const batchCapturePresetCount = batchCapturePresetIds.length;
+  const pipelineProgressValue = pipelineProgress
+    ? PIPELINE_PROGRESS_VALUE_BY_STEP[pipelineProgress.step]
+    : 0;
 
   return (
     <KangurAdminCard>
@@ -45,7 +59,7 @@ export function SocialPostPipeline(): React.JSX.Element {
               <Badge variant='outline' className='animate-pulse'>
                 {pipelineStep === 'capturing'
                   ? 'Capturing...'
-                  : pipelineStep === 'context'
+                  : pipelineStep === 'loading_context'
                     ? 'Loading context...'
                     : 'Generating...'}
               </Badge>
@@ -97,9 +111,9 @@ export function SocialPostPipeline(): React.JSX.Element {
 
           {pipelineStep !== 'idle' && pipelineStep !== 'done' && (
             <div className='space-y-2'>
-              <KangurProgressBar accent='slate' value={pipelineProgress} size='sm' />
+              <KangurProgressBar accent='slate' value={pipelineProgressValue} size='sm' />
               <div className='text-center text-[10px] uppercase tracking-wider text-muted-foreground'>
-                {Math.round(pipelineProgress)}% complete
+                {Math.round(pipelineProgressValue)}% complete
               </div>
             </div>
           )}

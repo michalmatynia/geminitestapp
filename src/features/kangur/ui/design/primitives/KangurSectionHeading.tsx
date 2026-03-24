@@ -10,7 +10,7 @@ import {
 } from './KangurHeadline';
 import { kangurIconBadgeVariants } from './KangurIconBadge';
 
-export type KangurSectionHeadingProps = React.HTMLAttributes<HTMLDivElement> & {
+export type KangurSectionHeadingProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> & {
   accent?: KangurAccent;
   align?: 'left' | 'center';
   description?: React.ReactNode;

@@ -82,12 +82,26 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
     return {
       data,
       isLoading: false,
+      isPending: false,
+      isFetching: false,
+      isRefetching: false,
       error: null,
     };
   },
+  useKangurLessonDocument: () => ({
+    data: null,
+    isLoading: false,
+    isPending: false,
+    isFetching: false,
+    isRefetching: false,
+    error: null,
+  }),
   useKangurLessonDocuments: () => ({
     data: {},
     isLoading: false,
+    isPending: false,
+    isFetching: false,
+    isRefetching: false,
     error: null,
   }),
 }));
@@ -133,19 +147,13 @@ vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
 
 import Lessons from '@/features/kangur/ui/pages/Lessons';
 
-
-const renderWithIntl = (ui: React.ReactElement) =>
-  renderWithIntl(
-    <NextIntlClientProvider locale='pl' messages={plMessages}>
-      {ui}
-    </NextIntlClientProvider>
-  );
-
 const renderLessonsPage = () =>
   render(
-    <KangurGuestPlayerProvider>
-      <Lessons />
-    </KangurGuestPlayerProvider>
+    <NextIntlClientProvider locale='pl' messages={plMessages}>
+      <KangurGuestPlayerProvider>
+        <Lessons />
+      </KangurGuestPlayerProvider>
+    </NextIntlClientProvider>
   );
 
 const lessonsSettingsValue = JSON.stringify([
@@ -194,7 +202,7 @@ describe('Lessons page mastery list', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
-      act(() => { callback(0); });
+      callback(0);
       return 1;
     });
     vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined);
@@ -315,7 +323,7 @@ describe('Lessons page mastery list', () => {
     expect(await screen.findByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
     expect(screen.getByTestId('kangur-lessons-heading-art')).toHaveAttribute('viewBox', '0 0 560 164');
-    expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Wróć do poprzedniej strony' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Wszystkie' })).not.toBeInTheDocument();
     const link = screen.getByRole('link', { name: 'Strona główna' });
     const topBar = link.closest('div.sticky');
@@ -372,10 +380,16 @@ describe('Lessons page mastery list', () => {
     renderLessonsPage();
 
     expect(screen.getByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
-    expect(screen.getByText('Lekcje zaraz beda gotowe.', { exact: false })).toBeInTheDocument();
+    expect(
+      screen.getByText('Wybierz temat i przejdz od razu do praktyki lub powtorki.', { exact: false })
+    ).toBeInTheDocument();
+    expect(screen.getByText('Ładowanie lekcji')).toBeInTheDocument();
+    expect(
+      screen.getByText('Przygotowujemy bibliotekę lekcji i dopasowujemy ją do wybranego tematu.')
+    ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /nauka zegara/i })).not.toBeInTheDocument();
-    expect(screen.queryByText('Ladowanie lekcji...')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('lessons-loading-fallback')).not.toBeInTheDocument();
+    expect(screen.getByTestId('lessons-intro-loading-state')).toBeInTheDocument();
+    expect(screen.getByTestId('lessons-catalog-skeleton')).toBeInTheDocument();
 
     expect(frameCallbacks).toHaveLength(1);
     act(() => {
@@ -383,7 +397,10 @@ describe('Lessons page mastery list', () => {
     });
 
     expect(await screen.findByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
-    expect(screen.queryByText('Lekcje zaraz beda gotowe.', { exact: false })).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Wybierz temat i przejdz od razu do praktyki lub powtorki.', { exact: false })
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('lessons-intro-loading-state')).not.toBeInTheDocument();
   });
 
   it('keeps loading copy visible until deferred content resolves', async () => {
@@ -397,10 +414,13 @@ describe('Lessons page mastery list', () => {
 
     const section = screen.getByTestId('lessons-shell-transition');
     expect(section).toBeInTheDocument();
-    expect(screen.getByText('Lekcje zaraz beda gotowe.', { exact: false })).toBeInTheDocument();
     expect(
-      screen.queryByText('Wybierz temat i przejdz od razu do praktyki lub powtórki.')
-    ).not.toBeInTheDocument();
+      screen.getByText('Wybierz temat i przejdz od razu do praktyki lub powtorki.', { exact: false })
+    ).toBeInTheDocument();
+    expect(screen.getByText('Ładowanie lekcji')).toBeInTheDocument();
+    expect(
+      screen.getByText('Przygotowujemy bibliotekę lekcji i dopasowujemy ją do wybranego tematu.')
+    ).toBeInTheDocument();
     expect(screen.getByTestId('lessons-list-transition')).toBeInTheDocument();
     expect(screen.getByTestId('lessons-catalog-skeleton')).toBeInTheDocument();
 
@@ -410,13 +430,12 @@ describe('Lessons page mastery list', () => {
 
     const contentTransitionSection = await screen.findByTestId('lessons-list-transition');
     expect(contentTransitionSection).toBeInTheDocument();
-    expect(screen.queryByText('Lekcje zaraz beda gotowe.', { exact: false })).not.toBeInTheDocument();
-    const introText = 'Wybierz temat i przejdz od razu do praktyki lub powtórki.';
+    expect(screen.queryByTestId('lessons-intro-loading-state')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('lessons-catalog-skeleton')).not.toBeInTheDocument();
     expect(
-      screen.getByText((content, element) => {
-        return element?.tagName.toLowerCase() === 'p' && content.includes('Wybierz temat');
-      })
-    ).toBeInTheDocument();  });
+      screen.getByText('Wybierz temat i przejdz od razu do praktyki lub powtorki.', { exact: false })
+    ).toBeInTheDocument();
+  });
 
   it('keeps a stable top section copy between initial and fully rendered states', async () => {
     const frameCallbacks: FrameRequestCallback[] = [];

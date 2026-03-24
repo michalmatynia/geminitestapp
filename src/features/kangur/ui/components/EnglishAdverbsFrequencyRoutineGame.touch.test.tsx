@@ -81,6 +81,9 @@ afterEach(() => {
   draggableSnapshot = { isDragging: false };
 });
 
+const getTokenActiveDotCount = (button: HTMLElement): number =>
+  button.querySelectorAll('[data-active="true"]').length;
+
 describe('EnglishAdverbsFrequencyRoutineGame touch interactions', () => {
   it('supports tap-to-lane placement and keeps the mobile drag-handle styling', () => {
     render(
@@ -100,6 +103,8 @@ describe('EnglishAdverbsFrequencyRoutineGame touch interactions', () => {
     expect(token).toHaveClass('touch-manipulation');
     expect(token).toHaveClass('min-h-[3.75rem]');
     expect(token).toHaveStyle({ touchAction: 'none' });
+    expect(within(token).getByText('Days lit: 7/7')).toBeInTheDocument();
+    expect(getTokenActiveDotCount(token)).toBe(7);
 
     fireEvent.click(token);
 
@@ -112,6 +117,9 @@ describe('EnglishAdverbsFrequencyRoutineGame touch interactions', () => {
     fireEvent.click(slot);
 
     expect(within(slot).getByRole('button', { name: 'always' })).toBeInTheDocument();
+    expect(
+      screen.getByTestId('english-adverbs-frequency-sentence-cinema-sunday-cinema')
+    ).toHaveTextContent('I always go to the cinema.');
     expect(screen.getByTestId('english-adverbs-frequency-selection-hint')).toHaveTextContent(
       'Tap a frequency card, then tap a routine lane or the bank.'
     );
@@ -131,5 +139,6 @@ describe('EnglishAdverbsFrequencyRoutineGame touch interactions', () => {
     expect(draggedToken).toHaveClass('touch-manipulation');
     expect(draggedToken).toHaveClass('min-h-[3.75rem]');
     expect(draggedToken).toHaveStyle({ touchAction: 'none' });
+    expect(within(draggedToken).getByText('Days lit: 7/7')).toBeInTheDocument();
   });
 });

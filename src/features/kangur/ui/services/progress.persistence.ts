@@ -492,6 +492,9 @@ export function loadProgressOwnerKey(): string | null {
 }
 
 export function saveProgressOwnerKey(ownerKey: string | null): void {
+  const normalized = typeof ownerKey === 'string' ? ownerKey.trim() : '';
+  setProgressOwnerKey(normalized || null);
+
   if (typeof window === 'undefined') {
     return;
   }
@@ -500,7 +503,6 @@ export function saveProgressOwnerKey(ownerKey: string | null): void {
     return;
   }
 
-  const normalized = typeof ownerKey === 'string' ? ownerKey.trim() : '';
   if (!normalized) {
     localStorage.removeItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY);
     return;

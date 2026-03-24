@@ -14,6 +14,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/features/kangur/shared/ui';
+import type { KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
 
 import {
   formatDatetimeDisplay,
@@ -23,10 +24,14 @@ import { SocialPostEditor } from './SocialPost.Editor';
 import { SocialPostImagesPanel } from './SocialPost.ImagesPanel';
 import { useSocialPostContext } from './SocialPostContext';
 
-const resolvePostTitle = (post: { titlePl: string; titleEn: string } | null): string =>
+const resolvePostTitle = (
+  post: Pick<KangurSocialPost, 'titlePl' | 'titleEn'> | null
+): string =>
   post?.titlePl.trim() || post?.titleEn.trim() || 'Untitled update';
 
-const resolvePostSubtitle = (post: { status: string; publishedAt?: string | Date; scheduledAt?: string | Date } | null): string => {
+const resolvePostSubtitle = (
+  post: Pick<KangurSocialPost, 'status' | 'publishedAt' | 'scheduledAt'> | null
+): string => {
   if (!post) return 'Edit copy and review attached images.';
   if (post.status === 'published' && post.publishedAt) {
     return `Published ${formatDatetimeDisplay(post.publishedAt)}`;
@@ -51,6 +56,10 @@ export function SocialPostEditorModal({
     handleSave,
     patchMutation,
     imageAssets,
+    handleRemoveImage,
+    setShowMediaLibrary,
+    showMediaLibrary,
+    handleAddImages,
   } = useSocialPostContext();
 
   const [activeTab, setActiveTab] = React.useState<'edit' | 'schedule' | 'images'>('edit');
@@ -154,10 +163,10 @@ export function SocialPostEditorModal({
           {activePost ? (
             <SocialPostImagesPanel
               imageAssets={imageAssets}
-              handleRemoveImage={useSocialPostContext().handleRemoveImage}
-              setShowMediaLibrary={useSocialPostContext().setShowMediaLibrary}
-              showMediaLibrary={useSocialPostContext().showMediaLibrary}
-              handleAddImages={useSocialPostContext().handleAddImages}
+              handleRemoveImage={handleRemoveImage}
+              setShowMediaLibrary={setShowMediaLibrary}
+              showMediaLibrary={showMediaLibrary}
+              handleAddImages={handleAddImages}
             />
           ) : (
             <div className='rounded-xl border border-border/60 bg-background/40 p-4 text-sm text-muted-foreground'>

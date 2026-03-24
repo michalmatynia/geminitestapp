@@ -42,6 +42,7 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import {
   addXp,
   createLessonPracticeReward,
+  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
@@ -359,14 +360,15 @@ export default function LogicalClassificationGame({
   const goToNextRound = (): void => {
     if (roundIndex + 1 >= TOTAL_ROUNDS) {
       if (TOTAL_TARGETS > 0) {
-        const progress = loadProgress();
+        const ownerKey = getProgressOwnerKey();
+        const progress = loadProgress({ ownerKey });
         const reward = createLessonPracticeReward(
           progress,
           'logical_classification',
           score,
           TOTAL_TARGETS
         );
-        addXp(reward.xp, reward.progressUpdates);
+        addXp(reward.xp, reward.progressUpdates, { ownerKey });
         void persistKangurSessionScore({
           operation: 'logical',
           score,

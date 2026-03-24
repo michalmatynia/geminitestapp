@@ -31,7 +31,7 @@ type KangurPageIntroCardProps = {
   title: string;
   titleId?: string;
   visualTitle?: ReactNode;
-  onBack: () => void;
+  onBack?: () => void;
 };
 
 type KangurPageIntroCardContextValue = {
@@ -176,7 +176,7 @@ export function KangurPageIntroCard({
   title,
   titleId,
   visualTitle,
-  onBack,
+  onBack = () => {},
 }: KangurPageIntroCardProps): React.JSX.Element {
   const panelClassName = cn('w-full', headingAction ? 'text-left' : 'text-center', className);
   const panelTestId = testId;

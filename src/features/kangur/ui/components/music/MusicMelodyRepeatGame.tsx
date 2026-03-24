@@ -25,6 +25,7 @@ import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurM
 import {
   addXp,
   createLessonPracticeReward,
+  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
@@ -105,6 +106,9 @@ export default function MusicMelodyRepeatGame({
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const [attemptOutcome, setAttemptOutcome] = useState<MusicRoundOutcome>(null);
+  const [hadErrorInCurrentRound, setHadErrorInCurrentRound] = useState(false);
+  const [firstTrySuccesses, setFirstTrySuccesses] = useState(0);
+  const [isSlowMode, setIsSlowMode] = useState(false);
   const [feedback, setFeedback] = useState<MusicRoundFeedback>({
     accent: 'sky',
     message: buildRoundStartMessage(),
@@ -152,6 +156,7 @@ export default function MusicMelodyRepeatGame({
       setPressedNoteId(null);
       setPressedVelocity(null);
       setAttemptOutcome(null);
+      setHadErrorInCurrentRound(false);
       setFeedback({
         accent: round?.accent ?? 'sky',
         message: nextMessage ?? buildRoundStartMessage(),
@@ -169,26 +174,28 @@ export default function MusicMelodyRepeatGame({
   }, [clearTransientTimeouts, resetRoundAttempt, roundIndex, stop]);
 
   const finalizeSession = useCallback(
-    (nextPerfectRounds: number): void => {
-      const progress = loadProgress();
+    (nextPerfectRounds: number, nextFirstTrySuccesses: number): void => {
+      const ownerKey = getProgressOwnerKey();
+      const progress = loadProgress({ ownerKey });
       const reward = createLessonPracticeReward(progress, {
         activityKey: `lesson_practice:${LESSON_KEY}`,
         lessonKey: LESSON_KEY,
-        correctAnswers: nextPerfectRounds,
+        correctAnswers: nextFirstTrySuccesses,
         totalQuestions: TOTAL_ROUNDS,
         strongThresholdPercent: 75,
       });
-      addXp(reward.xp, reward.progressUpdates);
+      addXp(reward.xp, reward.progressUpdates, { ownerKey });
       void persistKangurSessionScore({
         operation: LESSON_KEY,
         score: nextPerfectRounds,
         totalQuestions: TOTAL_ROUNDS,
-        correctAnswers: nextPerfectRounds,
+        correctAnswers: nextFirstTrySuccesses,
         timeTakenSeconds: Math.round((Date.now() - sessionStartedAtRef.current) / 1000),
         xpEarned: reward.xp,
       });
       setXpEarned(reward.xp);
       setXpBreakdown(reward.breakdown ?? []);
+      setFirstTrySuccesses(nextFirstTrySuccesses);
       setDone(true);
       setPhase('summary');
     },
@@ -198,10 +205,14 @@ export default function MusicMelodyRepeatGame({
   const queueNextRound = useCallback((): void => {
       const nextPerfectRounds = perfectRounds + 1;
       setPerfectRounds(nextPerfectRounds);
+      const nextFirstTrySuccesses = hadErrorInCurrentRound
+        ? firstTrySuccesses
+        : firstTrySuccesses + 1;
+      setFirstTrySuccesses(nextFirstTrySuccesses);
 
       if (roundIndex + 1 >= TOTAL_ROUNDS) {
         feedbackTimeoutRef.current = scheduleKangurRoundFeedback(() => {
-          finalizeSession(nextPerfectRounds);
+          finalizeSession(nextPerfectRounds, nextFirstTrySuccesses);
         }, 900);
         return;
       }
@@ -210,7 +221,7 @@ export default function MusicMelodyRepeatGame({
         setRoundIndex((current) => current + 1);
       }, 900);
     },
-    [finalizeSession, perfectRounds, roundIndex]
+    [finalizeSession, firstTrySuccesses, hadErrorInCurrentRound, perfectRounds, roundIndex]
   );
 
   const handleListen = useCallback(async (): Promise<void> => {
@@ -234,7 +245,7 @@ export default function MusicMelodyRepeatGame({
     });
 
     const started = await playSequence(melodyPlayback, {
-      gapMs: 120,
+      gapMs: isSlowMode ? 260 : 120,
       onStepStart: (_note, index) => {
         setActiveStepIndex(index);
       },
@@ -266,6 +277,7 @@ export default function MusicMelodyRepeatGame({
     isAudioBlocked,
     isAudioSupported,
     isPlayingSequence,
+    isSlowMode,
     melodyPlayback,
     playSequence,
     round,
@@ -309,6 +321,7 @@ export default function MusicMelodyRepeatGame({
       if (noteId !== expectedNote) {
         clearTransientTimeouts();
         stopAllSustainedNotes({ immediate: true });
+        setHadErrorInCurrentRound(true);
         setAttemptOutcome('error');
         setPhase('listen');
         setActiveStepIndex(null);
@@ -443,6 +456,8 @@ export default function MusicMelodyRepeatGame({
     setXpEarned(0);
     setXpBreakdown([]);
     setAttemptOutcome(null);
+    setHadErrorInCurrentRound(false);
+    setFirstTrySuccesses(0);
     setFeedback({
       accent: MUSIC_MELODY_REPEAT_ROUNDS[0]?.accent ?? 'sky',
       message: buildRoundStartMessage(),
@@ -457,19 +472,19 @@ export default function MusicMelodyRepeatGame({
   }, [clearTransientTimeouts, stop]);
 
   if (done) {
-    const percent = Math.round((perfectRounds / TOTAL_ROUNDS) * 100);
+    const firstTryPercent = Math.round((firstTrySuccesses / TOTAL_ROUNDS) * 100);
 
     return (
       <KangurPracticeGameSummary dataTestId='music-melody-repeat-summary-shell'>
         <KangurPracticeGameSummaryEmoji
           dataTestId='music-melody-repeat-summary-emoji'
-          emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '🎹'}
+          emoji={firstTrySuccesses === TOTAL_ROUNDS ? '🏆' : firstTryPercent >= 60 ? '🌟' : '🎹'}
         />
         <KangurPracticeGameSummaryTitle
           accent='sky'
           title={
             <KangurHeadline data-testid='music-melody-repeat-summary-title'>
-              Powtorzone melodie: {perfectRounds}/{TOTAL_ROUNDS}
+              Za pierwszym razem: {firstTrySuccesses}/{TOTAL_ROUNDS}
             </KangurHeadline>
           }
         />
@@ -481,16 +496,16 @@ export default function MusicMelodyRepeatGame({
         />
         <KangurPracticeGameSummaryProgress
           accent='sky'
-          ariaLabel='Skutecznosc powtorzonych melodii'
-          ariaValueText={`${percent}% melodii bez pomylki`}
+          ariaLabel='Melodie powtorzone za pierwszym razem'
+          ariaValueText={`${firstTryPercent}% melodii za pierwszym razem`}
           dataTestId='music-melody-repeat-summary-progress-bar'
-          percent={percent}
+          percent={firstTryPercent}
         />
         <KangurPracticeGameSummaryMessage>
-          {percent === 100
-            ? 'Kazda melodia zabrzmiala czysto i pewnie.'
-            : percent >= 60
-              ? 'Coraz lepiej lapiesz melodie. Sprobuj jeszcze raz, aby zagrac bez pomylek.'
+          {firstTrySuccesses === TOTAL_ROUNDS
+            ? 'Kazda melodia zabrzmiala czysto i pewnie — za pierwszym razem!'
+            : firstTryPercent >= 60
+              ? 'Coraz lepiej lapiesz melodie. Sprobuj jeszcze raz, aby zagrac wszystkie bez pomylek.'
               : 'Posluchaj ponownie i podazaj za swiecacymi kolorami krok po kroku.'}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
@@ -636,8 +651,8 @@ export default function MusicMelodyRepeatGame({
             melody={round?.notes ?? []}
             className='!overflow-visible !border-0 !bg-transparent !px-1.5 !py-2.5 !shadow-none sm:!px-2.5 sm:!py-3'
             onKeyboardModeChange={handleKeyboardModeChange}
-            onKeyPress={(details) => {
-              void handleKeyPress(details);
+            onKeyPress={(noteId, details) => {
+              void handleKeyPress(noteId, details);
             }}
             onSynthGlideModeChange={handleSynthGlideModeChange}
             onSynthGestureChange={handleSynthGestureChange}
@@ -732,6 +747,25 @@ export default function MusicMelodyRepeatGame({
                 ) : null}
               </div>
             </div>
+          </div>
+          <div className='flex w-full justify-center pb-1'>
+            <button
+              aria-label={isSlowMode ? 'Wolne tempo — kliknij aby przyspieszyc' : 'Normalne tempo — kliknij aby zwolnic'}
+              aria-pressed={isSlowMode}
+              className={cn(
+                'flex items-center gap-1.5 rounded-2xl border px-3 py-1.5 text-sm font-semibold transition-colors',
+                isCoarsePointer ? 'touch-manipulation select-none active:scale-[0.97]' : 'hover:bg-slate-50',
+                isSlowMode
+                  ? 'border-amber-200 bg-amber-50 text-amber-700 ring-1 ring-amber-200/80'
+                  : 'border-slate-200 bg-white/60 text-slate-400'
+              )}
+              data-testid='music-melody-repeat-slow-mode-toggle'
+              onClick={() => setIsSlowMode((v) => !v)}
+              type='button'
+            >
+              <span aria-hidden='true' className='text-base leading-none'>🐢</span>
+              <span>{isSlowMode ? 'Wolne tempo' : 'Zwolnij'}</span>
+            </button>
           </div>
         </div>
 

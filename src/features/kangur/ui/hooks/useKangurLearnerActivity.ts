@@ -13,7 +13,7 @@ import type {
   KangurLearnerActivityUpdateInput,
 } from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
-import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
+import * as KangurSubjectFocusContext from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { recordKangurOpenedTask } from '@/features/kangur/ui/services/progress';
 import { kangurLearnerActivityStatusSchema } from '@/features/kangur/shared/contracts/kangur';
 
@@ -23,6 +23,20 @@ const DEFAULT_PING_INTERVAL_MS = 45_000;
 const DEFAULT_REFRESH_INTERVAL_MS = 30_000;
 const ENABLE_LEARNER_ACTIVITY_SSE =
   process.env['NEXT_PUBLIC_KANGUR_LEARNER_ACTIVITY_SSE'] !== 'false';
+
+const useLegacySubjectFocusState = (): { subjectKey: string | null } | null => {
+  const legacyFocus = KangurSubjectFocusContext.useKangurSubjectFocus?.();
+  return legacyFocus ? { subjectKey: legacyFocus.subjectKey ?? null } : null;
+};
+
+const useResolvedSubjectFocusState = Object.prototype.hasOwnProperty.call(
+  KangurSubjectFocusContext,
+  'useOptionalKangurSubjectFocusState'
+)
+  ? (KangurSubjectFocusContext as {
+      useOptionalKangurSubjectFocusState: () => { subjectKey: string | null } | null;
+    }).useOptionalKangurSubjectFocusState
+  : useLegacySubjectFocusState;
 
 type UseKangurLearnerActivityStatusOptions = {
   enabled?: boolean;
@@ -232,7 +246,8 @@ export const useKangurLearnerActivityPing = ({
   enabled = true,
   intervalMs = DEFAULT_PING_INTERVAL_MS,
 }: UseKangurLearnerActivityPingOptions): void => {
-  const { subjectKey } = useKangurSubjectFocus();
+  const subjectFocusState = useResolvedSubjectFocusState();
+  const subjectKey = subjectFocusState?.subjectKey ?? null;
   const latestActivityRef = useRef<KangurLearnerActivityUpdateInput | null>(null);
   const lastRecordedKeyRef = useRef<string | null>(null);
   const activityPayload = useMemo<KangurLearnerActivityUpdateInput | null>(() => {

@@ -60,6 +60,14 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => ({
+    subject: 'english',
+    setSubject: vi.fn(),
+    subjectKey: 'learner-1',
+  }),
+}));
+
 vi.mock('@/features/kangur/ui/components/EnglishArticlesDragDropGame.data', () => ({
   ENGLISH_ARTICLES_DRAG_DROP_ROUNDS: [
     {

@@ -44,6 +44,7 @@ import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/moti
 import {
   addXp,
   createLessonPracticeReward,
+  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
@@ -291,9 +292,10 @@ export default function DivisionGroupsGame({
     const nextScore = score + 1;
     scheduleKangurRoundFeedback(() => {
       if (roundIndex + 1 >= TOTAL_ROUNDS) {
-        const progress = loadProgress();
+        const ownerKey = getProgressOwnerKey();
+        const progress = loadProgress({ ownerKey });
         const reward = createLessonPracticeReward(progress, 'division', nextScore, TOTAL_ROUNDS);
-        addXp(reward.xp, reward.progressUpdates);
+        addXp(reward.xp, reward.progressUpdates, { ownerKey });
         void persistKangurSessionScore({
           operation: 'division',
           score: nextScore,

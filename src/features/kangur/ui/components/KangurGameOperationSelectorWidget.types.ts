@@ -3,6 +3,7 @@ import type {
   KangurLessonSubject,
 } from '@/features/kangur/shared/contracts/kangur';
 import type {
+  KangurDifficulty,
   KangurGameScreen,
   KangurOperation,
 } from '@/features/kangur/ui/types';
@@ -89,7 +90,7 @@ export type OperationSelectorFallbackCopy = {
 };
 
 export type KangurOperationSelectorRecommendationTarget =
-  | { kind: 'operation'; operation: KangurOperation }
+  | { kind: 'operation'; difficulty: KangurDifficulty; operation: KangurOperation }
   | { kind: 'training' }
   | { kind: 'screen'; screen: KangurGameScreen };
 

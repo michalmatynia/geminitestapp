@@ -46,6 +46,7 @@ import { loosenMax, loosenMin, loosenMinInt } from '@/features/kangur/ui/service
 import {
   addXp,
   createLessonPracticeReward,
+  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import {
@@ -476,14 +477,15 @@ export default function GeometryPerimeterDrawingGame({
 
   const finishGame = useCallback(
     (finalScore: number): void => {
-      const progress = loadProgress();
+      const ownerKey = getProgressOwnerKey();
+      const progress = loadProgress({ ownerKey });
       const reward = createLessonPracticeReward(
         progress,
         'geometry_perimeter',
         finalScore,
         TOTAL_ROUNDS
       );
-      addXp(reward.xp, reward.progressUpdates);
+      addXp(reward.xp, reward.progressUpdates, { ownerKey });
       void persistKangurSessionScore({
         operation: 'geometry_perimeter',
         score: finalScore,

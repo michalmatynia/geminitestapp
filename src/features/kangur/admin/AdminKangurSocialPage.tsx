@@ -29,12 +29,7 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
   
   const {
     posts,
-    activePostId,
     activePost,
-    batchCaptureBaseUrl,
-    batchCapturePresetIds,
-    batchCapturePresetLimit,
-    effectiveBatchCapturePresetCount,
     deleteError,
     clearDeleteError,
     postsQuery,
@@ -43,19 +38,6 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
     handleCreateDraft,
     handleDeletePost,
     handleUnpublishPost,
-    handleRunFullPipeline,
-    handleRunFullPipelineWithFreshCapture,
-    handleCaptureImagesOnly,
-    canGenerateSocialDraft,
-    socialDraftBlockedReason,
-    canRunFreshCapturePipeline,
-    socialBatchCaptureBlockedReason,
-    pipelineStep,
-    pipelineProgress,
-    pipelineErrorMessage,
-    captureOnlyPending,
-    captureOnlyMessage,
-    captureOnlyErrorMessage,
     handleSaveSettings,
     isSettingsDirty,
     isSavingSettings,
@@ -148,26 +130,7 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
           <SocialPostList />
 
           <div className='space-y-6'>
-            <SocialPostPipeline
-              activePostId={activePostId}
-              pipelineStep={pipelineStep}
-              pipelineProgress={pipelineProgress}
-              pipelineErrorMessage={pipelineErrorMessage}
-              handleRunFullPipeline={handleRunFullPipeline}
-              handleRunFullPipelineWithFreshCapture={handleRunFullPipelineWithFreshCapture}
-              handleCaptureImagesOnly={handleCaptureImagesOnly}
-              canRunPipeline={canGenerateSocialDraft}
-              canRunFreshCapturePipeline={canRunFreshCapturePipeline}
-              canCaptureImagesOnly={Boolean(activePostId) && Boolean(batchCaptureBaseUrl.trim()) && batchCapturePresetIds.length > 0}
-              pipelineBlockedReason={socialDraftBlockedReason}
-              captureBlockedReason={socialBatchCaptureBlockedReason}
-              captureOnlyPending={captureOnlyPending}
-              captureOnlyMessage={captureOnlyMessage}
-              captureOnlyErrorMessage={captureOnlyErrorMessage}
-              batchCapturePresetCount={batchCapturePresetIds.length}
-              effectiveBatchCapturePresetCount={effectiveBatchCapturePresetCount}
-              batchCapturePresetLimit={batchCapturePresetLimit}
-            />
+            <SocialPostPipeline />
 
             <KangurSocialPipelineQueuePanel variant='compact' />
 

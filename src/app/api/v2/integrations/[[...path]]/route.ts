@@ -85,13 +85,16 @@ const dispatch = async (
   source: string
 ): Promise<Response> => {
   const handler = module[method];
-  if (!handler) {
+  if (typeof handler !== 'function') {
     const allowed = getAllowedMethods(module);
     return allowed.length > 0
       ? methodNotAllowed(request, allowed, source)
       : notFound(request, source);
   }
-  return handler(request, { params: Promise.resolve(params ?? ({} as Params)) });
+  return (handler as RouteModule[HttpMethod] & ((request: NextRequest, context: { params: Params | Promise<Params> }) => Promise<Response>))(
+    request,
+    { params: Promise.resolve(params ?? ({} as Params)) }
+  );
 };
 
 const getPathSegments = (request: NextRequest): string[] => {

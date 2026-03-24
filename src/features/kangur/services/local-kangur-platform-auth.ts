@@ -8,7 +8,7 @@ import {
   clearStoredActiveLearnerId,
   setStoredActiveLearnerId,
 } from '@/features/kangur/services/kangur-active-learner';
-import { KANGUR_PROGRESS_OWNER_STORAGE_KEY } from '@/features/kangur/ui/services/progress.contracts';
+import { saveProgressOwnerKey } from '@/features/kangur/ui/services/progress';
 import { kangurAuthUserSchema } from '@kangur/contracts';
 
 import { clearScoreQueryCache } from './local-kangur-platform-score-cache';
@@ -40,11 +40,7 @@ const unauthorizedError = (): Error & { status: number } => {
 };
 
 const clearStoredProgressOwnerKey = (): void => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  window.localStorage.removeItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY);
+  saveProgressOwnerKey(null);
 };
 
 export const clearSessionUserCache = (): void => {

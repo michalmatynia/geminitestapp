@@ -75,7 +75,7 @@ export function KangurFeaturePageShell({
     [focusSkipTarget]
   );
   const initialTopBarHeightCssValue = readKangurTopBarHeightCssValue();
-  const shellStyle: CSSProperties = {
+  const shellStyle: CSSProperties & Record<string, string> = {
     ...kangurAppearance.vars,
   };
   if (initialTopBarHeightCssValue) {

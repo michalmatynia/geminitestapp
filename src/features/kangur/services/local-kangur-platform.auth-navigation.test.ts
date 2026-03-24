@@ -101,6 +101,11 @@ const loadLocalKangurPlatformModule = () =>
     '@/features/kangur/services/local-kangur-platform'
   );
 
+const loadProgressModule = () =>
+  vi.importActual<typeof import('@/features/kangur/ui/services/progress')>(
+    '@/features/kangur/ui/services/progress'
+  );
+
 const loadActiveLearnerModule = () =>
   vi.importActual<typeof import('@/features/kangur/services/kangur-active-learner')>(
     '@/features/kangur/services/kangur-active-learner'
@@ -198,13 +203,15 @@ describe('createLocalKangurPlatform auth navigation', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    window.localStorage.setItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY, 'learner-stale');
+    const { getProgressOwnerKey, saveProgressOwnerKey } = await loadProgressModule();
+    saveProgressOwnerKey('learner-stale');
 
     const { createLocalKangurPlatform } = await loadLocalKangurPlatformModule();
     const platform = createLocalKangurPlatform();
 
     await expect(platform.auth.me()).rejects.toMatchObject({ status: 401 });
     expect(window.localStorage.getItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY)).toBeNull();
+    expect(getProgressOwnerKey()).toBeNull();
   });
 
   it('requests auth state with no-store caching so logout cannot reuse a stale session response', async () => {
@@ -269,7 +276,8 @@ describe('createLocalKangurPlatform auth navigation', () => {
       status: 200,
     });
     vi.stubGlobal('fetch', fetchMock);
-    window.localStorage.setItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY, 'learner-stale');
+    const { getProgressOwnerKey, saveProgressOwnerKey } = await loadProgressModule();
+    saveProgressOwnerKey('learner-stale');
 
     const { createLocalKangurPlatform } = await loadLocalKangurPlatformModule();
     const platform = createLocalKangurPlatform();
@@ -277,6 +285,7 @@ describe('createLocalKangurPlatform auth navigation', () => {
     await platform.auth.logout();
 
     expect(window.localStorage.getItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY)).toBeNull();
+    expect(getProgressOwnerKey()).toBeNull();
   });
 
   it('reloads the current Kangur page after server logout when a return URL is provided', async () => {

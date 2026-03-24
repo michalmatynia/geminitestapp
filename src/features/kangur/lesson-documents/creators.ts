@@ -493,6 +493,8 @@ const STARTER_TEMPLATE_BY_COMPONENT_ID: Record<
   english_parts_of_speech: 'article',
   english_sentence_structure: 'article',
   english_subject_verb_agreement: 'article',
+  english_adjectives: 'article',
+  english_adverbs_frequency: 'article',
   english_articles: 'article',
   english_prepositions_time_place: 'article',
   webdev_react_components: 'article',

@@ -151,6 +151,10 @@ export const useKangurSubjectFocusState = (): KangurSubjectFocusStateContextValu
   return context;
 };
 
+export const useOptionalKangurSubjectFocusState = ():
+  | KangurSubjectFocusStateContextValue
+  | null => useContext(KangurSubjectFocusStateContext);
+
 export const useKangurSubjectFocusActions = (): KangurSubjectFocusActionsContextValue => {
   const context = useContext(KangurSubjectFocusActionsContext);
   if (!context) {

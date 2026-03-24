@@ -42,6 +42,7 @@ import {
   KANGUR_WRAP_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   addXp,
@@ -185,6 +186,7 @@ export default function EnglishArticlesDragDropGame({
   onFinish,
 }: KangurMiniGameFinishProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const { subjectKey } = useKangurSubjectFocus();
   const isCoarsePointer = useKangurCoarsePointer();
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const [roundIndex, setRoundIndex] = useState(0);
@@ -357,7 +359,7 @@ export default function EnglishArticlesDragDropGame({
     setTotalCorrect(nextTotal);
 
     if (roundIndex + 1 >= TOTAL_ROUNDS) {
-      const progress = loadProgress();
+      const progress = loadProgress({ ownerKey: subjectKey });
       const reward = createLessonPracticeReward(progress, {
         activityKey: 'english_articles_drag_drop',
         lessonKey: 'english_articles',
@@ -365,7 +367,7 @@ export default function EnglishArticlesDragDropGame({
         totalQuestions: TOTAL_SENTENCES,
         strongThresholdPercent: 75,
       });
-      addXp(reward.xp, reward.progressUpdates);
+      addXp(reward.xp, reward.progressUpdates, { ownerKey: subjectKey });
       void persistKangurSessionScore({
         operation: 'english_articles',
         score: nextTotal,

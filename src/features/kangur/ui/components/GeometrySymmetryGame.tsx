@@ -48,6 +48,7 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import {
   addXp,
   createTrainingReward,
+  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
@@ -441,7 +442,8 @@ export default function GeometrySymmetryGame({
         clearDrawing();
         setShowMirrorHint(false);
         if (isLastRound) {
-          const progress = loadProgress();
+          const ownerKey = getProgressOwnerKey();
+          const progress = loadProgress({ ownerKey });
           const reward = createTrainingReward(progress, {
             activityKey: 'training:geometry_symmetry',
             lessonKey: 'geometry_symmetry',
@@ -450,7 +452,7 @@ export default function GeometrySymmetryGame({
             strongThresholdPercent: 65,
             perfectCounterKey: 'geometryPerfect',
           });
-          addXp(reward.xp, reward.progressUpdates);
+          addXp(reward.xp, reward.progressUpdates, { ownerKey });
           void persistKangurSessionScore({
             operation: 'geometry_symmetry',
             score: nextScore,

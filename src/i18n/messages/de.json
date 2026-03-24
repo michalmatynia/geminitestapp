@@ -741,7 +741,9 @@
     "createAccountSubmitting": "Konto wird erstellt...",
     "verificationSentTo": "Wir haben einen Bestätigungslink gesendet an:",
     "verificationAction": "Klicken Sie auf den Link in der E-Mail, um das Konto zu aktivieren.",
-    "debugLinkLabel": "Debug-Link (nur Dev)"
+    "debugLinkLabel": "Debug-Link (nur Dev)",
+    "showPassword": "Passwort anzeigen",
+    "hidePassword": "Passwort verbergen"
   },
   "AuthApi": {
     "invalidPayload": "Ungültige Nutzlast.",
@@ -2303,7 +2305,42 @@
       "summary": {
         "perfect": "Perfekt! Der Wochenplan passt zu jedem Häufigkeitswort.",
         "good": "Gute Arbeit! Der größte Teil der Woche hat schon den richtigen Rhythmus.",
-        "retry": "Versuche es noch einmal und beobachte, wie oft jede Handlung aufleuchtet."
+        "retry": "Versuche es noch einmal und beobachte, wie oft jede Handlung aufleuchtet.",
+        "guideLabel": "Häufigkeitsübersicht",
+        "guideHint": "Lies jedes Wort als Wochenmuster.",
+        "orderLabel": "Von am häufigsten bis am seltensten",
+        "ruleGuideLabel": "Satzbau-Überblick",
+        "ruleGuideHint": "Behalte diese zwei Satzmuster im Kopf.",
+        "mainVerbLabel": "Vor dem Hauptverb",
+        "beVerbLabel": "Nach am/is/are",
+        "starterLabel": "Sag es über deine Woche",
+        "starterHint": "Nutze einen dieser Rahmen für deinen eigenen Satz.",
+        "starters": {
+          "alwaysHabit": "I always do my homework after school.",
+          "sometimesPlace": "I sometimes go to the park with my friends.",
+          "neverLate": "I am never late for school."
+        },
+        "questionLabel": "Wie oft...?",
+        "questionHint": "Wähle eine Frage und beantworte sie mit einem Häufigkeitswort.",
+        "questions": {
+          "homework": {
+            "prompt": "How often do you do your homework?",
+            "starter": "Try: I always..."
+          },
+          "park": {
+            "prompt": "How often do you go to the park?",
+            "starter": "Try: I sometimes..."
+          },
+          "late": {
+            "prompt": "How often are you late for school?",
+            "starter": "Try: I am never..."
+          }
+        },
+        "badges": {
+          "rounds": "Runden {current}/{total}",
+          "patterns": "Muster {current}/{total}",
+          "studio": "Studio {current}/{total}"
+        }
       },
       "inRound": {
         "roundLabel": "Runde {current}/{total}",
@@ -2322,10 +2359,28 @@
           "poolHint": "In jeder Runde darf eine Karte unbenutzt bleiben.",
           "laneAria": "Routinebahn für {action}",
           "dropLabel": "Lege hier eine Häufigkeitskarte ab oder tippe sie an.",
+          "currentSentenceLabel": "Dein Satz",
+          "yourFrequencyLabel": "Deine Häufigkeit",
+          "yourWeekLabel": "Deine Woche",
+          "targetFrequencyLabel": "Zielhäufigkeit",
+          "targetSentenceLabel": "Zielsatz",
+          "targetWeekLabel": "Zielwoche",
+          "changeDaysLabel": "Zu ändernde Tage",
+          "turnOnLabel": "Einschalten",
+          "turnOffLabel": "Ausschalten",
+          "daysLitLabel": "Aktive Tage",
+          "matchedLabel": "Passt",
+          "sentenceLabel": "Satz",
+          "patternLabel": "Wortstellung:",
+          "previewEmpty": "Wähle eine Häufigkeitskarte, um den Satz zu bauen.",
           "weekAria": "Wochenroutine für {action}: {frequency}",
           "touchIdle": "Tippe eine Häufigkeitskarte an und danach eine Bahn oder die Bank.",
           "touchSelected": "Gewählte Häufigkeit: {frequency}. Tippe eine Bahn oder die Bank an.",
           "clearRound": "Runde leeren",
+          "patterns": {
+            "mainVerb": "Adverb vor dem Hauptverb",
+            "beVerb": "Adverb nach am/is/are"
+          },
           "feedback": {
             "perfect": "Perfekt! Der Plan passt zur Zielroutine.",
             "retry": "Versuche es noch einmal und vergleiche, an wie vielen Tagen jede Handlung passieren soll."

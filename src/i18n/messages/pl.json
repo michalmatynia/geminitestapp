@@ -741,7 +741,9 @@
     "createAccountSubmitting": "Tworzenie konta...",
     "verificationSentTo": "Wysłaliśmy link potwierdzający na adres:",
     "verificationAction": "Kliknij link w e-mailu, aby aktywować konto.",
-    "debugLinkLabel": "Link debugowania (tylko dev)"
+    "debugLinkLabel": "Link debugowania (tylko dev)",
+    "showPassword": "Pokaż hasło",
+    "hidePassword": "Ukryj hasło"
   },
   "AuthApi": {
     "invalidPayload": "Nieprawidłowe dane.",
@@ -2303,7 +2305,42 @@
       "summary": {
         "perfect": "Perfekcyjnie! Cały tygodniowy plan pasuje do przysłówków częstotliwości.",
         "good": "Dobra robota! Większość tygodnia ma już właściwy rytm.",
-        "retry": "Spróbuj jeszcze raz i zobacz, jak często rozświetla się każda czynność."
+        "retry": "Spróbuj jeszcze raz i zobacz, jak często rozświetla się każda czynność.",
+        "guideLabel": "Przewodnik po częstotliwości",
+        "guideHint": "Czytaj każde słowo jak wzór tygodnia.",
+        "orderLabel": "Od najczęściej do najrzadziej",
+        "ruleGuideLabel": "Przewodnik po szyku",
+        "ruleGuideHint": "Zapamiętaj dwa układy zdań.",
+        "mainVerbLabel": "Przed czasownikiem głównym",
+        "beVerbLabel": "Po am/is/are",
+        "starterLabel": "Powiedz to o swoim tygodniu",
+        "starterHint": "Użyj jednego z tych schematów, żeby ułożyć własne zdanie.",
+        "starters": {
+          "alwaysHabit": "I always do my homework after school.",
+          "sometimesPlace": "I sometimes go to the park with my friends.",
+          "neverLate": "I am never late for school."
+        },
+        "questionLabel": "Jak często...?",
+        "questionHint": "Wybierz jedno pytanie i odpowiedz przysłówkiem częstotliwości.",
+        "questions": {
+          "homework": {
+            "prompt": "How often do you do your homework?",
+            "starter": "Try: I always..."
+          },
+          "park": {
+            "prompt": "How often do you go to the park?",
+            "starter": "Try: I sometimes..."
+          },
+          "late": {
+            "prompt": "How often are you late for school?",
+            "starter": "Try: I am never..."
+          }
+        },
+        "badges": {
+          "rounds": "Rundy {current}/{total}",
+          "patterns": "Wzory {current}/{total}",
+          "studio": "Studio {current}/{total}"
+        }
       },
       "inRound": {
         "roundLabel": "Runda {current}/{total}",
@@ -2322,10 +2359,28 @@
           "poolHint": "W każdej rundzie jedna karta może zostać niewykorzystana.",
           "laneAria": "Pas rutyny dla czynności {action}",
           "dropLabel": "Upuść albo dotknij kartę częstotliwości tutaj.",
+          "currentSentenceLabel": "Twoje zdanie",
+          "yourFrequencyLabel": "Twoja częstotliwość",
+          "yourWeekLabel": "Twój tydzień",
+          "targetFrequencyLabel": "Docelowa częstotliwość",
+          "targetSentenceLabel": "Docelowe zdanie",
+          "targetWeekLabel": "Tydzień docelowy",
+          "changeDaysLabel": "Dni do zmiany",
+          "turnOnLabel": "Włącz dni",
+          "turnOffLabel": "Wyłącz dni",
+          "daysLitLabel": "Aktywne dni",
+          "matchedLabel": "Dopasowane",
+          "sentenceLabel": "Zdanie",
+          "patternLabel": "Szyk zdania:",
+          "previewEmpty": "Wybierz kartę częstotliwości, aby zbudować zdanie.",
           "weekAria": "Tygodniowy plan dla {action}: {frequency}",
           "touchIdle": "Dotknij kartę częstotliwości, a potem pas rutyny albo bank.",
           "touchSelected": "Wybrana częstotliwość: {frequency}. Dotknij pas rutyny albo bank.",
           "clearRound": "Wyczyść rundę",
+          "patterns": {
+            "mainVerb": "przysłówek przed głównym czasownikiem",
+            "beVerb": "przysłówek po am/is/are"
+          },
           "feedback": {
             "perfect": "Perfekcyjnie! Plan zgadza się z rutyną docelową.",
             "retry": "Spróbuj jeszcze raz i porównaj, ile dni powinna mieć każda czynność."

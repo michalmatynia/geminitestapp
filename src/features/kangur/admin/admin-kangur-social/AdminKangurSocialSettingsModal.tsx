@@ -63,7 +63,6 @@ export function AdminKangurSocialSettingsModal({
     socialDraftBlockedReason,
     socialVisionWarning,
     resolveDocReferences,
-    hasVisualDocUpdates,
     previewDocUpdatesMutation,
     applyDocUpdatesMutation,
     handlePreviewDocUpdates,
@@ -188,6 +187,7 @@ export function AdminKangurSocialSettingsModal({
   const selectedPostTitle =
     activePost?.titlePl?.trim() || activePost?.titleEn?.trim() || 'selected post';
   const suggestedDocUpdates = activePost?.visualDocUpdates ?? [];
+  const hasVisualDocUpdates = docsUsed.length > 0 || suggestedDocUpdates.length > 0;
   const batchCaptureLimitSummary =
     batchCapturePresetIds.length === 0
       ? 'No capture presets selected yet.'

@@ -37,6 +37,7 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import {
   addXp,
   createLessonPracticeReward,
+  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
@@ -249,7 +250,8 @@ export default function EnglishPrepositionsGame({
 
     scheduleKangurRoundFeedback(() => {
       if (roundIndex + 1 >= TOTAL_ROUNDS) {
-        const progress = loadProgress();
+        const ownerKey = getProgressOwnerKey();
+        const progress = loadProgress({ ownerKey });
         const reward = createLessonPracticeReward(progress, {
           activityKey: 'english_prepositions_quiz',
           lessonKey: 'english_prepositions_time_place',
@@ -257,7 +259,7 @@ export default function EnglishPrepositionsGame({
           totalQuestions: TOTAL_ROUNDS,
           strongThresholdPercent: 75,
         });
-        addXp(reward.xp, reward.progressUpdates);
+        addXp(reward.xp, reward.progressUpdates, { ownerKey });
         void persistKangurSessionScore({
           operation: 'english_prepositions_time_place',
           score: nextScore,

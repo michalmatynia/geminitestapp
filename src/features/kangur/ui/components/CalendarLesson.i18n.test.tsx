@@ -10,6 +10,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 vi.mock('next-intl', async () => await vi.importActual<typeof import('next-intl')>('next-intl'));
 vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>('use-intl'));
 
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => ({
+    subject: 'maths',
+    setSubject: vi.fn(),
+    subjectKey: 'learner-1',
+  }),
+}));
+
 let capturedProps: Record<string, unknown> | null = null;
 
 vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({

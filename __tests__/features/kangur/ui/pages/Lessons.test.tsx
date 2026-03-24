@@ -114,8 +114,13 @@ vi.mock('next/link', () => ({
     children,
     href,
     scroll: _scroll,
+    prefetch: _prefetch,
     ...rest
-  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; scroll?: boolean }) => (
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+    href: string;
+    scroll?: boolean;
+    prefetch?: boolean;
+  }) => (
     <a href={href} {...rest}>
       {children}
     </a>
@@ -230,6 +235,16 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   },
   useKangurLessonDocuments: () => ({
     data: lessonDocumentsState.value,
+    isLoading: false,
+    error: null,
+    refresh: vi.fn(),
+    refetch: vi.fn(),
+  }),
+  useKangurLessonDocument: (lessonId: string | null) => ({
+    data:
+      lessonId && typeof lessonDocumentsState.value === 'object'
+        ? (lessonDocumentsState.value[lessonId] ?? null)
+        : null,
     isLoading: false,
     error: null,
     refresh: vi.fn(),
@@ -604,34 +619,15 @@ describe('Lessons', () => {
     );
   });
 
-  it('uses app-router navigation when the fallback back action has no browser history entry', async () => {
+  it('does not render a generic catalog back action on the lessons list surface', async () => {
     setLessonState({
       lessons: [createLesson()],
     });
 
-    const historyBackSpy = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
-    const originalHistoryLength = window.history.length;
-    Object.defineProperty(window.history, 'length', {
-      configurable: true,
-      value: 1,
-    });
+    await renderLessonsPage();
 
-    try {
-      await renderLessonsPage();
-
-      fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
-
-      expect(historyBackSpy).not.toHaveBeenCalled();
-      expect(routerPushMock).toHaveBeenCalledWith('/kangur', {
-        scroll: false,
-      });
-    } finally {
-      Object.defineProperty(window.history, 'length', {
-        configurable: true,
-        value: originalHistoryLength,
-      });
-      historyBackSpy.mockRestore();
-    }
+    expect(screen.queryByTestId('kangur-lesson-back-to-lessons')).toBeNull();
+    expect(routerPushMock).not.toHaveBeenCalled();
   });
 
   it('keeps using the legacy component renderer when the lesson stays in component mode', async () => {
@@ -825,7 +821,7 @@ describe('Lessons', () => {
     );
   });
 
-  it('uses shared chips for lesson library document and assignment states', async () => {
+  it('uses shared chips for lesson library assignment and mastery states', async () => {
     authState.value = {
       user: {
         id: 'parent-1',
@@ -914,8 +910,10 @@ describe('Lessons', () => {
       'w-16',
       'kangur-gradient-icon-tile-lg'
     );
-    expect(screen.getByText('Wlasna zawartosc')).toHaveClass('rounded-full', 'border');
-    expect(screen.getAllByText('Priorytet rodzica')[0]).toHaveClass('rounded-full', 'border');
+    expect(screen.getByTestId('lesson-library-footer-assignment-chip')).toHaveClass(
+      'rounded-full',
+      'border'
+    );
     expect(screen.getByText('Opanowane 92%')).toHaveClass('rounded-full', 'border');
     expect(screen.getByText('Priorytet wysoki')).toHaveClass('rounded-full', 'border');
 

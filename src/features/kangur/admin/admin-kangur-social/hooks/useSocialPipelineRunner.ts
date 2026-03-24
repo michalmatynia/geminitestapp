@@ -301,18 +301,19 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       }
 
       const result = finalJob.result;
-      if (!result.generatedPost) {
+      const generatedPost = result.generatedPost;
+      if (!generatedPost) {
         throw new Error('Pipeline completed without generated content.');
       }
 
       setPipelineStep('previewing');
       const latestDeps = depsRef.current;
-      latestDeps.setActivePostId(result.generatedPost.id);
+      latestDeps.setActivePostId(generatedPost.id);
       latestDeps.setEditorState({
-        titlePl: result.generatedPost.titlePl ?? '',
-        titleEn: result.generatedPost.titleEn ?? '',
-        bodyPl: result.generatedPost.bodyPl ?? '',
-        bodyEn: result.generatedPost.bodyEn ?? '',
+        titlePl: generatedPost.titlePl ?? '',
+        titleEn: generatedPost.titleEn ?? '',
+        bodyPl: generatedPost.bodyPl ?? '',
+        bodyEn: generatedPost.bodyEn ?? '',
       });
       latestDeps.setDocUpdatesResult(result.docUpdates ?? null);
       latestDeps.setImageAddonIds(result.imageAddonIds ?? []);
@@ -328,7 +329,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       });
       queryClient.setQueryData<KangurSocialPost[]>(postsQueryKey, (current) =>
         (current ?? []).map((post) =>
-          post.id === result.generatedPost.id ? result.generatedPost : post
+          post.id === generatedPost.id ? generatedPost : post
         )
       );
       invalidateSocialQueries(queryClient);

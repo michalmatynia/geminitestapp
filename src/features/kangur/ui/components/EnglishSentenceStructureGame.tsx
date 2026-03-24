@@ -43,6 +43,7 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import {
   addXp,
   createLessonPracticeReward,
+  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import {
@@ -349,7 +350,8 @@ export default function EnglishSentenceStructureGame({
 
     scheduleKangurRoundFeedback(() => {
       if (roundIndex + 1 >= TOTAL_ROUNDS) {
-        const progress = loadProgress();
+        const ownerKey = getProgressOwnerKey();
+        const progress = loadProgress({ ownerKey });
         const reward = createLessonPracticeReward(progress, {
           activityKey: 'english_sentence_structure_quiz',
           lessonKey: 'english_sentence_structure',
@@ -357,7 +359,7 @@ export default function EnglishSentenceStructureGame({
           totalQuestions: TOTAL_ROUNDS,
           strongThresholdPercent: 75,
         });
-        addXp(reward.xp, reward.progressUpdates);
+        addXp(reward.xp, reward.progressUpdates, { ownerKey });
         void persistKangurSessionScore({
           operation: 'english_sentence_structure',
           score: nextScore,

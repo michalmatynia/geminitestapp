@@ -1714,7 +1714,15 @@
         "correct": "Nice work! The groups are even.",
         "idle": "Drag or click the items to split them into groups.",
         "touchIdle": "Tap an item, then tap a group, the pool, or the remainder area. You can still drag too.",
-        "touchSelected": "Selected item: {emoji}. Tap a group, the pool, or the remainder area."
+        "touchSelected": "Selected item: {emoji}. Tap a group, the pool, or the remainder area.",
+        "keyboardIdle": "Choose an item, then move to a group, the pool, or the remainder area and press Enter or Space.",
+        "keyboardSelected": "Selected item: {emoji}. Move to a group, the pool, or the remainder area and press Enter or Space."
+      },
+      "aria": {
+        "token": "Move item",
+        "pool": "Move the selected item to the pool",
+        "group": "Move the selected item to group {group}",
+        "remainder": "Move the selected item to the remainder area"
       }
     },
     "calendarTraining": {
@@ -3244,7 +3252,14 @@
       },
       "touch": {
         "idle": "Tap a glowing point, then tap the basket or the cloud. You can still drag too.",
-        "selected": "Selected point: {emoji}. Tap the basket or the cloud."
+        "selected": "Selected point: {emoji}. Tap the basket or the cloud.",
+        "keyboardIdle": "Choose a glowing point, then move to the basket or the cloud and press Enter or Space.",
+        "keyboardSelected": "Selected point: {emoji}. Move to the basket or the cloud and press Enter or Space."
+      },
+      "aria": {
+        "token": "Move glowing point",
+        "basket": "Move the selected point to the basket",
+        "sky": "Move the selected point to the cloud"
       },
       "summary": {
         "perfect": "Perfect! Subtraction is at your fingertips.",

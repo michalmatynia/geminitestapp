@@ -2,7 +2,8 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -65,7 +66,7 @@ vi.mock('@hello-pangea/dnd', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
-  useKangurCoarsePointer: () => true,
+  useKangurCoarsePointer: () => false,
 }));
 
 vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
@@ -82,8 +83,10 @@ vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
 import enMessages from '@/i18n/messages/en.json';
 import SubtractingGardenGame from '@/features/kangur/ui/components/SubtractingGardenGame';
 
-describe('SubtractingGardenGame touch interactions', () => {
-  it('supports selecting a token and tapping a destination zone', () => {
+describe('SubtractingGardenGame keyboard interactions', () => {
+  it('supports selecting a point and moving it to the cloud with the keyboard', async () => {
+    const user = userEvent.setup();
+
     render(
       <NextIntlClientProvider locale='en' messages={enMessages}>
         <SubtractingGardenGame onFinish={vi.fn()} />
@@ -91,31 +94,32 @@ describe('SubtractingGardenGame touch interactions', () => {
     );
 
     expect(screen.getByTestId('subtracting-garden-touch-hint')).toHaveTextContent(
-      'Tap a glowing point, then tap the basket or the cloud. You can still drag too.'
+      'Choose a glowing point, then move to the basket or the cloud and press Enter or Space.'
     );
 
     const basketZone = screen.getByTestId('subtracting-garden-zone-basket');
-    const firstToken = within(basketZone).getAllByRole('button', {
+    const token = within(basketZone).getAllByRole('button', {
       name: 'Move glowing point',
     })[0];
-    const tokenEmoji = firstToken.textContent ?? '';
+    const emoji = token?.textContent?.trim() ?? '';
 
-    expect(firstToken).toHaveClass('touch-manipulation');
-    expect(firstToken).toHaveStyle({ touchAction: 'none' });
-    expect(firstToken).toHaveClass('h-14');
+    token.focus();
+    await user.keyboard('{Enter}');
 
-    fireEvent.click(firstToken);
-
+    expect(token).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByTestId('subtracting-garden-touch-hint')).toHaveTextContent(
-      `Selected point: ${tokenEmoji}. Tap the basket or the cloud.`
+      `Selected point: ${emoji}. Move to the basket or the cloud and press Enter or Space.`
     );
 
-    const skyZone = screen.getByTestId('subtracting-garden-zone-sky');
-    fireEvent.click(skyZone);
+    const skyZone = screen.getByRole('button', {
+      name: 'Move the selected point to the cloud',
+    });
+    skyZone.focus();
+    await user.keyboard('{Enter}');
 
+    expect(within(screen.getByTestId('subtracting-garden-zone-sky')).getByText(emoji)).toBeInTheDocument();
     expect(screen.getByTestId('subtracting-garden-touch-hint')).toHaveTextContent(
-      'Tap a glowing point, then tap the basket or the cloud. You can still drag too.'
+      'Choose a glowing point, then move to the basket or the cloud and press Enter or Space.'
     );
-    expect(within(skyZone).getByText(tokenEmoji)).toBeInTheDocument();
   });
 });

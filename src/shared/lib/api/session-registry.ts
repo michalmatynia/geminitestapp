@@ -1,3 +1,5 @@
+import { logger } from '@/shared/utils/logger';
+
 export type SessionUser = { id?: string | null } | null;
 export type SessionResolver = () => Promise<SessionUser | null>;
 
@@ -17,7 +19,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   try {
     return await currentResolver();
   } catch (error) {
-    console.error('[SessionRegistry] Session resolution failed:', error);
+    logger.error('[SessionRegistry] Session resolution failed', error);
     return null;
   }
 }

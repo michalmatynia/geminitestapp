@@ -176,6 +176,26 @@ export const KANGUR_NATIVE_GUIDE_ENTRIES_PROFILE = [
     sortOrder: 168,
   }),
   createGuideEntry({
+    id: 'learner-profile-results',
+    surface: 'profile',
+    focusKind: 'summary',
+    focusIdPrefixes: ['kangur-profile-results'],
+    contentIdPrefixes: ['profile:'],
+    title: 'Wyniki ucznia na profilu',
+    shortDescription:
+      'Ta sekcja zbiera ostatnie wyniki ucznia i pomaga odczytać, czy forma jest stabilna.',
+    fullDescription:
+      'Sekcja wyników na profilu ucznia łączy historię prób z krótkim podsumowaniem trendów. Dzięki temu łatwiej zauważyć, czy uczeń utrzymuje poziom, czy raczej przeplata lepsze i słabsze sesje. Najbardziej użyteczna jest wtedy, gdy szukasz jednego następnego ruchu: wrócić do lekcji, powtórzyć podobny zakres czy zrobić krótszą, spokojniejszą próbę.',
+    hints: [
+      'Patrz na kilka ostatnich wyników razem, zamiast opierać decyzję na jednej próbie.',
+      'Jeśli wyniki mocno falują, wybierz krótszą powtórkę zamiast zwiększania trudności.',
+      'Po słabszym wyniku połącz tę sekcję z rekomendacjami albo opanowaniem materiału.',
+    ],
+    followUpActions: [{ id: 'profile-results-lessons', label: 'Powtórz temat', page: 'Lessons' }],
+    triggerPhrases: ['wyniki ucznia na profilu', 'jak czytać wyniki na profilu', 'ostatnie wyniki ucznia'],
+    sortOrder: 169,
+  }),
+  createGuideEntry({
     id: 'profile-sessions',
     surface: 'profile',
     focusKind: 'screen',
@@ -192,6 +212,6 @@ export const KANGUR_NATIVE_GUIDE_ENTRIES_PROFILE = [
     ],
     followUpActions: [{ id: 'profile-sessions-game', label: 'Wróć do gry', page: 'Game' }],
     triggerPhrases: ['historia sesji', 'ostatnie próby', 'jak często uczeń ćwiczy'],
-    sortOrder: 169,
+    sortOrder: 170,
   }),
 ];

@@ -5,6 +5,14 @@ export type InternalObservabilityErrorContext = ClientErrorContext & {
   action: string;
 };
 
+const serializeFallbackPayload = (value: unknown): string => {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+};
+
 export const reportObservabilityInternalError = (
   error: unknown,
   context: InternalObservabilityErrorContext
@@ -16,11 +24,17 @@ export const reportObservabilityInternalError = (
 
   const prefix = `[${context.source}] ${context.action} failed`;
   try {
-    console.error(prefix, {
-      error,
-      context,
-    });
+    process.stderr.write(
+      `${prefix} ${serializeFallbackPayload({
+        error,
+        context,
+      })}\n`
+    );
   } catch {
-    console.error(prefix, error);
+    try {
+      process.stderr.write(`${prefix} ${serializeFallbackPayload(error)}\n`);
+    } catch {
+      // No-op fallback.
+    }
   }
 };

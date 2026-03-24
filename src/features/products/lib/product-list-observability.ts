@@ -2,6 +2,7 @@
 
 import type { SystemLogsCreateRequest } from '@/shared/contracts/observability';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+import { logger } from '@/shared/utils/logger';
 import { getTraceId } from '@/shared/utils/observability/trace';
 
 const PRODUCT_LIST_DEBUG_PARAM = 'productListDebug';
@@ -87,9 +88,9 @@ const reportTransportFailure = (error: unknown): void => {
     return;
   }
 
-  if (typeof console !== 'undefined' && typeof console.warn === 'function') {
-    console.warn('[ProductListDebug] Failed to ship centralized log', error);
-  }
+  logger.warn('[ProductListDebug] Failed to ship centralized log', {
+    error,
+  });
 };
 
 const shipProductListDebugLog = (event: string, context?: Record<string, unknown>): void => {
@@ -164,9 +165,10 @@ export const logProductListDebug = (
 
   recentProductListDebugLogs.set(dedupeKey, { at: now, signature });
 
-  if (typeof console !== 'undefined' && typeof console.debug === 'function') {
-    console.debug('[ProductListDebug]', event, context ?? {});
-  }
+  logger.info('[ProductListDebug]', {
+    event,
+    ...(context ?? {}),
+  });
 
   shipProductListDebugLog(event, context);
 };

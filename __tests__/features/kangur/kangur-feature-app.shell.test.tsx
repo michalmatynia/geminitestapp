@@ -255,7 +255,7 @@ describe('KangurFeatureApp shell behavior', () => {
     );
   });
 
-  it('renders the user-not-registered state for missing Kangur enrollment', () => {
+  it('renders the user-not-registered state for missing Kangur enrollment', async () => {
     useKangurAuthMock.mockReturnValue(
       buildAuthState({
         authError: {
@@ -267,10 +267,10 @@ describe('KangurFeatureApp shell behavior', () => {
 
     render(<KangurFeatureApp />);
 
-    expect(screen.getByTestId('kangur-user-not-registered')).toBeInTheDocument();
+    expect(await screen.findByTestId('kangur-user-not-registered')).toBeInTheDocument();
   });
 
-  it('renders PageNotFound when requested page cannot be resolved', () => {
+  it('renders PageNotFound when requested page cannot be resolved', async () => {
     useKangurRoutingMock.mockReturnValue({
       pageKey: 'unknown-page',
       requestedPath: '/kangur/unknown-page',
@@ -279,7 +279,7 @@ describe('KangurFeatureApp shell behavior', () => {
 
     render(<KangurFeatureApp />);
 
-    expect(screen.getByTestId('kangur-page-not-found')).toBeInTheDocument();
+    expect(await screen.findByTestId('kangur-page-not-found')).toBeInTheDocument();
   });
 
   it('renders the resolved Kangur page component for known routes', () => {

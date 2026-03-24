@@ -144,6 +144,7 @@ const isZoneId = (id: string): id is ZoneId => id === 'basket' || id === 'sky';
 function DraggableToken({
   token,
   index,
+  ariaLabel,
   isDragDisabled,
   isSelected,
   isCoarsePointer,
@@ -152,6 +153,7 @@ function DraggableToken({
 }: {
   token: TokenItem;
   index: number;
+  ariaLabel: string;
   isDragDisabled: boolean;
   isSelected: boolean;
   isCoarsePointer: boolean;
@@ -193,7 +195,7 @@ function DraggableToken({
               }
             }}
             role='button'
-            aria-label='Przenieś obiekt'
+            aria-label={ariaLabel}
             aria-pressed={isSelected}
             aria-disabled={isDragDisabled}
             tabIndex={isDragDisabled ? -1 : 0}
@@ -311,6 +313,7 @@ export default function SubtractingGardenGame({
         sky.find((item) => item.id === selectedTokenId) ??
         null
       : null;
+  const canPlaceSelectedToken = Boolean(selectedToken) && !isLocked;
 
   const moveSelectedToken = (destination: ZoneId): void => {
     if (isLocked || !selectedTokenId) return;
@@ -440,6 +443,7 @@ export default function SubtractingGardenGame({
         : isCoarsePointer
           ? translations('subtractingGarden.touch.idle')
           : 'Przeciągnij lub kliknij obiekty, aby odejmować.';
+  const tokenAriaLabel = translations('subtractingGarden.aria.token');
 
   return (
     <KangurPracticeGameStage className='w-full max-w-none'>
@@ -497,16 +501,27 @@ export default function SubtractingGardenGame({
                             {...provided.droppableProps}
                             data-testid='subtracting-garden-zone-basket'
                             className={cn(
-                              'mt-3 flex min-h-[96px] flex-wrap items-center justify-center kangur-panel-gap rounded-[20px] border-2 border-dashed px-3 py-4 transition touch-manipulation select-none sm:min-h-[112px] lg:min-h-[140px]',
+                              'mt-3 flex min-h-[96px] flex-wrap items-center justify-center kangur-panel-gap rounded-[20px] border-2 border-dashed px-3 py-4 transition touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white sm:min-h-[112px] lg:min-h-[140px]',
                               snapshot.isDraggingOver
                                 ? 'border-amber-300 bg-amber-50/70'
-                                : selectedTokenId && isCoarsePointer
+                                : canPlaceSelectedToken
                                   ? 'border-amber-200 bg-amber-50/50'
                                   : 'border-white/60 bg-white/70'
                             )}
+                            role='button'
+                            aria-label={translations('subtractingGarden.aria.basket')}
+                            aria-disabled={!canPlaceSelectedToken}
+                            tabIndex={canPlaceSelectedToken ? 0 : -1}
                             onClick={() => {
-                              if (!isCoarsePointer || isLocked || !selectedTokenId) return;
+                              if (!canPlaceSelectedToken) return;
                               moveSelectedToken('basket');
+                            }}
+                            onKeyDown={(event) => {
+                              if (!canPlaceSelectedToken) return;
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                moveSelectedToken('basket');
+                              }
                             }}
                           >
                             {basket.map((token, index) => (
@@ -514,6 +529,7 @@ export default function SubtractingGardenGame({
                                 key={token.id}
                                 token={token}
                                 index={index}
+                                ariaLabel={tokenAriaLabel}
                                 isDragDisabled={isLocked}
                                 isSelected={selectedTokenId === token.id}
                                 isCoarsePointer={isCoarsePointer}
@@ -586,16 +602,27 @@ export default function SubtractingGardenGame({
                             {...provided.droppableProps}
                             data-testid='subtracting-garden-zone-sky'
                             className={cn(
-                              'mt-3 flex min-h-[96px] flex-wrap items-center justify-center kangur-panel-gap rounded-[20px] border-2 border-dashed px-3 py-4 transition touch-manipulation select-none sm:min-h-[112px] lg:min-h-[140px]',
+                              'mt-3 flex min-h-[96px] flex-wrap items-center justify-center kangur-panel-gap rounded-[20px] border-2 border-dashed px-3 py-4 transition touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/70 focus-visible:ring-offset-2 ring-offset-white sm:min-h-[112px] lg:min-h-[140px]',
                               snapshot.isDraggingOver
                                 ? 'border-rose-300 bg-rose-50/80'
-                                : selectedTokenId && isCoarsePointer
+                                : canPlaceSelectedToken
                                   ? 'border-rose-200 bg-rose-50/60'
                                   : 'border-white/60 bg-white/70'
                             )}
+                            role='button'
+                            aria-label={translations('subtractingGarden.aria.sky')}
+                            aria-disabled={!canPlaceSelectedToken}
+                            tabIndex={canPlaceSelectedToken ? 0 : -1}
                             onClick={() => {
-                              if (!isCoarsePointer || isLocked || !selectedTokenId) return;
+                              if (!canPlaceSelectedToken) return;
                               moveSelectedToken('sky');
+                            }}
+                            onKeyDown={(event) => {
+                              if (!canPlaceSelectedToken) return;
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                moveSelectedToken('sky');
+                              }
                             }}
                           >
                             {sky.map((token, index) => (
@@ -603,6 +630,7 @@ export default function SubtractingGardenGame({
                                 key={token.id}
                                 token={token}
                                 index={index}
+                                ariaLabel={tokenAriaLabel}
                                 isDragDisabled={isLocked}
                                 isSelected={selectedTokenId === token.id}
                                 isCoarsePointer={isCoarsePointer}
@@ -652,10 +680,12 @@ export default function SubtractingGardenGame({
                               ? translations('subtractingGarden.touch.selected', {
                                   emoji: selectedToken.emoji,
                                 })
-                              : `Wybrany obiekt: ${selectedToken.emoji}`
+                              : translations('subtractingGarden.touch.keyboardSelected', {
+                                  emoji: selectedToken.emoji,
+                                })
                             : isCoarsePointer
                               ? translations('subtractingGarden.touch.idle')
-                              : 'Wybierz obiekt, aby przenieść go klawiaturą.'}
+                              : translations('subtractingGarden.touch.keyboardIdle')}
                         </p>
                         <div className={KANGUR_WRAP_ROW_CLASSNAME}>
                           <KangurButton

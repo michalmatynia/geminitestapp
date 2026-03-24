@@ -1714,7 +1714,15 @@
         "correct": "Brawo! Podział jest równy.",
         "idle": "Przeciągnij lub kliknij elementy, aby podzielić je na grupy.",
         "touchIdle": "Stuknij element, a potem stuknij grupę, pulę albo pole reszty. Nadal możesz też przeciągać.",
-        "touchSelected": "Wybrany element: {emoji}. Stuknij grupę, pulę albo pole reszty."
+        "touchSelected": "Wybrany element: {emoji}. Stuknij grupę, pulę albo pole reszty.",
+        "keyboardIdle": "Wybierz element, przejdź do grupy, puli albo pola reszty i naciśnij Enter lub Spację.",
+        "keyboardSelected": "Wybrany element: {emoji}. Przejdź do grupy, puli albo pola reszty i naciśnij Enter lub Spację."
+      },
+      "aria": {
+        "token": "Przenieś element",
+        "pool": "Przenieś wybrany element do puli",
+        "group": "Przenieś wybrany element do grupy {group}",
+        "remainder": "Przenieś wybrany element do pola reszty"
       }
     },
     "calendarTraining": {
@@ -3244,7 +3252,14 @@
       },
       "touch": {
         "idle": "Dotknij świecący punkt, a potem dotknij koszyk albo chmurę. Nadal możesz też przeciągać.",
-        "selected": "Wybrany punkt: {emoji}. Dotknij koszyk albo chmurę."
+        "selected": "Wybrany punkt: {emoji}. Dotknij koszyk albo chmurę.",
+        "keyboardIdle": "Wybierz świecący punkt, przejdź do koszyka albo chmury i naciśnij Enter lub Spację.",
+        "keyboardSelected": "Wybrany punkt: {emoji}. Przejdź do koszyka albo chmury i naciśnij Enter lub Spację."
+      },
+      "aria": {
+        "token": "Przenieś punkt",
+        "basket": "Przenieś wybrany punkt do koszyka",
+        "sky": "Przenieś wybrany punkt do chmury"
       },
       "summary": {
         "perfect": "Idealnie! Odejmowanie masz w jednym palcu.",

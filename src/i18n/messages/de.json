@@ -1714,7 +1714,15 @@
         "correct": "Gut gemacht! Die Gruppen sind gleich groß.",
         "idle": "Ziehe oder klicke die Elemente, um sie in Gruppen aufzuteilen.",
         "touchIdle": "Tippe ein Element an und dann eine Gruppe, den Pool oder das Restfeld. Ziehen geht weiterhin auch.",
-        "touchSelected": "Ausgewähltes Element: {emoji}. Tippe eine Gruppe, den Pool oder das Restfeld an."
+        "touchSelected": "Ausgewähltes Element: {emoji}. Tippe eine Gruppe, den Pool oder das Restfeld an.",
+        "keyboardIdle": "Wähle ein Element aus, gehe dann zu einer Gruppe, dem Pool oder dem Restfeld und drücke Enter oder Leertaste.",
+        "keyboardSelected": "Ausgewähltes Element: {emoji}. Gehe zu einer Gruppe, dem Pool oder dem Restfeld und drücke Enter oder Leertaste."
+      },
+      "aria": {
+        "token": "Element verschieben",
+        "pool": "Das ausgewählte Element in den Pool verschieben",
+        "group": "Das ausgewählte Element in Gruppe {group} verschieben",
+        "remainder": "Das ausgewählte Element in das Restfeld verschieben"
       }
     },
     "calendarTraining": {
@@ -3244,7 +3252,14 @@
       },
       "touch": {
         "idle": "Tippe einen leuchtenden Punkt an und danach den Korb oder die Wolke. Ziehen geht weiterhin auch.",
-        "selected": "Ausgewählter Punkt: {emoji}. Tippe den Korb oder die Wolke an."
+        "selected": "Ausgewählter Punkt: {emoji}. Tippe den Korb oder die Wolke an.",
+        "keyboardIdle": "Wähle einen leuchtenden Punkt aus, gehe dann zum Korb oder zur Wolke und drücke Enter oder Leertaste.",
+        "keyboardSelected": "Ausgewählter Punkt: {emoji}. Gehe zum Korb oder zur Wolke und drücke Enter oder Leertaste."
+      },
+      "aria": {
+        "token": "Leuchtenden Punkt verschieben",
+        "basket": "Den ausgewählten Punkt in den Korb verschieben",
+        "sky": "Den ausgewählten Punkt in die Wolke verschieben"
       },
       "summary": {
         "perfect": "Perfekt! Subtraktion sitzt.",

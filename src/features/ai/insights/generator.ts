@@ -20,8 +20,8 @@ import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
 import { type AiBrainCapabilityKey } from '@/shared/lib/ai-brain/settings';
 import { listAnalyticsEvents, getAnalyticsSummary } from '@/shared/lib/analytics/server';
+import { sanitizeSystemLogForAi } from '@/shared/lib/observability/runtime-context/sanitize-system-log-for-ai';
 import { buildSystemLogsContextRegistrySystemPrompt } from '@/shared/lib/observability/runtime-context/server';
-import { sanitizeSystemLogForAi } from '@/features/observability/server';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { getSystemLogMetrics, listSystemLogs } from '@/shared/lib/observability/system-log-repository';;
 

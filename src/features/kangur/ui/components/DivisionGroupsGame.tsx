@@ -175,6 +175,7 @@ const createRound = (roundIndex: number): Round => {
 function DraggableToken({
   token,
   index,
+  ariaLabel,
   isDragDisabled,
   isCoarsePointer,
   isSelected,
@@ -183,6 +184,7 @@ function DraggableToken({
 }: {
   token: TokenItem;
   index: number;
+  ariaLabel: string;
   isDragDisabled: boolean;
   isCoarsePointer: boolean;
   isSelected: boolean;
@@ -227,7 +229,7 @@ function DraggableToken({
               }
             }}
             role='button'
-            aria-label='Przenieś element'
+            aria-label={ariaLabel}
             aria-pressed={isSelected}
             aria-disabled={isDragDisabled}
             tabIndex={isDragDisabled ? -1 : 0}
@@ -497,6 +499,7 @@ export default function DivisionGroupsGame({
       groups.flat().find((item) => item.id === selectedTokenId) ??
       null
     : null;
+  const canPlaceSelectedToken = Boolean(selectedToken) && !isLocked;
 
   const moveSelectedToken = (destination: ZoneId): void => {
     if (isLocked || !selectedTokenId) return;
@@ -636,12 +639,17 @@ export default function DivisionGroupsGame({
         ? wrongHint
         : translations('divisionGroups.feedback.idle');
   const selectionHint = selectedToken
-    ? translations('divisionGroups.feedback.touchSelected', {
-        emoji: selectedToken.emoji,
-      })
+    ? isCoarsePointer
+      ? translations('divisionGroups.feedback.touchSelected', {
+          emoji: selectedToken.emoji,
+        })
+      : translations('divisionGroups.feedback.keyboardSelected', {
+          emoji: selectedToken.emoji,
+        })
     : isCoarsePointer
       ? translations('divisionGroups.feedback.touchIdle')
-      : 'Wybierz element, aby przenieść go klawiaturą.';
+      : translations('divisionGroups.feedback.keyboardIdle');
+  const tokenAriaLabel = translations('divisionGroups.aria.token');
 
   return (
     <KangurPracticeGameStage className='w-full max-w-none'>
@@ -719,17 +727,28 @@ export default function DivisionGroupsGame({
                           {...provided.droppableProps}
                           data-testid='division-groups-pool-zone'
                           className={cn(
-                            'mt-3 flex flex-wrap items-center justify-center rounded-[20px] border-2 border-dashed px-3 py-4 transition touch-manipulation',
+                            'mt-3 flex flex-wrap items-center justify-center rounded-[20px] border-2 border-dashed px-3 py-4 transition touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
                             isCoarsePointer ? 'min-h-[112px] sm:min-h-[128px]' : 'min-h-[96px] sm:min-h-[112px]',
                             snapshot.isDraggingOver
                               ? 'border-amber-300 bg-amber-50/70'
-                              : selectedToken && isCoarsePointer && !isLocked
+                              : canPlaceSelectedToken
                                 ? 'border-amber-200 bg-amber-50/45'
                                 : 'border-white/60 bg-white/70',
-                            selectedToken && isCoarsePointer && !isLocked && 'cursor-pointer'
+                            canPlaceSelectedToken && 'cursor-pointer'
                           )}
+                          role='button'
+                          aria-label={translations('divisionGroups.aria.pool')}
+                          aria-disabled={!canPlaceSelectedToken}
+                          tabIndex={canPlaceSelectedToken ? 0 : -1}
                           onClick={() => {
-                            if (isCoarsePointer && selectedToken) {
+                            if (canPlaceSelectedToken) {
+                              moveSelectedToken('pool');
+                            }
+                          }}
+                          onKeyDown={(event) => {
+                            if (!canPlaceSelectedToken) return;
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
                               moveSelectedToken('pool');
                             }
                           }}
@@ -739,6 +758,7 @@ export default function DivisionGroupsGame({
                               key={token.id}
                               token={token}
                               index={index}
+                              ariaLabel={tokenAriaLabel}
                               isDragDisabled={isLocked}
                               isCoarsePointer={isCoarsePointer}
                               isSelected={selectedTokenId === token.id}
@@ -785,17 +805,30 @@ export default function DivisionGroupsGame({
                               {...provided.droppableProps}
                               data-testid={`division-groups-group-zone-${groupIndex}`}
                               className={cn(
-                                'mt-3 flex flex-wrap items-center justify-center rounded-[20px] border-2 border-dashed px-3 py-4 transition touch-manipulation',
+                                'mt-3 flex flex-wrap items-center justify-center rounded-[20px] border-2 border-dashed px-3 py-4 transition touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300/70 focus-visible:ring-offset-2 ring-offset-white',
                                 isCoarsePointer ? 'min-h-[104px] sm:min-h-[120px]' : 'min-h-[88px] sm:min-h-[104px]',
                                 snapshot.isDraggingOver
                                   ? 'border-teal-300 bg-teal-50/80'
-                                  : selectedToken && isCoarsePointer && !isLocked
+                                  : canPlaceSelectedToken
                                     ? 'border-amber-200 bg-amber-50/45'
                                     : 'border-white/60 bg-white/70',
-                                selectedToken && isCoarsePointer && !isLocked && 'cursor-pointer'
+                                canPlaceSelectedToken && 'cursor-pointer'
                               )}
+                              role='button'
+                              aria-label={translations('divisionGroups.aria.group', {
+                                group: groupIndex + 1,
+                              })}
+                              aria-disabled={!canPlaceSelectedToken}
+                              tabIndex={canPlaceSelectedToken ? 0 : -1}
                               onClick={() => {
-                                if (isCoarsePointer && selectedToken) {
+                                if (canPlaceSelectedToken) {
+                                  moveSelectedToken(groupId(groupIndex));
+                                }
+                              }}
+                              onKeyDown={(event) => {
+                                if (!canPlaceSelectedToken) return;
+                                if (event.key === 'Enter' || event.key === ' ') {
+                                  event.preventDefault();
                                   moveSelectedToken(groupId(groupIndex));
                                 }
                               }}
@@ -805,6 +838,7 @@ export default function DivisionGroupsGame({
                                   key={token.id}
                                   token={token}
                                   index={index}
+                                  ariaLabel={tokenAriaLabel}
                                   isDragDisabled={isLocked}
                                   isCoarsePointer={isCoarsePointer}
                                   isSelected={selectedTokenId === token.id}
@@ -850,17 +884,28 @@ export default function DivisionGroupsGame({
                           {...provided.droppableProps}
                           data-testid='division-groups-remainder-zone'
                           className={cn(
-                            'mt-3 flex flex-wrap items-center justify-center rounded-[20px] border-2 border-dashed px-3 py-4 transition touch-manipulation',
+                            'mt-3 flex flex-wrap items-center justify-center rounded-[20px] border-2 border-dashed px-3 py-4 transition touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
                             isCoarsePointer ? 'min-h-[96px] sm:min-h-[112px]' : 'min-h-[80px] sm:min-h-[96px]',
                             snapshot.isDraggingOver
                               ? 'border-amber-300 bg-amber-50/80'
-                              : selectedToken && isCoarsePointer && !isLocked
+                              : canPlaceSelectedToken
                                 ? 'border-amber-200 bg-amber-50/45'
                                 : 'border-white/60 bg-white/70',
-                            selectedToken && isCoarsePointer && !isLocked && 'cursor-pointer'
+                            canPlaceSelectedToken && 'cursor-pointer'
                           )}
+                          role='button'
+                          aria-label={translations('divisionGroups.aria.remainder')}
+                          aria-disabled={!canPlaceSelectedToken}
+                          tabIndex={canPlaceSelectedToken ? 0 : -1}
                           onClick={() => {
-                            if (isCoarsePointer && selectedToken) {
+                            if (canPlaceSelectedToken) {
+                              moveSelectedToken('remainder');
+                            }
+                          }}
+                          onKeyDown={(event) => {
+                            if (!canPlaceSelectedToken) return;
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
                               moveSelectedToken('remainder');
                             }
                           }}
@@ -870,6 +915,7 @@ export default function DivisionGroupsGame({
                               key={token.id}
                               token={token}
                               index={index}
+                              ariaLabel={tokenAriaLabel}
                               isDragDisabled={isLocked}
                               isCoarsePointer={isCoarsePointer}
                               isSelected={selectedTokenId === token.id}

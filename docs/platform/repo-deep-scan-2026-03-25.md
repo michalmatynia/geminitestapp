@@ -21,6 +21,19 @@ critical-path performance checks, and mobile tooling all passed. The main issues
 are concentrated in guardrail regressions and debt signals rather than
 repo-wide breakage.
 
+## Follow-up Status On 2026-03-25
+
+After the initial scan wave, the highest-priority executable failures were
+remediated on the same day:
+
+- `npm run metrics:guardrails`: now passes
+- `npm run observability:check`: now passes
+- `npm run metrics:kangur:baseline:strict`: now passes
+
+The remaining immediate red signal from the original scan is the high-risk
+coverage gate, which still depends on a repo-wide coverage artifact that is
+effectively near-zero.
+
 ## What Passed
 
 - Docs governance:
@@ -76,6 +89,15 @@ Current offending imports:
 This is the highest-priority architectural fix because one of the failures is a
 hard limit breach.
 
+Status after follow-up remediation:
+
+- Fixed by switching app routes to `@/features/data-import-export/public`
+- Fixed by moving the Base export segment implementation under
+  `src/features/integrations/services/base-export-segments`
+- `npm run metrics:guardrails` now passes with:
+  - `imports.appFeatureBarrelImports = 0`
+  - `imports.featuresToAppApiTotalImports = 0`
+
 ### 2. UI consolidation debt remains materially above baseline
 
 `npm run check:ui-consolidation` failed with:
@@ -126,6 +148,16 @@ The route coverage result is healthy. The failure is specifically cleanup debt:
   - `src/shared/utils/observability/error-system.ts`
   - `src/shared/utils/observability/internal-observability-fallback.ts`
 
+Status after follow-up remediation:
+
+- The runtime-context implementation was moved into `src/shared/lib/observability/runtime-context/*`
+- AI insights now consume the shared runtime-context surface
+- Raw `console.*` sites were replaced with `logger` or internal fallback
+  reporting
+- `npm run observability:check` now passes with:
+  - `consoleLogs = 0`
+  - `legacyCompatViolations = 0`
+
 ### 4. High-risk coverage gate is signaling a broken baseline
 
 `npm run check:coverage:high-risk:strict` failed across all protected domains.
@@ -163,6 +195,20 @@ worth keeping on the refactor backlog:
 - `src/features/kangur/ui/services/kangur-questions-data.js`
 - `src/features/kangur/ui/pages/LearnerProfile.tsx`
 - `src/features/kangur/ui/pages/Lessons.tsx`
+
+Status after follow-up remediation:
+
+- The baseline wrapper now passes:
+  - `npm run metrics:kangur:baseline:strict`
+- The underlying unit bundle also passes:
+  - `__tests__/features/kangur/learner-profile.page.test.tsx`
+  - `__tests__/features/kangur/lessons-focus-routing.test.tsx`
+  - `__tests__/features/kangur/kangur-feature-app.shell.test.tsx`
+  - `__tests__/features/kangur/kangur-admin-menu-toggle.test.tsx`
+  - `src/features/kangur/ui/services/profile.test.ts`
+  - `src/features/kangur/settings.test.ts`
+- E2E remains skipped by the generated baseline, but it is no longer causing the
+  strict command to fail.
 
 ## Secondary Scan Signals
 
@@ -219,15 +265,12 @@ references that already match the codebase.
 
 ### Immediate
 
-1. Remove the app-layer barrel imports and the feature-to-app-api dependency
-   currently breaking architecture guardrails.
-2. Replace legacy observability imports with the supported entrypoints and clear
-   the remaining `console.*` guardrail violations.
-3. Investigate why the coverage artifact is near-zero across the repo and fix
+1. Investigate why the coverage artifact is near-zero across the repo and fix
    the coverage-producing pipeline before treating protected-domain percentages
    as trustworthy.
-4. Re-run the Kangur baseline with a failing-test trace and stabilize the unit
-   suite before using the baseline as a performance gate.
+2. Preserve the now-green architecture and observability guardrails while
+   follow-up refactors continue.
+3. Keep the Kangur baseline green while addressing the larger file-size hotspots.
 
 ### Next wave
 

@@ -273,8 +273,8 @@ describe('ParentDashboard page', () => {
     const inactiveLearnerCard = screen.getByTestId('parent-dashboard-learner-card-learner-2');
     const activeLearnerCardContent = activeLearnerCard.firstElementChild as HTMLElement | null;
     const progressTab = screen.getByRole('tab', { name: /Post/i });
-    const scoresTab = screen.getByRole('tab', { name: /Wyniki/i });
     const assignmentsTab = screen.getByRole('tab', { name: /Zadania/i });
+    const monitoringTab = screen.getByRole('tab', { name: /Monitor/i });
 
     expect(activeLearnerCard).toHaveAttribute('aria-pressed', 'true');
     expect(activeLearnerCard).toHaveClass('soft-card', 'rounded-[30px]');
@@ -309,20 +309,20 @@ describe('ParentDashboard page', () => {
       screen.getByRole('button', { name: /Ustawienia profilu ucznia/i })
     ).toBeInTheDocument();
     expect(screen.queryByRole('combobox')).toBeNull();
-    expect(progressTab).toHaveAttribute('aria-selected', 'false');
-    expect(scoresTab).toHaveAttribute('aria-selected', 'true');
+    expect(progressTab).toHaveAttribute('aria-selected', 'true');
     expect(assignmentsTab).toHaveAttribute('aria-selected', 'false');
-    expect(progressTab).not.toHaveClass('kangur-segmented-control-item-active');
-    expect(scoresTab).toHaveClass('kangur-segmented-control-item-active');
+    expect(monitoringTab).toHaveAttribute('aria-selected', 'false');
+    expect(progressTab).toHaveClass('kangur-segmented-control-item-active');
     expect(assignmentsTab).not.toHaveClass('kangur-segmented-control-item-active');
+    expect(monitoringTab).not.toHaveClass('kangur-segmented-control-item-active');
 
     await userEvent.click(screen.getByRole('button', { name: /ola/i }));
     expect(selectLearnerMock).toHaveBeenCalledWith('learner-2');
 
-    await userEvent.click(scoresTab);
-    expect(scoresTab).toHaveAttribute('aria-selected', 'true');
+    await userEvent.click(monitoringTab);
+    expect(monitoringTab).toHaveAttribute('aria-selected', 'true');
     expect(progressTab).toHaveAttribute('aria-selected', 'false');
-    expect(scoresTab).toHaveClass('kangur-segmented-control-item-active');
+    expect(monitoringTab).toHaveClass('kangur-segmented-control-item-active');
     expect(progressTab).not.toHaveClass('kangur-segmented-control-item-active');
 
     await userEvent.click(assignmentsTab);

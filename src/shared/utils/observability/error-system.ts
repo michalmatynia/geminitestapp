@@ -10,6 +10,7 @@ import {
 import { isAppError } from '@/shared/errors/app-error';
 import { resolveErrorUserMessage } from '@/shared/errors/error-catalog';
 import type { ResolvedError } from '@/shared/contracts/base';
+import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 
 
 export const ErrorCategories = ERROR_CATEGORY;
@@ -33,11 +34,11 @@ const logErrorSystemFailure = async (
     }
     logger.error(message, error, { service: 'error-system' });
   } catch {
-    if (level === 'warn') {
-      console.warn(message, error);
-      return;
-    }
-    console.error(message, error);
+    reportObservabilityInternalError(error, {
+      source: 'error-system',
+      action: level === 'warn' ? 'warn-fallback' : 'error-fallback',
+      message,
+    });
   }
 };
 

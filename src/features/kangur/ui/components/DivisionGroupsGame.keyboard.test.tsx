@@ -2,7 +2,8 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -54,48 +55,47 @@ vi.mock('@hello-pangea/dnd', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
-  useKangurCoarsePointer: () => true,
+  useKangurCoarsePointer: () => false,
 }));
 
 import enMessages from '@/i18n/messages/en.json';
 import DivisionGroupsGame from '@/features/kangur/ui/components/DivisionGroupsGame';
 
-const renderGame = () =>
-  render(
-    <NextIntlClientProvider locale='en' messages={enMessages}>
-      <DivisionGroupsGame onFinish={vi.fn()} />
-    </NextIntlClientProvider>
-  );
+describe('DivisionGroupsGame keyboard interactions', () => {
+  it('supports selecting an item and moving it into a group with the keyboard', async () => {
+    const user = userEvent.setup();
 
-describe('DivisionGroupsGame touch interactions', () => {
-  it('supports coarse-pointer tap selection and moving into a destination zone', () => {
-    renderGame();
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <DivisionGroupsGame onFinish={vi.fn()} />
+      </NextIntlClientProvider>
+    );
 
     expect(screen.getByTestId('division-groups-selection-hint')).toHaveTextContent(
-      'Tap an item, then tap a group, the pool, or the remainder area. You can still drag too.'
+      'Choose an item, then move to a group, the pool, or the remainder area and press Enter or Space.'
     );
 
     const poolZone = screen.getByTestId('division-groups-pool-zone');
     const token = within(poolZone).getAllByRole('button', { name: 'Move item' })[0];
-    expect(token).toHaveClass('touch-manipulation');
-    expect(token).toHaveStyle({ touchAction: 'none' });
-
     const emoji = token?.textContent?.trim() ?? '';
-    expect(emoji).not.toBe('');
 
-    fireEvent.click(token);
+    token.focus();
+    await user.keyboard('{Enter}');
 
     expect(token).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByTestId('division-groups-selection-hint')).toHaveTextContent(
-      `Selected item: ${emoji}.`
+      `Selected item: ${emoji}. Move to a group, the pool, or the remainder area and press Enter or Space.`
     );
 
-    const firstGroupZone = screen.getByTestId('division-groups-group-zone-0');
-    fireEvent.click(firstGroupZone);
+    const firstGroupZone = screen.getByRole('button', {
+      name: 'Move the selected item to group 1',
+    });
+    firstGroupZone.focus();
+    await user.keyboard('{Enter}');
 
+    expect(within(screen.getByTestId('division-groups-group-zone-0')).getByText(emoji)).toBeInTheDocument();
     expect(screen.getByTestId('division-groups-selection-hint')).toHaveTextContent(
-      'Tap an item, then tap a group, the pool, or the remainder area. You can still drag too.'
+      'Choose an item, then move to a group, the pool, or the remainder area and press Enter or Space.'
     );
-    expect(within(firstGroupZone).getByText(emoji)).toBeInTheDocument();
   });
 });

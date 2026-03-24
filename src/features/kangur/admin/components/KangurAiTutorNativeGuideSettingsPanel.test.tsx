@@ -153,7 +153,7 @@ describe('KangurAiTutorNativeGuideSettingsPanel', () => {
 
     expect(within(authOverviewButton).getByText('EN scaffolded')).toBeInTheDocument();
     expect(within(authOverviewButton).getByText('DE manual')).toBeInTheDocument();
-    expect(screen.getAllByText('37 source copy')).toHaveLength(2);
+    expect(screen.getAllByText('38 source copy')).toHaveLength(2);
     expect(screen.getAllByText('1 manual')).toHaveLength(1);
   });
 });

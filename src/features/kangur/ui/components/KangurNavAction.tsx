@@ -5,12 +5,23 @@ import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { cn } from '@/features/kangur/shared/utils';
 
-import { memo, type ComponentProps, type ReactNode, type Ref, useCallback, useState } from 'react';
+import {
+  memo,
+  type AriaAttributes,
+  type ComponentProps,
+  type ReactNode,
+  type Ref,
+  useCallback,
+  useState,
+} from 'react';
 
 type KangurButtonProps = ComponentProps<typeof KangurButton>;
 
 export type KangurNavActionProps = {
   active?: boolean;
+  ariaControls?: string;
+  ariaExpanded?: boolean;
+  ariaHasPopup?: AriaAttributes['aria-haspopup'];
   ariaLabel?: string;
   className?: string;
   disabled?: boolean;
@@ -34,6 +45,9 @@ export type KangurNavActionProps = {
 
 export const KangurNavAction = memo(function KangurNavAction({
   active = false,
+  ariaControls,
+  ariaExpanded,
+  ariaHasPopup,
   ariaLabel,
   className,
   disabled = false,
@@ -92,6 +106,9 @@ export const KangurNavAction = memo(function KangurNavAction({
       <KangurButton
         asChild
         aria-current={active ? 'page' : undefined}
+        aria-controls={ariaControls}
+        aria-expanded={ariaExpanded}
+        aria-haspopup={ariaHasPopup}
         aria-label={ariaLabel}
         className={resolvedClassName}
         data-doc-id={docId}
@@ -126,6 +143,9 @@ export const KangurNavAction = memo(function KangurNavAction({
   return (
     <KangurButton
       aria-current={active ? 'page' : undefined}
+      aria-controls={ariaControls}
+      aria-expanded={ariaExpanded}
+      aria-haspopup={ariaHasPopup}
       aria-label={ariaLabel}
       className={resolvedClassName}
       data-doc-id={docId}

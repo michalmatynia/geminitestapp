@@ -61,6 +61,13 @@ import type {
 
 export function KangurAssignmentManager({
   basePath,
+  preloadedCreateAssignment,
+  preloadedAssignments,
+  preloadedAssignmentsError = null,
+  preloadedLessons,
+  preloadedLoading = false,
+  preloadedReassignAssignment,
+  preloadedUpdateAssignment,
   view = 'full',
 }: KangurAssignmentManagerProps): React.JSX.Element {
   const locale = useLocale();
@@ -69,8 +76,19 @@ export function KangurAssignmentManager({
   const isCoarsePointer = useKangurCoarsePointer();
   const progress = useKangurProgressState();
   const { ageGroup } = useKangurAgeGroupFocus();
-  const lessonsQuery = useKangurLessons({ ageGroup, enabledOnly: true });
-  const lessons = useMemo(() => lessonsQuery.data ?? [], [lessonsQuery.data]);
+  const shouldShowCatalog = view === 'full' || view === 'catalog' || view === 'catalogWithLists';
+  const shouldShowTracking = view === 'full' || view === 'tracking' || view === 'metrics';
+  const shouldShowLists = view === 'full' || view === 'tracking' || view === 'catalogWithLists';
+  const shouldShowListTabs = shouldShowLists && view === 'catalogWithLists';
+  const lessonsQuery = useKangurLessons({
+    ageGroup,
+    enabled: shouldShowCatalog && preloadedLessons === undefined,
+    enabledOnly: true,
+  });
+  const lessons = useMemo(
+    () => preloadedLessons ?? lessonsQuery.data ?? [],
+    [lessonsQuery.data, preloadedLessons]
+  );
   const assignmentRuntimeLocalizer = useMemo(
     () => ({
       locale,
@@ -79,12 +97,18 @@ export function KangurAssignmentManager({
     [assignmentRuntimeTranslations, locale]
   );
   const catalog = useMemo(
-    () => buildKangurAssignmentCatalog(lessons, assignmentRuntimeLocalizer),
-    [assignmentRuntimeLocalizer, lessons]
+    () =>
+      shouldShowCatalog
+        ? buildKangurAssignmentCatalog(lessons, assignmentRuntimeLocalizer)
+        : [],
+    [assignmentRuntimeLocalizer, lessons, shouldShowCatalog]
   );
   const suggestedCatalog = useMemo(
-    () => buildRecommendedKangurAssignmentCatalog(progress, assignmentRuntimeLocalizer),
-    [assignmentRuntimeLocalizer, progress]
+    () =>
+      shouldShowCatalog
+        ? buildRecommendedKangurAssignmentCatalog(progress, assignmentRuntimeLocalizer)
+        : [],
+    [assignmentRuntimeLocalizer, progress, shouldShowCatalog]
   );
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterOption>('all');
@@ -104,19 +128,27 @@ export function KangurAssignmentManager({
   const listTabButtonClassName = isCoarsePointer
     ? 'min-h-11 min-w-0 flex-1 px-4 text-xs touch-manipulation select-none active:scale-[0.97]'
     : 'min-w-0 flex-1 px-3 text-xs';
-  const {
-    assignments,
-    isLoading,
-    error,
-    createAssignment,
-    updateAssignment,
-    reassignAssignment,
-  } = useKangurAssignments({
-    enabled: true,
+  const assignmentsQuery = useKangurAssignments({
+    enabled:
+      (shouldShowCatalog || shouldShowTracking || shouldShowLists) &&
+      preloadedAssignments === undefined,
     query: {
       includeArchived: false,
     },
   });
+  const assignments = preloadedAssignments ?? assignmentsQuery.assignments;
+  const isLoading =
+    preloadedAssignments === undefined ? assignmentsQuery.isLoading : preloadedLoading;
+  const error =
+    preloadedAssignments === undefined ? assignmentsQuery.error : preloadedAssignmentsError;
+  const {
+    createAssignment,
+    updateAssignment,
+    reassignAssignment,
+  } = assignmentsQuery;
+  const resolvedCreateAssignment = preloadedCreateAssignment ?? createAssignment;
+  const resolvedUpdateAssignment = preloadedUpdateAssignment ?? updateAssignment;
+  const resolvedReassignAssignment = preloadedReassignAssignment ?? reassignAssignment;
   const timeLimitAssignment =
     timeLimitModalContext?.mode === 'update'
       ? assignments.find((assignment) => assignment.id === timeLimitModalContext.assignmentId) ??
@@ -144,14 +176,18 @@ export function KangurAssignmentManager({
   }, [isTimeLimitModalOpen, timeLimitAssignment?.id, timeLimitAssignment?.timeLimitMinutes]);
 
   const filteredCatalog = useMemo(
-    () => filterKangurAssignmentCatalog(catalog, searchTerm, activeFilter),
-    [activeFilter, catalog, searchTerm]
+    () =>
+      shouldShowCatalog ? filterKangurAssignmentCatalog(catalog, searchTerm, activeFilter) : [],
+    [activeFilter, catalog, searchTerm, shouldShowCatalog]
   );
   const filterOptions = FILTER_OPTION_VALUES.map((value) => ({
     value,
     label: translations(`filters.${value}`),
   }));
   const assignedAssignmentsByKey = useMemo(() => {
+    if (!shouldShowCatalog) {
+      return new Map<string, KangurAssignmentSnapshot>();
+    }
     const map = new Map<string, KangurAssignmentSnapshot>();
     assignments
       .filter((assignment) => !assignment.archived)
@@ -169,42 +205,59 @@ export function KangurAssignmentManager({
         }
       });
     return map;
-  }, [assignments]);
+  }, [assignments, shouldShowCatalog]);
   const assignedTargetKeys = useMemo(
     () => new Set<string>(assignedAssignmentsByKey.keys()),
     [assignedAssignmentsByKey]
   );
   const activeAssignments = useMemo(
     () =>
-      assignments.filter(
-        (assignment) => !assignment.archived && assignment.progress.status !== 'completed'
-      ),
-    [assignments]
+      shouldShowLists
+        ? assignments.filter(
+            (assignment) => !assignment.archived && assignment.progress.status !== 'completed'
+          )
+        : [],
+    [assignments, shouldShowLists]
   );
   const completedAssignments = useMemo(
     () =>
-      assignments.filter(
-        (assignment) => !assignment.archived && assignment.progress.status === 'completed'
-      ),
-    [assignments]
+      shouldShowLists
+        ? assignments.filter(
+            (assignment) => !assignment.archived && assignment.progress.status === 'completed'
+          )
+        : [],
+    [assignments, shouldShowLists]
   );
   const activeAssignmentItems = useMemo(
-    () => buildKangurAssignmentListItems(basePath, activeAssignments, assignmentRuntimeLocalizer),
-    [activeAssignments, assignmentRuntimeLocalizer, basePath]
+    () =>
+      shouldShowLists
+        ? buildKangurAssignmentListItems(basePath, activeAssignments, assignmentRuntimeLocalizer)
+        : [],
+    [activeAssignments, assignmentRuntimeLocalizer, basePath, shouldShowLists]
   );
   const completedAssignmentItems = useMemo(
-    () => buildKangurAssignmentListItems(basePath, completedAssignments, assignmentRuntimeLocalizer),
-    [assignmentRuntimeLocalizer, basePath, completedAssignments]
+    () =>
+      shouldShowLists
+        ? buildKangurAssignmentListItems(
+            basePath,
+            completedAssignments,
+            assignmentRuntimeLocalizer
+          )
+        : [],
+    [assignmentRuntimeLocalizer, basePath, completedAssignments, shouldShowLists]
   );
   const activeAssignmentsCount = activeAssignmentItems.length;
   const completedAssignmentsCount = completedAssignmentItems.length;
   const trackerSummary = useMemo(() => buildTrackerSummary(assignments), [assignments]);
   const recommendedCatalog = useMemo(
     () =>
-      suggestedCatalog.filter(
-        (item) => !assignedTargetKeys.has(buildKangurAssignmentDedupeKey(item.createInput.target))
-      ),
-    [assignedTargetKeys, suggestedCatalog]
+      shouldShowCatalog
+        ? suggestedCatalog.filter(
+            (item) =>
+              !assignedTargetKeys.has(buildKangurAssignmentDedupeKey(item.createInput.target))
+          )
+        : [],
+    [assignedTargetKeys, shouldShowCatalog, suggestedCatalog]
   );
   const timeLimitParsed = parseTimeLimitInput(timeLimitDraft);
   const timeLimitParsedError = timeLimitParsed.errorKey
@@ -259,7 +312,7 @@ export function KangurAssignmentManager({
           },
         },
         async () => {
-          await createAssignment(item.createInput);
+          await resolvedCreateAssignment(item.createInput);
           return true;
         },
         {
@@ -305,7 +358,7 @@ export function KangurAssignmentManager({
           context: { assignmentId },
         },
         async () => {
-          await updateAssignment(assignmentId, { archived: true });
+          await resolvedUpdateAssignment(assignmentId, { archived: true });
           return true;
         },
         {
@@ -336,7 +389,7 @@ export function KangurAssignmentManager({
           context: { assignmentId },
         },
         async () => {
-          await updateAssignment(assignmentId, { archived: true });
+          await resolvedUpdateAssignment(assignmentId, { archived: true });
           return true;
         },
         {
@@ -373,7 +426,7 @@ export function KangurAssignmentManager({
           context: { assignmentId },
         },
         async () => {
-          await reassignAssignment(assignmentId);
+          await resolvedReassignAssignment(assignmentId);
           return true;
         },
         {
@@ -450,7 +503,9 @@ export function KangurAssignmentManager({
             },
           },
           async () => {
-            await updateAssignment(timeLimitAssignment.id, { timeLimitMinutes: nextValue });
+            await resolvedUpdateAssignment(timeLimitAssignment.id, {
+              timeLimitMinutes: nextValue,
+            });
             return true;
           },
           {
@@ -496,7 +551,7 @@ export function KangurAssignmentManager({
           },
         },
         async () => {
-          await createAssignment({
+          await resolvedCreateAssignment({
             ...timeLimitCatalogItem.createInput,
             timeLimitMinutes: parsed.value,
           });
@@ -530,10 +585,6 @@ export function KangurAssignmentManager({
     }
   };
 
-  const shouldShowCatalog = view === 'full' || view === 'catalog' || view === 'catalogWithLists';
-  const shouldShowTracking = view === 'full' || view === 'tracking' || view === 'metrics';
-  const shouldShowLists = view === 'full' || view === 'tracking' || view === 'catalogWithLists';
-  const shouldShowListTabs = shouldShowLists && view === 'catalogWithLists';
   const showActiveAssignmentsList = !shouldShowListTabs || activeListTab === 'active';
   const showCompletedAssignmentsList = !shouldShowListTabs || activeListTab === 'completed';
 

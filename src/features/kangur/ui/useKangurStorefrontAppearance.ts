@@ -13,24 +13,28 @@ import {
   resolveKangurDefaultThemeForMode,
 } from '@/features/kangur/theme-settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
-import { useKangurStorefrontInitialThemeSettings } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
+import {
+  useKangurStorefrontAppearanceHydrated,
+  useKangurStorefrontInitialThemeSettings,
+} from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
 
 export const useKangurStorefrontAppearance = () => {
   const settingsStore = useSettingsStore();
   const appearance = useOptionalCmsStorefrontAppearance();
+  const hydrated = useKangurStorefrontAppearanceHydrated();
   const initialThemeSettings = useKangurStorefrontInitialThemeSettings();
   const mode = appearance?.mode ?? 'default';
   const dailyThemeRaw =
-    settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('default')) ??
+    (hydrated ? settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('default')) : null) ??
     initialThemeSettings.default;
   const dawnThemeRaw =
-    settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('dawn')) ??
+    (hydrated ? settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('dawn')) : null) ??
     initialThemeSettings.dawn;
   const sunsetThemeRaw =
-    settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('sunset')) ??
+    (hydrated ? settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('sunset')) : null) ??
     initialThemeSettings.sunset;
   const nightlyThemeRaw =
-    settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('dark')) ??
+    (hydrated ? settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('dark')) : null) ??
     initialThemeSettings.dark;
   const rawTheme = resolveKangurThemeSettingsRawForMode({
     mode,

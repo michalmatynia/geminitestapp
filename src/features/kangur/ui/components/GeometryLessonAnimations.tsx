@@ -104,38 +104,6 @@ function GeometrySurface({
   );
 }
 
-function GeometryLabel({
-  fill,
-  text,
-  textColor,
-  width,
-  x,
-  y,
-}: {
-  fill: string;
-  text: string;
-  textColor: string;
-  width: number;
-  x: number;
-  y: number;
-}): React.JSX.Element {
-  return (
-    <g>
-      <rect x={x} y={y} width={width} height='22' rx='11' fill={fill} />
-      <text
-        fill={textColor}
-        fontSize='11'
-        fontWeight='700'
-        textAnchor='middle'
-        x={x + width / 2}
-        y={y + 15}
-      >
-        {text}
-      </text>
-    </g>
-  );
-}
-
 export function GeometryPointSegmentAnimation(): React.JSX.Element {
   const surfaceIds = useGeometrySurfaceIds('geometry-point-segment');
 

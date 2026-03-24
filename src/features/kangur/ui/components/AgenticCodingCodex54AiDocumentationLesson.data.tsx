@@ -1,6 +1,5 @@
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
-  KangurLessonCallout,
   KangurLessonCaption,
   KangurLessonInset,
   KangurLessonLead,

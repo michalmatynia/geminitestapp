@@ -67,13 +67,8 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
         description={sectionSummary}
         eyebrow={sectionTitle}
       />
-      <div className={`grid grid-cols-1 ${KANGUR_PANEL_GAP_CLASSNAME} xl:grid-cols-5`}>
-        <KangurGlassPanel
-          className='xl:col-span-3'
-          padding='lg'
-          surface='mistStrong'
-          variant='soft'
-        >
+      <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
+        <KangurGlassPanel padding='lg' surface='mistStrong' variant='soft'>
           <KangurPanelSectionHeading>{translations('recentSessionsHeading')}</KangurPanelSectionHeading>
           {isLoadingScores ? (
             <KangurEmptyState
@@ -129,11 +124,11 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
           )}
         </KangurGlassPanel>
 
-        <KangurGlassPanel className='xl:col-span-2' padding='lg' surface='solid' variant='subtle'>
+        <KangurGlassPanel padding='lg' surface='solid' variant='subtle'>
           <KangurBadgeTrackSection
             dataTestIdPrefix='learner-profile-badge-track'
             emptyTestId='learner-profile-badges-empty'
-            gridClassName='grid-cols-1'
+            gridClassName='grid-cols-1 md:grid-cols-1'
             heading={translations('badgeTracksHeading')}
             progress={progress}
           />

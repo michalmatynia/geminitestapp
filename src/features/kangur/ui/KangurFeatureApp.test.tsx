@@ -223,6 +223,7 @@ describe('KangurFeatureApp', () => {
     });
 
     authStateMock.mockReturnValue({
+      hasResolvedAuth: true,
       isLoadingAuth: false,
       isLoadingPublicSettings: false,
       authError: null,
@@ -799,6 +800,7 @@ describe('KangurFeatureApp', () => {
 
   it('redirects anonymous users away from the parent dashboard route', async () => {
     authStateMock.mockReturnValue({
+      hasResolvedAuth: true,
       isLoadingAuth: false,
       isLoadingPublicSettings: false,
       authError: null,
@@ -822,6 +824,32 @@ describe('KangurFeatureApp', () => {
       pageKey: 'Game',
       sourceId: 'kangur-auth:redirect-parent-dashboard',
     });
+  });
+
+  it('does not redirect away from the parent dashboard while auth is still unresolved', async () => {
+    authStateMock.mockReturnValue({
+      hasResolvedAuth: false,
+      isLoadingAuth: false,
+      isLoadingPublicSettings: false,
+      authError: null,
+      navigateToLogin: vi.fn(),
+      isAuthenticated: false,
+    });
+    routingStateMock.mockReturnValue({
+      pageKey: 'ParentDashboard',
+      embedded: false,
+      requestedPath: '/parent-dashboard',
+      basePath: '/',
+    });
+
+    render(<KangurFeatureApp />);
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    expect(routeNavigatorMock.replace).not.toHaveBeenCalled();
+    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
   });
 
   it('does not render the app loader over visible route content during theme loading', () => {
@@ -869,6 +897,7 @@ describe('KangurFeatureApp', () => {
   it('keeps the navbar skeleton mounted for standalone routes even when route content is temporarily null', async () => {
     topNavigationHostVisibleMock.mockReturnValue(false);
     authStateMock.mockReturnValue({
+      hasResolvedAuth: true,
       isLoadingAuth: false,
       isLoadingPublicSettings: false,
       authError: null,

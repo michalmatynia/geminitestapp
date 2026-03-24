@@ -148,9 +148,24 @@ describe('KangurLearnerProfilePerformanceWidget', () => {
       'aria-valuenow',
       '83'
     );
-    expect(
-      screen.getByText('Próby: 3 · XP na sesję: 28 · Łącznie: 84 XP · Najlepsza skuteczność: 100%')
-    ).toBeInTheDocument();
+    expect(screen.getByTestId('learner-profile-operation-card-clock')).toHaveTextContent(
+      '🕐 Zegar'
+    );
+    expect(screen.getByTestId('learner-profile-operation-accuracy-clock')).toHaveTextContent(
+      '83%średnia skuteczność'
+    );
+    expect(screen.getByTestId('learner-profile-operation-attempts-clock')).toHaveTextContent(
+      'Próby3'
+    );
+    expect(screen.getByTestId('learner-profile-operation-average-xp-clock')).toHaveTextContent(
+      'XP na sesję28 XP'
+    );
+    expect(screen.getByTestId('learner-profile-operation-total-xp-clock')).toHaveTextContent(
+      'Łącznie84 XP'
+    );
+    expect(screen.getByTestId('learner-profile-operation-best-score-clock')).toHaveTextContent(
+      'Najlepsza skuteczność100%'
+    );
     expect(screen.getByRole('link', { name: performanceMessages.train })).toHaveAttribute(
       'href',
       '/kangur/game?quickStart=operation&operation=clock'

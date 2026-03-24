@@ -47,7 +47,7 @@ export function KangurBadgeTrackCardHeader({
   const headerStatusChipClassName = statusChipClassName;
 
   return (
-    <div className={cn('flex w-full items-start justify-between kangur-panel-gap', className)}>
+    <div className={cn('flex w-full flex-wrap items-start justify-between gap-3', className)}>
       <KangurSectionEyebrow
         as='p'
         className={cn('min-w-0 flex-1 pt-1 tracking-[0.18em]', headerLabelClassName)}
@@ -76,29 +76,50 @@ export function KangurBadgeTrackCardBody({
   className?: string;
 }): React.JSX.Element {
   const translations = useTranslations('KangurProgressRuntime');
+  const countText = translateKangurProgressWithFallback(
+    translations,
+    'badgeTrackCard.count',
+    `${track.unlockedCount}/${track.totalCount} odznak`,
+    {
+      unlocked: track.unlockedCount,
+      total: track.totalCount,
+    }
+  );
+  const allUnlockedText = translateKangurProgressWithFallback(
+    translations,
+    'badgeTrackCard.allUnlocked',
+    'Wszystkie odznaki odblokowane'
+  );
+  const nextBadgeEyebrow = translateKangurProgressWithFallback(
+    translations,
+    'badgeTrackCard.nextEyebrow',
+    'Następny kamień milowy'
+  );
+  const nextBadgeTitle = track.nextBadge?.name ?? allUnlockedText;
+  const nextBadgeSummary = track.nextBadge?.summary ?? null;
 
   return (
-    <div className={cn('space-y-1', className)}>
-      <KangurCardTitle as='p' className='w-full'>
-        {translateKangurProgressWithFallback(
-          translations,
-          'badgeTrackCard.count',
-          `${track.unlockedCount}/${track.totalCount} odznak`,
-          {
-            unlocked: track.unlockedCount,
-            total: track.totalCount,
-          }
-        )}
+    <div className={cn('space-y-3', className)}>
+      <KangurCardTitle as='p' className='w-full leading-tight'>
+        {countText}
       </KangurCardTitle>
-      <KangurCardDescription as='p' className='w-full leading-5' size='xs'>
-        {track.nextBadge
-          ? `${track.nextBadge.name} · ${track.nextBadge.summary}`
-          : translateKangurProgressWithFallback(
-              translations,
-              'badgeTrackCard.allUnlocked',
-              'Wszystkie odznaki odblokowane'
-            )}
-      </KangurCardDescription>
+      <div className='rounded-[18px] border px-3 py-3 [border-color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_74%,transparent)]'>
+        <KangurCardDescription
+          as='p'
+          className='w-full text-[10px] font-semibold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'
+          size='xs'
+        >
+          {nextBadgeEyebrow}
+        </KangurCardDescription>
+        <KangurCardTitle as='p' className='mt-1 w-full text-sm leading-snug'>
+          {nextBadgeTitle}
+        </KangurCardTitle>
+        {nextBadgeSummary ? (
+          <KangurCardDescription as='p' className='mt-1 w-full leading-5' size='xs'>
+            {nextBadgeSummary}
+          </KangurCardDescription>
+        ) : null}
+      </div>
     </div>
   );
 }

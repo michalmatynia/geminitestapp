@@ -220,6 +220,8 @@ describe('ActiveLessonView mobile controls', () => {
     const activeLessonTransition = screen.getByTestId('lessons-active-transition');
     const printRoot = screen.getByTestId('kangur-lesson-print-root');
     const printHeading = screen.getByTestId('kangur-lesson-print-heading');
+    const printBrand = screen.getByTestId('kangur-lesson-print-brand');
+    const printBrandLogo = screen.getByTestId('kangur-lesson-print-brand-logo');
 
     expect(activeLessonTransition.contains(topControls)).toBe(true);
     expect(topControls).toHaveAttribute('data-kangur-print-exclude', 'true');
@@ -232,6 +234,11 @@ describe('ActiveLessonView mobile controls', () => {
     );
     expect(printRoot).toHaveAttribute('data-kangur-print-root', 'true');
     expect(printRoot.contains(printHeading)).toBe(true);
+    expect(printHeading).toHaveAttribute('data-kangur-print-masthead', 'true');
+    expect(printRoot.contains(printBrand)).toBe(true);
+    expect(printBrand).toHaveAttribute('data-kangur-print-brand', 'true');
+    expect(printBrand).toHaveAttribute('aria-label', 'StudiQ');
+    expect(printBrandLogo.querySelector('svg')).not.toBeNull();
     expect(printHeading).toHaveTextContent('Lekcje');
     expect(printHeading).toHaveTextContent('Lesson 1');
     expect(screen.queryByTestId('kangur-lesson-scroll-container')).toBeNull();
@@ -283,12 +290,13 @@ describe('ActiveLessonView mobile controls', () => {
       'data-kangur-print-root',
       'true'
     );
+    expect(screen.getByTestId('kangur-lesson-print-brand-logo').querySelector('svg')).not.toBeNull();
     expect(screen.getByTestId('kangur-lesson-print-heading')).toHaveTextContent('Lesson 1');
 
     fireEvent.click(screen.getByTestId('mock-nested-lesson-print-button'));
 
     expect(window.print).toHaveBeenCalledTimes(1);
-    expect(titleDuringPrint).toBe('Lesson 1');
+    expect(titleDuringPrint).toBe('StudiQ - Lesson 1');
     expect(document.body.classList.contains('kangur-print-mode')).toBe(false);
     expect(document.title).toBe('Kangur app');
   });
@@ -385,7 +393,7 @@ describe('ActiveLessonView mobile controls', () => {
     fireEvent.click(screen.getByTestId('mock-targeted-lesson-print-button'));
 
     expect(window.print).toHaveBeenCalledTimes(1);
-    expect(titleDuringPrint).toBe('Lesson 1 - Panel Two');
+    expect(titleDuringPrint).toBe('StudiQ - Lesson 1 - Panel Two');
     expect(targetedDuringPrint).toBe('true');
     expect(firstSelectedDuringPrint).toBe('false');
     expect(secondSelectedDuringPrint).toBe('true');

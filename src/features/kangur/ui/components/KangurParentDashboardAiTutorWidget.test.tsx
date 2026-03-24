@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -102,6 +102,12 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 }));
 
 import { KangurParentDashboardAiTutorWidget } from './KangurParentDashboardAiTutorWidget';
+
+const flushDeferredUsageLoad = async (): Promise<void> => {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(900);
+  });
+};
 
 describe('KangurParentDashboardAiTutorWidget', () => {
   beforeEach(() => {
@@ -351,16 +357,42 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     );
   });
 
-  it('shows a fallback message when live usage cannot be loaded', () => {
+  it('shows loading copy before deferred live usage becomes available', async () => {
+    vi.useFakeTimers();
+
+    try {
+      render(<KangurParentDashboardAiTutorWidget />);
+
+      expect(screen.getByText('Sprawdzam dzisiejsze wiadomości…')).toBeInTheDocument();
+      expect(screen.queryByText('Wysłano 0 wiadomości.')).not.toBeInTheDocument();
+
+      await flushDeferredUsageLoad();
+
+      expect(screen.getByText('Wysłano 0 wiadomości.')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('shows a fallback message when live usage cannot be loaded', async () => {
+    vi.useFakeTimers();
     usageQueryState.value = {
       data: undefined,
       isLoading: false,
       isError: true,
     };
 
-    render(<KangurParentDashboardAiTutorWidget />);
+    try {
+      render(<KangurParentDashboardAiTutorWidget />);
 
-    expect(screen.getByText('Nie udało się odczytać bieżącego użycia.')).toBeInTheDocument();
+      expect(screen.queryByText('Nie udało się odczytać bieżącego użycia.')).not.toBeInTheDocument();
+
+      await flushDeferredUsageLoad();
+
+      expect(screen.getByText('Nie udało się odczytać bieżącego użycia.')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('does not show app-wide tutor controls in the parent dashboard', () => {

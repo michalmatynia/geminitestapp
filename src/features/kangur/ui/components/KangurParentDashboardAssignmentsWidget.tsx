@@ -16,8 +16,19 @@ export function KangurParentDashboardAssignmentsWidget({
   displayMode?: KangurParentDashboardPanelDisplayMode;
 }): React.JSX.Element | null {
   const translations = useTranslations('KangurParentDashboard');
-  const { activeLearner, activeTab, basePath, canAccessDashboard } =
-    useKangurParentDashboardRuntime();
+  const {
+    activeLearner,
+    activeTab,
+    assignments = [],
+    assignmentsError,
+    basePath,
+    canAccessDashboard,
+    createAssignment,
+    isLoadingAssignments = false,
+    lessons = [],
+    reassignAssignment,
+    updateAssignment,
+  } = useKangurParentDashboardRuntime();
   const { entry: assignmentsContent } = useKangurPageContentEntry('parent-dashboard-assignments');
   const activeLearnerId = activeLearner?.id ?? null;
 
@@ -44,6 +55,13 @@ export function KangurParentDashboardAssignmentsWidget({
       />
       <KangurAssignmentManager
         basePath={basePath}
+        preloadedAssignments={assignments}
+        preloadedAssignmentsError={assignmentsError}
+        preloadedCreateAssignment={createAssignment}
+        preloadedLessons={lessons}
+        preloadedLoading={isLoadingAssignments}
+        preloadedReassignAssignment={reassignAssignment}
+        preloadedUpdateAssignment={updateAssignment}
         view='catalogWithLists'
         key={activeLearnerId ?? 'no-learner'}
       />

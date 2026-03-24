@@ -1077,6 +1077,12 @@
       "triggerAriaLabel": "Aktualny język: {language}. Otwórz menu zmiany języka.",
       "triggerTitle": "Język: {language}"
     },
+    "mobileMenu": {
+      "open": "Otwórz menu",
+      "close": "Zamknij menu",
+      "title": "Menu Kangur",
+      "description": "Użyj klawisza Tab, aby przechodzić między opcjami nawigacji, a Escape, aby zamknąć menu."
+    },
     "subject": {
       "label": "Wybierz przedmiot",
       "currentTitle": "Aktualny przedmiot: {subject}",
@@ -1303,6 +1309,11 @@
       "operationsHeading": "Wyniki wg operacji",
       "emptyTitle": "Brak danych o operacjach.",
       "emptyDescription": "Rozegraj kilka zadań, aby zobaczyć skuteczność dla poszczególnych operacji.",
+      "accuracyLabel": "średnia skuteczność",
+      "attemptsLabel": "Próby",
+      "averageXpLabel": "XP na sesję",
+      "totalXpLabel": "Łącznie",
+      "bestAccuracyLabel": "Najlepsza skuteczność",
       "train": "Trenuj",
       "operationStats": "Próby: {attempts} · XP na sesję: {averageXp} · Łącznie: {totalXp} XP · Najlepsza skuteczność: {bestScore}%"
     },
@@ -4237,7 +4248,8 @@
     },
     "badgeTrackCard": {
       "count": "{unlocked}/{total} odznak",
-      "allUnlocked": "Wszystkie odznaki odblokowane"
+      "allUnlocked": "Wszystkie odznaki odblokowane",
+      "nextEyebrow": "Następny kamień milowy"
     },
     "badgeTrackHighlights": {
       "placeholders": {

@@ -96,6 +96,9 @@ export function KangurAiTutorContentProvider({
               });
             }
           },
+          // Optional tutor copy should quietly fall back to defaults instead of
+          // surfacing noisy client errors for users when the backing store is unavailable.
+          shouldReport: () => false,
         }
       );
       if (!cancelled) {

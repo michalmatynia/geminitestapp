@@ -229,7 +229,9 @@ describe('LessonSlideSection', () => {
     const navigationButtonRow = screen
       .getByTestId('lesson-slide-navigation-shell')
       .querySelector('[role="group"]');
+    const slideStageRoot = screen.getByTestId('lesson-slide-stage-root');
     const slideShell = screen.getByTestId('lesson-slide-shell');
+    const slideBody = slideShell.querySelector('[data-kangur-print-slide-body="true"]');
     expect(printButton).toHaveAttribute('aria-label', 'Drukuj panel');
     expect(
       Array.from(navigationButtonRow?.querySelectorAll('button') ?? []).map((button) =>
@@ -244,6 +246,8 @@ describe('LessonSlideSection', () => {
     expect(slideShell).toHaveAttribute('data-kangur-print-slide-panel', 'true');
     expect(slideShell).toHaveAttribute('data-kangur-print-panel-id');
     expect(slideShell).toHaveAttribute('data-kangur-print-panel-title', 'Slajd 1');
+    expect(slideStageRoot).toHaveAttribute('data-kangur-print-slide-stage', 'true');
+    expect(slideBody).not.toBeNull();
 
     fireEvent.click(printButton);
 

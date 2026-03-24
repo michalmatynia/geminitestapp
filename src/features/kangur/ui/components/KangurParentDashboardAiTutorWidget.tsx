@@ -91,6 +91,7 @@ const KANGUR_PARENT_TUTOR_MOOD_ACCENTS: Record<KangurTutorMoodId, 'slate' | 'ind
 };
 
 const PARENT_DASHBOARD_AI_TUTOR_TEMPORARILY_DISABLED = false;
+const AI_TUTOR_USAGE_LOAD_DEFER_MS = 900;
 
 const formatTutorMoodTimestamp = (
   value: string | null,
@@ -203,6 +204,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
   );
   const isUsageEnabled = isTemporarilyDisabled ? false : currentSettings?.enabled ?? false;
   const shouldLoadUsage = canAccessDashboard && Boolean(activeLearnerId) && isUsageEnabled;
+  const [isUsageQueryReady, setIsUsageQueryReady] = useState(false);
   const compactActionClassName = isCoarsePointer
     ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
     : 'w-full sm:w-auto';
@@ -273,9 +275,9 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
         },
       });
     },
-    enabled: shouldLoadUsage,
+    enabled: shouldLoadUsage && isUsageQueryReady,
     staleTime: 10_000,
-    refetchInterval: shouldLoadUsage ? 30_000 : false,
+    refetchInterval: shouldLoadUsage && isUsageQueryReady ? 30_000 : false,
     refetchOnWindowFocus: true,
     meta: {
       source: 'kangur.ui.KangurParentDashboardAiTutorWidget.usage',
@@ -287,9 +289,27 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
       description: 'Loads AI tutor usage for the active learner.',
     },
   });
+  const isUsagePending = shouldLoadUsage && (!isUsageQueryReady || isUsageLoading);
+
+  useEffect(() => {
+    if (!shouldLoadUsage) {
+      setIsUsageQueryReady(false);
+      return;
+    }
+
+    setIsUsageQueryReady(false);
+    const timeoutId = setTimeout(() => {
+      setIsUsageQueryReady(true);
+    }, AI_TUTOR_USAGE_LOAD_DEFER_MS);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [shouldLoadUsage]);
+
   const usageSummary = tutorUsageResponse?.usage ?? null;
   const usageSummaryText = (() => {
-    if (isUsageLoading) return tutorContent.parentDashboard.usageLoading;
+    if (isUsagePending) return tutorContent.parentDashboard.usageLoading;
     if (hasUsageError || !usageSummary) return tutorContent.parentDashboard.usageError;
     if (usageSummary.dailyMessageLimit === null) {
       return formatKangurAiTutorTemplate(
@@ -542,7 +562,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
               </KangurSectionEyebrow>
               <KangurCardTitle className='mt-1'>{usageSummaryText}</KangurCardTitle>
             </div>
-            {!isUsageLoading && !hasUsageError && usageSummary ? (
+            {!isUsagePending && !hasUsageError && usageSummary ? (
               <div className='rounded-full [background:color-mix(in_srgb,var(--kangur-soft-card-background)_90%,#ffffff)] px-3 py-1 text-xs font-semibold text-amber-700 sm:shrink-0'>
                 {usageBadgeText}
               </div>

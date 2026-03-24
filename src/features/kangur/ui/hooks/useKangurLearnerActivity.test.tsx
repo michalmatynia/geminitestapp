@@ -61,6 +61,7 @@ describe('useKangurLearnerActivityStatus', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
   });
 
@@ -128,5 +129,37 @@ describe('useKangurLearnerActivityStatus', () => {
     await waitFor(() => {
       expect(eventSourceClose).toHaveBeenCalled();
     });
+  });
+
+  it('defers the initial refresh and SSE startup until the requested delay elapses', async () => {
+    vi.useFakeTimers();
+
+    renderHook(() =>
+      useKangurLearnerActivityStatus({
+        deferInitialRefreshMs: 1_200,
+        enabled: true,
+        learnerId: 'learner-1',
+        refreshIntervalMs: 0,
+      })
+    );
+
+    expect(learnerActivityGetMock).not.toHaveBeenCalled();
+    expect(eventSourceCtor).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_199);
+    });
+
+    expect(learnerActivityGetMock).not.toHaveBeenCalled();
+    expect(eventSourceCtor).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+    });
+
+    expect(learnerActivityGetMock).toHaveBeenCalledTimes(1);
+    expect(eventSourceCtor).toHaveBeenCalledWith(
+      '/api/kangur/learner-activity/stream?learnerId=learner-1'
+    );
   });
 });

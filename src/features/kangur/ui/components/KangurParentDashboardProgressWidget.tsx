@@ -8,7 +8,6 @@ import { getLocalizedKangurLessonTitle } from '@/features/kangur/lessons/lesson-
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 
-import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
 import KangurAssignmentManager from '@/features/kangur/ui/components/KangurAssignmentManager';
 import KangurDailyQuestHighlightCardContent from '@/features/kangur/ui/components/KangurDailyQuestHighlightCardContent';
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
@@ -18,7 +17,6 @@ import {
   shouldRenderKangurParentDashboardPanel,
   useKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
-import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import {
   KangurButton,
@@ -34,9 +32,7 @@ import {
   KangurSummaryPanel,
   KangurWidgetIntro,
 } from '@/features/kangur/ui/design/primitives';
-import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
-import { useKangurParentDashboardScores } from '@/features/kangur/ui/hooks/useKangurParentDashboardScores';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { buildKangurAssignmentListItems } from '@/features/kangur/ui/services/delegated-assignments';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
@@ -101,21 +97,45 @@ export function KangurParentDashboardProgressWidget({
 }: {
   displayMode?: KangurParentDashboardPanelDisplayMode;
 }): React.JSX.Element | null {
+  const { activeLearner, activeTab, canAccessDashboard } = useKangurParentDashboardRuntime();
+  const activeLearnerId = activeLearner?.id ?? null;
+
+  if (!canAccessDashboard) {
+    return null;
+  }
+
+  if (!shouldRenderKangurParentDashboardPanel(displayMode, activeTab, 'progress')) {
+    return null;
+  }
+
+  if (!activeLearnerId) {
+    return null;
+  }
+
+  return <KangurParentDashboardProgressWidgetContent />;
+}
+
+function KangurParentDashboardProgressWidgetContent(): React.JSX.Element {
   const locale = useLocale();
   const translations = useTranslations('KangurParentDashboard');
   const runtimeTranslations = useTranslations('KangurProgressRuntime');
-  const { activeLearner, activeTab, basePath, canAccessDashboard, progress, user } =
-    useKangurParentDashboardRuntime();
+  const {
+    activeLearner,
+    assignments = [],
+    assignmentsError,
+    basePath,
+    isLoadingAssignments = false,
+    isLoadingScores = false,
+    lessons = [],
+    progress,
+    scores = [],
+    scoresError,
+    updateAssignment,
+  } = useKangurParentDashboardRuntime();
   const { subject, subjectKey } = useKangurSubjectFocus();
-  const { ageGroup } = useKangurAgeGroupFocus();
   const isCoarsePointer = useKangurCoarsePointer();
   const { entry: progressContent } = useKangurPageContentEntry('parent-dashboard-progress');
-  const lessonsQuery = useKangurLessons({ ageGroup, enabledOnly: true });
-  const lessons = useMemo(() => lessonsQuery.data ?? [], [lessonsQuery.data]);
   const activeLearnerId = activeLearner?.id ?? null;
-  const activeLearnerName =
-    activeLearner?.displayName?.trim() || user?.full_name?.trim() || null;
-  const createdBy = user?.email?.trim() || null;
   const [archiveError, setArchiveError] = useState<string | null>(null);
   const taskKindLabels: Record<string, string> = {
     game: translations('widgets.progress.taskKind.game'),
@@ -138,28 +158,6 @@ export function KangurParentDashboardProgressWidget({
   const recentAssignmentsTitle = translations('widgets.progress.assignments.recentTitle');
   const recentAssignmentsSummary = translations('widgets.progress.assignments.recentSummary');
   const recentAssignmentsEmptyLabel = translations('widgets.progress.assignments.recentEmpty');
-  const {
-    isLoadingScores,
-    scores,
-    scoresError,
-  } = useKangurParentDashboardScores({
-    createdBy,
-    enabled: Boolean(activeLearnerId && canAccessDashboard),
-    learnerId: activeLearnerId,
-    playerName: activeLearnerName,
-    subject,
-  });
-  const {
-    assignments,
-    isLoading: assignmentsLoading,
-    error: assignmentsError,
-    updateAssignment,
-  } = useKangurAssignments({
-    enabled: Boolean(activeLearnerId),
-    query: {
-      includeArchived: false,
-    },
-  });
   const openedTasks = progress.openedTasks ?? [];
   const lessonPanelProgress = progress.lessonPanelProgress ?? {};
   const activeAssignments = useMemo(
@@ -249,18 +247,6 @@ export function KangurParentDashboardProgressWidget({
     () => buildLessonMasteryInsights(progress, TOP_LESSON_INSIGHT_LIMIT, locale),
     [locale, progress]
   );
-
-  if (!canAccessDashboard) {
-    return null;
-  }
-
-  if (!shouldRenderKangurParentDashboardPanel(displayMode, activeTab, 'progress')) {
-    return null;
-  }
-
-  if (!activeLearnerId) {
-    return null;
-  }
 
   const dailyQuest = getCurrentKangurDailyQuest(progress, {
     ownerKey: subjectKey,
@@ -641,7 +627,7 @@ export function KangurParentDashboardProgressWidget({
           </div>
         )}
       </KangurSummaryPanel>
-      {assignmentsLoading ? (
+      {isLoadingAssignments ? (
         <KangurGlassPanel
           data-testid='parent-dashboard-active-assignments-loading'
           padding='lg'
@@ -705,6 +691,11 @@ export function KangurParentDashboardProgressWidget({
       )}
       <KangurAssignmentManager
         basePath={basePath}
+        preloadedAssignments={assignments}
+        preloadedAssignmentsError={assignmentsError}
+        preloadedLessons={lessons}
+        preloadedLoading={isLoadingAssignments}
+        preloadedUpdateAssignment={updateAssignment}
         view='metrics'
         key={`${activeLearnerId ?? 'no-learner'}:metrics`}
       />

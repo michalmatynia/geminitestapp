@@ -59,53 +59,58 @@ export async function getKangurAiTutorContent(locale = 'pl'): Promise<KangurAiTu
     return fallback;
   }
 
-  await ensureIndexes();
-  const collection = await readCollection();
-  const existing = await collection.findOne({ locale });
-  if (!existing) {
-    const now = new Date();
-    await collection.updateOne(
-      { locale },
-      {
-        $setOnInsert: {
-          locale,
-          content: fallback,
-          createdAt: now,
-          updatedAt: now,
-        },
-      },
-      { upsert: true }
-    );
-    return fallback;
-  }
-
   try {
-    const repaired = parseKangurAiTutorContent(repairKangurPolishCopy(existing.content));
+    await ensureIndexes();
+    const collection = await readCollection();
+    const existing = await collection.findOne({ locale });
+    if (!existing) {
+      const now = new Date();
+      await collection.updateOne(
+        { locale },
+        {
+          $setOnInsert: {
+            locale,
+            content: fallback,
+            createdAt: now,
+            updatedAt: now,
+          },
+        },
+        { upsert: true }
+      );
+      return fallback;
+    }
 
-    if (JSON.stringify(repaired) !== JSON.stringify(existing.content)) {
+    try {
+      const repaired = parseKangurAiTutorContent(repairKangurPolishCopy(existing.content));
+
+      if (JSON.stringify(repaired) !== JSON.stringify(existing.content)) {
+        await collection.updateOne(
+          { locale },
+          {
+            $set: {
+              content: repaired,
+              updatedAt: new Date(),
+            },
+          }
+        );
+      }
+
+      return repaired;
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       await collection.updateOne(
         { locale },
         {
           $set: {
-            content: repaired,
+            content: fallback,
             updatedAt: new Date(),
           },
         }
       );
+      return fallback;
     }
-
-    return repaired;
   } catch (error) {
     void ErrorSystem.captureException(error);
-    await collection.updateOne(
-      { locale },
-      {
-        $set: {
-          content: fallback,
-          updatedAt: new Date(),
-        },
-      }
-    );
     return fallback;
   }
 }

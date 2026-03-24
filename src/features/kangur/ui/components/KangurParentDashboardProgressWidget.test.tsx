@@ -9,8 +9,13 @@ const runtimeState = vi.hoisted(() => ({
   value: {
     activeLearner: { id: 'learner-1', displayName: 'Maja' },
     activeTab: 'progress',
+    assignments: [],
+    assignmentsError: null,
     basePath: '/kangur',
     canAccessDashboard: true,
+    isLoadingAssignments: false,
+    isLoadingScores: false,
+    lessons: [],
     progress: {
       totalXp: 480,
       gamesPlayed: 4,
@@ -27,19 +32,17 @@ const runtimeState = vi.hoisted(() => ({
       activityStats: {},
       lessonMastery: {},
     },
+    scores: [],
+    scoresError: null,
+    updateAssignment: vi.fn(),
   },
 }));
 
 const getCurrentKangurDailyQuestMock = vi.hoisted(() => vi.fn());
 const useKangurPageContentEntryMock = vi.hoisted(() => vi.fn());
-const useKangurAssignmentsMock = vi.hoisted(() => vi.fn());
-const useKangurParentDashboardScoresMock = vi.hoisted(() => vi.fn());
 const assignmentsListMock = vi.hoisted(() => vi.fn());
 const assignmentManagerMock = vi.hoisted(() => vi.fn());
 const useKangurSubjectFocusMock = vi.hoisted(() => vi.fn());
-const lessonsState = vi.hoisted(() => ({
-  value: [] as Array<Record<string, unknown>>,
-}));
 
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({
   shouldRenderKangurParentDashboardPanel: (displayMode: string, activeTab: string, targetTab: string) =>
@@ -63,22 +66,6 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
-vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
-  useKangurAssignments: useKangurAssignmentsMock,
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurParentDashboardScores', () => ({
-  useKangurParentDashboardScores: () => useKangurParentDashboardScoresMock(),
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
-  useKangurLessons: () => ({
-    data: lessonsState.value,
-    isLoading: false,
-    error: null,
-  }),
-}));
-
 vi.mock('@/features/kangur/ui/components/KangurAssignmentsList', () => ({
   default: (props: unknown) => {
     assignmentsListMock(props);
@@ -98,7 +85,6 @@ import { KangurParentDashboardProgressWidget } from './KangurParentDashboardProg
 describe('KangurParentDashboardProgressWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    lessonsState.value = [];
     useKangurPageContentEntryMock.mockReturnValue({
       data: undefined,
       entry: null,
@@ -112,19 +98,6 @@ describe('KangurParentDashboardProgressWidget', () => {
       refetch: vi.fn(),
       status: 'success',
     });
-    useKangurAssignmentsMock.mockReturnValue({
-      assignments: [],
-      isLoading: false,
-      error: null,
-      refresh: vi.fn(),
-      createAssignment: vi.fn(),
-      updateAssignment: vi.fn(),
-    });
-    useKangurParentDashboardScoresMock.mockReturnValue({
-      isLoadingScores: false,
-      scores: [],
-      scoresError: null,
-    });
     useKangurSubjectFocusMock.mockReturnValue({
       subject: 'maths',
       setSubject: vi.fn(),
@@ -133,8 +106,13 @@ describe('KangurParentDashboardProgressWidget', () => {
     runtimeState.value = {
       activeLearner: { id: 'learner-1', displayName: 'Maja' },
       activeTab: 'progress',
+      assignments: [],
+      assignmentsError: null,
       basePath: '/kangur',
       canAccessDashboard: true,
+      isLoadingAssignments: false,
+      isLoadingScores: false,
+      lessons: [],
       progress: {
         totalXp: 480,
         gamesPlayed: 4,
@@ -167,6 +145,9 @@ describe('KangurParentDashboardProgressWidget', () => {
           },
         },
       },
+      scores: [],
+      scoresError: null,
+      updateAssignment: vi.fn(),
     };
   });
 
@@ -208,6 +189,11 @@ describe('KangurParentDashboardProgressWidget', () => {
     expect(assignmentManagerMock).toHaveBeenCalledWith(
       expect.objectContaining({
         basePath: '/kangur',
+        preloadedAssignments: [],
+        preloadedAssignmentsError: null,
+        preloadedLessons: [],
+        preloadedLoading: false,
+        preloadedUpdateAssignment: expect.any(Function),
         view: 'metrics',
       })
     );
@@ -237,6 +223,19 @@ describe('KangurParentDashboardProgressWidget', () => {
 
     expect(screen.queryByTestId('parent-dashboard-daily-quest')).toBeNull();
     expect(getCurrentKangurDailyQuestMock).not.toHaveBeenCalled();
+    expect(screen.queryByText('widgets.progress.title')).toBeNull();
+    expect(assignmentsListMock).not.toHaveBeenCalled();
+    expect(assignmentManagerMock).not.toHaveBeenCalled();
+  });
+
+  it('does not start progress data hooks when another parent tab is active', () => {
+    runtimeState.value = {
+      ...runtimeState.value,
+      activeTab: 'assign',
+    };
+
+    render(<KangurParentDashboardProgressWidget displayMode='active-tab' />);
+
     expect(screen.queryByText('widgets.progress.title')).toBeNull();
     expect(assignmentsListMock).not.toHaveBeenCalled();
     expect(assignmentManagerMock).not.toHaveBeenCalled();
@@ -296,11 +295,12 @@ describe('KangurParentDashboardProgressWidget', () => {
   });
 
   it('shows a loading chip while weekly activity scores are being fetched', () => {
-    useKangurParentDashboardScoresMock.mockReturnValue({
+    runtimeState.value = {
+      ...runtimeState.value,
       isLoadingScores: true,
       scores: [],
       scoresError: null,
-    });
+    };
 
     render(<KangurParentDashboardProgressWidget />);
 
@@ -310,11 +310,12 @@ describe('KangurParentDashboardProgressWidget', () => {
   });
 
   it('shows an error chip when weekly activity scores fail to load', () => {
-    useKangurParentDashboardScoresMock.mockReturnValue({
+    runtimeState.value = {
+      ...runtimeState.value,
       isLoadingScores: false,
       scores: [],
       scoresError: new Error('load failed'),
-    });
+    };
 
     render(<KangurParentDashboardProgressWidget />);
 

@@ -127,7 +127,13 @@ describe('KangurLearnerProfileSessionsWidget', () => {
       '2/2 odznak'
     );
     expect(screen.getByTestId('learner-profile-badge-track-xp')).toHaveTextContent(
-      'Pół tysiąca XP · 480/500 XP'
+      'Następny kamień milowy'
+    );
+    expect(screen.getByTestId('learner-profile-badge-track-xp')).toHaveTextContent(
+      'Pół tysiąca XP'
+    );
+    expect(screen.getByTestId('learner-profile-badge-track-xp')).toHaveTextContent(
+      '480/500 XP'
     );
     expect(screen.queryByTestId('learner-profile-badge-track-variety')).toBeNull();
   });

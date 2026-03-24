@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useLocale, useTranslations } from 'next-intl';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type AriaAttributes } from 'react';
 
 import {
   CmsStorefrontAppearanceButtons,
@@ -91,6 +91,9 @@ type KangurPrimaryNavigationPage =
 
 type KangurNavActionConfig = {
   active?: boolean;
+  ariaControls?: string;
+  ariaExpanded?: boolean;
+  ariaHasPopup?: AriaAttributes['aria-haspopup'];
   ariaLabel?: string;
   className?: string;
   content: React.ReactNode;
@@ -158,6 +161,43 @@ const renderNavAction = (config: KangurNavActionConfig): React.JSX.Element => {
   const { content, ...action } = config;
   return <KangurNavAction {...action}>{content}</KangurNavAction>;
 };
+
+function KangurHomeBetaBadge(): React.JSX.Element {
+  return (
+    <svg
+      aria-hidden='true'
+      className='mt-0.5 h-[12px] w-auto overflow-visible sm:h-[13px]'
+      data-testid='kangur-home-beta-badge'
+      fill='none'
+      viewBox='0 0 62 18'
+      xmlns='http://www.w3.org/2000/svg'
+    >
+      <title>StuqiQ Beta badge</title>
+      <rect
+        fill='color-mix(in srgb, var(--kangur-accent, #5566f2) 10%, white)'
+        height='17'
+        rx='8.5'
+        stroke='color-mix(in srgb, var(--kangur-accent, #5566f2) 36%, white)'
+        strokeWidth='1'
+        width='61'
+        x='0.5'
+        y='0.5'
+      />
+      <text
+        fill='color-mix(in srgb, var(--kangur-accent, #5566f2) 68%, #1e293b)'
+        fontFamily='ui-sans-serif, system-ui, sans-serif'
+        fontSize='8'
+        fontWeight='800'
+        letterSpacing='0.18em'
+        textAnchor='middle'
+        x='31'
+        y='11.2'
+      >
+        BETA
+      </text>
+    </svg>
+  );
+}
 
 export function KangurPrimaryNavigation({
   basePath,
@@ -248,6 +288,8 @@ export function KangurPrimaryNavigation({
   const profileHref = createPageUrl('LearnerProfile', basePath);
   const transitionPhase = routeTransitionState?.transitionPhase ?? 'idle';
   const activeTransitionSourceId = routeTransitionState?.activeTransitionSourceId ?? null;
+  const subjectDialogId = 'kangur-primary-nav-subject-dialog';
+  const ageGroupDialogId = 'kangur-primary-nav-age-group-dialog';
   const homeTransitionSourceId = 'kangur-primary-nav:home';
   const lessonsTransitionSourceId = 'kangur-primary-nav:lessons';
   const duelsTransitionSourceId = 'kangur-primary-nav:duels';
@@ -593,13 +635,20 @@ export function KangurPrimaryNavigation({
     content: (
       <>
         <span
-          className='flex items-center justify-center transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none'
-          data-testid='kangur-home-logo'
+          className='flex flex-col items-center justify-center'
+          data-testid='kangur-home-brand'
         >
-          <KangurHomeLogo
-            idPrefix='kangur-primary-nav-logo'
-            className='-translate-y-[1px]'
-          />
+          <span
+            className='flex items-center justify-center transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none'
+            data-testid='kangur-home-logo'
+          >
+            <KangurHomeLogo
+              idPrefix='kangur-primary-nav-logo'
+              className='-translate-y-[1px]'
+            />
+          </span>
+          {/* Temporary beta marker for the home nav brand. Remove this block when the label is no longer needed. */}
+          <KangurHomeBetaBadge />
         </span>
         <span className='sr-only'>{navTranslations('home')}</span>
       </>
@@ -649,6 +698,9 @@ export function KangurPrimaryNavigation({
     },
   };
   const subjectAction: KangurNavActionConfig = {
+    ariaControls: subjectDialogId,
+    ariaExpanded: isSubjectModalOpen,
+    ariaHasPopup: 'dialog',
     ariaLabel: navTranslations('subject.label'),
     className: yellowPillActionClassName,
     content: isSixYearOld ? (
@@ -673,6 +725,9 @@ export function KangurPrimaryNavigation({
     title: navTranslations('subject.currentTitle', { subject: subjectChoiceLabel }),
   };
   const ageGroupAction: KangurNavActionConfig = {
+    ariaControls: ageGroupDialogId,
+    ariaExpanded: isAgeGroupModalOpen,
+    ariaHasPopup: 'dialog',
     ariaLabel: navTranslations('ageGroup.label'),
     className: amberPillActionClassName,
     content: isSixYearOld ? (
@@ -906,13 +961,16 @@ export function KangurPrimaryNavigation({
     );
   };
 
-  const mobileMenuLabel = isMobileMenuOpen ? 'Zamknij menu' : 'Otwórz menu';
+  const mobileMenuLabel = isMobileMenuOpen
+    ? navTranslations('mobileMenu.close')
+    : navTranslations('mobileMenu.open');
   const mobileMenuId = 'kangur-mobile-menu';
   const mobileMenuTitleId = 'kangur-mobile-menu-title';
+  const mobileMenuDescriptionId = 'kangur-mobile-menu-description';
   const mobileMenuCloseButton = (
     <KangurPanelCloseButton
       id='kangur-mobile-menu-close'
-      aria-label='Zamknij menu'
+      aria-label={navTranslations('mobileMenu.close')}
       onClick={closeMobileMenu}
       variant='chat'
     />
@@ -970,14 +1028,15 @@ export function KangurPrimaryNavigation({
     >
       <button
         type='button'
+        aria-hidden='true'
         className='absolute inset-0 cursor-pointer border-0 bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.4)_0%,rgba(15,23,42,0.72)_100%)] p-0 touch-manipulation active:opacity-95'
         onClick={closeMobileMenu}
-        aria-label='Close navigation menu'
         tabIndex={-1}
       />
       <div
         role='dialog'
         aria-modal='true'
+        aria-describedby={mobileMenuDescriptionId}
         aria-labelledby={mobileMenuTitleId}
         id={mobileMenuId}
         className={`relative flex h-full w-full flex-col kangur-panel-gap overflow-y-auto px-4 pb-[calc(var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px)] pt-[calc(env(safe-area-inset-top)+20px)] transition-transform duration-200 min-[420px]:px-5 ${
@@ -988,8 +1047,11 @@ export function KangurPrimaryNavigation({
         ref={mobileMenuRef}
       >
         <h2 id={mobileMenuTitleId} className='sr-only'>
-          Menu Kangur
+          {navTranslations('mobileMenu.title')}
         </h2>
+        <p id={mobileMenuDescriptionId} className='sr-only'>
+          {navTranslations('mobileMenu.description')}
+        </p>
         <KangurTopNavGroup label={navigationLabel} className='w-full flex-col'>
           <div
             className='flex w-full items-center gap-2'
@@ -1028,6 +1090,7 @@ export function KangurPrimaryNavigation({
   ) : null;
   const subjectModal = (
     <KangurChoiceDialog
+      contentId={subjectDialogId}
       open={isSubjectModalOpen}
       onOpenChange={setIsSubjectModalOpen}
       header={
@@ -1099,6 +1162,7 @@ export function KangurPrimaryNavigation({
   );
   const ageGroupModal = (
     <KangurChoiceDialog
+      contentId={ageGroupDialogId}
       open={isAgeGroupModalOpen}
       onOpenChange={setIsAgeGroupModalOpen}
       header={
@@ -1179,6 +1243,7 @@ export function KangurPrimaryNavigation({
         className={topBarClassName}
         contentClassName={topBarContentClassName}
         left={leftContent}
+        role='banner'
       />
       {mobileMenuOverlay}
       {subjectModal}

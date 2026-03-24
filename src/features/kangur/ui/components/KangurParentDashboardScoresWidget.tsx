@@ -1,6 +1,6 @@
 import {
   type KangurParentDashboardPanelDisplayMode,
-  useKangurParentDashboardRuntime,
+  useKangurParentDashboardRuntimeShellState,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import { KangurPanelIntro } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
@@ -11,7 +11,7 @@ export function KangurParentDashboardScoresWidget({
 }: {
   displayMode?: KangurParentDashboardPanelDisplayMode;
 }): React.JSX.Element | null {
-  const { canAccessDashboard } = useKangurParentDashboardRuntime();
+  const { canAccessDashboard } = useKangurParentDashboardRuntimeShellState();
   const { entry: scoresContent } = useKangurPageContentEntry('parent-dashboard-scores');
 
   if (!canAccessDashboard) {

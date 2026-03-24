@@ -130,12 +130,12 @@ export const MilestoneBoardVisual = (): JSX.Element => {
             </text>
           </g>
         ))}
-        {[
+        {([
           [32, 58],
           [144, 58],
           [256, 58],
           [144, 86],
-        ].map(([x, y], index) => (
+        ] as const).map(([x, y], index) => (
           <g key={`${x}-${y}`}>
             <rect x={x} y={y} width='72' height='20' rx='8' fill='rgba(224,242,254,0.96)' stroke='#38bdf8' strokeWidth='1.5' />
             <rect x={x + 10} y={y + 6} width={index === 1 ? 32 : 24} height='6' rx='3' fill='rgba(56,189,248,0.18)' />

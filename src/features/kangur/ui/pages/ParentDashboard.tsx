@@ -16,19 +16,25 @@ import {
 } from '@/features/kangur/ui/components/KangurParentDashboardTabsWidget';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
+import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import {
   KangurParentDashboardRuntimeBoundary,
   type KangurParentDashboardTabId,
-  useKangurParentDashboardRuntime,
+  useKangurParentDashboardRuntimeShellActions,
+  useKangurParentDashboardRuntimeShellState,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 
-function ParentDashboardContent(): React.JSX.Element {
+function ParentDashboardResolvedContent({
+  docsTooltipsEnabled,
+}: {
+  docsTooltipsEnabled: boolean;
+}): React.JSX.Element {
   const translations = useTranslations('KangurParentDashboard');
   const {
     activeLearner,
@@ -37,15 +43,10 @@ function ParentDashboardContent(): React.JSX.Element {
     canAccessDashboard,
     canManageLearners,
     isAuthenticated,
-    logout,
-  } = useKangurParentDashboardRuntime();
+  } = useKangurParentDashboardRuntimeShellState();
+  const { logout } = useKangurParentDashboardRuntimeShellActions();
   const { openLoginModal } = useKangurLoginModal();
-  useKangurRoutePageReady({
-    pageKey: 'ParentDashboard',
-    ready: true,
-  });
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
-  const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('parentDashboard');
   const tabPanelsRef = useRef<HTMLDivElement | null>(null);
   const tabPanelsContentRef = useRef<HTMLDivElement | null>(null);
   const guestHeroAnchorRef = useRef<HTMLDivElement | null>(null);
@@ -81,6 +82,22 @@ function ParentDashboardContent(): React.JSX.Element {
   const dashboardTitle = canAccessDashboard
     ? translations('page.dashboardTitle', { tab: parentTabLabels[activeTab] })
     : translations('page.dashboardTitleRestricted');
+  const progressPanelContent =
+    activeTab === 'progress' ? (
+      <KangurParentDashboardProgressWidget displayMode='active-tab' />
+    ) : null;
+  const assignmentsPanelContent =
+    activeTab === 'assign' ? (
+      <KangurParentDashboardAssignmentsWidget displayMode='active-tab' />
+    ) : null;
+  const monitoringPanelContent =
+    activeTab === 'monitoring' ? (
+      <KangurParentDashboardAssignmentsMonitoringWidget displayMode='active-tab' />
+    ) : null;
+  const aiTutorPanelContent =
+    activeTab === 'ai-tutor' ? (
+      <KangurParentDashboardAiTutorWidget displayMode='active-tab' />
+    ) : null;
 
   useKangurAiTutorSessionSync({
     learnerId: activeLearnerId,
@@ -410,7 +427,7 @@ function ParentDashboardContent(): React.JSX.Element {
                 hidden={activeTab !== 'progress'}
                 tabIndex={activeTab === 'progress' ? 0 : -1}
               >
-                <KangurParentDashboardProgressWidget displayMode='active-tab' />
+                {progressPanelContent}
               </div>
               <div
                 ref={assignmentsAnchorRef}
@@ -420,7 +437,7 @@ function ParentDashboardContent(): React.JSX.Element {
                 hidden={activeTab !== 'assign'}
                 tabIndex={activeTab === 'assign' ? 0 : -1}
               >
-                <KangurParentDashboardAssignmentsWidget displayMode='active-tab' />
+                {assignmentsPanelContent}
               </div>
               <div
                 ref={monitoringAnchorRef}
@@ -430,7 +447,7 @@ function ParentDashboardContent(): React.JSX.Element {
                 hidden={activeTab !== 'monitoring'}
                 tabIndex={activeTab === 'monitoring' ? 0 : -1}
               >
-                <KangurParentDashboardAssignmentsMonitoringWidget displayMode='active-tab' />
+                {monitoringPanelContent}
               </div>
               <div
                 ref={aiTutorAnchorRef}
@@ -440,7 +457,7 @@ function ParentDashboardContent(): React.JSX.Element {
                 hidden={activeTab !== 'ai-tutor'}
                 tabIndex={activeTab === 'ai-tutor' ? 0 : -1}
               >
-                <KangurParentDashboardAiTutorWidget displayMode='active-tab' />
+                {aiTutorPanelContent}
               </div>
             </div>
           </div>
@@ -448,6 +465,73 @@ function ParentDashboardContent(): React.JSX.Element {
       ) : null}
     </KangurStandardPageLayout>
   );
+}
+
+function ParentDashboardAuthLoadingState({
+  docsTooltipsEnabled,
+}: {
+  docsTooltipsEnabled: boolean;
+}): React.JSX.Element {
+  return (
+    <KangurStandardPageLayout
+      tone='dashboard'
+      id='kangur-parent-dashboard-page'
+      shellClassName='justify-center px-4'
+      skipLinkTargetId='kangur-parent-dashboard-loading-main'
+      docsRootId='kangur-parent-dashboard-page'
+      docsTooltipsEnabled={docsTooltipsEnabled}
+      containerProps={{
+        as: 'section',
+        id: 'kangur-parent-dashboard-loading-main',
+        className: 'flex w-full flex-1 items-center justify-center py-12',
+      }}
+    >
+      <div
+        aria-busy='true'
+        aria-live='polite'
+        className='w-full max-w-2xl animate-pulse'
+        data-testid='parent-dashboard-auth-loading'
+        role='status'
+      >
+        <span className='sr-only'>Ladowanie panelu rodzica</span>
+        <div className='rounded-[34px] border border-white/80 bg-white/78 p-6 shadow-[0_28px_64px_-36px_rgba(97,108,162,0.24)] backdrop-blur-xl sm:p-7'>
+          <div className='h-3 w-28 rounded-full bg-slate-200/80' />
+          <div className='mt-4 h-10 w-3/4 rounded-[22px] bg-slate-200/85' />
+          <div className='mt-3 h-4 w-full rounded-full bg-slate-200/70' />
+          <div className='mt-2 h-4 w-5/6 rounded-full bg-slate-200/65' />
+          <div className='mt-6 grid gap-3 sm:grid-cols-2'>
+            <div className='rounded-[24px] border border-white/75 bg-white/70 p-4'>
+              <div className='h-3 w-20 rounded-full bg-slate-200/75' />
+              <div className='mt-3 h-8 w-24 rounded-full bg-slate-200/85' />
+              <div className='mt-3 h-3 w-full rounded-full bg-slate-200/65' />
+            </div>
+            <div className='rounded-[24px] border border-white/75 bg-white/70 p-4'>
+              <div className='h-3 w-24 rounded-full bg-slate-200/75' />
+              <div className='mt-3 h-8 w-20 rounded-full bg-slate-200/85' />
+              <div className='mt-3 h-3 w-4/5 rounded-full bg-slate-200/65' />
+            </div>
+          </div>
+        </div>
+      </div>
+    </KangurStandardPageLayout>
+  );
+}
+
+function ParentDashboardContent(): React.JSX.Element {
+  const { hasResolvedAuth = true, isLoadingAuth } = useKangurAuth();
+  const { canAccessDashboard, isAuthenticated } = useKangurParentDashboardRuntimeShellState();
+  const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('parentDashboard');
+
+  useKangurRoutePageReady({
+    pageKey: 'ParentDashboard',
+    ready: true,
+  });
+
+  if ((!hasResolvedAuth || isLoadingAuth) && !isAuthenticated && !canAccessDashboard) {
+    return <ParentDashboardAuthLoadingState docsTooltipsEnabled={docsTooltipsEnabled} />;
+  }
+
+  return <ParentDashboardResolvedContent docsTooltipsEnabled={docsTooltipsEnabled} />;
 }
 
 export default function ParentDashboard(): React.JSX.Element {

@@ -278,6 +278,12 @@
       "triggerAriaLabel": "Поточна мова: {language}. Відкрити меню мов.",
       "triggerTitle": "Мова: {language}"
     },
+    "mobileMenu": {
+      "open": "Відкрити меню",
+      "close": "Закрити меню",
+      "title": "Меню Kangur",
+      "description": "Використовуйте Tab, щоб переходити між параметрами навігації, і Escape, щоб закрити меню."
+    },
     "subject": {
       "label": "Вибрати предмет",
       "currentTitle": "Поточний предмет: {subject}",
@@ -1488,6 +1494,11 @@
       "operationsHeading": "Результати за операціями",
       "emptyTitle": "Немає даних за операціями.",
       "emptyDescription": "Зіграйте кілька завдань, щоб побачити точність для кожної операції.",
+      "accuracyLabel": "середня точність",
+      "attemptsLabel": "Спроби",
+      "averageXpLabel": "XP за сесію",
+      "totalXpLabel": "Усього",
+      "bestAccuracyLabel": "Найкраща точність",
       "train": "Тренувати",
       "operationStats": "Спроби: {attempts} · XP за сесію: {averageXp} · Усього: {totalXp} XP · Найкраща точність: {bestScore}%"
     },
@@ -2233,7 +2244,8 @@
     },
     "badgeTrackCard": {
       "count": "{unlocked}/{total} значків",
-      "allUnlocked": "Усі значки відкрито"
+      "allUnlocked": "Усі значки відкрито",
+      "nextEyebrow": "Наступний рубіж"
     },
     "badgeTrackHighlights": {
       "placeholders": {

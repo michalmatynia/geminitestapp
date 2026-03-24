@@ -15,7 +15,6 @@ import {
   KangurLessonCallout,
   KangurLessonCaption,
   KangurLessonChip,
-  KangurLessonInset,
   KangurLessonLead,
   KangurLessonStack,
   KangurLessonVisual,

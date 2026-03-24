@@ -59,7 +59,14 @@ type LatchedNavigationSkeletonState = {
 };
 
 const AuthenticatedApp = (): JSX.Element | null => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, isAuthenticated } =
+  const {
+    isLoadingAuth,
+    isLoadingPublicSettings,
+    authError,
+    navigateToLogin,
+    isAuthenticated,
+    hasResolvedAuth = true,
+  } =
     useKangurAuth();
   const { isLoading: isLoadingSettings } = useSettingsStore();
   const {
@@ -83,6 +90,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const homeHref = getKangurHomeHref(basePath);
   const shouldRedirectToHome =
     !embedded &&
+    hasResolvedAuth &&
     !isLoadingAuth &&
     !isAuthenticated &&
     !authErrorType &&

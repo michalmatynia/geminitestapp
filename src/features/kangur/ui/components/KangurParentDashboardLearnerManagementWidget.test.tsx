@@ -80,7 +80,32 @@ const useKangurPageContentEntryMock = vi.hoisted(() => vi.fn());
 const learnerSessionsListMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({
-  useKangurParentDashboardRuntime: () => runtimeState.value,
+  useKangurParentDashboardRuntimeActions: () => ({
+    handleCreateLearner: runtimeState.value.handleCreateLearner,
+    handleDeleteLearner: runtimeState.value.handleDeleteLearner,
+    handleSaveLearner: runtimeState.value.handleSaveLearner,
+    selectLearner: runtimeState.value.selectLearner,
+    setCreateLearnerModalOpen: runtimeState.value.setCreateLearnerModalOpen,
+    updateCreateField: runtimeState.value.updateCreateField,
+    updateEditField: runtimeState.value.updateEditField,
+  }),
+  useKangurParentDashboardRuntimeOverviewState: () => ({
+    activeLearner: runtimeState.value.activeLearner,
+    basePath: runtimeState.value.basePath,
+    canAccessDashboard: runtimeState.value.canAccessDashboard,
+    canManageLearners: runtimeState.value.canManageLearners,
+    createForm: runtimeState.value.createForm,
+    editForm: runtimeState.value.editForm,
+    feedback: runtimeState.value.feedback,
+    isAuthenticated: runtimeState.value.isAuthenticated,
+    isCreateLearnerModalOpen: runtimeState.value.isCreateLearnerModalOpen,
+    isSubmitting: runtimeState.value.isSubmitting,
+    learners: runtimeState.value.learners,
+    lessons: runtimeState.value.lessons,
+    progress: runtimeState.value.progress,
+    viewerName: runtimeState.value.viewerName,
+    viewerRoleLabel: runtimeState.value.viewerRoleLabel,
+  }),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
@@ -319,7 +344,7 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
       isCreateLearnerModalOpen: true,
     };
 
-    const { rerender } = render(<KangurParentDashboardLearnerManagementWidget />);
+    const { unmount } = render(<KangurParentDashboardLearnerManagementWidget />);
 
     expect(screen.getByRole('button', { name: 'Dodaj ucznia' })).toHaveClass(
       'min-h-11',
@@ -331,7 +356,8 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
       ...runtimeState.value,
       isCreateLearnerModalOpen: false,
     };
-    rerender(<KangurParentDashboardLearnerManagementWidget />);
+    unmount();
+    render(<KangurParentDashboardLearnerManagementWidget />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Ustawienia profilu ucznia' }));
 

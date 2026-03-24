@@ -74,17 +74,17 @@ export default function MusicPianoRollFreePlayGame({
   );
 
   const handleKeyPress = useCallback(
-    async (
+    (
       noteId: DiatonicNoteId,
       pressDetails: KangurMusicPianoKeyPressDetails
-    ): Promise<void> => {
+    ): void => {
       pulsePressedKey(noteId, pressDetails.velocity);
 
       if (pressDetails.keyboardMode !== 'piano') {
         return;
       }
 
-      await playNote({
+      void playNote({
         brightness: pressDetails.brightness,
         ...DIATONIC_PIANO_KEYS_BY_ID[noteId],
         durationMs: 320,
@@ -129,13 +129,13 @@ export default function MusicPianoRollFreePlayGame({
   );
 
   const handleSynthGestureStart = useCallback(
-    async (details: KangurMusicSynthGestureDetails<DiatonicNoteId>): Promise<void> => {
+    (details: KangurMusicSynthGestureDetails<DiatonicNoteId>): void => {
       if (details.keyboardMode !== 'synth') {
         return;
       }
 
       pulsePressedKey(details.noteId, details.velocity);
-      await startSustainedNote(
+      void startSustainedNote(
         {
           ...DIATONIC_PIANO_KEYS_BY_ID[details.noteId],
           brightness: details.brightness,

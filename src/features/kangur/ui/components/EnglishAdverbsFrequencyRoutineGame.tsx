@@ -1234,7 +1234,6 @@ function DraggableFrequencyToken({
 }): React.JSX.Element | React.ReactPortal {
   const meta = FREQUENCY_META[token.frequency];
   const selectedClass = isSelected ? 'ring-2 ring-sky-400/80 ring-offset-1 ring-offset-white' : '';
-  const activeDays = countFrequencyActiveDays(token.frequency);
 
   return (
     <Draggable
@@ -1598,7 +1597,7 @@ function SummaryPatternGuideCard({
   dataTestId: string;
   label: string;
   sentence: string;
-  parts: string[];
+  parts: readonly string[];
   pattern: 'mainVerb' | 'beVerb';
   translate: KangurMiniGameTranslate;
 }): React.JSX.Element {

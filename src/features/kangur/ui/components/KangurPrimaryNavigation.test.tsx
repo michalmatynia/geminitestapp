@@ -63,6 +63,13 @@ const { translationMessages } = vi.hoisted(() => ({
           triggerAriaLabel: 'Aktualny język: {language}. Otwórz menu zmiany języka.',
           triggerTitle: 'Język: {language}',
         },
+        mobileMenu: {
+          open: 'Otwórz menu',
+          close: 'Zamknij menu',
+          title: 'Menu Kangur',
+          description:
+            'Użyj klawisza Tab, aby przechodzić między opcjami nawigacji, a Escape, aby zamknąć menu.',
+        },
         subject: {
           label: 'Wybierz przedmiot',
           currentTitle: 'Aktualny przedmiot: {subject}',
@@ -88,6 +95,12 @@ const { translationMessages } = vi.hoisted(() => ({
         languageSwitcher: {
           triggerAriaLabel: 'Current language: {language}. Open language menu.',
           triggerTitle: 'Language: {language}',
+        },
+        mobileMenu: {
+          open: 'Open menu',
+          close: 'Close menu',
+          title: 'Kangur menu',
+          description: 'Use Tab to move through the navigation options and Escape to close the menu.',
         },
         subject: {
           label: 'Choose subject',
@@ -115,6 +128,13 @@ const { translationMessages } = vi.hoisted(() => ({
           triggerAriaLabel: 'Aktuelle Sprache: {language}. Sprachmenü öffnen.',
           triggerTitle: 'Sprache: {language}',
         },
+        mobileMenu: {
+          open: 'Menü öffnen',
+          close: 'Menü schließen',
+          title: 'Kangur-Menü',
+          description:
+            'Verwende Tab, um durch die Navigationsoptionen zu wechseln, und Escape, um das Menü zu schließen.',
+        },
         subject: {
           label: 'Fach auswahlen',
           currentTitle: 'Aktuelles Fach: {subject}',
@@ -140,6 +160,13 @@ const { translationMessages } = vi.hoisted(() => ({
         languageSwitcher: {
           triggerAriaLabel: 'Поточна мова: {language}. Відкрити меню мов.',
           triggerTitle: 'Мова: {language}',
+        },
+        mobileMenu: {
+          open: 'Відкрити меню',
+          close: 'Закрити меню',
+          title: 'Меню Kangur',
+          description:
+            'Використовуйте Tab, щоб переходити між параметрами навігації, і Escape, щоб закрити меню.',
         },
         subject: {
           label: 'Вибрати предмет',
@@ -514,9 +541,15 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
+    const brand = screen.getByTestId('kangur-home-brand');
     const logo = screen.getByTestId('kangur-home-logo');
+    const betaBadge = screen.getByTestId('kangur-home-beta-badge');
 
+    expect(brand).toContainElement(logo);
+    expect(brand).toContainElement(betaBadge);
     expect(logo.querySelector('svg')).not.toBeNull();
+    expect(betaBadge.querySelector('title')?.textContent).toBe('StuqiQ Beta badge');
+    expect(betaBadge.querySelector('text')?.textContent).toBe('BETA');
     expect(logo.className).not.toContain('translate-x-');
     expect(screen.getByRole('link', { name: /strona główna/i })).toHaveAttribute(
       'href',
@@ -609,6 +642,7 @@ describe('KangurPrimaryNavigation', () => {
     );
 
     expect(screen.getByTestId('kangur-page-top-bar')).toHaveClass('sticky', 'top-0', 'w-full');
+    expect(screen.getByRole('banner')).toBe(screen.getByTestId('kangur-page-top-bar'));
     expect(screen.getByRole('navigation', { name: /główna nawigacja kangur/i })).toHaveClass(
       'kangur-nav-group',
       'w-full',
@@ -631,6 +665,9 @@ describe('KangurPrimaryNavigation', () => {
     const mobileToggle = screen.getByTestId('kangur-primary-nav-mobile-toggle');
 
     expect(mobileToggle).toBeInTheDocument();
+    expect(mobileToggle).toHaveAttribute('aria-controls', 'kangur-mobile-menu');
+    expect(mobileToggle).toHaveAttribute('aria-expanded', 'false');
+    expect(mobileToggle).toHaveAttribute('aria-haspopup', 'dialog');
     expect(mobileToggle).not.toHaveClass('glass-panel');
     expect(screen.getByRole('navigation', { name: /główna nawigacja kangur/i })).toHaveClass('p-2');
     expect(screen.queryByRole('link', { name: /lekcje/i })).toBeNull();
@@ -667,9 +704,12 @@ describe('KangurPrimaryNavigation', () => {
     );
 
     fireEvent.click(screen.getByTestId('kangur-primary-nav-mobile-toggle'));
-    expect(screen.getByRole('button', { name: 'Close navigation menu' })).toHaveClass(
-      'touch-manipulation',
-      'active:opacity-95'
+    expect(
+      within(screen.getByTestId('kangur-primary-nav-mobile-header')).getByRole('button', {
+        name: 'Zamknij menu',
+      })
+    ).toHaveClass(
+      'touch-manipulation'
     );
     fireEvent.click(screen.getByRole('button', { name: /wyloguj/i }));
 
@@ -751,6 +791,63 @@ describe('KangurPrimaryNavigation', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { name: /menu kangur/i })).not.toBeInTheDocument();
     });
+  });
+
+  it('exposes chooser dialog state for assistive technology', () => {
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    const subjectButton = screen.getByTestId('kangur-primary-nav-subject');
+    const ageGroupButton = screen.getByTestId('kangur-primary-nav-age-group');
+
+    expect(subjectButton).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(subjectButton).toHaveAttribute('aria-controls', 'kangur-primary-nav-subject-dialog');
+    expect(subjectButton).toHaveAttribute('aria-expanded', 'false');
+    expect(ageGroupButton).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(ageGroupButton).toHaveAttribute('aria-controls', 'kangur-primary-nav-age-group-dialog');
+    expect(ageGroupButton).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(subjectButton);
+
+    expect(subjectButton).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('dialog')).toHaveAttribute('id', 'kangur-primary-nav-subject-dialog');
+    fireEvent.click(screen.getByRole('button', { name: /gotowe/i }));
+    expect(subjectButton).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('announces mobile menu guidance for assistive technology', () => {
+    setViewport({ width: 390, matches: true });
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    const mobileToggle = screen.getByTestId('kangur-primary-nav-mobile-toggle');
+
+    fireEvent.click(mobileToggle);
+
+    const mobileMenuDialog = screen.getByRole('dialog', { name: /menu kangur/i });
+    const subjectButton = within(mobileMenuDialog).getByTestId('kangur-primary-nav-subject');
+    const ageGroupButton = within(mobileMenuDialog).getByTestId('kangur-primary-nav-age-group');
+
+    expect(mobileToggle).toHaveAttribute('aria-expanded', 'true');
+    expect(mobileMenuDialog).toHaveAttribute('aria-describedby', 'kangur-mobile-menu-description');
+    expect(screen.getByText(/użyj klawisza tab/i)).toHaveClass('sr-only');
+    expect(subjectButton).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(subjectButton).toHaveAttribute('aria-controls', 'kangur-primary-nav-subject-dialog');
+    expect(ageGroupButton).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(ageGroupButton).toHaveAttribute('aria-controls', 'kangur-primary-nav-age-group-dialog');
   });
 
   it('disables the logout action while auth logout is already pending', () => {

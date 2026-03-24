@@ -1,7 +1,7 @@
 'use client';
 
 import { Eye, EyeOff, Settings } from 'lucide-react';
-import { useEffect, useId, useMemo, useState } from 'react';
+import { memo, useEffect, useId, useMemo, useState } from 'react';
 
 import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
 import { KangurDialogHeader } from '@/features/kangur/ui/components/KangurDialogHeader';
@@ -9,7 +9,10 @@ import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/Kan
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurLearnerSessionHistory } from '@kangur/platform';
-import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
+import {
+  useKangurParentDashboardRuntimeActions,
+  useKangurParentDashboardRuntimeOverviewState,
+} from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import {
   KangurButton,
   KangurEmptyState,
@@ -45,7 +48,8 @@ const PROFILE_MODAL_TABS: Array<{ id: ProfileModalTabId; label: string; docId: s
   { id: 'metrics', label: 'Metryka', docId: 'parent_profile_tab_metrics' },
 ];
 
-export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Element | null {
+export const KangurParentDashboardLearnerManagementWidget = memo(
+function KangurParentDashboardLearnerManagementWidget(): React.JSX.Element | null {
   const isCoarsePointer = useKangurCoarsePointer();
   const compactActionClassName = isCoarsePointer
     ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
@@ -56,18 +60,20 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
     createForm,
     editForm,
     feedback,
-    handleCreateLearner,
-    handleDeleteLearner,
-    handleSaveLearner,
     isSubmitting,
     isCreateLearnerModalOpen,
     learners,
+    progress,
+  } = useKangurParentDashboardRuntimeOverviewState();
+  const {
+    handleCreateLearner,
+    handleDeleteLearner,
+    handleSaveLearner,
     selectLearner,
     setCreateLearnerModalOpen,
     updateCreateField,
     updateEditField,
-    progress,
-  } = useKangurParentDashboardRuntime();
+  } = useKangurParentDashboardRuntimeActions();
   const { entry: learnerManagementContent } = useKangurPageContentEntry(
     'parent-dashboard-learner-management'
   );
@@ -865,4 +871,4 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
       </KangurDialog>
     </KangurPanelStack>
   );
-}
+});

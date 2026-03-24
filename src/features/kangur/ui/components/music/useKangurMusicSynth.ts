@@ -31,6 +31,7 @@ type ActiveNode = {
   filterNode?: BiquadFilterNode;
   gainNode: GainNode;
   lfoFilterGainNode?: GainNode;
+  lfoFilterQGainNode?: GainNode;
   lfoGainNode?: GainNode;
   lfoOscillator?: OscillatorNode;
   oscillator: OscillatorNode;
@@ -177,6 +178,7 @@ const stopActiveNode = (activeNode: ActiveNode): void => {
     activeNode.blendGainNode3?.disconnect();
     activeNode.filterNode?.disconnect();
     activeNode.lfoFilterGainNode?.disconnect();
+    activeNode.lfoFilterQGainNode?.disconnect();
     activeNode.lfoGainNode?.disconnect();
     activeNode.reverbSendGainNode?.disconnect();
     activeNode.reverbStereoPannerNode?.disconnect();
@@ -475,6 +477,18 @@ const resolveVibratoFilterDepthHz = (
   return clamp((48 + brightness * 132) * clamp(vibratoDepth, 0, 1) * depthScale, 0, 220);
 };
 
+const resolveVibratoFilterQDepth = (
+  brightness: number,
+  frequencyHz: number,
+  vibratoDepth = 0
+): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const depthScale = clamp(1 - pitchTracking * 0.08, 0.82, 1.08);
+  return Number(
+    clamp((0.03 + brightness * 0.18) * clamp(vibratoDepth, 0, 1) * depthScale, 0, 0.28).toFixed(3)
+  );
+};
+
 const resolveLfoRateHz = (vibratoRateHz: number | undefined): number =>
   clamp(vibratoRateHz ?? DEFAULT_VIBRATO_RATE_HZ, 3.6, 7.0);
 
@@ -530,16 +544,40 @@ const resolveReverbSendGain = ({
   );
 };
 
-const resolveSustainedAttackReverbSendGain = (
-  brightness: number,
-  velocity: number,
-  frequencyHz: number
-): number => {
-  const sustainSendGain = resolveReverbSendGain({
+const resolveSustainedVibratoReverbSendGain = ({
+  brightness,
+  frequencyHz,
+  velocity,
+  vibratoDepth = 0,
+}: {
+  brightness: number;
+  frequencyHz: number;
+  velocity: number;
+  vibratoDepth?: number;
+}): number => {
+  const baseSendGain = resolveReverbSendGain({
     brightness,
     frequencyHz,
     sustained: true,
     velocity,
+  });
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const depthScale = clamp(1 - pitchTracking * 0.06, 0.88, 1.08);
+  const vibratoBoost = clamp(vibratoDepth, 0, 1) * (0.008 + brightness * 0.014) * depthScale;
+  return clamp(Number((baseSendGain + vibratoBoost).toFixed(3)), 0.05, 0.22);
+};
+
+const resolveSustainedAttackReverbSendGain = (
+  brightness: number,
+  velocity: number,
+  frequencyHz: number,
+  vibratoDepth = 0
+): number => {
+  const sustainSendGain = resolveSustainedVibratoReverbSendGain({
+    brightness,
+    frequencyHz,
+    velocity,
+    vibratoDepth,
   });
   const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
   const bloomScale = clamp(0.72 - brightness * 0.08 - velocity * 0.04 - pitchTracking * 0.08, 0.44, 0.74);
@@ -588,6 +626,15 @@ const releaseActiveNode = (activeNode: ActiveNode, releaseSeconds = SUSTAINED_RE
       now
     );
     activeNode.lfoFilterGainNode?.gain.linearRampToValueAtTime(
+      0,
+      now + Math.max(0.02, releaseSeconds * 0.72)
+    );
+    activeNode.lfoFilterQGainNode?.gain.cancelScheduledValues(now);
+    activeNode.lfoFilterQGainNode?.gain.setValueAtTime(
+      activeNode.lfoFilterQGainNode.gain.value,
+      now
+    );
+    activeNode.lfoFilterQGainNode?.gain.linearRampToValueAtTime(
       0,
       now + Math.max(0.02, releaseSeconds * 0.72)
     );
@@ -1221,6 +1268,7 @@ export function useKangurMusicSynth<NoteId extends string>() {
       const lfoOscillator = context.createOscillator();
       const lfoGainNode = context.createGain();
       const lfoFilterGainNode = context.createGain();
+      const lfoFilterQGainNode = context.createGain();
       lfoOscillator.type = 'sine';
       lfoOscillator.frequency.value = vibratoRateHz;
       lfoGainNode.gain.setValueAtTime(0, now);
@@ -1231,6 +1279,11 @@ export function useKangurMusicSynth<NoteId extends string>() {
       lfoFilterGainNode.gain.setValueAtTime(0, now);
       lfoFilterGainNode.gain.linearRampToValueAtTime(
         resolveVibratoFilterDepthHz(brightness, note.frequencyHz, vibratoDepth),
+        now + sustainedAttackSeconds + sustainedVibratoFadeInSeconds
+      );
+      lfoFilterQGainNode.gain.setValueAtTime(0, now);
+      lfoFilterQGainNode.gain.linearRampToValueAtTime(
+        resolveVibratoFilterQDepth(brightness, note.frequencyHz, vibratoDepth),
         now + sustainedAttackSeconds + sustainedVibratoFadeInSeconds
       );
 
@@ -1289,14 +1342,19 @@ export function useKangurMusicSynth<NoteId extends string>() {
         typeof context.createStereoPanner === 'function' ? context.createStereoPanner() : null;
       const reverbStereoPannerNode =
         typeof context.createStereoPanner === 'function' ? context.createStereoPanner() : null;
-      const sustainedReverbSendGain = resolveReverbSendGain({
+      const sustainedVibratoReverbSendGain = resolveSustainedVibratoReverbSendGain({
         brightness,
         frequencyHz: note.frequencyHz,
-        sustained: true,
         velocity,
+        vibratoDepth,
       });
       reverbSendGainNode.gain.setValueAtTime(
-        resolveSustainedAttackReverbSendGain(brightness, velocity, note.frequencyHz),
+        resolveSustainedAttackReverbSendGain(
+          brightness,
+          velocity,
+          note.frequencyHz,
+          vibratoDepth
+        ),
         now
       );
       const sustainedAttackReverbSendSeconds = resolveSustainedAttackReverbSendSeconds(
@@ -1306,7 +1364,7 @@ export function useKangurMusicSynth<NoteId extends string>() {
         stereoPan
       );
       reverbSendGainNode.gain.linearRampToValueAtTime(
-        sustainedReverbSendGain,
+        sustainedVibratoReverbSendGain,
         now + sustainedAttackReverbSendSeconds
       );
       const sustainedAttackStereoPan = resolveSustainedAttackStereoPan(
@@ -1369,6 +1427,8 @@ export function useKangurMusicSynth<NoteId extends string>() {
       if (oscillator3) lfoGainNode.connect(oscillator3.frequency);
       lfoOscillator.connect(lfoFilterGainNode);
       lfoFilterGainNode.connect(filterNode.frequency);
+      lfoOscillator.connect(lfoFilterQGainNode);
+      lfoFilterQGainNode.connect(filterNode.Q);
       oscillator.connect(gainNode);
       if (oscillator2 && blendGainNode) {
         oscillator2.connect(blendGainNode);
@@ -1408,6 +1468,7 @@ export function useKangurMusicSynth<NoteId extends string>() {
         id: note.id,
         interactionId: options.interactionId,
         lfoFilterGainNode,
+        lfoFilterQGainNode,
         lfoGainNode,
         lfoOscillator,
         oscillator,
@@ -1438,6 +1499,7 @@ export function useKangurMusicSynth<NoteId extends string>() {
           transientOscillator.stop();
           lfoOscillator.disconnect();
           lfoFilterGainNode.disconnect();
+          lfoFilterQGainNode.disconnect();
           lfoGainNode.disconnect();
           oscillator.disconnect();
           oscillator2?.disconnect();
@@ -1572,6 +1634,19 @@ export function useKangurMusicSynth<NoteId extends string>() {
         ),
         now + filterVibratoUpdateSeconds
       );
+      activeNode.lfoFilterQGainNode?.gain.cancelScheduledValues(now);
+      activeNode.lfoFilterQGainNode?.gain.setValueAtTime(
+        activeNode.lfoFilterQGainNode.gain.value,
+        now
+      );
+      activeNode.lfoFilterQGainNode?.gain.linearRampToValueAtTime(
+        resolveVibratoFilterQDepth(
+          resolvedBrightnessForTimbre,
+          frequencyHz,
+          resolvedVibratoDepth
+        ),
+        now + filterVibratoUpdateSeconds
+      );
       activeNode.stereoPannerNode?.pan.cancelScheduledValues(now);
       activeNode.stereoPannerNode?.pan.setValueAtTime(
         activeNode.stereoPannerNode.pan.value,
@@ -1653,11 +1728,11 @@ export function useKangurMusicSynth<NoteId extends string>() {
         now
       );
       activeNode.reverbSendGainNode?.gain.linearRampToValueAtTime(
-        resolveReverbSendGain({
+        resolveSustainedVibratoReverbSendGain({
           brightness: resolvedBrightnessForTimbre,
           frequencyHz,
-          sustained: true,
           velocity: resolvedVelocityForTimbre,
+          vibratoDepth: resolvedVibratoDepth,
         }),
         now + timbreUpdateSeconds
       );

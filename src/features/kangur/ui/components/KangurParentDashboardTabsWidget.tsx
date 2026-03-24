@@ -7,7 +7,8 @@ import { useTranslations } from 'next-intl';
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import {
   type KangurParentDashboardTabId,
-  useKangurParentDashboardRuntime,
+  useKangurParentDashboardRuntimeShellActions,
+  useKangurParentDashboardRuntimeShellState,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import { KangurButton, KangurPanelStack } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
@@ -59,7 +60,8 @@ export function KangurParentDashboardTabsWidget({
   onBeforeTabChange?: (tabId: KangurParentDashboardTabId) => void;
 } = {}): React.JSX.Element | null {
   const translations = useTranslations('KangurParentDashboard');
-  const { activeTab, canAccessDashboard, setActiveTab } = useKangurParentDashboardRuntime();
+  const { activeTab, canAccessDashboard } = useKangurParentDashboardRuntimeShellState();
+  const { setActiveTab } = useKangurParentDashboardRuntimeShellActions();
   const isCoarsePointer = useKangurCoarsePointer();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const tabs = useMemo(

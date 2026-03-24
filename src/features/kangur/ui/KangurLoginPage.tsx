@@ -265,7 +265,7 @@ export function KangurLoginPageContent(): React.JSX.Element {
   const verifyAttemptedRef = useRef(false);
   const initialFocusAppliedRef = useRef(false);
   const resendTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const focusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const focusTimerRef = useRef<number | null>(null);
   const identifierHintId = useId();
   const passwordHintId = useId();
   const formErrorId = useId();
@@ -1272,11 +1272,7 @@ export function KangurLoginPageContent(): React.JSX.Element {
                     ? translations('changeEmailAction')
                     : null
                 }
-                onChangeEmail={
-                  authMode === 'create-account'
-                    ? () => void handleChangeVerificationEmail()
-                    : null
-                }
+                onChangeEmail={authMode === 'create-account' ? handleChangeVerificationEmail : null}
                 continueToSignInLabel={
                   authMode === 'create-account'
                     ? translations('continueToSignInAction')

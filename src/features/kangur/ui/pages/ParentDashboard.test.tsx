@@ -21,6 +21,12 @@ const topNavigationPropsMock = vi.hoisted(() => vi.fn());
 const routeReadyMock = vi.hoisted(() => vi.fn());
 const aiTutorSessionSyncMock = vi.hoisted(() => vi.fn());
 const tutorAnchorMock = vi.hoisted(() => vi.fn());
+const authState = vi.hoisted(() => ({
+  value: {
+    hasResolvedAuth: true,
+    isLoadingAuth: false,
+  },
+}));
 
 vi.mock('framer-motion', () => ({
   motion: {
@@ -51,6 +57,10 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useKangurAiTutorSessionSync: (props: unknown) => aiTutorSessionSyncMock(props),
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useKangurAuth: () => authState.value,
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurGuestPlayerContext', () => ({
   useKangurGuestPlayer: () => ({
     guestPlayerName: 'Guest',
@@ -66,7 +76,10 @@ vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({
   KangurParentDashboardRuntimeBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  useKangurParentDashboardRuntime: () => runtimeState.value,
+  useKangurParentDashboardRuntimeShellActions: () => ({
+    logout: runtimeState.value.logout,
+  }),
+  useKangurParentDashboardRuntimeShellState: () => runtimeState.value,
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurStandardPageLayout', () => ({
@@ -149,6 +162,10 @@ import ParentDashboard from './ParentDashboard';
 describe('ParentDashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    authState.value = {
+      hasResolvedAuth: true,
+      isLoadingAuth: false,
+    };
     runtimeState.value = {
       activeLearner: { id: 'learner-1', displayName: 'Ada' },
       activeTab: 'progress',
@@ -205,5 +222,42 @@ describe('ParentDashboard', () => {
     expect(screen.queryByTestId('parent-dashboard-tabs-widget')).toBeNull();
     expect(screen.queryByTestId('parent-dashboard-progress-widget')).toBeNull();
     expect(screen.queryByTestId('parent-dashboard-monitoring-widget')).toBeNull();
+  });
+
+  it('keeps the guest shell hidden while parent auth is still loading', () => {
+    authState.value = {
+      hasResolvedAuth: false,
+      isLoadingAuth: true,
+    };
+    runtimeState.value = {
+      ...runtimeState.value,
+      canAccessDashboard: false,
+      activeLearner: null,
+      isAuthenticated: false,
+    };
+
+    render(<ParentDashboard />);
+
+    expect(screen.getByTestId('parent-dashboard-auth-loading')).toBeInTheDocument();
+    expect(screen.queryByTestId('parent-dashboard-hero-widget')).toBeNull();
+    expect(screen.queryByTestId('parent-dashboard-tabs-widget')).toBeNull();
+  });
+
+  it('keeps the guest shell hidden when auth timed out softly but has not resolved yet', () => {
+    authState.value = {
+      hasResolvedAuth: false,
+      isLoadingAuth: false,
+    };
+    runtimeState.value = {
+      ...runtimeState.value,
+      canAccessDashboard: false,
+      activeLearner: null,
+      isAuthenticated: false,
+    };
+
+    render(<ParentDashboard />);
+
+    expect(screen.getByTestId('parent-dashboard-auth-loading')).toBeInTheDocument();
+    expect(screen.queryByTestId('parent-dashboard-hero-widget')).toBeNull();
   });
 });

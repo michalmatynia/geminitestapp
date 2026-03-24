@@ -1077,6 +1077,12 @@
       "triggerAriaLabel": "Aktuelle Sprache: {language}. Sprachmenü öffnen.",
       "triggerTitle": "Sprache: {language}"
     },
+    "mobileMenu": {
+      "open": "Menü öffnen",
+      "close": "Menü schließen",
+      "title": "Kangur-Menü",
+      "description": "Verwende Tab, um durch die Navigationsoptionen zu wechseln, und Escape, um das Menü zu schließen."
+    },
     "subject": {
       "label": "Fach auswahlen",
       "currentTitle": "Aktuelles Fach: {subject}",
@@ -1303,6 +1309,11 @@
       "operationsHeading": "Ergebnisse nach Operation",
       "emptyTitle": "Keine Operationsdaten.",
       "emptyDescription": "Spiele ein paar Aufgaben, um die Genauigkeit fur einzelne Operationen zu sehen.",
+      "accuracyLabel": "durchschnittliche Genauigkeit",
+      "attemptsLabel": "Versuche",
+      "averageXpLabel": "XP pro Sitzung",
+      "totalXpLabel": "Insgesamt",
+      "bestAccuracyLabel": "Beste Genauigkeit",
       "train": "Trainieren",
       "operationStats": "Versuche: {attempts} · XP pro Sitzung: {averageXp} · Insgesamt: {totalXp} XP · Beste Genauigkeit: {bestScore}%"
     },
@@ -4237,7 +4248,8 @@
     },
     "badgeTrackCard": {
       "count": "{unlocked}/{total} Abzeichen",
-      "allUnlocked": "Alle Abzeichen freigeschaltet"
+      "allUnlocked": "Alle Abzeichen freigeschaltet",
+      "nextEyebrow": "Nächster Meilenstein"
     },
     "badgeTrackHighlights": {
       "placeholders": {

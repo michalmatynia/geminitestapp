@@ -225,6 +225,18 @@ const resolveExpectedVibratoFilterDepthHz = (
   return clamp((48 + brightness * 132) * clamp(vibratoDepth, 0, 1) * depthScale, 0, 220);
 };
 
+const resolveExpectedVibratoFilterQDepth = (
+  brightness: number,
+  frequencyHz: number,
+  vibratoDepth = 0
+): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const depthScale = clamp(1 - pitchTracking * 0.08, 0.82, 1.08);
+  return Number(
+    clamp((0.03 + brightness * 0.18) * clamp(vibratoDepth, 0, 1) * depthScale, 0, 0.28).toFixed(3)
+  );
+};
+
 const resolveExpectedSustainedUnisonBlendAttackSeconds = (
   baseAttackSeconds: number,
   brightness: number,
@@ -288,15 +300,30 @@ const resolveExpectedSustainedReverbSendGain = (
   return clamp(0.06 + brightness * 0.08 + velocity * 0.04 - pitchTracking * 0.012, 0.05, 0.2);
 };
 
+const resolveExpectedSustainedVibratoReverbSendGain = (
+  brightness: number,
+  velocity: number,
+  frequencyHz: number,
+  vibratoDepth = 0
+): number => {
+  const baseSendGain = resolveExpectedSustainedReverbSendGain(brightness, velocity, frequencyHz);
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const depthScale = clamp(1 - pitchTracking * 0.06, 0.88, 1.08);
+  const vibratoBoost = clamp(vibratoDepth, 0, 1) * (0.008 + brightness * 0.014) * depthScale;
+  return clamp(Number((baseSendGain + vibratoBoost).toFixed(3)), 0.05, 0.22);
+};
+
 const resolveExpectedSustainedAttackReverbSendGain = (
   brightness: number,
   velocity: number,
-  frequencyHz = 261.63
+  frequencyHz = 261.63,
+  vibratoDepth = 0
 ): number => {
-  const sustainSendGain = resolveExpectedSustainedReverbSendGain(
+  const sustainSendGain = resolveExpectedSustainedVibratoReverbSendGain(
     brightness,
     velocity,
-    frequencyHz
+    frequencyHz,
+    vibratoDepth
   );
   const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
   const bloomScale = clamp(
@@ -577,11 +604,17 @@ describe('useKangurMusicSynth', () => {
       createdContexts[0],
       filterNode?.frequency
     );
+    const lfoFilterQGainNode = findGainNodeConnectedToTarget(createdContexts[0], filterNode?.Q);
     expect(lfoGainNode).toBeDefined();
     expect(lfoOscillator).toBeDefined();
     expect(lfoFilterGainNode).toBeDefined();
+    expect(lfoFilterQGainNode).toBeDefined();
     expect(lfoGainNode?.gain.linearRampToValueAtTime).toHaveBeenCalledWith(0, expect.any(Number));
     expect(lfoFilterGainNode?.gain.linearRampToValueAtTime).toHaveBeenCalledWith(
+      0,
+      expect.any(Number)
+    );
+    expect(lfoFilterQGainNode?.gain.linearRampToValueAtTime).toHaveBeenCalledWith(
       0,
       expect.any(Number)
     );
@@ -606,6 +639,10 @@ describe('useKangurMusicSynth', () => {
     );
     expect(lfoFilterGainNode?.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(
       resolveExpectedVibratoFilterDepthHz(0.92, 261.63, 1),
+      expect.any(Number)
+    );
+    expect(lfoFilterQGainNode?.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(
+      resolveExpectedVibratoFilterQDepth(0.92, 261.63, 1),
       expect.any(Number)
     );
   });
@@ -1750,6 +1787,58 @@ describe('useKangurMusicSynth', () => {
     expect(reverbSendAttackTime).toBeGreaterThan(bodyAttackTime);
   });
 
+  it('starts the sustained reverb send wider when vibrato is already engaged', async () => {
+    const brightness = 0.74;
+    const velocity = 0.78;
+    const frequencyHz = 261.63;
+
+    const calmHook = renderHook(() => useKangurMusicSynth<string>());
+
+    await act(async () => {
+      await calmHook.result.current.startSustainedNote(
+        {
+          brightness,
+          frequencyHz,
+          id: 'reverb-vibrato-calm',
+          velocity,
+          vibratoDepth: 0,
+          waveform: 'sawtooth',
+        },
+        { interactionId: 'glide-reverb-vibrato-calm' }
+      );
+    });
+
+    const calmReverbSendGainNode = findGainNodeByRampTarget(
+      createdContexts.at(-1),
+      resolveExpectedSustainedVibratoReverbSendGain(brightness, velocity, frequencyHz, 0)
+    );
+    expect(calmReverbSendGainNode).toBeDefined();
+    const calmSend = calmReverbSendGainNode?.gain.value ?? 0;
+
+    const activeHook = renderHook(() => useKangurMusicSynth<string>());
+
+    await act(async () => {
+      await activeHook.result.current.startSustainedNote(
+        {
+          brightness,
+          frequencyHz,
+          id: 'reverb-vibrato-active',
+          velocity,
+          vibratoDepth: 1,
+          waveform: 'sawtooth',
+        },
+        { interactionId: 'glide-reverb-vibrato-active' }
+      );
+    });
+
+    const activeReverbSendGainNode = findGainNodeByRampTarget(
+      createdContexts.at(-1),
+      resolveExpectedSustainedVibratoReverbSendGain(brightness, velocity, frequencyHz, 1)
+    );
+    expect(activeReverbSendGainNode).toBeDefined();
+    expect(activeReverbSendGainNode?.gain.value ?? 0).toBeGreaterThan(calmSend);
+  });
+
   it('lets the sustained reverb pan bloom slightly after the dry image on note-on', async () => {
     const stereoPan = -0.34;
     const frequencyHz = 261.63;
@@ -1989,10 +2078,13 @@ describe('useKangurMusicSynth', () => {
       createdContexts[0],
       filterNode?.frequency
     );
+    const lfoFilterQGainNode = findGainNodeConnectedToTarget(createdContexts[0], filterNode?.Q);
     expect(lfoGainNode).toBeDefined();
     expect(lfoFilterGainNode).toBeDefined();
+    expect(lfoFilterQGainNode).toBeDefined();
     expect(lfoGainNode?.gain.value).toBeGreaterThan(0);
     expect(lfoFilterGainNode?.gain.value).toBeGreaterThan(0);
+    expect(lfoFilterQGainNode?.gain.value).toBeGreaterThan(0);
 
     act(() => {
       result.current.stopSustainedNote('glide-release-vibrato', {
@@ -2015,6 +2107,11 @@ describe('useKangurMusicSynth', () => {
       expect.any(Number)
     );
     expect(lfoFilterGainNode?.gain.value).toBe(0);
+    expect(lfoFilterQGainNode?.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(
+      0,
+      expect.any(Number)
+    );
+    expect(lfoFilterQGainNode?.gain.value).toBe(0);
   });
 
   it('warms the sustained filter tail during note-off', async () => {
@@ -3202,5 +3299,49 @@ describe('useKangurMusicSynth', () => {
       reverbSendGainNode?.gain.linearRampToValueAtTime.mock.calls.at(-1)?.[0] ?? 0;
     expect(typeof lastSendTarget).toBe('number');
     expect(lastSendTarget).toBeGreaterThan(0.16);
+  });
+
+  it('opens the sustained reverb send when vibrato deepens mid-glide', async () => {
+    const brightness = 0.58;
+    const velocity = 0.72;
+    const frequencyHz = 261.63;
+    const { result } = renderHook(() => useKangurMusicSynth<string>());
+
+    await act(async () => {
+      await result.current.startSustainedNote(
+        {
+          brightness,
+          frequencyHz,
+          id: 'vibrato-reverb-update',
+          velocity,
+          vibratoDepth: 0,
+          waveform: 'sawtooth',
+        },
+        { interactionId: 'glide-vibrato-reverb-update' }
+      );
+    });
+
+    const reverbSendGainNode = findGainNodeByRampTarget(
+      createdContexts[0],
+      resolveExpectedSustainedVibratoReverbSendGain(brightness, velocity, frequencyHz, 0)
+    );
+    expect(reverbSendGainNode).toBeDefined();
+    const calmSend = reverbSendGainNode?.gain.value ?? 0;
+
+    act(() => {
+      result.current.updateSustainedNote({
+        brightness,
+        frequencyHz,
+        interactionId: 'glide-vibrato-reverb-update',
+        vibratoDepth: 1,
+        velocity,
+      });
+    });
+
+    expect(reverbSendGainNode?.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(
+      resolveExpectedSustainedVibratoReverbSendGain(brightness, velocity, frequencyHz, 1),
+      expect.any(Number)
+    );
+    expect(reverbSendGainNode?.gain.value ?? 0).toBeGreaterThan(calmSend);
   });
 });

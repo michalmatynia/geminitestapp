@@ -26,6 +26,24 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuthState: () => authStateMock(),
 }));
 
+const { withKangurClientErrorMock } = vi.hoisted(() => ({
+  withKangurClientErrorMock: vi.fn(async (_report, task, options) => {
+    try {
+      return await task();
+    } catch (error) {
+      options.onError?.(error);
+      if (options.shouldRethrow?.(error)) {
+        throw error;
+      }
+      return typeof options.fallback === 'function' ? options.fallback() : options.fallback;
+    }
+  }),
+}));
+
+vi.mock('@/features/kangur/observability/client', () => ({
+  withKangurClientError: withKangurClientErrorMock,
+}));
+
 import {
   DEFAULT_KANGUR_AI_TUTOR_CONTENT,
   formatKangurAiTutorTemplate,
@@ -115,5 +133,29 @@ describe('KangurAiTutorContentContext', () => {
     expect(screen.getByTestId('default-tutor-name')).toHaveTextContent('Przewodnik');
     expect(screen.getByTestId('narrator-source-label')).toHaveTextContent('Czytnik tutora');
     expect(screen.getByTestId('step-label')).toHaveTextContent('Etap 2 z 5');
+  });
+
+  it('quietly falls back to the default AI Tutor content when the optional fetch fails', async () => {
+    apiGetMock.mockRejectedValue(new Error('database down'));
+    authStateMock.mockReturnValue({ isAuthenticated: true });
+
+    render(
+      <KangurAiTutorContentProvider>
+        <ActivatorHarness />
+      </KangurAiTutorContentProvider>
+    );
+
+    await waitFor(() => {
+      expect(apiGetMock).toHaveBeenCalledTimes(1);
+    });
+
+    expect(screen.getByTestId('restore-label')).toHaveTextContent(
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.navigation.restoreTutorLabel
+    );
+    expect(screen.getByTestId('default-tutor-name')).toHaveTextContent(
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.common.defaultTutorName
+    );
+    const options = withKangurClientErrorMock.mock.calls.at(-1)?.[2];
+    expect(options?.shouldReport?.(new Error('database down'))).toBe(false);
   });
 });

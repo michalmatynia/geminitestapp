@@ -1077,6 +1077,12 @@
       "triggerAriaLabel": "Current language: {language}. Open language menu.",
       "triggerTitle": "Language: {language}"
     },
+    "mobileMenu": {
+      "open": "Open menu",
+      "close": "Close menu",
+      "title": "Kangur menu",
+      "description": "Use Tab to move through the navigation options and Escape to close the menu."
+    },
     "subject": {
       "label": "Choose subject",
       "currentTitle": "Current subject: {subject}",
@@ -1303,6 +1309,11 @@
       "operationsHeading": "Results by operation",
       "emptyTitle": "No operation data.",
       "emptyDescription": "Play a few tasks to see accuracy for each operation.",
+      "accuracyLabel": "average accuracy",
+      "attemptsLabel": "Attempts",
+      "averageXpLabel": "XP per session",
+      "totalXpLabel": "Total",
+      "bestAccuracyLabel": "Best accuracy",
       "train": "Train",
       "operationStats": "Attempts: {attempts} · XP per session: {averageXp} · Total: {totalXp} XP · Best accuracy: {bestScore}%"
     },
@@ -4237,7 +4248,8 @@
     },
     "badgeTrackCard": {
       "count": "{unlocked}/{total} badges",
-      "allUnlocked": "All badges unlocked"
+      "allUnlocked": "All badges unlocked",
+      "nextEyebrow": "Next milestone"
     },
     "badgeTrackHighlights": {
       "placeholders": {

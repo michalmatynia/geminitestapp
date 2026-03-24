@@ -23,6 +23,7 @@ type KangurChoiceDialogOption = {
 };
 
 type KangurChoiceDialogProps = {
+  contentId?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   header: ReactNode;
@@ -37,6 +38,7 @@ type KangurChoiceDialogProps = {
 };
 
 export function KangurChoiceDialog({
+  contentId,
   open,
   onOpenChange,
   header,
@@ -55,6 +57,7 @@ export function KangurChoiceDialog({
       onOpenChange={onOpenChange}
       overlayVariant='dark'
       contentVariant='choice'
+      contentProps={contentId ? { id: contentId } : undefined}
     >
         {header}
         <KangurGlassPanel

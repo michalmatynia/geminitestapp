@@ -13,6 +13,7 @@ import { KangurActiveLessonHeader } from '@/features/kangur/ui/components/Kangur
 import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
 import { KangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
 import { KangurLessonNavigationWidget } from '@/features/kangur/ui/components/KangurLessonNavigationWidget';
+import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { KangurLessonPrintProvider } from '@/features/kangur/ui/context/KangurLessonPrintContext';
 import {
@@ -44,6 +45,8 @@ type ActiveLessonRenderSnapshot = {
   progress: ReturnType<typeof useLessons>['progress'];
   isActiveLessonDocumentLoading: ReturnType<typeof useLessons>['isActiveLessonDocumentLoading'];
 };
+
+const STUDIQ_PRINT_BRAND_LABEL = 'StudiQ';
 
 export function ActiveLessonView({
   snapshot,
@@ -144,13 +147,18 @@ export function ActiveLessonView({
         )
       : [];
     const matchedTargetPanel = targetPanelId
-      ? targetablePanels.find((panel) => panel.dataset.kangurPrintPanelId === targetPanelId) ?? null
+      ? targetablePanels.find((panel) => panel.dataset['kangurPrintPanelId'] === targetPanelId) ??
+        null
       : null;
-    const matchedTargetPanelTitle = matchedTargetPanel?.dataset.kangurPrintPanelTitle?.trim() || '';
-    const printDocumentTitle =
+    const matchedTargetPanelTitle =
+      matchedTargetPanel?.dataset['kangurPrintPanelTitle']?.trim() || '';
+    const printContentTitle =
       printableLessonTitle.trim() && matchedTargetPanelTitle
         ? `${printableLessonTitle.trim()} - ${matchedTargetPanelTitle}`
         : printableLessonTitle.trim() || matchedTargetPanelTitle || originalDocumentTitle;
+    const printDocumentTitle = printContentTitle.startsWith(`${STUDIQ_PRINT_BRAND_LABEL} -`)
+      ? printContentTitle
+      : `${STUDIQ_PRINT_BRAND_LABEL} - ${printContentTitle}`;
 
     if (printDocumentTitle) {
       document.title = printDocumentTitle;
@@ -158,15 +166,14 @@ export function ActiveLessonView({
 
     document.body.classList.add('kangur-print-mode');
     if (printRoot && matchedTargetPanel) {
-      printRoot.dataset.kangurPrintTargeted = 'true';
-      matchedTargetPanel.dataset.kangurPrintTargetPanel = 'true';
+      printRoot.dataset['kangurPrintTargeted'] = 'true';
+      matchedTargetPanel.dataset['kangurPrintTargetPanel'] = 'true';
       targetablePanels.forEach((panel) => {
         const shouldKeepVisible =
           panel === matchedTargetPanel ||
           panel.contains(matchedTargetPanel) ||
           matchedTargetPanel.contains(panel);
-        panel.dataset.kangurPrintPanelSelected =
-          shouldKeepVisible ? 'true' : 'false';
+        panel.dataset['kangurPrintPanelSelected'] = shouldKeepVisible ? 'true' : 'false';
       });
     }
     let isCleanedUp = false;
@@ -189,13 +196,13 @@ export function ActiveLessonView({
       document.body.classList.remove('kangur-print-mode');
       document.title = originalDocumentTitle;
       if (printRoot) {
-        delete printRoot.dataset.kangurPrintTargeted;
+        delete printRoot.dataset['kangurPrintTargeted'];
       }
       if (matchedTargetPanel) {
-        delete matchedTargetPanel.dataset.kangurPrintTargetPanel;
+        delete matchedTargetPanel.dataset['kangurPrintTargetPanel'];
       }
       targetablePanels.forEach((panel) => {
-        delete panel.dataset.kangurPrintPanelSelected;
+        delete panel.dataset['kangurPrintPanelSelected'];
       });
       window.removeEventListener('afterprint', cleanup);
       window.removeEventListener('focus', handleWindowFocus);
@@ -299,8 +306,26 @@ export function ActiveLessonView({
     >
       <div
         className='kangur-print-only w-full min-w-0 max-w-5xl border-b border-slate-200 pb-4 text-center'
+        data-kangur-print-masthead='true'
         data-testid='kangur-lesson-print-heading'
       >
+        <div
+          className='mb-4 flex items-center justify-center'
+          aria-label={STUDIQ_PRINT_BRAND_LABEL}
+          data-kangur-print-brand='true'
+          data-testid='kangur-lesson-print-brand'
+        >
+          <span
+            className='inline-flex items-center justify-center'
+            data-kangur-print-brand-logo='true'
+            data-testid='kangur-lesson-print-brand-logo'
+          >
+            <KangurHomeLogo
+              className='h-[30px] sm:h-[30px]'
+              idPrefix='kangur-lesson-print-logo'
+            />
+          </span>
+        </div>
         <div className='text-sm font-semibold uppercase tracking-[0.16em] text-slate-500'>
           {translations('pageTitle')}
         </div>

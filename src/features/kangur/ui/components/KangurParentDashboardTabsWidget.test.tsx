@@ -15,7 +15,13 @@ const runtimeState = vi.hoisted(() => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({
-  useKangurParentDashboardRuntime: () => runtimeState.value,
+  useKangurParentDashboardRuntimeShellActions: () => ({
+    setActiveTab: runtimeState.value.setActiveTab,
+  }),
+  useKangurParentDashboardRuntimeShellState: () => ({
+    activeTab: runtimeState.value.activeTab,
+    canAccessDashboard: runtimeState.value.canAccessDashboard,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({

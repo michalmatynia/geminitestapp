@@ -28,10 +28,14 @@ const KANGUR_EMPTY_THEME_SETTINGS_SNAPSHOT: KangurStorefrontThemeSettingsSnapsho
 
 const KangurStorefrontInitialThemeSettingsContext =
   createContext<KangurStorefrontThemeSettingsSnapshot>(KANGUR_EMPTY_THEME_SETTINGS_SNAPSHOT);
+const KangurStorefrontAppearanceHydratedContext = createContext(false);
 
 export const useKangurStorefrontInitialThemeSettings =
   (): KangurStorefrontThemeSettingsSnapshot =>
     useContext(KangurStorefrontInitialThemeSettingsContext);
+
+export const useKangurStorefrontAppearanceHydrated = (): boolean =>
+  useContext(KangurStorefrontAppearanceHydratedContext);
 
 export function KangurStorefrontAppearanceProvider({
   children,
@@ -73,13 +77,15 @@ export function KangurStorefrontAppearanceProvider({
 
   return (
     <KangurStorefrontInitialThemeSettingsContext.Provider value={resolvedInitialThemeSettings}>
-      <CmsStorefrontAppearanceProvider
-        initialMode={defaultMode}
-        storageKey={KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY}
-        persistMode={shouldPersistMode}
-      >
-        {children}
-      </CmsStorefrontAppearanceProvider>
+      <KangurStorefrontAppearanceHydratedContext.Provider value={hydrated}>
+        <CmsStorefrontAppearanceProvider
+          initialMode={defaultMode}
+          storageKey={KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY}
+          persistMode={shouldPersistMode}
+        >
+          {children}
+        </CmsStorefrontAppearanceProvider>
+      </KangurStorefrontAppearanceHydratedContext.Provider>
     </KangurStorefrontInitialThemeSettingsContext.Provider>
   );
 }

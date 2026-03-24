@@ -40,7 +40,7 @@ const { runtimeState, useKangurPageContentEntryMock } = vi.hoisted(() => ({
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({
   shouldRenderKangurParentDashboardPanel: (displayMode: string, activeTab: string, targetTab: string) =>
     displayMode === 'always' || activeTab === targetTab,
-  useKangurParentDashboardRuntime: () => runtimeState.value,
+  useKangurParentDashboardRuntimeShellState: () => runtimeState.value,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({

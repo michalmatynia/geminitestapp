@@ -2,7 +2,6 @@ import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSec
 import {
   KangurLessonCallout,
   KangurLessonCaption,
-  KangurLessonInset,
   KangurLessonLead,
   KangurLessonStack,
   KangurLessonVisual,

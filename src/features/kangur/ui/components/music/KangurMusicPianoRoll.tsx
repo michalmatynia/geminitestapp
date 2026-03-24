@@ -1507,6 +1507,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                     </span>
                   </div>
                   <input
+                    aria-label='Glososc OSC 1'
                     className='mt-3 h-2.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-sky-500'
                     data-testid={`${stepTestIdPrefix}-synth-osc1-volume`}
                     max={100}
@@ -1528,6 +1529,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                 <label className='flex items-center justify-between rounded-[22px] border border-slate-200/80 bg-slate-50/85 px-4 py-3'>
                   <span className='text-sm font-bold text-slate-900'>Aktywny</span>
                   <input
+                    aria-label='Aktywny OSC 2'
                     checked={resolvedOsc2Config.enabled}
                     className='h-4 w-4 accent-sky-500'
                     data-testid={`${stepTestIdPrefix}-synth-osc2-enabled`}
@@ -1584,6 +1586,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                         </span>
                       </div>
                       <input
+                        aria-label='Detune OSC 2'
                         className='mt-3 h-2.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-sky-500'
                         data-testid={`${stepTestIdPrefix}-synth-osc2-detune`}
                         max={50}
@@ -1611,6 +1614,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                         </span>
                       </div>
                       <input
+                        aria-label='Mieszanie OSC 2'
                         className='mt-3 h-2.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-sky-500'
                         data-testid={`${stepTestIdPrefix}-synth-osc2-blend`}
                         max={100}
@@ -1670,6 +1674,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                     </span>
                   </div>
                   <input
+                    aria-label={control.label}
                     className='mt-3 h-2.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-sky-500'
                     data-testid={`${stepTestIdPrefix}-synth-envelope-${control.testIdSuffix}`}
                     max={control.max}

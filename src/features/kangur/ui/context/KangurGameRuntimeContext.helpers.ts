@@ -225,7 +225,7 @@ export const buildKangurCompletedGameOutcome = ({
   });
 
   const dailyQuestBefore = getCurrentKangurDailyQuest(storedProgress, {
-    ownerKey,
+    ownerKey: ownerKey ?? null,
     persist: false,
     subject,
     translate: progressTranslate,
@@ -239,7 +239,7 @@ export const buildKangurCompletedGameOutcome = ({
   const awardedBreakdown = [...(sessionReward.breakdown ?? [])];
   let finalProgress = sessionRewardResult.updated;
   const questClaim = claimCurrentKangurDailyQuestReward(finalProgress, {
-    ownerKey,
+    ownerKey: ownerKey ?? null,
     subject,
     translate: progressTranslate,
   });

@@ -31,23 +31,6 @@ type KangurAuthCheckAppStateOptions = {
   timeoutMs?: number | null;
 };
 
-const raceWithTimeout = async <T,>(promise: Promise<T>, ms: number): Promise<T | null> => {
-  let timeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
-
-  try {
-    return await Promise.race([
-      promise,
-      new Promise<null>((resolve) => {
-        timeoutId = globalThis.setTimeout(() => resolve(null), ms);
-      }),
-    ]);
-  } finally {
-    if (timeoutId !== null) {
-      globalThis.clearTimeout(timeoutId);
-    }
-  }
-};
-
 type KangurAuthError = {
   type: 'unknown' | 'auth_required' | 'user_not_registered';
   message: string;
@@ -56,6 +39,7 @@ type KangurAuthError = {
 type KangurAuthContextValue = {
   user: KangurUser | null;
   isAuthenticated: boolean;
+  hasResolvedAuth: boolean;
   canAccessParentAssignments: boolean;
   isLoadingAuth: boolean;
   isLoggingOut?: boolean;
@@ -72,6 +56,7 @@ type KangurAuthStateContextValue = Pick<
   KangurAuthContextValue,
   | 'user'
   | 'isAuthenticated'
+  | 'hasResolvedAuth'
   | 'canAccessParentAssignments'
   | 'isLoadingAuth'
   | 'isLoadingPublicSettings'
@@ -138,6 +123,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
   const logoutInFlightRef = useRef(false);
   const [user, setUser] = useState<KangurUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [hasResolvedAuth, setHasResolvedAuth] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isLoadingPublicSettings] = useState(false);
@@ -152,6 +138,8 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
           ? Math.max(0, options.timeoutMs)
           : null;
       const requestVersion = ++authRequestVersionRef.current;
+      let didSoftTimeout = false;
+      let timeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
       setAuthError(null);
       setIsLoadingAuth(true);
       try {
@@ -186,17 +174,54 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
           }
         );
         const currentUser =
-          timeoutMs === null ? await authCheck : await raceWithTimeout(authCheck, timeoutMs);
+          timeoutMs === null
+            ? await authCheck
+            : await Promise.race([
+                authCheck,
+                new Promise<null>((resolve) => {
+                  timeoutId = globalThis.setTimeout(() => {
+                    didSoftTimeout = true;
+                    resolve(null);
+                  }, timeoutMs);
+                }),
+              ]);
+        if (timeoutId !== null) {
+          globalThis.clearTimeout(timeoutId);
+        }
+
+        if (didSoftTimeout) {
+          if (authRequestVersionRef.current === requestVersion) {
+            setIsLoadingAuth(false);
+          }
+
+          // Let the original request finish in the background so slow auth checks
+          // can still settle the session instead of downgrading to anonymous mode.
+          void authCheck.then((lateUser) => {
+            if (authRequestVersionRef.current !== requestVersion) {
+              return;
+            }
+            if (lateUser) {
+              setUser(lateUser);
+              setIsAuthenticated(true);
+              setAuthError(null);
+            }
+            setHasResolvedAuth(true);
+          });
+
+          return null;
+        }
         if (authRequestVersionRef.current !== requestVersion) {
           return null;
         }
         if (currentUser) {
           setUser(currentUser);
           setIsAuthenticated(true);
+          setAuthError(null);
         }
+        setHasResolvedAuth(true);
         return currentUser;
       } finally {
-        if (authRequestVersionRef.current === requestVersion) {
+        if (!didSoftTimeout && authRequestVersionRef.current === requestVersion) {
           setIsLoadingAuth(false);
         }
       }
@@ -209,6 +234,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
       authRequestVersionRef.current += 1;
       setUser(null);
       setIsAuthenticated(false);
+      setHasResolvedAuth(true);
       setAuthError(null);
       setIsLoadingAuth(false);
       return;
@@ -226,6 +252,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
     authRequestVersionRef.current += 1;
     setUser(null);
     setIsAuthenticated(false);
+    setHasResolvedAuth(true);
     setAuthError(null);
     setIsLoggingOut(true);
     setIsLoadingAuth(!shouldRedirect);
@@ -282,6 +309,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
     const nextUser = await kangurPlatform.learners.select(learnerId);
     setUser(nextUser);
     setIsAuthenticated(true);
+    setHasResolvedAuth(true);
     setAuthError(null);
   }, []);
 
@@ -289,6 +317,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
     () => ({
       user,
       isAuthenticated,
+      hasResolvedAuth,
       canAccessParentAssignments,
       isLoadingAuth,
       isLoggingOut,
@@ -300,6 +329,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
       appPublicSettings,
       authError,
       canAccessParentAssignments,
+      hasResolvedAuth,
       isAuthenticated,
       isLoadingAuth,
       isLoggingOut,

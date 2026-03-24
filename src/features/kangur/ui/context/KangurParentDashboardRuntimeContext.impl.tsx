@@ -12,7 +12,14 @@ import {
 } from 'react';
 
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import type { KangurLearnerProfile, KangurUser } from '@kangur/platform';
+import type {
+  KangurAssignmentCreateInput,
+  KangurAssignmentSnapshot,
+  KangurAssignmentUpdateInput,
+  KangurLearnerProfile,
+  KangurScoreRecord,
+  KangurUser,
+} from '@kangur/platform';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
@@ -29,6 +36,12 @@ import {
   KANGUR_LEARNER_PASSWORD_MIN_LENGTH,
   KANGUR_LEARNER_PASSWORD_PATTERN,
 } from '@/shared/contracts/kangur';
+import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
+import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
+import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
+import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
+import { useKangurParentDashboardScores } from '@/features/kangur/ui/hooks/useKangurParentDashboardScores';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 
 
 export type KangurParentDashboardTabId =
@@ -53,13 +66,18 @@ type KangurParentDashboardEditForm = {
 };
 
 type KangurParentDashboardRuntimeStateContextValue = {
+  assignments: KangurAssignmentSnapshot[];
+  assignmentsError: string | null;
   basePath: string;
   user: KangurUser | null;
   learners: KangurLearnerProfile[];
+  lessons: KangurLesson[];
   activeLearner: KangurLearnerProfile | null;
   isAuthenticated: boolean;
   canManageLearners: boolean;
   canAccessDashboard: boolean;
+  scores: KangurScoreRecord[];
+  scoresError: string | null;
   viewerName: string;
   scoreViewerName: string | null;
   scoreViewerEmail: string | null;
@@ -71,9 +89,58 @@ type KangurParentDashboardRuntimeStateContextValue = {
   editForm: KangurParentDashboardEditForm;
   isSubmitting: boolean;
   feedback: string | null;
+  isLoadingAssignments: boolean;
+  isLoadingScores: boolean;
 };
 
+type KangurParentDashboardRuntimeShellStateContextValue = Pick<
+  KangurParentDashboardRuntimeStateContextValue,
+  | 'activeLearner'
+  | 'activeTab'
+  | 'basePath'
+  | 'canAccessDashboard'
+  | 'canManageLearners'
+  | 'isAuthenticated'
+  | 'user'
+  | 'viewerName'
+  | 'viewerRoleLabel'
+>;
+
+type KangurParentDashboardRuntimeHeroStateContextValue = Pick<
+  KangurParentDashboardRuntimeStateContextValue,
+  | 'activeLearner'
+  | 'basePath'
+  | 'canManageLearners'
+  | 'isAuthenticated'
+  | 'lessons'
+  | 'progress'
+  | 'viewerName'
+  | 'viewerRoleLabel'
+>;
+
+type KangurParentDashboardRuntimeOverviewStateContextValue = Pick<
+  KangurParentDashboardRuntimeStateContextValue,
+  | 'activeLearner'
+  | 'basePath'
+  | 'canAccessDashboard'
+  | 'canManageLearners'
+  | 'createForm'
+  | 'editForm'
+  | 'feedback'
+  | 'isAuthenticated'
+  | 'isCreateLearnerModalOpen'
+  | 'isSubmitting'
+  | 'learners'
+  | 'lessons'
+  | 'progress'
+  | 'viewerName'
+  | 'viewerRoleLabel'
+>;
+
 type KangurParentDashboardRuntimeActionsContextValue = {
+  createAssignment: (input: KangurAssignmentCreateInput) => Promise<KangurAssignmentSnapshot>;
+  refreshAssignments: () => Promise<void>;
+  reassignAssignment: (id: string) => Promise<KangurAssignmentSnapshot>;
   navigateToLogin: (options?: { authMode?: KangurAuthMode }) => void;
   logout: (shouldRedirect?: boolean) => void;
   selectLearner: (learnerId: string) => Promise<void>;
@@ -90,7 +157,16 @@ type KangurParentDashboardRuntimeActionsContextValue = {
   handleCreateLearner: () => Promise<void>;
   handleSaveLearner: () => Promise<boolean>;
   handleDeleteLearner: (learnerId: string) => Promise<boolean>;
+  updateAssignment: (
+    id: string,
+    input: KangurAssignmentUpdateInput
+  ) => Promise<KangurAssignmentSnapshot>;
 };
+
+type KangurParentDashboardRuntimeShellActionsContextValue = Pick<
+  KangurParentDashboardRuntimeActionsContextValue,
+  'logout' | 'setActiveTab' | 'setCreateLearnerModalOpen'
+>;
 
 type KangurParentDashboardRuntimeContextValue = KangurParentDashboardRuntimeStateContextValue &
   KangurParentDashboardRuntimeActionsContextValue;
@@ -98,6 +174,7 @@ type KangurParentDashboardRuntimeContextValue = KangurParentDashboardRuntimeStat
 const kangurPlatform = getKangurPlatform();
 const ACTION_TIMEOUT_MS = 12_000;
 const REFRESH_TIMEOUT_MS = 8_000;
+const SCORES_LOAD_DEFER_MS = 900;
 
 async function withTimeout<T>(
   promise: Promise<T>,
@@ -122,6 +199,14 @@ async function withTimeout<T>(
 
 const KangurParentDashboardRuntimeStateContext =
   createContext<KangurParentDashboardRuntimeStateContextValue | null>(null);
+const KangurParentDashboardRuntimeShellStateContext =
+  createContext<KangurParentDashboardRuntimeShellStateContextValue | null>(null);
+const KangurParentDashboardRuntimeHeroStateContext =
+  createContext<KangurParentDashboardRuntimeHeroStateContextValue | null>(null);
+const KangurParentDashboardRuntimeOverviewStateContext =
+  createContext<KangurParentDashboardRuntimeOverviewStateContextValue | null>(null);
+const KangurParentDashboardRuntimeShellActionsContext =
+  createContext<KangurParentDashboardRuntimeShellActionsContextValue | null>(null);
 const KangurParentDashboardRuntimeActionsContext =
   createContext<KangurParentDashboardRuntimeActionsContextValue | null>(null);
 
@@ -146,6 +231,8 @@ export function KangurParentDashboardRuntimeProvider({
     selectLearner,
     checkAppState,
   } = useKangurAuth();
+  const { ageGroup } = useKangurAgeGroupFocus();
+  const { subject } = useKangurSubjectFocus();
   const progress = useKangurProgressState();
   const [activeTab, setActiveTab] = useState<KangurParentDashboardTabId>('progress');
   const [isCreateLearnerModalOpen, setCreateLearnerModalOpen] = useState(false);
@@ -168,9 +255,68 @@ export function KangurParentDashboardRuntimeProvider({
   const canAccessDashboard = isAuthenticated && canManageLearners;
   const learners = user?.learners ?? [];
   const activeLearner = user?.activeLearner ?? null;
+  const activeLearnerId = activeLearner?.id ?? null;
+  const lessonsQuery = useKangurLessons({
+    ageGroup,
+    enabled: canAccessDashboard && Boolean(activeLearnerId),
+    enabledOnly: true,
+  });
+  const assignmentsQuery = useKangurAssignments({
+    enabled: canAccessDashboard && Boolean(activeLearnerId),
+    query: {
+      includeArchived: false,
+    },
+  });
+  const lessons = useMemo(
+    () => (canAccessDashboard && activeLearnerId ? lessonsQuery.data ?? [] : []),
+    [activeLearnerId, canAccessDashboard, lessonsQuery.data]
+  );
+  const assignments = useMemo(
+    () => (canAccessDashboard && activeLearnerId ? assignmentsQuery.assignments : []),
+    [activeLearnerId, assignmentsQuery.assignments, canAccessDashboard]
+  );
+  const assignmentsError =
+    canAccessDashboard && activeLearnerId ? assignmentsQuery.error : null;
+  const isLoadingAssignments =
+    canAccessDashboard && activeLearnerId ? assignmentsQuery.isLoading : false;
   const viewerName = user?.email?.trim() || translations('account');
   const scoreViewerName = activeLearner?.displayName?.trim() || user?.full_name?.trim() || null;
   const scoreViewerEmail = user?.email?.trim() || null;
+  const [isScoresQueryReady, setIsScoresQueryReady] = useState(false);
+
+  useEffect(() => {
+    if (!canAccessDashboard || !activeLearnerId) {
+      setIsScoresQueryReady(false);
+      return;
+    }
+
+    setIsScoresQueryReady(false);
+    const timeoutId = setTimeout(() => {
+      setIsScoresQueryReady(true);
+    }, SCORES_LOAD_DEFER_MS);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [activeLearnerId, canAccessDashboard]);
+
+  const scoresQuery = useKangurParentDashboardScores({
+    createdBy: scoreViewerEmail,
+    enabled: canAccessDashboard && Boolean(activeLearnerId) && isScoresQueryReady,
+    learnerId: activeLearnerId,
+    playerName: scoreViewerName,
+    subject,
+  });
+  const scores =
+    canAccessDashboard && activeLearnerId && isScoresQueryReady ? scoresQuery.scores : [];
+  const scoresError =
+    canAccessDashboard && activeLearnerId && isScoresQueryReady
+      ? scoresQuery.scoresError
+      : null;
+  const isLoadingScores =
+    canAccessDashboard && activeLearnerId
+      ? !isScoresQueryReady || scoresQuery.isLoadingScores
+      : false;
   const viewerRoleLabel =
     user?.role === 'admin'
       ? translations('viewerRole.teacher')
@@ -190,15 +336,114 @@ export function KangurParentDashboardRuntimeProvider({
     activeLearner?.status,
   ]);
 
+  const shellStateValue = useMemo<KangurParentDashboardRuntimeShellStateContextValue>(
+    () => ({
+      activeLearner,
+      activeTab,
+      basePath,
+      canAccessDashboard,
+      canManageLearners,
+      isAuthenticated,
+      user,
+      viewerName,
+      viewerRoleLabel,
+    }),
+    [
+      activeLearner,
+      activeTab,
+      basePath,
+      canAccessDashboard,
+      canManageLearners,
+      isAuthenticated,
+      user,
+      viewerName,
+      viewerRoleLabel,
+    ]
+  );
+
+  const heroStateValue = useMemo<KangurParentDashboardRuntimeHeroStateContextValue>(
+    () => ({
+      activeLearner,
+      basePath,
+      canManageLearners,
+      isAuthenticated,
+      lessons,
+      progress,
+      viewerName,
+      viewerRoleLabel,
+    }),
+    [
+      activeLearner,
+      basePath,
+      canManageLearners,
+      isAuthenticated,
+      lessons,
+      progress,
+      viewerName,
+      viewerRoleLabel,
+    ]
+  );
+
+  const overviewStateValue = useMemo<KangurParentDashboardRuntimeOverviewStateContextValue>(
+    () => ({
+      activeLearner,
+      basePath,
+      canAccessDashboard,
+      canManageLearners,
+      createForm,
+      editForm,
+      feedback,
+      isAuthenticated,
+      isCreateLearnerModalOpen,
+      isSubmitting,
+      learners,
+      lessons,
+      progress,
+      viewerName,
+      viewerRoleLabel,
+    }),
+    [
+      activeLearner,
+      basePath,
+      canAccessDashboard,
+      canManageLearners,
+      createForm,
+      editForm,
+      feedback,
+      isAuthenticated,
+      isCreateLearnerModalOpen,
+      isSubmitting,
+      learners,
+      lessons,
+      progress,
+      viewerName,
+      viewerRoleLabel,
+    ]
+  );
+
+  const shellActionsValue = useMemo<KangurParentDashboardRuntimeShellActionsContextValue>(
+    () => ({
+      logout,
+      setActiveTab,
+      setCreateLearnerModalOpen,
+    }),
+    [logout, setActiveTab, setCreateLearnerModalOpen]
+  );
+
   const stateValue = useMemo<KangurParentDashboardRuntimeStateContextValue>(
     () => ({
+      assignments,
+      assignmentsError,
       basePath,
       user,
       learners,
+      lessons,
       activeLearner,
       isAuthenticated,
       canManageLearners,
       canAccessDashboard,
+      scores,
+      scoresError,
       viewerName,
       scoreViewerName,
       scoreViewerEmail,
@@ -210,10 +455,14 @@ export function KangurParentDashboardRuntimeProvider({
       editForm,
       isSubmitting,
       feedback,
+      isLoadingAssignments,
+      isLoadingScores,
     }),
     [
       activeLearner,
       activeTab,
+      assignments,
+      assignmentsError,
       basePath,
       canAccessDashboard,
       canManageLearners,
@@ -222,9 +471,15 @@ export function KangurParentDashboardRuntimeProvider({
       feedback,
       isAuthenticated,
       isCreateLearnerModalOpen,
+      isLoadingAssignments,
+      isLoadingScores,
       isSubmitting,
+      isScoresQueryReady,
       learners,
+      lessons,
       progress,
+      scores,
+      scoresError,
       scoreViewerEmail,
       scoreViewerName,
       user,
@@ -235,6 +490,9 @@ export function KangurParentDashboardRuntimeProvider({
 
   const actionsValue = useMemo<KangurParentDashboardRuntimeActionsContextValue>(
     () => ({
+      createAssignment: assignmentsQuery.createAssignment,
+      refreshAssignments: assignmentsQuery.refresh,
+      reassignAssignment: assignmentsQuery.reassignAssignment,
       navigateToLogin,
       logout,
       selectLearner,
@@ -561,9 +819,14 @@ export function KangurParentDashboardRuntimeProvider({
         setIsSubmitting(false);
         return didDelete;
       },
+      updateAssignment: assignmentsQuery.updateAssignment,
     }),
     [
       activeLearner,
+      assignmentsQuery.createAssignment,
+      assignmentsQuery.reassignAssignment,
+      assignmentsQuery.refresh,
+      assignmentsQuery.updateAssignment,
       canAccessDashboard,
       checkAppState,
       createForm,
@@ -579,9 +842,17 @@ export function KangurParentDashboardRuntimeProvider({
 
   return (
     <KangurParentDashboardRuntimeActionsContext.Provider value={actionsValue}>
-      <KangurParentDashboardRuntimeStateContext.Provider value={stateValue}>
-        {children}
-      </KangurParentDashboardRuntimeStateContext.Provider>
+      <KangurParentDashboardRuntimeShellActionsContext.Provider value={shellActionsValue}>
+        <KangurParentDashboardRuntimeShellStateContext.Provider value={shellStateValue}>
+          <KangurParentDashboardRuntimeHeroStateContext.Provider value={heroStateValue}>
+            <KangurParentDashboardRuntimeOverviewStateContext.Provider value={overviewStateValue}>
+              <KangurParentDashboardRuntimeStateContext.Provider value={stateValue}>
+                {children}
+              </KangurParentDashboardRuntimeStateContext.Provider>
+            </KangurParentDashboardRuntimeOverviewStateContext.Provider>
+          </KangurParentDashboardRuntimeHeroStateContext.Provider>
+        </KangurParentDashboardRuntimeShellStateContext.Provider>
+      </KangurParentDashboardRuntimeShellActionsContext.Provider>
     </KangurParentDashboardRuntimeActionsContext.Provider>
   );
 }
@@ -593,9 +864,21 @@ export function KangurParentDashboardRuntimeBoundary({
   enabled: boolean;
   children: ReactNode;
 }): JSX.Element {
+  const existingShellStateContext = useContext(KangurParentDashboardRuntimeShellStateContext);
+  const existingHeroStateContext = useContext(KangurParentDashboardRuntimeHeroStateContext);
+  const existingOverviewStateContext = useContext(KangurParentDashboardRuntimeOverviewStateContext);
+  const existingShellActionsContext = useContext(KangurParentDashboardRuntimeShellActionsContext);
   const existingStateContext = useContext(KangurParentDashboardRuntimeStateContext);
   const existingActionsContext = useContext(KangurParentDashboardRuntimeActionsContext);
-  if (!enabled || existingStateContext || existingActionsContext) {
+  if (
+    !enabled ||
+    existingShellStateContext ||
+    existingHeroStateContext ||
+    existingOverviewStateContext ||
+    existingShellActionsContext ||
+    existingStateContext ||
+    existingActionsContext
+  ) {
     return <>{children}</>;
   }
 
@@ -608,6 +891,50 @@ export const useKangurParentDashboardRuntimeState =
     if (!context) {
       throw internalError(
         'useKangurParentDashboardRuntimeState must be used within a KangurParentDashboardRuntimeProvider'
+      );
+    }
+    return context;
+  };
+
+export const useKangurParentDashboardRuntimeShellState =
+  (): KangurParentDashboardRuntimeShellStateContextValue => {
+    const context = useContext(KangurParentDashboardRuntimeShellStateContext);
+    if (!context) {
+      throw internalError(
+        'useKangurParentDashboardRuntimeShellState must be used within a KangurParentDashboardRuntimeProvider'
+      );
+    }
+    return context;
+  };
+
+export const useKangurParentDashboardRuntimeHeroState =
+  (): KangurParentDashboardRuntimeHeroStateContextValue => {
+    const context = useContext(KangurParentDashboardRuntimeHeroStateContext);
+    if (!context) {
+      throw internalError(
+        'useKangurParentDashboardRuntimeHeroState must be used within a KangurParentDashboardRuntimeProvider'
+      );
+    }
+    return context;
+  };
+
+export const useKangurParentDashboardRuntimeOverviewState =
+  (): KangurParentDashboardRuntimeOverviewStateContextValue => {
+    const context = useContext(KangurParentDashboardRuntimeOverviewStateContext);
+    if (!context) {
+      throw internalError(
+        'useKangurParentDashboardRuntimeOverviewState must be used within a KangurParentDashboardRuntimeProvider'
+      );
+    }
+    return context;
+  };
+
+export const useKangurParentDashboardRuntimeShellActions =
+  (): KangurParentDashboardRuntimeShellActionsContextValue => {
+    const context = useContext(KangurParentDashboardRuntimeShellActionsContext);
+    if (!context) {
+      throw internalError(
+        'useKangurParentDashboardRuntimeShellActions must be used within a KangurParentDashboardRuntimeProvider'
       );
     }
     return context;

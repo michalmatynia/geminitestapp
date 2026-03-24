@@ -7,8 +7,6 @@ import { useEffect, useMemo, useState } from 'react';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurLearnerInteractionHistory } from '@kangur/platform';
-import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
-import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import {
   type KangurParentDashboardPanelDisplayMode,
   shouldRenderKangurParentDashboardPanel,
@@ -46,6 +44,7 @@ import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts
 
 const kangurPlatform = getKangurPlatform();
 const INTERACTIONS_PAGE_LIMIT = 20;
+const INTERACTIONS_LOAD_DEFER_MS = 900;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -179,19 +178,35 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
 }: {
   displayMode?: KangurParentDashboardPanelDisplayMode;
 }): React.JSX.Element | null {
+  const { activeLearner, activeTab, canAccessDashboard } = useKangurParentDashboardRuntime();
+  const activeLearnerId = activeLearner?.id ?? null;
+
+  if (!canAccessDashboard) {
+    return null;
+  }
+
+  if (!shouldRenderKangurParentDashboardPanel(displayMode, activeTab, 'monitoring')) {
+    return null;
+  }
+
+  if (!activeLearnerId) {
+    return null;
+  }
+
+  return <KangurParentDashboardAssignmentsMonitoringWidgetContent />;
+}
+
+function KangurParentDashboardAssignmentsMonitoringWidgetContent(): React.JSX.Element {
   const locale = useLocale();
   const translations = useTranslations('KangurParentDashboard');
   const isCoarsePointer = useKangurCoarsePointer();
   const {
     activeLearner,
-    activeTab,
     canAccessDashboard,
+    lessons = [],
     progress,
   } = useKangurParentDashboardRuntime();
   const { entry: monitoringContent } = useKangurPageContentEntry('parent-dashboard-monitoring');
-  const { ageGroup } = useKangurAgeGroupFocus();
-  const lessonsQuery = useKangurLessons({ ageGroup, enabledOnly: true });
-  const lessons = useMemo(() => lessonsQuery.data ?? [], [lessonsQuery.data]);
   const activeLearnerId = activeLearner?.id ?? null;
   const lessonPanelProgress = progress.lessonPanelProgress ?? {};
   const interactionFilterOptions = useMemo(
@@ -222,6 +237,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
     });
   const [interactionHistory, setInteractionHistory] =
     useState<KangurLearnerInteractionHistory | null>(null);
+  const [isInteractionQueryReady, setIsInteractionQueryReady] = useState(false);
   const [isLoadingInteractions, setIsLoadingInteractions] = useState(false);
   const [interactionsError, setInteractionsError] = useState<string | null>(null);
   const [isLoadingMoreInteractions, setIsLoadingMoreInteractions] = useState(false);
@@ -513,6 +529,9 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
   );
   const filtersActive =
     interactionFilter !== 'all' || Boolean(interactionDateFrom) || Boolean(interactionDateTo);
+  const showInteractionsLoading =
+    (Boolean(activeLearnerId) && canAccessDashboard && !isInteractionQueryReady) ||
+    isLoadingInteractions;
 
   const handleLoadMoreInteractions = async (): Promise<void> => {
     if (!activeLearnerId || !interactionHistory || isLoadingMoreInteractions) {
@@ -567,6 +586,37 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
 
   useEffect(() => {
     if (!activeLearnerId || !canAccessDashboard) {
+      setIsInteractionQueryReady(false);
+      setInteractionHistory(null);
+      setInteractionsError(null);
+      setInteractionsLoadMoreError(null);
+      setIsLoadingMoreInteractions(false);
+      setIsLoadingInteractions(false);
+      return;
+    }
+
+    setIsInteractionQueryReady(false);
+    setInteractionHistory(null);
+    setInteractionsError(null);
+    setInteractionsLoadMoreError(null);
+    setIsLoadingMoreInteractions(false);
+    setIsLoadingInteractions(true);
+
+    const timeoutId = setTimeout(() => {
+      setIsInteractionQueryReady(true);
+    }, INTERACTIONS_LOAD_DEFER_MS);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [activeLearnerId, canAccessDashboard]);
+
+  useEffect(() => {
+    if (!activeLearnerId || !canAccessDashboard || !isInteractionQueryReady) {
+      return;
+    }
+
+    if (!activeLearnerId || !canAccessDashboard) {
       setInteractionHistory(null);
       return;
     }
@@ -602,19 +652,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
     return () => {
       isActive = false;
     };
-  }, [activeLearnerId, canAccessDashboard]);
-
-  if (!canAccessDashboard) {
-    return null;
-  }
-
-  if (!shouldRenderKangurParentDashboardPanel(displayMode, activeTab, 'monitoring')) {
-    return null;
-  }
-
-  if (!activeLearnerId) {
-    return null;
-  }
+  }, [activeLearnerId, canAccessDashboard, isInteractionQueryReady]);
 
   return (
     <KangurPanelStack>
@@ -923,7 +961,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
             </div>
           </div>
         </div>
-        {isLoadingInteractions ? (
+        {showInteractionsLoading ? (
           <KangurEmptyState
             accent='slate'
             align='center'

@@ -136,6 +136,7 @@ const AUTHENTICATED_USER = {
 const AuthProbe = (): React.JSX.Element => {
   const {
     canAccessParentAssignments,
+    hasResolvedAuth,
     isLoadingAuth,
     isLoggingOut,
     checkAppState,
@@ -168,6 +169,7 @@ const AuthProbe = (): React.JSX.Element => {
         Refresh auth
       </button>
       <div data-testid='kangur-auth-loading'>{String(isLoadingAuth)}</div>
+      <div data-testid='kangur-auth-resolved'>{String(hasResolvedAuth)}</div>
       <div data-testid='kangur-auth-logout-pending'>{String(Boolean(isLoggingOut))}</div>
       <div data-testid='kangur-parent-assignment-access'>
         {String(canAccessParentAssignments)}
@@ -308,6 +310,40 @@ describe('KangurAuthContext', () => {
     expect(logKangurClientErrorMock).not.toHaveBeenCalled();
   });
 
+  it('keeps bootstrap auth unresolved after the soft timeout until the original request settles', async () => {
+    vi.useFakeTimers();
+    let resolveInitialAuth: ((value: typeof AUTHENTICATED_USER) => void) | null = null;
+
+    meMock.mockImplementationOnce(
+      () =>
+        new Promise<typeof AUTHENTICATED_USER>((resolve) => {
+          resolveInitialAuth = resolve;
+        })
+    );
+
+    render(
+      <KangurAuthProvider>
+        <AuthProbe />
+      </KangurAuthProvider>
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_000);
+    });
+
+    expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+    expect(screen.getByTestId('kangur-auth-resolved')).toHaveTextContent('false');
+    expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('false');
+
+    await act(async () => {
+      resolveInitialAuth?.(AUTHENTICATED_USER);
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTestId('kangur-auth-resolved')).toHaveTextContent('true');
+    expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
+  });
+
   it('drops parent-assignment access immediately after logout', async () => {
     const user = userEvent.setup();
     meMock.mockResolvedValueOnce(AUTHENTICATED_USER);
@@ -433,6 +469,7 @@ describe('KangurAuthContext', () => {
       await vi.advanceTimersByTimeAsync(3_000);
     });
     expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+    expect(screen.getByTestId('kangur-auth-resolved')).toHaveTextContent('false');
 
     fireEvent.click(screen.getByRole('button', { name: 'Refresh auth' }));
 
@@ -452,6 +489,7 @@ describe('KangurAuthContext', () => {
     });
 
     expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+    expect(screen.getByTestId('kangur-auth-resolved')).toHaveTextContent('true');
     expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
     expect(screen.getByTestId('kangur-auth-last-check')).toHaveTextContent('parent-1');
   });

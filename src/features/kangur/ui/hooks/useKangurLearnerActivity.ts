@@ -25,6 +25,7 @@ const ENABLE_LEARNER_ACTIVITY_SSE =
   process.env['NEXT_PUBLIC_KANGUR_LEARNER_ACTIVITY_SSE'] !== 'false';
 
 type UseKangurLearnerActivityStatusOptions = {
+  deferInitialRefreshMs?: number;
   enabled?: boolean;
   learnerId?: string | null;
   refreshIntervalMs?: number;
@@ -42,15 +43,39 @@ export const useKangurLearnerActivityStatus = (
   options: UseKangurLearnerActivityStatusOptions = {}
 ): UseKangurLearnerActivityStatusResult => {
   const enabled = options.enabled ?? true;
+  const deferInitialRefreshMs = Math.max(0, options.deferInitialRefreshMs ?? 0);
   const learnerId = options.learnerId ?? null;
   const refreshIntervalMs = options.refreshIntervalMs ?? DEFAULT_REFRESH_INTERVAL_MS;
   const streamEnabled = options.streamEnabled ?? true;
   const [status, setStatus] = useState<KangurLearnerActivityStatus | null>(null);
   const [isLoading, setIsLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
+  const [isDeferredReady, setIsDeferredReady] = useState(deferInitialRefreshMs === 0);
+  const isActive = enabled && Boolean(learnerId) && isDeferredReady;
+
+  useEffect(() => {
+    if (!enabled || !learnerId) {
+      setIsDeferredReady(deferInitialRefreshMs === 0);
+      return;
+    }
+
+    if (deferInitialRefreshMs === 0) {
+      setIsDeferredReady(true);
+      return;
+    }
+
+    setIsDeferredReady(false);
+    const timeoutId = window.setTimeout(() => {
+      setIsDeferredReady(true);
+    }, deferInitialRefreshMs);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [deferInitialRefreshMs, enabled, learnerId]);
 
   const refresh = useCallback(async (): Promise<void> => {
-    if (!enabled || !learnerId) {
+    if (!isActive || !learnerId) {
       setStatus(null);
       setError(null);
       setIsLoading(false);
@@ -94,31 +119,34 @@ export const useKangurLearnerActivityStatus = (
     } finally {
       setIsLoading(false);
     }
-  }, [enabled, learnerId]);
+  }, [isActive, learnerId]);
 
   useEffect(() => {
+    if (!isActive) {
+      return;
+    }
     void refresh();
-  }, [refresh]);
+  }, [isActive, refresh]);
 
   useEffect(() => {
-    if (!enabled || !learnerId) {
+    if (!enabled || !learnerId || !isDeferredReady) {
       setStatus(null);
       setError(null);
       setIsLoading(false);
     }
-  }, [enabled, learnerId]);
+  }, [enabled, isDeferredReady, learnerId]);
 
   useInterval(
     () => {
       void refresh();
     },
-    enabled && learnerId && typeof window !== 'undefined' && refreshIntervalMs > 0
+    isActive && learnerId && typeof window !== 'undefined' && refreshIntervalMs > 0
       ? refreshIntervalMs
       : null
   );
 
   useEffect(() => {
-    if (!enabled || !learnerId || typeof window === 'undefined') {
+    if (!isActive || !learnerId || typeof window === 'undefined') {
       return;
     }
 
@@ -135,11 +163,11 @@ export const useKangurLearnerActivityStatus = (
       window.removeEventListener('focus', handleVisibility);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [enabled, learnerId, refresh]);
+  }, [isActive, learnerId, refresh]);
 
   useEffect(() => {
     if (
-      !enabled ||
+      !isActive ||
       !learnerId ||
       !streamEnabled ||
       !ENABLE_LEARNER_ACTIVITY_SSE ||
@@ -207,12 +235,12 @@ export const useKangurLearnerActivityStatus = (
     return () => {
       closeStream();
     };
-  }, [enabled, learnerId, streamEnabled]);
+  }, [isActive, learnerId, streamEnabled]);
 
   return {
-    status: enabled ? status : null,
-    isLoading: enabled ? isLoading : false,
-    error: enabled ? error : null,
+    status: isActive ? status : null,
+    isLoading: isActive ? isLoading : false,
+    error: isActive ? error : null,
     refresh,
   };
 };

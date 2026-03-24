@@ -443,6 +443,7 @@ export default function LessonSlideSection({
         'mx-auto'
       )}
       data-testid='lesson-slide-stage-root'
+      data-kangur-print-slide-stage='true'
       onKeyDownCapture={handleKeyDownCapture}
     >
       <div
@@ -574,7 +575,12 @@ export default function LessonSlideSection({
             >
               {activeSlide.title}
             </h2>
-            <div className='flex-1'>{activeSlide.content}</div>
+            <div
+              className='flex-1'
+              data-kangur-print-slide-body='true'
+            >
+              {activeSlide.content}
+            </div>
           </KangurGlassPanel>
         </motion.div>
       </AnimatePresence>

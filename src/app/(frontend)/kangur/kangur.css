@@ -3940,10 +3940,44 @@ body[data-kangur-shell='true'] {
       display: block !important;
     }
 
+    body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-masthead='true'] {
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+      break-after: avoid-page !important;
+      page-break-after: avoid !important;
+      row-gap: 0 !important;
+    }
+
+    body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-brand='true'] {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      flex-wrap: nowrap !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      break-after: avoid-page;
+      page-break-after: avoid;
+    }
+
+    body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-brand-logo='true'] {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-brand-logo='true'] svg {
+      height: 32px !important;
+      width: auto !important;
+      max-width: 100% !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
     body.kangur-print-mode [data-kangur-print-root] {
       position: static !important;
       inset: auto !important;
       display: block !important;
+      box-sizing: border-box !important;
       width: 100% !important;
       max-width: none !important;
       min-width: 0 !important;
@@ -3960,6 +3994,7 @@ body[data-kangur-shell='true'] {
     body.kangur-print-mode [data-kangur-print-root] [data-testid='lesson-slide-stage-root'] {
       width: 100% !important;
       max-width: none !important;
+      display: block !important;
       align-items: stretch !important;
     }
 
@@ -4009,15 +4044,19 @@ body[data-kangur-shell='true'] {
       display: none !important;
     }
 
+    body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-slide-stage='true'],
     body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-slide-frame='true'],
     body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-slide-panel='true'],
     body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-target-panel='true'] {
+      display: block !important;
       width: 100% !important;
       max-width: none !important;
       min-width: 0 !important;
       height: auto !important;
       max-height: none !important;
       overflow: visible !important;
+      break-before: auto !important;
+      page-break-before: auto !important;
       transform: none !important;
       contain: none !important;
     }
@@ -4038,6 +4077,173 @@ body[data-kangur-shell='true'] {
       > * {
       overflow: visible !important;
       max-height: none !important;
+    }
+
+    body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-slide-body='true'] {
+      display: block !important;
+      flex: none !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      overflow: visible !important;
+    }
+
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-slide-panel='true']
+      .kangur-panel-elevated,
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-slide-panel='true']
+      .kangur-panel-soft,
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-slide-panel='true']
+      .kangur-panel-subtle,
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-slide-panel='true']
+      .kangur-card-surface,
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-slide-panel='true']
+      .kangur-lesson-callout,
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-slide-panel='true']
+      .kangur-lesson-inset,
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-slide-panel='true']
+      .kangur-lesson-visual-frame,
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-target-panel='true']
+      .kangur-panel-elevated,
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-target-panel='true']
+      .kangur-panel-soft,
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-target-panel='true']
+      .kangur-panel-subtle,
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-target-panel='true']
+      .kangur-card-surface,
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-target-panel='true']
+      .kangur-lesson-callout,
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-target-panel='true']
+      .kangur-lesson-inset,
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-target-panel='true']
+      .kangur-lesson-visual-frame {
+      break-inside: auto !important;
+      page-break-inside: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+    }
+
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-slide-panel='true']
+      [class~='overflow-hidden'],
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-slide-panel='true']
+      [class~='overflow-x-hidden'],
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-slide-panel='true']
+      [class~='overflow-y-hidden'],
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-slide-panel='true']
+      [class~='overflow-y-auto'],
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-slide-panel='true']
+      [class~='overflow-x-auto'],
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-slide-panel='true']
+      [class~='overflow-clip'],
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-target-panel='true']
+      [class~='overflow-hidden'],
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-target-panel='true']
+      [class~='overflow-x-hidden'],
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-target-panel='true']
+      [class~='overflow-y-hidden'],
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-target-panel='true']
+      [class~='overflow-y-auto'],
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-target-panel='true']
+      [class~='overflow-x-auto'],
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-target-panel='true']
+      [class~='overflow-clip'] {
+      overflow: visible !important;
+    }
+
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-slide-panel='true']
+      [class~='sticky'],
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-target-panel='true']
+      [class~='sticky'] {
+      position: static !important;
+      top: auto !important;
+      bottom: auto !important;
+    }
+
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-slide-panel='true']
+      [class~='h-full'],
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-target-panel='true']
+      [class~='h-full'] {
+      height: auto !important;
+    }
+
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-slide-panel='true']
+      [class*='max-h-'],
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-slide-panel='true']
+      [class*='min-h-'],
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-target-panel='true']
+      [class*='max-h-'],
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-target-panel='true']
+      [class*='min-h-'] {
+      min-height: 0 !important;
+      max-height: none !important;
+      height: auto !important;
     }
 
     body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-page-heading='true'] {

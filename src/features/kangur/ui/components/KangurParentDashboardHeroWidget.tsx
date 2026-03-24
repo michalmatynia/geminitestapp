@@ -9,18 +9,19 @@ import {
   UserRound,
 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { type RefObject, useMemo } from 'react';
+import { memo, type RefObject, useMemo } from 'react';
 
 import { getKangurHomeHref, getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
-import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
-import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { KangurParentDashboardLearnerManagementWidget } from '@/features/kangur/ui/components/KangurParentDashboardLearnerManagementWidget';
 import { KangurNavAction } from '@/features/kangur/ui/components/KangurNavAction';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import { KangurParentDashboardWordmark } from '@/features/kangur/ui/components/KangurParentDashboardWordmark';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
-import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
+import {
+  useKangurParentDashboardRuntimeHeroState,
+  useKangurParentDashboardRuntimeShellActions,
+} from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import {
   KangurButton,
   KangurEmptyState,
@@ -38,8 +39,9 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 
 const LEARNER_ACTIVITY_REFRESH_MS = 10_000;
+const LEARNER_ACTIVITY_START_DELAY_MS = 1_200;
 
-export function KangurParentDashboardHeroWidget({
+export const KangurParentDashboardHeroWidget = memo(function KangurParentDashboardHeroWidget({
   showActions = true,
   showLearnerManagement = false,
   learnerManagementAnchorRef,
@@ -57,12 +59,12 @@ export function KangurParentDashboardHeroWidget({
     basePath,
     canManageLearners,
     isAuthenticated,
-    logout,
     progress,
-    setCreateLearnerModalOpen,
     viewerName,
     viewerRoleLabel,
-  } = useKangurParentDashboardRuntime();
+    lessons = [],
+  } = useKangurParentDashboardRuntimeHeroState();
+  const { logout, setCreateLearnerModalOpen } = useKangurParentDashboardRuntimeShellActions();
   const activeLearnerId = activeLearner?.id ?? null;
   const hasActiveLearner = Boolean(activeLearnerId);
   const activeLearnerLabel =
@@ -71,13 +73,11 @@ export function KangurParentDashboardHeroWidget({
     translations('hero.learnerFallback');
   const { status: learnerActivityStatus, isLoading: isActivityLoading } =
     useKangurLearnerActivityStatus({
+      deferInitialRefreshMs: LEARNER_ACTIVITY_START_DELAY_MS,
       enabled: canManageLearners && hasActiveLearner,
       learnerId: activeLearnerId,
       refreshIntervalMs: LEARNER_ACTIVITY_REFRESH_MS,
     });
-  const { ageGroup } = useKangurAgeGroupFocus();
-  const lessonsQuery = useKangurLessons({ ageGroup });
-  const lessons = useMemo(() => lessonsQuery.data ?? [], [lessonsQuery.data]);
   const learnerLiveState = useMemo(
     () =>
       buildKangurLearnerLiveState({
@@ -97,8 +97,11 @@ export function KangurParentDashboardHeroWidget({
   const activityHref = learnerLiveState.href;
   const shouldShowActivityLink = learnerLiveState.showLink;
   const { openLoginModal } = useKangurLoginModal();
-  const { entry: guestHeroContent } = useKangurPageContentEntry('parent-dashboard-guest-hero');
-  const { entry: dashboardHeroContent } = useKangurPageContentEntry('parent-dashboard-hero');
+  const heroContentEntryId =
+    !isAuthenticated || !canManageLearners
+      ? 'parent-dashboard-guest-hero'
+      : 'parent-dashboard-hero';
+  const { entry: heroContent } = useKangurPageContentEntry(heroContentEntryId);
   const parentWordmarkLabel = translations('hero.parentTitle');
   const compactActionClassName = isCoarsePointer
     ? 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
@@ -123,8 +126,8 @@ export function KangurParentDashboardHeroWidget({
   };
 
   if (!isAuthenticated) {
-    const guestDescription = guestHeroContent?.summary
-      ? `${guestHeroContent.summary} ${translations('hero.unauthenticated.summarySuffix')}`
+    const guestDescription = heroContent?.summary
+      ? `${heroContent.summary} ${translations('hero.unauthenticated.summarySuffix')}`
       : translations('hero.unauthenticated.description');
 
     return (
@@ -136,7 +139,7 @@ export function KangurParentDashboardHeroWidget({
         showBackButton={false}
         onBack={handleGoHome}
         testId='kangur-parent-dashboard-hero'
-        title={guestHeroContent?.title ?? translations('hero.unauthenticated.title')}
+        title={heroContent?.title ?? translations('hero.unauthenticated.title')}
         visualTitle={
           <KangurParentDashboardWordmark
             className='mx-auto'
@@ -182,8 +185,8 @@ export function KangurParentDashboardHeroWidget({
   }
 
   if (!canManageLearners) {
-    const restrictedDescription = guestHeroContent?.summary
-      ? `${guestHeroContent.summary} ${translations('hero.restricted.summarySuffix')}`
+    const restrictedDescription = heroContent?.summary
+      ? `${heroContent.summary} ${translations('hero.restricted.summarySuffix')}`
       : translations('hero.restricted.description');
 
     return (
@@ -257,7 +260,7 @@ export function KangurParentDashboardHeroWidget({
       showBackButton={false}
       onBack={handleGoToProfile}
       testId='kangur-parent-dashboard-hero'
-      title={dashboardHeroContent?.title ?? translations('hero.parentTitle')}
+      title={heroContent?.title ?? translations('hero.parentTitle')}
       visualTitle={
         <KangurParentDashboardWordmark
           className='mx-auto'
@@ -399,4 +402,4 @@ export function KangurParentDashboardHeroWidget({
       ) : null}
     </KangurPageIntroCard>
   );
-}
+});

@@ -9,6 +9,7 @@ import plMessages from '@/i18n/messages/pl.json';
 
 const useKangurProgressStateMock = vi.hoisted(() => vi.fn());
 const useKangurAssignmentsMock = vi.hoisted(() => vi.fn());
+const useKangurLessonsMock = vi.hoisted(() => vi.fn());
 const useSettingsStoreMock = vi.hoisted(() => vi.fn());
 const lessonsState = vi.hoisted(() => ({
   value: [] as Array<Record<string, unknown>>,
@@ -56,11 +57,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
-  useKangurLessons: () => ({
-    data: lessonsState.value,
-    isLoading: false,
-    error: null,
-  }),
+  useKangurLessons: useKangurLessonsMock,
 }));
 
 vi.mock('@/features/kangur/ui/services/delegated-assignments', () => ({
@@ -161,6 +158,11 @@ describe('KangurAssignmentManager', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     lessonsState.value = [];
+    useKangurLessonsMock.mockReturnValue({
+      data: lessonsState.value,
+      isLoading: false,
+      error: null,
+    });
     useSettingsStoreMock.mockReturnValue({
       get: vi.fn(),
     });
@@ -184,6 +186,29 @@ describe('KangurAssignmentManager', () => {
 
     expect(screen.getByText(assignmentManagerMessages.lists.activeTitle)).toBeInTheDocument();
     expect(screen.getByText(assignmentManagerMessages.lists.completedTitle)).toBeInTheDocument();
+  });
+
+  it('reuses preloaded dashboard data in metrics view instead of enabling its own queries', () => {
+    render(
+      <KangurAssignmentManager
+        basePath='/kangur'
+        preloadedAssignments={[]}
+        preloadedLessons={[]}
+        view='metrics'
+      />
+    );
+
+    expect(useKangurAssignmentsMock).toHaveBeenCalledWith({
+      enabled: false,
+      query: {
+        includeArchived: false,
+      },
+    });
+    expect(useKangurLessonsMock).toHaveBeenCalledWith({
+      ageGroup: expect.anything(),
+      enabled: false,
+      enabledOnly: true,
+    });
   });
 
   it('toggles between active and completed lists in catalogWithLists view', () => {

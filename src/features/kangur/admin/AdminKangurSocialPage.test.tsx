@@ -178,39 +178,53 @@ vi.mock('./admin-kangur-social/AdminKangurSocialPage.hooks', () => ({
   useAdminKangurSocialPage: () => useAdminKangurSocialPageMock(),
 }));
 
-vi.mock('./admin-kangur-social/SocialPost.List', () => ({
-  SocialPostList: ({
-    onOpenPost,
-  }: {
-    onOpenPost?: (id: string) => void;
-  }) => (
-    <div data-testid='social-post-list'>
-      <button type='button' onClick={() => onOpenPost?.('post-1')}>
-        Open post row
-      </button>
-    </div>
-  ),
-}));
+vi.mock('./admin-kangur-social/SocialPost.List', async () => {
+  const actual = await vi.importActual<typeof import('./admin-kangur-social/SocialPostContext')>(
+    './admin-kangur-social/SocialPostContext'
+  );
+
+  return {
+    SocialPostList: () => {
+      const { handleOpenPostEditor } = actual.useSocialPostContext();
+
+      return (
+        <div data-testid='social-post-list'>
+          <button type='button' onClick={() => handleOpenPostEditor('post-1')}>
+            Open post row
+          </button>
+        </div>
+      );
+    },
+  };
+});
 
 vi.mock('./admin-kangur-social/SocialPost.Pipeline', () => ({
   SocialPostPipeline: () => <div data-testid='social-post-pipeline'>social-post-pipeline</div>,
 }));
 
-vi.mock('./admin-kangur-social/SocialPost.EditorModal', () => ({
-  SocialPostEditorModal: ({
-    isOpen,
-    activePost,
-  }: {
-    isOpen: boolean;
-    activePost: { titlePl?: string | null } | null;
-  }) => (
-    <div
-      data-testid='social-post-editor-modal'
-      data-open={String(isOpen)}
-      data-title={activePost?.titlePl ?? ''}
-    />
-  ),
-}));
+vi.mock('./admin-kangur-social/SocialPost.EditorModal', async () => {
+  const actual = await vi.importActual<typeof import('./admin-kangur-social/SocialPostContext')>(
+    './admin-kangur-social/SocialPostContext'
+  );
+
+  return {
+    SocialPostEditorModal: ({
+      isOpen,
+    }: {
+      isOpen: boolean;
+    }) => {
+      const { activePost } = actual.useSocialPostContext();
+
+      return (
+        <div
+          data-testid='social-post-editor-modal'
+          data-open={String(isOpen)}
+          data-title={activePost?.titlePl ?? ''}
+        />
+      );
+    },
+  };
+});
 
 vi.mock('./admin-kangur-social/KangurSocialPipelineQueuePanel', () => ({
   KangurSocialPipelineQueuePanel: () => (

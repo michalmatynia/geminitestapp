@@ -6,6 +6,10 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+const { useSocialPostContextMock } = vi.hoisted(() => ({
+  useSocialPostContextMock: vi.fn(),
+}));
+
 vi.mock('@/features/kangur/shared/ui', async () => {
   const actual = await vi.importActual<typeof import('@/features/kangur/shared/ui')>(
     '@/features/kangur/shared/ui'
@@ -48,6 +52,10 @@ vi.mock('./SocialPost.ImagesPanel', () => ({
   ),
 }));
 
+vi.mock('./SocialPostContext', () => ({
+  useSocialPostContext: () => useSocialPostContextMock(),
+}));
+
 import { SocialPostEditorModal } from './SocialPost.EditorModal';
 
 const buildPost = () => ({
@@ -84,19 +92,21 @@ const buildPost = () => ({
 
 describe('SocialPostEditorModal', () => {
   it('uses edit and images tabs inside the modal and switches between them', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePost: buildPost(),
+      scheduledAt: '2026-03-21T10:30',
+      setScheduledAt: vi.fn(),
+      handleSave: vi.fn(async () => {}),
+      patchMutation: { isPending: false },
+      imageAssets: buildPost().imageAssets,
+      handleRemoveImage: vi.fn(),
+      setShowMediaLibrary: vi.fn(),
+      showMediaLibrary: false,
+      handleAddImages: vi.fn(),
+    });
+
     render(
-      <SocialPostEditorModal
-        isOpen={true}
-        onClose={vi.fn()}
-        activePost={buildPost()}
-        editorProps={{
-          scheduledAt: '2026-03-21T10:30',
-          setScheduledAt: vi.fn(),
-          handleSave: vi.fn(async () => {}),
-          patchMutationPending: false,
-        } as never}
-        imagesProps={{} as never}
-      />
+      <SocialPostEditorModal isOpen={true} onClose={vi.fn()} />
     );
 
     expect(screen.getByRole('dialog', { name: 'StudiQ Weekly Update' })).toBeInTheDocument();

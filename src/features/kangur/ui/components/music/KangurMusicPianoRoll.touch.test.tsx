@@ -2,40 +2,72 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const { useKangurCoarsePointerMock, useKangurMobileBreakpointMock } = vi.hoisted(() => ({
+  useKangurCoarsePointerMock: vi.fn(),
+  useKangurMobileBreakpointMock: vi.fn(),
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
-  useKangurCoarsePointer: () => true,
+  useKangurCoarsePointer: () => useKangurCoarsePointerMock(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
-  useKangurMobileBreakpoint: () => true,
+  useKangurMobileBreakpoint: () => useKangurMobileBreakpointMock(),
 }));
 
-import KangurMusicPianoRoll from '@/features/kangur/ui/components/music/KangurMusicPianoRoll';
 import { DIATONIC_PIANO_KEYS } from '@/features/kangur/ui/components/music/music-theory';
 
 describe('KangurMusicPianoRoll touch mode', () => {
-  const mockKeyRect = (element: HTMLElement, top = 0, height = 160): void => {
+  let KangurMusicPianoRoll: typeof import('@/features/kangur/ui/components/music/KangurMusicPianoRoll').default;
+
+  const mockKeyRect = (
+    element: HTMLElement,
+    top = 0,
+    height = 160,
+    left = 0,
+    width = 96
+  ): void => {
     Object.defineProperty(element, 'getBoundingClientRect', {
       configurable: true,
       value: () =>
         ({
           bottom: top + height,
           height,
-          left: 0,
-          right: 96,
+          left,
+          right: left + width,
           top,
-          width: 96,
-          x: 0,
+          width,
+          x: left,
           y: top,
         }) as DOMRect,
     });
   };
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.useRealTimers();
+    vi.resetModules();
+    useKangurCoarsePointerMock.mockReturnValue(true);
+    useKangurMobileBreakpointMock.mockReturnValue(true);
+    KangurMusicPianoRoll = (
+      await import('@/features/kangur/ui/components/music/KangurMusicPianoRoll')
+    ).default;
     vi.useFakeTimers();
+    Object.defineProperty(globalThis, 'requestAnimationFrame', {
+      configurable: true,
+      value: (callback: FrameRequestCallback) => {
+        callback(16);
+        return 1;
+      },
+      writable: true,
+    });
+    Object.defineProperty(globalThis, 'cancelAnimationFrame', {
+      configurable: true,
+      value: vi.fn(),
+      writable: true,
+    });
     Object.defineProperty(HTMLButtonElement.prototype, 'setPointerCapture', {
       configurable: true,
       value: vi.fn(),
@@ -50,6 +82,8 @@ describe('KangurMusicPianoRoll touch mode', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    delete (globalThis as Partial<typeof globalThis>).requestAnimationFrame;
+    delete (globalThis as Partial<typeof globalThis>).cancelAnimationFrame;
     delete (HTMLButtonElement.prototype as Partial<HTMLButtonElement>).setPointerCapture;
     delete (HTMLButtonElement.prototype as Partial<HTMLButtonElement>).releasePointerCapture;
   });
@@ -89,11 +123,15 @@ describe('KangurMusicPianoRoll touch mode', () => {
     );
 
     fireEvent.pointerDown(fastKey, { pointerType: 'touch' });
-    vi.advanceTimersByTime(45);
+    act(() => {
+      vi.advanceTimersByTime(45);
+    });
     fireEvent.click(fastKey);
 
     fireEvent.pointerDown(slowKey, { pointerType: 'touch' });
-    vi.advanceTimersByTime(260);
+    act(() => {
+      vi.advanceTimersByTime(260);
+    });
     fireEvent.click(slowKey);
 
     const firstPress = handleKeyPress.mock.calls[0]?.[1];
@@ -101,7 +139,10 @@ describe('KangurMusicPianoRoll touch mode', () => {
 
     expect(firstPress).toEqual(
       expect.objectContaining({
+        brightness: expect.any(Number),
         pointerType: 'touch',
+        pressure: null,
+        travelDistancePx: expect.any(Number),
         velocity: expect.any(Number),
       })
     );
@@ -112,6 +153,75 @@ describe('KangurMusicPianoRoll touch mode', () => {
       })
     );
     expect(firstPress.velocity).toBeGreaterThan(secondPress.velocity);
+  });
+
+  it('boosts touch velocity when pressure and gesture travel indicate a stronger strike', () => {
+    const handleKeyPress = vi.fn();
+
+    render(
+      <KangurMusicPianoRoll
+        keyTestIdPrefix='music-roll-touch-expression-key'
+        keys={DIATONIC_PIANO_KEYS}
+        melody={['do', 're', 'mi']}
+        onKeyPress={handleKeyPress}
+      />
+    );
+
+    const expressiveKey = screen.getByTestId('music-roll-touch-expression-key-do');
+    const gentleKey = screen.getByTestId('music-roll-touch-expression-key-re');
+
+    fireEvent.pointerDown(expressiveKey, {
+      clientY: 124,
+      height: 18,
+      pointerType: 'touch',
+      pressure: 0.92,
+      width: 24,
+    });
+    fireEvent.pointerMove(expressiveKey, {
+      clientY: 58,
+      height: 18,
+      pointerType: 'touch',
+      pressure: 0.84,
+      width: 24,
+    });
+    fireEvent.pointerUp(expressiveKey, {
+      clientY: 42,
+      height: 18,
+      pointerType: 'touch',
+      pressure: 0.84,
+      width: 24,
+    });
+    act(() => {
+      vi.advanceTimersByTime(30);
+    });
+    fireEvent.click(expressiveKey);
+
+    fireEvent.pointerDown(gentleKey, {
+      clientY: 110,
+      height: 12,
+      pointerType: 'touch',
+      pressure: 0.16,
+      width: 12,
+    });
+    fireEvent.pointerUp(gentleKey, {
+      clientY: 108,
+      height: 12,
+      pointerType: 'touch',
+      pressure: 0.16,
+      width: 12,
+    });
+    act(() => {
+      vi.advanceTimersByTime(180);
+    });
+    fireEvent.click(gentleKey);
+
+    const expressivePress = handleKeyPress.mock.calls[0]?.[1];
+    const gentlePress = handleKeyPress.mock.calls[1]?.[1];
+
+    expect(expressivePress.pressure).toBeCloseTo(0.92, 2);
+    expect(expressivePress.travelDistancePx).toBeGreaterThan(60);
+    expect(expressivePress.brightness).toBeGreaterThan(gentlePress.brightness);
+    expect(expressivePress.velocity).toBeGreaterThan(gentlePress.velocity);
   });
 
   it('uses non-scrolling synth keys and emits glide callbacks on coarse pointers', () => {
@@ -135,8 +245,8 @@ describe('KangurMusicPianoRoll touch mode', () => {
 
     const key = screen.getByTestId('music-roll-touch-synth-key-do');
     const secondKey = screen.getByTestId('music-roll-touch-synth-key-re');
-    mockKeyRect(key);
-    mockKeyRect(secondKey);
+    mockKeyRect(key, 0, 160, 0, 96);
+    mockKeyRect(secondKey, 0, 160, 104, 96);
 
     expect(key).toHaveClass('touch-none', 'select-none');
     expect(key).toHaveClass('cursor-pointer');
@@ -172,6 +282,10 @@ describe('KangurMusicPianoRoll touch mode', () => {
     expect(screen.getByTestId('music-roll-touch-synth-step-transport-glide-mode')).toHaveTextContent(
       'Ruch: Plynnie'
     );
+    expect(screen.getByTestId('music-roll-touch-synth-step-transport-axis-map')).toHaveTextContent(
+      'X: Pitch · Y: Vibrato'
+    );
+    expect(screen.getByTestId('music-roll-touch-synth-step-synth-axis-guide-shell')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('music-roll-touch-synth-step-synth-waveform-square'));
     fireEvent.click(screen.getByTestId('music-roll-touch-synth-step-synth-glide-mode-semitone'));
@@ -187,11 +301,13 @@ describe('KangurMusicPianoRoll touch mode', () => {
     );
 
     fireEvent.pointerDown(key, {
+      clientX: 48,
       clientY: 128,
       pointerId: 11,
       pointerType: 'touch',
     });
     fireEvent.pointerDown(secondKey, {
+      clientX: 152,
       clientY: 80,
       pointerId: 12,
       pointerType: 'touch',
@@ -202,18 +318,28 @@ describe('KangurMusicPianoRoll touch mode', () => {
     );
     expect(key).toHaveAttribute('data-active-glides', '1');
     expect(secondKey).toHaveAttribute('data-active-glides', '1');
+    expect(key).toHaveAttribute('data-key-state', 'gliding');
 
     fireEvent.pointerMove(key, {
+      clientX: 48,
       clientY: 24,
       pointerId: 11,
       pointerType: 'touch',
     });
+    expect(screen.getByTestId('music-roll-touch-synth-step-transport-pitch')).toHaveTextContent(
+      'Pitch: DO'
+    );
+    act(() => {
+      vi.advanceTimersByTime(16);
+    });
     fireEvent.pointerUp(key, {
+      clientX: 48,
       clientY: 24,
       pointerId: 11,
       pointerType: 'touch',
     });
     fireEvent.pointerUp(secondKey, {
+      clientX: 152,
       clientY: 80,
       pointerId: 12,
       pointerType: 'touch',
@@ -222,6 +348,7 @@ describe('KangurMusicPianoRoll touch mode', () => {
     expect(handleKeyPress).toHaveBeenCalledWith(
       'do',
       expect.objectContaining({
+        brightness: expect.any(Number),
         interactionId: 'synth-11-do',
         keyboardMode: 'synth',
         pointerType: 'touch',
@@ -229,10 +356,89 @@ describe('KangurMusicPianoRoll touch mode', () => {
     );
     expect(handleSynthGestureChange).toHaveBeenCalledWith(
       expect.objectContaining({
+        brightness: expect.any(Number),
         interactionId: 'synth-11-do',
         noteId: 'do',
-        pitchSemitoneOffset: 1,
+        pitchSemitoneOffset: 0,
+        velocity: expect.any(Number),
+        vibratoDepth: expect.any(Number),
       })
+    );
+  });
+
+  it('treats cross-key touch swipes as stronger expressive motion, not only vertical drags', () => {
+    const handleKeyPress = vi.fn();
+    const handleSynthGestureChange = vi.fn();
+
+    render(
+      <KangurMusicPianoRoll
+        keyboardMode='synth'
+        keyTestIdPrefix='music-roll-touch-cross-key'
+        keys={DIATONIC_PIANO_KEYS}
+        melody={['do', 're', 'mi']}
+        onKeyPress={handleKeyPress}
+        onSynthGestureChange={handleSynthGestureChange}
+      />
+    );
+
+    const doKey = screen.getByTestId('music-roll-touch-cross-key-do');
+    const reKey = screen.getByTestId('music-roll-touch-cross-key-re');
+    mockKeyRect(doKey, 0, 160, 0, 96);
+    mockKeyRect(reKey, 0, 160, 104, 96);
+
+    fireEvent.pointerDown(doKey, {
+      clientX: 24,
+      clientY: 120,
+      height: 16,
+      pointerId: 41,
+      pointerType: 'touch',
+      pressure: 0.22,
+      width: 18,
+    });
+    const initialPress = handleKeyPress.mock.calls[0]?.[1];
+    act(() => {
+      vi.advanceTimersByTime(24);
+    });
+    fireEvent.pointerMove(doKey, {
+      clientX: 148,
+      clientY: 74,
+      height: 16,
+      pointerId: 41,
+      pointerType: 'touch',
+      pressure: 0.22,
+      width: 18,
+    });
+
+    const glideUpdate = handleSynthGestureChange.mock.calls.at(-1)?.[0];
+
+    expect(initialPress).toEqual(
+      expect.objectContaining({
+        brightness: expect.any(Number),
+        interactionId: 'synth-41-do',
+        velocity: expect.any(Number),
+      })
+    );
+    expect(glideUpdate).toEqual(
+      expect.objectContaining({
+        brightness: expect.any(Number),
+        interactionId: 'synth-41-do',
+        noteId: 're',
+        velocity: expect.any(Number),
+      })
+    );
+    expect(glideUpdate.velocity).toBeGreaterThan(initialPress.velocity);
+    expect(glideUpdate.brightness).toBeGreaterThan(initialPress.brightness);
+    expect(screen.getByTestId('music-roll-touch-cross-key-re')).toHaveAttribute(
+      'data-active-glides',
+      '1'
+    );
+    expect(screen.getByTestId('music-roll-touch-cross-key-do')).toHaveAttribute(
+      'data-hit-pulse',
+      'press'
+    );
+    expect(screen.getByTestId('music-roll-touch-cross-key-re')).toHaveAttribute(
+      'data-hit-pulse',
+      'glide'
     );
   });
 

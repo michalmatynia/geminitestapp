@@ -493,17 +493,32 @@ export default function EnglishArticlesDragDropGame({
                     {(['a', 'an', 'the'] as const).map((article) => (
                       <div
                         key={article}
+                        data-testid={`english-articles-drag-topic-${article}`}
                         className={cn(
-                          'rounded-[16px] border px-3 py-2 text-xs shadow-sm',
+                          'relative overflow-hidden rounded-[16px] border px-3 py-2 text-xs shadow-sm',
                           KANGUR_ACCENT_STYLES[ARTICLE_META[article].accent].activeCard
                         )}
                       >
+                        <div
+                          aria-hidden='true'
+                          className='pointer-events-none absolute inset-0 opacity-90'
+                          style={{
+                            background:
+                              article === 'a'
+                                ? 'radial-gradient(circle_at_14%_20%,rgba(251,191,36,0.2),transparent_36%), linear-gradient(180deg,rgba(255,255,255,0.42),rgba(255,255,255,0.08))'
+                                : article === 'an'
+                                  ? 'radial-gradient(circle_at_14%_20%,rgba(56,189,248,0.18),transparent_36%), linear-gradient(180deg,rgba(255,255,255,0.42),rgba(255,255,255,0.08))'
+                                  : 'radial-gradient(circle_at_14%_20%,rgba(139,92,246,0.18),transparent_36%), linear-gradient(180deg,rgba(255,255,255,0.42),rgba(255,255,255,0.08))',
+                          }}
+                        />
+                        <div className='relative z-10'>
                         <p className='font-black uppercase tracking-[0.16em] text-slate-700'>
                           {ARTICLE_META[article].label}
                         </p>
                         <p className='mt-1 text-slate-600'>
                           {getArticleDescription(translations, article)}
                         </p>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -523,7 +538,7 @@ export default function EnglishArticlesDragDropGame({
                   {...provided.droppableProps}
                   data-testid='english-articles-drag-pool-zone'
                   className={cn(
-                    'mt-3 flex flex-wrap items-center justify-center gap-2 rounded-[20px] border-2 border-dashed px-3 py-3 transition touch-manipulation',
+                    'relative mt-3 flex flex-wrap items-center justify-center gap-2 overflow-hidden rounded-[20px] border-2 border-dashed px-3 py-3 transition touch-manipulation',
                     isCoarsePointer ? 'min-h-[92px]' : 'min-h-[72px]',
                     snapshot.isDraggingOver
                       ? 'border-amber-300 bg-amber-50/70'
@@ -543,6 +558,16 @@ export default function EnglishArticlesDragDropGame({
                     }
                   }}
                 >
+                  <div
+                    aria-hidden='true'
+                    className='pointer-events-none absolute inset-0'
+                    data-testid='english-articles-drag-pool-atmosphere'
+                    style={{
+                      background:
+                        'radial-gradient(circle_at_12%_18%,rgba(251,191,36,0.16),transparent_34%), radial-gradient(circle_at_84%_20%,rgba(59,130,246,0.14),transparent_28%), linear-gradient(180deg,rgba(255,255,255,0.32),rgba(255,255,255,0.06))',
+                    }}
+                  />
+                  <div className='pointer-events-none absolute inset-[10px] rounded-[16px] border border-white/40' />
                   {roundState.pool.map((token, index) => (
                     <DraggableArticleToken
                       key={token.id}
@@ -608,6 +633,25 @@ export default function EnglishArticlesDragDropGame({
                         }
                       }}
                     >
+                      <div
+                        aria-hidden='true'
+                        className='pointer-events-none absolute inset-0 opacity-90'
+                        style={{
+                          background: assigned
+                            ? assigned.article === 'a'
+                              ? 'radial-gradient(circle_at_14%_18%,rgba(251,191,36,0.16),transparent_34%), linear-gradient(180deg,rgba(255,255,255,0.34),rgba(255,255,255,0.08))'
+                              : assigned.article === 'an'
+                                ? 'radial-gradient(circle_at_14%_18%,rgba(56,189,248,0.16),transparent_34%), linear-gradient(180deg,rgba(255,255,255,0.34),rgba(255,255,255,0.08))'
+                                : 'radial-gradient(circle_at_14%_18%,rgba(139,92,246,0.16),transparent_34%), linear-gradient(180deg,rgba(255,255,255,0.34),rgba(255,255,255,0.08))'
+                            : 'radial-gradient(circle_at_84%_20%,rgba(255,255,255,0.72),transparent_24%), linear-gradient(180deg,rgba(255,255,255,0.38),rgba(255,255,255,0.08))',
+                        }}
+                      />
+                      <div
+                        aria-hidden='true'
+                        className='pointer-events-none absolute inset-[10px] rounded-[16px] border border-white/40'
+                        data-testid={`english-articles-drag-slot-frame-${sentence.id}`}
+                      />
+                      <div className='relative z-10'>
                       <div className='flex items-center justify-between gap-2'>
                         <KangurStatusChip accent={round.accent} size='sm'>
                           {translations('englishArticles.inRound.drag.sentenceLabel', {
@@ -662,6 +706,7 @@ export default function EnglishArticlesDragDropGame({
                           {translations('englishArticles.inRound.drag.missingArticle')}
                         </p>
                       ) : null}
+                      </div>
                     </div>
                   )}
                 </Droppable>

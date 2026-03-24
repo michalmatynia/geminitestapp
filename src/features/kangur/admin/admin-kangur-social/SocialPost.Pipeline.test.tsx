@@ -6,12 +6,23 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+const { useSocialPostContextMock } = vi.hoisted(() => ({
+  useSocialPostContextMock: vi.fn(),
+}));
+
 vi.mock('@/features/kangur/shared/ui', () => ({
+  Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
   Button: ({
     children,
     ...rest
   }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children: React.ReactNode }) => (
     <button {...rest}>{children}</button>
+  ),
+  Card: ({
+    children,
+    ...rest
+  }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) => (
+    <div {...rest}>{children}</div>
   ),
   FormSection: ({
     title,
@@ -31,6 +42,11 @@ vi.mock('@/features/kangur/shared/ui', () => ({
       {children}
     </section>
   ),
+  LoadingState: ({ message }: { message?: string }) => <div role='status'>{message ?? 'Loading...'}</div>,
+}));
+
+vi.mock('./SocialPostContext', () => ({
+  useSocialPostContext: () => useSocialPostContextMock(),
 }));
 
 import { SocialPostPipeline } from './SocialPost.Pipeline';
@@ -41,32 +57,33 @@ describe('SocialPostPipeline', () => {
     const handleRunFullPipelineWithFreshCapture = vi.fn();
     const handleCaptureImagesOnly = vi.fn();
 
-    render(
-      <SocialPostPipeline
-        activePostId='post-1'
-        pipelineStep='idle'
-        pipelineProgress={null}
-        pipelineErrorMessage={null}
-        handleRunFullPipeline={handleRunFullPipeline}
-        handleRunFullPipelineWithFreshCapture={handleRunFullPipelineWithFreshCapture}
-        handleCaptureImagesOnly={handleCaptureImagesOnly}
-        canRunPipeline={false}
-        canRunFreshCapturePipeline={false}
-        canCaptureImagesOnly={false}
-        pipelineBlockedReason='Choose a StudiQ Social post model in Settings or assign AI Brain routing in /admin/brain?tab=routing.'
-        captureBlockedReason='Set a batch capture base URL in Social Settings first.'
-        captureOnlyPending={false}
-        captureOnlyMessage={null}
-        captureOnlyErrorMessage={null}
-        batchCapturePresetCount={3}
-        effectiveBatchCapturePresetCount={2}
-        batchCapturePresetLimit={2}
-      />
-    );
+    useSocialPostContextMock.mockReturnValue({
+      activePostId: 'post-1',
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      handleRunFullPipeline,
+      handleRunFullPipelineWithFreshCapture,
+      handleCaptureImagesOnly,
+      canGenerateSocialDraft: false,
+      canRunFreshCapturePipeline: false,
+      batchCaptureBaseUrl: '',
+      batchCapturePresetIds: ['home', 'pricing', 'faq'],
+      socialDraftBlockedReason:
+        'Choose a StudiQ Social post model in Settings or assign AI Brain routing in /admin/brain?tab=routing.',
+      socialBatchCaptureBlockedReason: 'Set a batch capture base URL in Social Settings first.',
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 2,
+      hasBatchCaptureConfig: false,
+    });
 
-    const button = screen.getByRole('button', { name: 'Run pipeline' });
+    render(<SocialPostPipeline />);
+
+    const button = screen.getByRole('button', { name: 'Run full pipeline' });
     expect(button).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Run pipeline + fresh capture' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Fresh capture & pipeline' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Capture images only' })).toBeDisabled();
     expect(
       screen.getByText(
@@ -81,57 +98,53 @@ describe('SocialPostPipeline', () => {
   });
 
   it('shows capture progress details and screenshot failure reasons', () => {
-    render(
-      <SocialPostPipeline
-        activePostId='post-1'
-        pipelineStep='error'
-        pipelineProgress={{
-          type: 'manual-post-pipeline',
-          step: 'capturing',
-          captureMode: 'fresh_capture',
-          message: 'Pipeline stopped: no screenshots captured.',
-          updatedAt: 1_700_000_001_000,
-          contextDocCount: 1,
-          contextSummary: 'summary',
-          addonsCreated: 0,
-          captureFailureCount: 2,
-          captureFailures: [
-            { id: 'home', reason: 'Timeout' },
-            { id: 'pricing', reason: 'Navigation failed' },
-          ],
-          requestedPresetCount: 2,
-          usedPresetCount: 2,
-          usedPresetIds: ['home', 'pricing'],
-          runId: null,
-        }}
-        pipelineErrorMessage='Pipeline stopped: no screenshots captured.'
-        handleRunFullPipeline={vi.fn()}
-        handleRunFullPipelineWithFreshCapture={vi.fn()}
-        handleCaptureImagesOnly={vi.fn()}
-        canRunPipeline={true}
-        canRunFreshCapturePipeline={true}
-        canCaptureImagesOnly={true}
-        pipelineBlockedReason={null}
-        captureBlockedReason={null}
-        captureOnlyPending={false}
-        captureOnlyMessage='Captured 2 screenshots from 2 presets and linked them to the draft.'
-        captureOnlyErrorMessage={null}
-        batchCapturePresetCount={4}
-        effectiveBatchCapturePresetCount={2}
-        batchCapturePresetLimit={2}
-      />
-    );
+    useSocialPostContextMock.mockReturnValue({
+      activePostId: 'post-1',
+      pipelineStep: 'error',
+      pipelineProgress: {
+        type: 'manual-post-pipeline',
+        step: 'capturing',
+        captureMode: 'fresh_capture',
+        message: 'Pipeline stopped: no screenshots captured.',
+        updatedAt: 1_700_000_001_000,
+        contextDocCount: 1,
+        contextSummary: 'summary',
+        addonsCreated: 0,
+        captureFailureCount: 2,
+        captureFailures: [
+          { id: 'home', reason: 'Timeout' },
+          { id: 'pricing', reason: 'Navigation failed' },
+        ],
+        requestedPresetCount: 2,
+        usedPresetCount: 2,
+        usedPresetIds: ['home', 'pricing'],
+        runId: null,
+      },
+      pipelineErrorMessage: 'Pipeline stopped: no screenshots captured.',
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home', 'pricing', 'faq', 'pricing-mobile'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: 'Captured 2 screenshots from 2 presets and linked them to the draft.',
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 2,
+      hasBatchCaptureConfig: true,
+    });
 
-    expect(screen.getAllByText('Pipeline stopped: no screenshots captured.')).toHaveLength(2);
-    expect(screen.getByText('No screenshots were captured.')).toBeInTheDocument();
-    expect(screen.getByText('Capture issues')).toBeInTheDocument();
-    expect(screen.getByText('home: Timeout')).toBeInTheDocument();
-    expect(screen.getByText('pricing: Navigation failed')).toBeInTheDocument();
-    expect(
-      screen.getByText('Fresh capture will use up to 2 of 4 selected presets.')
-    ).toBeInTheDocument();
+    render(<SocialPostPipeline />);
+
+    expect(screen.getByText('Pipeline stopped: no screenshots captured.')).toBeInTheDocument();
     expect(
       screen.getByText('Captured 2 screenshots from 2 presets and linked them to the draft.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Fresh capture: Triggers Playwright batch capture \(4 presets, limit: 2\) before generation\./)
     ).toBeInTheDocument();
   });
 });

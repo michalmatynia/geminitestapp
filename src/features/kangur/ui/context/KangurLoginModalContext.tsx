@@ -20,6 +20,7 @@ import { withKangurClientErrorSync } from '@/features/kangur/observability/clien
 
 type KangurLoginModalOpenOptions = {
   authMode?: KangurAuthMode;
+  showParentAuthModeTabs?: boolean;
 };
 
 type KangurLoginModalContextValue = {
@@ -30,12 +31,13 @@ type KangurLoginModalContextValue = {
   homeHref: string;
   isOpen: boolean;
   isRouteDriven: boolean;
+  showParentAuthModeTabs: boolean;
   openLoginModal: (callbackUrl?: string | null, options?: KangurLoginModalOpenOptions) => void;
 };
 
 type KangurLoginModalStateValue = Pick<
   KangurLoginModalContextValue,
-  'authMode' | 'callbackUrl' | 'homeHref' | 'isOpen' | 'isRouteDriven'
+  'authMode' | 'callbackUrl' | 'homeHref' | 'isOpen' | 'isRouteDriven' | 'showParentAuthModeTabs'
 >;
 
 type KangurLoginModalActionsValue = Pick<
@@ -51,6 +53,7 @@ type InlineLoginModalState = {
   authMode: KangurAuthMode;
   callbackUrl: string | null;
   isOpen: boolean;
+  showParentAuthModeTabs: boolean;
 };
 
 const KangurLoginModalContext = createContext<KangurLoginModalContextValue | null>(null);
@@ -62,6 +65,7 @@ const FALLBACK_STATE: KangurLoginModalStateValue = {
   homeHref: FALLBACK_HOME_HREF,
   isOpen: false,
   isRouteDriven: false,
+  showParentAuthModeTabs: true,
 };
 const FALLBACK_ACTIONS: KangurLoginModalActionsValue = {
   closeLoginModal: () => {},
@@ -115,10 +119,12 @@ export const KangurLoginModalProvider = ({
     authMode: 'sign-in',
     callbackUrl: null,
     isOpen: false,
+    showParentAuthModeTabs: true,
   });
   const isRouteDriven = pathname === loginPathname;
   const fallbackCallbackUrl = requestedPath || homeHref;
   const authMode = isRouteDriven ? requestedAuthMode : inlineState.authMode;
+  const showParentAuthModeTabs = isRouteDriven ? true : inlineState.showParentAuthModeTabs;
   const callbackUrl = isRouteDriven
     ? requestedCallbackUrl
     : toNonEmptyString(inlineState.callbackUrl, fallbackCallbackUrl);
@@ -131,6 +137,7 @@ export const KangurLoginModalProvider = ({
         authMode: options?.authMode ?? 'sign-in',
         callbackUrl: toNonEmptyString(nextCallbackUrl, currentHref),
         isOpen: true,
+        showParentAuthModeTabs: options?.showParentAuthModeTabs ?? true,
       });
     },
     [fallbackCallbackUrl]
@@ -174,6 +181,7 @@ export const KangurLoginModalProvider = ({
       isOpen: isRouteDriven || inlineState.isOpen,
       isRouteDriven,
       openLoginModal,
+      showParentAuthModeTabs,
     }),
     [
       authMode,
@@ -184,6 +192,7 @@ export const KangurLoginModalProvider = ({
       inlineState.isOpen,
       isRouteDriven,
       openLoginModal,
+      showParentAuthModeTabs,
     ]
   );
 
@@ -215,6 +224,7 @@ export const useKangurLoginModalState = (): KangurLoginModalStateValue => {
       homeHref: context.homeHref,
       isOpen: context.isOpen,
       isRouteDriven: context.isRouteDriven,
+      showParentAuthModeTabs: context.showParentAuthModeTabs,
     }),
     [context]
   );

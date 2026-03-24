@@ -5,13 +5,21 @@ export type EnglishAdjectivePhraseId =
   | 'soft'
   | 'long_blue'
   | 'red'
+  | 'small_red'
   | 'small_blue'
+  | 'bright_green'
   | 'new'
+  | 'old'
   | 'brown'
   | 'long_black'
   | 'beautiful';
 
-export type EnglishAdjectiveSceneId = 'bedroom' | 'toy_shelf' | 'portrait';
+export type EnglishAdjectiveSceneId =
+  | 'bedroom'
+  | 'toy_shelf'
+  | 'portrait'
+  | 'study_corner'
+  | 'playground';
 
 export type EnglishAdjectiveSceneObjectId =
   | 'cupboard'
@@ -22,10 +30,16 @@ export type EnglishAdjectiveSceneObjectId =
   | 'games'
   | 'eyes'
   | 'hair'
-  | 'picture';
+  | 'picture'
+  | 'desk'
+  | 'lamp'
+  | 'book'
+  | 'slide'
+  | 'kite'
+  | 'bench';
 
 export type EnglishAdjectivesSceneRound = {
-  id: 'bedroom' | 'toy_shelf' | 'portrait';
+  id: EnglishAdjectiveSceneId;
   accent: KangurAccent;
   scene: EnglishAdjectiveSceneId;
   tokens: readonly EnglishAdjectivePhraseId[];
@@ -96,6 +110,29 @@ export const ENGLISH_ADJECTIVES_SCENE_ROUNDS = [
     ],
   },
   {
+    id: 'study_corner',
+    accent: 'emerald',
+    scene: 'study_corner',
+    tokens: ['small_red', 'new', 'bright_green', 'beautiful', 'soft'],
+    objects: [
+      {
+        id: 'study-corner-desk',
+        objectId: 'desk',
+        answer: 'new',
+      },
+      {
+        id: 'study-corner-lamp',
+        objectId: 'lamp',
+        answer: 'small_red',
+      },
+      {
+        id: 'study-corner-book',
+        objectId: 'book',
+        answer: 'bright_green',
+      },
+    ],
+  },
+  {
     id: 'portrait',
     accent: 'violet',
     scene: 'portrait',
@@ -115,6 +152,29 @@ export const ENGLISH_ADJECTIVES_SCENE_ROUNDS = [
         id: 'portrait-picture',
         objectId: 'picture',
         answer: 'beautiful',
+      },
+    ],
+  },
+  {
+    id: 'playground',
+    accent: 'rose',
+    scene: 'playground',
+    tokens: ['big_yellow', 'long_blue', 'old', 'red', 'beautiful'],
+    objects: [
+      {
+        id: 'playground-slide',
+        objectId: 'slide',
+        answer: 'big_yellow',
+      },
+      {
+        id: 'playground-kite',
+        objectId: 'kite',
+        answer: 'long_blue',
+      },
+      {
+        id: 'playground-bench',
+        objectId: 'bench',
+        answer: 'old',
       },
     ],
   },

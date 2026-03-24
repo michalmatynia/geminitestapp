@@ -12,7 +12,6 @@ import {
 import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
 import { cn } from '@/features/kangur/shared/utils';
 import { KANGUR_GRID_ROOMY_CLASSNAME } from '@/features/kangur/ui/design/tokens';
-import type { KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
 import { AdminFavoriteBreadcrumbRow } from '@/shared/ui/admin-favorite-breadcrumb-row';
 
 import { AdminKangurSocialSettingsModal } from './admin-kangur-social/AdminKangurSocialSettingsModal';
@@ -24,12 +23,17 @@ import { KangurAdminCard } from './components/KangurAdminCard';
 import { SocialPostProvider, useSocialPostContext } from './admin-kangur-social/SocialPostContext';
 
 function AdminKangurSocialPageContent(): React.JSX.Element {
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = React.useState(false);
-  const [isPostEditorModalOpen, setIsPostEditorModalOpen] = React.useState(false);
-  
   const {
     posts,
     activePost,
+    isSettingsModalOpen,
+    setIsSettingsModalOpen,
+    isPostEditorModalOpen,
+    setIsPostEditorModalOpen,
+    postToDelete,
+    setPostToDelete,
+    postToUnpublish,
+    setPostToUnpublish,
     deleteError,
     clearDeleteError,
     postsQuery,
@@ -42,9 +46,6 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
     isSettingsDirty,
     isSavingSettings,
   } = useSocialPostContext();
-
-  const [postToDelete, setPostToDelete] = React.useState<KangurSocialPost | null>(null);
-  const [postToUnpublish, setPostToUnpublish] = React.useState<KangurSocialPost | null>(null);
   const isInitialPageLoading = postsQuery.isLoading && posts.length === 0;
 
   const breadcrumbs = [

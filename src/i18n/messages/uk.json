@@ -723,7 +723,16 @@
     "magicLinkDeprecatedNotice": "Вхід за посиланням з електронного листа більше недоступний. Увійдіть за електронною поштою та паролем або створіть акаунт.",
     "verifyParentEmailFailed": "Не вдалося підтвердити електронну пошту батьків.",
     "fillEmailAndPassword": "Введіть електронну пошту та пароль.",
+    "invalidParentEmailNotice": "Введіть коректну електронну пошту батьків.",
     "completeSecurityVerification": "Пройдіть перевірку безпеки.",
+    "sessionResettingNotice": "Готуємо безпечний вхід...",
+    "verifyingCredentialsNotice": "Перевіряємо дані для входу...",
+    "signingInParentNotice": "Входимо як батьки...",
+    "signingInStudentNotice": "Входимо як учень...",
+    "refreshingSessionNotice": "Оновлюємо сесію...",
+    "redirectingNotice": "Відкриваємо ваш простір...",
+    "creatingAccountNotice": "Готуємо батьківський акаунт...",
+    "sendingVerificationNotice": "Надсилаємо лист для підтвердження...",
     "createAccountInstruction": "Натисніть на посилання підтвердження в електронному листі. Потім увійдіть, використовуючи ту саму пошту й пароль.",
     "createParentAccountFailed": "Не вдалося створити батьківський акаунт.",
     "createParentAccountUnexpected": "Під час створення акаунта сталася помилка.",
@@ -739,15 +748,24 @@
     "studentLoginUnexpected": "Під час входу для учня сталася помилка.",
     "resendEmailIn": "Надіслати лист повторно через {label}",
     "resendEmail": "Надіслати лист повторно",
+    "changeEmailAction": "Змінити пошту",
+    "continueToSignInAction": "Я вже підтвердив(-ла) пошту",
     "resendHelper": "Новий лист можна надіслати через {label}.",
     "createAccountIdentifierLabel": "Електронна пошта",
     "identifierLabel": "Електронна пошта або нікнейм учня",
     "createAccountIdentifierPlaceholder": "parent@example.com",
     "identifierPlaceholder": "Введіть пошту або нікнейм учня",
+    "signInModeHint": "Введіть електронну пошту батьків або нікнейм учня. Kangur сам підбере правильний спосіб входу.",
+    "parentLoginModeHint": "Схоже, це вхід для батьків. Використайте електронну пошту батьків і пароль акаунта.",
+    "studentLoginModeHint": "Схоже, це вхід для учня. Використайте нікнейм учня, а не електронну пошту.",
+    "createAccountModeHint": "Створіть батьківський акаунт за електронною поштою, а потім підтвердьте адресу з листа.",
     "haveAccount": "У мене є акаунт",
     "createAccount": "Створити акаунт",
     "passwordLabel": "Пароль",
     "passwordPlaceholder": "Введіть пароль",
+    "parentPasswordHint": "Це пароль від батьківського акаунта.",
+    "studentPasswordHint": "Це пароль, прив'язаний до нікнейма учня.",
+    "createAccountPasswordHint": "Створіть новий пароль для батьків. Щонайменше 8 символів.",
     "securityVerificationLabel": "Перевірка безпеки",
     "submitCreateAccount": "Створити батьківський акаунт",
     "submitParentLogin": "Увійти як батьки",
@@ -758,6 +776,7 @@
     "loginFormAriaLabel": "Форма входу",
     "loginSubmit": "Увійти",
     "loginSubmitting": "Вхід...",
+    "openingSpaceButtonLabel": "Відкриваємо Kangur...",
     "continueWith": "Або продовжити за допомогою",
     "signupFormAriaLabel": "Форма реєстрації для батьків",
     "parentEmailLabel": "Пошта батьків",
@@ -1306,7 +1325,9 @@
       "previousShort": "Попередній",
       "nextLesson": "Наступний урок: {title}",
       "noNextLesson": "Немає наступного уроку",
-      "nextShort": "Наступний"
+      "nextShort": "Наступний",
+      "printLesson": "Друкувати урок",
+      "printShort": "Друк"
     },
     "activeHeader": {
       "narrator": {
@@ -2839,7 +2860,83 @@
       "summary": {
         "perfect": "Perfect! The whole scene matches the adjectives.",
         "good": "Good job! Most of the scene matches already.",
-        "retry": "Try again and watch how each adjective changes the object."
+        "retry": "Try again and watch how each adjective changes the object.",
+        "badges": {
+          "rounds": "Rounds {current}/{total}",
+          "targets": "Targets {current}/{total}",
+          "studio": "Studio {current}/{total}"
+        },
+        "guideLabel": "Adjective guide",
+        "guideHint": "Group adjectives by what they change in the picture.",
+        "groups": {
+          "color": {
+            "label": "Colour",
+            "lead": "Use colour words to change what something looks like.",
+            "examples": "red train, brown eyes"
+          },
+          "sizeColor": {
+            "label": "Size + colour",
+            "lead": "More than one adjective can build one clear noun phrase.",
+            "examples": "big yellow cupboard, small blue teddy, long black hair"
+          },
+          "texture": {
+            "label": "Texture",
+            "lead": "Texture words tell us how something feels.",
+            "examples": "soft rug"
+          },
+          "opinionAge": {
+            "label": "Opinion + age",
+            "lead": "Some adjectives give an opinion or show if something feels new.",
+            "examples": "beautiful picture, new games"
+          }
+        },
+        "orderGuideLabel": "Word order guide",
+        "orderGuideHint": "In English, describing words usually come before the noun.",
+        "orderCards": {
+          "clear": {
+            "label": "Clear phrase",
+            "phrase": "a small blue teddy",
+            "rule": "adjective + adjective + noun"
+          },
+          "fix": {
+            "label": "Fix it",
+            "phrase": "a teddy small blue → a small blue teddy",
+            "rule": "move the adjectives before the noun"
+          }
+        },
+        "starterLabel": "Say it about the scene",
+        "starterHint": "Use these sentence frames to describe your own picture.",
+        "starters": {
+          "room": "There is a big yellow cupboard in the room.",
+          "toy": "I have a small blue teddy on the shelf.",
+          "portrait": "She has long black hair and brown eyes.",
+          "study": "There is a new desk by the wall.",
+          "playground": "It is an old bench near the slide."
+        },
+        "questionLabel": "What can you see?",
+        "questionHint": "Pick one question and answer it with an adjective phrase.",
+        "questions": {
+          "room": {
+            "prompt": "What can you see in the room?",
+            "starter": "Try: There is a..."
+          },
+          "toy": {
+            "prompt": "What toy can you see on the shelf?",
+            "starter": "Try: It is a..."
+          },
+          "person": {
+            "prompt": "What can you say about the person?",
+            "starter": "Try: She has..."
+          },
+          "study": {
+            "prompt": "What can you see in the study corner?",
+            "starter": "Try: There is a..."
+          },
+          "playground": {
+            "prompt": "What can you see in the playground?",
+            "starter": "Try: It is a..."
+          }
+        }
       },
       "inRound": {
         "roundLabel": "Round {current}/{total}",
@@ -2857,12 +2954,29 @@
           "poolAria": "Adjective bank",
           "objectSlotAria": "Object slot for {object}",
           "dropLabel": "Drop or tap an adjective here.",
+          "describePrompt": "How can you describe the {object}?",
+          "describeStarter": "Build: adjective + noun",
+          "yourPhraseLabel": "Your phrase",
+          "yourSentenceLabel": "Your sentence",
+          "targetPhraseLabel": "Target phrase",
+          "targetSentenceLabel": "Target sentence",
+          "categoryCompareLabel": "Category change",
+          "clueLabel": "Clue",
+          "matchedLabel": "Matched",
+          "typeLabel": "Type",
           "touchIdle": "Tap an adjective, then tap an object or the bank.",
           "touchSelected": "Selected adjective: {adjective}. Tap an object or the bank.",
           "clearRound": "Clear round",
           "feedback": {
             "perfect": "Perfect! The scene matches the description.",
             "retry": "Try again and check which adjective changes each object."
+          },
+          "focus": {
+            "color": "change the colour",
+            "size_color": "change the size and colour",
+            "texture": "change the texture",
+            "age": "change how new it feels",
+            "opinion": "change the feeling or opinion"
           },
           "rounds": {
             "bedroom": {
@@ -2875,10 +2989,20 @@
               "prompt": "Dress the toys with the right describing words.",
               "hint": "One train is red, one teddy is small and blue, and the games are new."
             },
+            "study_corner": {
+              "title": "Study corner",
+              "prompt": "Match the adjective cards to rebuild the study corner.",
+              "hint": "Look for the new desk, the small red lamp, and the bright green book."
+            },
             "portrait": {
               "title": "Portrait details",
               "prompt": "Add the right adjectives to the portrait.",
               "hint": "Brown eyes, long black hair, and a beautiful picture."
+            },
+            "playground": {
+              "title": "Playground scene",
+              "prompt": "Use the adjective cards to rebuild the playground.",
+              "hint": "Look for the big yellow slide, the long blue kite, and the old bench."
             }
           },
           "tokens": {
@@ -2886,8 +3010,11 @@
             "soft": "soft",
             "long_blue": "long blue",
             "red": "red",
+            "small_red": "small red",
             "small_blue": "small blue",
+            "bright_green": "bright green",
             "new": "new",
+            "old": "old",
             "brown": "brown",
             "long_black": "long black",
             "beautiful": "beautiful"
@@ -2901,12 +3028,20 @@
             "games": "games",
             "eyes": "eyes",
             "hair": "hair",
-            "picture": "picture"
+            "picture": "picture",
+            "desk": "desk",
+            "lamp": "lamp",
+            "book": "book",
+            "slide": "slide",
+            "kite": "kite",
+            "bench": "bench"
           },
           "sceneAria": {
             "bedroom": "Animated bedroom scene",
             "toyShelf": "Animated toy shelf scene",
-            "portrait": "Animated portrait scene"
+            "studyCorner": "Animated study corner scene",
+            "portrait": "Animated portrait scene",
+            "playground": "Animated playground scene"
           }
         }
       }
@@ -7891,6 +8026,11 @@
             "title": "Adjectives paint the picture",
             "lead": "Adjectives describe people, places, and things. They add colour, size, feeling, and detail to a noun.",
             "caption": "big yellow cupboard, soft rug, long blue curtains"
+          },
+          "peoplePlacesThings": {
+            "title": "People, places, things",
+            "lead": "You can use adjectives to describe a person, a place, or one object. They work almost everywhere in a sentence.",
+            "caption": "Ask: what kind? what colour? what size?"
           }
         },
         "order": {
@@ -7898,6 +8038,11 @@
             "title": "Put adjectives before the noun",
             "lead": "In English, adjectives usually stand before the noun: red train, brown eyes, small blue teddy.",
             "caption": "adjective + adjective + noun"
+          },
+          "clearPicture": {
+            "title": "Build a clear phrase",
+            "lead": "Put the describing words before the noun so the picture sounds clear straight away.",
+            "caption": "small + blue + teddy"
           }
         },
         "repair": {
@@ -7912,6 +8057,16 @@
             "title": "Describe a room",
             "lead": "Read the little room story and spot how adjectives make the picture clearer.",
             "caption": "Each adjective adds one more detail to the scene."
+          },
+          "peopleAndPlaces": {
+            "title": "Describe people and places",
+            "lead": "The same adjective rules help you talk about faces, hair, rooms, toys, and pictures.",
+            "caption": "Use the adjective before the noun each time."
+          },
+          "studyAndPlay": {
+            "title": "Describe study and play scenes",
+            "lead": "The same adjective rules also work when you talk about desks, lamps, books, slides, kites, and benches.",
+            "caption": "One adjective can change colour, size, age, or feeling in any scene."
           },
           "wordBank": {
             "title": "Word bank",

@@ -323,8 +323,9 @@ const parseJsonBody = async (
     throw payloadTooLargeError('Payload too large', { limit: options.maxBodyBytes });
   }
 
-  const clone = request.clone();
-  const text = await clone.text();
+  // Consume the request body directly. The parsed payload is forwarded via `ctx.body`,
+  // so handlers should not need to re-read the raw stream, and cloning can hang in tests.
+  const text = await request.text();
   if (text.length > options.maxBodyBytes) {
     throw payloadTooLargeError('Payload too large', { limit: options.maxBodyBytes });
   }

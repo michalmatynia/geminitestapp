@@ -1,5 +1,6 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 
@@ -35,7 +36,6 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import {
   addXp,
   createTrainingReward,
-  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
@@ -146,6 +146,7 @@ const TOTAL = 6;
 export default function CalendarTrainingGame({
   onFinish,
 }: KangurMiniGameFinishActionProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
   const [questions] = useState(() => Array.from({ length: TOTAL }, generateQuestion));
@@ -180,7 +181,6 @@ export default function CalendarTrainingGame({
   };
 
   const handleDone = (finalScore: number) => {
-    const ownerKey = getProgressOwnerKey();
     const prog = loadProgress({ ownerKey });
     const reward = createTrainingReward(prog, {
       activityKey: 'training:calendar',

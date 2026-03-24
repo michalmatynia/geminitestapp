@@ -90,6 +90,92 @@ describe('progress persistence owner scoping', () => {
     expect(getProgressOwnerKey()).toBeNull();
   });
 
+  it('switches the default progress snapshot when subject and owner scope change together', async () => {
+    const {
+      getProgressOwnerKey,
+      getProgressSubject,
+      loadProgress,
+      saveProgress,
+      setProgressScope,
+    } = await import('@/features/kangur/ui/services/progress');
+
+    saveProgress(
+      createProgress({
+        totalXp: 10,
+        gamesPlayed: 1,
+      }),
+      { ownerKey: 'learner-1' }
+    );
+
+    setProgressScope({ subject: 'english', ownerKey: 'learner-1' });
+    saveProgress(
+      createProgress({
+        totalXp: 24,
+        gamesPlayed: 3,
+      }),
+      { ownerKey: 'learner-1' }
+    );
+
+    setProgressScope({ subject: 'maths', ownerKey: 'learner-2' });
+    saveProgress(
+      createProgress({
+        totalXp: 41,
+        gamesPlayed: 5,
+      }),
+      { ownerKey: 'learner-2' }
+    );
+
+    setProgressScope({ subject: 'english', ownerKey: ' learner-1 ' });
+
+    expect(getProgressOwnerKey()).toBe('learner-1');
+    expect(getProgressSubject()).toBe('english');
+    expect(loadProgress().totalXp).toBe(24);
+    expect(loadProgress().gamesPlayed).toBe(3);
+
+    setProgressScope({ subject: 'maths', ownerKey: 'learner-2' });
+
+    expect(getProgressOwnerKey()).toBe('learner-2');
+    expect(getProgressSubject()).toBe('maths');
+    expect(loadProgress().totalXp).toBe(41);
+    expect(loadProgress().gamesPlayed).toBe(5);
+  });
+
+  it('emits the scoped snapshot when the active progress scope changes', async () => {
+    const { saveProgress, setProgressScope, subscribeToProgress } =
+      await import('@/features/kangur/ui/services/progress');
+
+    saveProgress(
+      createProgress({
+        totalXp: 8,
+      }),
+      { ownerKey: 'learner-1' }
+    );
+
+    setProgressScope({ subject: 'english', ownerKey: 'learner-1' });
+    saveProgress(
+      createProgress({
+        totalXp: 19,
+        lessonsCompleted: 2,
+      }),
+      { ownerKey: 'learner-1' }
+    );
+
+    const listener = vi.fn();
+    const unsubscribe = subscribeToProgress(listener);
+
+    setProgressScope({ subject: 'maths', ownerKey: 'learner-1' });
+    setProgressScope({ subject: 'english', ownerKey: 'learner-1' });
+
+    expect(listener).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        totalXp: 19,
+        lessonsCompleted: 2,
+      })
+    );
+
+    unsubscribe();
+  });
+
   it('migrates legacy shared progress into the previous owner slot without leaking it to another learner', async () => {
     localStorage.setItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY, 'learner-1');
     localStorage.setItem(

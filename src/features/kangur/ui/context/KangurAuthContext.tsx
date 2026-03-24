@@ -27,6 +27,10 @@ import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 const AUTH_CHECK_TIMEOUT_MS = 3_000;
 
+type KangurAuthCheckAppStateOptions = {
+  timeoutMs?: number | null;
+};
+
 const raceWithTimeout = async <T,>(promise: Promise<T>, ms: number): Promise<T | null> => {
   let timeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
 
@@ -60,7 +64,7 @@ type KangurAuthContextValue = {
   appPublicSettings: null;
   logout: (shouldRedirect?: boolean) => void;
   navigateToLogin: (options?: { authMode?: KangurAuthMode }) => void;
-  checkAppState: () => Promise<void>;
+  checkAppState: (options?: KangurAuthCheckAppStateOptions) => Promise<KangurUser | null>;
   selectLearner: (learnerId: string) => Promise<void>;
 };
 
@@ -141,13 +145,17 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
   const [appPublicSettings] = useState<null>(null);
   const canAccessParentAssignments = resolveCanAccessParentAssignments(user, isAuthenticated);
 
-  const checkAppState = useCallback(async (): Promise<void> => {
-    const requestVersion = ++authRequestVersionRef.current;
-    setAuthError(null);
-    setIsLoadingAuth(true);
-    try {
-      const currentUser = await raceWithTimeout(
-        withKangurClientError(
+  const checkAppState = useCallback(
+    async (options?: KangurAuthCheckAppStateOptions): Promise<KangurUser | null> => {
+      const timeoutMs =
+        typeof options?.timeoutMs === 'number' && Number.isFinite(options.timeoutMs)
+          ? Math.max(0, options.timeoutMs)
+          : null;
+      const requestVersion = ++authRequestVersionRef.current;
+      setAuthError(null);
+      setIsLoadingAuth(true);
+      try {
+        const authCheck = withKangurClientError(
           {
             source: 'kangur.auth',
             action: 'check-app-state',
@@ -176,22 +184,25 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
               }
             },
           }
-        ),
-        AUTH_CHECK_TIMEOUT_MS
-      );
-      if (authRequestVersionRef.current !== requestVersion) {
-        return;
+        );
+        const currentUser =
+          timeoutMs === null ? await authCheck : await raceWithTimeout(authCheck, timeoutMs);
+        if (authRequestVersionRef.current !== requestVersion) {
+          return null;
+        }
+        if (currentUser) {
+          setUser(currentUser);
+          setIsAuthenticated(true);
+        }
+        return currentUser;
+      } finally {
+        if (authRequestVersionRef.current === requestVersion) {
+          setIsLoadingAuth(false);
+        }
       }
-      if (currentUser) {
-        setUser(currentUser);
-        setIsAuthenticated(true);
-      }
-    } finally {
-      if (authRequestVersionRef.current === requestVersion) {
-        setIsLoadingAuth(false);
-      }
-    }
-  }, []);
+    },
+    []
+  );
 
   useEffect(() => {
     if (skipAuthBootstrap) {
@@ -203,7 +214,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
       return;
     }
 
-    void checkAppState();
+    void checkAppState({ timeoutMs: AUTH_CHECK_TIMEOUT_MS });
   }, [checkAppState, skipAuthBootstrap]);
 
   const logout = useCallback((shouldRedirect = true): void => {

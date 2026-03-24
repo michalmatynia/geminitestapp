@@ -20,7 +20,7 @@ import {
   ClassificationTwoCriteriaGridAnimation,
   ClassificationVennOverlapAnimation,
   ClassificationVennUnionAnimation,
-} from '@/features/kangur/ui/components/LogicalLessonAnimations';
+} from './LogicalLessonAnimations';
 import {
   KangurLessonCallout,
   KangurLessonCaption,

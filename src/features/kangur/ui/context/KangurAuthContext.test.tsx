@@ -2,8 +2,9 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -137,9 +138,11 @@ const AuthProbe = (): React.JSX.Element => {
     canAccessParentAssignments,
     isLoadingAuth,
     isLoggingOut,
+    checkAppState,
     logout,
     navigateToLogin,
   } = useKangurAuth();
+  const [lastCheckResult, setLastCheckResult] = useState<string>('idle');
 
   return (
     <div>
@@ -155,11 +158,21 @@ const AuthProbe = (): React.JSX.Element => {
       <button type='button' onClick={() => logout(false)}>
         Logout
       </button>
+      <button
+        type='button'
+        onClick={async () => {
+          const nextUser = await checkAppState({ timeoutMs: 10_000 });
+          setLastCheckResult(nextUser?.id ?? 'anonymous');
+        }}
+      >
+        Refresh auth
+      </button>
       <div data-testid='kangur-auth-loading'>{String(isLoadingAuth)}</div>
       <div data-testid='kangur-auth-logout-pending'>{String(Boolean(isLoggingOut))}</div>
       <div data-testid='kangur-parent-assignment-access'>
         {String(canAccessParentAssignments)}
       </div>
+      <div data-testid='kangur-auth-last-check'>{lastCheckResult}</div>
     </div>
   );
 };
@@ -391,5 +404,55 @@ describe('KangurAuthContext', () => {
     });
 
     expect(routerRefreshMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows a manual auth refresh to resolve beyond the bootstrap timeout window', async () => {
+    vi.useFakeTimers();
+    let resolveManualAuth: ((value: typeof AUTHENTICATED_USER) => void) | null = null;
+
+    meMock.mockImplementationOnce(
+      () =>
+        new Promise<typeof AUTHENTICATED_USER>(() => {
+          // Keep bootstrap pending so the provider must rely on the timeout.
+        })
+    );
+    meMock.mockImplementationOnce(
+      () =>
+        new Promise<typeof AUTHENTICATED_USER>((resolve) => {
+          resolveManualAuth = resolve;
+        })
+    );
+
+    render(
+      <KangurAuthProvider>
+        <AuthProbe />
+      </KangurAuthProvider>
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_000);
+    });
+    expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh auth' }));
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('true');
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_500);
+    });
+    expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('true');
+
+    await act(async () => {
+      resolveManualAuth?.(AUTHENTICATED_USER);
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+    expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
+    expect(screen.getByTestId('kangur-auth-last-check')).toHaveTextContent('parent-1');
   });
 });

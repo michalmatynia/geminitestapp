@@ -6,7 +6,6 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
-import { signOut } from 'next-auth/react';
 import type { ReactElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS } from '@/features/kangur/settings';
@@ -21,6 +20,7 @@ const {
   locationAssignMock,
   routerPushMock,
   routerRefreshMock,
+  signInMock,
   signOutMock,
   useKangurAiTutorSessionSyncMock,
   useOptionalKangurAuthMock,
@@ -36,6 +36,7 @@ const {
   locationAssignMock: vi.fn(),
   routerPushMock: vi.fn(),
   routerRefreshMock: vi.fn(),
+  signInMock: vi.fn(),
   signOutMock: vi.fn(),
   useKangurAiTutorSessionSyncMock: vi.fn(),
   useOptionalKangurAuthMock: vi.fn(),
@@ -52,6 +53,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('next-auth/react', () => ({
+  signIn: signInMock,
   signOut: signOutMock,
 }));
 
@@ -86,6 +88,7 @@ describe('KangurLoginPage', () => {
   const originalLocation = window.location;
 
   beforeEach(() => {
+    vi.useRealTimers();
     vi.clearAllMocks();
     vi.unstubAllGlobals();
     Object.defineProperty(window, 'location', {
@@ -109,6 +112,11 @@ describe('KangurLoginPage', () => {
       new URLSearchParams('callbackUrl=%2Ftests%3Ffocus%3Ddivision')
     );
     signOutMock.mockResolvedValue(undefined);
+    signInMock.mockResolvedValue({
+      error: undefined,
+      ok: true,
+      url: '/tests?focus=division',
+    });
     checkAppStateMock.mockResolvedValue(undefined);
     useOptionalKangurAuthMock.mockReturnValue({
       checkAppState: checkAppStateMock,
@@ -139,14 +147,6 @@ describe('KangurLoginPage', () => {
           };
         }
 
-        if (url === '/api/auth/csrf') {
-          return {
-            json: vi.fn().mockResolvedValue({ csrfToken: 'kangur-parent-csrf' }),
-            ok: true,
-            status: 200,
-          };
-        }
-
         if (url === '/api/auth/verify-credentials') {
           return {
             json: vi.fn().mockResolvedValue({
@@ -154,14 +154,6 @@ describe('KangurLoginPage', () => {
               challengeId: 'challenge-1',
               mfaRequired: false,
             }),
-            ok: true,
-            status: 200,
-          };
-        }
-
-        if (url === '/api/auth/callback/credentials') {
-          return {
-            json: vi.fn().mockResolvedValue({ url: '/tests?focus=division' }),
             ok: true,
             status: 200,
           };
@@ -387,9 +379,6 @@ describe('KangurLoginPage', () => {
         method: 'POST',
       })
     );
-    expect(fetchMock).toHaveBeenCalledWith('/api/auth/csrf', {
-      credentials: 'same-origin',
-    });
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/auth/verify-credentials',
       expect.objectContaining({
@@ -402,15 +391,13 @@ describe('KangurLoginPage', () => {
         method: 'POST',
       })
     );
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/auth/callback/credentials',
+    expect(signInMock).toHaveBeenCalledWith(
+      'credentials',
       expect.objectContaining({
-        body: expect.any(URLSearchParams),
-        credentials: 'same-origin',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        method: 'POST',
+        callbackUrl: '/tests?focus=division',
+        email: 'parent@example.com',
+        password: 'secret123',
+        redirect: false,
       })
     );
 
@@ -425,6 +412,11 @@ describe('KangurLoginPage', () => {
   it('refreshes the current page instead of redirecting when login returns to the same route', async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
+    signInMock.mockResolvedValue({
+      error: undefined,
+      ok: true,
+      url: '/kangur/lessons',
+    });
 
     Object.defineProperty(window, 'location', {
       value: {
@@ -450,13 +442,6 @@ describe('KangurLoginPage', () => {
             status: 200,
           };
         }
-        if (url === '/api/auth/csrf') {
-          return {
-            json: vi.fn().mockResolvedValue({ csrfToken: 'kangur-parent-csrf' }),
-            ok: true,
-            status: 200,
-          };
-        }
         if (url === '/api/auth/verify-credentials') {
           return {
             json: vi.fn().mockResolvedValue({
@@ -464,13 +449,6 @@ describe('KangurLoginPage', () => {
               challengeId: 'challenge-1',
               mfaRequired: false,
             }),
-            ok: true,
-            status: 200,
-          };
-        }
-        if (url === '/api/auth/callback/credentials') {
-          return {
-            json: vi.fn().mockResolvedValue({ url: '/kangur/lessons' }),
             ok: true,
             status: 200,
           };
@@ -520,14 +498,9 @@ describe('KangurLoginPage', () => {
     );
     expect(await screen.findByText('Sprawdź skrzynkę: parent@example.com')).toBeVisible();
     expect(screen.getByRole('status')).toHaveAttribute('aria-live', 'polite');
-    expect(
-      screen.getByText('Kliknij link potwierdzający w e-mailu. Potem zalogujesz się tym samym e-mailem i hasłem.')
-    ).toBeVisible();
-    expect(
-      screen.queryByText(
-        'Sprawdź e-mail rodzica. Konto zostanie utworzone po potwierdzeniu adresu, a AI Tutor odblokuje się po weryfikacji.'
-      )
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Sprawdź e-mail rodzica. Konto zostanie utworzone po potwierdzeniu adresu, a AI Tutor odblokuje się po weryfikacji.'
+    );
     expect(screen.getByRole('link', { name: 'Potwierdź e-mail teraz' })).toHaveAttribute(
       'href',
       'https://example.com/kangur/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-1'

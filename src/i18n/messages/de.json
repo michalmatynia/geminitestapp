@@ -697,7 +697,16 @@
     "magicLinkDeprecatedNotice": "Die Anmeldung per E-Mail-Link ist nicht mehr verfügbar. Melden Sie sich mit E-Mail und Passwort an oder erstellen Sie ein Konto.",
     "verifyParentEmailFailed": "Die E-Mail der Eltern konnte nicht bestätigt werden.",
     "fillEmailAndPassword": "E-Mail und Passwort eingeben.",
+    "invalidParentEmailNotice": "Geben Sie eine gültige E-Mail-Adresse der Eltern ein.",
     "completeSecurityVerification": "Sicherheitsprüfung abschließen.",
+    "sessionResettingNotice": "Sichere Anmeldung wird vorbereitet...",
+    "verifyingCredentialsNotice": "Anmeldedaten werden geprüft...",
+    "signingInParentNotice": "Eltern werden angemeldet...",
+    "signingInStudentNotice": "Schüler wird angemeldet...",
+    "refreshingSessionNotice": "Sitzung wird aktualisiert...",
+    "redirectingNotice": "Ihr Bereich wird geöffnet...",
+    "creatingAccountNotice": "Elternkonto wird vorbereitet...",
+    "sendingVerificationNotice": "Bestätigungs-E-Mail wird gesendet...",
     "createAccountInstruction": "Klicken Sie auf den Bestätigungslink in der E-Mail. Danach melden Sie sich mit derselben E-Mail und demselben Passwort an.",
     "createParentAccountFailed": "Das Elternkonto konnte nicht erstellt werden.",
     "createParentAccountUnexpected": "Beim Erstellen des Kontos ist ein Fehler aufgetreten.",
@@ -713,15 +722,24 @@
     "studentLoginUnexpected": "Beim Anmelden des Schülers ist ein Fehler aufgetreten.",
     "resendEmailIn": "E-Mail erneut senden in {label}",
     "resendEmail": "E-Mail erneut senden",
+    "changeEmailAction": "E-Mail ändern",
+    "continueToSignInAction": "Ich habe meine E-Mail schon bestätigt",
     "resendHelper": "Eine neue E-Mail kann in {label} gesendet werden.",
     "createAccountIdentifierLabel": "E-Mail",
     "identifierLabel": "E-Mail oder Nickname des Schülers",
     "createAccountIdentifierPlaceholder": "eltern@example.com",
     "identifierPlaceholder": "E-Mail oder Nickname eingeben",
+    "signInModeHint": "Geben Sie die E-Mail der Eltern oder den Nickname des Schülers ein. Kangur wählt den passenden Anmeldeweg.",
+    "parentLoginModeHint": "Das sieht nach einer Eltern-Anmeldung aus. Verwenden Sie die E-Mail der Eltern und das Kontopasswort.",
+    "studentLoginModeHint": "Das sieht nach einer Schüler-Anmeldung aus. Verwenden Sie den Nickname des Schülers, nicht die E-Mail.",
+    "createAccountModeHint": "Erstellen Sie ein Elternkonto mit einer E-Mail-Adresse und bestätigen Sie die Adresse danach in der E-Mail.",
     "haveAccount": "Ich habe ein Konto",
     "createAccount": "Konto erstellen",
     "passwordLabel": "Passwort",
     "passwordPlaceholder": "Passwort eingeben",
+    "parentPasswordHint": "Dies ist das Passwort für das Elternkonto.",
+    "studentPasswordHint": "Dies ist das Passwort für den Nickname des Schülers.",
+    "createAccountPasswordHint": "Legen Sie ein neues Eltern-Passwort fest. Mindestens 8 Zeichen.",
     "securityVerificationLabel": "Sicherheitsprüfung",
     "submitCreateAccount": "Elternkonto erstellen",
     "submitParentLogin": "Eltern anmelden",
@@ -732,6 +750,7 @@
     "loginFormAriaLabel": "Anmeldeformular",
     "loginSubmit": "Anmelden",
     "loginSubmitting": "Anmeldung läuft...",
+    "openingSpaceButtonLabel": "Kangur wird geöffnet...",
     "continueWith": "Oder weiter mit",
     "signupFormAriaLabel": "Registrierungsformular für Eltern",
     "parentEmailLabel": "E-Mail der Eltern",
@@ -1360,7 +1379,9 @@
       "previousShort": "Zuruck",
       "nextLesson": "Nachste Lektion: {title}",
       "noNextLesson": "Keine nachste Lektion",
-      "nextShort": "Weiter"
+      "nextShort": "Weiter",
+      "printLesson": "Lektion drucken",
+      "printShort": "Drucken"
     },
     "activeHeader": {
       "narrator": {
@@ -2448,7 +2469,83 @@
       "summary": {
         "perfect": "Perfekt! Die ganze Szene passt zu den Adjektiven.",
         "good": "Gute Arbeit! Der größte Teil der Szene stimmt schon.",
-        "retry": "Versuche es noch einmal und achte darauf, wie jedes Adjektiv das Objekt verändert."
+        "retry": "Versuche es noch einmal und achte darauf, wie jedes Adjektiv das Objekt verändert.",
+        "badges": {
+          "rounds": "Runden {current}/{total}",
+          "targets": "Ziele {current}/{total}",
+          "studio": "Studio {current}/{total}"
+        },
+        "guideLabel": "Adjektiv-Überblick",
+        "guideHint": "Ordne Adjektive danach, was sie im Bild verändern.",
+        "groups": {
+          "color": {
+            "label": "Farbe",
+            "lead": "Farbadjektive verändern das Aussehen eines Objekts.",
+            "examples": "red train, brown eyes"
+          },
+          "sizeColor": {
+            "label": "Größe + Farbe",
+            "lead": "Mehrere Adjektive können zusammen eine klare Nomen-Gruppe bauen.",
+            "examples": "big yellow cupboard, small blue teddy, long black hair"
+          },
+          "texture": {
+            "label": "Oberfläche",
+            "lead": "Manche Adjektive sagen, wie sich etwas anfühlt.",
+            "examples": "soft rug"
+          },
+          "opinionAge": {
+            "label": "Meinung + Alter",
+            "lead": "Manche Adjektive zeigen eine Meinung oder ob etwas new wirkt.",
+            "examples": "beautiful picture, new games"
+          }
+        },
+        "orderGuideLabel": "Satzbau-Überblick",
+        "orderGuideHint": "Im Englischen stehen describing words meistens vor dem Nomen.",
+        "orderCards": {
+          "clear": {
+            "label": "Klare Gruppe",
+            "phrase": "a small blue teddy",
+            "rule": "adjective + adjective + noun"
+          },
+          "fix": {
+            "label": "Korrigiere es",
+            "phrase": "a teddy small blue → a small blue teddy",
+            "rule": "schiebe die Adjektive vor das Nomen"
+          }
+        },
+        "starterLabel": "Sag es über die Szene",
+        "starterHint": "Nutze diese Satzanfänge für dein eigenes Bild.",
+        "starters": {
+          "room": "There is a big yellow cupboard in the room.",
+          "toy": "I have a small blue teddy on the shelf.",
+          "portrait": "She has long black hair and brown eyes.",
+          "study": "There is a new desk by the wall.",
+          "playground": "It is an old bench near the slide."
+        },
+        "questionLabel": "Was kannst du sehen?",
+        "questionHint": "Wähle eine Frage und antworte mit einer Adjektivgruppe.",
+        "questions": {
+          "room": {
+            "prompt": "What can you see in the room?",
+            "starter": "Try: There is a..."
+          },
+          "toy": {
+            "prompt": "What toy can you see on the shelf?",
+            "starter": "Try: It is a..."
+          },
+          "person": {
+            "prompt": "What can you say about the person?",
+            "starter": "Try: She has..."
+          },
+          "study": {
+            "prompt": "What can you see in the study corner?",
+            "starter": "Try: There is a..."
+          },
+          "playground": {
+            "prompt": "What can you see in the playground?",
+            "starter": "Try: It is a..."
+          }
+        }
       },
       "inRound": {
         "roundLabel": "Runde {current}/{total}",
@@ -2466,12 +2563,29 @@
           "poolAria": "Adjektivbank",
           "objectSlotAria": "Objektfeld für {object}",
           "dropLabel": "Lege hier ein Adjektiv ab oder tippe es an.",
+          "describePrompt": "Wie kannst du {object} beschreiben?",
+          "describeStarter": "Baue: adjective + noun",
+          "yourPhraseLabel": "Deine Wortgruppe",
+          "yourSentenceLabel": "Dein Satz",
+          "targetPhraseLabel": "Ziel-Wortgruppe",
+          "targetSentenceLabel": "Zielsatz",
+          "categoryCompareLabel": "Kategorie-Wechsel",
+          "clueLabel": "Hinweis",
+          "matchedLabel": "Passt",
+          "typeLabel": "Typ",
           "touchIdle": "Tippe ein Adjektiv an und dann ein Objekt oder die Bank.",
           "touchSelected": "Ausgewähltes Adjektiv: {adjective}. Tippe ein Objekt oder die Bank an.",
           "clearRound": "Runde leeren",
           "feedback": {
             "perfect": "Perfekt! Die Szene passt zur Beschreibung.",
             "retry": "Versuche es noch einmal und prüfe, welches Adjektiv welches Objekt verändert."
+          },
+          "focus": {
+            "color": "ändere die Farbe",
+            "size_color": "ändere Größe und Farbe",
+            "texture": "ändere die Oberfläche",
+            "age": "ändere, wie neu es wirkt",
+            "opinion": "ändere das Gefühl oder die Meinung"
           },
           "rounds": {
             "bedroom": {
@@ -2484,10 +2598,20 @@
               "prompt": "Gib den Spielsachen die richtigen describing words.",
               "hint": "Ein Zug ist red, ein Teddy ist small blue und die Spiele sind new."
             },
+            "study_corner": {
+              "title": "Lernecke",
+              "prompt": "Ordne die Adjektivkarten zu, um die Lernecke wieder aufzubauen.",
+              "hint": "Achte auf den new desk, die small red lamp und das bright green book."
+            },
             "portrait": {
               "title": "Porträt-Details",
               "prompt": "Füge dem Porträt die richtigen Adjektive hinzu.",
               "hint": "Brown eyes, long black hair und beautiful picture."
+            },
+            "playground": {
+              "title": "Spielplatzszene",
+              "prompt": "Nutze die Adjektivkarten, um den Spielplatz wieder aufzubauen.",
+              "hint": "Achte auf die big yellow slide, den long blue kite und die old bench."
             }
           },
           "tokens": {
@@ -2495,8 +2619,11 @@
             "soft": "soft",
             "long_blue": "long blue",
             "red": "red",
+            "small_red": "small red",
             "small_blue": "small blue",
+            "bright_green": "bright green",
             "new": "new",
+            "old": "old",
             "brown": "brown",
             "long_black": "long black",
             "beautiful": "beautiful"
@@ -2510,12 +2637,20 @@
             "games": "games",
             "eyes": "eyes",
             "hair": "hair",
-            "picture": "picture"
+            "picture": "picture",
+            "desk": "desk",
+            "lamp": "lamp",
+            "book": "book",
+            "slide": "slide",
+            "kite": "kite",
+            "bench": "bench"
           },
           "sceneAria": {
             "bedroom": "Animierte Schlafzimmerszene",
             "toyShelf": "Animierte Spielzeugregal-Szene",
-            "portrait": "Animierte Porträtszene"
+            "studyCorner": "Animierte Lernecke",
+            "portrait": "Animierte Porträtszene",
+            "playground": "Animierte Spielplatzszene"
           }
         }
       }
@@ -6026,6 +6161,11 @@
             "title": "Adjektive malen ein Bild",
             "lead": "Adjektive beschreiben Personen, Orte und Dinge. Sie geben einem Nomen Farbe, Größe, Gefühl und Detail.",
             "caption": "big yellow cupboard, soft rug, long blue curtains"
+          },
+          "peoplePlacesThings": {
+            "title": "Personen, Orte, Dinge",
+            "lead": "Du kannst Adjektive für Personen, Orte oder einzelne Dinge benutzen. Sie funktionieren fast überall im Satz.",
+            "caption": "Frag: Welche Art? Welche Farbe? Welche Größe?"
           }
         },
         "order": {
@@ -6033,6 +6173,11 @@
             "title": "Setze Adjektive vor das Nomen",
             "lead": "Im Englischen stehen Adjektive meistens vor dem Nomen: red train, brown eyes, small blue teddy.",
             "caption": "adjective + adjective + noun"
+          },
+          "clearPicture": {
+            "title": "Baue eine klare Wortgruppe",
+            "lead": "Setze die describing words vor das Nomen, damit das Bild sofort klar klingt.",
+            "caption": "small + blue + teddy"
           }
         },
         "repair": {
@@ -6047,6 +6192,16 @@
             "title": "Beschreibe ein Zimmer",
             "lead": "Lies die kleine Zimmergeschichte und entdecke, wie Adjektive das Bild klarer machen.",
             "caption": "Jedes Adjektiv fügt der Szene ein weiteres Detail hinzu."
+          },
+          "peopleAndPlaces": {
+            "title": "Beschreibe Personen und Orte",
+            "lead": "Dieselben Regeln helfen dir, über Gesichter, Haare, Zimmer, Spielsachen und Bilder zu sprechen.",
+            "caption": "Setze das Adjektiv jedes Mal vor das Nomen."
+          },
+          "studyAndPlay": {
+            "title": "Beschreibe Lernen und Spielen",
+            "lead": "Dieselben Regeln funktionieren auch, wenn du über desk, lamp, book, slide, kite und bench sprichst.",
+            "caption": "Ein Adjektiv kann in jeder Szene Farbe, Größe, Alter oder Gefühl verändern."
           },
           "wordBank": {
             "title": "Wortbank",

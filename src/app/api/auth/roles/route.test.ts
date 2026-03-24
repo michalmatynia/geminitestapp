@@ -9,7 +9,53 @@ const { authMock, logSystemEventMock, getErrorFingerprintMock } = vi.hoisted(() 
 
 const loadRoute = async () => {
   vi.resetModules();
-  vi.unmock('@/shared/lib/api/api-handler');
+  vi.doMock('@/shared/lib/api/api-handler', async () => {
+    const { NextResponse } = await import('next/server');
+    return {
+      apiHandler:
+        (
+          handler: (req: NextRequest, ctx: { requestId: string; body?: unknown }) => Promise<Response>,
+          options: { parseJsonBody?: boolean; bodySchema?: { safeParse: (value: unknown) => { success: boolean; data?: unknown } } }
+        ) =>
+        async (req: NextRequest): Promise<Response> => {
+          const ctx: { requestId: string; body?: unknown } = { requestId: 'test-request-id' };
+
+          if (options.parseJsonBody) {
+            let parsed: unknown;
+            try {
+              const raw = await req.text();
+              parsed = raw.trim() ? JSON.parse(raw) : undefined;
+            } catch {
+              return NextResponse.json(
+                {
+                  error: 'Invalid JSON payload',
+                  code: 'BAD_REQUEST',
+                },
+                { status: 400 }
+              );
+            }
+
+            if (options.bodySchema && parsed !== undefined) {
+              const validation = options.bodySchema.safeParse(parsed);
+              if (!validation.success) {
+                return NextResponse.json(
+                  {
+                    error: 'Please review the highlighted fields and try again.',
+                    code: 'VALIDATION_ERROR',
+                  },
+                  { status: 400 }
+                );
+              }
+              ctx.body = validation.data;
+            } else {
+              ctx.body = parsed;
+            }
+          }
+
+          return handler(req, ctx);
+        },
+    };
+  });
   vi.doMock('@/features/auth/auth', () => ({
     auth: authMock,
   }));

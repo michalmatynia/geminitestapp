@@ -1,6 +1,7 @@
 // @ts-nocheck
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
@@ -22,7 +23,6 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import {
   addXp,
   createTrainingReward,
-  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
@@ -83,6 +83,7 @@ type ClockFeedback = {
 };
 
 export default function ClockTrainingGame(props: ClockTrainingGameProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const {
     completionPrimaryActionLabel,
     enableAdaptiveRetry = true,
@@ -145,7 +146,6 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
 
   const handleDone = useCallback(
     (finalScore: number): void => {
-      const ownerKey = getProgressOwnerKey();
       const progress = loadProgress({ ownerKey });
       const reward = createTrainingReward(progress, {
         activityKey: `training:clock:${section}`,
@@ -183,7 +183,7 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
         });
       }
     },
-    [gameMode, onChallengeSuccess, onPracticeCompleted, section, tasks.length]
+    [gameMode, onChallengeSuccess, onPracticeCompleted, ownerKey, section, tasks.length]
   );
 
   const clearAdvanceTimeout = useCallback((): void => {

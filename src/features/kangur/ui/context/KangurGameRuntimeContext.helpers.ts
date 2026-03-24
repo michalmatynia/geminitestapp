@@ -17,7 +17,6 @@ import {
   addXp,
   createGameSessionReward,
   getNextLockedBadge,
-  getProgressSubject,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import {
@@ -62,7 +61,7 @@ type BuildKangurCompletedGameOutcomeInput = {
   nextScore: number;
   operation: KangurOperation | null;
   ownerKey?: string | null;
-  subject?: KangurLessonSubject;
+  subject: KangurLessonSubject;
   taken: number;
   totalQuestions: number;
   allowRewards?: boolean;
@@ -187,7 +186,7 @@ export const buildKangurCompletedGameOutcome = ({
   nextScore,
   operation,
   ownerKey,
-  subject: inputSubject,
+  subject,
   taken,
   totalQuestions,
   allowRewards = true,
@@ -216,7 +215,6 @@ export const buildKangurCompletedGameOutcome = ({
   const storedProgress = loadProgress(
     ownerKey !== undefined ? { ownerKey } : undefined
   );
-  const subject = inputSubject ?? getProgressSubject();
   const sessionReward = createGameSessionReward(storedProgress, {
     operation: selectedOperation,
     difficulty,

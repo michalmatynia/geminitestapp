@@ -6,6 +6,10 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+const { useSocialPostContextMock } = vi.hoisted(() => ({
+  useSocialPostContextMock: vi.fn(),
+}));
+
 vi.mock('@/features/kangur/shared/ui', () => ({
   ActionMenu: ({
     ariaLabel,
@@ -31,7 +35,17 @@ vi.mock('@/features/kangur/shared/ui', () => ({
     </button>
   ),
   Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+  DropdownMenuLabel: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenuSeparator: () => <hr />,
+  DropdownMenuTrigger: ({
+    children,
+  }: {
+    children: React.ReactNode;
+    asChild?: boolean;
+  }) => <>{children}</>,
   SelectSimple: ({
     value,
     onValueChange,
@@ -89,6 +103,10 @@ vi.mock('@/features/kangur/shared/ui', () => ({
   ),
 }));
 
+vi.mock('./SocialPostContext', () => ({
+  useSocialPostContext: () => useSocialPostContextMock(),
+}));
+
 import { SocialPostList } from './SocialPost.List';
 
 const buildPost = () => ({
@@ -133,13 +151,14 @@ describe('SocialPostList', () => {
       status: index === 8 ? ('published' as const) : ('draft' as const),
     }));
 
-    render(
-      <SocialPostList
-        posts={posts}
-        activePostId='post-1'
-        onSelectPost={vi.fn()}
-      />
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        posts,
+        activePostId: 'post-1',
+      })
     );
+
+    render(<SocialPostList />);
 
     expect(screen.getByLabelText('Search social posts')).toBeInTheDocument();
     expect(screen.getByLabelText('Filter posts by status')).toBeInTheDocument();
@@ -165,17 +184,19 @@ describe('SocialPostList', () => {
   });
 
   it('opens the modal from the post name without row hover zoom treatment', () => {
-    const onSelectPost = vi.fn();
-    const onOpenPost = vi.fn();
+    const setActivePostId = vi.fn();
+    const handleOpenPostEditor = vi.fn();
 
-    render(
-      <SocialPostList
-        posts={[buildPost()]}
-        activePostId='post-1'
-        onSelectPost={onSelectPost}
-        onOpenPost={onOpenPost}
-      />
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        posts: [buildPost()],
+        activePostId: 'post-1',
+        setActivePostId,
+        handleOpenPostEditor,
+      })
     );
+
+    render(<SocialPostList />);
 
     const row = screen.getByTestId('social-post-row-post-1');
     expect(row).not.toHaveClass('motion-safe:hover:scale-[1.01]');
@@ -187,44 +208,47 @@ describe('SocialPostList', () => {
 
     fireEvent.click(nameButton);
 
-    expect(onSelectPost).toHaveBeenCalledWith('post-1');
-    expect(onOpenPost).toHaveBeenCalledWith('post-1');
+    expect(setActivePostId).toHaveBeenCalledWith('post-1');
+    expect(handleOpenPostEditor).toHaveBeenCalledWith('post-1');
   });
 
   it('keeps delete actions separate from opening the post modal', () => {
-    const onSelectPost = vi.fn();
-    const onOpenPost = vi.fn();
-    const onDeletePost = vi.fn();
     const post = buildPost();
+    const setActivePostId = vi.fn();
+    const handleOpenPostEditor = vi.fn();
+    const setPostToDelete = vi.fn();
 
-    render(
-      <SocialPostList
-        posts={[post]}
-        activePostId='post-1'
-        onSelectPost={onSelectPost}
-        onOpenPost={onOpenPost}
-        onDeletePost={onDeletePost}
-      />
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        posts: [post],
+        activePostId: 'post-1',
+        setActivePostId,
+        handleOpenPostEditor,
+        setPostToDelete,
+      })
     );
+
+    render(<SocialPostList />);
 
     expect(screen.getByRole('button', { name: 'Open post actions' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Delete post permanently' }));
 
-    expect(onDeletePost).toHaveBeenCalledWith(post);
-    expect(onSelectPost).not.toHaveBeenCalled();
-    expect(onOpenPost).not.toHaveBeenCalled();
+    expect(setPostToDelete).toHaveBeenCalledWith(post);
+    expect(setActivePostId).not.toHaveBeenCalled();
+    expect(handleOpenPostEditor).not.toHaveBeenCalled();
   });
 
   it('renders the shared posts loader while posts are loading', () => {
-    render(
-      <SocialPostList
-        posts={[]}
-        activePostId={null}
-        isLoading={true}
-        onSelectPost={vi.fn()}
-      />
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        posts: [],
+        activePostId: null,
+        postsQuery: { isLoading: true },
+      })
     );
+
+    render(<SocialPostList />);
 
     expect(screen.getByRole('status')).toHaveTextContent('Loading social posts...');
     expect(
@@ -232,3 +256,23 @@ describe('SocialPostList', () => {
     ).not.toBeInTheDocument();
   });
 });
+
+function buildSocialPostContextState(
+  overrides: Record<string, unknown> = {}
+): Record<string, unknown> {
+  return {
+    posts: [buildPost()],
+    activePostId: null,
+    setActivePostId: vi.fn(),
+    postsQuery: { isLoading: false },
+    handleOpenPostEditor: vi.fn(),
+    handleQuickPublishPost: vi.fn(),
+    handleUnpublishPost: vi.fn(),
+    publishingPostId: null,
+    unpublishingPostId: null,
+    setPostToDelete: vi.fn(),
+    setPostToUnpublish: vi.fn(),
+    clearDeleteError: vi.fn(),
+    ...overrides,
+  };
+}

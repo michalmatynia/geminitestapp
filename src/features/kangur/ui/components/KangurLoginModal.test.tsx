@@ -87,6 +87,7 @@ describe('KangurLoginModal', () => {
       isOpen: true,
       isRouteDriven: true,
       openLoginModal: vi.fn(),
+      showParentAuthModeTabs: true,
     });
 
     render(
@@ -98,7 +99,10 @@ describe('KangurLoginModal', () => {
     expect(closeLoginModal).not.toHaveBeenCalled();
     expect(kangurLoginPagePropsMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
+        callbackUrl: '/kangur',
         onClose: expect.any(Function),
+        parentAuthMode: 'sign-in',
+        showParentAuthModeTabs: true,
       })
     );
   });
@@ -116,6 +120,7 @@ describe('KangurLoginModal', () => {
       isOpen: true,
       isRouteDriven: false,
       openLoginModal: vi.fn(),
+      showParentAuthModeTabs: true,
     });
 
     render(
@@ -127,7 +132,38 @@ describe('KangurLoginModal', () => {
     expect(closeLoginModal).toHaveBeenCalledTimes(1);
     expect(kangurLoginPagePropsMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
+        callbackUrl: '/kangur',
         onClose: dismissLoginModal,
+        parentAuthMode: 'sign-in',
+        showParentAuthModeTabs: true,
+      })
+    );
+  });
+
+  it('passes the requested callback and create-account mode through to the login page', () => {
+    useKangurLoginModalMock.mockReturnValue({
+      authMode: 'create-account',
+      callbackUrl: '/lessons?focus=division',
+      closeLoginModal: vi.fn(),
+      dismissLoginModal: vi.fn(),
+      homeHref: '/kangur',
+      isOpen: true,
+      isRouteDriven: false,
+      openLoginModal: vi.fn(),
+      showParentAuthModeTabs: false,
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <KangurLoginModal />
+      </QueryClientProvider>
+    );
+
+    expect(kangurLoginPagePropsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        callbackUrl: '/lessons?focus=division',
+        parentAuthMode: 'create-account',
+        showParentAuthModeTabs: false,
       })
     );
   });

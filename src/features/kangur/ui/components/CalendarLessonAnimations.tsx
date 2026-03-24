@@ -1,8 +1,29 @@
+import React, { useId } from 'react';
+
+function useCalendarAnimationSurfaceIds(prefix: string): {
+  clipId: string;
+  panelGradientId: string;
+  atmosphereId: string;
+  accentGradientId: string;
+} {
+  const baseId = useId().replace(/:/g, '');
+
+  return {
+    clipId: `${prefix}-${baseId}-clip`,
+    panelGradientId: `${prefix}-${baseId}-panel`,
+    atmosphereId: `${prefix}-${baseId}-atmosphere`,
+    accentGradientId: `${prefix}-${baseId}-accent`,
+  };
+}
+
 export function CalendarDaysStripAnimation(): React.JSX.Element {
+  const surfaceIds = useCalendarAnimationSurfaceIds('calendar-days-strip');
+
   return (
     <svg
       aria-label='Animacja: dni tygodnia podświetlają się po kolei.'
       className='h-auto w-full'
+      data-testid='calendar-days-strip-animation'
       role='img'
       viewBox='0 0 360 90'
     >
@@ -11,6 +32,8 @@ export function CalendarDaysStripAnimation(): React.JSX.Element {
           fill: #e2e8f0;
           animation: dayPulse 3.5s ease-in-out infinite;
         }
+        .panel { stroke: rgba(34, 197, 94, 0.22); stroke-width: 2; }
+        .frame { fill: none; stroke: rgba(255, 255, 255, 0.72); stroke-width: 1.5; }
         .d2 { animation-delay: 0.5s; }
         .d3 { animation-delay: 1s; }
         .d4 { animation-delay: 1.5s; }
@@ -25,6 +48,22 @@ export function CalendarDaysStripAnimation(): React.JSX.Element {
           .day { animation: none; fill: #34d399; opacity: 1; }
         }
       `}</style>
+      <defs>
+        <clipPath id={surfaceIds.clipId}>
+          <rect x='8' y='14' width='344' height='56' rx='18' />
+        </clipPath>
+        <linearGradient id={surfaceIds.panelGradientId} x1='8' x2='352' y1='14' y2='70' gradientUnits='userSpaceOnUse'>
+          <stop offset='0%' stopColor='#eff6ff' />
+          <stop offset='55%' stopColor='#f8fafc' />
+          <stop offset='100%' stopColor='#ecfdf5' />
+        </linearGradient>
+      </defs>
+      <g clipPath={`url(#${surfaceIds.clipId})`} data-testid='calendar-days-strip-atmosphere'>
+        <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} x='8' y='14' width='344' height='56' rx='18' />
+        <ellipse cx='74' cy='24' fill='rgba(34, 197, 94, 0.1)' rx='66' ry='14' />
+        <ellipse cx='288' cy='72' fill='rgba(56, 189, 248, 0.08)' rx='100' ry='16' />
+      </g>
+      <rect className='frame' data-testid='calendar-days-strip-frame' x='14' y='20' width='332' height='44' rx='14' />
       {['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Nd'].map((label, index) => (
         <g key={label}>
           <rect
@@ -52,15 +91,20 @@ export function CalendarDaysStripAnimation(): React.JSX.Element {
 }
 
 export function CalendarWeekendPulseAnimation(): React.JSX.Element {
+  const surfaceIds = useCalendarAnimationSurfaceIds('calendar-weekend-pulse');
+
   return (
     <svg
       aria-label='Animacja: weekend wyróżniony w tygodniu.'
       className='h-auto w-full'
+      data-testid='calendar-weekend-pulse-animation'
       role='img'
       viewBox='0 0 360 90'
     >
       <style>{`
         .day { fill: #e2e8f0; }
+        .panel { stroke: rgba(244, 114, 182, 0.22); stroke-width: 2; }
+        .frame { fill: none; stroke: rgba(255, 255, 255, 0.72); stroke-width: 1.5; }
         .weekend {
           fill: #fda4af;
           animation: weekendPulse 2.6s ease-in-out infinite;
@@ -73,6 +117,22 @@ export function CalendarWeekendPulseAnimation(): React.JSX.Element {
           .weekend { animation: none; opacity: 1; }
         }
       `}</style>
+      <defs>
+        <clipPath id={surfaceIds.clipId}>
+          <rect x='8' y='14' width='344' height='56' rx='18' />
+        </clipPath>
+        <linearGradient id={surfaceIds.panelGradientId} x1='8' x2='352' y1='14' y2='70' gradientUnits='userSpaceOnUse'>
+          <stop offset='0%' stopColor='#fff1f2' />
+          <stop offset='55%' stopColor='#f8fafc' />
+          <stop offset='100%' stopColor='#fff7ed' />
+        </linearGradient>
+      </defs>
+      <g clipPath={`url(#${surfaceIds.clipId})`} data-testid='calendar-weekend-pulse-atmosphere'>
+        <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} x='8' y='14' width='344' height='56' rx='18' />
+        <ellipse cx='88' cy='24' fill='rgba(244, 114, 182, 0.1)' rx='70' ry='14' />
+        <ellipse cx='286' cy='72' fill='rgba(251, 191, 36, 0.08)' rx='96' ry='16' />
+      </g>
+      <rect className='frame' data-testid='calendar-weekend-pulse-frame' x='14' y='20' width='332' height='44' rx='14' />
       {['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Nd'].map((label, index) => {
         const isWeekend = index >= 5;
         return (
@@ -103,16 +163,21 @@ export function CalendarWeekendPulseAnimation(): React.JSX.Element {
 }
 
 export function CalendarMonthsLoopAnimation(): React.JSX.Element {
+  const surfaceIds = useCalendarAnimationSurfaceIds('calendar-months-loop');
+
   return (
     <svg
       aria-label='Animacja: miesiące roku krążą w pętli.'
       className='h-auto w-full'
+      data-testid='calendar-months-loop-animation'
       role='img'
       viewBox='0 0 240 180'
     >
       <style>{`
         .ring { fill: none; stroke: #e2e8f0; stroke-dasharray: 6 6; }
         .dot { fill: #cbd5f5; }
+        .panel { stroke: rgba(99, 102, 241, 0.22); stroke-width: 2; }
+        .frame { fill: none; stroke: rgba(255, 255, 255, 0.72); stroke-width: 1.5; }
         .highlight {
           fill: #6366f1;
           animation: spin 6s linear infinite;
@@ -126,6 +191,22 @@ export function CalendarMonthsLoopAnimation(): React.JSX.Element {
           .highlight { animation: none; }
         }
       `}</style>
+      <defs>
+        <clipPath id={surfaceIds.clipId}>
+          <rect x='16' y='12' width='208' height='156' rx='24' />
+        </clipPath>
+        <linearGradient id={surfaceIds.panelGradientId} x1='16' x2='224' y1='12' y2='168' gradientUnits='userSpaceOnUse'>
+          <stop offset='0%' stopColor='#eef2ff' />
+          <stop offset='58%' stopColor='#f8fafc' />
+          <stop offset='100%' stopColor='#eff6ff' />
+        </linearGradient>
+      </defs>
+      <g clipPath={`url(#${surfaceIds.clipId})`} data-testid='calendar-months-loop-atmosphere'>
+        <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} x='16' y='12' width='208' height='156' rx='24' />
+        <ellipse cx='84' cy='32' fill='rgba(99, 102, 241, 0.1)' rx='56' ry='18' />
+        <ellipse cx='170' cy='162' fill='rgba(59, 130, 246, 0.08)' rx='72' ry='18' />
+      </g>
+      <rect className='frame' data-testid='calendar-months-loop-frame' x='22' y='18' width='196' height='144' rx='20' />
       <circle className='ring' cx='120' cy='90' r='58' />
       {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((index) => {
         const angle = (index / 12) * Math.PI * 2;
@@ -147,15 +228,20 @@ export function CalendarMonthsLoopAnimation(): React.JSX.Element {
 }
 
 export function CalendarSeasonsCycleAnimation(): React.JSX.Element {
+  const surfaceIds = useCalendarAnimationSurfaceIds('calendar-seasons-cycle');
+
   return (
     <svg
       aria-label='Animacja: pory roku zmieniają się cyklicznie.'
       className='h-auto w-full'
+      data-testid='calendar-seasons-cycle-animation'
       role='img'
       viewBox='0 0 240 180'
     >
       <style>{`
         .season { opacity: 0.35; animation: seasonPulse 4s ease-in-out infinite; }
+        .panel { stroke: rgba(34, 197, 94, 0.22); stroke-width: 2; }
+        .frame { fill: none; stroke: rgba(255, 255, 255, 0.72); stroke-width: 1.5; }
         .s2 { animation-delay: 1s; }
         .s3 { animation-delay: 2s; }
         .s4 { animation-delay: 3s; }
@@ -167,6 +253,15 @@ export function CalendarSeasonsCycleAnimation(): React.JSX.Element {
           .season { animation: none; opacity: 1; }
         }
       `}</style>
+      <defs>
+        <linearGradient id={surfaceIds.panelGradientId} x1='16' x2='224' y1='12' y2='168' gradientUnits='userSpaceOnUse'>
+          <stop offset='0%' stopColor='#ecfdf5' />
+          <stop offset='55%' stopColor='#f8fafc' />
+          <stop offset='100%' stopColor='#eff6ff' />
+        </linearGradient>
+      </defs>
+      <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} x='16' y='12' width='208' height='156' rx='24' data-testid='calendar-seasons-cycle-atmosphere' />
+      <rect className='frame' data-testid='calendar-seasons-cycle-frame' x='22' y='18' width='196' height='144' rx='20' />
       <circle cx='120' cy='90' r='70' fill='#f8fafc' stroke='#e2e8f0' />
       <circle className='season' cx='120' cy='40' r='22' fill='#34d399' />
       <circle className='season s2' cx='170' cy='90' r='22' fill='#f59e0b' />
@@ -181,15 +276,20 @@ export function CalendarSeasonsCycleAnimation(): React.JSX.Element {
 }
 
 export function CalendarDateFormatAnimation(): React.JSX.Element {
+  const surfaceIds = useCalendarAnimationSurfaceIds('calendar-date-format');
+
   return (
     <svg
       aria-label='Animacja: dzień, miesiąc i rok w zapisie daty.'
       className='h-auto w-full'
+      data-testid='calendar-date-format-animation'
       role='img'
       viewBox='0 0 320 120'
     >
       <style>{`
-        .box { fill: #eef2ff; stroke: #c7d2fe; stroke-width: 2; }
+        .box { stroke: #c7d2fe; stroke-width: 2; }
+        .panel { stroke: rgba(99, 102, 241, 0.22); stroke-width: 2; }
+        .frame { fill: none; stroke: rgba(255, 255, 255, 0.72); stroke-width: 1.5; }
         .hi { animation: glow 3s ease-in-out infinite; }
         .h2 { animation-delay: 1s; }
         .h3 { animation-delay: 2s; }
@@ -201,9 +301,30 @@ export function CalendarDateFormatAnimation(): React.JSX.Element {
           .hi { animation: none; opacity: 1; }
         }
       `}</style>
-      <rect className='box hi' x='30' y='40' width='70' height='40' rx='12' />
-      <rect className='box hi h2' x='120' y='40' width='70' height='40' rx='12' />
-      <rect className='box hi h3' x='210' y='40' width='80' height='40' rx='12' />
+      <defs>
+        <linearGradient id={surfaceIds.panelGradientId} x1='16' x2='304' y1='20' y2='100' gradientUnits='userSpaceOnUse'>
+          <stop offset='0%' stopColor='#eef2ff' />
+          <stop offset='55%' stopColor='#f8fafc' />
+          <stop offset='100%' stopColor='#eff6ff' />
+        </linearGradient>
+        <linearGradient id={`${surfaceIds.accentGradientId}-day`} x1='30' x2='100' y1='40' y2='80' gradientUnits='userSpaceOnUse'>
+          <stop offset='0%' stopColor='#e0e7ff' />
+          <stop offset='100%' stopColor='#c7d2fe' />
+        </linearGradient>
+        <linearGradient id={`${surfaceIds.accentGradientId}-month`} x1='120' x2='190' y1='40' y2='80' gradientUnits='userSpaceOnUse'>
+          <stop offset='0%' stopColor='#dbeafe' />
+          <stop offset='100%' stopColor='#bfdbfe' />
+        </linearGradient>
+        <linearGradient id={`${surfaceIds.accentGradientId}-year`} x1='210' x2='290' y1='40' y2='80' gradientUnits='userSpaceOnUse'>
+          <stop offset='0%' stopColor='#dcfce7' />
+          <stop offset='100%' stopColor='#bbf7d0' />
+        </linearGradient>
+      </defs>
+      <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} x='16' y='20' width='288' height='72' rx='20' data-testid='calendar-date-format-atmosphere' />
+      <rect className='frame' data-testid='calendar-date-format-frame' x='22' y='26' width='276' height='60' rx='16' />
+      <rect className='box hi' x='30' y='40' width='70' height='40' rx='12' fill={`url(#${surfaceIds.accentGradientId}-day)`} />
+      <rect className='box hi h2' x='120' y='40' width='70' height='40' rx='12' fill={`url(#${surfaceIds.accentGradientId}-month)`} />
+      <rect className='box hi h3' x='210' y='40' width='80' height='40' rx='12' fill={`url(#${surfaceIds.accentGradientId}-year)`} />
       <text fill='#3730a3' fontSize='14' fontWeight='700' x='50' y='66'>DD</text>
       <text fill='#3730a3' fontSize='14' fontWeight='700' x='140' y='66'>MM</text>
       <text fill='#3730a3' fontSize='14' fontWeight='700' x='230' y='66'>RRRR</text>
@@ -214,15 +335,20 @@ export function CalendarDateFormatAnimation(): React.JSX.Element {
 }
 
 export function CalendarDateHighlightAnimation(): React.JSX.Element {
+  const surfaceIds = useCalendarAnimationSurfaceIds('calendar-date-highlight');
+
   return (
     <svg
       aria-label='Animacja: wybieramy konkretny dzień w kalendarzu.'
       className='h-auto w-full'
+      data-testid='calendar-date-highlight-animation'
       role='img'
       viewBox='0 0 240 160'
     >
       <style>{`
         .cell { fill: #e2e8f0; }
+        .panel { stroke: rgba(99, 102, 241, 0.22); stroke-width: 2; }
+        .frame { fill: none; stroke: rgba(255, 255, 255, 0.72); stroke-width: 1.5; }
         .active {
           fill: #6366f1;
           animation: pick 3.2s ease-in-out infinite;
@@ -235,6 +361,15 @@ export function CalendarDateHighlightAnimation(): React.JSX.Element {
           .active { animation: none; opacity: 1; }
         }
       `}</style>
+      <defs>
+        <linearGradient id={surfaceIds.panelGradientId} x1='16' x2='224' y1='18' y2='142' gradientUnits='userSpaceOnUse'>
+          <stop offset='0%' stopColor='#eef2ff' />
+          <stop offset='55%' stopColor='#f8fafc' />
+          <stop offset='100%' stopColor='#eff6ff' />
+        </linearGradient>
+      </defs>
+      <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} x='16' y='18' width='208' height='124' rx='20' data-testid='calendar-date-highlight-atmosphere' />
+      <rect className='frame' data-testid='calendar-date-highlight-frame' x='22' y='24' width='196' height='112' rx='16' />
       {Array.from({ length: 21 }).map((_, index) => {
         const col = index % 7;
         const row = Math.floor(index / 7);
@@ -258,15 +393,20 @@ export function CalendarDateHighlightAnimation(): React.JSX.Element {
 }
 
 export function CalendarMonthLengthAnimation(): React.JSX.Element {
+  const surfaceIds = useCalendarAnimationSurfaceIds('calendar-month-length');
+
   return (
     <svg
       aria-label='Animacja: miesiące mają różną liczbę dni.'
       className='h-auto w-full'
+      data-testid='calendar-month-length-animation'
       role='img'
       viewBox='0 0 320 120'
     >
       <style>{`
         .bar { fill: #cbd5f5; }
+        .panel { stroke: rgba(99, 102, 241, 0.22); stroke-width: 2; }
+        .frame { fill: none; stroke: rgba(255, 255, 255, 0.72); stroke-width: 1.5; }
         .long { fill: #6366f1; animation: glow 3s ease-in-out infinite; }
         .mid { fill: #38bdf8; animation: glow 3s ease-in-out infinite 1s; }
         .short { fill: #fda4af; animation: glow 3s ease-in-out infinite 2s; }
@@ -278,6 +418,15 @@ export function CalendarMonthLengthAnimation(): React.JSX.Element {
           .long, .mid, .short { animation: none; opacity: 1; }
         }
       `}</style>
+      <defs>
+        <linearGradient id={surfaceIds.panelGradientId} x1='20' x2='300' y1='24' y2='96' gradientUnits='userSpaceOnUse'>
+          <stop offset='0%' stopColor='#eef2ff' />
+          <stop offset='55%' stopColor='#f8fafc' />
+          <stop offset='100%' stopColor='#fff7ed' />
+        </linearGradient>
+      </defs>
+      <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} x='20' y='24' width='280' height='64' rx='18' data-testid='calendar-month-length-atmosphere' />
+      <rect className='frame' data-testid='calendar-month-length-frame' x='26' y='30' width='268' height='52' rx='14' />
       <rect className='bar long' x='30' y='50' width='90' height='20' rx='10' />
       <rect className='bar mid' x='130' y='50' width='70' height='20' rx='10' />
       <rect className='bar short' x='210' y='50' width='50' height='20' rx='10' />

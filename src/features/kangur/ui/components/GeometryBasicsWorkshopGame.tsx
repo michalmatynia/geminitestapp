@@ -1,5 +1,6 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
 import { useMemo, useRef, useState } from 'react';
@@ -35,7 +36,6 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import {
   addXp,
   createLessonPracticeReward,
-  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import {
@@ -295,6 +295,7 @@ export default function GeometryBasicsWorkshopGame({
   finishLabel,
   onFinish,
 }: KangurMiniGameFinishProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
   const summaryFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
@@ -389,7 +390,6 @@ export default function GeometryBasicsWorkshopGame({
     setScore(nextScore);
 
     if (roundIndex + 1 >= TOTAL_ROUNDS) {
-      const ownerKey = getProgressOwnerKey();
       const progress = loadProgress({ ownerKey });
       const reward = createLessonPracticeReward(
         progress,

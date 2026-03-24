@@ -1,5 +1,6 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
@@ -43,7 +44,6 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import {
   addXp,
   createLessonPracticeReward,
-  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
@@ -145,6 +145,7 @@ export default function LogicalAnalogiesRelationGame({
   finishLabel,
   onFinish,
 }: KangurMiniGameFinishProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
   const t = (
@@ -280,7 +281,6 @@ export default function LogicalAnalogiesRelationGame({
   const goToNextRound = (): void => {
     if (roundIndex + 1 >= TOTAL_ROUNDS) {
       if (TOTAL_TARGETS > 0) {
-        const ownerKey = getProgressOwnerKey();
         const progress = loadProgress({ ownerKey });
         const reward = createLessonPracticeReward(
           progress,

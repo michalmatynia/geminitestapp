@@ -1,10 +1,14 @@
 import { motion } from 'framer-motion';
 import { ChevronsLeft } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useCallback } from 'react';
 import {
   hasKangurLessonDocumentContent,
 } from '@/features/kangur/lesson-documents';
+import {
+  getLocalizedKangurLessonDescription,
+  getLocalizedKangurLessonTitle,
+} from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { KangurActiveLessonHeader } from '@/features/kangur/ui/components/KangurActiveLessonHeader';
 import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
 import { KangurLessonNavigationWidget } from '@/features/kangur/ui/components/KangurLessonNavigationWidget';
@@ -47,6 +51,7 @@ export function ActiveLessonView({
 }: {
   snapshot?: ActiveLessonRenderSnapshot;
 }) {
+  const locale = useLocale();
   const translations = useTranslations('KangurLessonsPage');
   const lessons = useLessons();
   const {
@@ -123,6 +128,22 @@ export function ActiveLessonView({
     handleReturnToLessonList();
   }, [activeLessonContentRef, handleReturnToLessonList]);
 
+  const handlePrintLesson = useCallback((): void => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+
+    document.body.classList.add('kangur-print-mode');
+
+    const cleanup = (): void => {
+      document.body.classList.remove('kangur-print-mode');
+      window.removeEventListener('afterprint', cleanup);
+    };
+
+    window.addEventListener('afterprint', cleanup, { once: true });
+    window.print();
+  }, []);
+
   if (!activeLesson) {
     return null;
   }
@@ -135,6 +156,16 @@ export function ActiveLessonView({
   const ActiveLessonComponent = LESSON_COMPONENTS[activeLesson.componentId];
   const activeLessonDocument = lessonDocuments[activeLesson.id] ?? null;
   const hasActiveLessonDocContent = hasKangurLessonDocumentContent(activeLessonDocument);
+  const localizedLessonTitle = getLocalizedKangurLessonTitle(
+    activeLesson.componentId,
+    locale,
+    activeLesson.title
+  );
+  const localizedLessonDescription = getLocalizedKangurLessonDescription(
+    activeLesson.componentId,
+    locale,
+    activeLesson.description
+  );
 
   const activeLessonAssignment = lessonAssignmentsByComponent.get(activeLesson.componentId) ?? null;
   const completedActiveLessonAssignment = !activeLessonAssignment
@@ -176,6 +207,7 @@ export function ActiveLessonView({
       <KangurLessonNavigationWidget
         nextLesson={next}
         onSelectLesson={handleSelectLesson}
+        onPrintLesson={handlePrintLesson}
         prevLesson={prev}
       />
     </div>
@@ -184,8 +216,24 @@ export function ActiveLessonView({
   const lessonContentSection = (
     <div
       ref={activeLessonContentRef}
+      data-kangur-print-root='true'
+      data-testid='kangur-lesson-print-root'
       className={`flex w-full min-w-0 flex-col items-center ${LESSONS_ACTIVE_STACK_GAP_CLASSNAME}`}
     >
+      <div
+        className='kangur-print-only w-full min-w-0 max-w-5xl border-b border-slate-200 pb-4 text-center'
+        data-testid='kangur-lesson-print-heading'
+      >
+        <div className='text-sm font-semibold uppercase tracking-[0.16em] text-slate-500'>
+          {translations('title')}
+        </div>
+        <h1 className='mt-2 text-3xl font-black text-slate-900'>{localizedLessonTitle}</h1>
+        {localizedLessonDescription ? (
+          <p className='mx-auto mt-2 max-w-3xl text-sm text-slate-600'>
+            {localizedLessonDescription}
+          </p>
+        ) : null}
+      </div>
       {isSecretLessonHostActive ? (
         <KangurGlassPanel
           className='flex w-full max-w-3xl flex-col items-center text-center'

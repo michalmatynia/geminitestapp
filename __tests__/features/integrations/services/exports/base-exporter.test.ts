@@ -52,7 +52,7 @@ const createProduct = (): ProductWithImages =>
   }) as ProductWithImages;
 
 describe('buildBaseProductData producer mapping', () => {
-  it('exports producer_id for producer alias mappings', async () => {
+  it('normalizes producer aliases to manufacturer_id for single-producer exports', async () => {
     const product = createProduct();
     const payload = await buildBaseProductData(
       product,
@@ -63,19 +63,21 @@ describe('buildBaseProductData producer mapping', () => {
       }
     );
 
-    expect(payload['producer_id']).toBe('producer-local-1');
+    expect(payload['manufacturer_id']).toBe('producer-local-1');
+    expect(payload['producer_id']).toBeUndefined();
   });
 
-  it('falls back to producer id when lookup is unavailable', async () => {
+  it('falls back to manufacturer_id when lookup is unavailable', async () => {
     const product = createProduct();
     const payload = await buildBaseProductData(product, [
       { sourceKey: 'producer', targetField: 'producerIds' },
     ]);
 
-    expect(payload['producer_id']).toBe('producer-local-1');
+    expect(payload['manufacturer_id']).toBe('producer-local-1');
+    expect(payload['producer_id']).toBeUndefined();
   });
 
-  it('normalizes producerids alias and exports producer list', async () => {
+  it('normalizes producerids alias to manufacturer_id for single-producer exports', async () => {
     const product = createProduct();
     const payload = await buildBaseProductData(
       product,
@@ -86,10 +88,11 @@ describe('buildBaseProductData producer mapping', () => {
       }
     );
 
-    expect(payload['producer_ids']).toEqual(['producer-local-1']);
+    expect(payload['manufacturer_id']).toBe('producer-local-1');
+    expect(payload['producer_ids']).toBeUndefined();
   });
 
-  it('normalizes producers alias and exports producer_ids list', async () => {
+  it('normalizes producers alias to manufacturer_id for single-producer exports', async () => {
     const product = createProduct();
     const payload = await buildBaseProductData(
       product,
@@ -100,7 +103,8 @@ describe('buildBaseProductData producer mapping', () => {
       }
     );
 
-    expect(payload['producer_ids']).toEqual(['producer-local-1']);
+    expect(payload['manufacturer_id']).toBe('producer-local-1');
+    expect(payload['producer_ids']).toBeUndefined();
   });
 
   it('exports custom-field values via parameter:<id> mapping', async () => {

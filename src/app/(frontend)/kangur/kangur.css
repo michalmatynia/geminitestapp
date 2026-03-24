@@ -8,6 +8,10 @@ body[data-kangur-shell='true'] {
   scrollbar-gutter: auto;
 }
 
+.kangur-print-only {
+  display: none !important;
+}
+
 
   .kangur-max-h-screen-2 {
     max-height: calc(100vh - 2rem);
@@ -3904,5 +3908,59 @@ body[data-kangur-shell='true'] {
     }
     .tutor-badge-enter {
       animation: none !important;
+    }
+  }
+
+  @media print {
+    html,
+    body {
+      background: #ffffff !important;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+
+    body[data-kangur-shell='true'] {
+      overflow: visible !important;
+    }
+
+    body.kangur-print-mode * {
+      visibility: hidden !important;
+    }
+
+    body.kangur-print-mode [data-kangur-print-root],
+    body.kangur-print-mode [data-kangur-print-root] * {
+      visibility: visible !important;
+    }
+
+    body.kangur-print-mode .kangur-print-only {
+      display: block !important;
+    }
+
+    body.kangur-print-mode [data-kangur-print-root] {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      max-width: none !important;
+      min-width: 0 !important;
+      margin: 0 !important;
+      padding: 24px !important;
+      overflow: visible !important;
+      background: #ffffff !important;
+      color: #0f172a !important;
+      box-shadow: none !important;
+    }
+
+    body.kangur-print-mode [data-kangur-print-root] [role='button'],
+    body.kangur-print-mode [data-kangur-print-root] button {
+      display: none !important;
+    }
+
+    body.kangur-print-mode [data-kangur-print-root] img,
+    body.kangur-print-mode [data-kangur-print-root] svg,
+    body.kangur-print-mode [data-kangur-print-root] canvas,
+    body.kangur-print-mode [data-kangur-print-root] video {
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
   }

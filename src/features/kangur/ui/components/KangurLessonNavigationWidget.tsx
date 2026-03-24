@@ -1,7 +1,8 @@
 'use client';
 
+import { useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Printer } from 'lucide-react';
 
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
@@ -22,6 +23,7 @@ type KangurLessonNavigationWidgetProps = {
   prevLesson?: KangurLesson | null;
   nextLesson?: KangurLesson | null;
   onSelectLesson?: (lessonId: string) => void;
+  onPrintLesson?: () => void;
   sectionSummary?: string;
   sectionTitle?: string;
   align?: 'center' | 'start';
@@ -31,6 +33,7 @@ export function KangurLessonNavigationWidget({
   prevLesson: overridePrevLesson,
   nextLesson: overrideNextLesson,
   onSelectLesson,
+  onPrintLesson,
   sectionSummary,
   sectionTitle,
   align = 'center',
@@ -43,6 +46,9 @@ export function KangurLessonNavigationWidget({
   const prevLesson = overridePrevLesson ?? runtime?.prevLesson ?? null;
   const nextLesson = overrideNextLesson ?? runtime?.nextLesson ?? null;
   const handleSelectLesson = onSelectLesson ?? runtime?.selectLesson;
+  const handlePrintLesson = useCallback(() => {
+    onPrintLesson?.();
+  }, [onPrintLesson]);
   const panelDescription = sectionSummary;
   const panelTitle = sectionTitle;
   const isSixYearOld = ageGroup === 'six_year_old';
@@ -153,6 +159,37 @@ export function KangurLessonNavigationWidget({
           <span className='sr-only'>{nextLesson?.title ?? translations('noNextLesson')}</span>
           <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
         </KangurButton>
+
+        {onPrintLesson ? (
+          <KangurButton
+            onClick={handlePrintLesson}
+            className={cn(
+              'flex-1 justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] sm:flex-none',
+              isCoarsePointer ? 'min-h-11 touch-manipulation select-none active:scale-[0.97]' : null
+            )}
+            size='sm'
+            variant='surface'
+            data-testid='kangur-lesson-nav-print-button'
+            aria-label={translations('printLesson')}
+            title={translations('printLesson')}
+          >
+            {isSixYearOld ? (
+              <KangurVisualCueContent
+                icon='🖨️'
+                iconClassName='text-base'
+                iconTestId='kangur-lesson-nav-print-icon'
+                label={translations('printShort')}
+              />
+            ) : (
+              <>
+                <Printer className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+                <span className='text-xs font-semibold text-slate-600'>
+                  {translations('printShort')}
+                </span>
+              </>
+            )}
+          </KangurButton>
+        ) : null}
       </div>
     </nav>
   );

@@ -10,7 +10,7 @@ import {
   GeometryPerimeterSidesAnimation,
   GeometryPerimeterSumAnimation,
   GeometryPerimeterTraceAnimation,
-} from '@/features/kangur/ui/components/GeometryLessonAnimations';
+} from './GeometryLessonAnimations';
 import {
   KangurLessonCallout,
   KangurLessonCaption,

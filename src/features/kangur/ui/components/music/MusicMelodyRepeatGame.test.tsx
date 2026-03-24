@@ -38,9 +38,11 @@ vi.mock('@/features/kangur/ui/components/music/MusicMelodyRepeatGame.data', () =
   ],
 }));
 
-import MusicMelodyRepeatGame from '@/features/kangur/ui/components/music/MusicMelodyRepeatGame';
-
 class MockOscillatorNode {
+  readonly detune = {
+    value: 0,
+  };
+
   readonly frequency = {
     cancelScheduledValues: vi.fn(),
     linearRampToValueAtTime: vi.fn(),
@@ -77,21 +79,128 @@ class MockGainNode {
   disconnect = vi.fn();
 }
 
+class MockBiquadFilterNode {
+  readonly Q = {
+    value: 0,
+  };
+
+  readonly frequency = {
+    cancelScheduledValues: vi.fn(),
+    exponentialRampToValueAtTime: vi.fn((value: number) => {
+      this.frequency.value = value;
+    }),
+    linearRampToValueAtTime: vi.fn((value: number) => {
+      this.frequency.value = value;
+    }),
+    setValueAtTime: vi.fn((value: number) => {
+      this.frequency.value = value;
+    }),
+    value: 0,
+  };
+
+  type: BiquadFilterType = 'lowpass';
+  connect = vi.fn();
+  disconnect = vi.fn();
+}
+
+class MockDynamicsCompressorNode {
+  readonly attack = {
+    value: 0,
+  };
+
+  readonly knee = {
+    value: 0,
+  };
+
+  readonly ratio = {
+    value: 0,
+  };
+
+  readonly release = {
+    value: 0,
+  };
+
+  readonly threshold = {
+    value: 0,
+  };
+
+  connect = vi.fn();
+  disconnect = vi.fn();
+}
+
+class MockWaveShaperNode {
+  curve: Float32Array | null = null;
+  oversample: OverSampleType = 'none';
+  connect = vi.fn();
+  disconnect = vi.fn();
+}
+
+class MockConvolverNode {
+  buffer: AudioBuffer | null = null;
+  normalize = false;
+  connect = vi.fn();
+  disconnect = vi.fn();
+}
+
+class MockStereoPannerNode {
+  readonly pan = {
+    cancelScheduledValues: vi.fn(),
+    linearRampToValueAtTime: vi.fn((value: number) => {
+      this.pan.value = value;
+    }),
+    setValueAtTime: vi.fn((value: number) => {
+      this.pan.value = value;
+    }),
+    value: 0,
+  };
+
+  connect = vi.fn();
+  disconnect = vi.fn();
+}
+
+class MockAudioBuffer {
+  readonly channels: Float32Array[];
+
+  constructor(numberOfChannels: number, length: number) {
+    this.channels = Array.from({ length: numberOfChannels }, () => new Float32Array(length));
+  }
+
+  getChannelData(channel: number): Float32Array {
+    return this.channels[channel] ?? new Float32Array(0);
+  }
+}
+
 class MockAudioContext {
   currentTime = 0;
   destination = {};
+  sampleRate = 44_100;
   state: AudioContextState = 'running';
+  createBuffer = vi.fn(
+    (numberOfChannels: number, length: number) =>
+      new MockAudioBuffer(numberOfChannels, length) as unknown as AudioBuffer
+  );
   close = vi.fn(async () => {
     this.state = 'closed';
   });
+  createBiquadFilter = vi.fn(() => new MockBiquadFilterNode() as unknown as BiquadFilterNode);
+  createConvolver = vi.fn(() => new MockConvolverNode() as unknown as ConvolverNode);
+  createDynamicsCompressor = vi.fn(
+    () => new MockDynamicsCompressorNode() as unknown as DynamicsCompressorNode
+  );
   createGain = vi.fn(() => new MockGainNode() as unknown as GainNode);
   createOscillator = vi.fn(() => new MockOscillatorNode() as unknown as OscillatorNode);
+  createStereoPanner = vi.fn(
+    () => new MockStereoPannerNode() as unknown as StereoPannerNode
+  );
+  createWaveShaper = vi.fn(() => new MockWaveShaperNode() as unknown as WaveShaperNode);
   resume = vi.fn(async () => {
     this.state = 'running';
   });
 }
 
 describe('MusicMelodyRepeatGame', () => {
+  let MusicMelodyRepeatGame: typeof import('@/features/kangur/ui/components/music/MusicMelodyRepeatGame').default;
+
   const mockKeyRect = (element: HTMLElement, top = 0, height = 160): void => {
     Object.defineProperty(element, 'getBoundingClientRect', {
       configurable: true,
@@ -112,6 +221,7 @@ describe('MusicMelodyRepeatGame', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.clearAllMocks();
+    vi.resetModules();
     Object.defineProperty(globalThis, 'AudioContext', {
       configurable: true,
       value: MockAudioContext,
@@ -136,6 +246,9 @@ describe('MusicMelodyRepeatGame', () => {
   });
 
   it('plays the melody, lets the learner repeat it, and persists a perfect result', async () => {
+    MusicMelodyRepeatGame = (
+      await import('@/features/kangur/ui/components/music/MusicMelodyRepeatGame')
+    ).default;
     render(<MusicMelodyRepeatGame onFinish={() => undefined} />);
 
     expect(screen.getByTestId('music-melody-repeat-stage')).toHaveClass('w-full');
@@ -236,7 +349,9 @@ describe('MusicMelodyRepeatGame', () => {
       'translate-x-[2px]',
       'size-8'
     );
-    expect(screen.queryByTestId('music-melody-repeat-feedback')).not.toBeInTheDocument();
+    expect(screen.getByTestId('music-melody-repeat-feedback')).toHaveTextContent(
+      'Nacisnij przycisk play, aby uslyszec melodie.'
+    );
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Posluchaj melodii' }));
@@ -309,6 +424,9 @@ describe('MusicMelodyRepeatGame', () => {
   });
 
   it('keeps the learner on the same expected note after a wrong key press', async () => {
+    MusicMelodyRepeatGame = (
+      await import('@/features/kangur/ui/components/music/MusicMelodyRepeatGame')
+    ).default;
     render(<MusicMelodyRepeatGame onFinish={() => undefined} />);
 
     await act(async () => {
@@ -367,6 +485,9 @@ describe('MusicMelodyRepeatGame', () => {
   });
 
   it('keeps the play button centered and restarts playback immediately from the beginning', async () => {
+    MusicMelodyRepeatGame = (
+      await import('@/features/kangur/ui/components/music/MusicMelodyRepeatGame')
+    ).default;
     render(<MusicMelodyRepeatGame onFinish={() => undefined} />);
 
     expect(screen.getByTestId('music-melody-repeat-listen-button')).toHaveClass('cursor-pointer');
@@ -414,6 +535,9 @@ describe('MusicMelodyRepeatGame', () => {
   });
 
   it('supports synth-mode repetition without breaking melody scoring', async () => {
+    MusicMelodyRepeatGame = (
+      await import('@/features/kangur/ui/components/music/MusicMelodyRepeatGame')
+    ).default;
     render(<MusicMelodyRepeatGame onFinish={() => undefined} />);
 
     fireEvent.click(screen.getByTestId('music-melody-repeat-step-keyboard-mode-synth'));

@@ -159,6 +159,15 @@ describe('EnglishAdverbsFrequencyRoutineGame', () => {
     expect(
       screen.getByTestId('english-adverbs-frequency-target-cinema-sunday-cinema')
     ).toHaveTextContent('Days lit: 7/7');
+    expect(
+      screen.getByTestId('english-adverbs-frequency-target-week-cinema-sunday-cinema-clip')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('english-adverbs-frequency-target-week-cinema-sunday-cinema-atmosphere')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('english-adverbs-frequency-target-week-cinema-sunday-cinema-frame')
+    ).toBeInTheDocument();
     expect(getActiveDayCount('english-adverbs-frequency-target-week-cinema-sunday-cinema')).toBe(7);
     expect(getActiveDayCount('english-adverbs-frequency-target-week-cinema-sunday-friends')).toBe(6);
     expect(getActiveDayCount('english-adverbs-frequency-target-week-cinema-sunday-popcorn')).toBe(0);
@@ -166,6 +175,12 @@ describe('EnglishAdverbsFrequencyRoutineGame', () => {
     placeFrequency('always', 'cinema-sunday-cinema');
     placeFrequency('usually', 'cinema-sunday-friends');
     placeFrequency('never', 'cinema-sunday-popcorn');
+    expect(
+      screen.getByTestId('english-adverbs-frequency-week-cinema-sunday-cinema-atmosphere')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('english-adverbs-frequency-week-cinema-sunday-cinema-frame')
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
 
@@ -214,6 +229,21 @@ describe('EnglishAdverbsFrequencyRoutineGame', () => {
     );
     expect(screen.getByTestId('english-adverbs-frequency-summary-guide')).toHaveTextContent(
       'Read each word as a weekly pattern.'
+    );
+    expect(screen.getByTestId('english-adverbs-frequency-summary-order')).toHaveTextContent(
+      'Most to least often'
+    );
+    expect(screen.getByTestId('english-adverbs-frequency-summary-order')).toHaveTextContent(
+      'always'
+    );
+    expect(screen.getByTestId('english-adverbs-frequency-summary-order')).toHaveTextContent(
+      'usually'
+    );
+    expect(screen.getByTestId('english-adverbs-frequency-summary-order')).toHaveTextContent(
+      'sometimes'
+    );
+    expect(screen.getByTestId('english-adverbs-frequency-summary-order')).toHaveTextContent(
+      'never'
     );
     expect(
       screen.getByTestId('english-adverbs-frequency-summary-guide-always')

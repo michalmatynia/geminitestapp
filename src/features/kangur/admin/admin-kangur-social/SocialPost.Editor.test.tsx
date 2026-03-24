@@ -6,6 +6,10 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+const { useSocialPostContextMock } = vi.hoisted(() => ({
+  useSocialPostContextMock: vi.fn(),
+}));
+
 vi.mock('@/features/kangur/shared/ui', () => ({
   Button: ({
     children,
@@ -33,6 +37,10 @@ vi.mock('@/features/kangur/shared/ui', () => ({
 
 vi.mock('./SocialPost.Visuals', () => ({
   SocialPostVisuals: () => <div data-testid='social-post-visuals'>social-post-visuals</div>,
+}));
+
+vi.mock('./SocialPostContext', () => ({
+  useSocialPostContext: () => useSocialPostContextMock(),
 }));
 
 import { SocialPostEditor } from './SocialPost.Editor';
@@ -71,30 +79,17 @@ const buildPost = () => ({
 
 describe('SocialPostEditor', () => {
   it('keeps the editor post-specific and no longer renders general LinkedIn settings', () => {
-    render(
-      <SocialPostEditor
-        activePost={buildPost()}
-        editorState={{ titlePl: '', titleEn: '', bodyPl: '', bodyEn: '' }}
-        setEditorState={vi.fn()}
-        scheduledAt=''
-        setScheduledAt={vi.fn()}
-        imageAssets={[]}
-        handleRemoveImage={vi.fn()}
-        setShowMediaLibrary={vi.fn()}
-        showMediaLibrary={false}
-        handleAddImages={vi.fn()}
-        recentAddons={[]}
-        recentAddonsLoading={false}
-        selectedAddonSet={new Set<string>()}
-        handleSelectAddon={vi.fn()}
-        handleRemoveAddon={vi.fn()}
-        handleSave={vi.fn()}
-        handlePublish={vi.fn()}
-        saveMutationPending={false}
-        patchMutationPending={false}
-        publishMutationPending={false}
-      />
-    );
+    useSocialPostContextMock.mockReturnValue({
+      activePost: buildPost(),
+      editorState: { titlePl: '', titleEn: '', bodyPl: '', bodyEn: '' },
+      setEditorState: vi.fn(),
+      handleSave: vi.fn(),
+      handlePublish: vi.fn(),
+      saveMutation: { isPending: false },
+      publishMutation: { isPending: false },
+    });
+
+    render(<SocialPostEditor />);
 
     expect(screen.getByText('Post editor')).toBeInTheDocument();
     expect(screen.getByTestId('social-post-visuals')).toBeInTheDocument();

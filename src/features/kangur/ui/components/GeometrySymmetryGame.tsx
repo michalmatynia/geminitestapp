@@ -1,5 +1,6 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { Eraser } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -48,7 +49,6 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import {
   addXp,
   createTrainingReward,
-  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
@@ -112,6 +112,7 @@ const localizeSymmetryRound = (
 export default function GeometrySymmetryGame({
   onFinish,
 }: KangurMiniGameFinishActionProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const locale = useLocale();
   const translations = useTranslations('KangurMiniGames');
   const fallbackCopy = useMemo(() => getGeometrySymmetryMiniGameFallbackCopy(locale), [locale]);
@@ -442,7 +443,6 @@ export default function GeometrySymmetryGame({
         clearDrawing();
         setShowMirrorHint(false);
         if (isLastRound) {
-          const ownerKey = getProgressOwnerKey();
           const progress = loadProgress({ ownerKey });
           const reward = createTrainingReward(progress, {
             activityKey: 'training:geometry_symmetry',

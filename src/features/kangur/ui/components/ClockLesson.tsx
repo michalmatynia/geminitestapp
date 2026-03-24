@@ -1,5 +1,6 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -19,7 +20,6 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import {
   addXp,
   createLessonCompletionReward,
-  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { cn } from '@/features/kangur/shared/utils';
@@ -84,6 +84,7 @@ const localizeClockCopy = <T,>(
 };
 
 export default function ClockLesson(): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurStaticLessons.clock');
   const isCoarsePointer = useKangurCoarsePointer();
   const [sectionProgressSnapshot, setSectionProgressSnapshot] = useState<
@@ -184,13 +185,11 @@ export default function ClockLesson(): React.JSX.Element {
     if (!isClockLessonComplete || lessonCompletionAwardedRef.current) {
       return;
     }
-
-    const ownerKey = getProgressOwnerKey();
     const progress = loadProgress({ ownerKey });
     const reward = createLessonCompletionReward(progress, 'clock', 100);
     addXp(reward.xp, reward.progressUpdates, { ownerKey });
     lessonCompletionAwardedRef.current = true;
-  }, [isClockLessonComplete]);
+  }, [isClockLessonComplete, ownerKey]);
 
   const [activeTrainingPanelBySection, setActiveTrainingPanelBySection] = useState<
     Record<ClockTrainingSectionId, ClockTrainingPanelId>

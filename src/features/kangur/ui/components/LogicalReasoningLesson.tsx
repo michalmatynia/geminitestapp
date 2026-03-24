@@ -10,7 +10,7 @@ import {
   IfThenArrowAnimation,
   InductionGatherAnimation,
   QuantifierScopeAnimation,
-} from '@/features/kangur/ui/components/LogicalReasoningAnimations';
+} from './LogicalReasoningAnimations';
 import LogicalReasoningIfThenGame, {
   type LogicalReasoningIfThenCase,
   type LogicalReasoningIfThenGameCopy,

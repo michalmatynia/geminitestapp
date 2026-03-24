@@ -80,6 +80,10 @@ vi.mock('@/features/kangur/ui/services/session-score', () => ({
   persistKangurSessionScore: (...args: unknown[]) => persistKangurSessionScoreMock(...args),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurProgressOwnerKey', () => ({
+  useKangurProgressOwnerKey: () => progressOwnerState.current,
+}));
+
 import AddingSynthesisGame from '@/features/kangur/ui/components/AddingSynthesisGame';
 
 describe('AddingSynthesisGame', () => {
@@ -240,11 +244,13 @@ describe('AddingSynthesisGame', () => {
   });
 
   it('uses the latest active owner key when the reward is awarded', async () => {
-    render(<AddingSynthesisGame onFinish={vi.fn()} />);
+    const onFinish = vi.fn();
+    const { rerender } = render(<AddingSynthesisGame onFinish={onFinish} />);
 
     fireEvent.click(screen.getByRole('button', { name: /start syntezę/i }));
 
     progressOwnerState.current = 'learner-2';
+    rerender(<AddingSynthesisGame onFinish={onFinish} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Tor 2: 5' }));
 

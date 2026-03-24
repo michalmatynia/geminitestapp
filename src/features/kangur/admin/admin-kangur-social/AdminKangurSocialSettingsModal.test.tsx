@@ -6,7 +6,9 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { BRAIN_MODEL_DEFAULT_VALUE } from './AdminKangurSocialPage.Constants';
+const { useSocialPostContextMock } = vi.hoisted(() => ({
+  useSocialPostContextMock: vi.fn(),
+}));
 
 vi.mock('@/features/kangur/shared/ui', async () => {
   const ReactModule = await vi.importActual<typeof import('react')>('react');
@@ -137,12 +139,59 @@ vi.mock('@/features/kangur/shared/ui', async () => {
   };
 });
 
+vi.mock('./SocialPostContext', () => ({
+  useSocialPostContext: () => useSocialPostContextMock(),
+}));
+
 import { AdminKangurSocialSettingsModal } from './AdminKangurSocialSettingsModal';
 
 describe('AdminKangurSocialSettingsModal', () => {
   it('owns the documentation, publishing, and capture controls that were removed from the post modal', () => {
     const onBrainModelChange = vi.fn();
     const onVisionModelChange = vi.fn();
+    const onLinkedInConnectionChange = vi.fn();
+    const onProjectUrlChange = vi.fn();
+    const onDocReferenceInputChange = vi.fn();
+    const onGenerationNotesChange = vi.fn();
+    const onLoadContext = vi.fn();
+    const onGenerate = vi.fn();
+    const onPreviewDocUpdates = vi.fn();
+    const onApplyDocUpdates = vi.fn();
+    const onHandleCreateAddon = vi.fn();
+    const onBatchCaptureBaseUrlChange = vi.fn();
+    const onBatchCapturePresetLimitChange = vi.fn();
+    const onToggleCapturePreset = vi.fn();
+    const onSelectAllCapturePresets = vi.fn();
+    const onClearCapturePresets = vi.fn();
+    const onHandleBatchCapture = vi.fn();
+
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        brainModelId: 'gpt-4.1-mini',
+        visionModelId: 'gpt-4.1',
+        projectUrl: 'https://studiq.example.com/project',
+        handleBrainModelChange: onBrainModelChange,
+        handleVisionModelChange: onVisionModelChange,
+        handleLinkedInConnectionChange: onLinkedInConnectionChange,
+        setProjectUrl: onProjectUrlChange,
+        setDocReferenceInput: onDocReferenceInputChange,
+        setGenerationNotes: onGenerationNotesChange,
+        handleLoadContext: onLoadContext,
+        handleGenerate: onGenerate,
+        handlePreviewDocUpdates: onPreviewDocUpdates,
+        handleApplyDocUpdates: onApplyDocUpdates,
+        handleCreateAddon: onHandleCreateAddon,
+        setBatchCaptureBaseUrl: onBatchCaptureBaseUrlChange,
+        setBatchCapturePresetLimit: onBatchCapturePresetLimitChange,
+        handleToggleCapturePreset: onToggleCapturePreset,
+        selectAllCapturePresets: onSelectAllCapturePresets,
+        clearCapturePresets: onClearCapturePresets,
+        handleBatchCapture: onHandleBatchCapture,
+        docReferenceInput: 'overview, lessons-and-activities',
+        generationNotes: 'Focus on current product changes.',
+        resolveDocReferences: () => ['overview', 'lessons-and-activities'],
+      })
+    );
 
     render(
       <AdminKangurSocialSettingsModal
@@ -151,110 +200,6 @@ describe('AdminKangurSocialSettingsModal', () => {
         onSave={vi.fn()}
         isSaving={false}
         hasUnsavedChanges={false}
-        brainModelId='gpt-4.1-mini'
-        visionModelId='gpt-4.1'
-        projectUrl='https://studiq.example.com/project'
-        brainModelBadgeLabel='gpt-4.1-mini'
-        visionModelBadgeLabel='gpt-4.1'
-        brainModelSelectOptions={[
-          { value: BRAIN_MODEL_DEFAULT_VALUE, label: 'Use Brain routing' },
-          { value: 'gpt-4.1-mini', label: 'gpt-4.1-mini' },
-          { value: 'gpt-4.1', label: 'gpt-4.1' },
-        ]}
-        visionModelSelectOptions={[
-          { value: BRAIN_MODEL_DEFAULT_VALUE, label: 'Use Brain routing' },
-          { value: 'gpt-4.1', label: 'gpt-4.1' },
-          { value: 'gpt-4o', label: 'gpt-4o' },
-        ]}
-        brainModelLoading={false}
-        visionModelLoading={false}
-        linkedinConnectionId='linkedin-1'
-        linkedInOptions={[{ value: 'linkedin-1', label: 'Primary LinkedIn' }]}
-        linkedinIntegration={{ id: 'integration-1' }}
-        selectedLinkedInConnection={{ id: 'linkedin-1', hasLinkedInAccessToken: true }}
-        linkedInExpiryStatus='ok'
-        linkedInExpiryLabel={null}
-        linkedInDaysRemaining={null}
-        addonForm={{
-          title: '',
-          sourceUrl: '',
-          selector: '',
-          description: '',
-          waitForMs: '',
-        }}
-        setAddonForm={vi.fn()}
-        createAddonPending={false}
-        batchCaptureBaseUrl='https://studiq.example.com'
-        batchCapturePresetIds={['home']}
-        batchCapturePresetLimit={2}
-        effectiveBatchCapturePresetCount={1}
-        batchCapturePending={false}
-        batchCaptureResult={null}
-        activePost={{
-          id: 'post-1',
-          titlePl: 'StudiQ Weekly Update',
-          titleEn: 'StudiQ Weekly Update',
-          bodyPl: '',
-          bodyEn: '',
-          combinedBody: '',
-          status: 'draft',
-          scheduledAt: null,
-          publishedAt: null,
-          linkedinPostId: null,
-          linkedinUrl: null,
-          linkedinConnectionId: null,
-          brainModelId: null,
-          visionModelId: null,
-          publishError: null,
-          imageAssets: [],
-          imageAddonIds: [],
-          docReferences: [],
-          contextSummary: null,
-          generatedSummary: null,
-          visualSummary: null,
-          visualHighlights: [],
-          visualDocUpdates: [],
-          docUpdatesAppliedAt: null,
-          docUpdatesAppliedBy: null,
-          createdBy: null,
-          updatedBy: null,
-          createdAt: '2026-03-19T10:00:00.000Z',
-          updatedAt: '2026-03-19T10:00:00.000Z',
-        }}
-        contextSummary={null}
-        contextLoading={false}
-        docReferenceInput='overview, lessons-and-activities'
-        generationNotes='Focus on current product changes.'
-        docsUsed={['overview', 'lessons-and-activities']}
-        hasVisualDocUpdates={false}
-        previewDocUpdatesPending={false}
-        applyDocUpdatesPending={false}
-        docUpdatesResult={null}
-        docUpdatesAppliedAt={null}
-        docUpdatesAppliedBy={null}
-        docUpdatesAppliedCount={0}
-        docUpdatesSkippedCount={0}
-        docUpdatesPlan={null}
-        canGenerateDraft={true}
-        generateDraftBlockedReason={null}
-        socialVisionWarning={null}
-        onBrainModelChange={onBrainModelChange}
-        onVisionModelChange={onVisionModelChange}
-        onLinkedInConnectionChange={vi.fn()}
-        onProjectUrlChange={vi.fn()}
-        onDocReferenceInputChange={vi.fn()}
-        onGenerationNotesChange={vi.fn()}
-        onLoadContext={vi.fn()}
-        onGenerate={vi.fn()}
-        onPreviewDocUpdates={vi.fn()}
-        onApplyDocUpdates={vi.fn()}
-        onHandleCreateAddon={vi.fn()}
-        onBatchCaptureBaseUrlChange={vi.fn()}
-        onBatchCapturePresetLimitChange={vi.fn()}
-        onToggleCapturePreset={vi.fn()}
-        onSelectAllCapturePresets={vi.fn()}
-        onClearCapturePresets={vi.fn()}
-        onHandleBatchCapture={vi.fn()}
       />
     );
 
@@ -310,84 +255,45 @@ describe('AdminKangurSocialSettingsModal', () => {
   });
 
   it('blocks draft generation when no social or AI Brain post model is configured', () => {
-    const props = {
-      open: true,
-      onClose: vi.fn(),
-      onSave: vi.fn(),
-      isSaving: false,
-      hasUnsavedChanges: false,
-      brainModelId: null,
-      visionModelId: null,
-      projectUrl: '',
-      brainModelBadgeLabel: 'Not configured',
-      visionModelBadgeLabel: 'gemma3:12b',
-      brainModelSelectOptions: [{ value: BRAIN_MODEL_DEFAULT_VALUE, label: 'Use Brain routing' }],
-      visionModelSelectOptions: [{ value: BRAIN_MODEL_DEFAULT_VALUE, label: 'Use Brain routing' }],
-      brainModelLoading: false,
-      visionModelLoading: false,
-      linkedinConnectionId: null,
-      linkedInOptions: [],
-      linkedinIntegration: null,
-      selectedLinkedInConnection: null,
-      linkedInExpiryStatus: null,
-      linkedInExpiryLabel: null,
-      linkedInDaysRemaining: null,
-      addonForm: {
-        title: '',
-        sourceUrl: '',
-        selector: '',
-        description: '',
-        waitForMs: '',
-      },
-      setAddonForm: vi.fn(),
-      createAddonPending: false,
-      batchCaptureBaseUrl: '',
-      batchCapturePresetIds: [],
-      batchCapturePresetLimit: null,
-      effectiveBatchCapturePresetCount: 0,
-      batchCapturePending: false,
-      batchCaptureResult: null,
-      activePost: buildActivePost(),
-      contextSummary: null,
-      contextLoading: false,
-      docReferenceInput: '',
-      generationNotes: '',
-      docsUsed: [],
-      hasVisualDocUpdates: false,
-      previewDocUpdatesPending: false,
-      applyDocUpdatesPending: false,
-      docUpdatesResult: null,
-      docUpdatesAppliedAt: null,
-      docUpdatesAppliedBy: null,
-      docUpdatesAppliedCount: 0,
-      docUpdatesSkippedCount: 0,
-      docUpdatesPlan: null,
-      canGenerateDraft: false,
-      generateDraftBlockedReason:
-        'Choose a StudiQ Social post model in Settings or assign AI Brain routing in /admin/brain?tab=routing.',
-      socialVisionWarning:
-        'Visual analysis is not configured. Choose a StudiQ Social vision model in Settings or assign AI Brain routing to enable screenshot analysis.',
-      onBrainModelChange: vi.fn(),
-      onVisionModelChange: vi.fn(),
-      onLinkedInConnectionChange: vi.fn(),
-      onProjectUrlChange: vi.fn(),
-      onDocReferenceInputChange: vi.fn(),
-      onGenerationNotesChange: vi.fn(),
-      onLoadContext: vi.fn(),
-      onGenerate: vi.fn(),
-      onPreviewDocUpdates: vi.fn(),
-      onApplyDocUpdates: vi.fn(),
-      onHandleCreateAddon: vi.fn(),
-      onBatchCaptureBaseUrlChange: vi.fn(),
-      onBatchCapturePresetLimitChange: vi.fn(),
-      onToggleCapturePreset: vi.fn(),
-      onSelectAllCapturePresets: vi.fn(),
-      onClearCapturePresets: vi.fn(),
-      onHandleBatchCapture: vi.fn(),
-    } as const;
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        brainModelId: null,
+        visionModelId: null,
+        projectUrl: '',
+        brainModelOptions: {
+          effectiveModelId: null,
+          models: [],
+          isLoading: false,
+        },
+        visionModelOptions: {
+          effectiveModelId: 'gemma3:12b',
+          models: [],
+          isLoading: false,
+        },
+        linkedinConnectionId: null,
+        linkedinConnections: [],
+        linkedinIntegration: null,
+        batchCaptureBaseUrl: '',
+        batchCapturePresetIds: [],
+        batchCapturePresetLimit: null,
+        effectiveBatchCapturePresetCount: 0,
+        canGenerateSocialDraft: false,
+        socialDraftBlockedReason:
+          'Choose a StudiQ Social post model in Settings or assign AI Brain routing in /admin/brain?tab=routing.',
+        socialVisionWarning:
+          'Visual analysis is not configured. Choose a StudiQ Social vision model in Settings or assign AI Brain routing to enable screenshot analysis.',
+        resolveDocReferences: () => [],
+      })
+    );
 
     render(
-      <AdminKangurSocialSettingsModal {...props} />
+      <AdminKangurSocialSettingsModal
+        open={true}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        isSaving={false}
+        hasUnsavedChanges={false}
+      />
     );
 
     fireEvent.click(screen.getByRole('tab', { name: 'Documentation' }));
@@ -432,5 +338,80 @@ function buildActivePost() {
     updatedBy: null,
     createdAt: '2026-03-19T10:00:00.000Z',
     updatedAt: '2026-03-19T10:00:00.000Z',
+  };
+}
+
+function buildSocialPostContextState(
+  overrides: Record<string, unknown> = {}
+): Record<string, unknown> {
+  return {
+    activePost: buildActivePost(),
+    brainModelId: 'gpt-4.1-mini',
+    visionModelId: 'gpt-4.1',
+    projectUrl: 'https://studiq.example.com/project',
+    setProjectUrl: vi.fn(),
+    handleBrainModelChange: vi.fn(),
+    handleVisionModelChange: vi.fn(),
+    brainModelOptions: {
+      effectiveModelId: 'gpt-4.1-mini',
+      models: ['gpt-4.1-mini', 'gpt-4.1'],
+      isLoading: false,
+    },
+    visionModelOptions: {
+      effectiveModelId: 'gpt-4.1',
+      models: ['gpt-4.1', 'gpt-4o'],
+      isLoading: false,
+    },
+    linkedinConnectionId: 'linkedin-1',
+    handleLinkedInConnectionChange: vi.fn(),
+    linkedinConnections: [
+      {
+        id: 'linkedin-1',
+        name: 'Primary LinkedIn',
+        username: 'primary-linkedin',
+        hasLinkedInAccessToken: true,
+        linkedinExpiresAt: null,
+      },
+    ],
+    linkedinIntegration: { id: 'integration-1' },
+    docReferenceInput: 'overview, lessons-and-activities',
+    setDocReferenceInput: vi.fn(),
+    generationNotes: 'Focus on current product changes.',
+    setGenerationNotes: vi.fn(),
+    contextLoading: false,
+    handleLoadContext: vi.fn(),
+    handleGenerate: vi.fn(),
+    canGenerateSocialDraft: true,
+    socialDraftBlockedReason: null,
+    socialVisionWarning: null,
+    resolveDocReferences: () => ['overview', 'lessons-and-activities'],
+    previewDocUpdatesMutation: { isPending: false },
+    applyDocUpdatesMutation: { isPending: false },
+    handlePreviewDocUpdates: vi.fn(),
+    handleApplyDocUpdates: vi.fn(),
+    docUpdatesResult: null,
+    addonForm: {
+      title: '',
+      sourceUrl: '',
+      selector: '',
+      description: '',
+      waitForMs: '',
+    },
+    setAddonForm: vi.fn(),
+    createAddonMutation: { isPending: false },
+    handleCreateAddon: vi.fn(),
+    batchCaptureBaseUrl: 'https://studiq.example.com',
+    setBatchCaptureBaseUrl: vi.fn(),
+    batchCapturePresetIds: ['home'],
+    batchCapturePresetLimit: 2,
+    setBatchCapturePresetLimit: vi.fn(),
+    handleToggleCapturePreset: vi.fn(),
+    selectAllCapturePresets: vi.fn(),
+    clearCapturePresets: vi.fn(),
+    handleBatchCapture: vi.fn(),
+    batchCaptureMutation: { isPending: false },
+    batchCaptureResult: null,
+    effectiveBatchCapturePresetCount: 1,
+    ...overrides,
   };
 }

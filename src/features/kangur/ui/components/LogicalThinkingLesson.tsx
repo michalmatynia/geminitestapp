@@ -24,7 +24,7 @@ import {
   LogicalSummaryAnimation,
   LogicalThinkingIntroAnimation,
   LogicalThinkingStepsAnimation,
-} from '@/features/kangur/ui/components/LogicalThinkingAnimations';
+} from './LogicalThinkingAnimations';
 import {
   KangurLessonCallout,
   KangurLessonCaption,

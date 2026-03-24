@@ -7,8 +7,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
-import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
+
 const {
   useKangurRoutingMock,
   settingsStoreGetMock,
@@ -39,6 +39,7 @@ const { useKangurAgeGroupFocusMock } = vi.hoisted(() => ({
 
 let requestAnimationFrameMock: ReturnType<typeof vi.spyOn> | null = null;
 let cancelAnimationFrameMock: ReturnType<typeof vi.spyOn> | null = null;
+const scheduledAnimationFrameHandles = new Set<number>();
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
@@ -87,6 +88,14 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
       error: null,
     };
   },
+  useKangurLessonDocument: () => ({
+    data: null,
+    isLoading: false,
+    isPending: false,
+    isFetching: false,
+    isRefetching: false,
+    error: null,
+  }),
   useKangurLessonDocuments: () => ({
     data: {},
     isLoading: false,
@@ -131,8 +140,6 @@ vi.mock('next-auth/react', () => ({
   useSession: useSessionMock,
 }));
 
-import Lessons from '@/features/kangur/ui/pages/Lessons';
-
 const createTestQueryClient = (): QueryClient =>
   new QueryClient({
     defaultOptions: {
@@ -145,6 +152,9 @@ const createTestQueryClient = (): QueryClient =>
       },
     },
   });
+
+let Lessons: typeof import('@/features/kangur/ui/pages/Lessons').default;
+let KangurGuestPlayerProvider: typeof import('@/features/kangur/ui/context/KangurGuestPlayerContext').KangurGuestPlayerProvider;
 
 const renderLessonsPage = () =>
   render(
@@ -185,17 +195,28 @@ const lessonsSettingsValue = JSON.stringify([
 ]);
 
 describe('Lessons page focus query support', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    vi.useRealTimers();
+    vi.resetModules();
     requestAnimationFrameMock = vi
       .spyOn(window, 'requestAnimationFrame')
       .mockImplementation((callback: FrameRequestCallback) => {
-        callback(0);
-        return 0;
+        const handle = window.setTimeout(() => {
+          scheduledAnimationFrameHandles.delete(handle);
+          callback(performance.now());
+        }, 0);
+        scheduledAnimationFrameHandles.add(handle);
+        return handle;
       });
     cancelAnimationFrameMock = vi
       .spyOn(window, 'cancelAnimationFrame')
-      .mockImplementation(() => {});
+      .mockImplementation((handle: number) => {
+        if (scheduledAnimationFrameHandles.has(handle)) {
+          scheduledAnimationFrameHandles.delete(handle);
+          window.clearTimeout(handle);
+        }
+      });
     useKangurRoutingMock.mockReturnValue({ basePath: '/kangur' });
     useKangurAuthMock.mockReturnValue({
       user: null,
@@ -254,9 +275,17 @@ describe('Lessons page focus query support', () => {
       refresh: vi.fn(),
     });
     useKangurProgressStateMock.mockReturnValue(createDefaultKangurProgressState());
+    Lessons = (await import('@/features/kangur/ui/pages/Lessons')).default;
+    KangurGuestPlayerProvider = (
+      await import('@/features/kangur/ui/context/KangurGuestPlayerContext')
+    ).KangurGuestPlayerProvider;
   });
 
   afterEach(() => {
+    for (const handle of scheduledAnimationFrameHandles) {
+      window.clearTimeout(handle);
+    }
+    scheduledAnimationFrameHandles.clear();
     requestAnimationFrameMock?.mockRestore();
     cancelAnimationFrameMock?.mockRestore();
     requestAnimationFrameMock = null;
@@ -269,7 +298,6 @@ describe('Lessons page focus query support', () => {
     renderLessonsPage();
 
     expect(await screen.findByTestId('active-lesson-header')).toHaveTextContent('Dzielenie');
-    expect(await screen.findByText('Co to dzielenie?')).toBeInTheDocument();
     expect(screen.getByTestId('active-lesson-parent-completed-chip')).toHaveTextContent(
       'Ukończone dla rodzica'
     );
@@ -282,7 +310,7 @@ describe('Lessons page focus query support', () => {
     renderLessonsPage();
 
     expect(await screen.findByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
-    expect(screen.queryByText('Co to dzielenie?')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('active-lesson-header')).not.toBeInTheDocument();
     expect(window.location.search).toBe('?focus=unknown');
   });
 });

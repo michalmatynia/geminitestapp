@@ -19,11 +19,16 @@ vi.mock('next/navigation', () => ({
   useSearchParams: useSearchParamsMock,
 }));
 
-import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
-import {
-  KangurLoginModalProvider,
-  useKangurLoginModal,
-} from '@/features/kangur/ui/context/KangurLoginModalContext';
+type KangurRoutingProviderType =
+  typeof import('@/features/kangur/ui/context/KangurRoutingContext')['KangurRoutingProvider'];
+type KangurLoginModalProviderType =
+  typeof import('@/features/kangur/ui/context/KangurLoginModalContext')['KangurLoginModalProvider'];
+type UseKangurLoginModalType =
+  typeof import('@/features/kangur/ui/context/KangurLoginModalContext')['useKangurLoginModal'];
+
+let KangurRoutingProvider: KangurRoutingProviderType;
+let KangurLoginModalProvider: KangurLoginModalProviderType;
+let useKangurLoginModal: UseKangurLoginModalType;
 
 function LoginModalProbe(): JSX.Element {
   const {
@@ -35,6 +40,7 @@ function LoginModalProbe(): JSX.Element {
     isOpen,
     isRouteDriven,
     openLoginModal,
+    showParentAuthModeTabs,
   } = useKangurLoginModal();
 
   return (
@@ -44,6 +50,7 @@ function LoginModalProbe(): JSX.Element {
       <div data-testid='kangur-login-modal-home'>{homeHref}</div>
       <div data-testid='kangur-login-modal-open'>{String(isOpen)}</div>
       <div data-testid='kangur-login-modal-route-driven'>{String(isRouteDriven)}</div>
+      <div data-testid='kangur-login-modal-show-tabs'>{String(showParentAuthModeTabs)}</div>
       <button type='button' onClick={() => openLoginModal('/lessons?focus=division')}>
         Open lessons modal
       </button>
@@ -54,6 +61,17 @@ function LoginModalProbe(): JSX.Element {
         }
       >
         Open create-account modal
+      </button>
+      <button
+        type='button'
+        onClick={() =>
+          openLoginModal('/lessons?focus=division', {
+            authMode: 'create-account',
+            showParentAuthModeTabs: false,
+          })
+        }
+      >
+        Open create-account modal without tabs
       </button>
       <button type='button' onClick={() => openLoginModal()}>
         Open current page modal
@@ -68,7 +86,7 @@ function LoginModalProbe(): JSX.Element {
   );
 }
 
-function renderHarness({
+async function renderHarness({
   basePath = '/kangur',
   pageKey = 'Lessons',
   pathname = '/kangur/lessons',
@@ -84,26 +102,38 @@ function renderHarness({
   usePathnameMock.mockReturnValue(pathname);
   useSearchParamsMock.mockReturnValue(new URLSearchParams(search));
 
+  const RoutingProvider = KangurRoutingProvider;
+  const LoginModalProvider = KangurLoginModalProvider;
+
   return render(
-    <KangurRoutingProvider basePath={basePath} pageKey={pageKey} requestedPath={requestedPath}>
-      <KangurLoginModalProvider>
+    <RoutingProvider basePath={basePath} pageKey={pageKey} requestedPath={requestedPath}>
+      <LoginModalProvider>
         <LoginModalProbe />
-      </KangurLoginModalProvider>
-    </KangurRoutingProvider>
+      </LoginModalProvider>
+    </RoutingProvider>
   );
 }
 
 describe('KangurLoginModalProvider', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.useRealTimers();
     vi.clearAllMocks();
+    vi.resetModules();
     useRouterMock.mockReturnValue({
       push: routerPushMock,
     });
     window.history.replaceState({}, '', '/kangur/lessons?focus=division');
+
+    ({ KangurRoutingProvider } = await import(
+      '@/features/kangur/ui/context/KangurRoutingContext'
+    ));
+    ({ KangurLoginModalProvider, useKangurLoginModal } = await import(
+      '@/features/kangur/ui/context/KangurLoginModalContext'
+    ));
   });
 
-  it('treats the compatibility login route as an open route-driven modal and closes back to home', () => {
-    renderHarness({
+  it('treats the compatibility login route as an open route-driven modal and closes back to home', async () => {
+    await renderHarness({
       pageKey: 'Game',
       pathname: '/kangur/login',
       requestedPath: '/kangur',
@@ -123,12 +153,13 @@ describe('KangurLoginModalProvider', () => {
     expect(routerPushMock).toHaveBeenCalledWith('/kangur', { scroll: false });
   });
 
-  it('opens inline with an explicit callback target and dismisses without navigation', () => {
-    renderHarness({});
+  it('opens inline with an explicit callback target and dismisses without navigation', async () => {
+    await renderHarness({});
 
     expect(screen.getByTestId('kangur-login-modal-open')).toHaveTextContent('false');
     expect(screen.getByTestId('kangur-login-modal-route-driven')).toHaveTextContent('false');
     expect(screen.getByTestId('kangur-login-modal-auth-mode')).toHaveTextContent('sign-in');
+    expect(screen.getByTestId('kangur-login-modal-show-tabs')).toHaveTextContent('true');
     expect(screen.getByTestId('kangur-login-modal-callback')).toHaveTextContent(
       '/kangur/lessons'
     );
@@ -146,8 +177,8 @@ describe('KangurLoginModalProvider', () => {
     expect(routerPushMock).not.toHaveBeenCalled();
   });
 
-  it('opens inline in create-account mode when requested explicitly', () => {
-    renderHarness({});
+  it('opens inline in create-account mode when requested explicitly', async () => {
+    await renderHarness({});
 
     fireEvent.click(screen.getByRole('button', { name: 'Open create-account modal' }));
 
@@ -158,10 +189,23 @@ describe('KangurLoginModalProvider', () => {
     expect(screen.getByTestId('kangur-login-modal-callback')).toHaveTextContent(
       '/lessons?focus=division'
     );
+    expect(screen.getByTestId('kangur-login-modal-show-tabs')).toHaveTextContent('true');
   });
 
-  it('falls back to the current browser URL when opening inline without an explicit callback', () => {
-    renderHarness({});
+  it('can open inline in create-account mode with the parent auth tabs hidden', async () => {
+    await renderHarness({});
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open create-account modal without tabs' }));
+
+    expect(screen.getByTestId('kangur-login-modal-open')).toHaveTextContent('true');
+    expect(screen.getByTestId('kangur-login-modal-auth-mode')).toHaveTextContent(
+      'create-account'
+    );
+    expect(screen.getByTestId('kangur-login-modal-show-tabs')).toHaveTextContent('false');
+  });
+
+  it('falls back to the current browser URL when opening inline without an explicit callback', async () => {
+    await renderHarness({});
 
     fireEvent.click(screen.getByRole('button', { name: 'Open current page modal' }));
 
@@ -171,8 +215,8 @@ describe('KangurLoginModalProvider', () => {
     );
   });
 
-  it('reads create-account mode from the compatibility login route query', () => {
-    renderHarness({
+  it('reads create-account mode from the compatibility login route query', async () => {
+    await renderHarness({
       pageKey: 'Game',
       pathname: '/kangur/login',
       requestedPath: '/kangur',
@@ -186,8 +230,8 @@ describe('KangurLoginModalProvider', () => {
     );
   });
 
-  it('closes the canonical public login route back to root when Kangur owns the front page', () => {
-    renderHarness({
+  it('closes the canonical public login route back to root when Kangur owns the front page', async () => {
+    await renderHarness({
       basePath: '/',
       pageKey: 'Game',
       pathname: '/login',

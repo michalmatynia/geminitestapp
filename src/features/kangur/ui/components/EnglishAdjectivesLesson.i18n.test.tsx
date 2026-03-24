@@ -64,6 +64,9 @@ describe('EnglishAdjectivesLesson i18n', () => {
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};
     expect(slides.intro?.[0]?.title).toBe('Adjektive malen ein Bild');
+    expect(slides.intro?.[1]?.title).toBe('Personen, Orte, Dinge');
+    expect(slides.order?.[1]?.title).toBe('Baue eine klare Wortgruppe');
+    expect(slides.describe?.[2]?.title).toBe('Beschreibe Lernen und Spielen');
 
     render(<>{slides.intro?.[0]?.content}</>);
 
@@ -74,6 +77,22 @@ describe('EnglishAdjectivesLesson i18n', () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText('big yellow cupboard, soft rug, long blue curtains')
+    ).toBeInTheDocument();
+
+    render(<>{slides.intro?.[1]?.content}</>);
+
+    expect(
+      screen.getByText(
+        'Du kannst Adjektive für Personen, Orte oder einzelne Dinge benutzen. Sie funktionieren fast überall im Satz.'
+      )
+    ).toBeInTheDocument();
+
+    render(<>{slides.describe?.[2]?.content}</>);
+
+    expect(
+      screen.getByText(
+        'Dieselben Regeln funktionieren auch, wenn du über desk, lamp, book, slide, kite und bench sprichst.'
+      )
     ).toBeInTheDocument();
   });
 });

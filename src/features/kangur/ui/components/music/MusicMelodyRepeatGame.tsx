@@ -1,5 +1,6 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -25,7 +26,6 @@ import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurM
 import {
   addXp,
   createLessonPracticeReward,
-  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
@@ -64,7 +64,8 @@ const LESSON_KEY = 'music_diatonic_scale';
 const TOTAL_ROUNDS = MUSIC_MELODY_REPEAT_ROUNDS.length;
 const PLAYBACK_DURATION_MS = 420;
 
-const buildRoundStartMessage = (): string => '';
+const buildRoundStartMessage = (): string =>
+  'Nacisnij przycisk play, aby uslyszec melodie.';
 
 const resolveExpectedNoteMessage = (noteId: DiatonicNoteId): string =>
   `Teraz dotknij dzwieku ${DIATONIC_PIANO_KEYS_BY_ID[noteId].spokenLabel}.`;
@@ -72,6 +73,7 @@ const resolveExpectedNoteMessage = (noteId: DiatonicNoteId): string =>
 export default function MusicMelodyRepeatGame({
   onFinish,
 }: KangurMiniGameFinishActionProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const isCoarsePointer = useKangurCoarsePointer();
   const isMobileViewport = useKangurMobileBreakpoint();
   const isCompactMobile = isCoarsePointer || isMobileViewport;
@@ -106,7 +108,7 @@ export default function MusicMelodyRepeatGame({
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const [attemptOutcome, setAttemptOutcome] = useState<MusicRoundOutcome>(null);
-  const [hadErrorInCurrentRound, setHadErrorInCurrentRound] = useState(false);
+  const [errorCountInCurrentRound, setErrorCountInCurrentRound] = useState(0);
   const [firstTrySuccesses, setFirstTrySuccesses] = useState(0);
   const [isSlowMode, setIsSlowMode] = useState(false);
   const [feedback, setFeedback] = useState<MusicRoundFeedback>({
@@ -156,7 +158,7 @@ export default function MusicMelodyRepeatGame({
       setPressedNoteId(null);
       setPressedVelocity(null);
       setAttemptOutcome(null);
-      setHadErrorInCurrentRound(false);
+      setErrorCountInCurrentRound(0);
       setFeedback({
         accent: round?.accent ?? 'sky',
         message: nextMessage ?? buildRoundStartMessage(),
@@ -175,7 +177,6 @@ export default function MusicMelodyRepeatGame({
 
   const finalizeSession = useCallback(
     (nextPerfectRounds: number, nextFirstTrySuccesses: number): void => {
-      const ownerKey = getProgressOwnerKey();
       const progress = loadProgress({ ownerKey });
       const reward = createLessonPracticeReward(progress, {
         activityKey: `lesson_practice:${LESSON_KEY}`,
@@ -199,13 +200,13 @@ export default function MusicMelodyRepeatGame({
       setDone(true);
       setPhase('summary');
     },
-    []
+    [ownerKey]
   );
 
   const queueNextRound = useCallback((): void => {
       const nextPerfectRounds = perfectRounds + 1;
       setPerfectRounds(nextPerfectRounds);
-      const nextFirstTrySuccesses = hadErrorInCurrentRound
+      const nextFirstTrySuccesses = errorCountInCurrentRound > 0
         ? firstTrySuccesses
         : firstTrySuccesses + 1;
       setFirstTrySuccesses(nextFirstTrySuccesses);
@@ -221,7 +222,7 @@ export default function MusicMelodyRepeatGame({
         setRoundIndex((current) => current + 1);
       }, 900);
     },
-    [finalizeSession, firstTrySuccesses, hadErrorInCurrentRound, perfectRounds, roundIndex]
+    [finalizeSession, firstTrySuccesses, errorCountInCurrentRound, perfectRounds, roundIndex]
   );
 
   const handleListen = useCallback(async (): Promise<void> => {
@@ -311,6 +312,7 @@ export default function MusicMelodyRepeatGame({
 
       if (pressDetails.keyboardMode === 'piano') {
         await playNote({
+          brightness: pressDetails.brightness,
           ...DIATONIC_PIANO_KEYS_BY_ID[noteId],
           durationMs: 300,
           id: noteId,
@@ -321,7 +323,7 @@ export default function MusicMelodyRepeatGame({
       if (noteId !== expectedNote) {
         clearTransientTimeouts();
         stopAllSustainedNotes({ immediate: true });
-        setHadErrorInCurrentRound(true);
+        setErrorCountInCurrentRound((n) => n + 1);
         setAttemptOutcome('error');
         setPhase('listen');
         setActiveStepIndex(null);
@@ -408,9 +410,13 @@ export default function MusicMelodyRepeatGame({
       await startSustainedNote(
         {
           ...DIATONIC_PIANO_KEYS_BY_ID[details.noteId],
+          brightness: details.brightness,
           frequencyHz: details.frequencyHz,
           id: details.noteId,
+          stereoPan: details.stereoPan,
           velocity: details.velocity,
+          vibratoDepth: details.vibratoDepth,
+          vibratoRateHz: details.vibratoRateHz,
           waveform: synthWaveform,
         },
         { interactionId: details.interactionId }
@@ -426,9 +432,13 @@ export default function MusicMelodyRepeatGame({
       }
 
       updateSustainedNote({
+        brightness: details.brightness,
         frequencyHz: details.frequencyHz,
         interactionId: details.interactionId,
+        stereoPan: details.stereoPan,
         velocity: details.velocity,
+        vibratoDepth: details.vibratoDepth,
+        vibratoRateHz: details.vibratoRateHz,
       });
     },
     [done, isPlayingSequence, phase, updateSustainedNote]
@@ -456,7 +466,7 @@ export default function MusicMelodyRepeatGame({
     setXpEarned(0);
     setXpBreakdown([]);
     setAttemptOutcome(null);
-    setHadErrorInCurrentRound(false);
+    setErrorCountInCurrentRound(0);
     setFirstTrySuccesses(0);
     setFeedback({
       accent: MUSIC_MELODY_REPEAT_ROUNDS[0]?.accent ?? 'sky',
@@ -573,6 +583,19 @@ export default function MusicMelodyRepeatGame({
                 label={`Nuty: ${enteredNotes.length}/${round?.notes.length ?? 0}`}
               />
             </KangurStatusChip>
+            {errorCountInCurrentRound > 0 ? (
+              <KangurStatusChip
+                aria-label={`Proba ${errorCountInCurrentRound + 1}`}
+                className='bg-amber-100 text-amber-700'
+                data-testid='music-melody-repeat-status-attempt'
+              >
+                <KangurVisualCueContent
+                  icon='🔄'
+                  iconTestId='music-melody-repeat-status-attempt-icon'
+                  label={`Proba ${errorCountInCurrentRound + 1}`}
+                />
+              </KangurStatusChip>
+            ) : null}
             <KangurStatusChip
               aria-label={`Tryb: ${keyboardMode === 'synth' ? 'synth' : 'piano'}`}
               className='bg-fuchsia-100 text-fuchsia-800'

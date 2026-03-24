@@ -1,5 +1,6 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 
@@ -36,7 +37,6 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import {
   addXp,
   createLessonPracticeReward,
-  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
@@ -110,6 +110,7 @@ export default function SubtractingGame({
   finishLabelVariant = 'lesson',
   onFinish,
 }: SubtractingGameProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
   const finishLabel = getKangurMiniGameFinishLabel(
@@ -146,7 +147,6 @@ export default function SubtractingGame({
 
     scheduleKangurRoundFeedback(() => {
       if (roundIndex + 1 >= TOTAL) {
-        const ownerKey = getProgressOwnerKey();
         const progress = loadProgress({ ownerKey });
         const reward = createLessonPracticeReward(progress, 'subtracting', newScore, TOTAL);
         addXp(reward.xp, reward.progressUpdates, { ownerKey });

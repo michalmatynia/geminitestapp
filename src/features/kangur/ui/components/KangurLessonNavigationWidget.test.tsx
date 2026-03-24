@@ -4,7 +4,7 @@
 'use client';
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import {
   LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME,
@@ -150,5 +150,41 @@ describe('KangurLessonNavigationWidget', () => {
 
     expect(screen.getByTestId('kangur-lesson-nav-prev-icon')).toHaveTextContent('🔙');
     expect(screen.getByTestId('kangur-lesson-nav-next-icon')).toHaveTextContent('🔜');
+  });
+
+  it('renders a print button to the right of the lesson arrows and calls the print handler', () => {
+    ageGroupState.value = 'ten_year_old';
+    const selectLesson = vi.fn();
+    const onPrintLesson = vi.fn();
+    useOptionalKangurLessonsRuntimeMock.mockReturnValue({
+      prevLesson: {
+        id: 'lesson-adding',
+        emoji: '➕',
+        title: 'Dodawanie',
+      },
+      nextLesson: {
+        id: 'lesson-calendar',
+        emoji: '📅',
+        title: 'Kalendarz',
+      },
+      selectLesson,
+    });
+
+    render(
+      <KangurLessonNavigationProvider onBack={vi.fn()}>
+        <KangurLessonNavigationWidget onPrintLesson={onPrintLesson} />
+      </KangurLessonNavigationProvider>
+    );
+
+    const previousButton = screen.getByRole('button', { name: /Poprzednia lekcja/i });
+    const nextButton = screen.getByRole('button', { name: /Następna lekcja/i });
+    const printButton = screen.getByRole('button', { name: /Drukuj lekcję/i });
+
+    expect(previousButton.compareDocumentPosition(printButton)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(nextButton.compareDocumentPosition(printButton)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+
+    fireEvent.click(printButton);
+
+    expect(onPrintLesson).toHaveBeenCalledTimes(1);
   });
 });

@@ -3,20 +3,35 @@
  */
 
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { useKangurCoarsePointerMock, useKangurMobileBreakpointMock } = vi.hoisted(() => ({
+  useKangurCoarsePointerMock: vi.fn(),
+  useKangurMobileBreakpointMock: vi.fn(),
+}));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
-  useKangurCoarsePointer: () => false,
+  useKangurCoarsePointer: () => useKangurCoarsePointerMock(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
-  useKangurMobileBreakpoint: () => true,
+  useKangurMobileBreakpoint: () => useKangurMobileBreakpointMock(),
 }));
 
-import KangurMusicPianoRoll from '@/features/kangur/ui/components/music/KangurMusicPianoRoll';
 import { DIATONIC_PIANO_KEYS } from '@/features/kangur/ui/components/music/music-theory';
 
 describe('KangurMusicPianoRoll mobile viewport layout', () => {
+  let KangurMusicPianoRoll: typeof import('@/features/kangur/ui/components/music/KangurMusicPianoRoll').default;
+
+  beforeEach(async () => {
+    vi.resetModules();
+    useKangurCoarsePointerMock.mockReturnValue(false);
+    useKangurMobileBreakpointMock.mockReturnValue(true);
+    KangurMusicPianoRoll = (
+      await import('@/features/kangur/ui/components/music/KangurMusicPianoRoll')
+    ).default;
+  });
+
   it('uses the compact layout on narrow viewports even without a coarse pointer', () => {
     render(
       <KangurMusicPianoRoll

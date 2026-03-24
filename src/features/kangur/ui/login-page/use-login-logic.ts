@@ -18,6 +18,8 @@ import {
 import { useKangurLoginPageProps } from './login-context';
 
 export type KangurLoginKind = 'parent' | 'student' | 'unknown';
+const LOGIN_AUTH_REFRESH_TIMEOUT_MS = 12_000;
+export type KangurLoginSuccessStage = 'refreshing-session' | 'redirecting';
 
 export const resolveKangurLoginCallbackNavigation = (
   callbackUrl: string,
@@ -58,6 +60,7 @@ export type KangurLoginSuccessOptions = {
   kind: KangurLoginKind;
   learnerId?: string | null;
   callbackUrl?: string | null;
+  onStageChange?: (stage: KangurLoginSuccessStage) => void;
 };
 
 const resolveCurrentPath = (): string | null => {
@@ -77,7 +80,12 @@ export function useLoginLogic() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleLoginSuccess = useCallback(
-    async ({ kind, learnerId, callbackUrl: callbackOverride }: KangurLoginSuccessOptions) => {
+    async ({
+      kind,
+      learnerId,
+      callbackUrl: callbackOverride,
+      onStageChange,
+    }: KangurLoginSuccessOptions) => {
       setSuccessMessage(
         kind === 'student'
           ? translations('successStudent')
@@ -95,7 +103,10 @@ export function useLoginLogic() {
       }
 
       // Refresh auth context
-      await auth?.checkAppState();
+      onStageChange?.('refreshing-session');
+      const refreshedUser = await auth?.checkAppState?.({
+        timeoutMs: LOGIN_AUTH_REFRESH_TIMEOUT_MS,
+      });
 
       // Handle navigation
       const target = callbackOverride ?? callbackUrl ?? defaultCallbackUrl;
@@ -107,25 +118,35 @@ export function useLoginLogic() {
         Boolean(currentPath) &&
         navigation?.kind === 'router' &&
         navigation.href === currentPath;
+      const shouldForceFullReload = Boolean(auth?.checkAppState) && refreshedUser === null;
+      onStageChange?.('redirecting');
 
-      setTimeout(() => {
-        if (onClose) {
-          onClose();
-        }
-        if (navigation) {
-          if (navigation.kind === 'router') {
-            if (isSameRoute) {
-              router.refresh();
-            } else {
-              router.push(navigation.href, { scroll: false });
-            }
+      await new Promise((resolve) => {
+        setTimeout(resolve, LOGIN_SUCCESS_NOTICE_DELAY_MS);
+      });
+
+      if (onClose) {
+        onClose();
+      }
+      if (navigation) {
+        if (navigation.kind === 'router' && shouldForceFullReload) {
+          window.location.assign(navigation.href);
+        } else if (navigation.kind === 'router') {
+          if (isSameRoute) {
+            router.refresh();
           } else {
-            window.location.assign(navigation.href);
+            router.push(navigation.href, { scroll: false });
           }
-          return;
+        } else {
+          window.location.assign(navigation.href);
         }
-        router.refresh();
-      }, LOGIN_SUCCESS_NOTICE_DELAY_MS);
+        return;
+      }
+      if (shouldForceFullReload) {
+        window.location.assign(currentPath ?? window.location.href);
+        return;
+      }
+      router.refresh();
     },
     [auth, callbackUrl, defaultCallbackUrl, onClose, router, translations]
   );

@@ -108,6 +108,7 @@ describe('useProductAiPathsRunSync', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     invalidateProductsAndDetailMock.mockReset();
+    invalidateProductsAndDetailMock.mockResolvedValue(undefined);
     getRecentAiPathRunEnqueueMock.mockReset();
     listTriggerButtonRunFeedbackMock.mockReset();
     getQueuedProductSourcesMock.mockReset();

@@ -1,5 +1,6 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
@@ -32,7 +33,6 @@ import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/moti
 import {
   addXp,
   createLessonPracticeReward,
-  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { getKangurMiniGameFinishLabel } from '@/features/kangur/ui/constants/mini-game-i18n';
@@ -89,6 +89,7 @@ export default function MultiplicationArrayGame({
   finishLabelVariant = 'done',
   onFinish,
 }: MultiplicationArrayGameProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
   const finishLabel = getKangurMiniGameFinishLabel(
@@ -125,7 +126,6 @@ export default function MultiplicationArrayGame({
       advanceTimeoutRef.current = null;
       const newScore = score + 1;
       if (roundIndex + 1 >= TOTAL_ROUNDS) {
-        const ownerKey = getProgressOwnerKey();
         const progress = loadProgress({ ownerKey });
         const reward = createLessonPracticeReward(
           progress,

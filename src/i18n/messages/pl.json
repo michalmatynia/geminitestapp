@@ -697,7 +697,16 @@
     "magicLinkDeprecatedNotice": "Logowanie linkiem z e-maila nie jest już dostępne. Zaloguj się e-mailem i hasłem albo utwórz konto.",
     "verifyParentEmailFailed": "Nie udało się potwierdzić e-maila rodzica.",
     "fillEmailAndPassword": "Wypełnij email i hasło.",
+    "invalidParentEmailNotice": "Podaj prawidłowy email rodzica.",
     "completeSecurityVerification": "Uzupełnij weryfikację bezpieczeństwa.",
+    "sessionResettingNotice": "Przygotowuję bezpieczne logowanie...",
+    "verifyingCredentialsNotice": "Sprawdzam dane logowania...",
+    "signingInParentNotice": "Loguję rodzica...",
+    "signingInStudentNotice": "Loguję ucznia...",
+    "refreshingSessionNotice": "Odświeżam sesję...",
+    "redirectingNotice": "Otwieram Twoją przestrzeń...",
+    "creatingAccountNotice": "Przygotowuję konto rodzica...",
+    "sendingVerificationNotice": "Wysyłam wiadomość potwierdzającą...",
     "createAccountInstruction": "Kliknij link potwierdzający w e-mailu. Potem zalogujesz się tym samym e-mailem i hasłem.",
     "createParentAccountFailed": "Nie udało się utworzyć konta rodzica.",
     "createParentAccountUnexpected": "Wystąpił błąd podczas zakładania konta.",
@@ -713,15 +722,24 @@
     "studentLoginUnexpected": "Wystąpił błąd podczas logowania ucznia.",
     "resendEmailIn": "Wyślij e-mail ponownie za {label}",
     "resendEmail": "Wyślij e-mail ponownie",
+    "changeEmailAction": "Zmień email",
+    "continueToSignInAction": "Mam już potwierdzony email",
     "resendHelper": "Nowy e-mail będzie można wysłać za {label}.",
     "createAccountIdentifierLabel": "Email",
     "identifierLabel": "Email lub nick ucznia",
     "createAccountIdentifierPlaceholder": "rodzic@example.com",
     "identifierPlaceholder": "Wpisz email lub nick ucznia",
+    "signInModeHint": "Wpisz email rodzica albo nick ucznia. Kangur dopasuje odpowiedni sposób logowania.",
+    "parentLoginModeHint": "Wygląda na logowanie rodzica. Użyj emaila rodzica i hasła do konta.",
+    "studentLoginModeHint": "Wygląda na logowanie ucznia. Użyj nicku ucznia, nie emaila.",
+    "createAccountModeHint": "Załóż konto rodzica emailem, a potem potwierdź adres w wiadomości e-mail.",
     "haveAccount": "Mam konto",
     "createAccount": "Utwórz konto",
     "passwordLabel": "Hasło",
     "passwordPlaceholder": "Wpisz hasło",
+    "parentPasswordHint": "To hasło do konta rodzica.",
+    "studentPasswordHint": "To hasło przypisane do nicku ucznia.",
+    "createAccountPasswordHint": "Ustaw nowe hasło rodzica. Minimum 8 znaków.",
     "securityVerificationLabel": "Weryfikacja bezpieczeństwa",
     "submitCreateAccount": "Utwórz konto rodzica",
     "submitParentLogin": "Zaloguj rodzica",
@@ -732,6 +750,7 @@
     "loginFormAriaLabel": "Formularz logowania",
     "loginSubmit": "Zaloguj się",
     "loginSubmitting": "Logowanie...",
+    "openingSpaceButtonLabel": "Otwieram Kangur...",
     "continueWith": "Lub kontynuuj przez",
     "signupFormAriaLabel": "Formularz rejestracji rodzica",
     "parentEmailLabel": "Email rodzica",
@@ -1360,7 +1379,9 @@
       "previousShort": "Poprzednia",
       "nextLesson": "Następna lekcja: {title}",
       "noNextLesson": "Brak następnej lekcji",
-      "nextShort": "Następna"
+      "nextShort": "Następna",
+      "printLesson": "Drukuj lekcję",
+      "printShort": "Drukuj"
     },
     "activeHeader": {
       "narrator": {
@@ -2448,7 +2469,83 @@
       "summary": {
         "perfect": "Perfekcyjnie! Cała scena pasuje do adjectives.",
         "good": "Dobra robota! Większość sceny już się zgadza.",
-        "retry": "Spróbuj jeszcze raz i zobacz, jak każdy adjective zmienia obiekt."
+        "retry": "Spróbuj jeszcze raz i zobacz, jak każdy adjective zmienia obiekt.",
+        "badges": {
+          "rounds": "Rundy {current}/{total}",
+          "targets": "Cele {current}/{total}",
+          "studio": "Studio {current}/{total}"
+        },
+        "guideLabel": "Przewodnik po adjectives",
+        "guideHint": "Grupuj adjectives według tego, co zmieniają na obrazku.",
+        "groups": {
+          "color": {
+            "label": "Kolor",
+            "lead": "Słowa o kolorze zmieniają wygląd obiektu.",
+            "examples": "red train, brown eyes"
+          },
+          "sizeColor": {
+            "label": "Rozmiar + kolor",
+            "lead": "Kilka adjectives może zbudować jeden jasny opis.",
+            "examples": "big yellow cupboard, small blue teddy, long black hair"
+          },
+          "texture": {
+            "label": "Faktura",
+            "lead": "Niektóre adjectives mówią, jakie coś jest w dotyku.",
+            "examples": "soft rug"
+          },
+          "opinionAge": {
+            "label": "Opinia + wiek",
+            "lead": "Niektóre adjectives pokazują opinię albo to, czy coś jest new.",
+            "examples": "beautiful picture, new games"
+          }
+        },
+        "orderGuideLabel": "Przewodnik po szyku",
+        "orderGuideHint": "W angielskim describing words zwykle stoją przed rzeczownikiem.",
+        "orderCards": {
+          "clear": {
+            "label": "Dobry szyk",
+            "phrase": "a small blue teddy",
+            "rule": "adjective + adjective + noun"
+          },
+          "fix": {
+            "label": "Popraw to",
+            "phrase": "a teddy small blue → a small blue teddy",
+            "rule": "przenieś adjectives przed noun"
+          }
+        },
+        "starterLabel": "Powiedz to o scenie",
+        "starterHint": "Użyj tych zdań jako startu do własnego opisu.",
+        "starters": {
+          "room": "There is a big yellow cupboard in the room.",
+          "toy": "I have a small blue teddy on the shelf.",
+          "portrait": "She has long black hair and brown eyes.",
+          "study": "There is a new desk by the wall.",
+          "playground": "It is an old bench near the slide."
+        },
+        "questionLabel": "Co widzisz?",
+        "questionHint": "Wybierz jedno pytanie i odpowiedz frazą z adjective.",
+        "questions": {
+          "room": {
+            "prompt": "What can you see in the room?",
+            "starter": "Try: There is a..."
+          },
+          "toy": {
+            "prompt": "What toy can you see on the shelf?",
+            "starter": "Try: It is a..."
+          },
+          "person": {
+            "prompt": "What can you say about the person?",
+            "starter": "Try: She has..."
+          },
+          "study": {
+            "prompt": "What can you see in the study corner?",
+            "starter": "Try: There is a..."
+          },
+          "playground": {
+            "prompt": "What can you see in the playground?",
+            "starter": "Try: It is a..."
+          }
+        }
       },
       "inRound": {
         "roundLabel": "Runda {current}/{total}",
@@ -2466,12 +2563,29 @@
           "poolAria": "Bank adjectives",
           "objectSlotAria": "Pole obiektu {object}",
           "dropLabel": "Upuść albo dotknij adjective tutaj.",
+          "describePrompt": "Jak możesz opisać {object}?",
+          "describeStarter": "Buduj: adjective + noun",
+          "yourPhraseLabel": "Twoja fraza",
+          "yourSentenceLabel": "Twoje zdanie",
+          "targetPhraseLabel": "Docelowa fraza",
+          "targetSentenceLabel": "Docelowe zdanie",
+          "categoryCompareLabel": "Zmiana kategorii",
+          "clueLabel": "Podpowiedź",
+          "matchedLabel": "Pasuje",
+          "typeLabel": "Typ",
           "touchIdle": "Dotknij adjective, a potem dotknij obiekt albo bank.",
           "touchSelected": "Wybrany adjective: {adjective}. Dotknij obiekt albo bank.",
           "clearRound": "Wyczyść rundę",
           "feedback": {
             "perfect": "Perfekcyjnie! Scena zgadza się z opisem.",
             "retry": "Spróbuj jeszcze raz i sprawdź, który adjective zmienia dany obiekt."
+          },
+          "focus": {
+            "color": "zmień kolor",
+            "size_color": "zmień rozmiar i kolor",
+            "texture": "zmień fakturę",
+            "age": "zmień to, jak new coś wygląda",
+            "opinion": "zmień odczucie albo opinię"
           },
           "rounds": {
             "bedroom": {
@@ -2484,10 +2598,20 @@
               "prompt": "Ubierz zabawki w odpowiednie describing words.",
               "hint": "Jedna kolejka jest red, jeden miś jest small blue, a gry są new."
             },
+            "study_corner": {
+              "title": "Kącik do nauki",
+              "prompt": "Dopasuj adjective cards, aby odbudować kącik do nauki.",
+              "hint": "Szukaj new desk, small red lamp i bright green book."
+            },
             "portrait": {
               "title": "Szczegóły portretu",
               "prompt": "Dodaj właściwe adjectives do portretu.",
               "hint": "Brown eyes, long black hair i beautiful picture."
+            },
+            "playground": {
+              "title": "Plac zabaw",
+              "prompt": "Użyj adjective cards, aby odbudować scenę placu zabaw.",
+              "hint": "Szukaj big yellow slide, long blue kite i old bench."
             }
           },
           "tokens": {
@@ -2495,8 +2619,11 @@
             "soft": "soft",
             "long_blue": "long blue",
             "red": "red",
+            "small_red": "small red",
             "small_blue": "small blue",
+            "bright_green": "bright green",
             "new": "new",
+            "old": "old",
             "brown": "brown",
             "long_black": "long black",
             "beautiful": "beautiful"
@@ -2510,12 +2637,20 @@
             "games": "games",
             "eyes": "eyes",
             "hair": "hair",
-            "picture": "picture"
+            "picture": "picture",
+            "desk": "desk",
+            "lamp": "lamp",
+            "book": "book",
+            "slide": "slide",
+            "kite": "kite",
+            "bench": "bench"
           },
           "sceneAria": {
             "bedroom": "Animowana scena sypialni",
             "toyShelf": "Animowana scena półki z zabawkami",
-            "portrait": "Animowana scena portretu"
+            "studyCorner": "Animowana scena kącika do nauki",
+            "portrait": "Animowana scena portretu",
+            "playground": "Animowana scena placu zabaw"
           }
         }
       }
@@ -6026,6 +6161,11 @@
             "title": "Adjectives malują obraz",
             "lead": "Adjectives opisują osoby, miejsca i rzeczy. Dodają rzeczownikowi kolor, rozmiar, wrażenie i szczegół.",
             "caption": "big yellow cupboard, soft rug, long blue curtains"
+          },
+          "peoplePlacesThings": {
+            "title": "Osoby, miejsca, rzeczy",
+            "lead": "Możesz używać adjectives do opisu osoby, miejsca albo jednej rzeczy. Działają prawie wszędzie w zdaniu.",
+            "caption": "Zapytaj: jaki? jaki kolor? jaki rozmiar?"
           }
         },
         "order": {
@@ -6033,6 +6173,11 @@
             "title": "Stawiaj adjective przed rzeczownikiem",
             "lead": "W języku angielskim adjective zwykle stoi przed rzeczownikiem: red train, brown eyes, small blue teddy.",
             "caption": "adjective + adjective + noun"
+          },
+          "clearPicture": {
+            "title": "Zbuduj jasną frazę",
+            "lead": "Umieść describing words przed noun, żeby obraz był od razu czytelny.",
+            "caption": "small + blue + teddy"
           }
         },
         "repair": {
@@ -6047,6 +6192,16 @@
             "title": "Opisz pokój",
             "lead": "Przeczytaj krótką historyjkę o pokoju i zobacz, jak adjectives robią wyraźniejszy obraz.",
             "caption": "Każdy adjective dodaje scenie jeszcze jeden szczegół."
+          },
+          "peopleAndPlaces": {
+            "title": "Opisuj osoby i miejsca",
+            "lead": "Te same reguły pomagają mówić o twarzach, włosach, pokojach, zabawkach i obrazach.",
+            "caption": "Za każdym razem ustaw adjective przed noun."
+          },
+          "studyAndPlay": {
+            "title": "Opisuj naukę i zabawę",
+            "lead": "Te same zasady działają też, gdy mówisz o desk, lamp, book, slide, kite i bench.",
+            "caption": "Jedno adjective może zmienić kolor, rozmiar, wiek albo odczucie w każdej scenie."
           },
           "wordBank": {
             "title": "Bank słów",

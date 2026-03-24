@@ -171,6 +171,11 @@ describe('EnglishArticlesDragDropGame', () => {
     expect(screen.getByText('School bag')).toBeInTheDocument();
     expect(screen.getByText('Article bank')).toBeInTheDocument();
     expect(screen.getByText('Drag and drop')).toBeInTheDocument();
+    expect(screen.getByTestId('english-articles-drag-topic-a')).toBeInTheDocument();
+    expect(screen.getByTestId('english-articles-drag-topic-an')).toBeInTheDocument();
+    expect(screen.getByTestId('english-articles-drag-topic-the')).toBeInTheDocument();
+    expect(screen.getByTestId('english-articles-drag-pool-atmosphere')).toBeInTheDocument();
+    expect(screen.getByTestId('english-articles-drag-slot-frame-school-bag-book')).toBeInTheDocument();
 
     placeArticle('a', 'school-bag-book');
     placeArticle('an', 'school-bag-eraser');

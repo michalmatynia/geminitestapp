@@ -13,8 +13,15 @@ import type { JSX } from 'react';
 
 export const KangurLoginModal = memo(function KangurLoginModal(): JSX.Element {
   const translations = useTranslations('KangurLoginModal');
-  const { closeLoginModal, dismissLoginModal, isOpen, isRouteDriven } =
-    useKangurLoginModal();
+  const {
+    authMode,
+    callbackUrl,
+    closeLoginModal,
+    dismissLoginModal,
+    isOpen,
+    isRouteDriven,
+    showParentAuthModeTabs,
+  } = useKangurLoginModal();
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
       if (!nextOpen && !isRouteDriven) {
@@ -62,7 +69,12 @@ export const KangurLoginModal = memo(function KangurLoginModal(): JSX.Element {
         }
       />
 
-      <KangurLoginPage onClose={dismissLoginModal} />
+      <KangurLoginPage
+        callbackUrl={callbackUrl}
+        onClose={dismissLoginModal}
+        parentAuthMode={authMode}
+        showParentAuthModeTabs={showParentAuthModeTabs}
+      />
     </KangurDialog>
   );
 });

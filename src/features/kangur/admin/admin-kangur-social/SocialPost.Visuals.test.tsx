@@ -6,6 +6,10 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+const { useSocialPostContextMock } = vi.hoisted(() => ({
+  useSocialPostContextMock: vi.fn(),
+}));
+
 vi.mock('@/features/kangur/shared/ui', () => ({
   Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
   Button: ({
@@ -35,6 +39,10 @@ vi.mock('@/features/kangur/shared/ui', () => ({
 
 vi.mock('./SocialPost.ImagesPanel', () => ({
   SocialPostImagesPanel: () => <div data-testid='social-post-images-panel'>images-panel</div>,
+}));
+
+vi.mock('./SocialPostContext', () => ({
+  useSocialPostContext: () => useSocialPostContextMock(),
 }));
 
 import { SocialPostVisuals } from './SocialPost.Visuals';
@@ -73,22 +81,20 @@ const buildPost = () => ({
 
 describe('SocialPostVisuals', () => {
   it('keeps only post-scoped add-on selection controls in the editor surface', () => {
-    render(
-      <SocialPostVisuals
-        activePost={buildPost()}
-        recentAddons={[]}
-        recentAddonsLoading={false}
-        selectedAddonSet={new Set<string>()}
-        handleSelectAddon={vi.fn()}
-        handleRemoveAddon={vi.fn()}
-        imageAssets={[]}
-        handleRemoveImage={vi.fn()}
-        setShowMediaLibrary={vi.fn()}
-        showMediaLibrary={false}
-        handleAddImages={vi.fn()}
-        showImagesPanel={false}
-      />
-    );
+    useSocialPostContextMock.mockReturnValue({
+      recentAddons: [],
+      addonsQuery: { isLoading: false },
+      imageAddonIds: [],
+      handleSelectAddon: vi.fn(),
+      handleRemoveAddon: vi.fn(),
+      imageAssets: [],
+      handleRemoveImage: vi.fn(),
+      setShowMediaLibrary: vi.fn(),
+      showMediaLibrary: false,
+      handleAddImages: vi.fn(),
+    });
+
+    render(<SocialPostVisuals showImagesPanel={false} />);
 
     expect(screen.getByText('Image add-ons')).toBeInTheDocument();
     expect(
@@ -99,28 +105,26 @@ describe('SocialPostVisuals', () => {
     expect(screen.queryByText('Capture presets')).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Base URL (e.g. https://kangur.app)')).not.toBeInTheDocument();
     expect(screen.queryByText('Scheduling')).not.toBeInTheDocument();
-    expect(screen.getByText('Visual analysis')).toBeInTheDocument();
+    expect(screen.getByText('No image add-ons yet.')).toBeInTheDocument();
     expect(screen.queryByText('Documentation references')).not.toBeInTheDocument();
     expect(screen.queryByText('Documentation updates')).not.toBeInTheDocument();
   });
 
   it('renders the shared add-ons loader when recent add-ons are loading', () => {
-    render(
-      <SocialPostVisuals
-        activePost={buildPost()}
-        recentAddons={[]}
-        recentAddonsLoading={true}
-        selectedAddonSet={new Set<string>()}
-        handleSelectAddon={vi.fn()}
-        handleRemoveAddon={vi.fn()}
-        imageAssets={[]}
-        handleRemoveImage={vi.fn()}
-        setShowMediaLibrary={vi.fn()}
-        showMediaLibrary={false}
-        handleAddImages={vi.fn()}
-        showImagesPanel={false}
-      />
-    );
+    useSocialPostContextMock.mockReturnValue({
+      recentAddons: [],
+      addonsQuery: { isLoading: true },
+      imageAddonIds: [],
+      handleSelectAddon: vi.fn(),
+      handleRemoveAddon: vi.fn(),
+      imageAssets: [],
+      handleRemoveImage: vi.fn(),
+      setShowMediaLibrary: vi.fn(),
+      showMediaLibrary: false,
+      handleAddImages: vi.fn(),
+    });
+
+    render(<SocialPostVisuals showImagesPanel={false} />);
 
     expect(screen.getByRole('status')).toHaveTextContent('Loading image add-ons...');
     expect(screen.queryByText('No image add-ons yet.')).not.toBeInTheDocument();

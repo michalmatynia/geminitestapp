@@ -7,6 +7,17 @@ const KANGUR_FEATURE_ROOT = path.resolve(__dirname, '..', '..', '..');
 const ALLOWED_BARE_LOAD_PROGRESS_FILES = new Set<string>([
   path.join(KANGUR_FEATURE_ROOT, 'ui', 'services', 'progress.persistence.ts'),
 ]);
+const ALLOWED_AMBIENT_PROGRESS_OWNER_FILES = new Set<string>([
+  path.join(KANGUR_FEATURE_ROOT, 'ui', 'services', 'progress.persistence.ts'),
+  path.join(KANGUR_FEATURE_ROOT, 'ui', 'hooks', 'useKangurProgressOwnerKey.ts'),
+]);
+const ALLOWED_AMBIENT_PROGRESS_OWNER_STORAGE_FILES = new Set<string>([
+  path.join(KANGUR_FEATURE_ROOT, 'ui', 'services', 'progress.persistence.ts'),
+  path.join(KANGUR_FEATURE_ROOT, 'ui', 'context', 'KangurProgressSyncProvider.tsx'),
+]);
+const ALLOWED_AMBIENT_PROGRESS_SUBJECT_FILES = new Set<string>([
+  path.join(KANGUR_FEATURE_ROOT, 'ui', 'services', 'progress.persistence.ts'),
+]);
 const ALLOWED_SAVE_PROGRESS_FILES = new Set<string>([
   path.join(KANGUR_FEATURE_ROOT, 'ui', 'services', 'progress.persistence.ts'),
   path.join(KANGUR_FEATURE_ROOT, 'ui', 'services', 'progress.ts'),
@@ -61,6 +72,24 @@ describe('Kangur progress owner scope', () => {
       expect(content, `${sourceFile} should not use bare loadProgress()`).not.toMatch(
         /loadProgress\(\s*\)/
       );
+      if (!ALLOWED_AMBIENT_PROGRESS_OWNER_FILES.has(sourceFile)) {
+        expect(
+          content,
+          `${sourceFile} should not read progress owner from ambient storage directly`
+        ).not.toMatch(/getProgressOwnerKey\(/);
+      }
+      if (!ALLOWED_AMBIENT_PROGRESS_OWNER_STORAGE_FILES.has(sourceFile)) {
+        expect(
+          content,
+          `${sourceFile} should not load the persisted progress owner directly`
+        ).not.toMatch(/loadProgressOwnerKey\(/);
+      }
+      if (!ALLOWED_AMBIENT_PROGRESS_SUBJECT_FILES.has(sourceFile)) {
+        expect(
+          content,
+          `${sourceFile} should not read progress subject from ambient storage directly`
+        ).not.toMatch(/getProgressSubject\(/);
+      }
       expect(
         content,
         `${sourceFile} should not write reward XP without an explicit owner scope`

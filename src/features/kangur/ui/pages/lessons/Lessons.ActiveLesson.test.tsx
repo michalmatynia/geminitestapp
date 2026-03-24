@@ -75,7 +75,23 @@ vi.mock('@/features/kangur/ui/components/KangurLessonDocumentRenderer', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurLessonNavigationWidget', () => ({
-  KangurLessonNavigationWidget: () => <div data-testid='mock-lesson-navigation' />,
+  KangurLessonNavigationWidget: ({
+    onPrintLesson,
+  }: {
+    onPrintLesson?: () => void;
+  }) => (
+    <div data-testid='mock-lesson-navigation'>
+      {onPrintLesson ? (
+        <button
+          type='button'
+          data-testid='mock-lesson-print-button'
+          onClick={onPrintLesson}
+        >
+          Drukuj lekcję
+        </button>
+      ) : null}
+    </div>
+  ),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLessonNavigationContext', () => ({
@@ -184,6 +200,14 @@ describe('ActiveLessonView mobile controls', () => {
       isSecretLessonActive: false,
       progress: { lessonMastery: {} },
     });
+
+    Object.defineProperty(window, 'print', {
+      configurable: true,
+      writable: true,
+      value: vi.fn(() => {
+        window.dispatchEvent(new Event('afterprint'));
+      }),
+    });
   });
 
   afterEach(() => {
@@ -201,11 +225,16 @@ describe('ActiveLessonView mobile controls', () => {
     expect(screen.queryByRole('button', { name: 'Przewiń w górę' })).toBeNull();
     const topControls = screen.getByTestId('kangur-lesson-top-controls');
     const activeLessonTransition = screen.getByTestId('lessons-active-transition');
+    const printRoot = screen.getByTestId('kangur-lesson-print-root');
+    const printHeading = screen.getByTestId('kangur-lesson-print-heading');
 
     expect(activeLessonTransition.contains(topControls)).toBe(true);
     expect(screen.getByTestId('mock-lesson-navigation').parentElement).toHaveClass(
       ...splitClasses(LESSONS_ACTIVE_SECTION_CLASSNAME)
     );
+    expect(printRoot).toHaveAttribute('data-kangur-print-root', 'true');
+    expect(printRoot.contains(printHeading)).toBe(true);
+    expect(printHeading).toHaveTextContent('Lesson 1');
     expect(screen.queryByTestId('kangur-lesson-scroll-container')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Przewiń w dół' })).toBeNull();
     expect(document.documentElement.style.overflow).toBe('');
@@ -218,6 +247,24 @@ describe('ActiveLessonView mobile controls', () => {
 
     expect(document.documentElement.style.overflow).toBe('');
     expect(document.body.style.overflow).toBe('');
+  });
+
+  it('marks the lesson content as the printable root and only toggles print mode around lesson printing', async () => {
+    render(<ActiveLessonView />);
+
+    await act(async () => {});
+
+    expect(document.body.classList.contains('kangur-print-mode')).toBe(false);
+    expect(screen.getByTestId('kangur-lesson-print-root')).toHaveAttribute(
+      'data-kangur-print-root',
+      'true'
+    );
+    expect(screen.getByTestId('kangur-lesson-print-heading')).toHaveTextContent('Lesson 1');
+
+    fireEvent.click(screen.getByTestId('mock-lesson-print-button'));
+
+    expect(window.print).toHaveBeenCalledTimes(1);
+    expect(document.body.classList.contains('kangur-print-mode')).toBe(false);
   });
 
   it('uses an icon-first back control for six-year-old mobile lessons', async () => {

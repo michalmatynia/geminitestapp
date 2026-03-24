@@ -2,38 +2,71 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import KangurMusicPianoRoll from '@/features/kangur/ui/components/music/KangurMusicPianoRoll';
 import { DIATONIC_PIANO_KEYS } from '@/features/kangur/ui/components/music/music-theory';
+
+const { useKangurCoarsePointerMock, useKangurMobileBreakpointMock } = vi.hoisted(() => ({
+  useKangurCoarsePointerMock: vi.fn(),
+  useKangurMobileBreakpointMock: vi.fn(),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => useKangurCoarsePointerMock(),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
+  useKangurMobileBreakpoint: () => useKangurMobileBreakpointMock(),
+}));
 
 describe('KangurMusicPianoRoll', () => {
   const scrollIntoViewMock = vi.fn();
   const setPointerCaptureMock = vi.fn();
   const releasePointerCaptureMock = vi.fn();
+  let KangurMusicPianoRoll: typeof import('@/features/kangur/ui/components/music/KangurMusicPianoRoll').default;
 
-  const mockKeyRect = (element: HTMLElement, top = 0, height = 160): void => {
+  const mockKeyRect = (element: HTMLElement, top = 0, height = 160, left = 0, width = 96): void => {
     Object.defineProperty(element, 'getBoundingClientRect', {
       configurable: true,
       value: () =>
         ({
           bottom: top + height,
           height,
-          left: 0,
-          right: 96,
+          left,
+          right: left + width,
           top,
-          width: 96,
-          x: 0,
+          width,
+          x: left,
           y: top,
         }) as DOMRect,
     });
   };
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.useRealTimers();
+    vi.resetModules();
     scrollIntoViewMock.mockReset();
     setPointerCaptureMock.mockReset();
     releasePointerCaptureMock.mockReset();
+    useKangurCoarsePointerMock.mockReturnValue(false);
+    useKangurMobileBreakpointMock.mockReturnValue(false);
+    KangurMusicPianoRoll = (
+      await import('@/features/kangur/ui/components/music/KangurMusicPianoRoll')
+    ).default;
+    Object.defineProperty(globalThis, 'requestAnimationFrame', {
+      configurable: true,
+      value: (callback: FrameRequestCallback) => {
+        callback(16);
+        return 1;
+      },
+      writable: true,
+    });
+    Object.defineProperty(globalThis, 'cancelAnimationFrame', {
+      configurable: true,
+      value: vi.fn(),
+      writable: true,
+    });
     Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
       configurable: true,
       value: scrollIntoViewMock,
@@ -52,6 +85,8 @@ describe('KangurMusicPianoRoll', () => {
   });
 
   afterEach(() => {
+    delete (globalThis as Partial<typeof globalThis>).requestAnimationFrame;
+    delete (globalThis as Partial<typeof globalThis>).cancelAnimationFrame;
     delete (HTMLElement.prototype as Partial<HTMLElement>).scrollIntoView;
     delete (HTMLButtonElement.prototype as Partial<HTMLButtonElement>).setPointerCapture;
     delete (HTMLButtonElement.prototype as Partial<HTMLButtonElement>).releasePointerCapture;
@@ -111,6 +146,9 @@ describe('KangurMusicPianoRoll', () => {
     expect(screen.getByTestId('music-roll-key-re')).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByTestId('music-roll-key-high_do')).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByTestId('music-roll-key-do')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('music-roll-key-do')).toHaveAttribute('data-key-state', 'pressed');
+    expect(screen.getByTestId('music-roll-key-re')).toHaveAttribute('data-key-state', 'active');
+    expect(screen.getByTestId('music-roll-key-high_do')).toHaveAttribute('data-key-state', 'expected');
     expect(screen.getByTestId('music-roll-key-do')).toHaveClass('cursor-pointer');
     expect(scrollIntoViewMock).toHaveBeenCalledWith({
       behavior: 'smooth',
@@ -129,7 +167,7 @@ describe('KangurMusicPianoRoll', () => {
     );
   });
 
-  it('switches to synth mode and emits glide gesture updates while dragging vertically', () => {
+  it('switches to synth mode and maps horizontal glide to pitch while vertical motion controls vibrato', async () => {
     const handleKeyboardModeChange = vi.fn();
     const handleSynthGlideModeChange = vi.fn();
     const handleKeyPress = vi.fn();
@@ -161,9 +199,11 @@ describe('KangurMusicPianoRoll', () => {
     fireEvent.click(screen.getByTestId('music-roll-synth-step-keyboard-mode-synth'));
 
     expect(handleKeyboardModeChange).toHaveBeenCalledWith('synth');
-    expect(screen.getByTestId('music-roll-synth-step-keyboard-mode-synth')).toHaveAttribute(
-      'aria-pressed',
-      'true'
+    await waitFor(() =>
+      expect(screen.getByTestId('music-roll-synth-step-keyboard-mode-synth')).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      )
     );
     expect(screen.getByTestId('music-roll-synth-step-keyboard-mode-piano')).toHaveClass(
       'cursor-pointer'
@@ -186,13 +226,24 @@ describe('KangurMusicPianoRoll', () => {
     expect(screen.getByTestId('music-roll-synth-step-transport-glide-mode')).toHaveTextContent(
       'Ruch: Plynnie'
     );
+    expect(screen.getByTestId('music-roll-synth-step-transport-axis-map')).toHaveTextContent(
+      'X: Pitch · Y: Vibrato'
+    );
+    expect(screen.getByTestId('music-roll-synth-step-synth-axis-guide-x')).toHaveTextContent(
+      'X = Pitch'
+    );
+    expect(screen.getByTestId('music-roll-synth-step-synth-axis-guide-y')).toHaveTextContent(
+      'Y = Vibrato'
+    );
 
     fireEvent.click(screen.getByTestId('music-roll-synth-step-synth-waveform-triangle'));
 
     expect(handleSynthWaveformChange).toHaveBeenCalledWith('triangle');
-    expect(screen.getByTestId('music-roll-synth-step-synth-waveform-triangle')).toHaveAttribute(
-      'aria-pressed',
-      'true'
+    await waitFor(() =>
+      expect(screen.getByTestId('music-roll-synth-step-synth-waveform-triangle')).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      )
     );
     expect(
       screen.getByTestId('music-roll-synth-step-synth-waveform-icon-triangle')
@@ -203,12 +254,13 @@ describe('KangurMusicPianoRoll', () => {
 
     const key = screen.getByTestId('music-roll-synth-key-do');
     const secondKey = screen.getByTestId('music-roll-synth-key-re');
-    mockKeyRect(key);
-    mockKeyRect(secondKey);
+    mockKeyRect(key, 0, 160, 0, 96);
+    mockKeyRect(secondKey, 0, 160, 104, 96);
     expect(key).toHaveClass('cursor-pointer');
 
     fireEvent.pointerDown(key, {
-      clientY: 120,
+      clientX: 48,
+      clientY: 80,
       pointerId: 7,
       pointerType: 'touch',
     });
@@ -216,6 +268,7 @@ describe('KangurMusicPianoRoll', () => {
     expect(handleKeyPress).toHaveBeenCalledWith(
       'do',
       expect.objectContaining({
+        brightness: expect.any(Number),
         interactionId: 'synth-7-do',
         keyboardMode: 'synth',
         pointerType: 'touch',
@@ -223,31 +276,51 @@ describe('KangurMusicPianoRoll', () => {
     );
     expect(handleSynthGestureStart).toHaveBeenCalledWith(
       expect.objectContaining({
+        brightness: expect.any(Number),
         interactionId: 'synth-7-do',
-        normalizedVerticalPosition: 0.75,
+        normalizedVerticalPosition: 0.5,
         noteId: 'do',
-        pitchSemitoneOffset: -1,
+        pitchSemitoneOffset: 0,
+        stereoPan: -0.34,
+        vibratoDepth: 0,
+        vibratoRateHz: 5.2,
       })
     );
     expect(setPointerCaptureMock).toHaveBeenCalledWith(7);
-    expect(screen.getByTestId('music-roll-synth-step-transport-fingers')).toHaveTextContent(
-      'Glides: 1'
+    await waitFor(() =>
+      expect(screen.getByTestId('music-roll-synth-step-transport-fingers')).toHaveTextContent(
+        'Glides: 1'
+      )
+    );
+    expect(screen.getByTestId('music-roll-synth-step-transport-pan')).toHaveTextContent(
+      'Pan: L34'
     );
     expect(key).toHaveAttribute('data-active-glides', '1');
+    expect(screen.getByTestId('music-roll-synth-step-synth-axis-anchor-do')).toHaveAttribute(
+      'data-active-anchor',
+      'true'
+    );
+    expect(screen.getByTestId('music-roll-synth-step-synth-axis-anchor-re')).not.toHaveAttribute(
+      'data-active-anchor'
+    );
 
     fireEvent.pointerDown(secondKey, {
-      clientY: 96,
+      clientX: 152,
+      clientY: 80,
       pointerId: 8,
       pointerType: 'touch',
     });
 
-    expect(screen.getByTestId('music-roll-synth-step-transport-fingers')).toHaveTextContent(
-      'Glides: 2'
+    await waitFor(() =>
+      expect(screen.getByTestId('music-roll-synth-step-transport-fingers')).toHaveTextContent(
+        'Glides: 2'
+      )
     );
     expect(secondKey).toHaveAttribute('data-active-glides', '1');
 
     fireEvent.pointerMove(key, {
-      clientY: 20,
+      clientX: 106,
+      clientY: 80,
       pointerId: 7,
       pointerType: 'touch',
     });
@@ -255,32 +328,211 @@ describe('KangurMusicPianoRoll', () => {
     expect(handleSynthGestureChange).toHaveBeenCalledWith(
       expect.objectContaining({
         interactionId: 'synth-7-do',
-        normalizedVerticalPosition: 0.125,
-        noteId: 'do',
-        pitchSemitoneOffset: 1.5,
+        noteId: 're',
+        pitchCentsFromKey: -88,
+        pitchSemitoneOffset: 1.12,
+        stereoPan: 0,
       })
     );
-    expect(screen.getByTestId('music-roll-synth-step-transport-glide')).toHaveTextContent(
-      'Glide: +1.5 st'
+    expect(screen.getByTestId('music-roll-synth-step-synth-axis-anchor-do')).toHaveAttribute(
+      'data-active-anchor',
+      'true'
+    );
+    expect(screen.getByTestId('music-roll-synth-key-do')).toHaveAttribute(
+      'data-active-glides',
+      '1'
     );
 
-    fireEvent.pointerUp(key, {
+    fireEvent.pointerMove(key, {
+      clientX: 126,
+      clientY: 80,
+      pointerId: 7,
+      pointerType: 'touch',
+    });
+
+    await waitFor(() =>
+      expect(handleSynthGestureChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          brightness: expect.any(Number),
+          interactionId: 'synth-7-do',
+          normalizedVerticalPosition: 0.5,
+          noteId: 're',
+          pitchCentsFromKey: -50,
+          pitchSemitoneOffset: 1.5,
+          stereoPan: 0.14,
+          vibratoDepth: 0,
+          vibratoRateHz: 5.2,
+        })
+      )
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('music-roll-synth-step-transport-glide')).toHaveTextContent(
+        'Glide: +1.5 st'
+      )
+    );
+    expect(screen.getByTestId('music-roll-synth-step-transport-pitch')).toHaveTextContent(
+      'Pitch: RE -50c · 63%'
+    );
+    expect(screen.getByTestId('music-roll-synth-step-transport-pan')).toHaveTextContent(
+      'Pan: R14'
+    );
+    expect(screen.getByTestId('music-roll-synth-step-synth-pitch-guide')).toHaveAttribute(
+      'data-pitch-position',
+      '0.63'
+    );
+    expect(screen.getByTestId('music-roll-synth-step-synth-pitch-guide')).toHaveAttribute(
+      'data-pan',
+      '0.14'
+    );
+    expect(screen.getByTestId('music-roll-synth-step-synth-pitch-guide')).toHaveAttribute(
+      'data-pitch-cents',
+      '-50'
+    );
+    expect(screen.getByTestId('music-roll-synth-step-synth-axis-anchor-re')).toHaveAttribute(
+      'data-active-anchor',
+      'true'
+    );
+
+    fireEvent.pointerMove(key, {
+      clientX: 152,
+      clientY: 80,
+      pointerId: 7,
+      pointerType: 'touch',
+    });
+
+    await waitFor(() =>
+      expect(handleSynthGestureChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          brightness: expect.any(Number),
+          interactionId: 'synth-7-do',
+          normalizedVerticalPosition: 0.5,
+          noteId: 're',
+          pitchSemitoneOffset: 2,
+          stereoPan: 0.34,
+          vibratoDepth: 0,
+          vibratoRateHz: 5.2,
+        })
+      )
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('music-roll-synth-step-transport-glide')).toHaveTextContent(
+        'Glide: +2.0 st'
+      )
+    );
+    expect(screen.getByTestId('music-roll-synth-step-transport-pitch')).toHaveTextContent(
+      'Pitch: RE · 76%'
+    );
+    expect(screen.getByTestId('music-roll-synth-step-transport-pan')).toHaveTextContent(
+      'Pan: R34'
+    );
+    expect(screen.getByTestId('music-roll-synth-step-synth-pitch-guide')).toHaveAttribute(
+      'data-pitch-position',
+      '0.76'
+    );
+    expect(screen.getByTestId('music-roll-synth-step-synth-pitch-guide')).toHaveAttribute(
+      'data-pan',
+      '0.34'
+    );
+    expect(screen.getByTestId('music-roll-synth-step-synth-pitch-guide')).toHaveAttribute(
+      'data-pitch-cents',
+      '0'
+    );
+    expect(screen.getByTestId('music-roll-synth-step-synth-axis-anchor-re')).toHaveAttribute(
+      'data-active-anchor',
+      'true'
+    );
+
+    fireEvent.pointerMove(key, {
+      clientX: 152,
       clientY: 20,
       pointerId: 7,
       pointerType: 'touch',
     });
 
-    expect(handleSynthGestureEnd).toHaveBeenCalledWith(
-      expect.objectContaining({
-        interactionId: 'synth-7-do',
-        noteId: 'do',
-        pitchSemitoneOffset: 1.5,
-      })
+    await waitFor(() =>
+      expect(handleSynthGestureChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          interactionId: 'synth-7-do',
+          normalizedVerticalPosition: 0.125,
+          noteId: 're',
+          pitchSemitoneOffset: 2,
+          vibratoDepth: expect.any(Number),
+          vibratoRateHz: 3.9,
+        })
+      )
     );
-    expect(releasePointerCaptureMock).toHaveBeenCalledWith(7);
+    await waitFor(() =>
+      expect(screen.getByTestId('music-roll-synth-step-transport-vibrato')).toHaveTextContent(
+        'Vibrato: 72% · 3.9Hz'
+      )
+    );
+    expect(
+      screen
+        .getByTestId('music-roll-synth-key-re')
+        .querySelector('[data-vibrato-neutral-zone="0.12"]')
+    ).not.toBeNull();
+    expect(
+      screen
+        .getByTestId('music-roll-synth-key-re')
+        .querySelector('[data-vibrato-direction="up"]')
+    ).not.toBeNull();
+    expect(
+      screen
+        .getByTestId('music-roll-synth-key-re')
+        .querySelector('[data-vibrato-rate="3.9"]')
+    ).not.toBeNull();
+
+    fireEvent.pointerMove(key, {
+      clientX: 152,
+      clientY: 80,
+      pointerId: 7,
+      pointerType: 'touch',
+    });
+
+    await waitFor(() =>
+      expect(handleSynthGestureChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          interactionId: 'synth-7-do',
+          normalizedVerticalPosition: 0.5,
+          noteId: 're',
+          pitchSemitoneOffset: 2,
+          vibratoDepth: 0,
+          vibratoRateHz: 5.2,
+        })
+      )
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('music-roll-synth-step-transport-vibrato')).toHaveTextContent(
+        'Vibrato: 0%'
+      )
+    );
+    expect(
+      screen
+        .getByTestId('music-roll-synth-key-re')
+        .querySelector('[data-vibrato-direction="neutral"]')
+    ).not.toBeNull();
+
+    fireEvent.pointerUp(key, {
+      clientX: 152,
+      clientY: 80,
+      pointerId: 7,
+      pointerType: 'touch',
+    });
+
+    await waitFor(() =>
+      expect(handleSynthGestureEnd).toHaveBeenCalledWith(
+        expect.objectContaining({
+          interactionId: 'synth-7-do',
+          noteId: 're',
+          pitchSemitoneOffset: 2,
+        })
+      )
+    );
+    await waitFor(() => expect(releasePointerCaptureMock).toHaveBeenCalledWith(7));
 
     fireEvent.pointerUp(secondKey, {
-      clientY: 96,
+      clientX: 152,
+      clientY: 80,
       pointerId: 8,
       pointerType: 'touch',
     });
@@ -288,34 +540,43 @@ describe('KangurMusicPianoRoll', () => {
     fireEvent.click(screen.getByTestId('music-roll-synth-step-synth-glide-mode-semitone'));
 
     expect(handleSynthGlideModeChange).toHaveBeenCalledWith('semitone');
-    expect(screen.getByTestId('music-roll-synth-step-synth-glide-mode-semitone')).toHaveAttribute(
-      'aria-pressed',
-      'true'
+    await waitFor(() =>
+      expect(
+        screen.getByTestId('music-roll-synth-step-synth-glide-mode-semitone')
+      ).toHaveAttribute('aria-pressed', 'true')
     );
-    expect(screen.getByTestId('music-roll-synth-step-transport-glide-mode')).toHaveTextContent(
-      'Ruch: Stopnie'
+    await waitFor(() =>
+      expect(screen.getByTestId('music-roll-synth-step-transport-glide-mode')).toHaveTextContent(
+        'Ruch: Stopnie'
+      )
     );
 
     fireEvent.pointerDown(key, {
-      clientY: 120,
+      clientX: 48,
+      clientY: 80,
       pointerId: 9,
       pointerType: 'touch',
     });
     fireEvent.pointerMove(key, {
-      clientY: 20,
+      clientX: 120,
+      clientY: 80,
       pointerId: 9,
       pointerType: 'touch',
     });
 
-    expect(handleSynthGestureChange).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        interactionId: 'synth-9-do',
-        noteId: 'do',
-        pitchSemitoneOffset: 2,
-      })
+    await waitFor(() =>
+      expect(handleSynthGestureChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          interactionId: 'synth-9-do',
+          noteId: 're',
+          pitchSemitoneOffset: 1,
+        })
+      )
     );
-    expect(screen.getByTestId('music-roll-synth-step-transport-glide')).toHaveTextContent(
-      'Glide: +2.0 st'
+    await waitFor(() =>
+      expect(screen.getByTestId('music-roll-synth-step-transport-glide')).toHaveTextContent(
+        'Glide: +1.0 st'
+      )
     );
   });
 
@@ -359,6 +620,64 @@ describe('KangurMusicPianoRoll', () => {
     );
     expect(screen.getByTestId('music-roll-kid-step-transport-glide-mode-icon')).toHaveTextContent(
       '↕'
+    );
+  });
+
+  it('retargets a captured synth glide when the pointer crosses into a neighbouring key', () => {
+    const handleSynthGestureChange = vi.fn();
+    const handleSynthGestureEnd = vi.fn();
+
+    render(
+      <KangurMusicPianoRoll
+        keyboardMode='synth'
+        keyTestIdPrefix='music-roll-cross-key'
+        keys={DIATONIC_PIANO_KEYS}
+        melody={['do', 're']}
+        onKeyPress={vi.fn()}
+        onSynthGestureChange={handleSynthGestureChange}
+        onSynthGestureEnd={handleSynthGestureEnd}
+        stepTestIdPrefix='music-roll-cross-step'
+      />
+    );
+
+    const doKey = screen.getByTestId('music-roll-cross-key-do');
+    const reKey = screen.getByTestId('music-roll-cross-key-re');
+    mockKeyRect(doKey, 0, 160, 0, 96);
+    mockKeyRect(reKey, 0, 160, 104, 96);
+
+    fireEvent.pointerDown(doKey, {
+      clientX: 40,
+      clientY: 118,
+      pointerId: 31,
+      pointerType: 'touch',
+    });
+    fireEvent.pointerMove(doKey, {
+      clientX: 146,
+      clientY: 44,
+      pointerId: 31,
+      pointerType: 'touch',
+    });
+
+    expect(handleSynthGestureChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        interactionId: 'synth-31-do',
+        noteId: 're',
+      })
+    );
+    expect(screen.getByTestId('music-roll-cross-key-re')).toHaveAttribute('data-active-glides', '1');
+
+    fireEvent.pointerUp(doKey, {
+      clientX: 146,
+      clientY: 44,
+      pointerId: 31,
+      pointerType: 'touch',
+    });
+
+    expect(handleSynthGestureEnd).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        interactionId: 'synth-31-do',
+        noteId: 're',
+      })
     );
   });
 });

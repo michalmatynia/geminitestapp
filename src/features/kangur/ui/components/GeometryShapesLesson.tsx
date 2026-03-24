@@ -1,5 +1,6 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
@@ -17,13 +18,12 @@ import {
   GeometryShapesOrbitAnimation,
   GeometrySideHighlightAnimation,
   GeometryVerticesAnimation,
-} from '@/features/kangur/ui/components/GeometryLessonAnimations';
+} from './GeometryLessonAnimations';
 import { KANGUR_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 import {
   addXp,
   createLessonCompletionReward,
-  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-copy';
@@ -310,6 +310,7 @@ export const SLIDES = buildGeometryShapesSlides(translateStaticGeometryShapes);
 export const HUB_SECTIONS = buildGeometryShapesSections(translateStaticGeometryShapes);
 
 export default function GeometryShapesLesson(): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurStaticLessons.geometryShapes');
   const [rewarded, setRewarded] = useState(false);
   const translate = (key: string): string => translations(key as never);
@@ -318,12 +319,11 @@ export default function GeometryShapesLesson(): React.JSX.Element {
 
   const handleGameStart = useCallback((): void => {
     if (rewarded) return;
-    const ownerKey = getProgressOwnerKey();
     const progress = loadProgress({ ownerKey });
     const reward = createLessonCompletionReward(progress, 'geometry_shapes', 60);
     addXp(reward.xp, reward.progressUpdates, { ownerKey });
     setRewarded(true);
-  }, [rewarded]);
+  }, [ownerKey, rewarded]);
 
   return (
     <KangurUnifiedLesson

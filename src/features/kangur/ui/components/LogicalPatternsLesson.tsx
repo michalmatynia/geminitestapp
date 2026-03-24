@@ -15,7 +15,7 @@ import {
   PatternUnitAnimation,
   RuleChecklistAnimation,
   RuleCheckAnimation,
-} from '@/features/kangur/ui/components/LogicalPatternsAnimations';
+} from './LogicalPatternsAnimations';
 import LogicalPatternsWorkshopGame from '@/features/kangur/ui/components/LogicalPatternsWorkshopGame';
 import {
   KangurLessonCallout,

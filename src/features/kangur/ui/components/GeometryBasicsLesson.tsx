@@ -13,7 +13,7 @@ import {
   GeometryRightAngleAnimation,
   GeometrySideHighlightAnimation,
   GeometryVerticesAnimation,
-} from '@/features/kangur/ui/components/GeometryLessonAnimations';
+} from './GeometryLessonAnimations';
 import {
   KangurLessonCallout,
   KangurLessonCaption,

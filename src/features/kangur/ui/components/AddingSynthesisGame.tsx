@@ -1,5 +1,6 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { Gauge, Music2, RefreshCw, Sparkles, Target, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
@@ -45,7 +46,6 @@ import {
 import {
   addXp,
   createLessonPracticeReward,
-  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
@@ -115,6 +115,7 @@ const getFeedbackAccent = (kind: FeedbackKind): 'emerald' | 'amber' | 'rose' => 
 export default function AddingSynthesisGame({
   onFinish,
 }: KangurMiniGameFinishActionProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
   const t = (
@@ -201,7 +202,6 @@ export default function AddingSynthesisGame({
     finalPerfectHits: number,
     finalBestStreak: number
   ): void => {
-    const ownerKey = getProgressOwnerKey();
     const progress = loadProgress({ ownerKey });
     const reward = createLessonPracticeReward(progress, 'adding', finalScore, notes.length, 65);
     addXp(reward.xp, reward.progressUpdates, { ownerKey });

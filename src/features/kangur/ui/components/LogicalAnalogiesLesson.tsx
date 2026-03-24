@@ -11,7 +11,7 @@ import {
   NumberOperationAnimation,
   PartWholeAnimation,
   ShapeTransformAnimation,
-} from '@/features/kangur/ui/components/LogicalAnalogiesAnimations';
+} from './LogicalAnalogiesAnimations';
 import {
   KangurLessonCallout,
   KangurLessonCaption,

@@ -63,6 +63,31 @@ const buildEnglishAdjectivesSlides = (
         </KangurLessonStack>
       ),
     },
+    {
+      title: translations('slides.intro.peoplePlacesThings.title'),
+      content: (
+        <KangurLessonStack align='start'>
+          <KangurLessonLead align='left'>
+            {translations('slides.intro.peoplePlacesThings.lead')}
+          </KangurLessonLead>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-3 text-sm`}>
+            <KangurLessonInset accent='indigo' className='text-left'>
+              <p className='font-semibold text-indigo-700'>people</p>
+              <p className='mt-1 text-slate-600'>brown eyes, long black hair</p>
+            </KangurLessonInset>
+            <KangurLessonInset accent='indigo' className='text-left'>
+              <p className='font-semibold text-indigo-700'>places</p>
+              <p className='mt-1 text-slate-600'>big pink bedroom, soft rug</p>
+            </KangurLessonInset>
+            <KangurLessonInset accent='indigo' className='text-left'>
+              <p className='font-semibold text-indigo-700'>things</p>
+              <p className='mt-1 text-slate-600'>red train, new games</p>
+            </KangurLessonInset>
+          </div>
+          <KangurLessonCaption>{translations('slides.intro.peoplePlacesThings.caption')}</KangurLessonCaption>
+        </KangurLessonStack>
+      ),
+    },
   ],
   order: [
     {
@@ -89,6 +114,34 @@ const buildEnglishAdjectivesSlides = (
                 <p className='font-semibold text-indigo-700'>{text}</p>
               </KangurLessonInset>
             ))}
+          </div>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: translations('slides.order.clearPicture.title'),
+      content: (
+        <KangurLessonStack align='start'>
+          <KangurLessonLead align='left'>
+            {translations('slides.order.clearPicture.lead')}
+          </KangurLessonLead>
+          <KangurLessonVisual
+            accent='indigo'
+            caption={translations('slides.order.clearPicture.caption')}
+          >
+            <EnglishAdjectiveOrderAnimation />
+          </KangurLessonVisual>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm`}>
+            <KangurLessonInset accent='emerald' className='text-left'>
+              <p className='font-semibold text-emerald-700'>right</p>
+              <p className='mt-1 text-slate-700'>a small blue teddy</p>
+              <p className='mt-1 text-slate-700'>a beautiful picture</p>
+            </KangurLessonInset>
+            <KangurLessonInset accent='rose' className='text-left'>
+              <p className='font-semibold text-rose-700'>fix it</p>
+              <p className='mt-1 text-slate-700'>a teddy small blue</p>
+              <p className='mt-1 text-slate-700'>a picture beautiful</p>
+            </KangurLessonInset>
           </div>
         </KangurLessonStack>
       ),
@@ -147,6 +200,52 @@ const buildEnglishAdjectivesSlides = (
       ),
     },
     {
+      title: translations('slides.describe.peopleAndPlaces.title'),
+      content: (
+        <KangurLessonStack align='start'>
+          <KangurLessonLead align='left'>
+            {translations('slides.describe.peopleAndPlaces.lead')}
+          </KangurLessonLead>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm`}>
+            <KangurLessonCallout accent='indigo' padding='sm'>
+              <p className='font-semibold text-slate-700'>person</p>
+              <p className='mt-2 text-slate-700'>She has long black hair and brown eyes.</p>
+            </KangurLessonCallout>
+            <KangurLessonCallout accent='amber' padding='sm'>
+              <p className='font-semibold text-slate-700'>place</p>
+              <p className='mt-2 text-slate-700'>It is a big pink bedroom with long blue curtains.</p>
+            </KangurLessonCallout>
+          </div>
+          <KangurLessonCaption>{translations('slides.describe.peopleAndPlaces.caption')}</KangurLessonCaption>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: translations('slides.describe.studyAndPlay.title'),
+      content: (
+        <KangurLessonStack align='start'>
+          <KangurLessonLead align='left'>
+            {translations('slides.describe.studyAndPlay.lead')}
+          </KangurLessonLead>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm`}>
+            <KangurLessonCallout accent='emerald' padding='sm'>
+              <p className='font-semibold text-slate-700'>study corner</p>
+              <p className='mt-2 text-slate-700'>There is a new desk by the wall.</p>
+              <p className='mt-1 text-slate-700'>There is a small red lamp on the desk.</p>
+              <p className='mt-1 text-slate-700'>It is a bright green book.</p>
+            </KangurLessonCallout>
+            <KangurLessonCallout accent='amber' padding='sm'>
+              <p className='font-semibold text-slate-700'>playground</p>
+              <p className='mt-2 text-slate-700'>It is a big yellow slide.</p>
+              <p className='mt-1 text-slate-700'>It is a long blue kite.</p>
+              <p className='mt-1 text-slate-700'>It is an old bench.</p>
+            </KangurLessonCallout>
+          </div>
+          <KangurLessonCaption>{translations('slides.describe.studyAndPlay.caption')}</KangurLessonCaption>
+        </KangurLessonStack>
+      ),
+    },
+    {
       title: translations('slides.describe.wordBank.title'),
       content: (
         <KangurLessonStack align='start'>
@@ -157,14 +256,17 @@ const buildEnglishAdjectivesSlides = (
             {[
               'big',
               'small',
+              'small red',
               'soft',
               'long',
               'blue',
+              'bright green',
               'yellow',
               'red',
               'brown',
               'beautiful',
               'new',
+              'old',
             ].map((word) => (
               <KangurLessonChip key={word} accent='indigo'>
                 {word}

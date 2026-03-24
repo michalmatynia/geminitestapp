@@ -1,5 +1,6 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { Eraser, PencilRuler } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useMemo, useRef, useState } from 'react';
@@ -51,7 +52,6 @@ import type { Point2d } from '@/shared/contracts/geometry';
 import {
   addXp,
   createTrainingReward,
-  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
@@ -277,6 +277,7 @@ export default function GeometryDrawingGame({
   shapeIds,
   showDifficultySelector,
 }: GeometryDrawingGameProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const locale = useLocale();
   const translations = useTranslations('KangurMiniGames');
   const fallbackCopy = useMemo(() => getGeometryDrawingMiniGameFallbackCopy(locale), [locale]);
@@ -512,7 +513,6 @@ export default function GeometryDrawingGame({
 
   const finishGame = useCallback(
     (finalScore: number): void => {
-      const ownerKey = getProgressOwnerKey();
       const progress = loadProgress({ ownerKey });
       const reward = createTrainingReward(progress, {
         activityKey: resolvedActivityKey,
@@ -536,7 +536,7 @@ export default function GeometryDrawingGame({
       setXpBreakdown(reward.breakdown ?? []);
       setDone(true);
     },
-    [difficulty, lessonKey, operation, resolvedActivityKey, totalRounds]
+    [difficulty, lessonKey, operation, ownerKey, resolvedActivityKey, totalRounds]
   );
 
   const resetRun = useCallback((): void => {

@@ -10,7 +10,6 @@ const {
   createGameSessionRewardMock,
   getCurrentKangurDailyQuestMock,
   getNextLockedBadgeMock,
-  getProgressSubjectMock,
   loadProgressMock,
 } = vi.hoisted(() => ({
   addXpMock: vi.fn(),
@@ -18,7 +17,6 @@ const {
   createGameSessionRewardMock: vi.fn(),
   getCurrentKangurDailyQuestMock: vi.fn(),
   getNextLockedBadgeMock: vi.fn(),
-  getProgressSubjectMock: vi.fn(),
   loadProgressMock: vi.fn(),
 }));
 
@@ -31,7 +29,6 @@ vi.mock('@/features/kangur/ui/services/progress', () => ({
   addXp: addXpMock,
   createGameSessionReward: createGameSessionRewardMock,
   getNextLockedBadge: getNextLockedBadgeMock,
-  getProgressSubject: getProgressSubjectMock,
   loadProgress: loadProgressMock,
 }));
 
@@ -48,6 +45,7 @@ describe('buildKangurCompletedGameOutcome', () => {
       difficulty: 'medium',
       nextScore: 6,
       operation: 'addition',
+      subject: 'maths',
       taken: 42,
       totalQuestions: 10,
       allowRewards: false,
@@ -183,6 +181,5 @@ describe('buildKangurCompletedGameOutcome', () => {
         subject: 'maths',
       })
     );
-    expect(getProgressSubjectMock).not.toHaveBeenCalled();
   });
 });

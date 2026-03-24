@@ -1,9 +1,10 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import {
   KangurDragDropContext,
@@ -45,7 +46,6 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import {
   addXp,
   createLessonPracticeReward,
-  getProgressOwnerKey,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
@@ -263,6 +263,7 @@ export default function EnglishAdverbsFrequencyRoutineGame({
   finishLabel,
   onFinish,
 }: KangurMiniGameFinishProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
@@ -429,7 +430,6 @@ export default function EnglishAdverbsFrequencyRoutineGame({
     setTotalCorrect(nextTotal);
 
     if (roundIndex + 1 >= TOTAL_ROUNDS) {
-      const ownerKey = getProgressOwnerKey();
       const progress = loadProgress({ ownerKey });
       const reward = createLessonPracticeReward(progress, {
         activityKey: 'english_adverbs_frequency_routine_studio',
@@ -536,7 +536,10 @@ export default function EnglishAdverbsFrequencyRoutineGame({
               {translations('englishAdverbsFrequency.summary.orderLabel')}
             </span>
             {(Object.keys(FREQUENCY_META) as EnglishAdverbFrequencyId[]).map((frequency, index) => (
-              <React.Fragment key={`summary-order-${frequency}`}>
+              <span
+                key={`summary-order-${frequency}`}
+                className='contents'
+              >
                 <KangurStatusChip accent={FREQUENCY_META[frequency].accent} size='sm'>
                   {getFrequencyLabel(translations, frequency)}
                 </KangurStatusChip>
@@ -545,7 +548,7 @@ export default function EnglishAdverbsFrequencyRoutineGame({
                     →
                   </span>
                 ) : null}
-              </React.Fragment>
+              </span>
             ))}
           </div>
           <div className='mt-4 grid gap-3 sm:grid-cols-2'>
@@ -735,6 +738,7 @@ export default function EnglishAdverbsFrequencyRoutineGame({
                   </div>
                   <div className='mt-3 space-y-2'>
                     {round.actions.map((action) => {
+                      const targetMeta = FREQUENCY_META[action.answer];
                       const targetSentence = buildEnglishAdverbsFrequencySentence(
                         action.actionId,
                         action.answer
@@ -748,11 +752,19 @@ export default function EnglishAdverbsFrequencyRoutineGame({
                         <div
                           key={`target-${action.id}`}
                           className={cn(
-                            'rounded-[16px] border px-3 py-2 text-left shadow-sm',
+                            'relative overflow-hidden rounded-[18px] border px-3 py-2 text-left shadow-sm',
                             KANGUR_ACCENT_STYLES[round.accent].activeCard
                           )}
                           data-testid={`english-adverbs-frequency-target-${action.id}`}
                         >
+                          <div
+                            aria-hidden='true'
+                            className='pointer-events-none absolute inset-0 opacity-90'
+                            style={{
+                              background: `radial-gradient(circle at 14% 18%, ${targetMeta.fill}22, transparent 34%), radial-gradient(circle at 86% 22%, rgba(255,255,255,0.7), transparent 28%), linear-gradient(180deg, rgba(255,255,255,0.42), rgba(255,255,255,0.08))`,
+                            }}
+                          />
+                          <div className='relative z-10'>
                           <p className='text-xs font-black uppercase tracking-[0.14em] text-slate-700'>
                             {ACTION_META[action.actionId].emoji} {getActionLabel(translations, action.actionId)}
                           </p>
@@ -780,6 +792,7 @@ export default function EnglishAdverbsFrequencyRoutineGame({
                               )}
                             </span>
                           </p>
+                          </div>
                         </div>
                       );
                     })}
@@ -812,6 +825,7 @@ export default function EnglishAdverbsFrequencyRoutineGame({
                 const sentenceParts = assigned
                   ? buildEnglishAdverbsFrequencySentenceParts(action.actionId, assigned.frequency)
                   : buildEnglishAdverbsFrequencySentenceTemplateParts(action.actionId);
+                const laneFill = assigned ? FREQUENCY_META[assigned.frequency].fill : '#cbd5e1';
                 const surfaceClass = checked
                   ? isCorrect
                     ? 'border-emerald-300 bg-emerald-50/80'
@@ -825,7 +839,7 @@ export default function EnglishAdverbsFrequencyRoutineGame({
                         {...provided.droppableProps}
                         data-testid={`english-adverbs-frequency-slot-${action.id}`}
                         className={cn(
-                          'rounded-[22px] border p-3 transition touch-manipulation',
+                          'relative overflow-hidden rounded-[22px] border p-3 transition touch-manipulation',
                           isCoarsePointer ? 'min-h-[17rem]' : 'min-h-[15.5rem]',
                           surfaceClass,
                           selectedToken && !checked && isCoarsePointer
@@ -842,13 +856,21 @@ export default function EnglishAdverbsFrequencyRoutineGame({
                         aria-label={translations('englishAdverbsFrequency.inRound.studio.laneAria', {
                           action: getActionLabel(translations, action.actionId),
                         })}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            handleAssignToken(action.id);
-                          }
-                        }}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              handleAssignToken(action.id);
+                            }
+                          }}
                       >
+                        <div
+                          aria-hidden='true'
+                          className='pointer-events-none absolute inset-0 opacity-90'
+                          style={{
+                            background: `radial-gradient(circle at 12% 18%, ${laneFill}1f, transparent 36%), radial-gradient(circle at 86% 20%, rgba(255,255,255,0.8), transparent 26%), linear-gradient(180deg, rgba(255,255,255,0.46), rgba(255,255,255,0.08))`,
+                          }}
+                        />
+                        <div className='relative z-10'>
                         <div className='flex items-center justify-between gap-2'>
                           <KangurStatusChip accent={round.accent} size='sm'>
                             {ACTION_META[action.actionId].emoji} {getActionLabel(translations, action.actionId)}
@@ -1057,6 +1079,7 @@ export default function EnglishAdverbsFrequencyRoutineGame({
                             </span>
                           )}
                           {provided.placeholder}
+                        </div>
                         </div>
                       </div>
                     )}
@@ -1292,8 +1315,13 @@ function RoutineWeekStrip({
   frequency: EnglishAdverbFrequencyId | null;
   translate: KangurMiniGameTranslate;
 }): React.JSX.Element {
+  const stripId = useId().replace(/:/g, '-');
   const meta = frequency ? FREQUENCY_META[frequency] : null;
   const actionEmoji = ACTION_META[actionId].emoji;
+  const clipId = `${stripId}-clip`;
+  const panelGradientId = `${stripId}-panel-gradient`;
+  const accentGradientId = `${stripId}-accent-gradient`;
+  const atmosphereGradientId = `${stripId}-atmosphere-gradient`;
   const activePointXs = WEEKDAY_LABELS.map((_, index) => ({
     active: meta?.activeDays[index] ?? false,
     x: 28 + index * 28,
@@ -1318,8 +1346,26 @@ function RoutineWeekStrip({
       role='img'
       viewBox='0 0 240 94'
     >
+      <defs>
+        <clipPath id={clipId}>
+          <rect data-testid={`${dataTestId}-clip`} x='6' y='8' width='228' height='78' rx='22' />
+        </clipPath>
+        <linearGradient id={panelGradientId} x1='0%' x2='100%' y1='0%' y2='100%'>
+          <stop offset='0%' stopColor='rgba(255,255,255,0.98)' />
+          <stop offset='55%' stopColor='rgba(248,250,252,0.96)' />
+          <stop offset='100%' stopColor='rgba(226,232,240,0.92)' />
+        </linearGradient>
+        <linearGradient id={accentGradientId} x1='0%' x2='100%' y1='0%' y2='100%'>
+          <stop offset='0%' stopColor='rgba(255,255,255,0.58)' />
+          <stop offset='100%' stopColor={meta ? `${meta.fill}66` : 'rgba(148,163,184,0.28)'} />
+        </linearGradient>
+        <radialGradient id={atmosphereGradientId} cx='80%' cy='20%' r='76%'>
+          <stop offset='0%' stopColor={meta ? `${meta.fill}30` : 'rgba(148,163,184,0.14)'} />
+          <stop offset='100%' stopColor='rgba(255,255,255,0)' />
+        </radialGradient>
+      </defs>
       <style>{`
-        .panel { fill: #ffffff; stroke: #dbeafe; stroke-width: 2; }
+        .panel { fill: url(#${panelGradientId}); stroke: #dbeafe; stroke-width: 2; }
         .day-label {
           font: 700 10px/1 "Space Grotesk", "IBM Plex Sans", sans-serif;
           fill: #64748b;
@@ -1376,7 +1422,16 @@ function RoutineWeekStrip({
           .week-path { animation: none; }
         }
       `}</style>
-      <rect className='panel' x='6' y='8' width='228' height='78' rx='22' />
+      <g clipPath={`url(#${clipId})`}>
+        <rect className='panel' x='6' y='8' width='228' height='78' rx='22' />
+        <g data-testid={`${dataTestId}-atmosphere`}>
+          <ellipse cx='186' cy='24' rx='82' ry='34' fill={`url(#${atmosphereGradientId})`} />
+          <ellipse cx='74' cy='74' rx='92' ry='18' fill={meta ? `${meta.fill}12` : 'rgba(148,163,184,0.08)'} />
+          <path d='M16 72 C 48 52, 104 52, 224 78' fill='none' stroke='rgba(255,255,255,0.2)' strokeWidth='10' strokeLinecap='round' />
+        </g>
+        <rect x='12' y='14' width='216' height='66' rx='18' fill='none' stroke='rgba(255,255,255,0.46)' strokeWidth='1.6' data-testid={`${dataTestId}-frame`} />
+      </g>
+      <rect x='16' y='16' width='62' height='18' rx='9' fill={`url(#${accentGradientId})`} opacity='0.92' />
       <text className='meter-label' x='20' y='28'>
         {frequency ? getFrequencyLabel(translate, frequency) : '...'}
       </text>

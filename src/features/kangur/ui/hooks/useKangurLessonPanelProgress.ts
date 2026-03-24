@@ -6,7 +6,7 @@ import {
   recordKangurLessonPanelProgress,
   recordKangurLessonPanelTime,
 } from '@/features/kangur/ui/services/progress';
-import * as KangurSubjectFocusContext from '@/features/kangur/ui/context/KangurSubjectFocusContext';
+import { useKangurOptionalSubjectKey } from '@/features/kangur/ui/hooks/useKangurOptionalSubjectKey';
 
 import { useLessonHubProgress, type LessonHubSectionProgress } from './useLessonHubProgress';
 
@@ -28,27 +28,12 @@ type UseKangurLessonPanelProgressResult<SectionId extends string> = {
   sectionProgress: Partial<Record<SectionId, LessonHubSectionProgress>>;
 };
 
-const useLegacySubjectFocusState = (): { subjectKey: string | null } | null => {
-  const legacyFocus = KangurSubjectFocusContext.useKangurSubjectFocus?.();
-  return legacyFocus ? { subjectKey: legacyFocus.subjectKey ?? null } : null;
-};
-
-const useResolvedSubjectFocusState = Object.prototype.hasOwnProperty.call(
-  KangurSubjectFocusContext,
-  'useOptionalKangurSubjectFocusState'
-)
-  ? (KangurSubjectFocusContext as {
-      useOptionalKangurSubjectFocusState: () => { subjectKey: string | null } | null;
-    }).useOptionalKangurSubjectFocusState
-  : useLegacySubjectFocusState;
-
 export const useKangurLessonPanelProgress = <SectionId extends string>({
   lessonKey,
   slideSections,
   sectionLabels,
 }: UseKangurLessonPanelProgressOptions<SectionId>): UseKangurLessonPanelProgressResult<SectionId> => {
-  const subjectFocusState = useResolvedSubjectFocusState();
-  const subjectKey = subjectFocusState?.subjectKey ?? null;
+  const subjectKey = useKangurOptionalSubjectKey();
   const { markSectionOpened, markSectionViewedCount, sectionProgress } =
     useLessonHubProgress(slideSections);
   const sessionIdRef = useRef<string>(

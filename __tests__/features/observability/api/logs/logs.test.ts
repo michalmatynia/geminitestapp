@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { GET, POST, DELETE } from '@/app/api/system/logs/route';
+import { DELETE_handler } from '@/app/api/system/logs/handler';
+import { GET, POST } from '@/app/api/system/logs/route';
 import {
   hydrateLogRuntimeContext,
   hydrateSystemLogRecordRuntimeContext,
@@ -212,17 +213,23 @@ describe('System Logs API', () => {
     );
   });
 
-  it('DELETE /api/system/logs should clear logs', async () => {
+  it('DELETE /api/system/logs should clear the selected log target', async () => {
     vi.mocked(clearSystemLogs).mockResolvedValue({ deleted: 5 });
 
-    const req = new NextRequest('http://localhost/api/system/logs', {
+    const req = new NextRequest('http://localhost/api/system/logs?target=error_logs', {
       method: 'DELETE',
     });
-    const res = await DELETE(req);
+    const res = await DELETE_handler(req, {
+      requestId: 'test-request-id',
+    });
     const data = await res.json();
 
     expect(res.status).toBe(200);
+    expect(data.target).toBe('error_logs');
     expect(data.deleted).toBe(5);
-    expect(clearSystemLogs).toHaveBeenCalled();
+    expect(clearSystemLogs).toHaveBeenCalledWith({
+      before: null,
+      level: 'error',
+    });
   });
 });

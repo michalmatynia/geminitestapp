@@ -14,7 +14,6 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur-quests';
 
 import { buildKangurAssignments } from './assignments';
-import { getProgressSubject, loadProgressOwnerKey } from './progress';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 import {
   translateKangurProgressWithFallback,
@@ -40,9 +39,9 @@ type KangurDailyQuestStoredState = {
 type KangurDailyQuestOptions = {
   locale?: string | null;
   now?: Date;
-  ownerKey?: string | null;
+  ownerKey: string | null;
   persist?: boolean;
-  subject?: KangurLessonSubject;
+  subject: KangurLessonSubject;
   translate?: KangurProgressTranslate;
 };
 
@@ -130,9 +129,6 @@ const getDailyQuestFallbackCopy = (
 
 const canUseStorage = (): boolean => typeof window !== 'undefined' && Boolean(window.localStorage);
 
-const resolveQuestSubject = (options?: KangurDailyQuestOptions): KangurLessonSubject =>
-  options?.subject ?? getProgressSubject();
-
 const normalizeQuestOwnerKey = (ownerKey: string | null | undefined): string | null => {
   const normalized = typeof ownerKey === 'string' ? ownerKey.trim() : '';
   return normalized.length > 0 ? normalized : null;
@@ -182,13 +178,8 @@ const buildQuestExpiry = (now: Date): string => {
   return expiry.toISOString();
 };
 
-const resolveQuestOwnerKey = (ownerKeyOverride?: string | null): string | null => {
-  if (ownerKeyOverride !== undefined) {
-    return normalizeQuestOwnerKey(ownerKeyOverride);
-  }
-
-  return loadProgressOwnerKey();
-};
+const resolveQuestOwnerKey = (ownerKey: string | null): string | null =>
+  normalizeQuestOwnerKey(ownerKey);
 
 const isQuestMetric = (
   value: KangurAssignmentPlan['questMetric']
@@ -493,11 +484,11 @@ const toDailyQuestState = (
 
 export const getCurrentKangurDailyQuest = (
   progress: KangurProgressState,
-  options: KangurDailyQuestOptions = {}
+  options: KangurDailyQuestOptions
 ): KangurDailyQuestState | null => {
   const fallbackCopy = getDailyQuestFallbackCopy(options.locale);
   const { now = new Date(), persist = true } = options;
-  const subject = resolveQuestSubject(options);
+  const { subject } = options;
   const ownerKey = resolveQuestOwnerKey(options.ownerKey);
   const dateKey = toLocalDateKey(now);
   const stored = loadStoredDailyQuest(subject, ownerKey, { persist });
@@ -527,17 +518,17 @@ export const getCurrentKangurDailyQuest = (
 };
 
 export const getKangurDailyQuestStorageKey = (
-  subject?: KangurLessonSubject,
-  ownerKey?: string | null
-): string => buildDailyQuestStorageKey(subject ?? getProgressSubject(), resolveQuestOwnerKey(ownerKey));
+  subject: KangurLessonSubject,
+  ownerKey: string | null
+): string => buildDailyQuestStorageKey(subject, resolveQuestOwnerKey(ownerKey));
 
 export const claimCurrentKangurDailyQuestReward = (
   progress: KangurProgressState,
-  options: KangurDailyQuestOptions = {}
+  options: KangurDailyQuestOptions
 ): KangurDailyQuestClaimResult => {
   const fallbackCopy = getDailyQuestFallbackCopy(options.locale);
   const { now = new Date() } = options;
-  const subject = resolveQuestSubject(options);
+  const { subject } = options;
   const ownerKey = resolveQuestOwnerKey(options.ownerKey);
   const dateKey = toLocalDateKey(now);
   const stored = loadStoredDailyQuest(subject, ownerKey, { persist: options.persist });

@@ -7,7 +7,13 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 
-import { useLessonContentEditorContext } from '../context/LessonContentEditorContext';
+type UseLessonContentEditorContextType =
+  typeof import('../context/LessonContentEditorContext')['useLessonContentEditorContext'];
+type AdminKangurLessonsManagerPageType =
+  typeof import('@/features/kangur/admin/AdminKangurLessonsManagerPage')['AdminKangurLessonsManagerPage'];
+
+let useLessonContentEditorContext: UseLessonContentEditorContextType;
+let AdminKangurLessonsManagerPage: AdminKangurLessonsManagerPageType;
 
 const { withKangurClientError, withKangurClientErrorSync } = globalThis.__kangurClientErrorMocks();
 const {
@@ -206,7 +212,6 @@ vi.mock('@/features/kangur/shared/ui', () => ({
     saveText?: string;
     actions?: React.ReactNode;
   }) => {
-    console.log('FormModal render:', { isOpen, title });
     return isOpen ? (
       <div data-testid='mock-form-modal'>
         <h2 data-testid={titleTestId}>{title}</h2>
@@ -278,8 +283,6 @@ vi.mock('@/features/kangur/admin/components/KangurAdminContentShell', () => ({
   KangurAdminContentShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-import { AdminKangurLessonsManagerPage } from '@/features/kangur/admin/AdminKangurLessonsManagerPage';
-
 const baseLessons = [
   {
     id: 'kangur-lesson-clock',
@@ -306,7 +309,8 @@ vi.mock('@/features/kangur/settings', async (importOriginal) => {
 });
 
 describe('AdminKangurLessonsManagerPage content mode flow', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.resetModules();
     updateLessonsMock.mockReset();
     updateLessonDocumentsMock.mockReset();
     apiPostMock.mockReset();
@@ -342,6 +346,10 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
       message: 'Audio has not been generated for this lesson draft yet.',
       segments: [],
     });
+    ({ useLessonContentEditorContext } = await import('../context/LessonContentEditorContext'));
+    ({ AdminKangurLessonsManagerPage } = await import(
+      '@/features/kangur/admin/AdminKangurLessonsManagerPage'
+    ));
   });
 
   it('opens the content editor after creating a document-mode lesson and preserves the new lesson on content save', async () => {

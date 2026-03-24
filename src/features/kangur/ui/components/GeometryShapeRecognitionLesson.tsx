@@ -1,7 +1,7 @@
 'use client';
 
 import type * as React from 'react';
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import GeometryDrawingGame from '@/features/kangur/ui/components/GeometryDrawingGame';
@@ -132,7 +132,7 @@ const buildSections = (translate: LessonTranslate) =>
     },
   ] as const;
 
-const ShapeIcon = ({
+export const ShapeIcon = ({
   shape,
   color,
   className,
@@ -141,38 +141,134 @@ const ShapeIcon = ({
   color: string;
   className?: string;
 }): React.JSX.Element => {
+  const baseId = useId().replace(/:/g, '');
   const stroke = '#0f172a';
+  const testIdPrefix = `geometry-shape-icon-${shape}`;
+  const clipId = `${testIdPrefix}-${baseId}-clip`;
+  const panelGradientId = `${testIdPrefix}-${baseId}-panel`;
+  const frameGradientId = `${testIdPrefix}-${baseId}-frame`;
+  const shapeGradientId = `${testIdPrefix}-${baseId}-shape`;
 
   return (
     <svg
       aria-hidden='true'
       className={className ?? 'h-20 w-20'}
+      data-testid={`${testIdPrefix}-animation`}
       viewBox='0 0 120 120'
     >
+      <defs>
+        <clipPath id={clipId}>
+          <rect x='8' y='8' width='104' height='104' rx='28' />
+        </clipPath>
+        <linearGradient
+          id={panelGradientId}
+          x1='16'
+          x2='108'
+          y1='12'
+          y2='108'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='#f8fafc' />
+          <stop offset='55%' stopColor='#eff6ff' />
+          <stop offset='100%' stopColor='#ecfeff' />
+        </linearGradient>
+        <linearGradient
+          id={frameGradientId}
+          x1='16'
+          x2='104'
+          y1='16'
+          y2='16'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='rgba(56,189,248,0.78)' />
+          <stop offset='50%' stopColor='rgba(52,211,153,0.82)' />
+          <stop offset='100%' stopColor='rgba(250,204,21,0.84)' />
+        </linearGradient>
+        <linearGradient
+          id={shapeGradientId}
+          x1='28'
+          x2='96'
+          y1='24'
+          y2='96'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='rgba(255,255,255,0.95)' />
+          <stop offset='18%' stopColor={color} stopOpacity='0.96' />
+          <stop offset='100%' stopColor={color} stopOpacity='0.76' />
+        </linearGradient>
+      </defs>
+      <g clipPath={`url(#${clipId})`} data-testid={`${testIdPrefix}-atmosphere`}>
+        <rect x='8' y='8' width='104' height='104' rx='28' fill={`url(#${panelGradientId})`} />
+        <ellipse cx='36' cy='28' rx='24' ry='12' fill='rgba(255,255,255,0.55)' />
+        <ellipse cx='84' cy='92' rx='32' ry='16' fill='rgba(148,163,184,0.12)' />
+      </g>
+      <ellipse cx='60' cy='88' rx='28' ry='10' fill='rgba(15,23,42,0.08)' />
       {shape === 'circle' ? (
-        <circle cx='60' cy='60' r='34' fill={color} stroke={stroke} strokeWidth='4' />
+        <circle cx='60' cy='60' r='34' fill={`url(#${shapeGradientId})`} stroke={stroke} strokeWidth='4' />
       ) : null}
       {shape === 'square' ? (
-        <rect x='28' y='28' width='64' height='64' rx='10' fill={color} stroke={stroke} strokeWidth='4' />
+        <rect
+          x='28'
+          y='28'
+          width='64'
+          height='64'
+          rx='10'
+          fill={`url(#${shapeGradientId})`}
+          stroke={stroke}
+          strokeWidth='4'
+        />
       ) : null}
       {shape === 'triangle' ? (
-        <polygon points='60,20 100,96 20,96' fill={color} stroke={stroke} strokeWidth='4' />
+        <polygon
+          points='60,20 100,96 20,96'
+          fill={`url(#${shapeGradientId})`}
+          stroke={stroke}
+          strokeWidth='4'
+        />
       ) : null}
       {shape === 'rectangle' ? (
-        <rect x='22' y='36' width='76' height='48' rx='10' fill={color} stroke={stroke} strokeWidth='4' />
+        <rect
+          x='22'
+          y='36'
+          width='76'
+          height='48'
+          rx='10'
+          fill={`url(#${shapeGradientId})`}
+          stroke={stroke}
+          strokeWidth='4'
+        />
       ) : null}
       {shape === 'oval' ? (
-        <ellipse cx='60' cy='60' rx='40' ry='26' fill={color} stroke={stroke} strokeWidth='4' />
+        <ellipse
+          cx='60'
+          cy='60'
+          rx='40'
+          ry='26'
+          fill={`url(#${shapeGradientId})`}
+          stroke={stroke}
+          strokeWidth='4'
+        />
       ) : null}
       {shape === 'diamond' ? (
         <polygon
           points='60,14 104,60 60,106 16,60'
-          fill={color}
+          fill={`url(#${shapeGradientId})`}
           stroke={stroke}
           strokeWidth='4'
           strokeLinejoin='round'
         />
       ) : null}
+      <rect
+        x='14'
+        y='14'
+        width='92'
+        height='92'
+        rx='24'
+        fill='none'
+        stroke={`url(#${frameGradientId})`}
+        strokeWidth='1.75'
+        data-testid={`${testIdPrefix}-frame`}
+      />
     </svg>
   );
 };

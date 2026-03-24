@@ -14,6 +14,7 @@ import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import {
   loadPersistedSubjectFocus,
   loadRemoteSubjectFocus,
+  normalizeKangurSubjectFocusSubject,
   persistSubjectFocus,
   persistRemoteSubjectFocus,
   subscribeToSubjectFocusChanges,
@@ -108,10 +109,15 @@ export function KangurSubjectFocusProvider({
 
   const setSubject = useCallback(
     (nextSubject: KangurLessonSubject): void => {
-      setSubjectState(nextSubject);
-      persistSubjectFocus(storageKey, nextSubject);
+      const normalizedSubject = normalizeKangurSubjectFocusSubject(nextSubject);
+      if (!normalizedSubject) {
+        return;
+      }
+
+      setSubjectState(normalizedSubject);
+      persistSubjectFocus(storageKey, normalizedSubject);
       if (canSyncRemote) {
-        void persistRemoteSubjectFocus(nextSubject);
+        void persistRemoteSubjectFocus(normalizedSubject);
       }
     },
     [canSyncRemote, storageKey]

@@ -48,14 +48,14 @@ const buildEnglishSentenceStructureSlides = (
           <KangurLessonVisual
             accent='violet'
             caption={translations('slides.blueprint.core.caption')}
+            supportingContent={
+              <p className='text-left text-sm font-semibold text-violet-700'>
+                The student solves the equation.
+              </p>
+            }
           >
             <EnglishSentenceBlueprintAnimation />
           </KangurLessonVisual>
-          <KangurLessonInset accent='violet' className='text-left'>
-            <p className='text-sm font-semibold text-violet-700'>
-              The student solves the equation.
-            </p>
-          </KangurLessonInset>
         </KangurLessonStack>
       ),
     },
@@ -105,20 +105,25 @@ const buildEnglishSentenceStructureSlides = (
           <KangurLessonVisual
             accent='violet'
             caption={translations('slides.questions.doDoes.caption')}
+            supportingContent={
+              <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
+                {[
+                  'Do you understand the graph?',
+                  'Does he use a calculator?',
+                  'Do they check the steps?',
+                ].map((text) => (
+                  <div
+                    key={text}
+                    className='rounded-2xl border border-violet-200/70 bg-white/75 px-3 py-2 text-left font-semibold text-violet-700 shadow-sm'
+                  >
+                    {text}
+                  </div>
+                ))}
+              </div>
+            }
           >
             <EnglishQuestionFlipAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
-            {[
-              'Do you understand the graph?',
-              'Does he use a calculator?',
-              'Do they check the steps?',
-            ].map((text) => (
-              <KangurLessonInset key={text} accent='violet' className='text-left'>
-                <p className='font-semibold text-violet-700'>{text}</p>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -134,20 +139,25 @@ const buildEnglishSentenceStructureSlides = (
           <KangurLessonVisual
             accent='amber'
             caption={translations('slides.connectors.linking.caption')}
+            supportingContent={
+              <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
+                {[
+                  'I solved the equation, so I checked the graph.',
+                  'We repeated the task because the answer was wrong.',
+                  'She explains the steps, but he is still unsure.',
+                ].map((text) => (
+                  <div
+                    key={text}
+                    className='rounded-2xl border border-amber-200/70 bg-white/75 px-3 py-2 text-left font-semibold text-amber-700 shadow-sm'
+                  >
+                    {text}
+                  </div>
+                ))}
+              </div>
+            }
           >
             <EnglishConnectorBridgeAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
-            {[
-              'I solved the equation, so I checked the graph.',
-              'We repeated the task because the answer was wrong.',
-              'She explains the steps, but he is still unsure.',
-            ].map((text) => (
-              <KangurLessonInset key={text} accent='amber' className='text-left'>
-                <p className='font-semibold text-amber-700'>{text}</p>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },

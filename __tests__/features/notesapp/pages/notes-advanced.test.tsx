@@ -276,8 +276,12 @@ describe('Notes Advanced UI', () => {
 
     await user.click(favBtn);
 
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Unfavorite note/i })).toBeInTheDocument();
-    });
+    expect(
+      await within(await findAppleCard()).findByRole(
+        'button',
+        { name: /Unfavorite note/i },
+        { timeout: NOTE_LOAD_TIMEOUT_MS }
+      )
+    ).toBeInTheDocument();
   }, 15000);
 });

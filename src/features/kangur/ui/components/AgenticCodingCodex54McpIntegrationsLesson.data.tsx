@@ -11,6 +11,7 @@ import { KANGUR_GRID_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens'
 import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
+import { useId } from 'react';
 
 type SectionId = 'mcp-integrations';
 
@@ -60,39 +61,96 @@ const LINEAR_NOTES = [
   'Po dodaniu serwera Codex poprosi o logowanie do Linear.',
 ] as const;
 
-const McpFlowVisual = (): JSX.Element => (
-  <svg
-    aria-label='Diagram: MCP flow (Codex host -> MCP server -> tools/resources).'
-    className='h-auto w-full'
-    role='img'
-    viewBox='0 0 360 140'
-  >
-    <style>{`
-      .panel {
-        fill: #f8fafc;
-        stroke: #e2e8f0;
-        stroke-width: 2;
-      }
-      .label {
-        font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
-        fill: #0f172a;
-      }
-      .arrow {
-        stroke: #94a3b8;
-        stroke-width: 2;
-        fill: none;
-      }
-    `}</style>
-    <rect className='panel' height='36' rx='10' width='110' x='20' y='52' />
-    <rect className='panel' height='36' rx='10' width='120' x='140' y='52' />
-    <rect className='panel' height='36' rx='10' width='120' x='270' y='52' />
-    <text className='label' x='44' y='74'>Codex</text>
-    <text className='label' x='166' y='74'>MCP Server</text>
-    <text className='label' x='292' y='74'>Tools</text>
-    <path className='arrow' d='M130 70 H140' />
-    <path className='arrow' d='M260 70 H270' />
-  </svg>
-);
+export const McpFlowVisual = (): JSX.Element => {
+  const baseId = useId().replace(/:/g, '');
+  const clipId = `agentic-mcp-flow-${baseId}-clip`;
+  const panelGradientId = `agentic-mcp-flow-${baseId}-panel`;
+  const frameGradientId = `agentic-mcp-flow-${baseId}-frame`;
+
+  return (
+    <svg
+      aria-label='Diagram: MCP flow (Codex host -> MCP server -> tools/resources).'
+      className='h-auto w-full'
+      data-testid='agentic-mcp-flow-animation'
+      role='img'
+      viewBox='0 0 360 160'
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <rect x='10' y='10' width='340' height='140' rx='24' />
+        </clipPath>
+        <linearGradient
+          id={panelGradientId}
+          x1='16'
+          x2='342'
+          y1='16'
+          y2='148'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='#f0f9ff' />
+          <stop offset='52%' stopColor='#e0f2fe' />
+          <stop offset='100%' stopColor='#f8fafc' />
+        </linearGradient>
+        <linearGradient
+          id={frameGradientId}
+          x1='18'
+          x2='342'
+          y1='18'
+          y2='18'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='rgba(56,189,248,0.82)' />
+          <stop offset='50%' stopColor='rgba(125,211,252,0.82)' />
+          <stop offset='100%' stopColor='rgba(56,189,248,0.8)' />
+        </linearGradient>
+      </defs>
+
+      <g clipPath={`url(#${clipId})`} data-testid='agentic-mcp-flow-atmosphere'>
+        <rect
+          x='10'
+          y='10'
+          width='340'
+          height='140'
+          rx='24'
+          fill={`url(#${panelGradientId})`}
+          stroke='rgba(56,189,248,0.16)'
+          strokeWidth='2'
+        />
+        <ellipse cx='82' cy='30' rx='72' ry='18' fill='rgba(125,211,252,0.16)' />
+        <ellipse cx='286' cy='36' rx='76' ry='18' fill='rgba(56,189,248,0.12)' />
+        <ellipse cx='182' cy='132' rx='100' ry='20' fill='rgba(14,165,233,0.1)' />
+
+        <rect x='20' y='52' width='100' height='40' rx='14' fill='rgba(255,255,255,0.9)' stroke='#93c5fd' strokeWidth='2' />
+        <rect x='132' y='52' width='108' height='40' rx='14' fill='rgba(255,255,255,0.92)' stroke='#38bdf8' strokeWidth='2' />
+        <rect x='252' y='52' width='88' height='40' rx='14' fill='rgba(240,249,255,0.94)' stroke='#0ea5e9' strokeWidth='2' />
+        <rect x='36' y='64' width='30' height='8' rx='4' fill='rgba(56,189,248,0.18)' />
+        <rect x='148' y='64' width='38' height='8' rx='4' fill='rgba(56,189,248,0.18)' />
+        <rect x='268' y='64' width='28' height='8' rx='4' fill='rgba(14,165,233,0.18)' />
+
+        <path d='M120 72 H132' stroke='#94a3b8' strokeWidth='2.5' fill='none' />
+        <polygon points='132,72 124,67 124,77' fill='#94a3b8' />
+        <path d='M240 72 H252' stroke='#38bdf8' strokeWidth='2.5' fill='none' />
+        <polygon points='252,72 244,67 244,77' fill='#38bdf8' />
+
+        <text x='44' y='76' fontSize='10' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>Codex</text>
+        <text x='156' y='76' fontSize='10' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>MCP Server</text>
+        <text x='278' y='76' fontSize='10' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>Tools</text>
+      </g>
+
+      <rect
+        x='18'
+        y='18'
+        width='324'
+        height='124'
+        rx='20'
+        fill='none'
+        stroke={`url(#${frameGradientId})`}
+        strokeWidth='1.8'
+        data-testid='agentic-mcp-flow-frame'
+      />
+    </svg>
+  );
+};
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   'mcp-integrations': [
@@ -126,26 +184,31 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='sky'
             caption='Codex ↔ MCP server ↔ tools/resources.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <div className='space-y-4'>
+                <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-3`}>
+                  {MCP_ROLES.map((item) => (
+                    <div
+                      key={item.title}
+                      className='rounded-2xl border border-sky-200/70 bg-white/80 px-3 py-2 text-left shadow-sm'
+                    >
+                      <div className='text-xs font-semibold uppercase tracking-[0.2em] text-sky-500'>
+                        {item.title}
+                      </div>
+                      <KangurLessonCaption className='mt-2 text-sky-950'>
+                        {item.description}
+                      </KangurLessonCaption>
+                    </div>
+                  ))}
+                </div>
+                <KangurLessonCaption className='text-left text-sky-950'>
+                  Najczęstsze integracje: {MCP_SYSTEMS.join(', ')}.
+                </KangurLessonCaption>
+              </div>
+            }
           >
             <McpFlowVisual />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-3`}>
-            {MCP_ROLES.map((item) => (
-              <KangurLessonInset key={item.title} accent='sky'>
-                <div className='text-xs font-semibold uppercase tracking-[0.2em] text-sky-500'>
-                  {item.title}
-                </div>
-                <KangurLessonCaption className='mt-2 text-sky-950'>
-                  {item.description}
-                </KangurLessonCaption>
-              </KangurLessonInset>
-            ))}
-          </div>
-          <KangurLessonCallout accent='sky' padding='sm' className='text-left'>
-            <KangurLessonCaption className='text-sky-950'>
-              Najczęstsze integracje: {MCP_SYSTEMS.join(', ')}.
-            </KangurLessonCaption>
-          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },

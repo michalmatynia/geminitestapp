@@ -49,6 +49,7 @@ vi.mock('@/features/kangur/ui/components/SubtractingGardenGame', () => ({
 }));
 
 import { KangurLessonActivityBlock } from '@/features/kangur/ui/components/KangurLessonActivityBlock';
+import { KangurLessonPrintProvider } from '@/features/kangur/ui/context/KangurLessonPrintContext';
 
 describe('KangurLessonActivityBlock', () => {
   it('renders the mapped activity widget in lesson mode and supports restart after completion', () => {
@@ -75,11 +76,31 @@ describe('KangurLessonActivityBlock', () => {
       'kangur-panel-soft',
       'kangur-surface-panel-accent-emerald'
     );
+    expect(screen.getByTestId('lesson-activity-block-shell')).toHaveAttribute(
+      'data-kangur-print-panel',
+      'true'
+    );
+    expect(screen.getByTestId('lesson-activity-block-print-summary')).toHaveTextContent(
+      'Interactive activity'
+    );
+    expect(screen.getByTestId('lesson-activity-block-print-summary')).toHaveTextContent(
+      'Clock practice'
+    );
+    expect(screen.getByTestId('lesson-activity-block-print-summary')).toHaveTextContent(
+      'Open this lesson on screen to play the interactive task.'
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'ClockTrainingGame' }));
 
     expect(screen.getByText(/activity completed/i)).toBeInTheDocument();
     expect(screen.getByText(/activity completed/i).parentElement).toHaveClass('soft-card', 'border');
+    expect(screen.getByText(/activity completed/i).parentElement).toHaveAttribute(
+      'data-kangur-print-exclude',
+      'true'
+    );
+    expect(screen.getByTestId('lesson-activity-block-print-summary')).toHaveTextContent(
+      'Completed in the live lesson view.'
+    );
     expect(screen.getByRole('button', { name: /restart activity/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta',
@@ -136,5 +157,34 @@ describe('KangurLessonActivityBlock', () => {
     );
 
     expect(screen.getByRole('button', { name: 'AddingSynthesisGame' })).toBeInTheDocument();
+  });
+
+  it('renders a local print button and targets the activity block panel through the shared lesson print context', () => {
+    const onPrintPanel = vi.fn();
+
+    render(
+      <KangurLessonPrintProvider onPrintPanel={onPrintPanel}>
+        <KangurLessonActivityBlock
+          block={{
+            id: 'activity-print',
+            type: 'activity',
+            activityId: 'clock-training',
+            title: 'Clock practice',
+            description: 'Practice reading time.',
+          }}
+        />
+      </KangurLessonPrintProvider>
+    );
+
+    const shell = screen.getByTestId('lesson-activity-block-shell');
+    const printButton = screen.getByTestId('lesson-activity-block-print-button');
+
+    expect(shell).toHaveAttribute('data-kangur-print-panel-id', 'lesson-activity-block-activity-print');
+    expect(shell).toHaveAttribute('data-kangur-print-panel-title', 'Clock practice');
+    expect(printButton).toHaveAttribute('aria-label', 'Drukuj panel');
+
+    fireEvent.click(printButton);
+
+    expect(onPrintPanel).toHaveBeenCalledWith('lesson-activity-block-activity-print');
   });
 });

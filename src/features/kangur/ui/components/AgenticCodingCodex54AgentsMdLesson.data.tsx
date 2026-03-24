@@ -12,6 +12,7 @@ import { AgenticDocsStackAnimation } from '@/features/kangur/ui/components/Lesso
 import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
 import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
+import { useId } from 'react';
 
 type SectionId = 'agents_md';
 
@@ -64,39 +65,94 @@ const AGENTS_MD_TEMPLATE = `# AGENTS.md
 - Tests + lint pass
 - Diff reviewed, risks listed`;
 
-const AgentsMdLayeringVisual = (): JSX.Element => (
-  <svg
-    aria-label='Diagram: warstwowanie AGENTS.md w repo.'
-    className='h-auto w-full'
-    role='img'
-    viewBox='0 0 360 140'
-  >
-    <style>{`
-      .panel {
-        fill: #f8fafc;
-        stroke: #e2e8f0;
-        stroke-width: 2;
-      }
-      .label {
-        font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
-        fill: #0f172a;
-      }
-      .arrow {
-        stroke: #94a3b8;
-        stroke-width: 2;
-        fill: none;
-      }
-    `}</style>
-    <rect className='panel' height='36' rx='10' width='160' x='20' y='28' />
-    <rect className='panel' height='36' rx='10' width='160' x='180' y='28' />
-    <rect className='panel' height='36' rx='10' width='140' x='110' y='84' />
-    <text className='label' x='36' y='50'>/AGENTS.md</text>
-    <text className='label' x='196' y='50'>/apps/api/AGENTS.override.md</text>
-    <text className='label' x='132' y='106'>Closest wins</text>
-    <path className='arrow' d='M100 64 L140 84' />
-    <path className='arrow' d='M260 64 L210 84' />
-  </svg>
-);
+export const AgentsMdLayeringVisual = (): JSX.Element => {
+  const baseId = useId().replace(/:/g, '');
+  const clipId = `agentic-agents-md-layering-${baseId}-clip`;
+  const panelGradientId = `agentic-agents-md-layering-${baseId}-panel`;
+  const frameGradientId = `agentic-agents-md-layering-${baseId}-frame`;
+
+  return (
+    <svg
+      aria-label='Diagram: warstwowanie AGENTS.md w repo.'
+      className='h-auto w-full'
+      data-testid='agentic-agents-md-layering-animation'
+      role='img'
+      viewBox='0 0 360 160'
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <rect x='10' y='10' width='340' height='140' rx='24' />
+        </clipPath>
+        <linearGradient
+          id={panelGradientId}
+          x1='16'
+          x2='342'
+          y1='16'
+          y2='148'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='#fffbeb' />
+          <stop offset='52%' stopColor='#fef3c7' />
+          <stop offset='100%' stopColor='#f8fafc' />
+        </linearGradient>
+        <linearGradient
+          id={frameGradientId}
+          x1='18'
+          x2='342'
+          y1='18'
+          y2='18'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='rgba(245,158,11,0.82)' />
+          <stop offset='50%' stopColor='rgba(251,191,36,0.82)' />
+          <stop offset='100%' stopColor='rgba(245,158,11,0.8)' />
+        </linearGradient>
+      </defs>
+
+      <g clipPath={`url(#${clipId})`} data-testid='agentic-agents-md-layering-atmosphere'>
+        <rect
+          x='10'
+          y='10'
+          width='340'
+          height='140'
+          rx='24'
+          fill={`url(#${panelGradientId})`}
+          stroke='rgba(245,158,11,0.16)'
+          strokeWidth='2'
+        />
+        <ellipse cx='84' cy='32' rx='74' ry='18' fill='rgba(251,191,36,0.16)' />
+        <ellipse cx='286' cy='36' rx='76' ry='18' fill='rgba(245,158,11,0.12)' />
+        <ellipse cx='190' cy='132' rx='100' ry='20' fill='rgba(217,119,6,0.1)' />
+
+        <rect x='20' y='28' width='160' height='40' rx='14' fill='rgba(255,255,255,0.9)' stroke='#fcd34d' strokeWidth='2' />
+        <rect x='180' y='28' width='160' height='40' rx='14' fill='rgba(255,255,255,0.92)' stroke='#fbbf24' strokeWidth='2' />
+        <rect x='110' y='88' width='140' height='40' rx='14' fill='rgba(255,251,235,0.94)' stroke='#f59e0b' strokeWidth='2' />
+        <rect x='34' y='40' width='34' height='8' rx='4' fill='rgba(245,158,11,0.18)' />
+        <rect x='194' y='40' width='52' height='8' rx='4' fill='rgba(245,158,11,0.18)' />
+        <rect x='126' y='100' width='42' height='8' rx='4' fill='rgba(217,119,6,0.18)' />
+
+        <path d='M100 68 L140 88' stroke='#94a3b8' strokeWidth='2.5' fill='none' />
+        <path d='M260 68 L210 88' stroke='#94a3b8' strokeWidth='2.5' fill='none' />
+
+        <text x='36' y='53' fontSize='10' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>/AGENTS.md</text>
+        <text x='196' y='53' fontSize='9' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>/apps/api/AGENTS.override.md</text>
+        <text x='132' y='113' fontSize='10' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>Closest wins</text>
+      </g>
+
+      <rect
+        x='18'
+        y='18'
+        width='324'
+        height='124'
+        rx='20'
+        fill='none'
+        stroke={`url(#${frameGradientId})`}
+        strokeWidth='1.8'
+        data-testid='agentic-agents-md-layering-frame'
+      />
+    </svg>
+  );
+};
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   agents_md: [

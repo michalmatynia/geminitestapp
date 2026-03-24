@@ -408,6 +408,7 @@
       "label": "Frage {number}",
       "pointChip": "⭐ {points} Pkt. ({difficulty})",
       "touchHint": "Tippe eine Antwort an und danach auf den Bestätigen-Knopf.",
+      "printHint": "Öffne diese Lektion auf dem Bildschirm, um die Frage interaktiv zu beantworten.",
       "difficulty": {
         "easy": "leicht",
         "medium": "mittel",
@@ -419,6 +420,8 @@
       },
       "confirm": "Antwort bestätigen ✓"
     },
+    "examPrintHint": "Öffne diese Lektion auf dem Bildschirm, um die Mathe-Känguru-Frage interaktiv zu beantworten.",
+    "examResultPrintHint": "Öffne diese Lektion auf dem Bildschirm, um die Antworten und Lösungen des Mathe-Känguru zu überprüfen.",
     "operationSelector": {
       "title": "Los geht's!",
       "intro": {
@@ -582,6 +585,43 @@
           "activeTitle": "Aktive Aufgaben",
           "activeEmpty": "Keine aktiven Aufgaben für den Lernenden."
         },
+        "analytics": {
+          "label": "Lernüberblick",
+          "description": "Die wichtigsten Zahlen aus den letzten Sitzungen und dem aktuellen Lernrhythmus.",
+          "averageAccuracyLabel": "Durchschnittliche Genauigkeit",
+          "averageAccuracyDescription": "Bestes Ergebnis: {best}%",
+          "streakLabel": "Tagesserie",
+          "streakDescription": "Längste Serie: {longest} Tage",
+          "xpLabel": "XP heute",
+          "xpDescription": "{weeklyXp} XP in 7 Tagen · durchschnittlich {averageXp} XP / Sitzung",
+          "dailyGoalLabel": "Tagesziel",
+          "dailyGoalDescription": "{percent}% des heutigen Plans"
+        },
+        "weeklyActivity": {
+          "label": "Wöchentliche Aktivität",
+          "description": "Spiele pro Tag und deren durchschnittliche Genauigkeit in der letzten Woche.",
+          "loading": "Sitzungsverlauf wird geladen",
+          "error": "Der vollständige Ergebnisverlauf konnte nicht geladen werden",
+          "barTitle": "{count} Spiele · {accuracy}% Genauigkeit"
+        },
+        "operationFocus": {
+          "label": "Arbeitsbereiche",
+          "description": "Die am häufigsten geübten Bereiche mit Genauigkeit und XP-Tempo.",
+          "progressAria": "Genauigkeit im Bereich {title}",
+          "attempts": "{count} Versuche",
+          "averageXp": "{xp} XP / Sitzung",
+          "empty": "Noch keine Bereichsdaten. Ergebnisse erscheinen nach den ersten Spielen."
+        },
+        "masterySummary": {
+          "label": "Lernlandkarte",
+          "description": "Welche Lektionen schon stabil sind und welche noch Unterstützung brauchen.",
+          "trackedLabel": "Verfolgte Lektionen",
+          "masteredLabel": "Beherrscht",
+          "needsPracticeLabel": "Zum Wiederholen",
+          "weakestLabel": "Brauchen Unterstützung",
+          "strongestLabel": "Am stärksten",
+          "empty": "Noch keine Mastery-Daten zu Lektionen. Daten erscheinen nach der Arbeit in Lektionen."
+        },
         "lessonProgress": {
           "label": "Lektionsfortschritt",
           "description": "Lektionsfortschritt, Abschnitt für Abschnitt gespeichert.",
@@ -610,6 +650,28 @@
           "dateFromLabel": "Datum von",
           "dateToLabel": "Datum bis",
           "clear": "Filter zurücksetzen"
+        },
+        "overview": {
+          "label": "Aktivitätsüberblick",
+          "description": "Die wichtigsten Zahlen für den aktuell sichtbaren Aktivitätsbereich.",
+          "totalInteractionsLabel": "Interaktionen",
+          "sessionsLabel": "Sitzungen",
+          "openedTasksLabel": "Geöffnete Aufgaben",
+          "lessonPanelsLabel": "Lektionspanels",
+          "averageSessionDuration": "Durchschnittliche Sitzung: {duration}",
+          "latestActivity": "Letzte Aktivität: {timestamp}"
+        },
+        "activityMix": {
+          "label": "Aktivitätsmix",
+          "description": "Vergleich von Sitzungen, Aufgabenöffnungen und Besuchen in Lektionspanels.",
+          "barTitle": "{label}: {count}"
+        },
+        "lessonFocus": {
+          "label": "Meiste Zeit verbracht",
+          "description": "Lektionen, in denen der Lernende in Panels die meiste Zeit verbracht hat.",
+          "progressAria": "Zeitanteil für die Lektion {title}",
+          "sectionCount": "{count} Abschnitte mit Aktivität",
+          "empty": "Noch keine Panel-Zeitdaten für einen Vergleich."
         },
         "lessonPanelTime": {
           "label": "Zeit in Lektionspanels",
@@ -1380,8 +1442,7 @@
       "nextLesson": "Nachste Lektion: {title}",
       "noNextLesson": "Keine nachste Lektion",
       "nextShort": "Weiter",
-      "printLesson": "Lektion drucken",
-      "printShort": "Drucken"
+      "printPanel": "Panel drucken"
     },
     "activeHeader": {
       "narrator": {
@@ -7848,6 +7909,7 @@
     "openSecretPanel": "Geheimes Panel öffnen",
     "secretPanelTitle": "Geheimes Panel",
     "backToTopics": "Zurück zu den Themen",
+    "printInteractiveHint": "Öffne diese Lektion auf dem Bildschirm, um diese interaktive Aktivität auszuführen.",
     "panelsNavigation": "Panelnavigation",
     "previousPanel": "Vorheriges Panel",
     "nextPanel": "Nächstes Panel",

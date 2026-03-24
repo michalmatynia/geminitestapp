@@ -3,9 +3,10 @@
  */
 
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
+import { KangurLessonPrintProvider } from '@/features/kangur/ui/context/KangurLessonPrintContext';
 
 describe('KangurLessonDocumentRenderer', () => {
   it('renders text, image, svg, activity, and grid content across modular pages', () => {
@@ -193,16 +194,54 @@ describe('KangurLessonDocumentRenderer', () => {
       />
     );
 
-    expect(screen.getAllByText(/Strona [12]/)).toHaveLength(2);
+    expect(screen.getByTestId('lesson-document-root')).toHaveAttribute(
+      'data-kangur-print-document',
+      'true'
+    );
+    expect(screen.getByTestId('lesson-page-print-heading-page-1')).toHaveTextContent('Intro');
+    expect(screen.getByTestId('lesson-page-print-heading-page-1')).toHaveTextContent(
+      'Meet the lesson content'
+    );
+    expect(screen.getByTestId('lesson-page-print-heading-page-1')).not.toHaveTextContent(
+      'Sekcja'
+    );
+    expect(screen.getByTestId('lesson-page-print-heading-page-1')).not.toHaveTextContent(
+      'Strona 1'
+    );
+    expect(screen.getByTestId('lesson-page-section-summary-page-1')).toHaveAttribute(
+      'data-kangur-print-exclude',
+      'true'
+    );
+    expect(screen.getByTestId('lesson-page-summary-page-1')).toHaveAttribute(
+      'data-kangur-print-exclude',
+      'true'
+    );
+    expect(screen.getAllByTestId(/lesson-page-summary-page-/)).toHaveLength(2);
     expect(screen.getByTestId('lesson-page-shell-page-1')).toHaveClass(
       'glass-panel',
       'kangur-panel-elevated',
       'kangur-glass-surface-mist-soft'
     );
-    expect(screen.getAllByText('Sekcja')).toHaveLength(2);
-    expect(screen.getByText('Introduction')).toBeInTheDocument();
-    expect(screen.getByText('Get oriented before the lesson starts')).toBeInTheDocument();
-    expect(screen.getByText('Intro')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-page-shell-page-1')).toHaveAttribute(
+      'data-kangur-print-panel',
+      'true'
+    );
+    expect(screen.getByTestId('lesson-page-shell-page-1')).toHaveAttribute(
+      'data-kangur-print-panel-id',
+      'page-1'
+    );
+    expect(screen.getByTestId('lesson-page-shell-page-1')).toHaveAttribute(
+      'data-kangur-print-panel-title',
+      'Intro'
+    );
+    expect(screen.getAllByTestId(/lesson-page-section-summary-/)).toHaveLength(2);
+    expect(screen.getByTestId('lesson-page-section-summary-page-1')).toHaveTextContent(
+      'Introduction'
+    );
+    expect(screen.getByTestId('lesson-page-section-summary-page-1')).toHaveTextContent(
+      'Get oriented before the lesson starts'
+    );
+    expect(screen.getByTestId('lesson-page-summary-page-1')).toHaveTextContent('Intro');
     expect(screen.getByText('Lesson heading')).toBeInTheDocument();
     expect(screen.getByText('Image caption')).toBeInTheDocument();
     expect(screen.getByText('Photo reference')).toHaveClass(
@@ -233,7 +272,9 @@ describe('KangurLessonDocumentRenderer', () => {
     );
     expect(screen.getByText('Clock practice')).toBeInTheDocument();
     expect(screen.getByText(/live game widget is hidden in editor preview/i)).toBeInTheDocument();
-    expect(screen.getByText('Practice')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-page-section-summary-page-2')).toHaveTextContent(
+      'Practice'
+    );
     expect(screen.getByText('Grid copy')).toBeInTheDocument();
     expect(screen.getByTestId('lesson-grid-block-grid-1')).toHaveClass(
       'glass-panel',
@@ -303,7 +344,21 @@ describe('KangurLessonDocumentRenderer', () => {
       'kangur-glass-surface-mist-soft',
       'border-dashed'
     );
-    expect(screen.getAllByText('Sekcja')[0].parentElement).toHaveClass(
+    expect(screen.getByTestId('lesson-page-print-heading-page-empty')).toHaveTextContent(
+      'Empty page'
+    );
+    expect(screen.getByTestId('lesson-page-print-heading-page-empty')).not.toHaveTextContent(
+      'Draft section'
+    );
+    expect(screen.getByTestId('lesson-page-section-summary-page-empty')).toHaveAttribute(
+      'data-kangur-print-exclude',
+      'true'
+    );
+    expect(screen.getByTestId('lesson-page-summary-page-empty')).toHaveAttribute(
+      'data-kangur-print-exclude',
+      'true'
+    );
+    expect(screen.getByTestId('lesson-page-section-summary-page-empty')).toHaveClass(
       'soft-card',
       'border'
     );
@@ -328,5 +383,169 @@ describe('KangurLessonDocumentRenderer', () => {
       'border-dashed',
       '[border-color:var(--kangur-soft-card-border)]'
     );
+  });
+
+  it('renders a print-only quiz summary for lesson documents while excluding live quiz controls', () => {
+    render(
+      <KangurLessonDocumentRenderer
+        renderMode='lesson'
+        document={{
+          version: 1,
+          pages: [
+            {
+              id: 'quiz-page',
+              title: 'Quiz panel',
+              blocks: [
+                {
+                  id: 'quiz-1',
+                  type: 'quiz',
+                  question: '<p>Which article fits before apple?</p>',
+                  correctChoiceId: 'choice-a',
+                  explanation: '<p>Use <strong>an</strong> before a vowel sound.</p>',
+                  choices: [
+                    { id: 'choice-the', text: 'the' },
+                    { id: 'choice-a', text: 'an' },
+                    { id: 'choice-none', text: 'no article' },
+                  ],
+                },
+              ],
+            },
+          ],
+          blocks: [
+            {
+              id: 'quiz-1',
+              type: 'quiz',
+              question: '<p>Which article fits before apple?</p>',
+              correctChoiceId: 'choice-a',
+              explanation: '<p>Use <strong>an</strong> before a vowel sound.</p>',
+              choices: [
+                { id: 'choice-the', text: 'the' },
+                { id: 'choice-a', text: 'an' },
+                { id: 'choice-none', text: 'no article' },
+              ],
+            },
+          ],
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('lesson-quiz-print-summary-quiz-1')).toHaveTextContent('Quiz');
+    expect(screen.getByTestId('lesson-quiz-print-summary-quiz-1')).toHaveTextContent(
+      'Which article fits before apple?'
+    );
+    expect(screen.getByTestId('lesson-quiz-print-summary-quiz-1')).toHaveTextContent(
+      'Use an before a vowel sound.'
+    );
+    expect(screen.getByTestId('lesson-quiz-print-choice-choice-a')).toHaveTextContent('✓ an');
+    expect(screen.getByTestId('lesson-quiz-live-ui-quiz-1')).toHaveAttribute(
+      'data-kangur-print-exclude',
+      'true'
+    );
+    expect(screen.getByTestId('lesson-quiz-choice-choice-a')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-quiz-choice-choice-the')).toBeInTheDocument();
+  });
+
+  it('renders a local print button for quiz lesson panels and targets the quiz block panel', () => {
+    const onPrintPanel = vi.fn();
+
+    render(
+      <KangurLessonPrintProvider onPrintPanel={onPrintPanel}>
+        <KangurLessonDocumentRenderer
+          renderMode='lesson'
+          document={{
+            version: 1,
+            pages: [
+              {
+                id: 'quiz-page',
+                title: 'Quiz panel',
+                blocks: [
+                  {
+                    id: 'quiz-1',
+                    type: 'quiz',
+                    question: '<p>Which article fits before apple?</p>',
+                    correctChoiceId: 'choice-a',
+                    explanation: '<p>Use <strong>an</strong> before a vowel sound.</p>',
+                    choices: [
+                      { id: 'choice-the', text: 'the' },
+                      { id: 'choice-a', text: 'an' },
+                      { id: 'choice-none', text: 'no article' },
+                    ],
+                  },
+                ],
+              },
+            ],
+            blocks: [],
+          }}
+        />
+      </KangurLessonPrintProvider>
+    );
+
+    expect(screen.getByTestId('lesson-quiz-block-quiz-1')).toHaveAttribute(
+      'data-kangur-print-panel-id',
+      'lesson-quiz-panel-quiz-1'
+    );
+    expect(screen.getByTestId('lesson-quiz-block-quiz-1')).toHaveAttribute(
+      'data-kangur-print-panel-title',
+      'Quiz'
+    );
+    expect(screen.getByTestId('lesson-quiz-print-button-quiz-1')).toHaveAttribute(
+      'aria-label',
+      'Drukuj panel'
+    );
+
+    screen.getByTestId('lesson-quiz-print-button-quiz-1').click();
+
+    expect(onPrintPanel).toHaveBeenCalledWith('lesson-quiz-panel-quiz-1');
+  });
+
+  it('renders a page-level print button that targets the current document panel', () => {
+    const onPrintPanel = vi.fn();
+
+    render(
+      <KangurLessonPrintProvider onPrintPanel={onPrintPanel}>
+        <KangurLessonDocumentRenderer
+          renderMode='lesson'
+          document={{
+            version: 1,
+            pages: [
+              {
+                id: 'page-1',
+                title: 'Intro',
+                blocks: [
+                  {
+                    id: 'text-1',
+                    type: 'text',
+                    html: '<p>Intro paragraph</p>',
+                    align: 'left',
+                  },
+                ],
+              },
+              {
+                id: 'page-2',
+                title: 'Practice',
+                blocks: [
+                  {
+                    id: 'text-2',
+                    type: 'text',
+                    html: '<p>Practice paragraph</p>',
+                    align: 'left',
+                  },
+                ],
+              },
+            ],
+            blocks: [],
+          }}
+        />
+      </KangurLessonPrintProvider>
+    );
+
+    expect(screen.getByTestId('lesson-page-print-button-page-1')).toHaveAttribute(
+      'aria-label',
+      'Drukuj panel'
+    );
+
+    screen.getByTestId('lesson-page-print-button-page-2').click();
+
+    expect(onPrintPanel).toHaveBeenCalledWith('page-2');
   });
 });

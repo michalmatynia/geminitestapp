@@ -46,18 +46,6 @@ export const createDefaultParentDashboardScreenComponents = (): PageComponentInp
                 ),
               ],
             }),
-            makeGridColumn({
-              id: 'kangur-parent-dashboard-scores-column',
-              blocks: [
-                makeWidgetBlock(
-                  'kangur-widget-parent-dashboard-scores',
-                  'parent-dashboard-scores',
-                  {
-                    displayMode: 'always',
-                  }
-                ),
-              ],
-            }),
           ],
         }),
       ],

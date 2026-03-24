@@ -77,7 +77,7 @@ describe('AddingLesson', () => {
     );
   });
 
-  it('does not repeat the subsection title inside the adding game shell', () => {
+  it('keeps the shared stage title visible inside the adding game shell', () => {
     render(
       <KangurLessonNavigationProvider onBack={vi.fn()}>
         <AddingLesson />
@@ -89,11 +89,11 @@ describe('AddingLesson', () => {
     expect(screen.getByTestId('adding-lesson-game-shell')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Mock Adding Ball Game' })).toBeInTheDocument();
     expect(
-      within(screen.getByTestId('adding-lesson-game-shell')).queryByText('Gra z piłkami!')
-    ).toBeNull();
+      within(screen.getByTestId('adding-lesson-game-shell')).getByText('Gra z piłkami!')
+    ).toBeInTheDocument();
   });
 
-  it('gives the synthesis activity a wide shell so the four-lane board stays playable', () => {
+  it('gives the synthesis activity a wide shell and keeps its stage title visible', () => {
     render(
       <KangurLessonNavigationProvider onBack={vi.fn()}>
         <AddingLesson />
@@ -108,9 +108,9 @@ describe('AddingLesson', () => {
       'max-w-[1120px]'
     );
     expect(
-      within(screen.getByTestId('adding-lesson-synthesis-shell')).queryByText(
+      within(screen.getByTestId('adding-lesson-synthesis-shell')).getByText(
         'Synteza dodawania'
       )
-    ).toBeNull();
+    ).toBeInTheDocument();
   });
 });

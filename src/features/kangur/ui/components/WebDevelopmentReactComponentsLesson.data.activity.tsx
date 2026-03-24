@@ -23,17 +23,19 @@ export const activitySlides: LessonSlide[] = [
             accent='sky'
             caption='Activity chowa UI, ale zachowuje stan.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <div className='text-left'>
+                <p className='text-sm font-semibold text-slate-900'>Co się dzieje w ukryciu?</p>
+                <ul className='mt-2 list-disc pl-4 text-sm text-slate-600'>
+                  <li>UI jest ukryte przez <strong>display: none</strong>.</li>
+                  <li>Effecty są czyszczone, a po powrocie odtwarzane.</li>
+                  <li>Dzieci nadal renderują się na niskim priorytecie.</li>
+                </ul>
+              </div>
+            }
           >
             <ReactActivityToggleAnimation />
           </KangurLessonVisual>
-          <KangurLessonInset accent='slate' className='text-left'>
-            <p className='text-sm font-semibold text-slate-900'>Co się dzieje w ukryciu?</p>
-            <ul className='mt-2 list-disc pl-4 text-sm text-slate-600'>
-              <li>UI jest ukryte przez <strong>display: none</strong>.</li>
-              <li>Effecty są czyszczone, a po powrocie odtwarzane.</li>
-              <li>Dzieci nadal renderują się na niskim priorytecie.</li>
-            </ul>
-          </KangurLessonInset>
         </KangurLessonStack>
       ),
     },

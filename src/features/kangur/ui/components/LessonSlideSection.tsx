@@ -1,11 +1,12 @@
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, ChevronsLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, Printer } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState, type KeyboardEventHandler } from 'react';
 
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
+import { KangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
 import {
   useKangurLessonBackAction,
   useKangurLessonSecretPill,
@@ -13,8 +14,8 @@ import {
   useKangurSyncLessonSubsectionSummary,
   type KangurLessonSubsectionSummary,
 } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
+import { useOptionalKangurLessonPrint } from '@/features/kangur/ui/context/KangurLessonPrintContext';
 import {
-  KangurButton,
   KangurEmptyState,
   KangurGlassPanel,
 } from '@/features/kangur/ui/design/primitives';
@@ -25,10 +26,8 @@ import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_STEP_PILL_CLASSNAME } from '@/featur
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import {
   LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME,
-  LESSONS_SELECTOR_NAV_ICON_BUTTON_CLASSNAME,
   LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME,
   LESSONS_SELECTOR_NAV_PILLS_ROW_CLASSNAME,
-  LESSONS_SELECTOR_NAV_TOUCH_ICON_BUTTON_CLASSNAME,
 } from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -62,10 +61,12 @@ export default function LessonSlideSection({
   dotDoneClass,
 }: LessonSlideSectionProps): React.JSX.Element {
   const lessonChrome = useTranslations('KangurLessonChrome');
+  const lessonNavigationTranslations = useTranslations('KangurLessonsWidgets.navigation');
   const prefersReducedMotion = useReducedMotion();
   const slideMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const handleBack = useKangurLessonBackAction(onBack);
   const secretLessonPill = useKangurLessonSecretPill();
+  const lessonPrint = useOptionalKangurLessonPrint();
   const registerSubsectionNavigation = useKangurRegisterLessonSubsectionNavigation();
   useKangurSyncLessonSubsectionSummary(sectionHeader);
   const slideInstanceId = useId();
@@ -111,6 +112,8 @@ export default function LessonSlideSection({
       return `Panel ${index}`;
     }
   };
+  const printablePanelLabel = totalSlides > 1 ? getPanelLabel(slide + 1) : null;
+  const printPanelLabel = lessonNavigationTranslations('printPanel');
   const handlePanelNavigationCta = (ctaId: string, action: () => void): void => {
     panelTimeFlushRef.current?.();
     syncLessonPanelCta(ctaId);
@@ -376,65 +379,60 @@ export default function LessonSlideSection({
   const isPrevDisabled = isFirst;
   const isNextDisabled = isLast;
   const renderBackButton = (className?: string): React.JSX.Element => (
-    <KangurButton
+    <KangurLessonNavigationIconButton
       onClick={handleBackCta}
-      size='sm'
-      variant='surface'
       className={cn(
         'hidden sm:inline-flex',
-        LESSONS_SELECTOR_NAV_ICON_BUTTON_CLASSNAME,
-        isCoarsePointer && LESSONS_SELECTOR_NAV_TOUCH_ICON_BUTTON_CLASSNAME,
         className
       )}
       data-testid='lesson-slide-back-button'
       data-kangur-lesson-back='true'
       data-kangur-lesson-back-label={backToTopicsLabel}
       aria-label={backToTopicsLabel}
+      icon={ChevronsLeft}
       title={backToTopicsLabel}
-    >
-      <ChevronsLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-    </KangurButton>
+    />
   );
-  const navigationIconButtonClassName = cn(
-    LESSONS_SELECTOR_NAV_ICON_BUTTON_CLASSNAME,
-    'disabled:opacity-20',
-    isCoarsePointer && LESSONS_SELECTOR_NAV_TOUCH_ICON_BUTTON_CLASSNAME
-  );
-  const arrowNavigationButtons = shouldRenderArrowNavigation ? (
-    <>
-      <KangurButton
-        onClick={handlePreviousSlideCta}
-        disabled={isPrevDisabled}
-        aria-label={previousPanelLabel}
-        aria-keyshortcuts='ArrowLeft PageUp'
-        aria-controls={slidePanelId}
-        className={navigationIconButtonClassName}
-        data-testid='lesson-slide-prev-button'
-        size='sm'
-        type='button'
-        title={previousPanelLabel}
-        variant='surface'
-      >
-        <ChevronLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-      </KangurButton>
-
-      <KangurButton
-        onClick={handleNextSlideCta}
-        disabled={isNextDisabled}
-        aria-label={nextPanelLabel}
-        aria-keyshortcuts='ArrowRight PageDown'
-        aria-controls={slidePanelId}
-        className={navigationIconButtonClassName}
-        data-testid='lesson-slide-next-button'
-        size='sm'
-        type='button'
-        title={nextPanelLabel}
-        variant='surface'
-      >
-        <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-      </KangurButton>
-    </>
+  const printButton = lessonPrint?.onPrintPanel ? (
+    <KangurLessonNavigationIconButton
+      onClick={() => lessonPrint.onPrintPanel?.(slidePanelId)}
+      aria-label={printPanelLabel}
+      data-testid='lesson-slide-print-button'
+      icon={Printer}
+      title={printPanelLabel}
+    />
   ) : null;
+  const previousSlideButton = shouldRenderArrowNavigation ? (
+    <KangurLessonNavigationIconButton
+      onClick={handlePreviousSlideCta}
+      disabled={isPrevDisabled}
+      aria-label={previousPanelLabel}
+      aria-keyshortcuts='ArrowLeft PageUp'
+      aria-controls={slidePanelId}
+      data-testid='lesson-slide-prev-button'
+      icon={ChevronLeft}
+      title={previousPanelLabel}
+    />
+  ) : null;
+  const nextSlideButton = shouldRenderArrowNavigation ? (
+    <KangurLessonNavigationIconButton
+      onClick={handleNextSlideCta}
+      disabled={isNextDisabled}
+      aria-label={nextPanelLabel}
+      aria-keyshortcuts='ArrowRight PageDown'
+      aria-controls={slidePanelId}
+      data-testid='lesson-slide-next-button'
+      icon={ChevronRight}
+      title={nextPanelLabel}
+    />
+  ) : null;
+  const navigationActionButtons = (
+    <>
+      {previousSlideButton}
+      {printButton}
+      {nextSlideButton}
+    </>
+  );
 
   return (
     <div
@@ -450,6 +448,7 @@ export default function LessonSlideSection({
       <div
         className={LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME}
         data-testid='lesson-slide-navigation-shell'
+        data-kangur-print-exclude='true'
       >
         <div
           className={cn(LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME, 'hidden sm:flex')}
@@ -457,7 +456,7 @@ export default function LessonSlideSection({
           aria-label={panelsNavigationLabel}
         >
           {renderBackButton()}
-          {arrowNavigationButtons}
+          {navigationActionButtons}
         </div>
         {shouldRenderNavigationPills ? (
           <nav
@@ -528,6 +527,7 @@ export default function LessonSlideSection({
         <motion.div
           key={slide}
           {...slideMotionProps}
+          data-kangur-print-slide-frame='true'
           className='w-full'
         >
           <KangurGlassPanel
@@ -541,6 +541,10 @@ export default function LessonSlideSection({
               KANGUR_PANEL_GAP_CLASSNAME,
               activeSlide.panelClassName
             )}
+            data-kangur-print-panel='true'
+            data-kangur-print-slide-panel='true'
+            data-kangur-print-panel-id={slidePanelId}
+            data-kangur-print-panel-title={activeSlide.title}
             data-testid='lesson-slide-shell'
             padding='xl'
             surface='solid'
@@ -554,6 +558,14 @@ export default function LessonSlideSection({
             >
               Slajd {slide + 1} z {totalSlides}: {activeSlide.title}
             </p>
+            {printablePanelLabel ? (
+              <div
+                className='kangur-print-only text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'
+                data-testid='lesson-slide-print-panel-label'
+              >
+                {printablePanelLabel}
+              </div>
+            ) : null}
             <h2
               id={slideTitleId}
               ref={slideTitleRef}
@@ -567,14 +579,17 @@ export default function LessonSlideSection({
         </motion.div>
       </AnimatePresence>
 
-      {isMobile && shouldRenderArrowNavigation ? (
-        <div className='flex w-full flex-col items-center gap-2'>
+      {isMobile && (shouldRenderArrowNavigation || Boolean(printButton)) ? (
+        <div
+          className='flex w-full flex-col items-center gap-2'
+          data-kangur-print-exclude='true'
+        >
           <div
             className={LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME}
             role='group'
             aria-label={panelsNavigationLabel}
           >
-            {arrowNavigationButtons}
+            {navigationActionButtons}
           </div>
         </div>
       ) : null}

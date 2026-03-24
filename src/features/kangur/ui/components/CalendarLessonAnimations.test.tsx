@@ -32,6 +32,11 @@ describe('CalendarLessonAnimations visuals', () => {
     expect(screen.getByTestId('calendar-days-strip-animation')).toBeInTheDocument();
     expect(screen.getByTestId('calendar-days-strip-atmosphere')).toBeInTheDocument();
     expect(screen.getByTestId('calendar-days-strip-frame')).toBeInTheDocument();
+    expect(
+      screen
+        .getByTestId('calendar-days-strip-animation')
+        .querySelectorAll('ellipse[data-kangur-soft-oval="true"]').length
+    ).toBeGreaterThan(0);
 
     expect(screen.getByTestId('calendar-weekend-pulse-animation')).toBeInTheDocument();
     expect(screen.getByTestId('calendar-weekend-pulse-atmosphere')).toBeInTheDocument();

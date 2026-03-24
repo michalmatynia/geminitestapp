@@ -4,41 +4,22 @@
 'use client';
 
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import {
   LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME,
   LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME,
 } from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 
-const {
-  useKangurLessonsRuntimeStateMock,
-  useKangurLessonsRuntimeActionsMock,
-  useOptionalKangurLessonsRuntimeMock,
-  ageGroupState,
-} = vi.hoisted(() => ({
-  useKangurLessonsRuntimeStateMock: vi.fn(),
-  useKangurLessonsRuntimeActionsMock: vi.fn(),
+const { useOptionalKangurLessonsRuntimeMock } = vi.hoisted(() => ({
   useOptionalKangurLessonsRuntimeMock: vi.fn(),
-  ageGroupState: {
-    value: 'ten_year_old' as 'six_year_old' | 'ten_year_old' | 'grown_ups',
-  },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLessonsRuntimeContext', () => ({
-  useKangurLessonsRuntimeState: useKangurLessonsRuntimeStateMock,
-  useKangurLessonsRuntimeActions: useKangurLessonsRuntimeActionsMock,
   useOptionalKangurLessonsRuntime: useOptionalKangurLessonsRuntimeMock,
 }));
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
-}));
-
-vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
-  useKangurAgeGroupFocus: () => ({
-    ageGroup: ageGroupState.value,
-    setAgeGroup: vi.fn(),
-  }),
 }));
 
 import { KangurLessonNavigationWidget } from '@/features/kangur/ui/components/KangurLessonNavigationWidget';
@@ -62,17 +43,13 @@ const SubsectionNavigationMarker = (): React.JSX.Element => {
 
 describe('KangurLessonNavigationWidget', () => {
   it('hides lesson-to-lesson navigation while a subsection panel flow is active', () => {
-    ageGroupState.value = 'ten_year_old';
-    useOptionalKangurLessonsRuntimeMock.mockReturnValue(null);
-    useKangurLessonsRuntimeStateMock.mockReturnValue({
+    useOptionalKangurLessonsRuntimeMock.mockReturnValue({
       prevLesson: null,
       nextLesson: {
         id: 'lesson-calendar',
         emoji: '📅',
         title: 'Nauka kalendarza',
       },
-    });
-    useKangurLessonsRuntimeActionsMock.mockReturnValue({
       selectLesson: vi.fn(),
     });
 
@@ -88,7 +65,6 @@ describe('KangurLessonNavigationWidget', () => {
   });
 
   it('widens previous and next lesson buttons on coarse pointers', () => {
-    ageGroupState.value = 'ten_year_old';
     const selectLesson = vi.fn();
     useOptionalKangurLessonsRuntimeMock.mockReturnValue({
       prevLesson: {
@@ -126,8 +102,7 @@ describe('KangurLessonNavigationWidget', () => {
     );
   });
 
-  it('uses icon-first previous and next cues for six-year-old learners', () => {
-    ageGroupState.value = 'six_year_old';
+  it('keeps previous and next lesson controls icon-only', () => {
     useOptionalKangurLessonsRuntimeMock.mockReturnValue({
       prevLesson: {
         id: 'lesson-adding',
@@ -148,14 +123,17 @@ describe('KangurLessonNavigationWidget', () => {
       </KangurLessonNavigationProvider>
     );
 
-    expect(screen.getByTestId('kangur-lesson-nav-prev-icon')).toHaveTextContent('🔙');
-    expect(screen.getByTestId('kangur-lesson-nav-next-icon')).toHaveTextContent('🔜');
+    expect(screen.getByRole('button', { name: /Poprzednia lekcja/i })).not.toHaveTextContent(
+      'Poprzednia'
+    );
+    expect(screen.getByRole('button', { name: /Następna lekcja/i })).not.toHaveTextContent(
+      'Następna'
+    );
+    expect(screen.queryByText(/^Poprzednia$/)).toBeNull();
+    expect(screen.queryByText(/^Następna$/)).toBeNull();
   });
 
-  it('renders a print button to the right of the lesson arrows and calls the print handler', () => {
-    ageGroupState.value = 'ten_year_old';
-    const selectLesson = vi.fn();
-    const onPrintLesson = vi.fn();
+  it('renders only previous and next lesson controls in the outer lesson navigation', () => {
     useOptionalKangurLessonsRuntimeMock.mockReturnValue({
       prevLesson: {
         id: 'lesson-adding',
@@ -167,24 +145,17 @@ describe('KangurLessonNavigationWidget', () => {
         emoji: '📅',
         title: 'Kalendarz',
       },
-      selectLesson,
+      selectLesson: vi.fn(),
     });
 
     render(
       <KangurLessonNavigationProvider onBack={vi.fn()}>
-        <KangurLessonNavigationWidget onPrintLesson={onPrintLesson} />
+        <KangurLessonNavigationWidget />
       </KangurLessonNavigationProvider>
     );
 
-    const previousButton = screen.getByRole('button', { name: /Poprzednia lekcja/i });
-    const nextButton = screen.getByRole('button', { name: /Następna lekcja/i });
-    const printButton = screen.getByRole('button', { name: /Drukuj lekcję/i });
-
-    expect(previousButton.compareDocumentPosition(printButton)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-    expect(nextButton.compareDocumentPosition(printButton)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-
-    fireEvent.click(printButton);
-
-    expect(onPrintLesson).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: /Poprzednia lekcja/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Następna lekcja/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Drukuj panel/i })).toBeNull();
   });
 });

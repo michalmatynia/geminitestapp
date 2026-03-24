@@ -1,8 +1,16 @@
+import { useId } from 'react';
+
+import {
+  renderSoftAtmosphereGradients,
+  renderSoftAtmosphereOvals,
+} from '@/features/kangur/ui/components/animations/svgAtmosphere';
+
 type LogicalAnimationFrameProps = {
   ariaLabel: string;
   viewBox?: string;
   children: React.ReactNode;
   styles: string;
+  testIdPrefix: string;
 };
 
 function LogicalAnimationFrame({
@@ -10,16 +18,86 @@ function LogicalAnimationFrame({
   viewBox = '0 0 320 160',
   children,
   styles,
+  testIdPrefix,
 }: LogicalAnimationFrameProps): React.JSX.Element {
+  const baseId = useId().replace(/:/g, '');
+  const clipId = `${testIdPrefix}-${baseId}-clip`;
+  const panelGradientId = `${testIdPrefix}-${baseId}-panel`;
+  const frameGradientId = `${testIdPrefix}-${baseId}-frame-gradient`;
+  const atmosphereOvalId = `${testIdPrefix}-${baseId}-soft-oval`;
+
   return (
     <svg
       aria-label={ariaLabel}
       className='h-auto w-full'
+      data-testid={`${testIdPrefix}-animation`}
       role='img'
       viewBox={viewBox}
     >
+      <defs>
+        <clipPath id={clipId}>
+          <rect x='8' y='8' width='304' height='144' rx='24' />
+        </clipPath>
+        <linearGradient
+          id={panelGradientId}
+          x1='20'
+          x2='300'
+          y1='12'
+          y2='148'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='#f8fafc' />
+          <stop offset='55%' stopColor='#eff6ff' />
+          <stop offset='100%' stopColor='#ecfeff' />
+        </linearGradient>
+        <linearGradient
+          id={frameGradientId}
+          x1='16'
+          x2='304'
+          y1='16'
+          y2='16'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='rgba(45,212,191,0.78)' />
+          <stop offset='50%' stopColor='rgba(56,189,248,0.78)' />
+          <stop offset='100%' stopColor='rgba(167,139,250,0.82)' />
+        </linearGradient>
+        {renderSoftAtmosphereGradients(atmosphereOvalId, [
+          { key: 'left', cx: 76, cy: 40, rx: 64, ry: 24, color: '#2dd4bf', opacity: 0.08, glowBias: '42%' },
+          { key: 'bottom', cx: 244, cy: 126, rx: 88, ry: 36, color: '#38bdf8', opacity: 0.07, glowBias: '58%' },
+          { key: 'top', cx: 246, cy: 34, rx: 58, ry: 20, color: '#a78bfa', opacity: 0.075, glowBias: '40%' },
+        ])}
+      </defs>
       <style>{styles}</style>
-      {children}
+      <g clipPath={`url(#${clipId})`} data-testid={`${testIdPrefix}-atmosphere`}>
+        <rect
+          x='8'
+          y='8'
+          width='304'
+          height='144'
+          rx='24'
+          fill={`url(#${panelGradientId})`}
+          stroke='rgba(148,163,184,0.16)'
+          strokeWidth='2'
+        />
+        {renderSoftAtmosphereOvals(atmosphereOvalId, [
+          { key: 'left', cx: 76, cy: 40, rx: 64, ry: 24, color: '#2dd4bf', opacity: 0.08, glowBias: '42%' },
+          { key: 'bottom', cx: 244, cy: 126, rx: 88, ry: 36, color: '#38bdf8', opacity: 0.07, glowBias: '58%' },
+          { key: 'top', cx: 246, cy: 34, rx: 58, ry: 20, color: '#a78bfa', opacity: 0.075, glowBias: '40%' },
+        ])}
+        {children}
+      </g>
+      <rect
+        x='16'
+        y='16'
+        width='288'
+        height='128'
+        rx='20'
+        fill='none'
+        stroke={`url(#${frameGradientId})`}
+        strokeWidth='1.75'
+        data-testid={`${testIdPrefix}-frame`}
+      />
     </svg>
   );
 }
@@ -28,6 +106,7 @@ export function ClassificationSortByColorAnimation(): React.JSX.Element {
   return (
     <LogicalAnimationFrame
       ariaLabel='Animacja: przedmioty są grupowane według koloru.'
+      testIdPrefix='logical-classification-color'
       styles={`
         .bin { fill: #f8fafc; stroke-width: 2; stroke-dasharray: 6 6; }
         .left-bin { stroke: #ec4899; }
@@ -70,6 +149,7 @@ export function ClassificationSortByShapeAnimation(): React.JSX.Element {
   return (
     <LogicalAnimationFrame
       ariaLabel='Animacja: figury trafiają do grup według kształtu.'
+      testIdPrefix='logical-classification-shape'
       styles={`
         .bin { fill: #f8fafc; stroke: #a78bfa; stroke-width: 2; stroke-dasharray: 6 6; }
         .circle-shape { fill: #a855f7; }
@@ -113,6 +193,7 @@ export function ClassificationSortBySizeAnimation(): React.JSX.Element {
   return (
     <LogicalAnimationFrame
       ariaLabel='Animacja: elementy są porządkowane według rozmiaru.'
+      testIdPrefix='logical-classification-size'
       styles={`
         .guide { stroke: #cbd5e1; stroke-width: 2; stroke-dasharray: 4 6; }
         .small { fill: #22c55e; animation: growUp 4.2s ease-in-out infinite; }
@@ -140,6 +221,7 @@ export function ClassificationCategoryBinsAnimation(): React.JSX.Element {
   return (
     <LogicalAnimationFrame
       ariaLabel='Animacja: przedmioty trafiają do odpowiednich kategorii.'
+      testIdPrefix='logical-classification-category'
       styles={`
         .bin { fill: #fffbeb; stroke: #f59e0b; stroke-width: 2; stroke-dasharray: 6 6; }
         .token { opacity: 0.35; animation: sink 5s ease-in-out infinite; }
@@ -174,6 +256,7 @@ export function ClassificationTwoCriteriaGridAnimation(): React.JSX.Element {
   return (
     <LogicalAnimationFrame
       ariaLabel='Animacja: przedmioty układają się w siatce dwóch kryteriów.'
+      testIdPrefix='logical-classification-grid'
       styles={`
         .cell { fill: #f8fafc; stroke: #2dd4bf; stroke-width: 2; }
         .token {
@@ -224,6 +307,7 @@ export function ClassificationCriteriaAxesAnimation(): React.JSX.Element {
   return (
     <LogicalAnimationFrame
       ariaLabel='Animacja: osie pomagają czytać dwa kryteria naraz.'
+      testIdPrefix='logical-classification-axes'
       styles={`
         .axis { stroke: #14b8a6; stroke-width: 3; stroke-linecap: round; }
         .hint { stroke: #99f6e4; stroke-width: 2; stroke-dasharray: 5 5; }
@@ -254,6 +338,7 @@ export function ClassificationVennOverlapAnimation(): React.JSX.Element {
   return (
     <LogicalAnimationFrame
       ariaLabel='Animacja: część wspólna dwóch zbiorów jest podświetlona.'
+      testIdPrefix='logical-classification-venn-overlap'
       styles={`
         .left { fill: rgba(56, 189, 248, 0.32); stroke: #38bdf8; stroke-width: 3; }
         .right { fill: rgba(250, 204, 21, 0.32); stroke: #f59e0b; stroke-width: 3; }
@@ -285,6 +370,7 @@ export function ClassificationVennUnionAnimation(): React.JSX.Element {
   return (
     <LogicalAnimationFrame
       ariaLabel='Animacja: oba zbiory razem tworzą sumę.'
+      testIdPrefix='logical-classification-venn-union'
       styles={`
         .shell { fill: rgba(59, 130, 246, 0.08); stroke: #cbd5e1; stroke-width: 2; }
         .left { fill: rgba(96, 165, 250, 0.38); }
@@ -313,6 +399,7 @@ export function ClassificationCriteriaSwitchAnimation(): React.JSX.Element {
   return (
     <LogicalAnimationFrame
       ariaLabel='Animacja: to samo zadanie zmienia aktywne kryterium klasyfikacji.'
+      testIdPrefix='logical-classification-switch'
       styles={`
         .pill {
           fill: #eef2ff;
@@ -352,6 +439,7 @@ export function ClassificationOddOneOutAnimation(): React.JSX.Element {
   return (
     <LogicalAnimationFrame
       ariaLabel='Animacja: jeden element odstaje od reszty.'
+      testIdPrefix='logical-classification-odd'
       styles={`
         .common { fill: #38bdf8; opacity: 0.55; }
         .odd {
@@ -379,6 +467,7 @@ export function ClassificationHiddenRuleAnimation(): React.JSX.Element {
   return (
     <LogicalAnimationFrame
       ariaLabel='Animacja: ukryta reguła odsłania poprawne dopasowanie.'
+      testIdPrefix='logical-classification-hidden-rule'
       styles={`
         .card { fill: #fff7ed; stroke: #fb923c; stroke-width: 2; }
         .question { fill: #f97316; font: 700 28px/1 system-ui, sans-serif; }
@@ -410,6 +499,7 @@ export function ClassificationOddOneOutPatternAnimation(): React.JSX.Element {
   return (
     <LogicalAnimationFrame
       ariaLabel='Animacja: w szeregu wzorców jeden element łamie regułę.'
+      testIdPrefix='logical-classification-pattern'
       styles={`
         .pattern { fill: #c4b5fd; }
         .breaker {
@@ -443,6 +533,7 @@ export function ClassificationParityAnimation(): React.JSX.Element {
   return (
     <LogicalAnimationFrame
       ariaLabel='Animacja: liczby parzyste i nieparzyste rozchodzą się do dwóch grup.'
+      testIdPrefix='logical-classification-parity'
       styles={`
         .left { fill: #dbeafe; stroke: #3b82f6; stroke-width: 2; }
         .right { fill: #ffe4e6; stroke: #f43f5e; stroke-width: 2; }
@@ -483,6 +574,7 @@ export function ClassificationRecapSequenceAnimation(): React.JSX.Element {
   return (
     <LogicalAnimationFrame
       ariaLabel='Animacja: podsumowanie etapów klasyfikowania.'
+      testIdPrefix='logical-classification-recap'
       styles={`
         .card {
           fill: #f8fafc;

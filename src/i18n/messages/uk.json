@@ -421,6 +421,7 @@
       "label": "Питання {number}",
       "pointChip": "⭐ {points} б. ({difficulty})",
       "touchHint": "Торкніться відповіді, а потім кнопки підтвердження.",
+      "printHint": "Відкрийте цей урок на екрані, щоб відповісти на запитання інтерактивно.",
       "difficulty": {
         "easy": "легко",
         "medium": "середньо",
@@ -432,6 +433,8 @@
       },
       "confirm": "Підтвердити відповідь ✓"
     },
+    "examPrintHint": "Відкрийте цей урок на екрані, щоб відповісти на запитання Математичного Кенгуру інтерактивно.",
+    "examResultPrintHint": "Відкрийте цей урок на екрані, щоб переглянути відповіді та розв'язання Математичного Кенгуру.",
     "operationSelector": {
       "title": "Граймо!",
       "intro": {
@@ -625,6 +628,43 @@
           "activeTitle": "Активні завдання",
           "activeEmpty": "Для цього учня немає активних завдань."
         },
+        "analytics": {
+          "label": "Знімок навчання",
+          "description": "Найважливіші числа з останніх сесій і поточного ритму роботи учня.",
+          "averageAccuracyLabel": "Середня точність",
+          "averageAccuracyDescription": "Найкращий результат: {best}%",
+          "streakLabel": "Серія днів",
+          "streakDescription": "Найдовша серія: {longest} днів",
+          "xpLabel": "XP сьогодні",
+          "xpDescription": "{weeklyXp} XP за 7 днів · у середньому {averageXp} XP / сесію",
+          "dailyGoalLabel": "Денна ціль",
+          "dailyGoalDescription": "{percent}% сьогоднішнього плану"
+        },
+        "weeklyActivity": {
+          "label": "Тижнева активність",
+          "description": "Кількість ігор на день і їхня середня точність за останній тиждень.",
+          "loading": "Завантажуємо історію сесій",
+          "error": "Не вдалося завантажити повну історію результатів",
+          "barTitle": "{count} ігор · {accuracy}% точності"
+        },
+        "operationFocus": {
+          "label": "Робочі зони",
+          "description": "Найчастіше треновані зони разом із точністю та темпом отримання XP.",
+          "progressAria": "Точність у зоні {title}",
+          "attempts": "{count} спроб",
+          "averageXp": "{xp} XP / сесію",
+          "empty": "Ще немає даних за зонами. Результати з’являться після перших ігор."
+        },
+        "masterySummary": {
+          "label": "Карта опанування уроків",
+          "description": "Які уроки вже стабільні, а які ще потребують підтримки.",
+          "trackedLabel": "Відстежувані уроки",
+          "masteredLabel": "Опановано",
+          "needsPracticeLabel": "Потрібно повторити",
+          "weakestLabel": "Потребують підтримки",
+          "strongestLabel": "Найсильніші",
+          "empty": "Ще немає даних про mastery уроків. Вони з’являться після роботи учня в уроках."
+        },
         "lessonProgress": {
           "label": "Прогрес уроків",
           "description": "Прогрес уроків, збережений по панелях.",
@@ -653,6 +693,28 @@
           "dateFromLabel": "Дата від",
           "dateToLabel": "Дата до",
           "clear": "Очистити фільтри"
+        },
+        "overview": {
+          "label": "Огляд активності",
+          "description": "Ключові числа для поточного видимого діапазону активності.",
+          "totalInteractionsLabel": "Взаємодії",
+          "sessionsLabel": "Сесії",
+          "openedTasksLabel": "Відкриті завдання",
+          "lessonPanelsLabel": "Панелі уроків",
+          "averageSessionDuration": "Середня сесія: {duration}",
+          "latestActivity": "Остання активність: {timestamp}"
+        },
+        "activityMix": {
+          "label": "Розподіл активності",
+          "description": "Порівняння сесій, відкриттів завдань і відвідувань панелей уроків.",
+          "barTitle": "{label}: {count}"
+        },
+        "lessonFocus": {
+          "label": "Найбільше часу",
+          "description": "Уроки, у панелях яких учень провів найбільше часу.",
+          "progressAria": "Частка часу для уроку {title}",
+          "sectionCount": "{count} секцій з активністю",
+          "empty": "Ще немає даних про час у панелях для порівняння."
         },
         "lessonPanelTime": {
           "label": "Час у панелях уроків",
@@ -1326,8 +1388,7 @@
       "nextLesson": "Наступний урок: {title}",
       "noNextLesson": "Немає наступного уроку",
       "nextShort": "Наступний",
-      "printLesson": "Друкувати урок",
-      "printShort": "Друк"
+      "printPanel": "Друкувати панель"
     },
     "activeHeader": {
       "narrator": {
@@ -1484,6 +1545,7 @@
     "openSecretPanel": "Відкрити секретну панель",
     "secretPanelTitle": "Секретна панель",
     "backToTopics": "Назад до тем",
+    "printInteractiveHint": "Відкрийте цей урок на екрані, щоб виконати цю інтерактивну вправу.",
     "panelsNavigation": "Навігація панелями",
     "previousPanel": "Попередня панель",
     "nextPanel": "Наступна панель",

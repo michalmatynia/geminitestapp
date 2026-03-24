@@ -34,7 +34,9 @@ type KangurSubjectFocusChangeDetail = {
   subject: KangurLessonSubject;
 };
 
-const normalizeSubject = (value: unknown): KangurLessonSubject | null => {
+export const normalizeKangurSubjectFocusSubject = (
+  value: unknown
+): KangurLessonSubject | null => {
   const parsed = kangurLessonSubjectSchema.safeParse(value);
   return parsed.success ? parsed.data : null;
 };
@@ -60,7 +62,7 @@ const parseSubjectFocusStore = (value: unknown): KangurSubjectFocusStore => {
     if (!key || typeof key !== 'string') {
       return;
     }
-    const normalized = normalizeSubject(subject);
+    const normalized = normalizeKangurSubjectFocusSubject(subject);
     if (normalized) {
       entries[key] = normalized;
     }
@@ -132,7 +134,7 @@ const isSubjectFocusChangeDetail = (
     return false;
   }
   const record = value as Record<string, unknown>;
-  return record['key'] === key && normalizeSubject(record['subject']) !== null;
+  return record['key'] === key && normalizeKangurSubjectFocusSubject(record['subject']) !== null;
 };
 
 const isTransientSubjectFocusReadError = (
@@ -195,8 +197,13 @@ const requestSubjectFocusFromApi = async (
 
 const updateSubjectFocusViaApi = async (
   subject: KangurLessonSubject
-): Promise<KangurLessonSubject | null> =>
-  await withKangurClientError(
+): Promise<KangurLessonSubject | null> => {
+  const normalizedSubject = normalizeKangurSubjectFocusSubject(subject);
+  if (!normalizedSubject) {
+    return null;
+  }
+
+  return await withKangurClientError(
     (error) => ({
       source: 'kangur.subject-focus',
       action: 'update',
@@ -204,12 +211,14 @@ const updateSubjectFocusViaApi = async (
       context: {
         endpoint: KANGUR_SUBJECT_FOCUS_ENDPOINT,
         method: 'PATCH',
-        subject,
+        subject: normalizedSubject,
         ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
       },
     }),
     async () => {
-      const payload = await kangurSubjectFocusApiClient.updateSubjectFocus({ subject });
+      const payload = await kangurSubjectFocusApiClient.updateSubjectFocus({
+        subject: normalizedSubject,
+      });
       const parsed = kangurSubjectFocusSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur subject focus update payload validation failed.');
@@ -225,12 +234,13 @@ const updateSubjectFocusViaApi = async (
         trackWriteFailure('subject-focus.update', error, {
           endpoint: KANGUR_SUBJECT_FOCUS_ENDPOINT,
           method: 'PATCH',
-          subject,
+          subject: normalizedSubject,
           ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
         });
       },
     }
   );
+};
 
 export const loadPersistedSubjectFocus = (key: string | null): KangurLessonSubject => {
   if (!key) {

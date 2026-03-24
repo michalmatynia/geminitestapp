@@ -68,6 +68,25 @@ const renderWithIntl = (element: ReactElement) =>
   );
 
 describe('EnglishAdverbsFrequencyLesson', () => {
+  it('keeps adverb word-order examples inside the visual support area instead of separate inset cards', async () => {
+    renderWithIntl(
+      <KangurLessonNavigationProvider onBack={vi.fn()}>
+        <EnglishAdverbsFrequencyLesson />
+      </KangurLessonNavigationProvider>
+    );
+
+    fireEvent.click(screen.getByTestId('lesson-hub-section-position'));
+
+    await waitFor(() => {
+      expect(screen.getByText('I always do my homework.')).toBeInTheDocument();
+    });
+
+    expect(
+      screen.getByText('I always do my homework.').closest('.kangur-lesson-visual-supporting')
+    ).toBeTruthy();
+    expect(screen.queryByText('I always do my homework.')?.closest('.kangur-lesson-inset')).toBeNull();
+  });
+
   it('opens the frequency studio game section and returns to the lesson hub', async () => {
     renderWithIntl(
       <KangurLessonNavigationProvider onBack={vi.fn()}>

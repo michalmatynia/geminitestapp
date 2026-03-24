@@ -58,15 +58,15 @@ const PAGE_CONTENT_COPY_OVERRIDES: Partial<Record<string, KangurPageContentCopyO
   },
   'parent-dashboard-tabs': {
     title: 'Zakładki panelu',
-    summary: 'Przełączaj między wynikami, postępem, zadaniami, monitoringiem i ustawieniami Tutor-AI.',
+    summary: 'Przełączaj między postępem, zadaniami, monitoringiem i ustawieniami Tutor-AI.',
   },
   'parent-dashboard-progress': {
     title: 'Postęp ucznia',
     summary: 'Sprawdź rytm nauki, poziom, misję dnia i główny kierunek dalszej pracy.',
   },
   'parent-dashboard-scores': {
-    title: 'Wyniki ucznia',
-    summary: 'Przejrzyj ostatnie gry, skuteczność i obszary, które warto teraz powtórzyć.',
+    title: 'Wyniki przeniesiono do Profilu Ucznia',
+    summary: 'Otwórz Profil Ucznia, aby zobaczyć wyniki, skuteczność i historię gier.',
   },
   'parent-dashboard-assignments': {
     title: 'Zadania ucznia',
@@ -162,6 +162,10 @@ const PAGE_CONTENT_COPY_OVERRIDES: Partial<Record<string, KangurPageContentCopyO
     title: 'Przegląd wyników',
     summary: 'Najważniejsze wskaźniki dnia: skuteczność, misja, cel i odznaki w jednym widoku.',
   },
+  'learner-profile-results': {
+    title: 'Wyniki ucznia',
+    summary: 'Przejrzyj ostatnie gry, skuteczność i obszary, które warto teraz powtórzyć.',
+  },
   'learner-profile-recommendations': {
     title: 'Plan na dziś',
     summary: 'Krótka lista kolejnych kroków na podstawie ostatnich wyników i aktywności.',
@@ -215,15 +219,15 @@ const ENGLISH_PAGE_CONTENT_COPY_OVERRIDES: Partial<Record<string, KangurPageCont
   },
   'parent-dashboard-tabs': {
     title: 'Dashboard tabs',
-    summary: 'Switch between results, progress, assignments, monitoring, and Tutor-AI settings.',
+    summary: 'Switch between progress, assignments, monitoring, and Tutor-AI settings.',
   },
   'parent-dashboard-progress': {
     title: 'Learner progress',
     summary: 'Check learning rhythm, level, the daily quest, and the main direction for the next step.',
   },
   'parent-dashboard-scores': {
-    title: 'Learner results',
-    summary: 'Review recent games, accuracy, and the areas worth revisiting now.',
+    title: 'Results moved to Learner Profile',
+    summary: 'Open Learner Profile to see results, accuracy, and recent game history.',
   },
   'parent-dashboard-assignments': {
     title: 'Learner assignments',
@@ -317,6 +321,10 @@ const ENGLISH_PAGE_CONTENT_COPY_OVERRIDES: Partial<Record<string, KangurPageCont
     title: 'Results overview',
     summary: 'The key signals of the day: accuracy, quest, goal, and badges in one view.',
   },
+  'learner-profile-results': {
+    title: 'Learner results',
+    summary: 'Review recent games, accuracy, and the areas worth revisiting now.',
+  },
   'learner-profile-recommendations': {
     title: 'Today’s plan',
     summary: 'A short list of next steps based on recent results and activity.',
@@ -370,15 +378,16 @@ const GERMAN_PAGE_CONTENT_COPY_OVERRIDES: Partial<Record<string, KangurPageConte
   },
   'parent-dashboard-tabs': {
     title: 'Dashboard-Tabs',
-    summary: 'Wechsle zwischen Ergebnissen, Fortschritt, Aufgaben, Monitoring und Tutor-AI-Einstellungen.',
+    summary: 'Wechsle zwischen Fortschritt, Aufgaben, Monitoring und Tutor-AI-Einstellungen.',
   },
   'parent-dashboard-progress': {
     title: 'Lernfortschritt',
     summary: 'Pruefe Lernrhythmus, Level, Tagesmission und die wichtigste naechste Richtung.',
   },
   'parent-dashboard-scores': {
-    title: 'Ergebnisse des Lernenden',
-    summary: 'Pruefe letzte Spiele, Genauigkeit und Bereiche, die jetzt eine Wiederholung brauchen.',
+    title: 'Ergebnisse wurden ins Lernprofil verschoben',
+    summary:
+      'Oeffne das Lernprofil, um Ergebnisse, Genauigkeit und den Verlauf der letzten Spiele zu sehen.',
   },
   'parent-dashboard-assignments': {
     title: 'Aufgaben des Lernenden',
@@ -472,6 +481,10 @@ const GERMAN_PAGE_CONTENT_COPY_OVERRIDES: Partial<Record<string, KangurPageConte
     title: 'Ergebnisuebersicht',
     summary: 'Die wichtigsten Signale des Tages: Genauigkeit, Mission, Ziel und Abzeichen in einer Ansicht.',
   },
+  'learner-profile-results': {
+    title: 'Ergebnisse des Lernenden',
+    summary: 'Pruefe letzte Spiele, Genauigkeit und die Bereiche, die jetzt wiederholt werden sollten.',
+  },
   'learner-profile-recommendations': {
     title: 'Plan fuer heute',
     summary: 'Eine kurze Liste naechster Schritte auf Basis letzter Ergebnisse und Aktivitaet.',
@@ -533,7 +546,7 @@ const UKRAINIAN_PAGE_CONTENT_COPY_OVERRIDES: Partial<
   'parent-dashboard-tabs': {
     title: 'Вкладки панелі',
     summary:
-      'Перемикайтеся між результатами, прогресом, завданнями, моніторингом і налаштуваннями Tutor-AI.',
+      'Перемикайтеся між прогресом, завданнями, моніторингом і налаштуваннями Tutor-AI.',
   },
   'parent-dashboard-progress': {
     title: 'Прогрес учня',
@@ -541,8 +554,8 @@ const UKRAINIAN_PAGE_CONTENT_COPY_OVERRIDES: Partial<
       'Перевірте ритм навчання, рівень, місію дня і головний напрямок наступного кроку.',
   },
   'parent-dashboard-scores': {
-    title: 'Результати учня',
-    summary: 'Перегляньте останні ігри, точність і теми, які варто зараз повторити.',
+    title: 'Результати перенесено до Профілю учня',
+    summary: 'Відкрийте Профіль учня, щоб переглянути результати, точність і історію ігор.',
   },
   'parent-dashboard-assignments': {
     title: 'Завдання учня',
@@ -651,6 +664,11 @@ const UKRAINIAN_PAGE_CONTENT_COPY_OVERRIDES: Partial<
   'learner-profile-overview': {
     title: 'Огляд результатів',
     summary: 'Головні сигнали дня: точність, місія, ціль і значки в одному місці.',
+  },
+  'learner-profile-results': {
+    title: 'Результати учня',
+    summary:
+      'Перегляньте останні ігри, точність і теми, які варто повторити просто зараз.',
   },
   'learner-profile-recommendations': {
     title: 'План на сьогодні',

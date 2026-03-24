@@ -11,12 +11,11 @@ import {
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { KangurActiveLessonHeader } from '@/features/kangur/ui/components/KangurActiveLessonHeader';
 import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
+import { KangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
 import { KangurLessonNavigationWidget } from '@/features/kangur/ui/components/KangurLessonNavigationWidget';
-import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
-import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
+import { KangurLessonPrintProvider } from '@/features/kangur/ui/context/KangurLessonPrintContext';
 import {
-  KangurButton,
   KangurGlassPanel,
   KangurStatusChip,
   KangurSummaryPanel,
@@ -83,9 +82,7 @@ export function ActiveLessonView({
   const { entry: activeLessonSecretPanelContent } = useKangurPageContentEntry('lessons-active-secret-panel');
 
   const isMobile = useKangurMobileBreakpoint();
-  const { ageGroup } = useKangurAgeGroupFocus();
   const backToLessonsLabel = translations('mobileControls.backToLessons');
-  const isSixYearOld = ageGroup === 'six_year_old';
 
   const secretHostLesson = orderedLessons.at(-1) ?? null;
   const masteryByComponent = progress?.lessonMastery ?? {};
@@ -103,6 +100,9 @@ export function ActiveLessonView({
   const emptyDocumentDescription =
     activeLessonEmptyDocumentContent?.summary?.trim() ||
     'Ta lekcja ma włączony tryb dokumentu, ale nie zapisano jeszcze bloków treści.';
+  const printableLessonTitle = activeLesson
+    ? getLocalizedKangurLessonTitle(activeLesson.componentId, locale, activeLesson.title)
+    : '';
 
   void activeLessonNavigationContent;
   const handleReturnToLessonList = useCallback((): void => {
@@ -127,22 +127,92 @@ export function ActiveLessonView({
     }
     handleReturnToLessonList();
   }, [activeLessonContentRef, handleReturnToLessonList]);
-
-  const handlePrintLesson = useCallback((): void => {
-    if (typeof window === 'undefined' || typeof document === 'undefined') {
+  const handlePrintPanel = useCallback((targetPanelId?: string): void => {
+    if (
+      typeof window === 'undefined' ||
+      typeof document === 'undefined' ||
+      typeof window.print !== 'function'
+    ) {
       return;
     }
 
+    const originalDocumentTitle = document.title;
+    const printRoot = activeLessonContentRef.current;
+    const targetablePanels = printRoot
+      ? Array.from(
+          printRoot.querySelectorAll<HTMLElement>('[data-kangur-print-panel-id]')
+        )
+      : [];
+    const matchedTargetPanel =
+      targetPanelId && targetablePanels.find((panel) => panel.dataset.kangurPrintPanelId === targetPanelId);
+    const matchedTargetPanelTitle = matchedTargetPanel?.dataset.kangurPrintPanelTitle?.trim() || '';
+    const printDocumentTitle =
+      printableLessonTitle.trim() && matchedTargetPanelTitle
+        ? `${printableLessonTitle.trim()} - ${matchedTargetPanelTitle}`
+        : printableLessonTitle.trim() || matchedTargetPanelTitle || originalDocumentTitle;
+
+    if (printDocumentTitle) {
+      document.title = printDocumentTitle;
+    }
+
     document.body.classList.add('kangur-print-mode');
+    if (printRoot && matchedTargetPanel) {
+      printRoot.dataset.kangurPrintTargeted = 'true';
+      matchedTargetPanel.dataset.kangurPrintTargetPanel = 'true';
+      targetablePanels.forEach((panel) => {
+        const shouldKeepVisible =
+          panel === matchedTargetPanel ||
+          panel.contains(matchedTargetPanel) ||
+          matchedTargetPanel.contains(panel);
+        panel.dataset.kangurPrintPanelSelected =
+          shouldKeepVisible ? 'true' : 'false';
+      });
+    }
+    let isCleanedUp = false;
+    let focusCleanupTimer: number | null = null;
+
+    const handleWindowFocus = (): void => {
+      if (focusCleanupTimer !== null) {
+        window.clearTimeout(focusCleanupTimer);
+      }
+      focusCleanupTimer = window.setTimeout(() => {
+        cleanup();
+      }, 0);
+    };
 
     const cleanup = (): void => {
+      if (isCleanedUp) {
+        return;
+      }
+      isCleanedUp = true;
       document.body.classList.remove('kangur-print-mode');
+      document.title = originalDocumentTitle;
+      if (printRoot) {
+        delete printRoot.dataset.kangurPrintTargeted;
+      }
+      if (matchedTargetPanel) {
+        delete matchedTargetPanel.dataset.kangurPrintTargetPanel;
+      }
+      targetablePanels.forEach((panel) => {
+        delete panel.dataset.kangurPrintPanelSelected;
+      });
       window.removeEventListener('afterprint', cleanup);
+      window.removeEventListener('focus', handleWindowFocus);
+      if (focusCleanupTimer !== null) {
+        window.clearTimeout(focusCleanupTimer);
+        focusCleanupTimer = null;
+      }
     };
 
     window.addEventListener('afterprint', cleanup, { once: true });
-    window.print();
-  }, []);
+    window.addEventListener('focus', handleWindowFocus, { once: true });
+
+    try {
+      window.print();
+    } catch {
+      cleanup();
+    }
+  }, [activeLessonContentRef, printableLessonTitle]);
 
   if (!activeLesson) {
     return null;
@@ -171,11 +241,17 @@ export function ActiveLessonView({
   const completedActiveLessonAssignment = !activeLessonAssignment
     ? (completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null)
     : null;
+  const isPrintAvailable =
+    isSecretLessonHostActive ||
+    (activeLesson.contentMode === 'document'
+      ? hasActiveLessonDocContent
+      : Boolean(ActiveLessonComponent));
 
   const headerSection = !isMobile ? (
     <div
       ref={activeLessonHeaderRef}
       id='kangur-lesson-header'
+      data-kangur-print-exclude='true'
       className={LESSONS_ACTIVE_SECTION_CLASSNAME}
     >
       <KangurActiveLessonHeader
@@ -202,12 +278,12 @@ export function ActiveLessonView({
     <div
       ref={activeLessonNavigationRef}
       id={LESSON_NAV_ANCHOR_ID}
+      data-kangur-print-exclude='true'
       className={LESSONS_ACTIVE_SECTION_CLASSNAME}
     >
       <KangurLessonNavigationWidget
         nextLesson={next}
         onSelectLesson={handleSelectLesson}
-        onPrintLesson={handlePrintLesson}
         prevLesson={prev}
       />
     </div>
@@ -261,6 +337,7 @@ export function ActiveLessonView({
         <div className='w-full min-w-0 max-w-5xl space-y-4'>
           <KangurSummaryPanel
             accent='sky'
+            data-kangur-print-exclude='true'
             data-testid='lessons-document-summary'
             description={activeLessonDocumentContent?.summary ?? 'Czytaj dokument.'}
             label='Lesson document'
@@ -275,6 +352,7 @@ export function ActiveLessonView({
           <KangurSummaryPanel
             accent='sky'
             align='center'
+            data-kangur-print-exclude='true'
             data-testid='lessons-loading-document-summary'
             description='Ładujemy treść lekcji i przygotowujemy materiał.'
             label='Lesson document'
@@ -288,6 +366,7 @@ export function ActiveLessonView({
           <KangurSummaryPanel
             accent='amber'
             align='center'
+            data-kangur-print-exclude='true'
             data-testid='lessons-empty-document-summary'
             description={emptyDocumentDescription}
             label='Lesson document'
@@ -303,32 +382,19 @@ export function ActiveLessonView({
   );
 
   const topControlsSection = isMobile ? (
-    <div data-testid='kangur-lesson-top-controls' className='flex w-full min-w-0 gap-2'>
-      <KangurButton
-        size='sm'
-        variant='surface'
-        className='flex-1 justify-center shadow-sm [border-color:var(--kangur-soft-card-border)]'
+    <div
+      data-testid='kangur-lesson-top-controls'
+      data-kangur-print-exclude='true'
+      className='flex w-full min-w-0 gap-2'
+    >
+      <KangurLessonNavigationIconButton
+        className='shrink-0'
         data-testid='kangur-lesson-back-to-lessons'
         onClick={handleLessonBackAction}
         aria-label={backToLessonsLabel}
+        icon={ChevronsLeft}
         title={backToLessonsLabel}
-      >
-        {isSixYearOld ? (
-          <KangurVisualCueContent
-            detail='🏠'
-            detailClassName='text-base'
-            detailTestId='kangur-lesson-back-to-lessons-detail'
-            icon={<ChevronsLeft className='h-4 w-4' aria-hidden='true' />}
-            iconTestId='kangur-lesson-back-to-lessons-icon'
-            label={backToLessonsLabel}
-          />
-        ) : (
-          <>
-            <ChevronsLeft className='h-4 w-4' aria-hidden='true' />
-            {backToLessonsLabel}
-          </>
-        )}
-      </KangurButton>
+      />
     </div>
   ) : null;
 
@@ -346,12 +412,16 @@ export function ActiveLessonView({
         onBack={handleReturnToLessonList}
         secretLessonPill={{ isUnlocked: isSecretLessonUnlocked, onOpen: handleOpenSecretLesson }}
       >
-        <>
-          {topControlsSection}
-          {headerSection}
-          {navigationSection}
-          {lessonContentSection}
-        </>
+        <KangurLessonPrintProvider
+          onPrintPanel={isPrintAvailable ? handlePrintPanel : undefined}
+        >
+          <>
+            {topControlsSection}
+            {headerSection}
+            {navigationSection}
+            {lessonContentSection}
+          </>
+        </KangurLessonPrintProvider>
       </KangurLessonNavigationProvider>
     </motion.div>
   );

@@ -82,5 +82,10 @@ describe('EnglishPartsOfSpeechLesson i18n', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Achte darauf, wer etwas tut: solve, check, graph, explain.')).toBeInTheDocument();
     expect(document.body).toHaveTextContent('du / ihr');
+
+    render(<>{slides.possessive_adjectives?.[0]?.content}</>);
+
+    expect(screen.getByText('my solution').closest('.kangur-lesson-visual-supporting')).toBeTruthy();
+    expect(screen.getByText('my solution').closest('.kangur-lesson-inset')).toBeNull();
   });
 });

@@ -30,6 +30,7 @@ export * from '@/features/kangur/ui/components/KangurLearnerProfileLevelProgress
 export * from '@/features/kangur/ui/components/KangurLearnerProfileMasteryWidget';
 export * from '@/features/kangur/ui/components/KangurLearnerProfileOverviewWidget';
 export * from '@/features/kangur/ui/components/KangurLearnerProfilePerformanceWidget';
+export * from '@/features/kangur/ui/components/KangurLearnerProfileResultsWidget';
 export * from '@/features/kangur/ui/components/KangurLearnerProfileRecommendationsWidget';
 export * from '@/features/kangur/ui/components/KangurLearnerProfileSessionsWidget';
 export * from '@/features/kangur/ui/components/KangurParentDashboardAssignmentsWidget';

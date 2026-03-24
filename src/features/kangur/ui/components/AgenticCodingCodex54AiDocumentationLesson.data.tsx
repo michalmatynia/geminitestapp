@@ -11,6 +11,7 @@ import { KANGUR_GRID_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens'
 import AgenticDocsHierarchyGame from '@/features/kangur/ui/components/AgenticDocsHierarchyGame';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
 import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
+import { useId } from 'react';
 
 type SectionId = 'ai_documentation';
 
@@ -49,44 +50,112 @@ Risks: <edge cases>
 Evidence: <tests/logs>
 Rollout: <plan + monitoring>`;
 
-const DocumentationLadderVisual = (): JSX.Element => (
-  <svg
-    aria-label='Diagram: hierarchia trosk w AI documentation.'
-    className='h-auto w-full'
-    role='img'
-    viewBox='0 0 360 170'
-  >
-    <style>{`
-      .step {
-        fill: #ecfdf5;
-        stroke: #10b981;
-        stroke-width: 1.6;
-      }
-      .label {
-        font: 700 9px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
-        fill: #0f172a;
-      }
-      .muted {
-        font: 600 8px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
-        fill: #64748b;
-      }
-    `}</style>
-    <rect className='step' height='20' rx='8' width='240' x='60' y='16' />
-    <rect className='step' height='20' rx='8' width='240' x='60' y='40' />
-    <rect className='step' height='20' rx='8' width='240' x='60' y='64' />
-    <rect className='step' height='20' rx='8' width='240' x='60' y='88' />
-    <rect className='step' height='20' rx='8' width='240' x='60' y='112' />
-    <rect className='step' height='20' rx='8' width='240' x='60' y='136' />
-    <text className='label' x='72' y='30'>Goal</text>
-    <text className='label' x='72' y='54'>Context</text>
-    <text className='label' x='72' y='78'>Constraints</text>
-    <text className='label' x='72' y='102'>Risks</text>
-    <text className='label' x='72' y='126'>Evidence</text>
-    <text className='label' x='72' y='150'>Rollout</text>
-    <text className='muted' x='252' y='30'>Strategic</text>
-    <text className='muted' x='252' y='150'>Operational</text>
-  </svg>
-);
+export const DocumentationLadderVisual = (): JSX.Element => {
+  const baseId = useId().replace(/:/g, '');
+  const clipId = `agentic-documentation-ladder-${baseId}-clip`;
+  const panelGradientId = `agentic-documentation-ladder-${baseId}-panel`;
+  const frameGradientId = `agentic-documentation-ladder-${baseId}-frame`;
+
+  return (
+    <svg
+      aria-label='Diagram: hierarchia trosk w AI documentation.'
+      className='h-auto w-full'
+      data-testid='agentic-documentation-ladder-animation'
+      role='img'
+      viewBox='0 0 360 180'
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <rect x='10' y='10' width='340' height='160' rx='24' />
+        </clipPath>
+        <linearGradient
+          id={panelGradientId}
+          x1='16'
+          x2='342'
+          y1='16'
+          y2='168'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='#f0fdf4' />
+          <stop offset='52%' stopColor='#ecfdf5' />
+          <stop offset='100%' stopColor='#f8fafc' />
+        </linearGradient>
+        <linearGradient
+          id={frameGradientId}
+          x1='18'
+          x2='342'
+          y1='18'
+          y2='18'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='rgba(16,185,129,0.82)' />
+          <stop offset='50%' stopColor='rgba(52,211,153,0.82)' />
+          <stop offset='100%' stopColor='rgba(110,231,183,0.8)' />
+        </linearGradient>
+      </defs>
+
+      <g clipPath={`url(#${clipId})`} data-testid='agentic-documentation-ladder-atmosphere'>
+        <rect
+          x='10'
+          y='10'
+          width='340'
+          height='160'
+          rx='24'
+          fill={`url(#${panelGradientId})`}
+          stroke='rgba(16,185,129,0.16)'
+          strokeWidth='2'
+        />
+        <ellipse cx='84' cy='30' rx='72' ry='18' fill='rgba(110,231,183,0.16)' />
+        <ellipse cx='286' cy='36' rx='76' ry='18' fill='rgba(52,211,153,0.12)' />
+        <ellipse cx='224' cy='150' rx='92' ry='20' fill='rgba(16,185,129,0.1)' />
+
+        {[
+          ['Goal', 18],
+          ['Context', 42],
+          ['Constraints', 66],
+          ['Risks', 90],
+          ['Evidence', 114],
+          ['Rollout', 138],
+        ].map(([label, y], index) => (
+          <g key={label}>
+            <rect
+              x='60'
+              y={y}
+              width='240'
+              height='20'
+              rx='8'
+              fill={index < 2 ? 'rgba(236,253,245,0.92)' : index < 4 ? 'rgba(220,252,231,0.92)' : 'rgba(240,253,244,0.92)'}
+              stroke='#10b981'
+              strokeWidth='1.6'
+            />
+            <rect x='72' y={Number(y) + 6} width={index % 2 === 0 ? 34 : 46} height='6' rx='3' fill='rgba(16,185,129,0.16)' />
+            <text x='72' y={Number(y) + 14} fontSize='9' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>
+              {label}
+            </text>
+          </g>
+        ))}
+        <text x='252' y='32' fontSize='8' fontWeight='600' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#64748b'>
+          Strategic
+        </text>
+        <text x='250' y='152' fontSize='8' fontWeight='600' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#64748b'>
+          Operational
+        </text>
+      </g>
+
+      <rect
+        x='18'
+        y='18'
+        width='324'
+        height='144'
+        rx='20'
+        fill='none'
+        stroke={`url(#${frameGradientId})`}
+        strokeWidth='1.8'
+        data-testid='agentic-documentation-ladder-frame'
+      />
+    </svg>
+  );
+};
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   ai_documentation: [
@@ -125,16 +194,16 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='emerald'
             caption='Od strategii do operacji — jeden spójny format.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <ul className='space-y-2 text-sm text-emerald-950'>
+                <li>Zaczynaj od celu, żeby zablokować scope creep.</li>
+                <li>Ryzyka i dowody są obowiązkowe przed rollout.</li>
+                <li>Rollout + monitoring zamykają dokumentację.</li>
+              </ul>
+            }
           >
             <DocumentationLadderVisual />
           </KangurLessonVisual>
-          <KangurLessonCallout accent='emerald' padding='sm' className='text-left'>
-            <ul className='space-y-2 text-sm text-emerald-950'>
-              <li>Zaczynaj od celu, żeby zablokować scope creep.</li>
-              <li>Ryzyka i dowody są obowiązkowe przed rollout.</li>
-              <li>Rollout + monitoring zamykają dokumentację.</li>
-            </ul>
-          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },

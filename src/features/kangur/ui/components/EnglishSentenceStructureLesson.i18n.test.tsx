@@ -67,5 +67,12 @@ describe('EnglishSentenceStructureLesson i18n', () => {
       screen.getByText('Die häufigste Satzordnung ist Subject → Verb → Object.')
     ).toBeInTheDocument();
     expect(screen.getByText('Subject + Verb + Object')).toBeInTheDocument();
+
+    render(<>{slides.questions?.[0]?.content}</>);
+
+    expect(
+      screen.getByText('Do you understand the graph?').closest('.kangur-lesson-visual-supporting')
+    ).toBeTruthy();
+    expect(screen.getByText('Do you understand the graph?').closest('.kangur-lesson-inset')).toBeNull();
   });
 });

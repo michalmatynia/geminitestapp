@@ -101,21 +101,26 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='emerald'
             caption='Wybierz powierzchnię, która daje najwięcej kontekstu.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
+                {SURFACES.map((item) => (
+                  <div
+                    key={item.title}
+                    className='rounded-2xl border border-emerald-200/70 bg-white/80 px-3 py-2 text-left shadow-sm'
+                  >
+                    <div className='text-xs font-semibold uppercase tracking-[0.2em] text-emerald-500'>
+                      {item.title}
+                    </div>
+                    <KangurLessonCaption className='mt-2 text-emerald-950'>
+                      {item.description}
+                    </KangurLessonCaption>
+                  </div>
+                ))}
+              </div>
+            }
           >
             <AgenticSurfacePickerAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
-            {SURFACES.map((item) => (
-              <KangurLessonInset key={item.title} accent='emerald'>
-                <div className='text-xs font-semibold uppercase tracking-[0.2em] text-emerald-500'>
-                  {item.title}
-                </div>
-                <KangurLessonCaption className='mt-2 text-emerald-950'>
-                  {item.description}
-                </KangurLessonCaption>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },

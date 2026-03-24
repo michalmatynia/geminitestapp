@@ -81,16 +81,16 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='amber'
             caption='Plan → Execute → Verify.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <ul className='space-y-2 text-sm text-amber-950'>
+                {VERIFY_CHECKLIST.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            }
           >
             <AgenticOperatingLoopAnimation />
           </KangurLessonVisual>
-          <KangurLessonCallout accent='amber' padding='sm' className='text-left'>
-            <ul className='space-y-2 text-sm text-amber-950'>
-              {VERIFY_CHECKLIST.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
@@ -161,16 +161,16 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='amber'
             caption='Dowód = diff + testy + proof.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <ul className='space-y-2 text-sm text-amber-950'>
+                {EVIDENCE_PACK.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            }
           >
             <AgenticEvidencePackAnimation />
           </KangurLessonVisual>
-          <KangurLessonCallout accent='amber' padding='sm' className='text-left'>
-            <ul className='space-y-2 text-sm text-amber-950'>
-              {EVIDENCE_PACK.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </KangurLessonCallout>
           <AgenticLessonCodeBlock
             accent='amber'
             title='Evidence log'

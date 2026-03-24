@@ -160,4 +160,19 @@ describe('subject-focus remote API client integration', () => {
       }),
     );
   });
+
+  it('ignores invalid runtime subject values without calling the API', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { persistRemoteSubjectFocus } = await import(
+      '@/features/kangur/ui/services/subject-focus'
+    );
+
+    await expect(
+      persistRemoteSubjectFocus(undefined as unknown as 'maths')
+    ).resolves.toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(trackWriteFailureMock).not.toHaveBeenCalled();
+  });
 });

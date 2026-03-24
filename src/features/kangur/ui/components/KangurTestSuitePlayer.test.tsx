@@ -120,6 +120,7 @@ describe('KangurTestSuitePlayer', () => {
       'px-4',
       'touch-manipulation'
     );
+    expect(screen.getByRole('button', { name: /previous/i })).not.toHaveTextContent('Previous');
     expect(screen.getByRole('button', { name: /previous/i })).toBeDisabled();
 
     await userEvent.click(screen.getByRole('button', { name: /A.*4/i }));
@@ -346,5 +347,6 @@ describe('KangurTestSuitePlayer', () => {
     ).toBeInTheDocument();
     expect(await screen.findByText(/Correct! \+3 pts/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /next/i })).not.toHaveTextContent('Next');
   });
 });

@@ -1,17 +1,18 @@
 'use client';
 
-import { ChevronsLeft } from 'lucide-react';
+import { ChevronsLeft, Printer } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { createContext, useContext, useEffect, useId } from 'react';
 
+import { KangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
 import {
   type KangurLessonSubsectionSummary,
   useKangurLessonSecretPill,
   useKangurRegisterLessonSubsectionNavigation,
   useKangurSyncLessonSubsectionSummary,
 } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
+import { useOptionalKangurLessonPrint } from '@/features/kangur/ui/context/KangurLessonPrintContext';
 import {
-  KangurButton,
   KangurGlassPanel,
   KangurHeadline,
   KangurIconBadge,
@@ -20,10 +21,8 @@ import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME,
-  LESSONS_SELECTOR_NAV_ICON_BUTTON_CLASSNAME,
   LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME,
   LESSONS_SELECTOR_NAV_PILLS_ROW_CLASSNAME,
-  LESSONS_SELECTOR_NAV_TOUCH_ICON_BUTTON_CLASSNAME,
 } from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
@@ -55,6 +54,7 @@ type LessonActivityStageContextValue = {
   icon: string;
   navigationPills?: React.ReactNode;
   onBack: () => void;
+  printPanelId: string;
   title: string;
   titleId?: string;
   secretLessonPill: ReturnType<typeof useKangurLessonSecretPill>;
@@ -81,8 +81,11 @@ const translateLessonChrome = (
 
 function LessonActivityStageTopBar(): React.JSX.Element {
   const lessonChrome = useTranslations('KangurLessonChrome');
-  const { backButtonLabel, navigationPills, onBack, secretLessonPill } = useLessonActivityStageContext();
+  const lessonNavigationTranslations = useTranslations('KangurLessonsWidgets.navigation');
+  const { backButtonLabel, navigationPills, onBack, printPanelId, secretLessonPill } =
+    useLessonActivityStageContext();
   const isCoarsePointer = useKangurCoarsePointer();
+  const lessonPrint = useOptionalKangurLessonPrint();
   const navigationLabel = translateLessonChrome(
     lessonChrome,
     'lessonNavigation',
@@ -94,32 +97,54 @@ function LessonActivityStageTopBar(): React.JSX.Element {
     'Otwórz sekretny panel'
   );
   const secretPanelTitle = translateLessonChrome(lessonChrome, 'secretPanelTitle', 'Sekretny panel');
+  const printPanelLabel = lessonNavigationTranslations('printPanel');
+  const renderPrintButton = (): React.JSX.Element | null => {
+    if (!lessonPrint?.onPrintPanel) {
+      return null;
+    }
+
+    return (
+      <KangurLessonNavigationIconButton
+        onClick={() => lessonPrint.onPrintPanel?.(printPanelId)}
+        data-testid='lesson-activity-print-button'
+        aria-label={printPanelLabel}
+        icon={Printer}
+        title={printPanelLabel}
+      />
+    );
+  };
 
   return (
-    <nav className={LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME} aria-label={navigationLabel}>
+    <nav
+      className={LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME}
+      aria-label={navigationLabel}
+      data-kangur-print-exclude='true'
+    >
       <div
         className={cn(LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME, 'hidden sm:flex')}
         role='group'
         aria-label={navigationLabel}
       >
-        <KangurButton
+        <KangurLessonNavigationIconButton
           onClick={onBack}
-          size='sm'
-          type='button'
-          variant='surface'
-          className={cn(
-            LESSONS_SELECTOR_NAV_ICON_BUTTON_CLASSNAME,
-            isCoarsePointer && LESSONS_SELECTOR_NAV_TOUCH_ICON_BUTTON_CLASSNAME
-          )}
           data-testid='lesson-activity-back-button'
           data-kangur-lesson-back='true'
           data-kangur-lesson-back-label={backButtonLabel}
           aria-label={backButtonLabel}
+          icon={ChevronsLeft}
           title={backButtonLabel}
-        >
-          <ChevronsLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-        </KangurButton>
+        />
+        {renderPrintButton()}
       </div>
+      {lessonPrint?.onPrintPanel ? (
+        <div
+          className={cn(LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME, 'sm:hidden')}
+          role='group'
+          aria-label={navigationLabel}
+        >
+          {renderPrintButton()}
+        </div>
+      ) : null}
       {navigationPills || secretLessonPill?.isUnlocked ? (
         <div className={LESSONS_SELECTOR_NAV_PILLS_ROW_CLASSNAME}>
           {navigationPills}
@@ -197,6 +222,7 @@ export default function LessonActivityStage({
   const secretLessonPill = useKangurLessonSecretPill();
   const titleId = useId();
   const descriptionId = useId();
+  const printPanelId = `lesson-activity-panel-${useId()}`;
   const shellPanelClassName = cn(
     'flex w-full flex-col',
     KANGUR_PANEL_GAP_CLASSNAME,
@@ -212,6 +238,11 @@ export default function LessonActivityStage({
     'backToTopics',
     backButtonLabel
   );
+  const printInteractiveHint = translateLessonChrome(
+    lessonChrome,
+    'printInteractiveHint',
+    'Otwórz tę lekcję na ekranie, aby wykonać to ćwiczenie interaktywnie.'
+  );
   const contextValue: LessonActivityStageContextValue = {
     accent,
     backButtonLabel: resolvedBackButtonLabel,
@@ -221,6 +252,7 @@ export default function LessonActivityStage({
     icon,
     navigationPills,
     onBack,
+    printPanelId,
     title,
     titleId: shouldRenderStageHeader ? titleId : undefined,
     secretLessonPill,
@@ -246,6 +278,9 @@ export default function LessonActivityStage({
         {shellVariant === 'plain' ? (
           <div
             className={shellPanelClassName}
+            data-kangur-print-panel='true'
+            data-kangur-print-panel-id={printPanelId}
+            data-kangur-print-panel-title={title}
             data-testid={shellPanelTestId}
             role='region'
             aria-label={panelAriaLabel}
@@ -253,11 +288,26 @@ export default function LessonActivityStage({
             aria-describedby={panelDescribedBy}
           >
             {shouldRenderStageHeader ? <LessonActivityStageHeader /> : null}
-            {children}
+            <div
+              className='kangur-print-only space-y-2 border-b border-slate-200 pb-4'
+              data-testid='lesson-activity-stage-print-summary'
+            >
+              <div className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'>
+                {title}
+              </div>
+              {description ? (
+                <p className='text-sm text-slate-600'>{description}</p>
+              ) : null}
+              <p className='text-sm text-slate-600'>{printInteractiveHint}</p>
+            </div>
+            <div data-kangur-print-exclude='true'>{children}</div>
           </div>
         ) : (
           <KangurGlassPanel
             className={shellPanelClassName}
+            data-kangur-print-panel='true'
+            data-kangur-print-panel-id={printPanelId}
+            data-kangur-print-panel-title={title}
             data-testid={shellPanelTestId}
             role='region'
             aria-label={panelAriaLabel}
@@ -267,10 +317,26 @@ export default function LessonActivityStage({
             surface='solid'
           >
             {shouldRenderStageHeader ? <LessonActivityStageHeader /> : null}
-            {children}
+            <div
+              className='kangur-print-only space-y-2 border-b border-slate-200 pb-4'
+              data-testid='lesson-activity-stage-print-summary'
+            >
+              <div className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'>
+                {title}
+              </div>
+              {description ? (
+                <p className='text-sm text-slate-600'>{description}</p>
+              ) : null}
+              <p className='text-sm text-slate-600'>{printInteractiveHint}</p>
+            </div>
+            <div data-kangur-print-exclude='true'>{children}</div>
           </KangurGlassPanel>
         )}
-        {footerNavigation ? <div className='w-full'>{footerNavigation}</div> : null}
+        {footerNavigation ? (
+          <div className='w-full' data-kangur-print-exclude='true'>
+            {footerNavigation}
+          </div>
+        ) : null}
       </div>
     </LessonActivityStageContext.Provider>
   );

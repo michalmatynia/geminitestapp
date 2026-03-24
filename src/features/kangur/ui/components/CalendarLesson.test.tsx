@@ -170,9 +170,10 @@ describe('CalendarLesson section hub layout', () => {
         .getByRole('button', { name: 'Wróć do tematów' })
         .closest('[data-testid="calendar-lesson-game-shell"]')
     ).toBeNull();
+    expect(screen.queryByTestId('lesson-hub-section-game_dates')).toBeNull();
     expect(
-      within(screen.getByTestId('calendar-lesson-game-shell')).queryByText('Ćwiczenie: Daty')
-    ).toBeNull();
+      within(screen.getByTestId('calendar-lesson-game-shell')).getByText('Ćwiczenie: Daty')
+    ).toBeInTheDocument();
     expect(screen.getByTestId('mock-calendar-interactive-game')).toBeInTheDocument();
     expect(screen.getByTestId('mock-calendar-interactive-section')).toHaveTextContent('data');
     expect(loadProgressMock).toHaveBeenCalledWith({ ownerKey: 'learner-1' });

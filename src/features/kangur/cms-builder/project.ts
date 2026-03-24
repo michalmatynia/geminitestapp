@@ -32,6 +32,108 @@ export * from './project-leaderboard';
 export * from './project-defaults';
 
 const now = (): string => new Date().toISOString();
+const PARENT_DASHBOARD_SCORES_WIDGET_ID = 'parent-dashboard-scores';
+const LEARNER_PROFILE_RESULTS_WIDGET_ID = 'learner-profile-results';
+
+const getBlockWidgetId = (block: BlockInstance): string | null =>
+  block.type === 'KangurWidget' && typeof block.settings['widgetId'] === 'string'
+    ? block.settings['widgetId']
+    : null;
+
+const blockContainsWidgetId = (block: BlockInstance, widgetId: string): boolean =>
+  getBlockWidgetId(block) === widgetId ||
+  Boolean(block.blocks?.some((child) => blockContainsWidgetId(child, widgetId)));
+
+const componentContainsWidgetId = (component: PageComponentInput, widgetId: string): boolean =>
+  component.content.blocks.some((block) => blockContainsWidgetId(block, widgetId));
+
+const screenContainsWidgetId = (screen: KangurCmsScreen, widgetId: string): boolean =>
+  screen.components.some((component) => componentContainsWidgetId(component, widgetId));
+
+const stripWidgetBlocks = (blocks: BlockInstance[], widgetId: string): BlockInstance[] =>
+  blocks.flatMap((block) => {
+    if (getBlockWidgetId(block) === widgetId) {
+      return [];
+    }
+
+    if (!block.blocks?.length) {
+      return [block];
+    }
+
+    const nextBlocks = stripWidgetBlocks(block.blocks, widgetId);
+    if (nextBlocks.length === 0) {
+      return [];
+    }
+
+    return [{ ...block, blocks: nextBlocks }];
+  });
+
+const removeWidgetFromScreen = (screen: KangurCmsScreen, widgetId: string): KangurCmsScreen => ({
+  ...screen,
+  components: withOrders(
+    screen.components.flatMap((component) => {
+      const nextBlocks = stripWidgetBlocks(component.content.blocks, widgetId);
+      if (nextBlocks.length === 0) {
+        return [];
+      }
+
+      return [
+        {
+          ...component,
+          content: {
+            ...component.content,
+            blocks: nextBlocks,
+          },
+        },
+      ];
+    })
+  ),
+});
+
+const cloneComponentInput = (component: PageComponentInput): PageComponentInput =>
+  JSON.parse(JSON.stringify(component)) as PageComponentInput;
+
+const buildLearnerProfileResultsComponent = (): PageComponentInput | null => {
+  const defaultResultsComponent = createDefaultLearnerProfileScreenComponents().find((component) =>
+    componentContainsWidgetId(component, LEARNER_PROFILE_RESULTS_WIDGET_ID)
+  );
+  return defaultResultsComponent ? cloneComponentInput(defaultResultsComponent) : null;
+};
+
+const ensureLearnerProfileResultsScreen = (screen: KangurCmsScreen): KangurCmsScreen => {
+  if (screenContainsWidgetId(screen, LEARNER_PROFILE_RESULTS_WIDGET_ID)) {
+    return screen;
+  }
+
+  const resultsComponent = buildLearnerProfileResultsComponent();
+  if (!resultsComponent) {
+    return screen;
+  }
+
+  const overviewIndex = screen.components.findIndex((component) =>
+    componentContainsWidgetId(component, 'learner-profile-overview')
+  );
+  const insertAt = overviewIndex >= 0 ? overviewIndex + 1 : screen.components.length;
+  const components = [...screen.components];
+  components.splice(insertAt, 0, resultsComponent);
+
+  return {
+    ...screen,
+    components: withOrders(components),
+  };
+};
+
+const normalizeResultsOwnership = (project: KangurCmsProject): KangurCmsProject => ({
+  ...project,
+  screens: {
+    ...project.screens,
+    LearnerProfile: ensureLearnerProfileResultsScreen(project.screens.LearnerProfile),
+    ParentDashboard: removeWidgetFromScreen(
+      project.screens.ParentDashboard,
+      PARENT_DASHBOARD_SCORES_WIDGET_ID
+    ),
+  },
+});
 
 const resolveSingleWidgetId = (screen: KangurCmsScreen): string | null => {
   if (screen.components.length !== 1) {
@@ -181,7 +283,9 @@ export function parseKangurCmsProject(
     return fallbackToDefault ? createDefaultKangurCmsProject(locale) : null;
   }
 
-  return pruneHiddenWidgetsFromProject(upgradeLegacyScreenComponents(result.data, locale));
+  return pruneHiddenWidgetsFromProject(
+    normalizeResultsOwnership(upgradeLegacyScreenComponents(result.data, locale))
+  );
 }
 
 export function buildKangurCmsSyntheticPage(

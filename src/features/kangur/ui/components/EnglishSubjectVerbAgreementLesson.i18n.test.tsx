@@ -73,5 +73,11 @@ describe('EnglishSubjectVerbAgreementLesson i18n', () => {
     expect(
       screen.getByText('Singular → Verb + -s. Plural → Grundform.')
     ).toBeInTheDocument();
+    const singularMatchSentence = screen.getByText(
+      (_content, node) => node?.textContent === 'The coach talks before the match.'
+    );
+
+    expect(singularMatchSentence.closest('.kangur-lesson-visual-supporting')).toBeTruthy();
+    expect(singularMatchSentence.closest('.kangur-lesson-inset')).toBeNull();
   });
 });

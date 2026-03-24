@@ -54,6 +54,12 @@ describe('EnglishAnimations visuals', () => {
     expect(screen.getByTestId('english-article-vowel-card-equation-frame')).toBeInTheDocument();
     expect(screen.getByTestId('english-article-vowel-card-graph-frame')).toBeInTheDocument();
     expect(screen.getByTestId('english-article-vowel-card-angle-frame')).toBeInTheDocument();
+
+    expect(
+      screen
+        .getByTestId('english-article-focus-animation')
+        .querySelectorAll('ellipse[data-kangur-soft-oval="true"]').length
+    ).toBeGreaterThan(0);
   });
 
   it('renders upgraded adverb lesson surfaces with clipped frames and atmosphere', () => {
@@ -123,6 +129,12 @@ describe('EnglishAnimations visuals', () => {
     expect(screen.getByTestId('english-adjective-repair-animation')).toBeInTheDocument();
     expect(screen.getByTestId('english-adjective-repair-atmosphere')).toBeInTheDocument();
     expect(screen.getByTestId('english-adjective-repair-frame')).toBeInTheDocument();
+
+    expect(
+      screen
+        .getByTestId('english-adjective-room-animation')
+        .querySelectorAll('ellipse[data-kangur-soft-oval="true"]').length
+    ).toBeGreaterThan(0);
   });
 
   it('renders upgraded core grammar surfaces for pronouns, agreement, and zero article', () => {
@@ -207,6 +219,11 @@ describe('EnglishAnimations visuals', () => {
     expect(screen.getByTestId('english-prepositions-timeline-animation')).toBeInTheDocument();
     expect(screen.getByTestId('english-prepositions-timeline-atmosphere')).toBeInTheDocument();
     expect(screen.getByTestId('english-prepositions-timeline-frame')).toBeInTheDocument();
+    expect(
+      screen
+        .getByTestId('english-sentence-blueprint-animation')
+        .querySelectorAll('ellipse[data-kangur-soft-oval="true"]').length
+    ).toBeGreaterThan(0);
 
     expect(screen.getByTestId('english-prepositions-place-animation')).toBeInTheDocument();
     expect(screen.getByTestId('english-prepositions-place-at-frame')).toBeInTheDocument();

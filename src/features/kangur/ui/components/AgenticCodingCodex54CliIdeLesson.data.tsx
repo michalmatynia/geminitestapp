@@ -88,16 +88,16 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='sky'
             caption='Otwarty plik to gotowy kontekst.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <ul className='space-y-2 text-sm text-sky-950'>
+                {IDE_BENEFITS.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            }
           >
             <AgenticDocsStackAnimation />
           </KangurLessonVisual>
-          <KangurLessonCallout accent='sky' padding='sm' className='text-left'>
-            <ul className='space-y-2 text-sm text-sky-950'>
-              {IDE_BENEFITS.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
@@ -152,21 +152,26 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='sky'
             caption='IDE daje kontekst, CLI domyka wykonanie.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-3`}>
+                {IDE_TO_CLI_FLOW.map((item) => (
+                  <div
+                    key={item.title}
+                    className='rounded-2xl border border-sky-200/70 bg-white/75 px-3 py-2 text-left shadow-sm'
+                  >
+                    <div className='text-xs font-semibold uppercase tracking-[0.2em] text-sky-500'>
+                      {item.title}
+                    </div>
+                    <KangurLessonCaption className='mt-2 text-sky-950'>
+                      {item.description}
+                    </KangurLessonCaption>
+                  </div>
+                ))}
+              </div>
+            }
           >
             <AgenticCliIdeFlowAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-3`}>
-            {IDE_TO_CLI_FLOW.map((item) => (
-              <KangurLessonInset key={item.title} accent='sky'>
-                <div className='text-xs font-semibold uppercase tracking-[0.2em] text-sky-500'>
-                  {item.title}
-                </div>
-                <KangurLessonCaption className='mt-2 text-sky-950'>
-                  {item.description}
-                </KangurLessonCaption>
-              </KangurLessonInset>
-            ))}
-          </div>
           <AgenticLessonCodeBlock
             accent='sky'
             title='Flow card'
@@ -186,16 +191,16 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='sky'
             caption='Wysyłaj kolejne instrukcje w trakcie pracy.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <ul className='space-y-2 text-sm text-sky-950'>
+                {QUEUE_TIPS.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            }
           >
             <AgenticCliQueueTipAnimation />
           </KangurLessonVisual>
-          <KangurLessonCallout accent='sky' padding='sm' className='text-left'>
-            <ul className='space-y-2 text-sm text-sky-950'>
-              {QUEUE_TIPS.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </KangurLessonCallout>
           <AgenticLessonCodeBlock
             accent='sky'
             title='Przykład wiadomości'

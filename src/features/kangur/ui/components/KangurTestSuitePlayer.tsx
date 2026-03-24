@@ -6,6 +6,7 @@ import React, { useMemo, useRef, useState } from 'react';
 
 import { resolveKangurTutorSectionKnowledgeReference } from '@/features/kangur/ai-tutor-section-knowledge';
 import { isPublishedKangurTestQuestion } from '@/features/kangur/test-questions';
+import { KangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
 import {
   useKangurAiTutorSessionSync,
   useOptionalKangurAiTutor,
@@ -412,18 +413,15 @@ export function KangurTestSuitePlayer({
 
           {/* Navigation */}
           <KangurPanelRow className='pt-2 sm:items-center sm:justify-between'>
-            <KangurButton
-              type='button'
+            <KangurLessonNavigationIconButton
               onClick={handlePrev}
               disabled={currentIndex === 0}
               className={compactActionClassName}
-              size='sm'
-              variant='surface'
+              aria-label='Previous'
               data-doc-id='tests_suite_player'
-            >
-              <ChevronLeft aria-hidden='true' className='size-4' />
-              Previous
-            </KangurButton>
+              icon={ChevronLeft}
+              title='Previous'
+            />
 
             <div className={`w-full ${KANGUR_TIGHT_ROW_CLASSNAME} sm:w-auto sm:flex-wrap sm:items-center sm:justify-end`}>
               {canAskAboutSelectedChoice ? (
@@ -443,7 +441,16 @@ export function KangurTestSuitePlayer({
                 </KangurButton>
               ) : null}
 
-              {isAnswered ? (
+              {isAnswered && showAnswer && currentIndex < totalQuestions - 1 ? (
+                <KangurLessonNavigationIconButton
+                  onClick={handleNext}
+                  className={compactActionClassName}
+                  aria-label='Next'
+                  data-doc-id='tests_suite_player'
+                  icon={ChevronRight}
+                  title='Next'
+                />
+              ) : isAnswered ? (
                 <KangurButton
                   type='button'
                   onClick={showAnswer ? handleNext : handleRevealAnswer}
@@ -453,9 +460,7 @@ export function KangurTestSuitePlayer({
                   data-doc-id='tests_suite_player'
                 >
                   {showAnswer
-                    ? currentIndex < totalQuestions - 1
-                      ? 'Next'
-                      : 'Finish'
+                    ? 'Finish'
                     : 'Check answer'}
                   <ChevronRight aria-hidden='true' className='size-4' />
                 </KangurButton>

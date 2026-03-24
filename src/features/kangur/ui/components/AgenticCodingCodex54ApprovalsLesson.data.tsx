@@ -13,6 +13,7 @@ import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCo
 import AgenticDiagramFillGame from '@/features/kangur/ui/components/AgenticDiagramFillGame';
 import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
+import { useId } from 'react';
 
 type SectionId = 'approvals' | 'approval_gate_game';
 
@@ -66,42 +67,203 @@ const APPROVAL_GATE_STEPS = [
   'Sprawdź, czy zachowałeś minimalny scope.',
 ] as const;
 
-const ApprovalTiersVisual = (): JSX.Element => (
-  <svg
-    aria-label='Diagram: poziomy dostępu (read-only, workspace-write, network).'
-    className='h-auto w-full'
-    role='img'
-    viewBox='0 0 360 140'
-  >
-    <style>{`
-      .panel {
-        fill: #f8fafc;
-        stroke: #e2e8f0;
-        stroke-width: 2;
-      }
-      .label {
-        font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
-        fill: #0f172a;
-      }
-      .tier-1 { stroke: #94a3b8; }
-      .tier-2 { stroke: #38bdf8; }
-      .tier-3 { stroke: #f97316; }
-      .badge {
-        font: 600 9px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
-        fill: #64748b;
-      }
-    `}</style>
-    <rect className='panel tier-1' height='70' rx='14' width='100' x='20' y='40' />
-    <rect className='panel tier-2' height='70' rx='14' width='100' x='130' y='40' />
-    <rect className='panel tier-3' height='70' rx='14' width='100' x='240' y='40' />
-    <text className='label' x='38' y='70'>Read-only</text>
-    <text className='badge' x='40' y='92'>Default</text>
-    <text className='label' x='138' y='70'>Workspace</text>
-    <text className='badge' x='150' y='92'>Write</text>
-    <text className='label' x='252' y='70'>Full access</text>
-    <text className='badge' x='246' y='92'>Higher risk</text>
-  </svg>
-);
+export const ApprovalTiersVisual = (): JSX.Element => {
+  const baseId = useId().replace(/:/g, '');
+  const clipId = `agentic-approval-tiers-${baseId}-clip`;
+  const panelGradientId = `agentic-approval-tiers-${baseId}-panel`;
+  const frameGradientId = `agentic-approval-tiers-${baseId}-frame`;
+  const tierOneGradientId = `agentic-approval-tiers-${baseId}-one`;
+  const tierTwoGradientId = `agentic-approval-tiers-${baseId}-two`;
+  const tierThreeGradientId = `agentic-approval-tiers-${baseId}-three`;
+
+  return (
+    <svg
+      aria-label='Diagram: poziomy dostępu (read-only, workspace-write, network).'
+      className='h-auto w-full'
+      data-testid='agentic-approval-tiers-animation'
+      role='img'
+      viewBox='0 0 360 160'
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <rect x='10' y='10' width='340' height='140' rx='24' />
+        </clipPath>
+        <linearGradient
+          id={panelGradientId}
+          x1='20'
+          x2='340'
+          y1='16'
+          y2='148'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='#f8fafc' />
+          <stop offset='52%' stopColor='#eff6ff' />
+          <stop offset='100%' stopColor='#fff7ed' />
+        </linearGradient>
+        <linearGradient
+          id={frameGradientId}
+          x1='18'
+          x2='342'
+          y1='18'
+          y2='18'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='rgba(148,163,184,0.82)' />
+          <stop offset='50%' stopColor='rgba(56,189,248,0.82)' />
+          <stop offset='100%' stopColor='rgba(249,115,22,0.82)' />
+        </linearGradient>
+        <linearGradient id={tierOneGradientId} x1='28' x2='120' y1='38' y2='124' gradientUnits='userSpaceOnUse'>
+          <stop offset='0%' stopColor='rgba(255,255,255,0.95)' />
+          <stop offset='100%' stopColor='rgba(226,232,240,0.92)' />
+        </linearGradient>
+        <linearGradient id={tierTwoGradientId} x1='136' x2='228' y1='38' y2='124' gradientUnits='userSpaceOnUse'>
+          <stop offset='0%' stopColor='rgba(255,255,255,0.96)' />
+          <stop offset='100%' stopColor='rgba(224,242,254,0.96)' />
+        </linearGradient>
+        <linearGradient id={tierThreeGradientId} x1='244' x2='336' y1='38' y2='124' gradientUnits='userSpaceOnUse'>
+          <stop offset='0%' stopColor='rgba(255,255,255,0.96)' />
+          <stop offset='100%' stopColor='rgba(255,237,213,0.96)' />
+        </linearGradient>
+      </defs>
+
+      <g clipPath={`url(#${clipId})`} data-testid='agentic-approval-tiers-atmosphere'>
+        <rect
+          x='10'
+          y='10'
+          width='340'
+          height='140'
+          rx='24'
+          fill={`url(#${panelGradientId})`}
+          stroke='rgba(148,163,184,0.16)'
+          strokeWidth='2'
+        />
+        <ellipse cx='72' cy='36' rx='76' ry='22' fill='rgba(148,163,184,0.14)' />
+        <ellipse cx='186' cy='126' rx='92' ry='24' fill='rgba(56,189,248,0.12)' />
+        <ellipse cx='298' cy='38' rx='72' ry='20' fill='rgba(249,115,22,0.14)' />
+
+        <line x1='120' y1='80' x2='132' y2='80' stroke='#94a3b8' strokeWidth='3' strokeLinecap='round' />
+        <polygon points='132,80 124,75 124,85' fill='#94a3b8' />
+        <line x1='228' y1='80' x2='240' y2='80' stroke='#38bdf8' strokeWidth='3' strokeLinecap='round' />
+        <polygon points='240,80 232,75 232,85' fill='#38bdf8' />
+
+        <rect
+          x='24'
+          y='36'
+          width='96'
+          height='76'
+          rx='18'
+          fill={`url(#${tierOneGradientId})`}
+          stroke='#94a3b8'
+          strokeWidth='2'
+        />
+        <rect x='36' y='48' width='54' height='10' rx='5' fill='rgba(148,163,184,0.22)' />
+        <rect x='36' y='88' width='44' height='9' rx='4.5' fill='rgba(148,163,184,0.14)' />
+        <circle cx='98' cy='56' r='7' fill='rgba(148,163,184,0.24)' />
+
+        <rect
+          x='132'
+          y='36'
+          width='96'
+          height='76'
+          rx='18'
+          fill={`url(#${tierTwoGradientId})`}
+          stroke='#38bdf8'
+          strokeWidth='2'
+        />
+        <rect x='144' y='48' width='58' height='10' rx='5' fill='rgba(56,189,248,0.2)' />
+        <rect x='144' y='88' width='42' height='9' rx='4.5' fill='rgba(56,189,248,0.12)' />
+        <circle cx='206' cy='56' r='7' fill='rgba(56,189,248,0.22)' />
+
+        <rect
+          x='240'
+          y='36'
+          width='96'
+          height='76'
+          rx='18'
+          fill={`url(#${tierThreeGradientId})`}
+          stroke='#f97316'
+          strokeWidth='2'
+        />
+        <rect x='252' y='48' width='60' height='10' rx='5' fill='rgba(249,115,22,0.2)' />
+        <rect x='252' y='88' width='50' height='9' rx='4.5' fill='rgba(249,115,22,0.12)' />
+        <circle cx='314' cy='56' r='7' fill='rgba(249,115,22,0.24)' />
+
+        <text
+          x='36'
+          y='73'
+          fontSize='11'
+          fontWeight='700'
+          fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif'
+          fill='#0f172a'
+        >
+          Read-only
+        </text>
+        <text
+          x='36'
+          y='103'
+          fontSize='9'
+          fontWeight='600'
+          fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif'
+          fill='#64748b'
+        >
+          Default
+        </text>
+        <text
+          x='144'
+          y='73'
+          fontSize='11'
+          fontWeight='700'
+          fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif'
+          fill='#0f172a'
+        >
+          Workspace
+        </text>
+        <text
+          x='154'
+          y='103'
+          fontSize='9'
+          fontWeight='600'
+          fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif'
+          fill='#64748b'
+        >
+          Write
+        </text>
+        <text
+          x='252'
+          y='73'
+          fontSize='11'
+          fontWeight='700'
+          fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif'
+          fill='#0f172a'
+        >
+          Full access
+        </text>
+        <text
+          x='248'
+          y='103'
+          fontSize='9'
+          fontWeight='600'
+          fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif'
+          fill='#64748b'
+        >
+          Higher risk
+        </text>
+      </g>
+
+      <rect
+        x='18'
+        y='18'
+        width='324'
+        height='124'
+        rx='20'
+        fill='none'
+        stroke={`url(#${frameGradientId})`}
+        strokeWidth='1.8'
+        data-testid='agentic-approval-tiers-frame'
+      />
+    </svg>
+  );
+};
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   approvals: [
@@ -117,16 +279,16 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='slate'
             caption='Approval gate chroni przed niekontrolowanymi akcjami.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <ul className='space-y-2 text-sm text-slate-950'>
+                {DEFAULTS.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            }
           >
             <AgenticApprovalGateAnimation />
           </KangurLessonVisual>
-          <KangurLessonCallout accent='slate' padding='sm' className='text-left'>
-            <ul className='space-y-2 text-sm text-slate-950'>
-              {DEFAULTS.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
@@ -141,16 +303,16 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='slate'
             caption='Minimalny dostęp = mniejsze ryzyko.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <ul className='space-y-2 text-sm text-slate-950'>
+                {APPROVAL_TIPS.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            }
           >
             <ApprovalTiersVisual />
           </KangurLessonVisual>
-          <KangurLessonCallout accent='slate' padding='sm' className='text-left'>
-            <ul className='space-y-2 text-sm text-slate-950'>
-              {APPROVAL_TIPS.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
@@ -166,16 +328,16 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='slate'
             caption='Minimalny dostęp → szybsze approvals.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <ul className='space-y-2 text-sm text-slate-950'>
+                {ESCALATION_PLAYBOOK.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            }
           >
             <AgenticApprovalScopeMapAnimation />
           </KangurLessonVisual>
-          <KangurLessonCallout accent='slate' padding='sm' className='text-left'>
-            <ul className='space-y-2 text-sm text-slate-950'>
-              {ESCALATION_PLAYBOOK.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </KangurLessonCallout>
           <AgenticLessonCodeBlock
             accent='slate'
             title='Scoped approval request'

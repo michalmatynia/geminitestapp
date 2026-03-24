@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useId, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslations } from 'next-intl';
 
@@ -105,6 +105,128 @@ const computeStrokeLength = (stroke: Point2d[]): number => {
 };
 
 const isPointInCopyZone = (point: Point2d): boolean => point.y >= COPY_ZONE_TOP;
+
+export function AlphabetCopyGuideSurface({
+  guideColor,
+  inkColor,
+  letter,
+  word,
+  writeHereLabel,
+}: {
+  guideColor: string;
+  inkColor: string;
+  letter: string;
+  word: string;
+  writeHereLabel: string;
+}): React.JSX.Element {
+  const baseId = useId().replace(/:/g, '');
+  const clipId = `alphabet-copy-guide-${baseId}-clip`;
+  const panelGradientId = `alphabet-copy-guide-${baseId}-panel`;
+  const frameGradientId = `alphabet-copy-guide-${baseId}-frame`;
+
+  return (
+    <svg
+      viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
+      className='absolute inset-0 h-full w-full'
+      aria-hidden='true'
+      data-testid='alphabet-copy-guide-animation'
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <rect x='0' y='0' width={CANVAS_WIDTH} height={CANVAS_HEIGHT} rx='28' />
+        </clipPath>
+        <linearGradient id={panelGradientId} x1='0' x2='1' y1='0' y2='1'>
+          <stop offset='0%' stopColor='#fef3c7' />
+          <stop offset='55%' stopColor='#e0f2fe' />
+          <stop offset='100%' stopColor='#fae8ff' />
+        </linearGradient>
+        <linearGradient id={frameGradientId} x1='0' x2='1' y1='0' y2='0'>
+          <stop offset='0%' stopColor='rgba(245,158,11,0.78)' />
+          <stop offset='50%' stopColor='rgba(56,189,248,0.82)' />
+          <stop offset='100%' stopColor='rgba(244,114,182,0.82)' />
+        </linearGradient>
+      </defs>
+      <g clipPath={`url(#${clipId})`} data-testid='alphabet-copy-guide-atmosphere'>
+        <rect width={CANVAS_WIDTH} height={CANVAS_HEIGHT} fill={`url(#${panelGradientId})`} />
+        <rect
+          y={COPY_ZONE_TOP}
+          width={CANVAS_WIDTH}
+          height={COPY_ZONE_BOTTOM - COPY_ZONE_TOP}
+          fill='#ffffff'
+          opacity='0.72'
+        />
+        <line
+          x1={GUIDE_LINE_START_X}
+          x2={GUIDE_LINE_END_X}
+          y1={COPY_ZONE_TOP}
+          y2={COPY_ZONE_TOP}
+          className='copy-divider'
+        />
+        <line
+          x1={GUIDE_LINE_START_X}
+          x2={GUIDE_LINE_END_X}
+          y1={MIDLINE_Y}
+          y2={MIDLINE_Y}
+          className='copy-midline'
+          stroke={guideColor}
+        />
+        <line
+          x1={GUIDE_LINE_START_X}
+          x2={GUIDE_LINE_END_X}
+          y1={BASELINE_Y}
+          y2={BASELINE_Y}
+          className='copy-baseline'
+          stroke={inkColor}
+        />
+        <text
+          x={CANVAS_WIDTH / 2}
+          y={88}
+          textAnchor='middle'
+          className='target-letter'
+          fill={inkColor}
+          fontSize='96'
+          fontWeight='800'
+        >
+          {letter}
+        </text>
+        <text
+          x={CANVAS_WIDTH / 2}
+          y={110}
+          textAnchor='middle'
+          className='target-word'
+          fill='#0f172a'
+          fontSize='16'
+          fontWeight='600'
+          opacity='0.6'
+        >
+          {word}
+        </text>
+        <text
+          x={CANVAS_WIDTH / 2}
+          y={COPY_ZONE_TOP + 20}
+          textAnchor='middle'
+          fill='#0f172a'
+          fontSize='12'
+          fontWeight='600'
+          opacity='0.35'
+        >
+          {writeHereLabel}
+        </text>
+      </g>
+      <rect
+        x='10'
+        y='10'
+        width={CANVAS_WIDTH - 20}
+        height={CANVAS_HEIGHT - 20}
+        rx='24'
+        fill='none'
+        stroke={`url(#${frameGradientId})`}
+        strokeWidth='1.75'
+        data-testid='alphabet-copy-guide-frame'
+      />
+    </svg>
+  );
+}
 
 export default function AlphabetCopyLesson(): React.JSX.Element {
   const translations = useTranslations('KangurStaticLessons.alphabetCopy');
@@ -402,84 +524,13 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
             style={canvasSurfaceStyle}
             data-testid='alphabet-copy-canvas-shell'
           >
-            <svg
-              viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
-              className='absolute inset-0 h-full w-full'
-              aria-hidden='true'
-            >
-              <defs>
-                <linearGradient id='copyBg' x1='0' x2='1' y1='0' y2='1'>
-                  <stop offset='0%' stopColor='#fef3c7' />
-                  <stop offset='55%' stopColor='#e0f2fe' />
-                  <stop offset='100%' stopColor='#fae8ff' />
-                </linearGradient>
-              </defs>
-              <rect width={CANVAS_WIDTH} height={CANVAS_HEIGHT} fill='url(#copyBg)' />
-              <rect
-                y={COPY_ZONE_TOP}
-                width={CANVAS_WIDTH}
-                height={COPY_ZONE_BOTTOM - COPY_ZONE_TOP}
-                fill='#ffffff'
-                opacity='0.72'
-              />
-              <line
-                x1={GUIDE_LINE_START_X}
-                x2={GUIDE_LINE_END_X}
-                y1={COPY_ZONE_TOP}
-                y2={COPY_ZONE_TOP}
-                className='copy-divider'
-              />
-              <line
-                x1={GUIDE_LINE_START_X}
-                x2={GUIDE_LINE_END_X}
-                y1={MIDLINE_Y}
-                y2={MIDLINE_Y}
-                className='copy-midline'
-                stroke={currentRound.guideColor}
-              />
-              <line
-                x1={GUIDE_LINE_START_X}
-                x2={GUIDE_LINE_END_X}
-                y1={BASELINE_Y}
-                y2={BASELINE_Y}
-                className='copy-baseline'
-                stroke={currentRound.inkColor}
-              />
-              <text
-                x={CANVAS_WIDTH / 2}
-                y={88}
-                textAnchor='middle'
-                className='target-letter'
-                fill={currentRound.inkColor}
-                fontSize='96'
-                fontWeight='800'
-              >
-                {currentRound.label}
-              </text>
-              <text
-                x={CANVAS_WIDTH / 2}
-                y={110}
-                textAnchor='middle'
-                className='target-word'
-                fill='#0f172a'
-                fontSize='16'
-                fontWeight='600'
-                opacity='0.6'
-              >
-                {currentWord}
-              </text>
-              <text
-                x={CANVAS_WIDTH / 2}
-                y={COPY_ZONE_TOP + 20}
-                textAnchor='middle'
-                fill='#0f172a'
-                fontSize='12'
-                fontWeight='600'
-                opacity='0.35'
-              >
-                {translateAlphabetCopy(translations, 'guide.writeHere', 'Napisz tutaj')}
-              </text>
-            </svg>
+            <AlphabetCopyGuideSurface
+              guideColor={currentRound.guideColor}
+              inkColor={currentRound.inkColor}
+              letter={currentRound.label}
+              word={currentWord}
+              writeHereLabel={translateAlphabetCopy(translations, 'guide.writeHere', 'Napisz tutaj')}
+            />
 
             <div className='copy-guide pointer-events-none' aria-hidden='true' />
 

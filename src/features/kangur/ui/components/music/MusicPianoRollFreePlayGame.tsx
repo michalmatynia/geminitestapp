@@ -1,0 +1,249 @@
+'use client';
+
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';
+
+import KangurMusicPianoRoll, {
+  type KangurMusicKeyboardMode,
+  type KangurMusicPianoKeyPressDetails,
+  type KangurMusicSynthGestureDetails,
+  type KangurMusicSynthGlideMode,
+  type KangurMusicSynthWaveform,
+} from './KangurMusicPianoRoll';
+import {
+  DIATONIC_PIANO_KEYS,
+  DIATONIC_PIANO_KEYS_BY_ID,
+  type DiatonicNoteId,
+} from './music-theory';
+import { useKangurMusicSynth } from './useKangurMusicSynth';
+
+export default function MusicPianoRollFreePlayGame({
+  onFinish,
+}: KangurMiniGameFinishActionProps): React.JSX.Element {
+  const pressedResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const {
+    isAudioBlocked,
+    isAudioSupported,
+    playNote,
+    startSustainedNote,
+    stop,
+    stopAllSustainedNotes,
+    stopSustainedNote,
+    updateSustainedNote,
+  } = useKangurMusicSynth<DiatonicNoteId>();
+  const [keyboardMode, setKeyboardMode] = useState<KangurMusicKeyboardMode>('piano');
+  const [synthGlideMode, setSynthGlideMode] =
+    useState<KangurMusicSynthGlideMode>('continuous');
+  const [synthWaveform, setSynthWaveform] = useState<KangurMusicSynthWaveform>('sawtooth');
+  const [pressedNoteId, setPressedNoteId] = useState<DiatonicNoteId | null>(null);
+  const [pressedVelocity, setPressedVelocity] = useState<number | null>(null);
+
+  const clearPressedResetTimeout = useCallback((): void => {
+    if (pressedResetTimeoutRef.current !== null) {
+      globalThis.clearTimeout(pressedResetTimeoutRef.current);
+      pressedResetTimeoutRef.current = null;
+    }
+  }, []);
+
+  const pulsePressedKey = useCallback(
+    (noteId: DiatonicNoteId, velocity: number): void => {
+      clearPressedResetTimeout();
+      setPressedNoteId(noteId);
+      setPressedVelocity(velocity);
+      pressedResetTimeoutRef.current = globalThis.setTimeout(() => {
+        setPressedNoteId(null);
+        setPressedVelocity(null);
+        pressedResetTimeoutRef.current = null;
+      }, 220);
+    },
+    [clearPressedResetTimeout]
+  );
+
+  const handleKeyPress = useCallback(
+    async (
+      noteId: DiatonicNoteId,
+      pressDetails: KangurMusicPianoKeyPressDetails
+    ): Promise<void> => {
+      pulsePressedKey(noteId, pressDetails.velocity);
+
+      if (pressDetails.keyboardMode !== 'piano') {
+        return;
+      }
+
+      await playNote({
+        brightness: pressDetails.brightness,
+        ...DIATONIC_PIANO_KEYS_BY_ID[noteId],
+        durationMs: 320,
+        id: noteId,
+        velocity: pressDetails.velocity,
+      });
+    },
+    [playNote, pulsePressedKey]
+  );
+
+  const handleKeyboardModeChange = useCallback(
+    (nextMode: KangurMusicKeyboardMode): void => {
+      setKeyboardMode(nextMode);
+      stopAllSustainedNotes({ immediate: true });
+    },
+    [stopAllSustainedNotes]
+  );
+
+  const handleSynthGlideModeChange = useCallback(
+    (nextMode: KangurMusicSynthGlideMode): void => {
+      setSynthGlideMode(nextMode);
+      stopAllSustainedNotes({ immediate: true });
+    },
+    [stopAllSustainedNotes]
+  );
+
+  const handleSynthWaveformChange = useCallback(
+    (nextWaveform: KangurMusicSynthWaveform): void => {
+      setSynthWaveform(nextWaveform);
+      stopAllSustainedNotes({ immediate: true });
+    },
+    [stopAllSustainedNotes]
+  );
+
+  const handleSynthGestureStart = useCallback(
+    async (details: KangurMusicSynthGestureDetails<DiatonicNoteId>): Promise<void> => {
+      if (details.keyboardMode !== 'synth') {
+        return;
+      }
+
+      pulsePressedKey(details.noteId, details.velocity);
+      await startSustainedNote(
+        {
+          ...DIATONIC_PIANO_KEYS_BY_ID[details.noteId],
+          brightness: details.brightness,
+          frequencyHz: details.frequencyHz,
+          id: details.noteId,
+          stereoPan: details.stereoPan,
+          velocity: details.velocity,
+          vibratoDepth: details.vibratoDepth,
+          vibratoRateHz: details.vibratoRateHz,
+          waveform: synthWaveform,
+        },
+        { interactionId: details.interactionId }
+      );
+    },
+    [pulsePressedKey, startSustainedNote, synthWaveform]
+  );
+
+  const handleSynthGestureChange = useCallback(
+    (details: KangurMusicSynthGestureDetails<DiatonicNoteId>): void => {
+      if (details.keyboardMode !== 'synth') {
+        return;
+      }
+
+      updateSustainedNote({
+        brightness: details.brightness,
+        frequencyHz: details.frequencyHz,
+        interactionId: details.interactionId,
+        stereoPan: details.stereoPan,
+        velocity: details.velocity,
+        vibratoDepth: details.vibratoDepth,
+        vibratoRateHz: details.vibratoRateHz,
+      });
+    },
+    [updateSustainedNote]
+  );
+
+  const handleSynthGestureEnd = useCallback(
+    (details: KangurMusicSynthGestureDetails<DiatonicNoteId>): void => {
+      stopSustainedNote(details.interactionId, {
+        brightness: details.brightness,
+        velocity: details.velocity,
+      });
+    },
+    [stopSustainedNote]
+  );
+
+  useEffect(() => {
+    return () => {
+      clearPressedResetTimeout();
+      stop();
+      stopAllSustainedNotes({ immediate: true });
+    };
+  }, [clearPressedResetTimeout, stop, stopAllSustainedNotes]);
+
+  return (
+    <div className='w-full' data-testid='music-piano-roll-freeplay-game'>
+      <div className='flex w-full flex-col gap-4 px-2 sm:gap-5 sm:px-3'>
+        <div className='flex flex-wrap items-center justify-between gap-3 rounded-[28px] border border-sky-200/80 bg-white/88 px-4 py-4 shadow-[0_24px_64px_-48px_rgba(14,116,144,0.5)]'>
+          <div className='min-w-0 flex-1'>
+            <div className='text-[11px] font-black uppercase tracking-[0.26em] text-sky-500'>
+              Swobodny piano roll
+            </div>
+            <p className='mt-2 max-w-3xl text-sm font-medium leading-6 text-slate-700 sm:text-[15px]'>
+              Graj bez zadania. W synth przesuwaj palec w poziomie, aby zmieniac pitch, a w
+              pionie, aby dodac vibrato.
+            </p>
+          </div>
+          <div className='flex flex-wrap items-center gap-2 text-xs font-bold'>
+            <span
+              className='rounded-full bg-sky-100 px-3 py-1 text-sky-800'
+              data-testid='music-piano-roll-freeplay-mode'
+            >
+              Tryb: {keyboardMode === 'synth' ? 'synth' : 'piano'}
+            </span>
+            <span
+              className='rounded-full bg-white px-3 py-1 text-slate-700 ring-1 ring-slate-200'
+              data-testid='music-piano-roll-freeplay-audio'
+            >
+              {!isAudioSupported
+                ? 'Audio: niedostepne'
+                : isAudioBlocked
+                  ? 'Audio: odblokuj'
+                  : 'Audio: gotowe'}
+            </span>
+          </div>
+        </div>
+
+        <KangurMusicPianoRoll
+          description='Dotykaj dowolnych klawiszy i sprawdzaj, jak zmieniaja sie barwa, glide i vibrato.'
+          keyTestIdPrefix='music-piano-roll-freeplay-key'
+          keyboardMode={keyboardMode}
+          keys={DIATONIC_PIANO_KEYS}
+          melody={[]}
+          onKeyboardModeChange={handleKeyboardModeChange}
+          onKeyPress={handleKeyPress}
+          onSynthGlideModeChange={handleSynthGlideModeChange}
+          onSynthGestureChange={handleSynthGestureChange}
+          onSynthGestureEnd={handleSynthGestureEnd}
+          onSynthGestureStart={handleSynthGestureStart}
+          onSynthWaveformChange={handleSynthWaveformChange}
+          pressedNoteId={pressedNoteId}
+          pressedVelocity={pressedVelocity}
+          shellTestId='music-piano-roll-freeplay-shell'
+          showKeyboardModeSwitch
+          showMeasureGuides={false}
+          showSynthGlideModeSwitch
+          showSynthWaveformSwitch
+          stepTestIdPrefix='music-piano-roll-freeplay-step'
+          synthGlideMode={synthGlideMode}
+          synthWaveform={synthWaveform}
+          title='Swobodny piano roll'
+        />
+
+        <div className='flex justify-end'>
+          <KangurButton
+            data-testid='music-piano-roll-freeplay-finish'
+            onClick={() => {
+              stop();
+              stopAllSustainedNotes({ immediate: true });
+              onFinish();
+            }}
+            size='md'
+            type='button'
+            variant='surface'
+          >
+            Wroc do lekcji
+          </KangurButton>
+        </div>
+      </div>
+    </div>
+  );
+}

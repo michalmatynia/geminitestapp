@@ -7,7 +7,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import { KangurConfirmModal } from '@/features/kangur/ui/components/KangurConfirmModal';
-import { KangurButton, KangurPanelRow } from '@/features/kangur/ui/design/primitives';
+import { KangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
+import { KangurPanelRow } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_PENDING_STEP_PILL_CLASSNAME,
   KANGUR_STEP_PILL_CLASSNAME,
@@ -437,7 +438,7 @@ export default function ClockLesson(): React.JSX.Element {
       trainingPanels.length > 1 ? (
         <KangurPanelRow className='w-full sm:items-center sm:justify-between'>
           {currentTrainingPanelIndex > 0 ? (
-            <KangurButton
+            <KangurLessonNavigationIconButton
               onClick={() =>
                 requestTrainingExitAction({
                   kind: 'panel',
@@ -445,22 +446,18 @@ export default function ClockLesson(): React.JSX.Element {
                 })
               }
               aria-label={copy.training.previousPanel}
-              className='w-full justify-center px-5 shadow-sm [border-color:var(--kangur-soft-card-border)] sm:min-w-[72px] sm:w-auto touch-manipulation select-none min-h-11 active:scale-[0.98]'
+              className='w-full px-5 sm:min-w-[72px] sm:w-auto touch-manipulation select-none min-h-11 active:scale-[0.98]'
               data-testid='clock-lesson-training-prev-button'
-              size='sm'
-              type='button'
+              icon={ChevronLeft}
               title={copy.training.previousPanel}
-              variant='surface'
-            >
-              <ChevronLeft aria-hidden='true' className='h-4 w-4 flex-shrink-0' />
-            </KangurButton>
+            />
           ) : (
             <div className='hidden sm:block sm:min-w-[72px]' />
           )}
 
           {currentTrainingPanelIndex >= 0 &&
           currentTrainingPanelIndex < trainingPanels.length - 1 ? (
-            <KangurButton
+            <KangurLessonNavigationIconButton
               onClick={() =>
                 requestTrainingExitAction({
                   kind: 'panel',
@@ -468,15 +465,11 @@ export default function ClockLesson(): React.JSX.Element {
                 })
               }
               aria-label={copy.training.nextPanel}
-              className='w-full justify-center px-5 shadow-sm [border-color:var(--kangur-soft-card-border)] sm:min-w-[72px] sm:w-auto touch-manipulation select-none min-h-11 active:scale-[0.98]'
+              className='w-full px-5 sm:min-w-[72px] sm:w-auto touch-manipulation select-none min-h-11 active:scale-[0.98]'
               data-testid='clock-lesson-training-next-button'
-              size='sm'
-              type='button'
+              icon={ChevronRight}
               title={copy.training.nextPanel}
-              variant='surface'
-            >
-              <ChevronRight aria-hidden='true' className='h-4 w-4 flex-shrink-0' />
-            </KangurButton>
+            />
           ) : (
             <div className='hidden sm:block sm:min-w-[72px]' />
           )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart2, BookOpen, BrainCircuit, ClipboardList, ListChecks } from 'lucide-react';
+import { BarChart2, BookOpen, BrainCircuit, ListChecks } from 'lucide-react';
 import { useCallback, useMemo, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 
@@ -9,14 +9,9 @@ import {
   type KangurParentDashboardTabId,
   useKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
-import {
-  KangurButton,
-  KangurPanelStack,
-  KangurWidgetIntro,
-} from '@/features/kangur/ui/design/primitives';
+import { KangurButton, KangurPanelStack } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
-import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { cn } from '@/features/kangur/shared/utils';
 
 const TABS: Array<
@@ -25,12 +20,6 @@ const TABS: Array<
     docId: string;
   }
 > = [
-  {
-    id: 'scores',
-    label: '',
-    icon: ClipboardList,
-    docId: 'parent_scores_tab',
-  },
   {
     id: 'progress',
     label: '',
@@ -72,7 +61,6 @@ export function KangurParentDashboardTabsWidget({
   const translations = useTranslations('KangurParentDashboard');
   const { activeTab, canAccessDashboard, setActiveTab } = useKangurParentDashboardRuntime();
   const isCoarsePointer = useKangurCoarsePointer();
-  const { entry: tabsContent } = useKangurPageContentEntry('parent-dashboard-tabs');
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const tabs = useMemo(
     () =>
@@ -150,13 +138,6 @@ export function KangurParentDashboardTabsWidget({
 
   return (
     <KangurPanelStack>
-      <KangurWidgetIntro
-        description={
-          tabsContent?.summary ??
-          translations('tabs.description')
-        }
-        title={tabsContent?.title ?? translations('tabs.title')}
-      />
       <div
         className={cn(
           KANGUR_SEGMENTED_CONTROL_CLASSNAME,

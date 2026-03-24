@@ -1,5 +1,9 @@
 import React from 'react';
 
+import {
+  renderSoftAtmosphereGradients,
+  renderSoftAtmosphereOvals,
+} from '@/features/kangur/ui/components/animations/svgAtmosphere';
 import { cn } from '@/features/kangur/shared/utils';
 
 function useEnglishAnimationSurfaceIds(prefix: string): {
@@ -77,6 +81,10 @@ export function EnglishPronounSwapAnimation(): React.JSX.Element {
           <stop offset='0%' stopColor='rgba(56, 189, 248, 0.16)' />
           <stop offset='100%' stopColor='rgba(56, 189, 248, 0)' />
         </radialGradient>
+        {renderSoftAtmosphereGradients(`${surfaceIds.atmosphereGradientId}-soft`, [
+          { key: 'top', cx: 86, cy: 34, rx: 64, ry: 18, color: '#38bdf8', opacity: 0.055, glowBias: '38%' },
+          { key: 'bottom', cx: 300, cy: 108, rx: 110, ry: 24, color: '#38bdf8', opacity: 0.07, glowBias: '58%' },
+        ])}
         <linearGradient id={surfaceIds.accentGradientId} x1='40' x2='100' y1='34' y2='42' gradientUnits='userSpaceOnUse'>
           <stop offset='0%' stopColor='#38bdf8' />
           <stop offset='100%' stopColor='#22c55e' />
@@ -84,8 +92,10 @@ export function EnglishPronounSwapAnimation(): React.JSX.Element {
       </defs>
       <g clipPath={`url(#${surfaceIds.clipId})`} data-testid='english-pronoun-swap-atmosphere'>
         <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} height='90' rx='18' width='340' x='20' y='20' />
-        <ellipse cx='86' cy='34' fill='rgba(56, 189, 248, 0.12)' rx='64' ry='18' />
-        <ellipse cx='300' cy='108' fill={`url(#${surfaceIds.atmosphereGradientId})`} opacity='0.95' rx='110' ry='24' />
+        {renderSoftAtmosphereOvals(`${surfaceIds.atmosphereGradientId}-soft`, [
+          { key: 'top', cx: 86, cy: 34, rx: 64, ry: 18, color: '#38bdf8', opacity: 0.055, glowBias: '38%' },
+          { key: 'bottom', cx: 300, cy: 108, rx: 110, ry: 24, color: '#38bdf8', opacity: 0.07, glowBias: '58%' },
+        ])}
       </g>
       <rect
         className='frame'
@@ -345,11 +355,17 @@ export function EnglishAgreementBalanceAnimation(): React.JSX.Element {
           <stop offset='56%' stopColor='#f8fafc' />
           <stop offset='100%' stopColor='#ecfeff' />
         </linearGradient>
+        {renderSoftAtmosphereGradients(`${surfaceIds.atmosphereGradientId}-soft`, [
+          { key: 'left', cx: 104, cy: 34, rx: 88, ry: 20, color: '#818cf8', opacity: 0.055, glowBias: '40%' },
+          { key: 'right', cx: 318, cy: 138, rx: 126, ry: 26, color: '#14b8a6', opacity: 0.045, glowBias: '60%' },
+        ])}
       </defs>
       <g clipPath={`url(#${surfaceIds.clipId})`} data-testid='english-agreement-balance-atmosphere'>
         <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} height='128' rx='18' width='392' x='14' y='16' />
-        <ellipse cx='104' cy='34' fill='rgba(129, 140, 248, 0.12)' rx='88' ry='20' />
-        <ellipse cx='318' cy='138' fill='rgba(20, 184, 166, 0.1)' rx='126' ry='26' />
+        {renderSoftAtmosphereOvals(`${surfaceIds.atmosphereGradientId}-soft`, [
+          { key: 'left', cx: 104, cy: 34, rx: 88, ry: 20, color: '#818cf8', opacity: 0.055, glowBias: '40%' },
+          { key: 'right', cx: 318, cy: 138, rx: 126, ry: 26, color: '#14b8a6', opacity: 0.045, glowBias: '60%' },
+        ])}
       </g>
       <rect className='frame' data-testid='english-agreement-balance-frame' x='20' y='22' width='380' height='116' rx='14' />
       <line className='beam' x1='210' x2='210' y1='38' y2='118' />
@@ -420,11 +436,17 @@ export function EnglishThirdPersonSAnimation(): React.JSX.Element {
           <stop offset='55%' stopColor='#f8fafc' />
           <stop offset='100%' stopColor='#eff6ff' />
         </linearGradient>
+        {renderSoftAtmosphereGradients(`${surfaceIds.atmosphereGradientId}-soft`, [
+          { key: 'top', cx: 86, cy: 36, rx: 64, ry: 18, color: '#22c55e', opacity: 0.055, glowBias: '38%' },
+          { key: 'bottom', cx: 290, cy: 108, rx: 112, ry: 24, color: '#38bdf8', opacity: 0.042, glowBias: '58%' },
+        ])}
       </defs>
       <g clipPath={`url(#${surfaceIds.clipId})`} data-testid='english-third-person-s-atmosphere'>
         <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} height='90' rx='18' width='340' x='20' y='20' />
-        <ellipse cx='86' cy='36' fill='rgba(34, 197, 94, 0.12)' rx='64' ry='18' />
-        <ellipse cx='290' cy='108' fill='rgba(56, 189, 248, 0.08)' rx='112' ry='24' />
+        {renderSoftAtmosphereOvals(`${surfaceIds.atmosphereGradientId}-soft`, [
+          { key: 'top', cx: 86, cy: 36, rx: 64, ry: 18, color: '#22c55e', opacity: 0.055, glowBias: '38%' },
+          { key: 'bottom', cx: 290, cy: 108, rx: 112, ry: 24, color: '#38bdf8', opacity: 0.042, glowBias: '58%' },
+        ])}
       </g>
       <rect className='frame' data-testid='english-third-person-s-frame' x='26' y='26' width='328' height='78' rx='14' />
       <g className='swap-a'>
@@ -617,15 +639,25 @@ export function EnglishArticleFocusAnimation(): React.JSX.Element {
           <stop offset='0%' stopColor='#e0f2fe' />
           <stop offset='100%' stopColor='#0ea5e9' />
         </radialGradient>
+        {renderSoftAtmosphereGradients(`${baseIds.atmosphereGradientId}-soft`, [
+          { key: 'panel-a-top', cx: 78, cy: 46, rx: 54, ry: 24, color: '#f59e0b', opacity: 0.075, glowBias: '42%' },
+          { key: 'panel-a-bottom', cx: 146, cy: 104, rx: 46, ry: 18, color: '#fbbf24', opacity: 0.05, glowBias: '58%' },
+          { key: 'panel-b-top', cx: 248, cy: 42, rx: 50, ry: 22, color: '#3b82f6', opacity: 0.06, glowBias: '42%' },
+          { key: 'panel-b-bottom', cx: 322, cy: 104, rx: 52, ry: 20, color: '#38bdf8', opacity: 0.05, glowBias: '58%' },
+        ])}
       </defs>
       <g data-testid='english-article-focus-atmosphere'>
         <g clipPath={`url(#${panelAClipId})`}>
-          <ellipse cx='78' cy='46' fill='rgba(245, 158, 11, 0.18)' rx='54' ry='24' />
-          <ellipse cx='146' cy='104' fill='rgba(251, 191, 36, 0.12)' rx='46' ry='18' />
+          {renderSoftAtmosphereOvals(`${baseIds.atmosphereGradientId}-soft`, [
+            { key: 'panel-a-top', cx: 78, cy: 46, rx: 54, ry: 24, color: '#f59e0b', opacity: 0.075, glowBias: '42%' },
+            { key: 'panel-a-bottom', cx: 146, cy: 104, rx: 46, ry: 18, color: '#fbbf24', opacity: 0.05, glowBias: '58%' },
+          ])}
         </g>
         <g clipPath={`url(#${panelBClipId})`}>
-          <ellipse cx='248' cy='42' fill='rgba(59, 130, 246, 0.15)' rx='50' ry='22' />
-          <ellipse cx='322' cy='104' fill='rgba(56, 189, 248, 0.12)' rx='52' ry='20' />
+          {renderSoftAtmosphereOvals(`${baseIds.atmosphereGradientId}-soft`, [
+            { key: 'panel-b-top', cx: 248, cy: 42, rx: 50, ry: 22, color: '#3b82f6', opacity: 0.06, glowBias: '42%' },
+            { key: 'panel-b-bottom', cx: 322, cy: 104, rx: 52, ry: 20, color: '#38bdf8', opacity: 0.05, glowBias: '58%' },
+          ])}
         </g>
       </g>
       <g transform='translate(24, 24)'>
@@ -863,11 +895,17 @@ export function EnglishZeroArticleAnimation(): React.JSX.Element {
           <stop offset='55%' stopColor='#f8fafc' />
           <stop offset='100%' stopColor='#fff7ed' />
         </linearGradient>
+        {renderSoftAtmosphereGradients(`${surfaceIds.atmosphereGradientId}-soft`, [
+          { key: 'top', cx: 88, cy: 34, rx: 62, ry: 16, color: '#f87171', opacity: 0.055, glowBias: '38%' },
+          { key: 'bottom', cx: 274, cy: 110, rx: 96, ry: 22, color: '#fb923c', opacity: 0.04, glowBias: '58%' },
+        ])}
       </defs>
       <g clipPath={`url(#${surfaceIds.clipId})`} data-testid='english-zero-article-atmosphere'>
         <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} height='90' rx='18' width='320' x='20' y='24' />
-        <ellipse cx='88' cy='34' fill='rgba(248, 113, 113, 0.12)' rx='62' ry='16' />
-        <ellipse cx='274' cy='110' fill='rgba(251, 146, 60, 0.08)' rx='96' ry='22' />
+        {renderSoftAtmosphereOvals(`${surfaceIds.atmosphereGradientId}-soft`, [
+          { key: 'top', cx: 88, cy: 34, rx: 62, ry: 16, color: '#f87171', opacity: 0.055, glowBias: '38%' },
+          { key: 'bottom', cx: 274, cy: 110, rx: 96, ry: 22, color: '#fb923c', opacity: 0.04, glowBias: '58%' },
+        ])}
       </g>
       <rect className='frame' data-testid='english-zero-article-frame' x='26' y='30' width='308' height='78' rx='14' />
       <text className='word' x='40' y='60'>math</text>
@@ -961,6 +999,10 @@ export function EnglishAdjectiveRoomAnimation(): React.JSX.Element {
           <stop offset='0%' stopColor='rgba(99, 102, 241, 0.14)' />
           <stop offset='100%' stopColor='rgba(99, 102, 241, 0)' />
         </radialGradient>
+        {renderSoftAtmosphereGradients(`${surfaceIds.atmosphereGradientId}-soft`, [
+          { key: 'top', cx: 104, cy: 40, rx: 86, ry: 26, color: '#6366f1', opacity: 0.05, glowBias: '40%' },
+          { key: 'bottom', cx: 312, cy: 146, rx: 126, ry: 28, color: '#6366f1', opacity: 0.065, glowBias: '58%' },
+        ])}
         <linearGradient id={surfaceIds.accentGradientId} x1='19' x2='401' y1='126' y2='168' gradientUnits='userSpaceOnUse'>
           <stop offset='0%' stopColor='#e2e8f0' />
           <stop offset='100%' stopColor='#cbd5e1' />
@@ -980,8 +1022,10 @@ export function EnglishAdjectiveRoomAnimation(): React.JSX.Element {
       </defs>
       <g clipPath={`url(#${surfaceIds.clipId})`} data-testid='english-adjective-room-atmosphere'>
         <rect className='wall' fill={`url(#${surfaceIds.panelGradientId})`} height='140' rx='22' width='382' x='19' y='18' />
-        <ellipse cx='104' cy='40' fill='rgba(99, 102, 241, 0.1)' rx='86' ry='26' />
-        <ellipse cx='312' cy='146' fill={`url(#${surfaceIds.atmosphereGradientId})`} opacity='0.95' rx='126' ry='28' />
+        {renderSoftAtmosphereOvals(`${surfaceIds.atmosphereGradientId}-soft`, [
+          { key: 'top', cx: 104, cy: 40, rx: 86, ry: 26, color: '#6366f1', opacity: 0.05, glowBias: '40%' },
+          { key: 'bottom', cx: 312, cy: 146, rx: 126, ry: 28, color: '#6366f1', opacity: 0.065, glowBias: '58%' },
+        ])}
       </g>
       <rect
         className='frame'
@@ -1122,6 +1166,10 @@ export function EnglishAdjectiveOrderAnimation(): React.JSX.Element {
           <stop offset='0%' stopColor='rgba(99, 102, 241, 0.16)' />
           <stop offset='100%' stopColor='rgba(99, 102, 241, 0)' />
         </radialGradient>
+        {renderSoftAtmosphereGradients(`${surfaceIds.atmosphereGradientId}-soft`, [
+          { key: 'top', cx: 98, cy: 40, rx: 92, ry: 24, color: '#6366f1', opacity: 0.052, glowBias: '40%' },
+          { key: 'bottom', cx: 318, cy: 126, rx: 126, ry: 26, color: '#6366f1', opacity: 0.065, glowBias: '58%' },
+        ])}
         <linearGradient id={surfaceIds.accentGradientId} x1='48' x2='330' y1='66' y2='100' gradientUnits='userSpaceOnUse'>
           <stop offset='0%' stopColor='#e0e7ff' />
           <stop offset='65%' stopColor='#fef3c7' />
@@ -1138,8 +1186,10 @@ export function EnglishAdjectiveOrderAnimation(): React.JSX.Element {
       </defs>
       <g clipPath={`url(#${surfaceIds.clipId})`} data-testid='english-adjective-order-atmosphere'>
         <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} height='112' rx='20' width='388' x='16' y='18' />
-        <ellipse cx='98' cy='40' fill='rgba(99, 102, 241, 0.11)' rx='92' ry='24' />
-        <ellipse cx='318' cy='126' fill={`url(#${surfaceIds.atmosphereGradientId})`} opacity='0.95' rx='126' ry='26' />
+        {renderSoftAtmosphereOvals(`${surfaceIds.atmosphereGradientId}-soft`, [
+          { key: 'top', cx: 98, cy: 40, rx: 92, ry: 24, color: '#6366f1', opacity: 0.052, glowBias: '40%' },
+          { key: 'bottom', cx: 318, cy: 126, rx: 126, ry: 26, color: '#6366f1', opacity: 0.065, glowBias: '58%' },
+        ])}
       </g>
       <rect
         className='frame'
@@ -1271,11 +1321,17 @@ export function EnglishAdjectiveRepairAnimation(): React.JSX.Element {
           <stop offset='0%' stopColor='rgba(249, 115, 22, 0.16)' />
           <stop offset='100%' stopColor='rgba(249, 115, 22, 0)' />
         </radialGradient>
+        {renderSoftAtmosphereGradients(`${surfaceIds.atmosphereGradientId}-soft`, [
+          { key: 'top', cx: 104, cy: 42, rx: 88, ry: 24, color: '#f97316', opacity: 0.052, glowBias: '40%' },
+          { key: 'bottom', cx: 320, cy: 126, rx: 128, ry: 26, color: '#f97316', opacity: 0.065, glowBias: '58%' },
+        ])}
       </defs>
       <g clipPath={`url(#${surfaceIds.clipId})`} data-testid='english-adjective-repair-atmosphere'>
         <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} height='112' rx='20' width='388' x='16' y='18' />
-        <ellipse cx='104' cy='42' fill='rgba(249, 115, 22, 0.1)' rx='88' ry='24' />
-        <ellipse cx='320' cy='126' fill={`url(#${surfaceIds.atmosphereGradientId})`} opacity='0.95' rx='128' ry='26' />
+        {renderSoftAtmosphereOvals(`${surfaceIds.atmosphereGradientId}-soft`, [
+          { key: 'top', cx: 104, cy: 42, rx: 88, ry: 24, color: '#f97316', opacity: 0.052, glowBias: '40%' },
+          { key: 'bottom', cx: 320, cy: 126, rx: 128, ry: 26, color: '#f97316', opacity: 0.065, glowBias: '58%' },
+        ])}
       </g>
       <rect
         className='frame'
@@ -1363,11 +1419,17 @@ export function EnglishSentenceBlueprintAnimation(): React.JSX.Element {
           <stop offset='55%' stopColor='#f8fafc' />
           <stop offset='100%' stopColor='#eff6ff' />
         </linearGradient>
+        {renderSoftAtmosphereGradients(`${surfaceIds.atmosphereGradientId}-soft`, [
+          { key: 'left', cx: 112, cy: 36, rx: 82, ry: 18, color: '#a78bfa', opacity: 0.055, glowBias: '40%' },
+          { key: 'right', cx: 330, cy: 114, rx: 110, ry: 20, color: '#38bdf8', opacity: 0.042, glowBias: '58%' },
+        ])}
       </defs>
       <g clipPath={`url(#${surfaceIds.clipId})`} data-testid='english-sentence-blueprint-atmosphere'>
         <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} height='92' rx='18' width='380' x='30' y='24' />
-        <ellipse cx='112' cy='36' fill='rgba(167, 139, 250, 0.12)' rx='82' ry='18' />
-        <ellipse cx='330' cy='114' fill='rgba(56, 189, 248, 0.08)' rx='110' ry='20' />
+        {renderSoftAtmosphereOvals(`${surfaceIds.atmosphereGradientId}-soft`, [
+          { key: 'left', cx: 112, cy: 36, rx: 82, ry: 18, color: '#a78bfa', opacity: 0.055, glowBias: '40%' },
+          { key: 'right', cx: 330, cy: 114, rx: 110, ry: 20, color: '#38bdf8', opacity: 0.042, glowBias: '58%' },
+        ])}
       </g>
       <rect className='frame' data-testid='english-sentence-blueprint-frame' height='80' rx='14' width='368' x='36' y='30' />
       <g transform='translate(50, 44)'>
@@ -1445,11 +1507,17 @@ export function EnglishQuestionFlipAnimation(): React.JSX.Element {
           <stop offset='55%' stopColor='#f8fafc' />
           <stop offset='100%' stopColor='#eef2ff' />
         </linearGradient>
+        {renderSoftAtmosphereGradients(`${surfaceIds.atmosphereGradientId}-soft`, [
+          { key: 'left', cx: 102, cy: 36, rx: 84, ry: 18, color: '#a78bfa', opacity: 0.055, glowBias: '40%' },
+          { key: 'right', cx: 328, cy: 120, rx: 112, ry: 22, color: '#60a5fa', opacity: 0.042, glowBias: '58%' },
+        ])}
       </defs>
       <g clipPath={`url(#${surfaceIds.clipId})`} data-testid='english-question-flip-atmosphere'>
         <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} height='100' rx='18' width='380' x='30' y='24' />
-        <ellipse cx='102' cy='36' fill='rgba(167, 139, 250, 0.12)' rx='84' ry='18' />
-        <ellipse cx='328' cy='120' fill='rgba(96, 165, 250, 0.08)' rx='112' ry='22' />
+        {renderSoftAtmosphereOvals(`${surfaceIds.atmosphereGradientId}-soft`, [
+          { key: 'left', cx: 102, cy: 36, rx: 84, ry: 18, color: '#a78bfa', opacity: 0.055, glowBias: '40%' },
+          { key: 'right', cx: 328, cy: 120, rx: 112, ry: 22, color: '#60a5fa', opacity: 0.042, glowBias: '58%' },
+        ])}
       </g>
       <rect className='frame' data-testid='english-question-flip-frame' height='88' rx='14' width='368' x='36' y='30' />
       <circle className='accent' cx='56' cy='50' r='6' />
@@ -1692,11 +1760,17 @@ export function EnglishPrepositionsTimelineAnimation(): React.JSX.Element {
           <stop offset='55%' stopColor='#f8fafc' />
           <stop offset='100%' stopColor='#fff7ed' />
         </linearGradient>
+        {renderSoftAtmosphereGradients(`${surfaceIds.atmosphereGradientId}-soft`, [
+          { key: 'left', cx: 98, cy: 34, rx: 84, ry: 18, color: '#38bdf8', opacity: 0.05, glowBias: '40%' },
+          { key: 'right', cx: 320, cy: 130, rx: 116, ry: 22, color: '#fbbf24', opacity: 0.04, glowBias: '58%' },
+        ])}
       </defs>
       <g clipPath={`url(#${surfaceIds.clipId})`} data-testid='english-prepositions-timeline-atmosphere'>
         <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} height='110' rx='18' width='380' x='20' y='20' />
-        <ellipse cx='98' cy='34' fill='rgba(56, 189, 248, 0.1)' rx='84' ry='18' />
-        <ellipse cx='320' cy='130' fill='rgba(251, 191, 36, 0.08)' rx='116' ry='22' />
+        {renderSoftAtmosphereOvals(`${surfaceIds.atmosphereGradientId}-soft`, [
+          { key: 'left', cx: 98, cy: 34, rx: 84, ry: 18, color: '#38bdf8', opacity: 0.05, glowBias: '40%' },
+          { key: 'right', cx: 320, cy: 130, rx: 116, ry: 22, color: '#fbbf24', opacity: 0.04, glowBias: '58%' },
+        ])}
       </g>
       <rect className='frame' data-testid='english-prepositions-timeline-frame' height='98' rx='14' width='368' x='26' y='26' />
       <line className='axis' x1='40' y1='78' x2='380' y2='78' />

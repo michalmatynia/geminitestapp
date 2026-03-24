@@ -64,6 +64,23 @@ const renderWithIntl = (element: ReactElement) =>
   );
 
 describe('EnglishArticlesLesson', () => {
+  it('keeps article examples inside the visual support area instead of a separate inset grid', async () => {
+    renderWithIntl(
+      <KangurLessonNavigationProvider onBack={vi.fn()}>
+        <EnglishArticlesLesson />
+      </KangurLessonNavigationProvider>
+    );
+
+    fireEvent.click(screen.getByTestId('lesson-hub-section-a_an'));
+
+    await waitFor(() => {
+      expect(screen.getByText('a unit circle')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('a unit circle').closest('.kangur-lesson-visual-supporting')).toBeTruthy();
+    expect(screen.queryByText('a unit circle')?.closest('.kangur-lesson-inset')).toBeNull();
+  });
+
   it('opens the new drag-and-drop game section and returns to the lesson hub', async () => {
     renderWithIntl(
       <KangurLessonNavigationProvider onBack={vi.fn()}>

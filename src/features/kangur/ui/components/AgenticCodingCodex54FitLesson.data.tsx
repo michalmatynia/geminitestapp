@@ -1,13 +1,10 @@
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   KangurLessonCallout,
-  KangurLessonCaption,
-  KangurLessonInset,
   KangurLessonLead,
   KangurLessonStack,
   KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
-import { KANGUR_GRID_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   AgenticDoDontAnimation,
   AgenticFitQuadrantAnimation,
@@ -62,18 +59,21 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='sky'
             caption='Dobry fit to jasny scope i weryfikacja w zasięgu ręki.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <div className='grid gap-2 sm:grid-cols-2'>
+                {GOOD_FITS.map((item) => (
+                  <div
+                    key={item}
+                    className='rounded-2xl border border-sky-200/70 bg-white/80 px-3 py-2 text-left text-sm text-sky-950 shadow-sm'
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+            }
           >
             <AgenticDoDontAnimation />
           </KangurLessonVisual>
-          <KangurLessonCallout accent='sky' padding='sm' className='text-left'>
-            <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
-              {GOOD_FITS.map((item) => (
-                <KangurLessonInset key={item} accent='sky'>
-                  <KangurLessonCaption className='text-sky-950'>{item}</KangurLessonCaption>
-                </KangurLessonInset>
-              ))}
-            </div>
-          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },

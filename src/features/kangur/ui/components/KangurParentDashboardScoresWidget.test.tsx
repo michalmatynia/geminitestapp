@@ -37,11 +37,6 @@ const { runtimeState, useKangurPageContentEntryMock } = vi.hoisted(() => ({
   useKangurPageContentEntryMock: vi.fn(),
 }));
 
-const scoreHistoryMock = vi.hoisted(() => vi.fn());
-const progressOverviewMock = vi.hoisted(() => vi.fn());
-const getCurrentKangurDailyQuestMock = vi.hoisted(() => vi.fn());
-const useKangurSubjectFocusMock = vi.hoisted(() => vi.fn());
-
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({
   shouldRenderKangurParentDashboardPanel: (displayMode: string, activeTab: string, targetTab: string) =>
     displayMode === 'always' || activeTab === targetTab,
@@ -50,32 +45,6 @@ vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () =
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
-}));
-
-vi.mock('@/features/kangur/ui/services/daily-quests', () => ({
-  getCurrentKangurDailyQuest: getCurrentKangurDailyQuestMock,
-}));
-
-vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
-  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
-}));
-
-vi.mock('@/features/kangur/ui/components/ProgressOverview', () => ({
-  default: (props: unknown) => {
-    progressOverviewMock(props);
-    return <div data-testid='progress-overview-stub' />;
-  },
-}));
-
-vi.mock('@/features/kangur/ui/components/KangurBadgeTrackHighlights', () => ({
-  default: () => <div data-testid='badge-track-highlights-stub' />,
-}));
-
-vi.mock('@/features/kangur/ui/components/ScoreHistory', () => ({
-  default: (props: unknown) => {
-    scoreHistoryMock(props);
-    return <div data-testid='score-history-stub' />;
-  },
 }));
 
 import { KangurParentDashboardScoresWidget } from './KangurParentDashboardScoresWidget';
@@ -109,12 +78,6 @@ describe('KangurParentDashboardScoresWidget', () => {
       scoreViewerEmail: 'parent@example.com',
       scoreViewerName: 'Ada',
     };
-    getCurrentKangurDailyQuestMock.mockReturnValue(null);
-    useKangurSubjectFocusMock.mockReturnValue({
-      subject: 'maths',
-      setSubject: vi.fn(),
-      subjectKey: 'learner-1',
-    });
     useKangurPageContentEntryMock.mockReturnValue({
       data: undefined,
       entry: null,
@@ -130,32 +93,11 @@ describe('KangurParentDashboardScoresWidget', () => {
     });
   });
 
-  it('passes the learner-scoped filters into shared score history', () => {
+  it('renders a compatibility notice instead of score content', () => {
     render(<KangurParentDashboardScoresWidget />);
 
-    expect(screen.getByTestId('score-history-stub')).toBeInTheDocument();
-    expect(screen.getByTestId('progress-overview-stub')).toBeInTheDocument();
-    expect(getCurrentKangurDailyQuestMock).toHaveBeenCalledWith(
-      runtimeState.value.progress,
-      expect.objectContaining({
-        subject: 'maths',
-        translate: expect.any(Function),
-      })
-    );
-    expect(scoreHistoryMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        basePath: '/kangur',
-        createdBy: 'parent@example.com',
-        learnerId: 'learner-1',
-        playerName: 'Ada',
-      })
-    );
-    expect(progressOverviewMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        progress: runtimeState.value.progress,
-        dailyQuest: null,
-      })
-    );
+    expect(screen.getByText('Learner results moved')).toBeInTheDocument();
+    expect(screen.getByText('This widget moved to the Learner Profile screen.')).toBeInTheDocument();
   });
 
   it('renders Mongo-backed section intro copy when available', () => {
@@ -163,8 +105,8 @@ describe('KangurParentDashboardScoresWidget', () => {
       data: undefined,
       entry: {
         id: 'parent-dashboard-scores',
-        title: 'Wyniki ucznia',
-        summary: 'Sprawdź ostatnie gry i obszary, które warto teraz powtórzyć.',
+        title: 'Wyniki przeniesiono do Profilu Ucznia',
+        summary: 'Otwórz Profil Ucznia, aby zobaczyć wyniki, skuteczność i historię gier.',
       },
       error: null,
       isError: false,
@@ -179,9 +121,11 @@ describe('KangurParentDashboardScoresWidget', () => {
 
     render(<KangurParentDashboardScoresWidget />);
 
-    expect(screen.getByText('Wyniki ucznia')).toHaveClass('[color:var(--kangur-page-text)]');
+    expect(screen.getByText('Wyniki przeniesiono do Profilu Ucznia')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
     expect(
-      screen.getByText('Sprawdź ostatnie gry i obszary, które warto teraz powtórzyć.')
+      screen.getByText('Otwórz Profil Ucznia, aby zobaczyć wyniki, skuteczność i historię gier.')
     ).toHaveClass('[color:var(--kangur-page-muted-text)]');
   });
 
@@ -193,12 +137,10 @@ describe('KangurParentDashboardScoresWidget', () => {
 
     render(<KangurParentDashboardScoresWidget />);
 
-    expect(screen.queryByTestId('score-history-stub')).toBeNull();
-    expect(scoreHistoryMock).not.toHaveBeenCalled();
-    expect(progressOverviewMock).not.toHaveBeenCalled();
+    expect(screen.queryByText('Learner results moved')).toBeNull();
   });
 
-  it('does not render when no active learner is selected', () => {
+  it('still renders the move notice when no active learner is selected', () => {
     runtimeState.value = {
       ...runtimeState.value,
       activeLearner: null,
@@ -206,9 +148,6 @@ describe('KangurParentDashboardScoresWidget', () => {
 
     render(<KangurParentDashboardScoresWidget />);
 
-    expect(screen.queryByTestId('score-history-stub')).toBeNull();
-    expect(scoreHistoryMock).not.toHaveBeenCalled();
-    expect(progressOverviewMock).not.toHaveBeenCalled();
-    expect(screen.queryByText('Wyniki ucznia')).toBeNull();
+    expect(screen.getByText('Learner results moved')).toBeInTheDocument();
   });
 });

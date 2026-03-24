@@ -61,6 +61,10 @@ vi.mock('@/features/kangur/ui/components/KangurLearnerProfileRecommendationsWidg
   KangurLearnerProfileRecommendationsWidget: () => <div data-testid='recommendations-widget' />,
 }));
 
+vi.mock('@/features/kangur/ui/components/KangurLearnerProfileResultsWidget', () => ({
+  KangurLearnerProfileResultsWidget: () => <div data-testid='results-widget' />,
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurLearnerProfileSessionsWidget', () => ({
   KangurLearnerProfileSessionsWidget: () => <div data-testid='sessions-widget' />,
 }));
@@ -160,6 +164,7 @@ describe('LearnerProfile page', () => {
     expect(screen.getByRole('tablist', { name: 'Profil ucznia' })).toBeInTheDocument();
     expect(screen.getByText('Profil ucznia')).toBeInTheDocument();
     expect(screen.getByText('Relacja z AI Tutorem')).toBeInTheDocument();
+    expect(screen.getByTestId('results-widget')).toBeInTheDocument();
     expect(document.getElementById('learner-profile-root')).toHaveClass('w-full');
     expect(document.getElementById('learner-profile-root')).not.toHaveClass('max-w-[900px]');
   });

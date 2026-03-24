@@ -81,5 +81,10 @@ describe('EnglishPrepositionsLesson i18n', () => {
       )
     ).toBeInTheDocument();
     expect(screen.getByText('Zeit und Ort in einem Satz.')).toBeInTheDocument();
+
+    render(<>{slides.time?.[0]?.content}</>);
+
+    expect(screen.getByText('at noon').closest('.kangur-lesson-visual-supporting')).toBeTruthy();
+    expect(screen.getByText('at noon').closest('.kangur-lesson-inset')).toBeNull();
   });
 });

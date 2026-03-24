@@ -52,14 +52,18 @@ const buildEnglishAdjectivesSlides = (
           <KangurLessonVisual
             accent='indigo'
             caption={translations('slides.intro.overview.caption')}
+            supportingContent={
+              <div>
+                <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
+                  <KangurLessonChip accent='indigo'>big and pink bedroom</KangurLessonChip>
+                  <KangurLessonChip accent='indigo'>soft rug</KangurLessonChip>
+                  <KangurLessonChip accent='indigo'>long blue curtains</KangurLessonChip>
+                </div>
+              </div>
+            }
           >
             <EnglishAdjectiveRoomAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
-            <KangurLessonChip accent='indigo'>big and pink bedroom</KangurLessonChip>
-            <KangurLessonChip accent='indigo'>soft rug</KangurLessonChip>
-            <KangurLessonChip accent='indigo'>long blue curtains</KangurLessonChip>
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -100,21 +104,25 @@ const buildEnglishAdjectivesSlides = (
           <KangurLessonVisual
             accent='indigo'
             caption={translations('slides.order.beforeNoun.caption')}
+            supportingContent={
+              <div>
+                <ul className='space-y-2 text-sm'>
+                  {[
+                    'red train',
+                    'brown eyes',
+                    'small blue teddy',
+                    'big yellow cupboard',
+                  ].map((text) => (
+                    <li key={text} className='font-semibold text-indigo-700'>
+                      {text}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            }
           >
             <EnglishAdjectiveOrderAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm`}>
-            {[
-              'red train',
-              'brown eyes',
-              'small blue teddy',
-              'big yellow cupboard',
-            ].map((text) => (
-              <KangurLessonInset key={text} accent='indigo' className='text-left'>
-                <p className='font-semibold text-indigo-700'>{text}</p>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -128,21 +136,21 @@ const buildEnglishAdjectivesSlides = (
           <KangurLessonVisual
             accent='indigo'
             caption={translations('slides.order.clearPicture.caption')}
+            supportingContent={
+              <div className='space-y-4 text-sm'>
+                <div>
+                  <p className='font-semibold text-emerald-700'>a small blue teddy</p>
+                  <p className='mt-1 font-semibold text-emerald-700'>a beautiful picture</p>
+                </div>
+                <div>
+                  <p className='font-semibold text-rose-700'>a teddy small blue</p>
+                  <p className='mt-1 font-semibold text-rose-700'>a picture beautiful</p>
+                </div>
+              </div>
+            }
           >
             <EnglishAdjectiveOrderAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm`}>
-            <KangurLessonInset accent='emerald' className='text-left'>
-              <p className='font-semibold text-emerald-700'>right</p>
-              <p className='mt-1 text-slate-700'>a small blue teddy</p>
-              <p className='mt-1 text-slate-700'>a beautiful picture</p>
-            </KangurLessonInset>
-            <KangurLessonInset accent='rose' className='text-left'>
-              <p className='font-semibold text-rose-700'>fix it</p>
-              <p className='mt-1 text-slate-700'>a teddy small blue</p>
-              <p className='mt-1 text-slate-700'>a picture beautiful</p>
-            </KangurLessonInset>
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -158,21 +166,25 @@ const buildEnglishAdjectivesSlides = (
           <KangurLessonVisual
             accent='rose'
             caption={translations('slides.repair.makeItRight.caption')}
+            supportingContent={
+              <div>
+                <ul className='space-y-2 text-sm'>
+                  {[
+                    'talls → tall',
+                    'two reds shoes → two red shoes',
+                    'brown, long hair → long, brown hair',
+                    'a car small → a small car',
+                  ].map((text) => (
+                    <li key={text} className='font-semibold text-rose-700'>
+                      {text}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            }
           >
             <EnglishAdjectiveRepairAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
-            {[
-              'talls → tall',
-              'two reds shoes → two red shoes',
-              'brown, long hair → long, brown hair',
-              'a car small → a small car',
-            ].map((text) => (
-              <KangurLessonInset key={text} accent='rose' className='text-left'>
-                <p className='font-semibold text-rose-700'>{text}</p>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },

@@ -30,18 +30,20 @@ root.render(
             accent='sky'
             caption='StrictMode uruchamia dodatkowy cykl setup/cleanup w dev.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <div className='text-left'>
+                <p className='text-sm font-semibold text-slate-900'>Co włącza StrictMode?</p>
+                <ul className='mt-2 list-disc pl-4 text-sm text-slate-600'>
+                  <li>Podwójny render komponentów (wykrywa nieczyste renderowanie).</li>
+                  <li>Dodatkowy cykl setup/cleanup dla Effectów.</li>
+                  <li>Dodatkowy cykl dla callback refs.</li>
+                  <li>Ostrzeżenia o przestarzałych API.</li>
+                </ul>
+              </div>
+            }
           >
             <ReactStrictModeCycleAnimation />
           </KangurLessonVisual>
-          <KangurLessonInset accent='slate' className='text-left'>
-            <p className='text-sm font-semibold text-slate-900'>Co włącza StrictMode?</p>
-            <ul className='mt-2 list-disc pl-4 text-sm text-slate-600'>
-              <li>Podwójny render komponentów (wykrywa nieczyste renderowanie).</li>
-              <li>Dodatkowy cykl setup/cleanup dla Effectów.</li>
-              <li>Dodatkowy cykl dla callback refs.</li>
-              <li>Ostrzeżenia o przestarzałych API.</li>
-            </ul>
-          </KangurLessonInset>
         </KangurLessonStack>
       ),
     },

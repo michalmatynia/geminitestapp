@@ -623,6 +623,40 @@ describe('KangurMusicPianoRoll', () => {
     );
   });
 
+  it('renders a free-play transport state when no melody is provided', async () => {
+    render(
+      <KangurMusicPianoRoll
+        keyTestIdPrefix='music-roll-freeplay-key'
+        keys={DIATONIC_PIANO_KEYS}
+        melody={[]}
+        onKeyPress={vi.fn()}
+        showKeyboardModeSwitch
+        showSynthGlideModeSwitch
+        showSynthWaveformSwitch
+        stepTestIdPrefix='music-roll-freeplay-step'
+      />
+    );
+
+    expect(screen.getByText('Swobodnie')).toBeInTheDocument();
+    expect(screen.getByTestId('music-roll-freeplay-step-transport-freeplay')).toHaveTextContent(
+      'Swobodna gra'
+    );
+    expect(
+      screen.queryByTestId('music-roll-freeplay-step-transport-count')
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('music-roll-freeplay-step-keyboard-mode-synth'));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('music-roll-freeplay-step-transport-mode')).toHaveTextContent(
+        'Synth'
+      )
+    );
+    expect(
+      screen.getByTestId('music-roll-freeplay-step-transport-axis-map')
+    ).toHaveTextContent('X: Pitch · Y: Vibrato');
+  });
+
   it('retargets a captured synth glide when the pointer crosses into a neighbouring key', () => {
     const handleSynthGestureChange = vi.fn();
     const handleSynthGestureEnd = vi.fn();

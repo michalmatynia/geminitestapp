@@ -56,16 +56,16 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='violet'
             caption='Delegacja wymaga jasnych granic.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <ul className='space-y-2 text-sm text-violet-950'>
+                {DELEGATION_RULES.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            }
           >
             <AgenticOperatingLoopAnimation />
           </KangurLessonVisual>
-          <KangurLessonCallout accent='violet' padding='sm' className='text-left'>
-            <ul className='space-y-2 text-sm text-violet-950'>
-              {DELEGATION_RULES.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },

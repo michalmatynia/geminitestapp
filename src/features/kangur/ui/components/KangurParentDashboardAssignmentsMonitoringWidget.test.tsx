@@ -126,6 +126,103 @@ describe('KangurParentDashboardAssignmentsMonitoringWidget', () => {
     );
   });
 
+  it('renders overview cards, activity mix, and lesson time leaders for readable monitoring', async () => {
+    runtimeState.value = {
+      ...runtimeState.value,
+      progress: {
+        ...runtimeState.value.progress,
+        lessonPanelProgress: {
+          clock: {
+            intro: {
+              label: 'Wprowadzenie',
+              totalCount: 3,
+              viewedCount: 2,
+              sessionUpdatedAt: '2026-03-15T10:15:00.000Z',
+              lastViewedAt: '2026-03-15T10:15:00.000Z',
+              panelTimes: {
+                panel_1: { seconds: 90, title: 'Panel 1' },
+                panel_2: { seconds: 150, title: 'Panel 2' },
+              },
+            },
+          },
+        },
+      },
+    };
+    lessonsState.value = [
+      {
+        componentId: 'clock',
+        title: 'Zegar',
+      },
+    ];
+    learnerInteractionsListMock.mockResolvedValue({
+      items: [
+        {
+          id: 'activity-opened',
+          type: ActivityTypes.KANGUR.OPENED_TASK,
+          description: 'Otwarte zadanie: Powtórka',
+          userId: 'parent-1',
+          entityId: 'learner-1',
+          entityType: 'kangur_learner',
+          metadata: {
+            kind: 'lesson',
+            title: 'Powtórka',
+            openedAt: '2026-03-15T09:00:00.000Z',
+          },
+          createdAt: '2026-03-15T09:00:00.000Z',
+          updatedAt: '2026-03-15T09:00:00.000Z',
+        },
+        {
+          id: 'activity-panel',
+          type: ActivityTypes.KANGUR.LESSON_PANEL_ACTIVITY,
+          description: 'Aktywność w panelach lekcji',
+          userId: 'parent-1',
+          entityId: 'learner-1',
+          entityType: 'kangur_learner',
+          metadata: {
+            lessonKey: 'clock',
+            label: 'Wprowadzenie',
+            sessionUpdatedAt: '2026-03-15T10:00:00.000Z',
+            totalSeconds: 240,
+          },
+          createdAt: '2026-03-15T10:00:00.000Z',
+          updatedAt: '2026-03-15T10:00:00.000Z',
+        },
+        {
+          id: 'activity-session',
+          type: ActivityTypes.KANGUR.LEARNER_SESSION,
+          description: 'Sesja logowania ucznia.',
+          userId: 'parent-1',
+          entityId: 'learner-1',
+          entityType: 'kangur_learner',
+          metadata: {
+            startedAt: '2026-03-15T11:00:00.000Z',
+            endedAt: '2026-03-15T11:30:00.000Z',
+            durationSeconds: 1800,
+          },
+          createdAt: '2026-03-15T11:30:00.000Z',
+          updatedAt: '2026-03-15T11:30:00.000Z',
+        },
+      ],
+      total: 3,
+      limit: 20,
+      offset: 0,
+    });
+
+    render(<KangurParentDashboardAssignmentsMonitoringWidget />);
+
+    await waitFor(() =>
+      expect(screen.getByTestId('parent-monitoring-overview')).toBeInTheDocument()
+    );
+
+    expect(screen.getByTestId('parent-monitoring-overview-total')).toHaveTextContent('3');
+    expect(screen.getByTestId('parent-monitoring-overview-sessions')).toHaveTextContent('1');
+    expect(screen.getByTestId('parent-monitoring-overview-opened-tasks')).toHaveTextContent('1');
+    expect(screen.getByTestId('parent-monitoring-overview-lesson-panels')).toHaveTextContent('1');
+    expect(screen.getByTestId('parent-monitoring-activity-mix-session')).toBeInTheDocument();
+    expect(screen.getByTestId('parent-monitoring-lesson-focus')).toHaveTextContent('Zegar');
+    expect(screen.getByTestId('parent-monitoring-lesson-focus')).toHaveTextContent('4m 00s');
+  });
+
   it('loads more interactions when requested', async () => {
     learnerInteractionsListMock
       .mockResolvedValueOnce({

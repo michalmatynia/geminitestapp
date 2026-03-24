@@ -10,6 +10,7 @@ import {
   KangurLessonInset,
   KangurLessonLead,
   KangurLessonStack,
+  KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
 
 describe('Kangur lesson primitives', () => {
@@ -50,5 +51,25 @@ describe('Kangur lesson primitives', () => {
       'text-left',
       '[color:var(--kangur-page-muted-text)]'
     );
+  });
+
+  it('renders lesson visuals without the old callout shell and supports integrated supporting copy', () => {
+    render(
+      <KangurLessonVisual
+        accent='sky'
+        caption='Visual caption'
+        data-testid='lesson-visual'
+        supportingContent={<div>Supporting explanation</div>}
+      >
+        <svg aria-label='Example visual' role='img' viewBox='0 0 120 80'>
+          <rect width='120' height='80' rx='16' />
+        </svg>
+      </KangurLessonVisual>
+    );
+
+    expect(screen.getByTestId('lesson-visual')).toHaveClass('kangur-lesson-visual-frame', 'w-full');
+    expect(screen.getByTestId('lesson-visual')).not.toHaveClass('kangur-lesson-callout');
+    expect(screen.getByText('Supporting explanation').closest('.kangur-lesson-visual-supporting')).toBeTruthy();
+    expect(screen.getByText('Visual caption')).toBeInTheDocument();
   });
 });

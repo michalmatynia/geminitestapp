@@ -408,6 +408,7 @@
       "label": "Question {number}",
       "pointChip": "⭐ {points} pts ({difficulty})",
       "touchHint": "Tap an answer, then tap the confirm button.",
+      "printHint": "Open this lesson on screen to answer the question interactively.",
       "difficulty": {
         "easy": "easy",
         "medium": "medium",
@@ -419,6 +420,8 @@
       },
       "confirm": "Confirm answer ✓"
     },
+    "examPrintHint": "Open this lesson on screen to answer the Mathematical Kangaroo question interactively.",
+    "examResultPrintHint": "Open this lesson on screen to review the Mathematical Kangaroo answers and solutions.",
     "operationSelector": {
       "title": "Let's play!",
       "intro": {
@@ -582,6 +585,43 @@
           "activeTitle": "Active assignments",
           "activeEmpty": "No active assignments for the learner."
         },
+        "analytics": {
+          "label": "Learning snapshot",
+          "description": "The most important numbers from recent sessions and the learner's current rhythm.",
+          "averageAccuracyLabel": "Average accuracy",
+          "averageAccuracyDescription": "Best score: {best}%",
+          "streakLabel": "Day streak",
+          "streakDescription": "Longest streak: {longest} days",
+          "xpLabel": "XP today",
+          "xpDescription": "{weeklyXp} XP in 7 days · average {averageXp} XP / session",
+          "dailyGoalLabel": "Daily goal",
+          "dailyGoalDescription": "{percent}% of today's plan"
+        },
+        "weeklyActivity": {
+          "label": "Weekly activity",
+          "description": "Games per day and their average accuracy over the last week.",
+          "loading": "Loading session history",
+          "error": "We could not load the full score history",
+          "barTitle": "{count} games · {accuracy}% accuracy"
+        },
+        "operationFocus": {
+          "label": "Focus areas",
+          "description": "Most-practised areas with their accuracy and XP pace.",
+          "progressAria": "Accuracy in the {title} area",
+          "attempts": "{count} attempts",
+          "averageXp": "{xp} XP / session",
+          "empty": "No area data yet. Results will appear after the first games."
+        },
+        "masterySummary": {
+          "label": "Lesson mastery map",
+          "description": "Which lessons are stable already and which still need support.",
+          "trackedLabel": "Tracked lessons",
+          "masteredLabel": "Mastered",
+          "needsPracticeLabel": "Needs practice",
+          "weakestLabel": "Needs support",
+          "strongestLabel": "Strongest",
+          "empty": "No lesson-mastery data yet. Data will appear after the learner works through lessons."
+        },
         "lessonProgress": {
           "label": "Lesson progress",
           "description": "Lesson progress saved panel by panel.",
@@ -610,6 +650,28 @@
           "dateFromLabel": "Date from",
           "dateToLabel": "Date to",
           "clear": "Clear filters"
+        },
+        "overview": {
+          "label": "Activity overview",
+          "description": "The key numbers for the currently visible activity range.",
+          "totalInteractionsLabel": "Interactions",
+          "sessionsLabel": "Sessions",
+          "openedTasksLabel": "Opened tasks",
+          "lessonPanelsLabel": "Lesson panels",
+          "averageSessionDuration": "Average session: {duration}",
+          "latestActivity": "Latest activity: {timestamp}"
+        },
+        "activityMix": {
+          "label": "Activity mix",
+          "description": "A comparison of sessions, task openings, and lesson-panel visits.",
+          "barTitle": "{label}: {count}"
+        },
+        "lessonFocus": {
+          "label": "Most time spent",
+          "description": "Lessons where the learner has spent the most time in panels.",
+          "progressAria": "Time share for lesson {title}",
+          "sectionCount": "{count} sections with activity",
+          "empty": "No lesson panel-time data to compare yet."
         },
         "lessonPanelTime": {
           "label": "Time in lesson panels",
@@ -1380,8 +1442,7 @@
       "nextLesson": "Next lesson: {title}",
       "noNextLesson": "No next lesson",
       "nextShort": "Next",
-      "printLesson": "Print lesson",
-      "printShort": "Print"
+      "printPanel": "Print panel"
     },
     "activeHeader": {
       "narrator": {
@@ -7711,6 +7772,7 @@
     "openSecretPanel": "Open secret panel",
     "secretPanelTitle": "Secret panel",
     "backToTopics": "Back to topics",
+    "printInteractiveHint": "Open this lesson on screen to complete this interactive activity.",
     "panelsNavigation": "Panel navigation",
     "previousPanel": "Previous panel",
     "nextPanel": "Next panel",

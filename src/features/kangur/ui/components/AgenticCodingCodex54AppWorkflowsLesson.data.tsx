@@ -11,6 +11,7 @@ import { KANGUR_GRID_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens'
 import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
+import { useId } from 'react';
 
 type SectionId = 'app_workflows';
 
@@ -69,43 +70,95 @@ Done when: Summary + attached logs`;
 
 const APP_SERVER_EXAMPLE = 'codex app-server';
 
-const WorktreeSplitVisual = (): JSX.Element => (
-  <svg
-    aria-label='Diagram: repo główne z lokalnym wątkiem i worktree.'
-    className='h-auto w-full'
-    role='img'
-    viewBox='0 0 360 140'
-  >
-    <style>{`
-      .panel {
-        fill: #f8fafc;
-        stroke: #e2e8f0;
-        stroke-width: 2;
-      }
-      .label {
-        font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
-        fill: #0f172a;
-      }
-      .line {
-        stroke: #94a3b8;
-        stroke-width: 2;
-        fill: none;
-      }
-      .highlight {
-        stroke: #14b8a6;
-      }
-    `}</style>
-    <rect className='panel' height='40' rx='12' width='140' x='110' y='20' />
-    <text className='label' x='148' y='44'>Main repo</text>
-    <path className='line' d='M180 60 V84' />
-    <path className='line' d='M180 84 H80' />
-    <path className='line highlight' d='M180 84 H280' />
-    <rect className='panel' height='40' rx='12' width='120' x='20' y='92' />
-    <rect className='panel' height='40' rx='12' width='120' x='220' y='92' />
-    <text className='label' x='48' y='116'>Local</text>
-    <text className='label' x='244' y='116'>Worktree</text>
-  </svg>
-);
+export const WorktreeSplitVisual = (): JSX.Element => {
+  const baseId = useId().replace(/:/g, '');
+  const clipId = `agentic-worktree-split-${baseId}-clip`;
+  const panelGradientId = `agentic-worktree-split-${baseId}-panel`;
+  const frameGradientId = `agentic-worktree-split-${baseId}-frame`;
+
+  return (
+    <svg
+      aria-label='Diagram: repo główne z lokalnym wątkiem i worktree.'
+      className='h-auto w-full'
+      data-testid='agentic-worktree-split-animation'
+      role='img'
+      viewBox='0 0 360 160'
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <rect x='10' y='10' width='340' height='140' rx='24' />
+        </clipPath>
+        <linearGradient
+          id={panelGradientId}
+          x1='16'
+          x2='342'
+          y1='16'
+          y2='148'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='#f0fdfa' />
+          <stop offset='52%' stopColor='#ecfeff' />
+          <stop offset='100%' stopColor='#f8fafc' />
+        </linearGradient>
+        <linearGradient
+          id={frameGradientId}
+          x1='18'
+          x2='342'
+          y1='18'
+          y2='18'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='rgba(20,184,166,0.82)' />
+          <stop offset='50%' stopColor='rgba(45,212,191,0.82)' />
+          <stop offset='100%' stopColor='rgba(20,184,166,0.8)' />
+        </linearGradient>
+      </defs>
+
+      <g clipPath={`url(#${clipId})`} data-testid='agentic-worktree-split-atmosphere'>
+        <rect
+          x='10'
+          y='10'
+          width='340'
+          height='140'
+          rx='24'
+          fill={`url(#${panelGradientId})`}
+          stroke='rgba(20,184,166,0.16)'
+          strokeWidth='2'
+        />
+        <ellipse cx='82' cy='30' rx='72' ry='18' fill='rgba(45,212,191,0.16)' />
+        <ellipse cx='286' cy='36' rx='72' ry='18' fill='rgba(20,184,166,0.12)' />
+        <ellipse cx='182' cy='132' rx='100' ry='20' fill='rgba(20,184,166,0.1)' />
+
+        <rect x='110' y='22' width='140' height='44' rx='14' fill='rgba(255,255,255,0.9)' stroke='#99f6e4' strokeWidth='2' />
+        <rect x='20' y='96' width='120' height='40' rx='14' fill='rgba(255,255,255,0.88)' stroke='#cbd5e1' strokeWidth='2' />
+        <rect x='220' y='96' width='120' height='40' rx='14' fill='rgba(240,253,250,0.94)' stroke='#2dd4bf' strokeWidth='2' />
+        <rect x='126' y='34' width='34' height='8' rx='4' fill='rgba(20,184,166,0.18)' />
+        <rect x='36' y='108' width='26' height='8' rx='4' fill='rgba(148,163,184,0.18)' />
+        <rect x='236' y='108' width='38' height='8' rx='4' fill='rgba(20,184,166,0.18)' />
+
+        <path d='M180 66 V88' stroke='#94a3b8' strokeWidth='2.5' fill='none' />
+        <path d='M180 88 H80' stroke='#94a3b8' strokeWidth='2.5' fill='none' />
+        <path d='M180 88 H280' stroke='#14b8a6' strokeWidth='2.5' fill='none' />
+
+        <text x='148' y='48' fontSize='10' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>Main repo</text>
+        <text x='48' y='120' fontSize='10' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>Local</text>
+        <text x='244' y='120' fontSize='10' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>Worktree</text>
+      </g>
+
+      <rect
+        x='18'
+        y='18'
+        width='324'
+        height='124'
+        rx='20'
+        fill='none'
+        stroke={`url(#${frameGradientId})`}
+        strokeWidth='1.8'
+        data-testid='agentic-worktree-split-frame'
+      />
+    </svg>
+  );
+};
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   app_workflows: [

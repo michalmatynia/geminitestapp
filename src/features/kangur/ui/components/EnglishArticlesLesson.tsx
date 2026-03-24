@@ -108,21 +108,25 @@ const buildEnglishArticlesSlides = (
           <KangurLessonVisual
             accent='amber'
             caption={translations('slides.aAn.overview.caption')}
+            supportingContent={
+              <div>
+                <ul className='space-y-2 text-sm'>
+                  {[
+                    translations('slides.aAn.overview.items.unit'),
+                    translations('slides.aAn.overview.items.angle'),
+                    translations('slides.aAn.overview.items.xIntercept'),
+                    translations('slides.aAn.overview.items.variable'),
+                  ].map((text) => (
+                    <li key={text} className='font-semibold text-amber-700'>
+                      {text}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            }
           >
             <EnglishArticleVowelAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm`}>
-            {[
-              translations('slides.aAn.overview.items.unit'),
-              translations('slides.aAn.overview.items.angle'),
-              translations('slides.aAn.overview.items.xIntercept'),
-              translations('slides.aAn.overview.items.variable'),
-            ].map((text) => (
-              <KangurLessonInset key={text} accent='amber' className='text-left'>
-                <p className='font-semibold text-amber-700'>{text}</p>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -175,20 +179,24 @@ const buildEnglishArticlesSlides = (
           <KangurLessonVisual
             accent='indigo'
             caption={translations('slides.the.focus.caption')}
+            supportingContent={
+              <div>
+                <ul className='space-y-2 text-sm'>
+                  {[
+                    'The graph on the screen shows the parabola.',
+                    'The solution we found is correct.',
+                    'The angle at point A is 90°.',
+                  ].map((text) => (
+                    <li key={text} className='font-semibold text-indigo-700'>
+                      {text}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            }
           >
             <EnglishArticleFocusAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
-            {[
-              'The graph on the screen shows the parabola.',
-              'The solution we found is correct.',
-              'The angle at point A is 90°.',
-            ].map((text) => (
-              <KangurLessonInset key={text} accent='indigo' className='text-left'>
-                <p className='font-semibold text-indigo-700'>{text}</p>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -230,21 +238,25 @@ const buildEnglishArticlesSlides = (
           <KangurLessonVisual
             accent='slate'
             caption={translations('slides.zero.overview.caption')}
+            supportingContent={
+              <div>
+                <ul className='space-y-2 text-sm'>
+                  {[
+                    'We study math after class.',
+                    'Graphs show patterns.',
+                    'Homework helps practice.',
+                    'Variables x and y are common.',
+                  ].map((text) => (
+                    <li key={text} className='font-semibold text-slate-700'>
+                      {text}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            }
           >
             <EnglishZeroArticleAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
-            {[
-              'We study math after class.',
-              'Graphs show patterns.',
-              'Homework helps practice.',
-              'Variables x and y are common.',
-            ].map((text) => (
-              <KangurLessonInset key={text} accent='slate' className='text-left'>
-                <p className='font-semibold text-slate-700'>{text}</p>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },

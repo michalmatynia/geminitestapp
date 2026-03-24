@@ -22,20 +22,28 @@ import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGr
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import {
   KangurButton,
+  KangurActivityColumn,
   KangurEmptyState,
   KangurGlassPanel,
   KangurInfoCard,
+  KangurMetricCard,
   KangurMetaText,
   KangurPanelStack,
   KangurProgressBar,
+  KangurStatusChip,
   KangurSummaryPanel,
   KangurWidgetIntro,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import { useKangurParentDashboardScores } from '@/features/kangur/ui/hooks/useKangurParentDashboardScores';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { buildKangurAssignmentListItems } from '@/features/kangur/ui/services/delegated-assignments';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
+import {
+  buildKangurLearnerProfileSnapshot,
+  buildLessonMasteryInsights,
+} from '@/features/kangur/ui/services/profile';
 import type { KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
 import { withKangurClientError } from '@/features/kangur/observability/client';
 import {
@@ -46,6 +54,9 @@ import {
 
 
 const RECENT_ACTIVE_ASSIGNMENTS_LIMIT = 3;
+const DASHBOARD_ANALYTICS_DAILY_GOAL_GAMES = 3;
+const TOP_OPERATION_LIMIT = 4;
+const TOP_LESSON_INSIGHT_LIMIT = 3;
 
 const buildAssignmentHref = (
   basePath: string,
@@ -93,7 +104,7 @@ export function KangurParentDashboardProgressWidget({
   const locale = useLocale();
   const translations = useTranslations('KangurParentDashboard');
   const runtimeTranslations = useTranslations('KangurProgressRuntime');
-  const { activeLearner, activeTab, basePath, canAccessDashboard, progress } =
+  const { activeLearner, activeTab, basePath, canAccessDashboard, progress, user } =
     useKangurParentDashboardRuntime();
   const { subject, subjectKey } = useKangurSubjectFocus();
   const { ageGroup } = useKangurAgeGroupFocus();
@@ -102,6 +113,9 @@ export function KangurParentDashboardProgressWidget({
   const lessonsQuery = useKangurLessons({ ageGroup, enabledOnly: true });
   const lessons = useMemo(() => lessonsQuery.data ?? [], [lessonsQuery.data]);
   const activeLearnerId = activeLearner?.id ?? null;
+  const activeLearnerName =
+    activeLearner?.displayName?.trim() || user?.full_name?.trim() || null;
+  const createdBy = user?.email?.trim() || null;
   const [archiveError, setArchiveError] = useState<string | null>(null);
   const taskKindLabels: Record<string, string> = {
     game: translations('widgets.progress.taskKind.game'),
@@ -124,6 +138,17 @@ export function KangurParentDashboardProgressWidget({
   const recentAssignmentsTitle = translations('widgets.progress.assignments.recentTitle');
   const recentAssignmentsSummary = translations('widgets.progress.assignments.recentSummary');
   const recentAssignmentsEmptyLabel = translations('widgets.progress.assignments.recentEmpty');
+  const {
+    isLoadingScores,
+    scores,
+    scoresError,
+  } = useKangurParentDashboardScores({
+    createdBy,
+    enabled: Boolean(activeLearnerId && canAccessDashboard),
+    learnerId: activeLearnerId,
+    playerName: activeLearnerName,
+    subject,
+  });
   const {
     assignments,
     isLoading: assignmentsLoading,
@@ -202,6 +227,28 @@ export function KangurParentDashboardProgressWidget({
         .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry)),
     [lessonPanelProgress, lessons]
   );
+  const snapshot = useMemo(
+    () =>
+      buildKangurLearnerProfileSnapshot({
+        progress,
+        scores,
+        dailyGoalGames: DASHBOARD_ANALYTICS_DAILY_GOAL_GAMES,
+        locale,
+      }),
+    [locale, progress, scores]
+  );
+  const maxWeeklyGames = useMemo(
+    () => Math.max(1, ...snapshot.weeklyActivity.map((point) => point.games)),
+    [snapshot.weeklyActivity]
+  );
+  const topOperationPerformance = useMemo(
+    () => snapshot.operationPerformance.slice(0, TOP_OPERATION_LIMIT),
+    [snapshot.operationPerformance]
+  );
+  const lessonMasteryInsights = useMemo(
+    () => buildLessonMasteryInsights(progress, TOP_LESSON_INSIGHT_LIMIT, locale),
+    [locale, progress]
+  );
 
   if (!canAccessDashboard) {
     return null;
@@ -264,6 +311,8 @@ export function KangurParentDashboardProgressWidget({
       }
     );
   };
+  const strongestLessons = lessonMasteryInsights.strongest.slice(0, 2);
+  const weakestLessons = lessonMasteryInsights.weakest.slice(0, 2);
 
   return (
     <KangurPanelStack>
@@ -274,6 +323,230 @@ export function KangurParentDashboardProgressWidget({
         }
         title={progressContent?.title ?? translations('widgets.progress.title')}
       />
+      <KangurSummaryPanel
+        accent='indigo'
+        className='mt-1'
+        data-testid='parent-dashboard-progress-analytics'
+        description={translations('widgets.progress.analytics.description')}
+        label={translations('widgets.progress.analytics.label')}
+      >
+        <div className='mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
+          <KangurMetricCard
+            accent='indigo'
+            data-testid='parent-dashboard-progress-analytics-average-accuracy'
+            description={translations('widgets.progress.analytics.averageAccuracyDescription', {
+              best: snapshot.bestAccuracy,
+            })}
+            label={translations('widgets.progress.analytics.averageAccuracyLabel')}
+            value={`${snapshot.averageAccuracy}%`}
+          />
+          <KangurMetricCard
+            accent='amber'
+            data-testid='parent-dashboard-progress-analytics-streak'
+            description={translations('widgets.progress.analytics.streakDescription', {
+              longest: snapshot.longestStreakDays,
+            })}
+            label={translations('widgets.progress.analytics.streakLabel')}
+            value={snapshot.currentStreakDays}
+          />
+          <KangurMetricCard
+            accent='violet'
+            data-testid='parent-dashboard-progress-analytics-xp'
+            description={translations('widgets.progress.analytics.xpDescription', {
+              weeklyXp: snapshot.weeklyXpEarned,
+              averageXp: snapshot.averageXpPerSession,
+            })}
+            label={translations('widgets.progress.analytics.xpLabel')}
+            value={`+${snapshot.todayXpEarned}`}
+          />
+          <KangurMetricCard
+            accent='teal'
+            data-testid='parent-dashboard-progress-analytics-daily-goal'
+            description={translations('widgets.progress.analytics.dailyGoalDescription', {
+              percent: snapshot.dailyGoalPercent,
+            })}
+            label={translations('widgets.progress.analytics.dailyGoalLabel')}
+            value={`${snapshot.todayGames}/${snapshot.dailyGoalGames}`}
+          />
+        </div>
+      </KangurSummaryPanel>
+      <KangurSummaryPanel
+        accent='violet'
+        className='mt-1'
+        data-testid='parent-dashboard-progress-weekly-activity'
+        description={translations('widgets.progress.weeklyActivity.description')}
+        label={translations('widgets.progress.weeklyActivity.label')}
+      >
+        <div className='mt-3 flex flex-wrap gap-2'>
+          {isLoadingScores ? (
+            <KangurStatusChip className='bg-slate-100 text-slate-700'>
+              {translations('widgets.progress.weeklyActivity.loading')}
+            </KangurStatusChip>
+          ) : null}
+          {scoresError ? (
+            <KangurStatusChip className='bg-rose-100 text-rose-700'>
+              {translations('widgets.progress.weeklyActivity.error')}
+            </KangurStatusChip>
+          ) : null}
+        </div>
+        <div className='mt-3 rounded-[26px] border border-violet-200/70 bg-white/78 px-4 py-4'>
+          <div className='flex h-36 items-end gap-2'>
+            {snapshot.weeklyActivity.map((point) => {
+              const heightPercent =
+                point.games === 0
+                  ? 8
+                  : Math.max(16, Math.round((point.games / maxWeeklyGames) * 100));
+              return (
+                <div
+                  key={point.dateKey}
+                  className='flex min-w-0 flex-1 flex-col items-center gap-1.5'
+                >
+                  <div className='text-[11px] font-semibold text-violet-700'>
+                    {point.games}
+                  </div>
+                  <KangurActivityColumn
+                    accent='violet'
+                    active={point.games > 0}
+                    data-testid={`parent-dashboard-progress-weekly-activity-${point.dateKey}`}
+                    title={translations('widgets.progress.weeklyActivity.barTitle', {
+                      count: point.games,
+                      accuracy: point.averageAccuracy,
+                    })}
+                    value={heightPercent}
+                  />
+                  <div className='text-[11px] [color:var(--kangur-page-muted-text)]'>
+                    {point.label}
+                  </div>
+                  <div className='text-[10px] text-slate-400'>{point.averageAccuracy}%</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </KangurSummaryPanel>
+      <div className='grid gap-4 xl:grid-cols-2'>
+        <KangurSummaryPanel
+          accent='sky'
+          className='mt-1'
+          data-testid='parent-dashboard-progress-operation-focus'
+          description={translations('widgets.progress.operationFocus.description')}
+          label={translations('widgets.progress.operationFocus.label')}
+        >
+          <div className='mt-3 flex flex-col kangur-panel-gap'>
+            {topOperationPerformance.length > 0 ? (
+              topOperationPerformance.map((item) => (
+                <div key={item.operation} className='rounded-[20px] border border-sky-200/70 bg-white/82 px-4 py-3'>
+                  <div className={`${KANGUR_COMPACT_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
+                    <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                      {item.emoji} {item.label}
+                    </div>
+                    <div className='text-sm font-semibold text-sky-700'>
+                      {item.averageAccuracy}%
+                    </div>
+                  </div>
+                  <KangurProgressBar
+                    accent='sky'
+                    aria-label={translations('widgets.progress.operationFocus.progressAria', {
+                      title: item.label,
+                    })}
+                    className='mt-2'
+                    size='sm'
+                    value={item.averageAccuracy}
+                  />
+                  <div className='mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs [color:var(--kangur-page-muted-text)]'>
+                    <span>
+                      {translations('widgets.progress.operationFocus.attempts', {
+                        count: item.attempts,
+                      })}
+                    </span>
+                    <span>
+                      {translations('widgets.progress.operationFocus.averageXp', {
+                        xp: item.averageXpPerSession,
+                      })}
+                    </span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className='text-sm [color:var(--kangur-page-muted-text)]'>
+                {translations('widgets.progress.operationFocus.empty')}
+              </div>
+            )}
+          </div>
+        </KangurSummaryPanel>
+        <KangurSummaryPanel
+          accent='amber'
+          className='mt-1'
+          data-testid='parent-dashboard-progress-mastery-summary'
+          description={translations('widgets.progress.masterySummary.description')}
+          label={translations('widgets.progress.masterySummary.label')}
+        >
+          <div className='mt-3 grid gap-3 sm:grid-cols-3'>
+            <KangurMetricCard
+              accent='amber'
+              data-testid='parent-dashboard-progress-mastery-tracked'
+              label={translations('widgets.progress.masterySummary.trackedLabel')}
+              value={lessonMasteryInsights.trackedLessons}
+            />
+            <KangurMetricCard
+              accent='emerald'
+              data-testid='parent-dashboard-progress-mastery-mastered'
+              label={translations('widgets.progress.masterySummary.masteredLabel')}
+              value={lessonMasteryInsights.masteredLessons}
+            />
+            <KangurMetricCard
+              accent='rose'
+              data-testid='parent-dashboard-progress-mastery-needs-practice'
+              label={translations('widgets.progress.masterySummary.needsPracticeLabel')}
+              value={lessonMasteryInsights.lessonsNeedingPractice}
+            />
+          </div>
+          {lessonMasteryInsights.trackedLessons > 0 ? (
+            <div className='mt-4 grid gap-3 lg:grid-cols-2'>
+              <div className='rounded-[20px] border border-rose-200/70 bg-white/82 px-4 py-3'>
+                <div className='text-xs font-bold uppercase tracking-[0.18em] text-rose-700'>
+                  {translations('widgets.progress.masterySummary.weakestLabel')}
+                </div>
+                <div className='mt-2 flex flex-col gap-2'>
+                  {weakestLessons.map((lesson) => (
+                    <div key={lesson.componentId}>
+                      <div className='flex items-center justify-between gap-2 text-sm'>
+                        <span className='min-w-0 truncate font-semibold [color:var(--kangur-page-text)]'>
+                          {lesson.emoji} {lesson.title}
+                        </span>
+                        <span className='shrink-0 text-rose-700'>{lesson.masteryPercent}%</span>
+                      </div>
+                      <KangurProgressBar accent='rose' className='mt-1' size='sm' value={lesson.masteryPercent} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className='rounded-[20px] border border-emerald-200/70 bg-white/82 px-4 py-3'>
+                <div className='text-xs font-bold uppercase tracking-[0.18em] text-emerald-700'>
+                  {translations('widgets.progress.masterySummary.strongestLabel')}
+                </div>
+                <div className='mt-2 flex flex-col gap-2'>
+                  {strongestLessons.map((lesson) => (
+                    <div key={lesson.componentId}>
+                      <div className='flex items-center justify-between gap-2 text-sm'>
+                        <span className='min-w-0 truncate font-semibold [color:var(--kangur-page-text)]'>
+                          {lesson.emoji} {lesson.title}
+                        </span>
+                        <span className='shrink-0 text-emerald-700'>{lesson.masteryPercent}%</span>
+                      </div>
+                      <KangurProgressBar accent='emerald' className='mt-1' size='sm' value={lesson.masteryPercent} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className='mt-3 text-sm [color:var(--kangur-page-muted-text)]'>
+              {translations('widgets.progress.masterySummary.empty')}
+            </div>
+          )}
+        </KangurSummaryPanel>
+      </div>
       {dailyQuest ? (
         <KangurSummaryPanel
           accent='violet'

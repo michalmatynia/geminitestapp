@@ -442,6 +442,83 @@ describe('KangurMusicPianoRoll touch mode', () => {
     );
   });
 
+  it('lets live synth expression relax when touch pressure eases off after note start', () => {
+    const handleSynthGestureStart = vi.fn();
+    const handleSynthGestureChange = vi.fn();
+
+    render(
+      <KangurMusicPianoRoll
+        keyboardMode='synth'
+        keyTestIdPrefix='music-roll-touch-pressure-release'
+        keys={DIATONIC_PIANO_KEYS}
+        melody={['do', 're', 'mi']}
+        onKeyPress={vi.fn()}
+        onSynthGestureChange={handleSynthGestureChange}
+        onSynthGestureStart={handleSynthGestureStart}
+      />
+    );
+
+    const key = screen.getByTestId('music-roll-touch-pressure-release-do');
+    mockKeyRect(key, 0, 160, 0, 96);
+
+    fireEvent.pointerDown(key, {
+      clientX: 48,
+      clientY: 82,
+      height: 18,
+      pointerId: 51,
+      pointerType: 'touch',
+      pressure: 0.94,
+      width: 22,
+    });
+
+    const startGesture = handleSynthGestureStart.mock.calls[0]?.[0];
+    expect(startGesture).toEqual(
+      expect.objectContaining({
+        brightness: expect.any(Number),
+        interactionId: 'synth-51-do',
+        velocity: expect.any(Number),
+      })
+    );
+
+    fireEvent.pointerMove(key, {
+      clientX: 49,
+      clientY: 82,
+      height: 18,
+      pointerId: 51,
+      pointerType: 'touch',
+      pressure: 0.94,
+      width: 22,
+    });
+
+    const energizedGesture = handleSynthGestureChange.mock.calls.at(-1)?.[0];
+    expect(energizedGesture).toEqual(
+      expect.objectContaining({
+        interactionId: 'synth-51-do',
+        noteId: 'do',
+      })
+    );
+
+    fireEvent.pointerMove(key, {
+      clientX: 50,
+      clientY: 82,
+      height: 18,
+      pointerId: 51,
+      pointerType: 'touch',
+      pressure: 0.18,
+      width: 22,
+    });
+
+    const relaxedGesture = handleSynthGestureChange.mock.calls.at(-1)?.[0];
+    expect(relaxedGesture).toEqual(
+      expect.objectContaining({
+        interactionId: 'synth-51-do',
+        noteId: 'do',
+      })
+    );
+    expect(relaxedGesture.velocity).toBeLessThan(energizedGesture.velocity);
+    expect(relaxedGesture.brightness).toBeLessThan(energizedGesture.brightness);
+  });
+
   it('supports six-year-old icon cues on coarse-pointer synth controls', () => {
     render(
       <KangurMusicPianoRoll

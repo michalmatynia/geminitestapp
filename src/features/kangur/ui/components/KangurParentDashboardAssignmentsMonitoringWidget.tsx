@@ -15,11 +15,15 @@ import {
   useKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import {
+  KangurActivityColumn,
   KangurButton,
   KangurEmptyState,
   KangurInfoCard,
+  KangurMetricCard,
   KangurMetaText,
   KangurPanelStack,
+  KangurProgressBar,
+  KangurStatusChip,
   KangurSummaryPanel,
   KangurTextField,
   KangurWidgetIntro,
@@ -46,6 +50,15 @@ const INTERACTIONS_PAGE_LIMIT = 20;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 type InteractionFilter = 'all' | 'opened_task' | 'lesson_panel' | 'session';
+type InteractionView = {
+  description: string;
+  durationSeconds: number | null;
+  id: string;
+  kind: InteractionFilter | 'other';
+  label: string;
+  timestamp: string | null;
+  timestampMs: number | null;
+};
 
 const formatDuration = ({
   seconds,
@@ -298,7 +311,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
   const nextInteractionOffset = interactionHistory
     ? interactionHistory.offset + interactions.length
     : 0;
-  const interactionViews = useMemo(
+  const interactionViews = useMemo<InteractionView[]>(
     () =>
       interactions.map((entry) => {
         const metadata = asRecord(entry.metadata);
@@ -329,6 +342,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
               kind: kindLabel.toLowerCase(),
             }),
             description: title,
+            durationSeconds: null,
             timestamp,
             timestampMs,
           };
@@ -351,6 +365,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
             kind: 'lesson_panel' as const,
             label: translations('widgets.monitoring.interaction.lessonPanelLabel'),
             description: `${detail}${timeLabel}`,
+            durationSeconds: totalSeconds,
             timestamp,
             timestampMs,
           };
@@ -377,6 +392,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
             kind: 'session' as const,
             label: translations('widgets.monitoring.interaction.sessionLabel'),
             description,
+            durationSeconds,
             timestamp,
             timestampMs,
           };
@@ -389,6 +405,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
           description:
             entry.description ??
             translations('widgets.monitoring.interaction.learnerActivityDescription'),
+          durationSeconds: null,
           timestamp,
           timestampMs,
         };
@@ -428,6 +445,72 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
       return true;
     });
   }, [interactionFilter, interactionViews, rangeEndMs, rangeStartMs]);
+  const interactionSummary = useMemo(() => {
+    const openedTaskCount = filteredInteractions.filter((entry) => entry.kind === 'opened_task').length;
+    const lessonPanelCount = filteredInteractions.filter((entry) => entry.kind === 'lesson_panel').length;
+    const sessions = filteredInteractions.filter((entry) => entry.kind === 'session');
+    const sessionCount = sessions.length;
+    const totalSessionDuration = sessions.reduce(
+      (sum, entry) => sum + (entry.durationSeconds ?? 0),
+      0
+    );
+    const averageSessionDuration =
+      sessionCount > 0 ? Math.round(totalSessionDuration / sessionCount) : 0;
+    const latestTimestampEntry =
+      filteredInteractions
+        .filter((entry) => entry.timestampMs !== null)
+        .sort((left, right) => (right.timestampMs ?? 0) - (left.timestampMs ?? 0))[0] ?? null;
+
+    return {
+      averageSessionDuration,
+      lessonPanelCount,
+      latestTimestamp: latestTimestampEntry?.timestamp ?? null,
+      openedTaskCount,
+      sessionCount,
+      totalInteractions: filteredInteractions.length,
+    };
+  }, [filteredInteractions]);
+  const interactionMix = useMemo(
+    () => [
+      {
+        accent: 'indigo' as const,
+        count: interactionSummary.totalInteractions,
+        key: 'all',
+        label: translations('widgets.monitoring.overview.totalInteractionsLabel'),
+      },
+      {
+        accent: 'amber' as const,
+        count: interactionSummary.openedTaskCount,
+        key: 'opened_task',
+        label: translations('widgets.monitoring.overview.openedTasksLabel'),
+      },
+      {
+        accent: 'sky' as const,
+        count: interactionSummary.lessonPanelCount,
+        key: 'lesson_panel',
+        label: translations('widgets.monitoring.overview.lessonPanelsLabel'),
+      },
+      {
+        accent: 'emerald' as const,
+        count: interactionSummary.sessionCount,
+        key: 'session',
+        label: translations('widgets.monitoring.overview.sessionsLabel'),
+      },
+    ],
+    [interactionSummary, translations]
+  );
+  const maxInteractionMixCount = useMemo(
+    () => Math.max(1, ...interactionMix.map((entry) => entry.count)),
+    [interactionMix]
+  );
+  const lessonTimeLeaders = useMemo(
+    () => lessonPanelTimeCards.slice().sort((left, right) => right.totalSeconds - left.totalSeconds).slice(0, 4),
+    [lessonPanelTimeCards]
+  );
+  const maxLessonTimeSeconds = useMemo(
+    () => Math.max(1, ...lessonTimeLeaders.map((entry) => entry.totalSeconds)),
+    [lessonTimeLeaders]
+  );
   const filtersActive =
     interactionFilter !== 'all' || Boolean(interactionDateFrom) || Boolean(interactionDateTo);
 
@@ -542,6 +625,144 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
         }
         title={monitoringContent?.title ?? translations('widgets.monitoring.title')}
       />
+      <KangurSummaryPanel
+        accent='indigo'
+        className='mt-1'
+        data-testid='parent-monitoring-overview'
+        description={translations('widgets.monitoring.overview.description')}
+        label={translations('widgets.monitoring.overview.label')}
+      >
+        <div className='mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
+          <KangurMetricCard
+            accent='indigo'
+            data-testid='parent-monitoring-overview-total'
+            label={translations('widgets.monitoring.overview.totalInteractionsLabel')}
+            value={interactionSummary.totalInteractions}
+          />
+          <KangurMetricCard
+            accent='emerald'
+            data-testid='parent-monitoring-overview-sessions'
+            label={translations('widgets.monitoring.overview.sessionsLabel')}
+            value={interactionSummary.sessionCount}
+          />
+          <KangurMetricCard
+            accent='amber'
+            data-testid='parent-monitoring-overview-opened-tasks'
+            label={translations('widgets.monitoring.overview.openedTasksLabel')}
+            value={interactionSummary.openedTaskCount}
+          />
+          <KangurMetricCard
+            accent='sky'
+            data-testid='parent-monitoring-overview-lesson-panels'
+            label={translations('widgets.monitoring.overview.lessonPanelsLabel')}
+            value={interactionSummary.lessonPanelCount}
+          />
+        </div>
+        <div className='mt-3 flex flex-wrap gap-2'>
+          <KangurStatusChip className='bg-white/85 text-slate-700'>
+            {translations('widgets.monitoring.overview.averageSessionDuration', {
+              duration: formatLocalizedDuration(interactionSummary.averageSessionDuration),
+            })}
+          </KangurStatusChip>
+          <KangurStatusChip className='bg-white/85 text-slate-700'>
+            {translations('widgets.monitoring.overview.latestActivity', {
+              timestamp: formatTimestamp(interactionSummary.latestTimestamp),
+            })}
+          </KangurStatusChip>
+        </div>
+      </KangurSummaryPanel>
+
+      <KangurSummaryPanel
+        accent='violet'
+        className='mt-1'
+        data-testid='parent-monitoring-activity-mix'
+        description={translations('widgets.monitoring.activityMix.description')}
+        label={translations('widgets.monitoring.activityMix.label')}
+      >
+        <div className='mt-3 rounded-[26px] border border-violet-200/70 bg-white/78 px-4 py-4'>
+          <div className='flex h-36 items-end gap-3'>
+            {interactionMix.map((entry) => {
+              const heightPercent =
+                entry.count === 0
+                  ? 8
+                  : Math.max(16, Math.round((entry.count / maxInteractionMixCount) * 100));
+              return (
+                <div key={entry.key} className='flex min-w-0 flex-1 flex-col items-center gap-1.5'>
+                  <div className='text-[11px] font-semibold text-violet-700'>{entry.count}</div>
+                  <KangurActivityColumn
+                    accent={entry.accent}
+                    active={entry.count > 0}
+                    data-testid={`parent-monitoring-activity-mix-${entry.key}`}
+                    title={translations('widgets.monitoring.activityMix.barTitle', {
+                      count: entry.count,
+                      label: entry.label,
+                    })}
+                    value={heightPercent}
+                  />
+                  <div className='text-center text-[11px] leading-tight [color:var(--kangur-page-muted-text)]'>
+                    {entry.label}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </KangurSummaryPanel>
+
+      <KangurSummaryPanel
+        accent='sky'
+        className='mt-1'
+        data-testid='parent-monitoring-lesson-focus'
+        description={translations('widgets.monitoring.lessonFocus.description')}
+        label={translations('widgets.monitoring.lessonFocus.label')}
+      >
+        {lessonTimeLeaders.length > 0 ? (
+          <div className='mt-3 flex flex-col kangur-panel-gap'>
+            {lessonTimeLeaders.map((entry) => {
+              const lessonTitle = getLocalizedKangurLessonTitle(
+                entry.lesson.componentId,
+                locale,
+                entry.lesson.title
+              );
+              const percent = Math.max(6, Math.round((entry.totalSeconds / maxLessonTimeSeconds) * 100));
+              return (
+                <div
+                  key={`lesson-focus-${entry.lesson.componentId}`}
+                  className='rounded-[20px] border border-sky-200/70 bg-white/82 px-4 py-3'
+                >
+                  <div className={`${KANGUR_COMPACT_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
+                    <div className='min-w-0 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                      {lessonTitle}
+                    </div>
+                    <div className='shrink-0 text-sm font-semibold text-sky-700'>
+                      {formatLocalizedDuration(entry.totalSeconds)}
+                    </div>
+                  </div>
+                  <KangurProgressBar
+                    accent='sky'
+                    aria-label={translations('widgets.monitoring.lessonFocus.progressAria', {
+                      title: lessonTitle,
+                    })}
+                    className='mt-2'
+                    size='sm'
+                    value={percent}
+                  />
+                  <div className='mt-2 text-xs [color:var(--kangur-page-muted-text)]'>
+                    {translations('widgets.monitoring.lessonFocus.sectionCount', {
+                      count: entry.sections.length,
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className='mt-3 text-sm [color:var(--kangur-page-muted-text)]'>
+            {translations('widgets.monitoring.lessonFocus.empty')}
+          </div>
+        )}
+      </KangurSummaryPanel>
+
       <KangurSummaryPanel
         accent='sky'
         className='mt-1'

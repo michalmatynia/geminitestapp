@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useId, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslations } from 'next-intl';
 
@@ -104,6 +104,91 @@ const computeStrokeLength = (stroke: Point2d[]): number => {
   }
   return total;
 };
+
+export function AlphabetBasicsGuideSurface({
+  guideColor,
+  glowColor,
+  letter,
+  paths,
+}: {
+  guideColor: string;
+  glowColor: string;
+  letter: string;
+  paths: string[];
+}): React.JSX.Element {
+  const baseId = useId().replace(/:/g, '');
+  const clipId = `alphabet-basics-guide-${baseId}-clip`;
+  const panelGradientId = `alphabet-basics-guide-${baseId}-panel`;
+  const frameGradientId = `alphabet-basics-guide-${baseId}-frame`;
+
+  return (
+    <svg
+      viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
+      className='absolute inset-0 h-full w-full'
+      aria-hidden='true'
+      data-testid='alphabet-basics-guide-animation'
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <rect x='0' y='0' width={CANVAS_WIDTH} height={CANVAS_HEIGHT} rx='28' />
+        </clipPath>
+        <linearGradient id={panelGradientId} x1='0' x2='1' y1='0' y2='1'>
+          <stop offset='0%' stopColor='#fef3c7' />
+          <stop offset='50%' stopColor='#e0f2fe' />
+          <stop offset='100%' stopColor='#fae8ff' />
+        </linearGradient>
+        <linearGradient id={frameGradientId} x1='0' x2='1' y1='0' y2='0'>
+          <stop offset='0%' stopColor='rgba(245,158,11,0.78)' />
+          <stop offset='50%' stopColor='rgba(56,189,248,0.82)' />
+          <stop offset='100%' stopColor='rgba(244,114,182,0.82)' />
+        </linearGradient>
+      </defs>
+      <g clipPath={`url(#${clipId})`} data-testid='alphabet-basics-guide-atmosphere'>
+        <rect width={CANVAS_WIDTH} height={CANVAS_HEIGHT} fill={`url(#${panelGradientId})`} />
+        <circle cx='58' cy='60' r='24' fill='#fde68a' opacity='0.6' />
+        <circle cx='310' cy='54' r='18' fill='#bae6fd' opacity='0.65' />
+        <circle cx='304' cy='190' r='22' fill='#fecaca' opacity='0.55' />
+        {paths.map((path) => (
+          <path
+            key={`guide-${path}`}
+            d={path}
+            className='letter-guide'
+            stroke={guideColor}
+          />
+        ))}
+        {paths.map((path, index) => (
+          <path
+            key={`glow-${index}`}
+            d={path}
+            className='letter-glow motion-reduce:animate-none'
+            stroke={glowColor}
+          />
+        ))}
+        <text
+          x='24'
+          y='220'
+          fontSize='26'
+          fontWeight='700'
+          fill='#0f172a'
+          opacity='0.2'
+        >
+          {letter}
+        </text>
+      </g>
+      <rect
+        x='10'
+        y='10'
+        width={CANVAS_WIDTH - 20}
+        height={CANVAS_HEIGHT - 20}
+        rx='24'
+        fill='none'
+        stroke={`url(#${frameGradientId})`}
+        strokeWidth='1.75'
+        data-testid='alphabet-basics-guide-frame'
+      />
+    </svg>
+  );
+}
 
 export default function AlphabetBasicsLesson(): React.JSX.Element {
   const translations = useTranslations('KangurStaticLessons.alphabetBasics');
@@ -392,49 +477,12 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
               style={canvasSurfaceStyle}
               data-testid='alphabet-basics-canvas-shell'
             >
-            <svg
-              viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
-              className='absolute inset-0 h-full w-full'
-              aria-hidden='true'
-            >
-              <defs>
-                <linearGradient id='alphabetBg' x1='0' x2='1' y1='0' y2='1'>
-                  <stop offset='0%' stopColor='#fef3c7' />
-                  <stop offset='50%' stopColor='#e0f2fe' />
-                  <stop offset='100%' stopColor='#fae8ff' />
-                </linearGradient>
-              </defs>
-              <rect width={CANVAS_WIDTH} height={CANVAS_HEIGHT} fill='url(#alphabetBg)' />
-              <circle cx='58' cy='60' r='24' fill='#fde68a' opacity='0.6' />
-              <circle cx='310' cy='54' r='18' fill='#bae6fd' opacity='0.65' />
-              <circle cx='304' cy='190' r='22' fill='#fecaca' opacity='0.55' />
-              {currentRound.paths.map((path) => (
-                <path
-                  key={`guide-${path}`}
-                  d={path}
-                  className='letter-guide'
-                  stroke={currentRound.guideColor}
-                />
-              ))}
-              {currentRound.paths.map((path, index) => (
-                <path
-                  key={`glow-${index}`}
-                  d={path}
-                  className='letter-glow motion-reduce:animate-none'
-                  stroke={currentRound.glowColor}
-                />
-              ))}
-              <text
-                x='24'
-                y='220'
-                fontSize='26'
-                fontWeight='700'
-                fill='#0f172a'
-                opacity='0.2'
-              >
-                {currentRound.label}
-              </text>
-            </svg>
+            <AlphabetBasicsGuideSurface
+              guideColor={currentRound.guideColor}
+              glowColor={currentRound.glowColor}
+              letter={currentRound.label}
+              paths={currentRound.paths}
+            />
 
             <canvas
               ref={canvasRef}

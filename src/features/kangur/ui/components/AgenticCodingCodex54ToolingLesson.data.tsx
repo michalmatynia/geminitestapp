@@ -69,21 +69,26 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='slate'
             caption='Dobór narzędzia = krótsza pętla pracy.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-3`}>
+                {TOOLING_MAP.map((item) => (
+                  <div
+                    key={item.title}
+                    className='rounded-2xl border border-slate-200/70 bg-white/75 px-3 py-2 text-left shadow-sm'
+                  >
+                    <div className='text-xs font-semibold uppercase tracking-[0.2em] text-slate-500'>
+                      {item.title}
+                    </div>
+                    <KangurLessonCaption className='mt-2 text-slate-950'>
+                      {item.description}
+                    </KangurLessonCaption>
+                  </div>
+                ))}
+              </div>
+            }
           >
             <AgenticDocsStackAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-3`}>
-            {TOOLING_MAP.map((item) => (
-              <KangurLessonInset key={item.title} accent='slate'>
-                <div className='text-xs font-semibold uppercase tracking-[0.2em] text-slate-500'>
-                  {item.title}
-                </div>
-                <KangurLessonCaption className='mt-2 text-slate-950'>
-                  {item.description}
-                </KangurLessonCaption>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },

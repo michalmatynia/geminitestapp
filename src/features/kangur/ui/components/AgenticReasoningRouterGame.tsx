@@ -1,7 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 
+import {
+  renderSoftAtmosphereGradients,
+  renderSoftAtmosphereOvals,
+} from '@/features/kangur/ui/components/animations/svgAtmosphere';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
@@ -100,62 +104,117 @@ const ROUTER_TASKS: RouterTask[] = [
   },
 ];
 
-const ReasoningDialVisual = (): JSX.Element => (
-  <svg
-    aria-label='Animated dial showing reasoning levels.'
-    className='h-auto w-full max-w-[260px]'
-    role='img'
-    viewBox='0 0 240 180'
-  >
-    <style>{`
-      .dial {
-        fill: rgba(20,184,166,0.08);
-        stroke: rgba(20,184,166,0.35);
-        stroke-width: 3;
-      }
-      .tick {
-        stroke: rgba(15,118,110,0.5);
-        stroke-width: 2;
-        stroke-linecap: round;
-      }
-      .needle {
-        stroke: #0f766e;
-        stroke-width: 4;
-        stroke-linecap: round;
-        transform-origin: 120px 120px;
-        animation: sweep 6s ease-in-out infinite;
-      }
-      .hub {
-        fill: #0f766e;
-      }
-      .pulse {
-        fill: rgba(45,212,191,0.4);
-        animation: pulse 2.4s ease-in-out infinite;
-      }
-      @keyframes sweep {
-        0% { transform: rotate(-50deg); }
-        45% { transform: rotate(30deg); }
-        70% { transform: rotate(60deg); }
-        100% { transform: rotate(-50deg); }
-      }
-      @keyframes pulse {
-        0%, 100% { opacity: 0.4; transform: scale(1); }
-        50% { opacity: 0.9; transform: scale(1.25); }
-      }
-    `}</style>
-    <circle className='dial' cx='120' cy='120' r='72' />
-    <line className='tick' x1='120' x2='120' y1='38' y2='52' />
-    <line className='tick' x1='60' x2='70' y1='70' y2='80' />
-    <line className='tick' x1='180' x2='170' y1='70' y2='80' />
-    <line className='tick' x1='40' x2='54' y1='120' y2='120' />
-    <line className='tick' x1='200' x2='186' y1='120' y2='120' />
-    <line className='needle' x1='120' x2='120' y1='120' y2='58' />
-    <circle className='hub' cx='120' cy='120' r='6' />
-    <circle className='pulse' cx='120' cy='42' r='6' />
-    <circle className='pulse' cx='48' cy='120' r='6' style={{ animationDelay: '0.6s' }} />
-    <circle className='pulse' cx='192' cy='120' r='6' style={{ animationDelay: '1.2s' }} />
-  </svg>
-);
+export const ReasoningDialVisual = (): JSX.Element => {
+  const baseId = useId().replace(/:/g, '');
+  const clipId = `agentic-reasoning-dial-${baseId}-clip`;
+  const panelGradientId = `agentic-reasoning-dial-${baseId}-panel`;
+  const frameGradientId = `agentic-reasoning-dial-${baseId}-frame`;
+  const atmosphereId = `agentic-reasoning-dial-${baseId}-atmosphere-oval`;
+
+  return (
+    <svg
+      aria-label='Animated dial showing reasoning levels.'
+      className='h-auto w-full max-w-[260px]'
+      data-testid='agentic-reasoning-dial-animation'
+      role='img'
+      viewBox='0 0 240 180'
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <rect x='12' y='12' width='216' height='156' rx='24' />
+        </clipPath>
+        <linearGradient
+          id={panelGradientId}
+          x1='18'
+          x2='222'
+          y1='16'
+          y2='168'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='#f0fdfa' />
+          <stop offset='48%' stopColor='#ecfeff' />
+          <stop offset='100%' stopColor='#eff6ff' />
+        </linearGradient>
+        <linearGradient
+          id={frameGradientId}
+          x1='18'
+          x2='222'
+          y1='18'
+          y2='18'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='rgba(20,184,166,0.82)' />
+          <stop offset='50%' stopColor='rgba(45,212,191,0.82)' />
+          <stop offset='100%' stopColor='rgba(56,189,248,0.82)' />
+        </linearGradient>
+        {renderSoftAtmosphereGradients(atmosphereId, [
+          { key: 'left', cx: 68, cy: 30, rx: 56, ry: 16, color: '#2dd4bf', opacity: 0.06, glowBias: '40%' },
+          { key: 'right', cx: 176, cy: 36, rx: 52, ry: 16, color: '#38bdf8', opacity: 0.05, glowBias: '42%' },
+          { key: 'bottom', cx: 120, cy: 154, rx: 74, ry: 18, color: '#14b8a6', opacity: 0.045, glowBias: '60%' },
+        ])}
+      </defs>
+      <style>{`
+        .reasoning-dial-needle {
+          transform-origin: 120px 120px;
+          animation: sweep 6s ease-in-out infinite;
+        }
+        .reasoning-dial-pulse {
+          animation: pulse 2.4s ease-in-out infinite;
+        }
+        @keyframes sweep {
+          0% { transform: rotate(-50deg); }
+          45% { transform: rotate(30deg); }
+          70% { transform: rotate(60deg); }
+          100% { transform: rotate(-50deg); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 0.4; transform: scale(1); }
+          50% { opacity: 0.9; transform: scale(1.25); }
+        }
+      `}</style>
+      <g clipPath={`url(#${clipId})`} data-testid='agentic-reasoning-dial-atmosphere'>
+        <rect
+          x='12'
+          y='12'
+          width='216'
+          height='156'
+          rx='24'
+          fill={`url(#${panelGradientId})`}
+          stroke='rgba(20,184,166,0.16)'
+          strokeWidth='2'
+        />
+        {renderSoftAtmosphereOvals(atmosphereId, [
+          { key: 'left', cx: 68, cy: 30, rx: 56, ry: 16, color: '#2dd4bf', opacity: 0.06, glowBias: '40%' },
+          { key: 'right', cx: 176, cy: 36, rx: 52, ry: 16, color: '#38bdf8', opacity: 0.05, glowBias: '42%' },
+          { key: 'bottom', cx: 120, cy: 154, rx: 74, ry: 18, color: '#14b8a6', opacity: 0.045, glowBias: '60%' },
+        ])}
+        <circle cx='120' cy='120' r='72' fill='rgba(20,184,166,0.08)' stroke='rgba(20,184,166,0.35)' strokeWidth='3' />
+        <circle cx='120' cy='120' r='52' fill='rgba(255,255,255,0.24)' />
+        <line x1='120' x2='120' y1='38' y2='52' stroke='rgba(15,118,110,0.5)' strokeWidth='2' strokeLinecap='round' />
+        <line x1='60' x2='70' y1='70' y2='80' stroke='rgba(15,118,110,0.5)' strokeWidth='2' strokeLinecap='round' />
+        <line x1='180' x2='170' y1='70' y2='80' stroke='rgba(15,118,110,0.5)' strokeWidth='2' strokeLinecap='round' />
+        <line x1='40' x2='54' y1='120' y2='120' stroke='rgba(15,118,110,0.5)' strokeWidth='2' strokeLinecap='round' />
+        <line x1='200' x2='186' y1='120' y2='120' stroke='rgba(15,118,110,0.5)' strokeWidth='2' strokeLinecap='round' />
+        <line className='reasoning-dial-needle' x1='120' x2='120' y1='120' y2='58' stroke='#0f766e' strokeWidth='4' strokeLinecap='round' />
+        <circle cx='120' cy='120' r='6' fill='#0f766e' />
+        <circle className='reasoning-dial-pulse' cx='120' cy='42' r='6' fill='rgba(45,212,191,0.4)' />
+        <circle className='reasoning-dial-pulse' cx='48' cy='120' r='6' fill='rgba(45,212,191,0.4)' style={{ animationDelay: '0.6s' }} />
+        <circle className='reasoning-dial-pulse' cx='192' cy='120' r='6' fill='rgba(45,212,191,0.4)' style={{ animationDelay: '1.2s' }} />
+      </g>
+      <rect
+        x='18'
+        y='18'
+        width='204'
+        height='144'
+        rx='20'
+        fill='none'
+        stroke={`url(#${frameGradientId})`}
+        strokeWidth='1.8'
+        data-testid='agentic-reasoning-dial-frame'
+      />
+    </svg>
+  );
+};
 
 export default function AgenticReasoningRouterGame({
   onFinish,

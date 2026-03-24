@@ -27,12 +27,14 @@ type ActiveNode = {
   context: AudioContext;
   filterNode?: BiquadFilterNode;
   gainNode: GainNode;
+  lfoFilterGainNode?: GainNode;
   lfoGainNode?: GainNode;
   lfoOscillator?: OscillatorNode;
   oscillator: OscillatorNode;
   oscillator2?: OscillatorNode;
   oscillator3?: OscillatorNode;
   reverbSendGainNode?: GainNode;
+  reverbStereoPannerNode?: StereoPannerNode;
   stereoPannerNode?: StereoPannerNode;
   transientGainNode?: GainNode;
   transientOscillator?: OscillatorNode;
@@ -40,12 +42,22 @@ type ActiveNode = {
 };
 
 type SustainedNode<NoteId extends string = string> = ActiveNode & {
+  baseGain: number;
+  brightness: number;
   currentFrequencyHz: number;
   id: NoteId;
   interactionId: string;
   stereoPan: number;
+  velocity: number;
   vibratoDepth: number;
   vibratoRateHz: number;
+};
+
+type StopSustainedNoteOptions = {
+  brightness?: number;
+  immediate?: boolean;
+  releaseSeconds?: number;
+  velocity?: number;
 };
 
 const DEFAULT_DURATION_MS = 420;
@@ -76,7 +88,10 @@ const resolvePortamentoSeconds = (
   }
 
   const semitoneDelta = Math.abs(12 * Math.log2(nextFrequencyHz / previousFrequencyHz));
-  return clamp(Number((0.008 + semitoneDelta * 0.005).toFixed(3)), 0.008, 0.04);
+  const averageFrequencyHz = Math.sqrt(previousFrequencyHz * nextFrequencyHz);
+  const pitchTracking = clamp(Math.log2(Math.max(averageFrequencyHz, 55) / 261.63), -1, 1.5);
+  const pitchScale = clamp(1 - pitchTracking * 0.08, 0.88, 1.1);
+  return clamp(Number(((0.008 + semitoneDelta * 0.005) * pitchScale).toFixed(3)), 0.008, 0.04);
 };
 
 const resolveAudioContextCtor = (): typeof AudioContext | null => {
@@ -110,8 +125,10 @@ const stopActiveNode = (activeNode: ActiveNode): void => {
     activeNode.blendGainNode?.disconnect();
     activeNode.blendGainNode3?.disconnect();
     activeNode.filterNode?.disconnect();
+    activeNode.lfoFilterGainNode?.disconnect();
     activeNode.lfoGainNode?.disconnect();
     activeNode.reverbSendGainNode?.disconnect();
+    activeNode.reverbStereoPannerNode?.disconnect();
     activeNode.stereoPannerNode?.disconnect();
     activeNode.transientGainNode?.disconnect();
     activeNode.waveShaperNode?.disconnect();
@@ -149,11 +166,219 @@ const resolvePianoFilterProfile = (brightness: number): { attackHz: number; sust
   q: 0.45 + brightness * 1.1,
 });
 
-const resolveSustainedFilterHz = (brightness: number, velocity: number): number =>
-  1400 + brightness * 2400 + velocity * 1000;
+const resolveSustainedFilterHz = (
+  brightness: number,
+  velocity: number,
+  frequencyHz: number
+): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  return 1400 + brightness * 2400 + velocity * 1000 + pitchTracking * 260;
+};
 
-const resolveVibratoDepthHz = (frequencyHz: number, vibratoDepth = 0): number =>
-  clamp(frequencyHz * clamp(vibratoDepth, 0, 1) * 0.0075, 0, 6.5);
+const resolveSustainedFilterAttackHz = (
+  brightness: number,
+  velocity: number,
+  frequencyHz: number
+): number => {
+  const sustainHz = resolveSustainedFilterHz(brightness, velocity, frequencyHz);
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const attackBoostHz = clamp(900 - pitchTracking * 180, 620, 1080);
+  return sustainHz + attackBoostHz;
+};
+
+const resolveSustainedFilterQ = (
+  brightness: number,
+  velocity: number,
+  frequencyHz: number
+): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  return Number((clamp(0.68 + brightness * 0.82 + velocity * 0.22 - pitchTracking * 0.08, 0.7, 1.9)).toFixed(2));
+};
+
+const resolveSustainedFilterAttackQ = (
+  brightness: number,
+  velocity: number,
+  frequencyHz: number
+): number => {
+  const sustainQ = resolveSustainedFilterQ(brightness, velocity, frequencyHz);
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const attackBoostQ = clamp(0.34 - pitchTracking * 0.07, 0.18, 0.42);
+  return Number(clamp(sustainQ + attackBoostQ, sustainQ, 2.15).toFixed(2));
+};
+
+const resolveSustainedUnisonDetune = (
+  brightness: number,
+  velocity: number,
+  frequencyHz: number
+): { lowerCents: number; upperCents: number } => {
+  const expressiveWidth = clamp(brightness * 0.58 + velocity * 0.42, 0, 1);
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const widthScale = clamp(1 - pitchTracking * 0.12, 0.82, 1.12);
+  return {
+    lowerCents: Number(((-4.5 - expressiveWidth * 3.5) * widthScale).toFixed(1)),
+    upperCents: Number(((6.5 + expressiveWidth * 4.5) * widthScale).toFixed(1)),
+  };
+};
+
+const resolveSustainedUnisonAttackDetune = (
+  brightness: number,
+  velocity: number,
+  frequencyHz: number
+): { lowerCents: number; upperCents: number } => {
+  const sustainDetune = resolveSustainedUnisonDetune(brightness, velocity, frequencyHz);
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const bloomScale = clamp(0.7 - brightness * 0.07 - velocity * 0.05 - pitchTracking * 0.08, 0.42, 0.72);
+
+  return {
+    lowerCents: Number((sustainDetune.lowerCents * bloomScale).toFixed(1)),
+    upperCents: Number((sustainDetune.upperCents * bloomScale).toFixed(1)),
+  };
+};
+
+const resolveSustainedUnisonBlendGains = (
+  brightness: number,
+  frequencyHz: number
+): { lowerGain: number; upperGain: number } => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  return {
+    lowerGain: clamp(Number((0.18 + brightness * 0.16 - pitchTracking * 0.018).toFixed(3)), 0.16, 0.36),
+    upperGain: clamp(Number((0.26 + brightness * 0.12 - pitchTracking * 0.024).toFixed(3)), 0.22, 0.4),
+  };
+};
+
+const resolveSustainedUnisonAttackBlendGains = (
+  brightness: number,
+  frequencyHz: number
+): { lowerGain: number; upperGain: number } => {
+  const sustainGains = resolveSustainedUnisonBlendGains(brightness, frequencyHz);
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const bloomScale = clamp(0.72 - brightness * 0.08 - pitchTracking * 0.09, 0.42, 0.74);
+
+  return {
+    lowerGain: Number((sustainGains.lowerGain * bloomScale).toFixed(3)),
+    upperGain: Number((sustainGains.upperGain * bloomScale).toFixed(3)),
+  };
+};
+
+const resolveSustainedUnisonBlendAttackSeconds = (
+  baseAttackSeconds: number,
+  brightness: number,
+  frequencyHz: number
+): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const bloomSeconds = baseAttackSeconds + 0.0035 - brightness * 0.003 - pitchTracking * 0.0015;
+  return Number(clamp(bloomSeconds, 0.006, 0.018).toFixed(3));
+};
+
+const resolveSustainedTransientGain = ({
+  brightness,
+  frequencyHz,
+  resolvedGain,
+  velocity,
+}: {
+  brightness: number;
+  frequencyHz: number;
+  resolvedGain: number;
+  velocity: number;
+}): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const pitchScale = clamp(1 - pitchTracking * 0.14, 0.72, 1.14);
+  return clamp(
+    resolvedGain * (0.08 + brightness * 0.1 + velocity * 0.06) * pitchScale,
+    0.0001,
+    0.12
+  );
+};
+
+const resolveSustainedTransientWaveform = (
+  waveform: OscillatorType | undefined,
+  brightness: number,
+  frequencyHz: number
+): OscillatorType => {
+  if (waveform === 'square') {
+    return 'triangle';
+  }
+
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  return brightness > 0.7 && pitchTracking < 0.7 ? 'square' : 'triangle';
+};
+
+const resolveSustainedTransientFrequencyHz = (frequencyHz: number): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const partialMultiplier = clamp(2.08 - pitchTracking * 0.14, 1.82, 2.2);
+  return Number((frequencyHz * partialMultiplier).toFixed(2));
+};
+
+const resolveSustainedTransientDurationSeconds = (
+  brightness: number,
+  frequencyHz: number
+): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const brightnessTightening = clamp(brightness * 0.004, 0.001, 0.004);
+  return Number(clamp(0.042 - pitchTracking * 0.007 - brightnessTightening, 0.028, 0.05).toFixed(3));
+};
+
+const resolveSustainedAttackSeconds = (
+  baseAttackSeconds: number,
+  frequencyHz: number
+): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  return Number(clamp(baseAttackSeconds - pitchTracking * 0.0025, 0.006, 0.016).toFixed(3));
+};
+
+const resolveSustainedFilterSettleSeconds = (frequencyHz: number): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  return Number(clamp(0.18 - pitchTracking * 0.03, 0.13, 0.21).toFixed(3));
+};
+
+const resolveSustainedVibratoFadeInSeconds = (frequencyHz: number): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  return Number(clamp(0.15 - pitchTracking * 0.018, 0.12, 0.17).toFixed(3));
+};
+
+const resolveSustainedVibratoUpdateSeconds = (frequencyHz: number): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  return Number(clamp(0.04 - pitchTracking * 0.006, 0.03, 0.046).toFixed(3));
+};
+
+const resolveSustainedPanUpdateSeconds = (frequencyHz: number, wet = false): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const baseSeconds = wet ? 0.06 : 0.04;
+  const pitchScale = wet ? 0.008 : 0.006;
+  const minSeconds = wet ? 0.05 : 0.03;
+  const maxSeconds = wet ? 0.07 : 0.046;
+  return Number(clamp(baseSeconds - pitchTracking * pitchScale, minSeconds, maxSeconds).toFixed(3));
+};
+
+const resolveSustainedGainUpdateSeconds = (frequencyHz: number): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  return Number(clamp(0.012 - pitchTracking * 0.002, 0.009, 0.014).toFixed(3));
+};
+
+const resolveSustainedTimbreUpdateSeconds = (
+  portamentoSeconds: number,
+  frequencyHz: number
+): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const baseSeconds = clamp(0.04 - pitchTracking * 0.005, 0.032, 0.046);
+  return Number(Math.max(portamentoSeconds, baseSeconds).toFixed(3));
+};
+
+const resolveVibratoDepthHz = (frequencyHz: number, vibratoDepth = 0): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const depthScale = clamp(1 - pitchTracking * 0.12, 0.78, 1.12);
+  return clamp(frequencyHz * clamp(vibratoDepth, 0, 1) * 0.0075 * depthScale, 0, 6.5);
+};
+
+const resolveVibratoFilterDepthHz = (
+  brightness: number,
+  frequencyHz: number,
+  vibratoDepth = 0
+): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const depthScale = clamp(1 - pitchTracking * 0.1, 0.8, 1.12);
+  return clamp((48 + brightness * 132) * clamp(vibratoDepth, 0, 1) * depthScale, 0, 220);
+};
 
 const resolveLfoRateHz = (vibratoRateHz: number | undefined): number =>
   clamp(vibratoRateHz ?? DEFAULT_VIBRATO_RATE_HZ, 3.6, 7.0);
@@ -161,25 +386,197 @@ const resolveLfoRateHz = (vibratoRateHz: number | undefined): number =>
 const resolveStereoPan = (stereoPan: number | undefined): number =>
   clamp(stereoPan ?? 0, -0.72, 0.72);
 
+const resolveSustainedAttackStereoPan = (
+  stereoPan: number,
+  frequencyHz: number
+): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const bloomScale = clamp(0.76 - pitchTracking * 0.1, 0.46, 0.78);
+  return Number((stereoPan * bloomScale).toFixed(2));
+};
+
+const resolveSustainedAttackPanSeconds = (
+  baseAttackSeconds: number,
+  frequencyHz: number,
+  stereoPan: number,
+  wet = false
+): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const wetLagSeconds = wet ? clamp(0.01 - pitchTracking * 0.0015, 0.007, 0.011) : 0;
+  const spreadLagSeconds = Math.abs(stereoPan) * (wet ? 0.006 : 0.004);
+  return Number(clamp(baseAttackSeconds + wetLagSeconds + spreadLagSeconds, 0.006, 0.03).toFixed(3));
+};
+
+const resolveReverbStereoPan = (stereoPan: number): number =>
+  Number((clamp(stereoPan * 0.38, -0.28, 0.28)).toFixed(2));
+
 const resolveReverbSendGain = ({
   brightness,
+  frequencyHz,
   sustained = false,
   velocity,
 }: {
   brightness: number;
+  frequencyHz?: number;
   sustained?: boolean;
   velocity: number;
-}): number =>
-  clamp(
-    (sustained ? 0.06 : 0.08) + brightness * (sustained ? 0.08 : 0.1) + velocity * 0.04,
+}): number => {
+  const pitchTracking =
+    sustained && Number.isFinite(frequencyHz)
+      ? clamp(Math.log2(Math.max(frequencyHz ?? 261.63, 55) / 261.63), -1, 1.5)
+      : 0;
+  return clamp(
+    (sustained ? 0.06 : 0.08) +
+      brightness * (sustained ? 0.08 : 0.1) +
+      velocity * 0.04 -
+      pitchTracking * (sustained ? 0.012 : 0),
     0.05,
     sustained ? 0.2 : 0.24
   );
+};
+
+const resolveSustainedAttackReverbSendGain = (
+  brightness: number,
+  velocity: number,
+  frequencyHz: number
+): number => {
+  const sustainSendGain = resolveReverbSendGain({
+    brightness,
+    frequencyHz,
+    sustained: true,
+    velocity,
+  });
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const bloomScale = clamp(0.72 - brightness * 0.08 - velocity * 0.04 - pitchTracking * 0.08, 0.44, 0.74);
+  return Number((sustainSendGain * bloomScale).toFixed(3));
+};
+
+const resolveSustainedAttackReverbSendSeconds = (
+  baseAttackSeconds: number,
+  brightness: number,
+  frequencyHz: number,
+  stereoPan: number
+): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  const wetLagSeconds = clamp(0.01 - brightness * 0.003 - pitchTracking * 0.0015, 0.006, 0.011);
+  const spreadLagSeconds = Math.abs(stereoPan) * 0.006;
+  return Number(clamp(baseAttackSeconds + wetLagSeconds + spreadLagSeconds, 0.012, 0.03).toFixed(3));
+};
+
+const resolveSustainedReleaseSeconds = (
+  brightness: number,
+  velocity: number,
+  frequencyHz: number
+): number => {
+  const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
+  return clamp(
+    Number((0.055 + (1 - velocity) * 0.05 + (1 - brightness) * 0.035 - pitchTracking * 0.012).toFixed(3)),
+    0.05,
+    0.15
+  );
+};
 
 const releaseActiveNode = (activeNode: ActiveNode, releaseSeconds = SUSTAINED_RELEASE_SECONDS): void => {
   const now = activeNode.context.currentTime;
 
   try {
+    activeNode.lfoFilterGainNode?.gain.cancelScheduledValues(now);
+    activeNode.lfoFilterGainNode?.gain.setValueAtTime(
+      activeNode.lfoFilterGainNode.gain.value,
+      now
+    );
+    activeNode.lfoFilterGainNode?.gain.linearRampToValueAtTime(
+      0,
+      now + Math.max(0.02, releaseSeconds * 0.72)
+    );
+    activeNode.lfoGainNode?.gain.cancelScheduledValues(now);
+    activeNode.lfoGainNode?.gain.setValueAtTime(activeNode.lfoGainNode.gain.value, now);
+    activeNode.lfoGainNode?.gain.linearRampToValueAtTime(
+      0,
+      now + Math.max(0.02, releaseSeconds * 0.72)
+    );
+    if (activeNode.filterNode) {
+      const currentFilterHz = Math.max(activeNode.filterNode.frequency.value, 520);
+      const releaseFilterHz = clamp(currentFilterHz * 0.58, 520, currentFilterHz);
+      const currentFilterQ = Math.max(activeNode.filterNode.Q.value, 0.55);
+      const releaseFilterQ = clamp(currentFilterQ * 0.72, 0.55, currentFilterQ);
+
+      activeNode.filterNode.frequency.cancelScheduledValues(now);
+      activeNode.filterNode.frequency.setValueAtTime(currentFilterHz, now);
+      activeNode.filterNode.frequency.linearRampToValueAtTime(
+        releaseFilterHz,
+        now + Math.max(0.025, releaseSeconds * 0.84)
+      );
+      activeNode.filterNode.Q.cancelScheduledValues(now);
+      activeNode.filterNode.Q.setValueAtTime(currentFilterQ, now);
+      activeNode.filterNode.Q.linearRampToValueAtTime(
+        releaseFilterQ,
+        now + Math.max(0.025, releaseSeconds * 0.84)
+      );
+    }
+    if (activeNode.oscillator2) {
+      const currentLowerDetune = activeNode.oscillator2.detune.value;
+      activeNode.oscillator2.detune.cancelScheduledValues(now);
+      activeNode.oscillator2.detune.setValueAtTime(currentLowerDetune, now);
+      activeNode.oscillator2.detune.linearRampToValueAtTime(
+        Number((currentLowerDetune * 0.62).toFixed(2)),
+        now + Math.max(0.025, releaseSeconds * 0.8)
+      );
+    }
+    if (activeNode.oscillator3) {
+      const currentUpperDetune = activeNode.oscillator3.detune.value;
+      activeNode.oscillator3.detune.cancelScheduledValues(now);
+      activeNode.oscillator3.detune.setValueAtTime(currentUpperDetune, now);
+      activeNode.oscillator3.detune.linearRampToValueAtTime(
+        Number((currentUpperDetune * 0.62).toFixed(2)),
+        now + Math.max(0.025, releaseSeconds * 0.8)
+      );
+    }
+    if (activeNode.blendGainNode) {
+      const currentLowerBlend = Math.max(activeNode.blendGainNode.gain.value, 0.05);
+      activeNode.blendGainNode.gain.cancelScheduledValues(now);
+      activeNode.blendGainNode.gain.setValueAtTime(currentLowerBlend, now);
+      activeNode.blendGainNode.gain.linearRampToValueAtTime(
+        clamp(Number((currentLowerBlend * 0.58).toFixed(3)), 0.05, currentLowerBlend),
+        now + Math.max(0.025, releaseSeconds * 0.8)
+      );
+    }
+    if (activeNode.blendGainNode3) {
+      const currentUpperBlend = Math.max(activeNode.blendGainNode3.gain.value, 0.06);
+      activeNode.blendGainNode3.gain.cancelScheduledValues(now);
+      activeNode.blendGainNode3.gain.setValueAtTime(currentUpperBlend, now);
+      activeNode.blendGainNode3.gain.linearRampToValueAtTime(
+        clamp(Number((currentUpperBlend * 0.6).toFixed(3)), 0.06, currentUpperBlend),
+        now + Math.max(0.025, releaseSeconds * 0.82)
+      );
+    }
+    if (activeNode.stereoPannerNode) {
+      const currentPan = activeNode.stereoPannerNode.pan.value;
+      activeNode.stereoPannerNode.pan.cancelScheduledValues(now);
+      activeNode.stereoPannerNode.pan.setValueAtTime(currentPan, now);
+      activeNode.stereoPannerNode.pan.linearRampToValueAtTime(
+        Number((currentPan * 0.38).toFixed(2)),
+        now + Math.max(0.025, releaseSeconds * 0.82)
+      );
+    }
+    if (activeNode.reverbStereoPannerNode) {
+      const currentReverbPan = activeNode.reverbStereoPannerNode.pan.value;
+      activeNode.reverbStereoPannerNode.pan.cancelScheduledValues(now);
+      activeNode.reverbStereoPannerNode.pan.setValueAtTime(currentReverbPan, now);
+      activeNode.reverbStereoPannerNode.pan.linearRampToValueAtTime(
+        Number((currentReverbPan * 0.22).toFixed(2)),
+        now + Math.max(0.025, releaseSeconds * 0.88)
+      );
+    }
+    if (activeNode.reverbSendGainNode) {
+      const currentReverbSend = Math.max(activeNode.reverbSendGainNode.gain.value, 0.02);
+      activeNode.reverbSendGainNode.gain.cancelScheduledValues(now);
+      activeNode.reverbSendGainNode.gain.setValueAtTime(currentReverbSend, now);
+      activeNode.reverbSendGainNode.gain.linearRampToValueAtTime(
+        clamp(Number((currentReverbSend * 0.42).toFixed(3)), 0.02, currentReverbSend),
+        now + Math.max(0.025, releaseSeconds * 0.78)
+      );
+    }
     activeNode.gainNode.gain.cancelScheduledValues(now);
     const currentGain = Math.max(activeNode.gainNode.gain.value, 0.0001);
     activeNode.gainNode.gain.setValueAtTime(currentGain, now);
@@ -321,7 +718,7 @@ export function useKangurMusicSynth<NoteId extends string>() {
   }, [clearScheduledTimeouts]);
 
   const stopSustainedNote = useCallback(
-    (interactionId: string, options: { immediate?: boolean } = {}): void => {
+    (interactionId: string, options: StopSustainedNoteOptions = {}): void => {
       const activeNode = sustainedNodesRef.current.get(interactionId);
       if (!activeNode) {
         return;
@@ -333,13 +730,20 @@ export function useKangurMusicSynth<NoteId extends string>() {
         return;
       }
 
-      releaseActiveNode(activeNode);
+      const resolvedReleaseSeconds =
+        options.releaseSeconds ??
+        resolveSustainedReleaseSeconds(
+          options.brightness ?? activeNode.brightness,
+          options.velocity ?? activeNode.velocity,
+          activeNode.currentFrequencyHz
+        );
+      releaseActiveNode(activeNode, resolvedReleaseSeconds);
     },
     []
   );
 
   const stopAllSustainedNotes = useCallback(
-    (options: { immediate?: boolean } = {}): void => {
+    (options: StopSustainedNoteOptions = {}): void => {
       const interactionIds = [...sustainedNodesRef.current.keys()];
       interactionIds.forEach((interactionId) => {
         stopSustainedNote(interactionId, options);
@@ -635,28 +1039,65 @@ export function useKangurMusicSynth<NoteId extends string>() {
         durationSeconds: 1,
         velocity,
       });
+      const sustainedAttackSeconds = resolveSustainedAttackSeconds(attackSeconds, note.frequencyHz);
+      const sustainedUnisonAttackSeconds = resolveSustainedUnisonBlendAttackSeconds(
+        sustainedAttackSeconds,
+        brightness,
+        note.frequencyHz
+      );
+      const sustainedFilterSettleSeconds = resolveSustainedFilterSettleSeconds(note.frequencyHz);
+      const sustainedVibratoFadeInSeconds = resolveSustainedVibratoFadeInSeconds(
+        note.frequencyHz
+      );
       const baseGain = clamp(note.gain ?? DEFAULT_GAIN, 0.04, 0.24);
       const resolvedGain = clamp(gain * (baseGain / DEFAULT_GAIN), 0.04, 0.38);
+      const unisonDetune = resolveSustainedUnisonDetune(brightness, velocity, note.frequencyHz);
+      const unisonAttackDetune = resolveSustainedUnisonAttackDetune(
+        brightness,
+        velocity,
+        note.frequencyHz
+      );
+      const unisonBlendGains = resolveSustainedUnisonBlendGains(brightness, note.frequencyHz);
+      const unisonAttackBlendGains = resolveSustainedUnisonAttackBlendGains(
+        brightness,
+        note.frequencyHz
+      );
 
       // Low-pass filter: tames sawtooth upper harmonics for a warmer synth pad sound.
       const filterNode = context.createBiquadFilter();
       filterNode.type = 'lowpass';
-      filterNode.frequency.setValueAtTime(resolveSustainedFilterHz(brightness, velocity) + 900, now);
-      filterNode.frequency.linearRampToValueAtTime(
-        resolveSustainedFilterHz(brightness, velocity),
-        now + attackSeconds + 0.18
+      filterNode.frequency.setValueAtTime(
+        resolveSustainedFilterAttackHz(brightness, velocity, note.frequencyHz),
+        now
       );
-      filterNode.Q.value = 0.7 + brightness * 0.9;
+      filterNode.frequency.linearRampToValueAtTime(
+        resolveSustainedFilterHz(brightness, velocity, note.frequencyHz),
+        now + sustainedAttackSeconds + sustainedFilterSettleSeconds
+      );
+      filterNode.Q.setValueAtTime(
+        resolveSustainedFilterAttackQ(brightness, velocity, note.frequencyHz),
+        now
+      );
+      filterNode.Q.linearRampToValueAtTime(
+        resolveSustainedFilterQ(brightness, velocity, note.frequencyHz),
+        now + sustainedAttackSeconds + sustainedFilterSettleSeconds
+      );
 
       // Vibrato LFO: fades in after attack so the onset is clean, then adds expression.
       const lfoOscillator = context.createOscillator();
       const lfoGainNode = context.createGain();
+      const lfoFilterGainNode = context.createGain();
       lfoOscillator.type = 'sine';
       lfoOscillator.frequency.value = vibratoRateHz;
       lfoGainNode.gain.setValueAtTime(0, now);
       lfoGainNode.gain.linearRampToValueAtTime(
         resolveVibratoDepthHz(note.frequencyHz, vibratoDepth),
-        now + attackSeconds + 0.15
+        now + sustainedAttackSeconds + sustainedVibratoFadeInSeconds
+      );
+      lfoFilterGainNode.gain.setValueAtTime(0, now);
+      lfoFilterGainNode.gain.linearRampToValueAtTime(
+        resolveVibratoFilterDepthHz(brightness, note.frequencyHz, vibratoDepth),
+        now + sustainedAttackSeconds + sustainedVibratoFadeInSeconds
       );
 
       // Third unison voice: sawtooth at +9 cents spreads the sound wide.
@@ -664,40 +1105,135 @@ export function useKangurMusicSynth<NoteId extends string>() {
       const blend3GainNode = context.createGain();
       oscillator3.type = note.waveform ?? 'sawtooth';
       oscillator3.frequency.setValueAtTime(note.frequencyHz, now);
-      oscillator3.detune.value = 9;
-      blend3GainNode.gain.setValueAtTime(0.26 + brightness * 0.12, now);
+      oscillator3.detune.setValueAtTime(unisonAttackDetune.upperCents, now);
+      oscillator3.detune.linearRampToValueAtTime(
+        unisonDetune.upperCents,
+        now + sustainedUnisonAttackSeconds
+      );
+      blend3GainNode.gain.setValueAtTime(unisonAttackBlendGains.upperGain, now);
+      blend3GainNode.gain.linearRampToValueAtTime(
+        unisonBlendGains.upperGain,
+        now + sustainedUnisonAttackSeconds
+      );
+
+      // A short upper-partial transient helps touch starts speak before the sustained body blooms.
+      const transientOscillator = context.createOscillator();
+      const transientGainNode = context.createGain();
+      const transientDurationSeconds = resolveSustainedTransientDurationSeconds(
+        brightness,
+        note.frequencyHz
+      );
+      transientOscillator.type = resolveSustainedTransientWaveform(
+        note.waveform,
+        brightness,
+        note.frequencyHz
+      );
+      transientOscillator.frequency.setValueAtTime(
+        resolveSustainedTransientFrequencyHz(note.frequencyHz),
+        now
+      );
+      transientGainNode.gain.setValueAtTime(
+        resolveSustainedTransientGain({
+          brightness,
+          frequencyHz: note.frequencyHz,
+          resolvedGain,
+          velocity,
+        }),
+        now
+      );
+      transientGainNode.gain.exponentialRampToValueAtTime(
+        0.0001,
+        now + transientDurationSeconds
+      );
 
       const compressor = ensureCompressorNode(context, compressorNodeRef);
       const reverbChain = ensureReverbChain(context, reverbChainRef, compressor);
       const reverbSendGainNode = context.createGain();
       const stereoPannerNode =
         typeof context.createStereoPanner === 'function' ? context.createStereoPanner() : null;
+      const reverbStereoPannerNode =
+        typeof context.createStereoPanner === 'function' ? context.createStereoPanner() : null;
+      const sustainedReverbSendGain = resolveReverbSendGain({
+        brightness,
+        frequencyHz: note.frequencyHz,
+        sustained: true,
+        velocity,
+      });
       reverbSendGainNode.gain.setValueAtTime(
-        resolveReverbSendGain({ brightness, sustained: true, velocity }),
+        resolveSustainedAttackReverbSendGain(brightness, velocity, note.frequencyHz),
         now
       );
-      stereoPannerNode?.pan.setValueAtTime(stereoPan, now);
+      const sustainedAttackReverbSendSeconds = resolveSustainedAttackReverbSendSeconds(
+        sustainedUnisonAttackSeconds,
+        brightness,
+        note.frequencyHz,
+        stereoPan
+      );
+      reverbSendGainNode.gain.linearRampToValueAtTime(
+        sustainedReverbSendGain,
+        now + sustainedAttackReverbSendSeconds
+      );
+      const sustainedAttackStereoPan = resolveSustainedAttackStereoPan(
+        stereoPan,
+        note.frequencyHz
+      );
+      const sustainedAttackDryPanSeconds = resolveSustainedAttackPanSeconds(
+        sustainedUnisonAttackSeconds,
+        note.frequencyHz,
+        stereoPan
+      );
+      const sustainedAttackWetPanSeconds = resolveSustainedAttackPanSeconds(
+        sustainedUnisonAttackSeconds,
+        note.frequencyHz,
+        stereoPan,
+        true
+      );
+      stereoPannerNode?.pan.setValueAtTime(sustainedAttackStereoPan, now);
+      stereoPannerNode?.pan.linearRampToValueAtTime(
+        stereoPan,
+        now + sustainedAttackDryPanSeconds
+      );
+      reverbStereoPannerNode?.pan.setValueAtTime(
+        resolveReverbStereoPan(sustainedAttackStereoPan),
+        now
+      );
+      reverbStereoPannerNode?.pan.linearRampToValueAtTime(
+        resolveReverbStereoPan(stereoPan),
+        now + sustainedAttackWetPanSeconds
+      );
 
       oscillator.type = note.waveform ?? 'sawtooth';
       oscillator.frequency.setValueAtTime(note.frequencyHz, now);
       oscillator2.type = note.waveform === 'square' ? 'triangle' : 'sine';
       oscillator2.frequency.setValueAtTime(note.frequencyHz, now);
-      oscillator2.detune.value = -7;
-      blendGainNode.gain.setValueAtTime(0.18 + brightness * 0.16, now);
+      oscillator2.detune.setValueAtTime(unisonAttackDetune.lowerCents, now);
+      oscillator2.detune.linearRampToValueAtTime(
+        unisonDetune.lowerCents,
+        now + sustainedUnisonAttackSeconds
+      );
+      blendGainNode.gain.setValueAtTime(unisonAttackBlendGains.lowerGain, now);
+      blendGainNode.gain.linearRampToValueAtTime(
+        unisonBlendGains.lowerGain,
+        now + sustainedUnisonAttackSeconds
+      );
 
       gainNode.gain.setValueAtTime(0.0001, now);
-      gainNode.gain.linearRampToValueAtTime(resolvedGain, now + attackSeconds);
+      gainNode.gain.linearRampToValueAtTime(resolvedGain, now + sustainedAttackSeconds);
 
       lfoOscillator.connect(lfoGainNode);
       // LFO modulates all three oscillators so the unison voices move together.
       lfoGainNode.connect(oscillator.frequency);
       lfoGainNode.connect(oscillator2.frequency);
       lfoGainNode.connect(oscillator3.frequency);
+      lfoOscillator.connect(lfoFilterGainNode);
+      lfoFilterGainNode.connect(filterNode.frequency);
       oscillator.connect(gainNode);
       oscillator2.connect(blendGainNode);
       blendGainNode.connect(gainNode);
       oscillator3.connect(blend3GainNode);
       blend3GainNode.connect(gainNode);
+      transientOscillator.connect(transientGainNode);
+      transientGainNode.connect(filterNode);
       gainNode.connect(filterNode);
       if (stereoPannerNode) {
         filterNode.connect(stereoPannerNode);
@@ -706,25 +1242,37 @@ export function useKangurMusicSynth<NoteId extends string>() {
         filterNode.connect(compressor);
       }
       filterNode.connect(reverbSendGainNode);
-      reverbSendGainNode.connect(reverbChain.convolver);
+      if (reverbStereoPannerNode) {
+        reverbSendGainNode.connect(reverbStereoPannerNode);
+        reverbStereoPannerNode.connect(reverbChain.convolver);
+      } else {
+        reverbSendGainNode.connect(reverbChain.convolver);
+      }
 
       const sustainedNode: SustainedNode<NoteId> = {
+        baseGain,
         blendGainNode,
         blendGainNode3: blend3GainNode,
+        brightness,
         context,
         currentFrequencyHz: note.frequencyHz,
         filterNode,
         gainNode,
         id: note.id,
         interactionId: options.interactionId,
+        lfoFilterGainNode,
         lfoGainNode,
         lfoOscillator,
         oscillator,
         oscillator2,
         oscillator3,
         reverbSendGainNode,
+        reverbStereoPannerNode: reverbStereoPannerNode ?? undefined,
         stereoPan,
         stereoPannerNode: stereoPannerNode ?? undefined,
+        transientGainNode,
+        transientOscillator,
+        velocity,
         vibratoDepth,
         vibratoRateHz,
       };
@@ -740,15 +1288,20 @@ export function useKangurMusicSynth<NoteId extends string>() {
           lfoOscillator.stop();
           oscillator2.stop();
           oscillator3.stop();
+          transientOscillator.stop();
           lfoOscillator.disconnect();
+          lfoFilterGainNode.disconnect();
           lfoGainNode.disconnect();
           oscillator.disconnect();
           oscillator2.disconnect();
           blendGainNode.disconnect();
           oscillator3.disconnect();
           blend3GainNode.disconnect();
+          transientOscillator.disconnect();
+          transientGainNode.disconnect();
           gainNode.disconnect();
           reverbSendGainNode.disconnect();
+          reverbStereoPannerNode?.disconnect();
           stereoPannerNode?.disconnect();
           filterNode.disconnect();
         } catch {
@@ -759,6 +1312,8 @@ export function useKangurMusicSynth<NoteId extends string>() {
       oscillator.start(now);
       oscillator2.start(now);
       oscillator3.start(now);
+      transientOscillator.start(now);
+      transientOscillator.stop(now + transientDurationSeconds + 0.005);
       lfoOscillator.start(now);
       return true;
     },
@@ -821,12 +1376,27 @@ export function useKangurMusicSynth<NoteId extends string>() {
         now + portamentoSeconds
       );
       activeNode.currentFrequencyHz = frequencyHz;
+      const vibratoUpdateSeconds = resolveSustainedVibratoUpdateSeconds(frequencyHz);
+      const dryPanUpdateSeconds = resolveSustainedPanUpdateSeconds(frequencyHz);
+      const wetPanUpdateSeconds = resolveSustainedPanUpdateSeconds(frequencyHz, true);
+      const gainUpdateSeconds = resolveSustainedGainUpdateSeconds(frequencyHz);
+      const timbreUpdateSeconds = resolveSustainedTimbreUpdateSeconds(
+        portamentoSeconds,
+        frequencyHz
+      );
       const resolvedVibratoDepth = clamp(vibratoDepth ?? activeNode.vibratoDepth, 0, 1);
       activeNode.vibratoDepth = resolvedVibratoDepth;
       const resolvedVibratoRateHz = resolveLfoRateHz(vibratoRateHz ?? activeNode.vibratoRateHz);
       activeNode.vibratoRateHz = resolvedVibratoRateHz;
       const resolvedStereoPan = resolveStereoPan(stereoPan ?? activeNode.stereoPan);
       activeNode.stereoPan = resolvedStereoPan;
+      const resolvedVelocityForTimbre =
+        velocity !== undefined ? clamp(velocity, 0.22, 1) : activeNode.velocity;
+      const resolvedBrightnessForTimbre =
+        brightness !== undefined
+          ? resolveBrightness(brightness, resolvedVelocityForTimbre)
+          : activeNode.brightness;
+      const filterVibratoUpdateSeconds = Math.max(vibratoUpdateSeconds, timbreUpdateSeconds);
       activeNode.lfoOscillator?.frequency.cancelScheduledValues(now);
       activeNode.lfoOscillator?.frequency.setValueAtTime(
         activeNode.lfoOscillator.frequency.value,
@@ -834,13 +1404,26 @@ export function useKangurMusicSynth<NoteId extends string>() {
       );
       activeNode.lfoOscillator?.frequency.linearRampToValueAtTime(
         resolvedVibratoRateHz,
-        now + 0.04
+        now + vibratoUpdateSeconds
       );
       activeNode.lfoGainNode?.gain.cancelScheduledValues(now);
       activeNode.lfoGainNode?.gain.setValueAtTime(activeNode.lfoGainNode.gain.value, now);
       activeNode.lfoGainNode?.gain.linearRampToValueAtTime(
         resolveVibratoDepthHz(frequencyHz, resolvedVibratoDepth),
-        now + 0.04
+        now + vibratoUpdateSeconds
+      );
+      activeNode.lfoFilterGainNode?.gain.cancelScheduledValues(now);
+      activeNode.lfoFilterGainNode?.gain.setValueAtTime(
+        activeNode.lfoFilterGainNode.gain.value,
+        now
+      );
+      activeNode.lfoFilterGainNode?.gain.linearRampToValueAtTime(
+        resolveVibratoFilterDepthHz(
+          resolvedBrightnessForTimbre,
+          frequencyHz,
+          resolvedVibratoDepth
+        ),
+        now + filterVibratoUpdateSeconds
       );
       activeNode.stereoPannerNode?.pan.cancelScheduledValues(now);
       activeNode.stereoPannerNode?.pan.setValueAtTime(
@@ -849,53 +1432,106 @@ export function useKangurMusicSynth<NoteId extends string>() {
       );
       activeNode.stereoPannerNode?.pan.linearRampToValueAtTime(
         resolvedStereoPan,
-        now + 0.04
+        now + dryPanUpdateSeconds
+      );
+      activeNode.reverbStereoPannerNode?.pan.cancelScheduledValues(now);
+      activeNode.reverbStereoPannerNode?.pan.setValueAtTime(
+        activeNode.reverbStereoPannerNode.pan.value,
+        now
+      );
+      activeNode.reverbStereoPannerNode?.pan.linearRampToValueAtTime(
+        resolveReverbStereoPan(resolvedStereoPan),
+        now + wetPanUpdateSeconds
+      );
+      const resolvedUnisonBlendGains = resolveSustainedUnisonBlendGains(
+        resolvedBrightnessForTimbre,
+        frequencyHz
+      );
+      const resolvedUnisonDetune = resolveSustainedUnisonDetune(
+        resolvedBrightnessForTimbre,
+        resolvedVelocityForTimbre,
+        frequencyHz
+      );
+      activeNode.filterNode?.frequency.cancelScheduledValues(now);
+      activeNode.filterNode?.frequency.setValueAtTime(activeNode.filterNode.frequency.value, now);
+      activeNode.filterNode?.frequency.linearRampToValueAtTime(
+        resolveSustainedFilterHz(
+          resolvedBrightnessForTimbre,
+          resolvedVelocityForTimbre,
+          frequencyHz
+        ),
+        now + timbreUpdateSeconds
+      );
+      activeNode.filterNode?.Q.cancelScheduledValues(now);
+      activeNode.filterNode?.Q.setValueAtTime(activeNode.filterNode.Q.value, now);
+      activeNode.filterNode?.Q.linearRampToValueAtTime(
+        resolveSustainedFilterQ(
+          resolvedBrightnessForTimbre,
+          resolvedVelocityForTimbre,
+          frequencyHz
+        ),
+        now + timbreUpdateSeconds
+      );
+      activeNode.blendGainNode?.gain.cancelScheduledValues(now);
+      activeNode.blendGainNode?.gain.setValueAtTime(activeNode.blendGainNode.gain.value, now);
+      activeNode.blendGainNode?.gain.linearRampToValueAtTime(
+        resolvedUnisonBlendGains.lowerGain,
+        now + timbreUpdateSeconds
+      );
+      activeNode.blendGainNode3?.gain.cancelScheduledValues(now);
+      activeNode.blendGainNode3?.gain.setValueAtTime(activeNode.blendGainNode3.gain.value, now);
+      activeNode.blendGainNode3?.gain.linearRampToValueAtTime(
+        resolvedUnisonBlendGains.upperGain,
+        now + timbreUpdateSeconds
+      );
+      if (activeNode.oscillator2) {
+        activeNode.oscillator2.detune.cancelScheduledValues(now);
+        activeNode.oscillator2.detune.setValueAtTime(activeNode.oscillator2.detune.value, now);
+        activeNode.oscillator2.detune.linearRampToValueAtTime(
+          resolvedUnisonDetune.lowerCents,
+          now + timbreUpdateSeconds
+        );
+      }
+      if (activeNode.oscillator3) {
+        activeNode.oscillator3.detune.cancelScheduledValues(now);
+        activeNode.oscillator3.detune.setValueAtTime(activeNode.oscillator3.detune.value, now);
+        activeNode.oscillator3.detune.linearRampToValueAtTime(
+          resolvedUnisonDetune.upperCents,
+          now + timbreUpdateSeconds
+        );
+      }
+      activeNode.reverbSendGainNode?.gain.cancelScheduledValues(now);
+      activeNode.reverbSendGainNode?.gain.setValueAtTime(
+        activeNode.reverbSendGainNode.gain.value,
+        now
+      );
+      activeNode.reverbSendGainNode?.gain.linearRampToValueAtTime(
+        resolveReverbSendGain({
+          brightness: resolvedBrightnessForTimbre,
+          frequencyHz,
+          sustained: true,
+          velocity: resolvedVelocityForTimbre,
+        }),
+        now + timbreUpdateSeconds
       );
 
       if (velocity !== undefined || brightness !== undefined) {
         const normalizedVelocity = clamp(velocity ?? DEFAULT_VELOCITY, 0.22, 1);
         const normalizedBrightness = resolveBrightness(brightness, normalizedVelocity);
+        activeNode.velocity = normalizedVelocity;
+        activeNode.brightness = normalizedBrightness;
         const { gain } = resolveVelocityEnvelope({
           durationSeconds: 1,
           velocity: normalizedVelocity,
         });
+        const resolvedGain = clamp(
+          gain * (activeNode.baseGain / DEFAULT_GAIN),
+          0.04,
+          0.38
+        );
         activeNode.gainNode.gain.cancelScheduledValues(now);
         activeNode.gainNode.gain.setValueAtTime(activeNode.gainNode.gain.value, now);
-        activeNode.gainNode.gain.linearRampToValueAtTime(gain, now + 0.012);
-        activeNode.filterNode?.frequency.cancelScheduledValues(now);
-        activeNode.filterNode?.frequency.setValueAtTime(activeNode.filterNode.frequency.value, now);
-        activeNode.filterNode?.frequency.linearRampToValueAtTime(
-          resolveSustainedFilterHz(normalizedBrightness, normalizedVelocity),
-          now + 0.04
-        );
-        if (activeNode.filterNode) {
-          activeNode.filterNode.Q.value = 0.7 + normalizedBrightness * 0.9;
-        }
-        activeNode.blendGainNode?.gain.cancelScheduledValues(now);
-        activeNode.blendGainNode?.gain.setValueAtTime(activeNode.blendGainNode.gain.value, now);
-        activeNode.blendGainNode?.gain.linearRampToValueAtTime(
-          0.18 + normalizedBrightness * 0.16,
-          now + 0.04
-        );
-        activeNode.blendGainNode3?.gain.cancelScheduledValues(now);
-        activeNode.blendGainNode3?.gain.setValueAtTime(activeNode.blendGainNode3.gain.value, now);
-        activeNode.blendGainNode3?.gain.linearRampToValueAtTime(
-          0.26 + normalizedBrightness * 0.12,
-          now + 0.04
-        );
-        activeNode.reverbSendGainNode?.gain.cancelScheduledValues(now);
-        activeNode.reverbSendGainNode?.gain.setValueAtTime(
-          activeNode.reverbSendGainNode.gain.value,
-          now
-        );
-        activeNode.reverbSendGainNode?.gain.linearRampToValueAtTime(
-          resolveReverbSendGain({
-            brightness: normalizedBrightness,
-            sustained: true,
-            velocity: normalizedVelocity,
-          }),
-          now + 0.06
-        );
+        activeNode.gainNode.gain.linearRampToValueAtTime(resolvedGain, now + gainUpdateSeconds);
       }
 
       return true;

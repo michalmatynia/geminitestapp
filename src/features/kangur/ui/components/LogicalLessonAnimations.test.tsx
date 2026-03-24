@@ -63,5 +63,11 @@ describe('LogicalLessonAnimations visuals', () => {
       expect(screen.getByTestId(`${prefix}-atmosphere`)).toBeInTheDocument();
       expect(screen.getByTestId(`${prefix}-frame`)).toBeInTheDocument();
     });
+
+    expect(
+      screen
+        .getByTestId('logical-classification-color-animation')
+        .querySelectorAll('ellipse[data-kangur-soft-oval="true"]').length
+    ).toBe(3);
   });
 });

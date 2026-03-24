@@ -10,7 +10,6 @@ import { KangurParentDashboardAssignmentsWidget } from '@/features/kangur/ui/com
 import { KangurParentDashboardAssignmentsMonitoringWidget } from '@/features/kangur/ui/components/KangurParentDashboardAssignmentsMonitoringWidget';
 import { KangurParentDashboardHeroWidget } from '@/features/kangur/ui/components/KangurParentDashboardHeroWidget';
 import { KangurParentDashboardProgressWidget } from '@/features/kangur/ui/components/KangurParentDashboardProgressWidget';
-import { KangurParentDashboardScoresWidget } from '@/features/kangur/ui/components/KangurParentDashboardScoresWidget';
 import {
   KangurParentDashboardTabsWidget,
   getParentDashboardTabIds,
@@ -53,7 +52,6 @@ function ParentDashboardContent(): React.JSX.Element {
   const heroAnchorRef = useRef<HTMLDivElement | null>(null);
   const learnerManagementAnchorRef = useRef<HTMLDivElement | null>(null);
   const tabsAnchorRef = useRef<HTMLDivElement | null>(null);
-  const scoresAnchorRef = useRef<HTMLDivElement | null>(null);
   const progressAnchorRef = useRef<HTMLDivElement | null>(null);
   const assignmentsAnchorRef = useRef<HTMLDivElement | null>(null);
   const monitoringAnchorRef = useRef<HTMLDivElement | null>(null);
@@ -64,14 +62,12 @@ function ParentDashboardContent(): React.JSX.Element {
   const [reservedTabPanelHeight, setReservedTabPanelHeight] = useState<number | null>(null);
   const activeLearnerId = activeLearner?.id?.trim() || null;
   const hasActiveLearner = Boolean(activeLearnerId);
-  const scoresTabIds = getParentDashboardTabIds('scores');
   const progressTabIds = getParentDashboardTabIds('progress');
   const assignmentsTabIds = getParentDashboardTabIds('assign');
   const monitoringTabIds = getParentDashboardTabIds('monitoring');
   const aiTutorTabIds = getParentDashboardTabIds('ai-tutor');
   const parentTabLabels = useMemo<Record<KangurParentDashboardTabId, string>>(
     () => ({
-      scores: translations('page.tabs.scores'),
       progress: translations('page.tabs.progress'),
       assign: translations('page.tabs.assign'),
       monitoring: translations('page.tabs.monitoring'),
@@ -143,18 +139,6 @@ function ParentDashboardContent(): React.JSX.Element {
     metadata: {
       contentId: dashboardContentId,
       label: translations('page.anchors.tabs'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-parent-dashboard-scores',
-    kind: 'summary',
-    ref: scoresAnchorRef,
-    surface: 'parent_dashboard',
-    enabled: canAccessDashboard && hasActiveLearner && activeTab === 'scores',
-    priority: 80,
-    metadata: {
-      contentId: dashboardContentId,
-      label: translations('page.anchors.scores'),
     },
   });
   useKangurTutorAnchor({
@@ -418,16 +402,6 @@ function ParentDashboardContent(): React.JSX.Element {
             }
           >
             <div ref={tabPanelsContentRef}>
-              <div
-                ref={scoresAnchorRef}
-                id={scoresTabIds.panelId}
-                role='tabpanel'
-                aria-labelledby={scoresTabIds.tabId}
-                hidden={activeTab !== 'scores'}
-                tabIndex={activeTab === 'scores' ? 0 : -1}
-              >
-                <KangurParentDashboardScoresWidget displayMode='active-tab' />
-              </div>
               <div
                 ref={progressAnchorRef}
                 id={progressTabIds.panelId}

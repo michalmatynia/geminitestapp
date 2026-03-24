@@ -408,6 +408,7 @@
       "label": "Pytanie {number}",
       "pointChip": "⭐ {points} pkt ({difficulty})",
       "touchHint": "Dotknij odpowiedź, a potem dotknij przycisk zatwierdzania.",
+      "printHint": "Otwórz tę lekcję na ekranie, aby odpowiedzieć na pytanie interaktywnie.",
       "difficulty": {
         "easy": "łatwe",
         "medium": "średnie",
@@ -419,6 +420,8 @@
       },
       "confirm": "Zatwierdź odpowiedź ✓"
     },
+    "examPrintHint": "Otwórz tę lekcję na ekranie, aby odpowiedzieć na pytanie Kangura Matematycznego interaktywnie.",
+    "examResultPrintHint": "Otwórz tę lekcję na ekranie, aby przejrzeć odpowiedzi i rozwiązania Kangura Matematycznego.",
     "operationSelector": {
       "title": "Grajmy!",
       "intro": {
@@ -582,6 +585,43 @@
           "activeTitle": "Aktywne zadania",
           "activeEmpty": "Brak aktywnych zadań dla ucznia."
         },
+        "analytics": {
+          "label": "Szybki obraz nauki",
+          "description": "Najważniejsze liczby z ostatnich sesji i bieżącego rytmu pracy ucznia.",
+          "averageAccuracyLabel": "Średnia skuteczność",
+          "averageAccuracyDescription": "Najlepszy wynik: {best}%",
+          "streakLabel": "Seria dni",
+          "streakDescription": "Najdłuższa seria: {longest} dni",
+          "xpLabel": "XP dzisiaj",
+          "xpDescription": "{weeklyXp} XP w 7 dni · średnio {averageXp} XP / sesję",
+          "dailyGoalLabel": "Cel dzienny",
+          "dailyGoalDescription": "{percent}% dzisiejszego planu"
+        },
+        "weeklyActivity": {
+          "label": "Aktywność tygodniowa",
+          "description": "Liczba gier dziennie i ich średnia skuteczność w ostatnim tygodniu.",
+          "loading": "Ładujemy historię sesji",
+          "error": "Nie udało się wczytać pełnej historii wyników",
+          "barTitle": "{count} gier · {accuracy}% skuteczności"
+        },
+        "operationFocus": {
+          "label": "Obszary pracy",
+          "description": "Najczęściej ćwiczone obszary wraz ze skutecznością i tempem zdobywania XP.",
+          "progressAria": "Skuteczność w obszarze {title}",
+          "attempts": "{count} prób",
+          "averageXp": "{xp} XP / sesję",
+          "empty": "Brak danych o obszarach. Wyniki pojawią się po pierwszych grach."
+        },
+        "masterySummary": {
+          "label": "Mapa opanowania lekcji",
+          "description": "Które lekcje są już stabilne, a które nadal wymagają wsparcia.",
+          "trackedLabel": "Śledzone lekcje",
+          "masteredLabel": "Opanowane",
+          "needsPracticeLabel": "Do powtórki",
+          "weakestLabel": "Wymagają wsparcia",
+          "strongestLabel": "Najmocniejsze",
+          "empty": "Brak danych o mastery lekcji. Dane pojawią się po pracy ucznia w lekcjach."
+        },
         "lessonProgress": {
           "label": "Postęp lekcji",
           "description": "Postęp lekcji zapisany panel po panelu.",
@@ -610,6 +650,28 @@
           "dateFromLabel": "Data od",
           "dateToLabel": "Data do",
           "clear": "Wyczyść filtry"
+        },
+        "overview": {
+          "label": "Podsumowanie aktywności",
+          "description": "Najważniejsze liczby dla aktualnie widocznego zakresu aktywności.",
+          "totalInteractionsLabel": "Interakcje",
+          "sessionsLabel": "Sesje",
+          "openedTasksLabel": "Otwarte zadania",
+          "lessonPanelsLabel": "Panele lekcji",
+          "averageSessionDuration": "Średnia sesja: {duration}",
+          "latestActivity": "Ostatnia aktywność: {timestamp}"
+        },
+        "activityMix": {
+          "label": "Rozkład aktywności",
+          "description": "Porównanie liczby sesji, otwarć zadań i wejść w panele lekcji.",
+          "barTitle": "{label}: {count}"
+        },
+        "lessonFocus": {
+          "label": "Najwięcej czasu",
+          "description": "Lekcje, w których uczeń spędził najwięcej czasu podczas pracy w panelach.",
+          "progressAria": "Udział czasu dla lekcji {title}",
+          "sectionCount": "{count} sekcji z aktywnością",
+          "empty": "Brak lekcji z czasem paneli do porównania."
         },
         "lessonPanelTime": {
           "label": "Czas w panelach lekcji",
@@ -1380,8 +1442,7 @@
       "nextLesson": "Następna lekcja: {title}",
       "noNextLesson": "Brak następnej lekcji",
       "nextShort": "Następna",
-      "printLesson": "Drukuj lekcję",
-      "printShort": "Drukuj"
+      "printPanel": "Drukuj panel"
     },
     "activeHeader": {
       "narrator": {
@@ -7848,6 +7909,7 @@
     "openSecretPanel": "Otwórz sekretny panel",
     "secretPanelTitle": "Sekretny panel",
     "backToTopics": "Wróć do tematów",
+    "printInteractiveHint": "Otwórz tę lekcję na ekranie, aby wykonać to ćwiczenie interaktywnie.",
     "panelsNavigation": "Nawigacja paneli",
     "previousPanel": "Poprzedni panel",
     "nextPanel": "Następny panel",

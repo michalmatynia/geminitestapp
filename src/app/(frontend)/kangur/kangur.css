@@ -3912,6 +3912,10 @@ body[data-kangur-shell='true'] {
   }
 
   @media print {
+    @page {
+      margin: 14mm;
+    }
+
     html,
     body {
       background: #ffffff !important;
@@ -3937,23 +3941,165 @@ body[data-kangur-shell='true'] {
     }
 
     body.kangur-print-mode [data-kangur-print-root] {
-      position: absolute !important;
-      top: 0 !important;
-      left: 0 !important;
+      position: static !important;
+      inset: auto !important;
+      display: block !important;
       width: 100% !important;
       max-width: none !important;
       min-width: 0 !important;
       margin: 0 !important;
       padding: 24px !important;
+      height: auto !important;
+      max-height: none !important;
       overflow: visible !important;
       background: #ffffff !important;
       color: #0f172a !important;
       box-shadow: none !important;
     }
 
+    body.kangur-print-mode [data-kangur-print-root] [data-testid='lesson-slide-stage-root'] {
+      width: 100% !important;
+      max-width: none !important;
+      align-items: stretch !important;
+    }
+
     body.kangur-print-mode [data-kangur-print-root] [role='button'],
     body.kangur-print-mode [data-kangur-print-root] button {
       display: none !important;
+    }
+
+    body.kangur-print-mode [data-kangur-print-root] h1,
+    body.kangur-print-mode [data-kangur-print-root] h2,
+    body.kangur-print-mode [data-kangur-print-root] h3,
+    body.kangur-print-mode [data-kangur-print-root] h4 {
+      break-after: avoid-page;
+      page-break-after: avoid;
+    }
+
+    body.kangur-print-mode [data-kangur-print-root] .kangur-panel-elevated,
+    body.kangur-print-mode [data-kangur-print-root] .kangur-panel-soft,
+    body.kangur-print-mode [data-kangur-print-root] .kangur-panel-subtle,
+    body.kangur-print-mode [data-kangur-print-root] .kangur-card-surface,
+    body.kangur-print-mode [data-kangur-print-root] .kangur-lesson-callout,
+    body.kangur-print-mode [data-kangur-print-root] .kangur-lesson-inset,
+    body.kangur-print-mode [data-kangur-print-root] .kangur-lesson-visual-frame,
+    body.kangur-print-mode [data-kangur-print-root] [data-testid='lessons-document-summary'],
+    body.kangur-print-mode [data-kangur-print-root] [data-testid='lessons-loading-document-summary'],
+    body.kangur-print-mode [data-kangur-print-root] [data-testid='lessons-empty-document-summary'] {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-exclude='true'] {
+      display: none !important;
+    }
+
+    body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-panel='true'] {
+      min-height: 0 !important;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      background: #ffffff !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+    }
+
+    body.kangur-print-mode
+      [data-kangur-print-root][data-kangur-print-targeted='true']
+      [data-kangur-print-panel-id][data-kangur-print-panel-selected='false'] {
+      display: none !important;
+    }
+
+    body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-slide-frame='true'],
+    body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-slide-panel='true'],
+    body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-target-panel='true'] {
+      width: 100% !important;
+      max-width: none !important;
+      min-width: 0 !important;
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+      transform: none !important;
+      contain: none !important;
+    }
+
+    body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-slide-panel='true'],
+    body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-target-panel='true'] {
+      break-inside: auto !important;
+      page-break-inside: auto !important;
+    }
+
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-slide-panel='true']
+      > *,
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-target-panel='true']
+      > * {
+      overflow: visible !important;
+      max-height: none !important;
+    }
+
+    body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-page-heading='true'] {
+      break-after: avoid-page;
+      page-break-after: avoid;
+    }
+
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-document='true']
+      > [data-kangur-print-panel='true'] {
+      border: 1px solid #cbd5e1 !important;
+    }
+
+    body.kangur-print-mode
+      [data-kangur-print-root]
+      [data-kangur-print-document='true']
+      > [data-kangur-print-panel='true']
+      + [data-kangur-print-panel='true'] {
+      break-before: page;
+      page-break-before: always;
+    }
+
+    body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-document='true'] table {
+      width: 100% !important;
+      table-layout: fixed;
+      border-collapse: collapse !important;
+      font-size: 0.95rem;
+    }
+
+    body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-document='true'] th,
+    body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-document='true'] td {
+      border: 1px solid #cbd5e1 !important;
+      padding: 8px 10px !important;
+      vertical-align: top;
+      white-space: normal !important;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    body.kangur-print-mode [data-kangur-print-root] [data-kangur-print-document='true'] blockquote {
+      margin: 0 !important;
+      padding-left: 14px !important;
+      border-left: 4px solid #cbd5e1 !important;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    body.kangur-print-mode [data-kangur-print-root] pre {
+      max-width: 100% !important;
+      overflow: visible !important;
+      white-space: pre-wrap !important;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    body.kangur-print-mode [data-kangur-print-root] code {
+      white-space: pre-wrap !important;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
 
     body.kangur-print-mode [data-kangur-print-root] img,

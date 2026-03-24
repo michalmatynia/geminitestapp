@@ -64,9 +64,6 @@ const LESSON_KEY = 'music_diatonic_scale';
 const TOTAL_ROUNDS = MUSIC_MELODY_REPEAT_ROUNDS.length;
 const PLAYBACK_DURATION_MS = 420;
 
-const buildRoundStartMessage = (): string =>
-  'Nacisnij przycisk play, aby uslyszec melodie.';
-
 const resolveExpectedNoteMessage = (noteId: DiatonicNoteId): string =>
   `Teraz dotknij dzwieku ${DIATONIC_PIANO_KEYS_BY_ID[noteId].spokenLabel}.`;
 
@@ -113,7 +110,7 @@ export default function MusicMelodyRepeatGame({
   const [isSlowMode, setIsSlowMode] = useState(false);
   const [feedback, setFeedback] = useState<MusicRoundFeedback>({
     accent: 'sky',
-    message: buildRoundStartMessage(),
+    message: '',
   });
   const replayButtonClassName = cn(
     'shrink-0 whitespace-nowrap',
@@ -161,7 +158,7 @@ export default function MusicMelodyRepeatGame({
       setErrorCountInCurrentRound(0);
       setFeedback({
         accent: round?.accent ?? 'sky',
-        message: nextMessage ?? buildRoundStartMessage(),
+        message: nextMessage ?? '',
       });
     },
     [clearTransientTimeouts, round?.accent, stop]
@@ -446,7 +443,10 @@ export default function MusicMelodyRepeatGame({
 
   const handleSynthGestureEnd = useCallback(
     (details: KangurMusicSynthGestureDetails<DiatonicNoteId>): void => {
-      stopSustainedNote(details.interactionId);
+      stopSustainedNote(details.interactionId, {
+        brightness: details.brightness,
+        velocity: details.velocity,
+      });
     },
     [stopSustainedNote]
   );
@@ -470,7 +470,7 @@ export default function MusicMelodyRepeatGame({
     setFirstTrySuccesses(0);
     setFeedback({
       accent: MUSIC_MELODY_REPEAT_ROUNDS[0]?.accent ?? 'sky',
-      message: buildRoundStartMessage(),
+      message: '',
     });
   };
 

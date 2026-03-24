@@ -142,17 +142,19 @@ const buildEnglishPartsOfSpeechSlides = (
               accent='sky'
               caption={translations('slides.subjectPronouns.heSheIt.caption')}
               captionClassName='mt-1'
+              supportingContent={
+                <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
+                  <KangurLessonChip accent='sky'>I solve</KangurLessonChip>
+                  <KangurLessonChip accent='sky'>He solves</KangurLessonChip>
+                  <KangurLessonChip accent='sky'>They solve</KangurLessonChip>
+                </div>
+              }
             >
               <EnglishPronounSwapAnimation />
               <KangurEquationDisplay accent='sky' className='mt-2' size='sm'>
                 x + 4 = 10
               </KangurEquationDisplay>
             </KangurLessonVisual>
-            <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
-              <KangurLessonChip accent='sky'>I solve</KangurLessonChip>
-              <KangurLessonChip accent='sky'>He solves</KangurLessonChip>
-              <KangurLessonChip accent='sky'>They solve</KangurLessonChip>
-            </div>
           </KangurLessonStack>
         ),
       },
@@ -168,18 +170,23 @@ const buildEnglishPartsOfSpeechSlides = (
             <KangurLessonVisual
               accent='indigo'
               caption={translations('slides.possessiveAdjectives.overview.caption')}
+              supportingContent={
+                <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm`}>
+                  {POSSESSIVE_ADJECTIVES.map((item) => (
+                    <div
+                      key={item.word}
+                      className='rounded-2xl border border-indigo-200/70 bg-white/75 px-3 py-2 text-left shadow-sm'
+                    >
+                      <p className='text-sm font-semibold text-indigo-700'>
+                        {item.word} {item.noun}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              }
             >
               <EnglishPossessiveAdjectiveAnimation />
             </KangurLessonVisual>
-            <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm`}>
-              {POSSESSIVE_ADJECTIVES.map((item) => (
-                <KangurLessonInset key={item.word} accent='indigo' className='text-left'>
-                  <p className='text-sm font-semibold text-indigo-700'>
-                    {item.word} {item.noun}
-                  </p>
-                </KangurLessonInset>
-              ))}
-            </div>
           </KangurLessonStack>
         ),
       },
@@ -242,21 +249,25 @@ const buildEnglishPartsOfSpeechSlides = (
             <KangurLessonVisual
               accent='teal'
               caption={translations('slides.possessivePronouns.compare.caption')}
+              supportingContent={
+                <div className='space-y-4'>
+                  <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
+                    {POSSESSIVE_PRONOUNS.slice(0, 6).map((item) => (
+                      <KangurLessonChip key={item.word} accent='teal'>
+                        {item.word}
+                      </KangurLessonChip>
+                    ))}
+                  </div>
+                  <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-xs text-slate-600`}>
+                    {POSSESSIVE_PRONOUNS.slice(0, 3).map((item) => (
+                      <span key={item.word}>{item.example}</span>
+                    ))}
+                  </div>
+                </div>
+              }
             >
               <EnglishPossessivePronounAnimation />
             </KangurLessonVisual>
-            <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
-              {POSSESSIVE_PRONOUNS.slice(0, 6).map((item) => (
-                <KangurLessonChip key={item.word} accent='teal'>
-                  {item.word}
-                </KangurLessonChip>
-              ))}
-            </div>
-            <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-xs text-slate-600`}>
-              {POSSESSIVE_PRONOUNS.slice(0, 3).map((item) => (
-                <span key={item.word}>{item.example}</span>
-              ))}
-            </div>
           </KangurLessonStack>
         ),
       },

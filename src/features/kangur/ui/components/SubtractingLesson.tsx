@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
@@ -13,6 +13,10 @@ import {
   KangurLessonInset,
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
+import {
+  renderSoftAtmosphereGradients,
+  renderSoftAtmosphereOvals,
+} from '@/features/kangur/ui/components/animations/svgAtmosphere';
 import {
   KangurDisplayEmoji,
   KangurEquationDisplay,
@@ -197,12 +201,147 @@ const translateSubtractingLesson = (
   return translated === key || translated.endsWith(`.${key}`) ? fallback : translated;
 };
 
-function SubtractingSvgAnimation({ ariaLabel }: { ariaLabel: string }): React.JSX.Element {
+type SubtractingAnimationSurfaceProps = {
+  ariaLabel: string;
+  children: React.ReactNode;
+  surfaceHeight: number;
+  surfaceWidth: number;
+  testIdPrefix: string;
+  viewBox: string;
+};
+
+function SubtractingAnimationSurface({
+  ariaLabel,
+  children,
+  surfaceHeight,
+  surfaceWidth,
+  testIdPrefix,
+  viewBox,
+}: SubtractingAnimationSurfaceProps): React.JSX.Element {
+  const baseId = useId().replace(/:/g, '');
+  const clipId = `${testIdPrefix}-${baseId}-clip`;
+  const panelGradientId = `${testIdPrefix}-${baseId}-panel`;
+  const frameGradientId = `${testIdPrefix}-${baseId}-frame-gradient`;
+  const atmosphereId = `${testIdPrefix}-${baseId}-atmosphere-oval`;
+
   return (
     <svg
       aria-label={ariaLabel}
       className='h-auto w-full'
+      data-testid={`${testIdPrefix}-animation`}
       role='img'
+      viewBox={viewBox}
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <rect x='8' y='8' width={surfaceWidth} height={surfaceHeight} rx='24' />
+        </clipPath>
+        <linearGradient
+          id={panelGradientId}
+          x1='16'
+          x2={surfaceWidth}
+          y1='12'
+          y2={surfaceHeight}
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='#f8fafc' />
+          <stop offset='55%' stopColor='#eff6ff' />
+          <stop offset='100%' stopColor='#ecfeff' />
+        </linearGradient>
+        <linearGradient
+          id={frameGradientId}
+          x1='16'
+          x2={surfaceWidth}
+          y1='16'
+          y2='16'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='rgba(245,158,11,0.8)' />
+          <stop offset='50%' stopColor='rgba(96,165,250,0.82)' />
+          <stop offset='100%' stopColor='rgba(52,211,153,0.84)' />
+        </linearGradient>
+        {renderSoftAtmosphereGradients(atmosphereId, [
+          { key: 'left', cx: 86, cy: 34, rx: 76, ry: 20, color: '#f59e0b', opacity: 0.05, glowBias: '40%' },
+          {
+            key: 'bottom',
+            cx: Math.max(surfaceWidth - 92, 120),
+            cy: Math.max(surfaceHeight - 16, 52),
+            rx: 102,
+            ry: 32,
+            color: '#60a5fa',
+            opacity: 0.05,
+            glowBias: '60%',
+          },
+          {
+            key: 'top',
+            cx: Math.max(surfaceWidth - 104, 116),
+            cy: 28,
+            rx: 66,
+            ry: 18,
+            color: '#34d399',
+            opacity: 0.04,
+            glowBias: '38%',
+          },
+        ])}
+      </defs>
+      <g clipPath={`url(#${clipId})`} data-testid={`${testIdPrefix}-atmosphere`}>
+        <rect
+          x='8'
+          y='8'
+          width={surfaceWidth}
+          height={surfaceHeight}
+          rx='24'
+          fill={`url(#${panelGradientId})`}
+          stroke='rgba(148,163,184,0.16)'
+          strokeWidth='2'
+        />
+        {renderSoftAtmosphereOvals(atmosphereId, [
+          { key: 'left', cx: 86, cy: 34, rx: 76, ry: 20, color: '#f59e0b', opacity: 0.05, glowBias: '40%' },
+          {
+            key: 'bottom',
+            cx: Math.max(surfaceWidth - 92, 120),
+            cy: Math.max(surfaceHeight - 16, 52),
+            rx: 102,
+            ry: 32,
+            color: '#60a5fa',
+            opacity: 0.05,
+            glowBias: '60%',
+          },
+          {
+            key: 'top',
+            cx: Math.max(surfaceWidth - 104, 116),
+            cy: 28,
+            rx: 66,
+            ry: 18,
+            color: '#34d399',
+            opacity: 0.04,
+            glowBias: '38%',
+          },
+        ])}
+        {children}
+      </g>
+      <rect
+        x='16'
+        y='16'
+        width={surfaceWidth - 16}
+        height={surfaceHeight - 16}
+        rx='20'
+        fill='none'
+        stroke={`url(#${frameGradientId})`}
+        strokeWidth='1.75'
+        data-testid={`${testIdPrefix}-frame`}
+      />
+    </svg>
+  );
+}
+
+export function SubtractingSvgAnimation({ ariaLabel }: { ariaLabel: string }): React.JSX.Element {
+  return (
+    <SubtractingAnimationSurface
+      ariaLabel={ariaLabel}
+      surfaceHeight={104}
+      surfaceWidth={404}
+      testIdPrefix='subtracting-basics-motion'
       viewBox='0 0 420 120'
     >
       <style>{`
@@ -259,16 +398,17 @@ function SubtractingSvgAnimation({ ariaLabel }: { ariaLabel: string }): React.JS
           <circle key={`rest-${index}`} className='dot-rest' cx={270 + index * 22} cy='60' r='9' />
         ))}
       </g>
-    </svg>
+    </SubtractingAnimationSurface>
   );
 }
 
-function SubtractingNumberLineAnimation({ ariaLabel }: { ariaLabel: string }): React.JSX.Element {
+export function SubtractingNumberLineAnimation({ ariaLabel }: { ariaLabel: string }): React.JSX.Element {
   return (
-    <svg
-      aria-label={ariaLabel}
-      className='h-auto w-full'
-      role='img'
+    <SubtractingAnimationSurface
+      ariaLabel={ariaLabel}
+      surfaceHeight={104}
+      surfaceWidth={404}
+      testIdPrefix='subtracting-number-line'
       viewBox='0 0 420 120'
     >
       <style>{`
@@ -325,16 +465,17 @@ function SubtractingNumberLineAnimation({ ariaLabel }: { ariaLabel: string }): R
       <path className='jump-one' d='M260 60 Q200 20 140 60' fill='none' strokeWidth='4' />
       <path className='jump-two' d='M140 60 Q110 20 80 60' fill='none' strokeWidth='4' />
       <circle className='marker' cx='260' cy='70' r='8' />
-    </svg>
+    </SubtractingAnimationSurface>
   );
 }
 
-function SubtractingTenFrameAnimation({ ariaLabel }: { ariaLabel: string }): React.JSX.Element {
+export function SubtractingTenFrameAnimation({ ariaLabel }: { ariaLabel: string }): React.JSX.Element {
   return (
-    <svg
-      aria-label={ariaLabel}
-      className='h-auto w-full'
-      role='img'
+    <SubtractingAnimationSurface
+      ariaLabel={ariaLabel}
+      surfaceHeight={124}
+      surfaceWidth={404}
+      testIdPrefix='subtracting-ten-frame'
       viewBox='0 0 420 140'
     >
       <style>{`
@@ -432,11 +573,11 @@ function SubtractingTenFrameAnimation({ ariaLabel }: { ariaLabel: string }): Rea
         −5
       </text>
       <line stroke='#94a3b8' strokeWidth='3' x1='265' x2='295' y1='70' y2='70' />
-    </svg>
+    </SubtractingAnimationSurface>
   );
 }
 
-function SubtractingDifferenceBarAnimation({
+export function SubtractingDifferenceBarAnimation({
   ariaLabel,
   differenceLabel,
 }: {
@@ -444,10 +585,11 @@ function SubtractingDifferenceBarAnimation({
   differenceLabel: string;
 }): React.JSX.Element {
   return (
-    <svg
-      aria-label={ariaLabel}
-      className='h-auto w-full'
-      role='img'
+    <SubtractingAnimationSurface
+      ariaLabel={ariaLabel}
+      surfaceHeight={124}
+      surfaceWidth={404}
+      testIdPrefix='subtracting-difference-bar'
       viewBox='0 0 420 140'
     >
       <style>{`
@@ -511,11 +653,11 @@ function SubtractingDifferenceBarAnimation({
           />
         ))}
       </g>
-    </svg>
+    </SubtractingAnimationSurface>
   );
 }
 
-function SubtractingAbacusAnimation({
+export function SubtractingAbacusAnimation({
   ariaLabel,
   tensLabel,
   onesLabel,
@@ -531,10 +673,11 @@ function SubtractingAbacusAnimation({
   resultLabel: string;
 }): React.JSX.Element {
   return (
-    <svg
-      aria-label={ariaLabel}
-      className='h-auto w-full'
-      role='img'
+    <SubtractingAnimationSurface
+      ariaLabel={ariaLabel}
+      surfaceHeight={174}
+      surfaceWidth={424}
+      testIdPrefix='subtracting-abacus'
       viewBox='0 0 440 190'
     >
       <style>{`
@@ -644,7 +787,7 @@ function SubtractingAbacusAnimation({
           />
         ))}
       </g>
-    </svg>
+    </SubtractingAnimationSurface>
   );
 }
 

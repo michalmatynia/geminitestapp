@@ -54,6 +54,12 @@ export const createDefaultLearnerProfileScreenComponents = (): PageComponentInpu
       paddingTop: 0,
       paddingBottom: 0,
     }),
+    makeBlockSection({
+      id: 'kangur-profile-results',
+      blocks: [makeWidgetBlock('kangur-widget-profile-results', 'learner-profile-results')],
+      paddingTop: 0,
+      paddingBottom: 0,
+    }),
     makeGridSection({
       id: 'kangur-profile-learning-grid',
       rows: [

@@ -12,8 +12,8 @@ import {
   DIATONIC_SCALE_ASCENDING,
 } from '@/features/kangur/ui/components/music/music-theory';
 
-type SectionId = 'notes' | 'melody' | 'game_repeat' | 'summary';
-type SlideSectionId = Exclude<SectionId, 'game_repeat'>;
+type SectionId = 'notes' | 'melody' | 'game_repeat' | 'game_freeplay' | 'summary';
+type SlideSectionId = Exclude<SectionId, 'game_repeat' | 'game_freeplay'>;
 
 const NOTE_SEQUENCE = ['do', 're', 'mi', 'fa', 'sol', 'la', 'si', 'do'] as const;
 const PREVIEW_PIANO_ROLL = [
@@ -208,6 +208,13 @@ export const HUB_SECTIONS = [
     emoji: '🎹',
     title: 'Powtorz melodie',
     description: 'Najpierw posluchaj, potem zagraj te same kolory.',
+    isGame: true,
+  },
+  {
+    id: 'game_freeplay',
+    emoji: '🎛️',
+    title: 'Swobodna gra',
+    description: 'Graj na piano rollu bez zadania i sprawdzaj rozne brzmienia.',
     isGame: true,
   },
   {

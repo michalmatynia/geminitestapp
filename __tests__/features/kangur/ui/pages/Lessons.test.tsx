@@ -1248,8 +1248,11 @@ describe('Lessons', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
 
-    expect(screen.getByText('Nauka zegara')).toBeInTheDocument();
-    expect(screen.getByText('Odczytuj godziny')).toBeInTheDocument();
+    const activeHeader = screen.getByTestId('active-lesson-header');
+    expect(within(activeHeader).getByText('Nauka zegara', { selector: 'h2' })).toBeInTheDocument();
+    expect(
+      within(activeHeader).getByText('Odczytuj godziny', { selector: 'p' })
+    ).toBeInTheDocument();
     expect(screen.queryByText('Mongo aktywna lekcja')).not.toBeInTheDocument();
     expect(screen.queryByText('Mongo nagłówek aktywnej lekcji.')).not.toBeInTheDocument();
     expect(screen.getByText('Mongo zadanie rodzica')).toBeInTheDocument();
@@ -1303,8 +1306,11 @@ describe('Lessons', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
 
-    expect(screen.getByText('Nauka zegara')).toBeInTheDocument();
-    expect(screen.getByText('Odczytuj godziny')).toBeInTheDocument();
+    const activeHeader = screen.getByTestId('active-lesson-header');
+    expect(within(activeHeader).getByText('Nauka zegara', { selector: 'h2' })).toBeInTheDocument();
+    expect(
+      within(activeHeader).getByText('Odczytuj godziny', { selector: 'p' })
+    ).toBeInTheDocument();
   });
 
   it('uses Mongo-backed page-content copy for the empty active-lesson document state when available', async () => {

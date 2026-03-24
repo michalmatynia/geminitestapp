@@ -66,21 +66,26 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='indigo'
             caption='previous_response_id łączy kolejne kroki.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
+                {STATE_RULES.map((item) => (
+                  <div
+                    key={item.title}
+                    className='rounded-2xl border border-indigo-200/70 bg-white/75 px-3 py-2 text-left shadow-sm'
+                  >
+                    <div className='text-xs font-semibold uppercase tracking-[0.2em] text-indigo-500'>
+                      {item.title}
+                    </div>
+                    <KangurLessonCaption className='mt-2 text-indigo-950'>
+                      {item.description}
+                    </KangurLessonCaption>
+                  </div>
+                ))}
+              </div>
+            }
           >
             <AgenticStateChainAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
-            {STATE_RULES.map((item) => (
-              <KangurLessonInset key={item.title} accent='indigo'>
-                <div className='text-xs font-semibold uppercase tracking-[0.2em] text-indigo-500'>
-                  {item.title}
-                </div>
-                <KangurLessonCaption className='mt-2 text-indigo-950'>
-                  {item.description}
-                </KangurLessonCaption>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -95,16 +100,16 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='indigo'
             caption='Odbieraj wynik przez polling.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <ul className='space-y-2 text-sm text-indigo-950'>
+                {BACKGROUND_RULES.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            }
           >
             <AgenticBackgroundWebhookAnimation />
           </KangurLessonVisual>
-          <KangurLessonCallout accent='indigo' padding='sm' className='text-left'>
-            <ul className='space-y-2 text-sm text-indigo-950'>
-              {BACKGROUND_RULES.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
@@ -141,21 +146,26 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='indigo'
             caption='Compaction skraca pamięć, cache redukuje koszt.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
+                {CACHE_RULES.map((item) => (
+                  <div
+                    key={item.title}
+                    className='rounded-2xl border border-indigo-200/70 bg-white/75 px-3 py-2 text-left shadow-sm'
+                  >
+                    <div className='text-xs font-semibold uppercase tracking-[0.2em] text-indigo-500'>
+                      {item.title}
+                    </div>
+                    <KangurLessonCaption className='mt-2 text-indigo-950'>
+                      {item.description}
+                    </KangurLessonCaption>
+                  </div>
+                ))}
+              </div>
+            }
           >
             <AgenticCacheCompactionAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
-            {CACHE_RULES.map((item) => (
-              <KangurLessonInset key={item.title} accent='indigo'>
-                <div className='text-xs font-semibold uppercase tracking-[0.2em] text-indigo-500'>
-                  {item.title}
-                </div>
-                <KangurLessonCaption className='mt-2 text-indigo-950'>
-                  {item.description}
-                </KangurLessonCaption>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },

@@ -32,7 +32,6 @@ import {
 
 
 export type KangurParentDashboardTabId =
-  | 'scores'
   | 'progress'
   | 'assign'
   | 'monitoring'
@@ -148,7 +147,7 @@ export function KangurParentDashboardRuntimeProvider({
     checkAppState,
   } = useKangurAuth();
   const progress = useKangurProgressState();
-  const [activeTab, setActiveTab] = useState<KangurParentDashboardTabId>('scores');
+  const [activeTab, setActiveTab] = useState<KangurParentDashboardTabId>('progress');
   const [isCreateLearnerModalOpen, setCreateLearnerModalOpen] = useState(false);
   const [createForm, setCreateForm] = useState<KangurParentDashboardCreateForm>({
     displayName: '',

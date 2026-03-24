@@ -14,6 +14,7 @@ import { KangurLearnerProfileOverviewWidget } from '@/features/kangur/ui/compone
 import { KangurLearnerProfilePerformanceWidget } from '@/features/kangur/ui/components/KangurLearnerProfilePerformanceWidget';
 import { KangurLearnerProfileQuestSummaryWidget } from '@/features/kangur/ui/components/KangurLearnerProfileQuestSummaryWidget';
 import { KangurLearnerProfileRecommendationsWidget } from '@/features/kangur/ui/components/KangurLearnerProfileRecommendationsWidget';
+import { KangurLearnerProfileResultsWidget } from '@/features/kangur/ui/components/KangurLearnerProfileResultsWidget';
 import { KangurLearnerProfileSessionsWidget } from '@/features/kangur/ui/components/KangurLearnerProfileSessionsWidget';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
@@ -172,6 +173,7 @@ function LearnerProfileContent(): React.JSX.Element {
                   <KangurLearnerProfileQuestSummaryWidget />
                 </div>
                 <KangurLearnerProfileOverviewWidget />
+                <KangurLearnerProfileResultsWidget />
                 <KangurLearnerProfileRecommendationsWidget />
                 <KangurLearnerProfileMasteryWidget />
               </>

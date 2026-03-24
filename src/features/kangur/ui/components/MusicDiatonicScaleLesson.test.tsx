@@ -54,6 +54,17 @@ vi.mock('@/features/kangur/ui/components/music/MusicMelodyRepeatGame', () => ({
   ),
 }));
 
+vi.mock('@/features/kangur/ui/components/music/MusicPianoRollFreePlayGame', () => ({
+  __esModule: true,
+  default: ({ onFinish }: { onFinish: () => void }): React.JSX.Element => (
+    <div data-testid='mock-music-piano-roll-freeplay-game'>
+      <button type='button' onClick={onFinish}>
+        Finish freeplay
+      </button>
+    </div>
+  ),
+}));
+
 import MusicDiatonicScaleLesson from '@/features/kangur/ui/components/MusicDiatonicScaleLesson';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
@@ -148,6 +159,33 @@ describe('MusicDiatonicScaleLesson', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('lesson-hub-section-game_repeat')).toBeInTheDocument();
+    });
+  });
+
+  it('renders the freeplay hub section and opens the freeplay stage', async () => {
+    isMobileViewportMock = true;
+
+    renderWithIntl(
+      <KangurLessonNavigationProvider onBack={vi.fn()}>
+        <MusicDiatonicScaleLesson />
+      </KangurLessonNavigationProvider>
+    );
+
+    expect(screen.getByTestId('lesson-hub-section-game_freeplay')).toBeInTheDocument();
+    expect(screen.getByText('Swobodna gra')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('lesson-hub-section-game_freeplay'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('music-diatonic-scale-freeplay-shell')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('mock-music-piano-roll-freeplay-game')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Finish freeplay' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('lesson-hub-section-game_freeplay')).toBeInTheDocument();
     });
   });
 

@@ -1,0 +1,148 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const authState = vi.hoisted(() => ({
+  value: {
+    user: {
+      id: 'learner-owner-1',
+      actorType: 'learner' as const,
+      activeLearner: {
+        id: 'learner-1',
+      },
+    },
+    isAuthenticated: true,
+    isLoadingAuth: false,
+  },
+}));
+
+const subjectFocusServiceMocks = vi.hoisted(() => ({
+  loadPersistedSubjectFocusMock: vi.fn(),
+  loadRemoteSubjectFocusMock: vi.fn(),
+  persistSubjectFocusMock: vi.fn(),
+  persistRemoteSubjectFocusMock: vi.fn(),
+  subscribeToSubjectFocusChangesMock: vi.fn(),
+}));
+
+const setProgressScopeMock = vi.hoisted(() => vi.fn());
+
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useKangurAuth: () => authState.value,
+}));
+
+vi.mock('@/features/kangur/ui/services/progress', () => ({
+  setProgressScope: setProgressScopeMock,
+}));
+
+vi.mock('@/features/kangur/ui/services/subject-focus', () => ({
+  loadPersistedSubjectFocus: subjectFocusServiceMocks.loadPersistedSubjectFocusMock,
+  loadRemoteSubjectFocus: subjectFocusServiceMocks.loadRemoteSubjectFocusMock,
+  persistSubjectFocus: subjectFocusServiceMocks.persistSubjectFocusMock,
+  persistRemoteSubjectFocus: subjectFocusServiceMocks.persistRemoteSubjectFocusMock,
+  subscribeToSubjectFocusChanges: subjectFocusServiceMocks.subscribeToSubjectFocusChangesMock,
+  normalizeKangurSubjectFocusSubject: (value: unknown) =>
+    value === 'maths' || value === 'english' ? value : null,
+}));
+
+import {
+  KangurSubjectFocusProvider,
+  useKangurSubjectFocus,
+} from '@/features/kangur/ui/context/KangurSubjectFocusContext';
+
+const Probe = (): React.JSX.Element => {
+  const { subject, setSubject } = useKangurSubjectFocus();
+
+  return (
+    <div>
+      <button type='button' onClick={() => setSubject('english')}>
+        set-valid
+      </button>
+      <button
+        type='button'
+        onClick={() => setSubject(undefined as unknown as 'maths')}
+      >
+        set-invalid
+      </button>
+      <div data-testid='subject-value'>{subject}</div>
+    </div>
+  );
+};
+
+describe('KangurSubjectFocusContext', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    authState.value = {
+      user: {
+        id: 'learner-owner-1',
+        actorType: 'learner',
+        activeLearner: {
+          id: 'learner-1',
+        },
+      },
+      isAuthenticated: true,
+      isLoadingAuth: false,
+    };
+    subjectFocusServiceMocks.loadPersistedSubjectFocusMock.mockReturnValue('maths');
+    subjectFocusServiceMocks.loadRemoteSubjectFocusMock.mockResolvedValue(null);
+    subjectFocusServiceMocks.persistSubjectFocusMock.mockImplementation(
+      (_key: string | null, subject: string) => subject
+    );
+    subjectFocusServiceMocks.persistRemoteSubjectFocusMock.mockResolvedValue('english');
+    subjectFocusServiceMocks.subscribeToSubjectFocusChangesMock.mockImplementation(
+      (_key: string | null, listener: (subject: 'maths') => void) => {
+        listener('maths');
+        return () => undefined;
+      }
+    );
+  });
+
+  it('ignores invalid runtime subject values instead of persisting an empty payload', async () => {
+    render(
+      <KangurSubjectFocusProvider>
+        <Probe />
+      </KangurSubjectFocusProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('subject-value')).toHaveTextContent('maths');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'set-invalid' }));
+
+    expect(screen.getByTestId('subject-value')).toHaveTextContent('maths');
+    expect(subjectFocusServiceMocks.persistSubjectFocusMock).not.toHaveBeenCalledWith(
+      'learner-1',
+      undefined
+    );
+    expect(subjectFocusServiceMocks.persistRemoteSubjectFocusMock).not.toHaveBeenCalled();
+  });
+
+  it('persists valid subject changes locally and remotely', async () => {
+    render(
+      <KangurSubjectFocusProvider>
+        <Probe />
+      </KangurSubjectFocusProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('subject-value')).toHaveTextContent('maths');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'set-valid' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('subject-value')).toHaveTextContent('english');
+    });
+
+    expect(subjectFocusServiceMocks.persistSubjectFocusMock).toHaveBeenCalledWith(
+      'learner-1',
+      'english'
+    );
+    expect(subjectFocusServiceMocks.persistRemoteSubjectFocusMock).toHaveBeenCalledWith(
+      'english'
+    );
+  });
+});

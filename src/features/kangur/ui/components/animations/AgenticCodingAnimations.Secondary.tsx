@@ -1,44 +1,151 @@
-import React from 'react';
+import React, { useId } from 'react';
+
+type AgenticSecondarySurfaceIds = {
+  clipId: string;
+  frameGradientId: string;
+  panelGradientId: string;
+};
+
+type AgenticSecondarySurfaceProps = {
+  accentEnd: string;
+  accentStart: string;
+  atmosphereA: string;
+  atmosphereB: string;
+  ids: AgenticSecondarySurfaceIds;
+  stroke: string;
+  testIdPrefix: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rx: number;
+};
+
+function useAgenticSecondarySurfaceIds(prefix: string): AgenticSecondarySurfaceIds {
+  const baseId = useId().replace(/:/g, '');
+
+  return {
+    clipId: `${prefix}-${baseId}-clip`,
+    frameGradientId: `${prefix}-${baseId}-frame`,
+    panelGradientId: `${prefix}-${baseId}-panel`,
+  };
+}
+
+function AgenticSecondarySurface({
+  accentEnd,
+  accentStart,
+  atmosphereA,
+  atmosphereB,
+  ids,
+  stroke,
+  testIdPrefix,
+  x,
+  y,
+  width,
+  height,
+  rx,
+}: AgenticSecondarySurfaceProps): React.JSX.Element {
+  return (
+    <>
+      <defs>
+        <clipPath id={ids.clipId}>
+          <rect x={x} y={y} width={width} height={height} rx={rx} />
+        </clipPath>
+        <linearGradient
+          id={ids.panelGradientId}
+          x1={x}
+          x2={x + width}
+          y1={y}
+          y2={y + height}
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='#f8fafc' />
+          <stop offset='55%' stopColor='#eff6ff' />
+          <stop offset='100%' stopColor={accentEnd} />
+        </linearGradient>
+        <linearGradient
+          id={ids.frameGradientId}
+          x1={x}
+          x2={x + width}
+          y1={y}
+          y2={y}
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor={accentStart} stopOpacity='0.74' />
+          <stop offset='100%' stopColor='#ffffff' stopOpacity='0.92' />
+        </linearGradient>
+      </defs>
+      <g clipPath={`url(#${ids.clipId})`} data-testid={`${testIdPrefix}-atmosphere`}>
+        <rect
+          fill={`url(#${ids.panelGradientId})`}
+          height={height}
+          rx={rx}
+          stroke={stroke}
+          strokeWidth='2'
+          width={width}
+          x={x}
+          y={y}
+        />
+        <ellipse cx={x + width * 0.2} cy={y + height * 0.18} fill={atmosphereA} rx={width * 0.22} ry={height * 0.16} />
+        <ellipse cx={x + width * 0.82} cy={y + height * 0.88} fill={atmosphereB} rx={width * 0.32} ry={height * 0.22} />
+      </g>
+      <rect
+        data-testid={`${testIdPrefix}-frame`}
+        fill='none'
+        height={height - 12}
+        rx={Math.max(rx - 4, 8)}
+        stroke={`url(#${ids.frameGradientId})`}
+        strokeWidth='1.5'
+        width={width - 12}
+        x={x + 6}
+        y={y + 6}
+      />
+    </>
+  );
+}
 
 export function AgenticApprovalGateAnimation(): React.JSX.Element {
+  const surfaceIds = useAgenticSecondarySurfaceIds('agentic-approval-gate');
+
   return (
     <svg
       aria-label='Animacja: approval gate przed wykonaniem komendy.'
       className='h-auto w-full'
+      data-testid='agentic-approval-gate-animation'
       role='img'
-      viewBox='0 0 360 140'
+      viewBox='0 0 360 150'
     >
       <style>{`
-        .box {
-          fill: #f8fafc;
-          stroke: #e2e8f0;
+        .agentic-approval-box {
+          fill: rgba(255,255,255,0.82);
+          stroke: rgba(226,232,240,0.9);
           stroke-width: 2;
         }
-        .label {
+        .agentic-approval-label {
           font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
           fill: #0f172a;
         }
-        .line {
+        .agentic-approval-line {
           stroke: #cbd5f5;
           stroke-width: 2.5;
           stroke-linecap: round;
         }
-        .dot {
+        .agentic-approval-dot {
           fill: #38bdf8;
           transform-box: fill-box;
           transform-origin: center;
-          animation: moveDot 6s ease-in-out infinite;
+          animation: agenticApprovalMoveDot 6s ease-in-out infinite;
         }
-        .gate {
+        .agentic-approval-gate {
           fill: #e2e8f0;
-          animation: gatePulse 6s ease-in-out infinite;
+          animation: agenticApprovalGatePulse 6s ease-in-out infinite;
         }
-        .lock {
+        .agentic-approval-lock {
           stroke: #64748b;
           stroke-width: 2;
           fill: none;
         }
-        @keyframes moveDot {
+        @keyframes agenticApprovalMoveDot {
           0% { transform: translateX(0); opacity: 0; }
           10% { opacity: 1; }
           30% { transform: translateX(95px); opacity: 1; }
@@ -47,367 +154,484 @@ export function AgenticApprovalGateAnimation(): React.JSX.Element {
           85% { opacity: 1; }
           100% { transform: translateX(250px); opacity: 0; }
         }
-        @keyframes gatePulse {
+        @keyframes agenticApprovalGatePulse {
           0%, 30% { fill: #e2e8f0; }
           45%, 65% { fill: #bfdbfe; }
           100% { fill: #e2e8f0; }
         }
         @media (prefers-reduced-motion: reduce) {
-          .dot, .gate { animation: none; }
+          .agentic-approval-dot, .agentic-approval-gate { animation: none; }
         }
       `}</style>
-      <rect className='box' height='56' rx='14' width='90' x='20' y='42' />
-      <rect className='box' height='56' rx='14' width='90' x='135' y='42' />
-      <rect className='box' height='56' rx='14' width='90' x='250' y='42' />
-      <text className='label' x='34' y='72'>Command</text>
-      <text className='label' x='150' y='72'>Approval</text>
-      <text className='label' x='270' y='72'>Execute</text>
-      <line className='line' x1='110' x2='135' y1='70' y2='70' />
-      <line className='line' x1='225' x2='250' y1='70' y2='70' />
-      <rect className='gate' height='30' rx='8' width='44' x='158' y='56' />
-      <rect className='lock' height='14' rx='6' width='16' x='170' y='66' />
-      <path className='lock' d='M172 66 V62 C172 58 184 58 184 62 V66' />
-      <circle className='dot' cx='30' cy='70' r='5' />
+      <AgenticSecondarySurface
+        accentEnd='#dbeafe'
+        accentStart='#38bdf8'
+        atmosphereA='rgba(56,189,248,0.08)'
+        atmosphereB='rgba(251,146,60,0.08)'
+        ids={surfaceIds}
+        stroke='rgba(56,189,248,0.12)'
+        testIdPrefix='agentic-approval-gate'
+        x={12}
+        y={12}
+        width={336}
+        height={126}
+        rx={24}
+      />
+      <rect className='agentic-approval-box' height='56' rx='14' width='90' x='20' y='48' />
+      <rect className='agentic-approval-box' height='56' rx='14' width='90' x='135' y='48' />
+      <rect className='agentic-approval-box' height='56' rx='14' width='90' x='250' y='48' />
+      <text className='agentic-approval-label' x='34' y='78'>Command</text>
+      <text className='agentic-approval-label' x='150' y='78'>Approval</text>
+      <text className='agentic-approval-label' x='270' y='78'>Execute</text>
+      <line className='agentic-approval-line' x1='110' x2='135' y1='76' y2='76' />
+      <line className='agentic-approval-line' x1='225' x2='250' y1='76' y2='76' />
+      <rect className='agentic-approval-gate' height='30' rx='8' width='44' x='158' y='62' />
+      <rect className='agentic-approval-lock' height='14' rx='6' width='16' x='170' y='72' />
+      <path className='agentic-approval-lock' d='M172 72 V68 C172 64 184 64 184 68 V72' />
+      <circle className='agentic-approval-dot' cx='30' cy='76' r='5' />
     </svg>
   );
 }
 
 export function AgenticModelSelectorAnimation(): React.JSX.Element {
+  const surfaceIds = useAgenticSecondarySurfaceIds('agentic-model-selector');
+
   return (
     <svg
       aria-label='Animacja: dobór modelu między szybkością a głębokim reasoning.'
       className='h-auto w-full'
+      data-testid='agentic-model-selector-animation'
       role='img'
-      viewBox='0 0 360 140'
+      viewBox='0 0 360 150'
     >
       <style>{`
-        .line {
+        .agentic-model-line {
           stroke: #cbd5f5;
           stroke-width: 4;
           stroke-linecap: round;
         }
-        .node {
-          fill: #f8fafc;
-          stroke: #e2e8f0;
+        .agentic-model-node {
+          fill: rgba(255,255,255,0.82);
+          stroke: rgba(226,232,240,0.9);
           stroke-width: 2;
         }
-        .label {
+        .agentic-model-label {
           font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
           fill: #0f172a;
         }
-        .pulse-1, .pulse-2, .pulse-3 {
-          animation: nodePulse 6s ease-in-out infinite;
+        .agentic-model-pulse-1, .agentic-model-pulse-2, .agentic-model-pulse-3 {
+          animation: agenticModelPulse 6s ease-in-out infinite;
         }
-        .pulse-2 { animation-delay: 2s; }
-        .pulse-3 { animation-delay: 4s; }
-        @keyframes nodePulse {
-          0%, 20% { fill: #f8fafc; stroke: #e2e8f0; }
-          35%, 55% { fill: #ccfbf1; stroke: #14b8a6; }
-          100% { fill: #f8fafc; stroke: #e2e8f0; }
+        .agentic-model-pulse-2 { animation-delay: 2s; }
+        .agentic-model-pulse-3 { animation-delay: 4s; }
+        @keyframes agenticModelPulse {
+          0%, 20% { fill: rgba(255,255,255,0.82); stroke: rgba(226,232,240,0.9); }
+          35%, 55% { fill: rgba(204,251,241,0.96); stroke: #14b8a6; }
+          100% { fill: rgba(255,255,255,0.82); stroke: rgba(226,232,240,0.9); }
         }
         @media (prefers-reduced-motion: reduce) {
-          .pulse-1, .pulse-2, .pulse-3 { animation: none; }
+          .agentic-model-pulse-1, .agentic-model-pulse-2, .agentic-model-pulse-3 { animation: none; }
         }
       `}</style>
-      <line className='line' x1='40' x2='320' y1='70' y2='70' />
-      <circle className='node pulse-1' cx='80' cy='70' r='18' />
-      <circle className='node pulse-2' cx='180' cy='70' r='18' />
-      <circle className='node pulse-3' cx='280' cy='70' r='18' />
-      <text className='label' x='60' y='102'>Fast</text>
-      <text className='label' x='160' y='102'>Balanced</text>
-      <text className='label' x='258' y='102'>Deep</text>
-      <text className='label' x='40' y='50'>Speed</text>
-      <text className='label' x='278' y='50'>Reasoning</text>
+      <AgenticSecondarySurface
+        accentEnd='#ccfbf1'
+        accentStart='#14b8a6'
+        atmosphereA='rgba(20,184,166,0.08)'
+        atmosphereB='rgba(129,140,248,0.08)'
+        ids={surfaceIds}
+        stroke='rgba(20,184,166,0.12)'
+        testIdPrefix='agentic-model-selector'
+        x={12}
+        y={12}
+        width={336}
+        height={126}
+        rx={24}
+      />
+      <line className='agentic-model-line' x1='40' x2='320' y1='76' y2='76' />
+      <circle className='agentic-model-node agentic-model-pulse-1' cx='80' cy='76' r='18' />
+      <circle className='agentic-model-node agentic-model-pulse-2' cx='180' cy='76' r='18' />
+      <circle className='agentic-model-node agentic-model-pulse-3' cx='280' cy='76' r='18' />
+      <text className='agentic-model-label' x='60' y='108'>Fast</text>
+      <text className='agentic-model-label' x='160' y='108'>Balanced</text>
+      <text className='agentic-model-label' x='258' y='108'>Deep</text>
+      <text className='agentic-model-label' x='40' y='56'>Speed</text>
+      <text className='agentic-model-label' x='278' y='56'>Reasoning</text>
     </svg>
   );
 }
 
 export function AgenticSkillPipelineAnimation(): React.JSX.Element {
+  const surfaceIds = useAgenticSecondarySurfaceIds('agentic-skill-pipeline');
+
   return (
     <svg
       aria-label='Animacja: pipeline skilla od promptu do wyniku.'
       className='h-auto w-full'
+      data-testid='agentic-skill-pipeline-animation'
       role='img'
-      viewBox='0 0 360 140'
+      viewBox='0 0 360 150'
     >
       <style>{`
-        .box {
-          fill: #f8fafc;
-          stroke: #e2e8f0;
+        .agentic-skill-box {
+          fill: rgba(255,255,255,0.82);
+          stroke: rgba(226,232,240,0.9);
           stroke-width: 2;
         }
-        .label {
+        .agentic-skill-label {
           font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
           fill: #0f172a;
         }
-        .flow {
+        .agentic-skill-flow {
           stroke: #94a3b8;
           stroke-width: 2.5;
           stroke-linecap: round;
         }
-        .pulse-1, .pulse-2, .pulse-3, .pulse-4 {
-          animation: boxPulse 6s ease-in-out infinite;
+        .agentic-skill-pulse-1, .agentic-skill-pulse-2, .agentic-skill-pulse-3, .agentic-skill-pulse-4 {
+          animation: agenticSkillPulse 6s ease-in-out infinite;
         }
-        .pulse-2 { animation-delay: 1.5s; }
-        .pulse-3 { animation-delay: 3s; }
-        .pulse-4 { animation-delay: 4.5s; }
-        @keyframes boxPulse {
-          0%, 20% { fill: #f8fafc; stroke: #e2e8f0; }
-          30%, 55% { fill: #ecfdf3; stroke: #34d399; }
-          100% { fill: #f8fafc; stroke: #e2e8f0; }
+        .agentic-skill-pulse-2 { animation-delay: 1.5s; }
+        .agentic-skill-pulse-3 { animation-delay: 3s; }
+        .agentic-skill-pulse-4 { animation-delay: 4.5s; }
+        @keyframes agenticSkillPulse {
+          0%, 20% { fill: rgba(255,255,255,0.82); stroke: rgba(226,232,240,0.9); }
+          30%, 55% { fill: rgba(236,253,243,0.96); stroke: #34d399; }
+          100% { fill: rgba(255,255,255,0.82); stroke: rgba(226,232,240,0.9); }
         }
         @media (prefers-reduced-motion: reduce) {
-          .pulse-1, .pulse-2, .pulse-3, .pulse-4 { animation: none; }
+          .agentic-skill-pulse-1, .agentic-skill-pulse-2, .agentic-skill-pulse-3, .agentic-skill-pulse-4 { animation: none; }
         }
       `}</style>
-      <rect className='box pulse-1' height='40' rx='12' width='70' x='20' y='50' />
-      <rect className='box pulse-2' height='40' rx='12' width='70' x='110' y='50' />
-      <rect className='box pulse-3' height='40' rx='12' width='70' x='200' y='50' />
-      <rect className='box pulse-4' height='40' rx='12' width='70' x='290' y='50' />
-      <text className='label' x='34' y='74'>Prompt</text>
-      <text className='label' x='128' y='74'>Skill</text>
-      <text className='label' x='215' y='74'>Tools</text>
-      <text className='label' x='304' y='74'>Output</text>
-      <line className='flow' x1='90' x2='110' y1='70' y2='70' />
-      <line className='flow' x1='180' x2='200' y1='70' y2='70' />
-      <line className='flow' x1='270' x2='290' y1='70' y2='70' />
+      <AgenticSecondarySurface
+        accentEnd='#dcfce7'
+        accentStart='#34d399'
+        atmosphereA='rgba(52,211,153,0.08)'
+        atmosphereB='rgba(56,189,248,0.08)'
+        ids={surfaceIds}
+        stroke='rgba(52,211,153,0.12)'
+        testIdPrefix='agentic-skill-pipeline'
+        x={12}
+        y={12}
+        width={336}
+        height={126}
+        rx={24}
+      />
+      <rect className='agentic-skill-box agentic-skill-pulse-1' height='40' rx='12' width='70' x='20' y='54' />
+      <rect className='agentic-skill-box agentic-skill-pulse-2' height='40' rx='12' width='70' x='110' y='54' />
+      <rect className='agentic-skill-box agentic-skill-pulse-3' height='40' rx='12' width='70' x='200' y='54' />
+      <rect className='agentic-skill-box agentic-skill-pulse-4' height='40' rx='12' width='70' x='290' y='54' />
+      <text className='agentic-skill-label' x='34' y='78'>Prompt</text>
+      <text className='agentic-skill-label' x='128' y='78'>Skill</text>
+      <text className='agentic-skill-label' x='215' y='78'>Tools</text>
+      <text className='agentic-skill-label' x='304' y='78'>Output</text>
+      <line className='agentic-skill-flow' x1='90' x2='110' y1='74' y2='74' />
+      <line className='agentic-skill-flow' x1='180' x2='200' y1='74' y2='74' />
+      <line className='agentic-skill-flow' x1='270' x2='290' y1='74' y2='74' />
     </svg>
   );
 }
 
 export function AgenticMilestoneTimelineAnimation(): React.JSX.Element {
+  const surfaceIds = useAgenticSecondarySurfaceIds('agentic-milestone-timeline');
+
   return (
     <svg
       aria-label='Animacja: milestone timeline w długich zadaniach.'
       className='h-auto w-full'
+      data-testid='agentic-milestone-timeline-animation'
       role='img'
-      viewBox='0 0 360 140'
+      viewBox='0 0 360 150'
     >
       <style>{`
-        .line {
+        .agentic-milestone-line {
           stroke: #cbd5f5;
           stroke-width: 3;
           stroke-linecap: round;
         }
-        .node {
-          fill: #f8fafc;
-          stroke: #e2e8f0;
+        .agentic-milestone-node {
+          fill: rgba(255,255,255,0.82);
+          stroke: rgba(226,232,240,0.9);
           stroke-width: 2;
         }
-        .label {
+        .agentic-milestone-label {
           font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
           fill: #0f172a;
         }
-        .pulse-1, .pulse-2, .pulse-3, .pulse-4 {
-          animation: nodePulse 6s ease-in-out infinite;
+        .agentic-milestone-pulse-1, .agentic-milestone-pulse-2, .agentic-milestone-pulse-3, .agentic-milestone-pulse-4 {
+          animation: agenticMilestonePulse 6s ease-in-out infinite;
         }
-        .pulse-2 { animation-delay: 1.5s; }
-        .pulse-3 { animation-delay: 3s; }
-        .pulse-4 { animation-delay: 4.5s; }
-        @keyframes nodePulse {
-          0%, 20% { fill: #f8fafc; stroke: #e2e8f0; }
-          30%, 55% { fill: #e0f2fe; stroke: #38bdf8; }
-          100% { fill: #f8fafc; stroke: #e2e8f0; }
+        .agentic-milestone-pulse-2 { animation-delay: 1.5s; }
+        .agentic-milestone-pulse-3 { animation-delay: 3s; }
+        .agentic-milestone-pulse-4 { animation-delay: 4.5s; }
+        @keyframes agenticMilestonePulse {
+          0%, 20% { fill: rgba(255,255,255,0.82); stroke: rgba(226,232,240,0.9); }
+          30%, 55% { fill: rgba(224,242,254,0.98); stroke: #38bdf8; }
+          100% { fill: rgba(255,255,255,0.82); stroke: rgba(226,232,240,0.9); }
         }
         @media (prefers-reduced-motion: reduce) {
-          .pulse-1, .pulse-2, .pulse-3, .pulse-4 { animation: none; }
+          .agentic-milestone-pulse-1, .agentic-milestone-pulse-2, .agentic-milestone-pulse-3, .agentic-milestone-pulse-4 { animation: none; }
         }
       `}</style>
-      <line className='line' x1='40' x2='320' y1='70' y2='70' />
-      <circle className='node pulse-1' cx='70' cy='70' r='14' />
-      <circle className='node pulse-2' cx='150' cy='70' r='14' />
-      <circle className='node pulse-3' cx='230' cy='70' r='14' />
-      <circle className='node pulse-4' cx='310' cy='70' r='14' />
-      <text className='label' x='48' y='100'>Spec</text>
-      <text className='label' x='130' y='100'>Plan</text>
-      <text className='label' x='208' y='100'>Build</text>
-      <text className='label' x='290' y='100'>Verify</text>
+      <AgenticSecondarySurface
+        accentEnd='#dbeafe'
+        accentStart='#38bdf8'
+        atmosphereA='rgba(56,189,248,0.08)'
+        atmosphereB='rgba(129,140,248,0.08)'
+        ids={surfaceIds}
+        stroke='rgba(56,189,248,0.12)'
+        testIdPrefix='agentic-milestone-timeline'
+        x={12}
+        y={12}
+        width={336}
+        height={126}
+        rx={24}
+      />
+      <line className='agentic-milestone-line' x1='40' x2='320' y1='76' y2='76' />
+      <circle className='agentic-milestone-node agentic-milestone-pulse-1' cx='70' cy='76' r='14' />
+      <circle className='agentic-milestone-node agentic-milestone-pulse-2' cx='150' cy='76' r='14' />
+      <circle className='agentic-milestone-node agentic-milestone-pulse-3' cx='230' cy='76' r='14' />
+      <circle className='agentic-milestone-node agentic-milestone-pulse-4' cx='310' cy='76' r='14' />
+      <text className='agentic-milestone-label' x='48' y='106'>Spec</text>
+      <text className='agentic-milestone-label' x='130' y='106'>Plan</text>
+      <text className='agentic-milestone-label' x='208' y='106'>Build</text>
+      <text className='agentic-milestone-label' x='290' y='106'>Verify</text>
     </svg>
   );
 }
 
 export function AgenticRolloutStagesAnimation(): React.JSX.Element {
+  const surfaceIds = useAgenticSecondarySurfaceIds('agentic-rollout-stages');
+
   return (
     <svg
       aria-label='Animacja: etapy rolloutu zespołowego.'
       className='h-auto w-full'
+      data-testid='agentic-rollout-stages-animation'
       role='img'
-      viewBox='0 0 360 140'
+      viewBox='0 0 360 150'
     >
       <style>{`
-        .line {
+        .agentic-rollout-line {
           stroke: #cbd5f5;
           stroke-width: 3;
           stroke-linecap: round;
         }
-        .node {
-          fill: #f8fafc;
-          stroke: #e2e8f0;
+        .agentic-rollout-node {
+          fill: rgba(255,255,255,0.82);
+          stroke: rgba(226,232,240,0.9);
           stroke-width: 2;
         }
-        .label {
+        .agentic-rollout-label {
           font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
           fill: #0f172a;
         }
-        .pulse-1, .pulse-2, .pulse-3, .pulse-4 {
-          animation: nodePulse 6s ease-in-out infinite;
+        .agentic-rollout-pulse-1, .agentic-rollout-pulse-2, .agentic-rollout-pulse-3, .agentic-rollout-pulse-4 {
+          animation: agenticRolloutPulse 6s ease-in-out infinite;
         }
-        .pulse-2 { animation-delay: 1.5s; }
-        .pulse-3 { animation-delay: 3s; }
-        .pulse-4 { animation-delay: 4.5s; }
-        @keyframes nodePulse {
-          0%, 20% { fill: #f8fafc; stroke: #e2e8f0; }
-          30%, 55% { fill: #ccfbf1; stroke: #14b8a6; }
-          100% { fill: #f8fafc; stroke: #e2e8f0; }
+        .agentic-rollout-pulse-2 { animation-delay: 1.5s; }
+        .agentic-rollout-pulse-3 { animation-delay: 3s; }
+        .agentic-rollout-pulse-4 { animation-delay: 4.5s; }
+        @keyframes agenticRolloutPulse {
+          0%, 20% { fill: rgba(255,255,255,0.82); stroke: rgba(226,232,240,0.9); }
+          30%, 55% { fill: rgba(204,251,241,0.96); stroke: #14b8a6; }
+          100% { fill: rgba(255,255,255,0.82); stroke: rgba(226,232,240,0.9); }
         }
         @media (prefers-reduced-motion: reduce) {
-          .pulse-1, .pulse-2, .pulse-3, .pulse-4 { animation: none; }
+          .agentic-rollout-pulse-1, .agentic-rollout-pulse-2, .agentic-rollout-pulse-3, .agentic-rollout-pulse-4 { animation: none; }
         }
       `}</style>
-      <line className='line' x1='40' x2='320' y1='70' y2='70' />
-      <circle className='node pulse-1' cx='70' cy='70' r='14' />
-      <circle className='node pulse-2' cx='150' cy='70' r='14' />
-      <circle className='node pulse-3' cx='230' cy='70' r='14' />
-      <circle className='node pulse-4' cx='310' cy='70' r='14' />
-      <text className='label' x='52' y='100'>Pilot</text>
-      <text className='label' x='118' y='100'>Playbook</text>
-      <text className='label' x='208' y='100'>Metrics</text>
-      <text className='label' x='292' y='100'>Scale</text>
+      <AgenticSecondarySurface
+        accentEnd='#ccfbf1'
+        accentStart='#14b8a6'
+        atmosphereA='rgba(20,184,166,0.08)'
+        atmosphereB='rgba(56,189,248,0.08)'
+        ids={surfaceIds}
+        stroke='rgba(20,184,166,0.12)'
+        testIdPrefix='agentic-rollout-stages'
+        x={12}
+        y={12}
+        width={336}
+        height={126}
+        rx={24}
+      />
+      <line className='agentic-rollout-line' x1='40' x2='320' y1='76' y2='76' />
+      <circle className='agentic-rollout-node agentic-rollout-pulse-1' cx='70' cy='76' r='14' />
+      <circle className='agentic-rollout-node agentic-rollout-pulse-2' cx='150' cy='76' r='14' />
+      <circle className='agentic-rollout-node agentic-rollout-pulse-3' cx='230' cy='76' r='14' />
+      <circle className='agentic-rollout-node agentic-rollout-pulse-4' cx='310' cy='76' r='14' />
+      <text className='agentic-rollout-label' x='52' y='106'>Pilot</text>
+      <text className='agentic-rollout-label' x='118' y='106'>Playbook</text>
+      <text className='agentic-rollout-label' x='208' y='106'>Metrics</text>
+      <text className='agentic-rollout-label' x='292' y='106'>Scale</text>
     </svg>
   );
 }
 
 export function AgenticDoDontAnimation(): React.JSX.Element {
+  const surfaceIds = useAgenticSecondarySurfaceIds('agentic-do-dont');
+
   return (
     <svg
       aria-label='Animacja: do i don’t w agentic coding.'
       className='h-auto w-full'
+      data-testid='agentic-do-dont-animation'
       role='img'
-      viewBox='0 0 360 140'
+      viewBox='0 0 360 150'
     >
       <style>{`
-        .panel {
-          fill: #f8fafc;
-          stroke: #e2e8f0;
+        .agentic-dodont-panel {
+          fill: rgba(255,255,255,0.82);
+          stroke: rgba(226,232,240,0.9);
           stroke-width: 2;
         }
-        .label {
+        .agentic-dodont-label {
           font: 700 12px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
           fill: #0f172a;
         }
-        .check {
+        .agentic-dodont-check {
           stroke: #22c55e;
           stroke-width: 6;
           stroke-linecap: round;
           stroke-linejoin: round;
-          animation: pulseCheck 4.8s ease-in-out infinite;
+          animation: agenticDoCheck 4.8s ease-in-out infinite;
         }
-        .cross {
+        .agentic-dodont-cross {
           stroke: #f43f5e;
           stroke-width: 6;
           stroke-linecap: round;
-          animation: pulseCross 4.8s ease-in-out infinite;
+          animation: agenticDoCross 4.8s ease-in-out infinite;
         }
-        @keyframes pulseCheck {
+        @keyframes agenticDoCheck {
           0%, 30% { opacity: 0.4; }
           50%, 100% { opacity: 1; }
         }
-        @keyframes pulseCross {
+        @keyframes agenticDoCross {
           0%, 55% { opacity: 0.4; }
           70%, 100% { opacity: 1; }
         }
         @media (prefers-reduced-motion: reduce) {
-          .check, .cross { animation: none; opacity: 1; }
+          .agentic-dodont-check, .agentic-dodont-cross { animation: none; opacity: 1; }
         }
       `}</style>
-      <rect className='panel' height='90' rx='16' width='150' x='20' y='25' />
-      <rect className='panel' height='90' rx='16' width='150' x='190' y='25' />
-      <text className='label' x='70' y='48'>Do</text>
-      <text className='label' x='230' y='48'>Don't</text>
-      <path className='check' d='M60 80 L80 98 L120 60' />
-      <line className='cross' x1='220' x2='300' y1='60' y2='100' />
-      <line className='cross' x1='300' x2='220' y1='60' y2='100' />
+      <AgenticSecondarySurface
+        accentEnd='#fee2e2'
+        accentStart='#f43f5e'
+        atmosphereA='rgba(244,63,94,0.08)'
+        atmosphereB='rgba(34,197,94,0.08)'
+        ids={surfaceIds}
+        stroke='rgba(244,63,94,0.12)'
+        testIdPrefix='agentic-do-dont'
+        x={12}
+        y={12}
+        width={336}
+        height={126}
+        rx={24}
+      />
+      <rect className='agentic-dodont-panel' height='90' rx='16' width='150' x='20' y='28' />
+      <rect className='agentic-dodont-panel' height='90' rx='16' width='150' x='190' y='28' />
+      <text className='agentic-dodont-label' x='70' y='52'>Do</text>
+      <text className='agentic-dodont-label' x='230' y='52'>Don&apos;t</text>
+      <path className='agentic-dodont-check' d='M60 84 L80 102 L120 64' />
+      <line className='agentic-dodont-cross' x1='220' x2='300' y1='66' y2='106' />
+      <line className='agentic-dodont-cross' x1='300' x2='220' y1='66' y2='106' />
     </svg>
   );
 }
 
 export function AgenticDocsStackAnimation(): React.JSX.Element {
+  const surfaceIds = useAgenticSecondarySurfaceIds('agentic-docs-stack');
+
   return (
     <svg
       aria-label='Animacja: stos dokumentów z AGENTS.md na wierzchu.'
       className='h-auto w-full'
+      data-testid='agentic-docs-stack-animation'
       role='img'
-      viewBox='0 0 360 140'
+      viewBox='0 0 360 150'
     >
       <style>{`
-        .sheet {
-          fill: #f8fafc;
-          stroke: #e2e8f0;
+        .agentic-docs-sheet {
+          fill: rgba(255,255,255,0.86);
+          stroke: rgba(226,232,240,0.9);
           stroke-width: 2;
         }
-        .title {
+        .agentic-docs-title {
           font: 700 11px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
           fill: #0f172a;
         }
-        .pulse {
-          animation: sheetPulse 5.4s ease-in-out infinite;
-        }
-        @keyframes sheetPulse {
-          0%, 30% { fill: #f8fafc; stroke: #e2e8f0; }
-          45%, 70% { fill: #fef3c7; stroke: #f59e0b; }
-          100% { fill: #f8fafc; stroke: #e2e8f0; }
+        .agentic-docs-pulse { animation: agenticDocsPulse 5.4s ease-in-out infinite; }
+        @keyframes agenticDocsPulse {
+          0%, 30% { fill: rgba(255,255,255,0.86); stroke: rgba(226,232,240,0.9); }
+          45%, 70% { fill: rgba(254,243,199,0.96); stroke: #f59e0b; }
+          100% { fill: rgba(255,255,255,0.86); stroke: rgba(226,232,240,0.9); }
         }
         @media (prefers-reduced-motion: reduce) {
-          .pulse { animation: none; }
+          .agentic-docs-pulse { animation: none; }
         }
       `}</style>
-      <rect className='sheet' height='60' rx='12' width='200' x='80' y='32' />
-      <rect className='sheet' height='60' rx='12' width='200' x='70' y='40' />
-      <rect className='sheet pulse' height='60' rx='12' width='200' x='60' y='48' />
-      <text className='title' x='88' y='78'>AGENTS.md</text>
-      <text className='title' x='88' y='94'>Repo playbook</text>
+      <AgenticSecondarySurface
+        accentEnd='#fef3c7'
+        accentStart='#f59e0b'
+        atmosphereA='rgba(245,158,11,0.08)'
+        atmosphereB='rgba(56,189,248,0.08)'
+        ids={surfaceIds}
+        stroke='rgba(245,158,11,0.12)'
+        testIdPrefix='agentic-docs-stack'
+        x={12}
+        y={12}
+        width={336}
+        height={126}
+        rx={24}
+      />
+      <rect className='agentic-docs-sheet' height='60' rx='12' width='200' x='80' y='34' />
+      <rect className='agentic-docs-sheet' height='60' rx='12' width='200' x='70' y='42' />
+      <rect className='agentic-docs-sheet agentic-docs-pulse' height='60' rx='12' width='200' x='60' y='50' />
+      <text className='agentic-docs-title' x='88' y='80'>AGENTS.md</text>
+      <text className='agentic-docs-title' x='88' y='96'>Repo playbook</text>
     </svg>
   );
 }
 
 export function AgenticContextLensAnimation(): React.JSX.Element {
+  const surfaceIds = useAgenticSecondarySurfaceIds('agentic-context-lens');
+
   return (
     <svg
       aria-label='Animacja: soczewka kontekstu skanuje najważniejsze pliki.'
       className='h-auto w-full'
+      data-testid='agentic-context-lens-animation'
       role='img'
-      viewBox='0 0 360 140'
+      viewBox='0 0 360 150'
     >
       <style>{`
-        .card {
-          fill: #f8fafc;
-          stroke: #e2e8f0;
+        .agentic-context-card {
+          fill: rgba(255,255,255,0.82);
+          stroke: rgba(226,232,240,0.9);
           stroke-width: 2;
         }
-        .label {
+        .agentic-context-label {
           font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
           fill: #0f172a;
         }
-        .muted {
+        .agentic-context-muted {
           font: 600 9px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
           fill: #64748b;
         }
-        .lens {
+        .agentic-context-lens {
           fill: rgba(56, 189, 248, 0.12);
           stroke: #38bdf8;
           stroke-width: 3;
         }
-        .handle {
+        .agentic-context-handle {
           stroke: #38bdf8;
           stroke-width: 3;
           stroke-linecap: round;
         }
-        .scan {
-          animation: scanMove 6s ease-in-out infinite;
+        .agentic-context-scan {
+          animation: agenticContextScan 6s ease-in-out infinite;
           transform-box: fill-box;
           transform-origin: center;
         }
-        @keyframes scanMove {
+        @keyframes agenticContextScan {
           0% { transform: translateX(0); opacity: 0; }
           15% { opacity: 1; }
           50% { transform: translateX(140px); opacity: 1; }
@@ -415,69 +639,86 @@ export function AgenticContextLensAnimation(): React.JSX.Element {
           100% { transform: translateX(200px); opacity: 0; }
         }
         @media (prefers-reduced-motion: reduce) {
-          .scan { animation: none; opacity: 1; transform: translateX(120px); }
+          .agentic-context-scan { animation: none; opacity: 1; transform: translateX(120px); }
         }
       `}</style>
-      <rect className='card' height='36' rx='10' width='140' x='30' y='28' />
-      <rect className='card' height='36' rx='10' width='140' x='30' y='76' />
-      <rect className='card' height='36' rx='10' width='140' x='190' y='28' />
-      <rect className='card' height='36' rx='10' width='140' x='190' y='76' />
-      <text className='label' x='46' y='50'>app/editor.tsx</text>
-      <text className='muted' x='46' y='62'>UI surface</text>
-      <text className='label' x='46' y='98'>shared/hooks.ts</text>
-      <text className='muted' x='46' y='110'>shared logic</text>
-      <text className='label' x='206' y='50'>resources.ts</text>
-      <text className='muted' x='206' y='62'>data source</text>
-      <text className='label' x='206' y='98'>tests/editor.spec</text>
-      <text className='muted' x='206' y='110'>proof</text>
-      <g className='scan'>
-        <circle className='lens' cx='80' cy='70' r='24' />
-        <line className='handle' x1='96' x2='120' y1='86' y2='108' />
+      <AgenticSecondarySurface
+        accentEnd='#dbeafe'
+        accentStart='#38bdf8'
+        atmosphereA='rgba(56,189,248,0.08)'
+        atmosphereB='rgba(129,140,248,0.08)'
+        ids={surfaceIds}
+        stroke='rgba(56,189,248,0.12)'
+        testIdPrefix='agentic-context-lens'
+        x={12}
+        y={12}
+        width={336}
+        height={126}
+        rx={24}
+      />
+      <rect className='agentic-context-card' height='36' rx='10' width='140' x='30' y='28' />
+      <rect className='agentic-context-card' height='36' rx='10' width='140' x='30' y='76' />
+      <rect className='agentic-context-card' height='36' rx='10' width='140' x='190' y='28' />
+      <rect className='agentic-context-card' height='36' rx='10' width='140' x='190' y='76' />
+      <text className='agentic-context-label' x='46' y='50'>app/editor.tsx</text>
+      <text className='agentic-context-muted' x='46' y='62'>UI surface</text>
+      <text className='agentic-context-label' x='46' y='98'>shared/hooks.ts</text>
+      <text className='agentic-context-muted' x='46' y='110'>shared logic</text>
+      <text className='agentic-context-label' x='206' y='50'>resources.ts</text>
+      <text className='agentic-context-muted' x='206' y='62'>data source</text>
+      <text className='agentic-context-label' x='206' y='98'>tests/editor.spec</text>
+      <text className='agentic-context-muted' x='206' y='110'>proof</text>
+      <g className='agentic-context-scan'>
+        <circle className='agentic-context-lens' cx='80' cy='70' r='24' />
+        <line className='agentic-context-handle' x1='96' x2='120' y1='86' y2='108' />
       </g>
     </svg>
   );
 }
 
 export function AgenticAutomationScheduleAnimation(): React.JSX.Element {
+  const surfaceIds = useAgenticSecondarySurfaceIds('agentic-automation-schedule');
+
   return (
     <svg
       aria-label='Animacja: harmonogram automations w kalendarzu.'
       className='h-auto w-full'
+      data-testid='agentic-automation-schedule-animation'
       role='img'
-      viewBox='0 0 360 150'
+      viewBox='0 0 360 160'
     >
       <style>{`
-        .panel {
-          fill: #f8fafc;
-          stroke: #e2e8f0;
+        .agentic-automation-panel {
+          fill: rgba(255,255,255,0.82);
+          stroke: rgba(226,232,240,0.9);
           stroke-width: 2;
         }
-        .label {
+        .agentic-automation-label {
           font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
           fill: #0f172a;
         }
-        .slot {
+        .agentic-automation-slot {
           fill: #f1f5f9;
           stroke: #cbd5f5;
           stroke-width: 1.5;
-          animation: slotPulse 7s ease-in-out infinite;
+          animation: agenticAutomationSlot 7s ease-in-out infinite;
         }
-        .slot-2 { animation-delay: 1.2s; }
-        .slot-3 { animation-delay: 2.4s; }
-        .slot-4 { animation-delay: 3.6s; }
-        .slot-5 { animation-delay: 4.8s; }
-        .dot {
+        .agentic-automation-slot-2 { animation-delay: 1.2s; }
+        .agentic-automation-slot-3 { animation-delay: 2.4s; }
+        .agentic-automation-slot-4 { animation-delay: 3.6s; }
+        .agentic-automation-slot-5 { animation-delay: 4.8s; }
+        .agentic-automation-dot {
           fill: #6366f1;
-          animation: dotMove 7s ease-in-out infinite;
+          animation: agenticAutomationDot 7s ease-in-out infinite;
           transform-box: fill-box;
           transform-origin: center;
         }
-        @keyframes slotPulse {
+        @keyframes agenticAutomationSlot {
           0%, 15% { fill: #f1f5f9; stroke: #cbd5f5; }
           30%, 55% { fill: #eef2ff; stroke: #6366f1; }
           100% { fill: #f1f5f9; stroke: #cbd5f5; }
         }
-        @keyframes dotMove {
+        @keyframes agenticAutomationDot {
           0% { transform: translateX(0); opacity: 0; }
           20% { opacity: 1; }
           50% { transform: translateX(140px); opacity: 1; }
@@ -485,272 +726,350 @@ export function AgenticAutomationScheduleAnimation(): React.JSX.Element {
           100% { transform: translateX(200px); opacity: 0; }
         }
         @media (prefers-reduced-motion: reduce) {
-          .slot, .dot { animation: none; }
+          .agentic-automation-slot, .agentic-automation-dot { animation: none; }
         }
       `}</style>
-      <rect className='panel' height='98' rx='16' width='300' x='30' y='26' />
-      <text className='label' x='50' y='48'>Automation schedule</text>
-      <rect className='slot slot-1' height='16' rx='6' width='80' x='50' y='62' />
-      <rect className='slot slot-2' height='16' rx='6' width='90' x='145' y='62' />
-      <rect className='slot slot-3' height='16' rx='6' width='70' x='240' y='62' />
-      <rect className='slot slot-4' height='16' rx='6' width='110' x='50' y='86' />
-      <rect className='slot slot-5' height='16' rx='6' width='120' x='170' y='86' />
-      <circle className='dot' cx='60' cy='114' r='4' />
+      <AgenticSecondarySurface
+        accentEnd='#e0e7ff'
+        accentStart='#6366f1'
+        atmosphereA='rgba(99,102,241,0.08)'
+        atmosphereB='rgba(56,189,248,0.08)'
+        ids={surfaceIds}
+        stroke='rgba(99,102,241,0.12)'
+        testIdPrefix='agentic-automation-schedule'
+        x={12}
+        y={12}
+        width={336}
+        height={136}
+        rx={24}
+      />
+      <rect className='agentic-automation-panel' height='98' rx='16' width='300' x='30' y='32' />
+      <text className='agentic-automation-label' x='50' y='54'>Automation schedule</text>
+      <rect className='agentic-automation-slot agentic-automation-slot-1' height='16' rx='6' width='80' x='50' y='68' />
+      <rect className='agentic-automation-slot agentic-automation-slot-2' height='16' rx='6' width='90' x='145' y='68' />
+      <rect className='agentic-automation-slot agentic-automation-slot-3' height='16' rx='6' width='70' x='240' y='68' />
+      <rect className='agentic-automation-slot agentic-automation-slot-4' height='16' rx='6' width='110' x='50' y='92' />
+      <rect className='agentic-automation-slot agentic-automation-slot-5' height='16' rx='6' width='120' x='170' y='92' />
+      <circle className='agentic-automation-dot' cx='60' cy='120' r='4' />
     </svg>
   );
 }
 
 export function AgenticEvidencePackAnimation(): React.JSX.Element {
+  const surfaceIds = useAgenticSecondarySurfaceIds('agentic-evidence-pack');
+
   return (
     <svg
       aria-label='Animacja: pakiet dowodów (diff, testy, podsumowanie).'
       className='h-auto w-full'
+      data-testid='agentic-evidence-pack-animation'
       role='img'
-      viewBox='0 0 360 140'
+      viewBox='0 0 360 150'
     >
       <style>{`
-        .panel {
-          fill: #f8fafc;
-          stroke: #e2e8f0;
+        .agentic-evidence-panel {
+          fill: rgba(255,255,255,0.82);
+          stroke: rgba(226,232,240,0.9);
           stroke-width: 2;
         }
-        .label {
+        .agentic-evidence-label {
           font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
           fill: #0f172a;
         }
-        .check {
+        .agentic-evidence-check {
           stroke: #22c55e;
           stroke-width: 3.5;
           stroke-linecap: round;
           stroke-linejoin: round;
           opacity: 0.2;
-          animation: checkPulse 6s ease-in-out infinite;
+          animation: agenticEvidenceCheck 6s ease-in-out infinite;
         }
-        .check-2 { animation-delay: 1.5s; }
-        .check-3 { animation-delay: 3s; }
-        @keyframes checkPulse {
+        .agentic-evidence-check-2 { animation-delay: 1.5s; }
+        .agentic-evidence-check-3 { animation-delay: 3s; }
+        @keyframes agenticEvidenceCheck {
           0%, 35% { opacity: 0.2; }
           55%, 100% { opacity: 1; }
         }
         @media (prefers-reduced-motion: reduce) {
-          .check { animation: none; opacity: 1; }
+          .agentic-evidence-check { animation: none; opacity: 1; }
         }
       `}</style>
-      <rect className='panel' height='70' rx='14' width='90' x='30' y='36' />
-      <rect className='panel' height='70' rx='14' width='90' x='135' y='36' />
-      <rect className='panel' height='70' rx='14' width='90' x='240' y='36' />
-      <text className='label' x='52' y='58'>Diff</text>
-      <text className='label' x='152' y='58'>Tests</text>
-      <text className='label' x='252' y='58'>Summary</text>
-      <path className='check' d='M50 82 L60 92 L78 72' />
-      <path className='check check-2' d='M155 82 L165 92 L183 72' />
-      <path className='check check-3' d='M260 82 L270 92 L288 72' />
+      <AgenticSecondarySurface
+        accentEnd='#dcfce7'
+        accentStart='#22c55e'
+        atmosphereA='rgba(34,197,94,0.08)'
+        atmosphereB='rgba(56,189,248,0.08)'
+        ids={surfaceIds}
+        stroke='rgba(34,197,94,0.12)'
+        testIdPrefix='agentic-evidence-pack'
+        x={12}
+        y={12}
+        width={336}
+        height={126}
+        rx={24}
+      />
+      <rect className='agentic-evidence-panel' height='70' rx='14' width='90' x='30' y='42' />
+      <rect className='agentic-evidence-panel' height='70' rx='14' width='90' x='135' y='42' />
+      <rect className='agentic-evidence-panel' height='70' rx='14' width='90' x='240' y='42' />
+      <text className='agentic-evidence-label' x='52' y='64'>Diff</text>
+      <text className='agentic-evidence-label' x='152' y='64'>Tests</text>
+      <text className='agentic-evidence-label' x='252' y='64'>Summary</text>
+      <path className='agentic-evidence-check' d='M50 88 L60 98 L78 78' />
+      <path className='agentic-evidence-check agentic-evidence-check-2' d='M155 88 L165 98 L183 78' />
+      <path className='agentic-evidence-check agentic-evidence-check-3' d='M260 88 L270 98 L288 78' />
     </svg>
   );
 }
 
 export function AgenticFitQuadrantAnimation(): React.JSX.Element {
+  const surfaceIds = useAgenticSecondarySurfaceIds('agentic-fit-quadrant');
+
   return (
     <svg
       aria-label='Animacja: matryca fit (klarowny scope i weryfikacja).'
       className='h-auto w-full'
+      data-testid='agentic-fit-quadrant-animation'
       role='img'
-      viewBox='0 0 360 150'
+      viewBox='0 0 360 160'
     >
       <style>{`
-        .cell {
-          fill: #f8fafc;
-          stroke: #e2e8f0;
+        .agentic-fit-cell {
+          fill: rgba(255,255,255,0.82);
+          stroke: rgba(226,232,240,0.9);
           stroke-width: 2;
         }
-        .good {
-          fill: #ecfdf5;
+        .agentic-fit-good {
+          fill: rgba(236,253,245,0.96);
           stroke: #10b981;
         }
-        .label {
+        .agentic-fit-label {
           font: 700 9px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
           fill: #0f172a;
         }
-        .muted {
+        .agentic-fit-muted {
           font: 600 8px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
           fill: #64748b;
         }
-        .pulse {
-          animation: fitPulse 6s ease-in-out infinite;
-        }
-        @keyframes fitPulse {
+        .agentic-fit-pulse { animation: agenticFitPulse 6s ease-in-out infinite; }
+        @keyframes agenticFitPulse {
           0%, 30% { opacity: 0.4; }
           50%, 100% { opacity: 1; }
         }
         @media (prefers-reduced-motion: reduce) {
-          .pulse { animation: none; opacity: 1; }
+          .agentic-fit-pulse { animation: none; opacity: 1; }
         }
       `}</style>
-      <rect className='cell' height='48' rx='12' width='120' x='40' y='32' />
-      <rect className='cell' height='48' rx='12' width='120' x='200' y='32' />
-      <rect className='cell' height='48' rx='12' width='120' x='40' y='88' />
-      <rect className='cell good pulse' height='48' rx='12' width='120' x='200' y='88' />
-      <text className='label' x='60' y='60'>Low scope</text>
-      <text className='label' x='216' y='60'>Clear scope</text>
-      <text className='label' x='60' y='116'>Weak proof</text>
-      <text className='label' x='216' y='116'>Strong proof</text>
-      <text className='muted' x='44' y='20'>Verification</text>
-      <text className='muted' x='250' y='20'>Scope clarity</text>
+      <AgenticSecondarySurface
+        accentEnd='#dcfce7'
+        accentStart='#10b981'
+        atmosphereA='rgba(16,185,129,0.08)'
+        atmosphereB='rgba(56,189,248,0.08)'
+        ids={surfaceIds}
+        stroke='rgba(16,185,129,0.12)'
+        testIdPrefix='agentic-fit-quadrant'
+        x={12}
+        y={12}
+        width={336}
+        height={136}
+        rx={24}
+      />
+      <rect className='agentic-fit-cell' height='48' rx='12' width='120' x='40' y='40' />
+      <rect className='agentic-fit-cell' height='48' rx='12' width='120' x='200' y='40' />
+      <rect className='agentic-fit-cell' height='48' rx='12' width='120' x='40' y='96' />
+      <rect className='agentic-fit-good agentic-fit-pulse' height='48' rx='12' width='120' x='200' y='96' />
+      <text className='agentic-fit-label' x='60' y='68'>Low scope</text>
+      <text className='agentic-fit-label' x='216' y='68'>Clear scope</text>
+      <text className='agentic-fit-label' x='60' y='124'>Weak proof</text>
+      <text className='agentic-fit-label' x='216' y='124'>Strong proof</text>
+      <text className='agentic-fit-muted' x='44' y='28'>Verification</text>
+      <text className='agentic-fit-muted' x='250' y='28'>Scope clarity</text>
     </svg>
   );
 }
 
 export function AgenticRolloutMetricsAnimation(): React.JSX.Element {
+  const surfaceIds = useAgenticSecondarySurfaceIds('agentic-rollout-metrics');
+
   return (
     <svg
       aria-label='Animacja: metryki rolloutu (adopcja i jakość).'
       className='h-auto w-full'
+      data-testid='agentic-rollout-metrics-animation'
       role='img'
-      viewBox='0 0 360 140'
+      viewBox='0 0 360 150'
     >
       <style>{`
-        .grid {
-          stroke: #e2e8f0;
-          stroke-width: 1.5;
-        }
-        .bar {
+        .agentic-metrics-grid { stroke: #e2e8f0; stroke-width: 1.5; }
+        .agentic-metrics-bar {
           fill: #ccfbf1;
           stroke: #14b8a6;
           stroke-width: 1.5;
           transform-origin: bottom;
-          animation: barGrow 6s ease-in-out infinite;
+          animation: agenticMetricsBar 6s ease-in-out infinite;
         }
-        .bar-2 { animation-delay: 0.5s; }
-        .bar-3 { animation-delay: 1s; }
-        .bar-4 { animation-delay: 1.5s; }
-        .line {
+        .agentic-metrics-bar-2 { animation-delay: 0.5s; }
+        .agentic-metrics-bar-3 { animation-delay: 1s; }
+        .agentic-metrics-bar-4 { animation-delay: 1.5s; }
+        .agentic-metrics-line {
           stroke: #0ea5e9;
           stroke-width: 2.5;
           fill: none;
           stroke-linecap: round;
         }
-        .dot {
-          fill: #0ea5e9;
-        }
-        .label {
+        .agentic-metrics-dot { fill: #0ea5e9; }
+        .agentic-metrics-label {
           font: 700 9px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
           fill: #0f172a;
         }
-        @keyframes barGrow {
+        @keyframes agenticMetricsBar {
           0%, 20% { transform: scaleY(0.5); }
           40%, 100% { transform: scaleY(1); }
         }
         @media (prefers-reduced-motion: reduce) {
-          .bar { animation: none; }
+          .agentic-metrics-bar { animation: none; }
         }
       `}</style>
-      <line className='grid' x1='40' x2='320' y1='100' y2='100' />
-      <line className='grid' x1='40' x2='320' y1='60' y2='60' />
-      <rect className='bar bar-1' height='40' rx='6' width='36' x='60' y='60' />
-      <rect className='bar bar-2' height='52' rx='6' width='36' x='120' y='48' />
-      <rect className='bar bar-3' height='62' rx='6' width='36' x='180' y='38' />
-      <rect className='bar bar-4' height='72' rx='6' width='36' x='240' y='28' />
-      <path className='line' d='M78 84 L138 70 L198 60 L258 50' />
-      <circle className='dot' cx='78' cy='84' r='3.5' />
-      <circle className='dot' cx='138' cy='70' r='3.5' />
-      <circle className='dot' cx='198' cy='60' r='3.5' />
-      <circle className='dot' cx='258' cy='50' r='3.5' />
-      <text className='label' x='44' y='24'>Adoption</text>
-      <text className='label' x='252' y='24'>Quality</text>
+      <AgenticSecondarySurface
+        accentEnd='#ccfbf1'
+        accentStart='#14b8a6'
+        atmosphereA='rgba(20,184,166,0.08)'
+        atmosphereB='rgba(14,165,233,0.08)'
+        ids={surfaceIds}
+        stroke='rgba(20,184,166,0.12)'
+        testIdPrefix='agentic-rollout-metrics'
+        x={12}
+        y={12}
+        width={336}
+        height={126}
+        rx={24}
+      />
+      <line className='agentic-metrics-grid' x1='40' x2='320' y1='106' y2='106' />
+      <line className='agentic-metrics-grid' x1='40' x2='320' y1='68' y2='68' />
+      <rect className='agentic-metrics-bar agentic-metrics-bar-1' height='40' rx='6' width='36' x='60' y='66' />
+      <rect className='agentic-metrics-bar agentic-metrics-bar-2' height='52' rx='6' width='36' x='120' y='54' />
+      <rect className='agentic-metrics-bar agentic-metrics-bar-3' height='62' rx='6' width='36' x='180' y='44' />
+      <rect className='agentic-metrics-bar agentic-metrics-bar-4' height='72' rx='6' width='36' x='240' y='34' />
+      <path className='agentic-metrics-line' d='M78 90 L138 76 L198 66 L258 56' />
+      <circle className='agentic-metrics-dot' cx='78' cy='90' r='3.5' />
+      <circle className='agentic-metrics-dot' cx='138' cy='76' r='3.5' />
+      <circle className='agentic-metrics-dot' cx='198' cy='66' r='3.5' />
+      <circle className='agentic-metrics-dot' cx='258' cy='56' r='3.5' />
+      <text className='agentic-metrics-label' x='44' y='28'>Adoption</text>
+      <text className='agentic-metrics-label' x='252' y='28'>Quality</text>
     </svg>
   );
 }
 
 export function AgenticRoutingDialAnimation(): React.JSX.Element {
+  const surfaceIds = useAgenticSecondarySurfaceIds('agentic-routing-dial');
+
   return (
     <svg
       aria-label='Animacja: routing między szybkością, kosztem i głębią.'
       className='h-auto w-full'
+      data-testid='agentic-routing-dial-animation'
       role='img'
-      viewBox='0 0 360 150'
+      viewBox='0 0 360 160'
     >
       <style>{`
-        .dial {
-          fill: #f8fafc;
-          stroke: #e2e8f0;
+        .agentic-routing-dial {
+          fill: rgba(255,255,255,0.82);
+          stroke: rgba(226,232,240,0.9);
           stroke-width: 2;
         }
-        .label {
+        .agentic-routing-label {
           font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
           fill: #0f172a;
         }
-        .tick {
+        .agentic-routing-tick {
           stroke: #cbd5f5;
           stroke-width: 2;
           stroke-linecap: round;
         }
-        .needle {
+        .agentic-routing-needle {
           stroke: #14b8a6;
           stroke-width: 3;
           stroke-linecap: round;
           transform-origin: center;
-          animation: needleSweep 6s ease-in-out infinite;
+          animation: agenticRoutingNeedle 6s ease-in-out infinite;
         }
-        .needle-2 {
+        .agentic-routing-needle-2 {
           stroke: #6366f1;
           animation-delay: 1.5s;
         }
-        @keyframes needleSweep {
+        @keyframes agenticRoutingNeedle {
           0% { transform: rotate(-40deg); }
           40% { transform: rotate(10deg); }
           70% { transform: rotate(35deg); }
           100% { transform: rotate(-40deg); }
         }
         @media (prefers-reduced-motion: reduce) {
-          .needle { animation: none; transform: rotate(10deg); }
+          .agentic-routing-needle { animation: none; transform: rotate(10deg); }
         }
       `}</style>
-      <circle className='dial' cx='110' cy='80' r='44' />
-      <circle className='dial' cx='250' cy='80' r='44' />
-      <line className='tick' x1='110' x2='110' y1='34' y2='46' />
-      <line className='tick' x1='84' x2='92' y1='42' y2='52' />
-      <line className='tick' x1='136' x2='128' y1='42' y2='52' />
-      <line className='tick' x1='250' x2='250' y1='34' y2='46' />
-      <line className='tick' x1='224' x2='232' y1='42' y2='52' />
-      <line className='tick' x1='276' x2='268' y1='42' y2='52' />
-      <line className='needle' x1='110' x2='110' y1='80' y2='48' />
-      <line className='needle needle-2' x1='250' x2='250' y1='80' y2='48' />
-      <text className='label' x='84' y='122'>Speed</text>
-      <text className='label' x='228' y='122'>Depth</text>
+      <AgenticSecondarySurface
+        accentEnd='#e0e7ff'
+        accentStart='#6366f1'
+        atmosphereA='rgba(99,102,241,0.08)'
+        atmosphereB='rgba(20,184,166,0.08)'
+        ids={surfaceIds}
+        stroke='rgba(99,102,241,0.12)'
+        testIdPrefix='agentic-routing-dial'
+        x={12}
+        y={12}
+        width={336}
+        height={136}
+        rx={24}
+      />
+      <circle className='agentic-routing-dial' cx='110' cy='86' r='44' />
+      <circle className='agentic-routing-dial' cx='250' cy='86' r='44' />
+      <line className='agentic-routing-tick' x1='110' x2='110' y1='40' y2='52' />
+      <line className='agentic-routing-tick' x1='84' x2='92' y1='48' y2='58' />
+      <line className='agentic-routing-tick' x1='136' x2='128' y1='48' y2='58' />
+      <line className='agentic-routing-tick' x1='250' x2='250' y1='40' y2='52' />
+      <line className='agentic-routing-tick' x1='224' x2='232' y1='48' y2='58' />
+      <line className='agentic-routing-tick' x1='276' x2='268' y1='48' y2='58' />
+      <line className='agentic-routing-needle' x1='110' x2='110' y1='86' y2='54' />
+      <line className='agentic-routing-needle agentic-routing-needle-2' x1='250' x2='250' y1='86' y2='54' />
+      <text className='agentic-routing-label' x='84' y='128'>Speed</text>
+      <text className='agentic-routing-label' x='228' y='128'>Depth</text>
     </svg>
   );
 }
 
 export function AgenticApprovalScopeMapAnimation(): React.JSX.Element {
+  const surfaceIds = useAgenticSecondarySurfaceIds('agentic-approval-scope-map');
+
   return (
     <svg
       aria-label='Animacja: eskalacja uprawnień od read-only do network.'
       className='h-auto w-full'
+      data-testid='agentic-approval-scope-map-animation'
       role='img'
-      viewBox='0 0 360 140'
+      viewBox='0 0 360 150'
     >
       <style>{`
-        .node {
-          fill: #f8fafc;
-          stroke: #e2e8f0;
+        .agentic-scope-node {
+          fill: rgba(255,255,255,0.82);
+          stroke: rgba(226,232,240,0.9);
           stroke-width: 2;
         }
-        .label {
+        .agentic-scope-label {
           font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
           fill: #0f172a;
         }
-        .line {
+        .agentic-scope-line {
           stroke: #cbd5f5;
           stroke-width: 2.5;
           stroke-linecap: round;
         }
-        .dot {
+        .agentic-scope-dot {
           fill: #f97316;
-          animation: dotMove 6s ease-in-out infinite;
+          animation: agenticScopeDot 6s ease-in-out infinite;
           transform-box: fill-box;
           transform-origin: center;
         }
-        @keyframes dotMove {
+        @keyframes agenticScopeDot {
           0% { transform: translateX(0); opacity: 0; }
           15% { opacity: 1; }
           50% { transform: translateX(120px); opacity: 1; }
@@ -758,111 +1077,159 @@ export function AgenticApprovalScopeMapAnimation(): React.JSX.Element {
           100% { transform: translateX(200px); opacity: 0; }
         }
         @media (prefers-reduced-motion: reduce) {
-          .dot { animation: none; opacity: 1; transform: translateX(120px); }
+          .agentic-scope-dot { animation: none; opacity: 1; transform: translateX(120px); }
         }
       `}</style>
-      <line className='line' x1='80' x2='280' y1='70' y2='70' />
-      <circle className='node' cx='80' cy='70' r='22' />
-      <circle className='node' cx='180' cy='70' r='22' />
-      <circle className='node' cx='280' cy='70' r='22' />
-      <text className='label' x='52' y='108'>Read-only</text>
-      <text className='label' x='158' y='108'>Workspace</text>
-      <text className='label' x='258' y='108'>Network</text>
-      <circle className='dot' cx='80' cy='70' r='5' />
+      <AgenticSecondarySurface
+        accentEnd='#ffedd5'
+        accentStart='#f97316'
+        atmosphereA='rgba(249,115,22,0.08)'
+        atmosphereB='rgba(56,189,248,0.08)'
+        ids={surfaceIds}
+        stroke='rgba(249,115,22,0.12)'
+        testIdPrefix='agentic-approval-scope-map'
+        x={12}
+        y={12}
+        width={336}
+        height={126}
+        rx={24}
+      />
+      <line className='agentic-scope-line' x1='80' x2='280' y1='76' y2='76' />
+      <circle className='agentic-scope-node' cx='80' cy='76' r='22' />
+      <circle className='agentic-scope-node' cx='180' cy='76' r='22' />
+      <circle className='agentic-scope-node' cx='280' cy='76' r='22' />
+      <text className='agentic-scope-label' x='52' y='114'>Read-only</text>
+      <text className='agentic-scope-label' x='158' y='114'>Workspace</text>
+      <text className='agentic-scope-label' x='258' y='114'>Network</text>
+      <circle className='agentic-scope-dot' cx='80' cy='76' r='5' />
     </svg>
   );
 }
 
 export function AgenticSkillManifestAnimation(): React.JSX.Element {
+  const surfaceIds = useAgenticSecondarySurfaceIds('agentic-skill-manifest');
+
   return (
     <svg
       aria-label='Animacja: manifest skilla z wejściami, narzędziami i outputem.'
       className='h-auto w-full'
+      data-testid='agentic-skill-manifest-animation'
       role='img'
-      viewBox='0 0 360 140'
+      viewBox='0 0 360 150'
     >
       <style>{`
-        .card {
-          fill: #f8fafc;
-          stroke: #e2e8f0;
+        .agentic-manifest-card {
+          fill: rgba(255,255,255,0.82);
+          stroke: rgba(226,232,240,0.9);
           stroke-width: 2;
         }
-        .label {
+        .agentic-manifest-label {
           font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
           fill: #0f172a;
         }
-        .pulse-1, .pulse-2, .pulse-3, .pulse-4 {
-          animation: cardPulse 6s ease-in-out infinite;
+        .agentic-manifest-pulse-1, .agentic-manifest-pulse-2, .agentic-manifest-pulse-3, .agentic-manifest-pulse-4 {
+          animation: agenticManifestPulse 6s ease-in-out infinite;
         }
-        .pulse-2 { animation-delay: 1.5s; }
-        .pulse-3 { animation-delay: 3s; }
-        .pulse-4 { animation-delay: 4.5s; }
-        @keyframes cardPulse {
-          0%, 18% { fill: #f8fafc; stroke: #e2e8f0; }
-          30%, 55% { fill: #ecfeff; stroke: #22d3ee; }
-          100% { fill: #f8fafc; stroke: #e2e8f0; }
+        .agentic-manifest-pulse-2 { animation-delay: 1.5s; }
+        .agentic-manifest-pulse-3 { animation-delay: 3s; }
+        .agentic-manifest-pulse-4 { animation-delay: 4.5s; }
+        @keyframes agenticManifestPulse {
+          0%, 18% { fill: rgba(255,255,255,0.82); stroke: rgba(226,232,240,0.9); }
+          30%, 55% { fill: rgba(236,254,255,0.96); stroke: #22d3ee; }
+          100% { fill: rgba(255,255,255,0.82); stroke: rgba(226,232,240,0.9); }
         }
         @media (prefers-reduced-motion: reduce) {
-          .pulse-1, .pulse-2, .pulse-3, .pulse-4 { animation: none; }
+          .agentic-manifest-pulse-1, .agentic-manifest-pulse-2, .agentic-manifest-pulse-3, .agentic-manifest-pulse-4 { animation: none; }
         }
       `}</style>
-      <rect className='card pulse-1' height='44' rx='12' width='140' x='20' y='26' />
-      <rect className='card pulse-2' height='44' rx='12' width='140' x='200' y='26' />
-      <rect className='card pulse-3' height='44' rx='12' width='140' x='20' y='78' />
-      <rect className='card pulse-4' height='44' rx='12' width='140' x='200' y='78' />
-      <text className='label' x='44' y='52'>Inputs</text>
-      <text className='label' x='226' y='52'>Tools</text>
-      <text className='label' x='44' y='104'>Outputs</text>
-      <text className='label' x='226' y='104'>Safety</text>
+      <AgenticSecondarySurface
+        accentEnd='#ecfeff'
+        accentStart='#22d3ee'
+        atmosphereA='rgba(34,211,238,0.08)'
+        atmosphereB='rgba(56,189,248,0.08)'
+        ids={surfaceIds}
+        stroke='rgba(34,211,238,0.12)'
+        testIdPrefix='agentic-skill-manifest'
+        x={12}
+        y={12}
+        width={336}
+        height={126}
+        rx={24}
+      />
+      <rect className='agentic-manifest-card agentic-manifest-pulse-1' height='44' rx='12' width='140' x='20' y='32' />
+      <rect className='agentic-manifest-card agentic-manifest-pulse-2' height='44' rx='12' width='140' x='200' y='32' />
+      <rect className='agentic-manifest-card agentic-manifest-pulse-3' height='44' rx='12' width='140' x='20' y='84' />
+      <rect className='agentic-manifest-card agentic-manifest-pulse-4' height='44' rx='12' width='140' x='200' y='84' />
+      <text className='agentic-manifest-label' x='44' y='58'>Inputs</text>
+      <text className='agentic-manifest-label' x='226' y='58'>Tools</text>
+      <text className='agentic-manifest-label' x='44' y='110'>Outputs</text>
+      <text className='agentic-manifest-label' x='226' y='110'>Safety</text>
     </svg>
   );
 }
 
 export function AgenticCliIdeFlowAnimation(): React.JSX.Element {
+  const surfaceIds = useAgenticSecondarySurfaceIds('agentic-cli-ide-flow');
+
   return (
     <svg
       aria-label='Animacja: przepływ między IDE a CLI.'
       className='h-auto w-full'
+      data-testid='agentic-cli-ide-flow-animation'
       role='img'
-      viewBox='0 0 360 150'
+      viewBox='0 0 360 160'
     >
       <style>{`
-        .panel {
-          fill: #f8fafc;
-          stroke: #e2e8f0;
+        .agentic-cliide-panel {
+          fill: rgba(255,255,255,0.82);
+          stroke: rgba(226,232,240,0.9);
           stroke-width: 2;
         }
-        .label {
+        .agentic-cliide-label {
           font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
           fill: #0f172a;
         }
-        .line {
+        .agentic-cliide-line {
           stroke: #bae6fd;
           stroke-width: 3;
           stroke-linecap: round;
         }
-        .dot {
+        .agentic-cliide-dot {
           fill: #38bdf8;
-          animation: dotFlow 5.8s ease-in-out infinite;
+          animation: agenticCliIdeDot 5.8s ease-in-out infinite;
           transform-box: fill-box;
           transform-origin: center;
         }
-        @keyframes dotFlow {
+        @keyframes agenticCliIdeDot {
           0% { transform: translateX(0); opacity: 0; }
           15% { opacity: 1; }
           55% { transform: translateX(150px); opacity: 1; }
           100% { transform: translateX(210px); opacity: 0; }
         }
         @media (prefers-reduced-motion: reduce) {
-          .dot { animation: none; opacity: 1; transform: translateX(130px); }
+          .agentic-cliide-dot { animation: none; opacity: 1; transform: translateX(130px); }
         }
       `}</style>
-      <rect className='panel' height='70' rx='14' width='120' x='30' y='40' />
-      <rect className='panel' height='70' rx='14' width='120' x='210' y='40' />
-      <text className='label' x='68' y='70'>IDE</text>
-      <text className='label' x='248' y='70'>CLI</text>
-      <line className='line' x1='150' x2='210' y1='75' y2='75' />
-      <circle className='dot' cx='150' cy='75' r='5' />
+      <AgenticSecondarySurface
+        accentEnd='#dbeafe'
+        accentStart='#38bdf8'
+        atmosphereA='rgba(56,189,248,0.08)'
+        atmosphereB='rgba(129,140,248,0.08)'
+        ids={surfaceIds}
+        stroke='rgba(56,189,248,0.12)'
+        testIdPrefix='agentic-cli-ide-flow'
+        x={12}
+        y={12}
+        width={336}
+        height={136}
+        rx={24}
+      />
+      <rect className='agentic-cliide-panel' height='70' rx='14' width='120' x='30' y='46' />
+      <rect className='agentic-cliide-panel' height='70' rx='14' width='120' x='210' y='46' />
+      <text className='agentic-cliide-label' x='68' y='76'>IDE</text>
+      <text className='agentic-cliide-label' x='248' y='76'>CLI</text>
+      <line className='agentic-cliide-line' x1='150' x2='210' y1='81' y2='81' />
+      <circle className='agentic-cliide-dot' cx='150' cy='81' r='5' />
     </svg>
   );
 }

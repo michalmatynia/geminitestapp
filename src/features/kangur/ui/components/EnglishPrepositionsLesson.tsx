@@ -92,25 +92,30 @@ const buildEnglishPrepositionsSlides = (
           <KangurLessonVisual
             accent='rose'
             caption={translations('slides.time.core.caption')}
+            supportingContent={
+              <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-3 text-sm`}>
+                {[
+                  { title: 'AT', items: ['at 7:30', 'at noon', 'at midnight'] },
+                  { title: 'ON', items: ['on Monday', 'on 14 May', 'on my birthday'] },
+                  { title: 'IN', items: ['in April', 'in 2026', 'in the morning'] },
+                ].map((group) => (
+                  <div
+                    key={group.title}
+                    className='rounded-2xl border border-rose-200/70 bg-white/75 px-3 py-2 text-left shadow-sm'
+                  >
+                    <p className='text-xs uppercase tracking-wide text-rose-500'>{group.title}</p>
+                    <ul className='mt-1 space-y-1 text-sm font-semibold text-rose-700'>
+                      {group.items.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            }
           >
             <EnglishPrepositionsTimeAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-3 text-sm`}>
-            {[
-              { title: 'AT', items: ['at 7:30', 'at noon', 'at midnight'] },
-              { title: 'ON', items: ['on Monday', 'on 14 May', 'on my birthday'] },
-              { title: 'IN', items: ['in April', 'in 2026', 'in the morning'] },
-            ].map((group) => (
-              <KangurLessonInset key={group.title} accent='rose' className='text-left'>
-                <p className='text-xs uppercase tracking-wide text-rose-500'>{group.title}</p>
-                <ul className='mt-1 space-y-1 text-sm font-semibold text-rose-700'>
-                  {group.items.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -124,22 +129,27 @@ const buildEnglishPrepositionsSlides = (
           <KangurLessonVisual
             accent='rose'
             caption={translations('slides.time.sequence.caption')}
+            supportingContent={
+              <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
+                {[
+                  'Finish the homework before class.',
+                  'No phones during the test.',
+                  'We compare answers after school.',
+                  'Wait until 4:00.',
+                  'I have been here since 8:00.',
+                ].map((text) => (
+                  <div
+                    key={text}
+                    className='rounded-2xl border border-rose-200/70 bg-white/75 px-3 py-2 text-left font-semibold text-rose-700 shadow-sm'
+                  >
+                    {text}
+                  </div>
+                ))}
+              </div>
+            }
           >
             <EnglishPrepositionsTimelineAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
-            {[
-              'Finish the homework before class.',
-              'No phones during the test.',
-              'We compare answers after school.',
-              'Wait until 4:00.',
-              'I have been here since 8:00.',
-            ].map((text) => (
-              <KangurLessonInset key={text} accent='rose' className='text-left'>
-                <p className='font-semibold text-rose-700'>{text}</p>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -179,20 +189,25 @@ const buildEnglishPrepositionsSlides = (
           <KangurLessonVisual
             accent='rose'
             caption={translations('slides.place.core.caption')}
+            supportingContent={
+              <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
+                {[
+                  'Meet me at the bus stop.',
+                  'The calculator is in the backpack.',
+                  'The formula is on the screen.',
+                ].map((text) => (
+                  <div
+                    key={text}
+                    className='rounded-2xl border border-rose-200/70 bg-white/75 px-3 py-2 text-left font-semibold text-rose-700 shadow-sm'
+                  >
+                    {text}
+                  </div>
+                ))}
+              </div>
+            }
           >
             <EnglishPrepositionsPlaceAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
-            {[
-              'Meet me at the bus stop.',
-              'The calculator is in the backpack.',
-              'The formula is on the screen.',
-            ].map((text) => (
-              <KangurLessonInset key={text} accent='rose' className='text-left'>
-                <p className='font-semibold text-rose-700'>{text}</p>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -239,22 +254,27 @@ const buildEnglishPrepositionsSlides = (
           <KangurLessonVisual
             accent='violet'
             caption={translations('slides.relations.core.caption')}
+            supportingContent={
+              <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
+                {[
+                  'Point P is between A and B.',
+                  'The graph is above the axis.',
+                  'The label sits below the chart.',
+                  'The triangle is next to the square.',
+                  'The coach stands in front of the board.',
+                ].map((text) => (
+                  <div
+                    key={text}
+                    className='rounded-2xl border border-violet-200/70 bg-white/75 px-3 py-2 text-left font-semibold text-violet-700 shadow-sm'
+                  >
+                    {text}
+                  </div>
+                ))}
+              </div>
+            }
           >
             <EnglishPrepositionsRelationsDiagram />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
-            {[
-              'Point P is between A and B.',
-              'The graph is above the axis.',
-              'The label sits below the chart.',
-              'The triangle is next to the square.',
-              'The coach stands in front of the board.',
-            ].map((text) => (
-              <KangurLessonInset key={text} accent='violet' className='text-left'>
-                <p className='font-semibold text-violet-700'>{text}</p>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },

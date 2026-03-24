@@ -40,6 +40,13 @@ vi.mock('@/features/kangur/ui/components/music/MusicMelodyRepeatGame.data', () =
 
 class MockOscillatorNode {
   readonly detune = {
+    cancelScheduledValues: vi.fn(),
+    linearRampToValueAtTime: vi.fn((value: number) => {
+      this.detune.value = value;
+    }),
+    setValueAtTime: vi.fn((value: number) => {
+      this.detune.value = value;
+    }),
     value: 0,
   };
 
@@ -81,6 +88,13 @@ class MockGainNode {
 
 class MockBiquadFilterNode {
   readonly Q = {
+    cancelScheduledValues: vi.fn(),
+    linearRampToValueAtTime: vi.fn((value: number) => {
+      this.Q.value = value;
+    }),
+    setValueAtTime: vi.fn((value: number) => {
+      this.Q.value = value;
+    }),
     value: 0,
   };
 
@@ -349,9 +363,7 @@ describe('MusicMelodyRepeatGame', () => {
       'translate-x-[2px]',
       'size-8'
     );
-    expect(screen.getByTestId('music-melody-repeat-feedback')).toHaveTextContent(
-      'Nacisnij przycisk play, aby uslyszec melodie.'
-    );
+    expect(screen.queryByTestId('music-melody-repeat-feedback')).not.toBeInTheDocument();
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Posluchaj melodii' }));

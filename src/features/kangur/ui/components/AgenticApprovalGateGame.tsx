@@ -1,7 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 
+import {
+  renderSoftAtmosphereGradients,
+  renderSoftAtmosphereOvals,
+} from '@/features/kangur/ui/components/animations/svgAtmosphere';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
@@ -88,57 +92,131 @@ const APPROVAL_ACTIONS: ApprovalAction[] = [
   },
 ];
 
-const ApprovalGateVisual = (): JSX.Element => (
-  <svg
-    aria-label='Animated approval gate opening and closing.'
-    className='h-auto w-full max-w-[260px]'
-    role='img'
-    viewBox='0 0 240 180'
-  >
-    <style>{`
-      .frame {
-        fill: rgba(15,23,42,0.06);
-        stroke: rgba(15,23,42,0.25);
-        stroke-width: 3;
-      }
-      .door {
-        fill: rgba(248,113,113,0.35);
-        stroke: rgba(248,113,113,0.8);
-        stroke-width: 2;
-        animation: slide 3.6s ease-in-out infinite;
-      }
-      .door.right {
-        animation-delay: 0.2s;
-      }
-      .lock {
-        fill: rgba(15,23,42,0.6);
-        animation: pulse 2.4s ease-in-out infinite;
-      }
-      .glow {
-        fill: rgba(56,189,248,0.35);
-        animation: glow 2.6s ease-in-out infinite;
-      }
-      @keyframes slide {
-        0%, 100% { transform: translateX(0); }
-        45% { transform: translateX(-16px); }
-        60% { transform: translateX(0); }
-      }
-      @keyframes pulse {
-        0%, 100% { transform: scale(1); opacity: 0.6; }
-        50% { transform: scale(1.15); opacity: 1; }
-      }
-      @keyframes glow {
-        0%, 100% { opacity: 0.25; }
-        50% { opacity: 0.7; }
-      }
-    `}</style>
-    <rect className='frame' x='34' y='30' width='172' height='120' rx='16' />
-    <rect className='door' x='52' y='50' width='62' height='80' rx='10' />
-    <rect className='door right' x='126' y='50' width='62' height='80' rx='10' />
-    <rect className='glow' x='108' y='52' width='24' height='76' rx='12' />
-    <circle className='lock' cx='120' cy='112' r='10' />
-  </svg>
-);
+export const ApprovalGateVisual = (): JSX.Element => {
+  const baseId = useId().replace(/:/g, '');
+  const clipId = `agentic-approval-gate-${baseId}-clip`;
+  const panelGradientId = `agentic-approval-gate-${baseId}-panel`;
+  const frameGradientId = `agentic-approval-gate-${baseId}-frame`;
+  const glowGradientId = `agentic-approval-gate-${baseId}-glow`;
+  const atmosphereId = `agentic-approval-gate-${baseId}-atmosphere-oval`;
+
+  return (
+    <svg
+      aria-label='Animated approval gate opening and closing.'
+      className='h-auto w-full max-w-[260px]'
+      data-testid='agentic-approval-gate-visual-animation'
+      role='img'
+      viewBox='0 0 240 180'
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <rect x='12' y='12' width='216' height='156' rx='24' />
+        </clipPath>
+        <linearGradient
+          id={panelGradientId}
+          x1='20'
+          x2='220'
+          y1='20'
+          y2='160'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='#f8fafc' />
+          <stop offset='52%' stopColor='#fff7ed' />
+          <stop offset='100%' stopColor='#eff6ff' />
+        </linearGradient>
+        <linearGradient
+          id={frameGradientId}
+          x1='18'
+          x2='222'
+          y1='18'
+          y2='18'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='rgba(248,113,113,0.82)' />
+          <stop offset='50%' stopColor='rgba(251,191,36,0.82)' />
+          <stop offset='100%' stopColor='rgba(56,189,248,0.82)' />
+        </linearGradient>
+        <linearGradient
+          id={glowGradientId}
+          x1='108'
+          x2='132'
+          y1='52'
+          y2='128'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='rgba(255,255,255,0.7)' />
+          <stop offset='100%' stopColor='rgba(56,189,248,0.2)' />
+        </linearGradient>
+        {renderSoftAtmosphereGradients(atmosphereId, [
+          { key: 'left', cx: 66, cy: 34, rx: 54, ry: 16, color: '#f87171', opacity: 0.06, glowBias: '40%' },
+          { key: 'right', cx: 176, cy: 36, rx: 48, ry: 16, color: '#38bdf8', opacity: 0.05, glowBias: '42%' },
+          { key: 'bottom', cx: 120, cy: 150, rx: 74, ry: 18, color: '#fbbf24', opacity: 0.045, glowBias: '60%' },
+        ])}
+      </defs>
+      <style>{`
+        .approval-gate-door {
+          animation: slide 3.6s ease-in-out infinite;
+        }
+        .approval-gate-door.right {
+          animation-delay: 0.2s;
+        }
+        .approval-gate-lock {
+          animation: pulse 2.4s ease-in-out infinite;
+        }
+        .approval-gate-glow {
+          animation: glow 2.6s ease-in-out infinite;
+        }
+        @keyframes slide {
+          0%, 100% { transform: translateX(0); }
+          45% { transform: translateX(-16px); }
+          60% { transform: translateX(0); }
+        }
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); opacity: 0.7; }
+          50% { transform: scale(1.15); opacity: 1; }
+        }
+        @keyframes glow {
+          0%, 100% { opacity: 0.25; }
+          50% { opacity: 0.7; }
+        }
+      `}</style>
+      <g clipPath={`url(#${clipId})`} data-testid='agentic-approval-gate-visual-atmosphere'>
+        <rect
+          x='12'
+          y='12'
+          width='216'
+          height='156'
+          rx='24'
+          fill={`url(#${panelGradientId})`}
+          stroke='rgba(148,163,184,0.16)'
+          strokeWidth='2'
+        />
+        {renderSoftAtmosphereOvals(atmosphereId, [
+          { key: 'left', cx: 66, cy: 34, rx: 54, ry: 16, color: '#f87171', opacity: 0.06, glowBias: '40%' },
+          { key: 'right', cx: 176, cy: 36, rx: 48, ry: 16, color: '#38bdf8', opacity: 0.05, glowBias: '42%' },
+          { key: 'bottom', cx: 120, cy: 150, rx: 74, ry: 18, color: '#fbbf24', opacity: 0.045, glowBias: '60%' },
+        ])}
+        <rect x='34' y='30' width='172' height='120' rx='18' fill='rgba(15,23,42,0.06)' stroke='rgba(15,23,42,0.25)' strokeWidth='3' />
+        <rect x='48' y='42' width='144' height='96' rx='16' fill='rgba(255,255,255,0.2)' />
+        <rect className='approval-gate-door' x='52' y='50' width='62' height='80' rx='10' fill='rgba(248,113,113,0.4)' stroke='rgba(248,113,113,0.82)' strokeWidth='2' />
+        <rect className='approval-gate-door right' x='126' y='50' width='62' height='80' rx='10' fill='rgba(251,146,60,0.28)' stroke='rgba(251,146,60,0.78)' strokeWidth='2' />
+        <rect className='approval-gate-glow' x='108' y='52' width='24' height='76' rx='12' fill={`url(#${glowGradientId})`} />
+        <circle className='approval-gate-lock' cx='120' cy='112' r='10' fill='rgba(15,23,42,0.68)' />
+      </g>
+      <rect
+        x='18'
+        y='18'
+        width='204'
+        height='144'
+        rx='20'
+        fill='none'
+        stroke={`url(#${frameGradientId})`}
+        strokeWidth='1.8'
+        data-testid='agentic-approval-gate-visual-frame'
+      />
+    </svg>
+  );
+};
 
 export default function AgenticApprovalGateGame({
   onFinish,

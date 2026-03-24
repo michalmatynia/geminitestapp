@@ -76,10 +76,11 @@ type ActiveKeyPressState = {
   contactSpanPx: number | null;
   lastClientX: number | null;
   lastClientY: number | null;
+  livePressure: number | null;
   lastSampledAtMs: number | null;
   movementSpeedPxPerSecond: number | null;
+  peakPressure: number | null;
   pointerType: KangurMusicPointerType;
-  pressure: number | null;
   startedAtMs: number;
   travelDistancePx: number;
 };
@@ -472,6 +473,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
   );
   const resolvedCompletedCount = Math.max(0, Math.min(completedStepCount, resolvedMelody.length));
   const measureCount = Math.max(1, Math.ceil(resolvedStepCount / resolvedUnitsPerMeasure));
+  const isFreePlayMode = resolvedMelody.length === 0;
   const currentCursorStep =
     activeStepIndex !== null
       ? resolvedMelody[activeStepIndex] ?? null
@@ -502,6 +504,12 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
       : Math.round(activeSynthGesture.normalizedHorizontalPosition * 100);
   const activeSynthPanLabel =
     activeSynthGesture === null ? null : formatStereoPanLabel(activeSynthGesture.stereoPan);
+  const shouldShowTransportRail =
+    isFreePlayMode ||
+    activeTransportStep !== null ||
+    expectedTransportStep !== null ||
+    resolvedKeyboardMode === 'synth' ||
+    activeSynthGestureCount > 0;
 
   useEffect(() => {
     if (!autoFollowCursor) {
@@ -579,10 +587,11 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
       contactSpanPx: resolvePointerContactSpan(pointerType, event?.width, event?.height),
       lastClientX: event?.clientX ?? null,
       lastClientY: event?.clientY ?? null,
+      livePressure: resolvePointerPressure(pointerType, event?.pressure),
       lastSampledAtMs: event ? nowMs() : null,
       movementSpeedPxPerSecond: null,
+      peakPressure: resolvePointerPressure(pointerType, event?.pressure),
       pointerType,
-      pressure: resolvePointerPressure(pointerType, event?.pressure),
       startedAtMs: nowMs(),
       travelDistancePx: 0,
     });
@@ -813,6 +822,12 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
       contactSpanPx: nextContactSpanPx ?? activePress.contactSpanPx,
       lastClientX: event.clientX,
       lastClientY: event.clientY,
+      livePressure:
+        nextPressure === null
+          ? activePress.livePressure
+          : activePress.livePressure === null
+            ? nextPressure
+            : Number((activePress.livePressure * 0.28 + nextPressure * 0.72).toFixed(2)),
       lastSampledAtMs: sampledAtMs,
       movementSpeedPxPerSecond:
         instantaneousSpeedPxPerSecond === null
@@ -820,13 +835,13 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
           : activePress.movementSpeedPxPerSecond === null
             ? instantaneousSpeedPxPerSecond
             : activePress.movementSpeedPxPerSecond * 0.38 + instantaneousSpeedPxPerSecond * 0.62,
-      pointerType: activePress.pointerType,
-      pressure:
+      peakPressure:
         nextPressure === null
-          ? activePress.pressure
-          : activePress.pressure === null
+          ? activePress.peakPressure
+          : activePress.peakPressure === null
             ? nextPressure
-            : Math.max(activePress.pressure, nextPressure),
+            : Math.max(activePress.peakPressure, nextPressure),
+      pointerType: activePress.pointerType,
       startedAtMs: activePress.startedAtMs,
       travelDistancePx: nextTravelDistancePx,
     };
@@ -876,7 +891,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
       movementSpeedPxPerSecond: activePress.movementSpeedPxPerSecond,
       pointerType: activePress.pointerType,
       pressDurationMs: Math.max(24, nowMs() - activePress.startedAtMs),
-      pressure: activePress.pressure,
+      pressure: activePress.livePressure,
       travelDistancePx: activePress.travelDistancePx,
     });
 
@@ -905,7 +920,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
       pointerType: resolvedPointerType,
       pressDurationMs:
         activePress === undefined ? null : Math.max(24, triggeredAtMs - activePress.startedAtMs),
-      pressure: activePress?.pressure ?? null,
+      pressure: activePress?.peakPressure ?? null,
       travelDistancePx: Number((activePress?.travelDistancePx ?? 0).toFixed(1)),
       velocity: 0,
     };
@@ -1241,10 +1256,10 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                   Pitch / Time
                 </div>
                 <div className='text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500'>
-                  {resolvedMelody.length} nut
+                  {isFreePlayMode ? 'Swobodnie' : `${resolvedMelody.length} nut`}
                 </div>
               </div>
-              {activeTransportStep || expectedTransportStep ? (
+              {shouldShowTransportRail ? (
                 <div
                   className={cn(
                     'flex gap-2 px-2',
@@ -1254,6 +1269,14 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                   )}
                   data-testid={`${stepTestIdPrefix}-transport-rail`}
                 >
+                  {isFreePlayMode ? (
+                    <div
+                      className='shrink-0 rounded-full bg-emerald-100/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-emerald-800'
+                      data-testid={`${stepTestIdPrefix}-transport-freeplay`}
+                    >
+                      Swobodna gra
+                    </div>
+                  ) : null}
                   {activeTransportStep ? (
                     <div
                       className='shrink-0 rounded-full bg-sky-100/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-sky-800'
@@ -1270,12 +1293,14 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                       Dalej: {expectedTransportStep.key.shortLabel}
                     </div>
                   ) : null}
-                  <div
-                    className='shrink-0 rounded-full bg-white/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-600'
-                    data-testid={`${stepTestIdPrefix}-transport-count`}
-                  >
-                    Krok {(activeStepIndex ?? expectedStepIndex ?? 0) + 1}/{resolvedMelody.length}
-                  </div>
+                  {!isFreePlayMode ? (
+                    <div
+                      className='shrink-0 rounded-full bg-white/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-600'
+                      data-testid={`${stepTestIdPrefix}-transport-count`}
+                    >
+                      Krok {(activeStepIndex ?? expectedStepIndex ?? 0) + 1}/{resolvedMelody.length}
+                    </div>
+                  ) : null}
                   {resolvedKeyboardMode === 'synth' ? (
                     <div
                       aria-label={`Tryb: ${resolvedKeyboardMode}`}

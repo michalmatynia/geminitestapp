@@ -33,6 +33,7 @@ const runtimeState = vi.hoisted(() => ({
 const getCurrentKangurDailyQuestMock = vi.hoisted(() => vi.fn());
 const useKangurPageContentEntryMock = vi.hoisted(() => vi.fn());
 const useKangurAssignmentsMock = vi.hoisted(() => vi.fn());
+const useKangurParentDashboardScoresMock = vi.hoisted(() => vi.fn());
 const assignmentsListMock = vi.hoisted(() => vi.fn());
 const assignmentManagerMock = vi.hoisted(() => vi.fn());
 const useKangurSubjectFocusMock = vi.hoisted(() => vi.fn());
@@ -64,6 +65,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurParentDashboardScores', () => ({
+  useKangurParentDashboardScores: () => useKangurParentDashboardScoresMock(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
@@ -115,6 +120,11 @@ describe('KangurParentDashboardProgressWidget', () => {
       createAssignment: vi.fn(),
       updateAssignment: vi.fn(),
     });
+    useKangurParentDashboardScoresMock.mockReturnValue({
+      isLoadingScores: false,
+      scores: [],
+      scoresError: null,
+    });
     useKangurSubjectFocusMock.mockReturnValue({
       subject: 'maths',
       setSubject: vi.fn(),
@@ -138,8 +148,24 @@ describe('KangurParentDashboardProgressWidget', () => {
         totalCorrectAnswers: 20,
         totalQuestionsAnswered: 25,
         bestWinStreak: 2,
-        activityStats: {},
-        lessonMastery: {},
+        activityStats: {
+          'operation:addition': {
+            sessionsPlayed: 3,
+            totalCorrectAnswers: 18,
+            totalQuestionsAnswered: 24,
+            bestScorePercent: 92,
+            totalXpEarned: 45,
+          },
+        },
+        lessonMastery: {
+          clock: {
+            attempts: 3,
+            bestScorePercent: 91,
+            lastCompletedAt: '2026-03-15T10:00:00.000Z',
+            lastScorePercent: 88,
+            masteryPercent: 84,
+          },
+        },
       },
     };
   });
@@ -252,5 +278,48 @@ describe('KangurParentDashboardProgressWidget', () => {
       })
     );
     expect(assignmentManagerMock).toHaveBeenCalled();
+  });
+
+  it('renders analytics, weekly activity, and mastery summaries above the assignment sections', () => {
+    render(<KangurParentDashboardProgressWidget />);
+
+    expect(screen.getByTestId('parent-dashboard-progress-analytics')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('parent-dashboard-progress-analytics-average-accuracy')
+    ).toHaveTextContent('80%');
+    expect(screen.getByTestId('parent-dashboard-progress-weekly-activity')).toBeInTheDocument();
+    expect(screen.getByTestId('parent-dashboard-progress-operation-focus')).toHaveTextContent(
+      'Dodawanie'
+    );
+    expect(screen.getByTestId('parent-dashboard-progress-mastery-summary')).toBeInTheDocument();
+    expect(screen.getByTestId('parent-dashboard-progress-mastery-tracked')).toHaveTextContent('1');
+  });
+
+  it('shows a loading chip while weekly activity scores are being fetched', () => {
+    useKangurParentDashboardScoresMock.mockReturnValue({
+      isLoadingScores: true,
+      scores: [],
+      scoresError: null,
+    });
+
+    render(<KangurParentDashboardProgressWidget />);
+
+    expect(screen.getByTestId('parent-dashboard-progress-weekly-activity')).toHaveTextContent(
+      'Ładujemy historię sesji'
+    );
+  });
+
+  it('shows an error chip when weekly activity scores fail to load', () => {
+    useKangurParentDashboardScoresMock.mockReturnValue({
+      isLoadingScores: false,
+      scores: [],
+      scoresError: new Error('load failed'),
+    });
+
+    render(<KangurParentDashboardProgressWidget />);
+
+    expect(screen.getByTestId('parent-dashboard-progress-weekly-activity')).toHaveTextContent(
+      'Nie udało się wczytać pełnej historii wyników'
+    );
   });
 });

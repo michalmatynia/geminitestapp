@@ -1,5 +1,7 @@
 'use client';
 
+import { Printer } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import React from 'react';
 
 import { getKangurLessonActivityDefinition } from '@/features/kangur/lesson-activities';
@@ -13,6 +15,7 @@ import {
   KangurSurfacePanel,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_WRAP_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useOptionalKangurLessonPrint } from '@/features/kangur/ui/context/KangurLessonPrintContext';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurLessonActivityBlock as KangurLessonActivityBlockType } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';
@@ -88,10 +91,14 @@ export function KangurLessonActivityBlock(
   props: KangurLessonActivityBlockProps
 ): React.JSX.Element {
   const { block, renderMode = 'lesson' } = props;
+  const navigationTranslations = useTranslations('KangurLessonsWidgets.navigation');
   const isCoarsePointer = useKangurCoarsePointer();
+  const lessonPrint = useOptionalKangurLessonPrint();
   const definition = getKangurLessonActivityDefinition(block.activityId);
   const [instanceKey, setInstanceKey] = React.useState(0);
   const [isCompleted, setIsCompleted] = React.useState(false);
+  const printPanelId = `lesson-activity-block-${block.id}`;
+  const printPanelLabel = navigationTranslations('printPanel');
 
   const title = block.title.trim() || definition.title;
   const description = block.description?.trim() || definition.description;
@@ -124,21 +131,66 @@ export function KangurLessonActivityBlock(
   return (
     <KangurSurfacePanel
       accent='emerald'
+      data-kangur-print-panel='true'
+      data-kangur-print-panel-id={printPanelId}
+      data-kangur-print-panel-title={title}
       data-testid='lesson-activity-block-shell'
       padding='lg'
     >
-      <KangurLessonActivityHeader
-        badgeRowClassName={`mb-4 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME}`}
-        description={description}
-        label={definition.label}
-        title={title}
-        wrapperClassName='mb-4'
-      />
+      <div data-kangur-print-exclude='true'>
+        <KangurLessonActivityHeader
+          badgeRowClassName={`mb-4 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME}`}
+          description={description}
+          label={definition.label}
+          title={title}
+          wrapperClassName='mb-4'
+        />
+        {lessonPrint?.onPrintPanel ? (
+          <div className='mb-4 flex justify-end'>
+            <KangurButton
+              type='button'
+              size='sm'
+              variant='surface'
+              className={
+                isCoarsePointer
+                  ? 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
+                  : 'px-4'
+              }
+              data-testid='lesson-activity-block-print-button'
+              aria-label={printPanelLabel}
+              title={printPanelLabel}
+              onClick={(): void => {
+                lessonPrint.onPrintPanel?.(printPanelId);
+              }}
+            >
+              <Printer className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+              <span className='sr-only'>{printPanelLabel}</span>
+            </KangurButton>
+          </div>
+        ) : null}
+      </div>
+
+      <div
+        className='kangur-print-only space-y-2 border-b border-slate-200 pb-4'
+        data-testid='lesson-activity-block-print-summary'
+      >
+        <div className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'>
+          Interactive activity
+        </div>
+        <div className='text-xl font-black text-slate-900'>{title}</div>
+        <p className='text-sm text-slate-600'>{description}</p>
+        <p className='text-sm text-slate-600'>
+          {isCompleted
+            ? 'Completed in the live lesson view.'
+            : 'Open this lesson on screen to play the interactive task.'}
+        </p>
+      </div>
 
       {isCompleted ? (
         <KangurSummaryPanel
           accent='emerald'
           className='text-sm'
+          data-kangur-print-exclude='true'
           description='You can restart the activity to practice again without leaving the lesson page.'
           padding='lg'
           title='Activity completed.'
@@ -162,12 +214,14 @@ export function KangurLessonActivityBlock(
           </KangurButton>
         </KangurSummaryPanel>
       ) : (
-        <ActivityComponent
-          key={`${block.id}-${instanceKey}`}
-          onFinish={(): void => {
-            setIsCompleted(true);
-          }}
-        />
+        <div data-kangur-print-exclude='true'>
+          <ActivityComponent
+            key={`${block.id}-${instanceKey}`}
+            onFinish={(): void => {
+              setIsCompleted(true);
+            }}
+          />
+        </div>
       )}
     </KangurSurfacePanel>
   );

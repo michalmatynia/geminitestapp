@@ -27,17 +27,19 @@ export const fragmentSlides: LessonSlide[] = [
               accent='sky'
               caption='Fragment grupuje elementy bez dodania wrappera w DOM.'
               maxWidthClassName='max-w-full'
+              supportingContent={
+                <div className='text-left'>
+                  <p className='text-sm font-semibold text-slate-900'>Po co Fragment?</p>
+                  <KangurLessonCaption className='mt-2 text-left'>
+                    Komponent może zwrócić tylko jeden element, a Fragment pozwala zwrócić ich wiele
+                    bez dodatkowych divów.
+                  </KangurLessonCaption>
+                </div>
+              }
             >
               <ReactFragmentGroupAnimation />
             </KangurLessonVisual>
           </div>
-          <KangurLessonCallout accent='slate' padding='sm' className='text-left'>
-            <p className='text-sm font-semibold text-slate-900'>Po co Fragment?</p>
-            <KangurLessonCaption className='mt-2 text-left'>
-              Komponent może zwrócić tylko jeden element, a Fragment pozwala zwrócić ich wiele
-              bez dodatkowych divów.
-            </KangurLessonCaption>
-          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
@@ -114,16 +116,18 @@ return posts.map(post => (
             accent='sky'
             caption='Lista Fragmentów wymaga kluczy.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <div className='text-left'>
+                <p className='text-sm font-semibold text-slate-900'>Caveat</p>
+                <KangurLessonCaption className='mt-2 text-left'>
+                  Jeśli potrzebujesz <strong>key</strong> lub <strong>ref</strong>, użyj
+                  jawnego <strong>{'<Fragment>'}</strong>.
+                </KangurLessonCaption>
+              </div>
+            }
           >
             <ReactFragmentKeyListAnimation />
           </KangurLessonVisual>
-          <KangurLessonCallout accent='amber' padding='sm' className='text-left'>
-            <p className='text-sm font-semibold text-slate-900'>Caveat</p>
-            <KangurLessonCaption className='mt-2 text-left'>
-              Jeśli potrzebujesz <strong>key</strong> lub <strong>ref</strong>, użyj
-              jawnego <strong>{'<Fragment>'}</strong>.
-            </KangurLessonCaption>
-          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },

@@ -1,5 +1,10 @@
 import React, { useId } from 'react';
 
+import {
+  renderSoftAtmosphereGradients,
+  renderSoftAtmosphereOvals,
+} from '@/features/kangur/ui/components/animations/svgAtmosphere';
+
 function useCalendarAnimationSurfaceIds(prefix: string): {
   clipId: string;
   panelGradientId: string;
@@ -57,11 +62,17 @@ export function CalendarDaysStripAnimation(): React.JSX.Element {
           <stop offset='55%' stopColor='#f8fafc' />
           <stop offset='100%' stopColor='#ecfdf5' />
         </linearGradient>
+        {renderSoftAtmosphereGradients(surfaceIds.atmosphereId, [
+          { key: 'left', cx: 74, cy: 24, rx: 66, ry: 14, color: '#22c55e', opacity: 0.06, glowBias: '40%' },
+          { key: 'right', cx: 288, cy: 72, rx: 100, ry: 16, color: '#38bdf8', opacity: 0.045, glowBias: '58%' },
+        ])}
       </defs>
       <g clipPath={`url(#${surfaceIds.clipId})`} data-testid='calendar-days-strip-atmosphere'>
         <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} x='8' y='14' width='344' height='56' rx='18' />
-        <ellipse cx='74' cy='24' fill='rgba(34, 197, 94, 0.1)' rx='66' ry='14' />
-        <ellipse cx='288' cy='72' fill='rgba(56, 189, 248, 0.08)' rx='100' ry='16' />
+        {renderSoftAtmosphereOvals(surfaceIds.atmosphereId, [
+          { key: 'left', cx: 74, cy: 24, rx: 66, ry: 14, color: '#22c55e', opacity: 0.06, glowBias: '40%' },
+          { key: 'right', cx: 288, cy: 72, rx: 100, ry: 16, color: '#38bdf8', opacity: 0.045, glowBias: '58%' },
+        ])}
       </g>
       <rect className='frame' data-testid='calendar-days-strip-frame' x='14' y='20' width='332' height='44' rx='14' />
       {['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Nd'].map((label, index) => (
@@ -126,11 +137,17 @@ export function CalendarWeekendPulseAnimation(): React.JSX.Element {
           <stop offset='55%' stopColor='#f8fafc' />
           <stop offset='100%' stopColor='#fff7ed' />
         </linearGradient>
+        {renderSoftAtmosphereGradients(surfaceIds.atmosphereId, [
+          { key: 'left', cx: 88, cy: 24, rx: 70, ry: 14, color: '#f472b6', opacity: 0.06, glowBias: '40%' },
+          { key: 'right', cx: 286, cy: 72, rx: 96, ry: 16, color: '#fbbf24', opacity: 0.045, glowBias: '58%' },
+        ])}
       </defs>
       <g clipPath={`url(#${surfaceIds.clipId})`} data-testid='calendar-weekend-pulse-atmosphere'>
         <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} x='8' y='14' width='344' height='56' rx='18' />
-        <ellipse cx='88' cy='24' fill='rgba(244, 114, 182, 0.1)' rx='70' ry='14' />
-        <ellipse cx='286' cy='72' fill='rgba(251, 191, 36, 0.08)' rx='96' ry='16' />
+        {renderSoftAtmosphereOvals(surfaceIds.atmosphereId, [
+          { key: 'left', cx: 88, cy: 24, rx: 70, ry: 14, color: '#f472b6', opacity: 0.06, glowBias: '40%' },
+          { key: 'right', cx: 286, cy: 72, rx: 96, ry: 16, color: '#fbbf24', opacity: 0.045, glowBias: '58%' },
+        ])}
       </g>
       <rect className='frame' data-testid='calendar-weekend-pulse-frame' x='14' y='20' width='332' height='44' rx='14' />
       {['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Nd'].map((label, index) => {
@@ -200,11 +217,17 @@ export function CalendarMonthsLoopAnimation(): React.JSX.Element {
           <stop offset='58%' stopColor='#f8fafc' />
           <stop offset='100%' stopColor='#eff6ff' />
         </linearGradient>
+        {renderSoftAtmosphereGradients(surfaceIds.atmosphereId, [
+          { key: 'top', cx: 84, cy: 32, rx: 56, ry: 18, color: '#6366f1', opacity: 0.055, glowBias: '42%' },
+          { key: 'bottom', cx: 170, cy: 162, rx: 72, ry: 18, color: '#3b82f6', opacity: 0.04, glowBias: '60%' },
+        ])}
       </defs>
       <g clipPath={`url(#${surfaceIds.clipId})`} data-testid='calendar-months-loop-atmosphere'>
         <rect className='panel' fill={`url(#${surfaceIds.panelGradientId})`} x='16' y='12' width='208' height='156' rx='24' />
-        <ellipse cx='84' cy='32' fill='rgba(99, 102, 241, 0.1)' rx='56' ry='18' />
-        <ellipse cx='170' cy='162' fill='rgba(59, 130, 246, 0.08)' rx='72' ry='18' />
+        {renderSoftAtmosphereOvals(surfaceIds.atmosphereId, [
+          { key: 'top', cx: 84, cy: 32, rx: 56, ry: 18, color: '#6366f1', opacity: 0.055, glowBias: '42%' },
+          { key: 'bottom', cx: 170, cy: 162, rx: 72, ry: 18, color: '#3b82f6', opacity: 0.04, glowBias: '60%' },
+        ])}
       </g>
       <rect className='frame' data-testid='calendar-months-loop-frame' x='22' y='18' width='196' height='144' rx='20' />
       <circle className='ring' cx='120' cy='90' r='58' />

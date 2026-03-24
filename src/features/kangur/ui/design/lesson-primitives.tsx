@@ -42,6 +42,8 @@ type KangurLessonVisualProps = Omit<KangurLessonCalloutProps, 'children'> & {
   captionClassName?: string;
   center?: boolean;
   maxWidthClassName?: string;
+  supportingContent?: React.ReactNode;
+  supportingClassName?: string;
   visualClassName?: string;
   children: React.ReactNode;
 };
@@ -154,36 +156,56 @@ export function KangurLessonCallout({
 
 export function KangurLessonVisual({
   accent,
-  padding = 'sm',
   caption,
   captionClassName,
   center = true,
   className,
-  maxWidthClassName = 'max-w-sm',
+  maxWidthClassName = 'max-w-full',
+  supportingContent,
+  supportingClassName,
   visualClassName,
   children,
   ...props
 }: KangurLessonVisualProps): React.JSX.Element {
   const resolvedCaptionClassName = captionClassName ?? 'mt-2 kangur-lesson-visual-caption';
+  const hasSupportingContent = Boolean(supportingContent);
 
   return (
-    <KangurLessonCallout
-      accent={accent}
-      padding={padding}
-      className={cn('kangur-lesson-visual-frame', center ? 'text-center' : 'text-left', className)}
+    <div
+      className={cn('kangur-lesson-visual-frame w-full', center ? 'text-center' : 'text-left', className)}
       {...props}
     >
       <div
-        className={cn(center ? 'mx-auto w-full' : 'w-full', maxWidthClassName, visualClassName)}
+        className={cn(
+          center ? 'mx-auto w-full' : 'w-full',
+          maxWidthClassName,
+          hasSupportingContent
+            ? 'grid items-start gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(16rem,0.95fr)]'
+            : '',
+          visualClassName
+        )}
       >
-        {children}
+        <div className='min-w-0'>
+          {children}
+          {caption ? (
+            <KangurLessonCaption className={resolvedCaptionClassName}>
+              {caption}
+            </KangurLessonCaption>
+          ) : null}
+        </div>
+        {hasSupportingContent ? (
+          <div
+            className={cn(
+              'kangur-lesson-visual-supporting min-w-0 border-t pt-4 text-left text-sm [color:var(--kangur-page-text)] xl:border-l xl:border-t-0 xl:pl-5 xl:pt-0',
+              accent ? KANGUR_LESSON_BORDER_ACCENT_CLASSNAMES[accent] : null,
+              supportingClassName
+            )}
+          >
+            {supportingContent}
+          </div>
+        ) : null}
       </div>
-      {caption ? (
-        <KangurLessonCaption className={resolvedCaptionClassName}>
-          {caption}
-        </KangurLessonCaption>
-      ) : null}
-    </KangurLessonCallout>
+    </div>
   );
 }
 

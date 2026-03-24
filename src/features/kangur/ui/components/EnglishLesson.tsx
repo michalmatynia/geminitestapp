@@ -144,18 +144,17 @@ const buildEnglishBasicsSlides = (
           <KangurLessonVisual
             accent='emerald'
             caption={translations('slides.pronounRemix.rules.caption')}
-            maxWidthClassName='max-w-xs'
+            supportingContent={
+              <ul className='space-y-2 text-left text-sm'>
+                <li>{translations('slides.pronounRemix.rules.items.subject')}</li>
+                <li>{translations('slides.pronounRemix.rules.items.object')}</li>
+                <li>{translations('slides.pronounRemix.rules.items.possessive')}</li>
+                <li>{translations('slides.pronounRemix.rules.items.reflexive')}</li>
+              </ul>
+            }
           >
             <EnglishPronounsPulseAnimation />
           </KangurLessonVisual>
-          <KangurLessonCallout accent='emerald' className='text-sm' padding='sm'>
-            <ul className='space-y-2'>
-              <li>{translations('slides.pronounRemix.rules.items.subject')}</li>
-              <li>{translations('slides.pronounRemix.rules.items.object')}</li>
-              <li>{translations('slides.pronounRemix.rules.items.possessive')}</li>
-              <li>{translations('slides.pronounRemix.rules.items.reflexive')}</li>
-            </ul>
-          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },

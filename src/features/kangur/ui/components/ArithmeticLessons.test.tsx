@@ -122,8 +122,8 @@ describe('Arithmetic lessons shared surfaces', () => {
     );
     expect(screen.getByText('Mock Adding Ball Game')).toBeInTheDocument();
     expect(
-      within(screen.getByTestId('adding-lesson-game-shell')).queryByText('Gra z piłkami!')
-    ).toBeNull();
+      within(screen.getByTestId('adding-lesson-game-shell')).getByText('Gra z piłkami!')
+    ).toBeInTheDocument();
   });
 
   it('uses shared equation and game header surfaces in the subtracting lesson', () => {
@@ -157,10 +157,10 @@ describe('Arithmetic lessons shared surfaces', () => {
     );
     expect(screen.getByText('Mock Subtracting Garden Game')).toBeInTheDocument();
     expect(
-      within(screen.getByTestId('subtracting-lesson-game-shell')).queryByText(
+      within(screen.getByTestId('subtracting-lesson-game-shell')).getByText(
         'Gra z odejmowaniem!'
       )
-    ).toBeNull();
+    ).toBeInTheDocument();
   });
 
   it('uses shared equation and game header surfaces in the division lesson', () => {
@@ -191,8 +191,8 @@ describe('Arithmetic lessons shared surfaces', () => {
     );
     expect(screen.getByText('Mock Division Groups Game')).toBeInTheDocument();
     expect(
-      within(screen.getByTestId('division-lesson-game-shell')).queryByText('Gra z dzieleniem!')
-    ).toBeNull();
+      within(screen.getByTestId('division-lesson-game-shell')).getByText('Gra z dzieleniem!')
+    ).toBeInTheDocument();
   });
 
   it('uses shared equation, chip, and game header surfaces in the multiplication lesson', () => {
@@ -230,10 +230,10 @@ describe('Arithmetic lessons shared surfaces', () => {
     );
     expect(screen.getByText('Mock Multiplication Array Game')).toBeInTheDocument();
     expect(
-      within(screen.getByTestId('multiplication-lesson-game-array-shell')).queryByText(
+      within(screen.getByTestId('multiplication-lesson-game-array-shell')).getByText(
         'Gra z grupami!'
       )
-    ).toBeNull();
+    ).toBeInTheDocument();
 
   });
 });

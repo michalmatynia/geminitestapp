@@ -55,16 +55,20 @@ const buildEnglishAdverbsFrequencySlides = (
           <KangurLessonVisual
             accent='sky'
             caption={translations('slides.intro.overview.caption')}
+            supportingContent={
+              <div>
+                <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
+                  {['always', 'usually', 'sometimes', 'never'].map((word) => (
+                    <KangurLessonChip key={word} accent='sky'>
+                      {word}
+                    </KangurLessonChip>
+                  ))}
+                </div>
+              </div>
+            }
           >
             <EnglishAdverbFrequencyScaleAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
-            {['always', 'usually', 'sometimes', 'never'].map((word) => (
-              <KangurLessonChip key={word} accent='sky'>
-                {word}
-              </KangurLessonChip>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -80,16 +84,16 @@ const buildEnglishAdverbsFrequencySlides = (
           <KangurLessonVisual
             accent='amber'
             caption={translations('slides.routine.cinemaStory.caption')}
+            supportingContent={
+              <div className='space-y-2 text-sm text-slate-700'>
+                <p>I always go to the cinema on Sunday.</p>
+                <p>I usually go with my friends.</p>
+                <p>I never eat popcorn there.</p>
+              </div>
+            }
           >
             <EnglishAdverbRoutineAnimation />
           </KangurLessonVisual>
-          <KangurLessonCallout accent='amber' padding='sm'>
-            <div className='space-y-2 text-sm text-slate-700'>
-              <p>I always go to the cinema on Sunday.</p>
-              <p>I usually go with my friends.</p>
-              <p>I never eat popcorn there.</p>
-            </div>
-          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
@@ -127,20 +131,24 @@ const buildEnglishAdverbsFrequencySlides = (
           <KangurLessonVisual
             accent='violet'
             caption={translations('slides.position.mainVerb.caption')}
+            supportingContent={
+              <div>
+                <ul className='space-y-2 text-sm'>
+                  {[
+                    'I always do my homework.',
+                    'She usually gets up at seven.',
+                    'We sometimes watch TV after dinner.',
+                  ].map((text) => (
+                    <li key={text} className='font-semibold text-violet-700'>
+                      {text}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            }
           >
             <EnglishAdverbWordOrderAnimation mode='mainVerb' />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
-            {[
-              'I always do my homework.',
-              'She usually gets up at seven.',
-              'We sometimes watch TV after dinner.',
-            ].map((text) => (
-              <KangurLessonInset key={text} accent='violet' className='text-left'>
-                <p className='font-semibold text-violet-700'>{text}</p>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -154,18 +162,22 @@ const buildEnglishAdverbsFrequencySlides = (
           <KangurLessonVisual
             accent='violet'
             caption={translations('slides.position.beVerb.caption')}
+            supportingContent={
+              <div>
+                <ul className='space-y-2 text-sm'>
+                  {['I am never late.', 'She is usually ready.', 'They are sometimes noisy.'].map(
+                    (text) => (
+                      <li key={text} className='font-semibold text-violet-700'>
+                        {text}
+                      </li>
+                    )
+                  )}
+                </ul>
+              </div>
+            }
           >
             <EnglishAdverbWordOrderAnimation mode='beVerb' />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
-            {['I am never late.', 'She is usually ready.', 'They are sometimes noisy.'].map(
-              (text) => (
-                <KangurLessonInset key={text} accent='violet' className='text-left'>
-                  <p className='font-semibold text-violet-700'>{text}</p>
-                </KangurLessonInset>
-              )
-            )}
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -179,22 +191,26 @@ const buildEnglishAdverbsFrequencySlides = (
           <KangurLessonVisual
             accent='rose'
             caption={translations('slides.position.repairOrder.caption')}
+            supportingContent={
+              <div>
+                <ul className='space-y-2 text-sm'>
+                  {(
+                    [
+                      'I always do my homework.',
+                      'She usually gets up at seven.',
+                      'He is never late.',
+                    ] as const
+                  ).map((text) => (
+                    <li key={text} className='font-semibold text-rose-700'>
+                      {text}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            }
           >
             <EnglishAdverbSentenceRepairAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
-            {(
-              [
-                'I always do my homework.',
-                'She usually gets up at seven.',
-                'He is never late.',
-              ] as const
-            ).map((text) => (
-              <KangurLessonInset key={text} accent='rose' className='text-left'>
-                <p className='font-semibold text-rose-700'>{text}</p>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -275,20 +291,24 @@ const buildEnglishAdverbsFrequencySlides = (
           <KangurLessonVisual
             accent='emerald'
             caption={translations('slides.answer.myWeek.caption')}
+            supportingContent={
+              <div>
+                <ul className='space-y-2 text-sm'>
+                  {[
+                    'I always do my homework.',
+                    'I sometimes go to the park.',
+                    'I never arrive late.',
+                  ].map((text) => (
+                    <li key={text} className='font-semibold text-emerald-700'>
+                      {text}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            }
           >
             <EnglishAdverbHabitCardAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
-            {[
-              'I always do my homework.',
-              'I sometimes go to the park.',
-              'I never arrive late.',
-            ].map((text) => (
-              <KangurLessonInset key={text} accent='emerald' className='text-left'>
-                <p className='font-semibold text-emerald-700'>{text}</p>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -302,20 +322,24 @@ const buildEnglishAdverbsFrequencySlides = (
           <KangurLessonVisual
             accent='sky'
             caption={translations('slides.answer.favoritePlace.caption')}
+            supportingContent={
+              <div>
+                <ul className='space-y-2 text-sm'>
+                  {[
+                    'I usually go to the library.',
+                    'I sometimes go to the park.',
+                    'I never go to the swimming pool on school days.',
+                  ].map((text) => (
+                    <li key={text} className='font-semibold text-sky-700'>
+                      {text}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            }
           >
             <EnglishAdverbPlaceRoutineAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
-            {[
-              'I usually go to the library.',
-              'I sometimes go to the park.',
-              'I never go to the swimming pool on school days.',
-            ].map((text) => (
-              <KangurLessonInset key={text} accent='sky' className='text-left'>
-                <p className='font-semibold text-sky-700'>{text}</p>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },

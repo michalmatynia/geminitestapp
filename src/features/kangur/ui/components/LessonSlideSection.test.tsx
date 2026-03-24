@@ -56,6 +56,7 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
 
 import LessonSlideSection from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
+import { KangurLessonPrintProvider } from '@/features/kangur/ui/context/KangurLessonPrintContext';
 
 describe('LessonSlideSection', () => {
   it('uses the shared empty-state surface when no slides are provided', () => {
@@ -75,6 +76,20 @@ describe('LessonSlideSection', () => {
       'border'
     );
     expect(screen.getByText('Brak slajdu.')).toBeInTheDocument();
+  });
+
+  it('does not render a print-only panel label for single-slide lessons', () => {
+    render(
+      <LessonSlideSection
+        slides={[{ title: 'Slajd 1', content: <div>Pierwszy</div> }]}
+        onBack={vi.fn()}
+        dotActiveClass='bg-orange-400'
+        dotDoneClass='bg-orange-200'
+        gradientClass='kangur-gradient-accent-amber'
+      />
+    );
+
+    expect(screen.queryByTestId('lesson-slide-print-panel-label')).not.toBeInTheDocument();
   });
 
   it('renders slide indicators as clickable Kangur micro pills', async () => {
@@ -104,6 +119,11 @@ describe('LessonSlideSection', () => {
       'kangur-panel-soft',
       'kangur-glass-surface-solid'
     );
+    expect(screen.getByTestId('lesson-slide-shell')).toHaveAttribute(
+      'data-kangur-print-panel',
+      'true'
+    );
+    expect(screen.getByTestId('lesson-slide-print-panel-label')).toHaveTextContent('Panel 1');
     expect(screen.getByTestId('lesson-slide-stage-root')).toHaveClass('mx-auto');
     expect(firstIndicator).toHaveClass('kangur-cta-pill', 'bg-orange-400');
     expect(firstIndicator).toHaveClass('cursor-pointer');
@@ -126,6 +146,10 @@ describe('LessonSlideSection', () => {
     expect(nextButton.className).toContain('px-4');
     expect(screen.getByTestId('lesson-slide-navigation-shell')).toHaveClass(
       'items-center'
+    );
+    expect(screen.getByTestId('lesson-slide-navigation-shell')).toHaveAttribute(
+      'data-kangur-print-exclude',
+      'true'
     );
     expect(prevButton).toBeDisabled();
     expect(nextButton).toHaveAttribute(
@@ -181,6 +205,36 @@ describe('LessonSlideSection', () => {
     );
     expect(backButton).not.toHaveTextContent('Wróć do tematów');
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders a panel-level print button and routes it through the shared lesson print context', () => {
+    const onPrintPanel = vi.fn();
+
+    render(
+      <KangurLessonPrintProvider onPrintPanel={onPrintPanel}>
+        <LessonSlideSection
+          slides={[{ title: 'Slajd 1', content: <div>Pierwszy</div> }]}
+          onBack={vi.fn()}
+          dotActiveClass='bg-orange-400'
+          dotDoneClass='bg-orange-200'
+          gradientClass='kangur-gradient-accent-amber'
+        />
+      </KangurLessonPrintProvider>
+    );
+
+    const printButton = screen.getByTestId('lesson-slide-print-button');
+    const slideShell = screen.getByTestId('lesson-slide-shell');
+    expect(printButton).toHaveAttribute('aria-label', 'Drukuj panel');
+    expect(slideShell).toHaveAttribute('data-kangur-print-slide-panel', 'true');
+    expect(slideShell).toHaveAttribute('data-kangur-print-panel-id');
+    expect(slideShell).toHaveAttribute('data-kangur-print-panel-title', 'Slajd 1');
+
+    fireEvent.click(printButton);
+
+    expect(onPrintPanel).toHaveBeenCalledTimes(1);
+    expect(onPrintPanel).toHaveBeenCalledWith(
+      slideShell.getAttribute('data-kangur-print-panel-id')
+    );
   });
 
   it('uses bottom panel navigation to move within the active subsection', async () => {

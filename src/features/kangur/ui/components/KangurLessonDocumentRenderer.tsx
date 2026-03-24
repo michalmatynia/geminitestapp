@@ -1,10 +1,12 @@
 'use client';
 
+import { Printer } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import React from 'react';
 
 import { resolveKangurLessonDocumentPages } from '@/features/kangur/lesson-documents';
 import {
+  KangurButton,
   KangurEmptyState,
   KangurGlassPanel,
   KangurInlineFallback,
@@ -16,6 +18,7 @@ import {
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useOptionalKangurLessonPrint } from '@/features/kangur/ui/context/KangurLessonPrintContext';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type {
   KangurLessonActivityBlock,
@@ -403,8 +406,14 @@ function KangurLessonQuizBlockView(
   props: { block: KangurLessonQuizBlock; translate: (key: string, values?: Record<string, string | number>) => string }
 ): React.JSX.Element {
   const { block, translate } = props;
+  const navigationTranslations = useTranslations('KangurLessonsWidgets.navigation');
   const isCoarsePointer = useKangurCoarsePointer();
+  const lessonPrint = useOptionalKangurLessonPrint();
   const [state, setState] = React.useState<QuizState>({ selectedId: null, revealed: false });
+  const correctChoiceId = block.correctChoiceId;
+  const printPanelId = `lesson-quiz-panel-${block.id}`;
+  const printPanelTitle = translate('quizEyebrow');
+  const printPanelLabel = navigationTranslations('printPanel');
 
   const handleSelect = (choiceId: string): void => {
     if (state.revealed) return;
@@ -414,73 +423,144 @@ function KangurLessonQuizBlockView(
   return (
     <div
       data-testid={`lesson-quiz-block-${block.id}`}
+      data-kangur-print-panel='true'
+      data-kangur-print-panel-id={printPanelId}
+      data-kangur-print-panel-title={printPanelTitle}
       className='soft-card kangur-lesson-callout kangur-card-padding-md border shadow-sm'
       style={{ borderColor: 'var(--kangur-soft-card-border)' }}
     >
-      <KangurProse
-        className='mb-4 text-sm font-semibold leading-6 [color:var(--kangur-page-text)]'
-        dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.question) }}
-      />
-      <div className='space-y-2'>
-        {block.choices.map((choice) => {
-          const isSelected = state.selectedId === choice.id;
-          const isCorrect = choice.id === block.correctChoiceId;
-          let choiceClass =
-            'w-full cursor-pointer break-words rounded-lg border px-4 py-2 text-left text-sm transition touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white active:scale-[0.985] disabled:cursor-default';
-          if (isCoarsePointer) {
-            choiceClass += ' min-h-[4.25rem] rounded-2xl py-3 text-base';
-          }
-          if (!state.revealed) {
-            choiceClass +=
-              ' soft-card [color:var(--kangur-page-text)]';
-          } else if (isCorrect) {
-            choiceClass += ' font-semibold';
-          } else if (isSelected) {
-            choiceClass += '';
-          } else {
-            choiceClass +=
-              ' [background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#cbd5e1)] [color:var(--kangur-page-muted-text)] opacity-60';
-          }
-          return (
-            <button
-              key={choice.id}
+      <div
+        className='kangur-print-only space-y-3 border-b border-slate-200 pb-4'
+        data-testid={`lesson-quiz-print-summary-${block.id}`}
+      >
+        <div className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'>
+          {translate('quizEyebrow')}
+        </div>
+        <KangurProse
+          className='text-sm font-semibold leading-6 text-slate-900'
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.question) }}
+        />
+        <ul className='space-y-2 text-sm text-slate-700'>
+          {block.choices.map((choice) => {
+            const isCorrect = choice.id === correctChoiceId;
+            return (
+              <li
+                key={choice.id}
+                data-testid={`lesson-quiz-print-choice-${choice.id}`}
+                className={cn(
+                  'rounded-lg border px-4 py-2',
+                  isCorrect && 'font-semibold'
+                )}
+                style={{
+                  borderColor: isCorrect ? '#86efac' : '#cbd5e1',
+                  background: isCorrect ? '#f0fdf4' : '#ffffff',
+                  color: isCorrect ? '#166534' : '#334155',
+                }}
+              >
+                {isCorrect ? '✓ ' : ''}
+                {choice.text}
+              </li>
+            );
+          })}
+        </ul>
+        {block.explanation?.trim() ? (
+          <KangurProse
+            className='border-t border-slate-200 pt-3 text-sm leading-6 text-slate-600'
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.explanation) }}
+          />
+        ) : null}
+      </div>
+
+      <div data-kangur-print-exclude='true' data-testid={`lesson-quiz-live-ui-${block.id}`}>
+        {lessonPrint?.onPrintPanel ? (
+          <div className='mb-4 flex justify-end'>
+            <KangurButton
               type='button'
-              className={choiceClass}
-              style={{
-                borderColor: !state.revealed
-                  ? 'var(--kangur-soft-card-border)'
-                  : isCorrect
-                    ? 'color-mix(in srgb, rgb(52 211 153) 72%, var(--kangur-soft-card-border))'
-                    : isSelected
-                      ? 'color-mix(in srgb, rgb(251 113 133) 68%, var(--kangur-soft-card-border))'
-                      : 'color-mix(in srgb, var(--kangur-soft-card-border) 72%, #cbd5e1)',
-                background: !state.revealed
-                  ? 'var(--kangur-soft-card-background)'
-                  : isCorrect
-                    ? 'color-mix(in srgb, var(--kangur-soft-card-background) 82%, #d1fae5)'
-                    : isSelected
-                      ? 'color-mix(in srgb, var(--kangur-soft-card-background) 84%, #ffe4e6)'
-                      : 'color-mix(in srgb, var(--kangur-soft-card-background) 86%, #cbd5e1)',
-                color: isCorrect
-                  ? 'color-mix(in srgb, rgb(6 95 70) 82%, var(--kangur-page-text))'
-                  : isSelected
-                    ? 'color-mix(in srgb, rgb(190 24 93) 76%, var(--kangur-page-text))'
-                    : undefined,
+              size='sm'
+              variant='surface'
+              className={
+                isCoarsePointer
+                  ? 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
+                  : 'px-4'
+              }
+              data-testid={`lesson-quiz-print-button-${block.id}`}
+              aria-label={printPanelLabel}
+              title={printPanelLabel}
+              onClick={(): void => {
+                lessonPrint.onPrintPanel?.(printPanelId);
               }}
-              onClick={(): void => handleSelect(choice.id)}
-              disabled={state.revealed}
-              aria-label={translate('quizAnswerAria', { answer: choice.text })}
-              aria-pressed={isSelected}
-              data-testid={`lesson-quiz-choice-${choice.id}`}
             >
-              {choice.text}
-            </button>
-          );
-        })}
+              <Printer className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+              <span className='sr-only'>{printPanelLabel}</span>
+            </KangurButton>
+          </div>
+        ) : null}
+        <KangurProse
+          className='mb-4 text-sm font-semibold leading-6 [color:var(--kangur-page-text)]'
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.question) }}
+        />
+        <div className='space-y-2'>
+          {block.choices.map((choice) => {
+            const isSelected = state.selectedId === choice.id;
+            const isCorrect = choice.id === correctChoiceId;
+            let choiceClass =
+              'w-full cursor-pointer break-words rounded-lg border px-4 py-2 text-left text-sm transition touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white active:scale-[0.985] disabled:cursor-default';
+            if (isCoarsePointer) {
+              choiceClass += ' min-h-[4.25rem] rounded-2xl py-3 text-base';
+            }
+            if (!state.revealed) {
+              choiceClass +=
+                ' soft-card [color:var(--kangur-page-text)]';
+            } else if (isCorrect) {
+              choiceClass += ' font-semibold';
+            } else if (isSelected) {
+              choiceClass += '';
+            } else {
+              choiceClass +=
+                ' [background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#cbd5e1)] [color:var(--kangur-page-muted-text)] opacity-60';
+            }
+            return (
+              <button
+                key={choice.id}
+                type='button'
+                className={choiceClass}
+                style={{
+                  borderColor: !state.revealed
+                    ? 'var(--kangur-soft-card-border)'
+                    : isCorrect
+                      ? 'color-mix(in srgb, rgb(52 211 153) 72%, var(--kangur-soft-card-border))'
+                      : isSelected
+                        ? 'color-mix(in srgb, rgb(251 113 133) 68%, var(--kangur-soft-card-border))'
+                        : 'color-mix(in srgb, var(--kangur-soft-card-border) 72%, #cbd5e1)',
+                  background: !state.revealed
+                    ? 'var(--kangur-soft-card-background)'
+                    : isCorrect
+                      ? 'color-mix(in srgb, var(--kangur-soft-card-background) 82%, #d1fae5)'
+                      : isSelected
+                        ? 'color-mix(in srgb, var(--kangur-soft-card-background) 84%, #ffe4e6)'
+                        : 'color-mix(in srgb, var(--kangur-soft-card-background) 86%, #cbd5e1)',
+                  color: isCorrect
+                    ? 'color-mix(in srgb, rgb(6 95 70) 82%, var(--kangur-page-text))'
+                    : isSelected
+                      ? 'color-mix(in srgb, rgb(190 24 93) 76%, var(--kangur-page-text))'
+                      : undefined,
+                }}
+                onClick={(): void => handleSelect(choice.id)}
+                disabled={state.revealed}
+                aria-label={translate('quizAnswerAria', { answer: choice.text })}
+                aria-pressed={isSelected}
+                data-testid={`lesson-quiz-choice-${choice.id}`}
+              >
+                {choice.text}
+              </button>
+            );
+          })}
+        </div>
       </div>
       {state.revealed && block.explanation?.trim() ? (
         <KangurProse
           className='kangur-lesson-inset kangur-card-padding-sm mt-3 text-sm leading-6 [background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,#cbd5e1)] [color:var(--kangur-page-text)]'
+          data-kangur-print-exclude='true'
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.explanation) }}
         />
       ) : null}
@@ -607,12 +687,20 @@ export function KangurLessonDocumentRenderer(
   props: KangurLessonDocumentRendererProps
 ): React.JSX.Element {
   const translations = useTranslations('KangurLessonsWidgets.documentRenderer');
+  const navigationTranslations = useTranslations('KangurLessonsWidgets.navigation');
   const { document, className, renderMode = 'lesson', activePageId } = props;
+  const lessonPrint = useOptionalKangurLessonPrint();
+  const isCoarsePointer = useKangurCoarsePointer();
   const allPages = resolveKangurLessonDocumentPages(document);
   const pages = activePageId ? allPages.filter((page) => page.id === activePageId) : allPages;
+  const printPanelLabel = navigationTranslations('printPanel');
 
   return (
-    <div className={cn('w-full max-w-5xl space-y-6', className)}>
+    <div
+      className={cn('w-full max-w-5xl space-y-6', className)}
+      data-kangur-print-document='true'
+      data-testid='lesson-document-root'
+    >
       {pages.map((page, pageIndex) =>
         (() => {
           const previousPage = pages[pageIndex - 1];
@@ -621,10 +709,26 @@ export function KangurLessonDocumentRenderer(
             previousPage?.sectionKey?.trim() || previousPage?.sectionTitle?.trim() || '';
           const showSectionHeader =
             currentSectionIdentity.length > 0 && currentSectionIdentity !== previousSectionIdentity;
+          const shouldShowPageSummary =
+            pages.length > 1 || Boolean(page.title?.trim()) || Boolean(page.description?.trim());
+          const printHeadingTitle =
+            page.title?.trim() ||
+            (showSectionHeader ? page.sectionTitle?.trim() || '' : '');
+          const printHeadingDescription =
+            page.title?.trim()
+              ? page.description?.trim() || ''
+              : showSectionHeader
+                ? page.sectionDescription?.trim() || page.description?.trim() || ''
+                : page.description?.trim() || '';
+          const shouldShowPrintHeading =
+            printHeadingTitle.length > 0 || printHeadingDescription.length > 0;
 
           return (
             <KangurGlassPanel
               key={page.id}
+              data-kangur-print-panel='true'
+              data-kangur-print-panel-id={page.id}
+              data-kangur-print-panel-title={printHeadingTitle || page.title?.trim() || page.sectionTitle?.trim() || ''}
               data-testid={`lesson-page-shell-${page.id}`}
               className={cn(
                 'space-y-6 backdrop-blur-sm',
@@ -634,9 +738,48 @@ export function KangurLessonDocumentRenderer(
               surface='mistSoft'
               variant='elevated'
             >
+              {renderMode === 'lesson' && lessonPrint?.onPrintPanel ? (
+                <div className='flex justify-end' data-kangur-print-exclude='true'>
+                  <KangurButton
+                    onClick={() => lessonPrint.onPrintPanel?.(page.id)}
+                    size='sm'
+                    type='button'
+                    variant='surface'
+                    className={cn(
+                      'justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)]',
+                      isCoarsePointer
+                        ? 'min-h-11 touch-manipulation select-none active:scale-[0.97]'
+                        : null
+                    )}
+                    data-testid={`lesson-page-print-button-${page.id}`}
+                    aria-label={printPanelLabel}
+                    title={printPanelLabel}
+                  >
+                    <Printer className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+                    <span className='sr-only'>{printPanelLabel}</span>
+                  </KangurButton>
+                </div>
+              ) : null}
+              {shouldShowPrintHeading ? (
+                <div
+                  className='kangur-print-only space-y-2 border-b border-slate-200 pb-4'
+                  data-kangur-print-page-heading='true'
+                  data-testid={`lesson-page-print-heading-${page.id}`}
+                >
+                  {printHeadingTitle ? (
+                    <div className='text-xl font-black text-slate-900'>{printHeadingTitle}</div>
+                  ) : null}
+                  {printHeadingDescription ? (
+                    <p className='text-sm text-slate-600'>{printHeadingDescription}</p>
+                  ) : null}
+                </div>
+              ) : null}
+
               {showSectionHeader ? (
                 <KangurSummaryPanel
                   accent='emerald'
+                  data-kangur-print-exclude='true'
+                  data-testid={`lesson-page-section-summary-${page.id}`}
                   description={page.sectionDescription?.trim() || undefined}
                   label={translations('sectionLabel')}
                   labelAccent='emerald'
@@ -645,9 +788,11 @@ export function KangurLessonDocumentRenderer(
                 />
               ) : null}
 
-              {pages.length > 1 || page.title?.trim() || page.description?.trim() ? (
+              {shouldShowPageSummary ? (
                 <KangurSummaryPanel
                   accent='slate'
+                  data-kangur-print-exclude='true'
+                  data-testid={`lesson-page-summary-${page.id}`}
                   description={page.description?.trim() || undefined}
                   label={translations('pageLabel', { index: pageIndex + 1 })}
                   labelAccent='slate'

@@ -8,13 +8,17 @@ import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types
 import KangurMusicPianoRoll, {
   type KangurMusicKeyboardMode,
   type KangurMusicPianoKeyPressDetails,
+  type KangurMusicSynthEnvelope,
   type KangurMusicSynthGestureDetails,
   type KangurMusicSynthGlideMode,
-  type KangurMusicSynthWaveform,
+  type KangurMusicSynthOsc1Config,
+  type KangurMusicSynthOsc2Config,
 } from './KangurMusicPianoRoll';
 import {
   DIATONIC_PIANO_KEYS,
   DIATONIC_PIANO_KEYS_BY_ID,
+  KANGUR_MUSIC_SYNTH_DEFAULT_OSC1_CONFIG,
+  KANGUR_MUSIC_SYNTH_DEFAULT_OSC2_CONFIG,
   type DiatonicNoteId,
 } from './music-theory';
 import { useKangurMusicSynth } from './useKangurMusicSynth';
@@ -36,7 +40,15 @@ export default function MusicPianoRollFreePlayGame({
   const [keyboardMode, setKeyboardMode] = useState<KangurMusicKeyboardMode>('piano');
   const [synthGlideMode, setSynthGlideMode] =
     useState<KangurMusicSynthGlideMode>('continuous');
-  const [synthWaveform, setSynthWaveform] = useState<KangurMusicSynthWaveform>('sawtooth');
+  const [synthEnvelope, setSynthEnvelope] = useState<KangurMusicSynthEnvelope | undefined>(
+    undefined
+  );
+  const [osc1Config, setOsc1Config] = useState<KangurMusicSynthOsc1Config>(
+    KANGUR_MUSIC_SYNTH_DEFAULT_OSC1_CONFIG
+  );
+  const [osc2Config, setOsc2Config] = useState<KangurMusicSynthOsc2Config>(
+    KANGUR_MUSIC_SYNTH_DEFAULT_OSC2_CONFIG
+  );
   const [pressedNoteId, setPressedNoteId] = useState<DiatonicNoteId | null>(null);
   const [pressedVelocity, setPressedVelocity] = useState<number | null>(null);
 
@@ -99,9 +111,18 @@ export default function MusicPianoRollFreePlayGame({
     [stopAllSustainedNotes]
   );
 
-  const handleSynthWaveformChange = useCallback(
-    (nextWaveform: KangurMusicSynthWaveform): void => {
-      setSynthWaveform(nextWaveform);
+  const handleSynthOscSettingsChange = useCallback(
+    (nextOsc1: KangurMusicSynthOsc1Config, nextOsc2: KangurMusicSynthOsc2Config): void => {
+      setOsc1Config(nextOsc1);
+      setOsc2Config(nextOsc2);
+      stopAllSustainedNotes({ immediate: true });
+    },
+    [stopAllSustainedNotes]
+  );
+
+  const handleSynthEnvelopeChange = useCallback(
+    (nextEnvelope: KangurMusicSynthEnvelope): void => {
+      setSynthEnvelope(nextEnvelope);
       stopAllSustainedNotes({ immediate: true });
     },
     [stopAllSustainedNotes]
@@ -124,12 +145,17 @@ export default function MusicPianoRollFreePlayGame({
           velocity: details.velocity,
           vibratoDepth: details.vibratoDepth,
           vibratoRateHz: details.vibratoRateHz,
-          waveform: synthWaveform,
+          waveform: osc1Config.waveform,
+          envelope: synthEnvelope,
         },
-        { interactionId: details.interactionId }
+        {
+          interactionId: details.interactionId,
+          osc1Volume: osc1Config.volume,
+          osc2Config,
+        }
       );
     },
-    [pulsePressedKey, startSustainedNote, synthWaveform]
+    [osc1Config, osc2Config, pulsePressedKey, startSustainedNote, synthEnvelope]
   );
 
   const handleSynthGestureChange = useCallback(
@@ -214,17 +240,21 @@ export default function MusicPianoRollFreePlayGame({
           onSynthGestureChange={handleSynthGestureChange}
           onSynthGestureEnd={handleSynthGestureEnd}
           onSynthGestureStart={handleSynthGestureStart}
-          onSynthWaveformChange={handleSynthWaveformChange}
+          onSynthEnvelopeChange={handleSynthEnvelopeChange}
+          onSynthOscSettingsChange={handleSynthOscSettingsChange}
           pressedNoteId={pressedNoteId}
           pressedVelocity={pressedVelocity}
           shellTestId='music-piano-roll-freeplay-shell'
+          showSynthEnvelopeButton
           showKeyboardModeSwitch
           showMeasureGuides={false}
           showSynthGlideModeSwitch
-          showSynthWaveformSwitch
+          showSynthOscSettingsPanel
           stepTestIdPrefix='music-piano-roll-freeplay-step'
+          synthEnvelope={synthEnvelope}
           synthGlideMode={synthGlideMode}
-          synthWaveform={synthWaveform}
+          synthOsc1Config={osc1Config}
+          synthOsc2Config={osc2Config}
           title='Swobodny piano roll'
         />
 

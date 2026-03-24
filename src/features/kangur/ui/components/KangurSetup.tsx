@@ -1,12 +1,12 @@
 'use client';
 
-import { ArrowLeft, Lock } from 'lucide-react';
+import { ChevronLeft, Lock } from 'lucide-react';
 import { useId, useState, type ReactNode } from 'react';
 
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
+import { KangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
 import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
 import {
-  KangurButton,
   KangurGlassPanel,
   KangurIconBadge,
   KangurSectionHeading,
@@ -19,7 +19,6 @@ import {
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
   KANGUR_CENTER_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
-import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurMode } from '@/features/kangur/ui/types';
 
 type KangurSet = {
@@ -144,13 +143,9 @@ export default function KangurSetup({
   const recommendationDescription = recommendedDescription;
   const recommendationLabel = recommendedLabel ?? 'Polecamy teraz';
   const recommendationTitle = recommendedTitle;
-  const isCoarsePointer = useKangurCoarsePointer();
   const [selectedEdition, setSelectedEdition] = useState<KangurEdition | null>(null);
   const editionsHeadingId = useId();
   const setsHeadingId = useId();
-  const compactActionClassName = isCoarsePointer
-    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] self-stretch sm:w-auto sm:self-start'
-    : 'w-full self-stretch sm:w-auto sm:self-start';
 
   if (!selectedEdition) {
     return (
@@ -241,16 +236,14 @@ export default function KangurSetup({
 
   return (
     <KangurSetupSection headingId={setsHeadingId}>
-      <KangurButton
+      <KangurLessonNavigationIconButton
         aria-label='Wróć do listy edycji'
+        className='w-full self-stretch sm:w-auto sm:self-start'
+        data-testid='kangur-setup-back-to-editions'
+        icon={ChevronLeft}
         onClick={() => setSelectedEdition(null)}
-        className={compactActionClassName}
-        size='sm'
-        type='button'
-        variant='surface'
-      >
-        <ArrowLeft aria-hidden='true' className='w-4 h-4' /> Edycje
-      </KangurButton>
+        title='Wróć do listy edycji'
+      />
 
       <KangurSetupShell testId='kangur-setup-selected-edition-shell'>
         <KangurSectionHeading

@@ -143,8 +143,9 @@ export function ActiveLessonView({
           printRoot.querySelectorAll<HTMLElement>('[data-kangur-print-panel-id]')
         )
       : [];
-    const matchedTargetPanel =
-      targetPanelId && targetablePanels.find((panel) => panel.dataset.kangurPrintPanelId === targetPanelId);
+    const matchedTargetPanel = targetPanelId
+      ? targetablePanels.find((panel) => panel.dataset.kangurPrintPanelId === targetPanelId) ?? null
+      : null;
     const matchedTargetPanelTitle = matchedTargetPanel?.dataset.kangurPrintPanelTitle?.trim() || '';
     const printDocumentTitle =
       printableLessonTitle.trim() && matchedTargetPanelTitle
@@ -301,7 +302,7 @@ export function ActiveLessonView({
         data-testid='kangur-lesson-print-heading'
       >
         <div className='text-sm font-semibold uppercase tracking-[0.16em] text-slate-500'>
-          {translations('title')}
+          {translations('pageTitle')}
         </div>
         <h1 className='mt-2 text-3xl font-black text-slate-900'>{localizedLessonTitle}</h1>
         {localizedLessonDescription ? (

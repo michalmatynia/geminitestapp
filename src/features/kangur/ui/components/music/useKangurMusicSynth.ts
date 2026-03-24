@@ -2,9 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import type { KangurMusicSynthOsc2Config } from './music-theory';
+
 type KangurMusicPlayableNote<NoteId extends string = string> = {
   brightness?: number;
   durationMs?: number;
+  envelope?: KangurMusicSynthEnvelope;
   frequencyHz: number;
   gain?: number;
   id: NoteId;
@@ -45,6 +48,7 @@ type SustainedNode<NoteId extends string = string> = ActiveNode & {
   baseGain: number;
   brightness: number;
   currentFrequencyHz: number;
+  envelope?: KangurMusicSynthEnvelope;
   id: NoteId;
   interactionId: string;
   stereoPan: number;
@@ -71,8 +75,55 @@ const MAX_TRANSIENT_POLYPHONY = 6;
 const MAX_SUSTAINED_POLYPHONY = 4;
 const VOICE_STEAL_RELEASE_SECONDS = 0.03;
 
+export type KangurMusicSynthEnvelope = {
+  attackMs: number;
+  decayMs: number;
+  releaseMs: number;
+  sustainLevel: number;
+};
+
+export const KANGUR_DEFAULT_MUSIC_SYNTH_ENVELOPE: KangurMusicSynthEnvelope = {
+  attackMs: 12,
+  decayMs: 0,
+  releaseMs: 90,
+  sustainLevel: 1,
+};
+
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
+
+export const normalizeKangurMusicSynthEnvelope = (
+  envelope?: Partial<KangurMusicSynthEnvelope> | null
+): KangurMusicSynthEnvelope => ({
+  attackMs: Math.round(
+    clamp(
+      envelope?.attackMs ?? KANGUR_DEFAULT_MUSIC_SYNTH_ENVELOPE.attackMs,
+      0,
+      1800
+    )
+  ),
+  decayMs: Math.round(
+    clamp(
+      envelope?.decayMs ?? KANGUR_DEFAULT_MUSIC_SYNTH_ENVELOPE.decayMs,
+      0,
+      2400
+    )
+  ),
+  releaseMs: Math.round(
+    clamp(
+      envelope?.releaseMs ?? KANGUR_DEFAULT_MUSIC_SYNTH_ENVELOPE.releaseMs,
+      20,
+      3200
+    )
+  ),
+  sustainLevel: Number(
+    clamp(
+      envelope?.sustainLevel ?? KANGUR_DEFAULT_MUSIC_SYNTH_ENVELOPE.sustainLevel,
+      0,
+      1
+    ).toFixed(2)
+  ),
+});
 
 const resolvePortamentoSeconds = (
   previousFrequencyHz: number,
@@ -154,6 +205,43 @@ const resolveVelocityEnvelope = ({
 
   return { attackSeconds, gain, releaseSeconds };
 };
+
+const resolveSustainedPeakGain = ({
+  baseGain,
+  velocity,
+}: {
+  baseGain: number;
+  velocity: number;
+}): number => {
+  const { gain } = resolveVelocityEnvelope({
+    durationSeconds: 1,
+    velocity,
+  });
+
+  return clamp(gain * (baseGain / DEFAULT_GAIN), 0.04, 0.38);
+};
+
+const resolveConfiguredAttackSeconds = (
+  attackMs: number,
+  velocity: number
+): number =>
+  clamp(
+    Number((((attackMs * (1.14 - velocity * 0.26)) / 1000)).toFixed(3)),
+    0.002,
+    1.8
+  );
+
+const resolveConfiguredDecaySeconds = (decayMs: number): number =>
+  clamp(Number((decayMs / 1000).toFixed(3)), 0, 2.4);
+
+const resolveConfiguredReleaseSeconds = (releaseMs: number): number =>
+  clamp(Number((releaseMs / 1000).toFixed(3)), 0.02, 3.2);
+
+const resolveSustainGain = (
+  peakGain: number,
+  sustainLevel: number
+): number =>
+  Number((Math.max(0.0001, peakGain * clamp(sustainLevel, 0, 1))).toFixed(4));
 
 const resolveBrightness = (
   noteBrightness: number | undefined,
@@ -266,8 +354,11 @@ const resolveSustainedUnisonBlendAttackSeconds = (
   frequencyHz: number
 ): number => {
   const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
-  const bloomSeconds = baseAttackSeconds + 0.0035 - brightness * 0.003 - pitchTracking * 0.0015;
-  return Number(clamp(bloomSeconds, 0.006, 0.018).toFixed(3));
+  const bloomSeconds =
+    baseAttackSeconds <= 0.02
+      ? baseAttackSeconds + 0.0035 - brightness * 0.003 - pitchTracking * 0.0015
+      : baseAttackSeconds + clamp(0.01 - brightness * 0.003 - pitchTracking * 0.0015, 0.004, 0.018);
+  return Number(clamp(bloomSeconds, 0.006, 1.82).toFixed(3));
 };
 
 const resolveSustainedTransientGain = ({
@@ -323,7 +414,11 @@ const resolveSustainedAttackSeconds = (
   frequencyHz: number
 ): number => {
   const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
-  return Number(clamp(baseAttackSeconds - pitchTracking * 0.0025, 0.006, 0.016).toFixed(3));
+  const trackedAttackSeconds =
+    baseAttackSeconds <= 0.02
+      ? baseAttackSeconds - pitchTracking * 0.0025
+      : baseAttackSeconds;
+  return Number(clamp(trackedAttackSeconds, 0.002, 1.8).toFixed(3));
 };
 
 const resolveSustainedFilterSettleSeconds = (frequencyHz: number): number => {
@@ -470,7 +565,14 @@ const resolveSustainedReleaseSeconds = (
 ): number => {
   const pitchTracking = clamp(Math.log2(Math.max(frequencyHz, 55) / 261.63), -1, 1.5);
   return clamp(
-    Number((0.055 + (1 - velocity) * 0.05 + (1 - brightness) * 0.035 - pitchTracking * 0.012).toFixed(3)),
+    Number(
+      (
+        0.055 +
+        (1 - velocity) * 0.05 +
+        (1 - brightness) * 0.035 -
+        pitchTracking * 0.012
+      ).toFixed(3)
+    ),
     0.05,
     0.15
   );
@@ -732,11 +834,13 @@ export function useKangurMusicSynth<NoteId extends string>() {
 
       const resolvedReleaseSeconds =
         options.releaseSeconds ??
-        resolveSustainedReleaseSeconds(
-          options.brightness ?? activeNode.brightness,
-          options.velocity ?? activeNode.velocity,
-          activeNode.currentFrequencyHz
-        );
+        (activeNode.envelope
+          ? resolveConfiguredReleaseSeconds(activeNode.envelope.releaseMs)
+          : resolveSustainedReleaseSeconds(
+              options.brightness ?? activeNode.brightness,
+              options.velocity ?? activeNode.velocity,
+              activeNode.currentFrequencyHz
+            ));
       releaseActiveNode(activeNode, resolvedReleaseSeconds);
     },
     []
@@ -1012,7 +1116,11 @@ export function useKangurMusicSynth<NoteId extends string>() {
   const startSustainedNote = useCallback(
     async (
       note: KangurMusicPlayableNote<NoteId>,
-      options: { interactionId: string }
+      options: {
+        interactionId: string;
+        osc1Volume?: number | undefined;
+        osc2Config?: KangurMusicSynthOsc2Config | undefined;
+      }
     ): Promise<boolean> => {
       playbackTokenRef.current += 1;
       clearActivePlayback();
@@ -1025,9 +1133,12 @@ export function useKangurMusicSynth<NoteId extends string>() {
 
       stopSustainedNote(options.interactionId, { immediate: true });
 
+      const osc2Config = options.osc2Config;
+      const osc2Enabled = osc2Config?.enabled !== false;
+
       const oscillator = context.createOscillator();
-      const oscillator2 = context.createOscillator();
-      const blendGainNode = context.createGain();
+      const oscillator2 = osc2Enabled ? context.createOscillator() : undefined;
+      const blendGainNode = osc2Enabled ? context.createGain() : undefined;
       const gainNode = context.createGain();
       const now = context.currentTime;
       const velocity = clamp(note.velocity ?? DEFAULT_VELOCITY, 0.22, 1);
@@ -1035,11 +1146,19 @@ export function useKangurMusicSynth<NoteId extends string>() {
       const stereoPan = resolveStereoPan(note.stereoPan);
       const vibratoDepth = clamp(note.vibratoDepth ?? 0, 0, 1);
       const vibratoRateHz = resolveLfoRateHz(note.vibratoRateHz);
-      const { attackSeconds, gain } = resolveVelocityEnvelope({
+      const envelope = note.envelope
+        ? normalizeKangurMusicSynthEnvelope(note.envelope)
+        : undefined;
+      const legacyVelocityEnvelope = resolveVelocityEnvelope({
         durationSeconds: 1,
         velocity,
       });
+      const attackSeconds = envelope
+        ? resolveConfiguredAttackSeconds(envelope.attackMs, velocity)
+        : legacyVelocityEnvelope.attackSeconds;
+      const decaySeconds = envelope ? resolveConfiguredDecaySeconds(envelope.decayMs) : 0;
       const sustainedAttackSeconds = resolveSustainedAttackSeconds(attackSeconds, note.frequencyHz);
+      const sustainedDecaySeconds = decaySeconds;
       const sustainedUnisonAttackSeconds = resolveSustainedUnisonBlendAttackSeconds(
         sustainedAttackSeconds,
         brightness,
@@ -1050,7 +1169,12 @@ export function useKangurMusicSynth<NoteId extends string>() {
         note.frequencyHz
       );
       const baseGain = clamp(note.gain ?? DEFAULT_GAIN, 0.04, 0.24);
-      const resolvedGain = clamp(gain * (baseGain / DEFAULT_GAIN), 0.04, 0.38);
+      const resolvedGain = resolveSustainedPeakGain({ baseGain, velocity });
+      const resolvedGainWithOsc1 = resolvedGain * clamp(options.osc1Volume ?? 1, 0, 1);
+      const sustainedGain = resolveSustainGain(
+        resolvedGainWithOsc1,
+        envelope?.sustainLevel ?? 1
+      );
       const unisonDetune = resolveSustainedUnisonDetune(brightness, velocity, note.frequencyHz);
       const unisonAttackDetune = resolveSustainedUnisonAttackDetune(
         brightness,
@@ -1062,6 +1186,16 @@ export function useKangurMusicSynth<NoteId extends string>() {
         brightness,
         note.frequencyHz
       );
+      const resolvedUnisonDetune =
+        osc2Config && osc2Config.detuneCents !== 0
+          ? {
+              lowerCents: -Math.abs(osc2Config.detuneCents),
+              upperCents: Math.abs(osc2Config.detuneCents),
+            }
+          : unisonDetune;
+      const resolvedUnisonAttackDetune =
+        osc2Config && osc2Config.detuneCents !== 0 ? resolvedUnisonDetune : unisonAttackDetune;
+      const osc2BlendMultiplier = osc2Config ? clamp(osc2Config.blend / 0.3, 0, 3.33) : 1;
 
       // Low-pass filter: tames sawtooth upper harmonics for a warmer synth pad sound.
       const filterNode = context.createBiquadFilter();
@@ -1100,21 +1234,23 @@ export function useKangurMusicSynth<NoteId extends string>() {
         now + sustainedAttackSeconds + sustainedVibratoFadeInSeconds
       );
 
-      // Third unison voice: sawtooth at +9 cents spreads the sound wide.
-      const oscillator3 = context.createOscillator();
-      const blend3GainNode = context.createGain();
-      oscillator3.type = note.waveform ?? 'sawtooth';
-      oscillator3.frequency.setValueAtTime(note.frequencyHz, now);
-      oscillator3.detune.setValueAtTime(unisonAttackDetune.upperCents, now);
-      oscillator3.detune.linearRampToValueAtTime(
-        unisonDetune.upperCents,
-        now + sustainedUnisonAttackSeconds
-      );
-      blend3GainNode.gain.setValueAtTime(unisonAttackBlendGains.upperGain, now);
-      blend3GainNode.gain.linearRampToValueAtTime(
-        unisonBlendGains.upperGain,
-        now + sustainedUnisonAttackSeconds
-      );
+      // Third unison voice: spreads the sound wide.
+      const oscillator3 = osc2Enabled ? context.createOscillator() : undefined;
+      const blend3GainNode = osc2Enabled ? context.createGain() : undefined;
+      if (oscillator3 && blend3GainNode) {
+        oscillator3.type = osc2Config?.waveform ?? note.waveform ?? 'sawtooth';
+        oscillator3.frequency.setValueAtTime(note.frequencyHz, now);
+        oscillator3.detune.setValueAtTime(resolvedUnisonAttackDetune.upperCents, now);
+        oscillator3.detune.linearRampToValueAtTime(
+          resolvedUnisonDetune.upperCents,
+          now + sustainedUnisonAttackSeconds
+        );
+        blend3GainNode.gain.setValueAtTime(unisonAttackBlendGains.upperGain * osc2BlendMultiplier, now);
+        blend3GainNode.gain.linearRampToValueAtTime(
+          unisonBlendGains.upperGain * osc2BlendMultiplier,
+          now + sustainedUnisonAttackSeconds
+        );
+      }
 
       // A short upper-partial transient helps touch starts speak before the sustained body blooms.
       const transientOscillator = context.createOscillator();
@@ -1204,34 +1340,44 @@ export function useKangurMusicSynth<NoteId extends string>() {
 
       oscillator.type = note.waveform ?? 'sawtooth';
       oscillator.frequency.setValueAtTime(note.frequencyHz, now);
-      oscillator2.type = note.waveform === 'square' ? 'triangle' : 'sine';
-      oscillator2.frequency.setValueAtTime(note.frequencyHz, now);
-      oscillator2.detune.setValueAtTime(unisonAttackDetune.lowerCents, now);
-      oscillator2.detune.linearRampToValueAtTime(
-        unisonDetune.lowerCents,
-        now + sustainedUnisonAttackSeconds
-      );
-      blendGainNode.gain.setValueAtTime(unisonAttackBlendGains.lowerGain, now);
-      blendGainNode.gain.linearRampToValueAtTime(
-        unisonBlendGains.lowerGain,
-        now + sustainedUnisonAttackSeconds
-      );
+      if (oscillator2 && blendGainNode) {
+        oscillator2.type = osc2Config?.waveform ?? (note.waveform === 'square' ? 'triangle' : 'sine');
+        oscillator2.frequency.setValueAtTime(note.frequencyHz, now);
+        oscillator2.detune.setValueAtTime(resolvedUnisonAttackDetune.lowerCents, now);
+        oscillator2.detune.linearRampToValueAtTime(
+          resolvedUnisonDetune.lowerCents,
+          now + sustainedUnisonAttackSeconds
+        );
+        blendGainNode.gain.setValueAtTime(unisonAttackBlendGains.lowerGain * osc2BlendMultiplier, now);
+        blendGainNode.gain.linearRampToValueAtTime(
+          unisonBlendGains.lowerGain * osc2BlendMultiplier,
+          now + sustainedUnisonAttackSeconds
+        );
+      }
 
       gainNode.gain.setValueAtTime(0.0001, now);
-      gainNode.gain.linearRampToValueAtTime(resolvedGain, now + sustainedAttackSeconds);
+      gainNode.gain.linearRampToValueAtTime(resolvedGainWithOsc1, now + sustainedAttackSeconds);
+      gainNode.gain.linearRampToValueAtTime(
+        sustainedGain,
+        now + sustainedAttackSeconds + sustainedDecaySeconds
+      );
 
       lfoOscillator.connect(lfoGainNode);
-      // LFO modulates all three oscillators so the unison voices move together.
+      // LFO modulates all active oscillators so the unison voices move together.
       lfoGainNode.connect(oscillator.frequency);
-      lfoGainNode.connect(oscillator2.frequency);
-      lfoGainNode.connect(oscillator3.frequency);
+      if (oscillator2) lfoGainNode.connect(oscillator2.frequency);
+      if (oscillator3) lfoGainNode.connect(oscillator3.frequency);
       lfoOscillator.connect(lfoFilterGainNode);
       lfoFilterGainNode.connect(filterNode.frequency);
       oscillator.connect(gainNode);
-      oscillator2.connect(blendGainNode);
-      blendGainNode.connect(gainNode);
-      oscillator3.connect(blend3GainNode);
-      blend3GainNode.connect(gainNode);
+      if (oscillator2 && blendGainNode) {
+        oscillator2.connect(blendGainNode);
+        blendGainNode.connect(gainNode);
+      }
+      if (oscillator3 && blend3GainNode) {
+        oscillator3.connect(blend3GainNode);
+        blend3GainNode.connect(gainNode);
+      }
       transientOscillator.connect(transientGainNode);
       transientGainNode.connect(filterNode);
       gainNode.connect(filterNode);
@@ -1256,6 +1402,7 @@ export function useKangurMusicSynth<NoteId extends string>() {
         brightness,
         context,
         currentFrequencyHz: note.frequencyHz,
+        envelope,
         filterNode,
         gainNode,
         id: note.id,
@@ -1286,17 +1433,17 @@ export function useKangurMusicSynth<NoteId extends string>() {
         }
         try {
           lfoOscillator.stop();
-          oscillator2.stop();
-          oscillator3.stop();
+          oscillator2?.stop();
+          oscillator3?.stop();
           transientOscillator.stop();
           lfoOscillator.disconnect();
           lfoFilterGainNode.disconnect();
           lfoGainNode.disconnect();
           oscillator.disconnect();
-          oscillator2.disconnect();
-          blendGainNode.disconnect();
-          oscillator3.disconnect();
-          blend3GainNode.disconnect();
+          oscillator2?.disconnect();
+          blendGainNode?.disconnect();
+          oscillator3?.disconnect();
+          blend3GainNode?.disconnect();
           transientOscillator.disconnect();
           transientGainNode.disconnect();
           gainNode.disconnect();
@@ -1310,8 +1457,8 @@ export function useKangurMusicSynth<NoteId extends string>() {
       };
 
       oscillator.start(now);
-      oscillator2.start(now);
-      oscillator3.start(now);
+      oscillator2?.start(now);
+      oscillator3?.start(now);
       transientOscillator.start(now);
       transientOscillator.stop(now + transientDurationSeconds + 0.005);
       lfoOscillator.start(now);
@@ -1520,18 +1667,19 @@ export function useKangurMusicSynth<NoteId extends string>() {
         const normalizedBrightness = resolveBrightness(brightness, normalizedVelocity);
         activeNode.velocity = normalizedVelocity;
         activeNode.brightness = normalizedBrightness;
-        const { gain } = resolveVelocityEnvelope({
-          durationSeconds: 1,
+        const resolvedGain = resolveSustainedPeakGain({
+          baseGain: activeNode.baseGain,
           velocity: normalizedVelocity,
         });
-        const resolvedGain = clamp(
-          gain * (activeNode.baseGain / DEFAULT_GAIN),
-          0.04,
-          0.38
-        );
+        const resolvedSustainGain = activeNode.envelope
+          ? resolveSustainGain(resolvedGain, activeNode.envelope.sustainLevel)
+          : resolvedGain;
         activeNode.gainNode.gain.cancelScheduledValues(now);
         activeNode.gainNode.gain.setValueAtTime(activeNode.gainNode.gain.value, now);
-        activeNode.gainNode.gain.linearRampToValueAtTime(resolvedGain, now + gainUpdateSeconds);
+        activeNode.gainNode.gain.linearRampToValueAtTime(
+          resolvedSustainGain,
+          now + gainUpdateSeconds
+        );
       }
 
       return true;

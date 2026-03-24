@@ -242,16 +242,6 @@ describe('KangurFeaturePage', () => {
     });
   });
 
-  it('preserves the measured top-bar height when mounting a direct Kangur page shell', () => {
-    document.documentElement.style.setProperty('--kangur-top-bar-height', '136px');
-
-    renderWithIntl(<KangurFeaturePage slug={['tests']} basePath='/kangur' />);
-
-    expect(screen.getByTestId('kangur-feature-page-shell')).toHaveStyle({
-      '--kangur-top-bar-height': '136px',
-    });
-  });
-
   it('does not mutate unrelated stylesheet preload links', () => {
     const preload = document.createElement('link');
     preload.rel = 'preload';

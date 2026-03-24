@@ -1438,10 +1438,8 @@
       "ariaLabel": "Lesson navigation",
       "previousLesson": "Previous lesson: {title}",
       "noPreviousLesson": "No previous lesson",
-      "previousShort": "Previous",
       "nextLesson": "Next lesson: {title}",
       "noNextLesson": "No next lesson",
-      "nextShort": "Next",
       "printPanel": "Print panel"
     },
     "activeHeader": {
@@ -1492,6 +1490,22 @@
         "menu": "Back to menu",
         "done": "Finish lesson ✅",
         "end": "Finish"
+      }
+    },
+    "musicPianoRoll": {
+      "adsr": {
+        "button": "ADSR",
+        "buttonAriaLabel": "ADSR: {summary}",
+        "title": "Synth ADSR",
+        "description": "Adjust the synth attack, decay, sustain level, and release.",
+        "closeAriaLabel": "Close ADSR settings",
+        "reset": "Reset",
+        "close": "Close",
+        "attack": "Attack",
+        "decay": "Decay",
+        "sustain": "Sustain",
+        "release": "Release",
+        "summary": "A {attackMs} ms · D {decayMs} ms · S {sustainPercent}% · R {releaseMs} ms"
       }
     },
     "questionCard": {

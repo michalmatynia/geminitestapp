@@ -5,6 +5,31 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string, values?: Record<string, unknown>) => {
+    if (key === 'summary') {
+      return `A ${values?.attackMs} ms · D ${values?.decayMs} ms · S ${values?.sustainPercent}% · R ${values?.releaseMs} ms`;
+    }
+    if (key === 'buttonAriaLabel') {
+      return `ADSR: ${String(values?.summary ?? '')}`;
+    }
+    return (
+      {
+        attack: 'Attack',
+        button: 'ADSR',
+        close: 'Close',
+        closeAriaLabel: 'Close ADSR settings',
+        decay: 'Decay',
+        description: 'Adjust the synth attack, decay, sustain level, and release.',
+        release: 'Release',
+        reset: 'Reset',
+        sustain: 'Sustain',
+        title: 'Synth ADSR',
+      } satisfies Record<string, string>
+    )[key] ?? key;
+  },
+}));
+
 const { useKangurCoarsePointerMock, useKangurMobileBreakpointMock } = vi.hoisted(() => ({
   useKangurCoarsePointerMock: vi.fn(),
   useKangurMobileBreakpointMock: vi.fn(),

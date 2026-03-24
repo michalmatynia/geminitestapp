@@ -19,7 +19,6 @@ const {
   lessonDocumentBackButtonLabelMock,
   lessonDocumentBackClickMock,
   lessonComponentsMock,
-  ageGroupState,
 } = vi.hoisted(() => ({
   useLessonsMock: vi.fn(),
   useKangurMobileBreakpointMock: vi.fn(),
@@ -27,9 +26,6 @@ const {
   lessonDocumentBackButtonLabelMock: vi.fn(() => null),
   lessonDocumentBackClickMock: vi.fn(),
   lessonComponentsMock: {} as Record<string, React.ComponentType<unknown>>,
-  ageGroupState: {
-    value: 'ten_year_old' as 'six_year_old' | 'ten_year_old' | 'grown_ups',
-  },
 }));
 
 vi.mock('@/features/kangur/lesson-documents', () => ({
@@ -140,13 +136,6 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: () => ({ entry: null }),
 }));
 
-vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
-  useKangurAgeGroupFocus: () => ({
-    ageGroup: ageGroupState.value,
-    setAgeGroup: vi.fn(),
-  }),
-}));
-
 vi.mock('@/features/kangur/ui/pages/lessons/LessonsContext', () => ({
   useLessons: () => useLessonsMock(),
 }));
@@ -174,7 +163,6 @@ describe('ActiveLessonView mobile controls', () => {
   let handleSelectLesson: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    ageGroupState.value = 'ten_year_old';
     useKangurMobileBreakpointMock.mockReturnValue(true);
     hasKangurLessonDocumentContentMock.mockReturnValue(true);
     lessonDocumentBackButtonLabelMock.mockReturnValue(null);
@@ -244,6 +232,7 @@ describe('ActiveLessonView mobile controls', () => {
     );
     expect(printRoot).toHaveAttribute('data-kangur-print-root', 'true');
     expect(printRoot.contains(printHeading)).toBe(true);
+    expect(printHeading).toHaveTextContent('Lekcje');
     expect(printHeading).toHaveTextContent('Lesson 1');
     expect(screen.queryByTestId('kangur-lesson-scroll-container')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Przewiń w dół' })).toBeNull();
@@ -568,15 +557,14 @@ describe('ActiveLessonView mobile controls', () => {
     expect(screen.queryByRole('button', { name: /drukuj/i })).toBeNull();
   });
 
-  it('uses an icon-first back control for six-year-old mobile lessons', async () => {
-    ageGroupState.value = 'six_year_old';
-
+  it('uses an icon-only back control for mobile lessons', async () => {
     render(<ActiveLessonView />);
 
     await act(async () => {});
 
-    expect(screen.getByRole('button', { name: 'Wróć do lekcji' })).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-lesson-back-to-lessons-detail')).toHaveTextContent('🏠');
+    const backToLessonsButton = screen.getByRole('button', { name: 'Wróć do lekcji' });
+    expect(backToLessonsButton).toBeInTheDocument();
+    expect(backToLessonsButton).not.toHaveTextContent('Wróć do lekcji');
   });
 
   it('returns to the lessons list from the header even when in-content back is available', async () => {

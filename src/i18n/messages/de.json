@@ -1438,10 +1438,8 @@
       "ariaLabel": "Lektionsnavigation",
       "previousLesson": "Vorherige Lektion: {title}",
       "noPreviousLesson": "Keine vorherige Lektion",
-      "previousShort": "Zuruck",
       "nextLesson": "Nachste Lektion: {title}",
       "noNextLesson": "Keine nachste Lektion",
-      "nextShort": "Weiter",
       "printPanel": "Panel drucken"
     },
     "activeHeader": {
@@ -1492,6 +1490,22 @@
         "menu": "Zurück zum Menü",
         "done": "Lektion beenden ✅",
         "end": "Beenden"
+      }
+    },
+    "musicPianoRoll": {
+      "adsr": {
+        "button": "ADSR",
+        "buttonAriaLabel": "ADSR: {summary}",
+        "title": "Synth-ADSR",
+        "description": "Stelle Attack, Decay, Sustain und Release des Synths ein.",
+        "closeAriaLabel": "ADSR-Einstellungen schließen",
+        "reset": "Zurücksetzen",
+        "close": "Schließen",
+        "attack": "Attack",
+        "decay": "Decay",
+        "sustain": "Sustain",
+        "release": "Release",
+        "summary": "A {attackMs} ms · D {decayMs} ms · S {sustainPercent}% · R {releaseMs} ms"
       }
     },
     "questionCard": {

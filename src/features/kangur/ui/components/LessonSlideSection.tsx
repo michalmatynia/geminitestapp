@@ -429,8 +429,8 @@ export default function LessonSlideSection({
   const navigationActionButtons = (
     <>
       {previousSlideButton}
-      {printButton}
       {nextSlideButton}
+      {printButton}
     </>
   );
 

@@ -1384,10 +1384,8 @@
       "ariaLabel": "Навігація уроком",
       "previousLesson": "Попередній урок: {title}",
       "noPreviousLesson": "Немає попереднього уроку",
-      "previousShort": "Попередній",
       "nextLesson": "Наступний урок: {title}",
       "noNextLesson": "Немає наступного уроку",
-      "nextShort": "Наступний",
       "printPanel": "Друкувати панель"
     },
     "activeHeader": {
@@ -2481,6 +2479,22 @@
         "menu": "Назад до меню",
         "done": "Завершити урок ✅",
         "end": "Завершити"
+      }
+    },
+    "musicPianoRoll": {
+      "adsr": {
+        "button": "ADSR",
+        "buttonAriaLabel": "ADSR: {summary}",
+        "title": "ADSR синтезатора",
+        "description": "Налаштуйте атаку, спад, рівень підтримки та затухання синтезатора.",
+        "closeAriaLabel": "Закрити налаштування ADSR",
+        "reset": "Типові",
+        "close": "Закрити",
+        "attack": "Атака",
+        "decay": "Спад",
+        "sustain": "Підтримка",
+        "release": "Затухання",
+        "summary": "A {attackMs} ms · D {decayMs} ms · S {sustainPercent}% · R {releaseMs} ms"
       }
     },
     "questionCard": {

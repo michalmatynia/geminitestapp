@@ -47,11 +47,14 @@ describe('KangurSetup', () => {
 
     fireEvent.click(screen.getByTestId('kangur-setup-edition-2024'));
 
-    expect(screen.getByRole('button', { name: 'Wróć do listy edycji' })).toHaveClass(
+    const backToEditionsButton = screen.getByRole('button', { name: 'Wróć do listy edycji' });
+
+    expect(backToEditionsButton).toHaveClass(
       'min-h-11',
-      'px-4',
+      'px-5',
       'touch-manipulation'
     );
+    expect(backToEditionsButton).not.toHaveTextContent('Edycje');
 
     expect(screen.getByTestId('kangur-setup-recommendation-card')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-setup-recommendation-label')).toHaveTextContent('Mocny krok');

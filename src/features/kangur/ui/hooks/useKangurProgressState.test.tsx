@@ -6,14 +6,19 @@ import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultKangurProgressState } from '@/features/kangur/shared/contracts/kangur';
-import { saveProgress } from '@/features/kangur/ui/services/progress';
+import {
+  saveProgress,
+  setProgressOwnerKey,
+} from '@/features/kangur/ui/services/progress';
 
-const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
-  useKangurSubjectFocusMock: vi.fn(),
+const { subjectKeyState } = vi.hoisted(() => ({
+  subjectKeyState: {
+    current: 'learner-1' as string | null,
+  },
 }));
 
-vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
-  useKangurSubjectFocus: useKangurSubjectFocusMock,
+vi.mock('@/features/kangur/ui/hooks/useKangurOptionalSubjectKey', () => ({
+  useKangurOptionalSubjectKey: () => subjectKeyState.current,
 }));
 
 import { useKangurProgressState } from './useKangurProgressState';
@@ -33,12 +38,8 @@ const ProgressProbe = (): React.JSX.Element => {
 describe('useKangurProgressState', () => {
   beforeEach(() => {
     localStorage.clear();
-    vi.clearAllMocks();
-    useKangurSubjectFocusMock.mockReturnValue({
-      subject: 'maths',
-      setSubject: vi.fn(),
-      subjectKey: 'learner-1',
-    });
+    subjectKeyState.current = 'learner-1';
+    setProgressOwnerKey(null);
   });
 
   it('switches to the new learner scoped snapshot when the subject key changes', () => {
@@ -61,14 +62,26 @@ describe('useKangurProgressState', () => {
 
     expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('120');
 
-    useKangurSubjectFocusMock.mockReturnValue({
-      subject: 'maths',
-      setSubject: vi.fn(),
-      subjectKey: 'learner-2',
-    });
+    subjectKeyState.current = 'learner-2';
 
     rerender(<ProgressProbe />);
 
     expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('45');
+  });
+
+  it('falls back to the persisted owner key when no subject focus provider is mounted', () => {
+    saveProgress(
+      createProgress({
+        totalXp: 84,
+        gamesPlayed: 6,
+      }),
+      { ownerKey: 'persisted-owner' }
+    );
+    setProgressOwnerKey('persisted-owner');
+    subjectKeyState.current = null;
+
+    render(<ProgressProbe />);
+
+    expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('84');
   });
 });

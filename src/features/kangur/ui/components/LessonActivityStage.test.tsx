@@ -160,9 +160,17 @@ describe('LessonActivityStage', () => {
     );
 
     const [printButton] = screen.getAllByTestId('lesson-activity-print-button');
+    const desktopNavigationGroup = screen.getAllByRole('group', {
+      name: 'Nawigacja lekcji',
+    })[0];
     const shell = screen.getByText('Gra').closest('[data-kangur-print-panel="true"]');
     expect(screen.getAllByTestId('lesson-activity-print-button')).toHaveLength(2);
     expect(printButton).toHaveAttribute('aria-label', 'Drukuj panel');
+    expect(
+      Array.from(desktopNavigationGroup.querySelectorAll('button')).map((button) =>
+        button.getAttribute('data-testid')
+      )
+    ).toEqual(['lesson-activity-back-button', 'lesson-activity-print-button']);
     expect(shell).not.toBeNull();
     expect(shell).toHaveAttribute('data-kangur-print-panel-id');
     expect(shell).toHaveAttribute('data-kangur-print-panel-title', 'Ćwiczenie: Godziny');

@@ -1438,10 +1438,8 @@
       "ariaLabel": "Nawigacja miedzy lekcjami",
       "previousLesson": "Poprzednia lekcja: {title}",
       "noPreviousLesson": "Brak poprzedniej lekcji",
-      "previousShort": "Poprzednia",
       "nextLesson": "Następna lekcja: {title}",
       "noNextLesson": "Brak następnej lekcji",
-      "nextShort": "Następna",
       "printPanel": "Drukuj panel"
     },
     "activeHeader": {
@@ -1492,6 +1490,22 @@
         "menu": "Wróć do menu",
         "done": "Zakończ lekcję ✅",
         "end": "Zakończ"
+      }
+    },
+    "musicPianoRoll": {
+      "adsr": {
+        "button": "ADSR",
+        "buttonAriaLabel": "ADSR: {summary}",
+        "title": "ADSR synthu",
+        "description": "Ustaw narastanie, opadanie, poziom podtrzymania i wybrzmiewanie synthu.",
+        "closeAriaLabel": "Zamknij ustawienia ADSR",
+        "reset": "Domyślne",
+        "close": "Zamknij",
+        "attack": "Atak",
+        "decay": "Zanik",
+        "sustain": "Podtrzymanie",
+        "release": "Wybrzmiewanie",
+        "summary": "A {attackMs} ms · D {decayMs} ms · S {sustainPercent}% · R {releaseMs} ms"
       }
     },
     "questionCard": {

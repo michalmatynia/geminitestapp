@@ -1862,6 +1862,51 @@ describe('useKangurMusicSynth', () => {
     expect(softReleaseStopTime).toBeGreaterThan(hardReleaseStopTime);
   });
 
+  it('applies the configured ADSR envelope to sustained synth notes', async () => {
+    const { result } = renderHook(() => useKangurMusicSynth<string>());
+
+    await act(async () => {
+      await result.current.startSustainedNote(
+        {
+          brightness: 0.54,
+          envelope: {
+            attackMs: 280,
+            decayMs: 420,
+            releaseMs: 760,
+            sustainLevel: 0.24,
+          },
+          frequencyHz: 261.63,
+          id: 'adsr-shaped',
+          velocity: 0.74,
+          waveform: 'sawtooth',
+        },
+        { interactionId: 'adsr-shaped-note' }
+      );
+    });
+
+    const bodyGainNode = createdContexts[0]?.gains[1];
+    expect(bodyGainNode).toBeDefined();
+
+    const gainRamps = bodyGainNode?.gain.linearRampToValueAtTime.mock.calls ?? [];
+    expect(gainRamps.length).toBeGreaterThanOrEqual(2);
+    const [peakGain = 0, peakAt = 0] = gainRamps[0] ?? [];
+    const [sustainGain = 0, sustainAt = 0] = gainRamps[1] ?? [];
+
+    expect(peakAt).toBeGreaterThan(0.2);
+    expect(sustainAt).toBeGreaterThan(peakAt);
+    expect(sustainGain).toBeLessThan(peakGain);
+
+    const leadOscillator = createdContexts[0]?.oscillators[0];
+    expect(leadOscillator).toBeDefined();
+
+    act(() => {
+      result.current.stopSustainedNote('adsr-shaped-note');
+    });
+
+    const customReleaseStopTime = leadOscillator?.stop.mock.calls.at(-1)?.[0] ?? 0;
+    expect(customReleaseStopTime).toBeGreaterThan(0.76);
+  });
+
   it('uses a longer release tail for lower sustained note-offs at the same expression', async () => {
     const { result } = renderHook(() => useKangurMusicSynth<string>());
 

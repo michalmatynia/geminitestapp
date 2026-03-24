@@ -13,11 +13,9 @@ import {
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeaturePageShell } from '@/features/kangur/ui/KangurFeaturePage';
 import { KangurMainRoleProvider } from '@/features/kangur/ui/design/primitives/KangurPageContainer';
-import { KANGUR_TOP_BAR_HEIGHT_VAR_NAME } from '@/features/kangur/ui/design/tokens';
 import {
   getKangurSlugFromPathname,
 } from '@/features/kangur/ui/routing/managed-paths';
-import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { cn } from '@/features/kangur/shared/utils';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
@@ -71,13 +69,9 @@ export function KangurFeatureRouteShell({
     );
   }, [pathname, requestedPath, searchParams]);
   const isEmbedded = embedded;
-  const initialTopBarHeightCssValue = readKangurTopBarHeightCssValue();
   const shellStyle: CSSProperties & Record<string, string> = {
     ...kangurAppearance.vars,
   };
-  if (initialTopBarHeightCssValue) {
-    shellStyle[KANGUR_TOP_BAR_HEIGHT_VAR_NAME] = initialTopBarHeightCssValue;
-  }
 
   return (
     <div

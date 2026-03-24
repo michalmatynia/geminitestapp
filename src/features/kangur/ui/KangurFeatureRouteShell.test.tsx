@@ -110,16 +110,6 @@ describe('KangurFeatureRouteShell', () => {
     });
   });
 
-  it('preserves the last measured top-bar height instead of resetting to the default fallback', () => {
-    document.documentElement.style.setProperty('--kangur-top-bar-height', '136px');
-
-    render(<KangurFeatureRouteShell />);
-
-    expect(screen.getByTestId('kangur-route-shell')).toHaveStyle({
-      '--kangur-top-bar-height': '136px',
-    });
-  });
-
   it('maps learner profile routes into Kangur routing and observability context', () => {
     usePathnameMock.mockReturnValue('/kangur/profile');
 

@@ -3,6 +3,7 @@
  */
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { DEFAULT_THEME } from '@/shared/contracts/cms-theme';
@@ -50,6 +51,14 @@ describe('CmsStorefrontAppearance', () => {
 
   it('restores a persisted light selection over a dark initial mode', async () => {
     window.localStorage.setItem(TEST_STORAGE_KEY, 'default');
+
+    const initialMarkup = renderToStaticMarkup(
+      <CmsStorefrontAppearanceProvider initialMode='dark' storageKey={TEST_STORAGE_KEY}>
+        <AppearanceModeProbe />
+      </CmsStorefrontAppearanceProvider>
+    );
+
+    expect(initialMarkup).toContain('data-mode="dark"');
 
     render(
       <CmsStorefrontAppearanceProvider initialMode='dark' storageKey={TEST_STORAGE_KEY}>

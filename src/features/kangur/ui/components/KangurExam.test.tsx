@@ -189,6 +189,9 @@ describe('KangurExam', () => {
       'px-4',
       'touch-manipulation'
     );
+    expect(screen.getByRole('button', { name: /podsumowanie/i })).not.toHaveTextContent(
+      'Podsumowanie'
+    );
     expect(screen.getByRole('button', { name: /poprzednie pytanie w podglądzie/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'

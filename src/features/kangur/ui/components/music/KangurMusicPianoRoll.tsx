@@ -1,9 +1,12 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
+import { KangurDialogHeader } from '@/features/kangur/ui/components/KangurDialogHeader';
 import {
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
@@ -18,21 +21,38 @@ import type {
   KangurMusicKeyboardMode,
   KangurMusicPianoKeyDefinition,
   KangurMusicSynthWaveform,
+  KangurMusicSynthOsc1Config,
+  KangurMusicSynthOsc2Config,
 } from './music-theory';
 import {
   KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS,
   KANGUR_MUSIC_SYNTH_GLIDE_MODES,
   KANGUR_MUSIC_SYNTH_WAVEFORM_LABELS,
   KANGUR_MUSIC_SYNTH_WAVEFORMS,
+  KANGUR_MUSIC_SYNTH_DEFAULT_OSC1_CONFIG,
+  KANGUR_MUSIC_SYNTH_DEFAULT_OSC2_CONFIG,
   resolveFrequencyWithSemitoneOffset,
 } from './music-theory';
+import {
+  KANGUR_DEFAULT_MUSIC_SYNTH_ENVELOPE,
+  normalizeKangurMusicSynthEnvelope,
+  type KangurMusicSynthEnvelope,
+} from './useKangurMusicSynth';
 import { KangurMusicWaveformIcon } from './music-waveform-icons';
 
 export type {
   KangurMusicKeyboardMode,
   KangurMusicSynthGlideMode,
   KangurMusicSynthWaveform,
+  KangurMusicSynthOsc1Config,
+  KangurMusicSynthOsc2Config,
 } from './music-theory';
+export {
+  KANGUR_MUSIC_SYNTH_DEFAULT_OSC1_CONFIG,
+  KANGUR_MUSIC_SYNTH_DEFAULT_OSC2_CONFIG,
+} from './music-theory';
+export type { KangurMusicSynthEnvelope } from './useKangurMusicSynth';
+export { KANGUR_DEFAULT_MUSIC_SYNTH_ENVELOPE } from './useKangurMusicSynth';
 
 type KangurMusicPointerType = 'keyboard' | 'mouse' | 'pen' | 'touch';
 
@@ -354,17 +374,24 @@ type KangurMusicPianoRollProps<NoteId extends string> = {
   onSynthGestureChange?: (details: KangurMusicSynthGestureDetails<NoteId>) => void;
   onSynthGestureEnd?: (details: KangurMusicSynthGestureDetails<NoteId>) => void;
   onSynthGestureStart?: (details: KangurMusicSynthGestureDetails<NoteId>) => void;
+  onSynthEnvelopeChange?: (envelope: KangurMusicSynthEnvelope) => void;
+  onSynthOscSettingsChange?: ((osc1: KangurMusicSynthOsc1Config, osc2: KangurMusicSynthOsc2Config) => void) | undefined;
   onSynthWaveformChange?: (waveform: KangurMusicSynthWaveform) => void;
   pressedNoteId?: NoteId | null;
   pressedVelocity?: number | null;
   shellTestId?: string;
+  showSynthEnvelopeButton?: boolean;
   showKeyboardModeSwitch?: boolean;
   showSynthGlideModeSwitch?: boolean;
   showMeasureGuides?: boolean;
   showLaneLabels?: boolean;
+  showSynthOscSettingsPanel?: boolean | undefined;
+  synthEnvelope?: KangurMusicSynthEnvelope;
   showSynthWaveformSwitch?: boolean;
   synthGlideMode?: KangurMusicSynthGlideMode;
   stepTestIdPrefix?: string;
+  synthOsc1Config?: KangurMusicSynthOsc1Config | undefined;
+  synthOsc2Config?: KangurMusicSynthOsc2Config | undefined;
   synthWaveform?: KangurMusicSynthWaveform;
   title?: ReactNode;
   unitsPerMeasure?: number;
@@ -391,17 +418,24 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
   onSynthGestureChange,
   onSynthGestureEnd,
   onSynthGestureStart,
+  onSynthEnvelopeChange,
+  onSynthOscSettingsChange,
   onSynthWaveformChange,
   pressedNoteId = null,
   pressedVelocity = null,
   shellTestId,
+  showSynthEnvelopeButton = false,
   showKeyboardModeSwitch = false,
   showSynthGlideModeSwitch = false,
   showMeasureGuides = true,
   showLaneLabels = true,
+  showSynthOscSettingsPanel = false,
+  synthEnvelope,
   showSynthWaveformSwitch = false,
   synthGlideMode,
   stepTestIdPrefix = 'kangur-music-piano-step',
+  synthOsc1Config,
+  synthOsc2Config,
   synthWaveform,
   title,
   unitsPerMeasure = 4,
@@ -421,6 +455,15 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
     useState<KangurMusicSynthGlideMode>('continuous');
   const [uncontrolledSynthWaveform, setUncontrolledSynthWaveform] =
     useState<KangurMusicSynthWaveform>('sawtooth');
+  const [uncontrolledSynthEnvelope, setUncontrolledSynthEnvelope] =
+    useState<KangurMusicSynthEnvelope>(KANGUR_DEFAULT_MUSIC_SYNTH_ENVELOPE);
+  const [isSynthEnvelopeDialogOpen, setSynthEnvelopeDialogOpen] = useState(false);
+  const [isSynthOscPanelOpen, setSynthOscPanelOpen] = useState(false);
+  const [activeOscTab, setActiveOscTab] = useState<'osc1' | 'osc2'>('osc1');
+  const [uncontrolledOsc1Config, setUncontrolledOsc1Config] =
+    useState<KangurMusicSynthOsc1Config>(KANGUR_MUSIC_SYNTH_DEFAULT_OSC1_CONFIG);
+  const [uncontrolledOsc2Config, setUncontrolledOsc2Config] =
+    useState<KangurMusicSynthOsc2Config>(KANGUR_MUSIC_SYNTH_DEFAULT_OSC2_CONFIG);
   const [activeSynthGestures, setActiveSynthGestures] =
     useState<ActiveSynthGestureState<NoteId>[]>([]);
   const [recentKeyPulses, setRecentKeyPulses] = useState<Map<NoteId, KeyPulseState>>(new Map());
@@ -429,6 +472,11 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
   const resolvedKeyboardMode = keyboardMode ?? uncontrolledKeyboardMode;
   const resolvedSynthGlideMode = synthGlideMode ?? uncontrolledSynthGlideMode;
   const resolvedSynthWaveform = synthWaveform ?? uncontrolledSynthWaveform;
+  const resolvedSynthEnvelope = normalizeKangurMusicSynthEnvelope(
+    synthEnvelope ?? uncontrolledSynthEnvelope
+  );
+  const resolvedOsc1Config = synthOsc1Config ?? uncontrolledOsc1Config;
+  const resolvedOsc2Config = synthOsc2Config ?? uncontrolledOsc2Config;
   const resolvedMinStepWidthPx = minStepWidthPx ?? (isCompactMobile ? 38 : 64);
   const resolvedUnitsPerMeasure = Math.max(1, Math.round(unitsPerMeasure));
   const isSixYearOldVisualMode = visualCueMode === 'six_year_old';
@@ -510,6 +558,65 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
     expectedTransportStep !== null ||
     resolvedKeyboardMode === 'synth' ||
     activeSynthGestureCount > 0;
+  const adsrTranslations = useTranslations('KangurMiniGames.musicPianoRoll.adsr');
+  const resolvedSustainPercent = Math.round(resolvedSynthEnvelope.sustainLevel * 100);
+  const synthEnvelopeSummary = adsrTranslations('summary', {
+    attackMs: resolvedSynthEnvelope.attackMs,
+    decayMs: resolvedSynthEnvelope.decayMs,
+    releaseMs: resolvedSynthEnvelope.releaseMs,
+    sustainPercent: resolvedSustainPercent,
+  });
+  const synthEnvelopeControls: Array<{
+    id: 'attackMs' | 'decayMs' | 'sustainLevel' | 'releaseMs';
+    label: string;
+    max: number;
+    min: number;
+    step: number;
+    testIdSuffix: 'attack' | 'decay' | 'sustain' | 'release';
+    value: number;
+    valueLabel: string;
+  }> = [
+    {
+      id: 'attackMs',
+      label: adsrTranslations('attack'),
+      max: 1800,
+      min: 0,
+      step: 5,
+      testIdSuffix: 'attack',
+      value: resolvedSynthEnvelope.attackMs,
+      valueLabel: `${resolvedSynthEnvelope.attackMs} ms`,
+    },
+    {
+      id: 'decayMs',
+      label: adsrTranslations('decay'),
+      max: 2400,
+      min: 0,
+      step: 5,
+      testIdSuffix: 'decay',
+      value: resolvedSynthEnvelope.decayMs,
+      valueLabel: `${resolvedSynthEnvelope.decayMs} ms`,
+    },
+    {
+      id: 'sustainLevel',
+      label: adsrTranslations('sustain'),
+      max: 100,
+      min: 0,
+      step: 1,
+      testIdSuffix: 'sustain',
+      value: resolvedSustainPercent,
+      valueLabel: `${resolvedSustainPercent}%`,
+    },
+    {
+      id: 'releaseMs',
+      label: adsrTranslations('release'),
+      max: 3200,
+      min: 20,
+      step: 5,
+      testIdSuffix: 'release',
+      value: resolvedSynthEnvelope.releaseMs,
+      valueLabel: `${resolvedSynthEnvelope.releaseMs} ms`,
+    },
+  ];
 
   useEffect(() => {
     if (!autoFollowCursor) {
@@ -551,6 +658,13 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
     setActiveSynthGestures([]);
   }, [resolvedKeyboardMode]);
 
+  useEffect(() => {
+    if (resolvedKeyboardMode !== 'synth') {
+      if (isSynthEnvelopeDialogOpen) setSynthEnvelopeDialogOpen(false);
+      if (isSynthOscPanelOpen) setSynthOscPanelOpen(false);
+    }
+  }, [isSynthEnvelopeDialogOpen, isSynthOscPanelOpen, resolvedKeyboardMode]);
+
   const syncActiveSynthGestures = (): void => {
     setActiveSynthGestures([...activeSynthGesturesRef.current.values()]);
   };
@@ -576,6 +690,54 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
       setUncontrolledSynthGlideMode(nextGlideMode);
     }
     onSynthGlideModeChange?.(nextGlideMode);
+  };
+
+  const handleSynthOscSettingsChange = (
+    nextOsc1: KangurMusicSynthOsc1Config,
+    nextOsc2: KangurMusicSynthOsc2Config
+  ): void => {
+    if (synthOsc1Config === undefined) setUncontrolledOsc1Config(nextOsc1);
+    if (synthOsc2Config === undefined) setUncontrolledOsc2Config(nextOsc2);
+    onSynthOscSettingsChange?.(nextOsc1, nextOsc2);
+  };
+
+  const handleSynthEnvelopeChange = (
+    nextEnvelope: Partial<KangurMusicSynthEnvelope>
+  ): void => {
+    const resolvedNextEnvelope = normalizeKangurMusicSynthEnvelope({
+      ...resolvedSynthEnvelope,
+      ...nextEnvelope,
+    });
+    if (synthEnvelope === undefined) {
+      setUncontrolledSynthEnvelope(resolvedNextEnvelope);
+    }
+    onSynthEnvelopeChange?.(resolvedNextEnvelope);
+  };
+
+  const handleSynthEnvelopeReset = (): void => {
+    handleSynthEnvelopeChange(KANGUR_DEFAULT_MUSIC_SYNTH_ENVELOPE);
+  };
+
+  const handleSynthEnvelopeSliderChange = (
+    controlId: 'attackMs' | 'decayMs' | 'sustainLevel' | 'releaseMs',
+    nextValue: number
+  ): void => {
+    switch (controlId) {
+      case 'attackMs':
+        handleSynthEnvelopeChange({ attackMs: nextValue });
+        return;
+      case 'decayMs':
+        handleSynthEnvelopeChange({ decayMs: nextValue });
+        return;
+      case 'releaseMs':
+        handleSynthEnvelopeChange({ releaseMs: nextValue });
+        return;
+      case 'sustainLevel':
+        handleSynthEnvelopeChange({ sustainLevel: nextValue / 100 });
+        return;
+      default:
+        return;
+    }
   };
 
   const startPress = (
@@ -1094,7 +1256,10 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
 
         {showKeyboardModeSwitch ||
         (resolvedKeyboardMode === 'synth' &&
-          (showSynthWaveformSwitch || showSynthGlideModeSwitch)) ? (
+          (showSynthWaveformSwitch ||
+            showSynthGlideModeSwitch ||
+            showSynthEnvelopeButton ||
+            showSynthOscSettingsPanel)) ? (
           <div
             className={cn(
               'flex gap-2 px-1',
@@ -1218,8 +1383,333 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
                 ))}
               </div>
             ) : null}
+
+            {resolvedKeyboardMode === 'synth' && showSynthEnvelopeButton ? (
+              <div
+                className={cn(
+                  'rounded-full border border-white/70 bg-white/55 shadow-[0_16px_40px_-32px_rgba(14,116,144,0.34)]',
+                  isCompactMobile ? 'w-max shrink-0 snap-start' : 'w-full sm:w-auto'
+                )}
+              >
+                <KangurButton
+                  aria-expanded={isSynthEnvelopeDialogOpen}
+                  aria-label={adsrTranslations('buttonAriaLabel', {
+                    summary: synthEnvelopeSummary,
+                  })}
+                  className='px-4'
+                  data-testid={`${stepTestIdPrefix}-synth-envelope-button`}
+                  onClick={() => setSynthEnvelopeDialogOpen(true)}
+                  size='sm'
+                  type='button'
+                  variant='surface'
+                >
+                  {adsrTranslations('button')}
+                </KangurButton>
+              </div>
+            ) : null}
+
+            {resolvedKeyboardMode === 'synth' && showSynthOscSettingsPanel ? (
+              <div
+                className={cn(
+                  'rounded-full border border-white/70 bg-white/55 shadow-[0_16px_40px_-32px_rgba(14,116,144,0.34)]',
+                  isCompactMobile ? 'w-max shrink-0 snap-start' : 'w-full sm:w-auto'
+                )}
+              >
+                <KangurButton
+                  aria-expanded={isSynthOscPanelOpen}
+                  aria-label='Ustawienia oscylatorow synthu'
+                  className={cn('px-4', isSynthOscPanelOpen && 'ring-2 ring-sky-400')}
+                  data-testid={`${stepTestIdPrefix}-synth-osc-settings-button`}
+                  onClick={() => setSynthOscPanelOpen((prev) => !prev)}
+                  size='sm'
+                  type='button'
+                  variant={isSynthOscPanelOpen ? 'segmentActive' : 'surface'}
+                >
+                  Synth ⚙
+                </KangurButton>
+              </div>
+            ) : null}
           </div>
         ) : null}
+
+        {resolvedKeyboardMode === 'synth' && showSynthOscSettingsPanel && isSynthOscPanelOpen ? (
+          <div
+            className='rounded-[28px] border border-slate-200/80 bg-white/95 p-4 shadow-[0_28px_70px_-42px_rgba(15,23,42,0.2)]'
+            data-testid={`${stepTestIdPrefix}-synth-osc-panel`}
+          >
+            <div
+              className={cn(
+                KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+                'mb-4 border-sky-100 bg-sky-50/80'
+              )}
+              data-testid={`${stepTestIdPrefix}-synth-osc-tabs`}
+            >
+              <KangurButton
+                aria-pressed={activeOscTab === 'osc1'}
+                data-testid={`${stepTestIdPrefix}-synth-osc-tab-osc1`}
+                onClick={() => setActiveOscTab('osc1')}
+                size='sm'
+                type='button'
+                variant={activeOscTab === 'osc1' ? 'segmentActive' : 'segment'}
+              >
+                OSC 1
+              </KangurButton>
+              <KangurButton
+                aria-pressed={activeOscTab === 'osc2'}
+                data-testid={`${stepTestIdPrefix}-synth-osc-tab-osc2`}
+                onClick={() => setActiveOscTab('osc2')}
+                size='sm'
+                type='button'
+                variant={activeOscTab === 'osc2' ? 'segmentActive' : 'segment'}
+              >
+                OSC 2
+              </KangurButton>
+            </div>
+
+            {activeOscTab === 'osc1' ? (
+              <div className='grid gap-3' data-testid={`${stepTestIdPrefix}-synth-osc1-panel`}>
+                <div
+                  className={cn(
+                    KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+                    'border-slate-200/80 bg-white/60'
+                  )}
+                >
+                  {KANGUR_MUSIC_SYNTH_WAVEFORMS.map((waveform) => (
+                    <KangurButton
+                      key={waveform}
+                      aria-label={`OSC 1 brzmienie: ${KANGUR_MUSIC_SYNTH_WAVEFORM_LABELS[waveform]}`}
+                      aria-pressed={resolvedOsc1Config.waveform === waveform}
+                      className='min-w-[3rem] px-3'
+                      data-testid={`${stepTestIdPrefix}-synth-osc1-waveform-${waveform}`}
+                      onClick={() =>
+                        handleSynthOscSettingsChange(
+                          { ...resolvedOsc1Config, waveform },
+                          resolvedOsc2Config
+                        )
+                      }
+                      size='sm'
+                      type='button'
+                      variant={resolvedOsc1Config.waveform === waveform ? 'segmentActive' : 'segment'}
+                    >
+                      <KangurMusicWaveformIcon className='h-4 w-7' waveform={waveform} />
+                    </KangurButton>
+                  ))}
+                </div>
+
+                <label className='rounded-[22px] border border-slate-200/80 bg-slate-50/85 px-4 py-3'>
+                  <div className='flex items-center justify-between gap-3'>
+                    <span className='text-sm font-bold text-slate-900'>Glososc</span>
+                    <span
+                      className='rounded-full bg-white px-2.5 py-1 text-xs font-black text-sky-700 shadow-[0_12px_30px_-24px_rgba(14,116,144,0.45)]'
+                      data-testid={`${stepTestIdPrefix}-synth-osc1-volume-value`}
+                    >
+                      {Math.round(resolvedOsc1Config.volume * 100)}%
+                    </span>
+                  </div>
+                  <input
+                    className='mt-3 h-2.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-sky-500'
+                    data-testid={`${stepTestIdPrefix}-synth-osc1-volume`}
+                    max={100}
+                    min={0}
+                    onChange={(e) =>
+                      handleSynthOscSettingsChange(
+                        { ...resolvedOsc1Config, volume: Number(e.target.value) / 100 },
+                        resolvedOsc2Config
+                      )
+                    }
+                    step={1}
+                    type='range'
+                    value={Math.round(resolvedOsc1Config.volume * 100)}
+                  />
+                </label>
+              </div>
+            ) : (
+              <div className='grid gap-3' data-testid={`${stepTestIdPrefix}-synth-osc2-panel`}>
+                <label className='flex items-center justify-between rounded-[22px] border border-slate-200/80 bg-slate-50/85 px-4 py-3'>
+                  <span className='text-sm font-bold text-slate-900'>Aktywny</span>
+                  <input
+                    checked={resolvedOsc2Config.enabled}
+                    className='h-4 w-4 accent-sky-500'
+                    data-testid={`${stepTestIdPrefix}-synth-osc2-enabled`}
+                    onChange={(e) =>
+                      handleSynthOscSettingsChange(resolvedOsc1Config, {
+                        ...resolvedOsc2Config,
+                        enabled: e.target.checked,
+                      })
+                    }
+                    type='checkbox'
+                  />
+                </label>
+
+                {resolvedOsc2Config.enabled ? (
+                  <>
+                    <div
+                      className={cn(
+                        KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+                        'border-slate-200/80 bg-white/60'
+                      )}
+                    >
+                      {KANGUR_MUSIC_SYNTH_WAVEFORMS.map((waveform) => (
+                        <KangurButton
+                          key={waveform}
+                          aria-label={`OSC 2 brzmienie: ${KANGUR_MUSIC_SYNTH_WAVEFORM_LABELS[waveform]}`}
+                          aria-pressed={resolvedOsc2Config.waveform === waveform}
+                          className='min-w-[3rem] px-3'
+                          data-testid={`${stepTestIdPrefix}-synth-osc2-waveform-${waveform}`}
+                          onClick={() =>
+                            handleSynthOscSettingsChange(resolvedOsc1Config, {
+                              ...resolvedOsc2Config,
+                              waveform,
+                            })
+                          }
+                          size='sm'
+                          type='button'
+                          variant={resolvedOsc2Config.waveform === waveform ? 'segmentActive' : 'segment'}
+                        >
+                          <KangurMusicWaveformIcon className='h-4 w-7' waveform={waveform} />
+                        </KangurButton>
+                      ))}
+                    </div>
+
+                    <label className='rounded-[22px] border border-slate-200/80 bg-slate-50/85 px-4 py-3'>
+                      <div className='flex items-center justify-between gap-3'>
+                        <span className='text-sm font-bold text-slate-900'>Detune</span>
+                        <span
+                          className='rounded-full bg-white px-2.5 py-1 text-xs font-black text-sky-700 shadow-[0_12px_30px_-24px_rgba(14,116,144,0.45)]'
+                          data-testid={`${stepTestIdPrefix}-synth-osc2-detune-value`}
+                        >
+                          {resolvedOsc2Config.detuneCents === 0
+                            ? 'Auto'
+                            : `${resolvedOsc2Config.detuneCents > 0 ? '+' : ''}${resolvedOsc2Config.detuneCents}c`}
+                        </span>
+                      </div>
+                      <input
+                        className='mt-3 h-2.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-sky-500'
+                        data-testid={`${stepTestIdPrefix}-synth-osc2-detune`}
+                        max={50}
+                        min={-50}
+                        onChange={(e) =>
+                          handleSynthOscSettingsChange(resolvedOsc1Config, {
+                            ...resolvedOsc2Config,
+                            detuneCents: Number(e.target.value),
+                          })
+                        }
+                        step={1}
+                        type='range'
+                        value={resolvedOsc2Config.detuneCents}
+                      />
+                    </label>
+
+                    <label className='rounded-[22px] border border-slate-200/80 bg-slate-50/85 px-4 py-3'>
+                      <div className='flex items-center justify-between gap-3'>
+                        <span className='text-sm font-bold text-slate-900'>Mieszanie</span>
+                        <span
+                          className='rounded-full bg-white px-2.5 py-1 text-xs font-black text-sky-700 shadow-[0_12px_30px_-24px_rgba(14,116,144,0.45)]'
+                          data-testid={`${stepTestIdPrefix}-synth-osc2-blend-value`}
+                        >
+                          {Math.round(resolvedOsc2Config.blend * 100)}%
+                        </span>
+                      </div>
+                      <input
+                        className='mt-3 h-2.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-sky-500'
+                        data-testid={`${stepTestIdPrefix}-synth-osc2-blend`}
+                        max={100}
+                        min={0}
+                        onChange={(e) =>
+                          handleSynthOscSettingsChange(resolvedOsc1Config, {
+                            ...resolvedOsc2Config,
+                            blend: Number(e.target.value) / 100,
+                          })
+                        }
+                        step={1}
+                        type='range'
+                        value={Math.round(resolvedOsc2Config.blend * 100)}
+                      />
+                    </label>
+                  </>
+                ) : null}
+              </div>
+            )}
+          </div>
+        ) : null}
+
+        <KangurDialog
+          contentSize='sm'
+          contentProps={{
+            'data-testid': `${stepTestIdPrefix}-synth-envelope-modal`,
+          }}
+          onOpenChange={setSynthEnvelopeDialogOpen}
+          open={isSynthEnvelopeDialogOpen}
+          overlayVariant='standard'
+        >
+          <KangurDialogHeader
+            closeAriaLabel={adsrTranslations('closeAriaLabel')}
+            closeLabel={adsrTranslations('close')}
+            description={adsrTranslations('description')}
+            title={adsrTranslations('title')}
+          />
+
+          <div className='rounded-[30px] border border-slate-200/80 bg-white/95 p-4 shadow-[0_28px_70px_-42px_rgba(15,23,42,0.28)] sm:p-5'>
+            <div className='rounded-[20px] border border-sky-100 bg-sky-50/80 px-4 py-3 text-xs font-semibold text-sky-900'>
+              {synthEnvelopeSummary}
+            </div>
+
+            <div className='mt-4 grid gap-3'>
+              {synthEnvelopeControls.map((control) => (
+                <label
+                  key={control.id}
+                  className='rounded-[22px] border border-slate-200/80 bg-slate-50/85 px-4 py-3'
+                >
+                  <div className='flex items-center justify-between gap-3'>
+                    <span className='text-sm font-bold text-slate-900'>{control.label}</span>
+                    <span
+                      className='rounded-full bg-white px-2.5 py-1 text-xs font-black text-sky-700 shadow-[0_12px_30px_-24px_rgba(14,116,144,0.45)]'
+                      data-testid={`${stepTestIdPrefix}-synth-envelope-${control.testIdSuffix}-value`}
+                    >
+                      {control.valueLabel}
+                    </span>
+                  </div>
+                  <input
+                    className='mt-3 h-2.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-sky-500'
+                    data-testid={`${stepTestIdPrefix}-synth-envelope-${control.testIdSuffix}`}
+                    max={control.max}
+                    min={control.min}
+                    onChange={(event) =>
+                      handleSynthEnvelopeSliderChange(
+                        control.id,
+                        Number(event.target.value)
+                      )
+                    }
+                    step={control.step}
+                    type='range'
+                    value={control.value}
+                  />
+                </label>
+              ))}
+            </div>
+
+            <div className='mt-4 flex flex-wrap justify-between gap-2'>
+              <KangurButton
+                data-testid={`${stepTestIdPrefix}-synth-envelope-reset`}
+                onClick={handleSynthEnvelopeReset}
+                size='sm'
+                type='button'
+                variant='ghost'
+              >
+                {adsrTranslations('reset')}
+              </KangurButton>
+              <KangurButton
+                data-testid={`${stepTestIdPrefix}-synth-envelope-close`}
+                onClick={() => setSynthEnvelopeDialogOpen(false)}
+                size='sm'
+                type='button'
+                variant='surface'
+              >
+                {adsrTranslations('close')}
+              </KangurButton>
+            </div>
+          </div>
+        </KangurDialog>
 
         <div
           className={cn(

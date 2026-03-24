@@ -2,7 +2,7 @@
 
 import { useCallback, useSyncExternalStore } from 'react';
 
-import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import {
   getKangurProgressServerSnapshot,
   loadProgress,
@@ -13,10 +13,10 @@ const subscribe = (onStoreChange: () => void): (() => void) =>
   subscribeToProgress(() => onStoreChange());
 
 export const useKangurProgressState = () => {
-  const { subjectKey } = useKangurSubjectFocus();
+  const ownerKey = useKangurProgressOwnerKey();
   const getSnapshot = useCallback(
-    () => loadProgress({ ownerKey: subjectKey }),
-    [subjectKey]
+    () => loadProgress({ ownerKey }),
+    [ownerKey]
   );
 
   return useSyncExternalStore(subscribe, getSnapshot, getKangurProgressServerSnapshot);

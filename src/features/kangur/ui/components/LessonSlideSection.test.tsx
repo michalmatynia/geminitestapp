@@ -213,7 +213,10 @@ describe('LessonSlideSection', () => {
     render(
       <KangurLessonPrintProvider onPrintPanel={onPrintPanel}>
         <LessonSlideSection
-          slides={[{ title: 'Slajd 1', content: <div>Pierwszy</div> }]}
+          slides={[
+            { title: 'Slajd 1', content: <div>Pierwszy</div> },
+            { title: 'Slajd 2', content: <div>Drugi</div> },
+          ]}
           onBack={vi.fn()}
           dotActiveClass='bg-orange-400'
           dotDoneClass='bg-orange-200'
@@ -223,8 +226,21 @@ describe('LessonSlideSection', () => {
     );
 
     const printButton = screen.getByTestId('lesson-slide-print-button');
+    const navigationButtonRow = screen
+      .getByTestId('lesson-slide-navigation-shell')
+      .querySelector('[role="group"]');
     const slideShell = screen.getByTestId('lesson-slide-shell');
     expect(printButton).toHaveAttribute('aria-label', 'Drukuj panel');
+    expect(
+      Array.from(navigationButtonRow?.querySelectorAll('button') ?? []).map((button) =>
+        button.getAttribute('data-testid')
+      )
+    ).toEqual([
+      'lesson-slide-back-button',
+      'lesson-slide-prev-button',
+      'lesson-slide-next-button',
+      'lesson-slide-print-button',
+    ]);
     expect(slideShell).toHaveAttribute('data-kangur-print-slide-panel', 'true');
     expect(slideShell).toHaveAttribute('data-kangur-print-panel-id');
     expect(slideShell).toHaveAttribute('data-kangur-print-panel-title', 'Slajd 1');

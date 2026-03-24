@@ -20,11 +20,7 @@ import {
 } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeatureApp } from '@/features/kangur/ui/KangurFeatureApp';
 import { KANGUR_MAIN_CONTENT_ID } from '@/features/kangur/ui/design/primitives/KangurPageContainer';
-import {
-  KANGUR_TOP_BAR_HEIGHT_VAR_NAME,
-} from '@/features/kangur/ui/design/tokens';
 import { useKangurMobileViewportVars } from '@/features/kangur/ui/hooks/useKangurMobileViewportVars';
-import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { buildKangurScopedCustomCss } from '@/features/kangur/utils/custom-css';
 import { isKangurThemeDebugEnabled } from '@/features/kangur/utils/theme-debug';
@@ -74,13 +70,9 @@ export function KangurFeaturePageShell({
     },
     [focusSkipTarget]
   );
-  const initialTopBarHeightCssValue = readKangurTopBarHeightCssValue();
   const shellStyle: CSSProperties & Record<string, string> = {
     ...kangurAppearance.vars,
   };
-  if (initialTopBarHeightCssValue) {
-    shellStyle[KANGUR_TOP_BAR_HEIGHT_VAR_NAME] = initialTopBarHeightCssValue;
-  }
   const scopedCustomCss = useMemo(() => {
     if (process.env['NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED'] !== 'true') {
       return null;

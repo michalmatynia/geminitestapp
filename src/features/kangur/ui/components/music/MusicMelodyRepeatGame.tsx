@@ -43,6 +43,7 @@ import KangurMusicPianoRoll, {
   type KangurMusicSynthGlideMode,
   type KangurMusicKeyboardMode,
   type KangurMusicPianoKeyPressDetails,
+  type KangurMusicSynthEnvelope,
   type KangurMusicSynthWaveform,
   type KangurMusicSynthGestureDetails,
 } from './KangurMusicPianoRoll';
@@ -96,6 +97,9 @@ export default function MusicMelodyRepeatGame({
   const [synthGlideMode, setSynthGlideMode] =
     useState<KangurMusicSynthGlideMode>('continuous');
   const [synthWaveform, setSynthWaveform] = useState<KangurMusicSynthWaveform>('sawtooth');
+  const [synthEnvelope, setSynthEnvelope] = useState<KangurMusicSynthEnvelope | undefined>(
+    undefined
+  );
   const [pressedNoteId, setPressedNoteId] = useState<DiatonicNoteId | null>(null);
   const [pressedVelocity, setPressedVelocity] = useState<number | null>(null);
   const [activeStepIndex, setActiveStepIndex] = useState<number | null>(null);
@@ -398,6 +402,14 @@ export default function MusicMelodyRepeatGame({
     [stopAllSustainedNotes]
   );
 
+  const handleSynthEnvelopeChange = useCallback(
+    (nextEnvelope: KangurMusicSynthEnvelope): void => {
+      setSynthEnvelope(nextEnvelope);
+      stopAllSustainedNotes({ immediate: true });
+    },
+    [stopAllSustainedNotes]
+  );
+
   const handleSynthGestureStart = useCallback(
     async (details: KangurMusicSynthGestureDetails<DiatonicNoteId>): Promise<void> => {
       if (details.keyboardMode !== 'synth' || phase !== 'repeat' || isPlayingSequence || done) {
@@ -415,11 +427,12 @@ export default function MusicMelodyRepeatGame({
           vibratoDepth: details.vibratoDepth,
           vibratoRateHz: details.vibratoRateHz,
           waveform: synthWaveform,
+          envelope: synthEnvelope,
         },
         { interactionId: details.interactionId }
       );
     },
-    [done, isPlayingSequence, phase, startSustainedNote, synthWaveform]
+    [done, isPlayingSequence, phase, startSustainedNote, synthEnvelope, synthWaveform]
   );
 
   const handleSynthGestureChange = useCallback(
@@ -683,13 +696,16 @@ export default function MusicMelodyRepeatGame({
             onSynthGestureStart={(details) => {
               void handleSynthGestureStart(details);
             }}
+            onSynthEnvelopeChange={handleSynthEnvelopeChange}
             onSynthWaveformChange={handleSynthWaveformChange}
             pressedNoteId={pressedNoteId}
             pressedVelocity={pressedVelocity}
             shellTestId='music-melody-repeat-piano-roll'
+            showSynthEnvelopeButton
             showKeyboardModeSwitch
             showSynthGlideModeSwitch
             showSynthWaveformSwitch
+            synthEnvelope={synthEnvelope}
             synthGlideMode={synthGlideMode}
             stepTestIdPrefix='music-melody-repeat-step'
             synthWaveform={synthWaveform}

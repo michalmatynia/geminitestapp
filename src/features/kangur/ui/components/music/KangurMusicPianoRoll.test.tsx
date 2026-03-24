@@ -7,6 +7,31 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DIATONIC_PIANO_KEYS } from '@/features/kangur/ui/components/music/music-theory';
 
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string, values?: Record<string, unknown>) => {
+    if (key === 'summary') {
+      return `A ${values?.attackMs} ms · D ${values?.decayMs} ms · S ${values?.sustainPercent}% · R ${values?.releaseMs} ms`;
+    }
+    if (key === 'buttonAriaLabel') {
+      return `ADSR: ${String(values?.summary ?? '')}`;
+    }
+    return (
+      {
+        attack: 'Attack',
+        button: 'ADSR',
+        close: 'Close',
+        closeAriaLabel: 'Close ADSR settings',
+        decay: 'Decay',
+        description: 'Adjust the synth attack, decay, sustain level, and release.',
+        release: 'Release',
+        reset: 'Reset',
+        sustain: 'Sustain',
+        title: 'Synth ADSR',
+      } satisfies Record<string, string>
+    )[key] ?? key;
+  },
+}));
+
 const { useKangurCoarsePointerMock, useKangurMobileBreakpointMock } = vi.hoisted(() => ({
   useKangurCoarsePointerMock: vi.fn(),
   useKangurMobileBreakpointMock: vi.fn(),
@@ -578,6 +603,62 @@ describe('KangurMusicPianoRoll', () => {
         'Glide: +1.0 st'
       )
     );
+  });
+
+  it('opens the ADSR modal in synth mode and updates the envelope controls', async () => {
+    const handleSynthEnvelopeChange = vi.fn();
+
+    render(
+      <KangurMusicPianoRoll
+        keyTestIdPrefix='music-roll-envelope-key'
+        keys={DIATONIC_PIANO_KEYS}
+        melody={['do', 're']}
+        onSynthEnvelopeChange={handleSynthEnvelopeChange}
+        showKeyboardModeSwitch
+        showSynthEnvelopeButton
+        stepTestIdPrefix='music-roll-envelope-step'
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('music-roll-envelope-step-keyboard-mode-synth'));
+    fireEvent.click(screen.getByTestId('music-roll-envelope-step-synth-envelope-button'));
+
+    const modal = await screen.findByTestId('music-roll-envelope-step-synth-envelope-modal');
+    expect(modal).toBeInTheDocument();
+
+    const attackInput = screen.getByTestId(
+      'music-roll-envelope-step-synth-envelope-attack'
+    ) as HTMLInputElement;
+    expect(attackInput.value).toBe('12');
+
+    fireEvent.change(attackInput, { target: { value: '320' } });
+
+    expect(handleSynthEnvelopeChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        attackMs: 320,
+        decayMs: 0,
+        releaseMs: 90,
+        sustainLevel: 1,
+      })
+    );
+    expect(attackInput.value).toBe('320');
+    expect(
+      screen.getByTestId('music-roll-envelope-step-synth-envelope-attack-value')
+    ).toHaveTextContent('320 ms');
+
+    const sustainInput = screen.getByTestId(
+      'music-roll-envelope-step-synth-envelope-sustain'
+    ) as HTMLInputElement;
+    fireEvent.change(sustainInput, { target: { value: '42' } });
+
+    expect(handleSynthEnvelopeChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        sustainLevel: 0.42,
+      })
+    );
+    expect(
+      screen.getByTestId('music-roll-envelope-step-synth-envelope-sustain-value')
+    ).toHaveTextContent('42%');
   });
 
   it('can render six-year-old icon cues for synth transport and switches', () => {

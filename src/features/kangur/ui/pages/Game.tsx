@@ -1,6 +1,6 @@
 'use client';
 
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, type RefObject } from 'react';
@@ -520,6 +520,244 @@ function GameContent(): React.JSX.Element {
     </motion.div>
   );
 
+  const renderCurrentScreen = (): React.JSX.Element | null => {
+    switch (screen) {
+      case 'home':
+        return renderScreen(
+          'home',
+          GAME_HOME_LAYOUT_CLASSNAME,
+          <KangurGameHomeSections
+            visibility={homeVisibility}
+            parentSpotlight={(
+              <KangurAssignmentSpotlight
+                basePath={basePath}
+                enabled={canAccessParentAssignments}
+              />
+            )}
+            parentSpotlightSectionProps={{
+              headingId: 'kangur-home-parent-assignment-heading',
+              headingLabel: translations('home.parentSuggestionsHeading'),
+              id: 'kangur-home-parent-spotlight',
+            }}
+            actionsColumn={(
+              <>
+                <div id='kangur-home-actions' ref={homeActionsRef}>
+                  <KangurGameHomeActionsWidget hideWhenScreenMismatch={false} />
+                </div>
+                <KangurGameHomeDuelsInvitesWidget hideWhenScreenMismatch={false} />
+                {homeVisibility.hideLearnerWidgetsForParent ? (
+                  <KangurEmptyState
+                    align='left'
+                    className='text-left'
+                    padding='md'
+                    title={translations('home.missingLearnerTitle')}
+                    description={translations('home.missingLearnerDescription')}
+                  >
+                    <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} w-full sm:items-center`}>
+                      <KangurButton
+                        asChild
+                        className='w-full sm:w-auto'
+                        size='sm'
+                        variant='primary'
+                        data-doc-id='home_parent_add_learner'
+                      >
+                        <Link
+                          href={createPageUrl('ParentDashboard', basePath)}
+                          targetPageKey='ParentDashboard'
+                          transitionAcknowledgeMs={110}
+                          transitionSourceId='game-home-parent-add-learner'
+                        >
+                          {translations('home.addLearner')}
+                        </Link>
+                      </KangurButton>
+                    </div>
+                  </KangurEmptyState>
+                ) : null}
+              </>
+            )}
+            actionsColumnProps={{ testId: 'kangur-home-actions-column' }}
+            quest={<KangurGameHomeQuestWidget hideWhenScreenMismatch={false} />}
+            questSectionProps={{
+              headingId: 'kangur-home-quest-heading',
+              headingLabel: translations('home.questHeading'),
+              id: 'kangur-home-quest',
+              ref: homeQuestRef,
+            }}
+            summary={(
+              <KangurGameHomeHeroWidget
+                hideWhenScreenMismatch={false}
+                showIntro={false}
+                showAssignmentSpotlight={false}
+              />
+            )}
+            summarySectionProps={{
+              headingId: 'kangur-home-hero-heading',
+              headingLabel: translations('home.summaryHeading'),
+              id: 'kangur-home-summary',
+            }}
+            assignments={(
+              <KangurPriorityAssignments
+                basePath={basePath}
+                enabled={canAccessParentAssignments}
+                title={translations('home.priorityAssignmentsTitle')}
+                emptyLabel={translations('home.priorityAssignmentsEmpty')}
+              />
+            )}
+            assignmentsSectionProps={{
+              headingId: 'kangur-home-assignments-heading',
+              headingLabel: translations('home.priorityAssignmentsHeading'),
+              id: 'kangur-home-priority-assignments',
+              ref: homeAssignmentsRef,
+            }}
+            leaderboard={<Leaderboard />}
+            leaderboardColumnProps={{
+              id: 'kangur-home-leaderboard',
+              ref: homeLeaderboardRef,
+            }}
+            playerProgress={<PlayerProgressCard progress={progress} />}
+            playerProgressColumnProps={{
+              id: 'kangur-home-player-progress',
+              ref: homeProgressRef,
+            }}
+            progressSectionProps={{
+              headingId: 'kangur-home-progress-heading',
+              headingLabel: translations('home.progressHeading'),
+              id: 'kangur-home-progress',
+            }}
+          />,
+          undefined,
+          'kangur-game-home-layout'
+        );
+      case 'kangur_setup':
+        return renderScreen(
+          'kangur_setup',
+          'w-full flex flex-col items-center',
+          <KangurGameKangurSetupWidget />,
+          kangurSetupRef
+        );
+      case 'kangur':
+        return renderScreen(
+          'kangur',
+          'w-full max-w-lg flex flex-col items-center',
+          <KangurGameKangurSessionWidget />,
+          kangurSessionRef
+        );
+      case 'calendar_quiz':
+        return renderScreen(
+          'calendar_quiz',
+          'w-full flex flex-col items-center',
+          <KangurGameCalendarTrainingWidget />,
+          calendarQuizRef
+        );
+      case 'geometry_quiz':
+        return renderScreen(
+          'geometry_quiz',
+          'w-full flex flex-col items-center',
+          <KangurGameGeometryTrainingWidget />,
+          geometryQuizRef
+        );
+      case 'clock_quiz':
+        return renderScreen(
+          'clock_quiz',
+          'w-full flex flex-col items-center',
+          <KangurGameClockQuizWidget />,
+          clockQuizRef
+        );
+      case 'addition_quiz':
+        return renderScreen(
+          'addition_quiz',
+          'w-full flex flex-col items-center',
+          <KangurGameAdditionQuizWidget />,
+          additionQuizRef
+        );
+      case 'subtraction_quiz':
+        return renderScreen(
+          'subtraction_quiz',
+          'w-full flex flex-col items-center',
+          <KangurGameSubtractionQuizWidget />,
+          subtractionQuizRef
+        );
+      case 'division_quiz':
+        return renderScreen(
+          'division_quiz',
+          'w-full flex flex-col items-center',
+          <KangurGameDivisionQuizWidget />,
+          divisionQuizRef
+        );
+      case 'multiplication_quiz':
+        return renderScreen(
+          'multiplication_quiz',
+          'w-full flex flex-col items-center',
+          <KangurGameMultiplicationQuizWidget />,
+          multiplicationQuizRef
+        );
+      case 'logical_patterns_quiz':
+        return renderScreen(
+          'logical_patterns_quiz',
+          'w-full flex flex-col items-center',
+          <KangurGameLogicalPatternsQuizWidget />,
+          logicalPatternsQuizRef
+        );
+      case 'logical_classification_quiz':
+        return renderScreen(
+          'logical_classification_quiz',
+          'w-full flex flex-col items-center',
+          <KangurGameLogicalClassificationQuizWidget />,
+          logicalClassificationQuizRef
+        );
+      case 'logical_analogies_quiz':
+        return renderScreen(
+          'logical_analogies_quiz',
+          'w-full flex flex-col items-center',
+          <KangurGameLogicalAnalogiesQuizWidget />,
+          logicalAnalogiesQuizRef
+        );
+      case 'english_sentence_quiz':
+        return renderScreen(
+          'english_sentence_quiz',
+          'w-full flex flex-col items-center',
+          <KangurGameEnglishSentenceQuizWidget />,
+          englishSentenceQuizRef
+        );
+      case 'english_parts_of_speech_quiz':
+        return renderScreen(
+          'english_parts_of_speech_quiz',
+          'w-full flex flex-col items-center',
+          <KangurGameEnglishPartsOfSpeechQuizWidget />,
+          englishPartsOfSpeechQuizRef
+        );
+      case 'operation':
+      case 'training':
+        return renderScreen(
+          screen,
+          'w-full flex flex-col items-center',
+          <KangurGameOperationSelectorWidget />,
+          screen === 'training' ? trainingSetupRef : operationSelectorRef
+        );
+      case 'playing':
+        return renderScreen(
+          'playing',
+          'flex w-full flex-col items-center',
+          <KangurGameQuestionWidget />
+        );
+      case 'result':
+        return renderScreen(
+          'result',
+          `flex w-full flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`,
+          <>
+            <div ref={resultSummaryRef} className='w-full flex flex-col items-center'>
+              <KangurGameResultWidget />
+            </div>
+            <div ref={resultLeaderboardRef} className='w-full'>
+              <Leaderboard />
+            </div>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <>
       <KangurAiTutorSessionSync learnerId={learnerId} sessionContext={tutorSessionContext} />
@@ -564,273 +802,7 @@ function GameContent(): React.JSX.Element {
           <h1 id={GAME_TITLE_ID} className='sr-only'>
             {GAME_BRAND_NAME}
           </h1>
-          <AnimatePresence initial={false} mode='wait'>
-            {screen === 'home' ? (
-              renderScreen(
-                'home',
-                GAME_HOME_LAYOUT_CLASSNAME,
-                <KangurGameHomeSections
-                  visibility={homeVisibility}
-                  parentSpotlight={(
-                    <KangurAssignmentSpotlight
-                      basePath={basePath}
-                      enabled={canAccessParentAssignments}
-                    />
-                  )}
-                  parentSpotlightSectionProps={{
-                    headingId: 'kangur-home-parent-assignment-heading',
-                    headingLabel: translations('home.parentSuggestionsHeading'),
-                    id: 'kangur-home-parent-spotlight',
-                  }}
-                  actionsColumn={(
-                    <>
-                      <div id='kangur-home-actions' ref={homeActionsRef}>
-                        <KangurGameHomeActionsWidget hideWhenScreenMismatch={false} />
-                      </div>
-                      <KangurGameHomeDuelsInvitesWidget hideWhenScreenMismatch={false} />
-                      {homeVisibility.hideLearnerWidgetsForParent ? (
-                        <KangurEmptyState
-                          align='left'
-                          className='text-left'
-                          padding='md'
-                          title={translations('home.missingLearnerTitle')}
-                          description={translations('home.missingLearnerDescription')}
-                        >
-                          <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} w-full sm:items-center`}>
-                            <KangurButton
-                              asChild
-                              className='w-full sm:w-auto'
-                              size='sm'
-                              variant='primary'
-                              data-doc-id='home_parent_add_learner'
-                            >
-                              <Link
-                                href={createPageUrl('ParentDashboard', basePath)}
-                                targetPageKey='ParentDashboard'
-                                transitionAcknowledgeMs={110}
-                                transitionSourceId='game-home-parent-add-learner'
-                              >
-                                {translations('home.addLearner')}
-                              </Link>
-                            </KangurButton>
-                          </div>
-                        </KangurEmptyState>
-                      ) : null}
-                    </>
-                  )}
-                  actionsColumnProps={{ testId: 'kangur-home-actions-column' }}
-                  quest={<KangurGameHomeQuestWidget hideWhenScreenMismatch={false} />}
-                  questSectionProps={{
-                    headingId: 'kangur-home-quest-heading',
-                    headingLabel: translations('home.questHeading'),
-                    id: 'kangur-home-quest',
-                    ref: homeQuestRef,
-                  }}
-                  summary={(
-                    <KangurGameHomeHeroWidget
-                      hideWhenScreenMismatch={false}
-                      showIntro={false}
-                      showAssignmentSpotlight={false}
-                    />
-                  )}
-                  summarySectionProps={{
-                    headingId: 'kangur-home-hero-heading',
-                    headingLabel: translations('home.summaryHeading'),
-                    id: 'kangur-home-summary',
-                  }}
-                  assignments={(
-                    <KangurPriorityAssignments
-                      basePath={basePath}
-                      enabled={canAccessParentAssignments}
-                      title={translations('home.priorityAssignmentsTitle')}
-                      emptyLabel={translations('home.priorityAssignmentsEmpty')}
-                    />
-                  )}
-                  assignmentsSectionProps={{
-                    headingId: 'kangur-home-assignments-heading',
-                    headingLabel: translations('home.priorityAssignmentsHeading'),
-                    id: 'kangur-home-priority-assignments',
-                    ref: homeAssignmentsRef,
-                  }}
-                  leaderboard={<Leaderboard />}
-                  leaderboardColumnProps={{
-                    id: 'kangur-home-leaderboard',
-                    ref: homeLeaderboardRef,
-                  }}
-                  playerProgress={<PlayerProgressCard progress={progress} />}
-                  playerProgressColumnProps={{
-                    id: 'kangur-home-player-progress',
-                    ref: homeProgressRef,
-                  }}
-                  progressSectionProps={{
-                    headingId: 'kangur-home-progress-heading',
-                    headingLabel: translations('home.progressHeading'),
-                    id: 'kangur-home-progress',
-                  }}
-                />,
-                undefined,
-                'kangur-game-home-layout'
-              )
-            ) : null}
-
-            {screen === 'kangur_setup' ? (
-              renderScreen(
-                'kangur_setup',
-                'w-full flex flex-col items-center',
-                <KangurGameKangurSetupWidget />,
-                kangurSetupRef
-              )
-            ) : null}
-
-            {screen === 'kangur' ? (
-              renderScreen(
-                'kangur',
-                'w-full max-w-lg flex flex-col items-center',
-                <KangurGameKangurSessionWidget />,
-                kangurSessionRef
-              )
-            ) : null}
-
-            {screen === 'calendar_quiz' ? (
-              renderScreen(
-                'calendar_quiz',
-                'w-full flex flex-col items-center',
-                <KangurGameCalendarTrainingWidget />,
-                calendarQuizRef
-              )
-            ) : null}
-
-            {screen === 'geometry_quiz' ? (
-              renderScreen(
-                'geometry_quiz',
-                'w-full flex flex-col items-center',
-                <KangurGameGeometryTrainingWidget />,
-                geometryQuizRef
-              )
-            ) : null}
-
-            {screen === 'clock_quiz' ? (
-              renderScreen(
-                'clock_quiz',
-                'w-full flex flex-col items-center',
-                <KangurGameClockQuizWidget />,
-                clockQuizRef
-              )
-            ) : null}
-
-            {screen === 'addition_quiz' ? (
-              renderScreen(
-                'addition_quiz',
-                'w-full flex flex-col items-center',
-                <KangurGameAdditionQuizWidget />,
-                additionQuizRef
-              )
-            ) : null}
-
-            {screen === 'subtraction_quiz' ? (
-              renderScreen(
-                'subtraction_quiz',
-                'w-full flex flex-col items-center',
-                <KangurGameSubtractionQuizWidget />,
-                subtractionQuizRef
-              )
-            ) : null}
-
-            {screen === 'division_quiz' ? (
-              renderScreen(
-                'division_quiz',
-                'w-full flex flex-col items-center',
-                <KangurGameDivisionQuizWidget />,
-                divisionQuizRef
-              )
-            ) : null}
-
-            {screen === 'multiplication_quiz' ? (
-              renderScreen(
-                'multiplication_quiz',
-                'w-full flex flex-col items-center',
-                <KangurGameMultiplicationQuizWidget />,
-                multiplicationQuizRef
-              )
-            ) : null}
-
-            {screen === 'logical_patterns_quiz' ? (
-              renderScreen(
-                'logical_patterns_quiz',
-                'w-full flex flex-col items-center',
-                <KangurGameLogicalPatternsQuizWidget />,
-                logicalPatternsQuizRef
-              )
-            ) : null}
-
-            {screen === 'logical_classification_quiz' ? (
-              renderScreen(
-                'logical_classification_quiz',
-                'w-full flex flex-col items-center',
-                <KangurGameLogicalClassificationQuizWidget />,
-                logicalClassificationQuizRef
-              )
-            ) : null}
-
-            {screen === 'logical_analogies_quiz' ? (
-              renderScreen(
-                'logical_analogies_quiz',
-                'w-full flex flex-col items-center',
-                <KangurGameLogicalAnalogiesQuizWidget />,
-                logicalAnalogiesQuizRef
-              )
-            ) : null}
-
-            {screen === 'english_sentence_quiz' ? (
-              renderScreen(
-                'english_sentence_quiz',
-                'w-full flex flex-col items-center',
-                <KangurGameEnglishSentenceQuizWidget />,
-                englishSentenceQuizRef
-              )
-            ) : null}
-
-            {screen === 'english_parts_of_speech_quiz' ? (
-              renderScreen(
-                'english_parts_of_speech_quiz',
-                'w-full flex flex-col items-center',
-                <KangurGameEnglishPartsOfSpeechQuizWidget />,
-                englishPartsOfSpeechQuizRef
-              )
-            ) : null}
-
-            {screen === 'operation' || screen === 'training' ? (
-              renderScreen(
-                screen,
-                'w-full flex flex-col items-center',
-                <KangurGameOperationSelectorWidget />,
-                screen === 'training' ? trainingSetupRef : operationSelectorRef
-              )
-            ) : null}
-
-            {screen === 'playing' ? (
-              renderScreen(
-                'playing',
-                'flex w-full flex-col items-center',
-                <KangurGameQuestionWidget />
-              )
-            ) : null}
-
-            {screen === 'result' ? (
-              renderScreen(
-                'result',
-                `flex w-full flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`,
-                <>
-                  <div ref={resultSummaryRef} className='w-full flex flex-col items-center'>
-                    <KangurGameResultWidget />
-                  </div>
-                  <div ref={resultLeaderboardRef} className='w-full'>
-                    <Leaderboard />
-                  </div>
-                </>
-              )
-            ) : null}
-          </AnimatePresence>
+          {renderCurrentScreen()}
         </div>
       </KangurStandardPageLayout>
     </>

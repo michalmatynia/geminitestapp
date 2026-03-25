@@ -5,12 +5,16 @@ import type {
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
+import {
+  buildKangurMobileHomeDuelLobbyQueryKey,
+  MOBILE_HOME_DUEL_LOBBY_POLL_MS,
+  MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT,
+} from './homeDuelLobbyQuery';
 
 const MOBILE_HOME_DUELS_SPOTLIGHT_LIMIT = 4;
-const MOBILE_HOME_DUELS_SPOTLIGHT_QUERY_LIMIT = 8;
-const MOBILE_HOME_DUELS_SPOTLIGHT_POLL_MS = 20_000;
 
 type UseKangurMobileHomeDuelsSpotlightResult = {
   entries: KangurDuelLobbyEntry[];
@@ -75,20 +79,24 @@ export const useKangurMobileHomeDuelsSpotlight =
   (): UseKangurMobileHomeDuelsSpotlightResult => {
     const { copy } = useKangurMobileI18n();
     const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
+    const { session } = useKangurMobileAuth();
+    const learnerIdentity =
+      session.user?.activeLearner?.id ??
+      session.user?.email ??
+      session.user?.id ??
+      'guest';
 
     const spotlightQuery = useQuery({
-      queryKey: [
-        'kangur-mobile',
-        'home',
-        'duels-spotlight',
+      queryKey: buildKangurMobileHomeDuelLobbyQueryKey(
         apiBaseUrl,
-      ] as const,
+        learnerIdentity,
+      ),
       queryFn: async () =>
         apiClient.listDuelLobby(
-          { limit: MOBILE_HOME_DUELS_SPOTLIGHT_QUERY_LIMIT },
+          { limit: MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT },
           { cache: 'no-store' },
         ),
-      refetchInterval: MOBILE_HOME_DUELS_SPOTLIGHT_POLL_MS,
+      refetchInterval: MOBILE_HOME_DUEL_LOBBY_POLL_MS,
       staleTime: 10_000,
     });
 

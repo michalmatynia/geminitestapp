@@ -118,7 +118,8 @@ describe('FrontendPublicOwnerShell', () => {
     });
   });
 
-  it('treats null pathname as home route fallback', async () => {
+  it('falls back to the real browser pathname when the router pathname is transiently unavailable on root-owned routes', async () => {
+    window.history.replaceState({}, '', '/en/lessons');
     usePathnameMock.mockReturnValue(null);
 
     render(
@@ -130,11 +131,26 @@ describe('FrontendPublicOwnerShell', () => {
     expect(await screen.findByTestId('kangur-feature-route-shell')).toBeInTheDocument();
     await waitFor(() => {
       expect(frontendPublicOwnerKangurShellMock).toHaveBeenCalledWith({
-        embedded: true,
+        embedded: false,
         initialMode: undefined,
         initialThemeSettings: undefined,
       });
     });
+  });
+
+  it('falls back to the real browser pathname when the router pathname is transiently unavailable on localized Kangur alias routes', () => {
+    window.history.replaceState({}, '', '/en/kangur/game?quickStart=training');
+    usePathnameMock.mockReturnValue(null);
+
+    render(
+      <FrontendPublicOwnerShell publicOwner='kangur'>
+        <div data-testid='frontend-children'>children</div>
+      </FrontendPublicOwnerShell>
+    );
+
+    expect(screen.getByTestId('frontend-children')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-feature-route-shell')).not.toBeInTheDocument();
+    expect(frontendPublicOwnerKangurShellMock).not.toHaveBeenCalled();
   });
 
   it('warms the lessons shell dependencies from the embedded home route', async () => {

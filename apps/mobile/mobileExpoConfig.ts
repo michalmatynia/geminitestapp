@@ -105,7 +105,12 @@ export const createKangurExpoConfig = (
     slug,
     scheme,
     version,
+    backgroundColor: '#fffaf2',
     orientation: 'portrait',
+    splash: {
+      backgroundColor: '#fffaf2',
+      resizeMode: 'contain',
+    },
     userInterfaceStyle: 'light',
     platforms: ['ios', 'android', 'web'],
     plugins: ['expo-router'],

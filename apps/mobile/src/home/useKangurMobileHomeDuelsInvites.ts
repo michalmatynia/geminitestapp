@@ -5,10 +5,13 @@ import { useMemo } from 'react';
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
+import {
+  buildKangurMobileHomeDuelLobbyQueryKey,
+  MOBILE_HOME_DUEL_LOBBY_POLL_MS,
+  MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT,
+} from './homeDuelLobbyQuery';
 
 const MOBILE_HOME_DUELS_INVITES_DISPLAY_LIMIT = 4;
-const MOBILE_HOME_DUELS_INVITES_QUERY_LIMIT = 8;
-const MOBILE_HOME_DUELS_INVITES_POLL_MS = 20_000;
 
 type UseKangurMobileHomeDuelsInvitesResult = {
   error: string | null;
@@ -82,22 +85,20 @@ export const useKangurMobileHomeDuelsInvites =
     const activeLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
     const isAuthenticated = session.status === 'authenticated';
     const isRestoringAuth = isLoadingAuth && !isAuthenticated;
+    const lobbyQueryKey = buildKangurMobileHomeDuelLobbyQueryKey(
+      apiBaseUrl,
+      learnerIdentity,
+    );
 
     const invitesQuery = useQuery({
       enabled: isAuthenticated,
-      queryKey: [
-        'kangur-mobile',
-        'home',
-        'duels-invites',
-        apiBaseUrl,
-        learnerIdentity,
-      ] as const,
+      queryKey: lobbyQueryKey,
       queryFn: async () =>
         apiClient.listDuelLobby(
-          { limit: MOBILE_HOME_DUELS_INVITES_QUERY_LIMIT },
+          { limit: MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT },
           { cache: 'no-store' },
         ),
-      refetchInterval: MOBILE_HOME_DUELS_INVITES_POLL_MS,
+      refetchInterval: MOBILE_HOME_DUEL_LOBBY_POLL_MS,
       staleTime: 10_000,
     });
 
@@ -106,7 +107,7 @@ export const useKangurMobileHomeDuelsInvites =
         (invitesQuery.data?.entries ?? [])
           .filter((entry) => entry.visibility === 'private')
           .sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt))
-          .slice(0, MOBILE_HOME_DUELS_INVITES_QUERY_LIMIT),
+          .slice(0, MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT),
       [invitesQuery.data?.entries],
     );
     const invites = useMemo(

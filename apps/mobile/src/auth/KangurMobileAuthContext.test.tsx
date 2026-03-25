@@ -43,6 +43,7 @@ import {
   useKangurMobileAuth,
 } from './KangurMobileAuthContext';
 import { KANGUR_MOBILE_AUTH_ERROR_CODES } from './createLearnerSessionKangurAuthAdapter';
+import { KANGUR_MOBILE_AUTH_STATUS_STORAGE_KEY } from './mobileAuthStorageKeys';
 
 const createQueryClient = (): QueryClient =>
   new QueryClient({
@@ -134,12 +135,10 @@ describe('KangurMobileAuthProvider', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.isLoadingAuth).toBe(false);
+      expect(result.current.authError).toBe(
+        'Die Anmeldung konnte nicht aktualisiert werden.',
+      );
     });
-
-    expect(result.current.authError).toBe(
-      'Die Anmeldung konnte nicht aktualisiert werden.',
-    );
   });
 
   it('localizes learner-session network failures for English sign-in errors', async () => {
@@ -270,5 +269,70 @@ describe('KangurMobileAuthProvider', () => {
     expect(result.current.authError).toBe(
       'Custom adapter failure from a downstream runtime.',
     );
+  });
+
+  it('does not block the initial boot when there is no persisted learner session hint', async () => {
+    const queryClient = createQueryClient();
+    const adapter = {
+      getSession: vi.fn().mockResolvedValue(createAnonymousSession()),
+      signIn: vi.fn(),
+      signOut: vi.fn(),
+    } as unknown as KangurAuthAdapter;
+
+    const { result } = renderHook(() => useKangurMobileAuth(), {
+      wrapper: createWrapper({
+        adapter,
+        locale: 'pl',
+        queryClient,
+      }),
+    });
+
+    expect(result.current.isLoadingAuth).toBe(false);
+
+    await waitFor(() => {
+      expect(adapter.getSession).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('keeps the blocking boot state when a persisted learner session hint exists', async () => {
+    const queryClient = createQueryClient();
+    const storage = createStorageStub();
+    storage.getItem.mockImplementation((key: string) =>
+      key === KANGUR_MOBILE_AUTH_STATUS_STORAGE_KEY ? 'authenticated' : null,
+    );
+    useKangurMobileRuntimeMock.mockReturnValue({
+      apiClient: {},
+      storage,
+    });
+
+    let resolveSession: ((value: ReturnType<typeof createAnonymousSession>) => void) | null = null;
+    const adapter = {
+      getSession: vi.fn(
+        () =>
+          new Promise((resolve) => {
+            resolveSession = resolve;
+          }),
+      ),
+      signIn: vi.fn(),
+      signOut: vi.fn(),
+    } as unknown as KangurAuthAdapter;
+
+    const { result } = renderHook(() => useKangurMobileAuth(), {
+      wrapper: createWrapper({
+        adapter,
+        locale: 'pl',
+        queryClient,
+      }),
+    });
+
+    expect(result.current.isLoadingAuth).toBe(true);
+
+    await act(async () => {
+      resolveSession?.(createAnonymousSession());
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoadingAuth).toBe(false);
+    });
   });
 });

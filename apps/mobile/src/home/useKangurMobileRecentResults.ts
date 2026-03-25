@@ -16,6 +16,8 @@ type UseKangurMobileRecentResultsResult = {
   results: KangurScore[];
 };
 
+const MOBILE_SHARED_RECENT_RESULTS_QUERY_LIMIT = 40;
+
 export const useKangurMobileRecentResults = (
   options: UseKangurMobileRecentResultsOptions = {},
 ): UseKangurMobileRecentResultsResult => {
@@ -24,8 +26,9 @@ export const useKangurMobileRecentResults = (
     typeof options.limit === 'number' && options.limit > 0
       ? Math.round(options.limit)
       : 3;
+  const queryLimit = Math.max(limit, MOBILE_SHARED_RECENT_RESULTS_QUERY_LIMIT);
   const resultsQuery = useKangurMobileScoreHistory({
-    limit,
+    limit: queryLimit,
     sort: '-created_date',
   });
 
@@ -42,6 +45,6 @@ export const useKangurMobileRecentResults = (
     isLoading: resultsQuery.isLoading,
     isRestoringAuth: resultsQuery.isRestoringAuth,
     refresh: resultsQuery.refresh,
-    results: resultsQuery.scores,
+    results: resultsQuery.scores.slice(0, limit),
   };
 };

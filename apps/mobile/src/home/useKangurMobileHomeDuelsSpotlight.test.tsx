@@ -3,16 +3,23 @@
  */
 
 import React from 'react';
+import type { KangurAuthSession } from '@kangur/platform';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   listDuelLobbyMock,
+  useKangurMobileAuthMock,
   useKangurMobileRuntimeMock,
 } = vi.hoisted(() => ({
   listDuelLobbyMock: vi.fn(),
+  useKangurMobileAuthMock: vi.fn(),
   useKangurMobileRuntimeMock: vi.fn(),
+}));
+
+vi.mock('../auth/KangurMobileAuthContext', () => ({
+  useKangurMobileAuth: useKangurMobileAuthMock,
 }));
 
 vi.mock('../providers/KangurRuntimeContext', () => ({
@@ -40,6 +47,13 @@ const createWrapper =
     (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
+
+const createSession = (): KangurAuthSession => ({
+  lastResolvedAt: '2026-03-20T00:00:00.000Z',
+  source: 'native-learner-session',
+  status: 'anonymous',
+  user: null,
+});
 
 describe('useKangurMobileHomeDuelsSpotlight', () => {
   beforeEach(() => {
@@ -182,6 +196,14 @@ describe('useKangurMobileHomeDuelsSpotlight', () => {
       apiClient: {
         listDuelLobby: listDuelLobbyMock,
       },
+    });
+    useKangurMobileAuthMock.mockReturnValue({
+      authError: null,
+      authMode: 'learner-session',
+      isLoadingAuth: false,
+      session: createSession(),
+      signIn: vi.fn(),
+      supportsLearnerCredentials: true,
     });
   });
 

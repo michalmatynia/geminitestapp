@@ -29,7 +29,10 @@ export default function FrontendPublicOwnerShellClient({
   kangurInitialThemeSettings,
 }: FrontendPublicOwnerShellProps): JSX.Element {
   const pathname = usePathname();
-  const normalizedPathname = stripSiteLocalePrefix(pathname?.trim() || '/');
+  const browserPathname =
+    typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
+  const resolvedPathname = pathname?.trim() || browserPathname || '/';
+  const normalizedPathname = stripSiteLocalePrefix(resolvedPathname);
   const isHomeRoute = normalizedPathname === '/';
   const isKangurAliasRoute =
     normalizedPathname === '/kangur' || normalizedPathname.startsWith('/kangur/');

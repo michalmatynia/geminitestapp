@@ -21,6 +21,7 @@ import {
 } from './createLearnerSessionKangurAuthAdapter';
 import { createDevelopmentKangurAuthAdapter } from './createDevelopmentKangurAuthAdapter';
 import { invalidateKangurMobileAuthQueries } from './invalidateKangurMobileAuthQueries';
+import { KANGUR_MOBILE_AUTH_STATUS_STORAGE_KEY } from './mobileAuthStorageKeys';
 import {
   type KangurMobileAuthMode,
 } from './mobileAuthMode';
@@ -48,6 +49,11 @@ type KangurMobileAuthContextValue = {
 
 const KangurMobileAuthContext =
   createContext<KangurMobileAuthContextValue | null>(null);
+
+const hasPersistedLearnerSessionHint = (
+  storage: ReturnType<typeof useKangurMobileRuntime>['storage'],
+): boolean =>
+  storage.getItem(KANGUR_MOBILE_AUTH_STATUS_STORAGE_KEY) === 'authenticated';
 
 const resolveAuthErrorCode = (error: unknown): string | null =>
   typeof error === 'object' &&
@@ -125,6 +131,9 @@ export function KangurMobileAuthProvider({
     developerConfig.autoSignIn &&
     Boolean(developerConfig.learnerLoginName) &&
     Boolean(developerConfig.learnerPassword);
+  const initialSessionRefreshShouldBlockRef = useRef(
+    authMode === 'learner-session' && hasPersistedLearnerSessionHint(storage),
+  );
   const [authAdapter] = useState<KangurAuthAdapter>(
     () =>
       adapter ??
@@ -142,11 +151,21 @@ export function KangurMobileAuthProvider({
         : 'native-development',
     ),
   );
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(
+    initialSessionRefreshShouldBlockRef.current,
+  );
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const refreshSession = async (): Promise<void> => {
-    setIsLoadingAuth(true);
+  const refreshSession = async (
+    options: {
+      blockUI?: boolean;
+    } = {},
+  ): Promise<void> => {
+    const shouldBlockUI = options.blockUI ?? true;
+    if (shouldBlockUI) {
+      setIsLoadingAuth(true);
+    }
+
     try {
       setAuthError(null);
       const nextSession = await authAdapter.getSession();
@@ -155,7 +174,9 @@ export function KangurMobileAuthProvider({
     } catch (error) {
       setAuthError(toAuthErrorMessage(error, locale));
     } finally {
-      setIsLoadingAuth(false);
+      if (shouldBlockUI) {
+        setIsLoadingAuth(false);
+      }
     }
   };
 
@@ -199,7 +220,9 @@ export function KangurMobileAuthProvider({
     });
 
   useEffect(() => {
-    void refreshSession();
+    void refreshSession({
+      blockUI: initialSessionRefreshShouldBlockRef.current,
+    });
   }, []);
 
   useEffect(() => {

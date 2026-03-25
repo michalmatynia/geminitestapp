@@ -454,6 +454,38 @@ test.describe.serial('Front Manage', () => {
     }
   });
 
+  test('should keep localized public login routes route-driven when Kangur owns the frontend', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+
+    const originalValue = await readFrontPageAppSetting(page);
+
+    try {
+      await saveFrontPageSelectionFromUi(page, 'kangur');
+
+      await page.goto('/en/login?callbackUrl=%2Fen%2Ftests', {
+        waitUntil: 'domcontentloaded',
+      });
+      await expect(page).toHaveURL(/\/en\/login\?callbackUrl=%2Fen%2Ftests$/);
+      await expect(page.locator('[data-testid="kangur-feature-page-shell"]')).toBeVisible();
+      await expect(page.getByTestId('kangur-login-form')).toBeVisible({
+        timeout: 30_000,
+      });
+      await expect(page.getByTestId('kangur-login-form')).toHaveAttribute(
+        'data-login-kind',
+        'unknown'
+      );
+      await expect(
+        page
+          .getByTestId('kangur-login-form')
+          .getByLabel(/Email rodzica (albo|lub) nick ucznia|Parent email or learner username/i)
+      ).toBeVisible();
+    } finally {
+      await restoreFrontPageAppSetting(page, originalValue);
+    }
+  });
+
   test('should keep legacy /kangur routes when CMS owns the frontend', async ({ page }) => {
     test.setTimeout(120_000);
 

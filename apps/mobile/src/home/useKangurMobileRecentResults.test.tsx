@@ -124,7 +124,14 @@ describe('useKangurMobileRecentResults', () => {
   it('queries recent results by learner id for authenticated learner sessions', async () => {
     const queryClient = createQueryClient();
 
-    renderHook(() => useKangurMobileRecentResults(), {
+    listScoresMock.mockResolvedValue([
+      { id: 'score-1' },
+      { id: 'score-2' },
+      { id: 'score-3' },
+      { id: 'score-4' },
+    ]);
+
+    const { result } = renderHook(() => useKangurMobileRecentResults(), {
       wrapper: createWrapper(queryClient),
     });
 
@@ -133,12 +140,16 @@ describe('useKangurMobileRecentResults', () => {
         {
           learner_id: 'learner-1',
           sort: '-created_date',
-          limit: 3,
+          limit: 40,
         },
         {
           cache: 'no-store',
         },
       );
+    });
+
+    await waitFor(() => {
+      expect(result.current.results).toHaveLength(3);
     });
   });
 

@@ -3,11 +3,22 @@
  */
 
 import { render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { usePathnameMock, frontendPublicOwnerKangurShellMock } = vi.hoisted(() => ({
+const {
+  usePathnameMock,
+  frontendPublicOwnerKangurShellMock,
+  kangurFeatureAppPreloadMock,
+  kangurGamePreloadMock,
+  kangurLessonsPreloadMock,
+  prefetchKangurAuthMock,
+} = vi.hoisted(() => ({
   usePathnameMock: vi.fn<() => string | null>(),
   frontendPublicOwnerKangurShellMock: vi.fn(),
+  kangurFeatureAppPreloadMock: vi.fn(),
+  kangurGamePreloadMock: vi.fn(),
+  kangurLessonsPreloadMock: vi.fn(),
+  prefetchKangurAuthMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -32,12 +43,41 @@ vi.mock('@/features/kangur/ui/FrontendPublicOwnerKangurShell', () => ({
   },
 }));
 
+vi.mock('@/features/kangur/ui/KangurFeatureApp', () => {
+  kangurFeatureAppPreloadMock();
+  return {
+    KangurFeatureApp: () => null,
+  };
+});
+
+vi.mock('@/features/kangur/ui/pages/Game', () => {
+  kangurGamePreloadMock();
+  return {
+    default: () => null,
+  };
+});
+
+vi.mock('@/features/kangur/ui/pages/Lessons', () => {
+  kangurLessonsPreloadMock();
+  return {
+    default: () => null,
+  };
+});
+
+vi.mock('@/features/kangur/services/kangur-auth-prefetch', () => ({
+  prefetchKangurAuth: prefetchKangurAuthMock,
+}));
+
 import FrontendPublicOwnerShell from './_components/FrontendPublicOwnerShell';
 
 describe('FrontendPublicOwnerShell', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     usePathnameMock.mockReturnValue('/');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it('renders the persistent Kangur route shell for root-owned public routes', async () => {
@@ -75,6 +115,39 @@ describe('FrontendPublicOwnerShell', () => {
         initialThemeSettings: undefined,
       });
     });
+  });
+
+  it('warms the lessons shell dependencies from the embedded home route', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+
+    render(
+      <FrontendPublicOwnerShell publicOwner='kangur'>
+        <div data-testid='frontend-children'>children</div>
+      </FrontendPublicOwnerShell>
+    );
+
+    await waitFor(() => {
+      expect(kangurFeatureAppPreloadMock).toHaveBeenCalledTimes(1);
+      expect(prefetchKangurAuthMock).toHaveBeenCalledTimes(1);
+      expect(kangurGamePreloadMock).toHaveBeenCalledTimes(1);
+      expect(kangurLessonsPreloadMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('skips the lessons page preload when Kangur is already on a different standalone route', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    usePathnameMock.mockReturnValue('/tests');
+
+    render(
+      <FrontendPublicOwnerShell publicOwner='kangur'>
+        <div data-testid='frontend-children'>children</div>
+      </FrontendPublicOwnerShell>
+    );
+
+    await waitFor(() => {
+      expect(prefetchKangurAuthMock).toHaveBeenCalledTimes(1);
+    });
+    expect(kangurLessonsPreloadMock).not.toHaveBeenCalled();
   });
 
   it('lets the explicit /kangur alias route render its children', () => {

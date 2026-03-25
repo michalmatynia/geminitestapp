@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 
+import { FrontendRouteLoadingFallback } from '@/features/kangur/ui/FrontendRouteLoadingFallback';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 
 const FrontendPublicOwnerKangurShell = dynamic(
@@ -13,15 +14,7 @@ const FrontendPublicOwnerKangurShell = dynamic(
     })),
   {
     ssr: false,
-    loading: () => (
-      <div
-        className='pointer-events-none fixed inset-0 z-[90] flex items-center justify-center'
-        style={{
-          background:
-            'radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%)',
-        }}
-      />
-    ),
+    loading: () => <FrontendRouteLoadingFallback />,
   }
 );
 
@@ -58,6 +51,10 @@ export default function FrontendPublicOwnerShellClient({
   //   KangurAuthProvider to mount deep in the tree. resolveSessionUser()
   //   has built-in deduplication so the provider reuses the result.
   useEffect(() => {
+    if (process.env['NODE_ENV'] === 'test') {
+      return;
+    }
+
     if (publicOwner === 'kangur') {
       void import('@/features/kangur/ui/KangurFeatureApp');
       void import('@/features/kangur/services/kangur-auth-prefetch').then((m) =>
@@ -66,8 +63,13 @@ export default function FrontendPublicOwnerShellClient({
       // Preload the main landing page chunk (Game) so it's ready by the time
       // KangurFeatureApp resolves the route and renders the page component.
       void import('@/features/kangur/ui/pages/Game');
+      // Lessons is the primary next hop from the embedded home shell, so warm
+      // its page chunk too to reduce the route skeleton dwell time.
+      if (isHomeRoute || normalizedPathname === '/lessons') {
+        void import('@/features/kangur/ui/pages/Lessons');
+      }
     }
-  }, [publicOwner]);
+  }, [isHomeRoute, normalizedPathname, publicOwner]);
 
   if (publicOwner === 'kangur' && !isKangurAliasRoute) {
     return (

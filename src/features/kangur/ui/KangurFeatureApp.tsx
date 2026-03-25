@@ -215,6 +215,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
     isRouteSkeletonVisible;
   const shouldHideTopNavigationHost =
     !shouldHideTopNavigationDuringBoot && isRouteSkeletonVisible;
+  const shouldSkipRouteContentPresence =
+    isNavigationTransitionActive || isPendingRouteSnapshotVisible;
 
   useEffect(() => {
     if (hasPresentedInteractiveShell) {
@@ -434,8 +436,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
         offsetTopBar={shouldReserveTopBarOffset}
         visible={isBootLoaderBlockingNavigation}
       />
-      <AnimatePresence mode='wait'>
-        {routeContent ? (
+      {shouldSkipRouteContentPresence ? (
+        routeContent ? (
           <motion.div
             key={routeTransitionKey}
             {...routeContentMotionProps}
@@ -454,8 +456,31 @@ const AuthenticatedApp = (): JSX.Element | null => {
           >
             {routeContent}
           </motion.div>
-        ) : null}
-      </AnimatePresence>
+        ) : null
+      ) : (
+        <AnimatePresence mode='wait'>
+          {routeContent ? (
+            <motion.div
+              key={routeTransitionKey}
+              {...routeContentMotionProps}
+              aria-busy={isNavigationTransitionActive || isPendingRouteSnapshotVisible}
+              aria-hidden={isRouteContentVisuallyHidden ? 'true' : undefined}
+              className={cn(
+                'w-full min-w-0 kangur-shell-viewport-height',
+                embedded ? 'min-h-full' : null,
+                isRouteContentInteractionBlocked ? 'pointer-events-none' : null,
+                isRouteContentVisuallyHidden ? 'pointer-events-none opacity-0' : null
+              )}
+              data-route-transition-phase={transitionPhase}
+              data-route-transition-key={routeTransitionKey}
+              data-route-transition-source-id={activeTransitionSourceId ?? undefined}
+              data-testid='kangur-route-content'
+            >
+              {routeContent}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      )}
       <AnimatePresence>
         {isRouteSkeletonVisible ? (
           <motion.div

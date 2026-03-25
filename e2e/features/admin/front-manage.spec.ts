@@ -9,6 +9,7 @@ import { ensureAdminSession } from '../../support/admin-auth';
 
 const FRONT_PAGE_KEY = 'front_page_app';
 const FRONT_PAGE_UPDATED_TOAST = 'Front page updated';
+const ROOT_OWNED_HOME_URL_PATTERN = /\/(?:[a-z]{2})?$/;
 
 type BrowserFetchInit = {
   method?: string;
@@ -17,10 +18,13 @@ type BrowserFetchInit = {
 };
 
 type KangurNavigationSample = {
+  path: string;
   hasAppLoader: boolean;
   hasSkeleton: boolean;
   hasRouteShell: boolean;
   hasFeaturePageShell: boolean;
+  hasHomeActionsShell: boolean;
+  hasLessonsListTransition: boolean;
 };
 
 const KANGUR_NAVIGATION_MONITOR_KEY = '__kangurRootOwnerNavigationMonitor';
@@ -155,15 +159,44 @@ async function startKangurNavigationMonitor(page: Page): Promise<void> {
     const samples: KangurNavigationSample[] = [];
     let running = true;
 
+    const isElementVisible = (element: Element | null): boolean => {
+      if (!(element instanceof HTMLElement) && !(element instanceof SVGElement)) {
+        return false;
+      }
+
+      let current: Element | null = element;
+      while (current) {
+        const styles = window.getComputedStyle(current);
+        if (
+          styles.display === 'none' ||
+          styles.visibility === 'hidden' ||
+          Number.parseFloat(styles.opacity || '1') === 0
+        ) {
+          return false;
+        }
+        current = current.parentElement;
+      }
+
+      const rect = element.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    };
+
     const sample = (): void => {
       samples.push({
+        path: `${window.location.pathname}${window.location.search}`,
         hasAppLoader: Boolean(document.querySelector('[data-testid="kangur-app-loader"]')),
-        hasSkeleton: Boolean(
+        hasSkeleton: isElementVisible(
           document.querySelector('[data-testid="kangur-page-transition-skeleton"]')
         ),
         hasRouteShell: Boolean(document.querySelector('[data-testid="kangur-route-shell"]')),
         hasFeaturePageShell: Boolean(
           document.querySelector('[data-testid="kangur-feature-page-shell"]')
+        ),
+        hasHomeActionsShell: isElementVisible(
+          document.querySelector('[data-testid="kangur-home-actions-shell"]')
+        ),
+        hasLessonsListTransition: isElementVisible(
+          document.querySelector('[data-testid="lessons-list-transition"]')
         ),
       });
 
@@ -240,7 +273,7 @@ test.describe.serial('Front Manage', () => {
       await saveFrontPageSelectionFromUi(page, 'kangur');
 
       await page.goto('/', { waitUntil: 'domcontentloaded' });
-      await expect(page).toHaveURL(/\/$/);
+      await expect(page).toHaveURL(ROOT_OWNED_HOME_URL_PATTERN);
       await expect(page.locator('[data-testid="kangur-feature-page-shell"]')).toBeVisible();
     } finally {
       await page.goto('/admin/front-manage', { waitUntil: 'domcontentloaded' }).catch(() => {});
@@ -264,7 +297,7 @@ test.describe.serial('Front Manage', () => {
       await saveFrontPageSelectionFromUi(page, 'kangur');
 
       await page.goto('/', { waitUntil: 'domcontentloaded' });
-      await expect(page).toHaveURL(/\/$/);
+      await expect(page).toHaveURL(ROOT_OWNED_HOME_URL_PATTERN);
       await waitForRootOwnedKangurBoot(page);
 
       await startKangurNavigationMonitor(page);
@@ -287,6 +320,63 @@ test.describe.serial('Front Manage', () => {
       expect(
         samples.every((sample) => !sample.hasAppLoader),
         'expected root-owned Kangur navigation not to surface the global app loader after boot'
+      ).toBe(true);
+    } finally {
+      await page.goto('/admin/front-manage', { waitUntil: 'domcontentloaded' }).catch(() => {});
+      if (originalValue === 'products') {
+        await writeFrontPageAppSetting(page, originalValue);
+      } else {
+        await saveFrontPageSelectionFromUi(page, restoreOption);
+      }
+    }
+  });
+
+  test('should keep the home lessons action hidden once the root-owned lessons handoff begins', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+
+    const originalValue = await readFrontPageAppSetting(page);
+    const restoreOption = normalizeFrontPageApp(originalValue) ?? 'cms';
+
+    try {
+      await saveFrontPageSelectionFromUi(page, 'kangur');
+
+      await page.goto('/', { waitUntil: 'domcontentloaded' });
+      await expect(page).toHaveURL(ROOT_OWNED_HOME_URL_PATTERN);
+      await waitForRootOwnedKangurBoot(page);
+      await expect(page.locator('[data-doc-id="home_lessons_action"]')).toBeVisible({
+        timeout: 45_000,
+      });
+
+      await startKangurNavigationMonitor(page);
+      await page.locator('[data-doc-id="home_lessons_action"]').click();
+
+      await expect(page).toHaveURL(/\/lessons$/);
+      await expect(page.locator('[data-testid="lessons-list-transition"]')).toBeVisible({
+        timeout: 45_000,
+      });
+      await page.waitForTimeout(180);
+
+      const samples = await stopKangurNavigationMonitor(page);
+      const handoffStartIndex = samples.findIndex(
+        (sample) =>
+          sample.hasSkeleton || sample.hasLessonsListTransition || /\/lessons$/.test(sample.path)
+      );
+
+      expect(samples.length).toBeGreaterThan(0);
+      expect(handoffStartIndex).toBeGreaterThan(-1);
+      expect(
+        samples.some((sample) => sample.hasSkeleton),
+        'expected the root-owned lessons handoff to surface the route skeleton'
+      ).toBe(true);
+      expect(
+        samples.slice(handoffStartIndex).some((sample) => sample.hasHomeActionsShell),
+        'expected the embedded home actions shell not to reappear once the lessons handoff started'
+      ).toBe(false);
+      expect(
+        samples.some((sample) => sample.hasLessonsListTransition),
+        'expected the lessons list surface to become visible after the handoff'
       ).toBe(true);
     } finally {
       await page.goto('/admin/front-manage', { waitUntil: 'domcontentloaded' }).catch(() => {});

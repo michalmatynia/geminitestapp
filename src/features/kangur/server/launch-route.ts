@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { cache } from 'react';
+
 import {
   getKangurLaunchTarget,
   type KangurLaunchTarget,
@@ -18,10 +20,10 @@ type KangurPublicSearchParams =
   | null
   | undefined;
 
-export const getKangurConfiguredLaunchRoute = async (): Promise<KangurLaunchRoute> => {
+export const getKangurConfiguredLaunchRoute = cache(async (): Promise<KangurLaunchRoute> => {
   const rawSetting = await readKangurSettingValue(KANGUR_LAUNCH_ROUTE_SETTINGS_KEY);
   return parseKangurLaunchRouteSettings(rawSetting).route;
-};
+});
 
 export const getKangurConfiguredLaunchTarget = async (
   slugSegments: readonly string[] = [],

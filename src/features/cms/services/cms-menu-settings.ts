@@ -46,12 +46,9 @@ export const getCmsMenuSettings = cache(async (
   const scopedDomainId = zoningEnabled ? (domainId ?? null) : null;
   const fallbackKeys = getCmsMenuSettingsFallbackKeys(scopedDomainId, locale);
 
-  for (const key of fallbackKeys) {
-    const stored = await readSettingValue(key);
-    if (!stored) {
-      continue;
-    }
-
+  const results = await Promise.all(fallbackKeys.map(readSettingValue));
+  for (const stored of results) {
+    if (!stored) continue;
     const parsed = parseJsonSetting<unknown>(stored, null);
     return normalizeMenuSettings(parsed);
   }

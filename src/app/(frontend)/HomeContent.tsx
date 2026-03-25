@@ -5,7 +5,7 @@ import { getCmsMenuSettings } from '@/features/cms/server';
 import { getCmsRepository } from '@/features/cms/server';
 import { getCmsThemeSettings } from '@/features/cms/server';
 import { productService } from '@/shared/lib/products/services/productService';
-import type { Page, PageComponent, Slug } from '@/shared/contracts/cms';
+import type { Slug } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
@@ -38,12 +38,14 @@ export async function HomeContent({
   const colorSchemes = buildColorSchemeMap(themeSettings);
 
   if (defaultSlug) {
-    const cmsPage: Page | null = await withTiming('cmsPageBySlug', () =>
-      cmsRepository.getPageBySlug(defaultSlug.slug, { locale: resolvedLocale })
-    );
+    const [cmsPage, session] = await Promise.all([
+      withTiming('cmsPageBySlug', () =>
+        cmsRepository.getPageBySlug(defaultSlug.slug, { locale: resolvedLocale })
+      ),
+      withTiming('auth', () => auth()),
+    ]);
     let allowDrafts = false;
     if (cmsPage && cmsPage.status !== 'published') {
-      const session = await withTiming('auth', () => auth());
       allowDrafts = await withTiming('canPreviewDrafts', () => canPreviewDrafts(session));
     }
 
@@ -67,7 +69,7 @@ export async function HomeContent({
         loadingLabel={commonTranslations('loadingStorefront')}
         hasCmsContent={hasCmsContent}
         defaultSlug={defaultSlug.slug}
-        rendererComponents={rendererComponents as PageComponent[]}
+        rendererComponents={rendererComponents}
       />
     );
   }

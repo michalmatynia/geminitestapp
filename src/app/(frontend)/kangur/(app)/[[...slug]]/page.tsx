@@ -14,11 +14,13 @@ export default async function Page({
   searchParams,
 }: KangurAliasPageProps): Promise<null> {
   if (shouldApplyFrontPageAppSelection()) {
-    const frontPageSetting = await getFrontPageSetting();
+    const [frontPageSetting, { slug = [] }, resolvedSearchParams] = await Promise.all([
+      getFrontPageSetting(),
+      params,
+      searchParams ?? Promise.resolve(undefined),
+    ]);
 
     if (getFrontPagePublicOwner(frontPageSetting) === 'kangur') {
-      const { slug = [] } = await params;
-      const resolvedSearchParams = searchParams ? await searchParams : undefined;
       redirect(await getKangurConfiguredLaunchHref(slug, resolvedSearchParams));
     }
   }

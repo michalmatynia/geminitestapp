@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { unstable_cache } from 'next/cache';
+import { cache } from 'react';
 
 import {
   KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
@@ -46,8 +47,10 @@ const getKangurStorefrontInitialStateUncached = async (): Promise<KangurStorefro
   };
 };
 
-export const getKangurStorefrontInitialState = unstable_cache(
-  getKangurStorefrontInitialStateUncached,
-  ['kangur-storefront-initial-state'],
-  { revalidate: 300 }
+export const getKangurStorefrontInitialState = cache(
+  unstable_cache(
+    getKangurStorefrontInitialStateUncached,
+    ['kangur-storefront-initial-state'],
+    { revalidate: 300 }
+  )
 );

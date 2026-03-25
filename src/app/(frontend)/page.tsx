@@ -18,15 +18,15 @@ export default async function Home(): Promise<JSX.Element | null> {
   const { withTiming, flush } = createHomeTimingRecorder();
 
   const shouldApplyFrontPageSelection = shouldApplyFrontPageAppSelection();
-  const frontPageSetting = shouldApplyFrontPageSelection
-    ? await withTiming('frontPageSetting', getFrontPageSetting)
-    : null;
+  const [frontPageSetting, kangurLaunchTargetEager] = shouldApplyFrontPageSelection
+    ? await Promise.all([
+        withTiming('frontPageSetting', getFrontPageSetting),
+        withTiming('kangurLaunchTarget', () => getKangurConfiguredLaunchTarget()),
+      ])
+    : [null, null];
   const publicOwner = getFrontPagePublicOwner(frontPageSetting);
   const redirectPath = getFrontPageRedirectPath(frontPageSetting);
-  const kangurLaunchTarget =
-    shouldApplyFrontPageSelection && publicOwner === 'kangur'
-      ? await withTiming('kangurLaunchTarget', () => getKangurConfiguredLaunchTarget())
-      : null;
+  const kangurLaunchTarget = publicOwner === 'kangur' ? kangurLaunchTargetEager : null;
 
   if (shouldApplyFrontPageSelection && redirectPath) {
     await flush();

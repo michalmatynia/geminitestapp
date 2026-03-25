@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-24'
+last_reviewed: '2026-03-25'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,17 +8,21 @@ canonical: true
 ---
 # Import Boundaries Check
 
-Generated at: 2026-03-24T23:04:50.901Z
+Generated at: 2026-03-25T08:45:36.094Z
 
 ## Summary
 
-- Status: PASSED
-- Files scanned: 5735
+- Status: FAILED
+- Files scanned: 5745
 - Features tracked: 10
-- Circular dependencies: 0
-- Errors: 0
+- Circular dependencies: 1
+- Errors: 1
 - Warnings: 0
 - Info: 0
+
+## Circular Dependencies
+
+- products -> integrations -> products
 
 ## Feature Dependency Graph
 
@@ -28,9 +32,9 @@ Generated at: 2026-03-24T23:04:50.901Z
 | cms | files, foldertree, gsap, products, viewer3d | 5 |
 | products | ai, files, foldertree, integrations, internationalization | 5 |
 | admin | ai, foldertree, products, prompt-engine | 4 |
-| ai | files, foldertree, observability, viewer3d | 4 |
 | case-resolver | ai, document-editor, filemaker, foldertree | 4 |
-| integrations | data-import-export, product-sync | 2 |
+| integrations | auth, data-import-export, product-sync, products | 4 |
+| ai | files, foldertree, viewer3d | 3 |
 | notesapp | document-editor, foldertree | 2 |
 | drafter | products | 1 |
 | prompt-exploder | foldertree | 1 |
@@ -39,10 +43,13 @@ Generated at: 2026-03-24T23:04:50.901Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
+| circular-feature-dep | 1 | 0 | 0 |
 
 ## Issues
 
-No import boundary issues detected.
+| Severity | Rule | Location | Message |
+| --- | --- | --- | --- |
+| ERROR | circular-feature-dep | - | Circular dependency between features: products -> integrations -> products |
 
 ## Notes
 

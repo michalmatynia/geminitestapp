@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { cache } from 'react';
+
 import type {
   MongoPersistedStringSettingDocument,
   SettingRecord,
@@ -99,24 +101,26 @@ const backfillKangurSettingValue = async (key: string, value: string): Promise<v
   }
 };
 
-export const readKangurSettingValue = async (key: string): Promise<string | null> => {
+export const readKangurSettingValue = cache(async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
   await ensureKangurSettingsIndexes();
   const mongo = await getMongoDb();
-  const doc = await mongo
-    .collection<MongoPersistedStringSettingDocument>(KANGUR_SETTINGS_COLLECTION)
-    .findOne({ $or: [{ _id: key }, { key }] }, { projection: { _id: 1, key: 1, value: 1 } });
+  const [doc, legacyValue] = await Promise.all([
+    mongo
+      .collection<MongoPersistedStringSettingDocument>(KANGUR_SETTINGS_COLLECTION)
+      .findOne({ $or: [{ _id: key }, { key }] }, { projection: { _id: 1, key: 1, value: 1 } }),
+    readLegacySettingValue(key),
+  ]);
   const record = doc ? toSettingRecord(doc) : null;
   if (record) {
     return record.value;
   }
 
-  const legacyValue = await readLegacySettingValue(key);
   if (legacyValue !== null) {
     void backfillKangurSettingValue(key, legacyValue);
   }
   return legacyValue;
-};
+});
 
 export const listKangurSettings = async (): Promise<SettingRecord[]> => {
   if (!process.env['MONGODB_URI']) return [];

@@ -3,6 +3,15 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 export const shouldLogHomeTiming = (): boolean => process.env['DEBUG_API_TIMING'] === 'true';
 
 export const createHomeTimingRecorder = () => {
+  const enabled = shouldLogHomeTiming();
+
+  if (!enabled) {
+    return {
+      withTiming: <T>(_label: string, fn: () => Promise<T>): Promise<T> => fn(),
+      flush: (): Promise<void> => Promise.resolve(),
+    };
+  }
+
   const timings: Record<string, number> = {};
   const totalStart = performance.now();
 
@@ -14,7 +23,6 @@ export const createHomeTimingRecorder = () => {
   };
 
   const flush = async (): Promise<void> => {
-    if (!shouldLogHomeTiming()) return;
     timings['total'] = performance.now() - totalStart;
     await logSystemEvent({
       level: 'info',

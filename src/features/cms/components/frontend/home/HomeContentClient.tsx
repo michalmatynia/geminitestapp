@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { PageComponent } from '@/shared/contracts/cms';
+import type { PageComponentInput } from '@/shared/contracts/cms';
 import type { MenuSettings } from '@/shared/contracts/cms-menu';
 import type { ColorSchemeColors, ThemeSettings } from '@/shared/contracts/cms-theme';
 import type { ProductWithImages } from '@/shared/contracts/products';
@@ -33,7 +33,7 @@ type CmsVariantProps = {
   loadingLabel: string;
   hasCmsContent: boolean;
   defaultSlug: string;
-  rendererComponents: PageComponent[];
+  rendererComponents: PageComponentInput[];
 };
 
 type FallbackVariantProps = {
@@ -66,22 +66,26 @@ export function HomeContentClient(props: HomeContentClientProps): React.JSX.Elem
         colorSchemes={props.colorSchemes}
         showMenu={props.showMenu}
       >
-        {props.variant === 'cms' ? (
-          <LazyHomeCmsDefaultContent
-            themeSettings={props.theme}
-            colorSchemes={props.colorSchemes}
-            hasCmsContent={props.hasCmsContent}
-            defaultSlug={props.defaultSlug}
-            rendererComponents={props.rendererComponents}
-          />
-        ) : (
-          <LazyHomeFallbackContent
-            showFallbackHeader={props.showFallbackHeader}
-            products={props.products}
-            themeSettings={props.theme}
-            appearanceTone={props.appearanceTone}
-          />
-        )}
+        <React.Suspense
+          fallback={<LoadingPanel>{props.loadingLabel}</LoadingPanel>}
+        >
+          {props.variant === 'cms' ? (
+            <LazyHomeCmsDefaultContent
+              themeSettings={props.theme}
+              colorSchemes={props.colorSchemes}
+              hasCmsContent={props.hasCmsContent}
+              defaultSlug={props.defaultSlug}
+              rendererComponents={props.rendererComponents}
+            />
+          ) : (
+            <LazyHomeFallbackContent
+              showFallbackHeader={props.showFallbackHeader}
+              products={props.products}
+              themeSettings={props.theme}
+              appearanceTone={props.appearanceTone}
+            />
+          )}
+        </React.Suspense>
       </LazyCmsPageShell>
     </React.Suspense>
   );

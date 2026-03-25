@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { randomUUID } from 'crypto';
+import { cache } from 'react';
 
 import type { CmsDomain, CmsRepository, CmsSlugLookupOptions, Slug } from '@/shared/contracts/cms';
 import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
@@ -96,11 +97,11 @@ const getHostFromHeaders = (
   return null;
 };
 
-export async function isDomainZoningEnabled(): Promise<boolean> {
+export const isDomainZoningEnabled = cache(async (): Promise<boolean> => {
   if (!process.env['MONGODB_URI']) return false;
   const settings = await getCmsDomainSettings();
   return settings.zoningEnabled;
-}
+});
 
 export async function setGlobalDefaultSlug(slugId: string | null): Promise<void> {
   await getCmsDataProvider();
@@ -145,11 +146,14 @@ const getDomainRecordById = async (domainId: string): Promise<CmsDomainRecord | 
 };
 
 export async function resolveCmsDomainScopeById(domainId: string): Promise<CmsDomain | null> {
-  const zoningEnabled = await isDomainZoningEnabled();
+  const [zoningEnabled, initialRecord] = await Promise.all([
+    isDomainZoningEnabled(),
+    getDomainRecordById(domainId),
+  ]);
   if (!zoningEnabled) {
     return buildDefaultDomain(null);
   }
-  let current = await getDomainRecordById(domainId);
+  let current = initialRecord;
   if (!current) return null;
   const visited = new Set<string>([current.id]);
   while (current.aliasOf) {
@@ -164,12 +168,11 @@ export async function resolveCmsDomainScopeById(domainId: string): Promise<CmsDo
 
 export async function resolveCmsDomainByHost(hostHeader: string | null): Promise<CmsDomain> {
   const domain = normalizeHost(hostHeader);
-  const zoningEnabled = await isDomainZoningEnabled();
+  const [zoningEnabled, db] = await Promise.all([isDomainZoningEnabled(), getMongoDb()]);
   if (!zoningEnabled) {
     return buildDefaultDomain(hostHeader);
   }
 
-  const db = await getMongoDb();
   const existing = await db.collection<CmsDomainRecord>(DOMAIN_COLLECTION).findOne({ domain });
   if (existing) {
     const scoped = await resolveCmsDomainScopeById(existing.id);
@@ -190,25 +193,25 @@ export async function resolveCmsDomainByHost(hostHeader: string | null): Promise
 }
 
 export async function getCmsDomainById(domainId: string): Promise<CmsDomain | null> {
-  const zoningEnabled = await isDomainZoningEnabled();
+  const [zoningEnabled, doc] = await Promise.all([
+    isDomainZoningEnabled(),
+    getDomainRecordById(domainId),
+  ]);
   if (!zoningEnabled) {
     return buildDefaultDomain(null);
   }
-  const doc = await getDomainRecordById(domainId);
   return doc ? toDomainResponse(doc) : null;
 }
 
-export async function getDomainSlugLinks(domainId: string): Promise<CmsDomainSlugLink[]> {
-  const zoningEnabled = await isDomainZoningEnabled();
+export const getDomainSlugLinks = cache(async (domainId: string): Promise<CmsDomainSlugLink[]> => {
+  const [zoningEnabled, db] = await Promise.all([isDomainZoningEnabled(), getMongoDb()]);
   if (!zoningEnabled) return [];
-  const db = await getMongoDb();
   return db.collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION).find({ domainId }).toArray();
-}
+});
 
 export async function getDomainIdsForSlug(slugId: string): Promise<string[]> {
-  const zoningEnabled = await isDomainZoningEnabled();
+  const [zoningEnabled, db] = await Promise.all([isDomainZoningEnabled(), getMongoDb()]);
   if (!zoningEnabled) return [];
-  const db = await getMongoDb();
   const links = await db
     .collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION)
     .find({ slugId })
@@ -227,9 +230,8 @@ const toDomainResponse = (doc: CmsDomainRecord): CmsDomainResponse => ({
 });
 
 export async function listCmsDomains(): Promise<CmsDomainResponse[]> {
-  const zoningEnabled = await isDomainZoningEnabled();
+  const [zoningEnabled, db] = await Promise.all([isDomainZoningEnabled(), getMongoDb()]);
   if (!zoningEnabled) return [];
-  const db = await getMongoDb();
   const docs = await db
     .collection<CmsDomainRecord>(DOMAIN_COLLECTION)
     .find()
@@ -239,7 +241,7 @@ export async function listCmsDomains(): Promise<CmsDomainResponse[]> {
 }
 
 export async function createCmsDomain(domain: string): Promise<CmsDomainResponse> {
-  const zoningEnabled = await isDomainZoningEnabled();
+  const [zoningEnabled, db] = await Promise.all([isDomainZoningEnabled(), getMongoDb()]);
   if (!zoningEnabled) {
     const normalizedDomain = normalizeHost(domain);
     const now = new Date().toISOString();
@@ -251,7 +253,6 @@ export async function createCmsDomain(domain: string): Promise<CmsDomainResponse
       updatedAt: now,
     };
   }
-  const db = await getMongoDb();
   const normalized = normalizeHost(domain);
   const existing = await db
     .collection<CmsDomainRecord>(DOMAIN_COLLECTION)
@@ -271,25 +272,28 @@ export async function createCmsDomain(domain: string): Promise<CmsDomainResponse
 }
 
 export async function deleteCmsDomain(domainId: string): Promise<void> {
-  const zoningEnabled = await isDomainZoningEnabled();
+  const [zoningEnabled, db] = await Promise.all([isDomainZoningEnabled(), getMongoDb()]);
   if (!zoningEnabled) return;
-  const db = await getMongoDb();
-  await db
-    .collection<CmsDomainRecord>(DOMAIN_COLLECTION)
-    .updateMany({ aliasOf: domainId }, { $set: { aliasOf: null, updatedAt: new Date() } });
-  await db.collection<CmsDomainRecord>(DOMAIN_COLLECTION).deleteOne({ id: domainId });
-  await db.collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION).deleteMany({ domainId });
+  await Promise.all([
+    db
+      .collection<CmsDomainRecord>(DOMAIN_COLLECTION)
+      .updateMany({ aliasOf: domainId }, { $set: { aliasOf: null, updatedAt: new Date() } }),
+    db.collection<CmsDomainRecord>(DOMAIN_COLLECTION).deleteOne({ id: domainId }),
+    db.collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION).deleteMany({ domainId }),
+  ]);
 }
 
 export async function setCmsDomainAlias(
   domainId: string,
   aliasOf: string | null
 ): Promise<CmsDomainResponse | null> {
-  const zoningEnabled = await isDomainZoningEnabled();
+  const [zoningEnabled, domain, db] = await Promise.all([
+    isDomainZoningEnabled(),
+    getDomainRecordById(domainId),
+    getMongoDb(),
+  ]);
   if (!zoningEnabled) return null;
   if (aliasOf === domainId) aliasOf = null;
-  const db = await getMongoDb();
-  const domain = await getDomainRecordById(domainId);
   if (!domain) return null;
 
   let targetId: string | null = aliasOf;
@@ -312,9 +316,8 @@ export async function setCmsDomainAlias(
 }
 
 export async function isSlugAssignedToDomain(domainId: string, slugId: string): Promise<boolean> {
-  const zoningEnabled = await isDomainZoningEnabled();
+  const [zoningEnabled, db] = await Promise.all([isDomainZoningEnabled(), getMongoDb()]);
   if (!zoningEnabled) return true;
-  const db = await getMongoDb();
   const doc = await db
     .collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION)
     .findOne({ domainId, slugId });
@@ -322,9 +325,8 @@ export async function isSlugAssignedToDomain(domainId: string, slugId: string): 
 }
 
 export async function ensureDomainSlug(domainId: string, slugId: string): Promise<void> {
-  const zoningEnabled = await isDomainZoningEnabled();
+  const [zoningEnabled, db] = await Promise.all([isDomainZoningEnabled(), getMongoDb()]);
   if (!zoningEnabled) return;
-  const db = await getMongoDb();
   await db.collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION).updateOne(
     { domainId, slugId },
     {
@@ -341,16 +343,14 @@ export async function ensureDomainSlug(domainId: string, slugId: string): Promis
 }
 
 export async function removeDomainSlug(domainId: string, slugId: string): Promise<void> {
-  const zoningEnabled = await isDomainZoningEnabled();
+  const [zoningEnabled, db] = await Promise.all([isDomainZoningEnabled(), getMongoDb()]);
   if (!zoningEnabled) return;
-  const db = await getMongoDb();
   await db.collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION).deleteOne({ domainId, slugId });
 }
 
 export async function setDomainDefaultSlug(domainId: string, slugId: string | null): Promise<void> {
-  const zoningEnabled = await isDomainZoningEnabled();
+  const [zoningEnabled, db] = await Promise.all([isDomainZoningEnabled(), getMongoDb()]);
   if (!zoningEnabled) return;
-  const db = await getMongoDb();
   await db
     .collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION)
     .updateMany({ domainId }, { $set: { isDefault: false, updatedAt: new Date() } });
@@ -366,9 +366,8 @@ export async function setDomainDefaultSlug(domainId: string, slugId: string | nu
 }
 
 export async function isSlugLinkedToAnyDomain(slugId: string): Promise<boolean> {
-  const zoningEnabled = await isDomainZoningEnabled();
+  const [zoningEnabled, db] = await Promise.all([isDomainZoningEnabled(), getMongoDb()]);
   if (!zoningEnabled) return false;
-  const db = await getMongoDb();
   const count = await db
     .collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION)
     .countDocuments({ slugId }, { limit: 1 });
@@ -380,11 +379,13 @@ export async function getSlugsForDomain(
   repo: CmsRepository,
   options?: CmsSlugLookupOptions
 ): Promise<Slug[]> {
-  const zoningEnabled = await isDomainZoningEnabled();
+  const [zoningEnabled, links] = await Promise.all([
+    isDomainZoningEnabled(),
+    getDomainSlugLinks(domainId),
+  ]);
   if (!zoningEnabled) {
     return repo.getSlugs(options);
   }
-  const links = await getDomainSlugLinks(domainId);
   if (!links.length) return [];
 
   const slugIds = links.map((link: CmsDomainSlugLink) => link.slugId);
@@ -403,13 +404,13 @@ export async function getSlugForDomainById(
   repo: CmsRepository,
   options?: CmsSlugLookupOptions
 ): Promise<Slug | null> {
-  const zoningEnabled = await isDomainZoningEnabled();
-  if (!zoningEnabled) {
-    return repo.getSlugById(slugId, options);
-  }
-  const slug = await repo.getSlugById(slugId, options);
+  const [zoningEnabled, slug, links] = await Promise.all([
+    isDomainZoningEnabled(),
+    repo.getSlugById(slugId, options),
+    getDomainSlugLinks(domainId),
+  ]);
+  if (!zoningEnabled) return slug;
   if (!slug) return null;
-  const links = await getDomainSlugLinks(domainId);
   const link = links.find((item: CmsDomainSlugLink) => item.slugId === slugId);
   if (!link && process.env['MONGODB_URI']) return null;
   return {
@@ -424,18 +425,17 @@ export async function getSlugForDomainByValue(
   repo: CmsRepository,
   options?: CmsSlugLookupOptions
 ): Promise<Slug | null> {
-  const zoningEnabled = await isDomainZoningEnabled();
-  if (!zoningEnabled) {
-    return repo.getSlugByValue(slugValue, options);
-  }
-  const slug = await repo.getSlugByValue(slugValue, options);
+  const [zoningEnabled, slug, links] = await Promise.all([
+    isDomainZoningEnabled(),
+    repo.getSlugByValue(slugValue, options),
+    getDomainSlugLinks(domainId),
+  ]);
+  if (!zoningEnabled) return slug;
   if (!slug) return null;
-  const isAllowed = await isSlugAssignedToDomain(domainId, slug.id);
-  if (!isAllowed) return null;
-  const links = await getDomainSlugLinks(domainId);
   const link = links.find((item: CmsDomainSlugLink) => item.slugId === slug.id);
+  if (!link) return null;
   return {
     ...slug,
-    isDefault: link?.isDefault ?? false,
+    isDefault: link.isDefault ?? false,
   };
 }

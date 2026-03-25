@@ -1,5 +1,7 @@
 'use client';
 
+import '@/app/(frontend)/kangur/kangur.css';
+
 import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRouteShell';
 import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';

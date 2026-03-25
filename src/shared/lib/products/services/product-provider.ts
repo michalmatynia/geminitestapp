@@ -25,8 +25,10 @@ export const getProductDataProvider = async (): Promise<ProductDbProvider> => {
   }
 
   productProviderInflight = (async (): Promise<ProductDbProvider> => {
-    const policy = await getDatabaseEnginePolicy();
-    const routeProvider = await getDatabaseEngineServiceProvider('product');
+    const [policy, routeProvider] = await Promise.all([
+      getDatabaseEnginePolicy(),
+      getDatabaseEngineServiceProvider('product'),
+    ]);
     if (routeProvider) {
       if (routeProvider === 'redis') {
         throw internalError('Database Engine route "product" cannot target Redis. Configure MongoDB.');

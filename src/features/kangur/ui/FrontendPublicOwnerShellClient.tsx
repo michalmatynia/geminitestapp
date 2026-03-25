@@ -1,11 +1,17 @@
 'use client';
 
-import '@/app/(frontend)/kangur/kangur.css';
-
+import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 
-import { FrontendPublicOwnerKangurShell } from '@/features/kangur/ui/FrontendPublicOwnerKangurShell';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
+
+const FrontendPublicOwnerKangurShell = dynamic(
+  () =>
+    import('@/features/kangur/ui/FrontendPublicOwnerKangurShell').then((m) => ({
+      default: m.FrontendPublicOwnerKangurShell,
+    })),
+  { ssr: false }
+);
 
 import type {
   KangurStorefrontAppearanceMode,

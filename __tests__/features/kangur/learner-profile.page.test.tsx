@@ -370,6 +370,29 @@ describe('LearnerProfile page', () => {
     expect(screen.queryByRole('button', { name: /Zaloguj się/i })).not.toBeInTheDocument();
   });
 
+  it('supports keyboard navigation between learner profile tabs', async () => {
+    renderLearnerProfilePage();
+
+    const overviewTab = screen.getByRole('tab', { name: /profil ucznia/i });
+    const aiMoodTab = screen.getByRole('tab', { name: /relacja z ai tutorem/i });
+
+    expect(overviewTab).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tabpanel')).toHaveAttribute(
+      'id',
+      'kangur-learner-profile-panel-overview'
+    );
+
+    overviewTab.focus();
+    await userEvent.keyboard('{ArrowRight}');
+
+    expect(aiMoodTab).toHaveFocus();
+    expect(aiMoodTab).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tabpanel')).toHaveAttribute(
+      'id',
+      'kangur-learner-profile-panel-ai-mood'
+    );
+  });
+
   it('keeps profile in local mode when user is not authenticated', async () => {
     useKangurAuthMock.mockReturnValue({
       user: null,

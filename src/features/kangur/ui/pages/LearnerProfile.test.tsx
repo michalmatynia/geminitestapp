@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 const {
@@ -99,19 +99,24 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/design/primitives', () => ({
-  KangurButton: ({
-    children,
-    onClick,
-    ...props
-  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children: React.ReactNode }) => (
-    <button type='button' onClick={onClick} {...props}>
+  KangurButton: React.forwardRef<
+    HTMLButtonElement,
+    React.ButtonHTMLAttributes<HTMLButtonElement> & { children: React.ReactNode }
+  >(({ children, onClick, ...props }, ref) => (
+    <button ref={ref} type='button' onClick={onClick} {...props}>
       {children}
     </button>
-  ),
+  )),
   KangurPageContainer: ({
     children,
+    as: _as,
+    embeddedOverride: _embeddedOverride,
     ...props
-  }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) => (
+  }: React.HTMLAttributes<HTMLDivElement> & {
+    as?: React.ElementType;
+    children: React.ReactNode;
+    embeddedOverride?: boolean;
+  }) => (
     <div {...props}>{children}</div>
   ),
   KangurPageShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -167,6 +172,39 @@ describe('LearnerProfile page', () => {
     expect(screen.getByTestId('results-widget')).toBeInTheDocument();
     expect(document.getElementById('learner-profile-root')).toHaveClass('w-full');
     expect(document.getElementById('learner-profile-root')).not.toHaveClass('max-w-[900px]');
+  });
+
+  it('supports keyboard tab navigation and tabpanel relationships', async () => {
+    render(<LearnerProfilePage />);
+
+    const [overviewTab, aiMoodTab] = screen.getAllByRole('tab');
+
+    expect(overviewTab).toHaveAttribute('aria-selected', 'true');
+    expect(overviewTab).toHaveAttribute(
+      'aria-controls',
+      'kangur-learner-profile-panel-overview'
+    );
+    expect(aiMoodTab).toHaveAttribute(
+      'aria-controls',
+      'kangur-learner-profile-panel-ai-mood'
+    );
+    expect(screen.getByRole('tabpanel')).toHaveAttribute(
+      'id',
+      'kangur-learner-profile-panel-overview'
+    );
+
+    overviewTab.focus();
+    fireEvent.keyDown(overviewTab, { key: 'ArrowRight' });
+
+    await waitFor(() => {
+      expect(aiMoodTab).toHaveFocus();
+    });
+    expect(aiMoodTab).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tabpanel')).toHaveAttribute(
+      'id',
+      'kangur-learner-profile-panel-ai-mood'
+    );
+    expect(screen.getByTestId('ai-mood-widget')).toBeInTheDocument();
   });
 
   it('routes back to the localized base path when the learner profile fails to load', () => {

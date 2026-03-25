@@ -5,7 +5,8 @@ import { highRiskCoverageTargets } from '../config/high-risk-coverage.config.mjs
 import { createIssue, sortIssues, summarizeIssues, summarizeRules } from './check-runner.mjs';
 
 const METRIC_KEYS = ['lines', 'statements', 'functions', 'branches'];
-const DEFAULT_COVERAGE_SUMMARY_PATH = 'coverage/coverage-summary.json';
+const DEFAULT_COVERAGE_SUMMARY_PATH = 'coverage/high-risk/coverage-summary.json';
+const LEGACY_COVERAGE_SUMMARY_PATH = 'coverage/coverage-summary.json';
 const HIGH_RISK_COVERAGE_REPORTS_DIRECTORY = 'coverage/high-risk';
 const HIGH_RISK_COVERAGE_SUMMARY_GLOB_LABEL = 'coverage/high-risk/*/coverage-summary.json (merged)';
 
@@ -153,7 +154,10 @@ const readCoverageSummary = (root, relativeCoveragePath) => {
     };
   }
 
-  if (relativeCoveragePath !== DEFAULT_COVERAGE_SUMMARY_PATH) {
+  if (
+    relativeCoveragePath !== DEFAULT_COVERAGE_SUMMARY_PATH &&
+    relativeCoveragePath !== LEGACY_COVERAGE_SUMMARY_PATH
+  ) {
     return null;
   }
 
@@ -201,14 +205,14 @@ export const analyzeHighRiskCoverage = ({
 
   if (!coverageSummary) {
     issues.push(
-      createIssue({
-        severity: 'warn',
-        ruleId: 'high-risk-coverage-report-missing',
-        context: coverageSummaryPath,
-        message:
-          'Coverage summary artifact is missing. Run `npm run test:coverage` or point COVERAGE_SUMMARY_PATH at a coverage-summary.json file.',
-      })
-    );
+        createIssue({
+          severity: 'warn',
+          ruleId: 'high-risk-coverage-report-missing',
+          context: coverageSummaryPath,
+          message:
+            'Coverage summary artifact is missing. Run `npm run test:coverage:high-risk` or point COVERAGE_SUMMARY_PATH at a coverage-summary.json file.',
+        })
+      );
 
     const sortedIssues = sortIssues(issues);
     const summary = summarizeIssues(sortedIssues);

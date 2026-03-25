@@ -62,6 +62,12 @@ const PROFILE_TABS: Array<
 
 const PROFILE_MAIN_ID = 'kangur-learner-profile-main';
 const PROFILE_PAGE_ID = 'kangur-learner-profile-page';
+const getLearnerProfileTabIds = (
+  tabId: LearnerProfileTabId
+): { tabId: string; panelId: string } => ({
+  tabId: `kangur-learner-profile-tab-${tabId}`,
+  panelId: `kangur-learner-profile-panel-${tabId}`,
+});
 
 function LearnerProfileContent(): React.JSX.Element {
   const { user, isLoadingScores } = useKangurLearnerProfileRuntime();
@@ -75,6 +81,7 @@ function LearnerProfileContent(): React.JSX.Element {
 
   const [activeTab, setActiveTab] = useState<LearnerProfileTabId>('overview');
   const tutorAnchorRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useKangurTutorAnchor({
     id: 'learner-profile-root',
@@ -97,6 +104,51 @@ function LearnerProfileContent(): React.JSX.Element {
   const handleTabChange = useCallback((tabId: LearnerProfileTabId) => {
     setActiveTab(tabId);
   }, []);
+  const focusTabAt = useCallback((index: number): void => {
+    tabRefs.current[index]?.focus();
+  }, []);
+  const handleTabKeyDown = useCallback(
+    (index: number, event: React.KeyboardEvent<HTMLButtonElement>): void => {
+      if (PROFILE_TABS.length === 0) {
+        return;
+      }
+
+      let nextIndex = index;
+      switch (event.key) {
+        case 'ArrowRight':
+        case 'ArrowDown':
+          nextIndex = (index + 1) % PROFILE_TABS.length;
+          break;
+        case 'ArrowLeft':
+        case 'ArrowUp':
+          nextIndex = (index - 1 + PROFILE_TABS.length) % PROFILE_TABS.length;
+          break;
+        case 'Home':
+          nextIndex = 0;
+          break;
+        case 'End':
+          nextIndex = PROFILE_TABS.length - 1;
+          break;
+        default:
+          return;
+      }
+
+      event.preventDefault();
+      const nextTab = PROFILE_TABS[nextIndex];
+      if (!nextTab) {
+        return;
+      }
+      handleTabChange(nextTab.id);
+      requestAnimationFrame(() => focusTabAt(nextIndex));
+    },
+    [focusTabAt, handleTabChange]
+  );
+  const handlePointerTabMouseDown = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>): void => {
+      event.preventDefault();
+    },
+    []
+  );
 
   if (isLoadingScores) {
     return (
@@ -144,21 +196,32 @@ function LearnerProfileContent(): React.JSX.Element {
             role='tablist'
             aria-label={translations('tabListLabel')}
           >
-            {PROFILE_TABS.map((tab) => (
+            {PROFILE_TABS.map((tab, index) => {
+              const { tabId, panelId } = getLearnerProfileTabIds(tab.id);
+              return (
               <KangurButton
+                id={tabId}
                 key={tab.id}
                 size='sm'
                 variant={activeTab === tab.id ? 'segmentActive' : 'segment'}
+                onMouseDown={handlePointerTabMouseDown}
+                onKeyDown={(event) => handleTabKeyDown(index, event)}
                 onClick={() => handleTabChange(tab.id)}
                 data-doc-id={tab.docId}
                 role='tab'
                 aria-selected={activeTab === tab.id}
+                aria-controls={panelId}
                 tabIndex={activeTab === tab.id ? 0 : -1}
+                ref={(node) => {
+                  tabRefs.current[index] = node;
+                }}
+                type='button'
               >
                 <span className='hidden sm:inline'>{translations(tab.labelKey)}</span>
                 <span className='sm:hidden'>{translations(tab.mobileLabelKey)}</span>
               </KangurButton>
-            ))}
+            );
+            })}
           </div>
         </div>
 
@@ -166,20 +229,33 @@ function LearnerProfileContent(): React.JSX.Element {
           className={`grid w-full items-start ${KANGUR_PANEL_GAP_CLASSNAME} xl:grid-cols-[minmax(0,1.35fr)_minmax(22rem,28rem)]`}
         >
           <div className={`flex min-w-0 flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-            {activeTab === 'overview' ? (
-              <>
-                <div className='grid gap-6 sm:grid-cols-2'>
-                  <KangurLearnerProfileLevelProgressWidget />
-                  <KangurLearnerProfileQuestSummaryWidget />
-                </div>
-                <KangurLearnerProfileOverviewWidget />
-                <KangurLearnerProfileResultsWidget />
-                <KangurLearnerProfileRecommendationsWidget />
-                <KangurLearnerProfileMasteryWidget />
-              </>
-            ) : (
+            <div
+              id={getLearnerProfileTabIds('overview').panelId}
+              role='tabpanel'
+              aria-labelledby={getLearnerProfileTabIds('overview').tabId}
+              hidden={activeTab !== 'overview'}
+              tabIndex={activeTab === 'overview' ? 0 : -1}
+              className={`flex min-w-0 flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
+            >
+              <div className='grid gap-6 sm:grid-cols-2'>
+                <KangurLearnerProfileLevelProgressWidget />
+                <KangurLearnerProfileQuestSummaryWidget />
+              </div>
+              <KangurLearnerProfileOverviewWidget />
+              <KangurLearnerProfileResultsWidget />
+              <KangurLearnerProfileRecommendationsWidget />
+              <KangurLearnerProfileMasteryWidget />
+            </div>
+            <div
+              id={getLearnerProfileTabIds('ai-mood').panelId}
+              role='tabpanel'
+              aria-labelledby={getLearnerProfileTabIds('ai-mood').tabId}
+              hidden={activeTab !== 'ai-mood'}
+              tabIndex={activeTab === 'ai-mood' ? 0 : -1}
+              className={`flex min-w-0 flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
+            >
               <KangurLearnerProfileAiTutorMoodWidget />
-            )}
+            </div>
           </div>
 
           <div className={`flex min-w-0 flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>

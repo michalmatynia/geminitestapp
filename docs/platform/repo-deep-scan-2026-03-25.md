@@ -30,9 +30,15 @@ remediated on the same day:
 - `npm run observability:check`: now passes
 - `npm run metrics:kangur:baseline:strict`: now passes
 
-The remaining immediate red signal from the original scan is the high-risk
-coverage gate, which still depends on a repo-wide coverage artifact that is
-effectively near-zero.
+The high-risk coverage gate itself no longer misreads the generic repo coverage
+artifact. It now defaults to the dedicated `coverage/high-risk` artifact
+contract and warns when that baseline has not been generated yet.
+
+The remaining work is split into two narrower items:
+
+- Real threshold misses in `src/shared/contracts` and `src/shared/lib`
+- Local disk-pressure during the full high-risk baseline sweep on a nearly full
+  workstation
 
 ## What Passed
 
@@ -158,29 +164,43 @@ Status after follow-up remediation:
   - `consoleLogs = 0`
   - `legacyCompatViolations = 0`
 
-### 4. High-risk coverage gate is signaling a broken baseline
+### 4. High-risk coverage pipeline was reading the wrong artifact
 
-`npm run check:coverage:high-risk:strict` failed across all protected domains.
-The key issue is not one isolated feature; the active
-`coverage/coverage-summary.json` artifact is effectively near-zero at the repo
-level:
+The high-risk checker previously defaulted to the generic
+`coverage/coverage-summary.json` artifact. On this workstation that file was
+effectively unusable for protected-domain coverage:
 
 - Lines: `0.18%`
 - Statements: `0.16%`
 - Functions: `0.04%`
 - Branches: `0%`
 
-Protected-domain failures:
+Status after follow-up remediation:
 
-- API Routes: `0%`
-- Shared Contracts: `3.4%` lines
-- Shared Lib: `0.1%` lines
-- Kangur: `0.2%` lines
-- AI Paths: `0.1%` lines
+- `npm run check:coverage:high-risk:strict` now reads the dedicated
+  `coverage/high-risk` contract by default
+- When the high-risk baseline has not been generated, the check now degrades to
+  a missing-artifact warning instead of reporting false catastrophic coverage
+- The baseline runner no longer attempts to write a redundant monolithic
+  `coverage/high-risk/coverage-summary.json`, which previously failed with
+  `ENOSPC`
 
-This should be treated as a coverage-pipeline health problem first. Until the
-repo produces a meaningful coverage artifact, the gate does not help distinguish
-real domain-level testing gaps from missing or stale measurement.
+Current remaining findings after running the dedicated baseline with
+`--summary-json`:
+
+- Real threshold misses:
+  - Shared Contracts: `76.2%` lines, `75.2%` statements, `47.4%` functions,
+    `33.9%` branches
+  - Shared Lib: `57.5%` lines, `55.2%` statements, `55.1%` functions, `42%`
+    branches
+- Local environment pressure:
+  - The full five-domain baseline still hit `ENOSPC` while Vitest was creating
+    temp files under `node_modules/.vite-temp`
+  - That prevented complete local results for `api-routes`, `kangur`, and
+    `ai-paths`
+
+This is now a narrower problem set: part real coverage debt, part local disk
+headroom. The checker itself is no longer the source of the false signal.
 
 ### 5. Kangur performance baseline is not stable yet
 

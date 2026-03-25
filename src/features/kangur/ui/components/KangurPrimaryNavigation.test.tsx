@@ -5,6 +5,7 @@
 import { QueryClientContext } from '@tanstack/react-query';
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
@@ -849,6 +850,75 @@ describe('KangurPrimaryNavigation', () => {
     expect(subjectButton).toHaveAttribute('aria-controls', 'kangur-primary-nav-subject-dialog');
     expect(ageGroupButton).toHaveAttribute('aria-haspopup', 'dialog');
     expect(ageGroupButton).toHaveAttribute('aria-controls', 'kangur-primary-nav-age-group-dialog');
+  });
+
+  it('restores focus to the mobile toggle when the mobile menu closes with Escape', async () => {
+    const user = userEvent.setup();
+    setViewport({ width: 390, matches: true });
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    const mobileToggle = screen.getByTestId('kangur-primary-nav-mobile-toggle');
+    mobileToggle.focus();
+
+    fireEvent.click(mobileToggle);
+
+    const mobileMenuDialog = screen.getByRole('dialog', { name: /menu kangur/i });
+    const closeButton = within(mobileMenuDialog).getByRole('button', { name: /zamknij menu/i });
+
+    await waitFor(() => {
+      expect(closeButton).toHaveFocus();
+    });
+
+    await user.keyboard('{Escape}');
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: /menu kangur/i })).not.toBeInTheDocument();
+    });
+    expect(mobileToggle).toHaveFocus();
+  });
+
+  it('traps keyboard focus inside the mobile menu dialog', async () => {
+    const user = userEvent.setup();
+    setViewport({ width: 390, matches: true });
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('kangur-primary-nav-mobile-toggle'));
+
+    const mobileMenuDialog = screen.getByRole('dialog', { name: /menu kangur/i });
+    const focusable = Array.from(
+      mobileMenuDialog.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+    );
+    const firstFocusable = focusable.at(0);
+    const lastFocusable = focusable.at(-1);
+
+    expect(firstFocusable).toBeDefined();
+    expect(lastFocusable).toBeDefined();
+
+    firstFocusable?.focus();
+    await user.tab({ shift: true });
+    expect(lastFocusable).toHaveFocus();
+
+    lastFocusable?.focus();
+    await user.tab();
+    expect(firstFocusable).toHaveFocus();
   });
 
   it('disables the logout action while auth logout is already pending', () => {

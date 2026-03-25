@@ -1,9 +1,10 @@
 import { render, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import { KANGUR_DAILY_THEME_SETTINGS_KEY } from '@/features/kangur/theme-settings';
+import { KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY } from '@/features/kangur/storefront-appearance-settings';
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
+import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
 import { DEFAULT_THEME } from '@/shared/contracts/cms-theme';
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 
@@ -35,9 +36,11 @@ describe('KangurSurfaceClassSync', () => {
     expect(appContent).not.toBeNull();
 
     const { unmount } = render(
-      <KangurSurfaceClassSync>
-        <div>Surface</div>
-      </KangurSurfaceClassSync>
+      <KangurStorefrontAppearanceProvider>
+        <KangurSurfaceClassSync>
+          <div>Surface</div>
+        </KangurSurfaceClassSync>
+      </KangurStorefrontAppearanceProvider>
     );
 
     expect(document.documentElement).toHaveClass('kangur-surface-active');
@@ -64,12 +67,19 @@ describe('KangurSurfaceClassSync', () => {
   });
 
   it('applies the selected storefront appearance background to the page chrome', async () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY) {
+        return 'dark';
+      }
+      return undefined;
+    });
+
     render(
-      <CmsStorefrontAppearanceProvider initialMode='dark'>
+      <KangurStorefrontAppearanceProvider initialMode='dark'>
         <KangurSurfaceClassSync>
           <div>Surface</div>
         </KangurSurfaceClassSync>
-      </CmsStorefrontAppearanceProvider>
+      </KangurStorefrontAppearanceProvider>
     );
 
     await waitFor(() => {
@@ -140,11 +150,16 @@ describe('KangurSurfaceClassSync', () => {
     });
 
     render(
-      <CmsStorefrontAppearanceProvider initialMode='default'>
+      <KangurStorefrontAppearanceProvider
+        initialMode='default'
+        initialThemeSettings={{
+          default: settingsStoreMock.get(KANGUR_DAILY_THEME_SETTINGS_KEY) ?? null,
+        }}
+      >
         <KangurSurfaceClassSync>
           <div>Surface</div>
         </KangurSurfaceClassSync>
-      </CmsStorefrontAppearanceProvider>
+      </KangurStorefrontAppearanceProvider>
     );
 
     await waitFor(() => {

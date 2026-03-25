@@ -2,6 +2,7 @@ import { execFile, execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -475,7 +476,7 @@ const seedAccessibilityCommandHarness = (
     A11Y_SMOKE_BROWSER_NODE_BIN: path.join(root, 'bin'),
     NODE_OPTIONS: [
       process.env.NODE_OPTIONS,
-      `--import=${path.join(root, 'bin', 'mock-playwright-runtime-fetch.mjs')}`,
+      `--import=${pathToFileURL(path.join(root, 'bin', 'mock-playwright-runtime-fetch.mjs')).href}`,
     ]
       .filter(Boolean)
       .join(' '),

@@ -22,6 +22,7 @@ import {
 } from './createLearnerSessionKangurAuthAdapter';
 import { createDevelopmentKangurAuthAdapter } from './createDevelopmentKangurAuthAdapter';
 import { hasKangurMobileAuthQueryIdentityChanged } from './hasKangurMobileAuthQueryIdentityChanged';
+import { hasKangurMobileAuthSessionPayloadChanged } from './hasKangurMobileAuthSessionPayloadChanged';
 import { invalidateKangurMobileAuthQueries } from './invalidateKangurMobileAuthQueries';
 import { KANGUR_MOBILE_AUTH_STATUS_STORAGE_KEY } from './mobileAuthStorageKeys';
 import { resolvePersistedKangurMobileLearnerSession } from './persistedKangurMobileLearnerSession';
@@ -190,10 +191,33 @@ export function KangurMobileAuthProvider({
         : 'native-development',
     ),
   );
+  const sessionRef = useRef(session);
   const [isLoadingAuth, setIsLoadingAuth] = useState(
     initialBootState.shouldBlockInitialSessionRefresh,
   );
   const [authError, setAuthError] = useState<string | null>(null);
+
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
+
+  const applyResolvedSession = async (
+    nextSession: KangurAuthSession,
+  ): Promise<void> => {
+    const previousSession = sessionRef.current;
+    if (
+      hasKangurMobileAuthSessionPayloadChanged(previousSession, nextSession)
+    ) {
+      sessionRef.current = nextSession;
+      setSession(nextSession);
+    }
+
+    if (
+      hasKangurMobileAuthQueryIdentityChanged(previousSession, nextSession)
+    ) {
+      await invalidateKangurMobileAuthQueries(queryClient);
+    }
+  };
 
   const refreshSession = async (
     options: {
@@ -207,14 +231,8 @@ export function KangurMobileAuthProvider({
 
     try {
       setAuthError(null);
-      const previousSession = session;
       const nextSession = await authAdapter.getSession();
-      setSession(nextSession);
-      if (
-        hasKangurMobileAuthQueryIdentityChanged(previousSession, nextSession)
-      ) {
-        await invalidateKangurMobileAuthQueries(queryClient);
-      }
+      await applyResolvedSession(nextSession);
     } catch (error) {
       setAuthError(toAuthErrorMessage(error, locale));
     } finally {
@@ -228,14 +246,8 @@ export function KangurMobileAuthProvider({
     setIsLoadingAuth(true);
     try {
       setAuthError(null);
-      const previousSession = session;
       const nextSession = await authAdapter.signIn(input);
-      setSession(nextSession);
-      if (
-        hasKangurMobileAuthQueryIdentityChanged(previousSession, nextSession)
-      ) {
-        await invalidateKangurMobileAuthQueries(queryClient);
-      }
+      await applyResolvedSession(nextSession);
     } catch (error) {
       setAuthError(toAuthErrorMessage(error, locale));
     } finally {
@@ -247,14 +259,8 @@ export function KangurMobileAuthProvider({
     setIsLoadingAuth(true);
     try {
       setAuthError(null);
-      const previousSession = session;
       const nextSession = await authAdapter.signOut();
-      setSession(nextSession);
-      if (
-        hasKangurMobileAuthQueryIdentityChanged(previousSession, nextSession)
-      ) {
-        await invalidateKangurMobileAuthQueries(queryClient);
-      }
+      await applyResolvedSession(nextSession);
     } catch (error) {
       setAuthError(toAuthErrorMessage(error, locale));
     } finally {

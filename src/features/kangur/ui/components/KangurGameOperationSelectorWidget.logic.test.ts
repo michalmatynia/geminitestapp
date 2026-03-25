@@ -1,0 +1,53 @@
+import { describe, expect, it } from 'vitest';
+
+import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
+
+import {
+  resolveActionRecommendationTarget,
+  resolveLessonRecommendationTarget,
+} from './KangurGameOperationSelectorWidget.logic';
+
+describe('KangurGameOperationSelectorWidget.logic', () => {
+  it('resolves lesson recommendations from the shared game launch registry', () => {
+    expect(resolveLessonRecommendationTarget('logical_patterns', 82)).toEqual({
+      kind: 'screen',
+      screen: 'logical_patterns_quiz',
+    });
+
+    expect(resolveLessonRecommendationTarget('english_sentence_structure', 76)).toEqual({
+      kind: 'screen',
+      screen: 'english_sentence_quiz',
+    });
+
+    expect(resolveLessonRecommendationTarget('adding', 42)).toEqual({
+      kind: 'operation',
+      difficulty: 'easy',
+      operation: 'addition',
+    });
+  });
+
+  it('keeps selector-only lessons routed to the operation screen', () => {
+    expect(resolveLessonRecommendationTarget('art_shapes_basic', 65)).toEqual({
+      kind: 'screen',
+      screen: 'operation',
+    });
+  });
+
+  it('understands direct game screen quickstarts', () => {
+    expect(
+      resolveActionRecommendationTarget(
+        {
+          page: 'Game',
+          query: {
+            quickStart: 'screen',
+            screen: 'english_parts_of_speech_quiz',
+          },
+        },
+        createDefaultKangurProgressState()
+      )
+    ).toEqual({
+      kind: 'screen',
+      screen: 'english_parts_of_speech_quiz',
+    });
+  });
+});

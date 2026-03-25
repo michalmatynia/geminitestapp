@@ -11,6 +11,7 @@ export const mongoIntegrationTestFiles = [
 ];
 
 export const dbSpecificUnitTestFiles = [
+  '__tests__/shared/lib/db/mongo-client.test.ts',
   '__tests__/features/database/utils/mongo.test.ts',
   '__tests__/features/drafter/services/draft-repository-mongo.test.ts',
   '__tests__/features/integrations/services/category-mapping-repository-mongo.test.ts',
@@ -27,8 +28,14 @@ export const dbSpecificUnitTestFiles = [
   'src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-entity-executor.test.ts',
   'src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-action.test.ts',
   'src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-plan.legacy.test.ts',
+  'src/shared/lib/db/utils/mongo.test.ts',
   'src/shared/lib/db/mongo-write-retry.test.ts',
+  'src/shared/lib/products/services/category-repository/mongo-category-repository.test.ts',
+  'src/shared/lib/products/services/parameter-repository/mongo-parameter-repository.test.ts',
+  'src/shared/lib/products/services/producer-repository/mongo-producer-repository.test.ts',
+  'src/shared/lib/products/services/product-ai-job-repository/mongo-product-ai-job-repository.test.ts',
   'src/shared/lib/products/services/product-repository/mongo-product-repository.helpers.test.ts',
+  'src/shared/lib/products/services/tag-repository/mongo-tag-repository.test.ts',
 ];
 
 export const isDbSpecificMongoTestFile = (filePath) =>

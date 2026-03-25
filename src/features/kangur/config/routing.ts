@@ -17,6 +17,7 @@ const KANGUR_EMBED_STATE_QUERY_PARAM_KEYS = [
   KANGUR_EMBED_QUERY_PARAM,
   'focus',
   'quickStart',
+  'screen',
   'operation',
   'difficulty',
   'categories',

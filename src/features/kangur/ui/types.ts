@@ -13,26 +13,29 @@ export type {
   KangurQuestion,
 } from '@kangur/core';
 
-export type KangurGameScreen =
-  | 'home'
-  | 'training'
-  | 'kangur_setup'
-  | 'kangur'
-  | 'calendar_quiz'
-  | 'geometry_quiz'
-  | 'clock_quiz'
-  | 'addition_quiz'
-  | 'subtraction_quiz'
-  | 'multiplication_quiz'
-  | 'division_quiz'
-  | 'logical_patterns_quiz'
-  | 'logical_classification_quiz'
-  | 'logical_analogies_quiz'
-  | 'english_sentence_quiz'
-  | 'english_parts_of_speech_quiz'
-  | 'operation'
-  | 'playing'
-  | 'result';
+export const KANGUR_GAME_SCREENS = [
+  'home',
+  'training',
+  'kangur_setup',
+  'kangur',
+  'calendar_quiz',
+  'geometry_quiz',
+  'clock_quiz',
+  'addition_quiz',
+  'subtraction_quiz',
+  'multiplication_quiz',
+  'division_quiz',
+  'logical_patterns_quiz',
+  'logical_classification_quiz',
+  'logical_analogies_quiz',
+  'english_sentence_quiz',
+  'english_parts_of_speech_quiz',
+  'operation',
+  'playing',
+  'result',
+] as const;
+
+export type KangurGameScreen = (typeof KANGUR_GAME_SCREENS)[number];
 
 export type KangurDifficultyOption = {
   displayLabel: string;

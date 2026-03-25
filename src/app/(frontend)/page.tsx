@@ -5,6 +5,7 @@ import { JSX } from 'react';
 import { getCmsRepository } from '@/features/cms/server';
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/server';
 import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server/launch-route';
+import { KangurSSRSkeleton } from '@/features/kangur/ui/KangurSSRSkeleton';
 import { getFrontPagePublicOwner, getFrontPageRedirectPath } from '@/shared/lib/front-page-app';
 
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from './home-helpers';
@@ -45,7 +46,7 @@ export default async function Home(): Promise<JSX.Element | null> {
 
   if (shouldApplyFrontPageSelection && publicOwner === 'kangur') {
     await flush();
-    return null;
+    return <KangurSSRSkeleton />;
   }
 
   const [cmsRepository, hdrs] = await Promise.all([

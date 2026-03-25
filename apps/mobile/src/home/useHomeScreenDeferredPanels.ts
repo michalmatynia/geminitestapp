@@ -1,4 +1,4 @@
-import { startTransition, useLayoutEffect, useState } from 'react';
+import { startTransition, useEffect, useState } from 'react';
 import { InteractionManager } from 'react-native';
 
 const HOME_SCREEN_DEFERRED_PANELS_FALLBACK_TIMEOUT_MS = 320;
@@ -28,7 +28,7 @@ export const useHomeScreenDeferredPanels = (
 ): boolean => {
   const [arePanelsReady, setArePanelsReady] = useState(false);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (isBlocked) {
       setArePanelsReady(false);
       return;

@@ -8,6 +8,7 @@ import {
   translateRecommendationWithFallback,
   type RecommendationTranslate,
 } from '@/features/kangur/ui/services/recommendation-i18n';
+import { getKangurLaunchableGameScreenForLessonComponent } from '@/features/kangur/ui/services/game-launch';
 import {
   getProgressAverageAccuracy,
   getProgressBadgeTrackSummaries,
@@ -21,6 +22,7 @@ import type {
   KangurOperation,
   KangurProgressState,
 } from '@/features/kangur/ui/types';
+import { isKangurGameScreen } from '@/features/kangur/ui/context/KangurGameRuntimeContext.shared';
 import type {
   KangurLessonComponentId,
   KangurRouteAction,
@@ -39,6 +41,21 @@ export const OPERATION_LESSON_QUIZ_SCREENS: Partial<Record<KangurOperation, Kang
   division: 'division_quiz',
   clock: 'clock_quiz',
 };
+
+const LESSON_COMPONENT_OPERATION_TARGETS: Partial<Record<KangurLessonComponentId, KangurOperation>> =
+  {
+    clock: 'clock',
+    adding: 'addition',
+    subtracting: 'subtraction',
+    multiplication: 'multiplication',
+    division: 'division',
+  };
+
+const LESSON_COMPONENT_SELECTOR_SCREENS = new Set<KangurLessonComponentId>([
+  'art_colors_harmony',
+  'art_shapes_basic',
+  'music_diatonic_scale',
+]);
 
 export const resolveRecommendationDifficulty = (accuracy: number): KangurDifficulty => {
   if (accuracy >= 85) {
@@ -60,31 +77,24 @@ export const resolveLessonRecommendationTarget = (
 
   const difficulty = resolveRecommendationDifficulty(averageAccuracy);
 
-  switch (componentId) {
-    case 'clock':
-      return { kind: 'operation', difficulty, operation: 'clock' };
-    case 'calendar':
-      return { kind: 'screen', screen: 'calendar_quiz' };
-    case 'adding':
-      return { kind: 'operation', difficulty, operation: 'addition' };
-    case 'subtracting':
-      return { kind: 'operation', difficulty, operation: 'subtraction' };
-    case 'multiplication':
-      return { kind: 'operation', difficulty, operation: 'multiplication' };
-    case 'division':
-      return { kind: 'operation', difficulty, operation: 'division' };
-    case 'geometry_basics':
-    case 'geometry_shapes':
-    case 'geometry_symmetry':
-    case 'geometry_perimeter':
-      return { kind: 'screen', screen: 'geometry_quiz' };
-    case 'art_colors_harmony':
-    case 'art_shapes_basic':
-    case 'music_diatonic_scale':
-      return { kind: 'screen', screen: 'operation' };
-    default:
-      return { kind: 'training' };
+  const operationTarget =
+    LESSON_COMPONENT_OPERATION_TARGETS[componentId as KangurLessonComponentId] ?? null;
+  if (operationTarget) {
+    return { kind: 'operation', difficulty, operation: operationTarget };
   }
+
+  const launchScreen = getKangurLaunchableGameScreenForLessonComponent(
+    componentId as KangurLessonComponentId
+  );
+  if (launchScreen) {
+    return { kind: 'screen', screen: launchScreen };
+  }
+
+  if (LESSON_COMPONENT_SELECTOR_SCREENS.has(componentId as KangurLessonComponentId)) {
+    return { kind: 'screen', screen: 'operation' };
+  }
+
+  return { kind: 'training' };
 };
 
 export const resolveActivityRecommendationTarget = (
@@ -127,6 +137,12 @@ export const resolveActionRecommendationTarget = (
     const quickStart = action.query?.['quickStart'];
     if (quickStart === 'training') {
       return { kind: 'training' };
+    }
+    if (quickStart === 'screen') {
+      const requestedScreen = action.query?.['screen'] ?? null;
+      return isKangurGameScreen(requestedScreen)
+        ? { kind: 'screen', screen: requestedScreen }
+        : null;
     }
     if (quickStart === 'operation') {
       const requestedOperation = action.query?.['operation'] ?? null;
@@ -229,8 +245,8 @@ export const getRecommendationActionLabel = (
     }
     return translateRecommendationWithFallback(
       translate,
-      'operationSelector.actions.startTraining',
-      fallbackCopy.recommendation.actions.startTraining
+      'operationSelector.actions.playNow',
+      fallbackCopy.recommendation.actions.playNow
     );
   }
 

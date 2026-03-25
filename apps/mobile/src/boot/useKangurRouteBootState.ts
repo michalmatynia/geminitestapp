@@ -1,4 +1,4 @@
-import { startTransition, useLayoutEffect, useState } from 'react';
+import { startTransition, useEffect, useState } from 'react';
 import { InteractionManager } from 'react-native';
 
 import { useKangurAppBootstrap } from './KangurAppBootstrapContext';
@@ -37,7 +37,7 @@ export const useKangurRouteBootState = ({
     () => !shouldBypassInitialRouteBootShell,
   );
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (shouldBypassInitialRouteBootShell) {
       return;
     }

@@ -307,6 +307,9 @@
     "description": "Єдиний спільний каталог для всіх ігор Kangur, упорядкований за рушіями, механіками, варіантами та зв’язками з уроками.",
     "groupEyebrow": "Навчальна область",
     "groupDescription": "{count, plural, one {# гра в цій області.} few {# гри в цій області.} many {# ігор у цій області.} other {# ігор у цій області.}}",
+    "engineGroupsEyebrow": "Вид консолідації",
+    "engineGroupsTitle": "Сімейства рушіїв",
+    "engineGroupsDescription": "{count, plural, one {# сімейство рушіїв зараз згруповане в каталозі.} few {# сімейства рушіїв зараз згруповані в каталозі.} many {# сімейств рушіїв зараз згруповані в каталозі.} other {# сімейств рушіїв зараз згруповані в каталозі.}}",
     "emptyTitle": "У бібліотеці ще немає ігор",
     "emptyDescription": "Додайте перші визначення ігор, щоб почати класифікувати рушії та варіанти.",
     "metrics": {
@@ -318,6 +321,10 @@
       "variantsDescription": "Способи вбудовування та запуску.",
       "lessonLinked": "Пов’язані з уроками",
       "lessonLinkedDescription": "Ігри, уже підключені до компонентів уроків."
+    },
+    "actions": {
+      "openGame": "Відкрити гру",
+      "openLessons": "Відкрити уроки"
     },
     "statuses": {
       "active": "Активна",
@@ -331,6 +338,7 @@
       "duel": "Дуель"
     },
     "labels": {
+      "engineId": "Id рушія",
       "mechanic": "Механіка",
       "ageGroup": "Вікова група",
       "allAgeGroups": "Усі",
@@ -352,6 +360,15 @@
       "logic_classification": "Логічна класифікація",
       "logic_relation": "Відношення та аналогії",
       "sentence_building": "Побудова речень"
+    },
+    "engineGroups": {
+      "gameCount": "{count, plural, one {# гра використовує цей рушій.} few {# гри використовують цей рушій.} many {# ігор використовують цей рушій.} other {# ігор використовують цей рушій.}}",
+      "sharedChip": "Спільний рушій",
+      "singleChip": "Одна гра",
+      "gamesLabel": "Ігри",
+      "subjectsLabel": "Предмети",
+      "mechanicsLabel": "Механіки",
+      "surfacesLabel": "Поверхні"
     }
   },
   "KangurGameHomeActions": {

@@ -3,10 +3,11 @@
  */
 
 import React from 'react';
+import { createDefaultKangurAiTutorLearnerMood } from '@kangur/contracts';
 import type { KangurAuthAdapter } from '@kangur/platform';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KangurMobileI18nProvider } from '../i18n/kangurMobileI18n';
 
@@ -98,13 +99,7 @@ const createAuthenticatedSession = () => ({
       loginName: 'ada',
       status: 'active' as const,
       legacyUserKey: null,
-      aiTutor: {
-        confidence: 0,
-        curiosity: 0,
-        encouragement: 0,
-        momentum: 0,
-        updatedAt: '2026-03-20T00:00:00.000Z',
-      },
+      aiTutor: createDefaultKangurAiTutorLearnerMood(),
       createdAt: '2026-03-20T00:00:00.000Z',
       updatedAt: '2026-03-20T00:00:00.000Z',
     },
@@ -169,6 +164,24 @@ describe('KangurMobileAuthProvider', () => {
       apiClient: {},
       storage: createStorageStub(),
     });
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn((callback: FrameRequestCallback) => {
+        return setTimeout(() => {
+          callback(16);
+        }, 0) as unknown as number;
+      }),
+    );
+    vi.stubGlobal(
+      'cancelAnimationFrame',
+      vi.fn((frameId: number) => {
+        clearTimeout(frameId);
+      }),
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('localizes learner-session refresh failures for German mobile chrome', async () => {
@@ -401,21 +414,6 @@ describe('KangurMobileAuthProvider', () => {
         },
       };
     });
-    vi.stubGlobal(
-      'requestAnimationFrame',
-      vi.fn((callback: FrameRequestCallback) => {
-        return setTimeout(() => {
-          callback(16);
-        }, 0) as unknown as number;
-      }),
-    );
-    vi.stubGlobal(
-      'cancelAnimationFrame',
-      vi.fn((frameId: number) => {
-        clearTimeout(frameId);
-      }),
-    );
-
     try {
       const queryClient = createQueryClient();
       const storage = createStorageStub();
@@ -460,7 +458,6 @@ describe('KangurMobileAuthProvider', () => {
     } finally {
       vi.runOnlyPendingTimers();
       vi.useRealTimers();
-      vi.unstubAllGlobals();
     }
   });
 
@@ -506,7 +503,6 @@ describe('KangurMobileAuthProvider', () => {
     expect(result.current.isLoadingAuth).toBe(false);
     expect(result.current.session.status).toBe('authenticated');
     expect(result.current.session.user?.full_name).toBe('Ada Learner');
-
     await waitFor(() => {
       expect(adapter.getSession).toHaveBeenCalledTimes(1);
     });
@@ -518,6 +514,8 @@ describe('KangurMobileAuthProvider', () => {
     await waitFor(() => {
       expect(result.current.session.status).toBe('authenticated');
     });
+    expect(result.current.session.user?.id).toBe('learner-1');
+    expect(result.current.session.user?.full_name).toBe('Ada Learner');
     expect(invalidateKangurMobileAuthQueriesMock).not.toHaveBeenCalled();
   });
 

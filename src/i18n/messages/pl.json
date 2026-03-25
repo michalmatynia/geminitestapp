@@ -1107,6 +1107,9 @@
     "description": "Jeden wspolny katalog wszystkich gier Kangur, uporzadkowany wedlug silnikow, mechanik, wariantow i powiazan z lekcjami.",
     "groupEyebrow": "Obszar nauki",
     "groupDescription": "{count, plural, one {# gra w tym obszarze.} few {# gry w tym obszarze.} many {# gier w tym obszarze.} other {# gier w tym obszarze.}}",
+    "engineGroupsEyebrow": "Widok konsolidacji",
+    "engineGroupsTitle": "Rodziny silnikow",
+    "engineGroupsDescription": "{count, plural, one {# rodzina silnikow pogrupowana w katalogu.} few {# rodziny silnikow pogrupowane w katalogu.} many {# rodzin silnikow pogrupowanych w katalogu.} other {# rodzin silnikow pogrupowanych w katalogu.}}",
     "emptyTitle": "Brak gier w bibliotece",
     "emptyDescription": "Dodaj pierwsze definicje gier, aby zaczac klasyfikowac silniki i warianty.",
     "metrics": {
@@ -1118,6 +1121,10 @@
       "variantsDescription": "Sposoby osadzenia i uruchamiania.",
       "lessonLinked": "Powiazane z lekcjami",
       "lessonLinkedDescription": "Gry juz podlaczone do komponentow lekcji."
+    },
+    "actions": {
+      "openGame": "Otwórz grę",
+      "openLessons": "Otwórz lekcje"
     },
     "statuses": {
       "active": "Aktywna",
@@ -1131,6 +1138,7 @@
       "duel": "Pojedynek"
     },
     "labels": {
+      "engineId": "Id silnika",
       "mechanic": "Mechanika",
       "ageGroup": "Grupa wiekowa",
       "allAgeGroups": "Wszystkie",
@@ -1152,6 +1160,15 @@
       "logic_classification": "Klasyfikacja logiczna",
       "logic_relation": "Relacje i analogie",
       "sentence_building": "Budowanie zdan"
+    },
+    "engineGroups": {
+      "gameCount": "{count, plural, one {# gra korzysta z tego silnika.} few {# gry korzystaja z tego silnika.} many {# gier korzysta z tego silnika.} other {# gier korzysta z tego silnika.}}",
+      "sharedChip": "Wspolny silnik",
+      "singleChip": "Jedna gra",
+      "gamesLabel": "Gry",
+      "subjectsLabel": "Przedmioty",
+      "mechanicsLabel": "Mechaniki",
+      "surfacesLabel": "Powierzchnie"
     }
   },
   "KangurGameHomeActions": {

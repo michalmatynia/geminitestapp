@@ -3,7 +3,7 @@ import type {
   KangurLessonActivityId,
   KangurLessonActivityType,
 } from '@/features/kangur/shared/contracts/kangur';
-import { getKangurGameForLessonActivity } from '@/features/kangur/games';
+import { getKangurGameCatalogEntryForLessonActivity } from '@/features/kangur/games';
 
 type KangurLessonActivityDefinition = {
   id: KangurLessonActivityId;
@@ -22,13 +22,13 @@ const withGameScaffoldMetadata = (
     'defaultVariantId' | 'engineId' | 'gameId'
   >
 ): KangurLessonActivityDefinition => {
-  const game = getKangurGameForLessonActivity(definition.id);
+  const entry = getKangurGameCatalogEntryForLessonActivity(definition.id);
 
   return {
     ...definition,
-    gameId: game?.id,
-    engineId: game?.engineId,
-    defaultVariantId: game?.variants[0]?.id,
+    gameId: entry?.game.id,
+    engineId: entry?.game.engineId,
+    defaultVariantId: entry?.lessonVariant?.id ?? entry?.defaultVariant?.id,
   };
 };
 

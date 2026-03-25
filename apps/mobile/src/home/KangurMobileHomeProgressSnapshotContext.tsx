@@ -11,18 +11,30 @@ import {
 
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 
+type KangurMobileHomeProgressSnapshotContextValue = {
+  progress: KangurProgressState;
+  subscribeToProgressStore: boolean;
+};
+
 const KangurMobileHomeProgressSnapshotContext =
-  createContext<KangurProgressState | null>(null);
+  createContext<KangurMobileHomeProgressSnapshotContextValue | null>(null);
 
 const subscribeToProvidedHomeProgressSnapshot = (): (() => void) => () => {};
 
 export const KangurMobileHomeProgressSnapshotProvider = ({
   children,
   progress,
+  subscribeToProgressStore = false,
 }: PropsWithChildren<{
   progress: KangurProgressState;
+  subscribeToProgressStore?: boolean;
 }>): React.JSX.Element => (
-  <KangurMobileHomeProgressSnapshotContext.Provider value={progress}>
+  <KangurMobileHomeProgressSnapshotContext.Provider
+    value={{
+      progress,
+      subscribeToProgressStore,
+    }}
+  >
     {children}
   </KangurMobileHomeProgressSnapshotContext.Provider>
 );
@@ -30,12 +42,21 @@ export const KangurMobileHomeProgressSnapshotProvider = ({
 export const useKangurMobileHomeProgressSnapshot = (): KangurProgressState => {
   const providedProgressSnapshot = useContext(KangurMobileHomeProgressSnapshotContext);
   const { progressStore } = useKangurMobileRuntime();
+  const shouldSubscribeToProgressStore =
+    providedProgressSnapshot?.subscribeToProgressStore ?? true;
+  const providedProgress = providedProgressSnapshot?.progress ?? null;
 
   return useSyncExternalStore(
-    providedProgressSnapshot
-      ? subscribeToProvidedHomeProgressSnapshot
-      : progressStore.subscribeToProgress,
-    providedProgressSnapshot ? () => providedProgressSnapshot : progressStore.loadProgress,
-    providedProgressSnapshot ? () => providedProgressSnapshot : createDefaultKangurProgressState,
+    shouldSubscribeToProgressStore
+      ? progressStore.subscribeToProgress
+      : subscribeToProvidedHomeProgressSnapshot,
+    shouldSubscribeToProgressStore
+      ? progressStore.loadProgress
+      : () => providedProgress ?? createDefaultKangurProgressState(),
+    shouldSubscribeToProgressStore
+      ? providedProgress
+        ? () => providedProgress
+        : createDefaultKangurProgressState
+      : () => providedProgress ?? createDefaultKangurProgressState(),
   );
 };

@@ -1,5 +1,6 @@
 import type {
   KangurGameDefinition,
+  KangurGameEngineId,
   KangurGameId,
 } from '@/shared/contracts/kangur-games';
 import type {
@@ -54,6 +55,17 @@ export const KANGUR_GAME_IDS_BY_LESSON_COMPONENT_ID = Object.freeze(
   )
 );
 
+export const KANGUR_GAME_IDS_BY_ENGINE_ID = Object.freeze(
+  KANGUR_GAME_LIBRARY_LIST.reduce<Partial<Record<KangurGameEngineId, KangurGameId[]>>>(
+    (acc, game) => {
+      const existing = acc[game.engineId] ?? [];
+      acc[game.engineId] = [...existing, game.id];
+      return acc;
+    },
+    {}
+  )
+);
+
 export const getKangurGameDefinition = (gameId: KangurGameId): KangurGameDefinition => {
   const game = KANGUR_GAME_LIBRARY[gameId];
   if (!game) {
@@ -69,6 +81,11 @@ export const getKangurGamesForLessonComponent = (
   (KANGUR_GAME_IDS_BY_LESSON_COMPONENT_ID[componentId] ?? []).map((gameId) =>
     getKangurGameDefinition(gameId)
   );
+
+export const getKangurGamesForEngine = (
+  engineId: KangurGameEngineId
+): KangurGameDefinition[] =>
+  (KANGUR_GAME_IDS_BY_ENGINE_ID[engineId] ?? []).map((gameId) => getKangurGameDefinition(gameId));
 
 export const getKangurGameForLessonActivity = (
   activityId: KangurLessonActivityId

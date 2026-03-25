@@ -34,7 +34,11 @@ import type {
   KangurXpToastState,
 } from '@/features/kangur/ui/types';
 
-import { isKangurDifficulty, isKangurOperation } from './KangurGameRuntimeContext.shared';
+import {
+  isKangurDifficulty,
+  isKangurGameScreen,
+  isKangurOperation,
+} from './KangurGameRuntimeContext.shared';
 
 type UseKangurGameQuickStartInput = {
   basePath: string;
@@ -111,7 +115,7 @@ export const useKangurGameQuickStart = ({
     }
 
     const clearQuickStartParams = (): void => {
-      (['quickStart', 'operation', 'categories', 'count', 'difficulty'] as const).forEach((key) => {
+      (['quickStart', 'screen', 'operation', 'categories', 'count', 'difficulty'] as const).forEach((key) => {
         url.searchParams.delete(
           getKangurInternalQueryParamName(key as KangurInternalQueryParamKey, basePath)
         );
@@ -145,6 +149,21 @@ export const useKangurGameQuickStart = ({
       }
 
       setScreen('training');
+      return;
+    }
+
+    if (quickStart === 'screen') {
+      const requestedScreen = readKangurUrlParam(url.searchParams, 'screen', basePath);
+
+      quickStartConsumedRef.current = true;
+      if (!user && playerName.trim().length === 0) {
+        setPlayerName('Gracz');
+      }
+
+      clearQuickStartParams();
+      if (isKangurGameScreen(requestedScreen)) {
+        setScreen(requestedScreen);
+      }
       return;
     }
 

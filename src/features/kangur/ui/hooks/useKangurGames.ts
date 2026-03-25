@@ -133,6 +133,7 @@ const invalidateKangurGames = (queryClient: {
   invalidateQueries: (args: { queryKey: readonly unknown[] }) => void;
 }): void => {
   queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.games() });
+  queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.gameCatalog() });
 };
 
 export const useUpdateKangurGames = (): MutationResult<

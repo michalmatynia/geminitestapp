@@ -6,6 +6,7 @@ import React from 'react';
 import { createDefaultKangurAiTutorLearnerMood } from '@kangur/contracts';
 import type {
   KangurAuthSession,
+  KangurClientStorageAdapter,
   KangurUser,
 } from '@kangur/platform';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -83,6 +84,23 @@ const createWrapper =
     (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
+
+const createStorage = (
+  initialValues: Record<string, string> = {},
+): KangurClientStorageAdapter => {
+  const values = new Map(Object.entries(initialValues));
+
+  return {
+    getItem: vi.fn((key: string) => values.get(key) ?? null),
+    setItem: vi.fn((key: string, value: string) => {
+      values.set(key, value);
+    }),
+    removeItem: vi.fn((key: string) => {
+      values.delete(key);
+    }),
+    subscribe: vi.fn(() => () => {}),
+  };
+};
 
 describe('useKangurMobileHomeDuelsInvites', () => {
   beforeEach(() => {
@@ -162,6 +180,7 @@ describe('useKangurMobileHomeDuelsInvites', () => {
       apiClient: {
         listDuelLobby: listDuelLobbyMock,
       },
+      storage: createStorage(),
     });
 
     useKangurMobileAuthMock.mockReturnValue({
@@ -193,6 +212,7 @@ describe('useKangurMobileHomeDuelsInvites', () => {
       'outgoing-1',
     ]);
     expect(result.current.isAuthenticated).toBe(true);
+    expect(result.current.isDeferred).toBe(false);
   });
 
   it('stays in auth-restoring state until learner auth is available', async () => {
@@ -220,7 +240,42 @@ describe('useKangurMobileHomeDuelsInvites', () => {
     expect(listDuelLobbyMock).not.toHaveBeenCalled();
   });
 
-  it('does not start the lobby query until the home duel panels are enabled', () => {
+  it('hydrates persisted private invites while the live duel refresh is still deferred', () => {
+    const storage = createStorage({
+      'kangur.mobile.home.duels.privateLobby': JSON.stringify({
+        'learner-1': [
+          {
+            createdAt: '2026-03-21T08:00:00.000Z',
+            difficulty: 'medium',
+            host: {
+              bonusPoints: 0,
+              currentQuestionIndex: 0,
+              displayName: 'Leo Mentor',
+              joinedAt: '2026-03-21T08:00:00.000Z',
+              learnerId: 'learner-2',
+              score: 0,
+              status: 'ready',
+            },
+            mode: 'challenge',
+            operation: 'multiplication',
+            questionCount: 5,
+            sessionId: 'invite-1',
+            status: 'waiting',
+            timePerQuestionSec: 15,
+            updatedAt: '2026-03-21T08:05:00.000Z',
+            visibility: 'private',
+          },
+        ],
+      }),
+    });
+    useKangurMobileRuntimeMock.mockReturnValue({
+      apiBaseUrl: 'http://localhost:3000',
+      apiClient: {
+        listDuelLobby: listDuelLobbyMock,
+      },
+      storage,
+    });
+
     const queryClient = createQueryClient();
     const { result } = renderHook(
       () => useKangurMobileHomeDuelsInvites({ enabled: false }),
@@ -231,8 +286,80 @@ describe('useKangurMobileHomeDuelsInvites', () => {
 
     expect(result.current.isAuthenticated).toBe(true);
     expect(result.current.isLoading).toBe(false);
-    expect(result.current.invites).toEqual([]);
+    expect(result.current.isDeferred).toBe(true);
+    expect(result.current.invites.map((entry) => entry.sessionId)).toEqual(['invite-1']);
     expect(result.current.outgoingChallenges).toEqual([]);
     expect(listDuelLobbyMock).not.toHaveBeenCalled();
+  });
+
+  it('persists the resolved private lobby snapshot after a live refresh', async () => {
+    const storage = createStorage();
+    useKangurMobileRuntimeMock.mockReturnValue({
+      apiBaseUrl: 'http://localhost:3000',
+      apiClient: {
+        listDuelLobby: listDuelLobbyMock,
+      },
+      storage,
+    });
+
+    const queryClient = createQueryClient();
+    renderHook(() => useKangurMobileHomeDuelsInvites(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => {
+      expect(storage.setItem).toHaveBeenCalledWith(
+        'kangur.mobile.home.duels.privateLobby',
+        expect.any(String),
+      );
+    });
+
+    const persistedStoreRaw = (storage.setItem as ReturnType<typeof vi.fn>).mock.calls[0]?.[1];
+    expect(JSON.parse(persistedStoreRaw)).toEqual({
+      'learner-1': [
+        {
+          createdAt: '2026-03-21T08:00:00.000Z',
+          difficulty: 'hard',
+          host: {
+            bonusPoints: 0,
+            currentQuestionIndex: 0,
+            displayName: 'Ada Learner',
+            joinedAt: '2026-03-21T08:00:00.000Z',
+            learnerId: 'learner-1',
+            score: 0,
+            status: 'ready',
+          },
+          mode: 'challenge',
+          operation: 'division',
+          questionCount: 8,
+          sessionId: 'outgoing-1',
+          status: 'waiting',
+          timePerQuestionSec: 20,
+          updatedAt: '2026-03-21T08:07:00.000Z',
+          visibility: 'private',
+        },
+        {
+          createdAt: '2026-03-21T08:00:00.000Z',
+          difficulty: 'medium',
+          host: {
+            bonusPoints: 0,
+            currentQuestionIndex: 0,
+            displayName: 'Leo Mentor',
+            joinedAt: '2026-03-21T08:00:00.000Z',
+            learnerId: 'learner-2',
+            score: 0,
+            status: 'ready',
+          },
+          mode: 'challenge',
+          operation: 'multiplication',
+          questionCount: 5,
+          sessionId: 'invite-1',
+          status: 'waiting',
+          timePerQuestionSec: 15,
+          updatedAt: '2026-03-21T08:05:00.000Z',
+          visibility: 'private',
+        },
+      ],
+    });
   });
 });

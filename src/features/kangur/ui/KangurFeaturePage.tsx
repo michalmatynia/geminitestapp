@@ -18,15 +18,7 @@ import {
   KangurRoutingProvider,
   useKangurRoutingState,
 } from '@/features/kangur/ui/context/KangurRoutingContext';
-import dynamic from 'next/dynamic';
-
-const KangurFeatureApp = dynamic(
-  () =>
-    import('@/features/kangur/ui/KangurFeatureApp').then((m) => ({
-      default: m.KangurFeatureApp,
-    })),
-  { ssr: false, loading: () => null }
-);
+import { KangurFeatureApp } from '@/features/kangur/ui/KangurFeatureApp';
 import { KANGUR_MAIN_CONTENT_ID } from '@/features/kangur/ui/design/primitives/KangurPageContainer';
 import { useKangurMobileViewportVars } from '@/features/kangur/ui/hooks/useKangurMobileViewportVars';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';

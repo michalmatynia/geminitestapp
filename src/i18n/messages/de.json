@@ -1107,6 +1107,9 @@
     "description": "Ein gemeinsamer Katalog für alle Kangur-Spiele, geordnet nach Engines, Mechaniken, Varianten und Lektion-Verknüpfungen.",
     "groupEyebrow": "Lernbereich",
     "groupDescription": "{count, plural, one {# Spiel in diesem Bereich.} other {# Spiele in diesem Bereich.}}",
+    "engineGroupsEyebrow": "Konsolidierungsansicht",
+    "engineGroupsTitle": "Engine-Familien",
+    "engineGroupsDescription": "{count, plural, one {# Engine-Familie aktuell im Katalog gruppiert.} other {# Engine-Familien aktuell im Katalog gruppiert.}}",
     "emptyTitle": "Keine Spiele in der Bibliothek",
     "emptyDescription": "Füge die ersten Spieldefinitionen hinzu, um Engines und Varianten zu klassifizieren.",
     "metrics": {
@@ -1118,6 +1121,10 @@
       "variantsDescription": "Einbettungs- und Startmodi.",
       "lessonLinked": "Mit Lektionen verknüpft",
       "lessonLinkedDescription": "Spiele, die bereits mit Lektionskomponenten verbunden sind."
+    },
+    "actions": {
+      "openGame": "Spiel öffnen",
+      "openLessons": "Lektionen öffnen"
     },
     "statuses": {
       "active": "Aktiv",
@@ -1131,6 +1138,7 @@
       "duel": "Duell"
     },
     "labels": {
+      "engineId": "Engine-ID",
       "mechanic": "Mechanik",
       "ageGroup": "Altersgruppe",
       "allAgeGroups": "Alle",
@@ -1152,6 +1160,15 @@
       "logic_classification": "Logische Klassifikation",
       "logic_relation": "Beziehungen und Analogien",
       "sentence_building": "Satze bauen"
+    },
+    "engineGroups": {
+      "gameCount": "{count, plural, one {# Spiel nutzt diese Engine.} other {# Spiele nutzen diese Engine.}}",
+      "sharedChip": "Geteilte Engine",
+      "singleChip": "Ein Spiel",
+      "gamesLabel": "Spiele",
+      "subjectsLabel": "Facher",
+      "mechanicsLabel": "Mechaniken",
+      "surfacesLabel": "Oberflachen"
     }
   },
   "KangurGameHomeActions": {

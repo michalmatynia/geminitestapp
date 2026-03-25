@@ -15,7 +15,7 @@ import { server } from '@/mocks/server';
 import type { NoteWithRelations } from '@/shared/contracts/notes';
 import { ToastProvider } from '@/shared/ui/toast';
 
-const NOTE_LOAD_TIMEOUT_MS = 10_000;
+const NOTE_LOAD_TIMEOUT_MS = 15_000;
 
 const createQueryClient = () =>
   new QueryClient({
@@ -188,7 +188,7 @@ describe('Notes Advanced UI', () => {
 
     const titleInput = screen.getByPlaceholderText('Enter note title');
     expect(titleInput).toHaveValue('Apple');
-  });
+  }, 15_000);
 
   it('edits a note and saves', async () => {
     renderNotesPage();

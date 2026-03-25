@@ -183,6 +183,7 @@ describe('HomeScreen', () => {
     useKangurMobileHomeDuelsInvitesMock.mockReturnValue({
       error: null,
       invites: [],
+      isDeferred: false,
       isAuthenticated: false,
       isLoading: false,
       isRestoringAuth: false,
@@ -317,6 +318,8 @@ describe('HomeScreen', () => {
     ).toBeTruthy();
     expect(screen.getByText('Pobieramy wyniki ucznia.')).toBeTruthy();
     expect(screen.queryByText('Login ucznia')).toBeNull();
+    expect(useKangurMobileRecentResultsMock).not.toHaveBeenCalled();
+    expect(useKangurMobileTrainingFocusMock).not.toHaveBeenCalled();
   });
 
   it('renders the home loading shell before the home panels settle', () => {
@@ -329,6 +332,12 @@ describe('HomeScreen', () => {
     expect(document.querySelector('[testid="home-loading-account-card"]')).not.toBeNull();
     expect(document.querySelector('[testid="home-loading-navigation-card"]')).not.toBeNull();
     expect(screen.queryByText('Kangur mobilnie')).toBeNull();
+    expect(subscribeToProgressMock).not.toHaveBeenCalled();
+    expect(useHomeScreenDeferredPanelsMock).not.toHaveBeenCalled();
+    expect(useKangurMobileAuthMock).not.toHaveBeenCalled();
+    expect(useKangurMobileRecentResultsMock).not.toHaveBeenCalled();
+    expect(useKangurMobileTrainingFocusMock).not.toHaveBeenCalled();
+    expect(useKangurMobileHomeDuelsInvitesMock).not.toHaveBeenCalled();
   });
 
   it('shows duel placeholders until deferred home panels are ready', () => {
@@ -349,18 +358,27 @@ describe('HomeScreen', () => {
         'Przygotowujemy fokus treningowy oparty na wynikach na ekran startowy.',
       ),
     ).toBeTruthy();
-    expect(useKangurMobileRecentResultsMock).toHaveBeenCalledWith({
-      enabled: false,
-    });
-    expect(useKangurMobileTrainingFocusMock).toHaveBeenCalledWith({
-      enabled: false,
-      recentResultsLimit: 3,
-    });
+    expect(useKangurMobileRecentResultsMock).not.toHaveBeenCalled();
+    expect(useKangurMobileTrainingFocusMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps the shared home progress subscription deferred until the progress stage is ready', () => {
+    useHomeScreenDeferredPanelsMock.mockImplementation(
+      (panelKey: string) => panelKey !== 'home:progress',
+    );
+
+    renderHomeScreen();
+
+    expect(screen.getByText('Kangur mobilnie')).toBeTruthy();
+    expect(subscribeToProgressMock).not.toHaveBeenCalled();
   });
 
   it('keeps duel cards deferred until the secondary duel stage is ready', () => {
     useHomeScreenDeferredPanelsMock.mockImplementation(
-      (panelKey: string) => panelKey !== 'home:duels:secondary',
+      (panelKey: string) =>
+        panelKey !== 'home:duels:secondary' &&
+        panelKey !== 'home:duels:invites' &&
+        panelKey !== 'home:duels:advanced',
     );
 
     renderHomeScreen();
@@ -402,8 +420,133 @@ describe('HomeScreen', () => {
         'W tym oknie nie ma jeszcze zakończonych pojedynków. Pierwsze skończone serie od razu wypełnią tutaj ten stan pojedynków.',
       ),
     ).toBeNull();
+    expect(useKangurMobileHomeDuelsInvitesMock).not.toHaveBeenCalled();
+    expect(useKangurMobileHomeDuelsPresenceMock).not.toHaveBeenCalled();
+    expect(useKangurMobileHomeDuelsRematchesMock).not.toHaveBeenCalled();
+    expect(useKangurMobileHomeDuelsSpotlightMock).toHaveBeenCalledWith({
+      enabled: false,
+    });
+    expect(useKangurMobileHomeDuelsLeaderboardMock).toHaveBeenCalledWith({
+      enabled: false,
+    });
+  });
+
+  it('keeps private duel refresh deferred until the invites stage is ready', () => {
+    useHomeScreenDeferredPanelsMock.mockImplementation(
+      (panelKey: string) =>
+        panelKey !== 'home:duels:invites' && panelKey !== 'home:duels:advanced',
+    );
+    useKangurMobileAuthMock.mockReturnValue({
+      authError: null,
+      authMode: 'learner-session',
+      developerAutoSignInEnabled: false,
+      hasAttemptedDeveloperAutoSignIn: false,
+      isLoadingAuth: false,
+      session: {
+        status: 'authenticated',
+        user: {
+          activeLearner: {
+            displayName: 'Ada Learner',
+            id: 'learner-1',
+          },
+          actorType: 'learner',
+          full_name: 'Ada Learner',
+        },
+      },
+      signIn: vi.fn(),
+      signInWithLearnerCredentials: vi.fn(),
+      signOut: vi.fn(),
+      supportsLearnerCredentials: true,
+    });
+    useKangurMobileHomeDuelsInvitesMock.mockReturnValue({
+      error: null,
+      invites: [],
+      isDeferred: true,
+      isAuthenticated: true,
+      isLoading: false,
+      isRestoringAuth: false,
+      outgoingChallenges: [],
+      refresh: vi.fn(),
+    });
+
+    renderHomeScreen();
+
+    expect(
+      screen.getByText(
+        'Przygotowujemy odświeżone prywatne zaproszenia do pojedynków na kolejny etap ekranu startowego.',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Przygotowujemy odświeżone wysłane wyzwania na kolejny etap ekranu startowego.',
+      ),
+    ).toBeTruthy();
     expect(useKangurMobileHomeDuelsInvitesMock).toHaveBeenCalledWith({
       enabled: false,
+    });
+    expect(useKangurMobileHomeDuelsPresenceMock).toHaveBeenCalledWith({
+      enabled: false,
+    });
+  });
+
+  it('keeps advanced duel cards deferred until the advanced duel stage is ready', () => {
+    useHomeScreenDeferredPanelsMock.mockImplementation(
+      (panelKey: string) => panelKey !== 'home:duels:advanced',
+    );
+    useKangurMobileAuthMock.mockReturnValue({
+      authError: null,
+      authMode: 'learner-session',
+      developerAutoSignInEnabled: false,
+      hasAttemptedDeveloperAutoSignIn: false,
+      isLoadingAuth: false,
+      session: {
+        status: 'authenticated',
+        user: {
+          activeLearner: {
+            displayName: 'Ada Learner',
+            id: 'learner-1',
+          },
+          actorType: 'learner',
+          full_name: 'Ada Learner',
+        },
+      },
+      signIn: vi.fn(),
+      signInWithLearnerCredentials: vi.fn(),
+      signOut: vi.fn(),
+      supportsLearnerCredentials: true,
+    });
+    useKangurMobileHomeDuelsInvitesMock.mockReturnValue({
+      error: null,
+      invites: [],
+      isDeferred: false,
+      isAuthenticated: true,
+      isLoading: false,
+      isRestoringAuth: false,
+      outgoingChallenges: [],
+      refresh: vi.fn(),
+    });
+
+    renderHomeScreen();
+
+    expect(screen.getByText('Zaproszenia do pojedynków')).toBeTruthy();
+    expect(screen.getByText('Wysłane wyzwania')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Brak oczekujących zaproszeń. Możesz otworzyć lobby i wysłać nowe wyzwanie.',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Nie wysłano jeszcze prywatnych wyzwań. Otwórz lobby, aby od razu zaprosić rywala.',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getAllByText(
+        'Przygotowujemy kolejne karty pojedynków na następny etap ekranu startowego.',
+      ),
+    ).toHaveLength(4);
+    expect(useKangurMobileHomeDuelsInvitesMock).toHaveBeenCalledWith({
+      enabled: true,
     });
     expect(useKangurMobileHomeDuelsPresenceMock).toHaveBeenCalledWith({
       enabled: false,
@@ -440,13 +583,8 @@ describe('HomeScreen', () => {
     expect(useKangurMobileHomeLessonCheckpointsMock).toHaveBeenCalledWith({
       limit: 1,
     });
-    expect(useKangurMobileRecentResultsMock).toHaveBeenCalledWith({
-      enabled: false,
-    });
-    expect(useKangurMobileTrainingFocusMock).toHaveBeenCalledWith({
-      enabled: false,
-      recentResultsLimit: 3,
-    });
+    expect(useKangurMobileRecentResultsMock).not.toHaveBeenCalled();
+    expect(useKangurMobileTrainingFocusMock).not.toHaveBeenCalled();
   });
 
   it('keeps tertiary home insights deferred until the extra stage is ready', () => {
@@ -471,10 +609,82 @@ describe('HomeScreen', () => {
     expect(useKangurMobileHomeBadgesMock).not.toHaveBeenCalled();
   });
 
+  it('keeps the live score refresh deferred until the dedicated score stage is ready', () => {
+    useHomeScreenDeferredPanelsMock.mockImplementation(
+      (panelKey: string) => panelKey !== 'home:insights:scores',
+    );
+    useKangurMobileAuthMock.mockReturnValue({
+      authError: null,
+      authMode: 'learner-session',
+      developerAutoSignInEnabled: false,
+      hasAttemptedDeveloperAutoSignIn: false,
+      isLoadingAuth: false,
+      session: {
+        status: 'authenticated',
+        user: {
+          activeLearner: {
+            displayName: 'Maja Uczennica',
+            id: 'learner-1',
+          },
+          actorType: 'learner',
+          canManageLearners: false,
+          full_name: 'Maja Uczennica',
+        },
+      },
+      signIn: vi.fn(),
+      signInWithLearnerCredentials: vi.fn(),
+      signOut: vi.fn(),
+      supportsLearnerCredentials: true,
+    });
+
+    renderHomeScreen();
+
+    expect(
+      screen.getByText(
+        'Przygotowujemy odświeżony fokus treningowy na kolejny etap ekranu startowego.',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Przygotowujemy odświeżone podsumowanie wyników na kolejny etap ekranu startowego.',
+      ),
+    ).toBeTruthy();
+    expect(useKangurMobileRecentResultsMock).toHaveBeenCalledWith({
+      enabled: false,
+    });
+    expect(useKangurMobileTrainingFocusMock).toHaveBeenCalledWith({
+      enabled: false,
+      recentResultsLimit: 3,
+    });
+  });
+
   it('keeps detailed results actions deferred until the results stage is ready', () => {
     useHomeScreenDeferredPanelsMock.mockImplementation(
       (panelKey: string) => panelKey !== 'home:insights:results',
     );
+    useKangurMobileAuthMock.mockReturnValue({
+      authError: null,
+      authMode: 'learner-session',
+      developerAutoSignInEnabled: false,
+      hasAttemptedDeveloperAutoSignIn: false,
+      isLoadingAuth: false,
+      session: {
+        status: 'authenticated',
+        user: {
+          activeLearner: {
+            displayName: 'Maja Uczennica',
+            id: 'learner-1',
+          },
+          actorType: 'learner',
+          canManageLearners: false,
+          full_name: 'Maja Uczennica',
+        },
+      },
+      signIn: vi.fn(),
+      signInWithLearnerCredentials: vi.fn(),
+      signOut: vi.fn(),
+      supportsLearnerCredentials: true,
+    });
     useKangurMobileRecentResultsMock.mockReturnValue({
       error: null,
       isEnabled: true,
@@ -514,10 +724,10 @@ describe('HomeScreen', () => {
     expect(screen.queryByText('Historia trybu: Dodawanie')).toBeNull();
   });
 
-  it('subscribes to home progress once for the shared hero and insights snapshot', () => {
+  it('starts the shared home progress stage once the boot shell is clear', () => {
     renderHomeScreen();
 
-    expect(subscribeToProgressMock).toHaveBeenCalledTimes(1);
+    expect(useHomeScreenDeferredPanelsMock).toHaveBeenCalledWith('home:progress', false);
   });
 
   it('keeps badge and plan details deferred until the extras detail stage is ready', () => {
@@ -672,13 +882,17 @@ describe('HomeScreen', () => {
       signOut: vi.fn(),
       supportsLearnerCredentials: true,
     });
-    useKangurMobileRecentResultsMock.mockReturnValue({
+    useKangurMobileTrainingFocusMock.mockReturnValue({
       error: null,
       isEnabled: true,
       isLoading: false,
       isRestoringAuth: false,
       refresh: vi.fn(),
-      results: [],
+      recentResults: [],
+      strongestLessonFocus: null,
+      strongestOperation: null,
+      weakestLessonFocus: null,
+      weakestOperation: null,
     });
 
     renderHomeScreen();
@@ -764,6 +978,7 @@ describe('HomeScreen', () => {
           visibility: 'private',
         },
       ],
+      isDeferred: false,
       isAuthenticated: true,
       isLoading: false,
       isRestoringAuth: false,
@@ -1250,6 +1465,18 @@ describe('HomeScreen', () => {
       signOut: vi.fn(),
       supportsLearnerCredentials: true,
     });
+    useKangurMobileTrainingFocusMock.mockReturnValue({
+      error: null,
+      isEnabled: true,
+      isLoading: false,
+      isRestoringAuth: false,
+      recentResults: [],
+      refresh: vi.fn(),
+      strongestLessonFocus: null,
+      strongestOperation: null,
+      weakestLessonFocus: null,
+      weakestOperation: null,
+    });
 
     renderHomeScreen('de');
 
@@ -1276,7 +1503,7 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Ergebniszentrale')).toBeTruthy();
     expect(
       screen.getByText(
-        'Es gibt hier noch keine Ergebnisse.',
+        'Wir bereiten die aktualisierte Ergebnisübersicht für den nächsten Startschritt vor.',
       ),
     ).toBeTruthy();
     expect(

@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useRef, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, type ComponentType, type RefObject } from 'react';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
@@ -182,6 +182,12 @@ import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKang
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
+import {
+  KANGUR_LAUNCHABLE_GAME_SCREENS,
+  getKangurLaunchableGameContentId,
+  isKangurLaunchableGameScreen,
+  type KangurLaunchableGameScreen,
+} from '@/features/kangur/ui/services/game-launch';
 import { useKangurTutorAnchors, type KangurTutorAnchorConfig } from '@/features/kangur/ui/hooks/useKangurTutorAnchors';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
@@ -197,19 +203,26 @@ const GAME_TOP_RESET_SCREENS = new Set<KangurGameScreen>([
   'training',
   'kangur_setup',
   'operation',
-  'calendar_quiz',
-  'geometry_quiz',
-  'clock_quiz',
-  'addition_quiz',
-  'subtraction_quiz',
-  'division_quiz',
-  'multiplication_quiz',
-  'logical_patterns_quiz',
-  'logical_classification_quiz',
-  'logical_analogies_quiz',
-  'english_sentence_quiz',
-  'english_parts_of_speech_quiz',
+  ...KANGUR_LAUNCHABLE_GAME_SCREENS,
 ]);
+
+type LaunchableGameScreenConfig = {
+  className: string;
+  Component: ComponentType;
+  ref: RefObject<HTMLDivElement | null>;
+};
+
+const getLaunchableGameScreenConfig = (
+  configs: Record<KangurLaunchableGameScreen, LaunchableGameScreenConfig>,
+  screenKey: KangurLaunchableGameScreen
+): LaunchableGameScreenConfig => {
+  const config = configs[screenKey];
+  if (!config) {
+    throw new Error(`Missing launchable game screen config for "${screenKey}".`);
+  }
+
+  return config;
+};
 const focusGameScreenHeading = (heading: HTMLHeadingElement | null): void => {
   if (!heading) {
     return;
@@ -278,6 +291,71 @@ function GameContent(): React.JSX.Element {
   const operationSelectorRef = useRef<HTMLDivElement | null>(null);
   const resultSummaryRef = useRef<HTMLDivElement | null>(null);
   const resultLeaderboardRef = useRef<HTMLDivElement | null>(null);
+  const launchableGameScreenConfigs: Record<
+    KangurLaunchableGameScreen,
+    LaunchableGameScreenConfig
+  > = {
+    calendar_quiz: {
+      className: 'w-full flex flex-col items-center',
+      Component: KangurGameCalendarTrainingWidget,
+      ref: calendarQuizRef,
+    },
+    geometry_quiz: {
+      className: 'w-full flex flex-col items-center',
+      Component: KangurGameGeometryTrainingWidget,
+      ref: geometryQuizRef,
+    },
+    clock_quiz: {
+      className: 'w-full flex flex-col items-center',
+      Component: KangurGameClockQuizWidget,
+      ref: clockQuizRef,
+    },
+    addition_quiz: {
+      className: 'w-full flex flex-col items-center',
+      Component: KangurGameAdditionQuizWidget,
+      ref: additionQuizRef,
+    },
+    subtraction_quiz: {
+      className: 'w-full flex flex-col items-center',
+      Component: KangurGameSubtractionQuizWidget,
+      ref: subtractionQuizRef,
+    },
+    multiplication_quiz: {
+      className: 'w-full flex flex-col items-center',
+      Component: KangurGameMultiplicationQuizWidget,
+      ref: multiplicationQuizRef,
+    },
+    division_quiz: {
+      className: 'w-full flex flex-col items-center',
+      Component: KangurGameDivisionQuizWidget,
+      ref: divisionQuizRef,
+    },
+    logical_patterns_quiz: {
+      className: 'w-full flex flex-col items-center',
+      Component: KangurGameLogicalPatternsQuizWidget,
+      ref: logicalPatternsQuizRef,
+    },
+    logical_classification_quiz: {
+      className: 'w-full flex flex-col items-center',
+      Component: KangurGameLogicalClassificationQuizWidget,
+      ref: logicalClassificationQuizRef,
+    },
+    logical_analogies_quiz: {
+      className: 'w-full flex flex-col items-center',
+      Component: KangurGameLogicalAnalogiesQuizWidget,
+      ref: logicalAnalogiesQuizRef,
+    },
+    english_sentence_quiz: {
+      className: 'w-full flex flex-col items-center',
+      Component: KangurGameEnglishSentenceQuizWidget,
+      ref: englishSentenceQuizRef,
+    },
+    english_parts_of_speech_quiz: {
+      className: 'w-full flex flex-col items-center',
+      Component: KangurGameEnglishPartsOfSpeechQuizWidget,
+      ref: englishPartsOfSpeechQuizRef,
+    },
+  };
   const isMobile = useKangurMobileBreakpoint();
   const shouldUseStandardMobileScroll = isMobile;
   const getScreenLabel = (screenKey: KangurGameScreen): string =>
@@ -296,21 +374,8 @@ function GameContent(): React.JSX.Element {
       return `game:practice:${runtime.operation}:${runtime.difficulty}`;
     }
 
-    if (
-      screen === 'calendar_quiz' ||
-      screen === 'geometry_quiz' ||
-      screen === 'clock_quiz' ||
-      screen === 'addition_quiz' ||
-      screen === 'subtraction_quiz' ||
-      screen === 'division_quiz' ||
-      screen === 'multiplication_quiz' ||
-      screen === 'logical_patterns_quiz' ||
-      screen === 'logical_classification_quiz' ||
-      screen === 'logical_analogies_quiz' ||
-      screen === 'english_sentence_quiz' ||
-      screen === 'english_parts_of_speech_quiz'
-    ) {
-      return `game:${screen}`;
+    if (isKangurLaunchableGameScreen(screen)) {
+      return getKangurLaunchableGameContentId(screen);
     }
 
     if (screen === 'kangur' || screen === 'kangur_setup') {
@@ -441,22 +506,26 @@ function GameContent(): React.JSX.Element {
     { id: 'kangur-game-training-setup', kind: 'screen', ref: trainingSetupRef, surface: 'game', enabled: screen === 'training', priority: 120, contentId: screen === 'training' ? tutorActivityContentId : null, label: getScreenLabel('training') },
     { id: 'kangur-game-kangur-setup', kind: 'screen', ref: kangurSetupRef, surface: 'game', enabled: screen === 'kangur_setup', priority: 120, contentId: screen === 'kangur_setup' ? tutorActivityContentId : null, label: getScreenLabel('kangur_setup') },
     { id: 'kangur-game-kangur-session', kind: 'screen', ref: kangurSessionRef, surface: 'game', enabled: screen === 'kangur', priority: 120, contentId: screen === 'kangur' ? tutorActivityContentId : null, label: getScreenLabel('kangur') },
-    { id: 'kangur-game-calendar-quiz', kind: 'screen', ref: calendarQuizRef, surface: 'game', enabled: screen === 'calendar_quiz', priority: 120, contentId: screen === 'calendar_quiz' ? tutorActivityContentId : null, label: getScreenLabel('calendar_quiz') },
-    { id: 'kangur-game-geometry-quiz', kind: 'screen', ref: geometryQuizRef, surface: 'game', enabled: screen === 'geometry_quiz', priority: 120, contentId: screen === 'geometry_quiz' ? tutorActivityContentId : null, label: getScreenLabel('geometry_quiz') },
-    { id: 'kangur-game-clock-quiz', kind: 'screen', ref: clockQuizRef, surface: 'game', enabled: screen === 'clock_quiz', priority: 120, contentId: screen === 'clock_quiz' ? tutorActivityContentId : null, label: getScreenLabel('clock_quiz') },
-    { id: 'kangur-game-addition-quiz', kind: 'screen', ref: additionQuizRef, surface: 'game', enabled: screen === 'addition_quiz', priority: 120, contentId: screen === 'addition_quiz' ? tutorActivityContentId : null, label: getScreenLabel('addition_quiz') },
-    { id: 'kangur-game-subtraction-quiz', kind: 'screen', ref: subtractionQuizRef, surface: 'game', enabled: screen === 'subtraction_quiz', priority: 120, contentId: screen === 'subtraction_quiz' ? tutorActivityContentId : null, label: getScreenLabel('subtraction_quiz') },
-    { id: 'kangur-game-division-quiz', kind: 'screen', ref: divisionQuizRef, surface: 'game', enabled: screen === 'division_quiz', priority: 120, contentId: screen === 'division_quiz' ? tutorActivityContentId : null, label: getScreenLabel('division_quiz') },
-    { id: 'kangur-game-multiplication-quiz', kind: 'screen', ref: multiplicationQuizRef, surface: 'game', enabled: screen === 'multiplication_quiz', priority: 120, contentId: screen === 'multiplication_quiz' ? tutorActivityContentId : null, label: getScreenLabel('multiplication_quiz') },
-    { id: 'kangur-game-logical-patterns-quiz', kind: 'screen', ref: logicalPatternsQuizRef, surface: 'game', enabled: screen === 'logical_patterns_quiz', priority: 120, contentId: screen === 'logical_patterns_quiz' ? tutorActivityContentId : null, label: getScreenLabel('logical_patterns_quiz') },
-    { id: 'kangur-game-logical-classification-quiz', kind: 'screen', ref: logicalClassificationQuizRef, surface: 'game', enabled: screen === 'logical_classification_quiz', priority: 120, contentId: screen === 'logical_classification_quiz' ? tutorActivityContentId : null, label: getScreenLabel('logical_classification_quiz') },
-    { id: 'kangur-game-logical-analogies-quiz', kind: 'screen', ref: logicalAnalogiesQuizRef, surface: 'game', enabled: screen === 'logical_analogies_quiz', priority: 120, contentId: screen === 'logical_analogies_quiz' ? tutorActivityContentId : null, label: getScreenLabel('logical_analogies_quiz') },
-    { id: 'kangur-game-english-sentence-quiz', kind: 'screen', ref: englishSentenceQuizRef, surface: 'game', enabled: screen === 'english_sentence_quiz', priority: 120, contentId: screen === 'english_sentence_quiz' ? tutorActivityContentId : null, label: getScreenLabel('english_sentence_quiz') },
-    { id: 'kangur-game-english-parts-of-speech-quiz', kind: 'screen', ref: englishPartsOfSpeechQuizRef, surface: 'game', enabled: screen === 'english_parts_of_speech_quiz', priority: 120, contentId: screen === 'english_parts_of_speech_quiz' ? tutorActivityContentId : null, label: getScreenLabel('english_parts_of_speech_quiz') },
+    ...KANGUR_LAUNCHABLE_GAME_SCREENS.map((screenKey) => ({
+      ...(() => {
+        const config = getLaunchableGameScreenConfig(launchableGameScreenConfigs, screenKey);
+
+        return {
+          ref: config.ref,
+        };
+      })(),
+      id: `kangur-game-${screenKey.replaceAll('_', '-')}`,
+      kind: 'screen' as const,
+      surface: 'game' as const,
+      enabled: screen === screenKey,
+      priority: 120,
+      contentId: screen === screenKey ? tutorActivityContentId : null,
+      label: getScreenLabel(screenKey),
+    })),
     { id: 'kangur-game-operation-selector', kind: 'screen', ref: operationSelectorRef, surface: 'game', enabled: screen === 'operation', priority: 120, contentId: screen === 'operation' ? tutorActivityContentId : null, label: getScreenLabel('operation') },
     { id: 'kangur-game-result-summary', kind: 'review', ref: resultSummaryRef, surface: 'game', enabled: screen === 'result', priority: 110, contentId: screen === 'result' ? tutorActivityContentId : null, label: getScreenLabel('result'), assignmentId: activeGameAssignment?.id ?? null },
     { id: 'kangur-game-result-leaderboard', kind: 'leaderboard', ref: resultLeaderboardRef, surface: 'game', enabled: screen === 'result', priority: 100, contentId: screen === 'result' ? tutorActivityContentId : null, label: translations('result.leaderboardLabel') },
-  ], [activeGameAssignment?.id, canAccessParentAssignments, screen, translations, tutorActivityContentId]);
+  ], [activeGameAssignment?.id, canAccessParentAssignments, launchableGameScreenConfigs, screen, translations, tutorActivityContentId]);
   useKangurTutorAnchors(tutorAnchors);
 
   useEffect(() => {
@@ -521,6 +590,13 @@ function GameContent(): React.JSX.Element {
   );
 
   const renderCurrentScreen = (): React.JSX.Element | null => {
+    if (isKangurLaunchableGameScreen(screen)) {
+      const config = getLaunchableGameScreenConfig(launchableGameScreenConfigs, screen);
+      const ScreenComponent = config.Component;
+
+      return renderScreen(screen, config.className, <ScreenComponent />, config.ref);
+    }
+
     switch (screen) {
       case 'home':
         return renderScreen(
@@ -641,90 +717,6 @@ function GameContent(): React.JSX.Element {
           'w-full max-w-lg flex flex-col items-center',
           <KangurGameKangurSessionWidget />,
           kangurSessionRef
-        );
-      case 'calendar_quiz':
-        return renderScreen(
-          'calendar_quiz',
-          'w-full flex flex-col items-center',
-          <KangurGameCalendarTrainingWidget />,
-          calendarQuizRef
-        );
-      case 'geometry_quiz':
-        return renderScreen(
-          'geometry_quiz',
-          'w-full flex flex-col items-center',
-          <KangurGameGeometryTrainingWidget />,
-          geometryQuizRef
-        );
-      case 'clock_quiz':
-        return renderScreen(
-          'clock_quiz',
-          'w-full flex flex-col items-center',
-          <KangurGameClockQuizWidget />,
-          clockQuizRef
-        );
-      case 'addition_quiz':
-        return renderScreen(
-          'addition_quiz',
-          'w-full flex flex-col items-center',
-          <KangurGameAdditionQuizWidget />,
-          additionQuizRef
-        );
-      case 'subtraction_quiz':
-        return renderScreen(
-          'subtraction_quiz',
-          'w-full flex flex-col items-center',
-          <KangurGameSubtractionQuizWidget />,
-          subtractionQuizRef
-        );
-      case 'division_quiz':
-        return renderScreen(
-          'division_quiz',
-          'w-full flex flex-col items-center',
-          <KangurGameDivisionQuizWidget />,
-          divisionQuizRef
-        );
-      case 'multiplication_quiz':
-        return renderScreen(
-          'multiplication_quiz',
-          'w-full flex flex-col items-center',
-          <KangurGameMultiplicationQuizWidget />,
-          multiplicationQuizRef
-        );
-      case 'logical_patterns_quiz':
-        return renderScreen(
-          'logical_patterns_quiz',
-          'w-full flex flex-col items-center',
-          <KangurGameLogicalPatternsQuizWidget />,
-          logicalPatternsQuizRef
-        );
-      case 'logical_classification_quiz':
-        return renderScreen(
-          'logical_classification_quiz',
-          'w-full flex flex-col items-center',
-          <KangurGameLogicalClassificationQuizWidget />,
-          logicalClassificationQuizRef
-        );
-      case 'logical_analogies_quiz':
-        return renderScreen(
-          'logical_analogies_quiz',
-          'w-full flex flex-col items-center',
-          <KangurGameLogicalAnalogiesQuizWidget />,
-          logicalAnalogiesQuizRef
-        );
-      case 'english_sentence_quiz':
-        return renderScreen(
-          'english_sentence_quiz',
-          'w-full flex flex-col items-center',
-          <KangurGameEnglishSentenceQuizWidget />,
-          englishSentenceQuizRef
-        );
-      case 'english_parts_of_speech_quiz':
-        return renderScreen(
-          'english_parts_of_speech_quiz',
-          'w-full flex flex-col items-center',
-          <KangurGameEnglishPartsOfSpeechQuizWidget />,
-          englishPartsOfSpeechQuizRef
         );
       case 'operation':
       case 'training':

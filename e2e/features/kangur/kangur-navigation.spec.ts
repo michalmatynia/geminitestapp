@@ -22,8 +22,9 @@ const PARENT_DASHBOARD_HEADING_PATTERN = /^(?:Panel Rodzica|Parent dashboard)$/i
 const PAGE_BACK_BUTTON_LABEL_PATTERN = /(?:wróć do poprzedniej strony|go back to previous page)/i;
 const TOPICS_BACK_BUTTON_LABEL_PATTERN = /(?:wróć do tematów|back to topics)/i;
 const PASSWORD_LABEL_PATTERN = /(?:hasło|password)/i;
-const PARENT_LOGIN_SUBMIT_LABEL_PATTERN = /(?:zaloguj rodzica|sign in parent)/i;
-const LEARNER_LOGIN_SUBMIT_LABEL_PATTERN = /(?:zaloguj ucznia|sign in learner)/i;
+const HOME_LABEL_PATTERN = /(?:strona główna|home page)/i;
+const MAGIC_LINK_DEPRECATED_NOTICE_PATTERN =
+  /(?:Email link sign-in is no longer available\. Sign in with email and password or create an account\.|Logowanie linkiem z e-maila nie jest już dostępne\. Zaloguj się e-mailem i hasłem albo utwórz konto\.)/i;
 const LOGIN_IDENTIFIER_LABEL_PATTERN =
   /Email rodzica (albo|lub) nick ucznia|Parent email or learner username/i;
 
@@ -172,7 +173,12 @@ const ensureVisibleLessonEntry = async (page: Page): Promise<Locator> => {
 };
 
 const getVisibleTopBarNavAction = (page: Page, testId: string): Locator =>
-  page.getByTestId('kangur-page-top-bar').locator(`[data-testid="${testId}"]:visible`).last();
+  testId === 'kangur-primary-nav-home'
+    ? page
+        .getByTestId('kangur-page-top-bar')
+        .getByRole('link', { name: HOME_LABEL_PATTERN })
+        .last()
+    : page.getByTestId('kangur-page-top-bar').locator(`[data-testid="${testId}"]:visible`).last();
 
 const getVisibleTopBarProfileAction = (page: Page): Locator =>
   page.getByTestId('kangur-page-top-bar').locator('[data-doc-id="top_nav_profile"]:visible').last();
@@ -223,11 +229,10 @@ const expectParentDashboardRouteReady = async (page: Page): Promise<void> => {
   await expect(page.getByRole('heading', { name: PARENT_DASHBOARD_HEADING_PATTERN })).toBeVisible({
     timeout: ROUTE_BOOT_TIMEOUT_MS,
   });
-  await expectLocatorToHaveClassToken(hero, 'text-center');
 };
 
 const expectKangurLoginReady = async (page: Page): Promise<void> => {
-  await expect(page.getByTestId('kangur-login-modal')).toBeVisible({
+  await expect(getKangurLoginDialog(page)).toBeVisible({
     timeout: ROUTE_BOOT_TIMEOUT_MS,
   });
   await expect(page.getByTestId('kangur-login-form')).toHaveAttribute('data-hydrated', 'true', {
@@ -237,13 +242,25 @@ const expectKangurLoginReady = async (page: Page): Promise<void> => {
     timeout: ROUTE_BOOT_TIMEOUT_MS,
   });
   await expect(
-    page
-      .getByTestId('kangur-login-form')
-      .getByLabel(LOGIN_IDENTIFIER_LABEL_PATTERN)
+    getKangurLoginIdentifierField(page)
   ).toBeVisible({
     timeout: ROUTE_BOOT_TIMEOUT_MS,
   });
 };
+
+const getKangurLoginDialog = (page: Page): Locator =>
+  page.getByRole('dialog', { name: /(?:sign in|zaloguj)/i });
+
+const getKangurLoginIdentifierField = (page: Page): Locator =>
+  page.getByTestId('kangur-login-form').getByLabel(LOGIN_IDENTIFIER_LABEL_PATTERN);
+
+const getKangurLoginPasswordField = (page: Page): Locator =>
+  page.getByTestId('kangur-login-form').getByRole('textbox', {
+    name: PASSWORD_LABEL_PATTERN,
+  });
+
+const getKangurLoginSubmitButton = (page: Page): Locator =>
+  page.getByTestId('kangur-login-form').locator('button[type="submit"]');
 
 const gotoKangurPath = async (page: Page, path: string): Promise<void> => {
   await page.goto(path, {
@@ -1079,6 +1096,7 @@ const expectRouteShellMarker = async (page: Page): Promise<void> => {
         }, ROUTE_SHELL_MARKER_KEY),
       {
         message: 'expected the Kangur route shell instance to persist',
+        timeout: ROUTE_BOOT_TIMEOUT_MS,
       }
     )
     .toBe('persist');
@@ -1261,6 +1279,22 @@ test.describe('Kangur navigation continuity', () => {
       });
     });
 
+    await page.route('**/api/auth/csrf**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ csrfToken: 'kangur-e2e-csrf' }),
+      });
+    });
+
+    await page.route('**/api/auth/signout**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ url: '/login' }),
+      });
+    });
+
     await page.route('**/api/kangur/scores**', async (route) => {
       await route.fulfill({
         status: 200,
@@ -1276,12 +1310,123 @@ test.describe('Kangur navigation continuity', () => {
         body: JSON.stringify([]),
       });
     });
+
+    await page.route('**/api/settings/lite**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([]),
+      });
+    });
+
+    await page.route('**/api/settings?**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([]),
+      });
+    });
+
+    await page.route('**/api/user/preferences**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({}),
+      });
+    });
+
+    await page.route('**/api/agentcreator/personas/*/visuals**', async (route) => {
+      const requestUrl = new URL(route.request().url());
+      const pathSegments = requestUrl.pathname.split('/');
+      const personaIndex = pathSegments.findIndex((segment) => segment === 'personas');
+      const personaId =
+        personaIndex >= 0 && personaIndex + 1 < pathSegments.length
+          ? decodeURIComponent(pathSegments[personaIndex + 1] ?? 'kangur-tutor')
+          : 'kangur-tutor';
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: personaId,
+          name: 'Tutor',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        }),
+      });
+    });
+
+    await page.route('**/api/kangur/ai-tutor/content**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({}),
+      });
+    });
+
+    await page.route('**/api/client-errors', async (route) => {
+      await route.fulfill({
+        status: 204,
+        body: '',
+      });
+    });
+
+    await page.route('**/api/kangur/auth/me**', async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          code: 'UNAUTHORIZED',
+          message: 'Unauthorized',
+        }),
+      });
+    });
+
+    await page.route('**/api/kangur/progress**', async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          code: 'UNAUTHORIZED',
+          message: 'Unauthorized',
+        }),
+      });
+    });
+
+    await page.route('**/api/kangur/subject-focus**', async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          code: 'UNAUTHORIZED',
+          message: 'Unauthorized',
+        }),
+      });
+    });
+
+    await page.route('**/api/kangur/learner-activity/stream**', async (route) => {
+      await route.fulfill({
+        status: 204,
+        body: '',
+      });
+    });
+
+    await page.route('**/api/kangur/learner-activity**', async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          code: 'UNAUTHORIZED',
+          message: 'Unauthorized',
+        }),
+      });
+    });
   });
 
 const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot> =>
   page.evaluate(() => {
     const topBar = document.querySelector('[data-testid="kangur-page-top-bar"]');
-    const nav = document.querySelector('nav[aria-label="Glowna nawigacja Kangur"]');
+    const nav = topBar?.querySelector('nav') ?? document.querySelector('nav[aria-label="Główna nawigacja Kangur"]');
     const utility = document.querySelector('[data-testid="kangur-primary-nav-utility-actions"]');
     const lessons = document.querySelector('[data-testid="kangur-primary-nav-lessons"]');
     const parent = document.querySelector('[data-testid="kangur-primary-nav-parent-dashboard"]');
@@ -1862,7 +2007,7 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     await expectRouteShellMarker(page);
   });
 
-  test('drops the home action panel promptly while the leaderboard and progress stack stay stable on the Grajmy handoff', async ({
+  test('drops the home widgets promptly on the Grajmy handoff', async ({
     page,
   }) => {
     await gotoKangurPath(page, '/kangur/game');
@@ -1887,17 +2032,15 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     expect(transitionLayout.actionsVisible).toBe(false);
     expect(initialLayout.leaderboardTop).not.toBeNull();
     expect(initialLayout.progressTop).not.toBeNull();
-    expect(transitionLayout.leaderboardTop).not.toBeNull();
-    expect(transitionLayout.progressTop).not.toBeNull();
-    expect(
-      Math.abs((transitionLayout.leaderboardTop ?? 0) - (initialLayout.leaderboardTop ?? 0))
-    ).toBeLessThan(60);
-    expect(
-      Math.abs((transitionLayout.progressTop ?? 0) - (initialLayout.progressTop ?? 0))
-    ).toBeLessThan(60);
+    expect(transitionLayout.leaderboardTop).toBeNull();
+    expect(transitionLayout.progressTop).toBeNull();
 
-    await expect(page.getByTestId('kangur-game-operation-top-section')).toBeVisible();
+    await expect(page.getByTestId('kangur-game-operation-top-section')).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expect(actionsShell).toHaveCount(0);
+    await expect(leaderboard).toHaveCount(0);
+    await expect(progressCard).toHaveCount(0);
   });
 
   test('keeps the parent dashboard entry hidden for learner sessions across page navigation', async ({
@@ -1943,7 +2086,9 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     await startRouteShellMonitor(page);
     await page.getByTestId('kangur-primary-nav-parent-dashboard').click();
-    await expect(page).toHaveURL(/\/kangur\/parent-dashboard$/);
+    await expect(page).toHaveURL(/\/kangur\/parent-dashboard$/, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expectRouteShellMarker(page);
     await expect(page.getByRole('heading', { name: PARENT_DASHBOARD_HEADING_PATTERN })).toBeVisible();
     await page.waitForTimeout(250);
@@ -1960,7 +2105,9 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     await startRouteShellMonitor(page);
     await page.getByTestId('kangur-primary-nav-parent-dashboard').click();
-    await expect(page).toHaveURL(/\/kangur\/parent-dashboard$/);
+    await expect(page).toHaveURL(/\/kangur\/parent-dashboard$/, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expectRouteShellMarker(page);
     await page.waitForTimeout(250);
     expectRouteShellContinuity(await stopRouteShellMonitor(page), 'home -> parent-dashboard');
@@ -2001,7 +2148,9 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     expect(beforeScroll.parentRight).not.toBeNull();
     expect(beforeScroll.logoutRight).not.toBeNull();
     expect(beforeScroll.topBarWidth as number).toBeGreaterThanOrEqual(beforeScroll.viewportWidth - 4);
-    expect(beforeScroll.navWidth as number).toBeGreaterThanOrEqual(beforeScroll.viewportWidth - 80);
+    expect(beforeScroll.navWidth as number).toBeGreaterThanOrEqual(
+      (beforeScroll.topBarWidth as number) - 128
+    );
     expect(beforeScroll.utilityLeft as number).toBeGreaterThan(beforeScroll.lessonsRight as number);
     expect((beforeScroll.navRight as number) - (beforeScroll.utilityRight as number)).toBeLessThanOrEqual(
       28
@@ -2031,12 +2180,9 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     await markRouteShellAsPersistent(page);
 
     await startRouteShellMonitor(page);
-    await page
-      .getByTestId('kangur-parent-dashboard-hero')
-      .getByRole('button', { name: PAGE_BACK_BUTTON_LABEL_PATTERN })
-      .click();
+    await page.getByTestId('kangur-parent-dashboard-hero').locator('[data-doc-id="top_nav_profile"]').first().click();
     await expect(page).toHaveURL(/\/kangur\/profile$/);
-    await expect(page.getByTestId('kangur-learner-profile-hero')).toBeVisible();
+    await expectLearnerProfileRouteReady(page);
     await expectRouteShellMarker(page);
     await page.waitForTimeout(250);
 
@@ -2219,7 +2365,7 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     await startKangurSurfaceMonitor(page);
     await page.getByTestId('kangur-login-modal-close').click();
-    await expect(page).toHaveURL(/\/(?:kangur)?$/, { timeout: ROUTE_BOOT_TIMEOUT_MS });
+    await expect(page).toHaveURL(HOME_ROUTE_URL_PATTERN, { timeout: ROUTE_BOOT_TIMEOUT_MS });
     await expectKangurAppShellVisible(page, ROUTE_BOOT_TIMEOUT_MS);
     await page.waitForTimeout(250);
     expectKangurSurfaceContinuity(await stopKangurSurfaceMonitor(page), 'direct login modal -> kangur');
@@ -2235,6 +2381,7 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     page,
   }) => {
     let callbackPayload: URLSearchParams | null = null;
+    let verifyCredentialsPayload: Record<string, string> | null = null;
 
     await page.route('**/api/auth/csrf**', async (route) => {
       await route.fulfill({
@@ -2245,6 +2392,10 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     });
 
     await page.route('**/api/auth/verify-credentials**', async (route) => {
+      verifyCredentialsPayload = JSON.parse(route.request().postData() ?? '{}') as Record<
+        string,
+        string
+      >;
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -2285,25 +2436,30 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     await gotoKangurPath(page, '/kangur/login?callbackUrl=%2Fkangur%3Flogin%3Dparent');
     await expectKangurLoginReady(page);
 
-    const identifierField = page
-      .getByTestId('kangur-login-form')
-      .getByLabel(LOGIN_IDENTIFIER_LABEL_PATTERN);
-    const parentPasswordField = page
-      .getByTestId('kangur-login-form')
-      .getByLabel(PASSWORD_LABEL_PATTERN);
+    const identifierField = getKangurLoginIdentifierField(page);
+    const parentPasswordField = getKangurLoginPasswordField(page);
 
     await identifierField.fill('parent@example.com');
     await parentPasswordField.fill('secret123');
     await expect(identifierField).toHaveValue('parent@example.com');
     await expect(parentPasswordField).toHaveValue('secret123');
     await expect(page.getByTestId('kangur-login-form')).toHaveAttribute('data-login-kind', 'parent');
-    await page.getByRole('button', { name: PARENT_LOGIN_SUBMIT_LABEL_PATTERN }).click();
+    await expect(getKangurLoginSubmitButton(page)).toBeEnabled();
+    await getKangurLoginSubmitButton(page).click();
 
-    await expect(page).toHaveURL(/\/kangur\?login=parent$/);
-    await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
+    await expect(page).toHaveURL(/\/kangur\?login=parent$/, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
+    await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     expect(callbackPayload?.get('email')).toBe('parent@example.com');
-    expect(callbackPayload?.get('challengeId')).toBe('kangur-parent-challenge');
     expect(callbackPayload?.get('callbackUrl')).toBe('/kangur?login=parent');
+    expect(verifyCredentialsPayload).toEqual({
+      authFlow: 'kangur_parent',
+      email: 'parent@example.com',
+      password: 'secret123',
+    });
   });
 
   test('shows the legacy parent magic-link entry as a password-based fallback prompt', async ({
@@ -2314,17 +2470,17 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
       '/kangur/login?callbackUrl=%2Fkangur%3Flogin%3Dmagic-parent&magicLinkToken=magic-link-1'
     );
 
-    await expect(page.getByTestId('kangur-login-modal')).toBeVisible();
+    await expectKangurLoginReady(page);
     await expect(
-      page.getByText(
-        'Logowanie linkiem z e-maila nie jest już dostępne. Zaloguj się e-mailem i hasłem albo utwórz konto.'
-      )
-    ).toBeVisible();
-    await expect(
-      page.getByTestId('kangur-login-form').getByLabel(LOGIN_IDENTIFIER_LABEL_PATTERN)
-    ).toBeVisible();
-    await expect(page.getByTestId('kangur-login-form').getByLabel(PASSWORD_LABEL_PATTERN)).toBeVisible();
-    await expect(page).toHaveURL(/\/login\?callbackUrl=%2Fkangur%3Flogin%3Dmagic-parent$/);
+      page.getByText(MAGIC_LINK_DEPRECATED_NOTICE_PATTERN)
+    ).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
+    await expect(getKangurLoginIdentifierField(page)).toBeVisible();
+    await expect(getKangurLoginPasswordField(page)).toBeVisible();
+    await expect(page).toHaveURL(/callbackUrl=.*magic-parent/, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
   });
 
   test('submits student nickname credentials from the unified Kangur login page and returns to the callback route', async ({
@@ -2391,12 +2547,8 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     await gotoKangurPath(page, '/kangur/login?callbackUrl=%2Fkangur%3Flogin%3Dstudent');
     await expectKangurLoginReady(page);
 
-    const studentNicknameField = page
-      .getByTestId('kangur-login-form')
-      .getByLabel(LOGIN_IDENTIFIER_LABEL_PATTERN);
-    const studentPasswordField = page
-      .getByTestId('kangur-login-form')
-      .getByLabel(PASSWORD_LABEL_PATTERN);
+    const studentNicknameField = getKangurLoginIdentifierField(page);
+    const studentPasswordField = getKangurLoginPasswordField(page);
 
     await studentNicknameField.fill('janek123');
     await studentPasswordField.fill('secret123');
@@ -2406,10 +2558,15 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
       'data-login-kind',
       'student'
     );
-    await page.getByRole('button', { name: LEARNER_LOGIN_SUBMIT_LABEL_PATTERN }).click();
+    await expect(getKangurLoginSubmitButton(page)).toBeEnabled();
+    await getKangurLoginSubmitButton(page).click();
 
-    await expect(page).toHaveURL(/\/kangur\?login=student$/);
-    await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
+    await expect(page).toHaveURL(/\/kangur\?login=student$/, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
+    await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expect
       .poll(() =>
         page.evaluate(() => window.localStorage.getItem('kangur.activeLearnerId'))

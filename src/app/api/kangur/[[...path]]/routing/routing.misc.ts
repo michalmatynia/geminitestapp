@@ -11,6 +11,14 @@ import {
 import { patchKangurAssignmentHandler } from '../../assignments/[id]/handler';
 import { postKangurAssignmentReassignHandler } from '../../assignments/[id]/reassign/handler';
 import {
+  getKangurGameCatalogHandler,
+  querySchema as gameCatalogQuerySchema,
+} from '../../game-catalog/handler';
+import {
+  getKangurGameEnginesHandler,
+  querySchema as gameEnginesQuerySchema,
+} from '../../game-engines/handler';
+import {
   getKangurGamesHandler,
   postKangurGamesHandler,
   querySchema as gamesQuerySchema,
@@ -127,6 +135,24 @@ export const gamesGetHandler: SimpleRouteHandler = apiHandler(getKangurGamesHand
   service: 'kangur.api',
   querySchema: gamesQuerySchema,
 });
+
+export const gameEnginesGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurGameEnginesHandler,
+  {
+    source: 'kangur.game-engines.GET',
+    service: 'kangur.api',
+    querySchema: gameEnginesQuerySchema,
+  }
+);
+
+export const gameCatalogGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurGameCatalogHandler,
+  {
+    source: 'kangur.game-catalog.GET',
+    service: 'kangur.api',
+    querySchema: gameCatalogQuerySchema,
+  }
+);
 
 export const gamesPostHandler: SimpleRouteHandler = apiHandler(postKangurGamesHandler, {
   source: 'kangur.games.POST',
@@ -465,6 +491,14 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
   }
   if (segments[0] === 'games' && segments.length === 1) {
     return handleGetPost(request, gamesGetHandler, gamesPostHandler);
+  }
+  if (segments[0] === 'game-engines' && segments.length === 1) {
+    if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
+    return gameEnginesGetHandler(request);
+  }
+  if (segments[0] === 'game-catalog' && segments.length === 1) {
+    if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
+    return gameCatalogGetHandler(request);
   }
   if (segments[0] === 'lesson-sections' && segments.length === 1) {
     return handleGetPost(request, lessonSectionsGetHandler, lessonSectionsPostHandler);

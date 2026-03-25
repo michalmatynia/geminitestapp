@@ -50,6 +50,7 @@ describe('kangur page config', () => {
     expect(Object.keys(kangurPages)).toEqual([
       'Competition',
       'Game',
+      'GamesLibrary',
       'Duels',
       'LearnerProfile',
       'Lessons',
@@ -57,7 +58,7 @@ describe('kangur page config', () => {
       'SocialUpdates',
       'Tests',
     ]);
-    expect(dynamicCalls).toHaveLength(8);
+    expect(dynamicCalls).toHaveLength(9);
 
     const competitionLoadingFallback = dynamicCalls[0]?.loading;
     const gameLoadingFallback = dynamicCalls[1]?.loading;

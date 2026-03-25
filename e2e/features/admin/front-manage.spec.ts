@@ -2,13 +2,11 @@ import { expect, test, type Page } from '@playwright/test';
 
 import {
   FRONT_PAGE_OPTIONS,
-  normalizeFrontPageApp,
   type FrontPageSelectableApp,
 } from '@/shared/lib/front-page-app';
 import { ensureAdminSession } from '../../support/admin-auth';
 
 const FRONT_PAGE_KEY = 'front_page_app';
-const FRONT_PAGE_UPDATED_TOAST = 'Front page updated';
 const ROOT_OWNED_HOME_URL_PATTERN = /\/(?:[a-z]{2})?$/;
 
 type BrowserFetchInit = {
@@ -132,7 +130,26 @@ async function saveFrontPageSelectionFromUi(
   await main.getByRole('button', { name: new RegExp(optionTitle, 'i') }).click();
   await page.getByRole('button', { name: 'Save Selection' }).click();
   await updatePromise;
-  await expect(page.getByText(FRONT_PAGE_UPDATED_TOAST)).toBeVisible({ timeout: 30_000 });
+  await expect
+    .poll(async () => await readFrontPageAppSetting(page), {
+      timeout: 30_000,
+      message: `expected ${FRONT_PAGE_KEY} to persist as ${option}`,
+    })
+    .toBe(option);
+  await expect(page.getByRole('button', { name: 'Save Selection' })).toBeEnabled({
+    timeout: 30_000,
+  });
+}
+
+async function restoreFrontPageAppSetting(page: Page, value: string | null): Promise<void> {
+  const restoreValue = value ?? 'cms';
+  await writeFrontPageAppSetting(page, restoreValue);
+  await expect
+    .poll(async () => await readFrontPageAppSetting(page), {
+      timeout: 30_000,
+      message: `expected ${FRONT_PAGE_KEY} to restore as ${restoreValue}`,
+    })
+    .toBe(restoreValue);
 }
 
 async function waitForRootOwnedKangurBoot(page: Page): Promise<void> {
@@ -299,7 +316,6 @@ test.describe.serial('Front Manage', () => {
     test.setTimeout(120_000);
 
     const originalValue = await readFrontPageAppSetting(page);
-    const restoreOption = normalizeFrontPageApp(originalValue) ?? 'cms';
 
     try {
       await saveFrontPageSelectionFromUi(page, 'kangur');
@@ -308,12 +324,7 @@ test.describe.serial('Front Manage', () => {
       await expect(page).toHaveURL(ROOT_OWNED_HOME_URL_PATTERN);
       await expect(page.locator('[data-testid="kangur-feature-page-shell"]')).toBeVisible();
     } finally {
-      await page.goto('/admin/front-manage', { waitUntil: 'domcontentloaded' }).catch(() => {});
-      if (originalValue === 'products') {
-        await writeFrontPageAppSetting(page, originalValue);
-      } else {
-        await saveFrontPageSelectionFromUi(page, restoreOption);
-      }
+      await restoreFrontPageAppSetting(page, originalValue);
     }
   });
 
@@ -323,7 +334,6 @@ test.describe.serial('Front Manage', () => {
     test.setTimeout(120_000);
 
     const originalValue = await readFrontPageAppSetting(page);
-    const restoreOption = normalizeFrontPageApp(originalValue) ?? 'cms';
 
     try {
       await saveFrontPageSelectionFromUi(page, 'kangur');
@@ -354,12 +364,7 @@ test.describe.serial('Front Manage', () => {
         'expected root-owned Kangur navigation not to surface the global app loader after boot'
       ).toBe(true);
     } finally {
-      await page.goto('/admin/front-manage', { waitUntil: 'domcontentloaded' }).catch(() => {});
-      if (originalValue === 'products') {
-        await writeFrontPageAppSetting(page, originalValue);
-      } else {
-        await saveFrontPageSelectionFromUi(page, restoreOption);
-      }
+      await restoreFrontPageAppSetting(page, originalValue);
     }
   });
 
@@ -369,7 +374,6 @@ test.describe.serial('Front Manage', () => {
     test.setTimeout(120_000);
 
     const originalValue = await readFrontPageAppSetting(page);
-    const restoreOption = normalizeFrontPageApp(originalValue) ?? 'cms';
 
     try {
       await saveFrontPageSelectionFromUi(page, 'kangur');
@@ -411,12 +415,7 @@ test.describe.serial('Front Manage', () => {
         'expected the lessons list surface to become visible after the handoff'
       ).toBe(true);
     } finally {
-      await page.goto('/admin/front-manage', { waitUntil: 'domcontentloaded' }).catch(() => {});
-      if (originalValue === 'products') {
-        await writeFrontPageAppSetting(page, originalValue);
-      } else {
-        await saveFrontPageSelectionFromUi(page, restoreOption);
-      }
+      await restoreFrontPageAppSetting(page, originalValue);
     }
   });
 
@@ -426,7 +425,6 @@ test.describe.serial('Front Manage', () => {
     test.setTimeout(120_000);
 
     const originalValue = await readFrontPageAppSetting(page);
-    const restoreOption = normalizeFrontPageApp(originalValue) ?? 'cms';
 
     try {
       await saveFrontPageSelectionFromUi(page, 'kangur');
@@ -439,21 +437,20 @@ test.describe.serial('Front Manage', () => {
       });
       await expect(page).toHaveURL(/\/login\?callbackUrl=%2Fkangur%2Ftests$/);
       await expect(page.locator('[data-testid="kangur-feature-page-shell"]')).toBeVisible();
-      await expect(page.locator('[data-testid="kangur-login-modal"]')).toBeVisible();
+      await expect(page.getByTestId('kangur-login-form')).toBeVisible({
+        timeout: 30_000,
+      });
       await expect(page.getByTestId('kangur-login-form')).toHaveAttribute(
         'data-login-kind',
         'unknown'
       );
       await expect(
-        page.getByTestId('kangur-login-form').getByLabel('Email rodzica lub nick ucznia')
+        page
+          .getByTestId('kangur-login-form')
+          .getByLabel(/Email rodzica (albo|lub) nick ucznia|Parent email or learner username/i)
       ).toBeVisible();
     } finally {
-      await page.goto('/admin/front-manage', { waitUntil: 'domcontentloaded' }).catch(() => {});
-      if (originalValue === 'products') {
-        await writeFrontPageAppSetting(page, originalValue);
-      } else {
-        await saveFrontPageSelectionFromUi(page, restoreOption);
-      }
+      await restoreFrontPageAppSetting(page, originalValue);
     }
   });
 
@@ -461,7 +458,6 @@ test.describe.serial('Front Manage', () => {
     test.setTimeout(120_000);
 
     const originalValue = await readFrontPageAppSetting(page);
-    const restoreOption = normalizeFrontPageApp(originalValue) ?? 'cms';
 
     try {
       await saveFrontPageSelectionFromUi(page, 'cms');
@@ -475,21 +471,20 @@ test.describe.serial('Front Manage', () => {
       });
       await expect(page).toHaveURL(/\/kangur\/login\?callbackUrl=%2Fkangur%2Ftests$/);
       await expect(page.locator('[data-testid="kangur-route-shell"]')).toBeVisible();
-      await expect(page.locator('[data-testid="kangur-login-modal"]')).toBeVisible();
+      await expect(page.getByTestId('kangur-login-form')).toBeVisible({
+        timeout: 30_000,
+      });
       await expect(page.getByTestId('kangur-login-form')).toHaveAttribute(
         'data-login-kind',
         'unknown'
       );
       await expect(
-        page.getByTestId('kangur-login-form').getByLabel('Email rodzica lub nick ucznia')
+        page
+          .getByTestId('kangur-login-form')
+          .getByLabel(/Email rodzica (albo|lub) nick ucznia|Parent email or learner username/i)
       ).toBeVisible();
     } finally {
-      await page.goto('/admin/front-manage', { waitUntil: 'domcontentloaded' }).catch(() => {});
-      if (originalValue === 'products') {
-        await writeFrontPageAppSetting(page, originalValue);
-      } else {
-        await saveFrontPageSelectionFromUi(page, restoreOption);
-      }
+      await restoreFrontPageAppSetting(page, originalValue);
     }
   });
 });

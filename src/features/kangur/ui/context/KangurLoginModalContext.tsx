@@ -16,6 +16,7 @@ import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingCont
 import { type KangurAuthMode, parseKangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
+import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 
 
 type KangurLoginModalOpenOptions = {
@@ -107,6 +108,7 @@ export const KangurLoginModalProvider = ({
   const { basePath, requestedPath } = useKangurRouting();
   const homeHref = useMemo(() => getKangurHomeHref(basePath), [basePath]);
   const loginPathname = useMemo(() => getPathnameFromHref(getKangurLoginHref(basePath)), [basePath]);
+  const normalizedPathname = useMemo(() => stripSiteLocalePrefix(pathname), [pathname]);
   const requestedCallbackUrl = useMemo(
     () => toNonEmptyString(searchParams.get('callbackUrl'), homeHref),
     [homeHref, searchParams]
@@ -121,7 +123,7 @@ export const KangurLoginModalProvider = ({
     isOpen: false,
     showParentAuthModeTabs: true,
   });
-  const isRouteDriven = pathname === loginPathname;
+  const isRouteDriven = normalizedPathname === loginPathname;
   const fallbackCallbackUrl = requestedPath || homeHref;
   const authMode = isRouteDriven ? requestedAuthMode : inlineState.authMode;
   const showParentAuthModeTabs = isRouteDriven ? true : inlineState.showParentAuthModeTabs;

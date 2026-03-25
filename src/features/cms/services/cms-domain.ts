@@ -274,10 +274,11 @@ export async function createCmsDomain(domain: string): Promise<CmsDomainResponse
 export async function deleteCmsDomain(domainId: string): Promise<void> {
   const [zoningEnabled, db] = await Promise.all([isDomainZoningEnabled(), getMongoDb()]);
   if (!zoningEnabled) return;
+  // updateMany must complete before deleteOne to clear aliases first
+  await db
+    .collection<CmsDomainRecord>(DOMAIN_COLLECTION)
+    .updateMany({ aliasOf: domainId }, { $set: { aliasOf: null, updatedAt: new Date() } });
   await Promise.all([
-    db
-      .collection<CmsDomainRecord>(DOMAIN_COLLECTION)
-      .updateMany({ aliasOf: domainId }, { $set: { aliasOf: null, updatedAt: new Date() } }),
     db.collection<CmsDomainRecord>(DOMAIN_COLLECTION).deleteOne({ id: domainId }),
     db.collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION).deleteMany({ domainId }),
   ]);

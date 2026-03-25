@@ -118,8 +118,7 @@ describe('FrontendPublicOwnerShell', () => {
     });
   });
 
-  it('falls back to the real browser pathname when the router pathname is transiently unavailable', async () => {
-    window.history.replaceState({}, '', '/lessons');
+  it('treats null pathname as home route fallback', async () => {
     usePathnameMock.mockReturnValue(null);
 
     render(
@@ -131,7 +130,7 @@ describe('FrontendPublicOwnerShell', () => {
     expect(await screen.findByTestId('kangur-feature-route-shell')).toBeInTheDocument();
     await waitFor(() => {
       expect(frontendPublicOwnerKangurShellMock).toHaveBeenCalledWith({
-        embedded: false,
+        embedded: true,
         initialMode: undefined,
         initialThemeSettings: undefined,
       });

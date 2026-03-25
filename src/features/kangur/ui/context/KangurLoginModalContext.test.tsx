@@ -247,4 +247,18 @@ describe('KangurLoginModalProvider', () => {
 
     expect(routerPushMock).toHaveBeenCalledWith('/', { scroll: false });
   });
+
+  it('treats the localized canonical public login route as route-driven when Kangur owns the front page', async () => {
+    await renderHarness({
+      basePath: '/',
+      pageKey: 'Game',
+      pathname: '/en/login',
+      requestedPath: '/',
+      search: 'callbackUrl=%2Fkangur%2Fprofile',
+    });
+
+    expect(screen.getByTestId('kangur-login-modal-open')).toHaveTextContent('true');
+    expect(screen.getByTestId('kangur-login-modal-route-driven')).toHaveTextContent('true');
+    expect(screen.getByTestId('kangur-login-modal-home')).toHaveTextContent('/');
+  });
 });

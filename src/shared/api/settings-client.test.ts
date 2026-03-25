@@ -18,6 +18,24 @@ describe('settings-client', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
+    delete (globalThis as typeof globalThis & { __LITE_SETTINGS__?: unknown }).__LITE_SETTINGS__;
+  });
+
+  it('hydrates lite settings from SSR without touching fetch during module evaluation', async () => {
+    const ssrSettings = [{ key: 'observability.infoEnabled', value: 'true' }];
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    (
+      globalThis as typeof globalThis & { __LITE_SETTINGS__?: typeof ssrSettings }
+    ).__LITE_SETTINGS__ = ssrSettings;
+
+    const { fetchLiteSettingsCached } = await import('./settings-client');
+
+    await expect(fetchLiteSettingsCached()).resolves.toEqual(ssrSettings);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(
+      (globalThis as typeof globalThis & { __LITE_SETTINGS__?: unknown }).__LITE_SETTINGS__
+    ).toBeUndefined();
   });
 
   it('returns an empty lite settings list without logging when the user is unauthorized', async () => {

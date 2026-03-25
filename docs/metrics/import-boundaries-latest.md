@@ -8,21 +8,17 @@ canonical: true
 ---
 # Import Boundaries Check
 
-Generated at: 2026-03-25T08:45:36.094Z
+Generated at: 2026-03-25T09:30:25.160Z
 
 ## Summary
 
-- Status: FAILED
-- Files scanned: 5745
+- Status: PASSED
+- Files scanned: 5747
 - Features tracked: 10
-- Circular dependencies: 1
-- Errors: 1
+- Circular dependencies: 0
+- Errors: 0
 - Warnings: 0
 - Info: 0
-
-## Circular Dependencies
-
-- products -> integrations -> products
 
 ## Feature Dependency Graph
 
@@ -33,8 +29,8 @@ Generated at: 2026-03-25T08:45:36.094Z
 | products | ai, files, foldertree, integrations, internationalization | 5 |
 | admin | ai, foldertree, products, prompt-engine | 4 |
 | case-resolver | ai, document-editor, filemaker, foldertree | 4 |
-| integrations | auth, data-import-export, product-sync, products | 4 |
 | ai | files, foldertree, viewer3d | 3 |
+| integrations | auth, data-import-export, product-sync | 3 |
 | notesapp | document-editor, foldertree | 2 |
 | drafter | products | 1 |
 | prompt-exploder | foldertree | 1 |
@@ -43,13 +39,10 @@ Generated at: 2026-03-25T08:45:36.094Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| circular-feature-dep | 1 | 0 | 0 |
 
 ## Issues
 
-| Severity | Rule | Location | Message |
-| --- | --- | --- | --- |
-| ERROR | circular-feature-dep | - | Circular dependency between features: products -> integrations -> products |
+No import boundary issues detected.
 
 ## Notes
 

@@ -1,6 +1,16 @@
 import type { UnknownRecordDto } from '@/shared/contracts/base';
-import type { ClientErrorPayloadDto as ClientErrorPayload } from '@/shared/contracts/observability';
+import type {
+  ClientErrorPayloadDto as ClientErrorPayload,
+  SystemLogLevelDto as SystemLogLevel,
+} from '@/shared/contracts/observability';
 import { classifyError } from '@/shared/errors/error-classifier';
+import {
+  getObservabilityLoggingControlTypeForSystemLogLevel,
+} from '@/shared/lib/observability/logging-controls';
+import {
+  isClientLoggingControlEnabled,
+  resetClientLoggingControlsForTests,
+} from '@/shared/lib/observability/logging-controls-client';
 
 import { isSensitiveKey, REDACTED_VALUE, truncateString } from './client-redaction';
 import { isAbortLikeError } from './is-abort-like-error';
@@ -25,6 +35,7 @@ export const setClientErrorBaseContext = (context: ClientErrorContext): void => 
 export const resetClientErrorLoggerStateForTests = (): void => {
   baseContext = {};
   recentClientErrorSignatures.clear();
+  resetClientLoggingControlsForTests();
 };
 
 const safeSerialize = (value: unknown): SerializedContext => {
@@ -157,6 +168,20 @@ export interface LoggableObject extends Record<string, unknown> {
 export const isLoggableObject = (error: unknown): error is LoggableObject =>
   typeof error === 'object' && error !== null;
 
+const resolveClientLoggingLevel = (
+  extra: {
+    digest?: string | null | undefined;
+    componentStack?: string | null | undefined;
+    context?: ClientErrorContext | null | undefined;
+  } | undefined
+): SystemLogLevel => {
+  const candidate = extra?.context?.['level'];
+  if (candidate === 'info' || candidate === 'warn' || candidate === 'error') {
+    return candidate;
+  }
+  return 'error';
+};
+
 export const logClientError = (
   error: unknown,
   extra?: {
@@ -167,6 +192,10 @@ export const logClientError = (
 ): void => {
   if (typeof window === 'undefined') return;
   if (isAbortLikeError(error)) return;
+  const loggingControlType = getObservabilityLoggingControlTypeForSystemLogLevel(
+    resolveClientLoggingLevel(extra)
+  );
+  if (!isClientLoggingControlEnabled(loggingControlType)) return;
 
   // Prevent double logging of the same error instance
   if (isLoggableObject(error) && error.__logged) {

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-24'
+last_reviewed: '2026-03-25'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # API Contract Coverage Report
 
-Generated at: 2026-03-24T23:06:18.890Z
+Generated at: 2026-03-25T09:30:32.210Z
 
 ## Summary
 

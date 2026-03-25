@@ -28,8 +28,9 @@ const settingsFetchErrorLoggedAt = new Map<string, number>();
 const normalizeScope = (scope?: SettingsScope): SettingsScope =>
   scope === 'heavy' || scope === 'light' || scope === 'all' ? scope : 'light';
 
-const cloneSettings = (data: SettingRecord[]): SettingRecord[] =>
-  data.map((item: SettingRecord) => ({ ...item }));
+function cloneSettings(data: SettingRecord[]): SettingRecord[] {
+  return data.map((item: SettingRecord) => ({ ...item }));
+}
 
 const toError = (error: unknown): Error =>
   error instanceof Error ? error : new Error(String(error));
@@ -122,6 +123,20 @@ function saveLiteSettingsSnapshot(data: SettingRecord[]): void {
     fetchedAt: Date.now(),
   };
 }
+
+// SSR hydration: read lite settings injected by the server layout's <script> tag.
+// This seeds the client cache so the first fetchLiteSettingsCached() call returns
+// instantly without a network round-trip to /api/settings/lite.
+(function hydrateLiteSettingsFromSSR(): void {
+  if (typeof globalThis === 'undefined') return;
+  const win = globalThis as typeof globalThis & { __LITE_SETTINGS__?: SettingRecord[] };
+  const ssrData = win.__LITE_SETTINGS__;
+  if (!Array.isArray(ssrData) || ssrData.length === 0) return;
+  const data = cloneSettings(ssrData);
+  liteSettingsCache = { data, fetchedAt: Date.now() };
+  saveLiteSettingsSnapshot(data);
+  delete win.__LITE_SETTINGS__;
+})();
 
 function getScopeSnapshot(scope: SettingsScope): SettingRecord[] | null {
   return settingsSnapshotByScope.get(scope)?.data ?? settingsSnapshotAny?.data ?? null;

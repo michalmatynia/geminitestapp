@@ -9,6 +9,10 @@ import {
   redactSensitiveText,
   truncateString,
 } from './log-redaction';
+import {
+  getObservabilityLoggingControlTypeForSystemLogLevel,
+} from './logging-controls';
+import { isServerLoggingEnabled } from './logging-controls-server';
 import { getActiveOtelContextAttributes } from './otel-context';
 import { emitOtelLogRecord } from './otel-log-bridge';
 import { forwardToCentralizedLogging } from './system-logger-central-forwarding';
@@ -408,6 +412,15 @@ export type SystemLogInput = {
 
 export async function logSystemEvent(input: SystemLogInput): Promise<void> {
   try {
+    const level = input.level ?? 'info';
+    const loggingControlType = getObservabilityLoggingControlTypeForSystemLogLevel(
+      level,
+      Boolean(input.critical)
+    );
+    if (!(await isServerLoggingEnabled(loggingControlType))) {
+      return;
+    }
+
     const errorInfo = input.error ? normalizeErrorInfo(input.error) : null;
     const requestInfo = extractRequestInfo(input.request);
     const activeOtelContext = getActiveOtelContextAttributes();

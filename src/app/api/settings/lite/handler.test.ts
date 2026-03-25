@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KANGUR_AI_TUTOR_APP_SETTINGS_KEY } from '@/shared/contracts/kangur-ai-tutor';
 import { KANGUR_LAUNCH_ROUTE_SETTINGS_KEY } from '@/shared/contracts/kangur';
+import { OBSERVABILITY_LOGGING_KEYS } from '@/shared/contracts/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const { getMongoDbMock, getMongoClientMock } = vi.hoisted(() => ({
@@ -145,6 +146,59 @@ describe('settings lite handler', () => {
         {
           key: KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
           value: JSON.stringify({ route: 'dedicated_app' }),
+        },
+      ])
+    );
+  });
+
+  it('returns observability logging control settings from the lite endpoint', async () => {
+    const toArrayKangurMock = vi.fn().mockResolvedValue([]);
+    const toArraySettingsMock = vi.fn().mockResolvedValue([
+      {
+        _id: OBSERVABILITY_LOGGING_KEYS.infoEnabled,
+        key: OBSERVABILITY_LOGGING_KEYS.infoEnabled,
+        value: 'false',
+      },
+      {
+        _id: OBSERVABILITY_LOGGING_KEYS.activityEnabled,
+        key: OBSERVABILITY_LOGGING_KEYS.activityEnabled,
+        value: 'true',
+      },
+      {
+        _id: OBSERVABILITY_LOGGING_KEYS.errorEnabled,
+        key: OBSERVABILITY_LOGGING_KEYS.errorEnabled,
+        value: 'false',
+      },
+    ]);
+    const createIndexMock = vi.fn().mockResolvedValue(undefined);
+    const findKangurMock = vi.fn().mockReturnValue({ toArray: toArrayKangurMock });
+    const findSettingsMock = vi.fn().mockReturnValue({ toArray: toArraySettingsMock });
+    const collectionMock = vi.fn((name: string) => {
+      if (name === 'kangur_settings') {
+        return { find: findKangurMock, createIndex: createIndexMock };
+      }
+      return { find: findSettingsMock };
+    });
+    getMongoDbMock.mockResolvedValue({ collection: collectionMock });
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/settings/lite'),
+      createRequestContext()
+    );
+
+    await expect(response.json()).resolves.toEqual(
+      expect.arrayContaining([
+        {
+          key: OBSERVABILITY_LOGGING_KEYS.infoEnabled,
+          value: 'false',
+        },
+        {
+          key: OBSERVABILITY_LOGGING_KEYS.activityEnabled,
+          value: 'true',
+        },
+        {
+          key: OBSERVABILITY_LOGGING_KEYS.errorEnabled,
+          value: 'false',
         },
       ])
     );

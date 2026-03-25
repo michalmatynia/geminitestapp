@@ -1,8 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import { isServerLoggingEnabled } from '@/shared/lib/observability/logging-controls-server';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { notifyErrorEnrichers } from '@/shared/utils/observability/error-enricher-registry';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
+vi.mock('@/shared/lib/observability/logging-controls-server', () => ({
+  isServerLoggingEnabled: vi.fn().mockResolvedValue(true),
+}));
 
 // Mock dependencies — ErrorSystem imports from lib/system-logger, not server barrel
 vi.mock('@/shared/lib/observability/system-logger', () => ({
@@ -17,6 +22,7 @@ vi.mock('@/shared/utils/observability/error-enricher-registry', () => ({
 describe('ErrorSystem', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(isServerLoggingEnabled).mockResolvedValue(true);
   });
 
   it('captures and logs an Error object', async () => {
@@ -94,5 +100,24 @@ describe('ErrorSystem', () => {
         message: '[unknown] User logged in',
       })
     );
+  });
+
+  it('skips warning and error workflows when error logging is disabled', async () => {
+    vi.mocked(isServerLoggingEnabled).mockImplementation(async (type) => type !== 'error');
+
+    await ErrorSystem.captureException(new Error('suppressed'), { service: 'api' });
+    await ErrorSystem.logWarning('suppressed warning', { service: 'api' });
+    await ErrorSystem.logValidationError('suppressed validation', { service: 'api' });
+
+    expect(logSystemEvent).not.toHaveBeenCalled();
+    expect(notifyErrorEnrichers).not.toHaveBeenCalled();
+  });
+
+  it('skips info messages when info logging is disabled', async () => {
+    vi.mocked(isServerLoggingEnabled).mockImplementation(async (type) => type !== 'info');
+
+    await ErrorSystem.logInfo('suppressed info', { service: 'api' });
+
+    expect(logSystemEvent).not.toHaveBeenCalled();
   });
 });

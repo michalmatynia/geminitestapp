@@ -4,7 +4,16 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 
-import { CLIENT_LOGGING_KEYS } from '@/shared/contracts/observability';
+import {
+  CLIENT_LOGGING_KEYS,
+  OBSERVABILITY_LOGGING_KEYS,
+} from '@/shared/contracts/observability';
+import {
+  resolveObservabilityLoggingControls,
+} from '@/shared/lib/observability/logging-controls';
+import {
+  setClientLoggingControls,
+} from '@/shared/lib/observability/logging-controls-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   initClientErrorReporting,
@@ -26,6 +35,20 @@ export default function ClientErrorReporter(): null {
 
   const featureFlagsRaw = settingsStore.get(CLIENT_LOGGING_KEYS.featureFlags);
   const tagsRaw = settingsStore.get(CLIENT_LOGGING_KEYS.tags);
+  const infoLoggingEnabledRaw = settingsStore.get(OBSERVABILITY_LOGGING_KEYS.infoEnabled);
+  const activityLoggingEnabledRaw = settingsStore.get(OBSERVABILITY_LOGGING_KEYS.activityEnabled);
+  const errorLoggingEnabledRaw = settingsStore.get(OBSERVABILITY_LOGGING_KEYS.errorEnabled);
+
+  useEffect(() => {
+    setClientLoggingControls(
+      resolveObservabilityLoggingControls((key: string) => settingsStore.get(key))
+    );
+  }, [
+    activityLoggingEnabledRaw,
+    errorLoggingEnabledRaw,
+    infoLoggingEnabledRaw,
+    settingsStore,
+  ]);
 
   useEffect(() => {
     const featureFlags = parseJsonSetting<Record<string, unknown> | null>(featureFlagsRaw, null);

@@ -241,6 +241,20 @@ export const CLIENT_LOGGING_KEYS = {
   tags: 'client_logging_tags',
 } as const;
 
+export const OBSERVABILITY_LOGGING_KEYS = {
+  infoEnabled: 'observability_info_logging_enabled',
+  activityEnabled: 'observability_activity_logging_enabled',
+  errorEnabled: 'observability_error_logging_enabled',
+} as const;
+
+export const observabilityLoggingControlsSchema = z.object({
+  infoEnabled: z.boolean(),
+  activityEnabled: z.boolean(),
+  errorEnabled: z.boolean(),
+});
+
+export type ObservabilityLoggingControls = z.infer<typeof observabilityLoggingControlsSchema>;
+
 export const systemLogFilterFormValuesSchema = z.object({
   level: z.union([systemLogLevelSchema, z.literal('all')]),
   query: z.string(),

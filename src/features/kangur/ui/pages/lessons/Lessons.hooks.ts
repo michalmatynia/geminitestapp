@@ -98,6 +98,10 @@ export function useLessonsLogic() {
   const activeLessonDocumentQuery = useKangurLessonDocument(activeLessonId, {
     enabled: shouldLoadLessonDocument,
   });
+  const isLessonsPlaceholderData =
+    isDeferredContentReady && lessonsQuery.isPlaceholderData === true;
+  const isLessonSectionsPlaceholderData =
+    isDeferredContentReady && lessonSectionsQuery.isPlaceholderData === true;
   const isLessonsDataMissing = typeof lessonsQuery.data === 'undefined';
   const isLessonSectionsDataMissing = typeof lessonSectionsQuery.data === 'undefined';
   const isLessonsCatalogLoading =
@@ -118,20 +122,28 @@ export function useLessonsLogic() {
         lessonSectionsQuery.isRefetching) &&
         isLessonSectionsDataMissing
     );
-  const shouldShowLessonsCatalogSkeleton = !isDeferredContentReady || isLessonsCatalogLoading || isLessonSectionsLoading;
+  const shouldShowLessonsCatalogSkeleton =
+    !isDeferredContentReady ||
+    isLessonsPlaceholderData ||
+    isLessonSectionsPlaceholderData ||
+    isLessonsCatalogLoading ||
+    isLessonSectionsLoading;
   
   const lessons = useMemo(
     (): KangurLesson[] =>
-      isDeferredContentReady
+      isDeferredContentReady && !isLessonsPlaceholderData
         ? (lessonsQuery.data ?? []).filter(
             (lesson) => lesson.subject === subject && lesson.ageGroup === ageGroup
           )
         : [],
-    [ageGroup, isDeferredContentReady, lessonsQuery.data, subject]
+    [ageGroup, isDeferredContentReady, isLessonsPlaceholderData, lessonsQuery.data, subject]
   );
   const lessonSections = useMemo(
-    () => (isDeferredContentReady ? lessonSectionsQuery.data ?? [] : []),
-    [isDeferredContentReady, lessonSectionsQuery.data]
+    () =>
+      isDeferredContentReady && !isLessonSectionsPlaceholderData
+        ? lessonSectionsQuery.data ?? []
+        : [],
+    [isDeferredContentReady, isLessonSectionsPlaceholderData, lessonSectionsQuery.data]
   );
   const activeLessonDocument = useMemo(
     () => (isDeferredContentReady ? activeLessonDocumentQuery.data ?? null : null),

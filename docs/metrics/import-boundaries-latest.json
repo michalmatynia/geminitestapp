@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-03-25T08:45:36.094Z",
-  "status": "failed",
+  "generatedAt": "2026-03-25T09:30:25.160Z",
+  "status": "passed",
   "summary": {
-    "total": 1,
-    "errorCount": 1,
+    "total": 0,
+    "errorCount": 0,
     "warningCount": 0,
     "infoCount": 0,
-    "status": "failed",
-    "fileCount": 5745,
+    "status": "passed",
+    "fileCount": 5747,
     "featureCount": 10,
-    "circularDependencyCount": 1
+    "circularDependencyCount": 0
   },
   "scope": {
     "root": "src",
@@ -46,8 +46,7 @@
     "integrations": [
       "auth",
       "data-import-export",
-      "product-sync",
-      "products"
+      "product-sync"
     ],
     "kangur": [
       "ai",
@@ -72,32 +71,8 @@
       "foldertree"
     ]
   },
-  "circularDependencies": [
-    [
-      "products",
-      "integrations",
-      "products"
-    ]
-  ],
-  "issues": [
-    {
-      "severity": "error",
-      "ruleId": "circular-feature-dep",
-      "message": "Circular dependency between features: products -> integrations -> products",
-      "file": null,
-      "line": null,
-      "column": null,
-      "snippet": null,
-      "context": null
-    }
-  ],
-  "rules": [
-    {
-      "ruleId": "circular-feature-dep",
-      "errorCount": 1,
-      "warningCount": 0,
-      "infoCount": 0
-    }
-  ],
-  "durationMs": 296
+  "circularDependencies": [],
+  "issues": [],
+  "rules": [],
+  "durationMs": 292
 }

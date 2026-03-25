@@ -25,7 +25,7 @@ const KangurFeatureApp = dynamic(
     import('@/features/kangur/ui/KangurFeatureApp').then((m) => ({
       default: m.KangurFeatureApp,
     })),
-  { ssr: false }
+  { ssr: false, loading: () => null }
 );
 import { KANGUR_MAIN_CONTENT_ID } from '@/features/kangur/ui/design/primitives/KangurPageContainer';
 import { useKangurMobileViewportVars } from '@/features/kangur/ui/hooks/useKangurMobileViewportVars';

@@ -7,16 +7,14 @@ import {
   getTagMappingRepository,
   type Template,
 } from '@/features/integrations/server';
-import { getCategoryMappingRepository } from '@/features/integrations/services/category-mapping-repository';
-import {
-  getProducerRepository,
-  getTagRepository,
-  type ProducerRepository,
-} from '@/features/products/server';
 import { type CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
+import type { ProducerRepository } from '@/shared/contracts/products';
 import { badRequestError } from '@/shared/errors/app-error';
+import { getProducerRepository } from '@/shared/lib/products/services/producer-repository';
+import { getTagRepository } from '@/shared/lib/products/services/tag-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+import { getCategoryMappingRepository } from '@/features/integrations/services/category-mapping-repository';
 import {
   type BaseExportRequestData,
   type BaseFieldMapping,

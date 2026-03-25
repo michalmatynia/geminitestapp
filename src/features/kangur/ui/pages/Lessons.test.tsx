@@ -27,8 +27,10 @@ const {
   tutorSessionSyncPropsMock,
   lessonsState,
   lessonsLoadingState,
+  lessonsPlaceholderDataState,
   lessonSectionsState,
   lessonSectionsLoadingState,
+  lessonSectionsPlaceholderDataState,
 } = vi.hoisted(() => ({
   useKangurSubjectFocusMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
@@ -58,10 +60,16 @@ const {
   lessonsLoadingState: {
     value: false,
   },
+  lessonsPlaceholderDataState: {
+    value: false,
+  },
   lessonSectionsState: {
     value: [] as Array<Record<string, unknown>>,
   },
   lessonSectionsLoadingState: {
+    value: false,
+  },
+  lessonSectionsPlaceholderDataState: {
     value: false,
   },
 }));
@@ -348,6 +356,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
       isFetching: lessonsLoadingState.value,
       isLoading: lessonsLoadingState.value && !hasRetainedData,
       isPending: lessonsLoadingState.value && !hasRetainedData,
+      isPlaceholderData: lessonsPlaceholderDataState.value,
       isRefetching: hasRetainedData,
       refetch: vi.fn(),
     };
@@ -379,6 +388,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
       isFetching: lessonSectionsLoadingState.value,
       isLoading: lessonSectionsLoadingState.value && !hasRetainedData,
       isPending: lessonSectionsLoadingState.value && !hasRetainedData,
+      isPlaceholderData: lessonSectionsPlaceholderDataState.value,
       isRefetching: hasRetainedData,
     };
   },
@@ -471,9 +481,11 @@ describe('Lessons page subject filtering', () => {
     });
     lessonsState.value = lessonsFixture;
     lessonsLoadingState.value = false;
+    lessonsPlaceholderDataState.value = false;
     lessonsRetainDataWhileLoadingState.value = false;
     lessonSectionsState.value = [];
     lessonSectionsLoadingState.value = false;
+    lessonSectionsPlaceholderDataState.value = false;
     lessonSectionsRetainDataWhileLoadingState.value = false;
     routeTransitionStateState.value = null;
     useKangurSubjectFocusMock.mockReturnValue({
@@ -590,6 +602,49 @@ describe('Lessons page subject filtering', () => {
     expect(screen.getByTestId('lesson-card-lesson-english')).toBeInTheDocument();
   });
 
+  it('keeps the lessons library transition waiting while placeholder catalog data is still active', () => {
+    routeTransitionStateState.value = {
+      transitionPhase: 'waiting_for_ready',
+      activeTransitionKind: 'navigation',
+      activeTransitionSkeletonVariant: 'lessons-library',
+    };
+    lessonsPlaceholderDataState.value = true;
+    lessonSectionsPlaceholderDataState.value = true;
+
+    const view = render(<Lessons />);
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(useKangurRoutePageReadyMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        pageKey: 'Lessons',
+        ready: false,
+      })
+    );
+    expect(screen.getByTestId('lessons-catalog-skeleton')).toBeInTheDocument();
+    expect(screen.queryByTestId('lesson-card-lesson-english')).not.toBeInTheDocument();
+
+    lessonsPlaceholderDataState.value = false;
+    lessonSectionsPlaceholderDataState.value = false;
+
+    view.rerender(<Lessons />);
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(useKangurRoutePageReadyMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        pageKey: 'Lessons',
+        ready: true,
+      })
+    );
+    expect(screen.queryByTestId('lessons-catalog-skeleton')).not.toBeInTheDocument();
+    expect(screen.getByTestId('lesson-card-lesson-english')).toBeInTheDocument();
+  });
+
   it('keeps focused lesson transitions waiting until the lesson surface is ready', () => {
     routeTransitionStateState.value = {
       transitionPhase: 'waiting_for_ready',
@@ -657,6 +712,21 @@ describe('Lessons page subject filtering', () => {
     expect(
       screen.getByText('Porządkujemy sekcje lekcji, aby zaraz pokazać pełną listę tematów.')
     ).toBeInTheDocument();
+    expect(screen.queryByText('Brak aktywnych lekcji')).not.toBeInTheDocument();
+  });
+
+  it('shows the catalog skeleton instead of placeholder lessons until the real catalog arrives', () => {
+    lessonsPlaceholderDataState.value = true;
+    lessonSectionsPlaceholderDataState.value = true;
+
+    render(<Lessons />);
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(screen.getByTestId('lessons-catalog-skeleton')).toBeInTheDocument();
+    expect(screen.getByTestId('lessons-intro-loading-state')).toBeInTheDocument();
+    expect(screen.queryByTestId('lesson-card-lesson-english')).not.toBeInTheDocument();
     expect(screen.queryByText('Brak aktywnych lekcji')).not.toBeInTheDocument();
   });
 

@@ -49,9 +49,9 @@ export function KangurAppLoader({
     }
 
     let cancelled = false;
-    type FrameHandle = number | ReturnType<typeof setTimeout>;
-    let frameId: FrameHandle | null = null;
     let paintTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    let pollIntervalId: ReturnType<typeof setTimeout> | null = null;
+    let observer: MutationObserver | null = null;
     const startTime =
       typeof performance !== 'undefined' && typeof performance.now === 'function'
         ? performance.now()
@@ -75,78 +75,59 @@ export function KangurAppLoader({
       return targets;
     };
 
-    const hasThemeVars = (target: HTMLElement): boolean => {
-      if (typeof window === 'undefined') {
-        return false;
-      }
-      const styles = window.getComputedStyle(target);
-      return probeVars.some((variable) => styles.getPropertyValue(variable).trim().length > 0);
-    };
+    const hasThemeClass = (): boolean =>
+      resolveTargets().some((t) => t.classList.contains('kangur-surface-active'));
 
-    const isThemeReady = (): boolean => {
-      if (typeof document === 'undefined' || typeof window === 'undefined') {
-        return true;
-      }
+    const hasThemeVars = (): boolean => {
+      if (typeof window === 'undefined') return false;
       return resolveTargets().some((target) => {
-        if (target.classList.contains('kangur-surface-active')) {
-          return true;
-        }
-        return hasThemeVars(target);
+        const styles = window.getComputedStyle(target);
+        return probeVars.some((v) => styles.getPropertyValue(v).trim().length > 0);
       });
     };
 
-    const scheduleFrame = (callback: FrameRequestCallback): FrameHandle => {
-      if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
-        return window.requestAnimationFrame(callback);
-      }
-      return globalThis.setTimeout(() => callback(0), 16);
+    const onThemeReady = (): void => {
+      if (cancelled) return;
+      cancelled = true;
+      if (pollIntervalId !== null) globalThis.clearInterval(pollIntervalId);
+      if (observer) observer.disconnect();
+      setColorPhase((prev) => (prev === 'color' ? prev : 'paint'));
+      paintTimeoutId = globalThis.setTimeout(() => {
+        setColorPhase('color');
+      }, 900);
     };
 
-    const cancelFrame = (id: FrameHandle): void => {
-      if (
-        typeof window !== 'undefined'
-        && typeof window.cancelAnimationFrame === 'function'
-        && typeof id === 'number'
-      ) {
-        window.cancelAnimationFrame(id);
-        return;
-      }
-      globalThis.clearTimeout(id);
-    };
-
-    const check = (): void => {
-      if (cancelled) {
-        return;
-      }
-      const now =
-        typeof performance !== 'undefined' && typeof performance.now === 'function'
-          ? performance.now()
-          : Date.now();
-      if (isThemeReady() || now - startTime >= maxWaitMs) {
-        setColorPhase((prev) => (prev === 'color' ? prev : 'paint'));
-        if (paintTimeoutId !== null) {
-          globalThis.clearTimeout(paintTimeoutId);
+    // Fast path: class already present
+    if (hasThemeClass()) {
+      onThemeReady();
+    } else {
+      // Watch for class changes via MutationObserver (event-driven, no polling)
+      if (typeof MutationObserver !== 'undefined') {
+        observer = new MutationObserver(() => {
+          if (hasThemeClass()) onThemeReady();
+        });
+        for (const target of resolveTargets()) {
+          observer.observe(target, { attributes: true, attributeFilter: ['class'] });
         }
-        paintTimeoutId = globalThis.setTimeout(() => {
-          if (!cancelled) {
-            setColorPhase('color');
-          }
-        }, 900);
-        return;
       }
-      frameId = scheduleFrame(() => check());
-    };
 
-    frameId = scheduleFrame(() => check());
+      // Fallback: throttled poll for CSS variables (every 200ms instead of every frame)
+      pollIntervalId = globalThis.setInterval(() => {
+        const now =
+          typeof performance !== 'undefined' && typeof performance.now === 'function'
+            ? performance.now()
+            : Date.now();
+        if (hasThemeClass() || hasThemeVars() || now - startTime >= maxWaitMs) {
+          onThemeReady();
+        }
+      }, 200);
+    }
 
     return () => {
       cancelled = true;
-      if (frameId !== null) {
-        cancelFrame(frameId);
-      }
-      if (paintTimeoutId !== null) {
-        globalThis.clearTimeout(paintTimeoutId);
-      }
+      if (pollIntervalId !== null) globalThis.clearInterval(pollIntervalId);
+      if (observer) observer.disconnect();
+      if (paintTimeoutId !== null) globalThis.clearTimeout(paintTimeoutId);
     };
   }, [prefersReducedMotion, visible]);
 

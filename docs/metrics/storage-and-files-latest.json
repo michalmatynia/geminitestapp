@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-24T23:06:22.368Z",
+  "generatedAt": "2026-03-25T09:06:22.835Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "fileCount": 5710,
+    "fileCount": 5720,
     "codeUploadRootCount": 10,
     "runtimeUploadRootCount": 9,
     "dynamicReadRiskCount": 0
@@ -17669,6 +17669,66 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/integrations/services/base-export-segments/common.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/services/base-export-segments/constants.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/services/base-export-segments/export-executor.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/services/base-export-segments/images.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/services/base-export-segments/index.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/services/base-export-segments/listing-resolver.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/services/base-export-segments/preparation.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/services/base-export-segments/run-context.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/services/base-export-segments/sku-check.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/services/base-export-segments/stock.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/integrations/services/base-image-sync.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -34303,5 +34363,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 4150
+  "durationMs": 3231
 }

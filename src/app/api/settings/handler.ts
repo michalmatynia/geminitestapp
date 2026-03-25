@@ -43,6 +43,7 @@ import {
 } from '@/shared/lib/files/constants';
 import { invalidateFileStorageSettingsCache } from '@/shared/lib/files/services/storage/file-storage-service';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { resetServerLoggingControlsCache } from '@/shared/lib/observability/logging-controls-server';
 import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/settings-compression';
 import {
   AI_PATHS_CONFIG_PREFIX,
@@ -666,6 +667,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     await ErrorSystem.logInfo('[settings] POST /api/settings', { service: 'api/settings' });
   }
   clearSettingsCache();
+  resetServerLoggingControlsCache();
   const parsed = await parseJsonBody(req, settingSchema, {
     logPrefix: 'settings.POST',
   });

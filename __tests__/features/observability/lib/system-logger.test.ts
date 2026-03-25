@@ -5,6 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.unmock('@/shared/lib/observability/system-logger');
 
+import { isServerLoggingEnabled } from '@/shared/lib/observability/logging-controls-server';
 import { notifyCriticalError } from '@/shared/lib/observability/critical-error-notifier';
 import { REDACTED_VALUE } from '@/shared/lib/observability/log-redaction';
 import { emitOtelLogRecord } from '@/shared/lib/observability/otel-log-bridge';
@@ -22,6 +23,10 @@ import {
   getCentralLoggingRuntimeStats,
 } from '@/shared/lib/observability/system-logger';
 import { AppError, AppErrorCodes } from '@/shared/errors/app-error';
+
+vi.mock('@/shared/lib/observability/logging-controls-server', () => ({
+  isServerLoggingEnabled: vi.fn().mockResolvedValue(true),
+}));
 
 vi.mock('@/shared/lib/observability/system-log-repository', () => ({
   createSystemLog: vi.fn().mockResolvedValue({ id: 'log-1', level: 'info', message: 'test', createdAt: new Date().toISOString() }),
@@ -47,6 +52,7 @@ vi.mock('@/shared/lib/observability/central-log-dead-letter-store', () => ({
 describe('system-logger', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(isServerLoggingEnabled).mockResolvedValue(true);
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -132,6 +138,28 @@ describe('system-logger', () => {
           })
         );
       });
+    });
+
+    it('should skip info logs when info logging is disabled', async () => {
+      vi.mocked(isServerLoggingEnabled).mockImplementation(async (type) => type !== 'info');
+
+      await logSystemEvent({ level: 'info', message: 'suppressed', source: 'test' });
+
+      expect(createSystemLog).not.toHaveBeenCalled();
+      expect(emitOtelLogRecord).not.toHaveBeenCalled();
+      expect(console.log).not.toHaveBeenCalled();
+    });
+
+    it('should skip warn and error logs when error logging is disabled', async () => {
+      vi.mocked(isServerLoggingEnabled).mockImplementation(async (type) => type !== 'error');
+
+      await logSystemEvent({ level: 'warn', message: 'suppressed warning', source: 'test' });
+      await logSystemError({ message: 'suppressed error', source: 'test' });
+
+      expect(createSystemLog).not.toHaveBeenCalled();
+      expect(emitOtelLogRecord).not.toHaveBeenCalled();
+      expect(console.warn).not.toHaveBeenCalled();
+      expect(console.error).not.toHaveBeenCalled();
     });
 
     it('should emit an OpenTelemetry log record with correlation attributes', async () => {

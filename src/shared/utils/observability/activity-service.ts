@@ -5,8 +5,24 @@ import { randomUUID } from 'crypto';
 import type { CreateActivityLog, ActivityLog, ActivityFilters } from '@/shared/contracts/system';
 
 import { getActivityRepository } from '../../lib/observability/activity-repository';
+import { isServerLoggingEnabled } from '../../lib/observability/logging-controls-server';
 import { logSystemEvent } from '../../lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
+const createSuppressedActivityLog = (data: CreateActivityLog): ActivityLog => {
+  const nowIso = new Date().toISOString();
+  return {
+    id: `activity-disabled-${randomUUID()}`,
+    type: data.type,
+    description: data.description,
+    userId: data.userId ?? null,
+    entityId: data.entityId ?? null,
+    entityType: data.entityType ?? null,
+    metadata: data.metadata ?? null,
+    createdAt: nowIso,
+    updatedAt: nowIso,
+  };
+};
 
 
 /**
@@ -24,6 +40,10 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
  * ```
  */
 export async function logActivity(data: CreateActivityLog): Promise<ActivityLog> {
+  if (!(await isServerLoggingEnabled('activity'))) {
+    return createSuppressedActivityLog(data);
+  }
+
   const repository = await getActivityRepository();
   let activity: ActivityLog;
   try {

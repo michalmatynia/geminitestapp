@@ -3,9 +3,9 @@ import {
   getIntegrationRepository,
   getProductListingRepository,
 } from '@/features/integrations/server';
-import { getProductRepository } from '@/features/products/server';
 import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 
 import { BASE_EXPORT_RUN_PATH_ID, BASE_EXPORT_RUN_PATH_NAME } from './constants';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

@@ -4,7 +4,10 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CLIENT_LOGGING_KEYS } from '@/shared/contracts/observability';
+import {
+  CLIENT_LOGGING_KEYS,
+  OBSERVABILITY_LOGGING_KEYS,
+} from '@/shared/contracts/observability';
 
 const mocks = vi.hoisted(() => ({
   useSettingsMapMock: vi.fn(),
@@ -63,6 +66,25 @@ vi.mock('@/shared/ui', () => ({
     value?: string;
     onChange?: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
   }) => <textarea value={value} onChange={onChange} />,
+  ToggleRow: ({
+    label,
+    checked,
+    onCheckedChange,
+  }: {
+    label?: string;
+    checked?: boolean;
+    onCheckedChange?: (checked: boolean) => void;
+  }) => (
+    <label>
+      <span>{label}</span>
+      <input
+        type='checkbox'
+        aria-label={label}
+        checked={checked}
+        onChange={(event) => onCheckedChange?.(event.target.checked)}
+      />
+    </label>
+  ),
   UI_GRID_ROOMY_CLASSNAME: 'grid gap-6',
   useToast: () => ({
     toast: mocks.toastMock,
@@ -83,6 +105,9 @@ describe('ObservationPostSettingsPanel', () => {
       data: new Map([
         [CLIENT_LOGGING_KEYS.tags, '{"env":"admin"}'],
         [CLIENT_LOGGING_KEYS.featureFlags, '{"debug":false}'],
+        [OBSERVABILITY_LOGGING_KEYS.infoEnabled, 'true'],
+        [OBSERVABILITY_LOGGING_KEYS.activityEnabled, 'false'],
+        [OBSERVABILITY_LOGGING_KEYS.errorEnabled, 'true'],
       ]),
     });
 
@@ -92,17 +117,24 @@ describe('ObservationPostSettingsPanel', () => {
     });
   });
 
-  it('saves logging tags and flags from the settings tab panel', async () => {
+  it('saves logging toggles, tags, and flags from the settings tab panel', async () => {
     render(<ObservationPostSettingsPanel />);
 
+    const infoLoggingToggle = screen.getByLabelText('Info logging');
+    const activityLoggingToggle = screen.getByLabelText('Activity logging');
+    const errorLoggingToggle = screen.getByLabelText('Error logging');
     const featureFlagsField = screen.getByLabelText('Feature flags (JSON)');
     const tagsField = screen.getByLabelText('Tags (JSON)');
     const saveButton = screen.getByRole('button', { name: 'Save settings' });
 
+    expect(infoLoggingToggle).toBeChecked();
+    expect(activityLoggingToggle).not.toBeChecked();
+    expect(errorLoggingToggle).toBeChecked();
     expect(featureFlagsField).toHaveValue('{\n  "debug": false\n}');
     expect(tagsField).toHaveValue('{\n  "env": "admin"\n}');
     expect(saveButton).toBeDisabled();
 
+    fireEvent.click(activityLoggingToggle);
     fireEvent.change(featureFlagsField, {
       target: { value: '{\n  "debug": true\n}' },
     });
@@ -113,6 +145,18 @@ describe('ObservationPostSettingsPanel', () => {
 
     await waitFor(() => {
       expect(mocks.mutateAsyncMock).toHaveBeenCalledWith([
+        {
+          key: OBSERVABILITY_LOGGING_KEYS.infoEnabled,
+          value: 'true',
+        },
+        {
+          key: OBSERVABILITY_LOGGING_KEYS.activityEnabled,
+          value: 'true',
+        },
+        {
+          key: OBSERVABILITY_LOGGING_KEYS.errorEnabled,
+          value: 'true',
+        },
         {
           key: CLIENT_LOGGING_KEYS.tags,
           value: '{"env":"admin"}',

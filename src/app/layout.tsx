@@ -4,6 +4,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { RootClientShell } from './_providers/RootClientShell';
 import { cn } from '@/shared/utils';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
+import { getLiteSettingsForHydration } from '@/shared/lib/lite-settings-ssr';
 
 import type { Metadata, Viewport } from 'next';
 
@@ -37,12 +38,26 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>): Promise<React.JSX.Element> {
-  const locale = await getLocale();
-  const commonTranslations = await getTranslations('Common');
+  const [locale, commonTranslations, liteSettings] = await Promise.all([
+    getLocale(),
+    getTranslations('Common'),
+    getLiteSettingsForHydration(),
+  ]);
+  const sanitizedLiteSettingsScript =
+    liteSettings.length > 0
+      ? `self.__LITE_SETTINGS__=${JSON.stringify(liteSettings).replace(/</g, '\\u003c')}`
+      : null;
 
   return (
     <html lang={locale} suppressHydrationWarning>
       <body suppressHydrationWarning className={cn('max-w-full overflow-x-hidden font-sans')}>
+        {sanitizedLiteSettingsScript ? (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: sanitizedLiteSettingsScript,
+            }}
+          />
+        ) : null}
         <NextIntlClientProvider locale={locale}>
           <a href='#kangur-main-content' className='app-skip-link'>
             {commonTranslations('skipToMainContent')}

@@ -41,9 +41,10 @@ vi.mock('@/shared/providers/BackgroundSyncProvider', () => ({
   BackgroundSyncProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-vi.mock('@/shared/providers/CsrfProvider', () => ({
-  CsrfProvider: () => null,
-}));
+vi.mock('@/shared/providers/CsrfProvider', () => {
+  const CsrfProvider = (): null => null;
+  return { CsrfProvider, default: CsrfProvider };
+});
 
 vi.mock('@/shared/providers/QueryProvider', () => ({
   QueryProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,

@@ -1,10 +1,15 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { createContext, useContext, useMemo } from 'react';
 
 import { useSystemSync } from '@/shared/hooks/sync/useSystemSync';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { QueryDevPanel } from '@/shared/ui/QueryDevPanel';
+
+const QueryDevPanel = dynamic(
+  () => import('@/shared/ui/QueryDevPanel').then((m) => ({ default: m.QueryDevPanel })),
+  { ssr: false }
+);
 
 type BackgroundSyncContextValue = {
   enabled: boolean;

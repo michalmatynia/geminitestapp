@@ -1,16 +1,27 @@
 'use client';
 
+import React, { useDeferredValue, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 
 import {
+  filterKangurGameCatalogEntries,
+  getKangurGameCatalogFacets,
   type KangurGameCatalogEntry,
 } from '@/features/kangur/games';
-import { KANGUR_LESSON_LIBRARY, KANGUR_SUBJECTS } from '@/features/kangur/lessons/lesson-catalog';
+import {
+  KANGUR_AGE_GROUPS,
+  KANGUR_LESSON_LIBRARY,
+  KANGUR_SUBJECTS,
+} from '@/features/kangur/lessons/lesson-catalog';
 import {
   getLocalizedKangurAgeGroupLabel,
   getLocalizedKangurLessonTitle,
   getLocalizedKangurSubjectLabel,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
+import type {
+  KangurLessonAgeGroup,
+  KangurLessonSubject,
+} from '@/features/kangur/shared/contracts/kangur';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
@@ -24,6 +35,7 @@ import {
   KangurEmptyState,
   KangurInfoCard,
   KangurMetricCard,
+  KangurSelectField,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
@@ -43,6 +55,28 @@ import type {
 import { cn } from '@/features/kangur/shared/utils';
 
 const GAMES_LIBRARY_MAIN_ID = 'kangur-games-library-main';
+
+type GamesLibraryFilterValue<T extends string> = 'all' | T;
+
+type GamesLibraryFilterState = {
+  subject: GamesLibraryFilterValue<KangurLessonSubject>;
+  ageGroup: GamesLibraryFilterValue<KangurLessonAgeGroup>;
+  mechanic: GamesLibraryFilterValue<KangurGameMechanic>;
+  surface: GamesLibraryFilterValue<KangurGameSurface>;
+  gameStatus: GamesLibraryFilterValue<KangurGameStatus>;
+  engineId: GamesLibraryFilterValue<string>;
+  launchability: 'all' | 'launchable';
+};
+
+const DEFAULT_GAMES_LIBRARY_FILTERS: GamesLibraryFilterState = {
+  subject: 'all',
+  ageGroup: 'all',
+  mechanic: 'all',
+  surface: 'all',
+  gameStatus: 'all',
+  engineId: 'all',
+  launchability: 'all',
+};
 
 const formatMechanicLabel = (
   mechanic: KangurGameMechanic,
@@ -91,6 +125,21 @@ const getLinkedLessonTitles = (
     )
   );
 
+const buildGamesLibraryCatalogFilter = (
+  filters: GamesLibraryFilterState
+) => ({
+  subject: filters.subject === 'all' ? undefined : filters.subject,
+  ageGroup: filters.ageGroup === 'all' ? undefined : filters.ageGroup,
+  mechanic: filters.mechanic === 'all' ? undefined : filters.mechanic,
+  surface: filters.surface === 'all' ? undefined : filters.surface,
+  gameStatus: filters.gameStatus === 'all' ? undefined : filters.gameStatus,
+  engineId: filters.engineId === 'all' ? undefined : filters.engineId,
+  launchableOnly: filters.launchability === 'launchable' ? true : undefined,
+});
+
+const hasActiveGamesLibraryFilters = (filters: GamesLibraryFilterState): boolean =>
+  Object.values(filters).some((value) => value !== 'all');
+
 export default function GamesLibrary(): React.JSX.Element {
   const locale = useLocale();
   const translations = useTranslations('KangurGamesLibraryPage');
@@ -101,7 +150,15 @@ export default function GamesLibrary(): React.JSX.Element {
   const { openLoginModal } = useKangurLoginModal();
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
   const catalogQuery = useKangurGameCatalog();
-  const catalogEntries = catalogQuery.data ?? [];
+  const allCatalogEntries = catalogQuery.data ?? [];
+  const [filters, setFilters] = useState<GamesLibraryFilterState>(DEFAULT_GAMES_LIBRARY_FILTERS);
+  const deferredFilters = useDeferredValue(filters);
+  const catalogFilter = buildGamesLibraryCatalogFilter(deferredFilters);
+  const catalogEntries = filterKangurGameCatalogEntries(allCatalogEntries, catalogFilter);
+  const catalogFacets = getKangurGameCatalogFacets(allCatalogEntries);
+  const hasActiveFilters = hasActiveGamesLibraryFilters(filters);
+  const visibleGameCount = catalogEntries.length;
+  const totalGameCount = allCatalogEntries.length;
 
   const navigation = {
     basePath,
@@ -112,6 +169,16 @@ export default function GamesLibrary(): React.JSX.Element {
     onGuestPlayerNameChange: user ? undefined : setGuestPlayerName,
     onLogin: openLoginModal,
     onLogout: () => logout(false),
+  };
+
+  const updateFilter = <TKey extends keyof GamesLibraryFilterState>(
+    key: TKey,
+    value: GamesLibraryFilterState[TKey]
+  ): void => {
+    setFilters((current) => ({
+      ...current,
+      [key]: value,
+    }));
   };
 
   const engineCount = new Set(catalogEntries.map((entry) => entry.game.engineId)).size;
@@ -184,11 +251,219 @@ export default function GamesLibrary(): React.JSX.Element {
         </div>
       </KangurPageIntroCard>
 
+      <KangurInfoCard accent='amber' padding='lg' className='space-y-4'>
+        <div className='flex flex-wrap items-start justify-between gap-3'>
+          <div className='space-y-1'>
+            <div className='text-xs font-semibold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
+              {translations('filters.eyebrow')}
+            </div>
+            <div className='text-2xl font-black [color:var(--kangur-page-text)]'>
+              {translations('filters.title')}
+            </div>
+            <div className='text-sm [color:var(--kangur-page-muted-text)]'>
+              {hasActiveFilters
+                ? translations('filters.summaryFiltered', {
+                    visible: visibleGameCount,
+                    total: totalGameCount,
+                  })
+                : translations('filters.summaryAll', { count: totalGameCount })}
+            </div>
+          </div>
+          <KangurButton
+            type='button'
+            size='sm'
+            variant='surface'
+            onClick={() => setFilters(DEFAULT_GAMES_LIBRARY_FILTERS)}
+            disabled={!hasActiveFilters}
+          >
+            {translations('filters.clear')}
+          </KangurButton>
+        </div>
+
+        <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
+          <div className='min-w-0 space-y-1'>
+            <div className='text-xs font-semibold uppercase tracking-[0.08em] [color:var(--kangur-page-muted-text)]'>
+              {translations('filters.subject.label')}
+            </div>
+            <KangurSelectField
+              value={filters.subject}
+              onChange={(event) =>
+                updateFilter(
+                  'subject',
+                  event.target.value as GamesLibraryFilterState['subject']
+                )
+              }
+              aria-label={translations('filters.subject.aria')}
+              size='sm'
+              accent='slate'
+            >
+              <option value='all'>{translations('filters.subject.all')}</option>
+              {catalogFacets.subjects.map((subject) => (
+                <option key={subject} value={subject}>
+                  {getLocalizedKangurSubjectLabel(
+                    subject,
+                    locale,
+                    KANGUR_SUBJECTS.find((entry) => entry.id === subject)?.label ?? subject
+                  )}
+                </option>
+              ))}
+            </KangurSelectField>
+          </div>
+
+          <div className='min-w-0 space-y-1'>
+            <div className='text-xs font-semibold uppercase tracking-[0.08em] [color:var(--kangur-page-muted-text)]'>
+              {translations('filters.ageGroup.label')}
+            </div>
+            <KangurSelectField
+              value={filters.ageGroup}
+              onChange={(event) =>
+                updateFilter(
+                  'ageGroup',
+                  event.target.value as GamesLibraryFilterState['ageGroup']
+                )
+              }
+              aria-label={translations('filters.ageGroup.aria')}
+              size='sm'
+              accent='slate'
+            >
+              <option value='all'>{translations('filters.ageGroup.all')}</option>
+              {catalogFacets.ageGroups.map((ageGroup) => (
+                <option key={ageGroup} value={ageGroup}>
+                  {getLocalizedKangurAgeGroupLabel(
+                    ageGroup,
+                    locale,
+                    KANGUR_AGE_GROUPS.find((entry) => entry.id === ageGroup)?.label ?? ageGroup
+                  )}
+                </option>
+              ))}
+            </KangurSelectField>
+          </div>
+
+          <div className='min-w-0 space-y-1'>
+            <div className='text-xs font-semibold uppercase tracking-[0.08em] [color:var(--kangur-page-muted-text)]'>
+              {translations('filters.mechanic.label')}
+            </div>
+            <KangurSelectField
+              value={filters.mechanic}
+              onChange={(event) =>
+                updateFilter(
+                  'mechanic',
+                  event.target.value as GamesLibraryFilterState['mechanic']
+                )
+              }
+              aria-label={translations('filters.mechanic.aria')}
+              size='sm'
+              accent='slate'
+            >
+              <option value='all'>{translations('filters.mechanic.all')}</option>
+              {catalogFacets.mechanics.map((mechanic) => (
+                <option key={mechanic} value={mechanic}>
+                  {formatMechanicLabel(mechanic, translations)}
+                </option>
+              ))}
+            </KangurSelectField>
+          </div>
+
+          <div className='min-w-0 space-y-1'>
+            <div className='text-xs font-semibold uppercase tracking-[0.08em] [color:var(--kangur-page-muted-text)]'>
+              {translations('filters.surface.label')}
+            </div>
+            <KangurSelectField
+              value={filters.surface}
+              onChange={(event) =>
+                updateFilter('surface', event.target.value as GamesLibraryFilterState['surface'])
+              }
+              aria-label={translations('filters.surface.aria')}
+              size='sm'
+              accent='slate'
+            >
+              <option value='all'>{translations('filters.surface.all')}</option>
+              {catalogFacets.surfaces.map((surface) => (
+                <option key={surface} value={surface}>
+                  {translations(`surfaces.${surface}`)}
+                </option>
+              ))}
+            </KangurSelectField>
+          </div>
+
+          <div className='min-w-0 space-y-1'>
+            <div className='text-xs font-semibold uppercase tracking-[0.08em] [color:var(--kangur-page-muted-text)]'>
+              {translations('filters.status.label')}
+            </div>
+            <KangurSelectField
+              value={filters.gameStatus}
+              onChange={(event) =>
+                updateFilter(
+                  'gameStatus',
+                  event.target.value as GamesLibraryFilterState['gameStatus']
+                )
+              }
+              aria-label={translations('filters.status.aria')}
+              size='sm'
+              accent='slate'
+            >
+              <option value='all'>{translations('filters.status.all')}</option>
+              {catalogFacets.statuses.map((status) => (
+                <option key={status} value={status}>
+                  {translations(`statuses.${status}`)}
+                </option>
+              ))}
+            </KangurSelectField>
+          </div>
+
+          <div className='min-w-0 space-y-1'>
+            <div className='text-xs font-semibold uppercase tracking-[0.08em] [color:var(--kangur-page-muted-text)]'>
+              {translations('filters.engine.label')}
+            </div>
+            <KangurSelectField
+              value={filters.engineId}
+              onChange={(event) =>
+                updateFilter('engineId', event.target.value as GamesLibraryFilterState['engineId'])
+              }
+              aria-label={translations('filters.engine.aria')}
+              size='sm'
+              accent='slate'
+            >
+              <option value='all'>{translations('filters.engine.all')}</option>
+              {catalogFacets.engineIds.map((engineId) => (
+                <option key={engineId} value={engineId}>
+                  {allCatalogEntries.find((entry) => entry.game.engineId === engineId)?.engine
+                    ?.title ?? engineId}
+                </option>
+              ))}
+            </KangurSelectField>
+          </div>
+
+          <div className='min-w-0 space-y-1 sm:col-span-2 xl:col-span-3'>
+            <div className='text-xs font-semibold uppercase tracking-[0.08em] [color:var(--kangur-page-muted-text)]'>
+              {translations('filters.launchability.label')}
+            </div>
+            <KangurSelectField
+              value={filters.launchability}
+              onChange={(event) =>
+                updateFilter(
+                  'launchability',
+                  event.target.value as GamesLibraryFilterState['launchability']
+                )
+              }
+              aria-label={translations('filters.launchability.aria')}
+              size='sm'
+              accent='slate'
+            >
+              <option value='all'>{translations('filters.launchability.all')}</option>
+              <option value='launchable'>
+                {translations('filters.launchability.launchable')}
+              </option>
+            </KangurSelectField>
+          </div>
+        </div>
+      </KangurInfoCard>
+
       <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
         <KangurMetricCard
           accent='sky'
           label={translations('metrics.games')}
-          value={catalogEntries.length}
+          value={visibleGameCount}
           description={translations('metrics.gamesDescription')}
         />
         <KangurMetricCard
@@ -323,8 +598,16 @@ export default function GamesLibrary(): React.JSX.Element {
 
       {groupedGames.length === 0 ? (
         <KangurEmptyState
-          title={translations('emptyTitle')}
-          description={translations('emptyDescription')}
+          title={
+            hasActiveFilters
+              ? translations('emptyFilteredTitle')
+              : translations('emptyTitle')
+          }
+          description={
+            hasActiveFilters
+              ? translations('emptyFilteredDescription')
+              : translations('emptyDescription')
+          }
           padding='lg'
         />
       ) : (

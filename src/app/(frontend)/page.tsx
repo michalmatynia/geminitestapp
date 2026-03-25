@@ -2,7 +2,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { JSX } from 'react';
 
-import { getCmsRepository } from '@/features/cms/server';
+import { getCmsRepository, isDomainZoningEnabled } from '@/features/cms/server';
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/server';
 import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server/launch-route';
 import { KangurSSRSkeleton } from '@/features/kangur/ui/KangurSSRSkeleton';
@@ -52,6 +52,9 @@ export default async function Home(): Promise<JSX.Element | null> {
   const [cmsRepository, hdrs] = await Promise.all([
     withTiming('cmsRepository', getCmsRepository),
     withTiming('headers', () => headers()),
+    // Warm the isDomainZoningEnabled cache() so that resolveCmsDomainFromHeaders
+    // and getSlugsForDomain find it already resolved instead of awaiting it.
+    isDomainZoningEnabled(),
   ]);
   const domain = await withTiming('cmsDomain', () => resolveCmsDomainFromHeaders(hdrs));
   const slugs = await withTiming('cmsSlugs', () => getSlugsForDomain(domain.id, cmsRepository));

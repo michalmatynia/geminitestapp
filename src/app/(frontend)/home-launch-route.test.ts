@@ -6,6 +6,7 @@ const {
   getFrontPageRedirectPathMock,
   getFrontPageSettingMock,
   getKangurConfiguredLaunchTargetMock,
+  kangurSsrSkeletonMock,
   getSlugsForDomainMock,
   redirectMock,
   resolveCmsDomainFromHeadersMock,
@@ -16,6 +17,7 @@ const {
   getFrontPageRedirectPathMock: vi.fn(),
   getFrontPageSettingMock: vi.fn(),
   getKangurConfiguredLaunchTargetMock: vi.fn(),
+  kangurSsrSkeletonMock: vi.fn(),
   getSlugsForDomainMock: vi.fn(),
   redirectMock: vi.fn(),
   resolveCmsDomainFromHeadersMock: vi.fn(),
@@ -50,6 +52,10 @@ vi.mock('@/features/kangur/server/launch-route', () => ({
   getKangurConfiguredLaunchTarget: getKangurConfiguredLaunchTargetMock,
 }));
 
+vi.mock('@/features/kangur/ui/KangurSSRSkeleton', () => ({
+  KangurSSRSkeleton: kangurSsrSkeletonMock,
+}));
+
 describe('frontend home launch route', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -77,7 +83,7 @@ describe('frontend home launch route', () => {
     expect(getCmsRepositoryMock).not.toHaveBeenCalled();
   });
 
-  it('keeps the root home route on the web mount when the mobile web route is configured', async () => {
+  it('renders the Kangur SSR skeleton on the web mount when the mobile web route is configured', async () => {
     getKangurConfiguredLaunchTargetMock.mockResolvedValue({
       route: 'web_mobile_view',
       href: '/',
@@ -85,8 +91,9 @@ describe('frontend home launch route', () => {
     });
 
     const { default: Home } = await import('@/app/(frontend)/page');
+    const page = await Home();
 
-    await expect(Home()).resolves.toBeNull();
+    expect(page).toMatchObject({ type: kangurSsrSkeletonMock });
     expect(redirectMock).not.toHaveBeenCalled();
     expect(getCmsRepositoryMock).not.toHaveBeenCalled();
   });

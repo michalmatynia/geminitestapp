@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createKangurGameCatalogEntries,
   filterKangurGameCatalogEntries,
+  getKangurGameCatalogFacets,
   getKangurGameCatalogEntriesForEngine,
   getKangurGameCatalogEntryForLessonActivity,
 } from '@/features/kangur/games';
@@ -38,5 +39,16 @@ describe('kangur game catalog', () => {
       'english_sentence_builder',
       'english_parts_of_speech_sort',
     ]);
+  });
+
+  it('derives reusable classification facets from catalog entries', () => {
+    const facets = getKangurGameCatalogFacets(createKangurGameCatalogEntries());
+
+    expect(facets.subjects).toEqual(['maths', 'english']);
+    expect(facets.ageGroups).toEqual(['ten_year_old']);
+    expect(facets.statuses).toEqual(['active']);
+    expect(facets.surfaces).toEqual(['lesson', 'library', 'game']);
+    expect(facets.engineIds).toContain('classification-engine');
+    expect(facets.mechanics).toContain('logic_relation');
   });
 });

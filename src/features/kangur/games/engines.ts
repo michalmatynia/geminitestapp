@@ -197,4 +197,4 @@ export const getKangurGameEngineDefinition = (
 
 export const getOptionalKangurGameEngineDefinition = (
   engineId: string
-): KangurGameEngineDefinition | null => KANGUR_GAME_ENGINE_LIBRARY[engineId as KangurGameEngineId] ?? null;
+): KangurGameEngineDefinition | null => KANGUR_GAME_ENGINE_LIBRARY[engineId] ?? null;

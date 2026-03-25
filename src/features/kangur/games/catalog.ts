@@ -80,12 +80,23 @@ export type KangurGameCatalogFilter = {
   launchableOnly?: boolean;
 };
 
+export type KangurGameCatalogFacets = {
+  subjects: KangurLessonSubject[];
+  ageGroups: KangurLessonAgeGroup[];
+  statuses: KangurGameStatus[];
+  surfaces: KangurGameSurface[];
+  mechanics: KangurGameMechanic[];
+  engineIds: KangurGameEngineId[];
+};
+
 type CreateKangurGameCatalogInput = {
   engines?: KangurGameEngineDefinition[];
   games?: KangurGameDefinition[];
 };
 
 const isDefined = <T>(value: T | undefined): value is T => value !== undefined;
+
+const getUniqueValues = <T>(values: T[]): T[] => Array.from(new Set(values));
 
 const sortVariants = (
   left: Pick<KangurGameVariant, 'sortOrder'>,
@@ -194,6 +205,19 @@ export const filterKangurGameCatalogEntries = (
 
   return next;
 };
+
+export const getKangurGameCatalogFacets = (
+  entries: KangurGameCatalogEntry[]
+): KangurGameCatalogFacets => ({
+  subjects: getUniqueValues(entries.map((entry) => entry.game.subject)),
+  ageGroups: getUniqueValues(entries.map((entry) => entry.game.ageGroup).filter(isDefined)),
+  statuses: getUniqueValues(entries.map((entry) => entry.game.status)),
+  surfaces: getUniqueValues(entries.flatMap((entry) => entry.game.surfaces)),
+  mechanics: getUniqueValues(
+    entries.flatMap((entry) => entry.engine?.mechanics ?? [entry.game.mechanic])
+  ),
+  engineIds: getUniqueValues(entries.map((entry) => entry.game.engineId)),
+});
 
 export const KANGUR_GAME_CATALOG = Object.freeze(
   createKangurGameCatalogEntries().reduce<Record<KangurGameId, KangurGameCatalogEntry>>(

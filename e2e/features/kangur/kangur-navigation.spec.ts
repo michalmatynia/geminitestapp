@@ -2206,8 +2206,8 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     await gotoKangurPath(page, '/kangur/parent-dashboard');
     await expectParentDashboardRouteReady(page);
 
-    const scoresTab = page.getByRole('button', { name: /wyniki gier/i });
-    const tabTop = await scoresTab.evaluate(
+    const assignmentsTab = page.locator('[data-doc-id="parent_assignments_tab"]');
+    const tabTop = await assignmentsTab.evaluate(
       (element) => element.getBoundingClientRect().top + window.scrollY
     );
 
@@ -2216,20 +2216,20 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     }, tabTop);
 
     const beforeScrollY = await page.evaluate(() => window.scrollY);
-    await scoresTab.click();
+    await assignmentsTab.click();
 
-    await expect(scoresTab).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByText('Brak zapisanych wyników.')).toBeVisible();
+    await expect(assignmentsTab).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('#parent-dashboard-panel-assign')).toBeVisible();
 
     const afterScoresScrollY = await page.evaluate(() => window.scrollY);
     expect(Math.abs(afterScoresScrollY - beforeScrollY)).toBeLessThan(48);
 
-    const progressTab = page.getByRole('button', { name: /postęp/i });
+    const progressTab = page.locator('[data-doc-id="parent_progress_tab"]');
     const beforeProgressScrollY = await page.evaluate(() => window.scrollY);
     await progressTab.click();
 
-    await expect(progressTab).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByText(/Poziom i doświadczenie/i)).toBeVisible();
+    await expect(progressTab).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('#parent-dashboard-panel-progress')).toBeVisible();
 
     const afterProgressScrollY = await page.evaluate(() => window.scrollY);
     expect(Math.abs(afterProgressScrollY - beforeProgressScrollY)).toBeLessThan(48);
@@ -2251,7 +2251,7 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     await gotoKangurPath(page, '/kangur/parent-dashboard');
     await expectParentDashboardRouteReady(page);
 
-    await page.getByRole('button', { name: /ai tutor/i }).click();
+    await page.locator('[data-doc-id="parent_ai_tutor_tab"]').click();
 
     await expect(page.getByTestId('parent-dashboard-ai-tutor-mood')).toBeVisible();
     await expect(page.getByTestId('parent-dashboard-ai-tutor-mood-current')).toContainText(
@@ -2288,7 +2288,7 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     await gotoKangurPath(page, '/kangur/parent-dashboard');
     await expectParentDashboardRouteReady(page);
-    await page.getByRole('button', { name: /ai tutor/i }).click();
+    await page.locator('[data-doc-id="parent_ai_tutor_tab"]').click();
 
     await expect(page.getByTestId('parent-dashboard-ai-tutor-mood-current')).toContainText(
       'Wspierajacy'

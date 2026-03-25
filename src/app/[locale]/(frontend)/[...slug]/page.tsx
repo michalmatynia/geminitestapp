@@ -2,13 +2,8 @@ import { getTranslations } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import { JSX } from 'react';
 
-import { KangurPublicApp } from '@/features/kangur/public';
 import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server/launch-route';
-import { getKangurStorefrontInitialState } from '@/features/kangur/server/storefront-appearance';
-import {
-  buildLocalizedPathname,
-  normalizeSiteLocale,
-} from '@/shared/lib/i18n/site-locale';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
 import { renderCmsPage } from '@/app/(frontend)/cms-render';
@@ -70,7 +65,7 @@ export async function generateMetadata({
 export default async function LocalizedCmsSlugPage({
   params,
   searchParams,
-}: LocalizedSlugPageProps): Promise<JSX.Element> {
+}: LocalizedSlugPageProps): Promise<JSX.Element | null> {
   const { locale, slug } = await params;
   const resolvedLocale = normalizeSiteLocale(locale);
 
@@ -81,15 +76,7 @@ export default async function LocalizedCmsSlugPage({
       redirect(launchTarget.href);
     }
 
-    const initialState = await getKangurStorefrontInitialState();
-    return (
-      <KangurPublicApp
-        slug={slug}
-        basePath={buildLocalizedPathname('/', resolvedLocale)}
-        initialMode={initialState.initialMode}
-        initialThemeSettings={initialState.initialThemeSettings}
-      />
-    );
+    return null;
   }
 
   const page = await resolveSlugToPage(slug, { locale: resolvedLocale });

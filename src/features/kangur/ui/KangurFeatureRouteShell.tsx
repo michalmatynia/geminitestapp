@@ -37,17 +37,21 @@ export function KangurFeatureRouteShell({
   const normalizedBasePath = normalizeKangurBasePath(basePath);
   const appearanceMode = appearance?.mode ?? 'default';
   const kangurAppearance = useKangurStorefrontAppearance();
+  const browserPathname =
+    typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
+  const browserSearch = typeof window === 'undefined' ? '' : window.location.search || '';
+  const resolvedPathname = pathname?.trim() || browserPathname || normalizedBasePath;
   const slug = useMemo(
-    () => getKangurSlugFromPathname(pathname, normalizedBasePath),
-    [normalizedBasePath, pathname]
+    () => getKangurSlugFromPathname(resolvedPathname, normalizedBasePath),
+    [normalizedBasePath, resolvedPathname]
   );
   const activeSlug = slug[0] ?? null;
   const effectiveSlug = activeSlug?.trim().toLowerCase() === 'login' ? [] : slug;
   const pageKey = resolveKangurPageKeyFromSlug(activeSlug);
   const requestedPath = normalizeKangurRequestedPath(effectiveSlug, normalizedBasePath);
   const requestedHref = useMemo(() => {
-    const search = searchParams?.toString() || '';
-    const baseHref = pathname || requestedPath;
+    const search = searchParams?.toString() || browserSearch.replace(/^\?/, '');
+    const baseHref = resolvedPathname || requestedPath;
 
     const fallbackHref = baseHref.replace(/\/+$/, '') || '/';
     return withKangurClientErrorSync(
@@ -67,7 +71,7 @@ export function KangurFeatureRouteShell({
       },
       { fallback: search ? `${fallbackHref}?${search}` : fallbackHref }
     );
-  }, [pathname, requestedPath, searchParams]);
+  }, [browserSearch, requestedPath, resolvedPathname, searchParams]);
   const isEmbedded = embedded;
   const shellStyle: CSSProperties & Record<string, string> = {
     ...kangurAppearance.vars,

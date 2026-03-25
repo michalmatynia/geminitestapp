@@ -369,7 +369,7 @@ describe('KangurRouteTransitionProvider', () => {
     expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('true');
 
     act(() => {
-      vi.advanceTimersByTime(119);
+      vi.advanceTimersByTime(59);
     });
 
     expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('true');
@@ -427,7 +427,7 @@ describe('KangurRouteTransitionProvider', () => {
     expect(screen.getByTestId('route-transition-active-href')).toHaveTextContent('/de/lessons');
   });
 
-  it('clears a pending transition if the navigation takes too long', () => {
+  it('keeps a pending transition latched longer before clearing it', () => {
     renderRouteTransitionHarness({
       pageKey: 'Game',
       requestedPath: '/kangur',
@@ -440,7 +440,14 @@ describe('KangurRouteTransitionProvider', () => {
     expect(screen.getByTestId('route-transition-pending')).toHaveTextContent('true');
 
     act(() => {
-      vi.advanceTimersByTime(4_000);
+      vi.advanceTimersByTime(9_999);
+    });
+
+    expect(screen.getByTestId('route-transition-pending')).toHaveTextContent('true');
+    expect(screen.getByTestId('route-transition-page-key')).toHaveTextContent('LearnerProfile');
+
+    act(() => {
+      vi.advanceTimersByTime(1);
     });
 
     expect(screen.getByTestId('route-transition-pending')).toHaveTextContent('false');

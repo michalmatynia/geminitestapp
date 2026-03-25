@@ -124,6 +124,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     }
   }
   const [hasPresentedInteractiveShell, setHasPresentedInteractiveShell] = useState(false);
+  const [isRouteInteractionReady, setIsRouteInteractionReady] = useState(false);
   const shouldShowBootLoader = isThemeBootLoading && !hasPresentedInteractiveShell;
   const [isBootSkeletonVisible, setIsBootSkeletonVisible] = useState<boolean>(shouldShowBootLoader);
   const [isNavigationSkeletonVisible, setIsNavigationSkeletonVisible] = useState<boolean>(false);
@@ -203,6 +204,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
           shouldShowAcknowledgingNavigationSkeleton)) &&
         isRouteSkeletonVisible)));
   const isRouteContentInteractionBlocked =
+    !isRouteInteractionReady ||
     isPendingRouteSnapshotVisible ||
     (isRouteSkeletonVisible && transitionPhase !== 'revealing');
   const hasVisibleRouteContent = routeContent !== null && !isRouteContentVisuallyHidden;
@@ -217,6 +219,10 @@ const AuthenticatedApp = (): JSX.Element | null => {
     !shouldHideTopNavigationDuringBoot && isRouteSkeletonVisible;
   const shouldSkipRouteContentPresence =
     isNavigationTransitionActive || isPendingRouteSnapshotVisible;
+
+  useEffect(() => {
+    setIsRouteInteractionReady(true);
+  }, []);
 
   useEffect(() => {
     if (hasPresentedInteractiveShell) {
@@ -450,6 +456,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
               isRouteContentVisuallyHidden ? 'pointer-events-none opacity-0' : null
             )}
             data-route-transition-phase={transitionPhase}
+            data-route-interactive-ready={isRouteInteractionReady ? 'true' : 'false'}
             data-route-transition-key={routeTransitionKey}
             data-route-transition-source-id={activeTransitionSourceId ?? undefined}
             data-testid='kangur-route-content'
@@ -472,6 +479,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
                 isRouteContentVisuallyHidden ? 'pointer-events-none opacity-0' : null
               )}
               data-route-transition-phase={transitionPhase}
+              data-route-interactive-ready={isRouteInteractionReady ? 'true' : 'false'}
               data-route-transition-key={routeTransitionKey}
               data-route-transition-source-id={activeTransitionSourceId ?? undefined}
               data-testid='kangur-route-content'

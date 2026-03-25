@@ -78,6 +78,7 @@ describe('KangurFeatureRouteShell', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     clearLatchedKangurTopBarHeightCssValue();
+    window.history.replaceState({}, '', '/kangur');
     document.documentElement.style.removeProperty('--kangur-top-bar-height');
     usePathnameMock.mockReturnValue('/kangur');
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
@@ -96,7 +97,7 @@ describe('KangurFeatureRouteShell', () => {
     expect(screen.getByTestId('kangur-route-shell').style.background).toBe('');
     expect(screen.getByTestId('kangur-route-shell').style.color).toBe('');
     expect(screen.getByTestId('kangur-route-shell')).not.toHaveClass('text-slate-800');
-    expect(screen.getByTestId('kangur-feature-app')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-routing-provider')).toBeInTheDocument();
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
       pageKey: 'Lessons',
       requestedPath: '/kangur/lessons',
@@ -179,6 +180,22 @@ describe('KangurFeatureRouteShell', () => {
     expect(setKangurClientObservabilityContextMock).toHaveBeenCalledWith({
       pageKey: 'Lessons',
       requestedPath: '/lessons',
+    });
+  });
+
+  it('falls back to the real browser pathname when the router pathname is transiently unavailable', () => {
+    window.history.replaceState({}, '', '/en/lessons?focus=division');
+    usePathnameMock.mockReturnValue(null);
+    useSearchParamsMock.mockReturnValue(new URLSearchParams());
+
+    render(<KangurFeatureRouteShell basePath='/' />);
+
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'Lessons',
+      requestedPath: '/lessons',
+      requestedHref: '/en/lessons?focus=division',
+      basePath: '/',
+      embedded: false,
     });
   });
 

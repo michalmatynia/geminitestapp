@@ -142,6 +142,13 @@ async function waitForRootOwnedKangurBoot(page: Page): Promise<void> {
   await expect(page.locator('[data-testid="kangur-route-content"]')).toBeVisible({
     timeout: 45_000,
   });
+  await expect(page.locator('[data-testid="kangur-route-content"]')).toHaveAttribute(
+    'data-route-interactive-ready',
+    'true',
+    {
+      timeout: 45_000,
+    }
+  );
   await expect(page.locator('[data-testid="kangur-app-loader"]')).toHaveCount(0, {
     timeout: 45_000,
   });
@@ -156,8 +163,10 @@ async function startKangurNavigationMonitor(page: Page): Promise<void> {
           }
         | undefined;
     };
+    const storageKey = `${monitorKey}:samples`;
     const samples: KangurNavigationSample[] = [];
     let running = true;
+    window.sessionStorage.removeItem(storageKey);
 
     const isElementVisible = (element: Element | null): boolean => {
       if (!(element instanceof HTMLElement) && !(element instanceof SVGElement)) {
@@ -199,6 +208,7 @@ async function startKangurNavigationMonitor(page: Page): Promise<void> {
           document.querySelector('[data-testid="lessons-list-transition"]')
         ),
       });
+      window.sessionStorage.setItem(storageKey, JSON.stringify(samples));
 
       if (running) {
         window.requestAnimationFrame(sample);
@@ -209,6 +219,7 @@ async function startKangurNavigationMonitor(page: Page): Promise<void> {
     globalWindow[monitorKey] = {
       stop: () => {
         running = false;
+        window.sessionStorage.setItem(storageKey, JSON.stringify(samples));
         return samples;
       },
     };
@@ -225,7 +236,21 @@ async function stopKangurNavigationMonitor(page: Page): Promise<KangurNavigation
         | undefined;
     };
 
-    return globalWindow[monitorKey]?.stop() ?? [];
+    const liveSamples = globalWindow[monitorKey]?.stop();
+    if (liveSamples) {
+      return liveSamples;
+    }
+
+    const serializedSamples = window.sessionStorage.getItem(`${monitorKey}:samples`);
+    if (!serializedSamples) {
+      return [];
+    }
+
+    try {
+      return JSON.parse(serializedSamples) as KangurNavigationSample[];
+    } catch {
+      return [];
+    }
   }, KANGUR_NAVIGATION_MONITOR_KEY);
 }
 
@@ -250,11 +275,18 @@ test.describe.serial('Front Manage', () => {
 
   test('should display the available front page options', async ({ page }) => {
     const main = page.locator('main');
+    const kangurOptionTitle =
+      FRONT_PAGE_OPTIONS.find((option) => option.id === 'kangur')?.title ?? 'StudiQ';
+    await expect(
+      main.getByRole('button', { name: new RegExp(FRONT_PAGE_OPTIONS[0]?.title ?? 'CMS Home', 'i') })
+    ).toBeVisible({
+      timeout: 30_000,
+    });
     for (const option of FRONT_PAGE_OPTIONS) {
       await expect(main.getByRole('button', { name: new RegExp(option.title, 'i') })).toBeVisible();
     }
 
-    const kangurBtn = main.getByRole('button', { name: /Kangur/i });
+    const kangurBtn = main.getByRole('button', { name: new RegExp(kangurOptionTitle, 'i') });
     await kangurBtn.click();
 
     await expect(kangurBtn.getByText('/', { exact: true })).toBeVisible();

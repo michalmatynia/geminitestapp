@@ -122,9 +122,18 @@ export function KangurTransitionLink({
       scroll={resolvedScroll}
       target={target}
       onClickCapture={(event) => {
-        if (shouldStartTransition(event, href, target)) {
-          publishPendingSnapshot();
+        if (!shouldStartTransition(event, href, target)) {
+          return;
         }
+
+        publishPendingSnapshot();
+        event.preventDefault();
+        routeNavigator.push(href, {
+          ...(typeof transitionAcknowledgeMs === 'number' ? { acknowledgeMs: transitionAcknowledgeMs } : {}),
+          pageKey: targetPageKey ?? null,
+          scroll: resolvedScroll ?? false,
+          ...(transitionSourceId ? { sourceId: transitionSourceId } : {}),
+        });
       }}
       onClick={(event) => {
         if (onClick) {
@@ -134,14 +143,6 @@ export function KangurTransitionLink({
         if (!shouldStartTransition(event, href, target)) {
           return;
         }
-
-        event.preventDefault();
-        routeNavigator.push(href, {
-          ...(typeof transitionAcknowledgeMs === 'number' ? { acknowledgeMs: transitionAcknowledgeMs } : {}),
-          pageKey: targetPageKey ?? null,
-          scroll: resolvedScroll ?? false,
-          ...(transitionSourceId ? { sourceId: transitionSourceId } : {}),
-        });
       }}
       {...props}
     />

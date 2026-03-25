@@ -49,7 +49,8 @@ export type KangurRouteTransitionStartResult = {
 };
 
 const ROUTE_TRANSITION_MAX_ACKNOWLEDGE_MS = 400;
-const ROUTE_TRANSITION_TIMEOUT_MS = 2_000;
+const PENDING_ROUTE_TRANSITION_TIMEOUT_MS = 10_000;
+const ROUTE_TRANSITION_READY_TIMEOUT_MS = 2_000;
 const LOCALE_SWITCH_ROUTE_TRANSITION_READY_TIMEOUT_MS = 1_200;
 const ROUTE_TRANSITION_REVEAL_MS = 80;
 const LOCALE_SWITCH_ROUTE_TRANSITION_REVEAL_MS = 60;
@@ -211,10 +212,12 @@ export function useKangurRouteTransitionLogic({
     }
 
     const timeoutMs =
-      transitionState.phase === 'waiting_for_ready' &&
-      transitionState.kind === 'locale-switch'
-        ? LOCALE_SWITCH_ROUTE_TRANSITION_READY_TIMEOUT_MS
-        : ROUTE_TRANSITION_TIMEOUT_MS;
+      transitionState.phase === 'pending'
+        ? PENDING_ROUTE_TRANSITION_TIMEOUT_MS
+        : transitionState.phase === 'waiting_for_ready' &&
+            transitionState.kind === 'locale-switch'
+          ? LOCALE_SWITCH_ROUTE_TRANSITION_READY_TIMEOUT_MS
+          : ROUTE_TRANSITION_READY_TIMEOUT_MS;
 
     const timeoutId = window.setTimeout(() => {
       shouldResetScrollOnCommitRef.current = false;

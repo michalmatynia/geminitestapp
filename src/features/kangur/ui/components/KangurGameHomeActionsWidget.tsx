@@ -270,6 +270,9 @@ export function KangurGameHomeActionsWidget({
   const { basePath, canStartFromHome, handleStartGame, screen, setScreen } =
     useKangurGameRuntime();
   const { subject } = useKangurSubjectFocus();
+  const isLessonsHomeActionTransitionActive =
+    routeTransitionState?.activeTransitionSourceId === 'game-home-action:lessons' &&
+    routeTransitionState.transitionPhase !== 'idle';
 
   if (hideWhenScreenMismatch && screen !== 'home') {
     return null;
@@ -319,7 +322,12 @@ export function KangurGameHomeActionsWidget({
 
   return (
     <KangurGlassPanel
-      className={GAME_HOME_ACTIONS_SHELL_CLASSNAME}
+      aria-hidden={isLessonsHomeActionTransitionActive ? 'true' : undefined}
+      className={cn(
+        GAME_HOME_ACTIONS_SHELL_CLASSNAME,
+        isLessonsHomeActionTransitionActive ? 'pointer-events-none opacity-0' : null
+      )}
+      data-home-actions-transition-hidden={isLessonsHomeActionTransitionActive ? 'true' : 'false'}
       data-testid='kangur-home-actions-shell'
       padding='lg'
       surface='mist'

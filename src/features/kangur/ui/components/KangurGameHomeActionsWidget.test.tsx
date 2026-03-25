@@ -311,4 +311,34 @@ describe('KangurGameHomeActionsWidget', () => {
       'transitioning'
     );
   });
+
+  it('hides the home actions shell once the lessons handoff starts', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      basePath: '/kangur',
+      canStartFromHome: true,
+      handleStartGame: vi.fn(),
+      screen: 'home',
+      setScreen: vi.fn(),
+    });
+    useOptionalKangurRouteTransitionStateMock.mockReturnValue({
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionSourceId: 'game-home-action:lessons',
+      isRouteAcknowledging: false,
+      isRoutePending: true,
+      isRouteRevealing: false,
+      pendingPageKey: 'Lessons',
+      transitionPhase: 'pending',
+    });
+
+    render(<KangurGameHomeActionsWidget />);
+
+    expect(screen.getByTestId('kangur-home-actions-shell')).toHaveAttribute(
+      'data-home-actions-transition-hidden',
+      'true'
+    );
+    expect(screen.getByTestId('kangur-home-actions-shell')).toHaveClass(
+      'pointer-events-none',
+      'opacity-0'
+    );
+  });
 });

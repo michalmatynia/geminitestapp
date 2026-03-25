@@ -73,6 +73,7 @@ import FrontendPublicOwnerShell from './_components/FrontendPublicOwnerShell';
 describe('FrontendPublicOwnerShell', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.history.replaceState({}, '', '/');
     usePathnameMock.mockReturnValue('/');
   });
 
@@ -111,6 +112,26 @@ describe('FrontendPublicOwnerShell', () => {
     await waitFor(() => {
       expect(frontendPublicOwnerKangurShellMock).toHaveBeenCalledWith({
         embedded: true,
+        initialMode: undefined,
+        initialThemeSettings: undefined,
+      });
+    });
+  });
+
+  it('falls back to the real browser pathname when the router pathname is transiently unavailable', async () => {
+    window.history.replaceState({}, '', '/lessons');
+    usePathnameMock.mockReturnValue(null);
+
+    render(
+      <FrontendPublicOwnerShell publicOwner='kangur'>
+        <div data-testid='frontend-children'>children</div>
+      </FrontendPublicOwnerShell>
+    );
+
+    expect(await screen.findByTestId('kangur-feature-route-shell')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(frontendPublicOwnerKangurShellMock).toHaveBeenCalledWith({
+        embedded: false,
         initialMode: undefined,
         initialThemeSettings: undefined,
       });

@@ -2,7 +2,6 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -44,19 +43,7 @@ vi.mock('@/features/kangur/server/storefront-appearance', () => ({
 }));
 
 vi.mock('@/features/kangur/public', () => ({
-  KangurPublicApp: ({
-    slug = [],
-    basePath = '/',
-  }: {
-    slug?: string[];
-    basePath?: string;
-  }) => (
-    <div
-      data-testid='kangur-public-app'
-      data-base-path={basePath}
-      data-slug={slug.join('/')}
-    />
-  ),
+  KangurPublicApp: () => null,
 }));
 
 vi.mock('@/app/(frontend)/cms-render', () => ({
@@ -103,7 +90,7 @@ describe('frontend slug launch route', () => {
     expect(redirectMock).toHaveBeenCalledWith('kangur://lessons?focus=division');
   });
 
-  it('keeps unsupported slug routes on the web render path', async () => {
+  it('keeps unsupported slug routes on the shared Kangur shell path without redirecting', async () => {
     getKangurConfiguredLaunchTargetMock.mockResolvedValue({
       route: 'dedicated_app',
       href: '/login',
@@ -116,11 +103,8 @@ describe('frontend slug launch route', () => {
       searchParams: Promise.resolve({ callbackUrl: '/lessons' }),
     });
 
-    render(page);
-
     expect(redirectMock).not.toHaveBeenCalled();
-    expect(screen.getByTestId('kangur-public-app')).toHaveAttribute('data-base-path', '/');
-    expect(screen.getByTestId('kangur-public-app')).toHaveAttribute('data-slug', 'login');
+    expect(page).toBeNull();
   });
 
   it('does not add locale prefixes to dedicated app redirects on localized slug routes', async () => {

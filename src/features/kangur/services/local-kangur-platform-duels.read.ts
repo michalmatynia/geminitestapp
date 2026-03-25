@@ -166,12 +166,18 @@ export const requestDuelSpectatorStateFromApi = async (
 };
 
 export const requestDuelLobbyFromApi = async (
-  options?: { limit?: number; signal?: AbortSignal }
+  options?: { limit?: number; signal?: AbortSignal; visibility?: 'public' | 'private' }
 ): Promise<KangurDuelLobbyResponse> => {
   const limit = typeof options?.limit === 'number' && Number.isFinite(options.limit)
     ? Math.max(1, Math.floor(options.limit))
     : null;
-  const endpoint = buildKangurDuelLobbyPath(limit ? { limit } : undefined);
+  const visibility = options?.visibility === 'public' || options?.visibility === 'private'
+    ? options.visibility
+    : undefined;
+  const endpoint = buildKangurDuelLobbyPath({
+    ...(limit ? { limit } : {}),
+    ...(visibility ? { visibility } : {}),
+  });
 
   return withKangurClientError(
     (error) => ({
@@ -182,14 +188,21 @@ export const requestDuelLobbyFromApi = async (
         endpoint,
         method: 'GET',
         limit,
+        visibility: visibility ?? null,
         ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
       },
     }),
     async () => {
-      const payload = await kangurDuelsApiClient.listDuelLobby(limit ? { limit } : undefined, {
-        cache: 'no-store',
-        signal: options?.signal,
-      });
+      const payload = await kangurDuelsApiClient.listDuelLobby(
+        {
+          ...(limit ? { limit } : {}),
+          ...(visibility ? { visibility } : {}),
+        },
+        {
+          cache: 'no-store',
+          signal: options?.signal,
+        }
+      );
       const parsed = kangurDuelLobbyResponseSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur duel lobby payload validation failed.');
@@ -215,6 +228,7 @@ export const requestDuelLobbyFromApi = async (
         trackReadFailure('duels.lobby', error, {
           endpoint,
           method: 'GET',
+          visibility: visibility ?? null,
         });
       },
     }

@@ -46,6 +46,7 @@ export const resolveKangurRouteTransitionSkeletonVariant = ({
 
   switch (resolvedPageKey) {
     case 'Tests':
+    case 'GamesLibrary':
       return 'lessons-library';
     case 'Lessons': {
       const focusToken = searchParams

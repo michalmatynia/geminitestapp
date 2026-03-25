@@ -245,6 +245,7 @@
       "pages": {
         "Competition": "Mathe-Kanguru",
         "Game": "Startseite",
+        "GamesLibrary": "Spielebibliothek",
         "Lessons": "Lektionen",
         "Tests": "Tests",
         "LearnerProfile": "Lernendenprofil",
@@ -1071,6 +1072,7 @@
   },
   "KangurNavigation": {
     "home": "Startseite",
+    "gamesLibrary": "Spielebibliothek",
     "lessons": "Lektionen",
     "duels": "Duelle",
     "parent": "Eltern",
@@ -1097,6 +1099,59 @@
       "dialogDescription": "Wahle aus, fur wen die Lektionen angepasst werden sollen.",
       "closeAriaLabel": "Altersgruppenauswahl schliessen",
       "groupAriaLabel": "Altersgruppenauswahl"
+    }
+  },
+  "KangurGamesLibraryPage": {
+    "introEyebrow": "Gemeinsame Spiele-Domäne",
+    "title": "Spielebibliothek",
+    "description": "Ein gemeinsamer Katalog für alle Kangur-Spiele, geordnet nach Engines, Mechaniken, Varianten und Lektion-Verknüpfungen.",
+    "groupEyebrow": "Lernbereich",
+    "groupDescription": "{count, plural, one {# Spiel in diesem Bereich.} other {# Spiele in diesem Bereich.}}",
+    "emptyTitle": "Keine Spiele in der Bibliothek",
+    "emptyDescription": "Füge die ersten Spieldefinitionen hinzu, um Engines und Varianten zu klassifizieren.",
+    "metrics": {
+      "games": "Spiele",
+      "gamesDescription": "Alle Katalogeinträge.",
+      "engines": "Engines",
+      "enginesDescription": "Eindeutige Mechanik-Familien.",
+      "variants": "Varianten",
+      "variantsDescription": "Einbettungs- und Startmodi.",
+      "lessonLinked": "Mit Lektionen verknüpft",
+      "lessonLinkedDescription": "Spiele, die bereits mit Lektionskomponenten verbunden sind."
+    },
+    "statuses": {
+      "active": "Aktiv",
+      "draft": "Entwurf",
+      "legacy": "Legacy"
+    },
+    "surfaces": {
+      "lesson": "Lektion",
+      "library": "Bibliothek",
+      "game": "Spiel",
+      "duel": "Duell"
+    },
+    "labels": {
+      "mechanic": "Mechanik",
+      "ageGroup": "Altersgruppe",
+      "allAgeGroups": "Alle",
+      "variants": "Varianten",
+      "variantCount": "{count, plural, one {# Variante} other {# Varianten}}",
+      "legacyScreens": "Legacy-Screens",
+      "lessonLinks": "Verknüpfte Lektionen",
+      "none": "Keine"
+    },
+    "mechanics": {
+      "drag_drop": "Ziehen und Ablegen",
+      "multiple_choice": "Multiple Choice",
+      "tap_select": "Tippen und Auswahlen",
+      "drawing": "Zeichnen",
+      "rhythm": "Rhythmus",
+      "clock_training": "Uhrentraining",
+      "calendar_interactive": "Interaktiver Kalender",
+      "logic_pattern": "Logische Muster",
+      "logic_classification": "Logische Klassifikation",
+      "logic_relation": "Beziehungen und Analogien",
+      "sentence_building": "Satze bauen"
     }
   },
   "KangurGameHomeActions": {

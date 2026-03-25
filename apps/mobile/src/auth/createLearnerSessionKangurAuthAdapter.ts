@@ -10,11 +10,7 @@ import {
   createAuthenticatedKangurAuthSession,
 } from '@kangur/platform';
 
-import {
-  KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY,
-  KANGUR_MOBILE_AUTH_BEARER_TOKEN_STORAGE_KEY,
-  KANGUR_MOBILE_AUTH_STATUS_STORAGE_KEY,
-} from './mobileAuthStorageKeys';
+import { persistResolvedKangurMobileLearnerSession } from './persistedKangurMobileLearnerSession';
 
 type KangurApiClient = ReturnType<typeof createKangurApiClient>;
 
@@ -42,32 +38,11 @@ const resolveStatusCode = (error: unknown): number | null =>
     ? error.status
     : null;
 
-const clearPersistedLearnerSession = (
-  storage: KangurClientStorageAdapter,
-): void => {
-  storage.removeItem(KANGUR_MOBILE_AUTH_STATUS_STORAGE_KEY);
-  storage.removeItem(KANGUR_MOBILE_AUTH_BEARER_TOKEN_STORAGE_KEY);
-  storage.removeItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY);
-};
-
 const persistResolvedLearnerSession = (
   storage: KangurClientStorageAdapter,
   session: KangurAuthSession,
 ): void => {
-  if (session.status !== 'authenticated') {
-    clearPersistedLearnerSession(storage);
-    return;
-  }
-
-  storage.setItem(KANGUR_MOBILE_AUTH_STATUS_STORAGE_KEY, 'authenticated');
-  if (session.user?.activeLearner?.id) {
-    storage.setItem(
-      KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY,
-      session.user.activeLearner.id,
-    );
-  } else {
-    storage.removeItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY);
-  }
+  persistResolvedKangurMobileLearnerSession(storage, session);
 };
 
 const createAuthAdapterError = (

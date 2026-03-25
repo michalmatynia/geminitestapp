@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import { createDefaultKangurProgressState } from '@kangur/contracts';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -12,6 +13,7 @@ const {
   useLocalSearchParamsMock,
   useRouterMock,
   replaceMock,
+  subscribeToProgressMock,
   shareKangurDuelInviteMock,
   useKangurMobileAuthMock,
   useKangurMobileHomeDuelsLeaderboardMock,
@@ -27,10 +29,12 @@ const {
   useKangurMobileRecentResultsMock,
   useKangurMobileTrainingFocusMock,
   useHomeScreenBootStateMock,
+  useHomeScreenDeferredPanelsMock,
 } = vi.hoisted(() => ({
   useLocalSearchParamsMock: vi.fn(),
   useRouterMock: vi.fn(),
   replaceMock: vi.fn(),
+  subscribeToProgressMock: vi.fn(),
   shareKangurDuelInviteMock: vi.fn(),
   useKangurMobileAuthMock: vi.fn(),
   useKangurMobileHomeDuelsLeaderboardMock: vi.fn(),
@@ -46,6 +50,7 @@ const {
   useKangurMobileRecentResultsMock: vi.fn(),
   useKangurMobileTrainingFocusMock: vi.fn(),
   useHomeScreenBootStateMock: vi.fn(),
+  useHomeScreenDeferredPanelsMock: vi.fn(),
 }));
 
 vi.mock('expo-router', () => ({
@@ -114,6 +119,10 @@ vi.mock('./useHomeScreenBootState', () => ({
   useHomeScreenBootState: useHomeScreenBootStateMock,
 }));
 
+vi.mock('./useHomeScreenDeferredPanels', () => ({
+  useHomeScreenDeferredPanels: useHomeScreenDeferredPanelsMock,
+}));
+
 import HomeScreen from '../../app/index';
 
 const renderHomeScreen = (locale?: 'pl' | 'en' | 'de') =>
@@ -131,15 +140,22 @@ describe('HomeScreen', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal('__DEV__', false);
+    const progressSnapshot = createDefaultKangurProgressState();
+    subscribeToProgressMock.mockImplementation(() => () => {});
     shareKangurDuelInviteMock.mockResolvedValue(undefined);
     useLocalSearchParamsMock.mockReturnValue({});
     useRouterMock.mockReturnValue({
       replace: replaceMock,
     });
     useHomeScreenBootStateMock.mockReturnValue(false);
+    useHomeScreenDeferredPanelsMock.mockReturnValue(true);
     useKangurMobileRuntimeMock.mockReturnValue({
       apiBaseUrl: 'http://localhost:3000',
       apiBaseUrlSource: 'env',
+      progressStore: {
+        subscribeToProgress: subscribeToProgressMock,
+        loadProgress: () => progressSnapshot,
+      },
     });
     useKangurMobileAuthMock.mockReturnValue({
       authError: null,
@@ -232,6 +248,7 @@ describe('HomeScreen', () => {
       isEnabled: false,
       isLoading: false,
       isRestoringAuth: false,
+      recentResults: [],
       refresh: vi.fn(),
       strongestLessonFocus: null,
       strongestOperation: null,
@@ -273,6 +290,7 @@ describe('HomeScreen', () => {
       isEnabled: false,
       isLoading: true,
       isRestoringAuth: true,
+      recentResults: [],
       refresh: vi.fn(),
       strongestLessonFocus: null,
       strongestOperation: null,
@@ -311,6 +329,215 @@ describe('HomeScreen', () => {
     expect(document.querySelector('[testid="home-loading-account-card"]')).not.toBeNull();
     expect(document.querySelector('[testid="home-loading-navigation-card"]')).not.toBeNull();
     expect(screen.queryByText('Kangur mobilnie')).toBeNull();
+  });
+
+  it('shows duel placeholders until deferred home panels are ready', () => {
+    useHomeScreenDeferredPanelsMock.mockReturnValue(false);
+
+    renderHomeScreen();
+
+    expect(
+      screen.getAllByText('Przygotowujemy tę sekcję pojedynków na ekran startowy.'),
+    ).toHaveLength(6);
+    expect(
+      screen.queryByText(
+        'Po zalogowaniu zobaczysz tutaj prywatne zaproszenia do pojedynków od innych uczniów.',
+      ),
+    ).toBeNull();
+    expect(
+      screen.getByText(
+        'Przygotowujemy fokus treningowy oparty na wynikach na ekran startowy.',
+      ),
+    ).toBeTruthy();
+    expect(useKangurMobileRecentResultsMock).toHaveBeenCalledWith({
+      enabled: false,
+    });
+    expect(useKangurMobileTrainingFocusMock).toHaveBeenCalledWith({
+      enabled: false,
+      recentResultsLimit: 3,
+    });
+  });
+
+  it('keeps duel cards deferred until the secondary duel stage is ready', () => {
+    useHomeScreenDeferredPanelsMock.mockImplementation(
+      (panelKey: string) => panelKey !== 'home:duels:secondary',
+    );
+
+    renderHomeScreen();
+
+    expect(screen.getByText('Zaproszenia do pojedynków')).toBeTruthy();
+    expect(screen.getByText('Wysłane wyzwania')).toBeTruthy();
+    expect(
+      screen.getAllByText(
+        'Przygotowujemy kolejne karty pojedynków na następny etap ekranu startowego.',
+      ),
+    ).toHaveLength(6);
+    expect(
+      screen.queryByText(
+        'Po zalogowaniu zobaczysz tutaj prywatne zaproszenia do pojedynków od innych uczniów.',
+      ),
+    ).toBeNull();
+    expect(
+      screen.queryByText(
+        'Po zalogowaniu pojawią się tutaj Twoje prywatne wyzwania razem z akcją ponownego udostępnienia zaproszenia.',
+      ),
+    ).toBeNull();
+    expect(
+      screen.queryByText(
+        'Po zalogowaniu zobaczysz tutaj aktywnych rywali z lobby pojedynków razem z bezpośrednią akcją prywatnego wyzwania.',
+      ),
+    ).toBeNull();
+    expect(
+      screen.queryByText(
+        'Teraz nie ma aktywnych publicznych pojedynków. Otwórz lobby, aby wystartować z nowym meczem albo poczekać na kolejnego rywala.',
+      ),
+    ).toBeNull();
+    expect(
+      screen.queryByText(
+        'Po zalogowaniu pojawią się tutaj ostatni rywale razem z akcją szybkiego prywatnego rewanżu.',
+      ),
+    ).toBeNull();
+    expect(
+      screen.queryByText(
+        'W tym oknie nie ma jeszcze zakończonych pojedynków. Pierwsze skończone serie od razu wypełnią tutaj ten stan pojedynków.',
+      ),
+    ).toBeNull();
+    expect(useKangurMobileHomeDuelsInvitesMock).toHaveBeenCalledWith({
+      enabled: false,
+    });
+    expect(useKangurMobileHomeDuelsPresenceMock).toHaveBeenCalledWith({
+      enabled: false,
+    });
+    expect(useKangurMobileHomeDuelsRematchesMock).toHaveBeenCalledWith({
+      enabled: false,
+    });
+    expect(useKangurMobileHomeDuelsSpotlightMock).toHaveBeenCalledWith({
+      enabled: false,
+    });
+    expect(useKangurMobileHomeDuelsLeaderboardMock).toHaveBeenCalledWith({
+      enabled: false,
+    });
+  });
+
+  it('keeps secondary home insights deferred until the staged gate is ready', () => {
+    useHomeScreenDeferredPanelsMock.mockImplementation((panelKey: string) =>
+      panelKey === 'home:duels',
+    );
+
+    renderHomeScreen();
+
+    expect(screen.getByText('Więcej danych startowych')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Przygotowujemy zapisane lekcje, odznaki, zadania i rozszerzoną sekcję wyników na ekran startowy.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText('Plan lekcji ze startu')).toBeNull();
+    expect(useKangurMobileHomeAssignmentsMock).not.toHaveBeenCalled();
+    expect(useKangurMobileHomeLessonMasteryMock).not.toHaveBeenCalled();
+    expect(useKangurMobileHomeBadgesMock).not.toHaveBeenCalled();
+    expect(useKangurMobileHomeLessonCheckpointsMock).toHaveBeenCalledTimes(1);
+    expect(useKangurMobileHomeLessonCheckpointsMock).toHaveBeenCalledWith({
+      limit: 1,
+    });
+    expect(useKangurMobileRecentResultsMock).toHaveBeenCalledWith({
+      enabled: false,
+    });
+    expect(useKangurMobileTrainingFocusMock).toHaveBeenCalledWith({
+      enabled: false,
+      recentResultsLimit: 3,
+    });
+  });
+
+  it('keeps tertiary home insights deferred until the extra stage is ready', () => {
+    useHomeScreenDeferredPanelsMock.mockImplementation(
+      (panelKey: string) => panelKey !== 'home:insights:extras',
+    );
+
+    renderHomeScreen();
+
+    expect(screen.getByText('Plan lekcji ze startu')).toBeTruthy();
+    expect(screen.getByText('Powrót do ostatnich lekcji')).toBeTruthy();
+    expect(screen.getByText('Kolejne zapisane sekcje')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Przygotowujemy odznaki, zadania i centrum wyników na kolejny etap ekranu startowego.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText('Centrum odznak')).toBeNull();
+    expect(screen.queryByText('Plan z ekranu głównego')).toBeNull();
+    expect(screen.queryByText('Centrum wyników')).toBeNull();
+    expect(useKangurMobileHomeAssignmentsMock).not.toHaveBeenCalled();
+    expect(useKangurMobileHomeBadgesMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps detailed results actions deferred until the results stage is ready', () => {
+    useHomeScreenDeferredPanelsMock.mockImplementation(
+      (panelKey: string) => panelKey !== 'home:insights:results',
+    );
+    useKangurMobileRecentResultsMock.mockReturnValue({
+      error: null,
+      isEnabled: true,
+      isLoading: false,
+      isRestoringAuth: false,
+      refresh: vi.fn(),
+      results: [
+        {
+          correct_answers: 7,
+          created_by: 'user-1',
+          created_date: '2026-03-21T08:00:00.000Z',
+          id: 'score-1',
+          learner_id: 'learner-1',
+          operation: 'addition',
+          owner_user_id: 'user-1',
+          player_name: 'Ada Learner',
+          score: 7,
+          subject: 'maths',
+          time_taken: 42,
+          total_questions: 8,
+        },
+      ],
+    });
+
+    renderHomeScreen();
+
+    expect(screen.getByText('Centrum wyników')).toBeTruthy();
+    expect(screen.getAllByText('Ostatni wynik 7/8').length).toBeGreaterThanOrEqual(2);
+    expect(
+      screen.getByText(
+        'Przygotowujemy szczegóły ostatnich wyników na kolejny etap ekranu startowego. Możesz otworzyć je od razu, jeśli chcesz.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText('Pokaż ostatnie wyniki')).toBeTruthy();
+    expect(screen.getByText('Otwórz pełną historię')).toBeTruthy();
+    expect(screen.queryByText('7/8 poprawnych')).toBeNull();
+    expect(screen.queryByText('Historia trybu: Dodawanie')).toBeNull();
+  });
+
+  it('subscribes to home progress once for the shared hero and insights snapshot', () => {
+    renderHomeScreen();
+
+    expect(subscribeToProgressMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps badge and plan details deferred until the extras detail stage is ready', () => {
+    useHomeScreenDeferredPanelsMock.mockImplementation(
+      (panelKey: string) => panelKey !== 'home:insights:extras:details',
+    );
+
+    renderHomeScreen();
+
+    expect(screen.getByText('Kolejne karty postępu')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Przygotowujemy zapisane odznaki i plan działań na kolejny etap ekranu startowego.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText('Centrum odznak')).toBeNull();
+    expect(screen.queryByText('Plan z ekranu głównego')).toBeNull();
+    expect(screen.getByText('Centrum wyników')).toBeTruthy();
+    expect(useKangurMobileHomeAssignmentsMock).not.toHaveBeenCalled();
+    expect(useKangurMobileHomeBadgesMock).not.toHaveBeenCalled();
   });
 
   it('shows the parent dashboard link for parent accounts', () => {
@@ -816,6 +1043,14 @@ describe('HomeScreen', () => {
       isEnabled: true,
       isLoading: false,
       isRestoringAuth: false,
+      recentResults: [
+        {
+          id: 'score-1',
+          operation: 'clock',
+          correct_answers: 7,
+          total_questions: 8,
+        },
+      ],
       refresh: vi.fn(),
       strongestLessonFocus: 'clock',
       strongestOperation: {

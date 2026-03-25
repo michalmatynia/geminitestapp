@@ -55,6 +55,8 @@ const resolveAnnouncementLabel = (
       return translate('accessibility.pages.Competition');
     case 'Game':
       return translate('accessibility.pages.Game');
+    case 'GamesLibrary':
+      return translate('accessibility.pages.GamesLibrary');
     case 'Lessons':
       return translate('accessibility.pages.Lessons');
     case 'Tests':

@@ -84,9 +84,9 @@ test.describe('Kangur Game Quick Start', () => {
 
     await expect(page).toHaveURL(/\/kangur\/game/, { timeout: ROUTE_BOOT_TIMEOUT_MS });
     await expect(
-      page
-        .getByTestId('kangur-game-main')
-        .getByRole('heading', { name: GAME_PLAYING_HEADING_PATTERN })
+      page.locator('#kangur-game-main').getByRole('heading', {
+        name: GAME_PLAYING_HEADING_PATTERN,
+      })
     ).toBeVisible({ timeout: ROUTE_BOOT_TIMEOUT_MS });
     await expect
       .poll(

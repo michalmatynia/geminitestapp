@@ -3,6 +3,7 @@
  */
 
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KANGUR_PROGRESS_EVENT_NAME } from '@/features/kangur/ui/services/progress';
@@ -31,6 +32,20 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
 }));
 
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
+
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+};
 
 const createAssignmentSnapshot = (id: string, percent = 0) => ({
   id,
@@ -74,7 +89,9 @@ describe('useKangurAssignments', () => {
       .mockResolvedValueOnce(initialAssignments)
       .mockResolvedValueOnce(refreshedAssignments);
 
-    const { result } = renderHook(() => useKangurAssignments({ enabled: true }));
+    const { result } = renderHook(() => useKangurAssignments({ enabled: true }), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current.assignments).toEqual(initialAssignments);
@@ -97,7 +114,9 @@ describe('useKangurAssignments', () => {
       .mockResolvedValueOnce(initialAssignments)
       .mockResolvedValueOnce(refreshedAssignments);
 
-    const { result } = renderHook(() => useKangurAssignments({ enabled: true }));
+    const { result } = renderHook(() => useKangurAssignments({ enabled: true }), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current.assignments).toEqual(initialAssignments);
@@ -114,7 +133,9 @@ describe('useKangurAssignments', () => {
   });
 
   it('does not subscribe to revalidation events when disabled', async () => {
-    const { result } = renderHook(() => useKangurAssignments({ enabled: false }));
+    const { result } = renderHook(() => useKangurAssignments({ enabled: false }), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);

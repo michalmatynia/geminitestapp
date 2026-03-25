@@ -23,6 +23,7 @@ const resolveOptionalKangurActor = async (request: NextRequest) => {
 
 const querySchema = z.object({
   limit: optionalIntegerQuerySchema(z.number().int()),
+  visibility: z.enum(['public', 'private']).optional(),
 });
 
 export async function getKangurDuelLobbyHandler(
@@ -37,15 +38,21 @@ export async function getKangurDuelLobbyHandler(
       issues: parsedQuery.error.flatten(),
     });
   }
-  const { limit } = parsedQuery.data;
+  const { limit, visibility } = parsedQuery.data;
   const actor = await resolveOptionalKangurActor(req);
   const response = actor
     ? await listKangurDuelLobby(requireActiveLearner(actor), {
         ...(Number.isFinite(limit) ? { limit } : {}),
+        ...(visibility ? { visibility } : {}),
       })
-    : await listKangurPublicDuelLobby({
-        ...(Number.isFinite(limit) ? { limit } : {}),
-      });
+    : visibility === 'private'
+      ? {
+          entries: [],
+          serverTime: new Date().toISOString(),
+        }
+      : await listKangurPublicDuelLobby({
+          ...(Number.isFinite(limit) ? { limit } : {}),
+        });
   const inviteCount = response.entries.filter((entry) => entry.visibility === 'private').length;
   const publicCount = response.entries.length - inviteCount;
 
@@ -62,6 +69,7 @@ export async function getKangurDuelLobbyHandler(
       inviteEntries: inviteCount,
       isGuest: !actor,
       limit: Number.isFinite(limit) ? limit : null,
+      visibility: visibility ?? null,
     },
   });
 

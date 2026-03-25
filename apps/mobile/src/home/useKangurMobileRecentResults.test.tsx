@@ -3,7 +3,11 @@
  */
 
 import React from 'react';
-import { createDefaultKangurAiTutorLearnerMood, createDefaultKangurProgressState } from '@kangur/contracts';
+import {
+  createDefaultKangurAiTutorLearnerMood,
+  createDefaultKangurProgressState,
+  type KangurScore,
+} from '@kangur/contracts';
 import type {
   KangurAuthSession,
   KangurClientStorageAdapter,
@@ -78,12 +82,43 @@ const createSession = (user: KangurUser | null): KangurAuthSession => ({
   lastResolvedAt: '2026-03-20T00:00:00.000Z',
 });
 
-const createStorage = (): KangurClientStorageAdapter => ({
-  getItem: vi.fn(() => null),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  subscribe: vi.fn(() => () => {}),
+const createScore = (
+  id: string,
+  overrides: Partial<KangurScore> = {},
+): KangurScore => ({
+  id,
+  player_name: 'Ada Learner',
+  score: 7,
+  operation: 'addition',
+  subject: 'maths',
+  total_questions: 8,
+  correct_answers: 7,
+  time_taken: 42,
+  xp_earned: 14,
+  created_date: '2026-03-22T08:00:00.000Z',
+  client_mutation_id: null,
+  created_by: 'parent@example.com',
+  learner_id: 'learner-1',
+  owner_user_id: 'parent-1',
+  ...overrides,
 });
+
+const createStorage = (
+  initialValues: Record<string, string> = {},
+): KangurClientStorageAdapter => {
+  const values = new Map(Object.entries(initialValues));
+
+  return {
+    getItem: vi.fn((key: string) => values.get(key) ?? null),
+    setItem: vi.fn((key: string, value: string) => {
+      values.set(key, value);
+    }),
+    removeItem: vi.fn((key: string) => {
+      values.delete(key);
+    }),
+    subscribe: vi.fn(() => () => {}),
+  };
+};
 
 const createWrapper =
   (queryClient: QueryClient) =>
@@ -125,10 +160,16 @@ describe('useKangurMobileRecentResults', () => {
     const queryClient = createQueryClient();
 
     listScoresMock.mockResolvedValue([
-      { id: 'score-1' },
-      { id: 'score-2' },
-      { id: 'score-3' },
-      { id: 'score-4' },
+      createScore('score-1'),
+      createScore('score-2', {
+        created_date: '2026-03-21T08:00:00.000Z',
+      }),
+      createScore('score-3', {
+        created_date: '2026-03-20T08:00:00.000Z',
+      }),
+      createScore('score-4', {
+        created_date: '2026-03-19T08:00:00.000Z',
+      }),
     ]);
 
     const { result } = renderHook(() => useKangurMobileRecentResults(), {
@@ -140,7 +181,7 @@ describe('useKangurMobileRecentResults', () => {
         {
           learner_id: 'learner-1',
           sort: '-created_date',
-          limit: 40,
+          limit: 3,
         },
         {
           cache: 'no-store',
@@ -151,6 +192,96 @@ describe('useKangurMobileRecentResults', () => {
     await waitFor(() => {
       expect(result.current.results).toHaveLength(3);
     });
+  });
+
+  it('hydrates persisted recent results while the live score request is still pending', async () => {
+    let resolveScores: ((scores: KangurScore[]) => void) | undefined;
+    listScoresMock.mockImplementation(
+      () =>
+        new Promise<KangurScore[]>((resolve) => {
+          resolveScores = resolve;
+        }),
+    );
+
+    const storage = createStorage({
+      'kangur.mobile.scores.recent': JSON.stringify({
+        'learner:learner-1': [
+          createScore('score-cached-1', {
+            created_date: '2026-03-22T08:00:00.000Z',
+          }),
+          createScore('score-cached-2', {
+            created_date: '2026-03-21T08:00:00.000Z',
+          }),
+        ],
+      }),
+    });
+    const progressSnapshot = createDefaultKangurProgressState();
+    useKangurMobileRuntimeMock.mockReturnValue({
+      apiBaseUrl: 'http://localhost:3000',
+      apiClient: {
+        listScores: listScoresMock,
+      },
+      defaultDailyGoalGames: 5,
+      progressStore: {
+        subscribeToProgress: () => () => {},
+        loadProgress: () => progressSnapshot,
+      },
+      storage,
+    });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(() => useKangurMobileRecentResults(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => {
+      expect(result.current.results).toEqual([
+        createScore('score-cached-1', {
+          created_date: '2026-03-22T08:00:00.000Z',
+        }),
+        createScore('score-cached-2', {
+          created_date: '2026-03-21T08:00:00.000Z',
+        }),
+      ]);
+    });
+
+    expect(result.current.isLoading).toBe(false);
+
+    if (resolveScores) {
+      resolveScores([
+        createScore('score-live-1', {
+          created_date: '2026-03-23T08:00:00.000Z',
+        }),
+        createScore('score-live-2', {
+          created_date: '2026-03-22T08:00:00.000Z',
+        }),
+      ]);
+    }
+
+    await waitFor(() => {
+      expect(result.current.results).toEqual([
+        createScore('score-live-1', {
+          created_date: '2026-03-23T08:00:00.000Z',
+        }),
+        createScore('score-live-2', {
+          created_date: '2026-03-22T08:00:00.000Z',
+        }),
+      ]);
+    });
+
+    expect(storage.setItem).toHaveBeenCalledWith(
+      'kangur.mobile.scores.recent',
+      JSON.stringify({
+        'learner:learner-1': [
+          createScore('score-live-1', {
+            created_date: '2026-03-23T08:00:00.000Z',
+          }),
+          createScore('score-live-2', {
+            created_date: '2026-03-22T08:00:00.000Z',
+          }),
+        ],
+      }),
+    );
   });
 
   it('does not query recent results while the user is anonymous', async () => {
@@ -195,6 +326,56 @@ describe('useKangurMobileRecentResults', () => {
 
     expect(result.current.isEnabled).toBe(false);
     expect(result.current.isRestoringAuth).toBe(true);
+    expect(listScoresMock).not.toHaveBeenCalled();
+  });
+
+  it('reuses persisted recent results while the home screen keeps the live query deferred', async () => {
+    const storage = createStorage({
+      'kangur.mobile.scores.recent': JSON.stringify({
+        'learner:learner-1': [
+          createScore('score-cached-1', {
+            created_date: '2026-03-22T08:00:00.000Z',
+          }),
+          createScore('score-cached-2', {
+            created_date: '2026-03-21T08:00:00.000Z',
+          }),
+        ],
+      }),
+    });
+    const progressSnapshot = createDefaultKangurProgressState();
+    useKangurMobileRuntimeMock.mockReturnValue({
+      apiBaseUrl: 'http://localhost:3000',
+      apiClient: {
+        listScores: listScoresMock,
+      },
+      defaultDailyGoalGames: 5,
+      progressStore: {
+        subscribeToProgress: () => () => {},
+        loadProgress: () => progressSnapshot,
+      },
+      storage,
+    });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () => useKangurMobileRecentResults({ enabled: false }),
+      {
+        wrapper: createWrapper(queryClient),
+      },
+    );
+
+    await waitFor(() => {
+      expect(result.current.isEnabled).toBe(false);
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.results).toEqual([
+        createScore('score-cached-1', {
+          created_date: '2026-03-22T08:00:00.000Z',
+        }),
+        createScore('score-cached-2', {
+          created_date: '2026-03-21T08:00:00.000Z',
+        }),
+      ]);
+    });
     expect(listScoresMock).not.toHaveBeenCalled();
   });
 });

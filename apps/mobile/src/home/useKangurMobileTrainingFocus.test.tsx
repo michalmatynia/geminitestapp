@@ -79,12 +79,22 @@ const createSession = (user: KangurUser | null): KangurAuthSession => ({
   lastResolvedAt: '2026-03-20T00:00:00.000Z',
 });
 
-const createStorage = (): KangurClientStorageAdapter => ({
-  getItem: vi.fn(() => null),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  subscribe: vi.fn(() => () => {}),
-});
+const createStorage = (
+  initialValues: Record<string, string> = {},
+): KangurClientStorageAdapter => {
+  const values = new Map(Object.entries(initialValues));
+
+  return {
+    getItem: vi.fn((key: string) => values.get(key) ?? null),
+    setItem: vi.fn((key: string, value: string) => {
+      values.set(key, value);
+    }),
+    removeItem: vi.fn((key: string) => {
+      values.delete(key);
+    }),
+    subscribe: vi.fn(() => () => {}),
+  };
+};
 
 const createScore = (overrides: Partial<KangurScore> = {}): KangurScore => ({
   id: 'score-1',
@@ -158,6 +168,20 @@ describe('useKangurMobileTrainingFocus', () => {
   });
 
   it('derives strongest and weakest operations from learner score history', async () => {
+    const storage = createStorage();
+    const progressSnapshot = createDefaultKangurProgressState();
+    useKangurMobileRuntimeMock.mockReturnValue({
+      apiBaseUrl: 'http://localhost:3000',
+      apiClient: {
+        listScores: listScoresMock,
+      },
+      defaultDailyGoalGames: 5,
+      progressStore: {
+        subscribeToProgress: () => () => {},
+        loadProgress: () => progressSnapshot,
+      },
+      storage,
+    });
     const queryClient = createQueryClient();
     const { result } = renderHook(() => useKangurMobileTrainingFocus(), {
       wrapper: createWrapper(queryClient),
@@ -182,6 +206,72 @@ describe('useKangurMobileTrainingFocus', () => {
     expect(result.current.strongestLessonFocus).toBe('logical_patterns');
     expect(result.current.weakestOperation?.operation).toBe('addition');
     expect(result.current.weakestLessonFocus).toBe('adding');
+    expect(result.current.recentResults).toEqual([
+      createScore({
+        id: 'score-1',
+        operation: 'logical_patterns',
+        correct_answers: 8,
+        score: 8,
+      }),
+      createScore({
+        id: 'score-2',
+        operation: 'addition',
+        correct_answers: 4,
+        score: 4,
+      }),
+      createScore({
+        id: 'score-3',
+        operation: 'multiplication',
+        correct_answers: 6,
+        score: 6,
+      }),
+    ]);
+    expect(storage.setItem).toHaveBeenCalledWith(
+      'kangur.mobile.scores.trainingFocus',
+      JSON.stringify({
+        'learner:learner-1': {
+          strongestOperation: {
+            averageAccuracyPercent: 100,
+            bestAccuracyPercent: 100,
+            family: 'logic',
+            operation: 'logical_patterns',
+            sessions: 1,
+          },
+          weakestOperation: {
+            averageAccuracyPercent: 50,
+            bestAccuracyPercent: 50,
+            family: 'arithmetic',
+            operation: 'addition',
+            sessions: 1,
+          },
+        },
+      }),
+    );
+    expect(storage.setItem).toHaveBeenCalledWith(
+      'kangur.mobile.scores.recent',
+      JSON.stringify({
+        'learner:learner-1': [
+          createScore({
+            id: 'score-1',
+            operation: 'logical_patterns',
+            correct_answers: 8,
+            score: 8,
+          }),
+          createScore({
+            id: 'score-2',
+            operation: 'addition',
+            correct_answers: 4,
+            score: 4,
+          }),
+          createScore({
+            id: 'score-3',
+            operation: 'multiplication',
+            correct_answers: 6,
+            score: 6,
+          }),
+        ],
+      }),
+    );
   });
 
   it('stays in a restoring state while learner auth is still loading', async () => {
@@ -205,6 +295,78 @@ describe('useKangurMobileTrainingFocus', () => {
 
     expect(result.current.isEnabled).toBe(false);
     expect(result.current.isRestoringAuth).toBe(true);
+    expect(listScoresMock).not.toHaveBeenCalled();
+  });
+
+  it('does not query score history until the deferred home panel is enabled', () => {
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () => useKangurMobileTrainingFocus({ enabled: false }),
+      {
+        wrapper: createWrapper(queryClient),
+      },
+    );
+
+    expect(result.current.isEnabled).toBe(false);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.recentResults).toEqual([]);
+    expect(result.current.strongestOperation).toBeNull();
+    expect(result.current.weakestOperation).toBeNull();
+    expect(listScoresMock).not.toHaveBeenCalled();
+  });
+
+  it('hydrates persisted focus while the heavier score analysis is still deferred', () => {
+    const storage = createStorage({
+      'kangur.mobile.scores.trainingFocus': JSON.stringify({
+        'learner:learner-1': {
+          strongestOperation: {
+            averageAccuracyPercent: 94,
+            bestAccuracyPercent: 100,
+            family: 'logic',
+            operation: 'logical_patterns',
+            sessions: 4,
+          },
+          weakestOperation: {
+            averageAccuracyPercent: 52,
+            bestAccuracyPercent: 63,
+            family: 'arithmetic',
+            operation: 'addition',
+            sessions: 3,
+          },
+        },
+      }),
+    });
+    const progressSnapshot = createDefaultKangurProgressState();
+    useKangurMobileRuntimeMock.mockReturnValue({
+      apiBaseUrl: 'http://localhost:3000',
+      apiClient: {
+        listScores: listScoresMock,
+      },
+      defaultDailyGoalGames: 5,
+      progressStore: {
+        subscribeToProgress: () => () => {},
+        loadProgress: () => progressSnapshot,
+      },
+      storage,
+    });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () => useKangurMobileTrainingFocus({ enabled: false }),
+      {
+        wrapper: createWrapper(queryClient),
+      },
+    );
+
+    expect(result.current.isEnabled).toBe(false);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.recentResults).toEqual([]);
+    expect(result.current.strongestOperation?.operation).toBe(
+      'logical_patterns',
+    );
+    expect(result.current.strongestLessonFocus).toBe('logical_patterns');
+    expect(result.current.weakestOperation?.operation).toBe('addition');
+    expect(result.current.weakestLessonFocus).toBe('adding');
     expect(listScoresMock).not.toHaveBeenCalled();
   });
 });

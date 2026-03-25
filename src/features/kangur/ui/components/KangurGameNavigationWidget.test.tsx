@@ -9,11 +9,13 @@ const {
   gameRuntimeMock,
   guestPlayerStateMock,
   openLoginModalMock,
+  routingStateMock,
   topNavigationControllerPropsMock,
 } = vi.hoisted(() => ({
   gameRuntimeMock: vi.fn(),
   guestPlayerStateMock: vi.fn(),
   openLoginModalMock: vi.fn(),
+  routingStateMock: vi.fn(),
   topNavigationControllerPropsMock: vi.fn(),
 }));
 
@@ -29,6 +31,10 @@ vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   useKangurLoginModal: () => ({
     openLoginModal: openLoginModalMock,
   }),
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
+  useKangurRouting: () => routingStateMock(),
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
@@ -53,6 +59,9 @@ describe('KangurGameNavigationWidget', () => {
     guestPlayerStateMock.mockReturnValue({
       guestPlayerName: 'Ala',
       setGuestPlayerName: vi.fn(),
+    });
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
     });
   });
 

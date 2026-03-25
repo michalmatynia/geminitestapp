@@ -34,6 +34,7 @@ export const kangurPages: Readonly<Record<string, ComponentType>> = Object.freez
   Game: lazyPage(() => import('@/features/kangur/ui/pages/Game'), {
     includeTopNavigationSkeleton: false,
   }),
+  GamesLibrary: lazyPage(() => import('@/features/kangur/ui/pages/GamesLibrary')),
   Duels: lazyPage(() => import('@/features/kangur/ui/pages/Duels')),
   LearnerProfile: lazyPage(() => import('@/features/kangur/ui/pages/LearnerProfile')),
   Lessons: lazyPage(() => import('@/features/kangur/ui/pages/Lessons')),

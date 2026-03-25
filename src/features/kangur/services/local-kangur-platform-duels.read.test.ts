@@ -159,4 +159,38 @@ describe('local-kangur-platform duels read shared API client integration', () =>
       }),
     );
   });
+
+  it('loads duel lobby through the shared API client path builder with a visibility filter', async () => {
+    const lobby = {
+      entries: [],
+      serverTime: '2026-03-20T08:00:00.000Z',
+    };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => lobby,
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { requestDuelLobbyFromApi } = await import(
+      '@/features/kangur/services/local-kangur-platform-duels.read'
+    );
+
+    await expect(
+      requestDuelLobbyFromApi({
+        limit: 6,
+        visibility: 'private',
+      }),
+    ).resolves.toEqual(lobby);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/kangur/duels/lobby?limit=6&visibility=private',
+      expect.objectContaining({
+        method: 'GET',
+        credentials: 'same-origin',
+        cache: 'no-store',
+      }),
+    );
+  });
 });

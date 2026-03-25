@@ -218,7 +218,7 @@ describe('useKangurMobileHomeDuelsSpotlight', () => {
     });
 
     expect(listDuelLobbyMock).toHaveBeenCalledWith(
-      { limit: 8 },
+      { limit: 8, visibility: 'public' },
       { cache: 'no-store' },
     );
     expect(result.current.entries.map((entry) => entry.sessionId)).toEqual([
@@ -227,6 +227,20 @@ describe('useKangurMobileHomeDuelsSpotlight', () => {
       'public-ready-1',
       'public-waiting-1',
     ]);
+  });
+
+  it('stays idle until deferred home duel panels are enabled', () => {
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () => useKangurMobileHomeDuelsSpotlight({ enabled: false }),
+      {
+        wrapper: createWrapper(queryClient),
+      },
+    );
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.entries).toEqual([]);
+    expect(listDuelLobbyMock).not.toHaveBeenCalled();
   });
 
   it('maps network failures to the shared api error copy', async () => {

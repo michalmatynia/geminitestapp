@@ -245,6 +245,7 @@
       "pages": {
         "Competition": "Mathematical Kangaroo",
         "Game": "Home",
+        "GamesLibrary": "Games library",
         "Lessons": "Lessons",
         "Tests": "Tests",
         "LearnerProfile": "Learner profile",
@@ -1071,6 +1072,7 @@
   },
   "KangurNavigation": {
     "home": "Home page",
+    "gamesLibrary": "Games library",
     "lessons": "Lessons",
     "duels": "Duels",
     "parent": "Parent",
@@ -1097,6 +1099,59 @@
       "dialogDescription": "Choose who the lessons should be tailored for.",
       "closeAriaLabel": "Close age group chooser",
       "groupAriaLabel": "Age group chooser"
+    }
+  },
+  "KangurGamesLibraryPage": {
+    "introEyebrow": "Shared games domain",
+    "title": "Games library",
+    "description": "One shared catalog for every Kangur game, organized by engines, mechanics, variants, and lesson links.",
+    "groupEyebrow": "Learning area",
+    "groupDescription": "{count, plural, one {# game in this area.} other {# games in this area.}}",
+    "emptyTitle": "No games in the library",
+    "emptyDescription": "Add the first game definitions to start classifying engines and variants.",
+    "metrics": {
+      "games": "Games",
+      "gamesDescription": "All catalog entries.",
+      "engines": "Engines",
+      "enginesDescription": "Unique mechanic families.",
+      "variants": "Variants",
+      "variantsDescription": "Embedding and launch modes.",
+      "lessonLinked": "Linked to lessons",
+      "lessonLinkedDescription": "Games already connected to lesson components."
+    },
+    "statuses": {
+      "active": "Active",
+      "draft": "Draft",
+      "legacy": "Legacy"
+    },
+    "surfaces": {
+      "lesson": "Lesson",
+      "library": "Library",
+      "game": "Game",
+      "duel": "Duel"
+    },
+    "labels": {
+      "mechanic": "Mechanic",
+      "ageGroup": "Age group",
+      "allAgeGroups": "All",
+      "variants": "Variants",
+      "variantCount": "{count, plural, one {# variant} other {# variants}}",
+      "legacyScreens": "Legacy screens",
+      "lessonLinks": "Linked lessons",
+      "none": "None"
+    },
+    "mechanics": {
+      "drag_drop": "Drag and drop",
+      "multiple_choice": "Multiple choice",
+      "tap_select": "Tap and select",
+      "drawing": "Drawing",
+      "rhythm": "Rhythm",
+      "clock_training": "Clock training",
+      "calendar_interactive": "Interactive calendar",
+      "logic_pattern": "Logical patterns",
+      "logic_classification": "Logical classification",
+      "logic_relation": "Relations and analogies",
+      "sentence_building": "Sentence building"
     }
   },
   "KangurGameHomeActions": {

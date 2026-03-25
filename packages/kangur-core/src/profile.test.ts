@@ -63,6 +63,26 @@ describe('kangur-core profile localization', () => {
     expect(insights.strongest[0]?.title).toBe('Clock');
   });
 
+  it('keeps counts while limiting weakest and strongest lesson selections', () => {
+    const insights = buildLessonMasteryInsights(createProgressWithMastery(), 1, 'en');
+
+    expect(insights.trackedLessons).toBe(3);
+    expect(insights.masteredLessons).toBe(1);
+    expect(insights.lessonsNeedingPractice).toBe(2);
+    expect(insights.weakest).toEqual([
+      expect.objectContaining({
+        componentId: 'division',
+        title: 'Division',
+      }),
+    ]);
+    expect(insights.strongest).toEqual([
+      expect.objectContaining({
+        componentId: 'clock',
+        title: 'Clock',
+      }),
+    ]);
+  });
+
   it('localizes learner snapshot labels and recommendations in German', () => {
     const snapshot = buildKangurLearnerProfileSnapshot({
       dailyGoalGames: 3,

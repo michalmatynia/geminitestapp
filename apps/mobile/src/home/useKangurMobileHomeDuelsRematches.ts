@@ -26,6 +26,10 @@ type UseKangurMobileHomeDuelsRematchesResult = {
   refresh: () => Promise<void>;
 };
 
+type UseKangurMobileHomeDuelsRematchesOptions = {
+  enabled?: boolean;
+};
+
 const toRematchesErrorMessage = (
   error: unknown,
   copy: ReturnType<typeof useKangurMobileI18n>['copy'],
@@ -120,85 +124,91 @@ const toRematchActionErrorMessage = (
   return message;
 };
 
-export const useKangurMobileHomeDuelsRematches =
-  (): UseKangurMobileHomeDuelsRematchesResult => {
-    const queryClient = useQueryClient();
-    const { copy } = useKangurMobileI18n();
-    const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
-    const { isLoadingAuth, session } = useKangurMobileAuth();
-    const [actionError, setActionError] = useState<string | null>(null);
-    const [isActionPending, setIsActionPending] = useState(false);
-    const learnerIdentity =
-      session.user?.activeLearner?.id ??
-      session.user?.email ??
-      session.user?.id ??
-      'guest';
-    const isAuthenticated = session.status === 'authenticated';
-    const isRestoringAuth = isLoadingAuth && !isAuthenticated;
-    const rematchesQueryKey = [
-      'kangur-mobile',
-      'home',
-      'duels-rematches',
-      apiBaseUrl,
-      learnerIdentity,
-    ] as const;
+export const useKangurMobileHomeDuelsRematches = ({
+  enabled = true,
+}: UseKangurMobileHomeDuelsRematchesOptions = {}): UseKangurMobileHomeDuelsRematchesResult => {
+  const queryClient = useQueryClient();
+  const { copy } = useKangurMobileI18n();
+  const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
+  const { isLoadingAuth, session } = useKangurMobileAuth();
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [isActionPending, setIsActionPending] = useState(false);
+  const learnerIdentity =
+    session.user?.activeLearner?.id ??
+    session.user?.email ??
+    session.user?.id ??
+    'guest';
+  const isAuthenticated = session.status === 'authenticated';
+  const isRestoringAuth = isLoadingAuth && !isAuthenticated;
+  const isQueryEnabled = enabled && isAuthenticated;
+  const rematchesQueryKey = [
+    'kangur-mobile',
+    'home',
+    'duels-rematches',
+    apiBaseUrl,
+    learnerIdentity,
+  ] as const;
 
-    const rematchesQuery = useQuery({
-      enabled: isAuthenticated,
-      queryKey: rematchesQueryKey,
-      queryFn: async () =>
-        apiClient.listDuelOpponents(
-          { limit: MOBILE_HOME_DUELS_REMATCH_LIMIT },
+  const rematchesQuery = useQuery({
+    enabled: isQueryEnabled,
+    queryKey: rematchesQueryKey,
+    queryFn: async () =>
+      apiClient.listDuelOpponents(
+        { limit: MOBILE_HOME_DUELS_REMATCH_LIMIT },
+        { cache: 'no-store' },
+      ),
+    staleTime: 30_000,
+  });
+
+  const opponents = useMemo(
+    () =>
+      [...(rematchesQuery.data?.entries ?? [])]
+        .sort((left, right) => Date.parse(right.lastPlayedAt) - Date.parse(left.lastPlayedAt))
+        .slice(0, MOBILE_HOME_DUELS_REMATCH_LIMIT),
+    [rematchesQuery.data?.entries],
+  );
+
+  return {
+    actionError,
+    createRematch: async (opponentLearnerId) => {
+      setActionError(null);
+      setIsActionPending(true);
+
+      try {
+        const response = await apiClient.createDuel(
+          {
+            mode: 'challenge',
+            visibility: 'private',
+            opponentLearnerId,
+            operation: MOBILE_DUEL_DEFAULT_OPERATION,
+            difficulty: MOBILE_DUEL_DEFAULT_DIFFICULTY,
+            questionCount: MOBILE_DUEL_DEFAULT_QUESTION_COUNT,
+            timePerQuestionSec: MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC,
+          },
           { cache: 'no-store' },
-        ),
-      staleTime: 30_000,
-    });
+        );
 
-    const opponents = useMemo(
-      () =>
-        [...(rematchesQuery.data?.entries ?? [])]
-          .sort((left, right) => Date.parse(right.lastPlayedAt) - Date.parse(left.lastPlayedAt))
-          .slice(0, MOBILE_HOME_DUELS_REMATCH_LIMIT),
-      [rematchesQuery.data?.entries],
-    );
+        await queryClient.invalidateQueries({ queryKey: rematchesQueryKey });
+        return response.session.id;
+      } catch (error) {
+        setActionError(toRematchActionErrorMessage(error, copy));
+        return null;
+      } finally {
+        setIsActionPending(false);
+      }
+    },
+    error: toRematchesErrorMessage(rematchesQuery.error, copy),
+    isActionPending,
+    isAuthenticated,
+    isLoading: isRestoringAuth || (isQueryEnabled && rematchesQuery.isLoading),
+    isRestoringAuth,
+    opponents,
+    refresh: async () => {
+      if (!isQueryEnabled) {
+        return;
+      }
 
-    return {
-      actionError,
-      createRematch: async (opponentLearnerId) => {
-        setActionError(null);
-        setIsActionPending(true);
-
-        try {
-          const response = await apiClient.createDuel(
-            {
-              mode: 'challenge',
-              visibility: 'private',
-              opponentLearnerId,
-              operation: MOBILE_DUEL_DEFAULT_OPERATION,
-              difficulty: MOBILE_DUEL_DEFAULT_DIFFICULTY,
-              questionCount: MOBILE_DUEL_DEFAULT_QUESTION_COUNT,
-              timePerQuestionSec: MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC,
-            },
-            { cache: 'no-store' },
-          );
-
-          await queryClient.invalidateQueries({ queryKey: rematchesQueryKey });
-          return response.session.id;
-        } catch (error) {
-          setActionError(toRematchActionErrorMessage(error, copy));
-          return null;
-        } finally {
-          setIsActionPending(false);
-        }
-      },
-      error: toRematchesErrorMessage(rematchesQuery.error, copy),
-      isActionPending,
-      isAuthenticated,
-      isLoading: isRestoringAuth || rematchesQuery.isLoading,
-      isRestoringAuth,
-      opponents,
-      refresh: async () => {
-        await rematchesQuery.refetch();
-      },
-    };
+      await rematchesQuery.refetch();
+    },
   };
+};

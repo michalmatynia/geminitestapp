@@ -3,13 +3,12 @@ import {
   type KangurAssignmentAction,
   type KangurAssignmentPlan,
 } from '@kangur/core';
-import { createDefaultKangurProgressState } from '@kangur/contracts';
 import type { Href } from 'expo-router';
-import { useMemo, useSyncExternalStore } from 'react';
+import { useMemo } from 'react';
 
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
-import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 import { resolveKangurMobileActionHref } from '../shared/resolveKangurMobileActionHref';
+import { useKangurMobileHomeProgressSnapshot } from './KangurMobileHomeProgressSnapshotContext';
 
 export type KangurMobileHomeAssignmentItem = {
   assignment: KangurAssignmentPlan;
@@ -26,12 +25,7 @@ const createKangurMobileActionHref = (action: KangurAssignmentAction): Href | nu
 export const useKangurMobileHomeAssignments =
   (): UseKangurMobileHomeAssignmentsResult => {
     const { locale } = useKangurMobileI18n();
-    const { progressStore } = useKangurMobileRuntime();
-    const progress = useSyncExternalStore(
-      progressStore.subscribeToProgress,
-      progressStore.loadProgress,
-      createDefaultKangurProgressState,
-    );
+    const progress = useKangurMobileHomeProgressSnapshot();
     const assignments = useMemo(
       () => buildKangurAssignments(progress, 2, locale),
       [locale, progress],

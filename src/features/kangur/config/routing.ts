@@ -28,6 +28,7 @@ export type KangurInternalQueryParamKey = (typeof KANGUR_INTERNAL_QUERY_PARAM_KE
 export const KANGUR_PAGE_TO_SLUG: Record<string, string> = Object.freeze({
   Competition: 'competition',
   Game: 'game',
+  GamesLibrary: 'games',
   LearnerProfile: 'profile',
   Lessons: 'lessons',
   ParentDashboard: 'parent-dashboard',
@@ -391,6 +392,7 @@ type KangurPublicSearchParams =
 const KANGUR_DEDICATED_APP_PATH_BY_SLUG: Record<string, string> = Object.freeze({
   competition: 'competition',
   duels: 'duels',
+  games: 'games',
   leaderboard: 'leaderboard',
   lessons: 'lessons',
   'parent-dashboard': 'parent',

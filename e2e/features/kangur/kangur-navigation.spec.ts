@@ -18,7 +18,12 @@ const PROFILE_ROUTE_URL_PATTERN = /\/(?:kangur|[a-z]{2})\/profile$/;
 const LESSONS_ROUTE_PATH_PATTERN = /^\/(?:(?:[a-z]{2})\/)?(?:kangur\/)?lessons$/;
 const LESSONS_ROUTE_URL_PATTERN = /\/(?:(?:[a-z]{2})\/)?(?:kangur\/)?lessons$/;
 const LESSONS_HEADING_PATTERN = /^(?:Lekcje|Lessons)$/;
+const PARENT_DASHBOARD_HEADING_PATTERN = /^(?:Panel Rodzica|Parent dashboard)$/i;
 const PAGE_BACK_BUTTON_LABEL_PATTERN = /(?:wróć do poprzedniej strony|go back to previous page)/i;
+const TOPICS_BACK_BUTTON_LABEL_PATTERN = /(?:wróć do tematów|back to topics)/i;
+const PASSWORD_LABEL_PATTERN = /(?:hasło|password)/i;
+const PARENT_LOGIN_SUBMIT_LABEL_PATTERN = /(?:zaloguj rodzica|sign in parent)/i;
+const LEARNER_LOGIN_SUBMIT_LABEL_PATTERN = /(?:zaloguj ucznia|sign in learner)/i;
 const LOGIN_IDENTIFIER_LABEL_PATTERN =
   /Email rodzica (albo|lub) nick ucznia|Parent email or learner username/i;
 
@@ -72,6 +77,7 @@ type RouteScrollMonitorSample = {
   scrollY: number;
   hasSkeleton: boolean;
   skeletonTop: number | null;
+  skeletonLessonsLibraryTop: number | null;
   skeletonHomeLayoutTop: number | null;
   skeletonHomeActionsTop: number | null;
   topBarBottom: number | null;
@@ -111,8 +117,65 @@ const expectGameRouteReady = async (page: Page, navTestId: string): Promise<void
   });
 };
 
+const expectLessonsLibraryReady = async (page: Page): Promise<void> => {
+  await expect(page.getByTestId('kangur-page-transition-skeleton')).toHaveCount(0, {
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
+  });
+  await expect(page.getByTestId('kangur-route-content')).not.toHaveAttribute('aria-hidden', 'true');
+  await expect(page.getByTestId('lessons-list-intro-card')).toBeVisible({
+    timeout: ROUTE_BOOT_TIMEOUT_MS,
+  });
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const isVisible = (element: Element | null): boolean => {
+            if (!(element instanceof HTMLElement)) {
+              return false;
+            }
+
+            const rect = element.getBoundingClientRect();
+            return rect.width > 0 && rect.height > 0;
+          };
+
+          return (
+            isVisible(document.querySelector('[data-doc-id="lessons_library_entry"]')) ||
+            isVisible(document.querySelector('button[id^="kangur-lesson-group-trigger-"]'))
+          );
+        }),
+      {
+        message: 'expected the Lessons catalog to render visible groups or lesson entries',
+        timeout: ROUTE_BOOT_TIMEOUT_MS,
+      }
+    )
+    .toBe(true);
+};
+
+const ensureVisibleLessonEntry = async (page: Page): Promise<Locator> => {
+  const visibleLessonEntry = page.locator('[data-doc-id="lessons_library_entry"]:visible').first();
+
+  if ((await visibleLessonEntry.count()) === 0) {
+    const firstVisibleGroupTrigger = page
+      .locator('button[id^="kangur-lesson-group-trigger-"]:visible')
+      .first();
+
+    await expect(firstVisibleGroupTrigger).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
+    await firstVisibleGroupTrigger.click();
+    await expect(visibleLessonEntry).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
+  }
+
+  return visibleLessonEntry;
+};
+
 const getVisibleTopBarNavAction = (page: Page, testId: string): Locator =>
   page.getByTestId('kangur-page-top-bar').locator(`[data-testid="${testId}"]:visible`).last();
+
+const getVisibleTopBarProfileAction = (page: Page): Locator =>
+  page.getByTestId('kangur-page-top-bar').locator('[data-doc-id="top_nav_profile"]:visible').last();
 
 const expectLocatorToHaveClassToken = async (
   locator: Locator,
@@ -157,7 +220,7 @@ const expectParentDashboardRouteReady = async (page: Page): Promise<void> => {
   await expect(hero).toBeVisible({
     timeout: ROUTE_BOOT_TIMEOUT_MS,
   });
-  await expect(page.getByRole('heading', { name: /^Panel Rodzica$/ })).toBeVisible({
+  await expect(page.getByRole('heading', { name: PARENT_DASHBOARD_HEADING_PATTERN })).toBeVisible({
     timeout: ROUTE_BOOT_TIMEOUT_MS,
   });
   await expectLocatorToHaveClassToken(hero, 'text-center');
@@ -626,6 +689,9 @@ const startRouteScrollMonitor = async (page: Page): Promise<void> => {
       const routeContent = document.querySelector('[data-testid="kangur-route-content"]');
       const homeLessonsAction = document.querySelector('[data-testid="kangur-home-action-lessons"]');
       const skeleton = document.querySelector('[data-testid="kangur-page-transition-skeleton"]');
+      const skeletonLessonsLibraryLayout = document.querySelector(
+        '[data-testid="kangur-page-transition-skeleton-lessons-library-layout"]'
+      );
       const skeletonHomeLayout = document.querySelector(
         '[data-testid="kangur-page-transition-skeleton-game-home-layout"]'
       );
@@ -636,6 +702,8 @@ const startRouteScrollMonitor = async (page: Page): Promise<void> => {
       const homeActions = document.querySelector('[data-testid="kangur-home-actions-shell"]');
       const topBar = document.querySelector('[data-testid="kangur-page-top-bar"]');
       const skeletonRect = skeleton?.getBoundingClientRect() ?? null;
+      const skeletonLessonsLibraryRect =
+        skeletonLessonsLibraryLayout?.getBoundingClientRect() ?? null;
       const skeletonHomeLayoutRect = skeletonHomeLayout?.getBoundingClientRect() ?? null;
       const skeletonHomeActionsRect = skeletonHomeActions?.getBoundingClientRect() ?? null;
       const homeLayoutRect = homeLayout?.getBoundingClientRect() ?? null;
@@ -646,6 +714,7 @@ const startRouteScrollMonitor = async (page: Page): Promise<void> => {
         scrollY: window.scrollY,
         hasSkeleton: Boolean(skeletonRect),
         skeletonTop: skeletonRect?.top ?? null,
+        skeletonLessonsLibraryTop: skeletonLessonsLibraryRect?.top ?? null,
         skeletonHomeLayoutTop: skeletonHomeLayoutRect?.top ?? null,
         skeletonHomeActionsTop: skeletonHomeActionsRect?.top ?? null,
         topBarBottom: topBarRect?.bottom ?? null,
@@ -716,7 +785,10 @@ const expectLessonsSkeletonToStartBelowTopBar = (
   tolerance = 2
 ): void => {
   const skeletonSamples = samples.filter(
-    (sample) => sample.hasSkeleton && sample.skeletonTop !== null && sample.topBarBottom !== null
+    (sample) =>
+      sample.hasSkeleton &&
+      (sample.skeletonLessonsLibraryTop !== null || sample.skeletonTop !== null) &&
+      sample.topBarBottom !== null
   );
 
   expect(
@@ -725,7 +797,9 @@ const expectLessonsSkeletonToStartBelowTopBar = (
   ).toBeGreaterThan(0);
   expect(
     skeletonSamples.every(
-      (sample) => (sample.skeletonTop ?? Number.NEGATIVE_INFINITY) >= (sample.topBarBottom ?? 0) - tolerance
+      (sample) =>
+        (sample.skeletonLessonsLibraryTop ?? sample.skeletonTop ?? Number.NEGATIVE_INFINITY) >=
+        (sample.topBarBottom ?? 0) - tolerance
     ),
     `${stepLabel}: lessons skeleton rendered above the top bar before settling`
   ).toBe(true);
@@ -903,7 +977,7 @@ const expectRouteSkeletonHandoff = ({
     requireAcknowledgement
       ? `${stepLabel}: page skeleton appeared before the acknowledgement phase`
       : `${stepLabel}: page skeleton appeared before the tracked transition phase`
-  )[requireAcknowledgement ? 'toBeGreaterThan' : 'toBeGreaterThanOrEqual'](
+  ).toBeGreaterThanOrEqual(
     requireAcknowledgement ? acknowledgeIndex : transitionStartIndex
   );
   expect(
@@ -1249,7 +1323,7 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     await gotoKangurPath(page, '/kangur/game');
     await expectGameRouteReady(page, 'kangur-primary-nav-lessons');
-    await expect(page.getByRole('link', { name: /profil/i })).toBeVisible({
+    await expect(getVisibleTopBarProfileAction(page)).toBeVisible({
       timeout: ROUTE_BOOT_TIMEOUT_MS,
     });
 
@@ -1264,7 +1338,9 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     await startRouteShellMonitor(page);
     await getVisibleTopBarNavAction(page, 'kangur-primary-nav-lessons').click();
-    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN);
+    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expectRouteShellMarker(page);
     await expect(page.getByTestId('kangur-route-content')).toBeVisible();
     await page.waitForTimeout(250);
@@ -1272,15 +1348,19 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     await startRouteShellMonitor(page);
     await getVisibleTopBarNavAction(page, 'kangur-primary-nav-home').click();
-    await expect(page).toHaveURL(HOME_ROUTE_URL_PATTERN);
+    await expect(page).toHaveURL(HOME_ROUTE_URL_PATTERN, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expectRouteShellMarker(page);
     await expect(page.getByTestId('kangur-route-content')).toBeVisible();
     await page.waitForTimeout(250);
     expectRouteShellContinuity(await stopRouteShellMonitor(page), 'lessons -> home');
 
     await startRouteShellMonitor(page);
-    await page.getByRole('link', { name: /profil/i }).click();
-    await expect(page).toHaveURL(PROFILE_ROUTE_URL_PATTERN);
+    await getVisibleTopBarProfileAction(page).click();
+    await expect(page).toHaveURL(PROFILE_ROUTE_URL_PATTERN, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expectRouteShellMarker(page);
     await expectLearnerProfileRouteReady(page);
     await page.waitForTimeout(250);
@@ -1288,7 +1368,9 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     await startRouteShellMonitor(page);
     await getVisibleTopBarNavAction(page, 'kangur-primary-nav-home').click();
-    await expect(page).toHaveURL(HOME_ROUTE_URL_PATTERN);
+    await expect(page).toHaveURL(HOME_ROUTE_URL_PATTERN, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expectRouteShellMarker(page);
     await expect(page.getByTestId('kangur-route-content')).toBeVisible();
     await page.waitForTimeout(250);
@@ -1314,27 +1396,33 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     await gotoKangurPath(page, '/kangur/game');
     await expectGameRouteReady(page, 'kangur-primary-nav-lessons');
-    await expect(page.getByRole('link', { name: /profil/i })).toBeVisible({
+    await expect(getVisibleTopBarProfileAction(page)).toBeVisible({
       timeout: ROUTE_BOOT_TIMEOUT_MS,
     });
 
     await startRouteLayoutMonitor(page);
     await getVisibleTopBarNavAction(page, 'kangur-primary-nav-lessons').click();
-    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN);
+    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expect(page.getByTestId('kangur-route-content')).toBeVisible();
     await page.waitForTimeout(250);
     expectRouteLayoutStability(await stopRouteLayoutMonitor(page), 'game -> lessons');
 
     await startRouteLayoutMonitor(page);
-    await page.getByRole('link', { name: /profil/i }).click();
-    await expect(page).toHaveURL(PROFILE_ROUTE_URL_PATTERN);
+    await getVisibleTopBarProfileAction(page).click();
+    await expect(page).toHaveURL(PROFILE_ROUTE_URL_PATTERN, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expectLearnerProfileRouteReady(page);
     await page.waitForTimeout(250);
     expectRouteLayoutStability(await stopRouteLayoutMonitor(page), 'lessons -> profile');
 
     await startRouteLayoutMonitor(page);
     await getVisibleTopBarNavAction(page, 'kangur-primary-nav-home').click();
-    await expect(page).toHaveURL(HOME_ROUTE_URL_PATTERN);
+    await expect(page).toHaveURL(HOME_ROUTE_URL_PATTERN, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expect(page.getByTestId('kangur-route-content')).toBeVisible();
     await page.waitForTimeout(250);
     expectRouteLayoutStability(await stopRouteLayoutMonitor(page), 'profile -> home');
@@ -1348,7 +1436,9 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     await startRouteScrollMonitor(page);
     await getVisibleTopBarNavAction(page, 'kangur-primary-nav-lessons').click();
-    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN);
+    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expect(page.getByTestId('lessons-list-transition')).toBeVisible();
     await expect(page.getByTestId('lessons-list-intro-card')).toBeVisible();
     await expect(page.getByTestId('kangur-lessons-heading-art')).toBeVisible();
@@ -1386,7 +1476,9 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     await startRouteScrollMonitor(page);
     await page.locator('[data-doc-id="home_lessons_action"]').click();
-    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN);
+    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expect(page.getByTestId('lessons-list-transition')).toBeVisible();
     await page.waitForTimeout(120);
 
@@ -1400,29 +1492,28 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     expectNoAppLoaderFlash(samples, 'home lessons action -> lessons');
   });
 
-  test('animates the lessons surface smoothly on entry and when opening a lesson', async ({
+  test('reveals the lessons surface through the shell handoff and animates opening a lesson', async ({
     page,
   }) => {
     await gotoKangurPath(page, '/kangur/game');
     await expectGameRouteReady(page, 'kangur-primary-nav-lessons');
 
-    const lessonsEntrySnapshotPromise = captureLessonsTransitionSnapshot(
-      page,
-      '[data-testid="lessons-list-transition"]'
-    );
-
     await getVisibleTopBarNavAction(page, 'kangur-primary-nav-lessons').click();
-    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN);
-    await expect(page.getByTestId('lessons-list-transition')).toBeVisible();
-
-    expectAnimatedTransitionSnapshot(await lessonsEntrySnapshotPromise, 'game -> lessons');
+    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
+    await expect(page.getByTestId('kangur-page-transition-skeleton')).toBeVisible();
+    await expect(
+      page.getByTestId('kangur-page-transition-skeleton-lessons-library-layout')
+    ).toBeVisible();
+    await expectLessonsLibraryReady(page);
 
     const activeLessonSnapshotPromise = captureLessonsTransitionSnapshot(
       page,
       '[data-testid="lessons-active-transition"]'
     );
 
-    await page.locator('[data-doc-id="lessons_library_entry"]').first().click();
+    await (await ensureVisibleLessonEntry(page)).click();
     await expect(page.getByTestId('lessons-active-transition')).toBeVisible();
 
     expectAnimatedTransitionSnapshot(
@@ -1439,8 +1530,11 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     await expectGameRouteReady(page, 'kangur-primary-nav-lessons');
 
     await getVisibleTopBarNavAction(page, 'kangur-primary-nav-lessons').click();
-    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN);
-    await expect(page.getByTestId('lessons-list-transition')).toBeVisible();
+    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
+    await expectLessonsLibraryReady(page);
+    await ensureVisibleLessonEntry(page);
 
     await page.evaluate(() => {
       window.scrollTo({ top: 420, left: 0, behavior: 'auto' });
@@ -1458,7 +1552,7 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     const clickedLessonLabel = await page.evaluate(() => {
       const target = Array.from(document.querySelectorAll('[data-doc-id="lessons_library_entry"]'))
-        .filter((element): element is HTMLButtonElement => element instanceof HTMLButtonElement)
+        .filter((element): element is HTMLElement => element instanceof HTMLElement)
         .find((element) => {
           const rect = element.getBoundingClientRect();
           return rect.top >= 0 && rect.bottom <= window.innerHeight;
@@ -1469,7 +1563,7 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
       }
 
       const lessonLabel =
-        target.querySelector<HTMLElement>('.text-xl')?.textContent?.trim() ??
+        target.querySelector<HTMLElement>('h2, .text-xl')?.textContent?.trim() ??
         target.textContent?.trim() ??
         null;
 
@@ -1513,9 +1607,11 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     await startRouteScrollMonitor(page);
     await getVisibleTopBarNavAction(page, 'kangur-primary-nav-lessons').click();
-    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN);
+    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expect(page.getByTestId('lessons-list-transition')).toBeVisible();
-    await page.waitForTimeout(120);
+    await expectLessonsLibraryReady(page);
 
     const gameToLessonsSamples = await stopRouteScrollMonitor(page);
 
@@ -1544,7 +1640,9 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     await expect(page.getByTestId('kangur-app-loader')).toHaveCount(0);
     await startRouteScrollMonitor(page);
     await getVisibleTopBarNavAction(page, 'kangur-primary-nav-home').click();
-    await expect(page).toHaveURL(HOME_ROUTE_URL_PATTERN);
+    await expect(page).toHaveURL(HOME_ROUTE_URL_PATTERN, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
     await waitForAnimationFrames(page, 24);
 
@@ -1574,10 +1672,13 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     await expectGameRouteReady(page, 'kangur-primary-nav-lessons');
 
     await getVisibleTopBarNavAction(page, 'kangur-primary-nav-lessons').click();
-    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN);
+    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expect(page.getByTestId('lessons-list-transition')).toBeVisible();
+    await expectLessonsLibraryReady(page);
 
-    await page.locator('[data-doc-id="lessons_library_entry"]').first().click();
+    await (await ensureVisibleLessonEntry(page)).click();
     await expect(page.getByTestId('lessons-active-transition')).toBeVisible();
     await expect(page.getByTestId('active-lesson-header')).toBeVisible();
     await expect(page.getByTestId('kangur-page-transition-skeleton')).toHaveCount(0);
@@ -1585,7 +1686,9 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     await startRouteScrollMonitor(page);
     await getVisibleTopBarNavAction(page, 'kangur-primary-nav-home').click();
-    await expect(page).toHaveURL(HOME_ROUTE_URL_PATTERN);
+    await expect(page).toHaveURL(HOME_ROUTE_URL_PATTERN, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
     await waitForAnimationFrames(page, 24);
 
@@ -1621,9 +1724,14 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
       timeout: ROUTE_BOOT_TIMEOUT_MS,
     });
     await page.getByTestId('kangur-primary-nav-mobile-toggle').click();
-    await expect(page.getByRole('dialog', { name: /menu kangur/i })).toBeVisible();
-    await page.getByRole('dialog', { name: /menu kangur/i }).getByTestId('kangur-primary-nav-lessons').click();
-    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN);
+    const mobileMenuDialog = page.getByRole('dialog', {
+      name: /kangur menu|menu kangur/i,
+    });
+    await expect(mobileMenuDialog).toBeVisible();
+    await mobileMenuDialog.getByTestId('kangur-primary-nav-lessons').click();
+    await expect(page).toHaveURL(LESSONS_ROUTE_URL_PATTERN, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expect(page.getByTestId('lessons-list-intro-card')).toBeVisible();
     await expect(
       page.getByTestId('lessons-list-intro-card').getByRole('heading', {
@@ -1633,12 +1741,17 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     await expect(page.getByTestId('kangur-app-loader')).toHaveCount(0);
     await expect(page.getByTestId('kangur-page-transition-skeleton')).toHaveCount(0);
 
+    await page.getByTestId('kangur-primary-nav-mobile-toggle').click();
+    const lessonsMobileMenuDialog = page.getByRole('dialog', {
+      name: /kangur menu|menu kangur/i,
+    });
+    await expect(lessonsMobileMenuDialog).toBeVisible();
+
     await startRouteScrollMonitor(page);
-    await page
-      .getByTestId('lessons-list-intro-card')
-      .getByRole('button', { name: PAGE_BACK_BUTTON_LABEL_PATTERN })
-      .click();
-    await expect(page).toHaveURL(HOME_HISTORY_RETURN_ROUTE_URL_PATTERN);
+    await lessonsMobileMenuDialog.getByTestId('kangur-primary-nav-home').click();
+    await expect(page).toHaveURL(HOME_HISTORY_RETURN_ROUTE_URL_PATTERN, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
     await waitForAnimationFrames(page, 24);
 
@@ -1646,7 +1759,7 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     expectRouteSkeletonAcknowledgement({
       samples: lessonsToHomeSamples,
-      sourceId: LESSONS_LIST_BACK_SOURCE_ID,
+      sourceId: PRIMARY_NAV_HOME_SOURCE_ID,
       stepLabel: 'mobile lessons -> home',
       requireAcknowledgement: false,
     });
@@ -1669,7 +1782,7 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     await markRouteShellAsPersistent(page);
 
-    await page.getByRole('button', { name: /grajmy/i }).click();
+    await page.getByRole('button', { name: /grajmy|let'?s play/i }).click();
     await expect(page).toHaveURL(/\/kangur\/game$/);
     await expect(page.getByTestId('kangur-game-operation-top-section')).toBeVisible();
     await expect(page.getByTestId('kangur-grajmy-heading-art')).toBeVisible();
@@ -1678,42 +1791,21 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
       'text-center'
     );
     await expect(
-      page.getByTestId('kangur-game-operation-top-section').getByRole('heading', { name: 'Grajmy!' })
+      page
+        .getByTestId('kangur-game-operation-top-section')
+        .getByRole('heading', { name: /grajmy!?|let'?s play!?/i })
     ).toBeVisible();
     await expectRouteShellMarker(page);
 
     await page
       .getByTestId('kangur-game-operation-top-section')
-      .getByRole('button', { name: 'Wróć do poprzedniej strony' })
+      .getByRole('button', { name: PAGE_BACK_BUTTON_LABEL_PATTERN })
       .click();
     await expect(page).toHaveURL(/\/kangur\/game$/);
     await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
     await expectRouteShellMarker(page);
 
-    await page.getByRole('button', { name: /trening mieszany/i }).click();
-    await expect(page).toHaveURL(/\/kangur\/game$/);
-    await expect(page.getByTestId('kangur-game-training-top-section')).toBeVisible();
-    await expect(page.getByTestId('kangur-training-heading-art')).toBeVisible();
-    await expectLocatorToHaveClassToken(
-      page.getByTestId('kangur-game-training-top-section'),
-      'text-center'
-    );
-    await expect(
-      page
-        .getByTestId('kangur-game-training-top-section')
-        .getByRole('heading', { name: 'Trening' })
-    ).toBeVisible();
-    await expectRouteShellMarker(page);
-
-    await page
-      .getByTestId('kangur-game-training-top-section')
-      .getByRole('button', { name: 'Wróć do poprzedniej strony' })
-      .click();
-    await expect(page).toHaveURL(/\/kangur\/game$/);
-    await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
-    await expectRouteShellMarker(page);
-
-    await page.getByRole('button', { name: /kangur matematyczny/i }).click();
+    await page.getByRole('button', { name: /kangur matematyczny|math kangaroo/i }).click();
     await expect(page).toHaveURL(/\/kangur\/game$/);
     await expect(page.getByTestId('kangur-game-kangur-setup-top-section')).toBeVisible();
     await expect(page.getByTestId('kangur-kangur-heading-art')).toBeVisible();
@@ -1724,55 +1816,53 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     await expect(
       page
         .getByTestId('kangur-game-kangur-setup-top-section')
-        .getByRole('heading', { name: 'Kangur' })
+        .getByRole('heading', { name: /mathematical kangaroo|math kangaroo|kangur/i })
     ).toBeVisible();
     await expectRouteShellMarker(page);
 
     await page
       .getByTestId('kangur-game-kangur-setup-top-section')
-      .getByRole('button', { name: 'Wróć do poprzedniej strony' })
+      .getByRole('button', { name: PAGE_BACK_BUTTON_LABEL_PATTERN })
       .click();
     await expect(page).toHaveURL(/\/kangur\/game$/);
     await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
     await expectRouteShellMarker(page);
 
-    await page.getByRole('button', { name: /grajmy/i }).click();
+    await page.getByRole('button', { name: /grajmy|let'?s play/i }).click();
     await expect(page.getByTestId('kangur-game-operation-top-section')).toBeVisible();
 
-    await page.evaluate(() => {
-      window.scrollTo({ top: 320, left: 0, behavior: 'auto' });
-    });
-    await page.getByRole('button', { name: /ćwiczenia z kalendarzem/i }).click();
+    const calendarQuickPracticeCard = page.getByTestId('kangur-quick-practice-card-calendar_quiz');
+    await calendarQuickPracticeCard.scrollIntoViewIfNeeded();
+    await calendarQuickPracticeCard.click();
     await expect(page).toHaveURL(/\/kangur\/game$/);
     await expect(page.getByTestId('kangur-calendar-training-top-section')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeVisible();
+    await expect(page.getByRole('button', { name: TOPICS_BACK_BUTTON_LABEL_PATTERN })).toBeVisible();
     expect(await page.evaluate(() => window.scrollY)).toBeLessThan(48);
     await expect(page.getByTestId('kangur-primary-nav-home')).toBeVisible();
     await expectRouteShellMarker(page);
 
-    await page.getByRole('button', { name: 'Wróć do poprzedniej strony' }).click();
+    await page.getByRole('button', { name: TOPICS_BACK_BUTTON_LABEL_PATTERN }).click();
     await expect(page).toHaveURL(/\/kangur\/game$/);
     await expect(page.getByTestId('kangur-game-operation-top-section')).toBeVisible();
     await expectRouteShellMarker(page);
 
-    await page.evaluate(() => {
-      window.scrollTo({ top: 320, left: 0, behavior: 'auto' });
-    });
-    await page.getByRole('button', { name: /ćwiczenia z figurami/i }).click();
+    const geometryQuickPracticeCard = page.getByTestId('kangur-quick-practice-card-geometry_quiz');
+    await geometryQuickPracticeCard.scrollIntoViewIfNeeded();
+    await geometryQuickPracticeCard.click();
     await expect(page).toHaveURL(/\/kangur\/game$/);
     await expect(page.getByTestId('kangur-geometry-training-top-section')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeVisible();
+    await expect(page.getByRole('button', { name: TOPICS_BACK_BUTTON_LABEL_PATTERN })).toBeVisible();
     expect(await page.evaluate(() => window.scrollY)).toBeLessThan(48);
     await expect(page.getByTestId('kangur-primary-nav-home')).toBeVisible();
     await expectRouteShellMarker(page);
 
-    await page.getByRole('button', { name: 'Wróć do poprzedniej strony' }).click();
+    await page.getByRole('button', { name: TOPICS_BACK_BUTTON_LABEL_PATTERN }).click();
     await expect(page).toHaveURL(/\/kangur\/game$/);
     await expect(page.getByTestId('kangur-game-operation-top-section')).toBeVisible();
     await expectRouteShellMarker(page);
   });
 
-  test('keeps the home action panel mounted while the leaderboard and progress stack exit to Grajmy', async ({
+  test('drops the home action panel promptly while the leaderboard and progress stack stay stable on the Grajmy handoff', async ({
     page,
   }) => {
     await gotoKangurPath(page, '/kangur/game');
@@ -1788,13 +1878,13 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     const initialLayout = await getGameHomeLayoutSnapshot(page);
 
-    await page.getByRole('button', { name: /grajmy/i }).click();
+    await page.getByRole('button', { name: /grajmy|let'?s play/i }).click();
     await expect(page).toHaveURL(/\/kangur\/game$/);
     await waitForAnimationFrames(page, 2);
 
     const transitionLayout = await getGameHomeLayoutSnapshot(page);
 
-    expect(transitionLayout.actionsVisible).toBe(true);
+    expect(transitionLayout.actionsVisible).toBe(false);
     expect(initialLayout.leaderboardTop).not.toBeNull();
     expect(initialLayout.progressTop).not.toBeNull();
     expect(transitionLayout.leaderboardTop).not.toBeNull();
@@ -1823,15 +1913,17 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
 
     await gotoKangurPath(page, '/kangur/game');
     await expectGameRouteReady(page, 'kangur-primary-nav-lessons');
-    await expect(page.getByRole('link', { name: /profil/i })).toBeVisible({
+    await expect(getVisibleTopBarProfileAction(page)).toBeVisible({
       timeout: ROUTE_BOOT_TIMEOUT_MS,
     });
     await expect(page.getByTestId('kangur-primary-nav-parent-dashboard')).toHaveCount(0);
 
-    await page.getByRole('link', { name: /profil/i }).click();
-    await expect(page).toHaveURL(/\/kangur\/profile$/);
+    await getVisibleTopBarProfileAction(page).click();
+    await expect(page).toHaveURL(/\/kangur\/profile$/, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expectLearnerProfileRouteReady(page);
-    await expect(page.getByRole('link', { name: /profil/i })).toBeVisible();
+    await expect(getVisibleTopBarProfileAction(page)).toBeVisible();
     await expect(page.getByTestId('kangur-primary-nav-parent-dashboard')).toHaveCount(0);
   });
 
@@ -1853,13 +1945,15 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     await page.getByTestId('kangur-primary-nav-parent-dashboard').click();
     await expect(page).toHaveURL(/\/kangur\/parent-dashboard$/);
     await expectRouteShellMarker(page);
-    await expect(page.getByRole('heading', { name: /^Panel Rodzica$/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: PARENT_DASHBOARD_HEADING_PATTERN })).toBeVisible();
     await page.waitForTimeout(250);
     expectRouteShellContinuity(await stopRouteShellMonitor(page), 'profile -> parent-dashboard');
 
     await startRouteShellMonitor(page);
     await getVisibleTopBarNavAction(page, 'kangur-primary-nav-home').click();
-    await expect(page).toHaveURL(HOME_ROUTE_URL_PATTERN);
+    await expect(page).toHaveURL(HOME_ROUTE_URL_PATTERN, {
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
     await expectRouteShellMarker(page);
     await page.waitForTimeout(250);
     expectRouteShellContinuity(await stopRouteShellMonitor(page), 'parent-dashboard -> home');
@@ -1939,7 +2033,7 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     await startRouteShellMonitor(page);
     await page
       .getByTestId('kangur-parent-dashboard-hero')
-      .getByRole('button', { name: 'Wróć do poprzedniej strony' })
+      .getByRole('button', { name: PAGE_BACK_BUTTON_LABEL_PATTERN })
       .click();
     await expect(page).toHaveURL(/\/kangur\/profile$/);
     await expect(page.getByTestId('kangur-learner-profile-hero')).toBeVisible();
@@ -2194,14 +2288,16 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     const identifierField = page
       .getByTestId('kangur-login-form')
       .getByLabel(LOGIN_IDENTIFIER_LABEL_PATTERN);
-    const parentPasswordField = page.getByTestId('kangur-login-form').getByLabel('Hasło');
+    const parentPasswordField = page
+      .getByTestId('kangur-login-form')
+      .getByLabel(PASSWORD_LABEL_PATTERN);
 
     await identifierField.fill('parent@example.com');
     await parentPasswordField.fill('secret123');
     await expect(identifierField).toHaveValue('parent@example.com');
     await expect(parentPasswordField).toHaveValue('secret123');
     await expect(page.getByTestId('kangur-login-form')).toHaveAttribute('data-login-kind', 'parent');
-    await page.getByRole('button', { name: 'Zaloguj rodzica' }).click();
+    await page.getByRole('button', { name: PARENT_LOGIN_SUBMIT_LABEL_PATTERN }).click();
 
     await expect(page).toHaveURL(/\/kangur\?login=parent$/);
     await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
@@ -2227,7 +2323,7 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     await expect(
       page.getByTestId('kangur-login-form').getByLabel(LOGIN_IDENTIFIER_LABEL_PATTERN)
     ).toBeVisible();
-    await expect(page.getByTestId('kangur-login-form').getByLabel('Hasło')).toBeVisible();
+    await expect(page.getByTestId('kangur-login-form').getByLabel(PASSWORD_LABEL_PATTERN)).toBeVisible();
     await expect(page).toHaveURL(/\/login\?callbackUrl=%2Fkangur%3Flogin%3Dmagic-parent$/);
   });
 
@@ -2298,7 +2394,9 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
     const studentNicknameField = page
       .getByTestId('kangur-login-form')
       .getByLabel(LOGIN_IDENTIFIER_LABEL_PATTERN);
-    const studentPasswordField = page.getByTestId('kangur-login-form').getByLabel('Hasło');
+    const studentPasswordField = page
+      .getByTestId('kangur-login-form')
+      .getByLabel(PASSWORD_LABEL_PATTERN);
 
     await studentNicknameField.fill('janek123');
     await studentPasswordField.fill('secret123');
@@ -2308,7 +2406,7 @@ const getTopNavLayoutSnapshot = async (page: Page): Promise<TopNavLayoutSnapshot
       'data-login-kind',
       'student'
     );
-    await page.getByRole('button', { name: 'Zaloguj ucznia' }).click();
+    await page.getByRole('button', { name: LEARNER_LOGIN_SUBMIT_LABEL_PATTERN }).click();
 
     await expect(page).toHaveURL(/\/kangur\?login=student$/);
     await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();

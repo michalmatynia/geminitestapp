@@ -23,6 +23,10 @@ type UseKangurMobileHomeDuelsSpotlightResult = {
   refresh: () => Promise<void>;
 };
 
+type UseKangurMobileHomeDuelsSpotlightOptions = {
+  enabled?: boolean;
+};
+
 const DUEL_SPOTLIGHT_STATUS_PRIORITY: Record<KangurDuelStatus, number> = {
   aborted: 5,
   completed: 4,
@@ -75,58 +79,66 @@ const isSpotlightEntry = (entry: KangurDuelLobbyEntry): boolean =>
     entry.status === 'ready' ||
     entry.status === 'in_progress');
 
-export const useKangurMobileHomeDuelsSpotlight =
-  (): UseKangurMobileHomeDuelsSpotlightResult => {
-    const { copy } = useKangurMobileI18n();
-    const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
-    const { session } = useKangurMobileAuth();
-    const learnerIdentity =
-      session.user?.activeLearner?.id ??
-      session.user?.email ??
-      session.user?.id ??
-      'guest';
+export const useKangurMobileHomeDuelsSpotlight = ({
+  enabled = true,
+}: UseKangurMobileHomeDuelsSpotlightOptions = {}): UseKangurMobileHomeDuelsSpotlightResult => {
+  const { copy } = useKangurMobileI18n();
+  const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
+  const { session } = useKangurMobileAuth();
+  const learnerIdentity =
+    session.user?.activeLearner?.id ??
+    session.user?.email ??
+    session.user?.id ??
+    'guest';
 
-    const spotlightQuery = useQuery({
-      queryKey: buildKangurMobileHomeDuelLobbyQueryKey(
-        apiBaseUrl,
-        learnerIdentity,
+  const spotlightQuery = useQuery({
+    enabled,
+    queryKey: buildKangurMobileHomeDuelLobbyQueryKey(
+      apiBaseUrl,
+      learnerIdentity,
+      'public',
+    ),
+    queryFn: async () =>
+      apiClient.listDuelLobby(
+        {
+          limit: MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT,
+          visibility: 'public',
+        },
+        { cache: 'no-store' },
       ),
-      queryFn: async () =>
-        apiClient.listDuelLobby(
-          { limit: MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT },
-          { cache: 'no-store' },
-        ),
-      refetchInterval: MOBILE_HOME_DUEL_LOBBY_POLL_MS,
-      staleTime: 10_000,
-    });
+    refetchInterval: MOBILE_HOME_DUEL_LOBBY_POLL_MS,
+    staleTime: 10_000,
+  });
 
-    const entries = useMemo(
-      () =>
-        (spotlightQuery.data?.entries ?? [])
-          .filter((entry) => isSpotlightEntry(entry))
-          .sort((left, right) => {
-            const statusPriority =
-              DUEL_SPOTLIGHT_STATUS_PRIORITY[left.status] -
-              DUEL_SPOTLIGHT_STATUS_PRIORITY[right.status];
+  const entries = useMemo(
+    () =>
+      (spotlightQuery.data?.entries ?? [])
+        .filter((entry) => isSpotlightEntry(entry))
+        .sort((left, right) => {
+          const statusPriority =
+            DUEL_SPOTLIGHT_STATUS_PRIORITY[left.status] -
+            DUEL_SPOTLIGHT_STATUS_PRIORITY[right.status];
 
-            if (statusPriority !== 0) {
-              return statusPriority;
-            }
+          if (statusPriority !== 0) {
+            return statusPriority;
+          }
 
-            return (
-              Date.parse(right.updatedAt) - Date.parse(left.updatedAt)
-            );
-          })
-          .slice(0, MOBILE_HOME_DUELS_SPOTLIGHT_LIMIT),
-      [spotlightQuery.data?.entries],
-    );
+          return Date.parse(right.updatedAt) - Date.parse(left.updatedAt);
+        })
+        .slice(0, MOBILE_HOME_DUELS_SPOTLIGHT_LIMIT),
+    [spotlightQuery.data?.entries],
+  );
 
-    return {
-      entries,
-      error: toSpotlightErrorMessage(spotlightQuery.error, copy),
-      isLoading: spotlightQuery.isLoading,
-      refresh: async () => {
-        await spotlightQuery.refetch();
-      },
-    };
+  return {
+    entries,
+    error: toSpotlightErrorMessage(spotlightQuery.error, copy),
+    isLoading: enabled && spotlightQuery.isLoading,
+    refresh: async () => {
+      if (!enabled) {
+        return;
+      }
+
+      await spotlightQuery.refetch();
+    },
   };
+};

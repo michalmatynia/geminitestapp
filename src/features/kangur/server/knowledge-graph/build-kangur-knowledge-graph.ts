@@ -72,6 +72,12 @@ const ROOT_DEFINITIONS = {
       'Lesson-library navigation, lesson context, and tutor policy references for lesson-mode guidance.',
     relatedFlowId: 'flow:kangur:lesson-help',
   },
+  gameLibraryContext: {
+    title: 'Games library help',
+    summary:
+      'Games-library navigation, reusable game catalog references, and tutor context for practice-mode guidance.',
+    relatedFlowId: 'flow:kangur:game-help',
+  },
   testContext: {
     title: 'Tests help',
     summary:
@@ -104,6 +110,10 @@ const FLOW_TARGETS: Partial<Record<string, {
   'flow:kangur:create-account': {
     route: KANGUR_HOME_ROUTE,
     anchorId: 'kangur-primary-nav-login',
+  },
+  'flow:kangur:game-help': {
+    route: toRelativeKangurPageRoute('GamesLibrary'),
+    anchorId: 'kangur-primary-nav-games-library',
   },
 };
 
@@ -184,6 +194,39 @@ const REFERENCE_DETAILS: Partial<Record<string, ReferenceDetail>> = {
   'collection:kangur-lessons': {
     title: 'Lessons collection',
     summary: 'Lesson metadata and library entries referenced by the tutor.',
+  },
+  'page:kangur-games-library': {
+    title: {
+      pl: 'Biblioteka gier',
+      en: 'Games library page',
+    },
+    summary: {
+      pl: 'Biblioteka gier i ekran wyboru ćwiczeń w Kangurze.',
+      en: 'Kangur games library and practice selection surface.',
+    },
+    route: toRelativeKangurPageRoute('GamesLibrary'),
+    triggerPhrases: {
+      pl: [
+        'gry',
+        'biblioteka gier',
+        'gdzie są gry',
+        'otwórz gry',
+        'wróć do gier',
+      ],
+      en: ['games', 'games library', 'open games'],
+    },
+    tags: {
+      pl: ['gry', 'biblioteka-gier'],
+      en: ['games', 'games-library'],
+    },
+    semanticText: {
+      pl: 'Biblioteka gier w Kangurze. To tutaj uczeń wybiera gry i ćwiczenia do samodzielnej praktyki.',
+      en: 'Kangur games library where learners choose games and practice activities.',
+    },
+  },
+  'collection:kangur-games': {
+    title: 'Games collection',
+    summary: 'Available Kangur games and practice metadata referenced by the tutor.',
   },
   'policy:kangur-ai-tutor-socratic': {
     title: 'Socratic tutor policy',
@@ -267,6 +310,12 @@ const FLOW_DEFINITIONS = [
     title: 'Lessons help',
     summary: 'How to find lessons, open them, and understand lesson-mode navigation.',
     tags: ['lessons', 'navigation'],
+  },
+  {
+    id: 'flow:kangur:game-help',
+    title: 'Games library help',
+    summary: 'How to find games, open the games library, and start practice activities in Kangur.',
+    tags: ['games', 'navigation', 'practice'],
   },
   {
     id: 'flow:kangur:test-help',
@@ -378,6 +427,7 @@ const buildReferenceNode = (
 
 const SURFACE_FLOW_IDS: Partial<Record<string, string>> = {
   lesson: 'flow:kangur:lesson-help',
+  game: 'flow:kangur:game-help',
   test: 'flow:kangur:test-help',
   assignment: 'flow:kangur:assignment-help',
 };

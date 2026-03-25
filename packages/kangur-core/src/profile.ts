@@ -356,25 +356,72 @@ const computeRecentSessions = (
     };
   });
 
-const resolveLessonMasteryEntries = (
-  progress: KangurProgressState,
-  locale: KangurCoreLocale,
-): KangurLessonMasteryInsight[] =>
-  Object.entries(progress.lessonMastery).map(([componentId, mastery]) => {
-    const lesson = KANGUR_LESSON_CATALOG[componentId];
-    const lessonTitle = getLocalizedKangurCoreLessonTitle(componentId, locale, lesson?.title);
+type LessonMasteryEntry = {
+  componentId: string;
+  masteryPercent: number;
+  attempts: number;
+  bestScorePercent: number;
+  lastScorePercent: number;
+  lastCompletedAt: string | null;
+};
 
-    return {
-      componentId,
-      title: lessonTitle,
-      emoji: lesson?.emoji ?? '📘',
-      masteryPercent: mastery.masteryPercent,
-      attempts: mastery.attempts,
-      bestScorePercent: mastery.bestScorePercent,
-      lastScorePercent: mastery.lastScorePercent,
-      lastCompletedAt: mastery.lastCompletedAt,
-    };
-  });
+const compareWeakestLessonMasteryEntries = (
+  left: LessonMasteryEntry,
+  right: LessonMasteryEntry,
+): number => {
+  if (left.masteryPercent !== right.masteryPercent) {
+    return left.masteryPercent - right.masteryPercent;
+  }
+  if (left.lastScorePercent !== right.lastScorePercent) {
+    return left.lastScorePercent - right.lastScorePercent;
+  }
+  return right.attempts - left.attempts;
+};
+
+const compareStrongestLessonMasteryEntries = (
+  left: LessonMasteryEntry,
+  right: LessonMasteryEntry,
+): number => {
+  if (left.masteryPercent !== right.masteryPercent) {
+    return right.masteryPercent - left.masteryPercent;
+  }
+  if (left.bestScorePercent !== right.bestScorePercent) {
+    return right.bestScorePercent - left.bestScorePercent;
+  }
+  return right.attempts - left.attempts;
+};
+
+const insertBoundedLessonMasteryEntry = (
+  entries: LessonMasteryEntry[],
+  candidateEntry: LessonMasteryEntry,
+  limit: number,
+  compareEntries: (left: LessonMasteryEntry, right: LessonMasteryEntry) => number,
+): void => {
+  const insertIndex = entries.findIndex((entry) => compareEntries(candidateEntry, entry) < 0);
+
+  if (insertIndex === -1) {
+    entries.push(candidateEntry);
+  } else {
+    entries.splice(insertIndex, 0, candidateEntry);
+  }
+
+  if (entries.length > limit) {
+    entries.length = limit;
+  }
+};
+
+const localizeLessonMasteryEntry = (
+  entry: LessonMasteryEntry,
+  locale: KangurCoreLocale,
+): KangurLessonMasteryInsight => {
+  const lesson = KANGUR_LESSON_CATALOG[entry.componentId];
+
+  return {
+    ...entry,
+    title: getLocalizedKangurCoreLessonTitle(entry.componentId, locale, lesson?.title),
+    emoji: lesson?.emoji ?? '📘',
+  };
+};
 
 export const buildLessonMasteryInsights = (
   progress: KangurProgressState,
@@ -382,38 +429,51 @@ export const buildLessonMasteryInsights = (
   locale?: string | null | undefined,
 ): KangurLessonMasteryInsights => {
   const safeLocale = normalizeKangurCoreLocale(locale);
-  const entries = resolveLessonMasteryEntries(progress, safeLocale);
   const safeLimit = Math.max(1, Math.floor(limit));
-  const weakest = [...entries]
-    .filter((entry) => entry.masteryPercent < 80)
-    .sort((left, right) => {
-      if (left.masteryPercent !== right.masteryPercent) {
-        return left.masteryPercent - right.masteryPercent;
-      }
-      if (left.lastScorePercent !== right.lastScorePercent) {
-        return left.lastScorePercent - right.lastScorePercent;
-      }
-      return right.attempts - left.attempts;
-    })
-    .slice(0, safeLimit);
-  const strongest = [...entries]
-    .sort((left, right) => {
-      if (left.masteryPercent !== right.masteryPercent) {
-        return right.masteryPercent - left.masteryPercent;
-      }
-      if (left.bestScorePercent !== right.bestScorePercent) {
-        return right.bestScorePercent - left.bestScorePercent;
-      }
-      return right.attempts - left.attempts;
-    })
-    .slice(0, safeLimit);
+  const weakest: LessonMasteryEntry[] = [];
+  const strongest: LessonMasteryEntry[] = [];
+  let trackedLessons = 0;
+  let masteredLessons = 0;
+  let lessonsNeedingPractice = 0;
+
+  for (const [componentId, mastery] of Object.entries(progress.lessonMastery)) {
+    trackedLessons += 1;
+
+    const entry: LessonMasteryEntry = {
+      attempts: mastery.attempts,
+      bestScorePercent: mastery.bestScorePercent,
+      componentId,
+      lastCompletedAt: mastery.lastCompletedAt,
+      lastScorePercent: mastery.lastScorePercent,
+      masteryPercent: mastery.masteryPercent,
+    };
+
+    if (entry.masteryPercent >= 80) {
+      masteredLessons += 1;
+    } else {
+      lessonsNeedingPractice += 1;
+      insertBoundedLessonMasteryEntry(
+        weakest,
+        entry,
+        safeLimit,
+        compareWeakestLessonMasteryEntries,
+      );
+    }
+
+    insertBoundedLessonMasteryEntry(
+      strongest,
+      entry,
+      safeLimit,
+      compareStrongestLessonMasteryEntries,
+    );
+  }
 
   return {
-    weakest,
-    strongest,
-    trackedLessons: entries.length,
-    masteredLessons: entries.filter((entry) => entry.masteryPercent >= 80).length,
-    lessonsNeedingPractice: entries.filter((entry) => entry.masteryPercent < 80).length,
+    weakest: weakest.map((entry) => localizeLessonMasteryEntry(entry, safeLocale)),
+    strongest: strongest.map((entry) => localizeLessonMasteryEntry(entry, safeLocale)),
+    trackedLessons,
+    masteredLessons,
+    lessonsNeedingPractice,
   };
 };
 

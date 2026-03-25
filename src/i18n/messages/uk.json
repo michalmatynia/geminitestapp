@@ -255,6 +255,7 @@
       "pages": {
         "Competition": "Математичний Кенгуру",
         "Game": "Головна",
+        "GamesLibrary": "Бібліотека ігор",
         "Lessons": "Уроки",
         "Tests": "Тести",
         "LearnerProfile": "Профіль учня",
@@ -271,6 +272,7 @@
   },
   "KangurNavigation": {
     "home": "Головна",
+    "gamesLibrary": "Бібліотека ігор",
     "lessons": "Уроки",
     "duels": "Дуелі",
     "parent": "Батьки",
@@ -297,6 +299,59 @@
       "dialogDescription": "Виберіть, для кого мають бути підібрані уроки.",
       "closeAriaLabel": "Закрити вибір вікової групи",
       "groupAriaLabel": "Вибір вікової групи"
+    }
+  },
+  "KangurGamesLibraryPage": {
+    "introEyebrow": "Спільний домен ігор",
+    "title": "Бібліотека ігор",
+    "description": "Єдиний спільний каталог для всіх ігор Kangur, упорядкований за рушіями, механіками, варіантами та зв’язками з уроками.",
+    "groupEyebrow": "Навчальна область",
+    "groupDescription": "{count, plural, one {# гра в цій області.} few {# гри в цій області.} many {# ігор у цій області.} other {# ігор у цій області.}}",
+    "emptyTitle": "У бібліотеці ще немає ігор",
+    "emptyDescription": "Додайте перші визначення ігор, щоб почати класифікувати рушії та варіанти.",
+    "metrics": {
+      "games": "Ігри",
+      "gamesDescription": "Усі записи каталогу.",
+      "engines": "Рушії",
+      "enginesDescription": "Унікальні сімейства механік.",
+      "variants": "Варіанти",
+      "variantsDescription": "Способи вбудовування та запуску.",
+      "lessonLinked": "Пов’язані з уроками",
+      "lessonLinkedDescription": "Ігри, уже підключені до компонентів уроків."
+    },
+    "statuses": {
+      "active": "Активна",
+      "draft": "Чернетка",
+      "legacy": "Legacy"
+    },
+    "surfaces": {
+      "lesson": "Урок",
+      "library": "Бібліотека",
+      "game": "Гра",
+      "duel": "Дуель"
+    },
+    "labels": {
+      "mechanic": "Механіка",
+      "ageGroup": "Вікова група",
+      "allAgeGroups": "Усі",
+      "variants": "Варіанти",
+      "variantCount": "{count, plural, one {# варіант} few {# варіанти} many {# варіантів} other {# варіантів}}",
+      "legacyScreens": "Legacy-екрани",
+      "lessonLinks": "Пов’язані уроки",
+      "none": "Немає"
+    },
+    "mechanics": {
+      "drag_drop": "Перетягування",
+      "multiple_choice": "Вибір відповіді",
+      "tap_select": "Натисни й обери",
+      "drawing": "Малювання",
+      "rhythm": "Ритм",
+      "clock_training": "Тренування годинника",
+      "calendar_interactive": "Інтерактивний календар",
+      "logic_pattern": "Логічні візерунки",
+      "logic_classification": "Логічна класифікація",
+      "logic_relation": "Відношення та аналогії",
+      "sentence_building": "Побудова речень"
     }
   },
   "KangurGameHomeActions": {

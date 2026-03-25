@@ -5,6 +5,8 @@
 import { renderHook, act } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { KangurAppBootstrapProvider } from '../boot/KangurAppBootstrapContext';
+
 const { runAfterInteractionsMock, cancelInteractionTaskMock } = vi.hoisted(() => ({
   runAfterInteractionsMock: vi.fn(),
   cancelInteractionTaskMock: vi.fn(),
@@ -67,6 +69,27 @@ describe('useLessonsScreenBootState', () => {
 
     expect(result.current).toBe(false);
     expect(runAfterInteractionsMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips the initial lessons shell after the app bootstrap hands off control', () => {
+    const consumeInitialRouteBootstrapBypass = vi.fn(() => true);
+    const wrapper = ({ children }: React.PropsWithChildren) => (
+      <KangurAppBootstrapProvider
+        value={{
+          consumeInitialRouteBootstrapBypass,
+        }}
+      >
+        {children}
+      </KangurAppBootstrapProvider>
+    );
+
+    const { result } = renderHook(() => useLessonsScreenBootState('catalog'), {
+      wrapper,
+    });
+
+    expect(result.current).toBe(false);
+    expect(consumeInitialRouteBootstrapBypass).toHaveBeenCalledTimes(1);
+    expect(runAfterInteractionsMock).not.toHaveBeenCalled();
   });
 
   it('cancels the pending interaction task on unmount', () => {

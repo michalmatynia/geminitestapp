@@ -23,6 +23,10 @@ type UseKangurMobileHomeDuelsInvitesResult = {
   refresh: () => Promise<void>;
 };
 
+type UseKangurMobileHomeDuelsInvitesOptions = {
+  enabled?: boolean;
+};
+
 const toInviteErrorMessage = (
   error: unknown,
   copy: ReturnType<typeof useKangurMobileI18n>['copy'],
@@ -72,68 +76,78 @@ const toInviteErrorMessage = (
   return message;
 };
 
-export const useKangurMobileHomeDuelsInvites =
-  (): UseKangurMobileHomeDuelsInvitesResult => {
-    const { copy } = useKangurMobileI18n();
-    const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
-    const { isLoadingAuth, session } = useKangurMobileAuth();
-    const learnerIdentity =
-      session.user?.activeLearner?.id ??
-      session.user?.email ??
-      session.user?.id ??
-      'guest';
-    const activeLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
-    const isAuthenticated = session.status === 'authenticated';
-    const isRestoringAuth = isLoadingAuth && !isAuthenticated;
-    const lobbyQueryKey = buildKangurMobileHomeDuelLobbyQueryKey(
-      apiBaseUrl,
-      learnerIdentity,
-    );
+export const useKangurMobileHomeDuelsInvites = ({
+  enabled = true,
+}: UseKangurMobileHomeDuelsInvitesOptions = {}): UseKangurMobileHomeDuelsInvitesResult => {
+  const { copy } = useKangurMobileI18n();
+  const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
+  const { isLoadingAuth, session } = useKangurMobileAuth();
+  const learnerIdentity =
+    session.user?.activeLearner?.id ??
+    session.user?.email ??
+    session.user?.id ??
+    'guest';
+  const activeLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
+  const isAuthenticated = session.status === 'authenticated';
+  const isRestoringAuth = isLoadingAuth && !isAuthenticated;
+  const isQueryEnabled = enabled && isAuthenticated;
+  const lobbyQueryKey = buildKangurMobileHomeDuelLobbyQueryKey(
+    apiBaseUrl,
+    learnerIdentity,
+    'private',
+  );
 
-    const invitesQuery = useQuery({
-      enabled: isAuthenticated,
-      queryKey: lobbyQueryKey,
-      queryFn: async () =>
-        apiClient.listDuelLobby(
-          { limit: MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT },
-          { cache: 'no-store' },
-        ),
-      refetchInterval: MOBILE_HOME_DUEL_LOBBY_POLL_MS,
-      staleTime: 10_000,
-    });
+  const invitesQuery = useQuery({
+    enabled: isQueryEnabled,
+    queryKey: lobbyQueryKey,
+    queryFn: async () =>
+      apiClient.listDuelLobby(
+        {
+          limit: MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT,
+          visibility: 'private',
+        },
+        { cache: 'no-store' },
+      ),
+    refetchInterval: MOBILE_HOME_DUEL_LOBBY_POLL_MS,
+    staleTime: 10_000,
+  });
 
-    const privateEntries = useMemo(
-      () =>
-        (invitesQuery.data?.entries ?? [])
-          .filter((entry) => entry.visibility === 'private')
-          .sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt))
-          .slice(0, MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT),
-      [invitesQuery.data?.entries],
-    );
-    const invites = useMemo(
-      () =>
-        privateEntries
-          .filter((entry) => entry.host.learnerId !== activeLearnerId)
-          .slice(0, MOBILE_HOME_DUELS_INVITES_DISPLAY_LIMIT),
-      [activeLearnerId, privateEntries],
-    );
-    const outgoingChallenges = useMemo(
-      () =>
-        privateEntries
-          .filter((entry) => entry.host.learnerId === activeLearnerId)
-          .slice(0, MOBILE_HOME_DUELS_INVITES_DISPLAY_LIMIT),
-      [activeLearnerId, privateEntries],
-    );
+  const privateEntries = useMemo(
+    () =>
+      (invitesQuery.data?.entries ?? [])
+        .filter((entry) => entry.visibility === 'private')
+        .sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt))
+        .slice(0, MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT),
+    [invitesQuery.data?.entries],
+  );
+  const invites = useMemo(
+    () =>
+      privateEntries
+        .filter((entry) => entry.host.learnerId !== activeLearnerId)
+        .slice(0, MOBILE_HOME_DUELS_INVITES_DISPLAY_LIMIT),
+    [activeLearnerId, privateEntries],
+  );
+  const outgoingChallenges = useMemo(
+    () =>
+      privateEntries
+        .filter((entry) => entry.host.learnerId === activeLearnerId)
+        .slice(0, MOBILE_HOME_DUELS_INVITES_DISPLAY_LIMIT),
+    [activeLearnerId, privateEntries],
+  );
 
-    return {
-      error: toInviteErrorMessage(invitesQuery.error, copy),
-      invites,
-      isAuthenticated,
-      isLoading: isRestoringAuth || invitesQuery.isLoading,
-      outgoingChallenges,
-      isRestoringAuth,
-      refresh: async () => {
-        await invitesQuery.refetch();
-      },
-    };
+  return {
+    error: toInviteErrorMessage(invitesQuery.error, copy),
+    invites,
+    isAuthenticated,
+    isLoading: isRestoringAuth || (isQueryEnabled && invitesQuery.isLoading),
+    outgoingChallenges,
+    isRestoringAuth,
+    refresh: async () => {
+      if (!isQueryEnabled) {
+        return;
+      }
+
+      await invitesQuery.refetch();
+    },
   };
+};

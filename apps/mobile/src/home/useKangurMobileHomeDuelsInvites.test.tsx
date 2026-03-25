@@ -185,7 +185,7 @@ describe('useKangurMobileHomeDuelsInvites', () => {
     });
 
     expect(listDuelLobbyMock).toHaveBeenCalledWith(
-      { limit: 8 },
+      { limit: 8, visibility: 'private' },
       { cache: 'no-store' },
     );
     expect(result.current.invites.map((entry) => entry.sessionId)).toEqual(['invite-1']);
@@ -215,6 +215,22 @@ describe('useKangurMobileHomeDuelsInvites', () => {
     });
 
     expect(result.current.isRestoringAuth).toBe(true);
+    expect(result.current.invites).toEqual([]);
+    expect(result.current.outgoingChallenges).toEqual([]);
+    expect(listDuelLobbyMock).not.toHaveBeenCalled();
+  });
+
+  it('does not start the lobby query until the home duel panels are enabled', () => {
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () => useKangurMobileHomeDuelsInvites({ enabled: false }),
+      {
+        wrapper: createWrapper(queryClient),
+      },
+    );
+
+    expect(result.current.isAuthenticated).toBe(true);
+    expect(result.current.isLoading).toBe(false);
     expect(result.current.invites).toEqual([]);
     expect(result.current.outgoingChallenges).toEqual([]);
     expect(listDuelLobbyMock).not.toHaveBeenCalled();

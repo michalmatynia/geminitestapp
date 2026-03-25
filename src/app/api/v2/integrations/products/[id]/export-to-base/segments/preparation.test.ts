@@ -34,11 +34,14 @@ vi.mock('@/features/integrations/services/category-mapping-repository', () => ({
   }),
 }));
 
-vi.mock('@/features/products/server', () => ({
+vi.mock('@/shared/lib/products/services/producer-repository', () => ({
   getProducerRepository: () => ({
     getProducerById: (...args: unknown[]) => mocks.getProducerByIdMock(...args),
     findByName: (...args: unknown[]) => mocks.findProducerByNameMock(...args),
   }),
+}));
+
+vi.mock('@/shared/lib/products/services/tag-repository', () => ({
   getTagRepository: () => ({
     getTagById: (...args: unknown[]) => mocks.getTagByIdMock(...args),
   }),

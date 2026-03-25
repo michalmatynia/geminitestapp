@@ -129,17 +129,17 @@ describe('kangur public-owner frontend routes', () => {
     kangurFeatureRouteShellMock.mockReturnValue(null);
   });
 
-  it('routes public frontend slugs through Kangur when Kangur owns the frontend', async () => {
+  it('keeps root-owned public frontend slugs on the Kangur shell path without CMS lookup', async () => {
     const { default: CmsSlugPage } = await import('@/app/(frontend)/[...slug]/page');
 
     const result = await CmsSlugPage({
       params: Promise.resolve({ slug: ['tests'] }),
     });
 
-    expect(result).toMatchObject({
-      type: kangurPublicAppMock,
-      props: expect.objectContaining({ slug: ['tests'], basePath: '/' }),
-    });
+    expect(result).toBeNull();
+    expect(redirectMock).not.toHaveBeenCalled();
+    expect(kangurPublicAppMock).not.toHaveBeenCalled();
+    expect(kangurFeatureRouteShellMock).not.toHaveBeenCalled();
     expect(resolveSlugToPageMock).not.toHaveBeenCalled();
     expect(notFoundMock).not.toHaveBeenCalled();
   });

@@ -1,0 +1,98 @@
+import { z } from 'zod';
+
+import {
+  kangurLessonActivityIdSchema,
+  kangurLessonAgeGroupSchema,
+  kangurLessonComponentIdSchema,
+  kangurLessonSubjectSchema,
+} from './kangur-lesson-constants';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
+
+const nonEmptyTrimmedString = z.string().trim().min(1);
+
+export const kangurGameIdSchema = nonEmptyTrimmedString.max(120);
+export type KangurGameId = z.infer<typeof kangurGameIdSchema>;
+
+export const kangurGameSurfaceSchema = z.enum(['lesson', 'library', 'game', 'duel']);
+export type KangurGameSurface = z.infer<typeof kangurGameSurfaceSchema>;
+
+export const kangurGameStatusSchema = z.enum(['draft', 'active', 'legacy']);
+export type KangurGameStatus = z.infer<typeof kangurGameStatusSchema>;
+
+export const kangurGameMechanicSchema = z.enum([
+  'drag_drop',
+  'multiple_choice',
+  'tap_select',
+  'drawing',
+  'rhythm',
+  'clock_training',
+  'calendar_interactive',
+  'logic_pattern',
+  'logic_classification',
+  'logic_relation',
+  'sentence_building',
+]);
+export type KangurGameMechanic = z.infer<typeof kangurGameMechanicSchema>;
+
+export const kangurGameInteractionModeSchema = z.enum(['drag', 'tap', 'draw', 'mixed']);
+export type KangurGameInteractionMode = z.infer<typeof kangurGameInteractionModeSchema>;
+
+export const kangurGameVariantSurfaceSchema = z.enum([
+  'lesson_inline',
+  'lesson_stage',
+  'library_preview',
+  'game_screen',
+]);
+export type KangurGameVariantSurface = z.infer<typeof kangurGameVariantSurfaceSchema>;
+
+export const kangurGameVariantSchema = z.object({
+  id: nonEmptyTrimmedString.max(120),
+  label: nonEmptyTrimmedString.max(120),
+  title: nonEmptyTrimmedString.max(120),
+  description: z.string().trim().min(1).max(240),
+  surface: kangurGameVariantSurfaceSchema,
+  status: kangurGameStatusSchema.default('active'),
+  legacyActivityId: kangurLessonActivityIdSchema.optional(),
+  legacyScreenId: z.string().trim().min(1).max(120).optional(),
+  sortOrder: z.number().int().min(0).max(1_000_000).default(0),
+});
+export type KangurGameVariant = z.infer<typeof kangurGameVariantSchema>;
+
+export const kangurGameDefinitionSchema = z.object({
+  id: kangurGameIdSchema,
+  engineId: nonEmptyTrimmedString.max(120),
+  subject: kangurLessonSubjectSchema,
+  ageGroup: kangurLessonAgeGroupSchema.optional(),
+  lessonComponentIds: z.array(kangurLessonComponentIdSchema).max(24).default([]),
+  activityIds: z.array(kangurLessonActivityIdSchema).max(24).default([]),
+  legacyScreenIds: z.array(z.string().trim().min(1).max(120)).max(24).default([]),
+  label: nonEmptyTrimmedString.max(120),
+  title: nonEmptyTrimmedString.max(120),
+  description: z.string().trim().min(1).max(320),
+  emoji: z.string().trim().max(12),
+  mechanic: kangurGameMechanicSchema,
+  interactionMode: kangurGameInteractionModeSchema,
+  surfaces: z.array(kangurGameSurfaceSchema).min(1).max(4),
+  tags: z.array(z.string().trim().min(1).max(40)).max(20).default([]),
+  variants: z.array(kangurGameVariantSchema).max(12).default([]),
+  status: kangurGameStatusSchema.default('active'),
+  sortOrder: z.number().int().min(0).max(1_000_000).default(0),
+});
+export type KangurGameDefinition = z.infer<typeof kangurGameDefinitionSchema>;
+
+export const kangurGamesSchema = z.array(kangurGameDefinitionSchema);
+export type KangurGames = z.infer<typeof kangurGamesSchema>;
+
+export const kangurGamesQuerySchema = z.object({
+  subject: optionalTrimmedQueryString(kangurLessonSubjectSchema),
+  ageGroup: optionalTrimmedQueryString(kangurLessonAgeGroupSchema),
+  status: optionalTrimmedQueryString(kangurGameStatusSchema),
+  surface: optionalTrimmedQueryString(kangurGameSurfaceSchema),
+  lessonComponentId: optionalTrimmedQueryString(kangurLessonComponentIdSchema),
+});
+export type KangurGamesQuery = z.infer<typeof kangurGamesQuerySchema>;
+
+export const kangurGamesReplacePayloadSchema = z.object({
+  games: kangurGamesSchema,
+});
+export type KangurGamesReplacePayload = z.infer<typeof kangurGamesReplacePayloadSchema>;

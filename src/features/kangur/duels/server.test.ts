@@ -35,6 +35,7 @@ import {
   heartbeatKangurDuelSession,
   joinKangurDuelSession,
   leaveKangurDuelSession,
+  listKangurDuelLobby,
   listKangurDuelLeaderboard,
   listKangurPublicDuelLobby,
   sendKangurDuelReaction,
@@ -251,6 +252,31 @@ describe('kangur duels server', () => {
     expect(sessionIds).toEqual(expect.arrayContaining(['duel-missing', 'duel-future']));
     expect(sessionIds).not.toContain('duel-expired');
     expect(collection.findOneAndUpdate).toHaveBeenCalled();
+  });
+
+  it('passes the duel visibility filter through the authenticated lobby query', async () => {
+    const privateInvite = buildSession({
+      _id: 'duel-private',
+      visibility: 'private',
+    });
+    const cursor = {
+      limit: vi.fn().mockReturnThis(),
+      toArray: vi.fn().mockResolvedValue([privateInvite]),
+    };
+
+    collection.find.mockReturnValue(cursor);
+
+    const response = await listKangurDuelLobby(buildLearner(), {
+      limit: 4,
+      visibility: 'private',
+    });
+
+    expect(collection.find).toHaveBeenCalledWith({
+      status: 'waiting',
+      visibility: 'private',
+    });
+    expect(cursor.limit).toHaveBeenCalledWith(4);
+    expect(response.entries.map((entry) => entry.sessionId)).toEqual(['duel-private']);
   });
 
   it('records reactions for active sessions', async () => {

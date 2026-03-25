@@ -8,6 +8,7 @@ import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 type UseKangurMobileScoreHistoryOptions = {
   enabled?: boolean;
   limit?: number;
+  placeholderData?: KangurScore[];
   sort?: string;
 };
 
@@ -16,6 +17,7 @@ type UseKangurMobileScoreHistoryResult = {
   isEnabled: boolean;
   isLoadingAuth: boolean;
   isLoading: boolean;
+  isPlaceholderData: boolean;
   isRestoringAuth: boolean;
   refresh: () => Promise<void>;
   scores: KangurScore[];
@@ -44,6 +46,7 @@ export const useKangurMobileScoreHistory = (
 
   const scoresQuery = useQuery({
     enabled: isEnabled,
+    placeholderData: isEnabled ? options.placeholderData : undefined,
     queryKey: [
       'kangur-mobile',
       'scores',
@@ -71,6 +74,7 @@ export const useKangurMobileScoreHistory = (
     isEnabled,
     isLoading: isRestoringAuth || scoresQuery.isLoading,
     isLoadingAuth,
+    isPlaceholderData: scoresQuery.isPlaceholderData,
     isRestoringAuth,
     refresh: async () => {
       await scoresQuery.refetch();

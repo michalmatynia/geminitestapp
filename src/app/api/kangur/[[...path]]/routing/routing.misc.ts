@@ -11,6 +11,11 @@ import {
 import { patchKangurAssignmentHandler } from '../../assignments/[id]/handler';
 import { postKangurAssignmentReassignHandler } from '../../assignments/[id]/reassign/handler';
 import {
+  getKangurGamesHandler,
+  postKangurGamesHandler,
+  querySchema as gamesQuerySchema,
+} from '../../games/handler';
+import {
   getKangurLessonsHandler,
   postKangurLessonsHandler,
   querySchema as lessonsQuerySchema,
@@ -115,6 +120,18 @@ export const lessonsGetHandler: SimpleRouteHandler = apiHandler(getKangurLessons
   source: 'kangur.lessons.GET',
   service: 'kangur.api',
   querySchema: lessonsQuerySchema,
+});
+
+export const gamesGetHandler: SimpleRouteHandler = apiHandler(getKangurGamesHandler, {
+  source: 'kangur.games.GET',
+  service: 'kangur.api',
+  querySchema: gamesQuerySchema,
+});
+
+export const gamesPostHandler: SimpleRouteHandler = apiHandler(postKangurGamesHandler, {
+  source: 'kangur.games.POST',
+  service: 'kangur.api',
+  parseJsonBody: true,
 });
 
 export const lessonsPostHandler: SimpleRouteHandler = apiHandler(postKangurLessonsHandler, {
@@ -445,6 +462,9 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
   }
   if (segments[0] === 'lessons' && segments.length === 1) {
     return handleGetPost(request, lessonsGetHandler, lessonsPostHandler);
+  }
+  if (segments[0] === 'games' && segments.length === 1) {
+    return handleGetPost(request, gamesGetHandler, gamesPostHandler);
   }
   if (segments[0] === 'lesson-sections' && segments.length === 1) {
     return handleGetPost(request, lessonSectionsGetHandler, lessonSectionsPostHandler);

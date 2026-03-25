@@ -245,6 +245,7 @@
       "pages": {
         "Competition": "Kangur Matematyczny",
         "Game": "Strona główna",
+        "GamesLibrary": "Biblioteka gier",
         "Lessons": "Lekcje",
         "Tests": "Testy",
         "LearnerProfile": "Profil ucznia",
@@ -1071,6 +1072,7 @@
   },
   "KangurNavigation": {
     "home": "Strona główna",
+    "gamesLibrary": "Biblioteka gier",
     "lessons": "Lekcje",
     "duels": "Pojedynki",
     "parent": "Rodzic",
@@ -1097,6 +1099,59 @@
       "dialogDescription": "Wybierz, dla kogo mają być dopasowane lekcje.",
       "closeAriaLabel": "Zamknij wybór grupy wiekowej",
       "groupAriaLabel": "Wybór grupy wiekowej"
+    }
+  },
+  "KangurGamesLibraryPage": {
+    "introEyebrow": "Wspolna domena gier",
+    "title": "Biblioteka gier",
+    "description": "Jeden wspolny katalog wszystkich gier Kangur, uporzadkowany wedlug silnikow, mechanik, wariantow i powiazan z lekcjami.",
+    "groupEyebrow": "Obszar nauki",
+    "groupDescription": "{count, plural, one {# gra w tym obszarze.} few {# gry w tym obszarze.} many {# gier w tym obszarze.} other {# gier w tym obszarze.}}",
+    "emptyTitle": "Brak gier w bibliotece",
+    "emptyDescription": "Dodaj pierwsze definicje gier, aby zaczac klasyfikowac silniki i warianty.",
+    "metrics": {
+      "games": "Gry",
+      "gamesDescription": "Wszystkie wpisy katalogu.",
+      "engines": "Silniki",
+      "enginesDescription": "Unikalne rodziny mechanik.",
+      "variants": "Warianty",
+      "variantsDescription": "Sposoby osadzenia i uruchamiania.",
+      "lessonLinked": "Powiazane z lekcjami",
+      "lessonLinkedDescription": "Gry juz podlaczone do komponentow lekcji."
+    },
+    "statuses": {
+      "active": "Aktywna",
+      "draft": "Szkic",
+      "legacy": "Legacy"
+    },
+    "surfaces": {
+      "lesson": "Lekcja",
+      "library": "Biblioteka",
+      "game": "Gra",
+      "duel": "Pojedynek"
+    },
+    "labels": {
+      "mechanic": "Mechanika",
+      "ageGroup": "Grupa wiekowa",
+      "allAgeGroups": "Wszystkie",
+      "variants": "Warianty",
+      "variantCount": "{count, plural, one {# wariant} few {# warianty} many {# wariantow} other {# wariantow}}",
+      "legacyScreens": "Legacy screeny",
+      "lessonLinks": "Powiazane lekcje",
+      "none": "Brak"
+    },
+    "mechanics": {
+      "drag_drop": "Przeciaganie i upuszczanie",
+      "multiple_choice": "Wielokrotny wybor",
+      "tap_select": "Wskaz i wybierz",
+      "drawing": "Rysowanie",
+      "rhythm": "Rytm",
+      "clock_training": "Trening zegara",
+      "calendar_interactive": "Interaktywny kalendarz",
+      "logic_pattern": "Wzorce logiczne",
+      "logic_classification": "Klasyfikacja logiczna",
+      "logic_relation": "Relacje i analogie",
+      "sentence_building": "Budowanie zdan"
     }
   },
   "KangurGameHomeActions": {

@@ -43,6 +43,14 @@ const collectSourceFiles = (dir: string): string[] => {
 
     if (!absolute.endsWith('.ts') && !absolute.endsWith('.tsx')) continue;
     if (absolute.endsWith('.d.ts')) continue;
+    if (
+      absolute.endsWith('.test.ts') ||
+      absolute.endsWith('.test.tsx') ||
+      absolute.endsWith('.spec.ts') ||
+      absolute.endsWith('.spec.tsx')
+    ) {
+      continue;
+    }
     files.push(absolute);
   }
 

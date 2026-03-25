@@ -661,10 +661,16 @@ export async function heartbeatKangurDuelSession(
 
 export async function listKangurDuelLobby(
   _learner: KangurLearnerProfile,
-  options?: { limit?: number }
+  options?: { limit?: number; visibility?: 'public' | 'private' }
 ): Promise<KangurDuelLobbyResponse> {
   const collection = await getDuelCollection();
-  const sessions = await collection.find({ status: 'waiting' }).limit(options?.limit ?? 10).toArray();
+  const sessions = await collection
+    .find({
+      status: 'waiting',
+      ...(options?.visibility ? { visibility: options.visibility } : {}),
+    })
+    .limit(options?.limit ?? 10)
+    .toArray();
   return {
     entries: sessions.map(toLobbyEntry).filter((e): e is KangurDuelLobbyEntry => Boolean(e)),
     serverTime: nowIso(),

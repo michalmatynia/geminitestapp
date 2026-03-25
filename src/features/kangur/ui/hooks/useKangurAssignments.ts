@@ -74,7 +74,7 @@ export const useKangurAssignments = (
     enabled,
     staleTime: 1000 * 60 * 2,
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: 'always',
     refetchOnReconnect: true,
     retry: (failureCount, error) => {
       if (isKangurAuthStatusError(error)) return false;
@@ -95,7 +95,7 @@ export const useKangurAssignments = (
       ? 'Nie udało się pobrać zadań.'
       : null;
 
-  // Invalidate assignments when progress events fire (e.g. lesson completed)
+  // Revalidate assignments when progress changes or the learner returns to the tab.
   useEffect(() => {
     if (!enabled || typeof window === 'undefined') {
       return;
@@ -106,9 +106,11 @@ export const useKangurAssignments = (
     };
 
     window.addEventListener(KANGUR_PROGRESS_EVENT_NAME, handleRevalidate);
+    window.addEventListener('focus', handleRevalidate);
 
     return () => {
       window.removeEventListener(KANGUR_PROGRESS_EVENT_NAME, handleRevalidate);
+      window.removeEventListener('focus', handleRevalidate);
     };
   }, [enabled, queryClient, queryKey]);
 

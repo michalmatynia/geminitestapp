@@ -4,6 +4,7 @@ import {
   BookOpen,
   BookCheck,
   BrainCircuit,
+  Gamepad2,
   Users,
   LayoutGrid,
   LogIn,
@@ -82,6 +83,7 @@ import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
 type KangurPrimaryNavigationPage =
   | 'Competition'
   | 'Game'
+  | 'GamesLibrary'
   | 'Lessons'
   | 'Tests'
   | 'LearnerProfile'
@@ -282,6 +284,7 @@ export function KangurPrimaryNavigation({
     typeof onGuestPlayerNameChange === 'function';
   const hasGuestPlayerName = (guestPlayerName?.trim() ?? '').length > 0;
   const homeHref = getKangurHomeHref(basePath);
+  const gamesLibraryHref = createPageUrl('GamesLibrary', basePath);
   const lessonsHref = createPageUrl('Lessons', basePath);
   const duelsHref = createPageUrl('Duels', basePath);
   const parentDashboardHref = createPageUrl('ParentDashboard', basePath);
@@ -291,6 +294,7 @@ export function KangurPrimaryNavigation({
   const subjectDialogId = 'kangur-primary-nav-subject-dialog';
   const ageGroupDialogId = 'kangur-primary-nav-age-group-dialog';
   const homeTransitionSourceId = 'kangur-primary-nav:home';
+  const gamesLibraryTransitionSourceId = 'kangur-primary-nav:games-library';
   const lessonsTransitionSourceId = 'kangur-primary-nav:lessons';
   const duelsTransitionSourceId = 'kangur-primary-nav:duels';
   const profileTransitionSourceId = 'kangur-primary-nav:profile';
@@ -697,6 +701,35 @@ export function KangurPrimaryNavigation({
       sourceId: lessonsTransitionSourceId,
     },
   };
+  const gamesLibraryAction: KangurNavActionConfig = {
+    active: currentPage === 'GamesLibrary',
+    ariaLabel: navTranslations('gamesLibrary'),
+    className: mobileNavItemClassName,
+    content: isSixYearOld ? (
+      <KangurVisualCueContent
+        icon={<Gamepad2 aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />}
+        iconTestId='kangur-primary-nav-games-library-icon'
+        label={navTranslations('gamesLibrary')}
+      />
+    ) : (
+      <>
+        <Gamepad2 aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
+        <span className='truncate'>{navTranslations('gamesLibrary')}</span>
+      </>
+    ),
+    docId: 'top_nav_games_library',
+    href: gamesLibraryHref,
+    targetPageKey: 'GamesLibrary',
+    testId: 'kangur-primary-nav-games-library',
+    transition: {
+      active: isTransitionSourceActive({
+        activeTransitionSourceId,
+        transitionPhase,
+        transitionSourceId: gamesLibraryTransitionSourceId,
+      }),
+      sourceId: gamesLibraryTransitionSourceId,
+    },
+  };
   const subjectAction: KangurNavActionConfig = {
     ariaControls: subjectDialogId,
     ariaExpanded: isSubjectModalOpen,
@@ -887,6 +920,7 @@ export function KangurPrimaryNavigation({
       >
         {leading}
         {renderNavAction(buildActionWithClose(homeAction, onActionClick))}
+        {renderNavAction(buildActionWithClose(gamesLibraryAction, onActionClick))}
         {renderNavAction(buildActionWithClose(lessonsAction, onActionClick))}
         {renderNavAction(buildActionWithClose(duelsAction, onActionClick))}
         {renderNavAction(buildActionWithClose(subjectAction, onActionClick))}

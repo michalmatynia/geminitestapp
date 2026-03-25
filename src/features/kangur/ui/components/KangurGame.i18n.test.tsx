@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -74,7 +74,9 @@ describe('KangurGame i18n', () => {
       </NextIntlClientProvider>
     );
 
-    expect(screen.getByText('Frage 1')).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('kangur-game-question-shell')).getByText('Frage 1')
+    ).toBeInTheDocument();
     expect(screen.getByTestId('kangur-game-point-chip')).toHaveTextContent('⭐ 5 Pkt. (schwer)');
 
     fireEvent.click(screen.getByTestId('kangur-game-choice-0'));

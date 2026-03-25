@@ -29,6 +29,10 @@ type UseKangurMobileHomeDuelsPresenceResult = {
   refresh: () => Promise<void>;
 };
 
+type UseKangurMobileHomeDuelsPresenceOptions = {
+  enabled?: boolean;
+};
+
 const toPresenceErrorMessage = (
   error: unknown,
   copy: ReturnType<typeof useKangurMobileI18n>['copy'],
@@ -123,101 +127,107 @@ const toPresenceActionErrorMessage = (
   return message;
 };
 
-export const useKangurMobileHomeDuelsPresence =
-  (): UseKangurMobileHomeDuelsPresenceResult => {
-    const queryClient = useQueryClient();
-    const { copy } = useKangurMobileI18n();
-    const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
-    const { isLoadingAuth, session } = useKangurMobileAuth();
-    const [actionError, setActionError] = useState<string | null>(null);
-    const [isActionPending, setIsActionPending] = useState(false);
-    const [pendingLearnerId, setPendingLearnerId] = useState<string | null>(null);
-    const learnerIdentity =
-      session.user?.activeLearner?.id ??
-      session.user?.email ??
-      session.user?.id ??
-      'guest';
-    const isAuthenticated = session.status === 'authenticated';
-    const isRestoringAuth = isLoadingAuth && !isAuthenticated;
-    const presenceQueryKey = [
-      'kangur-mobile',
-      'home',
-      'duels-presence',
-      apiBaseUrl,
-      learnerIdentity,
-    ] as const;
-    const invitesQueryKey = [
-      'kangur-mobile',
-      'home',
-      'duels-invites',
-      apiBaseUrl,
-      learnerIdentity,
-    ] as const;
+export const useKangurMobileHomeDuelsPresence = ({
+  enabled = true,
+}: UseKangurMobileHomeDuelsPresenceOptions = {}): UseKangurMobileHomeDuelsPresenceResult => {
+  const queryClient = useQueryClient();
+  const { copy } = useKangurMobileI18n();
+  const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
+  const { isLoadingAuth, session } = useKangurMobileAuth();
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [isActionPending, setIsActionPending] = useState(false);
+  const [pendingLearnerId, setPendingLearnerId] = useState<string | null>(null);
+  const learnerIdentity =
+    session.user?.activeLearner?.id ??
+    session.user?.email ??
+    session.user?.id ??
+    'guest';
+  const isAuthenticated = session.status === 'authenticated';
+  const isRestoringAuth = isLoadingAuth && !isAuthenticated;
+  const isQueryEnabled = enabled && isAuthenticated;
+  const presenceQueryKey = [
+    'kangur-mobile',
+    'home',
+    'duels-presence',
+    apiBaseUrl,
+    learnerIdentity,
+  ] as const;
+  const invitesQueryKey = [
+    'kangur-mobile',
+    'home',
+    'duels-invites',
+    apiBaseUrl,
+    learnerIdentity,
+  ] as const;
 
-    const presenceQuery = useQuery({
-      enabled: isAuthenticated,
-      queryKey: presenceQueryKey,
-      queryFn: async () =>
-        apiClient.listDuelLobbyPresence(
-          { limit: MOBILE_HOME_DUELS_PRESENCE_QUERY_LIMIT },
+  const presenceQuery = useQuery({
+    enabled: isQueryEnabled,
+    queryKey: presenceQueryKey,
+    queryFn: async () =>
+      apiClient.listDuelLobbyPresence(
+        { limit: MOBILE_HOME_DUELS_PRESENCE_QUERY_LIMIT },
+        { cache: 'no-store' },
+      ),
+    refetchInterval: MOBILE_HOME_DUELS_PRESENCE_POLL_MS,
+    staleTime: 10_000,
+  });
+
+  const entries = useMemo(
+    () =>
+      [...(presenceQuery.data?.entries ?? [])]
+        .sort((left, right) => Date.parse(right.lastSeenAt) - Date.parse(left.lastSeenAt))
+        .slice(0, MOBILE_HOME_DUELS_PRESENCE_DISPLAY_LIMIT),
+    [presenceQuery.data?.entries],
+  );
+
+  return {
+    actionError,
+    createPrivateChallenge: async (opponentLearnerId) => {
+      setActionError(null);
+      setIsActionPending(true);
+      setPendingLearnerId(opponentLearnerId);
+
+      try {
+        const response = await apiClient.createDuel(
+          {
+            difficulty: MOBILE_DUEL_DEFAULT_DIFFICULTY,
+            mode: 'challenge',
+            operation: MOBILE_DUEL_DEFAULT_OPERATION,
+            opponentLearnerId,
+            questionCount: MOBILE_DUEL_DEFAULT_QUESTION_COUNT,
+            timePerQuestionSec: MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC,
+            visibility: 'private',
+          },
           { cache: 'no-store' },
-        ),
-      refetchInterval: MOBILE_HOME_DUELS_PRESENCE_POLL_MS,
-      staleTime: 10_000,
-    });
+        );
 
-    const entries = useMemo(
-      () =>
-        [...(presenceQuery.data?.entries ?? [])]
-          .sort((left, right) => Date.parse(right.lastSeenAt) - Date.parse(left.lastSeenAt))
-          .slice(0, MOBILE_HOME_DUELS_PRESENCE_DISPLAY_LIMIT),
-      [presenceQuery.data?.entries],
-    );
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: presenceQueryKey }),
+          queryClient.invalidateQueries({ queryKey: invitesQueryKey }),
+        ]);
 
-    return {
-      actionError,
-      createPrivateChallenge: async (opponentLearnerId) => {
-        setActionError(null);
-        setIsActionPending(true);
-        setPendingLearnerId(opponentLearnerId);
+        return response.session.id;
+      } catch (error) {
+        setActionError(toPresenceActionErrorMessage(error, copy));
+        return null;
+      } finally {
+        setIsActionPending(false);
+        setPendingLearnerId(null);
+      }
+    },
+    entries,
+    error: toPresenceErrorMessage(presenceQuery.error, copy),
+    isActionPending,
+    isAuthenticated,
+    isLoading: isRestoringAuth || (isQueryEnabled && presenceQuery.isLoading),
+    isRestoringAuth,
+    pendingLearnerId,
+    refresh: async () => {
+      if (!isQueryEnabled) {
+        return;
+      }
 
-        try {
-          const response = await apiClient.createDuel(
-            {
-              difficulty: MOBILE_DUEL_DEFAULT_DIFFICULTY,
-              mode: 'challenge',
-              operation: MOBILE_DUEL_DEFAULT_OPERATION,
-              opponentLearnerId,
-              questionCount: MOBILE_DUEL_DEFAULT_QUESTION_COUNT,
-              timePerQuestionSec: MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC,
-              visibility: 'private',
-            },
-            { cache: 'no-store' },
-          );
-
-          await Promise.all([
-            queryClient.invalidateQueries({ queryKey: presenceQueryKey }),
-            queryClient.invalidateQueries({ queryKey: invitesQueryKey }),
-          ]);
-
-          return response.session.id;
-        } catch (error) {
-          setActionError(toPresenceActionErrorMessage(error, copy));
-          return null;
-        } finally {
-          setIsActionPending(false);
-          setPendingLearnerId(null);
-        }
-      },
-      entries,
-      error: toPresenceErrorMessage(presenceQuery.error, copy),
-      isActionPending,
-      isAuthenticated,
-      isLoading: isRestoringAuth || presenceQuery.isLoading,
-      isRestoringAuth,
-      pendingLearnerId,
-      refresh: async () => {
-        await presenceQuery.refetch();
-      },
-    };
+      await presenceQuery.refetch();
+    },
   };
+};

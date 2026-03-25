@@ -14,14 +14,17 @@ import {
   useState,
   type PropsWithChildren,
 } from 'react';
+import { InteractionManager } from 'react-native';
 
 import {
   createLearnerSessionKangurAuthAdapter,
   KANGUR_MOBILE_AUTH_ERROR_CODES,
 } from './createLearnerSessionKangurAuthAdapter';
 import { createDevelopmentKangurAuthAdapter } from './createDevelopmentKangurAuthAdapter';
+import { hasKangurMobileAuthQueryIdentityChanged } from './hasKangurMobileAuthQueryIdentityChanged';
 import { invalidateKangurMobileAuthQueries } from './invalidateKangurMobileAuthQueries';
 import { KANGUR_MOBILE_AUTH_STATUS_STORAGE_KEY } from './mobileAuthStorageKeys';
+import { resolvePersistedKangurMobileLearnerSession } from './persistedKangurMobileLearnerSession';
 import {
   type KangurMobileAuthMode,
 } from './mobileAuthMode';
@@ -49,6 +52,27 @@ type KangurMobileAuthContextValue = {
 
 const KangurMobileAuthContext =
   createContext<KangurMobileAuthContextValue | null>(null);
+
+const AUTH_INITIAL_BACKGROUND_REFRESH_FALLBACK_TIMEOUT_MS = 220;
+
+const scheduleInitialAuthRefreshFrame = (callback: () => void): (() => void) => {
+  if (typeof requestAnimationFrame === 'function') {
+    const frameId = requestAnimationFrame(() => {
+      callback();
+    });
+
+    return () => {
+      if (typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(frameId);
+      }
+    };
+  }
+
+  const timeoutId = setTimeout(callback, 16);
+  return () => {
+    clearTimeout(timeoutId);
+  };
+};
 
 const hasPersistedLearnerSessionHint = (
   storage: ReturnType<typeof useKangurMobileRuntime>['storage'],
@@ -131,9 +155,23 @@ export function KangurMobileAuthProvider({
     developerConfig.autoSignIn &&
     Boolean(developerConfig.learnerLoginName) &&
     Boolean(developerConfig.learnerPassword);
-  const initialSessionRefreshShouldBlockRef = useRef(
-    authMode === 'learner-session' && hasPersistedLearnerSessionHint(storage),
-  );
+  const [initialBootState] = useState<{
+    persistedLearnerSession: KangurAuthSession | null;
+    shouldBlockInitialSessionRefresh: boolean;
+  }>(() => {
+    const persistedLearnerSession =
+      authMode === 'learner-session'
+        ? resolvePersistedKangurMobileLearnerSession(storage)
+        : null;
+
+    return {
+      persistedLearnerSession,
+      shouldBlockInitialSessionRefresh:
+        authMode === 'learner-session' &&
+        hasPersistedLearnerSessionHint(storage) &&
+        persistedLearnerSession === null,
+    };
+  });
   const [authAdapter] = useState<KangurAuthAdapter>(
     () =>
       adapter ??
@@ -145,6 +183,7 @@ export function KangurMobileAuthProvider({
         : createDevelopmentKangurAuthAdapter(storage)),
   );
   const [session, setSession] = useState<KangurAuthSession>(() =>
+    initialBootState.persistedLearnerSession ??
     createAnonymousKangurAuthSession(
       authMode === 'learner-session'
         ? 'native-learner-session'
@@ -152,7 +191,7 @@ export function KangurMobileAuthProvider({
     ),
   );
   const [isLoadingAuth, setIsLoadingAuth] = useState(
-    initialSessionRefreshShouldBlockRef.current,
+    initialBootState.shouldBlockInitialSessionRefresh,
   );
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -168,9 +207,14 @@ export function KangurMobileAuthProvider({
 
     try {
       setAuthError(null);
+      const previousSession = session;
       const nextSession = await authAdapter.getSession();
       setSession(nextSession);
-      await invalidateKangurMobileAuthQueries(queryClient);
+      if (
+        hasKangurMobileAuthQueryIdentityChanged(previousSession, nextSession)
+      ) {
+        await invalidateKangurMobileAuthQueries(queryClient);
+      }
     } catch (error) {
       setAuthError(toAuthErrorMessage(error, locale));
     } finally {
@@ -184,9 +228,14 @@ export function KangurMobileAuthProvider({
     setIsLoadingAuth(true);
     try {
       setAuthError(null);
+      const previousSession = session;
       const nextSession = await authAdapter.signIn(input);
       setSession(nextSession);
-      await invalidateKangurMobileAuthQueries(queryClient);
+      if (
+        hasKangurMobileAuthQueryIdentityChanged(previousSession, nextSession)
+      ) {
+        await invalidateKangurMobileAuthQueries(queryClient);
+      }
     } catch (error) {
       setAuthError(toAuthErrorMessage(error, locale));
     } finally {
@@ -198,9 +247,14 @@ export function KangurMobileAuthProvider({
     setIsLoadingAuth(true);
     try {
       setAuthError(null);
+      const previousSession = session;
       const nextSession = await authAdapter.signOut();
       setSession(nextSession);
-      await invalidateKangurMobileAuthQueries(queryClient);
+      if (
+        hasKangurMobileAuthQueryIdentityChanged(previousSession, nextSession)
+      ) {
+        await invalidateKangurMobileAuthQueries(queryClient);
+      }
     } catch (error) {
       setAuthError(toAuthErrorMessage(error, locale));
     } finally {
@@ -220,9 +274,59 @@ export function KangurMobileAuthProvider({
     });
 
   useEffect(() => {
-    void refreshSession({
-      blockUI: initialSessionRefreshShouldBlockRef.current,
-    });
+    if (initialBootState.shouldBlockInitialSessionRefresh) {
+      void refreshSession({
+        blockUI: true,
+      });
+      return;
+    }
+
+    let isDisposed = false;
+    let hasScheduledRefresh = false;
+    let fallbackTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    let cancelFrame = () => {};
+
+    const clearFallbackTimeout = (): void => {
+      if (fallbackTimeoutId === null) {
+        return;
+      }
+
+      clearTimeout(fallbackTimeoutId);
+      fallbackTimeoutId = null;
+    };
+
+    const scheduleRefresh = (): void => {
+      if (isDisposed || hasScheduledRefresh) {
+        return;
+      }
+
+      hasScheduledRefresh = true;
+      clearFallbackTimeout();
+      cancelFrame = scheduleInitialAuthRefreshFrame(() => {
+        if (isDisposed) {
+          return;
+        }
+
+        void refreshSession({
+          blockUI: false,
+        });
+      });
+    };
+
+    const interactionTask = InteractionManager.runAfterInteractions(
+      scheduleRefresh,
+    );
+    fallbackTimeoutId = setTimeout(
+      scheduleRefresh,
+      AUTH_INITIAL_BACKGROUND_REFRESH_FALLBACK_TIMEOUT_MS,
+    );
+
+    return () => {
+      isDisposed = true;
+      clearFallbackTimeout();
+      interactionTask.cancel?.();
+      cancelFrame();
+    };
   }, []);
 
   useEffect(() => {

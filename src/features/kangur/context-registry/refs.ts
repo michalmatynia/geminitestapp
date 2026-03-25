@@ -19,6 +19,11 @@ export const KANGUR_CONTEXT_ROOT_IDS = {
     'action:kangur-ai-tutor-chat',
     'policy:kangur-ai-tutor-socratic',
   ],
+  gameLibraryContext: [
+    'page:kangur-games-library',
+    'collection:kangur-games',
+    'action:kangur-ai-tutor-chat',
+  ],
   testContext: [
     'page:kangur-tests',
     'collection:kangur-test-suites',
@@ -39,6 +44,7 @@ export const KANGUR_RUNTIME_ENTITY_TYPES = {
   learnerSnapshot: 'kangur_learner_snapshot',
   loginActivity: 'kangur_login_activity',
   lessonContext: 'kangur_lesson_context',
+  gameLibraryContext: 'kangur_game_library_context',
   testContext: 'kangur_test_context',
   assignmentContext: 'kangur_assignment_context',
 } as const;

@@ -56,6 +56,7 @@ type KangurLanguageSwitcherProps = {
   currentPage:
     | 'Competition'
     | 'Game'
+    | 'GamesLibrary'
     | 'Lessons'
     | 'Tests'
     | 'LearnerProfile'

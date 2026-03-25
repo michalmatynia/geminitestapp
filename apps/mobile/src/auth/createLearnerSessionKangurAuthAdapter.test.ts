@@ -8,6 +8,7 @@ import {
 import {
   KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY,
   KANGUR_MOBILE_AUTH_STATUS_STORAGE_KEY,
+  KANGUR_MOBILE_AUTH_USER_STORAGE_KEY,
 } from './mobileAuthStorageKeys';
 
 const AUTH_USER = {
@@ -69,12 +70,16 @@ describe('createLearnerSessionKangurAuthAdapter', () => {
     expect(storage.getItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY)).toBe(
       'learner-1',
     );
+    expect(storage.getItem(KANGUR_MOBILE_AUTH_USER_STORAGE_KEY)).toBe(
+      JSON.stringify(AUTH_USER),
+    );
   });
 
   it('maps 401 from auth/me into an anonymous learner session', async () => {
     const storage = createMobileDevelopmentKangurStorage();
     storage.setItem(KANGUR_MOBILE_AUTH_STATUS_STORAGE_KEY, 'authenticated');
     storage.setItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY, 'learner-1');
+    storage.setItem(KANGUR_MOBILE_AUTH_USER_STORAGE_KEY, JSON.stringify(AUTH_USER));
 
     const adapter = createLearnerSessionKangurAuthAdapter({
       apiClient: {
@@ -89,6 +94,7 @@ describe('createLearnerSessionKangurAuthAdapter', () => {
     });
     expect(storage.getItem(KANGUR_MOBILE_AUTH_STATUS_STORAGE_KEY)).toBeNull();
     expect(storage.getItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY)).toBeNull();
+    expect(storage.getItem(KANGUR_MOBILE_AUTH_USER_STORAGE_KEY)).toBeNull();
   });
 
   it('requires learner credentials for native sign-in', async () => {
@@ -177,6 +183,7 @@ describe('createLearnerSessionKangurAuthAdapter', () => {
     const storage = createMobileDevelopmentKangurStorage();
     storage.setItem(KANGUR_MOBILE_AUTH_STATUS_STORAGE_KEY, 'authenticated');
     storage.setItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY, 'learner-1');
+    storage.setItem(KANGUR_MOBILE_AUTH_USER_STORAGE_KEY, JSON.stringify(AUTH_USER));
     const signOutLearner = vi.fn().mockResolvedValue({ ok: true });
 
     const adapter = createLearnerSessionKangurAuthAdapter({
@@ -197,5 +204,6 @@ describe('createLearnerSessionKangurAuthAdapter', () => {
     );
     expect(storage.getItem(KANGUR_MOBILE_AUTH_STATUS_STORAGE_KEY)).toBeNull();
     expect(storage.getItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY)).toBeNull();
+    expect(storage.getItem(KANGUR_MOBILE_AUTH_USER_STORAGE_KEY)).toBeNull();
   });
 });

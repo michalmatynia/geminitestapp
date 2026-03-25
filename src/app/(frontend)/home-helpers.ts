@@ -1,3 +1,5 @@
+import { cache } from 'react';
+
 import { getUserPreferences } from '@/features/auth/server';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -97,6 +99,6 @@ const readMongoFrontPageSetting = async (): Promise<string | null> => {
   return null;
 };
 
-export const getFrontPageSetting = async (): Promise<string | null> => {
+export const getFrontPageSetting = cache(async (): Promise<string | null> => {
   return readMongoFrontPageSetting();
-};
+});

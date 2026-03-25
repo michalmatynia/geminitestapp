@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { ObjectId } from 'mongodb';
+import { cache } from 'react';
 
 import {
   CMS_THEME_SETTINGS_KEY,
@@ -34,8 +35,8 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
 
 const readSettingValue = async (key: string): Promise<string | null> => readMongoSetting(key);
 
-export const getCmsThemeSettings = async (): Promise<ThemeSettings> => {
+export const getCmsThemeSettings = cache(async (): Promise<ThemeSettings> => {
   const stored = await readSettingValue(CMS_THEME_SETTINGS_KEY);
   const parsed = parseJsonSetting<Partial<ThemeSettings> | null>(stored, null);
   return normalizeThemeSettings(parsed);
-};
+});

@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { ObjectId } from 'mongodb';
+import { cache } from 'react';
 
 import {
   DEFAULT_MENU_SETTINGS,
@@ -37,7 +38,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
 
 const readSettingValue = async (key: string): Promise<string | null> => readMongoSetting(key);
 
-export const getCmsMenuSettings = async (
+export const getCmsMenuSettings = cache(async (
   domainId?: string | null,
   locale?: string | null
 ): Promise<MenuSettings> => {
@@ -56,4 +57,4 @@ export const getCmsMenuSettings = async (
   }
 
   return DEFAULT_MENU_SETTINGS;
-};
+});

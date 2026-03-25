@@ -48,9 +48,10 @@ export default async function Home(): Promise<JSX.Element | null> {
     return null;
   }
 
-  const cmsRepository = await withTiming('cmsRepository', getCmsRepository);
-
-  const hdrs = await withTiming('headers', () => headers());
+  const [cmsRepository, hdrs] = await Promise.all([
+    withTiming('cmsRepository', getCmsRepository),
+    withTiming('headers', () => headers()),
+  ]);
   const domain = await withTiming('cmsDomain', () => resolveCmsDomainFromHeaders(hdrs));
   const slugs = await withTiming('cmsSlugs', () => getSlugsForDomain(domain.id, cmsRepository));
 

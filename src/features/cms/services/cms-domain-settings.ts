@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { ObjectId } from 'mongodb';
+import { cache } from 'react';
 
 import {
   CMS_DOMAIN_SETTINGS_KEY,
@@ -27,8 +28,8 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
 
 const readSettingValue = async (key: string): Promise<string | null> => readMongoSetting(key);
 
-export const getCmsDomainSettings = async (): Promise<CmsDomainSettings> => {
+export const getCmsDomainSettings = cache(async (): Promise<CmsDomainSettings> => {
   const stored = await readSettingValue(CMS_DOMAIN_SETTINGS_KEY);
   const parsed = parseJsonSetting<Partial<CmsDomainSettings> | null>(stored, null);
   return normalizeCmsDomainSettings(parsed);
-};
+});

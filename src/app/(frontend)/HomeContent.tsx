@@ -27,11 +27,8 @@ export async function HomeContent({
   locale,
 }: HomeContentProps): Promise<React.JSX.Element> {
   const resolvedLocale = normalizeSiteLocale(locale);
-  const commonTranslations = await getTranslations({
-    locale: resolvedLocale,
-    namespace: 'Common',
-  });
-  const [cmsRepository, themeSettings, menuSettings] = await Promise.all([
+  const [commonTranslations, cmsRepository, themeSettings, menuSettings] = await Promise.all([
+    getTranslations({ locale: resolvedLocale, namespace: 'Common' }),
     withTiming('cmsRepository', getCmsRepository),
     withTiming('cmsTheme', () => getCmsThemeSettings()),
     withTiming('cmsMenu', () => getCmsMenuSettings(domainId, resolvedLocale)),

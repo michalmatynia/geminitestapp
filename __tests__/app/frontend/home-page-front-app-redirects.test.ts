@@ -5,11 +5,14 @@ const {
   frontPageAllowed,
   getFrontPagePublicOwnerMock,
   getFrontPageRedirectPathMock,
+  getKangurConfiguredLaunchTargetMock,
   getCmsRepositoryMock,
+  isDomainZoningEnabledMock,
   getSlugsForDomainMock,
   getFrontPageSettingMock,
   headersMock,
   homeContentMock,
+  kangurSsrSkeletonMock,
   redirectMock,
   resolveCmsDomainFromHeadersMock,
   shouldApplyFrontPageAppSelectionMock,
@@ -18,11 +21,14 @@ const {
   frontPageAllowed: new Set(['cms', 'products', 'kangur', 'chatbot', 'notes']),
   getFrontPagePublicOwnerMock: vi.fn(),
   getFrontPageRedirectPathMock: vi.fn(),
+  getKangurConfiguredLaunchTargetMock: vi.fn(),
   getCmsRepositoryMock: vi.fn(),
+  isDomainZoningEnabledMock: vi.fn(),
   getSlugsForDomainMock: vi.fn(),
   getFrontPageSettingMock: vi.fn(),
   headersMock: vi.fn(),
   homeContentMock: vi.fn(),
+  kangurSsrSkeletonMock: vi.fn(),
   redirectMock: vi.fn(),
   resolveCmsDomainFromHeadersMock: vi.fn(),
   shouldApplyFrontPageAppSelectionMock: vi.fn(),
@@ -38,12 +44,21 @@ vi.mock('next/headers', () => ({
 
 vi.mock('@/features/cms/server', () => ({
   getCmsRepository: getCmsRepositoryMock,
+  isDomainZoningEnabled: isDomainZoningEnabledMock,
   getSlugsForDomain: getSlugsForDomainMock,
   resolveCmsDomainFromHeaders: resolveCmsDomainFromHeadersMock,
 }));
 
 vi.mock('@/app/(frontend)/HomeContent', () => ({
   HomeContent: homeContentMock,
+}));
+
+vi.mock('@/features/kangur/server/launch-route', () => ({
+  getKangurConfiguredLaunchTarget: getKangurConfiguredLaunchTargetMock,
+}));
+
+vi.mock('@/features/kangur/ui/KangurSSRSkeleton', () => ({
+  KangurSSRSkeleton: kangurSsrSkeletonMock,
 }));
 
 vi.mock('@/shared/lib/front-page-app', () => ({
@@ -73,8 +88,14 @@ describe('front page app selection', () => {
     vi.resetModules();
 
     getCmsRepositoryMock.mockResolvedValue({});
+    isDomainZoningEnabledMock.mockResolvedValue(false);
     getSlugsForDomainMock.mockResolvedValue([]);
     getFrontPageSettingMock.mockResolvedValue('kangur');
+    getKangurConfiguredLaunchTargetMock.mockResolvedValue({
+      route: 'web_mobile_view',
+      href: '/',
+      fallbackHref: '/',
+    });
     headersMock.mockResolvedValue(new Headers());
     flushMock.mockResolvedValue(undefined);
     homeContentMock.mockReturnValue(null);
@@ -126,7 +147,7 @@ describe('front page app selection', () => {
 
     const result = await Home();
 
-    expect(result).toBeNull();
+    expect(result).toMatchObject({ type: kangurSsrSkeletonMock });
     expect(redirectMock).not.toHaveBeenCalled();
     expect(getCmsRepositoryMock).not.toHaveBeenCalled();
     expect(headersMock).not.toHaveBeenCalled();

@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
@@ -108,7 +108,9 @@ describe('EditProductForm', () => {
     await waitFor(() => {
       expect(queryClient.isFetching()).toBe(0);
     });
-    await expectNoAxeViolations(container);
+    await act(async () => {
+      await expectNoAxeViolations(container);
+    });
   }, 15000);
 
   it('renders the price in the Other tab', async () => {

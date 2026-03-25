@@ -1112,15 +1112,60 @@
     "engineGroupsDescription": "{count, plural, one {# rodzina silnikow pogrupowana w katalogu.} few {# rodziny silnikow pogrupowane w katalogu.} many {# rodzin silnikow pogrupowanych w katalogu.} other {# rodzin silnikow pogrupowanych w katalogu.}}",
     "emptyTitle": "Brak gier w bibliotece",
     "emptyDescription": "Dodaj pierwsze definicje gier, aby zaczac klasyfikowac silniki i warianty.",
+    "emptyFilteredTitle": "Zadne gry nie pasuja do tych filtrow",
+    "emptyFilteredDescription": "Wyczysc jeden lub kilka filtrow, aby zobaczyc reszte katalogu.",
     "metrics": {
       "games": "Gry",
-      "gamesDescription": "Wszystkie wpisy katalogu.",
+      "gamesDescription": "Widoczne wpisy katalogu.",
       "engines": "Silniki",
-      "enginesDescription": "Unikalne rodziny mechanik.",
+      "enginesDescription": "Widoczne rodziny silnikow.",
       "variants": "Warianty",
-      "variantsDescription": "Sposoby osadzenia i uruchamiania.",
+      "variantsDescription": "Widoczne sposoby osadzenia i uruchamiania.",
       "lessonLinked": "Powiazane z lekcjami",
-      "lessonLinkedDescription": "Gry juz podlaczone do komponentow lekcji."
+      "lessonLinkedDescription": "Widoczne gry juz podlaczone do komponentow lekcji."
+    },
+    "filters": {
+      "eyebrow": "Sterowanie klasyfikacja",
+      "title": "Filtruj katalog",
+      "summaryAll": "{count, plural, one {Pokazujemy # gre ze wspolnego katalogu.} few {Pokazujemy # gry ze wspolnego katalogu.} many {Pokazujemy # gier ze wspolnego katalogu.} other {Pokazujemy # gier ze wspolnego katalogu.}}",
+      "summaryFiltered": "Pokazujemy {visible} z {total} gier ze wspolnego katalogu.",
+      "clear": "Wyczysc filtry",
+      "subject": {
+        "label": "Przedmiot",
+        "aria": "Filtruj gry wedlug przedmiotu",
+        "all": "Wszystkie przedmioty"
+      },
+      "ageGroup": {
+        "label": "Grupa wiekowa",
+        "aria": "Filtruj gry wedlug grupy wiekowej",
+        "all": "Wszystkie grupy wiekowe"
+      },
+      "mechanic": {
+        "label": "Mechanika",
+        "aria": "Filtruj gry wedlug mechaniki",
+        "all": "Wszystkie mechaniki"
+      },
+      "surface": {
+        "label": "Powierzchnia",
+        "aria": "Filtruj gry wedlug powierzchni",
+        "all": "Wszystkie powierzchnie"
+      },
+      "status": {
+        "label": "Status",
+        "aria": "Filtruj gry wedlug statusu",
+        "all": "Wszystkie statusy"
+      },
+      "engine": {
+        "label": "Rodzina silnika",
+        "aria": "Filtruj gry wedlug rodziny silnika",
+        "all": "Wszystkie silniki"
+      },
+      "launchability": {
+        "label": "Sciezka uruchomienia",
+        "aria": "Filtruj gry wedlug sciezki uruchomienia",
+        "all": "Wszystkie gry",
+        "launchable": "Pelny ekran do uruchomienia"
+      }
     },
     "actions": {
       "openGame": "Otwórz grę",

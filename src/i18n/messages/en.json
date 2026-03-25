@@ -1112,15 +1112,60 @@
     "engineGroupsDescription": "{count, plural, one {# engine family currently grouped in the catalog.} other {# engine families currently grouped in the catalog.}}",
     "emptyTitle": "No games in the library",
     "emptyDescription": "Add the first game definitions to start classifying engines and variants.",
+    "emptyFilteredTitle": "No games match these filters",
+    "emptyFilteredDescription": "Clear one or more filters to see the rest of the catalog.",
     "metrics": {
       "games": "Games",
-      "gamesDescription": "All catalog entries.",
+      "gamesDescription": "Visible catalog entries.",
       "engines": "Engines",
-      "enginesDescription": "Unique mechanic families.",
+      "enginesDescription": "Visible engine families.",
       "variants": "Variants",
-      "variantsDescription": "Embedding and launch modes.",
+      "variantsDescription": "Visible embedding and launch modes.",
       "lessonLinked": "Linked to lessons",
-      "lessonLinkedDescription": "Games already connected to lesson components."
+      "lessonLinkedDescription": "Visible games already connected to lesson components."
+    },
+    "filters": {
+      "eyebrow": "Classification controls",
+      "title": "Filter the catalog",
+      "summaryAll": "{count, plural, one {Showing # game from the shared catalog.} other {Showing # games from the shared catalog.}}",
+      "summaryFiltered": "Showing {visible} of {total} games from the shared catalog.",
+      "clear": "Clear filters",
+      "subject": {
+        "label": "Subject",
+        "aria": "Filter games by subject",
+        "all": "All subjects"
+      },
+      "ageGroup": {
+        "label": "Age group",
+        "aria": "Filter games by age group",
+        "all": "All age groups"
+      },
+      "mechanic": {
+        "label": "Mechanic",
+        "aria": "Filter games by mechanic",
+        "all": "All mechanics"
+      },
+      "surface": {
+        "label": "Surface",
+        "aria": "Filter games by surface",
+        "all": "All surfaces"
+      },
+      "status": {
+        "label": "Status",
+        "aria": "Filter games by status",
+        "all": "All statuses"
+      },
+      "engine": {
+        "label": "Engine family",
+        "aria": "Filter games by engine family",
+        "all": "All engines"
+      },
+      "launchability": {
+        "label": "Launch path",
+        "aria": "Filter games by launch path",
+        "all": "All games",
+        "launchable": "Launchable fullscreen"
+      }
     },
     "actions": {
       "openGame": "Open game",

@@ -1112,15 +1112,60 @@
     "engineGroupsDescription": "{count, plural, one {# Engine-Familie aktuell im Katalog gruppiert.} other {# Engine-Familien aktuell im Katalog gruppiert.}}",
     "emptyTitle": "Keine Spiele in der Bibliothek",
     "emptyDescription": "Füge die ersten Spieldefinitionen hinzu, um Engines und Varianten zu klassifizieren.",
+    "emptyFilteredTitle": "Keine Spiele passen zu diesen Filtern",
+    "emptyFilteredDescription": "Entferne einen oder mehrere Filter, um den restlichen Katalog zu sehen.",
     "metrics": {
       "games": "Spiele",
-      "gamesDescription": "Alle Katalogeinträge.",
+      "gamesDescription": "Sichtbare Katalogeinträge.",
       "engines": "Engines",
-      "enginesDescription": "Eindeutige Mechanik-Familien.",
+      "enginesDescription": "Sichtbare Engine-Familien.",
       "variants": "Varianten",
-      "variantsDescription": "Einbettungs- und Startmodi.",
+      "variantsDescription": "Sichtbare Einbettungs- und Startmodi.",
       "lessonLinked": "Mit Lektionen verknüpft",
-      "lessonLinkedDescription": "Spiele, die bereits mit Lektionskomponenten verbunden sind."
+      "lessonLinkedDescription": "Sichtbare Spiele, die bereits mit Lektionskomponenten verbunden sind."
+    },
+    "filters": {
+      "eyebrow": "Klassifizierungssteuerung",
+      "title": "Katalog filtern",
+      "summaryAll": "{count, plural, one {# Spiel aus dem gemeinsamen Katalog wird angezeigt.} other {# Spiele aus dem gemeinsamen Katalog werden angezeigt.}}",
+      "summaryFiltered": "{visible} von {total} Spielen aus dem gemeinsamen Katalog werden angezeigt.",
+      "clear": "Filter zurücksetzen",
+      "subject": {
+        "label": "Fach",
+        "aria": "Spiele nach Fach filtern",
+        "all": "Alle Fächer"
+      },
+      "ageGroup": {
+        "label": "Altersgruppe",
+        "aria": "Spiele nach Altersgruppe filtern",
+        "all": "Alle Altersgruppen"
+      },
+      "mechanic": {
+        "label": "Mechanik",
+        "aria": "Spiele nach Mechanik filtern",
+        "all": "Alle Mechaniken"
+      },
+      "surface": {
+        "label": "Oberfläche",
+        "aria": "Spiele nach Oberfläche filtern",
+        "all": "Alle Oberflächen"
+      },
+      "status": {
+        "label": "Status",
+        "aria": "Spiele nach Status filtern",
+        "all": "Alle Statuswerte"
+      },
+      "engine": {
+        "label": "Engine-Familie",
+        "aria": "Spiele nach Engine-Familie filtern",
+        "all": "Alle Engines"
+      },
+      "launchability": {
+        "label": "Startpfad",
+        "aria": "Spiele nach Startpfad filtern",
+        "all": "Alle Spiele",
+        "launchable": "Startbarer Vollbildmodus"
+      }
     },
     "actions": {
       "openGame": "Spiel öffnen",

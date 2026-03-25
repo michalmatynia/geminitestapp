@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { cn } from '@/features/kangur/shared/utils';
 import {
@@ -9,7 +9,8 @@ import {
 } from '@/features/kangur/ui/components/KangurDragDropContext';
 import { KangurInfoCard } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
-import type { DraggableBallProps, BallProps, SlotZoneProps } from './types';
+import { usePointerDrag } from './PointerDragProvider';
+import type { DraggableBallProps, BallProps, SlotZoneProps, BallItem } from './types';
 import { getRectDropZoneSurface } from './utils';
 
 export function Ball({
@@ -166,5 +167,123 @@ export function SlotZone({
         );
       }}
     </Droppable>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Pointer-based drag components (mobile single-touch drag)
+// ---------------------------------------------------------------------------
+
+export type PointerDraggableBallProps = {
+  ball: BallItem;
+  zoneId: string;
+  isDragDisabled?: boolean;
+  small?: boolean;
+};
+
+export function PointerDraggableBall({
+  ball,
+  zoneId,
+  isDragDisabled = false,
+  small = false,
+}: PointerDraggableBallProps): React.JSX.Element {
+  const { dragState, startDrag } = usePointerDrag();
+  const isDragging = dragState?.ballId === ball.id;
+
+  const handlePointerDown = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (isDragDisabled || event.button !== 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+      startDrag(
+        ball.id,
+        ball,
+        zoneId,
+        event.clientX,
+        event.clientY,
+        event.currentTarget,
+      );
+    },
+    [ball, zoneId, isDragDisabled, startDrag],
+  );
+
+  return (
+    <button
+      type='button'
+      aria-label={`Piłka: ${ball.num}`}
+      className={cn(
+        'touch-none select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+        isDragDisabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing',
+        isDragging && 'opacity-30',
+      )}
+      disabled={isDragDisabled}
+      onPointerDown={handlePointerDown}
+    >
+      <Ball ball={ball} small={small} isCoarsePointer />
+    </button>
+  );
+}
+
+export type PointerDropZoneProps = {
+  id: string;
+  items: BallItem[];
+  label: string;
+  checked: boolean;
+  correct: boolean;
+  small?: boolean;
+};
+
+export function PointerDropZone({
+  id,
+  items,
+  label,
+  checked,
+  correct,
+  small = false,
+}: PointerDropZoneProps): React.JSX.Element {
+  const { dragState, hoveredZoneId, registerDropZone, unregisterDropZone } = usePointerDrag();
+  const ref = useRef<HTMLDivElement>(null);
+  const isDraggingOver = hoveredZoneId === id && dragState !== null;
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    registerDropZone(id, element);
+    return () => unregisterDropZone(id);
+  }, [id, registerDropZone, unregisterDropZone]);
+
+  const surface = getRectDropZoneSurface({
+    isDraggingOver,
+    checked,
+    correct,
+  });
+
+  return (
+    <div>
+      <p className='mb-1 text-center text-xs [color:var(--kangur-page-muted-text)]'>
+        {label}
+      </p>
+      <KangurInfoCard
+        ref={ref}
+        accent={surface.accent}
+        className={cn(
+          surface.className,
+          'min-h-[88px] min-w-[104px] w-full max-w-[160px] touch-none select-none transition',
+        )}
+        data-testid={`adding-ball-${id}`}
+        padding='sm'
+        tone={surface.tone}
+      >
+        {items.map((ball) => (
+          <PointerDraggableBall
+            key={ball.id}
+            ball={ball}
+            zoneId={id}
+            isDragDisabled={checked}
+            small={small}
+          />
+        ))}
+      </KangurInfoCard>
+    </div>
   );
 }

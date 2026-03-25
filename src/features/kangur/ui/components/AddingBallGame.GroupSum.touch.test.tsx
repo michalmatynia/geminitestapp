@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@hello-pangea/dnd', () => ({
@@ -55,8 +55,42 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 
 import { GroupSum } from '@/features/kangur/ui/components/adding-ball-game/AddingBallGame.GroupSum';
 
+const mockRect = (x: number, y: number, w: number, h: number): DOMRect => ({
+  left: x,
+  right: x + w,
+  top: y,
+  bottom: y + h,
+  width: w,
+  height: h,
+  x,
+  y,
+  toJSON: () => ({}),
+});
+
+const dragBallToZone = (
+  ballButton: HTMLElement,
+  targetZone: HTMLElement,
+  targetRect: DOMRect,
+): void => {
+  ballButton.getBoundingClientRect = () => mockRect(10, 10, 64, 64);
+  targetZone.getBoundingClientRect = () => targetRect;
+
+  const cx = targetRect.left + targetRect.width / 2;
+  const cy = targetRect.top + targetRect.height / 2;
+
+  act(() => {
+    fireEvent.pointerDown(ballButton, { clientX: 42, clientY: 42, button: 0 });
+  });
+  act(() => {
+    fireEvent(window, new PointerEvent('pointermove', { clientX: cx, clientY: cy }));
+  });
+  act(() => {
+    fireEvent(window, new PointerEvent('pointerup', { clientX: cx, clientY: cy }));
+  });
+};
+
 describe('GroupSum touch interactions', () => {
-  it('supports selecting a ball and tapping a group', () => {
+  it('renders the mobile drag layout with updated hint text', () => {
     render(<GroupSum round={{ mode: 'group_sum', a: 2, b: 3, target: 5 }} onResult={vi.fn()} />);
 
     expect(screen.getByTestId('adding-ball-group-solution-hint')).toHaveTextContent(
@@ -66,19 +100,19 @@ describe('GroupSum touch interactions', () => {
       'Każda piłka to 1.'
     );
     expect(screen.getByTestId('adding-ball-group-touch-hint')).toHaveTextContent(
-      'Dotknij piłkę, a potem grupę 1, grupę 2 albo pulę.'
+      'Przeciągnij piłkę do grupy 1, grupy 2 albo z powrotem do puli.'
     );
+  });
+
+  it('supports dragging a ball from the pool to a group', () => {
+    render(<GroupSum round={{ mode: 'group_sum', a: 2, b: 3, target: 5 }} onResult={vi.fn()} />);
 
     const pool = screen.getByTestId('adding-ball-pool');
-    const firstBall = within(pool).getAllByRole('button', { name: /Piłka:/i })[0];
-    fireEvent.click(firstBall);
-
-    expect(screen.getByTestId('adding-ball-group-touch-hint')).toHaveTextContent(
-      'Wybrana piłka: 1. Dotknij grupę 1, grupę 2 albo pulę.'
-    );
-
     const group1 = screen.getByTestId('adding-ball-group1');
-    fireEvent.click(group1);
+    const group1Rect = mockRect(200, 100, 160, 88);
+    const firstBall = within(pool).getAllByRole('button', { name: /Piłka:/i })[0];
+
+    dragBallToZone(firstBall, group1, group1Rect);
 
     expect(within(group1).getByRole('button', { name: 'Piłka: 1' })).toBeInTheDocument();
   });
@@ -89,18 +123,21 @@ describe('GroupSum touch interactions', () => {
 
     render(<GroupSum round={{ mode: 'group_sum', a: 2, b: 3, target: 5 }} onResult={onResult} />);
 
-    const moveFirstPoolBallTo = (target: 'group1' | 'group2') => {
+    const group1Rect = mockRect(200, 100, 160, 88);
+    const group2Rect = mockRect(400, 100, 160, 88);
+
+    const dragPoolBallTo = (testId: string, rect: DOMRect): void => {
       const pool = screen.getByTestId('adding-ball-pool');
       const ball = within(pool).getAllByRole('button', { name: 'Piłka: 1' })[0];
-      fireEvent.click(ball);
-      fireEvent.click(screen.getByTestId(`adding-ball-${target}`));
+      const zone = screen.getByTestId(testId);
+      dragBallToZone(ball, zone, rect);
     };
 
-    moveFirstPoolBallTo('group1');
-    moveFirstPoolBallTo('group1');
-    moveFirstPoolBallTo('group1');
-    moveFirstPoolBallTo('group2');
-    moveFirstPoolBallTo('group2');
+    dragPoolBallTo('adding-ball-group1', group1Rect);
+    dragPoolBallTo('adding-ball-group1', group1Rect);
+    dragPoolBallTo('adding-ball-group1', group1Rect);
+    dragPoolBallTo('adding-ball-group2', group2Rect);
+    dragPoolBallTo('adding-ball-group2', group2Rect);
 
     fireEvent.click(screen.getByRole('button', { name: /sprawdź/i }));
 
@@ -118,18 +155,21 @@ describe('GroupSum touch interactions', () => {
 
     render(<GroupSum round={{ mode: 'group_sum', a: 2, b: 3, target: 5 }} onResult={onResult} />);
 
-    const moveFirstPoolBallTo = (target: 'group1' | 'group2') => {
+    const group1Rect = mockRect(200, 100, 160, 88);
+    const group2Rect = mockRect(400, 100, 160, 88);
+
+    const dragPoolBallTo = (testId: string, rect: DOMRect): void => {
       const pool = screen.getByTestId('adding-ball-pool');
       const ball = within(pool).getAllByRole('button', { name: 'Piłka: 1' })[0];
-      fireEvent.click(ball);
-      fireEvent.click(screen.getByTestId(`adding-ball-${target}`));
+      const zone = screen.getByTestId(testId);
+      dragBallToZone(ball, zone, rect);
     };
 
-    moveFirstPoolBallTo('group1');
-    moveFirstPoolBallTo('group1');
-    moveFirstPoolBallTo('group1');
-    moveFirstPoolBallTo('group1');
-    moveFirstPoolBallTo('group2');
+    dragPoolBallTo('adding-ball-group1', group1Rect);
+    dragPoolBallTo('adding-ball-group1', group1Rect);
+    dragPoolBallTo('adding-ball-group1', group1Rect);
+    dragPoolBallTo('adding-ball-group1', group1Rect);
+    dragPoolBallTo('adding-ball-group2', group2Rect);
 
     fireEvent.click(screen.getByRole('button', { name: /sprawdź/i }));
 

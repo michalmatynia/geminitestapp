@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Droppable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import { motion } from 'framer-motion';
@@ -32,16 +32,10 @@ import {
   removeBallById,
   reorderWithinList,
 } from './utils';
-import { DraggableBall } from './AddingBallGame.Shared';
+import { DraggableBall, PointerDropZone } from './AddingBallGame.Shared';
+import { PointerDragProvider } from './PointerDragProvider';
 
-export function GroupSum({
-  round,
-  onResult,
-}: {
-  round: GroupSumRound;
-  onResult: (correct: boolean) => void;
-}): React.JSX.Element {
-  const isCoarsePointer = useKangurCoarsePointer();
+function useGroupSumState(round: GroupSumRound) {
   const total = round.a + round.b;
   const [state, setState] = useState<GroupSumState>(() => ({
     pool: createBalls(total),
@@ -50,18 +44,154 @@ export function GroupSum({
   }));
   const [checked, setChecked] = useState(false);
   const [correct, setCorrect] = useState(false);
+
+  const moveBallTo = useCallback(
+    (ballId: string, sourceZoneId: string, destinationId: string): void => {
+      if (checked) return;
+      if (!isGroupSlotId(sourceZoneId) || !isGroupSlotId(destinationId)) return;
+      if (sourceZoneId === destinationId) return;
+
+      setState((prev) => {
+        const { updated: sourceUpdated, ball } = removeBallById(prev[sourceZoneId], ballId);
+        if (!ball) return prev;
+        return {
+          ...prev,
+          [sourceZoneId]: sourceUpdated,
+          [destinationId]: [...prev[destinationId], ball],
+        };
+      });
+    },
+    [checked],
+  );
+
+  const check = useCallback(
+    (onResult: (correct: boolean) => void): void => {
+      const ok = isAcceptedCountSplit(state.group1.length, state.group2.length, round.a, round.b);
+      setCorrect(ok);
+      setChecked(true);
+      setTimeout(() => onResult(ok), 1400);
+    },
+    [round.a, round.b, state.group1.length, state.group2.length],
+  );
+
+  return { state, setState, checked, correct, moveBallTo, check, total };
+}
+
+// ---------------------------------------------------------------------------
+// Shared result banner
+// ---------------------------------------------------------------------------
+
+function GroupSumResult({
+  round,
+  correct,
+  submittedGroupPair,
+}: {
+  round: GroupSumRound;
+  correct: boolean;
+  submittedGroupPair: string;
+}): React.JSX.Element {
+  return (
+    <motion.div
+      initial={{ scale: 0 }}
+      animate={{ scale: 1 }}
+      className={`text-xl font-extrabold ${correct ? 'text-green-600' : 'text-red-500'}`}
+    >
+      {correct
+        ? `🎉 Brawo! Pasują grupy ${round.a} i ${round.b}${round.a !== round.b ? ` albo ${round.b} i ${round.a}` : ''}.`
+        : `❌ Spróbuj jeszcze raz! Masz grupy ${submittedGroupPair}, a szukamy ${round.a} i ${round.b}${round.a !== round.b ? ` albo ${round.b} i ${round.a}` : ''}.`}
+    </motion.div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Mobile (pointer drag) layout
+// ---------------------------------------------------------------------------
+
+function GroupSumMobile({
+  round,
+  onResult,
+}: {
+  round: GroupSumRound;
+  onResult: (correct: boolean) => void;
+}): React.JSX.Element {
+  const { state, checked, correct, moveBallTo, check, total } = useGroupSumState(round);
+  const acceptedGroupPair = formatAcceptedGroupPair(round.a, round.b);
+  const submittedGroupPair = formatSubmittedGroupPair(state.group1.length, state.group2.length);
+
+  return (
+    <PointerDragProvider onDrop={moveBallTo} disabled={checked}>
+      <div className={`flex flex-col items-center w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}>
+        <p className='text-lg font-bold [color:var(--kangur-page-text)]'>
+          Podziel {total} piłek na dwie grupy: <span className='text-orange-500'>{acceptedGroupPair}</span>
+        </p>
+        <p
+          className='text-sm text-center [color:var(--kangur-page-muted-text)]'
+          data-testid='adding-ball-group-solution-hint'
+        >
+          {round.a !== round.b
+            ? `Kolejność nie ma znaczenia, więc ${round.a} i ${round.b} albo ${round.b} i ${round.a} są poprawne.`
+            : `Obie grupy powinny mieć po ${round.a} piłki.`}
+        </p>
+        <p
+          className='text-xs text-center font-semibold uppercase tracking-[0.18em] text-slate-500'
+          data-testid='adding-ball-group-unit-hint'
+        >
+          Każda piłka to 1.
+        </p>
+
+        <div className='flex kangur-panel-gap flex-wrap justify-center'>
+          <PointerDropZone id='group1' items={state.group1} label='Grupa 1' checked={checked} correct={correct} small />
+          <PointerDropZone id='group2' items={state.group2} label='Grupa 2' checked={checked} correct={correct} small />
+        </div>
+
+        <PointerDropZone id='pool' items={state.pool} label='Pula' checked={checked} correct={false} />
+
+        <p
+          data-testid='adding-ball-group-touch-hint'
+          className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500'
+        >
+          Przeciągnij piłkę do grupy 1, grupy 2 albo z powrotem do puli.
+        </p>
+
+        {!checked && (
+          <KangurButton
+            disabled={state.group1.length === 0 || state.group2.length === 0}
+            onClick={() => check(onResult)}
+            size='lg'
+            variant='primary'
+          >
+            Sprawdź ✓
+          </KangurButton>
+        )}
+        {checked && (
+          <GroupSumResult round={round} correct={correct} submittedGroupPair={submittedGroupPair} />
+        )}
+      </div>
+    </PointerDragProvider>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Desktop (hello-pangea/dnd) layout
+// ---------------------------------------------------------------------------
+
+function GroupSumDesktop({
+  round,
+  onResult,
+}: {
+  round: GroupSumRound;
+  onResult: (correct: boolean) => void;
+}): React.JSX.Element {
+  const { state, setState, checked, correct, check, total } = useGroupSumState(round);
   const [selectedBallId, setSelectedBallId] = useState<string | null>(null);
   const acceptedGroupPair = formatAcceptedGroupPair(round.a, round.b);
   const submittedGroupPair = formatSubmittedGroupPair(state.group1.length, state.group2.length);
 
   const onDragEnd = (result: DropResult): void => {
     if (checked) return;
-
     const { source, destination } = result;
     if (!destination) return;
-    if (!isGroupSlotId(source.droppableId) || !isGroupSlotId(destination.droppableId)) {
-      return;
-    }
+    if (!isGroupSlotId(source.droppableId) || !isGroupSlotId(destination.droppableId)) return;
 
     const sourceId = source.droppableId;
     const destinationId = destination.droppableId;
@@ -74,37 +204,15 @@ export function GroupSum({
       return;
     }
     setSelectedBallId(null);
-
     setState((prev) => {
-      const moved = moveBetweenLists(
-        prev[sourceId],
-        prev[destinationId],
-        source.index,
-        destination.index
-      );
-
-      return {
-        ...prev,
-        [sourceId]: moved.source,
-        [destinationId]: moved.destination,
-      };
+      const moved = moveBetweenLists(prev[sourceId], prev[destinationId], source.index, destination.index);
+      return { ...prev, [sourceId]: moved.source, [destinationId]: moved.destination };
     });
-  };
-
-  const check = (): void => {
-    const group1Count = state.group1.length;
-    const group2Count = state.group2.length;
-    const ok = isAcceptedCountSplit(group1Count, group2Count, round.a, round.b);
-    setCorrect(ok);
-    setChecked(true);
-    setSelectedBallId(null);
-    setTimeout(() => onResult(ok), 1400);
   };
 
   const selectedBall =
     selectedBallId
-      ? [...state.pool, ...state.group1, ...state.group2].find((ball) => ball.id === selectedBallId) ??
-        null
+      ? [...state.pool, ...state.group1, ...state.group2].find((b) => b.id === selectedBallId) ?? null
       : null;
 
   const moveSelectedBallTo = (destinationId: GroupSlotId): void => {
@@ -116,9 +224,7 @@ export function GroupSum({
       zones.forEach((zone) => {
         const { updated, ball } = removeBallById(prev[zone], selectedBallId);
         nextState[zone] = updated;
-        if (ball) {
-          moved = ball;
-        }
+        if (ball) moved = ball;
       });
       if (!moved) return prev;
       nextState[destinationId] = [...nextState[destinationId], moved];
@@ -162,7 +268,6 @@ export function GroupSum({
                   checked,
                   correct,
                 });
-
                 return (
                   <div>
                     <p className='mb-1 text-center text-xs [color:var(--kangur-page-muted-text)]'>
@@ -174,16 +279,11 @@ export function GroupSum({
                       className={cn(
                         surface.className,
                         'min-h-[52px] min-w-[80px] w-full max-w-[160px] touch-manipulation select-none transition',
-                        isCoarsePointer && 'min-h-[88px] min-w-[120px]',
                         selectedBall && 'bg-amber-50/60'
                       )}
                       data-testid={`adding-ball-${group.id}`}
                       padding='sm'
                       tone={surface.tone}
-                      onClick={() => {
-                        if (!isCoarsePointer || checked || !selectedBall) return;
-                        moveSelectedBallTo(group.id);
-                      }}
                       {...provided.droppableProps}
                     >
                       {state[group.id].map((ball, i) => (
@@ -195,7 +295,7 @@ export function GroupSum({
                           small
                           isSelected={selectedBallId === ball.id}
                           onSelect={() =>
-                            setSelectedBallId((current) => (current === ball.id ? null : ball.id))
+                            setSelectedBallId((c) => (c === ball.id ? null : ball.id))
                           }
                         />
                       ))}
@@ -221,10 +321,6 @@ export function GroupSum({
               data-testid='adding-ball-pool'
               padding='sm'
               tone='neutral'
-              onClick={() => {
-                if (!isCoarsePointer || checked || !selectedBall) return;
-                moveSelectedBallTo('pool');
-              }}
               {...provided.droppableProps}
             >
               {state.pool.map((ball, i) => (
@@ -235,7 +331,7 @@ export function GroupSum({
                   isDragDisabled={checked}
                   isSelected={selectedBallId === ball.id}
                   onSelect={() =>
-                    setSelectedBallId((current) => (current === ball.id ? null : ball.id))
+                    setSelectedBallId((c) => (c === ball.id ? null : ball.id))
                   }
                 />
               ))}
@@ -253,38 +349,16 @@ export function GroupSum({
             aria-atomic='true'
           >
             {selectedBall
-              ? isCoarsePointer
-                ? `Wybrana piłka: ${selectedBall.num}. Dotknij grupę 1, grupę 2 albo pulę.`
-                : `Wybrana piłka: ${selectedBall.num}`
-              : isCoarsePointer
-                ? 'Dotknij piłkę, a potem grupę 1, grupę 2 albo pulę.'
-                : 'Wybierz piłkę, aby przenieść ją klawiaturą.'}
+              ? `Wybrana piłka: ${selectedBall.num}`
+              : 'Wybierz piłkę, aby przenieść ją klawiaturą.'}
           </span>
-          <KangurButton
-            size='sm'
-            type='button'
-            variant='surface'
-            onClick={() => moveSelectedBallTo('group1')}
-            disabled={!selectedBall || checked}
-          >
+          <KangurButton size='sm' type='button' variant='surface' onClick={() => moveSelectedBallTo('group1')} disabled={!selectedBall || checked}>
             Do grupy 1
           </KangurButton>
-          <KangurButton
-            size='sm'
-            type='button'
-            variant='surface'
-            onClick={() => moveSelectedBallTo('group2')}
-            disabled={!selectedBall || checked}
-          >
+          <KangurButton size='sm' type='button' variant='surface' onClick={() => moveSelectedBallTo('group2')} disabled={!selectedBall || checked}>
             Do grupy 2
           </KangurButton>
-          <KangurButton
-            size='sm'
-            type='button'
-            variant='surface'
-            onClick={() => moveSelectedBallTo('pool')}
-            disabled={!selectedBall || checked}
-          >
+          <KangurButton size='sm' type='button' variant='surface' onClick={() => moveSelectedBallTo('pool')} disabled={!selectedBall || checked}>
             Do puli
           </KangurButton>
         </div>
@@ -292,7 +366,7 @@ export function GroupSum({
         {!checked && (
           <KangurButton
             disabled={state.group1.length === 0 || state.group2.length === 0}
-            onClick={check}
+            onClick={() => check(onResult)}
             size='lg'
             variant='primary'
           >
@@ -300,17 +374,29 @@ export function GroupSum({
           </KangurButton>
         )}
         {checked && (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className={`text-xl font-extrabold ${correct ? 'text-green-600' : 'text-red-500'}`}
-          >
-            {correct
-              ? `🎉 Brawo! Pasują grupy ${round.a} i ${round.b}${round.a !== round.b ? ` albo ${round.b} i ${round.a}` : ''}.`
-              : `❌ Spróbuj jeszcze raz! Masz grupy ${submittedGroupPair}, a szukamy ${round.a} i ${round.b}${round.a !== round.b ? ` albo ${round.b} i ${round.a}` : ''}.`}
-          </motion.div>
+          <GroupSumResult round={round} correct={correct} submittedGroupPair={submittedGroupPair} />
         )}
       </div>
     </KangurDragDropContext>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Entry point
+// ---------------------------------------------------------------------------
+
+export function GroupSum({
+  round,
+  onResult,
+}: {
+  round: GroupSumRound;
+  onResult: (correct: boolean) => void;
+}): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
+
+  if (isCoarsePointer) {
+    return <GroupSumMobile round={round} onResult={onResult} />;
+  }
+
+  return <GroupSumDesktop round={round} onResult={onResult} />;
 }

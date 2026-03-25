@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Droppable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import { motion } from 'framer-motion';
@@ -31,16 +31,10 @@ import {
   removeBallById,
   reorderWithinList,
 } from './utils';
-import { DraggableBall, SlotZone } from './AddingBallGame.Shared';
+import { DraggableBall, PointerDropZone, SlotZone } from './AddingBallGame.Shared';
+import { PointerDragProvider } from './PointerDragProvider';
 
-export function CompleteEquation({
-  round,
-  onResult,
-}: {
-  round: CompleteEquationRound;
-  onResult: (correct: boolean) => void;
-}): React.JSX.Element {
-  const isCoarsePointer = useKangurCoarsePointer();
+function useCompleteEquationState(round: CompleteEquationRound) {
   const [state, setState] = useState<CompleteEquationState>(() => ({
     pool: createBalls(round.a + round.b),
     slotA: [],
@@ -48,6 +42,129 @@ export function CompleteEquation({
   }));
   const [checked, setChecked] = useState(false);
   const [correct, setCorrect] = useState(false);
+
+  const moveBallTo = useCallback(
+    (ballId: string, sourceZoneId: string, destinationId: string): void => {
+      if (checked) return;
+      if (!isCompleteSlotId(sourceZoneId) || !isCompleteSlotId(destinationId)) return;
+      if (sourceZoneId === destinationId) return;
+
+      setState((prev) => {
+        const { updated: sourceUpdated, ball } = removeBallById(prev[sourceZoneId], ballId);
+        if (!ball) return prev;
+        return {
+          ...prev,
+          [sourceZoneId]: sourceUpdated,
+          [destinationId]: [...prev[destinationId], ball],
+        };
+      });
+    },
+    [checked],
+  );
+
+  const check = useCallback(
+    (onResult: (correct: boolean) => void): void => {
+      const ok = isAcceptedCountSplit(state.slotA.length, state.slotB.length, round.a, round.b);
+      setCorrect(ok);
+      setChecked(true);
+      setTimeout(() => onResult(ok), 1400);
+    },
+    [round.a, round.b, state.slotA.length, state.slotB.length],
+  );
+
+  return { state, setState, checked, correct, moveBallTo, check };
+}
+
+// ---------------------------------------------------------------------------
+// Mobile (pointer drag) layout
+// ---------------------------------------------------------------------------
+
+function CompleteEquationMobile({
+  round,
+  onResult,
+}: {
+  round: CompleteEquationRound;
+  onResult: (correct: boolean) => void;
+}): React.JSX.Element {
+  const { state, checked, correct, moveBallTo, check } = useCompleteEquationState(round);
+  const acceptedEquationPair = formatAcceptedEquationPair(round.a, round.b);
+  const submittedEquationPair = formatSubmittedEquationPair(state.slotA.length, state.slotB.length);
+
+  return (
+    <PointerDragProvider onDrop={moveBallTo} disabled={checked}>
+      <div className={`flex flex-col items-center w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}>
+        <p className='text-lg font-bold [color:var(--kangur-page-text)]'>
+          Przeciągnij piłki tak, żeby uzupełnić równanie:
+        </p>
+        <p
+          className='text-sm text-center [color:var(--kangur-page-muted-text)]'
+          data-testid='adding-ball-complete-solution-hint'
+        >
+          Pasuje {acceptedEquationPair}
+          {round.a !== round.b ? '. Kolejność grup nie ma znaczenia.' : '.'}
+        </p>
+        <p
+          className='text-xs text-center font-semibold uppercase tracking-[0.18em] text-slate-500'
+          data-testid='adding-ball-complete-unit-hint'
+        >
+          Każda piłka to 1.
+        </p>
+
+        <div className='flex items-center kangur-panel-gap flex-wrap justify-center'>
+          <PointerDropZone id='slotA' items={state.slotA} label='Grupa A' checked={checked} correct={correct} small />
+          <span className='text-3xl font-extrabold [color:var(--kangur-page-muted-text)]'>+</span>
+          <PointerDropZone id='slotB' items={state.slotB} label='Grupa B' checked={checked} correct={correct} small />
+          <span className='text-3xl font-extrabold [color:var(--kangur-page-muted-text)]'>= {round.target}</span>
+        </div>
+
+        <PointerDropZone id='pool' items={state.pool} label='Pula' checked={checked} correct={false} />
+
+        <p
+          data-testid='adding-ball-complete-touch-hint'
+          className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500'
+        >
+          Przeciągnij piłkę do Grupy A, Grupy B albo z powrotem do puli.
+        </p>
+
+        {!checked && (
+          <KangurButton
+            disabled={state.slotA.length === 0 || state.slotB.length === 0}
+            onClick={() => check(onResult)}
+            size='lg'
+            variant='primary'
+          >
+            Sprawdź ✓
+          </KangurButton>
+        )}
+        {checked && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className={`text-xl font-extrabold ${correct ? 'text-green-600' : 'text-red-500'}`}
+          >
+            {correct
+              ? `🎉 Brawo! Pasuje ${acceptedEquationPair}.`
+              : `❌ Spróbuj jeszcze raz! Masz ${submittedEquationPair}, a pasuje ${acceptedEquationPair}.`}
+          </motion.div>
+        )}
+      </div>
+    </PointerDragProvider>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Desktop (hello-pangea/dnd) layout
+// ---------------------------------------------------------------------------
+
+function CompleteEquationDesktop({
+  round,
+  onResult,
+}: {
+  round: CompleteEquationRound;
+  onResult: (correct: boolean) => void;
+}): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
+  const { state, setState, checked, correct, check } = useCompleteEquationState(round);
   const [selectedBallId, setSelectedBallId] = useState<string | null>(null);
   const slotALabel = 'Grupa A';
   const slotBLabel = 'Grupa B';
@@ -92,14 +209,6 @@ export function CompleteEquation({
         [destinationId]: moved.destination,
       };
     });
-  };
-
-  const check = (): void => {
-    const ok = isAcceptedCountSplit(state.slotA.length, state.slotB.length, round.a, round.b);
-    setCorrect(ok);
-    setChecked(true);
-    setSelectedBallId(null);
-    setTimeout(() => onResult(ok), 1400);
   };
 
   const selectedBall =
@@ -224,12 +333,8 @@ export function CompleteEquation({
             aria-atomic='true'
           >
             {selectedBall
-              ? isCoarsePointer
-                ? `Wybrana piłka: ${selectedBall.num}. Dotknij ${slotALabel}, ${slotBLabel} albo pulę.`
-                : `Wybrana piłka: ${selectedBall.num}`
-              : isCoarsePointer
-                ? `Dotknij piłkę, a potem ${slotALabel}, ${slotBLabel} albo pulę.`
-                : 'Wybierz piłkę, aby przenieść ją klawiaturą.'}
+              ? `Wybrana piłka: ${selectedBall.num}`
+              : 'Wybierz piłkę, aby przenieść ją klawiaturą.'}
           </span>
           <KangurButton
             size='sm'
@@ -263,7 +368,7 @@ export function CompleteEquation({
         {!checked && (
           <KangurButton
             disabled={state.slotA.length === 0 || state.slotB.length === 0}
-            onClick={check}
+            onClick={() => check(onResult)}
             size='lg'
             variant='primary'
           >
@@ -284,4 +389,24 @@ export function CompleteEquation({
       </div>
     </KangurDragDropContext>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Entry point — picks mobile or desktop layout
+// ---------------------------------------------------------------------------
+
+export function CompleteEquation({
+  round,
+  onResult,
+}: {
+  round: CompleteEquationRound;
+  onResult: (correct: boolean) => void;
+}): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
+
+  if (isCoarsePointer) {
+    return <CompleteEquationMobile round={round} onResult={onResult} />;
+  }
+
+  return <CompleteEquationDesktop round={round} onResult={onResult} />;
 }

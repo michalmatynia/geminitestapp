@@ -1,5 +1,6 @@
 import type {
   KangurGameDefinition,
+  KangurGameEngineCategory,
   KangurGameEngineDefinition,
   KangurGameEngineId,
   KangurGameId,
@@ -7,7 +8,9 @@ import type {
   KangurGameStatus,
   KangurGameSurface,
   KangurGameVariant,
+  KangurGameVariantSurface,
 } from '@/shared/contracts/kangur-games';
+import { KANGUR_GAME_ENGINE_CATEGORIES } from '@/shared/contracts/kangur-games';
 import type {
   KangurLessonAgeGroup,
   KangurLessonActivityId,
@@ -77,16 +80,24 @@ export type KangurGameCatalogFilter = {
   lessonComponentId?: KangurLessonComponentId;
   mechanic?: KangurGameMechanic;
   engineId?: KangurGameEngineId;
+  engineCategory?: KangurGameEngineCategory;
+  variantSurface?: KangurGameVariantSurface;
+  variantStatus?: KangurGameStatus;
   launchableOnly?: boolean;
 };
 
 export type KangurGameCatalogFacets = {
+  gameCount: number;
   subjects: KangurLessonSubject[];
   ageGroups: KangurLessonAgeGroup[];
   statuses: KangurGameStatus[];
   surfaces: KangurGameSurface[];
+  variantSurfaces: KangurGameVariantSurface[];
+  variantStatuses: KangurGameStatus[];
   mechanics: KangurGameMechanic[];
   engineIds: KangurGameEngineId[];
+  engineCategories: KangurGameEngineCategory[];
+  engines: KangurGameEngineDefinition[];
 };
 
 type CreateKangurGameCatalogInput = {
@@ -97,6 +108,29 @@ type CreateKangurGameCatalogInput = {
 const isDefined = <T>(value: T | undefined): value is T => value !== undefined;
 
 const getUniqueValues = <T>(values: T[]): T[] => Array.from(new Set(values));
+
+const getSortedEngineCategories = (
+  values: KangurGameEngineCategory[]
+): KangurGameEngineCategory[] =>
+  KANGUR_GAME_ENGINE_CATEGORIES.filter((category) => values.includes(category));
+
+const getUniqueEngines = (
+  entries: KangurGameCatalogEntry[]
+): KangurGameEngineDefinition[] =>
+  Array.from(
+    entries.reduce<Map<KangurGameEngineId, KangurGameEngineDefinition>>((map, entry) => {
+      if (entry.engine) {
+        map.set(entry.engine.id, entry.engine);
+      }
+
+      return map;
+    }, new Map())
+  )
+    .map(([, engine]) => engine)
+    .sort(
+      (left, right) =>
+        left.sortOrder - right.sortOrder || left.title.localeCompare(right.title)
+    );
 
 const sortVariants = (
   left: Pick<KangurGameVariant, 'sortOrder'>,
@@ -199,6 +233,22 @@ export const filterKangurGameCatalogEntries = (
     next = next.filter((entry) => entry.game.engineId === filter.engineId);
   }
 
+  if (filter?.engineCategory) {
+    next = next.filter((entry) => entry.engine?.category === filter.engineCategory);
+  }
+
+  if (filter?.variantSurface) {
+    next = next.filter((entry) =>
+      entry.game.variants.some((variant) => variant.surface === filter.variantSurface)
+    );
+  }
+
+  if (filter?.variantStatus) {
+    next = next.filter((entry) =>
+      entry.game.variants.some((variant) => variant.status === filter.variantStatus)
+    );
+  }
+
   if (filter?.launchableOnly) {
     next = next.filter((entry) => Boolean(entry.launchableScreen));
   }
@@ -209,14 +259,23 @@ export const filterKangurGameCatalogEntries = (
 export const getKangurGameCatalogFacets = (
   entries: KangurGameCatalogEntry[]
 ): KangurGameCatalogFacets => ({
+  gameCount: entries.length,
   subjects: getUniqueValues(entries.map((entry) => entry.game.subject)),
   ageGroups: getUniqueValues(entries.map((entry) => entry.game.ageGroup).filter(isDefined)),
   statuses: getUniqueValues(entries.map((entry) => entry.game.status)),
   surfaces: getUniqueValues(entries.flatMap((entry) => entry.game.surfaces)),
+  variantSurfaces: getUniqueValues(entries.flatMap((entry) => entry.game.variants.map((variant) => variant.surface))),
+  variantStatuses: getUniqueValues(entries.flatMap((entry) => entry.game.variants.map((variant) => variant.status))),
   mechanics: getUniqueValues(
     entries.flatMap((entry) => entry.engine?.mechanics ?? [entry.game.mechanic])
   ),
   engineIds: getUniqueValues(entries.map((entry) => entry.game.engineId)),
+  engineCategories: getSortedEngineCategories(
+    getUniqueValues(
+      entries.flatMap((entry) => (entry.engine?.category ? [entry.engine.category] : []))
+    )
+  ),
+  engines: getUniqueEngines(entries),
 });
 
 export const KANGUR_GAME_CATALOG = Object.freeze(
@@ -274,8 +333,14 @@ export const KANGUR_GAME_CATALOG_IDS_BY_LESSON_COMPONENT_ID = Object.freeze(
   )
 );
 
+const createDefaultKangurGameCatalogSnapshot = (): KangurGameCatalogEntry[] =>
+  createKangurGameCatalogEntries();
+
 export const getKangurGameCatalogEntry = (gameId: KangurGameId): KangurGameCatalogEntry => {
-  const entry = KANGUR_GAME_CATALOG[gameId];
+  const entry = createDefaultKangurGameCatalogSnapshot().find(
+    (candidate) => candidate.game.id === gameId
+  );
+
   if (!entry) {
     throw new Error(`Missing Kangur game catalog entry for "${gameId}".`);
   }
@@ -285,21 +350,19 @@ export const getKangurGameCatalogEntry = (gameId: KangurGameId): KangurGameCatal
 
 export const getKangurGameCatalogEntryForLessonActivity = (
   activityId: KangurLessonActivityId
-): KangurGameCatalogEntry | null => {
-  const gameId = KANGUR_GAME_CATALOG_BY_LESSON_ACTIVITY_ID[activityId];
-  return gameId ? getKangurGameCatalogEntry(gameId) : null;
-};
+): KangurGameCatalogEntry | null =>
+  createDefaultKangurGameCatalogSnapshot().find((entry) =>
+    entry.game.activityIds.includes(activityId)
+  ) ?? null;
 
 export const getKangurGameCatalogEntriesForEngine = (
   engineId: KangurGameEngineId
 ): KangurGameCatalogEntry[] =>
-  (KANGUR_GAME_CATALOG_IDS_BY_ENGINE_ID[engineId] ?? [])
-    .map((gameId) => KANGUR_GAME_CATALOG[gameId])
-    .filter(isDefined);
+  createDefaultKangurGameCatalogSnapshot().filter((entry) => entry.game.engineId === engineId);
 
 export const getKangurGameCatalogEntriesForLessonComponent = (
   componentId: KangurLessonComponentId
 ): KangurGameCatalogEntry[] =>
-  (KANGUR_GAME_CATALOG_IDS_BY_LESSON_COMPONENT_ID[componentId] ?? [])
-    .map((gameId) => KANGUR_GAME_CATALOG[gameId])
-    .filter(isDefined);
+  createDefaultKangurGameCatalogSnapshot().filter((entry) =>
+    entry.game.lessonComponentIds.includes(componentId)
+  );

@@ -370,6 +370,10 @@ export function KangurLanguageSwitcher({
 
   const warmLocaleTarget = useCallback(
     (targetLocaleCode: string): void => {
+      if (isCoarsePointer) {
+        return;
+      }
+
       if (targetLocaleCode === selectedLocale) {
         return;
       }
@@ -387,7 +391,7 @@ export function KangurLanguageSwitcher({
       routeNavigator.prefetch(target.href);
       void prefetchKangurPageContentStore(queryClient, targetLocaleCode);
     },
-    [localeOptions, queryClient, routeNavigator, selectedLocale]
+    [isCoarsePointer, localeOptions, queryClient, routeNavigator, selectedLocale]
   );
 
   useEffect(() => {

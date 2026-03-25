@@ -1110,6 +1110,9 @@
     "engineGroupsEyebrow": "Widok konsolidacji",
     "engineGroupsTitle": "Rodziny silnikow",
     "engineGroupsDescription": "{count, plural, one {# rodzina silnikow pogrupowana w katalogu.} few {# rodziny silnikow pogrupowane w katalogu.} many {# rodzin silnikow pogrupowanych w katalogu.} other {# rodzin silnikow pogrupowanych w katalogu.}}",
+    "variantGroupsEyebrow": "Powierzchnie wariantow",
+    "variantGroupsTitle": "Katalog wariantow",
+    "variantGroupsDescription": "{count, plural, one {# widoczny wariant pogrupowany na {surfaceCount} powierzchniach.} few {# widoczne warianty pogrupowane na {surfaceCount} powierzchniach.} many {# widocznych wariantow pogrupowanych na {surfaceCount} powierzchniach.} other {# widocznych wariantow pogrupowanych na {surfaceCount} powierzchniach.}}",
     "emptyTitle": "Brak gier w bibliotece",
     "emptyDescription": "Dodaj pierwsze definicje gier, aby zaczac klasyfikowac silniki i warianty.",
     "emptyFilteredTitle": "Zadne gry nie pasuja do tych filtrow",
@@ -1123,6 +1126,48 @@
       "variantsDescription": "Widoczne sposoby osadzenia i uruchamiania.",
       "lessonLinked": "Powiazane z lekcjami",
       "lessonLinkedDescription": "Widoczne gry juz podlaczone do komponentow lekcji."
+    },
+    "coverageGroupsEyebrow": "Polityka pokrycia",
+    "coverageGroupsTitle": "Mapa pokrycia lekcji",
+    "coverageGroupsDescription": "{count, plural, one {# tor pokrycia sledzony we wspolnej domenie gier.} few {# tory pokrycia sledzone we wspolnej domenie gier.} many {# torow pokrycia sledzonych we wspolnej domenie gier.} other {# torow pokrycia sledzonych we wspolnej domenie gier.}}",
+    "coverageGroups": {
+      "completeChip": "Kompletne",
+      "gapsChip": "{count, plural, one {# luka} few {# luki} many {# luk} other {# luk}}",
+      "lessonsLabel": "Lekcje",
+      "coveredLabel": "Pokryte",
+      "gamesLabel": "Gry",
+      "cohortsLabel": "Kohorty",
+      "subjectsLabel": "Przedmioty",
+      "coveredLessonsLabel": "Pokryte lekcje",
+      "fallbackOnlyLessonsLabel": "Lekcje tylko z fallbackiem",
+      "groups": {
+        "library_backed": {
+          "eyebrow": "Wspolny katalog",
+          "title": "Lekcje wsparte biblioteka",
+          "description": "Komponenty lekcji, ktore powinny wskazywac na jedna lub wiecej wspolnych definicji gier w bibliotece gier."
+        },
+        "launchable": {
+          "eyebrow": "Pelny ekran",
+          "title": "Lekcje uruchamialne",
+          "description": "Komponenty lekcji, ktore powinny zachowac bezposrednia trase do pelnoekranowej gry obok wspolnego wpisu katalogowego."
+        },
+        "selector_fallback": {
+          "eyebrow": "Hub selektora",
+          "title": "Lekcje tylko w selektorze",
+          "description": "Komponenty lekcji, ktore obecnie przechodza do selektora gry zalezneho od przedmiotu zamiast do osobnej gry pelnoekranowej."
+        }
+      }
+    },
+    "cohortGroupsEyebrow": "Kohorty wiekowe",
+    "cohortGroupsTitle": "Katalog wedlug kohort",
+    "cohortGroupsDescription": "{count, plural, one {# kohorta wiekowa widoczna w biezacym katalogu.} few {# kohorty wiekowe widoczne w biezacym katalogu.} many {# kohort wiekowych widocznych w biezacym katalogu.} other {# kohort wiekowych widocznych w biezacym katalogu.}}",
+    "cohortGroups": {
+      "groupDescription": "{count, plural, one {# gra jest teraz widoczna w tej kohorcie.} few {# gry sa teraz widoczne w tej kohorcie.} many {# gier jest teraz widocznych w tej kohorcie.} other {# gier jest teraz widocznych w tej kohorcie.}}",
+      "gamesLabel": "Gry",
+      "enginesLabel": "Silniki",
+      "launchableLabel": "Uruchamialne",
+      "lessonLinkedLabel": "Powiazane z lekcjami",
+      "subjectsLabel": "Przedmioty"
     },
     "filters": {
       "eyebrow": "Sterowanie klasyfikacja",
@@ -1155,10 +1200,25 @@
         "aria": "Filtruj gry wedlug statusu",
         "all": "Wszystkie statusy"
       },
+      "variantSurface": {
+        "label": "Powierzchnia wariantu",
+        "aria": "Filtruj warianty wedlug powierzchni",
+        "all": "Wszystkie powierzchnie wariantow"
+      },
+      "variantStatus": {
+        "label": "Status wariantu",
+        "aria": "Filtruj warianty wedlug statusu",
+        "all": "Wszystkie statusy wariantow"
+      },
       "engine": {
         "label": "Rodzina silnika",
         "aria": "Filtruj gry wedlug rodziny silnika",
         "all": "Wszystkie silniki"
+      },
+      "engineCategory": {
+        "label": "Kategoria silnika",
+        "aria": "Filtruj gry wedlug kategorii silnika",
+        "all": "Wszystkie kategorie silnikow"
       },
       "launchability": {
         "label": "Sciezka uruchomienia",
@@ -1182,8 +1242,15 @@
       "game": "Gra",
       "duel": "Pojedynek"
     },
+    "variantSurfaces": {
+      "lesson_inline": "W lekcji inline",
+      "lesson_stage": "Etap lekcji",
+      "library_preview": "Podglad biblioteki",
+      "game_screen": "Ekran gry"
+    },
     "labels": {
       "engineId": "Id silnika",
+      "engineCategory": "Kategoria silnika",
       "mechanic": "Mechanika",
       "ageGroup": "Grupa wiekowa",
       "allAgeGroups": "Wszystkie",
@@ -1192,6 +1259,17 @@
       "legacyScreens": "Legacy screeny",
       "lessonLinks": "Powiazane lekcje",
       "none": "Brak"
+    },
+    "engineCategories": {
+      "foundational": "Fundamenty",
+      "early_learning": "Wczesna nauka",
+      "adult_learning": "Nauka doroslych"
+    },
+    "lessonCoverageStatuses": {
+      "launchable": "uruchamialna",
+      "library_backed": "w bibliotece",
+      "selector_fallback": "fallback selektora",
+      "lesson_only": "tylko lekcja"
     },
     "mechanics": {
       "drag_drop": "Przeciaganie i upuszczanie",
@@ -1214,6 +1292,15 @@
       "subjectsLabel": "Przedmioty",
       "mechanicsLabel": "Mechaniki",
       "surfacesLabel": "Powierzchnie"
+    },
+    "variantGroups": {
+      "surfaceLabel": "Powierzchnia wariantu",
+      "groupDescription": "{count, plural, one {# wariant korzysta z tej powierzchni.} few {# warianty korzystaja z tej powierzchni.} many {# wariantow korzysta z tej powierzchni.} other {# wariantow korzysta z tej powierzchni.}}",
+      "gamesLabel": "Gry",
+      "enginesLabel": "Silniki",
+      "defaultsLabel": "Warianty domyslne",
+      "launchableLabel": "Uruchamialne",
+      "variantsLabel": "Warianty"
     }
   },
   "KangurGameHomeActions": {

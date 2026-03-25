@@ -1,27 +1,28 @@
 'use client';
 
-import React, { useDeferredValue, useState } from 'react';
+import React, { useDeferredValue, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 
 import {
-  filterKangurGameCatalogEntries,
-  getKangurGameCatalogFacets,
-  type KangurGameCatalogEntry,
-} from '@/features/kangur/games';
+  appendKangurUrlParams,
+  getKangurCanonicalPublicHref,
+  getKangurPageSlug,
+} from '@/features/kangur/config/routing';
 import {
   KANGUR_AGE_GROUPS,
   KANGUR_LESSON_LIBRARY,
   KANGUR_SUBJECTS,
 } from '@/features/kangur/lessons/lesson-catalog';
 import {
+  isKangurGameLibraryLessonComponent,
+  shouldRouteKangurLessonComponentToOperationSelector,
+} from '@/features/kangur/games';
+import {
   getLocalizedKangurAgeGroupLabel,
   getLocalizedKangurLessonTitle,
   getLocalizedKangurSubjectLabel,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
-import type {
-  KangurLessonAgeGroup,
-  KangurLessonSubject,
-} from '@/features/kangur/shared/contracts/kangur';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
@@ -40,13 +41,35 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurGameCatalog } from '@/features/kangur/ui/hooks/useKangurGameCatalog';
+import { useKangurGameCatalogFacets } from '@/features/kangur/ui/hooks/useKangurGameCatalogFacets';
+import { useKangurGameVariants } from '@/features/kangur/ui/hooks/useKangurGameVariants';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import {
+  areGamesLibraryFiltersEqual,
+  buildGamesLibraryCatalogFilter,
+  DEFAULT_GAMES_LIBRARY_FILTERS,
+  getGamesLibrarySearchParams,
+  hasActiveGamesLibraryFilters,
+  readGamesLibraryFiltersFromSearchParams,
+  type GamesLibraryFilterState,
+} from '@/features/kangur/ui/pages/GamesLibrary.filters';
+import {
+  createGamesLibraryCohortGroups,
+  createGamesLibraryCoverageGroups,
+  createGamesLibraryEngineGroups,
+  createGamesLibraryMetrics,
+  createGamesLibrarySubjectGroups,
+  createGamesLibraryVariantGroups,
+} from '@/features/kangur/ui/pages/GamesLibrary.view-model';
+import {
   buildKangurGameLaunchHref,
   buildKangurGameLessonHref,
+  getKangurLaunchableGameScreenForLessonComponent,
 } from '@/features/kangur/ui/services/game-launch';
+import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 import type {
+  KangurGameVariantSurface,
   KangurGameDefinition,
   KangurGameMechanic,
   KangurGameSurface,
@@ -55,28 +78,6 @@ import type {
 import { cn } from '@/features/kangur/shared/utils';
 
 const GAMES_LIBRARY_MAIN_ID = 'kangur-games-library-main';
-
-type GamesLibraryFilterValue<T extends string> = 'all' | T;
-
-type GamesLibraryFilterState = {
-  subject: GamesLibraryFilterValue<KangurLessonSubject>;
-  ageGroup: GamesLibraryFilterValue<KangurLessonAgeGroup>;
-  mechanic: GamesLibraryFilterValue<KangurGameMechanic>;
-  surface: GamesLibraryFilterValue<KangurGameSurface>;
-  gameStatus: GamesLibraryFilterValue<KangurGameStatus>;
-  engineId: GamesLibraryFilterValue<string>;
-  launchability: 'all' | 'launchable';
-};
-
-const DEFAULT_GAMES_LIBRARY_FILTERS: GamesLibraryFilterState = {
-  subject: 'all',
-  ageGroup: 'all',
-  mechanic: 'all',
-  surface: 'all',
-  gameStatus: 'all',
-  engineId: 'all',
-  launchability: 'all',
-};
 
 const formatMechanicLabel = (
   mechanic: KangurGameMechanic,
@@ -113,11 +114,55 @@ const resolveSurfaceAccent = (
   }
 };
 
-const getLinkedLessonTitles = (
-  game: KangurGameDefinition,
+const resolveVariantSurfaceAccent = (
+  surface: KangurGameVariantSurface
+): 'amber' | 'emerald' | 'rose' | 'sky' => {
+  switch (surface) {
+    case 'lesson_inline':
+      return 'emerald';
+    case 'lesson_stage':
+      return 'amber';
+    case 'game_screen':
+      return 'rose';
+    case 'library_preview':
+    default:
+      return 'sky';
+  }
+};
+
+const resolveAgeGroupAccent = (
+  ageGroup: NonNullable<KangurGameDefinition['ageGroup']>
+): 'amber' | 'sky' | 'slate' => {
+  switch (ageGroup) {
+    case 'six_year_old':
+      return 'amber';
+    case 'grown_ups':
+      return 'slate';
+    case 'ten_year_old':
+    default:
+      return 'sky';
+  }
+};
+
+const resolveCoverageAccent = (
+  coverageId: 'library_backed' | 'launchable' | 'selector_fallback'
+): 'amber' | 'rose' | 'sky' => {
+  switch (coverageId) {
+    case 'launchable':
+      return 'rose';
+    case 'selector_fallback':
+      return 'amber';
+    case 'library_backed':
+    default:
+      return 'sky';
+  }
+};
+
+const getLessonTitles = (
+  lessonComponentIds: readonly KangurLessonComponentId[],
   locale: string
 ): string[] =>
-  game.lessonComponentIds.map((componentId) =>
+  lessonComponentIds.map((componentId) =>
     getLocalizedKangurLessonTitle(
       componentId,
       locale,
@@ -125,40 +170,66 @@ const getLinkedLessonTitles = (
     )
   );
 
-const buildGamesLibraryCatalogFilter = (
-  filters: GamesLibraryFilterState
-) => ({
-  subject: filters.subject === 'all' ? undefined : filters.subject,
-  ageGroup: filters.ageGroup === 'all' ? undefined : filters.ageGroup,
-  mechanic: filters.mechanic === 'all' ? undefined : filters.mechanic,
-  surface: filters.surface === 'all' ? undefined : filters.surface,
-  gameStatus: filters.gameStatus === 'all' ? undefined : filters.gameStatus,
-  engineId: filters.engineId === 'all' ? undefined : filters.engineId,
-  launchableOnly: filters.launchability === 'launchable' ? true : undefined,
-});
+const resolveLessonCoverageStatus = (
+  componentId: KangurLessonComponentId
+): 'launchable' | 'library_backed' | 'selector_fallback' | 'lesson_only' => {
+  if (getKangurLaunchableGameScreenForLessonComponent(componentId)) {
+    return 'launchable';
+  }
+  if (isKangurGameLibraryLessonComponent(componentId)) {
+    return 'library_backed';
+  }
+  if (shouldRouteKangurLessonComponentToOperationSelector(componentId)) {
+    return 'selector_fallback';
+  }
+  return 'lesson_only';
+};
 
-const hasActiveGamesLibraryFilters = (filters: GamesLibraryFilterState): boolean =>
-  Object.values(filters).some((value) => value !== 'all');
+const resolveLessonCoverageStatusAccent = (
+  status: ReturnType<typeof resolveLessonCoverageStatus>
+): 'amber' | 'rose' | 'sky' | 'slate' => {
+  switch (status) {
+    case 'launchable':
+      return 'rose';
+    case 'selector_fallback':
+      return 'amber';
+    case 'lesson_only':
+      return 'slate';
+    case 'library_backed':
+    default:
+      return 'sky';
+  }
+};
 
 export default function GamesLibrary(): React.JSX.Element {
   const locale = useLocale();
   const translations = useTranslations('KangurGamesLibraryPage');
+  const searchParams = useSearchParams();
   const routeNavigator = useKangurRouteNavigator();
-  const { basePath } = useKangurRouting();
+  const { basePath, requestedHref } = useKangurRouting();
   const auth = useKangurAuth();
   const { user, logout } = auth;
   const { openLoginModal } = useKangurLoginModal();
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
-  const catalogQuery = useKangurGameCatalog();
-  const allCatalogEntries = catalogQuery.data ?? [];
-  const [filters, setFilters] = useState<GamesLibraryFilterState>(DEFAULT_GAMES_LIBRARY_FILTERS);
+  const [filters, setFilters] = useState<GamesLibraryFilterState>(() =>
+    readGamesLibraryFiltersFromSearchParams(searchParams)
+  );
   const deferredFilters = useDeferredValue(filters);
   const catalogFilter = buildGamesLibraryCatalogFilter(deferredFilters);
-  const catalogEntries = filterKangurGameCatalogEntries(allCatalogEntries, catalogFilter);
-  const catalogFacets = getKangurGameCatalogFacets(allCatalogEntries);
+  const catalogQuery = useKangurGameCatalog(catalogFilter);
+  const coverageCatalogQuery = useKangurGameCatalog();
+  const facetsQuery = useKangurGameCatalogFacets();
+  const variantsQuery = useKangurGameVariants(catalogFilter);
+  const catalogEntries = catalogQuery.data ?? [];
+  const coverageCatalogEntries = coverageCatalogQuery.data ?? catalogEntries;
+  const catalogFacets = facetsQuery.data;
+  const variantEntries = variantsQuery.data ?? [];
   const hasActiveFilters = hasActiveGamesLibraryFilters(filters);
   const visibleGameCount = catalogEntries.length;
-  const totalGameCount = allCatalogEntries.length;
+  const totalGameCount = catalogFacets?.gameCount ?? visibleGameCount;
+  const currentGamesLibraryHref =
+    requestedHref ??
+    getKangurCanonicalPublicHref([getKangurPageSlug('GamesLibrary')]);
 
   const navigation = {
     basePath,
@@ -171,52 +242,55 @@ export default function GamesLibrary(): React.JSX.Element {
     onLogout: () => logout(false),
   };
 
+  const applyFilters = (
+    nextFilters: GamesLibraryFilterState,
+    sourceId: string
+  ): void => {
+    if (areGamesLibraryFiltersEqual(filters, nextFilters)) {
+      return;
+    }
+
+    setFilters(nextFilters);
+    routeNavigator.replace(
+      appendKangurUrlParams(
+        currentGamesLibraryHref,
+        getGamesLibrarySearchParams(nextFilters),
+        basePath
+      ),
+      {
+        pageKey: 'GamesLibrary',
+        scroll: false,
+        sourceId,
+      }
+    );
+  };
+
   const updateFilter = <TKey extends keyof GamesLibraryFilterState>(
     key: TKey,
     value: GamesLibraryFilterState[TKey]
   ): void => {
-    setFilters((current) => ({
-      ...current,
+    const nextFilters = {
+      ...filters,
       [key]: value,
-    }));
+    };
+
+    applyFilters(nextFilters, `kangur-games-library:filters:${String(key)}`);
   };
 
-  const engineCount = new Set(catalogEntries.map((entry) => entry.game.engineId)).size;
-  const variantCount = catalogEntries.reduce((sum, entry) => sum + entry.game.variants.length, 0);
-  const lessonLinkedCount = catalogEntries.filter((entry) => entry.game.lessonComponentIds.length > 0)
-    .length;
-  const groupedGames = KANGUR_SUBJECTS.map((subject) => ({
-    subject,
-    entries: catalogEntries.filter((entry) => entry.game.subject === subject.id),
-  })).filter((group) => group.entries.length > 0);
-  const engineGroups = Array.from(
-    catalogEntries.reduce((groups, entry) => {
-      const existing = groups.get(entry.game.engineId);
-      if (existing) {
-        existing.push(entry);
-      } else {
-        groups.set(entry.game.engineId, [entry]);
-      }
+  useEffect(() => {
+    const nextFilters = readGamesLibraryFiltersFromSearchParams(searchParams);
 
-      return groups;
-    }, new Map<string, KangurGameCatalogEntry[]>())
-  ).map(([engineId, entries]) => ({
-      engineId,
-      entries: entries.slice().sort((left, right) => left.game.sortOrder - right.game.sortOrder),
-      engine: entries[0]?.engine ?? null,
-      mechanics: Array.from(new Set(entries.flatMap((entry) => entry.engine?.mechanics ?? [entry.game.mechanic]))),
-      subjects: Array.from(new Set(entries.map((entry) => entry.game.subject))),
-      surfaces: Array.from(new Set(entries.flatMap((entry) => entry.engine?.surfaces ?? entry.game.surfaces))),
-    })).sort((left, right) => {
-      const leftEngine = left.engine;
-      const rightEngine = right.engine;
+    setFilters((current) =>
+      areGamesLibraryFiltersEqual(current, nextFilters) ? current : nextFilters
+    );
+  }, [searchParams]);
 
-      if (leftEngine && rightEngine && leftEngine.sortOrder !== rightEngine.sortOrder) {
-        return leftEngine.sortOrder - rightEngine.sortOrder;
-      }
-
-      return right.entries.length - left.entries.length || left.engineId.localeCompare(right.engineId);
-    });
+  const metrics = createGamesLibraryMetrics(catalogEntries, variantEntries);
+  const groupedGames = createGamesLibrarySubjectGroups(catalogEntries);
+  const cohortGroups = createGamesLibraryCohortGroups(catalogEntries, variantEntries);
+  const coverageGroups = createGamesLibraryCoverageGroups(coverageCatalogEntries);
+  const engineGroups = createGamesLibraryEngineGroups(catalogEntries);
+  const variantGroups = createGamesLibraryVariantGroups(variantEntries);
 
   useKangurRoutePageReady({
     pageKey: 'GamesLibrary',
@@ -273,7 +347,12 @@ export default function GamesLibrary(): React.JSX.Element {
             type='button'
             size='sm'
             variant='surface'
-            onClick={() => setFilters(DEFAULT_GAMES_LIBRARY_FILTERS)}
+            onClick={() =>
+              applyFilters(
+                DEFAULT_GAMES_LIBRARY_FILTERS,
+                'kangur-games-library:filters:clear'
+              )
+            }
             disabled={!hasActiveFilters}
           >
             {translations('filters.clear')}
@@ -298,7 +377,7 @@ export default function GamesLibrary(): React.JSX.Element {
               accent='slate'
             >
               <option value='all'>{translations('filters.subject.all')}</option>
-              {catalogFacets.subjects.map((subject) => (
+              {(catalogFacets?.subjects ?? []).map((subject) => (
                 <option key={subject} value={subject}>
                   {getLocalizedKangurSubjectLabel(
                     subject,
@@ -327,7 +406,7 @@ export default function GamesLibrary(): React.JSX.Element {
               accent='slate'
             >
               <option value='all'>{translations('filters.ageGroup.all')}</option>
-              {catalogFacets.ageGroups.map((ageGroup) => (
+              {(catalogFacets?.ageGroups ?? []).map((ageGroup) => (
                 <option key={ageGroup} value={ageGroup}>
                   {getLocalizedKangurAgeGroupLabel(
                     ageGroup,
@@ -356,7 +435,7 @@ export default function GamesLibrary(): React.JSX.Element {
               accent='slate'
             >
               <option value='all'>{translations('filters.mechanic.all')}</option>
-              {catalogFacets.mechanics.map((mechanic) => (
+              {(catalogFacets?.mechanics ?? []).map((mechanic) => (
                 <option key={mechanic} value={mechanic}>
                   {formatMechanicLabel(mechanic, translations)}
                 </option>
@@ -378,7 +457,7 @@ export default function GamesLibrary(): React.JSX.Element {
               accent='slate'
             >
               <option value='all'>{translations('filters.surface.all')}</option>
-              {catalogFacets.surfaces.map((surface) => (
+              {(catalogFacets?.surfaces ?? []).map((surface) => (
                 <option key={surface} value={surface}>
                   {translations(`surfaces.${surface}`)}
                 </option>
@@ -403,9 +482,84 @@ export default function GamesLibrary(): React.JSX.Element {
               accent='slate'
             >
               <option value='all'>{translations('filters.status.all')}</option>
-              {catalogFacets.statuses.map((status) => (
+              {(catalogFacets?.statuses ?? []).map((status) => (
                 <option key={status} value={status}>
                   {translations(`statuses.${status}`)}
+                </option>
+              ))}
+            </KangurSelectField>
+          </div>
+
+          <div className='min-w-0 space-y-1'>
+            <div className='text-xs font-semibold uppercase tracking-[0.08em] [color:var(--kangur-page-muted-text)]'>
+              {translations('filters.variantSurface.label')}
+            </div>
+            <KangurSelectField
+              value={filters.variantSurface}
+              onChange={(event) =>
+                updateFilter(
+                  'variantSurface',
+                  event.target.value as GamesLibraryFilterState['variantSurface']
+                )
+              }
+              aria-label={translations('filters.variantSurface.aria')}
+              size='sm'
+              accent='slate'
+            >
+              <option value='all'>{translations('filters.variantSurface.all')}</option>
+              {(catalogFacets?.variantSurfaces ?? []).map((surface) => (
+                <option key={surface} value={surface}>
+                  {translations(`variantSurfaces.${surface}`)}
+                </option>
+              ))}
+            </KangurSelectField>
+          </div>
+
+          <div className='min-w-0 space-y-1'>
+            <div className='text-xs font-semibold uppercase tracking-[0.08em] [color:var(--kangur-page-muted-text)]'>
+              {translations('filters.variantStatus.label')}
+            </div>
+            <KangurSelectField
+              value={filters.variantStatus}
+              onChange={(event) =>
+                updateFilter(
+                  'variantStatus',
+                  event.target.value as GamesLibraryFilterState['variantStatus']
+                )
+              }
+              aria-label={translations('filters.variantStatus.aria')}
+              size='sm'
+              accent='slate'
+            >
+              <option value='all'>{translations('filters.variantStatus.all')}</option>
+              {(catalogFacets?.variantStatuses ?? []).map((status) => (
+                <option key={status} value={status}>
+                  {translations(`statuses.${status}`)}
+                </option>
+              ))}
+            </KangurSelectField>
+          </div>
+
+          <div className='min-w-0 space-y-1'>
+            <div className='text-xs font-semibold uppercase tracking-[0.08em] [color:var(--kangur-page-muted-text)]'>
+              {translations('filters.engineCategory.label')}
+            </div>
+            <KangurSelectField
+              value={filters.engineCategory}
+              onChange={(event) =>
+                updateFilter(
+                  'engineCategory',
+                  event.target.value as GamesLibraryFilterState['engineCategory']
+                )
+              }
+              aria-label={translations('filters.engineCategory.aria')}
+              size='sm'
+              accent='slate'
+            >
+              <option value='all'>{translations('filters.engineCategory.all')}</option>
+              {(catalogFacets?.engineCategories ?? []).map((category) => (
+                <option key={category} value={category}>
+                  {translations(`engineCategories.${category}`)}
                 </option>
               ))}
             </KangurSelectField>
@@ -417,18 +571,15 @@ export default function GamesLibrary(): React.JSX.Element {
             </div>
             <KangurSelectField
               value={filters.engineId}
-              onChange={(event) =>
-                updateFilter('engineId', event.target.value as GamesLibraryFilterState['engineId'])
-              }
+              onChange={(event) => updateFilter('engineId', event.target.value)}
               aria-label={translations('filters.engine.aria')}
               size='sm'
               accent='slate'
             >
               <option value='all'>{translations('filters.engine.all')}</option>
-              {catalogFacets.engineIds.map((engineId) => (
-                <option key={engineId} value={engineId}>
-                  {allCatalogEntries.find((entry) => entry.game.engineId === engineId)?.engine
-                    ?.title ?? engineId}
+              {(catalogFacets?.engines ?? []).map((engine) => (
+                <option key={engine.id} value={engine.id}>
+                  {engine.title}
                 </option>
               ))}
             </KangurSelectField>
@@ -463,28 +614,264 @@ export default function GamesLibrary(): React.JSX.Element {
         <KangurMetricCard
           accent='sky'
           label={translations('metrics.games')}
-          value={visibleGameCount}
+          value={metrics.visibleGameCount}
           description={translations('metrics.gamesDescription')}
         />
         <KangurMetricCard
           accent='rose'
           label={translations('metrics.engines')}
-          value={engineCount}
+          value={metrics.engineCount}
           description={translations('metrics.enginesDescription')}
         />
         <KangurMetricCard
           accent='emerald'
           label={translations('metrics.variants')}
-          value={variantCount}
+          value={metrics.variantCount}
           description={translations('metrics.variantsDescription')}
         />
         <KangurMetricCard
           accent='amber'
           label={translations('metrics.lessonLinked')}
-          value={lessonLinkedCount}
+          value={metrics.lessonLinkedCount}
           description={translations('metrics.lessonLinkedDescription')}
         />
       </div>
+
+      {coverageGroups.length > 0 ? (
+        <section className='space-y-4'>
+          <div className='space-y-1'>
+            <div className='text-xs font-semibold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
+              {translations('coverageGroupsEyebrow')}
+            </div>
+            <div className='text-2xl font-black [color:var(--kangur-page-text)]'>
+              {translations('coverageGroupsTitle')}
+            </div>
+            <div className='text-sm [color:var(--kangur-page-muted-text)]'>
+              {translations('coverageGroupsDescription', { count: coverageGroups.length })}
+            </div>
+          </div>
+
+          <div className='grid gap-4 xl:grid-cols-3'>
+            {coverageGroups.map((group) => {
+              const coveredLessonTitles = getLessonTitles(group.coveredComponentIds, locale);
+              const uncoveredLessonTitles = getLessonTitles(group.uncoveredComponentIds, locale);
+
+              return (
+                <KangurInfoCard
+                  key={group.id}
+                  accent={resolveCoverageAccent(group.id)}
+                  padding='lg'
+                  className='flex h-full flex-col gap-4'
+                >
+                  <div className='flex flex-wrap items-start justify-between gap-3'>
+                    <div className='min-w-0 flex-1'>
+                      <div className='text-xs uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
+                        {translations(`coverageGroups.groups.${group.id}.eyebrow`)}
+                      </div>
+                      <div className='mt-1 text-xl font-black [color:var(--kangur-page-text)]'>
+                        {translations(`coverageGroups.groups.${group.id}.title`)}
+                      </div>
+                      <p className='mt-2 text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
+                        {translations(`coverageGroups.groups.${group.id}.description`)}
+                      </p>
+                    </div>
+                    <KangurStatusChip
+                      accent={group.uncoveredComponentIds.length > 0 ? 'amber' : 'emerald'}
+                      className='uppercase tracking-[0.14em]'
+                      size='sm'
+                    >
+                      {group.uncoveredComponentIds.length > 0
+                        ? translations('coverageGroups.gapsChip', {
+                            count: group.uncoveredComponentIds.length,
+                          })
+                        : translations('coverageGroups.completeChip')}
+                    </KangurStatusChip>
+                  </div>
+
+                  <div className='grid gap-3 sm:grid-cols-2'>
+                    <div>
+                      <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                        {translations('coverageGroups.lessonsLabel')}
+                      </div>
+                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {group.componentIds.length}
+                      </div>
+                    </div>
+                    <div>
+                      <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                        {translations('coverageGroups.coveredLabel')}
+                      </div>
+                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {group.coveredComponentIds.length}
+                      </div>
+                    </div>
+                    <div>
+                      <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                        {translations('coverageGroups.gamesLabel')}
+                      </div>
+                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {group.entries.length}
+                      </div>
+                    </div>
+                    <div>
+                      <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                        {translations('coverageGroups.cohortsLabel')}
+                      </div>
+                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {group.ageGroups.length}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className='space-y-2'>
+                    <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                      {translations('coverageGroups.subjectsLabel')}
+                    </div>
+                    <div className='text-sm [color:var(--kangur-page-text)]'>
+                      {group.subjects.length > 0
+                        ? group.subjects
+                            .map((subject) =>
+                              getLocalizedKangurSubjectLabel(
+                                subject,
+                                locale,
+                                KANGUR_SUBJECTS.find((entry) => entry.id === subject)?.label ??
+                                  subject
+                              )
+                            )
+                            .join(', ')
+                        : translations('labels.none')}
+                    </div>
+                  </div>
+
+                  <div className='space-y-2'>
+                    <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                      {translations('coverageGroups.coveredLessonsLabel')}
+                    </div>
+                    <div className='text-sm [color:var(--kangur-page-text)]'>
+                      {coveredLessonTitles.length > 0
+                        ? coveredLessonTitles.join(', ')
+                        : translations('labels.none')}
+                    </div>
+                  </div>
+
+                  {uncoveredLessonTitles.length > 0 ? (
+                    <div className='space-y-2'>
+                      <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                        {translations('coverageGroups.fallbackOnlyLessonsLabel')}
+                      </div>
+                      <div className='text-sm [color:var(--kangur-page-text)]'>
+                        {uncoveredLessonTitles.join(', ')}
+                      </div>
+                    </div>
+                  ) : null}
+                </KangurInfoCard>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
+      {cohortGroups.length > 0 ? (
+        <section className='space-y-4'>
+          <div className='space-y-1'>
+            <div className='text-xs font-semibold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
+              {translations('cohortGroupsEyebrow')}
+            </div>
+            <div className='text-2xl font-black [color:var(--kangur-page-text)]'>
+              {translations('cohortGroupsTitle')}
+            </div>
+            <div className='text-sm [color:var(--kangur-page-muted-text)]'>
+              {translations('cohortGroupsDescription', { count: cohortGroups.length })}
+            </div>
+          </div>
+
+          <div className='grid gap-4 xl:grid-cols-3'>
+            {cohortGroups.map((group) => (
+              <KangurInfoCard
+                key={group.ageGroup}
+                accent={resolveAgeGroupAccent(group.ageGroup)}
+                padding='lg'
+                className='flex h-full flex-col gap-4'
+              >
+                <div className='flex flex-wrap items-start justify-between gap-3'>
+                  <div className='min-w-0 flex-1'>
+                    <div className='text-xs uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
+                      {translations('labels.ageGroup')}
+                    </div>
+                    <div className='mt-1 text-xl font-black [color:var(--kangur-page-text)]'>
+                      {getLocalizedKangurAgeGroupLabel(group.ageGroup, locale)}
+                    </div>
+                    <p className='mt-2 text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
+                      {translations('cohortGroups.groupDescription', {
+                        count: group.entries.length,
+                      })}
+                    </p>
+                  </div>
+                  <KangurStatusChip
+                    accent={resolveAgeGroupAccent(group.ageGroup)}
+                    className='uppercase tracking-[0.14em]'
+                    size='sm'
+                  >
+                    {translations('labels.variantCount', { count: group.variantCount })}
+                  </KangurStatusChip>
+                </div>
+
+                <div className='grid gap-3 sm:grid-cols-2'>
+                  <div>
+                    <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                      {translations('cohortGroups.gamesLabel')}
+                    </div>
+                    <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                      {group.entries.length}
+                    </div>
+                  </div>
+                  <div>
+                    <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                      {translations('cohortGroups.enginesLabel')}
+                    </div>
+                    <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                      {group.engineCount}
+                    </div>
+                  </div>
+                  <div>
+                    <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                      {translations('cohortGroups.launchableLabel')}
+                    </div>
+                    <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                      {group.launchableCount}
+                    </div>
+                  </div>
+                  <div>
+                    <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                      {translations('cohortGroups.lessonLinkedLabel')}
+                    </div>
+                    <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                      {group.lessonLinkedCount}
+                    </div>
+                  </div>
+                </div>
+
+                <div className='space-y-2'>
+                  <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                    {translations('cohortGroups.subjectsLabel')}
+                  </div>
+                  <div className='text-sm [color:var(--kangur-page-text)]'>
+                    {group.subjects
+                      .map((subject) =>
+                        getLocalizedKangurSubjectLabel(
+                          subject,
+                          locale,
+                          KANGUR_SUBJECTS.find((entry) => entry.id === subject)?.label ?? subject
+                        )
+                      )
+                      .join(', ')}
+                  </div>
+                </div>
+              </KangurInfoCard>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {engineGroups.length > 0 ? (
         <section className='space-y-4'>
@@ -570,6 +957,16 @@ export default function GamesLibrary(): React.JSX.Element {
                     </div>
                     <div>
                       <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                        {translations('labels.engineCategory')}
+                      </div>
+                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {group.category
+                          ? translations(`engineCategories.${group.category}`)
+                          : translations('labels.none')}
+                      </div>
+                    </div>
+                    <div>
+                      <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
                         {translations('engineGroups.mechanicsLabel')}
                       </div>
                       <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
@@ -587,6 +984,116 @@ export default function GamesLibrary(): React.JSX.Element {
                           .map((surface) => translations(`surfaces.${surface}`))
                           .join(', ')}
                       </div>
+                    </div>
+                  </div>
+                </KangurInfoCard>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
+      {variantGroups.length > 0 ? (
+        <section className='space-y-4'>
+          <div className='space-y-1'>
+            <div className='text-xs font-semibold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
+              {translations('variantGroupsEyebrow')}
+            </div>
+            <div className='text-2xl font-black [color:var(--kangur-page-text)]'>
+              {translations('variantGroupsTitle')}
+            </div>
+            <div className='text-sm [color:var(--kangur-page-muted-text)]'>
+              {translations('variantGroupsDescription', {
+                count: variantEntries.length,
+                surfaceCount: variantGroups.length,
+              })}
+            </div>
+          </div>
+
+          <div className='grid gap-4 xl:grid-cols-2'>
+            {variantGroups.map((group) => {
+              const gamesCount = new Set(group.entries.map((entry) => entry.game.id)).size;
+              const enginesCount = new Set(group.entries.map((entry) => entry.game.engineId)).size;
+              const defaultCount = group.entries.filter((entry) => entry.isDefaultVariant).length;
+              const launchableCount = group.entries.filter((entry) => Boolean(entry.launchableScreen))
+                .length;
+
+              return (
+                <KangurInfoCard
+                  key={group.surface}
+                  accent='slate'
+                  padding='lg'
+                  className='flex h-full flex-col gap-4'
+                >
+                  <div className='flex flex-wrap items-start justify-between gap-3'>
+                    <div className='min-w-0 flex-1'>
+                      <div className='text-xs uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
+                        {translations('variantGroups.surfaceLabel')}
+                      </div>
+                      <div className='mt-1 text-xl font-black [color:var(--kangur-page-text)]'>
+                        {translations(`variantSurfaces.${group.surface}`)}
+                      </div>
+                      <p className='mt-2 text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
+                        {translations('variantGroups.groupDescription', {
+                          count: group.entries.length,
+                        })}
+                      </p>
+                    </div>
+                    <KangurStatusChip
+                      accent={resolveVariantSurfaceAccent(group.surface)}
+                      className='uppercase tracking-[0.14em]'
+                      size='sm'
+                    >
+                      {translations('labels.variantCount', { count: group.entries.length })}
+                    </KangurStatusChip>
+                  </div>
+
+                  <div className='grid gap-3 sm:grid-cols-2'>
+                    <div>
+                      <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                        {translations('variantGroups.gamesLabel')}
+                      </div>
+                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {gamesCount}
+                      </div>
+                    </div>
+                    <div>
+                      <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                        {translations('variantGroups.enginesLabel')}
+                      </div>
+                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {enginesCount}
+                      </div>
+                    </div>
+                    <div>
+                      <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                        {translations('variantGroups.defaultsLabel')}
+                      </div>
+                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {defaultCount}
+                      </div>
+                    </div>
+                    <div>
+                      <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                        {translations('variantGroups.launchableLabel')}
+                      </div>
+                      <div className='mt-1 text-sm font-semibold [color:var(--kangur-page-text)]'>
+                        {launchableCount}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className='space-y-2'>
+                    <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                      {translations('variantGroups.variantsLabel')}
+                    </div>
+                    <div className='text-sm [color:var(--kangur-page-text)]'>
+                      {group.entries
+                        .map(
+                          (entry) =>
+                            `${entry.game.title} · ${entry.variant.title}`
+                        )
+                        .join(', ')}
                     </div>
                   </div>
                 </KangurInfoCard>
@@ -628,7 +1135,7 @@ export default function GamesLibrary(): React.JSX.Element {
             <div className='grid gap-4 lg:grid-cols-2'>
               {subjectEntries.map((entry) => {
                 const game = entry.game;
-                const linkedLessonTitles = getLinkedLessonTitles(game, locale);
+                const linkedLessonTitles = getLessonTitles(game.lessonComponentIds, locale);
                 const gameHref = buildKangurGameLaunchHref(basePath, game);
                 const lessonHref = buildKangurGameLessonHref(basePath, game);
                 return (
@@ -751,11 +1258,29 @@ export default function GamesLibrary(): React.JSX.Element {
                       <div className='text-[11px] font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
                         {translations('labels.lessonLinks')}
                       </div>
-                      <div className='text-sm [color:var(--kangur-page-text)]'>
-                        {linkedLessonTitles.length > 0
-                          ? linkedLessonTitles.join(', ')
-                          : translations('labels.none')}
-                      </div>
+                      {game.lessonComponentIds.length > 0 ? (
+                        <div className='flex flex-wrap gap-2'>
+                          {game.lessonComponentIds.map((componentId, index) => {
+                            const status = resolveLessonCoverageStatus(componentId);
+                            return (
+                              <KangurStatusChip
+                                key={`${game.id}:${componentId}`}
+                                accent={resolveLessonCoverageStatusAccent(status)}
+                                className='max-w-full'
+                                size='sm'
+                              >
+                                {linkedLessonTitles[index] ?? componentId}
+                                {' · '}
+                                {translations(`lessonCoverageStatuses.${status}`)}
+                              </KangurStatusChip>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className='text-sm [color:var(--kangur-page-text)]'>
+                          {translations('labels.none')}
+                        </div>
+                      )}
                     </div>
                   </KangurInfoCard>
                 );

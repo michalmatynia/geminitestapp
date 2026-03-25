@@ -1,3 +1,4 @@
+import { primeFrontPageSettingRuntime } from '@/app/(frontend)/home-helpers';
 import { WithId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -42,6 +43,11 @@ import {
   FILE_STORAGE_SOURCE_SETTING_KEY,
 } from '@/shared/lib/files/constants';
 import { invalidateFileStorageSettingsCache } from '@/shared/lib/files/services/storage/file-storage-service';
+import {
+  getFrontPagePublicOwner,
+  getFrontPageRedirectPath,
+  normalizeFrontPageApp,
+} from '@/shared/lib/front-page-app';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { resetServerLoggingControlsCache } from '@/shared/lib/observability/logging-controls-server';
 import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/settings-compression';
@@ -87,6 +93,7 @@ const CASE_RESOLVER_DETACHED_WORKSPACE_KEYS = new Set<string>([
 
 const SETTINGS_COLLECTION = 'settings';
 const DEFAULT_SCOPE: SettingsScope = 'light';
+const FRONT_PAGE_SETTING_KEY = 'front_page_app';
 let settingsIndexesEnsured: Promise<void> | null = null;
 
 const TRADERA_RELIST_SCHEDULER_SETTING_KEYS = new Set<string>([
@@ -293,6 +300,64 @@ const upsertMongoSetting = async (key: string, value: string): Promise<SettingRe
     { upsert: true }
   );
   return { key, value: encodedValue };
+};
+
+const normalizeIncomingSettingValue = (
+  key: string,
+  value: string
+): { ok: true; value: string } | { ok: false; error: string } => {
+  if (key !== FRONT_PAGE_SETTING_KEY) {
+    return { ok: true, value };
+  }
+
+  const normalized = normalizeFrontPageApp(value);
+  if (!normalized) {
+    return {
+      ok: false,
+      error: 'front_page_app must be one of: cms, kangur, chatbot, notes.',
+    };
+  }
+
+  return { ok: true, value: normalized };
+};
+
+const logFrontPageSettingChange = async ({
+  previousValue,
+  nextValue,
+}: {
+  previousValue: string | null;
+  nextValue: string;
+}): Promise<void> => {
+  if (previousValue === nextValue) {
+    return;
+  }
+
+  const previousPublicOwner = getFrontPagePublicOwner(previousValue);
+  const nextPublicOwner = getFrontPagePublicOwner(nextValue);
+  const movedAwayFromKangur =
+    previousPublicOwner === 'kangur' && nextPublicOwner !== 'kangur';
+  const restoredToKangur =
+    previousPublicOwner !== 'kangur' && nextPublicOwner === 'kangur';
+
+  await logSystemEvent({
+    level: movedAwayFromKangur ? 'warn' : 'info',
+    source: 'api/settings',
+    service: 'api/settings',
+    message: movedAwayFromKangur
+      ? 'Front page app switched away from Kangur.'
+      : restoredToKangur
+        ? 'Front page app restored to Kangur.'
+        : 'Front page app changed.',
+    context: {
+      key: FRONT_PAGE_SETTING_KEY,
+      previousValue,
+      nextValue,
+      previousPublicOwner,
+      nextPublicOwner,
+      previousRedirectPath: getFrontPageRedirectPath(previousValue),
+      nextRedirectPath: getFrontPageRedirectPath(nextValue),
+    },
+  });
 };
 
 const shouldLogTiming = () => process.env['DEBUG_API_TIMING'] === 'true';
@@ -681,6 +746,36 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const expectedRevision = parsed.data.expectedRevision;
   const mutationId = parsed.data.mutationId;
   let value = parsed.data.value;
+  const normalizedIncomingValue = normalizeIncomingSettingValue(key, value);
+  if (!normalizedIncomingValue.ok) {
+    if (key === FRONT_PAGE_SETTING_KEY) {
+      await logSystemEvent({
+        level: 'warn',
+        source: 'api/settings',
+        service: 'api/settings',
+        message: 'Rejected invalid front page app update.',
+        context: {
+          key,
+          attemptedValue: value,
+        },
+      });
+    }
+    return NextResponse.json({ error: normalizedIncomingValue.error }, { status: 400 });
+  }
+  value = normalizedIncomingValue.value;
+  let previousFrontPageValue: string | null = null;
+  if (key === FRONT_PAGE_SETTING_KEY) {
+    try {
+      previousFrontPageValue = await readCurrentSettingValue(key);
+    } catch (error) {
+      void ErrorSystem.captureException(error, {
+        service: 'api/settings',
+        source: 'api/settings',
+        action: 'readFrontPageSettingForAudit',
+        key,
+      });
+    }
+  }
   if (isAiPathsSettingKey(key)) {
     await upsertAiPathsSetting(key, value);
     return NextResponse.json({ success: true });
@@ -769,6 +864,13 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     invalidateCollectionProviderMapCache();
   }
   await syncTraderaRelistSchedulerWorker(setting.key);
+  if (setting.key === FRONT_PAGE_SETTING_KEY) {
+    primeFrontPageSettingRuntime(normalizedSetting.value);
+    await logFrontPageSettingChange({
+      previousValue: previousFrontPageValue,
+      nextValue: normalizedSetting.value,
+    });
+  }
   return NextResponse.json(normalizedSetting);
 }
 

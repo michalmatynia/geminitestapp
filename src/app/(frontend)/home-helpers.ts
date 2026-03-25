@@ -3,7 +3,11 @@ import { cache } from 'react';
 import { getUserPreferences } from '@/features/auth/server';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { FRONT_PAGE_ALLOWED } from '@/shared/lib/front-page-app';
+import {
+  FRONT_PAGE_ALLOWED,
+  normalizeFrontPageApp,
+  type FrontPageSelectableApp,
+} from '@/shared/lib/front-page-app';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { Session } from 'next-auth';
@@ -14,6 +18,16 @@ const FRONT_PAGE_SETTING_RETRY_COOLDOWN_MS = 30_000;
 export { FRONT_PAGE_ALLOWED };
 
 let frontPageSettingRetryBlockedUntil = 0;
+let lastKnownFrontPageSetting: FrontPageSelectableApp | null = null;
+
+export const primeFrontPageSettingRuntime = (
+  value: string | null | undefined
+): FrontPageSelectableApp | null => {
+  const normalizedSetting = normalizeFrontPageApp(value);
+  lastKnownFrontPageSetting = normalizedSetting;
+  frontPageSettingRetryBlockedUntil = 0;
+  return normalizedSetting;
+};
 
 const isAdminSession = (session: Session | null): boolean => {
   if (!session?.user) return false;
@@ -72,19 +86,22 @@ const isTransientMongoFrontPageReadError = (error: unknown): boolean => {
 };
 
 const readMongoFrontPageSetting = async (): Promise<string | null> => {
-  if (!process.env['MONGODB_URI']) return null;
-  if (Date.now() < frontPageSettingRetryBlockedUntil) return null;
+  if (!process.env['MONGODB_URI']) return lastKnownFrontPageSetting;
+  if (Date.now() < frontPageSettingRetryBlockedUntil) return lastKnownFrontPageSetting;
 
   try {
     const mongo = await getMongoDb();
     const doc = await mongo
       .collection<MongoStringSettingRecord<string>>('settings')
       .findOne({ _id: FRONT_PAGE_SETTING_KEY });
-    if (doc?.value) return doc.value;
+    const normalizedSetting = primeFrontPageSettingRuntime(doc?.value);
+    if (normalizedSetting) {
+      return normalizedSetting;
+    }
   } catch (error) {
     if (isTransientMongoFrontPageReadError(error)) {
       frontPageSettingRetryBlockedUntil = Date.now() + FRONT_PAGE_SETTING_RETRY_COOLDOWN_MS;
-      return null;
+      return lastKnownFrontPageSetting;
     }
 
     void ErrorSystem.captureException(error, {
@@ -94,7 +111,7 @@ const readMongoFrontPageSetting = async (): Promise<string | null> => {
       settingKey: FRONT_PAGE_SETTING_KEY,
     });
 
-    // Mongo unavailable — ignore.
+    return lastKnownFrontPageSetting;
   }
   return null;
 };

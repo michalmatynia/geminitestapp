@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useCallback, useEffect } from 'react';
 
 import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
@@ -69,11 +70,13 @@ export function KangurTransitionLink({
   const routing = useOptionalKangurRouting();
   const locale = useLocale();
   const pathname = usePathname();
+  const isCoarsePointer = useKangurCoarsePointer();
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
   const managedLocalHref =
     typeof href === 'string' && href.startsWith('/') && target !== '_blank' ? href : null;
   const isManagedLocalHref = managedLocalHref !== null;
-  const shouldPrefetch = prefetch !== false;
+  const resolvedPrefetch = prefetch === false || isCoarsePointer ? false : prefetch;
+  const shouldPrefetch = resolvedPrefetch !== false;
   const shouldUseManagedScroll = isManagedLocalHref;
   const resolvedScroll = scroll ?? (shouldUseManagedScroll ? false : undefined);
   const renderedHref =
@@ -118,7 +121,7 @@ export function KangurTransitionLink({
     <NextLink
       href={renderedHref}
       className={cn('touch-manipulation select-none', className)}
-      prefetch={prefetch}
+      prefetch={resolvedPrefetch}
       scroll={resolvedScroll}
       target={target}
       onClickCapture={(event) => {

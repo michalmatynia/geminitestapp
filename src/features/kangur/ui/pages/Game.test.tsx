@@ -292,6 +292,19 @@ describe('Game page', () => {
     expect(routeNavigatorPrefetchMock).not.toHaveBeenCalledWith('/kangur/duels');
   });
 
+  it('skips the Lessons shell prefetch on mobile', () => {
+    useKangurMobileBreakpointMock.mockReturnValue(true);
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildRuntime('home'),
+      canAccessParentAssignments: true,
+      progress: { totalXp: 1 },
+    });
+
+    render(<Game />);
+
+    expect(routeNavigatorPrefetchMock).not.toHaveBeenCalled();
+  });
+
   it('keeps the home screen motion static so the skeleton handoff does not jump vertically', () => {
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildRuntime('home'),

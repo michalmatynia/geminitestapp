@@ -31,6 +31,9 @@ const setPointerState = ({
   });
 };
 
+const visualViewportAddEventListenerMock = vi.fn();
+const visualViewportRemoveEventListenerMock = vi.fn();
+
 function CoarsePointerProbe(): JSX.Element {
   const isCoarsePointer = useKangurCoarsePointer();
   return <div data-testid='coarse-pointer-state'>{isCoarsePointer ? 'coarse' : 'fine'}</div>;
@@ -67,11 +70,13 @@ describe('useKangurCoarsePointer', () => {
     Object.defineProperty(window, 'visualViewport', {
       configurable: true,
       value: {
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
+        addEventListener: visualViewportAddEventListenerMock,
+        removeEventListener: visualViewportRemoveEventListenerMock,
       },
       writable: true,
     });
+    visualViewportAddEventListenerMock.mockClear();
+    visualViewportRemoveEventListenerMock.mockClear();
   });
 
   it('tracks a coarse primary pointer when the media query matches', () => {
@@ -106,5 +111,33 @@ describe('useKangurCoarsePointer', () => {
     });
 
     expect(screen.getByTestId('coarse-pointer-state')).toHaveTextContent('coarse');
+  });
+
+  it('shares one coarse-pointer listener set across multiple consumers', () => {
+    const windowAddEventListenerSpy = vi.spyOn(window, 'addEventListener');
+    windowAddEventListenerSpy.mockClear();
+
+    render(
+      <>
+        <CoarsePointerProbe />
+        <CoarsePointerProbe />
+      </>
+    );
+
+    expect(
+      windowAddEventListenerSpy.mock.calls.filter(([eventName]) => eventName === 'resize')
+    ).toHaveLength(1);
+    expect(
+      windowAddEventListenerSpy.mock.calls.filter(
+        ([eventName]) => eventName === 'orientationchange'
+      )
+    ).toHaveLength(1);
+    expect(visualViewportAddEventListenerMock).toHaveBeenCalledTimes(1);
+    expect(visualViewportAddEventListenerMock).toHaveBeenCalledWith(
+      'resize',
+      expect.any(Function)
+    );
+
+    windowAddEventListenerSpy.mockRestore();
   });
 });

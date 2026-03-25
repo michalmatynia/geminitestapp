@@ -54,6 +54,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 }));
 
 import { GroupSum } from '@/features/kangur/ui/components/adding-ball-game/AddingBallGame.GroupSum';
+import { POINTER_DRAG_SETTLE_DURATION_MS } from '@/features/kangur/ui/components/adding-ball-game/PointerDragProvider';
 
 const mockRect = (x: number, y: number, w: number, h: number): DOMRect => ({
   left: x,
@@ -105,6 +106,7 @@ describe('GroupSum touch interactions', () => {
   });
 
   it('supports dragging a ball from the pool to a group', () => {
+    vi.useFakeTimers();
     render(<GroupSum round={{ mode: 'group_sum', a: 2, b: 3, target: 5 }} onResult={vi.fn()} />);
 
     const pool = screen.getByTestId('adding-ball-pool');
@@ -113,8 +115,12 @@ describe('GroupSum touch interactions', () => {
     const firstBall = within(pool).getAllByRole('button', { name: /Piłka:/i })[0];
 
     dragBallToZone(firstBall, group1, group1Rect);
+    act(() => {
+      vi.advanceTimersByTime(POINTER_DRAG_SETTLE_DURATION_MS);
+    });
 
     expect(within(group1).getByRole('button', { name: 'Piłka: 1' })).toBeInTheDocument();
+    vi.useRealTimers();
   });
 
   it('accepts swapped group sizes as a correct split', () => {
@@ -131,6 +137,9 @@ describe('GroupSum touch interactions', () => {
       const ball = within(pool).getAllByRole('button', { name: 'Piłka: 1' })[0];
       const zone = screen.getByTestId(testId);
       dragBallToZone(ball, zone, rect);
+      act(() => {
+        vi.advanceTimersByTime(POINTER_DRAG_SETTLE_DURATION_MS);
+      });
     };
 
     dragPoolBallTo('adding-ball-group1', group1Rect);
@@ -163,6 +172,9 @@ describe('GroupSum touch interactions', () => {
       const ball = within(pool).getAllByRole('button', { name: 'Piłka: 1' })[0];
       const zone = screen.getByTestId(testId);
       dragBallToZone(ball, zone, rect);
+      act(() => {
+        vi.advanceTimersByTime(POINTER_DRAG_SETTLE_DURATION_MS);
+      });
     };
 
     dragPoolBallTo('adding-ball-group1', group1Rect);

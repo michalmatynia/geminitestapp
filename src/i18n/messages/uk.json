@@ -310,6 +310,9 @@
     "engineGroupsEyebrow": "Вид консолідації",
     "engineGroupsTitle": "Сімейства рушіїв",
     "engineGroupsDescription": "{count, plural, one {# сімейство рушіїв зараз згруповане в каталозі.} few {# сімейства рушіїв зараз згруповані в каталозі.} many {# сімейств рушіїв зараз згруповані в каталозі.} other {# сімейств рушіїв зараз згруповані в каталозі.}}",
+    "variantGroupsEyebrow": "Поверхні варіантів",
+    "variantGroupsTitle": "Каталог варіантів",
+    "variantGroupsDescription": "{count, plural, one {# видимий варіант згруповано по {surfaceCount} поверхнях.} few {# видимі варіанти згруповано по {surfaceCount} поверхнях.} many {# видимих варіантів згруповано по {surfaceCount} поверхнях.} other {# видимих варіантів згруповано по {surfaceCount} поверхнях.}}",
     "emptyTitle": "У бібліотеці ще немає ігор",
     "emptyDescription": "Додайте перші визначення ігор, щоб почати класифікувати рушії та варіанти.",
     "emptyFilteredTitle": "Жодна гра не відповідає цим фільтрам",
@@ -323,6 +326,48 @@
       "variantsDescription": "Видимі способи вбудовування та запуску.",
       "lessonLinked": "Пов’язані з уроками",
       "lessonLinkedDescription": "Видимі ігри, уже підключені до компонентів уроків."
+    },
+    "coverageGroupsEyebrow": "Політика покриття",
+    "coverageGroupsTitle": "Мапа покриття уроків",
+    "coverageGroupsDescription": "{count, plural, one {# напрям покриття відстежується у спільному домені ігор.} few {# напрями покриття відстежуються у спільному домені ігор.} many {# напрямів покриття відстежуються у спільному домені ігор.} other {# напрямів покриття відстежуються у спільному домені ігор.}}",
+    "coverageGroups": {
+      "completeChip": "Повне",
+      "gapsChip": "{count, plural, one {# прогалина} few {# прогалини} many {# прогалин} other {# прогалин}}",
+      "lessonsLabel": "Уроки",
+      "coveredLabel": "Покрито",
+      "gamesLabel": "Ігри",
+      "cohortsLabel": "Когорти",
+      "subjectsLabel": "Предмети",
+      "coveredLessonsLabel": "Покриті уроки",
+      "fallbackOnlyLessonsLabel": "Уроки лише з fallback",
+      "groups": {
+        "library_backed": {
+          "eyebrow": "Спільний каталог",
+          "title": "Уроки з підтримкою бібліотеки",
+          "description": "Компоненти уроків, які мають розв’язуватися в одну або кілька спільних дефініцій гри в бібліотеці ігор."
+        },
+        "launchable": {
+          "eyebrow": "Повноекранний runtime",
+          "title": "Уроки з запуском",
+          "description": "Компоненти уроків, які мають зберігати прямий повноекранний маршрут гри поруч зі своїм спільним записом у каталозі."
+        },
+        "selector_fallback": {
+          "eyebrow": "Хаб селектора",
+          "title": "Уроки лише через селектор",
+          "description": "Компоненти уроків, які зараз ведуть у предметно-орієнтований селектор гри, а не в окрему повноекранну гру."
+        }
+      }
+    },
+    "cohortGroupsEyebrow": "Вікові когорти",
+    "cohortGroupsTitle": "Каталог за когортами",
+    "cohortGroupsDescription": "{count, plural, one {# вікова когорта видима в поточному каталозі.} few {# вікові когорти видимі в поточному каталозі.} many {# вікових когорт видимі в поточному каталозі.} other {# вікових когорт видимі в поточному каталозі.}}",
+    "cohortGroups": {
+      "groupDescription": "{count, plural, one {# гра зараз видима в цій когорті.} few {# гри зараз видимі в цій когорті.} many {# ігор зараз видимі в цій когорті.} other {# ігор зараз видимі в цій когорті.}}",
+      "gamesLabel": "Ігри",
+      "enginesLabel": "Рушії",
+      "launchableLabel": "Запуск",
+      "lessonLinkedLabel": "Пов’язані з уроками",
+      "subjectsLabel": "Предмети"
     },
     "filters": {
       "eyebrow": "Керування класифікацією",
@@ -355,10 +400,25 @@
         "aria": "Фільтрувати ігри за статусом",
         "all": "Усі статуси"
       },
+      "variantSurface": {
+        "label": "Поверхня варіанта",
+        "aria": "Фільтрувати варіанти за поверхнею",
+        "all": "Усі поверхні варіантів"
+      },
+      "variantStatus": {
+        "label": "Статус варіанта",
+        "aria": "Фільтрувати варіанти за статусом",
+        "all": "Усі статуси варіантів"
+      },
       "engine": {
         "label": "Сімейство рушія",
         "aria": "Фільтрувати ігри за сімейством рушія",
         "all": "Усі рушії"
+      },
+      "engineCategory": {
+        "label": "Категорія рушія",
+        "aria": "Фільтрувати ігри за категорією рушія",
+        "all": "Усі категорії рушіїв"
       },
       "launchability": {
         "label": "Шлях запуску",
@@ -382,8 +442,15 @@
       "game": "Гра",
       "duel": "Дуель"
     },
+    "variantSurfaces": {
+      "lesson_inline": "Вбудовано в урок",
+      "lesson_stage": "Сцена уроку",
+      "library_preview": "Попередній перегляд бібліотеки",
+      "game_screen": "Екран гри"
+    },
     "labels": {
       "engineId": "Id рушія",
+      "engineCategory": "Категорія рушія",
       "mechanic": "Механіка",
       "ageGroup": "Вікова група",
       "allAgeGroups": "Усі",
@@ -392,6 +459,17 @@
       "legacyScreens": "Legacy-екрани",
       "lessonLinks": "Пов’язані уроки",
       "none": "Немає"
+    },
+    "engineCategories": {
+      "foundational": "Базові",
+      "early_learning": "Раннє навчання",
+      "adult_learning": "Навчання дорослих"
+    },
+    "lessonCoverageStatuses": {
+      "launchable": "запускний",
+      "library_backed": "у бібліотеці",
+      "selector_fallback": "fallback селектора",
+      "lesson_only": "лише урок"
     },
     "mechanics": {
       "drag_drop": "Перетягування",
@@ -414,6 +492,15 @@
       "subjectsLabel": "Предмети",
       "mechanicsLabel": "Механіки",
       "surfacesLabel": "Поверхні"
+    },
+    "variantGroups": {
+      "surfaceLabel": "Поверхня варіанта",
+      "groupDescription": "{count, plural, one {# варіант зараз використовує цю поверхню.} few {# варіанти зараз використовують цю поверхню.} many {# варіантів зараз використовують цю поверхню.} other {# варіантів зараз використовують цю поверхню.}}",
+      "gamesLabel": "Ігри",
+      "enginesLabel": "Рушії",
+      "defaultsLabel": "Типові варіанти",
+      "launchableLabel": "Запускні",
+      "variantsLabel": "Варіанти"
     }
   },
   "KangurGameHomeActions": {

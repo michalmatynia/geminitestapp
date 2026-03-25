@@ -1110,6 +1110,9 @@
     "engineGroupsEyebrow": "Consolidation view",
     "engineGroupsTitle": "Engine families",
     "engineGroupsDescription": "{count, plural, one {# engine family currently grouped in the catalog.} other {# engine families currently grouped in the catalog.}}",
+    "variantGroupsEyebrow": "Variant surfaces",
+    "variantGroupsTitle": "Variant catalog",
+    "variantGroupsDescription": "{count, plural, one {# visible variant grouped across {surfaceCount} surfaces.} other {# visible variants grouped across {surfaceCount} surfaces.}}",
     "emptyTitle": "No games in the library",
     "emptyDescription": "Add the first game definitions to start classifying engines and variants.",
     "emptyFilteredTitle": "No games match these filters",
@@ -1123,6 +1126,48 @@
       "variantsDescription": "Visible embedding and launch modes.",
       "lessonLinked": "Linked to lessons",
       "lessonLinkedDescription": "Visible games already connected to lesson components."
+    },
+    "coverageGroupsEyebrow": "Coverage policy",
+    "coverageGroupsTitle": "Lesson coverage map",
+    "coverageGroupsDescription": "{count, plural, one {# coverage lane tracked across the shared game domain.} other {# coverage lanes tracked across the shared game domain.}}",
+    "coverageGroups": {
+      "completeChip": "Complete",
+      "gapsChip": "{count, plural, one {# gap} other {# gaps}}",
+      "lessonsLabel": "Lessons",
+      "coveredLabel": "Covered",
+      "gamesLabel": "Games",
+      "cohortsLabel": "Cohorts",
+      "subjectsLabel": "Subjects",
+      "coveredLessonsLabel": "Covered lessons",
+      "fallbackOnlyLessonsLabel": "Fallback-only lessons",
+      "groups": {
+        "library_backed": {
+          "eyebrow": "Shared catalog",
+          "title": "Library-backed lessons",
+          "description": "Lesson components that should resolve to one or more shared game definitions in the Games library."
+        },
+        "launchable": {
+          "eyebrow": "Fullscreen runtime",
+          "title": "Launchable lessons",
+          "description": "Lesson components that should keep a direct fullscreen game route alongside their shared catalog entry."
+        },
+        "selector_fallback": {
+          "eyebrow": "Selector hub",
+          "title": "Selector-only lessons",
+          "description": "Lesson components that currently route into the subject-aware game selector instead of a dedicated fullscreen game."
+        }
+      }
+    },
+    "cohortGroupsEyebrow": "Age-group cohorts",
+    "cohortGroupsTitle": "Catalog by cohort",
+    "cohortGroupsDescription": "{count, plural, one {# age-group cohort visible in the current catalog.} other {# age-group cohorts visible in the current catalog.}}",
+    "cohortGroups": {
+      "groupDescription": "{count, plural, one {# game currently visible in this cohort.} other {# games currently visible in this cohort.}}",
+      "gamesLabel": "Games",
+      "enginesLabel": "Engines",
+      "launchableLabel": "Launchable",
+      "lessonLinkedLabel": "Lesson-linked",
+      "subjectsLabel": "Subjects"
     },
     "filters": {
       "eyebrow": "Classification controls",
@@ -1155,10 +1200,25 @@
         "aria": "Filter games by status",
         "all": "All statuses"
       },
+      "variantSurface": {
+        "label": "Variant surface",
+        "aria": "Filter variants by surface",
+        "all": "All variant surfaces"
+      },
+      "variantStatus": {
+        "label": "Variant status",
+        "aria": "Filter variants by status",
+        "all": "All variant statuses"
+      },
       "engine": {
         "label": "Engine family",
         "aria": "Filter games by engine family",
         "all": "All engines"
+      },
+      "engineCategory": {
+        "label": "Engine category",
+        "aria": "Filter games by engine category",
+        "all": "All engine categories"
       },
       "launchability": {
         "label": "Launch path",
@@ -1182,8 +1242,15 @@
       "game": "Game",
       "duel": "Duel"
     },
+    "variantSurfaces": {
+      "lesson_inline": "Lesson inline",
+      "lesson_stage": "Lesson stage",
+      "library_preview": "Library preview",
+      "game_screen": "Game screen"
+    },
     "labels": {
       "engineId": "Engine id",
+      "engineCategory": "Engine category",
       "mechanic": "Mechanic",
       "ageGroup": "Age group",
       "allAgeGroups": "All",
@@ -1192,6 +1259,17 @@
       "legacyScreens": "Legacy screens",
       "lessonLinks": "Linked lessons",
       "none": "None"
+    },
+    "engineCategories": {
+      "foundational": "Foundational",
+      "early_learning": "Early learning",
+      "adult_learning": "Adult learning"
+    },
+    "lessonCoverageStatuses": {
+      "launchable": "launchable",
+      "library_backed": "library-backed",
+      "selector_fallback": "selector fallback",
+      "lesson_only": "lesson only"
     },
     "mechanics": {
       "drag_drop": "Drag and drop",
@@ -1214,6 +1292,15 @@
       "subjectsLabel": "Subjects",
       "mechanicsLabel": "Mechanics",
       "surfacesLabel": "Surfaces"
+    },
+    "variantGroups": {
+      "surfaceLabel": "Variant surface",
+      "groupDescription": "{count, plural, one {# variant currently uses this surface.} other {# variants currently use this surface.}}",
+      "gamesLabel": "Games",
+      "enginesLabel": "Engines",
+      "defaultsLabel": "Default variants",
+      "launchableLabel": "Launchable",
+      "variantsLabel": "Variants"
     }
   },
   "KangurGameHomeActions": {

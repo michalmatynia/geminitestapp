@@ -3,6 +3,7 @@ import 'server-only';
 import {
   createKangurGameCatalogEntries,
   filterKangurGameCatalogEntries,
+  getKangurGameCatalogFacets,
 } from '@/features/kangur/games';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { getKangurGameEngineRepository } from '@/features/kangur/services/kangur-game-engine-repository';
@@ -20,29 +21,32 @@ const SERVICE = 'kangur.game-catalog-repository';
 export const getKangurGameCatalogRepository = async (): Promise<KangurGameCatalogRepository> => {
   const provider = 'composite';
 
+  const loadCatalogEntries = async (
+    input?: KangurGameCatalogListInput
+  ) => {
+    const [gameRepository, engineRepository] = await Promise.all([
+      getKangurGameRepository(),
+      getKangurGameEngineRepository(),
+    ]);
+
+    const [games, engines] = await Promise.all([
+      gameRepository.listGames({
+        subject: input?.subject,
+        ageGroup: input?.ageGroup,
+        status: input?.gameStatus,
+        surface: input?.surface,
+        lessonComponentId: input?.lessonComponentId,
+      }),
+      engineRepository.listEngines(),
+    ]);
+
+    return createKangurGameCatalogEntries({ games, engines });
+  };
+
   return {
     listCatalog: async (input?: KangurGameCatalogListInput) => {
       try {
-        const [gameRepository, engineRepository] = await Promise.all([
-          getKangurGameRepository(),
-          getKangurGameEngineRepository(),
-        ]);
-
-        const [games, engines] = await Promise.all([
-          gameRepository.listGames({
-            subject: input?.subject,
-            ageGroup: input?.ageGroup,
-            status: input?.gameStatus,
-            surface: input?.surface,
-            lessonComponentId: input?.lessonComponentId,
-          }),
-          engineRepository.listEngines(),
-        ]);
-
-        return filterKangurGameCatalogEntries(
-          createKangurGameCatalogEntries({ games, engines }),
-          input
-        );
+        return filterKangurGameCatalogEntries(await loadCatalogEntries(input), input);
       } catch (error) {
         void ErrorSystem.captureException(error, {
           service: SERVICE,
@@ -55,7 +59,22 @@ export const getKangurGameCatalogRepository = async (): Promise<KangurGameCatalo
           lessonComponentId: input?.lessonComponentId ?? null,
           mechanic: input?.mechanic ?? null,
           engineId: input?.engineId ?? null,
+          engineCategory: input?.engineCategory ?? null,
+          variantSurface: input?.variantSurface ?? null,
+          variantStatus: input?.variantStatus ?? null,
           launchableOnly: input?.launchableOnly ?? false,
+        });
+        throw error;
+      }
+    },
+    listCatalogFacets: async () => {
+      try {
+        return getKangurGameCatalogFacets(await loadCatalogEntries());
+      } catch (error) {
+        void ErrorSystem.captureException(error, {
+          service: SERVICE,
+          action: 'listCatalogFacets',
+          provider,
         });
         throw error;
       }

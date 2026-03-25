@@ -54,6 +54,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 }));
 
 import { CompleteEquation } from '@/features/kangur/ui/components/adding-ball-game/AddingBallGame.CompleteEquation';
+import { POINTER_DRAG_SETTLE_DURATION_MS } from '@/features/kangur/ui/components/adding-ball-game/PointerDragProvider';
 
 const mockRect = (x: number, y: number, w: number, h: number): DOMRect => ({
   left: x,
@@ -116,6 +117,7 @@ describe('CompleteEquation touch interactions', () => {
   });
 
   it('supports dragging a ball from the pool to a slot', () => {
+    vi.useFakeTimers();
     render(
       <CompleteEquation
         round={{ mode: 'complete_equation', a: 2, b: 3, target: 5 }}
@@ -129,8 +131,12 @@ describe('CompleteEquation touch interactions', () => {
     const firstBall = within(pool).getAllByRole('button', { name: /Piłka:/i })[0];
 
     dragBallToZone(firstBall, slotA, slotARect);
+    act(() => {
+      vi.advanceTimersByTime(POINTER_DRAG_SETTLE_DURATION_MS);
+    });
 
     expect(within(slotA).getByRole('button', { name: 'Piłka: 1' })).toBeInTheDocument();
+    vi.useRealTimers();
   });
 
   it('accepts swapped group sizes as a correct equation solution', () => {
@@ -152,6 +158,9 @@ describe('CompleteEquation touch interactions', () => {
       const ball = within(pool).getAllByRole('button', { name: 'Piłka: 1' })[0];
       const zone = screen.getByTestId(testId);
       dragBallToZone(ball, zone, rect);
+      act(() => {
+        vi.advanceTimersByTime(POINTER_DRAG_SETTLE_DURATION_MS);
+      });
     };
 
     dragPoolBallTo('adding-ball-slotA', slotARect);
@@ -187,6 +196,9 @@ describe('CompleteEquation touch interactions', () => {
       const ball = within(pool).getAllByRole('button', { name: 'Piłka: 1' })[0];
       const zone = screen.getByTestId(testId);
       dragBallToZone(ball, zone, rect);
+      act(() => {
+        vi.advanceTimersByTime(POINTER_DRAG_SETTLE_DURATION_MS);
+      });
     };
 
     dragPoolBallTo('adding-ball-slotA', slotARect);

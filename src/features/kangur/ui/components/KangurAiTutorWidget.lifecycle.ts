@@ -141,6 +141,8 @@ export function useKangurAiTutorLifecycleEffects({
     dismissedSelectedText,
     draggedAvatarPoint,
     guidedTutorTarget,
+    homeOnboardingStepIndex,
+    hoveredSectionAnchorId,
     inputRef,
     isTutorHidden,
     messagesEndRef,
@@ -182,7 +184,10 @@ export function useKangurAiTutorLifecycleEffects({
     selectionConversationContext,
     selectionGuidanceCalloutVisibleText,
     selectionGuidanceHandoffText,
+    selectionResponseComplete,
     selectionResponsePending,
+    sectionResponseComplete,
+    sectionResponsePending,
     setSelectionGuidanceCalloutVisibleText,
     setSelectionConversationContext,
     setSelectionGuidanceHandoffText,
@@ -201,6 +206,18 @@ export function useKangurAiTutorLifecycleEffects({
       selectionGuidanceHandoffText !== null ||
       selectionResponsePending !== null
     );
+  const shouldTrackViewportScroll =
+    isOpen ||
+    guidedTutorTarget !== null ||
+    homeOnboardingStepIndex !== null ||
+    hoveredSectionAnchorId !== null ||
+    contextualTutorMode !== null ||
+    selectionGuidanceCalloutVisibleText !== null ||
+    selectionGuidanceHandoffText !== null ||
+    selectionResponsePending !== null ||
+    selectionResponseComplete !== null ||
+    sectionResponsePending !== null ||
+    sectionResponseComplete !== null;
 
   useEffect(() => {
     setMounted(true);
@@ -468,14 +485,18 @@ export function useKangurAiTutorLifecycleEffects({
     };
 
     window.addEventListener('resize', handleViewportChange);
-    window.addEventListener('scroll', handleViewportChange, true);
+    if (shouldTrackViewportScroll) {
+      window.addEventListener('scroll', handleViewportChange, { capture: true, passive: true });
+    }
 
     return () => {
       cancelAnimationFrame(rafId);
       window.removeEventListener('resize', handleViewportChange);
-      window.removeEventListener('scroll', handleViewportChange, true);
+      if (shouldTrackViewportScroll) {
+        window.removeEventListener('scroll', handleViewportChange, true);
+      }
     };
-  }, [mounted, setViewportTick]);
+  }, [mounted, setViewportTick, shouldTrackViewportScroll]);
 
   useLayoutEffect(() => {
     if (!isOpen) {

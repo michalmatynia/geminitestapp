@@ -13,6 +13,7 @@ const {
   routerPushMock,
   routerReplaceMock,
   startRouteTransitionMock,
+  useKangurCoarsePointerMock,
   useKangurGameRuntimeMock,
   useKangurSubjectFocusMock,
   useOptionalKangurRouteTransitionStateMock,
@@ -24,6 +25,7 @@ const {
   routerPushMock: vi.fn(),
   routerReplaceMock: vi.fn(),
   startRouteTransitionMock: vi.fn(),
+  useKangurCoarsePointerMock: vi.fn(),
   useKangurGameRuntimeMock: vi.fn(),
   useKangurSubjectFocusMock: vi.fn(),
   useOptionalKangurRouteTransitionStateMock: vi.fn(),
@@ -93,7 +95,7 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
-  useKangurCoarsePointer: () => true,
+  useKangurCoarsePointer: () => useKangurCoarsePointerMock(),
 }));
 
 import { KangurGameHomeActionsWidget } from './KangurGameHomeActionsWidget';
@@ -103,6 +105,7 @@ describe('KangurGameHomeActionsWidget navigation', () => {
     vi.clearAllMocks();
     localeMock.mockReturnValue('en');
     pathnameMock.mockReturnValue('/en/kangur');
+    useKangurCoarsePointerMock.mockReturnValue(false);
     startRouteTransitionMock.mockReturnValue({
       acknowledgeMs: 0,
       started: true,
@@ -156,5 +159,13 @@ describe('KangurGameHomeActionsWidget navigation', () => {
 
     expect(routerPrefetchMock).toHaveBeenCalledWith('/en/kangur/lessons');
     expect(routerPrefetchMock).not.toHaveBeenCalledWith('/en/kangur/duels');
+  });
+
+  it('does not prefetch home-action routes on coarse-pointer devices', () => {
+    useKangurCoarsePointerMock.mockReturnValue(true);
+
+    render(<KangurGameHomeActionsWidget />);
+
+    expect(routerPrefetchMock).not.toHaveBeenCalled();
   });
 });

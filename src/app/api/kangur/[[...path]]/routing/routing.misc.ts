@@ -15,9 +15,16 @@ import {
   querySchema as gameCatalogQuerySchema,
 } from '../../game-catalog/handler';
 import {
+  getKangurGameCatalogFacetsHandler,
+} from '../../game-catalog-facets/handler';
+import {
   getKangurGameEnginesHandler,
   querySchema as gameEnginesQuerySchema,
 } from '../../game-engines/handler';
+import {
+  getKangurGameVariantsHandler,
+  querySchema as gameVariantsQuerySchema,
+} from '../../game-variants/handler';
 import {
   getKangurGamesHandler,
   postKangurGamesHandler,
@@ -145,12 +152,29 @@ export const gameEnginesGetHandler: SimpleRouteHandler = apiHandler(
   }
 );
 
+export const gameVariantsGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurGameVariantsHandler,
+  {
+    source: 'kangur.game-variants.GET',
+    service: 'kangur.api',
+    querySchema: gameVariantsQuerySchema,
+  }
+);
+
 export const gameCatalogGetHandler: SimpleRouteHandler = apiHandler(
   getKangurGameCatalogHandler,
   {
     source: 'kangur.game-catalog.GET',
     service: 'kangur.api',
     querySchema: gameCatalogQuerySchema,
+  }
+);
+
+export const gameCatalogFacetsGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurGameCatalogFacetsHandler,
+  {
+    source: 'kangur.game-catalog-facets.GET',
+    service: 'kangur.api',
   }
 );
 
@@ -496,9 +520,17 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
     if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
     return gameEnginesGetHandler(request);
   }
+  if (segments[0] === 'game-variants' && segments.length === 1) {
+    if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
+    return gameVariantsGetHandler(request);
+  }
   if (segments[0] === 'game-catalog' && segments.length === 1) {
     if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
     return gameCatalogGetHandler(request);
+  }
+  if (segments[0] === 'game-catalog-facets' && segments.length === 1) {
+    if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
+    return gameCatalogFacetsGetHandler(request);
   }
   if (segments[0] === 'lesson-sections' && segments.length === 1) {
     return handleGetPost(request, lessonSectionsGetHandler, lessonSectionsPostHandler);

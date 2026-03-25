@@ -851,34 +851,17 @@ body[data-kangur-shell='true'] {
     gap: var(--kangur-stack-gap-lg, 20px);
   }
 
-  @supports selector(body:has(*)) {
-    html:has(#app-content .kangur-premium-bg),
-    body:has(#app-content .kangur-premium-bg) {
-      background: var(
-        --kangur-page-background,
-        radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%)
-      );
-    }
+  body.kangur-surface-active {
+    overflow: hidden;
+    scrollbar-gutter: auto;
+  }
 
-    #app-content:has(.kangur-premium-bg) {
-      background: var(
-        --kangur-page-background,
-        radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%)
-      );
-    }
-
-    body:has(#app-content [data-kangur-appearance]) {
-      overflow: hidden;
-      scrollbar-gutter: auto;
-    }
-
-    #app-content:has([data-kangur-appearance]) {
-      height: var(--kangur-shell-viewport-height, 100dvh);
-      min-height: var(--kangur-shell-viewport-height, 100dvh);
-      overflow-y: auto;
-      overscroll-behavior-y: contain;
-      scrollbar-gutter: stable;
-    }
+  #app-content.kangur-surface-active {
+    height: var(--kangur-shell-viewport-height, 100dvh);
+    min-height: var(--kangur-shell-viewport-height, 100dvh);
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
   }
 
   body[data-kangur-shell='true'] #app-content {

@@ -9,6 +9,7 @@ import { clearLatchedKangurTopBarHeightCssValue } from '@/features/kangur/ui/uti
 
 const {
   authStateMock,
+  loginModalStateMock,
   pendingRouteLoadingSnapshotMock,
   routingStateMock,
   routeTransitionStateMock,
@@ -17,6 +18,7 @@ const {
   topNavigationHostVisibleMock,
 } = vi.hoisted(() => ({
   authStateMock: vi.fn(),
+  loginModalStateMock: vi.fn(),
   pendingRouteLoadingSnapshotMock: vi.fn(),
   routingStateMock: vi.fn(),
   routeTransitionStateMock: vi.fn(),
@@ -28,6 +30,30 @@ const {
   },
   settingsStoreStateMock: vi.fn(),
   topNavigationHostVisibleMock: vi.fn(),
+}));
+
+vi.mock('next/dynamic', () => ({
+  default: (loader: unknown) => {
+    const signature = typeof loader === 'function' ? loader.toString() : '';
+
+    if (signature.includes('KangurAiTutorWidget')) {
+      return () => <div data-testid='kangur-ai-tutor-widget' />;
+    }
+
+    if (signature.includes('KangurLoginModal')) {
+      return () => <div data-testid='kangur-login-modal' />;
+    }
+
+    if (signature.includes('PageNotFound')) {
+      return () => <div data-testid='kangur-page-not-found' />;
+    }
+
+    if (signature.includes('UserNotRegisteredError')) {
+      return () => <div data-testid='kangur-user-not-registered-error' />;
+    }
+
+    return () => null;
+  },
 }));
 
 vi.mock('framer-motion', () => ({
@@ -120,6 +146,7 @@ vi.mock('@/features/kangur/ui/context/KangurTutorAnchorContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   KangurLoginModalProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  useKangurLoginModalState: () => loginModalStateMock(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
@@ -237,6 +264,14 @@ describe('KangurFeatureApp', () => {
       requestedHref: '/kangur/lessons',
       basePath: '/kangur',
     });
+    loginModalStateMock.mockReturnValue({
+      authMode: 'sign-in',
+      callbackUrl: '/kangur',
+      homeHref: '/kangur',
+      isOpen: false,
+      isRouteDriven: false,
+      showParentAuthModeTabs: true,
+    });
     pendingRouteLoadingSnapshotMock.mockReturnValue(null);
     routeTransitionStateMock.mockReturnValue({
       isRouteAcknowledging: false,
@@ -273,6 +308,22 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-lessons')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
+    expect(screen.queryByTestId('kangur-login-modal')).toBeNull();
+  });
+
+  it('mounts the login modal only when the modal state is open', () => {
+    loginModalStateMock.mockReturnValue({
+      authMode: 'sign-in',
+      callbackUrl: '/kangur',
+      homeHref: '/kangur',
+      isOpen: true,
+      isRouteDriven: false,
+      showParentAuthModeTabs: true,
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-login-modal')).toBeInTheDocument();
   });
 
   it('renders the navbar skeleton while the shared top-navigation host has not registered yet', () => {

@@ -23,6 +23,8 @@ vi.mock('@/features/auth/server', () => ({
 describe('home-helpers', () => {
   beforeEach(() => {
     vi.resetModules();
+    vi.unmock('react');
+    vi.unmock('@/app/(frontend)/home-helpers');
     vi.clearAllMocks();
     vi.useRealTimers();
     delete process.env['MONGODB_URI'];
@@ -72,5 +74,56 @@ describe('home-helpers', () => {
       action: 'readMongoFrontPageSetting',
       settingKey: 'front_page_app',
     });
+  });
+
+  it('keeps the last resolved front page app during transient mongo outages', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-23T12:00:00.000Z'));
+    process.env['MONGODB_URI'] = 'mongodb://localhost:27017/test';
+
+    const findOneMock = vi
+      .fn()
+      .mockResolvedValueOnce({ value: ' StudiQ ' })
+      .mockRejectedValueOnce(new Error('connection 10 to 104.40.250.190:27017 timed out'));
+
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn(() => ({
+        findOne: findOneMock,
+      })),
+    });
+
+    vi.doMock('react', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('react')>();
+      return {
+        ...actual,
+        cache: <T extends (...args: never[]) => unknown>(fn: T): T => fn,
+      };
+    });
+
+    const { getFrontPageSetting } = await import('@/app/(frontend)/home-helpers');
+
+    await expect(getFrontPageSetting()).resolves.toBe('kangur');
+    await expect(getFrontPageSetting()).resolves.toBe('kangur');
+    await expect(getFrontPageSetting()).resolves.toBe('kangur');
+
+    expect(getMongoDbMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('returns the primed front page setting immediately when mongo is unavailable', async () => {
+    vi.doMock('react', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('react')>();
+      return {
+        ...actual,
+        cache: <T extends (...args: never[]) => unknown>(fn: T): T => fn,
+      };
+    });
+
+    const { getFrontPageSetting, primeFrontPageSettingRuntime } = await import(
+      '@/app/(frontend)/home-helpers'
+    );
+
+    expect(primeFrontPageSettingRuntime('StudiQ')).toBe('kangur');
+    await expect(getFrontPageSetting()).resolves.toBe('kangur');
+    expect(getMongoDbMock).not.toHaveBeenCalled();
   });
 });

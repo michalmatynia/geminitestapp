@@ -22,7 +22,10 @@ import { KangurAuthProvider, useKangurAuth } from '@/features/kangur/ui/context/
 import { KangurContextRegistryPageBoundary } from '@/features/kangur/ui/context/KangurContextRegistryPageBoundary';
 import { KangurAgeGroupFocusProvider } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
-import { KangurLoginModalProvider } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import {
+  KangurLoginModalProvider,
+  useKangurLoginModalState,
+} from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { KangurProgressSyncProvider } from '@/features/kangur/ui/context/KangurProgressSyncProvider';
 import {
   KangurRouteTransitionProvider,
@@ -56,6 +59,16 @@ type LatchedNavigationSkeletonState = {
   embedded: boolean;
   pageKey: string;
   variant: KangurRouteTransitionSkeletonVariant | null;
+};
+
+const KangurLoginModalMount = (): JSX.Element | null => {
+  const loginModalState = useKangurLoginModalState();
+
+  if (!loginModalState.isOpen) {
+    return null;
+  }
+
+  return <KangurLoginModal />;
 };
 
 const AuthenticatedApp = (): JSX.Element | null => {
@@ -532,7 +545,7 @@ export function KangurFeatureApp(): JSX.Element {
                             <KangurTutorAnchorProvider>
                               <AuthenticatedApp />
                               <KangurAiTutorWidget />
-                              <KangurLoginModal />
+                              <KangurLoginModalMount />
                             </KangurTutorAnchorProvider>
                           </KangurAiTutorDeferredProvider>
                         </KangurAiTutorContentProvider>

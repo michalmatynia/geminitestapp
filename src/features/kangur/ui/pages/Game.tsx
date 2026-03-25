@@ -552,6 +552,10 @@ function GameContent(): React.JSX.Element {
   }, [screen]);
 
   useEffect(() => {
+    if (isMobile) {
+      return;
+    }
+
     const schedule =
       typeof globalThis.requestIdleCallback === 'function'
         ? globalThis.requestIdleCallback
@@ -566,7 +570,7 @@ function GameContent(): React.JSX.Element {
         clearTimeout(handle as ReturnType<typeof setTimeout>);
       }
     };
-  }, [basePath, routeNavigator]);
+  }, [basePath, isMobile, routeNavigator]);
 
   const renderScreen = (
     screenKey: KangurGameScreen,

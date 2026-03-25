@@ -75,6 +75,24 @@ describe('FrontendPublicOwnerShell', () => {
     vi.clearAllMocks();
     window.history.replaceState({}, '', '/');
     usePathnameMock.mockReturnValue('/');
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+    Object.defineProperty(window.navigator, 'maxTouchPoints', {
+      configurable: true,
+      value: 0,
+    });
   });
 
   afterEach(() => {
@@ -183,6 +201,41 @@ describe('FrontendPublicOwnerShell', () => {
     await waitFor(() => {
       expect(prefetchKangurAuthMock).toHaveBeenCalledTimes(1);
     });
+    expect(kangurLessonsPreloadMock).not.toHaveBeenCalled();
+  });
+
+  it('limits warmup on coarse-pointer devices to idle auth prefetch only', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(pointer: coarse)' || query === '(hover: none)',
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+    Object.defineProperty(window.navigator, 'maxTouchPoints', {
+      configurable: true,
+      value: 5,
+    });
+
+    render(
+      <FrontendPublicOwnerShell publicOwner='kangur'>
+        <div data-testid='frontend-children'>children</div>
+      </FrontendPublicOwnerShell>
+    );
+
+    await waitFor(() => {
+      expect(prefetchKangurAuthMock).toHaveBeenCalledTimes(1);
+    });
+    expect(kangurFeatureAppPreloadMock).not.toHaveBeenCalled();
+    expect(kangurGamePreloadMock).not.toHaveBeenCalled();
     expect(kangurLessonsPreloadMock).not.toHaveBeenCalled();
   });
 

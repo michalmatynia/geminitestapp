@@ -37,6 +37,9 @@ type KangurBackNavigationOptions = Pick<
   fallbackPageKey?: string | null;
 };
 
+const KANGUR_COARSE_POINTER_QUERY = '(pointer: coarse)';
+const KANGUR_HOVER_NONE_QUERY = '(hover: none)';
+
 const getManagedPathnameFromHref = (href: string): string | null => {
   return withKangurClientErrorSync(
     {
@@ -48,6 +51,43 @@ const getManagedPathnameFromHref = (href: string): string | null => {
     () => normalizeManagedKangurPathname(new URL(href, 'https://kangur.local').pathname),
     { fallback: normalizeManagedKangurPathname(href) }
   );
+};
+
+const shouldBypassManagedNavigationAcknowledge = (): boolean => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const matchesCoarsePointer =
+    typeof window.matchMedia === 'function'
+      ? window.matchMedia(KANGUR_COARSE_POINTER_QUERY).matches
+      : false;
+
+  if (matchesCoarsePointer) {
+    return true;
+  }
+
+  const maxTouchPoints =
+    typeof navigator === 'undefined' ? 0 : Math.max(navigator.maxTouchPoints ?? 0, 0);
+  const prefersTouchOnlyInteraction =
+    typeof window.matchMedia === 'function'
+      ? window.matchMedia(KANGUR_HOVER_NONE_QUERY).matches
+      : false;
+
+  return maxTouchPoints > 0 && prefersTouchOnlyInteraction;
+};
+
+const resolveEffectiveManagedAcknowledgeMs = (acknowledgeMs?: number | null): number => {
+  if (!Number.isFinite(acknowledgeMs)) {
+    return 0;
+  }
+
+  const normalizedAcknowledgeMs = Math.max(0, Math.round(acknowledgeMs ?? 0));
+  if (normalizedAcknowledgeMs === 0) {
+    return 0;
+  }
+
+  return shouldBypassManagedNavigationAcknowledge() ? 0 : normalizedAcknowledgeMs;
 };
 
 let queuedManagedNavigationTimeoutId: number | null = null;
@@ -99,6 +139,8 @@ export function useKangurRouteNavigator(): {
         'acknowledgeMs' | 'pageKey' | 'sourceId' | 'transitionKind'
       > = {}
     ): { acknowledgeMs: number; started: boolean } => {
+      const effectiveAcknowledgeMs = resolveEffectiveManagedAcknowledgeMs(acknowledgeMs);
+
       if (!routeTransitionActions || (href !== null && !isManagedLocalHref(href))) {
         return {
           acknowledgeMs: 0,
@@ -147,7 +189,7 @@ export function useKangurRouteNavigator(): {
         ...(resolvedHref ? { href: resolvedHref } : {}),
         ...(resolvedPageKey ? { pageKey: resolvedPageKey } : {}),
         ...(sourceId?.trim() ? { sourceId: sourceId.trim() } : {}),
-        ...(typeof acknowledgeMs === 'number' && acknowledgeMs > 0 ? { acknowledgeMs } : {}),
+        ...(effectiveAcknowledgeMs > 0 ? { acknowledgeMs: effectiveAcknowledgeMs } : {}),
         ...(transitionKind ? { transitionKind } : {}),
       });
 

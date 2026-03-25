@@ -21,10 +21,12 @@ import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   kangurGameCatalogEntriesSchema,
+  type KangurGameEngineCategory,
   type KangurGameEngineId,
   type KangurGameMechanic,
   type KangurGameStatus,
   type KangurGameSurface,
+  type KangurGameVariantSurface,
 } from '@/shared/contracts/kangur-games';
 
 type GameCatalogQueryOptions = KangurGameCatalogFilter & {
@@ -52,6 +54,9 @@ const fetchGameCatalog = async (
         lessonComponentId: options?.lessonComponentId ?? null,
         mechanic: options?.mechanic ?? null,
         engineId: options?.engineId ?? null,
+        engineCategory: options?.engineCategory ?? null,
+        variantSurface: options?.variantSurface ?? null,
+        variantStatus: options?.variantStatus ?? null,
         launchableOnly: options?.launchableOnly ?? false,
       },
     }),
@@ -64,6 +69,9 @@ const fetchGameCatalog = async (
         lessonComponentId: options?.lessonComponentId,
         mechanic: options?.mechanic,
         engineId: options?.engineId,
+        engineCategory: options?.engineCategory,
+        variantSurface: options?.variantSurface,
+        variantStatus: options?.variantStatus,
         launchableOnly: options?.launchableOnly,
       };
       const payload = await api.get<KangurGameCatalogEntry[]>('/api/kangur/game-catalog', {
@@ -91,6 +99,9 @@ export const useKangurGameCatalog = (
         lessonComponentId: options?.lessonComponentId ?? null,
         mechanic: options?.mechanic ?? null,
         engineId: options?.engineId ?? null,
+        engineCategory: options?.engineCategory ?? null,
+        variantSurface: options?.variantSurface ?? null,
+        variantStatus: options?.variantStatus ?? null,
         launchableOnly: options?.launchableOnly ?? false,
       },
     ],
@@ -119,10 +130,12 @@ export type {
 
 export type {
   KangurGameCatalogFilter,
+  KangurGameEngineCategory,
   KangurGameEngineId,
   KangurGameMechanic,
   KangurGameStatus,
   KangurGameSurface,
+  KangurGameVariantSurface,
   KangurLessonAgeGroup,
   KangurLessonComponentId,
   KangurLessonSubject,

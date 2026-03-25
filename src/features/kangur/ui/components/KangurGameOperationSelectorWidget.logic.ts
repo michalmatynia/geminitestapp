@@ -10,6 +10,9 @@ import {
 } from '@/features/kangur/ui/services/recommendation-i18n';
 import { getKangurLaunchableGameScreenForLessonComponent } from '@/features/kangur/ui/services/game-launch';
 import {
+  shouldRouteKangurLessonComponentToOperationSelector,
+} from '@/features/kangur/games';
+import {
   getProgressAverageAccuracy,
   getProgressBadgeTrackSummaries,
   getProgressTopActivities,
@@ -51,12 +54,6 @@ const LESSON_COMPONENT_OPERATION_TARGETS: Partial<Record<KangurLessonComponentId
     division: 'division',
   };
 
-const LESSON_COMPONENT_SELECTOR_SCREENS = new Set<KangurLessonComponentId>([
-  'art_colors_harmony',
-  'art_shapes_basic',
-  'music_diatonic_scale',
-]);
-
 export const resolveRecommendationDifficulty = (accuracy: number): KangurDifficulty => {
   if (accuracy >= 85) {
     return 'hard';
@@ -90,7 +87,7 @@ export const resolveLessonRecommendationTarget = (
     return { kind: 'screen', screen: launchScreen };
   }
 
-  if (LESSON_COMPONENT_SELECTOR_SCREENS.has(componentId as KangurLessonComponentId)) {
+  if (shouldRouteKangurLessonComponentToOperationSelector(componentId)) {
     return { kind: 'screen', screen: 'operation' };
   }
 

@@ -43,12 +43,35 @@ export const FRONT_PAGE_OPTIONS: FrontPageOption[] = [
   },
 ];
 
+const FRONT_PAGE_APP_ALIASES: Record<string, FrontPageSelectableApp> = {
+  products: 'cms',
+  studiq: 'kangur',
+};
+
 export const normalizeFrontPageApp = (
   value: string | null | undefined
 ): FrontPageSelectableApp | null => {
-  if (value === 'products') return 'cms';
-  if (value === 'cms' || value === 'kangur' || value === 'chatbot' || value === 'notes') {
-    return value;
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) {
+    return null;
+  }
+
+  const alias = FRONT_PAGE_APP_ALIASES[normalized];
+  if (alias) {
+    return alias;
+  }
+
+  if (
+    normalized === 'cms' ||
+    normalized === 'kangur' ||
+    normalized === 'chatbot' ||
+    normalized === 'notes'
+  ) {
+    return normalized;
   }
   return null;
 };

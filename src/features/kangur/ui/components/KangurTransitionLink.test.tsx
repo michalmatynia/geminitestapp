@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   clearKangurPendingRouteLoadingSnapshot,
@@ -13,6 +13,7 @@ import {
 const {
   nextLinkPropsMock,
   startRouteTransitionMock,
+  useKangurCoarsePointerMock,
   useOptionalKangurRouteTransitionStateMock,
   useOptionalKangurRoutingMock,
   useLocaleMock,
@@ -23,6 +24,7 @@ const {
 } = vi.hoisted(() => ({
   nextLinkPropsMock: vi.fn(),
   startRouteTransitionMock: vi.fn(),
+  useKangurCoarsePointerMock: vi.fn(),
   useOptionalKangurRouteTransitionStateMock: vi.fn(),
   useOptionalKangurRoutingMock: vi.fn(),
   useLocaleMock: vi.fn(),
@@ -77,6 +79,10 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useOptionalKangurRouting: useOptionalKangurRoutingMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => useKangurCoarsePointerMock(),
+}));
+
 import { KangurTransitionLink } from '@/features/kangur/ui/components/KangurTransitionLink';
 
 describe('KangurTransitionLink', () => {
@@ -85,6 +91,7 @@ describe('KangurTransitionLink', () => {
     clearKangurPendingRouteLoadingSnapshot();
     useLocaleMock.mockReturnValue('pl');
     usePathnameMock.mockReturnValue('/kangur');
+    useKangurCoarsePointerMock.mockReturnValue(false);
     useOptionalKangurRouteTransitionStateMock.mockReturnValue(null);
     useOptionalKangurRoutingMock.mockReturnValue(null);
     startRouteTransitionMock.mockReturnValue({
@@ -94,6 +101,7 @@ describe('KangurTransitionLink', () => {
   });
 
   afterEach(() => {
+    cleanup();
     clearKangurPendingRouteLoadingSnapshot();
     vi.useRealTimers();
   });
@@ -214,6 +222,24 @@ describe('KangurTransitionLink', () => {
     );
 
     expect(routerPrefetchMock).toHaveBeenCalledWith('/kangur/lessons');
+  });
+
+  it('disables managed link prefetch on coarse-pointer devices', () => {
+    useKangurCoarsePointerMock.mockReturnValue(true);
+
+    render(
+      <KangurTransitionLink href='/kangur/lessons' targetPageKey='Lessons'>
+        Lekcje
+      </KangurTransitionLink>
+    );
+
+    expect(routerPrefetchMock).not.toHaveBeenCalled();
+    expect(nextLinkPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        href: '/kangur/lessons',
+        prefetch: false,
+      })
+    );
   });
 
   it('renders a locale-prefixed href before hydration on localized routes', () => {

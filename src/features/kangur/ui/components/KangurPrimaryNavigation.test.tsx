@@ -52,6 +52,10 @@ const { localeMock } = vi.hoisted(() => ({
   localeMock: vi.fn(),
 }));
 
+const { useKangurCoarsePointerMock } = vi.hoisted(() => ({
+  useKangurCoarsePointerMock: vi.fn(),
+}));
+
 const { translationMessages } = vi.hoisted(() => ({
   translationMessages: {
     pl: {
@@ -373,7 +377,7 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
-  useKangurCoarsePointer: () => true,
+  useKangurCoarsePointer: () => useKangurCoarsePointerMock(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
@@ -471,6 +475,7 @@ describe('KangurPrimaryNavigation', () => {
     routeTransitionStateMock.mockReturnValue(null);
     frontendPublicOwnerMock.mockReturnValue(null);
     localeMock.mockReturnValue('pl');
+    useKangurCoarsePointerMock.mockReturnValue(true);
     setViewport({ width: 1024, matches: false });
     pathnameMock.mockReturnValue('/kangur');
     searchParamsMock.mockReturnValue(new URLSearchParams());
@@ -1037,6 +1042,7 @@ describe('KangurPrimaryNavigation', () => {
 
   it('switches to a non-default locale while preserving search params', async () => {
     localeMock.mockReturnValue('pl');
+    useKangurCoarsePointerMock.mockReturnValue(false);
     pathnameMock.mockReturnValue('/lessons');
     searchParamsMock.mockReturnValue(new URLSearchParams('mode=solo&difficulty=hard'));
 
@@ -1065,6 +1071,7 @@ describe('KangurPrimaryNavigation', () => {
   it('canonicalizes /kangur alias routes when Kangur owns the public frontend', async () => {
     frontendPublicOwnerMock.mockReturnValue({ publicOwner: 'kangur' });
     localeMock.mockReturnValue('pl');
+    useKangurCoarsePointerMock.mockReturnValue(false);
     pathnameMock.mockReturnValue('/kangur/lessons');
     searchParamsMock.mockReturnValue(new URLSearchParams('mode=solo'));
 
@@ -1089,6 +1096,7 @@ describe('KangurPrimaryNavigation', () => {
 
   it('drops the locale prefix when switching back to the default locale', async () => {
     localeMock.mockReturnValue('en');
+    useKangurCoarsePointerMock.mockReturnValue(false);
     pathnameMock.mockReturnValue('/en/duels');
 
     render(
@@ -1137,6 +1145,7 @@ describe('KangurPrimaryNavigation', () => {
 
   it('warms the default locale target when opening the menu from a non-default locale', async () => {
     localeMock.mockReturnValue('en');
+    useKangurCoarsePointerMock.mockReturnValue(false);
     pathnameMock.mockReturnValue('/en/lessons');
     const queryClient = { prefetchQuery: vi.fn() };
 
@@ -1168,6 +1177,7 @@ describe('KangurPrimaryNavigation', () => {
 
   it('warms the locale route and page content only once before switching', async () => {
     localeMock.mockReturnValue('pl');
+    useKangurCoarsePointerMock.mockReturnValue(false);
     pathnameMock.mockReturnValue('/lessons');
     const queryClient = { prefetchQuery: vi.fn() };
 

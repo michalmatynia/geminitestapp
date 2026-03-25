@@ -134,6 +134,8 @@ const invalidateKangurGames = (queryClient: {
 }): void => {
   queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.games() });
   queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.gameCatalog() });
+  queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.gameCatalogFacets() });
+  queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.gameVariants() });
 };
 
 export const useUpdateKangurGames = (): MutationResult<

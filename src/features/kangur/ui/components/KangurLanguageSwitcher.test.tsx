@@ -35,6 +35,10 @@ const { frontendPublicOwnerMock } = vi.hoisted(() => ({
   frontendPublicOwnerMock: vi.fn(),
 }));
 
+const { useKangurCoarsePointerMock } = vi.hoisted(() => ({
+  useKangurCoarsePointerMock: vi.fn(),
+}));
+
 const { prefetchKangurPageContentStoreMock } = vi.hoisted(() => ({
   prefetchKangurPageContentStoreMock: vi.fn(),
 }));
@@ -140,7 +144,7 @@ vi.mock('@/features/kangur/ui/FrontendPublicOwnerContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
-  useKangurCoarsePointer: () => false,
+  useKangurCoarsePointer: () => useKangurCoarsePointerMock(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
@@ -220,6 +224,7 @@ describe('KangurLanguageSwitcher', () => {
     vi.clearAllMocks();
     localeMock.mockReturnValue('pl');
     pathnameMock.mockReturnValue('/kangur/lessons');
+    useKangurCoarsePointerMock.mockReturnValue(false);
     searchParamsMock.mockReturnValue(new URLSearchParams());
     routeTransitionStateMock.mockReturnValue(null);
     frontendPublicOwnerMock.mockReturnValue(null);
@@ -610,6 +615,28 @@ describe('KangurLanguageSwitcher', () => {
     pathnameMock.mockReturnValue('/kangur/lessons');
 
     render(<KangurLanguageSwitcher basePath='/kangur' currentPage='Lessons' />);
+
+    prefetchMock.mockClear();
+    prefetchKangurPageContentStoreMock.mockClear();
+
+    openLanguageMenu();
+    await screen.findByRole('menu');
+
+    expect(prefetchMock).not.toHaveBeenCalled();
+    expect(prefetchKangurPageContentStoreMock).not.toHaveBeenCalled();
+  });
+
+  it('does not warm locale targets on coarse-pointer devices', async () => {
+    localeMock.mockReturnValue('en');
+    pathnameMock.mockReturnValue('/en/kangur/lessons');
+    useKangurCoarsePointerMock.mockReturnValue(true);
+    const queryClient = { prefetchQuery: vi.fn() };
+
+    render(
+      <QueryClientContext.Provider value={queryClient as never}>
+        <KangurLanguageSwitcher basePath='/en/kangur' currentPage='Lessons' />
+      </QueryClientContext.Provider>
+    );
 
     prefetchMock.mockClear();
     prefetchKangurPageContentStoreMock.mockClear();

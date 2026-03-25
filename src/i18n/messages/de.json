@@ -1110,6 +1110,9 @@
     "engineGroupsEyebrow": "Konsolidierungsansicht",
     "engineGroupsTitle": "Engine-Familien",
     "engineGroupsDescription": "{count, plural, one {# Engine-Familie aktuell im Katalog gruppiert.} other {# Engine-Familien aktuell im Katalog gruppiert.}}",
+    "variantGroupsEyebrow": "Variantenoberflachen",
+    "variantGroupsTitle": "Variantenkatalog",
+    "variantGroupsDescription": "{count, plural, one {# sichtbare Variante uber {surfaceCount} Oberflachen gruppiert.} other {# sichtbare Varianten uber {surfaceCount} Oberflachen gruppiert.}}",
     "emptyTitle": "Keine Spiele in der Bibliothek",
     "emptyDescription": "Füge die ersten Spieldefinitionen hinzu, um Engines und Varianten zu klassifizieren.",
     "emptyFilteredTitle": "Keine Spiele passen zu diesen Filtern",
@@ -1123,6 +1126,48 @@
       "variantsDescription": "Sichtbare Einbettungs- und Startmodi.",
       "lessonLinked": "Mit Lektionen verknüpft",
       "lessonLinkedDescription": "Sichtbare Spiele, die bereits mit Lektionskomponenten verbunden sind."
+    },
+    "coverageGroupsEyebrow": "Abdeckungspolitik",
+    "coverageGroupsTitle": "Lektions-Abdeckungsplan",
+    "coverageGroupsDescription": "{count, plural, one {# Abdeckungspfad wird in der gemeinsamen Spiele-Domäne verfolgt.} other {# Abdeckungspfade werden in der gemeinsamen Spiele-Domäne verfolgt.}}",
+    "coverageGroups": {
+      "completeChip": "Vollstandig",
+      "gapsChip": "{count, plural, one {# Lucke} other {# Lucken}}",
+      "lessonsLabel": "Lektionen",
+      "coveredLabel": "Abgedeckt",
+      "gamesLabel": "Spiele",
+      "cohortsLabel": "Kohorten",
+      "subjectsLabel": "Facher",
+      "coveredLessonsLabel": "Abgedeckte Lektionen",
+      "fallbackOnlyLessonsLabel": "Nur-Fallback-Lektionen",
+      "groups": {
+        "library_backed": {
+          "eyebrow": "Gemeinsamer Katalog",
+          "title": "Bibliotheksgestutzte Lektionen",
+          "description": "Lektionskomponenten, die auf eine oder mehrere gemeinsame Spieldefinitionen in der Spielebibliothek zeigen sollen."
+        },
+        "launchable": {
+          "eyebrow": "Vollbild-Runtime",
+          "title": "Startbare Lektionen",
+          "description": "Lektionskomponenten, die neben ihrem gemeinsamen Katalogeintrag einen direkten Vollbild-Spielpfad behalten sollen."
+        },
+        "selector_fallback": {
+          "eyebrow": "Selector-Hub",
+          "title": "Nur-Selector-Lektionen",
+          "description": "Lektionskomponenten, die aktuell in den fachbezogenen Spiel-Selector statt in ein eigenes Vollbild-Spiel routen."
+        }
+      }
+    },
+    "cohortGroupsEyebrow": "Alterskohorten",
+    "cohortGroupsTitle": "Katalog nach Kohorten",
+    "cohortGroupsDescription": "{count, plural, one {# Alterskohorte ist im aktuellen Katalog sichtbar.} other {# Alterskohorten sind im aktuellen Katalog sichtbar.}}",
+    "cohortGroups": {
+      "groupDescription": "{count, plural, one {# Spiel ist aktuell in dieser Kohorte sichtbar.} other {# Spiele sind aktuell in dieser Kohorte sichtbar.}}",
+      "gamesLabel": "Spiele",
+      "enginesLabel": "Engines",
+      "launchableLabel": "Startbar",
+      "lessonLinkedLabel": "Mit Lektionen verknüpft",
+      "subjectsLabel": "Fächer"
     },
     "filters": {
       "eyebrow": "Klassifizierungssteuerung",
@@ -1155,10 +1200,25 @@
         "aria": "Spiele nach Status filtern",
         "all": "Alle Statuswerte"
       },
+      "variantSurface": {
+        "label": "Variantenoberflache",
+        "aria": "Varianten nach Oberflache filtern",
+        "all": "Alle Variantenoberflachen"
+      },
+      "variantStatus": {
+        "label": "Variantenstatus",
+        "aria": "Varianten nach Status filtern",
+        "all": "Alle Variantenstatus"
+      },
       "engine": {
         "label": "Engine-Familie",
         "aria": "Spiele nach Engine-Familie filtern",
         "all": "Alle Engines"
+      },
+      "engineCategory": {
+        "label": "Engine-Kategorie",
+        "aria": "Spiele nach Engine-Kategorie filtern",
+        "all": "Alle Engine-Kategorien"
       },
       "launchability": {
         "label": "Startpfad",
@@ -1182,8 +1242,15 @@
       "game": "Spiel",
       "duel": "Duell"
     },
+    "variantSurfaces": {
+      "lesson_inline": "Lektion inline",
+      "lesson_stage": "Lektionsstufe",
+      "library_preview": "Bibliotheksvorschau",
+      "game_screen": "Spielbildschirm"
+    },
     "labels": {
       "engineId": "Engine-ID",
+      "engineCategory": "Engine-Kategorie",
       "mechanic": "Mechanik",
       "ageGroup": "Altersgruppe",
       "allAgeGroups": "Alle",
@@ -1192,6 +1259,17 @@
       "legacyScreens": "Legacy-Screens",
       "lessonLinks": "Verknüpfte Lektionen",
       "none": "Keine"
+    },
+    "engineCategories": {
+      "foundational": "Grundlagen",
+      "early_learning": "Frühes Lernen",
+      "adult_learning": "Erwachsenenlernen"
+    },
+    "lessonCoverageStatuses": {
+      "launchable": "startbar",
+      "library_backed": "bibliotheksgestutzt",
+      "selector_fallback": "Selector-Fallback",
+      "lesson_only": "nur Lektion"
     },
     "mechanics": {
       "drag_drop": "Ziehen und Ablegen",
@@ -1214,6 +1292,15 @@
       "subjectsLabel": "Facher",
       "mechanicsLabel": "Mechaniken",
       "surfacesLabel": "Oberflachen"
+    },
+    "variantGroups": {
+      "surfaceLabel": "Variantenoberflache",
+      "groupDescription": "{count, plural, one {# Variante nutzt aktuell diese Oberflache.} other {# Varianten nutzen aktuell diese Oberflache.}}",
+      "gamesLabel": "Spiele",
+      "enginesLabel": "Engines",
+      "defaultsLabel": "Standardvarianten",
+      "launchableLabel": "Startbar",
+      "variantsLabel": "Varianten"
     }
   },
   "KangurGameHomeActions": {

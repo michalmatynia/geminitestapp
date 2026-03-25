@@ -1,0 +1,88 @@
+import type { KangurGameEngineDefinition } from '@/shared/contracts/kangur-games';
+
+export const KANGUR_EARLY_LEARNING_GAME_ENGINES: readonly KangurGameEngineDefinition[] = [
+  {
+    id: 'color-harmony-engine',
+    category: 'early_learning',
+    label: 'Color harmony engine',
+    title: 'Color Harmony Engine',
+    description:
+      'Shared early-learning engine for warm-cool color grouping, harmony matching, and future palette-based art games in the library.',
+    mechanics: ['tap_select'],
+    interactionModes: ['tap'],
+    surfaces: ['lesson', 'library'],
+    tags: ['art', 'colors', 'matching'],
+    status: 'active',
+    sortOrder: 1150,
+  },
+  {
+    id: 'symbol-tracing-engine',
+    category: 'early_learning',
+    label: 'Symbol tracing engine',
+    title: 'Symbol Tracing Engine',
+    description:
+      'Shared tracing engine for early handwriting, letter copying, and other follow-the-line activities exposed in the games library.',
+    mechanics: ['drawing'],
+    interactionModes: ['draw'],
+    surfaces: ['lesson', 'library'],
+    tags: ['tracing', 'letters', 'handwriting'],
+    status: 'active',
+    sortOrder: 1200,
+  },
+  {
+    id: 'letter-match-engine',
+    category: 'early_learning',
+    label: 'Letter match engine',
+    title: 'Letter Match Engine',
+    description:
+      'Tap-based matching engine for first-word recognition, uppercase-lowercase pairs, and other early literacy variants.',
+    mechanics: ['tap_select'],
+    interactionModes: ['tap'],
+    surfaces: ['lesson', 'library'],
+    tags: ['alphabet', 'matching', 'literacy'],
+    status: 'active',
+    sortOrder: 1300,
+  },
+  {
+    id: 'melody-repeat-engine',
+    category: 'early_learning',
+    label: 'Melody repeat engine',
+    title: 'Melody Repeat Engine',
+    description:
+      'Call-and-response music engine for repeating short melodies and developing pitch memory in shared lesson and library surfaces.',
+    mechanics: ['rhythm'],
+    interactionModes: ['tap'],
+    surfaces: ['lesson', 'library'],
+    tags: ['music', 'melody', 'memory'],
+    status: 'active',
+    sortOrder: 1400,
+  },
+  {
+    id: 'piano-roll-engine',
+    category: 'early_learning',
+    label: 'Piano roll engine',
+    title: 'Piano Roll Engine',
+    description:
+      'Exploratory piano-roll engine for free play, keyboard discovery, and music interaction variants that stay outside lesson-specific code.',
+    mechanics: ['tap_select'],
+    interactionModes: ['tap'],
+    surfaces: ['lesson', 'library'],
+    tags: ['music', 'piano', 'free-play'],
+    status: 'active',
+    sortOrder: 1500,
+  },
+  {
+    id: 'shape-recognition-engine',
+    category: 'early_learning',
+    label: 'Shape recognition engine',
+    title: 'Shape Recognition Engine',
+    description:
+      'Shared shape-spotting engine for recognising, rotating, and comparing geometric forms across early art and geometry games.',
+    mechanics: ['tap_select'],
+    interactionModes: ['tap'],
+    surfaces: ['lesson', 'library'],
+    tags: ['shapes', 'spatial', 'geometry'],
+    status: 'active',
+    sortOrder: 1600,
+  },
+];

@@ -119,6 +119,24 @@ const NavigatorBackProbe = ({
 describe('useKangurRouteNavigator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+    Object.defineProperty(window.navigator, 'maxTouchPoints', {
+      configurable: true,
+      value: 0,
+    });
     useLocaleMock.mockReturnValue('pl');
     usePathnameMock.mockReturnValue('/lessons');
     useOptionalKangurRouteTransitionStateMock.mockReturnValue(null);
@@ -229,6 +247,37 @@ describe('useKangurRouteNavigator', () => {
     unmount();
     vi.advanceTimersByTime(110);
 
+    expect(routerPushMock).toHaveBeenCalledWith('/lessons', { scroll: false });
+  });
+
+  it('bypasses acknowledged navigation delays on coarse-pointer devices', () => {
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(pointer: coarse)' || query === '(hover: none)',
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+    Object.defineProperty(window.navigator, 'maxTouchPoints', {
+      configurable: true,
+      value: 5,
+    });
+
+    render(<NavigatorPushProbe acknowledgeMs={110} href='/lessons' />);
+
+    fireEvent.click(screen.getByTestId('navigator-push'));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/lessons',
+      pageKey: 'Lessons',
+    });
     expect(routerPushMock).toHaveBeenCalledWith('/lessons', { scroll: false });
   });
 

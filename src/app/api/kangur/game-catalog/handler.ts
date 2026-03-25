@@ -4,10 +4,12 @@ import { getKangurGameCatalogRepository } from '@/features/kangur/services/kangu
 import {
   kangurGameCatalogEntriesSchema,
   kangurGameCatalogQuerySchema,
+  kangurGameEngineCategorySchema,
   kangurGameEngineIdSchema,
   kangurGameMechanicSchema,
   kangurGameStatusSchema,
   kangurGameSurfaceSchema,
+  kangurGameVariantSurfaceSchema,
 } from '@/shared/contracts/kangur-games';
 import {
   kangurLessonAgeGroupSchema,
@@ -34,6 +36,15 @@ export async function getKangurGameCatalogHandler(
       : undefined,
     mechanic: query.mechanic ? kangurGameMechanicSchema.parse(query.mechanic) : undefined,
     engineId: query.engineId ? kangurGameEngineIdSchema.parse(query.engineId) : undefined,
+    engineCategory: query.engineCategory
+      ? kangurGameEngineCategorySchema.parse(query.engineCategory)
+      : undefined,
+    variantSurface: query.variantSurface
+      ? kangurGameVariantSurfaceSchema.parse(query.variantSurface)
+      : undefined,
+    variantStatus: query.variantStatus
+      ? kangurGameStatusSchema.parse(query.variantStatus)
+      : undefined,
     launchableOnly: query.launchableOnly,
   });
 

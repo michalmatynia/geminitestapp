@@ -1169,6 +1169,33 @@
       "lessonLinkedLabel": "Lesson-linked",
       "subjectsLabel": "Subjects"
     },
+    "implementationGroupsEyebrow": "Extraction status",
+    "implementationGroupsTitle": "Implementation ownership",
+    "implementationGroupsDescription": "{count, plural, one {# ownership lane currently tracked across the engine catalog.} other {# ownership lanes currently tracked across the engine catalog.}}",
+    "implementationGroups": {
+      "eyebrow": "Ownership lane",
+      "groupDescription": "{count, plural, one {# engine family currently grouped under this ownership state.} other {# engine families currently grouped under this ownership state.}}",
+      "enginesLabel": "Engines",
+      "gamesLabel": "Games",
+      "runtimeComponentsLabel": "Runtime components",
+      "lessonsLabel": "Lessons",
+      "engineTitlesLabel": "Engine families",
+      "lessonLinksLabel": "Lesson links"
+    },
+    "drawingGroupsEyebrow": "Drawing mechanics",
+    "drawingGroupsTitle": "Drawing engines",
+    "drawingGroupsDescription": "{count, plural, one {# drawing engine family visible in the current catalog.} other {# drawing engine families visible in the current catalog.}}",
+    "drawingGroups": {
+      "gamesLabel": "Games",
+      "variantsLabel": "Variants",
+      "cohortsLabel": "Cohorts",
+      "lessonsLabel": "Lessons",
+      "ownershipLabel": "Implementation ownership",
+      "runtimeComponentsLabel": "Runtime components",
+      "subjectsLabel": "Subjects",
+      "lessonLinksLabel": "Lesson links",
+      "gameTitlesLabel": "Game titles"
+    },
     "filters": {
       "eyebrow": "Classification controls",
       "title": "Filter the catalog",
@@ -1220,6 +1247,11 @@
         "aria": "Filter games by engine category",
         "all": "All engine categories"
       },
+      "implementationOwnership": {
+        "label": "Implementation ownership",
+        "aria": "Filter games by implementation ownership",
+        "all": "All ownership states"
+      },
       "launchability": {
         "label": "Launch path",
         "aria": "Filter games by launch path",
@@ -1265,6 +1297,11 @@
       "early_learning": "Early learning",
       "adult_learning": "Adult learning"
     },
+    "implementationOwnership": {
+      "shared_runtime": "Shared runtime",
+      "lesson_embedded": "Lesson embedded",
+      "mixed_runtime": "Mixed runtime"
+    },
     "lessonCoverageStatuses": {
       "launchable": "launchable",
       "library_backed": "library-backed",
@@ -1290,8 +1327,10 @@
       "singleChip": "Single game",
       "gamesLabel": "Games",
       "subjectsLabel": "Subjects",
+      "ownershipLabel": "Implementation ownership",
       "mechanicsLabel": "Mechanics",
-      "surfacesLabel": "Surfaces"
+      "surfacesLabel": "Surfaces",
+      "runtimeComponentsLabel": "Runtime components"
     },
     "variantGroups": {
       "surfaceLabel": "Variant surface",

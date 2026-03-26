@@ -3,7 +3,7 @@
 import { useEffect, useRef, type RefObject } from 'react';
 
 type UseKangurCanvasRedrawInput = {
-  canvasRef: RefObject<HTMLCanvasElement | null>;
+  canvasRef: RefObject<Element | null>;
   redraw: () => void;
 };
 
@@ -27,12 +27,12 @@ export const useKangurCanvasRedraw = ({
     }
 
     if (typeof ResizeObserver === 'function') {
-      const canvas = canvasRef.current;
-      if (canvas) {
+      const surface = canvasRef.current;
+      if (surface) {
         const observer = new ResizeObserver(() => {
           handleResize();
         });
-        observer.observe(canvas);
+        observer.observe(surface);
         handleResize();
         return () => {
           observer.disconnect();

@@ -1,7 +1,7 @@
 'use client';
 
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
-import { Eraser, PencilRuler } from 'lucide-react';
+import { PencilRuler } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
@@ -21,13 +21,23 @@ import {
   translateKangurMiniGameWithFallback,
   type KangurMiniGameTranslate,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
+import { KangurDrawingActionRow } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingActionRow';
+import {
+  KangurDrawingEmptyStateOverlay,
+  KangurDrawingKeyboardCursorOverlay,
+} from '@/features/kangur/ui/components/drawing-engine/KangurDrawingOverlays';
+import { KangurDrawingPracticeBoard } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingPracticeBoard';
+import { KangurDrawingStatusRegions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingStatusRegions';
+import { renderKangurDrawingStrokes } from '@/features/kangur/ui/components/drawing-engine/render';
+import { flattenKangurStrokePoints } from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
+import { useKangurKeyboardPointDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurKeyboardPointDrawing';
+import { useKangurPointDrawingEngine } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingEngine';
 import {
   KangurButton,
   KangurDisplayEmoji,
   KangurGlassPanel,
   KangurHeadline,
   KangurInfoCard,
-  KangurPanelRow,
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -41,21 +51,15 @@ import {
   evaluateGeometryDrawing,
   type GeometryShapeId,
 } from '@/features/kangur/ui/services/geometry-drawing';
-import {
-  resolveKangurCanvasPoint,
-  syncKangurCanvasContext,
-} from '@/features/kangur/ui/services/drawing-canvas';
-import { useKangurCanvasTouchLock } from '@/features/kangur/ui/hooks/useKangurCanvasTouchLock';
+import { syncKangurCanvasContext } from '@/features/kangur/ui/services/drawing-canvas';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { loosenMinInt } from '@/features/kangur/ui/services/drawing-leniency';
-import type { Point2d } from '@/shared/contracts/geometry';
 import {
   addXp,
   createTrainingReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
-import { useKangurCanvasRedraw } from '@/features/kangur/ui/hooks/useKangurCanvasRedraw';
 import type {
   KangurMiniGameInformationalFeedback,
   KangurRewardBreakdownEntry,
@@ -219,12 +223,6 @@ const KEYBOARD_CURSOR_START = {
 } as const;
 const BASE_MIN_DRAWING_POINTS = loosenMinInt(14);
 
-const distance = (a: Point2d, b: Point2d): number =>
-  Math.hypot(a.x - b.x, a.y - b.y);
-
-const flattenPoints = (strokes: Point2d[][]): Point2d[] =>
-  strokes.flatMap((stroke) => stroke);
-
 const getGeometryDrawingShapeLabel = (
   translate: KangurMiniGameTranslate,
   shapeId: GeometryShapeId,
@@ -287,7 +285,6 @@ export default function GeometryDrawingGame({
     [translations]
   );
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const isDrawingRef = useRef(false);
 
   const localizedShapeLibrary = useMemo<Record<GeometryShapeId, ShapeRound>>(
     () =>
@@ -317,16 +314,6 @@ export default function GeometryDrawingGame({
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const [feedback, setFeedback] = useState<KangurMiniGameInformationalFeedback | null>(null);
-  const [strokes, setStrokes] = useState<Point2d[][]>([]);
-  const [isPointerDrawing, setIsPointerDrawing] = useState(false);
-  const [keyboardCursor, setKeyboardCursor] = useState<Point2d>(KEYBOARD_CURSOR_START);
-  const [keyboardDrawing, setKeyboardDrawing] = useState(false);
-  const [keyboardStatus, setKeyboardStatus] = useState(() =>
-    translateWithFallback(
-      'geometryDrawing.inRound.keyboard.ready',
-      fallbackCopy.keyboard.ready
-    )
-  );
   const isCoarsePointer = useKangurCoarsePointer();
   const sessionStartedAtRef = useRef(Date.now());
   const handleFinishSession = (): void => {
@@ -370,146 +357,126 @@ export default function GeometryDrawingGame({
         'geometryDrawing.inRound.difficulty.default',
         fallbackCopy.difficultyDefault
       );
-  const points = useMemo(() => flattenPoints(strokes), [strokes]);
   const minPointDistance = isCoarsePointer ? 5 : 2;
   const minDrawingPoints = isCoarsePointer
     ? Math.max(8, Math.round(BASE_MIN_DRAWING_POINTS * 0.7))
     : BASE_MIN_DRAWING_POINTS;
   const strokeWidth = isCoarsePointer ? 7 : 5;
-
-  const redrawCanvas = useCallback((nextStrokes: Point2d[][]): void => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = syncKangurCanvasContext(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-    ctx.strokeStyle = '#e2e8f0';
-    ctx.lineWidth = 1;
-    for (let x = 40; x < CANVAS_WIDTH; x += 40) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, CANVAS_HEIGHT);
-      ctx.stroke();
-    }
-    for (let y = 40; y < CANVAS_HEIGHT; y += 40) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(CANVAS_WIDTH, y);
-      ctx.stroke();
-    }
-
-    ctx.strokeStyle = '#0f172a';
-    ctx.lineWidth = strokeWidth;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    for (const stroke of nextStrokes) {
-      if (stroke.length === 0) continue;
-      ctx.beginPath();
-      const first = stroke[0];
-      if (!first) continue;
-      ctx.moveTo(first.x, first.y);
-      for (let i = 1; i < stroke.length; i += 1) {
-        const point = stroke[i];
-        if (!point) continue;
-        ctx.lineTo(point.x, point.y);
-      }
-      ctx.stroke();
-    }
-  }, [strokeWidth]);
-
-  useKangurCanvasRedraw({
+  const {
+    clearStrokes,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    isPointerDrawing,
+    setStrokes,
+    strokes,
+  } = useKangurPointDrawingEngine({
     canvasRef,
-    redraw: () => redrawCanvas(strokes),
-  });
-  useKangurCanvasTouchLock(canvasRef, { enabled: isCoarsePointer });
-
-  const updateStrokes = useCallback(
-    (updater: (current: Point2d[][]) => Point2d[][]): void => {
-      setStrokes((current) => {
-        const next = updater(current);
-        redrawCanvas(next);
-        return next;
-      });
+    enabled: !done && feedback?.kind !== 'success' && feedback?.kind !== 'error',
+    logicalHeight: CANVAS_HEIGHT,
+    logicalWidth: CANVAS_WIDTH,
+    minPointDistance,
+    onPointerStart: () => {
+      if (feedback?.kind === 'info') {
+        setFeedback(null);
+      }
     },
-    [redrawCanvas]
+    redraw: (nextStrokes) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = syncKangurCanvasContext(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
+      if (!ctx) return;
+
+      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 1;
+      for (let x = 40; x < CANVAS_WIDTH; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, CANVAS_HEIGHT);
+        ctx.stroke();
+      }
+      for (let y = 40; y < CANVAS_HEIGHT; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(CANVAS_WIDTH, y);
+        ctx.stroke();
+      }
+
+      renderKangurDrawingStrokes(
+        ctx,
+        nextStrokes.map((points) => ({ meta: null, points })),
+        () => ({
+          lineWidth: strokeWidth,
+          strokeStyle: '#0f172a',
+        })
+      );
+    },
+    touchLockEnabled: isCoarsePointer,
+  });
+  const points = useMemo(() => flattenKangurStrokePoints(strokes), [strokes]);
+  const keyboardReadyStatus = translateWithFallback(
+    'geometryDrawing.inRound.keyboard.ready',
+    fallbackCopy.keyboard.ready
   );
+  const keyboardStartedStatus = translateWithFallback(
+    'geometryDrawing.inRound.keyboard.started',
+    fallbackCopy.keyboard.started
+  );
+  const keyboardFinishedStatus = translateWithFallback(
+    'geometryDrawing.inRound.keyboard.finished',
+    fallbackCopy.keyboard.finished
+  );
+  const keyboardClearedStatus = translateWithFallback(
+    'geometryDrawing.inRound.keyboard.cleared',
+    fallbackCopy.keyboard.cleared
+  );
+  const keyboardBoardClearedStatus = translateWithFallback(
+    'geometryDrawing.inRound.keyboard.boardCleared',
+    fallbackCopy.keyboard.boardCleared
+  );
+  const keyboardRestartedStatus = translateWithFallback(
+    'geometryDrawing.inRound.keyboard.restarted',
+    fallbackCopy.keyboard.restarted
+  );
+
+  const clearBoardState = useCallback((): void => {
+    clearStrokes();
+    setFeedback(null);
+  }, [clearStrokes]);
+
+  const {
+    handleCanvasKeyDown,
+    keyboardCursor,
+    keyboardDrawing,
+    keyboardStatus,
+    resetKeyboard,
+  } = useKangurKeyboardPointDrawing({
+    clearedStatus: keyboardClearedStatus,
+    disabled: done || feedback?.kind === 'success' || feedback?.kind === 'error',
+    finishedStatus: keyboardFinishedStatus,
+    height: CANVAS_HEIGHT,
+    initialCursor: KEYBOARD_CURSOR_START,
+    onBeforeKeyboardAction: () => {
+      if (feedback?.kind === 'info') {
+        setFeedback(null);
+      }
+    },
+    onEscape: clearBoardState,
+    readyStatus: keyboardReadyStatus,
+    setStrokes,
+    startedStatus: keyboardStartedStatus,
+    step: KEYBOARD_DRAW_STEP,
+    width: CANVAS_WIDTH,
+  });
 
   const clearDrawing = useCallback((): void => {
-    setStrokes(() => {
-      redrawCanvas([]);
-      return [];
-    });
-    setFeedback(null);
-    setKeyboardDrawing(false);
-    setKeyboardStatus(
-      translateWithFallback(
-        'geometryDrawing.inRound.keyboard.boardCleared',
-        fallbackCopy.keyboard.boardCleared
-      )
-    );
-  }, [fallbackCopy.keyboard.boardCleared, redrawCanvas, translateWithFallback]);
-
-  const resolvePoint = useCallback(
-    (event: React.PointerEvent<HTMLCanvasElement>): Point2d => {
-      const canvas = canvasRef.current;
-      if (!canvas) return { x: 0, y: 0 };
-      return resolveKangurCanvasPoint(event, canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
-    },
-    []
-  );
-
-  const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    if (done || feedback?.kind === 'success' || feedback?.kind === 'error') return;
-    event.preventDefault();
-    if (feedback?.kind === 'info') {
-      setFeedback(null);
-    }
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const point = resolvePoint(event);
-    isDrawingRef.current = true;
-    setIsPointerDrawing(true);
-    canvas.setPointerCapture(event.pointerId);
-    updateStrokes((current) => [...current, [point]]);
-  };
-
-  const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    if (
-      !isDrawingRef.current ||
-      done ||
-      feedback?.kind === 'success' ||
-      feedback?.kind === 'error'
-    ) {
-      return;
-    }
-    event.preventDefault();
-    const point = resolvePoint(event);
-    updateStrokes((current) => {
-      if (current.length === 0) return current;
-      const next = [...current];
-      const lastStroke = next[next.length - 1] ?? [];
-      const lastPoint = lastStroke[lastStroke.length - 1];
-      if (lastPoint && distance(lastPoint, point) < minPointDistance) {
-        return current;
-      }
-      next[next.length - 1] = [...lastStroke, point];
-      return next;
-    });
-  };
-
-  const handlePointerUp = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    if (!isDrawingRef.current) return;
-    isDrawingRef.current = false;
-    setIsPointerDrawing(false);
-    const canvas = canvasRef.current;
-    if (canvas) {
-      canvas.releasePointerCapture(event.pointerId);
-    }
-  };
+    clearBoardState();
+    resetKeyboard(keyboardBoardClearedStatus);
+  }, [clearBoardState, keyboardBoardClearedStatus, resetKeyboard]);
 
   const finishGame = useCallback(
     (finalScore: number): void => {
@@ -546,141 +513,22 @@ export default function GeometryDrawingGame({
     setXpEarned(0);
     setXpBreakdown([]);
     setFeedback(null);
-    setKeyboardCursor(KEYBOARD_CURSOR_START);
-    setKeyboardDrawing(false);
-    clearDrawing();
-    setKeyboardStatus(
-      translateWithFallback(
-        'geometryDrawing.inRound.keyboard.restarted',
-        fallbackCopy.keyboard.restarted
-      )
-    );
+    clearBoardState();
+    resetKeyboard(keyboardRestartedStatus);
     sessionStartedAtRef.current = Date.now();
-  }, [clearDrawing, fallbackCopy.keyboard.restarted, translateWithFallback]);
+  }, [clearBoardState, keyboardRestartedStatus, resetKeyboard]);
 
   const handleDifficultyChange = (nextDifficulty: GeometryDifficultyId): void => {
     if (nextDifficulty === difficulty) return;
     setDifficulty(nextDifficulty);
-    setKeyboardCursor(KEYBOARD_CURSOR_START);
-    setKeyboardDrawing(false);
     resetRun();
-    setKeyboardStatus(
+    resetKeyboard(
       translateWithFallback(
         'geometryDrawing.inRound.keyboard.difficultyChanged',
         fallbackCopy.keyboard.difficultyChanged,
         { difficulty: difficultyLabels[nextDifficulty] }
       )
     );
-  };
-
-  const appendKeyboardPoint = useCallback(
-    (point: Point2d): void => {
-      updateStrokes((current) => {
-        if (current.length === 0) {
-          return [[point]];
-        }
-
-        const next = [...current];
-        const lastStroke = next[next.length - 1] ?? [];
-        next[next.length - 1] = [...lastStroke, point];
-        return next;
-      });
-    },
-    [updateStrokes]
-  );
-
-  const beginKeyboardStroke = useCallback((): void => {
-    const point = { ...keyboardCursor };
-    updateStrokes((current) => [...current, [point]]);
-    setKeyboardDrawing(true);
-    setKeyboardStatus(
-      translateWithFallback(
-        'geometryDrawing.inRound.keyboard.started',
-        fallbackCopy.keyboard.started
-      )
-    );
-  }, [fallbackCopy.keyboard.started, keyboardCursor, translateWithFallback, updateStrokes]);
-
-  const finishKeyboardStroke = useCallback((): void => {
-    if (keyboardDrawing) {
-      appendKeyboardPoint({ ...keyboardCursor });
-    }
-    setKeyboardDrawing(false);
-    setKeyboardStatus(
-      translateWithFallback(
-        'geometryDrawing.inRound.keyboard.finished',
-        fallbackCopy.keyboard.finished
-      )
-    );
-  }, [
-    appendKeyboardPoint,
-    fallbackCopy.keyboard.finished,
-    keyboardCursor,
-    keyboardDrawing,
-    translateWithFallback,
-  ]);
-
-  const handleCanvasKeyDown = (event: React.KeyboardEvent<HTMLCanvasElement>): void => {
-    if (done || feedback?.kind === 'success' || feedback?.kind === 'error') return;
-
-    const key = event.key;
-    if (
-      key !== 'ArrowUp' &&
-      key !== 'ArrowDown' &&
-      key !== 'ArrowLeft' &&
-      key !== 'ArrowRight' &&
-      key !== 'Enter' &&
-      key !== ' ' &&
-      key !== 'Escape'
-    ) {
-      return;
-    }
-
-    event.preventDefault();
-
-    if (feedback?.kind === 'info') {
-      setFeedback(null);
-    }
-
-    if (key === 'Enter' || key === ' ') {
-      if (keyboardDrawing) {
-        finishKeyboardStroke();
-      } else {
-        beginKeyboardStroke();
-      }
-      return;
-    }
-
-    if (key === 'Escape') {
-      clearDrawing();
-      setKeyboardCursor(KEYBOARD_CURSOR_START);
-      setKeyboardStatus(
-        translateWithFallback(
-          'geometryDrawing.inRound.keyboard.cleared',
-          fallbackCopy.keyboard.cleared
-        )
-      );
-      return;
-    }
-
-    const delta =
-      key === 'ArrowUp'
-        ? { x: 0, y: -KEYBOARD_DRAW_STEP }
-        : key === 'ArrowDown'
-          ? { x: 0, y: KEYBOARD_DRAW_STEP }
-          : key === 'ArrowLeft'
-            ? { x: -KEYBOARD_DRAW_STEP, y: 0 }
-            : { x: KEYBOARD_DRAW_STEP, y: 0 };
-
-    const nextPoint = {
-      x: Math.max(12, Math.min(CANVAS_WIDTH - 12, keyboardCursor.x + delta.x)),
-      y: Math.max(12, Math.min(CANVAS_HEIGHT - 12, keyboardCursor.y + delta.y)),
-    };
-
-    setKeyboardCursor(nextPoint);
-    if (keyboardDrawing) {
-      appendKeyboardPoint(nextPoint);
-    }
   };
 
   const moveToNextRound = useCallback(
@@ -800,8 +648,10 @@ export default function GeometryDrawingGame({
         </KangurPracticeGameSummary>
       ) : (
         <>
-          <div aria-live='polite' aria-atomic='true' className='sr-only'>
-            {translateWithFallback(
+          <KangurDrawingStatusRegions
+            keyboardStatus={keyboardStatus}
+            keyboardStatusTestId='geometry-drawing-keyboard-status'
+            liveMessage={translateWithFallback(
               'geometryDrawing.inRound.liveRegion',
               fallbackCopy.liveRegion,
               {
@@ -811,15 +661,7 @@ export default function GeometryDrawingGame({
                 difficulty: resolvedDifficultyLabel,
               }
             )}
-          </div>
-          <div
-            aria-live='polite'
-            aria-atomic='true'
-            className='sr-only'
-            data-testid='geometry-drawing-keyboard-status'
-          >
-            {keyboardStatus}
-          </div>
+          />
           {shouldShowDifficultySelector ? (
             <KangurGlassPanel
               className='w-full rounded-[26px] !p-3'
@@ -927,128 +769,82 @@ export default function GeometryDrawingGame({
                 </p>
               </KangurInfoCard>
 
-              <KangurInfoCard
+              <KangurDrawingPracticeBoard
                 accent={boardAccent}
-                className={cn(
+                actionRow={
+                  <KangurDrawingActionRow
+                    clearDisabled={isResultLocked || (points.length === 0 && feedback === null)}
+                    clearLabel={translateWithFallback(
+                      'geometryDrawing.inRound.clear',
+                      fallbackCopy.clear
+                    )}
+                    feedback={feedback}
+                    onClear={clearDrawing}
+                    onPrimary={handleCheck}
+                    primaryDisabled={isResultLocked}
+                    primaryLabel={translateWithFallback(
+                      'geometryDrawing.inRound.check',
+                      fallbackCopy.check
+                    )}
+                  />
+                }
+                afterCanvas={
+                  <>
+                    <KangurDrawingKeyboardCursorOverlay
+                      accentClassName='border-emerald-400/80 bg-emerald-100/70 shadow-[0_0_0_3px_rgba(16,185,129,0.12)]'
+                      cursor={keyboardCursor}
+                      height={CANVAS_HEIGHT}
+                      isCoarsePointer={isCoarsePointer}
+                      isDrawing={keyboardDrawing}
+                      width={CANVAS_WIDTH}
+                    />
+                    {points.length === 0 ? (
+                      <KangurDrawingEmptyStateOverlay>
+                        <PencilRuler aria-hidden='true' className='mr-2 h-4 w-4' />
+                        {translateWithFallback(
+                          'geometryDrawing.inRound.drawHere',
+                          fallbackCopy.drawHere
+                        )}
+                      </KangurDrawingEmptyStateOverlay>
+                    ) : null}
+                  </>
+                }
+                ariaDescribedBy='geometry-drawing-hint geometry-drawing-input-help'
+                ariaKeyShortcuts='Enter Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape'
+                ariaLabel={translateWithFallback(
+                  'geometryDrawing.inRound.canvasAria',
+                  fallbackCopy.canvasAria,
+                  { shape: currentRound?.label ?? '' }
+                )}
+                boardClassName={cn(
                   'relative w-full overflow-hidden rounded-[26px] p-0',
                   !feedback && KANGUR_ACCENT_STYLES.teal.hoverCard,
                   isCoarsePointer && 'shadow-[0_18px_38px_-30px_rgba(14,165,233,0.35)]',
                   isPointerDrawing && 'ring-2 ring-sky-300/70 ring-offset-2 ring-offset-white'
                 )}
-                data-testid='geometry-drawing-board'
-                padding='sm'
-                tone={feedback ? 'accent' : 'neutral'}
-              >
-                <canvas
-                  aria-describedby='geometry-drawing-hint geometry-drawing-input-help'
-                  aria-label={translateWithFallback(
-                    'geometryDrawing.inRound.canvasAria',
-                    fallbackCopy.canvasAria,
-                    { shape: currentRound?.label ?? '' }
-                  )}
-                  aria-keyshortcuts='Enter Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape'
-                  data-testid='geometry-drawing-canvas'
-                  data-drawing-active={isPointerDrawing ? 'true' : 'false'}
-                  role='img'
-                  ref={canvasRef}
-                  tabIndex={0}
-                  width={CANVAS_WIDTH}
-                  height={CANVAS_HEIGHT}
-                  className='kangur-drawing-canvas w-full rounded-[20px] touch-none'
-                  style={{ background: 'var(--kangur-soft-card-background)' }}
-                  onKeyDown={handleCanvasKeyDown}
-                  onPointerDown={handlePointerDown}
-                  onPointerMove={handlePointerMove}
-                  onPointerUp={handlePointerUp}
-                  onPointerCancel={handlePointerUp}
-                  onPointerLeave={handlePointerUp}
-                />
-                <div
-                  aria-hidden='true'
-                  className={cn(
-                    'pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-emerald-400/80 bg-emerald-100/70 shadow-[0_0_0_3px_rgba(16,185,129,0.12)] transition-transform duration-75',
-                    isCoarsePointer ? 'h-5 w-5' : 'h-4 w-4',
-                    keyboardDrawing ? 'scale-110' : 'scale-100'
-                  )}
-                  style={{
-                    left: `${(keyboardCursor.x / CANVAS_WIDTH) * 100}%`,
-                    top: `${(keyboardCursor.y / CANVAS_HEIGHT) * 100}%`,
-                  }}
-                />
-                {points.length === 0 && (
-                  <div className='pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-semibold [color:var(--kangur-page-muted-text)]'>
-                    <PencilRuler aria-hidden='true' className='w-4 h-4 mr-2' />
-                    {translateWithFallback(
-                      'geometryDrawing.inRound.drawHere',
-                      fallbackCopy.drawHere
-                    )}
-                  </div>
-                )}
-              </KangurInfoCard>
-              <p
-                id='geometry-drawing-input-help'
-                className={cn(
-                  'text-xs text-center [color:var(--kangur-page-muted-text)]',
-                  isCoarsePointer ? 'block' : 'hidden sm:block'
-                )}
-                data-testid='geometry-drawing-input-help'
-              >
-                {translateWithFallback(
+                boardDataTestId='geometry-drawing-board'
+                canvasDataTestId='geometry-drawing-canvas'
+                canvasRef={canvasRef}
+                canvasStyle={{ background: 'var(--kangur-soft-card-background)' }}
+                feedback={feedback}
+                feedbackTestId='geometry-drawing-feedback'
+                height={CANVAS_HEIGHT}
+                helpId='geometry-drawing-input-help'
+                helpTestId='geometry-drawing-input-help'
+                helpText={translateWithFallback(
                   'geometryDrawing.inRound.inputHelp',
                   fallbackCopy.inputHelp
                 )}
-              </p>
-
-              <KangurPanelRow className='w-full'>
-                <KangurButton
-                  className='w-full sm:flex-1'
-                  disabled={isResultLocked || (points.length === 0 && feedback === null)}
-                  onClick={clearDrawing}
-                  type='button'
-                  size='lg'
-                  variant='surface'
-                >
-                  <Eraser aria-hidden='true' className='w-4 h-4' />
-                  {translateWithFallback('geometryDrawing.inRound.clear', fallbackCopy.clear)}
-                </KangurButton>
-                <KangurButton
-                  className={cn(
-                    'w-full sm:flex-1',
-                    feedback
-                      ? feedback.kind === 'success'
-                        ? 'bg-emerald-500 border-emerald-500 text-white'
-                        : feedback.kind === 'error'
-                          ? 'bg-rose-500 border-rose-500 text-white'
-                          : 'bg-amber-500 border-amber-500 text-white'
-                      : '[background:var(--kangur-soft-card-background)] [border-color:var(--kangur-soft-card-border)] [color:var(--kangur-page-text)]'
-                  )}
-                  disabled={isResultLocked}
-                  onClick={handleCheck}
-                  type='button'
-                  size='lg'
-                  variant='primary'
-                >
-                  {translateWithFallback('geometryDrawing.inRound.check', fallbackCopy.check)}
-                </KangurButton>
-              </KangurPanelRow>
-
-              {feedback && (
-                <p
-                  aria-live='polite'
-                  className={cn(
-                    'text-sm font-semibold text-center',
-                    feedback.kind === 'success'
-                      ? 'text-emerald-600'
-                      : feedback.kind === 'error'
-                        ? 'text-rose-600'
-                        : 'text-amber-600'
-                  )}
-                  data-testid='geometry-drawing-feedback'
-                  role='status'
-                >
-                  {feedback.text}
-                </p>
-              )}
+                isCoarsePointer={isCoarsePointer}
+                isPointerDrawing={isPointerDrawing}
+                onKeyDown={handleCanvasKeyDown}
+                onPointerCancel={handlePointerUp}
+                onPointerDown={handlePointerDown}
+                onPointerLeave={handlePointerUp}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                width={CANVAS_WIDTH}
+              />
             </KangurGlassPanel>
           </div>
         </>

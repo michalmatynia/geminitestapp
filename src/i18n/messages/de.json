@@ -1169,6 +1169,33 @@
       "lessonLinkedLabel": "Mit Lektionen verknüpft",
       "subjectsLabel": "Fächer"
     },
+    "implementationGroupsEyebrow": "Extraktionsstatus",
+    "implementationGroupsTitle": "Implementierungsbesitz",
+    "implementationGroupsDescription": "{count, plural, one {# Besitzspur wird aktuell im Engine-Katalog verfolgt.} other {# Besitzspuren werden aktuell im Engine-Katalog verfolgt.}}",
+    "implementationGroups": {
+      "eyebrow": "Besitzspur",
+      "groupDescription": "{count, plural, one {# Engine-Familie ist aktuell diesem Besitzstatus zugeordnet.} other {# Engine-Familien sind aktuell diesem Besitzstatus zugeordnet.}}",
+      "enginesLabel": "Engines",
+      "gamesLabel": "Spiele",
+      "runtimeComponentsLabel": "Runtime-Komponenten",
+      "lessonsLabel": "Lektionen",
+      "engineTitlesLabel": "Engine-Familien",
+      "lessonLinksLabel": "Lektionsverknüpfungen"
+    },
+    "drawingGroupsEyebrow": "Zeichenmechaniken",
+    "drawingGroupsTitle": "Zeichen-Engines",
+    "drawingGroupsDescription": "{count, plural, one {# Zeichen-Engine-Familie ist im aktuellen Katalog sichtbar.} other {# Zeichen-Engine-Familien sind im aktuellen Katalog sichtbar.}}",
+    "drawingGroups": {
+      "gamesLabel": "Spiele",
+      "variantsLabel": "Varianten",
+      "cohortsLabel": "Kohorten",
+      "lessonsLabel": "Lektionen",
+      "ownershipLabel": "Implementierungsbesitz",
+      "runtimeComponentsLabel": "Runtime-Komponenten",
+      "subjectsLabel": "Fächer",
+      "lessonLinksLabel": "Lektionsverknüpfungen",
+      "gameTitlesLabel": "Spieltitel"
+    },
     "filters": {
       "eyebrow": "Klassifizierungssteuerung",
       "title": "Katalog filtern",
@@ -1220,6 +1247,11 @@
         "aria": "Spiele nach Engine-Kategorie filtern",
         "all": "Alle Engine-Kategorien"
       },
+      "implementationOwnership": {
+        "label": "Implementierungsbesitz",
+        "aria": "Spiele nach Implementierungsbesitz filtern",
+        "all": "Alle Besitzstatus"
+      },
       "launchability": {
         "label": "Startpfad",
         "aria": "Spiele nach Startpfad filtern",
@@ -1265,6 +1297,11 @@
       "early_learning": "Frühes Lernen",
       "adult_learning": "Erwachsenenlernen"
     },
+    "implementationOwnership": {
+      "shared_runtime": "Gemeinsame Runtime",
+      "lesson_embedded": "In Lektion eingebettet",
+      "mixed_runtime": "Gemischte Runtime"
+    },
     "lessonCoverageStatuses": {
       "launchable": "startbar",
       "library_backed": "bibliotheksgestutzt",
@@ -1290,8 +1327,10 @@
       "singleChip": "Ein Spiel",
       "gamesLabel": "Spiele",
       "subjectsLabel": "Facher",
+      "ownershipLabel": "Implementierungsbesitz",
       "mechanicsLabel": "Mechaniken",
-      "surfacesLabel": "Oberflachen"
+      "surfacesLabel": "Oberflachen",
+      "runtimeComponentsLabel": "Runtime-Komponenten"
     },
     "variantGroups": {
       "surfaceLabel": "Variantenoberflache",

@@ -51,11 +51,11 @@ export const syncKangurCanvasContext = (
 
 export const resolveKangurCanvasPoint = (
   event: PointerLike,
-  canvas: HTMLCanvasElement,
+  surface: Pick<HTMLElement, 'getBoundingClientRect'> | Pick<SVGElement, 'getBoundingClientRect'>,
   logicalWidth: number,
   logicalHeight: number
 ): Point2d => {
-  const rect = canvas.getBoundingClientRect();
+  const rect = surface.getBoundingClientRect();
   const width = rect.width > 0 ? rect.width : logicalWidth;
   const height = rect.height > 0 ? rect.height : logicalHeight;
   const scaleX = logicalWidth / width;

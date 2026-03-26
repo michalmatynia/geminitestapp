@@ -1169,6 +1169,33 @@
       "lessonLinkedLabel": "Powiazane z lekcjami",
       "subjectsLabel": "Przedmioty"
     },
+    "implementationGroupsEyebrow": "Stan ekstrakcji",
+    "implementationGroupsTitle": "Wlasnosc implementacji",
+    "implementationGroupsDescription": "{count, plural, one {# tor wlasnosci jest teraz sledzony w katalogu silnikow.} few {# tory wlasnosci sa teraz sledzone w katalogu silnikow.} many {# torow wlasnosci jest teraz sledzonych w katalogu silnikow.} other {# torow wlasnosci jest teraz sledzonych w katalogu silnikow.}}",
+    "implementationGroups": {
+      "eyebrow": "Tor wlasnosci",
+      "groupDescription": "{count, plural, one {# rodzina silnika jest teraz przypisana do tego stanu wlasnosci.} few {# rodziny silnikow sa teraz przypisane do tego stanu wlasnosci.} many {# rodzin silnikow jest teraz przypisanych do tego stanu wlasnosci.} other {# rodzin silnikow jest teraz przypisanych do tego stanu wlasnosci.}}",
+      "enginesLabel": "Silniki",
+      "gamesLabel": "Gry",
+      "runtimeComponentsLabel": "Komponenty runtime",
+      "lessonsLabel": "Lekcje",
+      "engineTitlesLabel": "Rodziny silnikow",
+      "lessonLinksLabel": "Powiazania z lekcjami"
+    },
+    "drawingGroupsEyebrow": "Mechaniki rysowania",
+    "drawingGroupsTitle": "Silniki rysowania",
+    "drawingGroupsDescription": "{count, plural, one {# rodzina silnika rysowania widoczna w biezacym katalogu.} few {# rodziny silnikow rysowania widoczne w biezacym katalogu.} many {# rodzin silnikow rysowania widocznych w biezacym katalogu.} other {# rodzin silnikow rysowania widocznych w biezacym katalogu.}}",
+    "drawingGroups": {
+      "gamesLabel": "Gry",
+      "variantsLabel": "Warianty",
+      "cohortsLabel": "Kohorty",
+      "lessonsLabel": "Lekcje",
+      "ownershipLabel": "Wlasnosc implementacji",
+      "runtimeComponentsLabel": "Komponenty runtime",
+      "subjectsLabel": "Przedmioty",
+      "lessonLinksLabel": "Powiazania z lekcjami",
+      "gameTitlesLabel": "Tytuly gier"
+    },
     "filters": {
       "eyebrow": "Sterowanie klasyfikacja",
       "title": "Filtruj katalog",
@@ -1220,6 +1247,11 @@
         "aria": "Filtruj gry wedlug kategorii silnika",
         "all": "Wszystkie kategorie silnikow"
       },
+      "implementationOwnership": {
+        "label": "Wlasnosc implementacji",
+        "aria": "Filtruj gry wedlug wlasnosci implementacji",
+        "all": "Wszystkie stany wlasnosci"
+      },
       "launchability": {
         "label": "Sciezka uruchomienia",
         "aria": "Filtruj gry wedlug sciezki uruchomienia",
@@ -1265,6 +1297,11 @@
       "early_learning": "Wczesna nauka",
       "adult_learning": "Nauka doroslych"
     },
+    "implementationOwnership": {
+      "shared_runtime": "Wspolny runtime",
+      "lesson_embedded": "Osadzone w lekcji",
+      "mixed_runtime": "Mieszany runtime"
+    },
     "lessonCoverageStatuses": {
       "launchable": "uruchamialna",
       "library_backed": "w bibliotece",
@@ -1290,8 +1327,10 @@
       "singleChip": "Jedna gra",
       "gamesLabel": "Gry",
       "subjectsLabel": "Przedmioty",
+      "ownershipLabel": "Wlasnosc implementacji",
       "mechanicsLabel": "Mechaniki",
-      "surfacesLabel": "Powierzchnie"
+      "surfacesLabel": "Powierzchnie",
+      "runtimeComponentsLabel": "Komponenty runtime"
     },
     "variantGroups": {
       "surfaceLabel": "Powierzchnia wariantu",

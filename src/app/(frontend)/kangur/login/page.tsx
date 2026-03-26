@@ -16,8 +16,7 @@ export default async function Page({
   searchParams,
 }: KangurAliasLoginPageProps): Promise<JSX.Element> {
   const translations = await getTranslations('KangurPublic');
-  const shouldRedirectToCanonical =
-    shouldApplyFrontPageAppSelection() && process.env.NODE_ENV === 'production';
+  const shouldRedirectToCanonical = shouldApplyFrontPageAppSelection();
 
   if (shouldRedirectToCanonical) {
     const frontPageSetting = await getFrontPageSetting();

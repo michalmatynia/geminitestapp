@@ -4,30 +4,30 @@ import { useCallback, useId, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslations } from 'next-intl';
 
+import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
+import {
+  computeKangurTotalStrokeLength,
+  flattenKangurStrokePoints,
+} from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
+import { renderKangurDrawingStrokes } from '@/features/kangur/ui/components/drawing-engine/render';
+import { KangurTracingBoard } from '@/features/kangur/ui/components/drawing-engine/KangurTracingBoard';
+import { useKangurPointDrawingEngine } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingEngine';
 import {
   KangurButton,
   KangurGlassPanel,
   KangurHeadline,
-  KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KANGUR_STACK_ROOMY_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
-import { useKangurCanvasRedraw } from '@/features/kangur/ui/hooks/useKangurCanvasRedraw';
-import {
-  resolveKangurCanvasPoint,
-  syncKangurCanvasContext,
-} from '@/features/kangur/ui/services/drawing-canvas';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
-import { useKangurCanvasTouchLock } from '@/features/kangur/ui/hooks/useKangurCanvasTouchLock';
+import { syncKangurCanvasContext } from '@/features/kangur/ui/services/drawing-canvas';
 import type {
   KangurIntlTranslate,
   KangurMiniGameFeedbackState,
 } from '@/features/kangur/ui/types';
-import type { Point2d } from '@/shared/contracts/geometry';
 import type { TranslationValues } from 'use-intl';
 
 const CANVAS_WIDTH = 360;
@@ -88,21 +88,6 @@ const translateAlphabetBasics = (
 ): string => {
   const translated = translate(key, values);
   return translated === key || translated.endsWith(`.${key}`) ? fallback : translated;
-};
-
-const flattenPoints = (strokes: Point2d[][]): Point2d[] =>
-  strokes.flatMap((stroke) => stroke);
-
-const distance = (a: Point2d, b: Point2d): number =>
-  Math.hypot(a.x - b.x, a.y - b.y);
-
-const computeStrokeLength = (stroke: Point2d[]): number => {
-  if (stroke.length < 2) return 0;
-  let total = 0;
-  for (let i = 1; i < stroke.length; i += 1) {
-    total += distance(stroke[i - 1] as Point2d, stroke[i] as Point2d);
-  }
-  return total;
 };
 
 export function AlphabetBasicsGuideSurface({
@@ -193,11 +178,8 @@ export function AlphabetBasicsGuideSurface({
 export default function AlphabetBasicsLesson(): React.JSX.Element {
   const translations = useTranslations('KangurStaticLessons.alphabetBasics');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const isDrawingRef = useRef(false);
 
   const [roundIndex, setRoundIndex] = useState(0);
-  const [strokes, setStrokes] = useState<Point2d[][]>([]);
-  const [isPointerDrawing, setIsPointerDrawing] = useState(false);
   const [feedback, setFeedback] = useState<KangurMiniGameFeedbackState>(null);
   const isCoarsePointer = useKangurCoarsePointer();
 
@@ -208,18 +190,52 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
     `rounds.${currentRound.id}.word`,
     currentRound.word
   );
-  const points = useMemo(() => flattenPoints(strokes), [strokes]);
-  const strokeLength = useMemo(
-    () => strokes.reduce((sum, stroke) => sum + computeStrokeLength(stroke), 0),
-    [strokes]
-  );
-
   const minPointDistance = isCoarsePointer ? 5 : 2;
   const minDrawingPoints = isCoarsePointer ? 12 : BASE_MIN_DRAWING_POINTS;
   const minDrawingLength = isCoarsePointer ? 120 : BASE_MIN_DRAWING_LENGTH;
   const strokeWidth = isCoarsePointer ? 14 : 10;
   const guideStrokeWidth = isCoarsePointer ? 18 : 14;
   const glowStrokeWidth = isCoarsePointer ? 12 : 8;
+  const {
+    clearStrokes,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    isPointerDrawing,
+    strokes,
+  } = useKangurPointDrawingEngine({
+    canvasRef,
+    enabled: feedback?.kind !== 'success',
+    logicalHeight: CANVAS_HEIGHT,
+    logicalWidth: CANVAS_WIDTH,
+    minPointDistance,
+    onPointerStart: () => {
+      if (feedback?.kind === 'error') {
+        setFeedback(null);
+      }
+    },
+    redraw: (nextStrokes) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = syncKangurCanvasContext(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
+      if (!ctx) return;
+
+      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      renderKangurDrawingStrokes(
+        ctx,
+        nextStrokes.map((points) => ({ meta: null, points })),
+        () => ({
+          lineWidth: strokeWidth,
+          shadowBlur: isCoarsePointer ? 8 : 6,
+          shadowColor: 'rgba(15, 23, 42, 0.12)',
+          strokeStyle: '#0f172a',
+        })
+      );
+    },
+    touchLockEnabled: isCoarsePointer,
+  });
+  const points = useMemo(() => flattenKangurStrokePoints(strokes), [strokes]);
+  const strokeLength = useMemo(() => computeKangurTotalStrokeLength(strokes), [strokes]);
   const drawHint = isCoarsePointer
     ? translateAlphabetBasics(
         translations,
@@ -231,13 +247,20 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
         'drawHint.fine',
         'Rysuj palcem lub myszką'
       );
+  const traceHint = translateAlphabetBasics(
+    translations,
+    'footer.traceHint',
+    'Rysuj po grubych liniach i nie spiesz się.'
+  );
   const touchHint = isPointerDrawing
-    ? translateAlphabetBasics(
-        translations,
-        'footer.traceHint',
-        'Rysuj po grubych liniach i nie spiesz się.'
-      )
+    ? traceHint
     : drawHint;
+  const pointsLabel = translateAlphabetBasics(
+    translations,
+    'footer.points',
+    '{count} punktów',
+    { count: points.length }
+  );
   const canvasSurfaceStyle = useMemo<CSSProperties>(
     () =>
       ({
@@ -248,111 +271,10 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
     [guideStrokeWidth, glowStrokeWidth]
   );
 
-  const redrawCanvas = useCallback((nextStrokes: Point2d[][]): void => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = syncKangurCanvasContext(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    ctx.lineWidth = strokeWidth;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = '#0f172a';
-    ctx.shadowColor = 'rgba(15, 23, 42, 0.12)';
-    ctx.shadowBlur = isCoarsePointer ? 8 : 6;
-
-    for (const stroke of nextStrokes) {
-      if (stroke.length === 0) continue;
-      ctx.beginPath();
-      const first = stroke[0];
-      if (!first) continue;
-      ctx.moveTo(first.x, first.y);
-      for (let i = 1; i < stroke.length; i += 1) {
-        const point = stroke[i];
-        if (!point) continue;
-        ctx.lineTo(point.x, point.y);
-      }
-      ctx.stroke();
-    }
-  }, [isCoarsePointer, strokeWidth]);
-
-  useKangurCanvasRedraw({
-    canvasRef,
-    redraw: () => redrawCanvas(strokes),
-  });
-  useKangurCanvasTouchLock(canvasRef, { enabled: isCoarsePointer });
-
-  const updateStrokes = useCallback(
-    (updater: (current: Point2d[][]) => Point2d[][]): void => {
-      setStrokes((current) => {
-        const next = updater(current);
-        redrawCanvas(next);
-        return next;
-      });
-    },
-    [redrawCanvas]
-  );
-
   const clearDrawing = useCallback((): void => {
-    setStrokes(() => {
-      redrawCanvas([]);
-      return [];
-    });
+    clearStrokes();
     setFeedback(null);
-  }, [redrawCanvas]);
-
-  const resolvePoint = useCallback(
-    (event: React.PointerEvent<HTMLCanvasElement>): Point2d => {
-      const canvas = canvasRef.current;
-      if (!canvas) return { x: 0, y: 0 };
-      return resolveKangurCanvasPoint(event, canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
-    },
-    []
-  );
-
-  const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    if (feedback?.kind === 'success') return;
-    event.preventDefault();
-    if (feedback?.kind === 'error') {
-      setFeedback(null);
-    }
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const point = resolvePoint(event);
-    isDrawingRef.current = true;
-    setIsPointerDrawing(true);
-    canvas.setPointerCapture(event.pointerId);
-    updateStrokes((current) => [...current, [point]]);
-  };
-
-  const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    if (!isDrawingRef.current || feedback?.kind === 'success') return;
-    event.preventDefault();
-    const point = resolvePoint(event);
-    updateStrokes((current) => {
-      if (current.length === 0) return current;
-      const next = [...current];
-      const lastStroke = next[next.length - 1] ?? [];
-      const lastPoint = lastStroke[lastStroke.length - 1];
-      if (lastPoint && distance(lastPoint, point) < minPointDistance) {
-        return current;
-      }
-      next[next.length - 1] = [...lastStroke, point];
-      return next;
-    });
-  };
-
-  const handlePointerUp = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    if (!isDrawingRef.current) return;
-    event.preventDefault();
-    const canvas = canvasRef.current;
-    if (canvas) {
-      canvas.releasePointerCapture(event.pointerId);
-    }
-    isDrawingRef.current = false;
-    setIsPointerDrawing(false);
-  };
+  }, [clearStrokes]);
 
   const evaluateDrawing = (): KangurMiniGameFeedbackState => {
     if (points.length < minDrawingPoints) {
@@ -457,70 +379,38 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
             </KangurStatusChip>
           </div>
 
-          {isCoarsePointer ? (
-            <KangurInfoCard accent='sky' className='w-full rounded-[20px] text-sm' padding='sm' tone='neutral'>
-              <p
-                className='font-semibold text-slate-600'
-                data-testid='alphabet-basics-touch-hint'
-                role='status'
-                aria-live='polite'
-              >
-                {touchHint}
-              </p>
-            </KangurInfoCard>
-          ) : null}
-
-            <div
-              className={`relative w-full overflow-hidden rounded-[28px] border border-slate-200/70 bg-white/80 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.45)] ${
-                isPointerDrawing ? 'ring-2 ring-sky-300/70 ring-offset-2 ring-offset-white' : ''
-              }`}
-              style={canvasSurfaceStyle}
-              data-testid='alphabet-basics-canvas-shell'
-            >
-            <AlphabetBasicsGuideSurface
-              guideColor={currentRound.guideColor}
-              glowColor={currentRound.glowColor}
-              letter={currentRound.label}
-              paths={currentRound.paths}
-            />
-
-            <canvas
-              ref={canvasRef}
-              width={CANVAS_WIDTH}
-              height={CANVAS_HEIGHT}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerCancel={handlePointerUp}
-              onPointerLeave={handlePointerUp}
-              data-drawing-active={isPointerDrawing ? 'true' : 'false'}
-              className='kangur-drawing-canvas relative z-10 h-full w-full touch-none'
-              aria-label={translateAlphabetBasics(
-                translations,
-                'canvasAria',
-                'Rysuj litere {letter}',
-                { letter: currentRound.label }
-              )}
-            />
-          </div>
-
-          <div className='flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600'>
-            <span>
-              {translateAlphabetBasics(
-                translations,
-                'footer.traceHint',
-                'Rysuj po grubych liniach i nie spiesz się.'
-              )}
-            </span>
-            <span>
-              {translateAlphabetBasics(
-                translations,
-                'footer.points',
-                '{count} punktów',
-                { count: points.length }
-              )}
-            </span>
-          </div>
+          <KangurTracingBoard
+            canvasAriaLabel={translateAlphabetBasics(
+              translations,
+              'canvasAria',
+              'Rysuj litere {letter}',
+              { letter: currentRound.label }
+            )}
+            canvasRef={canvasRef}
+            footerHint={traceHint}
+            footerPointsLabel={pointsLabel}
+            guideSurface={
+              <AlphabetBasicsGuideSurface
+                guideColor={currentRound.guideColor}
+                glowColor={currentRound.glowColor}
+                letter={currentRound.label}
+                paths={currentRound.paths}
+              />
+            }
+            height={CANVAS_HEIGHT}
+            isCoarsePointer={isCoarsePointer}
+            isPointerDrawing={isPointerDrawing}
+            onPointerCancel={handlePointerUp}
+            onPointerDown={handlePointerDown}
+            onPointerLeave={handlePointerUp}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            shellDataTestId='alphabet-basics-canvas-shell'
+            shellStyle={canvasSurfaceStyle}
+            touchHint={touchHint}
+            touchHintTestId='alphabet-basics-touch-hint'
+            width={CANVAS_WIDTH}
+          />
         </div>
       </KangurGlassPanel>
 

@@ -233,6 +233,24 @@ describe('KangurFeatureRouteShell', () => {
     });
   });
 
+  it('uses the main page behind the root-owned canonical login route so the shell can show the modal', () => {
+    usePathnameMock.mockReturnValue('/login');
+
+    render(<KangurFeatureRouteShell basePath='/' />);
+
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'Game',
+      requestedPath: '/',
+      requestedHref: '/login',
+      basePath: '/',
+      embedded: false,
+    });
+    expect(setKangurClientObservabilityContextMock).toHaveBeenCalledWith({
+      pageKey: 'Game',
+      requestedPath: '/',
+    });
+  });
+
   it('clears the client observability context on unmount', () => {
     const { unmount } = render(<KangurFeatureRouteShell />);
 

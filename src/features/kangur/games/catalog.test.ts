@@ -106,6 +106,11 @@ describe('kangur game catalog', () => {
       'early_learning',
       'adult_learning',
     ]);
+    expect(facets.implementationOwnerships).toEqual([
+      'shared_runtime',
+      'mixed_runtime',
+      'lesson_embedded',
+    ]);
     expect(facets.engines.some((engine) => engine.id === 'classification-engine')).toBe(true);
     expect(facets.mechanics).toContain('logic_relation');
   });
@@ -151,6 +156,21 @@ describe('kangur game catalog', () => {
       expect.arrayContaining(['agentic_loop_sketch', 'agentic_milestone_flow'])
     );
     expect(filtered.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('filters catalog entries by implementation ownership', () => {
+    const filtered = filterKangurGameCatalogEntries(createKangurGameCatalogEntries(), {
+      implementationOwnership: 'lesson_embedded',
+    });
+
+    expect(filtered.map((entry) => entry.game.id)).toEqual(
+      expect.arrayContaining([
+        'art_color_harmony_studio',
+        'alphabet_first_words',
+        'alphabet_letter_matching',
+      ])
+    );
+    expect(filtered.some((entry) => entry.game.id === 'clock_training')).toBe(false);
   });
 
   it('includes six-year-old and grown-up games in the shared catalog', () => {

@@ -136,6 +136,35 @@ describe('FrontendPublicOwnerShell', () => {
     });
   });
 
+  it('lets the canonical public login route render its children when Kangur owns the root', () => {
+    usePathnameMock.mockReturnValue('/login');
+
+    render(
+      <FrontendPublicOwnerShell publicOwner='kangur'>
+        <div data-testid='frontend-children'>children</div>
+      </FrontendPublicOwnerShell>
+    );
+
+    expect(screen.getByTestId('frontend-children')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-feature-route-shell')).not.toBeInTheDocument();
+    expect(frontendPublicOwnerKangurShellMock).not.toHaveBeenCalled();
+  });
+
+  it('lets the localized canonical public login route render its children when Kangur owns the root', () => {
+    window.history.replaceState({}, '', '/en/login?callbackUrl=%2Fen%2Ftests');
+    usePathnameMock.mockReturnValue('/en/login');
+
+    render(
+      <FrontendPublicOwnerShell publicOwner='kangur'>
+        <div data-testid='frontend-children'>children</div>
+      </FrontendPublicOwnerShell>
+    );
+
+    expect(screen.getByTestId('frontend-children')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-feature-route-shell')).not.toBeInTheDocument();
+    expect(frontendPublicOwnerKangurShellMock).not.toHaveBeenCalled();
+  });
+
   it('falls back to the real browser pathname when the router pathname is transiently unavailable on root-owned routes', async () => {
     window.history.replaceState({}, '', '/en/lessons');
     usePathnameMock.mockReturnValue(null);

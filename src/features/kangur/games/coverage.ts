@@ -1,11 +1,52 @@
-import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
+import type {
+  KangurLessonAgeGroup,
+  KangurLessonComponentId,
+  KangurLessonSubject,
+} from '@/features/kangur/shared/contracts/kangur';
+import {
+  KANGUR_AGE_GROUPS,
+  KANGUR_SUBJECTS,
+} from '@/features/kangur/lessons/lesson-catalog';
 import { AGENTIC_CODING_LESSON_COMPONENT_ORDER } from '@/features/kangur/lessons/subjects/agentic-coding/catalog';
 
+import type { KangurGameCatalogEntry } from './catalog';
 import { getKangurGameCatalogEntriesForLessonComponent } from './catalog';
+
+export type KangurGameLibraryLessonCoverageStatus =
+  | 'launchable'
+  | 'library_backed'
+  | 'selector_fallback'
+  | 'lesson_only';
+
+export type KangurGameLibraryCoverageGroupId =
+  | 'library_backed'
+  | 'launchable'
+  | 'selector_fallback';
+
+export type KangurGameLibraryCoverageGroup = {
+  ageGroups: KangurLessonAgeGroup[];
+  componentIds: KangurLessonComponentId[];
+  coveredComponentIds: KangurLessonComponentId[];
+  entries: KangurGameCatalogEntry[];
+  id: KangurGameLibraryCoverageGroupId;
+  subjects: KangurLessonSubject[];
+  uncoveredComponentIds: KangurLessonComponentId[];
+};
 
 const getUniqueLessonComponentIds = (
   ...groups: ReadonlyArray<readonly KangurLessonComponentId[]>
 ): KangurLessonComponentId[] => Array.from(new Set(groups.flat()));
+
+const unique = <T>(values: T[]): T[] => Array.from(new Set(values));
+
+const sortGameEntries = (left: KangurGameCatalogEntry, right: KangurGameCatalogEntry): number =>
+  left.game.sortOrder - right.game.sortOrder || left.game.title.localeCompare(right.game.title);
+
+const getAgeGroupSortOrder = (ageGroup: KangurLessonAgeGroup): number =>
+  KANGUR_AGE_GROUPS.findIndex((entry) => entry.id === ageGroup);
+
+const getSubjectSortOrder = (subject: KangurLessonSubject): number =>
+  KANGUR_SUBJECTS.findIndex((entry) => entry.id === subject);
 
 export const KANGUR_SIX_YEAR_OLD_GAME_LIBRARY_LESSON_COMPONENT_IDS = [
   'alphabet_basics',
@@ -113,3 +154,84 @@ export const shouldRouteKangurLessonComponentToOperationSelector = (
     componentId &&
       OPERATION_SELECTOR_FALLBACK_COMPONENT_ID_SET.has(componentId as KangurLessonComponentId)
   );
+
+export const resolveKangurGameLibraryLessonCoverageStatus = (
+  componentId: KangurLessonComponentId
+): KangurGameLibraryLessonCoverageStatus => {
+  if (hasKangurLaunchableGameCoverageForLessonComponent(componentId)) {
+    return 'launchable';
+  }
+
+  if (shouldRouteKangurLessonComponentToOperationSelector(componentId)) {
+    return 'selector_fallback';
+  }
+
+  if (
+    hasKangurGameLibraryCoverageForLessonComponent(componentId) ||
+    isKangurGameLibraryLessonComponent(componentId)
+  ) {
+    return 'library_backed';
+  }
+
+  return 'lesson_only';
+};
+
+const createKangurGameLibraryCoverageGroup = (
+  id: KangurGameLibraryCoverageGroupId,
+  componentIds: readonly KangurLessonComponentId[],
+  catalogEntries: KangurGameCatalogEntry[]
+): KangurGameLibraryCoverageGroup => {
+  const componentIdSet = new Set<KangurLessonComponentId>(componentIds);
+  const entries = catalogEntries
+    .filter((entry) =>
+      entry.game.lessonComponentIds.some((componentId) => componentIdSet.has(componentId))
+    )
+    .slice()
+    .sort(sortGameEntries);
+  const coveredComponentIdSet = new Set(
+    entries.flatMap((entry) =>
+      entry.game.lessonComponentIds.filter((componentId) => componentIdSet.has(componentId))
+    )
+  );
+  const coveredComponentIds = componentIds.filter((componentId) =>
+    coveredComponentIdSet.has(componentId)
+  );
+
+  return {
+    id,
+    componentIds: [...componentIds],
+    coveredComponentIds,
+    uncoveredComponentIds: componentIds.filter(
+      (componentId) => !coveredComponentIdSet.has(componentId)
+    ),
+    entries,
+    ageGroups: unique(
+      entries
+        .map((entry) => entry.game.ageGroup)
+        .filter((ageGroup): ageGroup is KangurLessonAgeGroup => Boolean(ageGroup))
+    ).sort((left, right) => getAgeGroupSortOrder(left) - getAgeGroupSortOrder(right)),
+    subjects: unique(entries.map((entry) => entry.game.subject)).sort(
+      (left, right) => getSubjectSortOrder(left) - getSubjectSortOrder(right)
+    ),
+  };
+};
+
+export const createKangurGameLibraryCoverageGroups = (
+  catalogEntries: KangurGameCatalogEntry[]
+): KangurGameLibraryCoverageGroup[] => [
+  createKangurGameLibraryCoverageGroup(
+    'library_backed',
+    KANGUR_GAME_LIBRARY_LESSON_COMPONENT_IDS,
+    catalogEntries
+  ),
+  createKangurGameLibraryCoverageGroup(
+    'launchable',
+    KANGUR_LAUNCHABLE_GAME_LIBRARY_LESSON_COMPONENT_IDS,
+    catalogEntries
+  ),
+  createKangurGameLibraryCoverageGroup(
+    'selector_fallback',
+    KANGUR_OPERATION_SELECTOR_FALLBACK_LESSON_COMPONENT_IDS,
+    catalogEntries
+  ),
+];

@@ -3,6 +3,7 @@ import type {
   KangurGameEngineCategory,
   KangurGameEngineDefinition,
   KangurGameEngineId,
+  KangurGameEngineImplementationOwnership,
   KangurGameId,
   KangurGameMechanic,
   KangurGameStatus,
@@ -10,7 +11,10 @@ import type {
   KangurGameVariant,
   KangurGameVariantSurface,
 } from '@/shared/contracts/kangur-games';
-import { KANGUR_GAME_ENGINE_CATEGORIES } from '@/shared/contracts/kangur-games';
+import {
+  KANGUR_GAME_ENGINE_CATEGORIES,
+  KANGUR_GAME_ENGINE_IMPLEMENTATION_OWNERSHIPS,
+} from '@/shared/contracts/kangur-games';
 import type {
   KangurLessonAgeGroup,
   KangurLessonActivityId,
@@ -19,6 +23,7 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur';
 
 import { createDefaultKangurGameEngines } from './engines';
+import { getOptionalKangurGameEngineImplementation } from './engine-implementations';
 import { createDefaultKangurGames } from './defaults';
 
 export const KANGUR_LAUNCHABLE_GAME_SCREENS = [
@@ -81,6 +86,7 @@ export type KangurGameCatalogFilter = {
   mechanic?: KangurGameMechanic;
   engineId?: KangurGameEngineId;
   engineCategory?: KangurGameEngineCategory;
+  implementationOwnership?: KangurGameEngineImplementationOwnership;
   variantSurface?: KangurGameVariantSurface;
   variantStatus?: KangurGameStatus;
   launchableOnly?: boolean;
@@ -97,6 +103,7 @@ export type KangurGameCatalogFacets = {
   mechanics: KangurGameMechanic[];
   engineIds: KangurGameEngineId[];
   engineCategories: KangurGameEngineCategory[];
+  implementationOwnerships: KangurGameEngineImplementationOwnership[];
   engines: KangurGameEngineDefinition[];
 };
 
@@ -113,6 +120,11 @@ const getSortedEngineCategories = (
   values: KangurGameEngineCategory[]
 ): KangurGameEngineCategory[] =>
   KANGUR_GAME_ENGINE_CATEGORIES.filter((category) => values.includes(category));
+
+const getSortedImplementationOwnerships = (
+  values: KangurGameEngineImplementationOwnership[]
+): KangurGameEngineImplementationOwnership[] =>
+  KANGUR_GAME_ENGINE_IMPLEMENTATION_OWNERSHIPS.filter((ownership) => values.includes(ownership));
 
 const getUniqueEngines = (
   entries: KangurGameCatalogEntry[]
@@ -237,6 +249,14 @@ export const filterKangurGameCatalogEntries = (
     next = next.filter((entry) => entry.engine?.category === filter.engineCategory);
   }
 
+  if (filter?.implementationOwnership) {
+    next = next.filter(
+      (entry) =>
+        getOptionalKangurGameEngineImplementation(entry.game.engineId)?.ownership ===
+        filter.implementationOwnership
+    );
+  }
+
   if (filter?.variantSurface) {
     next = next.filter((entry) =>
       entry.game.variants.some((variant) => variant.surface === filter.variantSurface)
@@ -273,6 +293,14 @@ export const getKangurGameCatalogFacets = (
   engineCategories: getSortedEngineCategories(
     getUniqueValues(
       entries.flatMap((entry) => (entry.engine?.category ? [entry.engine.category] : []))
+    )
+  ),
+  implementationOwnerships: getSortedImplementationOwnerships(
+    getUniqueValues(
+      entries.flatMap((entry) => {
+        const ownership = getOptionalKangurGameEngineImplementation(entry.game.engineId)?.ownership;
+        return ownership ? [ownership] : [];
+      })
     )
   ),
   engines: getUniqueEngines(entries),

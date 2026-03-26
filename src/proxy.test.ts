@@ -259,9 +259,21 @@ describe('proxy api routing', () => {
     const response = await Promise.resolve(proxy(request as never, { params: {} }));
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('x-middleware-rewrite')).toBe(
-      'http://localhost/pl/products/123'
-    );
+    expect(response.headers.get('x-middleware-next')).toBe('1');
+    expect(response.headers.get('location')).toBeNull();
+    expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes the default-locale root route through without rewriting it to a locale-prefixed alias', async () => {
+    const request = createRequest('http://localhost/', {
+      localeCookie: 'pl',
+    });
+
+    const response = await Promise.resolve(proxy(request as never, { params: {} }));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('x-middleware-next')).toBe('1');
+    expect(response.headers.get('x-middleware-rewrite')).toBeNull();
     expect(response.headers.get('location')).toBeNull();
     expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
   });

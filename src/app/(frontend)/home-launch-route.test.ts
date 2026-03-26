@@ -115,4 +115,21 @@ describe('frontend home launch route', () => {
     expect(redirectMock).toHaveBeenCalledWith('kangur://');
     expect(getCmsRepositoryMock).not.toHaveBeenCalled();
   });
+
+  it('renders the Kangur SSR skeleton on localized home routes when the mobile web route is configured', async () => {
+    getKangurConfiguredLaunchTargetMock.mockResolvedValue({
+      route: 'web_mobile_view',
+      href: '/',
+      fallbackHref: '/',
+    });
+
+    const { default: LocalizedHome } = await import('@/app/[locale]/(frontend)/page');
+    const page = await LocalizedHome({
+      params: Promise.resolve({ locale: 'pl' }),
+    });
+
+    expect(page).toMatchObject({ type: kangurSsrSkeletonMock });
+    expect(redirectMock).not.toHaveBeenCalled();
+    expect(getCmsRepositoryMock).not.toHaveBeenCalled();
+  });
 });

@@ -32,6 +32,7 @@ export const getKangurGameVariantRepository = async (): Promise<KangurGameVarian
           mechanic: input?.mechanic,
           engineId: input?.engineId,
           engineCategory: input?.engineCategory,
+          implementationOwnership: input?.implementationOwnership,
           launchableOnly: input?.launchableOnly,
         });
 
@@ -56,6 +57,7 @@ export const getKangurGameVariantRepository = async (): Promise<KangurGameVarian
           mechanic: input?.mechanic ?? null,
           engineId: input?.engineId ?? null,
           engineCategory: input?.engineCategory ?? null,
+          implementationOwnership: input?.implementationOwnership ?? null,
           variantSurface: input?.variantSurface ?? null,
           variantStatus: input?.variantStatus ?? null,
           launchableOnly: input?.launchableOnly ?? false,

@@ -56,4 +56,22 @@ describe('kangur game variants', () => {
     );
     expect(filtered.length).toBeGreaterThanOrEqual(5);
   });
+
+  it('filters variants by implementation ownership', () => {
+    const filtered = filterKangurGameVariantCatalogEntries(
+      createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries()),
+      {
+        implementationOwnership: 'mixed_runtime',
+      }
+    );
+
+    expect(filtered.map((entry) => entry.game.id)).toEqual(
+      expect.arrayContaining([
+        'alphabet_letter_order',
+        'art_shape_rotation_puzzle',
+        'geometry_shape_spotter',
+      ])
+    );
+    expect(filtered.some((entry) => entry.game.id === 'clock_training')).toBe(false);
+  });
 });

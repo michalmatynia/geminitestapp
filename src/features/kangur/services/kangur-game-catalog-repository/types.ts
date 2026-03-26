@@ -10,6 +10,7 @@ import type {
 import type {
   KangurGameEngineCategory,
   KangurGameEngineId,
+  KangurGameEngineImplementationOwnership,
   KangurGameMechanic,
   KangurGameStatus,
   KangurGameSurface,
@@ -25,6 +26,7 @@ export type KangurGameCatalogListInput = {
   mechanic?: KangurGameMechanic;
   engineId?: KangurGameEngineId;
   engineCategory?: KangurGameEngineCategory;
+  implementationOwnership?: KangurGameEngineImplementationOwnership;
   variantSurface?: KangurGameVariantSurface;
   variantStatus?: KangurGameStatus;
   launchableOnly?: boolean;

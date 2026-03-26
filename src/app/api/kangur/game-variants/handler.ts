@@ -4,6 +4,7 @@ import { getKangurGameVariantRepository } from '@/features/kangur/services/kangu
 import {
   kangurGameEngineCategorySchema,
   kangurGameEngineIdSchema,
+  kangurGameEngineImplementationOwnershipSchema,
   kangurGameMechanicSchema,
   kangurGameStatusSchema,
   kangurGameSurfaceSchema,
@@ -38,6 +39,9 @@ export async function getKangurGameVariantsHandler(
     engineId: query.engineId ? kangurGameEngineIdSchema.parse(query.engineId) : undefined,
     engineCategory: query.engineCategory
       ? kangurGameEngineCategorySchema.parse(query.engineCategory)
+      : undefined,
+    implementationOwnership: query.implementationOwnership
+      ? kangurGameEngineImplementationOwnershipSchema.parse(query.implementationOwnership)
       : undefined,
     variantSurface: query.variantSurface
       ? kangurGameVariantSurfaceSchema.parse(query.variantSurface)

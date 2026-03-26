@@ -3,6 +3,11 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import { auth } from '@/features/auth/edge';
 import { siteRouting } from '@/i18n/routing';
+import {
+  getDefaultSiteLocaleCode,
+  getPathLocale,
+  resolvePreferredSiteLocale,
+} from '@/shared/lib/i18n/site-locale';
 import { CSRF_COOKIE_NAME, ensureCsrfCookie } from '@/shared/lib/security/csrf';
 
 const intlMiddleware = createIntlMiddleware(siteRouting);
@@ -32,9 +37,30 @@ const isAdminRequest = (pathname: string): boolean =>
 const isSafePageMethod = (request: NextRequest): boolean =>
   request.method === 'GET' || request.method === 'HEAD';
 
+const shouldBypassIntlRewriteForDefaultLocale = (request: NextRequest): boolean => {
+  const pathname = request.nextUrl.pathname;
+  if (getPathLocale(pathname)) {
+    return false;
+  }
+
+  const localeCookieName =
+    siteRouting.localeCookie === false ? null : siteRouting.localeCookie?.name ?? 'NEXT_LOCALE';
+  const resolvedLocale = resolvePreferredSiteLocale({
+    pathname,
+    cookieLocale: localeCookieName ? request.cookies.get(localeCookieName)?.value ?? null : null,
+    acceptLanguage: request.headers.get('accept-language'),
+  });
+
+  return resolvedLocale === getDefaultSiteLocaleCode();
+};
+
 const resolvePublicLocaleResponse = (request: NextRequest): NextResponse | null => {
   if (!isSafePageMethod(request)) {
     return null;
+  }
+
+  if (shouldBypassIntlRewriteForDefaultLocale(request)) {
+    return baseProxy(request);
   }
 
   return finalizeResponse(request, intlMiddleware(request));

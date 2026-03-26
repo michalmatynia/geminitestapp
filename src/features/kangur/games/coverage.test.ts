@@ -7,11 +7,14 @@ import {
   KANGUR_OPERATION_SELECTOR_FALLBACK_LESSON_COMPONENT_IDS,
   KANGUR_SIX_YEAR_OLD_GAME_LIBRARY_LESSON_COMPONENT_IDS,
   KANGUR_TEN_YEAR_OLD_GAME_LIBRARY_LESSON_COMPONENT_IDS,
+  createKangurGameLibraryCoverageGroups,
   hasKangurGameLibraryCoverageForLessonComponent,
   hasKangurLaunchableGameCoverageForLessonComponent,
   isKangurGameLibraryLessonComponent,
+  resolveKangurGameLibraryLessonCoverageStatus,
   shouldRouteKangurLessonComponentToOperationSelector,
 } from './coverage';
+import { createKangurGameCatalogEntries } from './catalog';
 
 describe('kangur game coverage', () => {
   it('keeps game-library lesson component ids unique across cohorts', () => {
@@ -72,6 +75,38 @@ describe('kangur game coverage', () => {
     expect(shouldRouteKangurLessonComponentToOperationSelector('art_colors_harmony')).toBe(true);
 
     expect(KANGUR_OPERATION_SELECTOR_FALLBACK_LESSON_COMPONENT_IDS).toEqual([
+      'art_colors_harmony',
+      'art_shapes_basic',
+      'music_diatonic_scale',
+    ]);
+  });
+
+  it('resolves lesson coverage status from shared coverage policy', () => {
+    expect(resolveKangurGameLibraryLessonCoverageStatus('clock')).toBe('launchable');
+    expect(resolveKangurGameLibraryLessonCoverageStatus('geometry_shape_recognition')).toBe(
+      'library_backed'
+    );
+    expect(resolveKangurGameLibraryLessonCoverageStatus('art_shapes_basic')).toBe(
+      'selector_fallback'
+    );
+    expect(resolveKangurGameLibraryLessonCoverageStatus('webdev_react_components')).toBe(
+      'lesson_only'
+    );
+  });
+
+  it('builds shared coverage groups from the game catalog', () => {
+    const coverageGroups = createKangurGameLibraryCoverageGroups(
+      createKangurGameCatalogEntries()
+    );
+
+    expect(coverageGroups.map((group) => group.id)).toEqual([
+      'library_backed',
+      'launchable',
+      'selector_fallback',
+    ]);
+    expect(coverageGroups[0]?.uncoveredComponentIds).toEqual([]);
+    expect(coverageGroups[1]?.uncoveredComponentIds).toEqual([]);
+    expect(coverageGroups[2]?.coveredComponentIds).toEqual([
       'art_colors_harmony',
       'art_shapes_basic',
       'music_diatonic_scale',

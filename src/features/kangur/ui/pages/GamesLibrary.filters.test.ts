@@ -21,6 +21,7 @@ describe('GamesLibrary filters', () => {
         variantStatus: 'active',
         engineId: 'relation-match-engine',
         engineCategory: 'foundational',
+        implementationOwnership: 'shared_runtime',
         launchableOnly: 'true',
       })
     );
@@ -35,6 +36,7 @@ describe('GamesLibrary filters', () => {
       variantStatus: 'active',
       engineId: 'relation-match-engine',
       engineCategory: 'foundational',
+      implementationOwnership: 'shared_runtime',
       launchability: 'launchable',
     });
   });
@@ -47,6 +49,7 @@ describe('GamesLibrary filters', () => {
         surface: 'invalid',
         variantSurface: 'bad',
         engineCategory: 'unknown',
+        implementationOwnership: 'unknown',
         launchableOnly: 'false',
       })
     );
@@ -64,6 +67,7 @@ describe('GamesLibrary filters', () => {
       variantSurface: 'game_screen' as const,
       engineId: 'clock-dial-engine' as const,
       engineCategory: 'foundational' as const,
+      implementationOwnership: 'shared_runtime' as const,
       launchability: 'launchable' as const,
     };
 
@@ -77,6 +81,7 @@ describe('GamesLibrary filters', () => {
       variantStatus: undefined,
       engineId: 'clock-dial-engine',
       engineCategory: 'foundational',
+      implementationOwnership: 'shared_runtime',
       launchableOnly: 'true',
     });
     expect(buildGamesLibraryCatalogFilter(filters)).toEqual({
@@ -89,6 +94,7 @@ describe('GamesLibrary filters', () => {
       variantStatus: undefined,
       engineId: 'clock-dial-engine',
       engineCategory: 'foundational',
+      implementationOwnership: 'shared_runtime',
       launchableOnly: true,
     });
     expect(

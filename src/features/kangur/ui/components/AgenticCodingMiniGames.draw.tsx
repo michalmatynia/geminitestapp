@@ -1,6 +1,7 @@
-import { forwardRef, useRef, useState } from 'react';
+import { forwardRef, useMemo, useRef } from 'react';
 
 import { cn } from '@/features/kangur/shared/utils';
+import { useKangurPointDrawingEngine } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingEngine';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
@@ -12,6 +13,7 @@ import {
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import type { Point2d } from '@/shared/contracts/geometry';
 
 import type { DrawCheckpoint, DrawGameConfig } from './AgenticCodingMiniGames.types';
 
@@ -23,81 +25,41 @@ export function AgenticDrawGame({
   config: DrawGameConfig;
 }): React.JSX.Element {
   const isCoarsePointer = useKangurCoarsePointer();
-  const [points, setPoints] = useState<Array<{ x: number; y: number }>>([]);
-  const [visited, setVisited] = useState<Record<string, boolean>>(() => {
-    const base: Record<string, boolean> = {};
-    config.checkpoints.forEach((checkpoint) => {
-      base[checkpoint.id] = false;
-    });
-    return base;
-  });
-  const [isDrawing, setIsDrawing] = useState(false);
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const completedCount = Object.values(visited).filter(Boolean).length;
-  const isComplete = completedCount === config.checkpoints.length;
   const viewBox = { width: 360, height: 140 };
-
-  const reset = (): void => {
-    setPoints([]);
-    setVisited(() => {
-      const base: Record<string, boolean> = {};
-      config.checkpoints.forEach((checkpoint) => {
-        base[checkpoint.id] = false;
-      });
-      return base;
-    });
-  };
-
-  const toSvgPoint = (event: React.PointerEvent<SVGSVGElement>): { x: number; y: number } | null => {
-    const node = svgRef.current;
-    if (!node) return null;
-    const rect = node.getBoundingClientRect();
-    const scaleX = viewBox.width / rect.width;
-    const scaleY = viewBox.height / rect.height;
-    return {
-      x: (event.clientX - rect.left) * scaleX,
-      y: (event.clientY - rect.top) * scaleY,
-    };
-  };
-
-  const markVisited = (point: { x: number; y: number }): void => {
+  const {
+    clearStrokes,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    isPointerDrawing,
+    strokes,
+  } = useKangurPointDrawingEngine<SVGSVGElement>({
+    canvasRef: svgRef,
+    logicalHeight: viewBox.height,
+    logicalWidth: viewBox.width,
+    minPointDistance: isCoarsePointer ? 4 : 2.5,
+    redraw: () => {},
+    touchLockEnabled: isCoarsePointer,
+  });
+  const points = useMemo(() => strokes.flatMap((stroke) => stroke), [strokes]);
+  const visited = useMemo(() => {
     const radius = 18;
-    setVisited((prev) => {
-      const next = { ...prev };
-      config.checkpoints.forEach((checkpoint) => {
-        if (next[checkpoint.id]) return;
+    const next: Record<string, boolean> = {};
+    config.checkpoints.forEach((checkpoint) => {
+      next[checkpoint.id] = points.some((point) => {
         const dx = checkpoint.x - point.x;
         const dy = checkpoint.y - point.y;
-        if (Math.hypot(dx, dy) <= radius) {
-          next[checkpoint.id] = true;
-        }
+        return Math.hypot(dx, dy) <= radius;
       });
-      return next;
     });
-  };
+    return next;
+  }, [config.checkpoints, points]);
+  const completedCount = Object.values(visited).filter(Boolean).length;
+  const isComplete = completedCount === config.checkpoints.length;
 
-  const handlePointerDown = (event: React.PointerEvent<SVGSVGElement>): void => {
-    if (isComplete) return;
-    const point = toSvgPoint(event);
-    if (!point) return;
-    svgRef.current?.setPointerCapture(event.pointerId);
-    setIsDrawing(true);
-    setPoints((prev) => [...prev, point]);
-    markVisited(point);
-  };
-
-  const handlePointerMove = (event: React.PointerEvent<SVGSVGElement>): void => {
-    if (!isDrawing || isComplete) return;
-    const point = toSvgPoint(event);
-    if (!point) return;
-    setPoints((prev) => [...prev, point]);
-    markVisited(point);
-  };
-
-  const handlePointerUp = (event: React.PointerEvent<SVGSVGElement>): void => {
-    if (!isDrawing) return;
-    svgRef.current?.releasePointerCapture(event.pointerId);
-    setIsDrawing(false);
+  const reset = (): void => {
+    clearStrokes();
   };
 
   return (
@@ -110,11 +72,12 @@ export function AgenticDrawGame({
         <DrawGameSvg
           ref={svgRef}
           checkpoints={config.checkpoints}
+          isDrawing={isPointerDrawing}
           guide={config.guide}
           pathPoints={points}
           visited={visited}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
+          onPointerDown={isComplete ? undefined : handlePointerDown}
+          onPointerMove={isComplete ? undefined : handlePointerMove}
           onPointerUp={handlePointerUp}
         />
       </KangurLessonVisual>
@@ -160,14 +123,15 @@ const DrawGameSvg = forwardRef<
   {
     checkpoints: DrawCheckpoint[];
     guide: 'loop' | 'line';
-    pathPoints: Array<{ x: number; y: number }>;
+    isDrawing: boolean;
+    pathPoints: Point2d[];
     visited: Record<string, boolean>;
-    onPointerDown: (event: React.PointerEvent<SVGSVGElement>) => void;
-    onPointerMove: (event: React.PointerEvent<SVGSVGElement>) => void;
+    onPointerDown?: (event: React.PointerEvent<SVGSVGElement>) => void;
+    onPointerMove?: (event: React.PointerEvent<SVGSVGElement>) => void;
     onPointerUp: (event: React.PointerEvent<SVGSVGElement>) => void;
   }
 >(function DrawGameSvg(
-  { checkpoints, guide, pathPoints, visited, onPointerDown, onPointerMove, onPointerUp },
+  { checkpoints, guide, isDrawing, pathPoints, visited, onPointerDown, onPointerMove, onPointerUp },
   ref
 ): React.JSX.Element {
   const pathD =
@@ -178,7 +142,8 @@ const DrawGameSvg = forwardRef<
     <svg
       ref={ref}
       aria-label='Rysuj, aby połączyć checkpointy.'
-      className='h-auto w-full'
+      className={cn('h-auto w-full', isDrawing && 'drop-shadow-[0_8px_18px_rgba(56,189,248,0.28)]')}
+      data-drawing-active={isDrawing ? 'true' : 'false'}
       role='img'
       viewBox='0 0 360 140'
       onPointerDown={onPointerDown}

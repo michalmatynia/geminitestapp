@@ -8,6 +8,7 @@ import type {
   KangurGameEngineId,
   KangurGameEngineDefinition,
   KangurGameDefinition,
+  KangurGameEngineImplementationOwnership,
   KangurGameSurface,
 } from '@/shared/contracts/kangur-games';
 import type {
@@ -20,6 +21,7 @@ import {
   createKangurGameCatalogEntries,
   type KangurGameCatalogEntry,
 } from './catalog';
+import { getOptionalKangurGameEngineImplementation } from './engine-implementations';
 
 export type KangurGameVariantCatalogEntry = {
   game: KangurGameDefinition;
@@ -41,6 +43,7 @@ export type KangurGameVariantCatalogFilter = {
   mechanic?: KangurGameMechanic;
   engineId?: KangurGameEngineId;
   engineCategory?: KangurGameEngineCategory;
+  implementationOwnership?: KangurGameEngineImplementationOwnership;
   variantSurface?: KangurGameVariantSurface;
   variantStatus?: KangurGameStatus;
   launchableOnly?: boolean;
@@ -124,6 +127,14 @@ export const filterKangurGameVariantCatalogEntries = (
 
   if (filter?.engineCategory) {
     next = next.filter((entry) => entry.engine?.category === filter.engineCategory);
+  }
+
+  if (filter?.implementationOwnership) {
+    next = next.filter(
+      (entry) =>
+        getOptionalKangurGameEngineImplementation(entry.game.engineId)?.ownership ===
+        filter.implementationOwnership
+    );
   }
 
   if (variantSurface) {

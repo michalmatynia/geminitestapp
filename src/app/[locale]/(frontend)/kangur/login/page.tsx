@@ -27,8 +27,7 @@ export default async function LocalizedKangurLoginPage({
     locale: resolvedLocale,
     namespace: 'KangurPublic',
   });
-  const shouldRedirectToCanonical =
-    shouldApplyFrontPageAppSelection() && process.env.NODE_ENV === 'production';
+  const shouldRedirectToCanonical = shouldApplyFrontPageAppSelection();
 
   if (shouldRedirectToCanonical) {
     const frontPageSetting = await getFrontPageSetting();

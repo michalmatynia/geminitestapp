@@ -22,6 +22,7 @@ import {
   kangurGameVariantCatalogEntriesSchema,
   type KangurGameEngineCategory,
   type KangurGameEngineId,
+  type KangurGameEngineImplementationOwnership,
   type KangurGameMechanic,
   type KangurGameStatus,
   type KangurGameSurface,
@@ -37,6 +38,7 @@ type GameVariantsQueryOptions = {
   mechanic?: KangurGameMechanic;
   engineId?: KangurGameEngineId;
   engineCategory?: KangurGameEngineCategory;
+  implementationOwnership?: KangurGameEngineImplementationOwnership;
   variantSurface?: KangurGameVariantSurface;
   variantStatus?: KangurGameStatus;
   launchableOnly?: boolean;
@@ -65,6 +67,7 @@ const fetchGameVariants = async (
         mechanic: options?.mechanic ?? null,
         engineId: options?.engineId ?? null,
         engineCategory: options?.engineCategory ?? null,
+        implementationOwnership: options?.implementationOwnership ?? null,
         variantSurface: options?.variantSurface ?? null,
         variantStatus: options?.variantStatus ?? null,
         launchableOnly: options?.launchableOnly ?? false,
@@ -80,6 +83,7 @@ const fetchGameVariants = async (
         mechanic: options?.mechanic,
         engineId: options?.engineId,
         engineCategory: options?.engineCategory,
+        implementationOwnership: options?.implementationOwnership,
         variantSurface: options?.variantSurface,
         variantStatus: options?.variantStatus,
         launchableOnly: options?.launchableOnly,
@@ -111,6 +115,7 @@ export const useKangurGameVariants = (
         mechanic: options?.mechanic ?? null,
         engineId: options?.engineId ?? null,
         engineCategory: options?.engineCategory ?? null,
+        implementationOwnership: options?.implementationOwnership ?? null,
         variantSurface: options?.variantSurface ?? null,
         variantStatus: options?.variantStatus ?? null,
         launchableOnly: options?.launchableOnly ?? false,

@@ -84,6 +84,7 @@ export default function FrontendPublicOwnerShellClient({
   const resolvedPathname = pathname?.trim() || browserPathname || '/';
   const normalizedPathname = stripSiteLocalePrefix(resolvedPathname);
   const isHomeRoute = normalizedPathname === '/';
+  const isCanonicalPublicLoginRoute = normalizedPathname === '/login';
   const isKangurAliasRoute =
     normalizedPathname === '/kangur' || normalizedPathname.startsWith('/kangur/');
 
@@ -115,7 +116,7 @@ export default function FrontendPublicOwnerShellClient({
     return undefined;
   }, [isHomeRoute, normalizedPathname, publicOwner]);
 
-  if (publicOwner === 'kangur' && !isKangurAliasRoute) {
+  if (publicOwner === 'kangur' && !isKangurAliasRoute && !isCanonicalPublicLoginRoute) {
     return (
       <FrontendPublicOwnerKangurShell
         embedded={isHomeRoute}

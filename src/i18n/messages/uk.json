@@ -369,6 +369,33 @@
       "lessonLinkedLabel": "Пов’язані з уроками",
       "subjectsLabel": "Предмети"
     },
+    "implementationGroupsEyebrow": "Стан винесення",
+    "implementationGroupsTitle": "Власність імплементації",
+    "implementationGroupsDescription": "{count, plural, one {# лінія власності зараз відстежується в каталозі рушіїв.} few {# лінії власності зараз відстежуються в каталозі рушіїв.} many {# ліній власності зараз відстежуються в каталозі рушіїв.} other {# ліній власності зараз відстежуються в каталозі рушіїв.}}",
+    "implementationGroups": {
+      "eyebrow": "Лінія власності",
+      "groupDescription": "{count, plural, one {# сімейство рушія зараз віднесене до цього стану власності.} few {# сімейства рушіїв зараз віднесені до цього стану власності.} many {# сімейств рушіїв зараз віднесені до цього стану власності.} other {# сімейств рушіїв зараз віднесені до цього стану власності.}}",
+      "enginesLabel": "Рушії",
+      "gamesLabel": "Ігри",
+      "runtimeComponentsLabel": "Runtime-компоненти",
+      "lessonsLabel": "Уроки",
+      "engineTitlesLabel": "Сімейства рушіїв",
+      "lessonLinksLabel": "Зв’язки з уроками"
+    },
+    "drawingGroupsEyebrow": "Механіки малювання",
+    "drawingGroupsTitle": "Рушії малювання",
+    "drawingGroupsDescription": "{count, plural, one {# сімейство рушія малювання видиме в поточному каталозі.} few {# сімейства рушіїв малювання видимі в поточному каталозі.} many {# сімейств рушіїв малювання видимі в поточному каталозі.} other {# сімейств рушіїв малювання видимі в поточному каталозі.}}",
+    "drawingGroups": {
+      "gamesLabel": "Ігри",
+      "variantsLabel": "Варіанти",
+      "cohortsLabel": "Когорти",
+      "lessonsLabel": "Уроки",
+      "ownershipLabel": "Власність імплементації",
+      "runtimeComponentsLabel": "Runtime-компоненти",
+      "subjectsLabel": "Предмети",
+      "lessonLinksLabel": "Зв’язки з уроками",
+      "gameTitlesLabel": "Назви ігор"
+    },
     "filters": {
       "eyebrow": "Керування класифікацією",
       "title": "Фільтрувати каталог",
@@ -420,6 +447,11 @@
         "aria": "Фільтрувати ігри за категорією рушія",
         "all": "Усі категорії рушіїв"
       },
+      "implementationOwnership": {
+        "label": "Власність імплементації",
+        "aria": "Фільтрувати ігри за власністю імплементації",
+        "all": "Усі стани власності"
+      },
       "launchability": {
         "label": "Шлях запуску",
         "aria": "Фільтрувати ігри за шляхом запуску",
@@ -465,6 +497,11 @@
       "early_learning": "Раннє навчання",
       "adult_learning": "Навчання дорослих"
     },
+    "implementationOwnership": {
+      "shared_runtime": "Спільний runtime",
+      "lesson_embedded": "Вбудовано в урок",
+      "mixed_runtime": "Змішаний runtime"
+    },
     "lessonCoverageStatuses": {
       "launchable": "запускний",
       "library_backed": "у бібліотеці",
@@ -490,8 +527,10 @@
       "singleChip": "Одна гра",
       "gamesLabel": "Ігри",
       "subjectsLabel": "Предмети",
+      "ownershipLabel": "Власність реалізації",
       "mechanicsLabel": "Механіки",
-      "surfacesLabel": "Поверхні"
+      "surfacesLabel": "Поверхні",
+      "runtimeComponentsLabel": "Runtime-компоненти"
     },
     "variantGroups": {
       "surfaceLabel": "Поверхня варіанта",

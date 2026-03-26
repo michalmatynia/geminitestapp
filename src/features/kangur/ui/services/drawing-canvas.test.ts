@@ -45,6 +45,21 @@ describe('drawing-canvas', () => {
     expect(point).toEqual({ x: 160, y: 110 });
   });
 
+  it('maps pointer coordinates into logical svg space too', () => {
+    const surface = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const rect = createRect({ left: 24, top: 12, width: 180, height: 90 });
+    surface.getBoundingClientRect = vi.fn(() => rect);
+
+    const point = resolveKangurCanvasPoint(
+      { clientX: 114, clientY: 57 },
+      surface,
+      360,
+      180
+    );
+
+    expect(point).toEqual({ x: 180, y: 90 });
+  });
+
   it('syncs canvas backing store and context transform to render size and DPR', () => {
     const canvas = document.createElement('canvas');
     const rect = createRect({ left: 0, top: 0, width: 200, height: 100 });

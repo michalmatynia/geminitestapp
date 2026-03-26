@@ -77,5 +77,7 @@ describe('front-page-app helpers', () => {
     expect(getFrontPagePublicOwner('chatbot')).toBe('cms');
     expect(getFrontPagePublicOwner('notes')).toBe('cms');
     expect(getFrontPagePublicOwner('unknown')).toBe('cms');
+    expect(getFrontPagePublicOwner(null)).toBe('cms');
+    expect(getFrontPagePublicOwner(undefined)).toBe('cms');
   });
 });

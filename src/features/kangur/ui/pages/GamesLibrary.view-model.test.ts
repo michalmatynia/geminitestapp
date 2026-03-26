@@ -3,12 +3,14 @@ import { describe, expect, it } from 'vitest';
 import {
   createGamesLibraryCohortGroups,
   createGamesLibraryCoverageGroups,
-  createGamesLibraryDrawingGroups,
+  createGamesLibraryDrawingGroupsFromEngineGroups,
   createGamesLibraryEngineGroups,
+  createGamesLibraryImplementationGroupsFromEngineGroups,
   createGamesLibraryMetrics,
   createGamesLibraryVariantGroups,
 } from './GamesLibrary.view-model';
 import {
+  createDefaultKangurGameEngineImplementations,
   createKangurGameCatalogEntries,
   createKangurGameVariantCatalogEntries,
 } from '@/features/kangur/games';
@@ -35,9 +37,13 @@ describe('games library view model', () => {
   it('builds metrics and engine groups from the shared catalog', () => {
     const catalogEntries = createKangurGameCatalogEntries();
     const variantEntries = createKangurGameVariantCatalogEntries(catalogEntries);
+    const engineImplementations = createDefaultKangurGameEngineImplementations();
     const metrics = createGamesLibraryMetrics(catalogEntries, variantEntries);
-    const engineGroups = createGamesLibraryEngineGroups(catalogEntries);
-    const drawingGroups = createGamesLibraryDrawingGroups(catalogEntries, variantEntries);
+    const engineGroups = createGamesLibraryEngineGroups(catalogEntries, engineImplementations);
+    const implementationGroups = createGamesLibraryImplementationGroupsFromEngineGroups(
+      engineGroups
+    );
+    const drawingGroups = createGamesLibraryDrawingGroupsFromEngineGroups(engineGroups);
     const variantGroups = createGamesLibraryVariantGroups(variantEntries);
     const coverageGroups = createGamesLibraryCoverageGroups(catalogEntries);
 
@@ -50,11 +56,44 @@ describe('games library view model', () => {
       'foundational'
     );
     expect(
+      engineGroups.find((group) => group.engineId === 'classification-engine')?.implementation
+        ?.ownership
+    ).toBe('shared_runtime');
+    expect(
+      engineGroups.find((group) => group.engineId === 'pattern-sequence-engine')?.implementation
+        ?.ownership
+    ).toBe('mixed_runtime');
+    expect(
+      engineGroups.find((group) => group.engineId === 'shape-recognition-engine')?.implementation
+        ?.runtimeIds
+    ).toEqual(['ArtShapesRotationGapGame', 'ShapeRecognitionGame']);
+    expect(
       engineGroups.find((group) => group.engineId === 'symbol-tracing-engine')?.category
     ).toBe('early_learning');
     expect(
       engineGroups.find((group) => group.engineId === 'diagram-sketch-engine')?.category
     ).toBe('adult_learning');
+    expect(implementationGroups.map((group) => group.ownership)).toEqual([
+      'shared_runtime',
+      'mixed_runtime',
+      'lesson_embedded',
+    ]);
+    expect(implementationGroups[0]?.engineGroups.map((group) => group.engineId)).toEqual(
+      expect.arrayContaining([
+        'clock-dial-engine',
+        'classification-engine',
+        'diagram-sketch-engine',
+        'symbol-tracing-engine',
+      ])
+    );
+    expect(implementationGroups[1]?.engineGroups.map((group) => group.engineId)).toEqual([
+      'pattern-sequence-engine',
+      'shape-recognition-engine',
+    ]);
+    expect(implementationGroups[2]?.engineGroups.map((group) => group.engineId)).toEqual([
+      'color-harmony-engine',
+      'letter-match-engine',
+    ]);
     expect(drawingGroups.map((group) => group.engineId)).toEqual([
       'shape-drawing-engine',
       'symmetry-drawing-engine',
@@ -62,6 +101,10 @@ describe('games library view model', () => {
       'symbol-tracing-engine',
       'diagram-sketch-engine',
     ]);
+    expect(
+      drawingGroups.find((group) => group.engineId === 'shape-drawing-engine')?.implementation
+        ?.ownership
+    ).toBe('shared_runtime');
     expect(drawingGroups.find((group) => group.engineId === 'shape-drawing-engine')?.entries).toHaveLength(
       2
     );
@@ -71,6 +114,14 @@ describe('games library view model', () => {
     expect(
       drawingGroups.find((group) => group.engineId === 'symbol-tracing-engine')?.lessonComponentIds
     ).toEqual(['alphabet_basics', 'alphabet_copy']);
+    expect(
+      drawingGroups.find((group) => group.engineId === 'symbol-tracing-engine')?.implementation
+        ?.runtimeIds
+    ).toEqual([
+      'AlphabetBasicsLesson',
+      'AlphabetCopyLesson',
+      'useKangurDrawingEngine',
+    ]);
     expect(variantGroups.map((group) => group.surface)).toEqual([
       'lesson_inline',
       'lesson_stage',

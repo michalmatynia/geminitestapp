@@ -7,11 +7,13 @@ import {
   KANGUR_GAME_VARIANT_SURFACES,
   kangurGameEngineCategorySchema,
   kangurGameEngineIdSchema,
+  kangurGameEngineImplementationOwnershipSchema,
   kangurGameMechanicSchema,
   kangurGameStatusSchema,
   kangurGameSurfaceSchema,
   type KangurGameEngineCategory,
   type KangurGameEngineId,
+  type KangurGameEngineImplementationOwnership,
   type KangurGameMechanic,
   type KangurGameStatus,
   type KangurGameSurface,
@@ -37,6 +39,7 @@ export type GamesLibraryFilterState = {
   variantStatus: GamesLibraryFilterValue<KangurGameStatus>;
   engineId: GamesLibraryFilterValue<KangurGameEngineId>;
   engineCategory: GamesLibraryFilterValue<KangurGameEngineCategory>;
+  implementationOwnership: GamesLibraryFilterValue<KangurGameEngineImplementationOwnership>;
   launchability: 'all' | 'launchable';
 };
 
@@ -50,6 +53,7 @@ export const DEFAULT_GAMES_LIBRARY_FILTERS: GamesLibraryFilterState = {
   variantStatus: 'all',
   engineId: 'all',
   engineCategory: 'all',
+  implementationOwnership: 'all',
   launchability: 'all',
 };
 
@@ -124,6 +128,11 @@ export const readGamesLibraryFiltersFromSearchParams = (
         kangurGameEngineCategorySchema,
         readSearchParam(searchParams, 'engineCategory')
       ) ?? 'all',
+    implementationOwnership:
+      parseOptionalQueryValue(
+        kangurGameEngineImplementationOwnershipSchema,
+        readSearchParam(searchParams, 'implementationOwnership')
+      ) ?? 'all',
     launchability: launchableOnly ? 'launchable' : 'all',
   };
 };
@@ -140,6 +149,10 @@ export const getGamesLibrarySearchParams = (
   variantStatus: filters.variantStatus === 'all' ? undefined : filters.variantStatus,
   engineId: filters.engineId === 'all' ? undefined : filters.engineId,
   engineCategory: filters.engineCategory === 'all' ? undefined : filters.engineCategory,
+  implementationOwnership:
+    filters.implementationOwnership === 'all'
+      ? undefined
+      : filters.implementationOwnership,
   launchableOnly: filters.launchability === 'launchable' ? 'true' : undefined,
 });
 
@@ -155,6 +168,10 @@ export const buildGamesLibraryCatalogFilter = (
   variantStatus: filters.variantStatus === 'all' ? undefined : filters.variantStatus,
   engineId: filters.engineId === 'all' ? undefined : filters.engineId,
   engineCategory: filters.engineCategory === 'all' ? undefined : filters.engineCategory,
+  implementationOwnership:
+    filters.implementationOwnership === 'all'
+      ? undefined
+      : filters.implementationOwnership,
   launchableOnly: filters.launchability === 'launchable' ? true : undefined,
 });
 
@@ -174,4 +191,5 @@ export const areGamesLibraryFiltersEqual = (
   left.variantStatus === right.variantStatus &&
   left.engineId === right.engineId &&
   left.engineCategory === right.engineCategory &&
+  left.implementationOwnership === right.implementationOwnership &&
   left.launchability === right.launchability;

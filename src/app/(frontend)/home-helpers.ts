@@ -98,6 +98,10 @@ const readMongoFrontPageSetting = async (): Promise<string | null> => {
     if (normalizedSetting) {
       return normalizedSetting;
     }
+    console.warn(
+      '[home-helpers] No "front_page_app" setting found in MongoDB — defaulting to CMS. ' +
+        'Set the setting via Admin Settings to change the front page app.'
+    );
   } catch (error) {
     if (isTransientMongoFrontPageReadError(error)) {
       frontPageSettingRetryBlockedUntil = Date.now() + FRONT_PAGE_SETTING_RETRY_COOLDOWN_MS;

@@ -1,8 +1,9 @@
 import { Link, type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { KangurDuelSeries, KangurScore } from '@kangur/contracts';
+import { resolveKangurLessonFocusForPracticeOperation } from '@kangur/core';
 
 import { useKangurMobileAuth } from '../src/auth/KangurMobileAuthContext';
 import { createKangurCompetitionHref } from '../src/competition/competitionHref';
@@ -50,14 +51,18 @@ import { useKangurMobileTrainingFocus } from '../src/home/useKangurMobileTrainin
 import { useHomeScreenBootState } from '../src/home/useHomeScreenBootState';
 import { useKangurMobileI18n } from '../src/i18n/kangurMobileI18n';
 import { createKangurLessonHref } from '../src/lessons/lessonHref';
+import { getKangurMobileLessonCheckpoints } from '../src/lessons/useKangurMobileLessonCheckpoints';
 import { createKangurParentDashboardHref } from '../src/parent/parentHref';
 import { createKangurPlanHref } from '../src/plan/planHref';
+import { resolveKangurMobileScoreScope } from '../src/profile/mobileScoreScope';
 import { createKangurPracticeHref } from '../src/practice/practiceHref';
 import { useKangurMobileRuntime } from '../src/providers/KangurRuntimeContext';
 import { translateKangurMobileActionLabel } from '../src/shared/translateKangurMobileActionLabel';
 import {
   createKangurResultsHref,
 } from '../src/scores/resultsHref';
+import { resolvePersistedKangurMobileRecentResults } from '../src/scores/persistedKangurMobileRecentResults';
+import { resolvePersistedKangurMobileTrainingFocus } from '../src/scores/persistedKangurMobileTrainingFocus';
 import {
   formatKangurMobileScoreOperation,
   type KangurMobileOperationPerformance,
@@ -853,7 +858,7 @@ function formatHomeRelativeAge(
   }[locale];
 }
 
-type HomeSecondaryInsightsSectionGroupProps = {
+type HomeRecentResultsSectionProps = {
   recentResults: {
     error: string | null;
     isDeferred: boolean;
@@ -861,6 +866,11 @@ type HomeSecondaryInsightsSectionGroupProps = {
     isRestoringAuth: boolean;
     results: KangurScore[];
   };
+};
+
+type HomeSecondaryInsightsSectionGroupProps = HomeRecentResultsSectionProps & {
+  initialRecentLessonCheckpoints: KangurMobileHomeLessonCheckpointItem[];
+  isLiveHomeProgressReady: boolean;
 };
 
 function DeferredHomeInsightsCard(): React.JSX.Element {
@@ -879,6 +889,89 @@ function DeferredHomeInsightsCard(): React.JSX.Element {
           de: 'Wir bereiten gespeicherte Lektionen, Abzeichen, Aufgaben und den erweiterten Ergebnisbereich fur den Start vor.',
           en: 'Preparing saved lessons, badges, tasks, and the extended results area for the home screen.',
           pl: 'Przygotowujemy zapisane lekcje, odznaki, zadania i rozszerzoną sekcję wyników na ekran startowy.',
+        })}
+      </Text>
+    </SectionCard>
+  );
+}
+
+function DeferredHomeNavigationExtendedLinks(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <Text style={{ color: '#475569', lineHeight: 20 }}>
+      {copy({
+        de: 'Wir bereiten weitere Navigationsziele fur den nachsten Startschritt vor.',
+        en: 'Preparing more navigation destinations for the next home step.',
+        pl: 'Przygotowujemy kolejne skróty nawigacji na kolejny etap ekranu startowego.',
+      })}
+    </Text>
+  );
+}
+
+function DeferredHomeAccountDetails(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <Text style={{ color: '#475569', lineHeight: 20 }}>
+      {copy({
+        de: 'Wir bereiten weitere Konto- und Verbindungsdetails fur den nachsten Startschritt vor.',
+        en: 'Preparing more account and connection details for the next home step.',
+        pl: 'Przygotowujemy kolejne szczegóły konta i połączenia na kolejny etap ekranu startowego.',
+      })}
+    </Text>
+  );
+}
+
+function DeferredHomeAccountSignInForm({
+  onOpen,
+}: {
+  onOpen: () => void;
+}): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <View style={{ gap: 10 }}>
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Wir bereiten das Schüler-Login fur den nachsten Startschritt vor. Du kannst es sofort öffnen.',
+          en: 'Preparing the learner sign-in form for the next home step. You can open it immediately.',
+          pl: 'Przygotowujemy formularz logowania ucznia na kolejny etap ekranu startowego. Możesz otworzyć go od razu.',
+        })}
+      </Text>
+      <PrimaryButton
+        hint={copy({
+          de: 'Öffnet sofort das Formular für den Schüler-Login.',
+          en: 'Opens the learner sign-in form immediately.',
+          pl: 'Otwiera od razu formularz logowania ucznia.',
+        })}
+        label={copy({
+          de: 'Anmeldung öffnen',
+          en: 'Open sign-in',
+          pl: 'Otwórz logowanie',
+        })}
+        onPress={onOpen}
+      />
+    </View>
+  );
+}
+
+function DeferredHomeInsightsLessonPlanCard(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <SectionCard
+      title={copy({
+        de: 'Lektionsplan zum Start',
+        en: 'Lesson plan from home',
+        pl: 'Plan lekcji ze startu',
+      })}
+    >
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Wir bereiten die vollstandige Lektionszusammenfassung fur den nachsten Startschritt vor.',
+          en: 'Preparing the full lesson summary for the next home step.',
+          pl: 'Przygotowujemy pełne podsumowanie lekcji na kolejny etap ekranu startowego.',
         })}
       </Text>
     </SectionCard>
@@ -907,6 +1000,164 @@ function DeferredHomeInsightsExtrasCard(): React.JSX.Element {
   );
 }
 
+function HomeSecondaryLessonPlanSection(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+  const lessonMastery = useKangurMobileHomeLessonMastery();
+
+  return (
+    <SectionCard
+      title={copy({
+        de: 'Lektionsplan zum Start',
+        en: 'Lesson plan from home',
+        pl: 'Plan lekcji ze startu',
+      })}
+    >
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Sieh sofort, was wiederholt werden sollte und welche Lektion nur kurz aufgefrischt werden muss.',
+          en: 'See right away what needs review and which lesson only needs a quick refresh.',
+          pl: 'Od razu zobacz, co wymaga powtórki, a którą lekcję trzeba tylko krótko odświeżyć.',
+        })}
+      </Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <SummaryChip
+          accent='blue'
+          label={copy({
+            de: `Verfolgt ${lessonMastery.trackedLessons}`,
+            en: `Tracked ${lessonMastery.trackedLessons}`,
+            pl: `Śledzone ${lessonMastery.trackedLessons}`,
+          })}
+        />
+        <SummaryChip
+          accent='emerald'
+          label={copy({
+            de: `Beherrscht ${lessonMastery.masteredLessons}`,
+            en: `Mastered ${lessonMastery.masteredLessons}`,
+            pl: `Opanowane ${lessonMastery.masteredLessons}`,
+          })}
+        />
+        <SummaryChip
+          accent='amber'
+          label={copy({
+            de: `Zum Wiederholen ${lessonMastery.lessonsNeedingPractice}`,
+            en: `Needs review ${lessonMastery.lessonsNeedingPractice}`,
+            pl: `Do powtórki ${lessonMastery.lessonsNeedingPractice}`,
+          })}
+        />
+      </View>
+
+      {lessonMastery.trackedLessons === 0 ? (
+        <Text style={{ color: '#475569', lineHeight: 20 }}>
+          {copy({
+            de: 'Es gibt noch keine Lektions-Checkpoints. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
+            en: 'There are no lesson checkpoints yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.',
+            pl: 'Nie ma jeszcze checkpointów lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.',
+          })}
+        </Text>
+      ) : (
+        <View style={{ gap: 12 }}>
+          {lessonMastery.weakest[0] ? (
+            <LessonMasteryCard
+              insight={lessonMastery.weakest[0]}
+              title={copy({
+                de: 'Zum Wiederholen',
+                en: 'Needs review',
+                pl: 'Do powtórki',
+              })}
+            />
+          ) : (
+            <Text style={{ color: '#475569', lineHeight: 20 }}>
+              {copy({
+                de: 'Alle verfolgten Lektionen sind aktuell auf einem sicheren Niveau.',
+                en: 'All tracked lessons are currently at a safe level.',
+                pl: 'Wszystkie śledzone lekcje są obecnie na bezpiecznym poziomie.',
+              })}
+            </Text>
+          )}
+
+          {lessonMastery.strongest[0] ? (
+            <LessonMasteryCard
+              insight={lessonMastery.strongest[0]}
+              title={copy({
+                de: 'Stärkste Lektion',
+                en: 'Strongest lesson',
+                pl: 'Najmocniejsza lekcja',
+              })}
+            />
+          ) : null}
+        </View>
+      )}
+    </SectionCard>
+  );
+}
+
+function HomeSecondaryRecentLessonsSection({
+  recentCheckpoints,
+}: {
+  recentCheckpoints: KangurMobileHomeLessonCheckpointItem[];
+}): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <SectionCard
+      title={copy({
+        de: 'Zurück zu den letzten Lektionen',
+        en: 'Return to recent lessons',
+        pl: 'Powrót do ostatnich lekcji',
+      })}
+    >
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Jeder lokal gespeicherte Checkpoint oder Lektionsabschluss erscheint hier sofort, damit du vom Start aus direkt an der zuletzt gespeicherten Stelle weitermachen kannst.',
+          en: 'Every locally saved checkpoint or lesson completion appears here right away so you can resume from home at the most recently saved lesson.',
+          pl: 'Każdy lokalnie zapisany checkpoint albo ukończenie lekcji pojawia się tutaj od razu, aby można było ze startu wrócić do ostatnio zapisanej lekcji.',
+        })}
+      </Text>
+      {recentCheckpoints.length === 0 ? (
+        <Text style={{ color: '#475569', lineHeight: 20 }}>
+          {copy({
+            de: 'Es gibt noch keine gespeicherten Checkpoints. Öffne eine Lektion und speichere den ersten Stand, damit die letzten Lektionen hier erscheinen.',
+            en: 'There are no saved checkpoints yet. Open a lesson and save the first checkpoint so recent lessons appear here.',
+            pl: 'Nie ma jeszcze zapisanych checkpointów. Otwórz lekcję i zapisz pierwszy stan, aby ostatnie lekcje pojawiły się tutaj.',
+          })}
+        </Text>
+      ) : (
+        <View style={{ gap: 12 }}>
+          {recentCheckpoints.map((item) => (
+            <LessonCheckpointCard
+              key={item.componentId}
+              item={item}
+            />
+          ))}
+          <OutlineLink
+            href={LESSONS_ROUTE}
+            hint={copy({
+              de: 'Öffnet den vollständigen Lektionskatalog.',
+              en: 'Opens the full lessons catalog.',
+              pl: 'Otwiera pełny katalog lekcji.',
+            })}
+            label={copy({
+              de: 'Alle Lektionen öffnen',
+              en: 'Open all lessons',
+              pl: 'Otwórz wszystkie lekcje',
+            })}
+          />
+        </View>
+      )}
+    </SectionCard>
+  );
+}
+
+function LiveHomeSecondaryRecentLessonsSection(): React.JSX.Element {
+  const lessonCheckpoints = useKangurMobileHomeLessonCheckpoints();
+
+  return (
+    <HomeSecondaryRecentLessonsSection
+      recentCheckpoints={lessonCheckpoints.recentCheckpoints}
+    />
+  );
+}
+
 function DeferredHomeInsightsBadgesAndPlanCard(): React.JSX.Element {
   const { copy } = useKangurMobileI18n();
 
@@ -929,9 +1180,96 @@ function DeferredHomeInsightsBadgesAndPlanCard(): React.JSX.Element {
   );
 }
 
-function HomeSecondaryInsightsBadgesAndPlanSectionGroup(): React.JSX.Element {
+function DeferredHomeInsightsPlanCard(): React.JSX.Element {
   const { copy } = useKangurMobileI18n();
-  const homeAssignments = useKangurMobileHomeAssignments();
+
+  return (
+    <SectionCard
+      title={copy({
+        de: 'Plan zum Start',
+        en: 'Plan from home',
+        pl: 'Plan z ekranu głównego',
+      })}
+    >
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Wir bereiten den Aktionsplan fur den nachsten Startschritt vor.',
+          en: 'Preparing the action plan for the next home step.',
+          pl: 'Przygotowujemy plan działań na kolejny etap ekranu startowego.',
+        })}
+      </Text>
+    </SectionCard>
+  );
+}
+
+function DeferredHomeInsightsPlanDetailsCard(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <SectionCard
+      title={copy({
+        de: 'Plan zum Start',
+        en: 'Plan from home',
+        pl: 'Plan z ekranu głównego',
+      })}
+    >
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Wir bereiten die nächsten Aufgaben und Aktionslinks fur den nachsten Startschritt vor.',
+          en: 'Preparing the next tasks and action links for the next home step.',
+          pl: 'Przygotowujemy kolejne zadania i linki działań na kolejny etap ekranu startowego.',
+        })}
+      </Text>
+    </SectionCard>
+  );
+}
+
+function DeferredHomeInsightsBadgesCard(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <SectionCard
+      title={copy({
+        de: 'Abzeichen-Zentrale',
+        en: 'Badge hub',
+        pl: 'Centrum odznak',
+      })}
+    >
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Wir bereiten die gespeicherte Abzeichenübersicht fur den nachsten Startschritt vor.',
+          en: 'Preparing the saved badge summary for the next home step.',
+          pl: 'Przygotowujemy zapisane podsumowanie odznak na kolejny etap ekranu startowego.',
+        })}
+      </Text>
+    </SectionCard>
+  );
+}
+
+function DeferredHomeInsightsResultsHubCard(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <SectionCard
+      title={copy({
+        de: 'Ergebniszentrale',
+        en: 'Results hub',
+        pl: 'Centrum wyników',
+      })}
+    >
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Wir bereiten die gespeicherte Ergebnisübersicht fur den nachsten Startschritt vor.',
+          en: 'Preparing the saved results summary for the next home step.',
+          pl: 'Przygotowujemy zapisane podsumowanie wyników na kolejny etap ekranu startowego.',
+        })}
+      </Text>
+    </SectionCard>
+  );
+}
+
+function HomeSecondaryInsightsBadgesSectionGroup(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
   const homeBadges = useKangurMobileHomeBadges();
 
   return (
@@ -1006,69 +1344,141 @@ function HomeSecondaryInsightsBadgesAndPlanSectionGroup(): React.JSX.Element {
           })}
         />
       </SectionCard>
+    </>
+  );
+}
 
-      <SectionCard
-        title={copy({
-          de: 'Plan zum Start',
-          en: 'Plan from home',
-          pl: 'Plan z ekranu głównego',
+function HomeSecondaryInsightsPlanSection(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+  const homeAssignments = useKangurMobileHomeAssignments();
+
+  return (
+    <SectionCard
+      title={copy({
+        de: 'Plan zum Start',
+        en: 'Plan from home',
+        pl: 'Plan z ekranu głównego',
+      })}
+    >
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Verwandle Fortschritt und gespeicherte Lektionen direkt in die nächsten Schritte.',
+          en: 'Turn progress and saved lessons directly into the next steps.',
+          pl: 'Zamień postęp i zapisane lekcje bezpośrednio w kolejne kroki.',
         })}
-      >
+      </Text>
+      {homeAssignments.assignmentItems.length === 0 ? (
         <Text style={{ color: '#475569', lineHeight: 20 }}>
           {copy({
-            de: 'Verwandle Fortschritt und gespeicherte Lektionen direkt in die nächsten Schritte.',
-            en: 'Turn progress and saved lessons directly into the next steps.',
-            pl: 'Zamień postęp i zapisane lekcje bezpośrednio w kolejne kroki.',
+            de: 'Es gibt noch keine Aufgaben. Öffne eine Lektion oder schließe ein Training ab, um sie zu erzeugen.',
+            en: 'There are no tasks yet. Open a lesson or finish practice to generate them.',
+            pl: 'Nie ma jeszcze zadań. Otwórz lekcję albo ukończ trening, aby je wygenerować.',
           })}
         </Text>
-        {homeAssignments.assignmentItems.length === 0 ? (
-          <Text style={{ color: '#475569', lineHeight: 20 }}>
-            {copy({
-              de: 'Es gibt noch keine Aufgaben. Öffne eine Lektion oder schließe ein Training ab, um sie zu erzeugen.',
-              en: 'There are no tasks yet. Open a lesson or finish practice to generate them.',
-              pl: 'Nie ma jeszcze zadań. Otwórz lekcję albo ukończ trening, aby je wygenerować.',
-            })}
-          </Text>
-        ) : (
-          <View style={{ gap: 12 }}>
-            {homeAssignments.assignmentItems.map((item) => (
-              <AssignmentCard
-                key={item.assignment.id}
-                item={item}
-              />
-            ))}
-            <OutlineLink
-              href={PLAN_ROUTE}
-              hint={copy({
-                de: 'Öffnet den vollständigen Tagesplan mit der erweiterten Aufgabenliste.',
-                en: 'Opens the full daily plan with the extended task list.',
-                pl: 'Otwiera pełny plan dnia z rozszerzoną listą zadań.',
-              })}
-              label={copy({
-                de: 'Vollen Tagesplan öffnen',
-                en: 'Open full daily plan',
-                pl: 'Otwórz pełny plan dnia',
-              })}
+      ) : (
+        <View style={{ gap: 12 }}>
+          {homeAssignments.assignmentItems.map((item) => (
+            <AssignmentCard
+              key={item.assignment.id}
+              item={item}
             />
-          </View>
-        )}
-      </SectionCard>
+          ))}
+          <OutlineLink
+            href={PLAN_ROUTE}
+            hint={copy({
+              de: 'Öffnet den vollständigen Tagesplan mit der erweiterten Aufgabenliste.',
+              en: 'Opens the full daily plan with the extended task list.',
+              pl: 'Otwiera pełny plan dnia z rozszerzoną listą zadań.',
+            })}
+            label={copy({
+              de: 'Vollen Tagesplan öffnen',
+              en: 'Open full daily plan',
+              pl: 'Otwórz pełny plan dnia',
+            })}
+          />
+        </View>
+      )}
+    </SectionCard>
+  );
+}
+
+function HomeSecondaryInsightsBadgesAndPlanSectionGroup(): React.JSX.Element {
+  const areDeferredHomeInsightBadgesReady = useHomeScreenDeferredPanels(
+    'home:insights:extras:badges',
+    false,
+  );
+  const areDeferredHomeInsightPlanReady = useHomeScreenDeferredPanels(
+    'home:insights:extras:plan',
+    false,
+  );
+  const areDeferredHomeInsightPlanDetailsReady = useHomeScreenDeferredPanels(
+    'home:insights:extras:plan:details',
+    !areDeferredHomeInsightPlanReady,
+  );
+
+  return (
+    <>
+      {!areDeferredHomeInsightBadgesReady ? (
+        <DeferredHomeInsightsBadgesCard />
+      ) : (
+        <HomeSecondaryInsightsBadgesSectionGroup />
+      )}
+      {!areDeferredHomeInsightPlanReady ? (
+        <DeferredHomeInsightsPlanCard />
+      ) : !areDeferredHomeInsightPlanDetailsReady ? (
+        <DeferredHomeInsightsPlanDetailsCard />
+      ) : (
+        <HomeSecondaryInsightsPlanSection />
+      )}
+    </>
+  );
+}
+
+function HomeSecondaryInsightsExtrasSectionGroup({
+  recentResults,
+}: HomeRecentResultsSectionProps): React.JSX.Element {
+  const areDeferredHomeInsightBadgesAndPlanReady = useHomeScreenDeferredPanels(
+    'home:insights:extras:details',
+    false,
+  );
+  const areDeferredHomeInsightResultsSummaryReady = useHomeScreenDeferredPanels(
+    'home:insights:extras:results',
+    false,
+  );
+
+  return (
+    <>
+      {!areDeferredHomeInsightBadgesAndPlanReady ? (
+        <DeferredHomeInsightsBadgesAndPlanCard />
+      ) : (
+        <HomeSecondaryInsightsBadgesAndPlanSectionGroup />
+      )}
+      {!areDeferredHomeInsightResultsSummaryReady ? (
+        <DeferredHomeInsightsResultsHubCard />
+      ) : (
+        <HomeResultsHubSection recentResults={recentResults} />
+      )}
     </>
   );
 }
 
 function HomeResultsHubSection({
   recentResults,
-}: HomeSecondaryInsightsSectionGroupProps): React.JSX.Element {
+}: HomeRecentResultsSectionProps): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const [hasRequestedDetailedResults, setHasRequestedDetailedResults] = useState(false);
-  const areDeferredHomeResultsHubDetailsReady = useHomeScreenDeferredPanels(
+  const areDeferredHomeResultsHubSummaryReady = useHomeScreenDeferredPanels(
     'home:insights:results',
     false,
   );
+  const areDeferredHomeResultsHubCardsReady = useHomeScreenDeferredPanels(
+    'home:insights:results:cards',
+    !areDeferredHomeResultsHubSummaryReady,
+  );
   const latestResult = recentResults.results[0] ?? null;
   const shouldRenderDetailedResults =
-    areDeferredHomeResultsHubDetailsReady || hasRequestedDetailedResults;
+    (areDeferredHomeResultsHubSummaryReady && areDeferredHomeResultsHubCardsReady) ||
+    hasRequestedDetailedResults;
 
   return (
     <SectionCard
@@ -1240,32 +1650,17 @@ function HomeResultsHubSection({
   );
 }
 
-function HomeSecondaryInsightsExtrasSectionGroup({
+function HomeSecondaryInsightsSectionGroup({
+  initialRecentLessonCheckpoints,
+  isLiveHomeProgressReady,
   recentResults,
 }: HomeSecondaryInsightsSectionGroupProps): React.JSX.Element {
-  const areDeferredHomeInsightBadgesAndPlanReady = useHomeScreenDeferredPanels(
-    'home:insights:extras:details',
+  const areDeferredHomeInsightLessonsReady = useHomeScreenDeferredPanels(
+    'home:insights:lessons',
     false,
   );
-
-  return (
-    <>
-      {!areDeferredHomeInsightBadgesAndPlanReady ? (
-        <DeferredHomeInsightsBadgesAndPlanCard />
-      ) : (
-        <HomeSecondaryInsightsBadgesAndPlanSectionGroup />
-      )}
-      <HomeResultsHubSection recentResults={recentResults} />
-    </>
-  );
-}
-
-function HomeSecondaryInsightsSectionGroup({
-  recentResults,
-}: HomeSecondaryInsightsSectionGroupProps): React.JSX.Element {
-  const { copy } = useKangurMobileI18n();
-  const lessonMastery = useKangurMobileHomeLessonMastery();
-  const lessonCheckpoints = useKangurMobileHomeLessonCheckpoints();
+  const shouldRenderLiveHomeLessonInsights =
+    isLiveHomeProgressReady && areDeferredHomeInsightLessonsReady;
   const areDeferredHomeInsightExtrasReady = useHomeScreenDeferredPanels(
     'home:insights:extras',
     false,
@@ -1273,136 +1668,19 @@ function HomeSecondaryInsightsSectionGroup({
 
   return (
     <>
-      <SectionCard
-        title={copy({
-          de: 'Lektionsplan zum Start',
-          en: 'Lesson plan from home',
-          pl: 'Plan lekcji ze startu',
-        })}
-      >
-        <Text style={{ color: '#475569', lineHeight: 20 }}>
-          {copy({
-            de: 'Sieh sofort, was wiederholt werden sollte und welche Lektion nur kurz aufgefrischt werden muss.',
-            en: 'See right away what needs review and which lesson only needs a quick refresh.',
-            pl: 'Od razu zobacz, co wymaga powtórki, a którą lekcję trzeba tylko krótko odświeżyć.',
-          })}
-        </Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          <SummaryChip
-            accent='blue'
-            label={copy({
-              de: `Verfolgt ${lessonMastery.trackedLessons}`,
-              en: `Tracked ${lessonMastery.trackedLessons}`,
-              pl: `Śledzone ${lessonMastery.trackedLessons}`,
-            })}
-          />
-          <SummaryChip
-            accent='emerald'
-            label={copy({
-              de: `Beherrscht ${lessonMastery.masteredLessons}`,
-              en: `Mastered ${lessonMastery.masteredLessons}`,
-              pl: `Opanowane ${lessonMastery.masteredLessons}`,
-            })}
-          />
-          <SummaryChip
-            accent='amber'
-            label={copy({
-              de: `Zum Wiederholen ${lessonMastery.lessonsNeedingPractice}`,
-              en: `Needs review ${lessonMastery.lessonsNeedingPractice}`,
-              pl: `Do powtórki ${lessonMastery.lessonsNeedingPractice}`,
-            })}
-          />
-        </View>
+      {shouldRenderLiveHomeLessonInsights ? (
+        <HomeSecondaryLessonPlanSection />
+      ) : (
+        <DeferredHomeInsightsLessonPlanCard />
+      )}
 
-        {lessonMastery.trackedLessons === 0 ? (
-          <Text style={{ color: '#475569', lineHeight: 20 }}>
-            {copy({
-              de: 'Es gibt noch keine Lektions-Checkpoints. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
-              en: 'There are no lesson checkpoints yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.',
-              pl: 'Nie ma jeszcze checkpointów lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.',
-            })}
-          </Text>
-        ) : (
-          <View style={{ gap: 12 }}>
-            {lessonMastery.weakest[0] ? (
-              <LessonMasteryCard
-                insight={lessonMastery.weakest[0]}
-                title={copy({
-                  de: 'Zum Wiederholen',
-                  en: 'Needs review',
-                  pl: 'Do powtórki',
-                })}
-              />
-            ) : (
-              <Text style={{ color: '#475569', lineHeight: 20 }}>
-                {copy({
-                  de: 'Alle verfolgten Lektionen sind aktuell auf einem sicheren Niveau.',
-                  en: 'All tracked lessons are currently at a safe level.',
-                  pl: 'Wszystkie śledzone lekcje są obecnie na bezpiecznym poziomie.',
-                })}
-              </Text>
-            )}
-
-            {lessonMastery.strongest[0] ? (
-              <LessonMasteryCard
-                insight={lessonMastery.strongest[0]}
-                title={copy({
-                  de: 'Stärkste Lektion',
-                  en: 'Strongest lesson',
-                  pl: 'Najmocniejsza lekcja',
-                })}
-              />
-            ) : null}
-          </View>
-        )}
-      </SectionCard>
-
-      <SectionCard
-        title={copy({
-          de: 'Zurück zu den letzten Lektionen',
-          en: 'Return to recent lessons',
-          pl: 'Powrót do ostatnich lekcji',
-        })}
-      >
-        <Text style={{ color: '#475569', lineHeight: 20 }}>
-          {copy({
-            de: 'Jeder lokal gespeicherte Checkpoint oder Lektionsabschluss erscheint hier sofort, damit du vom Start aus direkt an der zuletzt gespeicherten Stelle weitermachen kannst.',
-            en: 'Every locally saved checkpoint or lesson completion appears here right away so you can resume from home at the most recently saved lesson.',
-            pl: 'Każdy lokalnie zapisany checkpoint albo ukończenie lekcji pojawia się tutaj od razu, aby można było ze startu wrócić do ostatnio zapisanej lekcji.',
-          })}
-        </Text>
-        {lessonCheckpoints.recentCheckpoints.length === 0 ? (
-          <Text style={{ color: '#475569', lineHeight: 20 }}>
-            {copy({
-              de: 'Es gibt noch keine gespeicherten Checkpoints. Öffne eine Lektion und speichere den ersten Stand, damit die letzten Lektionen hier erscheinen.',
-              en: 'There are no saved checkpoints yet. Open a lesson and save the first checkpoint so recent lessons appear here.',
-              pl: 'Nie ma jeszcze zapisanych checkpointów. Otwórz lekcję i zapisz pierwszy stan, aby ostatnie lekcje pojawiły się tutaj.',
-            })}
-          </Text>
-        ) : (
-          <View style={{ gap: 12 }}>
-            {lessonCheckpoints.recentCheckpoints.map((item) => (
-              <LessonCheckpointCard
-                key={item.componentId}
-                item={item}
-              />
-            ))}
-            <OutlineLink
-              href={LESSONS_ROUTE}
-              hint={copy({
-                de: 'Öffnet den vollständigen Lektionskatalog.',
-                en: 'Opens the full lessons catalog.',
-                pl: 'Otwiera pełny katalog lekcji.',
-              })}
-              label={copy({
-                de: 'Alle Lektionen öffnen',
-                en: 'Open all lessons',
-                pl: 'Otwórz wszystkie lekcje',
-              })}
-            />
-          </View>
-        )}
-      </SectionCard>
+      {shouldRenderLiveHomeLessonInsights ? (
+        <LiveHomeSecondaryRecentLessonsSection />
+      ) : (
+        <HomeSecondaryRecentLessonsSection
+          recentCheckpoints={initialRecentLessonCheckpoints}
+        />
+      )}
 
       {!areDeferredHomeInsightExtrasReady ? (
         <DeferredHomeInsightsExtrasCard />
@@ -2324,6 +2602,385 @@ function AnonymousHomeRematchesSection({
   );
 }
 
+function HomeLiveDuelsSection({
+  isAuthenticated,
+}: {
+  isAuthenticated: boolean;
+}): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+  const duelSpotlight = useKangurMobileHomeDuelsSpotlight({
+    enabled: true,
+  });
+
+  return (
+    <SectionCard
+      title={copy({
+        de: 'Live-Duelle',
+        en: 'Live duels',
+        pl: 'Na żywo w pojedynkach',
+      })}
+    >
+      {duelSpotlight.isLoading ? (
+        <Text style={{ color: '#475569', lineHeight: 20 }}>
+          {copy({
+            de: 'Offene öffentliche Duelle werden geladen.',
+            en: 'Loading public duels from the lobby.',
+            pl: 'Pobieramy publiczne pojedynki z lobby.',
+          })}
+        </Text>
+      ) : duelSpotlight.error ? (
+        <View style={{ gap: 10 }}>
+          <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
+            {duelSpotlight.error}
+          </Text>
+          <PrimaryButton
+            hint={copy({
+              de: 'Aktualisiert die öffentlichen Duelle aus der Lobby.',
+              en: 'Refreshes the public duels from the lobby.',
+              pl: 'Odświeża publiczne pojedynki z lobby.',
+            })}
+            label={copy({
+              de: 'Live-Duelle aktualisieren',
+              en: 'Refresh live duels',
+              pl: 'Odśwież pojedynki',
+            })}
+            onPress={duelSpotlight.refresh}
+          />
+        </View>
+      ) : duelSpotlight.entries.length === 0 ? (
+        <View style={{ gap: 10 }}>
+          <Text style={{ color: '#475569', lineHeight: 20 }}>
+            {copy({
+              de: 'Gerade sind keine öffentlichen Duelle aktiv. Öffne die Lobby, um ein neues Match zu starten oder auf den nächsten Gegner zu warten.',
+              en: 'There are no active public duels right now. Open the lobby to start a new match or wait for the next opponent.',
+              pl: 'Teraz nie ma aktywnych publicznych pojedynków. Otwórz lobby, aby wystartować z nowym meczem albo poczekać na kolejnego rywala.',
+            })}
+          </Text>
+          <OutlineLink
+            href={DUELS_ROUTE}
+            hint={copy({
+              de: 'Öffnet die Duell-Lobby.',
+              en: 'Opens the duels lobby.',
+              pl: 'Otwiera lobby pojedynków.',
+            })}
+            label={copy({
+              de: 'Duell-Lobby öffnen',
+              en: 'Open duels lobby',
+              pl: 'Otwórz lobby pojedynków',
+            })}
+          />
+        </View>
+      ) : (
+        <View style={{ gap: 12 }}>
+          {duelSpotlight.entries.map((entry) => {
+            const isLiveEntry = entry.status === 'in_progress';
+            const primaryHref = isLiveEntry
+              ? createKangurDuelsHref({
+                  sessionId: entry.sessionId,
+                  spectate: true,
+                })
+              : isAuthenticated
+                ? createKangurDuelsHref({
+                    joinSessionId: entry.sessionId,
+                  })
+                : DUELS_ROUTE;
+            const primaryHint = isLiveEntry
+              ? copy({
+                  de: `Öffnet das Live-Duell von ${entry.host.displayName}.`,
+                  en: `Opens the live duel hosted by ${entry.host.displayName}.`,
+                  pl: `Otwiera pojedynek na żywo gospodarza ${entry.host.displayName}.`,
+                })
+              : isAuthenticated
+                ? copy({
+                    de: `Tritt dem öffentlichen Duell von ${entry.host.displayName} bei.`,
+                    en: `Joins the public duel hosted by ${entry.host.displayName}.`,
+                    pl: `Dołącza do publicznego pojedynku gospodarza ${entry.host.displayName}.`,
+                  })
+                : copy({
+                    de: 'Öffnet die Duell-Lobby.',
+                    en: 'Opens the duels lobby.',
+                    pl: 'Otwiera lobby pojedynków.',
+                  });
+            const primaryLabel = isLiveEntry
+              ? copy({
+                  de: 'Live ansehen',
+                  en: 'Watch live',
+                  pl: 'Obserwuj na żywo',
+                })
+              : isAuthenticated
+                ? copy({
+                    de: 'Match beitreten',
+                    en: 'Join match',
+                    pl: 'Dołącz do meczu',
+                  })
+                : copy({
+                    de: 'Lobby öffnen',
+                    en: 'Open lobby',
+                    pl: 'Otwórz lobby',
+                  });
+
+            return (
+              <View
+                key={entry.sessionId}
+                style={{
+                  backgroundColor: '#f8fafc',
+                  borderColor: '#e2e8f0',
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  gap: 8,
+                  padding: 14,
+                }}
+              >
+                <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
+                  {entry.host.displayName}
+                </Text>
+                <Text style={{ color: '#475569', lineHeight: 20 }}>
+                  {getHomeDuelModeLabel(entry.mode, locale)} •{' '}
+                  {formatKangurMobileScoreOperation(entry.operation, locale)} •{' '}
+                  {copy({
+                    de: 'Stufe',
+                    en: 'level',
+                    pl: 'poziom',
+                  })}{' '}
+                  {getHomeDuelDifficultyLabel(entry.difficulty, locale)}
+                </Text>
+                <Text style={{ color: '#64748b' }}>
+                  {copy({
+                    de: `${getHomeDuelStatusLabel(entry.status, locale)} • ${entry.questionCount} Fragen • ${entry.timePerQuestionSec}s pro Frage • aktualisiert ${formatHomeRelativeAge(entry.updatedAt, locale)}`,
+                    en: `${getHomeDuelStatusLabel(entry.status, locale)} • ${entry.questionCount} questions • ${entry.timePerQuestionSec}s per question • updated ${formatHomeRelativeAge(entry.updatedAt, locale)}`,
+                    pl: `${getHomeDuelStatusLabel(entry.status, locale)} • ${entry.questionCount} pytań • ${entry.timePerQuestionSec}s na pytanie • aktualizacja ${formatHomeRelativeAge(entry.updatedAt, locale)}`,
+                  })}
+                </Text>
+                {entry.series ? (
+                  <Text style={{ color: '#4338ca', lineHeight: 20 }}>
+                    {getHomeDuelSeriesLabel(entry.series, locale)}
+                  </Text>
+                ) : null}
+                <View style={{ flexDirection: 'column', gap: 8 }}>
+                  <OutlineLink
+                    href={primaryHref}
+                    hint={primaryHint}
+                    label={primaryLabel}
+                  />
+                  <OutlineLink
+                    href={DUELS_ROUTE}
+                    hint={copy({
+                      de: 'Öffnet die Duell-Lobby.',
+                      en: 'Opens the duels lobby.',
+                      pl: 'Otwiera lobby pojedynków.',
+                    })}
+                    label={copy({
+                      de: 'Alle Duelle',
+                      en: 'All duels',
+                      pl: 'Wszystkie pojedynki',
+                    })}
+                  />
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      )}
+    </SectionCard>
+  );
+}
+
+function HomeDuelLeaderboardSection({
+  activeDuelLearnerId,
+  isAuthenticated,
+}: {
+  activeDuelLearnerId: string | null;
+  isAuthenticated: boolean;
+}): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+  const duelLeaderboard = useKangurMobileHomeDuelsLeaderboard({
+    enabled: true,
+  });
+  const currentLearnerDuelRank = activeDuelLearnerId
+    ? duelLeaderboard.entries.findIndex((entry) => entry.learnerId === activeDuelLearnerId)
+    : -1;
+  const currentLearnerDuelEntry =
+    currentLearnerDuelRank >= 0 ? duelLeaderboard.entries[currentLearnerDuelRank] : null;
+
+  return (
+    <SectionCard
+      title={copy({
+        de: 'Duell-Rangliste',
+        en: 'Duel leaderboard',
+        pl: 'Ranking pojedynków',
+      })}
+    >
+      {duelLeaderboard.isLoading ? (
+        <Text style={{ color: '#475569', lineHeight: 20 }}>
+          {copy({
+            de: 'Die Duell-Rangliste wird geladen.',
+            en: 'Loading the duel leaderboard.',
+            pl: 'Pobieramy ranking pojedynków.',
+          })}
+        </Text>
+      ) : duelLeaderboard.error ? (
+        <View style={{ gap: 10 }}>
+          <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
+            {duelLeaderboard.error}
+          </Text>
+          <PrimaryButton
+            hint={copy({
+              de: 'Aktualisiert die Duell-Rangliste.',
+              en: 'Refreshes the duel leaderboard.',
+              pl: 'Odświeża ranking pojedynków.',
+            })}
+            label={copy({
+              de: 'Ranking aktualisieren',
+              en: 'Refresh leaderboard',
+              pl: 'Odśwież ranking',
+            })}
+            onPress={duelLeaderboard.refresh}
+          />
+        </View>
+      ) : duelLeaderboard.entries.length === 0 ? (
+        <View style={{ gap: 10 }}>
+          <Text style={{ color: '#475569', lineHeight: 20 }}>
+            {copy({
+              de: 'Noch keine abgeschlossenen Duelle in diesem Fenster. Die ersten beendeten Serien füllen hier sofort diesen Duellstand.',
+              en: 'There are no completed duels in this window yet. The first finished series will fill this duel standing right away.',
+              pl: 'W tym oknie nie ma jeszcze zakończonych pojedynków. Pierwsze skończone serie od razu wypełnią tutaj ten stan pojedynków.',
+            })}
+          </Text>
+          <OutlineLink
+            href={DUELS_ROUTE}
+            hint={copy({
+              de: 'Öffnet die Duell-Lobby.',
+              en: 'Opens the duels lobby.',
+              pl: 'Otwiera lobby pojedynków.',
+            })}
+            label={copy({
+              de: 'Duell-Lobby öffnen',
+              en: 'Open duels lobby',
+              pl: 'Otwórz lobby pojedynków',
+            })}
+          />
+        </View>
+      ) : (
+        <View style={{ gap: 12 }}>
+          {isAuthenticated && currentLearnerDuelEntry ? (
+            <View
+              style={{
+                backgroundColor: '#eff6ff',
+                borderColor: '#bfdbfe',
+                borderRadius: 20,
+                borderWidth: 1,
+                gap: 8,
+                padding: 14,
+              }}
+            >
+              <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
+                {copy({
+                  de: 'DEIN DUELLSTAND',
+                  en: 'YOUR DUEL SNAPSHOT',
+                  pl: 'TWÓJ WYNIK W POJEDYNKACH',
+                })}
+              </Text>
+              <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+                #{currentLearnerDuelRank + 1} {currentLearnerDuelEntry.displayName}
+              </Text>
+              <Text style={{ color: '#475569', lineHeight: 20 }}>
+                {copy({
+                  de: `Siege ${currentLearnerDuelEntry.wins} • Niederlagen ${currentLearnerDuelEntry.losses} • Unentschieden ${currentLearnerDuelEntry.ties}`,
+                  en: `Wins ${currentLearnerDuelEntry.wins} • Losses ${currentLearnerDuelEntry.losses} • Ties ${currentLearnerDuelEntry.ties}`,
+                  pl: `Wygrane ${currentLearnerDuelEntry.wins} • Porażki ${currentLearnerDuelEntry.losses} • Remisy ${currentLearnerDuelEntry.ties}`,
+                })}
+              </Text>
+              <Text style={{ color: '#64748b' }}>
+                {copy({
+                  de: `Matches ${currentLearnerDuelEntry.matches} • Quote ${Math.round(
+                    currentLearnerDuelEntry.winRate * 100,
+                  )}% • letztes Duell ${formatHomeRelativeAge(
+                    currentLearnerDuelEntry.lastPlayedAt,
+                    locale,
+                  )}`,
+                  en: `Matches ${currentLearnerDuelEntry.matches} • Win rate ${Math.round(
+                    currentLearnerDuelEntry.winRate * 100,
+                  )}% • last duel ${formatHomeRelativeAge(
+                    currentLearnerDuelEntry.lastPlayedAt,
+                    locale,
+                  )}`,
+                  pl: `Mecze ${currentLearnerDuelEntry.matches} • Win rate ${Math.round(
+                    currentLearnerDuelEntry.winRate * 100,
+                  )}% • ostatni pojedynek ${formatHomeRelativeAge(
+                    currentLearnerDuelEntry.lastPlayedAt,
+                    locale,
+                  )}`,
+                })}
+              </Text>
+            </View>
+          ) : isAuthenticated ? (
+            <Text style={{ color: '#64748b', lineHeight: 20 }}>
+              {copy({
+                de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
+                en: 'Your account is not visible in this duel standing yet. Finish another duel or open the lobby so your rank appears here.',
+                pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
+              })}
+            </Text>
+          ) : null}
+          {duelLeaderboard.entries.map((entry, index) => (
+            <View
+              key={entry.learnerId}
+              style={{
+                backgroundColor:
+                  entry.learnerId === activeDuelLearnerId ? '#eff6ff' : '#f8fafc',
+                borderColor:
+                  entry.learnerId === activeDuelLearnerId ? '#bfdbfe' : '#e2e8f0',
+                borderRadius: 20,
+                borderWidth: 1,
+                gap: 8,
+                padding: 14,
+              }}
+            >
+              <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
+                #{index + 1} {entry.displayName}
+                {entry.learnerId === activeDuelLearnerId
+                  ? copy({
+                      de: ' · Du',
+                      en: ' · You',
+                      pl: ' · Ty',
+                    })
+                  : ''}
+              </Text>
+              <Text style={{ color: '#475569', lineHeight: 20 }}>
+                {copy({
+                  de: `Siege ${entry.wins} • Niederlagen ${entry.losses} • Unentschieden ${entry.ties}`,
+                  en: `Wins ${entry.wins} • Losses ${entry.losses} • Ties ${entry.ties}`,
+                  pl: `Wygrane ${entry.wins} • Porażki ${entry.losses} • Remisy ${entry.ties}`,
+                })}
+              </Text>
+              <Text style={{ color: '#64748b' }}>
+                {copy({
+                  de: `Matches ${entry.matches} • Quote ${Math.round(entry.winRate * 100)}% • letztes Duell ${formatHomeRelativeAge(entry.lastPlayedAt, locale)}`,
+                  en: `Matches ${entry.matches} • Win rate ${Math.round(entry.winRate * 100)}% • last duel ${formatHomeRelativeAge(entry.lastPlayedAt, locale)}`,
+                  pl: `Mecze ${entry.matches} • Win rate ${Math.round(entry.winRate * 100)}% • ostatni pojedynek ${formatHomeRelativeAge(entry.lastPlayedAt, locale)}`,
+                })}
+              </Text>
+            </View>
+          ))}
+          <OutlineLink
+            href={DUELS_ROUTE}
+            hint={copy({
+              de: 'Öffnet die vollständige Duell-Lobby mit der erweiterten Rangliste.',
+              en: 'Opens the full duels lobby with the extended leaderboard.',
+              pl: 'Otwiera pełne lobby pojedynków z rozszerzonym rankingiem.',
+            })}
+            label={copy({
+              de: 'Volle Duell-Rangliste',
+              en: 'Full duel leaderboard',
+              pl: 'Pełny ranking pojedynków',
+            })}
+          />
+        </View>
+      )}
+    </SectionCard>
+  );
+}
+
 export default function HomeScreen(): React.JSX.Element {
   const isPreparingHomeView = useHomeScreenBootState('home');
 
@@ -2335,19 +2992,32 @@ export default function HomeScreen(): React.JSX.Element {
 }
 
 function HomeScreenReady(): React.JSX.Element {
+  const { locale } = useKangurMobileI18n();
   const { progressStore } = useKangurMobileRuntime();
   const [progress] = useState(() => progressStore.loadProgress());
   const areDeferredHomeProgressReady = useHomeScreenDeferredPanels(
     'home:progress',
     false,
   );
+  const initialRecentLessonCheckpoints = useMemo(
+    () =>
+      getKangurMobileLessonCheckpoints(progress, locale, {
+        limit: 2,
+      }).recentCheckpoints,
+    [locale, progress],
+  );
+  const initialLatestLessonCheckpoint = initialRecentLessonCheckpoints[0] ?? null;
 
   return (
     <KangurMobileHomeProgressSnapshotProvider
       progress={progress}
       subscribeToProgressStore={areDeferredHomeProgressReady}
     >
-      <HomeScreenContent />
+      <HomeScreenContent
+        initialLatestLessonCheckpoint={initialLatestLessonCheckpoint}
+        initialRecentLessonCheckpoints={initialRecentLessonCheckpoints}
+        isLiveHomeProgressReady={areDeferredHomeProgressReady}
+      />
     </KangurMobileHomeProgressSnapshotProvider>
   );
 }
@@ -2389,9 +3059,145 @@ type HomeScoreStateProps = {
   debugProofOperation: string | null;
 };
 
+type HomeHeroLatestLessonCheckpointViewModel = {
+  homeHeroRecentCheckpoint: KangurMobileHomeLessonCheckpointItem | null;
+  homeHeroRecentCheckpointCount: number;
+};
+
+type HomeHeroLatestLessonCheckpointStateProps = {
+  children: (viewModel: HomeHeroLatestLessonCheckpointViewModel) => React.ReactNode;
+  initialLatestLessonCheckpoint: KangurMobileHomeLessonCheckpointItem | null;
+  isLiveProgressReady: boolean;
+};
+
 const noopRefreshHomeScoreViewModel = async (): Promise<void> => {};
 
-function AuthenticatedHomeScoreState({
+function LiveHomeHeroLatestLessonCheckpointState({
+  children,
+}: Pick<HomeHeroLatestLessonCheckpointStateProps, 'children'>): React.JSX.Element {
+  const latestLessonCheckpoint = useKangurMobileHomeLessonCheckpoints({
+    limit: 1,
+  });
+
+  return (
+    <>
+      {children({
+        homeHeroRecentCheckpoint: latestLessonCheckpoint.recentCheckpoints[0] ?? null,
+        homeHeroRecentCheckpointCount: latestLessonCheckpoint.recentCheckpoints.length,
+      })}
+    </>
+  );
+}
+
+function HomeHeroLatestLessonCheckpointState({
+  children,
+  initialLatestLessonCheckpoint,
+  isLiveProgressReady,
+}: HomeHeroLatestLessonCheckpointStateProps): React.JSX.Element {
+  if (!isLiveProgressReady) {
+    return (
+      <>
+        {children({
+          homeHeroRecentCheckpoint: initialLatestLessonCheckpoint,
+          homeHeroRecentCheckpointCount: initialLatestLessonCheckpoint ? 1 : 0,
+        })}
+      </>
+    );
+  }
+
+  return <LiveHomeHeroLatestLessonCheckpointState>{children}</LiveHomeHeroLatestLessonCheckpointState>;
+}
+
+function PersistedAuthenticatedHomeScoreState({
+  areDeferredHomePanelsReady,
+  children,
+  debugProofOperation,
+}: HomeScoreStateProps): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+  const { session } = useKangurMobileAuth();
+  const { storage } = useKangurMobileRuntime();
+  const scoreScopeIdentityKey =
+    resolveKangurMobileScoreScope(session.user)?.identityKey ?? null;
+  const persistedRecentResults = useMemo(
+    () =>
+      scoreScopeIdentityKey
+        ? (resolvePersistedKangurMobileRecentResults({
+            identityKey: scoreScopeIdentityKey,
+            limit: 3,
+            storage,
+          }) ?? [])
+        : [],
+    [scoreScopeIdentityKey, storage],
+  );
+  const persistedTrainingFocus = useMemo(
+    () =>
+      scoreScopeIdentityKey
+        ? resolvePersistedKangurMobileTrainingFocus({
+            identityKey: scoreScopeIdentityKey,
+            storage,
+          })
+        : null,
+    [scoreScopeIdentityKey, storage],
+  );
+  const strongestOperation = persistedTrainingFocus?.strongestOperation ?? null;
+  const weakestOperation = persistedTrainingFocus?.weakestOperation ?? null;
+  const recentResults = {
+    error: null,
+    isEnabled: false,
+    isLoading: false,
+    isRestoringAuth: false,
+    refresh: noopRefreshHomeScoreViewModel,
+    results: persistedRecentResults,
+  } satisfies HomeRecentResultsViewModel;
+  const trainingFocus = {
+    error: null,
+    isEnabled: false,
+    isLoading: false,
+    isRestoringAuth: false,
+    recentResults: persistedRecentResults,
+    refresh: noopRefreshHomeScoreViewModel,
+    strongestLessonFocus: strongestOperation
+      ? resolveKangurLessonFocusForPracticeOperation(strongestOperation.operation)
+      : null,
+    strongestOperation,
+    weakestLessonFocus: weakestOperation
+      ? resolveKangurLessonFocusForPracticeOperation(weakestOperation.operation)
+      : null,
+    weakestOperation,
+  } satisfies HomeTrainingFocusViewModel;
+  const homeDebugProof = buildKangurHomeDebugProofViewModel({
+    isEnabled: false,
+    isLoading: !areDeferredHomePanelsReady,
+    locale,
+    operation: debugProofOperation,
+    recentResults: recentResults.results,
+    strongestOperation,
+    weakestOperation,
+  });
+
+  return (
+    <>
+      {children({
+        homeDebugProof,
+        homeHeroFocusHref: weakestOperation
+          ? createKangurPracticeHref(weakestOperation.operation)
+          : PRACTICE_ROUTE,
+        homeHeroFocusLabel: weakestOperation
+          ? formatKangurMobileScoreOperation(weakestOperation.operation, locale)
+          : copy({
+              de: 'Gemischtes Training',
+              en: 'Mixed practice',
+              pl: 'Trening mieszany',
+            }),
+        homeHeroRecentResult: persistedRecentResults[0] ?? null,
+        recentResults,
+        trainingFocus,
+      })}
+    </>
+  );
+}
+
+function LiveAuthenticatedHomeScoreState({
   areDeferredHomePanelsReady,
   areDeferredHomeScoreRefreshReady,
   children,
@@ -2526,11 +3332,21 @@ function AnonymousHomeScoreState({
   );
 }
 
-function HomeScreenContent(): React.JSX.Element {
+function HomeScreenContent({
+  initialLatestLessonCheckpoint,
+  initialRecentLessonCheckpoints,
+  isLiveHomeProgressReady,
+}: {
+  initialLatestLessonCheckpoint: KangurMobileHomeLessonCheckpointItem | null;
+  initialRecentLessonCheckpoints: KangurMobileHomeLessonCheckpointItem[];
+  isLiveHomeProgressReady: boolean;
+}): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const params = useLocalSearchParams<{
     debugProofOperation?: string | string[];
   }>();
+  const [hasRequestedLearnerCredentialsForm, setHasRequestedLearnerCredentialsForm] =
+    useState(false);
   const [loginName, setLoginName] = useState('');
   const [password, setPassword] = useState('');
   const { apiBaseUrl, apiBaseUrlSource } = useKangurMobileRuntime();
@@ -2566,19 +3382,26 @@ function HomeScreenContent(): React.JSX.Element {
     'home:insights',
     !areDeferredHomePanelsReady,
   );
+  const areDeferredHomeHeroScoresReady = useHomeScreenDeferredPanels(
+    'home:hero:scores',
+    !areDeferredHomePanelsReady,
+  );
+  const areDeferredHomeAccountDetailsReady = useHomeScreenDeferredPanels(
+    'home:account:details',
+    false,
+  );
+  const areDeferredHomeAccountSignInReady = useHomeScreenDeferredPanels(
+    'home:account:sign-in',
+    false,
+  );
+  const areDeferredHomeNavigationExtendedReady = useHomeScreenDeferredPanels(
+    'home:navigation:extended',
+    false,
+  );
   const areDeferredHomeScoreRefreshReady = useHomeScreenDeferredPanels(
     'home:insights:scores',
     !areDeferredHomeInsightsReady,
   );
-  const duelLeaderboard = useKangurMobileHomeDuelsLeaderboard({
-    enabled: areDeferredHomeDuelAdvancedReady,
-  });
-  const latestLessonCheckpoint = useKangurMobileHomeLessonCheckpoints({
-    limit: 1,
-  });
-  const duelSpotlight = useKangurMobileHomeDuelsSpotlight({
-    enabled: areDeferredHomeDuelAdvancedReady,
-  });
   const authBoundary = getKangurHomeAuthBoundaryViewModel({
     authError,
     developerAutoSignInEnabled,
@@ -2593,15 +3416,9 @@ function HomeScreenContent(): React.JSX.Element {
     : null;
   const homeHeroLearnerName =
     session.user?.activeLearner?.displayName?.trim() || session.user?.full_name?.trim() || null;
-  const homeHeroRecentCheckpoint = latestLessonCheckpoint.recentCheckpoints[0] ?? null;
   const canOpenParentDashboard =
     session.status === 'authenticated' && Boolean(session.user?.canManageLearners);
   const activeDuelLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
-  const currentLearnerDuelRank = activeDuelLearnerId
-    ? duelLeaderboard.entries.findIndex((entry) => entry.learnerId === activeDuelLearnerId)
-    : -1;
-  const currentLearnerDuelEntry =
-    currentLearnerDuelRank >= 0 ? duelLeaderboard.entries[currentLearnerDuelRank] : null;
 
   const renderHomeScreenContent = ({
     homeDebugProof,
@@ -2611,15 +3428,20 @@ function HomeScreenContent(): React.JSX.Element {
     recentResults,
     trainingFocus,
   }: HomeScoreViewModel): React.JSX.Element => (
-    <SafeAreaView style={{ backgroundColor: '#fffaf2', flex: 1 }}>
-      <ScrollView
-        keyboardShouldPersistTaps='handled'
-        contentContainerStyle={{
-          gap: 16,
-          paddingHorizontal: 24,
-          paddingVertical: 28,
-        }}
-      >
+    <HomeHeroLatestLessonCheckpointState
+      initialLatestLessonCheckpoint={initialLatestLessonCheckpoint}
+      isLiveProgressReady={isLiveHomeProgressReady}
+    >
+      {({ homeHeroRecentCheckpoint, homeHeroRecentCheckpointCount }) => (
+        <SafeAreaView style={{ backgroundColor: '#fffaf2', flex: 1 }}>
+          <ScrollView
+            keyboardShouldPersistTaps='handled'
+            contentContainerStyle={{
+              gap: 16,
+              paddingHorizontal: 24,
+              paddingVertical: 28,
+            }}
+          >
         <View style={{ gap: 10 }}>
           <Text
             accessibilityRole='header'
@@ -2711,9 +3533,9 @@ function HomeScreenContent(): React.JSX.Element {
                       pl: `Ostatnia lekcja ${homeHeroRecentCheckpoint.title}`,
                     })
                   : copy({
-                      de: `Checkpoints ${latestLessonCheckpoint.recentCheckpoints.length}`,
-                      en: `Checkpoints ${latestLessonCheckpoint.recentCheckpoints.length}`,
-                      pl: `Checkpointy ${latestLessonCheckpoint.recentCheckpoints.length}`,
+                      de: `Checkpoints ${homeHeroRecentCheckpointCount}`,
+                      en: `Checkpoints ${homeHeroRecentCheckpointCount}`,
+                      pl: `Checkpointy ${homeHeroRecentCheckpointCount}`,
                     })}
               </Text>
             </View>
@@ -2840,22 +3662,35 @@ function HomeScreenContent(): React.JSX.Element {
             })}
             : {authBoundary.userLabel}
           </Text>
-          <Text style={{ color: '#475569' }}>
-            {copy({
-              de: 'Anmeldemodus',
-              en: 'Sign-in mode',
-              pl: 'Tryb logowania',
-            })}
-            : {authMode}
-          </Text>
-          <Text style={{ color: '#475569' }}>
-            API: {apiBaseUrl} ({apiBaseUrlSource})
-          </Text>
+          {!areDeferredHomeAccountDetailsReady ? (
+            <DeferredHomeAccountDetails />
+          ) : (
+            <>
+              <Text style={{ color: '#475569' }}>
+                {copy({
+                  de: 'Anmeldemodus',
+                  en: 'Sign-in mode',
+                  pl: 'Tryb logowania',
+                })}
+                : {authMode}
+              </Text>
+              <Text style={{ color: '#475569' }}>
+                API: {apiBaseUrl} ({apiBaseUrlSource})
+              </Text>
+            </>
+          )}
           {authError ? (
             <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{authError}</Text>
           ) : null}
 
           {authBoundary.showLearnerCredentialsForm ? (
+            !areDeferredHomeAccountSignInReady && !hasRequestedLearnerCredentialsForm ? (
+              <DeferredHomeAccountSignInForm
+                onOpen={() => {
+                  setHasRequestedLearnerCredentialsForm(true);
+                }}
+              />
+            ) : (
             <View style={{ gap: 10 }}>
               <LabeledTextField
                 autoCapitalize='none'
@@ -2916,6 +3751,7 @@ function HomeScreenContent(): React.JSX.Element {
                 }}
               />
             </View>
+            )
           ) : session.status === 'authenticated' ? (
             <PrimaryButton
               hint={copy({
@@ -2982,32 +3818,6 @@ function HomeScreenContent(): React.JSX.Element {
               })}
             />
             <OutlineLink
-              href={TESTS_ROUTE}
-              hint={copy({
-                de: 'Öffnet die Tests.',
-                en: 'Opens tests.',
-                pl: 'Otwiera testy.',
-              })}
-              label={copy({
-                de: 'Tests',
-                en: 'Tests',
-                pl: 'Testy',
-              })}
-            />
-            <OutlineLink
-              href={COMPETITION_ROUTE}
-              hint={copy({
-                de: 'Öffnet den Wettbewerb.',
-                en: 'Opens the competition.',
-                pl: 'Otwiera konkurs.',
-              })}
-              label={copy({
-                de: 'Wettbewerb',
-                en: 'Competition',
-                pl: 'Konkurs',
-              })}
-            />
-            <OutlineLink
               href={PLAN_ROUTE}
               hint={copy({
                 de: 'Öffnet den Tagesplan des Schulers.',
@@ -3033,19 +3843,6 @@ function HomeScreenContent(): React.JSX.Element {
                 pl: 'Wyniki',
               })}
             />
-            <OutlineLink
-              href={PROFILE_ROUTE}
-              hint={copy({
-                de: 'Öffnet das Profil des Schulers.',
-                en: 'Opens the learner profile.',
-                pl: 'Otwiera profil ucznia.',
-              })}
-              label={copy({
-                de: 'Profil',
-                en: 'Profile',
-                pl: 'Profil',
-              })}
-            />
             {canOpenParentDashboard ? (
               <OutlineLink
                 href={PARENT_ROUTE}
@@ -3061,32 +3858,77 @@ function HomeScreenContent(): React.JSX.Element {
                 })}
               />
             ) : null}
-            <OutlineLink
-              href={LEADERBOARD_ROUTE}
-              hint={copy({
-                de: 'Öffnet die Rangliste der Schuler.',
-                en: 'Opens the learner leaderboard.',
-                pl: 'Otwiera ranking uczniów.',
-              })}
-              label={copy({
-                de: 'Rangliste',
-                en: 'Leaderboard',
-                pl: 'Ranking',
-              })}
-            />
-            <OutlineLink
-              href={DUELS_ROUTE}
-              hint={copy({
-                de: 'Öffnet die Duell-Lobby.',
-                en: 'Opens the duels lobby.',
-                pl: 'Otwiera lobby pojedynków.',
-              })}
-              label={copy({
-                de: 'Duelle',
-                en: 'Duels',
-                pl: 'Pojedynki',
-              })}
-            />
+            {!areDeferredHomeNavigationExtendedReady ? (
+              <DeferredHomeNavigationExtendedLinks />
+            ) : (
+              <>
+                <OutlineLink
+                  href={TESTS_ROUTE}
+                  hint={copy({
+                    de: 'Öffnet die Tests.',
+                    en: 'Opens tests.',
+                    pl: 'Otwiera testy.',
+                  })}
+                  label={copy({
+                    de: 'Tests',
+                    en: 'Tests',
+                    pl: 'Testy',
+                  })}
+                />
+                <OutlineLink
+                  href={COMPETITION_ROUTE}
+                  hint={copy({
+                    de: 'Öffnet den Wettbewerb.',
+                    en: 'Opens the competition.',
+                    pl: 'Otwiera konkurs.',
+                  })}
+                  label={copy({
+                    de: 'Wettbewerb',
+                    en: 'Competition',
+                    pl: 'Konkurs',
+                  })}
+                />
+                <OutlineLink
+                  href={PROFILE_ROUTE}
+                  hint={copy({
+                    de: 'Öffnet das Profil des Schulers.',
+                    en: 'Opens the learner profile.',
+                    pl: 'Otwiera profil ucznia.',
+                  })}
+                  label={copy({
+                    de: 'Profil',
+                    en: 'Profile',
+                    pl: 'Profil',
+                  })}
+                />
+                <OutlineLink
+                  href={LEADERBOARD_ROUTE}
+                  hint={copy({
+                    de: 'Öffnet die Rangliste der Schuler.',
+                    en: 'Opens the learner leaderboard.',
+                    pl: 'Otwiera ranking uczniów.',
+                  })}
+                  label={copy({
+                    de: 'Rangliste',
+                    en: 'Leaderboard',
+                    pl: 'Ranking',
+                  })}
+                />
+                <OutlineLink
+                  href={DUELS_ROUTE}
+                  hint={copy({
+                    de: 'Öffnet die Duell-Lobby.',
+                    en: 'Opens the duels lobby.',
+                    pl: 'Otwiera lobby pojedynków.',
+                  })}
+                  label={copy({
+                    de: 'Duelle',
+                    en: 'Duels',
+                    pl: 'Pojedynki',
+                  })}
+                />
+              </>
+            )}
           </View>
         </SectionCard>
 
@@ -3106,179 +3948,23 @@ function HomeScreenContent(): React.JSX.Element {
           />
         )}
 
-        <SectionCard
-          title={copy({
-            de: 'Live-Duelle',
-            en: 'Live duels',
-            pl: 'Na żywo w pojedynkach',
-          })}
-        >
-          {!areDeferredHomePanelsReady ? (
-            <DeferredDuelSectionPlaceholder />
-          ) : !areDeferredHomeDuelAdvancedReady ? (
-            <DeferredDuelAdvancedSectionPlaceholder />
-          ) : duelSpotlight.isLoading ? (
-            <Text style={{ color: '#475569', lineHeight: 20 }}>
-              {copy({
-                de: 'Offene öffentliche Duelle werden geladen.',
-                en: 'Loading public duels from the lobby.',
-                pl: 'Pobieramy publiczne pojedynki z lobby.',
-              })}
-            </Text>
-          ) : duelSpotlight.error ? (
-            <View style={{ gap: 10 }}>
-              <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
-                {duelSpotlight.error}
-              </Text>
-              <PrimaryButton
-                hint={copy({
-                  de: 'Aktualisiert die öffentlichen Duelle aus der Lobby.',
-                  en: 'Refreshes the public duels from the lobby.',
-                  pl: 'Odświeża publiczne pojedynki z lobby.',
-                })}
-                label={copy({
-                  de: 'Live-Duelle aktualisieren',
-                  en: 'Refresh live duels',
-                  pl: 'Odśwież pojedynki',
-                })}
-                onPress={duelSpotlight.refresh}
-              />
-            </View>
-          ) : duelSpotlight.entries.length === 0 ? (
-            <View style={{ gap: 10 }}>
-              <Text style={{ color: '#475569', lineHeight: 20 }}>
-                {copy({
-                  de: 'Gerade sind keine öffentlichen Duelle aktiv. Öffne die Lobby, um ein neues Match zu starten oder auf den nächsten Gegner zu warten.',
-                  en: 'There are no active public duels right now. Open the lobby to start a new match or wait for the next opponent.',
-                  pl: 'Teraz nie ma aktywnych publicznych pojedynków. Otwórz lobby, aby wystartować z nowym meczem albo poczekać na kolejnego rywala.',
-                })}
-              </Text>
-              <OutlineLink
-                href={DUELS_ROUTE}
-                hint={copy({
-                  de: 'Öffnet die Duell-Lobby.',
-                  en: 'Opens the duels lobby.',
-                  pl: 'Otwiera lobby pojedynków.',
-                })}
-                label={copy({
-                  de: 'Duell-Lobby öffnen',
-                  en: 'Open duels lobby',
-                  pl: 'Otwórz lobby pojedynków',
-                })}
-              />
-            </View>
-          ) : (
-            <View style={{ gap: 12 }}>
-              {duelSpotlight.entries.map((entry) => {
-                const isLiveEntry = entry.status === 'in_progress';
-                const primaryHref = isLiveEntry
-                  ? createKangurDuelsHref({
-                      sessionId: entry.sessionId,
-                      spectate: true,
-                    })
-                  : session.status === 'authenticated'
-                    ? createKangurDuelsHref({
-                        joinSessionId: entry.sessionId,
-                      })
-                    : DUELS_ROUTE;
-                const primaryHint = isLiveEntry
-                  ? copy({
-                      de: `Öffnet das Live-Duell von ${entry.host.displayName}.`,
-                      en: `Opens the live duel hosted by ${entry.host.displayName}.`,
-                      pl: `Otwiera pojedynek na żywo gospodarza ${entry.host.displayName}.`,
-                    })
-                  : session.status === 'authenticated'
-                    ? copy({
-                        de: `Tritt dem öffentlichen Duell von ${entry.host.displayName} bei.`,
-                        en: `Joins the public duel hosted by ${entry.host.displayName}.`,
-                        pl: `Dołącza do publicznego pojedynku gospodarza ${entry.host.displayName}.`,
-                      })
-                    : copy({
-                        de: 'Öffnet die Duell-Lobby.',
-                        en: 'Opens the duels lobby.',
-                        pl: 'Otwiera lobby pojedynków.',
-                      });
-                const primaryLabel = isLiveEntry
-                  ? copy({
-                      de: 'Live ansehen',
-                      en: 'Watch live',
-                      pl: 'Obserwuj na żywo',
-                    })
-                  : session.status === 'authenticated'
-                    ? copy({
-                        de: 'Match beitreten',
-                        en: 'Join match',
-                        pl: 'Dołącz do meczu',
-                      })
-                    : copy({
-                        de: 'Lobby öffnen',
-                        en: 'Open lobby',
-                        pl: 'Otwórz lobby',
-                      });
-
-                return (
-                  <View
-                    key={entry.sessionId}
-                    style={{
-                      backgroundColor: '#f8fafc',
-                      borderColor: '#e2e8f0',
-                      borderRadius: 20,
-                      borderWidth: 1,
-                      gap: 8,
-                      padding: 14,
-                    }}
-                  >
-                    <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
-                      {entry.host.displayName}
-                    </Text>
-                    <Text style={{ color: '#475569', lineHeight: 20 }}>
-                      {getHomeDuelModeLabel(entry.mode, locale)} •{' '}
-                      {formatKangurMobileScoreOperation(entry.operation, locale)} •{' '}
-                      {copy({
-                        de: 'Stufe',
-                        en: 'level',
-                        pl: 'poziom',
-                      })}{' '}
-                      {getHomeDuelDifficultyLabel(entry.difficulty, locale)}
-                    </Text>
-                    <Text style={{ color: '#64748b' }}>
-                      {copy({
-                        de: `${getHomeDuelStatusLabel(entry.status, locale)} • ${entry.questionCount} Fragen • ${entry.timePerQuestionSec}s pro Frage • aktualisiert ${formatHomeRelativeAge(entry.updatedAt, locale)}`,
-                        en: `${getHomeDuelStatusLabel(entry.status, locale)} • ${entry.questionCount} questions • ${entry.timePerQuestionSec}s per question • updated ${formatHomeRelativeAge(entry.updatedAt, locale)}`,
-                        pl: `${getHomeDuelStatusLabel(entry.status, locale)} • ${entry.questionCount} pytań • ${entry.timePerQuestionSec}s na pytanie • aktualizacja ${formatHomeRelativeAge(entry.updatedAt, locale)}`,
-                      })}
-                    </Text>
-                    {entry.series ? (
-                      <Text style={{ color: '#4338ca', lineHeight: 20 }}>
-                        {getHomeDuelSeriesLabel(entry.series, locale)}
-                      </Text>
-                    ) : null}
-                    <View style={{ flexDirection: 'column', gap: 8 }}>
-                      <OutlineLink
-                        href={primaryHref}
-                        hint={primaryHint}
-                        label={primaryLabel}
-                      />
-                      <OutlineLink
-                        href={DUELS_ROUTE}
-                        hint={copy({
-                          de: 'Öffnet die Duell-Lobby.',
-                          en: 'Opens the duels lobby.',
-                          pl: 'Otwiera lobby pojedynków.',
-                        })}
-                        label={copy({
-                          de: 'Alle Duelle',
-                          en: 'All duels',
-                          pl: 'Wszystkie pojedynki',
-                        })}
-                      />
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
-          )}
-        </SectionCard>
+        {!areDeferredHomePanelsReady || !areDeferredHomeDuelAdvancedReady ? (
+          <SectionCard
+            title={copy({
+              de: 'Live-Duelle',
+              en: 'Live duels',
+              pl: 'Na żywo w pojedynkach',
+            })}
+          >
+            {!areDeferredHomePanelsReady ? (
+              <DeferredDuelSectionPlaceholder />
+            ) : (
+              <DeferredDuelAdvancedSectionPlaceholder />
+            )}
+          </SectionCard>
+        ) : (
+          <HomeLiveDuelsSection isAuthenticated={session.status === 'authenticated'} />
+        )}
 
         {session.status === 'authenticated' ? (
           <AuthenticatedHomeRematchesSection
@@ -3296,185 +3982,26 @@ function HomeScreenContent(): React.JSX.Element {
           />
         )}
 
-        <SectionCard
-          title={copy({
-            de: 'Duell-Rangliste',
-            en: 'Duel leaderboard',
-            pl: 'Ranking pojedynków',
-          })}
-        >
-          {!areDeferredHomePanelsReady ? (
-            <DeferredDuelSectionPlaceholder />
-          ) : !areDeferredHomeDuelAdvancedReady ? (
-            <DeferredDuelAdvancedSectionPlaceholder />
-          ) : duelLeaderboard.isLoading ? (
-            <Text style={{ color: '#475569', lineHeight: 20 }}>
-              {copy({
-                de: 'Die Duell-Rangliste wird geladen.',
-                en: 'Loading the duel leaderboard.',
-                pl: 'Pobieramy ranking pojedynków.',
-              })}
-            </Text>
-          ) : duelLeaderboard.error ? (
-            <View style={{ gap: 10 }}>
-              <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
-                {duelLeaderboard.error}
-              </Text>
-              <PrimaryButton
-                hint={copy({
-                  de: 'Aktualisiert die Duell-Rangliste.',
-                  en: 'Refreshes the duel leaderboard.',
-                  pl: 'Odświeża ranking pojedynków.',
-                })}
-                label={copy({
-                  de: 'Ranking aktualisieren',
-                  en: 'Refresh leaderboard',
-                  pl: 'Odśwież ranking',
-                })}
-                onPress={duelLeaderboard.refresh}
-              />
-            </View>
-          ) : duelLeaderboard.entries.length === 0 ? (
-            <View style={{ gap: 10 }}>
-              <Text style={{ color: '#475569', lineHeight: 20 }}>
-                {copy({
-                  de: 'Noch keine abgeschlossenen Duelle in diesem Fenster. Die ersten beendeten Serien füllen hier sofort diesen Duellstand.',
-                  en: 'There are no completed duels in this window yet. The first finished series will fill this duel standing right away.',
-                  pl: 'W tym oknie nie ma jeszcze zakończonych pojedynków. Pierwsze skończone serie od razu wypełnią tutaj ten stan pojedynków.',
-                })}
-              </Text>
-              <OutlineLink
-                href={DUELS_ROUTE}
-                hint={copy({
-                  de: 'Öffnet die Duell-Lobby.',
-                  en: 'Opens the duels lobby.',
-                  pl: 'Otwiera lobby pojedynków.',
-                })}
-                label={copy({
-                  de: 'Duell-Lobby öffnen',
-                  en: 'Open duels lobby',
-                  pl: 'Otwórz lobby pojedynków',
-                })}
-              />
-            </View>
-          ) : (
-            <View style={{ gap: 12 }}>
-              {session.status === 'authenticated' && currentLearnerDuelEntry ? (
-                <View
-                  style={{
-                    backgroundColor: '#eff6ff',
-                    borderColor: '#bfdbfe',
-                    borderRadius: 20,
-                    borderWidth: 1,
-                    gap: 8,
-                    padding: 14,
-                  }}
-                >
-                  <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
-                    {copy({
-                      de: 'DEIN DUELLSTAND',
-                      en: 'YOUR DUEL SNAPSHOT',
-                      pl: 'TWÓJ WYNIK W POJEDYNKACH',
-                    })}
-                  </Text>
-                  <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-                    #{currentLearnerDuelRank + 1} {currentLearnerDuelEntry.displayName}
-                  </Text>
-                  <Text style={{ color: '#475569', lineHeight: 20 }}>
-                    {copy({
-                      de: `Siege ${currentLearnerDuelEntry.wins} • Niederlagen ${currentLearnerDuelEntry.losses} • Unentschieden ${currentLearnerDuelEntry.ties}`,
-                      en: `Wins ${currentLearnerDuelEntry.wins} • Losses ${currentLearnerDuelEntry.losses} • Ties ${currentLearnerDuelEntry.ties}`,
-                      pl: `Wygrane ${currentLearnerDuelEntry.wins} • Porażki ${currentLearnerDuelEntry.losses} • Remisy ${currentLearnerDuelEntry.ties}`,
-                    })}
-                  </Text>
-                  <Text style={{ color: '#64748b' }}>
-                    {copy({
-                      de: `Matches ${currentLearnerDuelEntry.matches} • Quote ${Math.round(
-                        currentLearnerDuelEntry.winRate * 100,
-                      )}% • letztes Duell ${formatHomeRelativeAge(
-                        currentLearnerDuelEntry.lastPlayedAt,
-                        locale,
-                      )}`,
-                      en: `Matches ${currentLearnerDuelEntry.matches} • Win rate ${Math.round(
-                        currentLearnerDuelEntry.winRate * 100,
-                      )}% • last duel ${formatHomeRelativeAge(
-                        currentLearnerDuelEntry.lastPlayedAt,
-                        locale,
-                      )}`,
-                      pl: `Mecze ${currentLearnerDuelEntry.matches} • Win rate ${Math.round(
-                        currentLearnerDuelEntry.winRate * 100,
-                      )}% • ostatni pojedynek ${formatHomeRelativeAge(
-                        currentLearnerDuelEntry.lastPlayedAt,
-                        locale,
-                      )}`,
-                    })}
-                  </Text>
-                </View>
-              ) : session.status === 'authenticated' ? (
-                <Text style={{ color: '#64748b', lineHeight: 20 }}>
-                  {copy({
-                    de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
-                    en: 'Your account is not visible in this duel standing yet. Finish another duel or open the lobby so your rank appears here.',
-                    pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
-                  })}
-                </Text>
-              ) : null}
-              {duelLeaderboard.entries.map((entry, index) => (
-                <View
-                  key={entry.learnerId}
-                  style={{
-                    backgroundColor:
-                      entry.learnerId === activeDuelLearnerId ? '#eff6ff' : '#f8fafc',
-                    borderColor:
-                      entry.learnerId === activeDuelLearnerId ? '#bfdbfe' : '#e2e8f0',
-                    borderRadius: 20,
-                    borderWidth: 1,
-                    gap: 8,
-                    padding: 14,
-                  }}
-                >
-                  <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
-                    #{index + 1} {entry.displayName}
-                    {entry.learnerId === activeDuelLearnerId
-                      ? copy({
-                          de: ' · Du',
-                          en: ' · You',
-                          pl: ' · Ty',
-                        })
-                      : ''}
-                  </Text>
-                  <Text style={{ color: '#475569', lineHeight: 20 }}>
-                    {copy({
-                      de: `Siege ${entry.wins} • Niederlagen ${entry.losses} • Unentschieden ${entry.ties}`,
-                      en: `Wins ${entry.wins} • Losses ${entry.losses} • Ties ${entry.ties}`,
-                      pl: `Wygrane ${entry.wins} • Porażki ${entry.losses} • Remisy ${entry.ties}`,
-                    })}
-                  </Text>
-                  <Text style={{ color: '#64748b' }}>
-                    {copy({
-                      de: `Matches ${entry.matches} • Quote ${Math.round(entry.winRate * 100)}% • letztes Duell ${formatHomeRelativeAge(entry.lastPlayedAt, locale)}`,
-                      en: `Matches ${entry.matches} • Win rate ${Math.round(entry.winRate * 100)}% • last duel ${formatHomeRelativeAge(entry.lastPlayedAt, locale)}`,
-                      pl: `Mecze ${entry.matches} • Win rate ${Math.round(entry.winRate * 100)}% • ostatni pojedynek ${formatHomeRelativeAge(entry.lastPlayedAt, locale)}`,
-                    })}
-                  </Text>
-                </View>
-              ))}
-              <OutlineLink
-                href={DUELS_ROUTE}
-                hint={copy({
-                  de: 'Öffnet die vollständige Duell-Lobby mit der erweiterten Rangliste.',
-                  en: 'Opens the full duels lobby with the extended leaderboard.',
-                  pl: 'Otwiera pełne lobby pojedynków z rozszerzonym rankingiem.',
-                })}
-                label={copy({
-                  de: 'Volle Duell-Rangliste',
-                  en: 'Full duel leaderboard',
-                  pl: 'Pełny ranking pojedynków',
-                })}
-              />
-            </View>
-          )}
-        </SectionCard>
+        {!areDeferredHomePanelsReady || !areDeferredHomeDuelAdvancedReady ? (
+          <SectionCard
+            title={copy({
+              de: 'Duell-Rangliste',
+              en: 'Duel leaderboard',
+              pl: 'Ranking pojedynków',
+            })}
+          >
+            {!areDeferredHomePanelsReady ? (
+              <DeferredDuelSectionPlaceholder />
+            ) : (
+              <DeferredDuelAdvancedSectionPlaceholder />
+            )}
+          </SectionCard>
+        ) : (
+          <HomeDuelLeaderboardSection
+            activeDuelLearnerId={activeDuelLearnerId}
+            isAuthenticated={session.status === 'authenticated'}
+          />
+        )}
 
         <SectionCard
           title={copy({
@@ -3579,6 +4106,8 @@ function HomeScreenContent(): React.JSX.Element {
           <DeferredHomeInsightsCard />
         ) : (
           <HomeSecondaryInsightsSectionGroup
+            initialRecentLessonCheckpoints={initialRecentLessonCheckpoints}
+            isLiveHomeProgressReady={isLiveHomeProgressReady}
             recentResults={{
               error: recentResults.error,
               isDeferred: !trainingFocus.isEnabled,
@@ -3588,19 +4117,32 @@ function HomeScreenContent(): React.JSX.Element {
             }}
           />
         )}
-      </ScrollView>
-    </SafeAreaView>
+          </ScrollView>
+        </SafeAreaView>
+      )}
+    </HomeHeroLatestLessonCheckpointState>
   );
 
   if (session.status === 'authenticated') {
     return (
-      <AuthenticatedHomeScoreState
-        areDeferredHomePanelsReady={areDeferredHomePanelsReady}
-        areDeferredHomeScoreRefreshReady={areDeferredHomeScoreRefreshReady}
-        debugProofOperation={debugProofOperation}
-      >
-        {renderHomeScreenContent}
-      </AuthenticatedHomeScoreState>
+      <>
+        {!areDeferredHomeHeroScoresReady ? (
+          <PersistedAuthenticatedHomeScoreState
+            areDeferredHomePanelsReady={areDeferredHomePanelsReady}
+            debugProofOperation={debugProofOperation}
+          >
+            {renderHomeScreenContent}
+          </PersistedAuthenticatedHomeScoreState>
+        ) : (
+          <LiveAuthenticatedHomeScoreState
+            areDeferredHomePanelsReady={areDeferredHomePanelsReady}
+            areDeferredHomeScoreRefreshReady={areDeferredHomeScoreRefreshReady}
+            debugProofOperation={debugProofOperation}
+          >
+            {renderHomeScreenContent}
+          </LiveAuthenticatedHomeScoreState>
+        )}
+      </>
     );
   }
 

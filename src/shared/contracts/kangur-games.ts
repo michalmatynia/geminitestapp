@@ -34,6 +34,19 @@ export const KANGUR_GAME_ENGINE_CATEGORIES = [
 export const kangurGameEngineCategorySchema = z.enum(KANGUR_GAME_ENGINE_CATEGORIES);
 export type KangurGameEngineCategory = z.infer<typeof kangurGameEngineCategorySchema>;
 
+export const KANGUR_GAME_ENGINE_IMPLEMENTATION_OWNERSHIPS = [
+  'shared_runtime',
+  'mixed_runtime',
+  'lesson_embedded',
+] as const;
+
+export const kangurGameEngineImplementationOwnershipSchema = z.enum(
+  KANGUR_GAME_ENGINE_IMPLEMENTATION_OWNERSHIPS
+);
+export type KangurGameEngineImplementationOwnership = z.infer<
+  typeof kangurGameEngineImplementationOwnershipSchema
+>;
+
 export const kangurGameMechanicSchema = z.enum([
   'drag_drop',
   'multiple_choice',
@@ -134,6 +147,23 @@ export type KangurGames = z.infer<typeof kangurGamesSchema>;
 export const kangurGameEnginesSchema = z.array(kangurGameEngineDefinitionSchema);
 export type KangurGameEngines = z.infer<typeof kangurGameEnginesSchema>;
 
+export const kangurGameEngineImplementationSchema = z.object({
+  engineId: kangurGameEngineIdSchema,
+  ownership: kangurGameEngineImplementationOwnershipSchema,
+  runtimeIds: z.array(nonEmptyTrimmedString.max(120)).max(24),
+  summary: z.string().trim().min(1).max(320),
+});
+export type KangurGameEngineImplementation = z.infer<
+  typeof kangurGameEngineImplementationSchema
+>;
+
+export const kangurGameEngineImplementationsSchema = z.array(
+  kangurGameEngineImplementationSchema
+);
+export type KangurGameEngineImplementations = z.infer<
+  typeof kangurGameEngineImplementationsSchema
+>;
+
 const optionalLegacyScreenSchema = kangurLaunchableGameScreenSchema.nullable();
 
 export const kangurGameCatalogEntrySchema = z.object({
@@ -161,6 +191,7 @@ export const kangurGameCatalogFacetsSchema = z.object({
   mechanics: z.array(kangurGameMechanicSchema),
   engineIds: z.array(kangurGameEngineIdSchema),
   engineCategories: z.array(kangurGameEngineCategorySchema),
+  implementationOwnerships: z.array(kangurGameEngineImplementationOwnershipSchema),
   engines: z.array(kangurGameEngineDefinitionSchema),
 });
 export type KangurGameCatalogFacetsDto = z.infer<typeof kangurGameCatalogFacetsSchema>;
@@ -182,6 +213,88 @@ export type KangurGameVariantCatalogEntriesDto = z.infer<
   typeof kangurGameVariantCatalogEntriesSchema
 >;
 
+export const kangurGameEngineCatalogEntrySchema = z.object({
+  ageGroups: z.array(kangurLessonAgeGroupSchema),
+  category: kangurGameEngineCategorySchema.nullable(),
+  engine: kangurGameEngineDefinitionSchema.nullable(),
+  engineId: kangurGameEngineIdSchema,
+  entries: kangurGameCatalogEntriesSchema,
+  implementation: kangurGameEngineImplementationSchema.nullable(),
+  launchableCount: z.number().int().min(0),
+  lessonComponentIds: z.array(kangurLessonComponentIdSchema),
+  mechanics: z.array(kangurGameMechanicSchema),
+  subjects: z.array(kangurLessonSubjectSchema),
+  surfaces: z.array(kangurGameSurfaceSchema),
+  variants: kangurGameVariantCatalogEntriesSchema,
+});
+export type KangurGameEngineCatalogEntryDto = z.infer<
+  typeof kangurGameEngineCatalogEntrySchema
+>;
+
+export const kangurGameEngineCatalogEntriesSchema = z.array(
+  kangurGameEngineCatalogEntrySchema
+);
+export type KangurGameEngineCatalogEntriesDto = z.infer<
+  typeof kangurGameEngineCatalogEntriesSchema
+>;
+
+export const kangurGameEngineCatalogFacetsSchema = z.object({
+  ageGroups: z.array(kangurLessonAgeGroupSchema),
+  drawingEngineCount: z.number().int().min(0),
+  engineCategories: z.array(kangurGameEngineCategorySchema),
+  engineCount: z.number().int().min(0),
+  engineIds: z.array(kangurGameEngineIdSchema),
+  engines: z.array(kangurGameEngineDefinitionSchema),
+  implementationOwnerships: z.array(kangurGameEngineImplementationOwnershipSchema),
+  launchableEngineCount: z.number().int().min(0),
+  lessonLinkedEngineCount: z.number().int().min(0),
+  mechanics: z.array(kangurGameMechanicSchema),
+  subjects: z.array(kangurLessonSubjectSchema),
+  surfaces: z.array(kangurGameSurfaceSchema),
+});
+export type KangurGameEngineCatalogFacetsDto = z.infer<
+  typeof kangurGameEngineCatalogFacetsSchema
+>;
+
+export const kangurGameLibraryLessonCoverageStatusSchema = z.enum([
+  'launchable',
+  'library_backed',
+  'selector_fallback',
+  'lesson_only',
+]);
+export type KangurGameLibraryLessonCoverageStatusDto = z.infer<
+  typeof kangurGameLibraryLessonCoverageStatusSchema
+>;
+
+export const kangurGameLibraryCoverageGroupIdSchema = z.enum([
+  'library_backed',
+  'launchable',
+  'selector_fallback',
+]);
+export type KangurGameLibraryCoverageGroupIdDto = z.infer<
+  typeof kangurGameLibraryCoverageGroupIdSchema
+>;
+
+export const kangurGameLibraryCoverageGroupSchema = z.object({
+  ageGroups: z.array(kangurLessonAgeGroupSchema),
+  componentIds: z.array(kangurLessonComponentIdSchema),
+  coveredComponentIds: z.array(kangurLessonComponentIdSchema),
+  entries: kangurGameCatalogEntriesSchema,
+  id: kangurGameLibraryCoverageGroupIdSchema,
+  subjects: z.array(kangurLessonSubjectSchema),
+  uncoveredComponentIds: z.array(kangurLessonComponentIdSchema),
+});
+export type KangurGameLibraryCoverageGroupDto = z.infer<
+  typeof kangurGameLibraryCoverageGroupSchema
+>;
+
+export const kangurGameLibraryCoverageGroupsSchema = z.array(
+  kangurGameLibraryCoverageGroupSchema
+);
+export type KangurGameLibraryCoverageGroupsDto = z.infer<
+  typeof kangurGameLibraryCoverageGroupsSchema
+>;
+
 export const kangurGamesQuerySchema = z.object({
   subject: optionalTrimmedQueryString(kangurLessonSubjectSchema),
   ageGroup: optionalTrimmedQueryString(kangurLessonAgeGroupSchema),
@@ -198,6 +311,14 @@ export const kangurGameEnginesQuerySchema = z.object({
 });
 export type KangurGameEnginesQuery = z.infer<typeof kangurGameEnginesQuerySchema>;
 
+export const kangurGameEngineImplementationsQuerySchema = z.object({
+  engineId: optionalTrimmedQueryString(kangurGameEngineIdSchema),
+  ownership: optionalTrimmedQueryString(kangurGameEngineImplementationOwnershipSchema),
+});
+export type KangurGameEngineImplementationsQuery = z.infer<
+  typeof kangurGameEngineImplementationsQuerySchema
+>;
+
 export const kangurGameCatalogQuerySchema = z.object({
   subject: optionalTrimmedQueryString(kangurLessonSubjectSchema),
   ageGroup: optionalTrimmedQueryString(kangurLessonAgeGroupSchema),
@@ -207,11 +328,17 @@ export const kangurGameCatalogQuerySchema = z.object({
   mechanic: optionalTrimmedQueryString(kangurGameMechanicSchema),
   engineId: optionalTrimmedQueryString(kangurGameEngineIdSchema),
   engineCategory: optionalTrimmedQueryString(kangurGameEngineCategorySchema),
+  implementationOwnership: optionalTrimmedQueryString(
+    kangurGameEngineImplementationOwnershipSchema
+  ),
   variantSurface: optionalTrimmedQueryString(kangurGameVariantSurfaceSchema),
   variantStatus: optionalTrimmedQueryString(kangurGameStatusSchema),
   launchableOnly: optionalBooleanQuerySchema(),
 });
 export type KangurGameCatalogQuery = z.infer<typeof kangurGameCatalogQuerySchema>;
+
+export const kangurGameEngineCatalogQuerySchema = kangurGameCatalogQuerySchema;
+export type KangurGameEngineCatalogQuery = z.infer<typeof kangurGameEngineCatalogQuerySchema>;
 
 export const kangurGameVariantsQuerySchema = z.object({
   subject: optionalTrimmedQueryString(kangurLessonSubjectSchema),
@@ -222,6 +349,9 @@ export const kangurGameVariantsQuerySchema = z.object({
   mechanic: optionalTrimmedQueryString(kangurGameMechanicSchema),
   engineId: optionalTrimmedQueryString(kangurGameEngineIdSchema),
   engineCategory: optionalTrimmedQueryString(kangurGameEngineCategorySchema),
+  implementationOwnership: optionalTrimmedQueryString(
+    kangurGameEngineImplementationOwnershipSchema
+  ),
   variantSurface: optionalTrimmedQueryString(kangurGameVariantSurfaceSchema),
   variantStatus: optionalTrimmedQueryString(kangurGameStatusSchema),
   launchableOnly: optionalBooleanQuerySchema(),

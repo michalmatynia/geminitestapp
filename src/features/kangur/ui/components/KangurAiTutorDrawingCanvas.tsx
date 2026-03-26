@@ -4,15 +4,20 @@ import { Eraser, Pen, RotateCcw, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
-import { useKangurCanvasTouchLock } from '@/features/kangur/ui/hooks/useKangurCanvasTouchLock';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { KANGUR_WRAP_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { KangurDrawingCanvasSurface } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingCanvasSurface';
+import { renderKangurDrawingStrokes } from '@/features/kangur/ui/components/drawing-engine/render';
+import {
+  useKangurDrawingEngine,
+} from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingEngine';
+import { syncKangurCanvasContext } from '@/features/kangur/ui/services/drawing-canvas';
 import { cn } from '@/features/kangur/shared/utils';
+import type { KangurDrawingStroke } from '@/features/kangur/ui/components/drawing-engine/types';
 
-import type { JSX, PointerEvent as ReactPointerEvent } from 'react';
+import type { JSX } from 'react';
 
-type DrawingStroke = {
-  points: { x: number; y: number }[];
+type DrawingStrokeMeta = {
   color: string;
   width: number;
   isEraser: boolean;
@@ -36,68 +41,28 @@ type TutorDrawingContent = {
 const COLORS = ['#1e293b', '#2563eb', '#dc2626', '#16a34a', '#f59e0b'] as const;
 const STROKE_WIDTHS = [2, 4, 8] as const;
 const CANVAS_BG = '#ffffff';
-
-function getPointerPosition(
-  event: ReactPointerEvent<HTMLCanvasElement>,
-  canvas: HTMLCanvasElement
-): { x: number; y: number } {
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  return {
-    x: (event.clientX - rect.left) * scaleX,
-    y: (event.clientY - rect.top) * scaleY,
-  };
-}
-
-const distance = (a: { x: number; y: number }, b: { x: number; y: number }): number =>
-  Math.hypot(a.x - b.x, a.y - b.y);
+const CANVAS_WIDTH = 320;
+const CANVAS_HEIGHT = 240;
 
 function renderStrokes(
   ctx: CanvasRenderingContext2D,
-  strokes: DrawingStroke[],
-  width: number,
-  height: number
+  strokes: KangurDrawingStroke<DrawingStrokeMeta>[]
 ): void {
-  ctx.clearRect(0, 0, width, height);
+  ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
   ctx.fillStyle = CANVAS_BG;
-  ctx.fillRect(0, 0, width, height);
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-  for (const stroke of strokes) {
-    const [firstPoint, ...remainingPoints] = stroke.points;
-    if (!firstPoint || remainingPoints.length === 0) {
-      continue;
-    }
-
-    ctx.beginPath();
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = stroke.width;
-
-    if (stroke.isEraser) {
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.strokeStyle = 'rgba(0,0,0,1)';
-    } else {
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.strokeStyle = stroke.color;
-    }
-
-    ctx.moveTo(firstPoint.x, firstPoint.y);
-    for (const point of remainingPoints) {
-      ctx.lineTo(point.x, point.y);
-    }
-    ctx.stroke();
-  }
-
-  ctx.globalCompositeOperation = 'source-over';
+  renderKangurDrawingStrokes(ctx, strokes, ({ meta }) => ({
+    compositeOperation: meta.isEraser ? 'destination-out' : 'source-over',
+    lineWidth: meta.width,
+    strokeStyle: meta.isEraser ? 'rgba(0,0,0,1)' : meta.color,
+  }));
 }
 
 export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX.Element {
   const tutorContent = useKangurAiTutorContent();
   const drawingContent = (tutorContent as { drawing?: TutorDrawingContent }).drawing;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [strokes, setStrokes] = useState<DrawingStroke[]>([]);
-  const [activeStroke, setActiveStroke] = useState<DrawingStroke | null>(null);
   const [selectedColor, setSelectedColor] = useState<string>(COLORS[0]);
   const isCoarsePointer = useKangurCoarsePointer();
   const strokeWidths = useMemo(
@@ -106,92 +71,44 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
   );
   const [selectedWidth, setSelectedWidth] = useState<number>(strokeWidths[1] ?? 8);
   const [isEraser, setIsEraser] = useState(false);
-  const isDrawingRef = useRef(false);
   const minPointDistance = isCoarsePointer ? 4 : 2;
-
-  const redraw = useCallback(
-    (extraStroke?: DrawingStroke | null) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      const allStrokes = extraStroke ? [...strokes, extraStroke] : strokes;
-      renderStrokes(ctx, allStrokes, canvas.width, canvas.height);
-    },
-    [strokes]
-  );
-
-  useEffect(() => {
-    redraw();
-  }, [redraw]);
 
   useEffect(() => {
     setSelectedWidth((current) =>
       strokeWidths.includes(current) ? current : (strokeWidths[1] ?? 8)
     );
   }, [strokeWidths]);
-  useKangurCanvasTouchLock(canvasRef, { enabled: isCoarsePointer });
-
-  const handlePointerDown = useCallback(
-    (event: ReactPointerEvent<HTMLCanvasElement>): void => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      event.preventDefault();
-      canvas.setPointerCapture(event.pointerId);
-      isDrawingRef.current = true;
-
-      const pos = getPointerPosition(event, canvas);
-      const stroke: DrawingStroke = {
-        points: [pos],
+  const {
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    isPointerDrawing,
+    strokes,
+    undoLastStroke: handleUndo,
+    clearStrokes: handleClear,
+  } = useKangurDrawingEngine<DrawingStrokeMeta>({
+    canvasRef,
+    createStroke: ({ point }) => ({
+      meta: {
         color: selectedColor,
-        width: isEraser ? selectedWidth * 3 : selectedWidth,
         isEraser,
-      };
-      setActiveStroke(stroke);
-    },
-    [isEraser, selectedColor, selectedWidth]
-  );
-
-  const handlePointerMove = useCallback(
-    (event: ReactPointerEvent<HTMLCanvasElement>): void => {
-      if (!isDrawingRef.current || !activeStroke) return;
+        width: isEraser ? selectedWidth * 3 : selectedWidth,
+      },
+      points: [point],
+    }),
+    logicalHeight: 240,
+    logicalWidth: 320,
+    minPointDistance,
+    redraw: ({ activeStroke, strokes }) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-
-      event.preventDefault();
-      const pos = getPointerPosition(event, canvas);
-      const lastPoint = activeStroke.points[activeStroke.points.length - 1];
-      if (lastPoint && distance(lastPoint, pos) < minPointDistance) {
-        return;
-      }
-      const updated: DrawingStroke = {
-        ...activeStroke,
-        points: [...activeStroke.points, pos],
-      };
-      setActiveStroke(updated);
-      redraw(updated);
+      const ctx = syncKangurCanvasContext(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
+      if (!ctx) return;
+      renderStrokes(ctx, activeStroke ? [...strokes, activeStroke] : strokes);
     },
-    [activeStroke, minPointDistance, redraw]
-  );
-
-  const handlePointerUp = useCallback((): void => {
-    if (!isDrawingRef.current || !activeStroke) return;
-    isDrawingRef.current = false;
-
-    if (activeStroke.points.length >= 2) {
-      setStrokes((prev) => [...prev, activeStroke]);
-    }
-    setActiveStroke(null);
-  }, [activeStroke]);
-
-  const handleUndo = useCallback((): void => {
-    setStrokes((prev) => prev.slice(0, -1));
-  }, []);
-
-  const handleClear = useCallback((): void => {
-    setStrokes([]);
-  }, []);
+    shouldCommitStroke: (stroke) => stroke.points.length >= 2,
+    touchLockEnabled: isCoarsePointer,
+  });
 
   const handleDone = useCallback((): void => {
     const canvas = canvasRef.current;
@@ -228,22 +145,22 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         className={cn(
           'relative transition-shadow',
           isCoarsePointer && 'shadow-[inset_0_0_0_1px_var(--kangur-soft-card-border)]',
-          activeStroke && 'ring-2 ring-amber-300/70 ring-offset-2 ring-offset-white'
+          isPointerDrawing && 'ring-2 ring-amber-300/70 ring-offset-2 ring-offset-white'
         )}
         data-testid='kangur-ai-tutor-drawing-board'
       >
-        <canvas
-          ref={canvasRef}
-          width={320}
-          height={240}
-          aria-label={drawingContent?.canvasLabel ?? 'Plansza do rysowania'}
-          data-drawing-active={activeStroke ? 'true' : 'false'}
-          className='kangur-drawing-canvas touch-none rounded-none'
-          style={{ cursor: isEraser ? 'cell' : 'crosshair', width: '100%', height: 'auto' }}
+        <KangurDrawingCanvasSurface
+          ariaLabel={drawingContent?.canvasLabel ?? 'Plansza do rysowania'}
+          canvasClassName='rounded-none'
+          canvasRef={canvasRef}
+          canvasStyle={{ cursor: isEraser ? 'cell' : 'crosshair', width: '100%', height: 'auto' }}
+          height={CANVAS_HEIGHT}
+          isPointerDrawing={isPointerDrawing}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
+          width={CANVAS_WIDTH}
         />
       </div>
 

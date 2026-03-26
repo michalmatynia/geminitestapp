@@ -2,5 +2,7 @@ export * from './catalog';
 export * from './coverage';
 export * from './defaults';
 export * from './engines';
+export * from './engine-implementations';
+export * from './engine-catalog';
 export * from './registry';
 export * from './variants';

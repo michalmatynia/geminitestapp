@@ -60,6 +60,7 @@ export const getKangurGameCatalogRepository = async (): Promise<KangurGameCatalo
           mechanic: input?.mechanic ?? null,
           engineId: input?.engineId ?? null,
           engineCategory: input?.engineCategory ?? null,
+          implementationOwnership: input?.implementationOwnership ?? null,
           variantSurface: input?.variantSurface ?? null,
           variantStatus: input?.variantStatus ?? null,
           launchableOnly: input?.launchableOnly ?? false,

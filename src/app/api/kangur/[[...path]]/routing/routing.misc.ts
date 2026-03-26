@@ -15,12 +15,27 @@ import {
   querySchema as gameCatalogQuerySchema,
 } from '../../game-catalog/handler';
 import {
+  getKangurGameEngineCatalogHandler,
+  querySchema as gameEngineCatalogQuerySchema,
+} from '../../game-engine-catalog/handler';
+import {
+  getKangurGameEngineCatalogFacetsHandler,
+  querySchema as gameEngineCatalogFacetsQuerySchema,
+} from '../../game-engine-catalog-facets/handler';
+import {
   getKangurGameCatalogFacetsHandler,
 } from '../../game-catalog-facets/handler';
+import {
+  getKangurGameLibraryCoverageHandler,
+} from '../../game-library-coverage/handler';
 import {
   getKangurGameEnginesHandler,
   querySchema as gameEnginesQuerySchema,
 } from '../../game-engines/handler';
+import {
+  getKangurGameEngineImplementationsHandler,
+  querySchema as gameEngineImplementationsQuerySchema,
+} from '../../game-engine-implementations/handler';
 import {
   getKangurGameVariantsHandler,
   querySchema as gameVariantsQuerySchema,
@@ -152,6 +167,15 @@ export const gameEnginesGetHandler: SimpleRouteHandler = apiHandler(
   }
 );
 
+export const gameEngineImplementationsGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurGameEngineImplementationsHandler,
+  {
+    source: 'kangur.game-engine-implementations.GET',
+    service: 'kangur.api',
+    querySchema: gameEngineImplementationsQuerySchema,
+  }
+);
+
 export const gameVariantsGetHandler: SimpleRouteHandler = apiHandler(
   getKangurGameVariantsHandler,
   {
@@ -170,10 +194,36 @@ export const gameCatalogGetHandler: SimpleRouteHandler = apiHandler(
   }
 );
 
+export const gameEngineCatalogGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurGameEngineCatalogHandler,
+  {
+    source: 'kangur.game-engine-catalog.GET',
+    service: 'kangur.api',
+    querySchema: gameEngineCatalogQuerySchema,
+  }
+);
+
+export const gameEngineCatalogFacetsGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurGameEngineCatalogFacetsHandler,
+  {
+    source: 'kangur.game-engine-catalog-facets.GET',
+    service: 'kangur.api',
+    querySchema: gameEngineCatalogFacetsQuerySchema,
+  }
+);
+
 export const gameCatalogFacetsGetHandler: SimpleRouteHandler = apiHandler(
   getKangurGameCatalogFacetsHandler,
   {
     source: 'kangur.game-catalog-facets.GET',
+    service: 'kangur.api',
+  }
+);
+
+export const gameLibraryCoverageGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurGameLibraryCoverageHandler,
+  {
+    source: 'kangur.game-library-coverage.GET',
     service: 'kangur.api',
   }
 );
@@ -520,6 +570,10 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
     if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
     return gameEnginesGetHandler(request);
   }
+  if (segments[0] === 'game-engine-implementations' && segments.length === 1) {
+    if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
+    return gameEngineImplementationsGetHandler(request);
+  }
   if (segments[0] === 'game-variants' && segments.length === 1) {
     if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
     return gameVariantsGetHandler(request);
@@ -528,9 +582,21 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
     if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
     return gameCatalogGetHandler(request);
   }
+  if (segments[0] === 'game-engine-catalog' && segments.length === 1) {
+    if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
+    return gameEngineCatalogGetHandler(request);
+  }
+  if (segments[0] === 'game-engine-catalog-facets' && segments.length === 1) {
+    if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
+    return gameEngineCatalogFacetsGetHandler(request);
+  }
   if (segments[0] === 'game-catalog-facets' && segments.length === 1) {
     if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
     return gameCatalogFacetsGetHandler(request);
+  }
+  if (segments[0] === 'game-library-coverage' && segments.length === 1) {
+    if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
+    return gameLibraryCoverageGetHandler(request);
   }
   if (segments[0] === 'lesson-sections' && segments.length === 1) {
     return handleGetPost(request, lessonSectionsGetHandler, lessonSectionsPostHandler);

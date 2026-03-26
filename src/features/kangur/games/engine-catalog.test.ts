@@ -69,16 +69,14 @@ describe('kangur game engine catalog', () => {
     ).toEqual(['alphabet_basics', 'alphabet_copy']);
     expect(ownershipGroups.map((group) => group.ownership)).toEqual([
       'shared_runtime',
-      'mixed_runtime',
       'lesson_embedded',
     ]);
-    expect(ownershipGroups[2]?.engineEntries.map((entry) => entry.engineId)).toEqual([
+    expect(ownershipGroups[1]?.engineEntries.map((entry) => entry.engineId)).toEqual([
       'color-harmony-engine',
       'letter-match-engine',
     ]);
     expect(implementationGroups.map((group) => group.ownership)).toEqual([
       'shared_runtime',
-      'mixed_runtime',
       'lesson_embedded',
     ]);
     expect(
@@ -101,7 +99,6 @@ describe('kangur game engine catalog', () => {
     ]);
     expect(facets.implementationOwnerships).toEqual([
       'shared_runtime',
-      'mixed_runtime',
       'lesson_embedded',
     ]);
     expect(overview.engineGroups).toEqual(engineEntries);

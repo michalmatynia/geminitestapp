@@ -25,7 +25,8 @@ scan outputs, not accumulate dated historical snapshots.
 
 - Guardrail/check command: `npm run check:ui-consolidation`
 - Bun compatibility lane: `bun run bun:check:ui-consolidation`
-- The markdown, JSON, and CSV files here are generated companions for the same current scan.
+- The guardrail command refreshes the latest markdown, JSON, and CSV aliases before enforcing thresholds.
+- Use `node scripts/architecture/check-ui-consolidation.mjs --no-write --summary-json` only when you intentionally need a read-only check run.
 
 ## Placement Rule
 

@@ -36,7 +36,7 @@ type KangurPointCanvasDrawingStrokePayload = KangurPointCanvasDrawingEventPayloa
   stroke: Point2d[];
 };
 
-type UseKangurPointCanvasDrawingOptions = {
+export type UseKangurPointCanvasDrawingOptions = {
   backgroundFill?: string;
   baseLayerCacheKey?: number | string | null;
   beforeStrokes?: (ctx: CanvasRenderingContext2D) => void;

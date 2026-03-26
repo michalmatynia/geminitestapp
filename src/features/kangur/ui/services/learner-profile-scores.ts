@@ -21,6 +21,11 @@ type LoadLearnerProfileScoresInput = {
   limit?: number;
 };
 
+type LoadKangurLeaderboardScoresInput = {
+  subject?: KangurLessonSubject;
+  limit?: number;
+};
+
 type ScopedScoresCacheEntry = {
   data: KangurScoreRecord[];
   fetchedAt: number;
@@ -37,6 +42,11 @@ const dedupeScoresById = (scores: KangurScoreRecord[]): KangurScoreRecord[] => {
 
 const scopedScoresCache = new Map<KangurScorePort, Map<string, ScopedScoresCacheEntry>>();
 const scopedScoresInflight = new Map<KangurScorePort, Map<string, Promise<KangurScoreRecord[]>>>();
+const leaderboardScoresCache = new Map<KangurScorePort, Map<string, ScopedScoresCacheEntry>>();
+const leaderboardScoresInflight = new Map<
+  KangurScorePort,
+  Map<string, Promise<KangurScoreRecord[]>>
+>();
 
 const cloneScopedScores = (scores: KangurScoreRecord[]): KangurScoreRecord[] =>
   structuredClone(scores);
@@ -65,6 +75,30 @@ const getScopedScoresInflightStore = (
   return next;
 };
 
+const getLeaderboardScoresCacheStore = (
+  scorePort: KangurScorePort
+): Map<string, ScopedScoresCacheEntry> => {
+  const existing = leaderboardScoresCache.get(scorePort);
+  if (existing) {
+    return existing;
+  }
+  const next = new Map<string, ScopedScoresCacheEntry>();
+  leaderboardScoresCache.set(scorePort, next);
+  return next;
+};
+
+const getLeaderboardScoresInflightStore = (
+  scorePort: KangurScorePort
+): Map<string, Promise<KangurScoreRecord[]>> => {
+  const existing = leaderboardScoresInflight.get(scorePort);
+  if (existing) {
+    return existing;
+  }
+  const next = new Map<string, Promise<KangurScoreRecord[]>>();
+  leaderboardScoresInflight.set(scorePort, next);
+  return next;
+};
+
 const buildScopedScoresCacheKey = (input: {
   learnerId?: string | null;
   playerName?: string | null;
@@ -82,9 +116,20 @@ const buildScopedScoresCacheKey = (input: {
     fallbackToAll: input.fallbackToAll === true,
   });
 
+const buildLeaderboardScoresCacheKey = (input: {
+  subject?: KangurLessonSubject;
+  limit: number;
+}): string =>
+  JSON.stringify({
+    subject: input.subject ?? null,
+    limit: input.limit,
+  });
+
 export const clearKangurScopedScoresCache = (): void => {
   scopedScoresCache.clear();
   scopedScoresInflight.clear();
+  leaderboardScoresCache.clear();
+  leaderboardScoresInflight.clear();
 };
 
 export const peekCachedScopedKangurScores = (
@@ -210,6 +255,73 @@ export const loadScopedKangurScores = async (
           )
         : [...rowsByLearner, ...rowsByEmail, ...rowsByName];
       const resolvedRows = dedupeScoresById(filtered);
+      cacheStore.set(cacheKey, {
+        data: cloneScopedScores(resolvedRows),
+        fetchedAt: Date.now(),
+      });
+      return resolvedRows;
+    })
+    .finally(() => {
+      inflightStore.delete(cacheKey);
+    });
+
+  inflightStore.set(cacheKey, inflightPromise);
+  return cloneScopedScores(await inflightPromise);
+};
+
+export const peekCachedKangurLeaderboardScores = (
+  scorePort: KangurScorePort,
+  input: LoadKangurLeaderboardScoresInput
+): KangurScoreRecord[] | null => {
+  const limit = input.limit ?? 20;
+  const cacheKey = buildLeaderboardScoresCacheKey({
+    subject: input.subject,
+    limit,
+  });
+  const cacheStore = getLeaderboardScoresCacheStore(scorePort);
+  const cached = cacheStore.get(cacheKey);
+  if (!cached) {
+    return null;
+  }
+
+  if (Date.now() - cached.fetchedAt >= KANGUR_SCOPED_SCORES_CACHE_TTL_MS) {
+    cacheStore.delete(cacheKey);
+    return null;
+  }
+
+  return cloneScopedScores(cached.data);
+};
+
+export const loadKangurLeaderboardScores = async (
+  scorePort: KangurScorePort,
+  input: LoadKangurLeaderboardScoresInput
+): Promise<KangurScoreRecord[]> => {
+  const limit = input.limit ?? 20;
+  const cacheKey = buildLeaderboardScoresCacheKey({
+    subject: input.subject,
+    limit,
+  });
+  const cacheStore = getLeaderboardScoresCacheStore(scorePort);
+  const inflightStore = getLeaderboardScoresInflightStore(scorePort);
+  const cached = peekCachedKangurLeaderboardScores(scorePort, {
+    subject: input.subject,
+    limit,
+  });
+  if (cached !== null) {
+    return cached;
+  }
+
+  const inflight = inflightStore.get(cacheKey);
+  if (inflight) {
+    return cloneScopedScores(await inflight);
+  }
+
+  const inflightPromise = scorePort
+    .filter(input.subject ? { subject: input.subject } : {}, '-score', limit)
+    .then((rows) => {
+      const resolvedRows = input.subject
+        ? rows.filter((score) => resolveKangurScoreSubject(score) === input.subject)
+        : rows;
       cacheStore.set(cacheKey, {
         data: cloneScopedScores(resolvedRows),
         fetchedAt: Date.now(),

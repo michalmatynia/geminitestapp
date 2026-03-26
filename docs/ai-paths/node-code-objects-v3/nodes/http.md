@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-05'
+last_reviewed: '2026-03-26'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # HTTP Fetch Migration Sheet (`http`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-26T12:17:00.706Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/http.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/http.scaffold.json`
 - v3 object id: `node_obj_http_portable_v3`
-- v3 object hash: `d04742150b2ce59424ebefa3cb2708ef329f8f10b63808192cfda7767fb3e272`
+- v3 object hash: `73f0c1bae7b5bdfa019db3fc38b0c4d92f798c3a5ea37042659b96177a749b25`
 
 ## Ports
 

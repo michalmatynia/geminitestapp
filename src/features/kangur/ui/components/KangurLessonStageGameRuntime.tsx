@@ -15,6 +15,8 @@ import AgenticSurfaceMatchGame from '@/features/kangur/ui/components/AgenticSurf
 import AddingBallGame from '@/features/kangur/ui/components/AddingBallGame';
 import AddingSynthesisGame from '@/features/kangur/ui/components/AddingSynthesisGame';
 import { ArtShapesRotationGapGame } from '@/features/kangur/ui/components/ArtShapesRotationGapGame';
+import CalendarInteractiveStageGame from '@/features/kangur/ui/components/CalendarInteractiveStageGame';
+import ClockTrainingStageGame from '@/features/kangur/ui/components/ClockTrainingStageGame';
 import DivisionGroupsGame from '@/features/kangur/ui/components/DivisionGroupsGame';
 import EnglishSubjectVerbAgreementGame from '@/features/kangur/ui/components/EnglishSubjectVerbAgreementGame';
 import EnglishAdjectivesSceneGame from '@/features/kangur/ui/components/EnglishAdjectivesSceneGame';
@@ -34,6 +36,7 @@ import LogicalAnalogiesRelationGame from '@/features/kangur/ui/components/Logica
 import LogicalClassificationGame from '@/features/kangur/ui/components/LogicalClassificationGame';
 import LogicalPatternsWorkshopGame from '@/features/kangur/ui/components/LogicalPatternsWorkshopGame';
 import MultiplicationArrayGame from '@/features/kangur/ui/components/MultiplicationArrayGame';
+import ShapeRecognitionStageGame from '@/features/kangur/ui/components/ShapeRecognitionStageGame';
 import MusicMelodyRepeatGame from '@/features/kangur/ui/components/music/MusicMelodyRepeatGame';
 import MusicPianoRollFreePlayGame from '@/features/kangur/ui/components/music/MusicPianoRollFreePlayGame';
 import SubtractingGardenGame from '@/features/kangur/ui/components/SubtractingGardenGame';
@@ -55,6 +58,8 @@ const RUNTIME_COMPONENTS: Record<
   agentic_reasoning_router_game: AgenticReasoningRouterGame,
   agentic_surface_match_game: AgenticSurfaceMatchGame as ComponentType<LessonStageRuntimeComponentProps>,
   art_shapes_rotation_gap_game: ArtShapesRotationGapGame,
+  calendar_interactive_stage_game: CalendarInteractiveStageGame,
+  clock_training_stage_game: ClockTrainingStageGame,
   division_groups_game: DivisionGroupsGame as ComponentType<LessonStageRuntimeComponentProps>,
   english_subject_verb_agreement_game: EnglishSubjectVerbAgreementGame,
   english_adjectives_scene_game: EnglishAdjectivesSceneGame,
@@ -74,6 +79,7 @@ const RUNTIME_COMPONENTS: Record<
   logical_classification_game: LogicalClassificationGame,
   logical_patterns_workshop_game: LogicalPatternsWorkshopGame,
   multiplication_array_game: MultiplicationArrayGame as ComponentType<LessonStageRuntimeComponentProps>,
+  shape_recognition_stage_game: ShapeRecognitionStageGame,
   music_melody_repeat_game: MusicMelodyRepeatGame,
   music_piano_roll_free_play_game: MusicPianoRollFreePlayGame,
   subtracting_garden_game: SubtractingGardenGame as ComponentType<LessonStageRuntimeComponentProps>,

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-25T09:30:25.421Z",
+  "generatedAt": "2026-03-26T12:50:53.749Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,9 +7,9 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "fileCount": 943,
-    "totalHandlers": 895,
-    "validatedHandlers": 895,
+    "fileCount": 944,
+    "totalHandlers": 896,
+    "validatedHandlers": 896,
     "coveragePercent": 100
   },
   "scope": {
@@ -17,5 +17,5 @@
   },
   "issues": [],
   "rules": [],
-  "durationMs": 62
+  "durationMs": 131
 }

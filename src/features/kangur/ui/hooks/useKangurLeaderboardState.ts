@@ -9,6 +9,10 @@ import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord, KangurUser } from '@kangur/platform';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
+import {
+  loadKangurLeaderboardScores,
+  peekCachedKangurLeaderboardScores,
+} from '@/features/kangur/ui/services/learner-profile-scores';
 import { resolveKangurScoreSubject, type KangurLessonSubject } from '@/shared/contracts/kangur';
 
 const kangurPlatform = getKangurPlatform();
@@ -279,13 +283,19 @@ export const useKangurLeaderboardState = (
   const limit = typeof options.limit === 'number' && options.limit > 0 ? Math.round(options.limit) : 10;
   const auth = useOptionalKangurAuth();
   const currentUser = auth?.user ?? null;
-  const [scores, setScores] = useState<KangurScoreRecord[]>([]);
-  const [loading, setLoading] = useState(enabled);
   const [operationFilter, setOperationFilter] = useState('all');
   const [userFilter, setUserFilter] = useState<KangurLeaderboardUserFilter>('all');
   const [error, setError] = useState<string | null>(null);
   const { subject } = useKangurSubjectFocus();
-
+  const leaderboardFetchLimit = Math.max(limit, 20);
+  const initialCachedScores = enabled
+    ? peekCachedKangurLeaderboardScores(kangurPlatform.score, {
+        subject,
+        limit: leaderboardFetchLimit,
+      })
+    : null;
+  const [scores, setScores] = useState<KangurScoreRecord[]>(() => initialCachedScores ?? []);
+  const [loading, setLoading] = useState(enabled && initialCachedScores === null);
   useEffect(() => {
     let isActive = true;
 
@@ -298,12 +308,28 @@ export const useKangurLeaderboardState = (
       };
     }
 
+    const cachedScores = peekCachedKangurLeaderboardScores(kangurPlatform.score, {
+      subject,
+      limit: leaderboardFetchLimit,
+    });
+    if (cachedScores !== null) {
+      setScores(cachedScores);
+      setError(null);
+      setLoading(false);
+      return () => {
+        isActive = false;
+      };
+    }
+
     const loadScores = async (): Promise<void> => {
       setLoading(true);
       setError(null);
 
       try {
-        const scoreRows = await kangurPlatform.score.filter({ subject }, '-score', 20);
+        const scoreRows = await loadKangurLeaderboardScores(kangurPlatform.score, {
+          subject,
+          limit: leaderboardFetchLimit,
+        });
 
         if (!isActive) {
           return;
@@ -333,7 +359,7 @@ export const useKangurLeaderboardState = (
     return () => {
       isActive = false;
     };
-  }, [enabled, subject, translations]);
+  }, [enabled, leaderboardFetchLimit, subject]);
 
   const operationOptions = useMemo(
     () => buildOperationOptions(subject, translations),

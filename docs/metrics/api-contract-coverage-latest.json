@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-25T09:30:32.210Z",
+  "generatedAt": "2026-03-26T12:26:34.645Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -9,7 +9,7 @@
     "status": "passed",
     "routeFileCount": 285,
     "methodCount": 215,
-    "methodsWithTests": 205,
+    "methodsWithTests": 206,
     "mutationValidationCount": 37,
     "queryValidationCount": 10
   },
@@ -196,7 +196,8 @@
         "src/app/api/ai/context/bundle/handler.ts"
       ],
       "testFiles": [
-        "src/app/api/ai/context/bundle/route.test.ts"
+        "src/app/api/ai/context/bundle/route.test.ts",
+        "src/app/api/ai/context/bundle/handler.test.ts"
       ]
     },
     {
@@ -1008,14 +1009,16 @@
       "route": "client-errors",
       "method": "POST",
       "expectedAccess": "public",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/client-errors/route.ts",
         "src/app/api/client-errors/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/client-errors/handler.test.ts"
+      ]
     },
     {
       "route": "cms/css-ai/stream",
@@ -2667,7 +2670,8 @@
         "src/app/api/settings/handler.ts"
       ],
       "testFiles": [
-        "src/app/api/settings/route.test.ts"
+        "src/app/api/settings/route.test.ts",
+        "src/app/api/settings/handler.test.ts"
       ]
     },
     {
@@ -2682,7 +2686,8 @@
         "src/app/api/settings/handler.ts"
       ],
       "testFiles": [
-        "src/app/api/settings/route.test.ts"
+        "src/app/api/settings/route.test.ts",
+        "src/app/api/settings/handler.test.ts"
       ]
     },
     {
@@ -3173,5 +3178,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 181
+  "durationMs": 478
 }

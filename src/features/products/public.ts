@@ -35,7 +35,6 @@ export {
   productCreateSchema as productCreateInputSchemaV1,
   productUpdateSchema as productUpdateInputSchemaV1,
 } from '@/shared/lib/products/validations';
-export { default as ProductEditPage } from './pages/ProductEditPage';
 export { AdminProductsPage } from './pages/AdminProductsPage';
 export { ProductPreferencesPage } from './pages/ProductPreferencesPage';
 export { AdminProductProducersPage } from './pages/AdminProductProducersPage';

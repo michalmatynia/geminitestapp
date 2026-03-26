@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useCallback, useRef, useEffect } from 'react';
 
 import type { ImageFileSelection } from '@/shared/contracts/files';

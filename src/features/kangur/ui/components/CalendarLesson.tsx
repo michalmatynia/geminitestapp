@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
+import { useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 
 import type { LessonSlide as LessonSlideSectionSlide } from '@/features/kangur/ui/components/LessonSlideSection';
@@ -27,10 +28,7 @@ import {
 } from '@/features/kangur/ui/services/progress';
 import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
-
-import CalendarInteractiveGame, {
-  type CalendarInteractiveSectionId,
-} from './CalendarInteractiveGame';
+import type { CalendarInteractiveSectionId } from './CalendarInteractiveGame';
 
 type LessonSectionId = 'intro' | 'dni' | 'miesiace' | 'data';
 type TrainingCardId = 'game_days' | 'game_months' | 'game_dates';
@@ -554,21 +552,13 @@ const CALENDAR_GAME_SECTION_MAP: Record<TrainingCardId, CalendarInteractiveSecti
   game_months: 'miesiace',
   game_dates: 'data',
 };
-
-const CalendarGameBody = ({
-  section,
-  onFinish,
-  onAward,
-}: {
-  section: CalendarInteractiveSectionId;
-  onFinish: () => void;
-  onAward: () => void;
-}): React.JSX.Element => {
-  useEffect(() => {
-    onAward();
-  }, [onAward]);
-
-  return <CalendarInteractiveGame key={section} onFinish={onFinish} section={section} />;
+const CALENDAR_STAGE_RUNTIME_BY_SECTION: Record<
+  CalendarInteractiveSectionId,
+  ReturnType<typeof getKangurLessonStageGameRuntimeSpec>
+> = {
+  dni: getKangurLessonStageGameRuntimeSpec('calendar_interactive_days_lesson_stage'),
+  miesiace: getKangurLessonStageGameRuntimeSpec('calendar_interactive_months_lesson_stage'),
+  data: getKangurLessonStageGameRuntimeSpec('calendar_interactive_dates_lesson_stage'),
 };
 
 export default function CalendarLesson(): React.JSX.Element {
@@ -609,13 +599,8 @@ export default function CalendarLesson(): React.JSX.Element {
         shellTestId: 'calendar-lesson-game-shell',
         title: section.title,
       },
-      render: ({ onBack }: { onBack: () => void }) => (
-        <CalendarGameBody
-          section={interactiveSection}
-          onFinish={onBack}
-          onAward={awardLessonCompletionOnce}
-        />
-      ),
+      onStageEnter: awardLessonCompletionOnce,
+      runtime: CALENDAR_STAGE_RUNTIME_BY_SECTION[interactiveSection],
     };
   });
 

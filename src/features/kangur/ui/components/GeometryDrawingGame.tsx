@@ -3,7 +3,13 @@
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { PencilRuler } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react';
 
 import {
   KangurPracticeGameSummary,
@@ -28,12 +34,14 @@ import {
 } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingOverlays';
 import { KangurDrawingPracticeBoard } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingPracticeBoard';
 import { KangurDrawingStatusRegions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingStatusRegions';
+import {
+  createKangurDrawingDraftStorageKey,
+  createKangurDrawingExportFilename,
+} from '@/features/kangur/ui/components/drawing-engine/drawing-identifiers';
 import { KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS } from '@/features/kangur/ui/components/drawing-engine/keyboard-shortcuts';
 import { flattenKangurStrokePoints } from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
-import { useKangurDrawingDraftStorage } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage';
 import { useKangurKeyboardPointDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurKeyboardPointDrawing';
-import { useKangurFeedbackManagedDrawingActions } from '@/features/kangur/ui/components/drawing-engine/useKangurFeedbackManagedDrawingActions';
-import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
+import { useKangurManagedStoredPointDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedStoredPointDrawing';
 import { KangurManagedDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurManagedDrawingUtilityActions';
 import {
   KangurButton,
@@ -350,13 +358,6 @@ export default function GeometryDrawingGame({
   const currentRound = rounds[roundIndex];
   const totalRounds = rounds.length;
   const resolvedActivityKey = activityKey ?? `training:${operation}:${difficulty}`;
-  const {
-    clearDraftSnapshot,
-    draftSnapshot,
-    setDraftSnapshot,
-  } = useKangurDrawingDraftStorage(
-    currentRound ? `geometry-drawing:${resolvedActivityKey}:${currentRound.id}` : null
-  );
   const shouldShowDifficultySelector =
     showDifficultySelector ?? (customRounds.length === 0);
   const resolvedDifficultyLabel = shouldShowDifficultySelector
@@ -371,58 +372,12 @@ export default function GeometryDrawingGame({
     ? Math.max(8, Math.round(BASE_MIN_DRAWING_POINTS * 0.7))
     : BASE_MIN_DRAWING_POINTS;
   const strokeWidth = isCoarsePointer ? 7 : 5;
-  const {
-    canRedo,
-    canUndo,
-    clearStrokes,
-    exportDataUrl,
-    handlePointerDown,
-    handlePointerMove,
-    handlePointerUp,
-    hasDrawableContent,
-    isPointerDrawing,
-    redoLastStroke,
-    setStrokes,
-    strokes,
-    undoLastStroke,
-  } = useKangurPointCanvasDrawing({
-    canvasRef,
-    baseLayerCacheKey: 'geometry-drawing:grid:v1',
-    enabled: !done && feedback?.kind !== 'success' && feedback?.kind !== 'error',
-    initialSerializedSnapshot: draftSnapshot,
-    logicalHeight: CANVAS_HEIGHT,
-    logicalWidth: CANVAS_WIDTH,
-    minPointDistance,
-    onSerializedSnapshotChange: setDraftSnapshot,
-    onPointerStart: () => {
-      if (feedback?.kind === 'info') {
-        setFeedback(null);
-      }
-    },
-    backgroundFill: '#ffffff',
-    beforeStrokes: (ctx) => {
-      ctx.strokeStyle = '#e2e8f0';
-      ctx.lineWidth = 1;
-      for (let x = 40; x < CANVAS_WIDTH; x += 40) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, CANVAS_HEIGHT);
-        ctx.stroke();
-      }
-      for (let y = 40; y < CANVAS_HEIGHT; y += 40) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(CANVAS_WIDTH, y);
-        ctx.stroke();
-      }
-    },
-    resolveStyle: () => ({
-      lineWidth: strokeWidth,
-      strokeStyle: '#0f172a',
-    }),
-    touchLockEnabled: isCoarsePointer,
-  });
-  const points = useMemo(() => flattenKangurStrokePoints(strokes), [strokes]);
+  const exportFileName = useMemo(() => {
+    return createKangurDrawingExportFilename(
+      (resolvedActivityKey || 'geometry-drawing').toLowerCase(),
+      currentRound?.id ?? 'drawing'
+    );
+  }, [currentRound?.id, resolvedActivityKey]);
   const keyboardReadyStatus = translateWithFallback(
     'geometryDrawing.inRound.keyboard.ready',
     fallbackCopy.keyboard.ready
@@ -447,6 +402,87 @@ export default function GeometryDrawingGame({
     'geometryDrawing.inRound.keyboard.restarted',
     fallbackCopy.keyboard.restarted
   );
+  const keyboardCanvasKeyDownRef = useRef<
+    ((event: ReactKeyboardEvent<HTMLCanvasElement>) => void) | null
+  >(null);
+  const resetKeyboardRef = useRef<((status: string) => void) | null>(null);
+  const handleManagedUnhandledKeyDown = useCallback(
+    (event: ReactKeyboardEvent<HTMLCanvasElement>): void => {
+      keyboardCanvasKeyDownRef.current?.(event);
+    },
+    []
+  );
+  const handleManagedAfterClearExtra = useCallback((): void => {
+    resetKeyboardRef.current?.(keyboardBoardClearedStatus);
+  }, [keyboardBoardClearedStatus]);
+  const {
+    canRedo,
+    canUndo,
+    clearDraftSnapshot,
+    clearStrokes,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    hasDrawableContent,
+    isPointerDrawing,
+    setStrokes,
+    strokes,
+    clearDrawing,
+    exportDrawing,
+    handleCanvasKeyDown,
+    redoDrawing,
+    undoDrawing,
+  } = useKangurManagedStoredPointDrawing({
+    actions: {
+      clearFeedback: () => {
+        setFeedback(null);
+      },
+      exportFilename: exportFileName,
+      onAfterClearExtra: handleManagedAfterClearExtra,
+      onUnhandledKeyDown: handleManagedUnhandledKeyDown,
+    },
+    drawing: {
+      canvasRef,
+      backgroundFill: '#ffffff',
+      baseLayerCacheKey: 'geometry-drawing:grid:v1',
+      beforeStrokes: (ctx) => {
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 1;
+        for (let x = 40; x < CANVAS_WIDTH; x += 40) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, CANVAS_HEIGHT);
+          ctx.stroke();
+        }
+        for (let y = 40; y < CANVAS_HEIGHT; y += 40) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(CANVAS_WIDTH, y);
+          ctx.stroke();
+        }
+      },
+      enabled: !done && feedback?.kind !== 'success' && feedback?.kind !== 'error',
+      logicalHeight: CANVAS_HEIGHT,
+      logicalWidth: CANVAS_WIDTH,
+      minPointDistance,
+      onPointerStart: () => {
+        if (feedback?.kind === 'info') {
+          setFeedback(null);
+        }
+      },
+      resolveStyle: () => ({
+        lineWidth: strokeWidth,
+        strokeStyle: '#0f172a',
+      }),
+      storageKey: createKangurDrawingDraftStorageKey(
+        'geometry-drawing',
+        currentRound ? resolvedActivityKey : null,
+        currentRound?.id
+      ),
+      touchLockEnabled: isCoarsePointer,
+    },
+  });
+  const points = useMemo(() => flattenKangurStrokePoints(strokes), [strokes]);
 
   const clearBoardState = useCallback((): void => {
     clearDraftSnapshot();
@@ -478,41 +514,8 @@ export default function GeometryDrawingGame({
     step: KEYBOARD_DRAW_STEP,
     width: CANVAS_WIDTH,
   });
-
-  const exportFileName = useMemo(() => {
-    const resolvedRoundId = currentRound?.id ?? 'drawing';
-    const normalizedActivityKey = resolvedActivityKey
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-
-    return `${normalizedActivityKey || 'geometry-drawing'}-${resolvedRoundId}.png`;
-  }, [currentRound?.id, resolvedActivityKey]);
-
-  const {
-    clearDrawing,
-    exportDrawing,
-    handleCanvasKeyDown,
-    redoDrawing,
-    undoDrawing,
-  } = useKangurFeedbackManagedDrawingActions<HTMLCanvasElement>({
-    canExport: hasDrawableContent,
-    canRedo,
-    canUndo,
-    clearDraftSnapshot,
-    clearFeedback: () => {
-      setFeedback(null);
-    },
-    clearStrokes,
-    exportDataUrl,
-    exportFilename: exportFileName,
-    onAfterClearExtra: () => {
-      resetKeyboard(keyboardBoardClearedStatus);
-    },
-    onUnhandledKeyDown: handleKeyboardCanvasKeyDown,
-    redoLastStroke,
-    undoLastStroke,
-  });
+  keyboardCanvasKeyDownRef.current = handleKeyboardCanvasKeyDown;
+  resetKeyboardRef.current = resetKeyboard;
 
   const finishGame = useCallback(
     (finalScore: number): void => {
@@ -820,17 +823,14 @@ export default function GeometryDrawingGame({
                         canExport={hasDrawableContent}
                         canRedo={canRedo}
                         canUndo={canUndo}
-                        exportButtonClassName='w-full'
-                        exportClassName='w-full sm:flex-1'
                         exportLabel={translateWithFallback(
                           'geometryDrawing.inRound.export',
                           'Export PNG'
                         )}
                         exportTestId='geometry-drawing-export'
                         historyLocked={isResultLocked}
-                        historyButtonClassName='w-full sm:flex-1'
-                        historyClassName='w-full sm:flex-1'
                         isCoarsePointer={isCoarsePointer}
+                        layoutPreset='practice-board'
                         onExport={exportDrawing}
                         onRedo={redoDrawing}
                         onUndo={undoDrawing}

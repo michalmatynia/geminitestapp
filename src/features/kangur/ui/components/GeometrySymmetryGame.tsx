@@ -2,7 +2,14 @@
 
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useLocale, useTranslations } from 'next-intl';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react';
 
 import {
   KangurPracticeGameSummary,
@@ -24,12 +31,14 @@ import { KangurDrawingActionRow } from '@/features/kangur/ui/components/drawing-
 import { KangurDrawingKeyboardCursorOverlay } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingOverlays';
 import { KangurDrawingPracticeBoard } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingPracticeBoard';
 import { KangurDrawingStatusRegions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingStatusRegions';
+import {
+  createKangurDrawingDraftStorageKey,
+  createKangurDrawingExportFilename,
+} from '@/features/kangur/ui/components/drawing-engine/drawing-identifiers';
 import { KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS } from '@/features/kangur/ui/components/drawing-engine/keyboard-shortcuts';
 import { flattenKangurStrokePoints } from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
-import { useKangurDrawingDraftStorage } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage';
 import { useKangurKeyboardPointDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurKeyboardPointDrawing';
-import { useKangurFeedbackManagedDrawingActions } from '@/features/kangur/ui/components/drawing-engine/useKangurFeedbackManagedDrawingActions';
-import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
+import { useKangurManagedStoredPointDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedStoredPointDrawing';
 import { KangurManagedDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurManagedDrawingUtilityActions';
 import {
   KangurButton,
@@ -140,13 +149,6 @@ export default function GeometrySymmetryGame({
 
   const totalRounds = resolvedRounds.length;
   const currentRound = resolvedRounds[roundIndex];
-  const {
-    clearDraftSnapshot,
-    draftSnapshot,
-    setDraftSnapshot,
-  } = useKangurDrawingDraftStorage(
-    currentRound ? `geometry-symmetry:${currentRound.id}` : null
-  );
   const minPointDistance = isCoarsePointer ? 5 : 2;
   const minDrawingPoints = isCoarsePointer
     ? Math.max(6, Math.round(BASE_MIN_DRAWING_POINTS * 0.7))
@@ -155,73 +157,10 @@ export default function GeometrySymmetryGame({
   const baseLayerCacheKey = currentRound
     ? `geometry-symmetry:${currentRound.id}:${showMirrorHint ? 'hint' : 'plain'}`
     : 'geometry-symmetry:empty';
-  const {
-    canRedo,
-    canUndo,
-    clearStrokes,
-    exportDataUrl,
-    handlePointerDown,
-    handlePointerMove,
-    handlePointerUp,
-    hasDrawableContent,
-    isPointerDrawing,
-    redoLastStroke,
-    setStrokes,
-    strokes,
-    undoLastStroke,
-  } = useKangurPointCanvasDrawing({
-    canvasRef,
-    baseLayerCacheKey,
-    enabled: !done && feedback?.kind !== 'success' && feedback?.kind !== 'error',
-    initialSerializedSnapshot: draftSnapshot,
-    logicalHeight: CANVAS_HEIGHT,
-    logicalWidth: CANVAS_WIDTH,
-    minPointDistance,
-    onSerializedSnapshotChange: setDraftSnapshot,
-    onPointerStart: () => {
-      if (feedback?.kind === 'info') {
-        setFeedback(null);
-      }
-    },
-    backgroundFill: '#ffffff',
-    beforeStrokes: (ctx) => {
-      drawGrid(ctx);
-
-      if (currentRound) {
-        if (currentRound.type === 'mirror' && currentRound.expectedSide) {
-          drawTargetZone(ctx, currentRound.axis, currentRound.expectedSide, {
-            shadeOpposite: true,
-          });
-          if (showMirrorHint) {
-            drawGhostShape(ctx, currentRound.template, currentRound.axis);
-          }
-          drawAxis(ctx, currentRound.axis);
-          drawShape(ctx, currentRound.template, '#6ee7b7', 4);
-        } else {
-          drawAxisCorridor(
-            ctx,
-            currentRound.axis,
-            computeShapeBounds(currentRound.template)
-          );
-          drawShape(ctx, currentRound.template, '#a7f3d0', 4);
-        }
-      }
-    },
-    resolveStyle: () => ({
-      lineWidth: strokeWidth,
-      strokeStyle: '#0f172a',
-    }),
-    touchLockEnabled: isCoarsePointer,
-  });
-  const points = useMemo(() => flattenKangurStrokePoints(strokes), [strokes]);
-
-  useEffect(() => {
-    return () => {
-      if (nextRoundTimeoutRef.current !== null) {
-        window.clearTimeout(nextRoundTimeoutRef.current);
-      }
-    };
-  }, []);
+  const exportFileName = useMemo(
+    () => createKangurDrawingExportFilename('geometry-symmetry', currentRound?.id ?? 'drawing'),
+    [currentRound?.id]
+  );
   const keyboardReadyStatus = translateWithFallback(
     'geometrySymmetry.inRound.keyboard.ready',
     fallbackCopy.keyboard.ready
@@ -246,7 +185,98 @@ export default function GeometrySymmetryGame({
     'geometrySymmetry.inRound.keyboard.restarted',
     fallbackCopy.keyboard.restarted
   );
+  const keyboardCanvasKeyDownRef = useRef<
+    ((event: ReactKeyboardEvent<HTMLCanvasElement>) => void) | null
+  >(null);
+  const resetKeyboardRef = useRef<((status: string) => void) | null>(null);
+  const handleManagedUnhandledKeyDown = useCallback(
+    (event: ReactKeyboardEvent<HTMLCanvasElement>): void => {
+      keyboardCanvasKeyDownRef.current?.(event);
+    },
+    []
+  );
+  const handleManagedAfterClearExtra = useCallback((): void => {
+    resetKeyboardRef.current?.(keyboardBoardClearedStatus);
+  }, [keyboardBoardClearedStatus]);
+  const {
+    canRedo,
+    canUndo,
+    clearDraftSnapshot,
+    clearStrokes,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    hasDrawableContent,
+    isPointerDrawing,
+    setStrokes,
+    strokes,
+    clearDrawing,
+    exportDrawing,
+    handleCanvasKeyDown,
+    redoDrawing,
+    undoDrawing,
+  } = useKangurManagedStoredPointDrawing({
+    actions: {
+      clearFeedback: () => {
+        setFeedback(null);
+      },
+      exportFilename: exportFileName,
+      onAfterClearExtra: handleManagedAfterClearExtra,
+      onUnhandledKeyDown: handleManagedUnhandledKeyDown,
+    },
+    drawing: {
+      canvasRef,
+      backgroundFill: '#ffffff',
+      baseLayerCacheKey,
+      beforeStrokes: (ctx) => {
+        drawGrid(ctx);
 
+        if (currentRound) {
+          if (currentRound.type === 'mirror' && currentRound.expectedSide) {
+            drawTargetZone(ctx, currentRound.axis, currentRound.expectedSide, {
+              shadeOpposite: true,
+            });
+            if (showMirrorHint) {
+              drawGhostShape(ctx, currentRound.template, currentRound.axis);
+            }
+            drawAxis(ctx, currentRound.axis);
+            drawShape(ctx, currentRound.template, '#6ee7b7', 4);
+          } else {
+            drawAxisCorridor(
+              ctx,
+              currentRound.axis,
+              computeShapeBounds(currentRound.template)
+            );
+            drawShape(ctx, currentRound.template, '#a7f3d0', 4);
+          }
+        }
+      },
+      enabled: !done && feedback?.kind !== 'success' && feedback?.kind !== 'error',
+      logicalHeight: CANVAS_HEIGHT,
+      logicalWidth: CANVAS_WIDTH,
+      minPointDistance,
+      onPointerStart: () => {
+        if (feedback?.kind === 'info') {
+          setFeedback(null);
+        }
+      },
+      resolveStyle: () => ({
+        lineWidth: strokeWidth,
+        strokeStyle: '#0f172a',
+      }),
+      storageKey: createKangurDrawingDraftStorageKey('geometry-symmetry', currentRound?.id),
+      touchLockEnabled: isCoarsePointer,
+    },
+  });
+  const points = useMemo(() => flattenKangurStrokePoints(strokes), [strokes]);
+
+  useEffect(() => {
+    return () => {
+      if (nextRoundTimeoutRef.current !== null) {
+        window.clearTimeout(nextRoundTimeoutRef.current);
+      }
+    };
+  }, []);
   const clearBoardState = useCallback((): void => {
     clearDraftSnapshot();
     clearStrokes();
@@ -277,36 +307,8 @@ export default function GeometrySymmetryGame({
     step: KEYBOARD_DRAW_STEP,
     width: CANVAS_WIDTH,
   });
-
-  const exportFileName = useMemo(
-    () => `geometry-symmetry-${currentRound?.id ?? 'drawing'}.png`,
-    [currentRound?.id]
-  );
-
-  const {
-    clearDrawing,
-    exportDrawing,
-    handleCanvasKeyDown,
-    redoDrawing,
-    undoDrawing,
-  } = useKangurFeedbackManagedDrawingActions<HTMLCanvasElement>({
-    canExport: hasDrawableContent,
-    canRedo,
-    canUndo,
-    clearDraftSnapshot,
-    clearFeedback: () => {
-      setFeedback(null);
-    },
-    clearStrokes,
-    exportDataUrl,
-    exportFilename: exportFileName,
-    onAfterClearExtra: () => {
-      resetKeyboard(keyboardBoardClearedStatus);
-    },
-    onUnhandledKeyDown: handleKeyboardCanvasKeyDown,
-    redoLastStroke,
-    undoLastStroke,
-  });
+  keyboardCanvasKeyDownRef.current = handleKeyboardCanvasKeyDown;
+  resetKeyboardRef.current = resetKeyboard;
 
   const moveToNextRound = useCallback(
     (wasCorrect: boolean): void => {
@@ -600,17 +602,14 @@ export default function GeometrySymmetryGame({
                     canExport={hasDrawableContent}
                     canRedo={canRedo}
                     canUndo={canUndo}
-                    exportButtonClassName='w-full'
-                    exportClassName='w-full sm:flex-1'
                     exportLabel={translateWithFallback(
                       'geometrySymmetry.inRound.export',
                       'Export PNG'
                     )}
                     exportTestId='geometry-symmetry-export'
                     historyLocked={isResultLocked}
-                    historyButtonClassName='w-full sm:flex-1'
-                    historyClassName='w-full sm:flex-1'
                     isCoarsePointer={isCoarsePointer}
+                    layoutPreset='practice-board'
                     onExport={exportDrawing}
                     onRedo={redoDrawing}
                     onUndo={undoDrawing}

@@ -5,7 +5,7 @@ export type LogicalPatternTile = {
   value: string;
   label: string;
   accent?: KangurAccent;
-  kind?: 'emoji' | 'number';
+  kind?: 'emoji' | 'number' | 'letter';
 };
 
 export type LogicalPatternCell =
@@ -22,6 +22,8 @@ export type LogicalPatternRound = {
   pool: string[];
   sequence: LogicalPatternCell[];
 };
+
+export type LogicalPatternSetId = 'logical_patterns_workshop' | 'alphabet_letter_order';
 
 export const LOGICAL_PATTERNS_WORKSHOP_TILES: Record<string, LogicalPatternTile> = {
   tri_a: { id: 'tri_a', value: 'triangle', label: '🔺', accent: 'rose', kind: 'emoji' },
@@ -165,3 +167,99 @@ export const LOGICAL_PATTERNS_WORKSHOP_ROUNDS: LogicalPatternRound[] = [
     ],
   },
 ];
+
+export const ALPHABET_LETTER_ORDER_TILES: Record<string, LogicalPatternTile> = {
+  letter_c: { id: 'letter_c', value: 'c', label: 'C', accent: 'amber', kind: 'letter' },
+  letter_e: { id: 'letter_e', value: 'e', label: 'E', accent: 'amber', kind: 'letter' },
+  letter_f: { id: 'letter_f', value: 'f', label: 'F', accent: 'rose', kind: 'letter' },
+  letter_k: { id: 'letter_k', value: 'k', label: 'K', accent: 'amber', kind: 'letter' },
+  letter_m: { id: 'letter_m', value: 'm', label: 'M', accent: 'amber', kind: 'letter' },
+  letter_n: { id: 'letter_n', value: 'n', label: 'N', accent: 'rose', kind: 'letter' },
+  letter_y: { id: 'letter_y', value: 'y', label: 'Y', accent: 'amber', kind: 'letter' },
+  letter_w: { id: 'letter_w', value: 'w', label: 'W', accent: 'rose', kind: 'letter' },
+};
+
+type LogicalPatternDataset = {
+  rounds: LogicalPatternRound[];
+  tiles: Record<string, LogicalPatternTile>;
+};
+
+const ALPHABET_LETTER_ORDER_FIXED_TILES: Record<string, LogicalPatternTile> = {
+  alpha_a: { id: 'alpha_a', value: 'a', label: 'A', accent: 'sky', kind: 'letter' },
+  alpha_b: { id: 'alpha_b', value: 'b', label: 'B', accent: 'sky', kind: 'letter' },
+  alpha_d: { id: 'alpha_d', value: 'd', label: 'D', accent: 'sky', kind: 'letter' },
+  alpha_h: { id: 'alpha_h', value: 'h', label: 'H', accent: 'sky', kind: 'letter' },
+  alpha_i: { id: 'alpha_i', value: 'i', label: 'I', accent: 'sky', kind: 'letter' },
+  alpha_j: { id: 'alpha_j', value: 'j', label: 'J', accent: 'sky', kind: 'letter' },
+  alpha_l: { id: 'alpha_l', value: 'l', label: 'L', accent: 'sky', kind: 'letter' },
+  alpha_x: { id: 'alpha_x', value: 'x', label: 'X', accent: 'sky', kind: 'letter' },
+  alpha_z: { id: 'alpha_z', value: 'z', label: 'Z', accent: 'sky', kind: 'letter' },
+};
+
+export const ALPHABET_LETTER_ORDER_DATASET: LogicalPatternDataset = {
+  rounds: [
+    {
+      id: 'alphabet-abcde',
+      title: 'Alfabet A-E',
+      prompt: 'Uzupełnij brakujące litery w kolejności alfabetu.',
+      ruleHint: 'Każda kolejna litera idzie o jeden krok dalej.',
+      ruleSummary: 'Porządek alfabetu: A, B, C, D, E.',
+      stepHint: 'Powiedz litery na głos: A, B, C, D, E.',
+      pool: ['letter_c', 'letter_e', 'letter_f'],
+      sequence: [
+        { type: 'fixed', tileId: 'alpha_a' },
+        { type: 'fixed', tileId: 'alpha_b' },
+        { type: 'blank', id: 'alphabet-1', correctValue: 'c' },
+        { type: 'fixed', tileId: 'alpha_d' },
+        { type: 'blank', id: 'alphabet-2', correctValue: 'e' },
+      ],
+    },
+    {
+      id: 'alphabet-hm',
+      title: 'Alfabet H-M',
+      prompt: 'Znajdź kolejne litery w środku alfabetu.',
+      ruleHint: 'H, I, J, K, L, M.',
+      ruleSummary: 'Litery idą po kolei bez przeskoków.',
+      stepHint: 'Sprawdź, jaka litera jest po J i po L.',
+      pool: ['letter_k', 'letter_m', 'letter_n'],
+      sequence: [
+        { type: 'fixed', tileId: 'alpha_h' },
+        { type: 'fixed', tileId: 'alpha_i' },
+        { type: 'fixed', tileId: 'alpha_j' },
+        { type: 'blank', id: 'alphabet-3', correctValue: 'k' },
+        { type: 'fixed', tileId: 'alpha_l' },
+        { type: 'blank', id: 'alphabet-4', correctValue: 'm' },
+      ],
+    },
+    {
+      id: 'alphabet-xyz',
+      title: 'Koniec alfabetu',
+      prompt: 'Uzupełnij brakującą literę na końcu alfabetu.',
+      ruleHint: 'X, Y, Z.',
+      ruleSummary: 'Na końcu alfabetu mamy X, Y, Z.',
+      stepHint: 'Pomyśl, jaka litera jest między X i Z.',
+      pool: ['letter_y', 'letter_w'],
+      sequence: [
+        { type: 'fixed', tileId: 'alpha_x' },
+        { type: 'blank', id: 'alphabet-5', correctValue: 'y' },
+        { type: 'fixed', tileId: 'alpha_z' },
+      ],
+    },
+  ],
+  tiles: {
+    ...ALPHABET_LETTER_ORDER_FIXED_TILES,
+    ...ALPHABET_LETTER_ORDER_TILES,
+  },
+};
+
+export const LOGICAL_PATTERN_DATASETS: Record<LogicalPatternSetId, LogicalPatternDataset> = {
+  logical_patterns_workshop: {
+    rounds: LOGICAL_PATTERNS_WORKSHOP_ROUNDS,
+    tiles: LOGICAL_PATTERNS_WORKSHOP_TILES,
+  },
+  alphabet_letter_order: ALPHABET_LETTER_ORDER_DATASET,
+};
+
+export const getLogicalPatternDataset = (
+  patternSetId: LogicalPatternSetId = 'logical_patterns_workshop'
+): LogicalPatternDataset => LOGICAL_PATTERN_DATASETS[patternSetId];

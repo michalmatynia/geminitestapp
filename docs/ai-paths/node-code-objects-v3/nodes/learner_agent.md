@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-05'
+last_reviewed: '2026-03-26'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Learner Agent Migration Sheet (`learner_agent`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-26T12:17:00.706Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/learner_agent.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/learner_agent.scaffold.json`
 - v3 object id: `node_obj_learner_agent_portable_v3`
-- v3 object hash: `07ac3c2ba602a5997d4181fb6a4c5937dabce6d6cc26f55dc104e7354cea4c80`
+- v3 object hash: `c16c4a787e6caf3a64c45afccc99cb28b2d4563f4f8e2192e32e99faf3c9c924`
 
 ## Ports
 

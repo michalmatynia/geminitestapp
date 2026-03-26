@@ -34,6 +34,7 @@ describe('lesson stage runtime specs', () => {
       lessonStageVariants
         .filter((variant) =>
           [
+            'alphabet_letter_order.lesson-stage',
             'adding_ball.lesson-stage',
             'adding_synthesis.lesson-stage',
             'agentic_prompt_trim_stage.lesson-stage',
@@ -43,6 +44,7 @@ describe('lesson stage runtime specs', () => {
             'art_shape_rotation_puzzle.lesson-stage',
             'division_groups.lesson-stage',
             'geometry_shape_workshop.lesson-stage',
+            'geometry_shape_spotter.lesson-stage',
             'geometry_shape_drawing.lesson-stage',
             'geometry_symmetry_studio.lesson-stage',
             'geometry_perimeter_trainer.lesson-stage',
@@ -63,6 +65,7 @@ describe('lesson stage runtime specs', () => {
       lessonStageVariants.map((variant) => variant.lessonStageRuntimeId).filter(Boolean)
     ).toEqual(
       expect.arrayContaining([
+        'alphabet_letter_order_lesson_stage',
         'adding_ball_lesson_stage',
         'adding_synthesis_lesson_stage',
         'agentic_prompt_trim_lesson_stage',
@@ -72,6 +75,7 @@ describe('lesson stage runtime specs', () => {
         'art_shape_rotation_puzzle_lesson_stage',
         'division_groups_lesson_stage',
         'geometry_shape_workshop_lesson_stage',
+        'geometry_shape_spotter_lesson_stage',
         'geometry_shape_drawing_lesson_stage',
         'english_sentence_builder_lesson_stage',
         'geometry_symmetry_studio_lesson_stage',

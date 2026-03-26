@@ -5,7 +5,7 @@ import {
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
 
-type SectionId = 'kolejnosc' | 'summary';
+type SectionId = 'kolejnosc' | 'game_order' | 'summary';
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   kolejnosc: [
@@ -21,6 +21,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
   ],
+  game_order: [],
   summary: [
     {
       title: 'Podsumowanie',
@@ -43,6 +44,13 @@ export const HUB_SECTIONS = [
     title: 'Kolejność liter',
     description: 'Uzupełnij brakujące litery',
     slideCount: SLIDES.kolejnosc.length,
+  },
+  {
+    id: 'game_order',
+    emoji: '🎮',
+    title: 'Gra alfabet',
+    description: 'Uzupełnij brakujące litery w kolejności',
+    isGame: true,
   },
   {
     id: 'summary',

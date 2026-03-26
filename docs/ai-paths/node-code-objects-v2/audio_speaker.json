@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "generatedAt": "2026-03-26T12:16:59.624Z",
   "id": "node_obj_audio_speaker_portable_v2",
   "nodeType": "audio_speaker",
   "nodeDocVersion": "2026-02-20.v1",
@@ -248,5 +248,5 @@
     "semanticNodeHash": "37a4b7541ec63acc4d5d1797a0871d52f1d3fa54d8dc44cf6fc350796c3b0d3e"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "dfb90e0e8d2acee6e82550a456eed3f470ed6cb0b9c1e455f19e9d2471a9a640"
+  "objectHash": "06913118234b99fba62990d5ca66eb4e4cca0bdac64c27cb2c3e046e93242ae5"
 }

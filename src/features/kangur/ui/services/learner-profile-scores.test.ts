@@ -5,8 +5,10 @@ import type { KangurScorePort, KangurScoreRecord } from '@kangur/platform';
 import {
   LEARNER_PROFILE_SCORE_FETCH_LIMIT,
   clearKangurScopedScoresCache,
+  loadKangurLeaderboardScores,
   loadLearnerProfileScores,
   loadScopedKangurScores,
+  peekCachedKangurLeaderboardScores,
   peekCachedScopedKangurScores,
 } from './learner-profile-scores';
 
@@ -200,5 +202,41 @@ describe('loadScopedKangurScores', () => {
     expect(cachedResult).toEqual(firstResult);
     expect(cachedResult).not.toBe(firstResult);
     expect(filterMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('loadKangurLeaderboardScores', () => {
+  beforeEach(() => {
+    clearKangurScopedScoresCache();
+  });
+
+  it('loads top subject scores with score ordering and reuses the hot cache', async () => {
+    const scorePort = createScorePort();
+    const filterMock = vi.mocked(scorePort.filter);
+    filterMock.mockResolvedValue([
+      createScore({ id: 'score-top', score: 10, subject: 'maths' }),
+      createScore({ id: 'score-next', score: 9, subject: 'maths' }),
+    ]);
+
+    const firstResult = await loadKangurLeaderboardScores(scorePort, {
+      subject: 'maths',
+      limit: 20,
+    });
+    const cachedResult = peekCachedKangurLeaderboardScores(scorePort, {
+      subject: 'maths',
+      limit: 20,
+    });
+    const secondResult = await loadKangurLeaderboardScores(scorePort, {
+      subject: 'maths',
+      limit: 20,
+    });
+
+    expect(filterMock).toHaveBeenCalledTimes(1);
+    expect(filterMock).toHaveBeenCalledWith({ subject: 'maths' }, '-score', 20);
+    expect(firstResult.map((score) => score.id)).toEqual(['score-top', 'score-next']);
+    expect(cachedResult).toEqual(firstResult);
+    expect(cachedResult).not.toBe(firstResult);
+    expect(secondResult).toEqual(firstResult);
+    expect(secondResult).not.toBe(firstResult);
   });
 });

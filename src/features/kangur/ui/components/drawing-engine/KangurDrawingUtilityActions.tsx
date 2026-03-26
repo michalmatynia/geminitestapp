@@ -1,9 +1,11 @@
 'use client';
 
+import type { KangurButtonProps } from '@/features/kangur/ui/design/primitives';
 import { KangurDrawingHistoryActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions';
 import { KangurDrawingSnapshotActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions';
 
 export type KangurDrawingUtilityActionsProps = {
+  display?: 'icon' | 'label';
   exportButtonClassName?: string;
   exportClassName?: string;
   exportDisabled?: boolean;
@@ -11,6 +13,7 @@ export type KangurDrawingUtilityActionsProps = {
   exportTestId?: string;
   historyButtonClassName?: string;
   historyClassName?: string;
+  iconClassName?: string;
   isCoarsePointer?: boolean;
   onExport: () => void;
   onRedo: () => void;
@@ -22,9 +25,11 @@ export type KangurDrawingUtilityActionsProps = {
   undoDisabled?: boolean;
   undoLabel: string;
   undoTestId?: string;
+  variant?: KangurButtonProps['variant'];
 };
 
 export function KangurDrawingUtilityActions({
+  display = 'label',
   exportButtonClassName,
   exportClassName,
   exportDisabled = false,
@@ -32,6 +37,7 @@ export function KangurDrawingUtilityActions({
   exportTestId,
   historyButtonClassName,
   historyClassName,
+  iconClassName,
   isCoarsePointer = false,
   onExport,
   onRedo,
@@ -43,12 +49,15 @@ export function KangurDrawingUtilityActions({
   undoDisabled = false,
   undoLabel,
   undoTestId,
+  variant = 'surface',
 }: KangurDrawingUtilityActionsProps): React.JSX.Element {
   return (
     <>
       <KangurDrawingHistoryActions
         buttonClassName={historyButtonClassName}
         className={historyClassName}
+        display={display}
+        iconClassName={iconClassName}
         isCoarsePointer={isCoarsePointer}
         onRedo={onRedo}
         onUndo={onUndo}
@@ -59,16 +68,20 @@ export function KangurDrawingUtilityActions({
         undoDisabled={undoDisabled}
         undoLabel={undoLabel}
         undoTestId={undoTestId}
+        variant={variant}
       />
       <KangurDrawingSnapshotActions
         buttonClassName={exportButtonClassName}
         className={exportClassName}
+        display={display}
         exportDisabled={exportDisabled}
         exportLabel={exportLabel}
         exportTestId={exportTestId}
+        iconClassName={iconClassName}
         isCoarsePointer={isCoarsePointer}
         onExport={onExport}
         size={size}
+        variant={variant}
       />
     </>
   );

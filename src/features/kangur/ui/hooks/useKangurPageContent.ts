@@ -83,6 +83,9 @@ export const useKangurPageContentStore = (
     gcTime: KANGUR_PAGE_CONTENT_GC_TIME_MS,
     initialData,
     staleTime: KANGUR_PAGE_CONTENT_STALE_TIME_MS,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
     retry: false,
   });
 };

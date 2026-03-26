@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-03-08T19:34:26.735Z",
+  "generatedAt": "2026-03-26T12:51:55.172Z",
   "summary": {
     "status": "ready",
-    "runsAnalyzed": 14,
-    "oldestRun": "2026-03-05T00:31:37.152Z",
-    "newestRun": "2026-03-08T19:27:19.918Z",
+    "runsAnalyzed": 20,
+    "oldestRun": "2026-03-07T19:15:23.018Z",
+    "newestRun": "2026-03-26T12:51:04.756Z",
     "checks": 12,
     "checksRequired": 9,
     "checksOptional": 3,
-    "samplesWeekly": 103,
-    "samplesSupplemental": 30,
-    "samplesTotal": 133,
+    "samplesWeekly": 137,
+    "samplesSupplemental": 28,
+    "samplesTotal": 165,
     "supplementalSamplesEnabled": true,
     "checksReady": 9,
     "checksReadyRequired": 9,
@@ -20,7 +20,7 @@
     "requiredRunsNeeded": 0,
     "blockingChecks": [],
     "weeklyCadenceDays": 7,
-    "estimatedReadyDateWeeklyCadence": "2026-03-08T19:27:19.918Z",
+    "estimatedReadyDateWeeklyCadence": "2026-03-26T12:51:04.756Z",
     "checksChanged": 2,
     "minimumSamplesRequired": 8,
     "percentile": 0.9,
@@ -37,10 +37,10 @@
   },
   "supplemental": {
     "enabled": true,
-    "totalSamples": 30,
+    "totalSamples": 28,
     "byCheck": {
-      "lintDomains": 9,
-      "unitDomains": 4,
+      "lintDomains": 8,
+      "unitDomains": 3,
       "criticalFlows": 12,
       "securitySmoke": 5
     }
@@ -51,16 +51,16 @@
       "label": "Build",
       "requiredForReadiness": true,
       "currentBudgetMs": 195000,
-      "sampleCountWeekly": 9,
+      "sampleCountWeekly": 13,
       "sampleCountSupplemental": 0,
-      "sampleCount": 9,
+      "sampleCount": 13,
       "samplesNeeded": 0,
-      "percentileDurationMs": 203497,
+      "percentileDurationMs": 174347,
       "maxDurationMs": 326086,
       "recommendedBudgetMs": 359000,
       "deltaMs": 164000,
       "status": "ready",
-      "estimatedReadyDateWeeklyCadence": "2026-03-08T19:27:19.918Z"
+      "estimatedReadyDateWeeklyCadence": "2026-03-26T12:51:04.756Z"
     },
     {
       "id": "lint",
@@ -83,16 +83,16 @@
       "label": "Lint Domain Gate",
       "requiredForReadiness": true,
       "currentBudgetMs": 407000,
-      "sampleCountWeekly": 7,
-      "sampleCountSupplemental": 9,
-      "sampleCount": 16,
+      "sampleCountWeekly": 11,
+      "sampleCountSupplemental": 8,
+      "sampleCount": 19,
       "samplesNeeded": 0,
-      "percentileDurationMs": 240612,
+      "percentileDurationMs": 230878,
       "maxDurationMs": 357366,
       "recommendedBudgetMs": 407000,
       "deltaMs": 0,
       "status": "ready",
-      "estimatedReadyDateWeeklyCadence": "2026-03-08T19:27:19.918Z"
+      "estimatedReadyDateWeeklyCadence": "2026-03-26T12:51:04.756Z"
     },
     {
       "id": "typecheck",
@@ -108,55 +108,55 @@
       "recommendedBudgetMs": 172000,
       "deltaMs": 52000,
       "status": "ready",
-      "estimatedReadyDateWeeklyCadence": "2026-03-08T19:27:19.918Z"
+      "estimatedReadyDateWeeklyCadence": "2026-03-26T12:51:04.756Z"
     },
     {
       "id": "criticalFlows",
       "label": "Critical Flow Gate",
       "requiredForReadiness": true,
       "currentBudgetMs": 60000,
-      "sampleCountWeekly": 13,
+      "sampleCountWeekly": 20,
       "sampleCountSupplemental": 12,
-      "sampleCount": 25,
+      "sampleCount": 32,
       "samplesNeeded": 0,
-      "percentileDurationMs": 36879,
+      "percentileDurationMs": 36899,
       "maxDurationMs": 51433,
       "recommendedBudgetMs": 60000,
       "deltaMs": 0,
       "status": "ready",
-      "estimatedReadyDateWeeklyCadence": "2026-03-08T19:27:19.918Z"
+      "estimatedReadyDateWeeklyCadence": "2026-03-26T12:51:04.756Z"
     },
     {
       "id": "securitySmoke",
       "label": "Security Smoke Gate",
       "requiredForReadiness": true,
       "currentBudgetMs": 60000,
-      "sampleCountWeekly": 13,
+      "sampleCountWeekly": 20,
       "sampleCountSupplemental": 5,
-      "sampleCount": 18,
+      "sampleCount": 25,
       "samplesNeeded": 0,
-      "percentileDurationMs": 11889,
+      "percentileDurationMs": 12352,
       "maxDurationMs": 34787,
       "recommendedBudgetMs": 60000,
       "deltaMs": 0,
       "status": "ready",
-      "estimatedReadyDateWeeklyCadence": "2026-03-08T19:27:19.918Z"
+      "estimatedReadyDateWeeklyCadence": "2026-03-26T12:51:04.756Z"
     },
     {
       "id": "unitDomains",
       "label": "Unit Domain Gate",
       "requiredForReadiness": true,
       "currentBudgetMs": 600000,
-      "sampleCountWeekly": 12,
-      "sampleCountSupplemental": 4,
-      "sampleCount": 16,
+      "sampleCountWeekly": 15,
+      "sampleCountSupplemental": 3,
+      "sampleCount": 18,
       "samplesNeeded": 0,
-      "percentileDurationMs": 337090,
+      "percentileDurationMs": 337555,
       "maxDurationMs": 442843,
       "recommendedBudgetMs": 600000,
       "deltaMs": 0,
       "status": "ready",
-      "estimatedReadyDateWeeklyCadence": "2026-03-08T19:27:19.918Z"
+      "estimatedReadyDateWeeklyCadence": "2026-03-26T12:51:04.756Z"
     },
     {
       "id": "fullUnit",
@@ -195,67 +195,51 @@
       "label": "Architecture Guardrails",
       "requiredForReadiness": true,
       "currentBudgetMs": 60000,
-      "sampleCountWeekly": 9,
+      "sampleCountWeekly": 10,
       "sampleCountSupplemental": 0,
-      "sampleCount": 9,
+      "sampleCount": 10,
       "samplesNeeded": 0,
-      "percentileDurationMs": 5936,
+      "percentileDurationMs": 5603,
       "maxDurationMs": 8602,
       "recommendedBudgetMs": 60000,
       "deltaMs": 0,
       "status": "ready",
-      "estimatedReadyDateWeeklyCadence": "2026-03-08T19:27:19.918Z"
+      "estimatedReadyDateWeeklyCadence": "2026-03-26T12:51:04.756Z"
     },
     {
       "id": "uiConsolidation",
       "label": "UI Consolidation Guardrail",
       "requiredForReadiness": true,
       "currentBudgetMs": 60000,
-      "sampleCountWeekly": 13,
+      "sampleCountWeekly": 16,
       "sampleCountSupplemental": 0,
-      "sampleCount": 13,
+      "sampleCount": 16,
       "samplesNeeded": 0,
-      "percentileDurationMs": 6589,
+      "percentileDurationMs": 5434,
       "maxDurationMs": 10373,
       "recommendedBudgetMs": 60000,
       "deltaMs": 0,
       "status": "ready",
-      "estimatedReadyDateWeeklyCadence": "2026-03-08T19:27:19.918Z"
+      "estimatedReadyDateWeeklyCadence": "2026-03-26T12:51:04.756Z"
     },
     {
       "id": "observability",
       "label": "Observability Check",
       "requiredForReadiness": true,
       "currentBudgetMs": 30000,
-      "sampleCountWeekly": 14,
+      "sampleCountWeekly": 19,
       "sampleCountSupplemental": 0,
-      "sampleCount": 14,
+      "sampleCount": 19,
       "samplesNeeded": 0,
-      "percentileDurationMs": 2093,
+      "percentileDurationMs": 1794,
       "maxDurationMs": 4618,
       "recommendedBudgetMs": 30000,
       "deltaMs": 0,
       "status": "ready",
-      "estimatedReadyDateWeeklyCadence": "2026-03-08T19:27:19.918Z"
+      "estimatedReadyDateWeeklyCadence": "2026-03-26T12:51:04.756Z"
     }
   ],
   "runs": [
-    {
-      "sourceFile": "weekly-quality-2026-03-05T00-31-37-152Z.json",
-      "generatedAt": "2026-03-05T00:31:37.152Z"
-    },
-    {
-      "sourceFile": "weekly-quality-2026-03-07T18-10-37-333Z.json",
-      "generatedAt": "2026-03-07T18:10:37.333Z"
-    },
-    {
-      "sourceFile": "weekly-quality-2026-03-07T18-22-56-602Z.json",
-      "generatedAt": "2026-03-07T18:22:56.602Z"
-    },
-    {
-      "sourceFile": "weekly-quality-2026-03-07T18-43-30-446Z.json",
-      "generatedAt": "2026-03-07T18:43:30.446Z"
-    },
     {
       "sourceFile": "weekly-quality-2026-03-07T19-15-23-018Z.json",
       "generatedAt": "2026-03-07T19:15:23.018Z"
@@ -293,8 +277,48 @@
       "generatedAt": "2026-03-08T19:02:29.014Z"
     },
     {
+      "sourceFile": "weekly-quality-2026-03-09T05-26-11-912Z.json",
+      "generatedAt": "2026-03-09T05:26:11.912Z"
+    },
+    {
+      "sourceFile": "weekly-quality-2026-03-09T06-12-30-508Z.json",
+      "generatedAt": "2026-03-09T06:12:30.508Z"
+    },
+    {
+      "sourceFile": "weekly-quality-2026-03-09T06-35-31-382Z.json",
+      "generatedAt": "2026-03-09T06:35:31.382Z"
+    },
+    {
+      "sourceFile": "weekly-quality-2026-03-09T06-39-33-414Z.json",
+      "generatedAt": "2026-03-09T06:39:33.414Z"
+    },
+    {
+      "sourceFile": "weekly-quality-2026-03-09T06-52-13-164Z.json",
+      "generatedAt": "2026-03-09T06:52:13.164Z"
+    },
+    {
+      "sourceFile": "weekly-quality-2026-03-09T07-07-39-563Z.json",
+      "generatedAt": "2026-03-09T07:07:39.563Z"
+    },
+    {
+      "sourceFile": "weekly-quality-2026-03-09T07-24-17-852Z.json",
+      "generatedAt": "2026-03-09T07:24:17.852Z"
+    },
+    {
+      "sourceFile": "weekly-quality-2026-03-09T07-40-09-183Z.json",
+      "generatedAt": "2026-03-09T07:40:09.183Z"
+    },
+    {
+      "sourceFile": "weekly-quality-2026-03-09T07-50-55-873Z.json",
+      "generatedAt": "2026-03-09T07:50:55.873Z"
+    },
+    {
+      "sourceFile": "weekly-quality-2026-03-09T08-55-19-838Z.json",
+      "generatedAt": "2026-03-09T08:55:19.838Z"
+    },
+    {
       "sourceFile": "weekly-quality-latest.json",
-      "generatedAt": "2026-03-08T19:27:19.918Z"
+      "generatedAt": "2026-03-26T12:51:04.756Z"
     }
   ]
 }

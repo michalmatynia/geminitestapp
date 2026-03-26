@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-25'
+last_reviewed: '2026-03-26'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,14 +8,14 @@ canonical: true
 ---
 # API Contract Coverage Report
 
-Generated at: 2026-03-25T09:30:32.210Z
+Generated at: 2026-03-26T12:26:34.645Z
 
 ## Summary
 
 - Status: PASSED
 - Route files scanned: 285
 - Route methods scanned: 215
-- Methods with adjacent tests: 205
+- Methods with adjacent tests: 206
 - Mutations with body validation: 37
 - Query routes with validation: 10
 - Errors: 0
@@ -103,7 +103,7 @@ No API contract coverage gaps detected.
 | chatbot/[[...path]] | PUT | protected | yes | - | - |
 | chatbot/[[...path]] | PATCH | protected | yes | - | - |
 | chatbot/[[...path]] | DELETE | protected | yes | - | - |
-| client-errors | POST | public | no | yes | - |
+| client-errors | POST | public | yes | yes | - |
 | cms/css-ai/stream | POST | protected | yes | yes | - |
 | cms/domains/[id] | DELETE | protected | yes | - | - |
 | cms/domains/[id] | PUT | protected | yes | - | - |

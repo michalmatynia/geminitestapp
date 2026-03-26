@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-25'
+last_reviewed: '2026-03-26'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Route Policy Report
 
-Generated at: 2026-03-25T09:30:27.699Z
+Generated at: 2026-03-26T12:26:19.272Z
 
 ## Summary
 

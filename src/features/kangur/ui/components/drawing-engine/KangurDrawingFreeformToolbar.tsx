@@ -6,8 +6,7 @@ import type { ReactNode } from 'react';
 import { KANGUR_WRAP_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
 
-import { KangurDrawingHistoryActions } from './KangurDrawingHistoryActions';
-import { KangurDrawingSnapshotActions } from './KangurDrawingSnapshotActions';
+import { KangurManagedDrawingUtilityActions } from './KangurManagedDrawingUtilityActions';
 import type { UseKangurFreeformDrawingToolsResult } from './useKangurFreeformDrawingTools';
 
 type KangurFreeformToolbarToolState = Pick<
@@ -187,37 +186,18 @@ export function KangurDrawingFreeformToolbar({
 
       <div className='mx-1 h-4 w-px [background:var(--kangur-soft-card-border)]' />
 
-      <KangurDrawingHistoryActions
-        buttonClassName={cn(
-          '!min-w-0 !gap-0 rounded-full [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
-          isCoarsePointer ? 'h-11 w-11' : 'h-6 w-6'
-        )}
-        className='flex items-center gap-1'
-        display='icon'
-        iconClassName='h-3 w-3'
+      <KangurManagedDrawingUtilityActions
+        canExport={canExport}
+        canRedo={canRedo}
+        canUndo={canUndo}
+        exportLabel={exportLabel}
+        isCoarsePointer={isCoarsePointer}
+        layoutPreset='freeform-toolbar'
+        onExport={onExport}
         onRedo={onRedo}
         onUndo={onUndo}
-        redoDisabled={!canRedo}
         redoLabel={redoLabel}
-        size='sm'
-        undoDisabled={!canUndo}
         undoLabel={undoLabel}
-        variant='ghost'
-      />
-      <KangurDrawingSnapshotActions
-        buttonClassName={cn(
-          '!min-w-0 !gap-0 rounded-full [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
-          isCoarsePointer ? 'h-11 w-11' : 'h-6 w-6'
-        )}
-        className='flex items-center'
-        display='icon'
-        exportDisabled={!canExport}
-        exportLabel={exportLabel}
-        iconClassName='h-3 w-3'
-        isCoarsePointer={isCoarsePointer}
-        onExport={onExport}
-        size='sm'
-        variant='ghost'
       />
 
       <ToolbarIconButton

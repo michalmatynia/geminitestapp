@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-26'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,16 +8,16 @@ canonical: true
 ---
 # Lint Domain Checks Report
 
-Generated at: 2026-03-11T22:45:57.926Z
+Generated at: 2026-03-26T12:40:05.891Z
 
 ## Summary
 
 - Domains: 5
-- Passed: 3
-- Failed: 2
+- Passed: 0
+- Failed: 5
 - Timed out: 0
 - Skipped: 0
-- Total duration: 1.5m
+- Total duration: 1.7m
 - Include test probes: no
 - Include test tree: yes
 
@@ -25,11 +25,11 @@ Generated at: 2026-03-11T22:45:57.926Z
 
 | Domain | Status | Duration | Exit | Targets | Test Trees | Test Probes |
 | --- | --- | ---: | ---: | --- | --- | --- |
-| Auth | FAIL | 1.2s | 2 | `src/features/auth`, `src/app/api/auth` | `__tests__/features/auth` | - |
-| Products | FAIL | 722ms | 2 | `src/features/products`, `src/app/api/v2/products` | `__tests__/features/products` | - |
-| AI Paths | PASS | 35.7s | 0 | `src/features/ai/ai-paths`, `src/app/api/ai-paths` | `src/features/ai/ai-paths/__tests__`, `src/features/ai/ai-paths/components/__tests__` | - |
-| Image Studio | PASS | 29.6s | 0 | `src/features/ai/image-studio`, `src/app/api/image-studio` | `src/features/ai/image-studio/components/__tests__` | - |
-| Case Resolver | PASS | 25.1s | 0 | `src/features/case-resolver`, `src/features/case-resolver-capture`, `src/app/api/case-resolver` | `src/features/case-resolver/__tests__`, `src/features/case-resolver-capture/__tests__` | - |
+| Auth | FAIL | 958ms | 2 | `src/features/auth`, `src/app/api/auth` | `__tests__/features/auth` | - |
+| Products | FAIL | 991ms | 2 | `src/features/products`, `src/app/api/v2/products` | `__tests__/features/products` | - |
+| AI Paths | FAIL | 34.6s | - | `src/features/ai/ai-paths`, `src/app/api/ai-paths` | `src/features/ai/ai-paths/__tests__`, `src/features/ai/ai-paths/components/__tests__` | - |
+| Image Studio | FAIL | 34.9s | - | `src/features/ai/image-studio`, `src/app/api/image-studio` | `src/features/ai/image-studio/components/__tests__` | - |
+| Case Resolver | FAIL | 29.2s | - | `src/features/case-resolver`, `src/features/case-resolver/capture`, `src/app/api/case-resolver` | `src/features/case-resolver/__tests__`, `src/features/case-resolver/capture/__tests__` | - |
 
 ## Notes
 

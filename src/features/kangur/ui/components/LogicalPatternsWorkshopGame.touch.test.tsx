@@ -89,4 +89,28 @@ describe('LogicalPatternsWorkshopGame touch interactions', () => {
 
     expect(within(firstSlot).getByText('🔷')).toBeInTheDocument();
   });
+
+  it('supports alphabet-order datasets through the same shared workshop renderer', () => {
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <LogicalPatternsWorkshopGame patternSetId='alphabet_letter_order' onFinish={vi.fn()} />
+      </NextIntlClientProvider>
+    );
+
+    expect(screen.getByText('Alfabet A-E')).toBeInTheDocument();
+
+    const pool = screen.getByTestId('logical-patterns-pool');
+    const letterTile = within(pool).getByRole('button', { name: 'Kafelek: litera F' });
+
+    fireEvent.click(letterTile);
+
+    expect(screen.getByTestId('logical-patterns-touch-hint')).toHaveTextContent(
+      'Wybrany kafelek: F. Dotknij pustego pola.'
+    );
+
+    const firstSlot = screen.getByTestId('logical-patterns-slot-alphabet-1');
+    fireEvent.click(firstSlot);
+
+    expect(within(firstSlot).getByText('F')).toBeInTheDocument();
+  });
 });

@@ -66,6 +66,27 @@ describe('kangur game catalog', () => {
     );
   });
 
+  it('resolves the alphabet sequence lesson-stage runtime from serialized variant config', () => {
+    const entry = createKangurGameCatalogEntries().find(
+      (candidate) => candidate.game.id === 'alphabet_letter_order'
+    );
+
+    expect(entry).toBeTruthy();
+    expect(entry?.lessonStageRuntime?.runtimeId).toBe('alphabet_letter_order_lesson_stage');
+    expect(
+      entry?.game.variants.find((variant) => variant.id === 'alphabet_letter_order.lesson-stage')
+        ?.lessonStageRuntimeId
+    ).toBe('alphabet_letter_order_lesson_stage');
+    expect(entry ? getKangurLessonStageGameRuntimeSpecForGame(entry.game)?.rendererId : null).toBe(
+      'logical_patterns_workshop_game'
+    );
+    expect(
+      entry ? getKangurLessonStageGameRuntimeSpecForGame(entry.game)?.rendererProps : null
+    ).toMatchObject({
+      patternSetId: 'alphabet_letter_order',
+    });
+  });
+
   it('resolves geometry workshop lesson-stage runtime specs from the serialized stage variant config', () => {
     const entry = createKangurGameCatalogEntries().find(
       (candidate) => candidate.game.id === 'geometry_shape_workshop'
@@ -186,7 +207,6 @@ describe('kangur game catalog', () => {
     ]);
     expect(facets.implementationOwnerships).toEqual([
       'shared_runtime',
-      'mixed_runtime',
       'lesson_embedded',
     ]);
     expect(facets.engines.some((engine) => engine.id === 'classification-engine')).toBe(true);

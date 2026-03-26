@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-05'
+last_reviewed: '2026-03-26'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Mutator Migration Sheet (`mutator`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-26T12:17:00.706Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/mutator.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/mutator.scaffold.json`
 - v3 object id: `node_obj_mutator_portable_v3`
-- v3 object hash: `905d2aef2e7ac39d6af1759e2cce1a94fd6ecfa39b551303f010aee9d85a6d5b`
+- v3 object hash: `64ee140d22f0b9a26ccaa134cd61546540e142ad39ce2ec1409d3ff25a67aa23`
 
 ## Ports
 

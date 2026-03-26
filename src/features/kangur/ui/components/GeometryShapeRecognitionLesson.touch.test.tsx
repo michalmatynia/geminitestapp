@@ -28,6 +28,7 @@ vi.mock('@/features/kangur/ui/components/GeometryDrawingGame', () => ({
 }));
 
 import plMessages from '@/i18n/messages/pl.json';
+import { KangurLessonStageGameRuntime } from '@/features/kangur/ui/components/KangurLessonStageGameRuntime';
 import GeometryShapeRecognitionLesson from '@/features/kangur/ui/components/GeometryShapeRecognitionLesson';
 
 type CapturedSlide = {
@@ -47,9 +48,20 @@ describe('GeometryShapeRecognitionLesson touch mode', () => {
       </NextIntlClientProvider>
     );
 
-    const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        runtime?: Parameters<typeof KangurLessonStageGameRuntime>[0]['runtime'];
+      }>) ?? [];
+    const practiceRuntime = games.find((game) => game.sectionId === 'practice')?.runtime;
 
-    render(<>{slides.practice?.[0]?.content}</>);
+    expect(practiceRuntime).toBeTruthy();
+
+    render(
+      <NextIntlClientProvider locale='pl' messages={plMessages}>
+        <KangurLessonStageGameRuntime runtime={practiceRuntime!} onFinish={vi.fn()} />
+      </NextIntlClientProvider>
+    );
 
     expect(screen.getByRole('button', { name: 'Koło' })).toHaveClass(
       'touch-manipulation',

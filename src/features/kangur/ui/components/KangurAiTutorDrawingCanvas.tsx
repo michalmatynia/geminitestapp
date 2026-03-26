@@ -8,9 +8,9 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import { KangurDrawingCanvasSurface } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingCanvasSurface';
 import { KangurDrawingFreeformToolbar } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar';
 import type { KangurFreeformDrawingToolConfig } from '@/features/kangur/ui/components/drawing-engine/freeform-config';
+import { createKangurDrawingExportFilename } from '@/features/kangur/ui/components/drawing-engine/drawing-identifiers';
 import { KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS } from '@/features/kangur/ui/components/drawing-engine/keyboard-shortcuts';
-import { useKangurFreeformCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurFreeformCanvasDrawing';
-import { useKangurManagedDrawingActions } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedDrawingActions';
+import { useKangurManagedFreeformCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedFreeformCanvasDrawing';
 import { cn } from '@/features/kangur/shared/utils';
 
 import type { JSX } from 'react';
@@ -64,20 +64,27 @@ export function KangurAiTutorDrawingCanvas({
     isPointerDrawing,
     canRedo,
     canUndo,
-    redoLastStroke: rawHandleRedo,
-    undoLastStroke: rawHandleUndo,
-    clearStrokes: rawHandleClear,
-  } = useKangurFreeformCanvasDrawing({
-    backgroundFill: CANVAS_BG,
-    canvasRef,
-    config: KANGUR_AI_TUTOR_DRAWING_TOOL_CONFIG,
-    initialSerializedSnapshot: initialSnapshot,
-    isCoarsePointer,
-    logicalHeight: 240,
-    logicalWidth: 320,
-    onSerializedSnapshotChange: onSnapshotChange,
-    shouldCommitStroke: (stroke) => stroke.points.length >= 2,
-    touchLockEnabled: isCoarsePointer,
+    clearDrawing,
+    exportDrawing: handleExport,
+    handleCanvasKeyDown,
+    redoDrawing: handleRedo,
+    undoDrawing: handleUndo,
+  } = useKangurManagedFreeformCanvasDrawing({
+    actions: {
+      exportFilename: createKangurDrawingExportFilename('kangur-ai-tutor-drawing'),
+    },
+    drawing: {
+      backgroundFill: CANVAS_BG,
+      canvasRef,
+      config: KANGUR_AI_TUTOR_DRAWING_TOOL_CONFIG,
+      initialSerializedSnapshot: initialSnapshot,
+      isCoarsePointer,
+      logicalHeight: 240,
+      logicalWidth: 320,
+      onSerializedSnapshotChange: onSnapshotChange,
+      shouldCommitStroke: (stroke) => stroke.points.length >= 2,
+      touchLockEnabled: isCoarsePointer,
+    },
   });
 
   const handleDone = useCallback((): void => {
@@ -86,23 +93,6 @@ export function KangurAiTutorDrawingCanvas({
     if (!dataUrl) return;
     onComplete(dataUrl);
   }, [exportDataUrl, hasDrawableContent, onComplete]);
-
-  const {
-    clearDrawing,
-    exportDrawing: handleExport,
-    handleCanvasKeyDown,
-    redoDrawing: handleRedo,
-    undoDrawing: handleUndo,
-  } = useKangurManagedDrawingActions<HTMLCanvasElement>({
-    canExport: hasDrawableContent,
-    canRedo,
-    canUndo,
-    clearStrokes: rawHandleClear,
-    exportDataUrl,
-    exportFilename: 'kangur-ai-tutor-drawing.png',
-    redoLastStroke: rawHandleRedo,
-    undoLastStroke: rawHandleUndo,
-  });
 
   return (
     <div

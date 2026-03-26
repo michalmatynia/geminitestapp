@@ -22,6 +22,9 @@ vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
 vi.mock('@/features/kangur/ui/components/GeometryDrawingGame', () => ({
   default: () => <div data-testid='geometry-drawing-game' />,
 }));
+vi.mock('@/features/kangur/ui/components/ShapeRecognitionStageGame', () => ({
+  default: () => <div data-testid='shape-recognition-stage-game' />,
+}));
 
 import deMessages from '@/i18n/messages/de.json';
 import GeometryShapeRecognitionLesson from '@/features/kangur/ui/components/GeometryShapeRecognitionLesson';
@@ -62,12 +65,25 @@ describe('GeometryShapeRecognitionLesson i18n', () => {
       title: 'Formen kennenlernen',
       description: 'Sieh dir die häufigsten Formen an.',
     });
+    expect(sections.find((section) => section.id === 'practice')).toMatchObject({
+      title: 'Spiel: Formen erkennen',
+      description: 'Tippe die richtige Form an.',
+      isGame: true,
+    });
     expect(sections.find((section) => section.id === 'draw')).toMatchObject({
       title: 'Spiel: Formen zeichnen',
       description: 'Zeichne Kreis, Dreieck, Quadrat, Rechteck, Oval und Raute.',
       isGame: true,
     });
 
+    expect(games.find((game) => game.sectionId === 'practice')?.stage).toMatchObject({
+      title: 'Spiel: Formen erkennen',
+      shellTestId: 'geometry-shape-recognition-practice-shell',
+    });
+    expect(games.find((game) => game.sectionId === 'practice')?.runtime).toMatchObject({
+      runtimeId: 'geometry_shape_spotter_lesson_stage',
+      rendererId: 'shape_recognition_stage_game',
+    });
     expect(games.find((game) => game.sectionId === 'draw')?.stage).toMatchObject({
       title: 'Spiel: Formen zeichnen',
     });

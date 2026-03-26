@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-21'
+last_reviewed: '2026-03-26'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Critical Flow Regression Report
 
-Generated at: 2026-03-21T16:43:35.604Z
+Generated at: 2026-03-26T12:42:44.265Z
 
 ## Summary
 
@@ -20,12 +20,12 @@ Generated at: 2026-03-21T16:43:35.604Z
 
 | Flow | KPI | Status | Duration | Exit | Tests |
 | --- | --- | --- | ---: | ---: | --- |
-| Authentication + Session Bootstrap | Successful sign-in completion rate | PASS | 4.7s | 0 | `__tests__/features/auth/pages/signin-page.test.tsx` |
-| Products CRUD + Listing Refresh | Create/edit success rate without retries | PASS | 1.5s | 0 | `__tests__/features/products/services/getSettingValue.test.ts` |
-| Image Studio Generate + Preview | Generation completion under timeout budget | PASS | 1.7s | 0 | `src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts` |
-| AI Paths Run Execution | Run completion without fallback/error path | PASS | 4.1s | 0 | `__tests__/features/ai/ai-paths/services/path-run-executor.test.ts` |
-| Case Resolver OCR + Capture Mapping | Queue-to-review completion without manual recovery | PASS | 3.4s | 0 | `src/features/case-resolver/__tests__/workspace-persistence.test.ts` |
-| Products Trigger Button Queue Integration | Trigger enqueue updates queue state without invalid run-id regressions | PASS | 12.2s | 0 | `src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx`, `src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts`, `src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts`, `src/shared/lib/__tests__/query-invalidation.optimistically-insert-run.test.ts`, `src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts`, `src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts`, `src/features/products/hooks/useProductAiPathsRunSync.test.tsx`, `src/features/products/state/queued-product-ops.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-selection.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-sanitization.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-utils.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-recovery.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-context.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-invalidation.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts` |
+| Authentication + Session Bootstrap | Successful sign-in completion rate | PASS | 6.6s | 0 | `__tests__/features/auth/pages/signin-page.test.tsx` |
+| Products CRUD + Listing Refresh | Create/edit success rate without retries | PASS | 2.1s | 0 | `__tests__/features/products/services/getSettingValue.test.ts` |
+| Image Studio Generate + Preview | Generation completion under timeout budget | PASS | 2.3s | 0 | `src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts` |
+| AI Paths Run Execution | Run completion without fallback/error path | PASS | 4.6s | 0 | `__tests__/features/ai/ai-paths/services/path-run-executor.test.ts` |
+| Case Resolver OCR + Capture Mapping | Queue-to-review completion without manual recovery | PASS | 3.1s | 0 | `src/features/case-resolver/__tests__/workspace-persistence.test.ts` |
+| Products Trigger Button Queue Integration | Trigger enqueue updates queue state without invalid run-id regressions | PASS | 11.4s | 0 | `src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx`, `src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts`, `src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts`, `src/shared/lib/__tests__/query-invalidation.optimistically-insert-run.test.ts`, `src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts`, `src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts`, `src/features/products/hooks/useProductAiPathsRunSync.test.tsx`, `src/features/products/state/queued-product-ops.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-selection.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-sanitization.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-utils.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-recovery.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-context.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-invalidation.test.ts`, `src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts` |
 
 ## Notes
 

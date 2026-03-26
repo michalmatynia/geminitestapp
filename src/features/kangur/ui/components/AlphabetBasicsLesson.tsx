@@ -8,6 +8,10 @@ import {
   computeKangurTotalStrokeLength,
   flattenKangurStrokePoints,
 } from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
+import {
+  createKangurDrawingDraftStorageKey,
+  createKangurDrawingExportFilename,
+} from '@/features/kangur/ui/components/drawing-engine/drawing-identifiers';
 import { KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS } from '@/features/kangur/ui/components/drawing-engine/keyboard-shortcuts';
 import { KangurTracingLessonFooter } from '@/features/kangur/ui/components/drawing-engine/KangurTracingLessonFooter';
 import { KangurTracingBoard } from '@/features/kangur/ui/components/drawing-engine/KangurTracingBoard';
@@ -15,9 +19,7 @@ import {
   evaluateKangurTracingAttempt,
   getKangurTracingCanvasConfig,
 } from '@/features/kangur/ui/components/drawing-engine/tracing';
-import { useKangurDrawingDraftStorage } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage';
-import { useKangurFeedbackManagedDrawingActions } from '@/features/kangur/ui/components/drawing-engine/useKangurFeedbackManagedDrawingActions';
-import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
+import { useKangurManagedStoredPointDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedStoredPointDrawing';
 import { KangurManagedDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurManagedDrawingUtilityActions';
 import {
   KangurGlassPanel,
@@ -200,41 +202,44 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
       }),
     [isCoarsePointer]
   );
-  const {
-    clearDraftSnapshot,
-    draftSnapshot,
-    setDraftSnapshot,
-  } = useKangurDrawingDraftStorage(`alphabet-basics:${currentRound.id}`);
   const guideStrokeWidth = isCoarsePointer ? 18 : 14;
   const glowStrokeWidth = isCoarsePointer ? 12 : 8;
   const {
     canRedo,
     canUndo,
-    clearStrokes,
-    exportDataUrl,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
     hasDrawableContent,
     isPointerDrawing,
-    redoLastStroke,
     strokes,
-    undoLastStroke,
-  } = useKangurPointCanvasDrawing({
-    canvasRef,
-    enabled: feedback?.kind !== 'success',
-    initialSerializedSnapshot: draftSnapshot,
-    logicalHeight: CANVAS_HEIGHT,
-    logicalWidth: CANVAS_WIDTH,
-    minPointDistance: tracingCanvasConfig.minPointDistance,
-    onSerializedSnapshotChange: setDraftSnapshot,
-    onPointerStart: () => {
-      if (feedback?.kind === 'error') {
+    clearDrawing,
+    exportDrawing,
+    handleCanvasKeyDown,
+    redoDrawing,
+    undoDrawing,
+  } = useKangurManagedStoredPointDrawing({
+    actions: {
+      clearFeedback: () => {
         setFeedback(null);
-      }
+      },
+      exportFilename: createKangurDrawingExportFilename('alphabet-basics', currentRound.id),
     },
-    resolveStyle: () => tracingCanvasConfig.strokeStyle,
-    touchLockEnabled: isCoarsePointer,
+    drawing: {
+      canvasRef,
+      enabled: feedback?.kind !== 'success',
+      logicalHeight: CANVAS_HEIGHT,
+      logicalWidth: CANVAS_WIDTH,
+      minPointDistance: tracingCanvasConfig.minPointDistance,
+      onPointerStart: () => {
+        if (feedback?.kind === 'error') {
+          setFeedback(null);
+        }
+      },
+      resolveStyle: () => tracingCanvasConfig.strokeStyle,
+      storageKey: createKangurDrawingDraftStorageKey('alphabet-basics', currentRound.id),
+      touchLockEnabled: isCoarsePointer,
+    },
   });
   const points = useMemo(() => flattenKangurStrokePoints(strokes), [strokes]);
   const strokeLength = useMemo(() => computeKangurTotalStrokeLength(strokes), [strokes]);
@@ -272,27 +277,6 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
       }) as CSSProperties,
     [guideStrokeWidth, glowStrokeWidth]
   );
-
-  const {
-    clearDrawing,
-    exportDrawing,
-    handleCanvasKeyDown,
-    redoDrawing,
-    undoDrawing,
-  } = useKangurFeedbackManagedDrawingActions<HTMLCanvasElement>({
-    canExport: hasDrawableContent,
-    canRedo,
-    canUndo,
-    clearDraftSnapshot,
-    clearFeedback: () => {
-      setFeedback(null);
-    },
-    clearStrokes,
-    exportDataUrl,
-    exportFilename: `alphabet-basics-${currentRound.id}.png`,
-    redoLastStroke,
-    undoLastStroke,
-  });
 
   const evaluateDrawing = (): KangurMiniGameFeedbackState => {
     return evaluateKangurTracingAttempt({

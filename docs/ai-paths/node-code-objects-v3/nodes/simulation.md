@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-05'
+last_reviewed: '2026-03-26'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Simulation: Entity Modal Migration Sheet (`simulation`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-26T12:17:00.706Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/simulation.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/simulation.scaffold.json`
 - v3 object id: `node_obj_simulation_portable_v3`
-- v3 object hash: `2e7504c02f6d65866b23cf869eb33e55a52fd9f9319c08bcc07c2b7b6a5ce435`
+- v3 object hash: `0c02394171adce13d883cedc21427515d8d7668947232261005d09411f761f40`
 
 ## Ports
 

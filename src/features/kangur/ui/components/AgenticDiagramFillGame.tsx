@@ -17,10 +17,12 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KangurDrawingCanvasSurface } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingCanvasSurface';
+import {
+  createKangurDrawingDraftStorageKey,
+  createKangurDrawingExportFilename,
+} from '@/features/kangur/ui/components/drawing-engine/drawing-identifiers';
 import { getKangurPointDistance } from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
-import { useKangurDrawingDraftStorage } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage';
-import { useKangurFeedbackManagedDrawingActions } from '@/features/kangur/ui/components/drawing-engine/useKangurFeedbackManagedDrawingActions';
-import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
+import { useKangurManagedStoredPointDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedStoredPointDrawing';
 import { KangurManagedDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurManagedDrawingUtilityActions';
 import { KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS } from '@/features/kangur/ui/components/drawing-engine/keyboard-shortcuts';
 import {
@@ -587,65 +589,50 @@ export function AgenticDiagramFillGame({
   const isCoarsePointer = useKangurCoarsePointer();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [feedback, setFeedback] = useState<KangurMiniGameInformationalFeedback | null>(null);
-  const { clearDraftSnapshot, draftSnapshot, setDraftSnapshot } = useKangurDrawingDraftStorage(
-    `agentic-diagram:${gameId}`
-  );
-
   const strokeWidth = isCoarsePointer ? 6 : 4;
   const minPointDistance = isCoarsePointer ? 4 : 2.5;
   const isSolved = feedback?.kind === 'success';
   const {
     canRedo,
     canUndo,
-    clearStrokes,
-    exportDataUrl,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
     hasDrawableContent,
     isPointerDrawing,
-    redoLastStroke,
     strokes,
-    undoLastStroke,
-  } = useKangurPointCanvasDrawing({
-    canvasRef,
-    enabled: !isSolved,
-    initialSerializedSnapshot: draftSnapshot,
-    logicalHeight: CANVAS_HEIGHT,
-    logicalWidth: CANVAS_WIDTH,
-    minPointDistance,
-    onSerializedSnapshotChange: setDraftSnapshot,
-    onPointerStart: () => {
-      setFeedback(null);
-    },
-    resolveStyle: () => ({
-      lineWidth: strokeWidth,
-      strokeStyle: config.stroke,
-    }),
-    touchLockEnabled: isCoarsePointer,
-  });
-  const points = useMemo(() => strokes.flatMap((stroke) => stroke), [strokes]);
-
-  const {
     clearDrawing,
     exportDrawing,
     handleCanvasKeyDown,
     redoDrawing,
     undoDrawing,
-  } = useKangurFeedbackManagedDrawingActions<HTMLCanvasElement>({
-    canExport: hasDrawableContent,
-    canRedo: !isSolved && canRedo,
-    canUndo: !isSolved && canUndo,
-    clearDraftSnapshot,
-    clearFeedback: () => {
-      setFeedback(null);
+  } = useKangurManagedStoredPointDrawing({
+    actions: {
+      clearFeedback: () => {
+        setFeedback(null);
+      },
+      exportFilename: createKangurDrawingExportFilename(config.id, 'diagram'),
+      resolveCanRedo: (drawing) => !isSolved && drawing.canRedo,
+      resolveCanUndo: (drawing) => !isSolved && drawing.canUndo,
     },
-    clearStrokes,
-    exportDataUrl,
-    exportFilename: `${config.id}-diagram.png`,
-    redoLastStroke,
-    undoLastStroke,
+    drawing: {
+      canvasRef,
+      enabled: !isSolved,
+      logicalHeight: CANVAS_HEIGHT,
+      logicalWidth: CANVAS_WIDTH,
+      minPointDistance,
+      onPointerStart: () => {
+        setFeedback(null);
+      },
+      resolveStyle: () => ({
+        lineWidth: strokeWidth,
+        strokeStyle: config.stroke,
+      }),
+      storageKey: createKangurDrawingDraftStorageKey('agentic-diagram', gameId),
+      touchLockEnabled: isCoarsePointer,
+    },
   });
+  const points = useMemo(() => strokes.flatMap((stroke) => stroke), [strokes]);
 
   const handleCheck = (): void => {
     const result = evaluateDiagramDrawing(config.target, points);
@@ -719,12 +706,11 @@ export function AgenticDiagramFillGame({
                   canExport={hasDrawableContent}
                   canRedo={canRedo}
                   canUndo={canUndo}
-                  exportButtonClassName='w-full sm:flex-1'
                   exportLabel='Eksportuj PNG'
                   exportTestId='agentic-diagram-export'
                   historyLocked={isSolved}
-                  historyButtonClassName='w-full sm:flex-1'
                   isCoarsePointer={isCoarsePointer}
+                  layoutPreset='inline-board'
                   onExport={exportDrawing}
                   onRedo={redoDrawing}
                   onUndo={undoDrawing}

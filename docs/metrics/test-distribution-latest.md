@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-25'
+last_reviewed: '2026-03-26'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Test Distribution Check
 
-Generated at: 2026-03-25T09:30:27.012Z
+Generated at: 2026-03-26T12:50:55.240Z
 
 ## Summary
 
@@ -18,7 +18,7 @@ Generated at: 2026-03-25T09:30:27.012Z
 - Features without tests: 0
 - Features without fast tests: 0
 - Features without negative-path tests: 0
-- Total test files: 2289
+- Total test files: 2449
 - .only() occurrences: 0
 - .skip() occurrences: 32
 - .todo() occurrences: 0
@@ -27,15 +27,15 @@ Generated at: 2026-03-25T09:30:27.012Z
 
 | Feature | Test Files | Fast | E2E | Negative |
 | --- | ---: | ---: | ---: | ---: |
-| kangur | 582 | 566 | 16 | 102 |
+| kangur | 651 | 633 | 18 | 110 |
 | ai | 296 | 296 | 0 | 108 |
 | products | 109 | 102 | 7 | 33 |
 | case-resolver | 81 | 80 | 1 | 34 |
 | cms | 71 | 70 | 1 | 15 |
 | integrations | 51 | 50 | 1 | 18 |
 | prompt-exploder | 47 | 47 | 0 | 24 |
+| observability | 29 | 28 | 1 | 5 |
 | foldertree | 28 | 26 | 2 | 7 |
-| observability | 26 | 25 | 1 | 4 |
 | admin | 18 | 15 | 3 | 4 |
 | database | 13 | 12 | 1 | 8 |
 | notesapp | 12 | 10 | 2 | 3 |

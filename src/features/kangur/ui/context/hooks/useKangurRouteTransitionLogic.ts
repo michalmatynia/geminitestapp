@@ -23,6 +23,7 @@ export type KangurRouteTransitionState = {
   pageKey: string | null;
   sourceId: string | null;
   kind: KangurRouteTransitionKind;
+  performanceKey: string;
   skeletonVariant: KangurRouteTransitionSkeletonVariant;
   committedRequestedHref: string | null;
   startedAt: number;
@@ -55,10 +56,119 @@ const LOCALE_SWITCH_ROUTE_TRANSITION_READY_TIMEOUT_MS = 1_200;
 const ROUTE_TRANSITION_REVEAL_MS = 0;
 const LOCALE_SWITCH_ROUTE_TRANSITION_REVEAL_MS = 0;
 const ROUTE_TRANSITION_SCROLL_RESET_FRAME_COUNT = 2;
+const KANGUR_ROUTE_TRANSITION_PERFORMANCE_PREFIX = 'kangur:route-transition';
 
 const normalizeTransitionKind = (
   value: KangurRouteTransitionKind | null | undefined
 ): KangurRouteTransitionKind => (value === 'locale-switch' ? 'locale-switch' : 'navigation');
+
+const buildKangurRouteTransitionPerformanceKey = (state: {
+  href: string | null;
+  kind: KangurRouteTransitionKind;
+  pageKey: string | null;
+  startedAt: number;
+}): string => [state.startedAt, state.kind, state.pageKey ?? 'none', state.href ?? 'none'].join('::');
+
+const buildKangurRouteTransitionPerformanceMarkName = (
+  performanceKey: string,
+  phase: 'start' | 'commit' | 'ready' | 'complete'
+): string => `${KANGUR_ROUTE_TRANSITION_PERFORMANCE_PREFIX}:${phase}:${performanceKey}`;
+
+const markKangurRouteTransitionPerformance = (
+  performanceKey: string,
+  phase: 'start' | 'commit' | 'ready' | 'complete',
+  detail: Record<string, unknown>
+): void => {
+  if (
+    typeof window === 'undefined' ||
+    typeof window.performance === 'undefined' ||
+    typeof window.performance.mark !== 'function'
+  ) {
+    return;
+  }
+
+  const markName = buildKangurRouteTransitionPerformanceMarkName(performanceKey, phase);
+  try {
+    window.performance.mark(markName, { detail });
+  } catch {
+    try {
+      window.performance.mark(markName);
+    } catch {
+      // Ignore instrumentation failures.
+    }
+  }
+};
+
+const measureKangurRouteTransitionPerformance = (
+  performanceKey: string,
+  phase: 'commit' | 'ready' | 'complete',
+  detail: Record<string, unknown>
+): void => {
+  if (
+    typeof window === 'undefined' ||
+    typeof window.performance === 'undefined' ||
+    typeof window.performance.measure !== 'function'
+  ) {
+    return;
+  }
+
+  const startMark = buildKangurRouteTransitionPerformanceMarkName(performanceKey, 'start');
+  const endMark = buildKangurRouteTransitionPerformanceMarkName(performanceKey, phase);
+  const measureName = `${KANGUR_ROUTE_TRANSITION_PERFORMANCE_PREFIX}:${phase}`;
+
+  try {
+    window.performance.measure(measureName, {
+      start: startMark,
+      end: endMark,
+      detail,
+    });
+  } catch {
+    try {
+      window.performance.measure(measureName, startMark, endMark);
+    } catch {
+      // Ignore instrumentation failures.
+    }
+  }
+};
+
+const clearKangurRouteTransitionPerformanceMarks = (performanceKey: string): void => {
+  if (
+    typeof window === 'undefined' ||
+    typeof window.performance === 'undefined' ||
+    typeof window.performance.clearMarks !== 'function'
+  ) {
+    return;
+  }
+
+  for (const phase of ['start', 'commit', 'ready', 'complete'] as const) {
+    window.performance.clearMarks(
+      buildKangurRouteTransitionPerformanceMarkName(performanceKey, phase)
+    );
+  }
+};
+
+const recordKangurRouteTransitionPerformancePhase = (
+  state: Pick<
+    KangurRouteTransitionState,
+    'href' | 'kind' | 'pageKey' | 'performanceKey' | 'startedAt'
+  >,
+  phase: 'start' | 'commit' | 'ready' | 'complete'
+): void => {
+  const detail = {
+    href: state.href,
+    kind: state.kind,
+    pageKey: state.pageKey,
+    startedAt: state.startedAt,
+  };
+
+  markKangurRouteTransitionPerformance(state.performanceKey, phase, detail);
+  if (phase !== 'start') {
+    measureKangurRouteTransitionPerformance(state.performanceKey, phase, detail);
+  }
+  if (phase === 'complete') {
+    clearKangurRouteTransitionPerformanceMarks(state.performanceKey);
+  }
+};
 
 export const normalizeTransitionHref = (href: string | null | undefined): string | null => {
   if (typeof href !== 'string') {
@@ -153,9 +263,10 @@ export function useKangurRouteTransitionLogic({
 
     const commitTransition = (): void => {
       clearAcknowledgementTimeout();
+      const currentTransition = transitionStateRef.current;
 
       const currentTransitionKind =
-        transitionStateRef.current?.kind ?? transitionState?.kind ?? null;
+        currentTransition?.kind ?? transitionState?.kind ?? null;
       const shouldResetScrollPosition =
         shouldResetScrollOnCommitRef.current && currentTransitionKind !== 'locale-switch';
 
@@ -175,6 +286,9 @@ export function useKangurRouteTransitionLogic({
       }
 
       shouldResetScrollOnCommitRef.current = false;
+      if (currentTransition) {
+        recordKangurRouteTransitionPerformancePhase(currentTransition, 'commit');
+      }
       updateTransitionState((currentState) =>
         currentState
           ? {
@@ -223,6 +337,7 @@ export function useKangurRouteTransitionLogic({
       shouldResetScrollOnCommitRef.current = false;
 
       if (transitionState.phase === 'waiting_for_ready') {
+        recordKangurRouteTransitionPerformancePhase(transitionState, 'ready');
         updateTransitionState((currentState) =>
           currentState?.phase === 'waiting_for_ready'
             ? {
@@ -253,6 +368,9 @@ export function useKangurRouteTransitionLogic({
         : ROUTE_TRANSITION_REVEAL_MS;
 
     const timeoutId = window.setTimeout(() => {
+      if (transitionState.phase === 'revealing') {
+        recordKangurRouteTransitionPerformancePhase(transitionState, 'complete');
+      }
       updateTransitionState((currentState) =>
         currentState?.phase === 'revealing' ? null : currentState
       );
@@ -312,12 +430,14 @@ export function useKangurRouteTransitionLogic({
       shouldResetScrollOnCommitRef.current =
         nextTransitionKind !== 'locale-switch' && nextPageKey !== pageKey;
       clearAcknowledgementTimeout();
+      const startedAt = Date.now();
 
       const nextState: KangurRouteTransitionState = {
         href: normalizedHref,
         pageKey: nextPageKey,
         sourceId: nextSourceId,
         kind: nextTransitionKind,
+        performanceKey: '',
         skeletonVariant:
           input.skeletonVariant ??
           resolveKangurRouteTransitionSkeletonVariant({
@@ -326,9 +446,10 @@ export function useKangurRouteTransitionLogic({
             pageKey: nextPageKey,
           }),
         committedRequestedHref: null,
-        startedAt: Date.now(),
+        startedAt,
         phase: requestedAcknowledgeMs > 0 ? 'acknowledging' : 'pending',
       };
+      nextState.performanceKey = buildKangurRouteTransitionPerformanceKey(nextState);
 
       setKangurPendingRouteLoadingSnapshot({
         fromHref: currentRequestedHref,
@@ -339,6 +460,7 @@ export function useKangurRouteTransitionLogic({
         topBarHeightCssValue: readKangurTopBarHeightCssValue(),
       });
       setNextTransitionState(nextState);
+      recordKangurRouteTransitionPerformancePhase(nextState, 'start');
 
       if (requestedAcknowledgeMs > 0 && typeof window !== 'undefined') {
         acknowledgementTimeoutRef.current = window.setTimeout(() => {
@@ -366,32 +488,35 @@ export function useKangurRouteTransitionLogic({
     (input: KangurRouteTransitionReadyInput = {}): void => {
       const expectedPageKey = input.pageKey?.trim() || null;
       const expectedRequestedHref = normalizeTransitionHref(input.requestedHref ?? currentRequestedHref);
+      const activeTransition = transitionStateRef.current;
+      if (activeTransition?.phase !== 'waiting_for_ready') {
+        return;
+      }
 
-      updateTransitionState((currentState) => {
-        if (currentState?.phase !== 'waiting_for_ready') {
-          return currentState;
-        }
+      if (activeTransition.pageKey && expectedPageKey && activeTransition.pageKey !== expectedPageKey) {
+        return;
+      }
 
-        if (currentState.pageKey && expectedPageKey && currentState.pageKey !== expectedPageKey) {
-          return currentState;
-        }
+      const committedRequestedHref =
+        normalizeTransitionHref(activeTransition.committedRequestedHref) ??
+        normalizeTransitionHref(activeTransition.href);
+      if (
+        committedRequestedHref &&
+        expectedRequestedHref &&
+        committedRequestedHref !== expectedRequestedHref
+      ) {
+        return;
+      }
 
-        const committedRequestedHref =
-          normalizeTransitionHref(currentState.committedRequestedHref) ??
-          normalizeTransitionHref(currentState.href);
-        if (
-          committedRequestedHref &&
-          expectedRequestedHref &&
-          committedRequestedHref !== expectedRequestedHref
-        ) {
-          return currentState;
-        }
-
-        return {
-          ...currentState,
-          phase: 'revealing',
-        };
-      });
+      recordKangurRouteTransitionPerformancePhase(activeTransition, 'ready');
+      updateTransitionState((currentState) =>
+        currentState?.phase === 'waiting_for_ready'
+          ? {
+              ...currentState,
+              phase: 'revealing',
+            }
+          : currentState
+      );
     },
     [currentRequestedHref, updateTransitionState]
   );

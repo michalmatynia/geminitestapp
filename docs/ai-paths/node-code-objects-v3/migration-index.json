@@ -1,6 +1,6 @@
 {
   "schemaVersion": "ai-paths.node-migration-doc-index.v5",
-  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "generatedAt": "2026-03-26T12:17:00.706Z",
   "totalNodes": 34,
   "runtimeKernelNodeTypes": [
     "agent",
@@ -42,7 +42,7 @@
     "compatibility": 0,
     "code_object_v3": 34
   },
-  "v3ContractsHash": "ccaeb5d779cae157bfdf1a4b5cdfad63637bff6256f0a67021e147f0c50db76f",
+  "v3ContractsHash": "de90a44e21b6ec4130cc8c99134d1c26fc46453f2e5cd95b9c68eb058ae2ac6a",
   "readiness": {
     "averageScore": 100,
     "totalsByStage": {
@@ -146,7 +146,7 @@
   "rolloutEligibility": {
     "sourceFile": "docs/ai-paths/node-code-objects-v3/rollout-eligibility.json",
     "schemaVersion": "ai-paths.node-migration-rollout-eligibility.v2",
-    "generatedAt": "2026-03-05T00:00:00.000Z",
+    "generatedAt": "2026-03-26T12:17:00.706Z",
     "criteria": [
       "runtime_strategy=code_object_v3",
       "has_semantic_contract_hash",
@@ -252,7 +252,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/agent.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/agent.scaffold.json",
         "v3ObjectId": "node_obj_agent_portable_v3",
-        "v3ObjectHash": "391ea94d05769318529c281fdcd3007163adbac56deabc683960d459b6e44f3b",
+        "v3ObjectHash": "93867ddf5ea48fa1b0fb43422a871128b2b1b5f169753a44596d97f81b4bb994",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/agent.md"
       },
       "migrationChecklistTemplate": {
@@ -303,7 +303,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/api_advanced.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/api_advanced.scaffold.json",
         "v3ObjectId": "node_obj_api_advanced_portable_v3",
-        "v3ObjectHash": "77838bc67f8604217d9f1c75cab0b355213b8d25f9a624cd27932c321f4f5041",
+        "v3ObjectHash": "d298852a9e66f59811e339385c7ead54b2adfd18b1f2444c761300fa3fed9066",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/api_advanced.md"
       },
       "migrationChecklistTemplate": {
@@ -351,7 +351,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/audio_oscillator.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/audio_oscillator.scaffold.json",
         "v3ObjectId": "node_obj_audio_oscillator_portable_v3",
-        "v3ObjectHash": "9580ebad3164c3d5af98cd622a957bbc3941e4b3d69827407a11c6b21cad6fbf",
+        "v3ObjectHash": "4daa940f75f931cdac814f842fff121c0f48e5394792af7607e6eb85b39fd48c",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/audio_oscillator.md"
       },
       "migrationChecklistTemplate": {
@@ -397,7 +397,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/audio_speaker.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/audio_speaker.scaffold.json",
         "v3ObjectId": "node_obj_audio_speaker_portable_v3",
-        "v3ObjectHash": "bd68ece9ae085f72960a502d939ad1ed30ce6eb4d4987efb6c9ae91907d03eb5",
+        "v3ObjectHash": "8a7d955c9111289fbd03a5c419725b94aa3212a19c1604d247fbeedfb8c6ca17",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/audio_speaker.md"
       },
       "migrationChecklistTemplate": {
@@ -441,7 +441,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/bundle.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/bundle.scaffold.json",
         "v3ObjectId": "node_obj_bundle_portable_v3",
-        "v3ObjectHash": "128dc8b581e6fa336c213a421a0863032cb065d373fd9e2c5d99557f6b8fca75",
+        "v3ObjectHash": "6bf8f8031d4127c0cf3065921bf48322d2646ef02bf695ec8c5f6e46a578c09c",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/bundle.md"
       },
       "migrationChecklistTemplate": {
@@ -483,7 +483,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/compare.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/compare.scaffold.json",
         "v3ObjectId": "node_obj_compare_portable_v3",
-        "v3ObjectHash": "27cd022de9a91da8088d4845d0bcc7da25818e41ca6ab312523b59477a9e6265",
+        "v3ObjectHash": "36551f48875e54fb823c8eb032468e0818238106ff83d46a8613b7a74891566f",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/compare.md"
       },
       "migrationChecklistTemplate": {
@@ -521,7 +521,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/constant.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/constant.scaffold.json",
         "v3ObjectId": "node_obj_constant_portable_v3",
-        "v3ObjectHash": "8cd7a6fc31db0a9a50f42231ebc8e006471e9d59ee046723b9f4b344a3c54ff0",
+        "v3ObjectHash": "49b8f4e156add4a579e30292b2c49fe2c4bd8e52ee2f52c9bc301e148c07d648",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/constant.md"
       },
       "migrationChecklistTemplate": {
@@ -564,7 +564,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/context.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/context.scaffold.json",
         "v3ObjectId": "node_obj_context_portable_v3",
-        "v3ObjectHash": "051a0edf561bf0f1456a9358738790b6e931aaa38b85884528dc623f5a6ecf65",
+        "v3ObjectHash": "8e40f13129d39a0af842feb6e83445ab517c885daa57f79072cc87b3aa643a1f",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/context.md"
       },
       "migrationChecklistTemplate": {
@@ -618,7 +618,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/database.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/database.scaffold.json",
         "v3ObjectId": "node_obj_database_portable_v3",
-        "v3ObjectHash": "d269b7737ba09cbe15946597b2d675d593ab067e28f7d9b238a67396f8f38043",
+        "v3ObjectHash": "a5cd1696f816568e28002f05d60958eb57334a769dbb202e5ab84cce2fe3b3ba",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/database.md"
       },
       "migrationChecklistTemplate": {
@@ -657,7 +657,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/db_schema.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/db_schema.scaffold.json",
         "v3ObjectId": "node_obj_db_schema_portable_v3",
-        "v3ObjectHash": "86528cde5227693e6df921247af672d0d22c164d2dcc974e27c4f75db7ab4727",
+        "v3ObjectHash": "78f9c11a1f6fcf2d818039966100bdf2f3b05c3a7ba0681a7350438eda9e3f63",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/db_schema.md"
       },
       "migrationChecklistTemplate": {
@@ -699,7 +699,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/delay.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/delay.scaffold.json",
         "v3ObjectId": "node_obj_delay_portable_v3",
-        "v3ObjectHash": "b0e3ddc142991c5842e6f96f6b3b736ecf709ec85f61a2da89e620389e5dc1ce",
+        "v3ObjectHash": "7e07aa2e2e144e315092d4489552cf1509fea4a17c363425af2bdc03f01d259f",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/delay.md"
       },
       "migrationChecklistTemplate": {
@@ -746,7 +746,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/fetcher.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/fetcher.scaffold.json",
         "v3ObjectId": "node_obj_fetcher_portable_v3",
-        "v3ObjectHash": "6e0e7cb5f8f711d9b4a0222deb4ac066656de78e68a2ad6fb59d935ddcc17524",
+        "v3ObjectHash": "00cd970940b15411ab0f2f3dfda76b76596b1b675616ce73325206e1897591b0",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/fetcher.md"
       },
       "migrationChecklistTemplate": {
@@ -790,7 +790,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/gate.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/gate.scaffold.json",
         "v3ObjectId": "node_obj_gate_portable_v3",
-        "v3ObjectHash": "b97f1b9584a7dda0fc135a6bf3fcfed1149d7851833cffdc2c49f099d3f7d73f",
+        "v3ObjectHash": "fcfde82f0d8fb7bc67be215e6ff0bb72ff61d7de5cc3221a1022a7319bdd0fac",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/gate.md"
       },
       "migrationChecklistTemplate": {
@@ -834,7 +834,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/http.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/http.scaffold.json",
         "v3ObjectId": "node_obj_http_portable_v3",
-        "v3ObjectHash": "d04742150b2ce59424ebefa3cb2708ef329f8f10b63808192cfda7767fb3e272",
+        "v3ObjectHash": "73f0c1bae7b5bdfa019db3fc38b0c4d92f798c3a5ea37042659b96177a749b25",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/http.md"
       },
       "migrationChecklistTemplate": {
@@ -879,7 +879,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/iterator.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/iterator.scaffold.json",
         "v3ObjectId": "node_obj_iterator_portable_v3",
-        "v3ObjectHash": "dae944bf214f313dc1c11d5892dee04fcdcd353a7b2ed71f83d6f3b6ad3feff0",
+        "v3ObjectHash": "df603f0175f5dd61ef8afd1d362850957745e7a42fba73f1ddb89c2192a3f7ca",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/iterator.md"
       },
       "migrationChecklistTemplate": {
@@ -922,7 +922,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/learner_agent.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/learner_agent.scaffold.json",
         "v3ObjectId": "node_obj_learner_agent_portable_v3",
-        "v3ObjectHash": "07ac3c2ba602a5997d4181fb6a4c5937dabce6d6cc26f55dc104e7354cea4c80",
+        "v3ObjectHash": "c16c4a787e6caf3a64c45afccc99cb28b2d4563f4f8e2192e32e99faf3c9c924",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/learner_agent.md"
       },
       "migrationChecklistTemplate": {
@@ -966,7 +966,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/mapper.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/mapper.scaffold.json",
         "v3ObjectId": "node_obj_mapper_portable_v3",
-        "v3ObjectHash": "b5d41c750522b971eb7bd7d852f8502d89002b6fb202af30456f598fa38e93bf",
+        "v3ObjectHash": "36169e42e001a07c2b41114cd203dde8911dcfc3d6eb85064d8e5d1895a88693",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/mapper.md"
       },
       "migrationChecklistTemplate": {
@@ -1006,7 +1006,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/math.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/math.scaffold.json",
         "v3ObjectId": "node_obj_math_portable_v3",
-        "v3ObjectHash": "c70779a2aab2367a9808d19b34ce4ed47d62d5d81603d531fbed1fa332ea898f",
+        "v3ObjectHash": "d3365ea7037a2218107995201d7925c88e4913e27caa7a31f0c0e2733a4b5f2f",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/math.md"
       },
       "migrationChecklistTemplate": {
@@ -1048,7 +1048,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/model.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/model.scaffold.json",
         "v3ObjectId": "node_obj_model_portable_v3",
-        "v3ObjectHash": "4dad6cd6dc5826ea8b9af205b8c52264da0e6d56da5471632967a10e1f9a0158",
+        "v3ObjectHash": "c89944cb3112898d0528154592cba6036eae5348a0b3d36356625709166db62c",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/model.md"
       },
       "migrationChecklistTemplate": {
@@ -1088,7 +1088,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/mutator.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/mutator.scaffold.json",
         "v3ObjectId": "node_obj_mutator_portable_v3",
-        "v3ObjectHash": "905d2aef2e7ac39d6af1759e2cce1a94fd6ecfa39b551303f010aee9d85a6d5b",
+        "v3ObjectHash": "64ee140d22f0b9a26ccaa134cd61546540e142ad39ce2ec1409d3ff25a67aa23",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/mutator.md"
       },
       "migrationChecklistTemplate": {
@@ -1128,7 +1128,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/notification.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/notification.scaffold.json",
         "v3ObjectId": "node_obj_notification_portable_v3",
-        "v3ObjectHash": "ba8a2a6ef746ce80c6a7f1c12dd913262b29fb2381c7d28d5379992f0d348302",
+        "v3ObjectHash": "1484c81c033822c34b689fec546b9a67438b47c5894c76314fe1911ba6e7b9cc",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/notification.md"
       },
       "migrationChecklistTemplate": {
@@ -1172,7 +1172,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/parser.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/parser.scaffold.json",
         "v3ObjectId": "node_obj_parser_portable_v3",
-        "v3ObjectHash": "7890aca2b93289bbbb77469614dc81d7fc5296c284bdbf60e241a2515fe22d83",
+        "v3ObjectHash": "3a6048b3c4eaa8150ca32ef7d6dd6415218fe0b9abff309d414c849221086869",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/parser.md"
       },
       "migrationChecklistTemplate": {
@@ -1217,7 +1217,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/playwright.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/playwright.scaffold.json",
         "v3ObjectId": "node_obj_playwright_portable_v3",
-        "v3ObjectHash": "3c448f15426f46d9fc942dc37863fc357de4603bd2ffdae718ef54154952e71e",
+        "v3ObjectHash": "1f348f118174ec4b75cef6ce1509c98e015e446b5af6b9da37b9e2f743e7a568",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/playwright.md"
       },
       "migrationChecklistTemplate": {
@@ -1265,7 +1265,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/poll.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/poll.scaffold.json",
         "v3ObjectId": "node_obj_poll_portable_v3",
-        "v3ObjectHash": "dc22572b507d6f585c827ba13dac9de96bddd3b79fddd0a176ddbb58bf3f6cbe",
+        "v3ObjectHash": "e00b20535d481132576e26c2dec514caaabe3d277ce7a93865e45a12f1b25c8c",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/poll.md"
       },
       "migrationChecklistTemplate": {
@@ -1310,7 +1310,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/prompt.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/prompt.scaffold.json",
         "v3ObjectId": "node_obj_prompt_portable_v3",
-        "v3ObjectHash": "23711dacb5763f7eebf19f39d9c1155d0da28b71f215990ef3e835745a7fb1bc",
+        "v3ObjectHash": "63a5dbaea9d111efac796898aa0e87f2296d00bf88605e02039430af07624a5f",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/prompt.md"
       },
       "migrationChecklistTemplate": {
@@ -1355,7 +1355,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/regex.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/regex.scaffold.json",
         "v3ObjectId": "node_obj_regex_portable_v3",
-        "v3ObjectHash": "d1752a00d7dd0d3bd36a924ac414d5cbc518b2a17b8e29eb75d27880ad8c7f92",
+        "v3ObjectHash": "30648254e5d3e0257b9c3be4846be97ffe206e73a139a5f73a835c5384985698",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/regex.md"
       },
       "migrationChecklistTemplate": {
@@ -1397,7 +1397,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/router.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/router.scaffold.json",
         "v3ObjectId": "node_obj_router_portable_v3",
-        "v3ObjectHash": "a1637c9c049eceeebbc27427d4b8f4e9c024bf06d83b34fd336ffb43735387ec",
+        "v3ObjectHash": "40d82fea434a45f992145492e3d542a84b740fe2dd1df171aa491c4ed7fb2ecd",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/router.md"
       },
       "migrationChecklistTemplate": {
@@ -1440,7 +1440,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/simulation.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/simulation.scaffold.json",
         "v3ObjectId": "node_obj_simulation_portable_v3",
-        "v3ObjectHash": "2e7504c02f6d65866b23cf869eb33e55a52fd9f9319c08bcc07c2b7b6a5ce435",
+        "v3ObjectHash": "0c02394171adce13d883cedc21427515d8d7668947232261005d09411f761f40",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/simulation.md"
       },
       "migrationChecklistTemplate": {
@@ -1482,7 +1482,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/string_mutator.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/string_mutator.scaffold.json",
         "v3ObjectId": "node_obj_string_mutator_portable_v3",
-        "v3ObjectHash": "1475200e961721518686a28aeaa8bf654e67df9c2d31972157325fe2360a5dad",
+        "v3ObjectHash": "ad8322f3cf39afc3a6d616ae8f924d7460737d2ca948fde89963257ca2d62e4b",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/string_mutator.md"
       },
       "migrationChecklistTemplate": {
@@ -1524,7 +1524,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/template.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/template.scaffold.json",
         "v3ObjectId": "node_obj_template_portable_v3",
-        "v3ObjectHash": "661cd86e53a179505bc2d9d7561e6b7bc1462db9440f4500b95209b2e211762b",
+        "v3ObjectHash": "5f2b5a76ef3fff26c5644c78f155837ff482e3e16fe8576f8866ce5cc2bade55",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/template.md"
       },
       "migrationChecklistTemplate": {
@@ -1563,7 +1563,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/trigger.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/trigger.scaffold.json",
         "v3ObjectId": "node_obj_trigger_portable_v3",
-        "v3ObjectHash": "b819305ec153c1cc968ab1ae5062c3d93a4713043f78591f8f3abc2fbf7e2e20",
+        "v3ObjectHash": "e27326343ae256b530c64c10ca422117f71d39da916256f6ca93aa8dc1df76f5",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/trigger.md"
       },
       "migrationChecklistTemplate": {
@@ -1612,7 +1612,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/validation_pattern.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/validation_pattern.scaffold.json",
         "v3ObjectId": "node_obj_validation_pattern_portable_v3",
-        "v3ObjectHash": "0d8be52647277ec06255ed22dab15637e06837fdb792d1197c5ec440eb09311c",
+        "v3ObjectHash": "c6bba206b4bef4db144d0e4af63531120246c6308a62d5cb10ca03eaa1ee8ef0",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/validation_pattern.md"
       },
       "migrationChecklistTemplate": {
@@ -1654,7 +1654,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/validator.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/validator.scaffold.json",
         "v3ObjectId": "node_obj_validator_portable_v3",
-        "v3ObjectHash": "81f650d8c5f96b78f2e0635bf418536071d8df90e8a02fb0e74be9e9cb1db6c6",
+        "v3ObjectHash": "e1966fe3819f450a310082d66b865825124e605807fca2ec77bd18594d190167",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/validator.md"
       },
       "migrationChecklistTemplate": {
@@ -1726,7 +1726,7 @@
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/viewer.json",
         "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/viewer.scaffold.json",
         "v3ObjectId": "node_obj_viewer_portable_v3",
-        "v3ObjectHash": "e05a8a71e2a778b49351aff81d30d9c767ed59ab4b57c3a0c0aa4b96c08c82f9",
+        "v3ObjectHash": "eaf19e9d40b214d09373a87d29068ee7eeae507c9c91c95340d6b20857625b7e",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/viewer.md"
       },
       "migrationChecklistTemplate": {

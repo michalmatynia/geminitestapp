@@ -7,7 +7,7 @@ import {
   type UseKangurManagedDrawingActionsOptions,
 } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedDrawingActions';
 
-type UseKangurFeedbackManagedDrawingActionsOptions<
+export type UseKangurFeedbackManagedDrawingActionsOptions<
   TElement extends HTMLElement | SVGElement = HTMLCanvasElement,
 > = Omit<
   UseKangurManagedDrawingActionsOptions<TElement>,

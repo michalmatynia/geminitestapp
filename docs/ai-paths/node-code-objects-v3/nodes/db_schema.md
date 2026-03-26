@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-05'
+last_reviewed: '2026-03-26'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Database Schema Migration Sheet (`db_schema`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-26T12:17:00.706Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/db_schema.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/db_schema.scaffold.json`
 - v3 object id: `node_obj_db_schema_portable_v3`
-- v3 object hash: `86528cde5227693e6df921247af672d0d22c164d2dcc974e27c4f75db7ab4727`
+- v3 object hash: `78f9c11a1f6fcf2d818039966100bdf2f3b05c3a7ba0681a7350438eda9e3f63`
 
 ## Ports
 

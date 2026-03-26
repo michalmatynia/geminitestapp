@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-24'
+last_reviewed: '2026-03-26'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Critical Path Performance Report
 
-Generated at: 2026-03-24T23:08:29.487Z
+Generated at: 2026-03-26T12:27:36.708Z
 
 ## Summary
 
@@ -90,12 +90,12 @@ Generated at: 2026-03-24T23:08:29.487Z
 | `src/features/kangur/ui/components/animations/EnglishAnimations.tsx` | 2718 |
 | `src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx` | 2712 |
 | `src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx` | 2454 |
-| `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx` | 2016 |
-| `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 1856 |
-| `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1844 |
+| `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 2023 |
+| `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1846 |
 | `src/features/kangur/ui/components/music/useKangurMusicSynth.ts` | 1793 |
 | `src/features/kangur/ui/components/EnglishAdverbsFrequencyRoutineGame.tsx` | 1701 |
-| `src/features/kangur/ui/components/AddingLesson.tsx` | 1681 |
+| `src/features/kangur/ui/pages/GamesLibrary.tsx` | 1694 |
+| `src/features/kangur/ui/components/AddingLesson.tsx` | 1685 |
 
 ## Top API Route Hotspots (Reference)
 

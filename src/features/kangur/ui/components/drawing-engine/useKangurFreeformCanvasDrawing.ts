@@ -41,7 +41,7 @@ type KangurFreeformCanvasDrawingEventPayload = KangurFreeformCanvasDrawingPayloa
   event: ReactPointerEvent<HTMLCanvasElement>;
 };
 
-type UseKangurFreeformCanvasDrawingOptions = {
+export type UseKangurFreeformCanvasDrawingOptions = {
   backgroundFill?: string;
   beforeStrokes?: (ctx: CanvasRenderingContext2D) => void;
   canvasRef: RefObject<HTMLCanvasElement | null>;

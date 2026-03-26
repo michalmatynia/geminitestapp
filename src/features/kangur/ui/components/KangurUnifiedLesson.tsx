@@ -97,27 +97,19 @@ export type KangurUnifiedLessonGameConfig<SectionId extends string> = {
     onFinish: () => void;
     onBack: () => void;
   }) => void;
+  onStageFinish?: (helpers: {
+    sectionId: SectionId;
+    onFinish: () => void;
+    onBack: () => void;
+  }) => void;
   onStageBack?: (helpers: {
     sectionId: SectionId;
     onFinish: () => void;
     onBack: () => void;
   }) => void;
-} & (
-  | {
-      stage: KangurUnifiedLessonGameStageConfig;
-      render: (helpers: {
-        sectionId: SectionId;
-        onFinish: () => void;
-        onBack: () => void;
-      }) => ReactNode;
-      runtime?: never;
-    }
-  | {
-      stage: KangurUnifiedLessonGameStageConfig;
-      runtime: KangurLessonStageGameRuntimeSpec;
-      render?: never;
-    }
-);
+  stage: KangurUnifiedLessonGameStageConfig;
+  runtime: KangurLessonStageGameRuntimeSpec;
+};
 
 type KangurUnifiedLessonBaseProps<SectionId extends string> = {
   lessonId: string;
@@ -142,11 +134,6 @@ type KangurUnifiedLessonBaseProps<SectionId extends string> = {
   recordComplete: () => Promise<void>;
   progressAdapter: LessonProgressAdapter<SectionId>;
 };
-
-const hasLessonStageRuntime = <SectionId extends string>(
-  config: KangurUnifiedLessonGameConfig<SectionId>
-): config is Extract<KangurUnifiedLessonGameConfig<SectionId>, { runtime: KangurLessonStageGameRuntimeSpec }> =>
-  'runtime' in config && typeof config.runtime !== 'undefined';
 
 type KangurUnifiedLessonSubsectionProps<SectionId extends string> = Omit<
   KangurUnifiedLessonBaseProps<SectionId>,
@@ -302,13 +289,20 @@ function KangurUnifiedLessonBase<SectionId extends string>({
 
     if (gameConfig) {
       const stage = gameConfig.stage;
-      const gameHelpers = {
+      const rawGameHelpers = {
         sectionId: currentSection,
         onFinish: handleReturnToHub,
         onBack: handleReturnToHub,
       };
+      const runtimeFinishHandler = gameConfig.onStageFinish
+        ? () => gameConfig.onStageFinish?.(rawGameHelpers)
+        : handleReturnToHub;
+      const gameHelpers = {
+        ...rawGameHelpers,
+        onFinish: runtimeFinishHandler,
+      };
       const stageBackHandler = gameConfig.onStageBack
-        ? () => gameConfig.onStageBack?.(gameHelpers)
+        ? () => gameConfig.onStageBack?.(rawGameHelpers)
         : handleReturnToHub;
 
       content = (
@@ -329,14 +323,10 @@ function KangurUnifiedLessonBase<SectionId extends string>({
           title={stage.title}
         >
           {stage.bodyPrelude ? stage.bodyPrelude : null}
-          {hasLessonStageRuntime(gameConfig) ? (
-            <KangurLessonStageGameRuntime
-              runtime={gameConfig.runtime}
-              onFinish={gameHelpers.onFinish}
-            />
-          ) : (
-            gameConfig.render(gameHelpers)
-          )}
+          <KangurLessonStageGameRuntime
+            runtime={gameConfig.runtime}
+            onFinish={gameHelpers.onFinish}
+          />
         </LessonActivityStage>
       );
     } else {

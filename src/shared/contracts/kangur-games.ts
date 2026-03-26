@@ -216,7 +216,14 @@ export const KANGUR_LESSON_STAGE_GAME_RUNTIME_IDS = [
   'agentic_prompt_trim_lesson_stage',
   'agentic_reasoning_router_lesson_stage',
   'agentic_surface_match_lesson_stage',
+  'alphabet_letter_order_lesson_stage',
   'art_shape_rotation_puzzle_lesson_stage',
+  'calendar_interactive_days_lesson_stage',
+  'calendar_interactive_months_lesson_stage',
+  'calendar_interactive_dates_lesson_stage',
+  'clock_training_hours_lesson_stage',
+  'clock_training_minutes_lesson_stage',
+  'clock_training_combined_lesson_stage',
   'division_groups_lesson_stage',
   'english_subject_verb_agreement_lesson_stage',
   'english_adjectives_scene_lesson_stage',
@@ -228,6 +235,7 @@ export const KANGUR_LESSON_STAGE_GAME_RUNTIME_IDS = [
   'english_sentence_builder_lesson_stage',
   'geometry_perimeter_trainer_lesson_stage',
   'geometry_basics_workshop_lesson_stage',
+  'geometry_shape_spotter_lesson_stage',
   'geometry_shape_workshop_lesson_stage',
   'geometry_shape_drawing_lesson_stage',
   'geometry_symmetry_studio_lesson_stage',
@@ -257,6 +265,8 @@ export const KANGUR_LESSON_STAGE_GAME_RUNTIME_RENDERER_IDS = [
   'agentic_reasoning_router_game',
   'agentic_surface_match_game',
   'art_shapes_rotation_gap_game',
+  'calendar_interactive_stage_game',
+  'clock_training_stage_game',
   'division_groups_game',
   'english_subject_verb_agreement_game',
   'english_adjectives_scene_game',
@@ -271,6 +281,7 @@ export const KANGUR_LESSON_STAGE_GAME_RUNTIME_RENDERER_IDS = [
   'geometry_perimeter_drawing_game',
   'geometry_basics_workshop_game',
   'geometry_drawing_game',
+  'shape_recognition_stage_game',
   'geometry_symmetry_game',
   'logical_analogies_relation_game',
   'logical_classification_game',
@@ -304,6 +315,27 @@ export type KangurGeometryDrawingShapeId = z.infer<
   typeof kangurGeometryDrawingShapeIdSchema
 >;
 
+const KANGUR_CALENDAR_INTERACTIVE_STAGE_SECTIONS = ['dni', 'miesiace', 'data'] as const;
+const kangurCalendarInteractiveStageSectionSchema = z.enum(
+  KANGUR_CALENDAR_INTERACTIVE_STAGE_SECTIONS
+);
+export type KangurCalendarInteractiveStageSection = z.infer<
+  typeof kangurCalendarInteractiveStageSectionSchema
+>;
+
+const KANGUR_CLOCK_TRAINING_STAGE_SECTIONS = ['hours', 'minutes', 'combined'] as const;
+const kangurClockTrainingStageSectionSchema = z.enum(KANGUR_CLOCK_TRAINING_STAGE_SECTIONS);
+export type KangurClockTrainingStageSection = z.infer<
+  typeof kangurClockTrainingStageSectionSchema
+>;
+
+const KANGUR_LOGICAL_PATTERN_SET_IDS = [
+  'logical_patterns_workshop',
+  'alphabet_letter_order',
+] as const;
+const kangurLogicalPatternSetIdSchema = z.enum(KANGUR_LOGICAL_PATTERN_SET_IDS);
+export type KangurLogicalPatternSetId = z.infer<typeof kangurLogicalPatternSetIdSchema>;
+
 const KANGUR_LESSON_STAGE_GAME_FINISH_LABEL_VARIANTS = [
   'lesson',
   'topics',
@@ -318,10 +350,13 @@ const kangurLessonStageGameFinishLabelVariantSchema = z.enum(
 export const kangurLessonStageGameRuntimeRendererPropsSchema = z
   .object({
     activityKey: nonEmptyTrimmedString.max(120).optional(),
+    calendarSection: kangurCalendarInteractiveStageSectionSchema.optional(),
+    clockSection: kangurClockTrainingStageSectionSchema.optional(),
     difficultyLabelOverride: nonEmptyTrimmedString.max(120).optional(),
     finishLabel: nonEmptyTrimmedString.max(120).optional(),
     finishLabelVariant: kangurLessonStageGameFinishLabelVariantSchema.optional(),
     lessonKey: nonEmptyTrimmedString.max(120).optional(),
+    patternSetId: kangurLogicalPatternSetIdSchema.optional(),
     operation: nonEmptyTrimmedString.max(80).optional(),
     shapeIds: z.array(kangurGeometryDrawingShapeIdSchema).min(1).max(12).optional(),
     showDifficultySelector: z.boolean().optional(),

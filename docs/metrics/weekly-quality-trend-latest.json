@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-03-09T21:26:53.643Z",
+  "generatedAt": "2026-03-26T12:51:46.645Z",
   "summary": {
     "runCount": 10,
     "oldestRun": "2026-03-09T06:12:30.508Z",
-    "newestRun": "2026-03-09T09:07:34.294Z",
-    "latestKangurAiTutorBridgeState": "absent",
-    "latestAvailableKangurAiTutorBridgeAlertStatus": null,
-    "latestAvailableKangurAiTutorBridgeSummaryText": null,
-    "latestAvailableKangurAiTutorBridgeRun": null,
-    "latestAvailableKangurAiTutorBridgeState": "absent",
-    "latestAvailableKangurAiTutorBridgeAgeMs": null,
-    "latestAvailableKangurAiTutorBridgeAgeRuns": null
+    "newestRun": "2026-03-26T12:51:04.756Z",
+    "latestKangurAiTutorBridgeState": "current",
+    "latestAvailableKangurAiTutorBridgeAlertStatus": "insufficient_data",
+    "latestAvailableKangurAiTutorBridgeSummaryText": "bridge funnel insufficient data",
+    "latestAvailableKangurAiTutorBridgeRun": "2026-03-26T12:51:04.756Z",
+    "latestAvailableKangurAiTutorBridgeState": "current",
+    "latestAvailableKangurAiTutorBridgeAgeMs": 0,
+    "latestAvailableKangurAiTutorBridgeAgeRuns": 0
   },
   "runs": [
     {
@@ -1014,33 +1014,57 @@
     },
     {
       "sourceFile": "weekly-quality-latest.json",
-      "generatedAt": "2026-03-09T09:07:34.294Z",
+      "generatedAt": "2026-03-26T12:51:04.756Z",
       "summary": {
         "totalChecks": 18,
-        "passed": 15,
-        "failed": 0,
+        "executedChecks": 15,
+        "passed": 8,
+        "failed": 7,
         "timedOut": 0,
-        "skipped": 3
+        "skipped": 3,
+        "selectionSkipped": 0,
+        "otherSkipped": 3
       },
       "passRates": {
-        "build": 100,
+        "build": 0,
         "lint": null,
-        "lintDomains": 100,
-        "typecheck": 100,
+        "lintDomains": 0,
+        "typecheck": 0,
         "criticalFlows": 100,
         "securitySmoke": 100,
-        "unitDomains": 100,
+        "unitDomains": 0,
         "fullUnit": null,
         "e2e": null
       },
-      "totalDurationMs": 674847,
-      "kangurAiTutorBridge": null,
-      "kangurAiTutorBridgeSummaryText": null,
+      "totalDurationMs": 962150,
+      "kangurAiTutorBridge": {
+        "range": "7d",
+        "overallStatus": "insufficient_data",
+        "messageSucceededCount": 0,
+        "knowledgeGraphAppliedCount": 0,
+        "knowledgeGraphSemanticCount": 0,
+        "knowledgeGraphWebsiteHelpCount": 0,
+        "knowledgeGraphMetadataOnlyRecallCount": 0,
+        "knowledgeGraphHybridRecallCount": 0,
+        "knowledgeGraphVectorOnlyRecallCount": 0,
+        "knowledgeGraphVectorRecallAttemptedCount": 0,
+        "bridgeSuggestionCount": 0,
+        "lessonToGameBridgeSuggestionCount": 0,
+        "gameToLessonBridgeSuggestionCount": 0,
+        "bridgeQuickActionClickCount": 0,
+        "bridgeFollowUpClickCount": 0,
+        "bridgeFollowUpCompletionCount": 0,
+        "knowledgeGraphCoverageRatePercent": null,
+        "knowledgeGraphVectorAssistRatePercent": null,
+        "bridgeCompletionRatePercent": null,
+        "alertStatus": "insufficient_data"
+      },
+      "kangurAiTutorBridgeSummaryText": "bridge funnel insufficient data",
       "checks": {
         "build": {
-          "status": "pass",
-          "durationMs": 184875,
-          "exitCode": 0,
+          "status": "fail",
+          "durationMs": 212052,
+          "exitCode": 1,
           "scanSummary": null,
           "structuredSummaryText": null
         },
@@ -1052,39 +1076,151 @@
           "structuredSummaryText": null
         },
         "lintDomains": {
-          "status": "pass",
-          "durationMs": 133598,
-          "exitCode": 0,
-          "scanSummary": null,
-          "structuredSummaryText": null
+          "status": "fail",
+          "durationMs": 100745,
+          "exitCode": 1,
+          "scanSummary": {
+            "scanner": {
+              "name": "lint-domain-checks",
+              "version": "1.0.0"
+            },
+            "status": "failed",
+            "summary": {
+              "totalDomains": 5,
+              "passedDomains": 0,
+              "failedDomains": 5,
+              "timedOutDomains": 0,
+              "skippedDomains": 0,
+              "totalDurationMs": 100695
+            },
+            "paths": {
+              "latestJson": "docs/metrics/lint-domain-checks-latest.json",
+              "latestMarkdown": "docs/metrics/lint-domain-checks-latest.md",
+              "historicalJson": null,
+              "historicalMarkdown": null
+            },
+            "filters": {
+              "strictMode": true,
+              "includeTestProbes": false,
+              "includeTestTree": true,
+              "historyDisabled": true,
+              "noWrite": false,
+              "ci": true
+            },
+            "notes": [
+              "lint domain report result"
+            ]
+          },
+          "structuredSummaryText": "pass=0/5 fail=5 timeout=0 skip=0"
         },
         "typecheck": {
-          "status": "pass",
-          "durationMs": 35192,
-          "exitCode": 0,
+          "status": "fail",
+          "durationMs": 128313,
+          "exitCode": 2,
           "scanSummary": null,
           "structuredSummaryText": null
         },
         "criticalFlows": {
           "status": "pass",
-          "durationMs": 25991,
+          "durationMs": 30058,
           "exitCode": 0,
-          "scanSummary": null,
-          "structuredSummaryText": null
+          "scanSummary": {
+            "scanner": {
+              "name": "critical-flow-tests",
+              "version": "1.0.0"
+            },
+            "status": "ok",
+            "summary": {
+              "totalFlows": 6,
+              "passedFlows": 6,
+              "failedFlows": 0,
+              "totalDurationMs": 30021
+            },
+            "paths": {
+              "latestJson": "docs/metrics/critical-flow-tests-latest.json",
+              "latestMarkdown": "docs/metrics/critical-flow-tests-latest.md",
+              "historicalJson": null,
+              "historicalMarkdown": null
+            },
+            "filters": {
+              "strictMode": true,
+              "historyDisabled": true,
+              "noWrite": false,
+              "ci": true
+            },
+            "notes": [
+              "critical flow regression report result"
+            ]
+          },
+          "structuredSummaryText": "pass=6/6 fail=0"
         },
         "securitySmoke": {
           "status": "pass",
-          "durationMs": 8863,
+          "durationMs": 8429,
           "exitCode": 0,
-          "scanSummary": null,
-          "structuredSummaryText": null
+          "scanSummary": {
+            "scanner": {
+              "name": "security-smoke",
+              "version": "1.0.0"
+            },
+            "status": "ok",
+            "summary": {
+              "totalSuites": 5,
+              "passedSuites": 5,
+              "failedSuites": 0,
+              "totalDurationMs": 8391
+            },
+            "paths": {
+              "latestJson": "docs/metrics/security-smoke-latest.json",
+              "latestMarkdown": "docs/metrics/security-smoke-latest.md",
+              "historicalJson": null,
+              "historicalMarkdown": null
+            },
+            "filters": {
+              "strictMode": true,
+              "historyDisabled": true,
+              "noWrite": false,
+              "ci": true
+            },
+            "notes": [
+              "security smoke report result"
+            ]
+          },
+          "structuredSummaryText": "pass=5/5 fail=0"
         },
         "unitDomains": {
-          "status": "pass",
-          "durationMs": 276209,
-          "exitCode": 0,
-          "scanSummary": null,
-          "structuredSummaryText": null
+          "status": "fail",
+          "durationMs": 468366,
+          "exitCode": 1,
+          "scanSummary": {
+            "scanner": {
+              "name": "unit-domain-timings",
+              "version": "1.0.0"
+            },
+            "status": "failed",
+            "summary": {
+              "totalDomains": 5,
+              "passedDomains": 4,
+              "failedDomains": 1,
+              "totalDurationMs": 468320
+            },
+            "paths": {
+              "latestJson": "docs/metrics/unit-domain-timings-latest.json",
+              "latestMarkdown": "docs/metrics/unit-domain-timings-latest.md",
+              "historicalJson": null,
+              "historicalMarkdown": null
+            },
+            "filters": {
+              "strictMode": true,
+              "historyDisabled": true,
+              "noWrite": false,
+              "ci": true
+            },
+            "notes": [
+              "unit domain timings report result"
+            ]
+          },
+          "structuredSummaryText": "pass=4/5 fail=1"
         },
         "fullUnit": {
           "status": "skipped",
@@ -1101,25 +1237,118 @@
           "structuredSummaryText": null
         },
         "guardrails": {
-          "status": "pass",
-          "durationMs": 3592,
-          "exitCode": 0,
-          "scanSummary": null,
-          "structuredSummaryText": null
+          "status": "fail",
+          "durationMs": 5141,
+          "exitCode": 1,
+          "scanSummary": {
+            "scanner": {
+              "name": "architecture-guardrails",
+              "version": "1.0.0"
+            },
+            "status": "failed",
+            "summary": {
+              "totalMetrics": 24,
+              "okMetrics": 22,
+              "failedMetrics": 1,
+              "infoMetrics": 1,
+              "warnMetrics": 0,
+              "hardLimitFailures": 0,
+              "updatedBaseline": false
+            },
+            "paths": null,
+            "filters": {
+              "strictMode": false,
+              "failOnWarnings": false,
+              "historyDisabled": true,
+              "noWrite": true,
+              "updateBaseline": false,
+              "ci": false
+            },
+            "notes": [
+              "architecture guardrail result"
+            ]
+          },
+          "structuredSummaryText": "pass=22/24 fail=1 hard=0 warn=0 info=1 baseline=no"
         },
         "uiConsolidation": {
-          "status": "pass",
-          "durationMs": 2548,
-          "exitCode": 0,
-          "scanSummary": null,
-          "structuredSummaryText": null
+          "status": "fail",
+          "durationMs": 4550,
+          "exitCode": 1,
+          "scanSummary": {
+            "scanner": {
+              "name": "ui-consolidation-guardrail",
+              "version": "1.0.0"
+            },
+            "status": "failed",
+            "summary": {
+              "totalRules": 7,
+              "failedRules": 2,
+              "passedRules": 5,
+              "propForwardingCount": 120,
+              "propDepthGte4ChainCount": 58,
+              "totalOpportunityCount": 0,
+              "highPriorityOpportunityCount": 0,
+              "configurationError": false
+            },
+            "paths": null,
+            "filters": {
+              "strictMode": false,
+              "failOnWarnings": false,
+              "historyDisabled": true,
+              "noWrite": false,
+              "ci": false
+            },
+            "notes": [
+              "ui consolidation guardrail result"
+            ]
+          },
+          "structuredSummaryText": "pass=5/7 fail=2 forwarded=120 depth4=58 opps=0 high=0 config=no"
         },
         "observability": {
-          "status": "pass",
-          "durationMs": 1297,
-          "exitCode": 0,
-          "scanSummary": null,
-          "structuredSummaryText": null
+          "status": "fail",
+          "durationMs": 1188,
+          "exitCode": 1,
+          "scanSummary": {
+            "scanner": {
+              "name": "observability-check",
+              "version": "2"
+            },
+            "status": "failed",
+            "summary": {
+              "mode": "check",
+              "totalRoutes": 285,
+              "wrappedRoutes": 163,
+              "delegatedRoutes": 122,
+              "uncoveredRoutes": 0,
+              "loggerViolations": 0,
+              "eventSourceViolations": 0,
+              "coreViolations": 0,
+              "consoleLogViolations": 0,
+              "emptyCatchBlockViolations": 0,
+              "legacyCompatibilityViolations": 3,
+              "runtimeFilesScanned": 0,
+              "runtimeErrors": 0,
+              "runtimeErrorsTruncated": false,
+              "runtimeFingerprintCount": 0,
+              "logWriteErrors": 0
+            },
+            "paths": {
+              "checkLog": "logs/observability-check.log",
+              "errorLog": "logs/observability-check.error.log"
+            },
+            "filters": {
+              "mode": "check",
+              "allowPartial": false,
+              "scanRuntimeLogs": true,
+              "emitCiAnnotations": true,
+              "maxRuntimeErrorFindings": 100
+            },
+            "notes": [
+              "Error discovered in legacy compatibility guardrails: 3 violations. See logs/observability-check.error.log.",
+              "observability check scan envelope"
+            ]
+          },
+          "structuredSummaryText": "mode=check routes=285 uncovered=0 logger=0 event=0 core=0 console=0 catches=0 legacy=3 runtime=0 logWrites=0"
         }
       }
     }

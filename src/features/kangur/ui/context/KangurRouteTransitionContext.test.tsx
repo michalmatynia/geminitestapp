@@ -161,6 +161,69 @@ describe('KangurRouteTransitionProvider', () => {
     });
   });
 
+  it('records route transition performance marks for start, commit, ready, and complete', async () => {
+    const performanceMarkSpy = vi
+      .spyOn(window.performance, 'mark')
+      .mockImplementation(() => undefined);
+    const performanceMeasureSpy = vi
+      .spyOn(window.performance, 'measure')
+      .mockImplementation(() => undefined as PerformanceMeasure);
+    const performanceClearMarksSpy = vi
+      .spyOn(window.performance, 'clearMarks')
+      .mockImplementation(() => undefined);
+
+    const { rerender } = renderRouteTransitionHarness({
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+      targetHref: '/kangur/lessons',
+      targetPageKey: 'Lessons',
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
+    });
+
+    await act(async () => {
+      rerender(
+        <KangurRoutingProvider
+          basePath='/kangur'
+          pageKey='Lessons'
+          requestedPath='/kangur/lessons'
+          requestedHref='/kangur/lessons'
+        >
+          <KangurRouteTransitionProvider>
+            <RouteTransitionProbe targetHref='/kangur/lessons' targetPageKey='Lessons' />
+          </KangurRouteTransitionProvider>
+        </KangurRoutingProvider>
+      );
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Mark ready' }));
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(0);
+    });
+
+    expect(performanceMarkSpy.mock.calls.map((call) => call[0])).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('kangur:route-transition:start:'),
+        expect.stringContaining('kangur:route-transition:commit:'),
+        expect.stringContaining('kangur:route-transition:ready:'),
+        expect.stringContaining('kangur:route-transition:complete:'),
+      ])
+    );
+    expect(performanceMeasureSpy.mock.calls.map((call) => call[0])).toEqual(
+      expect.arrayContaining([
+        'kangur:route-transition:commit',
+        'kangur:route-transition:ready',
+        'kangur:route-transition:complete',
+      ])
+    );
+    expect(performanceClearMarksSpy).toHaveBeenCalled();
+  });
+
   it('resets scroll after a Kangur route transition commits to a new requested path', async () => {
     const scrollToMock = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback): number => {

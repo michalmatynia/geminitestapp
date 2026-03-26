@@ -3,7 +3,14 @@
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { PencilRuler } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react';
 
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import {
@@ -25,12 +32,14 @@ import {
 } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingOverlays';
 import { KangurDrawingPracticeBoard } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingPracticeBoard';
 import { KangurDrawingStatusRegions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingStatusRegions';
+import {
+  createKangurDrawingDraftStorageKey,
+  createKangurDrawingExportFilename,
+} from '@/features/kangur/ui/components/drawing-engine/drawing-identifiers';
 import { KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS } from '@/features/kangur/ui/components/drawing-engine/keyboard-shortcuts';
 import { flattenKangurStrokePoints } from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
-import { useKangurDrawingDraftStorage } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage';
 import { useKangurKeyboardPointDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurKeyboardPointDrawing';
-import { useKangurFeedbackManagedDrawingActions } from '@/features/kangur/ui/components/drawing-engine/useKangurFeedbackManagedDrawingActions';
-import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
+import { useKangurManagedStoredPointDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedStoredPointDrawing';
 import { KangurManagedDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurManagedDrawingUtilityActions';
 import {
   KangurDisplayEmoji,
@@ -213,13 +222,6 @@ export default function GeometryPerimeterDrawingGame({
   const sessionStartedAtRef = useRef(Date.now());
 
   const currentRound = ROUNDS[roundIndex] ?? null;
-  const {
-    clearDraftSnapshot,
-    draftSnapshot,
-    setDraftSnapshot,
-  } = useKangurDrawingDraftStorage(
-    currentRound ? `geometry-perimeter:${currentRound.id}` : null
-  );
   const perimeter = currentRound
     ? currentRound.shape === 'square'
       ? currentRound.a * 4
@@ -242,56 +244,101 @@ export default function GeometryPerimeterDrawingGame({
   const strokeWidth = isCoarsePointer ? 7 : 5;
   const isLocked = feedback?.kind === 'success' || feedback?.kind === 'error';
   const revealAnswers = feedback?.kind === 'success' || feedback?.kind === 'error';
+  const exportFileName = useMemo(
+    () => createKangurDrawingExportFilename('geometry-perimeter', currentRound?.id ?? 'drawing'),
+    [currentRound?.id]
+  );
+  const keyboardReadyStatus = translations('geometryPerimeter.inRound.keyboard.ready');
+  const keyboardStartedStatus = translations('geometryPerimeter.inRound.keyboard.started');
+  const keyboardFinishedStatus = translations('geometryPerimeter.inRound.keyboard.finished');
+  const keyboardClearedStatus = translations('geometryPerimeter.inRound.keyboard.cleared');
+  const keyboardBoardClearedStatus = translations('geometryPerimeter.inRound.keyboard.boardCleared');
+  const keyboardRestartedStatus = translations('geometryPerimeter.inRound.keyboard.restarted');
+  const keyboardCanvasKeyDownRef = useRef<
+    ((event: ReactKeyboardEvent<HTMLCanvasElement>) => void) | null
+  >(null);
+  const resetKeyboardRef = useRef<((status: string) => void) | null>(null);
+  const handleManagedUnhandledKeyDown = useCallback(
+    (event: ReactKeyboardEvent<HTMLCanvasElement>): void => {
+      keyboardCanvasKeyDownRef.current?.(event);
+    },
+    []
+  );
+  const handleManagedAfterClearExtra = useCallback((): void => {
+    setSelected(null);
+    setDrawingValidated(false);
+    resetKeyboardRef.current?.(keyboardBoardClearedStatus);
+  }, [keyboardBoardClearedStatus]);
   const {
     canRedo,
     canUndo,
+    clearDraftSnapshot,
     clearStrokes,
-    exportDataUrl,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
     hasDrawableContent,
     isPointerDrawing,
-    redoLastStroke,
     setStrokes,
     strokes,
-    undoLastStroke,
-  } = useKangurPointCanvasDrawing({
-    canvasRef,
-    baseLayerCacheKey: 'geometry-perimeter:grid:v1',
-    enabled: !done && !isLocked && !drawingValidated,
-    initialSerializedSnapshot: draftSnapshot,
-    logicalHeight: CANVAS_HEIGHT,
-    logicalWidth: CANVAS_WIDTH,
-    minPointDistance,
-    onSerializedSnapshotChange: setDraftSnapshot,
-    onPointerStart: () => {
-      if (feedback?.kind === 'info') {
+    clearDrawing,
+    exportDrawing,
+    handleCanvasKeyDown,
+    redoDrawing,
+    undoDrawing,
+  } = useKangurManagedStoredPointDrawing({
+    actions: {
+      clearFeedback: () => {
         setFeedback(null);
-      }
+      },
+      exportFilename: exportFileName,
+      onAfterClearExtra: handleManagedAfterClearExtra,
+      onAfterRedoExtra: () => {
+        setSelected(null);
+        setDrawingValidated(false);
+      },
+      onAfterUndoExtra: () => {
+        setSelected(null);
+        setDrawingValidated(false);
+      },
+      onUnhandledKeyDown: handleManagedUnhandledKeyDown,
     },
-    backgroundFill: '#ffffff',
-    beforeStrokes: (ctx) => {
-      ctx.strokeStyle = '#e2e8f0';
-      ctx.lineWidth = 1;
-      for (let x = GRID_STEP; x < CANVAS_WIDTH; x += GRID_STEP) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, CANVAS_HEIGHT);
-        ctx.stroke();
-      }
-      for (let y = GRID_STEP; y < CANVAS_HEIGHT; y += GRID_STEP) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(CANVAS_WIDTH, y);
-        ctx.stroke();
-      }
+    drawing: {
+      canvasRef,
+      baseLayerCacheKey: 'geometry-perimeter:grid:v1',
+      enabled: !done && !isLocked && !drawingValidated,
+      logicalHeight: CANVAS_HEIGHT,
+      logicalWidth: CANVAS_WIDTH,
+      minPointDistance,
+      onPointerStart: () => {
+        if (feedback?.kind === 'info') {
+          setFeedback(null);
+        }
+      },
+      backgroundFill: '#ffffff',
+      beforeStrokes: (ctx) => {
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 1;
+        for (let x = GRID_STEP; x < CANVAS_WIDTH; x += GRID_STEP) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, CANVAS_HEIGHT);
+          ctx.stroke();
+        }
+        for (let y = GRID_STEP; y < CANVAS_HEIGHT; y += GRID_STEP) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(CANVAS_WIDTH, y);
+          ctx.stroke();
+        }
+      },
+      resolveStyle: () => ({
+        lineWidth: strokeWidth,
+        strokeStyle: '#0f172a',
+      }),
+      storageKey: createKangurDrawingDraftStorageKey('geometry-perimeter', currentRound?.id),
+      touchLockEnabled: isCoarsePointer,
     },
-    resolveStyle: () => ({
-      lineWidth: strokeWidth,
-      strokeStyle: '#0f172a',
-    }),
-    touchLockEnabled: isCoarsePointer,
   });
   const points = useMemo(() => flattenKangurStrokePoints(strokes), [strokes]);
   const isDrawingReady = points.length >= minDrawingPoints;
@@ -304,13 +351,6 @@ export default function GeometryPerimeterDrawingGame({
     },
     []
   );
-  const keyboardReadyStatus = translations('geometryPerimeter.inRound.keyboard.ready');
-  const keyboardStartedStatus = translations('geometryPerimeter.inRound.keyboard.started');
-  const keyboardFinishedStatus = translations('geometryPerimeter.inRound.keyboard.finished');
-  const keyboardClearedStatus = translations('geometryPerimeter.inRound.keyboard.cleared');
-  const keyboardBoardClearedStatus = translations('geometryPerimeter.inRound.keyboard.boardCleared');
-  const keyboardRestartedStatus = translations('geometryPerimeter.inRound.keyboard.restarted');
-
   const clearBoardState = useCallback((): void => {
     clearDraftSnapshot();
     clearStrokes();
@@ -342,46 +382,8 @@ export default function GeometryPerimeterDrawingGame({
     step: KEYBOARD_DRAW_STEP,
     width: CANVAS_WIDTH,
   });
-
-  const exportFileName = useMemo(
-    () => `geometry-perimeter-${currentRound?.id ?? 'drawing'}.png`,
-    [currentRound?.id]
-  );
-
-  const {
-    clearDrawing,
-    exportDrawing,
-    handleCanvasKeyDown,
-    redoDrawing,
-    undoDrawing,
-  } = useKangurFeedbackManagedDrawingActions<HTMLCanvasElement>({
-    canExport: hasDrawableContent,
-    canRedo,
-    canUndo,
-    clearDraftSnapshot,
-    clearFeedback: () => {
-      setFeedback(null);
-    },
-    clearStrokes,
-    exportDataUrl,
-    exportFilename: exportFileName,
-    onAfterClearExtra: () => {
-      setSelected(null);
-      setDrawingValidated(false);
-      resetKeyboard(keyboardBoardClearedStatus);
-    },
-    onAfterRedoExtra: () => {
-      setSelected(null);
-      setDrawingValidated(false);
-    },
-    onAfterUndoExtra: () => {
-      setSelected(null);
-      setDrawingValidated(false);
-    },
-    onUnhandledKeyDown: handleKeyboardCanvasKeyDown,
-    redoLastStroke,
-    undoLastStroke,
-  });
+  keyboardCanvasKeyDownRef.current = handleKeyboardCanvasKeyDown;
+  resetKeyboardRef.current = resetKeyboard;
 
   const finishGame = useCallback(
     (finalScore: number): void => {
@@ -707,14 +709,11 @@ export default function GeometryPerimeterDrawingGame({
                   canExport={hasDrawableContent}
                   canRedo={canRedo}
                   canUndo={canUndo}
-                  exportButtonClassName='w-full'
-                  exportClassName='w-full sm:flex-1'
                   exportLabel={translations('geometryPerimeter.inRound.export')}
                   exportTestId='geometry-perimeter-export'
                   historyLocked={feedback !== null}
-                  historyButtonClassName='w-full sm:flex-1'
-                  historyClassName='w-full sm:flex-1'
                   isCoarsePointer={isCoarsePointer}
+                  layoutPreset='practice-board'
                   onExport={exportDrawing}
                   onRedo={redoDrawing}
                   onUndo={undoDrawing}

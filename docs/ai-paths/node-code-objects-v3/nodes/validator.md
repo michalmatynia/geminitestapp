@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-05'
+last_reviewed: '2026-03-26'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Validator Migration Sheet (`validator`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-26T12:17:00.706Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/validator.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/validator.scaffold.json`
 - v3 object id: `node_obj_validator_portable_v3`
-- v3 object hash: `81f650d8c5f96b78f2e0635bf418536071d8df90e8a02fb0e74be9e9cb1db6c6`
+- v3 object hash: `e1966fe3819f450a310082d66b865825124e605807fca2ec77bd18594d190167`
 
 ## Ports
 

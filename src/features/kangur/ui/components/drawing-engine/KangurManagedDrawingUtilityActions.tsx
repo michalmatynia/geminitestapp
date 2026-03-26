@@ -7,6 +7,7 @@ import {
 
 type KangurDrawingUtilityLayoutPreset =
   | 'footer'
+  | 'freeform-toolbar'
   | 'practice-board'
   | 'inline-board';
 
@@ -31,6 +32,27 @@ const getPresetProps = (
       exportButtonClassName: isCoarsePointer ? 'px-4' : undefined,
       historyButtonClassName: isCoarsePointer ? 'px-4' : undefined,
       size: 'sm',
+    };
+  }
+
+  if (layoutPreset === 'freeform-toolbar') {
+    const buttonClassName = [
+      '!min-w-0 !gap-0 rounded-full',
+      '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]',
+      'hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]',
+      'hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
+      isCoarsePointer ? 'h-11 w-11' : 'h-6 w-6',
+    ].join(' ');
+
+    return {
+      display: 'icon',
+      exportButtonClassName: buttonClassName,
+      exportClassName: 'flex items-center',
+      historyButtonClassName: buttonClassName,
+      historyClassName: 'flex items-center gap-1',
+      iconClassName: 'h-3 w-3',
+      size: 'sm',
+      variant: 'ghost',
     };
   }
 

@@ -52,6 +52,32 @@ vi.mock('@/features/kangur/ui/components/AddingSynthesisGame', () => ({
 vi.mock('@/features/kangur/ui/components/ArtShapesRotationGapGame', () => ({
   ArtShapesRotationGapGame: createMockGame('ArtShapesRotationGapGame'),
 }));
+vi.mock('@/features/kangur/ui/components/CalendarInteractiveStageGame', () => ({
+  default: ({
+    onFinish,
+    calendarSection,
+  }: {
+    onFinish?: () => void;
+    calendarSection?: string;
+  }) => (
+    <button data-section={calendarSection} type='button' onClick={onFinish}>
+      CalendarInteractiveStageGame
+    </button>
+  ),
+}));
+vi.mock('@/features/kangur/ui/components/ClockTrainingStageGame', () => ({
+  default: ({
+    onFinish,
+    clockSection,
+  }: {
+    onFinish?: () => void;
+    clockSection?: string;
+  }) => (
+    <button data-section={clockSection} type='button' onClick={onFinish}>
+      ClockTrainingStageGame
+    </button>
+  ),
+}));
 vi.mock('@/features/kangur/ui/components/DivisionGroupsGame', () => ({
   default: createMockGame('DivisionGroupsGame'),
 }));
@@ -101,10 +127,25 @@ vi.mock('@/features/kangur/ui/components/LogicalClassificationGame', () => ({
   default: createMockGame('LogicalClassificationGame'),
 }));
 vi.mock('@/features/kangur/ui/components/LogicalPatternsWorkshopGame', () => ({
-  default: createMockGame('LogicalPatternsWorkshopGame'),
+  default: ({
+    onFinish,
+    finishLabel,
+    patternSetId,
+  }: {
+    onFinish?: () => void;
+    finishLabel?: string;
+    patternSetId?: string;
+  }) => (
+    <button data-pattern-set-id={patternSetId} type='button' onClick={onFinish}>
+      {finishLabel ?? 'LogicalPatternsWorkshopGame'}
+    </button>
+  ),
 }));
 vi.mock('@/features/kangur/ui/components/MultiplicationArrayGame', () => ({
   default: createMockGame('MultiplicationArrayGame'),
+}));
+vi.mock('@/features/kangur/ui/components/ShapeRecognitionStageGame', () => ({
+  default: createMockGame('ShapeRecognitionStageGame'),
 }));
 vi.mock('@/features/kangur/ui/components/music/MusicMelodyRepeatGame', () => ({
   default: createMockGame('MusicMelodyRepeatGame'),
@@ -136,6 +177,20 @@ describe('KangurLessonStageGameRuntime', () => {
     expect(onFinish).toHaveBeenCalledTimes(1);
   });
 
+  it('forwards serialized renderer props into the shared stage runtime component', () => {
+    render(
+      <KangurLessonStageGameRuntime
+        runtime={getKangurLessonStageGameRuntimeSpec('alphabet_letter_order_lesson_stage')}
+        onFinish={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'LogicalPatternsWorkshopGame' })).toHaveAttribute(
+      'data-pattern-set-id',
+      'alphabet_letter_order'
+    );
+  });
+
   it('switches renderer components from the shared runtime spec rather than lesson-local render callbacks', () => {
     render(
       <KangurLessonStageGameRuntime
@@ -147,8 +202,34 @@ describe('KangurLessonStageGameRuntime', () => {
     expect(screen.getByRole('button', { name: 'EnglishPronounsWarmupGame' })).toBeInTheDocument();
   });
 
+  it('supports calendar and clock lesson-stage runtimes through the same shared registry', () => {
+    const { rerender } = render(
+      <KangurLessonStageGameRuntime
+        runtime={getKangurLessonStageGameRuntimeSpec('calendar_interactive_days_lesson_stage')}
+        onFinish={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'CalendarInteractiveStageGame' })).toHaveAttribute(
+      'data-section',
+      'dni'
+    );
+
+    rerender(
+      <KangurLessonStageGameRuntime
+        runtime={getKangurLessonStageGameRuntimeSpec('clock_training_combined_lesson_stage')}
+        onFinish={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'ClockTrainingStageGame' })).toHaveAttribute(
+      'data-section',
+      'combined'
+    );
+  });
+
   it('supports the geometry lesson-stage runtime renderers through the same registry', () => {
-    render(
+    const { rerender } = render(
       <KangurLessonStageGameRuntime
         runtime={getKangurLessonStageGameRuntimeSpec('geometry_symmetry_studio_lesson_stage')}
         onFinish={vi.fn()}
@@ -156,6 +237,15 @@ describe('KangurLessonStageGameRuntime', () => {
     );
 
     expect(screen.getByRole('button', { name: 'GeometrySymmetryGame' })).toBeInTheDocument();
+
+    rerender(
+      <KangurLessonStageGameRuntime
+        runtime={getKangurLessonStageGameRuntimeSpec('geometry_shape_spotter_lesson_stage')}
+        onFinish={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'ShapeRecognitionStageGame' })).toBeInTheDocument();
   });
 
   it('supports the sentence-builder lesson-stage runtime through the same registry', () => {

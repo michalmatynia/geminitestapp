@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-25T09:30:27.699Z",
+  "generatedAt": "2026-03-26T12:26:19.272Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -308,5 +308,5 @@
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
     }
   ],
-  "durationMs": 95
+  "durationMs": 511
 }

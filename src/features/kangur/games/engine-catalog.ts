@@ -289,6 +289,9 @@ export const getKangurGameEngineCatalogFacets = (
       .filter(
         (ownership): ownership is KangurGameEngineImplementation['ownership'] => Boolean(ownership)
       )
+  ).sort(
+    (left, right) =>
+      getImplementationOwnershipSortOrder(left) - getImplementationOwnershipSortOrder(right)
   ),
   engines: entries
     .map((entry) => entry.engine)

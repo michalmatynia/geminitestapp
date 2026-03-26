@@ -5,6 +5,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { KangurScoreRecord } from '@kangur/platform';
+import { clearKangurScopedScoresCache } from '@/features/kangur/ui/services/learner-profile-scores';
 
 const {
   logKangurClientErrorMock,
@@ -64,6 +65,7 @@ const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord =
 describe('useKangurLeaderboardState', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearKangurScopedScoresCache();
     useOptionalKangurAuthMock.mockReturnValue({
       user: {
         email: 'ada@example.com',
@@ -139,5 +141,27 @@ describe('useKangurLeaderboardState', () => {
       timeLabel: '41s',
       xpLabel: '+24 XP',
     });
+  });
+
+  it('reuses cached leaderboard scores across remounts for the same subject', async () => {
+    const firstRender = renderHook(() => useKangurLeaderboardState());
+
+    await waitFor(() => {
+      expect(firstRender.result.current.loading).toBe(false);
+    });
+
+    expect(scoreFilterMock).toHaveBeenCalledTimes(1);
+
+    firstRender.unmount();
+
+    const secondRender = renderHook(() => useKangurLeaderboardState());
+
+    expect(secondRender.result.current.loading).toBe(false);
+    expect(secondRender.result.current.items.map((item) => item.playerName)).toEqual([
+      'Ada',
+      'Bartek',
+      'Olek',
+    ]);
+    expect(scoreFilterMock).toHaveBeenCalledTimes(1);
   });
 });

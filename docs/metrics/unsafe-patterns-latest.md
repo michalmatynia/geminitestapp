@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-25'
+last_reviewed: '2026-03-26'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,13 +8,13 @@ canonical: true
 ---
 # Unsafe Patterns Check
 
-Generated at: 2026-03-25T09:30:24.679Z
+Generated at: 2026-03-26T12:50:53.124Z
 
 ## Summary
 
-- Status: PASSED
-- Files scanned: 5747
-- Errors: 0
+- Status: FAILED
+- Files scanned: 5829
+- Errors: 1
 - Warnings: 0
 - Info: 0
 
@@ -22,7 +22,7 @@ Generated at: 2026-03-25T09:30:24.679Z
 
 | Metric | Count |
 | --- | ---: |
-| doubleAssertionCount | 0 |
+| doubleAssertionCount | 1 |
 | anyCount | 0 |
 | eslintDisableCount | 0 |
 | nonNullAssertionCount | 0 |
@@ -33,10 +33,13 @@ Generated at: 2026-03-25T09:30:24.679Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
+| double-assertion | 1 | 0 | 0 |
 
 ## Issues
 
-No unsafe pattern issues detected.
+| Severity | Rule | Location | Message |
+| --- | --- | --- | --- |
+| ERROR | double-assertion | src/features/kangur/ui/components/LazyAnimatePresence.tsx:30 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
 
 ## Notes
 

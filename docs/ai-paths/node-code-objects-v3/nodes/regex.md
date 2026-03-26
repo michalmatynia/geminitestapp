@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-05'
+last_reviewed: '2026-03-26'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Regex Grouper Migration Sheet (`regex`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-26T12:17:00.706Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/regex.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/regex.scaffold.json`
 - v3 object id: `node_obj_regex_portable_v3`
-- v3 object hash: `d1752a00d7dd0d3bd36a924ac414d5cbc518b2a17b8e29eb75d27880ad8c7f92`
+- v3 object hash: `30648254e5d3e0257b9c3be4846be97ffe206e73a139a5f73a835c5384985698`
 
 ## Ports
 

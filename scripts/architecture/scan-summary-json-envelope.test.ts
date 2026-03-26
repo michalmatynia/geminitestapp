@@ -828,10 +828,13 @@ describe('scanner summary-json envelope', () => {
     expect(uiConsolidationGuardrail.paths).toBeNull();
     expect(uiConsolidationGuardrail.filters).toMatchObject({
       historyDisabled: true,
-      noWrite: true,
+      noWrite: false,
       ci: false,
     });
     expect(uiConsolidationGuardrail.notes).toContain('ui consolidation guardrail result');
+    expect(fs.existsSync(path.join(root, 'docs', 'ui-consolidation', 'scan-latest.md'))).toBe(true);
+    expect(fs.existsSync(path.join(root, 'docs', 'ui-consolidation', 'scan-latest.json'))).toBe(true);
+    expect(fs.existsSync(path.join(root, 'docs', 'ui-consolidation', 'inventory-latest.csv'))).toBe(true);
   }, 30_000);
 
   it('wraps critical path performance checks in the shared scan envelope', () => {

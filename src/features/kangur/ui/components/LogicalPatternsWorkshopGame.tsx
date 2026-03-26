@@ -52,8 +52,8 @@ import type {
 import { cn } from '@/features/kangur/shared/utils';
 
 import {
-  LOGICAL_PATTERNS_WORKSHOP_ROUNDS,
-  LOGICAL_PATTERNS_WORKSHOP_TILES,
+  getLogicalPatternDataset,
+  type LogicalPatternSetId,
   type LogicalPatternCell,
   type LogicalPatternRound,
   type LogicalPatternTile,
@@ -68,12 +68,7 @@ type RoundState = {
 
 type BlankCell = Extract<LogicalPatternCell, { type: 'blank' }>;
 
-const TOTAL_ROUNDS = Math.max(LOGICAL_PATTERNS_WORKSHOP_ROUNDS.length, 1);
-const TOTAL_TARGETS = LOGICAL_PATTERNS_WORKSHOP_ROUNDS.reduce(
-  (sum, round) => sum + round.sequence.filter((cell) => cell.type === 'blank').length,
-  0
-);
-const FALLBACK_ROUND: LogicalPatternRound = {
+const createFallbackRound = (): LogicalPatternRound => ({
   id: 'fallback',
   title: 'Wzorce i ciągi',
   prompt: 'Brak danych do gry.',
@@ -82,15 +77,17 @@ const FALLBACK_ROUND: LogicalPatternRound = {
   stepHint: 'Najpierw znajdź powtarzający się fragment.',
   pool: [],
   sequence: [],
-};
-const FIRST_ROUND = LOGICAL_PATTERNS_WORKSHOP_ROUNDS[0] ?? FALLBACK_ROUND;
+});
 
 const shuffle = <T,>(items: T[]): T[] => [...items].sort(() => Math.random() - 0.5);
 
-const buildRoundState = (round: LogicalPatternRound): RoundState => {
+const buildRoundState = (
+  round: LogicalPatternRound,
+  tiles: Record<string, LogicalPatternTile>
+): RoundState => {
   const pool = shuffle(
     round.pool
-      .map((tileId) => LOGICAL_PATTERNS_WORKSHOP_TILES[tileId])
+      .map((tileId) => tiles[tileId])
       .filter((tile): tile is LogicalPatternTile => Boolean(tile))
   );
   const slots = round.sequence
@@ -131,6 +128,19 @@ const ringClasses: Record<KangurAccent, string> = {
 };
 
 const dragPortal = typeof document === 'undefined' ? null : document.body;
+
+const isTextTile = (tile: LogicalPatternTile): boolean =>
+  tile.kind === 'number' || tile.kind === 'letter';
+
+const getTileNoun = (tile: LogicalPatternTile): string => {
+  if (tile.kind === 'number') {
+    return 'liczba';
+  }
+  if (tile.kind === 'letter') {
+    return 'litera';
+  }
+  return 'symbol';
+};
 
 const buildTileClassName = ({
   accent,
@@ -222,10 +232,24 @@ const resolveTileByValue = (
 export default function LogicalPatternsWorkshopGame({
   finishLabel = 'Wróć do tematów',
   onFinish,
-}: KangurMiniGameFinishProps): React.JSX.Element {
+  patternSetId = 'logical_patterns_workshop',
+}: KangurMiniGameFinishProps & {
+  patternSetId?: LogicalPatternSetId;
+}): React.JSX.Element {
   const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
+  const patternDataset = useMemo(() => getLogicalPatternDataset(patternSetId), [patternSetId]);
+  const rounds = patternDataset.rounds;
+  const tiles = patternDataset.tiles;
+  const totalRounds = Math.max(rounds.length, 1);
+  const totalTargets = rounds.reduce(
+    (sum, currentRound) =>
+      sum + currentRound.sequence.filter((cell) => cell.type === 'blank').length,
+    0
+  );
+  const fallbackRound = useMemo(() => createFallbackRound(), []);
+  const firstRound = rounds[0] ?? fallbackRound;
   const summaryFinishLabel =
     finishLabel === 'Wróć do tematów'
       ? getKangurMiniGameFinishLabel(translations, 'topics')
@@ -233,7 +257,7 @@ export default function LogicalPatternsWorkshopGame({
   const handleFinish = onFinish;
   const [roundIndex, setRoundIndex] = useState(0);
   const [roundState, setRoundState] = useState<RoundState>(() =>
-    buildRoundState(FIRST_ROUND)
+    buildRoundState(firstRound, tiles)
   );
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
@@ -248,14 +272,14 @@ export default function LogicalPatternsWorkshopGame({
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const sessionStartedAtRef = useRef(Date.now());
 
-  const round = LOGICAL_PATTERNS_WORKSHOP_ROUNDS[roundIndex] ?? FIRST_ROUND;
+  const round = rounds[roundIndex] ?? firstRound;
   const blanks = useMemo(
     () => round.sequence.filter((cell): cell is BlankCell => cell.type === 'blank'),
     [round.sequence]
   );
   const tileByValue = useMemo(
-    () => resolveTileByValue(LOGICAL_PATTERNS_WORKSHOP_TILES),
-    []
+    () => resolveTileByValue(tiles),
+    [tiles]
   );
   const selectedToken = selectedTokenId
     ? roundState.pool.find((token) => token.id === selectedTokenId) ?? null
@@ -267,7 +291,7 @@ export default function LogicalPatternsWorkshopGame({
   const isRoundComplete = blanks.every((blank) => roundState.slots[blank.id]?.length);
 
   const resetRound = (): void => {
-    setRoundState(buildRoundState(round));
+    setRoundState(buildRoundState(round, tiles));
     setSelectedTokenId(null);
     setChecked(false);
     setShowHint(false);
@@ -303,20 +327,20 @@ export default function LogicalPatternsWorkshopGame({
     const nextScore = score + Math.min(roundScore, roundMax);
     setScore(nextScore);
 
-    if (roundIndex + 1 >= TOTAL_ROUNDS) {
-      if (TOTAL_TARGETS > 0) {
+    if (roundIndex + 1 >= totalRounds) {
+      if (totalTargets > 0) {
         const progress = loadProgress({ ownerKey });
         const reward = createLessonPracticeReward(
           progress,
           'logical_patterns',
           nextScore,
-          TOTAL_TARGETS
+          totalTargets
         );
         addXp(reward.xp, reward.progressUpdates, { ownerKey });
         void persistKangurSessionScore({
           operation: 'logical',
           score: nextScore,
-          totalQuestions: TOTAL_TARGETS,
+          totalQuestions: totalTargets,
           correctAnswers: nextScore,
           timeTakenSeconds: Math.round((Date.now() - sessionStartedAtRef.current) / 1000),
           xpEarned: reward.xp,
@@ -328,9 +352,9 @@ export default function LogicalPatternsWorkshopGame({
       return;
     }
     const nextIndex = roundIndex + 1;
-    const nextRound = LOGICAL_PATTERNS_WORKSHOP_ROUNDS[nextIndex] ?? FIRST_ROUND;
+    const nextRound = rounds[nextIndex] ?? firstRound;
     setRoundIndex(nextIndex);
-    setRoundState(buildRoundState(nextRound));
+    setRoundState(buildRoundState(nextRound, tiles));
     setSelectedTokenId(null);
     setChecked(false);
     setShowHint(false);
@@ -342,7 +366,7 @@ export default function LogicalPatternsWorkshopGame({
 
   const restart = (): void => {
     setRoundIndex(0);
-    setRoundState(buildRoundState(FIRST_ROUND));
+    setRoundState(buildRoundState(firstRound, tiles));
     setSelectedTokenId(null);
     setChecked(false);
     setShowHint(false);
@@ -448,7 +472,7 @@ export default function LogicalPatternsWorkshopGame({
   };
 
   if (done) {
-    const percent = TOTAL_TARGETS ? Math.round((score / TOTAL_TARGETS) * 100) : 0;
+    const percent = totalTargets ? Math.round((score / totalTargets) * 100) : 0;
     return (
       <KangurPracticeGameSummary dataTestId='logical-patterns-summary-shell'>
         <KangurPracticeGameSummaryEmoji
@@ -458,7 +482,7 @@ export default function LogicalPatternsWorkshopGame({
         />
         <KangurPracticeGameSummaryTitle
           accent='violet'
-          title={getKangurMiniGameScoreLabel(translations, score, TOTAL_TARGETS)}
+          title={getKangurMiniGameScoreLabel(translations, score, totalTargets)}
         />
         <KangurPracticeGameSummaryXP accent='violet' xpEarned={xpEarned} />
         <KangurPracticeGameSummaryBreakdown
@@ -504,17 +528,18 @@ export default function LogicalPatternsWorkshopGame({
           accent='violet'
           currentRound={roundIndex}
           dataTestId='logical-patterns-progress-bar'
-          totalRounds={TOTAL_ROUNDS}
+          totalRounds={totalRounds}
         />
 
         <KangurInfoCard accent='violet' className='w-full' padding='sm' tone='accent'>
           <div className='flex flex-wrap items-center justify-between gap-2'>
             <div>
               <p className='text-sm font-bold'>Warsztat wzorców</p>
+              <p className='text-xs font-semibold text-violet-700'>{round.title}</p>
               <p className='text-xs [color:var(--kangur-page-muted-text)]'>{round.prompt}</p>
             </div>
             <KangurStatusChip accent='violet' size='sm'>
-              Runda {roundIndex + 1}/{TOTAL_ROUNDS}
+              Runda {roundIndex + 1}/{totalRounds}
             </KangurStatusChip>
           </div>
           <p className='mt-2 text-[11px] [color:var(--kangur-page-muted-text)]'>
@@ -562,7 +587,7 @@ export default function LogicalPatternsWorkshopGame({
           <div className='flex flex-wrap items-center justify-center gap-2'>
             {round.sequence.map((cell, index) => {
               if (cell.type === 'fixed') {
-                const tile = LOGICAL_PATTERNS_WORKSHOP_TILES[cell.tileId];
+                const tile = tiles[cell.tileId];
                 if (!tile) return null;
                 return (
                   <div
@@ -577,7 +602,7 @@ export default function LogicalPatternsWorkshopGame({
                       isMuted: false,
                     })}
                   >
-                    <span className={tile.kind === 'number' ? 'text-lg font-bold' : 'text-xl'}>
+                    <span className={isTextTile(tile) ? 'text-lg font-bold' : 'text-xl'}>
                       {tile.label}
                     </span>
                   </div>
@@ -655,9 +680,7 @@ export default function LogicalPatternsWorkshopGame({
                                       isMuted: checked,
                                     })}
                                     aria-label={
-                                      assigned.kind === 'number'
-                                        ? `Usuń liczbę ${assigned.label} z sekwencji`
-                                        : `Usuń symbol ${assigned.label} z sekwencji`
+                                      `Usuń ${getTileNoun(assigned)} ${assigned.label} z sekwencji`
                                     }
                                     onClick={(event) => {
                                       event.stopPropagation();
@@ -672,11 +695,7 @@ export default function LogicalPatternsWorkshopGame({
                                     }}
                                   >
                                     <span
-                                      className={
-                                        assigned.kind === 'number'
-                                          ? 'text-sm font-bold'
-                                          : 'text-base'
-                                      }
+                                      className={isTextTile(assigned) ? 'text-sm font-bold' : 'text-base'}
                                     >
                                       {assigned.label}
                                     </span>
@@ -747,7 +766,7 @@ export default function LogicalPatternsWorkshopGame({
                 {round.sequence.map((cell, index) => {
                   const tile =
                     cell.type === 'fixed'
-                      ? LOGICAL_PATTERNS_WORKSHOP_TILES[cell.tileId]
+                      ? tiles[cell.tileId]
                       : tileByValue.get(cell.correctValue);
                   if (!tile) return null;
                   return (
@@ -764,7 +783,7 @@ export default function LogicalPatternsWorkshopGame({
                     })}
                     >
                       <span
-                        className={tile.kind === 'number' ? 'text-sm font-bold' : 'text-base'}
+                        className={isTextTile(tile) ? 'text-sm font-bold' : 'text-base'}
                       >
                         {tile.label}
                       </span>
@@ -829,9 +848,7 @@ export default function LogicalPatternsWorkshopGame({
                             isMuted: checked,
                           })}
                           aria-label={
-                            token.kind === 'number'
-                              ? `Kafelek: liczba ${token.label}`
-                              : `Kafelek: symbol ${token.label}`
+                            `Kafelek: ${getTileNoun(token)} ${token.label}`
                           }
                           aria-pressed={selectedTokenId === token.id}
                           onClick={(event) => {
@@ -843,7 +860,7 @@ export default function LogicalPatternsWorkshopGame({
                           }}
                         >
                           <span
-                            className={token.kind === 'number' ? 'text-lg font-bold' : 'text-xl'}
+                            className={isTextTile(token) ? 'text-lg font-bold' : 'text-xl'}
                           >
                             {token.label}
                           </span>
@@ -893,7 +910,7 @@ export default function LogicalPatternsWorkshopGame({
             </KangurButton>
           ) : (
             <KangurButton size='sm' type='button' variant='primary' onClick={goToNextRound}>
-              {roundIndex + 1 >= TOTAL_ROUNDS ? 'Zobacz wynik' : 'Dalej'}
+              {roundIndex + 1 >= totalRounds ? 'Zobacz wynik' : 'Dalej'}
             </KangurButton>
           )}
         </div>

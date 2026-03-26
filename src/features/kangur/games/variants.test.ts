@@ -40,6 +40,24 @@ describe('kangur game variants', () => {
     expect(entry?.launchableRuntime).toBeNull();
   });
 
+  it('attaches the alphabet sequence lesson-stage runtime to the six-year-old stage variant', () => {
+    const entry = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries()).find(
+      (candidate) => candidate.variant.id === 'alphabet_letter_order.lesson-stage'
+    );
+
+    expect(entry?.isLessonVariant).toBe(true);
+    expect(entry?.lessonStageRuntime).toMatchObject({
+      runtimeId: 'alphabet_letter_order_lesson_stage',
+      rendererId: 'logical_patterns_workshop_game',
+      engineId: 'pattern-sequence-engine',
+      rendererProps: {
+        patternSetId: 'alphabet_letter_order',
+      },
+    });
+    expect(entry?.lessonActivityRuntime).toBeNull();
+    expect(entry?.launchableRuntime).toBeNull();
+  });
+
   it('attaches geometry lesson-stage runtimes to drawing lesson variants', () => {
     const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
     const workshopEntry = entries.find(
@@ -112,6 +130,9 @@ describe('kangur game variants', () => {
     const artEntry = entries.find(
       (candidate) => candidate.variant.id === 'art_shape_rotation_puzzle.lesson-stage'
     );
+    const geometrySpotterEntry = entries.find(
+      (candidate) => candidate.variant.id === 'geometry_shape_spotter.lesson-stage'
+    );
     const geometryDrawingEntry = entries.find(
       (candidate) => candidate.variant.id === 'geometry_shape_drawing.lesson-stage'
     );
@@ -125,6 +146,11 @@ describe('kangur game variants', () => {
     expect(artEntry?.lessonStageRuntime).toMatchObject({
       runtimeId: 'art_shape_rotation_puzzle_lesson_stage',
       rendererId: 'art_shapes_rotation_gap_game',
+      engineId: 'shape-recognition-engine',
+    });
+    expect(geometrySpotterEntry?.lessonStageRuntime).toMatchObject({
+      runtimeId: 'geometry_shape_spotter_lesson_stage',
+      rendererId: 'shape_recognition_stage_game',
       engineId: 'shape-recognition-engine',
     });
     expect(geometryDrawingEntry?.lessonStageRuntime).toMatchObject({
@@ -255,13 +281,8 @@ describe('kangur game variants', () => {
       }
     );
 
-    expect(filtered.map((entry) => entry.game.id)).toEqual(
-      expect.arrayContaining([
-        'alphabet_letter_order',
-        'art_shape_rotation_puzzle',
-        'geometry_shape_spotter',
-      ])
-    );
+    expect(filtered).toEqual([]);
+    expect(filtered.some((entry) => entry.game.id === 'alphabet_letter_order')).toBe(false);
     expect(filtered.some((entry) => entry.game.id === 'clock_training')).toBe(false);
   });
 });

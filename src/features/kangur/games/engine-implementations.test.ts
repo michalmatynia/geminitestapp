@@ -24,17 +24,28 @@ describe('kangur game engine implementations', () => {
       'shared_runtime'
     );
     expect(getKangurGameEngineImplementation('pattern-sequence-engine').ownership).toBe(
-      'mixed_runtime'
+      'shared_runtime'
     );
     expect(getKangurGameEngineImplementation('shape-recognition-engine').ownership).toBe(
-      'mixed_runtime'
+      'shared_runtime'
     );
   });
 
   it('resolves runtime component identifiers for extracted engine families', () => {
     expect(getKangurGameEngineImplementation('calendar-grid-engine').runtimeIds).toEqual([
+      'calendar_interactive_days_lesson_stage',
+      'calendar_interactive_months_lesson_stage',
+      'calendar_interactive_dates_lesson_stage',
       'calendar_interactive_game',
+      'CalendarInteractiveStageGame',
       'calendar_training_game',
+    ]);
+    expect(getKangurGameEngineImplementation('clock-dial-engine').runtimeIds).toEqual([
+      'clock_training_hours_lesson_stage',
+      'clock_training_minutes_lesson_stage',
+      'clock_training_combined_lesson_stage',
+      'clock_training_game',
+      'ClockTrainingStageGame',
     ]);
     expect(getKangurGameEngineImplementation('quantity-drag-engine').runtimeIds).toEqual([
       'adding_ball_lesson_stage',
@@ -95,6 +106,12 @@ describe('kangur game engine implementations', () => {
       'multiplication_game',
       'division_game',
     ]);
+    expect(getKangurGameEngineImplementation('pattern-sequence-engine').runtimeIds).toEqual([
+      'alphabet_letter_order_lesson_stage',
+      'logical_patterns_workshop_lesson_stage',
+      'logical_patterns_workshop_game',
+      'AgenticSequenceGame',
+    ]);
     expect(getKangurGameEngineImplementation('melody-repeat-engine').runtimeIds).toEqual([
       'music_melody_repeat_lesson_stage',
       'MusicMelodyRepeatGame',
@@ -105,8 +122,9 @@ describe('kangur game engine implementations', () => {
     ]);
     expect(getKangurGameEngineImplementation('shape-recognition-engine').runtimeIds).toEqual([
       'art_shape_rotation_puzzle_lesson_stage',
+      'geometry_shape_spotter_lesson_stage',
       'ArtShapesRotationGapGame',
-      'ShapeRecognitionGame',
+      'ShapeRecognitionStageGame',
     ]);
     expect(getKangurGameEngineImplementation('symbol-tracing-engine').runtimeIds).toEqual([
       'AlphabetBasicsLesson',
@@ -138,7 +156,11 @@ describe('kangur game engine implementations', () => {
     cloned[0]?.runtimeIds.push('MutatedRuntime');
 
     expect(getKangurGameEngineImplementation('clock-dial-engine').runtimeIds).toEqual([
+      'clock_training_hours_lesson_stage',
+      'clock_training_minutes_lesson_stage',
+      'clock_training_combined_lesson_stage',
       'clock_training_game',
+      'ClockTrainingStageGame',
     ]);
   });
 });

@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { ProductEditPage } from '@/features/products/public';
+import ProductEditPage from '@/features/products/pages/ProductEditPage';
 
 export default async function Page({
   params,

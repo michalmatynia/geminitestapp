@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-03-05T04:40:55.526Z",
+  "generatedAt": "2026-03-26T12:51:46.475Z",
   "suite": "lint-domain-checks",
   "label": "Lint Domain Checks",
   "windowDays": 7,
   "summary": {
-    "runCount": 4,
-    "oldestRun": "2026-03-05T04:00:57.270Z",
-    "newestRun": "2026-03-05T04:36:38.577Z"
+    "runCount": 1,
+    "oldestRun": "2026-03-26T12:40:05.891Z",
+    "newestRun": "2026-03-26T12:40:05.891Z"
   },
   "domainIds": [
     "auth",
@@ -24,9 +24,9 @@
   },
   "runs": [
     {
-      "sourceFile": "lint-domain-checks-2026-03-05T04-00-57-270Z.json",
-      "generatedAt": "2026-03-05T04:00:57.270Z",
-      "totalDurationMs": 5087,
+      "sourceFile": "lint-domain-checks-latest.json",
+      "generatedAt": "2026-03-26T12:40:05.891Z",
+      "totalDurationMs": 100695,
       "statusSummary": {
         "total": 5,
         "passed": 0,
@@ -40,7 +40,7 @@
           "name": "Auth",
           "owner": "team-auth-platform",
           "status": "fail",
-          "durationMs": 1705,
+          "durationMs": 958,
           "exitCode": 2
         },
         {
@@ -48,7 +48,7 @@
           "name": "Products",
           "owner": "team-products-platform",
           "status": "fail",
-          "durationMs": 821,
+          "durationMs": 991,
           "exitCode": 2
         },
         {
@@ -56,186 +56,24 @@
           "name": "AI Paths",
           "owner": "team-ai-runtime",
           "status": "fail",
-          "durationMs": 841,
-          "exitCode": 2
+          "durationMs": 34642,
+          "exitCode": null
         },
         {
           "id": "image-studio",
           "name": "Image Studio",
           "owner": "team-image-studio",
           "status": "fail",
-          "durationMs": 847,
-          "exitCode": 2
+          "durationMs": 34868,
+          "exitCode": null
         },
         {
           "id": "case-resolver",
           "name": "Case Resolver",
           "owner": "team-case-resolver",
           "status": "fail",
-          "durationMs": 873,
-          "exitCode": 2
-        }
-      ]
-    },
-    {
-      "sourceFile": "lint-domain-checks-2026-03-05T04-06-33-027Z.json",
-      "generatedAt": "2026-03-05T04:06:33.027Z",
-      "totalDurationMs": 99289,
-      "statusSummary": {
-        "total": 5,
-        "passed": 5,
-        "failed": 0,
-        "timedOut": 0,
-        "skipped": 0
-      },
-      "domains": [
-        {
-          "id": "auth",
-          "name": "Auth",
-          "owner": "team-auth-platform",
-          "status": "pass",
-          "durationMs": 11092,
-          "exitCode": 0
-        },
-        {
-          "id": "products",
-          "name": "Products",
-          "owner": "team-products-platform",
-          "status": "pass",
-          "durationMs": 22563,
-          "exitCode": 0
-        },
-        {
-          "id": "ai-paths",
-          "name": "AI Paths",
-          "owner": "team-ai-runtime",
-          "status": "pass",
-          "durationMs": 23679,
-          "exitCode": 0
-        },
-        {
-          "id": "image-studio",
-          "name": "Image Studio",
-          "owner": "team-image-studio",
-          "status": "pass",
-          "durationMs": 21621,
-          "exitCode": 0
-        },
-        {
-          "id": "case-resolver",
-          "name": "Case Resolver",
-          "owner": "team-case-resolver",
-          "status": "pass",
-          "durationMs": 20334,
-          "exitCode": 0
-        }
-      ]
-    },
-    {
-      "sourceFile": "lint-domain-checks-2026-03-05T04-33-16-757Z.json",
-      "generatedAt": "2026-03-05T04:33:16.757Z",
-      "totalDurationMs": 72765,
-      "statusSummary": {
-        "total": 5,
-        "passed": 5,
-        "failed": 0,
-        "timedOut": 0,
-        "skipped": 0
-      },
-      "domains": [
-        {
-          "id": "auth",
-          "name": "Auth",
-          "owner": "team-auth-platform",
-          "status": "pass",
-          "durationMs": 10112,
-          "exitCode": 0
-        },
-        {
-          "id": "products",
-          "name": "Products",
-          "owner": "team-products-platform",
-          "status": "pass",
-          "durationMs": 14574,
-          "exitCode": 0
-        },
-        {
-          "id": "ai-paths",
-          "name": "AI Paths",
-          "owner": "team-ai-runtime",
-          "status": "pass",
-          "durationMs": 17953,
-          "exitCode": 0
-        },
-        {
-          "id": "image-studio",
-          "name": "Image Studio",
-          "owner": "team-image-studio",
-          "status": "pass",
-          "durationMs": 17211,
-          "exitCode": 0
-        },
-        {
-          "id": "case-resolver",
-          "name": "Case Resolver",
-          "owner": "team-case-resolver",
-          "status": "pass",
-          "durationMs": 12915,
-          "exitCode": 0
-        }
-      ]
-    },
-    {
-      "sourceFile": "lint-domain-checks-latest.json",
-      "generatedAt": "2026-03-05T04:36:38.577Z",
-      "totalDurationMs": 104259,
-      "statusSummary": {
-        "total": 5,
-        "passed": 5,
-        "failed": 0,
-        "timedOut": 0,
-        "skipped": 0
-      },
-      "domains": [
-        {
-          "id": "auth",
-          "name": "Auth",
-          "owner": "team-auth-platform",
-          "status": "pass",
-          "durationMs": 9961,
-          "exitCode": 0
-        },
-        {
-          "id": "products",
-          "name": "Products",
-          "owner": "team-products-platform",
-          "status": "pass",
-          "durationMs": 16291,
-          "exitCode": 0
-        },
-        {
-          "id": "ai-paths",
-          "name": "AI Paths",
-          "owner": "team-ai-runtime",
-          "status": "pass",
-          "durationMs": 25126,
-          "exitCode": 0
-        },
-        {
-          "id": "image-studio",
-          "name": "Image Studio",
-          "owner": "team-image-studio",
-          "status": "pass",
-          "durationMs": 34019,
-          "exitCode": 0
-        },
-        {
-          "id": "case-resolver",
-          "name": "Case Resolver",
-          "owner": "team-case-resolver",
-          "status": "pass",
-          "durationMs": 18862,
-          "exitCode": 0
+          "durationMs": 29236,
+          "exitCode": null
         }
       ]
     }

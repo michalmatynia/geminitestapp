@@ -18,16 +18,29 @@ export const KANGUR_GAME_ENGINE_IMPLEMENTATIONS: readonly KangurGameEngineImplem
   {
     engineId: 'clock-dial-engine',
     ownership: 'shared_runtime',
-    runtimeIds: ['clock_training_game'],
+    runtimeIds: [
+      'clock_training_hours_lesson_stage',
+      'clock_training_minutes_lesson_stage',
+      'clock_training_combined_lesson_stage',
+      'clock_training_game',
+      'ClockTrainingStageGame',
+    ],
     summary:
-      'Clock practice already runs through a shared runtime component reused across lesson blocks and fullscreen play.',
+      'Clock practice now runs through shared lesson-stage, lesson-inline, and fullscreen runtimes instead of lesson-local stage wrappers.',
   },
   {
     engineId: 'calendar-grid-engine',
     ownership: 'shared_runtime',
-    runtimeIds: ['calendar_interactive_game', 'calendar_training_game'],
+    runtimeIds: [
+      'calendar_interactive_days_lesson_stage',
+      'calendar_interactive_months_lesson_stage',
+      'calendar_interactive_dates_lesson_stage',
+      'calendar_interactive_game',
+      'CalendarInteractiveStageGame',
+      'calendar_training_game',
+    ],
     summary:
-      'Calendar practice is extracted into shared lesson and fullscreen runtime components instead of staying embedded in one lesson shell.',
+      'Calendar practice is extracted into shared lesson-stage, lesson-inline, and fullscreen runtime components instead of staying embedded in one lesson shell.',
   },
   {
     engineId: 'quantity-drag-engine',
@@ -105,15 +118,15 @@ export const KANGUR_GAME_ENGINE_IMPLEMENTATIONS: readonly KangurGameEngineImplem
   },
   {
     engineId: 'pattern-sequence-engine',
-    ownership: 'mixed_runtime',
+    ownership: 'shared_runtime',
     runtimeIds: [
+      'alphabet_letter_order_lesson_stage',
       'logical_patterns_workshop_lesson_stage',
       'logical_patterns_workshop_game',
       'AgenticSequenceGame',
-      'AlphabetSequenceLesson',
     ],
     summary:
-      'Pattern sequencing is partly consolidated into shared logic runtimes, but the alphabet sequence variant is still lesson-embedded.',
+      'Pattern sequencing now flows through shared logic runtimes, including the alphabet order lesson-stage variant and reusable workshop renderer.',
   },
   {
     engineId: 'classification-engine',
@@ -182,14 +195,15 @@ export const KANGUR_GAME_ENGINE_IMPLEMENTATIONS: readonly KangurGameEngineImplem
   },
   {
     engineId: 'shape-recognition-engine',
-    ownership: 'mixed_runtime',
+    ownership: 'shared_runtime',
     runtimeIds: [
       'art_shape_rotation_puzzle_lesson_stage',
+      'geometry_shape_spotter_lesson_stage',
       'ArtShapesRotationGapGame',
-      'ShapeRecognitionGame',
+      'ShapeRecognitionStageGame',
     ],
     summary:
-      'Shape recognition mixes one shared runtime with a geometry lesson-internal implementation that still needs extraction.',
+      'Shape recognition now uses serialized lesson-stage runtimes and shared runtime components for both art rotation and geometry spotting variants.',
   },
   {
     engineId: 'diagram-sketch-engine',

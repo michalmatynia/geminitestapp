@@ -21,6 +21,7 @@ import { useKangurOptionalSubjectKey } from '@/features/kangur/ui/hooks/useKangu
 const kangurPlatform = getKangurPlatform();
 const DEFAULT_PING_INTERVAL_MS = 45_000;
 const DEFAULT_REFRESH_INTERVAL_MS = 30_000;
+const LEARNER_ACTIVITY_PING_DEDUPE_MS = 5_000;
 const ENABLE_LEARNER_ACTIVITY_SSE =
   process.env['NEXT_PUBLIC_KANGUR_LEARNER_ACTIVITY_SSE'] !== 'false';
 
@@ -105,8 +106,16 @@ export const useKangurLearnerActivityStatus = (
   const [isLoading, setIsLoading] = useState(enabled && initialCachedStatus === null);
   const [error, setError] = useState<string | null>(null);
   const [isDeferredReady, setIsDeferredReady] = useState(deferInitialRefreshMs === 0);
+  const [isStreamActive, setIsStreamActive] = useState(false);
   const statusRef = useRef<KangurLearnerActivityStatus | null>(initialCachedStatus);
   const isActive = enabled && Boolean(learnerId) && isDeferredReady;
+  const canUseEventStream =
+    isActive &&
+    Boolean(learnerId) &&
+    streamEnabled &&
+    ENABLE_LEARNER_ACTIVITY_SSE &&
+    typeof window !== 'undefined' &&
+    typeof EventSource !== 'undefined';
 
   useEffect(() => {
     statusRef.current = status;
@@ -196,8 +205,15 @@ export const useKangurLearnerActivityStatus = (
       return;
     }
 
+    if (canUseEventStream) {
+      setStatus(null);
+      setError(null);
+      setIsLoading(true);
+      return;
+    }
+
     void refresh();
-  }, [isActive, learnerId, refresh, statusCacheMaxAgeMs]);
+  }, [canUseEventStream, isActive, learnerId, refresh, statusCacheMaxAgeMs]);
 
   useEffect(() => {
     if (!enabled || !learnerId) {
@@ -222,22 +238,33 @@ export const useKangurLearnerActivityStatus = (
       return;
     }
 
+    if (canUseEventStream) {
+      setStatus(null);
+      setError(null);
+      setIsLoading(true);
+      return;
+    }
+
     setStatus(null);
     setError(null);
     setIsLoading(true);
-  }, [enabled, isDeferredReady, learnerId, statusCacheMaxAgeMs]);
+  }, [canUseEventStream, enabled, isDeferredReady, learnerId, statusCacheMaxAgeMs]);
 
   useInterval(
     () => {
       void refresh();
     },
-    isActive && learnerId && typeof window !== 'undefined' && refreshIntervalMs > 0
+    isActive &&
+    learnerId &&
+    typeof window !== 'undefined' &&
+    refreshIntervalMs > 0 &&
+    !isStreamActive
       ? refreshIntervalMs
       : null
   );
 
   useEffect(() => {
-    if (!isActive || !learnerId || typeof window === 'undefined') {
+    if (!isActive || !learnerId || typeof window === 'undefined' || isStreamActive) {
       return;
     }
 
@@ -262,17 +289,11 @@ export const useKangurLearnerActivityStatus = (
       window.removeEventListener('focus', handleVisibility);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [isActive, learnerId, refresh, statusCacheMaxAgeMs]);
+  }, [isActive, isStreamActive, learnerId, refresh, statusCacheMaxAgeMs]);
 
   useEffect(() => {
-    if (
-      !isActive ||
-      !learnerId ||
-      !streamEnabled ||
-      !ENABLE_LEARNER_ACTIVITY_SSE ||
-      typeof window === 'undefined' ||
-      typeof EventSource === 'undefined'
-    ) {
+    if (!canUseEventStream || !learnerId) {
+      setIsStreamActive(false);
       return;
     }
 
@@ -291,8 +312,13 @@ export const useKangurLearnerActivityStatus = (
       { fallback: null }
     );
     if (!source) {
+      setIsStreamActive(false);
+      if (statusRef.current === null) {
+        void refresh();
+      }
       return;
     }
+    setIsStreamActive(true);
     const closeStream = (): void => {
       source.close();
     };
@@ -314,7 +340,11 @@ export const useKangurLearnerActivityStatus = (
         return;
       }
       if (payload.type === 'fallback') {
+        setIsStreamActive(false);
         closeStream();
+        if (statusRef.current === null) {
+          void refresh();
+        }
         return;
       }
       if (payload.type === 'snapshot') {
@@ -329,13 +359,17 @@ export const useKangurLearnerActivityStatus = (
     };
 
     source.onerror = () => {
+      setIsStreamActive(false);
       closeStream();
+      if (statusRef.current === null) {
+        void refresh();
+      }
     };
 
     return () => {
       closeStream();
     };
-  }, [isActive, learnerId, streamEnabled]);
+  }, [canUseEventStream, learnerId, refresh]);
 
   return {
     status: isActive ? status : null,
@@ -363,6 +397,8 @@ export const useKangurLearnerActivityPing = ({
   const subjectKey = useKangurOptionalSubjectKey();
   const latestActivityRef = useRef<KangurLearnerActivityUpdateInput | null>(null);
   const lastRecordedKeyRef = useRef<string | null>(null);
+  const lastPingKeyRef = useRef<string | null>(null);
+  const lastPingAtRef = useRef<number>(0);
   const activityPayload = useMemo<KangurLearnerActivityUpdateInput | null>(() => {
     const title = activity.title?.trim();
     if (!title) {
@@ -421,6 +457,17 @@ export const useKangurLearnerActivityPing = ({
     if (!payload) {
       return;
     }
+
+    const now = Date.now();
+    const payloadKey = `${payload.kind}::${payload.href}`;
+    if (
+      lastPingKeyRef.current === payloadKey &&
+      now - lastPingAtRef.current < LEARNER_ACTIVITY_PING_DEDUPE_MS
+    ) {
+      return;
+    }
+    lastPingKeyRef.current = payloadKey;
+    lastPingAtRef.current = now;
 
     await withKangurClientError(
       () => ({

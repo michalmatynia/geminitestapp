@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-03-24T23:08:29.487Z",
-  "strictMode": true,
+  "generatedAt": "2026-03-26T12:27:36.708Z",
+  "strictMode": false,
   "summary": {
     "total": 10,
     "passed": 10,
@@ -383,7 +383,7 @@
     }
   ],
   "metrics": {
-    "generatedAt": "2026-03-24T23:08:29.481Z",
+    "generatedAt": "2026-03-26T12:27:36.701Z",
     "hotspots": {
       "topFilesByLines": [
         {
@@ -403,16 +403,12 @@
           "lines": 2454
         },
         {
-          "path": "src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx",
-          "lines": 2016
-        },
-        {
           "path": "src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx",
-          "lines": 1856
+          "lines": 2023
         },
         {
           "path": "src/features/kangur/ui/components/SubtractingLesson.tsx",
-          "lines": 1844
+          "lines": 1846
         },
         {
           "path": "src/features/kangur/ui/components/music/useKangurMusicSynth.ts",
@@ -423,12 +419,16 @@
           "lines": 1701
         },
         {
+          "path": "src/features/kangur/ui/pages/GamesLibrary.tsx",
+          "lines": 1694
+        },
+        {
           "path": "src/features/kangur/ui/components/AddingLesson.tsx",
-          "lines": 1681
+          "lines": 1685
         },
         {
           "path": "src/features/kangur/server/ai-tutor-content-locale-scaffold.ts",
-          "lines": 1617
+          "lines": 1621
         },
         {
           "path": "src/features/kangur/page-content-catalog.ts",
@@ -439,8 +439,16 @@
           "lines": 1396
         },
         {
+          "path": "src/features/kangur/ui/KangurLoginPage.test.tsx",
+          "lines": 1394
+        },
+        {
           "path": "src/features/kangur/ui/KangurLoginPage.tsx",
-          "lines": 1347
+          "lines": 1394
+        },
+        {
+          "path": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx",
+          "lines": 1287
         },
         {
           "path": "src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx",
@@ -449,14 +457,6 @@
         {
           "path": "src/features/kangur/server/ai-tutor-native-guide-locale-scaffold.ts",
           "lines": 1265
-        },
-        {
-          "path": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx",
-          "lines": 1253
-        },
-        {
-          "path": "src/features/kangur/ui/KangurLoginPage.test.tsx",
-          "lines": 1248
         },
         {
           "path": "src/features/kangur/ui/components/GeometryLessonAnimations.tsx",
@@ -499,8 +499,8 @@
           "lines": 1074
         },
         {
-          "path": "src/features/kangur/ui/components/GeometryDrawingGame.tsx",
-          "lines": 1059
+          "path": "src/features/kangur/ui/KangurFeatureApp.test.tsx",
+          "lines": 1065
         },
         {
           "path": "src/app/api/kangur/ai-tutor/chat/handler.ts",

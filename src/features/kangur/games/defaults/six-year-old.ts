@@ -71,7 +71,7 @@ export const KANGUR_SIX_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     tags: ['alphabet', 'matching', 'pairs'],
     sortOrder: 40,
   }),
-  createSixYearOldInlineGame({
+  createSixYearOldStageGame({
     id: 'alphabet_letter_order',
     engineId: 'pattern-sequence-engine',
     subject: 'alphabet',
@@ -81,6 +81,7 @@ export const KANGUR_SIX_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     emoji: '🧠',
     mechanic: 'logic_pattern',
     interactionMode: 'tap',
+    lessonStageRuntimeId: 'alphabet_letter_order_lesson_stage',
     tags: ['alphabet', 'sequence', 'order'],
     sortOrder: 50,
   }),
@@ -98,7 +99,7 @@ export const KANGUR_SIX_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     tags: ['art', 'shapes', 'rotation'],
     sortOrder: 60,
   }),
-  createSixYearOldInlineGame({
+  createSixYearOldStageGame({
     id: 'geometry_shape_spotter',
     engineId: 'shape-recognition-engine',
     subject: 'geometry',
@@ -108,6 +109,7 @@ export const KANGUR_SIX_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     emoji: '🔷',
     mechanic: 'tap_select',
     interactionMode: 'tap',
+    lessonStageRuntimeId: 'geometry_shape_spotter_lesson_stage',
     tags: ['geometry', 'shapes', 'recognition'],
     sortOrder: 70,
   }),

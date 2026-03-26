@@ -92,5 +92,28 @@ describe('KangurManagedDrawingUtilityActions', () => {
 
     expect(screen.getByRole('button', { name: 'Undo' })).toHaveClass('px-4');
     expect(screen.getByRole('button', { name: 'Export PNG' })).toHaveClass('px-4');
+
+    rerender(
+      <KangurManagedDrawingUtilityActions
+        exportLabel='Export PNG'
+        layoutPreset='freeform-toolbar'
+        onExport={() => {}}
+        onRedo={() => {}}
+        onUndo={() => {}}
+        redoLabel='Redo'
+        undoLabel='Undo'
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Undo' })).toHaveClass(
+      'rounded-full',
+      'h-6',
+      'w-6'
+    );
+    expect(screen.getByRole('button', { name: 'Export PNG' })).toHaveClass(
+      'rounded-full',
+      'h-6',
+      'w-6'
+    );
   });
 });

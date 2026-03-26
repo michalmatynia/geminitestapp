@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "generatedAt": "2026-03-26T12:16:59.624Z",
   "id": "node_obj_playwright_portable_v2",
   "nodeType": "playwright",
   "nodeDocVersion": "2026-02-20.v1",
@@ -313,5 +313,5 @@
     "semanticNodeHash": "7fe5f58cbada808ffbcf5fdcafb8ad435b9278f38320239f6b66897e3d2d0056"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "e886f668b4d88b3dbc24f9f1ee4cbf639262a90cb538881361bc2da3110006d9"
+  "objectHash": "38ad666f2e259e112cd523ffd0f6bd50e5b4eb895124ba5697811dd04ccffaea"
 }

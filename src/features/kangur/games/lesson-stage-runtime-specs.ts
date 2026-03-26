@@ -62,10 +62,66 @@ export const KANGUR_LESSON_STAGE_GAME_RUNTIME_SPECS = Object.freeze({
     'agentic_surface_match_game',
     'classification-engine'
   ),
+  alphabet_letter_order_lesson_stage: createSharedLessonStageGameRuntimeSpec(
+    'alphabet_letter_order_lesson_stage',
+    'logical_patterns_workshop_game',
+    'pattern-sequence-engine',
+    {
+      patternSetId: 'alphabet_letter_order',
+    }
+  ),
   art_shape_rotation_puzzle_lesson_stage: createSharedLessonStageGameRuntimeSpec(
     'art_shape_rotation_puzzle_lesson_stage',
     'art_shapes_rotation_gap_game',
     'shape-recognition-engine'
+  ),
+  calendar_interactive_days_lesson_stage: createSharedLessonStageGameRuntimeSpec(
+    'calendar_interactive_days_lesson_stage',
+    'calendar_interactive_stage_game',
+    'calendar-grid-engine',
+    {
+      calendarSection: 'dni',
+    }
+  ),
+  calendar_interactive_months_lesson_stage: createSharedLessonStageGameRuntimeSpec(
+    'calendar_interactive_months_lesson_stage',
+    'calendar_interactive_stage_game',
+    'calendar-grid-engine',
+    {
+      calendarSection: 'miesiace',
+    }
+  ),
+  calendar_interactive_dates_lesson_stage: createSharedLessonStageGameRuntimeSpec(
+    'calendar_interactive_dates_lesson_stage',
+    'calendar_interactive_stage_game',
+    'calendar-grid-engine',
+    {
+      calendarSection: 'data',
+    }
+  ),
+  clock_training_hours_lesson_stage: createSharedLessonStageGameRuntimeSpec(
+    'clock_training_hours_lesson_stage',
+    'clock_training_stage_game',
+    'clock-dial-engine',
+    {
+      clockSection: 'hours',
+    }
+  ),
+  clock_training_minutes_lesson_stage: createSharedLessonStageGameRuntimeSpec(
+    'clock_training_minutes_lesson_stage',
+    'clock_training_stage_game',
+    'clock-dial-engine',
+    {
+      clockSection: 'minutes',
+    }
+  ),
+  clock_training_combined_lesson_stage: createSharedLessonStageGameRuntimeSpec(
+    'clock_training_combined_lesson_stage',
+    'clock_training_stage_game',
+    'clock-dial-engine',
+    {
+      clockSection: 'combined',
+    }
   ),
   division_groups_lesson_stage: createSharedLessonStageGameRuntimeSpec(
     'division_groups_lesson_stage',
@@ -121,6 +177,11 @@ export const KANGUR_LESSON_STAGE_GAME_RUNTIME_SPECS = Object.freeze({
   geometry_basics_workshop_lesson_stage: createSharedLessonStageGameRuntimeSpec(
     'geometry_basics_workshop_lesson_stage',
     'geometry_basics_workshop_game'
+  ),
+  geometry_shape_spotter_lesson_stage: createSharedLessonStageGameRuntimeSpec(
+    'geometry_shape_spotter_lesson_stage',
+    'shape_recognition_stage_game',
+    'shape-recognition-engine'
   ),
   geometry_shape_workshop_lesson_stage: createSharedLessonStageGameRuntimeSpec(
     'geometry_shape_workshop_lesson_stage',

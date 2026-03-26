@@ -5,8 +5,8 @@ import * as React from 'react';
 
 import { cn } from '@/shared/utils';
 
-import { Button } from './button';
-import { Input, type InputProps } from './input';
+import { buttonVariants } from './button';
+import { inputVariants, type InputProps } from './input';
 
 interface PasswordInputProps extends Omit<InputProps, 'type'> {
   containerClassName?: string;
@@ -30,19 +30,20 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
 
     return (
       <div className={cn('relative flex items-center', containerClassName)}>
-        <Input
+        <input
           {...props}
           ref={ref}
           type={isVisible ? 'text' : 'password'}
           disabled={disabled}
-          className={cn('pr-10', className)}
+          className={cn(inputVariants({ className: 'pr-10' }), className)}
         />
-        <Button
+        <button
           type='button'
-          variant='ghost'
-          size='icon'
           onClick={toggleVisibility}
-          className='absolute right-1 size-7 text-gray-500 hover:text-gray-300'
+          className={cn(
+            buttonVariants({ variant: 'ghost', size: 'icon' }),
+            'absolute right-1 size-7 text-gray-500 hover:text-gray-300'
+          )}
           aria-label={toggleLabel}
           aria-pressed={isVisible}
           title={toggleLabel}
@@ -53,7 +54,7 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
           ) : (
             <Eye className='size-3.5' aria-hidden='true' />
           )}
-        </Button>
+        </button>
       </div>
     );
   }

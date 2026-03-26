@@ -15,6 +15,7 @@ import {
   Alert,
   Badge,
   Button,
+  Card,
   FormField,
   FormSection,
   Input,
@@ -208,7 +209,7 @@ function AgentPersonaSelect() {
         />
       </FormField>
 
-      <KangurAdminInsetCard padding='sm' className='mt-4'>
+      <Card variant='subtle' padding='sm' className='mt-4 rounded-2xl border-border/60 bg-background/60 shadow-sm'>
         <div className={KANGUR_CENTER_ROW_CLASSNAME}>
           <Badge variant='outline'>Current persona</Badge>
         </div>
@@ -231,7 +232,7 @@ function AgentPersonaSelect() {
             </div>
           </div>
         </div>
-      </KangurAdminInsetCard>
+      </Card>
     </>
   );
 }

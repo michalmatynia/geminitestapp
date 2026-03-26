@@ -13,5 +13,10 @@ export default function CalendarInteractiveStageGame({
   calendarSection = 'dni',
   onFinish,
 }: CalendarInteractiveStageGameProps): React.JSX.Element {
-  return <CalendarInteractiveGame key={calendarSection} onFinish={onFinish} section={calendarSection} />;
+  return (
+    <CalendarInteractiveGame
+      key={calendarSection}
+      stage={{ onFinish, section: calendarSection }}
+    />
+  );
 }

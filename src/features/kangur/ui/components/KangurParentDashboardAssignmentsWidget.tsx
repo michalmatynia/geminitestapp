@@ -8,7 +8,8 @@ import {
   shouldRenderKangurParentDashboardPanel,
   useKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
-import { KangurPanelStack, KangurWidgetIntro } from '@/features/kangur/ui/design/primitives';
+import { KangurPanelIntro, KangurPanelStack } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_WIDGET_TITLE_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 export function KangurParentDashboardAssignmentsWidget({
   displayMode = 'always',
@@ -46,12 +47,14 @@ export function KangurParentDashboardAssignmentsWidget({
 
   return (
     <KangurPanelStack>
-      <KangurWidgetIntro
+      <KangurPanelIntro
         description={
           assignmentsContent?.summary ??
           translations('widgets.assignments.description')
         }
         title={assignmentsContent?.title ?? translations('widgets.assignments.title')}
+        titleAs='h2'
+        titleClassName={KANGUR_WIDGET_TITLE_CLASSNAME}
       />
       <KangurAssignmentManager
         basePath={basePath}

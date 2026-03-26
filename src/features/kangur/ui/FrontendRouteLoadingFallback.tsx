@@ -6,7 +6,10 @@ import { KANGUR_BASE_PATH, KANGUR_MAIN_PAGE_KEY } from '@/features/kangur/config
 import { KangurRouteLoadingFallback } from '@/features/kangur/ui/components/KangurRouteLoadingFallback';
 import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
 import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
-import { useKangurPendingRouteLoadingSnapshot } from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
+import {
+  resolveAccessibleKangurPendingRouteLoadingSnapshot,
+  useKangurPendingRouteLoadingSnapshot,
+} from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
 import {
   normalizeManagedKangurPathname,
   resolveManagedKangurEmbeddedFromHref,
@@ -97,7 +100,12 @@ export function FrontendRouteLoadingFallback({
   const { data: session } = useOptionalNextAuthSession();
   const publicOwnerContext = useOptionalFrontendPublicOwner();
   const pathname = usePathname();
-  const pendingRouteLoadingSnapshot = useKangurPendingRouteLoadingSnapshot();
+  const pendingRouteLoadingSnapshot = resolveAccessibleKangurPendingRouteLoadingSnapshot({
+    currentHref: pathname,
+    fallbackPageKey: KANGUR_MAIN_PAGE_KEY,
+    session,
+    snapshot: useKangurPendingRouteLoadingSnapshot(),
+  });
   const accessiblePageKey =
     pendingRouteLoadingSnapshot?.pageKey ??
     resolveAccessibleManagedKangurPageKeyFromHref({

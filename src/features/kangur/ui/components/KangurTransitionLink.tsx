@@ -8,7 +8,6 @@ import { useCallback } from 'react';
 import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import { resolveAccessibleKangurPageKey } from '@/features/kangur/config/page-access';
 import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
-import { useKangurAccessiblePageKey } from '@/features/kangur/ui/hooks/useKangurAccessiblePageKey';
 import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
@@ -81,7 +80,7 @@ export function KangurTransitionLink({
   const locale = useLocale();
   const pathname = usePathname();
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
-  const currentAccessiblePageKey = useKangurAccessiblePageKey(routing?.pageKey ?? null, 'Game');
+  const currentAccessiblePageKey = routing?.pageKey ?? 'Game';
   const effectivePageKeyBasePath = frontendPublicOwner?.publicOwner === 'kangur' ? '/' : basePath;
   const managedLocalHref =
     typeof href === 'string' && href.startsWith('/') && target !== '_blank' ? href : null;

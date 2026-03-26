@@ -5,7 +5,10 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import { KangurPageTransitionSkeleton } from '@/features/kangur/ui/components/KangurPageTransitionSkeleton';
 import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
-import { useKangurPendingRouteLoadingSnapshot } from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
+import {
+  resolveAccessibleKangurPendingRouteLoadingSnapshot,
+  useKangurPendingRouteLoadingSnapshot,
+} from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
 import { resolveKangurRouteTransitionSkeletonVariant } from '@/features/kangur/ui/routing/route-transition-skeletons';
 import {
   normalizeManagedKangurPathname,
@@ -66,7 +69,6 @@ export function KangurRouteLoadingFallback({
   includeTopNavigationSkeleton?: boolean;
 } = {}): React.JSX.Element {
   const { data: session } = useOptionalNextAuthSession();
-  const pendingRouteLoadingSnapshot = useKangurPendingRouteLoadingSnapshot();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const serializedSearchParams = searchParams?.toString().trim() ?? '';
@@ -76,6 +78,12 @@ export function KangurRouteLoadingFallback({
         ? `${pathname}?${serializedSearchParams}`
         : pathname
       : null;
+  const pendingRouteLoadingSnapshot = resolveAccessibleKangurPendingRouteLoadingSnapshot({
+    currentHref,
+    fallbackPageKey: 'Game',
+    session,
+    snapshot: useKangurPendingRouteLoadingSnapshot(),
+  });
   const href = pendingRouteLoadingSnapshot?.href ?? currentHref;
   const basePath = resolveKangurBasePath(href);
   const accessiblePageKey =

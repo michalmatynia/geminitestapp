@@ -127,17 +127,13 @@ type PortableEngineRecordCardProps = {
   stacked?: boolean;
 };
 
-function PortableEngineInfoPanel({
-  children,
-  className,
-}: PortableEngineInfoPanelProps): React.JSX.Element {
+function PortableEngineInfoPanel(props: PortableEngineInfoPanelProps): React.JSX.Element {
+  const { children, className } = props;
   return <div className={cn(portableEngineInfoPanelClassName, className)}>{children}</div>;
 }
 
-function PortableEngineMutedLine({
-  children,
-  className,
-}: PortableEngineMutedLineProps): React.JSX.Element {
+function PortableEngineMutedLine(props: PortableEngineMutedLineProps): React.JSX.Element {
+  const { children, className } = props;
   return <div className={cn('mt-1 text-gray-400', className)}>{children}</div>;
 }
 

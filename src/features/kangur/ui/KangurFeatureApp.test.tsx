@@ -195,9 +195,16 @@ vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
   useKangurRouteNavigator: () => routeNavigatorMock,
 }));
 
-vi.mock('@/features/kangur/ui/routing/pending-route-loading-snapshot', () => ({
-  useKangurPendingRouteLoadingSnapshot: () => pendingRouteLoadingSnapshotMock(),
-}));
+vi.mock('@/features/kangur/ui/routing/pending-route-loading-snapshot', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/features/kangur/ui/routing/pending-route-loading-snapshot')>();
+  return {
+    ...actual,
+    useKangurPendingRouteLoadingSnapshot: () => pendingRouteLoadingSnapshotMock(),
+    resolveAccessibleKangurPendingRouteLoadingSnapshot:
+      actual.resolveAccessibleKangurPendingRouteLoadingSnapshot,
+  };
+});
 
 vi.mock('@/features/kangur/config/pages', () => ({
   KANGUR_MAIN_PAGE: 'Game',
@@ -211,22 +218,28 @@ vi.mock('@/features/kangur/config/pages', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/config/routing', () => ({
-  normalizeKangurBasePath: (basePath: string | null | undefined) => {
-    if (typeof basePath !== 'string') {
-      return '/kangur';
-    }
+vi.mock('@/features/kangur/config/routing', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/features/kangur/config/routing')>();
 
-    const trimmed = basePath.trim();
-    return trimmed.length > 0 ? trimmed : '/kangur';
-  },
-  resolveKangurPageKey: (
-    pageKey: string | null | undefined,
-    pages: Record<string, React.ComponentType>,
-    fallbackPageKey: string
-  ) => (pageKey && pages[pageKey] ? pageKey : fallbackPageKey),
-  getKangurHomeHref: (basePath = '/kangur') => basePath,
-}));
+  return {
+    ...actual,
+    normalizeKangurBasePath: (basePath: string | null | undefined) => {
+      if (typeof basePath !== 'string') {
+        return '/kangur';
+      }
+
+      const trimmed = basePath.trim();
+      return trimmed.length > 0 ? trimmed : '/kangur';
+    },
+    resolveKangurPageKey: (
+      pageKey: string | null | undefined,
+      pages: Record<string, React.ComponentType>,
+      fallbackPageKey: string
+    ) => (pageKey && pages[pageKey] ? pageKey : fallbackPageKey),
+    getKangurHomeHref: (basePath = '/kangur') => basePath,
+  };
+});
 
 vi.mock('@/features/kangur/cms-builder/KangurCmsRuntimeScreen', () => ({
   KangurCmsRuntimeScreen: ({ fallback }: { fallback: ReactNode }) => <>{fallback}</>,
@@ -463,6 +476,43 @@ describe('KangurFeatureApp', () => {
     );
     expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-hidden', 'true');
     expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-busy', 'true');
+  });
+
+  it('downgrades blocked GamesLibrary pending snapshots to the game-home skeleton for non-super-admin users', () => {
+    sessionMock.mockReturnValue({
+      data: {
+        expires: '2026-12-31T23:59:59.000Z',
+        user: {
+          email: 'admin@example.com',
+          id: 'admin-1',
+          name: 'Admin',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: false,
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      basePath: '/kangur',
+    });
+    pendingRouteLoadingSnapshotMock.mockReturnValue({
+      fromHref: '/kangur',
+      href: '/kangur/games',
+      pageKey: 'GamesLibrary',
+      skeletonVariant: 'lessons-library',
+      startedAt: Date.now(),
+      topBarHeightCssValue: '136px',
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Game:game-home'
+    );
+    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('moves the navbar skeleton inline into the pending route skeleton while the shared host is unresolved', async () => {

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { Card, type CardProps } from '@/features/kangur/shared/ui';
+import { Card } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/utils/cn';
 
 export const KANGUR_ADMIN_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-card/40 shadow-sm';
@@ -19,35 +19,26 @@ type KangurAdminCardHeaderProps = {
   titleClassName?: string;
 };
 
-export function KangurAdminCard({
-  className,
-  padding = 'md',
-  variant = 'subtle',
-  ...props
-}: CardProps): React.JSX.Element {
+type KangurAdminCardProps = {
+  children: ReactNode;
+  className?: string;
+};
+
+export function KangurAdminCard(props: KangurAdminCardProps): React.JSX.Element {
+  const { children, className } = props;
   return (
-    <Card
-      variant={variant}
-      padding={padding}
-      className={cn(KANGUR_ADMIN_CARD_CLASS_NAME, className)}
-      {...props}
-    />
+    <Card variant='subtle' padding='md' className={cn(KANGUR_ADMIN_CARD_CLASS_NAME, className)}>
+      {children}
+    </Card>
   );
 }
 
-export function KangurAdminInsetCard({
-  className,
-  padding = 'md',
-  variant = 'subtle',
-  ...props
-}: CardProps): React.JSX.Element {
+export function KangurAdminInsetCard(props: KangurAdminCardProps): React.JSX.Element {
+  const { children, className } = props;
   return (
-    <Card
-      variant={variant}
-      padding={padding}
-      className={cn(KANGUR_ADMIN_INSET_CARD_CLASS_NAME, className)}
-      {...props}
-    />
+    <Card variant='subtle' padding='md' className={cn(KANGUR_ADMIN_INSET_CARD_CLASS_NAME, className)}>
+      {children}
+    </Card>
   );
 }
 

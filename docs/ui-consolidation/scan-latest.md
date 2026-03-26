@@ -8,13 +8,13 @@ canonical: true
 ---
 # UI Consolidation Scan
 
-Generated at: 2026-03-26T20:30:52.499Z
+Generated at: 2026-03-26T21:16:26.316Z
 
 ## Snapshot
 
 - Scanned UI files: 2118
 - Duplicate-name clusters: 0
-- Prop-signature clusters: 1
+- Prop-signature clusters: 0
 - Token-similarity clusters: 0
 - Thin re-export wrappers ignored: 10
 - Total consolidation opportunities: 0
@@ -70,9 +70,7 @@ Generated at: 2026-03-26T20:30:52.499Z
 
 ### Prop Signature Clusters
 
-- `Panel` `prop_signature` files=2 loc=452 scopes=feature:ai
-  - `src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx` (429 LOC)
-  - `src/features/ai/ai-paths/components/validation/ValidationPanel.tsx` (23 LOC)
+- None
 
 ### Token Similarity Clusters
 

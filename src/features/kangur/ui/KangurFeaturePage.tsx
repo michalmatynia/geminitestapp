@@ -21,7 +21,6 @@ import {
   useKangurRoutingState,
 } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeatureApp } from '@/features/kangur/ui/KangurFeatureApp';
-import { useKangurAccessiblePageKey } from '@/features/kangur/ui/hooks/useKangurAccessiblePageKey';
 import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import { localizeManagedKangurHref } from '@/features/kangur/ui/routing/managed-paths';
 import { KANGUR_MAIN_CONTENT_ID } from '@/features/kangur/ui/design/primitives/KangurPageContainer';
@@ -55,9 +54,9 @@ export function KangurFeaturePageShell({
   const shellTranslations = useTranslations('KangurShell');
   const appearance = useOptionalCmsStorefrontAppearance();
   const { embedded, pageKey, requestedPath, basePath } = useKangurRoutingState();
-  const accessiblePageKey = useKangurAccessiblePageKey(pageKey, KANGUR_MAIN_PAGE_KEY);
+  const resolvedPageKey = pageKey ?? KANGUR_MAIN_PAGE_KEY;
   const appearanceMode = appearance?.mode ?? 'default';
-  const showFooter = !embedded && accessiblePageKey === KANGUR_MAIN_PAGE_KEY;
+  const showFooter = !embedded && resolvedPageKey === KANGUR_MAIN_PAGE_KEY;
   const kangurAppearance = useKangurStorefrontAppearance();
   const debugRef = useRef<string | null>(null);
   const browserPathname = typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
@@ -115,13 +114,13 @@ export function KangurFeaturePageShell({
 
   useEffect(() => {
     setKangurClientObservabilityContext({
-      pageKey: accessiblePageKey,
+      pageKey: resolvedPageKey,
       requestedPath: requestedPath ?? '',
     });
     return () => {
       clearKangurClientObservabilityContext();
     };
-  }, [accessiblePageKey, requestedPath]);
+  }, [requestedPath, resolvedPageKey]);
 
   const shouldLockBodyScroll = forceBodyScrollLock || !embedded;
 

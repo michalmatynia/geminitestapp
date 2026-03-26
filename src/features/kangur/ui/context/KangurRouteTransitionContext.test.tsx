@@ -161,7 +161,7 @@ describe('KangurRouteTransitionProvider', () => {
       targetPageKey: 'Lessons',
     });
 
-    await act(async () => {
+    act(() => {
       fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
     });
 
@@ -192,7 +192,7 @@ describe('KangurRouteTransitionProvider', () => {
       targetPageKey: 'Game',
     });
 
-    await act(async () => {
+    act(() => {
       fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
     });
 
@@ -220,7 +220,7 @@ describe('KangurRouteTransitionProvider', () => {
       targetPageKey: 'GamesLibrary',
     });
 
-    await act(async () => {
+    act(() => {
       fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
     });
 
@@ -256,7 +256,7 @@ describe('KangurRouteTransitionProvider', () => {
       targetPageKey: 'GamesLibrary',
     });
 
-    await act(async () => {
+    act(() => {
       fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
     });
 

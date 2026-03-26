@@ -45,8 +45,6 @@ type CanvasRunControlNoticeProps = {
   children?: React.ReactNode;
 };
 
-type CanvasRunControlButtonProps = Omit<React.ComponentProps<typeof Button>, 'type' | 'size'>;
-
 type CanvasSelectedWireMetaLineProps = {
   label: string;
   value: React.ReactNode;
@@ -157,17 +155,6 @@ function CanvasRunControlNotice({
       <div>{description}</div>
       {children}
     </Card>
-  );
-}
-
-function CanvasRunControlButton({
-  children,
-  ...props
-}: CanvasRunControlButtonProps): React.JSX.Element {
-  return (
-    <Button type='button' size='sm' {...props}>
-      {children}
-    </Button>
   );
 }
 
@@ -759,13 +746,15 @@ export function CanvasSidebar(): React.JSX.Element {
               >
                 {activeRunId ? (
                   <div className='flex flex-wrap items-center gap-2 pt-1'>
-                    <CanvasRunControlButton
+                    <Button
+                      type='button'
+                      size='sm'
                       variant='outline'
                       onClick={handleMarkRunHandoffReady}
                       disabled={isMarkingHandoff}
                     >
                       {isMarkingHandoff ? 'Marking...' : 'Mark handoff-ready'}
-                    </CanvasRunControlButton>
+                    </Button>
                     {handoffRequested ? (
                       <span className='text-[10px] text-current/80'>
                         Handoff requested. Refreshing run status...
@@ -785,40 +774,50 @@ export function CanvasSidebar(): React.JSX.Element {
             <div className='grid grid-cols-2 gap-2'>
               {isRunControlActive ? (
                 <>
-                  <CanvasRunControlButton
+                  <Button
+                    type='button'
+                    size='sm'
                     variant='warning'
                     onClick={pauseRun}
                     disabled={!pauseRun}
                   >
                   Pause
-                  </CanvasRunControlButton>
-                  <CanvasRunControlButton
+                  </Button>
+                  <Button
+                    type='button'
+                    size='sm'
                     variant='destructive'
                     onClick={cancelRun}
                     disabled={!cancelRun}
                   >
                   Cancel
-                  </CanvasRunControlButton>
+                  </Button>
                 </>
               ) : runStatus === 'blocked_on_lease' || runStatus === 'handoff_ready' ? (
-                <CanvasRunControlButton
+                <Button
+                  type='button'
+                  size='sm'
                   className='col-span-2'
                   variant='destructive'
                   onClick={cancelRun}
                   disabled={!cancelRun}
                 >
                 Cancel
-                </CanvasRunControlButton>
+                </Button>
               ) : runStatus === 'paused' ? (
                 <>
-                  <CanvasRunControlButton
+                  <Button
+                    type='button'
+                    size='sm'
                     variant='success'
                     onClick={resumeRun}
                     disabled={!resumeRun}
                   >
                   Resume
-                  </CanvasRunControlButton>
-                  <CanvasRunControlButton
+                  </Button>
+                  <Button
+                    type='button'
+                    size='sm'
                     variant='info'
                     onClick={() => {
                       const node = selectedNode?.type === 'trigger' ? selectedNode : undefined;
@@ -827,18 +826,22 @@ export function CanvasSidebar(): React.JSX.Element {
                     disabled={!stepRun}
                   >
                   Step
-                  </CanvasRunControlButton>
-                  <CanvasRunControlButton
+                  </Button>
+                  <Button
+                    type='button'
+                    size='sm'
                     className='col-span-2'
                     variant='destructive'
                     onClick={cancelRun}
                     disabled={!cancelRun}
                   >
                   Cancel
-                  </CanvasRunControlButton>
+                  </Button>
                 </>
               ) : (
-                <CanvasRunControlButton
+                <Button
+                  type='button'
+                  size='sm'
                   className='col-span-2'
                   variant='info'
                   onClick={() => {
@@ -848,7 +851,7 @@ export function CanvasSidebar(): React.JSX.Element {
                   disabled={!stepRun}
                 >
                 Step Run
-                </CanvasRunControlButton>
+                </Button>
               )}
             </div>
           </Card>

@@ -19,12 +19,12 @@ import {
   KangurInfoCard,
   KangurMetricCard,
   KangurMetaText,
+  KangurPanelIntro,
   KangurPanelStack,
   KangurProgressBar,
   KangurStatusChip,
   KangurSummaryPanel,
   KangurTextField,
-  KangurWidgetIntro,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_COMPACT_ROW_CLASSNAME,
@@ -33,6 +33,7 @@ import {
   KANGUR_STACK_COMPACT_CLASSNAME,
   KANGUR_STACK_TIGHT_CLASSNAME,
   KANGUR_TIGHT_ROW_CLASSNAME,
+  KANGUR_WIDGET_TITLE_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
@@ -656,12 +657,14 @@ function KangurParentDashboardAssignmentsMonitoringWidgetContent(): React.JSX.El
 
   return (
     <KangurPanelStack>
-      <KangurWidgetIntro
+      <KangurPanelIntro
         description={
           monitoringContent?.summary ??
           translations('widgets.monitoring.description')
         }
         title={monitoringContent?.title ?? translations('widgets.monitoring.title')}
+        titleAs='h2'
+        titleClassName={KANGUR_WIDGET_TITLE_CLASSNAME}
       />
       <KangurSummaryPanel
         accent='indigo'

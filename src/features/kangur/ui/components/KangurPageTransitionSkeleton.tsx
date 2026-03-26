@@ -857,7 +857,7 @@ const LessonsLibraryGroupSkeleton = ({
   </KangurGlassPanel>
 );
 
-const LessonsLibrarySkeleton = ({
+const renderLessonsLibrarySkeleton = ({
   lessonsTitle,
   locale,
 }: {
@@ -1089,12 +1089,10 @@ const renderSkeletonVariant = (
     case 'lessons-focus':
       return <LessonsFocusSkeleton />;
     case 'lessons-library':
-      return (
-        <LessonsLibrarySkeleton
-          lessonsTitle={options.lessonsTitle}
-          locale={options.locale}
-        />
-      );
+      return renderLessonsLibrarySkeleton({
+        lessonsTitle: options.lessonsTitle,
+        locale: options.locale,
+      });
     case 'learner-profile':
       return <LearnerProfileSkeleton />;
     case 'parent-dashboard':

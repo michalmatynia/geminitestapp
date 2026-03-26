@@ -20,13 +20,13 @@ import {
   KangurGlassPanel,
   KangurIconBadge,
   KangurMetaText,
+  KangurPanelIntro,
   KangurPanelRow,
   KangurPanelStack,
   KangurSelectField,
   KangurStatusChip,
   KangurSummaryPanel,
   KangurTextField,
-  KangurWidgetIntro,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
@@ -37,6 +37,7 @@ import {
   KANGUR_STACK_TIGHT_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
   KANGUR_TIGHT_ROW_CLASSNAME,
+  KANGUR_WIDGET_TITLE_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
@@ -556,12 +557,14 @@ function KangurParentDashboardLearnerManagementWidget(): React.JSX.Element | nul
     <KangurPanelStack>
       <KangurGlassPanel className='w-full' padding='lg' surface='mistStrong' variant='soft'>
         <KangurPanelStack>
-          <KangurWidgetIntro
+          <KangurPanelIntro
             className='gap-1.5'
             eyebrow={copy.learnerManagementEyebrow}
             title={learnerManagementContent?.title ?? copy.learnerManagementTitle}
             description={learnerManagementContent?.summary ?? copy.learnerManagementDescription}
             descriptionClassName='max-w-2xl'
+            titleAs='h2'
+            titleClassName={KANGUR_WIDGET_TITLE_CLASSNAME}
           />
 
           <div className='grid kangur-panel-gap sm:grid-cols-2'>
@@ -665,9 +668,11 @@ function KangurParentDashboardLearnerManagementWidget(): React.JSX.Element | nul
 
           <KangurGlassPanel className='w-full' padding='lg' surface='mistStrong' variant='soft'>
             <KangurPanelStack>
-              <KangurWidgetIntro
+              <KangurPanelIntro
                 eyebrow={copy.newProfileEyebrow}
                 description={copy.createModalDescription}
+                titleAs='h2'
+                titleClassName={KANGUR_WIDGET_TITLE_CLASSNAME}
               />
 
               <div className='grid kangur-panel-gap min-[420px]:grid-cols-2 xl:grid-cols-3'>
@@ -827,7 +832,7 @@ function KangurParentDashboardLearnerManagementWidget(): React.JSX.Element | nul
 
               {profileModalTab === 'settings' ? (
                 <KangurPanelStack>
-                  <KangurWidgetIntro
+                  <KangurPanelIntro
                     eyebrow={copy.currentProfileLabel}
                     description={
                       <>
@@ -838,6 +843,8 @@ function KangurParentDashboardLearnerManagementWidget(): React.JSX.Element | nul
                         .
                       </>
                     }
+                    titleAs='h2'
+                    titleClassName={KANGUR_WIDGET_TITLE_CLASSNAME}
                   />
                   <div className='grid kangur-panel-gap min-[420px]:grid-cols-2'>
                     <KangurTextField

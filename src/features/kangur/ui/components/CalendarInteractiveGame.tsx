@@ -42,8 +42,12 @@ import type { KangurMiniGameBinaryFeedbackState } from '@/features/kangur/ui/typ
 import { cn } from '@/features/kangur/shared/utils';
 
 type CalendarInteractiveGameProps = {
-  onFinish: () => void;
+  onFinish?: () => void;
   section?: CalendarInteractiveTaskPoolId;
+  stage?: {
+    onFinish: () => void;
+    section?: CalendarInteractiveTaskPoolId;
+  };
 };
 
 type CalendarInteractiveTranslate = KangurMiniGameTranslate;
@@ -363,14 +367,19 @@ function generateTask(
 export default function CalendarInteractiveGame({
   onFinish,
   section = 'mixed',
+  stage,
 }: CalendarInteractiveGameProps): React.JSX.Element {
+  const resolvedOnFinish = stage?.onFinish ?? onFinish ?? (() => undefined);
+  const resolvedSection = stage?.section ?? section;
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
   const YEAR = 2025;
   const TOTAL = 6;
 
   const [month, setMonth] = useState(0);
-  const [task, setTask] = useState<Task>(() => generateTask(0, YEAR, translations, section));
+  const [task, setTask] = useState<Task>(() =>
+    generateTask(0, YEAR, translations, resolvedSection)
+  );
   const [feedback, setFeedback] = useState<KangurMiniGameBinaryFeedbackState>(null);
   const [round, setRound] = useState(0);
   const [score, setScore] = useState(0);
@@ -378,12 +387,12 @@ export default function CalendarInteractiveGame({
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<Season | null>(null);
   const [selectedWeekdayIdx, setSelectedWeekdayIdx] = useState<number | null>(null);
-  const trainingSectionContent = getCalendarInteractiveSectionContent(section);
+  const trainingSectionContent = getCalendarInteractiveSectionContent(resolvedSection);
   const showCalendarError =
     feedback === 'wrong' && (task.type === 'click_date' || task.type === 'click_all_weekends');
   const showFlipMonthError = feedback === 'wrong' && task.type === 'flip_month';
   const handleFinishSession = (): void => {
-    onFinish();
+    resolvedOnFinish();
   };
 
   const nextRound = (correct: boolean): void => {

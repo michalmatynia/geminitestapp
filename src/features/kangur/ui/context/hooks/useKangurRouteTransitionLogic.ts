@@ -216,7 +216,7 @@ export function useKangurRouteTransitionLogic({
   const previousRequestedHrefRef = useRef<string | null>(currentRequestedHref);
   const shouldResetScrollOnCommitRef = useRef(false);
   const acknowledgementTimeoutRef = useRef<number | null>(null);
-  const currentAccessiblePageKey = resolveAccessibleKangurPageKey(pageKey, session, 'Game');
+  const currentAccessiblePageKey = pageKey ?? 'Game';
 
   const clearAcknowledgementTimeout = useCallback((): void => {
     if (acknowledgementTimeoutRef.current === null || typeof window === 'undefined') {

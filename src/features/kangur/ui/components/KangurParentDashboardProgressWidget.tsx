@@ -26,11 +26,11 @@ import {
   KangurInfoCard,
   KangurMetricCard,
   KangurMetaText,
+  KangurPanelIntro,
   KangurPanelStack,
   KangurProgressBar,
   KangurStatusChip,
   KangurSummaryPanel,
-  KangurWidgetIntro,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
@@ -46,6 +46,7 @@ import {
   KANGUR_COMPACT_ROW_CLASSNAME,
   KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_PANEL_ROW_CLASSNAME,
+  KANGUR_WIDGET_TITLE_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 
 
@@ -302,12 +303,14 @@ function KangurParentDashboardProgressWidgetContent(): React.JSX.Element {
 
   return (
     <KangurPanelStack>
-      <KangurWidgetIntro
+      <KangurPanelIntro
         description={
           progressContent?.summary ??
           translations('widgets.progress.description')
         }
         title={progressContent?.title ?? translations('widgets.progress.title')}
+        titleAs='h2'
+        titleClassName={KANGUR_WIDGET_TITLE_CLASSNAME}
       />
       <KangurSummaryPanel
         accent='indigo'

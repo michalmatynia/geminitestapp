@@ -62,7 +62,10 @@ import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTu
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import type { KangurRouteTransitionSkeletonVariant } from '@/features/kangur/ui/routing/route-transition-skeletons';
-import { useKangurPendingRouteLoadingSnapshot } from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
+import {
+  resolveAccessibleKangurPendingRouteLoadingSnapshot,
+  useKangurPendingRouteLoadingSnapshot,
+} from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
 import { resolveManagedKangurEmbeddedFromHref } from '@/features/kangur/ui/routing/managed-paths';
 import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import { cn } from '@/features/kangur/shared/utils';
@@ -118,7 +121,6 @@ const AuthenticatedApp = (): JSX.Element | null => {
     activeTransitionSkeletonVariant,
   } = useKangurRouteTransitionState();
   const routeNavigator = useKangurRouteNavigator();
-  const pendingRouteLoadingSnapshot = useKangurPendingRouteLoadingSnapshot();
   const { pageKey, embedded, requestedPath, requestedHref, basePath } = useKangurRouting();
   const authErrorType = authError?.type;
   const resolvedPageKey = resolveKangurPageKey(pageKey, kangurPages, KANGUR_MAIN_PAGE);
@@ -137,6 +139,12 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
   const currentRequestedHref = requestedHref ?? requestedPath ?? null;
+  const pendingRouteLoadingSnapshot = resolveAccessibleKangurPendingRouteLoadingSnapshot({
+    currentHref: currentRequestedHref,
+    fallbackPageKey: KANGUR_MAIN_PAGE,
+    session,
+    snapshot: useKangurPendingRouteLoadingSnapshot(),
+  });
   const isBootLoading = isLoadingPublicSettings || isLoadingAuth || isProtectedPageAccessPending;
   const isThemeBootLoading = isLoadingSettings;
   const isNavigationTransitionActive =
@@ -206,11 +214,6 @@ const AuthenticatedApp = (): JSX.Element | null => {
     session,
     KANGUR_MAIN_PAGE
   );
-  const accessibleSnapshotTransitionPageKey = resolveAccessibleKangurPageKey(
-    snapshotTransitionPageKey,
-    session,
-    KANGUR_MAIN_PAGE
-  );
   const snapshotTransitionEmbedded =
     resolveManagedKangurEmbeddedFromHref({
       href: pendingRouteLoadingSnapshot?.href ?? null,
@@ -224,7 +227,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     isPendingRouteSnapshotVisible;
   const visibleTransitionSkeletonPageKey =
     isPendingRouteSnapshotVisible
-      ? accessibleSnapshotTransitionPageKey
+      ? snapshotTransitionPageKey
       : isRouteSkeletonVisible
       ? latchedNavigationSkeletonRef.current?.pageKey ?? accessibleTransitionPageKey
       : accessibleTransitionPageKey;

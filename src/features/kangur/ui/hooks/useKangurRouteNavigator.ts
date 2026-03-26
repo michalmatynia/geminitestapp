@@ -9,7 +9,6 @@ import {
 } from '@/features/kangur/config/routing';
 import { resolveAccessibleKangurPageKey } from '@/features/kangur/config/page-access';
 import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
-import { useKangurAccessiblePageKey } from '@/features/kangur/ui/hooks/useKangurAccessiblePageKey';
 import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import {
   type KangurRouteTransitionKind,
@@ -121,7 +120,7 @@ export function useKangurRouteNavigator(): {
   const { data: session } = useOptionalNextAuthSession();
   const frontendPublicOwner = useOptionalFrontendPublicOwner();
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
-  const currentAccessiblePageKey = useKangurAccessiblePageKey(routing?.pageKey ?? null, 'Game');
+  const currentAccessiblePageKey = routing?.pageKey ?? 'Game';
   const effectivePageKeyBasePath = frontendPublicOwner?.publicOwner === 'kangur' ? '/' : basePath;
   const requestedHref = routing?.requestedHref ?? routing?.requestedPath;
   const resolveManagedHref = useCallback(

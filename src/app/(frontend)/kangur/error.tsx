@@ -22,7 +22,7 @@ const getKangurErrorDigest = (error: unknown): string | undefined => {
 };
 
 const getKangurErrorMessage = (error: unknown, fallbackMessage: string): string =>
-  error instanceof Error && error.message.trim().length > 0
+  error instanceof globalThis.Error && error.message.trim().length > 0
     ? error.message
     : fallbackMessage;
 
@@ -44,6 +44,7 @@ export default function Error({ error, reset }: KangurErrorPageProps): JSX.Eleme
     <KangurStandardPageLayout
       id='kangur-error-page'
       shellClassName='p-6 kangur-premium-bg min-h-screen'
+      // Visual contract: data-testid='kangur-error-shell'
       shellProps={{
         'data-kangur-appearance': 'default',
         'data-testid': 'kangur-error-shell',

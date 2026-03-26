@@ -341,6 +341,7 @@ describe('KangurLessonNarrator', () => {
   });
 
   it('renders shared error feedback when narration preparation fails', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     apiPostMock.mockRejectedValueOnce(new Error('Narrator network failed.'));
 
     render(<NarratorHarness />);
@@ -356,5 +357,7 @@ describe('KangurLessonNarrator', () => {
     expect(screen.getByText('Narrator network failed.').parentElement).toHaveClass(
       'soft-card'
     );
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 });

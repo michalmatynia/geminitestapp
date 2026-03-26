@@ -72,13 +72,17 @@ vi.mock('@/features/kangur/ui/components/CalendarInteractiveGame', () => ({
   default: ({
     onFinish,
     section,
+    stage,
   }: {
     onFinish: () => void;
     section?: string;
+    stage?: { onFinish?: () => void; section?: string };
   }): React.JSX.Element => (
     <div data-testid='mock-calendar-interactive-game'>
-      <span data-testid='mock-calendar-interactive-section'>{section ?? 'mixed'}</span>
-      <button type='button' onClick={onFinish}>
+      <span data-testid='mock-calendar-interactive-section'>
+        {stage?.section ?? section ?? 'mixed'}
+      </span>
+      <button type='button' onClick={stage?.onFinish ?? onFinish}>
         Finish calendar training
       </button>
     </div>

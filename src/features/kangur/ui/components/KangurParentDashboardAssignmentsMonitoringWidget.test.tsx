@@ -162,6 +162,7 @@ describe('KangurParentDashboardAssignmentsMonitoringWidget', () => {
   });
 
   it('shows error state when interactions fail to load', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     learnerInteractionsListMock.mockRejectedValue(new Error('network error'));
 
     render(<KangurParentDashboardAssignmentsMonitoringWidget />);
@@ -171,6 +172,8 @@ describe('KangurParentDashboardAssignmentsMonitoringWidget', () => {
         screen.getByTestId('parent-monitoring-interactions-error')
       ).toBeInTheDocument()
     , { timeout: 2_000 });
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 
   it('renders overview cards, activity mix, and lesson time leaders for readable monitoring', async () => {

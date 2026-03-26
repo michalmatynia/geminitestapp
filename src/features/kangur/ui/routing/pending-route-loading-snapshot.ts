@@ -1,8 +1,18 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
+import type { Session } from 'next-auth';
 
-import type { KangurRouteTransitionSkeletonVariant } from '@/features/kangur/ui/routing/route-transition-skeletons';
+import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
+import { resolveAccessibleKangurPageKey } from '@/features/kangur/config/page-access';
+import {
+  normalizeManagedKangurPathname,
+  resolveAccessibleManagedKangurPageKeyFromHref,
+} from '@/features/kangur/ui/routing/managed-paths';
+import {
+  resolveKangurRouteTransitionSkeletonVariant,
+  type KangurRouteTransitionSkeletonVariant,
+} from '@/features/kangur/ui/routing/route-transition-skeletons';
 
 export type KangurPendingRouteLoadingSnapshot = {
   fromHref: string | null;
@@ -35,6 +45,68 @@ const normalizePendingRouteLoadingSnapshot = (
   }
 
   return snapshot;
+};
+
+const resolveKangurBasePathForPendingSnapshot = (href: string | null): string => {
+  const normalizedPathname = normalizeManagedKangurPathname(href);
+
+  if (!normalizedPathname) {
+    return '/';
+  }
+
+  return normalizedPathname === KANGUR_BASE_PATH ||
+    normalizedPathname.startsWith(`${KANGUR_BASE_PATH}/`)
+    ? KANGUR_BASE_PATH
+    : '/';
+};
+
+export const resolveAccessibleKangurPendingRouteLoadingSnapshot = ({
+  currentHref = null,
+  fallbackPageKey = 'Game',
+  session = null,
+  snapshot,
+}: {
+  currentHref?: string | null;
+  fallbackPageKey?: string | null;
+  session?: Session | null;
+  snapshot: KangurPendingRouteLoadingSnapshot | null;
+}): KangurPendingRouteLoadingSnapshot | null => {
+  const normalizedSnapshot = normalizePendingRouteLoadingSnapshot(snapshot);
+
+  if (!normalizedSnapshot) {
+    return null;
+  }
+
+  const normalizedFallbackPageKey = fallbackPageKey?.trim() || 'Game';
+  const targetHref = normalizedSnapshot.href?.trim() || currentHref?.trim() || '/';
+  const basePath = resolveKangurBasePathForPendingSnapshot(targetHref);
+  const resolvedPageKey =
+    resolveAccessibleKangurPageKey(
+      normalizedSnapshot.pageKey?.trim() || null,
+      session,
+      resolveAccessibleManagedKangurPageKeyFromHref({
+        href: targetHref,
+        basePath,
+        session,
+        fallbackPageKey: normalizedFallbackPageKey,
+      })
+    ) ?? normalizedFallbackPageKey;
+  const resolvedSkeletonVariant = resolveKangurRouteTransitionSkeletonVariant({
+    basePath,
+    fallbackPageKey: normalizedFallbackPageKey,
+    href: targetHref,
+    pageKey: resolvedPageKey,
+    session,
+  });
+
+  return resolvedPageKey === normalizedSnapshot.pageKey &&
+    resolvedSkeletonVariant === normalizedSnapshot.skeletonVariant
+    ? normalizedSnapshot
+    : {
+        ...normalizedSnapshot,
+        pageKey: resolvedPageKey,
+        skeletonVariant: resolvedSkeletonVariant,
+      };
 };
 
 export const setKangurPendingRouteLoadingSnapshot = (

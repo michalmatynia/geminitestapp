@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:ai-paths'
@@ -8,6 +8,11 @@ canonical: true
 ---
 
 # AI-Paths Semantic Grammar v1
+
+This is the maintained spec reference for the portable AI Paths canvas
+contract. Use [`./README.md`](./README.md) for the semantic-grammar hub and
+[`../overview.md`](../overview.md) plus [`../reference.md`](../reference.md)
+for the broader runtime and operator surface around this contract.
 
 ## Goal
 

@@ -16,7 +16,7 @@ import {
   getKangurTracingCanvasConfig,
 } from '@/features/kangur/ui/components/drawing-engine/tracing';
 import { useKangurDrawingDraftStorage } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage';
-import { useKangurManagedDrawingActions } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedDrawingActions';
+import { useKangurFeedbackManagedDrawingActions } from '@/features/kangur/ui/components/drawing-engine/useKangurFeedbackManagedDrawingActions';
 import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
 import { KangurManagedDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurManagedDrawingUtilityActions';
 import {
@@ -332,23 +332,17 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
     handleCanvasKeyDown,
     redoDrawing,
     undoDrawing,
-  } = useKangurManagedDrawingActions<HTMLCanvasElement>({
+  } = useKangurFeedbackManagedDrawingActions<HTMLCanvasElement>({
     canExport: hasDrawableContent,
     canRedo,
     canUndo,
     clearDraftSnapshot,
+    clearFeedback: () => {
+      setFeedback(null);
+    },
     clearStrokes,
     exportDataUrl,
     exportFilename: `alphabet-copy-${currentRound.id}.png`,
-    onAfterClear: () => {
-      setFeedback(null);
-    },
-    onAfterRedo: () => {
-      setFeedback(null);
-    },
-    onAfterUndo: () => {
-      setFeedback(null);
-    },
     redoLastStroke,
     undoLastStroke,
   });
@@ -489,16 +483,14 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
             canExport={hasDrawableContent}
             canRedo={canRedo}
             canUndo={canUndo}
-            exportButtonClassName={isCoarsePointer ? 'px-4' : undefined}
             exportLabel={translateAlphabetCopy(translations, 'actions.export', 'Eksportuj PNG')}
             exportTestId='alphabet-copy-export'
-            historyButtonClassName={isCoarsePointer ? 'px-4' : undefined}
             isCoarsePointer={isCoarsePointer}
+            layoutPreset='footer'
             onExport={exportDrawing}
             onRedo={redoDrawing}
             onUndo={undoDrawing}
             redoLabel={translateAlphabetCopy(translations, 'actions.redo', 'Ponow')}
-            size='sm'
             undoLabel={translateAlphabetCopy(translations, 'actions.undo', 'Cofnij')}
           />
         }

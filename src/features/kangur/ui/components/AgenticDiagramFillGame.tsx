@@ -19,7 +19,7 @@ import {
 import { KangurDrawingCanvasSurface } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingCanvasSurface';
 import { getKangurPointDistance } from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
 import { useKangurDrawingDraftStorage } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage';
-import { useKangurManagedDrawingActions } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedDrawingActions';
+import { useKangurFeedbackManagedDrawingActions } from '@/features/kangur/ui/components/drawing-engine/useKangurFeedbackManagedDrawingActions';
 import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
 import { KangurManagedDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurManagedDrawingUtilityActions';
 import { KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS } from '@/features/kangur/ui/components/drawing-engine/keyboard-shortcuts';
@@ -632,23 +632,17 @@ export function AgenticDiagramFillGame({
     handleCanvasKeyDown,
     redoDrawing,
     undoDrawing,
-  } = useKangurManagedDrawingActions<HTMLCanvasElement>({
+  } = useKangurFeedbackManagedDrawingActions<HTMLCanvasElement>({
     canExport: hasDrawableContent,
     canRedo: !isSolved && canRedo,
     canUndo: !isSolved && canUndo,
     clearDraftSnapshot,
+    clearFeedback: () => {
+      setFeedback(null);
+    },
     clearStrokes,
     exportDataUrl,
     exportFilename: `${config.id}-diagram.png`,
-    onAfterClear: () => {
-      setFeedback(null);
-    },
-    onAfterRedo: () => {
-      setFeedback(null);
-    },
-    onAfterUndo: () => {
-      setFeedback(null);
-    },
     redoLastStroke,
     undoLastStroke,
   });

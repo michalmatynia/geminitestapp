@@ -41,10 +41,20 @@ describe('kangur game variants', () => {
   });
 
   it('attaches geometry lesson-stage runtimes to drawing lesson variants', () => {
-    const entry = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries()).find(
+    const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
+    const workshopEntry = entries.find(
+      (candidate) => candidate.variant.id === 'geometry_shape_workshop.lesson-stage'
+    );
+    const entry = entries.find(
       (candidate) => candidate.variant.id === 'geometry_symmetry_studio.lesson-stage'
     );
 
+    expect(workshopEntry?.isLessonVariant).toBe(false);
+    expect(workshopEntry?.lessonStageRuntime).toMatchObject({
+      runtimeId: 'geometry_shape_workshop_lesson_stage',
+      rendererId: 'geometry_drawing_game',
+      engineId: 'shape-drawing-engine',
+    });
     expect(entry?.isLessonVariant).toBe(true);
     expect(entry?.lessonStageRuntime?.rendererId).toBe('geometry_symmetry_game');
     expect(entry?.lessonStageRuntime?.engineId).toBe('symmetry-drawing-engine');

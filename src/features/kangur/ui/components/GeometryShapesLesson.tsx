@@ -1,13 +1,13 @@
 'use client';
 
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import plMessages from '@/i18n/messages/pl.json';
-import GeometryDrawingGame from '@/features/kangur/ui/components/GeometryDrawingGame';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
 import {
   GeometryMovingPointAnimation,
   GeometryPolygonSidesAnimation,
@@ -31,6 +31,10 @@ import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-cop
 type SectionId = 'podstawowe' | 'ile_bokow' | 'podsumowanie' | 'game';
 type ShapeCardId = 'circle' | 'triangle' | 'square' | 'rectangle' | 'pentagon' | 'hexagon';
 
+const GEOMETRY_SHAPE_WORKSHOP_RUNTIME = getKangurLessonStageGameRuntimeSpec(
+  'geometry_shape_workshop_lesson_stage'
+);
+
 const createStaticTranslator = (messages: Record<string, unknown>): LessonTranslate => (key) => {
   const resolved = key.split('.').reduce<unknown>(
     (current, segment) =>
@@ -51,20 +55,6 @@ const SHAPE_CARD_IDS = [
   { id: 'pentagon', emoji: '⬟' },
   { id: 'hexagon', emoji: '⬢' },
 ] as const satisfies ReadonlyArray<{ id: ShapeCardId; emoji: string }>;
-
-function GeometryShapesGameStage({
-  onFinish,
-  onStart,
-}: {
-  onFinish: () => void;
-  onStart: () => void;
-}): React.JSX.Element {
-  useEffect(() => {
-    onStart();
-  }, [onStart]);
-
-  return <GeometryDrawingGame onFinish={onFinish} />;
-}
 
 const buildShapeCards = (translations: LessonTranslate) =>
   SHAPE_CARD_IDS.map((shape) => ({
@@ -341,15 +331,14 @@ export default function GeometryShapesLesson(): React.JSX.Element {
       games={[
         {
           sectionId: 'game',
+          onStageEnter: handleGameStart,
           stage: {
             accent: 'violet',
             icon: '✍️',
             shellTestId: 'geometry-shapes-game-shell',
             title: translate('game.stageTitle'),
           },
-          render: ({ onFinish }) => (
-            <GeometryShapesGameStage onFinish={onFinish} onStart={handleGameStart} />
-          ),
+          runtime: GEOMETRY_SHAPE_WORKSHOP_RUNTIME,
         },
       ]}
     />

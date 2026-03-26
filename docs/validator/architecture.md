@@ -8,6 +8,14 @@ canonical: true
 ---
 # Validator Architecture
 
+This is the maintained high-level architecture reference for the validator
+feature. Use the generated docs for exact symbol/tooling inventories rather than
+expanding this file into a full API catalog:
+
+- `docs/validator/function-reference.md`
+- `docs/validator/function-inventory.md`
+- `docs/validator/tooltips.md`
+
 ## Validation Pipeline
 1. UI (`ValidatorSettings`) writes pattern definitions, launch rules, replacement strategy, and runtime config.
 2. Static engine (`buildFieldIssues`) evaluates regex patterns in deterministic sequence order.

@@ -8,6 +8,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 
 import plMessages from '@/i18n/messages/pl.json';
+import { addXp } from '@/features/kangur/ui/services/progress';
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: () => ({
@@ -116,6 +117,8 @@ describe('Geometry lessons shared surfaces', () => {
       'kangur-cta-pill',
       'surface-cta'
     );
+    expect(screen.getByRole('button', { name: 'Mock Geometry Drawing Game' })).toBeInTheDocument();
+    expect(addXp).toHaveBeenCalledTimes(1);
   });
 
   it('routes the shape recognition draw section through the shared stage runtime', () => {

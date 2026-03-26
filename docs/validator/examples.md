@@ -8,6 +8,10 @@ canonical: true
 ---
 # Validator Examples
 
+This is a maintained example guide for common validator behaviors. Use
+`docs/validator/architecture.md` for the pipeline overview and the generated
+function reference for exact symbol-level details.
+
 ## Example: Static Regex Pattern
 Pattern: target=`name`, regex=`\s{2,}`, replacement=` `.
 Result: `buildFieldIssues` returns warning issue with replacement preview collapsing duplicate spaces.

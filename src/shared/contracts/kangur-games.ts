@@ -228,6 +228,7 @@ export const KANGUR_LESSON_STAGE_GAME_RUNTIME_IDS = [
   'english_sentence_builder_lesson_stage',
   'geometry_perimeter_trainer_lesson_stage',
   'geometry_basics_workshop_lesson_stage',
+  'geometry_shape_workshop_lesson_stage',
   'geometry_shape_drawing_lesson_stage',
   'geometry_symmetry_studio_lesson_stage',
   'english_parts_of_speech_sort_lesson_stage',

@@ -433,6 +433,16 @@ export const KANGUR_TEN_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
         legacyActivityId: 'geometry-drawing',
       }),
       createVariant({
+        id: 'geometry_shape_workshop.lesson-stage',
+        label: 'Lesson stage',
+        title: 'Geometry shape workshop as a lesson stage',
+        description:
+          'Stage variant for the geometry shapes lesson shell, backed by the shared shape drawing engine.',
+        surface: 'lesson_stage',
+        lessonStageRuntimeId: 'geometry_shape_workshop_lesson_stage',
+        sortOrder: 50,
+      }),
+      createVariant({
         id: 'geometry_shape_workshop.library-preview',
         label: 'Library preview',
         title: 'Geometry shape workshop preview',

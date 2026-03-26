@@ -122,6 +122,11 @@ export const KANGUR_LESSON_STAGE_GAME_RUNTIME_SPECS = Object.freeze({
     'geometry_basics_workshop_lesson_stage',
     'geometry_basics_workshop_game'
   ),
+  geometry_shape_workshop_lesson_stage: createSharedLessonStageGameRuntimeSpec(
+    'geometry_shape_workshop_lesson_stage',
+    'geometry_drawing_game',
+    'shape-drawing-engine'
+  ),
   geometry_shape_drawing_lesson_stage: createSharedLessonStageGameRuntimeSpec(
     'geometry_shape_drawing_lesson_stage',
     'geometry_drawing_game',

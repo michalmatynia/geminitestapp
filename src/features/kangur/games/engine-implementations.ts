@@ -73,12 +73,13 @@ export const KANGUR_GAME_ENGINE_IMPLEMENTATIONS: readonly KangurGameEngineImplem
     engineId: 'shape-drawing-engine',
     ownership: 'shared_runtime',
     runtimeIds: [
+      'geometry_shape_workshop_lesson_stage',
       'geometry_shape_drawing_lesson_stage',
       'geometry_drawing_game',
       'useKangurDrawingEngine',
     ],
     summary:
-      'Shape sketching runs on the shared Kangur drawing runtime with geometry-specific prompts and evaluation layered on top.',
+      'Shape sketching runs on the shared Kangur drawing runtime and serialized lesson-stage shells with geometry-specific prompts and evaluation layered on top.',
   },
   {
     engineId: 'symmetry-drawing-engine',

@@ -53,7 +53,7 @@ export * from './library-overview';
 
 // library-page.ts
 export type { KangurGameLibraryPageData } from './library-page';
-export { createKangurGameLibraryPageDataFromGames } from './library-page';
+export { createKangurGameLibraryPageDataFromCatalog, createKangurGameLibraryPageDataFromGames } from './library-page';
 
 // Runtime specs
 export * from './launchable-runtime-specs';

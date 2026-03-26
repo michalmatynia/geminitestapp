@@ -55,4 +55,42 @@ describe('KangurManagedDrawingUtilityActions', () => {
     expect(screen.getByRole('button', { name: 'Redo' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Export PNG' })).toBeDisabled();
   });
+
+  it('applies the shared layout presets for point boards and tracing footers', () => {
+    const { rerender } = render(
+      <KangurManagedDrawingUtilityActions
+        exportLabel='Export PNG'
+        layoutPreset='practice-board'
+        onExport={() => {}}
+        onRedo={() => {}}
+        onUndo={() => {}}
+        redoLabel='Redo'
+        undoLabel='Undo'
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Undo' }).parentElement).toHaveClass(
+      'w-full',
+      'sm:flex-1'
+    );
+    expect(
+      screen.getByRole('button', { name: 'Export PNG' }).parentElement
+    ).toHaveClass('w-full', 'sm:flex-1');
+
+    rerender(
+      <KangurManagedDrawingUtilityActions
+        exportLabel='Export PNG'
+        isCoarsePointer
+        layoutPreset='footer'
+        onExport={() => {}}
+        onRedo={() => {}}
+        onUndo={() => {}}
+        redoLabel='Redo'
+        undoLabel='Undo'
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Undo' })).toHaveClass('px-4');
+    expect(screen.getByRole('button', { name: 'Export PNG' })).toHaveClass('px-4');
+  });
 });

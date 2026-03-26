@@ -11,7 +11,7 @@ import { useKangurDrawingHistoryKeyDown } from '@/features/kangur/ui/components/
 
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 
-type UseKangurManagedDrawingActionsOptions<
+export type UseKangurManagedDrawingActionsOptions<
   TElement extends HTMLElement | SVGElement = HTMLCanvasElement,
 > = {
   canExport: boolean;

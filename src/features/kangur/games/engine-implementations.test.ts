@@ -80,6 +80,7 @@ describe('kangur game engine implementations', () => {
       'useKangurDrawingEngine',
     ]);
     expect(getKangurGameEngineImplementation('shape-drawing-engine').runtimeIds).toEqual([
+      'geometry_shape_workshop_lesson_stage',
       'geometry_shape_drawing_lesson_stage',
       'geometry_drawing_game',
       'useKangurDrawingEngine',

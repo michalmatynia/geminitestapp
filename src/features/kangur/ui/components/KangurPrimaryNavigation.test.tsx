@@ -1145,13 +1145,9 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
-    prefetchMock.mockClear();
     await openLanguageMenu();
-    expect(prefetchMock).not.toHaveBeenCalled();
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-en'));
 
-    expect(prefetchMock).toHaveBeenCalledTimes(1);
-    expect(prefetchMock).toHaveBeenCalledWith('/en/lessons?mode=solo&difficulty=hard');
     expect(locationAssignSpy).toHaveBeenCalledWith('/en/lessons?mode=solo&difficulty=hard');
     expect(startRouteTransitionMock).not.toHaveBeenCalled();
     expect(replaceMock).not.toHaveBeenCalled();

@@ -44,7 +44,14 @@ describe('GeometryShapesLesson i18n', () => {
     );
 
     const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
-    const games = (capturedProps?.games as Array<{ sectionId: string; stage: Record<string, unknown> }>) ?? [];
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        stage: Record<string, unknown>;
+        runtime?: { runtimeId?: string; rendererId?: string; engineId?: string };
+        render?: unknown;
+        onStageEnter?: unknown;
+      }>) ?? [];
 
     expect(sections.find((section) => section.id === 'podstawowe')).toMatchObject({
       title: 'Grundformen',
@@ -55,9 +62,18 @@ describe('GeometryShapesLesson i18n', () => {
       description: 'Zeichne eine Form und sammle XP',
       isGame: true,
     });
-    expect(games.find((game) => game.sectionId === 'game')?.stage).toMatchObject({
+    const game = games.find((candidate) => candidate.sectionId === 'game');
+
+    expect(game?.stage).toMatchObject({
       title: 'Formen zeichnen',
     });
+    expect(game?.runtime).toMatchObject({
+      runtimeId: 'geometry_shape_workshop_lesson_stage',
+      rendererId: 'geometry_drawing_game',
+      engineId: 'shape-drawing-engine',
+    });
+    expect(game).not.toHaveProperty('render');
+    expect(game).toHaveProperty('onStageEnter');
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};
 

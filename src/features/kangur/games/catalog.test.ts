@@ -66,6 +66,22 @@ describe('kangur game catalog', () => {
     );
   });
 
+  it('resolves geometry workshop lesson-stage runtime specs from the serialized stage variant config', () => {
+    const entry = createKangurGameCatalogEntries().find(
+      (candidate) => candidate.game.id === 'geometry_shape_workshop'
+    );
+
+    expect(entry).toBeTruthy();
+    expect(entry?.lessonStageRuntime?.runtimeId).toBe('geometry_shape_workshop_lesson_stage');
+    expect(
+      entry?.game.variants.find((variant) => variant.id === 'geometry_shape_workshop.lesson-stage')
+        ?.lessonStageRuntimeId
+    ).toBe('geometry_shape_workshop_lesson_stage');
+    expect(entry ? getKangurLessonStageGameRuntimeSpecForGame(entry.game)?.engineId : null).toBe(
+      'shape-drawing-engine'
+    );
+  });
+
   it('resolves launchable runtime specs from the serialized game-screen variant config', () => {
     const entry = createKangurGameCatalogEntries().find(
       (candidate) => candidate.game.id === 'english_sentence_builder'

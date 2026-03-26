@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'runbook'
 scope: 'feature:ai-paths'
@@ -8,6 +8,11 @@ canonical: true
 ---
 
 # Description Inference v3 Lite -> Longform Ecommerce (UI-only)
+
+This is a maintained workflow-specific runbook for the shipped Description
+Inference path family. Use [`overview.md`](./overview.md) and
+[`reference.md`](./reference.md) for shared AI Paths runtime/operator rules
+rather than duplicating them here.
 
 ## Outcome
 

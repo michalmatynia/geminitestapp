@@ -10,13 +10,18 @@ canonical: true
 
 Generated and maintained docs for the Product Validator tool.
 
+Maintained references:
+
+- Function and runtime architecture: `docs/validator/architecture.md`
+- Worked examples: `docs/validator/examples.md`
+- Case Resolver plain-text patterns: `docs/validator/case-resolver-plain-text-patterns.md`
+- Semantic grammar hub: `docs/validator/semantic-grammar/README.md`
+
+Generated reference surfaces:
+
 - Function reference: `docs/validator/function-reference.md`
 - Tooltip reference: `docs/validator/tooltips.md`
 - Function inventory: `docs/validator/function-inventory.md`
-- Architecture: `docs/validator/architecture.md`
-- Examples: `docs/validator/examples.md`
-- Case Resolver plain-text patterns: `docs/validator/case-resolver-plain-text-patterns.md`
-- Semantic grammar: `docs/validator/semantic-grammar/README.md`
 
 Validation and settings APIs:
 
@@ -29,3 +34,6 @@ Regenerate with:
 npm run docs:validator:generate
 npm run docs:validator:check
 ```
+
+Do not hand-edit the generated validator surfaces unless the generator itself is
+also being updated in the same change.

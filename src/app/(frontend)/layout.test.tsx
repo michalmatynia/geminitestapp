@@ -1,3 +1,7 @@
+/**
+ * @vitest-environment jsdom
+ */
+import { render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 
@@ -78,9 +82,10 @@ describe('frontend layout bootstrap', () => {
   it('skips Kangur storefront bootstrap when the frontend public owner is cms', async () => {
     const { default: FrontendLayout } = await import('@/app/(frontend)/layout');
 
-    await FrontendLayout({
+    const layout = await FrontendLayout({
       children: <div>cms</div>,
     });
+    render(layout);
 
     expect(getFrontPageSettingMock).toHaveBeenCalledTimes(1);
     expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
@@ -100,11 +105,13 @@ describe('frontend layout bootstrap', () => {
 
     const { default: FrontendLayout } = await import('@/app/(frontend)/layout');
 
-    await FrontendLayout({
+    const layout = await FrontendLayout({
       children: <div>kangur</div>,
     });
+    render(layout);
 
     expect(getFrontPageSettingMock).toHaveBeenCalledTimes(1);
+    expect(getCmsThemeSettingsMock).not.toHaveBeenCalled();
     expect(getKangurStorefrontInitialStateMock).toHaveBeenCalledTimes(1);
     expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
       expect.objectContaining({

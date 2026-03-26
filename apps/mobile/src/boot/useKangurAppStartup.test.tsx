@@ -111,28 +111,30 @@ describe('useKangurAppStartup', () => {
     });
   });
 
-  it('treats an authenticated snapshot refresh as boot-ready and exposes cached startup data', () => {
+  it('treats an authenticated snapshot refresh as boot-ready without reading cached startup data by default', () => {
+    const storage = createStorage({
+      'kangur.mobile.scores.recent': JSON.stringify({
+        'learner:learner-1': [createScore('score-1')],
+      }),
+    });
     useKangurMobileAuthMock.mockReturnValue({
       authError: null,
       isLoadingAuth: true,
       session: createAuthenticatedSession(),
     });
     useKangurMobileRuntimeMock.mockReturnValue({
-      storage: createStorage({
-        'kangur.mobile.scores.recent': JSON.stringify({
-          'learner:learner-1': [createScore('score-1')],
-        }),
-      }),
+      storage,
     });
 
     const { result } = renderHook(() => useKangurAppStartup());
 
     expect(result.current.isBootLoading).toBe(false);
     expect(result.current.isAuthResolved).toBe(true);
-    expect(result.current.hasCachedStartupData).toBe(true);
+    expect(result.current.hasCachedStartupData).toBe(false);
+    expect(storage.getItem).not.toHaveBeenCalled();
   });
 
-  it('detects persisted training focus as cached startup data', () => {
+  it('exposes cached startup data when explicitly requested', () => {
     useKangurMobileAuthMock.mockReturnValue({
       authError: null,
       isLoadingAuth: false,
@@ -155,7 +157,9 @@ describe('useKangurAppStartup', () => {
       }),
     });
 
-    const { result } = renderHook(() => useKangurAppStartup());
+    const { result } = renderHook(() =>
+      useKangurAppStartup({ includeCachedStartupData: true }),
+    );
 
     expect(result.current.hasCachedStartupData).toBe(true);
     expect(result.current.isBootLoading).toBe(false);

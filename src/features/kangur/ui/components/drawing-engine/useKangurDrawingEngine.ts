@@ -99,8 +99,14 @@ export const useKangurDrawingEngine = <
   const [activeStroke, setActiveStroke] = useState<KangurDrawingStroke<TMeta> | null>(null);
   const [isPointerDrawing, setIsPointerDrawing] = useState(false);
   const isDrawingRef = useRef(false);
+  const redrawFrameRef = useRef<number | null>(null);
+  const redrawRef = useRef(redraw);
   const strokesRef = useRef(strokes);
   const activeStrokeRef = useRef(activeStroke);
+
+  useEffect(() => {
+    redrawRef.current = redraw;
+  }, [redraw]);
 
   useEffect(() => {
     strokesRef.current = strokes;
@@ -110,18 +116,53 @@ export const useKangurDrawingEngine = <
     activeStrokeRef.current = activeStroke;
   }, [activeStroke]);
 
+  const flushRedraw = useCallback((): void => {
+    redrawFrameRef.current = null;
+    redrawRef.current({
+      activeStroke: activeStrokeRef.current,
+      strokes: strokesRef.current,
+    });
+  }, []);
+
+  const scheduleRedraw = useCallback((): void => {
+    if (
+      typeof window === 'undefined' ||
+      typeof window.requestAnimationFrame !== 'function'
+    ) {
+      flushRedraw();
+      return;
+    }
+
+    if (redrawFrameRef.current !== null) {
+      return;
+    }
+
+    redrawFrameRef.current = window.requestAnimationFrame(() => {
+      flushRedraw();
+    });
+  }, [flushRedraw]);
+
   useEffect(() => {
-    redraw({ activeStroke, strokes });
-  }, [activeStroke, redraw, strokes]);
+    scheduleRedraw();
+  }, [activeStroke, scheduleRedraw, strokes]);
+
+  useEffect(
+    () => () => {
+      if (
+        redrawFrameRef.current !== null &&
+        typeof window !== 'undefined' &&
+        typeof window.cancelAnimationFrame === 'function'
+      ) {
+        window.cancelAnimationFrame(redrawFrameRef.current);
+        redrawFrameRef.current = null;
+      }
+    },
+    []
+  );
 
   useKangurCanvasRedraw({
     canvasRef,
-    redraw: () => {
-      redraw({
-        activeStroke: activeStrokeRef.current,
-        strokes: strokesRef.current,
-      });
-    },
+    redraw: scheduleRedraw,
   });
 
   useKangurCanvasTouchLock(canvasRef, { enabled: touchLockEnabled });

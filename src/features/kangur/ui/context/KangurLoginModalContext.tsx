@@ -58,7 +58,7 @@ type InlineLoginModalState = {
 };
 
 const KangurLoginModalContext = createContext<KangurLoginModalContextValue | null>(null);
-const LOGIN_MODAL_CLOSE_ACKNOWLEDGE_MS = 110;
+const LOGIN_MODAL_CLOSE_ACKNOWLEDGE_MS = 0;
 const FALLBACK_HOME_HREF = getKangurHomeHref();
 const FALLBACK_STATE: KangurLoginModalStateValue = {
   authMode: 'sign-in',

@@ -549,7 +549,6 @@ function KangurParentDashboardProgressWidgetContent(): React.JSX.Element {
                     <Link
                       href={dailyQuestHref}
                       targetPageKey={dailyQuestTargetPage ?? undefined}
-                      transitionAcknowledgeMs={110}
                       transitionSourceId='parent-dashboard:daily-quest'
                     >
                       {dailyQuestActionLabel}
@@ -610,7 +609,6 @@ function KangurParentDashboardProgressWidgetContent(): React.JSX.Element {
                     <KangurButton asChild className={compactActionClassName} size='sm' variant='surface'>
                       <Link
                         href={task.href}
-                        transitionAcknowledgeMs={110}
                         transitionSourceId='parent-dashboard:opened-task'
                       >
                         {translations('widgets.progress.openedTasks.openAction')}

@@ -8,6 +8,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
+  loadProgressMock,
   useLocalSearchParamsMock,
   useRouterMock,
   replaceMock,
@@ -29,6 +30,7 @@ const {
   useHomeScreenBootStateMock,
   useHomeScreenDeferredPanelsMock,
 } = vi.hoisted(() => ({
+  loadProgressMock: vi.fn(),
   useLocalSearchParamsMock: vi.fn(),
   useRouterMock: vi.fn(),
   replaceMock: vi.fn(),
@@ -164,6 +166,7 @@ describe('HomeScreen', () => {
     ({ default: HomeScreen } = await import('../../app/index'));
     const progressSnapshot = createDefaultKangurProgressState();
     const storageSnapshot = new Map<string, string>();
+    loadProgressMock.mockReturnValue(progressSnapshot);
     subscribeToProgressMock.mockImplementation(() => () => {});
     shareKangurDuelInviteMock.mockResolvedValue(undefined);
     useLocalSearchParamsMock.mockReturnValue({});
@@ -177,7 +180,7 @@ describe('HomeScreen', () => {
       apiBaseUrlSource: 'env',
       progressStore: {
         subscribeToProgress: subscribeToProgressMock,
-        loadProgress: () => progressSnapshot,
+        loadProgress: loadProgressMock,
       },
       storage: {
         getItem: (key: string) => storageSnapshot.get(key) ?? null,
@@ -372,31 +375,32 @@ describe('HomeScreen', () => {
     expect(useKangurMobileHomeDuelsInvitesMock).not.toHaveBeenCalled();
   });
 
-  it('shows duel placeholders until deferred home panels are ready', () => {
+  it('shows the combined lower-home placeholder until deferred home panels are ready', () => {
     useHomeScreenDeferredPanelsMock.mockReturnValue(false);
 
     renderHomeScreen();
 
+    expect(screen.getByText('Szybki dostęp')).toBeTruthy();
     expect(
       screen.getByText(
-        'Przygotowujemy zaproszenia, wysłane wyzwania i szybkie rewanże na ekran startowy.',
+        'Przygotowujemy status konta, logowanie i kolejne ścieżki nawigacji na następny etap ekranu startowego.',
       ),
     ).toBeTruthy();
+    expect(screen.getByText('Kolejne sekcje startowe')).toBeTruthy();
     expect(
       screen.getByText(
-        'Przygotowujemy aktywnych rywali, pojedynki na żywo i ranking na następny etap ekranu startowego.',
+        'Przygotowujemy pojedynki, fokus treningowy i kolejne zapisane sekcje na następne etapy ekranu startowego.',
       ),
     ).toBeTruthy();
+    expect(screen.queryByText('Konto i połączenie')).toBeNull();
+    expect(screen.queryByText('Nawigacja')).toBeNull();
     expect(
       screen.queryByText(
         'Po zalogowaniu zobaczysz tutaj prywatne zaproszenia do pojedynków od innych uczniów.',
       ),
     ).toBeNull();
-    expect(
-      screen.getByText(
-        'Przygotowujemy fokus treningowy oparty na wynikach na ekran startowy.',
-      ),
-    ).toBeTruthy();
+    expect(screen.queryByText('Fokus treningowy')).toBeNull();
+    expect(screen.queryByText('Więcej danych startowych')).toBeNull();
     expect(useKangurMobileHomeDuelsInvitesMock).not.toHaveBeenCalled();
     expect(useKangurMobileHomeDuelsPresenceMock).not.toHaveBeenCalled();
     expect(useKangurMobileHomeDuelsRematchesMock).not.toHaveBeenCalled();
@@ -414,6 +418,7 @@ describe('HomeScreen', () => {
     renderHomeScreen();
 
     expect(screen.getByText('Kangur mobilnie')).toBeTruthy();
+    expect(loadProgressMock).not.toHaveBeenCalled();
     expect(subscribeToProgressMock).not.toHaveBeenCalled();
     expect(useKangurMobileHomeLessonCheckpointsMock).not.toHaveBeenCalledWith({
       limit: 1,
@@ -624,28 +629,43 @@ describe('HomeScreen', () => {
   });
 
   it('keeps live lesson insights deferred while recent lessons render from the boot snapshot', () => {
-    const progressSnapshot = {
-      ...createDefaultKangurProgressState(),
-      lessonMastery: {
-        adding: {
-          attempts: 3,
-          bestScorePercent: 72,
-          completions: 1,
-          lastCompletedAt: '2026-03-21T08:12:00.000Z',
-          lastScorePercent: 70,
-          masteryPercent: 68,
-        },
-      },
-    };
+    const storageSnapshot = new Map<string, string>([
+      [
+        'kangur.mobile.home.lessonCheckpoints',
+        JSON.stringify({
+          guest: {
+            adding: {
+              attempts: 3,
+              bestScorePercent: 72,
+              completions: 1,
+              lastCompletedAt: '2026-03-21T08:12:00.000Z',
+              lastScorePercent: 70,
+              masteryPercent: 68,
+            },
+          },
+        }),
+      ],
+    ]);
+    const getItemMock = vi.fn((key: string) => storageSnapshot.get(key) ?? null);
     useHomeScreenDeferredPanelsMock.mockImplementation(
-      (panelKey: string) => panelKey !== 'home:insights:lessons',
+      (panelKey: string) =>
+        panelKey !== 'home:insights:lessons' && panelKey !== 'home:progress',
     );
     useKangurMobileRuntimeMock.mockReturnValue({
       apiBaseUrl: 'http://localhost:3000',
       apiBaseUrlSource: 'env',
       progressStore: {
         subscribeToProgress: subscribeToProgressMock,
-        loadProgress: () => progressSnapshot,
+        loadProgress: loadProgressMock,
+      },
+      storage: {
+        getItem: getItemMock,
+        removeItem: (key: string) => {
+          storageSnapshot.delete(key);
+        },
+        setItem: (key: string, value: string) => {
+          storageSnapshot.set(key, value);
+        },
       },
     });
 
@@ -660,11 +680,9 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Powrót do ostatnich lekcji')).toBeTruthy();
     expect(screen.getByText('➕ Dodawanie')).toBeTruthy();
     expect(screen.getByText('Wróć do lekcji: Dodawanie')).toBeTruthy();
+    expect(loadProgressMock).not.toHaveBeenCalled();
     expect(useKangurMobileHomeLessonMasteryMock).not.toHaveBeenCalled();
-    expect(useKangurMobileHomeLessonCheckpointsMock).toHaveBeenCalledTimes(1);
-    expect(useKangurMobileHomeLessonCheckpointsMock).toHaveBeenCalledWith({
-      limit: 1,
-    });
+    expect(useKangurMobileHomeLessonCheckpointsMock).not.toHaveBeenCalled();
   });
 
   it('keeps lesson plan details deferred until the dedicated lesson-plan stage is ready', () => {
@@ -810,7 +828,6 @@ describe('HomeScreen', () => {
   });
 
   it('keeps authenticated hero score hooks deferred until the dedicated hero score stage is ready', () => {
-    const progressSnapshot = createDefaultKangurProgressState();
     const storageSnapshot = new Map<string, string>([
       [
         'kangur.mobile.scores.recent',
@@ -851,14 +868,15 @@ describe('HomeScreen', () => {
     ]);
     const getItemMock = vi.fn((key: string) => storageSnapshot.get(key) ?? null);
     useHomeScreenDeferredPanelsMock.mockImplementation(
-      (panelKey: string) => panelKey !== 'home:hero:scores',
+      (panelKey: string) =>
+        panelKey !== 'home:hero:scores' && panelKey !== 'home:progress',
     );
     useKangurMobileRuntimeMock.mockReturnValue({
       apiBaseUrl: 'http://localhost:3000',
       apiBaseUrlSource: 'env',
       progressStore: {
         subscribeToProgress: subscribeToProgressMock,
-        loadProgress: () => progressSnapshot,
+        loadProgress: loadProgressMock,
       },
       storage: {
         getItem: getItemMock,
@@ -898,9 +916,13 @@ describe('HomeScreen', () => {
 
     expect(screen.getByText('Fokus treningowy: Trening mieszany')).toBeTruthy();
     expect(screen.queryByText('Ostatni wynik 7/8')).toBeNull();
+    expect(loadProgressMock).not.toHaveBeenCalled();
     expect(useKangurMobileRecentResultsMock).not.toHaveBeenCalled();
     expect(useKangurMobileTrainingFocusMock).not.toHaveBeenCalled();
-    expect(getItemMock).not.toHaveBeenCalled();
+    expect(getItemMock).not.toHaveBeenCalledWith('kangur.mobile.scores.recent');
+    expect(getItemMock).not.toHaveBeenCalledWith(
+      'kangur.mobile.scores.trainingFocus',
+    );
   });
 
   it('keeps detailed training focus cards deferred until the dedicated training focus stage is ready', () => {

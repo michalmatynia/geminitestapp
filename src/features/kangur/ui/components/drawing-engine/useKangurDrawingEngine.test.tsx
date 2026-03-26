@@ -20,20 +20,24 @@ const createRect = (input: { left: number; top: number; width: number; height: n
 
 function SvgDrawingHarness({
   minPointDistance = 2,
+  redrawSpy,
   shouldCommitStroke,
 }: {
   minPointDistance?: number;
+  redrawSpy?: (strokes: Array<Array<{ x: number; y: number }>>) => void;
   shouldCommitStroke?: (stroke: Array<{ x: number; y: number }>) => boolean;
 }): React.JSX.Element {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const {
     canRedo,
     canUndo,
+    clearStrokes,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
     isPointerDrawing,
     redoLastStroke,
+    setStrokes,
     strokes,
     undoLastStroke,
   } = useKangurPointDrawingEngine<SVGSVGElement>({
@@ -41,7 +45,9 @@ function SvgDrawingHarness({
     logicalHeight: 140,
     logicalWidth: 360,
     minPointDistance,
-    redraw: () => {},
+    redraw: (nextStrokes) => {
+      redrawSpy?.(nextStrokes);
+    },
     shouldCommitStroke,
     touchLockEnabled: true,
   });
@@ -74,14 +80,40 @@ function SvgDrawingHarness({
       <button type='button' onClick={redoLastStroke}>
         Redo
       </button>
+      <button
+        type='button'
+        onClick={() => {
+          setStrokes([[{ x: 12, y: 18 }, { x: 44, y: 52 }]]);
+        }}
+      >
+        Seed
+      </button>
+      <button type='button' onClick={clearStrokes}>
+        Clear
+      </button>
     </>
   );
 }
 
 describe('useKangurDrawingEngine generic surfaces', () => {
   const originalSvgRect = SVGSVGElement.prototype.getBoundingClientRect;
+  const originalRequestAnimationFrame = window.requestAnimationFrame;
+  const originalCancelAnimationFrame = window.cancelAnimationFrame;
+  let animationFrameId = 0;
+  let scheduledFrames = new Map<number, FrameRequestCallback>();
+
+  const flushAnimationFrames = (): void => {
+    const queuedFrames = [...scheduledFrames.entries()];
+    scheduledFrames.clear();
+
+    for (const [, callback] of queuedFrames) {
+      callback(16);
+    }
+  };
 
   beforeEach(() => {
+    animationFrameId = 0;
+    scheduledFrames = new Map<number, FrameRequestCallback>();
     SVGSVGElement.prototype.getBoundingClientRect = vi.fn(() =>
       createRect({ left: 0, top: 0, width: 360, height: 140 })
     ) as typeof SVGSVGElement.prototype.getBoundingClientRect;
@@ -93,11 +125,33 @@ describe('useKangurDrawingEngine generic surfaces', () => {
       configurable: true,
       value: vi.fn(),
     });
+    Object.defineProperty(window, 'requestAnimationFrame', {
+      configurable: true,
+      value: vi.fn((callback: FrameRequestCallback): number => {
+        const nextId = ++animationFrameId;
+        scheduledFrames.set(nextId, callback);
+        return nextId;
+      }),
+    });
+    Object.defineProperty(window, 'cancelAnimationFrame', {
+      configurable: true,
+      value: vi.fn((frameId: number) => {
+        scheduledFrames.delete(frameId);
+      }),
+    });
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
     SVGSVGElement.prototype.getBoundingClientRect = originalSvgRect;
+    Object.defineProperty(window, 'requestAnimationFrame', {
+      configurable: true,
+      value: originalRequestAnimationFrame,
+    });
+    Object.defineProperty(window, 'cancelAnimationFrame', {
+      configurable: true,
+      value: originalCancelAnimationFrame,
+    });
   });
 
   it('tracks strokes on an SVG surface and filters near-duplicate points', () => {
@@ -191,5 +245,25 @@ describe('useKangurDrawingEngine generic surfaces', () => {
     expect(surface).toHaveAttribute('data-stroke-count', '1');
     expect(surface).toHaveAttribute('data-can-undo', 'true');
     expect(surface).toHaveAttribute('data-can-redo', 'false');
+  });
+
+  it('coalesces rapid redraw requests into a single animation frame on shared surfaces', () => {
+    const redrawSpy = vi.fn();
+    render(<SvgDrawingHarness redrawSpy={redrawSpy} />);
+
+    flushAnimationFrames();
+    redrawSpy.mockClear();
+    vi.mocked(window.requestAnimationFrame).mockClear();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Seed' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+
+    expect(redrawSpy).not.toHaveBeenCalled();
+    expect(window.requestAnimationFrame).toHaveBeenCalledTimes(1);
+
+    flushAnimationFrames();
+
+    expect(redrawSpy).toHaveBeenCalledTimes(1);
+    expect(redrawSpy).toHaveBeenCalledWith([]);
   });
 });

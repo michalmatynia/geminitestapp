@@ -20,7 +20,7 @@ import { GAME_HOME_DUELS_SHELL_CLASSNAME } from '@/features/kangur/ui/pages/Game
 import type { KangurHomeScreenVisibilityProps } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
-const HOME_DUELS_INVITE_TRANSITION_MS = 110;
+const HOME_DUELS_INVITE_TRANSITION_MS = 0;
 
 type KangurGameHomeDuelsInvitesWidgetProps = KangurHomeScreenVisibilityProps;
 

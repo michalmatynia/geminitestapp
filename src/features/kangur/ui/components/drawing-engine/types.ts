@@ -13,11 +13,14 @@ export type KangurFreeformDrawingStrokeMeta = {
   width: number;
 };
 
+export type KangurDrawingStrokeRenderMode = 'polyline' | 'smooth';
+
 export type KangurDrawingStrokeRenderStyle = {
   compositeOperation?: GlobalCompositeOperation;
   lineCap?: CanvasLineCap;
   lineJoin?: CanvasLineJoin;
   lineWidth: number;
+  renderMode?: KangurDrawingStrokeRenderMode;
   shadowBlur?: number;
   shadowColor?: string;
   strokeStyle: string;

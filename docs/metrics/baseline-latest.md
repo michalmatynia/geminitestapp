@@ -8,12 +8,12 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-26T08:48:26.790Z
+Generated at: 2026-03-26T08:49:08.951Z
 
 ## Snapshot
 
-- Source files: 7720
-- Source lines: 1285596
+- Source files: 7722
+- Source lines: 1285786
 - use client files: 2
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0

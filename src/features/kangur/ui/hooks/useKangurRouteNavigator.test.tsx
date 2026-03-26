@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   startRouteTransitionMock,
+  frontendPublicOwnerMock,
   useOptionalKangurRouteTransitionStateMock,
   useOptionalKangurRoutingMock,
   usePathnameMock,
@@ -17,6 +18,7 @@ const {
   routerReplaceMock,
 } = vi.hoisted(() => ({
   startRouteTransitionMock: vi.fn(),
+  frontendPublicOwnerMock: vi.fn(),
   useOptionalKangurRouteTransitionStateMock: vi.fn(),
   useOptionalKangurRoutingMock: vi.fn(),
   usePathnameMock: vi.fn(),
@@ -49,6 +51,10 @@ vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useOptionalKangurRouting: useOptionalKangurRoutingMock,
+}));
+
+vi.mock('@/features/kangur/ui/FrontendPublicOwnerContext', () => ({
+  useOptionalFrontendPublicOwner: () => frontendPublicOwnerMock(),
 }));
 
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
@@ -139,6 +145,7 @@ describe('useKangurRouteNavigator', () => {
     });
     useLocaleMock.mockReturnValue('pl');
     usePathnameMock.mockReturnValue('/lessons');
+    frontendPublicOwnerMock.mockReturnValue(null);
     useOptionalKangurRouteTransitionStateMock.mockReturnValue(null);
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/',
@@ -210,6 +217,31 @@ describe('useKangurRouteNavigator', () => {
       pageKey: 'Lessons',
     });
     expect(routerReplaceMock).toHaveBeenCalledWith('/en/kangur/lessons', { scroll: false });
+  });
+
+  it('canonicalizes localized /kangur alias routes when Kangur owns the public frontend', () => {
+    frontendPublicOwnerMock.mockReturnValue({ publicOwner: 'kangur' });
+    useLocaleMock.mockReturnValue('en');
+    usePathnameMock.mockReturnValue('/en/kangur');
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+      pageKey: 'Game',
+      requestedHref: '/en/kangur',
+      requestedPath: '/kangur',
+    });
+
+    render(<NavigatorProbe href='/kangur/lessons?focus=division' />);
+
+    fireEvent.click(screen.getByTestId('navigator-replace'));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/en/lessons?focus=division',
+      pageKey: 'Lessons',
+    });
+    expect(routerReplaceMock).toHaveBeenCalledWith('/en/lessons?focus=division', {
+      scroll: false,
+    });
   });
 
   it('preserves the active locale prefix when navigating between root-owned public Kangur routes', () => {

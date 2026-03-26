@@ -207,7 +207,6 @@ function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
         >
           <Link
             href={banner.actionHref}
-            transitionAcknowledgeMs={110}
             transitionSourceId={banner.actionTransitionSourceId}
           >
             {banner.actionLabel}

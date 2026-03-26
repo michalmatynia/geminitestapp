@@ -694,7 +694,7 @@ const getHomeRecommendation = (
   getTrackRecommendation(progress, fallbackCopy, translate, progressTranslate) ??
   getFallbackRecommendation(progress, fallbackCopy, translate, progressTranslate);
 
-const HOME_MOMENTUM_ROUTE_ACKNOWLEDGE_MS = 110;
+const HOME_MOMENTUM_ROUTE_ACKNOWLEDGE_MS = 0;
 
 const buildHomeMomentumTransitionSourceId = (action: KangurRouteAction): string => {
   const queryToken =

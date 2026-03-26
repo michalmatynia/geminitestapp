@@ -541,7 +541,6 @@ export default function ScoreHistory({
                     <Link
                       href={weakestLessonHref}
                       targetPageKey='Lessons'
-                      transitionAcknowledgeMs={110}
                       transitionSourceId='score-history:weakest-lesson'
                     >
                       {translateScoreHistoryWithFallback(

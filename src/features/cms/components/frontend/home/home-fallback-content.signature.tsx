@@ -4,7 +4,7 @@ import React from 'react';
 import { Layers, Palette, TrendingUp } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
-import { ProductCard } from '@/features/products/public';
+import ProductCard from '@/features/products/components/ProductCard';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { UI_GRID_RELAXED_CLASSNAME, UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui/layout';
 

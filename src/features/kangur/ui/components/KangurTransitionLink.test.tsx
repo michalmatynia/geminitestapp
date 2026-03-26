@@ -13,6 +13,7 @@ import {
 const {
   nextLinkPropsMock,
   startRouteTransitionMock,
+  frontendPublicOwnerMock,
   useKangurCoarsePointerMock,
   useOptionalKangurRouteTransitionStateMock,
   useOptionalKangurRoutingMock,
@@ -24,6 +25,7 @@ const {
 } = vi.hoisted(() => ({
   nextLinkPropsMock: vi.fn(),
   startRouteTransitionMock: vi.fn(),
+  frontendPublicOwnerMock: vi.fn(),
   useKangurCoarsePointerMock: vi.fn(),
   useOptionalKangurRouteTransitionStateMock: vi.fn(),
   useOptionalKangurRoutingMock: vi.fn(),
@@ -79,6 +81,10 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useOptionalKangurRouting: useOptionalKangurRoutingMock,
 }));
 
+vi.mock('@/features/kangur/ui/FrontendPublicOwnerContext', () => ({
+  useOptionalFrontendPublicOwner: () => frontendPublicOwnerMock(),
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => useKangurCoarsePointerMock(),
 }));
@@ -92,6 +98,7 @@ describe('KangurTransitionLink', () => {
     useLocaleMock.mockReturnValue('pl');
     usePathnameMock.mockReturnValue('/kangur');
     useKangurCoarsePointerMock.mockReturnValue(false);
+    frontendPublicOwnerMock.mockReturnValue(null);
     useOptionalKangurRouteTransitionStateMock.mockReturnValue(null);
     useOptionalKangurRoutingMock.mockReturnValue(null);
     startRouteTransitionMock.mockReturnValue({
@@ -214,17 +221,69 @@ describe('KangurTransitionLink', () => {
     expect(routerPushMock).toHaveBeenCalledWith('/en/kangur/lessons', { scroll: false });
   });
 
-  it('prefetches managed local links while mounted', () => {
+  it('canonicalizes localized /kangur alias routes when Kangur owns the public frontend', () => {
+    frontendPublicOwnerMock.mockReturnValue({ publicOwner: 'kangur' });
+    useLocaleMock.mockReturnValue('en');
+    usePathnameMock.mockReturnValue('/en/kangur');
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+      pageKey: 'Game',
+      requestedHref: '/en/kangur',
+      requestedPath: '/kangur',
+    });
+
+    render(
+      <KangurTransitionLink href='/kangur/lessons?focus=division'>
+        Lekcje
+      </KangurTransitionLink>
+    );
+
+    expect(screen.getByRole('link', { name: 'Lekcje' })).toHaveAttribute(
+      'href',
+      '/en/lessons?focus=division'
+    );
+    expect(nextLinkPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        href: '/en/lessons?focus=division',
+      })
+    );
+
+    fireEvent.click(screen.getByRole('link', { name: 'Lekcje' }));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/en/lessons?focus=division',
+      pageKey: 'Lessons',
+    });
+    expect(routerPushMock).toHaveBeenCalledWith('/en/lessons?focus=division', {
+      scroll: false,
+    });
+    expect(getKangurPendingRouteLoadingSnapshot()).toEqual(
+      expect.objectContaining({
+        href: '/en/lessons?focus=division',
+        pageKey: 'Lessons',
+        skeletonVariant: 'lessons-focus',
+      })
+    );
+  });
+
+  it('disables Next auto-prefetch for managed local Kangur links by default', () => {
     render(
       <KangurTransitionLink href='/kangur/lessons' targetPageKey='Lessons'>
         Lekcje
       </KangurTransitionLink>
     );
 
-    expect(routerPrefetchMock).toHaveBeenCalledWith('/kangur/lessons');
+    expect(nextLinkPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        href: '/kangur/lessons',
+        prefetch: false,
+      })
+    );
+    expect(routerPrefetchMock).not.toHaveBeenCalled();
   });
 
-  it('prefetches managed local links on coarse-pointer devices', () => {
+  it('does not trigger manual router prefetch for managed links on coarse-pointer devices', () => {
     useKangurCoarsePointerMock.mockReturnValue(true);
 
     render(
@@ -233,7 +292,7 @@ describe('KangurTransitionLink', () => {
       </KangurTransitionLink>
     );
 
-    expect(routerPrefetchMock).toHaveBeenCalledWith('/kangur/lessons');
+    expect(routerPrefetchMock).not.toHaveBeenCalled();
   });
 
   it('renders a locale-prefixed href before hydration on localized routes', () => {
@@ -317,6 +376,21 @@ describe('KangurTransitionLink', () => {
       })
     );
     expect(routerPrefetchMock).not.toHaveBeenCalled();
+  });
+
+  it('still allows explicit opt-in prefetch for managed local links', () => {
+    render(
+      <KangurTransitionLink href='/kangur/duels' prefetch targetPageKey='Duels'>
+        Pojedynki
+      </KangurTransitionLink>
+    );
+
+    expect(nextLinkPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        href: '/kangur/duels',
+        prefetch: true,
+      })
+    );
   });
 
   it('delays the router push until the button acknowledgement window ends', () => {

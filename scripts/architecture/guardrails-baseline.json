@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-26T02:12:06.644Z",
+  "generatedAt": "2026-03-26T08:49:31.217Z",
   "hardLimits": {
     "sourceLargestFileLines": 4000,
     "imports.featuresToAppApiTotalImports": 0
@@ -14,7 +14,7 @@
     "api.routesWithoutApiHandler": 0,
     "api.routesWithoutExplicitCachePolicy": 0,
     "imports.appFeatureBarrelImports": 0,
-    "imports.appFeatureDeepImports": 14,
+    "imports.appFeatureDeepImports": 3,
     "imports.featuresToSharedTotalImports": 27,
     "imports.featuresToAppApiTotalImports": 0,
     "imports.sharedToFeaturesTotalImports": 0,

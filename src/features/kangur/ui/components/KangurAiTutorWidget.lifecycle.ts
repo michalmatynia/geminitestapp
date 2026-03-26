@@ -19,6 +19,7 @@ import {
   clearPersistedTutorAvatarPosition,
   clearPersistedTutorPanelPosition,
   clearPersistedPendingTutorFollowUp,
+  persistTutorDrawingDraftSnapshot,
   clearPersistedTutorSessionKey,
   loadPersistedPendingNavigationTarget,
   loadPersistedPendingTutorFollowUp,
@@ -138,6 +139,7 @@ export function useKangurAiTutorLifecycleEffects({
     askModalVisible,
     contextualTutorMode,
     contextSwitchNotice,
+    drawingDraftSnapshot,
     dismissedSelectedText,
     draggedAvatarPoint,
     guidedTutorTarget,
@@ -159,6 +161,7 @@ export function useKangurAiTutorLifecycleEffects({
     setContextSwitchNotice,
     setDismissedSelectedText,
     setDraggedAvatarPoint,
+    setDrawingDraftSnapshot,
     setGuestAuthFormVisible,
     setGuestIntroHelpVisible,
     setGuestIntroVisible,
@@ -241,6 +244,10 @@ export function useKangurAiTutorLifecycleEffects({
   ]);
 
   useEffect(() => subscribeToTutorVisibilityChanges(setIsTutorHidden), [setIsTutorHidden]);
+
+  useEffect(() => {
+    persistTutorDrawingDraftSnapshot(drawingDraftSnapshot);
+  }, [drawingDraftSnapshot]);
 
   useEffect(() => {
     if (!draggedAvatarPoint) {
@@ -727,6 +734,7 @@ export function useKangurAiTutorLifecycleEffects({
 
     const previousSessionKey = allowCrossPagePersistence ? previousSessionKeyRef.current : null;
     if (previousSessionKey && previousSessionKey !== tutorSessionKey) {
+      setDrawingDraftSnapshot(null);
       setInputValue('');
       setSelectionGuidanceCalloutVisibleText(null);
       setSelectionConversationContext(null);
@@ -770,6 +778,7 @@ export function useKangurAiTutorLifecycleEffects({
     sessionContext?.surface,
     sessionContext?.title,
     setContextSwitchNotice,
+    setDrawingDraftSnapshot,
     setInputValue,
     setPersistedSelectionContainerRect,
     setPersistedSelectionPageRect,

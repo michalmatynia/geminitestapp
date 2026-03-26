@@ -16,7 +16,7 @@ import {
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 
-const LEARNER_PROFILE_RECOMMENDATION_ROUTE_ACKNOWLEDGE_MS = 110;
+const LEARNER_PROFILE_RECOMMENDATION_ROUTE_ACKNOWLEDGE_MS = 0;
 
 export function KangurLearnerProfileRecommendationsWidget(): React.JSX.Element {
   const translations = useTranslations('KangurLearnerProfileWidgets.recommendations');

@@ -587,6 +587,7 @@ export function useKangurAiTutorWidgetCoordinator({
     tutorSessionKey,
     widgetState: {
       setDismissedSelectedText: widgetState.setDismissedSelectedText,
+      setDrawingDraftSnapshot: widgetState.setDrawingDraftSnapshot,
       setDrawingImageData: widgetState.setDrawingImageData,
       setDrawingMode: widgetState.setDrawingMode,
       setHighlightedSection: widgetState.setHighlightedSection,

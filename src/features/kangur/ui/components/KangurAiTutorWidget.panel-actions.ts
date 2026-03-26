@@ -89,6 +89,7 @@ type UseKangurAiTutorPanelActionsInput = {
   tutorSessionKey: string | null;
   widgetState: Pick<
     KangurAiTutorWidgetState,
+    | 'setDrawingDraftSnapshot'
     | 'setDismissedSelectedText'
     | 'setDrawingImageData'
     | 'setDrawingMode'
@@ -140,6 +141,7 @@ export function useKangurAiTutorPanelActions({
   widgetState,
 }: UseKangurAiTutorPanelActionsInput) {
   const {
+    setDrawingDraftSnapshot,
     setDismissedSelectedText,
     setDrawingImageData,
     setDrawingMode,
@@ -174,6 +176,7 @@ export function useKangurAiTutorPanelActions({
     setInputValue('');
     const currentDrawingData = drawingImageData;
     if (currentDrawingData) {
+      setDrawingDraftSnapshot(null);
       setDrawingImageData(null);
       setDrawingMode(false);
     }
@@ -221,6 +224,7 @@ export function useKangurAiTutorPanelActions({
     persistSelectionGeometry,
     resolveGuestLoginGuidanceIntent,
     sendMessage,
+    setDrawingDraftSnapshot,
     setDrawingImageData,
     setDrawingMode,
     setHighlightedText,
@@ -550,11 +554,17 @@ export function useKangurAiTutorPanelActions({
 
   const handleDrawingComplete = useCallback(
     (dataUrl: string): void => {
+      setDrawingDraftSnapshot(null);
       setDrawingImageData(dataUrl);
       setDrawingMode(false);
       setDrawingPanelOpen(false);
     },
-    [setDrawingImageData, setDrawingMode, setDrawingPanelOpen]
+    [
+      setDrawingDraftSnapshot,
+      setDrawingImageData,
+      setDrawingMode,
+      setDrawingPanelOpen,
+    ]
   );
 
   const handleOpenDrawingPanel = useCallback((): void => {
@@ -567,8 +577,9 @@ export function useKangurAiTutorPanelActions({
   }, [setDrawingPanelOpen]);
 
   const handleClearDrawing = useCallback((): void => {
+    setDrawingDraftSnapshot(null);
     setDrawingImageData(null);
-  }, [setDrawingImageData]);
+  }, [setDrawingDraftSnapshot, setDrawingImageData]);
 
   return {
     handleClearDrawing,

@@ -2,9 +2,13 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  createKangurFreeformDrawingSnapshot,
+  serializeKangurFreeformDrawingSnapshot,
+} from '@/features/kangur/ui/components/drawing-engine/freeform-snapshots';
 import { KangurAiTutorDrawingCanvas } from './KangurAiTutorDrawingCanvas';
 
 const canvasContextStub = {
@@ -13,6 +17,7 @@ const canvasContextStub = {
   fillRect: vi.fn(),
   lineTo: vi.fn(),
   moveTo: vi.fn(),
+  quadraticCurveTo: vi.fn(),
   resetTransform: vi.fn(),
   scale: vi.fn(),
   setTransform: vi.fn(),
@@ -27,9 +32,12 @@ const canvasContextStub = {
 
 describe('KangurAiTutorDrawingCanvas', () => {
   const originalGetBoundingClientRect = HTMLCanvasElement.prototype.getBoundingClientRect;
+  const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
 
   beforeEach(() => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(canvasContextStub);
+    HTMLCanvasElement.prototype.toDataURL = vi
+      .fn(() => 'data:image/png;base64,AAA') as typeof HTMLCanvasElement.prototype.toDataURL;
     HTMLCanvasElement.prototype.getBoundingClientRect = vi.fn(() => ({
       width: 320,
       height: 240,
@@ -54,6 +62,7 @@ describe('KangurAiTutorDrawingCanvas', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     HTMLCanvasElement.prototype.getBoundingClientRect = originalGetBoundingClientRect;
+    HTMLCanvasElement.prototype.toDataURL = originalToDataURL;
   });
 
   it('renders the drawing shell with storefront surface tokens', () => {
@@ -132,5 +141,68 @@ describe('KangurAiTutorDrawingCanvas', () => {
 
     fireEvent.click(redoButton);
     expect(redoButton).toBeDisabled();
+  });
+
+  it('exports the completed drawing through the shared freeform engine api', () => {
+    const onComplete = vi.fn();
+
+    render(<KangurAiTutorDrawingCanvas onCancel={vi.fn()} onComplete={onComplete} />);
+
+    const canvas = screen.getByLabelText('Plansza do rysowania');
+
+    fireEvent.pointerDown(canvas, {
+      pointerId: 10,
+      clientX: 48,
+      clientY: 56,
+    });
+    fireEvent.pointerMove(canvas, {
+      pointerId: 10,
+      clientX: 120,
+      clientY: 132,
+    });
+    fireEvent.pointerUp(canvas, {
+      pointerId: 10,
+      clientX: 120,
+      clientY: 132,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Gotowe' }));
+
+    expect(onComplete).toHaveBeenCalledWith('data:image/png;base64,AAA');
+    expect(HTMLCanvasElement.prototype.toDataURL).toHaveBeenCalledWith('image/png');
+  });
+
+  it('restores an incoming draft snapshot and enables completing it after remount', async () => {
+    const initialSnapshot = serializeKangurFreeformDrawingSnapshot(
+      createKangurFreeformDrawingSnapshot({
+        logicalHeight: 240,
+        logicalWidth: 320,
+        strokes: [
+          {
+            meta: {
+              color: '#2563eb',
+              isEraser: false,
+              width: 4,
+            },
+            points: [
+              { x: 30, y: 40 },
+              { x: 100, y: 132 },
+            ],
+          },
+        ],
+      })
+    );
+
+    render(
+      <KangurAiTutorDrawingCanvas
+        initialSnapshot={initialSnapshot}
+        onCancel={vi.fn()}
+        onComplete={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Gotowe' })).toBeEnabled();
+    });
   });
 });

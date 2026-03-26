@@ -17,6 +17,7 @@ const canvasContextStub = {
   fillRect: vi.fn(),
   lineTo: vi.fn(),
   moveTo: vi.fn(),
+  quadraticCurveTo: vi.fn(),
   resetTransform: vi.fn(),
   scale: vi.fn(),
   setTransform: vi.fn(),

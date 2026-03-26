@@ -16,6 +16,7 @@ import {
   loadPersistedGuestIntroRecord,
   loadPersistedHomeOnboardingRecord,
   loadPersistedTutorAvatarPosition,
+  loadPersistedTutorDrawingDraftSnapshot,
   loadPersistedTutorPanelPosition,
   loadPersistedTutorSessionKey,
   loadPersistedTutorVisibilityHidden,
@@ -244,17 +245,22 @@ function useWidgetOnboardingState() {
 
 function useWidgetInputState() {
   const [inputValue, setInputValue] = useState('');
+  const [drawingDraftSnapshot, setDrawingDraftSnapshot] = useState<string | null>(
+    () => loadPersistedTutorDrawingDraftSnapshot()
+  );
   const [drawingMode, setDrawingMode] = useState(false);
   const [drawingImageData, setDrawingImageData] = useState<string | null>(null);
   const [drawingPanelOpen, setDrawingPanelOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   return {
+    drawingDraftSnapshot,
     drawingImageData,
     drawingMode,
     drawingPanelOpen,
     inputRef,
     inputValue,
+    setDrawingDraftSnapshot,
     setDrawingImageData,
     setDrawingMode,
     setDrawingPanelOpen,

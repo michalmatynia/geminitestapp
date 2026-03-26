@@ -71,6 +71,7 @@ export type KangurAiTutorPanelPositionRecord = {
 };
 
 type KangurAiTutorWidgetStorageState = {
+  drawingDraftSnapshot?: string | null;
   lastSessionKey?: string | null;
   pendingFollowUp?: KangurAiTutorPendingFollowUpRecord | null;
   pendingNavigationTarget?: KangurAiTutorPendingNavigationTarget | null;
@@ -132,6 +133,9 @@ const persistTutorWidgetState = (state: KangurAiTutorWidgetStorageState): void =
   }
 
   const nextState = {
+    ...(typeof state.drawingDraftSnapshot === 'string'
+      ? { drawingDraftSnapshot: state.drawingDraftSnapshot }
+      : {}),
     ...(typeof state.lastSessionKey === 'string'
       ? { lastSessionKey: state.lastSessionKey }
       : {}),
@@ -155,6 +159,7 @@ const persistTutorWidgetState = (state: KangurAiTutorWidgetStorageState): void =
     },
     () => {
       if (
+        !('drawingDraftSnapshot' in nextState) &&
         !('lastSessionKey' in nextState) &&
         !('pendingFollowUp' in nextState) &&
         !('pendingNavigationTarget' in nextState) &&
@@ -331,6 +336,29 @@ const normalizeTutorAvatarPositionRecord = (
 export const loadPersistedTutorSessionKey = (): string | null => {
   const parsed = loadPersistedTutorWidgetState();
   return typeof parsed?.lastSessionKey === 'string' ? parsed.lastSessionKey : null;
+};
+
+export const loadPersistedTutorDrawingDraftSnapshot = (): string | null => {
+  const parsed = loadPersistedTutorWidgetState();
+  return typeof parsed?.drawingDraftSnapshot === 'string'
+    ? parsed.drawingDraftSnapshot
+    : null;
+};
+
+export const persistTutorDrawingDraftSnapshot = (snapshot: string | null): void => {
+  const currentState = loadPersistedTutorWidgetState();
+  persistTutorWidgetState({
+    ...currentState,
+    drawingDraftSnapshot: snapshot,
+  });
+};
+
+export const clearPersistedTutorDrawingDraftSnapshot = (): void => {
+  const currentState = loadPersistedTutorWidgetState();
+  persistTutorWidgetState({
+    ...currentState,
+    drawingDraftSnapshot: null,
+  });
 };
 
 export const persistTutorSessionKey = (sessionKey: string | null): void => {

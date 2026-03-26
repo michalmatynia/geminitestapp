@@ -277,7 +277,7 @@ describe('Game page', () => {
     expect(screen.getByTestId('kangur-game-navigation-widget')).toBeInTheDocument();
   });
 
-  it('prefetches Lessons from the home shell but leaves Duels user-initiated', async () => {
+  it('does not prefetch other Kangur pages while the game shell mounts', () => {
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildRuntime('home'),
       canAccessParentAssignments: true,
@@ -286,13 +286,10 @@ describe('Game page', () => {
 
     render(<Game />);
 
-    await waitFor(() => {
-      expect(routeNavigatorPrefetchMock).toHaveBeenCalledWith('/kangur/lessons');
-    });
-    expect(routeNavigatorPrefetchMock).not.toHaveBeenCalledWith('/kangur/duels');
+    expect(routeNavigatorPrefetchMock).not.toHaveBeenCalled();
   });
 
-  it('skips the Lessons shell prefetch on mobile', () => {
+  it('keeps mount behavior unchanged on mobile without route prefetch work', () => {
     useKangurMobileBreakpointMock.mockReturnValue(true);
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildRuntime('home'),

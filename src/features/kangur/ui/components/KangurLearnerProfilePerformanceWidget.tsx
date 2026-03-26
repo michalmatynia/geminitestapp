@@ -23,7 +23,7 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { cn } from '@/features/kangur/shared/utils';
 
-const LEARNER_PROFILE_PERFORMANCE_ROUTE_ACKNOWLEDGE_MS = 110;
+const LEARNER_PROFILE_PERFORMANCE_ROUTE_ACKNOWLEDGE_MS = 0;
 
 function KangurLearnerProfileOperationStat({
   dataTestId,

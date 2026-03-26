@@ -3,12 +3,14 @@
 import NextLink from 'next/link';
 import { useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 
 import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
+import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
+  canonicalizeKangurPublicAliasHref,
   localizeManagedKangurHref,
   resolveManagedKangurPageKeyFromHref,
 } from '@/features/kangur/ui/routing/managed-paths';
@@ -67,53 +69,52 @@ export function KangurTransitionLink({
 }: KangurTransitionLinkProps): React.JSX.Element {
   const routeNavigator = useKangurRouteNavigator();
   const routing = useOptionalKangurRouting();
+  const frontendPublicOwner = useOptionalFrontendPublicOwner();
   const locale = useLocale();
   const pathname = usePathname();
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
+  const effectivePageKeyBasePath = frontendPublicOwner?.publicOwner === 'kangur' ? '/' : basePath;
   const managedLocalHref =
     typeof href === 'string' && href.startsWith('/') && target !== '_blank' ? href : null;
   const isManagedLocalHref = managedLocalHref !== null;
-  const resolvedPrefetch = prefetch === false ? false : prefetch;
-  const shouldPrefetch = resolvedPrefetch !== false;
+  const resolvedPrefetch = isManagedLocalHref ? (prefetch ?? false) : prefetch;
   const shouldUseManagedScroll = isManagedLocalHref;
   const resolvedScroll = scroll ?? (shouldUseManagedScroll ? false : undefined);
   const renderedHref =
     managedLocalHref === null
       ? href
-      : localizeManagedKangurHref({
-        href: managedLocalHref,
-        locale,
-        pathname,
-      });
+      : (() => {
+        const localizedHref = localizeManagedKangurHref({
+          href: managedLocalHref,
+          locale,
+          pathname,
+        });
+
+        return frontendPublicOwner?.publicOwner === 'kangur'
+          ? canonicalizeKangurPublicAliasHref(localizedHref)
+          : localizedHref;
+      })();
   const publishPendingSnapshot = useCallback((): void => {
     if (managedLocalHref === null || typeof renderedHref !== 'string') {
       return;
     }
 
     const resolvedPageKey =
-      targetPageKey ?? resolveManagedKangurPageKeyFromHref(renderedHref, basePath);
+      targetPageKey ?? resolveManagedKangurPageKeyFromHref(renderedHref, effectivePageKeyBasePath);
 
     setKangurPendingRouteLoadingSnapshot({
       fromHref: pathname,
       href: renderedHref,
       pageKey: resolvedPageKey ?? null,
       skeletonVariant: resolveKangurRouteTransitionSkeletonVariant({
-        basePath,
+        basePath: effectivePageKeyBasePath,
         href: renderedHref,
         pageKey: resolvedPageKey ?? null,
       }),
       startedAt: Date.now(),
       topBarHeightCssValue: readKangurTopBarHeightCssValue(),
     });
-  }, [basePath, managedLocalHref, renderedHref, targetPageKey]);
-
-  useEffect(() => {
-    if (!managedLocalHref || !shouldPrefetch) {
-      return;
-    }
-
-    routeNavigator.prefetch(managedLocalHref);
-  }, [managedLocalHref, routeNavigator, shouldPrefetch]);
+  }, [effectivePageKeyBasePath, managedLocalHref, pathname, renderedHref, targetPageKey]);
 
   return (
     <NextLink

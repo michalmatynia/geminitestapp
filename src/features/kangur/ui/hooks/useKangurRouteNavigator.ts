@@ -7,6 +7,7 @@ import { useCallback, useMemo } from 'react';
 import {
   KANGUR_BASE_PATH,
 } from '@/features/kangur/config/routing';
+import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
 import {
   type KangurRouteTransitionKind,
   useOptionalKangurRouteTransitionActions,
@@ -14,6 +15,7 @@ import {
 } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
+  canonicalizeKangurPublicAliasHref,
   isManagedLocalHref,
   localizeManagedKangurHref,
   normalizeManagedKangurPathname,
@@ -113,17 +115,24 @@ export function useKangurRouteNavigator(): {
   const routeTransitionActions = useOptionalKangurRouteTransitionActions();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const routing = useOptionalKangurRouting();
+  const frontendPublicOwner = useOptionalFrontendPublicOwner();
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
+  const effectivePageKeyBasePath = frontendPublicOwner?.publicOwner === 'kangur' ? '/' : basePath;
   const requestedHref = routing?.requestedHref ?? routing?.requestedPath;
   const resolveManagedHref = useCallback(
-    (href: string, transitionKind?: KangurRouteTransitionKind | null): string =>
-      localizeManagedKangurHref({
+    (href: string, transitionKind?: KangurRouteTransitionKind | null): string => {
+      const localizedHref = localizeManagedKangurHref({
         href,
         locale,
         pathname,
         transitionKind,
-      }),
-    [locale, pathname]
+      });
+
+      return frontendPublicOwner?.publicOwner === 'kangur'
+        ? canonicalizeKangurPublicAliasHref(localizedHref)
+        : localizedHref;
+    },
+    [frontendPublicOwner?.publicOwner, locale, pathname]
   );
 
   const startManagedTransition = useCallback(
@@ -184,7 +193,9 @@ export function useKangurRouteNavigator(): {
       const resolvedHref = href ? resolveManagedHref(href, transitionKind) : null;
       const resolvedPageKey =
         pageKey ??
-        (resolvedHref ? resolveManagedKangurPageKeyFromHref(resolvedHref, basePath) : null);
+        (resolvedHref
+          ? resolveManagedKangurPageKeyFromHref(resolvedHref, effectivePageKeyBasePath)
+          : null);
       const transitionResult = routeTransitionActions.startRouteTransition({
         ...(resolvedHref ? { href: resolvedHref } : {}),
         ...(resolvedPageKey ? { pageKey: resolvedPageKey } : {}),
@@ -207,7 +218,14 @@ export function useKangurRouteNavigator(): {
         started: true,
       };
     },
-    [basePath, pathname, requestedHref, resolveManagedHref, routeTransitionActions, routeTransitionState]
+    [
+      effectivePageKeyBasePath,
+      pathname,
+      requestedHref,
+      resolveManagedHref,
+      routeTransitionActions,
+      routeTransitionState,
+    ]
   );
 
   const clearQueuedNavigation = useCallback((): void => {

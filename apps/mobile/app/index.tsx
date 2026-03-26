@@ -1,8 +1,12 @@
 import { Link, type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useMemo, useState } from 'react';
-import type { KangurDuelSeries, KangurScore } from '@kangur/contracts';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  createDefaultKangurProgressState,
+  type KangurDuelSeries,
+  type KangurScore,
+} from '@kangur/contracts';
 
 import { useKangurMobileAuth } from '../src/auth/KangurMobileAuthContext';
 import { createKangurCompetitionHref } from '../src/competition/competitionHref';
@@ -48,13 +52,18 @@ import {
   type KangurMobileHomeBadgeItem,
 } from '../src/home/useKangurMobileHomeBadges';
 import { useKangurMobileHomeDuelsSpotlight } from '../src/home/useKangurMobileHomeDuelsSpotlight';
+import {
+  buildPersistedKangurMobileHomeLessonCheckpointSnapshot,
+  persistKangurMobileHomeLessonCheckpoints,
+  resolveKangurMobileHomeLessonCheckpointIdentity,
+  resolvePersistedKangurMobileHomeLessonCheckpoints,
+} from '../src/home/persistedKangurMobileHomeLessonCheckpoints';
 import { useKangurMobileRecentResults } from '../src/home/useKangurMobileRecentResults';
 import { useKangurMobileHomeDuelsInvites } from '../src/home/useKangurMobileHomeDuelsInvites';
 import { useKangurMobileTrainingFocus } from '../src/home/useKangurMobileTrainingFocus';
 import { useHomeScreenBootState } from '../src/home/useHomeScreenBootState';
 import { useKangurMobileI18n } from '../src/i18n/kangurMobileI18n';
 import { createKangurLessonHref } from '../src/lessons/lessonHref';
-import { getKangurMobileLessonCheckpoints } from '../src/lessons/useKangurMobileLessonCheckpoints';
 import { createKangurParentDashboardHref } from '../src/parent/parentHref';
 import { createKangurPlanHref } from '../src/plan/planHref';
 import { createKangurPracticeHref } from '../src/practice/practiceHref';
@@ -307,57 +316,25 @@ function DeferredDuelAdvancedSectionPlaceholder(): React.JSX.Element {
   );
 }
 
-function DeferredHomeDuelOverviewSectionGroup(): React.JSX.Element {
+function DeferredHomeActivitySectionsCard(): React.JSX.Element {
   const { copy } = useKangurMobileI18n();
 
   return (
-    <>
-      <SectionCard
-        title={copy({
-          de: 'Private Duelle',
-          en: 'Private duels',
-          pl: 'Prywatne pojedynki',
-        })}
-      >
-        <Text style={{ color: '#475569', lineHeight: 20 }}>
-          {copy({
-            de: 'Wir bereiten Einladungen, gesendete Herausforderungen und schnelle Rückkämpfe fur den Start vor.',
-            en: 'Preparing invites, sent challenges, and quick rematches for the home screen.',
-            pl: 'Przygotowujemy zaproszenia, wysłane wyzwania i szybkie rewanże na ekran startowy.',
-          })}
-        </Text>
-      </SectionCard>
-
-      <SectionCard
-        title={copy({
-          de: 'Lobby und Rangliste',
-          en: 'Lobby and leaderboard',
-          pl: 'Lobby i ranking',
-        })}
-      >
-        <Text style={{ color: '#475569', lineHeight: 20 }}>
-          {copy({
-            de: 'Wir bereiten aktive Rivalen, Live-Duelle und die Rangliste fur den nachsten Startschritt vor.',
-            en: 'Preparing active rivals, live duels, and the leaderboard for the next home step.',
-            pl: 'Przygotowujemy aktywnych rywali, pojedynki na żywo i ranking na następny etap ekranu startowego.',
-          })}
-        </Text>
-      </SectionCard>
-    </>
-  );
-}
-
-function DeferredTrainingFocusPlaceholder(): React.JSX.Element {
-  const { copy } = useKangurMobileI18n();
-
-  return (
-    <Text style={{ color: '#475569', lineHeight: 20 }}>
-      {copy({
-        de: 'Wir bereiten den ergebnisbasierten Trainingsfokus fur den Start vor.',
-        en: 'Preparing score-based training focus for the home screen.',
-        pl: 'Przygotowujemy fokus treningowy oparty na wynikach na ekran startowy.',
+    <SectionCard
+      title={copy({
+        de: 'Nächste Startbereiche',
+        en: 'Next home sections',
+        pl: 'Kolejne sekcje startowe',
       })}
-    </Text>
+    >
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Wir bereiten Duelle, Trainingsfokus und weitere gespeicherte Bereiche fur die nächsten Startschritte vor.',
+          en: 'Preparing duels, training focus, and more saved sections for the next home steps.',
+          pl: 'Przygotowujemy pojedynki, fokus treningowy i kolejne zapisane sekcje na następne etapy ekranu startowego.',
+        })}
+      </Text>
+    </SectionCard>
   );
 }
 
@@ -1065,6 +1042,28 @@ function DeferredHomeAccountSummary(): React.JSX.Element {
         pl: 'Przygotowujemy status, profil ucznia i kolejne szczegóły konta na następny etap ekranu startowego.',
       })}
     </Text>
+  );
+}
+
+function DeferredHomeQuickAccessCard(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <SectionCard
+      title={copy({
+        de: 'Schnellzugriff',
+        en: 'Quick access',
+        pl: 'Szybki dostęp',
+      })}
+    >
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Wir bereiten Kontostatus, Anmeldung und weitere Navigationswege fur den nächsten Startschritt vor.',
+          en: 'Preparing account status, sign-in, and more navigation routes for the next home step.',
+          pl: 'Przygotowujemy status konta, logowanie i kolejne ścieżki nawigacji na następny etap ekranu startowego.',
+        })}
+      </Text>
+    </SectionCard>
   );
 }
 
@@ -3296,24 +3295,50 @@ export default function HomeScreen(): React.JSX.Element {
 
 function HomeScreenReady(): React.JSX.Element {
   const { locale } = useKangurMobileI18n();
-  const { progressStore } = useKangurMobileRuntime();
-  const [progress] = useState(() => progressStore.loadProgress());
+  const { progressStore, storage } = useKangurMobileRuntime();
+  const [initialProgress] = useState(createDefaultKangurProgressState);
   const areDeferredHomeProgressReady = useHomeScreenDeferredPanels(
     'home:progress',
     false,
   );
+  const homeLessonCheckpointIdentity = useMemo(
+    () => resolveKangurMobileHomeLessonCheckpointIdentity(storage),
+    [storage],
+  );
   const initialRecentLessonCheckpoints = useMemo(
     () =>
-      getKangurMobileLessonCheckpoints(progress, locale, {
+      resolvePersistedKangurMobileHomeLessonCheckpoints({
+        learnerIdentity: homeLessonCheckpointIdentity,
         limit: 2,
-      }).recentCheckpoints,
-    [locale, progress],
+        locale,
+        storage,
+      }) ?? [],
+    [homeLessonCheckpointIdentity, locale, storage],
   );
   const initialLatestLessonCheckpoint = initialRecentLessonCheckpoints[0] ?? null;
 
+  useEffect(() => {
+    if (!areDeferredHomeProgressReady) {
+      return;
+    }
+
+    persistKangurMobileHomeLessonCheckpoints({
+      learnerIdentity: homeLessonCheckpointIdentity,
+      snapshot: buildPersistedKangurMobileHomeLessonCheckpointSnapshot({
+        progress: progressStore.loadProgress(),
+      }),
+      storage,
+    });
+  }, [
+    areDeferredHomeProgressReady,
+    homeLessonCheckpointIdentity,
+    progressStore,
+    storage,
+  ]);
+
   return (
     <KangurMobileHomeProgressSnapshotProvider
-      progress={progress}
+      progress={initialProgress}
       subscribeToProgressStore={areDeferredHomeProgressReady}
     >
       <HomeScreenContent
@@ -3811,6 +3836,8 @@ function HomeScreenContent({
   const canOpenParentDashboard =
     session.status === 'authenticated' && Boolean(session.user?.canManageLearners);
   const activeDuelLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
+  const shouldRenderCombinedHomeQuickAccessPlaceholder =
+    !areDeferredHomeAccountSummaryReady && !areDeferredHomeNavigationSecondaryReady;
 
   const renderHomeScreenContent = ({
     homeDebugProof,
@@ -4045,249 +4072,255 @@ function HomeScreenContent({
           </SectionCard>
         ) : null}
 
-        <SectionCard
-          title={copy({
-            de: 'Konto und Verbindung',
-            en: 'Account and connection',
-            pl: 'Konto i połączenie',
-          })}
-        >
-          {!areDeferredHomeAccountSummaryReady ? (
-            <DeferredHomeAccountSummary />
-          ) : (
-            <>
-              <Text accessibilityLiveRegion='polite' style={{ color: '#0f172a' }}>
-                {copy({
-                  de: 'Status',
-                  en: 'Status',
-                  pl: 'Status',
-                })}
-                : {authBoundary?.statusLabel}
-              </Text>
-              <Text style={{ color: '#475569' }}>
-                {copy({
-                  de: 'Nutzer',
-                  en: 'User',
-                  pl: 'Użytkownik',
-                })}
-                : {authBoundary?.userLabel}
-              </Text>
-              {!areDeferredHomeAccountDetailsReady ? (
-                <DeferredHomeAccountDetails />
+        {shouldRenderCombinedHomeQuickAccessPlaceholder ? (
+          <DeferredHomeQuickAccessCard />
+        ) : (
+          <>
+            <SectionCard
+              title={copy({
+                de: 'Konto und Verbindung',
+                en: 'Account and connection',
+                pl: 'Konto i połączenie',
+              })}
+            >
+              {!areDeferredHomeAccountSummaryReady ? (
+                <DeferredHomeAccountSummary />
               ) : (
                 <>
+                  <Text accessibilityLiveRegion='polite' style={{ color: '#0f172a' }}>
+                    {copy({
+                      de: 'Status',
+                      en: 'Status',
+                      pl: 'Status',
+                    })}
+                    : {authBoundary?.statusLabel}
+                  </Text>
                   <Text style={{ color: '#475569' }}>
                     {copy({
-                      de: 'Anmeldemodus',
-                      en: 'Sign-in mode',
-                      pl: 'Tryb logowania',
+                      de: 'Nutzer',
+                      en: 'User',
+                      pl: 'Użytkownik',
                     })}
-                    : {authMode}
+                    : {authBoundary?.userLabel}
                   </Text>
-                  <Text style={{ color: '#475569' }}>
-                    API: {apiBaseUrl} ({apiBaseUrlSource})
-                  </Text>
+                  {!areDeferredHomeAccountDetailsReady ? (
+                    <DeferredHomeAccountDetails />
+                  ) : (
+                    <>
+                      <Text style={{ color: '#475569' }}>
+                        {copy({
+                          de: 'Anmeldemodus',
+                          en: 'Sign-in mode',
+                          pl: 'Tryb logowania',
+                        })}
+                        : {authMode}
+                      </Text>
+                      <Text style={{ color: '#475569' }}>
+                        API: {apiBaseUrl} ({apiBaseUrlSource})
+                      </Text>
+                    </>
+                  )}
                 </>
               )}
-            </>
-          )}
-          {authError ? (
-            <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{authError}</Text>
-          ) : null}
+              {authError ? (
+                <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{authError}</Text>
+              ) : null}
 
-          {shouldShowLearnerCredentialsForm ? (
-            <HomeLearnerCredentialsSignInSection
-              isDeferredReady={areDeferredHomeAccountSignInReady}
-              onSignIn={signInWithLearnerCredentials}
-            />
-          ) : session.status === 'authenticated' ? (
-            <PrimaryButton
-              hint={copy({
-                de: 'Meldet das aktuelle Konto ab.',
-                en: 'Signs out the current account.',
-                pl: 'Wylogowuje bieżące konto.',
-              })}
-              label={copy({
-                de: 'Abmelden',
-                en: 'Sign out',
-                pl: 'Wyloguj',
-              })}
-              onPress={signOut}
-            />
-          ) : (
-            <PrimaryButton
-              hint={copy({
-                de: 'Startet die Demo.',
-                en: 'Starts the demo.',
-                pl: 'Uruchamia demo.',
-              })}
-              label={copy({
-                de: 'Demo starten',
-                en: 'Start demo',
-                pl: 'Uruchom demo',
-              })}
-              onPress={signIn}
-            />
-          )}
-        </SectionCard>
-
-        <SectionCard
-          title={copy({
-            de: 'Navigation',
-            en: 'Navigation',
-            pl: 'Nawigacja',
-          })}
-        >
-          <View style={{ flexDirection: 'column', gap: 8 }}>
-            <OutlineLink
-              href={LESSONS_ROUTE}
-              hint={copy({
-                de: 'Öffnet die Lektionen.',
-                en: 'Opens lessons.',
-                pl: 'Otwiera lekcje.',
-              })}
-              label={copy({
-                de: 'Lektionen',
-                en: 'Lessons',
-                pl: 'Lekcje',
-              })}
-            />
-            <OutlineLink
-              href={PRACTICE_ROUTE}
-              hint={copy({
-                de: 'Öffnet das Training.',
-                en: 'Opens practice.',
-                pl: 'Otwiera trening.',
-              })}
-              label={copy({
-                de: 'Training',
-                en: 'Practice',
-                pl: 'Trening',
-              })}
-            />
-            {!areDeferredHomeNavigationSecondaryReady ? (
-              <DeferredHomeNavigationSecondaryLinks />
-            ) : (
-              <>
-                <OutlineLink
-                  href={PLAN_ROUTE}
+              {shouldShowLearnerCredentialsForm ? (
+                <HomeLearnerCredentialsSignInSection
+                  isDeferredReady={areDeferredHomeAccountSignInReady}
+                  onSignIn={signInWithLearnerCredentials}
+                />
+              ) : session.status === 'authenticated' ? (
+                <PrimaryButton
                   hint={copy({
-                    de: 'Öffnet den Tagesplan des Schulers.',
-                    en: 'Opens the learner daily plan.',
-                    pl: 'Otwiera plan dnia ucznia.',
+                    de: 'Meldet das aktuelle Konto ab.',
+                    en: 'Signs out the current account.',
+                    pl: 'Wylogowuje bieżące konto.',
                   })}
                   label={copy({
-                    de: 'Tagesplan',
-                    en: 'Daily plan',
-                    pl: 'Plan dnia',
+                    de: 'Abmelden',
+                    en: 'Sign out',
+                    pl: 'Wyloguj',
+                  })}
+                  onPress={signOut}
+                />
+              ) : (
+                <PrimaryButton
+                  hint={copy({
+                    de: 'Startet die Demo.',
+                    en: 'Starts the demo.',
+                    pl: 'Uruchamia demo.',
+                  })}
+                  label={copy({
+                    de: 'Demo starten',
+                    en: 'Start demo',
+                    pl: 'Uruchom demo',
+                  })}
+                  onPress={signIn}
+                />
+              )}
+            </SectionCard>
+
+            <SectionCard
+              title={copy({
+                de: 'Navigation',
+                en: 'Navigation',
+                pl: 'Nawigacja',
+              })}
+            >
+              <View style={{ flexDirection: 'column', gap: 8 }}>
+                <OutlineLink
+                  href={LESSONS_ROUTE}
+                  hint={copy({
+                    de: 'Öffnet die Lektionen.',
+                    en: 'Opens lessons.',
+                    pl: 'Otwiera lekcje.',
+                  })}
+                  label={copy({
+                    de: 'Lektionen',
+                    en: 'Lessons',
+                    pl: 'Lekcje',
                   })}
                 />
                 <OutlineLink
-                  href={RESULTS_ROUTE}
+                  href={PRACTICE_ROUTE}
                   hint={copy({
-                    de: 'Öffnet Ergebnisse und den vollständigen Verlauf.',
-                    en: 'Opens results and full history.',
-                    pl: 'Otwiera wyniki i pełną historię.',
+                    de: 'Öffnet das Training.',
+                    en: 'Opens practice.',
+                    pl: 'Otwiera trening.',
                   })}
                   label={copy({
-                    de: 'Ergebnisse',
-                    en: 'Results',
-                    pl: 'Wyniki',
+                    de: 'Training',
+                    en: 'Practice',
+                    pl: 'Trening',
                   })}
                 />
-                {canOpenParentDashboard ? (
-                  <OutlineLink
-                    href={PARENT_ROUTE}
-                    hint={copy({
-                      de: 'Öffnet den Elternbereich.',
-                      en: 'Opens the parent dashboard.',
-                      pl: 'Otwiera panel rodzica.',
-                    })}
-                    label={copy({
-                      de: 'Elternbereich',
-                      en: 'Parent dashboard',
-                      pl: 'Panel rodzica',
-                    })}
-                  />
-                ) : null}
-                {!areDeferredHomeNavigationExtendedReady ? (
-                  <DeferredHomeNavigationExtendedLinks />
+                {!areDeferredHomeNavigationSecondaryReady ? (
+                  <DeferredHomeNavigationSecondaryLinks />
                 ) : (
                   <>
                     <OutlineLink
-                      href={TESTS_ROUTE}
+                      href={PLAN_ROUTE}
                       hint={copy({
-                        de: 'Öffnet die Tests.',
-                        en: 'Opens tests.',
-                        pl: 'Otwiera testy.',
+                        de: 'Öffnet den Tagesplan des Schulers.',
+                        en: 'Opens the learner daily plan.',
+                        pl: 'Otwiera plan dnia ucznia.',
                       })}
                       label={copy({
-                        de: 'Tests',
-                        en: 'Tests',
-                        pl: 'Testy',
+                        de: 'Tagesplan',
+                        en: 'Daily plan',
+                        pl: 'Plan dnia',
                       })}
                     />
                     <OutlineLink
-                      href={COMPETITION_ROUTE}
+                      href={RESULTS_ROUTE}
                       hint={copy({
-                        de: 'Öffnet den Wettbewerb.',
-                        en: 'Opens the competition.',
-                        pl: 'Otwiera konkurs.',
+                        de: 'Öffnet Ergebnisse und den vollständigen Verlauf.',
+                        en: 'Opens results and full history.',
+                        pl: 'Otwiera wyniki i pełną historię.',
                       })}
                       label={copy({
-                        de: 'Wettbewerb',
-                        en: 'Competition',
-                        pl: 'Konkurs',
+                        de: 'Ergebnisse',
+                        en: 'Results',
+                        pl: 'Wyniki',
                       })}
                     />
-                    <OutlineLink
-                      href={PROFILE_ROUTE}
-                      hint={copy({
-                        de: 'Öffnet das Profil des Schulers.',
-                        en: 'Opens the learner profile.',
-                        pl: 'Otwiera profil ucznia.',
-                      })}
-                      label={copy({
-                        de: 'Profil',
-                        en: 'Profile',
-                        pl: 'Profil',
-                      })}
-                    />
-                    <OutlineLink
-                      href={LEADERBOARD_ROUTE}
-                      hint={copy({
-                        de: 'Öffnet die Rangliste der Schuler.',
-                        en: 'Opens the learner leaderboard.',
-                        pl: 'Otwiera ranking uczniów.',
-                      })}
-                      label={copy({
-                        de: 'Rangliste',
-                        en: 'Leaderboard',
-                        pl: 'Ranking',
-                      })}
-                    />
-                    <OutlineLink
-                      href={DUELS_ROUTE}
-                      hint={copy({
-                        de: 'Öffnet die Duell-Lobby.',
-                        en: 'Opens the duels lobby.',
-                        pl: 'Otwiera lobby pojedynków.',
-                      })}
-                      label={copy({
-                        de: 'Duelle',
-                        en: 'Duels',
-                        pl: 'Pojedynki',
-                      })}
-                    />
+                    {canOpenParentDashboard ? (
+                      <OutlineLink
+                        href={PARENT_ROUTE}
+                        hint={copy({
+                          de: 'Öffnet den Elternbereich.',
+                          en: 'Opens the parent dashboard.',
+                          pl: 'Otwiera panel rodzica.',
+                        })}
+                        label={copy({
+                          de: 'Elternbereich',
+                          en: 'Parent dashboard',
+                          pl: 'Panel rodzica',
+                        })}
+                      />
+                    ) : null}
+                    {!areDeferredHomeNavigationExtendedReady ? (
+                      <DeferredHomeNavigationExtendedLinks />
+                    ) : (
+                      <>
+                        <OutlineLink
+                          href={TESTS_ROUTE}
+                          hint={copy({
+                            de: 'Öffnet die Tests.',
+                            en: 'Opens tests.',
+                            pl: 'Otwiera testy.',
+                          })}
+                          label={copy({
+                            de: 'Tests',
+                            en: 'Tests',
+                            pl: 'Testy',
+                          })}
+                        />
+                        <OutlineLink
+                          href={COMPETITION_ROUTE}
+                          hint={copy({
+                            de: 'Öffnet den Wettbewerb.',
+                            en: 'Opens the competition.',
+                            pl: 'Otwiera konkurs.',
+                          })}
+                          label={copy({
+                            de: 'Wettbewerb',
+                            en: 'Competition',
+                            pl: 'Konkurs',
+                          })}
+                        />
+                        <OutlineLink
+                          href={PROFILE_ROUTE}
+                          hint={copy({
+                            de: 'Öffnet das Profil des Schulers.',
+                            en: 'Opens the learner profile.',
+                            pl: 'Otwiera profil ucznia.',
+                          })}
+                          label={copy({
+                            de: 'Profil',
+                            en: 'Profile',
+                            pl: 'Profil',
+                          })}
+                        />
+                        <OutlineLink
+                          href={LEADERBOARD_ROUTE}
+                          hint={copy({
+                            de: 'Öffnet die Rangliste der Schuler.',
+                            en: 'Opens the learner leaderboard.',
+                            pl: 'Otwiera ranking uczniów.',
+                          })}
+                          label={copy({
+                            de: 'Rangliste',
+                            en: 'Leaderboard',
+                            pl: 'Ranking',
+                          })}
+                        />
+                        <OutlineLink
+                          href={DUELS_ROUTE}
+                          hint={copy({
+                            de: 'Öffnet die Duell-Lobby.',
+                            en: 'Opens the duels lobby.',
+                            pl: 'Otwiera lobby pojedynków.',
+                          })}
+                          label={copy({
+                            de: 'Duelle',
+                            en: 'Duels',
+                            pl: 'Pojedynki',
+                          })}
+                        />
+                      </>
+                    )}
                   </>
                 )}
-              </>
-            )}
-          </View>
-        </SectionCard>
+              </View>
+            </SectionCard>
+          </>
+        )}
 
         {!areDeferredHomePanelsReady ? (
-          <DeferredHomeDuelOverviewSectionGroup />
+          <DeferredHomeActivitySectionsCard />
         ) : session.status === 'authenticated' ? (
           <AuthenticatedHomePrivateDuelSectionGroup
             areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
@@ -4351,108 +4384,108 @@ function HomeScreenContent({
           />
         )}
 
-        <SectionCard
-          title={copy({
-            de: 'Trainingsfokus',
-            en: 'Training focus',
-            pl: 'Fokus treningowy',
-          })}
-        >
-          {!areDeferredHomePanelsReady ? (
-            <DeferredTrainingFocusPlaceholder />
-          ) : trainingFocus.isRestoringAuth || trainingFocus.isLoading ? (
-            <Text style={{ color: '#475569', lineHeight: 20 }}>
-              {copy({
-                de: 'Die Anmeldung und der ergebnisbasierte Trainingsfokus werden wiederhergestellt.',
-                en: 'Restoring sign-in and score-based training focus.',
-                pl: 'Przywracamy logowanie i fokus treningowy oparty na wynikach.',
-              })}
-            </Text>
-          ) : !areDeferredHomeTrainingFocusDetailsReady ? (
-            <DeferredTrainingFocusDetailsPlaceholder />
-          ) : !trainingFocus.isEnabled &&
-            !trainingFocus.weakestOperation &&
-            !trainingFocus.strongestOperation ? (
-            <Text style={{ color: '#475569', lineHeight: 20 }}>
-              {copy({
-                de: 'Wir bereiten den aktualisierten Trainingsfokus für den nächsten Startschritt vor.',
-                en: 'Preparing the refreshed training focus for the next home step.',
-                pl: 'Przygotowujemy odświeżony fokus treningowy na kolejny etap ekranu startowego.',
-              })}
-            </Text>
-          ) : trainingFocus.error ? (
-            <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
-              {trainingFocus.error}
-            </Text>
-          ) : (
-            <View style={{ gap: 12 }}>
-              {trainingFocus.weakestOperation ? (
-                <FocusCard
-                  actionHref={createKangurPracticeHref(
-                    trainingFocus.weakestOperation.operation,
-                  )}
-                  actionLabel={copy({
-                    de: 'Schwächsten Modus trainieren',
-                    en: 'Practice weakest mode',
-                    pl: 'Trenuj najsłabszy tryb',
-                  })}
-                  averageAccuracyPercent={
-                    trainingFocus.weakestOperation.averageAccuracyPercent
-                  }
-                  lessonHref={createKangurLessonHref(
-                    trainingFocus.weakestLessonFocus,
-                  )}
-                  operation={trainingFocus.weakestOperation.operation}
-                  sessions={trainingFocus.weakestOperation.sessions}
-                  title={copy({
-                    de: 'Zum Wiederholen',
-                    en: 'Needs review',
-                    pl: 'Do powtórki',
-                  })}
-                />
-              ) : null}
-
-              {trainingFocus.strongestOperation ? (
-                <FocusCard
-                  actionHref={createKangurPracticeHref(
-                    trainingFocus.strongestOperation.operation,
-                  )}
-                  actionLabel={copy({
-                    de: 'Tempo halten',
-                    en: 'Keep the momentum',
-                    pl: 'Utrzymaj tempo',
-                  })}
-                  averageAccuracyPercent={
-                    trainingFocus.strongestOperation.averageAccuracyPercent
-                  }
-                  lessonHref={createKangurLessonHref(
-                    trainingFocus.strongestLessonFocus,
-                  )}
-                  operation={trainingFocus.strongestOperation.operation}
-                  sessions={trainingFocus.strongestOperation.sessions}
-                  title={copy({
-                    de: 'Stärkster Modus',
-                    en: 'Strongest mode',
-                    pl: 'Najmocniejszy tryb',
-                  })}
-                />
-              ) : null}
-
-              {!trainingFocus.weakestOperation &&
+        {!areDeferredHomePanelsReady ? null : (
+          <SectionCard
+            title={copy({
+              de: 'Trainingsfokus',
+              en: 'Training focus',
+              pl: 'Fokus treningowy',
+            })}
+          >
+            {trainingFocus.isRestoringAuth || trainingFocus.isLoading ? (
+              <Text style={{ color: '#475569', lineHeight: 20 }}>
+                {copy({
+                  de: 'Die Anmeldung und der ergebnisbasierte Trainingsfokus werden wiederhergestellt.',
+                  en: 'Restoring sign-in and score-based training focus.',
+                  pl: 'Przywracamy logowanie i fokus treningowy oparty na wynikach.',
+                })}
+              </Text>
+            ) : !areDeferredHomeTrainingFocusDetailsReady ? (
+              <DeferredTrainingFocusDetailsPlaceholder />
+            ) : !trainingFocus.isEnabled &&
+              !trainingFocus.weakestOperation &&
               !trainingFocus.strongestOperation ? (
-                <Text style={{ color: '#475569', lineHeight: 20 }}>
-                  {copy({
-                    de: 'Es gibt noch keine Ergebnisse für diesen Fokus. Starte mit einem Training oder öffne direkt eine Lektion.',
-                    en: 'There are no results for this focus yet. Start with practice or open a lesson directly.',
-                    pl: 'Nie ma jeszcze wyników dla tego fokusu. Zacznij od treningu albo otwórz lekcję bezpośrednio.',
-                  })}
-                </Text>
-              ) : null}
-            </View>
-          )}
-        </SectionCard>
+              <Text style={{ color: '#475569', lineHeight: 20 }}>
+                {copy({
+                  de: 'Wir bereiten den aktualisierten Trainingsfokus für den nächsten Startschritt vor.',
+                  en: 'Preparing the refreshed training focus for the next home step.',
+                  pl: 'Przygotowujemy odświeżony fokus treningowy na kolejny etap ekranu startowego.',
+                })}
+              </Text>
+            ) : trainingFocus.error ? (
+              <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
+                {trainingFocus.error}
+              </Text>
+            ) : (
+              <View style={{ gap: 12 }}>
+                {trainingFocus.weakestOperation ? (
+                  <FocusCard
+                    actionHref={createKangurPracticeHref(
+                      trainingFocus.weakestOperation.operation,
+                    )}
+                    actionLabel={copy({
+                      de: 'Schwächsten Modus trainieren',
+                      en: 'Practice weakest mode',
+                      pl: 'Trenuj najsłabszy tryb',
+                    })}
+                    averageAccuracyPercent={
+                      trainingFocus.weakestOperation.averageAccuracyPercent
+                    }
+                    lessonHref={createKangurLessonHref(
+                      trainingFocus.weakestLessonFocus,
+                    )}
+                    operation={trainingFocus.weakestOperation.operation}
+                    sessions={trainingFocus.weakestOperation.sessions}
+                    title={copy({
+                      de: 'Zum Wiederholen',
+                      en: 'Needs review',
+                      pl: 'Do powtórki',
+                    })}
+                  />
+                ) : null}
 
-        {!areDeferredHomeInsightsReady ? (
+                {trainingFocus.strongestOperation ? (
+                  <FocusCard
+                    actionHref={createKangurPracticeHref(
+                      trainingFocus.strongestOperation.operation,
+                    )}
+                    actionLabel={copy({
+                      de: 'Tempo halten',
+                      en: 'Keep the momentum',
+                      pl: 'Utrzymaj tempo',
+                    })}
+                    averageAccuracyPercent={
+                      trainingFocus.strongestOperation.averageAccuracyPercent
+                    }
+                    lessonHref={createKangurLessonHref(
+                      trainingFocus.strongestLessonFocus,
+                    )}
+                    operation={trainingFocus.strongestOperation.operation}
+                    sessions={trainingFocus.strongestOperation.sessions}
+                    title={copy({
+                      de: 'Stärkster Modus',
+                      en: 'Strongest mode',
+                      pl: 'Najmocniejszy tryb',
+                    })}
+                  />
+                ) : null}
+
+                {!trainingFocus.weakestOperation &&
+                !trainingFocus.strongestOperation ? (
+                  <Text style={{ color: '#475569', lineHeight: 20 }}>
+                    {copy({
+                      de: 'Es gibt noch keine Ergebnisse für diesen Fokus. Starte mit einem Training oder öffne direkt eine Lektion.',
+                      en: 'There are no results for this focus yet. Start with practice or open a lesson directly.',
+                      pl: 'Nie ma jeszcze wyników dla tego fokusu. Zacznij od treningu albo otwórz lekcję bezpośrednio.',
+                    })}
+                  </Text>
+                ) : null}
+              </View>
+            )}
+          </SectionCard>
+        )}
+
+        {!areDeferredHomePanelsReady ? null : !areDeferredHomeInsightsReady ? (
           <DeferredHomeInsightsCard />
         ) : (
           <HomeSecondaryInsightsSectionGroup

@@ -94,7 +94,6 @@ import {
 import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
-import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import {
   KANGUR_LAUNCHABLE_GAME_SCREENS,
   getKangurLaunchableGameContentId,
@@ -160,7 +159,6 @@ function GameContent(): React.JSX.Element {
     [canAccessParentAssignments, progress, user]
   );
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('home');
-  const routeNavigator = useKangurRouteNavigator();
   const prefersReducedMotion = useReducedMotion();
   const screenHeadingRef = useRef<HTMLHeadingElement>(null);
   const previousScreenRef = useRef<KangurGameScreen | null>(null);
@@ -393,27 +391,6 @@ function GameContent(): React.JSX.Element {
     return () => window.cancelAnimationFrame(frameId);
   }, [screen]);
 
-  useEffect(() => {
-    if (isMobile) {
-      return;
-    }
-
-    const schedule =
-      typeof globalThis.requestIdleCallback === 'function'
-        ? globalThis.requestIdleCallback
-        : (cb: () => void) => setTimeout(cb, 1);
-    const handle = schedule(() => {
-      routeNavigator.prefetch(createPageUrl('Lessons', basePath));
-    });
-    return () => {
-      if (typeof globalThis.cancelIdleCallback === 'function') {
-        globalThis.cancelIdleCallback(handle as number);
-      } else {
-        clearTimeout(handle as ReturnType<typeof setTimeout>);
-      }
-    };
-  }, [basePath, isMobile, routeNavigator]);
-
   const renderScreen = (
     screenKey: KangurGameScreen,
     className: string,
@@ -491,7 +468,6 @@ function GameContent(): React.JSX.Element {
                         <Link
                           href={createPageUrl('ParentDashboard', basePath)}
                           targetPageKey='ParentDashboard'
-                          transitionAcknowledgeMs={110}
                           transitionSourceId='game-home-parent-add-learner'
                         >
                           {translations('home.addLearner')}

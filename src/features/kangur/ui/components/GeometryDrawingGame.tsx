@@ -375,6 +375,7 @@ export default function GeometryDrawingGame({
     undoLastStroke,
   } = useKangurPointCanvasDrawing({
     canvasRef,
+    baseLayerCacheKey: 'geometry-drawing:grid:v1',
     enabled: !done && feedback?.kind !== 'success' && feedback?.kind !== 'error',
     logicalHeight: CANVAS_HEIGHT,
     logicalWidth: CANVAS_WIDTH,

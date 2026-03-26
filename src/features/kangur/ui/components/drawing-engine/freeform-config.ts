@@ -1,6 +1,9 @@
 'use client';
 
-import type { KangurFreeformDrawingTool } from './types';
+import type {
+  KangurDrawingStrokeRenderMode,
+  KangurFreeformDrawingTool,
+} from './types';
 
 export type KangurFreeformDrawingToolConfig = {
   colors?: readonly string[];
@@ -9,6 +12,7 @@ export type KangurFreeformDrawingToolConfig = {
   defaultTool?: KangurFreeformDrawingTool;
   eraserWidthMultiplier?: number;
   preferredWidthIndex?: number;
+  strokeRenderMode?: KangurDrawingStrokeRenderMode;
   strokeWidths?: readonly number[];
 };
 
@@ -19,6 +23,7 @@ export type ResolvedKangurFreeformDrawingToolConfig = {
   defaultTool: KangurFreeformDrawingTool;
   eraserWidthMultiplier: number;
   preferredWidthIndex: number;
+  strokeRenderMode: KangurDrawingStrokeRenderMode;
   strokeWidths: readonly number[];
 };
 
@@ -39,6 +44,7 @@ export const DEFAULT_KANGUR_FREEFORM_DRAWING_TOOL_CONFIG: ResolvedKangurFreeform
   defaultTool: 'pen',
   eraserWidthMultiplier: 3,
   preferredWidthIndex: 1,
+  strokeRenderMode: 'smooth',
   strokeWidths: DEFAULT_KANGUR_FREEFORM_DRAWING_STROKE_WIDTHS,
 };
 
@@ -72,6 +78,9 @@ export function resolveKangurFreeformDrawingToolConfig(
     preferredWidthIndex:
       config?.preferredWidthIndex ??
       DEFAULT_KANGUR_FREEFORM_DRAWING_TOOL_CONFIG.preferredWidthIndex,
+    strokeRenderMode:
+      config?.strokeRenderMode ??
+      DEFAULT_KANGUR_FREEFORM_DRAWING_TOOL_CONFIG.strokeRenderMode,
     strokeWidths,
   };
 }

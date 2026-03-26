@@ -45,6 +45,8 @@ describe('kangur server launch route', () => {
   });
 
   it('localizes fallback web routes without altering dedicated app deep links', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-26T09:00:00.000Z'));
     const localizeFallbackHref = vi.fn((href: string) => `/pl${href}`);
     const { getKangurConfiguredLaunchHref } = await import('./launch-route');
 
@@ -55,6 +57,7 @@ describe('kangur server launch route', () => {
     expect(localizeFallbackHref).toHaveBeenCalledWith('/lessons?focus=division');
 
     localizeFallbackHref.mockClear();
+    vi.setSystemTime(new Date('2026-03-26T09:00:31.000Z'));
     readKangurSettingValueMock.mockResolvedValue(JSON.stringify({ route: 'dedicated_app' }));
     await expect(
       getKangurConfiguredLaunchHref(['duels'], { join: 'invite-1' }, { localizeFallbackHref })

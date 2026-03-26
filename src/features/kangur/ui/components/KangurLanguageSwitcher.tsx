@@ -20,7 +20,6 @@ import {
   buildLocalizedPathname,
   getPathLocale,
   normalizeSiteLocale,
-  stripSiteLocalePrefix,
 } from '@/shared/lib/i18n/site-locale';
 import {
   DropdownMenu,
@@ -31,7 +30,6 @@ import {
 } from '@/shared/ui/dropdown-menu';
 
 import {
-  getKangurCanonicalPublicHref,
   getKangurHomeHref,
   getKangurPageHref,
   isKangurEmbeddedBasePath,
@@ -42,6 +40,7 @@ import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { prefetchKangurPageContentStore } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
+import { canonicalizeKangurPublicAliasPathname } from '@/features/kangur/ui/routing/managed-paths';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 
 const LANGUAGE_SWITCHER_SOURCE_ID = 'kangur-language-switcher';
@@ -178,22 +177,6 @@ const buildCurrentPageFallbackPath = (
   return getKangurPageHref(currentPage, basePath);
 };
 
-const canonicalizeKangurPublicAliasPath = (pathname: string): string => {
-  const normalizedPathname = stripSiteLocalePrefix(pathname);
-
-  if (normalizedPathname !== '/kangur' && !normalizedPathname.startsWith('/kangur/')) {
-    return pathname;
-  }
-
-  const slugSegments = normalizedPathname
-    .split('/')
-    .map((segment) => segment.trim())
-    .filter(Boolean)
-    .slice(1);
-
-  return getKangurCanonicalPublicHref(slugSegments);
-};
-
 const buildLocalizedHref = ({
   hash,
   locale,
@@ -280,7 +263,7 @@ export function KangurLanguageSwitcher({
   const rawCurrentPathname = pathname?.trim() || fallbackPath;
   const currentPathname =
     frontendPublicOwner?.publicOwner === 'kangur'
-      ? canonicalizeKangurPublicAliasPath(rawCurrentPathname)
+      ? canonicalizeKangurPublicAliasPathname(rawCurrentPathname)
       : rawCurrentPathname;
   const currentHash = typeof window === 'undefined' ? '' : window.location.hash;
 

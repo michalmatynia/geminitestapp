@@ -5,6 +5,59 @@ import type { KangurDrawingStroke, KangurDrawingStrokeRenderStyle } from './type
 const DEFAULT_LINE_CAP: CanvasLineCap = 'round';
 const DEFAULT_LINE_JOIN: CanvasLineJoin = 'round';
 
+export type KangurDrawingCanvasBaseLayerCache = {
+  canvas: HTMLCanvasElement;
+  logicalHeight: number;
+  logicalWidth: number;
+  key: number | string | null;
+};
+
+const renderSmoothKangurStrokePath = (
+  ctx: CanvasRenderingContext2D,
+  stroke: KangurDrawingStroke<unknown>
+): void => {
+  const firstPoint = stroke.points[0];
+  if (!firstPoint) {
+    return;
+  }
+
+  if (stroke.points.length === 1) {
+    ctx.lineTo(firstPoint.x, firstPoint.y);
+    return;
+  }
+
+  if (stroke.points.length === 2) {
+    const secondPoint = stroke.points[1];
+    if (secondPoint) {
+      ctx.lineTo(secondPoint.x, secondPoint.y);
+    }
+    return;
+  }
+
+  for (let pointIndex = 1; pointIndex < stroke.points.length - 1; pointIndex += 1) {
+    const point = stroke.points[pointIndex];
+    const nextPoint = stroke.points[pointIndex + 1];
+    if (!point || !nextPoint) {
+      continue;
+    }
+
+    const midPointX = (point.x + nextPoint.x) / 2;
+    const midPointY = (point.y + nextPoint.y) / 2;
+    ctx.quadraticCurveTo(point.x, point.y, midPointX, midPointY);
+  }
+
+  const penultimatePoint = stroke.points[stroke.points.length - 2];
+  const lastPoint = stroke.points[stroke.points.length - 1];
+  if (penultimatePoint && lastPoint) {
+    ctx.quadraticCurveTo(
+      penultimatePoint.x,
+      penultimatePoint.y,
+      lastPoint.x,
+      lastPoint.y
+    );
+  }
+};
+
 export const renderKangurDrawingStrokes = <TMeta>(
   ctx: CanvasRenderingContext2D,
   strokes: KangurDrawingStroke<TMeta>[],
@@ -34,12 +87,19 @@ export const renderKangurDrawingStrokes = <TMeta>(
     ctx.globalCompositeOperation = style.compositeOperation ?? 'source-over';
     ctx.moveTo(firstPoint.x, firstPoint.y);
 
-    for (let pointIndex = 1; pointIndex < stroke.points.length; pointIndex += 1) {
-      const point = stroke.points[pointIndex];
-      if (!point) {
-        continue;
+    if (style.renderMode === 'smooth') {
+      renderSmoothKangurStrokePath(
+        ctx,
+        stroke as KangurDrawingStroke<unknown>
+      );
+    } else {
+      for (let pointIndex = 1; pointIndex < stroke.points.length; pointIndex += 1) {
+        const point = stroke.points[pointIndex];
+        if (!point) {
+          continue;
+        }
+        ctx.lineTo(point.x, point.y);
       }
-      ctx.lineTo(point.x, point.y);
     }
 
     ctx.stroke();
@@ -52,6 +112,10 @@ export const renderKangurDrawingStrokes = <TMeta>(
 
 type RedrawKangurCanvasStrokesOptions<TMeta> = {
   backgroundFill?: string;
+  baseLayerCache?: {
+    current: KangurDrawingCanvasBaseLayerCache | null;
+  };
+  baseLayerCacheKey?: number | string | null;
   beforeStrokes?: (ctx: CanvasRenderingContext2D) => void;
   canvas: HTMLCanvasElement | null;
   logicalHeight: number;
@@ -63,8 +127,31 @@ type RedrawKangurCanvasStrokesOptions<TMeta> = {
   strokes: KangurDrawingStroke<TMeta>[];
 };
 
+const drawKangurCanvasBaseLayer = ({
+  backgroundFill,
+  beforeStrokes,
+  ctx,
+  logicalHeight,
+  logicalWidth,
+}: {
+  backgroundFill?: string;
+  beforeStrokes?: (ctx: CanvasRenderingContext2D) => void;
+  ctx: CanvasRenderingContext2D;
+  logicalHeight: number;
+  logicalWidth: number;
+}): void => {
+  ctx.clearRect(0, 0, logicalWidth, logicalHeight);
+  if (backgroundFill) {
+    ctx.fillStyle = backgroundFill;
+    ctx.fillRect(0, 0, logicalWidth, logicalHeight);
+  }
+  beforeStrokes?.(ctx);
+};
+
 export const redrawKangurCanvasStrokes = <TMeta>({
   backgroundFill,
+  baseLayerCache,
+  baseLayerCacheKey,
   beforeStrokes,
   canvas,
   logicalHeight,
@@ -81,11 +168,47 @@ export const redrawKangurCanvasStrokes = <TMeta>({
     return;
   }
 
-  ctx.clearRect(0, 0, logicalWidth, logicalHeight);
-  if (backgroundFill) {
-    ctx.fillStyle = backgroundFill;
-    ctx.fillRect(0, 0, logicalWidth, logicalHeight);
+  if (baseLayerCache && baseLayerCacheKey !== undefined) {
+    const cachedLayer = baseLayerCache.current;
+    const shouldRefreshBaseLayer =
+      cachedLayer?.key !== baseLayerCacheKey ||
+      cachedLayer?.logicalWidth !== logicalWidth ||
+      cachedLayer?.logicalHeight !== logicalHeight;
+
+    if (shouldRefreshBaseLayer) {
+      const nextBaseCanvas = cachedLayer?.canvas ?? document.createElement('canvas');
+      const baseCtx = syncKangurCanvasContext(nextBaseCanvas, logicalWidth, logicalHeight);
+      if (baseCtx) {
+        drawKangurCanvasBaseLayer({
+          backgroundFill,
+          beforeStrokes,
+          ctx: baseCtx,
+          logicalHeight,
+          logicalWidth,
+        });
+      }
+      baseLayerCache.current = {
+        canvas: nextBaseCanvas,
+        key: baseLayerCacheKey,
+        logicalHeight,
+        logicalWidth,
+      };
+    }
+
+    ctx.clearRect(0, 0, logicalWidth, logicalHeight);
+    const nextCachedLayer = baseLayerCache.current;
+    if (nextCachedLayer) {
+      ctx.drawImage(nextCachedLayer.canvas, 0, 0, logicalWidth, logicalHeight);
+    }
+  } else {
+    drawKangurCanvasBaseLayer({
+      backgroundFill,
+      beforeStrokes,
+      ctx,
+      logicalHeight,
+      logicalWidth,
+    });
   }
-  beforeStrokes?.(ctx);
+
   renderKangurDrawingStrokes(ctx, strokes, resolveStyle);
 };

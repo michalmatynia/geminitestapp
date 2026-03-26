@@ -22,7 +22,7 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import type { KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
 
-const PROFILE_ROUTE_ACKNOWLEDGE_MS = 110;
+const PROFILE_ROUTE_ACKNOWLEDGE_MS = 0;
 
 const buildAssignmentHref = (
   basePath: string,

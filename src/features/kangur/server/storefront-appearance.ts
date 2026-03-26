@@ -18,6 +18,16 @@ import {
 } from '@/shared/contracts/kangur-settings-keys';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 
+const KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TTL_MS = 30_000;
+
+type KangurStorefrontInitialStateCacheEntry = {
+  expiresAt: number;
+  value: KangurStorefrontInitialState;
+};
+
+let kangurStorefrontInitialStateCacheEntry: KangurStorefrontInitialStateCacheEntry | null = null;
+let kangurStorefrontInitialStateInFlight: Promise<KangurStorefrontInitialState> | null = null;
+
 export const getKangurStorefrontDefaultMode = async (): Promise<KangurStorefrontAppearanceMode> => {
   const raw = await getSettingValue(KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY);
   return parseKangurStorefrontAppearanceMode(raw);
@@ -47,9 +57,37 @@ const getKangurStorefrontInitialStateUncached = async (): Promise<KangurStorefro
   };
 };
 
+const getKangurStorefrontInitialStateHotCached = async (): Promise<KangurStorefrontInitialState> => {
+  const now = Date.now();
+  if (
+    kangurStorefrontInitialStateCacheEntry &&
+    kangurStorefrontInitialStateCacheEntry.expiresAt > now
+  ) {
+    return kangurStorefrontInitialStateCacheEntry.value;
+  }
+
+  if (kangurStorefrontInitialStateInFlight) {
+    return kangurStorefrontInitialStateInFlight;
+  }
+
+  kangurStorefrontInitialStateInFlight = getKangurStorefrontInitialStateUncached()
+    .then((value) => {
+      kangurStorefrontInitialStateCacheEntry = {
+        value,
+        expiresAt: Date.now() + KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TTL_MS,
+      };
+      return value;
+    })
+    .finally(() => {
+      kangurStorefrontInitialStateInFlight = null;
+    });
+
+  return kangurStorefrontInitialStateInFlight;
+};
+
 export const getKangurStorefrontInitialState = cache(
   unstable_cache(
-    getKangurStorefrontInitialStateUncached,
+    getKangurStorefrontInitialStateHotCached,
     ['kangur-storefront-initial-state'],
     { revalidate: 300 }
   )

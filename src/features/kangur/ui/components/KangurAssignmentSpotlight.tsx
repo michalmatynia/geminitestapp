@@ -210,7 +210,6 @@ export function KangurAssignmentSpotlight({
                 setSubject(assignmentSubject);
               }
             }}
-            transitionAcknowledgeMs={110}
             transitionSourceId={transitionSourceId}
           >
             {getKangurAssignmentActionLabel(assignment, {

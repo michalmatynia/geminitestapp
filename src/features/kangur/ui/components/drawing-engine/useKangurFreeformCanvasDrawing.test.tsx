@@ -3,16 +3,21 @@
  */
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  createKangurPointDrawingSnapshot,
-  serializeKangurPointDrawingSnapshot,
-} from '@/features/kangur/ui/components/drawing-engine/point-snapshots';
-import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
+  createKangurFreeformDrawingSnapshot,
+  serializeKangurFreeformDrawingSnapshot,
+} from '@/features/kangur/ui/components/drawing-engine/freeform-snapshots';
+import { useKangurFreeformCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurFreeformCanvasDrawing';
 
-const createRect = (input: { left: number; top: number; width: number; height: number }): DOMRect =>
+const createRect = (input: {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}): DOMRect =>
   ({
     ...input,
     right: input.left + input.width,
@@ -22,15 +27,17 @@ const createRect = (input: { left: number; top: number; width: number; height: n
     toJSON: () => ({}),
   }) as DOMRect;
 
-function CanvasDrawingHarness({
+function FreeformCanvasHarness({
   initialSerializedSnapshot = null,
+  isCoarsePointer = false,
   onSerializedSnapshotChange,
 }: {
   initialSerializedSnapshot?: string | null;
+  isCoarsePointer?: boolean;
   onSerializedSnapshotChange?: (raw: string | null) => void;
 }): React.JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [savedSerializedSnapshot, setSavedSerializedSnapshot] = useState('');
+  const [serializedSnapshot, setSerializedSnapshot] = useState('');
   const {
     canRedo,
     canUndo,
@@ -43,64 +50,80 @@ function CanvasDrawingHarness({
     restoreSerializedSnapshot,
     serializeSnapshot,
     strokes,
+    tools,
     undoLastStroke,
-  } = useKangurPointCanvasDrawing({
+  } = useKangurFreeformCanvasDrawing({
     backgroundFill: '#ffffff',
     canvasRef,
+    config: {
+      colors: ['#111827', '#2563eb'],
+      eraserWidthMultiplier: 4,
+      preferredWidthIndex: 1,
+      strokeWidths: [2, 4],
+    },
     initialSerializedSnapshot,
+    isCoarsePointer,
     logicalHeight: 220,
     logicalWidth: 320,
-    minPointDistance: 8,
     onSerializedSnapshotChange,
-    resolveStyle: () => ({
-      lineWidth: 4,
-      strokeStyle: '#0f172a',
-    }),
+    shouldCommitStroke: (stroke) => stroke.points.length >= 2,
     touchLockEnabled: true,
   });
 
-  const pointCount = useMemo(() => strokes.flatMap((stroke) => stroke).length, [strokes]);
+  const lastStroke = strokes[strokes.length - 1];
 
   return (
     <>
       <canvas
         ref={canvasRef}
-        aria-label='Shared canvas drawing surface'
+        aria-label='Shared freeform canvas surface'
+        data-active-tool={tools.activeTool}
         data-can-redo={canRedo ? 'true' : 'false'}
         data-can-undo={canUndo ? 'true' : 'false'}
         data-drawing-active={isPointerDrawing ? 'true' : 'false'}
         data-has-drawable-content={hasDrawableContent ? 'true' : 'false'}
-        data-point-count={String(pointCount)}
+        data-last-color={lastStroke?.meta.color ?? ''}
+        data-last-width={lastStroke ? String(lastStroke.meta.width) : ''}
+        data-resolved-width={String(tools.strokeMeta.width)}
         data-stroke-count={String(strokes.length)}
+        onPointerCancel={handlePointerUp}
         onPointerDown={handlePointerDown}
+        onPointerLeave={handlePointerUp}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        onPointerLeave={handlePointerUp}
       />
+      <button type='button' onClick={() => tools.selectColor('#2563eb')}>
+        Blue
+      </button>
+      <button type='button' onClick={tools.selectEraser}>
+        Eraser
+      </button>
+      <button type='button' onClick={() => tools.selectWidth(tools.strokeWidths[1] ?? 4)}>
+        Thick
+      </button>
       <button type='button' onClick={undoLastStroke}>
         Undo
       </button>
       <button type='button' onClick={redoLastStroke}>
         Redo
       </button>
-      <button type='button' onClick={() => setSavedSerializedSnapshot(serializeSnapshot())}>
+      <button type='button' onClick={() => setSerializedSnapshot(serializeSnapshot())}>
         Save
       </button>
       <button
         type='button'
         onClick={() => {
-          restoreSerializedSnapshot(savedSerializedSnapshot);
+          restoreSerializedSnapshot(serializedSnapshot);
         }}
       >
         Restore
       </button>
-      <div data-testid='serialized-snapshot'>{savedSerializedSnapshot}</div>
+      <div data-testid='serialized-snapshot'>{serializedSnapshot}</div>
     </>
   );
 }
 
-describe('useKangurPointCanvasDrawing', () => {
+describe('useKangurFreeformCanvasDrawing', () => {
   const originalGetBoundingClientRect = HTMLCanvasElement.prototype.getBoundingClientRect;
 
   beforeEach(() => {
@@ -110,6 +133,7 @@ describe('useKangurPointCanvasDrawing', () => {
       fillRect: vi.fn(),
       lineTo: vi.fn(),
       moveTo: vi.fn(),
+      quadraticCurveTo: vi.fn(),
       resetTransform: vi.fn(),
       scale: vi.fn(),
       setTransform: vi.fn(),
@@ -119,8 +143,6 @@ describe('useKangurPointCanvasDrawing', () => {
       lineCap: 'round',
       lineJoin: 'round',
       lineWidth: 1,
-      shadowBlur: 0,
-      shadowColor: '',
       strokeStyle: '#000000',
     } as unknown as CanvasRenderingContext2D;
 
@@ -143,63 +165,37 @@ describe('useKangurPointCanvasDrawing', () => {
     HTMLCanvasElement.prototype.getBoundingClientRect = originalGetBoundingClientRect;
   });
 
-  it('tracks strokes on a canvas surface and filters near-duplicate points', () => {
-    render(<CanvasDrawingHarness />);
+  it('tracks freeform canvas strokes and preserves redo history', () => {
+    render(<FreeformCanvasHarness />);
 
-    const canvas = screen.getByLabelText('Shared canvas drawing surface');
+    const canvas = screen.getByLabelText('Shared freeform canvas surface');
     expect(canvas.style.touchAction).toBe('none');
+    expect(canvas).toHaveAttribute('data-resolved-width', '4');
+    expect(canvas).toHaveAttribute('data-has-drawable-content', 'false');
 
+    fireEvent.click(screen.getByRole('button', { name: 'Blue' }));
     fireEvent.pointerDown(canvas, {
-      pointerId: 3,
+      pointerId: 2,
       clientX: 40,
       clientY: 60,
     });
-    expect(canvas).toHaveAttribute('data-drawing-active', 'true');
-
     fireEvent.pointerMove(canvas, {
-      pointerId: 3,
-      clientX: 44,
-      clientY: 64,
-    });
-    fireEvent.pointerMove(canvas, {
-      pointerId: 3,
-      clientX: 90,
-      clientY: 120,
+      pointerId: 2,
+      clientX: 92,
+      clientY: 124,
     });
     fireEvent.pointerUp(canvas, {
-      pointerId: 3,
-      clientX: 90,
-      clientY: 120,
+      pointerId: 2,
+      clientX: 92,
+      clientY: 124,
     });
 
-    expect(canvas).toHaveAttribute('data-drawing-active', 'false');
     expect(canvas).toHaveAttribute('data-stroke-count', '1');
-    expect(canvas).toHaveAttribute('data-point-count', '2');
+    expect(canvas).toHaveAttribute('data-last-color', '#2563eb');
+    expect(canvas).toHaveAttribute('data-last-width', '4');
     expect(canvas).toHaveAttribute('data-can-undo', 'true');
     expect(canvas).toHaveAttribute('data-can-redo', 'false');
     expect(canvas).toHaveAttribute('data-has-drawable-content', 'true');
-  });
-
-  it('exposes redo history for point-canvas surfaces', () => {
-    render(<CanvasDrawingHarness />);
-
-    const canvas = screen.getByLabelText('Shared canvas drawing surface');
-
-    fireEvent.pointerDown(canvas, {
-      pointerId: 11,
-      clientX: 36,
-      clientY: 48,
-    });
-    fireEvent.pointerMove(canvas, {
-      pointerId: 11,
-      clientX: 92,
-      clientY: 108,
-    });
-    fireEvent.pointerUp(canvas, {
-      pointerId: 11,
-      clientX: 92,
-      clientY: 108,
-    });
 
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect(canvas).toHaveAttribute('data-stroke-count', '0');
@@ -210,25 +206,25 @@ describe('useKangurPointCanvasDrawing', () => {
     expect(canvas).toHaveAttribute('data-can-redo', 'false');
   });
 
-  it('serializes and restores shared point snapshots through the engine api', () => {
-    render(<CanvasDrawingHarness />);
+  it('serializes and restores shared freeform snapshots through the engine api', () => {
+    render(<FreeformCanvasHarness />);
 
-    const canvas = screen.getByLabelText('Shared canvas drawing surface');
+    const canvas = screen.getByLabelText('Shared freeform canvas surface');
 
     fireEvent.pointerDown(canvas, {
-      pointerId: 15,
-      clientX: 32,
-      clientY: 52,
+      pointerId: 7,
+      clientX: 24,
+      clientY: 36,
     });
     fireEvent.pointerMove(canvas, {
-      pointerId: 15,
-      clientX: 96,
-      clientY: 116,
+      pointerId: 7,
+      clientX: 72,
+      clientY: 96,
     });
     fireEvent.pointerUp(canvas, {
-      pointerId: 15,
-      clientX: 96,
-      clientY: 116,
+      pointerId: 7,
+      clientX: 72,
+      clientY: 96,
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
@@ -243,52 +239,62 @@ describe('useKangurPointCanvasDrawing', () => {
     expect(canvas).toHaveAttribute('data-has-drawable-content', 'true');
   });
 
-  it('restores initial serialized point snapshots and emits snapshot updates', async () => {
+  it('applies coarse-pointer width boosts and eraser multipliers through the shared config', () => {
+    render(<FreeformCanvasHarness isCoarsePointer />);
+
+    const canvas = screen.getByLabelText('Shared freeform canvas surface');
+    expect(canvas).toHaveAttribute('data-resolved-width', '6');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Thick' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Eraser' }));
+
+    expect(canvas).toHaveAttribute('data-active-tool', 'eraser');
+    expect(canvas).toHaveAttribute('data-resolved-width', '24');
+  });
+
+  it('restores initial serialized snapshots and emits shared draft updates', async () => {
     const onSerializedSnapshotChange = vi.fn();
-    const initialSerializedSnapshot = serializeKangurPointDrawingSnapshot(
-      createKangurPointDrawingSnapshot({
+    const initialSerializedSnapshot = serializeKangurFreeformDrawingSnapshot(
+      createKangurFreeformDrawingSnapshot({
         logicalHeight: 220,
         logicalWidth: 320,
         strokes: [
-          [
-            { x: 18, y: 24 },
-            { x: 72, y: 120 },
-          ],
+          {
+            meta: {
+              color: '#2563eb',
+              isEraser: false,
+              width: 4,
+            },
+            points: [
+              { x: 32, y: 40 },
+              { x: 108, y: 144 },
+            ],
+          },
         ],
       })
     );
 
     render(
-      <CanvasDrawingHarness
+      <FreeformCanvasHarness
         initialSerializedSnapshot={initialSerializedSnapshot}
         onSerializedSnapshotChange={onSerializedSnapshotChange}
       />
     );
 
-    const canvas = screen.getByLabelText('Shared canvas drawing surface');
-
-    expect(canvas).toHaveAttribute('data-stroke-count', '1');
-
-    fireEvent.pointerDown(canvas, {
-      pointerId: 22,
-      clientX: 128,
-      clientY: 80,
-    });
-    fireEvent.pointerMove(canvas, {
-      pointerId: 22,
-      clientX: 172,
-      clientY: 132,
-    });
-    fireEvent.pointerUp(canvas, {
-      pointerId: 22,
-      clientX: 172,
-      clientY: 132,
-    });
+    const canvas = screen.getByLabelText('Shared freeform canvas surface');
 
     await waitFor(() => {
+      expect(canvas).toHaveAttribute('data-stroke-count', '1');
+    });
+    await waitFor(() => {
       expect(onSerializedSnapshotChange).toHaveBeenLastCalledWith(
-        expect.stringContaining('"version":1')
+        initialSerializedSnapshot
       );
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    await waitFor(() => {
+      expect(onSerializedSnapshotChange).toHaveBeenLastCalledWith(null);
     });
   });
 });

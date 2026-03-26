@@ -7,19 +7,17 @@ import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTu
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { KangurDrawingCanvasSurface } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingCanvasSurface';
 import { KangurDrawingFreeformToolbar } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar';
-import { redrawKangurCanvasStrokes } from '@/features/kangur/ui/components/drawing-engine/render';
-import { useKangurFreeformDrawingTools } from '@/features/kangur/ui/components/drawing-engine/useKangurFreeformDrawingTools';
-import {
-  useKangurDrawingEngine,
-} from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingEngine';
-import type { KangurFreeformDrawingStrokeMeta } from '@/features/kangur/ui/components/drawing-engine/types';
+import type { KangurFreeformDrawingToolConfig } from '@/features/kangur/ui/components/drawing-engine/freeform-config';
+import { useKangurFreeformCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurFreeformCanvasDrawing';
 import { cn } from '@/features/kangur/shared/utils';
 
 import type { JSX } from 'react';
 
 type Props = {
+  initialSnapshot?: string | null;
   onComplete: (dataUrl: string) => void;
   onCancel: () => void;
+  onSnapshotChange?: (snapshot: string | null) => void;
 };
 
 type TutorDrawingContent = {
@@ -33,67 +31,58 @@ type TutorDrawingContent = {
   doneLabel?: string;
   canvasLabel?: string;
 };
-const COLORS = ['#1e293b', '#2563eb', '#dc2626', '#16a34a', '#f59e0b'] as const;
-const STROKE_WIDTHS = [2, 4, 8] as const;
 const CANVAS_BG = '#ffffff';
 const CANVAS_WIDTH = 320;
 const CANVAS_HEIGHT = 240;
+const KANGUR_AI_TUTOR_DRAWING_TOOL_CONFIG: KangurFreeformDrawingToolConfig = {
+  colors: ['#1e293b', '#2563eb', '#dc2626', '#16a34a', '#f59e0b'],
+  eraserWidthMultiplier: 3,
+  preferredWidthIndex: 1,
+  strokeWidths: [2, 4, 8],
+};
 
-export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX.Element {
+export function KangurAiTutorDrawingCanvas({
+  initialSnapshot = null,
+  onComplete,
+  onCancel,
+  onSnapshotChange,
+}: Props): JSX.Element {
   const tutorContent = useKangurAiTutorContent();
   const drawingContent = (tutorContent as { drawing?: TutorDrawingContent }).drawing;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isCoarsePointer = useKangurCoarsePointer();
-  const drawingTools = useKangurFreeformDrawingTools({
-    colors: COLORS,
-    isCoarsePointer,
-    strokeWidths: STROKE_WIDTHS,
-  });
-  const minPointDistance = isCoarsePointer ? 4 : 2;
   const {
+    tools: drawingTools,
+    exportDataUrl,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
+    hasDrawableContent,
     isPointerDrawing,
     canRedo,
     canUndo,
-    strokes,
     redoLastStroke: handleRedo,
     undoLastStroke: handleUndo,
     clearStrokes: handleClear,
-  } = useKangurDrawingEngine<KangurFreeformDrawingStrokeMeta>({
+  } = useKangurFreeformCanvasDrawing({
+    backgroundFill: CANVAS_BG,
     canvasRef,
-    createStroke: ({ point }) => ({
-      meta: drawingTools.strokeMeta,
-      points: [point],
-    }),
+    config: KANGUR_AI_TUTOR_DRAWING_TOOL_CONFIG,
+    initialSerializedSnapshot: initialSnapshot,
+    isCoarsePointer,
     logicalHeight: 240,
     logicalWidth: 320,
-    minPointDistance,
-    redraw: ({ activeStroke, strokes }) => {
-      redrawKangurCanvasStrokes({
-        backgroundFill: CANVAS_BG,
-        canvas: canvasRef.current,
-        logicalHeight: CANVAS_HEIGHT,
-        logicalWidth: CANVAS_WIDTH,
-        resolveStyle: ({ meta }) => ({
-          compositeOperation: meta.isEraser ? 'destination-out' : 'source-over',
-          lineWidth: meta.width,
-          strokeStyle: meta.isEraser ? 'rgba(0,0,0,1)' : meta.color,
-        }),
-        strokes: activeStroke ? [...strokes, activeStroke] : strokes,
-      });
-    },
+    onSerializedSnapshotChange: onSnapshotChange,
     shouldCommitStroke: (stroke) => stroke.points.length >= 2,
     touchLockEnabled: isCoarsePointer,
   });
 
   const handleDone = useCallback((): void => {
-    const canvas = canvasRef.current;
-    if (!canvas || strokes.length === 0) return;
-    const dataUrl = canvas.toDataURL('image/png');
+    if (!hasDrawableContent) return;
+    const dataUrl = exportDataUrl();
+    if (!dataUrl) return;
     onComplete(dataUrl);
-  }, [onComplete, strokes.length]);
+  }, [exportDataUrl, hasDrawableContent, onComplete]);
 
   return (
     <div
@@ -149,7 +138,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
       <KangurDrawingFreeformToolbar
         canRedo={canRedo}
         canUndo={canUndo}
-        clearDisabled={strokes.length === 0}
+        clearDisabled={!hasDrawableContent}
         clearLabel={drawingContent?.clearLabel ?? 'Wyczyść'}
         eraserLabel={drawingContent?.eraserLabel ?? 'Gumka'}
         isCoarsePointer={isCoarsePointer}
@@ -174,7 +163,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         </button>
         <button
           type='button'
-          disabled={strokes.length === 0}
+          disabled={!hasDrawableContent}
           onClick={handleDone}
           aria-label={drawingContent?.doneLabel ?? 'Gotowe'}
           className={`${isCoarsePointer ? 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]' : ''} cursor-pointer font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white [color:var(--kangur-chat-panel-text,var(--kangur-page-text))] hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40`}

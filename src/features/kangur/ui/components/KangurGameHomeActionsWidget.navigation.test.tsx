@@ -13,6 +13,7 @@ const {
   routerPushMock,
   routerReplaceMock,
   startRouteTransitionMock,
+  frontendPublicOwnerMock,
   useKangurCoarsePointerMock,
   useKangurGameRuntimeMock,
   useKangurSubjectFocusMock,
@@ -25,6 +26,7 @@ const {
   routerPushMock: vi.fn(),
   routerReplaceMock: vi.fn(),
   startRouteTransitionMock: vi.fn(),
+  frontendPublicOwnerMock: vi.fn(),
   useKangurCoarsePointerMock: vi.fn(),
   useKangurGameRuntimeMock: vi.fn(),
   useKangurSubjectFocusMock: vi.fn(),
@@ -90,6 +92,10 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useOptionalKangurRouting: useOptionalKangurRoutingMock,
 }));
 
+vi.mock('@/features/kangur/ui/FrontendPublicOwnerContext', () => ({
+  useOptionalFrontendPublicOwner: () => frontendPublicOwnerMock(),
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: useKangurSubjectFocusMock,
 }));
@@ -106,6 +112,7 @@ describe('KangurGameHomeActionsWidget navigation', () => {
     localeMock.mockReturnValue('en');
     pathnameMock.mockReturnValue('/en/kangur');
     useKangurCoarsePointerMock.mockReturnValue(false);
+    frontendPublicOwnerMock.mockReturnValue(null);
     startRouteTransitionMock.mockReturnValue({
       acknowledgeMs: 0,
       started: true,
@@ -154,11 +161,31 @@ describe('KangurGameHomeActionsWidget navigation', () => {
     expect(routerPushMock).toHaveBeenCalledWith('/en/kangur/lessons', { scroll: false });
   });
 
-  it('prefetches Lessons but not Duels from the home actions shell', () => {
+  it('keeps home-action route prefetch disabled until an explicit prefetch strategy is added', () => {
     render(<KangurGameHomeActionsWidget />);
 
-    expect(routerPrefetchMock).toHaveBeenCalledWith('/en/kangur/lessons');
-    expect(routerPrefetchMock).not.toHaveBeenCalledWith('/en/kangur/duels');
+    expect(routerPrefetchMock).not.toHaveBeenCalled();
+  });
+
+  it('canonicalizes the lessons home action when Kangur owns the public frontend', () => {
+    frontendPublicOwnerMock.mockReturnValue({ publicOwner: 'kangur' });
+
+    render(<KangurGameHomeActionsWidget />);
+
+    const lessonsLink = screen.getByRole('link', { name: 'Lessons' });
+
+    expect(lessonsLink).toHaveAttribute('href', '/en/lessons');
+    expect(routerPrefetchMock).not.toHaveBeenCalled();
+
+    fireEvent.pointerDown(lessonsLink, { button: 0 });
+    fireEvent.click(lessonsLink);
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/en/lessons',
+      pageKey: 'Lessons',
+      sourceId: 'game-home-action:lessons',
+    });
+    expect(routerPushMock).toHaveBeenCalledWith('/en/lessons', { scroll: false });
   });
 
   it('does not prefetch home-action routes on coarse-pointer devices', () => {

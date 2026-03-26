@@ -599,6 +599,97 @@ describe('KangurPrimaryNavigation', () => {
     });
   });
 
+  it('renders canonical localized nav links when Kangur owns the public frontend', async () => {
+    frontendPublicOwnerMock.mockReturnValue({ publicOwner: 'kangur' });
+    localeMock.mockReturnValue('en');
+    pathnameMock.mockReturnValue('/en/kangur');
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Game'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('kangur-primary-nav-games-library')).toHaveAttribute(
+      'href',
+      '/en/games'
+    );
+    expect(screen.getByTestId('kangur-primary-nav-lessons')).toHaveAttribute(
+      'href',
+      '/en/lessons'
+    );
+    expect(screen.getByTestId('kangur-primary-nav-duels')).toHaveAttribute(
+      'href',
+      '/en/duels'
+    );
+    expect(await screen.findByRole('link', { name: /profil/i })).toHaveAttribute(
+      'href',
+      '/en/profile'
+    );
+
+    fireEvent.click(screen.getByTestId('kangur-primary-nav-lessons'));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/en/lessons',
+      pageKey: 'Lessons',
+      sourceId: 'kangur-primary-nav:lessons',
+    });
+  });
+
+  it('uses the canonical localized home route when Kangur owns the public frontend', () => {
+    frontendPublicOwnerMock.mockReturnValue({ publicOwner: 'kangur' });
+    localeMock.mockReturnValue('en');
+    pathnameMock.mockReturnValue('/en/lessons');
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('kangur-primary-nav-home')).toHaveAttribute('href', '/en');
+
+    fireEvent.click(screen.getByTestId('kangur-primary-nav-home'));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/en',
+      pageKey: 'Game',
+      sourceId: 'kangur-primary-nav:home',
+    });
+  });
+
+  it('uses the canonical localized profile route when Kangur owns the public frontend', async () => {
+    frontendPublicOwnerMock.mockReturnValue({ publicOwner: 'kangur' });
+    localeMock.mockReturnValue('en');
+    pathnameMock.mockReturnValue('/en/lessons');
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    const profileLink = await screen.findByRole('link', { name: /profil/i });
+    expect(profileLink).toHaveAttribute('href', '/en/profile');
+
+    fireEvent.click(profileLink);
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/en/profile',
+      pageKey: 'LearnerProfile',
+      sourceId: 'kangur-primary-nav:profile',
+    });
+  });
+
   it('uses the canonical Kangur home route when returning from another page', () => {
     render(
       <KangurPrimaryNavigation

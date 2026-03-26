@@ -9,6 +9,10 @@ import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
 
 import type { JSX } from 'react';
 
+const DEFAULT_CMS_THEME_SETTINGS = {
+  darkMode: false,
+} as const;
+
 export default async function FrontendLayout({
   children,
 }: {
@@ -18,13 +22,14 @@ export default async function FrontendLayout({
   const frontPageSettingPromise = shouldUseFrontPageAppSelection
     ? getFrontPageSetting()
     : Promise.resolve(null);
-  const themeSettingsPromise = getCmsThemeSettings();
   const frontPageSetting = await frontPageSettingPromise;
   const publicOwner = shouldUseFrontPageAppSelection
     ? getFrontPagePublicOwner(frontPageSetting)
     : 'cms';
   const [themeSettings, kangurInitialState] = await Promise.all([
-    themeSettingsPromise,
+    publicOwner === 'cms'
+      ? getCmsThemeSettings()
+      : Promise.resolve(DEFAULT_CMS_THEME_SETTINGS),
     publicOwner === 'kangur' ? getKangurStorefrontInitialState() : Promise.resolve(null),
   ]);
   const storefrontAppearanceMode = themeSettings.darkMode ? 'dark' : 'default';

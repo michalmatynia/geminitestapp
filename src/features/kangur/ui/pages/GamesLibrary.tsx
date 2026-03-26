@@ -1587,7 +1587,6 @@ export default function GamesLibrary(): React.JSX.Element {
                             <Link
                               href={gameHref}
                               targetPageKey='Game'
-                              transitionAcknowledgeMs={110}
                               transitionSourceId={`kangur-games-library:${game.id}:game`}
                             >
                               {translations('actions.openGame')}
@@ -1603,7 +1602,6 @@ export default function GamesLibrary(): React.JSX.Element {
                             <Link
                               href={lessonHref}
                               targetPageKey='Lessons'
-                              transitionAcknowledgeMs={110}
                               transitionSourceId={`kangur-games-library:${game.id}:lessons`}
                             >
                               {translations('actions.openLessons')}

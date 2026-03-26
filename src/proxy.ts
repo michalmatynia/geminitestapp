@@ -37,18 +37,44 @@ const isAdminRequest = (pathname: string): boolean =>
 const isSafePageMethod = (request: NextRequest): boolean =>
   request.method === 'GET' || request.method === 'HEAD';
 
+const getLocaleCookieName = (): string | null =>
+  siteRouting.localeCookie === false
+    ? null
+    : siteRouting.localeCookie === true
+      ? 'NEXT_LOCALE'
+      : (siteRouting.localeCookie?.name ?? 'NEXT_LOCALE');
+
+const syncExplicitLocaleCookie = (
+  request: NextRequest,
+  response: NextResponse,
+  locale: string
+): NextResponse => {
+  const localeCookieName = getLocaleCookieName();
+  if (!localeCookieName) {
+    return response;
+  }
+
+  const existingLocale = request.cookies.get(localeCookieName)?.value ?? null;
+  if (existingLocale === locale) {
+    return response;
+  }
+
+  response.cookies.set(localeCookieName, locale, {
+    sameSite:
+      siteRouting.localeCookie === false || siteRouting.localeCookie === true
+        ? 'lax'
+        : (siteRouting.localeCookie?.sameSite ?? 'lax'),
+  });
+  return response;
+};
+
 const shouldBypassIntlRewriteForDefaultLocale = (request: NextRequest): boolean => {
   const pathname = request.nextUrl.pathname;
   if (getPathLocale(pathname)) {
     return false;
   }
 
-  const localeCookieName =
-    siteRouting.localeCookie === false
-      ? null
-      : siteRouting.localeCookie === true
-        ? 'NEXT_LOCALE'
-        : (siteRouting.localeCookie?.name ?? 'NEXT_LOCALE');
+  const localeCookieName = getLocaleCookieName();
   const resolvedLocale = resolvePreferredSiteLocale({
     pathname,
     cookieLocale: localeCookieName ? request.cookies.get(localeCookieName)?.value ?? null : null,
@@ -61,6 +87,14 @@ const shouldBypassIntlRewriteForDefaultLocale = (request: NextRequest): boolean 
 const resolvePublicLocaleResponse = (request: NextRequest): NextResponse | null => {
   if (!isSafePageMethod(request)) {
     return null;
+  }
+
+  const pathname = request.nextUrl.pathname;
+  const pathLocale = getPathLocale(pathname);
+  const defaultLocale = getDefaultSiteLocaleCode();
+
+  if (pathLocale && pathLocale !== defaultLocale) {
+    return syncExplicitLocaleCookie(request, baseProxy(request), pathLocale);
   }
 
   if (shouldBypassIntlRewriteForDefaultLocale(request)) {

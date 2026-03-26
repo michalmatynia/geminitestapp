@@ -35,7 +35,7 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
-const ASSIGNMENTS_LIST_ROUTE_ACKNOWLEDGE_MS = 110;
+const ASSIGNMENTS_LIST_ROUTE_ACKNOWLEDGE_MS = 0;
 
 type KangurAssignmentsListProps = {
   items: KangurAssignmentListItem[];

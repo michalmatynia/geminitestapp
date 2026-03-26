@@ -142,6 +142,9 @@ export default function GeometrySymmetryGame({
     ? Math.max(6, Math.round(BASE_MIN_DRAWING_POINTS * 0.7))
     : BASE_MIN_DRAWING_POINTS;
   const strokeWidth = isCoarsePointer ? 7 : 5;
+  const baseLayerCacheKey = currentRound
+    ? `geometry-symmetry:${currentRound.id}:${showMirrorHint ? 'hint' : 'plain'}`
+    : 'geometry-symmetry:empty';
   const {
     canRedo,
     canUndo,
@@ -156,6 +159,7 @@ export default function GeometrySymmetryGame({
     undoLastStroke,
   } = useKangurPointCanvasDrawing({
     canvasRef,
+    baseLayerCacheKey,
     enabled: !done && feedback?.kind !== 'success' && feedback?.kind !== 'error',
     logicalHeight: CANVAS_HEIGHT,
     logicalWidth: CANVAS_WIDTH,

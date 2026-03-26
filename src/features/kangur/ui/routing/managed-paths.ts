@@ -1,4 +1,5 @@
 import {
+  getKangurCanonicalPublicHref,
   normalizeKangurBasePath,
   resolveKangurPageKeyFromSlug,
 } from '@/features/kangur/config/routing';
@@ -29,6 +30,59 @@ export const normalizeManagedKangurPathname = (
   const withoutHash = withoutQuery.split('#')[0] ?? withoutQuery;
   const localeStrippedPath = stripSiteLocalePrefix(withoutHash);
   return localeStrippedPath.replace(/\/+$/, '') || '/';
+};
+
+const canonicalizeKangurPublicAliasPathnameUnsafe = (pathname: string): string => {
+  const normalizedPathname = stripSiteLocalePrefix(pathname);
+
+  if (normalizedPathname !== '/kangur' && !normalizedPathname.startsWith('/kangur/')) {
+    return pathname;
+  }
+
+  const slugSegments = normalizedPathname
+    .split('/')
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .slice(1);
+  const localizedAliasLocale = getPathLocale(pathname);
+  const canonicalPathname = getKangurCanonicalPublicHref(slugSegments);
+
+  return localizedAliasLocale
+    ? buildLocalizedPathname(canonicalPathname, localizedAliasLocale)
+    : canonicalPathname;
+};
+
+export const canonicalizeKangurPublicAliasPathname = (pathname: string): string =>
+  withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'canonicalize-public-alias-pathname',
+      description: 'Canonicalizes /kangur alias pathnames to the public Kangur route space.',
+      context: { pathname },
+    },
+    () => canonicalizeKangurPublicAliasPathnameUnsafe(pathname),
+    { fallback: pathname }
+  );
+
+export const canonicalizeKangurPublicAliasHref = (href: string): string => {
+  if (!isManagedLocalHref(href)) {
+    return href;
+  }
+
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'canonicalize-public-alias-href',
+      description: 'Canonicalizes /kangur alias hrefs to the public Kangur route space.',
+      context: { href },
+    },
+    () => {
+      const parsed = new URL(href, 'https://kangur.local');
+      const canonicalPathname = canonicalizeKangurPublicAliasPathnameUnsafe(parsed.pathname);
+      return `${canonicalPathname}${parsed.search}${parsed.hash}`;
+    },
+    { fallback: href }
+  );
 };
 
 export const getKangurSlugFromPathname = (

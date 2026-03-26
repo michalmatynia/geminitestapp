@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import {
+  DEFAULT_KANGUR_FREEFORM_DRAWING_STROKE_WIDTHS,
   resolveKangurFreeformDrawingStrokeWidths,
   resolveKangurFreeformDrawingToolConfig,
   type KangurFreeformDrawingToolConfig,
@@ -48,7 +49,8 @@ export function useKangurFreeformDrawingTools({
     resolvedStrokeWidths[resolvedConfig.preferredWidthIndex] ??
     resolvedStrokeWidths[0] ??
     resolvedConfig.strokeWidths[resolvedConfig.preferredWidthIndex] ??
-    resolvedConfig.strokeWidths[0];
+    resolvedConfig.strokeWidths[0] ??
+    DEFAULT_KANGUR_FREEFORM_DRAWING_STROKE_WIDTHS[0];
   const [selectedColor, setSelectedColor] = useState<string>(
     resolvedConfig.defaultColor
   );

@@ -246,6 +246,7 @@ export default function GeometryPerimeterDrawingGame({
     undoLastStroke,
   } = useKangurPointCanvasDrawing({
     canvasRef,
+    baseLayerCacheKey: 'geometry-perimeter:grid:v1',
     enabled: !done && !isLocked && !drawingValidated,
     logicalHeight: CANVAS_HEIGHT,
     logicalWidth: CANVAS_WIDTH,

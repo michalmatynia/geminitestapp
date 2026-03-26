@@ -11,9 +11,11 @@ function FreeformToolsHarness({
   isCoarsePointer?: boolean;
 }): React.JSX.Element {
   const tools = useKangurFreeformDrawingTools({
-    colors: ['#111111', '#2563eb'],
+    config: {
+      colors: ['#111111', '#2563eb'],
+      strokeWidths: [2, 4, 8],
+    },
     isCoarsePointer,
-    strokeWidths: [2, 4, 8],
   });
 
   return (

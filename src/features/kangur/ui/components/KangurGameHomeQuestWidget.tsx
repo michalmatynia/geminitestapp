@@ -52,7 +52,7 @@ const QUEST_STATUS_ACCENTS = {
   not_started: 'slate',
 } as const;
 
-const HOME_QUEST_ROUTE_ACKNOWLEDGE_MS = 110;
+const HOME_QUEST_ROUTE_ACKNOWLEDGE_MS = 0;
 
 type KangurHomeQuestFallbackCopy = {
   defaultLabel: string;

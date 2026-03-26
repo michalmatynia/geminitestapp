@@ -15,31 +15,38 @@ export type KangurAppStartupState = {
   isBootLoading: boolean;
 };
 
-export const useKangurAppStartup = (): KangurAppStartupState => {
+type UseKangurAppStartupOptions = {
+  includeCachedStartupData?: boolean;
+};
+
+export const useKangurAppStartup = (
+  options: UseKangurAppStartupOptions = {},
+): KangurAppStartupState => {
   const { authError, isLoadingAuth, session } = useKangurMobileAuth();
   const { storage } = useKangurMobileRuntime();
+  const includeCachedStartupData = options.includeCachedStartupData ?? false;
   const scoreScopeIdentityKey =
     resolveKangurMobileScoreScope(session.user)?.identityKey ?? null;
   const cachedRecentResults = useMemo(
     () =>
-      scoreScopeIdentityKey
+      includeCachedStartupData && scoreScopeIdentityKey
         ? resolvePersistedKangurMobileRecentResults({
             identityKey: scoreScopeIdentityKey,
             limit: APP_STARTUP_RECENT_RESULTS_LIMIT,
             storage,
           })
         : null,
-    [scoreScopeIdentityKey, storage],
+    [includeCachedStartupData, scoreScopeIdentityKey, storage],
   );
   const cachedTrainingFocus = useMemo(
     () =>
-      scoreScopeIdentityKey
+      includeCachedStartupData && scoreScopeIdentityKey
         ? resolvePersistedKangurMobileTrainingFocus({
             identityKey: scoreScopeIdentityKey,
             storage,
           })
         : null,
-    [scoreScopeIdentityKey, storage],
+    [includeCachedStartupData, scoreScopeIdentityKey, storage],
   );
   // Keep the main loader only for the blocking session-restore path.
   const isBootLoading = isLoadingAuth && session.status !== 'authenticated';

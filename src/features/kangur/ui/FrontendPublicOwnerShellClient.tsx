@@ -97,24 +97,19 @@ export default function FrontendPublicOwnerShellClient({
       return undefined;
     }
 
+    const warmupAuth = (): void => {
+      void import('@/features/kangur/services/kangur-auth-prefetch')
+        .then((m) => m.prefetchKangurAuth())
+        .catch(() => {});
+    };
+
     if (shouldLimitKangurWarmup()) {
-      return scheduleKangurWarmupTask(() => {
-        void import('@/features/kangur/services/kangur-auth-prefetch')
-          .then((m) => m.prefetchKangurAuth())
-          .catch(() => {});
-      });
+      return scheduleKangurWarmupTask(warmupAuth);
     }
 
-    void import('@/features/kangur/ui/KangurFeatureApp').catch(() => {});
-    void import('@/features/kangur/services/kangur-auth-prefetch')
-      .then((m) => m.prefetchKangurAuth())
-      .catch(() => {});
-    void import('@/features/kangur/ui/pages/Game').catch(() => {});
-    if (isHomeRoute || normalizedPathname === '/lessons') {
-      void import('@/features/kangur/ui/pages/Lessons').catch(() => {});
-    }
+    warmupAuth();
     return undefined;
-  }, [isHomeRoute, normalizedPathname, publicOwner]);
+  }, [publicOwner]);
 
   if (publicOwner === 'kangur' && !isKangurAliasRoute && !isCanonicalPublicLoginRoute) {
     return (

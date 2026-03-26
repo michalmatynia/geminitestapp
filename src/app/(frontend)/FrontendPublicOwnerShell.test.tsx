@@ -200,7 +200,7 @@ describe('FrontendPublicOwnerShell', () => {
     expect(frontendPublicOwnerKangurShellMock).not.toHaveBeenCalled();
   });
 
-  it('warms the lessons shell dependencies from the embedded home route', async () => {
+  it('warms auth state from the embedded home route without preloading extra page bundles', async () => {
     vi.stubEnv('NODE_ENV', 'development');
 
     render(
@@ -210,14 +210,14 @@ describe('FrontendPublicOwnerShell', () => {
     );
 
     await waitFor(() => {
-      expect(kangurFeatureAppPreloadMock).toHaveBeenCalledTimes(1);
       expect(prefetchKangurAuthMock).toHaveBeenCalledTimes(1);
-      expect(kangurGamePreloadMock).toHaveBeenCalledTimes(1);
-      expect(kangurLessonsPreloadMock).toHaveBeenCalledTimes(1);
     });
+    expect(kangurFeatureAppPreloadMock).not.toHaveBeenCalled();
+    expect(kangurGamePreloadMock).not.toHaveBeenCalled();
+    expect(kangurLessonsPreloadMock).not.toHaveBeenCalled();
   });
 
-  it('skips the lessons page preload when Kangur is already on a different standalone route', async () => {
+  it('keeps warmup auth-only when Kangur is already on a different standalone route', async () => {
     vi.stubEnv('NODE_ENV', 'development');
     usePathnameMock.mockReturnValue('/tests');
 
@@ -230,6 +230,8 @@ describe('FrontendPublicOwnerShell', () => {
     await waitFor(() => {
       expect(prefetchKangurAuthMock).toHaveBeenCalledTimes(1);
     });
+    expect(kangurFeatureAppPreloadMock).not.toHaveBeenCalled();
+    expect(kangurGamePreloadMock).not.toHaveBeenCalled();
     expect(kangurLessonsPreloadMock).not.toHaveBeenCalled();
   });
 

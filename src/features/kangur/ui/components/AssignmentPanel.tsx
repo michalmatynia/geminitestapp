@@ -42,7 +42,7 @@ const buildAssignmentHref = (
   return action.query ? appendKangurUrlParams(href, action.query, basePath) : href;
 };
 
-const ASSIGNMENT_PANEL_ROUTE_ACKNOWLEDGE_MS = 110;
+const ASSIGNMENT_PANEL_ROUTE_ACKNOWLEDGE_MS = 0;
 
 export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): React.JSX.Element {
   const locale = useLocale();

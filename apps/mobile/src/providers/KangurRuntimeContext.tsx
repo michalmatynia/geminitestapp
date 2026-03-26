@@ -18,6 +18,11 @@ import {
   KANGUR_MOBILE_AUTH_BEARER_TOKEN_STORAGE_KEY,
 } from '../auth/mobileAuthStorageKeys';
 import {
+  buildPersistedKangurMobileHomeLessonCheckpointSnapshot,
+  persistKangurMobileHomeLessonCheckpoints,
+  resolveKangurMobileHomeLessonCheckpointIdentity,
+} from '../home/persistedKangurMobileHomeLessonCheckpoints';
+import {
   persistKangurMobileCsrfTokenFromHeaders,
   resolveKangurMobileCsrfRequestToken,
 } from '../auth/mobileCsrfToken';
@@ -99,6 +104,11 @@ const createKangurMobileRuntime = (): KangurMobileRuntime => {
     : resolveDefaultApiBaseUrl();
 
   const storage = createMobileDevelopmentKangurStorage();
+  const baseProgressStore = createKangurProgressStore({
+    storage,
+    progressStorageKey: 'sprycio_progress',
+    ownerStorageKey: 'sprycio_progress_owner',
+  });
 
   return {
     ...apiBaseUrlState,
@@ -136,11 +146,22 @@ const createKangurMobileRuntime = (): KangurMobileRuntime => {
       },
     }),
     defaultDailyGoalGames: KANGUR_PROFILE_DEFAULT_DAILY_GOAL_GAMES,
-    progressStore: createKangurProgressStore({
-      storage,
-      progressStorageKey: 'sprycio_progress',
-      ownerStorageKey: 'sprycio_progress_owner',
-    }),
+    progressStore: {
+      ...baseProgressStore,
+      saveProgress: (progress) => {
+        const normalizedProgress = baseProgressStore.saveProgress(progress);
+
+        persistKangurMobileHomeLessonCheckpoints({
+          learnerIdentity: resolveKangurMobileHomeLessonCheckpointIdentity(storage),
+          snapshot: buildPersistedKangurMobileHomeLessonCheckpointSnapshot({
+            progress: normalizedProgress,
+          }),
+          storage,
+        });
+
+        return normalizedProgress;
+      },
+    },
     storage,
   };
 };

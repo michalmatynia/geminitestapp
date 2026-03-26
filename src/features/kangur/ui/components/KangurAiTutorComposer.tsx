@@ -34,8 +34,8 @@ export function KangurAiTutorComposer(): JSX.Element {
     drawingImageData,
     drawingMode,
     guestAuthFormVisible,
-    handleClearDrawing,
-    handleDrawingComplete,
+    handleClearDrawing: clearAttachedDrawing,
+    handleDrawingComplete: commitDrawingImage,
     handleKeyDown,
     handleQuickAction,
     handleSend,
@@ -46,7 +46,13 @@ export function KangurAiTutorComposer(): JSX.Element {
     showToolboxLayout,
     visibleQuickActions,
   } = useKangurAiTutorPanelBodyContext();
-  const { inputRef, inputValue, setInputValue } = useKangurAiTutorWidgetStateContext();
+  const {
+    drawingDraftSnapshot,
+    inputRef,
+    inputValue,
+    setDrawingDraftSnapshot,
+    setInputValue,
+  } = useKangurAiTutorWidgetStateContext();
   const showDrawingToggle = !showToolboxLayout && !guestAuthFormVisible;
 
   const canSubmit = Boolean(inputValue.trim() || drawingImageData);
@@ -58,12 +64,27 @@ export function KangurAiTutorComposer(): JSX.Element {
     void handleSend();
   }, [canSubmit, canSendMessages, handleSend, isLoading]);
 
+  const handleDrawingComplete = useCallback(
+    (dataUrl: string): void => {
+      setDrawingDraftSnapshot(null);
+      commitDrawingImage(dataUrl);
+    },
+    [commitDrawingImage, setDrawingDraftSnapshot]
+  );
+
+  const handleClearDrawing = useCallback((): void => {
+    setDrawingDraftSnapshot(null);
+    clearAttachedDrawing();
+  }, [clearAttachedDrawing, setDrawingDraftSnapshot]);
+
   if (drawingMode) {
     return (
       <section className='kangur-chat-padding-md pt-3 pb-0'>
         <KangurAiTutorDrawingCanvas
+          initialSnapshot={drawingDraftSnapshot}
           onComplete={handleDrawingComplete}
           onCancel={handleToggleDrawing}
+          onSnapshotChange={setDrawingDraftSnapshot}
         />
       </section>
     );

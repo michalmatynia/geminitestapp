@@ -88,6 +88,23 @@ const readLegacySettingValue = async (key: string): Promise<string | null> => {
   return records.length > 0 ? records[0]!.value : null;
 };
 
+const readKangurSettingsByKeysFromMongo = async (keys: string[]): Promise<SettingRecord[]> => {
+  if (!process.env['MONGODB_URI']) return [];
+  if (keys.length === 0) return [];
+  const mongo = await getMongoDb();
+  const docs = await mongo
+    .collection<MongoPersistedStringSettingDocument>(KANGUR_SETTINGS_COLLECTION)
+    .find(
+      { $or: [{ key: { $in: keys } }, { _id: { $in: keys } }] },
+      { projection: { _id: 1, key: 1, value: 1 } }
+    )
+    .toArray();
+
+  return docs
+    .map((doc: MongoPersistedStringSettingDocument) => toSettingRecord(doc))
+    .filter((item: SettingRecord | null): item is SettingRecord => Boolean(item));
+};
+
 const backfillKangurSettingValue = async (key: string, value: string): Promise<void> => {
   try {
     await upsertKangurSettingValue(key, value);
@@ -103,19 +120,17 @@ const backfillKangurSettingValue = async (key: string, value: string): Promise<v
 
 export const readKangurSettingValue = cache(async (key: string): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
-  await ensureKangurSettingsIndexes();
+  void ensureKangurSettingsIndexes();
   const mongo = await getMongoDb();
-  const [doc, legacyValue] = await Promise.all([
-    mongo
-      .collection<MongoPersistedStringSettingDocument>(KANGUR_SETTINGS_COLLECTION)
-      .findOne({ $or: [{ _id: key }, { key }] }, { projection: { _id: 1, key: 1, value: 1 } }),
-    readLegacySettingValue(key),
-  ]);
+  const doc = await mongo
+    .collection<MongoPersistedStringSettingDocument>(KANGUR_SETTINGS_COLLECTION)
+    .findOne({ $or: [{ _id: key }, { key }] }, { projection: { _id: 1, key: 1, value: 1 } });
   const record = doc ? toSettingRecord(doc) : null;
   if (record) {
     return record.value;
   }
 
+  const legacyValue = await readLegacySettingValue(key);
   if (legacyValue !== null) {
     void backfillKangurSettingValue(key, legacyValue);
   }
@@ -124,7 +139,7 @@ export const readKangurSettingValue = cache(async (key: string): Promise<string 
 
 export const listKangurSettings = async (): Promise<SettingRecord[]> => {
   if (!process.env['MONGODB_URI']) return [];
-  await ensureKangurSettingsIndexes();
+  void ensureKangurSettingsIndexes();
   const mongo = await getMongoDb();
   const docs = await mongo
     .collection<MongoPersistedStringSettingDocument>(KANGUR_SETTINGS_COLLECTION)
@@ -140,34 +155,21 @@ export const listKangurSettingsByKeys = async (keys: string[]): Promise<SettingR
   const kangurKeys = keys.filter(isKangurSettingKey);
   if (!process.env['MONGODB_URI']) return [];
   if (kangurKeys.length === 0) return [];
-  await ensureKangurSettingsIndexes();
-  const mongo = await getMongoDb();
-  const [legacyDocs, kangurDocs] = await Promise.all([
-    mongo
-      .collection<KangurLegacySettingDocument>(KANGUR_LEGACY_SETTINGS_COLLECTION)
-      .find(
-        { $or: [{ key: { $in: kangurKeys } }, { _id: { $in: kangurKeys } }] },
-        { projection: { _id: 1, key: 1, value: 1 } }
-      )
-      .toArray(),
-    mongo
-      .collection<MongoPersistedStringSettingDocument>(KANGUR_SETTINGS_COLLECTION)
-      .find(
-        { $or: [{ key: { $in: kangurKeys } }, { _id: { $in: kangurKeys } }] },
-        { projection: { _id: 1, key: 1, value: 1 } }
-      )
-      .toArray(),
-  ]);
-
+  void ensureKangurSettingsIndexes();
   const merged = new Map<string, string>();
-  legacyDocs.forEach((doc: KangurLegacySettingDocument) => {
-    const record = toSettingRecord(doc);
-    if (record) merged.set(record.key, record.value);
+  const kangurRecords = await readKangurSettingsByKeysFromMongo(kangurKeys);
+  kangurRecords.forEach((record) => {
+    merged.set(record.key, record.value);
   });
-  kangurDocs.forEach((doc: MongoPersistedStringSettingDocument) => {
-    const record = toSettingRecord(doc);
-    if (record) merged.set(record.key, record.value);
-  });
+
+  const missingKeys = kangurKeys.filter((key) => !merged.has(key));
+  if (missingKeys.length > 0) {
+    const legacyRecords = await readLegacySettingsByKeys(missingKeys);
+    legacyRecords.forEach((record) => {
+      merged.set(record.key, record.value);
+      void backfillKangurSettingValue(record.key, record.value);
+    });
+  }
 
   return Array.from(merged.entries()).map(([key, value]) => ({ key, value }));
 };

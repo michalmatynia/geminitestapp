@@ -3,15 +3,27 @@
  */
 
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { localeMock } = vi.hoisted(() => ({
+  localeMock: vi.fn(() => 'pl'),
+}));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
 }));
 
+vi.mock('next-intl', () => ({
+  useLocale: () => localeMock(),
+}));
+
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 
 describe('KangurPageIntroCard', () => {
+  beforeEach(() => {
+    localeMock.mockReturnValue('pl');
+  });
+
   it('keeps the visual title visible while preserving a hidden text heading fallback', () => {
     const handleBack = vi.fn();
 
@@ -71,5 +83,15 @@ describe('KangurPageIntroCard', () => {
     expect(
       screen.queryByRole('button', { name: 'Wróć do poprzedniej strony' })
     ).toBeNull();
+  });
+
+  it('localizes the default back button label on the English route', () => {
+    localeMock.mockReturnValue('en');
+
+    render(<KangurPageIntroCard onBack={vi.fn()} title='Lessons' />);
+
+    expect(
+      screen.getByRole('button', { name: 'Back to the previous page' })
+    ).toBeInTheDocument();
   });
 });

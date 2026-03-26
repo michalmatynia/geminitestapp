@@ -5,9 +5,9 @@ import {
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
 
-type SectionId = 'dopasowanie' | 'summary';
+type SectionId = 'dopasowanie' | 'game_pairs' | 'summary';
 
-export const SLIDES: Record<SectionId, LessonSlide[]> = {
+export const SLIDES: Record<Exclude<SectionId, 'game_pairs'>, LessonSlide[]> = {
   dopasowanie: [
     {
       title: 'Dopasuj litery',
@@ -45,10 +45,17 @@ export const HUB_SECTIONS = [
     slideCount: SLIDES.dopasowanie.length,
   },
   {
+    id: 'game_pairs',
+    emoji: '🎮',
+    title: 'Gra litery',
+    description: 'Połącz wielkie i małe litery',
+    isGame: true,
+  },
+  {
     id: 'summary',
     emoji: '📋',
     title: 'Podsumowanie',
     description: 'Najważniejsze wnioski',
     slideCount: SLIDES.summary.length,
   },
-];
+] as const;

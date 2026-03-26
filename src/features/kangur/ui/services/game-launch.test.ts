@@ -36,6 +36,17 @@ describe('game launch helpers', () => {
     expect(getKangurLaunchableGameScreenForLessonComponent('adding')).toBeNull();
   });
 
+  it('keeps the definition-level launch fallback for synthetic legacy-only games', () => {
+    const game = findGame('english_sentence_builder');
+    const legacyOnlyGame = {
+      ...game,
+      legacyScreenIds: ['english_sentence_quiz'],
+      variants: game.variants.filter((variant) => variant.surface !== 'game_screen'),
+    };
+
+    expect(getKangurLaunchableGameScreen(legacyOnlyGame)).toBe('english_sentence_quiz');
+  });
+
   it('builds game and lesson hrefs from the shared definitions', () => {
     expect(buildKangurGameLaunchHref('/kangur', findGame('clock_training'))).toBe(
       '/kangur/game?quickStart=screen&screen=clock_quiz'

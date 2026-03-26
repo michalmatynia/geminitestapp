@@ -1,7 +1,7 @@
 'use client';
 
 import { Pen, X } from 'lucide-react';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurTextField } from '@/features/kangur/ui/design/primitives';
@@ -54,6 +54,14 @@ export function KangurAiTutorComposer(): JSX.Element {
     setInputValue,
   } = useKangurAiTutorWidgetStateContext();
   const showDrawingToggle = !showToolboxLayout && !guestAuthFormVisible;
+  const drawingDraftStorage = useMemo(
+    () => ({
+      clearDraftSnapshot: () => setDrawingDraftSnapshot(null),
+      draftSnapshot: drawingDraftSnapshot,
+      setDraftSnapshot: setDrawingDraftSnapshot,
+    }),
+    [drawingDraftSnapshot, setDrawingDraftSnapshot]
+  );
 
   const canSubmit = Boolean(inputValue.trim() || drawingImageData);
 
@@ -81,10 +89,9 @@ export function KangurAiTutorComposer(): JSX.Element {
     return (
       <section className='kangur-chat-padding-md pt-3 pb-0'>
         <KangurAiTutorDrawingCanvas
-          initialSnapshot={drawingDraftSnapshot}
+          draftStorage={drawingDraftStorage}
           onComplete={handleDrawingComplete}
           onCancel={handleToggleDrawing}
-          onSnapshotChange={setDrawingDraftSnapshot}
         />
       </section>
     );

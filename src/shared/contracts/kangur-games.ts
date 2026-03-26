@@ -216,7 +216,10 @@ export const KANGUR_LESSON_STAGE_GAME_RUNTIME_IDS = [
   'agentic_prompt_trim_lesson_stage',
   'agentic_reasoning_router_lesson_stage',
   'agentic_surface_match_lesson_stage',
+  'alphabet_first_words_lesson_stage',
+  'alphabet_letter_matching_lesson_stage',
   'alphabet_letter_order_lesson_stage',
+  'art_color_harmony_studio_lesson_stage',
   'art_shape_rotation_puzzle_lesson_stage',
   'calendar_interactive_days_lesson_stage',
   'calendar_interactive_months_lesson_stage',
@@ -264,6 +267,8 @@ export const KANGUR_LESSON_STAGE_GAME_RUNTIME_RENDERER_IDS = [
   'agentic_prompt_trim_game',
   'agentic_reasoning_router_game',
   'agentic_surface_match_game',
+  'alphabet_literacy_stage_game',
+  'color_harmony_stage_game',
   'art_shapes_rotation_gap_game',
   'calendar_interactive_stage_game',
   'clock_training_stage_game',
@@ -336,6 +341,13 @@ const KANGUR_LOGICAL_PATTERN_SET_IDS = [
 const kangurLogicalPatternSetIdSchema = z.enum(KANGUR_LOGICAL_PATTERN_SET_IDS);
 export type KangurLogicalPatternSetId = z.infer<typeof kangurLogicalPatternSetIdSchema>;
 
+const KANGUR_LITERACY_MATCH_SET_IDS = [
+  'alphabet_first_words',
+  'alphabet_letter_matching',
+] as const;
+const kangurLiteracyMatchSetIdSchema = z.enum(KANGUR_LITERACY_MATCH_SET_IDS);
+export type KangurLiteracyMatchSetId = z.infer<typeof kangurLiteracyMatchSetIdSchema>;
+
 const KANGUR_LESSON_STAGE_GAME_FINISH_LABEL_VARIANTS = [
   'lesson',
   'topics',
@@ -356,6 +368,7 @@ export const kangurLessonStageGameRuntimeRendererPropsSchema = z
     finishLabel: nonEmptyTrimmedString.max(120).optional(),
     finishLabelVariant: kangurLessonStageGameFinishLabelVariantSchema.optional(),
     lessonKey: nonEmptyTrimmedString.max(120).optional(),
+    literacyMatchSetId: kangurLiteracyMatchSetIdSchema.optional(),
     patternSetId: kangurLogicalPatternSetIdSchema.optional(),
     operation: nonEmptyTrimmedString.max(80).optional(),
     shapeIds: z.array(kangurGeometryDrawingShapeIdSchema).min(1).max(12).optional(),
@@ -482,8 +495,18 @@ export type KangurGameCatalogEntryDto = z.infer<typeof kangurGameCatalogEntrySch
 export const kangurGameCatalogEntriesSchema = z.array(kangurGameCatalogEntrySchema);
 export type KangurGameCatalogEntriesDto = z.infer<typeof kangurGameCatalogEntriesSchema>;
 
+export const kangurGameCatalogFacetGameSchema = z.object({
+  id: kangurGameIdSchema,
+  title: nonEmptyTrimmedString.max(120),
+  sortOrder: z.number().int().min(0).max(1_000_000),
+});
+export type KangurGameCatalogFacetGameDto = z.infer<
+  typeof kangurGameCatalogFacetGameSchema
+>;
+
 export const kangurGameCatalogFacetsSchema = z.object({
   gameCount: z.number().int().min(0),
+  games: z.array(kangurGameCatalogFacetGameSchema),
   subjects: z.array(kangurLessonSubjectSchema),
   ageGroups: z.array(kangurLessonAgeGroupSchema),
   statuses: z.array(kangurGameStatusSchema),
@@ -709,16 +732,100 @@ export type KangurGamesLibraryOverviewDto = z.infer<
   typeof kangurGamesLibraryOverviewSchema
 >;
 
+export const KANGUR_GAME_RUNTIME_SERIALIZATION_SURFACES = [
+  'lesson_inline',
+  'lesson_stage',
+  'game_screen',
+] as const;
+
+export const kangurGameRuntimeSerializationSurfaceIdSchema = z.enum(
+  KANGUR_GAME_RUNTIME_SERIALIZATION_SURFACES
+);
+export type KangurGameRuntimeSerializationSurfaceIdDto = z.infer<
+  typeof kangurGameRuntimeSerializationSurfaceIdSchema
+>;
+
+export const kangurGameRuntimeSerializationSurfaceSchema = z.object({
+  surface: kangurGameRuntimeSerializationSurfaceIdSchema,
+  totalVariants: z.number().int().min(0),
+  explicitRuntimeVariants: z.number().int().min(0),
+  compatibilityFallbackVariants: z.number().int().min(0),
+  duplicatedLegacyVariants: z.number().int().min(0),
+  missingRuntimeVariants: z.number().int().min(0),
+});
+export type KangurGameRuntimeSerializationSurfaceDto = z.infer<
+  typeof kangurGameRuntimeSerializationSurfaceSchema
+>;
+
+export const KANGUR_GAME_RUNTIME_SERIALIZATION_ISSUE_KINDS = [
+  'compatibility_fallback_variant',
+  'duplicated_legacy_variant',
+  'missing_runtime_variant',
+  'legacy_launch_fallback_game',
+  'non_shared_runtime_engine',
+] as const;
+
+export const kangurGameRuntimeSerializationIssueKindSchema = z.enum(
+  KANGUR_GAME_RUNTIME_SERIALIZATION_ISSUE_KINDS
+);
+export type KangurGameRuntimeSerializationIssueKindDto = z.infer<
+  typeof kangurGameRuntimeSerializationIssueKindSchema
+>;
+
+export const KANGUR_GAME_RUNTIME_SERIALIZATION_ISSUE_TARGETS = [
+  'game',
+  'engine',
+] as const;
+
+export const kangurGameRuntimeSerializationIssueTargetSchema = z.enum(
+  KANGUR_GAME_RUNTIME_SERIALIZATION_ISSUE_TARGETS
+);
+export type KangurGameRuntimeSerializationIssueTargetDto = z.infer<
+  typeof kangurGameRuntimeSerializationIssueTargetSchema
+>;
+
+export const kangurGameRuntimeSerializationIssueSchema = z.object({
+  kind: kangurGameRuntimeSerializationIssueKindSchema,
+  itemId: nonEmptyTrimmedString.max(120),
+  label: nonEmptyTrimmedString.max(160),
+  detail: z.string().trim().min(1).max(160).optional(),
+  targetKind: kangurGameRuntimeSerializationIssueTargetSchema,
+  targetId: nonEmptyTrimmedString.max(120),
+});
+export type KangurGameRuntimeSerializationIssueDto = z.infer<
+  typeof kangurGameRuntimeSerializationIssueSchema
+>;
+
+export const kangurGameRuntimeSerializationAuditSchema = z.object({
+  surfaces: z.array(kangurGameRuntimeSerializationSurfaceSchema),
+  runtimeBearingVariantCount: z.number().int().min(0),
+  explicitRuntimeVariantCount: z.number().int().min(0),
+  compatibilityFallbackVariantCount: z.number().int().min(0),
+  duplicatedLegacyVariantCount: z.number().int().min(0),
+  missingRuntimeVariantCount: z.number().int().min(0),
+  legacyLaunchFallbackGameCount: z.number().int().min(0),
+  issues: z.array(kangurGameRuntimeSerializationIssueSchema),
+  engineCount: z.number().int().min(0),
+  sharedRuntimeEngineCount: z.number().int().min(0),
+  nonSharedRuntimeEngineCount: z.number().int().min(0),
+  allEnginesSharedRuntime: z.boolean(),
+});
+export type KangurGameRuntimeSerializationAuditDto = z.infer<
+  typeof kangurGameRuntimeSerializationAuditSchema
+>;
+
 export const kangurGameLibraryPageDataSchema = z.object({
   catalogFacets: kangurGameCatalogFacetsSchema,
   coverage: kangurGameLibraryCoverageSchema,
   engineFilterOptions: kangurGameEngineCatalogFacetsSchema,
   engineOverview: kangurGameEngineLibraryOverviewSchema,
   overview: kangurGamesLibraryOverviewSchema,
+  serializationAudit: kangurGameRuntimeSerializationAuditSchema,
 });
 export type KangurGameLibraryPageDataDto = z.infer<typeof kangurGameLibraryPageDataSchema>;
 
 export const kangurGameCatalogQuerySchema = z.object({
+  gameId: optionalTrimmedQueryString(kangurGameIdSchema),
   subject: optionalTrimmedQueryString(kangurLessonSubjectSchema),
   ageGroup: optionalTrimmedQueryString(kangurLessonAgeGroupSchema),
   gameStatus: optionalTrimmedQueryString(kangurGameStatusSchema),

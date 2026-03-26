@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-26T12:50:53.124Z",
-  "status": "failed",
+  "generatedAt": "2026-03-26T14:23:59.569Z",
+  "status": "passed",
   "summary": {
-    "total": 1,
-    "errorCount": 1,
+    "total": 0,
+    "errorCount": 0,
     "warningCount": 0,
     "infoCount": 0,
-    "status": "failed",
-    "fileCount": 5829
+    "status": "passed",
+    "fileCount": 5840
   },
   "scope": {
     "root": "src",
@@ -15,7 +15,7 @@
     "doubleAssertionAllowlist": []
   },
   "trendCounters": {
-    "doubleAssertionCount": 1,
+    "doubleAssertionCount": 0,
     "anyCount": 0,
     "eslintDisableCount": 0,
     "nonNullAssertionCount": 0,
@@ -23,25 +23,7 @@
     "tsExpectErrorCount": 0
   },
   "eslintDisabledRules": {},
-  "issues": [
-    {
-      "severity": "error",
-      "ruleId": "double-assertion",
-      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
-      "file": "src/features/kangur/ui/components/LazyAnimatePresence.tsx",
-      "line": 30,
-      "column": null,
-      "snippet": null,
-      "context": null
-    }
-  ],
-  "rules": [
-    {
-      "ruleId": "double-assertion",
-      "errorCount": 1,
-      "warningCount": 0,
-      "infoCount": 0
-    }
-  ],
-  "durationMs": 1145
+  "issues": [],
+  "rules": [],
+  "durationMs": 1247
 }

@@ -3,7 +3,9 @@
  */
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { renderToString } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog';
 
 const authState = vi.hoisted(() => ({
   value: {
@@ -185,5 +187,31 @@ describe('KangurSubjectFocusContext', () => {
       'learner-1',
       'english'
     );
+  });
+
+  it('defers persisted subject hydration until after the initial render', async () => {
+    subjectFocusServiceMocks.loadPersistedSubjectFocusMock.mockReturnValue('english');
+    subjectFocusServiceMocks.subscribeToSubjectFocusChangesMock.mockImplementation(
+      () => () => undefined
+    );
+
+    const serverHtml = renderToString(
+      <KangurSubjectFocusProvider>
+        <Probe />
+      </KangurSubjectFocusProvider>
+    );
+
+    expect(serverHtml).toContain(DEFAULT_KANGUR_SUBJECT);
+    expect(serverHtml).not.toContain('english');
+
+    render(
+      <KangurSubjectFocusProvider>
+        <Probe />
+      </KangurSubjectFocusProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('subject-value')).toHaveTextContent('english');
+    });
   });
 });

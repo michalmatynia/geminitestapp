@@ -8,7 +8,7 @@ canonical: true
 ---
 # Critical Path Performance Report
 
-Generated at: 2026-03-26T12:27:36.708Z
+Generated at: 2026-03-26T13:47:25.619Z
 
 ## Summary
 
@@ -90,11 +90,11 @@ Generated at: 2026-03-26T12:27:36.708Z
 | `src/features/kangur/ui/components/animations/EnglishAnimations.tsx` | 2718 |
 | `src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx` | 2712 |
 | `src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx` | 2454 |
-| `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 2023 |
+| `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 2083 |
+| `src/features/kangur/ui/pages/GamesLibrary.tsx` | 1904 |
 | `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1846 |
 | `src/features/kangur/ui/components/music/useKangurMusicSynth.ts` | 1793 |
 | `src/features/kangur/ui/components/EnglishAdverbsFrequencyRoutineGame.tsx` | 1701 |
-| `src/features/kangur/ui/pages/GamesLibrary.tsx` | 1694 |
 | `src/features/kangur/ui/components/AddingLesson.tsx` | 1685 |
 
 ## Top API Route Hotspots (Reference)

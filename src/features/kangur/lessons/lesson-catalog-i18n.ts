@@ -1103,33 +1103,56 @@ const resolveKangurLessonCatalogLocale = (
   return 'en';
 };
 
-const shouldApplyOverride = (
+const getLessonSourceValue = (
   componentId: string,
-  fallbackValue: string,
   field: keyof LessonCopyOverride
-): boolean => {
+): string | null => {
   if (!(componentId in KANGUR_LESSON_LIBRARY)) {
-    return false;
+    return null;
   }
+
   const template = KANGUR_LESSON_LIBRARY[componentId as keyof typeof KANGUR_LESSON_LIBRARY];
   const sourceValue = template?.[field];
-  return typeof sourceValue === 'string' && fallbackValue.trim() === sourceValue.trim();
+
+  return typeof sourceValue === 'string' ? sourceValue : null;
+};
+
+const shouldApplyOverride = (
+  componentId: string,
+  fallbackValue: string | null | undefined,
+  field: keyof LessonCopyOverride
+): boolean => {
+  const sourceValue = getLessonSourceValue(componentId, field);
+
+  if (typeof sourceValue !== 'string') {
+    return false;
+  }
+
+  if (typeof fallbackValue !== 'string' || fallbackValue.trim().length === 0) {
+    return true;
+  }
+
+  return fallbackValue.trim() === sourceValue.trim();
 };
 
 const resolveLessonOverride = (
   componentId: string,
   locale: string | null | undefined,
   field: keyof LessonCopyOverride,
-  fallbackValue: string
+  fallbackValue: string | null | undefined
 ): string => {
   const catalogLocale = resolveKangurLessonCatalogLocale(locale);
+  const resolvedFallbackValue =
+    typeof fallbackValue === 'string' && fallbackValue.trim().length > 0
+      ? fallbackValue
+      : getLessonSourceValue(componentId, field) ?? '';
 
   if (catalogLocale === 'pl') {
-    return fallbackValue;
+    return resolvedFallbackValue;
   }
 
   if (!shouldApplyOverride(componentId, fallbackValue, field)) {
-    return fallbackValue;
+    return resolvedFallbackValue;
   }
 
   return (
@@ -1139,7 +1162,7 @@ const resolveLessonOverride = (
         ? UKRAINIAN_LESSON_COPY_OVERRIDES[componentId as KangurLessonComponentId]?.[field]
       : undefined) ??
     ENGLISH_LESSON_COPY_OVERRIDES[componentId as KangurLessonComponentId]?.[field] ??
-    fallbackValue
+    resolvedFallbackValue
   );
 };
 
@@ -1152,7 +1175,7 @@ export const getLocalizedKangurLessonTitle = (
 export const getLocalizedKangurLessonDescription = (
   componentId: string,
   locale: string | null | undefined,
-  fallbackDescription: string
+  fallbackDescription?: string | null
 ): string => resolveLessonOverride(componentId, locale, 'description', fallbackDescription);
 
 export const getLocalizedKangurSubjectLabel = (

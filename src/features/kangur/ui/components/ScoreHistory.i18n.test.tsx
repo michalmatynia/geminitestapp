@@ -109,4 +109,53 @@ describe('ScoreHistory i18n', () => {
     expect(screen.getAllByText('Adjectives').length).toBeGreaterThan(0);
     expect(screen.getByText('Games total')).toBeInTheDocument();
   });
+
+  it('uses English fallback copy when messages are unavailable', () => {
+    render(
+      <NextIntlClientProvider
+        locale='en'
+        messages={{}}
+        getMessageFallback={({ namespace, key }) => `${namespace}.${key}`}
+        onError={() => {}}
+      >
+        <ScoreHistory
+          prefetchedLoading={false}
+          prefetchedScores={[
+            createScore({
+              id: 'score-1',
+              operation: 'division',
+              correct_answers: 4,
+              score: 4,
+              created_date: '2026-03-06T11:00:00.000Z',
+            }),
+            createScore({
+              id: 'score-2',
+              operation: 'multiplication',
+              correct_answers: 10,
+              score: 10,
+              created_date: '2026-03-05T11:00:00.000Z',
+            }),
+            createScore({
+              id: 'score-3',
+              operation: 'division',
+              correct_answers: 5,
+              score: 5,
+              created_date: '2026-03-04T11:00:00.000Z',
+            }),
+          ]}
+          basePath='/kangur'
+        />
+      </NextIntlClientProvider>
+    );
+
+    expect(screen.getByText('Overview of the last 7 days')).toBeInTheDocument();
+    expect(screen.getByText('Weekly trend')).toBeInTheDocument();
+    expect(screen.getByText('Results by operation')).toBeInTheDocument();
+    expect(screen.getByText('Recent games')).toBeInTheDocument();
+    expect(screen.getAllByText('Division').length).toBeGreaterThan(0);
+    expect(screen.getByRole('link', { name: 'Review lesson' })).toHaveAttribute(
+      'href',
+      '/en/kangur/lessons?focus=division'
+    );
+  });
 });

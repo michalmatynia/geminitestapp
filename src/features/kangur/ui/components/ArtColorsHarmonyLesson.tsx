@@ -2,6 +2,7 @@
 
 import type { JSX } from 'react';
 
+import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   KangurLessonCallout,
@@ -13,7 +14,11 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
-type SectionId = 'warmCool' | 'pairing' | 'lookAround' | 'summary';
+type SectionId = 'warmCool' | 'pairing' | 'gameHarmony' | 'lookAround' | 'summary';
+
+const ART_COLOR_HARMONY_RUNTIME = getKangurLessonStageGameRuntimeSpec(
+  'art_color_harmony_studio_lesson_stage'
+);
 
 type ColorCardProps = {
   accent: 'amber' | 'rose' | 'sky' | 'emerald';
@@ -49,6 +54,12 @@ const sections = [
     description: 'Practice making calm and happy color pairs.',
   },
   {
+    id: 'gameHarmony',
+    emoji: '🎮',
+    title: 'Color studio game',
+    description: 'Pick the palette that feels warm, cool, or balanced.',
+  },
+  {
     id: 'lookAround',
     emoji: '👀',
     title: 'Find colors around you',
@@ -62,7 +73,7 @@ const sections = [
   },
 ] as const;
 
-const slides: Record<SectionId, LessonSlide[]> = {
+const slides: Partial<Record<SectionId, LessonSlide[]>> = {
   warmCool: [
     {
       title: 'Warm colors feel sunny',
@@ -174,6 +185,7 @@ const slides: Record<SectionId, LessonSlide[]> = {
       ),
     },
   ],
+  gameHarmony: [],
   lookAround: [
     {
       title: 'Where can you see harmony?',
@@ -242,6 +254,20 @@ export default function ArtColorsHarmonyLesson(): JSX.Element {
       completionSectionId='summary'
       autoRecordComplete
       scorePercent={100}
+      skipMarkFor={['gameHarmony']}
+      games={[
+        {
+          sectionId: 'gameHarmony',
+          stage: {
+            accent: 'rose',
+            icon: '🎮',
+            shellTestId: 'art-colors-harmony-game-shell',
+            title: 'Color studio game',
+            description: 'Choose the palette that feels warm, calm, smooth, or balanced.',
+          },
+          runtime: ART_COLOR_HARMONY_RUNTIME,
+        },
+      ]}
     />
   );
 }

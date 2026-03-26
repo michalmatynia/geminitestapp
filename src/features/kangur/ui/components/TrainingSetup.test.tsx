@@ -3,9 +3,138 @@
  */
 
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import TrainingSetup from '@/features/kangur/ui/components/TrainingSetup';
+
+const { localeMock } = vi.hoisted(() => ({
+  localeMock: vi.fn(() => 'pl'),
+}));
+
+const { translationMessages } = vi.hoisted(() => ({
+  translationMessages: {
+    pl: {
+      KangurTrainingSetup: {
+        categories: {
+          addition: 'Dodawanie',
+          subtraction: 'Odejmowanie',
+          multiplication: 'Mnozenie',
+          division: 'Dzielenie',
+          decimals: 'Ulamki',
+          powers: 'Potegi',
+          roots: 'Pierwiastki',
+        },
+        difficulty: {
+          easy: 'Latwy',
+          medium: 'Sredni',
+          hard: 'Trudny',
+        },
+        difficultySummary: {
+          easy: 'latwy',
+          medium: 'sredni',
+          hard: 'trudny',
+        },
+        difficultyMeta: '{seconds}s · zakres 1-{range}',
+        summaryLabel: 'Wybrano {categories} kategorii, {count} pytan, poziom {difficulty}.',
+        toggleAll: {
+          selectAll: 'Zaznacz wszystkie',
+          clear: 'Odznacz wszystkie',
+        },
+      },
+    },
+    en: {
+      KangurTrainingSetup: {
+        categories: {
+          addition: 'Addition',
+          subtraction: 'Subtraction',
+          multiplication: 'Multiplication',
+          division: 'Division',
+          decimals: 'Fractions',
+          powers: 'Powers',
+          roots: 'Roots',
+        },
+        difficulty: {
+          easy: 'Easy',
+          medium: 'Medium',
+          hard: 'Hard',
+        },
+        difficultySummary: {
+          easy: 'easy',
+          medium: 'medium',
+          hard: 'hard',
+        },
+        difficultyMeta: '{seconds}s · range 1-{range}',
+        summaryLabel: '{categories} categories selected, {count} questions, {difficulty} level.',
+        toggleAll: {
+          selectAll: 'Select all',
+          clear: 'Clear all',
+        },
+      },
+    },
+  },
+}));
+
+vi.mock('next-intl', () => ({
+  NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children,
+  useLocale: () => localeMock(),
+  useTranslations:
+    (namespace?: string) =>
+    (key: string, values?: Record<string, string | number>) => {
+      const locale = localeMock() || 'pl';
+      const dictionary =
+        translationMessages[locale as keyof typeof translationMessages] ?? translationMessages.pl;
+      const namespaceParts = (namespace ?? '').split('.').filter(Boolean);
+      const keyParts = key.split('.').filter(Boolean);
+      const resolved = [...namespaceParts, ...keyParts].reduce<unknown>((current, part) => {
+        if (!current || typeof current !== 'object') {
+          return undefined;
+        }
+
+        return (current as Record<string, unknown>)[part];
+      }, dictionary);
+
+      if (typeof resolved !== 'string') {
+        return key;
+      }
+
+      return Object.entries(values ?? {}).reduce(
+        (message, [valueKey, value]) => message.replaceAll(`{${valueKey}}`, String(value)),
+        resolved
+      );
+    },
+}));
+
+vi.mock('framer-motion', () => {
+  const createMotionTag = (tag: keyof React.JSX.IntrinsicElements) =>
+    function MotionTag({
+      animate: _animate,
+      children,
+      exit: _exit,
+      initial: _initial,
+      transition: _transition,
+      whileHover: _whileHover,
+      whileTap: _whileTap,
+      ...props
+    }: React.HTMLAttributes<HTMLElement> & {
+      animate?: unknown;
+      children?: React.ReactNode;
+      exit?: unknown;
+      initial?: unknown;
+      transition?: unknown;
+      whileHover?: unknown;
+      whileTap?: unknown;
+    }) {
+      return React.createElement(tag, props, children);
+    };
+
+  return {
+    motion: {
+      button: createMotionTag('button'),
+      div: createMotionTag('div'),
+    },
+  };
+});
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
@@ -13,6 +142,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 
 describe('TrainingSetup', () => {
   it('surfaces pressed state for category and question-count selections', () => {
+    localeMock.mockReturnValue('pl');
     render(<TrainingSetup onStart={vi.fn()} />);
 
     const heading = screen.getByTestId('training-setup-heading');
@@ -79,6 +209,7 @@ describe('TrainingSetup', () => {
   });
 
   it('applies the suggested training preset and shows the recommendation card', () => {
+    localeMock.mockReturnValue('pl');
     render(
       <TrainingSetup
         onStart={vi.fn()}
@@ -106,5 +237,19 @@ describe('TrainingSetup', () => {
     expect(screen.getByRole('button', { name: '15 pytań' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('group', { name: 'Poziom trudności' })).toBeInTheDocument();
     expect(screen.getByTestId('difficulty-option-hard')).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('renders the training chrome in English on the English route', () => {
+    localeMock.mockReturnValue('en');
+    render(<TrainingSetup onStart={vi.fn()} />);
+
+    expect(screen.getByRole('heading', { name: 'Build your training' })).toBeInTheDocument();
+    expect(
+      screen.getByText('Choose the level, categories, and number of questions for one session.')
+    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Question categories' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Question count' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '10 questions' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Start! 🚀' })).toBeInTheDocument();
   });
 });

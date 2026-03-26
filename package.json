@@ -201,6 +201,7 @@
     "metrics:prop-drilling": "node scripts/architecture/scan-prop-drilling.mjs",
     "metrics:type-clusters": "node --max-old-space-size=12288 scripts/architecture/scan-type-clusters.mjs",
     "metrics:type-clusters:init": "node --max-old-space-size=12288 scripts/architecture/scan-type-clusters.mjs --init --no-history",
+    "metrics:type-clusters:domains": "node scripts/architecture/generate-type-clusters-domain-scans.mjs",
     "metrics:type-clusters:ai": "node --max-old-space-size=12288 scripts/architecture/scan-type-clusters.mjs --domain=feature:ai --min-risk=10",
     "metrics:guardrails": "node scripts/architecture/check-guardrails.mjs",
     "metrics:guardrails:update": "node scripts/architecture/check-guardrails.mjs --update-baseline",

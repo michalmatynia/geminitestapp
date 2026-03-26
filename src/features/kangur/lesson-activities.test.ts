@@ -8,6 +8,7 @@ import {
 import {
   KANGUR_LESSON_ACTIVITY_DEFINITIONS,
   applyKangurLessonActivityDefaults,
+  getLocalizedKangurLessonActivityDefinition,
 } from './lesson-activities';
 
 describe('kangur lesson activities', () => {
@@ -17,6 +18,14 @@ describe('kangur lesson activities', () => {
       title: 'Ćwiczenie z zegarem',
       description:
         'Ćwicz osobno godziny, minuty i pełny czas na zegarze analogowym w sekcjach treningowych.',
+    });
+  });
+
+  it('returns localized learner-facing copy for english routes', () => {
+    expect(getLocalizedKangurLessonActivityDefinition('clock-training', 'en')).toMatchObject({
+      title: 'Clock practice',
+      description:
+        'Practise hours, minutes, and full time on the analogue clock in training sections.',
     });
   });
 

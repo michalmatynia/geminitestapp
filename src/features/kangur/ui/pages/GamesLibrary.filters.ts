@@ -8,12 +8,14 @@ import {
   kangurGameEngineCategorySchema,
   kangurGameEngineIdSchema,
   kangurGameEngineImplementationOwnershipSchema,
+  kangurGameIdSchema,
   kangurGameMechanicSchema,
   kangurGameStatusSchema,
   kangurGameSurfaceSchema,
   type KangurGameEngineCategory,
   type KangurGameEngineId,
   type KangurGameEngineImplementationOwnership,
+  type KangurGameId,
   type KangurGameMechanic,
   type KangurGameStatus,
   type KangurGameSurface,
@@ -28,8 +30,16 @@ import type { ZodType } from 'zod';
 type SearchParamReader = Pick<URLSearchParams, 'get'> | null | undefined;
 
 export type GamesLibraryFilterValue<T extends string> = 'all' | T;
+export type GamesLibraryTabId = 'catalog' | 'structure' | 'runtime';
+
+const GAMES_LIBRARY_TAB_IDS: readonly GamesLibraryTabId[] = [
+  'catalog',
+  'structure',
+  'runtime',
+] as const;
 
 export type GamesLibraryFilterState = {
+  gameId: GamesLibraryFilterValue<KangurGameId>;
   subject: GamesLibraryFilterValue<KangurLessonSubject>;
   ageGroup: GamesLibraryFilterValue<KangurLessonAgeGroup>;
   mechanic: GamesLibraryFilterValue<KangurGameMechanic>;
@@ -44,6 +54,7 @@ export type GamesLibraryFilterState = {
 };
 
 export const DEFAULT_GAMES_LIBRARY_FILTERS: GamesLibraryFilterState = {
+  gameId: 'all',
   subject: 'all',
   ageGroup: 'all',
   mechanic: 'all',
@@ -85,12 +96,24 @@ const parseVariantSurface = (value: string | undefined): KangurGameVariantSurfac
   return KANGUR_GAME_VARIANT_SURFACES.find((surface) => surface === value);
 };
 
+export const readGamesLibraryTabFromSearchParams = (
+  searchParams: SearchParamReader
+): GamesLibraryTabId | null => {
+  const value = readSearchParam(searchParams, 'tab');
+  return value && GAMES_LIBRARY_TAB_IDS.includes(value as GamesLibraryTabId)
+    ? (value as GamesLibraryTabId)
+    : null;
+};
+
 export const readGamesLibraryFiltersFromSearchParams = (
   searchParams: SearchParamReader
 ): GamesLibraryFilterState => {
   const launchableOnly = readSearchParam(searchParams, 'launchableOnly') === 'true';
 
   return {
+    gameId:
+      parseOptionalQueryValue(kangurGameIdSchema, readSearchParam(searchParams, 'gameId')) ??
+      'all',
     subject:
       parseOptionalQueryValue(kangurLessonSubjectSchema, readSearchParam(searchParams, 'subject')) ??
       'all',
@@ -138,8 +161,10 @@ export const readGamesLibraryFiltersFromSearchParams = (
 };
 
 export const getGamesLibrarySearchParams = (
-  filters: GamesLibraryFilterState
+  filters: GamesLibraryFilterState,
+  tab?: GamesLibraryTabId | null
 ): Record<string, string | undefined> => ({
+  gameId: filters.gameId === 'all' ? undefined : filters.gameId,
   subject: filters.subject === 'all' ? undefined : filters.subject,
   ageGroup: filters.ageGroup === 'all' ? undefined : filters.ageGroup,
   mechanic: filters.mechanic === 'all' ? undefined : filters.mechanic,
@@ -154,11 +179,13 @@ export const getGamesLibrarySearchParams = (
       ? undefined
       : filters.implementationOwnership,
   launchableOnly: filters.launchability === 'launchable' ? 'true' : undefined,
+  tab: tab && tab !== 'catalog' ? tab : undefined,
 });
 
 export const buildGamesLibraryCatalogFilter = (
   filters: GamesLibraryFilterState
 ): KangurGameCatalogFilter => ({
+  gameId: filters.gameId === 'all' ? undefined : filters.gameId,
   subject: filters.subject === 'all' ? undefined : filters.subject,
   ageGroup: filters.ageGroup === 'all' ? undefined : filters.ageGroup,
   mechanic: filters.mechanic === 'all' ? undefined : filters.mechanic,
@@ -182,6 +209,7 @@ export const areGamesLibraryFiltersEqual = (
   left: GamesLibraryFilterState,
   right: GamesLibraryFilterState
 ): boolean =>
+  left.gameId === right.gameId &&
   left.subject === right.subject &&
   left.ageGroup === right.ageGroup &&
   left.mechanic === right.mechanic &&

@@ -12,6 +12,7 @@ import {
   createKangurPointDrawingSnapshot,
   serializeKangurPointDrawingSnapshot,
 } from '@/features/kangur/ui/components/drawing-engine/point-snapshots';
+import type { KangurDrawingDraftStorageController } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage';
 import {
   KANGUR_DRAWING_DRAFT_PERSIST_DELAY_MS,
   loadKangurDrawingDraftSnapshot,
@@ -29,14 +30,17 @@ const createRect = (input: { left: number; top: number; width: number; height: n
   }) as DOMRect;
 
 function StoredCanvasHarness({
+  draftStorage,
   storageKey,
 }: {
+  draftStorage?: KangurDrawingDraftStorageController;
   storageKey: string | null;
 }): React.JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const { handlePointerDown, handlePointerMove, handlePointerUp, strokes } =
     useKangurStoredPointCanvasDrawing({
       canvasRef,
+      draftStorage,
       logicalHeight: 220,
       logicalWidth: 320,
       minPointDistance: 8,
@@ -155,5 +159,56 @@ describe('useKangurStoredPointCanvasDrawing', () => {
     expect(loadKangurDrawingDraftSnapshot('geometry-drawing:triangle')).toContain(
       '"version":1'
     );
+  });
+
+  it('supports injected external draft controllers for stored point drawings', () => {
+    let draftSnapshot = serializeKangurPointDrawingSnapshot(
+      createKangurPointDrawingSnapshot({
+        logicalHeight: 220,
+        logicalWidth: 320,
+        strokes: [[{ x: 24, y: 48 }, { x: 92, y: 116 }]],
+      })
+    );
+
+    const draftStorage: KangurDrawingDraftStorageController = {
+      clearDraftSnapshot: () => {
+        draftSnapshot = null;
+      },
+      get draftSnapshot() {
+        return draftSnapshot;
+      },
+      setDraftSnapshot: (nextSnapshot) => {
+        draftSnapshot =
+          typeof nextSnapshot === 'function'
+            ? nextSnapshot(draftSnapshot)
+            : nextSnapshot;
+      },
+    };
+
+    render(<StoredCanvasHarness draftStorage={draftStorage} storageKey={null} />);
+
+    const canvas = screen.getByLabelText('Stored point canvas');
+    expect(canvas).toHaveAttribute('data-stroke-count', '1');
+
+    fireEvent.pointerDown(canvas, {
+      pointerId: 9,
+      clientX: 32,
+      clientY: 48,
+    });
+    fireEvent.pointerMove(canvas, {
+      pointerId: 9,
+      clientX: 96,
+      clientY: 128,
+    });
+    fireEvent.pointerUp(canvas, {
+      pointerId: 9,
+      clientX: 96,
+      clientY: 128,
+    });
+
+    expect(draftSnapshot).toContain('"version":1');
+
+    draftStorage.clearDraftSnapshot();
+    expect(draftSnapshot).toBeNull();
   });
 });

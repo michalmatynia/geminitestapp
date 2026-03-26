@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useMemo } from 'react';
+import { useLocale } from 'next-intl';
 
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
 import {
@@ -20,10 +21,167 @@ import {
   selectKangurPriorityAssignments,
   type KangurAssignmentListItem,
 } from '@/features/kangur/ui/services/delegated-assignments';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type KangurLearnerAssignmentsPanelProps = {
   basePath: string;
   enabled?: boolean;
+};
+
+type LearnerAssignmentsFallbackCopy = {
+  activeAssignmentsDescription: string;
+  activeAssignmentsEmptyLabel: string;
+  activeAssignmentsTitle: string;
+  activeLabel: string;
+  completedAssignmentsDescription: string;
+  completedAssignmentsEmptyLabel: string;
+  completedAssignmentsTitle: string;
+  completedLabel: string;
+  completionRateDescription: string;
+  completionRateLabel: string;
+  disabledDescription: string;
+  disabledLabel: string;
+  disabledTitle: string;
+  errorDescription: string;
+  errorLabel: string;
+  highPriorityDescription: string;
+  highPriorityLabel: string;
+  latestCompletedTitle: string;
+  latestSuccessDescription: string;
+  latestSuccessLabel: string;
+  loadingDescription: string;
+  loadingTitle: string;
+  sectionSummary: string;
+  sectionTitle: string;
+};
+
+const getLearnerAssignmentsFallbackCopy = (
+  locale: ReturnType<typeof normalizeSiteLocale>
+): LearnerAssignmentsFallbackCopy => {
+  if (locale === 'uk') {
+    return {
+      activeAssignmentsDescription: 'завдання ще очікують виконання',
+      activeAssignmentsEmptyLabel: 'Зараз немає активних підказок від батьків.',
+      activeAssignmentsTitle: 'Поточні підказки від батьків',
+      activeLabel: 'Активні',
+      completedAssignmentsDescription: 'призначення вже завершені',
+      completedAssignmentsEmptyLabel: 'У тебе ще немає виконаних підказок від батьків.',
+      completedAssignmentsTitle: 'Історія виконаних підказок',
+      completedLabel: 'Завершені',
+      completionRateDescription: 'виконано з усіх видимих завдань',
+      completionRateLabel: 'Результативність',
+      disabledDescription:
+        'Після входу ти побачиш підказки від батьків і історію їх виконання.',
+      disabledLabel: 'Локальний режим',
+      disabledTitle: 'Підказки від батьків',
+      errorDescription: 'Спробуй ще раз за хвилину або онови профіль учня.',
+      errorLabel: 'Помилка призначень',
+      highPriorityDescription: 'високі пріоритети від батьків',
+      highPriorityLabel: 'Термінові',
+      latestCompletedTitle: 'Немає завершених завдань',
+      latestSuccessDescription: 'Найновіше завершене завдання з історії призначень.',
+      latestSuccessLabel: 'Останній успіх',
+      loadingDescription: 'Перевіряємо активні та завершені призначення для цього профілю.',
+      loadingTitle: 'Завантаження призначених завдань...',
+      sectionSummary:
+        'Завдання та підказки від батьків, які варто виконати насамперед.',
+      sectionTitle: 'Підказки від батьків',
+    };
+  }
+
+  if (locale === 'de') {
+    return {
+      activeAssignmentsDescription: 'Aufgaben stehen noch aus',
+      activeAssignmentsEmptyLabel: 'Es gibt aktuell keine Empfehlungen der Eltern.',
+      activeAssignmentsTitle: 'Aktuelle Empfehlungen der Eltern',
+      activeLabel: 'Aktiv',
+      completedAssignmentsDescription: 'Zuweisungen bereits abgeschlossen',
+      completedAssignmentsEmptyLabel: 'Du hast noch keine erledigten Empfehlungen der Eltern.',
+      completedAssignmentsTitle: 'Verlauf erledigter Empfehlungen',
+      completedLabel: 'Erledigt',
+      completionRateDescription: 'von allen sichtbaren Aufgaben erledigt',
+      completionRateLabel: 'Trefferquote',
+      disabledDescription:
+        'Nach der Anmeldung siehst du Empfehlungen der Eltern und deren Verlauf.',
+      disabledLabel: 'Lokaler Modus',
+      disabledTitle: 'Empfehlungen der Eltern',
+      errorDescription:
+        'Versuche es in einem Moment noch einmal oder aktualisiere das Lernendenprofil.',
+      errorLabel: 'Zuweisungsfehler',
+      highPriorityDescription: 'hohe Prioritaten von den Eltern',
+      highPriorityLabel: 'Dringend',
+      latestCompletedTitle: 'Keine abgeschlossenen Aufgaben',
+      latestSuccessDescription: 'Die zuletzt abgeschlossene Aufgabe aus dem Zuweisungsverlauf.',
+      latestSuccessLabel: 'Letzter Erfolg',
+      loadingDescription:
+        'Aktive und abgeschlossene Zuweisungen fur dieses Profil werden gepruft.',
+      loadingTitle: 'Zugewiesene Aufgaben werden geladen...',
+      sectionSummary:
+        'Aufgaben und Hinweise der Eltern, die du zuerst erledigen solltest.',
+      sectionTitle: 'Empfehlungen der Eltern',
+    };
+  }
+
+  if (locale === 'en') {
+    return {
+      activeAssignmentsDescription: 'assignments still waiting to be done',
+      activeAssignmentsEmptyLabel: 'There are no current parent suggestions.',
+      activeAssignmentsTitle: 'Current parent suggestions',
+      activeLabel: 'Active',
+      completedAssignmentsDescription: 'assignments already completed',
+      completedAssignmentsEmptyLabel: 'You do not have any completed parent suggestions yet.',
+      completedAssignmentsTitle: 'History of completed suggestions',
+      completedLabel: 'Completed',
+      completionRateDescription: 'completed out of all visible assignments',
+      completionRateLabel: 'Completion rate',
+      disabledDescription:
+        'After signing in you will see parent suggestions and the history of completing them.',
+      disabledLabel: 'Local mode',
+      disabledTitle: 'Parent suggestions',
+      errorDescription: 'Try again in a moment or refresh the learner profile.',
+      errorLabel: 'Assignment error',
+      highPriorityDescription: 'high-priority items from the parent',
+      highPriorityLabel: 'Urgent',
+      latestCompletedTitle: 'No completed assignments',
+      latestSuccessDescription:
+        'The most recently completed assignment from the assignment history.',
+      latestSuccessLabel: 'Latest success',
+      loadingDescription: 'Checking active and completed assignments for this profile.',
+      loadingTitle: 'Loading assigned tasks...',
+      sectionSummary:
+        'Tasks and hints from the parent that are worth completing first.',
+      sectionTitle: 'Parent suggestions',
+    };
+  }
+
+  return {
+    activeAssignmentsDescription: 'zadania nadal do wykonania',
+    activeAssignmentsEmptyLabel: 'Brak aktualnych sugestii od rodzica.',
+    activeAssignmentsTitle: 'Aktualne sugestie od rodzica',
+    activeLabel: 'Aktywne',
+    completedAssignmentsDescription: 'przydziały już zakończone',
+    completedAssignmentsEmptyLabel: 'Nie masz jeszcze wykonanych sugestii od rodzica.',
+    completedAssignmentsTitle: 'Historia wykonanych sugestii',
+    completedLabel: 'Ukończone',
+    completionRateDescription: 'wykonanych z wszystkich widocznych zadań',
+    completionRateLabel: 'Skuteczność',
+    disabledDescription:
+      'Po zalogowaniu zobaczysz sugestie od rodzica oraz historię ich wykonania.',
+    disabledLabel: 'Tryb lokalny',
+    disabledTitle: 'Sugestie od Rodzica',
+    errorDescription: 'Spróbuj ponownie za chwilę albo odśwież profil ucznia.',
+    errorLabel: 'Błąd przydziałów',
+    highPriorityDescription: 'wysokie priorytety od rodzica',
+    highPriorityLabel: 'Pilne',
+    latestCompletedTitle: 'Brak ukończonych zadań',
+    latestSuccessDescription: 'Najnowsze zakończone zadanie z historii przydziałów.',
+    latestSuccessLabel: 'Ostatni sukces',
+    loadingDescription: 'Sprawdzamy aktywne i zakończone przydziały dla tego profilu.',
+    loadingTitle: 'Ładowanie przydzielonych zadań...',
+    sectionSummary:
+      'Zadania i wskazówki od rodzica, które warto wykonać w pierwszej kolejności.',
+    sectionTitle: 'Sugestie od Rodzica',
+  };
 };
 
 const getLatestAssignmentTimestamp = (value: string | null, fallback: string): number => {
@@ -40,6 +198,8 @@ export function KangurLearnerAssignmentsPanel({
   basePath,
   enabled = false,
 }: KangurLearnerAssignmentsPanelProps): React.JSX.Element {
+  const locale = normalizeSiteLocale(useLocale());
+  const fallbackCopy = getLearnerAssignmentsFallbackCopy(locale);
   const { entry: assignmentsContent } = useKangurPageContentEntry('learner-profile-assignments');
   const { subject, setSubject } = useKangurSubjectFocus();
   const { assignments, isLoading, error } = useKangurAssignments({
@@ -98,21 +258,20 @@ export function KangurLearnerAssignmentsPanel({
   const highPriorityActiveCount = activeAssignments.filter(
     (assignment) => assignment.priority === 'high'
   ).length;
-  const latestCompletedTitle = completedAssignments[0]?.title ?? 'Brak ukończonych zadań';
-  const sectionTitle = assignmentsContent?.title ?? 'Sugestie od Rodzica';
-  const sectionSummary =
-    assignmentsContent?.summary ??
-    'Zadania i wskazówki od rodzica, które warto wykonać w pierwszej kolejności.';
+  const latestCompletedTitle =
+    completedAssignments[0]?.title ?? fallbackCopy.latestCompletedTitle;
+  const sectionTitle = assignmentsContent?.title ?? fallbackCopy.sectionTitle;
+  const sectionSummary = assignmentsContent?.summary ?? fallbackCopy.sectionSummary;
 
   if (!enabled) {
     return (
       <KangurSummaryPanel
         accent='slate'
         data-testid='learner-assignments-disabled'
-        description='Po zalogowaniu zobaczysz sugestie od rodzica oraz historię ich wykonania.'
-        label='Tryb lokalny'
+        description={fallbackCopy.disabledDescription}
+        label={fallbackCopy.disabledLabel}
         padding='lg'
-        title='Sugestie od Rodzica'
+        title={fallbackCopy.disabledTitle}
       />
     );
   }
@@ -123,9 +282,9 @@ export function KangurLearnerAssignmentsPanel({
         accent='slate'
         align='center'
         data-testid='learner-assignments-loading'
-        description='Sprawdzamy aktywne i zakończone przydziały dla tego profilu.'
+        description={fallbackCopy.loadingDescription}
         padding='lg'
-        title='Ładowanie przydzielonych zadań...'
+        title={fallbackCopy.loadingTitle}
         role='status'
         aria-live='polite'
         aria-atomic='true'
@@ -138,8 +297,8 @@ export function KangurLearnerAssignmentsPanel({
       <KangurSummaryPanel
         accent='rose'
         data-testid='learner-assignments-error'
-        description='Spróbuj ponownie za chwilę albo odśwież profil ucznia.'
-        label='Błąd przydziałów'
+        description={fallbackCopy.errorDescription}
+        label={fallbackCopy.errorLabel}
         padding='lg'
         title={error}
         tone='accent'
@@ -159,32 +318,32 @@ export function KangurLearnerAssignmentsPanel({
           <KangurMetricCard
             accent='slate'
             data-testid='learner-assignments-active'
-            description='zadania nadal do wykonania'
-            label='Aktywne'
+            description={fallbackCopy.activeAssignmentsDescription}
+            label={fallbackCopy.activeLabel}
             value={activeAssignments.length}
           />
 
           <KangurMetricCard
             accent='emerald'
             data-testid='learner-assignments-completed'
-            description='przydziały już zakończone'
-            label='Ukończone'
+            description={fallbackCopy.completedAssignmentsDescription}
+            label={fallbackCopy.completedLabel}
             value={completedAssignments.length}
           />
 
           <KangurMetricCard
             accent='amber'
             data-testid='learner-assignments-high-priority'
-            description='wysokie priorytety od rodzica'
-            label='Pilne'
+            description={fallbackCopy.highPriorityDescription}
+            label={fallbackCopy.highPriorityLabel}
             value={highPriorityActiveCount}
           />
 
           <KangurMetricCard
             accent='indigo'
             data-testid='learner-assignments-completion-rate'
-            description='wykonanych z wszystkich widocznych zadań'
-            label='Skuteczność'
+            description={fallbackCopy.completionRateDescription}
+            label={fallbackCopy.completionRateLabel}
             value={`${completionRate}%`}
           />
         </div>
@@ -192,8 +351,8 @@ export function KangurLearnerAssignmentsPanel({
         <KangurSummaryPanel
           accent='indigo'
           className='mt-4'
-          description='Najnowsze zakończone zadanie z historii przydziałów.'
-          label='Ostatni sukces'
+          description={fallbackCopy.latestSuccessDescription}
+          label={fallbackCopy.latestSuccessLabel}
           padding='md'
           title={latestCompletedTitle}
           tone='accent'
@@ -202,8 +361,8 @@ export function KangurLearnerAssignmentsPanel({
 
       <KangurAssignmentsList
         items={activeAssignmentItems}
-        title='Aktualne sugestie od rodzica'
-        emptyLabel='Brak aktualnych sugestii od rodzica.'
+        title={fallbackCopy.activeAssignmentsTitle}
+        emptyLabel={fallbackCopy.activeAssignmentsEmptyLabel}
         compact
         showTimeCountdown
         onItemActionClick={handleAssignmentOpen}
@@ -211,8 +370,8 @@ export function KangurLearnerAssignmentsPanel({
 
       <KangurAssignmentsList
         items={completedAssignmentItems}
-        title='Historia wykonanych sugestii'
-        emptyLabel='Nie masz jeszcze wykonanych sugestii od rodzica.'
+        title={fallbackCopy.completedAssignmentsTitle}
+        emptyLabel={fallbackCopy.completedAssignmentsEmptyLabel}
         compact
         onItemActionClick={handleAssignmentOpen}
       />

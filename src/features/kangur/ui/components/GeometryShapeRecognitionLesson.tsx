@@ -44,7 +44,7 @@ const buildSections = (translate: LessonTranslate) =>
     {
       id: 'practice',
       emoji: '🎯',
-      title: translate('sections.practice.title'),
+      title: translate('practiceSlide.title'),
       description: translate('sections.practice.description'),
       isGame: true,
     },
@@ -159,7 +159,7 @@ export default function GeometryShapeRecognitionLesson(): React.JSX.Element {
           sectionId: 'practice',
           stage: {
             accent: 'emerald',
-            title: translate('sections.practice.title'),
+            title: translate('practiceSlide.title'),
             description: translate('sections.practice.description'),
             icon: '🎯',
             maxWidthClassName: 'max-w-3xl',

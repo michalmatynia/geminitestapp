@@ -1,14 +1,79 @@
+import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurButton, KangurPanelRow } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { formatKangurAiTutorTemplate } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
 
 import type { JSX } from 'react';
 
+type AuxiliaryFallbackCopy = {
+  drawingToggleLabel: string;
+  toolboxDescription: string;
+  toolboxTitle: string;
+};
+
+const getAuxiliaryFallbackCopy = (
+  locale: ReturnType<typeof normalizeSiteLocale>
+): AuxiliaryFallbackCopy => {
+  if (locale === 'uk') {
+    return {
+      drawingToggleLabel: 'Малюй',
+      toolboxDescription:
+        'Швидкий доступ до підказок, малювання та наступних кроків у поточній розмові.',
+      toolboxTitle: 'Інструменти тьютора',
+    };
+  }
+
+  if (locale === 'de') {
+    return {
+      drawingToggleLabel: 'Zeichnen',
+      toolboxDescription:
+        'Schnellzugriffe fur Hinweise, Zeichnen und die nachsten Schritte im aktuellen Gesprach.',
+      toolboxTitle: 'Tutor-Werkzeuge',
+    };
+  }
+
+  if (locale === 'en') {
+    return {
+      drawingToggleLabel: 'Draw',
+      toolboxDescription:
+        'Shortcuts for hints, drawing, and the next steps in the current conversation.',
+      toolboxTitle: 'Tutor tools',
+    };
+  }
+
+  return {
+    drawingToggleLabel: 'Rysuj',
+    toolboxDescription:
+      'Skróty do wskazówek, rysowania i kolejnych kroków w bieżącej rozmowie.',
+    toolboxTitle: 'Narzędzia tutora',
+  };
+};
+
+const resolveTutorAuxiliaryFallback = (
+  locale: ReturnType<typeof normalizeSiteLocale>,
+  value: string | null | undefined,
+  polishDefault: string,
+  fallback: string
+): string => {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return fallback;
+  }
+
+  if (locale !== 'pl' && value === polishDefault) {
+    return fallback;
+  }
+
+  return value;
+};
+
 export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
   const tutorContent = useKangurAiTutorContent();
+  const locale = normalizeSiteLocale(tutorContent.locale);
+  const fallbackCopy = getAuxiliaryFallbackCopy(locale);
   const isCoarsePointer = useKangurCoarsePointer();
   const auxiliaryContent = (
     tutorContent as {
@@ -54,11 +119,20 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
           className='w-full kangur-chat-card border kangur-chat-padding-md kangur-chat-surface-warm kangur-chat-surface-warm-shadow'
         >
           <div className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'>
-            {auxiliaryContent?.toolboxTitle ?? 'Narzędzia tutora'}
+            {resolveTutorAuxiliaryFallback(
+              locale,
+              auxiliaryContent?.toolboxTitle,
+              DEFAULT_KANGUR_AI_TUTOR_CONTENT.auxiliaryControls.toolboxTitle,
+              fallbackCopy.toolboxTitle
+            )}
           </div>
           <div className='mt-1 text-[11px] leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
-            {auxiliaryContent?.toolboxDescription ??
-              'Skróty do wskazówek, rysowania i kolejnych kroków w bieżącej rozmowie.'}
+            {resolveTutorAuxiliaryFallback(
+              locale,
+              auxiliaryContent?.toolboxDescription,
+              DEFAULT_KANGUR_AI_TUTOR_CONTENT.auxiliaryControls.toolboxDescription,
+              fallbackCopy.toolboxDescription
+            )}
           </div>
           <div className={`mt-3 ${KANGUR_WRAP_ROW_CLASSNAME}`}>
             {canStartHomeOnboardingManually ? (
@@ -84,7 +158,12 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
                 onClick={handleToggleDrawing}
                 aria-pressed={drawingMode}
               >
-                {drawingContent?.toggleLabel ?? 'Rysuj'}
+                {resolveTutorAuxiliaryFallback(
+                  locale,
+                  drawingContent?.toggleLabel,
+                  DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing?.toggleLabel ?? 'Rysuj',
+                  fallbackCopy.drawingToggleLabel
+                )}
               </KangurButton>
             ) : null}
             {visibleQuickActions.map((action) => (

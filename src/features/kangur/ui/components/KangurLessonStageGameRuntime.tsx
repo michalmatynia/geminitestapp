@@ -14,6 +14,8 @@ import AgenticReasoningRouterGame from '@/features/kangur/ui/components/AgenticR
 import AgenticSurfaceMatchGame from '@/features/kangur/ui/components/AgenticSurfaceMatchGame';
 import AddingBallGame from '@/features/kangur/ui/components/AddingBallGame';
 import AddingSynthesisGame from '@/features/kangur/ui/components/AddingSynthesisGame';
+import AlphabetLiteracyStageGame from '@/features/kangur/ui/components/AlphabetLiteracyStageGame';
+import ColorHarmonyStageGame from '@/features/kangur/ui/components/ColorHarmonyStageGame';
 import { ArtShapesRotationGapGame } from '@/features/kangur/ui/components/ArtShapesRotationGapGame';
 import CalendarInteractiveStageGame from '@/features/kangur/ui/components/CalendarInteractiveStageGame';
 import ClockTrainingStageGame from '@/features/kangur/ui/components/ClockTrainingStageGame';
@@ -57,6 +59,8 @@ const RUNTIME_COMPONENTS: Record<
   agentic_prompt_trim_game: AgenticPromptTrimGame,
   agentic_reasoning_router_game: AgenticReasoningRouterGame,
   agentic_surface_match_game: AgenticSurfaceMatchGame as ComponentType<LessonStageRuntimeComponentProps>,
+  alphabet_literacy_stage_game: AlphabetLiteracyStageGame,
+  color_harmony_stage_game: ColorHarmonyStageGame,
   art_shapes_rotation_gap_game: ArtShapesRotationGapGame,
   calendar_interactive_stage_game: CalendarInteractiveStageGame,
   clock_training_stage_game: ClockTrainingStageGame,

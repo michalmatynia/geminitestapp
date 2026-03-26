@@ -1117,17 +1117,65 @@
     "emptyDescription": "Add the first game definitions to start classifying engines and variants.",
     "emptyFilteredTitle": "No games match these filters",
     "emptyFilteredDescription": "Clear one or more filters to see the rest of the catalog.",
-    "metrics": {
-      "games": "Games",
-      "gamesDescription": "Visible catalog entries.",
-      "engines": "Engines",
-      "enginesDescription": "Visible engine families.",
-      "variants": "Variants",
-      "variantsDescription": "Visible embedding and launch modes.",
-      "lessonLinked": "Linked to lessons",
-      "lessonLinkedDescription": "Visible games already connected to lesson components."
+    "focus": {
+      "eyebrow": "Deep link focus",
+      "gameTitle": "Focused catalog entry",
+      "gameDescription": "This view is currently narrowed to {game}.",
+      "clear": "Clear game focus",
+      "engineTitle": "Focused engine family",
+      "engineDescription": "This view is currently narrowed to the {engine} engine family.",
+      "clearEngine": "Clear engine focus"
     },
-    "coverageGroupsEyebrow": "Coverage policy",
+  "tabs": {
+    "eyebrow": "Section layout",
+    "title": "Browse by tabs",
+    "description": "Switch between the game catalog, the shared structure view, and runtime serialization.",
+    "listLabel": "Games library sections",
+    "catalog": "Catalog",
+    "structure": "Structure",
+    "runtime": "Runtime"
+  },
+  "metrics": {
+    "games": "Games",
+    "gamesDescription": "Visible catalog entries.",
+    "engines": "Engines",
+    "enginesDescription": "Visible engine families.",
+    "variants": "Variants",
+    "variantsDescription": "Visible embedding and launch modes.",
+    "lessonLinked": "Linked to lessons",
+    "lessonLinkedDescription": "Visible games already connected to lesson components."
+  },
+  "serializationAuditEyebrow": "Runtime contract",
+  "serializationAuditTitle": "Runtime serialization",
+  "serializationAuditDescription": "Tracks which runtime-bearing variants use explicit ids and which ones still rely on compatibility fallbacks.",
+  "serializationAudit": {
+    "statusClean": "Explicit runtime ids",
+    "statusAttention": "Compatibility cleanup",
+    "explicitLabel": "Explicit runtimes",
+    "explicitDescription": "{count} of {total} runtime-bearing variants use explicit runtime ids.",
+    "fallbackLabel": "Fallback only",
+    "fallbackDescription": "Variants still resolving only through compatibility ids.",
+    "duplicatesLabel": "Duplicate legacy ids",
+    "duplicatesDescription": "Variants still carrying both explicit and legacy runtime ids.",
+    "legacyGameFallbackLabel": "Legacy launch games",
+    "legacyGameFallbackDescription": "Games still carrying legacyScreenIds on the shared definition.",
+    "backlogEyebrow": "Fix backlog",
+    "backlogDescription": "Lists the exact catalog ids that still need compatibility cleanup.",
+    "fallbackBacklogLabel": "Fallback-only variants",
+    "duplicatesBacklogLabel": "Duplicate-legacy variants",
+    "missingBacklogLabel": "Missing-runtime variants",
+    "legacyGameBacklogLabel": "Legacy launch games",
+    "nonSharedBacklogLabel": "Non-shared engines",
+    "nonSharedEnginesLabel": "Non-shared engines",
+    "nonSharedEnginesDescription": "Engine families not yet marked as shared runtime.",
+    "surfaceDescription": "{count} runtime-bearing variants currently use this surface.",
+    "totalVariantsLabel": "Runtime-bearing variants",
+    "explicitVariantsLabel": "Explicit",
+    "fallbackVariantsLabel": "Fallback only",
+    "duplicatesVariantsLabel": "Duplicated legacy",
+    "missingVariantsLabel": "Missing runtime"
+  },
+  "coverageGroupsEyebrow": "Coverage policy",
     "coverageGroupsTitle": "Lesson coverage map",
     "coverageGroupsDescription": "{count, plural, one {# coverage lane tracked across the shared game domain.} other {# coverage lanes tracked across the shared game domain.}}",
     "coverageGroups": {
@@ -1202,6 +1250,11 @@
       "summaryAll": "{count, plural, one {Showing # game from the shared catalog.} other {Showing # games from the shared catalog.}}",
       "summaryFiltered": "Showing {visible} of {total} games from the shared catalog.",
       "clear": "Clear filters",
+      "game": {
+        "label": "Game",
+        "aria": "Filter games by exact game",
+        "all": "All games"
+      },
       "subject": {
         "label": "Subject",
         "aria": "Filter games by subject",
@@ -3500,13 +3553,35 @@
     },
     "subtractingGarden": {
       "feedback": {
-        "correct": "Nice work! Left:"
+        "correct": "Nice work! Left:",
+        "tooFew": "Too few. Take away {count} more.",
+        "tooMany": "Too many. Put back {count}."
+      },
+      "inRound": {
+        "idle": "Drag or tap the objects to subtract.",
+        "takeAwayInstruction": "Take away {count} glowing points",
+        "target": "Target: take away {count}",
+        "removed": "Taken away: {current}/{total}",
+        "remaining": "Left: {count}",
+        "check": "Check",
+        "zones": {
+          "basket": {
+            "title": "Starting basket",
+            "empty": "Empty basket"
+          },
+          "cloud": {
+            "title": "The cloud takes away",
+            "empty": "Drop here"
+          }
+        }
       },
       "touch": {
         "idle": "Tap a glowing point, then tap the basket or the cloud. You can still drag too.",
         "selected": "Selected point: {emoji}. Tap the basket or the cloud.",
         "keyboardIdle": "Choose a glowing point, then move to the basket or the cloud and press Enter or Space.",
-        "keyboardSelected": "Selected point: {emoji}. Move to the basket or the cloud and press Enter or Space."
+        "keyboardSelected": "Selected point: {emoji}. Move to the basket or the cloud and press Enter or Space.",
+        "moveToBasket": "To basket",
+        "moveToCloud": "To cloud"
       },
       "aria": {
         "token": "Move glowing point",

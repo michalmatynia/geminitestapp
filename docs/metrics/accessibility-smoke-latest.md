@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-22'
+last_reviewed: '2026-03-26'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,13 +8,13 @@ canonical: true
 ---
 # Accessibility Smoke Report
 
-Generated at: 2026-03-22T09:13:54.000Z
+Generated at: 2026-03-26T13:06:45.566Z
 
 ## Summary
 
 - Suites: 14
-- Passed: 14
-- Failed: 0
+- Passed: 12
+- Failed: 2
 - React act warnings: 0
 - Warning budget: 10
 - Warning budget status: ok
@@ -24,20 +24,20 @@ Generated at: 2026-03-22T09:13:54.000Z
 
 | Suite | Runner | Status | Duration | Exit | Tests |
 | --- | --- | --- | ---: | ---: | --- |
-| App Shell Accessibility | vitest | PASS | 2.5s | 0 | `src/app/__tests__/shell-accessibility.test.tsx` |
+| App Shell Accessibility | vitest | FAIL | 2.8s | 1 | `src/app/__tests__/shell-accessibility.test.tsx` |
 | Auth Sign-In Accessibility | vitest | PASS | 4.3s | 0 | `__tests__/features/auth/pages/signin-page.test.tsx` |
-| Products Edit Form Accessibility | vitest | PASS | 6.5s | 0 | `__tests__/features/products/pages/product-edit-page.test.tsx` |
-| Image Studio UI Accessibility | vitest | PASS | 4.4s | 0 | `src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx` |
-| AI Paths Canvas Accessibility | vitest | PASS | 5.6s | 0 | `src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx` |
-| Case Resolver Header Accessibility | vitest | PASS | 3.9s | 0 | `src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx` |
-| Case Resolver Accessibility | playwright | PASS | 46.9s | 0 | `e2e/features/accessibility/case-resolver-accessibility.spec.ts` |
+| Products Edit Form Accessibility | vitest | PASS | 5.4s | 0 | `__tests__/features/products/pages/product-edit-page.test.tsx` |
+| Image Studio UI Accessibility | vitest | PASS | 4.7s | 0 | `src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx` |
+| AI Paths Canvas Accessibility | vitest | PASS | 4.8s | 0 | `src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx` |
+| Case Resolver Header Accessibility | vitest | PASS | 3.4s | 0 | `src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx` |
+| Case Resolver Accessibility | playwright | PASS | 2.4m | 0 | `e2e/features/accessibility/case-resolver-accessibility.spec.ts` |
 | Kangur Profile Accessibility | vitest | PASS | 7.2s | 0 | `__tests__/features/kangur/kangur-accessibility-smoke.test.tsx` |
-| Public Auth Route Accessibility | playwright | PASS | 24.1s | 0 | `e2e/features/accessibility/public-auth-accessibility.spec.ts` |
-| Admin Dashboard Accessibility | playwright | PASS | 18.7s | 0 | `e2e/features/accessibility/admin-dashboard-accessibility.spec.ts` |
+| Public Auth Route Accessibility | playwright | PASS | 26.0s | 0 | `e2e/features/accessibility/public-auth-accessibility.spec.ts` |
+| Admin Dashboard Accessibility | playwright | PASS | 44.8s | 0 | `e2e/features/accessibility/admin-dashboard-accessibility.spec.ts` |
 | Products List Accessibility | playwright | PASS | 1.2m | 0 | `e2e/features/accessibility/products-list-accessibility.spec.ts` |
-| CMS Pages Accessibility | playwright | PASS | 31.2s | 0 | `e2e/features/accessibility/cms-pages-accessibility.spec.ts` |
-| Notes Workspace Accessibility | playwright | PASS | 25.3s | 0 | `e2e/features/accessibility/notes-workspace-accessibility.spec.ts` |
-| CMS Builder Accessibility | playwright | PASS | 27.4s | 0 | `e2e/features/accessibility/cms-builder-accessibility.spec.ts` |
+| CMS Pages Accessibility | playwright | FAIL | 2.1m | 1 | `e2e/features/accessibility/cms-pages-accessibility.spec.ts` |
+| Notes Workspace Accessibility | playwright | PASS | 1.2m | 0 | `e2e/features/accessibility/notes-workspace-accessibility.spec.ts` |
+| CMS Builder Accessibility | playwright | PASS | 2.2m | 0 | `e2e/features/accessibility/cms-builder-accessibility.spec.ts` |
 
 ## Warning Details
 

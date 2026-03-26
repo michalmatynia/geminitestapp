@@ -11,6 +11,7 @@ import {
 } from '@/shared/contracts/kangur';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
+import { clearKangurLessonsCatalogCache } from '../lessons-catalog/handler';
 
 export { kangurLessonsQuerySchema as querySchema };
 export { kangurLessonsReplacePayloadSchema as bodySchema };
@@ -116,6 +117,7 @@ export async function postKangurLessonsHandler(
   const repository = await getKangurLessonRepository();
   const lessons = await repository.replaceLessons(parsed.lessons);
   clearKangurLessonsCache();
+  clearKangurLessonsCatalogCache();
 
   return NextResponse.json(lessons, {
     headers: {

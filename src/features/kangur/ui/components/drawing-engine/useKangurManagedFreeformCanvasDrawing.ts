@@ -1,13 +1,14 @@
 'use client';
 
 import {
-  useKangurManagedDrawingActions,
   type UseKangurManagedDrawingActionsOptions,
 } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedDrawingActions';
 import {
-  useKangurFreeformCanvasDrawing,
-  type UseKangurFreeformCanvasDrawingOptions,
-  type UseKangurFreeformCanvasDrawingResult,
+  useKangurManagedStoredFreeformCanvasDrawing,
+} from '@/features/kangur/ui/components/drawing-engine/useKangurManagedStoredFreeformCanvasDrawing';
+import type {
+  UseKangurFreeformCanvasDrawingOptions,
+  UseKangurFreeformCanvasDrawingResult,
 } from '@/features/kangur/ui/components/drawing-engine/useKangurFreeformCanvasDrawing';
 
 type UseKangurManagedFreeformCanvasDrawingOptions = {
@@ -32,7 +33,6 @@ export const useKangurManagedFreeformCanvasDrawing = ({
   actions,
   drawing: drawingOptions,
 }: UseKangurManagedFreeformCanvasDrawingOptions) => {
-  const drawing = useKangurFreeformCanvasDrawing(drawingOptions);
   const {
     resolveCanExport = (current) => current.hasDrawableContent,
     resolveCanRedo = (current) => current.canRedo,
@@ -40,19 +40,13 @@ export const useKangurManagedFreeformCanvasDrawing = ({
     ...actionOptions
   } = actions;
 
-  const managedActions = useKangurManagedDrawingActions<HTMLCanvasElement>({
-    ...actionOptions,
-    canExport: resolveCanExport(drawing),
-    canRedo: resolveCanRedo(drawing),
-    canUndo: resolveCanUndo(drawing),
-    clearStrokes: drawing.clearStrokes,
-    exportDataUrl: drawing.exportDataUrl,
-    redoLastStroke: drawing.redoLastStroke,
-    undoLastStroke: drawing.undoLastStroke,
+  return useKangurManagedStoredFreeformCanvasDrawing({
+    actions: {
+      ...actionOptions,
+      resolveCanExport: (drawing) => resolveCanExport(drawing),
+      resolveCanRedo: (drawing) => resolveCanRedo(drawing),
+      resolveCanUndo: (drawing) => resolveCanUndo(drawing),
+    },
+    drawing: drawingOptions,
   });
-
-  return {
-    ...drawing,
-    ...managedActions,
-  };
 };

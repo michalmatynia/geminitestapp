@@ -59,6 +59,26 @@ describe('kangur game library page handler', () => {
     expect(captureExceptionMock).not.toHaveBeenCalled();
   });
 
+  it('supports deep-link filtering to a single game id', async () => {
+    const response = await getKangurGameLibraryPageHandler(
+      new NextRequest(
+        'http://localhost/api/kangur/game-library-page?gameId=division_groups'
+      ),
+      createRequestContext({ gameId: 'division_groups' })
+    );
+
+    expect(response.status).toBe(200);
+
+    const payload = await response.json();
+
+    expect(payload.overview.subjectGroups).toHaveLength(1);
+    expect(
+      payload.overview.subjectGroups.flatMap((group: { entries: { game: { id: string } }[] }) =>
+        group.entries.map((entry) => entry.game.id)
+      )
+    ).toEqual(['division_groups']);
+  });
+
   it('captures handler context when loading the page payload fails', async () => {
     const error = new Error('mongo unavailable');
     listKangurGamesMock.mockRejectedValueOnce(error);

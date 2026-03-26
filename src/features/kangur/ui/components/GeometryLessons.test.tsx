@@ -26,6 +26,13 @@ vi.mock('@/features/kangur/ui/components/GeometryDrawingGame', () => ({
     </button>
   ),
 }));
+vi.mock('@/features/kangur/ui/components/ShapeRecognitionStageGame', () => ({
+  default: ({ onFinish }: { onFinish?: () => void }): React.JSX.Element => (
+    <button type='button' onClick={onFinish}>
+      Mock Shape Recognition Game
+    </button>
+  ),
+}));
 
 vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/kangur/ui/services/progress')>();
@@ -121,9 +128,21 @@ describe('Geometry lessons shared surfaces', () => {
     expect(addXp).toHaveBeenCalledTimes(1);
   });
 
-  it('routes the shape recognition draw section through the shared stage runtime', () => {
+  it('routes the shape recognition practice and draw sections through shared stage runtimes', () => {
     renderLesson(<GeometryShapeRecognitionLesson />);
 
+    fireEvent.click(screen.getByTestId('lesson-hub-section-practice'));
+
+    expect(screen.getByTestId('geometry-shape-recognition-practice-shell')).toHaveClass(
+      'glass-panel',
+      'kangur-panel-soft',
+      'kangur-glass-surface-solid'
+    );
+    expect(
+      screen.getByRole('button', { name: 'Mock Shape Recognition Game' })
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('lesson-activity-back-button'));
     fireEvent.click(screen.getByTestId('lesson-hub-section-draw'));
 
     expect(screen.getByTestId('geometry-shape-recognition-draw-shell')).toHaveClass(

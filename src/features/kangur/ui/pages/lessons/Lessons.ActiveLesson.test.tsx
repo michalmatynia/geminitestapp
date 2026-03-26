@@ -4,6 +4,8 @@
 
 import React from 'react';
 import { act, fireEvent, render, screen } from '@/__tests__/test-utils';
+import { render as rtlRender } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import { useOptionalKangurLessonPrint } from '@/features/kangur/ui/context/KangurLessonPrintContext';
@@ -11,6 +13,10 @@ import {
   LESSONS_ACTIVE_HUB_COLUMN_CLASSNAME,
   LESSONS_ACTIVE_SECTION_CLASSNAME,
 } from '@/features/kangur/ui/pages/lessons/Lessons.constants';
+import enMessages from '@/i18n/messages/en.json';
+
+vi.mock('next-intl', async () => await vi.importActual<typeof import('next-intl')>('next-intl'));
+vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>('use-intl'));
 
 const {
   useLessonsMock,
@@ -260,6 +266,40 @@ describe('ActiveLessonView mobile controls', () => {
 
     expect(document.documentElement.style.overflow).toBe('');
     expect(document.body.style.overflow).toBe('');
+  });
+
+  it('renders the loading document fallback title in English on the English route', async () => {
+    useKangurMobileBreakpointMock.mockReturnValue(false);
+    hasKangurLessonDocumentContentMock.mockReturnValue(false);
+    useLessonsMock.mockReturnValue({
+      activeLesson,
+      handleSelectLesson,
+      lessonDocuments: {},
+      lessonAssignmentsByComponent: new Map(),
+      completedLessonAssignmentsByComponent: new Map(),
+      setIsActiveLessonComponentReady: vi.fn(),
+      activeLessonHeaderRef: React.createRef<HTMLDivElement>(),
+      activeLessonNavigationRef: React.createRef<HTMLDivElement>(),
+      activeLessonContentRef,
+      activeLessonScrollRef: React.createRef<HTMLDivElement>(),
+      orderedLessons: [activeLesson, nextLesson],
+      isSecretLessonActive: false,
+      progress: { lessonMastery: {} },
+      isActiveLessonDocumentLoading: true,
+    });
+
+    rtlRender(
+      <NextIntlClientProvider locale='en' messages={enMessages} onError={() => {}}>
+        <ActiveLessonView />
+      </NextIntlClientProvider>
+    );
+
+    await act(async () => {});
+
+    expect(screen.getByTestId('lessons-loading-document-summary')).toHaveTextContent(
+      'Loading material'
+    );
+    expect(screen.getByTestId('kangur-lesson-print-heading')).toHaveTextContent('Lessons');
   });
 
   it('registers lesson tutor anchors so selected text can resolve to the lesson knowledge base', async () => {

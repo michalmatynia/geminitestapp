@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import type { KangurScoreRecord } from '@kangur/platform';
 
-import { SCORE_INSIGHT_WINDOW_DAYS, buildKangurScoreInsights } from './score-insights';
+import {
+  SCORE_INSIGHT_WINDOW_DAYS,
+  buildKangurScoreInsights,
+  resolveKangurScoreOperationInfo,
+} from './score-insights';
 
 const createScore = (overrides: Partial<KangurScoreRecord> = {}): KangurScoreRecord => ({
   id: 'score-1',
@@ -131,6 +135,36 @@ describe('buildKangurScoreInsights', () => {
       },
       strongestOperation: null,
       weakestOperation: null,
+    });
+  });
+
+  it('uses locale-aware English operation labels when translations are unavailable', () => {
+    const insights = buildKangurScoreInsights(
+      [
+        createScore({
+          id: 'score-1',
+          operation: 'division',
+          correct_answers: 4,
+          score: 4,
+          created_date: '2026-03-06T12:00:00.000Z',
+        }),
+        createScore({
+          id: 'score-2',
+          operation: 'multiplication',
+          correct_answers: 10,
+          score: 10,
+          created_date: '2026-03-05T12:00:00.000Z',
+        }),
+      ],
+      new Date('2026-03-06T15:00:00.000Z'),
+      { locale: 'en' }
+    );
+
+    expect(insights.strongestOperation?.label).toBe('Multiplication');
+    expect(insights.weakestOperation?.label).toBe('Division');
+    expect(resolveKangurScoreOperationInfo('english_adjectives', { locale: 'en' })).toEqual({
+      emoji: '🎨',
+      label: 'Adjectives',
     });
   });
 });

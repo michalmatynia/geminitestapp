@@ -13,6 +13,12 @@ import {
 const DRAWING_DRAFT_STORAGE_PREFIX = 'kangur-drawing-draft-v1:';
 export const KANGUR_DRAWING_DRAFT_PERSIST_DELAY_MS = 120;
 
+export type KangurDrawingDraftStorageController = {
+  clearDraftSnapshot: () => void;
+  draftSnapshot: string | null;
+  setDraftSnapshot: Dispatch<SetStateAction<string | null>>;
+};
+
 const resolveDrawingDraftStorageKey = (storageKey: string): string =>
   `${DRAWING_DRAFT_STORAGE_PREFIX}${storageKey}`;
 
@@ -43,7 +49,9 @@ export const persistKangurDrawingDraftSnapshot = (
   window.sessionStorage.removeItem(resolvedStorageKey);
 };
 
-export const useKangurDrawingDraftStorage = (storageKey: string | null) => {
+export const useKangurDrawingDraftStorage = (
+  storageKey: string | null
+): KangurDrawingDraftStorageController => {
   const [draftSnapshot, setDraftSnapshotState] = useState<string | null>(() =>
     loadKangurDrawingDraftSnapshot(storageKey)
   );

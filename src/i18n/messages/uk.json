@@ -317,17 +317,65 @@
     "emptyDescription": "Додайте перші визначення ігор, щоб почати класифікувати рушії та варіанти.",
     "emptyFilteredTitle": "Жодна гра не відповідає цим фільтрам",
     "emptyFilteredDescription": "Очистьте один або кілька фільтрів, щоб побачити решту каталогу.",
-    "metrics": {
-      "games": "Ігри",
-      "gamesDescription": "Видимі записи каталогу.",
-      "engines": "Рушії",
-      "enginesDescription": "Видимі сімейства рушіїв.",
-      "variants": "Варіанти",
-      "variantsDescription": "Видимі способи вбудовування та запуску.",
-      "lessonLinked": "Пов’язані з уроками",
-      "lessonLinkedDescription": "Видимі ігри, уже підключені до компонентів уроків."
+    "focus": {
+      "eyebrow": "Фокус із deep link",
+      "gameTitle": "Сфокусований запис каталогу",
+      "gameDescription": "Цей перегляд зараз звужено до гри {game}.",
+      "clear": "Прибрати фокус гри",
+      "engineTitle": "Сфокусоване сімейство рушіїв",
+      "engineDescription": "Цей перегляд зараз звужено до сімейства рушіїв {engine}.",
+      "clearEngine": "Прибрати фокус рушія"
     },
-    "coverageGroupsEyebrow": "Політика покриття",
+  "tabs": {
+    "eyebrow": "Макет секцій",
+    "title": "Перегляд по вкладках",
+    "description": "Перемикайтеся між каталогом ігор, спільною структурою домену та серіалізацією runtime.",
+    "listLabel": "Секції бібліотеки ігор",
+    "catalog": "Каталог",
+    "structure": "Структура",
+    "runtime": "Runtime"
+  },
+  "metrics": {
+    "games": "Ігри",
+    "gamesDescription": "Видимі записи каталогу.",
+    "engines": "Рушії",
+    "enginesDescription": "Видимі сімейства рушіїв.",
+    "variants": "Варіанти",
+    "variantsDescription": "Видимі способи вбудовування та запуску.",
+    "lessonLinked": "Пов’язані з уроками",
+    "lessonLinkedDescription": "Видимі ігри, уже підключені до компонентів уроків."
+  },
+  "serializationAuditEyebrow": "Контракт runtime",
+  "serializationAuditTitle": "Серіалізація runtime",
+  "serializationAuditDescription": "Показує, які runtime-варіанти використовують явні ідентифікатори, а які ще спираються на fallback-и сумісності.",
+  "serializationAudit": {
+    "statusClean": "Явні runtime-ідентифікатори",
+    "statusAttention": "Прибирання сумісності",
+    "explicitLabel": "Явні runtime",
+    "explicitDescription": "{count} з {total} runtime-варіантів використовують явні runtime-ідентифікатори.",
+    "fallbackLabel": "Лише fallback",
+    "fallbackDescription": "Варіанти, які все ще розв’язуються тільки через ідентифікатори сумісності.",
+    "duplicatesLabel": "Дубльовані legacy ids",
+    "duplicatesDescription": "Варіанти, які все ще мають і явні, і legacy runtime-ідентифікатори.",
+    "legacyGameFallbackLabel": "Legacy launch games",
+    "legacyGameFallbackDescription": "Ігри, які все ще мають legacyScreenIds у спільній дефініції.",
+    "backlogEyebrow": "Беклог виправлень",
+    "backlogDescription": "Показує точні ідентифікатори каталогу, яким ще потрібне прибирання сумісності.",
+    "fallbackBacklogLabel": "Варіанти лише з fallback",
+    "duplicatesBacklogLabel": "Варіанти з дубльованим legacy",
+    "missingBacklogLabel": "Варіанти без runtime",
+    "legacyGameBacklogLabel": "Legacy launch games",
+    "nonSharedBacklogLabel": "Не shared рушії",
+    "nonSharedEnginesLabel": "Не shared рушії",
+    "nonSharedEnginesDescription": "Сімейства рушіїв, які ще не позначені як shared runtime.",
+    "surfaceDescription": "{count} runtime-варіантів зараз використовують цю поверхню.",
+    "totalVariantsLabel": "Runtime-варіанти",
+    "explicitVariantsLabel": "Явні",
+    "fallbackVariantsLabel": "Лише fallback",
+    "duplicatesVariantsLabel": "Дубльовані legacy",
+    "missingVariantsLabel": "Відсутній runtime"
+  },
+  "coverageGroupsEyebrow": "Політика покриття",
     "coverageGroupsTitle": "Мапа покриття уроків",
     "coverageGroupsDescription": "{count, plural, one {# напрям покриття відстежується у спільному домені ігор.} few {# напрями покриття відстежуються у спільному домені ігор.} many {# напрямів покриття відстежуються у спільному домені ігор.} other {# напрямів покриття відстежуються у спільному домені ігор.}}",
     "coverageGroups": {
@@ -402,6 +450,11 @@
       "summaryAll": "{count, plural, one {Показано # гру зі спільного каталогу.} few {Показано # гри зі спільного каталогу.} many {Показано # ігор зі спільного каталогу.} other {Показано # ігор зі спільного каталогу.}}",
       "summaryFiltered": "Показано {visible} з {total} ігор зі спільного каталогу.",
       "clear": "Очистити фільтри",
+      "game": {
+        "label": "Гра",
+        "aria": "Фільтрувати ігри за точною грою",
+        "all": "Усі ігри"
+      },
       "subject": {
         "label": "Предмет",
         "aria": "Фільтрувати ігри за предметом",
@@ -2933,11 +2986,31 @@
       }
     },
     "subtractingGarden": {
+      "inRound": {
+        "idle": "Перетягуйте або натискайте обʼєкти, щоб віднімати.",
+        "takeAwayInstruction": "Заберіть {count} сяючих точок",
+        "target": "Ціль: заберіть {count}",
+        "removed": "Забрано: {current}/{total}",
+        "remaining": "Залишилось: {count}",
+        "check": "Перевірити",
+        "zones": {
+          "basket": {
+            "title": "Стартовий кошик",
+            "empty": "Порожній кошик"
+          },
+          "cloud": {
+            "title": "Хмарка забирає",
+            "empty": "Перетягни сюди"
+          }
+        }
+      },
       "touch": {
         "idle": "Торкніться підсвіченої точки, а потім кошика або хмарки. Перетягування теж працює.",
         "selected": "Вибрана точка: {emoji}. Торкніться кошика або хмарки.",
         "keyboardIdle": "Виберіть підсвічену точку, перейдіть до кошика або хмарки й натисніть Enter або пробіл.",
-        "keyboardSelected": "Вибрана точка: {emoji}. Перейдіть до кошика або хмарки й натисніть Enter або пробіл."
+        "keyboardSelected": "Вибрана точка: {emoji}. Перейдіть до кошика або хмарки й натисніть Enter або пробіл.",
+        "moveToBasket": "До кошика",
+        "moveToCloud": "До хмарки"
       },
       "aria": {
         "token": "Перемістити точку",
@@ -2945,7 +3018,9 @@
         "sky": "Перемістити вибрану точку до хмарки"
       },
       "feedback": {
-        "correct": "Чудово! Залишилося:"
+        "correct": "Чудово! Залишилося:",
+        "tooFew": "Замало. Забери ще {count}.",
+        "tooMany": "Забагато. Поверни {count}."
       },
       "summary": {
         "perfect": "Ідеально! Віднімання у вас на кінчиках пальців.",

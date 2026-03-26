@@ -118,11 +118,15 @@ const loadActiveLearnerModule = () =>
 
 describe('createLocalKangurPlatform auth navigation', () => {
   const originalLocation = window.location;
+  const bootstrapWindow = window as Window & {
+    __KANGUR_AUTH_BOOTSTRAP__?: unknown;
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
     localStorage.clear();
+    delete bootstrapWindow.__KANGUR_AUTH_BOOTSTRAP__;
     withCsrfHeadersMock.mockImplementation((headers?: HeadersInit) => new Headers(headers));
     Object.defineProperty(window, 'location', {
       value: {
@@ -239,6 +243,53 @@ describe('createLocalKangurPlatform auth navigation', () => {
         credentials: 'same-origin',
       })
     );
+  });
+
+  it('hydrates anonymous auth from SSR bootstrap without probing auth/me', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    bootstrapWindow.__KANGUR_AUTH_BOOTSTRAP__ = null;
+
+    const { createLocalKangurPlatform } = await loadLocalKangurPlatformModule();
+    const platform = createLocalKangurPlatform();
+
+    await expect(platform.auth.me()).rejects.toMatchObject({ status: 401 });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('hydrates authenticated auth from SSR bootstrap without probing auth/me', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    bootstrapWindow.__KANGUR_AUTH_BOOTSTRAP__ = {
+      id: 'learner-1',
+      full_name: 'Ada',
+      email: null,
+      role: 'user',
+      actorType: 'learner',
+      canManageLearners: false,
+      ownerUserId: 'parent-1',
+      activeLearner: {
+        id: 'learner-1',
+        ownerUserId: 'parent-1',
+        displayName: 'Ada',
+        loginName: 'ada-child',
+        status: 'active',
+        legacyUserKey: null,
+        createdAt: '2026-03-06T10:00:00.000Z',
+        updatedAt: '2026-03-06T10:00:00.000Z',
+      },
+      learners: [],
+      ownerEmailVerified: false,
+    };
+
+    const { createLocalKangurPlatform } = await loadLocalKangurPlatformModule();
+    const platform = createLocalKangurPlatform();
+
+    await expect(platform.auth.me()).resolves.toMatchObject({
+      id: 'learner-1',
+      actorType: 'learner',
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('starts a fresh guest score session on logout', async () => {

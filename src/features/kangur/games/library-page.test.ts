@@ -26,7 +26,27 @@ describe('kangur game library page data', () => {
     ).toBe(true);
     expect(pageData.coverage.groups[0]?.entries.length).toBe(globalCatalogEntries.length);
     expect(pageData.catalogFacets.gameCount).toBe(globalCatalogEntries.length);
+    expect(pageData.catalogFacets.games).toHaveLength(globalCatalogEntries.length);
+    expect(pageData.catalogFacets.games.some((game) => game.id === 'division_groups')).toBe(true);
+    expect(
+      pageData.catalogFacets.games.some((game) => game.id === 'english_sentence_builder')
+    ).toBe(true);
+    expect(
+      pageData.overview.subjectGroups.flatMap((group) =>
+        group.entries.map((entry) => entry.game.id)
+      )
+    ).not.toContain('english_sentence_builder');
     expect(pageData.engineFilterOptions.engineCount).toBeGreaterThan(0);
+    expect(
+      pageData.engineFilterOptions.engines.some((engine) => engine.id === 'sentence-builder-engine')
+    ).toBe(true);
+    expect(pageData.engineOverview.engineGroups.some((group) => group.engineId === 'sentence-builder-engine')).toBe(
+      false
+    );
+    expect(pageData.serializationAudit.runtimeBearingVariantCount).toBeGreaterThan(0);
+    expect(pageData.serializationAudit.legacyLaunchFallbackGameCount).toBe(0);
+    expect(pageData.serializationAudit.issues).toEqual([]);
+    expect(pageData.serializationAudit.allEnginesSharedRuntime).toBe(true);
   });
 
   it('builds the same filtered page shape from raw games', () => {
@@ -40,6 +60,10 @@ describe('kangur game library page data', () => {
 
     expect(pageData.overview.subjectGroups.map((group) => group.subject.id)).toEqual(['maths']);
     expect(pageData.catalogFacets.gameCount).toBe(games.length);
+    expect(pageData.catalogFacets.games).toHaveLength(games.length);
     expect(pageData.engineOverview.engineGroups.length).toBeGreaterThan(0);
+    expect(pageData.serializationAudit.compatibilityFallbackVariantCount).toBe(0);
+    expect(pageData.serializationAudit.legacyLaunchFallbackGameCount).toBe(0);
+    expect(pageData.serializationAudit.issues).toEqual([]);
   });
 });

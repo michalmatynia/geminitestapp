@@ -78,6 +78,7 @@ export type KangurGameCatalogEntry = {
 };
 
 export type KangurGameCatalogFilter = {
+  gameId?: KangurGameId;
   subject?: KangurLessonSubject;
   ageGroup?: KangurLessonAgeGroup;
   gameStatus?: KangurGameStatus;
@@ -94,6 +95,7 @@ export type KangurGameCatalogFilter = {
 
 export type KangurGameCatalogFacets = {
   gameCount: number;
+  games: Pick<KangurGameDefinition, 'id' | 'title' | 'sortOrder'>[];
   subjects: KangurLessonSubject[];
   ageGroups: KangurLessonAgeGroup[];
   statuses: KangurGameStatus[];
@@ -139,6 +141,27 @@ const getUniqueEngines = (
     }, new Map())
   )
     .map(([, engine]) => engine)
+    .sort(
+      (left, right) =>
+        left.sortOrder - right.sortOrder || left.title.localeCompare(right.title)
+    );
+
+const getUniqueGames = (
+  entries: KangurGameCatalogEntry[]
+): Pick<KangurGameDefinition, 'id' | 'title' | 'sortOrder'>[] =>
+  Array.from(
+    entries.reduce<
+      Map<KangurGameId, Pick<KangurGameDefinition, 'id' | 'title' | 'sortOrder'>>
+    >((map, entry) => {
+      map.set(entry.game.id, {
+        id: entry.game.id,
+        title: entry.game.title,
+        sortOrder: entry.game.sortOrder,
+      });
+      return map;
+    }, new Map())
+  )
+    .map(([, game]) => game)
     .sort(
       (left, right) =>
         left.sortOrder - right.sortOrder || left.title.localeCompare(right.title)
@@ -329,6 +352,10 @@ export const filterKangurGameCatalogEntries = (
 ): KangurGameCatalogEntry[] => {
   let next = entries;
 
+  if (filter?.gameId) {
+    next = next.filter((entry) => entry.game.id === filter.gameId);
+  }
+
   if (filter?.subject) {
     next = next.filter((entry) => entry.game.subject === filter.subject);
   }
@@ -396,6 +423,7 @@ export const getKangurGameCatalogFacets = (
   entries: KangurGameCatalogEntry[]
 ): KangurGameCatalogFacets => ({
   gameCount: entries.length,
+  games: getUniqueGames(entries),
   subjects: getUniqueValues(entries.map((entry) => entry.game.subject)),
   ageGroups: getUniqueValues(entries.map((entry) => entry.game.ageGroup).filter(isDefined)),
   statuses: getUniqueValues(entries.map((entry) => entry.game.status)),

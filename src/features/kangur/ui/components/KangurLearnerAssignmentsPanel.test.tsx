@@ -21,6 +21,14 @@ const {
   useKangurSubjectFocusMock: vi.fn(),
 }));
 
+const { localeMock } = vi.hoisted(() => ({
+  localeMock: vi.fn(() => 'pl'),
+}));
+
+vi.mock('next-intl', () => ({
+  useLocale: () => localeMock(),
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurAssignmentsList', () => ({
   __esModule: true,
   default: ({
@@ -62,6 +70,7 @@ import { KangurLearnerAssignmentsPanel } from '@/features/kangur/ui/components/K
 describe('KangurLearnerAssignmentsPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localeMock.mockReturnValue('pl');
     useKangurPageContentEntryMock.mockReturnValue({
       entry: null,
       data: undefined,
@@ -173,5 +182,25 @@ describe('KangurLearnerAssignmentsPanel', () => {
     expect(
       screen.getByText('Mongo opis aktywnych i zakończonych sugestii od rodzica.')
     ).toBeInTheDocument();
+  });
+
+  it('renders English fallback copy on the English route', () => {
+    localeMock.mockReturnValue('en');
+    useKangurAssignmentsMock.mockReturnValue({
+      assignments: [],
+      isLoading: false,
+      error: null,
+    });
+    selectKangurPriorityAssignmentsMock.mockReturnValue([]);
+    buildKangurAssignmentListItemsMock.mockReturnValue([]);
+
+    render(<KangurLearnerAssignmentsPanel basePath='/kangur' enabled />);
+
+    expect(screen.getByText('Parent suggestions')).toBeInTheDocument();
+    expect(
+      screen.getByText('Tasks and hints from the parent that are worth completing first.')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Current parent suggestions')).toBeInTheDocument();
+    expect(screen.getByText('History of completed suggestions')).toBeInTheDocument();
   });
 });

@@ -5,6 +5,7 @@ import {
   areGamesLibraryFiltersEqual,
   buildGamesLibraryCatalogFilter,
   getGamesLibrarySearchParams,
+  readGamesLibraryTabFromSearchParams,
   readGamesLibraryFiltersFromSearchParams,
 } from '@/features/kangur/ui/pages/GamesLibrary.filters';
 
@@ -12,6 +13,7 @@ describe('GamesLibrary filters', () => {
   it('reads valid filter values from route search params', () => {
     const filters = readGamesLibraryFiltersFromSearchParams(
       new URLSearchParams({
+        gameId: 'clock_training',
         subject: 'english',
         ageGroup: 'ten_year_old',
         mechanic: 'logic_relation',
@@ -27,6 +29,7 @@ describe('GamesLibrary filters', () => {
     );
 
     expect(filters).toEqual({
+      gameId: 'clock_training',
       subject: 'english',
       ageGroup: 'ten_year_old',
       mechanic: 'logic_relation',
@@ -39,6 +42,16 @@ describe('GamesLibrary filters', () => {
       implementationOwnership: 'shared_runtime',
       launchability: 'launchable',
     });
+  });
+
+  it('reads a valid tab from route search params and rejects invalid tabs', () => {
+    expect(
+      readGamesLibraryTabFromSearchParams(new URLSearchParams({ tab: 'runtime' }))
+    ).toBe('runtime');
+    expect(
+      readGamesLibraryTabFromSearchParams(new URLSearchParams({ tab: 'invalid' }))
+    ).toBeNull();
+    expect(readGamesLibraryTabFromSearchParams(new URLSearchParams())).toBeNull();
   });
 
   it('ignores invalid query values and falls back per filter', () => {
@@ -63,6 +76,7 @@ describe('GamesLibrary filters', () => {
   it('serializes filters back to route params and catalog query input', () => {
     const filters = {
       ...DEFAULT_GAMES_LIBRARY_FILTERS,
+      gameId: 'clock_training' as const,
       subject: 'maths' as const,
       variantSurface: 'game_screen' as const,
       engineId: 'clock-dial-engine' as const,
@@ -71,7 +85,8 @@ describe('GamesLibrary filters', () => {
       launchability: 'launchable' as const,
     };
 
-    expect(getGamesLibrarySearchParams(filters)).toEqual({
+    expect(getGamesLibrarySearchParams(filters, 'runtime')).toEqual({
+      gameId: 'clock_training',
       subject: 'maths',
       ageGroup: undefined,
       mechanic: undefined,
@@ -83,8 +98,11 @@ describe('GamesLibrary filters', () => {
       engineCategory: 'foundational',
       implementationOwnership: 'shared_runtime',
       launchableOnly: 'true',
+      tab: 'runtime',
     });
+    expect(getGamesLibrarySearchParams(filters, 'catalog').tab).toBeUndefined();
     expect(buildGamesLibraryCatalogFilter(filters)).toEqual({
+      gameId: 'clock_training',
       subject: 'maths',
       ageGroup: undefined,
       mechanic: undefined,

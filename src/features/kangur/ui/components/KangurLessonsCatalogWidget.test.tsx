@@ -87,6 +87,27 @@ vi.mock('@/features/kangur/ui/context/KangurLessonsRuntimeContext', () => ({
         title: 'English Basics',
       },
     ],
+    lessonSections: [
+      {
+        id: 'opening-section',
+        subject: 'english',
+        enabled: true,
+        sortOrder: 1,
+        label: 'Opening Section',
+        typeLabel: 'Featured',
+        componentIds: [],
+        subsections: [
+          {
+            id: 'opening-subsection',
+            enabled: true,
+            sortOrder: 1,
+            label: 'Sentence structure',
+            typeLabel: 'Subsection',
+            componentIds: ['english_basics'],
+          },
+        ],
+      },
+    ],
     lessonDocuments: {},
     progress: {},
     activeLessonId: null,
@@ -130,32 +151,6 @@ vi.mock('@/features/kangur/ui/design/tokens', () => ({
 
 vi.mock('@/features/kangur/ui/constants/subject-groups', () => ({
   getKangurSubjectGroups: () => [{ value: 'english', label: 'English' }],
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
-  useKangurLessonSections: () => ({
-    data: [
-      {
-        id: 'opening-section',
-        subject: 'english',
-        enabled: true,
-        sortOrder: 1,
-        label: 'Opening Section',
-        typeLabel: 'Featured',
-        componentIds: [],
-        subsections: [
-          {
-            id: 'opening-subsection',
-            enabled: true,
-            sortOrder: 1,
-            label: 'Sentence structure',
-            typeLabel: 'Subsection',
-            componentIds: ['english_basics'],
-          },
-        ],
-      },
-    ],
-  }),
 }));
 
 import { KangurLessonsCatalogWidget } from './KangurLessonsCatalogWidget';

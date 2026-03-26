@@ -26,7 +26,6 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import { KangurSubjectGroupSection } from '@/features/kangur/ui/components/KangurSubjectGroupSection';
 import { getKangurSubjectGroups } from '@/features/kangur/ui/constants/subject-groups';
-import { useKangurLessonSections } from '@/features/kangur/ui/hooks/useKangurLessonSections';
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
 import { LESSONS_LIBRARY_LIST_CLASSNAME } from '@/features/kangur/ui/pages/lessons/Lessons.constants';
@@ -96,6 +95,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
   const { entry: emptyStateContent } = useKangurPageContentEntry('lessons-list-empty-state');
   const {
     orderedLessons,
+    lessonSections,
     lessonDocuments,
     progress,
     activeLessonId,
@@ -105,7 +105,6 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
   const {
     selectLesson,
   } = useKangurLessonsRuntimeActions();
-  const { data: allSections = [] } = useKangurLessonSections({ enabledOnly: true });
   const [expandedLessonGroupId, setExpandedLessonGroupId] = useState<string | null>(null);
   const isSixYearOld = ageGroup === 'six_year_old';
 
@@ -165,7 +164,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
           return null;
         }
 
-        const subjectSections = allSections.filter((s) => s.subject === group.value);
+        const subjectSections = lessonSections.filter((s) => s.subject === group.value);
         const displayLessonGroups = buildLessonGroups(subjectSections, groupLessons, locale);
 
         type LessonEntry =

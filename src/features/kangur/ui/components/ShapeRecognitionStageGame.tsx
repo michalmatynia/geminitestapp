@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 import {
   KangurButton,
@@ -17,6 +17,7 @@ import {
   type ShapeId,
 } from './GeometryShapeRecognition.shared';
 import type { LessonTranslate } from './lesson-copy';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type ShapeRecognitionStageGameProps = {
   finishLabel?: string;
@@ -24,9 +25,10 @@ type ShapeRecognitionStageGameProps = {
 };
 
 export default function ShapeRecognitionStageGame({
-  finishLabel = 'Wróć do tematów',
+  finishLabel,
   onFinish,
 }: ShapeRecognitionStageGameProps): React.JSX.Element {
+  const locale = normalizeSiteLocale(useLocale());
   const translations = useTranslations('KangurStaticLessons.geometryShapeRecognition');
   const translate: LessonTranslate = (key, values) => translations(key as never, values as never);
   const shapes = useMemo(() => buildGeometryShapeDefinitions(translate), [translations]);
@@ -41,6 +43,15 @@ export default function ShapeRecognitionStageGame({
   const [roundIndex, setRoundIndex] = useState(0);
   const [selected, setSelected] = useState<ShapeId | null>(null);
   const [score, setScore] = useState(0);
+  const resolvedFinishLabel =
+    finishLabel ??
+    (locale === 'uk'
+      ? 'Повернутися до тем'
+      : locale === 'de'
+        ? 'Zurück zu den Themen'
+        : locale === 'en'
+          ? 'Back to topics'
+          : 'Wróć do tematów');
 
   if (SHAPE_ROUNDS.length === 0) {
     return (
@@ -102,7 +113,7 @@ export default function ShapeRecognitionStageGame({
               variant='primary'
               onClick={onFinish}
             >
-              {finishLabel}
+              {resolvedFinishLabel}
             </KangurButton>
           ) : null}
           <KangurButton

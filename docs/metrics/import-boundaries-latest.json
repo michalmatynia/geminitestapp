@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-26T12:50:53.565Z",
-  "status": "failed",
+  "generatedAt": "2026-03-26T14:24:00.140Z",
+  "status": "passed",
   "summary": {
-    "total": 2,
-    "errorCount": 2,
+    "total": 0,
+    "errorCount": 0,
     "warningCount": 0,
     "infoCount": 0,
-    "status": "failed",
-    "fileCount": 5829,
+    "status": "passed",
+    "fileCount": 5840,
     "featureCount": 10,
     "circularDependencyCount": 0
   },
@@ -71,35 +71,7 @@
     ]
   },
   "circularDependencies": [],
-  "issues": [
-    {
-      "severity": "error",
-      "ruleId": "cross-feature-internal-import",
-      "message": "Imports internal path from feature \"products\": @/features/products/components/ProductCard. Use the barrel export instead.",
-      "file": "src/features/cms/components/frontend/home/home-fallback-content.products.tsx",
-      "line": 8,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "error",
-      "ruleId": "cross-feature-internal-import",
-      "message": "Imports internal path from feature \"products\": @/features/products/components/ProductCard. Use the barrel export instead.",
-      "file": "src/features/cms/components/frontend/home/home-fallback-content.signature.tsx",
-      "line": 7,
-      "column": null,
-      "snippet": null,
-      "context": null
-    }
-  ],
-  "rules": [
-    {
-      "ruleId": "cross-feature-internal-import",
-      "errorCount": 2,
-      "warningCount": 0,
-      "infoCount": 0
-    }
-  ],
-  "durationMs": 386
+  "issues": [],
+  "rules": [],
+  "durationMs": 338
 }

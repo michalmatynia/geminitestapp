@@ -1,24 +1,24 @@
 {
-  "generatedAt": "2026-03-22T09:13:54.000Z",
-  "strictMode": true,
+  "generatedAt": "2026-03-26T13:06:45.566Z",
+  "strictMode": false,
   "failOnWarningBudgetExceed": false,
   "runtime": {
     "source": "broker",
     "reused": false,
-    "baseUrl": "http://127.0.0.1:63635",
-    "agentId": "019d0ff1-fd27-7482-9e6b-69bf74bad3d7",
-    "leaseKey": "web-dev-webpack-019d0ff1-fd27-7482-9e6b-69bf74bad3d7-ed58ad7e",
+    "baseUrl": "http://127.0.0.1:58609",
+    "agentId": "019d2582-7462-72e1-b297-b5158752a775",
+    "leaseKey": "web-dev-webpack-019d2582-7462-72e1-b297-b5158752a775-ed58ad7e",
     "strategy": "per-playwright-suite"
   },
   "summary": {
     "total": 14,
-    "passed": 14,
-    "failed": 0,
+    "passed": 12,
+    "failed": 2,
     "actWarnings": 0,
     "warningBudget": 10,
     "warningBudgetStatus": "ok",
     "warningBudgetEnforcement": "telemetry-only",
-    "totalDurationMs": 280485
+    "totalDurationMs": 650544
   },
   "results": [
     {
@@ -29,11 +29,11 @@
         "src/app/__tests__/shell-accessibility.test.tsx"
       ],
       "command": "npx vitest run --project unit src/app/__tests__/shell-accessibility.test.tsx",
-      "status": "pass",
-      "exitCode": 0,
-      "durationMs": 2529,
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 2764,
       "actWarnings": 0,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/app/__tests__/shell-accessibility.test.tsx (2 tests) 950ms\n     ✓ renders a focusable main landmark in the frontend shell  900ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  17:23:52\n   Duration  1.69s (transform 658ms, setup 232ms, import 111ms, tests 950ms, environment 314ms)"
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ❯ |unit| src/app/__tests__/shell-accessibility.test.tsx (2 tests | 1 failed) 1023ms\n     × renders a focusable main landmark in the frontend shell 875ms\n     ✓ renders a focusable main landmark in the auth shell 144ms\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  |unit| src/app/__tests__/shell-accessibility.test.tsx > app shell accessibility > renders a focusable main landmark in the frontend shell\nError: `headers` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context\n ❯ throwForMissingRequestStore node_modules/next/dist/server/app-render/work-unit-async-storage.external.js:63:33\n ❯ headers node_modules/next/dist/server/request/headers.js:123:67\n ❯ FrontendLayout src/app/(frontend)/layout.tsx:57:32\n     55|   children: React.ReactNode;\n     56| }): Promise<JSX.Element> {\n     57|   const requestHeaders = await headers();\n       |                                ^\n     58|   const requestPathname =\n     59|     resolveFrontendRequestPathname(requestHeaders.get('next-url')) ??\n ❯ src/app/__tests__/shell-accessibility.test.tsx:34:26\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 1 passed (2)\n   Start at  13:53:22\n   Duration  2.11s (transform 695ms, setup 291ms, import 136ms, tests 1.02s, environment 575ms)"
     },
     {
       "id": "auth-signin-a11y",
@@ -45,9 +45,9 @@
       "command": "npx vitest run --project unit __tests__/features/auth/pages/signin-page.test.tsx",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 4275,
+      "durationMs": 4258,
       "actWarnings": 0,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/pages/signin-page.test.tsx (10 tests) 945ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  17:23:54\n   Duration  3.58s (transform 1.54s, setup 227ms, import 2.00s, tests 945ms, environment 320ms)"
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/pages/signin-page.test.tsx (10 tests) 852ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  13:53:24\n   Duration  3.58s (transform 1.40s, setup 346ms, import 1.93s, tests 852ms, environment 355ms)"
     },
     {
       "id": "products-edit-a11y",
@@ -59,9 +59,9 @@
       "command": "npx vitest run --project unit __tests__/features/products/pages/product-edit-page.test.tsx",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 6519,
+      "durationMs": 5363,
       "actWarnings": 0,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/products/pages/product-edit-page.test.tsx (7 tests) 2361ms\n     ✓ renders the form with product data in the General tab  458ms\n     ✓ has no obvious accessibility violations in the default edit form view  511ms\n     ✓ renders the price in the Other tab  314ms\n     ✓ enables Update after SKU value changes  363ms\n     ✓ submits the updated product when Update is clicked  476ms\n\n Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  17:23:58\n   Duration  5.76s (transform 2.14s, setup 242ms, import 2.72s, tests 2.36s, environment 344ms)"
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/products/pages/product-edit-page.test.tsx (7 tests) 1966ms\n     ✓ renders the form with product data in the General tab  425ms\n     ✓ has no obvious accessibility violations in the default edit form view  435ms\n     ✓ enables Update after SKU value changes  338ms\n     ✓ submits the updated product when Update is clicked  347ms\n\n Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  13:53:29\n   Duration  4.71s (transform 1.64s, setup 225ms, import 2.12s, tests 1.97s, environment 304ms)"
     },
     {
       "id": "image-studio-a11y",
@@ -73,9 +73,9 @@
       "command": "npx vitest run --project unit src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 4405,
+      "durationMs": 4661,
       "actWarnings": 0,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx (7 tests) 770ms\n\n Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  17:24:05\n   Duration  3.62s (transform 1.66s, setup 255ms, import 2.13s, tests 770ms, environment 368ms)"
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx (7 tests) 1106ms\n\n Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  13:53:34\n   Duration  3.93s (transform 1.68s, setup 240ms, import 2.15s, tests 1.11s, environment 343ms)"
     },
     {
       "id": "ai-paths-a11y",
@@ -87,9 +87,9 @@
       "command": "npx vitest run --project unit src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 5587,
+      "durationMs": 4771,
       "actWarnings": 0,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx (4 tests) 286ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  17:24:09\n   Duration  4.84s (transform 3.10s, setup 239ms, import 3.88s, tests 286ms, environment 345ms)"
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx (4 tests) 280ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  13:53:39\n   Duration  3.91s (transform 2.25s, setup 298ms, import 2.81s, tests 280ms, environment 402ms)"
     },
     {
       "id": "case-resolver-a11y",
@@ -101,9 +101,9 @@
       "command": "npx vitest run --project unit src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 3908,
+      "durationMs": 3435,
       "actWarnings": 0,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx (10 tests) 398ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  17:24:15\n   Duration  3.18s (transform 1.52s, setup 335ms, import 1.85s, tests 398ms, environment 510ms)"
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx (10 tests) 382ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  13:53:43\n   Duration  2.74s (transform 1.32s, setup 223ms, import 1.73s, tests 382ms, environment 321ms)"
     },
     {
       "id": "case-resolver-browser-a11y",
@@ -115,9 +115,9 @@
       "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/case-resolver-accessibility.spec.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 46939,
+      "durationMs": 141679,
       "actWarnings": 0,
-      "output": "Running 1 test using 1 worker\n\n(node:30615) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:30615) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/case-resolver-accessibility.spec.ts:7:1 › case resolver exposes tree controls accessibly and passes the accessibility smoke scan (44.3s)\n\n  1 passed (45.9s)"
+      "output": "Running 1 test using 1 worker\n\n(node:96869) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:96869) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/case-resolver-accessibility.spec.ts:7:1 › case resolver exposes tree controls accessibly and passes the accessibility smoke scan (2.3m)\n\n  1 passed (2.3m)"
     },
     {
       "id": "kangur-profile-a11y",
@@ -129,9 +129,9 @@
       "command": "npx vitest run --project unit __tests__/features/kangur/kangur-accessibility-smoke.test.tsx",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 7238,
+      "durationMs": 7156,
       "actWarnings": 0,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\nstderr | __tests__/features/kangur/kangur-accessibility-smoke.test.tsx > Kangur accessibility smoke > exposes skip navigation, landmarks, and labeled home controls on the game page\nReceived NaN for the `children` attribute. If this is expected, cast the value to a string.\n\nstderr | __tests__/features/kangur/kangur-accessibility-smoke.test.tsx > Kangur accessibility smoke > keeps entry-screen back navigation discoverable by accessible name on the game page\n[2026-03-21T16:25:46.653Z] [ERROR] [unknown] [unknown] Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths) {\n  category: 'VALIDATION',\n  jobId: undefined,\n  runId: undefined,\n  productId: undefined,\n  source: 'unknown',\n  service: 'unknown',\n  statusCode: undefined,\n  error: {\n    message: 'Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths)',\n    stack: 'Error: Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths)\\n' +\n      '    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/packages/kangur-api-client/src/index.ts:336:21\\n' +\n      '    at processTicksAndRejections (node:internal/process/task_queues:105:5)\\n' +\n      '    at request (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/packages/kangur-api-client/src/index.ts:376:13)\\n' +\n      '    at requestPromise.fallback (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:213:27)\\n' +\n      '    at withKangurClientError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/observability/client.ts:134:12)\\n' +\n      '    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:201:14'\n  }\n}\n\nstderr | __tests__/features/kangur/kangur-accessibility-smoke.test.tsx > Kangur accessibility smoke > keeps entry-screen back navigation discoverable by accessible name on the game page\n[2026-03-21T16:25:46.667Z] [ERROR] [unknown] [unknown] Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths) {\n  category: 'VALIDATION',\n  jobId: undefined,\n  runId: undefined,\n  productId: undefined,\n  source: 'unknown',\n  service: 'unknown',\n  statusCode: undefined,\n  error: {\n    message: 'Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths)',\n    stack: 'Error: Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths)\\n' +\n      '    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/packages/kangur-api-client/src/index.ts:336:21\\n' +\n      '    at processTicksAndRejections (node:internal/process/task_queues:105:5)\\n' +\n      '    at request (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/packages/kangur-api-client/src/index.ts:376:13)\\n' +\n      '    at requestPromise.fallback (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:213:27)\\n' +\n      '    at withKangurClientError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/observability/client.ts:134:12)\\n' +\n      '    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:201:14'\n  }\n}\n[2026-03-21T16:25:46.667Z] [ERROR] [unknown] [unknown] Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths) {\n  category: 'VALIDATION',\n  jobId: undefined,\n  runId: undefined,\n  productId: undefined,\n  source: 'unknown',\n  service: 'unknown',\n  statusCode: undefined,\n  error: {\n    message: 'Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths)',\n    stack: 'Error: Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths)\\n' +\n      '    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/packages/kangur-api-client/src/index.ts:336:21\\n' +\n      '    at processTicksAndRejections (node:internal/process/task_queues:105:5)\\n' +\n      '    at request (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/packages/kangur-api-client/src/index.ts:376:13)\\n' +\n      '    at requestPromise.fallback (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:213:27)\\n' +\n      '    at withKangurClientError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/observability/client.ts:134:12)\\n' +\n      '    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:201:14'\n  }\n}\n\nstderr | __tests__/features/kangur/kangur-accessibility-smoke.test.tsx > Kangur accessibility smoke > keeps entry-screen back navigation discoverable by accessible name on the game page\n[2026-03-21T16:25:46.781Z] [ERROR] [unknown] [unknown] Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths) {\n  category: 'VALIDATION',\n  jobId: undefined,\n  runId: undefined,\n  productId: undefined,\n  source: 'unknown',\n  service: 'unknown',\n  statusCode: undefined,\n  error: {\n    message: 'Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths)',\n    stack: 'Error: Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths)\\n' +\n      '    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/packages/kangur-api-client/src/index.ts:336:21\\n' +\n      '    at processTicksAndRejections (node:internal/process/task_queues:105:5)\\n' +\n      '    at request (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/packages/kangur-api-client/src/index.ts:376:13)\\n' +\n      '    at requestPromise.fallback (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:213:27)\\n' +\n      '    at withKangurClientError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/observability/client.ts:134:12)\\n' +\n      '    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:201:14\\n' +\n      '    at requestMergedScores (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:152:24)\\n' +\n      '    at async Promise.allSettled (index 1)\\n' +\n      '    at loadScores (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/ui/hooks/useKangurLeaderboardState.ts:287:41)'\n  }\n}\n\nstderr | __tests__/features/kangur/kangur-accessibility-smoke.test.tsx > Kangur accessibility smoke > keeps entry-screen back navigation discoverable by accessible name on the game page\n[2026-03-21T16:25:46.782Z] [ERROR] [unknown] [unknown] Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths) {\n  category: 'VALIDATION',\n  jobId: undefined,\n  runId: undefined,\n  productId: undefined,\n  source: 'unknown',\n  service: 'unknown',\n  statusCode: undefined,\n  error: {\n    message: 'Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths)',\n    stack: 'Error: Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths)\\n' +\n      '    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/packages/kangur-api-client/src/index.ts:336:21\\n' +\n      '    at processTicksAndRejections (node:internal/process/task_queues:105:5)\\n' +\n      '    at request (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/packages/kangur-api-client/src/index.ts:376:13)\\n' +\n      '    at requestPromise.fallback (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:213:27)\\n' +\n      '    at withKangurClientError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/observability/client.ts:134:12)\\n' +\n      '    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:201:14\\n' +\n      '    at requestMergedScores (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:152:24)\\n' +\n      '    at async Promise.allSettled (index 1)\\n' +\n      '    at loadScores (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/ui/hooks/useKangurLeaderboardState.ts:287:41)'\n  }\n}\n\nstderr | __tests__/features/kangur/kangur-accessibility-smoke.test.tsx > Kangur accessibility smoke > keeps entry-screen back navigation discoverable by accessible name on the game page\n[2026-03-21T16:25:46.860Z] [ERROR] [unknown] [unknown] Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths) {\n  category: 'VALIDATION',\n  jobId: undefined,\n  runId: undefined,\n  productId: undefined,\n  source: 'unknown',\n  service: 'unknown',\n  statusCode: undefined,\n  error: {\n    message: 'Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths)',\n    stack: 'Error: Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths)\\n' +\n      '    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/packages/kangur-api-client/src/index.ts:336:21\\n' +\n      '    at processTicksAndRejections (node:internal/process/task_queues:105:5)\\n' +\n      '    at request (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/packages/kangur-api-client/src/index.ts:376:13)\\n' +\n      '    at requestPromise.fallback (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:213:27)\\n' +\n      '    at withKangurClientError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/observability/client.ts:134:12)\\n' +\n      '    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:201:14\\n' +\n      '    at requestMergedScores (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:152:24)\\n' +\n      '    at async Promise.allSettled (index 1)\\n' +\n      '    at loadScores (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/ui/hooks/useKangurLeaderboardState.ts:287:41)'\n  }\n}\n\nstderr | __tests__/features/kangur/kangur-accessibility-smoke.test.tsx > Kangur accessibility smoke > keeps entry-screen back navigation discoverable by accessible name on the game page\n[2026-03-21T16:25:46.860Z] [ERROR] [unknown] [unknown] Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths) {\n  category: 'VALIDATION',\n  jobId: undefined,\n  runId: undefined,\n  productId: undefined,\n  source: 'unknown',\n  service: 'unknown',\n  statusCode: undefined,\n  error: {\n    message: 'Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths)',\n    stack: 'Error: Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths)\\n' +\n      '    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/packages/kangur-api-client/src/index.ts:336:21\\n' +\n      '    at processTicksAndRejections (node:internal/process/task_queues:105:5)\\n' +\n      '    at request (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/packages/kangur-api-client/src/index.ts:376:13)\\n' +\n      '    at requestPromise.fallback (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:213:27)\\n' +\n      '    at withKangurClientError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/observability/client.ts:134:12)\\n' +\n      '    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:201:14\\n' +\n      '    at requestMergedScores (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:152:24)\\n' +\n      '    at async Promise.allSettled (index 1)\\n' +\n      '    at loadScores (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/ui/hooks/useKangurLeaderboardState.ts:287:41)'\n  }\n}\n\nstderr | __tests__/features/kangur/kangur-accessibility-smoke.test.tsx > Kangur accessibility smoke > keeps entry-screen back navigation discoverable by accessible name on the game page\n[2026-03-21T16:25:46.923Z] [ERROR] [unknown] [unknown] Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths) {\n  category: 'VALIDATION',\n  jobId: undefined,\n  runId: undefined,\n  productId: undefined,\n  source: 'unknown',\n  service: 'unknown',\n  statusCode: undefined,\n  error: {\n    message: 'Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths)',\n    stack: 'Error: Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths)\\n' +\n      '    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/packages/kangur-api-client/src/index.ts:336:21\\n' +\n      '    at processTicksAndRejections (node:internal/process/task_queues:105:5)\\n' +\n      '    at request (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/packages/kangur-api-client/src/index.ts:376:13)\\n' +\n      '    at requestPromise.fallback (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:213:27)\\n' +\n      '    at withKangurClientError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/observability/client.ts:134:12)\\n' +\n      '    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:201:14\\n' +\n      '    at requestMergedScores (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:152:24)\\n' +\n      '    at async Promise.allSettled (index 1)\\n' +\n      '    at loadScores (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/ui/hooks/useKangurLeaderboardState.ts:287:41)'\n  }\n}\n\nstderr | __tests__/features/kangur/kangur-accessibility-smoke.test.tsx > Kangur accessibility smoke > keeps entry-screen back navigation discoverable by accessible name on the game page\n[2026-03-21T16:25:46.924Z] [ERROR] [unknown] [unknown] Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths) {\n  category: 'VALIDATION',\n  jobId: undefined,\n  runId: undefined,\n  productId: undefined,\n  source: 'unknown',\n  service: 'unknown',\n  statusCode: undefined,\n  error: {\n    message: 'Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths)',\n    stack: 'Error: Kangur API request failed: 404 Not Found (/api/kangur/scores?sort=-score&limit=100&subject=maths)\\n' +\n      '    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/packages/kangur-api-client/src/index.ts:336:21\\n' +\n      '    at processTicksAndRejections (node:internal/process/task_queues:105:5)\\n' +\n      '    at request (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/packages/kangur-api-client/src/index.ts:376:13)\\n' +\n      '    at requestPromise.fallback (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:213:27)\\n' +\n      '    at withKangurClientError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/observability/client.ts:134:12)\\n' +\n      '    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:201:14\\n' +\n      '    at requestMergedScores (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/services/local-kangur-platform-scores.ts:152:24)\\n' +\n      '    at async Promise.allSettled (index 1)\\n' +\n      '    at loadScores (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/ui/hooks/useKangurLeaderboardState.ts:287:41)'\n  }\n}\n\n ✓ |unit| __tests__/features/kangur/kangur-accessibility-smoke.test.tsx (5 tests) 963ms\n     ✓ keeps entry-screen back navigation discoverable by accessible name on the game page  495ms\n\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n   Start at  17:25:40\n   Duration  6.21s (transform 2.63s, setup 274ms, import 4.52s, tests 963ms, environment 354ms)"
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/kangur/kangur-accessibility-smoke.test.tsx (5 tests) 566ms\n\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n   Start at  13:56:36\n   Duration  6.03s (transform 2.65s, setup 290ms, import 4.50s, tests 566ms, environment 569ms)"
     },
     {
       "id": "public-auth-routes-browser-a11y",
@@ -143,9 +143,9 @@
       "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/public-auth-accessibility.spec.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 24095,
+      "durationMs": 26036,
       "actWarnings": 0,
-      "output": "Running 2 tests using 1 worker\n\n(node:31782) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:31782) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/signin exposes skip navigation and passes the accessibility smoke scan (10.7s)\n  ✓  2 e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/register exposes skip navigation and passes the accessibility smoke scan (10.3s)\n\n  2 passed (22.8s)"
+      "output": "Running 2 tests using 1 worker\n\n(node:5801) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:5801) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/signin exposes skip navigation and passes the accessibility smoke scan (17.5s)\n  ✓  2 e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/register exposes skip navigation and passes the accessibility smoke scan (6.2s)\n\n  2 passed (25.1s)"
     },
     {
       "id": "admin-dashboard-browser-a11y",
@@ -157,9 +157,9 @@
       "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/admin-dashboard-accessibility.spec.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 18737,
+      "durationMs": 44780,
       "actWarnings": 0,
-      "output": "Running 1 test using 1 worker\n\n(node:32400) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:32400) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/admin-dashboard-accessibility.spec.ts:6:1 › admin dashboard exposes shell landmarks and passes the accessibility smoke scan (15.7s)\n\n  1 passed (17.1s)"
+      "output": "Running 1 test using 1 worker\n\n(node:6661) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:6661) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/admin-dashboard-accessibility.spec.ts:6:1 › admin dashboard exposes shell landmarks and passes the accessibility smoke scan (42.7s)\n\n  1 passed (43.9s)"
     },
     {
       "id": "products-list-browser-a11y",
@@ -171,9 +171,9 @@
       "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/products-list-accessibility.spec.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 72326,
+      "durationMs": 73997,
       "actWarnings": 0,
-      "output": "Running 1 test using 1 worker\n\n(node:33124) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:33124) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/products-list-accessibility.spec.ts:6:1 › products list exposes search and actions accessibly and passes the accessibility smoke scan (1.2m)\n\n  1 passed (1.2m)"
+      "output": "Running 1 test using 1 worker\n\n(node:7750) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:7750) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/products-list-accessibility.spec.ts:6:1 › products list exposes search and actions accessibly and passes the accessibility smoke scan (1.2m)\n\n  1 passed (1.2m)"
     },
     {
       "id": "cms-pages-browser-a11y",
@@ -183,11 +183,11 @@
         "e2e/features/accessibility/cms-pages-accessibility.spec.ts"
       ],
       "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/cms-pages-accessibility.spec.ts",
-      "status": "pass",
-      "exitCode": 0,
-      "durationMs": 31186,
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 123268,
       "actWarnings": 0,
-      "output": "Running 1 test using 1 worker\n\n(node:34403) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:34403) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/cms-pages-accessibility.spec.ts:6:1 › cms pages list exposes filters and actions accessibly and passes the accessibility smoke scan (28.4s)\n\n  1 passed (30.0s)"
+      "output": "Running 1 test using 1 worker\n\n(node:9206) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:9206) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✘  1 e2e/features/accessibility/cms-pages-accessibility.spec.ts:6:1 › cms pages list exposes filters and actions accessibly and passes the accessibility smoke scan (1.8m)\n\n\n  1) e2e/features/accessibility/cms-pages-accessibility.spec.ts:6:1 › cms pages list exposes filters and actions accessibly and passes the accessibility smoke scan \n\n    Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeHidden\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\n    Locator:  getByText('Loading zones...')\n    Expected: hidden\n    Received: visible\n\n    Call log:\n    \u001b[2m  - Expect \"toBeHidden\" with timeout 120000ms\u001b[22m\n    \u001b[2m  - waiting for getByText('Loading zones...')\u001b[22m\n    \u001b[2m    14 × locator resolved to <span class=\"text-[11px] text-gray-500\">Loading zones...</span>\u001b[22m\n    \u001b[2m       - unexpected value \"visible\"\u001b[22m\n\n\n      26 |   const simpleRoutingIndicator = page.getByText('Simple routing');\n      27 |   // Cold brokered runs can spend tens of seconds compiling the zone/slugs data path.\n    > 28 |   await expect(page.getByText('Loading zones...')).toBeHidden({ timeout: cmsPagesUiTimeoutMs });\n         |                                                    ^\n      29 |   await expect\n      30 |     .poll(\n      31 |       async () => (await zoneSelector.count()) > 0 || (await simpleRoutingIndicator.count()) > 0,\n        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/cms-pages-accessibility.spec.ts:28:52\n\n    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/019d2582-7462-72e1-b297-b5158752a775/accessibility-smoke-cms-pages-browser-a11y/test-results/features-accessibility-cms-17323-he-accessibility-smoke-scan/trace.zip\n    Usage:\n\n        npx playwright show-trace tmp/playwright-runs/web/019d2582-7462-72e1-b297-b5158752a775/accessibility-smoke-cms-pages-browser-a11y/test-results/features-accessibility-cms-17323-he-accessibility-smoke-scan/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  1 failed\n    e2e/features/accessibility/cms-pages-accessibility.spec.ts:6:1 › cms pages list exposes filters and actions accessibly and passes the accessibility smoke scan"
     },
     {
       "id": "notes-workspace-browser-a11y",
@@ -199,9 +199,9 @@
       "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/notes-workspace-accessibility.spec.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 25341,
+      "durationMs": 73559,
       "actWarnings": 0,
-      "output": "Running 1 test using 1 worker\n\n(node:35176) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:35176) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/notes-workspace-accessibility.spec.ts:7:1 › notes workspace exposes list controls accessibly and passes the accessibility smoke scan (22.2s)\n\n  1 passed (23.9s)"
+      "output": "Running 1 test using 1 worker\n\n(node:14441) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:14441) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/notes-workspace-accessibility.spec.ts:7:1 › notes workspace exposes list controls accessibly and passes the accessibility smoke scan (1.1m)\n\n  1 passed (1.2m)"
     },
     {
       "id": "cms-builder-browser-a11y",
@@ -213,9 +213,9 @@
       "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/cms-builder-accessibility.spec.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 27400,
+      "durationMs": 134817,
       "actWarnings": 0,
-      "output": "Running 1 test using 1 worker\n\n(node:64234) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:64234) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/cms-builder-accessibility.spec.ts:7:1 › cms builder exposes shell controls accessibly and passes the accessibility smoke scan (15.6s)\n\n  1 passed (27.4s)"
+      "output": "Running 1 test using 1 worker\n\n(node:19366) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:19366) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/cms-builder-accessibility.spec.ts:7:1 › cms builder exposes shell controls accessibly and passes the accessibility smoke scan (2.2m)\n\n  1 passed (2.2m)"
     }
   ]
 }

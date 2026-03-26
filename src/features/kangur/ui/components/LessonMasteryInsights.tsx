@@ -16,6 +16,7 @@ import {
   translateKangurLearnerProfileWithFallback,
 } from '@/features/kangur/ui/services/profile';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type LessonMasteryInsightsProps = {
   progress: KangurProgressState;
@@ -23,18 +24,107 @@ type LessonMasteryInsightsProps = {
   sectionTitle?: React.ReactNode;
 };
 
+type LessonMasteryFallbackCopy = {
+  attemptsLine: (attempts: number, lastScore: number) => string;
+  bestScoreLine: (bestScore: number, date: string) => string;
+  dateMissing: string;
+  emptyDescription: string;
+  reviewEmpty: string;
+  reviewTitle: string;
+  strongestEmpty: string;
+  strongestTitle: string;
+  title: string;
+  trackedBadge: (count: number) => string;
+  trackedSummary: (tracked: number, mastered: number, review: number) => string;
+};
+
+const getLessonMasteryFallbackCopy = (
+  locale: ReturnType<typeof normalizeSiteLocale>
+): LessonMasteryFallbackCopy => {
+  if (locale === 'uk') {
+    return {
+      attemptsLine: (attempts, lastScore) => `Спроби: ${attempts} · останній результат ${lastScore}%`,
+      bestScoreLine: (bestScore, date) => `Найкращий результат: ${bestScore}% · Остання спроба: ${date}`,
+      dateMissing: 'немає дати',
+      emptyDescription:
+        'Ще немає збережених спроб уроків. Заверши будь-який урок, щоб побачити сильні сторони й теми для повторення.',
+      reviewEmpty: 'Усі відстежувані уроки вже на безпечному рівні.',
+      reviewTitle: 'На повторення',
+      strongestEmpty: 'Заверши кілька уроків, щоб побачити найсильніші напрями.',
+      strongestTitle: 'Найсильніші уроки',
+      title: 'Опанування уроків',
+      trackedBadge: (count) => `${count} уроків зі збереженим прогресом`,
+      trackedSummary: (tracked, mastered, review) =>
+        `Відстежується: ${tracked} · опановано: ${mastered} · на повторення: ${review}`,
+    };
+  }
+
+  if (locale === 'de') {
+    return {
+      attemptsLine: (attempts, lastScore) => `Versuche: ${attempts} · letztes Ergebnis ${lastScore}%`,
+      bestScoreLine: (bestScore, date) => `Bestes Ergebnis: ${bestScore}% · Letzter Versuch: ${date}`,
+      dateMissing: 'kein Datum',
+      emptyDescription:
+        'Es gibt noch keine gespeicherten Lektionsversuche. Schließe eine beliebige Lektion ab, um Stärken und Wiederholungsbereiche zu sehen.',
+      reviewEmpty: 'Alle verfolgten Lektionen sind auf einem sicheren Niveau.',
+      reviewTitle: 'Zur Wiederholung',
+      strongestEmpty: 'Schließe zuerst ein paar Lektionen ab, um die stärksten Bereiche zu sehen.',
+      strongestTitle: 'Stärkste Lektionen',
+      title: 'Lektionsbeherrschung',
+      trackedBadge: (count) => `${count} Lektionen mit gespeichertem Fortschritt`,
+      trackedSummary: (tracked, mastered, review) =>
+        `Verfolgt: ${tracked} · beherrscht: ${mastered} · zur Wiederholung: ${review}`,
+    };
+  }
+
+  if (locale === 'en') {
+    return {
+      attemptsLine: (attempts, lastScore) => `Attempts: ${attempts} · last score ${lastScore}%`,
+      bestScoreLine: (bestScore, date) => `Best score: ${bestScore}% · Last attempt: ${date}`,
+      dateMissing: 'no date',
+      emptyDescription:
+        'There are no saved lesson attempts yet. Finish any lesson to see strengths and review areas.',
+      reviewEmpty: 'All tracked lessons are at a safe level.',
+      reviewTitle: 'To review',
+      strongestEmpty: 'Finish a few lessons first to see the strongest areas.',
+      strongestTitle: 'Strongest lessons',
+      title: 'Lesson mastery',
+      trackedBadge: (count) => `${count} lessons with saved progress`,
+      trackedSummary: (tracked, mastered, review) =>
+        `Tracked: ${tracked} · mastered: ${mastered} · to review: ${review}`,
+    };
+  }
+
+  return {
+    attemptsLine: (attempts, lastScore) => `Próby: ${attempts} · ostatni wynik ${lastScore}%`,
+    bestScoreLine: (bestScore, date) => `Najlepszy wynik: ${bestScore}% · Ostatnia próba: ${date}`,
+    dateMissing: 'brak daty',
+    emptyDescription:
+      'Brak zapisanych prób lekcji. Ukończ dowolną lekcję, aby zobaczyć mocne strony i obszary do powtórki.',
+    reviewEmpty: 'Wszystkie śledzone lekcje są na bezpiecznym poziomie.',
+    reviewTitle: 'Do powtórki',
+    strongestEmpty: 'Najpierw ukończ kilka lekcji, aby zobaczyć najmocniejsze obszary.',
+    strongestTitle: 'Najmocniejsze lekcje',
+    title: 'Opanowanie lekcji',
+    trackedBadge: (count) => `${count} lekcji z zapisem`,
+    trackedSummary: (tracked, mastered, review) =>
+      `Śledzone: ${tracked} · opanowane: ${mastered} · do powtórki: ${review}`,
+  };
+};
+
 const formatCompletedAt = (
   value: string | null,
   translate: (key: string, values?: Record<string, string | number>) => string,
-  locale: string
+  locale: string,
+  fallbackCopy: LessonMasteryFallbackCopy
 ): string => {
   if (!value) {
-    return translateLessonMasteryWithFallback(translate, 'dateMissing', 'brak daty');
+    return translateLessonMasteryWithFallback(translate, 'dateMissing', fallbackCopy.dateMissing);
   }
 
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
-    return translateLessonMasteryWithFallback(translate, 'dateMissing', 'brak daty');
+    return translateLessonMasteryWithFallback(translate, 'dateMissing', fallbackCopy.dateMissing);
   }
 
   return parsed.toLocaleDateString(locale, {
@@ -74,6 +164,8 @@ type InsightListProps = {
 
 const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.Element => {
   const locale = useLocale();
+  const normalizedLocale = normalizeSiteLocale(locale);
+  const fallbackCopy = getLessonMasteryFallbackCopy(normalizedLocale);
   const translations = useTranslations('KangurLearnerProfileWidgets.lessonMastery');
   const translateWithFallback = (
     key: string,
@@ -110,7 +202,7 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
                   <KangurMetaText as='div' className='mt-1' size='xs'>
                     {translateWithFallback(
                       'attemptsLine',
-                      `Próby: ${item.attempts} · ostatni wynik ${item.lastScorePercent}%`,
+                      fallbackCopy.attemptsLine(item.attempts, item.lastScorePercent),
                       {
                         attempts: item.attempts,
                         lastScore: item.lastScorePercent,
@@ -129,14 +221,13 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
               <KangurMetaText as='div' className='mt-2' size='xs'>
                 {translateWithFallback(
                   'bestScoreLine',
-                  `Najlepszy wynik: ${item.bestScorePercent}% · Ostatnia próba: ${formatCompletedAt(
-                    item.lastCompletedAt,
-                    translations,
-                    locale
-                  )}`,
+                  fallbackCopy.bestScoreLine(
+                    item.bestScorePercent,
+                    formatCompletedAt(item.lastCompletedAt, translations, locale, fallbackCopy)
+                  ),
                   {
                     bestScore: item.bestScorePercent,
-                    date: formatCompletedAt(item.lastCompletedAt, translations, locale),
+                    date: formatCompletedAt(item.lastCompletedAt, translations, locale, fallbackCopy),
                   }
                 )}
               </KangurMetaText>
@@ -154,6 +245,8 @@ export default function LessonMasteryInsights({
   sectionTitle,
 }: LessonMasteryInsightsProps): React.JSX.Element {
   const locale = useLocale();
+  const normalizedLocale = normalizeSiteLocale(locale);
+  const fallbackCopy = getLessonMasteryFallbackCopy(normalizedLocale);
   const translations = useTranslations('KangurLearnerProfileWidgets.lessonMastery');
   const translateWithFallback = (
     key: string,
@@ -162,12 +255,16 @@ export default function LessonMasteryInsights({
   ): string => translateLessonMasteryWithFallback(translations, key, fallback, values);
   const insights = buildLessonMasteryInsights(progress, 3, locale);
   const resolvedSectionTitle =
-    sectionTitle ?? translateWithFallback('title', 'Opanowanie lekcji');
+    sectionTitle ?? translateWithFallback('title', fallbackCopy.title);
   const resolvedSectionSummary =
     sectionSummary ??
     translateWithFallback(
       'trackedSummary',
-      `Śledzone: ${insights.trackedLessons} · opanowane: ${insights.masteredLessons} · do powtórki: ${insights.lessonsNeedingPractice}`,
+      fallbackCopy.trackedSummary(
+        insights.trackedLessons,
+        insights.masteredLessons,
+        insights.lessonsNeedingPractice
+      ),
       {
         tracked: insights.trackedLessons,
         mastered: insights.masteredLessons,
@@ -183,7 +280,7 @@ export default function LessonMasteryInsights({
           <KangurStatusChip accent='indigo' size='md'>
             {translateWithFallback(
               'trackedBadge',
-              `${insights.trackedLessons} lekcji z zapisem`,
+              fallbackCopy.trackedBadge(insights.trackedLessons),
               { count: insights.trackedLessons }
             )}
           </KangurStatusChip>
@@ -196,26 +293,26 @@ export default function LessonMasteryInsights({
           className='mt-4'
           description={translateWithFallback(
             'emptyDescription',
-            'Brak zapisanych prób lekcji. Ukończ dowolną lekcję, aby zobaczyć mocne strony i obszary do powtórki.'
+            fallbackCopy.emptyDescription
           )}
           padding='lg'
         />
       ) : (
         <div className='mt-4 grid grid-cols-1 xl:grid-cols-2 kangur-panel-gap'>
           <InsightList
-            title={translateWithFallback('reviewTitle', 'Do powtórki')}
+            title={translateWithFallback('reviewTitle', fallbackCopy.reviewTitle)}
             items={insights.weakest}
             emptyState={translateWithFallback(
               'reviewEmpty',
-              'Wszystkie śledzone lekcje są na bezpiecznym poziomie.'
+              fallbackCopy.reviewEmpty
             )}
           />
           <InsightList
-            title={translateWithFallback('strongestTitle', 'Najmocniejsze lekcje')}
+            title={translateWithFallback('strongestTitle', fallbackCopy.strongestTitle)}
             items={insights.strongest}
             emptyState={translateWithFallback(
               'strongestEmpty',
-              'Najpierw ukończ kilka lekcji, aby zobaczyć najmocniejsze obszary.'
+              fallbackCopy.strongestEmpty
             )}
           />
         </div>

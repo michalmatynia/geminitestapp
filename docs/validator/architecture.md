@@ -16,6 +16,13 @@ expanding this file into a full API catalog:
 - `docs/validator/function-inventory.md`
 - `docs/validator/tooltips.md`
 
+## Operator entrypoints
+
+- Admin route: `src/app/(admin)/admin/validator/ClientPage.tsx`
+- Pattern-list management page: `src/features/admin/pages/AdminValidatorPatternListsPage.tsx`
+- Product settings composition root: `src/features/products/components/settings/ValidatorSettings.tsx`
+- Runtime evaluation endpoint: `src/app/api/v2/products/validator-runtime/evaluate/`
+
 ## Validation Pipeline
 1. UI (`ValidatorSettings`) writes pattern definitions, launch rules, replacement strategy, and runtime config.
 2. Static engine (`buildFieldIssues`) evaluates regex patterns in deterministic sequence order.
@@ -32,6 +39,13 @@ expanding this file into a full API catalog:
 - Add new pattern templates in `controller-sequence-actions.ts`.
 - Add new replacement/runtime options in modal options + helper normalizers.
 - Extend runtime evaluation contract via `runtimeType` and runtime handler.
+
+## Validation and doc lanes
+
+- Docs generation/check: `npm run docs:validator:generate`, `npm run docs:validator:check`
+- Runtime/settings surfaces:
+  - `src/app/api/v2/products/validator-settings/`
+  - `src/app/api/v2/products/validator-runtime/evaluate/`
 
 ## Performance Notes
 - Sequence ordering and scope filters run before regex execution to reduce work.

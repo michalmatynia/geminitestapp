@@ -1,31 +1,239 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-26T12:51:59.889Z",
-  "status": "scaffold",
+  "generatedAt": "2026-03-26T13:27:58.826Z",
+  "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
     "version": "0.1.0",
-    "mode": "init",
+    "mode": "scan",
     "scope": "src/**/*.{ts,tsx}"
   },
   "filters": {
-    "domains": [],
+    "domains": [
+      "shared"
+    ],
     "minRisk": 0
   },
   "thresholds": {
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 0,
-    "exportedDeclarationsScanned": 0,
-    "candidateDeclarationsScanned": 0,
-    "exactShapeClusters": 0,
-    "nearShapeClusters": 0,
-    "clustersAfterFilters": 0,
-    "declarationsInClusters": 0,
-    "highestRiskScore": 0
+    "filesScanned": 7787,
+    "exportedDeclarationsScanned": 5176,
+    "candidateDeclarationsScanned": 5152,
+    "exactShapeClusters": 12,
+    "nearShapeClusters": 5,
+    "clustersAfterFilters": 5,
+    "declarationsInClusters": 12,
+    "highestRiskScore": 20
   },
-  "clusters": [],
+  "clusters": [
+    {
+      "clusterId": "exact-0002",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 20,
+      "declarationCount": 3,
+      "domains": [
+        "shared",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "a38c2e730457",
+        "memberCount": 1,
+        "preview": "StringRecordDto"
+      },
+      "declarations": [
+        {
+          "name": "CatchAllRouteParams",
+          "kind": "type",
+          "path": "src/shared/lib/api/catch-all-router.ts",
+          "line": 8,
+          "domain": "shared",
+          "usageCount": 5
+        },
+        {
+          "name": "AiPathsCollectionMap",
+          "kind": "type",
+          "path": "src/shared/lib/ai-paths/core/utils/collection-mapping.ts",
+          "line": 3,
+          "domain": "shared",
+          "usageCount": 2
+        },
+        {
+          "name": "StringRecord",
+          "kind": "type",
+          "path": "src/shared/contracts/base.ts",
+          "line": 26,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0001",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 16,
+      "declarationCount": 3,
+      "domains": [
+        "feature:kangur",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "4ca7be7bf5a8",
+        "memberCount": 2,
+        "preview": "prop:kind:'success' | 'error'; prop:text:string"
+      },
+      "declarations": [
+        {
+          "name": "Segment",
+          "kind": "type",
+          "path": "src/shared/utils/prompt-params/scanner.ts",
+          "line": 17,
+          "domain": "shared",
+          "usageCount": 3
+        },
+        {
+          "name": "KangurMiniGameFeedbackDto",
+          "kind": "type",
+          "path": "src/features/kangur/ui/types.ts",
+          "line": 82,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        },
+        {
+          "name": "KangurMiniGameInformationalFeedbackDto",
+          "kind": "type",
+          "path": "src/features/kangur/ui/types.ts",
+          "line": 91,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0005",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 14,
+      "declarationCount": 2,
+      "domains": [
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "f29799e1c9b0",
+        "memberCount": 1,
+        "preview": "prop:type:'alert-tick'"
+      },
+      "declarations": [
+        {
+          "name": "ScheduledTickJobData",
+          "kind": "type",
+          "path": "src/shared/lib/queue/scheduler-queue-types.ts",
+          "line": 1,
+          "domain": "shared",
+          "usageCount": 5
+        },
+        {
+          "name": "SystemLogAlertsJobData",
+          "kind": "type",
+          "path": "src/shared/lib/observability/workers/system-log-alerts/types.ts",
+          "line": 4,
+          "domain": "shared",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0011",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 13,
+      "declarationCount": 2,
+      "domains": [
+        "shared",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "cabeb613a9ab",
+        "memberCount": 1,
+        "preview": "UnknownRecordDto"
+      },
+      "declarations": [
+        {
+          "name": "ClientErrorContext",
+          "kind": "type",
+          "path": "src/shared/utils/observability/client-error-logger.ts",
+          "line": 18,
+          "domain": "shared",
+          "usageCount": 2
+        },
+        {
+          "name": "UnknownRecord",
+          "kind": "type",
+          "path": "src/shared/contracts/base.ts",
+          "line": 24,
+          "domain": "shared:contracts",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0010",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "32b509c4d84b",
+        "memberCount": 1,
+        "preview": "IdLabelOptionDto<string>"
+      },
+      "declarations": [
+        {
+          "name": "AdminFavoriteCandidate",
+          "kind": "type",
+          "path": "src/shared/providers/AdminFavoritesProvider.tsx",
+          "line": 6,
+          "domain": "shared",
+          "usageCount": 1
+        },
+        {
+          "name": "SortGameBin",
+          "kind": "type",
+          "path": "src/features/kangur/ui/components/AgenticCodingMiniGames.types.ts",
+          "line": 14,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    }
+  ],
   "notes": [
     "This is a scanner scaffold output. Risk and clustering heuristics are intentionally conservative.",
     "Use clusters as review candidates before moving declarations to canonical DTO modules."

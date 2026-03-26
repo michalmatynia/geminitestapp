@@ -20,6 +20,7 @@ import {
 } from '@/features/kangur/lessons/lesson-ui-registry';
 import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/lessons/lesson-catalog';
 import type { KangurLessonTemplate } from '@/shared/contracts/kangur-lesson-templates';
+import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
 
 export { LESSON_COMPONENTS };
 
@@ -185,6 +186,7 @@ export const getLessonMasteryPresentation = (
 
 export type KangurLessonsRuntimeStateContextValue = {
   orderedLessons: KangurLesson[];
+  lessonSections: KangurLessonSection[];
   lessonDocuments: KangurLessonDocumentStore;
   progress: KangurProgressState;
   activeLessonId: string | null;

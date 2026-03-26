@@ -11,11 +11,10 @@ import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/cont
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
-import { useKangurLessonSections } from '@/features/kangur/ui/hooks/useKangurLessonSections';
 import {
   useKangurLessonDocument,
-  useKangurLessons,
 } from '@/features/kangur/ui/hooks/useKangurLessons';
+import { useKangurLessonsCatalog } from '@/features/kangur/ui/hooks/useKangurLessonsCatalog';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
@@ -52,16 +51,19 @@ export function useLessonsLogic() {
   const canAccessParentAssignments =
     auth.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
   const isMobile = useKangurMobileBreakpoint();
-  const { data: lessonTemplates = [] } = useKangurLessonTemplates();
-  const lessonTemplateMap = useMemo(
-    () => new Map(lessonTemplates.map((t) => [t.componentId, t])),
-    [lessonTemplates],
-  );
-
   const [isDeferredContentReady, setIsDeferredContentReady] = useState(false);
   const [isActiveLessonComponentReady, setIsActiveLessonComponentReady] = useState(false);
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [isSecretLessonActive, setIsSecretLessonActive] = useState(false);
+  const [focusToken, setFocusToken] = useState<string | null>(null);
+  const [isAssignmentsReady, setIsAssignmentsReady] = useState(false);
+  const { data: lessonTemplates = [] } = useKangurLessonTemplates({
+    enabled: isDeferredContentReady && focusToken !== null,
+  });
+  const lessonTemplateMap = useMemo(
+    () => new Map(lessonTemplates.map((t) => [t.componentId, t])),
+    [lessonTemplates],
+  );
   const progress = useKangurProgressState();
   
   const activeLessonNavigationRef = useRef<HTMLDivElement | null>(null);
@@ -70,7 +72,7 @@ export function useLessonsLogic() {
   const activeLessonScrollRef = useRef<HTMLDivElement | null>(null);
 
   const { assignments } = useKangurAssignments({
-    enabled: isDeferredContentReady && canAccessParentAssignments,
+    enabled: isAssignmentsReady && canAccessParentAssignments,
     query: {
       includeArchived: false,
     },
@@ -107,13 +109,50 @@ export function useLessonsLogic() {
     };
   }, []);
 
-  const lessonsQuery = useKangurLessons({
-    subject,
-    ageGroup,
-    enabledOnly: true,
-    enabled: isDeferredContentReady,
-  });
-  const lessonSectionsQuery = useKangurLessonSections({
+  useEffect((): void => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const currentUrl = new URL(window.location.href);
+    const nextFocusToken =
+      readKangurUrlParam(currentUrl.searchParams, 'focus', basePath)?.trim().toLowerCase() ?? null;
+    setFocusToken(nextFocusToken && nextFocusToken.length > 0 ? nextFocusToken : null);
+  }, [basePath]);
+
+  useEffect((): (() => void) | void => {
+    if (!isDeferredContentReady || !canAccessParentAssignments) {
+      setIsAssignmentsReady(false);
+      return;
+    }
+
+    let timeoutId: number | null = null;
+    const frameId =
+      typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'
+        ? window.requestAnimationFrame(() => {
+            setIsAssignmentsReady(true);
+          })
+        : window.setTimeout(() => {
+            timeoutId = null;
+            setIsAssignmentsReady(true);
+          }, 0);
+
+    return () => {
+      setIsAssignmentsReady(false);
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+        return;
+      }
+
+      if (typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+        window.cancelAnimationFrame(frameId);
+      } else {
+        window.clearTimeout(frameId);
+      }
+    };
+  }, [canAccessParentAssignments, isDeferredContentReady]);
+
+  const lessonsCatalogQuery = useKangurLessonsCatalog({
     subject,
     ageGroup,
     enabledOnly: true,
@@ -123,52 +162,47 @@ export function useLessonsLogic() {
   const activeLessonDocumentQuery = useKangurLessonDocument(activeLessonId, {
     enabled: shouldLoadLessonDocument,
   });
-  const isLessonsPlaceholderData =
-    isDeferredContentReady && lessonsQuery.isPlaceholderData === true;
-  const isLessonSectionsPlaceholderData =
-    isDeferredContentReady && lessonSectionsQuery.isPlaceholderData === true;
-  const isLessonsDataMissing = typeof lessonsQuery.data === 'undefined';
-  const isLessonSectionsDataMissing = typeof lessonSectionsQuery.data === 'undefined';
+  const isLessonsCatalogPlaceholderData =
+    isDeferredContentReady && lessonsCatalogQuery.isPlaceholderData === true;
+  const isLessonsCatalogDataMissing = typeof lessonsCatalogQuery.data === 'undefined';
   const isLessonsCatalogLoading =
     isDeferredContentReady &&
     Boolean(
-      (lessonsQuery.isPending ||
-        lessonsQuery.isLoading ||
-        lessonsQuery.isFetching ||
-        lessonsQuery.isRefetching) &&
-        isLessonsDataMissing
+      (lessonsCatalogQuery.isPending ||
+        lessonsCatalogQuery.isLoading ||
+        lessonsCatalogQuery.isFetching ||
+        lessonsCatalogQuery.isRefetching) &&
+        isLessonsCatalogDataMissing
     );
-  const isLessonSectionsLoading =
-    isDeferredContentReady &&
-    Boolean(
-      (lessonSectionsQuery.isPending ||
-        lessonSectionsQuery.isLoading ||
-        lessonSectionsQuery.isFetching ||
-        lessonSectionsQuery.isRefetching) &&
-        isLessonSectionsDataMissing
-    );
+  const isLessonSectionsLoading = isLessonsCatalogLoading;
   const shouldShowLessonsCatalogSkeleton =
     !isDeferredContentReady ||
-    isLessonsPlaceholderData ||
-    isLessonSectionsPlaceholderData ||
+    isLessonsCatalogPlaceholderData ||
     isLessonsCatalogLoading ||
     isLessonSectionsLoading;
   
   const lessons = useMemo(
     (): KangurLesson[] =>
-      isDeferredContentReady && !isLessonsPlaceholderData
-        ? (lessonsQuery.data ?? []).filter(
-            (lesson) => lesson.subject === subject && lesson.ageGroup === ageGroup
+      isDeferredContentReady && !isLessonsCatalogPlaceholderData
+        ? (lessonsCatalogQuery.data?.lessons ?? []).filter(
+            (lesson: KangurLesson) =>
+              lesson.subject === subject && lesson.ageGroup === ageGroup
           )
         : [],
-    [ageGroup, isDeferredContentReady, isLessonsPlaceholderData, lessonsQuery.data, subject]
+    [
+      ageGroup,
+      isDeferredContentReady,
+      isLessonsCatalogPlaceholderData,
+      lessonsCatalogQuery.data?.lessons,
+      subject,
+    ]
   );
   const lessonSections = useMemo(
     () =>
-      isDeferredContentReady && !isLessonSectionsPlaceholderData
-        ? lessonSectionsQuery.data ?? []
+      isDeferredContentReady && !isLessonsCatalogPlaceholderData
+        ? lessonsCatalogQuery.data?.sections ?? []
         : [],
-    [isDeferredContentReady, isLessonSectionsPlaceholderData, lessonSectionsQuery.data]
+    [isDeferredContentReady, isLessonsCatalogPlaceholderData, lessonsCatalogQuery.data?.sections]
   );
   const activeLessonDocument = useMemo(
     () => (isDeferredContentReady ? activeLessonDocumentQuery.data ?? null : null),
@@ -246,6 +280,7 @@ export function useLessonsLogic() {
     const focusParamName = getKangurInternalQueryParamName('focus', basePath);
     if (!currentUrl.searchParams.has(focusParamName)) return;
     currentUrl.searchParams.delete(focusParamName);
+    setFocusToken(null);
     window.history.replaceState({}, '', `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
   }, [basePath]);
   const handleSelectLesson = useCallback(
@@ -273,9 +308,8 @@ export function useLessonsLogic() {
 
   useEffect((): void => {
     if (activeLessonId || typeof window === 'undefined') return;
-    const currentUrl = new URL(window.location.href);
-    const focusToken = readKangurUrlParam(currentUrl.searchParams, 'focus', basePath)?.trim().toLowerCase();
     if (!focusToken) return;
+    const currentUrl = new URL(window.location.href);
     const focusScope = resolveFocusedLessonScope(focusToken, lessonTemplateMap);
     if (focusScope?.ageGroup && focusScope.ageGroup !== ageGroup) {
       setAgeGroup(focusScope.ageGroup);
@@ -290,12 +324,14 @@ export function useLessonsLogic() {
     if (!focusedLessonId) return;
     setIsActiveLessonComponentReady(false);
     setActiveLessonId(focusedLessonId);
+    setFocusToken(null);
     currentUrl.searchParams.delete(getKangurInternalQueryParamName('focus', basePath));
     window.history.replaceState({}, '', `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
   }, [
     activeLessonId,
     ageGroup,
     basePath,
+    focusToken,
     lessons,
     lessonTemplateMap,
     setAgeGroup,

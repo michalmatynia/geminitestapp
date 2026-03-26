@@ -66,8 +66,8 @@ describe('GeometryShapeRecognitionLesson i18n', () => {
       description: 'Sieh dir die häufigsten Formen an.',
     });
     expect(sections.find((section) => section.id === 'practice')).toMatchObject({
-      title: 'Spiel: Formen erkennen',
-      description: 'Tippe die richtige Form an.',
+      title: 'Formen-Challenge',
+      description: 'Benenne die Form, die du siehst.',
       isGame: true,
     });
     expect(sections.find((section) => section.id === 'draw')).toMatchObject({
@@ -77,7 +77,7 @@ describe('GeometryShapeRecognitionLesson i18n', () => {
     });
 
     expect(games.find((game) => game.sectionId === 'practice')?.stage).toMatchObject({
-      title: 'Spiel: Formen erkennen',
+      title: 'Formen-Challenge',
       shellTestId: 'geometry-shape-recognition-practice-shell',
     });
     expect(games.find((game) => game.sectionId === 'practice')?.runtime).toMatchObject({

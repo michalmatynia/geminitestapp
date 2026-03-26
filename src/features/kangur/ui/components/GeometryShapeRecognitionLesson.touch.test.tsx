@@ -31,11 +31,6 @@ import plMessages from '@/i18n/messages/pl.json';
 import { KangurLessonStageGameRuntime } from '@/features/kangur/ui/components/KangurLessonStageGameRuntime';
 import GeometryShapeRecognitionLesson from '@/features/kangur/ui/components/GeometryShapeRecognitionLesson';
 
-type CapturedSlide = {
-  title: string;
-  content: React.ReactNode;
-};
-
 describe('GeometryShapeRecognitionLesson touch mode', () => {
   afterEach(() => {
     capturedProps = null;

@@ -12,6 +12,7 @@ import { getCmsRepository } from '@/features/cms/server';
 import { getCmsThemeSettings } from '@/features/cms/server';
 import type { CmsTheme, Page, PageComponent } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
+import { isElevatedSession } from '@/shared/lib/auth/elevated-session-user';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { Metadata } from 'next';
@@ -48,16 +49,7 @@ const normalizeRendererComponent = (
   pageId,
 });
 
-const isAdminSession = (session: Session | null): boolean => {
-  if (!session?.user) return false;
-  const user = session.user as Session['user'] & {
-    isElevated?: boolean;
-    role?: string | null;
-  };
-  if (user.isElevated) return true;
-  const role = user.role ?? '';
-  return ['admin', 'super_admin', 'superuser'].includes(role);
-};
+const isAdminSession = isElevatedSession;
 
 const canPreviewDrafts = async (session: Session | null): Promise<boolean> => {
   if (!isAdminSession(session)) return false;

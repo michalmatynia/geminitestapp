@@ -1,9 +1,11 @@
 import { User } from 'lucide-react';
+import { useLocale } from 'next-intl';
 
 import { KANGUR_BASE_PATH, getKangurPageHref } from '@/features/kangur/config/routing';
 import { KangurNavAction } from '@/features/kangur/ui/components/KangurNavAction';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type KangurProfileMenuProps = {
   label?: string;
@@ -38,6 +40,24 @@ const isTransitionSourceActive = ({
       transitionPhase !== 'idle'
   );
 
+const getProfileMenuFallbackLabel = (
+  locale: ReturnType<typeof normalizeSiteLocale>
+): string => {
+  if (locale === 'uk') {
+    return 'Профіль';
+  }
+
+  if (locale === 'de') {
+    return 'Profil';
+  }
+
+  if (locale === 'en') {
+    return 'Profile';
+  }
+
+  return 'Profil';
+};
+
 export function KangurProfileMenu({
   label,
   avatar,
@@ -50,6 +70,7 @@ export function KangurProfileMenu({
 }: KangurProfileMenuProps): React.JSX.Element {
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const isCoarsePointer = useKangurCoarsePointer();
+  const locale = normalizeSiteLocale(useLocale());
   const resolvedHref =
     profile?.href ??
     getKangurPageHref('LearnerProfile', basePath ?? KANGUR_BASE_PATH);
@@ -64,6 +85,7 @@ export function KangurProfileMenu({
   const transitionSource = transitionSourceId;
   const avatarSrc = avatar?.src?.trim() ?? '';
   const shouldRenderAvatar = avatarSrc.length > 0;
+  const resolvedLabel = label ?? getProfileMenuFallbackLabel(locale);
 
   const isTransitionActive = isTransitionSourceActive({
     activeTransitionSourceId: routeTransitionState?.activeTransitionSourceId,
@@ -97,7 +119,7 @@ export function KangurProfileMenu({
       ) : (
         <User aria-hidden='true' className='h-[18px] w-[18px] sm:h-5 sm:w-5' strokeWidth={2.15} />
       )}
-      <span className='truncate'>{label ?? 'Profil'}</span>
+      <span className='truncate'>{resolvedLabel}</span>
     </KangurNavAction>
   );
 }

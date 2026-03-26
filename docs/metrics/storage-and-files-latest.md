@@ -8,12 +8,12 @@ canonical: true
 ---
 # Storage And Files Health Report
 
-Generated at: 2026-03-26T12:26:49.398Z
+Generated at: 2026-03-26T13:49:53.297Z
 
 ## Summary
 
 - Status: PASSED
-- Source files scanned: 5799
+- Source files scanned: 5814
 - Code upload roots: 10
 - Runtime upload roots: 9
 - Dynamic public-path read risks: 0

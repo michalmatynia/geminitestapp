@@ -25,17 +25,25 @@ describe('lesson activity runtime specs', () => {
 
   it('keeps seeded inline lesson variants pointed at runtime specs instead of local component maps', () => {
     const lessonInlineVariants = createDefaultKangurGames().flatMap((game) =>
-      game.variants.filter((variant) => variant.surface === 'lesson_inline')
+      game.variants
+        .filter((variant) => variant.surface === 'lesson_inline')
+        .map((variant) => ({ game, variant }))
+    );
+    const activityBackedInlineVariants = lessonInlineVariants.filter(
+      ({ game }) => game.activityIds.length > 0
     );
 
-    expect(lessonInlineVariants.length).toBeGreaterThan(0);
+    expect(activityBackedInlineVariants.length).toBeGreaterThan(0);
     expect(
-      lessonInlineVariants
-        .filter((variant) => Boolean(variant.legacyActivityId))
-        .every((variant) => Boolean(variant.lessonActivityRuntimeId))
+      activityBackedInlineVariants.every(({ variant }) => Boolean(variant.lessonActivityRuntimeId))
     ).toBe(true);
     expect(
-      lessonInlineVariants.map((variant) => variant.lessonActivityRuntimeId).filter(Boolean)
+      activityBackedInlineVariants.some(({ variant }) => Boolean(variant.legacyActivityId))
+    ).toBe(false);
+    expect(
+      activityBackedInlineVariants
+        .map(({ variant }) => variant.lessonActivityRuntimeId)
+        .filter(Boolean)
     ).toEqual(expect.arrayContaining(['clock-training', 'division-game']));
   });
 });

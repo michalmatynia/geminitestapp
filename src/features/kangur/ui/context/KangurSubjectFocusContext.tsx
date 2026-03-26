@@ -20,6 +20,7 @@ import {
   persistRemoteSubjectFocus,
   subscribeToSubjectFocusChanges,
 } from '@/features/kangur/ui/services/subject-focus';
+import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog';
 import { setProgressScope } from '@/features/kangur/ui/services/progress';
 import type { KangurLessonSubject } from '@/shared/contracts/kangur';
 import { internalError } from '@/shared/errors/app-error';
@@ -63,9 +64,7 @@ export function KangurSubjectFocusProvider({
   const { user, isAuthenticated, isLoadingAuth } = useKangurAuth();
   const subjectKey = resolveSubjectFocusKey(user);
   const storageKey = subjectKey ?? FALLBACK_SUBJECT_KEY;
-  const [subject, setSubjectState] = useState<KangurLessonSubject>(() =>
-    loadPersistedSubjectFocus(storageKey)
-  );
+  const [subject, setSubjectState] = useState<KangurLessonSubject>(DEFAULT_KANGUR_SUBJECT);
   const canSyncRemote =
     !isLoadingAuth && isAuthenticated && typeof subjectKey === 'string' && subjectKey.length > 0;
 

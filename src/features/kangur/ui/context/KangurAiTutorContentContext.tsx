@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale } from 'next-intl';
 import {
   createContext,
   useCallback,
@@ -19,6 +20,7 @@ import {
 import { useKangurAuthState } from '@/features/kangur/ui/context/KangurAuthContext';
 import { api } from '@/shared/lib/api-client';
 import { withKangurClientError } from '@/features/kangur/observability/client';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 
 type KangurAiTutorContentContextValue = {
@@ -52,15 +54,17 @@ const KangurAiTutorContentActivationContext = createContext<(() => void) | null>
 
 export function KangurAiTutorContentProvider({
   children,
-  locale = 'pl',
+  locale,
 }: Props): JSX.Element {
+  const routeLocale = useLocale();
+  const resolvedLocale = normalizeSiteLocale(locale ?? routeLocale);
   const { isAuthenticated } = useKangurAuthState();
   const defaultContent = useMemo<KangurAiTutorContent>(
     () => ({
       ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
-      locale,
+      locale: resolvedLocale,
     }),
-    [locale]
+    [resolvedLocale]
   );
   const [content, setContent] = useState<KangurAiTutorContent>({
     ...defaultContent,
@@ -80,7 +84,7 @@ export function KangurAiTutorContentProvider({
     let cancelled = false;
 
     const load = async (): Promise<void> => {
-      const cached = kangurAiTutorContentCache.get(locale);
+      const cached = kangurAiTutorContentCache.get(resolvedLocale);
       if (cached) {
         setContent(cloneKangurAiTutorContent(cached));
         setIsLoading(false);
@@ -89,42 +93,45 @@ export function KangurAiTutorContentProvider({
 
       setIsLoading(true);
       const inflight =
-        kangurAiTutorContentInflight.get(locale) ??
+        kangurAiTutorContentInflight.get(resolvedLocale) ??
         withKangurClientError(
         {
           source: 'kangur-ai-tutor-content',
           action: 'load',
           description: 'Load AI tutor content for the selected locale.',
           context: {
-            locale,
+            locale: resolvedLocale,
           },
         },
         async () => {
           const response = await api.get<KangurAiTutorContent>(
-            `/api/kangur/ai-tutor/content?locale=${encodeURIComponent(locale)}`,
+            `/api/kangur/ai-tutor/content?locale=${encodeURIComponent(resolvedLocale)}`,
             {
               cache: 'no-store',
             }
           );
           const parsed = parseKangurAiTutorContent(response);
-          kangurAiTutorContentCache.set(locale, cloneKangurAiTutorContent(parsed));
+          kangurAiTutorContentCache.set(resolvedLocale, cloneKangurAiTutorContent(parsed));
           return parsed;
         },
         {
           fallback: defaultContent,
           onError: () => {
-            kangurAiTutorContentCache.set(locale, cloneKangurAiTutorContent(defaultContent));
+            kangurAiTutorContentCache.set(
+              resolvedLocale,
+              cloneKangurAiTutorContent(defaultContent)
+            );
           },
           // Optional tutor copy should quietly fall back to defaults instead of
           // surfacing noisy client errors for users when the backing store is unavailable.
           shouldReport: () => false,
         }
       ).finally(() => {
-        kangurAiTutorContentInflight.delete(locale);
+        kangurAiTutorContentInflight.delete(resolvedLocale);
       });
 
-      if (!kangurAiTutorContentInflight.has(locale)) {
-        kangurAiTutorContentInflight.set(locale, inflight);
+      if (!kangurAiTutorContentInflight.has(resolvedLocale)) {
+        kangurAiTutorContentInflight.set(resolvedLocale, inflight);
       }
 
       const nextContent = await inflight;
@@ -139,7 +146,7 @@ export function KangurAiTutorContentProvider({
     return () => {
       cancelled = true;
     };
-  }, [defaultContent, isAuthenticated, isActivated, locale]);
+  }, [defaultContent, isAuthenticated, isActivated, resolvedLocale]);
 
   const value = useMemo(
     () => ({

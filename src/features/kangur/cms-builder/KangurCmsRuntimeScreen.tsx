@@ -24,8 +24,8 @@ import { KangurCmsRuntimeDataProvider } from './KangurCmsRuntimeDataProvider';
 import {
   KANGUR_CMS_PROJECT_SETTING_KEY,
   parseKangurCmsProject,
-  resolveKangurCmsScreenKey,
 } from './project';
+import { resolveKangurCmsScreenKey } from './runtime-screen-presence';
 
 import type { CSSProperties, ReactNode } from 'react';
 

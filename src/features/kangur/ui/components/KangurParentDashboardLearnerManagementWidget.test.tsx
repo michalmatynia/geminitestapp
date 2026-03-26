@@ -78,6 +78,12 @@ const runtimeState = vi.hoisted(() => ({
 }));
 const useKangurPageContentEntryMock = vi.hoisted(() => vi.fn());
 const learnerSessionsListMock = vi.hoisted(() => vi.fn());
+const localeState = vi.hoisted(() => ({ value: 'pl' }));
+
+vi.mock('next-intl', () => ({
+  useLocale: () => localeState.value,
+  useTranslations: () => (key: string) => key,
+}));
 
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({
   useKangurParentDashboardRuntimeActions: () => ({
@@ -128,6 +134,7 @@ import { KangurParentDashboardLearnerManagementWidget } from './KangurParentDash
 describe('KangurParentDashboardLearnerManagementWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localeState.value = 'pl';
     learnerSessionsListMock.mockResolvedValue({ sessions: [], totalSessions: 0 });
     useKangurPageContentEntryMock.mockReturnValue({
       data: undefined,
@@ -416,5 +423,29 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
     expect(screen.getByText('Wybierz ucznia i popraw jego dane bez wychodzenia z panelu.')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
+  });
+
+  it('renders English fallback copy on the English route', async () => {
+    localeState.value = 'en';
+
+    render(<KangurParentDashboardLearnerManagementWidget />);
+
+    expect(screen.getByText('Manage profiles without leaving the dashboard')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'The parent signs in with email, and learners get separate login names and passwords.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Learner profile settings' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Learner profile settings' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Metrics' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Profile details')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Login sessions')).toBeInTheDocument();
+    expect(screen.getByText('No login sessions.')).toBeInTheDocument();
   });
 });

@@ -15,7 +15,7 @@ import type { AnimatePresenceProps, HTMLMotionProps } from 'framer-motion';
 
 type FramerMotionExports = {
   AnimatePresence: React.ComponentType<AnimatePresenceProps & { children: ReactNode }>;
-  motion: { div: React.ComponentType<HTMLMotionProps<'div'>> };
+  MotionDiv: React.ComponentType<HTMLMotionProps<'div'>>;
 };
 
 let cached: FramerMotionExports | null = null;
@@ -27,7 +27,7 @@ const loadFramerMotion = (): Promise<FramerMotionExports> => {
     loadPromise = import('framer-motion').then((mod) => {
       cached = {
         AnimatePresence: mod.AnimatePresence as FramerMotionExports['AnimatePresence'],
-        motion: mod.motion as unknown as FramerMotionExports['motion'],
+        MotionDiv: mod.motion.div,
       };
       return cached;
     });
@@ -91,7 +91,7 @@ export const LazyMotionDiv = forwardRef<HTMLDivElement, LazyMotionDivProps>(
     const fm = useFramerMotion();
 
     if (fm) {
-      const MotionDiv = fm.motion.div;
+      const MotionDiv = fm.MotionDiv;
       return <MotionDiv ref={ref} {...props} />;
     }
 

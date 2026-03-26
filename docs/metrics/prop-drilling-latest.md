@@ -8,17 +8,17 @@ canonical: true
 ---
 # Prop Drilling Scan
 
-Generated at: 2026-03-26T12:50:50.435Z
+Generated at: 2026-03-26T15:10:56.459Z
 
 ## Snapshot
 
-- Scanned source files: 5818
-- JSX files scanned: 2133
-- Components detected: 3629
+- Scanned source files: 5831
+- JSX files scanned: 2136
+- Components detected: 3635
 - Components forwarding parent props (hotspot threshold): 120
-- Components forwarding parent props (any): 268
-- Resolved forwarded transitions: 1213
-- Candidate chains (depth >= 2): 1213
+- Components forwarding parent props (any): 271
+- Resolved forwarded transitions: 1221
+- Candidate chains (depth >= 2): 1221
 - Candidate chains (depth >= 3): 275
 - High-priority chains (depth >= 4): 58
 - Unknown spread forwarding edges: 32
@@ -28,7 +28,7 @@ Generated at: 2026-03-26T12:50:50.435Z
 
 | Feature Scope | Forwarding Components |
 | --- | ---: |
-| `feature:kangur` | 136 |
+| `feature:kangur` | 139 |
 | `shared-ui` | 54 |
 | `feature:ai` | 37 |
 | `feature:database` | 10 |
@@ -127,48 +127,48 @@ Generated at: 2026-03-26T12:50:50.435Z
 | 76 | `ParentVerificationCard` | `src/features/kangur/ui/KangurLoginPage.tsx` | 4 | 4 | no | yes |
 | 77 | `KangurDialogHeader` | `src/features/kangur/ui/components/KangurDialogHeader.tsx` | 4 | 4 | no | yes |
 | 78 | `SkeletonInfoSurface` | `src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx` | 4 | 4 | no | yes |
-| 79 | `KangurTextWordmark` | `src/features/kangur/ui/components/KangurTextWordmark.tsx` | 4 | 4 | yes | yes |
-| 80 | `KangurTracingLessonFooter` | `src/features/kangur/ui/components/drawing-engine/KangurTracingLessonFooter.tsx` | 4 | 4 | no | yes |
-| 81 | `NotesAppTreeHeaderQuickFilters` | `src/features/notesapp/components/tree/NotesAppTreeHeader.tsx` | 4 | 4 | no | yes |
-| 82 | `ProductMetadataMultiSelectField` | `src/features/products/components/form/ProductMetadataMultiSelectField.tsx` | 4 | 4 | no | yes |
-| 83 | `PageLayoutSaveFooter` | `src/shared/ui/PageLayout.tsx` | 4 | 4 | no | yes |
-| 84 | `StandardDataTablePanelGeneratedHeader` | `src/shared/ui/templates/StandardDataTablePanel.tsx` | 4 | 4 | no | yes |
-| 85 | `TableDetailCard` | `src/features/database/pages/DatabasePreviewPage.tsx` | 3 | 11 | no | yes |
-| 86 | `RuntimeEventLevelBadge` | `src/features/ai/ai-paths/components/runtime-event-badges.tsx` | 3 | 6 | no | yes |
-| 87 | `RunComparisonRowSummary` | `src/features/ai/ai-paths/components/RunComparisonTool.tsx` | 3 | 5 | no | yes |
-| 88 | `FilemakerEntityTableFilters` | `src/features/filemaker/components/shared/FilemakerEntityTablePage.tsx` | 3 | 5 | no | yes |
-| 89 | `DatabaseActionsRestoreItem` | `src/features/database/components/DatabaseColumns.tsx` | 3 | 4 | no | yes |
-| 90 | `DatabaseActionsDeleteItem` | `src/features/database/components/DatabaseColumns.tsx` | 3 | 4 | no | yes |
-| 91 | `JobRow` | `src/features/kangur/admin/admin-kangur-social/KangurSocialPipelineQueuePanel.tsx` | 3 | 4 | no | yes |
-| 92 | `KangurStandardPageLayout` | `src/features/kangur/ui/components/KangurStandardPageLayout.tsx` | 3 | 4 | no | yes |
-| 93 | `PointerDropZone` | `src/features/kangur/ui/components/adding-ball-game/AddingBallGame.Shared.tsx` | 3 | 4 | no | yes |
-| 94 | `CanvasSelectedWireEndpointCard` | `src/features/ai/ai-paths/components/canvas-sidebar.tsx` | 3 | 3 | no | yes |
-| 95 | `RuntimeEventLogActionButton` | `src/features/ai/ai-paths/components/runtime-event-log-panel.tsx` | 3 | 3 | no | yes |
-| 96 | `RuntimeEventLogCountBadge` | `src/features/ai/ai-paths/components/runtime-event-log-panel.tsx` | 3 | 3 | no | yes |
-| 97 | `CentralDocsSyncSummaryBadge` | `src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx` | 3 | 3 | no | yes |
-| 98 | `ValidationMetaBadge` | `src/features/ai/ai-paths/components/validation/ValidationMetaBadge.tsx` | 3 | 3 | no | yes |
-| 99 | `TableDetailCardActions` | `src/features/database/pages/DatabasePreviewPage.tsx` | 3 | 3 | no | yes |
-| 100 | `FolderTreeSearchViewportSearchBar` | `src/features/foldertree/v2/search/FolderTreeSearchViewport.tsx` | 3 | 3 | no | yes |
-| 101 | `KangurAdminCard` | `src/features/kangur/admin/components/KangurAdminCard.tsx` | 3 | 3 | yes | yes |
-| 102 | `KangurAdminInsetCard` | `src/features/kangur/admin/components/KangurAdminCard.tsx` | 3 | 3 | yes | yes |
-| 103 | `KangurCmsBuilderRightPanel` | `src/features/kangur/cms-builder/KangurCmsBuilderRightPanel.tsx` | 3 | 3 | no | yes |
-| 104 | `FrontendPublicOwnerKangurShell` | `src/features/kangur/ui/FrontendPublicOwnerKangurShell.tsx` | 3 | 3 | no | yes |
-| 105 | `KangurPublicAppEntry` | `src/features/kangur/ui/KangurPublicAppEntry.tsx` | 3 | 3 | no | yes |
-| 106 | `KangurDuelsWordmark` | `src/features/kangur/ui/components/KangurDuelsWordmark.tsx` | 3 | 3 | yes | yes |
-| 107 | `KangurGrajmyWordmark` | `src/features/kangur/ui/components/KangurGrajmyWordmark.tsx` | 3 | 3 | yes | yes |
-| 108 | `KangurKangurWordmark` | `src/features/kangur/ui/components/KangurKangurWordmark.tsx` | 3 | 3 | yes | yes |
-| 109 | `KangurLessonsWordmark` | `src/features/kangur/ui/components/KangurLessonsWordmark.tsx` | 3 | 3 | yes | yes |
-| 110 | `KangurLocalizedPathWordmark` | `src/features/kangur/ui/components/KangurLocalizedPathWordmark.tsx` | 3 | 3 | yes | yes |
-| 111 | `KangurParentDashboardWordmark` | `src/features/kangur/ui/components/KangurParentDashboardWordmark.tsx` | 3 | 3 | yes | yes |
-| 112 | `KangurPrimaryNavigation` | `src/features/kangur/ui/components/KangurPrimaryNavigation.tsx` | 3 | 3 | no | yes |
-| 113 | `KangurTestsWordmark` | `src/features/kangur/ui/components/KangurTestsWordmark.tsx` | 3 | 3 | yes | yes |
-| 114 | `KangurTreningWordmark` | `src/features/kangur/ui/components/KangurTreningWordmark.tsx` | 3 | 3 | yes | yes |
-| 115 | `KangurUnifiedLessonPanel` | `src/features/kangur/ui/components/KangurUnifiedLesson.tsx` | 3 | 3 | yes | yes |
-| 116 | `FocusModeTogglePortal` | `src/shared/ui/FocusModeTogglePortal.tsx` | 3 | 3 | no | yes |
-| 117 | `PromptGenerationInitialResultPanel` | `src/shared/ui/PromptGenerationSection.tsx` | 3 | 3 | no | yes |
-| 118 | `PromptGenerationFinalResultPanel` | `src/shared/ui/PromptGenerationSection.tsx` | 3 | 3 | no | yes |
-| 119 | `AppModalDialogContentShell` | `src/shared/ui/app-modal.tsx` | 3 | 3 | no | yes |
-| 120 | `ConfirmModalPasswordField` | `src/shared/ui/templates/modals/ConfirmModal.tsx` | 3 | 3 | no | yes |
+| 79 | `KangurPrimaryNavigation` | `src/features/kangur/ui/components/KangurPrimaryNavigation.tsx` | 4 | 4 | no | yes |
+| 80 | `KangurTextWordmark` | `src/features/kangur/ui/components/KangurTextWordmark.tsx` | 4 | 4 | yes | yes |
+| 81 | `KangurTracingLessonFooter` | `src/features/kangur/ui/components/drawing-engine/KangurTracingLessonFooter.tsx` | 4 | 4 | no | yes |
+| 82 | `NotesAppTreeHeaderQuickFilters` | `src/features/notesapp/components/tree/NotesAppTreeHeader.tsx` | 4 | 4 | no | yes |
+| 83 | `ProductMetadataMultiSelectField` | `src/features/products/components/form/ProductMetadataMultiSelectField.tsx` | 4 | 4 | no | yes |
+| 84 | `PageLayoutSaveFooter` | `src/shared/ui/PageLayout.tsx` | 4 | 4 | no | yes |
+| 85 | `StandardDataTablePanelGeneratedHeader` | `src/shared/ui/templates/StandardDataTablePanel.tsx` | 4 | 4 | no | yes |
+| 86 | `TableDetailCard` | `src/features/database/pages/DatabasePreviewPage.tsx` | 3 | 11 | no | yes |
+| 87 | `RuntimeEventLevelBadge` | `src/features/ai/ai-paths/components/runtime-event-badges.tsx` | 3 | 6 | no | yes |
+| 88 | `RunComparisonRowSummary` | `src/features/ai/ai-paths/components/RunComparisonTool.tsx` | 3 | 5 | no | yes |
+| 89 | `FilemakerEntityTableFilters` | `src/features/filemaker/components/shared/FilemakerEntityTablePage.tsx` | 3 | 5 | no | yes |
+| 90 | `DatabaseActionsRestoreItem` | `src/features/database/components/DatabaseColumns.tsx` | 3 | 4 | no | yes |
+| 91 | `DatabaseActionsDeleteItem` | `src/features/database/components/DatabaseColumns.tsx` | 3 | 4 | no | yes |
+| 92 | `JobRow` | `src/features/kangur/admin/admin-kangur-social/KangurSocialPipelineQueuePanel.tsx` | 3 | 4 | no | yes |
+| 93 | `KangurStandardPageLayout` | `src/features/kangur/ui/components/KangurStandardPageLayout.tsx` | 3 | 4 | no | yes |
+| 94 | `PointerDropZone` | `src/features/kangur/ui/components/adding-ball-game/AddingBallGame.Shared.tsx` | 3 | 4 | no | yes |
+| 95 | `CanvasSelectedWireEndpointCard` | `src/features/ai/ai-paths/components/canvas-sidebar.tsx` | 3 | 3 | no | yes |
+| 96 | `RuntimeEventLogActionButton` | `src/features/ai/ai-paths/components/runtime-event-log-panel.tsx` | 3 | 3 | no | yes |
+| 97 | `RuntimeEventLogCountBadge` | `src/features/ai/ai-paths/components/runtime-event-log-panel.tsx` | 3 | 3 | no | yes |
+| 98 | `CentralDocsSyncSummaryBadge` | `src/features/ai/ai-paths/components/validation/CentralDocsSyncPanel.tsx` | 3 | 3 | no | yes |
+| 99 | `ValidationMetaBadge` | `src/features/ai/ai-paths/components/validation/ValidationMetaBadge.tsx` | 3 | 3 | no | yes |
+| 100 | `TableDetailCardActions` | `src/features/database/pages/DatabasePreviewPage.tsx` | 3 | 3 | no | yes |
+| 101 | `FolderTreeSearchViewportSearchBar` | `src/features/foldertree/v2/search/FolderTreeSearchViewport.tsx` | 3 | 3 | no | yes |
+| 102 | `KangurAdminCard` | `src/features/kangur/admin/components/KangurAdminCard.tsx` | 3 | 3 | yes | yes |
+| 103 | `KangurAdminInsetCard` | `src/features/kangur/admin/components/KangurAdminCard.tsx` | 3 | 3 | yes | yes |
+| 104 | `KangurCmsBuilderRightPanel` | `src/features/kangur/cms-builder/KangurCmsBuilderRightPanel.tsx` | 3 | 3 | no | yes |
+| 105 | `FrontendPublicOwnerKangurShell` | `src/features/kangur/ui/FrontendPublicOwnerKangurShell.tsx` | 3 | 3 | no | yes |
+| 106 | `KangurPublicAppEntry` | `src/features/kangur/ui/KangurPublicAppEntry.tsx` | 3 | 3 | no | yes |
+| 107 | `KangurDuelsWordmark` | `src/features/kangur/ui/components/KangurDuelsWordmark.tsx` | 3 | 3 | yes | yes |
+| 108 | `KangurElevatedUserMenu` | `src/features/kangur/ui/components/KangurElevatedUserMenu.tsx` | 3 | 3 | no | yes |
+| 109 | `KangurGrajmyWordmark` | `src/features/kangur/ui/components/KangurGrajmyWordmark.tsx` | 3 | 3 | yes | yes |
+| 110 | `KangurKangurWordmark` | `src/features/kangur/ui/components/KangurKangurWordmark.tsx` | 3 | 3 | yes | yes |
+| 111 | `KangurLessonsWordmark` | `src/features/kangur/ui/components/KangurLessonsWordmark.tsx` | 3 | 3 | yes | yes |
+| 112 | `KangurLocalizedPathWordmark` | `src/features/kangur/ui/components/KangurLocalizedPathWordmark.tsx` | 3 | 3 | yes | yes |
+| 113 | `KangurParentDashboardWordmark` | `src/features/kangur/ui/components/KangurParentDashboardWordmark.tsx` | 3 | 3 | yes | yes |
+| 114 | `KangurTestsWordmark` | `src/features/kangur/ui/components/KangurTestsWordmark.tsx` | 3 | 3 | yes | yes |
+| 115 | `KangurTreningWordmark` | `src/features/kangur/ui/components/KangurTreningWordmark.tsx` | 3 | 3 | yes | yes |
+| 116 | `KangurUnifiedLessonPanel` | `src/features/kangur/ui/components/KangurUnifiedLesson.tsx` | 3 | 3 | yes | yes |
+| 117 | `FocusModeTogglePortal` | `src/shared/ui/FocusModeTogglePortal.tsx` | 3 | 3 | no | yes |
+| 118 | `PromptGenerationInitialResultPanel` | `src/shared/ui/PromptGenerationSection.tsx` | 3 | 3 | no | yes |
+| 119 | `PromptGenerationFinalResultPanel` | `src/shared/ui/PromptGenerationSection.tsx` | 3 | 3 | no | yes |
+| 120 | `AppModalDialogContentShell` | `src/shared/ui/app-modal.tsx` | 3 | 3 | no | yes |
 
 ## Prioritized Transition Backlog (Depth = 2)
 

@@ -23,9 +23,14 @@ type SessionUserCacheEntry = {
   expiresAt: number;
 };
 
+type KangurBootstrapWindow = Window & {
+  __KANGUR_AUTH_BOOTSTRAP__?: KangurUser | null;
+};
+
 let sessionUserCache: SessionUserCacheEntry | null = null;
 let sessionUserInFlight: Promise<KangurUser> | null = null;
 let sessionUserCacheEpoch = 0;
+let sessionUserBootstrapHydrated = false;
 
 const kangurAuthApiClient = createKangurApiClient({
   fetchImpl: fetch,
@@ -79,7 +84,30 @@ const syncActiveLearnerStorage = (user: KangurUser): void => {
   clearStoredProgressOwnerKey();
 };
 
+function hydrateSessionUserCacheFromBootstrap(): void {
+  if (sessionUserBootstrapHydrated || typeof window === 'undefined') {
+    return;
+  }
+
+  sessionUserBootstrapHydrated = true;
+  const bootstrapWindow = window as KangurBootstrapWindow;
+  const bootstrapUser = bootstrapWindow.__KANGUR_AUTH_BOOTSTRAP__;
+
+  if (typeof bootstrapUser === 'undefined') {
+    return;
+  }
+
+  if (bootstrapUser) {
+    syncActiveLearnerStorage(bootstrapUser);
+  }
+
+  cacheResolvedUser(bootstrapUser, bootstrapUser === null);
+}
+
+hydrateSessionUserCacheFromBootstrap();
+
 export const resolveSessionUser = async (): Promise<KangurUser> => {
+  hydrateSessionUserCacheFromBootstrap();
   const now = Date.now();
   if (sessionUserCache && sessionUserCache.expiresAt > now) {
     if (sessionUserCache.isAnonymous) {

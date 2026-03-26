@@ -1,1 +1,2 @@
-clusterId,clusterKind,riskScore,declarationCount,domains,canonicalDtoCandidate,signatureHash,signatureKind
+clusterId,clusterKind,riskScore,declarationCount,domains,canonicalDtoCandidate,signatureHash,signaturePreview,declarations
+exact-0006,exact-shape,8,2,feature:integrations,,807893788d98,prop:listing:ProductListingWithDetails,src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx:25:ProductListingActionsProps|src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx:29:ProductListingDetailsProps

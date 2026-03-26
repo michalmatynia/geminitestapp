@@ -1,4 +1,4 @@
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { LogIn } from 'lucide-react';
 
 import KangurHeroMilestoneSummary from '@/features/kangur/ui/components/KangurHeroMilestoneSummary';
@@ -16,8 +16,26 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { translateKangurLearnerProfileWithFallback } from '@/features/kangur/ui/services/profile';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
+
+const getLocalModeFallbackLabel = (locale: ReturnType<typeof normalizeSiteLocale>): string => {
+  if (locale === 'uk') {
+    return 'Локальний режим';
+  }
+
+  if (locale === 'de') {
+    return 'Lokaler Modus';
+  }
+
+  if (locale === 'en') {
+    return 'Local mode';
+  }
+
+  return 'Tryb lokalny';
+};
 
 export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
+  const locale = normalizeSiteLocale(useLocale());
   const translations = useTranslations('KangurLearnerProfileWidgets.hero');
   const runtimeTranslations = useTranslations('KangurLearnerProfileRuntime');
   const isCoarsePointer = useKangurCoarsePointer();
@@ -28,7 +46,7 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
   const localModeLabel = translateKangurLearnerProfileWithFallback(
     (key, values) => runtimeTranslations(key as never, values as never),
     'localMode',
-    'Tryb lokalny'
+    getLocalModeFallbackLabel(locale)
   );
   const displayName = user ? getKangurLearnerProfileDisplayName(user, localModeLabel) : null;
   const hasMeaningfulProgress =

@@ -34,6 +34,12 @@ Retained planning and transition baselines:
 - Modernization playbook: [`./ai-paths-modernization-playbook-2026-03-04.md`](./ai-paths-modernization-playbook-2026-03-04.md)
 - Kernel transition plan: [`./kernel-engine-transition-plan-2026-03-05.md`](./kernel-engine-transition-plan-2026-03-05.md)
 
+Retained sprint execution artifacts:
+
+- Sprint 1 execution brief: [`./ai-paths-v1-sprint-1-execution-brief-2026-03-06.md`](./ai-paths-v1-sprint-1-execution-brief-2026-03-06.md)
+- Sprint 1 implementation checklist: [`./ai-paths-v1-sprint-1-implementation-checklist-2026-03-06.md`](./ai-paths-v1-sprint-1-implementation-checklist-2026-03-06.md)
+- Sprint 1 test plan: [`./ai-paths-v1-sprint-1-test-plan-2026-03-06.md`](./ai-paths-v1-sprint-1-test-plan-2026-03-06.md)
+
 ## Node And Runtime References
 
 - Node code objects v2 hub: [`./node-code-objects-v2/README.md`](./node-code-objects-v2/README.md)
@@ -62,3 +68,5 @@ Retained planning and transition baselines:
   active AI Paths documentation surface.
 - When a dated design or sprint document is retained here, it should say so
   explicitly near the top and point back to `overview.md` and `reference.md`.
+- Retained sprint plans, checklists, and execution briefs should be treated as
+  delivery-history records, not as the current operator or QA entrypoint.

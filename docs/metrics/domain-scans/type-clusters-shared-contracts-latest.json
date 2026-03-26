@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-05T04:20:49.036Z",
+  "generatedAt": "2026-03-26T13:27:49.517Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "mode": "scan",
     "scope": "src/**/*.{ts,tsx}"
   },
@@ -18,18 +18,223 @@
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 4208,
-    "exportedDeclarationsScanned": 3332,
-    "candidateDeclarationsScanned": 3303,
-    "exactShapeClusters": 0,
-    "nearShapeClusters": 0,
-    "clustersAfterFilters": 0,
-    "declarationsInClusters": 0,
-    "highestRiskScore": 0
+    "filesScanned": 7787,
+    "exportedDeclarationsScanned": 5176,
+    "candidateDeclarationsScanned": 5152,
+    "exactShapeClusters": 12,
+    "nearShapeClusters": 5,
+    "clustersAfterFilters": 5,
+    "declarationsInClusters": 12,
+    "highestRiskScore": 20
   },
-  "clusters": [],
+  "clusters": [
+    {
+      "clusterId": "exact-0002",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 20,
+      "declarationCount": 3,
+      "domains": [
+        "shared",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "a38c2e730457",
+        "memberCount": 1,
+        "preview": "StringRecordDto"
+      },
+      "declarations": [
+        {
+          "name": "CatchAllRouteParams",
+          "kind": "type",
+          "path": "src/shared/lib/api/catch-all-router.ts",
+          "line": 8,
+          "domain": "shared",
+          "usageCount": 5
+        },
+        {
+          "name": "AiPathsCollectionMap",
+          "kind": "type",
+          "path": "src/shared/lib/ai-paths/core/utils/collection-mapping.ts",
+          "line": 3,
+          "domain": "shared",
+          "usageCount": 2
+        },
+        {
+          "name": "StringRecord",
+          "kind": "type",
+          "path": "src/shared/contracts/base.ts",
+          "line": 26,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0001",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 14,
+      "declarationCount": 3,
+      "domains": [
+        "feature:kangur",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "3e500a0ab2c2",
+        "memberCount": 1,
+        "preview": "(typeof KANGUR_WIDGET_IDS)[number]"
+      },
+      "declarations": [
+        {
+          "name": "KangurWidgetId",
+          "kind": "type",
+          "path": "src/features/kangur/cms-builder/project-contracts.ts",
+          "line": 68,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        },
+        {
+          "name": "KangurWidgetId",
+          "kind": "type",
+          "path": "src/features/kangur/cms-builder/widget-options.ts",
+          "line": 42,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        },
+        {
+          "name": "KangurWidgetId",
+          "kind": "type",
+          "path": "src/shared/contracts/kangur-cms.ts",
+          "line": 16,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0011",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 13,
+      "declarationCount": 2,
+      "domains": [
+        "shared",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "cabeb613a9ab",
+        "memberCount": 1,
+        "preview": "UnknownRecordDto"
+      },
+      "declarations": [
+        {
+          "name": "ClientErrorContext",
+          "kind": "type",
+          "path": "src/shared/utils/observability/client-error-logger.ts",
+          "line": 18,
+          "domain": "shared",
+          "usageCount": 2
+        },
+        {
+          "name": "UnknownRecord",
+          "kind": "type",
+          "path": "src/shared/contracts/base.ts",
+          "line": 24,
+          "domain": "shared:contracts",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0012",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 13,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "883a389768e1",
+        "memberCount": 1,
+        "preview": "CmsLookupOptionsDto"
+      },
+      "declarations": [
+        {
+          "name": "CmsSlugLookupOptions",
+          "kind": "type",
+          "path": "src/shared/contracts/cms.ts",
+          "line": 961,
+          "domain": "shared:contracts",
+          "usageCount": 3
+        },
+        {
+          "name": "CmsPageLookupOptions",
+          "kind": "type",
+          "path": "src/shared/contracts/cms.ts",
+          "line": 959,
+          "domain": "shared:contracts",
+          "usageCount": 2
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0003",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "726ca3d63c38",
+        "memberCount": 1,
+        "preview": "LabeledOptionDto<string>"
+      },
+      "declarations": [
+        {
+          "name": "DatabaseTemplateSnippet",
+          "kind": "type",
+          "path": "src/features/ai/ai-paths/config/query-presets.ts",
+          "line": 5,
+          "domain": "feature:ai",
+          "usageCount": 1
+        },
+        {
+          "name": "LabelValueOptionDto",
+          "kind": "type",
+          "path": "src/shared/contracts/base.ts",
+          "line": 70,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    }
+  ],
   "notes": [
-    "This is a scanner scaffold output. Risk and clustering heuristics are intentionally conservative.",
-    "Use clusters as review candidates before moving declarations to canonical DTO modules."
+    "type-clusters scan result"
   ]
 }

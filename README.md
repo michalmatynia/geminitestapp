@@ -38,6 +38,7 @@ packages for contracts, domain logic, transport, and platform ports.
 - Deep architecture reference: [`GEMINI.md`](./GEMINI.md)
 - Kangur hub: [`docs/kangur/README.md`](./docs/kangur/README.md)
 - Mobile app runtime guide: [`apps/mobile/README.md`](./apps/mobile/README.md)
+- Reserved mobile web boundary: [`apps/mobile-web/README.md`](./apps/mobile-web/README.md)
 - Package entry docs:
   - [`packages/kangur-contracts/README.md`](./packages/kangur-contracts/README.md)
   - [`packages/kangur-core/README.md`](./packages/kangur-core/README.md)

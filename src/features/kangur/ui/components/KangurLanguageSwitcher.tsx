@@ -3,10 +3,8 @@ import { ChevronDown } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
-  useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type CSSProperties,
 } from 'react';
@@ -41,7 +39,6 @@ import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurSto
 
 const LANGUAGE_SWITCHER_SOURCE_ID = 'kangur-language-switcher';
 const LANGUAGE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
-const HARD_NAVIGATION_RECOVERY_TIMEOUT_MS = 10_000;
 const ENABLED_LOCALES = DEFAULT_SITE_I18N_CONFIG.locales.filter((locale) => locale.enabled);
 const DEFAULT_SITE_LOCALE = normalizeSiteLocale(DEFAULT_SITE_I18N_CONFIG.defaultLocale);
 
@@ -247,9 +244,7 @@ export function KangurLanguageSwitcher({
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const [open, setOpen] = useState(false);
   const [announcement, setAnnouncement] = useState<string | null>(null);
-  const [hardNavigationPendingLocale, setHardNavigationPendingLocale] = useState<string | null>(null);
-  const hardNavigationRecoveryTimeoutRef = useRef<number | null>(null);
-  const hardNavigationCommittedRef = useRef(false);
+  const [optimisticPendingLocale, setOptimisticPendingLocale] = useState<string | null>(null);
 
   const currentLocale = normalizeSiteLocale(locale);
   const search = searchParams?.toString() ?? '';
@@ -299,47 +294,21 @@ export function KangurLanguageSwitcher({
     routeTransitionState?.activeTransitionSourceId,
   ]);
 
-  const clearHardNavigationRecoveryTimeout = useCallback((): void => {
-    if (hardNavigationRecoveryTimeoutRef.current === null || typeof window === 'undefined') {
-      return;
-    }
-
-    window.clearTimeout(hardNavigationRecoveryTimeoutRef.current);
-    hardNavigationRecoveryTimeoutRef.current = null;
-  }, []);
-
-  const pendingLocale = hardNavigationPendingLocale ?? transitionPendingLocale;
+  const pendingLocale = optimisticPendingLocale ?? transitionPendingLocale;
   const selectedLocale = pendingLocale ?? currentLocale;
 
   useEffect(() => {
-    if (!hardNavigationPendingLocale || hardNavigationPendingLocale !== currentLocale) {
+    if (!optimisticPendingLocale) {
       return;
     }
 
-    clearHardNavigationRecoveryTimeout();
-    setHardNavigationPendingLocale(null);
-  }, [clearHardNavigationRecoveryTimeout, currentLocale, hardNavigationPendingLocale]);
-
-  useEffect(() => {
-    return () => {
-      clearHardNavigationRecoveryTimeout();
-    };
-  }, [clearHardNavigationRecoveryTimeout]);
-
-  useEffect(() => {
-    if (!hardNavigationPendingLocale) {
-      hardNavigationCommittedRef.current = false;
-      return;
+    if (
+      optimisticPendingLocale === currentLocale ||
+      optimisticPendingLocale === transitionPendingLocale
+    ) {
+      setOptimisticPendingLocale(null);
     }
-
-    const onBeforeUnload = (): void => {
-      hardNavigationCommittedRef.current = true;
-    };
-    window.addEventListener('beforeunload', onBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', onBeforeUnload);
-    };
-  }, [hardNavigationPendingLocale]);
+  }, [currentLocale, optimisticPendingLocale, transitionPendingLocale]);
 
   if (ENABLED_LOCALES.length < 2 || isKangurEmbeddedBasePath(basePath)) {
     return null;
@@ -459,29 +428,7 @@ export function KangurLanguageSwitcher({
                 path: '/',
                 sameSite: 'Lax',
               });
-
-              if (typeof window !== 'undefined' && typeof window.location.assign === 'function') {
-                hardNavigationCommittedRef.current = false;
-                clearHardNavigationRecoveryTimeout();
-                setHardNavigationPendingLocale(target.code);
-                hardNavigationRecoveryTimeoutRef.current = window.setTimeout(() => {
-                  hardNavigationRecoveryTimeoutRef.current = null;
-                  // If the browser has committed to unloading (beforeunload fired),
-                  // the navigation is in progress — do NOT clear the pending state.
-                  if (hardNavigationCommittedRef.current) return;
-                  setHardNavigationPendingLocale((currentPendingLocale) =>
-                    currentPendingLocale === target.code ? null : currentPendingLocale
-                  );
-                }, HARD_NAVIGATION_RECOVERY_TIMEOUT_MS);
-
-                try {
-                  window.location.assign(target.href);
-                  return;
-                } catch {
-                  clearHardNavigationRecoveryTimeout();
-                  setHardNavigationPendingLocale(null);
-                }
-              }
+              setOptimisticPendingLocale(target.code);
 
               routeNavigator.replace(target.href, {
                 pageKey: currentPage,

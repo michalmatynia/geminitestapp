@@ -39,6 +39,7 @@ import {
 } from '@/features/kangur/ui/services/score-insights';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { resolveKangurScoreSubject } from '@/shared/contracts/kangur';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type OperationBreakdown = {
   total: number;
@@ -53,6 +54,55 @@ type ScoreHistoryProps = {
   basePath?: string | null;
   prefetchedScores?: KangurScoreRecord[] | null;
   prefetchedLoading?: boolean;
+};
+
+type ScoreHistoryFallbackCopy = {
+  byOperationHeading: string;
+  emptyDescription: string;
+  loadingDescription: string;
+  loadingTitle: string;
+  recentHeading: string;
+  relative: {
+    daysAgo: string;
+    noActivity: string;
+    today: string;
+    yesterday: string;
+  };
+  shared: {
+    noData: string;
+    operationSummary: string;
+  };
+  strongest: {
+    empty: string;
+    label: string;
+  };
+  summary: {
+    averageAccuracy: string;
+    perfectGames: string;
+    totalGames: string;
+  };
+  trend: {
+    context: {
+      down: string;
+      flat: string;
+      insufficient: string;
+      up: string;
+    };
+    label: string;
+    newRange: string;
+  };
+  weakest: {
+    empty: string;
+    label: string;
+    reviewLesson: string;
+  };
+  window: {
+    lastActivityPrefix: string;
+    title: string;
+    weeklySessions: string;
+    weeklySummary: string;
+    weeklyXp: string;
+  };
 };
 
 const OP_ACCENTS: Record<string, KangurAccent> = {
@@ -80,6 +130,214 @@ const OP_ACCENTS: Record<string, KangurAccent> = {
 const kangurPlatform = getKangurPlatform();
 
 const SCORE_FETCH_LIMIT = 30;
+const getScoreHistoryFallbackCopy = (
+  locale: ReturnType<typeof normalizeSiteLocale>
+): ScoreHistoryFallbackCopy => {
+  if (locale === 'uk') {
+    return {
+      byOperationHeading: 'Результати за операціями',
+      emptyDescription: 'Немає збережених результатів.',
+      loadingDescription: 'Отримуємо найновіші результати та готуємо підсумок прогресу.',
+      loadingTitle: 'Завантаження результатів...',
+      recentHeading: 'Останні ігри',
+      relative: {
+        daysAgo: '{days} днів тому',
+        noActivity: 'Немає активності',
+        today: 'Сьогодні',
+        yesterday: 'Учора',
+      },
+      shared: {
+        noData: 'Немає даних',
+        operationSummary: 'У середньому {accuracy}% · спроб {attempts} · +{xp} XP / сесію',
+      },
+      strongest: {
+        empty: 'Недостатньо даних, щоб визначити сильну сторону.',
+        label: 'Сильна сторона',
+      },
+      summary: {
+        averageAccuracy: 'Середня точність',
+        perfectGames: 'Ідеальні результати',
+        totalGames: 'Усього ігор',
+      },
+      trend: {
+        context: {
+          down: 'Спад з {previous}% до {recent}%.',
+          flat: 'Стабільно: {recent}% тиждень до тижня.',
+          insufficient: 'Потрібні старіші результати для порівняння.',
+          up: 'Зростання з {previous}% до {recent}%.',
+        },
+        label: 'Тижневий тренд',
+        newRange: 'Новий діапазон',
+      },
+      weakest: {
+        empty:
+          'Потрібно більше ніж один тип завдань, щоб визначити зону, яка потребує підтримки.',
+        label: 'Потребує підтримки',
+        reviewLesson: 'Повторити урок',
+      },
+      window: {
+        lastActivityPrefix: 'Остання активність:',
+        title: 'Огляд за останні {days} днів',
+        weeklySessions: 'Сесій цього тижня',
+        weeklySummary: 'У середньому {accuracy}% · ідеальних {perfect}',
+        weeklyXp: 'XP: +{xp} · у середньому {average} за сесію',
+      },
+    };
+  }
+
+  if (locale === 'de') {
+    return {
+      byOperationHeading: 'Ergebnisse nach Operation',
+      emptyDescription: 'Keine gespeicherten Ergebnisse.',
+      loadingDescription:
+        'Wir laden die neuesten Ergebnisse und bereiten die Fortschrittsübersicht vor.',
+      loadingTitle: 'Ergebnisse werden geladen...',
+      recentHeading: 'Letzte Spiele',
+      relative: {
+        daysAgo: 'vor {days} Tagen',
+        noActivity: 'Keine Aktivität',
+        today: 'Heute',
+        yesterday: 'Gestern',
+      },
+      shared: {
+        noData: 'Keine Daten',
+        operationSummary: 'Durchschnitt {accuracy}% · Versuche {attempts} · +{xp} XP / Sitzung',
+      },
+      strongest: {
+        empty: 'Nicht genug Daten, um eine Stärke zu erkennen.',
+        label: 'Starke Seite',
+      },
+      summary: {
+        averageAccuracy: 'Durchschn. Genauigkeit',
+        perfectGames: 'Perfekte Ergebnisse',
+        totalGames: 'Spiele insgesamt',
+      },
+      trend: {
+        context: {
+          down: 'Rückgang von {previous}% auf {recent}%.',
+          flat: 'Stabil: {recent}% Woche zu Woche.',
+          insufficient: 'Zum Vergleichen werden ältere Ergebnisse benötigt.',
+          up: 'Anstieg von {previous}% auf {recent}%.',
+        },
+        label: 'Wochentrend',
+        newRange: 'Neuer Bereich',
+      },
+      weakest: {
+        empty: 'Wir brauchen mehr als einen Aufgabentyp, um einen Förderbereich zu erkennen.',
+        label: 'Braucht Unterstützung',
+        reviewLesson: 'Lektion wiederholen',
+      },
+      window: {
+        lastActivityPrefix: 'Letzte Aktivität:',
+        title: 'Überblick über die letzten {days} Tage',
+        weeklySessions: 'Sitzungen dieser Woche',
+        weeklySummary: 'Durchschnitt {accuracy}% · perfekt {perfect}',
+        weeklyXp: 'XP: +{xp} · durchschnittlich {average} pro Sitzung',
+      },
+    };
+  }
+
+  if (locale === 'en') {
+    return {
+      byOperationHeading: 'Results by operation',
+      emptyDescription: 'No saved scores.',
+      loadingDescription: 'We are fetching the latest results and preparing the progress summary.',
+      loadingTitle: 'Loading scores...',
+      recentHeading: 'Recent games',
+      relative: {
+        daysAgo: '{days} days ago',
+        noActivity: 'No activity',
+        today: 'Today',
+        yesterday: 'Yesterday',
+      },
+      shared: {
+        noData: 'No data',
+        operationSummary: 'Average {accuracy}% · attempts {attempts} · +{xp} XP / session',
+      },
+      strongest: {
+        empty: 'Not enough data to identify a strength.',
+        label: 'Strong area',
+      },
+      summary: {
+        averageAccuracy: 'Avg. accuracy',
+        perfectGames: 'Perfect scores',
+        totalGames: 'Games total',
+      },
+      trend: {
+        context: {
+          down: 'Down from {previous}% to {recent}%.',
+          flat: 'Stable: {recent}% week over week.',
+          insufficient: 'We need older results to compare.',
+          up: 'Up from {previous}% to {recent}%.',
+        },
+        label: 'Weekly trend',
+        newRange: 'New range',
+      },
+      weakest: {
+        empty: 'We need more than one task type to identify a support area.',
+        label: 'Needs support',
+        reviewLesson: 'Review lesson',
+      },
+      window: {
+        lastActivityPrefix: 'Last activity:',
+        title: 'Overview of the last {days} days',
+        weeklySessions: 'Sessions this week',
+        weeklySummary: 'Average {accuracy}% · perfect {perfect}',
+        weeklyXp: 'XP: +{xp} · average {average} per session',
+      },
+    };
+  }
+
+  return {
+    byOperationHeading: 'Wyniki wg operacji',
+    emptyDescription: 'Brak zapisanych wyników.',
+    loadingDescription: 'Pobieramy ostatnie wyniki i przygotowujemy podsumowanie postępu.',
+    loadingTitle: 'Ładowanie wyników...',
+    recentHeading: 'Ostatnie gry',
+    relative: {
+      daysAgo: '{days} dni temu',
+      noActivity: 'Brak aktywności',
+      today: 'Dzisiaj',
+      yesterday: 'Wczoraj',
+    },
+    shared: {
+      noData: 'Brak danych',
+      operationSummary: 'Średnio {accuracy}% · próby {attempts} · +{xp} XP / sesję',
+    },
+    strongest: {
+      empty: 'Za mało danych na wskazanie przewagi.',
+      label: 'Mocna strona',
+    },
+    summary: {
+      averageAccuracy: 'Śr. skuteczność',
+      perfectGames: 'Idealne wyniki',
+      totalGames: 'Gier łącznie',
+    },
+    trend: {
+      context: {
+        down: 'Spadek z {previous}% na {recent}%.',
+        flat: 'Stabilnie: {recent}% tydzień do tygodnia.',
+        insufficient: 'Potrzeba starszych wyników do porównania.',
+        up: 'Wzrost z {previous}% na {recent}%.',
+      },
+      label: 'Trend tygodnia',
+      newRange: 'Nowy zakres',
+    },
+    weakest: {
+      empty: 'Potrzeba więcej niż jednego typu zadania, aby wskazać obszar do wsparcia.',
+      label: 'Do wsparcia',
+      reviewLesson: 'Powtórz lekcję',
+    },
+    window: {
+      lastActivityPrefix: 'Ostatnia aktywność:',
+      title: 'Obraz ostatnich {days} dni',
+      weeklySessions: 'Sesje tygodnia',
+      weeklySummary: 'Średnia {accuracy}% · idealne {perfect}',
+      weeklyXp: 'XP: +{xp} · średnio {average} na sesję',
+    },
+  };
+};
+
 const interpolateScoreHistoryTemplate = (
   template: string,
   values?: TranslationValues
@@ -114,15 +372,24 @@ const translateScoreHistoryWithFallback = (
 
 const formatRelativeLastPlayed = (
   value: string | null,
-  translate: ((key: string, values?: TranslationValues) => string) | undefined
+  translate: ((key: string, values?: TranslationValues) => string) | undefined,
+  fallbackCopy: ScoreHistoryFallbackCopy
 ): string => {
   if (!value) {
-    return translateScoreHistoryWithFallback(translate, 'relative.noActivity', 'Brak aktywności');
+    return translateScoreHistoryWithFallback(
+      translate,
+      'relative.noActivity',
+      fallbackCopy.relative.noActivity
+    );
   }
 
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
-    return translateScoreHistoryWithFallback(translate, 'relative.noActivity', 'Brak aktywności');
+    return translateScoreHistoryWithFallback(
+      translate,
+      'relative.noActivity',
+      fallbackCopy.relative.noActivity
+    );
   }
 
   const today = new Date();
@@ -132,25 +399,38 @@ const formatRelativeLastPlayed = (
     (todayMidnight.getTime() - playedMidnight.getTime()) / (24 * 60 * 60 * 1000)
   );
   if (diffDays <= 0) {
-    return translateScoreHistoryWithFallback(translate, 'relative.today', 'Dzisiaj');
+    return translateScoreHistoryWithFallback(
+      translate,
+      'relative.today',
+      fallbackCopy.relative.today
+    );
   }
   if (diffDays === 1) {
-    return translateScoreHistoryWithFallback(translate, 'relative.yesterday', 'Wczoraj');
+    return translateScoreHistoryWithFallback(
+      translate,
+      'relative.yesterday',
+      fallbackCopy.relative.yesterday
+    );
   }
   return translateScoreHistoryWithFallback(
     translate,
     'relative.daysAgo',
-    '{days} dni temu',
+    fallbackCopy.relative.daysAgo,
     { days: diffDays }
   );
 };
 
 const formatTrendValue = (
   deltaAccuracy: number | null,
-  translate: ((key: string, values?: TranslationValues) => string) | undefined
+  translate: ((key: string, values?: TranslationValues) => string) | undefined,
+  fallbackCopy: ScoreHistoryFallbackCopy
 ): string => {
   if (deltaAccuracy === null) {
-    return translateScoreHistoryWithFallback(translate, 'trend.newRange', 'Nowy zakres');
+    return translateScoreHistoryWithFallback(
+      translate,
+      'trend.newRange',
+      fallbackCopy.trend.newRange
+    );
   }
   if (deltaAccuracy > 0) {
     return `+${deltaAccuracy} pp`;
@@ -160,20 +440,21 @@ const formatTrendValue = (
 
 const formatTrendContext = (
   trend: ReturnType<typeof buildKangurScoreInsights>['trend'],
-  translate: ((key: string, values?: TranslationValues) => string) | undefined
+  translate: ((key: string, values?: TranslationValues) => string) | undefined,
+  fallbackCopy: ScoreHistoryFallbackCopy
 ): string => {
   if (trend.previousAverageAccuracy === null) {
     return translateScoreHistoryWithFallback(
       translate,
       'trend.context.insufficient',
-      'Potrzeba starszych wyników do porównania.'
+      fallbackCopy.trend.context.insufficient
     );
   }
   if (trend.direction === 'up') {
     return translateScoreHistoryWithFallback(
       translate,
       'trend.context.up',
-      'Wzrost z {previous}% na {recent}%.',
+      fallbackCopy.trend.context.up,
       {
         previous: trend.previousAverageAccuracy,
         recent: trend.recentAverageAccuracy,
@@ -184,7 +465,7 @@ const formatTrendContext = (
     return translateScoreHistoryWithFallback(
       translate,
       'trend.context.down',
-      'Spadek z {previous}% na {recent}%.',
+      fallbackCopy.trend.context.down,
       {
         previous: trend.previousAverageAccuracy,
         recent: trend.recentAverageAccuracy,
@@ -194,7 +475,7 @@ const formatTrendContext = (
   return translateScoreHistoryWithFallback(
     translate,
     'trend.context.flat',
-    'Stabilnie: {recent}% tydzień do tygodnia.',
+    fallbackCopy.trend.context.flat,
     { recent: trend.recentAverageAccuracy }
   );
 };
@@ -223,8 +504,13 @@ export default function ScoreHistory({
   prefetchedLoading,
 }: ScoreHistoryProps): React.JSX.Element {
   const locale = useLocale();
+  const normalizedLocale = normalizeSiteLocale(locale);
   const translations = useTranslations('KangurScoreHistory');
   const operationTranslations = useTranslations('KangurScoreHistory.operations');
+  const fallbackCopy = useMemo(
+    () => getScoreHistoryFallbackCopy(normalizedLocale),
+    [normalizedLocale]
+  );
   const isCoarsePointer = useKangurCoarsePointer();
   const { subject } = useKangurSubjectFocus();
   const [scores, setScores] = useState<KangurScoreRecord[]>([]);
@@ -308,10 +594,11 @@ export default function ScoreHistory({
   );
   const scoreInsightsLocalizer = useMemo(
     () => ({
+      locale: normalizedLocale,
       translateOperationLabel: (operation: string, fallback: string) =>
         translateScoreHistoryWithFallback(operationTranslations, operation, fallback),
     }),
-    [operationTranslations]
+    [normalizedLocale, operationTranslations]
   );
   const insights = useMemo(
     () => buildKangurScoreInsights(subjectScores, new Date(), scoreInsightsLocalizer),
@@ -331,13 +618,13 @@ export default function ScoreHistory({
         description={translateScoreHistoryWithFallback(
           translations,
           'loading.description',
-          'Pobieramy ostatnie wyniki i przygotowujemy podsumowanie postępu.'
+          fallbackCopy.loadingDescription
         )}
         padding='lg'
         title={translateScoreHistoryWithFallback(
           translations,
           'loading.title',
-          'Ładowanie wyników...'
+          fallbackCopy.loadingTitle
         )}
         role='status'
         aria-live='polite'
@@ -352,7 +639,7 @@ export default function ScoreHistory({
         description={translateScoreHistoryWithFallback(
           translations,
           'empty.description',
-          'Brak zapisanych wyników.'
+          fallbackCopy.emptyDescription
         )}
         padding='lg'
       />
@@ -383,7 +670,11 @@ export default function ScoreHistory({
           accent='sky'
           align='center'
           data-testid='score-history-total-games'
-          label={translateScoreHistoryWithFallback(translations, 'summary.totalGames', 'Gier łącznie')}
+          label={translateScoreHistoryWithFallback(
+            translations,
+            'summary.totalGames',
+            fallbackCopy.summary.totalGames
+          )}
           value={subjectScores.length}
         />
         <KangurMetricCard
@@ -393,7 +684,7 @@ export default function ScoreHistory({
           label={translateScoreHistoryWithFallback(
             translations,
             'summary.averageAccuracy',
-            'Śr. skuteczność'
+            fallbackCopy.summary.averageAccuracy
           )}
           value={`${avgAccuracy}%`}
         />
@@ -404,7 +695,7 @@ export default function ScoreHistory({
           label={translateScoreHistoryWithFallback(
             translations,
             'summary.perfectGames',
-            'Idealne wyniki'
+            fallbackCopy.summary.perfectGames
           )}
           value={
             subjectScores.filter((score) => score.correct_answers === score.total_questions).length
@@ -417,7 +708,7 @@ export default function ScoreHistory({
           {translateScoreHistoryWithFallback(
             translations,
             'window.title',
-            'Obraz ostatnich {days} dni',
+            fallbackCopy.window.title,
             { days: SCORE_INSIGHT_WINDOW_DAYS }
           )}
         </KangurPanelSectionHeading>
@@ -427,7 +718,7 @@ export default function ScoreHistory({
             label={translateScoreHistoryWithFallback(
               translations,
               'window.weeklySessions',
-              'Sesje tygodnia'
+              fallbackCopy.window.weeklySessions
             )}
             value={insights.recentGames}
           >
@@ -435,7 +726,7 @@ export default function ScoreHistory({
               {translateScoreHistoryWithFallback(
                 translations,
                 'window.weeklySummary',
-                'Średnia {accuracy}% · idealne {perfect}',
+                fallbackCopy.window.weeklySummary,
                 {
                   accuracy: insights.recentAverageAccuracy,
                   perfect: insights.recentPerfectGames,
@@ -446,7 +737,7 @@ export default function ScoreHistory({
               {translateScoreHistoryWithFallback(
                 translations,
                 'window.weeklyXp',
-                'XP: +{xp} · średnio {average} na sesję',
+                fallbackCopy.window.weeklyXp,
                 {
                   xp: insights.recentXpEarned,
                   average: insights.averageXpPerRecentGame,
@@ -457,9 +748,9 @@ export default function ScoreHistory({
               {translateScoreHistoryWithFallback(
                 translations,
                 'window.lastActivityPrefix',
-                'Ostatnia aktywność:'
+                fallbackCopy.window.lastActivityPrefix
               )}{' '}
-              {formatRelativeLastPlayed(insights.lastPlayedAt, translations)}
+              {formatRelativeLastPlayed(insights.lastPlayedAt, translations, fallbackCopy)}
             </p>
           </KangurMetricCard>
 
@@ -468,12 +759,12 @@ export default function ScoreHistory({
             label={translateScoreHistoryWithFallback(
               translations,
               'trend.label',
-              'Trend tygodnia'
+              fallbackCopy.trend.label
             )}
-            value={formatTrendValue(insights.trend.deltaAccuracy, translations)}
+            value={formatTrendValue(insights.trend.deltaAccuracy, translations, fallbackCopy)}
           >
             <p className='text-xs text-violet-800/80'>
-              {formatTrendContext(insights.trend, translations)}
+              {formatTrendContext(insights.trend, translations, fallbackCopy)}
             </p>
           </KangurMetricCard>
 
@@ -482,12 +773,16 @@ export default function ScoreHistory({
             label={translateScoreHistoryWithFallback(
               translations,
               'strongest.label',
-              'Mocna strona'
+              fallbackCopy.strongest.label
             )}
             value={
               insights.strongestOperation
                 ? `${insights.strongestOperation.emoji} ${insights.strongestOperation.label}`
-                : translateScoreHistoryWithFallback(translations, 'shared.noData', 'Brak danych')
+                : translateScoreHistoryWithFallback(
+                    translations,
+                    'shared.noData',
+                    fallbackCopy.shared.noData
+                  )
             }
             valueClassName='text-base leading-tight sm:text-lg'
           >
@@ -496,7 +791,7 @@ export default function ScoreHistory({
                 {translateScoreHistoryWithFallback(
                   translations,
                   'shared.operationSummary',
-                  'Średnio {accuracy}% · próby {attempts} · +{xp} XP / sesję',
+                  fallbackCopy.shared.operationSummary,
                   {
                     accuracy: insights.strongestOperation.averageAccuracy,
                     attempts: insights.strongestOperation.attempts,
@@ -509,7 +804,7 @@ export default function ScoreHistory({
                 {translateScoreHistoryWithFallback(
                   translations,
                   'strongest.empty',
-                  'Za mało danych na wskazanie przewagi.'
+                  fallbackCopy.strongest.empty
                 )}
               </p>
             )}
@@ -520,12 +815,16 @@ export default function ScoreHistory({
             label={translateScoreHistoryWithFallback(
               translations,
               'weakest.label',
-              'Do wsparcia'
+              fallbackCopy.weakest.label
             )}
             value={
               insights.weakestOperation
                 ? `${insights.weakestOperation.emoji} ${insights.weakestOperation.label}`
-                : translateScoreHistoryWithFallback(translations, 'shared.noData', 'Brak danych')
+                : translateScoreHistoryWithFallback(
+                    translations,
+                    'shared.noData',
+                    fallbackCopy.shared.noData
+                  )
             }
             valueClassName='text-base leading-tight sm:text-lg'
           >
@@ -535,7 +834,7 @@ export default function ScoreHistory({
                   {translateScoreHistoryWithFallback(
                     translations,
                     'shared.operationSummary',
-                    'Średnio {accuracy}% · próby {attempts} · +{xp} XP / sesję',
+                    fallbackCopy.shared.operationSummary,
                     {
                       accuracy: insights.weakestOperation.averageAccuracy,
                       attempts: insights.weakestOperation.attempts,
@@ -558,7 +857,7 @@ export default function ScoreHistory({
                       {translateScoreHistoryWithFallback(
                         translations,
                         'weakest.reviewLesson',
-                        'Powtórz lekcję'
+                        fallbackCopy.weakest.reviewLesson
                       )}
                     </Link>
                   </KangurButton>
@@ -569,7 +868,7 @@ export default function ScoreHistory({
                 {translateScoreHistoryWithFallback(
                   translations,
                   'weakest.empty',
-                  'Potrzeba więcej niż jednego typu zadania, aby wskazać obszar do wsparcia.'
+                  fallbackCopy.weakest.empty
                 )}
               </p>
             )}
@@ -582,7 +881,7 @@ export default function ScoreHistory({
           {translateScoreHistoryWithFallback(
             translations,
             'byOperation.heading',
-            'Wyniki wg operacji'
+            fallbackCopy.byOperationHeading
           )}
         </KangurPanelSectionHeading>
         <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
@@ -615,7 +914,11 @@ export default function ScoreHistory({
 
       <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
         <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
-          {translateScoreHistoryWithFallback(translations, 'recent.heading', 'Ostatnie gry')}
+          {translateScoreHistoryWithFallback(
+            translations,
+            'recent.heading',
+            fallbackCopy.recentHeading
+          )}
         </p>
         <div className={`${KANGUR_STACK_TIGHT_CLASSNAME} max-h-64 overflow-y-auto`}>
           {subjectScores.map((score) => {

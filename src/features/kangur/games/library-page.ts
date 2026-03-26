@@ -29,6 +29,10 @@ import {
   type KangurGameEngineImplementation,
 } from './engine-implementations';
 import {
+  createKangurGameRuntimeSerializationAudit,
+  type KangurGameRuntimeSerializationAudit,
+} from './serialization-audit';
+import {
   createKangurGameVariantCatalogEntries,
   filterKangurGameVariantCatalogEntries,
   type KangurGameVariantCatalogEntry,
@@ -44,6 +48,7 @@ export type KangurGameLibraryPageData = {
   engineFilterOptions: KangurGameEngineCatalogFacets;
   engineOverview: KangurGameEngineLibraryOverview;
   overview: KangurGamesLibraryOverview;
+  serializationAudit: KangurGameRuntimeSerializationAudit;
 };
 
 export type CreateKangurGameLibraryPageDataInput = {
@@ -52,6 +57,7 @@ export type CreateKangurGameLibraryPageDataInput = {
   filteredVariantEntries: KangurGameVariantCatalogEntry[];
   globalCatalogEntries: KangurGameCatalogEntry[];
   globalEngineEntries: KangurGameEngineCatalogEntry[];
+  globalVariantEntries: KangurGameVariantCatalogEntry[];
 };
 
 export type CreateKangurGameLibraryPageDataFromCatalogInput = {
@@ -78,6 +84,10 @@ export const createKangurGameLibraryPageData = (
   coverage: createKangurGameLibraryCoverage(input.globalCatalogEntries),
   catalogFacets: getKangurGameCatalogFacets(input.globalCatalogEntries),
   engineFilterOptions: getKangurGameEngineCatalogFacets(input.globalEngineEntries),
+  serializationAudit: createKangurGameRuntimeSerializationAudit(
+    input.globalVariantEntries,
+    input.globalEngineEntries
+  ),
 });
 
 export const createKangurGameLibraryPageDataFromCatalog = (
@@ -109,6 +119,7 @@ export const createKangurGameLibraryPageDataFromCatalog = (
     filteredVariantEntries,
     globalCatalogEntries,
     globalEngineEntries,
+    globalVariantEntries,
   });
 };
 

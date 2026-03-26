@@ -18,6 +18,7 @@ vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
   },
 }));
 
+import ArtColorsHarmonyLesson from '@/features/kangur/ui/components/ArtColorsHarmonyLesson';
 import ArtShapesBasicLesson from '@/features/kangur/ui/components/ArtShapesBasicLesson';
 import MusicDiatonicScaleLesson from '@/features/kangur/ui/components/MusicDiatonicScaleLesson';
 import { ART_SHAPES_ROTATION_PUZZLE_SECTION_ID } from '@/features/kangur/ui/components/ArtShapesBasicLesson.data';
@@ -28,6 +29,15 @@ describe('art and music stage lesson configs', () => {
   });
 
   it.each([
+    {
+      lessonTitle: 'Harmony of colors',
+      Component: ArtColorsHarmonyLesson,
+      sectionId: 'gameHarmony',
+      runtimeId: 'art_color_harmony_studio_lesson_stage',
+      rendererId: 'color_harmony_stage_game',
+      engineId: 'color-harmony-engine',
+      shellTestId: 'art-colors-harmony-game-shell',
+    },
     {
       lessonTitle: 'Skala diatoniczna',
       Component: MusicDiatonicScaleLesson,

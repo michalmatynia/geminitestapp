@@ -10,9 +10,9 @@ import { getCmsRepository } from '@/features/cms/server';
 import { getCmsThemeSettings } from '@/features/cms/server';
 import type { CmsTheme, Page, PageComponent } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
+import { isElevatedSession } from '@/shared/lib/auth/elevated-session-user';
 
 import type { SlugRenderData as PreviewRenderData } from '../../[...slug]/slug-page-data';
-import type { Session } from 'next-auth';
 
 export type { PreviewRenderData };
 
@@ -28,16 +28,7 @@ const normalizeRendererComponent = (
   pageId,
 });
 
-export const isAdminSession = (session: Session | null): boolean => {
-  if (!session?.user) return false;
-  const user = session.user as Session['user'] & {
-    isElevated?: boolean;
-    role?: string | null;
-  };
-  if (user.isElevated) return true;
-  const role = user.role ?? '';
-  return ['admin', 'super_admin', 'superuser'].includes(role);
-};
+export const isAdminSession = isElevatedSession;
 
 export const loadPreviewRenderData = async (id: string): Promise<PreviewRenderData | null> => {
   const cmsRepository = await getCmsRepository();

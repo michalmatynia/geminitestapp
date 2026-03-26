@@ -62,6 +62,22 @@ export const KANGUR_LESSON_STAGE_GAME_RUNTIME_SPECS = Object.freeze({
     'agentic_surface_match_game',
     'classification-engine'
   ),
+  alphabet_first_words_lesson_stage: createSharedLessonStageGameRuntimeSpec(
+    'alphabet_first_words_lesson_stage',
+    'alphabet_literacy_stage_game',
+    'letter-match-engine',
+    {
+      literacyMatchSetId: 'alphabet_first_words',
+    }
+  ),
+  alphabet_letter_matching_lesson_stage: createSharedLessonStageGameRuntimeSpec(
+    'alphabet_letter_matching_lesson_stage',
+    'alphabet_literacy_stage_game',
+    'letter-match-engine',
+    {
+      literacyMatchSetId: 'alphabet_letter_matching',
+    }
+  ),
   alphabet_letter_order_lesson_stage: createSharedLessonStageGameRuntimeSpec(
     'alphabet_letter_order_lesson_stage',
     'logical_patterns_workshop_game',
@@ -69,6 +85,11 @@ export const KANGUR_LESSON_STAGE_GAME_RUNTIME_SPECS = Object.freeze({
     {
       patternSetId: 'alphabet_letter_order',
     }
+  ),
+  art_color_harmony_studio_lesson_stage: createSharedLessonStageGameRuntimeSpec(
+    'art_color_harmony_studio_lesson_stage',
+    'color_harmony_stage_game',
+    'color-harmony-engine'
   ),
   art_shape_rotation_puzzle_lesson_stage: createSharedLessonStageGameRuntimeSpec(
     'art_shape_rotation_puzzle_lesson_stage',

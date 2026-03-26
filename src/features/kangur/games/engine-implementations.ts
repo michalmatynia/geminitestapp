@@ -167,17 +167,21 @@ export const KANGUR_GAME_ENGINE_IMPLEMENTATIONS: readonly KangurGameEngineImplem
   },
   {
     engineId: 'color-harmony-engine',
-    ownership: 'lesson_embedded',
-    runtimeIds: ['ArtColorsHarmonyLesson'],
+    ownership: 'shared_runtime',
+    runtimeIds: ['art_color_harmony_studio_lesson_stage', 'ColorHarmonyStageGame'],
     summary:
-      'Color harmony still lives inside the lesson component and has not been extracted into a reusable shared game runtime yet.',
+      'Color harmony now runs through a serialized lesson-stage runtime and reusable shared palette-matching component instead of staying embedded in one lesson shell.',
   },
   {
     engineId: 'letter-match-engine',
-    ownership: 'lesson_embedded',
-    runtimeIds: ['AlphabetWordsLesson', 'AlphabetMatchingLesson'],
+    ownership: 'shared_runtime',
+    runtimeIds: [
+      'alphabet_first_words_lesson_stage',
+      'alphabet_letter_matching_lesson_stage',
+      'AlphabetLiteracyStageGame',
+    ],
     summary:
-      'Letter matching remains split across lesson components and still needs a single shared literacy runtime.',
+      'Letter matching now uses a single shared literacy runtime with serialized lesson-stage configs for first words and uppercase-lowercase pairing.',
   },
   {
     engineId: 'melody-repeat-engine',

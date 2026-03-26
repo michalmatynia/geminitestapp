@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useSession } from 'next-auth/react';
 import { useEffect, useRef, useState } from 'react';
 
 import {
@@ -9,7 +10,8 @@ import {
   usePrefersReducedMotion,
 } from '@/features/kangur/ui/components/LazyAnimatePresence';
 
-import { KangurCmsRuntimeScreen } from '@/features/kangur/cms-builder/KangurCmsRuntimeScreen';
+import { KANGUR_CMS_PROJECT_SETTING_KEY } from '@/features/kangur/cms-builder/project-contracts';
+import { hasKangurCmsRuntimeScreen } from '@/features/kangur/cms-builder/runtime-screen-presence';
 import { KANGUR_MAIN_PAGE, kangurPages } from '@/features/kangur/config/pages';
 import { getKangurHomeHref, resolveKangurPageKey } from '@/features/kangur/config/routing';
 import { KangurAppLoader } from '@/features/kangur/ui/components/KangurAppLoader';
@@ -18,6 +20,13 @@ import { KangurTopNavigationSkeleton } from '@/features/kangur/ui/components/Kan
 
 const KangurAiTutorWidget = dynamic(() => import('@/features/kangur/ui/components/KangurAiTutorWidget').then(m => ({ default: m.KangurAiTutorWidget })), { ssr: false });
 const KangurLoginModal = dynamic(() => import('@/features/kangur/ui/components/KangurLoginModal').then(m => ({ default: m.KangurLoginModal })), { ssr: false });
+const KangurCmsRuntimeScreen = dynamic(
+  () =>
+    import('@/features/kangur/cms-builder/KangurCmsRuntimeScreen').then((m) => ({
+      default: m.KangurCmsRuntimeScreen,
+    })),
+  { ssr: false }
+);
 import { KangurRouteAccessibilityAnnouncer } from '@/features/kangur/ui/components/KangurRouteAccessibilityAnnouncer';
 const PageNotFound = dynamic(() => import('@/features/kangur/ui/components/PageNotFound').then(m => ({ default: m.PageNotFound })), { ssr: false });
 const UserNotRegisteredError = dynamic(() => import('@/features/kangur/ui/components/UserNotRegisteredError'), { ssr: false });
@@ -52,6 +61,7 @@ import { useKangurPendingRouteLoadingSnapshot } from '@/features/kangur/ui/routi
 import { resolveManagedKangurEmbeddedFromHref } from '@/features/kangur/ui/routing/managed-paths';
 import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import { cn } from '@/features/kangur/shared/utils';
+import { isSuperAdminSession } from '@/shared/lib/auth/elevated-session-user';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 import type { JSX } from 'react';
@@ -86,7 +96,10 @@ const AuthenticatedApp = (): JSX.Element | null => {
     hasResolvedAuth = true,
   } =
     useKangurAuth();
-  const { isLoading: isLoadingSettings } = useSettingsStore();
+  const { data: session, status: sessionStatus } = useSession();
+  const settingsStore = useSettingsStore();
+  const isLoadingSettings = settingsStore.isLoading;
+  const rawCmsProject = settingsStore.get(KANGUR_CMS_PROJECT_SETTING_KEY);
   const {
     isRouteAcknowledging,
     isRoutePending,
@@ -113,11 +126,14 @@ const AuthenticatedApp = (): JSX.Element | null => {
     !isAuthenticated &&
     !authErrorType &&
     resolvedPageKey === 'ParentDashboard';
+  const canAccessGamesLibrary = isSuperAdminSession(session);
+  const isGamesLibraryAccessPending =
+    resolvedPageKey === 'GamesLibrary' && sessionStatus === 'loading';
   const prefersReducedMotion = usePrefersReducedMotion();
   const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
   const currentRequestedHref = requestedHref ?? requestedPath ?? null;
-  const isBootLoading = isLoadingPublicSettings || isLoadingAuth;
+  const isBootLoading = isLoadingPublicSettings || isLoadingAuth || isGamesLibraryAccessPending;
   const isThemeBootLoading = isLoadingSettings;
   const isNavigationTransitionActive =
     isRouteAcknowledging || isRoutePending || isRouteWaitingForReady || isRouteRevealing;
@@ -126,16 +142,23 @@ const AuthenticatedApp = (): JSX.Element | null => {
     activeTransitionSourceId === LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID;
   const shouldSkipNavigationSkeletonDelay = activeTransitionSourceId !== null;
   const shouldBlockRouteContent = shouldRedirectToHome;
+  const shouldUseCmsRuntimeScreen = hasKangurCmsRuntimeScreen(rawCmsProject, resolvedPageKey);
   let routeContent: JSX.Element | null = null;
   if (authErrorType !== 'auth_required') {
     if (shouldBlockRouteContent) {
       routeContent = null;
     } else if (!resolvedPageKey) {
       routeContent = <PageNotFound />;
+    } else if (resolvedPageKey === 'GamesLibrary' && !canAccessGamesLibrary) {
+      routeContent = isGamesLibraryAccessPending ? null : <PageNotFound />;
     } else {
       const ResolvedPage = kangurPages[resolvedPageKey];
       routeContent = ResolvedPage ? (
-        <KangurCmsRuntimeScreen pageKey={resolvedPageKey} fallback={<ResolvedPage />} />
+        shouldUseCmsRuntimeScreen ? (
+          <KangurCmsRuntimeScreen pageKey={resolvedPageKey} fallback={<ResolvedPage />} />
+        ) : (
+          <ResolvedPage />
+        )
       ) : (
         <PageNotFound />
       );

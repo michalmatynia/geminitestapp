@@ -19,6 +19,7 @@ import {
   optionalBooleanQuerySchema,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
+import { kangurLessonSectionsSchema } from './kangur-lesson-sections';
 
 const nonEmptyTrimmedString = z.string().trim().min(1);
 
@@ -71,6 +72,12 @@ export const kangurLessonsQuerySchema = z.object({
   enabledOnly: optionalBooleanQuerySchema(),
 });
 export type KangurLessonsQuery = z.infer<typeof kangurLessonsQuerySchema>;
+
+export const kangurLessonsCatalogSchema = z.object({
+  lessons: kangurLessonsSchema,
+  sections: kangurLessonSectionsSchema,
+});
+export type KangurLessonsCatalog = z.infer<typeof kangurLessonsCatalogSchema>;
 
 export const kangurLessonsReplacePayloadSchema = z.object({
   lessons: kangurLessonsSchema,

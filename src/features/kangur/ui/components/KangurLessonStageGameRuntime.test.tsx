@@ -49,6 +49,24 @@ vi.mock('@/features/kangur/ui/components/AddingBallGame', () => ({
 vi.mock('@/features/kangur/ui/components/AddingSynthesisGame', () => ({
   default: createMockGame('AddingSynthesisGame'),
 }));
+vi.mock('@/features/kangur/ui/components/AlphabetLiteracyStageGame', () => ({
+  default: ({
+    onFinish,
+    finishLabel,
+    literacyMatchSetId,
+  }: {
+    onFinish?: () => void;
+    finishLabel?: string;
+    literacyMatchSetId?: string;
+  }) => (
+    <button data-literacy-match-set-id={literacyMatchSetId} type='button' onClick={onFinish}>
+      {finishLabel ?? 'AlphabetLiteracyStageGame'}
+    </button>
+  ),
+}));
+vi.mock('@/features/kangur/ui/components/ColorHarmonyStageGame', () => ({
+  default: createMockGame('ColorHarmonyStageGame'),
+}));
 vi.mock('@/features/kangur/ui/components/ArtShapesRotationGapGame', () => ({
   ArtShapesRotationGapGame: createMockGame('ArtShapesRotationGapGame'),
 }));
@@ -178,7 +196,7 @@ describe('KangurLessonStageGameRuntime', () => {
   });
 
   it('forwards serialized renderer props into the shared stage runtime component', () => {
-    render(
+    const { rerender } = render(
       <KangurLessonStageGameRuntime
         runtime={getKangurLessonStageGameRuntimeSpec('alphabet_letter_order_lesson_stage')}
         onFinish={vi.fn()}
@@ -188,6 +206,18 @@ describe('KangurLessonStageGameRuntime', () => {
     expect(screen.getByRole('button', { name: 'LogicalPatternsWorkshopGame' })).toHaveAttribute(
       'data-pattern-set-id',
       'alphabet_letter_order'
+    );
+
+    rerender(
+      <KangurLessonStageGameRuntime
+        runtime={getKangurLessonStageGameRuntimeSpec('alphabet_letter_matching_lesson_stage')}
+        onFinish={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'AlphabetLiteracyStageGame' })).toHaveAttribute(
+      'data-literacy-match-set-id',
+      'alphabet_letter_matching'
     );
   });
 
@@ -295,7 +325,16 @@ describe('KangurLessonStageGameRuntime', () => {
   });
 
   it('supports the art and music lesson-stage runtimes through the same registry', () => {
-    render(
+    const { rerender } = render(
+      <KangurLessonStageGameRuntime
+        runtime={getKangurLessonStageGameRuntimeSpec('art_color_harmony_studio_lesson_stage')}
+        onFinish={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'ColorHarmonyStageGame' })).toBeInTheDocument();
+
+    rerender(
       <KangurLessonStageGameRuntime
         runtime={getKangurLessonStageGameRuntimeSpec('music_melody_repeat_lesson_stage')}
         onFinish={vi.fn()}

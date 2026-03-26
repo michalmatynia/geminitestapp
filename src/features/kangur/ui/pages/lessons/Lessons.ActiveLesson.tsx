@@ -32,6 +32,7 @@ import {
 } from './Lessons.constants';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type ActiveLessonRenderSnapshot = {
   activeLesson: NonNullable<ReturnType<typeof useLessons>['activeLesson']>;
@@ -49,12 +50,104 @@ type ActiveLessonRenderSnapshot = {
 
 const STUDIQ_PRINT_BRAND_LABEL = 'StudiQ';
 
+type ActiveLessonFallbackCopy = {
+  activeLessonTitle: string;
+  documentDescription: string;
+  documentLabel: string;
+  documentTitle: string;
+  emptyDocumentDescription: string;
+  emptyDocumentTitle: string;
+  lastLessonLabel: string;
+  loadingDocumentDescription: string;
+  loadingDocumentTitle: string;
+  secretSummary: string;
+  secretTitle: string;
+  secretUnlockedLabel: string;
+};
+
+const getActiveLessonFallbackCopy = (
+  locale: ReturnType<typeof normalizeSiteLocale>
+): ActiveLessonFallbackCopy => {
+  if (locale === 'uk') {
+    return {
+      activeLessonTitle: 'Активний урок',
+      documentDescription: 'Читай матеріал уроку.',
+      documentLabel: 'Матеріал уроку',
+      documentTitle: 'Матеріал уроку',
+      emptyDocumentDescription:
+        'Для цього уроку увімкнено режим документа, але блоки контенту ще не збережено.',
+      emptyDocumentTitle: 'Матеріал уроку',
+      lastLessonLabel: 'Останній урок',
+      loadingDocumentDescription: 'Завантажуємо вміст уроку та готуємо матеріал.',
+      loadingDocumentTitle: 'Завантаження матеріалу',
+      secretSummary: 'Секретне завершення!',
+      secretTitle: 'Прихований фінал',
+      secretUnlockedLabel: 'Секрет розблоковано',
+    };
+  }
+
+  if (locale === 'de') {
+    return {
+      activeLessonTitle: 'Aktive Lektion',
+      documentDescription: 'Lies das Unterrichtsmaterial.',
+      documentLabel: 'Lektionsmaterial',
+      documentTitle: 'Lektionsmaterial',
+      emptyDocumentDescription:
+        'Fur diese Lektion ist der Dokumentmodus aktiv, aber es wurden noch keine Inhaltsblöcke gespeichert.',
+      emptyDocumentTitle: 'Lektionsmaterial',
+      lastLessonLabel: 'Letzte Lektion',
+      loadingDocumentDescription:
+        'Der Lektionsinhalt wird geladen und das Material wird vorbereitet.',
+      loadingDocumentTitle: 'Material wird geladen',
+      secretSummary: 'Geheimes Finale!',
+      secretTitle: 'Verstecktes Finale',
+      secretUnlockedLabel: 'Geheimnis freigeschaltet',
+    };
+  }
+
+  if (locale === 'en') {
+    return {
+      activeLessonTitle: 'Active lesson',
+      documentDescription: 'Read the lesson document.',
+      documentLabel: 'Lesson document',
+      documentTitle: 'Lesson material',
+      emptyDocumentDescription:
+        'This lesson has document mode enabled, but no content blocks have been saved yet.',
+      emptyDocumentTitle: 'Lesson material',
+      lastLessonLabel: 'Last lesson',
+      loadingDocumentDescription: 'We are loading the lesson content and preparing the material.',
+      loadingDocumentTitle: 'Loading material',
+      secretSummary: 'Secret ending!',
+      secretTitle: 'Hidden finale',
+      secretUnlockedLabel: 'Secret unlocked',
+    };
+  }
+
+  return {
+    activeLessonTitle: 'Aktywna lekcja',
+    documentDescription: 'Czytaj dokument.',
+    documentLabel: 'Materiał lekcji',
+    documentTitle: 'Materiał lekcji',
+    emptyDocumentDescription:
+      'Ta lekcja ma włączony tryb dokumentu, ale nie zapisano jeszcze bloków treści.',
+    emptyDocumentTitle: 'Materiał lekcji',
+    lastLessonLabel: 'Ostatnia lekcja',
+    loadingDocumentDescription: 'Ładujemy treść lekcji i przygotowujemy materiał.',
+    loadingDocumentTitle: 'Ładowanie materiału',
+    secretSummary: 'Sekretne zakończenie!',
+    secretTitle: 'Ukryty finisz',
+    secretUnlockedLabel: 'Sekret odblokowany',
+  };
+};
+
 export function ActiveLessonView({
   snapshot,
 }: {
   snapshot?: ActiveLessonRenderSnapshot;
 }) {
   const locale = useLocale();
+  const normalizedLocale = normalizeSiteLocale(locale);
+  const fallbackCopy = getActiveLessonFallbackCopy(normalizedLocale);
   const translations = useTranslations('KangurLessonsPage');
   const lessons = useLessons();
   const {
@@ -98,12 +191,14 @@ export function ActiveLessonView({
     if (!secretHostLesson) return;
     handleSelectLesson(secretHostLesson.id, { secret: true });
   };
-  const secretHostLabel = secretHostLesson?.title ?? 'Ostatnia lekcja';
+  const secretHostLabel = secretHostLesson?.title ?? fallbackCopy.lastLessonLabel;
 
-  const emptyDocumentTitle = activeLessonEmptyDocumentContent?.title?.trim() || activeLesson?.title || '';
+  const emptyDocumentTitle =
+    activeLessonEmptyDocumentContent?.title?.trim() ||
+    activeLesson?.title ||
+    fallbackCopy.emptyDocumentTitle;
   const emptyDocumentDescription =
-    activeLessonEmptyDocumentContent?.summary?.trim() ||
-    'Ta lekcja ma włączony tryb dokumentu, ale nie zapisano jeszcze bloków treści.';
+    activeLessonEmptyDocumentContent?.summary?.trim() || fallbackCopy.emptyDocumentDescription;
   const activeLessonDocument = activeLesson ? lessonDocuments[activeLesson.id] ?? null : null;
   const hasActiveLessonDocContent = hasKangurLessonDocumentContent(activeLessonDocument);
   const activeLessonAssignment = activeLesson
@@ -350,7 +445,7 @@ export function ActiveLessonView({
         completedActiveLessonAssignment={completedActiveLessonAssignment}
         assignmentRef={activeLessonAssignmentRef}
         onBack={handleReturnToLessonList}
-        titleOverride={activeLessonHeaderContent?.title ?? 'Aktywna lekcja'}
+        titleOverride={activeLessonHeaderContent?.title ?? fallbackCopy.activeLessonTitle}
         headerTestId='active-lesson-header'
         headerActionsTestId='active-lesson-header-icon-actions'
         iconTestId={`active-lesson-icon-${activeLesson.id}`}
@@ -425,7 +520,7 @@ export function ActiveLessonView({
           surface='solid'
         >
           <KangurStatusChip accent='amber' data-testid='lessons-secret-pill-chip' size='sm'>
-            Sekret odblokowany
+            {fallbackCopy.secretUnlockedLabel}
           </KangurStatusChip>
           <div
             className='mt-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-500'
@@ -434,10 +529,10 @@ export function ActiveLessonView({
             {secretHostLabel}
           </div>
           <h2 className='mt-2 text-2xl font-black text-slate-800'>
-            {activeLessonSecretPanelContent?.title ?? 'Ukryty finisz'}
+            {activeLessonSecretPanelContent?.title ?? fallbackCopy.secretTitle}
           </h2>
           <p className='text-sm text-slate-600'>
-            {activeLessonSecretPanelContent?.summary ?? 'Sekretne zakończenie!'}
+            {activeLessonSecretPanelContent?.summary ?? fallbackCopy.secretSummary}
           </p>
         </KangurGlassPanel>
       ) : activeLesson.contentMode === 'document' && hasActiveLessonDocContent ? (
@@ -446,10 +541,10 @@ export function ActiveLessonView({
             accent='sky'
             data-kangur-print-exclude='true'
             data-testid='lessons-document-summary'
-            description={activeLessonDocumentContent?.summary ?? 'Czytaj dokument.'}
-            label='Lesson document'
+            description={activeLessonDocumentContent?.summary ?? fallbackCopy.documentDescription}
+            label={fallbackCopy.documentLabel}
             labelAccent='sky'
-            title={activeLessonDocumentContent?.title ?? 'Materiał lekcji'}
+            title={activeLessonDocumentContent?.title ?? fallbackCopy.documentTitle}
             tone='accent'
           />
           <KangurLessonDocumentRenderer document={activeLessonDocument!} />
@@ -461,10 +556,10 @@ export function ActiveLessonView({
             align='center'
             data-kangur-print-exclude='true'
             data-testid='lessons-loading-document-summary'
-            description='Ładujemy treść lekcji i przygotowujemy materiał.'
-            label='Lesson document'
+            description={fallbackCopy.loadingDocumentDescription}
+            label={fallbackCopy.documentLabel}
             labelAccent='sky'
-            title='Ładowanie materiału'
+            title={fallbackCopy.loadingDocumentTitle}
             tone='accent'
           />
         </div>
@@ -476,7 +571,7 @@ export function ActiveLessonView({
             data-kangur-print-exclude='true'
             data-testid='lessons-empty-document-summary'
             description={emptyDocumentDescription}
-            label='Lesson document'
+            label={fallbackCopy.documentLabel}
             labelAccent='amber'
             title={emptyDocumentTitle}
             tone='accent'

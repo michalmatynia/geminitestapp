@@ -6,6 +6,14 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+const { localeMock } = vi.hoisted(() => ({
+  localeMock: vi.fn(() => 'pl'),
+}));
+
+vi.mock('next-intl', () => ({
+  useLocale: () => localeMock(),
+}));
+
 vi.mock('next/link', () => ({
   default: ({
     children,
@@ -39,6 +47,7 @@ import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfile
 
 describe('KangurProfileMenu', () => {
   it('uses touch-friendly coarse-pointer sizing for the profile trigger', () => {
+    localeMock.mockReturnValue('pl');
     render(
       <KangurProfileMenu
         label='Profil ucznia'
@@ -51,5 +60,13 @@ describe('KangurProfileMenu', () => {
       'px-4',
       'touch-manipulation'
     );
+  });
+
+  it('uses an English fallback label when none is provided on the English route', () => {
+    localeMock.mockReturnValue('en');
+
+    render(<KangurProfileMenu profile={{ href: '/kangur/profile' }} />);
+
+    expect(screen.getByRole('link', { name: 'Profile' })).toBeInTheDocument();
   });
 });

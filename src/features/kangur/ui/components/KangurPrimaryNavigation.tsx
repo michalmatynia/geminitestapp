@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { useSession } from 'next-auth/react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState, type AriaAttributes } from 'react';
 
@@ -49,6 +50,12 @@ import { KangurPanelCloseButton } from '@/features/kangur/ui/components/KangurPa
 const KangurProfileMenu = dynamic(() =>
   import('@/features/kangur/ui/components/KangurProfileMenu').then(m => ({ default: m.KangurProfileMenu }))
 );
+const KangurElevatedUserMenu = dynamic(() =>
+  import('@/features/kangur/ui/components/KangurElevatedUserMenu').then((m) => ({
+    default: m.KangurElevatedUserMenu,
+  }))
+);
+import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { useOptionalKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
@@ -79,6 +86,11 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
+import {
+  getElevatedSessionUserSnapshot,
+  isSuperAdminSession,
+} from '@/shared/lib/auth/elevated-session-user';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type KangurPrimaryNavigationPage =
   | 'Competition'
@@ -134,6 +146,91 @@ type KangurPrimaryNavigationProps = {
   showParentDashboard?: boolean;
 };
 
+type KangurPrimaryNavigationFallbackCopy = {
+  adminLabel: string;
+  avatarLabel: string;
+  enableTutorLabel: string;
+  disableTutorLabel: string;
+  guestPlayerNameLabel: string;
+  guestPlayerNamePlaceholder: string;
+  loginLabel: string;
+  logoutLabel: string;
+  logoutPendingLabel: string;
+  navLabel: string;
+  profileLabel: string;
+  profileLabelWithName: (name: string) => string;
+};
+
+const getPrimaryNavigationFallbackCopy = (
+  locale: ReturnType<typeof normalizeSiteLocale>
+): KangurPrimaryNavigationFallbackCopy => {
+  if (locale === 'uk') {
+    return {
+      adminLabel: 'Адмін',
+      avatarLabel: 'Аватар адміністратора',
+      enableTutorLabel: 'Увімкнути AI Tutor',
+      disableTutorLabel: 'Вимкнути AI Tutor',
+      guestPlayerNameLabel: "Ім'я гравця",
+      guestPlayerNamePlaceholder: "Введіть ім'я гравця...",
+      loginLabel: 'Увійти',
+      logoutLabel: 'Вийти',
+      logoutPendingLabel: 'Вихід...',
+      navLabel: 'Головна навігація Kangur',
+      profileLabel: 'Профіль',
+      profileLabelWithName: (name) => `Профіль ${name}`,
+    };
+  }
+
+  if (locale === 'de') {
+    return {
+      adminLabel: 'Admin',
+      avatarLabel: 'Administrator-Avatar',
+      enableTutorLabel: 'AI Tutor aktivieren',
+      disableTutorLabel: 'AI Tutor deaktivieren',
+      guestPlayerNameLabel: 'Name des Spielers',
+      guestPlayerNamePlaceholder: 'Name des Spielers eingeben...',
+      loginLabel: 'Anmelden',
+      logoutLabel: 'Abmelden',
+      logoutPendingLabel: 'Abmeldung...',
+      navLabel: 'Kangur-Hauptnavigation',
+      profileLabel: 'Profil',
+      profileLabelWithName: (name) => `Profil ${name}`,
+    };
+  }
+
+  if (locale === 'en') {
+    return {
+      adminLabel: 'Admin',
+      avatarLabel: 'Admin avatar',
+      enableTutorLabel: 'Enable AI Tutor',
+      disableTutorLabel: 'Disable AI Tutor',
+      guestPlayerNameLabel: 'Player name',
+      guestPlayerNamePlaceholder: 'Enter the player name...',
+      loginLabel: 'Sign in',
+      logoutLabel: 'Sign out',
+      logoutPendingLabel: 'Signing out...',
+      navLabel: 'Kangur primary navigation',
+      profileLabel: 'Profile',
+      profileLabelWithName: (name) => `Profile ${name}`,
+    };
+  }
+
+  return {
+    adminLabel: 'Admin',
+    avatarLabel: 'Awatar administratora',
+    enableTutorLabel: 'Włącz AI Tutora',
+    disableTutorLabel: 'Wyłącz AI Tutora',
+    guestPlayerNameLabel: 'Imię gracza',
+    guestPlayerNamePlaceholder: 'Wpisz imię gracza...',
+    loginLabel: 'Zaloguj się',
+    logoutLabel: 'Wyloguj',
+    logoutPendingLabel: 'Wylogowywanie...',
+    navLabel: 'Główna nawigacja Kangur',
+    profileLabel: 'Profil',
+    profileLabelWithName: (name) => `Profil ${name}`,
+  };
+};
+
 export type { KangurPrimaryNavigationProps };
 
 const ICON_CLASSNAME = 'h-[18px] w-[18px] sm:h-5 sm:w-5';
@@ -162,6 +259,23 @@ const isTransitionSourceActive = ({
 const renderNavAction = (config: KangurNavActionConfig): React.JSX.Element => {
   const { content, ...action } = config;
   return <KangurNavAction {...action}>{content}</KangurNavAction>;
+};
+
+const resolveTutorFallbackCopy = (
+  locale: ReturnType<typeof normalizeSiteLocale>,
+  value: string | null | undefined,
+  polishDefault: string,
+  fallback: string
+): string => {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return fallback;
+  }
+
+  if (locale !== 'pl' && value === polishDefault) {
+    return fallback;
+  }
+
+  return value;
 };
 
 function KangurHomeBetaBadge(): React.JSX.Element {
@@ -208,10 +322,10 @@ export function KangurPrimaryNavigation({
   contentClassName,
   currentPage,
   guestPlayerName,
-  guestPlayerNamePlaceholder = 'Wpisz imię gracza...',
+  guestPlayerNamePlaceholder,
   homeActive = currentPage === 'Game',
   isAuthenticated,
-  navLabel = 'Główna nawigacja Kangur',
+  navLabel,
   onGuestPlayerNameChange,
   onHomeClick,
   onLogin,
@@ -222,12 +336,20 @@ export function KangurPrimaryNavigation({
   const tutorContent = useKangurAiTutorContent();
   const tutor = useOptionalKangurAiTutor();
   const auth = useOptionalKangurAuth();
+  const { data: session } = useSession();
   const storefrontAppearance = useOptionalCmsStorefrontAppearance();
   const kangurAppearance = useKangurStorefrontAppearance();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
+  const locale = useLocale();
+  const normalizedLocale = normalizeSiteLocale(locale);
+  const fallbackCopy = useMemo(
+    () => getPrimaryNavigationFallbackCopy(normalizedLocale),
+    [normalizedLocale]
+  );
   const guestPlayerNameValue = typeof guestPlayerName === 'string' ? guestPlayerName : '';
-  const guestPlayerPlaceholderText = guestPlayerNamePlaceholder;
-  const navigationLabel = navLabel;
+  const guestPlayerPlaceholderText =
+    guestPlayerNamePlaceholder ?? fallbackCopy.guestPlayerNamePlaceholder;
+  const navigationLabel = navLabel ?? fallbackCopy.navLabel;
   const topBarClassName = className;
   const topBarContentClassName = contentClassName;
   const learnerProfileIsActive = currentPage === 'LearnerProfile';
@@ -244,11 +366,30 @@ export function KangurPrimaryNavigation({
   const hasActiveLearner = activeLearnerId.length > 0;
   const activeLearnerName =
     activeLearner?.displayName?.trim() || activeLearner?.loginName?.trim() || null;
+  const elevatedSessionUser = useMemo(() => {
+    const snapshot = getElevatedSessionUserSnapshot(session);
+
+    if (!snapshot) {
+      return null;
+    }
+
+    return {
+      ...snapshot,
+      email: snapshot.email ?? authUser?.email?.trim() ?? null,
+      name: snapshot.name ?? authUser?.full_name?.trim() ?? null,
+    };
+  }, [authUser?.email, authUser?.full_name, session]);
   const profileDisplayName = activeLearnerName || authUser?.full_name?.trim() || null;
-  const profileLabel = profileDisplayName ? `Profil ${profileDisplayName}` : 'Profil';
+  const profileLabel = profileDisplayName
+    ? fallbackCopy.profileLabelWithName(profileDisplayName)
+    : fallbackCopy.profileLabel;
   const profileAvatar = getKangurAvatarById(activeLearner?.avatarId);
+  const shouldRenderElevatedUserMenu =
+    effectiveIsAuthenticated && Boolean(elevatedSessionUser);
+  const canAccessGamesLibrary =
+    effectiveIsAuthenticated && isSuperAdminSession(session);
   const shouldRenderProfileMenu =
-    effectiveIsAuthenticated && (!isParentAccount || hasActiveLearner);
+    effectiveIsAuthenticated && !shouldRenderElevatedUserMenu && (!isParentAccount || hasActiveLearner);
   const isCoarsePointer = useKangurCoarsePointer();
   const mobileNavItemClassName =
     `max-sm:col-span-1 max-sm:min-w-0 max-sm:w-full max-sm:justify-center ${
@@ -259,6 +400,9 @@ export function KangurPrimaryNavigation({
       isCoarsePointer ? 'max-sm:min-h-12 max-sm:px-4' : 'max-sm:px-3'
     }`;
   const mobileAuthActionClassName = mobileNavItemClassName;
+  const elevatedUserTriggerClassName = isCoarsePointer
+    ? 'min-h-12 min-w-12 touch-manipulation select-none active:scale-[0.985]'
+    : undefined;
   const { entry: loginActionContent } = useKangurPageContentEntry('shared-nav-login-action');
   const loginActionRef = useRef<HTMLButtonElement | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
@@ -267,14 +411,22 @@ export function KangurPrimaryNavigation({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
   const [isAgeGroupModalOpen, setIsAgeGroupModalOpen] = useState(false);
-  const locale = useLocale();
   const navTranslations = useTranslations('KangurNavigation');
   const { subject, setSubject } = useKangurSubjectFocus();
   const { ageGroup, setAgeGroup } = useKangurAgeGroupFocus();
   const isMobileViewport = useKangurMobileBreakpoint();
-  const enableTutorLabel =
-    tutorContent.common.enableTutorLabel ?? tutorContent.navigation.restoreTutorLabel;
-  const disableTutorLabel = tutorContent.common.disableTutorAria ?? 'Wyłącz AI Tutora';
+  const enableTutorLabel = resolveTutorFallbackCopy(
+    normalizedLocale,
+    tutorContent.common.enableTutorLabel ?? tutorContent.navigation.restoreTutorLabel,
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.common.enableTutorLabel,
+    fallbackCopy.enableTutorLabel
+  );
+  const disableTutorLabel = resolveTutorFallbackCopy(
+    normalizedLocale,
+    tutorContent.common.disableTutorAria,
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.common.disableTutorAria,
+    fallbackCopy.disableTutorLabel
+  );
   const [isEditingGuestPlayerName, setIsEditingGuestPlayerName] = useState(
     !(guestPlayerName?.trim() ?? '')
   );
@@ -487,7 +639,7 @@ export function KangurPrimaryNavigation({
     enabled: !effectiveIsAuthenticated && Boolean(onLogin),
     priority: 130,
     metadata: {
-      label: 'Zaloguj się',
+      label: fallbackCopy.loginLabel,
     },
   });
 
@@ -508,7 +660,9 @@ export function KangurPrimaryNavigation({
     content: (
       <>
         <LogOut aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
-        <span className='truncate'>{isLoggingOut ? 'Wylogowywanie...' : 'Wyloguj'}</span>
+        <span className='truncate'>
+          {isLoggingOut ? fallbackCopy.logoutPendingLabel : fallbackCopy.logoutLabel}
+        </span>
       </>
     ),
     disabled: isLoggingOut,
@@ -533,6 +687,10 @@ export function KangurPrimaryNavigation({
   };
 
   const renderAuthActions = (onActionClick?: () => void): React.ReactNode => {
+    if (shouldRenderElevatedUserMenu) {
+      return null;
+    }
+
     if (effectiveIsAuthenticated) {
       return renderNavAction(buildActionWithClose(logoutAction, onActionClick));
     }
@@ -547,7 +705,7 @@ export function KangurPrimaryNavigation({
           isEditingGuestPlayerName || !hasGuestPlayerName ? (
             <div className='w-full sm:w-[220px]'>
               <label className='sr-only' htmlFor='kangur-primary-nav-guest-player-name'>
-                Imię gracza
+                {fallbackCopy.guestPlayerNameLabel}
               </label>
               <KangurTextField
                 accent='indigo'
@@ -591,7 +749,7 @@ export function KangurPrimaryNavigation({
                   <>
                     <LogIn aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
                     <span className='truncate'>
-                      {loginActionContent?.title ?? 'Zaloguj się'}
+                      {loginActionContent?.title ?? fallbackCopy.loginLabel}
                     </span>
                   </>
                 ),
@@ -920,7 +1078,9 @@ export function KangurPrimaryNavigation({
       >
         {leading}
         {renderNavAction(buildActionWithClose(homeAction, onActionClick))}
-        {renderNavAction(buildActionWithClose(gamesLibraryAction, onActionClick))}
+        {canAccessGamesLibrary
+          ? renderNavAction(buildActionWithClose(gamesLibraryAction, onActionClick))
+          : null}
         {renderNavAction(buildActionWithClose(lessonsAction, onActionClick))}
         {renderNavAction(buildActionWithClose(duelsAction, onActionClick))}
         {renderNavAction(buildActionWithClose(subjectAction, onActionClick))}
@@ -955,6 +1115,7 @@ export function KangurPrimaryNavigation({
       !resolvedAppearanceControls &&
       !rightAccessory &&
       !parentDashboardAction &&
+      !shouldRenderElevatedUserMenu &&
       !shouldRenderProfileMenu &&
       !authActions
     ) {
@@ -981,6 +1142,24 @@ export function KangurPrimaryNavigation({
         {parentDashboardAction
           ? renderNavAction(buildActionWithClose(parentDashboardAction, onActionClick))
           : null}
+        {shouldRenderElevatedUserMenu && elevatedSessionUser ? (
+          <KangurElevatedUserMenu
+            adminLabel={fallbackCopy.adminLabel}
+            logoutLabel={fallbackCopy.logoutLabel}
+            onLogout={onLogout}
+            profile={
+              !isParentAccount || hasActiveLearner
+                ? {
+                    href: profileHref,
+                    label: profileLabel,
+                  }
+                : null
+            }
+            triggerAriaLabel={fallbackCopy.avatarLabel}
+            triggerClassName={elevatedUserTriggerClassName}
+            user={elevatedSessionUser}
+          />
+        ) : null}
         {shouldRenderProfileMenu ? (
           <KangurProfileMenu
             avatar={profileAvatar}

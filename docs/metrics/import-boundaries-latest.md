@@ -8,15 +8,15 @@ canonical: true
 ---
 # Import Boundaries Check
 
-Generated at: 2026-03-26T12:50:53.565Z
+Generated at: 2026-03-26T14:24:00.140Z
 
 ## Summary
 
-- Status: FAILED
-- Files scanned: 5829
+- Status: PASSED
+- Files scanned: 5840
 - Features tracked: 10
 - Circular dependencies: 0
-- Errors: 2
+- Errors: 0
 - Warnings: 0
 - Info: 0
 
@@ -39,14 +39,10 @@ Generated at: 2026-03-26T12:50:53.565Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| cross-feature-internal-import | 2 | 0 | 0 |
 
 ## Issues
 
-| Severity | Rule | Location | Message |
-| --- | --- | --- | --- |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/home/home-fallback-content.products.tsx:8 | Imports internal path from feature "products": @/features/products/components/ProductCard. Use the barrel export instead. |
-| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/home/home-fallback-content.signature.tsx:7 | Imports internal path from feature "products": @/features/products/components/ProductCard. Use the barrel export instead. |
+No import boundary issues detected.
 
 ## Notes
 

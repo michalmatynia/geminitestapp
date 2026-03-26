@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, type ReactNode, useContext } from 'react';
+import { useLocale } from 'next-intl';
 
 import {
   KangurButton,
@@ -11,6 +12,7 @@ import {
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type KangurPageIntroCardProps = {
   accent?: KangurAccent;
@@ -54,6 +56,24 @@ type KangurPageIntroCardContextValue = {
 };
 
 const KangurPageIntroCardContext = createContext<KangurPageIntroCardContextValue | null>(null);
+
+const getKangurPageIntroFallbackLabel = (
+  locale: ReturnType<typeof normalizeSiteLocale>
+): string => {
+  if (locale === 'uk') {
+    return 'Повернутися на попередню сторінку';
+  }
+
+  if (locale === 'de') {
+    return 'Zur vorherigen Seite zurück';
+  }
+
+  if (locale === 'en') {
+    return 'Back to the previous page';
+  }
+
+  return 'Wróć do poprzedniej strony';
+};
 
 const useKangurPageIntroCardContext = () => {
   const value = useContext(KangurPageIntroCardContext);
@@ -160,7 +180,7 @@ function KangurPageIntroBackButton(): React.JSX.Element | null {
 export function KangurPageIntroCard({
   accent = 'slate',
   backButtonContent,
-  backButtonLabel = 'Wróć do poprzedniej strony',
+  backButtonLabel,
   backButtonTestId,
   className,
   children,
@@ -178,12 +198,14 @@ export function KangurPageIntroCard({
   visualTitle,
   onBack = () => {},
 }: KangurPageIntroCardProps): React.JSX.Element {
+  const locale = normalizeSiteLocale(useLocale());
   const panelClassName = cn('w-full', headingAction ? 'text-left' : 'text-center', className);
   const panelTestId = testId;
+  const resolvedBackButtonLabel = backButtonLabel ?? getKangurPageIntroFallbackLabel(locale);
   const contextValue: KangurPageIntroCardContextValue = {
     accent,
     backButtonContent,
-    backButtonLabel,
+    backButtonLabel: resolvedBackButtonLabel,
     backButtonTestId,
     description,
     headingAction,

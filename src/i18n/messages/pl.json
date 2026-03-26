@@ -1117,17 +1117,65 @@
     "emptyDescription": "Dodaj pierwsze definicje gier, aby zaczac klasyfikowac silniki i warianty.",
     "emptyFilteredTitle": "Zadne gry nie pasuja do tych filtrow",
     "emptyFilteredDescription": "Wyczysc jeden lub kilka filtrow, aby zobaczyc reszte katalogu.",
-    "metrics": {
-      "games": "Gry",
-      "gamesDescription": "Widoczne wpisy katalogu.",
-      "engines": "Silniki",
-      "enginesDescription": "Widoczne rodziny silnikow.",
-      "variants": "Warianty",
-      "variantsDescription": "Widoczne sposoby osadzenia i uruchamiania.",
-      "lessonLinked": "Powiazane z lekcjami",
-      "lessonLinkedDescription": "Widoczne gry juz podlaczone do komponentow lekcji."
+    "focus": {
+      "eyebrow": "Fokus z glebokiego linku",
+      "gameTitle": "Skupiony wpis katalogowy",
+      "gameDescription": "Ten widok jest teraz zawężony do gry {game}.",
+      "clear": "Wyczysc fokus gry",
+      "engineTitle": "Skupiona rodzina silnikow",
+      "engineDescription": "Ten widok jest teraz zawężony do rodziny silnikow {engine}.",
+      "clearEngine": "Wyczysc fokus silnika"
     },
-    "coverageGroupsEyebrow": "Polityka pokrycia",
+  "tabs": {
+    "eyebrow": "Uklad sekcji",
+    "title": "Przegladaj po zakladkach",
+    "description": "Przelaczaj miedzy katalogiem gier, widokiem struktury wspolnej domeny i serializacja runtime.",
+    "listLabel": "Sekcje biblioteki gier",
+    "catalog": "Katalog",
+    "structure": "Struktura",
+    "runtime": "Runtime"
+  },
+  "metrics": {
+    "games": "Gry",
+    "gamesDescription": "Widoczne wpisy katalogu.",
+    "engines": "Silniki",
+    "enginesDescription": "Widoczne rodziny silnikow.",
+    "variants": "Warianty",
+    "variantsDescription": "Widoczne sposoby osadzenia i uruchamiania.",
+    "lessonLinked": "Powiazane z lekcjami",
+    "lessonLinkedDescription": "Widoczne gry juz podlaczone do komponentow lekcji."
+  },
+  "serializationAuditEyebrow": "Kontrakt runtime",
+  "serializationAuditTitle": "Serializacja runtime",
+  "serializationAuditDescription": "Pokazuje, ktore warianty runtime maja jawne identyfikatory, a ktore nadal opieraja sie na fallbackach zgodnosci.",
+  "serializationAudit": {
+    "statusClean": "Jawne identyfikatory runtime",
+    "statusAttention": "Sprzatanie zgodnosci",
+    "explicitLabel": "Jawne runtime",
+    "explicitDescription": "{count} z {total} wariantow runtime ma jawne identyfikatory runtime.",
+    "fallbackLabel": "Tylko fallback",
+    "fallbackDescription": "Warianty, ktore nadal rozwiazuja sie tylko przez identyfikatory zgodnosci.",
+    "duplicatesLabel": "Zduplikowane legacy ids",
+    "duplicatesDescription": "Warianty, ktore nadal trzymaja jednoczesnie jawne i legacy identyfikatory runtime.",
+    "legacyGameFallbackLabel": "Legacy launch games",
+    "legacyGameFallbackDescription": "Gry, ktore nadal trzymaja legacyScreenIds we wspolnej definicji.",
+    "backlogEyebrow": "Backlog napraw",
+    "backlogDescription": "Pokazuje dokladne identyfikatory katalogu, ktore nadal wymagaja sprzatania zgodnosci.",
+    "fallbackBacklogLabel": "Warianty tylko z fallbackiem",
+    "duplicatesBacklogLabel": "Warianty z duplikatem legacy",
+    "missingBacklogLabel": "Warianty bez runtime",
+    "legacyGameBacklogLabel": "Gry z legacy launch",
+    "nonSharedBacklogLabel": "Silniki poza shared runtime",
+    "nonSharedEnginesLabel": "Silniki poza shared runtime",
+    "nonSharedEnginesDescription": "Rodziny silnikow, ktore nie sa jeszcze oznaczone jako shared runtime.",
+    "surfaceDescription": "{count} wariantow runtime korzysta teraz z tej powierzchni.",
+    "totalVariantsLabel": "Warianty runtime",
+    "explicitVariantsLabel": "Jawne",
+    "fallbackVariantsLabel": "Tylko fallback",
+    "duplicatesVariantsLabel": "Zduplikowane legacy",
+    "missingVariantsLabel": "Brak runtime"
+  },
+  "coverageGroupsEyebrow": "Polityka pokrycia",
     "coverageGroupsTitle": "Mapa pokrycia lekcji",
     "coverageGroupsDescription": "{count, plural, one {# tor pokrycia sledzony we wspolnej domenie gier.} few {# tory pokrycia sledzone we wspolnej domenie gier.} many {# torow pokrycia sledzonych we wspolnej domenie gier.} other {# torow pokrycia sledzonych we wspolnej domenie gier.}}",
     "coverageGroups": {
@@ -1202,6 +1250,11 @@
       "summaryAll": "{count, plural, one {Pokazujemy # gre ze wspolnego katalogu.} few {Pokazujemy # gry ze wspolnego katalogu.} many {Pokazujemy # gier ze wspolnego katalogu.} other {Pokazujemy # gier ze wspolnego katalogu.}}",
       "summaryFiltered": "Pokazujemy {visible} z {total} gier ze wspolnego katalogu.",
       "clear": "Wyczysc filtry",
+      "game": {
+        "label": "Gra",
+        "aria": "Filtruj gry wedlug dokladnej gry",
+        "all": "Wszystkie gry"
+      },
       "subject": {
         "label": "Przedmiot",
         "aria": "Filtruj gry wedlug przedmiotu",
@@ -3500,13 +3553,35 @@
     },
     "subtractingGarden": {
       "feedback": {
-        "correct": "Brawo! Zostało"
+        "correct": "Brawo! Zostało",
+        "tooFew": "Za mało. Zabierz jeszcze {count}.",
+        "tooMany": "Za dużo. Oddaj {count}."
+      },
+      "inRound": {
+        "idle": "Przeciągnij lub kliknij obiekty, aby odejmować.",
+        "takeAwayInstruction": "Zabierz {count} świecących punktów",
+        "target": "Cel: zabierz {count}",
+        "removed": "Zabrane: {current}/{total}",
+        "remaining": "Zostało: {count}",
+        "check": "Sprawdź",
+        "zones": {
+          "basket": {
+            "title": "Koszyk startowy",
+            "empty": "Pusty koszyk"
+          },
+          "cloud": {
+            "title": "Chmura zabiera",
+            "empty": "Upuść tutaj"
+          }
+        }
       },
       "touch": {
         "idle": "Dotknij świecący punkt, a potem dotknij koszyk albo chmurę. Nadal możesz też przeciągać.",
         "selected": "Wybrany punkt: {emoji}. Dotknij koszyk albo chmurę.",
         "keyboardIdle": "Wybierz świecący punkt, przejdź do koszyka albo chmury i naciśnij Enter lub Spację.",
-        "keyboardSelected": "Wybrany punkt: {emoji}. Przejdź do koszyka albo chmury i naciśnij Enter lub Spację."
+        "keyboardSelected": "Wybrany punkt: {emoji}. Przejdź do koszyka albo chmury i naciśnij Enter lub Spację.",
+        "moveToBasket": "Do koszyka",
+        "moveToCloud": "Do chmury"
       },
       "aria": {
         "token": "Przenieś punkt",

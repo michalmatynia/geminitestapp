@@ -1117,17 +1117,65 @@
     "emptyDescription": "Füge die ersten Spieldefinitionen hinzu, um Engines und Varianten zu klassifizieren.",
     "emptyFilteredTitle": "Keine Spiele passen zu diesen Filtern",
     "emptyFilteredDescription": "Entferne einen oder mehrere Filter, um den restlichen Katalog zu sehen.",
-    "metrics": {
-      "games": "Spiele",
-      "gamesDescription": "Sichtbare Katalogeinträge.",
-      "engines": "Engines",
-      "enginesDescription": "Sichtbare Engine-Familien.",
-      "variants": "Varianten",
-      "variantsDescription": "Sichtbare Einbettungs- und Startmodi.",
-      "lessonLinked": "Mit Lektionen verknüpft",
-      "lessonLinkedDescription": "Sichtbare Spiele, die bereits mit Lektionskomponenten verbunden sind."
+    "focus": {
+      "eyebrow": "Deep-Link-Fokus",
+      "gameTitle": "Fokussierter Katalogeintrag",
+      "gameDescription": "Diese Ansicht ist derzeit auf {game} eingegrenzt.",
+      "clear": "Spielfokus entfernen",
+      "engineTitle": "Fokussierte Engine-Familie",
+      "engineDescription": "Diese Ansicht ist derzeit auf die Engine-Familie {engine} eingegrenzt.",
+      "clearEngine": "Engine-Fokus entfernen"
     },
-    "coverageGroupsEyebrow": "Abdeckungspolitik",
+  "tabs": {
+    "eyebrow": "Abschnittslayout",
+    "title": "Per Tabs durchsuchen",
+    "description": "Wechsle zwischen Spielekatalog, gemeinsamer Strukturansicht und Runtime-Serialisierung.",
+    "listLabel": "Bereiche der Spielebibliothek",
+    "catalog": "Katalog",
+    "structure": "Struktur",
+    "runtime": "Runtime"
+  },
+  "metrics": {
+    "games": "Spiele",
+    "gamesDescription": "Sichtbare Katalogeinträge.",
+    "engines": "Engines",
+    "enginesDescription": "Sichtbare Engine-Familien.",
+    "variants": "Varianten",
+    "variantsDescription": "Sichtbare Einbettungs- und Startmodi.",
+    "lessonLinked": "Mit Lektionen verknüpft",
+    "lessonLinkedDescription": "Sichtbare Spiele, die bereits mit Lektionskomponenten verbunden sind."
+  },
+  "serializationAuditEyebrow": "Runtime-Vertrag",
+  "serializationAuditTitle": "Runtime-Serialisierung",
+  "serializationAuditDescription": "Zeigt, welche runtime-tragenden Varianten explizite IDs verwenden und welche noch auf Kompatibilitäts-Fallbacks beruhen.",
+  "serializationAudit": {
+    "statusClean": "Explizite Runtime-IDs",
+    "statusAttention": "Kompatibilitätsbereinigung",
+    "explicitLabel": "Explizite Runtimes",
+    "explicitDescription": "{count} von {total} runtime-tragenden Varianten verwenden explizite Runtime-IDs.",
+    "fallbackLabel": "Nur Fallback",
+    "fallbackDescription": "Varianten, die weiterhin nur über Kompatibilitäts-IDs aufgelöst werden.",
+    "duplicatesLabel": "Doppelte Legacy-IDs",
+    "duplicatesDescription": "Varianten, die noch sowohl explizite als auch Legacy-Runtime-IDs tragen.",
+    "legacyGameFallbackLabel": "Legacy-Startspiele",
+    "legacyGameFallbackDescription": "Spiele, die in der gemeinsamen Definition noch legacyScreenIds tragen.",
+    "backlogEyebrow": "Bereinigungs-Backlog",
+    "backlogDescription": "Listet die genauen Katalog-IDs auf, die noch Kompatibilitätsbereinigung brauchen.",
+    "fallbackBacklogLabel": "Nur-Fallback-Varianten",
+    "duplicatesBacklogLabel": "Varianten mit Legacy-Duplikat",
+    "missingBacklogLabel": "Varianten ohne Runtime",
+    "legacyGameBacklogLabel": "Legacy-Startspiele",
+    "nonSharedBacklogLabel": "Nicht-geteilte Engines",
+    "nonSharedEnginesLabel": "Nicht-geteilte Engines",
+    "nonSharedEnginesDescription": "Engine-Familien, die noch nicht als Shared Runtime markiert sind.",
+    "surfaceDescription": "{count} runtime-tragende Varianten nutzen aktuell diese Oberfläche.",
+    "totalVariantsLabel": "Runtime-tragende Varianten",
+    "explicitVariantsLabel": "Explizit",
+    "fallbackVariantsLabel": "Nur Fallback",
+    "duplicatesVariantsLabel": "Doppelte Legacy",
+    "missingVariantsLabel": "Fehlende Runtime"
+  },
+  "coverageGroupsEyebrow": "Abdeckungspolitik",
     "coverageGroupsTitle": "Lektions-Abdeckungsplan",
     "coverageGroupsDescription": "{count, plural, one {# Abdeckungspfad wird in der gemeinsamen Spiele-Domäne verfolgt.} other {# Abdeckungspfade werden in der gemeinsamen Spiele-Domäne verfolgt.}}",
     "coverageGroups": {
@@ -1202,6 +1250,11 @@
       "summaryAll": "{count, plural, one {# Spiel aus dem gemeinsamen Katalog wird angezeigt.} other {# Spiele aus dem gemeinsamen Katalog werden angezeigt.}}",
       "summaryFiltered": "{visible} von {total} Spielen aus dem gemeinsamen Katalog werden angezeigt.",
       "clear": "Filter zurücksetzen",
+      "game": {
+        "label": "Spiel",
+        "aria": "Spiele nach exaktem Spiel filtern",
+        "all": "Alle Spiele"
+      },
       "subject": {
         "label": "Fach",
         "aria": "Spiele nach Fach filtern",
@@ -3500,13 +3553,35 @@
     },
     "subtractingGarden": {
       "feedback": {
-        "correct": "Gut gemacht! Übrig:"
+        "correct": "Gut gemacht! Übrig:",
+        "tooFew": "Zu wenig. Nimm noch {count} weg.",
+        "tooMany": "Zu viel. Gib {count} zurück."
+      },
+      "inRound": {
+        "idle": "Ziehe oder tippe die Objekte an, um zu subtrahieren.",
+        "takeAwayInstruction": "Nimm {count} leuchtende Punkte weg",
+        "target": "Ziel: nimm {count} weg",
+        "removed": "Weggenommen: {current}/{total}",
+        "remaining": "Übrig: {count}",
+        "check": "Prüfen",
+        "zones": {
+          "basket": {
+            "title": "Startkorb",
+            "empty": "Leerer Korb"
+          },
+          "cloud": {
+            "title": "Die Wolke nimmt weg",
+            "empty": "Hier ablegen"
+          }
+        }
       },
       "touch": {
         "idle": "Tippe einen leuchtenden Punkt an und danach den Korb oder die Wolke. Ziehen geht weiterhin auch.",
         "selected": "Ausgewählter Punkt: {emoji}. Tippe den Korb oder die Wolke an.",
         "keyboardIdle": "Wähle einen leuchtenden Punkt aus, gehe dann zum Korb oder zur Wolke und drücke Enter oder Leertaste.",
-        "keyboardSelected": "Ausgewählter Punkt: {emoji}. Gehe zum Korb oder zur Wolke und drücke Enter oder Leertaste."
+        "keyboardSelected": "Ausgewählter Punkt: {emoji}. Gehe zum Korb oder zur Wolke und drücke Enter oder Leertaste.",
+        "moveToBasket": "Zum Korb",
+        "moveToCloud": "Zur Wolke"
       },
       "aria": {
         "token": "Leuchtenden Punkt verschieben",

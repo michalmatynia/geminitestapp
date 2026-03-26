@@ -19,6 +19,7 @@ import {
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import { translateKangurLearnerProfileWithFallback } from '@/features/kangur/ui/services/profile';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 const SESSION_ACCENTS: Record<string, KangurAccent> = {
   addition: 'amber',
@@ -44,8 +45,24 @@ const resolveSessionScoreAccent = (accuracyPercent: number): KangurAccent => {
   return 'rose';
 };
 
+const getDateMissingFallbackLabel = (locale: ReturnType<typeof normalizeSiteLocale>): string => {
+  if (locale === 'uk') {
+    return 'Немає дати';
+  }
+
+  if (locale === 'de') {
+    return 'Kein Datum';
+  }
+
+  if (locale === 'en') {
+    return 'No date';
+  }
+
+  return 'Brak daty';
+};
+
 export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
-  const locale = useLocale();
+  const locale = normalizeSiteLocale(useLocale());
   const translations = useTranslations('KangurLearnerProfileWidgets.sessions');
   const runtimeTranslations = useTranslations('KangurLearnerProfileRuntime');
   const { isLoadingScores, progress, scoresError, snapshot } = useKangurLearnerProfileRuntime();
@@ -57,7 +74,7 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
   const dateMissingLabel = translateKangurLearnerProfileWithFallback(
     (key, values) => runtimeTranslations(key as never, values as never),
     'dateMissing',
-    'Brak daty'
+    getDateMissingFallbackLabel(locale)
   );
 
   return (

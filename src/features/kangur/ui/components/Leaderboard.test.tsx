@@ -2,9 +2,9 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { KangurScoreRecord, KangurUser } from '@kangur/platform';
 
 import { GAME_HOME_LEADERBOARD_SHELL_CLASSNAME } from '@/features/kangur/ui/pages/GameHome.constants';
@@ -125,6 +125,10 @@ describe('Leaderboard', () => {
       setSubject: vi.fn(),
       subjectKey: 'learner-1',
     });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('uses shared segmented styling for filters and still narrows leaderboard results', async () => {
@@ -251,5 +255,20 @@ describe('Leaderboard', () => {
     render(<Leaderboard />);
 
     expect(await screen.findByRole('heading', { name: 'Ranking mistrzow' })).toBeInTheDocument();
+  });
+
+  it('defers the leaderboard score fetch until after the initial render turn', async () => {
+    vi.useFakeTimers();
+
+    render(<Leaderboard />);
+
+    expect(scoreFilterMock).not.toHaveBeenCalled();
+    expect(screen.getByTestId('leaderboard-loading')).toBeInTheDocument();
+
+    await act(async () => {
+      vi.runOnlyPendingTimers();
+    });
+
+    expect(scoreFilterMock).toHaveBeenCalledTimes(1);
   });
 });

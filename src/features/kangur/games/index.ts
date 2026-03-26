@@ -48,6 +48,9 @@ export * from './engine-implementations';
 // engine-catalog.ts
 export * from './engine-catalog';
 
+// serialization-audit.ts
+export * from './serialization-audit';
+
 // library-overview.ts
 export * from './library-overview';
 

@@ -2,6 +2,7 @@ import { cache } from 'react';
 
 import { getUserPreferences } from '@/features/auth/server';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
+import { isElevatedSession } from '@/shared/lib/auth/elevated-session-user';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import {
   FRONT_PAGE_ALLOWED,
@@ -40,16 +41,7 @@ export const primeFrontPageSettingRuntime = (
   return commitFrontPageSettingSnapshot(value);
 };
 
-const isAdminSession = (session: Session | null): boolean => {
-  if (!session?.user) return false;
-  const user = session.user as Session['user'] & {
-    isElevated?: boolean;
-    role?: string | null;
-  };
-  if (user.isElevated) return true;
-  const role = user.role ?? '';
-  return ['admin', 'super_admin', 'superuser'].includes(role);
-};
+const isAdminSession = isElevatedSession;
 
 export const canPreviewDrafts = async (session: Session | null): Promise<boolean> => {
   if (!isAdminSession(session)) return false;

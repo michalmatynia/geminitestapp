@@ -67,22 +67,17 @@ describe('kangur game engine catalog', () => {
       drawingCatalogEntries.find((entry) => entry.engineId === 'symbol-tracing-engine')
         ?.lessonComponentIds
     ).toEqual(['alphabet_basics', 'alphabet_copy']);
-    expect(ownershipGroups.map((group) => group.ownership)).toEqual([
-      'shared_runtime',
-      'lesson_embedded',
-    ]);
-    expect(ownershipGroups[1]?.engineEntries.map((entry) => entry.engineId)).toEqual([
-      'color-harmony-engine',
-      'letter-match-engine',
-    ]);
-    expect(implementationGroups.map((group) => group.ownership)).toEqual([
-      'shared_runtime',
-      'lesson_embedded',
-    ]);
+    expect(ownershipGroups.map((group) => group.ownership)).toEqual(['shared_runtime']);
+    expect(ownershipGroups[0]?.engineEntries.map((entry) => entry.engineId)).toContain(
+      'color-harmony-engine'
+    );
+    expect(implementationGroups.map((group) => group.ownership)).toEqual(['shared_runtime']);
     expect(
       implementationGroups.find((group) => group.ownership === 'shared_runtime')?.runtimeIds
     ).toEqual(
       expect.arrayContaining([
+        'art_color_harmony_studio_lesson_stage',
+        'ColorHarmonyStageGame',
         'geometry_drawing_game',
         'GeometrySymmetryGame',
         'GeometryPerimeterDrawingGame',
@@ -97,10 +92,7 @@ describe('kangur game engine catalog', () => {
       'early_learning',
       'adult_learning',
     ]);
-    expect(facets.implementationOwnerships).toEqual([
-      'shared_runtime',
-      'lesson_embedded',
-    ]);
+    expect(facets.implementationOwnerships).toEqual(['shared_runtime']);
     expect(overview.engineGroups).toEqual(engineEntries);
     expect(overview.drawingGroups).toEqual(drawingCatalogEntries);
     expect(overview.implementationGroups).toEqual(implementationGroups);

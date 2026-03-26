@@ -11,6 +11,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import type { KangurDrawingDraftStorageController } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage';
 
 import {
   KangurAiTutorPanelBodyProvider,
@@ -32,21 +33,19 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 
 vi.mock('./KangurAiTutorDrawingCanvas', () => ({
   KangurAiTutorDrawingCanvas: ({
-    initialSnapshot,
+    draftStorage,
     onCancel,
     onComplete,
-    onSnapshotChange,
   }: {
-    initialSnapshot?: string | null;
+    draftStorage?: KangurDrawingDraftStorageController;
     onCancel: () => void;
     onComplete: (dataUrl: string) => void;
-    onSnapshotChange?: (snapshot: string | null) => void;
   }) => (
     <div
-      data-initial-snapshot={initialSnapshot ?? ''}
+      data-initial-snapshot={draftStorage?.draftSnapshot ?? ''}
       data-testid='mock-kangur-ai-tutor-drawing-canvas'
     >
-      <button type='button' onClick={() => onSnapshotChange?.('draft-snapshot-1')}>
+      <button type='button' onClick={() => draftStorage?.setDraftSnapshot('draft-snapshot-1')}>
         Save draft
       </button>
       <button type='button' onClick={onCancel}>

@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-26T12:26:31.766Z",
+  "generatedAt": "2026-03-26T14:24:06.609Z",
   "status": "warn",
   "summary": {
-    "total": 3,
+    "total": 4,
     "errorCount": 0,
-    "warningCount": 3,
+    "warningCount": 4,
     "infoCount": 0,
     "status": "warn",
-    "fileCount": 5824
+    "fileCount": 5840
   },
   "scope": {
     "root": "src",
@@ -26,9 +26,19 @@
       "ruleId": "dangerouslysetinnerhtml-review",
       "message": "dangerouslySetInnerHTML is used without an obvious sanitize/safe marker in the inline expression.",
       "file": "src/app/(frontend)/layout.tsx",
-      "line": 101,
+      "line": 133,
       "column": 17,
       "snippet": "{{ __html: kangurSurfaceHintScript }}",
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "dangerouslysetinnerhtml-review",
+      "message": "dangerouslySetInnerHTML is used without an obvious sanitize/safe marker in the inline expression.",
+      "file": "src/app/(frontend)/layout.tsx",
+      "line": 136,
+      "column": 17,
+      "snippet": "{{ __html: kangurAuthBootstrapScript }}",
       "context": null
     },
     {
@@ -56,9 +66,9 @@
     {
       "ruleId": "dangerouslysetinnerhtml-review",
       "errorCount": 0,
-      "warningCount": 3,
+      "warningCount": 4,
       "infoCount": 0
     }
   ],
-  "durationMs": 9394
+  "durationMs": 2806
 }

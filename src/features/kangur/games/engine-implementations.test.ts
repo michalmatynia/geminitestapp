@@ -16,7 +16,7 @@ describe('kangur game engine implementations', () => {
     ).toEqual(createDefaultKangurGameEngines().map((engine) => engine.id).sort());
   });
 
-  it('distinguishes shared, lesson-embedded, and mixed runtime ownership', () => {
+  it('tracks which engine families are shared-runtime versus still lesson-embedded', () => {
     expect(getKangurGameEngineImplementation('shape-drawing-engine').ownership).toBe(
       'shared_runtime'
     );
@@ -27,6 +27,12 @@ describe('kangur game engine implementations', () => {
       'shared_runtime'
     );
     expect(getKangurGameEngineImplementation('shape-recognition-engine').ownership).toBe(
+      'shared_runtime'
+    );
+    expect(getKangurGameEngineImplementation('letter-match-engine').ownership).toBe(
+      'shared_runtime'
+    );
+    expect(getKangurGameEngineImplementation('color-harmony-engine').ownership).toBe(
       'shared_runtime'
     );
   });
@@ -125,6 +131,15 @@ describe('kangur game engine implementations', () => {
       'geometry_shape_spotter_lesson_stage',
       'ArtShapesRotationGapGame',
       'ShapeRecognitionStageGame',
+    ]);
+    expect(getKangurGameEngineImplementation('letter-match-engine').runtimeIds).toEqual([
+      'alphabet_first_words_lesson_stage',
+      'alphabet_letter_matching_lesson_stage',
+      'AlphabetLiteracyStageGame',
+    ]);
+    expect(getKangurGameEngineImplementation('color-harmony-engine').runtimeIds).toEqual([
+      'art_color_harmony_studio_lesson_stage',
+      'ColorHarmonyStageGame',
     ]);
     expect(getKangurGameEngineImplementation('symbol-tracing-engine').runtimeIds).toEqual([
       'AlphabetBasicsLesson',

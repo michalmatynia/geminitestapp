@@ -523,6 +523,31 @@ describe('buildKangurLearnerProfileSnapshot', () => {
     expect(snapshot.recommendedSessionNextBadgeName).toBe('Staying on track');
   });
 
+  it('uses English fallback profile copy when runtime translations are unavailable', () => {
+    const snapshot = buildKangurLearnerProfileSnapshot({
+      progress,
+      scores: [
+        createScore({
+          id: 'calendar-session',
+          operation: 'calendar',
+          created_date: '2026-03-06T12:00:00.000Z',
+        }),
+      ],
+      dailyGoalGames: 2,
+      now: new Date('2026-03-06T15:00:00.000Z'),
+      locale: 'en',
+    });
+
+    expect(snapshot.recentSessions[0]?.operationLabel).toBe('Calendar');
+    expect(snapshot.recommendations.find((entry) => entry.id === 'daily_goal')).toMatchObject({
+      title: 'Finish the daily goal',
+      description: 'Only 1 game is left to reach the daily goal. Today you already earned +24 XP.',
+      action: {
+        label: 'Play now',
+      },
+    });
+  });
+
   it('adds an xp momentum recommendation when the daily game goal is complete but xp is low', () => {
     const snapshot = buildKangurLearnerProfileSnapshot({
       progress: {

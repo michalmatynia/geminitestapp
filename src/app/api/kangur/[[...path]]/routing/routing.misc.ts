@@ -20,6 +20,10 @@ import {
   querySchema as lessonsQuerySchema,
 } from '../../lessons/handler';
 import {
+  getKangurLessonsCatalogHandler,
+  querySchema as lessonsCatalogQuerySchema,
+} from '../../lessons-catalog/handler';
+import {
   getKangurLessonDocumentHandler,
   getKangurLessonDocumentsHandler,
   postKangurLessonDocumentsHandler,
@@ -120,6 +124,15 @@ export const lessonsGetHandler: SimpleRouteHandler = apiHandler(getKangurLessons
   service: 'kangur.api',
   querySchema: lessonsQuerySchema,
 });
+
+export const lessonsCatalogGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurLessonsCatalogHandler,
+  {
+    source: 'kangur.lessons-catalog.GET',
+    service: 'kangur.api',
+    querySchema: lessonsCatalogQuerySchema,
+  }
+);
 
 export const gameLibraryPageGetHandler: SimpleRouteHandler = apiHandler(
   getKangurGameLibraryPageHandler,
@@ -458,6 +471,10 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
   }
   if (segments[0] === 'lessons' && segments.length === 1) {
     return handleGetPost(request, lessonsGetHandler, lessonsPostHandler);
+  }
+  if (segments[0] === 'lessons-catalog' && segments.length === 1) {
+    if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
+    return lessonsCatalogGetHandler(request);
   }
   if (segments[0] === 'game-library-page' && segments.length === 1) {
     if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);

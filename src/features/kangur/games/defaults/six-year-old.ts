@@ -16,6 +16,7 @@ export const KANGUR_SIX_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     emoji: '🎨',
     mechanic: 'tap_select',
     interactionMode: 'tap',
+    lessonStageRuntimeId: 'art_color_harmony_studio_lesson_stage',
     tags: ['art', 'colors', 'warm-cool'],
     sortOrder: 55,
   }),
@@ -45,7 +46,7 @@ export const KANGUR_SIX_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     tags: ['alphabet', 'copying', 'handwriting'],
     sortOrder: 20,
   }),
-  createSixYearOldInlineGame({
+  createSixYearOldStageGame({
     id: 'alphabet_first_words',
     engineId: 'letter-match-engine',
     subject: 'alphabet',
@@ -55,10 +56,11 @@ export const KANGUR_SIX_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     emoji: '📖',
     mechanic: 'tap_select',
     interactionMode: 'tap',
+    lessonStageRuntimeId: 'alphabet_first_words_lesson_stage',
     tags: ['alphabet', 'words', 'matching'],
     sortOrder: 30,
   }),
-  createSixYearOldInlineGame({
+  createSixYearOldStageGame({
     id: 'alphabet_letter_matching',
     engineId: 'letter-match-engine',
     subject: 'alphabet',
@@ -68,6 +70,7 @@ export const KANGUR_SIX_YEAR_OLD_GAMES: readonly KangurGameDefinition[] = [
     emoji: '🔤',
     mechanic: 'tap_select',
     interactionMode: 'tap',
+    lessonStageRuntimeId: 'alphabet_letter_matching_lesson_stage',
     tags: ['alphabet', 'matching', 'pairs'],
     sortOrder: 40,
   }),

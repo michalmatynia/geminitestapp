@@ -16,9 +16,12 @@ const {
   useKangurRoutePageReadyMock,
   lessonCardPropsMock,
   lessonDocumentsHookCallsMock,
+  lessonAssignmentsHookCallsMock,
+  lessonTemplatesHookCallsMock,
   lessonsWordmarkPropsMock,
   openLoginModalMock,
   localeState,
+  focusTokenState,
   lessonSectionsRetainDataWhileLoadingState,
   lessonsRetainDataWhileLoadingState,
   routeTransitionStateState,
@@ -37,10 +40,15 @@ const {
   useKangurRoutePageReadyMock: vi.fn(),
   lessonCardPropsMock: vi.fn(),
   lessonDocumentsHookCallsMock: vi.fn(),
+  lessonAssignmentsHookCallsMock: vi.fn(),
+  lessonTemplatesHookCallsMock: vi.fn(),
   lessonsWordmarkPropsMock: vi.fn(),
   openLoginModalMock: vi.fn(),
   localeState: {
     value: 'pl' as 'de' | 'en' | 'pl',
+  },
+  focusTokenState: {
+    value: null as string | null,
   },
   lessonSectionsRetainDataWhileLoadingState: {
     value: false,
@@ -132,7 +140,7 @@ vi.mock('@/features/kangur/config/routing', () => ({
   getKangurHomeHref: () => '/kangur',
   getKangurInternalQueryParamName: () => 'focus',
   getKangurPageHref: () => '/kangur/lessons',
-  readKangurUrlParam: () => null,
+  readKangurUrlParam: () => focusTokenState.value,
 }));
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
@@ -297,6 +305,7 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
 }));
 
 vi.mock('@/features/kangur/lessons/lesson-ui-registry', () => ({
+  FOCUS_TO_COMPONENT: {},
   LESSON_COMPONENTS: {
     adding: () => <div data-testid='mock-lesson-component-adding' />,
     english_basics: () => <div data-testid='mock-lesson-component-english' />,
@@ -338,29 +347,13 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLearnerActivity', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
-  useKangurAssignments: () => ({ assignments: [] }),
+  useKangurAssignments: (options?: unknown) => {
+    lessonAssignmentsHookCallsMock(options ?? {});
+    return { assignments: [] };
+  },
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
-  useKangurLessons: (options: { subject?: string; enabledOnly?: boolean } = {}) => {
-    let data = lessonsState.value;
-    const hasRetainedData = lessonsLoadingState.value && lessonsRetainDataWhileLoadingState.value;
-    if (options.enabledOnly) {
-      data = data.filter((lesson) => lesson.enabled !== false);
-    }
-    if (options.subject) {
-      data = data.filter((lesson) => (lesson.subject ?? 'maths') === options.subject);
-    }
-    return {
-      data: lessonsLoadingState.value && !hasRetainedData ? undefined : data,
-      isFetching: lessonsLoadingState.value,
-      isLoading: lessonsLoadingState.value && !hasRetainedData,
-      isPending: lessonsLoadingState.value && !hasRetainedData,
-      isPlaceholderData: lessonsPlaceholderDataState.value,
-      isRefetching: hasRetainedData,
-      refetch: vi.fn(),
-    };
-  },
   useKangurLessonDocument: (
     lessonId: string | null,
     options?: { enabled?: boolean }
@@ -375,22 +368,48 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   }),
 }));
 
-vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
-  useKangurLessonTemplates: () => ({ data: [] }),
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonsCatalog', () => ({
+  useKangurLessonsCatalog: (
+    options: { subject?: string; ageGroup?: string; enabledOnly?: boolean } = {}
+  ) => {
+    let lessons = lessonsState.value;
+    let sections = lessonSectionsState.value;
+    const hasRetainedData =
+      (lessonsLoadingState.value && lessonsRetainDataWhileLoadingState.value) ||
+      (lessonSectionsLoadingState.value && lessonSectionsRetainDataWhileLoadingState.value);
+    if (options.enabledOnly) {
+      lessons = lessons.filter((lesson) => lesson.enabled !== false);
+      sections = sections.filter((section) => section.enabled !== false);
+    }
+    if (options.subject) {
+      lessons = lessons.filter((lesson) => (lesson.subject ?? 'maths') === options.subject);
+      sections = sections.filter((section) => (section.subject ?? 'maths') === options.subject);
+    }
+    if (options.ageGroup) {
+      lessons = lessons.filter((lesson) => (lesson.ageGroup ?? DEFAULT_KANGUR_AGE_GROUP) === options.ageGroup);
+      sections = sections.filter(
+        (section) => (section.ageGroup ?? DEFAULT_KANGUR_AGE_GROUP) === options.ageGroup
+      );
+    }
+    const isLoading = lessonsLoadingState.value || lessonSectionsLoadingState.value;
+    const isPlaceholderData =
+      lessonsPlaceholderDataState.value || lessonSectionsPlaceholderDataState.value;
+    return {
+      data: isLoading && !hasRetainedData ? undefined : { lessons, sections },
+      isFetching: isLoading,
+      isLoading: isLoading && !hasRetainedData,
+      isPending: isLoading && !hasRetainedData,
+      isPlaceholderData,
+      isRefetching: hasRetainedData,
+      refetch: vi.fn(),
+    };
+  },
 }));
 
-vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
-  useKangurLessonSections: () => {
-    const hasRetainedData =
-      lessonSectionsLoadingState.value && lessonSectionsRetainDataWhileLoadingState.value;
-    return {
-      data: lessonSectionsLoadingState.value && !hasRetainedData ? undefined : lessonSectionsState.value,
-      isFetching: lessonSectionsLoadingState.value,
-      isLoading: lessonSectionsLoadingState.value && !hasRetainedData,
-      isPending: lessonSectionsLoadingState.value && !hasRetainedData,
-      isPlaceholderData: lessonSectionsPlaceholderDataState.value,
-      isRefetching: hasRetainedData,
-    };
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
+  useKangurLessonTemplates: (options?: { enabled?: boolean }) => {
+    lessonTemplatesHookCallsMock(options ?? {});
+    return { data: [] };
   },
 }));
 
@@ -461,6 +480,7 @@ describe('Lessons page subject filtering', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     localeState.value = 'pl';
+    focusTokenState.value = null;
     if (!window.requestAnimationFrame) {
       Object.defineProperty(window, 'requestAnimationFrame', {
         value: (callback: FrameRequestCallback) => window.setTimeout(() => callback(0), 0),
@@ -509,6 +529,8 @@ describe('Lessons page subject filtering', () => {
     tutorSessionSyncPropsMock.mockClear();
     useKangurRoutePageReadyMock.mockClear();
     lessonDocumentsHookCallsMock.mockClear();
+    lessonAssignmentsHookCallsMock.mockClear();
+    lessonTemplatesHookCallsMock.mockClear();
   });
 
   afterEach(() => {
@@ -538,6 +560,78 @@ describe('Lessons page subject filtering', () => {
 
     expect(screen.queryByRole('button', { name: 'mock-lessons-back' })).not.toBeInTheDocument();
     expect(routeNavigatorBackMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps lesson templates disabled on the default lessons route', () => {
+    render(<Lessons />);
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(lessonTemplatesHookCallsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        enabled: false,
+      })
+    );
+  });
+
+  it('enables lesson templates when a focused lesson token is present in the URL', () => {
+    focusTokenState.value = 'mystery-focus-token';
+
+    render(<Lessons />);
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(lessonTemplatesHookCallsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        enabled: true,
+      })
+    );
+  });
+
+  it('defers assignments hydration until after the first deferred render turn for parent access', () => {
+    useKangurAuthMock.mockReturnValue({
+      user: {
+        actorType: 'parent',
+        activeLearner: { id: 'learner-1' },
+        canManageLearners: true,
+      },
+      logout: vi.fn(),
+      canAccessParentAssignments: true,
+    });
+
+    act(() => {
+      render(<Lessons />);
+    });
+
+    expect(lessonAssignmentsHookCallsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: false,
+      })
+    );
+
+    act(() => {
+      vi.runOnlyPendingTimers();
+    });
+
+    expect(lessonAssignmentsHookCallsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        enabled: false,
+      })
+    );
+
+    act(() => {
+      vi.runOnlyPendingTimers();
+    });
+
+    expect(lessonAssignmentsHookCallsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        enabled: true,
+      })
+    );
   });
 
   it('keeps the lessons library transition waiting until the catalog loading state settles', () => {

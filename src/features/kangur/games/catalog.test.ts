@@ -48,6 +48,21 @@ describe('kangur game catalog', () => {
     );
   });
 
+  it('keeps the lesson activity catalog fallback for older legacy-only variants', () => {
+    expect(
+      getKangurLessonActivityRuntimeSpecForVariant({
+        id: 'legacy-division.lesson-inline',
+        label: 'Legacy lesson inline',
+        title: 'Legacy division lesson',
+        description: 'Older stored variant using only the legacy lesson activity id.',
+        surface: 'lesson_inline',
+        legacyActivityId: 'division-game',
+        sortOrder: 0,
+        status: 'active',
+      })?.rendererId
+    ).toBe('division_game');
+  });
+
   it('resolves lesson-stage runtime specs from serialized lesson-stage variants', () => {
     const entry = createKangurGameCatalogEntries().find(
       (candidate) => candidate.game.id === 'logical_patterns_workshop'
@@ -87,6 +102,46 @@ describe('kangur game catalog', () => {
     });
   });
 
+  it('resolves the alphabet literacy lesson-stage runtime from serialized variant config', () => {
+    const entry = createKangurGameCatalogEntries().find(
+      (candidate) => candidate.game.id === 'alphabet_letter_matching'
+    );
+
+    expect(entry).toBeTruthy();
+    expect(entry?.lessonStageRuntime?.runtimeId).toBe('alphabet_letter_matching_lesson_stage');
+    expect(
+      entry?.game.variants.find((variant) => variant.id === 'alphabet_letter_matching.lesson-stage')
+        ?.lessonStageRuntimeId
+    ).toBe('alphabet_letter_matching_lesson_stage');
+    expect(entry ? getKangurLessonStageGameRuntimeSpecForGame(entry.game)?.rendererId : null).toBe(
+      'alphabet_literacy_stage_game'
+    );
+    expect(
+      entry ? getKangurLessonStageGameRuntimeSpecForGame(entry.game)?.rendererProps : null
+    ).toMatchObject({
+      literacyMatchSetId: 'alphabet_letter_matching',
+    });
+  });
+
+  it('resolves the color harmony lesson-stage runtime from serialized variant config', () => {
+    const entry = createKangurGameCatalogEntries().find(
+      (candidate) => candidate.game.id === 'art_color_harmony_studio'
+    );
+
+    expect(entry).toBeTruthy();
+    expect(entry?.lessonStageRuntime?.runtimeId).toBe('art_color_harmony_studio_lesson_stage');
+    expect(
+      entry?.game.variants.find((variant) => variant.id === 'art_color_harmony_studio.lesson-stage')
+        ?.lessonStageRuntimeId
+    ).toBe('art_color_harmony_studio_lesson_stage');
+    expect(entry ? getKangurLessonStageGameRuntimeSpecForGame(entry.game)?.rendererId : null).toBe(
+      'color_harmony_stage_game'
+    );
+    expect(entry ? getKangurLessonStageGameRuntimeSpecForGame(entry.game)?.engineId : null).toBe(
+      'color-harmony-engine'
+    );
+  });
+
   it('resolves geometry workshop lesson-stage runtime specs from the serialized stage variant config', () => {
     const entry = createKangurGameCatalogEntries().find(
       (candidate) => candidate.game.id === 'geometry_shape_workshop'
@@ -118,6 +173,21 @@ describe('kangur game catalog', () => {
     expect(entry ? getKangurLaunchableGameRuntimeSpecForGame(entry.game)?.engineId : null).toBe(
       'sentence-builder-engine'
     );
+  });
+
+  it('keeps the launchable catalog fallback for older legacy-only game-screen variants', () => {
+    expect(
+      getKangurLaunchableGameRuntimeSpecForVariant({
+        id: 'legacy-sentence.game-screen',
+        label: 'Legacy game screen',
+        title: 'Legacy sentence fullscreen',
+        description: 'Older stored variant using only the legacy screen id.',
+        surface: 'game_screen',
+        legacyScreenId: 'english_sentence_quiz',
+        sortOrder: 0,
+        status: 'active',
+      })?.rendererId
+    ).toBe('english_sentence_structure_game');
   });
 
   it('resolves lesson activities and engine families through the catalog', () => {
@@ -174,6 +244,14 @@ describe('kangur game catalog', () => {
     ]);
   });
 
+  it('filters catalog entries by exact game id when a deep link targets one game', () => {
+    const filtered = filterKangurGameCatalogEntries(createKangurGameCatalogEntries(), {
+      gameId: 'division_groups',
+    });
+
+    expect(filtered.map((entry) => entry.game.id)).toEqual(['division_groups']);
+  });
+
   it('derives reusable classification facets from catalog entries', () => {
     const entries = createKangurGameCatalogEntries();
     const facets = getKangurGameCatalogFacets(entries);
@@ -190,6 +268,12 @@ describe('kangur game catalog', () => {
     expect(facets.ageGroups).toEqual(['six_year_old', 'ten_year_old', 'grown_ups']);
     expect(facets.statuses).toEqual(['active']);
     expect(facets.gameCount).toBe(entries.length);
+    expect(facets.games[0]).toEqual({
+      id: entries[0]?.game.id,
+      title: entries[0]?.game.title,
+      sortOrder: entries[0]?.game.sortOrder,
+    });
+    expect(facets.games.some((game) => game.id === 'division_groups')).toBe(true);
     expect(facets.surfaces).toEqual(['lesson', 'library', 'game']);
     expect(facets.variantSurfaces).toEqual([
       'lesson_inline',
@@ -205,10 +289,7 @@ describe('kangur game catalog', () => {
       'early_learning',
       'adult_learning',
     ]);
-    expect(facets.implementationOwnerships).toEqual([
-      'shared_runtime',
-      'lesson_embedded',
-    ]);
+    expect(facets.implementationOwnerships).toEqual(['shared_runtime']);
     expect(facets.engines.some((engine) => engine.id === 'classification-engine')).toBe(true);
     expect(facets.mechanics).toContain('logic_relation');
   });
@@ -257,18 +338,17 @@ describe('kangur game catalog', () => {
   });
 
   it('filters catalog entries by implementation ownership', () => {
-    const filtered = filterKangurGameCatalogEntries(createKangurGameCatalogEntries(), {
+    const embedded = filterKangurGameCatalogEntries(createKangurGameCatalogEntries(), {
       implementationOwnership: 'lesson_embedded',
     });
+    const shared = filterKangurGameCatalogEntries(createKangurGameCatalogEntries(), {
+      implementationOwnership: 'shared_runtime',
+    });
 
-    expect(filtered.map((entry) => entry.game.id)).toEqual(
-      expect.arrayContaining([
-        'art_color_harmony_studio',
-        'alphabet_first_words',
-        'alphabet_letter_matching',
-      ])
-    );
-    expect(filtered.some((entry) => entry.game.id === 'clock_training')).toBe(false);
+    expect(embedded).toEqual([]);
+    expect(shared.some((entry) => entry.game.id === 'art_color_harmony_studio')).toBe(true);
+    expect(shared.some((entry) => entry.game.id === 'alphabet_first_words')).toBe(true);
+    expect(shared.some((entry) => entry.game.id === 'clock_training')).toBe(true);
   });
 
   it('includes six-year-old and grown-up games in the shared catalog', () => {

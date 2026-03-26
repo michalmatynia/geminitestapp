@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { localeMock } = vi.hoisted(() => ({
@@ -20,10 +20,6 @@ const {
   prefetchMock: vi.fn(),
   replaceMock: vi.fn(),
   searchParamsMock: vi.fn(),
-}));
-
-const { startRouteTransitionMock } = vi.hoisted(() => ({
-  startRouteTransitionMock: vi.fn(),
 }));
 
 const { routeTransitionStateMock } = vi.hoisted(() => ({
@@ -129,7 +125,7 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
   useOptionalKangurRouteTransitionActions: () => ({
-    startRouteTransition: startRouteTransitionMock,
+    startRouteTransition: vi.fn(),
   }),
   useOptionalKangurRouteTransitionState: () => routeTransitionStateMock(),
 }));
@@ -188,6 +184,20 @@ import { KangurLanguageSwitcher } from './KangurLanguageSwitcher';
 const openLanguageMenu = (trigger?: HTMLElement): void => {
   fireEvent.keyDown(trigger ?? screen.getByTestId('kangur-language-switcher-trigger'), {
     key: 'ArrowDown',
+  });
+};
+
+const expectLocaleReplace = async (
+  href: string,
+  pageKey: 'Competition' | 'Game' | 'GamesLibrary' | 'Lessons' | 'Tests' | 'LearnerProfile' | 'ParentDashboard' | 'Duels' | 'SocialUpdates'
+): Promise<void> => {
+  await waitFor(() => {
+    expect(replaceMock).toHaveBeenCalledWith(href, {
+      pageKey,
+      scroll: false,
+      sourceId: 'kangur-language-switcher',
+      transitionKind: 'locale-switch',
+    });
   });
 };
 
@@ -320,7 +330,7 @@ describe('KangurLanguageSwitcher', () => {
     expect(screen.getByTestId('kangur-language-switcher-option-uk')).toHaveTextContent('Українська');
   });
 
-  // ─── Locale switching — hard navigation ─────────────────────────────
+  // ─── Locale switching — managed navigation ─────────────────────────
 
   it('navigates to the localized href when switching to English', async () => {
     render(<KangurLanguageSwitcher basePath='/kangur' currentPage='Lessons' />);
@@ -333,8 +343,8 @@ describe('KangurLanguageSwitcher', () => {
       'en',
       expect.objectContaining({ path: '/' })
     );
-    expect(locationAssignSpy).toHaveBeenCalledWith('/en/kangur/lessons');
-    expect(replaceMock).not.toHaveBeenCalled();
+    expect(locationAssignSpy).not.toHaveBeenCalled();
+    await expectLocaleReplace('/en/kangur/lessons', 'Lessons');
   });
 
   it('sets the NEXT_LOCALE cookie when navigating', async () => {
@@ -348,8 +358,10 @@ describe('KangurLanguageSwitcher', () => {
       'en',
       expect.objectContaining({ path: '/' })
     );
-    expect(locationAssignSpy).toHaveBeenCalledTimes(1);
-    expect(replaceMock).not.toHaveBeenCalled();
+    expect(locationAssignSpy).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('drops the locale prefix when switching back to the default locale (Polish)', async () => {
@@ -361,8 +373,8 @@ describe('KangurLanguageSwitcher', () => {
     openLanguageMenu();
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-pl'));
 
-    expect(locationAssignSpy).toHaveBeenCalledWith('/kangur/lessons');
-    expect(replaceMock).not.toHaveBeenCalled();
+    expect(locationAssignSpy).not.toHaveBeenCalled();
+    await expectLocaleReplace('/kangur/lessons', 'Lessons');
     expect(setClientCookieMock).toHaveBeenCalledWith(
       'NEXT_LOCALE',
       'pl',
@@ -378,10 +390,8 @@ describe('KangurLanguageSwitcher', () => {
     openLanguageMenu();
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-de'));
 
-    expect(locationAssignSpy).toHaveBeenCalledWith(
-      '/de/kangur/lessons?mode=solo&difficulty=hard'
-    );
-    expect(replaceMock).not.toHaveBeenCalled();
+    expect(locationAssignSpy).not.toHaveBeenCalled();
+    await expectLocaleReplace('/de/kangur/lessons?mode=solo&difficulty=hard', 'Lessons');
   });
 
   it('preserves the URL hash when switching locale', async () => {
@@ -392,18 +402,18 @@ describe('KangurLanguageSwitcher', () => {
     openLanguageMenu();
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-en'));
 
-    expect(locationAssignSpy).toHaveBeenCalledWith('/en/kangur/lessons#section-2');
-    expect(replaceMock).not.toHaveBeenCalled();
+    expect(locationAssignSpy).not.toHaveBeenCalled();
+    await expectLocaleReplace('/en/kangur/lessons#section-2', 'Lessons');
   });
 
-  it('uses full-document navigation for locale switches', async () => {
+  it('uses managed client-side navigation for locale switches', async () => {
     render(<KangurLanguageSwitcher basePath='/kangur' currentPage='Lessons' />);
 
     openLanguageMenu();
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-en'));
 
-    expect(locationAssignSpy).toHaveBeenCalledWith('/en/kangur/lessons');
-    expect(replaceMock).not.toHaveBeenCalled();
+    expect(locationAssignSpy).not.toHaveBeenCalled();
+    await expectLocaleReplace('/en/kangur/lessons', 'Lessons');
   });
 
   // ─── No-op when selecting the current locale ───────────────────────
@@ -421,7 +431,7 @@ describe('KangurLanguageSwitcher', () => {
 
   // ─── Pending state (loading spinner + disabled) ─────────────────────
 
-  it('shows loading UI immediately while a hard locale navigation is in progress', async () => {
+  it('shows loading UI immediately while a locale transition is starting', async () => {
     render(<KangurLanguageSwitcher basePath='/kangur' currentPage='Lessons' />);
 
     const trigger = screen.getByTestId('kangur-language-switcher-trigger');
@@ -430,39 +440,34 @@ describe('KangurLanguageSwitcher', () => {
     openLanguageMenu();
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-en'));
 
-    expect(locationAssignSpy).toHaveBeenCalledWith('/en/kangur/lessons');
+    expect(locationAssignSpy).not.toHaveBeenCalled();
+    await expectLocaleReplace('/en/kangur/lessons', 'Lessons');
     expect(trigger.querySelector('.animate-spin')).not.toBeNull();
     expect(trigger).toBeDisabled();
     expect(trigger).toHaveClass('opacity-70');
   });
 
-  it('recovers if the document does not unload after a hard locale navigation attempt', async () => {
-    render(<KangurLanguageSwitcher basePath='/kangur' currentPage='Lessons' />);
+  it('clears the optimistic pending state once the route locale catches up', async () => {
+    const { rerender } = render(
+      <KangurLanguageSwitcher basePath='/kangur' currentPage='Lessons' />
+    );
 
     const trigger = screen.getByTestId('kangur-language-switcher-trigger');
     openLanguageMenu();
-    const englishOption = await screen.findByTestId('kangur-language-switcher-option-en');
+    fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-en'));
 
-    vi.useFakeTimers();
-    try {
-      fireEvent.click(englishOption);
+    expect(trigger).toBeDisabled();
+    expect(trigger.querySelector('.animate-spin')).not.toBeNull();
 
-      expect(trigger).toBeDisabled();
-      expect(trigger.querySelector('.animate-spin')).not.toBeNull();
+    localeMock.mockReturnValue('en');
+    pathnameMock.mockReturnValue('/en/kangur/lessons');
+    rerender(<KangurLanguageSwitcher basePath='/en/kangur' currentPage='Lessons' />);
 
-      act(() => {
-        vi.advanceTimersByTime(10_000);
-      });
-
+    await waitFor(() => {
       expect(trigger.querySelector('.animate-spin')).toBeNull();
       expect(trigger).toBeEnabled();
       expect(trigger).not.toHaveClass('opacity-70');
-    } finally {
-      act(() => {
-        vi.runOnlyPendingTimers();
-      });
-      vi.useRealTimers();
-    }
+    });
   });
 
   it('shows loading UI while a locale-switch transition from the selector is active', () => {
@@ -611,7 +616,8 @@ describe('KangurLanguageSwitcher', () => {
     fireEvent.click(englishOption);
 
     expect(prefetchMock).not.toHaveBeenCalled();
-    expect(locationAssignSpy).toHaveBeenCalledWith('/en/kangur/lessons');
+    expect(locationAssignSpy).not.toHaveBeenCalled();
+    await expectLocaleReplace('/en/kangur/lessons', 'Lessons');
   });
 
   // ─── Page-specific href building ───────────────────────────────────
@@ -624,8 +630,15 @@ describe('KangurLanguageSwitcher', () => {
     openLanguageMenu();
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-en'));
 
-    expect(locationAssignSpy).toHaveBeenCalledWith(expect.stringContaining('/en/'));
-    expect(replaceMock).not.toHaveBeenCalled();
+    expect(locationAssignSpy).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith(expect.stringContaining('/en/'), {
+        pageKey: 'Game',
+        scroll: false,
+        sourceId: 'kangur-language-switcher',
+        transitionKind: 'locale-switch',
+      });
+    });
   });
 
   it('builds the correct localized href for the Duels page', async () => {
@@ -636,8 +649,8 @@ describe('KangurLanguageSwitcher', () => {
     openLanguageMenu();
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-de'));
 
-    expect(locationAssignSpy).toHaveBeenCalledWith('/de/kangur/duels');
-    expect(replaceMock).not.toHaveBeenCalled();
+    expect(locationAssignSpy).not.toHaveBeenCalled();
+    await expectLocaleReplace('/de/kangur/duels', 'Duels');
   });
 
   it('canonicalizes /kangur alias lesson routes when Kangur owns the public frontend', async () => {
@@ -649,8 +662,8 @@ describe('KangurLanguageSwitcher', () => {
     openLanguageMenu();
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-en'));
 
-    expect(locationAssignSpy).toHaveBeenCalledWith('/en/lessons');
-    expect(replaceMock).not.toHaveBeenCalled();
+    expect(locationAssignSpy).not.toHaveBeenCalled();
+    await expectLocaleReplace('/en/lessons', 'Lessons');
   });
 
   it('canonicalizes localized /kangur alias home routes when Kangur owns the public frontend', async () => {
@@ -663,8 +676,8 @@ describe('KangurLanguageSwitcher', () => {
     openLanguageMenu();
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-de'));
 
-    expect(locationAssignSpy).toHaveBeenCalledWith('/de');
-    expect(replaceMock).not.toHaveBeenCalled();
+    expect(locationAssignSpy).not.toHaveBeenCalled();
+    await expectLocaleReplace('/de', 'Game');
   });
 
   it('uses the canonical public fallback when pathname is unavailable in the Kangur-owned frontend shell', async () => {
@@ -676,8 +689,8 @@ describe('KangurLanguageSwitcher', () => {
     openLanguageMenu();
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-en'));
 
-    expect(locationAssignSpy).toHaveBeenCalledWith('/en/lessons');
-    expect(replaceMock).not.toHaveBeenCalled();
+    expect(locationAssignSpy).not.toHaveBeenCalled();
+    await expectLocaleReplace('/en/lessons', 'Lessons');
   });
 
   // ─── Switching back to default locale (regression test) ─────────────
@@ -696,8 +709,8 @@ describe('KangurLanguageSwitcher', () => {
       'pl',
       expect.objectContaining({ path: '/' })
     );
-    expect(locationAssignSpy).toHaveBeenCalledWith('/kangur/lessons');
-    expect(replaceMock).not.toHaveBeenCalled();
+    expect(locationAssignSpy).not.toHaveBeenCalled();
+    await expectLocaleReplace('/kangur/lessons', 'Lessons');
   });
 
   // ─── Cross-locale switching (non-default to non-default) ───────────
@@ -711,8 +724,8 @@ describe('KangurLanguageSwitcher', () => {
     openLanguageMenu();
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-de'));
 
-    expect(locationAssignSpy).toHaveBeenCalledWith('/de/kangur/lessons');
-    expect(replaceMock).not.toHaveBeenCalled();
+    expect(locationAssignSpy).not.toHaveBeenCalled();
+    await expectLocaleReplace('/de/kangur/lessons', 'Lessons');
     expect(setClientCookieMock).toHaveBeenCalledWith(
       'NEXT_LOCALE',
       'de',

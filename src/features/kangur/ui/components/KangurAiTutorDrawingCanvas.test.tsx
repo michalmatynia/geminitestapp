@@ -9,6 +9,8 @@ import {
   createKangurFreeformDrawingSnapshot,
   serializeKangurFreeformDrawingSnapshot,
 } from '@/features/kangur/ui/components/drawing-engine/freeform-snapshots';
+import type { KangurDrawingDraftStorageController } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage';
+import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 const { downloadKangurDataUrl } = vi.hoisted(() => ({
   downloadKangurDataUrl: vi.fn(),
 }));
@@ -43,12 +45,58 @@ const canvasContextStub = {
   strokeStyle: '#000000',
 } as unknown as CanvasRenderingContext2D;
 
+const createDraftStorage = (
+  initialDraftSnapshot: string | null = null
+): KangurDrawingDraftStorageController => {
+  let draftSnapshot = initialDraftSnapshot;
+
+  return {
+    clearDraftSnapshot: () => {
+      draftSnapshot = null;
+    },
+    get draftSnapshot() {
+      return draftSnapshot;
+    },
+    setDraftSnapshot: (nextSnapshot) => {
+      draftSnapshot =
+        typeof nextSnapshot === 'function'
+          ? nextSnapshot(draftSnapshot)
+          : nextSnapshot;
+    },
+  };
+};
+
+const defaultTutorContentSnapshot = structuredClone(DEFAULT_KANGUR_AI_TUTOR_CONTENT);
+
 describe('KangurAiTutorDrawingCanvas', () => {
   const originalGetBoundingClientRect = HTMLCanvasElement.prototype.getBoundingClientRect;
   const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
 
   beforeEach(() => {
     downloadKangurDataUrl.mockReset();
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.locale = defaultTutorContentSnapshot.locale;
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.common.closeAria =
+      defaultTutorContentSnapshot.common.closeAria;
+    if (DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing && defaultTutorContentSnapshot.drawing) {
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing.title =
+        defaultTutorContentSnapshot.drawing.title;
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing.penLabel =
+        defaultTutorContentSnapshot.drawing.penLabel;
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing.eraserLabel =
+        defaultTutorContentSnapshot.drawing.eraserLabel;
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing.undoLabel =
+        defaultTutorContentSnapshot.drawing.undoLabel;
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing.redoLabel =
+        defaultTutorContentSnapshot.drawing.redoLabel;
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing.exportLabel =
+        defaultTutorContentSnapshot.drawing.exportLabel;
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing.clearLabel =
+        defaultTutorContentSnapshot.drawing.clearLabel;
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing.cancelLabel =
+        defaultTutorContentSnapshot.drawing.cancelLabel;
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing.doneLabel =
+        defaultTutorContentSnapshot.drawing.doneLabel;
+    }
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(canvasContextStub);
     HTMLCanvasElement.prototype.toDataURL = vi
       .fn(() => 'data:image/png;base64,AAA') as typeof HTMLCanvasElement.prototype.toDataURL;
@@ -113,6 +161,23 @@ describe('KangurAiTutorDrawingCanvas', () => {
     expect(screen.getByRole('button', { name: 'Cofnij' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Ponów' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Eksportuj PNG' })).toBeDisabled();
+  });
+
+  it('falls back to English drawing controls when tutor content still uses Polish defaults', () => {
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.locale = 'en';
+
+    render(<KangurAiTutorDrawingCanvas onCancel={vi.fn()} onComplete={vi.fn()} />);
+
+    expect(screen.getByText('Drawing')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Drawing board')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Pen' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Eraser' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Redo' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Export PNG' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument();
   });
 
   it('keeps cancel wired while the themed shell is open', () => {
@@ -252,30 +317,69 @@ describe('KangurAiTutorDrawingCanvas', () => {
     );
   });
 
+  it('clears the external tutor draft snapshot through the managed stored freeform hook', () => {
+    const draftStorage = createDraftStorage();
+    const setDraftSnapshot = vi.spyOn(draftStorage, 'setDraftSnapshot');
+
+    render(
+      <KangurAiTutorDrawingCanvas
+        draftStorage={draftStorage}
+        onCancel={vi.fn()}
+        onComplete={vi.fn()}
+      />
+    );
+
+    const canvas = screen.getByLabelText('Plansza do rysowania');
+
+    fireEvent.pointerDown(canvas, {
+      pointerId: 13,
+      clientX: 48,
+      clientY: 56,
+    });
+    fireEvent.pointerMove(canvas, {
+      pointerId: 13,
+      clientX: 120,
+      clientY: 132,
+    });
+    fireEvent.pointerUp(canvas, {
+      pointerId: 13,
+      clientX: 120,
+      clientY: 132,
+    });
+
+    expect(setDraftSnapshot).toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wyczyść' }));
+
+    expect(setDraftSnapshot).toHaveBeenLastCalledWith(null);
+  });
+
   it('restores an incoming draft snapshot and enables completing it after remount', async () => {
-    const initialSnapshot = serializeKangurFreeformDrawingSnapshot(
-      createKangurFreeformDrawingSnapshot({
-        logicalHeight: 240,
-        logicalWidth: 320,
-        strokes: [
-          {
-            meta: {
-              color: '#2563eb',
-              isEraser: false,
-              width: 4,
+    const draftStorage = createDraftStorage(
+      serializeKangurFreeformDrawingSnapshot(
+        createKangurFreeformDrawingSnapshot({
+          logicalHeight: 240,
+          logicalWidth: 320,
+          strokes: [
+            {
+              meta: {
+                color: '#2563eb',
+                isEraser: false,
+                width: 4,
+              },
+              points: [
+                { x: 30, y: 40 },
+                { x: 100, y: 132 },
+              ],
             },
-            points: [
-              { x: 30, y: 40 },
-              { x: 100, y: 132 },
-            ],
-          },
-        ],
-      })
+          ],
+        })
+      )
     );
 
     render(
       <KangurAiTutorDrawingCanvas
-        initialSnapshot={initialSnapshot}
+        draftStorage={draftStorage}
         onCancel={vi.fn()}
         onComplete={vi.fn()}
       />

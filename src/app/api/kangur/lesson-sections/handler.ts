@@ -12,6 +12,7 @@ import { kangurLessonSectionsSchema } from '@/shared/contracts/kangur-lesson-sec
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
 import { optionalBooleanQuerySchema, optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
+import { clearKangurLessonsCatalogCache } from '../lessons-catalog/handler';
 
 export const querySchema = z.object({
   subject: optionalTrimmedQueryString(kangurLessonSubjectSchema),
@@ -125,6 +126,7 @@ export async function postKangurLessonSectionsHandler(
   const repository = await getKangurLessonSectionRepository();
   const sections = await repository.replaceSections(parsed.sections);
   clearKangurLessonSectionsCache();
+  clearKangurLessonsCatalogCache();
 
   return NextResponse.json(sections, {
     headers: {

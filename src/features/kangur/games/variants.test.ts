@@ -41,10 +41,35 @@ describe('kangur game variants', () => {
   });
 
   it('attaches the alphabet sequence lesson-stage runtime to the six-year-old stage variant', () => {
-    const entry = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries()).find(
+    const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
+    const wordsEntry = entries.find(
+      (candidate) => candidate.variant.id === 'alphabet_first_words.lesson-stage'
+    );
+    const matchingEntry = entries.find(
+      (candidate) => candidate.variant.id === 'alphabet_letter_matching.lesson-stage'
+    );
+    const entry = entries.find(
       (candidate) => candidate.variant.id === 'alphabet_letter_order.lesson-stage'
     );
 
+    expect(wordsEntry?.isLessonVariant).toBe(true);
+    expect(wordsEntry?.lessonStageRuntime).toMatchObject({
+      runtimeId: 'alphabet_first_words_lesson_stage',
+      rendererId: 'alphabet_literacy_stage_game',
+      engineId: 'letter-match-engine',
+      rendererProps: {
+        literacyMatchSetId: 'alphabet_first_words',
+      },
+    });
+    expect(matchingEntry?.isLessonVariant).toBe(true);
+    expect(matchingEntry?.lessonStageRuntime).toMatchObject({
+      runtimeId: 'alphabet_letter_matching_lesson_stage',
+      rendererId: 'alphabet_literacy_stage_game',
+      engineId: 'letter-match-engine',
+      rendererProps: {
+        literacyMatchSetId: 'alphabet_letter_matching',
+      },
+    });
     expect(entry?.isLessonVariant).toBe(true);
     expect(entry?.lessonStageRuntime).toMatchObject({
       runtimeId: 'alphabet_letter_order_lesson_stage',
@@ -127,6 +152,9 @@ describe('kangur game variants', () => {
 
   it('attaches shared lesson-stage runtimes to the seeded six-year-old art and music stage variants', () => {
     const entries = createKangurGameVariantCatalogEntries(createKangurGameCatalogEntries());
+    const colorHarmonyEntry = entries.find(
+      (candidate) => candidate.variant.id === 'art_color_harmony_studio.lesson-stage'
+    );
     const artEntry = entries.find(
       (candidate) => candidate.variant.id === 'art_shape_rotation_puzzle.lesson-stage'
     );
@@ -143,6 +171,11 @@ describe('kangur game variants', () => {
       (candidate) => candidate.variant.id === 'music_piano_roll_free_play.lesson-stage'
     );
 
+    expect(colorHarmonyEntry?.lessonStageRuntime).toMatchObject({
+      runtimeId: 'art_color_harmony_studio_lesson_stage',
+      rendererId: 'color_harmony_stage_game',
+      engineId: 'color-harmony-engine',
+    });
     expect(artEntry?.lessonStageRuntime).toMatchObject({
       runtimeId: 'art_shape_rotation_puzzle_lesson_stage',
       rendererId: 'art_shapes_rotation_gap_game',

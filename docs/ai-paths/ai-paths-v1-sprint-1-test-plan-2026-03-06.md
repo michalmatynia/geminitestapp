@@ -13,6 +13,14 @@ This is the retained test-plan artifact for the V1 sprint contract work. It rema
 useful as historical evidence, but it is not the primary current QA entrypoint for
 AI Paths.
 
+For the current QA and validation entrypoints, use:
+
+- [`overview.md`](./overview.md)
+- [`reference.md`](./reference.md)
+- `npm run ai-paths:check:canonical`
+- `npm run docs:ai-paths:node-docs:check`
+- `npm run docs:ai-paths:kernel-transition:check`
+
 ## References
 
 1. `docs/ai-paths/ai-paths-v1-sprint-1-execution-brief-2026-03-06.md`

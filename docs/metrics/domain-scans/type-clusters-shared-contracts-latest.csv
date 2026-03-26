@@ -1,1 +1,6 @@
-clusterId,clusterKind,riskScore,declarationCount,domains,canonicalDtoCandidate,signatureHash,signatureKind
+clusterId,clusterKind,riskScore,declarationCount,domains,canonicalDtoCandidate,signatureHash,signaturePreview,declarations
+exact-0002,exact-shape,20,3,shared|shared:contracts,,a38c2e730457,StringRecordDto,src/shared/lib/api/catch-all-router.ts:8:CatchAllRouteParams|src/shared/lib/ai-paths/core/utils/collection-mapping.ts:3:AiPathsCollectionMap|src/shared/contracts/base.ts:26:StringRecord
+exact-0001,exact-shape,14,3,feature:kangur|shared:contracts,,3e500a0ab2c2,(typeof KANGUR_WIDGET_IDS)[number],src/features/kangur/cms-builder/project-contracts.ts:68:KangurWidgetId|src/features/kangur/cms-builder/widget-options.ts:42:KangurWidgetId|src/shared/contracts/kangur-cms.ts:16:KangurWidgetId
+exact-0011,exact-shape,13,2,shared|shared:contracts,,cabeb613a9ab,UnknownRecordDto,src/shared/utils/observability/client-error-logger.ts:18:ClientErrorContext|src/shared/contracts/base.ts:24:UnknownRecord
+exact-0012,exact-shape,13,2,shared:contracts,,883a389768e1,CmsLookupOptionsDto,src/shared/contracts/cms.ts:961:CmsSlugLookupOptions|src/shared/contracts/cms.ts:959:CmsPageLookupOptions
+exact-0003,exact-shape,11,2,feature:ai|shared:contracts,,726ca3d63c38,LabeledOptionDto<string>,src/features/ai/ai-paths/config/query-presets.ts:5:DatabaseTemplateSnippet|src/shared/contracts/base.ts:70:LabelValueOptionDto

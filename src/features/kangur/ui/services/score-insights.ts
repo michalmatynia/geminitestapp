@@ -1,39 +1,10 @@
 import type { KangurScoreRecord } from '@kangur/platform';
+import { resolveKangurOperationFallbackInfo } from '@/features/kangur/ui/services/kangur-operation-fallbacks';
 
 export const SCORE_INSIGHT_WINDOW_DAYS = 7;
 
-const OPERATION_LABELS: Record<string, { label: string; emoji: string }> = {
-  alphabet: { label: 'Alfabet', emoji: '🔤' },
-  alphabet_basics: { label: 'Alfabet', emoji: '🔤' },
-  alphabet_copy: { label: 'Przepisz litery', emoji: '📝' },
-  alphabet_syllables: { label: 'Sylaby', emoji: '🔤' },
-  alphabet_words: { label: 'Pierwsze slowa', emoji: '📖' },
-  alphabet_matching: { label: 'Dopasuj litery', emoji: '🔤' },
-  alphabet_sequence: { label: 'Kolejnosc liter', emoji: '🔤' },
-  geometry_shape_recognition: { label: 'Geometria', emoji: '🔷' },
-  addition: { label: 'Dodawanie', emoji: '➕' },
-  subtraction: { label: 'Odejmowanie', emoji: '➖' },
-  multiplication: { label: 'Mnożenie', emoji: '✖️' },
-  division: { label: 'Dzielenie', emoji: '➗' },
-  decimals: { label: 'Ułamki', emoji: '🔢' },
-  powers: { label: 'Potęgi', emoji: '⚡' },
-  roots: { label: 'Pierwiastki', emoji: '√' },
-  clock: { label: 'Zegar', emoji: '🕐' },
-  calendar: { label: 'Kalendarz', emoji: '📅' },
-  geometry: { label: 'Geometria', emoji: '🔷' },
-  logical: { label: 'Logika', emoji: '🧩' },
-  mixed: { label: 'Mieszane', emoji: '🎲' },
-  english_basics: { label: 'Podstawy', emoji: '🗣️' },
-  english_parts_of_speech: { label: 'Części mowy', emoji: '🔤' },
-  english_sentence_structure: { label: 'Szyk zdania', emoji: '🧩' },
-  english_subject_verb_agreement: { label: 'Zgoda podmiotu', emoji: '🤝' },
-  english_articles: { label: 'Przedimki', emoji: '📰' },
-  english_adjectives: { label: 'Przymiotniki', emoji: '🎨' },
-  english_adverbs_frequency: { label: 'Przysłówki częstotliwości', emoji: '🔁' },
-  english_prepositions_time_place: { label: 'Przyimki czasu i miejsca', emoji: '🧭' },
-};
-
 export type KangurScoreInsightsLocalizer = {
+  locale?: string | null;
   translateOperationLabel?: (operation: string, fallback: string) => string;
 };
 
@@ -98,7 +69,7 @@ export const resolveKangurScoreOperationInfo = (
   operation: string,
   localizer?: KangurScoreInsightsLocalizer
 ): { label: string; emoji: string } => {
-  const fallback = OPERATION_LABELS[operation] ?? { label: operation, emoji: '❓' };
+  const fallback = resolveKangurOperationFallbackInfo(operation, localizer?.locale);
   return {
     emoji: fallback.emoji,
     label: localizer?.translateOperationLabel?.(operation, fallback.label) ?? fallback.label,

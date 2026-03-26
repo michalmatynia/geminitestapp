@@ -170,7 +170,7 @@ export function LessonsCatalog() {
           subsections: subsections.length > 0 ? subsections : undefined,
         };
       })
-      .filter((group) =>
+      .filter((group: LessonGroup) =>
         group.subsections ? group.subsections.length > 0 : group.lessons.length > 0
       );
   }, [locale, sections, orderedLessons]);

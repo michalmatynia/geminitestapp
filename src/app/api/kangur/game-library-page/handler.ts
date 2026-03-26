@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { auth } from '@/features/auth/server';
 import {
   createKangurGameLibraryPageDataFromGames,
 } from '@/features/kangur/games';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { listKangurGames } from '@/features/kangur/services/kangur-game-repository/mongo-kangur-game-repository';
+import { isSuperAdminSession } from '@/shared/lib/auth/elevated-session-user';
 import {
   kangurGameEngineCategorySchema,
   kangurGameEngineIdSchema,
   kangurGameEngineImplementationOwnershipSchema,
+  kangurGameIdSchema,
   kangurGameLibraryPageDataSchema,
   kangurGameLibraryPageQuerySchema,
   kangurGameMechanicSchema,
@@ -26,13 +29,30 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 export { kangurGameLibraryPageQuerySchema as querySchema };
 
 const SERVICE = 'kangur.game-library-page-handler';
+const GAMES_LIBRARY_DENIED_HEADERS = Object.freeze({
+  'Cache-Control': 'private, no-store',
+});
 
 export async function getKangurGameLibraryPageHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
+  const session = await auth().catch(() => null);
+  if (!isSuperAdminSession(session)) {
+    return NextResponse.json(
+      {
+        error: 'Not Found',
+      },
+      {
+        headers: GAMES_LIBRARY_DENIED_HEADERS,
+        status: 404,
+      }
+    );
+  }
+
   const query = kangurGameLibraryPageQuerySchema.parse(ctx.query ?? {});
   const filter = {
+    gameId: query.gameId ? kangurGameIdSchema.parse(query.gameId) : undefined,
     subject: query.subject ? kangurLessonSubjectSchema.parse(query.subject) : undefined,
     ageGroup: query.ageGroup ? kangurLessonAgeGroupSchema.parse(query.ageGroup) : undefined,
     gameStatus: query.gameStatus ? kangurGameStatusSchema.parse(query.gameStatus) : undefined,
@@ -66,7 +86,7 @@ export async function getKangurGameLibraryPageHandler(
 
     return NextResponse.json(kangurGameLibraryPageDataSchema.parse(pageData), {
       headers: {
-        'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',
+        'Cache-Control': 'private, no-store',
       },
     });
   } catch (error) {
@@ -74,6 +94,7 @@ export async function getKangurGameLibraryPageHandler(
       service: SERVICE,
       action: 'getPageData',
       provider: 'composite',
+      gameId: filter.gameId ?? null,
       subject: filter.subject ?? null,
       ageGroup: filter.ageGroup ?? null,
       gameStatus: filter.gameStatus ?? null,

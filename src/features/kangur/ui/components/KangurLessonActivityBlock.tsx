@@ -1,10 +1,10 @@
 'use client';
 
 import { Printer } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import React from 'react';
 
-import { getKangurLessonActivityDefinition } from '@/features/kangur/lesson-activities';
+import { getLocalizedKangurLessonActivityDefinition } from '@/features/kangur/lesson-activities';
 import {
   KangurButton,
   KangurCardDescription,
@@ -66,10 +66,11 @@ export function KangurLessonActivityBlock(
   props: KangurLessonActivityBlockProps
 ): React.JSX.Element {
   const { block, renderMode = 'lesson' } = props;
+  const locale = useLocale();
   const navigationTranslations = useTranslations('KangurLessonsWidgets.navigation');
   const isCoarsePointer = useKangurCoarsePointer();
   const lessonPrint = useOptionalKangurLessonPrint();
-  const definition = getKangurLessonActivityDefinition(block.activityId);
+  const definition = getLocalizedKangurLessonActivityDefinition(block.activityId, locale);
   const [instanceKey, setInstanceKey] = React.useState(0);
   const [isCompleted, setIsCompleted] = React.useState(false);
   const printPanelId = `lesson-activity-block-${block.id}`;

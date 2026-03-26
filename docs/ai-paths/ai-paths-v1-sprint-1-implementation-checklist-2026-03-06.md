@@ -13,6 +13,13 @@ This checklist is retained for historical implementation traceability. The activ
 contract/runtime surface should be read from [`overview.md`](./overview.md),
 [`reference.md`](./reference.md), and the current schema/reference docs.
 
+Do not treat this checklist as the active work queue. For current validation and
+readiness gates, use:
+
+- `npm run ai-paths:check:canonical`
+- `npm run docs:ai-paths:node-docs:check`
+- `npm run docs:ai-paths:kernel-transition:check`
+
 ## References
 
 1. `docs/ai-paths/ai-paths-v1-sprint-1-execution-brief-2026-03-06.md`

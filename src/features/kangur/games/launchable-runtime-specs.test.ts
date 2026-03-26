@@ -27,9 +27,15 @@ describe('launchable runtime specs', () => {
     const gameScreenVariants = createDefaultKangurGames().flatMap((game) =>
       game.variants.filter((variant) => variant.surface === 'game_screen')
     );
+    const launchableGames = createDefaultKangurGames().filter((game) =>
+      game.variants.some((variant) => variant.surface === 'game_screen')
+    );
 
     expect(gameScreenVariants.length).toBeGreaterThan(0);
+    expect(launchableGames.length).toBeGreaterThan(0);
+    expect(launchableGames.every((game) => game.legacyScreenIds.length === 0)).toBe(true);
     expect(gameScreenVariants.every((variant) => Boolean(variant.launchableRuntimeId))).toBe(true);
+    expect(gameScreenVariants.some((variant) => Boolean(variant.legacyScreenId))).toBe(false);
     expect(
       gameScreenVariants.map((variant) => variant.launchableRuntimeId).filter(Boolean)
     ).toEqual(expect.arrayContaining(['clock_quiz', 'logical_patterns_quiz']));

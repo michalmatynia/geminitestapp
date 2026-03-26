@@ -8,13 +8,13 @@ canonical: true
 ---
 # Unsafe Patterns Check
 
-Generated at: 2026-03-26T12:50:53.124Z
+Generated at: 2026-03-26T14:23:59.569Z
 
 ## Summary
 
-- Status: FAILED
-- Files scanned: 5829
-- Errors: 1
+- Status: PASSED
+- Files scanned: 5840
+- Errors: 0
 - Warnings: 0
 - Info: 0
 
@@ -22,7 +22,7 @@ Generated at: 2026-03-26T12:50:53.124Z
 
 | Metric | Count |
 | --- | ---: |
-| doubleAssertionCount | 1 |
+| doubleAssertionCount | 0 |
 | anyCount | 0 |
 | eslintDisableCount | 0 |
 | nonNullAssertionCount | 0 |
@@ -33,13 +33,10 @@ Generated at: 2026-03-26T12:50:53.124Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| double-assertion | 1 | 0 | 0 |
 
 ## Issues
 
-| Severity | Rule | Location | Message |
-| --- | --- | --- | --- |
-| ERROR | double-assertion | src/features/kangur/ui/components/LazyAnimatePresence.tsx:30 | Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead. |
+No unsafe pattern issues detected.
 
 ## Notes
 

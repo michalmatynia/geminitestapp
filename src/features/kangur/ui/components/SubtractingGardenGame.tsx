@@ -3,8 +3,8 @@
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
+import { useMemo, useRef, useState } from 'react';
 import {
   KangurDragDropContext,
   getKangurMobileDragHandleStyle,
@@ -26,6 +26,7 @@ import {
 import {
   getKangurMiniGameFinishLabel,
   getKangurMiniGameScoreLabel,
+  translateKangurMiniGameWithFallback,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurButton,
@@ -51,6 +52,7 @@ import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 import type { DropResult } from '@hello-pangea/dnd';
 
@@ -71,9 +73,104 @@ type Round = {
   tokens: TokenItem[];
 };
 
+type SubtractingGardenFallbackCopy = {
+  basketEmpty: string;
+  basketTitle: string;
+  checkLabel: string;
+  cloudEmpty: string;
+  cloudTitle: string;
+  desktopIdle: string;
+  feedbackTooFew: (missing: number) => string;
+  feedbackTooMany: (missing: number) => string;
+  moveToBasket: string;
+  moveToCloud: string;
+  remainingLabel: (value: number) => string;
+  removedLabel: (value: number, target: number) => string;
+  takeAwayInstruction: (count: number) => string;
+  targetLabel: (value: number) => string;
+};
+
 type ZoneId = 'basket' | 'sky';
 
 const TOTAL_ROUNDS = 6;
+
+const getSubtractingGardenFallbackCopy = (
+  locale: ReturnType<typeof normalizeSiteLocale>
+): SubtractingGardenFallbackCopy => {
+  if (locale === 'uk') {
+    return {
+      basketEmpty: 'Порожній кошик',
+      basketTitle: 'Стартовий кошик',
+      checkLabel: 'Перевірити',
+      cloudEmpty: 'Перетягни сюди',
+      cloudTitle: 'Хмарка забирає',
+      desktopIdle: 'Перетягуй або натискай обʼєкти, щоб віднімати.',
+      feedbackTooFew: (missing) => `Замало. Забери ще ${missing}.`,
+      feedbackTooMany: (missing) => `Забагато. Поверни ${missing}.`,
+      moveToBasket: 'До кошика',
+      moveToCloud: 'До хмарки',
+      remainingLabel: (value) => `Залишилось: ${value}`,
+      removedLabel: (value, target) => `Забрано: ${value}/${target}`,
+      takeAwayInstruction: (count) => `Забери ${count} сяючих точок`,
+      targetLabel: (value) => `Ціль: забери ${value}`,
+    };
+  }
+
+  if (locale === 'de') {
+    return {
+      basketEmpty: 'Leerer Korb',
+      basketTitle: 'Startkorb',
+      checkLabel: 'Prufen',
+      cloudEmpty: 'Hier ablegen',
+      cloudTitle: 'Die Wolke nimmt weg',
+      desktopIdle: 'Ziehe oder klicke Objekte, um zu subtrahieren.',
+      feedbackTooFew: (missing) => `Zu wenig. Nimm noch ${missing} weg.`,
+      feedbackTooMany: (missing) => `Zu viel. Gib ${missing} zuruck.`,
+      moveToBasket: 'Zum Korb',
+      moveToCloud: 'Zur Wolke',
+      remainingLabel: (value) => `Ubrig: ${value}`,
+      removedLabel: (value, target) => `Weggenommen: ${value}/${target}`,
+      takeAwayInstruction: (count) => `Nimm ${count} leuchtende Punkte weg`,
+      targetLabel: (value) => `Ziel: nimm ${value} weg`,
+    };
+  }
+
+  if (locale === 'en') {
+    return {
+      basketEmpty: 'Empty basket',
+      basketTitle: 'Starting basket',
+      checkLabel: 'Check',
+      cloudEmpty: 'Drop here',
+      cloudTitle: 'The cloud takes away',
+      desktopIdle: 'Drag or tap the objects to subtract.',
+      feedbackTooFew: (missing) => `Too few. Take away ${missing} more.`,
+      feedbackTooMany: (missing) => `Too many. Put back ${missing}.`,
+      moveToBasket: 'To basket',
+      moveToCloud: 'To cloud',
+      remainingLabel: (value) => `Left: ${value}`,
+      removedLabel: (value, target) => `Taken away: ${value}/${target}`,
+      takeAwayInstruction: (count) => `Take away ${count} glowing points`,
+      targetLabel: (value) => `Target: take away ${value}`,
+    };
+  }
+
+  return {
+    basketEmpty: 'Pusty koszyk',
+    basketTitle: 'Koszyk startowy',
+    checkLabel: 'Sprawdź',
+    cloudEmpty: 'Upuść tutaj',
+    cloudTitle: 'Chmura zabiera',
+    desktopIdle: 'Przeciągnij lub kliknij obiekty, aby odejmować.',
+    feedbackTooFew: (missing) => `Za mało. Zabierz jeszcze ${missing}.`,
+    feedbackTooMany: (missing) => `Za dużo. Oddaj ${missing}.`,
+    moveToBasket: 'Do koszyka',
+    moveToCloud: 'Do chmury',
+    remainingLabel: (value) => `Zostało: ${value}`,
+    removedLabel: (value, target) => `Zabrane: ${value}/${target}`,
+    takeAwayInstruction: (count) => `Zabierz ${count} swiecacych punktów`,
+    targetLabel: (value) => `Cel: zabierz ${value}`,
+  };
+};
 
 const TOKEN_STYLES = [
   'bg-gradient-to-br from-amber-200 via-orange-300 to-rose-300 shadow-[0_10px_26px_-12px_rgba(251,146,60,0.7)]',
@@ -222,7 +319,9 @@ export default function SubtractingGardenGame({
   onFinish,
 }: SubtractingGardenGameProps): React.JSX.Element {
   const ownerKey = useKangurProgressOwnerKey();
+  const locale = normalizeSiteLocale(useLocale());
   const translations = useTranslations('KangurMiniGames');
+  const fallbackCopy = useMemo(() => getSubtractingGardenFallbackCopy(locale), [locale]);
   const isCoarsePointer = useKangurCoarsePointer();
   const finishLabel =
     finishLabelVariant === 'topics'
@@ -438,11 +537,25 @@ export default function SubtractingGardenGame({
       ? `${translations('subtractingGarden.feedback.correct')} ${round.a - round.b}.`
       : status === 'wrong'
         ? missing > 0
-          ? `Za mało. Zabierz jeszcze ${missing}.`
-          : `Za dużo. Oddaj ${Math.abs(missing)}.`
+          ? translateKangurMiniGameWithFallback(
+            translations,
+            'subtractingGarden.feedback.tooFew',
+            fallbackCopy.feedbackTooFew(missing),
+            { count: missing }
+          )
+          : translateKangurMiniGameWithFallback(
+            translations,
+            'subtractingGarden.feedback.tooMany',
+            fallbackCopy.feedbackTooMany(Math.abs(missing)),
+            { count: Math.abs(missing) }
+          )
         : isCoarsePointer
           ? translations('subtractingGarden.touch.idle')
-          : 'Przeciągnij lub kliknij obiekty, aby odejmować.';
+          : translateKangurMiniGameWithFallback(
+            translations,
+            'subtractingGarden.inRound.idle',
+            fallbackCopy.desktopIdle
+          );
   const tokenAriaLabel = translations('subtractingGarden.aria.token');
 
   return (
@@ -469,7 +582,12 @@ export default function SubtractingGardenGame({
                 <span className='[color:var(--kangur-page-muted-text)]'>?</span>
               </KangurEquationDisplay>
               <p className='text-xs font-semibold uppercase tracking-wide text-rose-500'>
-                Zabierz {round.b} swiecacych punktów
+                {translateKangurMiniGameWithFallback(
+                  translations,
+                  'subtractingGarden.inRound.takeAwayInstruction',
+                  fallbackCopy.takeAwayInstruction(round.b),
+                  { count: round.b }
+                )}
               </p>
             </div>
             <KangurDragDropContext onDragEnd={handleDragEnd}>
@@ -492,7 +610,11 @@ export default function SubtractingGardenGame({
                       tone='accent'
                     >
                       <p className='text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700'>
-                        Koszyk startowy
+                        {translateKangurMiniGameWithFallback(
+                          translations,
+                          'subtractingGarden.inRound.zones.basket.title',
+                          fallbackCopy.basketTitle
+                        )}
                       </p>
                       <Droppable droppableId='basket' direction='horizontal'>
                         {(provided, snapshot) => (
@@ -553,7 +675,11 @@ export default function SubtractingGardenGame({
                             {provided.placeholder}
                             {basket.length === 0 ? (
                               <p className='text-xs font-semibold text-slate-400'>
-                                Pusty koszyk
+                                {translateKangurMiniGameWithFallback(
+                                  translations,
+                                  'subtractingGarden.inRound.zones.basket.empty',
+                                  fallbackCopy.basketEmpty
+                                )}
                               </p>
                             ) : null}
                           </div>
@@ -567,7 +693,12 @@ export default function SubtractingGardenGame({
                         padding='sm'
                         tone='accent'
                       >
-                        Cel: zabierz {round.b}
+                        {translateKangurMiniGameWithFallback(
+                          translations,
+                          'subtractingGarden.inRound.target',
+                          fallbackCopy.targetLabel(round.b),
+                          { count: round.b }
+                        )}
                       </KangurInfoCard>
                       <KangurInfoCard
                         accent='amber'
@@ -575,7 +706,12 @@ export default function SubtractingGardenGame({
                         padding='sm'
                         tone='accent'
                       >
-                        Zabrane: {removed}/{round.b}
+                        {translateKangurMiniGameWithFallback(
+                          translations,
+                          'subtractingGarden.inRound.removed',
+                          fallbackCopy.removedLabel(removed, round.b),
+                          { current: removed, total: round.b }
+                        )}
                       </KangurInfoCard>
                       <KangurInfoCard
                         accent='emerald'
@@ -583,7 +719,12 @@ export default function SubtractingGardenGame({
                         padding='sm'
                         tone='accent'
                       >
-                        Zostało: {remaining}
+                        {translateKangurMiniGameWithFallback(
+                          translations,
+                          'subtractingGarden.inRound.remaining',
+                          fallbackCopy.remainingLabel(remaining),
+                          { count: remaining }
+                        )}
                       </KangurInfoCard>
                     </div>
                     <KangurInfoCard
@@ -593,7 +734,11 @@ export default function SubtractingGardenGame({
                       tone='accent'
                     >
                       <p className='text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-700'>
-                        Chmura zabiera
+                        {translateKangurMiniGameWithFallback(
+                          translations,
+                          'subtractingGarden.inRound.zones.cloud.title',
+                          fallbackCopy.cloudTitle
+                        )}
                       </p>
                       <Droppable droppableId='sky' direction='horizontal'>
                         {(provided, snapshot) => (
@@ -654,7 +799,11 @@ export default function SubtractingGardenGame({
                             {provided.placeholder}
                             {sky.length === 0 ? (
                               <p className='text-xs font-semibold text-slate-400'>
-                                Upusc tutaj
+                                {translateKangurMiniGameWithFallback(
+                                  translations,
+                                  'subtractingGarden.inRound.zones.cloud.empty',
+                                  fallbackCopy.cloudEmpty
+                                )}
                               </p>
                             ) : null}
                           </div>
@@ -695,7 +844,11 @@ export default function SubtractingGardenGame({
                             onClick={() => moveSelectedToken('basket')}
                             disabled={!selectedToken || isLocked}
                           >
-                            Do koszyka
+                            {translateKangurMiniGameWithFallback(
+                              translations,
+                              'subtractingGarden.touch.moveToBasket',
+                              fallbackCopy.moveToBasket
+                            )}
                           </KangurButton>
                           <KangurButton
                             size='sm'
@@ -704,7 +857,11 @@ export default function SubtractingGardenGame({
                             onClick={() => moveSelectedToken('sky')}
                             disabled={!selectedToken || isLocked}
                           >
-                            Do chmury
+                            {translateKangurMiniGameWithFallback(
+                              translations,
+                              'subtractingGarden.touch.moveToCloud',
+                              fallbackCopy.moveToCloud
+                            )}
                           </KangurButton>
                         </div>
                       </div>
@@ -722,7 +879,11 @@ export default function SubtractingGardenGame({
                       }
                       disabled={isLocked}
                     >
-                      Sprawdź
+                      {translateKangurMiniGameWithFallback(
+                        translations,
+                        'subtractingGarden.inRound.check',
+                        fallbackCopy.checkLabel
+                      )}
                     </KangurCheckButton>
                     <p
                       className={cn(

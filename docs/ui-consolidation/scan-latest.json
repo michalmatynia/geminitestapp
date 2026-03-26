@@ -1,7 +1,7 @@
 {
   "summary": {
-    "generatedAt": "2026-03-26T12:50:50.710Z",
-    "scannedFileCount": 2105,
+    "generatedAt": "2026-03-26T15:10:56.905Z",
+    "scannedFileCount": 2114,
     "duplicateNameClusterCount": 0,
     "propSignatureClusterCount": 0,
     "tokenSimilarityClusterCount": 0,
@@ -11,7 +11,7 @@
     "familyCounts": [
       {
         "family": "Unknown",
-        "count": 1473
+        "count": 1482
       },
       {
         "family": "Page",
@@ -81,7 +81,7 @@
     "domainCounts": [
       {
         "domain": "feature",
-        "count": 1693
+        "count": 1702
       },
       {
         "domain": "app",
@@ -3009,7 +3009,7 @@
       "domain": "app",
       "scope": "app",
       "family": "Unknown",
-      "lines": 172,
+      "lines": 221,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -3029,15 +3029,17 @@
       "domain": "app",
       "scope": "app",
       "family": "Unknown",
-      "lines": 119,
+      "lines": 162,
       "useClient": false,
       "imports": [
         "next/headers",
         "@/app/(frontend)/home-helpers",
         "@/features/cms/components/frontend/CmsStorefrontAppearance",
         "@/features/cms/server",
+        "@/features/kangur/server/auth-bootstrap",
         "@/features/kangur/server/storefront-appearance",
         "@/features/kangur/ui/FrontendPublicOwnerContext",
+        "@/features/kangur/ui/FrontendPublicOwnerKangurShell",
         "@/features/kangur/ui/FrontendPublicOwnerShellClient",
         "@/shared/lib/front-page-app",
         "@/shared/lib/i18n/site-locale",
@@ -23062,12 +23064,51 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/kangur/ui/components/AlphabetLiteracyStageGame.test.tsx",
+      "basename": "AlphabetLiteracyStageGame.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 40,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/AlphabetLiteracyStageGame"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/AlphabetLiteracyStageGame.tsx",
+      "basename": "AlphabetLiteracyStageGame.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 186,
+      "useClient": true,
+      "imports": [
+        "react",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/hooks/useKangurCoarsePointer",
+        "./alphabet-literacy-stage-data"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "finishLabel|literacyMatchSetId|onFinish",
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/kangur/ui/components/AlphabetMatchingLesson.data.tsx",
       "basename": "AlphabetMatchingLesson.data.tsx",
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 55,
+      "lines": 62,
       "useClient": false,
       "imports": [
         "@/features/kangur/ui/components/LessonSlideSection",
@@ -23085,9 +23126,10 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 26,
+      "lines": 46,
       "useClient": true,
       "imports": [
+        "@/features/kangur/games/lesson-stage-runtime-specs",
         "../lessons/lesson-components",
         "./AlphabetMatchingLesson.data"
       ],
@@ -23140,13 +23182,15 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 64,
+      "lines": 115,
       "useClient": false,
       "imports": [
         "react",
         "@testing-library/react",
         "vitest",
-        "@/features/kangur/ui/components/AlphabetSequenceLesson"
+        "@/features/kangur/ui/components/AlphabetMatchingLesson",
+        "@/features/kangur/ui/components/AlphabetSequenceLesson",
+        "@/features/kangur/ui/components/AlphabetWordsLesson"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -23220,10 +23264,11 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 6,
+      "lines": 62,
       "useClient": false,
       "imports": [
-        "./LessonPlaceholder.data"
+        "@/features/kangur/ui/components/LessonSlideSection",
+        "@/features/kangur/ui/design/lesson-primitives"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -23237,9 +23282,10 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 26,
+      "lines": 46,
       "useClient": true,
       "imports": [
+        "@/features/kangur/games/lesson-stage-runtime-specs",
         "../lessons/lesson-components",
         "./AlphabetWordsLesson.data"
       ],
@@ -23304,7 +23350,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 90,
+      "lines": 100,
       "useClient": false,
       "imports": [
         "react",
@@ -23312,6 +23358,7 @@
         "next-intl",
         "vitest",
         "@/i18n/messages/pl.json",
+        "@/features/kangur/ui/components/ArtColorsHarmonyLesson",
         "@/features/kangur/ui/components/ArtShapesBasicLesson",
         "@/features/kangur/ui/components/MusicDiatonicScaleLesson",
         "@/features/kangur/ui/components/ArtShapesBasicLesson.data"
@@ -23328,10 +23375,11 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 248,
+      "lines": 274,
       "useClient": true,
       "imports": [
         "react",
+        "@/features/kangur/games/lesson-stage-runtime-specs",
         "@/features/kangur/ui/components/LessonSlideSection",
         "@/features/kangur/ui/design/lesson-primitives",
         "@/features/kangur/ui/lessons/lesson-components"
@@ -24145,6 +24193,44 @@
       "uiPrimitiveImports": 0,
       "tokenSet": {},
       "propsSignature": "clockSection|onFinish",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/ColorHarmonyStageGame.test.tsx",
+      "basename": "ColorHarmonyStageGame.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 37,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/ColorHarmonyStageGame"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/ColorHarmonyStageGame.tsx",
+      "basename": "ColorHarmonyStageGame.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 360,
+      "useClient": true,
+      "imports": [
+        "react",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/hooks/useKangurCoarsePointer"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "finishLabel|onFinish",
       "thinReExportWrapper": false
     },
     {
@@ -26116,7 +26202,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 137,
+      "lines": 156,
       "useClient": false,
       "imports": [
         "react",
@@ -26279,7 +26365,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 95,
+      "lines": 111,
       "useClient": false,
       "imports": [
         "react",
@@ -26302,7 +26388,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 61,
+      "lines": 68,
       "useClient": false,
       "imports": [
         "react",
@@ -26310,6 +26396,7 @@
         "next-intl",
         "vitest",
         "@/i18n/messages/pl.json",
+        "@/features/kangur/ui/components/KangurLessonStageGameRuntime",
         "@/features/kangur/ui/components/GeometryShapeRecognitionLesson",
         "use-intl"
       ],
@@ -26721,13 +26808,14 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 263,
+      "lines": 262,
       "useClient": true,
       "imports": [
         "@testing-library/react",
         "react",
         "vitest",
         "@/features/kangur/shared/contracts/kangur-ai-tutor-content",
+        "@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage",
         "./KangurAiTutorPanelBody.context",
         "./KangurAiTutorComposer",
         "./KangurAiTutorWidget.state"
@@ -26744,7 +26832,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 194,
+      "lines": 201,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -26769,12 +26857,14 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 289,
+      "lines": 393,
       "useClient": false,
       "imports": [
         "@testing-library/react",
         "vitest",
         "@/features/kangur/ui/components/drawing-engine/freeform-snapshots",
+        "@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage",
+        "@/features/kangur/shared/contracts/kangur-ai-tutor-content",
         "./KangurAiTutorDrawingCanvas",
         "@/features/kangur/ui/components/drawing-engine/canvas-export"
       ],
@@ -26809,11 +26899,12 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 193,
+      "lines": 356,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
+        "@/features/kangur/shared/contracts/kangur-ai-tutor-content",
         "@/features/kangur/ui/context/KangurAiTutorContentContext",
         "@/features/kangur/ui/hooks/useKangurCoarsePointer",
         "@/features/kangur/ui/components/drawing-engine/KangurDrawingCanvasSurface",
@@ -26821,13 +26912,15 @@
         "@/features/kangur/ui/components/drawing-engine/freeform-config",
         "@/features/kangur/ui/components/drawing-engine/drawing-identifiers",
         "@/features/kangur/ui/components/drawing-engine/keyboard-shortcuts",
-        "@/features/kangur/ui/components/drawing-engine/useKangurManagedFreeformCanvasDrawing",
-        "@/features/kangur/shared/utils"
+        "@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage",
+        "@/features/kangur/ui/components/drawing-engine/useKangurManagedStoredFreeformCanvasDrawing",
+        "@/features/kangur/shared/utils",
+        "@/shared/lib/i18n/site-locale"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "initialSnapshot|onCancel|onComplete|onSnapshotChange",
+      "propsSignature": "draftStorage|onCancel|onComplete",
       "thinReExportWrapper": false
     },
     {
@@ -26924,7 +27017,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 564,
+      "lines": 683,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -26945,18 +27038,20 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 578,
+      "lines": 681,
       "useClient": true,
       "imports": [
         "react",
         "framer-motion",
         "@/features/kangur/page-content-fragments",
+        "@/features/kangur/shared/contracts/kangur-ai-tutor-content",
         "@/features/kangur/ui/context/KangurAiTutorContentContext",
         "@/features/kangur/ui/design/primitives",
         "@/features/kangur/ui/hooks/useKangurCoarsePointer",
         "@/features/kangur/ui/hooks/useKangurPageContent",
         "@/features/kangur/shared/contracts/kangur-page-content",
         "@/features/kangur/shared/utils",
+        "@/shared/lib/i18n/site-locale",
         "@/features/kangur/ui/design/tokens",
         "./KangurAiTutorChrome",
         "./KangurAiTutorPanelBody.context",
@@ -27069,7 +27164,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 231,
+      "lines": 268,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -27090,14 +27185,15 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 146,
+      "lines": 225,
       "useClient": false,
       "imports": [
+        "@/features/kangur/shared/contracts/kangur-ai-tutor-content",
         "@/features/kangur/ui/context/KangurAiTutorContentContext",
         "@/features/kangur/ui/design/primitives",
         "@/features/kangur/ui/design/tokens",
         "@/features/kangur/ui/hooks/useKangurCoarsePointer",
-        "@/features/kangur/shared/contracts/kangur-ai-tutor-content",
+        "@/shared/lib/i18n/site-locale",
         "./KangurAiTutorPanelBody.context",
         "react"
       ],
@@ -28489,6 +28585,48 @@
       "uiPrimitiveImports": 0,
       "tokenSet": {},
       "propsSignature": "idPrefix|label|locale|props",
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurElevatedUserMenu.test.tsx",
+      "basename": "KangurElevatedUserMenu.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 57,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@testing-library/react",
+        "@testing-library/user-event",
+        "vitest",
+        "@/features/kangur/ui/components/KangurElevatedUserMenu"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/components/KangurElevatedUserMenu.tsx",
+      "basename": "KangurElevatedUserMenu.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 112,
+      "useClient": true,
+      "imports": [
+        "lucide-react",
+        "next/link",
+        "@/shared/lib/auth/elevated-session-user",
+        "@/shared/utils",
+        "@/shared/ui"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "adminHref|adminLabel|logoutLabel|onLogout|profile|triggerAriaLabel|triggerClassName|user",
       "thinReExportWrapper": false
     },
     {
@@ -30016,7 +30154,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 723,
+      "lines": 736,
       "useClient": false,
       "imports": [
         "react",
@@ -30036,7 +30174,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 540,
+      "lines": 487,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -30068,7 +30206,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 178,
+      "lines": 207,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -30087,17 +30225,19 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Panel",
-      "lines": 224,
+      "lines": 383,
       "useClient": true,
       "imports": [
         "react",
+        "next-intl",
         "@/features/kangur/ui/components/KangurAssignmentsList",
         "@/features/kangur/ui/design/primitives",
         "@/features/kangur/ui/design/tokens",
         "@/features/kangur/ui/context/KangurSubjectFocusContext",
         "@/features/kangur/ui/hooks/useKangurPageContent",
         "@/features/kangur/ui/hooks/useKangurAssignments",
-        "@/features/kangur/ui/services/delegated-assignments"
+        "@/features/kangur/ui/services/delegated-assignments",
+        "@/shared/lib/i18n/site-locale"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -30216,7 +30356,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 124,
+      "lines": 142,
       "useClient": false,
       "imports": [
         "next-intl",
@@ -30229,7 +30369,8 @@
         "@/features/kangur/ui/design/primitives",
         "@/features/kangur/ui/design/tokens",
         "@/features/kangur/ui/hooks/useKangurCoarsePointer",
-        "@/features/kangur/ui/services/profile"
+        "@/features/kangur/ui/services/profile",
+        "@/shared/lib/i18n/site-locale"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -30283,7 +30424,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 89,
+      "lines": 134,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -30302,14 +30443,15 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 36,
+      "lines": 69,
       "useClient": true,
       "imports": [
         "next-intl",
         "@/features/kangur/ui/components/LessonMasteryInsights",
         "@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext",
         "@/features/kangur/ui/hooks/useKangurPageContent",
-        "@/features/kangur/ui/services/profile"
+        "@/features/kangur/ui/services/profile",
+        "@/shared/lib/i18n/site-locale"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -30573,7 +30715,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 140,
+      "lines": 157,
       "useClient": false,
       "imports": [
         "next-intl",
@@ -30584,7 +30726,8 @@
         "@/features/kangur/ui/design/primitives",
         "@/features/kangur/ui/hooks/useKangurPageContent",
         "@/features/kangur/ui/design/tokens",
-        "@/features/kangur/ui/services/profile"
+        "@/features/kangur/ui/services/profile",
+        "@/shared/lib/i18n/site-locale"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -30618,7 +30761,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 215,
+      "lines": 216,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -30979,7 +31122,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 396,
+      "lines": 447,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -30999,7 +31142,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 106,
+      "lines": 110,
       "useClient": true,
       "imports": [
         "react",
@@ -31011,6 +31154,8 @@
         "@/features/kangur/ui/components/AgenticSurfaceMatchGame",
         "@/features/kangur/ui/components/AddingBallGame",
         "@/features/kangur/ui/components/AddingSynthesisGame",
+        "@/features/kangur/ui/components/AlphabetLiteracyStageGame",
+        "@/features/kangur/ui/components/ColorHarmonyStageGame",
         "@/features/kangur/ui/components/ArtShapesRotationGapGame",
         "@/features/kangur/ui/components/CalendarInteractiveStageGame",
         "@/features/kangur/ui/components/ClockTrainingStageGame",
@@ -31050,7 +31195,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 223,
+      "lines": 218,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -31070,7 +31215,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 324,
+      "lines": 323,
       "useClient": true,
       "imports": [
         "next-intl",
@@ -31088,7 +31233,6 @@
         "@/features/kangur/ui/design/tokens",
         "@/features/kangur/ui/components/KangurSubjectGroupSection",
         "@/features/kangur/ui/constants/subject-groups",
-        "@/features/kangur/ui/hooks/useKangurLessonSections",
         "@/features/kangur/shared/contracts/kangur",
         "@/shared/contracts/kangur-lesson-sections",
         "@/features/kangur/ui/pages/lessons/Lessons.constants",
@@ -31298,7 +31442,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 76,
+      "lines": 98,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -31317,14 +31461,16 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Card",
-      "lines": 219,
+      "lines": 241,
       "useClient": true,
       "imports": [
         "react",
+        "next-intl",
         "@/features/kangur/ui/design/primitives",
         "@/features/kangur/ui/hooks/useKangurCoarsePointer",
         "@/features/kangur/ui/design/tokens",
-        "@/features/kangur/shared/utils"
+        "@/features/kangur/shared/utils",
+        "@/shared/lib/i18n/site-locale"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -31679,7 +31825,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 421,
+      "lines": 452,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -31698,9 +31844,10 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 875,
+      "lines": 1119,
       "useClient": true,
       "imports": [
+        "next-intl",
         "lucide-react",
         "react",
         "@/features/kangur/ui/components/KangurDialog",
@@ -31716,7 +31863,8 @@
         "@/features/kangur/shared/utils",
         "@/features/kangur/observability/client",
         "@/features/kangur/ui/design/tokens",
-        "@/features/kangur/shared/utils/observability/error-system-client"
+        "@/features/kangur/shared/utils/observability/error-system-client",
+        "@/shared/lib/i18n/site-locale"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -31996,7 +32144,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 2023,
+      "lines": 2152,
       "useClient": false,
       "imports": [
         "@tanstack/react-query",
@@ -32024,11 +32172,12 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 1287,
+      "lines": 1459,
       "useClient": true,
       "imports": [
         "lucide-react",
         "next/dynamic",
+        "next-auth/react",
         "next-intl",
         "react",
         "@/features/cms/public",
@@ -32043,6 +32192,7 @@
         "@/features/kangur/ui/components/KangurVisualCueContent",
         "@/features/kangur/ui/components/KangurNavAction",
         "@/features/kangur/ui/components/KangurPanelCloseButton",
+        "@/features/kangur/shared/contracts/kangur-ai-tutor-content",
         "@/features/kangur/ui/context/KangurAiTutorContentContext",
         "@/features/kangur/ui/context/KangurAiTutorContext",
         "@/features/kangur/ui/context/KangurAuthContext",
@@ -32057,9 +32207,12 @@
         "@/features/kangur/ui/hooks/useKangurTutorAnchor",
         "@/features/kangur/ui/useKangurStorefrontAppearance",
         "@/shared/contracts/site-i18n",
+        "@/shared/lib/auth/elevated-session-user",
+        "@/shared/lib/i18n/site-locale",
         "@/features/kangur/ui/components/KangurChoiceDialog",
         "@/features/kangur/ui/components/KangurLanguageSwitcher",
-        "@/features/kangur/ui/components/KangurProfileMenu"
+        "@/features/kangur/ui/components/KangurProfileMenu",
+        "@/features/kangur/ui/components/KangurElevatedUserMenu"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -32118,7 +32271,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 56,
+      "lines": 73,
       "useClient": false,
       "imports": [
         "react",
@@ -32138,14 +32291,16 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 104,
+      "lines": 126,
       "useClient": false,
       "imports": [
         "lucide-react",
+        "next-intl",
         "@/features/kangur/config/routing",
         "@/features/kangur/ui/components/KangurNavAction",
         "@/features/kangur/ui/context/KangurRouteTransitionContext",
-        "@/features/kangur/ui/hooks/useKangurCoarsePointer"
+        "@/features/kangur/ui/hooks/useKangurCoarsePointer",
+        "@/shared/lib/i18n/site-locale"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -32476,7 +32631,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 72,
+      "lines": 106,
       "useClient": false,
       "imports": [
         "react",
@@ -32496,17 +32651,19 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 343,
+      "lines": 604,
       "useClient": true,
       "imports": [
         "lucide-react",
+        "next-intl",
         "react",
         "@/features/kangur/ui/components/KangurAnswerChoiceCard",
         "@/features/kangur/ui/components/KangurLessonNavigationIconButton",
         "@/features/kangur/ui/components/KangurRecommendationCard",
         "@/features/kangur/ui/design/primitives",
         "@/features/kangur/ui/design/tokens",
-        "@/features/kangur/ui/types"
+        "@/features/kangur/ui/types",
+        "@/shared/lib/i18n/site-locale"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -33017,7 +33174,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 256,
+      "lines": 275,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -33039,11 +33196,12 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 215,
-      "useClient": false,
+      "lines": 231,
+      "useClient": true,
       "imports": [
         "lucide-react",
         "next-intl",
+        "react",
         "@/features/kangur/ui/design/primitives",
         "@/features/kangur/ui/design/tokens",
         "@/features/kangur/ui/hooks/useKangurCoarsePointer",
@@ -33220,14 +33378,15 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 226,
+      "lines": 323,
       "useClient": false,
       "imports": [
         "next-intl",
         "@/features/kangur/ui/design/primitives",
         "@/features/kangur/ui/design/tokens",
         "@/features/kangur/ui/services/profile",
-        "@/features/kangur/ui/types"
+        "@/features/kangur/ui/types",
+        "@/shared/lib/i18n/site-locale"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -34685,7 +34844,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 113,
+      "lines": 161,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -34731,7 +34890,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 657,
+      "lines": 959,
       "useClient": true,
       "imports": [
         "next-intl",
@@ -34750,7 +34909,8 @@
         "@/features/kangur/ui/services/learner-profile-scores",
         "@/features/kangur/ui/services/score-insights",
         "@/features/kangur/ui/context/KangurSubjectFocusContext",
-        "@/shared/contracts/kangur"
+        "@/shared/contracts/kangur",
+        "@/shared/lib/i18n/site-locale"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -34764,7 +34924,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 192,
+      "lines": 203,
       "useClient": true,
       "imports": [
         "react",
@@ -34772,7 +34932,8 @@
         "@/features/kangur/ui/design/primitives",
         "@/features/kangur/ui/hooks/useKangurCoarsePointer",
         "./GeometryShapeRecognition.shared",
-        "./lesson-copy"
+        "./lesson-copy",
+        "@/shared/lib/i18n/site-locale"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -34904,7 +35065,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 122,
+      "lines": 129,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -34928,7 +35089,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 752,
+      "lines": 913,
       "useClient": true,
       "imports": [
         "@/features/kangur/ui/hooks/useKangurProgressOwnerKey",
@@ -34948,7 +35109,8 @@
         "@/features/kangur/ui/services/round-transition",
         "@/features/kangur/ui/services/session-score",
         "@/features/kangur/ui/types",
-        "@/features/kangur/shared/utils"
+        "@/features/kangur/shared/utils",
+        "@/shared/lib/i18n/site-locale"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -35055,17 +35217,18 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 111,
+      "lines": 256,
       "useClient": false,
       "imports": [
         "@testing-library/react",
+        "react",
         "vitest",
         "@/features/kangur/ui/components/TrainingSetup"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": null,
+      "propsSignature": "animate|children|exit|initial|transition|whileHover|whileTap",
       "thinReExportWrapper": false
     },
     {
@@ -35074,11 +35237,12 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 213,
+      "lines": 277,
       "useClient": true,
       "imports": [
         "framer-motion",
         "lucide-react",
+        "next-intl",
         "react",
         "@/features/kangur/ui/components/DifficultySelector",
         "@/features/kangur/ui/components/KangurRecommendationCard",
@@ -35087,7 +35251,8 @@
         "@/features/kangur/ui/hooks/useKangurCoarsePointer",
         "@/features/kangur/ui/hooks/useKangurTrainingSetupState",
         "@/features/kangur/ui/types",
-        "@/features/kangur/shared/utils"
+        "@/features/kangur/shared/utils",
+        "@/shared/lib/i18n/site-locale"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -37336,6 +37501,26 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/kangur/ui/components/drawing-engine/useKangurManagedStoredFreeformCanvasDrawing.test.tsx",
+      "basename": "useKangurManagedStoredFreeformCanvasDrawing.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 204,
+      "useClient": true,
+      "imports": [
+        "@testing-library/react",
+        "react",
+        "vitest",
+        "@/features/kangur/ui/components/drawing-engine/useKangurManagedStoredFreeformCanvasDrawing"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/kangur/ui/components/drawing-engine/useKangurManagedStoredPointDrawing.test.tsx",
       "basename": "useKangurManagedStoredPointDrawing.test.tsx",
       "domain": "feature",
@@ -37377,6 +37562,26 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/kangur/ui/components/drawing-engine/useKangurResolvedDrawingDraftStorage.test.tsx",
+      "basename": "useKangurResolvedDrawingDraftStorage.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 79,
+      "useClient": true,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage",
+        "@/features/kangur/ui/components/drawing-engine/useKangurResolvedDrawingDraftStorage"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/kangur/ui/components/drawing-engine/useKangurSerializedSnapshotSync.test.tsx",
       "basename": "useKangurSerializedSnapshotSync.test.tsx",
       "domain": "feature",
@@ -37397,12 +37602,34 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/kangur/ui/components/drawing-engine/useKangurStoredFreeformCanvasDrawing.test.tsx",
+      "basename": "useKangurStoredFreeformCanvasDrawing.test.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Unknown",
+      "lines": 220,
+      "useClient": true,
+      "imports": [
+        "@testing-library/react",
+        "react",
+        "vitest",
+        "@/features/kangur/ui/components/drawing-engine/freeform-snapshots",
+        "@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage",
+        "@/features/kangur/ui/components/drawing-engine/useKangurStoredFreeformCanvasDrawing"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "externalDraft|initialExternalSnapshot|storageKey",
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/kangur/ui/components/drawing-engine/useKangurStoredPointCanvasDrawing.test.tsx",
       "basename": "useKangurStoredPointCanvasDrawing.test.tsx",
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 160,
+      "lines": 215,
       "useClient": true,
       "imports": [
         "@testing-library/react",
@@ -37415,7 +37642,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": null,
+      "propsSignature": "draftStorage|storageKey",
       "thinReExportWrapper": false
     },
     {

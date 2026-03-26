@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:ai-paths'
@@ -8,6 +8,11 @@ canonical: true
 ---
 
 # AI-Paths Node Code Objects (v3 Scaffold)
+
+This is the maintained migration/scaffold reference for executable node
+code-object contracts. Pair it with [`./node-code-objects-v2.md`](./node-code-objects-v2.md)
+for the stable portable copy/paste contract and with [`./reference.md`](./reference.md)
+for the broader AI Paths runtime model.
 
 ## Purpose
 

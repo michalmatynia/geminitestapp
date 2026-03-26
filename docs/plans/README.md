@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-25'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'index'
 scope: 'cross-feature'
@@ -42,3 +42,5 @@ Use this directory for cross-feature or repo-wide:
 - Feature-specific implementation waves should not linger here after completion.
 - When a file is retained for historical context, say so explicitly at the top and
   link to the current owning runtime or operator docs.
+- Retained closeout docs should prefer pointing to maintained hub docs rather than
+  duplicating current command guidance inline.

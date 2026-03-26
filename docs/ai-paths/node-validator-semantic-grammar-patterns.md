@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:ai-paths'
@@ -8,6 +8,11 @@ canonical: true
 ---
 
 # Node Validator Semantic Grammar Patterns
+
+This is the maintained semantic-grammar pattern pack for AI Paths node
+validation. Use [`./node-validator-central-patterns.md`](./node-validator-central-patterns.md)
+for the full validator pattern-pack index and [`./semantic-grammar/README.md`](./semantic-grammar/README.md)
+for the portable canvas contract these assertions support.
 
 ```ai-paths-assertion
 {

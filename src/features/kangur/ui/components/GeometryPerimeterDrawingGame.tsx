@@ -31,7 +31,7 @@ import { useKangurDrawingDraftStorage } from '@/features/kangur/ui/components/dr
 import { useKangurKeyboardPointDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurKeyboardPointDrawing';
 import { useKangurManagedDrawingActions } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedDrawingActions';
 import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
-import { KangurDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions';
+import { KangurManagedDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurManagedDrawingUtilityActions';
 import {
   KangurDisplayEmoji,
   KangurGlassPanel,
@@ -702,21 +702,22 @@ export default function GeometryPerimeterDrawingGame({
               clearLabel={translations('geometryPerimeter.inRound.clear')}
               feedback={feedback}
               utilityActions={
-                <KangurDrawingUtilityActions
+                <KangurManagedDrawingUtilityActions
+                  canExport={hasDrawableContent}
+                  canRedo={canRedo}
+                  canUndo={canUndo}
                   exportButtonClassName='w-full'
                   exportClassName='w-full sm:flex-1'
-                  exportDisabled={!hasDrawableContent}
                   exportLabel={translations('geometryPerimeter.inRound.export')}
                   exportTestId='geometry-perimeter-export'
+                  historyLocked={feedback !== null}
                   historyButtonClassName='w-full sm:flex-1'
                   historyClassName='w-full sm:flex-1'
                   isCoarsePointer={isCoarsePointer}
                   onExport={exportDrawing}
                   onRedo={redoDrawing}
                   onUndo={undoDrawing}
-                  redoDisabled={feedback !== null || !canRedo}
                   redoLabel='Ponów'
-                  undoDisabled={feedback !== null || !canUndo}
                   undoLabel='Cofnij'
                 />
               }

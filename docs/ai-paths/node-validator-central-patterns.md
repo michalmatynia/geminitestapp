@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:ai-paths'
@@ -10,6 +10,9 @@ canonical: true
 # AI-Paths Node Validator Central Patterns
 
 This file is the centralized index for AI-Paths validation pattern packs.
+It is the maintained hub for validator pattern-pack references; detailed rule
+sets stay in the linked domain files below.
+
 Machine-readable assertions are maintained in domain-specific docs referenced by:
 
 - `docs/ai-paths/node-validator-core-patterns.md`
@@ -41,3 +44,8 @@ Schema reference:
 Inference logic reference:
 
 - `docs/ai-paths/node-validator-doc-logic-inference.md`
+
+Broader product/runtime context:
+
+- `docs/ai-paths/overview.md`
+- `docs/ai-paths/reference.md`

@@ -71,6 +71,9 @@ describe('kangur game variants', () => {
     const reasoningRouterEntry = entries.find(
       (candidate) => candidate.variant.id === 'agentic_reasoning_router.lesson-stage'
     );
+    const surfaceMatchEntry = entries.find(
+      (candidate) => candidate.variant.id === 'agentic_surface_match.lesson-stage'
+    );
 
     expect(promptTrimEntry?.lessonStageRuntime).toMatchObject({
       runtimeId: 'agentic_prompt_trim_lesson_stage',
@@ -85,6 +88,11 @@ describe('kangur game variants', () => {
     expect(reasoningRouterEntry?.lessonStageRuntime).toMatchObject({
       runtimeId: 'agentic_reasoning_router_lesson_stage',
       rendererId: 'agentic_reasoning_router_game',
+      engineId: 'classification-engine',
+    });
+    expect(surfaceMatchEntry?.lessonStageRuntime).toMatchObject({
+      runtimeId: 'agentic_surface_match_lesson_stage',
+      rendererId: 'agentic_surface_match_game',
       engineId: 'classification-engine',
     });
   });

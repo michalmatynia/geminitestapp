@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-25'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'platform'
@@ -8,6 +8,15 @@ canonical: true
 ---
 
 # Repo Deep Scan Report 2026-03-25
+
+This is the retained scan-and-remediation snapshot from the 2026-03-25 repo
+review wave. Use it for the exact findings and same-day fixes captured then, but
+use the maintained hubs below for current operator guidance:
+
+- [`./README.md`](./README.md)
+- [`../runbooks/README.md`](../runbooks/README.md)
+- [`../plans/repo-deep-scan-and-doc-refresh-plan-2026-03-25.md`](../plans/repo-deep-scan-and-doc-refresh-plan-2026-03-25.md)
+- [`../../GEMINI.md`](../../GEMINI.md)
 
 ## Summary
 

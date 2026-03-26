@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:ai-paths'
@@ -8,6 +8,10 @@ canonical: true
 ---
 
 # AI-Paths Node Code Objects (v2)
+
+This is the maintained portable copy/paste contract reference for AI Paths node
+code objects. Use [`./overview.md`](./overview.md) and [`./reference.md`](./reference.md)
+for the broader runtime surface around these artifacts.
 
 ## Purpose
 

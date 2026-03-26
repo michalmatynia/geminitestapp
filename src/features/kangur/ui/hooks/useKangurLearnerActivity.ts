@@ -24,6 +24,55 @@ const DEFAULT_REFRESH_INTERVAL_MS = 30_000;
 const ENABLE_LEARNER_ACTIVITY_SSE =
   process.env['NEXT_PUBLIC_KANGUR_LEARNER_ACTIVITY_SSE'] !== 'false';
 
+type KangurLearnerActivityStatusCacheEntry = {
+  cachedAt: number;
+  status: KangurLearnerActivityStatus;
+};
+
+const learnerActivityStatusCache = new Map<string, KangurLearnerActivityStatusCacheEntry>();
+
+const cloneKangurLearnerActivityStatus = (
+  status: KangurLearnerActivityStatus
+): KangurLearnerActivityStatus => ({
+  ...status,
+  snapshot: status.snapshot ? { ...status.snapshot } : null,
+});
+
+const readCachedKangurLearnerActivityStatus = (
+  learnerId: string | null,
+  maxAgeMs: number
+): KangurLearnerActivityStatus | null => {
+  if (!learnerId) {
+    return null;
+  }
+
+  const cachedEntry = learnerActivityStatusCache.get(learnerId);
+  if (!cachedEntry) {
+    return null;
+  }
+
+  if (Date.now() - cachedEntry.cachedAt >= maxAgeMs) {
+    learnerActivityStatusCache.delete(learnerId);
+    return null;
+  }
+
+  return cloneKangurLearnerActivityStatus(cachedEntry.status);
+};
+
+const writeCachedKangurLearnerActivityStatus = (
+  learnerId: string,
+  status: KangurLearnerActivityStatus
+): void => {
+  learnerActivityStatusCache.set(learnerId, {
+    cachedAt: Date.now(),
+    status: cloneKangurLearnerActivityStatus(status),
+  });
+};
+
+export const resetKangurLearnerActivityStatusCacheForTests = (): void => {
+  learnerActivityStatusCache.clear();
+};
+
 type UseKangurLearnerActivityStatusOptions = {
   deferInitialRefreshMs?: number;
   enabled?: boolean;
@@ -47,11 +96,21 @@ export const useKangurLearnerActivityStatus = (
   const learnerId = options.learnerId ?? null;
   const refreshIntervalMs = options.refreshIntervalMs ?? DEFAULT_REFRESH_INTERVAL_MS;
   const streamEnabled = options.streamEnabled ?? true;
-  const [status, setStatus] = useState<KangurLearnerActivityStatus | null>(null);
-  const [isLoading, setIsLoading] = useState(enabled);
+  const statusCacheMaxAgeMs = Math.max(1_000, refreshIntervalMs);
+  const initialCachedStatus = readCachedKangurLearnerActivityStatus(
+    learnerId,
+    statusCacheMaxAgeMs
+  );
+  const [status, setStatus] = useState<KangurLearnerActivityStatus | null>(initialCachedStatus);
+  const [isLoading, setIsLoading] = useState(enabled && initialCachedStatus === null);
   const [error, setError] = useState<string | null>(null);
   const [isDeferredReady, setIsDeferredReady] = useState(deferInitialRefreshMs === 0);
+  const statusRef = useRef<KangurLearnerActivityStatus | null>(initialCachedStatus);
   const isActive = enabled && Boolean(learnerId) && isDeferredReady;
+
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
 
   useEffect(() => {
     if (!enabled || !learnerId) {
@@ -89,7 +148,9 @@ export const useKangurLearnerActivityStatus = (
       return;
     }
 
-    setIsLoading(true);
+    if (statusRef.current === null) {
+      setIsLoading(true);
+    }
     setError(null);
 
     try {
@@ -114,6 +175,7 @@ export const useKangurLearnerActivityStatus = (
         }
       );
       if (nextStatus) {
+        writeCachedKangurLearnerActivityStatus(learnerId, nextStatus);
         setStatus(nextStatus);
       }
     } finally {
@@ -125,16 +187,45 @@ export const useKangurLearnerActivityStatus = (
     if (!isActive) {
       return;
     }
+
+    const cachedStatus = readCachedKangurLearnerActivityStatus(learnerId, statusCacheMaxAgeMs);
+    if (cachedStatus) {
+      setStatus(cachedStatus);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
     void refresh();
-  }, [isActive, refresh]);
+  }, [isActive, learnerId, refresh, statusCacheMaxAgeMs]);
 
   useEffect(() => {
-    if (!enabled || !learnerId || !isDeferredReady) {
+    if (!enabled || !learnerId) {
       setStatus(null);
       setError(null);
       setIsLoading(false);
+      return;
     }
-  }, [enabled, isDeferredReady, learnerId]);
+
+    const cachedStatus = readCachedKangurLearnerActivityStatus(learnerId, statusCacheMaxAgeMs);
+    if (cachedStatus) {
+      setStatus(cachedStatus);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
+    if (!isDeferredReady) {
+      setStatus(null);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
+    setStatus(null);
+    setError(null);
+    setIsLoading(true);
+  }, [enabled, isDeferredReady, learnerId, statusCacheMaxAgeMs]);
 
   useInterval(
     () => {
@@ -152,6 +243,14 @@ export const useKangurLearnerActivityStatus = (
 
     const handleVisibility = (): void => {
       if (document.visibilityState === 'visible') {
+        const cachedStatus = readCachedKangurLearnerActivityStatus(learnerId, statusCacheMaxAgeMs);
+        if (cachedStatus) {
+          setStatus(cachedStatus);
+          setError(null);
+          setIsLoading(false);
+          return;
+        }
+
         void refresh();
       }
     };
@@ -163,7 +262,7 @@ export const useKangurLearnerActivityStatus = (
       window.removeEventListener('focus', handleVisibility);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [isActive, learnerId, refresh]);
+  }, [isActive, learnerId, refresh, statusCacheMaxAgeMs]);
 
   useEffect(() => {
     if (
@@ -221,6 +320,7 @@ export const useKangurLearnerActivityStatus = (
       if (payload.type === 'snapshot') {
         const parsed = kangurLearnerActivityStatusSchema.safeParse(payload.data);
         if (parsed.success) {
+          writeCachedKangurLearnerActivityStatus(learnerId, parsed.data);
           setStatus(parsed.data);
           setError(null);
           setIsLoading(false);

@@ -40,6 +40,9 @@ vi.mock('@/features/kangur/ui/components/AgenticPromptTrimGame', () => ({
 vi.mock('@/features/kangur/ui/components/AgenticReasoningRouterGame', () => ({
   default: createMockGame('AgenticReasoningRouterGame'),
 }));
+vi.mock('@/features/kangur/ui/components/AgenticSurfaceMatchGame', () => ({
+  default: createMockGame('AgenticSurfaceMatchGame'),
+}));
 vi.mock('@/features/kangur/ui/components/AddingBallGame', () => ({
   default: createMockGame('AddingBallGame'),
 }));
@@ -182,7 +185,7 @@ describe('KangurLessonStageGameRuntime', () => {
   });
 
   it('supports the extracted agentic lesson-stage runtimes through the same registry', () => {
-    render(
+    const { rerender } = render(
       <KangurLessonStageGameRuntime
         runtime={getKangurLessonStageGameRuntimeSpec('agentic_prompt_trim_lesson_stage')}
         onFinish={vi.fn()}
@@ -190,6 +193,15 @@ describe('KangurLessonStageGameRuntime', () => {
     );
 
     expect(screen.getByRole('button', { name: 'AgenticPromptTrimGame' })).toBeInTheDocument();
+
+    rerender(
+      <KangurLessonStageGameRuntime
+        runtime={getKangurLessonStageGameRuntimeSpec('agentic_surface_match_lesson_stage')}
+        onFinish={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'AgenticSurfaceMatchGame' })).toBeInTheDocument();
   });
 
   it('supports the art and music lesson-stage runtimes through the same registry', () => {

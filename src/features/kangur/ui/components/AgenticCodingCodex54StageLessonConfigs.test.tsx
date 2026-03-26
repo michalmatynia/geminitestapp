@@ -18,6 +18,7 @@ vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
 import AgenticCodingCodex54ApprovalsLesson from '@/features/kangur/ui/components/AgenticCodingCodex54ApprovalsLesson';
 import AgenticCodingCodex54ModelsLesson from '@/features/kangur/ui/components/AgenticCodingCodex54ModelsLesson';
 import AgenticCodingCodex54PromptingLesson from '@/features/kangur/ui/components/AgenticCodingCodex54PromptingLesson';
+import AgenticCodingCodex54SurfacesLesson from '@/features/kangur/ui/components/AgenticCodingCodex54SurfacesLesson';
 
 describe('AgenticCodingCodex54 stage lesson configs', () => {
   afterEach(() => {
@@ -51,6 +52,15 @@ describe('AgenticCodingCodex54 stage lesson configs', () => {
       rendererId: 'agentic_reasoning_router_game',
       engineId: 'classification-engine',
       shellTestId: 'agentic-reasoning-router-game-shell',
+    },
+    {
+      lessonTitle: 'Codex 5.4: Surfaces',
+      Component: AgenticCodingCodex54SurfacesLesson,
+      sectionId: 'surface_match_game',
+      runtimeId: 'agentic_surface_match_lesson_stage',
+      rendererId: 'agentic_surface_match_game',
+      engineId: 'classification-engine',
+      shellTestId: 'agentic-surface-match-game-shell',
     },
   ])(
     'passes the shared lesson-stage runtime into KangurUnifiedLesson for $lessonTitle',

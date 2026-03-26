@@ -71,9 +71,21 @@ vi.mock('@/features/kangur/ui/components/AgenticReasoningRouterGame', () => ({
   ),
 }));
 
+vi.mock('@/features/kangur/ui/components/AgenticSurfaceMatchGame', () => ({
+  __esModule: true,
+  default: ({ onFinish }: { onFinish: () => void }): React.JSX.Element => (
+    <div data-testid='mock-agentic-surface-match-game'>
+      <button type='button' onClick={onFinish}>
+        Finish surface match game
+      </button>
+    </div>
+  ),
+}));
+
 import AgenticCodingCodex54ApprovalsLesson from '@/features/kangur/ui/components/AgenticCodingCodex54ApprovalsLesson';
 import AgenticCodingCodex54ModelsLesson from '@/features/kangur/ui/components/AgenticCodingCodex54ModelsLesson';
 import AgenticCodingCodex54PromptingLesson from '@/features/kangur/ui/components/AgenticCodingCodex54PromptingLesson';
+import AgenticCodingCodex54SurfacesLesson from '@/features/kangur/ui/components/AgenticCodingCodex54SurfacesLesson';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
 describe('AgenticCodingCodex54 stage lessons', () => {
@@ -101,6 +113,14 @@ describe('AgenticCodingCodex54 stage lessons', () => {
       shellTestId: 'agentic-reasoning-router-game-shell',
       mockTestId: 'mock-agentic-reasoning-router-game',
       finishButtonLabel: 'Finish reasoning router game',
+    },
+    {
+      title: 'Surface Match',
+      Component: AgenticCodingCodex54SurfacesLesson,
+      hubSectionTestId: 'lesson-hub-section-surface_match_game',
+      shellTestId: 'agentic-surface-match-game-shell',
+      mockTestId: 'mock-agentic-surface-match-game',
+      finishButtonLabel: 'Finish surface match game',
     },
   ])('opens the $title section through the shared lesson-stage runtime and returns to the hub', async ({
     Component,

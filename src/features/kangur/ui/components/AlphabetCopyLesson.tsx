@@ -18,7 +18,7 @@ import {
 import { useKangurDrawingDraftStorage } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage';
 import { useKangurManagedDrawingActions } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedDrawingActions';
 import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
-import { KangurDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions';
+import { KangurManagedDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurManagedDrawingUtilityActions';
 import {
   KangurGlassPanel,
   KangurHeadline,
@@ -485,9 +485,11 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
         clearLabel={translateAlphabetCopy(translations, 'actions.clear', 'Wyczysc')}
         feedback={feedback}
         utilityActions={
-          <KangurDrawingUtilityActions
+          <KangurManagedDrawingUtilityActions
+            canExport={hasDrawableContent}
+            canRedo={canRedo}
+            canUndo={canUndo}
             exportButtonClassName={isCoarsePointer ? 'px-4' : undefined}
-            exportDisabled={!hasDrawableContent}
             exportLabel={translateAlphabetCopy(translations, 'actions.export', 'Eksportuj PNG')}
             exportTestId='alphabet-copy-export'
             historyButtonClassName={isCoarsePointer ? 'px-4' : undefined}
@@ -495,10 +497,8 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
             onExport={exportDrawing}
             onRedo={redoDrawing}
             onUndo={undoDrawing}
-            redoDisabled={!canRedo}
             redoLabel={translateAlphabetCopy(translations, 'actions.redo', 'Ponow')}
             size='sm'
-            undoDisabled={!canUndo}
             undoLabel={translateAlphabetCopy(translations, 'actions.undo', 'Cofnij')}
           />
         }

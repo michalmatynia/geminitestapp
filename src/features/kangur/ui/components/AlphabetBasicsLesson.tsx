@@ -18,7 +18,7 @@ import {
 import { useKangurDrawingDraftStorage } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage';
 import { useKangurManagedDrawingActions } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedDrawingActions';
 import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
-import { KangurDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions';
+import { KangurManagedDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurManagedDrawingUtilityActions';
 import {
   KangurGlassPanel,
   KangurHeadline,
@@ -438,9 +438,11 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
         clearLabel={translateAlphabetBasics(translations, 'actions.clear', 'Wyczyść')}
         feedback={feedback}
         utilityActions={
-          <KangurDrawingUtilityActions
+          <KangurManagedDrawingUtilityActions
+            canExport={hasDrawableContent}
+            canRedo={canRedo}
+            canUndo={canUndo}
             exportButtonClassName={isCoarsePointer ? 'px-4' : undefined}
-            exportDisabled={!hasDrawableContent}
             exportLabel={translateAlphabetBasics(translations, 'actions.export', 'Eksportuj PNG')}
             exportTestId='alphabet-basics-export'
             historyButtonClassName={isCoarsePointer ? 'px-4' : undefined}
@@ -448,10 +450,8 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
             onExport={exportDrawing}
             onRedo={redoDrawing}
             onUndo={undoDrawing}
-            redoDisabled={!canRedo}
             redoLabel={translateAlphabetBasics(translations, 'actions.redo', 'Ponów')}
             size='sm'
-            undoDisabled={!canUndo}
             undoLabel={translateAlphabetBasics(translations, 'actions.undo', 'Cofnij')}
           />
         }

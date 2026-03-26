@@ -34,7 +34,7 @@ import { useKangurDrawingDraftStorage } from '@/features/kangur/ui/components/dr
 import { useKangurKeyboardPointDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurKeyboardPointDrawing';
 import { useKangurManagedDrawingActions } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedDrawingActions';
 import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
-import { KangurDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions';
+import { KangurManagedDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurManagedDrawingUtilityActions';
 import {
   KangurButton,
   KangurDisplayEmoji,
@@ -820,27 +820,28 @@ export default function GeometryDrawingGame({
                     )}
                     feedback={feedback}
                     utilityActions={
-                      <KangurDrawingUtilityActions
+                      <KangurManagedDrawingUtilityActions
+                        canExport={hasDrawableContent}
+                        canRedo={canRedo}
+                        canUndo={canUndo}
                         exportButtonClassName='w-full'
                         exportClassName='w-full sm:flex-1'
-                        exportDisabled={!hasDrawableContent}
                         exportLabel={translateWithFallback(
                           'geometryDrawing.inRound.export',
                           'Export PNG'
                         )}
                         exportTestId='geometry-drawing-export'
+                        historyLocked={isResultLocked}
                         historyButtonClassName='w-full sm:flex-1'
                         historyClassName='w-full sm:flex-1'
                         isCoarsePointer={isCoarsePointer}
                         onExport={exportDrawing}
                         onRedo={redoDrawing}
                         onUndo={undoDrawing}
-                        redoDisabled={isResultLocked || !canRedo}
                         redoLabel={translateWithFallback(
                           'geometryDrawing.inRound.redo',
                           'Ponów'
                         )}
-                        undoDisabled={isResultLocked || !canUndo}
                         undoLabel={translateWithFallback(
                           'geometryDrawing.inRound.undo',
                           'Cofnij'

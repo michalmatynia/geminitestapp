@@ -3,6 +3,7 @@ import type { KangurGameDefinition } from '@/shared/contracts/kangur-games';
 import {
   createAgenticInlineGame,
   createAgenticStageGame,
+  createVariant,
   withAgenticTags,
 } from './factories';
 
@@ -55,18 +56,54 @@ export const KANGUR_GROWN_UP_GAMES: readonly KangurGameDefinition[] = [
     tags: withAgenticTags('fit', 'triage', 'scoping'),
     sortOrder: 2030,
   }),
-  createAgenticInlineGame({
+  {
     id: 'agentic_surface_match',
     engineId: 'classification-engine',
+    subject: 'agentic_coding',
+    ageGroup: 'grown_ups',
     lessonComponentIds: ['agentic_coding_codex_5_4_surfaces'],
+    activityIds: [],
+    legacyScreenIds: [],
     label: 'Surface Match',
     title: 'Surface Match',
+    description:
+      'Surface Match is cataloged as a shared game so its engine can evolve independently from the lesson flow that routes scenarios across Codex surfaces.',
     emoji: '🧩',
     mechanic: 'logic_classification',
     interactionMode: 'tap',
+    surfaces: ['lesson', 'library'],
     tags: withAgenticTags('surfaces', 'routing', 'selection'),
+    variants: [
+      createVariant({
+        id: 'agentic_surface_match.lesson-inline',
+        label: 'Lesson inline',
+        title: 'Surface Match in lessons',
+        description:
+          'Inline lesson variant for Surface Match, exposed through the shared games library.',
+        surface: 'lesson_inline',
+      }),
+      createVariant({
+        id: 'agentic_surface_match.lesson-stage',
+        label: 'Lesson stage',
+        title: 'Surface Match as a lesson stage',
+        description:
+          'Stage variant for Surface Match, shared between the Codex surfaces lesson flow and the games library.',
+        surface: 'lesson_stage',
+        lessonStageRuntimeId: 'agentic_surface_match_lesson_stage',
+        sortOrder: 50,
+      }),
+      createVariant({
+        id: 'agentic_surface_match.library-preview',
+        label: 'Library preview',
+        title: 'Surface Match preview',
+        description: 'Catalog preview for Surface Match in the shared games library.',
+        surface: 'library_preview',
+        sortOrder: 100,
+      }),
+    ],
+    status: 'active',
     sortOrder: 2040,
-  }),
+  },
   createAgenticInlineGame({
     id: 'agentic_surface_arrow',
     engineId: 'diagram-sketch-engine',

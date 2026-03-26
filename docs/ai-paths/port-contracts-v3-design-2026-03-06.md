@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'plan'
 scope: 'feature:ai-paths'
@@ -8,6 +8,14 @@ canonical: true
 ---
 
 # Port Contracts V3 Design (2026-03-06)
+
+This is a retained design-baseline document from the March 2026 AI Paths
+planning wave. Keep it as the detailed rationale for the V3 contract expansion,
+but use the maintained AI Paths docs for current runtime and operator guidance:
+
+- [`./overview.md`](./overview.md)
+- [`./reference.md`](./reference.md)
+- [`./ai-paths-improvements-plan-2026-03-06.md`](./ai-paths-improvements-plan-2026-03-06.md)
 
 ## References
 

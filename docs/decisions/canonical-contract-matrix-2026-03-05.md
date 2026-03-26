@@ -19,6 +19,14 @@ Current single source of truth for canonical runtime contracts and allowed migra
 This decision stays authoritative for contract shape, while the April closeout and
 stabilization docs track whether the migration program remains fully closed.
 
+Use this matrix to answer "what is canonical now?" and "which migration entry
+points are still allowed?" Do not use it as the daily execution log; that
+evidence belongs in:
+
+- [`../plans/canonical-closeout-2026-04-17.md`](../plans/canonical-closeout-2026-04-17.md)
+- [`../migrations/wave-execution-status-2026-04-17.md`](../migrations/wave-execution-status-2026-04-17.md)
+- [`../migrations/stabilization-window-2026-04-17.md`](../migrations/stabilization-window-2026-04-17.md)
+
 ## Matrix
 
 | Domain | Canonical Runtime Contract | Canonical Persistence / Keys | Canonical API Surface | Canonical Migration Entry Points | Guardrail |
@@ -45,3 +53,6 @@ stabilization docs track whether the migration program remains fully closed.
 1. New runtime compatibility behavior is blocked by default.
 2. Any temporary compatibility must be declared in the current exception register.
 3. Migration helpers must remain outside runtime source (`src/**`) unless explicitly approved and time-boxed.
+4. If a later migration wave changes a canonical contract, update this matrix in
+   place or replace it with a newer canonical matrix; do not fork parallel
+   contract baselines in execution docs.

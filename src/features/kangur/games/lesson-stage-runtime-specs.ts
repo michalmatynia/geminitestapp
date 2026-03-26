@@ -57,6 +57,11 @@ export const KANGUR_LESSON_STAGE_GAME_RUNTIME_SPECS = Object.freeze({
     'agentic_reasoning_router_game',
     'classification-engine'
   ),
+  agentic_surface_match_lesson_stage: createSharedLessonStageGameRuntimeSpec(
+    'agentic_surface_match_lesson_stage',
+    'agentic_surface_match_game',
+    'classification-engine'
+  ),
   art_shape_rotation_puzzle_lesson_stage: createSharedLessonStageGameRuntimeSpec(
     'art_shape_rotation_puzzle_lesson_stage',
     'art_shapes_rotation_gap_game',

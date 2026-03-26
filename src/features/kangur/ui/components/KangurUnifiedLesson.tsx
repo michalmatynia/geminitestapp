@@ -92,6 +92,11 @@ type KangurUnifiedLessonGameStageConfig = {
 
 export type KangurUnifiedLessonGameConfig<SectionId extends string> = {
   sectionId: SectionId;
+  onStageEnter?: (helpers: {
+    sectionId: SectionId;
+    onFinish: () => void;
+    onBack: () => void;
+  }) => void;
   onStageBack?: (helpers: {
     sectionId: SectionId;
     onFinish: () => void;
@@ -193,6 +198,7 @@ function KangurUnifiedLessonBase<SectionId extends string>({
   const isMobileViewport = useKangurMobileBreakpoint();
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
   const hasMountedScrollEffectRef = useRef(false);
+  const lastEnteredGameSectionRef = useRef<SectionId | null>(null);
   const handleReturnToHub = useCallback(() => setActiveSection(null), []);
   const contextValue = useMemo(
     () => ({
@@ -266,6 +272,26 @@ function KangurUnifiedLessonBase<SectionId extends string>({
     if (!games?.length) return new Map<SectionId, KangurUnifiedLessonGameConfig<SectionId>>();
     return new Map(games.map((game) => [game.sectionId, game]));
   }, [games]);
+
+  const activeGameConfig = activeSection ? gameMap.get(activeSection) ?? null : null;
+
+  useEffect(() => {
+    if (!activeSection || !activeGameConfig) {
+      lastEnteredGameSectionRef.current = null;
+      return;
+    }
+
+    if (lastEnteredGameSectionRef.current === activeSection) {
+      return;
+    }
+
+    lastEnteredGameSectionRef.current = activeSection;
+    activeGameConfig.onStageEnter?.({
+      sectionId: activeSection,
+      onFinish: handleReturnToHub,
+      onBack: handleReturnToHub,
+    });
+  }, [activeGameConfig, activeSection, handleReturnToHub]);
 
   let content: JSX.Element;
 

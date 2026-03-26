@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:ai-paths'
@@ -10,6 +10,11 @@ canonical: true
 # AI-Paths Tooltip Schema v1
 
 This schema defines the centralized, UI-only tooltip catalog consumed by the tooltip engine.
+
+It is the maintained tooltip contract reference for AI Paths. For the product
+surface and node/runtime behavior behind those tooltips, use
+[`overview.md`](./overview.md), [`reference.md`](./reference.md), and the
+semantic grammar docs.
 
 ## Entry contract
 

@@ -1,11 +1,15 @@
 'use client';
 
+import { getKangurLessonStageGameRuntimeSpec } from '@/features/kangur/games/lesson-stage-runtime-specs';
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
 
 import { HUB_SECTIONS, SLIDES } from './AgenticCodingCodex54SurfacesLesson.data';
-import AgenticSurfaceMatchGame from './AgenticSurfaceMatchGame';
 
 export { HUB_SECTIONS, SLIDES };
+
+const AGENTIC_SURFACE_MATCH_RUNTIME = getKangurLessonStageGameRuntimeSpec(
+  'agentic_surface_match_lesson_stage'
+);
 
 export default function AgenticCodingCodex54SurfacesLesson(): JSX.Element {
   return (
@@ -29,8 +33,9 @@ export default function AgenticCodingCodex54SurfacesLesson(): JSX.Element {
             title: 'Surface Match',
             description: 'Match each scenario to the best Codex surface.',
             maxWidthClassName: 'max-w-4xl',
+            shellTestId: 'agentic-surface-match-game-shell',
           },
-          render: ({ onFinish }) => <AgenticSurfaceMatchGame onFinish={onFinish} />,
+          runtime: AGENTIC_SURFACE_MATCH_RUNTIME,
         },
       ]}
       completionSectionId='surfaces'

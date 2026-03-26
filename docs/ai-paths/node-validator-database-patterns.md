@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:ai-paths'
@@ -8,6 +8,11 @@ canonical: true
 ---
 
 # Node Validator Database Patterns
+
+This is the maintained database-domain pattern pack for AI Paths node
+validation. Use [`./node-validator-central-patterns.md`](./node-validator-central-patterns.md)
+for the full validator pattern-pack index and [`./reference.md`](./reference.md)
+for the broader runtime model these assertions support.
 
 ```ai-paths-assertion
 {

@@ -13,16 +13,21 @@ Date: 2026-03-05
 Owner: Platform Architecture + Domain Maintainers  
 Re-baselined: 2026-03-05 (post Wave E execution)
 
-This remains the umbrella migration plan, but the active execution and closeout
-state now lives in:
+This is the retained umbrella baseline for the canonical migration program. Use
+it for original scope, success metrics, and resolved workboard context, but use
+the active execution and closeout docs for current operator state:
 
 - [`docs/plans/canonical-closeout-2026-04-17.md`](./canonical-closeout-2026-04-17.md)
 - [`docs/migrations/stabilization-window-2026-04-17.md`](../migrations/stabilization-window-2026-04-17.md)
 - [`docs/migrations/wave-execution-status-2026-04-17.md`](../migrations/wave-execution-status-2026-04-17.md)
+- [`docs/migrations/script-lifecycle-register-2026-04-17.md`](../migrations/script-lifecycle-register-2026-04-17.md)
 
 ## Objective
 
 Complete migration to canonical runtime and persistence contracts, remove remaining legacy compatibility behavior, and close the program with measurable proof.
+
+Treat the objective and acceptance criteria in this file as the frozen planning
+baseline. Do not append new stabilization evidence here.
 
 ## Current Baseline (Re-verified 2026-03-05)
 

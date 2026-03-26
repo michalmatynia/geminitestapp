@@ -53,12 +53,14 @@ describe('kangur game engine implementations', () => {
     expect(getKangurGameEngineImplementation('classification-engine').runtimeIds).toEqual([
       'agentic_approval_gate_lesson_stage',
       'agentic_reasoning_router_lesson_stage',
+      'agentic_surface_match_lesson_stage',
       'logical_classification_lab_lesson_stage',
       'logical_classification_game',
       'english_parts_of_speech_sort_lesson_stage',
       'english_parts_of_speech_game',
       'AgenticApprovalGateGame',
       'AgenticReasoningRouterGame',
+      'AgenticSurfaceMatchGame',
       'AgenticAssignmentGame',
       'AgenticSortGame',
     ]);

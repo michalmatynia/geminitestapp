@@ -21,7 +21,7 @@ import { getKangurPointDistance } from '@/features/kangur/ui/components/drawing-
 import { useKangurDrawingDraftStorage } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage';
 import { useKangurManagedDrawingActions } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedDrawingActions';
 import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
-import { KangurDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions';
+import { KangurManagedDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurManagedDrawingUtilityActions';
 import { KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS } from '@/features/kangur/ui/components/drawing-engine/keyboard-shortcuts';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
@@ -721,19 +721,20 @@ export function AgenticDiagramFillGame({
               clearLabel='Wyczyść'
               feedback={feedback}
               utilityActions={
-                <KangurDrawingUtilityActions
+                <KangurManagedDrawingUtilityActions
+                  canExport={hasDrawableContent}
+                  canRedo={canRedo}
+                  canUndo={canUndo}
                   exportButtonClassName='w-full sm:flex-1'
-                  exportDisabled={!hasDrawableContent}
                   exportLabel='Eksportuj PNG'
                   exportTestId='agentic-diagram-export'
+                  historyLocked={isSolved}
                   historyButtonClassName='w-full sm:flex-1'
                   isCoarsePointer={isCoarsePointer}
                   onExport={exportDrawing}
                   onRedo={redoDrawing}
                   onUndo={undoDrawing}
-                  redoDisabled={isSolved || !canRedo}
                   redoLabel='Ponów'
-                  undoDisabled={isSolved || !canUndo}
                   undoLabel='Cofnij'
                 />
               }

@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'index'
 scope: 'feature:ai-paths'
@@ -8,6 +8,11 @@ canonical: true
 ---
 
 # Node Code Objects v3 (Scaffold + Migration Docs)
+
+This folder is the maintained generated/scaffold hub for v3 executable
+node-code-object contracts. Use [`../node-code-objects-v3.md`](../node-code-objects-v3.md)
+for the high-level contract summary and [`../reference.md`](../reference.md) for
+the broader AI Paths runtime/operator surface.
 
 This folder contains migration scaffolding and generated migration docs for executable node
 code-object contracts.

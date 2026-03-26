@@ -11,6 +11,7 @@ import type { KangurMiniGameFinishProps } from '@/features/kangur/ui/types';
 import AgenticApprovalGateGame from '@/features/kangur/ui/components/AgenticApprovalGateGame';
 import AgenticPromptTrimGame from '@/features/kangur/ui/components/AgenticPromptTrimGame';
 import AgenticReasoningRouterGame from '@/features/kangur/ui/components/AgenticReasoningRouterGame';
+import AgenticSurfaceMatchGame from '@/features/kangur/ui/components/AgenticSurfaceMatchGame';
 import AddingBallGame from '@/features/kangur/ui/components/AddingBallGame';
 import AddingSynthesisGame from '@/features/kangur/ui/components/AddingSynthesisGame';
 import { ArtShapesRotationGapGame } from '@/features/kangur/ui/components/ArtShapesRotationGapGame';
@@ -52,6 +53,7 @@ const RUNTIME_COMPONENTS: Record<
   agentic_approval_gate_game: AgenticApprovalGateGame,
   agentic_prompt_trim_game: AgenticPromptTrimGame,
   agentic_reasoning_router_game: AgenticReasoningRouterGame,
+  agentic_surface_match_game: AgenticSurfaceMatchGame as ComponentType<LessonStageRuntimeComponentProps>,
   art_shapes_rotation_gap_game: ArtShapesRotationGapGame,
   division_groups_game: DivisionGroupsGame as ComponentType<LessonStageRuntimeComponentProps>,
   english_subject_verb_agreement_game: EnglishSubjectVerbAgreementGame,

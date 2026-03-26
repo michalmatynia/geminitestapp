@@ -35,7 +35,10 @@ vi.mock('@/features/kangur/observability/client', () => ({
   withKangurClientErrorSync,
 }));
 
-import { useKangurLearnerActivityStatus } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
+import {
+  resetKangurLearnerActivityStatusCacheForTests,
+  useKangurLearnerActivityStatus,
+} from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
 
 describe('useKangurLearnerActivityStatus', () => {
   const eventSourceCtor = vi.fn();
@@ -55,6 +58,7 @@ describe('useKangurLearnerActivityStatus', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    resetKangurLearnerActivityStatusCacheForTests();
     eventSources.length = 0;
     learnerActivityGetMock.mockResolvedValue({ snapshot: null, isOnline: false });
     vi.stubGlobal('EventSource', MockEventSource as unknown as typeof EventSource);
@@ -161,5 +165,56 @@ describe('useKangurLearnerActivityStatus', () => {
     expect(eventSourceCtor).toHaveBeenCalledWith(
       '/api/kangur/learner-activity/stream?learnerId=learner-1'
     );
+  });
+
+  it('reuses a fresh cached learner status across remounts without another immediate refresh', async () => {
+    const cachedStatus = {
+      snapshot: {
+        learnerId: 'learner-cached',
+        kind: 'lesson' as const,
+        title: 'Lekcja: Zegar',
+        href: '/kangur/lessons?component=clock',
+        startedAt: '2026-03-15T12:00:00.000Z',
+        updatedAt: '2026-03-15T12:01:00.000Z',
+      },
+      isOnline: true,
+    };
+    learnerActivityGetMock.mockResolvedValue(cachedStatus);
+
+    const firstMount = renderHook(
+      () =>
+        useKangurLearnerActivityStatus({
+          enabled: true,
+          learnerId: 'learner-cached',
+          refreshIntervalMs: 30_000,
+          streamEnabled: false,
+        })
+    );
+
+    await waitFor(() => {
+      expect(firstMount.result.current.status?.snapshot?.title).toBe('Lekcja: Zegar');
+      expect(firstMount.result.current.isLoading).toBe(false);
+    });
+
+    firstMount.unmount();
+
+    const secondMount = renderHook(
+      () =>
+        useKangurLearnerActivityStatus({
+          enabled: true,
+          learnerId: 'learner-cached',
+          refreshIntervalMs: 30_000,
+          streamEnabled: false,
+        })
+    );
+
+    expect(secondMount.result.current.status?.snapshot?.title).toBe('Lekcja: Zegar');
+    expect(secondMount.result.current.isLoading).toBe(false);
+
+    await waitFor(() => {
+      expect(secondMount.result.current.status?.snapshot?.title).toBe('Lekcja: Zegar');
+    });
+
+    expect(learnerActivityGetMock).toHaveBeenCalledTimes(1);
   });
 });

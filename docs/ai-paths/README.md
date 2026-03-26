@@ -22,11 +22,17 @@ catalogs, and dated plans.
 
 ## Curated Deep Entry Points
 
-- Current improvement plan: [`./ai-paths-improvements-plan-2026-03-06.md`](./ai-paths-improvements-plan-2026-03-06.md)
-- Modernization playbook: [`./ai-paths-modernization-playbook-2026-03-04.md`](./ai-paths-modernization-playbook-2026-03-04.md)
-- Kernel transition plan: [`./kernel-engine-transition-plan-2026-03-05.md`](./kernel-engine-transition-plan-2026-03-05.md)
+Maintained operator/runtime references:
+
 - Parameter inference workflow: [`./parameter-inference-workflow.md`](./parameter-inference-workflow.md)
 - Portable engine receiver runbook: [`./portable-engine-receiver-runbook.md`](./portable-engine-receiver-runbook.md)
+- Playwright node reference: [`./playwright-node.md`](./playwright-node.md)
+
+Retained planning and transition baselines:
+
+- Improvement plan baseline: [`./ai-paths-improvements-plan-2026-03-06.md`](./ai-paths-improvements-plan-2026-03-06.md)
+- Modernization playbook: [`./ai-paths-modernization-playbook-2026-03-04.md`](./ai-paths-modernization-playbook-2026-03-04.md)
+- Kernel transition plan: [`./kernel-engine-transition-plan-2026-03-05.md`](./kernel-engine-transition-plan-2026-03-05.md)
 
 ## Node And Runtime References
 
@@ -54,3 +60,5 @@ catalogs, and dated plans.
 - This hub is intentionally curated, not a full listing of every dated artifact
   in the folder. Add new stable entry points here when they become part of the
   active AI Paths documentation surface.
+- When a dated design or sprint document is retained here, it should say so
+  explicitly near the top and point back to `overview.md` and `reference.md`.

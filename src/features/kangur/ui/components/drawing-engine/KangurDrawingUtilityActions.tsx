@@ -3,7 +3,7 @@
 import { KangurDrawingHistoryActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions';
 import { KangurDrawingSnapshotActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions';
 
-type KangurDrawingUtilityActionsProps = {
+export type KangurDrawingUtilityActionsProps = {
   exportButtonClassName?: string;
   exportClassName?: string;
   exportDisabled?: boolean;

@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:ai-paths'
@@ -8,6 +8,11 @@ canonical: true
 ---
 
 # Parameter Inference AI Path Workflow (English)
+
+This is a maintained workflow-specific reference for the shipped Parameter
+Inference starter flow. Use [`overview.md`](./overview.md) and
+[`reference.md`](./reference.md) for shared AI Paths runtime conventions rather
+than duplicating them here.
 
 ## Scope
 

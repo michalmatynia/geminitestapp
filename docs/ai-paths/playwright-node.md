@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:ai-paths'
@@ -8,6 +8,10 @@ canonical: true
 ---
 
 # AI Paths Playwright Node
+
+This is the maintained feature-local reference for the `playwright` node. Use
+[`overview.md`](./overview.md) and [`reference.md`](./reference.md) for the
+broader AI Paths runtime model and operator controls.
 
 ## Purpose
 

@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:ai-paths'
@@ -8,6 +8,11 @@ canonical: true
 ---
 
 # AI-Paths Node Validator Docs Logic Inference
+
+This is the maintained reference for documentation-driven validator inference.
+Use [`./node-validator-central-patterns.md`](./node-validator-central-patterns.md)
+for the overall validator-pack index and [`./node-validator-assertion-schema-v2.md`](./node-validator-assertion-schema-v2.md)
+for the fenced assertion contract.
 
 This document defines how the Node Validator infers additional candidate rules directly from centralized AI-Paths documentation sources.
 

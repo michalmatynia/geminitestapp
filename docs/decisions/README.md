@@ -35,6 +35,14 @@ records, migration logs, and implementation closeouts should usually live under
 `docs/migrations/` or `docs/plans/` unless they establish a durable
 cross-feature policy baseline.
 
+In practice, the two files here play different roles:
+
+- the contract matrix defines the durable canonical boundary
+- the exception register defines the only allowed temporary escape hatch
+
+Migration progress, stabilization status, and closeout evidence should point at
+these decisions, not duplicate them.
+
 ## Structure Notes
 
 - Keep the currently enforced decision baseline here.

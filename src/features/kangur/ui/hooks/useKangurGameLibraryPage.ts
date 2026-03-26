@@ -6,10 +6,9 @@ import type {
   KangurLessonSubject,
 } from '@/features/kangur/shared/contracts/kangur';
 import {
-  createKangurGameCatalogEntries,
-  filterKangurGameCatalogEntries,
-  type KangurGameCatalogEntry,
+  createKangurGameLibraryPageDataFromGames,
   type KangurGameCatalogFilter,
+  type KangurGameLibraryPageData,
 } from '@/features/kangur/games';
 import {
   isRecoverableKangurClientFetchError,
@@ -20,7 +19,7 @@ import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
-  kangurGameCatalogEntriesSchema,
+  kangurGameLibraryPageDataSchema,
   type KangurGameEngineCategory,
   type KangurGameEngineId,
   type KangurGameEngineImplementationOwnership,
@@ -30,23 +29,22 @@ import {
   type KangurGameVariantSurface,
 } from '@/shared/contracts/kangur-games';
 
-type GameCatalogQueryOptions = KangurGameCatalogFilter & {
+type GameLibraryPageQueryOptions = KangurGameCatalogFilter & {
   enabled?: boolean;
 };
 
-const buildGameCatalogFallback = (
-  options?: GameCatalogQueryOptions
-): KangurGameCatalogEntry[] =>
-  filterKangurGameCatalogEntries(createKangurGameCatalogEntries(), options);
+const buildGameLibraryPageFallback = (
+  options?: GameLibraryPageQueryOptions
+): KangurGameLibraryPageData => createKangurGameLibraryPageDataFromGames({ filter: options });
 
-const fetchGameCatalog = async (
-  options?: GameCatalogQueryOptions
-): Promise<KangurGameCatalogEntry[]> =>
+const fetchGameLibraryPage = async (
+  options?: GameLibraryPageQueryOptions
+): Promise<KangurGameLibraryPageData> =>
   await withKangurClientError(
     () => ({
-      source: 'kangur.hooks.useKangurGameCatalog',
-      action: 'fetch-game-catalog',
-      description: 'Loads the joined Kangur game catalog from games and engine APIs.',
+      source: 'kangur.hooks.useKangurGameLibraryPage',
+      action: 'fetch-game-library-page',
+      description: 'Loads consolidated Kangur games library page data from the API.',
       context: {
         subject: options?.subject ?? null,
         ageGroup: options?.ageGroup ?? null,
@@ -77,23 +75,26 @@ const fetchGameCatalog = async (
         variantStatus: options?.variantStatus,
         launchableOnly: options?.launchableOnly,
       };
-      const payload = await api.get<KangurGameCatalogEntry[]>('/api/kangur/game-catalog', {
-        params,
-      });
-      return kangurGameCatalogEntriesSchema.parse(payload);
+      const payload = await api.get<KangurGameLibraryPageData>(
+        '/api/kangur/game-library-page',
+        {
+          params,
+        }
+      );
+      return kangurGameLibraryPageDataSchema.parse(payload);
     },
     {
-      fallback: () => buildGameCatalogFallback(options),
+      fallback: () => buildGameLibraryPageFallback(options),
       shouldReport: (error) => !isRecoverableKangurClientFetchError(error),
     }
   );
 
-export const useKangurGameCatalog = (
-  options?: GameCatalogQueryOptions
-): ListQuery<KangurGameCatalogEntry, KangurGameCatalogEntry[]> =>
-  createListQueryV2<KangurGameCatalogEntry, KangurGameCatalogEntry[]>({
+export const useKangurGameLibraryPage = (
+  options?: GameLibraryPageQueryOptions
+): ListQuery<KangurGameLibraryPageData, KangurGameLibraryPageData> =>
+  createListQueryV2<KangurGameLibraryPageData, KangurGameLibraryPageData>({
     queryKey: [
-      ...QUERY_KEYS.kangur.gameCatalog(),
+      ...QUERY_KEYS.kangur.gameLibraryPage(),
       {
         subject: options?.subject ?? null,
         ageGroup: options?.ageGroup ?? null,
@@ -109,8 +110,9 @@ export const useKangurGameCatalog = (
         launchableOnly: options?.launchableOnly ?? false,
       },
     ],
-    queryFn: async (): Promise<KangurGameCatalogEntry[]> => await fetchGameCatalog(options),
-    placeholderData: () => buildGameCatalogFallback(options),
+    queryFn: async (): Promise<KangurGameLibraryPageData> =>
+      await fetchGameLibraryPage(options),
+    placeholderData: () => buildGameLibraryPageFallback(options),
     enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
@@ -118,22 +120,19 @@ export const useKangurGameCatalog = (
     refetchOnReconnect: false,
     retry: 1,
     meta: {
-      source: 'kangur.hooks.useKangurGameCatalog',
+      source: 'kangur.hooks.useKangurGameLibraryPage',
       operation: 'list',
-      resource: 'kangur.game-catalog',
+      resource: 'kangur.game-library-page',
       domain: 'kangur',
-      tags: ['kangur', 'games', 'catalog'],
-      description: 'Loads the joined Kangur game catalog.',
+      tags: ['kangur', 'games', 'library', 'page'],
+      description: 'Loads the consolidated Kangur games library page payload.',
     },
   });
 
 export type {
-  GameCatalogQueryOptions as UseKangurGameCatalogOptions,
-  KangurGameCatalogEntry,
-};
-
-export type {
+  GameLibraryPageQueryOptions as UseKangurGameLibraryPageOptions,
   KangurGameCatalogFilter,
+  KangurGameLibraryPageData,
   KangurGameEngineCategory,
   KangurGameEngineId,
   KangurGameEngineImplementationOwnership,

@@ -52,4 +52,26 @@ describe('KangurTracingLessonFooter', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Restart' }));
     expect(onNext).toHaveBeenCalledTimes(1);
   });
+
+  it('renders shared history actions inside the footer controls', () => {
+    render(
+      <KangurTracingLessonFooter
+        checkLabel='Check'
+        clearLabel='Clear'
+        feedback={null}
+        historyActions={<button type='button'>Undo</button>}
+        idlePrompt='Idle'
+        isCoarsePointer={false}
+        isLastRound={false}
+        nextLabel='Next'
+        onCheck={() => {}}
+        onClear={() => {}}
+        onNext={() => {}}
+        restartLabel='Restart'
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Clear' })).toBeInTheDocument();
+  });
 });

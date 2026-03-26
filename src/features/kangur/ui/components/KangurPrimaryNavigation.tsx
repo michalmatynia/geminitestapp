@@ -137,7 +137,7 @@ type KangurPrimaryNavigationProps = {
 export type { KangurPrimaryNavigationProps };
 
 const ICON_CLASSNAME = 'h-[18px] w-[18px] sm:h-5 sm:w-5';
-const PRIMARY_NAV_ROUTE_ACKNOWLEDGE_MS = 110;
+const PRIMARY_NAV_ROUTE_ACKNOWLEDGE_MS = 0;
 const isTransitionSourceActive = ({
   activeTransitionSourceId,
   transitionPhase,

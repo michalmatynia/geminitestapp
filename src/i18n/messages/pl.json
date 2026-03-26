@@ -3225,6 +3225,8 @@
         "drawHere": "Rysuj tutaj",
         "inputHelp": "Pole rysowania obsługuje mysz, dotyk lub klawiaturę. Enter albo spacja zaczyna i kończy kreskę, strzałki przesuwają kursor, Escape czyści planszę.",
         "clear": "Wyczyść",
+        "undo": "Cofnij",
+        "redo": "Ponów",
         "check": "Sprawdź",
         "tooShort": "Narysuj figurę trochę dłużej, żeby można było ją ocenić.",
         "keyboard": {
@@ -3372,6 +3374,8 @@
         "drawOnGrid": "Rysuj po kratkach",
         "inputHelp": "Pole rysowania obsługuje mysz, dotyk lub klawiaturę. Enter albo spacja zaczyna i kończy kreskę, strzałki przesuwają kursor, a Escape czyści planszę.",
         "clear": "Wyczyść",
+        "undo": "Cofnij",
+        "redo": "Ponów",
         "checkDrawing": "Sprawdź rysunek",
         "checkPerimeter": "Sprawdź obwód",
         "rounds": {
@@ -3454,6 +3458,8 @@
         "canvasAria": "Plansza do rysowania osi i odbić symetrii.",
         "inputHelp": "Pole rysowania obsługuje mysz, dotyk lub klawiaturę. Enter albo spacja zaczyna i kończy kreskę, strzałki przesuwają kursor, Escape czyści planszę.",
         "clear": "Wyczyść",
+        "undo": "Cofnij",
+        "redo": "Ponów",
         "check": "Sprawdź",
         "rounds": {
           "axis-butterfly": {
@@ -8118,6 +8124,8 @@
       },
       "actions": {
         "clear": "Wyczysc",
+        "undo": "Cofnij",
+        "redo": "Ponow",
         "check": "Sprawdz",
         "next": "Dalej",
         "restart": "Zacznij od nowa"
@@ -8164,6 +8172,8 @@
       },
       "actions": {
         "clear": "Wyczysc",
+        "undo": "Cofnij",
+        "redo": "Ponow",
         "check": "Sprawdz",
         "next": "Dalej",
         "restart": "Zacznij od nowa"

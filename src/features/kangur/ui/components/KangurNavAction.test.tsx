@@ -43,7 +43,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 import { KangurNavAction } from '@/features/kangur/ui/components/KangurNavAction';
 
 describe('KangurNavAction', () => {
-  it('adds touch-friendly sizing to linked navigation actions on coarse pointers without managed prefetch', () => {
+  it('adds touch-friendly sizing to linked navigation actions on coarse pointers with managed prefetch', () => {
     render(
       <KangurNavAction href='/kangur/lessons' size='sm' targetPageKey='Lessons'>
         Lekcje
@@ -55,7 +55,7 @@ describe('KangurNavAction', () => {
       'px-4',
       'touch-manipulation'
     );
-    expect(routeNavigatorPrefetchMock).not.toHaveBeenCalled();
+    expect(routeNavigatorPrefetchMock).toHaveBeenCalledWith('/kangur/lessons');
   });
 
   it('can disable managed prefetch for linked navigation actions', () => {

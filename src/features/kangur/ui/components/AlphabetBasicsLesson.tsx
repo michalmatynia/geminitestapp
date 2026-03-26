@@ -8,6 +8,7 @@ import {
   computeKangurTotalStrokeLength,
   flattenKangurStrokePoints,
 } from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
+import { KangurDrawingHistoryActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions';
 import { KangurTracingLessonFooter } from '@/features/kangur/ui/components/drawing-engine/KangurTracingLessonFooter';
 import { KangurTracingBoard } from '@/features/kangur/ui/components/drawing-engine/KangurTracingBoard';
 import {
@@ -199,12 +200,16 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
   const guideStrokeWidth = isCoarsePointer ? 18 : 14;
   const glowStrokeWidth = isCoarsePointer ? 12 : 8;
   const {
+    canRedo,
+    canUndo,
     clearStrokes,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
     isPointerDrawing,
+    redoLastStroke,
     strokes,
+    undoLastStroke,
   } = useKangurPointCanvasDrawing({
     canvasRef,
     enabled: feedback?.kind !== 'success',
@@ -260,6 +265,16 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
     clearStrokes();
     setFeedback(null);
   }, [clearStrokes]);
+
+  const undoDrawing = useCallback((): void => {
+    undoLastStroke();
+    setFeedback(null);
+  }, [undoLastStroke]);
+
+  const redoDrawing = useCallback((): void => {
+    redoLastStroke();
+    setFeedback(null);
+  }, [redoLastStroke]);
 
   const evaluateDrawing = (): KangurMiniGameFeedbackState => {
     return evaluateKangurTracingAttempt({
@@ -396,6 +411,19 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
         checkLabel={translateAlphabetBasics(translations, 'actions.check', 'Sprawdź')}
         clearLabel={translateAlphabetBasics(translations, 'actions.clear', 'Wyczyść')}
         feedback={feedback}
+        historyActions={
+          <KangurDrawingHistoryActions
+            buttonClassName={isCoarsePointer ? 'px-4' : undefined}
+            isCoarsePointer={isCoarsePointer}
+            onRedo={redoDrawing}
+            onUndo={undoDrawing}
+            redoDisabled={!canRedo}
+            redoLabel={translateAlphabetBasics(translations, 'actions.redo', 'Ponów')}
+            size='sm'
+            undoDisabled={!canUndo}
+            undoLabel={translateAlphabetBasics(translations, 'actions.undo', 'Cofnij')}
+          />
+        }
         idlePrompt={translateAlphabetBasics(
           translations,
           'footer.idlePrompt',

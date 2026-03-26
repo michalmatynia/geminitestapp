@@ -27,11 +27,15 @@ function SvgDrawingHarness({
 }): React.JSX.Element {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const {
+    canRedo,
+    canUndo,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
     isPointerDrawing,
+    redoLastStroke,
     strokes,
+    undoLastStroke,
   } = useKangurPointDrawingEngine<SVGSVGElement>({
     canvasRef: svgRef,
     logicalHeight: 140,
@@ -48,19 +52,29 @@ function SvgDrawingHarness({
   );
 
   return (
-    <svg
-      ref={svgRef}
-      aria-label='Shared SVG drawing surface'
-      data-drawing-active={isPointerDrawing ? 'true' : 'false'}
-      data-point-count={String(pointCount)}
-      data-stroke-count={String(strokes.length)}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
-      onPointerLeave={handlePointerUp}
-      viewBox='0 0 360 140'
-    />
+    <>
+      <svg
+        ref={svgRef}
+        aria-label='Shared SVG drawing surface'
+        data-can-redo={canRedo ? 'true' : 'false'}
+        data-can-undo={canUndo ? 'true' : 'false'}
+        data-drawing-active={isPointerDrawing ? 'true' : 'false'}
+        data-point-count={String(pointCount)}
+        data-stroke-count={String(strokes.length)}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+        viewBox='0 0 360 140'
+      />
+      <button type='button' onClick={undoLastStroke}>
+        Undo
+      </button>
+      <button type='button' onClick={redoLastStroke}>
+        Redo
+      </button>
+    </>
   );
 }
 
@@ -119,6 +133,8 @@ describe('useKangurDrawingEngine generic surfaces', () => {
     expect(surface).toHaveAttribute('data-drawing-active', 'false');
     expect(surface).toHaveAttribute('data-stroke-count', '1');
     expect(surface).toHaveAttribute('data-point-count', '2');
+    expect(surface).toHaveAttribute('data-can-undo', 'true');
+    expect(surface).toHaveAttribute('data-can-redo', 'false');
   });
 
   it('honors stroke commit guards on shared surfaces', () => {
@@ -141,5 +157,39 @@ describe('useKangurDrawingEngine generic surfaces', () => {
 
     expect(surface).toHaveAttribute('data-stroke-count', '0');
     expect(surface).toHaveAttribute('data-point-count', '0');
+  });
+
+  it('supports undo and redo on shared surfaces', () => {
+    render(<SvgDrawingHarness />);
+
+    const surface = screen.getByLabelText('Shared SVG drawing surface');
+
+    fireEvent.pointerDown(surface, {
+      pointerId: 9,
+      clientX: 40,
+      clientY: 32,
+    });
+    fireEvent.pointerMove(surface, {
+      pointerId: 9,
+      clientX: 84,
+      clientY: 76,
+    });
+    fireEvent.pointerUp(surface, {
+      pointerId: 9,
+      clientX: 84,
+      clientY: 76,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+
+    expect(surface).toHaveAttribute('data-stroke-count', '0');
+    expect(surface).toHaveAttribute('data-can-undo', 'false');
+    expect(surface).toHaveAttribute('data-can-redo', 'true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Redo' }));
+
+    expect(surface).toHaveAttribute('data-stroke-count', '1');
+    expect(surface).toHaveAttribute('data-can-undo', 'true');
+    expect(surface).toHaveAttribute('data-can-redo', 'false');
   });
 });

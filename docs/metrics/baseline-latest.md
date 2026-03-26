@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-25'
+last_reviewed: '2026-03-26'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,12 +8,12 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-25T22:32:58.920Z
+Generated at: 2026-03-26T08:48:26.790Z
 
 ## Snapshot
 
-- Source files: 7686
-- Source lines: 1281433
+- Source files: 7720
+- Source lines: 1285596
 - use client files: 2
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
@@ -22,10 +22,10 @@ Generated at: 2026-03-25T22:32:58.920Z
 - API delegated server routes: 159
 - API routes without apiHandler/delegation: 0
 - API explicit cache policy coverage: 285/29 (982.8%)
-- Cross-feature dependency pairs: 3
+- Cross-feature dependency pairs: 2
 - Shared -> features imports: 0
 - setInterval occurrences: 1
-- Prop-drilling chains (depth >= 3): 240
+- Prop-drilling chains (depth >= 3): 247
 - Prop-drilling chains (depth >= 4): 49
 
 ## Top API Hotspots (by LOC)
@@ -54,7 +54,6 @@ Generated at: 2026-03-25T22:32:58.920Z
 | --- | ---: |
 | `kangur -> cms` | 9 |
 | `admin -> foldertree` | 2 |
-| `integrations -> product-sync` | 1 |
 
 ## Top File Hotspots (by LOC)
 
@@ -64,16 +63,16 @@ Generated at: 2026-03-25T22:32:58.920Z
 | `src/features/kangur/ui/components/animations/EnglishAnimations.tsx` | 2718 |
 | `src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx` | 2712 |
 | `src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx` | 2454 |
-| `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 1937 |
+| `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 1936 |
 | `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1844 |
 | `src/features/kangur/ui/components/music/useKangurMusicSynth.ts` | 1793 |
 | `src/features/kangur/ui/components/EnglishAdverbsFrequencyRoutineGame.tsx` | 1701 |
+| `src/features/kangur/ui/pages/GamesLibrary.tsx` | 1696 |
 | `src/features/kangur/ui/components/AddingLesson.tsx` | 1681 |
-| `src/features/kangur/server/ai-tutor-content-locale-scaffold.ts` | 1617 |
+| `src/features/kangur/server/ai-tutor-content-locale-scaffold.ts` | 1619 |
 | `src/features/kangur/page-content-catalog.ts` | 1531 |
 | `src/features/kangur/admin/appearance/appearance.copy.ts` | 1396 |
 | `src/features/kangur/ui/KangurLoginPage.tsx` | 1347 |
-| `src/features/kangur/ui/pages/GamesLibrary.tsx` | 1295 |
 | `src/features/kangur/ui/components/KangurPrimaryNavigation.tsx` | 1287 |
 | `src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx` | 1271 |
 | `src/features/kangur/server/ai-tutor-native-guide-locale-scaffold.ts` | 1265 |

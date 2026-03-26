@@ -44,7 +44,11 @@ const shouldBypassIntlRewriteForDefaultLocale = (request: NextRequest): boolean 
   }
 
   const localeCookieName =
-    siteRouting.localeCookie === false ? null : siteRouting.localeCookie?.name ?? 'NEXT_LOCALE';
+    siteRouting.localeCookie === false
+      ? null
+      : siteRouting.localeCookie === true
+        ? 'NEXT_LOCALE'
+        : (siteRouting.localeCookie?.name ?? 'NEXT_LOCALE');
   const resolvedLocale = resolvePreferredSiteLocale({
     pathname,
     cookieLocale: localeCookieName ? request.cookies.get(localeCookieName)?.value ?? null : null,

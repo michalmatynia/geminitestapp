@@ -443,6 +443,7 @@ export const kangurAiTutorContentSchema = z.object({
     penLabel: tutorCopySchema,
     eraserLabel: tutorCopySchema,
     undoLabel: tutorCopySchema,
+    redoLabel: tutorCopySchema,
     clearLabel: tutorCopySchema,
     cancelLabel: tutorCopySchema,
     doneLabel: tutorCopySchema,

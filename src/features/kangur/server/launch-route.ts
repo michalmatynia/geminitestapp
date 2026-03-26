@@ -20,9 +20,29 @@ type KangurPublicSearchParams =
   | null
   | undefined;
 
+const KANGUR_LAUNCH_ROUTE_CACHE_TTL_MS = 30_000;
+
+let cachedKangurLaunchRoute: {
+  readAt: number;
+  route: KangurLaunchRoute;
+} | null = null;
+
 export const getKangurConfiguredLaunchRoute = cache(async (): Promise<KangurLaunchRoute> => {
+  const now = Date.now();
+  if (
+    cachedKangurLaunchRoute &&
+    now - cachedKangurLaunchRoute.readAt < KANGUR_LAUNCH_ROUTE_CACHE_TTL_MS
+  ) {
+    return cachedKangurLaunchRoute.route;
+  }
+
   const rawSetting = await readKangurSettingValue(KANGUR_LAUNCH_ROUTE_SETTINGS_KEY);
-  return parseKangurLaunchRouteSettings(rawSetting).route;
+  const route = parseKangurLaunchRouteSettings(rawSetting).route;
+  cachedKangurLaunchRoute = {
+    readAt: now,
+    route,
+  };
+  return route;
 });
 
 export const getKangurConfiguredLaunchTarget = async (

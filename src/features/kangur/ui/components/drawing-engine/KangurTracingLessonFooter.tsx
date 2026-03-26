@@ -1,5 +1,7 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KangurButton,
@@ -12,6 +14,7 @@ type KangurTracingLessonFooterProps = {
   checkLabel: string;
   clearLabel: string;
   feedback: KangurMiniGameFeedbackState;
+  historyActions?: ReactNode;
   idlePrompt: string;
   isCoarsePointer: boolean;
   isLastRound: boolean;
@@ -26,6 +29,7 @@ export function KangurTracingLessonFooter({
   checkLabel,
   clearLabel,
   feedback,
+  historyActions,
   idlePrompt,
   isCoarsePointer,
   isLastRound,
@@ -56,6 +60,7 @@ export function KangurTracingLessonFooter({
           )}
         </div>
         <div className={KANGUR_WRAP_ROW_CLASSNAME}>
+          {historyActions}
           <KangurButton
             className={buttonClassName}
             size='sm'

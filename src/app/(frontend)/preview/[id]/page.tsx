@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { JSX } from 'react';
 
-import { auth } from '@/features/auth/auth';
+import { auth } from '@/features/auth/server';
 
 import { renderCmsPage } from '../../cms-render';
 import { isAdminSession, loadPreviewRenderData } from './preview-page-data';

@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 
-import { auth } from '@/features/auth/auth';
+import { auth } from '@/features/auth/server';
 import { getCmsMenuSettings } from '@/features/cms/server';
 import { getCmsRepository } from '@/features/cms/server';
 import { getCmsThemeSettings } from '@/features/cms/server';

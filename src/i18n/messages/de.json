@@ -3225,6 +3225,8 @@
         "drawHere": "Hier zeichnen",
         "inputHelp": "Die Zeichenfläche unterstützt Maus, Berührung oder Tastatur. Enter oder Leertaste starten und beenden einen Strich, die Pfeiltasten bewegen den Cursor und Escape leert das Brett.",
         "clear": "Leeren",
+        "undo": "Rückgängig",
+        "redo": "Wiederholen",
         "check": "Prüfen",
         "tooShort": "Zeichne die Form etwas länger, damit sie geprüft werden kann.",
         "keyboard": {
@@ -3372,6 +3374,8 @@
         "drawOnGrid": "Auf dem Raster zeichnen",
         "inputHelp": "Die Zeichenfläche unterstützt Maus, Berührung oder Tastatur. Enter oder Leertaste starten und beenden einen Strich, die Pfeiltasten bewegen den Cursor, Escape leert das Brett.",
         "clear": "Leeren",
+        "undo": "Rückgängig",
+        "redo": "Wiederholen",
         "checkDrawing": "Zeichnung prüfen",
         "checkPerimeter": "Umfang prüfen",
         "rounds": {
@@ -3454,6 +3458,8 @@
         "canvasAria": "Zeichenfläche für Symmetrieachsen und Spiegelungen.",
         "inputHelp": "Die Zeichenfläche unterstützt Maus, Berührung oder Tastatur. Enter oder Leertaste starten und beenden einen Strich, die Pfeiltasten bewegen den Cursor und Escape leert das Brett.",
         "clear": "Leeren",
+        "undo": "Rückgängig",
+        "redo": "Wiederholen",
         "check": "Prüfen",
         "rounds": {
           "axis-butterfly": {
@@ -8118,6 +8124,8 @@
       },
       "actions": {
         "clear": "Loeschen",
+        "undo": "Rückgängig",
+        "redo": "Wiederholen",
         "check": "Pruefen",
         "next": "Weiter",
         "restart": "Von vorn"
@@ -8164,6 +8172,8 @@
       },
       "actions": {
         "clear": "Loeschen",
+        "undo": "Rückgängig",
+        "redo": "Wiederholen",
         "check": "Pruefen",
         "next": "Weiter",
         "restart": "Von vorn"

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-26T01:56:36.553Z",
+  "generatedAt": "2026-03-26T02:12:06.644Z",
   "hardLimits": {
     "sourceLargestFileLines": 4000,
     "imports.featuresToAppApiTotalImports": 0
@@ -18,7 +18,7 @@
     "imports.featuresToSharedTotalImports": 27,
     "imports.featuresToAppApiTotalImports": 0,
     "imports.sharedToFeaturesTotalImports": 0,
-    "architecture.crossFeatureEdgePairs": 3,
+    "architecture.crossFeatureEdgePairs": 2,
     "runtime.setIntervalOccurrences": 1,
     "propDrilling.depthGte4Chains": 0,
     "propDrilling.componentsWithForwarding": 0,

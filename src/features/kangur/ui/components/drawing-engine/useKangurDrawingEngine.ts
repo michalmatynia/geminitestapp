@@ -57,12 +57,15 @@ export type UseKangurDrawingEngineResult<
   TElement extends KangurDrawingSurfaceElement = HTMLCanvasElement,
 > = {
   activeStroke: KangurDrawingStroke<TMeta> | null;
+  canRedo: boolean;
+  canUndo: boolean;
   clearStrokes: () => void;
   handlePointerDown: (event: ReactPointerEvent<TElement>) => void;
   handlePointerMove: (event: ReactPointerEvent<TElement>) => void;
   handlePointerUp: (event: ReactPointerEvent<TElement>) => void;
   isPointerDrawing: boolean;
   pointStrokes: Point2d[][];
+  redoLastStroke: () => void;
   setStrokes: (
     next:
       | KangurDrawingStroke<TMeta>[]
@@ -92,6 +95,7 @@ export const useKangurDrawingEngine = <
   touchLockEnabled = true,
 }: UseKangurDrawingEngineOptions<TMeta, TElement>): UseKangurDrawingEngineResult<TMeta, TElement> => {
   const [strokes, setCommittedStrokes] = useState<KangurDrawingStroke<TMeta>[]>([]);
+  const [redoStrokes, setRedoStrokes] = useState<KangurDrawingStroke<TMeta>[]>([]);
   const [activeStroke, setActiveStroke] = useState<KangurDrawingStroke<TMeta> | null>(null);
   const [isPointerDrawing, setIsPointerDrawing] = useState(false);
   const isDrawingRef = useRef(false);
@@ -131,6 +135,7 @@ export const useKangurDrawingEngine = <
       setCommittedStrokes((current) =>
         typeof next === 'function' ? next(current) : next
       );
+      setRedoStrokes([]);
       setActiveStroke(null);
       isDrawingRef.current = false;
       setIsPointerDrawing(false);
@@ -140,13 +145,35 @@ export const useKangurDrawingEngine = <
 
   const clearStrokes = useCallback((): void => {
     setCommittedStrokes([]);
+    setRedoStrokes([]);
     setActiveStroke(null);
     isDrawingRef.current = false;
     setIsPointerDrawing(false);
   }, []);
 
   const undoLastStroke = useCallback((): void => {
-    setCommittedStrokes((current) => current.slice(0, -1));
+    setCommittedStrokes((current) => {
+      const lastStroke = current[current.length - 1];
+      if (!lastStroke) {
+        return current;
+      }
+      setRedoStrokes((redoCurrent) => [...redoCurrent, lastStroke]);
+      return current.slice(0, -1);
+    });
+    setActiveStroke(null);
+    isDrawingRef.current = false;
+    setIsPointerDrawing(false);
+  }, []);
+
+  const redoLastStroke = useCallback((): void => {
+    setRedoStrokes((current) => {
+      const nextStroke = current[current.length - 1];
+      if (!nextStroke) {
+        return current;
+      }
+      setCommittedStrokes((strokeCurrent) => [...strokeCurrent, nextStroke]);
+      return current.slice(0, -1);
+    });
     setActiveStroke(null);
     isDrawingRef.current = false;
     setIsPointerDrawing(false);
@@ -268,6 +295,7 @@ export const useKangurDrawingEngine = <
         (shouldCommitStroke ? shouldCommitStroke(currentStroke) : true)
       ) {
         setCommittedStrokes((current) => [...current, currentStroke]);
+        setRedoStrokes([]);
       }
 
       onPointerUp?.({
@@ -290,12 +318,15 @@ export const useKangurDrawingEngine = <
 
   return {
     activeStroke,
+    canRedo: redoStrokes.length > 0,
+    canUndo: strokes.length > 0,
     clearStrokes,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
     isPointerDrawing,
     pointStrokes,
+    redoLastStroke,
     setStrokes,
     strokes,
     undoLastStroke,
@@ -344,11 +375,14 @@ type UseKangurPointDrawingEngineOptions<
 export type UseKangurPointDrawingEngineResult<
   TElement extends KangurDrawingSurfaceElement = HTMLCanvasElement,
 > = {
+  canRedo: boolean;
+  canUndo: boolean;
   clearStrokes: () => void;
   handlePointerDown: (event: ReactPointerEvent<TElement>) => void;
   handlePointerMove: (event: ReactPointerEvent<TElement>) => void;
   handlePointerUp: (event: ReactPointerEvent<TElement>) => void;
   isPointerDrawing: boolean;
+  redoLastStroke: () => void;
   setStrokes: (next: SetStateAction<Point2d[][]>) => void;
   strokes: Point2d[][];
   undoLastStroke: () => void;
@@ -440,11 +474,14 @@ export const useKangurPointDrawingEngine = <
   }, [engine]);
 
   return {
+    canRedo: engine.canRedo,
+    canUndo: engine.canUndo,
     clearStrokes: engine.clearStrokes,
     handlePointerDown: engine.handlePointerDown,
     handlePointerMove: engine.handlePointerMove,
     handlePointerUp: engine.handlePointerUp,
     isPointerDrawing: engine.isPointerDrawing,
+    redoLastStroke: engine.redoLastStroke,
     setStrokes,
     strokes: engine.pointStrokes,
     undoLastStroke: engine.undoLastStroke,

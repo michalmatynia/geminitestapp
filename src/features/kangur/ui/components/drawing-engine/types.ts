@@ -5,6 +5,14 @@ export type KangurDrawingStroke<TMeta = undefined> = {
   points: Point2d[];
 };
 
+export type KangurFreeformDrawingTool = 'pen' | 'eraser';
+
+export type KangurFreeformDrawingStrokeMeta = {
+  color: string;
+  isEraser: boolean;
+  width: number;
+};
+
 export type KangurDrawingStrokeRenderStyle = {
   compositeOperation?: GlobalCompositeOperation;
   lineCap?: CanvasLineCap;

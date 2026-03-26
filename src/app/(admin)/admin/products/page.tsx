@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { AdminProductsPage } from '@/features/products/pages/AdminProductsPage';
+import { AdminProductsPage } from '@/features/products/public';
 
 export default function Page(): JSX.Element {
   return <AdminProductsPage />;

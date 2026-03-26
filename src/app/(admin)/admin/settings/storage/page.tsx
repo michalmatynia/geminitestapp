@@ -1,4 +1,4 @@
-import { AdminFileStorageSettingsPage } from '@/features/files/pages/AdminFileStorageSettingsPage';
+import { AdminFileStorageSettingsPage } from '@/features/files/public';
 
 export const dynamic = 'force-dynamic';
 

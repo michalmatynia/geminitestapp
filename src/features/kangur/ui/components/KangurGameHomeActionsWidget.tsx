@@ -267,6 +267,7 @@ export function KangurGameHomeActionsWidget({
 }: KangurGameHomeActionsWidgetProps = {}): React.JSX.Element | null {
   const translations = useTranslations('KangurGameHomeActions');
   const routeTransitionState = useOptionalKangurRouteTransitionState();
+  const isCoarsePointer = useKangurCoarsePointer();
   const { basePath, canStartFromHome, handleStartGame, screen, setScreen } =
     useKangurGameRuntime();
   const { subject } = useKangurSubjectFocus();
@@ -285,6 +286,7 @@ export function KangurGameHomeActionsWidget({
       symbol: '📚',
       tone: 'neutral',
       href: createPageUrl('Lessons', basePath),
+      prefetch: isCoarsePointer ? false : undefined,
       targetPageKey: 'Lessons',
       transitionSourceId: 'game-home-action:lessons',
     },

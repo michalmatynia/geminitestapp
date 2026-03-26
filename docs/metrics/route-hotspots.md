@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-25'
+last_reviewed: '2026-03-26'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-03-25T22:33:01.685Z
+Generated at: 2026-03-26T08:48:29.677Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -42,25 +42,25 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | Page | LOC |
 | --- | ---: |
 | `src/app/[locale]/(frontend)/[...slug]/page.tsx` | 91 |
-| `src/app/[locale]/(frontend)/page.tsx` | 87 |
+| `src/app/[locale]/(frontend)/page.tsx` | 88 |
 | `src/app/(frontend)/[...slug]/page.tsx` | 72 |
 | `src/app/(frontend)/page.tsx` | 67 |
-| `src/app/[locale]/(frontend)/kangur/login/page.tsx` | 53 |
+| `src/app/[locale]/(frontend)/kangur/login/page.tsx` | 52 |
 | `src/app/(admin)/admin/agentcreator/teaching/page.tsx` | 48 |
 | `src/app/(admin)/admin/agentcreator/page.tsx` | 45 |
 | `src/app/(frontend)/preview/[id]/page.tsx` | 40 |
-| `src/app/(frontend)/kangur/login/page.tsx` | 37 |
 | `src/app/[locale]/(frontend)/kangur/(app)/[[...slug]]/page.tsx` | 37 |
+| `src/app/(frontend)/kangur/login/page.tsx` | 36 |
 | `src/app/(frontend)/kangur/(app)/[[...slug]]/page.tsx` | 30 |
 | `src/app/(admin)/admin/products/settings/page.tsx` | 29 |
+| `src/app/[locale]/(frontend)/login/page.tsx` | 29 |
 | `src/app/(frontend)/preview/foldertree-shell-runtime/page.tsx` | 21 |
 | `src/app/[locale]/(frontend)/products/[id]/page.tsx` | 20 |
+| `src/app/(admin)/admin/integrations/aggregators/base-com/synchronization-engine/page.tsx` | 17 |
+| `src/app/(frontend)/login/page.tsx` | 16 |
 | `src/app/(admin)/admin/ai-paths/queue/page.tsx` | 15 |
 | `src/app/(frontend)/products/[id]/page.tsx` | 15 |
 | `src/app/(admin)/admin/chatbot/context/page.tsx` | 14 |
-| `src/app/(admin)/admin/chatbot/page.tsx` | 14 |
-| `src/app/(admin)/admin/integrations/marketplaces/page.tsx` | 14 |
-| `src/app/(admin)/admin/integrations/page.tsx` | 14 |
 
 ## Recommended First Runtime Profiling Targets
 

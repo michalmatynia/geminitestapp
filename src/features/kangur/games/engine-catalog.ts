@@ -214,6 +214,13 @@ export type KangurGameEngineCatalogFacets = {
   surfaces: KangurGameSurface[];
 };
 
+export type KangurGameEngineLibraryOverview = {
+  drawingGroups: KangurDrawingEngineCatalogEntry[];
+  engineGroups: KangurGameEngineCatalogEntry[];
+  facets: KangurGameEngineCatalogFacets;
+  implementationGroups: KangurGameEngineCatalogImplementationGroup[];
+};
+
 export const groupKangurGameEngineCatalogEntriesByImplementationOwnership = (
   entries: readonly KangurGameEngineCatalogEntry[]
 ): KangurGameEngineCatalogOwnershipGroup[] =>
@@ -286,4 +293,13 @@ export const getKangurGameEngineCatalogFacets = (
   engines: entries
     .map((entry) => entry.engine)
     .filter((engine): engine is KangurGameEngineDefinition => Boolean(engine)),
+});
+
+export const createKangurGameEngineLibraryOverview = (
+  entries: readonly KangurGameEngineCatalogEntry[]
+): KangurGameEngineLibraryOverview => ({
+  engineGroups: entries.slice(),
+  drawingGroups: createKangurDrawingEngineCatalogEntries(entries),
+  implementationGroups: createKangurGameEngineCatalogImplementationGroups(entries),
+  facets: getKangurGameEngineCatalogFacets(entries),
 });

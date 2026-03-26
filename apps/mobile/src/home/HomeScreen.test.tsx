@@ -7,8 +7,6 @@ import { createDefaultKangurProgressState } from '@kangur/contracts';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { KangurMobileI18nProvider } from '../i18n/kangurMobileI18n';
-
 const {
   useLocalSearchParamsMock,
   useRouterMock,
@@ -121,9 +119,30 @@ vi.mock('./useHomeScreenBootState', () => ({
 
 vi.mock('./useHomeScreenDeferredPanels', () => ({
   useHomeScreenDeferredPanels: useHomeScreenDeferredPanelsMock,
+  useHomeScreenDeferredPanelGroup: (
+    panelKeys: readonly string[],
+    isBlocked: boolean,
+  ) => panelKeys.map((panelKey) => useHomeScreenDeferredPanelsMock(panelKey, isBlocked)),
+  useHomeScreenDeferredPanelSequence: (
+    panelKeys: readonly string[],
+    isBlocked: boolean,
+  ) => {
+    let isCurrentPanelBlocked = isBlocked;
+
+    return panelKeys.map((panelKey) => {
+      const isPanelReady = useHomeScreenDeferredPanelsMock(
+        panelKey,
+        isCurrentPanelBlocked,
+      );
+
+      isCurrentPanelBlocked = !isPanelReady;
+      return isPanelReady;
+    });
+  },
 }));
 
-import HomeScreen from '../../app/index';
+let HomeScreen: typeof import('../../app/index').default;
+let KangurMobileI18nProvider: typeof import('../i18n/kangurMobileI18n').KangurMobileI18nProvider;
 
 const renderHomeScreen = (locale?: 'pl' | 'en' | 'de') =>
   render(
@@ -137,9 +156,12 @@ const renderHomeScreen = (locale?: 'pl' | 'en' | 'de') =>
   );
 
 describe('HomeScreen', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    vi.resetModules();
     vi.stubGlobal('__DEV__', false);
+    ({ KangurMobileI18nProvider } = await import('../i18n/kangurMobileI18n'));
+    ({ default: HomeScreen } = await import('../../app/index'));
     const progressSnapshot = createDefaultKangurProgressState();
     const storageSnapshot = new Map<string, string>();
     subscribeToProgressMock.mockImplementation(() => () => {});
@@ -673,6 +695,49 @@ describe('HomeScreen', () => {
     });
   });
 
+  it('keeps recent lesson details deferred until the dedicated recent-lessons stage is ready', () => {
+    useHomeScreenDeferredPanelsMock.mockImplementation(
+      (panelKey: string) => panelKey !== 'home:insights:lessons:recent:details',
+    );
+    useKangurMobileHomeLessonCheckpointsMock.mockReturnValue({
+      recentCheckpoints: [
+        {
+          attempts: 3,
+          bestScorePercent: 72,
+          componentId: 'adding',
+          emoji: '➕',
+          lastCompletedAt: '2026-03-21T08:12:00.000Z',
+          lastScorePercent: 70,
+          lessonHref: {
+            pathname: '/lessons',
+            params: {
+              focus: 'adding',
+            },
+          },
+          masteryPercent: 68,
+          practiceHref: {
+            pathname: '/practice',
+            params: {
+              operation: 'addition',
+            },
+          },
+          title: 'Dodawanie',
+        },
+      ],
+    });
+
+    renderHomeScreen();
+
+    expect(screen.getByText('Powrót do ostatnich lekcji')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Przygotowujemy kolejne zapisane lekcje i szybkie przejścia na kolejny etap ekranu startowego.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText('Nie ma jeszcze zapisanych checkpointów. Otwórz lekcję i zapisz pierwszy stan, aby ostatnie lekcje pojawiły się tutaj.')).toBeNull();
+    expect(screen.queryByText('Otwórz wszystkie lekcje')).toBeNull();
+  });
+
   it('keeps tertiary home insights deferred until the extra stage is ready', () => {
     useHomeScreenDeferredPanelsMock.mockImplementation(
       (panelKey: string) => panelKey !== 'home:insights:extras',
@@ -784,6 +849,7 @@ describe('HomeScreen', () => {
         }),
       ],
     ]);
+    const getItemMock = vi.fn((key: string) => storageSnapshot.get(key) ?? null);
     useHomeScreenDeferredPanelsMock.mockImplementation(
       (panelKey: string) => panelKey !== 'home:hero:scores',
     );
@@ -795,7 +861,7 @@ describe('HomeScreen', () => {
         loadProgress: () => progressSnapshot,
       },
       storage: {
-        getItem: (key: string) => storageSnapshot.get(key) ?? null,
+        getItem: getItemMock,
         removeItem: (key: string) => {
           storageSnapshot.delete(key);
         },
@@ -830,10 +896,11 @@ describe('HomeScreen', () => {
 
     renderHomeScreen();
 
-    expect(screen.getByText('Fokus treningowy: Dodawanie')).toBeTruthy();
-    expect(screen.getAllByText('Ostatni wynik 7/8').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Fokus treningowy: Trening mieszany')).toBeTruthy();
+    expect(screen.queryByText('Ostatni wynik 7/8')).toBeNull();
     expect(useKangurMobileRecentResultsMock).not.toHaveBeenCalled();
     expect(useKangurMobileTrainingFocusMock).not.toHaveBeenCalled();
+    expect(getItemMock).not.toHaveBeenCalled();
   });
 
   it('keeps detailed training focus cards deferred until the dedicated training focus stage is ready', () => {
@@ -897,6 +964,45 @@ describe('HomeScreen', () => {
     expect(screen.queryByText('Utrzymaj tempo')).toBeNull();
   });
 
+  it('keeps the long hero intro deferred until the dedicated hero intro stage is ready', () => {
+    useHomeScreenDeferredPanelsMock.mockImplementation(
+      (panelKey: string) => panelKey !== 'home:hero:intro',
+    );
+    useKangurMobileAuthMock.mockReturnValue({
+      authError: null,
+      authMode: 'learner-session',
+      developerAutoSignInEnabled: false,
+      hasAttemptedDeveloperAutoSignIn: false,
+      isLoadingAuth: false,
+      session: {
+        status: 'authenticated',
+        user: {
+          activeLearner: {
+            displayName: 'Ada Learner',
+            id: 'learner-1',
+          },
+          actorType: 'learner',
+          canManageLearners: false,
+          full_name: 'Ada Learner',
+        },
+      },
+      signIn: vi.fn(),
+      signInWithLearnerCredentials: vi.fn(),
+      signOut: vi.fn(),
+      supportsLearnerCredentials: true,
+    });
+
+    renderHomeScreen();
+
+    expect(screen.getByText('Kangur mobilnie')).toBeTruthy();
+    expect(screen.getByText('Witaj ponownie, Ada Learner.')).toBeTruthy();
+    expect(
+      screen.queryByText(
+        'Witaj ponownie, Ada Learner. Zacznij od fokusu treningowego, wróć do ostatniej lekcji albo od razu otwórz plan dnia.',
+      ),
+    ).toBeNull();
+  });
+
   it('keeps hero chips and secondary quick links deferred until the dedicated hero details stage is ready', () => {
     useHomeScreenDeferredPanelsMock.mockImplementation(
       (panelKey: string) => panelKey !== 'home:hero:details',
@@ -915,6 +1021,9 @@ describe('HomeScreen', () => {
     expect(screen.queryByText('Checkpointy 0')).toBeNull();
     expect(screen.queryByText('Plan dnia teraz')).toBeNull();
     expect(screen.queryByText('Ostatnia lekcja: Dodawanie')).toBeNull();
+    expect(useKangurMobileHomeLessonCheckpointsMock).not.toHaveBeenCalledWith({
+      limit: 1,
+    });
   });
 
   it('keeps results hub summary details deferred until the results stage is ready', () => {
@@ -1307,6 +1416,26 @@ describe('HomeScreen', () => {
     expect(useKangurMobileHomeAssignmentsMock).not.toHaveBeenCalled();
   });
 
+  it('keeps the live plan assignments deferred until the dedicated extras plan-assignments stage is ready', () => {
+    useHomeScreenDeferredPanelsMock.mockImplementation(
+      (panelKey: string) => panelKey !== 'home:insights:extras:plan:assignments',
+    );
+
+    renderHomeScreen();
+
+    expect(screen.getByText('Centrum odznak')).toBeTruthy();
+    expect(screen.getByText('Plan z ekranu głównego')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Przygotowujemy kartę zadań i link do planu dnia na kolejny etap ekranu startowego.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText('Trening celowany')).toBeNull();
+    expect(screen.queryByText('Otwórz pełny plan dnia')).toBeNull();
+    expect(useKangurMobileHomeBadgesMock).toHaveBeenCalledTimes(1);
+    expect(useKangurMobileHomeAssignmentsMock).not.toHaveBeenCalled();
+  });
+
   it('keeps badge details deferred until the dedicated extras badge stage is ready', () => {
     useHomeScreenDeferredPanelsMock.mockImplementation(
       (panelKey: string) => panelKey !== 'home:insights:extras:badges',
@@ -1321,6 +1450,28 @@ describe('HomeScreen', () => {
       ),
     ).toBeTruthy();
     expect(screen.queryByText('Ostatnio odblokowane')).toBeNull();
+    expect(screen.getByText('Plan z ekranu głównego')).toBeTruthy();
+    expect(useKangurMobileHomeBadgesMock).not.toHaveBeenCalled();
+    expect(useKangurMobileHomeAssignmentsMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps live badge summary deferred until the dedicated extras badge-details stage is ready', () => {
+    useHomeScreenDeferredPanelsMock.mockImplementation(
+      (panelKey: string) => panelKey !== 'home:insights:extras:badges:details',
+    );
+
+    renderHomeScreen();
+
+    expect(screen.getByText('Centrum odznak')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Przygotowujemy ostatnie odblokowania i linki do odznak na kolejny etap ekranu startowego.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText('Odblokowane 0/9')).toBeNull();
+    expect(screen.queryByText('Do zdobycia 9')).toBeNull();
+    expect(screen.queryByText('Ostatnio odblokowane')).toBeNull();
+    expect(screen.queryByText('Otwórz profil i odznaki')).toBeNull();
     expect(screen.getByText('Plan z ekranu głównego')).toBeTruthy();
     expect(useKangurMobileHomeBadgesMock).not.toHaveBeenCalled();
     expect(useKangurMobileHomeAssignmentsMock).toHaveBeenCalledTimes(1);

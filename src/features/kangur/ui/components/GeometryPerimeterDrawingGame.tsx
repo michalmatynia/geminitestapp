@@ -19,6 +19,7 @@ import {
   KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import { KangurDrawingActionRow } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingActionRow';
+import { KangurDrawingHistoryActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions';
 import {
   KangurDrawingEmptyStateOverlay,
   KangurDrawingKeyboardCursorOverlay,
@@ -232,13 +233,17 @@ export default function GeometryPerimeterDrawingGame({
   const isLocked = feedback?.kind === 'success' || feedback?.kind === 'error';
   const revealAnswers = feedback?.kind === 'success' || feedback?.kind === 'error';
   const {
+    canRedo,
+    canUndo,
     clearStrokes,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
     isPointerDrawing,
+    redoLastStroke,
     setStrokes,
     strokes,
+    undoLastStroke,
   } = useKangurPointCanvasDrawing({
     canvasRef,
     enabled: !done && !isLocked && !drawingValidated,
@@ -326,6 +331,20 @@ export default function GeometryPerimeterDrawingGame({
     clearBoardState();
     resetKeyboard(keyboardBoardClearedStatus);
   }, [clearBoardState, keyboardBoardClearedStatus, resetKeyboard]);
+
+  const undoDrawing = useCallback((): void => {
+    undoLastStroke();
+    setFeedback(null);
+    setSelected(null);
+    setDrawingValidated(false);
+  }, [undoLastStroke]);
+
+  const redoDrawing = useCallback((): void => {
+    redoLastStroke();
+    setFeedback(null);
+    setSelected(null);
+    setDrawingValidated(false);
+  }, [redoLastStroke]);
 
   const finishGame = useCallback(
     (finalScore: number): void => {
@@ -646,6 +665,18 @@ export default function GeometryPerimeterDrawingGame({
               clearDisabled={feedback !== null || points.length === 0}
               clearLabel={translations('geometryPerimeter.inRound.clear')}
               feedback={feedback}
+              historyActions={
+                <KangurDrawingHistoryActions
+                  buttonClassName='w-full sm:flex-1'
+                  isCoarsePointer={isCoarsePointer}
+                  onRedo={redoDrawing}
+                  onUndo={undoDrawing}
+                  redoDisabled={feedback !== null || !canRedo}
+                  redoLabel='Ponów'
+                  undoDisabled={feedback !== null || !canUndo}
+                  undoLabel='Cofnij'
+                />
+              }
               onClear={clearDrawing}
               onPrimary={handleCheck}
               primaryDisabled={

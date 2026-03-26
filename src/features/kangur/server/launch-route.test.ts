@@ -61,4 +61,29 @@ describe('kangur server launch route', () => {
     ).resolves.toBe('kangur://duels?join=invite-1');
     expect(localizeFallbackHref).not.toHaveBeenCalled();
   });
+
+  it('reuses the cached launch route between hot reads and refreshes it after the ttl', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-26T09:00:00.000Z'));
+    vi.doMock('react', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('react')>();
+      return {
+        ...actual,
+        cache: <T extends (...args: never[]) => unknown>(fn: T): T => fn,
+      };
+    });
+
+    readKangurSettingValueMock.mockResolvedValue(JSON.stringify({ route: 'dedicated_app' }));
+
+    const { getKangurConfiguredLaunchRoute } = await import('./launch-route');
+
+    await expect(getKangurConfiguredLaunchRoute()).resolves.toBe('dedicated_app');
+    await expect(getKangurConfiguredLaunchRoute()).resolves.toBe('dedicated_app');
+    expect(readKangurSettingValueMock).toHaveBeenCalledTimes(1);
+
+    vi.setSystemTime(new Date('2026-03-26T09:00:31.000Z'));
+
+    await expect(getKangurConfiguredLaunchRoute()).resolves.toBe('dedicated_app');
+    expect(readKangurSettingValueMock).toHaveBeenCalledTimes(2);
+  });
 });

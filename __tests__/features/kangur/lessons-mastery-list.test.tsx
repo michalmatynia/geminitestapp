@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { act, render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
@@ -201,11 +201,25 @@ const lessonsSettingsValue = JSON.stringify([
 describe('Lessons page mastery list', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
-      callback(0);
-      return 1;
+    vi.useFakeTimers();
+    if (!window.requestAnimationFrame) {
+      Object.defineProperty(window, 'requestAnimationFrame', {
+        value: (callback: FrameRequestCallback) => window.setTimeout(() => callback(0), 0),
+        writable: true,
+      });
+    }
+    if (!window.cancelAnimationFrame) {
+      Object.defineProperty(window, 'cancelAnimationFrame', {
+        value: (handle: number) => window.clearTimeout(handle),
+        writable: true,
+      });
+    }
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) =>
+      window.setTimeout(() => callback(0), 0)
+    );
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((handle: number) => {
+      window.clearTimeout(handle);
     });
-    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined);
     useKangurRoutingMock.mockReturnValue({ basePath: '/kangur' });
     useKangurAuthMock.mockReturnValue({
       user: {
@@ -317,11 +331,20 @@ describe('Lessons page mastery list', () => {
     });
   });
 
-  it('shows mastery badges and summaries for each lesson card', async () => {
-    renderLessonsPage();
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
 
-    expect(await screen.findByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
+  it('shows mastery badges and summaries for each lesson card', () => {
+    renderLessonsPage();
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(screen.getByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
     expect(screen.getByTestId('kangur-lessons-heading-art')).toHaveAttribute('viewBox', '0 0 560 164');
     expect(screen.queryByRole('button', { name: 'Wróć do poprzedniej strony' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Wszystkie' })).not.toBeInTheDocument();
@@ -355,12 +378,15 @@ describe('Lessons page mastery list', () => {
     expect(lessonCards[0]).toHaveTextContent('Figury geometryczne');
   });
 
-  it('sticks the header flush to the top inside the admin shell too', async () => {
+  it('sticks the header flush to the top inside the admin shell too', () => {
     useKangurRoutingMock.mockReturnValue({ basePath: '/admin/kangur', pageKey: 'lessons' });
 
     renderLessonsPage();
+    act(() => {
+      vi.runAllTimers();
+    });
 
-    await screen.findByRole('heading', { name: 'Lekcje' });
+    expect(screen.getByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
     const link = screen.getByRole('link', { name: 'Strona główna' });
     expect(link).toHaveAttribute('href', '/admin/kangur');
     const topBar = link.closest('div.sticky');
@@ -369,13 +395,7 @@ describe('Lessons page mastery list', () => {
     expect(topBar?.className).toContain('top-0');
   });
 
-  it('renders top section instantly and then reveals lesson list after deferred content is ready', async () => {
-    const frameCallbacks: FrameRequestCallback[] = [];
-    vi.mocked(window.requestAnimationFrame).mockImplementation((callback: FrameRequestCallback) => {
-      frameCallbacks.push(callback);
-      return 1;
-    });
-
+  it('renders the top section instantly and then settles on the lesson list', () => {
     window.history.replaceState({}, '', '/kangur/lessons');
     renderLessonsPage();
 
@@ -383,52 +403,32 @@ describe('Lessons page mastery list', () => {
     expect(
       screen.getByText('Wybierz temat i przejdz od razu do praktyki lub powtorki.', { exact: false })
     ).toBeInTheDocument();
-    expect(screen.getByText('Ładowanie lekcji')).toBeInTheDocument();
-    expect(
-      screen.getByText('Przygotowujemy bibliotekę lekcji i dopasowujemy ją do wybranego tematu.')
-    ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /nauka zegara/i })).not.toBeInTheDocument();
-    expect(screen.getByTestId('lessons-intro-loading-state')).toBeInTheDocument();
-    expect(screen.getByTestId('lessons-catalog-skeleton')).toBeInTheDocument();
-
-    expect(frameCallbacks).toHaveLength(1);
     act(() => {
-      frameCallbacks[0](0);
+      vi.runAllTimers();
     });
 
-    expect(await screen.findByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
     expect(
       screen.getByText('Wybierz temat i przejdz od razu do praktyki lub powtorki.', { exact: false })
     ).toBeInTheDocument();
     expect(screen.queryByTestId('lessons-intro-loading-state')).not.toBeInTheDocument();
   });
 
-  it('keeps loading copy visible until deferred content resolves', async () => {
-    const frameCallbacks: FrameRequestCallback[] = [];
-    vi.mocked(window.requestAnimationFrame).mockImplementation((callback: FrameRequestCallback) => {
-      frameCallbacks.push(callback);
-      return 1;
-    });
-
+  it('keeps the lessons shell mounted while the catalog becomes interactive', () => {
     renderLessonsPage();
 
     const section = screen.getByTestId('lessons-shell-transition');
     expect(section).toBeInTheDocument();
+    expect(screen.getByTestId('lessons-list-transition')).toBeInTheDocument();
     expect(
       screen.getByText('Wybierz temat i przejdz od razu do praktyki lub powtorki.', { exact: false })
     ).toBeInTheDocument();
-    expect(screen.getByText('Ładowanie lekcji')).toBeInTheDocument();
-    expect(
-      screen.getByText('Przygotowujemy bibliotekę lekcji i dopasowujemy ją do wybranego tematu.')
-    ).toBeInTheDocument();
-    expect(screen.getByTestId('lessons-list-transition')).toBeInTheDocument();
-    expect(screen.getByTestId('lessons-catalog-skeleton')).toBeInTheDocument();
 
     act(() => {
-      frameCallbacks[0](0);
+      vi.runAllTimers();
     });
 
-    const contentTransitionSection = await screen.findByTestId('lessons-list-transition');
+    const contentTransitionSection = screen.getByTestId('lessons-list-transition');
     expect(contentTransitionSection).toBeInTheDocument();
     expect(screen.queryByTestId('lessons-intro-loading-state')).not.toBeInTheDocument();
     expect(screen.queryByTestId('lessons-catalog-skeleton')).not.toBeInTheDocument();
@@ -437,23 +437,18 @@ describe('Lessons page mastery list', () => {
     ).toBeInTheDocument();
   });
 
-  it('keeps a stable top section copy between initial and fully rendered states', async () => {
-    const frameCallbacks: FrameRequestCallback[] = [];
-    vi.mocked(window.requestAnimationFrame).mockImplementation((callback: FrameRequestCallback) => {
-      frameCallbacks.push(callback);
-      return 1;
-    });
-
+  it('keeps a stable top section copy between initial and fully rendered states', () => {
     renderLessonsPage();
 
     expect(screen.getByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: /strona główna/i })).toHaveLength(1);
 
     act(() => {
-      frameCallbacks[0](0);
+      vi.runAllTimers();
     });
 
-    expect(await screen.findByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /strona główna/i })).toHaveLength(1);
   });
 });

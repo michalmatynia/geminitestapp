@@ -1,6 +1,7 @@
 'use client';
 
 import { Eraser } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 import {
   KangurButton,
@@ -14,6 +15,7 @@ type KangurDrawingActionRowProps = {
   clearLabel: string;
   clearTestId?: string;
   feedback: KangurMiniGameInformationalFeedback | null;
+  historyActions?: ReactNode;
   isCoarsePointer?: boolean;
   onClear: () => void;
   onPrimary: () => void;
@@ -38,6 +40,7 @@ export function KangurDrawingActionRow({
   clearLabel,
   clearTestId,
   feedback,
+  historyActions,
   isCoarsePointer = false,
   onClear,
   onPrimary,
@@ -47,6 +50,7 @@ export function KangurDrawingActionRow({
 }: KangurDrawingActionRowProps): React.JSX.Element {
   return (
     <KangurPanelRow className='w-full'>
+      {historyActions}
       <KangurButton
         className={cn('w-full sm:flex-1', isCoarsePointer && 'min-h-11')}
         data-testid={clearTestId}

@@ -54,8 +54,5 @@ export {
 } from '@/server/queues/product-ai';
 
 export { startProductSyncSchedulerQueue } from '@/server/queues/product-sync';
-export {
-  startProductSyncBackfillQueue,
-  stopProductSyncBackfillQueue,
-  enqueueProductSyncBackfillJob,
-} from '@/server/queues/product-sync';
+export { startProductSyncBackfillQueue, stopProductSyncBackfillQueue, enqueueProductSyncBackfillJob } from '@/server/queues/product-sync';
+export { initializeQueues } from './queue-init';

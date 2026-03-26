@@ -1,6 +1,6 @@
 import { headers } from 'next/headers';
 
-import { auth } from '@/features/auth/auth';
+import { auth } from '@/features/auth/server';
 import { getUserPreferences } from '@/features/auth/server';
 import {
   getMediaInlineStyles,

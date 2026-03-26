@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getKangurGameLibraryOverviewRepository } from '@/features/kangur/services/kangur-game-library-overview-repository';
+import {
+  createKangurGameLibraryPageDataFromGames,
+} from '@/features/kangur/games';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
+import { listKangurGames } from '@/features/kangur/services/kangur-game-repository/mongo-kangur-game-repository';
 import {
   kangurGameEngineCategorySchema,
   kangurGameEngineIdSchema,
   kangurGameEngineImplementationOwnershipSchema,
-  kangurGameLibraryOverviewQuerySchema,
+  kangurGameLibraryPageDataSchema,
+  kangurGameLibraryPageQuerySchema,
   kangurGameMechanicSchema,
   kangurGameStatusSchema,
   kangurGameSurfaceSchema,
   kangurGameVariantSurfaceSchema,
-  kangurGamesLibraryOverviewSchema,
 } from '@/shared/contracts/kangur-games';
 import {
   kangurLessonAgeGroupSchema,
@@ -19,15 +23,16 @@ import {
 } from '@/shared/contracts/kangur-lesson-constants';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-export { kangurGameLibraryOverviewQuerySchema as querySchema };
+export { kangurGameLibraryPageQuerySchema as querySchema };
 
-export async function getKangurGameLibraryOverviewHandler(
+const SERVICE = 'kangur.game-library-page-handler';
+
+export async function getKangurGameLibraryPageHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
-  const query = kangurGameLibraryOverviewQuerySchema.parse(ctx.query ?? {});
-  const repository = await getKangurGameLibraryOverviewRepository();
-  const overview = await repository.getOverview({
+  const query = kangurGameLibraryPageQuerySchema.parse(ctx.query ?? {});
+  const filter = {
     subject: query.subject ? kangurLessonSubjectSchema.parse(query.subject) : undefined,
     ageGroup: query.ageGroup ? kangurLessonAgeGroupSchema.parse(query.ageGroup) : undefined,
     gameStatus: query.gameStatus ? kangurGameStatusSchema.parse(query.gameStatus) : undefined,
@@ -50,11 +55,38 @@ export async function getKangurGameLibraryOverviewHandler(
       ? kangurGameStatusSchema.parse(query.variantStatus)
       : undefined,
     launchableOnly: query.launchableOnly,
-  });
+  };
 
-  return NextResponse.json(kangurGamesLibraryOverviewSchema.parse(overview), {
-    headers: {
-      'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',
-    },
-  });
+  try {
+    const games = await listKangurGames();
+    const pageData = createKangurGameLibraryPageDataFromGames({
+      filter,
+      games,
+    });
+
+    return NextResponse.json(kangurGameLibraryPageDataSchema.parse(pageData), {
+      headers: {
+        'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',
+      },
+    });
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: SERVICE,
+      action: 'getPageData',
+      provider: 'composite',
+      subject: filter.subject ?? null,
+      ageGroup: filter.ageGroup ?? null,
+      gameStatus: filter.gameStatus ?? null,
+      surface: filter.surface ?? null,
+      lessonComponentId: filter.lessonComponentId ?? null,
+      mechanic: filter.mechanic ?? null,
+      engineId: filter.engineId ?? null,
+      engineCategory: filter.engineCategory ?? null,
+      implementationOwnership: filter.implementationOwnership ?? null,
+      variantSurface: filter.variantSurface ?? null,
+      variantStatus: filter.variantStatus ?? null,
+      launchableOnly: filter.launchableOnly ?? false,
+    });
+    throw error;
+  }
 }

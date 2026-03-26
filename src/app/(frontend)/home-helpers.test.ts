@@ -103,7 +103,7 @@ describe('home-helpers', () => {
     const { getFrontPageSetting } = await import('@/app/(frontend)/home-helpers');
 
     await expect(getFrontPageSetting()).resolves.toBe('kangur');
-    await expect(getFrontPageSetting()).resolves.toBe('kangur');
+    vi.setSystemTime(new Date('2026-03-23T12:00:31.000Z'));
     await expect(getFrontPageSetting()).resolves.toBe('kangur');
 
     expect(getMongoDbMock).toHaveBeenCalledTimes(2);

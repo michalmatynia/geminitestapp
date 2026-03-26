@@ -512,7 +512,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
             className={transitionPhase === 'revealing' ? 'pointer-events-none' : undefined}
             exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.18, ease: 'easeOut' }}
+            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.1, ease: 'easeOut' }}
           >
             <KangurPageTransitionSkeleton
               embeddedOverride={visibleTransitionSkeletonEmbedded}

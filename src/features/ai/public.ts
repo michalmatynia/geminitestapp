@@ -8,3 +8,4 @@ export * from './image-studio/image-src';
 export { SplitVariantPreview } from './image-studio/components/center-preview/SplitVariantPreview';
 export * from './image-studio/components/center-preview/CenterPreviewContext';
 export { AgentPersonaMoodAvatar } from './agentcreator/components/AgentPersonaMoodAvatar';
+export { AdminAiInsightsPage } from './insights';

@@ -71,4 +71,21 @@ describe('KangurDrawingActionRow', () => {
     );
     expect(screen.getByRole('button', { name: 'Check' })).toHaveClass('bg-amber-500');
   });
+
+  it('renders shared history actions ahead of the main row actions', () => {
+    render(
+      <KangurDrawingActionRow
+        clearLabel='Clear'
+        feedback={null}
+        historyActions={<button type='button'>Undo</button>}
+        onClear={() => {}}
+        onPrimary={() => {}}
+        primaryLabel='Check'
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Clear' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Check' })).toBeInTheDocument();
+  });
 });

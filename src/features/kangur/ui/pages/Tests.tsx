@@ -111,17 +111,7 @@ export default function Tests(): React.JSX.Element {
   const testsPlayerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const frameId = window.requestAnimationFrame(() => {
-      setIsDeferredContentReady(true);
-    });
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-    };
+    setIsDeferredContentReady(true);
   }, []);
 
   const rawSuites = settingsStore.get(KANGUR_TEST_SUITES_SETTING_KEY);

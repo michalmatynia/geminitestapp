@@ -8,6 +8,7 @@ import {
   computeKangurTotalStrokeLength,
   flattenKangurStrokePoints,
 } from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
+import { KangurDrawingHistoryActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions';
 import { KangurTracingLessonFooter } from '@/features/kangur/ui/components/drawing-engine/KangurTracingLessonFooter';
 import { KangurTracingBoard } from '@/features/kangur/ui/components/drawing-engine/KangurTracingBoard';
 import {
@@ -236,12 +237,16 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
     [isCoarsePointer]
   );
   const {
+    canRedo,
+    canUndo,
     clearStrokes,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
     isPointerDrawing,
+    redoLastStroke,
     strokes,
+    undoLastStroke,
   } = useKangurPointCanvasDrawing({
     canvasRef,
     enabled: feedback?.kind !== 'success',
@@ -313,6 +318,16 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
     clearStrokes();
     setFeedback(null);
   }, [clearStrokes]);
+
+  const undoDrawing = useCallback((): void => {
+    undoLastStroke();
+    setFeedback(null);
+  }, [undoLastStroke]);
+
+  const redoDrawing = useCallback((): void => {
+    redoLastStroke();
+    setFeedback(null);
+  }, [redoLastStroke]);
 
   const evaluateDrawing = (): KangurMiniGameFeedbackState => {
     return evaluateKangurTracingAttempt({
@@ -443,6 +458,19 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
         checkLabel={translateAlphabetCopy(translations, 'actions.check', 'Sprawdz')}
         clearLabel={translateAlphabetCopy(translations, 'actions.clear', 'Wyczysc')}
         feedback={feedback}
+        historyActions={
+          <KangurDrawingHistoryActions
+            buttonClassName={isCoarsePointer ? 'px-4' : undefined}
+            isCoarsePointer={isCoarsePointer}
+            onRedo={redoDrawing}
+            onUndo={undoDrawing}
+            redoDisabled={!canRedo}
+            redoLabel={translateAlphabetCopy(translations, 'actions.redo', 'Ponow')}
+            size='sm'
+            undoDisabled={!canUndo}
+            undoLabel={translateAlphabetCopy(translations, 'actions.undo', 'Cofnij')}
+          />
+        }
         idlePrompt={translateAlphabetCopy(
           translations,
           'footer.idlePrompt',

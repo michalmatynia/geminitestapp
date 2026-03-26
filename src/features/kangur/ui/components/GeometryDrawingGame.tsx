@@ -22,6 +22,7 @@ import {
   type KangurMiniGameTranslate,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import { KangurDrawingActionRow } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingActionRow';
+import { KangurDrawingHistoryActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions';
 import {
   KangurDrawingEmptyStateOverlay,
   KangurDrawingKeyboardCursorOverlay,
@@ -361,13 +362,17 @@ export default function GeometryDrawingGame({
     : BASE_MIN_DRAWING_POINTS;
   const strokeWidth = isCoarsePointer ? 7 : 5;
   const {
+    canRedo,
+    canUndo,
     clearStrokes,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
     isPointerDrawing,
+    redoLastStroke,
     setStrokes,
     strokes,
+    undoLastStroke,
   } = useKangurPointCanvasDrawing({
     canvasRef,
     enabled: !done && feedback?.kind !== 'success' && feedback?.kind !== 'error',
@@ -462,6 +467,16 @@ export default function GeometryDrawingGame({
     clearBoardState();
     resetKeyboard(keyboardBoardClearedStatus);
   }, [clearBoardState, keyboardBoardClearedStatus, resetKeyboard]);
+
+  const undoDrawing = useCallback((): void => {
+    undoLastStroke();
+    setFeedback(null);
+  }, [undoLastStroke]);
+
+  const redoDrawing = useCallback((): void => {
+    redoLastStroke();
+    setFeedback(null);
+  }, [redoLastStroke]);
 
   const finishGame = useCallback(
     (finalScore: number): void => {
@@ -764,6 +779,24 @@ export default function GeometryDrawingGame({
                       fallbackCopy.clear
                     )}
                     feedback={feedback}
+                    historyActions={
+                      <KangurDrawingHistoryActions
+                        buttonClassName='w-full sm:flex-1'
+                        isCoarsePointer={isCoarsePointer}
+                        onRedo={redoDrawing}
+                        onUndo={undoDrawing}
+                        redoDisabled={isResultLocked || !canRedo}
+                        redoLabel={translateWithFallback(
+                          'geometryDrawing.inRound.redo',
+                          'Ponów'
+                        )}
+                        undoDisabled={isResultLocked || !canUndo}
+                        undoLabel={translateWithFallback(
+                          'geometryDrawing.inRound.undo',
+                          'Cofnij'
+                        )}
+                      />
+                    }
                     onClear={clearDrawing}
                     onPrimary={handleCheck}
                     primaryDisabled={isResultLocked}

@@ -21,11 +21,15 @@ const createRect = (input: { left: number; top: number; width: number; height: n
 function CanvasDrawingHarness(): React.JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const {
+    canRedo,
+    canUndo,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
     isPointerDrawing,
+    redoLastStroke,
     strokes,
+    undoLastStroke,
   } = useKangurPointCanvasDrawing({
     backgroundFill: '#ffffff',
     canvasRef,
@@ -42,18 +46,28 @@ function CanvasDrawingHarness(): React.JSX.Element {
   const pointCount = useMemo(() => strokes.flatMap((stroke) => stroke).length, [strokes]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      aria-label='Shared canvas drawing surface'
-      data-drawing-active={isPointerDrawing ? 'true' : 'false'}
-      data-point-count={String(pointCount)}
-      data-stroke-count={String(strokes.length)}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
-      onPointerLeave={handlePointerUp}
-    />
+    <>
+      <canvas
+        ref={canvasRef}
+        aria-label='Shared canvas drawing surface'
+        data-can-redo={canRedo ? 'true' : 'false'}
+        data-can-undo={canUndo ? 'true' : 'false'}
+        data-drawing-active={isPointerDrawing ? 'true' : 'false'}
+        data-point-count={String(pointCount)}
+        data-stroke-count={String(strokes.length)}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+      />
+      <button type='button' onClick={undoLastStroke}>
+        Undo
+      </button>
+      <button type='button' onClick={redoLastStroke}>
+        Redo
+      </button>
+    </>
   );
 }
 
@@ -132,5 +146,37 @@ describe('useKangurPointCanvasDrawing', () => {
     expect(canvas).toHaveAttribute('data-drawing-active', 'false');
     expect(canvas).toHaveAttribute('data-stroke-count', '1');
     expect(canvas).toHaveAttribute('data-point-count', '2');
+    expect(canvas).toHaveAttribute('data-can-undo', 'true');
+    expect(canvas).toHaveAttribute('data-can-redo', 'false');
+  });
+
+  it('exposes redo history for point-canvas surfaces', () => {
+    render(<CanvasDrawingHarness />);
+
+    const canvas = screen.getByLabelText('Shared canvas drawing surface');
+
+    fireEvent.pointerDown(canvas, {
+      pointerId: 11,
+      clientX: 36,
+      clientY: 48,
+    });
+    fireEvent.pointerMove(canvas, {
+      pointerId: 11,
+      clientX: 92,
+      clientY: 108,
+    });
+    fireEvent.pointerUp(canvas, {
+      pointerId: 11,
+      clientX: 92,
+      clientY: 108,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(canvas).toHaveAttribute('data-stroke-count', '0');
+    expect(canvas).toHaveAttribute('data-can-redo', 'true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Redo' }));
+    expect(canvas).toHaveAttribute('data-stroke-count', '1');
+    expect(canvas).toHaveAttribute('data-can-redo', 'false');
   });
 });

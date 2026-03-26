@@ -256,6 +256,42 @@ export type KangurGameEngineCatalogFacetsDto = z.infer<
   typeof kangurGameEngineCatalogFacetsSchema
 >;
 
+export const kangurDrawingEngineCatalogEntrySchema = z.object({
+  ageGroups: z.array(kangurLessonAgeGroupSchema),
+  category: kangurGameEngineCategorySchema.nullable(),
+  engine: kangurGameEngineDefinitionSchema.nullable(),
+  engineId: kangurGameEngineIdSchema,
+  entries: kangurGameCatalogEntriesSchema,
+  implementation: kangurGameEngineImplementationSchema.nullable(),
+  lessonComponentIds: z.array(kangurLessonComponentIdSchema),
+  subjects: z.array(kangurLessonSubjectSchema),
+  variantCount: z.number().int().min(0),
+});
+export type KangurDrawingEngineCatalogEntryDto = z.infer<
+  typeof kangurDrawingEngineCatalogEntrySchema
+>;
+
+export const kangurGameEngineCatalogImplementationGroupSchema = z.object({
+  engineGroups: kangurGameEngineCatalogEntriesSchema,
+  gameCount: z.number().int().min(0),
+  lessonComponentIds: z.array(kangurLessonComponentIdSchema),
+  ownership: kangurGameEngineImplementationOwnershipSchema,
+  runtimeIds: z.array(nonEmptyTrimmedString.max(120)),
+});
+export type KangurGameEngineCatalogImplementationGroupDto = z.infer<
+  typeof kangurGameEngineCatalogImplementationGroupSchema
+>;
+
+export const kangurGameEngineLibraryOverviewSchema = z.object({
+  drawingGroups: z.array(kangurDrawingEngineCatalogEntrySchema),
+  engineGroups: kangurGameEngineCatalogEntriesSchema,
+  facets: kangurGameEngineCatalogFacetsSchema,
+  implementationGroups: z.array(kangurGameEngineCatalogImplementationGroupSchema),
+});
+export type KangurGameEngineLibraryOverviewDto = z.infer<
+  typeof kangurGameEngineLibraryOverviewSchema
+>;
+
 export const kangurGameLibraryLessonCoverageStatusSchema = z.enum([
   'launchable',
   'library_backed',
@@ -295,7 +331,7 @@ export type KangurGameLibraryCoverageGroupsDto = z.infer<
   typeof kangurGameLibraryCoverageGroupsSchema
 >;
 
-export const kangurGameLibraryCoverageStatusMapSchema = z.record(
+export const kangurGameLibraryCoverageStatusMapSchema = z.partialRecord(
   kangurLessonComponentIdSchema,
   kangurGameLibraryLessonCoverageStatusSchema
 );
@@ -368,29 +404,14 @@ export type KangurGamesLibraryOverviewDto = z.infer<
   typeof kangurGamesLibraryOverviewSchema
 >;
 
-export const kangurGamesQuerySchema = z.object({
-  subject: optionalTrimmedQueryString(kangurLessonSubjectSchema),
-  ageGroup: optionalTrimmedQueryString(kangurLessonAgeGroupSchema),
-  status: optionalTrimmedQueryString(kangurGameStatusSchema),
-  surface: optionalTrimmedQueryString(kangurGameSurfaceSchema),
-  lessonComponentId: optionalTrimmedQueryString(kangurLessonComponentIdSchema),
+export const kangurGameLibraryPageDataSchema = z.object({
+  catalogFacets: kangurGameCatalogFacetsSchema,
+  coverage: kangurGameLibraryCoverageSchema,
+  engineFilterOptions: kangurGameEngineCatalogFacetsSchema,
+  engineOverview: kangurGameEngineLibraryOverviewSchema,
+  overview: kangurGamesLibraryOverviewSchema,
 });
-export type KangurGamesQuery = z.infer<typeof kangurGamesQuerySchema>;
-
-export const kangurGameEnginesQuerySchema = z.object({
-  status: optionalTrimmedQueryString(kangurGameStatusSchema),
-  surface: optionalTrimmedQueryString(kangurGameSurfaceSchema),
-  mechanic: optionalTrimmedQueryString(kangurGameMechanicSchema),
-});
-export type KangurGameEnginesQuery = z.infer<typeof kangurGameEnginesQuerySchema>;
-
-export const kangurGameEngineImplementationsQuerySchema = z.object({
-  engineId: optionalTrimmedQueryString(kangurGameEngineIdSchema),
-  ownership: optionalTrimmedQueryString(kangurGameEngineImplementationOwnershipSchema),
-});
-export type KangurGameEngineImplementationsQuery = z.infer<
-  typeof kangurGameEngineImplementationsQuerySchema
->;
+export type KangurGameLibraryPageDataDto = z.infer<typeof kangurGameLibraryPageDataSchema>;
 
 export const kangurGameCatalogQuerySchema = z.object({
   subject: optionalTrimmedQueryString(kangurLessonSubjectSchema),
@@ -410,33 +431,5 @@ export const kangurGameCatalogQuerySchema = z.object({
 });
 export type KangurGameCatalogQuery = z.infer<typeof kangurGameCatalogQuerySchema>;
 
-export const kangurGameLibraryOverviewQuerySchema = kangurGameCatalogQuerySchema;
-export type KangurGameLibraryOverviewQuery = z.infer<
-  typeof kangurGameLibraryOverviewQuerySchema
->;
-
-export const kangurGameEngineCatalogQuerySchema = kangurGameCatalogQuerySchema;
-export type KangurGameEngineCatalogQuery = z.infer<typeof kangurGameEngineCatalogQuerySchema>;
-
-export const kangurGameVariantsQuerySchema = z.object({
-  subject: optionalTrimmedQueryString(kangurLessonSubjectSchema),
-  ageGroup: optionalTrimmedQueryString(kangurLessonAgeGroupSchema),
-  gameStatus: optionalTrimmedQueryString(kangurGameStatusSchema),
-  surface: optionalTrimmedQueryString(kangurGameSurfaceSchema),
-  lessonComponentId: optionalTrimmedQueryString(kangurLessonComponentIdSchema),
-  mechanic: optionalTrimmedQueryString(kangurGameMechanicSchema),
-  engineId: optionalTrimmedQueryString(kangurGameEngineIdSchema),
-  engineCategory: optionalTrimmedQueryString(kangurGameEngineCategorySchema),
-  implementationOwnership: optionalTrimmedQueryString(
-    kangurGameEngineImplementationOwnershipSchema
-  ),
-  variantSurface: optionalTrimmedQueryString(kangurGameVariantSurfaceSchema),
-  variantStatus: optionalTrimmedQueryString(kangurGameStatusSchema),
-  launchableOnly: optionalBooleanQuerySchema(),
-});
-export type KangurGameVariantsQuery = z.infer<typeof kangurGameVariantsQuerySchema>;
-
-export const kangurGamesReplacePayloadSchema = z.object({
-  games: kangurGamesSchema,
-});
-export type KangurGamesReplacePayload = z.infer<typeof kangurGamesReplacePayloadSchema>;
+export const kangurGameLibraryPageQuerySchema = kangurGameCatalogQuerySchema;
+export type KangurGameLibraryPageQuery = z.infer<typeof kangurGameLibraryPageQuerySchema>;

@@ -612,7 +612,6 @@ describe('KangurPrimaryNavigation', () => {
     fireEvent.click(screen.getByRole('link', { name: /strona główna/i }));
 
     expect(startRouteTransitionMock).toHaveBeenCalledWith({
-      acknowledgeMs: 110,
       href: '/kangur',
       pageKey: 'Game',
       sourceId: 'kangur-primary-nav:home',

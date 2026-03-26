@@ -3,7 +3,6 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMemo, useState } from 'react';
 import type { KangurDuelSeries, KangurScore } from '@kangur/contracts';
-import { resolveKangurLessonFocusForPracticeOperation } from '@kangur/core';
 
 import { useKangurMobileAuth } from '../src/auth/KangurMobileAuthContext';
 import { createKangurCompetitionHref } from '../src/competition/competitionHref';
@@ -24,7 +23,11 @@ import { HomeLoadingShell } from '../src/home/HomeLoadingShell';
 import {
   KangurMobileHomeProgressSnapshotProvider,
 } from '../src/home/KangurMobileHomeProgressSnapshotContext';
-import { useHomeScreenDeferredPanels } from '../src/home/useHomeScreenDeferredPanels';
+import {
+  useHomeScreenDeferredPanelGroup,
+  useHomeScreenDeferredPanelSequence,
+  useHomeScreenDeferredPanels,
+} from '../src/home/useHomeScreenDeferredPanels';
 import { useKangurMobileHomeDuelsPresence } from '../src/home/useKangurMobileHomeDuelsPresence';
 import { useKangurMobileHomeDuelsRematches } from '../src/home/useKangurMobileHomeDuelsRematches';
 import { useKangurMobileHomeDuelsLeaderboard } from '../src/home/useKangurMobileHomeDuelsLeaderboard';
@@ -54,15 +57,12 @@ import { createKangurLessonHref } from '../src/lessons/lessonHref';
 import { getKangurMobileLessonCheckpoints } from '../src/lessons/useKangurMobileLessonCheckpoints';
 import { createKangurParentDashboardHref } from '../src/parent/parentHref';
 import { createKangurPlanHref } from '../src/plan/planHref';
-import { resolveKangurMobileScoreScope } from '../src/profile/mobileScoreScope';
 import { createKangurPracticeHref } from '../src/practice/practiceHref';
 import { useKangurMobileRuntime } from '../src/providers/KangurRuntimeContext';
 import { translateKangurMobileActionLabel } from '../src/shared/translateKangurMobileActionLabel';
 import {
   createKangurResultsHref,
 } from '../src/scores/resultsHref';
-import { resolvePersistedKangurMobileRecentResults } from '../src/scores/persistedKangurMobileRecentResults';
-import { resolvePersistedKangurMobileTrainingFocus } from '../src/scores/persistedKangurMobileTrainingFocus';
 import {
   formatKangurMobileScoreOperation,
   type KangurMobileOperationPerformance,
@@ -79,6 +79,55 @@ const COMPETITION_ROUTE = createKangurCompetitionHref();
 const PLAN_ROUTE = createKangurPlanHref();
 const DUELS_ROUTE = createKangurDuelsHref();
 const PARENT_ROUTE = createKangurParentDashboardHref();
+const HOME_DUEL_PANEL_SEQUENCE = [
+  'home:duels',
+  'home:duels:secondary',
+  'home:duels:invites',
+  'home:duels:advanced',
+] as const;
+const HOME_INSIGHT_SCORE_REFRESH_SEQUENCE = [
+  'home:insights',
+  'home:insights:scores',
+] as const;
+const HOME_PRIMARY_SURFACE_PANEL_GROUP = [
+  'home:hero:intro',
+  'home:hero:details',
+  'home:account:summary',
+] as const;
+const HOME_SCORE_DETAILS_PANEL_GROUP = [
+  'home:hero:scores',
+  'home:training-focus:details',
+] as const;
+const HOME_ACCOUNT_DETAILS_PANEL_GROUP = [
+  'home:account:details',
+  'home:account:sign-in',
+] as const;
+const HOME_NAVIGATION_PANEL_SEQUENCE = [
+  'home:navigation:secondary',
+  'home:navigation:extended',
+] as const;
+const HOME_INSIGHTS_SECTION_PANEL_GROUP = [
+  'home:insights:lessons',
+  'home:insights:extras',
+] as const;
+const HOME_INSIGHTS_EXTRAS_PANEL_GROUP = [
+  'home:insights:extras:details',
+  'home:insights:extras:results',
+] as const;
+const HOME_BADGES_PANEL_SEQUENCE = [
+  'home:insights:extras:badges',
+  'home:insights:extras:badges:details',
+] as const;
+const HOME_PLAN_PANEL_SEQUENCE = [
+  'home:insights:extras:plan',
+  'home:insights:extras:plan:details',
+  'home:insights:extras:plan:assignments',
+] as const;
+const HOME_RESULTS_HUB_PANEL_SEQUENCE = [
+  'home:insights:results',
+  'home:insights:results:actions',
+  'home:insights:results:cards',
+] as const;
 
 const getHomeDuelModeLabel = (
   value: 'challenge' | 'quick_match',
@@ -1080,6 +1129,38 @@ function DeferredHomeHeroDetails(): React.JSX.Element {
   );
 }
 
+function DeferredHomeHeroIntro({
+  homeHeroLearnerName,
+  isRestoringAuth,
+}: {
+  homeHeroLearnerName: string | null;
+  isRestoringAuth: boolean;
+}): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <Text style={{ color: '#475569', fontSize: 16, lineHeight: 24 }}>
+      {isRestoringAuth
+        ? copy({
+            de: 'Wir bereiten die Startdaten gerade vor.',
+            en: 'Preparing your home startup data.',
+            pl: 'Przygotowujemy teraz dane startowe.',
+          })
+        : homeHeroLearnerName
+          ? copy({
+              de: `Willkommen zurück, ${homeHeroLearnerName}.`,
+              en: `Welcome back, ${homeHeroLearnerName}.`,
+              pl: `Witaj ponownie, ${homeHeroLearnerName}.`,
+            })
+          : copy({
+              de: 'Lektionen, Training und Ergebnisse sind hier schnell erreichbar.',
+              en: 'Lessons, practice, and results are all close here.',
+              pl: 'Lekcje, trening i wyniki są tutaj pod ręką.',
+            })}
+    </Text>
+  );
+}
+
 function DeferredHomeInsightsLessonPlanCard(): React.JSX.Element {
   const { copy } = useKangurMobileI18n();
 
@@ -1111,6 +1192,20 @@ function DeferredHomeInsightsLessonPlanDetails(): React.JSX.Element {
         de: 'Wir bereiten die Detailkarten und Lernhinweise fur den nachsten Startschritt vor.',
         en: 'Preparing the lesson detail cards and study cues for the next home step.',
         pl: 'Przygotowujemy szczegółowe karty lekcji i wskazówki nauki na kolejny etap ekranu startowego.',
+      })}
+    </Text>
+  );
+}
+
+function DeferredHomeInsightsRecentLessonsDetails(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <Text style={{ color: '#475569', lineHeight: 20 }}>
+      {copy({
+        de: 'Wir bereiten weitere gespeicherte Lektionen und Schnellwege fur den nachsten Startschritt vor.',
+        en: 'Preparing more saved lessons and quick links for the next home step.',
+        pl: 'Przygotowujemy kolejne zapisane lekcje i szybkie przejścia na kolejny etap ekranu startowego.',
       })}
     </Text>
   );
@@ -1253,6 +1348,11 @@ function HomeSecondaryRecentLessonsSection({
   recentCheckpoints: KangurMobileHomeLessonCheckpointItem[];
 }): React.JSX.Element {
   const { copy } = useKangurMobileI18n();
+  const areDeferredHomeInsightRecentLessonsDetailsReady = useHomeScreenDeferredPanels(
+    'home:insights:lessons:recent:details',
+    false,
+  );
+  const primaryCheckpoint = recentCheckpoints[0] ?? null;
 
   return (
     <SectionCard
@@ -1277,6 +1377,11 @@ function HomeSecondaryRecentLessonsSection({
             pl: 'Nie ma jeszcze zapisanych checkpointów. Otwórz lekcję i zapisz pierwszy stan, aby ostatnie lekcje pojawiły się tutaj.',
           })}
         </Text>
+      ) : !areDeferredHomeInsightRecentLessonsDetailsReady && primaryCheckpoint ? (
+        <View style={{ gap: 12 }}>
+          <LessonCheckpointCard item={primaryCheckpoint} />
+          <DeferredHomeInsightsRecentLessonsDetails />
+        </View>
       ) : (
         <View style={{ gap: 12 }}>
           {recentCheckpoints.map((item) => (
@@ -1380,6 +1485,28 @@ function DeferredHomeInsightsPlanDetailsCard(): React.JSX.Element {
   );
 }
 
+function DeferredHomeInsightsPlanAssignmentsCard(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <SectionCard
+      title={copy({
+        de: 'Plan zum Start',
+        en: 'Plan from home',
+        pl: 'Plan z ekranu głównego',
+      })}
+    >
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Wir bereiten die Aufgabenkarte und den Tagesplan-Link fur den nachsten Startschritt vor.',
+          en: 'Preparing the assignment card and daily-plan link for the next home step.',
+          pl: 'Przygotowujemy kartę zadań i link do planu dnia na kolejny etap ekranu startowego.',
+        })}
+      </Text>
+    </SectionCard>
+  );
+}
+
 function DeferredHomeInsightsBadgesCard(): React.JSX.Element {
   const { copy } = useKangurMobileI18n();
 
@@ -1396,6 +1523,28 @@ function DeferredHomeInsightsBadgesCard(): React.JSX.Element {
           de: 'Wir bereiten die gespeicherte Abzeichenübersicht fur den nachsten Startschritt vor.',
           en: 'Preparing the saved badge summary for the next home step.',
           pl: 'Przygotowujemy zapisane podsumowanie odznak na kolejny etap ekranu startowego.',
+        })}
+      </Text>
+    </SectionCard>
+  );
+}
+
+function DeferredHomeInsightsBadgesDetailsCard(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <SectionCard
+      title={copy({
+        de: 'Abzeichen-Zentrale',
+        en: 'Badge hub',
+        pl: 'Centrum odznak',
+      })}
+    >
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Wir bereiten die letzten Freischaltungen und Abzeichen-Links fur den nachsten Startschritt vor.',
+          en: 'Preparing recent unlocks and badge links for the next home step.',
+          pl: 'Przygotowujemy ostatnie odblokowania i linki do odznak na kolejny etap ekranu startowego.',
         })}
       </Text>
     </SectionCard>
@@ -1559,23 +1708,22 @@ function HomeSecondaryInsightsPlanSection(): React.JSX.Element {
 }
 
 function HomeSecondaryInsightsBadgesAndPlanSectionGroup(): React.JSX.Element {
-  const areDeferredHomeInsightBadgesReady = useHomeScreenDeferredPanels(
-    'home:insights:extras:badges',
-    false,
-  );
-  const areDeferredHomeInsightPlanReady = useHomeScreenDeferredPanels(
-    'home:insights:extras:plan',
-    false,
-  );
-  const areDeferredHomeInsightPlanDetailsReady = useHomeScreenDeferredPanels(
-    'home:insights:extras:plan:details',
-    !areDeferredHomeInsightPlanReady,
-  );
+  const [
+    areDeferredHomeInsightBadgesReady,
+    areDeferredHomeInsightBadgesDetailsReady,
+  ] = useHomeScreenDeferredPanelSequence(HOME_BADGES_PANEL_SEQUENCE, false);
+  const [
+    areDeferredHomeInsightPlanReady,
+    areDeferredHomeInsightPlanDetailsReady,
+    areDeferredHomeInsightPlanAssignmentsReady,
+  ] = useHomeScreenDeferredPanelSequence(HOME_PLAN_PANEL_SEQUENCE, false);
 
   return (
     <>
       {!areDeferredHomeInsightBadgesReady ? (
         <DeferredHomeInsightsBadgesCard />
+      ) : !areDeferredHomeInsightBadgesDetailsReady ? (
+        <DeferredHomeInsightsBadgesDetailsCard />
       ) : (
         <HomeSecondaryInsightsBadgesSectionGroup />
       )}
@@ -1583,6 +1731,8 @@ function HomeSecondaryInsightsBadgesAndPlanSectionGroup(): React.JSX.Element {
         <DeferredHomeInsightsPlanCard />
       ) : !areDeferredHomeInsightPlanDetailsReady ? (
         <DeferredHomeInsightsPlanDetailsCard />
+      ) : !areDeferredHomeInsightPlanAssignmentsReady ? (
+        <DeferredHomeInsightsPlanAssignmentsCard />
       ) : (
         <HomeSecondaryInsightsPlanSection />
       )}
@@ -1593,14 +1743,10 @@ function HomeSecondaryInsightsBadgesAndPlanSectionGroup(): React.JSX.Element {
 function HomeSecondaryInsightsExtrasSectionGroup({
   recentResults,
 }: HomeRecentResultsSectionProps): React.JSX.Element {
-  const areDeferredHomeInsightBadgesAndPlanReady = useHomeScreenDeferredPanels(
-    'home:insights:extras:details',
-    false,
-  );
-  const areDeferredHomeInsightResultsSummaryReady = useHomeScreenDeferredPanels(
-    'home:insights:extras:results',
-    false,
-  );
+  const [
+    areDeferredHomeInsightBadgesAndPlanReady,
+    areDeferredHomeInsightResultsSummaryReady,
+  ] = useHomeScreenDeferredPanelGroup(HOME_INSIGHTS_EXTRAS_PANEL_GROUP, false);
 
   return (
     <>
@@ -1623,18 +1769,11 @@ function HomeResultsHubSection({
 }: HomeRecentResultsSectionProps): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const [hasRequestedDetailedResults, setHasRequestedDetailedResults] = useState(false);
-  const areDeferredHomeResultsHubSummaryReady = useHomeScreenDeferredPanels(
-    'home:insights:results',
-    false,
-  );
-  const areDeferredHomeResultsHubActionsReady = useHomeScreenDeferredPanels(
-    'home:insights:results:actions',
-    !areDeferredHomeResultsHubSummaryReady,
-  );
-  const areDeferredHomeResultsHubCardsReady = useHomeScreenDeferredPanels(
-    'home:insights:results:cards',
-    !areDeferredHomeResultsHubActionsReady,
-  );
+  const [
+    areDeferredHomeResultsHubSummaryReady,
+    areDeferredHomeResultsHubActionsReady,
+    areDeferredHomeResultsHubCardsReady,
+  ] = useHomeScreenDeferredPanelSequence(HOME_RESULTS_HUB_PANEL_SEQUENCE, false);
   const latestResult = recentResults.results[0] ?? null;
   const shouldRenderDetailedResults =
     (areDeferredHomeResultsHubSummaryReady &&
@@ -1825,16 +1964,10 @@ function HomeSecondaryInsightsSectionGroup({
   isLiveHomeProgressReady,
   recentResults,
 }: HomeSecondaryInsightsSectionGroupProps): React.JSX.Element {
-  const areDeferredHomeInsightLessonsReady = useHomeScreenDeferredPanels(
-    'home:insights:lessons',
-    false,
-  );
+  const [areDeferredHomeInsightLessonsReady, areDeferredHomeInsightExtrasReady] =
+    useHomeScreenDeferredPanelGroup(HOME_INSIGHTS_SECTION_PANEL_GROUP, false);
   const shouldRenderLiveHomeLessonInsights =
     isLiveHomeProgressReady && areDeferredHomeInsightLessonsReady;
-  const areDeferredHomeInsightExtrasReady = useHomeScreenDeferredPanels(
-    'home:insights:extras',
-    false,
-  );
 
   return (
     <>
@@ -3236,6 +3369,7 @@ type HomeHeroLatestLessonCheckpointViewModel = {
 
 type HomeHeroLatestLessonCheckpointStateProps = {
   children: (viewModel: HomeHeroLatestLessonCheckpointViewModel) => React.ReactNode;
+  isEnabled: boolean;
   initialLatestLessonCheckpoint: KangurMobileHomeLessonCheckpointItem | null;
   isLiveProgressReady: boolean;
 };
@@ -3261,9 +3395,21 @@ function LiveHomeHeroLatestLessonCheckpointState({
 
 function HomeHeroLatestLessonCheckpointState({
   children,
+  isEnabled,
   initialLatestLessonCheckpoint,
   isLiveProgressReady,
 }: HomeHeroLatestLessonCheckpointStateProps): React.JSX.Element {
+  if (!isEnabled) {
+    return (
+      <>
+        {children({
+          homeHeroRecentCheckpoint: null,
+          homeHeroRecentCheckpointCount: 0,
+        })}
+      </>
+    );
+  }
+
   if (!isLiveProgressReady) {
     return (
       <>
@@ -3278,88 +3424,90 @@ function HomeHeroLatestLessonCheckpointState({
   return <LiveHomeHeroLatestLessonCheckpointState>{children}</LiveHomeHeroLatestLessonCheckpointState>;
 }
 
-function PersistedAuthenticatedHomeScoreState({
+function LiveHomeDebugProofOperationState({
+  children,
+}: {
+  children: (debugProofOperation: string | null) => React.ReactNode;
+}): React.JSX.Element {
+  const params = useLocalSearchParams<{
+    debugProofOperation?: string | string[];
+  }>();
+
+  return <>{children(resolveKangurHomeDebugProofOperation(params.debugProofOperation))}</>;
+}
+
+function HomeDebugProofOperationState({
+  children,
+}: {
+  children: (debugProofOperation: string | null) => React.ReactNode;
+}): React.JSX.Element {
+  if (!__DEV__) {
+    return <>{children(null)}</>;
+  }
+
+  return <LiveHomeDebugProofOperationState>{children}</LiveHomeDebugProofOperationState>;
+}
+
+const createHomeDebugProofViewModel = (input: {
+  isEnabled: boolean;
+  isLoading: boolean;
+  locale: 'pl' | 'en' | 'de';
+  operation: string | null;
+  recentResults: KangurScore[];
+  strongestOperation: KangurMobileOperationPerformance | null;
+  weakestOperation: KangurMobileOperationPerformance | null;
+}) =>
+  input.operation
+    ? buildKangurHomeDebugProofViewModel(input)
+    : null;
+
+function DeferredAuthenticatedHomeScoreState({
   areDeferredHomePanelsReady,
   children,
   debugProofOperation,
 }: HomeScoreStateProps): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
-  const { session } = useKangurMobileAuth();
-  const { storage } = useKangurMobileRuntime();
-  const scoreScopeIdentityKey =
-    resolveKangurMobileScoreScope(session.user)?.identityKey ?? null;
-  const persistedRecentResults = useMemo(
-    () =>
-      scoreScopeIdentityKey
-        ? (resolvePersistedKangurMobileRecentResults({
-            identityKey: scoreScopeIdentityKey,
-            limit: 3,
-            storage,
-          }) ?? [])
-        : [],
-    [scoreScopeIdentityKey, storage],
-  );
-  const persistedTrainingFocus = useMemo(
-    () =>
-      scoreScopeIdentityKey
-        ? resolvePersistedKangurMobileTrainingFocus({
-            identityKey: scoreScopeIdentityKey,
-            storage,
-          })
-        : null,
-    [scoreScopeIdentityKey, storage],
-  );
-  const strongestOperation = persistedTrainingFocus?.strongestOperation ?? null;
-  const weakestOperation = persistedTrainingFocus?.weakestOperation ?? null;
   const recentResults = {
     error: null,
     isEnabled: false,
     isLoading: false,
     isRestoringAuth: false,
     refresh: noopRefreshHomeScoreViewModel,
-    results: persistedRecentResults,
+    results: [],
   } satisfies HomeRecentResultsViewModel;
   const trainingFocus = {
     error: null,
     isEnabled: false,
     isLoading: false,
     isRestoringAuth: false,
-    recentResults: persistedRecentResults,
+    recentResults: [],
     refresh: noopRefreshHomeScoreViewModel,
-    strongestLessonFocus: strongestOperation
-      ? resolveKangurLessonFocusForPracticeOperation(strongestOperation.operation)
-      : null,
-    strongestOperation,
-    weakestLessonFocus: weakestOperation
-      ? resolveKangurLessonFocusForPracticeOperation(weakestOperation.operation)
-      : null,
-    weakestOperation,
+    strongestLessonFocus: null,
+    strongestOperation: null,
+    weakestLessonFocus: null,
+    weakestOperation: null,
   } satisfies HomeTrainingFocusViewModel;
-  const homeDebugProof = buildKangurHomeDebugProofViewModel({
+  const homeDebugProof = createHomeDebugProofViewModel({
     isEnabled: false,
     isLoading: !areDeferredHomePanelsReady,
     locale,
     operation: debugProofOperation,
     recentResults: recentResults.results,
-    strongestOperation,
-    weakestOperation,
+    strongestOperation: null,
+    weakestOperation: null,
   });
 
   return (
     <>
       {children({
         homeDebugProof,
-        homeHeroFocusHref: weakestOperation
-          ? createKangurPracticeHref(weakestOperation.operation)
-          : PRACTICE_ROUTE,
-        homeHeroFocusLabel: weakestOperation
-          ? formatKangurMobileScoreOperation(weakestOperation.operation, locale)
-          : copy({
-              de: 'Gemischtes Training',
-              en: 'Mixed practice',
-              pl: 'Trening mieszany',
-            }),
-        homeHeroRecentResult: persistedRecentResults[0] ?? null,
+        homeHeroFocusHref: PRACTICE_ROUTE,
+        homeHeroFocusLabel: copy({
+          de: 'Gemischtes Training',
+          en: 'Mixed practice',
+          pl: 'Trening mieszany',
+        }),
+        homeHeroRecentResult: null,
         recentResults,
         trainingFocus,
       })}
@@ -3402,7 +3550,7 @@ function LiveAuthenticatedHomeScoreState({
       ? trainingFocus.recentResults
       : cachedRecentResults.results,
   };
-  const homeDebugProof = buildKangurHomeDebugProofViewModel({
+  const homeDebugProof = createHomeDebugProofViewModel({
     isEnabled:
       recentResults.isEnabled &&
       (!areDeferredHomePanelsReady || trainingFocus.isEnabled),
@@ -3471,7 +3619,7 @@ function AnonymousHomeScoreState({
     weakestLessonFocus: null,
     weakestOperation: null,
   } satisfies HomeTrainingFocusViewModel;
-  const homeDebugProof = buildKangurHomeDebugProofViewModel({
+  const homeDebugProof = createHomeDebugProofViewModel({
     isEnabled: false,
     isLoading:
       recentResults.isLoading ||
@@ -3502,6 +3650,92 @@ function AnonymousHomeScoreState({
   );
 }
 
+function HomeLearnerCredentialsSignInSection({
+  isDeferredReady,
+  onSignIn,
+}: {
+  isDeferredReady: boolean;
+  onSignIn: (loginName: string, password: string) => Promise<void>;
+}): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+  const [hasRequestedOpen, setHasRequestedOpen] = useState(false);
+  const [loginName, setLoginName] = useState('');
+  const [password, setPassword] = useState('');
+
+  if (!isDeferredReady && !hasRequestedOpen) {
+    return (
+      <DeferredHomeAccountSignInForm
+        onOpen={() => {
+          setHasRequestedOpen(true);
+        }}
+      />
+    );
+  }
+
+  return (
+    <View style={{ gap: 10 }}>
+      <LabeledTextField
+        autoCapitalize='none'
+        hint={copy({
+          de: 'Gib den Schüler-Login ein.',
+          en: 'Enter the learner login.',
+          pl: 'Wpisz login ucznia.',
+        })}
+        label={copy({
+          de: 'Schuler-Login',
+          en: 'Learner login',
+          pl: 'Login ucznia',
+        })}
+        onChangeText={setLoginName}
+        placeholder={copy({
+          de: 'Schuler-Login',
+          en: 'Learner login',
+          pl: 'Login ucznia',
+        })}
+        textContentType='username'
+        value={loginName}
+      />
+      <LabeledTextField
+        autoCapitalize='none'
+        hint={copy({
+          de: 'Gib das Schülerpasswort ein.',
+          en: 'Enter the learner password.',
+          pl: 'Wpisz hasło ucznia.',
+        })}
+        label={copy({
+          de: 'Passwort',
+          en: 'Password',
+          pl: 'Hasło',
+        })}
+        onChangeText={setPassword}
+        placeholder={copy({
+          de: 'Passwort',
+          en: 'Password',
+          pl: 'Hasło',
+        })}
+        secureTextEntry
+        textContentType='password'
+        value={password}
+      />
+      <PrimaryButton
+        hint={copy({
+          de: 'Meldet mit den eingegebenen Daten an.',
+          en: 'Signs in with the entered credentials.',
+          pl: 'Loguje przy użyciu wpisanych danych.',
+        })}
+        label={copy({
+          de: 'Anmelden',
+          en: 'Sign in',
+          pl: 'Zaloguj',
+        })}
+        onPress={async () => {
+          await onSignIn(loginName, password);
+        }}
+      />
+    </View>
+  );
+}
+
 function HomeScreenContent({
   initialLatestLessonCheckpoint,
   initialRecentLessonCheckpoints,
@@ -3512,13 +3746,6 @@ function HomeScreenContent({
   isLiveHomeProgressReady: boolean;
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
-  const params = useLocalSearchParams<{
-    debugProofOperation?: string | string[];
-  }>();
-  const [hasRequestedLearnerCredentialsForm, setHasRequestedLearnerCredentialsForm] =
-    useState(false);
-  const [loginName, setLoginName] = useState('');
-  const [password, setPassword] = useState('');
   const { apiBaseUrl, apiBaseUrlSource } = useKangurMobileRuntime();
   const {
     authError,
@@ -3532,73 +3759,52 @@ function HomeScreenContent({
     signOut,
     supportsLearnerCredentials,
   } = useKangurMobileAuth();
-  const areDeferredHomePanelsReady = useHomeScreenDeferredPanels(
-    'home:duels',
-    false,
-  );
-  const areDeferredHomeDuelSecondaryReady = useHomeScreenDeferredPanels(
-    'home:duels:secondary',
-    !areDeferredHomePanelsReady,
-  );
-  const areDeferredHomeDuelInvitesReady = useHomeScreenDeferredPanels(
-    'home:duels:invites',
-    !areDeferredHomeDuelSecondaryReady,
-  );
-  const areDeferredHomeDuelAdvancedReady = useHomeScreenDeferredPanels(
-    'home:duels:advanced',
-    !areDeferredHomeDuelInvitesReady,
-  );
-  const areDeferredHomeInsightsReady = useHomeScreenDeferredPanels(
-    'home:insights',
-    !areDeferredHomePanelsReady,
-  );
-  const areDeferredHomeHeroScoresReady = useHomeScreenDeferredPanels(
-    'home:hero:scores',
-    !areDeferredHomePanelsReady,
-  );
-  const areDeferredHomeTrainingFocusDetailsReady = useHomeScreenDeferredPanels(
-    'home:training-focus:details',
-    !areDeferredHomePanelsReady,
-  );
-  const areDeferredHomeHeroDetailsReady = useHomeScreenDeferredPanels(
-    'home:hero:details',
-    false,
-  );
-  const areDeferredHomeAccountSummaryReady = useHomeScreenDeferredPanels(
-    'home:account:summary',
-    false,
-  );
-  const areDeferredHomeAccountDetailsReady = useHomeScreenDeferredPanels(
-    'home:account:details',
-    !areDeferredHomeAccountSummaryReady,
-  );
-  const areDeferredHomeAccountSignInReady = useHomeScreenDeferredPanels(
-    'home:account:sign-in',
-    !areDeferredHomeAccountSummaryReady,
-  );
-  const areDeferredHomeNavigationSecondaryReady = useHomeScreenDeferredPanels(
-    'home:navigation:secondary',
-    false,
-  );
-  const areDeferredHomeNavigationExtendedReady = useHomeScreenDeferredPanels(
-    'home:navigation:extended',
-    !areDeferredHomeNavigationSecondaryReady,
-  );
-  const areDeferredHomeScoreRefreshReady = useHomeScreenDeferredPanels(
-    'home:insights:scores',
-    !areDeferredHomeInsightsReady,
-  );
-  const authBoundary = getKangurHomeAuthBoundaryViewModel({
-    authError,
-    developerAutoSignInEnabled,
-    hasAttemptedDeveloperAutoSignIn,
-    isLoadingAuth,
-    locale,
-    session,
-    supportsLearnerCredentials,
-  });
-  const debugProofOperation = __DEV__
-    ? resolveKangurHomeDebugProofOperation(params.debugProofOperation)
+  const [
+    areDeferredHomePanelsReady,
+    areDeferredHomeDuelSecondaryReady,
+    areDeferredHomeDuelInvitesReady,
+    areDeferredHomeDuelAdvancedReady,
+  ] = useHomeScreenDeferredPanelSequence(HOME_DUEL_PANEL_SEQUENCE, false);
+  const [areDeferredHomeInsightsReady, areDeferredHomeScoreRefreshReady] =
+    useHomeScreenDeferredPanelSequence(
+      HOME_INSIGHT_SCORE_REFRESH_SEQUENCE,
+      !areDeferredHomePanelsReady,
+    );
+  const [areDeferredHomeHeroScoresReady, areDeferredHomeTrainingFocusDetailsReady] =
+    useHomeScreenDeferredPanelGroup(
+      HOME_SCORE_DETAILS_PANEL_GROUP,
+      !areDeferredHomePanelsReady,
+    );
+  const [
+    areDeferredHomeHeroIntroReady,
+    areDeferredHomeHeroDetailsReady,
+    areDeferredHomeAccountSummaryReady,
+  ] = useHomeScreenDeferredPanelGroup(HOME_PRIMARY_SURFACE_PANEL_GROUP, false);
+  const [areDeferredHomeAccountDetailsReady, areDeferredHomeAccountSignInReady] =
+    useHomeScreenDeferredPanelGroup(
+      HOME_ACCOUNT_DETAILS_PANEL_GROUP,
+      !areDeferredHomeAccountSummaryReady,
+    );
+  const [
+    areDeferredHomeNavigationSecondaryReady,
+    areDeferredHomeNavigationExtendedReady,
+  ] = useHomeScreenDeferredPanelSequence(HOME_NAVIGATION_PANEL_SEQUENCE, false);
+  const isRestoringLearnerSession =
+    isLoadingAuth && session.status !== 'authenticated';
+  const shouldShowLearnerCredentialsForm =
+    supportsLearnerCredentials &&
+    !isRestoringLearnerSession &&
+    session.status !== 'authenticated';
+  const authBoundary = areDeferredHomeAccountSummaryReady
+    ? getKangurHomeAuthBoundaryViewModel({
+        authError,
+        developerAutoSignInEnabled,
+        hasAttemptedDeveloperAutoSignIn,
+        isLoadingAuth,
+        locale,
+        session,
+        supportsLearnerCredentials,
+      })
     : null;
   const homeHeroLearnerName =
     session.user?.activeLearner?.displayName?.trim() || session.user?.full_name?.trim() || null;
@@ -3615,6 +3821,7 @@ function HomeScreenContent({
     trainingFocus,
   }: HomeScoreViewModel): React.JSX.Element => (
     <HomeHeroLatestLessonCheckpointState
+      isEnabled={areDeferredHomeHeroDetailsReady}
       initialLatestLessonCheckpoint={initialLatestLessonCheckpoint}
       isLiveProgressReady={isLiveHomeProgressReady}
     >
@@ -3639,25 +3846,32 @@ function HomeScreenContent({
               pl: 'Kangur mobilnie',
             })}
           </Text>
-          <Text style={{ color: '#475569', fontSize: 16, lineHeight: 24 }}>
-            {isLoadingAuth && session.status !== 'authenticated'
-              ? copy({
-                  de: 'Wir stellen gerade die Anmeldung, letzte Ergebnisse und Trainingshinweise wieder her.',
-                  en: 'We are restoring sign-in, recent results, and training cues.',
-                  pl: 'Przywracamy teraz logowanie, ostatnie wyniki i wskazówki treningowe.',
-                })
-              : session.status === 'authenticated' && homeHeroLearnerName
+          {!areDeferredHomeHeroIntroReady ? (
+            <DeferredHomeHeroIntro
+              homeHeroLearnerName={homeHeroLearnerName}
+              isRestoringAuth={isLoadingAuth && session.status !== 'authenticated'}
+            />
+          ) : (
+            <Text style={{ color: '#475569', fontSize: 16, lineHeight: 24 }}>
+              {isLoadingAuth && session.status !== 'authenticated'
                 ? copy({
-                    de: `Willkommen, ${homeHeroLearnerName}. Starte mit dem Trainingsfokus, kehre zur letzten Lektion zurück oder öffne direkt den Tagesplan.`,
-                    en: `Welcome back, ${homeHeroLearnerName}. Start with the training focus, return to the latest lesson, or jump straight into the daily plan.`,
-                    pl: `Witaj ponownie, ${homeHeroLearnerName}. Zacznij od fokusu treningowego, wróć do ostatniej lekcji albo od razu otwórz plan dnia.`,
+                    de: 'Wir stellen gerade die Anmeldung, letzte Ergebnisse und Trainingshinweise wieder her.',
+                    en: 'We are restoring sign-in, recent results, and training cues.',
+                    pl: 'Przywracamy teraz logowanie, ostatnie wyniki i wskazówki treningowe.',
                   })
-                : copy({
-                    de: 'Von hier aus kannst du Lektionen, Training, Ergebnisse und Duelle durchsuchen. Nach der Anmeldung siehst du hier auch Ergebnisse und den Tagesplan.',
-                    en: 'From here you can browse lessons, practice, results, and duels. After sign-in, you will also see results and the daily plan here.',
-                  pl: 'Stąd możesz przeglądać lekcje, trening, wyniki i pojedynki. Po zalogowaniu zobaczysz tu też wyniki oraz plan dnia.',
-                })}
-          </Text>
+                : session.status === 'authenticated' && homeHeroLearnerName
+                  ? copy({
+                      de: `Willkommen, ${homeHeroLearnerName}. Starte mit dem Trainingsfokus, kehre zur letzten Lektion zurück oder öffne direkt den Tagesplan.`,
+                      en: `Welcome back, ${homeHeroLearnerName}. Start with the training focus, return to the latest lesson, or jump straight into the daily plan.`,
+                      pl: `Witaj ponownie, ${homeHeroLearnerName}. Zacznij od fokusu treningowego, wróć do ostatniej lekcji albo od razu otwórz plan dnia.`,
+                    })
+                  : copy({
+                      de: 'Von hier aus kannst du Lektionen, Training, Ergebnisse und Duelle durchsuchen. Nach der Anmeldung siehst du hier auch Ergebnisse und den Tagesplan.',
+                      en: 'From here you can browse lessons, practice, results, and duels. After sign-in, you will also see results and the daily plan here.',
+                      pl: 'Stąd możesz przeglądać lekcje, trening, wyniki i pojedynki. Po zalogowaniu zobaczysz tu też wyniki oraz plan dnia.',
+                    })}
+            </Text>
+          )}
 
           {!areDeferredHomeHeroDetailsReady ? (
             <DeferredHomeHeroDetails />
@@ -3848,7 +4062,7 @@ function HomeScreenContent({
                   en: 'Status',
                   pl: 'Status',
                 })}
-                : {authBoundary.statusLabel}
+                : {authBoundary?.statusLabel}
               </Text>
               <Text style={{ color: '#475569' }}>
                 {copy({
@@ -3856,7 +4070,7 @@ function HomeScreenContent({
                   en: 'User',
                   pl: 'Użytkownik',
                 })}
-                : {authBoundary.userLabel}
+                : {authBoundary?.userLabel}
               </Text>
               {!areDeferredHomeAccountDetailsReady ? (
                 <DeferredHomeAccountDetails />
@@ -3881,75 +4095,11 @@ function HomeScreenContent({
             <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{authError}</Text>
           ) : null}
 
-          {authBoundary.showLearnerCredentialsForm ? (
-            !areDeferredHomeAccountSignInReady && !hasRequestedLearnerCredentialsForm ? (
-              <DeferredHomeAccountSignInForm
-                onOpen={() => {
-                  setHasRequestedLearnerCredentialsForm(true);
-                }}
-              />
-            ) : (
-            <View style={{ gap: 10 }}>
-              <LabeledTextField
-                autoCapitalize='none'
-                hint={copy({
-                  de: 'Gib den Schüler-Login ein.',
-                  en: 'Enter the learner login.',
-                  pl: 'Wpisz login ucznia.',
-                })}
-                label={copy({
-                  de: 'Schuler-Login',
-                  en: 'Learner login',
-                  pl: 'Login ucznia',
-                })}
-                onChangeText={setLoginName}
-                placeholder={copy({
-                  de: 'Schuler-Login',
-                  en: 'Learner login',
-                  pl: 'Login ucznia',
-                })}
-                textContentType='username'
-                value={loginName}
-              />
-              <LabeledTextField
-                autoCapitalize='none'
-                hint={copy({
-                  de: 'Gib das Schülerpasswort ein.',
-                  en: 'Enter the learner password.',
-                  pl: 'Wpisz hasło ucznia.',
-                })}
-                label={copy({
-                  de: 'Passwort',
-                  en: 'Password',
-                  pl: 'Hasło',
-                })}
-                onChangeText={setPassword}
-                placeholder={copy({
-                  de: 'Passwort',
-                  en: 'Password',
-                  pl: 'Hasło',
-                })}
-                secureTextEntry
-                textContentType='password'
-                value={password}
-              />
-              <PrimaryButton
-                hint={copy({
-                  de: 'Meldet mit den eingegebenen Daten an.',
-                  en: 'Signs in with the entered credentials.',
-                  pl: 'Loguje przy użyciu wpisanych danych.',
-                })}
-                label={copy({
-                  de: 'Anmelden',
-                  en: 'Sign in',
-                  pl: 'Zaloguj',
-                })}
-                onPress={async () => {
-                  await signInWithLearnerCredentials(loginName, password);
-                }}
-              />
-            </View>
-            )
+          {shouldShowLearnerCredentialsForm ? (
+            <HomeLearnerCredentialsSignInSection
+              isDeferredReady={areDeferredHomeAccountSignInReady}
+              onSignIn={signInWithLearnerCredentials}
+            />
           ) : session.status === 'authenticated' ? (
             <PrimaryButton
               hint={copy({
@@ -4325,34 +4475,42 @@ function HomeScreenContent({
 
   if (session.status === 'authenticated') {
     return (
-      <>
-        {!areDeferredHomeHeroScoresReady ? (
-          <PersistedAuthenticatedHomeScoreState
-            areDeferredHomePanelsReady={areDeferredHomePanelsReady}
-            debugProofOperation={debugProofOperation}
-          >
-            {renderHomeScreenContent}
-          </PersistedAuthenticatedHomeScoreState>
-        ) : (
-          <LiveAuthenticatedHomeScoreState
-            areDeferredHomePanelsReady={areDeferredHomePanelsReady}
-            areDeferredHomeScoreRefreshReady={areDeferredHomeScoreRefreshReady}
-            debugProofOperation={debugProofOperation}
-          >
-            {renderHomeScreenContent}
-          </LiveAuthenticatedHomeScoreState>
+      <HomeDebugProofOperationState>
+        {(debugProofOperation) => (
+          <>
+            {!areDeferredHomeHeroScoresReady ? (
+              <DeferredAuthenticatedHomeScoreState
+                areDeferredHomePanelsReady={areDeferredHomePanelsReady}
+                debugProofOperation={debugProofOperation}
+              >
+                {renderHomeScreenContent}
+              </DeferredAuthenticatedHomeScoreState>
+            ) : (
+              <LiveAuthenticatedHomeScoreState
+                areDeferredHomePanelsReady={areDeferredHomePanelsReady}
+                areDeferredHomeScoreRefreshReady={areDeferredHomeScoreRefreshReady}
+                debugProofOperation={debugProofOperation}
+              >
+                {renderHomeScreenContent}
+              </LiveAuthenticatedHomeScoreState>
+            )}
+          </>
         )}
-      </>
+      </HomeDebugProofOperationState>
     );
   }
 
   return (
-    <AnonymousHomeScoreState
-      areDeferredHomePanelsReady={areDeferredHomePanelsReady}
-      debugProofOperation={debugProofOperation}
-      isRestoringAuth={isLoadingAuth}
-    >
-      {renderHomeScreenContent}
-    </AnonymousHomeScoreState>
+    <HomeDebugProofOperationState>
+      {(debugProofOperation) => (
+        <AnonymousHomeScoreState
+          areDeferredHomePanelsReady={areDeferredHomePanelsReady}
+          debugProofOperation={debugProofOperation}
+          isRestoringAuth={isLoadingAuth}
+        >
+          {renderHomeScreenContent}
+        </AnonymousHomeScoreState>
+      )}
+    </HomeDebugProofOperationState>
   );
 }

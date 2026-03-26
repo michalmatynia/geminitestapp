@@ -94,7 +94,7 @@ export function KangurAppLoader({
       setColorPhase((prev) => (prev === 'color' ? prev : 'paint'));
       paintTimeoutId = globalThis.setTimeout(() => {
         setColorPhase('color');
-      }, 900);
+      }, 300);
     };
 
     // Fast path: class already present

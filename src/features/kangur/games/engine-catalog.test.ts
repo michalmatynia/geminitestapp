@@ -6,6 +6,7 @@ import {
   createKangurGameCatalogEntries,
   createKangurGameEngineCatalogEntries,
   createKangurGameEngineCatalogImplementationGroups,
+  createKangurGameEngineLibraryOverview,
   createKangurGameVariantCatalogEntries,
   getKangurGameEngineCatalogFacets,
   getKangurDrawingEngineCatalogEntries,
@@ -45,6 +46,7 @@ describe('kangur game engine catalog', () => {
     const ownershipGroups = groupKangurGameEngineCatalogEntriesByImplementationOwnership(engineEntries);
     const implementationGroups = createKangurGameEngineCatalogImplementationGroups(engineEntries);
     const facets = getKangurGameEngineCatalogFacets(engineEntries);
+    const overview = createKangurGameEngineLibraryOverview(engineEntries);
 
     expect(drawingEntries.map((entry) => entry.engineId)).toEqual([
       'shape-drawing-engine',
@@ -102,5 +104,9 @@ describe('kangur game engine catalog', () => {
       'mixed_runtime',
       'lesson_embedded',
     ]);
+    expect(overview.engineGroups).toEqual(engineEntries);
+    expect(overview.drawingGroups).toEqual(drawingCatalogEntries);
+    expect(overview.implementationGroups).toEqual(implementationGroups);
+    expect(overview.facets).toEqual(facets);
   });
 });

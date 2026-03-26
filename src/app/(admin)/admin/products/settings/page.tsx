@@ -7,7 +7,7 @@ import {
   CurrencyModal,
   LanguageModal,
 } from '@/features/internationalization/public';
-import { ProductSettingsPage } from '@/features/products/pages/ProductSettingsPage';
+import { ProductSettingsPage } from '@/features/products/public';
 import { ProductSyncSettings } from '@/features/product-sync/public';
 
 export default function Page(): JSX.Element {

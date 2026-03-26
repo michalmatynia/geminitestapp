@@ -40,11 +40,7 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
-import { useKangurGameCatalogFacets } from '@/features/kangur/ui/hooks/useKangurGameCatalogFacets';
-import { useKangurGameEngineCatalog } from '@/features/kangur/ui/hooks/useKangurGameEngineCatalog';
-import { useKangurGameEngineCatalogFacets } from '@/features/kangur/ui/hooks/useKangurGameEngineCatalogFacets';
-import { useKangurGameLibraryCoverage } from '@/features/kangur/ui/hooks/useKangurGameLibraryCoverage';
-import { useKangurGameLibraryOverview } from '@/features/kangur/ui/hooks/useKangurGameLibraryOverview';
+import { useKangurGameLibraryPage } from '@/features/kangur/ui/hooks/useKangurGameLibraryPage';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import {
@@ -56,10 +52,6 @@ import {
   readGamesLibraryFiltersFromSearchParams,
   type GamesLibraryFilterState,
 } from '@/features/kangur/ui/pages/GamesLibrary.filters';
-import {
-  createGamesLibraryDrawingGroupsFromEngineGroups,
-  createGamesLibraryImplementationGroupsFromEngineGroups,
-} from '@/features/kangur/ui/pages/GamesLibrary.view-model';
 import {
   buildKangurGameLaunchHref,
   buildKangurGameLessonHref,
@@ -227,20 +219,19 @@ export default function GamesLibrary(): React.JSX.Element {
   );
   const deferredFilters = useDeferredValue(filters);
   const catalogFilter = buildGamesLibraryCatalogFilter(deferredFilters);
-  const overviewQuery = useKangurGameLibraryOverview(catalogFilter);
-  const coverageQuery = useKangurGameLibraryCoverage();
-  const engineCatalogQuery = useKangurGameEngineCatalog(catalogFilter);
-  const engineCatalogFacetsQuery = useKangurGameEngineCatalogFacets(catalogFilter);
-  const engineCatalogFilterOptionsQuery = useKangurGameEngineCatalogFacets();
-  const facetsQuery = useKangurGameCatalogFacets();
-  const overview = overviewQuery.data;
-  const coverageResource = coverageQuery.data;
+  const pageDataQuery = useKangurGameLibraryPage(catalogFilter);
+  const pageData = pageDataQuery.data;
+  const overview = pageData?.overview;
+  const engineOverview = pageData?.engineOverview;
+  const coverageResource = pageData?.coverage;
   const coverageGroups = coverageResource?.groups ?? [];
   const coverageStatusMap = coverageResource?.statusMap ?? {};
-  const engineGroups = engineCatalogQuery.data ?? [];
-  const engineCatalogFacets = engineCatalogFacetsQuery.data;
-  const engineCatalogFilterOptions = engineCatalogFilterOptionsQuery.data;
-  const catalogFacets = facetsQuery.data;
+  const engineGroups = engineOverview?.engineGroups ?? [];
+  const drawingGroups = engineOverview?.drawingGroups ?? [];
+  const implementationGroups = engineOverview?.implementationGroups ?? [];
+  const engineCatalogFacets = engineOverview?.facets;
+  const engineCatalogFilterOptions = pageData?.engineFilterOptions;
+  const catalogFacets = pageData?.catalogFacets;
   const metrics = overview?.metrics ?? {
     engineCount: 0,
     lessonLinkedCount: 0,
@@ -310,9 +301,6 @@ export default function GamesLibrary(): React.JSX.Element {
       areGamesLibraryFiltersEqual(current, nextFilters) ? current : nextFilters
     );
   }, [searchParams]);
-
-  const drawingGroups = createGamesLibraryDrawingGroupsFromEngineGroups(engineGroups);
-  const implementationGroups = createGamesLibraryImplementationGroupsFromEngineGroups(engineGroups);
 
   useKangurRoutePageReady({
     pageKey: 'GamesLibrary',

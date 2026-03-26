@@ -77,9 +77,34 @@ export function useLessonsLogic() {
   });
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const frameId = window.requestAnimationFrame(() => setIsDeferredContentReady(true));
-    return () => window.cancelAnimationFrame(frameId);
+    if (typeof window === 'undefined') {
+      setIsDeferredContentReady(true);
+      return;
+    }
+
+    let timeoutId: number | null = null;
+    const frameId =
+      typeof window.requestAnimationFrame === 'function'
+        ? window.requestAnimationFrame(() => {
+            setIsDeferredContentReady(true);
+          })
+        : window.setTimeout(() => {
+            timeoutId = null;
+            setIsDeferredContentReady(true);
+          }, 0);
+
+    return () => {
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+        return;
+      }
+
+      if (typeof window.cancelAnimationFrame === 'function') {
+        window.cancelAnimationFrame(frameId);
+      } else {
+        window.clearTimeout(frameId);
+      }
+    };
   }, []);
 
   const lessonsQuery = useKangurLessons({

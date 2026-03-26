@@ -14,19 +14,30 @@ import type { Session } from 'next-auth';
 
 
 const FRONT_PAGE_SETTING_KEY = 'front_page_app';
+const FRONT_PAGE_SETTING_CACHE_TTL_MS = 30_000;
 const FRONT_PAGE_SETTING_RETRY_COOLDOWN_MS = 30_000;
 export { FRONT_PAGE_ALLOWED };
 
 let frontPageSettingRetryBlockedUntil = 0;
 let lastKnownFrontPageSetting: FrontPageSelectableApp | null = null;
+let hasResolvedFrontPageSettingSnapshot = false;
+let frontPageSettingSnapshotReadAt = 0;
 
-export const primeFrontPageSettingRuntime = (
+const commitFrontPageSettingSnapshot = (
   value: string | null | undefined
 ): FrontPageSelectableApp | null => {
   const normalizedSetting = normalizeFrontPageApp(value);
   lastKnownFrontPageSetting = normalizedSetting;
+  hasResolvedFrontPageSettingSnapshot = true;
+  frontPageSettingSnapshotReadAt = Date.now();
   frontPageSettingRetryBlockedUntil = 0;
   return normalizedSetting;
+};
+
+export const primeFrontPageSettingRuntime = (
+  value: string | null | undefined
+): FrontPageSelectableApp | null => {
+  return commitFrontPageSettingSnapshot(value);
 };
 
 const isAdminSession = (session: Session | null): boolean => {
@@ -87,14 +98,23 @@ const isTransientMongoFrontPageReadError = (error: unknown): boolean => {
 
 const readMongoFrontPageSetting = async (): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return lastKnownFrontPageSetting;
-  if (Date.now() < frontPageSettingRetryBlockedUntil) return lastKnownFrontPageSetting;
+  const now = Date.now();
+
+  if (
+    hasResolvedFrontPageSettingSnapshot &&
+    now - frontPageSettingSnapshotReadAt < FRONT_PAGE_SETTING_CACHE_TTL_MS
+  ) {
+    return lastKnownFrontPageSetting;
+  }
+
+  if (now < frontPageSettingRetryBlockedUntil) return lastKnownFrontPageSetting;
 
   try {
     const mongo = await getMongoDb();
     const doc = await mongo
       .collection<MongoStringSettingRecord<string>>('settings')
       .findOne({ _id: FRONT_PAGE_SETTING_KEY });
-    const normalizedSetting = primeFrontPageSettingRuntime(doc?.value);
+    const normalizedSetting = commitFrontPageSettingSnapshot(doc?.value);
     if (normalizedSetting) {
       return normalizedSetting;
     }

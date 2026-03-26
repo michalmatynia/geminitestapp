@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { kangurGameLibraryCoverageSchema } from '@/shared/contracts/kangur-games';
 import {
   KANGUR_GAME_LIBRARY_LESSON_COMPONENT_IDS,
   KANGUR_GROWN_UP_GAME_LIBRARY_LESSON_COMPONENT_IDS,
@@ -155,5 +156,11 @@ describe('kangur game coverage', () => {
     expect(
       getKangurGameLibraryLessonCoverageStatusFromMap('art_shapes_basic', coverage.statusMap)
     ).toBe('selector_fallback');
+  });
+
+  it('matches the shared DTO schema with a sparse status map', () => {
+    const coverage = createKangurGameLibraryCoverage(createKangurGameCatalogEntries());
+
+    expect(() => kangurGameLibraryCoverageSchema.parse(coverage)).not.toThrow();
   });
 });

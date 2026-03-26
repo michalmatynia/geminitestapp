@@ -3,4 +3,5 @@ export * from '@/shared/lib/prompt-engine/prompt-formatter';
 export * from '@/shared/lib/prompt-engine/prompt-validator';
 export * from '@/shared/lib/prompt-engine/prompt-params';
 export { AdminPromptEngineValidationPatternsPage } from './pages/AdminPromptEngineValidationPatternsPage';
+export { default as AdminPromptEngineValidationClientPage } from './pages/AdminPromptEngineValidationClientPage';
 export * from './context/PromptEngineContext';

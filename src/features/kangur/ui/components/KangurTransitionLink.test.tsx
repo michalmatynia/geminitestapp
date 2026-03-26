@@ -224,7 +224,7 @@ describe('KangurTransitionLink', () => {
     expect(routerPrefetchMock).toHaveBeenCalledWith('/kangur/lessons');
   });
 
-  it('disables managed link prefetch on coarse-pointer devices', () => {
+  it('prefetches managed local links on coarse-pointer devices', () => {
     useKangurCoarsePointerMock.mockReturnValue(true);
 
     render(
@@ -233,13 +233,7 @@ describe('KangurTransitionLink', () => {
       </KangurTransitionLink>
     );
 
-    expect(routerPrefetchMock).not.toHaveBeenCalled();
-    expect(nextLinkPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        href: '/kangur/lessons',
-        prefetch: false,
-      })
-    );
+    expect(routerPrefetchMock).toHaveBeenCalledWith('/kangur/lessons');
   });
 
   it('renders a locale-prefixed href before hydration on localized routes', () => {

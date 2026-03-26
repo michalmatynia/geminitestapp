@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation';
 import { useCallback, useEffect } from 'react';
 
 import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
-import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
@@ -70,12 +69,11 @@ export function KangurTransitionLink({
   const routing = useOptionalKangurRouting();
   const locale = useLocale();
   const pathname = usePathname();
-  const isCoarsePointer = useKangurCoarsePointer();
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
   const managedLocalHref =
     typeof href === 'string' && href.startsWith('/') && target !== '_blank' ? href : null;
   const isManagedLocalHref = managedLocalHref !== null;
-  const resolvedPrefetch = prefetch === false || isCoarsePointer ? false : prefetch;
+  const resolvedPrefetch = prefetch === false ? false : prefetch;
   const shouldPrefetch = resolvedPrefetch !== false;
   const shouldUseManagedScroll = isManagedLocalHref;
   const resolvedScroll = scroll ?? (shouldUseManagedScroll ? false : undefined);

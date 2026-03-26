@@ -366,16 +366,8 @@ describe('KangurRouteTransitionProvider', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Mark ready' }));
     });
 
-    expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('true');
-
     act(() => {
-      vi.advanceTimersByTime(59);
-    });
-
-    expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('true');
-
-    act(() => {
-      vi.advanceTimersByTime(1);
+      vi.advanceTimersByTime(0);
     });
 
     expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('false');

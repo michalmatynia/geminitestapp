@@ -15,16 +15,19 @@ export default async function FrontendLayout({
   children: React.ReactNode;
 }): Promise<JSX.Element> {
   const shouldUseFrontPageAppSelection = shouldApplyFrontPageAppSelection();
-  const [frontPageSetting, themeSettings, kangurInitialStateEager] = await Promise.all([
-    shouldUseFrontPageAppSelection ? getFrontPageSetting() : Promise.resolve(null),
-    getCmsThemeSettings(),
-    shouldUseFrontPageAppSelection ? getKangurStorefrontInitialState() : Promise.resolve(null),
-  ]);
+  const frontPageSettingPromise = shouldUseFrontPageAppSelection
+    ? getFrontPageSetting()
+    : Promise.resolve(null);
+  const themeSettingsPromise = getCmsThemeSettings();
+  const frontPageSetting = await frontPageSettingPromise;
   const publicOwner = shouldUseFrontPageAppSelection
     ? getFrontPagePublicOwner(frontPageSetting)
     : 'cms';
+  const [themeSettings, kangurInitialState] = await Promise.all([
+    themeSettingsPromise,
+    publicOwner === 'kangur' ? getKangurStorefrontInitialState() : Promise.resolve(null),
+  ]);
   const storefrontAppearanceMode = themeSettings.darkMode ? 'dark' : 'default';
-  const kangurInitialState = publicOwner === 'kangur' ? kangurInitialStateEager : null;
 
   return (
     <main

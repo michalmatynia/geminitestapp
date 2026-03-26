@@ -1,25 +1,21 @@
 'use client';
 
-import { Eraser, Pen, RotateCcw, Trash2, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { X } from 'lucide-react';
+import { useCallback, useRef } from 'react';
 
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
-import { KANGUR_WRAP_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { KangurDrawingCanvasSurface } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingCanvasSurface';
+import { KangurDrawingFreeformToolbar } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar';
 import { redrawKangurCanvasStrokes } from '@/features/kangur/ui/components/drawing-engine/render';
+import { useKangurFreeformDrawingTools } from '@/features/kangur/ui/components/drawing-engine/useKangurFreeformDrawingTools';
 import {
   useKangurDrawingEngine,
 } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingEngine';
+import type { KangurFreeformDrawingStrokeMeta } from '@/features/kangur/ui/components/drawing-engine/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 import type { JSX } from 'react';
-
-type DrawingStrokeMeta = {
-  color: string;
-  width: number;
-  isEraser: boolean;
-};
 
 type Props = {
   onComplete: (dataUrl: string) => void;
@@ -31,6 +27,7 @@ type TutorDrawingContent = {
   penLabel?: string;
   eraserLabel?: string;
   undoLabel?: string;
+  redoLabel?: string;
   clearLabel?: string;
   cancelLabel?: string;
   doneLabel?: string;
@@ -46,37 +43,28 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
   const tutorContent = useKangurAiTutorContent();
   const drawingContent = (tutorContent as { drawing?: TutorDrawingContent }).drawing;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [selectedColor, setSelectedColor] = useState<string>(COLORS[0]);
   const isCoarsePointer = useKangurCoarsePointer();
-  const strokeWidths = useMemo(
-    () => (isCoarsePointer ? STROKE_WIDTHS.map((width) => width + 2) : [...STROKE_WIDTHS]),
-    [isCoarsePointer]
-  );
-  const [selectedWidth, setSelectedWidth] = useState<number>(strokeWidths[1] ?? 8);
-  const [isEraser, setIsEraser] = useState(false);
+  const drawingTools = useKangurFreeformDrawingTools({
+    colors: COLORS,
+    isCoarsePointer,
+    strokeWidths: STROKE_WIDTHS,
+  });
   const minPointDistance = isCoarsePointer ? 4 : 2;
-
-  useEffect(() => {
-    setSelectedWidth((current) =>
-      strokeWidths.includes(current) ? current : (strokeWidths[1] ?? 8)
-    );
-  }, [strokeWidths]);
   const {
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
     isPointerDrawing,
+    canRedo,
+    canUndo,
     strokes,
+    redoLastStroke: handleRedo,
     undoLastStroke: handleUndo,
     clearStrokes: handleClear,
-  } = useKangurDrawingEngine<DrawingStrokeMeta>({
+  } = useKangurDrawingEngine<KangurFreeformDrawingStrokeMeta>({
     canvasRef,
     createStroke: ({ point }) => ({
-      meta: {
-        color: selectedColor,
-        isEraser,
-        width: isEraser ? selectedWidth * 3 : selectedWidth,
-      },
+      meta: drawingTools.strokeMeta,
       points: [point],
     }),
     logicalHeight: 240,
@@ -143,7 +131,11 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
           ariaLabel={drawingContent?.canvasLabel ?? 'Plansza do rysowania'}
           canvasClassName='rounded-none'
           canvasRef={canvasRef}
-          canvasStyle={{ cursor: isEraser ? 'cell' : 'crosshair', width: '100%', height: 'auto' }}
+          canvasStyle={{
+            cursor: drawingTools.isEraser ? 'cell' : 'crosshair',
+            width: '100%',
+            height: 'auto',
+          }}
           height={CANVAS_HEIGHT}
           isPointerDrawing={isPointerDrawing}
           onPointerDown={handlePointerDown}
@@ -154,105 +146,22 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         />
       </div>
 
-      <div className={`${KANGUR_WRAP_CENTER_ROW_CLASSNAME} border-t kangur-chat-divider kangur-chat-padding-sm`}>
-        <div className='flex items-center gap-1'>
-          {COLORS.map((color) => (
-            <button
-              key={color}
-              type='button'
-              aria-label={`Kolor ${color}`}
-              aria-pressed={selectedColor === color && !isEraser}
-              className={`${isCoarsePointer ? 'h-11 w-11 touch-manipulation active:scale-95' : 'h-5 w-5'} cursor-pointer rounded-full border-2 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white ${
-                selectedColor === color && !isEraser
-                  ? 'scale-110 kangur-chat-accent-border'
-                  : '[border-color:var(--kangur-soft-card-border)] hover:scale-105'
-              }`}
-              style={{ backgroundColor: color }}
-              onClick={() => {
-                setSelectedColor(color);
-                setIsEraser(false);
-              }}
-            />
-          ))}
-        </div>
-
-        <div className='mx-1 h-4 w-px [background:var(--kangur-soft-card-border)]' />
-
-        <div className='flex items-center gap-1'>
-          {strokeWidths.map((w) => (
-            <button
-              key={w}
-              type='button'
-              aria-label={`Grubość ${w}px`}
-              aria-pressed={selectedWidth === w && !isEraser}
-              className={`flex ${isCoarsePointer ? 'h-11 w-11 touch-manipulation active:scale-95' : 'h-6 w-6'} cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white ${
-                selectedWidth === w && !isEraser
-                  ? '[background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
-                  : '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
-              }`}
-              onClick={() => {
-                setSelectedWidth(w);
-                setIsEraser(false);
-              }}
-            >
-              <span
-                className='rounded-full bg-current'
-                style={{ width: w + 2, height: w + 2 }}
-              />
-            </button>
-          ))}
-        </div>
-
-        <div className='mx-1 h-4 w-px [background:var(--kangur-soft-card-border)]' />
-
-        <button
-          type='button'
-          aria-label={drawingContent?.penLabel ?? 'Pióro'}
-          aria-pressed={!isEraser}
-          className={`flex ${isCoarsePointer ? 'h-11 w-11 touch-manipulation active:scale-95' : 'h-6 w-6'} cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white ${
-            !isEraser
-              ? '[background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
-              : '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
-          }`}
-          onClick={() => setIsEraser(false)}
-          title={drawingContent?.penLabel ?? 'Pióro'}>
-          <Pen aria-hidden='true' className='h-3 w-3' />
-        </button>
-        <button
-          type='button'
-          aria-label={drawingContent?.eraserLabel ?? 'Gumka'}
-          aria-pressed={isEraser}
-          className={`flex ${isCoarsePointer ? 'h-11 w-11 touch-manipulation active:scale-95' : 'h-6 w-6'} cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white ${
-            isEraser
-              ? '[background:var(--kangur-chat-control-background,color-mix(in_srgb,var(--kangur-soft-card-background)_82%,#fef3c7))] [color:var(--kangur-chat-control-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'
-              : '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]'
-          }`}
-          onClick={() => setIsEraser(true)}
-          title={drawingContent?.eraserLabel ?? 'Gumka'}>
-          <Eraser aria-hidden='true' className='h-3 w-3' />
-        </button>
-
-        <div className='mx-1 h-4 w-px [background:var(--kangur-soft-card-border)]' />
-
-        <button
-          type='button'
-          aria-label={drawingContent?.undoLabel ?? 'Cofnij'}
-          className={`flex ${isCoarsePointer ? 'h-11 w-11 touch-manipulation active:scale-95' : 'h-6 w-6'} cursor-pointer items-center justify-center rounded-full [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))] disabled:opacity-30`}
-          disabled={strokes.length === 0}
-          onClick={handleUndo}
-          title={drawingContent?.undoLabel ?? 'Cofnij'}>
-          <RotateCcw aria-hidden='true' className='h-3 w-3' />
-        </button>
-        <button
-          type='button'
-          aria-label={drawingContent?.clearLabel ?? 'Wyczyść'}
-          className={`flex ${isCoarsePointer ? 'h-11 w-11 touch-manipulation active:scale-95' : 'h-6 w-6'} cursor-pointer items-center justify-center rounded-full [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white hover:[background:var(--kangur-chat-danger-background,#fff1f2)] hover:[color:var(--kangur-chat-danger-text,#ef4444)] disabled:opacity-30`}
-          disabled={strokes.length === 0}
-          onClick={handleClear}
-          title={drawingContent?.clearLabel ?? 'Wyczyść'}>
-          <Trash2 aria-hidden='true' className='h-3 w-3' />
-        </button>
-      </div>
+      <KangurDrawingFreeformToolbar
+        canRedo={canRedo}
+        canUndo={canUndo}
+        clearDisabled={strokes.length === 0}
+        clearLabel={drawingContent?.clearLabel ?? 'Wyczyść'}
+        eraserLabel={drawingContent?.eraserLabel ?? 'Gumka'}
+        isCoarsePointer={isCoarsePointer}
+        onClear={handleClear}
+        onRedo={handleRedo}
+        onUndo={handleUndo}
+        penLabel={drawingContent?.penLabel ?? 'Pióro'}
+        redoLabel={drawingContent?.redoLabel ?? 'Ponów'}
+        toolActions={drawingTools}
+        toolState={drawingTools}
+        undoLabel={drawingContent?.undoLabel ?? 'Cofnij'}
+      />
 
       <div className='flex justify-end kangur-panel-gap border-t kangur-chat-divider kangur-chat-padding-sm text-xs'>
         <button

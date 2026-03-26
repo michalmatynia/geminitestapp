@@ -21,6 +21,7 @@ import {
   type KangurMiniGameTranslate,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import { KangurDrawingActionRow } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingActionRow';
+import { KangurDrawingHistoryActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions';
 import { KangurDrawingKeyboardCursorOverlay } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingOverlays';
 import { KangurDrawingPracticeBoard } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingPracticeBoard';
 import { KangurDrawingStatusRegions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingStatusRegions';
@@ -142,13 +143,17 @@ export default function GeometrySymmetryGame({
     : BASE_MIN_DRAWING_POINTS;
   const strokeWidth = isCoarsePointer ? 7 : 5;
   const {
+    canRedo,
+    canUndo,
     clearStrokes,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
     isPointerDrawing,
+    redoLastStroke,
     setStrokes,
     strokes,
+    undoLastStroke,
   } = useKangurPointCanvasDrawing({
     canvasRef,
     enabled: !done && feedback?.kind !== 'success' && feedback?.kind !== 'error',
@@ -258,6 +263,16 @@ export default function GeometrySymmetryGame({
     clearBoardState();
     resetKeyboard(keyboardBoardClearedStatus);
   }, [clearBoardState, keyboardBoardClearedStatus, resetKeyboard]);
+
+  const undoDrawing = useCallback((): void => {
+    undoLastStroke();
+    setFeedback(null);
+  }, [undoLastStroke]);
+
+  const redoDrawing = useCallback((): void => {
+    redoLastStroke();
+    setFeedback(null);
+  }, [redoLastStroke]);
 
   const moveToNextRound = useCallback(
     (wasCorrect: boolean): void => {
@@ -546,6 +561,24 @@ export default function GeometrySymmetryGame({
                   fallbackCopy.clear
                 )}
                 feedback={feedback}
+                historyActions={
+                  <KangurDrawingHistoryActions
+                    buttonClassName='w-full sm:flex-1'
+                    isCoarsePointer={isCoarsePointer}
+                    onRedo={redoDrawing}
+                    onUndo={undoDrawing}
+                    redoDisabled={isResultLocked || !canRedo}
+                    redoLabel={translateWithFallback(
+                      'geometrySymmetry.inRound.redo',
+                      'Ponów'
+                    )}
+                    undoDisabled={isResultLocked || !canUndo}
+                    undoLabel={translateWithFallback(
+                      'geometrySymmetry.inRound.undo',
+                      'Cofnij'
+                    )}
+                  />
+                }
                 isCoarsePointer={isCoarsePointer}
                 onClear={clearDrawing}
                 onPrimary={handleCheck}

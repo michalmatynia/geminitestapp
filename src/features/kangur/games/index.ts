@@ -5,5 +5,6 @@ export * from './engines';
 export * from './engine-implementations';
 export * from './engine-catalog';
 export * from './library-overview';
+export * from './library-page';
 export * from './registry';
 export * from './variants';

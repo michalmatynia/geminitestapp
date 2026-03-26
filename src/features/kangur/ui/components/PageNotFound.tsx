@@ -162,7 +162,7 @@ export function PageNotFound(): React.JSX.Element {
               }
               onClick={() => {
                 routeNavigator.push(getKangurHomeHref(basePath), {
-                  acknowledgeMs: 110,
+                  acknowledgeMs: 0,
                   pageKey: 'Game',
                   sourceId: 'page-not-found:home',
                 });

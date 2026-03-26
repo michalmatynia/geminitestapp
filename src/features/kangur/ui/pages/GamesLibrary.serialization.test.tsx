@@ -1238,6 +1238,46 @@ describe('GamesLibrary serialization audit', () => {
     expect(screen.getByText('Updated clock deck')).toBeInTheDocument();
   });
 
+  it('keeps a new hub section draft in the editor when saving fails', async () => {
+    replaceLessonGameSectionsMutateAsyncMock.mockImplementationOnce(async () => {
+      throw new Error('save failed');
+    });
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    fireEvent.change(screen.getByLabelText('Attached hub lesson'), {
+      target: { value: 'calendar' },
+    });
+    fireEvent.change(screen.getByLabelText('Section name'), {
+      target: { value: 'Unsaved clock deck' },
+    });
+    fireEvent.change(screen.getByLabelText('Section subtext'), {
+      target: { value: 'Keep this new draft in the editor.' },
+    });
+    fireEvent.click(screen.getByLabelText('Show minute hand'));
+    fireEvent.click(screen.getByRole('button', { name: 'Add hub section draft' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Add hub section draft' })).toBeInTheDocument();
+      expect(screen.getByLabelText('Attached hub lesson')).toHaveValue('calendar');
+      expect(screen.getByLabelText('Section name')).toHaveValue('Unsaved clock deck');
+      expect(screen.getByLabelText('Section subtext')).toHaveValue(
+        'Keep this new draft in the editor.'
+      );
+      expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
+        'data-show-minute-hand',
+        'false'
+      );
+    });
+  });
+
   it('restores the edited saved section when deleting it fails', async () => {
     lessonGameSectionsState.value = [
       {

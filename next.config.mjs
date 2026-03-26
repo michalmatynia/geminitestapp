@@ -101,9 +101,6 @@ const nextConfig = {
     // Default proxy body clone limit (~10MB) is too low for multi-image product forms.
     // Raise it so multipart requests don't fail before route handlers read formData().
     proxyClientMaxBodySize: '50mb',
-    // Limit webpack parallelism on Vercel to stay within build machine memory.
-    // Turbopack manages its own parallelism so this only affects webpack builds.
-    ...(isVercel ? { cpus: 1 } : {}),
     optimizePackageImports: [
       'lucide-react',
       '@radix-ui/react-alert-dialog',

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/lessons/lesson-catalog';
 import { getLocalizedKangurLessonTitle } from '@/features/kangur/lessons/lesson-catalog-i18n';
@@ -55,6 +55,14 @@ type ClockTrainingGamePreviewProps = {
   showTimeDisplay?: boolean;
 };
 
+type HubSectionEditorState = {
+  attachedLessonId: KangurLessonComponentId | null;
+  clockSettings: ClockPreviewSettings;
+  draftIcon: string;
+  draftSubtext: string;
+  draftTitle: string;
+};
+
 const ClockTrainingGamePreview = ClockTrainingGame as React.ComponentType<ClockTrainingGamePreviewProps>;
 
 const HUB_SECTION_ICON_OPTIONS = ['🕒', '⏰', '🎯', '🎮', '🧩', '⭐', '🚀', '📘'] as const;
@@ -70,6 +78,14 @@ const DEFAULT_CLOCK_PREVIEW_SETTINGS: ClockPreviewSettings = {
 
 const createDraftId = (): string =>
   `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+const normalizeSectionSortOrder = (
+  sections: readonly KangurLessonGameSection[]
+): KangurLessonGameSection[] =>
+  sections.map((section, index) => ({
+    ...section,
+    sortOrder: index + 1,
+  }));
 
 const resolveClockSectionFromPreviewSettings = (
   settings: ClockPreviewSettings
@@ -159,8 +175,15 @@ export function GamesLibraryGameModal({
   const [clockSettings, setClockSettings] = useState<ClockPreviewSettings>(
     DEFAULT_CLOCK_PREVIEW_SETTINGS
   );
+  const pendingEditorRestoreRef = useRef<HubSectionEditorState | null>(null);
   const persistedSections = lessonGameSectionsQuery.data ?? [];
-  const activeSections = optimisticSections ?? persistedSections;
+  const activeSections = useMemo(
+    () =>
+      [...(optimisticSections ?? persistedSections)].sort(
+        (left, right) => left.sortOrder - right.sortOrder || left.id.localeCompare(right.id)
+      ),
+    [optimisticSections, persistedSections]
+  );
   const selectedSection =
     selectedSectionId === null
       ? null
@@ -181,12 +204,28 @@ export function GamesLibraryGameModal({
     setClockSettings(resolvePreviewSettingsFromPersistedSection(section));
   };
 
+  const applyEditorState = (editorState: HubSectionEditorState): void => {
+    setAttachedLessonId(editorState.attachedLessonId);
+    setDraftTitle(editorState.draftTitle);
+    setDraftSubtext(editorState.draftSubtext);
+    setDraftIcon(editorState.draftIcon);
+    setClockSettings(editorState.clockSettings);
+  };
+
   useEffect(() => {
     setOptimisticSections(null);
   }, [game?.id, persistedSections]);
 
   useEffect(() => {
     if (!game) {
+      return;
+    }
+
+    const pendingEditorRestore = pendingEditorRestoreRef.current;
+    if (pendingEditorRestore) {
+      pendingEditorRestoreRef.current = null;
+      applyEditorState(pendingEditorRestore);
+      setSettingsOpen(game.id === 'clock_training');
       return;
     }
 
@@ -270,6 +309,13 @@ export function GamesLibraryGameModal({
     const sectionId = selectedSectionId ?? createDraftId();
     const previousPreferNewDraft = preferNewDraft;
     const previousSelectedSectionId = selectedSectionId;
+    const previousEditorState: HubSectionEditorState = {
+      attachedLessonId,
+      clockSettings,
+      draftIcon,
+      draftSubtext,
+      draftTitle,
+    };
     const nextSection: KangurLessonGameSection = {
       id: sectionId,
       description: draftSubtext.trim(),
@@ -314,6 +360,7 @@ export function GamesLibraryGameModal({
         sections: nextSections,
       });
     } catch {
+      pendingEditorRestoreRef.current = previousEditorState;
       setOptimisticSections(null);
       setPreferNewDraft(previousPreferNewDraft);
       setSelectedSectionId(previousSelectedSectionId);

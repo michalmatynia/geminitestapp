@@ -28,10 +28,9 @@ import {
 } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingOverlays';
 import { KangurDrawingPracticeBoard } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingPracticeBoard';
 import { KangurDrawingStatusRegions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingStatusRegions';
-import { renderKangurDrawingStrokes } from '@/features/kangur/ui/components/drawing-engine/render';
 import { flattenKangurStrokePoints } from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
 import { useKangurKeyboardPointDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurKeyboardPointDrawing';
-import { useKangurPointDrawingEngine } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingEngine';
+import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
 import {
   KangurButton,
   KangurDisplayEmoji,
@@ -51,7 +50,6 @@ import {
   evaluateGeometryDrawing,
   type GeometryShapeId,
 } from '@/features/kangur/ui/services/geometry-drawing';
-import { syncKangurCanvasContext } from '@/features/kangur/ui/services/drawing-canvas';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { loosenMinInt } from '@/features/kangur/ui/services/drawing-leniency';
 import {
@@ -370,7 +368,7 @@ export default function GeometryDrawingGame({
     isPointerDrawing,
     setStrokes,
     strokes,
-  } = useKangurPointDrawingEngine({
+  } = useKangurPointCanvasDrawing({
     canvasRef,
     enabled: !done && feedback?.kind !== 'success' && feedback?.kind !== 'error',
     logicalHeight: CANVAS_HEIGHT,
@@ -381,16 +379,8 @@ export default function GeometryDrawingGame({
         setFeedback(null);
       }
     },
-    redraw: (nextStrokes) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = syncKangurCanvasContext(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
-      if (!ctx) return;
-
-      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
+    backgroundFill: '#ffffff',
+    beforeStrokes: (ctx) => {
       ctx.strokeStyle = '#e2e8f0';
       ctx.lineWidth = 1;
       for (let x = 40; x < CANVAS_WIDTH; x += 40) {
@@ -405,16 +395,11 @@ export default function GeometryDrawingGame({
         ctx.lineTo(CANVAS_WIDTH, y);
         ctx.stroke();
       }
-
-      renderKangurDrawingStrokes(
-        ctx,
-        nextStrokes.map((points) => ({ meta: null, points })),
-        () => ({
-          lineWidth: strokeWidth,
-          strokeStyle: '#0f172a',
-        })
-      );
     },
+    resolveStyle: () => ({
+      lineWidth: strokeWidth,
+      strokeStyle: '#0f172a',
+    }),
     touchLockEnabled: isCoarsePointer,
   });
   const points = useMemo(() => flattenKangurStrokePoints(strokes), [strokes]);

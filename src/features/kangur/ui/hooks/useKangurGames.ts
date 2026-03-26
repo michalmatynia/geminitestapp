@@ -137,6 +137,7 @@ const invalidateKangurGames = (queryClient: {
   queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.gameEngineCatalog() });
   queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.gameEngineCatalogFacets() });
   queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.gameCatalogFacets() });
+  queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.gameLibraryOverview() });
   queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.gameLibraryCoverage() });
   queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.gameVariants() });
 };

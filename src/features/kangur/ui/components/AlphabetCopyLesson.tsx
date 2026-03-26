@@ -4,26 +4,24 @@ import { useCallback, useId, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslations } from 'next-intl';
 
-import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   computeKangurTotalStrokeLength,
   flattenKangurStrokePoints,
 } from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
-import { renderKangurDrawingStrokes } from '@/features/kangur/ui/components/drawing-engine/render';
+import { KangurTracingLessonFooter } from '@/features/kangur/ui/components/drawing-engine/KangurTracingLessonFooter';
 import { KangurTracingBoard } from '@/features/kangur/ui/components/drawing-engine/KangurTracingBoard';
-import { useKangurPointDrawingEngine } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingEngine';
 import {
-  KangurButton,
+  evaluateKangurTracingAttempt,
+  getKangurTracingCanvasConfig,
+} from '@/features/kangur/ui/components/drawing-engine/tracing';
+import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
+import {
   KangurGlassPanel,
   KangurHeadline,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import {
-  KANGUR_STACK_ROOMY_CLASSNAME,
-  KANGUR_WRAP_ROW_CLASSNAME,
-} from '@/features/kangur/ui/design/tokens';
+import { KANGUR_STACK_ROOMY_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
-import { syncKangurCanvasContext } from '@/features/kangur/ui/services/drawing-canvas';
 import type {
   KangurIntlTranslate,
   KangurMiniGameFeedbackState,
@@ -229,10 +227,14 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
     `rounds.${currentRound.id}.word`,
     currentRound.word
   );
-  const minPointDistance = isCoarsePointer ? 5 : 2;
-  const minDrawingPoints = isCoarsePointer ? 12 : BASE_MIN_DRAWING_POINTS;
-  const minDrawingLength = isCoarsePointer ? 120 : BASE_MIN_DRAWING_LENGTH;
-  const strokeWidth = isCoarsePointer ? 14 : 10;
+  const tracingCanvasConfig = useMemo(
+    () =>
+      getKangurTracingCanvasConfig(isCoarsePointer, {
+        fineMinDrawingLength: BASE_MIN_DRAWING_LENGTH,
+        fineMinDrawingPoints: BASE_MIN_DRAWING_POINTS,
+      }),
+    [isCoarsePointer]
+  );
   const {
     clearStrokes,
     handlePointerDown,
@@ -240,12 +242,12 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
     handlePointerUp,
     isPointerDrawing,
     strokes,
-  } = useKangurPointDrawingEngine({
+  } = useKangurPointCanvasDrawing({
     canvasRef,
     enabled: feedback?.kind !== 'success',
     logicalHeight: CANVAS_HEIGHT,
     logicalWidth: CANVAS_WIDTH,
-    minPointDistance,
+    minPointDistance: tracingCanvasConfig.minPointDistance,
     onPointerStart: () => {
       if (feedback?.kind === 'error') {
         setFeedback(null);
@@ -261,24 +263,7 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
         ),
       });
     },
-    redraw: (nextStrokes) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = syncKangurCanvasContext(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
-      if (!ctx) return;
-
-      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-      renderKangurDrawingStrokes(
-        ctx,
-        nextStrokes.map((points) => ({ meta: null, points })),
-        () => ({
-          lineWidth: strokeWidth,
-          shadowBlur: isCoarsePointer ? 8 : 6,
-          shadowColor: 'rgba(15, 23, 42, 0.12)',
-          strokeStyle: '#0f172a',
-        })
-      );
-    },
+    resolveStyle: () => tracingCanvasConfig.strokeStyle,
     shouldAddPoint: ({ point }) => isPointInCopyZone(point),
     shouldStartStroke: ({ point }) => isPointInCopyZone(point),
     touchLockEnabled: isCoarsePointer,
@@ -330,35 +315,28 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
   }, [clearStrokes]);
 
   const evaluateDrawing = (): KangurMiniGameFeedbackState => {
-    if (points.length < minDrawingPoints) {
-      return {
-        kind: 'error',
-        text: translateAlphabetCopy(
-          translations,
-          'feedback.error.copyMore',
-          'Przepisz litere na dole i sprobuj jeszcze raz.'
-        ),
-      };
-    }
-    if (strokeLength < minDrawingLength) {
-      return {
-        kind: 'error',
-        text: translateAlphabetCopy(
-          translations,
-          'feedback.error.keepGoing',
-          'Super start! Dorysuj jeszcze kawalek litery.'
-        ),
-      };
-    }
-    return {
-      kind: 'success',
-      text: translateAlphabetCopy(
+    return evaluateKangurTracingAttempt({
+      keepGoingText: translateAlphabetCopy(
+        translations,
+        'feedback.error.keepGoing',
+        'Super start! Dorysuj jeszcze kawalek litery.'
+      ),
+      minDrawingLength: tracingCanvasConfig.minDrawingLength,
+      minDrawingPoints: tracingCanvasConfig.minDrawingPoints,
+      pointCount: points.length,
+      strokeLength,
+      successText: translateAlphabetCopy(
         translations,
         'feedback.success',
         'Brawo! Litera {letter} gotowa.',
         { letter: currentRound.label }
       ),
-    };
+      tooShortText: translateAlphabetCopy(
+        translations,
+        'feedback.error.copyMore',
+        'Przepisz litere na dole i sprobuj jeszcze raz.'
+      ),
+    });
   };
 
   const handleCheck = (): void => {
@@ -461,66 +439,27 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
         </div>
       </KangurGlassPanel>
 
-      <KangurGlassPanel className='w-full max-w-3xl' padding='lg' surface='playField'>
-        <div className='flex flex-wrap items-center justify-between gap-3'>
-          <div className='min-w-0'>
-            {feedback ? (
-              <p
-                className={`text-sm font-semibold ${
-                  feedback.kind === 'success' ? 'text-emerald-600' : 'text-rose-600'
-                }`}
-                role='status'
-                aria-live='polite'
-              >
-                {feedback.text}
-              </p>
-            ) : (
-              <p className='text-sm text-slate-600'>
-                {translateAlphabetCopy(
-                  translations,
-                  'footer.idlePrompt',
-                  'Kliknij Sprawdz, gdy skonczysz przepisywac.'
-                )}
-              </p>
-            )}
-          </div>
-          <div className={KANGUR_WRAP_ROW_CLASSNAME}>
-            <KangurButton
-              className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
-              size='sm'
-              type='button'
-              variant='surface'
-              onClick={clearDrawing}
-            >
-              {translateAlphabetCopy(translations, 'actions.clear', 'Wyczysc')}
-            </KangurButton>
-            {feedback?.kind === 'success' ? (
-              <KangurButton
-                className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
-                size='sm'
-                type='button'
-                variant='primary'
-                onClick={handleNext}
-              >
-                {roundIndex + 1 >= totalRounds
-                  ? translateAlphabetCopy(translations, 'actions.restart', 'Zacznij od nowa')
-                  : translateAlphabetCopy(translations, 'actions.next', 'Dalej')}
-              </KangurButton>
-            ) : (
-              <KangurCheckButton
-                className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
-                size='sm'
-                type='button'
-                variant='primary'
-                onClick={handleCheck}
-                feedbackTone={feedback?.kind === 'error' ? 'error' : null}
-              >
-                {translateAlphabetCopy(translations, 'actions.check', 'Sprawdz')}
-              </KangurCheckButton>
-            )}
-          </div>
-        </div>
-      </KangurGlassPanel>
+      <KangurTracingLessonFooter
+        checkLabel={translateAlphabetCopy(translations, 'actions.check', 'Sprawdz')}
+        clearLabel={translateAlphabetCopy(translations, 'actions.clear', 'Wyczysc')}
+        feedback={feedback}
+        idlePrompt={translateAlphabetCopy(
+          translations,
+          'footer.idlePrompt',
+          'Kliknij Sprawdz, gdy skonczysz przepisywac.'
+        )}
+        isCoarsePointer={isCoarsePointer}
+        isLastRound={roundIndex + 1 >= totalRounds}
+        nextLabel={translateAlphabetCopy(translations, 'actions.next', 'Dalej')}
+        onCheck={handleCheck}
+        onClear={clearDrawing}
+        onNext={handleNext}
+        restartLabel={translateAlphabetCopy(
+          translations,
+          'actions.restart',
+          'Zacznij od nowa'
+        )}
+      />
 
       <style jsx>{`
         .target-letter {

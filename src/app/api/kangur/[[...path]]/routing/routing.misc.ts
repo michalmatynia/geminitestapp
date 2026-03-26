@@ -29,6 +29,10 @@ import {
   getKangurGameLibraryCoverageHandler,
 } from '../../game-library-coverage/handler';
 import {
+  getKangurGameLibraryOverviewHandler,
+  querySchema as gameLibraryOverviewQuerySchema,
+} from '../../game-library-overview/handler';
+import {
   getKangurGameEnginesHandler,
   querySchema as gameEnginesQuerySchema,
 } from '../../game-engines/handler';
@@ -225,6 +229,15 @@ export const gameLibraryCoverageGetHandler: SimpleRouteHandler = apiHandler(
   {
     source: 'kangur.game-library-coverage.GET',
     service: 'kangur.api',
+  }
+);
+
+export const gameLibraryOverviewGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurGameLibraryOverviewHandler,
+  {
+    source: 'kangur.game-library-overview.GET',
+    service: 'kangur.api',
+    querySchema: gameLibraryOverviewQuerySchema,
   }
 );
 
@@ -597,6 +610,10 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
   if (segments[0] === 'game-library-coverage' && segments.length === 1) {
     if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
     return gameLibraryCoverageGetHandler(request);
+  }
+  if (segments[0] === 'game-library-overview' && segments.length === 1) {
+    if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
+    return gameLibraryOverviewGetHandler(request);
   }
   if (segments[0] === 'lesson-sections' && segments.length === 1) {
     return handleGetPost(request, lessonSectionsGetHandler, lessonSectionsPostHandler);

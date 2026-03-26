@@ -24,10 +24,9 @@ import { KangurDrawingActionRow } from '@/features/kangur/ui/components/drawing-
 import { KangurDrawingKeyboardCursorOverlay } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingOverlays';
 import { KangurDrawingPracticeBoard } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingPracticeBoard';
 import { KangurDrawingStatusRegions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingStatusRegions';
-import { renderKangurDrawingStrokes } from '@/features/kangur/ui/components/drawing-engine/render';
 import { flattenKangurStrokePoints } from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
 import { useKangurKeyboardPointDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurKeyboardPointDrawing';
-import { useKangurPointDrawingEngine } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingEngine';
+import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
 import {
   KangurButton,
   KangurDisplayEmoji,
@@ -46,7 +45,6 @@ import {
   evaluateAxisDrawing,
   evaluateMirrorDrawing,
 } from '@/features/kangur/ui/services/geometry-symmetry';
-import { syncKangurCanvasContext } from '@/features/kangur/ui/services/drawing-canvas';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   addXp,
@@ -151,7 +149,7 @@ export default function GeometrySymmetryGame({
     isPointerDrawing,
     setStrokes,
     strokes,
-  } = useKangurPointDrawingEngine({
+  } = useKangurPointCanvasDrawing({
     canvasRef,
     enabled: !done && feedback?.kind !== 'success' && feedback?.kind !== 'error',
     logicalHeight: CANVAS_HEIGHT,
@@ -162,16 +160,8 @@ export default function GeometrySymmetryGame({
         setFeedback(null);
       }
     },
-    redraw: (nextStrokes) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = syncKangurCanvasContext(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
-      if (!ctx) return;
-
-      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
+    backgroundFill: '#ffffff',
+    beforeStrokes: (ctx) => {
       drawGrid(ctx);
 
       if (currentRound) {
@@ -193,16 +183,11 @@ export default function GeometrySymmetryGame({
           drawShape(ctx, currentRound.template, '#a7f3d0', 4);
         }
       }
-
-      renderKangurDrawingStrokes(
-        ctx,
-        nextStrokes.map((points) => ({ meta: null, points })),
-        () => ({
-          lineWidth: strokeWidth,
-          strokeStyle: '#0f172a',
-        })
-      );
     },
+    resolveStyle: () => ({
+      lineWidth: strokeWidth,
+      strokeStyle: '#0f172a',
+    }),
     touchLockEnabled: isCoarsePointer,
   });
   const points = useMemo(() => flattenKangurStrokePoints(strokes), [strokes]);

@@ -7,7 +7,10 @@ import {
   KANGUR_OPERATION_SELECTOR_FALLBACK_LESSON_COMPONENT_IDS,
   KANGUR_SIX_YEAR_OLD_GAME_LIBRARY_LESSON_COMPONENT_IDS,
   KANGUR_TEN_YEAR_OLD_GAME_LIBRARY_LESSON_COMPONENT_IDS,
+  createKangurGameLibraryCoverage,
   createKangurGameLibraryCoverageGroups,
+  createKangurGameLibraryCoverageStatusMap,
+  getKangurGameLibraryLessonCoverageStatusFromMap,
   hasKangurGameLibraryCoverageForLessonComponent,
   hasKangurLaunchableGameCoverageForLessonComponent,
   isKangurGameLibraryLessonComponent,
@@ -111,5 +114,46 @@ describe('kangur game coverage', () => {
       'art_shapes_basic',
       'music_diatonic_scale',
     ]);
+  });
+
+  it('builds a shared lesson coverage status map from coverage groups', () => {
+    const coverageStatusMap = createKangurGameLibraryCoverageStatusMap(
+      createKangurGameLibraryCoverageGroups(createKangurGameCatalogEntries())
+    );
+
+    expect(getKangurGameLibraryLessonCoverageStatusFromMap('clock', coverageStatusMap)).toBe(
+      'launchable'
+    );
+    expect(
+      getKangurGameLibraryLessonCoverageStatusFromMap(
+        'geometry_shape_recognition',
+        coverageStatusMap
+      )
+    ).toBe('library_backed');
+    expect(
+      getKangurGameLibraryLessonCoverageStatusFromMap('art_shapes_basic', coverageStatusMap)
+    ).toBe('selector_fallback');
+    expect(
+      getKangurGameLibraryLessonCoverageStatusFromMap(
+        'webdev_react_components',
+        coverageStatusMap
+      )
+    ).toBe('lesson_only');
+  });
+
+  it('builds a combined coverage resource from the game catalog', () => {
+    const coverage = createKangurGameLibraryCoverage(createKangurGameCatalogEntries());
+
+    expect(coverage.groups.map((group) => group.id)).toEqual([
+      'library_backed',
+      'launchable',
+      'selector_fallback',
+    ]);
+    expect(getKangurGameLibraryLessonCoverageStatusFromMap('clock', coverage.statusMap)).toBe(
+      'launchable'
+    );
+    expect(
+      getKangurGameLibraryLessonCoverageStatusFromMap('art_shapes_basic', coverage.statusMap)
+    ).toBe('selector_fallback');
   });
 });

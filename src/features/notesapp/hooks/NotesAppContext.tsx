@@ -79,7 +79,6 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
 
   const {
     notes,
-    setNotes,
     tags,
     themes,
     notebook,
@@ -163,7 +162,6 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
     selectedNote,
     setIsCreating,
     setIsEditing,
-    setNotes,
     setSelectedFolderId,
     setSelectedNote,
     toast,

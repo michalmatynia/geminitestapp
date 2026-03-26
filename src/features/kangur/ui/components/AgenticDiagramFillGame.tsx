@@ -16,15 +16,13 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
 import { KangurDrawingCanvasSurface } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingCanvasSurface';
-import { renderKangurDrawingStrokes } from '@/features/kangur/ui/components/drawing-engine/render';
 import { getKangurPointDistance } from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
-import { useKangurPointDrawingEngine } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingEngine';
+import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_WRAP_ROW_SPACED_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
-import { syncKangurCanvasContext } from '@/features/kangur/ui/services/drawing-canvas';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurMiniGameInformationalFeedback } from '@/features/kangur/ui/types';
 import type { Point2d } from '@/shared/contracts/geometry';
@@ -595,7 +593,7 @@ export function AgenticDiagramFillGame({
     handlePointerUp,
     isPointerDrawing,
     strokes,
-  } = useKangurPointDrawingEngine({
+  } = useKangurPointCanvasDrawing({
     canvasRef,
     enabled: !isSolved,
     logicalHeight: CANVAS_HEIGHT,
@@ -604,21 +602,10 @@ export function AgenticDiagramFillGame({
     onPointerStart: () => {
       setFeedback(null);
     },
-    redraw: (currentStrokes) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = syncKangurCanvasContext(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
-      if (!ctx) return;
-      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-      renderKangurDrawingStrokes(
-        ctx,
-        currentStrokes.map((points) => ({ meta: null, points })),
-        () => ({
-          lineWidth: strokeWidth,
-          strokeStyle: config.stroke,
-        })
-      );
-    },
+    resolveStyle: () => ({
+      lineWidth: strokeWidth,
+      strokeStyle: config.stroke,
+    }),
     touchLockEnabled: isCoarsePointer,
   });
   const points = useMemo(() => strokes.flatMap((stroke) => stroke), [strokes]);

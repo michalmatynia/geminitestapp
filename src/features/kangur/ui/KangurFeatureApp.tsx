@@ -440,13 +440,15 @@ const AuthenticatedApp = (): JSX.Element | null => {
     return <UserNotRegisteredError />;
   }
 
-  const topNavigationFallback = !embedded ? <KangurTopNavigationSkeleton /> : null;
-  const shouldReserveTopBarOffset = !embedded && !shouldHideTopNavigationDuringBoot;
+  const topNavigationFallback = <KangurTopNavigationSkeleton />;
+  const shouldReserveTopBarOffset = true;
 
   return (
     <>
       <KangurRouteAccessibilityAnnouncer />
-      {shouldHideTopNavigationDuringBoot ? null : shouldHideTopNavigationHost ? (
+      {shouldHideTopNavigationDuringBoot ? (
+        topNavigationFallback
+      ) : shouldHideTopNavigationHost ? (
         null
       ) : (
         <KangurTopNavigationHost fallback={topNavigationFallback} />

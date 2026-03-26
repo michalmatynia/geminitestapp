@@ -88,6 +88,7 @@ export const QUERY_KEYS = {
       [...QUERY_KEYS.kangur.all, 'game-engine-catalog-facets'] as const,
     gameEngineImplementations: () =>
       [...QUERY_KEYS.kangur.all, 'game-engine-implementations'] as const,
+    gameLibraryOverview: () => [...QUERY_KEYS.kangur.all, 'game-library-overview'] as const,
     gameLibraryCoverage: () => [...QUERY_KEYS.kangur.all, 'game-library-coverage'] as const,
     gameVariants: () => [...QUERY_KEYS.kangur.all, 'game-variants'] as const,
     gameCatalog: () => [...QUERY_KEYS.kangur.all, 'game-catalog'] as const,

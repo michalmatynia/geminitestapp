@@ -258,6 +258,46 @@ function DeferredDuelAdvancedSectionPlaceholder(): React.JSX.Element {
   );
 }
 
+function DeferredHomeDuelOverviewSectionGroup(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <>
+      <SectionCard
+        title={copy({
+          de: 'Private Duelle',
+          en: 'Private duels',
+          pl: 'Prywatne pojedynki',
+        })}
+      >
+        <Text style={{ color: '#475569', lineHeight: 20 }}>
+          {copy({
+            de: 'Wir bereiten Einladungen, gesendete Herausforderungen und schnelle Rückkämpfe fur den Start vor.',
+            en: 'Preparing invites, sent challenges, and quick rematches for the home screen.',
+            pl: 'Przygotowujemy zaproszenia, wysłane wyzwania i szybkie rewanże na ekran startowy.',
+          })}
+        </Text>
+      </SectionCard>
+
+      <SectionCard
+        title={copy({
+          de: 'Lobby und Rangliste',
+          en: 'Lobby and leaderboard',
+          pl: 'Lobby i ranking',
+        })}
+      >
+        <Text style={{ color: '#475569', lineHeight: 20 }}>
+          {copy({
+            de: 'Wir bereiten aktive Rivalen, Live-Duelle und die Rangliste fur den nachsten Startschritt vor.',
+            en: 'Preparing active rivals, live duels, and the leaderboard for the next home step.',
+            pl: 'Przygotowujemy aktywnych rywali, pojedynki na żywo i ranking na następny etap ekranu startowego.',
+          })}
+        </Text>
+      </SectionCard>
+    </>
+  );
+}
+
 function DeferredTrainingFocusPlaceholder(): React.JSX.Element {
   const { copy } = useKangurMobileI18n();
 
@@ -267,6 +307,48 @@ function DeferredTrainingFocusPlaceholder(): React.JSX.Element {
         de: 'Wir bereiten den ergebnisbasierten Trainingsfokus fur den Start vor.',
         en: 'Preparing score-based training focus for the home screen.',
         pl: 'Przygotowujemy fokus treningowy oparty na wynikach na ekran startowy.',
+      })}
+    </Text>
+  );
+}
+
+function DeferredTrainingFocusDetailsPlaceholder(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <Text style={{ color: '#475569', lineHeight: 20 }}>
+      {copy({
+        de: 'Wir bereiten die detaillierten Trainingskarten fur den nachsten Startschritt vor.',
+        en: 'Preparing detailed training cards for the next home step.',
+        pl: 'Przygotowujemy szczegółowe karty treningowe na kolejny etap ekranu startowego.',
+      })}
+    </Text>
+  );
+}
+
+function DeferredResultsHubSummaryPlaceholder(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <Text style={{ color: '#475569', lineHeight: 20 }}>
+      {copy({
+        de: 'Wir bereiten die Kurzfassung der letzten Ergebnisse fur den nachsten Startschritt vor.',
+        en: 'Preparing the compact recent-results summary for the next home step.',
+        pl: 'Przygotowujemy skrót ostatnich wyników na kolejny etap ekranu startowego.',
+      })}
+    </Text>
+  );
+}
+
+function DeferredResultsHubActionsPlaceholder(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <Text style={{ color: '#475569', lineHeight: 20 }}>
+      {copy({
+        de: 'Wir bereiten die Schnellaktionen fur die letzten Ergebnisse fur den nachsten Startschritt vor.',
+        en: 'Preparing the recent-result quick actions for the next home step.',
+        pl: 'Przygotowujemy akcje ostatnich wyników na kolejny etap ekranu startowego.',
       })}
     </Text>
   );
@@ -909,6 +991,34 @@ function DeferredHomeNavigationExtendedLinks(): React.JSX.Element {
   );
 }
 
+function DeferredHomeNavigationSecondaryLinks(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <Text style={{ color: '#475569', lineHeight: 20 }}>
+      {copy({
+        de: 'Wir bereiten Tagesplan, Ergebnisse und weitere Lernwege fur den nachsten Startschritt vor.',
+        en: 'Preparing the daily plan, results, and more learning routes for the next home step.',
+        pl: 'Przygotowujemy plan dnia, wyniki i kolejne ścieżki nauki na następny etap ekranu startowego.',
+      })}
+    </Text>
+  );
+}
+
+function DeferredHomeAccountSummary(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <Text style={{ color: '#475569', lineHeight: 20 }}>
+      {copy({
+        de: 'Wir bereiten Status, Nutzerprofil und weitere Kontodetails fur den nachsten Startschritt vor.',
+        en: 'Preparing status, learner profile, and more account details for the next home step.',
+        pl: 'Przygotowujemy status, profil ucznia i kolejne szczegóły konta na następny etap ekranu startowego.',
+      })}
+    </Text>
+  );
+}
+
 function DeferredHomeAccountDetails(): React.JSX.Element {
   const { copy } = useKangurMobileI18n();
 
@@ -956,6 +1066,20 @@ function DeferredHomeAccountSignInForm({
   );
 }
 
+function DeferredHomeHeroDetails(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <Text style={{ color: '#475569', lineHeight: 20 }}>
+      {copy({
+        de: 'Wir bereiten die letzte Lektion, das letzte Ergebnis und weitere Schnellzugriffe fur den nachsten Startschritt vor.',
+        en: 'Preparing the latest lesson, latest score, and more quick links for the next home step.',
+        pl: 'Przygotowujemy ostatnią lekcję, ostatni wynik i kolejne szybkie skróty na następny etap ekranu startowego.',
+      })}
+    </Text>
+  );
+}
+
 function DeferredHomeInsightsLessonPlanCard(): React.JSX.Element {
   const { copy } = useKangurMobileI18n();
 
@@ -975,6 +1099,20 @@ function DeferredHomeInsightsLessonPlanCard(): React.JSX.Element {
         })}
       </Text>
     </SectionCard>
+  );
+}
+
+function DeferredHomeInsightsLessonPlanDetails(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <Text style={{ color: '#475569', lineHeight: 20 }}>
+      {copy({
+        de: 'Wir bereiten die Detailkarten und Lernhinweise fur den nachsten Startschritt vor.',
+        en: 'Preparing the lesson detail cards and study cues for the next home step.',
+        pl: 'Przygotowujemy szczegółowe karty lekcji i wskazówki nauki na kolejny etap ekranu startowego.',
+      })}
+    </Text>
   );
 }
 
@@ -1000,25 +1138,12 @@ function DeferredHomeInsightsExtrasCard(): React.JSX.Element {
   );
 }
 
-function HomeSecondaryLessonPlanSection(): React.JSX.Element {
+function LiveHomeSecondaryLessonPlanSection(): React.JSX.Element {
   const { copy } = useKangurMobileI18n();
   const lessonMastery = useKangurMobileHomeLessonMastery();
 
   return (
-    <SectionCard
-      title={copy({
-        de: 'Lektionsplan zum Start',
-        en: 'Lesson plan from home',
-        pl: 'Plan lekcji ze startu',
-      })}
-    >
-      <Text style={{ color: '#475569', lineHeight: 20 }}>
-        {copy({
-          de: 'Sieh sofort, was wiederholt werden sollte und welche Lektion nur kurz aufgefrischt werden muss.',
-          en: 'See right away what needs review and which lesson only needs a quick refresh.',
-          pl: 'Od razu zobacz, co wymaga powtórki, a którą lekcję trzeba tylko krótko odświeżyć.',
-        })}
-      </Text>
+    <>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <SummaryChip
           accent='blue'
@@ -1086,6 +1211,37 @@ function HomeSecondaryLessonPlanSection(): React.JSX.Element {
             />
           ) : null}
         </View>
+      )}
+    </>
+  );
+}
+
+function HomeSecondaryLessonPlanSection(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+  const areDeferredHomeInsightLessonPlanDetailsReady = useHomeScreenDeferredPanels(
+    'home:insights:lessons:plan:details',
+    false,
+  );
+
+  return (
+    <SectionCard
+      title={copy({
+        de: 'Lektionsplan zum Start',
+        en: 'Lesson plan from home',
+        pl: 'Plan lekcji ze startu',
+      })}
+    >
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Sieh sofort, was wiederholt werden sollte und welche Lektion nur kurz aufgefrischt werden muss.',
+          en: 'See right away what needs review and which lesson only needs a quick refresh.',
+          pl: 'Od razu zobacz, co wymaga powtórki, a którą lekcję trzeba tylko krótko odświeżyć.',
+        })}
+      </Text>
+      {!areDeferredHomeInsightLessonPlanDetailsReady ? (
+        <DeferredHomeInsightsLessonPlanDetails />
+      ) : (
+        <LiveHomeSecondaryLessonPlanSection />
       )}
     </SectionCard>
   );
@@ -1471,13 +1627,19 @@ function HomeResultsHubSection({
     'home:insights:results',
     false,
   );
+  const areDeferredHomeResultsHubActionsReady = useHomeScreenDeferredPanels(
+    'home:insights:results:actions',
+    !areDeferredHomeResultsHubSummaryReady,
+  );
   const areDeferredHomeResultsHubCardsReady = useHomeScreenDeferredPanels(
     'home:insights:results:cards',
-    !areDeferredHomeResultsHubSummaryReady,
+    !areDeferredHomeResultsHubActionsReady,
   );
   const latestResult = recentResults.results[0] ?? null;
   const shouldRenderDetailedResults =
-    (areDeferredHomeResultsHubSummaryReady && areDeferredHomeResultsHubCardsReady) ||
+    (areDeferredHomeResultsHubSummaryReady &&
+      areDeferredHomeResultsHubActionsReady &&
+      areDeferredHomeResultsHubCardsReady) ||
     hasRequestedDetailedResults;
 
   return (
@@ -1523,6 +1685,8 @@ function HomeResultsHubSection({
             pl: 'Nie ma tu jeszcze wyników.',
           })}
         </Text>
+      ) : !areDeferredHomeResultsHubSummaryReady ? (
+        <DeferredResultsHubSummaryPlaceholder />
       ) : !shouldRenderDetailedResults ? (
         <View style={{ gap: 12 }}>
           <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
@@ -1538,44 +1702,50 @@ function HomeResultsHubSection({
                   pl: `Wyniki ${recentResults.results.length}`,
                 })}
           </Text>
-          <Text style={{ color: '#475569', lineHeight: 20 }}>
-            {copy({
-              de: 'Wir bereiten die Schnellaktionen fur die letzten Ergebnisse fur den nachsten Startschritt vor. Du kannst sie sofort öffnen, wenn du möchtest.',
-              en: 'Preparing the recent result quick actions for the next home step. You can open them immediately if you want.',
-              pl: 'Przygotowujemy szczegóły ostatnich wyników na kolejny etap ekranu startowego. Możesz otworzyć je od razu, jeśli chcesz.',
-            })}
-          </Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            <PrimaryButton
-              hint={copy({
-                de: 'Zeigt die letzten Ergebnisse mit Trainings- und Verlaufsaktionen an.',
-                en: 'Shows the recent results with practice and history actions.',
-                pl: 'Pokazuje ostatnie wyniki z akcjami treningu i historii.',
-              })}
-              label={copy({
-                de: 'Letzte Ergebnisse zeigen',
-                en: 'Show recent results',
-                pl: 'Pokaż ostatnie wyniki',
-              })}
-              onPress={() => {
-                setHasRequestedDetailedResults(true);
-              }}
-            />
-            <OutlineLink
-              fullWidth={false}
-              href={RESULTS_ROUTE}
-              hint={copy({
-                de: 'Öffnet den vollständigen Ergebnisverlauf.',
-                en: 'Opens the full results history.',
-                pl: 'Otwiera pełną historię wyników.',
-              })}
-              label={copy({
-                de: 'Vollständigen Verlauf öffnen',
-                en: 'Open full history',
-                pl: 'Otwórz pełną historię',
-              })}
-            />
-          </View>
+          {!areDeferredHomeResultsHubActionsReady ? (
+            <DeferredResultsHubActionsPlaceholder />
+          ) : (
+            <>
+              <Text style={{ color: '#475569', lineHeight: 20 }}>
+                {copy({
+                  de: 'Wir bereiten die Schnellaktionen fur die letzten Ergebnisse fur den nachsten Startschritt vor. Du kannst sie sofort öffnen, wenn du möchtest.',
+                  en: 'Preparing the recent result quick actions for the next home step. You can open them immediately if you want.',
+                  pl: 'Przygotowujemy szczegóły ostatnich wyników na kolejny etap ekranu startowego. Możesz otworzyć je od razu, jeśli chcesz.',
+                })}
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                <PrimaryButton
+                  hint={copy({
+                    de: 'Zeigt die letzten Ergebnisse mit Trainings- und Verlaufsaktionen an.',
+                    en: 'Shows the recent results with practice and history actions.',
+                    pl: 'Pokazuje ostatnie wyniki z akcjami treningu i historii.',
+                  })}
+                  label={copy({
+                    de: 'Letzte Ergebnisse zeigen',
+                    en: 'Show recent results',
+                    pl: 'Pokaż ostatnie wyniki',
+                  })}
+                  onPress={() => {
+                    setHasRequestedDetailedResults(true);
+                  }}
+                />
+                <OutlineLink
+                  fullWidth={false}
+                  href={RESULTS_ROUTE}
+                  hint={copy({
+                    de: 'Öffnet den vollständigen Ergebnisverlauf.',
+                    en: 'Opens the full results history.',
+                    pl: 'Otwiera pełną historię wyników.',
+                  })}
+                  label={copy({
+                    de: 'Vollständigen Verlauf öffnen',
+                    en: 'Open full history',
+                    pl: 'Otwórz pełną historię',
+                  })}
+                />
+              </View>
+            </>
+          )}
         </View>
       ) : (
         <View style={{ gap: 12 }}>
@@ -3386,17 +3556,33 @@ function HomeScreenContent({
     'home:hero:scores',
     !areDeferredHomePanelsReady,
   );
+  const areDeferredHomeTrainingFocusDetailsReady = useHomeScreenDeferredPanels(
+    'home:training-focus:details',
+    !areDeferredHomePanelsReady,
+  );
+  const areDeferredHomeHeroDetailsReady = useHomeScreenDeferredPanels(
+    'home:hero:details',
+    false,
+  );
+  const areDeferredHomeAccountSummaryReady = useHomeScreenDeferredPanels(
+    'home:account:summary',
+    false,
+  );
   const areDeferredHomeAccountDetailsReady = useHomeScreenDeferredPanels(
     'home:account:details',
-    false,
+    !areDeferredHomeAccountSummaryReady,
   );
   const areDeferredHomeAccountSignInReady = useHomeScreenDeferredPanels(
     'home:account:sign-in',
+    !areDeferredHomeAccountSummaryReady,
+  );
+  const areDeferredHomeNavigationSecondaryReady = useHomeScreenDeferredPanels(
+    'home:navigation:secondary',
     false,
   );
   const areDeferredHomeNavigationExtendedReady = useHomeScreenDeferredPanels(
     'home:navigation:extended',
-    false,
+    !areDeferredHomeNavigationSecondaryReady,
   );
   const areDeferredHomeScoreRefreshReady = useHomeScreenDeferredPanels(
     'home:insights:scores',
@@ -3469,77 +3655,81 @@ function HomeScreenContent({
                 : copy({
                     de: 'Von hier aus kannst du Lektionen, Training, Ergebnisse und Duelle durchsuchen. Nach der Anmeldung siehst du hier auch Ergebnisse und den Tagesplan.',
                     en: 'From here you can browse lessons, practice, results, and duels. After sign-in, you will also see results and the daily plan here.',
-                    pl: 'Stąd możesz przeglądać lekcje, trening, wyniki i pojedynki. Po zalogowaniu zobaczysz tu też wyniki oraz plan dnia.',
-                  })}
+                  pl: 'Stąd możesz przeglądać lekcje, trening, wyniki i pojedynki. Po zalogowaniu zobaczysz tu też wyniki oraz plan dnia.',
+                })}
           </Text>
 
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            <View
-              style={{
-                alignSelf: 'flex-start',
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: '#c7d2fe',
-                backgroundColor: '#eef2ff',
-                paddingHorizontal: 12,
-                paddingVertical: 7,
-              }}
-            >
-              <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
-                {copy({
-                  de: `Ergebnisse ${recentResults.results.length}`,
-                  en: `Results ${recentResults.results.length}`,
-                  pl: `Wyniki ${recentResults.results.length}`,
-                })}
-              </Text>
-            </View>
-            {homeHeroRecentResult ? (
+          {!areDeferredHomeHeroDetailsReady ? (
+            <DeferredHomeHeroDetails />
+          ) : (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               <View
                 style={{
                   alignSelf: 'flex-start',
                   borderRadius: 999,
                   borderWidth: 1,
-                  borderColor: '#a7f3d0',
-                  backgroundColor: '#ecfdf5',
+                  borderColor: '#c7d2fe',
+                  backgroundColor: '#eef2ff',
                   paddingHorizontal: 12,
                   paddingVertical: 7,
                 }}
               >
-                <Text style={{ color: '#047857', fontSize: 12, fontWeight: '700' }}>
+                <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
                   {copy({
-                    de: `Letztes Ergebnis ${homeHeroRecentResult.correct_answers}/${homeHeroRecentResult.total_questions}`,
-                    en: `Latest score ${homeHeroRecentResult.correct_answers}/${homeHeroRecentResult.total_questions}`,
-                    pl: `Ostatni wynik ${homeHeroRecentResult.correct_answers}/${homeHeroRecentResult.total_questions}`,
+                    de: `Ergebnisse ${recentResults.results.length}`,
+                    en: `Results ${recentResults.results.length}`,
+                    pl: `Wyniki ${recentResults.results.length}`,
                   })}
                 </Text>
               </View>
-            ) : null}
-            <View
-              style={{
-                alignSelf: 'flex-start',
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: '#fde68a',
-                backgroundColor: '#fffbeb',
-                paddingHorizontal: 12,
-                paddingVertical: 7,
-              }}
-            >
-              <Text style={{ color: '#b45309', fontSize: 12, fontWeight: '700' }}>
-                {homeHeroRecentCheckpoint
-                  ? copy({
-                      de: `Letzte Lektion ${homeHeroRecentCheckpoint.title}`,
-                      en: `Latest lesson ${homeHeroRecentCheckpoint.title}`,
-                      pl: `Ostatnia lekcja ${homeHeroRecentCheckpoint.title}`,
-                    })
-                  : copy({
-                      de: `Checkpoints ${homeHeroRecentCheckpointCount}`,
-                      en: `Checkpoints ${homeHeroRecentCheckpointCount}`,
-                      pl: `Checkpointy ${homeHeroRecentCheckpointCount}`,
+              {homeHeroRecentResult ? (
+                <View
+                  style={{
+                    alignSelf: 'flex-start',
+                    borderRadius: 999,
+                    borderWidth: 1,
+                    borderColor: '#a7f3d0',
+                    backgroundColor: '#ecfdf5',
+                    paddingHorizontal: 12,
+                    paddingVertical: 7,
+                  }}
+                >
+                  <Text style={{ color: '#047857', fontSize: 12, fontWeight: '700' }}>
+                    {copy({
+                      de: `Letztes Ergebnis ${homeHeroRecentResult.correct_answers}/${homeHeroRecentResult.total_questions}`,
+                      en: `Latest score ${homeHeroRecentResult.correct_answers}/${homeHeroRecentResult.total_questions}`,
+                      pl: `Ostatni wynik ${homeHeroRecentResult.correct_answers}/${homeHeroRecentResult.total_questions}`,
                     })}
-              </Text>
+                  </Text>
+                </View>
+              ) : null}
+              <View
+                style={{
+                  alignSelf: 'flex-start',
+                  borderRadius: 999,
+                  borderWidth: 1,
+                  borderColor: '#fde68a',
+                  backgroundColor: '#fffbeb',
+                  paddingHorizontal: 12,
+                  paddingVertical: 7,
+                }}
+              >
+                <Text style={{ color: '#b45309', fontSize: 12, fontWeight: '700' }}>
+                  {homeHeroRecentCheckpoint
+                    ? copy({
+                        de: `Letzte Lektion ${homeHeroRecentCheckpoint.title}`,
+                        en: `Latest lesson ${homeHeroRecentCheckpoint.title}`,
+                        pl: `Ostatnia lekcja ${homeHeroRecentCheckpoint.title}`,
+                      })
+                    : copy({
+                        de: `Checkpoints ${homeHeroRecentCheckpointCount}`,
+                        en: `Checkpoints ${homeHeroRecentCheckpointCount}`,
+                        pl: `Checkpointy ${homeHeroRecentCheckpointCount}`,
+                      })}
+                </Text>
+              </View>
             </View>
-          </View>
+          )}
 
           <View style={{ gap: 10 }}>
             <OutlineLink
@@ -3550,7 +3740,7 @@ function HomeScreenContent({
                 pl: `Fokus treningowy: ${homeHeroFocusLabel}`,
               })}
             />
-            {homeHeroRecentCheckpoint ? (
+            {areDeferredHomeHeroDetailsReady && homeHeroRecentCheckpoint ? (
               <OutlineLink
                 href={homeHeroRecentCheckpoint.lessonHref}
                 label={copy({
@@ -3560,14 +3750,16 @@ function HomeScreenContent({
                 })}
               />
             ) : null}
-            <OutlineLink
-              href={PLAN_ROUTE}
-              label={copy({
-                de: 'Tagesplan jetzt',
-                en: 'Daily plan now',
-                pl: 'Plan dnia teraz',
-              })}
-            />
+            {areDeferredHomeHeroDetailsReady ? (
+              <OutlineLink
+                href={PLAN_ROUTE}
+                label={copy({
+                  de: 'Tagesplan jetzt',
+                  en: 'Daily plan now',
+                  pl: 'Plan dnia teraz',
+                })}
+              />
+            ) : null}
           </View>
         </View>
 
@@ -3646,37 +3838,43 @@ function HomeScreenContent({
             pl: 'Konto i połączenie',
           })}
         >
-          <Text accessibilityLiveRegion='polite' style={{ color: '#0f172a' }}>
-            {copy({
-              de: 'Status',
-              en: 'Status',
-              pl: 'Status',
-            })}
-            : {authBoundary.statusLabel}
-          </Text>
-          <Text style={{ color: '#475569' }}>
-            {copy({
-              de: 'Nutzer',
-              en: 'User',
-              pl: 'Użytkownik',
-            })}
-            : {authBoundary.userLabel}
-          </Text>
-          {!areDeferredHomeAccountDetailsReady ? (
-            <DeferredHomeAccountDetails />
+          {!areDeferredHomeAccountSummaryReady ? (
+            <DeferredHomeAccountSummary />
           ) : (
             <>
+              <Text accessibilityLiveRegion='polite' style={{ color: '#0f172a' }}>
+                {copy({
+                  de: 'Status',
+                  en: 'Status',
+                  pl: 'Status',
+                })}
+                : {authBoundary.statusLabel}
+              </Text>
               <Text style={{ color: '#475569' }}>
                 {copy({
-                  de: 'Anmeldemodus',
-                  en: 'Sign-in mode',
-                  pl: 'Tryb logowania',
+                  de: 'Nutzer',
+                  en: 'User',
+                  pl: 'Użytkownik',
                 })}
-                : {authMode}
+                : {authBoundary.userLabel}
               </Text>
-              <Text style={{ color: '#475569' }}>
-                API: {apiBaseUrl} ({apiBaseUrlSource})
-              </Text>
+              {!areDeferredHomeAccountDetailsReady ? (
+                <DeferredHomeAccountDetails />
+              ) : (
+                <>
+                  <Text style={{ color: '#475569' }}>
+                    {copy({
+                      de: 'Anmeldemodus',
+                      en: 'Sign-in mode',
+                      pl: 'Tryb logowania',
+                    })}
+                    : {authMode}
+                  </Text>
+                  <Text style={{ color: '#475569' }}>
+                    API: {apiBaseUrl} ({apiBaseUrlSource})
+                  </Text>
+                </>
+              )}
             </>
           )}
           {authError ? (
@@ -3817,122 +4015,130 @@ function HomeScreenContent({
                 pl: 'Trening',
               })}
             />
-            <OutlineLink
-              href={PLAN_ROUTE}
-              hint={copy({
-                de: 'Öffnet den Tagesplan des Schulers.',
-                en: 'Opens the learner daily plan.',
-                pl: 'Otwiera plan dnia ucznia.',
-              })}
-              label={copy({
-                de: 'Tagesplan',
-                en: 'Daily plan',
-                pl: 'Plan dnia',
-              })}
-            />
-            <OutlineLink
-              href={RESULTS_ROUTE}
-              hint={copy({
-                de: 'Öffnet Ergebnisse und den vollständigen Verlauf.',
-                en: 'Opens results and full history.',
-                pl: 'Otwiera wyniki i pełną historię.',
-              })}
-              label={copy({
-                de: 'Ergebnisse',
-                en: 'Results',
-                pl: 'Wyniki',
-              })}
-            />
-            {canOpenParentDashboard ? (
-              <OutlineLink
-                href={PARENT_ROUTE}
-                hint={copy({
-                  de: 'Öffnet den Elternbereich.',
-                  en: 'Opens the parent dashboard.',
-                  pl: 'Otwiera panel rodzica.',
-                })}
-                label={copy({
-                  de: 'Elternbereich',
-                  en: 'Parent dashboard',
-                  pl: 'Panel rodzica',
-                })}
-              />
-            ) : null}
-            {!areDeferredHomeNavigationExtendedReady ? (
-              <DeferredHomeNavigationExtendedLinks />
+            {!areDeferredHomeNavigationSecondaryReady ? (
+              <DeferredHomeNavigationSecondaryLinks />
             ) : (
               <>
                 <OutlineLink
-                  href={TESTS_ROUTE}
+                  href={PLAN_ROUTE}
                   hint={copy({
-                    de: 'Öffnet die Tests.',
-                    en: 'Opens tests.',
-                    pl: 'Otwiera testy.',
+                    de: 'Öffnet den Tagesplan des Schulers.',
+                    en: 'Opens the learner daily plan.',
+                    pl: 'Otwiera plan dnia ucznia.',
                   })}
                   label={copy({
-                    de: 'Tests',
-                    en: 'Tests',
-                    pl: 'Testy',
+                    de: 'Tagesplan',
+                    en: 'Daily plan',
+                    pl: 'Plan dnia',
                   })}
                 />
                 <OutlineLink
-                  href={COMPETITION_ROUTE}
+                  href={RESULTS_ROUTE}
                   hint={copy({
-                    de: 'Öffnet den Wettbewerb.',
-                    en: 'Opens the competition.',
-                    pl: 'Otwiera konkurs.',
+                    de: 'Öffnet Ergebnisse und den vollständigen Verlauf.',
+                    en: 'Opens results and full history.',
+                    pl: 'Otwiera wyniki i pełną historię.',
                   })}
                   label={copy({
-                    de: 'Wettbewerb',
-                    en: 'Competition',
-                    pl: 'Konkurs',
+                    de: 'Ergebnisse',
+                    en: 'Results',
+                    pl: 'Wyniki',
                   })}
                 />
-                <OutlineLink
-                  href={PROFILE_ROUTE}
-                  hint={copy({
-                    de: 'Öffnet das Profil des Schulers.',
-                    en: 'Opens the learner profile.',
-                    pl: 'Otwiera profil ucznia.',
-                  })}
-                  label={copy({
-                    de: 'Profil',
-                    en: 'Profile',
-                    pl: 'Profil',
-                  })}
-                />
-                <OutlineLink
-                  href={LEADERBOARD_ROUTE}
-                  hint={copy({
-                    de: 'Öffnet die Rangliste der Schuler.',
-                    en: 'Opens the learner leaderboard.',
-                    pl: 'Otwiera ranking uczniów.',
-                  })}
-                  label={copy({
-                    de: 'Rangliste',
-                    en: 'Leaderboard',
-                    pl: 'Ranking',
-                  })}
-                />
-                <OutlineLink
-                  href={DUELS_ROUTE}
-                  hint={copy({
-                    de: 'Öffnet die Duell-Lobby.',
-                    en: 'Opens the duels lobby.',
-                    pl: 'Otwiera lobby pojedynków.',
-                  })}
-                  label={copy({
-                    de: 'Duelle',
-                    en: 'Duels',
-                    pl: 'Pojedynki',
-                  })}
-                />
+                {canOpenParentDashboard ? (
+                  <OutlineLink
+                    href={PARENT_ROUTE}
+                    hint={copy({
+                      de: 'Öffnet den Elternbereich.',
+                      en: 'Opens the parent dashboard.',
+                      pl: 'Otwiera panel rodzica.',
+                    })}
+                    label={copy({
+                      de: 'Elternbereich',
+                      en: 'Parent dashboard',
+                      pl: 'Panel rodzica',
+                    })}
+                  />
+                ) : null}
+                {!areDeferredHomeNavigationExtendedReady ? (
+                  <DeferredHomeNavigationExtendedLinks />
+                ) : (
+                  <>
+                    <OutlineLink
+                      href={TESTS_ROUTE}
+                      hint={copy({
+                        de: 'Öffnet die Tests.',
+                        en: 'Opens tests.',
+                        pl: 'Otwiera testy.',
+                      })}
+                      label={copy({
+                        de: 'Tests',
+                        en: 'Tests',
+                        pl: 'Testy',
+                      })}
+                    />
+                    <OutlineLink
+                      href={COMPETITION_ROUTE}
+                      hint={copy({
+                        de: 'Öffnet den Wettbewerb.',
+                        en: 'Opens the competition.',
+                        pl: 'Otwiera konkurs.',
+                      })}
+                      label={copy({
+                        de: 'Wettbewerb',
+                        en: 'Competition',
+                        pl: 'Konkurs',
+                      })}
+                    />
+                    <OutlineLink
+                      href={PROFILE_ROUTE}
+                      hint={copy({
+                        de: 'Öffnet das Profil des Schulers.',
+                        en: 'Opens the learner profile.',
+                        pl: 'Otwiera profil ucznia.',
+                      })}
+                      label={copy({
+                        de: 'Profil',
+                        en: 'Profile',
+                        pl: 'Profil',
+                      })}
+                    />
+                    <OutlineLink
+                      href={LEADERBOARD_ROUTE}
+                      hint={copy({
+                        de: 'Öffnet die Rangliste der Schuler.',
+                        en: 'Opens the learner leaderboard.',
+                        pl: 'Otwiera ranking uczniów.',
+                      })}
+                      label={copy({
+                        de: 'Rangliste',
+                        en: 'Leaderboard',
+                        pl: 'Ranking',
+                      })}
+                    />
+                    <OutlineLink
+                      href={DUELS_ROUTE}
+                      hint={copy({
+                        de: 'Öffnet die Duell-Lobby.',
+                        en: 'Opens the duels lobby.',
+                        pl: 'Otwiera lobby pojedynków.',
+                      })}
+                      label={copy({
+                        de: 'Duelle',
+                        en: 'Duels',
+                        pl: 'Pojedynki',
+                      })}
+                    />
+                  </>
+                )}
               </>
             )}
           </View>
         </SectionCard>
 
-        {session.status === 'authenticated' ? (
+        {!areDeferredHomePanelsReady ? (
+          <DeferredHomeDuelOverviewSectionGroup />
+        ) : session.status === 'authenticated' ? (
           <AuthenticatedHomePrivateDuelSectionGroup
             areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
             areDeferredHomeDuelInvitesReady={areDeferredHomeDuelInvitesReady}
@@ -3948,7 +4154,7 @@ function HomeScreenContent({
           />
         )}
 
-        {!areDeferredHomePanelsReady || !areDeferredHomeDuelAdvancedReady ? (
+        {!areDeferredHomePanelsReady ? null : !areDeferredHomeDuelAdvancedReady ? (
           <SectionCard
             title={copy({
               de: 'Live-Duelle',
@@ -3956,17 +4162,13 @@ function HomeScreenContent({
               pl: 'Na żywo w pojedynkach',
             })}
           >
-            {!areDeferredHomePanelsReady ? (
-              <DeferredDuelSectionPlaceholder />
-            ) : (
-              <DeferredDuelAdvancedSectionPlaceholder />
-            )}
+            <DeferredDuelAdvancedSectionPlaceholder />
           </SectionCard>
         ) : (
           <HomeLiveDuelsSection isAuthenticated={session.status === 'authenticated'} />
         )}
 
-        {session.status === 'authenticated' ? (
+        {!areDeferredHomePanelsReady ? null : session.status === 'authenticated' ? (
           <AuthenticatedHomeRematchesSection
             areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
             areDeferredHomeDuelInvitesReady={areDeferredHomeDuelInvitesReady}
@@ -3982,7 +4184,7 @@ function HomeScreenContent({
           />
         )}
 
-        {!areDeferredHomePanelsReady || !areDeferredHomeDuelAdvancedReady ? (
+        {!areDeferredHomePanelsReady ? null : !areDeferredHomeDuelAdvancedReady ? (
           <SectionCard
             title={copy({
               de: 'Duell-Rangliste',
@@ -3990,11 +4192,7 @@ function HomeScreenContent({
               pl: 'Ranking pojedynków',
             })}
           >
-            {!areDeferredHomePanelsReady ? (
-              <DeferredDuelSectionPlaceholder />
-            ) : (
-              <DeferredDuelAdvancedSectionPlaceholder />
-            )}
+            <DeferredDuelAdvancedSectionPlaceholder />
           </SectionCard>
         ) : (
           <HomeDuelLeaderboardSection
@@ -4020,6 +4218,8 @@ function HomeScreenContent({
                 pl: 'Przywracamy logowanie i fokus treningowy oparty na wynikach.',
               })}
             </Text>
+          ) : !areDeferredHomeTrainingFocusDetailsReady ? (
+            <DeferredTrainingFocusDetailsPlaceholder />
           ) : !trainingFocus.isEnabled &&
             !trainingFocus.weakestOperation &&
             !trainingFocus.strongestOperation ? (

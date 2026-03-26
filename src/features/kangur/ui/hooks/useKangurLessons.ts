@@ -11,9 +11,9 @@ import {
   kangurLessonsSchema,
   kangurLessonDocumentStoreSchema,
 } from '@/features/kangur/shared/contracts/kangur';
-import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
+import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { createListQueryV2, createSingleQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { createDefaultKangurLessons } from '@/features/kangur/settings';
 import { normalizeKangurLessonDocumentStore } from '@/features/kangur/lesson-documents';
@@ -171,8 +171,8 @@ export const useKangurLessonDocuments = (options?: { enabled?: boolean }): ListQ
 export const useKangurLessonDocument = (
   lessonId: string | null,
   options?: { enabled?: boolean }
-): ListQuery<KangurLessonDocument | null, KangurLessonDocument | null> =>
-  createListQueryV2<KangurLessonDocument | null, KangurLessonDocument | null>({
+): SingleQuery<KangurLessonDocument | null> =>
+  createSingleQueryV2<KangurLessonDocument | null>({
     queryKey: QUERY_KEYS.kangur.lessonDocument(lessonId),
     queryFn: async (): Promise<KangurLessonDocument | null> =>
       lessonId ? await fetchLessonDocument(lessonId) : null,

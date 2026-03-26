@@ -1,4 +1,5 @@
 import { readClientCookie, setClientCookie } from '@/shared/lib/browser/client-cookies';
+import { mapErrorToAppError } from '@/shared/errors/error-mapper';
 import {
   logClientError,
   setClientErrorBaseContext,
@@ -137,6 +138,9 @@ export const isRecoverableKangurClientFetchError = (error: unknown): boolean => 
   );
 };
 
+export const isExpectedKangurClientError = (error: unknown): boolean =>
+  mapErrorToAppError(error)?.expected === true;
+
 export const withKangurClientError = async <T>(
   report: KangurClientErrorReport | ((error: unknown) => KangurClientErrorReport),
   task: () => Promise<T>,
@@ -145,7 +149,10 @@ export const withKangurClientError = async <T>(
   try {
     return await task();
   } catch (error) {
-    const shouldReport = options.shouldReport?.(error) ?? true;
+    const shouldReport =
+      !isRecoverableKangurClientFetchError(error) &&
+      !isExpectedKangurClientError(error) &&
+      (options.shouldReport?.(error) ?? true);
     if (shouldReport) {
       void ErrorSystem.captureException(error);
     }
@@ -171,7 +178,10 @@ export const withKangurClientErrorSync = <T>(
   try {
     return task();
   } catch (error) {
-    const shouldReport = options.shouldReport?.(error) ?? true;
+    const shouldReport =
+      !isRecoverableKangurClientFetchError(error) &&
+      !isExpectedKangurClientError(error) &&
+      (options.shouldReport?.(error) ?? true);
     if (shouldReport) {
       void ErrorSystem.captureException(error);
     }

@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { createKangurGameLibraryCoverageGroups } from '@/features/kangur/games';
+import { createKangurGameLibraryCoverage } from '@/features/kangur/games';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { getKangurGameCatalogRepository } from '@/features/kangur/services/kangur-game-catalog-repository';
 
@@ -15,16 +15,16 @@ export const getKangurGameLibraryCoverageRepository =
     const provider = 'composite';
 
     return {
-      listCoverage: async () => {
+      getCoverage: async () => {
         try {
           const catalogRepository = await getKangurGameCatalogRepository();
-          return createKangurGameLibraryCoverageGroups(
+          return createKangurGameLibraryCoverage(
             await catalogRepository.listCatalog()
           );
         } catch (error) {
           void ErrorSystem.captureException(error, {
             service: SERVICE,
-            action: 'listCoverage',
+            action: 'getCoverage',
             provider,
           });
           throw error;

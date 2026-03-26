@@ -2,8 +2,8 @@
 
 import {
   createKangurGameCatalogEntries,
-  createKangurGameLibraryCoverageGroups,
-  type KangurGameLibraryCoverageGroup,
+  createKangurGameLibraryCoverage,
+  type KangurGameLibraryCoverage,
 } from '@/features/kangur/games';
 import {
   isRecoverableKangurClientFetchError,
@@ -13,16 +13,16 @@ import type { ListQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { kangurGameLibraryCoverageGroupsSchema } from '@/shared/contracts/kangur-games';
+import { kangurGameLibraryCoverageSchema } from '@/shared/contracts/kangur-games';
 
 type GameLibraryCoverageQueryOptions = {
   enabled?: boolean;
 };
 
-const buildGameLibraryCoverageFallback = (): KangurGameLibraryCoverageGroup[] =>
-  createKangurGameLibraryCoverageGroups(createKangurGameCatalogEntries());
+const buildGameLibraryCoverageFallback = (): KangurGameLibraryCoverage =>
+  createKangurGameLibraryCoverage(createKangurGameCatalogEntries());
 
-const fetchGameLibraryCoverage = async (): Promise<KangurGameLibraryCoverageGroup[]> =>
+const fetchGameLibraryCoverage = async (): Promise<KangurGameLibraryCoverage> =>
   await withKangurClientError(
     () => ({
       source: 'kangur.hooks.useKangurGameLibraryCoverage',
@@ -30,10 +30,10 @@ const fetchGameLibraryCoverage = async (): Promise<KangurGameLibraryCoverageGrou
       description: 'Loads Kangur game library coverage groups from the API.',
     }),
     async () => {
-      const payload = await api.get<KangurGameLibraryCoverageGroup[]>(
+      const payload = await api.get<KangurGameLibraryCoverage>(
         '/api/kangur/game-library-coverage'
       );
-      return kangurGameLibraryCoverageGroupsSchema.parse(payload);
+      return kangurGameLibraryCoverageSchema.parse(payload);
     },
     {
       fallback: buildGameLibraryCoverageFallback,
@@ -43,8 +43,8 @@ const fetchGameLibraryCoverage = async (): Promise<KangurGameLibraryCoverageGrou
 
 export const useKangurGameLibraryCoverage = (
   options?: GameLibraryCoverageQueryOptions
-): ListQuery<KangurGameLibraryCoverageGroup, KangurGameLibraryCoverageGroup[]> =>
-  createListQueryV2<KangurGameLibraryCoverageGroup, KangurGameLibraryCoverageGroup[]>({
+): ListQuery<KangurGameLibraryCoverage, KangurGameLibraryCoverage> =>
+  createListQueryV2<KangurGameLibraryCoverage, KangurGameLibraryCoverage>({
     queryKey: QUERY_KEYS.kangur.gameLibraryCoverage(),
     queryFn: fetchGameLibraryCoverage,
     placeholderData: buildGameLibraryCoverageFallback,
@@ -66,5 +66,5 @@ export const useKangurGameLibraryCoverage = (
 
 export type {
   GameLibraryCoverageQueryOptions as UseKangurGameLibraryCoverageOptions,
-  KangurGameLibraryCoverageGroup,
+  KangurGameLibraryCoverage,
 };

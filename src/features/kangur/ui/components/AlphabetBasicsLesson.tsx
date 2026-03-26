@@ -4,26 +4,24 @@ import { useCallback, useId, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslations } from 'next-intl';
 
-import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   computeKangurTotalStrokeLength,
   flattenKangurStrokePoints,
 } from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
-import { renderKangurDrawingStrokes } from '@/features/kangur/ui/components/drawing-engine/render';
+import { KangurTracingLessonFooter } from '@/features/kangur/ui/components/drawing-engine/KangurTracingLessonFooter';
 import { KangurTracingBoard } from '@/features/kangur/ui/components/drawing-engine/KangurTracingBoard';
-import { useKangurPointDrawingEngine } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingEngine';
 import {
-  KangurButton,
+  evaluateKangurTracingAttempt,
+  getKangurTracingCanvasConfig,
+} from '@/features/kangur/ui/components/drawing-engine/tracing';
+import { useKangurPointCanvasDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurPointCanvasDrawing';
+import {
   KangurGlassPanel,
   KangurHeadline,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import {
-  KANGUR_STACK_ROOMY_CLASSNAME,
-  KANGUR_WRAP_ROW_CLASSNAME,
-} from '@/features/kangur/ui/design/tokens';
+import { KANGUR_STACK_ROOMY_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
-import { syncKangurCanvasContext } from '@/features/kangur/ui/services/drawing-canvas';
 import type {
   KangurIntlTranslate,
   KangurMiniGameFeedbackState,
@@ -190,10 +188,14 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
     `rounds.${currentRound.id}.word`,
     currentRound.word
   );
-  const minPointDistance = isCoarsePointer ? 5 : 2;
-  const minDrawingPoints = isCoarsePointer ? 12 : BASE_MIN_DRAWING_POINTS;
-  const minDrawingLength = isCoarsePointer ? 120 : BASE_MIN_DRAWING_LENGTH;
-  const strokeWidth = isCoarsePointer ? 14 : 10;
+  const tracingCanvasConfig = useMemo(
+    () =>
+      getKangurTracingCanvasConfig(isCoarsePointer, {
+        fineMinDrawingLength: BASE_MIN_DRAWING_LENGTH,
+        fineMinDrawingPoints: BASE_MIN_DRAWING_POINTS,
+      }),
+    [isCoarsePointer]
+  );
   const guideStrokeWidth = isCoarsePointer ? 18 : 14;
   const glowStrokeWidth = isCoarsePointer ? 12 : 8;
   const {
@@ -203,35 +205,18 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
     handlePointerUp,
     isPointerDrawing,
     strokes,
-  } = useKangurPointDrawingEngine({
+  } = useKangurPointCanvasDrawing({
     canvasRef,
     enabled: feedback?.kind !== 'success',
     logicalHeight: CANVAS_HEIGHT,
     logicalWidth: CANVAS_WIDTH,
-    minPointDistance,
+    minPointDistance: tracingCanvasConfig.minPointDistance,
     onPointerStart: () => {
       if (feedback?.kind === 'error') {
         setFeedback(null);
       }
     },
-    redraw: (nextStrokes) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = syncKangurCanvasContext(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
-      if (!ctx) return;
-
-      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-      renderKangurDrawingStrokes(
-        ctx,
-        nextStrokes.map((points) => ({ meta: null, points })),
-        () => ({
-          lineWidth: strokeWidth,
-          shadowBlur: isCoarsePointer ? 8 : 6,
-          shadowColor: 'rgba(15, 23, 42, 0.12)',
-          strokeStyle: '#0f172a',
-        })
-      );
-    },
+    resolveStyle: () => tracingCanvasConfig.strokeStyle,
     touchLockEnabled: isCoarsePointer,
   });
   const points = useMemo(() => flattenKangurStrokePoints(strokes), [strokes]);
@@ -277,35 +262,28 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
   }, [clearStrokes]);
 
   const evaluateDrawing = (): KangurMiniGameFeedbackState => {
-    if (points.length < minDrawingPoints) {
-      return {
-        kind: 'error',
-        text: translateAlphabetBasics(
-          translations,
-          'feedback.error.traceMore',
-          'Rysuj po śladzie litery i spróbuj jeszcze raz.'
-        ),
-      };
-    }
-    if (strokeLength < minDrawingLength) {
-      return {
-        kind: 'error',
-        text: translateAlphabetBasics(
-          translations,
-          'feedback.error.keepGoing',
-          'Super start! Dorysuj jeszcze kawałek litery.'
-        ),
-      };
-    }
-    return {
-      kind: 'success',
-      text: translateAlphabetBasics(
+    return evaluateKangurTracingAttempt({
+      keepGoingText: translateAlphabetBasics(
+        translations,
+        'feedback.error.keepGoing',
+        'Super start! Dorysuj jeszcze kawałek litery.'
+      ),
+      minDrawingLength: tracingCanvasConfig.minDrawingLength,
+      minDrawingPoints: tracingCanvasConfig.minDrawingPoints,
+      pointCount: points.length,
+      strokeLength,
+      successText: translateAlphabetBasics(
         translations,
         'feedback.success',
         'Świetnie! Litera {letter} gotowa.',
         { letter: currentRound.label }
       ),
-    };
+      tooShortText: translateAlphabetBasics(
+        translations,
+        'feedback.error.traceMore',
+        'Rysuj po śladzie litery i spróbuj jeszcze raz.'
+      ),
+    });
   };
 
   const handleCheck = (): void => {
@@ -414,70 +392,27 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
         </div>
       </KangurGlassPanel>
 
-      <KangurGlassPanel
-        className='w-full max-w-3xl'
-        padding='lg'
-        surface='playField'
-      >
-        <div className='flex flex-wrap items-center justify-between gap-3'>
-          <div className='min-w-0'>
-            {feedback ? (
-              <p
-                className={`text-sm font-semibold ${
-                  feedback.kind === 'success' ? 'text-emerald-600' : 'text-rose-600'
-                }`}
-                role='status'
-                aria-live='polite'
-              >
-                {feedback.text}
-              </p>
-            ) : (
-              <p className='text-sm text-slate-600'>
-                {translateAlphabetBasics(
-                  translations,
-                  'footer.idlePrompt',
-                  'Kliknij Sprawdź, gdy skończysz rysować.'
-                )}
-              </p>
-            )}
-          </div>
-          <div className={KANGUR_WRAP_ROW_CLASSNAME}>
-            <KangurButton
-              className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
-              size='sm'
-              type='button'
-              variant='surface'
-              onClick={clearDrawing}
-            >
-              {translateAlphabetBasics(translations, 'actions.clear', 'Wyczyść')}
-            </KangurButton>
-            {feedback?.kind === 'success' ? (
-              <KangurButton
-                className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
-                size='sm'
-                type='button'
-                variant='primary'
-                onClick={handleNext}
-              >
-                {roundIndex + 1 >= totalRounds
-                  ? translateAlphabetBasics(translations, 'actions.restart', 'Zacznij od nowa')
-                  : translateAlphabetBasics(translations, 'actions.next', 'Dalej')}
-              </KangurButton>
-            ) : (
-              <KangurCheckButton
-                className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
-                size='sm'
-                type='button'
-                variant='primary'
-                onClick={handleCheck}
-                feedbackTone={feedback?.kind === 'error' ? 'error' : null}
-              >
-                {translateAlphabetBasics(translations, 'actions.check', 'Sprawdź')}
-              </KangurCheckButton>
-            )}
-          </div>
-        </div>
-      </KangurGlassPanel>
+      <KangurTracingLessonFooter
+        checkLabel={translateAlphabetBasics(translations, 'actions.check', 'Sprawdź')}
+        clearLabel={translateAlphabetBasics(translations, 'actions.clear', 'Wyczyść')}
+        feedback={feedback}
+        idlePrompt={translateAlphabetBasics(
+          translations,
+          'footer.idlePrompt',
+          'Kliknij Sprawdź, gdy skończysz rysować.'
+        )}
+        isCoarsePointer={isCoarsePointer}
+        isLastRound={roundIndex + 1 >= totalRounds}
+        nextLabel={translateAlphabetBasics(translations, 'actions.next', 'Dalej')}
+        onCheck={handleCheck}
+        onClear={clearDrawing}
+        onNext={handleNext}
+        restartLabel={translateAlphabetBasics(
+          translations,
+          'actions.restart',
+          'Zacznij od nowa'
+        )}
+      />
 
       <style jsx>{`
         .letter-guide {

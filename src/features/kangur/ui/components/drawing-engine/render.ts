@@ -1,3 +1,5 @@
+import { syncKangurCanvasContext } from '@/features/kangur/ui/services/drawing-canvas';
+
 import type { KangurDrawingStroke, KangurDrawingStrokeRenderStyle } from './types';
 
 const DEFAULT_LINE_CAP: CanvasLineCap = 'round';
@@ -46,4 +48,44 @@ export const renderKangurDrawingStrokes = <TMeta>(
   ctx.globalCompositeOperation = 'source-over';
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
+};
+
+type RedrawKangurCanvasStrokesOptions<TMeta> = {
+  backgroundFill?: string;
+  beforeStrokes?: (ctx: CanvasRenderingContext2D) => void;
+  canvas: HTMLCanvasElement | null;
+  logicalHeight: number;
+  logicalWidth: number;
+  resolveStyle: (
+    stroke: KangurDrawingStroke<TMeta>,
+    index: number
+  ) => KangurDrawingStrokeRenderStyle;
+  strokes: KangurDrawingStroke<TMeta>[];
+};
+
+export const redrawKangurCanvasStrokes = <TMeta>({
+  backgroundFill,
+  beforeStrokes,
+  canvas,
+  logicalHeight,
+  logicalWidth,
+  resolveStyle,
+  strokes,
+}: RedrawKangurCanvasStrokesOptions<TMeta>): void => {
+  if (!canvas) {
+    return;
+  }
+
+  const ctx = syncKangurCanvasContext(canvas, logicalWidth, logicalHeight);
+  if (!ctx) {
+    return;
+  }
+
+  ctx.clearRect(0, 0, logicalWidth, logicalHeight);
+  if (backgroundFill) {
+    ctx.fillStyle = backgroundFill;
+    ctx.fillRect(0, 0, logicalWidth, logicalHeight);
+  }
+  beforeStrokes?.(ctx);
+  renderKangurDrawingStrokes(ctx, strokes, resolveStyle);
 };

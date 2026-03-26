@@ -295,6 +295,79 @@ export type KangurGameLibraryCoverageGroupsDto = z.infer<
   typeof kangurGameLibraryCoverageGroupsSchema
 >;
 
+export const kangurGameLibraryCoverageStatusMapSchema = z.record(
+  kangurLessonComponentIdSchema,
+  kangurGameLibraryLessonCoverageStatusSchema
+);
+export type KangurGameLibraryCoverageStatusMapDto = z.infer<
+  typeof kangurGameLibraryCoverageStatusMapSchema
+>;
+
+export const kangurGameLibraryCoverageSchema = z.object({
+  groups: kangurGameLibraryCoverageGroupsSchema,
+  statusMap: kangurGameLibraryCoverageStatusMapSchema,
+});
+export type KangurGameLibraryCoverageDto = z.infer<typeof kangurGameLibraryCoverageSchema>;
+
+export const kangurGamesLibraryMetricsSchema = z.object({
+  engineCount: z.number().int().min(0),
+  lessonLinkedCount: z.number().int().min(0),
+  variantCount: z.number().int().min(0),
+  visibleGameCount: z.number().int().min(0),
+});
+export type KangurGamesLibraryMetricsDto = z.infer<typeof kangurGamesLibraryMetricsSchema>;
+
+export const kangurGamesLibrarySubjectDefinitionSchema = z.object({
+  id: kangurLessonSubjectSchema,
+  label: nonEmptyTrimmedString.max(120),
+  shortLabel: nonEmptyTrimmedString.max(120),
+  sortOrder: z.number().int().min(0).max(1_000_000),
+  default: z.boolean().optional(),
+  ageGroups: z.array(kangurLessonAgeGroupSchema),
+});
+export type KangurGamesLibrarySubjectDefinitionDto = z.infer<
+  typeof kangurGamesLibrarySubjectDefinitionSchema
+>;
+
+export const kangurGamesLibrarySubjectGroupSchema = z.object({
+  entries: kangurGameCatalogEntriesSchema,
+  subject: kangurGamesLibrarySubjectDefinitionSchema,
+});
+export type KangurGamesLibrarySubjectGroupDto = z.infer<
+  typeof kangurGamesLibrarySubjectGroupSchema
+>;
+
+export const kangurGamesLibraryVariantGroupSchema = z.object({
+  entries: kangurGameVariantCatalogEntriesSchema,
+  surface: kangurGameVariantSurfaceSchema,
+});
+export type KangurGamesLibraryVariantGroupDto = z.infer<
+  typeof kangurGamesLibraryVariantGroupSchema
+>;
+
+export const kangurGamesLibraryCohortGroupSchema = z.object({
+  ageGroup: kangurLessonAgeGroupSchema,
+  engineCount: z.number().int().min(0),
+  entries: kangurGameCatalogEntriesSchema,
+  launchableCount: z.number().int().min(0),
+  lessonLinkedCount: z.number().int().min(0),
+  subjects: z.array(kangurLessonSubjectSchema),
+  variantCount: z.number().int().min(0),
+});
+export type KangurGamesLibraryCohortGroupDto = z.infer<
+  typeof kangurGamesLibraryCohortGroupSchema
+>;
+
+export const kangurGamesLibraryOverviewSchema = z.object({
+  cohortGroups: z.array(kangurGamesLibraryCohortGroupSchema),
+  metrics: kangurGamesLibraryMetricsSchema,
+  subjectGroups: z.array(kangurGamesLibrarySubjectGroupSchema),
+  variantGroups: z.array(kangurGamesLibraryVariantGroupSchema),
+});
+export type KangurGamesLibraryOverviewDto = z.infer<
+  typeof kangurGamesLibraryOverviewSchema
+>;
+
 export const kangurGamesQuerySchema = z.object({
   subject: optionalTrimmedQueryString(kangurLessonSubjectSchema),
   ageGroup: optionalTrimmedQueryString(kangurLessonAgeGroupSchema),
@@ -336,6 +409,11 @@ export const kangurGameCatalogQuerySchema = z.object({
   launchableOnly: optionalBooleanQuerySchema(),
 });
 export type KangurGameCatalogQuery = z.infer<typeof kangurGameCatalogQuerySchema>;
+
+export const kangurGameLibraryOverviewQuerySchema = kangurGameCatalogQuerySchema;
+export type KangurGameLibraryOverviewQuery = z.infer<
+  typeof kangurGameLibraryOverviewQuerySchema
+>;
 
 export const kangurGameEngineCatalogQuerySchema = kangurGameCatalogQuerySchema;
 export type KangurGameEngineCatalogQuery = z.infer<typeof kangurGameEngineCatalogQuerySchema>;

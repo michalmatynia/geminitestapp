@@ -356,8 +356,15 @@ describe('HomeScreen', () => {
     renderHomeScreen();
 
     expect(
-      screen.getAllByText('Przygotowujemy tę sekcję pojedynków na ekran startowy.'),
-    ).toHaveLength(6);
+      screen.getByText(
+        'Przygotowujemy zaproszenia, wysłane wyzwania i szybkie rewanże na ekran startowy.',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Przygotowujemy aktywnych rywali, pojedynki na żywo i ranking na następny etap ekranu startowego.',
+      ),
+    ).toBeTruthy();
     expect(
       screen.queryByText(
         'Po zalogowaniu zobaczysz tutaj prywatne zaproszenia do pojedynków od innych uczniów.',
@@ -368,6 +375,11 @@ describe('HomeScreen', () => {
         'Przygotowujemy fokus treningowy oparty na wynikach na ekran startowy.',
       ),
     ).toBeTruthy();
+    expect(useKangurMobileHomeDuelsInvitesMock).not.toHaveBeenCalled();
+    expect(useKangurMobileHomeDuelsPresenceMock).not.toHaveBeenCalled();
+    expect(useKangurMobileHomeDuelsRematchesMock).not.toHaveBeenCalled();
+    expect(useKangurMobileHomeDuelsSpotlightMock).not.toHaveBeenCalled();
+    expect(useKangurMobileHomeDuelsLeaderboardMock).not.toHaveBeenCalled();
     expect(useKangurMobileRecentResultsMock).not.toHaveBeenCalled();
     expect(useKangurMobileTrainingFocusMock).not.toHaveBeenCalled();
   });
@@ -633,6 +645,34 @@ describe('HomeScreen', () => {
     });
   });
 
+  it('keeps lesson plan details deferred until the dedicated lesson-plan stage is ready', () => {
+    useHomeScreenDeferredPanelsMock.mockImplementation(
+      (panelKey: string) => panelKey !== 'home:insights:lessons:plan:details',
+    );
+
+    renderHomeScreen();
+
+    expect(screen.getByText('Plan lekcji ze startu')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Od razu zobacz, co wymaga powtórki, a którą lekcję trzeba tylko krótko odświeżyć.',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Przygotowujemy szczegółowe karty lekcji i wskazówki nauki na kolejny etap ekranu startowego.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText('Śledzone 2')).toBeNull();
+    expect(screen.queryByText('Opanowane 1')).toBeNull();
+    expect(screen.queryByText('Najmocniejsza lekcja')).toBeNull();
+    expect(screen.getByText('Powrót do ostatnich lekcji')).toBeTruthy();
+    expect(useKangurMobileHomeLessonMasteryMock).not.toHaveBeenCalled();
+    expect(useKangurMobileHomeLessonCheckpointsMock).toHaveBeenCalledWith({
+      limit: 1,
+    });
+  });
+
   it('keeps tertiary home insights deferred until the extra stage is ready', () => {
     useHomeScreenDeferredPanelsMock.mockImplementation(
       (panelKey: string) => panelKey !== 'home:insights:extras',
@@ -796,9 +836,155 @@ describe('HomeScreen', () => {
     expect(useKangurMobileTrainingFocusMock).not.toHaveBeenCalled();
   });
 
-  it('keeps detailed results actions deferred until the results stage is ready', () => {
+  it('keeps detailed training focus cards deferred until the dedicated training focus stage is ready', () => {
+    useHomeScreenDeferredPanelsMock.mockImplementation(
+      (panelKey: string) => panelKey !== 'home:training-focus:details',
+    );
+    useKangurMobileAuthMock.mockReturnValue({
+      authError: null,
+      authMode: 'learner-session',
+      developerAutoSignInEnabled: false,
+      hasAttemptedDeveloperAutoSignIn: false,
+      isLoadingAuth: false,
+      session: {
+        status: 'authenticated',
+        user: {
+          activeLearner: {
+            displayName: 'Maja Uczennica',
+            id: 'learner-1',
+          },
+          actorType: 'learner',
+          canManageLearners: false,
+          full_name: 'Maja Uczennica',
+        },
+      },
+      signIn: vi.fn(),
+      signInWithLearnerCredentials: vi.fn(),
+      signOut: vi.fn(),
+      supportsLearnerCredentials: true,
+    });
+    useKangurMobileTrainingFocusMock.mockReturnValue({
+      error: null,
+      isEnabled: true,
+      isLoading: false,
+      isRestoringAuth: false,
+      recentResults: [],
+      refresh: vi.fn(),
+      strongestLessonFocus: 'clock',
+      strongestOperation: {
+        averageAccuracyPercent: 94,
+        operation: 'clock',
+        sessions: 4,
+      },
+      weakestLessonFocus: 'adding',
+      weakestOperation: {
+        averageAccuracyPercent: 52,
+        operation: 'addition',
+        sessions: 3,
+      },
+    });
+
+    renderHomeScreen();
+
+    expect(screen.getByText('Fokus treningowy')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Przygotowujemy szczegółowe karty treningowe na kolejny etap ekranu startowego.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText('Najmocniejszy tryb')).toBeNull();
+    expect(screen.queryByText('Trenuj najsłabszy tryb')).toBeNull();
+    expect(screen.queryByText('Utrzymaj tempo')).toBeNull();
+  });
+
+  it('keeps hero chips and secondary quick links deferred until the dedicated hero details stage is ready', () => {
+    useHomeScreenDeferredPanelsMock.mockImplementation(
+      (panelKey: string) => panelKey !== 'home:hero:details',
+    );
+
+    renderHomeScreen();
+
+    expect(screen.getByText('Kangur mobilnie')).toBeTruthy();
+    expect(screen.getByText('Fokus treningowy: Trening mieszany')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Przygotowujemy ostatnią lekcję, ostatni wynik i kolejne szybkie skróty na następny etap ekranu startowego.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText('Wyniki 0')).toBeNull();
+    expect(screen.queryByText('Checkpointy 0')).toBeNull();
+    expect(screen.queryByText('Plan dnia teraz')).toBeNull();
+    expect(screen.queryByText('Ostatnia lekcja: Dodawanie')).toBeNull();
+  });
+
+  it('keeps results hub summary details deferred until the results stage is ready', () => {
     useHomeScreenDeferredPanelsMock.mockImplementation(
       (panelKey: string) => panelKey !== 'home:insights:results',
+    );
+    useKangurMobileAuthMock.mockReturnValue({
+      authError: null,
+      authMode: 'learner-session',
+      developerAutoSignInEnabled: false,
+      hasAttemptedDeveloperAutoSignIn: false,
+      isLoadingAuth: false,
+      session: {
+        status: 'authenticated',
+        user: {
+          activeLearner: {
+            displayName: 'Maja Uczennica',
+            id: 'learner-1',
+          },
+          actorType: 'learner',
+          canManageLearners: false,
+          full_name: 'Maja Uczennica',
+        },
+      },
+      signIn: vi.fn(),
+      signInWithLearnerCredentials: vi.fn(),
+      signOut: vi.fn(),
+      supportsLearnerCredentials: true,
+    });
+    useKangurMobileRecentResultsMock.mockReturnValue({
+      error: null,
+      isEnabled: true,
+      isLoading: false,
+      isRestoringAuth: false,
+      refresh: vi.fn(),
+      results: [
+        {
+          correct_answers: 7,
+          created_by: 'user-1',
+          created_date: '2026-03-21T08:00:00.000Z',
+          id: 'score-1',
+          learner_id: 'learner-1',
+          operation: 'addition',
+          owner_user_id: 'user-1',
+          player_name: 'Ada Learner',
+          score: 7,
+          subject: 'maths',
+          time_taken: 42,
+          total_questions: 8,
+        },
+      ],
+    });
+
+    renderHomeScreen();
+
+    expect(screen.getByText('Centrum wyników')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Przygotowujemy skrót ostatnich wyników na kolejny etap ekranu startowego.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText('Pokaż ostatnie wyniki')).toBeNull();
+    expect(screen.queryByText('Otwórz pełną historię')).toBeNull();
+    expect(screen.queryByText('7/8 poprawnych')).toBeNull();
+    expect(screen.queryByText('Historia trybu: Dodawanie')).toBeNull();
+  });
+
+  it('keeps results hub actions deferred until the dedicated results actions stage is ready', () => {
+    useHomeScreenDeferredPanelsMock.mockImplementation(
+      (panelKey: string) => panelKey !== 'home:insights:results:actions',
     );
     useKangurMobileAuthMock.mockReturnValue({
       authError: null,
@@ -853,11 +1039,11 @@ describe('HomeScreen', () => {
     expect(screen.getAllByText('Ostatni wynik 7/8').length).toBeGreaterThanOrEqual(1);
     expect(
       screen.getByText(
-        'Przygotowujemy szczegóły ostatnich wyników na kolejny etap ekranu startowego. Możesz otworzyć je od razu, jeśli chcesz.',
+        'Przygotowujemy akcje ostatnich wyników na kolejny etap ekranu startowego.',
       ),
     ).toBeTruthy();
-    expect(screen.getByText('Pokaż ostatnie wyniki')).toBeTruthy();
-    expect(screen.getByText('Otwórz pełną historię')).toBeTruthy();
+    expect(screen.queryByText('Pokaż ostatnie wyniki')).toBeNull();
+    expect(screen.queryByText('Otwórz pełną historię')).toBeNull();
     expect(screen.queryByText('7/8 poprawnych')).toBeNull();
     expect(screen.queryByText('Historia trybu: Dodawanie')).toBeNull();
   });
@@ -934,6 +1120,35 @@ describe('HomeScreen', () => {
     expect(useHomeScreenDeferredPanelsMock).toHaveBeenCalledWith('home:progress', false);
   });
 
+  it('keeps account summary details deferred until the dedicated account summary stage is ready', () => {
+    useHomeScreenDeferredPanelsMock.mockImplementation(
+      (panelKey: string, isBlocked: boolean) =>
+        !isBlocked && panelKey !== 'home:account:summary',
+    );
+
+    renderHomeScreen();
+
+    expect(screen.getByText('Konto i połączenie')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Przygotowujemy status, profil ucznia i kolejne szczegóły konta na następny etap ekranu startowego.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText('Status: anonimowy')).toBeNull();
+    expect(screen.queryByText('Użytkownik: anonimowy')).toBeNull();
+    expect(screen.queryByText('Tryb logowania: learner-session')).toBeNull();
+    expect(screen.queryByText('API: http://localhost:3000 (env)')).toBeNull();
+    expect(
+      screen.getByText(
+        'Przygotowujemy formularz logowania ucznia na kolejny etap ekranu startowego. Możesz otworzyć go od razu.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText('Otwórz logowanie')).toBeTruthy();
+    expect(screen.queryByText('Login ucznia')).toBeNull();
+    expect(screen.queryByText('Hasło')).toBeNull();
+    expect(screen.queryByText('Zaloguj')).toBeNull();
+  });
+
   it('keeps extended account details deferred until the dedicated account stage is ready', () => {
     useHomeScreenDeferredPanelsMock.mockImplementation(
       (panelKey: string) => panelKey !== 'home:account:details',
@@ -981,6 +1196,27 @@ describe('HomeScreen', () => {
     });
     expect(screen.getByText('Hasło')).toBeTruthy();
     expect(screen.getByText('Zaloguj')).toBeTruthy();
+  });
+
+  it('keeps secondary navigation links deferred until the dedicated navigation stage is ready', () => {
+    useHomeScreenDeferredPanelsMock.mockImplementation(
+      (panelKey: string) => panelKey !== 'home:navigation:secondary',
+    );
+
+    renderHomeScreen();
+
+    expect(screen.getByText('Nawigacja')).toBeTruthy();
+    expect(screen.getByText('Lekcje')).toBeTruthy();
+    expect(screen.getByText('Trening')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Przygotowujemy plan dnia, wyniki i kolejne ścieżki nauki na następny etap ekranu startowego.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText('Plan dnia')).toBeNull();
+    expect(screen.queryByText('Wyniki')).toBeNull();
+    expect(screen.queryByText('Testy')).toBeNull();
+    expect(screen.queryByText('Pojedynki')).toBeNull();
   });
 
   it('keeps extended navigation links deferred until the dedicated navigation stage is ready', () => {

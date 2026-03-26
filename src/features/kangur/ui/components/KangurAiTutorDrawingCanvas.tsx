@@ -7,13 +7,11 @@ import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTu
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { KANGUR_WRAP_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { KangurDrawingCanvasSurface } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingCanvasSurface';
-import { renderKangurDrawingStrokes } from '@/features/kangur/ui/components/drawing-engine/render';
+import { redrawKangurCanvasStrokes } from '@/features/kangur/ui/components/drawing-engine/render';
 import {
   useKangurDrawingEngine,
 } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingEngine';
-import { syncKangurCanvasContext } from '@/features/kangur/ui/services/drawing-canvas';
 import { cn } from '@/features/kangur/shared/utils';
-import type { KangurDrawingStroke } from '@/features/kangur/ui/components/drawing-engine/types';
 
 import type { JSX } from 'react';
 
@@ -43,21 +41,6 @@ const STROKE_WIDTHS = [2, 4, 8] as const;
 const CANVAS_BG = '#ffffff';
 const CANVAS_WIDTH = 320;
 const CANVAS_HEIGHT = 240;
-
-function renderStrokes(
-  ctx: CanvasRenderingContext2D,
-  strokes: KangurDrawingStroke<DrawingStrokeMeta>[]
-): void {
-  ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-  ctx.fillStyle = CANVAS_BG;
-  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-  renderKangurDrawingStrokes(ctx, strokes, ({ meta }) => ({
-    compositeOperation: meta.isEraser ? 'destination-out' : 'source-over',
-    lineWidth: meta.width,
-    strokeStyle: meta.isEraser ? 'rgba(0,0,0,1)' : meta.color,
-  }));
-}
 
 export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX.Element {
   const tutorContent = useKangurAiTutorContent();
@@ -100,11 +83,18 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
     logicalWidth: 320,
     minPointDistance,
     redraw: ({ activeStroke, strokes }) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = syncKangurCanvasContext(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
-      if (!ctx) return;
-      renderStrokes(ctx, activeStroke ? [...strokes, activeStroke] : strokes);
+      redrawKangurCanvasStrokes({
+        backgroundFill: CANVAS_BG,
+        canvas: canvasRef.current,
+        logicalHeight: CANVAS_HEIGHT,
+        logicalWidth: CANVAS_WIDTH,
+        resolveStyle: ({ meta }) => ({
+          compositeOperation: meta.isEraser ? 'destination-out' : 'source-over',
+          lineWidth: meta.width,
+          strokeStyle: meta.isEraser ? 'rgba(0,0,0,1)' : meta.color,
+        }),
+        strokes: activeStroke ? [...strokes, activeStroke] : strokes,
+      });
     },
     shouldCommitStroke: (stroke) => stroke.points.length >= 2,
     touchLockEnabled: isCoarsePointer,

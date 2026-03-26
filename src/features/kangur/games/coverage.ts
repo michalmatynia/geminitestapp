@@ -33,6 +33,15 @@ export type KangurGameLibraryCoverageGroup = {
   uncoveredComponentIds: KangurLessonComponentId[];
 };
 
+export type KangurGameLibraryCoverageStatusMap = Partial<
+  Record<KangurLessonComponentId, KangurGameLibraryLessonCoverageStatus>
+>;
+
+export type KangurGameLibraryCoverage = {
+  groups: KangurGameLibraryCoverageGroup[];
+  statusMap: KangurGameLibraryCoverageStatusMap;
+};
+
 const getUniqueLessonComponentIds = (
   ...groups: ReadonlyArray<readonly KangurLessonComponentId[]>
 ): KangurLessonComponentId[] => Array.from(new Set(groups.flat()));
@@ -176,6 +185,36 @@ export const resolveKangurGameLibraryLessonCoverageStatus = (
   return 'lesson_only';
 };
 
+const getKangurGameLibraryCoverageStatusPriority = (
+  status: KangurGameLibraryLessonCoverageStatus
+): number => {
+  switch (status) {
+    case 'launchable':
+      return 3;
+    case 'selector_fallback':
+      return 2;
+    case 'library_backed':
+      return 1;
+    case 'lesson_only':
+    default:
+      return 0;
+  }
+};
+
+const getKangurGameLibraryCoverageStatusForGroup = (
+  groupId: KangurGameLibraryCoverageGroupId
+): Exclude<KangurGameLibraryLessonCoverageStatus, 'lesson_only'> => {
+  switch (groupId) {
+    case 'launchable':
+      return 'launchable';
+    case 'selector_fallback':
+      return 'selector_fallback';
+    case 'library_backed':
+    default:
+      return 'library_backed';
+  }
+};
+
 const createKangurGameLibraryCoverageGroup = (
   id: KangurGameLibraryCoverageGroupId,
   componentIds: readonly KangurLessonComponentId[],
@@ -235,3 +274,43 @@ export const createKangurGameLibraryCoverageGroups = (
     catalogEntries
   ),
 ];
+
+export const createKangurGameLibraryCoverageStatusMap = (
+  groups: readonly KangurGameLibraryCoverageGroup[]
+): KangurGameLibraryCoverageStatusMap => {
+  const statusMap = new Map<KangurLessonComponentId, KangurGameLibraryLessonCoverageStatus>();
+
+  groups.forEach((group) => {
+    const status = getKangurGameLibraryCoverageStatusForGroup(group.id);
+
+    group.coveredComponentIds.forEach((componentId) => {
+      const currentStatus = statusMap.get(componentId);
+
+      if (
+        !currentStatus ||
+        getKangurGameLibraryCoverageStatusPriority(status) >
+          getKangurGameLibraryCoverageStatusPriority(currentStatus)
+      ) {
+        statusMap.set(componentId, status);
+      }
+    });
+  });
+
+  return Object.fromEntries(statusMap) as KangurGameLibraryCoverageStatusMap;
+};
+
+export const getKangurGameLibraryLessonCoverageStatusFromMap = (
+  componentId: KangurLessonComponentId,
+  statusMap: KangurGameLibraryCoverageStatusMap
+): KangurGameLibraryLessonCoverageStatus => statusMap[componentId] ?? 'lesson_only';
+
+export const createKangurGameLibraryCoverage = (
+  catalogEntries: KangurGameCatalogEntry[]
+): KangurGameLibraryCoverage => {
+  const groups = createKangurGameLibraryCoverageGroups(catalogEntries);
+
+  return {
+    groups,
+    statusMap: createKangurGameLibraryCoverageStatusMap(groups),
+  };
+};

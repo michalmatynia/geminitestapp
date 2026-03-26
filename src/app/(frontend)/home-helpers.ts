@@ -98,9 +98,14 @@ const readMongoFrontPageSetting = async (): Promise<string | null> => {
     if (normalizedSetting) {
       return normalizedSetting;
     }
-    console.warn(
-      '[home-helpers] No "front_page_app" setting found in MongoDB — defaulting to CMS. ' +
-        'Set the setting via Admin Settings to change the front page app.'
+    void import('@/shared/lib/observability/system-logger').then(({ logSystemEvent }) =>
+      logSystemEvent({
+        level: 'warn',
+        message:
+          'No "front_page_app" setting found in MongoDB — defaulting to CMS. Set the setting via Admin Settings to change the front page app.',
+        service: 'frontend.home-helpers',
+        source: 'frontend.home-helpers',
+      })
     );
   } catch (error) {
     if (isTransientMongoFrontPageReadError(error)) {

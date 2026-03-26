@@ -23,6 +23,7 @@ vi.mock('@/features/kangur/shared/utils/observability/error-system-client', () =
 
 import {
   clearKangurClientObservabilityContext,
+  isExpectedKangurClientError,
   isRecoverableKangurClientFetchError,
   logKangurClientError,
   setKangurClientObservabilityContext,
@@ -68,6 +69,32 @@ describe('kangur client observability', () => {
     expect(onErrorMock).toHaveBeenCalledWith(authError);
   });
 
+  it('skips system capture and client reporting for expected API errors by default', async () => {
+    const validationError = Object.assign(
+      new Error('Please review the highlighted fields and try again.'),
+      { status: 400 }
+    );
+
+    await expect(
+      withKangurClientError(
+        {
+          source: 'kangur.games',
+          action: 'fetch-library-coverage',
+          description: 'Loads the Kangur game library coverage groups.',
+        },
+        async () => {
+          throw validationError;
+        },
+        {
+          fallback: null,
+        }
+      )
+    ).resolves.toBeNull();
+
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(logClientErrorMock).not.toHaveBeenCalled();
+  });
+
   it('skips sync system capture and client reporting when shouldReport returns false', () => {
     const authError = Object.assign(new Error('Authentication required'), { status: 401 });
     const onErrorMock = vi.fn();
@@ -93,6 +120,32 @@ describe('kangur client observability', () => {
     expect(captureExceptionMock).not.toHaveBeenCalled();
     expect(logClientErrorMock).not.toHaveBeenCalled();
     expect(onErrorMock).toHaveBeenCalledWith(authError);
+  });
+
+  it('skips sync system capture and client reporting for expected API errors by default', () => {
+    const validationError = Object.assign(
+      new Error('Please review the highlighted fields and try again.'),
+      { status: 400 }
+    );
+
+    expect(
+      withKangurClientErrorSync(
+        {
+          source: 'kangur.games',
+          action: 'resolve-library-coverage',
+          description: 'Resolves the Kangur game library coverage payload.',
+        },
+        () => {
+          throw validationError;
+        },
+        {
+          fallback: 'fallback',
+        }
+      )
+    ).toBe('fallback');
+
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(logClientErrorMock).not.toHaveBeenCalled();
   });
 
   it('still captures and reports unexpected errors', async () => {
@@ -135,6 +188,30 @@ describe('kangur client observability', () => {
     ).toBe(true);
     expect(isRecoverableKangurClientFetchError(new Error('Failed to fetch'))).toBe(false);
     expect(isRecoverableKangurClientFetchError(new Error('Unexpected failure'))).toBe(false);
+  });
+
+  it('treats 4xx API-style errors as expected client errors', () => {
+    expect(
+      isExpectedKangurClientError(
+        Object.assign(new Error('Please review the highlighted fields and try again.'), {
+          status: 400,
+        })
+      )
+    ).toBe(true);
+    expect(
+      isExpectedKangurClientError(
+        Object.assign(new Error('Your session has expired.'), {
+          status: 401,
+        })
+      )
+    ).toBe(true);
+    expect(
+      isExpectedKangurClientError(
+        Object.assign(new Error('Unexpected failure'), {
+          status: 500,
+        })
+      )
+    ).toBe(false);
   });
 
   it('logs client errors with Kangur default context tags', () => {

@@ -15,7 +15,7 @@ import {
   KANGUR_SUBJECTS,
 } from '@/features/kangur/lessons/lesson-catalog';
 import {
-  resolveKangurGameLibraryLessonCoverageStatus,
+  getKangurGameLibraryLessonCoverageStatusFromMap,
   type KangurGameLibraryLessonCoverageStatus,
 } from '@/features/kangur/games';
 import {
@@ -40,12 +40,11 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
-import { useKangurGameCatalog } from '@/features/kangur/ui/hooks/useKangurGameCatalog';
 import { useKangurGameCatalogFacets } from '@/features/kangur/ui/hooks/useKangurGameCatalogFacets';
 import { useKangurGameEngineCatalog } from '@/features/kangur/ui/hooks/useKangurGameEngineCatalog';
 import { useKangurGameEngineCatalogFacets } from '@/features/kangur/ui/hooks/useKangurGameEngineCatalogFacets';
 import { useKangurGameLibraryCoverage } from '@/features/kangur/ui/hooks/useKangurGameLibraryCoverage';
-import { useKangurGameVariants } from '@/features/kangur/ui/hooks/useKangurGameVariants';
+import { useKangurGameLibraryOverview } from '@/features/kangur/ui/hooks/useKangurGameLibraryOverview';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import {
@@ -58,12 +57,8 @@ import {
   type GamesLibraryFilterState,
 } from '@/features/kangur/ui/pages/GamesLibrary.filters';
 import {
-  createGamesLibraryCohortGroups,
   createGamesLibraryDrawingGroupsFromEngineGroups,
   createGamesLibraryImplementationGroupsFromEngineGroups,
-  createGamesLibraryMetrics,
-  createGamesLibrarySubjectGroups,
-  createGamesLibraryVariantGroups,
 } from '@/features/kangur/ui/pages/GamesLibrary.view-model';
 import {
   buildKangurGameLaunchHref,
@@ -232,22 +227,31 @@ export default function GamesLibrary(): React.JSX.Element {
   );
   const deferredFilters = useDeferredValue(filters);
   const catalogFilter = buildGamesLibraryCatalogFilter(deferredFilters);
-  const catalogQuery = useKangurGameCatalog(catalogFilter);
+  const overviewQuery = useKangurGameLibraryOverview(catalogFilter);
   const coverageQuery = useKangurGameLibraryCoverage();
   const engineCatalogQuery = useKangurGameEngineCatalog(catalogFilter);
   const engineCatalogFacetsQuery = useKangurGameEngineCatalogFacets(catalogFilter);
   const engineCatalogFilterOptionsQuery = useKangurGameEngineCatalogFacets();
   const facetsQuery = useKangurGameCatalogFacets();
-  const variantsQuery = useKangurGameVariants(catalogFilter);
-  const catalogEntries = catalogQuery.data ?? [];
-  const coverageGroups = coverageQuery.data ?? [];
+  const overview = overviewQuery.data;
+  const coverageResource = coverageQuery.data;
+  const coverageGroups = coverageResource?.groups ?? [];
+  const coverageStatusMap = coverageResource?.statusMap ?? {};
   const engineGroups = engineCatalogQuery.data ?? [];
   const engineCatalogFacets = engineCatalogFacetsQuery.data;
   const engineCatalogFilterOptions = engineCatalogFilterOptionsQuery.data;
   const catalogFacets = facetsQuery.data;
-  const variantEntries = variantsQuery.data ?? [];
+  const metrics = overview?.metrics ?? {
+    engineCount: 0,
+    lessonLinkedCount: 0,
+    variantCount: 0,
+    visibleGameCount: 0,
+  };
+  const groupedGames = overview?.subjectGroups ?? [];
+  const cohortGroups = overview?.cohortGroups ?? [];
+  const variantGroups = overview?.variantGroups ?? [];
   const hasActiveFilters = hasActiveGamesLibraryFilters(filters);
-  const visibleGameCount = catalogEntries.length;
+  const visibleGameCount = metrics.visibleGameCount;
   const totalGameCount = catalogFacets?.gameCount ?? visibleGameCount;
   const currentGamesLibraryHref =
     requestedHref ??
@@ -307,12 +311,8 @@ export default function GamesLibrary(): React.JSX.Element {
     );
   }, [searchParams]);
 
-  const metrics = createGamesLibraryMetrics(catalogEntries, variantEntries);
-  const groupedGames = createGamesLibrarySubjectGroups(catalogEntries);
-  const cohortGroups = createGamesLibraryCohortGroups(catalogEntries, variantEntries);
   const drawingGroups = createGamesLibraryDrawingGroupsFromEngineGroups(engineGroups);
   const implementationGroups = createGamesLibraryImplementationGroupsFromEngineGroups(engineGroups);
-  const variantGroups = createGamesLibraryVariantGroups(variantEntries);
 
   useKangurRoutePageReady({
     pageKey: 'GamesLibrary',
@@ -1414,7 +1414,7 @@ export default function GamesLibrary(): React.JSX.Element {
             </div>
             <div className='text-sm [color:var(--kangur-page-muted-text)]'>
               {translations('variantGroupsDescription', {
-                count: variantEntries.length,
+                count: metrics.variantCount,
                 surfaceCount: variantGroups.length,
               })}
             </div>
@@ -1671,8 +1671,10 @@ export default function GamesLibrary(): React.JSX.Element {
                       {game.lessonComponentIds.length > 0 ? (
                         <div className='flex flex-wrap gap-2'>
                           {game.lessonComponentIds.map((componentId, index) => {
-                            const status =
-                              resolveKangurGameLibraryLessonCoverageStatus(componentId);
+                            const status = getKangurGameLibraryLessonCoverageStatusFromMap(
+                              componentId,
+                              coverageStatusMap
+                            );
                             return (
                               <KangurStatusChip
                                 key={`${game.id}:${componentId}`}

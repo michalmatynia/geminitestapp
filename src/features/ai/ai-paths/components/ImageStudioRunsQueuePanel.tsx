@@ -47,11 +47,6 @@ const getDispatchModeBadge = (
     ? { status: 'Inline', variant: 'error' }
     : { status: 'Redis', variant: 'success' };
 
-type ImageStudioRunsHeaderActionButtonProps = Pick<
-  React.ComponentProps<typeof Button>,
-  'children' | 'disabled' | 'onClick'
->;
-
 function ImageStudioRunsStatusCell({
   run,
 }: {
@@ -80,18 +75,6 @@ function ImageStudioRunsRuntimeCell({
       size='sm'
       className='font-medium'
     />
-  );
-}
-
-function ImageStudioRunsHeaderActionButton({
-  children,
-  disabled,
-  onClick,
-}: ImageStudioRunsHeaderActionButtonProps): React.JSX.Element {
-  return (
-    <Button type='button' variant='outline' size='xs' disabled={disabled} onClick={onClick}>
-      {children}
-    </Button>
   );
 }
 
@@ -169,14 +152,17 @@ export function ImageStudioRunsQueuePanel(): React.JSX.Element {
         description='Queue-backed generation runs persisted from Image Studio.'
         headerActions={
           <div className='flex items-center gap-2'>
-            <ImageStudioRunsHeaderActionButton
+            <Button
+              type='button'
+              variant='outline'
+              size='xs'
               onClick={() => setAutoRefreshEnabled((prev) => !prev)}
             >
               {autoRefreshEnabled ? 'Auto-refresh on' : 'Auto-refresh off'}
-            </ImageStudioRunsHeaderActionButton>
-            <ImageStudioRunsHeaderActionButton onClick={refetch} disabled={isFetching}>
+            </Button>
+            <Button type='button' variant='outline' size='xs' onClick={refetch} disabled={isFetching}>
               {isFetching ? 'Refreshing...' : 'Refresh'}
-            </ImageStudioRunsHeaderActionButton>
+            </Button>
           </div>
         }
         columns={columns}

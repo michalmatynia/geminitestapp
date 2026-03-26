@@ -17,11 +17,6 @@ import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsVali
 import { ValidationActionButton } from './ValidationActionButton';
 import { ValidationMetaBadge } from './ValidationMetaBadge';
 
-type ValidationHeaderStatusIndicatorProps = {
-  status: string;
-  variant?: StatusVariant;
-};
-
 type ValidationStatusIndicator = {
   key: string;
   status: string;
@@ -55,13 +50,6 @@ const getDocsSyncStatusVariant = (
 const createValidationStatusIndicator = (
   indicator: ValidationStatusIndicator
 ): ValidationStatusIndicator => indicator;
-
-function ValidationHeaderStatusIndicator({
-  status,
-  variant,
-}: ValidationHeaderStatusIndicatorProps): React.JSX.Element {
-  return <StatusBadge status={status} variant={variant} size='sm' />;
-}
 
 function ValidationHeaderFocusBadge({
   label,
@@ -171,10 +159,11 @@ export function ValidationHeader(): React.JSX.Element {
         </div>
         <div className='mt-3 flex flex-wrap items-center gap-2'>
           {statusIndicators.map((indicator) => (
-            <ValidationHeaderStatusIndicator
+            <StatusBadge
               key={indicator.key}
               status={indicator.status}
               variant={indicator.variant}
+              size='sm'
             />
           ))}
           {focusNodeType ? (

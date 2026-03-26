@@ -8,6 +8,8 @@ import {
   renderKangurDragPreview,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
 import { KangurInfoCard } from '@/features/kangur/ui/design/primitives';
+import { kangurInfoCardVariants } from '@/features/kangur/ui/design/primitives/KangurInfoCard';
+import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { usePointerDrag } from './PointerDragProvider';
 import type { DraggableBallProps, BallProps, SlotZoneProps, BallItem } from './types';
@@ -117,6 +119,7 @@ export function SlotZone({
   const dragDisabled = checked;
   const selectedId = selectedBallId;
   const handleSelectBall = onSelectBall;
+  const sizeClass = isCoarsePointer ? 'h-12 w-12 text-base' : 'h-9 w-9 text-sm';
 
   return (
     <Droppable droppableId={id} direction='horizontal'>
@@ -132,37 +135,81 @@ export function SlotZone({
             <p className='mb-1 text-center text-xs [color:var(--kangur-page-muted-text)]'>
               {label}
             </p>
-            <KangurInfoCard
+            <div
               ref={provided.innerRef}
-              accent={surface.accent}
               className={cn(
+                kangurInfoCardVariants({ tone: surface.tone, padding: 'sm' }),
+                surface.tone === 'accent' &&
+                  cn(
+                    KANGUR_ACCENT_STYLES[surface.accent].activeCard,
+                    KANGUR_ACCENT_STYLES[surface.accent].activeText
+                  ),
+                'kangur-panel-shell',
                 surface.className,
                 'min-h-[52px] min-w-[60px] w-full max-w-[160px] touch-manipulation select-none transition',
                 isCoarsePointer && 'min-h-[88px] min-w-[104px]',
                 selectedId && 'bg-amber-50/60'
               )}
               data-testid={slotZoneTestId}
-              padding='sm'
-              tone={surface.tone}
               onClick={() => {
                 if (!isCoarsePointer || checked || !selectedId || !onActivateZone) return;
                 onActivateZone();
               }}
               {...provided.droppableProps}
             >
-              {items.map((ball, i) => (
-                <DraggableBall
+              {items.map((ball, index) => (
+                <Draggable
                   key={ball.id}
-                  ball={ball}
-                  index={i}
+                  draggableId={ball.id}
+                  index={index}
                   isDragDisabled={dragDisabled}
-                  small
-                  isSelected={selectedId === ball.id}
-                  onSelect={handleSelectBall ? () => handleSelectBall(ball.id) : undefined}
-                />
+                  disableInteractiveElementBlocking
+                >
+                  {(draggableProvided, snapshot) => {
+                    const isSelected = selectedId === ball.id;
+                    const content = (
+                      <button
+                        type='button'
+                        ref={draggableProvided.innerRef}
+                        {...draggableProvided.draggableProps}
+                        {...draggableProvided.dragHandleProps}
+                        style={getKangurMobileDragHandleStyle(
+                          draggableProvided.draggableProps.style,
+                          isCoarsePointer
+                        )}
+                        className={cn(
+                          'touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+                          isCoarsePointer && 'active:scale-[0.98]',
+                          isSelected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white',
+                          dragDisabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'
+                        )}
+                        aria-label={`Piłka: ${ball.num}`}
+                        aria-pressed={isSelected}
+                        disabled={dragDisabled}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          if (dragDisabled || !handleSelectBall) return;
+                          handleSelectBall(ball.id);
+                        }}
+                      >
+                        <div
+                          className={cn(
+                            `${sizeClass} rounded-full ${ball.color} flex items-center justify-center shadow-md select-none transition`,
+                            isSelected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white'
+                          )}
+                        >
+                          <span className='text-white font-extrabold'>{ball.num}</span>
+                        </div>
+                      </button>
+                    );
+
+                    return renderKangurDragPreview(content, snapshot.isDragging);
+                  }}
+                </Draggable>
               ))}
               {provided.placeholder}
-            </KangurInfoCard>
+            </div>
           </div>
         );
       }}
@@ -189,6 +236,7 @@ export function PointerDraggableBall({
 }: PointerDraggableBallProps): React.JSX.Element {
   const { dragState, startDrag } = usePointerDrag();
   const isDragging = dragState?.ballId === ball.id;
+  const sizeClass = small ? 'h-12 w-12 text-base' : 'h-16 w-16 text-xl';
 
   const handlePointerDown = useCallback(
     (event: React.PointerEvent<HTMLButtonElement>) => {
@@ -219,7 +267,13 @@ export function PointerDraggableBall({
       disabled={isDragDisabled}
       onPointerDown={handlePointerDown}
     >
-      <Ball ball={ball} small={small} isCoarsePointer />
+      <div
+        className={cn(
+          `${sizeClass} rounded-full ${ball.color} flex items-center justify-center shadow-md select-none transition`
+        )}
+      >
+        <span className='text-white font-extrabold'>{ball.num}</span>
+      </div>
     </button>
   );
 }

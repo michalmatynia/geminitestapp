@@ -30,15 +30,14 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/features/kangur/ui/FrontendPublicOwnerKangurShell', () => ({
   FrontendPublicOwnerKangurShell: ({
-    embedded,
-    initialMode,
-    initialThemeSettings,
+    initialAppearance,
   }: {
-    embedded?: boolean;
-    initialMode?: string;
-    initialThemeSettings?: Record<string, unknown>;
+    initialAppearance?: {
+      mode?: string;
+      themeSettings?: Record<string, unknown>;
+    };
   }) => {
-    frontendPublicOwnerKangurShellMock({ embedded, initialMode, initialThemeSettings });
+    frontendPublicOwnerKangurShellMock({ initialAppearance });
     return <div data-testid='kangur-feature-route-shell'>Kangur route shell</div>;
   },
 }));
@@ -112,9 +111,10 @@ describe('FrontendPublicOwnerShell', () => {
     expect(screen.queryByTestId('frontend-children')).not.toBeInTheDocument();
     await waitFor(() => {
       expect(frontendPublicOwnerKangurShellMock).toHaveBeenCalledWith({
-        embedded: false,
-        initialMode: undefined,
-        initialThemeSettings: undefined,
+        initialAppearance: {
+          mode: undefined,
+          themeSettings: undefined,
+        },
       });
     });
   });
@@ -129,9 +129,10 @@ describe('FrontendPublicOwnerShell', () => {
     expect(await screen.findByTestId('kangur-feature-route-shell')).toBeInTheDocument();
     await waitFor(() => {
       expect(frontendPublicOwnerKangurShellMock).toHaveBeenCalledWith({
-        embedded: true,
-        initialMode: undefined,
-        initialThemeSettings: undefined,
+        initialAppearance: {
+          mode: undefined,
+          themeSettings: undefined,
+        },
       });
     });
   });
@@ -178,9 +179,10 @@ describe('FrontendPublicOwnerShell', () => {
     expect(await screen.findByTestId('kangur-feature-route-shell')).toBeInTheDocument();
     await waitFor(() => {
       expect(frontendPublicOwnerKangurShellMock).toHaveBeenCalledWith({
-        embedded: false,
-        initialMode: undefined,
-        initialThemeSettings: undefined,
+        initialAppearance: {
+          mode: undefined,
+          themeSettings: undefined,
+        },
       });
     });
   });

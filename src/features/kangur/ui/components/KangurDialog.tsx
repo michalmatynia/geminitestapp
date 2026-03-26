@@ -2,8 +2,12 @@
 
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 
-import { KangurDialogShell } from '@/features/kangur/ui/components/KangurDialogShell';
+import {
+  KANGUR_DIALOG_CONTENT_BASE_CLASSNAME,
+  KANGUR_DIALOG_OVERLAY_BASE_CLASSNAME,
+} from '@/features/kangur/ui/components/KangurDialogShell';
 import { cn } from '@/features/kangur/shared/utils';
+import { RadixOverlayContentShell } from '@/shared/ui/radix-overlay-content-shell';
 
 import type { ComponentPropsWithoutRef, ReactNode, CSSProperties } from 'react';
 
@@ -89,9 +93,17 @@ export function KangurDialog({
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange} modal={modal}>
-      <KangurDialogShell overlayProps={mergedOverlayProps} contentProps={mergedContentProps}>
+      <RadixOverlayContentShell
+        Portal={DialogPrimitive.Portal}
+        Overlay={DialogPrimitive.Overlay}
+        Content={DialogPrimitive.Content}
+        overlayBaseClassName={KANGUR_DIALOG_OVERLAY_BASE_CLASSNAME}
+        contentBaseClassName={KANGUR_DIALOG_CONTENT_BASE_CLASSNAME}
+        overlayProps={mergedOverlayProps}
+        contentProps={mergedContentProps}
+      >
         {children}
-      </KangurDialogShell>
+      </RadixOverlayContentShell>
     </DialogPrimitive.Root>
   );
 }

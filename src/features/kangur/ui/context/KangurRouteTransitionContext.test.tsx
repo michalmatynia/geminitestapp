@@ -201,6 +201,78 @@ describe('KangurRouteTransitionProvider', () => {
     expect(getKangurPendingRouteLoadingSnapshot()).toBeNull();
   });
 
+  it('downgrades raw /kangur/games transition targets to the fallback page for non-super-admin users', async () => {
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'admin@example.com',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    renderRouteTransitionHarness({
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      targetHref: '/kangur/games',
+      targetPageKey: 'GamesLibrary',
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
+    });
+
+    expect(screen.getByTestId('route-transition-phase')).toHaveTextContent('pending');
+    expect(screen.getByTestId('route-transition-page-key')).toHaveTextContent('Game');
+    expect(screen.getByTestId('route-transition-skeleton-variant')).toHaveTextContent(
+      'game-home'
+    );
+    expect(getKangurPendingRouteLoadingSnapshot()).toMatchObject({
+      fromHref: '/kangur',
+      href: '/kangur/games',
+      pageKey: 'Game',
+      skeletonVariant: 'game-home',
+    });
+  });
+
+  it('keeps raw /kangur/games transition targets intact for exact super admins', async () => {
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'super-admin@example.com',
+          role: 'super_admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    renderRouteTransitionHarness({
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      targetHref: '/kangur/games',
+      targetPageKey: 'GamesLibrary',
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
+    });
+
+    expect(screen.getByTestId('route-transition-phase')).toHaveTextContent('pending');
+    expect(screen.getByTestId('route-transition-page-key')).toHaveTextContent('GamesLibrary');
+    expect(screen.getByTestId('route-transition-skeleton-variant')).toHaveTextContent(
+      'lessons-library'
+    );
+    expect(getKangurPendingRouteLoadingSnapshot()).toMatchObject({
+      fromHref: '/kangur',
+      href: '/kangur/games',
+      pageKey: 'GamesLibrary',
+      skeletonVariant: 'lessons-library',
+    });
+  });
+
   it('records route transition performance marks for start, commit, ready, and complete', async () => {
     const performanceMarkSpy = vi
       .spyOn(window.performance, 'mark')

@@ -6,7 +6,8 @@ import type { ReactNode } from 'react';
 import { KANGUR_WRAP_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
 
-import { KangurManagedDrawingUtilityActions } from './KangurManagedDrawingUtilityActions';
+import { KangurDrawingHistoryActions } from './KangurDrawingHistoryActions';
+import { KangurDrawingSnapshotActions } from './KangurDrawingSnapshotActions';
 import type { UseKangurFreeformDrawingToolsResult } from './useKangurFreeformDrawingTools';
 
 type KangurFreeformToolbarToolState = Pick<
@@ -109,6 +110,13 @@ export function KangurDrawingFreeformToolbar({
 }: KangurDrawingFreeformToolbarProps): React.JSX.Element {
   const { colors, isEraser, selectedColor, selectedWidth, strokeWidths } = toolState;
   const { selectColor, selectEraser, selectPen, selectWidth } = toolActions;
+  const compactActionButtonClassName = [
+    '!min-w-0 !gap-0 rounded-full',
+    '[color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]',
+    'hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))]',
+    'hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]',
+    isCoarsePointer ? 'h-11 w-11' : 'h-6 w-6',
+  ].join(' ');
 
   return (
     <div
@@ -186,18 +194,32 @@ export function KangurDrawingFreeformToolbar({
 
       <div className='mx-1 h-4 w-px [background:var(--kangur-soft-card-border)]' />
 
-      <KangurManagedDrawingUtilityActions
-        canExport={canExport}
-        canRedo={canRedo}
-        canUndo={canUndo}
-        exportLabel={exportLabel}
+      <KangurDrawingHistoryActions
+        buttonClassName={compactActionButtonClassName}
+        className='flex items-center gap-1'
+        display='icon'
+        iconClassName='h-3 w-3'
         isCoarsePointer={isCoarsePointer}
-        layoutPreset='freeform-toolbar'
-        onExport={onExport}
         onRedo={onRedo}
         onUndo={onUndo}
+        redoDisabled={!canRedo}
         redoLabel={redoLabel}
+        size='sm'
+        undoDisabled={!canUndo}
         undoLabel={undoLabel}
+        variant='ghost'
+      />
+      <KangurDrawingSnapshotActions
+        buttonClassName={compactActionButtonClassName}
+        className='flex items-center'
+        display='icon'
+        exportDisabled={!canExport}
+        exportLabel={exportLabel}
+        iconClassName='h-3 w-3'
+        isCoarsePointer={isCoarsePointer}
+        onExport={onExport}
+        size='sm'
+        variant='ghost'
       />
 
       <ToolbarIconButton

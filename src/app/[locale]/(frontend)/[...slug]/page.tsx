@@ -2,6 +2,8 @@ import { getTranslations } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import { JSX } from 'react';
 
+import { auth } from '@/features/auth/server';
+import { canAccessKangurSlugSegments } from '@/features/kangur/config/page-access';
 import { getKangurConfiguredLaunchTarget } from '@/features/kangur/server/launch-route';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
@@ -70,6 +72,11 @@ export default async function LocalizedCmsSlugPage({
   const resolvedLocale = normalizeSiteLocale(locale);
 
   if (await isKangurFrontPageSelected()) {
+    const session = await auth();
+    if (!canAccessKangurSlugSegments(slug, session)) {
+      notFound();
+    }
+
     const resolvedSearchParams = searchParams ? await searchParams : undefined;
     const launchTarget = await getKangurConfiguredLaunchTarget(slug, resolvedSearchParams);
     if (launchTarget.href !== launchTarget.fallbackHref) {

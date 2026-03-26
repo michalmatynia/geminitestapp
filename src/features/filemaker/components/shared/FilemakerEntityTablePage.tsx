@@ -60,13 +60,6 @@ function FilemakerEntityTableFilters({
   );
 }
 
-function FilemakerEntityTableEmptyState({
-  emptyTitle,
-  emptyDescription,
-}: Pick<FilemakerEntityTableRuntimeValue, 'emptyTitle' | 'emptyDescription'>): React.JSX.Element {
-  return <EmptyState title={emptyTitle} description={emptyDescription} />;
-}
-
 export function FilemakerEntityTablePage<TData>(
   props: FilemakerEntityTablePageProps<TData>
 ): React.JSX.Element {
@@ -102,12 +95,7 @@ export function FilemakerEntityTablePage<TData>(
         columns={columns}
         data={data}
         isLoading={isLoading}
-        emptyState={
-          <FilemakerEntityTableEmptyState
-            emptyTitle={emptyTitle}
-            emptyDescription={emptyDescription}
-          />
-        }
+        emptyState={<EmptyState title={emptyTitle} description={emptyDescription} />}
       />
     </div>
   );

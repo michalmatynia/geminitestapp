@@ -12,7 +12,12 @@ const { logKangurClientErrorMock, withKangurClientError, withKangurClientErrorSy
     };
   });
 
+const { sessionMock } = vi.hoisted(() => ({
+  sessionMock: vi.fn(),
+}));
+
 const kangurFeaturePageMock = vi.fn();
+const kangurRoutingProviderMock = vi.fn();
 const kangurFeaturePageState = {
   slug: [] as string[],
   basePath: '/',
@@ -65,10 +70,32 @@ vi.mock('@/features/kangur/ui/KangurFeaturePage', () => ({
   KangurFeaturePageShell: () => <KangurFeaturePageMock {...kangurFeaturePageState} />,
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
+  KangurRoutingProvider: ({
+    children,
+    ...props
+  }: {
+    pageKey?: string | null;
+    requestedPath?: string;
+    requestedHref?: string;
+    basePath: string;
+    embedded: boolean;
+    children: ReactNode;
+  }) => {
+    kangurRoutingProviderMock(props);
+    return <div data-testid='kangur-routing-provider'>{children}</div>;
+  },
+  useOptionalKangurRouting: () => null,
+}));
+
 vi.mock('@/features/kangur/ui/KangurSurfaceClassSync', () => ({
   KangurSurfaceClassSync: ({ children }: { children: ReactNode }) => (
     <div data-testid='kangur-surface-sync'>{children}</div>
   ),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useOptionalNextAuthSession', () => ({
+  useOptionalNextAuthSession: () => sessionMock(),
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({
@@ -82,6 +109,10 @@ import { KangurPublicApp } from '@/features/kangur/ui/KangurPublicApp';
 describe('KangurPublicApp', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
     kangurFeaturePageState.slug = [];
     kangurFeaturePageState.basePath = '/';
     kangurFeaturePageState.embedded = false;
@@ -105,6 +136,13 @@ describe('KangurPublicApp', () => {
     expect(screen.getByTestId('kangur-feature-page')).toBeInTheDocument();
     expect(kangurFeaturePageMock).toHaveBeenCalledWith({
       slug: ['lessons'],
+      basePath: '/',
+      embedded: false,
+    });
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'Lessons',
+      requestedPath: '/lessons',
+      requestedHref: '/lessons',
       basePath: '/',
       embedded: false,
     });
@@ -138,5 +176,49 @@ describe('KangurPublicApp', () => {
     );
 
     consoleErrorSpy.mockRestore();
+  });
+
+  it('sanitizes blocked GamesLibrary routes before they reach shared routing state', () => {
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'admin@example.com',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(<KangurPublicApp slug={['games']} basePath='/' />);
+
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'Game',
+      requestedPath: '/',
+      requestedHref: '/',
+      basePath: '/',
+      embedded: false,
+    });
+  });
+
+  it('keeps GamesLibrary routes for exact super admins', () => {
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'super-admin@example.com',
+          role: 'super_admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(<KangurPublicApp slug={['games']} basePath='/' />);
+
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'GamesLibrary',
+      requestedPath: '/games',
+      requestedHref: '/games',
+      basePath: '/',
+      embedded: false,
+    });
   });
 });

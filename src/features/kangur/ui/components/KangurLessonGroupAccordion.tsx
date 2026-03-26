@@ -3,7 +3,10 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useId, useState, type HTMLAttributes, type ReactNode } from 'react';
 
-import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
+import {
+  kangurPanelVariants,
+  KANGUR_GLASS_PANEL_SURFACE_CLASSNAMES,
+} from '@/features/kangur/ui/design/primitives/KangurPanel';
 import { KANGUR_LESSON_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { cn } from '@/features/kangur/shared/utils';
@@ -43,11 +46,14 @@ export function KangurLessonGroupAccordion({
   } = contentProps ?? {};
 
   return (
-    <KangurGlassPanel
-      className={cn('w-full kangur-lesson-group-accordion', className)}
+    <div
       data-state={isExpanded ? 'open' : 'closed'}
-      padding='lg'
-      surface='playField'
+      className={cn(
+        kangurPanelVariants({ padding: 'lg', variant: 'soft' }),
+        KANGUR_GLASS_PANEL_SURFACE_CLASSNAMES.playField,
+        'kangur-panel-shell w-full kangur-lesson-group-accordion',
+        className
+      )}
     >
       <motion.button
         id={triggerId}
@@ -97,6 +103,6 @@ export function KangurLessonGroupAccordion({
           </motion.div>
         ) : null}
       </AnimatePresence>
-    </KangurGlassPanel>
+    </div>
   );
 }

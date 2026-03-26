@@ -35,84 +35,6 @@ type AppModalProps = {
   bodyClassName?: string | undefined;
 };
 
-type AppModalDefaultHeaderProps = {
-  title: React.ReactNode;
-  subtitle?: React.ReactNode;
-  titleHidden: boolean;
-  headerActions?: React.ReactNode;
-  showClose: boolean;
-  canClose: boolean;
-  onClose: () => void;
-};
-
-type AppModalDialogContentShellProps = {
-  title: React.ReactNode;
-  dialogDescription: React.ReactNode;
-  children: React.ReactNode;
-  modalContentClassName?: string;
-  onInteractOutside: (event: Event) => void;
-  onEscapeKeyDown: (event: KeyboardEvent) => void;
-};
-
-function AppModalDefaultHeader({
-  title,
-  subtitle,
-  titleHidden,
-  headerActions,
-  showClose,
-  canClose,
-  onClose,
-}: AppModalDefaultHeaderProps): React.JSX.Element {
-  return (
-    <SectionHeader
-      title={title}
-      subtitle={subtitle}
-      size='md'
-      titleClassName={cn(titleHidden && 'sr-only')}
-      actions={
-        <div className='flex items-center gap-2'>
-          {headerActions}
-          {showClose ? (
-            <Button
-              type='button'
-              onClick={onClose}
-              disabled={!canClose}
-              variant='outline'
-              size='sm'
-            >
-              Close
-            </Button>
-          ) : null}
-        </div>
-      }
-    />
-  );
-}
-
-function AppModalDialogContentShell({
-  title,
-  dialogDescription,
-  children,
-  modalContentClassName,
-  onInteractOutside,
-  onEscapeKeyDown,
-}: AppModalDialogContentShellProps): React.JSX.Element {
-  return (
-    <DialogContent
-      className={cn(
-        'max-w-none w-auto p-0 border-none bg-transparent shadow-none',
-        modalContentClassName ?? ''
-      )}
-      onInteractOutside={onInteractOutside}
-      onEscapeKeyDown={onEscapeKeyDown}
-    >
-      <DialogTitle className='sr-only'>{title}</DialogTitle>
-      <DialogDescription className='sr-only'>{dialogDescription}</DialogDescription>
-      {children}
-    </DialogContent>
-  );
-}
-
 const sizeClasses = {
   sm: 'max-w-lg md:min-w-[420px]',
   md: 'max-w-2xl md:min-w-[640px]',
@@ -195,13 +117,16 @@ export function AppModal({
 
   return (
     <Dialog open={isCurrentlyOpen} onOpenChange={handleOpenChange}>
-      <AppModalDialogContentShell
-        title={modalTitle}
-        dialogDescription={dialogDescription}
-        modalContentClassName={modalContentClassName}
+      <DialogContent
+        className={cn(
+          'max-w-none w-auto p-0 border-none bg-transparent shadow-none',
+          modalContentClassName ?? ''
+        )}
         onInteractOutside={handleInteractOutside}
         onEscapeKeyDown={handleEscapeKeyDown}
       >
+        <DialogTitle className='sr-only'>{modalTitle}</DialogTitle>
+        <DialogDescription className='sr-only'>{dialogDescription}</DialogDescription>
         <div
           className={cn(
             'pointer-events-auto w-full rounded-lg border flex flex-col',
@@ -215,14 +140,27 @@ export function AppModal({
             {header ? (
               header
             ) : (
-              <AppModalDefaultHeader
+              <SectionHeader
                 title={title}
                 subtitle={subtitle}
-                titleHidden={titleHidden}
-                headerActions={headerActions}
-                showClose={showClose}
-                canClose={canClose}
-                onClose={() => handleOpenChange(false)}
+                size='md'
+                titleClassName={cn(titleHidden && 'sr-only')}
+                actions={
+                  <div className='flex items-center gap-2'>
+                    {headerActions}
+                    {showClose ? (
+                      <Button
+                        type='button'
+                        onClick={() => handleOpenChange(false)}
+                        disabled={!canClose}
+                        variant='outline'
+                        size='sm'
+                      >
+                        Close
+                      </Button>
+                    ) : null}
+                  </div>
+                }
               />
             )}
           </div>
@@ -246,7 +184,7 @@ export function AppModal({
             </div>
           ) : null}
         </div>
-      </AppModalDialogContentShell>
+      </DialogContent>
     </Dialog>
   );
 }

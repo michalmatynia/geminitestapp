@@ -9,11 +9,13 @@ import {
   clearKangurPendingRouteLoadingSnapshot,
   getKangurPendingRouteLoadingSnapshot,
 } from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
 
 const {
   nextLinkPropsMock,
   startRouteTransitionMock,
   frontendPublicOwnerMock,
+  sessionMock,
   useKangurCoarsePointerMock,
   useOptionalKangurRouteTransitionStateMock,
   useOptionalKangurRoutingMock,
@@ -26,6 +28,7 @@ const {
   nextLinkPropsMock: vi.fn(),
   startRouteTransitionMock: vi.fn(),
   frontendPublicOwnerMock: vi.fn(),
+  sessionMock: vi.fn(),
   useKangurCoarsePointerMock: vi.fn(),
   useOptionalKangurRouteTransitionStateMock: vi.fn(),
   useOptionalKangurRoutingMock: vi.fn(),
@@ -38,6 +41,11 @@ const {
 
 vi.mock('next-intl', () => ({
   useLocale: useLocaleMock,
+}));
+
+vi.mock('next-auth/react', () => ({
+  SessionContext: React.createContext(null),
+  useSession: () => sessionMock(),
 }));
 
 vi.mock('next/link', () => ({
@@ -99,6 +107,10 @@ describe('KangurTransitionLink', () => {
     usePathnameMock.mockReturnValue('/kangur');
     useKangurCoarsePointerMock.mockReturnValue(false);
     frontendPublicOwnerMock.mockReturnValue(null);
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
     useOptionalKangurRouteTransitionStateMock.mockReturnValue(null);
     useOptionalKangurRoutingMock.mockReturnValue(null);
     startRouteTransitionMock.mockReturnValue({
@@ -281,6 +293,48 @@ describe('KangurTransitionLink', () => {
       })
     );
     expect(routerPrefetchMock).not.toHaveBeenCalled();
+  });
+
+  it('applies disabled semantics and blocks route transitions when disabled', () => {
+    render(
+      <KangurTransitionLink disabled href='/kangur/lessons' targetPageKey='Lessons'>
+        Lekcje
+      </KangurTransitionLink>
+    );
+
+    const link = screen.getByRole('link', { name: 'Lekcje' });
+
+    expect(link).toHaveAttribute('aria-disabled', 'true');
+    expect(link).toHaveAttribute('tabindex', '-1');
+    expect(link).toHaveClass('pointer-events-none', 'cursor-not-allowed', 'opacity-40');
+
+    fireEvent.click(link);
+
+    expect(startRouteTransitionMock).not.toHaveBeenCalled();
+    expect(routerPushMock).not.toHaveBeenCalled();
+    expect(getKangurPendingRouteLoadingSnapshot()).toBeNull();
+  });
+
+  it('keeps disabled semantics when used through KangurButton asChild', () => {
+    render(
+      <KangurButton asChild disabled size='sm' variant='primary'>
+        <KangurTransitionLink href='/kangur/lessons' targetPageKey='Lessons'>
+          Lekcje
+        </KangurTransitionLink>
+      </KangurButton>
+    );
+
+    const link = screen.getByRole('link', { name: 'Lekcje' });
+
+    expect(link).toHaveAttribute('aria-disabled', 'true');
+    expect(link).toHaveAttribute('tabindex', '-1');
+    expect(link).toHaveClass('pointer-events-none', 'cursor-not-allowed', 'opacity-40');
+
+    fireEvent.click(link);
+
+    expect(startRouteTransitionMock).not.toHaveBeenCalled();
+    expect(routerPushMock).not.toHaveBeenCalled();
+    expect(getKangurPendingRouteLoadingSnapshot()).toBeNull();
   });
 
   it('does not trigger manual router prefetch for managed links on coarse-pointer devices', () => {
@@ -479,5 +533,46 @@ describe('KangurTransitionLink', () => {
     fireEvent.click(screen.getByRole('link', { name: 'Profil' }));
 
     expect(routerPushMock).toHaveBeenCalledWith('/kangur/profile', { scroll: false });
+  });
+
+  it('downgrades blocked GamesLibrary pending snapshots and transitions to Game for non-super-admin users', () => {
+    useLocaleMock.mockReturnValue('en');
+    usePathnameMock.mockReturnValue('/en');
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/',
+      embedded: true,
+      pageKey: 'Game',
+      requestedHref: '/en',
+      requestedPath: '/',
+    });
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'admin@example.com',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(
+      <KangurTransitionLink href='/games'>
+        Biblioteka
+      </KangurTransitionLink>
+    );
+
+    fireEvent.click(screen.getByRole('link', { name: 'Biblioteka' }));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/en/games',
+      pageKey: 'Game',
+    });
+    expect(getKangurPendingRouteLoadingSnapshot()).toMatchObject({
+      fromHref: '/en',
+      href: '/en/games',
+      pageKey: 'Game',
+      skeletonVariant: 'game-home',
+    });
+    expect(routerPushMock).toHaveBeenCalledWith('/en/games', { scroll: false });
   });
 });

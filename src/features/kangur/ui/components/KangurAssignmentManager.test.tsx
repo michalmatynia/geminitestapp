@@ -292,7 +292,7 @@ describe('KangurAssignmentManager', () => {
     );
   });
 
-  it('allows unassigning catalog items that are already assigned', () => {
+  it('allows unassigning catalog items that are already assigned', async () => {
     const updateAssignment = vi.fn().mockResolvedValue({
       id: 'assignment-1',
     });
@@ -369,6 +369,9 @@ describe('KangurAssignmentManager', () => {
       name: assignmentManagerMessages.actions.unassign,
     });
     fireEvent.click(unassignButton);
-    expect(updateAssignment).toHaveBeenCalledWith('assignment-1', { archived: true });
+
+    await waitFor(() =>
+      expect(updateAssignment).toHaveBeenCalledWith('assignment-1', { archived: true })
+    );
   });
 });

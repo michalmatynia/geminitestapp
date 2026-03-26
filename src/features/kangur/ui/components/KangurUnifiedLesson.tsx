@@ -47,10 +47,11 @@ type KangurUnifiedLessonContextValue = {
 };
 
 const KangurUnifiedLessonContext = createContext<KangurUnifiedLessonContextValue | null>(null);
+const FALLBACK_RETURN_TO_HUB = (): void => undefined;
 
 export const useKangurUnifiedLessonBack = (): (() => void) => {
   const context = useContext(KangurUnifiedLessonContext);
-  return context?.returnToHub ?? (() => undefined);
+  return context?.returnToHub ?? FALLBACK_RETURN_TO_HUB;
 };
 
 type LessonProgressAdapter<SectionId extends string> = {

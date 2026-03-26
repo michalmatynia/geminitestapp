@@ -7,12 +7,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildKangurEmbeddedBasePath } from '@/shared/lib/kangur-bridge';
 
-const { kangurAdapterTestDouble, usePathnameMock, useSearchParamsMock } = vi.hoisted(() => ({
+const { kangurAdapterTestDouble, sessionMock, usePathnameMock, useSearchParamsMock } = vi.hoisted(() => ({
   kangurAdapterTestDouble: {
     KANGUR_EMBED_QUERY_PARAM: 'kangur',
     KANGUR_MAIN_PAGE_KEY: 'Game',
     KANGUR_PAGE_TO_SLUG: Object.freeze({
       Game: 'game',
+      GamesLibrary: 'games',
       LearnerProfile: 'profile',
       Lessons: 'lessons',
       Tests: 'tests',
@@ -54,6 +55,7 @@ const { kangurAdapterTestDouble, usePathnameMock, useSearchParamsMock } = vi.hoi
       return (
         {
           Game: 'game',
+          GamesLibrary: 'games',
           LearnerProfile: 'profile',
           Lessons: 'lessons',
           Tests: 'tests',
@@ -77,6 +79,7 @@ const { kangurAdapterTestDouble, usePathnameMock, useSearchParamsMock } = vi.hoi
       return scopeMatch ? searchParams.get(key) : null;
     },
   },
+  sessionMock: vi.fn(),
   usePathnameMock: vi.fn(),
   useSearchParamsMock: vi.fn(),
 }));
@@ -84,6 +87,10 @@ const { kangurAdapterTestDouble, usePathnameMock, useSearchParamsMock } = vi.hoi
 vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
   useSearchParams: useSearchParamsMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useOptionalNextAuthSession', () => ({
+  useOptionalNextAuthSession: () => sessionMock(),
 }));
 
 vi.mock('@/shared/lib/kangur-bridge', async () => {
@@ -135,6 +142,10 @@ describe('AppEmbedBlock', () => {
   beforeEach(() => {
     usePathnameMock.mockReturnValue('/home');
     useSearchParamsMock.mockReturnValue(new URLSearchParams('preview=1'));
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
   });
 
   it('renders iframe embeds for iframe-based app embeds', () => {
@@ -199,6 +210,44 @@ describe('AppEmbedBlock', () => {
       'data-base-path',
       buildKangurEmbeddedBasePath('/home?preview=1', 'app-embed-a')
     );
+  });
+
+  it('downgrades blocked GamesLibrary embed entry pages for non-super-admin users', () => {
+    renderAppEmbedBlock({
+      appId: 'kangur',
+      title: 'Kangur Games',
+      entryPage: 'GamesLibrary',
+      basePath: '',
+      height: 640,
+    });
+
+    expect(screen.getByTestId('kangur-feature-page')).toHaveAttribute('data-slug', '[]');
+  });
+
+  it('keeps GamesLibrary embed routes for exact super-admin users', () => {
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'owner@example.com',
+          role: 'super_admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams('preview=1&kangur-app-embed-a=games')
+    );
+
+    renderAppEmbedBlock({
+      appId: 'kangur',
+      title: 'Kangur Games',
+      entryPage: 'Lessons',
+      basePath: '',
+      height: 640,
+    });
+
+    expect(screen.getByTestId('kangur-feature-page')).toHaveAttribute('data-slug', '["games"]');
   });
 
   it('preserves other embedded Kangur instances when deriving the current host page', () => {

@@ -207,32 +207,6 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
-  useKangurLessons: (
-    options: { subject?: string; enabledOnly?: boolean; enabled?: boolean } = {}
-  ) => {
-    let data = lessonsState.value;
-    if (options.enabledOnly) {
-      data = data.filter((lesson) => lesson.enabled !== false);
-    }
-    if (options.subject) {
-      data = data.filter((lesson) => (lesson.subject ?? 'maths') === options.subject);
-    }
-    const deduped = new Map<string, Record<string, unknown>>();
-    data.forEach((lesson) => {
-      const componentId = String(lesson.componentId ?? lesson.id ?? '');
-      if (!deduped.has(componentId)) {
-        deduped.set(componentId, lesson);
-      }
-    });
-    data = Array.from(deduped.values());
-    return {
-      data,
-      isLoading: false,
-      error: null,
-      refresh: vi.fn(),
-      refetch: vi.fn(),
-    };
-  },
   useKangurLessonDocuments: () => ({
     data: lessonDocumentsState.value,
     isLoading: false,
@@ -250,6 +224,50 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
     refresh: vi.fn(),
     refetch: vi.fn(),
   }),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonsCatalog', () => ({
+  useKangurLessonsCatalog: (
+    options: {
+      ageGroup?: string;
+      enabledOnly?: boolean;
+      subject?: string;
+    } = {}
+  ) => {
+    let lessons = lessonsState.value;
+    if (options.enabledOnly) {
+      lessons = lessons.filter((lesson) => lesson.enabled !== false);
+    }
+    if (options.subject) {
+      lessons = lessons.filter((lesson) => (lesson.subject ?? 'maths') === options.subject);
+    }
+    if (options.ageGroup) {
+      lessons = lessons.filter((lesson) => lesson.ageGroup === options.ageGroup);
+    }
+
+    const deduped = new Map<string, Record<string, unknown>>();
+    lessons.forEach((lesson) => {
+      const componentId = String(lesson.componentId ?? lesson.id ?? '');
+      if (!deduped.has(componentId)) {
+        deduped.set(componentId, lesson);
+      }
+    });
+
+    return {
+      data: {
+        lessons: Array.from(deduped.values()),
+        sections: [],
+      },
+      isLoading: false,
+      isPending: false,
+      isFetching: false,
+      isRefetching: false,
+      isPlaceholderData: false,
+      error: null,
+      refresh: vi.fn(),
+      refetch: vi.fn(),
+    };
+  },
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
@@ -812,7 +830,7 @@ describe('Lessons', () => {
     expect(screen.getByTestId('lessons-empty-document-summary')).toHaveClass(
       'soft-card'
     );
-    expect(screen.getByText('Lesson document')).toHaveClass('rounded-full', 'border');
+    expect(screen.getByText('Materiał lekcji')).toHaveClass('rounded-full', 'border');
     expect(within(activeLessonView).queryAllByTestId('legacy-lesson')).toHaveLength(0);
     expect(screen.queryByTestId('lesson-document-renderer')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Wróć do listy lekcji' })).toHaveClass(

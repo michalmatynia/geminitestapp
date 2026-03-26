@@ -1,11 +1,3 @@
-import { useTranslations } from 'next-intl';
-
-import { useKangurUnifiedLessonBack } from '@/features/kangur/ui/lessons/lesson-components';
-
-import ClockTrainingGame from './ClockTrainingGame';
-import type { ClockTrainingSectionId } from './clock-training/types';
-import type { ClockPracticeTask } from './ClockLesson.types';
-
 type AnalogClockProps = {
   hours: number;
   minutes: number;
@@ -14,38 +6,6 @@ type AnalogClockProps = {
   highlightMinute?: boolean;
   showHourHand?: boolean;
   showMinuteHand?: boolean;
-};
-
-type ClockTrainingSlideProps = {
-  section: ClockTrainingSectionId;
-  practiceTasks: ClockPracticeTask[];
-};
-
-export const ClockTrainingSlide = ({
-  section,
-  practiceTasks,
-}: ClockTrainingSlideProps): React.JSX.Element => {
-  const returnToHub = useKangurUnifiedLessonBack();
-  const lessonChrome = useTranslations('KangurLessonChrome');
-  const backToTopicsLabel = (() => {
-    const translated = lessonChrome('backToTopics');
-    return translated === 'backToTopics' || translated.endsWith('.backToTopics')
-      ? 'Wróć do tematów'
-      : translated;
-  })();
-
-  return (
-    <ClockTrainingGame
-      completionPrimaryActionLabel={backToTopicsLabel}
-      enableAdaptiveRetry={false}
-      hideModeSwitch
-      onFinish={returnToHub}
-      practiceTasks={practiceTasks}
-      section={section}
-      showTaskTitle
-      showTimeDisplay
-    />
-  );
 };
 
 export function AnalogClock({

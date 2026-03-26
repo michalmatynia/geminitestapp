@@ -12,6 +12,7 @@ import plMessages from '@/i18n/messages/pl.json';
 const {
   signInMock,
   signOutMock,
+  sessionMock,
   frontendPublicOwnerMock,
   useKangurAiTutorSessionSyncMock,
   useKangurPageContentEntryMock,
@@ -27,6 +28,7 @@ const {
 } = vi.hoisted(() => ({
   signInMock: vi.fn().mockResolvedValue({ ok: true, url: '/kangur' }),
   signOutMock: vi.fn().mockResolvedValue(undefined),
+  sessionMock: vi.fn(),
   frontendPublicOwnerMock: vi.fn(),
   useKangurAiTutorSessionSyncMock: vi.fn(),
   useKangurPageContentEntryMock: vi.fn(),
@@ -47,10 +49,15 @@ vi.mock('next/navigation', () => ({
   useSearchParams: useSearchParamsMock,
 }));
 
-vi.mock('next-auth/react', () => ({
-  signIn: signInMock,
-  signOut: signOutMock,
-}));
+vi.mock('next-auth/react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('next-auth/react')>();
+  return {
+    ...actual,
+    signIn: signInMock,
+    signOut: signOutMock,
+    useSession: () => sessionMock(),
+  };
+});
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useKangurAiTutorSessionSync: useKangurAiTutorSessionSyncMock,
@@ -102,6 +109,10 @@ describe('KangurLoginPage', () => {
     vi.useRealTimers();
     vi.clearAllMocks();
     signInMock.mockResolvedValue({ ok: true, url: '/kangur' });
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
     frontendPublicOwnerMock.mockReturnValue(null);
     useOptionalKangurRoutingMock.mockReturnValue(null);
     usePathnameMock.mockReturnValue('/kangur/login');
@@ -389,6 +400,65 @@ describe('KangurLoginPage', () => {
         'credentials',
         expect.objectContaining({
           callbackUrl: '/en',
+          email: 'parent@example.com',
+          password: 'sekret123',
+          redirect: false,
+        })
+      );
+    });
+  });
+
+  it('sanitizes blocked games callbacks before parent sign-in for non-super-admin sessions', async () => {
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'admin@example.com',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+    useSearchParamsMock.mockReturnValue(new URLSearchParams('callbackUrl=%2Fkangur%2Fgames'));
+    useOptionalKangurRoutingMock.mockReturnValue({ basePath: '/kangur' });
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.endsWith('/api/kangur/auth/learner-signout')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({}),
+        };
+      }
+      if (url.endsWith('/api/auth/verify-credentials')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ ok: true, challengeId: 'challenge-1' }),
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+      };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+
+    const identifierInput = screen.getByTestId('kangur-login-identifier-input');
+    const passwordInput = screen.getByLabelText('Hasło');
+
+    fireEvent.change(identifierInput, { target: { value: 'parent@example.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'sekret123' } });
+    fireEvent.submit(screen.getByTestId('kangur-login-form'));
+
+    await waitFor(() => {
+      expect(signInMock).toHaveBeenCalledWith(
+        'credentials',
+        expect.objectContaining({
+          callbackUrl: '/kangur',
           email: 'parent@example.com',
           password: 'sekret123',
           redirect: false,

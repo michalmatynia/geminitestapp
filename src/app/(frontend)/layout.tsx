@@ -5,9 +5,7 @@ import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/front
 import { getCmsThemeSettings } from '@/features/cms/server';
 import { getKangurAuthBootstrapScript } from '@/features/kangur/server/auth-bootstrap';
 import { getKangurStorefrontInitialState } from '@/features/kangur/server/storefront-appearance';
-import { KangurAuthWarmupClient } from '@/features/kangur/ui/KangurAuthWarmupClient';
 import { FrontendPublicOwnerProvider } from '@/features/kangur/ui/FrontendPublicOwnerContext';
-import { FrontendPublicOwnerKangurShell } from '@/features/kangur/ui/FrontendPublicOwnerKangurShell';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
@@ -17,6 +15,20 @@ import type { JSX } from 'react';
 const DEFAULT_CMS_THEME_SETTINGS = {
   darkMode: false,
 } as const;
+
+const isMissingRequestScopeError = (error: unknown): boolean =>
+  error instanceof Error && error.message.includes('outside a request scope');
+
+const readOptionalRequestHeaders = async (): Promise<Headers | null> => {
+  try {
+    return await headers();
+  } catch (error) {
+    if (isMissingRequestScopeError(error)) {
+      return null;
+    }
+    throw error;
+  }
+};
 
 const resolveFrontendRequestPathname = (headerValue: string | null | undefined): string | null => {
   if (typeof headerValue !== 'string') {
@@ -72,10 +84,10 @@ export default async function FrontendLayout({
 }: {
   children: React.ReactNode;
 }): Promise<JSX.Element> {
-  const requestHeaders = await headers();
+  const requestHeaders = await readOptionalRequestHeaders();
   const requestPathname =
-    resolveFrontendRequestPathname(requestHeaders.get('next-url')) ??
-    resolveFrontendRequestPathname(requestHeaders.get('x-matched-path'));
+    resolveFrontendRequestPathname(requestHeaders?.get('next-url')) ??
+    resolveFrontendRequestPathname(requestHeaders?.get('x-matched-path'));
   const isExplicitKangurAlias = isExplicitKangurAliasRequest(requestPathname);
   const isCanonicalPublicLogin = isCanonicalPublicLoginRequest(requestPathname);
   const isRootPublicRoute = isRootPublicRequest(requestPathname);
@@ -103,7 +115,9 @@ export default async function FrontendLayout({
     ? getKangurStorefrontInitialState()
     : Promise.resolve(null);
   const kangurAuthBootstrapScriptPromise = shouldInjectKangurAuthBootstrap
-    ? getKangurAuthBootstrapScript(requestHeaders)
+    ? requestHeaders
+      ? getKangurAuthBootstrapScript(requestHeaders)
+      : Promise.resolve(null)
     : Promise.resolve(null);
   const [themeSettings, kangurInitialState] = await Promise.all([
     publicOwner === 'cms' && !isExplicitKangurAlias
@@ -113,6 +127,14 @@ export default async function FrontendLayout({
   ]);
   const kangurAuthBootstrapScript = await kangurAuthBootstrapScriptPromise;
   const storefrontAppearanceMode = themeSettings.darkMode ? 'dark' : 'default';
+  const FrontendPublicOwnerKangurShell = shouldRenderStandaloneKangurShell
+    ? (await import('@/features/kangur/ui/FrontendPublicOwnerKangurShell'))
+        .FrontendPublicOwnerKangurShell
+    : null;
+  const KangurAuthWarmupClient =
+    publicOwner === 'kangur' && !shouldRenderStandaloneKangurShell
+      ? (await import('@/features/kangur/ui/KangurAuthWarmupClient')).KangurAuthWarmupClient
+      : null;
 
   // When Kangur is the public owner, inject a tiny blocking script that pre-applies
   // the kangur-surface-active class to html/body before React hydrates. This lets
@@ -135,24 +157,26 @@ export default async function FrontendLayout({
       {kangurAuthBootstrapScript ? (
         <script dangerouslySetInnerHTML={{ __html: kangurAuthBootstrapScript }} />
       ) : null}
-      <CmsStorefrontAppearanceProvider initialMode={storefrontAppearanceMode}>
-        <FrontendPublicOwnerProvider publicOwner={publicOwner}>
-          <QueryErrorBoundary>
-            {shouldRenderStandaloneKangurShell ? (
-              <FrontendPublicOwnerKangurShell
-                embedded={isRootPublicRoute}
-                initialMode={kangurInitialState?.initialMode}
-                initialThemeSettings={kangurInitialState?.initialThemeSettings}
-              />
-            ) : (
+      <FrontendPublicOwnerProvider publicOwner={publicOwner}>
+        <QueryErrorBoundary>
+          {shouldRenderStandaloneKangurShell && FrontendPublicOwnerKangurShell ? (
+            <FrontendPublicOwnerKangurShell
+              embeddedOverride={isRootPublicRoute}
+              initialAppearance={{
+                mode: kangurInitialState?.initialMode,
+                themeSettings: kangurInitialState?.initialThemeSettings,
+              }}
+            />
+          ) : (
+            <CmsStorefrontAppearanceProvider initialMode={storefrontAppearanceMode}>
               <>
-                {publicOwner === 'kangur' ? <KangurAuthWarmupClient /> : null}
+                {KangurAuthWarmupClient ? <KangurAuthWarmupClient /> : null}
                 {children}
               </>
-            )}
-          </QueryErrorBoundary>
-        </FrontendPublicOwnerProvider>
-      </CmsStorefrontAppearanceProvider>
+            </CmsStorefrontAppearanceProvider>
+          )}
+        </QueryErrorBoundary>
+      </FrontendPublicOwnerProvider>
     </main>
   );
 }

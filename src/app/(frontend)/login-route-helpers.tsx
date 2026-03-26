@@ -76,9 +76,11 @@ export const renderCanonicalLoginRoute = async ({
     const kangurInitialState = await getKangurStorefrontInitialState();
     return (
       <FrontendPublicOwnerKangurShell
-        embedded={false}
-        initialMode={kangurInitialState.initialMode}
-        initialThemeSettings={kangurInitialState.initialThemeSettings}
+        embeddedOverride={false}
+        initialAppearance={{
+          mode: kangurInitialState.initialMode,
+          themeSettings: kangurInitialState.initialThemeSettings,
+        }}
       />
     );
   }

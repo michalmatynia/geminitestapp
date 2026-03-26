@@ -4,10 +4,12 @@ import { usePathname, useSearchParams } from 'next/navigation';
 
 import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import { KangurPageTransitionSkeleton } from '@/features/kangur/ui/components/KangurPageTransitionSkeleton';
+import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import { useKangurPendingRouteLoadingSnapshot } from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
 import { resolveKangurRouteTransitionSkeletonVariant } from '@/features/kangur/ui/routing/route-transition-skeletons';
 import {
   normalizeManagedKangurPathname,
+  resolveAccessibleManagedKangurPageKeyFromHref,
   resolveManagedKangurEmbeddedFromHref,
 } from '@/features/kangur/ui/routing/managed-paths';
 import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
@@ -63,6 +65,7 @@ export function KangurRouteLoadingFallback({
 }: {
   includeTopNavigationSkeleton?: boolean;
 } = {}): React.JSX.Element {
+  const { data: session } = useOptionalNextAuthSession();
   const pendingRouteLoadingSnapshot = useKangurPendingRouteLoadingSnapshot();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -75,10 +78,23 @@ export function KangurRouteLoadingFallback({
       : null;
   const href = pendingRouteLoadingSnapshot?.href ?? currentHref;
   const basePath = resolveKangurBasePath(href);
-  const variant = pendingRouteLoadingSnapshot?.skeletonVariant ?? resolveKangurRouteTransitionSkeletonVariant({
-    basePath,
-    href,
-  });
+  const accessiblePageKey =
+    pendingRouteLoadingSnapshot?.pageKey ??
+    resolveAccessibleManagedKangurPageKeyFromHref({
+      href: href ?? '/',
+      basePath,
+      session,
+      fallbackPageKey: 'Game',
+    });
+  const variant =
+    pendingRouteLoadingSnapshot?.skeletonVariant ??
+    resolveKangurRouteTransitionSkeletonVariant({
+      basePath,
+      fallbackPageKey: 'Game',
+      href,
+      pageKey: accessiblePageKey,
+      session,
+    });
   const topBarHeightCssValue =
     pendingRouteLoadingSnapshot?.topBarHeightCssValue ?? readKangurTopBarHeightCssValue();
   const embeddedOverride = resolveTransitionEmbeddedOverride({
@@ -89,7 +105,7 @@ export function KangurRouteLoadingFallback({
   return (
     <KangurPageTransitionSkeleton
       embeddedOverride={embeddedOverride}
-      pageKey={pendingRouteLoadingSnapshot?.pageKey}
+      pageKey={accessiblePageKey}
       reason='navigation'
       renderInlineTopNavigationSkeleton={includeTopNavigationSkeleton}
       topBarHeightCssValue={topBarHeightCssValue}

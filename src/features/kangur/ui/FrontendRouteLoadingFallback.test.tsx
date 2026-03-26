@@ -17,8 +17,16 @@ const { kangurRouteLoadingFallbackMock, usePathnameMock } = vi.hoisted(() => ({
   usePathnameMock: vi.fn(),
 }));
 
+const { sessionMock } = vi.hoisted(() => ({
+  sessionMock: vi.fn(),
+}));
+
 vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
+}));
+
+vi.mock('next-auth/react', () => ({
+  useSession: () => sessionMock(),
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurRouteLoadingFallback', () => ({
@@ -35,6 +43,10 @@ describe('FrontendRouteLoadingFallback', () => {
     kangurRouteLoadingFallbackMock.mockReset();
     clearKangurPendingRouteLoadingSnapshot();
     usePathnameMock.mockReturnValue('/en');
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
   });
 
   it('suppresses the navbar skeleton for the Kangur main page by default', () => {
@@ -156,6 +168,29 @@ describe('FrontendRouteLoadingFallback', () => {
 
     expect(screen.getByTestId('kangur-route-loading-fallback-probe')).toBeInTheDocument();
     expect(kangurRouteLoadingFallbackMock).toHaveBeenCalledTimes(1);
+    expect(kangurRouteLoadingFallbackMock).toHaveBeenCalledWith({
+      includeTopNavigationSkeleton: false,
+    });
+  });
+
+  it('treats blocked GamesLibrary routes like the main game route for non-super-admin users', () => {
+    usePathnameMock.mockReturnValue('/en/games');
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'admin@example.com',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(
+      <FrontendPublicOwnerProvider publicOwner='kangur'>
+        <FrontendRouteLoadingFallback />
+      </FrontendPublicOwnerProvider>
+    );
+
     expect(kangurRouteLoadingFallbackMock).toHaveBeenCalledWith({
       includeTopNavigationSkeleton: false,
     });

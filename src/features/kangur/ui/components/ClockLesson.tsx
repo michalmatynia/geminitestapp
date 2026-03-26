@@ -18,9 +18,11 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { cn } from '@/features/kangur/shared/utils';
-import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
-
-import { ClockTrainingSlide } from './ClockLesson.visuals';
+import {
+  KangurUnifiedLesson,
+  useKangurUnifiedLessonBack,
+} from '@/features/kangur/ui/lessons/lesson-components';
+import ClockTrainingGame from '@/features/kangur/ui/components/ClockTrainingGame';
 import {
   buildClockCombinedSlides,
   buildClockHoursSlides,
@@ -145,6 +147,26 @@ const buildClockLessonStageRuntime = (
   };
 };
 
+const isSameSectionProgressSnapshot = (
+  left: Partial<Record<SectionId, { viewedCount: number; totalCount: number }>>,
+  right: Partial<Record<SectionId, { viewedCount: number; totalCount: number }>>
+): boolean => {
+  const leftEntries = Object.entries(left);
+  const rightEntries = Object.entries(right);
+
+  if (leftEntries.length !== rightEntries.length) {
+    return false;
+  }
+
+  return leftEntries.every(([sectionId, progress]) => {
+    const nextProgress = right[sectionId as SectionId];
+    return (
+      progress?.viewedCount === nextProgress?.viewedCount &&
+      progress?.totalCount === nextProgress?.totalCount
+    );
+  });
+};
+
 export default function ClockLesson(): React.JSX.Element {
   const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurStaticLessons.clock');
@@ -245,6 +267,14 @@ export default function ClockLesson(): React.JSX.Element {
     ],
     [copy, trainingConfigs]
   );
+  const returnToHub = useKangurUnifiedLessonBack();
+  const lessonChrome = useTranslations('KangurLessonChrome');
+  const backToTopicsLabel = (() => {
+    const translated = lessonChrome('backToTopics');
+    return translated === 'backToTopics' || translated.endsWith('.backToTopics')
+      ? 'Wróć do tematów'
+      : translated;
+  })();
   const runtimeSlides = useMemo<Record<SectionId, LessonSlide[]>>(
     () => ({
       hours: [
@@ -253,7 +283,16 @@ export default function ClockLesson(): React.JSX.Element {
           title: copy.trainingSlides.hours.title,
           tts: copy.trainingSlides.hours.tts,
           content: (
-            <ClockTrainingSlide section='hours' practiceTasks={TRAINING_PANEL_TASKS.hours.learn} />
+            <ClockTrainingGame
+              completionPrimaryActionLabel={backToTopicsLabel}
+              enableAdaptiveRetry={false}
+              hideModeSwitch
+              onFinish={returnToHub}
+              practiceTasks={TRAINING_PANEL_TASKS.hours.learn}
+              section='hours'
+              showTaskTitle
+              showTimeDisplay
+            />
           ),
         },
       ],
@@ -263,9 +302,15 @@ export default function ClockLesson(): React.JSX.Element {
           title: copy.trainingSlides.minutes.title,
           tts: copy.trainingSlides.minutes.tts,
           content: (
-            <ClockTrainingSlide
-              section='minutes'
+            <ClockTrainingGame
+              completionPrimaryActionLabel={backToTopicsLabel}
+              enableAdaptiveRetry={false}
+              hideModeSwitch
+              onFinish={returnToHub}
               practiceTasks={TRAINING_PANEL_TASKS.minutes.learn}
+              section='minutes'
+              showTaskTitle
+              showTimeDisplay
             />
           ),
         },
@@ -276,15 +321,21 @@ export default function ClockLesson(): React.JSX.Element {
           title: copy.trainingSlides.combined.title,
           tts: copy.trainingSlides.combined.tts,
           content: (
-            <ClockTrainingSlide
-              section='combined'
+            <ClockTrainingGame
+              completionPrimaryActionLabel={backToTopicsLabel}
+              enableAdaptiveRetry={false}
+              hideModeSwitch
+              onFinish={returnToHub}
               practiceTasks={TRAINING_PANEL_TASKS.combined.learn}
+              section='combined'
+              showTaskTitle
+              showTimeDisplay
             />
           ),
         },
       ],
     }),
-    [combinedSlides, copy, hoursSlides, minutesSlides]
+    [backToTopicsLabel, combinedSlides, copy, hoursSlides, minutesSlides, returnToHub]
   );
 
   const lessonCompletionAwardedRef = useRef(false);
@@ -425,6 +476,20 @@ export default function ClockLesson(): React.JSX.Element {
     onStageFinish: (helpers: { onFinish: () => void }) => void;
     runtime: ReturnType<typeof getKangurLessonStageGameRuntimeSpec>;
   }>;
+  const handleSectionProgress = useCallback(
+    (progress: Partial<Record<ClockHubId, unknown>>) => {
+      const nextProgress = progress as Partial<
+        Record<SectionId, { viewedCount: number; totalCount: number }>
+      >;
+
+      setSectionProgressSnapshot((currentProgress) =>
+        isSameSectionProgressSnapshot(currentProgress, nextProgress)
+          ? currentProgress
+          : nextProgress
+      );
+    },
+    []
+  );
 
   return (
     <KangurUnifiedLesson
@@ -440,11 +505,7 @@ export default function ClockLesson(): React.JSX.Element {
       dotDoneClass='bg-indigo-200'
       skipMarkFor={trainingConfigs.map((config) => config.hubId)}
       buildHubSections={buildHubSections}
-      onSectionProgress={(progress) =>
-        setSectionProgressSnapshot(
-          progress as Partial<Record<SectionId, { viewedCount: number; totalCount: number }>>
-        )
-      }
+      onSectionProgress={handleSectionProgress}
       games={games}
     />
   );

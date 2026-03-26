@@ -16,6 +16,29 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonPanelProgress', async () => {
+  const { useLessonHubProgress } =
+    await vi.importActual<typeof import('@/features/kangur/ui/hooks/useLessonHubProgress')>(
+      '@/features/kangur/ui/hooks/useLessonHubProgress'
+    );
+  return {
+    useKangurLessonPanelProgress: ({
+      slideSections,
+    }: {
+      slideSections: Partial<Record<string, readonly unknown[]>>;
+    }) => {
+      const { markSectionOpened, markSectionViewedCount, sectionProgress } =
+        useLessonHubProgress(slideSections);
+      return {
+        markSectionOpened,
+        markSectionViewedCount,
+        recordPanelTime: vi.fn(),
+        sectionProgress,
+      };
+    },
+  };
+});
+
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonGameSections', () => ({
   useKangurLessonGameSections: () => ({
     data: [],
@@ -47,6 +70,8 @@ vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
       progressUpdates: {},
     })),
     loadProgress: vi.fn(() => createDefaultKangurProgressState()),
+    recordKangurLessonPanelProgress: vi.fn(),
+    recordKangurLessonPanelTime: vi.fn(),
   };
 });
 

@@ -3,20 +3,17 @@
 import { LayoutGrid, LogOut, User } from 'lucide-react';
 import Link from 'next/link';
 
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import type { ElevatedSessionUserSnapshot } from '@/shared/lib/auth/elevated-session-user';
 import { cn } from '@/shared/utils';
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/shared/ui';
+} from '@/shared/ui/dropdown-menu';
 
 type KangurElevatedUserMenuProps = {
   adminHref?: string;
@@ -37,6 +34,27 @@ const getElevatedUserInitial = (user: ElevatedSessionUserSnapshot): string => {
   return candidate[0]?.toUpperCase() ?? 'A';
 };
 
+const ElevatedUserAvatar = ({
+  imageSrc,
+  initial,
+}: {
+  imageSrc: string;
+  initial: string;
+}): React.JSX.Element => (
+  <span className='flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/75 bg-white/85 text-sm font-black text-[var(--kangur-page-text)] shadow-sm'>
+    {imageSrc ? (
+      <img
+        alt=''
+        aria-hidden='true'
+        className='h-full w-full object-cover'
+        src={imageSrc}
+      />
+    ) : (
+      <span aria-hidden='true'>{initial}</span>
+    )}
+  </span>
+);
+
 export function KangurElevatedUserMenu({
   adminHref = '/admin',
   adminLabel,
@@ -49,25 +67,25 @@ export function KangurElevatedUserMenu({
 }: KangurElevatedUserMenuProps): React.JSX.Element {
   const displayName = user.name?.trim() || user.email?.trim() || adminLabel;
   const imageSrc = user.image?.trim() ?? '';
+  const initial = getElevatedUserInitial(user);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
+        <KangurButton
           aria-label={triggerAriaLabel}
           className={cn(
             'relative z-[95] h-10 w-10 rounded-full opacity-60 transition-opacity hover:opacity-100',
             triggerClassName
           )}
           data-testid='kangur-elevated-user-menu-trigger'
+          size='md'
           title={displayName}
           variant='ghost'
+          type='button'
         >
-          <Avatar className='h-10 w-10'>
-            {imageSrc ? <AvatarImage alt={displayName} src={imageSrc} /> : null}
-            <AvatarFallback>{getElevatedUserInitial(user)}</AvatarFallback>
-          </Avatar>
-        </Button>
+          <ElevatedUserAvatar imageSrc={imageSrc} initial={initial} />
+        </KangurButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent align='end' className='z-[95] w-56' sideOffset={8}>
         <DropdownMenuLabel className='font-normal'>

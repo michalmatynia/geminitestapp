@@ -2,7 +2,8 @@ import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { Suspense, type JSX } from 'react';
 
-import { getKangurCanonicalPublicHref } from '@/features/kangur/config/routing';
+import { auth } from '@/features/auth/server';
+import { getKangurCanonicalPublicHref, getKangurHomeHref } from '@/features/kangur/config/routing';
 import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRouteShell';
 import {
   buildLocalizedPathname,
@@ -10,6 +11,7 @@ import {
 } from '@/shared/lib/i18n/site-locale';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
+import { sanitizeKangurAliasLoginSearchParams } from '@/app/(frontend)/kangur/login/alias-search-params';
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '@/app/(frontend)/home-helpers';
 
 type LocalizedKangurAliasLoginPageProps = {
@@ -33,7 +35,13 @@ export default async function LocalizedKangurLoginPage({
     const frontPageSetting = await getFrontPageSetting();
 
     if (getFrontPagePublicOwner(frontPageSetting) === 'kangur') {
-      const resolvedSearchParams = searchParams ? await searchParams : undefined;
+      const session = await auth();
+      const resolvedSearchParams = sanitizeKangurAliasLoginSearchParams({
+        searchParams: searchParams ? await searchParams : undefined,
+        pathname: buildLocalizedPathname('/kangur/login', resolvedLocale),
+        fallbackHref: buildLocalizedPathname(getKangurHomeHref('/'), resolvedLocale),
+        session,
+      });
       redirect(
         buildLocalizedPathname(
           getKangurCanonicalPublicHref(['login'], resolvedSearchParams),

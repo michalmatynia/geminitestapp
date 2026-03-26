@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { useKangurAccessiblePageKey } from '@/features/kangur/ui/hooks/useKangurAccessiblePageKey';
 import {
   KangurButton,
   KangurGlassPanel,
@@ -225,76 +226,6 @@ const SkeletonInfoSurface = ({
 const SkeletonLine = ({ className }: { className?: string }): React.JSX.Element => {
   const lineClassName = className;
   return <SkeletonBlock className={cn('h-4 rounded-full', lineClassName)} />;
-};
-
-const LessonsLibraryIntroSkeleton = ({
-  lessonsTitle,
-  locale,
-}: {
-  lessonsTitle: string;
-  locale: KangurSkeletonLocale;
-}): React.JSX.Element => {
-  return (
-    <KangurPageIntroCard
-      backButtonContent={
-        <div data-testid='kangur-page-transition-skeleton-lessons-library-intro-back-button'>
-          <div className='relative mx-auto w-full max-w-fit'>
-            <KangurButton
-              aria-hidden='true'
-              className='pointer-events-none opacity-0'
-              disabled
-              size='sm'
-              tabIndex={-1}
-              type='button'
-              variant='surface'
-            >
-              Wróć do poprzedniej strony
-            </KangurButton>
-            <SkeletonBlock className='absolute inset-0 rounded-full bg-slate-200/80' />
-          </div>
-        </div>
-      }
-      description={
-        <span
-          className='flex flex-col items-center gap-2'
-          data-testid='kangur-page-transition-skeleton-lessons-library-intro-description'
-        >
-          <span
-            aria-hidden='true'
-            className='block h-5 w-full max-w-[28rem] animate-pulse rounded-full'
-            style={{
-              background:
-                'color-mix(in srgb, var(--kangur-soft-card-border, #e2e8f0) 78%, var(--kangur-soft-card-background, #ffffff))',
-            }}
-          />
-          <span
-            aria-hidden='true'
-            className='block h-5 w-4/5 max-w-[20rem] animate-pulse rounded-full'
-            style={{
-              background:
-                'color-mix(in srgb, var(--kangur-soft-card-border, #e2e8f0) 78%, var(--kangur-soft-card-background, #ffffff))',
-            }}
-          />
-        </span>
-      }
-      onBack={() => undefined}
-      testId='kangur-page-transition-skeleton-lessons-library-intro-card'
-      title={lessonsTitle}
-      visualTitle={
-        <div
-          className='relative mx-auto w-full max-w-[272px] sm:max-w-[356px]'
-          data-testid='kangur-page-transition-skeleton-lessons-library-intro-art'
-        >
-          <KangurLessonsWordmark
-            className='opacity-0'
-            label={lessonsTitle}
-            locale={locale}
-          />
-          <SkeletonBlock className='absolute inset-0 rounded-[28px] bg-slate-200/80' />
-        </div>
-      }
-    />
-  );
 };
 
 const HOME_ACTION_SKELETONS = [
@@ -938,7 +869,65 @@ const LessonsLibrarySkeleton = ({
     data-testid='kangur-page-transition-skeleton-lessons-library-layout'
   >
     <div className='w-full' data-testid='kangur-page-transition-skeleton-lessons-library-intro'>
-      <LessonsLibraryIntroSkeleton lessonsTitle={lessonsTitle} locale={locale} />
+      <KangurPageIntroCard
+        backButtonContent={
+          <div data-testid='kangur-page-transition-skeleton-lessons-library-intro-back-button'>
+            <div className='relative mx-auto w-full max-w-fit'>
+              <KangurButton
+                aria-hidden='true'
+                className='pointer-events-none opacity-0'
+                disabled
+                size='sm'
+                tabIndex={-1}
+                type='button'
+                variant='surface'
+              >
+                Wróć do poprzedniej strony
+              </KangurButton>
+              <SkeletonBlock className='absolute inset-0 rounded-full bg-slate-200/80' />
+            </div>
+          </div>
+        }
+        description={
+          <span
+            className='flex flex-col items-center gap-2'
+            data-testid='kangur-page-transition-skeleton-lessons-library-intro-description'
+          >
+            <span
+              aria-hidden='true'
+              className='block h-5 w-full max-w-[28rem] animate-pulse rounded-full'
+              style={{
+                background:
+                  'color-mix(in srgb, var(--kangur-soft-card-border, #e2e8f0) 78%, var(--kangur-soft-card-background, #ffffff))',
+              }}
+            />
+            <span
+              aria-hidden='true'
+              className='block h-5 w-4/5 max-w-[20rem] animate-pulse rounded-full'
+              style={{
+                background:
+                  'color-mix(in srgb, var(--kangur-soft-card-border, #e2e8f0) 78%, var(--kangur-soft-card-background, #ffffff))',
+              }}
+            />
+          </span>
+        }
+        onBack={() => undefined}
+        testId='kangur-page-transition-skeleton-lessons-library-intro-card'
+        title={lessonsTitle}
+        visualTitle={
+          <div
+            className='relative mx-auto w-full max-w-[272px] sm:max-w-[356px]'
+            data-testid='kangur-page-transition-skeleton-lessons-library-intro-art'
+          >
+            <KangurLessonsWordmark
+              className='opacity-0'
+              label={lessonsTitle}
+              locale={locale}
+            />
+            <SkeletonBlock className='absolute inset-0 rounded-[28px] bg-slate-200/80' />
+          </div>
+        }
+      />
     </div>
     <div
       className={LESSONS_LIBRARY_COLUMN_CLASSNAME}
@@ -1135,17 +1124,23 @@ export function KangurPageTransitionSkeleton({
   const skeletonLocale = resolveSkeletonLocale(pathname);
   const skeletonCopy = KANGUR_SKELETON_COPY_BY_LOCALE[skeletonLocale];
   const routing = useOptionalKangurRouting();
+  const accessiblePageKey = useKangurAccessiblePageKey(pageKey, 'Game');
   const embedded = routing?.embedded ?? false;
   const effectiveEmbedded = embeddedOverride ?? embedded;
   const isLocaleSwitch = reason === 'locale-switch';
   const shouldRenderInlineTopNavigationSkeleton =
     renderInlineTopNavigationSkeleton && !effectiveEmbedded;
   const resolvedVariant =
-    variant ??
-    resolveKangurRouteTransitionSkeletonVariant({
-      basePath: routing?.basePath,
-      pageKey,
-    });
+    accessiblePageKey !== (pageKey?.trim() || null)
+      ? resolveKangurRouteTransitionSkeletonVariant({
+          basePath: routing?.basePath,
+          pageKey: accessiblePageKey,
+        })
+      : variant ??
+        resolveKangurRouteTransitionSkeletonVariant({
+          basePath: routing?.basePath,
+          pageKey: accessiblePageKey,
+        });
   const resolvedPageKey = resolveSkeletonPageKey(resolvedVariant);
   const shouldOffsetStandaloneRouteOverlay =
     !effectiveEmbedded && !shouldRenderInlineTopNavigationSkeleton;

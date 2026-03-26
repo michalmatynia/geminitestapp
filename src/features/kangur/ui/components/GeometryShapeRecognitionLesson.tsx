@@ -24,6 +24,8 @@ import {
 } from './GeometryShapeRecognition.shared';
 import type { LessonTranslate } from './lesson-copy';
 
+export { ShapeIcon } from './GeometryShapeRecognition.shared';
+
 type SectionId = 'intro' | 'practice' | 'draw' | 'summary';
 
 const GEOMETRY_SHAPE_SPOTTER_RUNTIME = getKangurLessonStageGameRuntimeSpec(

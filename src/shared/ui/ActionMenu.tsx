@@ -19,29 +19,17 @@ interface ActionMenuProps {
   disabled?: boolean;
 }
 
-type ActionMenuContentProps = {
-  children: ReactNode;
-  trigger?: ReactNode;
-  align: 'start' | 'end' | 'center';
-  className?: string;
-  triggerClassName?: string;
-  ariaLabel: string;
-  variant: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
-  size: 'default' | 'sm' | 'lg' | 'icon' | 'xs';
-  disabled: boolean;
-};
-
-function ActionMenuContent({
+export function ActionMenu({
   children,
   trigger,
-  align,
+  align = 'end',
   className,
   triggerClassName,
-  ariaLabel,
-  variant,
-  size,
-  disabled,
-}: ActionMenuContentProps): React.JSX.Element {
+  ariaLabel = 'Open actions menu',
+  variant = 'ghost',
+  size = 'icon',
+  disabled = false,
+}: ActionMenuProps): React.JSX.Element {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -64,31 +52,5 @@ function ActionMenuContent({
         {children}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-export function ActionMenu({
-  children,
-  trigger,
-  align = 'end',
-  className,
-  triggerClassName,
-  ariaLabel = 'Open actions menu',
-  variant = 'ghost',
-  size = 'icon',
-  disabled = false,
-}: ActionMenuProps): React.JSX.Element {
-  return (
-    <ActionMenuContent
-      children={children}
-      trigger={trigger}
-      align={align}
-      className={className}
-      triggerClassName={triggerClassName}
-      ariaLabel={ariaLabel}
-      variant={variant}
-      size={size}
-      disabled={disabled}
-    />
   );
 }

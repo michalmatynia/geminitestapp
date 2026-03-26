@@ -46,11 +46,6 @@ type QueueOverviewLineProps = {
   className?: string;
 };
 
-type QueueOverviewStateLineProps = QueueOverviewLineProps & {
-  showIndicator?: boolean;
-  indicatorLabel: string;
-};
-
 function QueueOverviewCard({
   title,
   children,
@@ -144,22 +139,6 @@ function QueueOverviewCompactDetailLine({
   return <div className={cn('mt-1 text-[10px] text-gray-400', className)}>{children}</div>;
 }
 
-function QueueOverviewStateLine({
-  children,
-  className,
-  showIndicator = false,
-  indicatorLabel,
-}: QueueOverviewStateLineProps): React.JSX.Element {
-  return (
-    <QueueOverviewPrimaryLine className={cn('flex items-center gap-2', className)}>
-      <>
-        {children}
-        {showIndicator ? <RunningIndicator label={indicatorLabel} /> : null}
-      </>
-    </QueueOverviewPrimaryLine>
-  );
-}
-
 export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Element {
   const {
     queueStatus,
@@ -180,12 +159,10 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
     <>
       <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-6'>
         <QueueOverviewCard title='Worker'>
-          <QueueOverviewStateLine
-            showIndicator={Boolean(queueStatus?.running)}
-            indicatorLabel='Active'
-          >
+          <QueueOverviewPrimaryLine className='flex items-center gap-2'>
             {queueStatus ? (queueStatus.running ? 'Running' : 'Stopped') : '-'}
-          </QueueOverviewStateLine>
+            {queueStatus?.running ? <RunningIndicator label='Active' /> : null}
+          </QueueOverviewPrimaryLine>
           <QueueOverviewDetailLine>
             Healthy: {queueStatus ? (queueStatus.healthy ? 'Yes' : 'No') : '-'}
           </QueueOverviewDetailLine>
@@ -255,12 +232,10 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
           </QueueOverviewCompactDetailLine>
         </QueueOverviewCard>
         <QueueOverviewCard title='Brain Analytics Queue'>
-          <QueueOverviewStateLine
-            showIndicator={Boolean(queueStatus?.brainQueue?.running)}
-            indicatorLabel='Active'
-          >
+          <QueueOverviewPrimaryLine className='flex items-center gap-2'>
             {queueStatus?.brainQueue?.running ? 'Running' : 'Stopped'}
-          </QueueOverviewStateLine>
+            {queueStatus?.brainQueue?.running ? <RunningIndicator label='Active' /> : null}
+          </QueueOverviewPrimaryLine>
           <QueueOverviewDetailLine className='flex items-center gap-2'>
             <span>
               Active {queueStatus?.brainQueue?.activeJobs ?? 0} · Waiting{' '}

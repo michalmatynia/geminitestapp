@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { resolveAccessibleKangurPageKey } from '@/features/kangur/config/page-access';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
+import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import {
   resolveKangurRouteTransitionSkeletonVariant,
   type KangurRouteTransitionSkeletonVariant,
 } from '../../routing/route-transition-skeletons';
+import { resolveAccessibleManagedKangurPageKeyFromHref } from '../../routing/managed-paths';
 import {
   clearKangurPendingRouteLoadingSnapshot,
   setKangurPendingRouteLoadingSnapshot,
@@ -207,11 +210,13 @@ export function useKangurRouteTransitionLogic({
   pageKey: string | null;
   currentRequestedHref: string | null;
 }) {
+  const { data: session } = useOptionalNextAuthSession();
   const [transitionState, setTransitionState] = useState<KangurRouteTransitionState | null>(null);
   const transitionStateRef = useRef<KangurRouteTransitionState | null>(null);
   const previousRequestedHrefRef = useRef<string | null>(currentRequestedHref);
   const shouldResetScrollOnCommitRef = useRef(false);
   const acknowledgementTimeoutRef = useRef<number | null>(null);
+  const currentAccessiblePageKey = resolveAccessibleKangurPageKey(pageKey, session, 'Game');
 
   const clearAcknowledgementTimeout = useCallback((): void => {
     if (acknowledgementTimeoutRef.current === null || typeof window === 'undefined') {
@@ -385,7 +390,19 @@ export function useKangurRouteTransitionLogic({
     (input: KangurRouteTransitionStartInput = {}): KangurRouteTransitionStartResult => {
       const normalizedHref = normalizeTransitionHref(input.href);
       const normalizedRequestedHref = normalizeTransitionHref(currentRequestedHref);
-      const nextPageKey = input.pageKey?.trim() || null;
+      const nextPageKey =
+        resolveAccessibleKangurPageKey(
+          input.pageKey?.trim() || null,
+          session,
+          normalizedHref
+            ? resolveAccessibleManagedKangurPageKeyFromHref({
+                href: normalizedHref,
+                basePath,
+                session,
+                fallbackPageKey: currentAccessiblePageKey,
+              })
+            : currentAccessiblePageKey
+        ) || null;
       const nextSourceId = input.sourceId?.trim() || null;
       const nextTransitionKind = normalizeTransitionKind(input.transitionKind);
       const activeTransition = transitionStateRef.current;
@@ -398,7 +415,7 @@ export function useKangurRouteTransitionLogic({
 
       if (
         (normalizedHref && normalizedRequestedHref && normalizedHref === normalizedRequestedHref) ||
-        (!normalizedHref && nextPageKey !== null && nextPageKey === pageKey)
+        (!normalizedHref && nextPageKey !== null && nextPageKey === currentAccessiblePageKey)
       ) {
         return {
           started: false,
@@ -428,7 +445,7 @@ export function useKangurRouteTransitionLogic({
       }
 
       shouldResetScrollOnCommitRef.current =
-        nextTransitionKind !== 'locale-switch' && nextPageKey !== pageKey;
+        nextTransitionKind !== 'locale-switch' && nextPageKey !== currentAccessiblePageKey;
       clearAcknowledgementTimeout();
       const startedAt = Date.now();
 
@@ -442,8 +459,10 @@ export function useKangurRouteTransitionLogic({
           input.skeletonVariant ??
           resolveKangurRouteTransitionSkeletonVariant({
             basePath,
+            fallbackPageKey: currentAccessiblePageKey,
             href: normalizedHref,
             pageKey: nextPageKey,
+            session,
           }),
         committedRequestedHref: null,
         startedAt,
@@ -481,7 +500,14 @@ export function useKangurRouteTransitionLogic({
         acknowledgeMs: requestedAcknowledgeMs,
       };
     },
-    [basePath, clearAcknowledgementTimeout, currentRequestedHref, pageKey, updateTransitionState]
+    [
+      basePath,
+      clearAcknowledgementTimeout,
+      currentAccessiblePageKey,
+      currentRequestedHref,
+      session,
+      updateTransitionState,
+    ]
   );
 
   const markRouteTransitionReady = useCallback(

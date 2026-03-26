@@ -71,8 +71,16 @@ vi.mock('@/features/kangur/observability/client', () => ({
   withKangurClientErrorSync,
 }));
 
-vi.mock('next-auth/react', () => ({
-  useSession: () => sessionMock(),
+vi.mock('next-auth/react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('next-auth/react')>();
+  return {
+    ...actual,
+    useSession: () => sessionMock(),
+  };
+});
+
+vi.mock('@/features/kangur/ui/hooks/useOptionalNextAuthSession', () => ({
+  useOptionalNextAuthSession: () => sessionMock(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
@@ -392,12 +400,38 @@ describe('KangurFeaturePage', () => {
     expect(clearKangurClientObservabilityContextMock).toHaveBeenCalledTimes(1);
   });
 
-  it('sanitizes blocked GamesLibrary routes in shell observability context for non-super-admin users', () => {
+  it('sanitizes blocked GamesLibrary routes before they reach shared Kangur routing state', () => {
     sessionMock.mockReturnValue({
       data: {
         user: {
           email: 'admin@example.com',
           role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(<KangurFeaturePage slug={['games']} basePath='/kangur' />);
+
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      basePath: '/kangur',
+      embedded: false,
+    });
+    expect(setKangurClientObservabilityContextMock).toHaveBeenCalledWith({
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+    });
+  });
+
+  it('keeps GamesLibrary routes in shared Kangur routing state for exact super admins', () => {
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'super-admin@example.com',
+          role: 'super_admin',
         },
       },
       status: 'authenticated',
@@ -413,7 +447,7 @@ describe('KangurFeaturePage', () => {
       embedded: false,
     });
     expect(setKangurClientObservabilityContextMock).toHaveBeenCalledWith({
-      pageKey: 'Game',
+      pageKey: 'GamesLibrary',
       requestedPath: '/kangur/games',
     });
   });

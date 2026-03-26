@@ -1,8 +1,15 @@
+import type { Session } from 'next-auth';
+
 import {
+  KANGUR_BASE_PATH,
   getKangurCanonicalPublicHref,
   normalizeKangurBasePath,
   resolveKangurPageKeyFromSlug,
 } from '@/features/kangur/config/routing';
+import {
+  canAccessKangurPage,
+  resolveAccessibleKangurPageKey,
+} from '@/features/kangur/config/page-access';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 import {
   buildLocalizedPathname,
@@ -223,6 +230,18 @@ export const resolveManagedKangurPageKeyFromHref = (
   );
 };
 
+export const resolveAccessibleManagedKangurPageKeyFromHref = <TPageKey extends string>(input: {
+  href: string;
+  basePath: string;
+  session?: Session | null;
+  fallbackPageKey: TPageKey;
+}): TPageKey => {
+  const { href, basePath, session, fallbackPageKey } = input;
+  const resolvedPageKey = resolveManagedKangurPageKeyFromHref(href, basePath);
+
+  return resolveAccessibleKangurPageKey(resolvedPageKey as TPageKey | null, session, fallbackPageKey);
+};
+
 export const resolveManagedKangurEmbeddedFromHref = ({
   href,
   basePath,
@@ -258,6 +277,51 @@ export const resolveManagedKangurEmbeddedFromHref = ({
       return normalizedPathname === '/';
     },
     { fallback: null }
+  );
+};
+
+export const sanitizeAccessibleManagedKangurHref = ({
+  href,
+  pathname,
+  currentOrigin,
+  canonicalizePublicAlias = false,
+  basePath = KANGUR_BASE_PATH,
+  fallbackHref,
+  session,
+}: {
+  href: string | null | undefined;
+  pathname: string | null;
+  currentOrigin?: string | null;
+  canonicalizePublicAlias?: boolean;
+  basePath?: string | null;
+  fallbackHref: string;
+  session?: Session | null;
+}): string | undefined => {
+  const resolvedHref = resolveRouteAwareManagedKangurHref({
+    href,
+    pathname,
+    currentOrigin,
+    canonicalizePublicAlias,
+  });
+
+  if (!resolvedHref) {
+    return undefined;
+  }
+
+  const effectiveBasePath = normalizeKangurBasePath(basePath ?? KANGUR_BASE_PATH);
+  const resolvedPageKey = resolveManagedKangurPageKeyFromHref(resolvedHref, effectiveBasePath);
+
+  if (!resolvedPageKey || canAccessKangurPage(resolvedPageKey, session)) {
+    return resolvedHref;
+  }
+
+  return (
+    resolveRouteAwareManagedKangurHref({
+      href: fallbackHref,
+      pathname,
+      currentOrigin,
+      canonicalizePublicAlias,
+    }) ?? fallbackHref
   );
 };
 

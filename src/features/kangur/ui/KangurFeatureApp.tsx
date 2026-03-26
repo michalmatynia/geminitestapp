@@ -1,7 +1,6 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useSession } from 'next-auth/react';
 import { useEffect, useRef, useState } from 'react';
 
 import {
@@ -9,6 +8,7 @@ import {
   LazyMotionDiv,
   usePrefersReducedMotion,
 } from '@/features/kangur/ui/components/LazyAnimatePresence';
+import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 
 import { KANGUR_CMS_PROJECT_SETTING_KEY } from '@/features/kangur/cms-builder/project-contracts';
 import { hasKangurCmsRuntimeScreen } from '@/features/kangur/cms-builder/runtime-screen-presence';
@@ -100,7 +100,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     hasResolvedAuth = true,
   } =
     useKangurAuth();
-  const { data: session, status: sessionStatus } = useSession();
+  const { data: session, status: sessionStatus } = useOptionalNextAuthSession();
   const settingsStore = useSettingsStore();
   const isLoadingSettings = settingsStore.isLoading;
   const rawCmsProject = settingsStore.get(KANGUR_CMS_PROJECT_SETTING_KEY);

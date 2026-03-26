@@ -83,7 +83,6 @@ export default function FrontendPublicOwnerShellClient({
     typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
   const resolvedPathname = pathname?.trim() || browserPathname || '/';
   const normalizedPathname = stripSiteLocalePrefix(resolvedPathname);
-  const isHomeRoute = normalizedPathname === '/';
   const isCanonicalPublicLoginRoute = normalizedPathname === '/login';
   const isKangurAliasRoute =
     normalizedPathname === '/kangur' || normalizedPathname.startsWith('/kangur/');
@@ -114,9 +113,10 @@ export default function FrontendPublicOwnerShellClient({
   if (publicOwner === 'kangur' && !isKangurAliasRoute && !isCanonicalPublicLoginRoute) {
     return (
       <FrontendPublicOwnerKangurShell
-        embedded={isHomeRoute}
-        initialMode={kangurInitialMode}
-        initialThemeSettings={kangurInitialThemeSettings}
+        initialAppearance={{
+          mode: kangurInitialMode,
+          themeSettings: kangurInitialThemeSettings,
+        }}
       />
     );
   }

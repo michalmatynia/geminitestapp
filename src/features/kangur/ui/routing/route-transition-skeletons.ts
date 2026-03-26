@@ -1,9 +1,15 @@
+import type { Session } from 'next-auth';
+
 import {
   getKangurInternalQueryParamName,
   normalizeKangurBasePath,
   readKangurUrlParam,
 } from '@/features/kangur/config/routing';
-import { isManagedLocalHref, resolveManagedKangurPageKeyFromHref } from '@/features/kangur/ui/routing/managed-paths';
+import { resolveAccessibleKangurPageKey } from '@/features/kangur/config/page-access';
+import {
+  isManagedLocalHref,
+  resolveAccessibleManagedKangurPageKeyFromHref,
+} from '@/features/kangur/ui/routing/managed-paths';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 export type KangurRouteTransitionSkeletonVariant =
   | 'game-home'
@@ -15,20 +21,34 @@ export type KangurRouteTransitionSkeletonVariant =
 
 type ResolveKangurRouteTransitionSkeletonInput = {
   basePath?: string | null;
+  fallbackPageKey?: string | null;
   href?: string | null;
   pageKey?: string | null;
+  session?: Session | null;
 };
 
 export const resolveKangurRouteTransitionSkeletonVariant = ({
   basePath,
+  fallbackPageKey,
   href,
   pageKey,
+  session,
 }: ResolveKangurRouteTransitionSkeletonInput): KangurRouteTransitionSkeletonVariant => {
   const normalizedBasePath = normalizeKangurBasePath(basePath);
+  const resolvedFallbackPageKey = fallbackPageKey?.trim() || 'Game';
   const resolvedPageKey =
-    pageKey?.trim() ||
-    (href ? resolveManagedKangurPageKeyFromHref(href, normalizedBasePath) : null) ||
-    'Game';
+    resolveAccessibleKangurPageKey(
+      pageKey?.trim() || null,
+      session,
+      href
+        ? resolveAccessibleManagedKangurPageKeyFromHref({
+            href,
+            basePath: normalizedBasePath,
+            session,
+            fallbackPageKey: resolvedFallbackPageKey,
+          })
+        : resolvedFallbackPageKey
+    ) || resolvedFallbackPageKey;
 
   let searchParams: URLSearchParams | null = null;
   if (href && isManagedLocalHref(href)) {

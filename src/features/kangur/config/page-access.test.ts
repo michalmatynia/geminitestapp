@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
   canAccessKangurPage,
+  canAccessKangurSlugSegments,
   isSuperAdminOnlyKangurPage,
+  resolveAccessibleKangurFeaturePageRoute,
   resolveAccessibleKangurPageKey,
+  resolveAccessibleKangurRouteState,
 } from '@/features/kangur/config/page-access';
 
 describe('kangur page access', () => {
@@ -38,6 +41,32 @@ describe('kangur page access', () => {
     expect(canAccessKangurPage('Game', adminSession)).toBe(true);
   });
 
+  it('blocks the games slug for non-super-admin sessions only', () => {
+    const superAdminSession = {
+      expires: '2026-12-31T23:59:59.000Z',
+      user: {
+        email: 'super@example.com',
+        id: 'user-1',
+        name: 'Super Admin',
+        role: 'super_admin',
+      },
+    };
+    const adminSession = {
+      expires: '2026-12-31T23:59:59.000Z',
+      user: {
+        email: 'admin@example.com',
+        id: 'user-2',
+        name: 'Admin',
+        role: 'admin',
+      },
+    };
+
+    expect(canAccessKangurSlugSegments(['games'], superAdminSession)).toBe(true);
+    expect(canAccessKangurSlugSegments(['games'], adminSession)).toBe(false);
+    expect(canAccessKangurSlugSegments(['lessons'], adminSession)).toBe(true);
+    expect(canAccessKangurSlugSegments(['unknown'], adminSession)).toBe(true);
+  });
+
   it('resolves inaccessible GamesLibrary routes to the provided fallback page', () => {
     expect(
       resolveAccessibleKangurPageKey(
@@ -55,5 +84,51 @@ describe('kangur page access', () => {
       )
     ).toBe('Game');
     expect(resolveAccessibleKangurPageKey('Lessons', null, 'Game')).toBe('Lessons');
+  });
+
+  it('resolves blocked GamesLibrary route state to the fallback page and path', () => {
+    expect(
+      resolveAccessibleKangurRouteState({
+        normalizedBasePath: '/kangur',
+        pageKey: 'GamesLibrary',
+        requestedPath: '/kangur/games',
+        slugSegments: ['games'],
+        session: {
+          expires: '2026-12-31T23:59:59.000Z',
+          user: {
+            email: 'admin@example.com',
+            id: 'user-2',
+            name: 'Admin',
+            role: 'admin',
+          },
+        },
+        fallbackPageKey: 'Game',
+      })
+    ).toEqual({
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+    });
+  });
+
+  it('keeps exact super-admin GamesLibrary feature routes intact', () => {
+    expect(
+      resolveAccessibleKangurFeaturePageRoute({
+        slug: ['games'],
+        basePath: '/kangur',
+        session: {
+          expires: '2026-12-31T23:59:59.000Z',
+          user: {
+            email: 'super@example.com',
+            id: 'user-1',
+            name: 'Super Admin',
+            role: 'super_admin',
+          },
+        },
+      })
+    ).toEqual({
+      normalizedBasePath: '/kangur',
+      pageKey: 'GamesLibrary',
+      requestedPath: '/kangur/games',
+    });
   });
 });

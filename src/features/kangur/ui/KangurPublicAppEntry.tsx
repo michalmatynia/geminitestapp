@@ -35,8 +35,10 @@ export function KangurPublicAppEntry({
     >
       <LazyKangurPublicApp
         basePath={basePath}
-        initialMode={initialMode}
-        initialThemeSettings={initialThemeSettings}
+        initialAppearance={{
+          mode: initialMode,
+          themeSettings: initialThemeSettings,
+        }}
       />
     </React.Suspense>
   );

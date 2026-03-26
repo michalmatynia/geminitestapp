@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import {
   canonicalizeKangurPublicAliasHref,
   canonicalizeKangurPublicAliasPathname,
+  resolveAccessibleManagedKangurPageKeyFromHref,
   resolveRouteAwareManagedKangurHref,
+  sanitizeAccessibleManagedKangurHref,
 } from '@/features/kangur/ui/routing/managed-paths';
 
 describe('managed-paths canonical Kangur alias helpers', () => {
@@ -61,5 +63,54 @@ describe('managed-paths canonical Kangur alias helpers', () => {
         canonicalizePublicAlias: false,
       })
     ).toBe('/en/profile?tab=stats');
+  });
+
+  it('sanitizes blocked GamesLibrary hrefs to the provided fallback for non-super-admin sessions', () => {
+    expect(
+      sanitizeAccessibleManagedKangurHref({
+        href: '/kangur/games',
+        pathname: '/kangur/login',
+        basePath: '/kangur',
+        fallbackHref: '/kangur',
+        session: {
+          expires: '2099-01-01T00:00:00.000Z',
+          user: {
+            email: 'admin@example.com',
+            role: 'admin',
+          },
+        },
+      })
+    ).toBe('/kangur');
+  });
+
+  it('resolves accessible page keys from managed hrefs with the shared GamesLibrary fallback rule', () => {
+    expect(
+      resolveAccessibleManagedKangurPageKeyFromHref({
+        href: '/kangur/games',
+        basePath: '/kangur',
+        fallbackPageKey: 'Game',
+        session: {
+          expires: '2099-01-01T00:00:00.000Z',
+          user: {
+            email: 'admin@example.com',
+            role: 'admin',
+          },
+        },
+      })
+    ).toBe('Game');
+    expect(
+      resolveAccessibleManagedKangurPageKeyFromHref({
+        href: '/kangur/games',
+        basePath: '/kangur',
+        fallbackPageKey: 'Game',
+        session: {
+          expires: '2099-01-01T00:00:00.000Z',
+          user: {
+            email: 'owner@example.com',
+            role: 'super_admin',
+          },
+        },
+      })
+    ).toBe('GamesLibrary');
   });
 });

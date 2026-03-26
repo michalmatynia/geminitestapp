@@ -15,6 +15,16 @@ type KangurLocalizedPathWordmarkProps = KangurLocalizedWordmarkProps & {
   wordTransform: string;
 };
 
+type KangurConfiguredLocalizedPathWordmark = {
+  arcPath: string;
+  children: ReactNode;
+  defaultIdPrefix: string;
+  defaultLabel: string;
+  displayName?: string;
+  matchesPolishPathLabel: (resolvedLabel: string) => boolean;
+  wordTransform: string;
+};
+
 export function createNormalizedWordmarkLabelMatcher(
   expectedLabel: string,
   stripPattern = /[!\s-]+/g
@@ -23,7 +33,7 @@ export function createNormalizedWordmarkLabelMatcher(
     resolvedLabel.toLocaleLowerCase('pl-PL').replace(stripPattern, '') === expectedLabel;
 }
 
-export function KangurLocalizedPathWordmark({
+function renderKangurLocalizedPathWordmark({
   arcPath,
   children,
   defaultLabel,
@@ -54,4 +64,37 @@ export function KangurLocalizedPathWordmark({
       {shouldUsePolishPathWordmark ? children : null}
     </KangurWordmarkBase>
   );
+}
+
+export function createConfiguredKangurLocalizedPathWordmark({
+  arcPath,
+  children,
+  defaultIdPrefix,
+  defaultLabel,
+  displayName,
+  matchesPolishPathLabel,
+  wordTransform,
+}: KangurConfiguredLocalizedPathWordmark): (props: KangurLocalizedWordmarkProps) => React.JSX.Element {
+  const ConfiguredKangurLocalizedPathWordmark = ({
+    idPrefix = defaultIdPrefix,
+    label = defaultLabel,
+    locale = 'pl',
+    ...props
+  }: KangurLocalizedWordmarkProps): React.JSX.Element =>
+    renderKangurLocalizedPathWordmark({
+      arcPath,
+      defaultLabel,
+      idPrefix,
+      label,
+      locale,
+      matchesPolishPathLabel,
+      wordTransform,
+      ...props,
+      children,
+    });
+
+  ConfiguredKangurLocalizedPathWordmark.displayName =
+    displayName ?? `Configured(${defaultIdPrefix})`;
+
+  return ConfiguredKangurLocalizedPathWordmark;
 }

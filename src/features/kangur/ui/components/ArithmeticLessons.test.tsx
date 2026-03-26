@@ -54,6 +54,79 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonPanelProgress', async () => {
+  const { useLessonHubProgress } =
+    await vi.importActual<typeof import('@/features/kangur/ui/hooks/useLessonHubProgress')>(
+      '@/features/kangur/ui/hooks/useLessonHubProgress'
+    );
+  return {
+    useKangurLessonPanelProgress: ({
+      slideSections,
+    }: {
+      slideSections: Partial<Record<string, readonly unknown[]>>;
+    }) => {
+      const { markSectionOpened, markSectionViewedCount, sectionProgress } =
+        useLessonHubProgress(slideSections);
+      return {
+        markSectionOpened,
+        markSectionViewedCount,
+        recordPanelTime: vi.fn(),
+        sectionProgress,
+      };
+    },
+  };
+});
+
+vi.mock('@/features/kangur/ui/learner-activity/hooks', () => ({
+  useKangurLessonSubsectionProgress: () => ({
+    markSectionOpened: vi.fn(),
+    markSectionViewedCount: vi.fn(),
+    recordPanelTime: vi.fn(),
+    sectionProgress: {},
+  }),
+  useLessonTimeTracking: () => ({
+    recordComplete: vi.fn(async () => undefined),
+    recordPanelTime: vi.fn(),
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/ui/services/progress')>();
+  const { createDefaultKangurProgressState } =
+    await vi.importActual<typeof import('@/features/kangur/shared/contracts/kangur')>(
+      '@/features/kangur/shared/contracts/kangur'
+    );
+
+  return {
+    ...actual,
+    addXp: vi.fn(),
+    createLessonCompletionReward: vi.fn(() => ({
+      xp: 28,
+      scorePercent: 100,
+      progressUpdates: {},
+    })),
+    loadProgress: vi.fn(() => createDefaultKangurProgressState()),
+    recordKangurLessonPanelProgress: vi.fn(),
+    recordKangurLessonPanelTime: vi.fn(),
+  };
+});
+
+vi.mock('@/features/kangur/services/kangur-platform', async () => {
+  const { createDefaultKangurProgressState } =
+    await vi.importActual<typeof import('@/features/kangur/shared/contracts/kangur')>(
+      '@/features/kangur/shared/contracts/kangur'
+    );
+
+  return {
+    getKangurPlatform: () => ({
+      progress: {
+        get: vi.fn(async () => createDefaultKangurProgressState()),
+        update: vi.fn(async (progress: unknown) => progress),
+      },
+    }),
+  };
+});
+
 vi.mock('@/features/kangur/ui/components/AddingBallGame', () => ({
   default: () => <div>Mock Adding Ball Game</div>,
 }));

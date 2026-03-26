@@ -1,4 +1,4 @@
-import { AdminSyncSettingsPage } from '@/features/admin/public';
+import { AdminSyncSettingsPage } from '@/features/admin/public/pages';
 
 export const dynamic = 'force-dynamic';
 

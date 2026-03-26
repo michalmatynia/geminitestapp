@@ -1,4 +1,6 @@
-import { KangurTextWordmark } from '@/features/kangur/ui/components/KangurTextWordmark';
+import {
+  renderKangurTextWordmark,
+} from '@/features/kangur/ui/components/KangurTextWordmark';
 import type { KangurLocalizedWordmarkProps } from '@/features/kangur/ui/components/kangur-wordmark';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
@@ -11,6 +13,13 @@ type KangurWordmarkLocaleLabels = {
 
 type KangurLocalizedTextWordmarkProps = KangurLocalizedWordmarkProps & {
   arcPath: string;
+  labels: KangurWordmarkLocaleLabels;
+};
+
+type KangurConfiguredLocalizedTextWordmark = {
+  arcPath: string;
+  defaultIdPrefix: string;
+  displayName?: string;
   labels: KangurWordmarkLocaleLabels;
 };
 
@@ -30,7 +39,7 @@ export function resolveLocalizedWordmarkLabel(
   }
 }
 
-export function KangurLocalizedTextWordmark({
+function renderKangurLocalizedTextWordmark({
   arcPath,
   idPrefix,
   label,
@@ -40,12 +49,37 @@ export function KangurLocalizedTextWordmark({
 }: KangurLocalizedTextWordmarkProps): React.JSX.Element {
   const resolvedLabel = label?.trim() || resolveLocalizedWordmarkLabel(locale, labels);
 
-  return (
-    <KangurTextWordmark
-      arcPath={arcPath}
-      idPrefix={idPrefix}
-      label={resolvedLabel}
-      {...props}
-    />
-  );
+  return renderKangurTextWordmark({
+    arcPath,
+    idPrefix,
+    label: resolvedLabel,
+    ...props,
+  });
+}
+
+export function createConfiguredKangurLocalizedTextWordmark({
+  arcPath,
+  defaultIdPrefix,
+  displayName,
+  labels,
+}: KangurConfiguredLocalizedTextWordmark): (props: KangurLocalizedWordmarkProps) => React.JSX.Element {
+  const ConfiguredKangurLocalizedTextWordmark = ({
+    idPrefix = defaultIdPrefix,
+    label,
+    locale = 'pl',
+    ...props
+  }: KangurLocalizedWordmarkProps): React.JSX.Element =>
+    renderKangurLocalizedTextWordmark({
+      arcPath,
+      idPrefix,
+      label,
+      labels,
+      locale,
+      ...props,
+    });
+
+  ConfiguredKangurLocalizedTextWordmark.displayName =
+    displayName ?? `Configured(${defaultIdPrefix})`;
+
+  return ConfiguredKangurLocalizedTextWordmark;
 }

@@ -1,5 +1,4 @@
-import { KangurLocalizedTextWordmark } from '@/features/kangur/ui/components/KangurLocalizedTextWordmark';
-import type { KangurLocalizedWordmarkProps } from '@/features/kangur/ui/components/kangur-wordmark';
+import { createConfiguredKangurLocalizedTextWordmark } from '@/features/kangur/ui/components/KangurLocalizedTextWordmark';
 
 const KANGUR_PARENT_DASHBOARD_WORDMARK_LABELS = {
   de: 'Elterndashboard',
@@ -8,20 +7,9 @@ const KANGUR_PARENT_DASHBOARD_WORDMARK_LABELS = {
   uk: 'Панель для батьків',
 } as const;
 
-export function KangurParentDashboardWordmark({
-  idPrefix = 'kangur-parent-dashboard-wordmark',
-  label,
-  locale = 'pl',
-  ...props
-}: KangurLocalizedWordmarkProps): React.JSX.Element {
-  return (
-    <KangurLocalizedTextWordmark
-      arcPath='M88 118C194 140 322 140 446 112'
-      idPrefix={idPrefix}
-      label={label}
-      labels={KANGUR_PARENT_DASHBOARD_WORDMARK_LABELS}
-      locale={locale}
-      {...props}
-    />
-  );
-}
+export const KangurParentDashboardWordmark = createConfiguredKangurLocalizedTextWordmark({
+  arcPath: 'M88 118C194 140 322 140 446 112',
+  defaultIdPrefix: 'kangur-parent-dashboard-wordmark',
+  displayName: 'KangurParentDashboardWordmark',
+  labels: KANGUR_PARENT_DASHBOARD_WORDMARK_LABELS,
+});

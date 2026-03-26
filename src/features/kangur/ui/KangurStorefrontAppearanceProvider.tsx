@@ -39,15 +39,23 @@ export const useKangurStorefrontAppearanceHydrated = (): boolean =>
 
 export function KangurStorefrontAppearanceProvider({
   children,
+  initialAppearance,
   initialMode,
   initialThemeSettings,
 }: {
   children: ReactNode;
+  initialAppearance?: {
+    mode?: KangurStorefrontAppearanceMode;
+    themeSettings?: Partial<KangurStorefrontThemeSettingsSnapshot>;
+  };
   initialMode?: KangurStorefrontAppearanceMode;
   initialThemeSettings?: Partial<KangurStorefrontThemeSettingsSnapshot>;
 }): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const [hydrated, setHydrated] = useState(false);
+  const resolvedInitialMode = initialAppearance?.mode ?? initialMode;
+  const resolvedInitialThemeSettingsInput =
+    initialAppearance?.themeSettings ?? initialThemeSettings;
   const storedMode = settingsStore.get(KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY);
   const resolvedMode = useMemo(
     () => parseKangurStorefrontAppearanceMode(storedMode),
@@ -55,14 +63,14 @@ export function KangurStorefrontAppearanceProvider({
   );
   const resolvedInitialThemeSettings = useMemo<KangurStorefrontThemeSettingsSnapshot>(
     () => ({
-      default: initialThemeSettings?.default ?? null,
-      dawn: initialThemeSettings?.dawn ?? null,
-      sunset: initialThemeSettings?.sunset ?? null,
-      dark: initialThemeSettings?.dark ?? null,
+      default: resolvedInitialThemeSettingsInput?.default ?? null,
+      dawn: resolvedInitialThemeSettingsInput?.dawn ?? null,
+      sunset: resolvedInitialThemeSettingsInput?.sunset ?? null,
+      dark: resolvedInitialThemeSettingsInput?.dark ?? null,
     }),
-    [initialThemeSettings]
+    [resolvedInitialThemeSettingsInput]
   );
-  const defaultMode = hydrated ? resolvedMode : (initialMode ?? 'default');
+  const defaultMode = hydrated ? resolvedMode : (resolvedInitialMode ?? 'default');
   const shouldPersistMode = useMemo(() => {
     const raw = process.env['NEXT_PUBLIC_KANGUR_APPEARANCE_PERSIST'];
     if (process.env['NODE_ENV'] !== 'production') {

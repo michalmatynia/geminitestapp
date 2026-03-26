@@ -12,7 +12,7 @@ import { ValidationItemCard } from './ValidationItemCard';
 import { ValidationMetaBadge } from './ValidationMetaBadge';
 import { ValidationPanel } from './ValidationPanel';
 import { ValidationPanelHeader } from './ValidationPanelHeader';
-import { ValidationSubpanel } from './ValidationSubpanel';
+import { validationSubpanelClassName } from './ValidationSubpanel';
 
 type CentralDocsSyncSummaryBadgeProps = {
   label: string;
@@ -209,7 +209,11 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
       ) : null}
 
       {centralSnapshot?.sources?.length ? (
-        <ValidationSubpanel className='mb-3 max-h-28 space-y-1 overflow-y-auto'>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className={validationSubpanelClassName('mb-3 max-h-28 space-y-1 overflow-y-auto')}
+        >
           {centralSnapshot.sources.map((source) => (
             <div
               key={`${source.id}:${source.hash}`}
@@ -222,7 +226,7 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
               </span>
             </div>
           ))}
-        </ValidationSubpanel>
+        </Card>
       ) : null}
 
       <div className='mb-3 grid gap-2 sm:grid-cols-2'>
@@ -244,7 +248,11 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
           Inferred Candidates ({candidateRules.length})
         </Hint>
         {candidateRules.length > 0 ? (
-          <ValidationSubpanel className='max-h-60 space-y-2 overflow-y-auto'>
+          <Card
+            variant='subtle-compact'
+            padding='sm'
+            className={validationSubpanelClassName('max-h-60 space-y-2 overflow-y-auto')}
+          >
             {candidateRules.map((rule: AiPathsValidationRule) => (
               <CentralDocsSyncCandidateCard
                 key={rule.id}
@@ -254,16 +262,24 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
                 onReject={handleRejectCandidate}
               />
             ))}
-          </ValidationSubpanel>
+          </Card>
         ) : (
-          <ValidationSubpanel padding='md' className='text-xs text-gray-500'>
+          <Card
+            variant='subtle-compact'
+            padding='md'
+            className={validationSubpanelClassName('text-xs text-gray-500')}
+          >
             Sync from central docs to generate inference candidates.
-          </ValidationSubpanel>
+          </Card>
         )}
       </div>
 
       {rejectedCandidates.length > 0 ? (
-        <ValidationSubpanel className='mt-3 space-y-1'>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className={validationSubpanelClassName('mt-3 space-y-1')}
+        >
           <div className='text-[11px] font-medium text-gray-300'>Rejected candidates</div>
           <div className='max-h-20 space-y-1 overflow-y-auto'>
             {rejectedCandidates.map((rule: AiPathsValidationRule) => (
@@ -272,7 +288,7 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
               </div>
             ))}
           </div>
-        </ValidationSubpanel>
+        </Card>
       ) : null}
     </ValidationPanel>
   );

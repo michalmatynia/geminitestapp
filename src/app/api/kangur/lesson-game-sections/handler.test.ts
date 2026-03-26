@@ -108,6 +108,38 @@ describe('kangur lesson game sections handler', () => {
     ]);
   });
 
+  it('passes enabled and lesson filters through to the repository', async () => {
+    listSectionsMock.mockResolvedValue([
+      createClockSection({
+        id: 'clock_saved_calendar_section',
+        lessonComponentId: 'calendar',
+      }),
+    ]);
+
+    const response = await getKangurLessonGameSectionsHandler(
+      new NextRequest(
+        'http://localhost/api/kangur/lesson-game-sections?gameId=clock_training&lessonComponentId=calendar&enabledOnly=true'
+      ),
+      createRequestContext({
+        enabledOnly: true,
+        gameId: 'clock_training',
+        lessonComponentId: 'calendar',
+      })
+    );
+
+    expect(listSectionsMock).toHaveBeenCalledWith({
+      enabledOnly: true,
+      gameId: 'clock_training',
+      lessonComponentId: 'calendar',
+    });
+    await expect(response.json()).resolves.toEqual([
+      expect.objectContaining({
+        id: 'clock_saved_calendar_section',
+        lessonComponentId: 'calendar',
+      }),
+    ]);
+  });
+
   it('invalidates cached game sections after a replace', async () => {
     const cachedSection = createClockSection();
     const replacedSection = createClockSection({

@@ -106,6 +106,7 @@ const QUIET_TEST_LOG_PATTERNS = [
   'Deleted CMS page:',
   '[queue:',
   '[ai-paths-service]',
+  'Kangur API request failed: 405 Method Not Allowed (/api/kangur/progress)',
 ];
 const QUIET_TEST_LOG_SERVICES = new Set([
   'export-template-repository',
@@ -145,6 +146,10 @@ if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon !== 'functio
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+const matchesQuietTestLogPattern = (value: unknown): boolean =>
+  typeof value === 'string'
+  && QUIET_TEST_LOG_PATTERNS.some((pattern: string): boolean => value.includes(pattern));
+
 const shouldSuppressStructuredTestLog = (args: unknown[]): boolean => {
   const [, secondArg] = args;
   const message = args
@@ -155,12 +160,20 @@ const shouldSuppressStructuredTestLog = (args: unknown[]): boolean => {
     return true;
   }
 
-  if (QUIET_TEST_LOG_PATTERNS.some((pattern: string): boolean => message.includes(pattern))) {
+  if (matchesQuietTestLogPattern(message)) {
     return true;
   }
 
   if (!isObjectRecord(secondArg)) {
     return false;
+  }
+
+  if (
+    matchesQuietTestLogPattern(secondArg['message'])
+    || (isObjectRecord(secondArg['error'])
+      && matchesQuietTestLogPattern(secondArg['error']['message']))
+  ) {
+    return true;
   }
 
   if (secondArg['expected'] === true) {

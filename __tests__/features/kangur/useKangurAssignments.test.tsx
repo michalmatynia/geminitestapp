@@ -113,23 +113,31 @@ describe('useKangurAssignments', () => {
     assignmentsListMock
       .mockResolvedValueOnce(initialAssignments)
       .mockResolvedValueOnce(refreshedAssignments);
+    let now = Date.now();
+    const dateNowSpy = vi.spyOn(Date, 'now').mockImplementation(() => now);
 
-    const { result } = renderHook(() => useKangurAssignments({ enabled: true }), {
-      wrapper: createWrapper(),
-    });
+    try {
+      const { result } = renderHook(() => useKangurAssignments({ enabled: true }), {
+        wrapper: createWrapper(),
+      });
 
-    await waitFor(() => {
-      expect(result.current.assignments).toEqual(initialAssignments);
-    });
+      await waitFor(() => {
+        expect(result.current.assignments).toEqual(initialAssignments);
+      });
 
-    act(() => {
-      window.dispatchEvent(new Event('focus'));
-    });
+      now += 1000 * 60 * 2 + 1;
 
-    await waitFor(() => {
-      expect(assignmentsListMock).toHaveBeenCalledTimes(2);
-      expect(result.current.assignments).toEqual(refreshedAssignments);
-    });
+      act(() => {
+        window.dispatchEvent(new Event('focus'));
+      });
+
+      await waitFor(() => {
+        expect(assignmentsListMock).toHaveBeenCalledTimes(2);
+        expect(result.current.assignments).toEqual(refreshedAssignments);
+      });
+    } finally {
+      dateNowSpy.mockRestore();
+    }
   });
 
   it('does not subscribe to revalidation events when disabled', async () => {

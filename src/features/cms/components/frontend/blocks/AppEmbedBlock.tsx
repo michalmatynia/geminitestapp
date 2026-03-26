@@ -3,6 +3,8 @@
 import { usePathname, useSearchParams } from 'next/navigation';
 import React from 'react';
 
+import { canAccessKangurSlugSegments } from '@/features/kangur/config/page-access';
+import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import {
   DEFAULT_APP_EMBED_BASE_PATH,
   DEFAULT_APP_EMBED_ENTRY_PAGE,
@@ -65,11 +67,29 @@ const resolveKangurEntrySlug = (entryPage: unknown): string[] => {
   return [resolvedSlug];
 };
 
+const resolveAccessibleKangurEmbedSlug = (input: {
+  requestedSlug: string | null;
+  entryPage: unknown;
+  session: import('next-auth').Session | null | undefined;
+}): string[] => {
+  const { requestedSlug, entryPage, session } = input;
+  const fallbackSlug = resolveKangurEntrySlug(entryPage);
+  const requestedActiveSlug =
+    requestedSlug === null ? fallbackSlug : requestedSlug ? [requestedSlug] : [];
+
+  if (canAccessKangurSlugSegments(requestedActiveSlug, session)) {
+    return requestedActiveSlug;
+  }
+
+  return canAccessKangurSlugSegments(fallbackSlug, session) ? fallbackSlug : [];
+};
+
 export function AppEmbedBlock(): React.ReactNode {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const settings = useRequiredBlockSettings();
   const { block } = useRequiredBlockRenderContext();
+  const { data: session } = useOptionalNextAuthSession();
   const rawAppId = settings['appId'];
   const appOption = getAppEmbedOption(
     typeof rawAppId === 'string' ? rawAppId : DEFAULT_APP_EMBED_ID
@@ -101,12 +121,11 @@ export function AppEmbedBlock(): React.ReactNode {
     KANGUR_EMBED_QUERY_PARAM,
     embeddedBasePath
   );
-  const activeSlug =
-    requestedSlug === null
-      ? resolveKangurEntrySlug(entryPage)
-      : requestedSlug
-        ? [requestedSlug]
-        : [];
+  const activeSlug = resolveAccessibleKangurEmbedSlug({
+    requestedSlug,
+    entryPage,
+    session,
+  });
 
   return (
     <Card

@@ -3,6 +3,7 @@
  */
 
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { SessionContext, type SessionContextValue } from 'next-auth/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -138,6 +139,24 @@ const AUTHENTICATED_USER = {
   learners: [],
 };
 
+const SUPER_ADMIN_SESSION = {
+  expires: '2026-12-31T23:59:59.000Z',
+  user: {
+    id: 'super-admin-1',
+    name: 'Super Admin',
+    email: 'super-admin@example.com',
+    role: 'super_admin',
+  },
+} as const;
+
+const createSessionContextValue = (
+  session: typeof SUPER_ADMIN_SESSION | null = null
+): SessionContextValue<false> => ({
+  data: session,
+  status: session ? 'authenticated' : 'unauthenticated',
+  update: async () => session,
+});
+
 const AuthProbe = (): React.JSX.Element => {
   const {
     canAccessParentAssignments,
@@ -184,6 +203,40 @@ const AuthProbe = (): React.JSX.Element => {
   );
 };
 
+const renderAuthHarness = ({
+  session = null,
+  basePath,
+  pageKey,
+  requestedPath,
+}: {
+  session?: typeof SUPER_ADMIN_SESSION | null;
+  basePath?: string;
+  pageKey?: string;
+  requestedPath?: string;
+} = {}): ReturnType<typeof render> => {
+  const content = (
+    <KangurAuthProvider>
+      <AuthProbe />
+    </KangurAuthProvider>
+  );
+
+  return render(
+    <SessionContext.Provider value={createSessionContextValue(session)}>
+      {typeof basePath === 'string' || typeof pageKey === 'string' || typeof requestedPath === 'string' ? (
+        <KangurRoutingProvider
+          basePath={basePath}
+          pageKey={pageKey}
+          requestedPath={requestedPath}
+        >
+          {content}
+        </KangurRoutingProvider>
+      ) : (
+        content
+      )}
+    </SessionContext.Provider>
+  );
+};
+
 describe('KangurAuthContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -201,11 +254,7 @@ describe('KangurAuthContext', () => {
   });
 
   it('exposes assignment access only when auth resolves an active learner session', async () => {
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await waitFor(() => {
       expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
@@ -214,11 +263,7 @@ describe('KangurAuthContext', () => {
   });
 
   it('reuses the bootstrap auth session across provider remounts', async () => {
-    const firstRender = render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    const firstRender = renderAuthHarness();
 
     await waitFor(() => {
       expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
@@ -227,28 +272,20 @@ describe('KangurAuthContext', () => {
     expect(meMock).toHaveBeenCalledTimes(1);
     firstRender.unmount();
 
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await waitFor(() => {
       expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
       expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
     });
 
-    expect(meMock).toHaveBeenCalledTimes(1);
+    expect(meMock).toHaveBeenCalledTimes(2);
   });
 
   it('navigates to the Kangur login page using the current location as callback target', async () => {
     const user = userEvent.setup();
 
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await waitFor(() => {
       expect(meMock).toHaveBeenCalledTimes(1);
@@ -267,11 +304,7 @@ describe('KangurAuthContext', () => {
   it('navigates to the Kangur login page in create-account mode when requested', async () => {
     const user = userEvent.setup();
 
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await waitFor(() => {
       expect(meMock).toHaveBeenCalledTimes(1);
@@ -294,13 +327,11 @@ describe('KangurAuthContext', () => {
     const user = userEvent.setup();
     window.history.replaceState({}, '', '/en/kangur/profile?tab=stats#summary');
 
-    render(
-      <KangurRoutingProvider basePath='/' pageKey='LearnerProfile' requestedPath='/profile'>
-        <KangurAuthProvider>
-          <AuthProbe />
-        </KangurAuthProvider>
-      </KangurRoutingProvider>
-    );
+    renderAuthHarness({
+      basePath: '/',
+      pageKey: 'LearnerProfile',
+      requestedPath: '/profile',
+    });
 
     await waitFor(() => {
       expect(meMock).toHaveBeenCalledTimes(1);
@@ -314,14 +345,53 @@ describe('KangurAuthContext', () => {
     );
   });
 
+  it('sanitizes blocked GamesLibrary callbacks for non-super-admin login redirects', async () => {
+    const user = userEvent.setup();
+    window.history.replaceState({}, '', '/kangur/games?engine=shape-drawing#catalog');
+
+    renderAuthHarness({
+      basePath: '/kangur',
+      pageKey: 'GamesLibrary',
+      requestedPath: '/kangur/games',
+    });
+
+    await waitFor(() => {
+      expect(meMock).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Open login' }));
+
+    expect(routerPushMock).toHaveBeenCalledWith(getKangurLoginHref('/kangur', '/kangur'));
+  });
+
+  it('preserves GamesLibrary callbacks for exact super-admin login redirects', async () => {
+    const user = userEvent.setup();
+    window.history.replaceState({}, '', '/kangur/games?engine=shape-drawing#catalog');
+
+    renderAuthHarness({
+      session: SUPER_ADMIN_SESSION,
+      basePath: '/kangur',
+      pageKey: 'GamesLibrary',
+      requestedPath: '/kangur/games',
+    });
+
+    await waitFor(() => {
+      expect(meMock).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Open login' }));
+
+    expect(routerPushMock).toHaveBeenCalledWith(
+      getKangurLoginHref('/kangur', '/kangur/games?engine=shape-drawing#catalog')
+    );
+  });
+
   it('drops parent-assignment access in anonymous mode', async () => {
     meMock.mockRejectedValueOnce({ status: 401 });
 
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await waitFor(() => {
       expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
@@ -333,11 +403,7 @@ describe('KangurAuthContext', () => {
   it('still reports unexpected auth bootstrap failures', async () => {
     meMock.mockRejectedValueOnce(new Error('boom'));
 
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await waitFor(() => {
       expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
@@ -353,11 +419,7 @@ describe('KangurAuthContext', () => {
       '/kangur/lessons?kangurCapture=social-batch'
     );
 
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await waitFor(() => {
       expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
@@ -379,11 +441,7 @@ describe('KangurAuthContext', () => {
         })
     );
 
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(3_000);
@@ -407,11 +465,7 @@ describe('KangurAuthContext', () => {
     meMock.mockResolvedValueOnce(AUTHENTICATED_USER);
     meMock.mockRejectedValueOnce({ status: 401 });
 
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await waitFor(() => {
       expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
@@ -438,11 +492,7 @@ describe('KangurAuthContext', () => {
     );
     meMock.mockRejectedValueOnce({ status: 401 });
 
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await user.click(screen.getByRole('button', { name: 'Logout' }));
 
@@ -471,11 +521,7 @@ describe('KangurAuthContext', () => {
         })
     );
 
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await waitFor(() => {
       expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
@@ -517,11 +563,7 @@ describe('KangurAuthContext', () => {
         })
     );
 
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(3_000);

@@ -14,15 +14,21 @@ const {
   useKangurProgressStateMock,
   useOptionalKangurAuthMock,
   useOptionalKangurRoutingMock,
+  sessionMock,
 } = vi.hoisted(() => ({
   usePathnameMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
   useOptionalKangurAuthMock: vi.fn(),
   useOptionalKangurRoutingMock: vi.fn(),
+  sessionMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
+}));
+
+vi.mock('next-auth/react', () => ({
+  useSession: () => sessionMock(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
@@ -49,6 +55,10 @@ const renderWithIntl = (element: ReactElement) =>
 describe('KangurPageTransitionSkeleton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
     usePathnameMock.mockReturnValue('/en/lessons');
     useOptionalKangurAuthMock.mockReturnValue({
       canAccessParentAssignments: true,
@@ -133,6 +143,29 @@ describe('KangurPageTransitionSkeleton', () => {
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
       'data-kangur-skeleton-variant',
       'lessons-library'
+    );
+  });
+
+  it('downgrades blocked GamesLibrary skeletons to the game-home variant for non-super-admin users', () => {
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+    });
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'admin@example.com',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    renderWithIntl(<KangurPageTransitionSkeleton pageKey='GamesLibrary' />);
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-kangur-skeleton-variant',
+      'game-home'
     );
   });
 

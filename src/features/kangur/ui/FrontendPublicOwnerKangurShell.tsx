@@ -2,10 +2,13 @@
 
 import '@/app/(frontend)/kangur/kangur.css';
 
+import { usePathname } from 'next/navigation';
+
 import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRouteShell';
 import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
 import { KangurMainRoleProvider } from '@/features/kangur/ui/design/primitives/KangurPageContainer';
+import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 import type {
   KangurStorefrontAppearanceMode,
   KangurStorefrontThemeSettingsSnapshot,
@@ -14,20 +17,36 @@ import type {
 import type { JSX } from 'react';
 
 type FrontendPublicOwnerKangurShellProps = {
-  embedded: boolean;
+  embeddedOverride?: boolean;
+  initialAppearance?: {
+    mode?: KangurStorefrontAppearanceMode;
+    themeSettings?: Partial<KangurStorefrontThemeSettingsSnapshot>;
+  };
   initialMode?: KangurStorefrontAppearanceMode;
   initialThemeSettings?: Partial<KangurStorefrontThemeSettingsSnapshot>;
 };
 
 export function FrontendPublicOwnerKangurShell({
-  embedded,
+  embeddedOverride,
+  initialAppearance,
   initialMode,
   initialThemeSettings,
 }: FrontendPublicOwnerKangurShellProps): JSX.Element {
+  const pathname = usePathname();
+  const browserPathname =
+    typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
+  const resolvedPathname = pathname?.trim() || browserPathname || '/';
+  const normalizedPathname = stripSiteLocalePrefix(resolvedPathname);
+  const embedded = embeddedOverride ?? normalizedPathname === '/';
+
   return (
     <KangurStorefrontAppearanceProvider
-      initialMode={initialMode}
-      initialThemeSettings={initialThemeSettings}
+      initialAppearance={
+        initialAppearance ?? {
+          mode: initialMode,
+          themeSettings: initialThemeSettings,
+        }
+      }
     >
       <KangurSurfaceClassSync>
         <KangurMainRoleProvider suppressMainRole>

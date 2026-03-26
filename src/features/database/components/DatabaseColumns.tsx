@@ -47,13 +47,6 @@ type DatabaseActionsRuntimeValue = {
   handleDeleteRequest: (backupName: string) => void;
 };
 
-function DatabaseActionsPreviewItem({
-  backup,
-  handlePreview,
-}: Pick<DatabaseActionsRuntimeValue, 'backup' | 'handlePreview'>): React.JSX.Element {
-  return <DropdownMenuItem onClick={() => handlePreview(backup.name)}>Preview</DropdownMenuItem>;
-}
-
 function DatabaseActionsRestoreItem({
   backup,
   backupMaintenanceAllowed,
@@ -102,7 +95,7 @@ function DatabaseActionsCell({ backup }: { backup: DatabaseInfo }): React.JSX.El
   return (
     <div className='flex justify-end'>
       <ActionMenu>
-        <DatabaseActionsPreviewItem backup={backup} handlePreview={handlePreview} />
+        <DropdownMenuItem onClick={() => handlePreview(backup.name)}>Preview</DropdownMenuItem>
         <DatabaseActionsRestoreItem
           backup={backup}
           backupMaintenanceAllowed={backupMaintenanceAllowed}

@@ -39,6 +39,12 @@ vi.mock('@/features/kangur/ui/learner-activity/hooks', async (importOriginal) =>
     await importOriginal<typeof import('@/features/kangur/ui/learner-activity/hooks')>();
   return {
     ...actual,
+    useKangurLessonSubsectionProgress: () => ({
+      markSectionOpened: vi.fn(),
+      markSectionViewedCount: vi.fn(),
+      recordPanelTime: vi.fn(),
+      sectionProgress: {},
+    }),
     useLessonTimeTracking: () => ({
       recordComplete: vi.fn(async () => undefined),
       recordPanelTime: vi.fn(),

@@ -10,6 +10,7 @@ const {
   withKangurClientErrorSync,
   usePathnameMock,
   useSearchParamsMock,
+  sessionMock,
 } = vi.hoisted(() => {
   const mocks = globalThis.__kangurClientErrorMocks();
   return {
@@ -19,6 +20,7 @@ const {
     withKangurClientErrorSync: mocks.withKangurClientErrorSync,
     usePathnameMock: vi.fn<() => string | null>(),
     useSearchParamsMock: vi.fn<() => URLSearchParams>(),
+    sessionMock: vi.fn(),
   };
 });
 
@@ -44,6 +46,10 @@ vi.mock('@/features/kangur/observability/client', () => ({
   clearKangurClientObservabilityContext: clearKangurClientObservabilityContextMock,
   withKangurClientError,
   withKangurClientErrorSync,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useOptionalNextAuthSession', () => ({
+  useOptionalNextAuthSession: () => sessionMock(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
@@ -77,6 +83,10 @@ import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRoute
 describe('KangurFeatureRouteShell', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
     clearLatchedKangurTopBarHeightCssValue();
     window.history.replaceState({}, '', '/kangur');
     document.documentElement.style.removeProperty('--kangur-top-bar-height');
@@ -200,6 +210,33 @@ describe('KangurFeatureRouteShell', () => {
   });
 
   it('falls back to the main page for the base Kangur path', () => {
+    render(<KangurFeatureRouteShell />);
+
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      basePath: '/kangur',
+      embedded: false,
+    });
+    expect(setKangurClientObservabilityContextMock).toHaveBeenCalledWith({
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+    });
+  });
+
+  it('sanitizes blocked GamesLibrary routes before they reach shared Kangur routing state', () => {
+    usePathnameMock.mockReturnValue('/kangur/games');
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'admin@example.com',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
     render(<KangurFeatureRouteShell />);
 
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({

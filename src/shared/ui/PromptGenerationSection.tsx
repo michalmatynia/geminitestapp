@@ -70,28 +70,6 @@ type PromptGenerationSectionResolvedProps = PromptGenerationSectionProps & {
   finalResultLabelId: string;
 };
 
-function PromptGenerationSectionHeader({
-  badgeVariant,
-  badgeTextColor,
-  pathNumber,
-  pathTitle,
-}: Pick<
-  PromptGenerationSectionResolvedProps,
-  'badgeVariant' | 'badgeTextColor' | 'pathNumber' | 'pathTitle'
->): JSX.Element {
-  return (
-    <div className='flex items-center gap-2'>
-      <Badge
-        variant={badgeVariant}
-        className={`h-6 w-6 justify-center p-0 font-bold ${badgeTextColor}`}
-      >
-        {pathNumber}
-      </Badge>
-      <h3 className='text-md font-medium text-white'>{pathTitle}</h3>
-    </div>
-  );
-}
-
 function PromptGenerationInputPanel({
   inputId,
   inputLabel,
@@ -317,7 +295,15 @@ function PromptGenerationSectionLayout(
 ): JSX.Element {
   return (
     <div className='space-y-4'>
-      <PromptGenerationSectionHeader {...props} />
+      <div className='flex items-center gap-2'>
+        <Badge
+          variant={props.badgeVariant}
+          className={`h-6 w-6 justify-center p-0 font-bold ${props.badgeTextColor}`}
+        >
+          {props.pathNumber}
+        </Badge>
+        <h3 className='text-md font-medium text-white'>{props.pathTitle}</h3>
+      </div>
 
       <div className='pl-8 space-y-6'>
         <div className={`${UI_GRID_ROOMY_CLASSNAME} grid-cols-1 lg:grid-cols-2`}>

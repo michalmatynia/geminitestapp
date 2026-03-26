@@ -49,6 +49,7 @@ function KangurLearnerProfileOperationStat({
 
 export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
   const translations = useTranslations('KangurLearnerProfileWidgets.performance');
+  const commonTranslations = useTranslations('KangurPublic');
   const { basePath, maxWeeklyGames, snapshot } = useKangurLearnerProfileRuntime();
   const isCoarsePointer = useKangurCoarsePointer();
   const { entry: performanceContent } = useKangurPageContentEntry('learner-profile-performance');
@@ -122,7 +123,7 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
         </KangurGlassPanel>
 
         <KangurGlassPanel padding='lg' surface='solid' variant='subtle'>
-          <KangurPanelSectionHeading>{translations('operationsHeading')}</KangurPanelSectionHeading>
+          <KangurPanelSectionHeading>{commonTranslations('overview.operationsHeading')}</KangurPanelSectionHeading>
           <div className='flex flex-col kangur-panel-gap'>
             {snapshot.operationPerformance.length === 0 ? (
               <KangurEmptyState

@@ -32,11 +32,16 @@ vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
     capturedProps = props;
     return <div data-testid='kangur-unified-lesson'>{String(props.lessonTitle ?? '')}</div>;
   },
+  useKangurUnifiedLessonBack: () => vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonGameSections', () => ({
-  useKangurLessonGameSections: () => ({
-    data: lessonGameSectionsState,
+  useKangurLessonGameSections: (options?: { enabledOnly?: boolean }) => ({
+    data: options?.enabledOnly
+      ? lessonGameSectionsState.filter(
+          (section) => (section.enabled as boolean | undefined) !== false
+        )
+      : lessonGameSectionsState,
     isPending: false,
   }),
 }));
@@ -228,5 +233,44 @@ describe('time stage lesson configs', () => {
         }),
       ])
     );
+  });
+
+  it('skips disabled persisted clock hub cards from the lesson config', () => {
+    lessonGameSectionsState = [
+      {
+        id: 'clock_custom_disabled',
+        lessonComponentId: 'clock',
+        gameId: 'clock_training',
+        title: 'Ukryta karta zegara',
+        description: 'Ta karta nie powinna trafic do lesson huba.',
+        emoji: '🙈',
+        sortOrder: 9,
+        enabled: false,
+        settings: {
+          clock: {
+            clockSection: 'combined',
+            initialMode: 'practice',
+            showHourHand: true,
+            showMinuteHand: true,
+            showModeSwitch: true,
+            showTaskTitle: true,
+            showTimeDisplay: true,
+          },
+        },
+      },
+    ];
+
+    render(
+      <NextIntlClientProvider locale='pl' messages={plMessages}>
+        <ClockLesson />
+      </NextIntlClientProvider>
+    );
+
+    const sectionIds =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+      }>)?.map((game) => game.sectionId) ?? [];
+
+    expect(sectionIds).not.toContain('clock_custom_disabled');
   });
 });

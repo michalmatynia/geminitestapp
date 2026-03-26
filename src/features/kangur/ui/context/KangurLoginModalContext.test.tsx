@@ -6,18 +6,28 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import type { JSX } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { routerPushMock, usePathnameMock, useRouterMock, useSearchParamsMock } = vi.hoisted(() => ({
-  routerPushMock: vi.fn(),
-  usePathnameMock: vi.fn(),
-  useRouterMock: vi.fn(),
-  useSearchParamsMock: vi.fn(),
-}));
+const { routerPushMock, sessionMock, usePathnameMock, useRouterMock, useSearchParamsMock } =
+  vi.hoisted(() => ({
+    routerPushMock: vi.fn(),
+    sessionMock: vi.fn(),
+    usePathnameMock: vi.fn(),
+    useRouterMock: vi.fn(),
+    useSearchParamsMock: vi.fn(),
+  }));
 
 vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
   useRouter: useRouterMock,
   useSearchParams: useSearchParamsMock,
 }));
+
+vi.mock('next-auth/react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('next-auth/react')>();
+  return {
+    ...actual,
+    useSession: () => sessionMock(),
+  };
+});
 
 type KangurRoutingProviderType =
   typeof import('@/features/kangur/ui/context/KangurRoutingContext')['KangurRoutingProvider'];
@@ -121,6 +131,10 @@ describe('KangurLoginModalProvider', () => {
     vi.resetModules();
     useRouterMock.mockReturnValue({
       push: routerPushMock,
+    });
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
     });
     window.history.replaceState({}, '', '/kangur/lessons?focus=division');
 
@@ -228,6 +242,27 @@ describe('KangurLoginModalProvider', () => {
     expect(screen.getByTestId('kangur-login-modal-auth-mode')).toHaveTextContent(
       'create-account'
     );
+  });
+
+  it('sanitizes blocked games callbacks to home for non-super-admin sessions', async () => {
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'admin@example.com',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    await renderHarness({
+      pageKey: 'Game',
+      pathname: '/kangur/login',
+      requestedPath: '/kangur',
+      search: 'callbackUrl=%2Fkangur%2Fgames',
+    });
+
+    expect(screen.getByTestId('kangur-login-modal-callback')).toHaveTextContent('/kangur');
   });
 
   it('closes the canonical public login route back to root when Kangur owns the front page', async () => {

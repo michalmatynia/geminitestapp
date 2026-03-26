@@ -54,15 +54,16 @@ vi.mock('@/features/kangur/server/storefront-appearance', () => ({
 
 vi.mock('@/features/kangur/ui/FrontendPublicOwnerKangurShell', () => ({
   FrontendPublicOwnerKangurShell: ({
-    embedded,
-    initialMode,
-    initialThemeSettings,
+    embeddedOverride,
+    initialAppearance,
   }: {
-    embedded: boolean;
-    initialMode?: string;
-    initialThemeSettings?: Record<string, unknown>;
+    embeddedOverride?: boolean;
+    initialAppearance?: {
+      mode?: string;
+      themeSettings?: Record<string, unknown>;
+    };
   }) => {
-    frontendPublicOwnerKangurShellMock({ embedded, initialMode, initialThemeSettings });
+    frontendPublicOwnerKangurShellMock({ embeddedOverride, initialAppearance });
     return <div data-testid='kangur-root-login-shell'>Kangur root login shell</div>;
   },
 }));
@@ -111,10 +112,12 @@ describe('canonical login route helpers', () => {
 
     expect(screen.getByTestId('kangur-root-login-shell')).toBeInTheDocument();
     expect(frontendPublicOwnerKangurShellMock).toHaveBeenCalledWith({
-      embedded: false,
-      initialMode: 'default',
-      initialThemeSettings: {
-        themePreset: 'premium',
+      embeddedOverride: false,
+      initialAppearance: {
+        mode: 'default',
+        themeSettings: {
+          themePreset: 'premium',
+        },
       },
     });
     expect(resolveSlugToPageMock).not.toHaveBeenCalled();

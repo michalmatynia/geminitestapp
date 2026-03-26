@@ -71,23 +71,6 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
-  useKangurLessons: (options: { subject?: string; enabledOnly?: boolean } = {}) => {
-    let data = lessonsState.value;
-    if (options.enabledOnly) {
-      data = data.filter((lesson) => lesson.enabled !== false);
-    }
-    if (options.subject) {
-      data = data.filter((lesson) => lesson.subject === options.subject);
-    }
-    return {
-      data,
-      isLoading: false,
-      isPending: false,
-      isFetching: false,
-      isRefetching: false,
-      error: null,
-    };
-  },
   useKangurLessonDocument: () => ({
     data: null,
     isLoading: false,
@@ -104,6 +87,36 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
     isRefetching: false,
     error: null,
   }),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonsCatalog', () => ({
+  useKangurLessonsCatalog: (
+    options: { ageGroup?: string; enabledOnly?: boolean; subject?: string } = {}
+  ) => {
+    let lessons = lessonsState.value;
+    if (options.enabledOnly) {
+      lessons = lessons.filter((lesson) => lesson.enabled !== false);
+    }
+    if (options.subject) {
+      lessons = lessons.filter((lesson) => lesson.subject === options.subject);
+    }
+    if (options.ageGroup) {
+      lessons = lessons.filter((lesson) => lesson.ageGroup === options.ageGroup);
+    }
+
+    return {
+      data: {
+        lessons,
+        sections: [],
+      },
+      isLoading: false,
+      isPending: false,
+      isFetching: false,
+      isRefetching: false,
+      isPlaceholderData: false,
+      error: null,
+    };
+  },
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({

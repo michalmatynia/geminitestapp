@@ -1,8 +1,9 @@
 import { type FormEvent, type JSX, useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { Eye, EyeOff } from 'lucide-react';
-import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { kangurButtonVariants } from '@/features/kangur/ui/design/primitives/KangurButton';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
+import { cn } from '@/features/kangur/shared/utils';
 import { useTurnstile } from './use-turnstile';
 import { KANGUR_PARENT_CAPTCHA_SITE_KEY } from './login-constants';
 import {
@@ -137,15 +138,16 @@ export function SignupForm({
         </div>
       )}
 
-      <KangurButton
+      <button
         type='submit'
-        variant='primary'
-        size='lg'
         disabled={isLoading || !password.trim() || (isCaptchaRequired && !captchaToken)}
-        className='mt-2 w-full justify-center rounded-xl font-bold'
+        className={cn(
+          kangurButtonVariants({ variant: 'primary', size: 'lg', fullWidth: true }),
+          'mt-2 justify-center rounded-xl font-bold'
+        )}
       >
         {isLoading ? translations('createAccountSubmitting') : translations('createAccount')}
-      </KangurButton>
+      </button>
     </form>
   );
 }

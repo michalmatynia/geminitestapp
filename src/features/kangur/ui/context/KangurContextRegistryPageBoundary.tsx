@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { useSession } from 'next-auth/react';
 
 import { resolveAccessibleKangurPageKey } from '@/features/kangur/config/page-access';
 import { KANGUR_MAIN_PAGE } from '@/features/kangur/config/pages';
 import { resolveKangurPageKey } from '@/features/kangur/config/routing';
 import { KANGUR_CONTEXT_ROOT_IDS } from '@/features/kangur/context-registry/refs';
+import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import { ContextRegistryPageProvider } from '@/shared/lib/ai-context-registry/page-context';
 
 import { useKangurRouting } from './KangurRoutingContext';
@@ -88,7 +88,7 @@ export function KangurContextRegistryPageBoundary({
   children: React.ReactNode;
 }): React.JSX.Element {
   const { pageKey } = useKangurRouting();
-  const { data: session } = useSession();
+  const { data: session } = useOptionalNextAuthSession();
   const resolvedPageKey = resolveKangurPageKey(
     pageKey,
     KANGUR_PAGE_KEY_LOOKUP,

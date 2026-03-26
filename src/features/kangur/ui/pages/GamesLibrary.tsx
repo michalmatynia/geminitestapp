@@ -1,6 +1,5 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
@@ -42,6 +41,7 @@ import {
   KangurSelectField,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
@@ -321,16 +321,19 @@ const getKangurGameCardAnchorId = (gameId: string): string =>
 const getKangurEngineCardAnchorId = (engineId: string): string =>
   `kangur-engine-card-${engineId}`;
 
-const isGamesLibraryCardInteractiveTarget = (target: EventTarget | null): boolean => {
+const isGamesLibraryCardInteractiveTarget = (
+  target: EventTarget | null,
+  currentTarget?: Element | null
+): boolean => {
   if (!(target instanceof Element)) {
     return false;
   }
 
-  return (
-    target.closest(
-      'a, button, input, select, textarea, summary, [role="button"], [role="link"]'
-    ) !== null
+  const interactiveTarget = target.closest(
+    'a, button, input, select, textarea, summary, [role="button"], [role="link"]'
   );
+
+  return interactiveTarget !== null && interactiveTarget !== currentTarget;
 };
 
 const withGamesLibraryAnchor = (href: string, anchorId: string): string => {
@@ -2356,14 +2359,31 @@ function GamesLibraryContent(): React.JSX.Element {
                     id={getKangurGameCardAnchorId(game.id)}
                     accent='slate'
                     padding='lg'
-                    className='flex h-full scroll-mt-24 cursor-pointer flex-col gap-4 transition hover:border-[color:var(--kangur-page-accent)]'
+                    aria-expanded={selectedGame?.id === game.id}
+                    aria-haspopup='dialog'
+                    aria-label={`${translations('actions.previewGame')}: ${game.title}`}
+                    className='flex h-full scroll-mt-24 cursor-pointer flex-col gap-4 transition hover:border-[color:var(--kangur-page-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--kangur-page-accent)] focus-visible:ring-offset-2'
                     onClick={(event) => {
-                      if (isGamesLibraryCardInteractiveTarget(event.target)) {
+                      if (isGamesLibraryCardInteractiveTarget(event.target, event.currentTarget)) {
                         return;
                       }
 
                       setSelectedGame(game);
                     }}
+                    onKeyDown={(event) => {
+                      if (isGamesLibraryCardInteractiveTarget(event.target, event.currentTarget)) {
+                        return;
+                      }
+
+                      if (event.key !== 'Enter' && event.key !== ' ') {
+                        return;
+                      }
+
+                      event.preventDefault();
+                      setSelectedGame(game);
+                    }}
+                    role='button'
+                    tabIndex={0}
                   >
                     <div className='flex flex-wrap items-start justify-between gap-3'>
                       <div className='min-w-0 flex-1'>
@@ -2525,6 +2545,7 @@ function GamesLibraryContent(): React.JSX.Element {
       <GamesLibraryGameModal
         basePath={basePath}
         game={selectedGame}
+        key={selectedGame?.id ?? 'kangur-games-library-modal'}
         onOpenChange={(open) => {
           if (!open) {
             setSelectedGame(null);
@@ -2537,7 +2558,7 @@ function GamesLibraryContent(): React.JSX.Element {
 }
 
 export default function GamesLibrary(): React.JSX.Element {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useOptionalNextAuthSession();
 
   if (status === 'loading') {
     return <></>;

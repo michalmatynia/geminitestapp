@@ -7,7 +7,10 @@ import { useCallback, useMemo } from 'react';
 import {
   KANGUR_BASE_PATH,
 } from '@/features/kangur/config/routing';
+import { resolveAccessibleKangurPageKey } from '@/features/kangur/config/page-access';
 import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
+import { useKangurAccessiblePageKey } from '@/features/kangur/ui/hooks/useKangurAccessiblePageKey';
+import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import {
   type KangurRouteTransitionKind,
   useOptionalKangurRouteTransitionActions,
@@ -19,7 +22,7 @@ import {
   isManagedLocalHref,
   localizeManagedKangurHref,
   normalizeManagedKangurPathname,
-  resolveManagedKangurPageKeyFromHref,
+  resolveAccessibleManagedKangurPageKeyFromHref,
 } from '@/features/kangur/ui/routing/managed-paths';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
@@ -115,8 +118,10 @@ export function useKangurRouteNavigator(): {
   const routeTransitionActions = useOptionalKangurRouteTransitionActions();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const routing = useOptionalKangurRouting();
+  const { data: session } = useOptionalNextAuthSession();
   const frontendPublicOwner = useOptionalFrontendPublicOwner();
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
+  const currentAccessiblePageKey = useKangurAccessiblePageKey(routing?.pageKey ?? null, 'Game');
   const effectivePageKeyBasePath = frontendPublicOwner?.publicOwner === 'kangur' ? '/' : basePath;
   const requestedHref = routing?.requestedHref ?? routing?.requestedPath;
   const resolveManagedHref = useCallback(
@@ -191,14 +196,19 @@ export function useKangurRouteNavigator(): {
       }
 
       const resolvedHref = href ? resolveManagedHref(href, transitionKind) : null;
-      const resolvedPageKey =
-        pageKey ??
-        (resolvedHref
-          ? resolveManagedKangurPageKeyFromHref(resolvedHref, effectivePageKeyBasePath)
-          : null);
+      const accessibleResolvedPageKey = pageKey
+        ? resolveAccessibleKangurPageKey(pageKey, session, currentAccessiblePageKey)
+        : resolvedHref
+          ? resolveAccessibleManagedKangurPageKeyFromHref({
+              href: resolvedHref,
+              basePath: effectivePageKeyBasePath,
+              session,
+              fallbackPageKey: currentAccessiblePageKey,
+            })
+          : currentAccessiblePageKey;
       const transitionResult = routeTransitionActions.startRouteTransition({
         ...(resolvedHref ? { href: resolvedHref } : {}),
-        ...(resolvedPageKey ? { pageKey: resolvedPageKey } : {}),
+        ...(accessibleResolvedPageKey ? { pageKey: accessibleResolvedPageKey } : {}),
         ...(sourceId?.trim() ? { sourceId: sourceId.trim() } : {}),
         ...(effectiveAcknowledgeMs > 0 ? { acknowledgeMs: effectiveAcknowledgeMs } : {}),
         ...(transitionKind ? { transitionKind } : {}),
@@ -220,9 +230,11 @@ export function useKangurRouteNavigator(): {
     },
     [
       effectivePageKeyBasePath,
+      currentAccessiblePageKey,
       pathname,
       requestedHref,
       resolveManagedHref,
+      session,
       routeTransitionActions,
       routeTransitionState,
     ]

@@ -14,7 +14,6 @@ import {
   X,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { useSession } from 'next-auth/react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState, type AriaAttributes } from 'react';
 
@@ -37,6 +36,7 @@ import {
   persistTutorVisibilityHidden,
   subscribeToTutorVisibilityChanges,
 } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
+import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
@@ -337,7 +337,7 @@ export function KangurPrimaryNavigation({
   const tutorContent = useKangurAiTutorContent();
   const tutor = useOptionalKangurAiTutor();
   const auth = useOptionalKangurAuth();
-  const { data: session } = useSession();
+  const { data: session } = useOptionalNextAuthSession();
   const storefrontAppearance = useOptionalCmsStorefrontAppearance();
   const kangurAppearance = useKangurStorefrontAppearance();
   const routeTransitionState = useOptionalKangurRouteTransitionState();

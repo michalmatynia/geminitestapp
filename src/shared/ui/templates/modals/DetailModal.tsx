@@ -3,7 +3,9 @@
 import React from 'react';
 
 import type { ModalStateProps } from '@/shared/contracts/ui';
-import { AppModal } from '@/shared/ui/app-modal';
+import { Button } from '@/shared/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/shared/ui/dialog';
+import { SectionHeader } from '@/shared/ui/section-header';
 import { cn } from '@/shared/utils';
 
 export interface DetailModalProps extends ModalStateProps {
@@ -52,28 +54,88 @@ export function DetailModal({
   onInteractOutside,
   onEscapeKeyDown,
 }: DetailModalProps): React.JSX.Element {
+  const handleInteractOutside = (event: Event): void => {
+    if (closeOnOutside === false) {
+      event.preventDefault();
+    }
+    onInteractOutside?.(event);
+  };
+
+  const handleEscape = (event: KeyboardEvent): void => {
+    if (closeOnEscape === false) {
+      event.preventDefault();
+    }
+    onEscapeKeyDown?.(event);
+  };
+
   return (
-    <AppModal
-      open={isOpen}
-      onOpenChange={onClose}
-      onClose={onClose}
-      title={title}
-      subtitle={subtitle}
-      header={header}
-      headerActions={headerActions}
-      size={size}
-      padding={padding}
-      footer={footer}
-      className={className}
-      contentClassName={contentClassName}
-      bodyClassName={cn(maxHeight, 'overflow-y-auto', bodyClassName)}
-      showClose={showClose}
-      closeOnOutside={closeOnOutside}
-      closeOnEscape={closeOnEscape}
-      onInteractOutside={onInteractOutside}
-      onEscapeKeyDown={onEscapeKeyDown}
-    >
-      {children}
-    </AppModal>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent
+        className={cn(
+          'max-w-none w-auto p-0 border-none bg-transparent shadow-none',
+          contentClassName ?? ''
+        )}
+        onInteractOutside={handleInteractOutside}
+        onEscapeKeyDown={handleEscape}
+      >
+        <DialogTitle className='sr-only'>{title}</DialogTitle>
+        <DialogDescription className='sr-only'>
+          {subtitle ??
+            (typeof title === 'string' && title.trim().length > 0
+              ? `${title} dialog`
+              : 'Modal dialog content')}
+        </DialogDescription>
+        <div
+          className={cn(
+            'pointer-events-auto w-full rounded-lg border flex flex-col bg-card border-border',
+            {
+              'max-w-lg md:min-w-[420px]': size === 'sm',
+              'max-w-2xl md:min-w-[640px]': size === 'md',
+              'max-w-4xl md:min-w-[800px]': size === 'lg',
+              'max-w-6xl md:min-w-[960px]': size === 'xl',
+            },
+            className
+          )}
+        >
+          <div className='p-6 pb-4 border-b border-white/5'>
+            {header ? (
+              header
+            ) : (
+              <SectionHeader
+                title={title}
+                subtitle={subtitle}
+                size='md'
+                actions={
+                  <div className='flex items-center gap-2'>
+                    {headerActions}
+                    {showClose ? (
+                      <Button type='button' onClick={onClose} variant='outline' size='sm'>
+                        Close
+                      </Button>
+                    ) : null}
+                  </div>
+                }
+              />
+            )}
+          </div>
+          <div
+            className={cn(
+              size === 'sm' ? 'max-h-[50vh]' : 'h-[80vh]',
+              'overflow-y-auto',
+              padding === 'default' && 'p-6',
+              maxHeight,
+              bodyClassName
+            )}
+          >
+            {children}
+          </div>
+          {footer ? (
+            <div className='p-6 pt-4 border-t border-white/5 flex justify-end gap-2'>
+              {footer}
+            </div>
+          ) : null}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

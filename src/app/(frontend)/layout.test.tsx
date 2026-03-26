@@ -111,14 +111,7 @@ describe('frontend layout bootstrap', () => {
     expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
     expect(getKangurAuthBootstrapScriptMock).not.toHaveBeenCalled();
     expect(frontendPublicOwnerKangurShellMock).not.toHaveBeenCalled();
-    expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        publicOwner: 'cms',
-        kangurInitialMode: undefined,
-        kangurInitialThemeSettings: undefined,
-      }),
-      undefined
-    );
+    expect(frontendPublicOwnerShellClientMock).not.toHaveBeenCalled();
   });
 
   it('loads Kangur storefront bootstrap only when the frontend public owner is kangur', async () => {
@@ -145,13 +138,15 @@ describe('frontend layout bootstrap', () => {
     expect(frontendPublicOwnerShellClientMock).not.toHaveBeenCalled();
     expect(frontendPublicOwnerKangurShellMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        embedded: true,
-        initialMode: 'default',
-        initialThemeSettings: {
-          dark: null,
-          dawn: null,
-          default: null,
-          sunset: null,
+        embeddedOverride: true,
+        initialAppearance: {
+          mode: 'default',
+          themeSettings: {
+            dark: null,
+            dawn: null,
+            default: null,
+            sunset: null,
+          },
         },
       }),
       undefined
@@ -180,9 +175,11 @@ describe('frontend layout bootstrap', () => {
     expect(frontendPublicOwnerShellClientMock).not.toHaveBeenCalled();
     expect(frontendPublicOwnerKangurShellMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        embedded: false,
-        initialMode: undefined,
-        initialThemeSettings: undefined,
+        embeddedOverride: false,
+        initialAppearance: {
+          mode: undefined,
+          themeSettings: undefined,
+        },
       }),
       undefined
     );
@@ -208,13 +205,6 @@ describe('frontend layout bootstrap', () => {
     expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
     expect(getKangurAuthBootstrapScriptMock).toHaveBeenCalledTimes(1);
     expect(frontendPublicOwnerKangurShellMock).not.toHaveBeenCalled();
-    expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        publicOwner: 'cms',
-        kangurInitialMode: undefined,
-        kangurInitialThemeSettings: undefined,
-      }),
-      undefined
-    );
+    expect(frontendPublicOwnerShellClientMock).not.toHaveBeenCalled();
   });
 });

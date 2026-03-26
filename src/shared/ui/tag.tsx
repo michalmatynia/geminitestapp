@@ -15,23 +15,18 @@ interface TagProps {
   onClick?: () => void;
 }
 
-type TagBadgeProps = {
-  label: string;
-  color?: string | null;
-  className?: string;
-  dot: boolean;
-  onRemove?: () => void;
-  onClick?: () => void;
-};
-
-function TagBadge({
+/**
+ * Tag - A specialized badge typically used for categorization or metadata.
+ * Leverages the shared Badge component for consistent styling and logic.
+ */
+export function Tag({
   label,
   color,
   className,
-  dot,
+  dot = false,
   onRemove,
   onClick,
-}: TagBadgeProps): React.JSX.Element {
+}: TagProps): React.JSX.Element {
   return (
     <Badge
       variant='outline'
@@ -52,29 +47,5 @@ function TagBadge({
     >
       {label}
     </Badge>
-  );
-}
-
-/**
- * Tag - A specialized badge typically used for categorization or metadata.
- * Leverages the shared Badge component for consistent styling and logic.
- */
-export function Tag({
-  label,
-  color,
-  className,
-  dot = false,
-  onRemove,
-  onClick,
-}: TagProps): React.JSX.Element {
-  return (
-    <TagBadge
-      label={label}
-      color={color}
-      className={className}
-      dot={dot}
-      onRemove={onRemove}
-      onClick={onClick}
-    />
   );
 }

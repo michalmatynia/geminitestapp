@@ -1,7 +1,6 @@
 'use client';
 
 import { useLocale } from 'next-intl';
-import { useSession } from 'next-auth/react';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import {
@@ -26,6 +25,7 @@ import {
 import { buildContextRegistryConsumerEnvelope } from '@/shared/lib/ai-context-registry/page-context-shared';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { cn } from '@/features/kangur/shared/utils';
+import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 
 import { extractNarrationTextFromElement } from './kangur-narrator-utils';
 import { KangurNarratorControl } from './KangurNarratorControl';
@@ -64,7 +64,7 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
     showFeedback,
   } = props;
   const locale = useLocale();
-  const { data: session } = useSession();
+  const { data: session } = useOptionalNextAuthSession();
   const settingsStore = useSettingsStore();
   const rawNarratorSettings = settingsStore.get(KANGUR_NARRATOR_SETTINGS_KEY);
   const narratorSettings = useMemo(

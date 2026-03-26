@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   startRouteTransitionMock,
   frontendPublicOwnerMock,
+  sessionMock,
   useOptionalKangurRouteTransitionStateMock,
   useOptionalKangurRoutingMock,
   usePathnameMock,
@@ -19,6 +20,7 @@ const {
 } = vi.hoisted(() => ({
   startRouteTransitionMock: vi.fn(),
   frontendPublicOwnerMock: vi.fn(),
+  sessionMock: vi.fn(),
   useOptionalKangurRouteTransitionStateMock: vi.fn(),
   useOptionalKangurRoutingMock: vi.fn(),
   usePathnameMock: vi.fn(),
@@ -31,6 +33,14 @@ const {
 vi.mock('next-intl', () => ({
   useLocale: useLocaleMock,
 }));
+
+vi.mock('next-auth/react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('next-auth/react')>();
+  return {
+    ...actual,
+    useSession: () => sessionMock(),
+  };
+});
 
 vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
@@ -146,6 +156,10 @@ describe('useKangurRouteNavigator', () => {
     useLocaleMock.mockReturnValue('pl');
     usePathnameMock.mockReturnValue('/lessons');
     frontendPublicOwnerMock.mockReturnValue(null);
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
     useOptionalKangurRouteTransitionStateMock.mockReturnValue(null);
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/',
@@ -374,5 +388,27 @@ describe('useKangurRouteNavigator', () => {
     if (originalHistoryLengthDescriptor) {
       Object.defineProperty(window.history, 'length', originalHistoryLengthDescriptor);
     }
+  });
+
+  it('downgrades blocked GamesLibrary targets to the current accessible page for non-super-admin users', () => {
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'admin@example.com',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(<NavigatorProbe href='/games' />);
+
+    fireEvent.click(screen.getByTestId('navigator-replace'));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/games',
+      pageKey: 'Lessons',
+    });
+    expect(routerReplaceMock).toHaveBeenCalledWith('/games', { scroll: false });
   });
 });

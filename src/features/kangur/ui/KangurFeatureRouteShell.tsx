@@ -6,13 +6,18 @@ import { useMemo } from 'react';
 import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
 import {
   KANGUR_BASE_PATH,
+  KANGUR_MAIN_PAGE_KEY,
   normalizeKangurBasePath,
   normalizeKangurRequestedPath,
   resolveKangurPageKeyFromSlug,
 } from '@/features/kangur/config/routing';
+import {
+  resolveAccessibleKangurRouteState,
+} from '@/features/kangur/config/page-access';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeaturePageShell } from '@/features/kangur/ui/KangurFeaturePage';
 import { KangurMainRoleProvider } from '@/features/kangur/ui/design/primitives/KangurPageContainer';
+import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import {
   getKangurSlugFromPathname,
 } from '@/features/kangur/ui/routing/managed-paths';
@@ -34,6 +39,7 @@ export function KangurFeatureRouteShell({
   const appearance = useOptionalCmsStorefrontAppearance();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { data: session } = useOptionalNextAuthSession();
   const normalizedBasePath = normalizeKangurBasePath(basePath);
   const appearanceMode = appearance?.mode ?? 'default';
   const kangurAppearance = useKangurStorefrontAppearance();
@@ -48,10 +54,23 @@ export function KangurFeatureRouteShell({
   const activeSlug = slug[0] ?? null;
   const effectiveSlug = activeSlug?.trim().toLowerCase() === 'login' ? [] : slug;
   const pageKey = resolveKangurPageKeyFromSlug(activeSlug);
-  const requestedPath = normalizeKangurRequestedPath(effectiveSlug, normalizedBasePath);
+  const rawRequestedPath = normalizeKangurRequestedPath(effectiveSlug, normalizedBasePath);
+  const {
+    pageKey: accessiblePageKey,
+    requestedPath,
+  } = resolveAccessibleKangurRouteState({
+    normalizedBasePath,
+    pageKey,
+    requestedPath: rawRequestedPath,
+    session,
+    slugSegments: effectiveSlug,
+    fallbackPageKey: KANGUR_MAIN_PAGE_KEY,
+  });
+  const accessibleSlug = requestedPath === rawRequestedPath ? effectiveSlug : [];
   const requestedHref = useMemo(() => {
     const search = searchParams?.toString() || browserSearch.replace(/^\?/, '');
-    const baseHref = resolvedPathname || requestedPath;
+    const baseHref =
+      accessibleSlug === effectiveSlug ? resolvedPathname || requestedPath : requestedPath;
 
     const fallbackHref = baseHref.replace(/\/+$/, '') || '/';
     return withKangurClientErrorSync(
@@ -71,7 +90,7 @@ export function KangurFeatureRouteShell({
       },
       { fallback: search ? `${fallbackHref}?${search}` : fallbackHref }
     );
-  }, [browserSearch, requestedPath, resolvedPathname, searchParams]);
+  }, [accessibleSlug, browserSearch, effectiveSlug, requestedPath, resolvedPathname, searchParams]);
   const isEmbedded = embedded;
   const shellStyle: CSSProperties & Record<string, string> = {
     ...kangurAppearance.vars,
@@ -88,7 +107,7 @@ export function KangurFeatureRouteShell({
       style={shellStyle}
     >
       <KangurRoutingProvider
-        pageKey={pageKey}
+        pageKey={accessiblePageKey}
         requestedPath={requestedPath}
         requestedHref={requestedHref}
         basePath={normalizedBasePath}

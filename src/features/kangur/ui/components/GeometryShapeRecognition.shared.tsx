@@ -112,7 +112,7 @@ export const ShapeIcon = ({
         </linearGradient>
       </defs>
 
-      <g clipPath={`url(#${clipId})`}>
+      <g clipPath={`url(#${clipId})`} data-testid={`${testIdPrefix}-atmosphere`}>
         <rect fill={`url(#${panelGradientId})`} height='120' rx='32' width='120' />
         <rect
           fill='rgba(255,255,255,0.38)'
@@ -125,6 +125,7 @@ export const ShapeIcon = ({
           y='16'
         />
         <rect
+          data-testid={`${testIdPrefix}-frame`}
           fill={`url(#${frameGradientId})`}
           height='96'
           rx='28'

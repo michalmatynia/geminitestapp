@@ -2,7 +2,6 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Home } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
@@ -24,6 +23,7 @@ import {
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { KANGUR_INLINE_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import {
   withKangurClientError,
@@ -43,7 +43,7 @@ export function PageNotFound(): React.JSX.Element {
   const isCoarsePointer = useKangurCoarsePointer();
   const routeNavigator = useKangurRouteNavigator();
   const { requestedPath, basePath, pageKey } = useKangurRouting();
-  const { data: session } = useSession();
+  const { data: session } = useOptionalNextAuthSession();
   const shouldHideRequestedPageName = !canAccessKangurPage(pageKey, session);
 
   const pageName = useMemo(() => {

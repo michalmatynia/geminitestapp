@@ -1,9 +1,10 @@
 'use client';
 
 import {
-  KangurDrawingUtilityActions,
   type KangurDrawingUtilityActionsProps,
 } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions';
+import { KangurDrawingHistoryActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions';
+import { KangurDrawingSnapshotActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions';
 
 type KangurDrawingUtilityLayoutPreset =
   | 'footer'
@@ -85,14 +86,46 @@ export function KangurManagedDrawingUtilityActions({
   ...props
 }: KangurManagedDrawingUtilityActionsProps): React.JSX.Element {
   const presetProps = getPresetProps(layoutPreset, props.isCoarsePointer ?? false);
+  const resolvedProps: KangurDrawingUtilityActionsProps = {
+    ...presetProps,
+    ...props,
+    exportDisabled: exportLocked || !canExport,
+    redoDisabled: historyLocked || !canRedo,
+    undoDisabled: historyLocked || !canUndo,
+  };
 
   return (
-    <KangurDrawingUtilityActions
-      {...presetProps}
-      {...props}
-      exportDisabled={exportLocked || !canExport}
-      redoDisabled={historyLocked || !canRedo}
-      undoDisabled={historyLocked || !canUndo}
-    />
+    <>
+      <KangurDrawingHistoryActions
+        buttonClassName={resolvedProps.historyButtonClassName}
+        className={resolvedProps.historyClassName}
+        display={resolvedProps.display}
+        iconClassName={resolvedProps.iconClassName}
+        isCoarsePointer={resolvedProps.isCoarsePointer}
+        onRedo={resolvedProps.onRedo}
+        onUndo={resolvedProps.onUndo}
+        redoDisabled={resolvedProps.redoDisabled}
+        redoLabel={resolvedProps.redoLabel}
+        redoTestId={resolvedProps.redoTestId}
+        size={resolvedProps.size}
+        undoDisabled={resolvedProps.undoDisabled}
+        undoLabel={resolvedProps.undoLabel}
+        undoTestId={resolvedProps.undoTestId}
+        variant={resolvedProps.variant}
+      />
+      <KangurDrawingSnapshotActions
+        buttonClassName={resolvedProps.exportButtonClassName}
+        className={resolvedProps.exportClassName}
+        display={resolvedProps.display}
+        exportDisabled={resolvedProps.exportDisabled}
+        exportLabel={resolvedProps.exportLabel}
+        exportTestId={resolvedProps.exportTestId}
+        iconClassName={resolvedProps.iconClassName}
+        isCoarsePointer={resolvedProps.isCoarsePointer}
+        onExport={resolvedProps.onExport}
+        size={resolvedProps.size}
+        variant={resolvedProps.variant}
+      />
+    </>
   );
 }

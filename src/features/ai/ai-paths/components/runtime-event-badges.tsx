@@ -1,19 +1,6 @@
 'use client';
 
-import React from 'react';
-
 import { StatusBadge } from '@/shared/ui';
-
-type RuntimeEventLevelBadgeProps = {
-  level: string | null | undefined;
-  className?: string;
-  hideLabel?: boolean;
-};
-
-type RuntimeEventKindBadgeProps = {
-  kind: string | null | undefined;
-  className?: string;
-};
 
 export const getRuntimeEventLevelVariant = (
   level: string | null | undefined
@@ -46,33 +33,3 @@ export const getRuntimeEventKindVariant = (
   if (label.startsWith('node_')) return 'success';
   return 'neutral';
 };
-
-export function RuntimeEventLevelBadge({
-  level,
-  className,
-  hideLabel = false,
-}: RuntimeEventLevelBadgeProps): React.JSX.Element {
-  return (
-    <StatusBadge
-      status={hideLabel ? '' : level ?? 'info'}
-      variant={hideLabel ? getRuntimeEventDotVariant(level) : getRuntimeEventLevelVariant(level)}
-      size='sm'
-      hideLabel={hideLabel}
-      className={className}
-    />
-  );
-}
-
-export function RuntimeEventKindBadge({
-  kind,
-  className,
-}: RuntimeEventKindBadgeProps): React.JSX.Element {
-  return (
-    <StatusBadge
-      status={getRuntimeEventKindLabel(kind)}
-      variant={getRuntimeEventKindVariant(kind)}
-      size='sm'
-      className={className}
-    />
-  );
-}

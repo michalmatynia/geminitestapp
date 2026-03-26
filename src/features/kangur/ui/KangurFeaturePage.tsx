@@ -1,5 +1,6 @@
 'use client';
 
+import { useSession } from 'next-auth/react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 
@@ -10,6 +11,7 @@ import {
   getKangurPageHref,
   resolveKangurFeaturePageRoute,
 } from '@/features/kangur/config/routing';
+import { resolveAccessibleKangurPageKey } from '@/features/kangur/config/page-access';
 import {
   clearKangurClientObservabilityContext,
   setKangurClientObservabilityContext,
@@ -51,8 +53,14 @@ export function KangurFeaturePageShell({
   const shellTranslations = useTranslations('KangurShell');
   const appearance = useOptionalCmsStorefrontAppearance();
   const { embedded, pageKey, requestedPath, basePath } = useKangurRoutingState();
+  const { data: session } = useSession();
+  const accessiblePageKey = resolveAccessibleKangurPageKey(
+    pageKey,
+    session,
+    KANGUR_MAIN_PAGE_KEY
+  );
   const appearanceMode = appearance?.mode ?? 'default';
-  const showFooter = !embedded && pageKey === KANGUR_MAIN_PAGE_KEY;
+  const showFooter = !embedded && accessiblePageKey === KANGUR_MAIN_PAGE_KEY;
   const kangurAppearance = useKangurStorefrontAppearance();
   const debugRef = useRef<string | null>(null);
   const browserPathname = typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
@@ -110,13 +118,13 @@ export function KangurFeaturePageShell({
 
   useEffect(() => {
     setKangurClientObservabilityContext({
-      pageKey: pageKey ?? null,
+      pageKey: accessiblePageKey,
       requestedPath: requestedPath ?? '',
     });
     return () => {
       clearKangurClientObservabilityContext();
     };
-  }, [pageKey, requestedPath]);
+  }, [accessiblePageKey, requestedPath]);
 
   const shouldLockBodyScroll = forceBodyScrollLock || !embedded;
 

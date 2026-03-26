@@ -6,6 +6,8 @@ export { Asset3DUploader } from './components/Asset3DUploader';
 export { Asset3DPreviewModal } from './components/Asset3DPreviewModalImpl';
 export { Asset3DCard } from './components/Asset3DCard';
 export { Asset3DEditModal } from './components/Asset3DEditModalImpl';
+export { Admin3DAssetsPage } from './pages/Admin3DAssetsPage';
+export { Asset3DListPage } from './pages/Asset3DListPage';
 export * from './context/Viewer3DContext';
 export * from './hooks/useAsset3dQueries';
 export * from './api';

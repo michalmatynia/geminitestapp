@@ -1,7 +1,7 @@
 {
   "summary": {
-    "generatedAt": "2026-03-26T15:42:50.824Z",
-    "scannedFileCount": 2114,
+    "generatedAt": "2026-03-26T16:59:31.867Z",
+    "scannedFileCount": 2117,
     "duplicateNameClusterCount": 0,
     "propSignatureClusterCount": 0,
     "tokenSimilarityClusterCount": 0,
@@ -11,7 +11,7 @@
     "familyCounts": [
       {
         "family": "Unknown",
-        "count": 1482
+        "count": 1484
       },
       {
         "family": "Page",
@@ -27,7 +27,7 @@
       },
       {
         "family": "Modal",
-        "count": 61
+        "count": 62
       },
       {
         "family": "Tab",
@@ -81,7 +81,7 @@
     "domainCounts": [
       {
         "domain": "feature",
-        "count": 1702
+        "count": 1705
       },
       {
         "domain": "app",
@@ -178,7 +178,7 @@
       "lines": 6,
       "useClient": false,
       "imports": [
-        "@/features/ai/public"
+        "@/features/ai/agentcreator/public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -195,7 +195,7 @@
       "lines": 10,
       "useClient": false,
       "imports": [
-        "@/features/ai/public"
+        "@/features/ai/agentcreator/public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -316,7 +316,7 @@
       "lines": 6,
       "useClient": false,
       "imports": [
-        "@/features/ai/public"
+        "@/features/ai/insights"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -2210,7 +2210,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/products/pages/ProductEditPage"
+        "@/features/products/public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -3029,7 +3029,7 @@
       "domain": "app",
       "scope": "app",
       "family": "Unknown",
-      "lines": 162,
+      "lines": 159,
       "useClient": false,
       "imports": [
         "next/headers",
@@ -3038,9 +3038,9 @@
         "@/features/cms/server",
         "@/features/kangur/server/auth-bootstrap",
         "@/features/kangur/server/storefront-appearance",
+        "@/features/kangur/ui/KangurAuthWarmupClient",
         "@/features/kangur/ui/FrontendPublicOwnerContext",
         "@/features/kangur/ui/FrontendPublicOwnerKangurShell",
-        "@/features/kangur/ui/FrontendPublicOwnerShellClient",
         "@/shared/lib/front-page-app",
         "@/shared/lib/i18n/site-locale",
         "@/shared/ui/QueryErrorBoundary",
@@ -3821,7 +3821,7 @@
       "lines": 8,
       "useClient": true,
       "imports": [
-        "@/features/products/public"
+        "@/features/products"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -12478,7 +12478,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 81,
+      "lines": 85,
       "useClient": true,
       "imports": [
         "react",
@@ -12776,7 +12776,7 @@
         "next/link",
         "next-intl",
         "react",
-        "@/features/products/components/ProductCard",
+        "@/features/products/public",
         "@/shared/contracts/products",
         "@/shared/ui/layout"
       ],
@@ -12816,7 +12816,7 @@
         "react",
         "lucide-react",
         "next-intl",
-        "@/features/products/components/ProductCard",
+        "@/features/products/public",
         "@/shared/contracts/products",
         "@/shared/ui/layout"
       ],
@@ -13619,7 +13619,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Picker",
-      "lines": 57,
+      "lines": 62,
       "useClient": true,
       "imports": [
         "react",
@@ -13628,6 +13628,7 @@
         "@/shared/providers/SettingsStoreProvider",
         "@/shared/ui/templates/pickers",
         "@/shared/utils/settings-json",
+        "./PageBuilderPolicyContext",
         "./section-registry",
         "../../types/page-builder"
       ],
@@ -13667,7 +13668,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Picker",
-      "lines": 83,
+      "lines": 86,
       "useClient": true,
       "imports": [
         "react",
@@ -13676,6 +13677,7 @@
         "@/shared/providers/SettingsStoreProvider",
         "@/shared/ui/templates/pickers",
         "@/shared/utils/settings-json",
+        "./PageBuilderPolicyContext",
         "./section-registry",
         "../../types/page-builder"
       ],
@@ -13895,6 +13897,25 @@
       "uiPrimitiveImports": 0,
       "tokenSet": {},
       "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/cms/components/page-builder/PageBuilderPolicyContext.tsx",
+      "basename": "PageBuilderPolicyContext.tsx",
+      "domain": "feature",
+      "scope": "feature:cms",
+      "family": "Unknown",
+      "lines": 311,
+      "useClient": true,
+      "imports": [
+        "react",
+        "@/shared/contracts/cms",
+        "../../types/page-builder"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "children|value",
       "thinReExportWrapper": false
     },
     {
@@ -14533,6 +14554,29 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/cms/components/page-builder/hooks/useGroupedTemplates.policy.test.tsx",
+      "basename": "useGroupedTemplates.policy.test.tsx",
+      "domain": "feature",
+      "scope": "feature:cms",
+      "family": "Unknown",
+      "lines": 151,
+      "useClient": false,
+      "imports": [
+        "@testing-library/react",
+        "vitest",
+        "../PageBuilderPolicyContext",
+        "./useGroupedTemplates",
+        "../grid-templates",
+        "../section-template-store",
+        "@/features/cms/types/page-builder"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/cms/components/page-builder/preview/InspectorOverlay.tsx",
       "basename": "InspectorOverlay.tsx",
       "domain": "feature",
@@ -14560,7 +14604,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 108,
+      "lines": 112,
       "useClient": true,
       "imports": [
         "react",
@@ -14880,7 +14924,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Tab",
-      "lines": 252,
+      "lines": 255,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -14893,6 +14937,7 @@
         "@/shared/utils/settings-json",
         "./field-group-helpers",
         "./SettingsFormContext",
+        "../PageBuilderPolicyContext",
         "../context/ComponentSettingsContext",
         "../section-registry"
       ],
@@ -15122,7 +15167,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Tab",
-      "lines": 227,
+      "lines": 230,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -15135,6 +15180,7 @@
         "@/shared/utils/settings-json",
         "./field-group-helpers",
         "./SettingsFormContext",
+        "../PageBuilderPolicyContext",
         "../context/ComponentSettingsContext",
         "../grid-templates",
         "../section-registry",
@@ -16625,7 +16671,7 @@
       "domain": "feature",
       "scope": "feature:drafter",
       "family": "Unknown",
-      "lines": 759,
+      "lines": 764,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -16633,7 +16679,7 @@
         "@/features/drafter/hooks/useDraftQueries",
         "@/features/drafter/validations/draft-form",
         "@/shared/contracts/product-image-manager",
-        "@/features/products/public",
+        "@/features/products",
         "@/shared/contracts/products",
         "@/shared/lib/icons",
         "@/shared/lib/query-factories-v2",
@@ -16679,11 +16725,11 @@
       "domain": "feature",
       "scope": "feature:drafter",
       "family": "Unknown",
-      "lines": 745,
+      "lines": 747,
       "useClient": true,
       "imports": [
         "react",
-        "@/features/products/public",
+        "@/features/products",
         "@/shared/contracts/base",
         "@/shared/contracts/products",
         "@/shared/lib/icons",
@@ -23942,7 +23988,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 182,
+      "lines": 189,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -23967,7 +24013,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 75,
+      "lines": 82,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -23991,7 +24037,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 354,
+      "lines": 452,
       "useClient": true,
       "imports": [
         "@/features/kangur/games/lesson-stage-runtime-specs",
@@ -24002,13 +24048,15 @@
         "@/features/kangur/ui/components/lesson-utils",
         "@/features/kangur/ui/hooks/useLessonHubProgress",
         "@/features/kangur/ui/hooks/useKangurCoarsePointer",
+        "@/features/kangur/ui/hooks/useKangurLessonGameSections",
         "@/features/kangur/ui/services/progress",
         "@/features/kangur/shared/utils",
         "@/features/kangur/ui/lessons/lesson-components",
         "./ClockLesson.visuals",
         "./ClockLesson.data",
         "./ClockLesson.i18n",
-        "./clock-training/types"
+        "./clock-training/types",
+        "@/shared/contracts/kangur-lesson-game-sections"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -24150,7 +24198,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 650,
+      "lines": 656,
       "useClient": true,
       "imports": [
         "@/features/kangur/ui/hooks/useKangurProgressOwnerKey",
@@ -24182,7 +24230,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 39,
+      "lines": 53,
       "useClient": true,
       "imports": [
         "@/shared/contracts/kangur-games",
@@ -24192,7 +24240,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "clockSection|onFinish",
+      "propsSignature": "clockInitialMode|clockSection|onFinish|showClockHourHand|showClockMinuteHand|showClockModeSwitch|showClockTaskTitle|showClockTimeDisplay",
       "thinReExportWrapper": false
     },
     {
@@ -30174,7 +30222,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 487,
+      "lines": 489,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -30197,7 +30245,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "basePath|className|currentPage",
+      "propsSignature": "basePath|className|currentPage|forceFallbackPath",
       "thinReExportWrapper": false
     },
     {
@@ -32144,7 +32192,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 2302,
+      "lines": 2348,
       "useClient": false,
       "imports": [
         "@tanstack/react-query",
@@ -32172,7 +32220,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 1466,
+      "lines": 1479,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -32181,6 +32229,7 @@
         "next-intl",
         "react",
         "@/features/cms/public",
+        "@/features/kangur/config/page-access",
         "@/features/kangur/ui/design/tokens",
         "@/features/kangur/config/routing",
         "@/features/kangur/ui/components/KangurAiTutorWidget.storage",
@@ -32525,16 +32574,16 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 140,
+      "lines": 139,
       "useClient": true,
       "imports": [
         "next-auth/react",
         "next-intl",
         "react",
+        "@/features/kangur/config/page-access",
         "@/features/kangur/ui/context/KangurRoutingContext",
         "@/features/kangur/ui/context/KangurRouteTransitionContext",
-        "@/features/kangur/observability/client",
-        "@/shared/lib/auth/elevated-session-user"
+        "@/features/kangur/observability/client"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -34586,7 +34635,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 113,
+      "lines": 151,
       "useClient": false,
       "imports": [
         "@tanstack/react-query",
@@ -34607,13 +34656,15 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 185,
+      "lines": 193,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
         "lucide-react",
+        "next-auth/react",
         "next-intl",
         "react",
+        "@/features/kangur/config/page-access",
         "@/features/kangur/config/routing",
         "@/features/kangur/services/kangur-platform",
         "@/features/kangur/ui/context/KangurRoutingContext",
@@ -35196,7 +35247,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 165,
+      "lines": 233,
       "useClient": false,
       "imports": [
         "react",
@@ -36812,7 +36863,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 584,
+      "lines": 601,
       "useClient": true,
       "imports": [
         "react",
@@ -36829,7 +36880,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "challengeTimeLeft|challengeTimeLimit|onSubmit|section|showChallengeRing|showTimeDisplay|submitFeedback|submitFeedbackDetails|submitFeedbackTitle|submitLocked|submitNextStep",
+      "propsSignature": "challengeTimeLeft|challengeTimeLimit|onSubmit|section|showChallengeRing|showHourHand|showMinuteHand|showTimeDisplay|submitFeedback|submitFeedbackDetails|submitFeedbackTitle|submitLocked|submitNextStep",
       "thinReExportWrapper": false
     },
     {
@@ -38012,6 +38063,38 @@
       "uiPrimitiveImports": 0,
       "tokenSet": {},
       "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx",
+      "basename": "GamesLibraryGameModal.tsx",
+      "domain": "feature",
+      "scope": "feature:kangur",
+      "family": "Modal",
+      "lines": 791,
+      "useClient": true,
+      "imports": [
+        "react",
+        "@/features/kangur/lessons/lesson-catalog",
+        "@/features/kangur/lessons/lesson-catalog-i18n",
+        "@/features/kangur/ui/components/ClockTrainingGame",
+        "@/features/kangur/ui/components/KangurDialog",
+        "@/features/kangur/ui/components/KangurTransitionLink",
+        "@/features/kangur/ui/design/primitives",
+        "@/features/kangur/ui/services/game-launch",
+        "@/features/kangur/shared/contracts/kangur",
+        "@/features/kangur/ui/hooks/useKangurLessonGameSections",
+        "@/features/kangur/ui/components/clock-training/types",
+        "@/shared/contracts/kangur-lesson-game-sections",
+        "@/shared/contracts/kangur-games",
+        "@/shared/ui/searchable-select",
+        "@/features/kangur/shared/utils",
+        "next-intl"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 1,
+      "tokenSet": {},
+      "propsSignature": "checked|description|label|onChange",
       "thinReExportWrapper": false
     },
     {

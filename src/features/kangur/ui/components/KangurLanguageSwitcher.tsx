@@ -55,6 +55,7 @@ type KangurLanguageSwitcherProps = {
     | 'ParentDashboard'
     | 'Duels'
     | 'SocialUpdates';
+  forceFallbackPath?: boolean;
 };
 
 type KangurLanguageMenuPalette = {
@@ -232,6 +233,7 @@ export function KangurLanguageSwitcher({
   basePath,
   className,
   currentPage,
+  forceFallbackPath = false,
 }: KangurLanguageSwitcherProps): React.JSX.Element | null {
   const locale = useLocale();
   const translations = useTranslations('KangurNavigation');
@@ -249,7 +251,7 @@ export function KangurLanguageSwitcher({
   const currentLocale = normalizeSiteLocale(locale);
   const search = searchParams?.toString() ?? '';
   const fallbackPath = buildCurrentPageFallbackPath(currentPage, basePath);
-  const rawCurrentPathname = pathname?.trim() || fallbackPath;
+  const rawCurrentPathname = forceFallbackPath ? fallbackPath : pathname?.trim() || fallbackPath;
   const currentPathname =
     frontendPublicOwner?.publicOwner === 'kangur'
       ? canonicalizeKangurPublicAliasPathname(rawCurrentPathname)

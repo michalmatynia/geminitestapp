@@ -1,22 +1,22 @@
 {
   "summary": {
-    "generatedAt": "2026-03-26T15:42:51.005Z",
-    "scannedSourceFiles": 5833,
-    "scannedJsxFiles": 2136,
-    "componentCount": 3636,
+    "generatedAt": "2026-03-26T16:59:31.261Z",
+    "scannedSourceFiles": 5858,
+    "scannedJsxFiles": 2139,
+    "componentCount": 3640,
     "componentsWithForwarding": 120,
-    "componentsWithAnyForwarding": 270,
-    "resolvedTransitionCount": 1205,
-    "depth2CandidateChainCount": 1205,
+    "componentsWithAnyForwarding": 271,
+    "resolvedTransitionCount": 1217,
+    "depth2CandidateChainCount": 1217,
     "candidateChainCount": 275,
     "highPriorityChainCount": 58,
     "unknownSpreadForwardingCount": 32,
-    "highPropCountComponentCount": 68,
-    "passThroughHotspotCount": 85,
+    "highPropCountComponentCount": 69,
+    "passThroughHotspotCount": 86,
     "topFeatureScopes": [
       {
         "scope": "feature:kangur",
-        "count": 138
+        "count": 139
       },
       {
         "scope": "shared-ui",
@@ -6459,7 +6459,7 @@
           "sourceProp": "clockSection",
           "targetProp": "key",
           "relativePath": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx",
-          "line": 25
+          "line": 37
         }
       ]
     },
@@ -6485,7 +6485,7 @@
           "sourceProp": "clockSection",
           "targetProp": "practiceTasks",
           "relativePath": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx",
-          "line": 25
+          "line": 37
         }
       ]
     },
@@ -6511,7 +6511,7 @@
           "sourceProp": "clockSection",
           "targetProp": "section",
           "relativePath": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx",
-          "line": 25
+          "line": 37
         }
       ]
     },
@@ -6720,6 +6720,84 @@
           "targetProp": "label",
           "relativePath": "src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx",
           "line": 288
+        }
+      ]
+    },
+    {
+      "score": 72,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx#GamesLibraryGameModal",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurStatusChip.tsx#KangurStatusChip",
+      "componentPath": [
+        "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx#GamesLibraryGameModal",
+        "src/features/kangur/ui/design/primitives/KangurStatusChip.tsx#KangurStatusChip"
+      ],
+      "propPath": [
+        "game",
+        "key"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx#GamesLibraryGameModal",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurStatusChip.tsx#KangurStatusChip",
+          "sourceProp": "game",
+          "targetProp": "key",
+          "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx",
+          "line": 424
+        }
+      ]
+    },
+    {
+      "score": 72,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx#GamesLibraryGameModal",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink",
+      "componentPath": [
+        "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx#GamesLibraryGameModal",
+        "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink"
+      ],
+      "propPath": [
+        "game",
+        "transitionSourceId"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx#GamesLibraryGameModal",
+          "toComponentId": "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink",
+          "sourceProp": "game",
+          "targetProp": "transitionSourceId",
+          "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx",
+          "line": 481
+        }
+      ]
+    },
+    {
+      "score": 72,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx#GamesLibraryGameModal",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx#GamesLibraryGameModal",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "game",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx#GamesLibraryGameModal",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "game",
+          "targetProp": "onClick",
+          "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx",
+          "line": 730
         }
       ]
     },
@@ -9293,7 +9371,7 @@
           "sourceProp": "themePreviewMode",
           "targetProp": "themePreviewTheme",
           "relativePath": "src/features/kangur/cms-builder/KangurCmsBuilderWorkspace.tsx",
-          "line": 228
+          "line": 233
         }
       ]
     },
@@ -9465,6 +9543,58 @@
         "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame"
       ],
       "propPath": [
+        "clockInitialMode",
+        "initialMode"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+          "toComponentId": "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "clockInitialMode",
+          "targetProp": "initialMode",
+          "relativePath": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "score": 62,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+      "sinkComponentId": "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+        "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "clockInitialMode",
+        "onPracticeCompleted"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+          "toComponentId": "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "clockInitialMode",
+          "targetProp": "onPracticeCompleted",
+          "relativePath": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "score": 62,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+      "sinkComponentId": "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+        "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
         "onFinish",
         "onPracticeCompleted"
       ],
@@ -9475,7 +9605,7 @@
           "sourceProp": "onFinish",
           "targetProp": "onPracticeCompleted",
           "relativePath": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx",
-          "line": 25
+          "line": 37
         }
       ]
     },
@@ -10386,6 +10516,32 @@
           "targetProp": "undoDisabled",
           "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurManagedDrawingUtilityActions.tsx",
           "line": 90
+        }
+      ]
+    },
+    {
+      "score": 62,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx#GamesLibraryGameModal",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx#GamesLibraryGameModal",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "onOpenChange",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx#GamesLibraryGameModal",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "onOpenChange",
+          "targetProp": "onClick",
+          "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx",
+          "line": 388
         }
       ]
     },
@@ -13739,7 +13895,7 @@
           "sourceProp": "themePreviewMode",
           "targetProp": "themePreviewMode",
           "relativePath": "src/features/kangur/cms-builder/KangurCmsBuilderWorkspace.tsx",
-          "line": 228
+          "line": 233
         }
       ]
     },
@@ -13817,7 +13973,7 @@
           "sourceProp": "onFinish",
           "targetProp": "onFinish",
           "relativePath": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx",
-          "line": 25
+          "line": 37
         }
       ]
     },
@@ -14572,6 +14728,32 @@
           "targetProp": "variant",
           "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingUtilityActions.tsx",
           "line": 73
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx#GamesLibraryGameModal",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurDialog.tsx#KangurDialog",
+      "componentPath": [
+        "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx#GamesLibraryGameModal",
+        "src/features/kangur/ui/components/KangurDialog.tsx#KangurDialog"
+      ],
+      "propPath": [
+        "onOpenChange",
+        "onOpenChange"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx#GamesLibraryGameModal",
+          "toComponentId": "src/features/kangur/ui/components/KangurDialog.tsx#KangurDialog",
+          "sourceProp": "onOpenChange",
+          "targetProp": "onOpenChange",
+          "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx",
+          "line": 339
         }
       ]
     },
@@ -16114,6 +16296,136 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+      "sinkComponentId": "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+        "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "showClockModeSwitch",
+        "hideModeSwitch"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+          "toComponentId": "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "showClockModeSwitch",
+          "targetProp": "hideModeSwitch",
+          "relativePath": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+      "sinkComponentId": "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+        "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "showClockHourHand",
+        "showHourHand"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+          "toComponentId": "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "showClockHourHand",
+          "targetProp": "showHourHand",
+          "relativePath": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+      "sinkComponentId": "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+        "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "showClockMinuteHand",
+        "showMinuteHand"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+          "toComponentId": "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "showClockMinuteHand",
+          "targetProp": "showMinuteHand",
+          "relativePath": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+      "sinkComponentId": "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+        "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "showClockTaskTitle",
+        "showTaskTitle"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+          "toComponentId": "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "showClockTaskTitle",
+          "targetProp": "showTaskTitle",
+          "relativePath": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+      "sinkComponentId": "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+        "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "showClockTimeDisplay",
+        "showTimeDisplay"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+          "toComponentId": "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "showClockTimeDisplay",
+          "targetProp": "showTimeDisplay",
+          "relativePath": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx#BedroomScene",
       "sinkComponentId": "src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx#ObjectSceneBadge",
       "componentPath": [
@@ -16963,7 +17275,7 @@
           "sourceProp": "className",
           "targetProp": "icon",
           "relativePath": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx",
-          "line": 838
+          "line": 846
         }
       ]
     },
@@ -25283,7 +25595,7 @@
           "sourceProp": "className",
           "targetProp": "className",
           "relativePath": "src/features/kangur/ui/components/KangurLanguageSwitcher.tsx",
-          "line": 350
+          "line": 352
         }
       ]
     },
@@ -25881,33 +26193,7 @@
           "sourceProp": "basePath",
           "targetProp": "basePath",
           "relativePath": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx",
-          "line": 1134
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx#KangurPrimaryNavigation",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx#KangurLanguageSwitcher",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx#KangurPrimaryNavigation",
-        "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx#KangurLanguageSwitcher"
-      ],
-      "propPath": [
-        "currentPage",
-        "currentPage"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx#KangurPrimaryNavigation",
-          "toComponentId": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx#KangurLanguageSwitcher",
-          "sourceProp": "currentPage",
-          "targetProp": "currentPage",
-          "relativePath": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx",
-          "line": 1134
+          "line": 1142
         }
       ]
     },
@@ -25933,7 +26219,7 @@
           "sourceProp": "onLogout",
           "targetProp": "onLogout",
           "relativePath": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx",
-          "line": 1146
+          "line": 1155
         }
       ]
     },
@@ -28560,6 +28846,32 @@
           "targetProp": "titleClassName",
           "relativePath": "src/features/kangur/ui/design/primitives/KangurWidgetIntro.tsx",
           "line": 18
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx#GamesLibraryGameModal",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurDialog.tsx#KangurDialog",
+      "componentPath": [
+        "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx#GamesLibraryGameModal",
+        "src/features/kangur/ui/components/KangurDialog.tsx#KangurDialog"
+      ],
+      "propPath": [
+        "open",
+        "open"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx#GamesLibraryGameModal",
+          "toComponentId": "src/features/kangur/ui/components/KangurDialog.tsx#KangurDialog",
+          "sourceProp": "open",
+          "targetProp": "open",
+          "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx",
+          "line": 339
         }
       ]
     },
@@ -35188,6 +35500,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+      "name": "ClockTrainingStageGame",
+      "relativePath": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 8,
+      "outgoingTransitionCount": 12,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/shared/lib/analytics/components/AnalyticsEventsTable.tsx#AnalyticsEventsTable",
       "name": "AnalyticsEventsTable",
       "relativePath": "src/shared/lib/analytics/components/AnalyticsEventsTable.tsx",
@@ -35629,15 +35950,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx#KangurPrimaryNavigation",
-      "name": "KangurPrimaryNavigation",
-      "relativePath": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 4,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/ui/components/KangurTextWordmark.tsx#KangurTextWordmark",
       "name": "KangurTextWordmark",
       "relativePath": "src/features/kangur/ui/components/KangurTextWordmark.tsx",
@@ -35705,6 +36017,15 @@
       "name": "RuntimeEventLevelBadge",
       "relativePath": "src/features/ai/ai-paths/components/runtime-event-badges.tsx",
       "feature": "feature:ai",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 6,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx#GamesLibraryGameModal",
+      "name": "GamesLibraryGameModal",
+      "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx",
+      "feature": "feature:kangur",
       "forwardedPropCount": 3,
       "outgoingTransitionCount": 6,
       "hasUnknownSpreadForwarding": false
@@ -35944,6 +36265,15 @@
       "hasUnknownSpreadForwarding": true
     },
     {
+      "componentId": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx#KangurPrimaryNavigation",
+      "name": "KangurPrimaryNavigation",
+      "relativePath": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/kangur/ui/components/KangurTestsWordmark.tsx#KangurTestsWordmark",
       "name": "KangurTestsWordmark",
       "relativePath": "src/features/kangur/ui/components/KangurTestsWordmark.tsx",
@@ -35992,24 +36322,6 @@
       "componentId": "src/shared/ui/PromptGenerationSection.tsx#PromptGenerationFinalResultPanel",
       "name": "PromptGenerationFinalResultPanel",
       "relativePath": "src/shared/ui/PromptGenerationSection.tsx",
-      "feature": "shared-ui",
-      "forwardedPropCount": 3,
-      "outgoingTransitionCount": 3,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/shared/ui/app-modal.tsx#AppModalDialogContentShell",
-      "name": "AppModalDialogContentShell",
-      "relativePath": "src/shared/ui/app-modal.tsx",
-      "feature": "shared-ui",
-      "forwardedPropCount": 3,
-      "outgoingTransitionCount": 3,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/shared/ui/templates/modals/ConfirmModal.tsx#ConfirmModalPasswordField",
-      "name": "ConfirmModalPasswordField",
-      "relativePath": "src/shared/ui/templates/modals/ConfirmModal.tsx",
       "feature": "shared-ui",
       "forwardedPropCount": 3,
       "outgoingTransitionCount": 3,
@@ -36270,6 +36582,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
+      "name": "ClockTrainingStageGame",
+      "relativePath": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 8,
+      "outgoingTransitionCount": 12,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/shared/lib/analytics/components/AnalyticsEventsTable.tsx#AnalyticsEventsTable",
       "name": "AnalyticsEventsTable",
       "relativePath": "src/shared/lib/analytics/components/AnalyticsEventsTable.tsx",
@@ -36711,15 +37032,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx#KangurPrimaryNavigation",
-      "name": "KangurPrimaryNavigation",
-      "relativePath": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 4,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/ui/components/KangurTextWordmark.tsx#KangurTextWordmark",
       "name": "KangurTextWordmark",
       "relativePath": "src/features/kangur/ui/components/KangurTextWordmark.tsx",
@@ -36787,6 +37099,15 @@
       "name": "RuntimeEventLevelBadge",
       "relativePath": "src/features/ai/ai-paths/components/runtime-event-badges.tsx",
       "feature": "feature:ai",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 6,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx#GamesLibraryGameModal",
+      "name": "GamesLibraryGameModal",
+      "relativePath": "src/features/kangur/ui/pages/GamesLibraryGameModal.tsx",
+      "feature": "feature:kangur",
       "forwardedPropCount": 3,
       "outgoingTransitionCount": 6,
       "hasUnknownSpreadForwarding": false
@@ -37026,6 +37347,15 @@
       "hasUnknownSpreadForwarding": true
     },
     {
+      "componentId": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx#KangurPrimaryNavigation",
+      "name": "KangurPrimaryNavigation",
+      "relativePath": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/kangur/ui/components/KangurTestsWordmark.tsx#KangurTestsWordmark",
       "name": "KangurTestsWordmark",
       "relativePath": "src/features/kangur/ui/components/KangurTestsWordmark.tsx",
@@ -37155,15 +37485,6 @@
       "componentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.trim.tsx#AgenticTrimGame",
       "name": "AgenticTrimGame",
       "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.trim.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 2,
-      "outgoingTransitionCount": 5,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx#ClockTrainingStageGame",
-      "name": "ClockTrainingStageGame",
-      "relativePath": "src/features/kangur/ui/components/ClockTrainingStageGame.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 2,
       "outgoingTransitionCount": 5,
@@ -42317,7 +42638,7 @@
           "sourceProp": "themePreviewMode",
           "targetProp": "themePreviewMode",
           "relativePath": "src/features/kangur/cms-builder/KangurCmsBuilderWorkspace.tsx",
-          "line": 228
+          "line": 233
         },
         {
           "fromComponentId": "src/features/kangur/cms-builder/KangurCmsBuilderRightPanel.tsx#KangurCmsBuilderRightPanel",
@@ -42353,7 +42674,7 @@
           "sourceProp": "themePreviewMode",
           "targetProp": "themePreviewTheme",
           "relativePath": "src/features/kangur/cms-builder/KangurCmsBuilderWorkspace.tsx",
-          "line": 228
+          "line": 233
         },
         {
           "fromComponentId": "src/features/kangur/cms-builder/KangurCmsBuilderRightPanel.tsx#KangurCmsBuilderRightPanel",

@@ -298,12 +298,6 @@ const resolveSerializationSurfaceAccent = (
   return 'emerald';
 };
 
-const getGamesLibraryAnchorBaseHref = (href: string): string => {
-  const [withoutHash] = href.split('#');
-  const [withoutQuery] = (withoutHash ?? href).split('?');
-  return withoutQuery ?? href;
-};
-
 const withGamesLibrarySearchParams = (
   href: string,
   searchParams: ReturnType<typeof useSearchParams>
@@ -339,6 +333,11 @@ const isGamesLibraryCardInteractiveTarget = (target: EventTarget | null): boolea
   );
 };
 
+const withGamesLibraryAnchor = (href: string, anchorId: string): string => {
+  const [withoutHash = href] = href.split('#');
+  return `${withoutHash}#${anchorId}`;
+};
+
 const getSerializationIssueHref = (
   hrefBase: string,
   basePath: string,
@@ -351,12 +350,24 @@ const getSerializationIssueHref = (
   const href = appendKangurUrlParams(
     hrefBase,
     issue.targetKind === 'engine'
-      ? { engineId: issue.targetId }
-      : { gameId: issue.targetId },
+      ? getGamesLibrarySearchParams(
+          {
+            ...DEFAULT_GAMES_LIBRARY_FILTERS,
+            engineId: issue.targetId,
+          },
+          'structure'
+        )
+      : getGamesLibrarySearchParams(
+          {
+            ...DEFAULT_GAMES_LIBRARY_FILTERS,
+            gameId: issue.targetId,
+          },
+          'catalog'
+        ),
     basePath
   );
 
-  return `${href}#${anchorId}`;
+  return withGamesLibraryAnchor(href, anchorId);
 };
 
 const getLessonTitles = (
@@ -532,7 +543,6 @@ function GamesLibraryContent(): React.JSX.Element {
       getKangurCanonicalPublicHref([getKangurPageSlug('GamesLibrary')]),
     searchParams
   );
-  const gamesLibraryAnchorBaseHref = getGamesLibraryAnchorBaseHref(currentGamesLibraryHref);
   const requestedTab = readGamesLibraryTabFromSearchParams(searchParams);
   const availableTabIds = useMemo(
     () =>
@@ -1473,7 +1483,7 @@ function GamesLibraryContent(): React.JSX.Element {
                         <a
                           key={`${entry.key}:${issue.itemId}`}
                           href={getSerializationIssueHref(
-                            gamesLibraryAnchorBaseHref,
+                            currentGamesLibraryHref,
                             basePath,
                             issue
                           )}

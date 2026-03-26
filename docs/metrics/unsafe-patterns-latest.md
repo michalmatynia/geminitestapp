@@ -8,12 +8,12 @@ canonical: true
 ---
 # Unsafe Patterns Check
 
-Generated at: 2026-03-26T14:23:59.569Z
+Generated at: 2026-03-26T16:58:42.153Z
 
 ## Summary
 
 - Status: PASSED
-- Files scanned: 5840
+- Files scanned: 5869
 - Errors: 0
 - Warnings: 0
 - Info: 0

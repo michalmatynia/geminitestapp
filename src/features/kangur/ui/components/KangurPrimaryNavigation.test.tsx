@@ -1418,6 +1418,52 @@ describe('KangurPrimaryNavigation', () => {
     expect(prefetchMock).not.toHaveBeenCalled();
   });
 
+  it('does not preserve the blocked GamesLibrary pathname in locale-switch links for non-super-admin users', async () => {
+    localeMock.mockReturnValue('pl');
+    useKangurCoarsePointerMock.mockReturnValue(false);
+    pathnameMock.mockReturnValue('/kangur/games');
+    searchParamsMock.mockReturnValue(new URLSearchParams());
+    sessionMock.mockReturnValue({
+      data: {
+        expires: '2026-12-31T23:59:59.000Z',
+        user: {
+          email: 'admin@example.com',
+          id: 'admin-1',
+          image: null,
+          name: 'Admin',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='GamesLibrary'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByTestId('kangur-primary-nav-games-library')).toBeNull();
+
+    await openLanguageMenu();
+    fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-en'));
+
+    await waitFor(() => {
+      expect(startRouteTransitionMock).toHaveBeenCalledWith({
+        href: '/en/kangur',
+        pageKey: 'Game',
+        sourceId: 'kangur-language-switcher',
+        transitionKind: 'locale-switch',
+      });
+      expect(replaceMock).toHaveBeenCalledWith('/en/kangur', {
+        scroll: false,
+      });
+    });
+  });
+
   it('drops the locale prefix when switching back to the default locale', async () => {
     localeMock.mockReturnValue('en');
     useKangurCoarsePointerMock.mockReturnValue(false);

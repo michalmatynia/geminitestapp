@@ -146,6 +146,8 @@ export function GamesLibraryGameModal({
     gameId: game?.id,
   });
   const replaceLessonGameSections = useReplaceKangurLessonGameSections();
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+  const [preferNewDraft, setPreferNewDraft] = useState(false);
   const [attachedLessonId, setAttachedLessonId] = useState<KangurLessonComponentId | null>(null);
   const [draftTitle, setDraftTitle] = useState('');
   const [draftSubtext, setDraftSubtext] = useState('');
@@ -159,6 +161,25 @@ export function GamesLibraryGameModal({
   );
   const persistedSections = lessonGameSectionsQuery.data ?? [];
   const activeSections = optimisticSections ?? persistedSections;
+  const selectedSection =
+    selectedSectionId === null
+      ? null
+      : activeSections.find((section) => section.id === selectedSectionId) ?? null;
+  const supportsPreviewSettings = game?.id === 'clock_training';
+
+  const syncEditorFromSection = (
+    section: KangurLessonGameSection | null,
+    nextGame: KangurGameDefinition
+  ): void => {
+    const resolvedEmoji = section?.emoji ?? nextGame.emoji ?? '🎮';
+    setPreferNewDraft(section === null);
+    setSelectedSectionId(section?.id ?? null);
+    setAttachedLessonId((section?.lessonComponentId ?? nextGame.lessonComponentIds[0]) ?? null);
+    setDraftTitle(section?.title ?? nextGame.title);
+    setDraftSubtext(section?.description ?? nextGame.description);
+    setDraftIcon(resolvedEmoji);
+    setClockSettings(resolvePreviewSettingsFromPersistedSection(section));
+  };
 
   useEffect(() => {
     setOptimisticSections(null);
@@ -169,14 +190,20 @@ export function GamesLibraryGameModal({
       return;
     }
 
-    const firstPersistedSection = persistedSections[0];
-    setAttachedLessonId(firstPersistedSection?.lessonComponentId ?? game.lessonComponentIds[0] ?? null);
-    setDraftTitle(game.title);
-    setDraftSubtext(game.description);
-    setDraftIcon(game.emoji || '🎮');
+    let selectedPersistedSection: KangurLessonGameSection | null = null;
+    if (preferNewDraft) {
+      selectedPersistedSection = null;
+    } else if (selectedSectionId) {
+      selectedPersistedSection =
+        persistedSections.find((section) => section.id === selectedSectionId) ??
+        persistedSections[0] ??
+        null;
+    } else {
+      selectedPersistedSection = persistedSections[0] ?? null;
+    }
+    syncEditorFromSection(selectedPersistedSection, game);
     setSettingsOpen(game.id === 'clock_training');
-    setClockSettings(resolvePreviewSettingsFromPersistedSection(firstPersistedSection));
-  }, [game, persistedSections]);
+  }, [game, persistedSections, preferNewDraft, selectedSectionId]);
 
   const lessonOptions = useMemo(
     () =>
@@ -223,53 +250,63 @@ export function GamesLibraryGameModal({
     attachedLessonId !== null &&
     draftTitle.trim().length > 0 &&
     draftIcon.trim().length > 0 &&
-    (game?.id !== 'clock_training' ||
+    (!supportsPreviewSettings ||
       clockSettings.showHourHand ||
       clockSettings.showMinuteHand);
 
-  const handleAddDraft = async (): Promise<void> => {
+  const handleResetEditor = (): void => {
+    if (!game) {
+      return;
+    }
+
+    syncEditorFromSection(null, game);
+  };
+
+  const handleSaveDraft = async (): Promise<void> => {
     if (!game || !attachedLessonId) {
       return;
     }
 
-    const nextSections: KangurLessonGameSection[] = [
-      ...activeSections,
-      {
-        id: createDraftId(),
-        description: draftSubtext.trim(),
-        emoji: draftIcon.trim() || '🎮',
-        enabled: true,
-        gameId: game.id,
-        lessonComponentId: attachedLessonId,
-        settings:
-          game.id === 'clock_training'
-            ? {
-                clock: {
-                  clockSection: resolveClockSectionFromPreviewSettings(clockSettings),
-                  initialMode: clockSettings.initialMode,
-                  showHourHand: clockSettings.showHourHand,
-                  showMinuteHand: clockSettings.showMinuteHand,
-                  showModeSwitch: clockSettings.showModeSwitch,
-                  showTaskTitle: clockSettings.showTaskTitle,
-                  showTimeDisplay: clockSettings.showTimeDisplay,
-                },
-              }
-            : {},
-        sortOrder:
-          Math.max(0, ...activeSections.map((section) => section.sortOrder)) + 1,
-        title: draftTitle.trim(),
-      },
-    ];
+    const sectionId = selectedSectionId ?? createDraftId();
+    const previousPreferNewDraft = preferNewDraft;
+    const previousSelectedSectionId = selectedSectionId;
+    const nextSection: KangurLessonGameSection = {
+      id: sectionId,
+      description: draftSubtext.trim(),
+      emoji: draftIcon.trim() || '🎮',
+      enabled: true,
+      gameId: game.id,
+      lessonComponentId: attachedLessonId,
+      settings:
+        supportsPreviewSettings
+          ? {
+              clock: {
+                clockSection: resolveClockSectionFromPreviewSettings(clockSettings),
+                initialMode: clockSettings.initialMode,
+                showHourHand: clockSettings.showHourHand,
+                showMinuteHand: clockSettings.showMinuteHand,
+                showModeSwitch: clockSettings.showModeSwitch,
+                showTaskTitle: clockSettings.showTaskTitle,
+                showTimeDisplay: clockSettings.showTimeDisplay,
+              },
+            }
+          : {},
+      sortOrder:
+        selectedSection?.sortOrder ??
+        Math.max(0, ...activeSections.map((section) => section.sortOrder)) + 1,
+      title: draftTitle.trim(),
+    };
 
-    const nextDraftIcon = game.emoji || '🎮';
-    const previousDraftTitle = draftTitle;
-    const previousDraftSubtext = draftSubtext;
-    const previousDraftIcon = draftIcon;
+    const nextSections =
+      selectedSectionId === null
+        ? [...activeSections, nextSection]
+        : activeSections.map((section) =>
+            section.id === selectedSectionId ? nextSection : section
+          );
 
     setOptimisticSections(nextSections);
-    setDraftTitle('');
-    setDraftSubtext('');
-    setDraftIcon(nextDraftIcon);
+    setPreferNewDraft(false);
+    setSelectedSectionId(sectionId);
 
     try {
       await replaceLessonGameSections.mutateAsync({
@@ -278,9 +315,8 @@ export function GamesLibraryGameModal({
       });
     } catch {
       setOptimisticSections(null);
-      setDraftTitle(previousDraftTitle);
-      setDraftSubtext(previousDraftSubtext);
-      setDraftIcon(previousDraftIcon);
+      setPreferNewDraft(previousPreferNewDraft);
+      setSelectedSectionId(previousSelectedSectionId);
       return;
     }
   };
@@ -337,16 +373,18 @@ export function GamesLibraryGameModal({
           </div>
 
           <div className='flex flex-wrap items-center gap-2'>
-            <KangurButton
-              onClick={() => setSettingsOpen((current) => !current)}
-              size='sm'
-              type='button'
-              variant='surface'
-            >
-              {settingsOpen
-                ? translations('modal.hideSettingsButton')
-                : translations('modal.settingsButton')}
-            </KangurButton>
+            {supportsPreviewSettings ? (
+              <KangurButton
+                onClick={() => setSettingsOpen((current) => !current)}
+                size='sm'
+                type='button'
+                variant='surface'
+              >
+                {settingsOpen
+                  ? translations('modal.hideSettingsButton')
+                  : translations('modal.settingsButton')}
+              </KangurButton>
+            ) : null}
             <KangurButton onClick={() => onOpenChange(false)} size='sm' type='button' variant='surface'>
               {translations('modal.closeButton')}
             </KangurButton>
@@ -466,13 +504,27 @@ export function GamesLibraryGameModal({
 
           <div className='space-y-4'>
             <KangurInfoCard accent='emerald' padding='lg' className='space-y-4'>
-              <div className='space-y-1'>
-                <div className='text-xs font-semibold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
-                  {translations('modal.draftEyebrow')}
+              <div className='flex flex-wrap items-start justify-between gap-3'>
+                <div className='space-y-1'>
+                  <div className='text-xs font-semibold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
+                    {translations('modal.draftEyebrow')}
+                  </div>
+                  <div className='text-lg font-black [color:var(--kangur-page-text)]'>
+                    {selectedSectionId
+                      ? translations('modal.editDraftTitle')
+                      : translations('modal.draftTitle')}
+                  </div>
                 </div>
-                <div className='text-lg font-black [color:var(--kangur-page-text)]'>
-                  {translations('modal.draftTitle')}
-                </div>
+                {selectedSectionId ? (
+                  <KangurButton
+                    onClick={handleResetEditor}
+                    size='sm'
+                    type='button'
+                    variant='surface'
+                  >
+                    {translations('modal.newDraftButton')}
+                  </KangurButton>
+                ) : null}
               </div>
 
               <div className='space-y-2'>
@@ -534,17 +586,19 @@ export function GamesLibraryGameModal({
               <KangurButton
                 disabled={!canAddDraft || replaceLessonGameSections.isPending}
                 onClick={() => {
-                  void handleAddDraft();
+                  void handleSaveDraft();
                 }}
                 size='sm'
                 type='button'
                 variant='primary'
               >
-                {translations('modal.addDraftButton')}
+                {selectedSectionId
+                  ? translations('modal.saveDraftButton')
+                  : translations('modal.addDraftButton')}
               </KangurButton>
             </KangurInfoCard>
 
-            {settingsOpen ? (
+            {supportsPreviewSettings && settingsOpen ? (
               <KangurInfoCard accent='slate' padding='lg' className='space-y-4'>
                 <div className='space-y-1'>
                   <div className='text-xs font-semibold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'>
@@ -636,7 +690,12 @@ export function GamesLibraryGameModal({
                   {activeSections.map((draft) => (
                     <div
                       key={draft.id}
-                      className='rounded-[1.5rem] border border-[color:var(--kangur-page-border)] bg-white/80 p-4'
+                      className={cn(
+                        'rounded-[1.5rem] border bg-white/80 p-4 transition',
+                        draft.id === selectedSectionId
+                          ? 'border-indigo-500 shadow-[0_18px_48px_-32px_rgba(79,70,229,0.7)]'
+                          : 'border-[color:var(--kangur-page-border)]'
+                      )}
                     >
                       <div className='flex items-start justify-between gap-3'>
                         <div className='min-w-0 flex-1'>
@@ -647,6 +706,11 @@ export function GamesLibraryGameModal({
                             <div className='text-sm font-bold [color:var(--kangur-page-text)]'>
                               {draft.title}
                             </div>
+                            {draft.id === selectedSectionId ? (
+                              <KangurStatusChip accent='indigo' size='sm'>
+                                {translations('modal.editingBadge')}
+                              </KangurStatusChip>
+                            ) : null}
                           </div>
                           {draft.description ? (
                             <p className='mt-2 text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
@@ -662,28 +726,52 @@ export function GamesLibraryGameModal({
                             </KangurStatusChip>
                           </div>
                         </div>
-                        <KangurButton
-                          disabled={replaceLessonGameSections.isPending}
-                          onClick={() => {
-                            const nextSections = activeSections.filter(
-                              (entry) => entry.id !== draft.id
-                            );
-                            setOptimisticSections(nextSections);
-                            void replaceLessonGameSections
-                              .mutateAsync({
-                                gameId: game.id,
-                                sections: nextSections,
-                              })
-                              .catch(() => {
-                                setOptimisticSections(null);
-                              });
-                          }}
-                          size='sm'
-                          type='button'
-                          variant='surface'
-                        >
-                          {translations('modal.removeDraftButton')}
-                        </KangurButton>
+                        <div className='flex flex-wrap gap-2'>
+                          <KangurButton
+                            onClick={() => {
+                              syncEditorFromSection(draft, game);
+                            }}
+                            size='sm'
+                            type='button'
+                            variant='surface'
+                          >
+                            {translations('modal.editDraftButton')}
+                          </KangurButton>
+                          <KangurButton
+                            disabled={replaceLessonGameSections.isPending}
+                            onClick={() => {
+                              const nextSections = activeSections.filter(
+                                (entry) => entry.id !== draft.id
+                              );
+                              const removingSelectedSection = draft.id === selectedSectionId;
+                              setOptimisticSections(nextSections);
+                              if (removingSelectedSection) {
+                                const fallbackSection = nextSections[0] ?? null;
+                                if (fallbackSection) {
+                                  syncEditorFromSection(fallbackSection, game);
+                                } else {
+                                  handleResetEditor();
+                                }
+                              }
+                              void replaceLessonGameSections
+                                .mutateAsync({
+                                  gameId: game.id,
+                                  sections: nextSections,
+                                })
+                                .catch(() => {
+                                  setOptimisticSections(null);
+                                  if (removingSelectedSection) {
+                                    syncEditorFromSection(draft, game);
+                                  }
+                                });
+                            }}
+                            size='sm'
+                            type='button'
+                            variant='surface'
+                          >
+                            {translations('modal.removeDraftButton')}
+                          </KangurButton>
+                        </div>
                       </div>
                     </div>
                   ))}

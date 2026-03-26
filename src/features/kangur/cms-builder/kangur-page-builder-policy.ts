@@ -1,5 +1,5 @@
 import type { BlockInstance, PageComponentInput } from '@/shared/contracts/cms';
-import type { PageBuilderPolicyConfig } from '@/features/cms/components/page-builder/PageBuilderPolicyContext';
+import type { PageBuilderPolicyConfig } from '@/features/cms/public';
 
 import type { KangurCmsScreenKey } from './project-contracts';
 

@@ -166,5 +166,21 @@ describe('GamesLibrary filters', () => {
         'runtime'
       )
     ).toBe(false);
+
+    expect(
+      areGamesLibrarySearchParamsCanonical(
+        new URLSearchParams('gameId=division_groups&subject=maths&subject=english&tab=runtime'),
+        filters,
+        'runtime'
+      )
+    ).toBe(false);
+
+    expect(
+      areGamesLibrarySearchParamsCanonical(
+        new URLSearchParams('gameId=division_groups&subject=%20maths%20&tab=runtime'),
+        filters,
+        'runtime'
+      )
+    ).toBe(false);
   });
 });

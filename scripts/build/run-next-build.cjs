@@ -12,11 +12,13 @@ if (process.env.VERCEL) {
   args.push('--webpack');
 }
 
+const defaultHeap = process.env.VERCEL ? '4096' : '8192';
+
 const child = spawn(process.execPath, [nextBin, ...args], {
   stdio: 'inherit',
   env: {
     ...process.env,
-    NODE_OPTIONS: process.env.NODE_OPTIONS || '--max-old-space-size=8192',
+    NODE_OPTIONS: process.env.NODE_OPTIONS || `--max-old-space-size=${defaultHeap}`,
   },
 });
 

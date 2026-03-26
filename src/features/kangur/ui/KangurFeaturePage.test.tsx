@@ -21,6 +21,10 @@ const {
   };
 });
 
+const { sessionMock } = vi.hoisted(() => ({
+  sessionMock: vi.fn(),
+}));
+
 const kangurRoutingProviderMock = vi.fn();
 
 const mockKangurRoutingState = {
@@ -67,6 +71,10 @@ vi.mock('@/features/kangur/observability/client', () => ({
   withKangurClientErrorSync,
 }));
 
+vi.mock('next-auth/react', () => ({
+  useSession: () => sessionMock(),
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   KangurRoutingProvider: ({
     children,
@@ -109,6 +117,10 @@ const renderWithIntl = (ui: ReactElement) =>
 describe('KangurFeaturePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
     clearLatchedKangurTopBarHeightCssValue();
     document.documentElement.style.removeProperty('--kangur-top-bar-height');
     setEnvValue('NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED', originalCustomCssEnv);
@@ -378,6 +390,32 @@ describe('KangurFeaturePage', () => {
     unmount();
 
     expect(clearKangurClientObservabilityContextMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('sanitizes blocked GamesLibrary routes in shell observability context for non-super-admin users', () => {
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'admin@example.com',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(<KangurFeaturePage slug={['games']} basePath='/kangur' />);
+
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'GamesLibrary',
+      requestedPath: '/kangur/games',
+      requestedHref: '/kangur/games',
+      basePath: '/kangur',
+      embedded: false,
+    });
+    expect(setKangurClientObservabilityContextMock).toHaveBeenCalledWith({
+      pageKey: 'Game',
+      requestedPath: '/kangur/games',
+    });
   });
 
   it('renders the scoped custom CSS when enabled', () => {

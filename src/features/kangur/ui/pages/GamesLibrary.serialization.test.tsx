@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -155,7 +155,7 @@ const messageMap = {
   'KangurGamesLibraryPage.modal.eyebrow': 'Game scaffold',
   'KangurGamesLibraryPage.modal.scaffoldBadge': 'Scaffold',
   'KangurGamesLibraryPage.modal.description':
-    'Preview the active runtime, map the game to a lesson hub, and draft new hub sections before persistence is wired.',
+    'Preview the active runtime, map the game to a lesson hub, and manage saved hub sections.',
   'KangurGamesLibraryPage.modal.settingsButton': 'Game settings',
   'KangurGamesLibraryPage.modal.hideSettingsButton': 'Hide settings',
   'KangurGamesLibraryPage.modal.closeButton': 'Close',
@@ -167,13 +167,14 @@ const messageMap = {
   'KangurGamesLibraryPage.modal.lessonEmpty': 'No lesson hubs found.',
   'KangurGamesLibraryPage.modal.lessonUnassigned': 'No lesson attached yet',
   'KangurGamesLibraryPage.modal.scaffoldHint':
-    'Scaffold only. The current draft is mapped to {lesson}.',
+    'The current editor is mapped to {lesson}.',
   'KangurGamesLibraryPage.modal.previewEyebrow': 'Live runtime',
   'KangurGamesLibraryPage.modal.previewTitle': 'Game preview',
   'KangurGamesLibraryPage.modal.previewFallback':
     'Clock is scaffolded first. Other games will plug into this modal next.',
   'KangurGamesLibraryPage.modal.draftEyebrow': 'Hub section draft',
   'KangurGamesLibraryPage.modal.draftTitle': 'Create a new hub game section',
+  'KangurGamesLibraryPage.modal.editDraftTitle': 'Edit saved hub game section',
   'KangurGamesLibraryPage.modal.draftNameLabel': 'Section name',
   'KangurGamesLibraryPage.modal.draftNamePlaceholder': 'Clock challenge',
   'KangurGamesLibraryPage.modal.draftSubtextLabel': 'Section subtext',
@@ -182,9 +183,13 @@ const messageMap = {
   'KangurGamesLibraryPage.modal.draftIconLabel': 'Game icon',
   'KangurGamesLibraryPage.modal.draftIconAria': 'Choose {icon} as the game icon',
   'KangurGamesLibraryPage.modal.addDraftButton': 'Add hub section draft',
+  'KangurGamesLibraryPage.modal.saveDraftButton': 'Save hub section',
+  'KangurGamesLibraryPage.modal.newDraftButton': 'New hub section',
   'KangurGamesLibraryPage.modal.draftListEyebrow': 'Draft list',
-  'KangurGamesLibraryPage.modal.draftListTitle': 'Drafted hub sections',
+  'KangurGamesLibraryPage.modal.draftListTitle': 'Saved hub sections',
   'KangurGamesLibraryPage.modal.draftListEmpty': 'No hub sections drafted yet.',
+  'KangurGamesLibraryPage.modal.editDraftButton': 'Edit',
+  'KangurGamesLibraryPage.modal.editingBadge': 'Editing',
   'KangurGamesLibraryPage.modal.removeDraftButton': 'Remove',
   'KangurGamesLibraryPage.modal.settingsEyebrow': 'Preview settings',
   'KangurGamesLibraryPage.modal.settingsTitle': 'Clock preview settings',
@@ -530,6 +535,72 @@ describe('GamesLibrary serialization audit', () => {
     });
   });
 
+  const enableCompatibilityCleanupAudit = (): void => {
+    pageDataState.value = {
+      ...pageDataState.value,
+      serializationAudit: {
+        ...pageDataState.value.serializationAudit,
+        compatibilityFallbackVariantCount: 1,
+        duplicatedLegacyVariantCount: 1,
+        missingRuntimeVariantCount: 1,
+        legacyLaunchFallbackGameCount: 1,
+        issues: [
+          {
+            kind: 'compatibility_fallback_variant',
+            itemId: 'division_groups.lesson-inline',
+            label: 'Division Groups · Lesson inline',
+            detail: 'division_groups.lesson-inline',
+            targetKind: 'game',
+            targetId: 'division_groups',
+          },
+          {
+            kind: 'duplicated_legacy_variant',
+            itemId: 'clock_training.lesson-inline',
+            label: 'Clock Training · Lesson inline',
+            detail: 'clock_training.lesson-inline',
+            targetKind: 'game',
+            targetId: 'clock_training',
+          },
+          {
+            kind: 'missing_runtime_variant',
+            itemId: 'logical_patterns_workshop.lesson-stage',
+            label: 'Logical Patterns Workshop · Lesson stage',
+            detail: 'logical_patterns_workshop.lesson-stage',
+            targetKind: 'game',
+            targetId: 'logical_patterns_workshop',
+          },
+          {
+            kind: 'legacy_launch_fallback_game',
+            itemId: 'clock_training',
+            label: 'Clock Training',
+            detail: 'clock_training',
+            targetKind: 'game',
+            targetId: 'clock_training',
+          },
+          {
+            kind: 'non_shared_runtime_engine',
+            itemId: 'classification-engine',
+            label: 'Classification engine',
+            detail: 'classification-engine',
+            targetKind: 'engine',
+            targetId: 'classification-engine',
+          },
+        ],
+        nonSharedRuntimeEngineCount: 1,
+        allEnginesSharedRuntime: false,
+        surfaces: pageDataState.value.serializationAudit.surfaces.map((surface) =>
+          surface.surface === 'game_screen'
+            ? {
+                ...surface,
+                compatibilityFallbackVariants: 1,
+                duplicatedLegacyVariants: 1,
+              }
+            : surface
+        ),
+      },
+    };
+  };
+
   it('renders nothing while the admin session is still loading and skips page data hooks', () => {
     sessionState.value = {
       data: null,
@@ -659,6 +730,24 @@ describe('GamesLibrary serialization audit', () => {
       'true'
     );
     expect(replaceMock).toHaveBeenCalledWith('/games?tab=runtime', {
+      pageKey: 'GamesLibrary',
+      scroll: false,
+      sourceId: 'kangur-games-library:query-normalize',
+    });
+  });
+
+  it('deduplicates repeated known filter params while preserving valid tab state', () => {
+    searchParamsState.value = new URLSearchParams(
+      'subject=english&subject=maths&tab=runtime'
+    );
+
+    render(<GamesLibrary />);
+
+    expect(screen.getByRole('tab', { name: 'Runtime' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    expect(replaceMock).toHaveBeenCalledWith('/games?subject=english&tab=runtime', {
       pageKey: 'GamesLibrary',
       scroll: false,
       sourceId: 'kangur-games-library:query-normalize',
@@ -795,69 +884,7 @@ describe('GamesLibrary serialization audit', () => {
   });
 
   it('switches the audit status when compatibility cleanup is needed', () => {
-    pageDataState.value = {
-      ...pageDataState.value,
-      serializationAudit: {
-        ...pageDataState.value.serializationAudit,
-        compatibilityFallbackVariantCount: 1,
-        duplicatedLegacyVariantCount: 1,
-        missingRuntimeVariantCount: 1,
-        legacyLaunchFallbackGameCount: 1,
-        issues: [
-          {
-            kind: 'compatibility_fallback_variant',
-            itemId: 'division_groups.lesson-inline',
-            label: 'Division Groups · Lesson inline',
-            detail: 'division_groups.lesson-inline',
-            targetKind: 'game',
-            targetId: 'division_groups',
-          },
-          {
-            kind: 'duplicated_legacy_variant',
-            itemId: 'clock_training.lesson-inline',
-            label: 'Clock Training · Lesson inline',
-            detail: 'clock_training.lesson-inline',
-            targetKind: 'game',
-            targetId: 'clock_training',
-          },
-          {
-            kind: 'missing_runtime_variant',
-            itemId: 'logical_patterns_workshop.lesson-stage',
-            label: 'Logical Patterns Workshop · Lesson stage',
-            detail: 'logical_patterns_workshop.lesson-stage',
-            targetKind: 'game',
-            targetId: 'logical_patterns_workshop',
-          },
-          {
-            kind: 'legacy_launch_fallback_game',
-            itemId: 'clock_training',
-            label: 'Clock Training',
-            detail: 'clock_training',
-            targetKind: 'game',
-            targetId: 'clock_training',
-          },
-          {
-            kind: 'non_shared_runtime_engine',
-            itemId: 'classification-engine',
-            label: 'Classification engine',
-            detail: 'classification-engine',
-            targetKind: 'engine',
-            targetId: 'classification-engine',
-          },
-        ],
-        nonSharedRuntimeEngineCount: 1,
-        allEnginesSharedRuntime: false,
-        surfaces: pageDataState.value.serializationAudit.surfaces.map((surface) =>
-          surface.surface === 'game_screen'
-            ? {
-                ...surface,
-                compatibilityFallbackVariants: 1,
-                duplicatedLegacyVariants: 1,
-              }
-            : surface
-        ),
-      },
-    };
+    enableCompatibilityCleanupAudit();
 
     render(<GamesLibrary />);
     openRuntimeTab();
@@ -872,8 +899,39 @@ describe('GamesLibrary serialization audit', () => {
     ).toHaveAttribute('href', '/games?gameId=division_groups#kangur-game-card-division_groups');
     expect(screen.getByRole('link', { name: /classification-engine/i })).toHaveAttribute(
       'href',
-      '/games?engineId=classification-engine#kangur-engine-card-classification-engine'
+      '/games?engineId=classification-engine&tab=structure#kangur-engine-card-classification-engine'
     );
+  });
+
+  it('preserves unrelated query params while canonicalizing runtime backlog links', () => {
+    searchParamsState.value = new URLSearchParams('view=compact&tab=runtime&subject=english');
+    enableCompatibilityCleanupAudit();
+
+    render(<GamesLibrary />);
+
+    const divisionLink = new URL(
+      screen.getByRole('link', { name: /division_groups\.lesson-inline/i }).getAttribute('href') ??
+        '',
+      'https://kangur.test'
+    );
+    const engineLink = new URL(
+      screen.getByRole('link', { name: /classification-engine/i }).getAttribute('href') ?? '',
+      'https://kangur.test'
+    );
+
+    expect(divisionLink.pathname).toBe('/games');
+    expect(divisionLink.searchParams.get('view')).toBe('compact');
+    expect(divisionLink.searchParams.get('gameId')).toBe('division_groups');
+    expect(divisionLink.searchParams.get('subject')).toBeNull();
+    expect(divisionLink.searchParams.get('tab')).toBeNull();
+    expect(divisionLink.hash).toBe('#kangur-game-card-division_groups');
+
+    expect(engineLink.pathname).toBe('/games');
+    expect(engineLink.searchParams.get('view')).toBe('compact');
+    expect(engineLink.searchParams.get('engineId')).toBe('classification-engine');
+    expect(engineLink.searchParams.get('subject')).toBeNull();
+    expect(engineLink.searchParams.get('tab')).toBe('structure');
+    expect(engineLink.hash).toBe('#kangur-engine-card-classification-engine');
   });
 
   it('explains when the page is focused to a single game through a deep link', () => {
@@ -1106,7 +1164,152 @@ describe('GamesLibrary serialization audit', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add hub section draft' }));
 
     expect(screen.getByText('Clock deck')).toBeInTheDocument();
-    expect(screen.getByText('Mixed drills for the lesson hub.')).toBeInTheDocument();
+    expect(screen.getAllByText('Mixed drills for the lesson hub.').length).toBeGreaterThan(0);
+  });
+
+  it('loads a saved hub section into the editor and persists updates on the same record', () => {
+    lessonGameSectionsState.value = [
+      {
+        id: 'clock_saved_section',
+        lessonComponentId: 'clock',
+        gameId: 'clock_training',
+        title: 'Saved clock deck',
+        description: 'Saved section from the lesson hub.',
+        emoji: '🧩',
+        sortOrder: 1,
+        enabled: true,
+        settings: {
+          clock: {
+            clockSection: 'minutes',
+            initialMode: 'challenge',
+            showHourHand: false,
+            showMinuteHand: true,
+            showModeSwitch: true,
+            showTaskTitle: true,
+            showTimeDisplay: false,
+          },
+        },
+      },
+    ];
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    expect(screen.getByRole('button', { name: 'Save hub section' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Attached hub lesson')).toHaveValue('clock');
+    expect(screen.getByLabelText('Section name')).toHaveValue('Saved clock deck');
+    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
+      'data-show-hour-hand',
+      'false'
+    );
+    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
+      'data-initial-mode',
+      'challenge'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'New hub section' }));
+    expect(screen.getByRole('button', { name: 'Add hub section draft' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    fireEvent.change(screen.getByLabelText('Attached hub lesson'), {
+      target: { value: 'calendar' },
+    });
+    fireEvent.change(screen.getByLabelText('Section name'), {
+      target: { value: 'Updated clock deck' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save hub section' }));
+
+    expect(replaceLessonGameSectionsMutateAsyncMock).toHaveBeenLastCalledWith({
+      gameId: 'clock_training',
+      sections: [
+        expect.objectContaining({
+          id: 'clock_saved_section',
+          lessonComponentId: 'calendar',
+          title: 'Updated clock deck',
+        }),
+      ],
+    });
+    expect(screen.getByText('Updated clock deck')).toBeInTheDocument();
+  });
+
+  it('restores the edited saved section when deleting it fails', async () => {
+    lessonGameSectionsState.value = [
+      {
+        id: 'clock_saved_section',
+        lessonComponentId: 'clock',
+        gameId: 'clock_training',
+        title: 'Saved clock deck',
+        description: 'Saved section from the lesson hub.',
+        emoji: '🧩',
+        sortOrder: 1,
+        enabled: true,
+        settings: {
+          clock: {
+            clockSection: 'minutes',
+            initialMode: 'challenge',
+            showHourHand: false,
+            showMinuteHand: true,
+            showModeSwitch: true,
+            showTaskTitle: true,
+            showTimeDisplay: false,
+          },
+        },
+      },
+      {
+        id: 'clock_secondary_section',
+        lessonComponentId: 'calendar',
+        gameId: 'clock_training',
+        title: 'Fallback clock deck',
+        description: 'Fallback section from the lesson hub.',
+        emoji: '⏰',
+        sortOrder: 2,
+        enabled: true,
+        settings: {
+          clock: {
+            clockSection: 'hours',
+            initialMode: 'practice',
+            showHourHand: true,
+            showMinuteHand: true,
+            showModeSwitch: true,
+            showTaskTitle: true,
+            showTimeDisplay: true,
+          },
+        },
+      },
+    ];
+    replaceLessonGameSectionsMutateAsyncMock.mockImplementationOnce(async () => {
+      throw new Error('delete failed');
+    });
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    expect(screen.getByRole('button', { name: 'Save hub section' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Section name')).toHaveValue('Saved clock deck');
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Remove' })[0]!);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Save hub section' })).toBeInTheDocument();
+      expect(screen.getByLabelText('Section name')).toHaveValue('Saved clock deck');
+      expect(screen.getByLabelText('Attached hub lesson')).toHaveValue('clock');
+      expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
+        'data-show-hour-hand',
+        'false'
+      );
+    });
   });
 
   it('keeps the structure tab active when an engine deep link also requests runtime', () => {

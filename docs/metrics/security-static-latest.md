@@ -8,12 +8,12 @@ canonical: true
 ---
 # Static Security Review
 
-Generated at: 2026-03-26T14:24:06.609Z
+Generated at: 2026-03-26T16:58:50.566Z
 
 ## Summary
 
 - Status: WARN
-- Files scanned: 5840
+- Files scanned: 5869
 - Errors: 0
 - Warnings: 4
 - Info: 0

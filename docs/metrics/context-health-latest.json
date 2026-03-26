@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-26T14:24:01.066Z",
+  "generatedAt": "2026-03-26T16:58:43.964Z",
   "status": "warn",
   "summary": {
-    "total": 3,
+    "total": 4,
     "errorCount": 0,
     "warningCount": 2,
-    "infoCount": 1,
+    "infoCount": 2,
     "status": "warn",
-    "contextFileCount": 243
+    "contextFileCount": 244
   },
   "scope": {
     "sourceDirs": [
@@ -42,6 +42,16 @@
       "severity": "info",
       "ruleId": "context-missing-split",
       "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/cms/components/page-builder/PageBuilderPolicyContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
       "file": "src/features/kangur/admin/admin-kangur-social/SocialPostContext.tsx",
       "line": null,
       "column": null,
@@ -60,8 +70,8 @@
       "ruleId": "context-missing-split",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 1
+      "infoCount": 2
     }
   ],
-  "durationMs": 285
+  "durationMs": 353
 }

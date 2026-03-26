@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-playwright",
+        "--port",
+        "3000"
+      ],
+      "env": {
+        "PLAYWRIGHT_BASE_URL": "http://localhost:3000",
+        "PLAYWRIGHT_USE_EXISTING_SERVER": "true"
+      },
+      "description": "Playwright test runner and inspector",
+      "disabled": false
+    }
+  },
+  "notes": [
+    "Start the dev server before using Playwright MCP: npm run dev",
+    "Or set PLAYWRIGHT_USE_EXISTING_SERVER=true when running e2e tests",
+    "See playwright.config.ts for base URL and configuration",
+    "E2E tests are in e2e/ directory, organized by feature"
+  ]
+}

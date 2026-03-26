@@ -7,18 +7,24 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { authMeMock, useKangurRoutingMock, usePathnameMock, routerPushMock } = vi.hoisted(() => ({
-  authMeMock: vi.fn(),
-  useKangurRoutingMock: vi.fn(),
-  usePathnameMock: vi.fn(),
-  routerPushMock: vi.fn(),
-}));
+const { authMeMock, sessionMock, useKangurRoutingMock, usePathnameMock, routerPushMock } =
+  vi.hoisted(() => ({
+    authMeMock: vi.fn(),
+    sessionMock: vi.fn(),
+    useKangurRoutingMock: vi.fn(),
+    usePathnameMock: vi.fn(),
+    routerPushMock: vi.fn(),
+  }));
 
 vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
   useRouter: () => ({
     push: routerPushMock,
   }),
+}));
+
+vi.mock('next-auth/react', () => ({
+  useSession: () => sessionMock(),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
@@ -59,9 +65,14 @@ describe('PageNotFound', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     authMeMock.mockResolvedValue({ role: 'student' });
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
     usePathnameMock.mockReturnValue('/kangur/missing-page');
     useKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
+      pageKey: null,
       requestedPath: '/kangur/missing-page',
     });
   });
@@ -108,5 +119,32 @@ describe('PageNotFound', () => {
       'rounded-full',
       'border'
     );
+  });
+
+  it('does not expose the blocked GamesLibrary page name to non-super-admin users', async () => {
+    usePathnameMock.mockReturnValue('/kangur/games');
+    useKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      pageKey: 'GamesLibrary',
+      requestedPath: '/kangur/games',
+    });
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'admin@example.com',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(<PageNotFound />, { wrapper: createWrapper() });
+
+    expect(
+      await screen.findByText('Nie udalo sie znalezc strony "nieznana" w tej aplikacji.')
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Nie udalo sie znalezc strony "games" w tej aplikacji.')
+    ).not.toBeInTheDocument();
   });
 });

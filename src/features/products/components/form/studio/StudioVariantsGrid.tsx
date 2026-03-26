@@ -6,7 +6,7 @@ import React from 'react';
 
 import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
-import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/public';
+import { getImageStudioSlotImageSrc } from '@/features/ai/public';
 import { Button, FormSection, LoadingState, StatusBadge } from '@/features/products/ui';
 import { cn } from '@/shared/utils';
 

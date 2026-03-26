@@ -8,7 +8,7 @@ import {
   SplitVariantPreview,
   CenterPreviewProvider,
   useCenterPreviewContext,
-} from '@/features/ai/image-studio/public';
+} from '@/features/ai/public';
 import { Button, FormSection } from '@/features/products/ui';
 
 function StudioPreviewCanvasInner(): React.JSX.Element {

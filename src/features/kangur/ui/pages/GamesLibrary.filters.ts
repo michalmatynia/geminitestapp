@@ -27,7 +27,7 @@ import {
 } from '@/shared/contracts/kangur-lesson-constants';
 import type { ZodType } from 'zod';
 
-type SearchParamReader = Pick<URLSearchParams, 'get'> | null | undefined;
+type SearchParamReader = Pick<URLSearchParams, 'get' | 'getAll'> | null | undefined;
 
 export type GamesLibraryFilterValue<T extends string> = 'all' | T;
 export type GamesLibraryTabId = 'catalog' | 'structure' | 'runtime';
@@ -91,6 +91,22 @@ const readSearchParam = (
 ): string | undefined => {
   const rawValue = searchParams?.get(key)?.trim();
   return rawValue ? rawValue : undefined;
+};
+
+const readSearchParamValues = (
+  searchParams: SearchParamReader,
+  key: string
+): string[] => {
+  if (!searchParams) {
+    return [];
+  }
+
+  if (typeof searchParams.getAll === 'function') {
+    return searchParams.getAll(key);
+  }
+
+  const value = searchParams.get(key);
+  return value === null ? [] : [value];
 };
 
 const parseOptionalQueryValue = <T extends string>(
@@ -208,8 +224,14 @@ export const areGamesLibrarySearchParamsCanonical = (
   const expectedParams = getGamesLibrarySearchParams(filters, tab);
 
   return GAMES_LIBRARY_QUERY_PARAM_KEYS.every((key) => {
-    const rawValue = readSearchParam(searchParams, key);
-    return rawValue === expectedParams[key];
+    const rawValues = readSearchParamValues(searchParams, key);
+    const expectedValue = expectedParams[key];
+
+    if (expectedValue === undefined) {
+      return rawValues.length === 0;
+    }
+
+    return rawValues.length === 1 && rawValues[0] === expectedValue;
   });
 };
 

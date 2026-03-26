@@ -22,7 +22,10 @@ import {
   CmsStorefrontAppearanceButtons,
   useOptionalCmsStorefrontAppearance,
 } from '@/features/cms/public';
-import { canAccessKangurPage } from '@/features/kangur/config/page-access';
+import {
+  canAccessKangurPage,
+  resolveAccessibleKangurPageKey,
+} from '@/features/kangur/config/page-access';
 import { KANGUR_TIGHT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   getKangurHomeHref,
@@ -321,7 +324,7 @@ export function KangurPrimaryNavigation({
   currentPage,
   guestPlayerName,
   guestPlayerNamePlaceholder,
-  homeActive = currentPage === 'Game',
+  homeActive,
   isAuthenticated,
   navLabel,
   onGuestPlayerNameChange,
@@ -350,7 +353,6 @@ export function KangurPrimaryNavigation({
   const navigationLabel = navLabel ?? fallbackCopy.navLabel;
   const topBarClassName = className;
   const topBarContentClassName = contentClassName;
-  const learnerProfileIsActive = currentPage === 'LearnerProfile';
   const effectiveIsAuthenticated = auth?.isAuthenticated ?? isAuthenticated;
   const effectiveCanManageLearners = auth?.user
     ? Boolean(auth.user.canManageLearners)
@@ -386,6 +388,14 @@ export function KangurPrimaryNavigation({
     effectiveIsAuthenticated && Boolean(elevatedSessionUser);
   const canAccessGamesLibrary =
     effectiveIsAuthenticated && canAccessKangurPage('GamesLibrary', session);
+  const accessibleCurrentPage = resolveAccessibleKangurPageKey(
+    currentPage,
+    session,
+    'Game'
+  ) as KangurPrimaryNavigationPage;
+  const forceLanguageSwitcherFallbackPath = accessibleCurrentPage !== currentPage;
+  const effectiveHomeActive = homeActive ?? accessibleCurrentPage === 'Game';
+  const learnerProfileIsActive = accessibleCurrentPage === 'LearnerProfile';
   const shouldRenderProfileMenu =
     effectiveIsAuthenticated && !shouldRenderElevatedUserMenu && (!isParentAccount || hasActiveLearner);
   const isCoarsePointer = useKangurCoarsePointer();
@@ -527,7 +537,7 @@ export function KangurPrimaryNavigation({
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
-  }, [currentPage]);
+  }, [accessibleCurrentPage]);
 
   useEffect(() => {
     if (!isMobileMenuOpen || typeof document === 'undefined') return;
@@ -789,7 +799,7 @@ export function KangurPrimaryNavigation({
     transition: {},
   };
   const homeAction: KangurNavActionConfig = {
-    active: homeActive,
+    active: effectiveHomeActive,
     ariaLabel: navTranslations('home'),
     className: `px-3 sm:px-4 ${mobileNavItemClassName}`,
     content: (
@@ -829,7 +839,7 @@ export function KangurPrimaryNavigation({
     },
   };
   const lessonsAction: KangurNavActionConfig = {
-    active: currentPage === 'Lessons',
+    active: accessibleCurrentPage === 'Lessons',
     ariaLabel: navTranslations('lessons'),
     className: mobileNavItemClassName,
     content: isSixYearOld ? (
@@ -858,7 +868,7 @@ export function KangurPrimaryNavigation({
     },
   };
   const gamesLibraryAction: KangurNavActionConfig = {
-    active: currentPage === 'GamesLibrary',
+    active: accessibleCurrentPage === 'GamesLibrary',
     ariaLabel: navTranslations('gamesLibrary'),
     className: mobileNavItemClassName,
     content: isSixYearOld ? (
@@ -941,7 +951,7 @@ export function KangurPrimaryNavigation({
     title: navTranslations('ageGroup.currentTitle', { group: ageGroupChoiceLabel }),
   };
   const duelsAction: KangurNavActionConfig = {
-    active: currentPage === 'Duels',
+    active: accessibleCurrentPage === 'Duels',
     ariaLabel: navTranslations('duels'),
     className: mobileNavItemClassName,
     content: isSixYearOld ? (
@@ -972,7 +982,7 @@ export function KangurPrimaryNavigation({
   };
   const parentDashboardAction: KangurNavActionConfig | null = effectiveShowParentDashboard
     ? {
-      active: currentPage === 'ParentDashboard',
+      active: accessibleCurrentPage === 'ParentDashboard',
       ariaLabel: navTranslations('parent'),
       content: (
         isSixYearOld ? (
@@ -1132,7 +1142,8 @@ export function KangurPrimaryNavigation({
           <KangurLanguageSwitcher
             basePath={basePath}
             className={mobileNavItemClassName}
-            currentPage={currentPage}
+            currentPage={accessibleCurrentPage}
+            forceFallbackPath={forceLanguageSwitcherFallbackPath}
           />
         ) : null}
         {resolvedAppearanceControls}
@@ -1274,7 +1285,11 @@ export function KangurPrimaryNavigation({
                 data-testid='kangur-primary-nav-mobile-header-actions'
               >
                 {shouldRenderMobileLanguageHeader ? (
-                  <KangurLanguageSwitcher basePath={basePath} currentPage={currentPage} />
+                  <KangurLanguageSwitcher
+                    basePath={basePath}
+                    currentPage={accessibleCurrentPage}
+                    forceFallbackPath={forceLanguageSwitcherFallbackPath}
+                  />
                 ) : null}
                 {shouldRenderMobileAppearanceHeader ? (
                   <div className='flex shrink-0 items-center'>{appearanceControlsInline}</div>

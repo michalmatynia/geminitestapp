@@ -1,5 +1,6 @@
 'use client';
 
+import { useSession } from 'next-auth/react';
 import {
   createContext,
   useContext,
@@ -7,6 +8,7 @@ import {
 } from 'react';
 
 import { internalError } from '@/features/kangur/shared/errors/app-error';
+import { resolveAccessibleKangurPageKey } from '@/features/kangur/config/page-access';
 
 import { useKangurRouting } from './KangurRoutingContext';
 import {
@@ -70,7 +72,9 @@ export function KangurRouteTransitionProvider({
   children: React.ReactNode;
 }): React.JSX.Element {
   const { basePath, pageKey, requestedHref, requestedPath } = useKangurRouting();
+  const { data: session } = useSession();
   const currentRequestedHref = normalizeTransitionHref(requestedHref ?? requestedPath);
+  const accessiblePageKey = resolveAccessibleKangurPageKey(pageKey, session, 'Game');
 
   const {
     transitionState,
@@ -78,7 +82,7 @@ export function KangurRouteTransitionProvider({
     markRouteTransitionReady,
   } = useKangurRouteTransitionLogic({
     basePath,
-    pageKey: pageKey ?? null,
+    pageKey: accessiblePageKey,
     currentRequestedHref,
   });
 

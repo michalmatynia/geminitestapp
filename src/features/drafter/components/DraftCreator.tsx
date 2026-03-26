@@ -18,7 +18,7 @@ import {
   useCatalogs,
   useProductImages,
   useProducers,
-} from '@/features/products/forms/public';
+} from '@/features/products';
 import type {
   ProductCategory,
   ProductTag,

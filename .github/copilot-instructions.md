@@ -692,6 +692,230 @@ Both scan `src/` for all `create*QueryV2`, `create*MutationV2` calls and verify 
 
 If a check fails, add the missing `meta` object to your factory creator.
 
+### Database and Persistence
+
+The application uses **MongoDB as the primary database** with optional Redis caching. Database operations follow a repository pattern for testability and decoupling.
+
+**Database Configuration**
+
+```typescript
+// src/shared/lib/env.ts
+MONGODB_URI=mongodb://...        // MongoDB connection string (required)
+MONGODB_DB=app                   // Database name (default: 'app')
+REDIS_URL=redis://...            // Optional Redis for caching/queues
+APP_DB_PROVIDER=mongodb          // Currently only 'mongodb' supported
+```
+
+At startup, `src/instrumentation.ts` validates `MONGODB_URI` is configured. If missing, the app fails to start.
+
+**Provider Routing: App DB vs Service-Specific**
+
+Database Engine (`src/shared/lib/db/`) supports per-service provider routing:
+
+```typescript
+import { getAppDbProvider, getDatabaseEngineServiceProvider } from '@/shared/lib/db/app-db-provider';
+
+// Get the app's primary database (currently always MongoDB)
+const provider = await getAppDbProvider(); // → 'mongodb'
+
+// Get service-specific provider (e.g., products, auth, cms)
+const serviceProvider = await getDatabaseEngineServiceProvider('products');
+// → 'mongodb' (if routed to MongoDB) or 'redis' (if cache-only)
+```
+
+**Resolution order:**
+1. Check Database Engine policy for explicit service routing
+2. If no route, check `APP_DB_PROVIDER` env var (default: read from settings)
+3. If not set, check `MONGODB_URI` (fall back to MongoDB if available)
+4. Throw error if no provider is configured
+
+**Caching with Redis**
+
+When Redis is available (`REDIS_URL`), it's used for:
+- Job queues (BullMQ)
+- Query result caching (optional, feature-driven)
+- Session storage (optional, auth-driven)
+- Rate limiting
+
+If Redis is unavailable, jobs fall back to **inline execution** (controlled by `AI_JOBS_INLINE`).
+
+Check `src/shared/lib/queue/` for queue factory:
+
+```typescript
+import { createManagedQueue } from '@/shared/lib/queue';
+
+const productAiQueue = await createManagedQueue('product-ai', {
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: { type: 'exponential', delay: 2000 },
+  },
+});
+
+await productAiQueue.add('generate-description', { productId }, { delay: 1000 });
+```
+
+**Repository Pattern**
+
+Features use repositories to abstract data access. Example: `src/features/notesapp/services/notes/note-repository/`:
+
+```typescript
+// src/features/notesapp/services/notes/types/note-repository.ts
+export interface NoteRepository {
+  getAll(filters?: NoteFilters): Promise<NoteWithRelations[]>;
+  getById(id: string): Promise<NoteWithRelations | null>;
+  create(data: NoteCreateInput): Promise<NoteWithRelations>;
+  update(id: string, data: NoteUpdateInput): Promise<NoteWithRelations | null>;
+  delete(id: string): Promise<boolean>;
+  // ... tag and category methods
+}
+
+// src/features/notesapp/services/notes/note-repository/mongo-note-repository.ts
+export const mongoNoteRepository: NoteRepository = {
+  async getAll(filters = {}) {
+    const db = await getMongoDb();
+    return db.collection('notes').find({ ...filters }).toArray();
+  },
+  async getById(id: string) {
+    const db = await getMongoDb();
+    return db.collection('notes').findOne({ _id: id });
+  },
+  async create(data: NoteCreateInput) {
+    const db = await getMongoDb();
+    const result = await db.collection('notes').insertOne(data);
+    return this.getById(result.insertedId.toString())!;
+  },
+  // ... more methods
+};
+```
+
+**Why repositories matter:**
+- Abstracts MongoDB-specific operations: easier to test, mock, or switch providers
+- Single responsibility: all data access for notes lives in one place
+- Consistent error handling and logging
+- Enables soft deletes, archival, and audit trails
+- Repositories are exported via `server.ts` (server-only)
+
+**Using Repositories in API Routes**
+
+```typescript
+// src/app/api/notes/route.ts
+import { mongoNoteRepository } from '@/features/notesapp/server';
+
+export async function GET() {
+  const notes = await mongoNoteRepository.getAll();
+  return Response.json({ data: notes });
+}
+
+// src/app/api/notes/[id]/route.ts
+import { apiHandler } from '@/shared/lib/api-handler';
+import { mongoNoteRepository } from '@/features/notesapp/server';
+
+async function handleGetNote(req: ApiRequest<{ id: string }>) {
+  const note = await mongoNoteRepository.getById(req.params.id);
+  if (!note) throw notFoundError(`Note ${req.params.id} not found`);
+  return note;
+}
+
+export const GET = apiHandler(handleGetNote);
+```
+
+**MongoDB Client and Connection**
+
+```typescript
+// src/shared/lib/db/mongo-client.ts
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+
+// Get the MongoDB Db instance (singleton)
+const db = await getMongoDb();
+const collection = db.collection('products');
+await collection.insertOne({ name: 'Widget', price: 9.99 });
+```
+
+**Connection pooling, slow query logging, and monitoring** are configured in `mongo-client.ts`:
+
+- Default pool size: 10 connections
+- Slow query threshold: `MONGODB_SLOW_COMMAND_MS` (default: 3 seconds)
+- Enable pool logging: `DEBUG_MONGODB_POOL=true`
+- Monitor all commands: `MONGODB_MONITOR_COMMANDS=true`
+
+**Database Backups**
+
+The Database Engine provides backup and restore functionality:
+
+- **API**: `POST /api/system/databases/backups`
+- **UI**: `/admin/system` > Database > Backups
+- **CLI**: `npm run seed` / `npm run cleanup:*` commands
+
+Backup files live in `mongo/` directory (local dev) or configurable backup schedule via Database Engine policy.
+
+**Common Patterns**
+
+**1. Query with filtering:**
+```typescript
+const notes = await mongoNoteRepository.getAll({
+  notebookId: 'notebook-1',
+  tag: 'important',
+  limit: 10,
+  offset: 0,
+});
+```
+
+**2. Bulk write with retry:**
+```typescript
+import { retryableWrite } from '@/shared/lib/db/mongo-write-retry';
+
+const result = await retryableWrite(async () => {
+  const db = await getMongoDb();
+  return db.collection('products').updateMany(
+    { status: 'draft' },
+    { $set: { updatedAt: new Date() } }
+  );
+});
+```
+
+**3. Transaction (if using MongoDB 4.0+):**
+```typescript
+import { withMongoTransaction } from '@/shared/lib/db/mongo-client';
+
+const result = await withMongoTransaction(async (session) => {
+  const db = await getMongoDb();
+  const productsCollection = db.collection('products');
+  
+  const product = await productsCollection.findOneAndUpdate(
+    { _id: productId },
+    { $set: { status: 'published' } },
+    { session, returnDocument: 'after' }
+  );
+  
+  // Other operations with `session`
+  
+  return product;
+});
+```
+
+**Observability and Debugging**
+
+```bash
+# Monitor slow queries
+DEBUG_MONGODB_POOL=true npm run dev
+
+# Check MongoDB status
+curl http://localhost:3000/api/system/health
+
+# View system logs with MongoDB activity
+curl http://localhost:3000/api/system/logs?source=mongodb
+```
+
+**Common Errors**
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `MONGODB_URI is not configured` | Env var missing | Set `MONGODB_URI` in `.env` |
+| `Replica set not available` | Connection pooling issue | Restart MongoDB, check `DEBUG_MONGODB_POOL=true` logs |
+| `E11000 duplicate key` | Duplicate unique field | Check index definition; may need data cleanup |
+| `Timeout: operation exceeded 30000ms` | Query too slow | Add index or optimize query; check `MONGODB_SLOW_COMMAND_MS` |
+| `Transaction aborted` | Multi-document transaction failed | Retry via `retryableWrite()` |
+
 ### File and Media Handling
 
 - **Local uploads**: `public/uploads`
@@ -719,6 +943,280 @@ If a check fails, add the missing `meta` object to your factory creator.
 - **Error handling**: Structured error responses with meaningful HTTP codes
 - **Validation**: Zod schemas for all inputs
 - **Grouping**: Feature-scoped directories (e.g., `/api/products/`, `/api/ai-paths/`)
+
+### API Routes and Request Handling
+
+All API routes (`src/app/api/`) use a standardized handler pattern with automatic request validation, auth, rate limiting, error handling, and observability.
+
+**The Pattern: Route + Handler**
+
+```typescript
+// src/app/api/notes/route.ts (route file)
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic'; // Optional: disable caching
+
+import { apiHandler } from '@/shared/lib/api';
+import { GET_handler, POST_handler } from './handler';
+
+export const GET = apiHandler(GET_handler, {
+  source: 'notes.GET',
+  requireAuth: true,
+});
+
+export const POST = apiHandler(POST_handler, {
+  source: 'notes.POST',
+  requireAuth: true,
+  rateLimitKey: 'write',
+});
+```
+
+```typescript
+// src/app/api/notes/handler.ts (handler file with business logic)
+import { NextRequest, NextResponse } from 'next/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { mongoNoteRepository } from '@/features/notesapp/server';
+
+export async function GET_handler(
+  req: NextRequest,
+  ctx: ApiHandlerContext
+): Promise<Response> {
+  // req.url, req.method, req.headers available
+  // ctx.params available for route params
+  const notes = await mongoNoteRepository.getAll();
+  return NextResponse.json({ data: notes });
+}
+
+export async function POST_handler(
+  req: NextRequest,
+  ctx: ApiHandlerContext
+): Promise<Response> {
+  // Body is auto-parsed by apiHandler if parseJsonBody: true (default)
+  const body = ctx.parsedBody;
+  const note = await mongoNoteRepository.create(body);
+  return NextResponse.json({ data: note }, { status: 201 });
+}
+```
+
+**Route with URL Params**
+
+```typescript
+// src/app/api/notes/[id]/route.ts
+import { apiHandlerWithParams } from '@/shared/lib/api';
+import { GET_handler, PUT_handler } from './handler';
+
+export const GET = apiHandlerWithParams(GET_handler, {
+  source: 'notes.detail.GET',
+  requireAuth: true,
+});
+
+export const PUT = apiHandlerWithParams(PUT_handler, {
+  source: 'notes.detail.PUT',
+  requireAuth: true,
+  rateLimitKey: 'write',
+});
+
+// src/app/api/notes/[id]/handler.ts
+export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext) {
+  const id = ctx.params.id; // URL param
+  const note = await mongoNoteRepository.getById(id);
+  if (!note) throw notFoundError(`Note ${id} not found`);
+  return NextResponse.json({ data: note });
+}
+```
+
+**Handler Options**
+
+The `apiHandler` and `apiHandlerWithParams` wrappers accept these options:
+
+| Option | Type | Default | Purpose |
+|--------|------|---------|---------|
+| `source` | string | required | Telemetry source ID (e.g., `'notes.GET'`); used for logging and metrics |
+| `requireAuth` | boolean | false | If true, throws `authError` if session is missing |
+| `parseJsonBody` | boolean | true | If true, parses request body as JSON and validates via `bodySchema` |
+| `bodySchema` | Zod schema | undefined | Validates and parses request body; throws validation error if invalid |
+| `querySchema` | Zod schema | undefined | Validates and parses query params; throws validation error if invalid |
+| `rateLimitKey` | 'api' \| 'write' | false | Rate limit category; 'api' for all requests, 'write' for mutations |
+| `requireCsrf` | boolean | true | If true, validates CSRF token from header or body |
+| `successLogging` | 'all' \| 'slow' \| 'off' | 'slow' | Log all successes, only slow (>750ms), or none |
+| `slowThresholdMs` | number | 750 | Threshold for slow request logging |
+| `corsAllowCredentials` | boolean | false | Add `Access-Control-Allow-Credentials` header |
+
+**Common Examples**
+
+**1. GET with query validation:**
+```typescript
+import { z } from 'zod';
+
+const querySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  tags: z.string().transform(s => s.split(',')).optional(),
+});
+
+export const GET = apiHandler(
+  async (req, ctx) => {
+    const { page, limit, tags } = ctx.queryParams; // Auto-validated
+    const notes = await mongoNoteRepository.getAll({ page, limit, tags });
+    return NextResponse.json({ data: notes });
+  },
+  { source: 'notes.list.GET', querySchema }
+);
+```
+
+**2. POST with body validation:**
+```typescript
+const bodySchema = z.object({
+  title: z.string().min(1).max(200),
+  content: z.string().min(1),
+  tags: z.array(z.string()).optional(),
+});
+
+export const POST = apiHandler(
+  async (req, ctx) => {
+    const data = ctx.parsedBody; // Auto-validated against schema
+    const note = await mongoNoteRepository.create(data);
+    return NextResponse.json({ data: note }, { status: 201 });
+  },
+  {
+    source: 'notes.create.POST',
+    bodySchema,
+    requireAuth: true,
+    rateLimitKey: 'write',
+  }
+);
+```
+
+**3. File upload (multipart form-data):**
+```typescript
+export const POST = apiHandler(
+  async (req, ctx) => {
+    // parseJsonBody: false prevents auto-parsing
+    const formData = await req.formData();
+    const file = formData.get('file') as File;
+    if (!file) throw badRequestError('File is required');
+    
+    const uploaded = await uploadFile(file);
+    return NextResponse.json({ data: uploaded }, { status: 201 });
+  },
+  {
+    source: 'files.upload.POST',
+    parseJsonBody: false,
+    requireAuth: true,
+    rateLimitKey: 'write',
+  }
+);
+```
+
+**4. No auth, CORS-friendly:**
+```typescript
+export const GET = apiHandler(
+  async (req, ctx) => {
+    const data = await fetchPublicData();
+    return NextResponse.json({ data });
+  },
+  {
+    source: 'public-data.GET',
+    requireAuth: false,
+    requireCsrf: false,
+    corsAllowCredentials: false,
+  }
+);
+```
+
+**Error Handling**
+
+All errors in handlers are automatically caught and converted to appropriate HTTP responses:
+
+```typescript
+import { badRequestError, notFoundError, forbiddenError, internalError } from '@/shared/errors/app-error';
+
+export async function handler(req, ctx) {
+  if (!req.url.includes('notes')) {
+    throw badRequestError('Invalid path'); // → 400 Bad Request
+  }
+  
+  const note = await repo.getById(id);
+  if (!note) {
+    throw notFoundError(`Note ${id} not found`); // → 404 Not Found
+  }
+  
+  if (!canEdit(note)) {
+    throw forbiddenError('Cannot edit this note'); // → 403 Forbidden
+  }
+  
+  try {
+    await deleteNote(note);
+  } catch (error) {
+    throw internalError('Failed to delete note', { cause: error }); // → 500 Internal Server Error
+  }
+  
+  return NextResponse.json({ success: true });
+}
+```
+
+**Rate Limiting**
+
+```bash
+# Dev: disabled by default
+# To enable: ENABLE_RATE_LIMITS=true npm run dev
+
+# Production: enabled by default
+# To disable: DISABLE_RATE_LIMITS=true npm start
+
+# In tests: disabled by default
+# To enforce: ENFORCE_TEST_RATE_LIMITS=true npm test
+```
+
+Rate limit categories:
+- **'api'** (read): 100 req/min per IP
+- **'write'** (mutation): 30 req/min per IP
+
+Rate limit failures return 429 Too Many Requests with `Retry-After` header.
+
+**CSRF Protection**
+
+By default, all POST/PUT/PATCH/DELETE routes require a CSRF token:
+
+```typescript
+// Client-side (auto-injected by CsrfProvider)
+const response = await fetch('/api/notes', {
+  method: 'POST',
+  body: JSON.stringify({ title: 'My Note' }),
+  headers: {
+    'X-CSRF-Token': csrfToken, // Auto-added by CsrfProvider
+  },
+});
+
+// Or in form data:
+const formData = new FormData();
+formData.append('title', 'My Note');
+formData.append('_csrf', csrfToken);
+await fetch('/api/notes', { method: 'POST', body: formData });
+```
+
+Bypass CSRF if `requireCsrf: false` (e.g., for public endpoints or client error reporting):
+
+```typescript
+export const POST = apiHandler(handler, {
+  source: 'client-errors.POST',
+  parseJsonBody: false,
+  requireCsrf: false, // Browser client-side errors don't have CSRF token
+});
+```
+
+**Observability**
+
+Every request logged via `apiHandler` includes:
+- Request ID and trace ID (for debugging)
+- Session user ID (if authenticated)
+- Response status code and duration
+- Error details (if failed)
+- Rate limit headers
+
+Check logs via:
+```bash
+curl http://localhost:3000/api/system/logs?source=api
+```
 
 ### Component and UI Patterns
 
@@ -801,7 +1299,335 @@ For transient diagnostics, logs, and build artifacts (not for committing):
 7. **Factory metadata**: Query/mutation factories require metadata; run `npm run check:factory-meta:strict` to verify
 8. **Workspace commands**: Mobile and packages use `npm run <cmd> --workspace @kangur/<name>`
 
-## Common Issues
+### Testing: Unit, Integration, and E2E
+
+Testing is distributed across three layers with different tools and purposes:
+
+**Unit & Integration Tests (Vitest)**
+
+Located in `__tests__/` (top-level or colocated) and organized by layer:
+
+```
+__tests__/
+├── api/              # API integration tests
+├── features/         # Feature-level tests
+├── shared/           # Shared lib tests
+└── scripts/          # Build/tooling tests
+
+src/features/*/
+├── __tests__/        # Colocated feature tests
+│   ├── *.test.ts
+│   └── *.test.tsx
+└── components/
+    └── __tests__/    # Colocated component tests
+```
+
+Run all unit tests:
+```bash
+npm run test              # Run all tests (vitest run --project unit)
+npm run test:unit:domains # Run tests grouped by domain with timing
+```
+
+Run a single test:
+```bash
+npx vitest run --project unit src/features/database/hooks/__tests__/database-engine-settings-parsing.test.ts
+```
+
+Watch mode (for development):
+```bash
+npx vitest --project unit src/features/database
+```
+
+**Test Configuration**
+
+```typescript
+// vitest.config.ts
+export default defineConfig({
+  test: {
+    environment: 'jsdom',        // DOM API available
+    setupFiles: ['./vitest.setup.ts'], // Auto-imported test utilities
+    globals: true,               // expect/describe/it available without imports
+    fileParallelism: false,      // Tests run sequentially (important for DB/queue tests)
+    testTimeout: 30_000,         // 30s per test
+    hookTimeout: 30_000,         // 30s for beforeEach/afterEach
+  },
+});
+```
+
+**Unit Test Pattern**
+
+```typescript
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+describe('ProductRepository.getById', () => {
+  let repository: ProductRepository;
+
+  beforeEach(() => {
+    repository = mongoProductRepository;
+  });
+
+  it('returns product when found', async () => {
+    const product = await repository.getById('product-123');
+    
+    expect(product).toBeDefined();
+    expect(product?.name).toBe('Widget');
+  });
+
+  it('returns null when not found', async () => {
+    const product = await repository.getById('nonexistent');
+    
+    expect(product).toBeNull();
+  });
+
+  it('throws error on database failure', async () => {
+    const mockRepo = {
+      getById: vi.fn().mockRejectedValue(new Error('DB error')),
+    };
+    
+    await expect(mockRepo.getById('id')).rejects.toThrow('DB error');
+  });
+});
+```
+
+**Mocking Patterns**
+
+```typescript
+// Mock API responses
+vi.mock('@/shared/lib/api-client', () => ({
+  api: {
+    get: vi.fn().mockResolvedValue({ data: [...] }),
+    post: vi.fn().mockResolvedValue({ data: {...} }),
+  },
+}));
+
+// Mock services
+vi.mock('@/features/products/server', () => ({
+  getProductRepository: vi.fn(() => mockRepository),
+}));
+
+// Mock Next.js functions
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    refresh: vi.fn(),
+  }),
+  usePathname: () => '/admin/products',
+}));
+```
+
+**E2E Tests (Playwright)**
+
+Located in `e2e/features/` organized by feature:
+
+```
+e2e/features/
+├── admin/
+├── ai-paths/
+├── chatbot/
+├── cms/
+├── data-import-export/
+├── database/
+├── files/
+├── integrations/
+├── notesapp/
+├── products/
+├── settings/
+└── viewer3d/
+```
+
+Run all E2E tests:
+```bash
+npm run test:e2e
+```
+
+Run specific E2E test:
+```bash
+node scripts/testing/run-playwright-suite.mjs e2e/features/products/products-list.spec.ts
+```
+
+Run with grep pattern:
+```bash
+node scripts/testing/run-playwright-suite.mjs e2e/features/products/products.spec.ts --grep "should update product"
+```
+
+Run in headed mode (see browser):
+```bash
+PLAYWRIGHT_HEADLESS=false npm run test:e2e
+```
+
+**E2E Test Pattern**
+
+```typescript
+import { test, expect } from '@playwright/test';
+
+test.describe('Products Page', () => {
+  test.beforeEach(async ({ page }) => {
+    // Run before each test
+    await page.goto('/admin/products');
+  });
+
+  test('should display products list', async ({ page }) => {
+    // Expect heading visible
+    await expect(page.getByRole('heading', { name: 'Products' })).toBeVisible();
+    
+    // Expect action button visible
+    await expect(page.getByRole('button', { name: 'New Product' })).toBeVisible();
+  });
+
+  test('should create new product', async ({ page }) => {
+    // Click button to open form
+    await page.getByRole('button', { name: 'New Product' }).click();
+    
+    // Fill form
+    await page.getByLabel('Product Name').fill('Test Widget');
+    await page.getByLabel('Price').fill('19.99');
+    
+    // Submit form
+    await page.getByRole('button', { name: 'Create' }).click();
+    
+    // Verify success (e.g., toast message or new row in table)
+    await expect(page.getByText('Product created successfully')).toBeVisible();
+    await expect(page.getByText('Test Widget')).toBeVisible();
+  });
+
+  test('should filter products by category', async ({ page }) => {
+    // Click filter button
+    await page.getByRole('button', { name: 'Filters' }).click();
+    
+    // Select category
+    await page.getByLabel('Category').selectOption('Electronics');
+    
+    // Apply filter (if there's an apply button; some auto-apply)
+    await page.getByRole('button', { name: 'Apply' }).click();
+    
+    // Verify filtered results
+    const rows = await page.getByRole('row').count();
+    expect(rows).toBeGreaterThan(1); // At least header + 1 data row
+  });
+});
+```
+
+**E2E Test Configuration**
+
+```typescript
+// playwright.config.ts
+export default defineConfig({
+  testDir: './e2e',
+  timeout: 30_000,           // 30s per test
+  expect: { timeout: 5_000 }, // 5s for expect()
+  use: {
+    baseURL: 'http://localhost:3000',
+    headless: true,
+    trace: 'retain-on-failure', // Save trace for failed tests
+    screenshot: 'only-on-failure', // Screenshot on failure
+  },
+  webServer: {
+    command: 'npm run dev',  // Auto-start dev server
+    port: 3000,
+    // Or skip if PLAYWRIGHT_USE_EXISTING_SERVER=true
+  },
+});
+```
+
+**Key Playwright APIs**
+
+```typescript
+// Navigation
+await page.goto('/admin/products');
+await page.reload();
+await page.goBack();
+
+// Selectors (prefer getByRole for accessibility)
+page.getByRole('heading', { name: 'Products' });    // Best: semantic
+page.getByLabel('Product Name');                    // Good: form labels
+page.getByPlaceholder('Search...');                 // Good: placeholders
+page.getByText('Created');                          // Good: text content
+page.locator('[data-testid="product-card"]');       // Fallback: data-testid
+
+// Interaction
+await page.getByRole('button', { name: 'Save' }).click();
+await page.getByLabel('Name').fill('Widget');
+await page.getByLabel('Category').selectOption('Electronics');
+await page.getByRole('checkbox').check();
+await page.keyboard.press('Enter');
+
+// Assertions
+await expect(page.getByText('Success')).toBeVisible();
+await expect(page.getByText('Error')).toBeHidden();
+await expect(page.getByRole('button')).toBeEnabled();
+await expect(page.getByRole('button')).toBeDisabled();
+await expect(page).toHaveTitle('Products');
+await expect(page).toHaveURL('/admin/products');
+```
+
+**Critical Flows vs Feature Tests**
+
+- **Feature E2E tests** (`e2e/features/*/`): Test individual feature workflows in isolation
+- **Critical flow tests** (`npm run test:critical-flows`): Test high-value cross-feature workflows (e.g., create product → apply AI path → publish)
+
+Run critical flows:
+```bash
+npm run test:critical-flows
+npm run test:critical-flows:strict  # Fail on any error
+```
+
+**Test Coverage**
+
+Generate coverage report:
+```bash
+npm run test:coverage
+```
+
+Coverage is collected for `src/**/*.ts` and `src/**/*.tsx` and reported to:
+- Console: Text summary
+- HTML: `coverage/index.html` (open in browser)
+- JSON: `coverage/coverage-final.json` (for CI/CD)
+
+**Test Environments and Setup**
+
+Unit tests run in jsdom (DOM API + React Testing Library):
+```typescript
+// vitest.setup.ts
+import '@testing-library/jest-dom';
+import { expect, afterEach, vi } from 'vitest';
+import { cleanup } from '@testing-library/react';
+
+// Auto-cleanup after each test
+afterEach(() => cleanup());
+
+// Mock next/router, next/navigation, etc.
+```
+
+E2E tests run in real browser (Chromium):
+```typescript
+// playwright.config.ts - auto-starts npm run dev
+// Or reuse existing server: PLAYWRIGHT_USE_EXISTING_SERVER=true
+```
+
+**CI/CD Testing**
+
+```bash
+# Full test matrix (unit + E2E + critical flows)
+npm run test                 # Unit tests
+npm run test:e2e             # E2E tests (starts dev server)
+npm run test:critical-flows  # Critical workflows
+
+# Check for code quality issues
+npm run lint                 # ESLint
+npm run typecheck            # TypeScript
+```
+
+**Common Issues**
+
+| Problem | Cause | Fix |
+|---------|-------|-----|
+| Test timeout (>30s) | Slow query or missing mock | Add `vi.mock()`, optimize query, increase timeout |
+| "Element not found" in E2E | Selector too specific, element not rendered | Use `getByRole`, add `await page.waitForSelector()` |
+| Flaky test (passes/fails randomly) | Race condition, timing dependency | Add `await expect().toBeVisible()`, avoid `page.waitForTimeout()` |
+| Import error in test | Missing mock or path alias | Check `vitest.config.ts` alias, add `vi.mock()` |
+| Database error in test | Tests run sequentially; previous test dirty state | Add cleanup in `afterEach()`, use transaction rollback |
+
+### Common Issues
 
 ### Build Fails with Heap Error
 

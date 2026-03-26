@@ -208,10 +208,28 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
   const skipAuthBootstrap = isKangurSocialBatchCaptureHref(requestedHref);
   const authRequestVersionRef = useRef(0);
   const logoutInFlightRef = useRef(false);
-  const [user, setUser] = useState<KangurUser | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [hasResolvedAuth, setHasResolvedAuth] = useState(false);
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+
+  // Read bootstrap cache synchronously so the first render already has auth
+  // state when the SSR-injected __KANGUR_AUTH_BOOTSTRAP__ script is present.
+  // This eliminates the extra render cycle that waiting for useEffect would cost.
+  const [user, setUser] = useState<KangurUser | null>(() => {
+    if (skipAuthBootstrap) return null;
+    const cached = readKangurAuthBootstrapCache();
+    return typeof cached !== 'undefined' ? cached : null;
+  });
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    if (skipAuthBootstrap) return false;
+    const cached = readKangurAuthBootstrapCache();
+    return typeof cached !== 'undefined' ? cached !== null : false;
+  });
+  const [hasResolvedAuth, setHasResolvedAuth] = useState(() => {
+    if (skipAuthBootstrap) return false;
+    return typeof readKangurAuthBootstrapCache() !== 'undefined';
+  });
+  const [isLoadingAuth, setIsLoadingAuth] = useState(() => {
+    if (skipAuthBootstrap) return false;
+    return typeof readKangurAuthBootstrapCache() === 'undefined';
+  });
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isLoadingPublicSettings] = useState(false);
   const [authError, setAuthError] = useState<KangurAuthError | null>(null);
@@ -332,6 +350,30 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
       setHasResolvedAuth(true);
       setAuthError(null);
       setIsLoadingAuth(false);
+      return;
+    }
+
+    // When the bootstrap cache was consumed synchronously in useState
+    // initialisers above, skip the blocking auth check and run a silent
+    // background revalidation instead.  This avoids the extra render cycle
+    // and the 1.5 s timeout race on first load.
+    const cachedUser = readKangurAuthBootstrapCache();
+    if (typeof cachedUser !== 'undefined') {
+      // Background revalidation — update state only if the result differs.
+      void kangurPlatform.auth.me().then(
+        (freshUser) => {
+          primeKangurAuthBootstrapCache(freshUser);
+          setUser((prev) => {
+            if (prev?.id === freshUser?.id) return prev;
+            return freshUser;
+          });
+          setIsAuthenticated(freshUser !== null);
+          setHasResolvedAuth(true);
+        },
+        () => {
+          // Revalidation failed — keep the cached state; don't disrupt the UI.
+        }
+      );
       return;
     }
 

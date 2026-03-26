@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-import { AdminLayout } from '@/features/admin/public';
+import { AdminLayout } from '@/features/admin/layout/public';
 import { auth, getUserPreferences } from '@/features/auth/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

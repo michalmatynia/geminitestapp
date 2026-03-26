@@ -20,6 +20,7 @@ import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRou
 import {
   useOptionalKangurTutorAnchors,
 } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
+import { useKangurAccessiblePageKey } from '@/features/kangur/ui/hooks/useKangurAccessiblePageKey';
 import { useKangurTextHighlight } from '@/features/kangur/ui/hooks/useKangurTextHighlight';
 import type {
   KangurAiTutorConversationContext,
@@ -257,6 +258,7 @@ export function useKangurAiTutorWidgetEnvironment({
   } = textHighlightState;
   const tutorAnchorContext = useOptionalKangurTutorAnchors();
   const routing = useOptionalKangurRouting();
+  const accessibleRoutingPageKey = useKangurAccessiblePageKey(routing?.pageKey ?? null, 'Game');
   const rawNarratorSettings = settingsStore.get(KANGUR_NARRATOR_SETTINGS_KEY);
 
   const {
@@ -474,6 +476,7 @@ export function useKangurAiTutorWidgetEnvironment({
     remainingMessages,
     resolveGuestLoginGuidanceIntentForContent,
     routing,
+    accessibleRoutingPageKey,
     selectionGlowSupported,
     selectionLineRects: liveSelectionLineRects,
     selectionContainerRect: liveSelectionContainerRect,

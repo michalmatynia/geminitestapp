@@ -189,6 +189,12 @@ const messageMap = {
   'KangurGamesLibraryPage.modal.draftListTitle': 'Saved hub sections',
   'KangurGamesLibraryPage.modal.draftListEmpty': 'No hub sections drafted yet.',
   'KangurGamesLibraryPage.modal.editDraftButton': 'Edit',
+  'KangurGamesLibraryPage.modal.moveDraftUpButton': 'Move up',
+  'KangurGamesLibraryPage.modal.moveDraftDownButton': 'Move down',
+  'KangurGamesLibraryPage.modal.enableDraftButton': 'Enable',
+  'KangurGamesLibraryPage.modal.disableDraftButton': 'Disable',
+  'KangurGamesLibraryPage.modal.enabledBadge': 'Enabled',
+  'KangurGamesLibraryPage.modal.disabledBadge': 'Disabled',
   'KangurGamesLibraryPage.modal.editingBadge': 'Editing',
   'KangurGamesLibraryPage.modal.removeDraftButton': 'Remove',
   'KangurGamesLibraryPage.modal.settingsEyebrow': 'Preview settings',
@@ -1236,6 +1242,269 @@ describe('GamesLibrary serialization audit', () => {
       ],
     });
     expect(screen.getByText('Updated clock deck')).toBeInTheDocument();
+  });
+
+  it('keeps clock preview settings hidden when switching editor modes inside the modal', () => {
+    lessonGameSectionsState.value = [
+      {
+        id: 'clock_saved_section',
+        lessonComponentId: 'clock',
+        gameId: 'clock_training',
+        title: 'Saved clock deck',
+        description: 'Saved section from the lesson hub.',
+        emoji: '🧩',
+        sortOrder: 1,
+        enabled: true,
+        settings: {
+          clock: {
+            clockSection: 'minutes',
+            initialMode: 'challenge',
+            showHourHand: false,
+            showMinuteHand: true,
+            showModeSwitch: true,
+            showTaskTitle: true,
+            showTimeDisplay: false,
+          },
+        },
+      },
+    ];
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    expect(screen.getByText('Clock preview settings')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hide settings' }));
+    expect(screen.queryByText('Clock preview settings')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'New hub section' }));
+    expect(screen.queryByText('Clock preview settings')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    expect(screen.queryByText('Clock preview settings')).toBeNull();
+  });
+
+  it('reorders saved hub sections and persists normalized sort order', () => {
+    lessonGameSectionsState.value = [
+      {
+        id: 'clock_saved_section',
+        lessonComponentId: 'clock',
+        gameId: 'clock_training',
+        title: 'Saved clock deck',
+        description: 'Saved section from the lesson hub.',
+        emoji: '🧩',
+        sortOrder: 1,
+        enabled: true,
+        settings: {
+          clock: {
+            clockSection: 'minutes',
+            initialMode: 'challenge',
+            showHourHand: false,
+            showMinuteHand: true,
+            showModeSwitch: true,
+            showTaskTitle: true,
+            showTimeDisplay: false,
+          },
+        },
+      },
+      {
+        id: 'clock_secondary_section',
+        lessonComponentId: 'calendar',
+        gameId: 'clock_training',
+        title: 'Fallback clock deck',
+        description: 'Fallback section from the lesson hub.',
+        emoji: '⏰',
+        sortOrder: 2,
+        enabled: true,
+        settings: {
+          clock: {
+            clockSection: 'hours',
+            initialMode: 'practice',
+            showHourHand: true,
+            showMinuteHand: true,
+            showModeSwitch: true,
+            showTaskTitle: true,
+            showTimeDisplay: true,
+          },
+        },
+      },
+    ];
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+    fireEvent.click(
+      within(screen.getByTestId('games-library-saved-section-clock_secondary_section')).getByRole(
+        'button',
+        { name: 'Move up' }
+      )
+    );
+
+    expect(replaceLessonGameSectionsMutateAsyncMock).toHaveBeenLastCalledWith({
+      gameId: 'clock_training',
+      sections: [
+        expect.objectContaining({
+          id: 'clock_secondary_section',
+          sortOrder: 1,
+        }),
+        expect.objectContaining({
+          id: 'clock_saved_section',
+          sortOrder: 2,
+        }),
+      ],
+    });
+
+    expect(
+      Array.from(document.querySelectorAll('[data-testid^="games-library-saved-section-"]')).map(
+        (node) => node.getAttribute('data-testid')
+      )
+    ).toEqual([
+      'games-library-saved-section-clock_secondary_section',
+      'games-library-saved-section-clock_saved_section',
+    ]);
+  });
+
+  it('keeps unsaved editor changes while reordering a different saved section', () => {
+    lessonGameSectionsState.value = [
+      {
+        id: 'clock_saved_section',
+        lessonComponentId: 'clock',
+        gameId: 'clock_training',
+        title: 'Saved clock deck',
+        description: 'Saved section from the lesson hub.',
+        emoji: '🧩',
+        sortOrder: 1,
+        enabled: true,
+        settings: {
+          clock: {
+            clockSection: 'minutes',
+            initialMode: 'challenge',
+            showHourHand: false,
+            showMinuteHand: true,
+            showModeSwitch: true,
+            showTaskTitle: true,
+            showTimeDisplay: false,
+          },
+        },
+      },
+      {
+        id: 'clock_secondary_section',
+        lessonComponentId: 'calendar',
+        gameId: 'clock_training',
+        title: 'Fallback clock deck',
+        description: 'Fallback section from the lesson hub.',
+        emoji: '⏰',
+        sortOrder: 2,
+        enabled: true,
+        settings: {
+          clock: {
+            clockSection: 'hours',
+            initialMode: 'practice',
+            showHourHand: true,
+            showMinuteHand: true,
+            showModeSwitch: true,
+            showTaskTitle: true,
+            showTimeDisplay: true,
+          },
+        },
+      },
+    ];
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    fireEvent.change(screen.getByLabelText('Section name'), {
+      target: { value: 'Unsaved editor change' },
+    });
+    fireEvent.change(screen.getByLabelText('Section subtext'), {
+      target: { value: 'Keep this unsaved text while the list reorders.' },
+    });
+
+    fireEvent.click(
+      within(screen.getByTestId('games-library-saved-section-clock_secondary_section')).getByRole(
+        'button',
+        { name: 'Move up' }
+      )
+    );
+
+    expect(screen.getByLabelText('Section name')).toHaveValue('Unsaved editor change');
+    expect(screen.getByLabelText('Section subtext')).toHaveValue(
+      'Keep this unsaved text while the list reorders.'
+    );
+  });
+
+  it('resets unsaved editor state when the modal is closed and reopened for the same game', () => {
+    lessonGameSectionsState.value = [
+      {
+        id: 'clock_saved_section',
+        lessonComponentId: 'clock',
+        gameId: 'clock_training',
+        title: 'Saved clock deck',
+        description: 'Saved section from the lesson hub.',
+        emoji: '🧩',
+        sortOrder: 1,
+        enabled: true,
+        settings: {
+          clock: {
+            clockSection: 'minutes',
+            initialMode: 'challenge',
+            showHourHand: false,
+            showMinuteHand: true,
+            showModeSwitch: true,
+            showTaskTitle: true,
+            showTimeDisplay: false,
+          },
+        },
+      },
+    ];
+
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+    fireEvent.click(screen.getByRole('button', { name: 'New hub section' }));
+    fireEvent.change(screen.getByLabelText('Section name'), {
+      target: { value: 'Temporary unsaved draft' },
+    });
+    fireEvent.change(screen.getByLabelText('Section subtext'), {
+      target: { value: 'This should not survive a close and reopen.' },
+    });
+    fireEvent.change(screen.getByLabelText('Attached hub lesson'), {
+      target: { value: 'calendar' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(screen.queryByTestId('games-library-game-modal')).toBeNull();
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    expect(screen.getByRole('button', { name: 'Save hub section' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Attached hub lesson')).toHaveValue('clock');
+    expect(screen.getByLabelText('Section name')).toHaveValue('Saved clock deck');
+    expect(screen.getByLabelText('Section subtext')).toHaveValue(
+      'Saved section from the lesson hub.'
+    );
   });
 
   it('keeps a new hub section draft in the editor when saving fails', async () => {

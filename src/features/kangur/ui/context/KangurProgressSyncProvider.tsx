@@ -272,10 +272,26 @@ export function KangurProgressSyncProvider({
       }
     };
 
-    void hydrateProgress();
+    // Yield to the rendering pipeline so the first paint completes before
+    // the progress hydration network call fires.  This reduces network
+    // contention during the critical boot window.
+    let rafId: number | undefined;
+    let deferredTimeoutId: ReturnType<typeof globalThis.setTimeout> | undefined;
+
+    rafId = requestAnimationFrame(() => {
+      rafId = undefined;
+      deferredTimeoutId = globalThis.setTimeout(() => {
+        deferredTimeoutId = undefined;
+        if (!cancelled) {
+          void hydrateProgress();
+        }
+      }, 0);
+    });
 
     return () => {
       cancelled = true;
+      if (rafId !== undefined) cancelAnimationFrame(rafId);
+      if (deferredTimeoutId !== undefined) globalThis.clearTimeout(deferredTimeoutId);
       cancelDeferredRemoteUpdate?.();
     };
   }, [isAuthenticated, isLoadingAuth, subject, userKey]);

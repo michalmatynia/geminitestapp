@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { useKangurAccessiblePageKey } from '@/features/kangur/ui/hooks/useKangurAccessiblePageKey';
 
 const readDocumentVisible = (): boolean => {
   if (typeof document === 'undefined') {
@@ -14,6 +15,7 @@ const readDocumentVisible = (): boolean => {
 
 export function useKangurRouteActivity(targetPageKey: string): boolean {
   const { pageKey } = useKangurRouting();
+  const accessiblePageKey = useKangurAccessiblePageKey(pageKey, 'Game');
   const [isDocumentVisible, setIsDocumentVisible] = useState<boolean>(() => readDocumentVisible());
 
   useEffect(() => {
@@ -34,7 +36,8 @@ export function useKangurRouteActivity(targetPageKey: string): boolean {
   }, []);
 
   return useMemo(() => {
-    const normalizedCurrentPageKey = typeof pageKey === 'string' ? pageKey.trim() : '';
+    const normalizedCurrentPageKey =
+      typeof accessiblePageKey === 'string' ? accessiblePageKey.trim() : '';
     return normalizedCurrentPageKey === targetPageKey && isDocumentVisible;
-  }, [isDocumentVisible, pageKey, targetPageKey]);
+  }, [accessiblePageKey, isDocumentVisible, targetPageKey]);
 }

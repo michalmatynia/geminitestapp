@@ -176,6 +176,7 @@ export function GamesLibraryGameModal({
     DEFAULT_CLOCK_PREVIEW_SETTINGS
   );
   const pendingEditorRestoreRef = useRef<HubSectionEditorState | null>(null);
+  const previousGameIdRef = useRef<string | null>(null);
   const persistedSections = lessonGameSectionsQuery.data ?? [];
   const activeSections = useMemo(
     () =>
@@ -212,6 +213,40 @@ export function GamesLibraryGameModal({
     setClockSettings(editorState.clockSettings);
   };
 
+  const captureEditorState = (): HubSectionEditorState => ({
+    attachedLessonId,
+    clockSettings,
+    draftIcon,
+    draftSubtext,
+    draftTitle,
+  });
+
+  const resetTransientState = (): void => {
+    pendingEditorRestoreRef.current = null;
+    setSelectedSectionId(null);
+    setPreferNewDraft(false);
+    setAttachedLessonId(null);
+    setDraftTitle('');
+    setDraftSubtext('');
+    setDraftIcon('🎮');
+    setOptimisticSections(null);
+    setSettingsOpen(false);
+    setClockSettings(DEFAULT_CLOCK_PREVIEW_SETTINGS);
+  };
+
+  useEffect(() => {
+    const nextGameId = game?.id ?? null;
+    const previousGameId = previousGameIdRef.current;
+    const gameChanged =
+      previousGameId !== null && nextGameId !== null && previousGameId !== nextGameId;
+
+    previousGameIdRef.current = nextGameId;
+
+    if (!open || !game || gameChanged) {
+      resetTransientState();
+    }
+  }, [game?.id, open]);
+
   useEffect(() => {
     setOptimisticSections(null);
   }, [game?.id, persistedSections]);
@@ -225,24 +260,31 @@ export function GamesLibraryGameModal({
     if (pendingEditorRestore) {
       pendingEditorRestoreRef.current = null;
       applyEditorState(pendingEditorRestore);
-      setSettingsOpen(game.id === 'clock_training');
       return;
     }
 
-    let selectedPersistedSection: KangurLessonGameSection | null = null;
     if (preferNewDraft) {
-      selectedPersistedSection = null;
-    } else if (selectedSectionId) {
-      selectedPersistedSection =
-        persistedSections.find((section) => section.id === selectedSectionId) ??
-        persistedSections[0] ??
-        null;
-    } else {
-      selectedPersistedSection = persistedSections[0] ?? null;
+      return;
     }
-    syncEditorFromSection(selectedPersistedSection, game);
+
+    if (selectedSectionId) {
+      const matchingSection = activeSections.find((section) => section.id === selectedSectionId);
+      if (matchingSection) {
+        return;
+      }
+    }
+
+    syncEditorFromSection(activeSections[0] ?? null, game);
+  }, [activeSections, game, preferNewDraft, selectedSectionId]);
+
+  useEffect(() => {
+    if (!open || !game) {
+      setSettingsOpen(false);
+      return;
+    }
+
     setSettingsOpen(game.id === 'clock_training');
-  }, [game, persistedSections, preferNewDraft, selectedSectionId]);
+  }, [game?.id, open]);
 
   const lessonOptions = useMemo(
     () =>
@@ -309,13 +351,7 @@ export function GamesLibraryGameModal({
     const sectionId = selectedSectionId ?? createDraftId();
     const previousPreferNewDraft = preferNewDraft;
     const previousSelectedSectionId = selectedSectionId;
-    const previousEditorState: HubSectionEditorState = {
-      attachedLessonId,
-      clockSettings,
-      draftIcon,
-      draftSubtext,
-      draftTitle,
-    };
+    const previousEditorState = captureEditorState();
     const nextSection: KangurLessonGameSection = {
       id: sectionId,
       description: draftSubtext.trim(),
@@ -343,12 +379,13 @@ export function GamesLibraryGameModal({
       title: draftTitle.trim(),
     };
 
-    const nextSections =
+    const nextSections = normalizeSectionSortOrder(
       selectedSectionId === null
         ? [...activeSections, nextSection]
         : activeSections.map((section) =>
             section.id === selectedSectionId ? nextSection : section
-          );
+          )
+    );
 
     setOptimisticSections(nextSections);
     setPreferNewDraft(false);
@@ -376,6 +413,67 @@ export function GamesLibraryGameModal({
       ...current,
       [key]: value,
     }));
+  };
+
+  const handleMoveSection = (sectionId: string, direction: 'up' | 'down'): void => {
+    if (!game) {
+      return;
+    }
+
+    const currentIndex = activeSections.findIndex((section) => section.id === sectionId);
+    if (currentIndex < 0) {
+      return;
+    }
+
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= activeSections.length) {
+      return;
+    }
+
+    const reordered = [...activeSections];
+    const [movedSection] = reordered.splice(currentIndex, 1);
+    if (!movedSection) {
+      return;
+    }
+
+    reordered.splice(targetIndex, 0, movedSection);
+    const nextSections = normalizeSectionSortOrder(reordered);
+    const previousEditorState = captureEditorState();
+
+    pendingEditorRestoreRef.current = previousEditorState;
+    setOptimisticSections(nextSections);
+    void replaceLessonGameSections
+      .mutateAsync({
+        gameId: game.id,
+        sections: nextSections,
+      })
+      .catch(() => {
+        pendingEditorRestoreRef.current = previousEditorState;
+        setOptimisticSections(null);
+      });
+  };
+
+  const handleToggleSectionEnabled = (sectionId: string): void => {
+    if (!game) {
+      return;
+    }
+
+    const previousEditorState = captureEditorState();
+    const nextSections = activeSections.map((section) =>
+      section.id === sectionId ? { ...section, enabled: !section.enabled } : section
+    );
+
+    pendingEditorRestoreRef.current = previousEditorState;
+    setOptimisticSections(nextSections);
+    void replaceLessonGameSections
+      .mutateAsync({
+        gameId: game.id,
+        sections: nextSections,
+      })
+      .catch(() => {
+        pendingEditorRestoreRef.current = previousEditorState;
+        setOptimisticSections(null);
+      });
   };
 
   if (!game) {
@@ -734,11 +832,13 @@ export function GamesLibraryGameModal({
 
               {activeSections.length > 0 ? (
                 <div className='space-y-3'>
-                  {activeSections.map((draft) => (
+                  {activeSections.map((draft, index) => (
                     <div
                       key={draft.id}
+                      data-testid={`games-library-saved-section-${draft.id}`}
                       className={cn(
                         'rounded-[1.5rem] border bg-white/80 p-4 transition',
+                        !draft.enabled && 'opacity-70 saturate-[0.8]',
                         draft.id === selectedSectionId
                           ? 'border-indigo-500 shadow-[0_18px_48px_-32px_rgba(79,70,229,0.7)]'
                           : 'border-[color:var(--kangur-page-border)]'
@@ -758,6 +858,14 @@ export function GamesLibraryGameModal({
                                 {translations('modal.editingBadge')}
                               </KangurStatusChip>
                             ) : null}
+                            <KangurStatusChip
+                              accent={draft.enabled ? 'emerald' : 'slate'}
+                              size='sm'
+                            >
+                              {draft.enabled
+                                ? translations('modal.enabledBadge')
+                                : translations('modal.disabledBadge')}
+                            </KangurStatusChip>
                           </div>
                           {draft.description ? (
                             <p className='mt-2 text-sm leading-6 [color:var(--kangur-page-muted-text)]'>
@@ -775,6 +883,43 @@ export function GamesLibraryGameModal({
                         </div>
                         <div className='flex flex-wrap gap-2'>
                           <KangurButton
+                            disabled={replaceLessonGameSections.isPending}
+                            onClick={() => {
+                              handleToggleSectionEnabled(draft.id);
+                            }}
+                            size='sm'
+                            type='button'
+                            variant='surface'
+                          >
+                            {draft.enabled
+                              ? translations('modal.disableDraftButton')
+                              : translations('modal.enableDraftButton')}
+                          </KangurButton>
+                          <KangurButton
+                            disabled={index === 0 || replaceLessonGameSections.isPending}
+                            onClick={() => {
+                              handleMoveSection(draft.id, 'up');
+                            }}
+                            size='sm'
+                            type='button'
+                            variant='surface'
+                          >
+                            {translations('modal.moveDraftUpButton')}
+                          </KangurButton>
+                          <KangurButton
+                            disabled={
+                              index === activeSections.length - 1 || replaceLessonGameSections.isPending
+                            }
+                            onClick={() => {
+                              handleMoveSection(draft.id, 'down');
+                            }}
+                            size='sm'
+                            type='button'
+                            variant='surface'
+                          >
+                            {translations('modal.moveDraftDownButton')}
+                          </KangurButton>
+                          <KangurButton
                             onClick={() => {
                               syncEditorFromSection(draft, game);
                             }}
@@ -787,10 +932,16 @@ export function GamesLibraryGameModal({
                           <KangurButton
                             disabled={replaceLessonGameSections.isPending}
                             onClick={() => {
-                              const nextSections = activeSections.filter(
-                                (entry) => entry.id !== draft.id
+                              const nextSections = normalizeSectionSortOrder(
+                                activeSections.filter((entry) => entry.id !== draft.id)
                               );
                               const removingSelectedSection = draft.id === selectedSectionId;
+                              const previousEditorState =
+                                !removingSelectedSection ? captureEditorState() : null;
+
+                              if (previousEditorState) {
+                                pendingEditorRestoreRef.current = previousEditorState;
+                              }
                               setOptimisticSections(nextSections);
                               if (removingSelectedSection) {
                                 const fallbackSection = nextSections[0] ?? null;
@@ -806,6 +957,9 @@ export function GamesLibraryGameModal({
                                   sections: nextSections,
                                 })
                                 .catch(() => {
+                                  if (previousEditorState) {
+                                    pendingEditorRestoreRef.current = previousEditorState;
+                                  }
                                   setOptimisticSections(null);
                                   if (removingSelectedSection) {
                                     syncEditorFromSection(draft, game);

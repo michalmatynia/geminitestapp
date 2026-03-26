@@ -11,6 +11,7 @@ import {
 } from '@/features/kangur/ui/components/lesson-utils';
 import type { LessonHubSectionProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import { useKangurLessonGameSections } from '@/features/kangur/ui/hooks/useKangurLessonGameSections';
 import {
   addXp,
   createLessonCompletionReward,
@@ -39,6 +40,19 @@ import {
 import type { ClockLessonTranslate, WidenLessonCopy } from './ClockLesson.i18n';
 import { translateClockLesson } from './ClockLesson.i18n';
 import type { ClockTrainingSectionId } from './clock-training/types';
+import type {
+  KangurLessonGameSection,
+  KangurLessonGameSectionSettings,
+} from '@/shared/contracts/kangur-lesson-game-sections';
+
+type ClockTrainingHubConfig = {
+  description: string;
+  emoji: string;
+  hubId: string;
+  settings?: KangurLessonGameSectionSettings;
+  title: string;
+  trainingSectionId: ClockTrainingSectionId;
+};
 
 export { HUB_SECTIONS, LESSON_SECTIONS, SLIDES } from './ClockLesson.data';
 
@@ -82,6 +96,55 @@ const localizeClockCopy = <T,>(
   ) as WidenLessonCopy<T>;
 };
 
+const resolveClockTrainingSectionFromSettings = (
+  settings?: KangurLessonGameSectionSettings
+): ClockTrainingSectionId => {
+  const clockSettings = settings?.clock;
+  if (clockSettings?.clockSection) {
+    return clockSettings.clockSection;
+  }
+  if (clockSettings?.showHourHand === false && clockSettings?.showMinuteHand !== false) {
+    return 'minutes';
+  }
+  if (clockSettings?.showMinuteHand === false && clockSettings?.showHourHand !== false) {
+    return 'hours';
+  }
+  return 'combined';
+};
+
+const buildClockLessonStageRuntime = (
+  trainingSectionId: ClockTrainingSectionId,
+  settings?: KangurLessonGameSectionSettings
+) => {
+  const baseRuntime = CLOCK_TRAINING_STAGE_RUNTIME_BY_SECTION[trainingSectionId];
+  const clockSettings = settings?.clock;
+
+  return {
+    ...baseRuntime,
+    rendererProps: {
+      ...baseRuntime.rendererProps,
+      ...(clockSettings?.initialMode
+        ? { clockInitialMode: clockSettings.initialMode }
+        : {}),
+      ...(clockSettings?.showHourHand !== undefined
+        ? { showClockHourHand: clockSettings.showHourHand }
+        : {}),
+      ...(clockSettings?.showMinuteHand !== undefined
+        ? { showClockMinuteHand: clockSettings.showMinuteHand }
+        : {}),
+      ...(clockSettings?.showModeSwitch !== undefined
+        ? { showClockModeSwitch: clockSettings.showModeSwitch }
+        : {}),
+      ...(clockSettings?.showTaskTitle !== undefined
+        ? { showClockTaskTitle: clockSettings.showTaskTitle }
+        : {}),
+      ...(clockSettings?.showTimeDisplay !== undefined
+        ? { showClockTimeDisplay: clockSettings.showTimeDisplay }
+        : {}),
+    },
+  };
+};
+
 export default function ClockLesson(): React.JSX.Element {
   const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurStaticLessons.clock');
@@ -105,6 +168,17 @@ export default function ClockLesson(): React.JSX.Element {
     () => localizeClockCopy(CLOCK_COMBINED_SLIDES_COPY_PL, 'slides.combined', translations),
     [translations]
   );
+  const lessonGameSectionsQuery = useKangurLessonGameSections({
+    enabledOnly: true,
+    lessonComponentId: 'clock',
+  });
+  const persistedClockGameSections = useMemo(
+    () =>
+      (lessonGameSectionsQuery.data ?? [])
+        .filter((section) => section.gameId === 'clock_training')
+        .sort((left, right) => left.sortOrder - right.sortOrder || left.id.localeCompare(right.id)),
+    [lessonGameSectionsQuery.data]
+  );
   const hoursSlides = useMemo(() => buildClockHoursSlides(localizedHoursCopy), [localizedHoursCopy]);
   const minutesSlides = useMemo(
     () => buildClockMinutesSlides(localizedMinutesCopy),
@@ -114,13 +188,62 @@ export default function ClockLesson(): React.JSX.Element {
     () => buildClockCombinedSlides(localizedCombinedCopy),
     [localizedCombinedCopy]
   );
-  const localizedHubSections = useMemo(() => buildClockHubSections(copy), [copy]);
-  const localizedTrainingSections = useMemo(
+  const defaultTrainingConfigs = useMemo<ClockTrainingHubConfig[]>(
+    () => [
+      {
+        description: copy.hubSections.gameHours.description,
+        emoji: '🎯',
+        hubId: 'game_hours',
+        title: copy.hubSections.gameHours.title,
+        trainingSectionId: 'hours',
+      },
+      {
+        description: copy.hubSections.gameMinutes.description,
+        emoji: '🟢',
+        hubId: 'game_minutes',
+        title: copy.hubSections.gameMinutes.title,
+        trainingSectionId: 'minutes',
+      },
+      {
+        description: copy.hubSections.gameCombined.description,
+        emoji: '🕐',
+        hubId: 'game_combined',
+        title: copy.hubSections.gameCombined.title,
+        trainingSectionId: 'combined',
+      },
+    ],
+    [copy]
+  );
+  const customTrainingConfigs = useMemo<ClockTrainingHubConfig[]>(
     () =>
-      localizedHubSections.filter(
-        (section): section is ClockHubSection & { isGame: true } => section.isGame === true
+      persistedClockGameSections.map((section: KangurLessonGameSection) => ({
+        description: section.description,
+        emoji: section.emoji,
+        hubId: section.id,
+        settings: section.settings,
+        title: section.title,
+        trainingSectionId: resolveClockTrainingSectionFromSettings(section.settings),
+      })),
+    [persistedClockGameSections]
+  );
+  const trainingConfigs = useMemo(
+    () => [...defaultTrainingConfigs, ...customTrainingConfigs],
+    [customTrainingConfigs, defaultTrainingConfigs]
+  );
+  const localizedHubSections = useMemo(
+    () => [
+      ...buildClockHubSections(copy).filter((section) => !section.isGame),
+      ...trainingConfigs.map(
+        (config): ClockHubSection => ({
+          id: config.hubId,
+          emoji: config.emoji,
+          title: config.title,
+          description: config.description,
+          isGame: true,
+        })
       ),
-    [localizedHubSections]
+    ],
+    [copy, trainingConfigs]
   );
   const runtimeSlides = useMemo<Record<SectionId, LessonSlide[]>>(
     () => ({
@@ -191,7 +314,7 @@ export default function ClockLesson(): React.JSX.Element {
   }, [isClockLessonComplete, ownerKey]);
 
   const [completedTrainingSections, setCompletedTrainingSections] = useState<
-    Partial<Record<ClockTrainingSectionId, boolean>>
+    Partial<Record<string, boolean>>
   >({});
 
   const buildHubSections = useCallback(
@@ -219,21 +342,7 @@ export default function ClockLesson(): React.JSX.Element {
         if (!section.isGame) {
           return section;
         }
-
-        const trainingSectionId =
-          section.id === 'game_hours'
-            ? 'hours'
-            : section.id === 'game_minutes'
-              ? 'minutes'
-              : section.id === 'game_combined'
-                ? 'combined'
-                : null;
-
-        if (!trainingSectionId) {
-          return section;
-        }
-
-        const viewedCount = completedTrainingSections[trainingSectionId] ? 1 : 0;
+        const viewedCount = completedTrainingSections[section.id] ? 1 : 0;
 
         return {
           ...section,
@@ -248,15 +357,8 @@ export default function ClockLesson(): React.JSX.Element {
   );
 
   const buildTrainingConfig = (
-    trainingSectionId: ClockTrainingSectionId,
-    hubId: TrainingCardId
+    config: ClockTrainingHubConfig
   ) => {
-    const currentTrainingSection =
-      localizedTrainingSections.find((section) => section.id === hubId) ??
-      localizedTrainingSections[0];
-    if (!currentTrainingSection) {
-      return null;
-    }
     const trainingPills = (
       <div className='flex gap-2'>
         <button
@@ -282,37 +384,33 @@ export default function ClockLesson(): React.JSX.Element {
     );
 
     return {
-      sectionId: hubId,
+      sectionId: config.hubId,
       stage: {
         accent: 'indigo',
-        description: currentTrainingSection.description,
+        description: config.description,
         headerTestId: 'clock-lesson-training-header',
         icon: '🕐',
         maxWidthClassName: 'max-w-lg',
         navigationPills: trainingPills,
         shellTestId: 'clock-lesson-training-shell',
-        title: currentTrainingSection.title,
+        title: config.title,
       },
       onStageFinish: ({ onFinish }: { onFinish: () => void }) => {
         setCompletedTrainingSections((currentSections) =>
-          currentSections[trainingSectionId]
+          currentSections[config.hubId]
             ? currentSections
             : {
                 ...currentSections,
-                [trainingSectionId]: true,
+                [config.hubId]: true,
               }
         );
         onFinish();
       },
-      runtime: CLOCK_TRAINING_STAGE_RUNTIME_BY_SECTION[trainingSectionId],
+      runtime: buildClockLessonStageRuntime(config.trainingSectionId, config.settings),
     };
   };
 
-  const games = [
-    buildTrainingConfig('hours', 'game_hours'),
-    buildTrainingConfig('minutes', 'game_minutes'),
-    buildTrainingConfig('combined', 'game_combined'),
-  ].filter(Boolean) as Array<{
+  const games = trainingConfigs.map(buildTrainingConfig) as Array<{
     sectionId: TrainingCardId;
     stage: {
       accent: 'indigo';
@@ -340,7 +438,7 @@ export default function ClockLesson(): React.JSX.Element {
       progressDotClassName='bg-indigo-200'
       dotActiveClass='bg-indigo-500'
       dotDoneClass='bg-indigo-200'
-      skipMarkFor={['game_hours', 'game_minutes', 'game_combined']}
+      skipMarkFor={trainingConfigs.map((config) => config.hubId)}
       buildHubSections={buildHubSections}
       onSectionProgress={(progress) =>
         setSectionProgressSnapshot(

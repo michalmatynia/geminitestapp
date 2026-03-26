@@ -18,6 +18,7 @@ import {
 type KangurButtonProps = ComponentProps<typeof KangurButton>;
 
 export type KangurNavActionProps = {
+  action?: Omit<KangurNavActionProps, 'action' | 'children'>;
   active?: boolean;
   ariaControls?: string;
   ariaExpanded?: boolean;
@@ -44,6 +45,7 @@ export type KangurNavActionProps = {
 };
 
 export const KangurNavAction = memo(function KangurNavAction({
+  action,
   active = false,
   ariaControls,
   ariaExpanded,
@@ -64,32 +66,73 @@ export const KangurNavAction = memo(function KangurNavAction({
   variant,
   children,
 }: KangurNavActionProps): React.JSX.Element {
+  const resolvedAction = action ?? {
+    active,
+    ariaControls,
+    ariaExpanded,
+    ariaHasPopup,
+    ariaLabel,
+    className,
+    disabled,
+    docId,
+    elementRef,
+    href,
+    onClick,
+    prefetch,
+    targetPageKey,
+    testId,
+    title,
+    transition,
+    size,
+    variant,
+  };
+  const {
+    active: resolvedActive = false,
+    ariaControls: resolvedAriaControls,
+    ariaExpanded: resolvedAriaExpanded,
+    ariaHasPopup: resolvedAriaHasPopup,
+    ariaLabel: resolvedAriaLabel,
+    className: resolvedClassNameProp,
+    disabled: resolvedDisabled = false,
+    docId: resolvedDocId,
+    elementRef: resolvedElementRef,
+    href: resolvedHref,
+    onClick: resolvedOnClick,
+    prefetch: resolvedPrefetch,
+    targetPageKey: resolvedTargetPageKey,
+    testId: resolvedTestId,
+    title: resolvedTitle,
+    transition: resolvedTransition,
+    size: resolvedSize = 'md',
+    variant: resolvedVariantProp,
+  } = resolvedAction;
   const isCoarsePointer = useKangurCoarsePointer();
   const [isPressed, setIsPressed] = useState(false);
-  const transitionActive = transition?.active ?? false;
+  const transitionActive = resolvedTransition?.active ?? false;
   const navState = transitionActive ? 'transitioning' : isPressed ? 'pressed' : 'idle';
   const resolvedVariant =
-    variant ?? (active || navState !== 'idle' ? 'navigationActive' : 'navigation');
+    resolvedVariantProp ??
+    (resolvedActive || navState !== 'idle' ? 'navigationActive' : 'navigation');
   const resolvedClassName = cn(
     isCoarsePointer &&
-      (size === 'sm' || size === 'md') &&
+      (resolvedSize === 'sm' || resolvedSize === 'md') &&
       'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]',
-    className
+    resolvedClassNameProp
   );
   const handlePressStart = useCallback(() => {
-    if (disabled || transitionActive) {
+    if (resolvedDisabled || transitionActive) {
       return;
     }
 
     setIsPressed(true);
-  }, [disabled, transitionActive]);
+  }, [resolvedDisabled, transitionActive]);
   const handlePressEnd = useCallback(() => {
     setIsPressed(false);
   }, []);
   const handleActionClick = useCallback(() => {
     handlePressEnd();
-    onClick?.();
-  }, [handlePressEnd, onClick]);
+    resolvedOnClick?.();
+  }, [handlePressEnd, resolvedOnClick]);
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLElement>) => {
     if (event.key === 'Enter' || event.key === ' ') {
       handlePressStart();
@@ -100,40 +143,46 @@ export const KangurNavAction = memo(function KangurNavAction({
       handlePressEnd();
     }
   }, [handlePressEnd]);
+  const buttonProps = {
+    'aria-current': resolvedActive ? 'page' : undefined,
+    'aria-controls': resolvedAriaControls,
+    'aria-expanded': resolvedAriaExpanded,
+    'aria-haspopup': resolvedAriaHasPopup,
+    'aria-label': resolvedAriaLabel,
+    className: resolvedClassName,
+    'data-doc-id': resolvedDocId,
+    'data-nav-state': navState,
+    'data-testid': resolvedTestId,
+    disabled: resolvedDisabled,
+    onBlur: handlePressEnd,
+    onClick: handleActionClick,
+    onKeyDown: handleKeyDown,
+    onKeyUp: handleKeyUp,
+    onMouseLeave: handlePressEnd,
+    onPointerCancel: handlePressEnd,
+    onPointerDown: handlePressStart,
+    onPointerUp: handlePressEnd,
+    size: resolvedSize,
+    title: resolvedTitle,
+    variant: resolvedVariant,
+  } satisfies Omit<KangurButtonProps, 'asChild' | 'children' | 'ref' | 'type'> & {
+    'data-doc-id'?: string;
+    'data-nav-state': 'idle' | 'pressed' | 'transitioning';
+    'data-testid'?: string;
+  };
 
-  if (href) {
+  if (resolvedHref) {
+    const transitionLinkProps = {
+      href: resolvedHref,
+      prefetch: resolvedPrefetch,
+      targetPageKey: resolvedTargetPageKey,
+      transitionAcknowledgeMs: resolvedTransition?.acknowledgeMs,
+      transitionSourceId: resolvedTransition?.sourceId,
+    };
+
     return (
-      <KangurButton
-        asChild
-        aria-current={active ? 'page' : undefined}
-        aria-controls={ariaControls}
-        aria-expanded={ariaExpanded}
-        aria-haspopup={ariaHasPopup}
-        aria-label={ariaLabel}
-        className={resolvedClassName}
-        data-doc-id={docId}
-        data-nav-state={navState}
-        data-testid={testId}
-        onBlur={handlePressEnd}
-        onClick={handleActionClick}
-        onKeyDown={handleKeyDown}
-        onKeyUp={handleKeyUp}
-        onMouseLeave={handlePressEnd}
-        onPointerCancel={handlePressEnd}
-        onPointerDown={handlePressStart}
-        onPointerUp={handlePressEnd}
-        disabled={disabled}
-        size={size}
-        title={title}
-        variant={resolvedVariant}
-      >
-        <Link
-          href={href}
-          prefetch={prefetch}
-          targetPageKey={targetPageKey}
-          transitionAcknowledgeMs={transition?.acknowledgeMs}
-          transitionSourceId={transition?.sourceId}
-        >
+      <KangurButton asChild {...buttonProps}>
+        <Link {...transitionLinkProps}>
           {children}
         </Link>
       </KangurButton>
@@ -142,29 +191,9 @@ export const KangurNavAction = memo(function KangurNavAction({
 
   return (
     <KangurButton
-      aria-current={active ? 'page' : undefined}
-      aria-controls={ariaControls}
-      aria-expanded={ariaExpanded}
-      aria-haspopup={ariaHasPopup}
-      aria-label={ariaLabel}
-      className={resolvedClassName}
-      data-doc-id={docId}
-      data-nav-state={navState}
-      data-testid={testId}
-      disabled={disabled}
-      onBlur={handlePressEnd}
-      onClick={handleActionClick}
-      onKeyDown={handleKeyDown}
-      onKeyUp={handleKeyUp}
-      onMouseLeave={handlePressEnd}
-      onPointerCancel={handlePressEnd}
-      onPointerDown={handlePressStart}
-      onPointerUp={handlePressEnd}
-      ref={elementRef}
-      size={size}
-      title={title}
+      {...buttonProps}
+      ref={resolvedElementRef}
       type='button'
-      variant={resolvedVariant}
     >
       {children}
     </KangurButton>

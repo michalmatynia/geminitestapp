@@ -1,6 +1,6 @@
 {
   "summary": {
-    "generatedAt": "2026-03-26T15:10:56.905Z",
+    "generatedAt": "2026-03-26T15:42:50.824Z",
     "scannedFileCount": 2114,
     "duplicateNameClusterCount": 0,
     "propSignatureClusterCount": 0,
@@ -28593,7 +28593,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 57,
+      "lines": 87,
       "useClient": false,
       "imports": [
         "react",
@@ -31421,7 +31421,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 173,
+      "lines": 202,
       "useClient": true,
       "imports": [
         "@/features/kangur/ui/components/KangurTransitionLink",
@@ -31433,7 +31433,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "active|ariaControls|ariaExpanded|ariaHasPopup|ariaLabel|children|className|disabled|docId|elementRef|href|onClick|prefetch|size|targetPageKey|testId|title|transition|variant",
+      "propsSignature": "action|active|ariaControls|ariaExpanded|ariaHasPopup|ariaLabel|children|className|disabled|docId|elementRef|href|onClick|prefetch|size|targetPageKey|testId|title|transition|variant",
       "thinReExportWrapper": false
     },
     {
@@ -32144,7 +32144,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 2152,
+      "lines": 2302,
       "useClient": false,
       "imports": [
         "@tanstack/react-query",
@@ -32172,7 +32172,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 1459,
+      "lines": 1466,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -32502,7 +32502,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 110,
+      "lines": 164,
       "useClient": false,
       "imports": [
         "next-intl",
@@ -32525,14 +32525,16 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 129,
+      "lines": 140,
       "useClient": true,
       "imports": [
+        "next-auth/react",
         "next-intl",
         "react",
         "@/features/kangur/ui/context/KangurRoutingContext",
         "@/features/kangur/ui/context/KangurRouteTransitionContext",
-        "@/features/kangur/observability/client"
+        "@/features/kangur/observability/client",
+        "@/shared/lib/auth/elevated-session-user"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -34844,7 +34846,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 161,
+      "lines": 162,
       "useClient": false,
       "imports": [
         "@testing-library/react",
@@ -34890,7 +34892,7 @@
       "domain": "feature",
       "scope": "feature:kangur",
       "family": "Unknown",
-      "lines": 959,
+      "lines": 960,
       "useClient": true,
       "imports": [
         "next-intl",

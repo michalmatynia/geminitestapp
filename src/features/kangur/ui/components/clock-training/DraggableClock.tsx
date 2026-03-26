@@ -36,6 +36,8 @@ import { translateClockTrainingWithFallback } from '../clock-training-i18n';
 export type DraggableClockProps = {
   onSubmit: (hours: number, minutes: number) => void;
   showChallengeRing?: boolean;
+  showHourHand?: boolean;
+  showMinuteHand?: boolean;
   challengeTimeLeft?: number;
   challengeTimeLimit?: number;
   section?: ClockTrainingTaskPoolId;
@@ -50,6 +52,8 @@ export type DraggableClockProps = {
 export function DraggableClock({
   onSubmit,
   showChallengeRing = false,
+  showHourHand = true,
+  showMinuteHand = true,
   challengeTimeLeft = CHALLENGE_TIME_LIMIT_SECONDS,
   challengeTimeLimit = CHALLENGE_TIME_LIMIT_SECONDS,
   section = 'mixed',
@@ -244,7 +248,7 @@ export function DraggableClock({
           {displayHour}:{pad(displayMinutes)}
         </KangurStatusChip>
       ) : null}
-      {minuteHandEnabled ? (
+      {showMinuteHand && minuteHandEnabled ? (
         <div
           className={cn(
             KANGUR_SEGMENTED_CONTROL_CLASSNAME,
@@ -330,6 +334,8 @@ export function DraggableClock({
                 ? null
                 : section === 'hours'
                   ? null
+                  : !showHourHand || !showMinuteHand
+                    ? null
                   : translateClockTrainingWithFallback(
                       translations,
                       'interactionHint.idle.mixed',
@@ -429,108 +435,119 @@ export function DraggableClock({
           );
         })}
 
-        <line
-          aria-hidden='true'
-          data-testid='clock-hour-hand-hit-area'
-          x1='100'
-          y1='100'
-          x2={hourHandX}
-          y2={hourHandY}
-          stroke='transparent'
-          strokeWidth='24'
-          strokeLinecap='round'
-          pointerEvents='stroke'
-          style={hourHandInteractionStyle}
-          onPointerDown={onPointerDown('hour')}
-        />
-        <line
-          data-testid='clock-hour-hand'
-          x1='100'
-          y1='100'
-          x2={hourHandX}
-          y2={hourHandY}
-          stroke='#dc2626'
-          strokeWidth={activeHand === 'hour' ? '9' : '7'}
-          strokeLinecap='round'
-          style={hourHandInteractionStyle}
-          onPointerDown={onPointerDown('hour')}
-        />
+        {showHourHand ? (
+          <>
+            <line
+              aria-hidden='true'
+              data-testid='clock-hour-hand-hit-area'
+              x1='100'
+              y1='100'
+              x2={hourHandX}
+              y2={hourHandY}
+              stroke='transparent'
+              strokeWidth='24'
+              strokeLinecap='round'
+              pointerEvents='stroke'
+              style={hourHandInteractionStyle}
+              onPointerDown={onPointerDown('hour')}
+            />
+            <line
+              data-testid='clock-hour-hand'
+              x1='100'
+              y1='100'
+              x2={hourHandX}
+              y2={hourHandY}
+              stroke='#dc2626'
+              strokeWidth={activeHand === 'hour' ? '9' : '7'}
+              strokeLinecap='round'
+              style={hourHandInteractionStyle}
+              onPointerDown={onPointerDown('hour')}
+            />
+            <circle
+              cx={hourHandX}
+              cy={hourHandY}
+              r={activeHand === 'hour' ? '12' : '10'}
+              fill='#dc2626'
+              fillOpacity='0.25'
+              style={hourHandInteractionStyle}
+              onPointerDown={onPointerDown('hour')}
+            />
+          </>
+        ) : null}
 
-        <line
-          aria-hidden='true'
-          data-testid='clock-minute-hand-hit-area'
-          x1='100'
-          y1='100'
-          x2={minuteHandX}
-          y2={minuteHandY}
-          stroke='transparent'
-          strokeWidth='20'
-          strokeLinecap='round'
-          pointerEvents='stroke'
-          style={minuteHandInteractionStyle}
-          onPointerDown={onPointerDown('minute')}
-        />
-        <line
-          data-testid='clock-minute-hand'
-          x1='100'
-          y1='100'
-          x2={minuteHandX}
-          y2={minuteHandY}
-          stroke='#16a34a'
-          strokeWidth={activeHand === 'minute' ? '7' : '5'}
-          strokeLinecap='round'
-          style={minuteHandInteractionStyle}
-          onPointerDown={onPointerDown('minute')}
-        />
-
-        <circle
-          cx={hourHandX}
-          cy={hourHandY}
-          r={activeHand === 'hour' ? '12' : '10'}
-          fill='#dc2626'
-          fillOpacity='0.25'
-          style={hourHandInteractionStyle}
-          onPointerDown={onPointerDown('hour')}
-        />
-        <circle
-          cx={minuteHandX}
-          cy={minuteHandY}
-          r={activeHand === 'minute' ? '12' : '10'}
-          fill='#16a34a'
-          fillOpacity='0.25'
-          style={minuteHandInteractionStyle}
-          onPointerDown={onPointerDown('minute')}
-        />
+        {showMinuteHand ? (
+          <>
+            <line
+              aria-hidden='true'
+              data-testid='clock-minute-hand-hit-area'
+              x1='100'
+              y1='100'
+              x2={minuteHandX}
+              y2={minuteHandY}
+              stroke='transparent'
+              strokeWidth='20'
+              strokeLinecap='round'
+              pointerEvents='stroke'
+              style={minuteHandInteractionStyle}
+              onPointerDown={onPointerDown('minute')}
+            />
+            <line
+              data-testid='clock-minute-hand'
+              x1='100'
+              y1='100'
+              x2={minuteHandX}
+              y2={minuteHandY}
+              stroke='#16a34a'
+              strokeWidth={activeHand === 'minute' ? '7' : '5'}
+              strokeLinecap='round'
+              style={minuteHandInteractionStyle}
+              onPointerDown={onPointerDown('minute')}
+            />
+            <circle
+              cx={minuteHandX}
+              cy={minuteHandY}
+              r={activeHand === 'minute' ? '12' : '10'}
+              fill='#16a34a'
+              fillOpacity='0.25'
+              style={minuteHandInteractionStyle}
+              onPointerDown={onPointerDown('minute')}
+            />
+          </>
+        ) : null}
         <circle cx='100' cy='100' r='5' fill='#6366f1' />
       </svg>
 
       <div className={`${KANGUR_WRAP_ROW_SPACED_CLASSNAME} justify-center text-sm [color:var(--kangur-page-muted-text)]`}>
-        <span className='flex items-center gap-1'>
-          <KangurAccentDot
-            accent='rose'
-            aria-hidden='true'
-            data-testid='clock-hour-legend-dot'
-            size='md'
-          />
-          {translateClockTrainingWithFallback(
-            translations,
-            'legend.hourHand',
-            'Godziny (krótka)'
-          )}
-        </span>
-        <span className='flex items-center gap-1'>
-          <KangurAccentDot
-            accent='emerald'
-            aria-hidden='true'
-            data-testid='clock-minute-legend-dot'
-            size='md'
-          />
-          {translateClockTrainingWithFallback(
-            translations,
-            'legend.minuteHand',
-            'Minuty (długa)'
-          )}
-        </span>
+        {showHourHand ? (
+          <span className='flex items-center gap-1'>
+            <KangurAccentDot
+              accent='rose'
+              aria-hidden='true'
+              data-testid='clock-hour-legend-dot'
+              size='md'
+            />
+            {translateClockTrainingWithFallback(
+              translations,
+              'legend.hourHand',
+              'Godziny (krótka)'
+            )}
+          </span>
+        ) : null}
+        {showMinuteHand ? (
+          <span className='flex items-center gap-1'>
+            <KangurAccentDot
+              accent='emerald'
+              aria-hidden='true'
+              data-testid='clock-minute-legend-dot'
+              size='md'
+            />
+            {translateClockTrainingWithFallback(
+              translations,
+              'legend.minuteHand',
+              'Minuty (długa)'
+            )}
+          </span>
+        ) : null}
       </div>
 
       {(() => {

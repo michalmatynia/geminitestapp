@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import plMessages from '@/i18n/messages/pl.json';
 
 let capturedProps: Record<string, unknown> | null = null;
+let lessonGameSectionsState: Array<Record<string, unknown>> = [];
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: () => ({
@@ -33,12 +34,20 @@ vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
   },
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonGameSections', () => ({
+  useKangurLessonGameSections: () => ({
+    data: lessonGameSectionsState,
+    isPending: false,
+  }),
+}));
+
 import CalendarLesson from '@/features/kangur/ui/components/CalendarLesson';
 import ClockLesson from '@/features/kangur/ui/components/ClockLesson';
 
 describe('time stage lesson configs', () => {
   afterEach(() => {
     capturedProps = null;
+    lessonGameSectionsState = [];
   });
 
   it('passes shared calendar lesson-stage runtimes into KangurUnifiedLesson', () => {
@@ -160,5 +169,64 @@ describe('time stage lesson configs', () => {
       ])
     );
     expect(games.every((game) => !('render' in game))).toBe(true);
+  });
+
+  it('appends persisted clock hub cards with saved renderer props', () => {
+    lessonGameSectionsState = [
+      {
+        id: 'clock_custom_minutes',
+        lessonComponentId: 'clock',
+        gameId: 'clock_training',
+        title: 'Ćwiczenie: Minuty bez czasu cyfrowego',
+        description: 'Nowa karta zapisana z biblioteki gier.',
+        emoji: '🧩',
+        sortOrder: 10,
+        enabled: true,
+        settings: {
+          clock: {
+            clockSection: 'minutes',
+            initialMode: 'challenge',
+            showHourHand: false,
+            showMinuteHand: true,
+            showModeSwitch: true,
+            showTaskTitle: true,
+            showTimeDisplay: false,
+          },
+        },
+      },
+    ];
+
+    render(
+      <NextIntlClientProvider locale='pl' messages={plMessages}>
+        <ClockLesson />
+      </NextIntlClientProvider>
+    );
+
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        runtime?: {
+          rendererProps?: Record<string, unknown>;
+        };
+      }>) ?? [];
+
+    expect(games).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sectionId: 'clock_custom_minutes',
+          runtime: expect.objectContaining({
+            rendererProps: expect.objectContaining({
+              clockInitialMode: 'challenge',
+              clockSection: 'minutes',
+              showClockHourHand: false,
+              showClockMinuteHand: true,
+              showClockModeSwitch: true,
+              showClockTaskTitle: true,
+              showClockTimeDisplay: false,
+            }),
+          }),
+        }),
+      ])
+    );
   });
 });

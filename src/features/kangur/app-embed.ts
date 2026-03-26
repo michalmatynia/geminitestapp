@@ -6,5 +6,5 @@ export {
   KANGUR_PAGE_TO_SLUG,
   readKangurUrlParam,
   KANGUR_EMBED_QUERY_PARAM,
-  KangurFeaturePage,
-} from '@/features/kangur/public';
+} from '@/features/kangur/config/routing';
+export { KangurFeaturePage } from '@/features/kangur/ui/KangurFeaturePage';

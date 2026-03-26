@@ -71,6 +71,8 @@ type ClockTrainingGameProps = {
   onChallengeSuccess?: (result: ClockChallengeResult) => void;
   practiceTasks?: ClockTask[];
   section?: ClockTrainingTaskPoolId;
+  showHourHand?: boolean;
+  showMinuteHand?: boolean;
   showTaskTitle?: boolean;
   showTimeDisplay?: boolean;
 };
@@ -97,6 +99,8 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
     onChallengeSuccess,
     practiceTasks,
     section = 'mixed',
+    showHourHand = true,
+    showMinuteHand = true,
     showTaskTitle = true,
     showTimeDisplay = true,
   } = props;
@@ -619,6 +623,8 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
         challengeTimeLeft={challengeTimeLeft}
         challengeTimeLimit={CHALLENGE_TIME_LIMIT_SECONDS}
         section={section}
+        showHourHand={showHourHand}
+        showMinuteHand={showMinuteHand}
         showTimeDisplay={showTimeDisplay}
         submitFeedback={feedback?.kind ?? (done && gameMode === 'practice' ? 'correct' : null)}
         submitFeedbackDetails={feedback?.details ?? null}

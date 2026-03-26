@@ -15,7 +15,7 @@ import {
   withKangurClientError,
 } from '@/features/kangur/observability/client';
 import type { ListQuery } from '@/shared/contracts/ui';
-import { api } from '@/shared/lib/api-client';
+import { ApiError, api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
@@ -37,6 +37,10 @@ const buildGameLibraryPageFallback = (
   options?: GameLibraryPageQueryOptions
 ): KangurGameLibraryPageData => createKangurGameLibraryPageDataFromGames({ filter: options });
 
+const isGameLibraryPageAccessDeniedError = (error: unknown): boolean =>
+  error instanceof ApiError &&
+  (error.status === 401 || error.status === 403 || error.status === 404);
+
 const fetchGameLibraryPage = async (
   options?: GameLibraryPageQueryOptions
 ): Promise<KangurGameLibraryPageData> =>
@@ -46,6 +50,7 @@ const fetchGameLibraryPage = async (
       action: 'fetch-game-library-page',
       description: 'Loads consolidated Kangur games library page data from the API.',
       context: {
+        gameId: options?.gameId ?? null,
         subject: options?.subject ?? null,
         ageGroup: options?.ageGroup ?? null,
         gameStatus: options?.gameStatus ?? null,
@@ -62,6 +67,7 @@ const fetchGameLibraryPage = async (
     }),
     async () => {
       const params: Record<string, string | boolean | undefined> = {
+        gameId: options?.gameId,
         subject: options?.subject,
         ageGroup: options?.ageGroup,
         gameStatus: options?.gameStatus,
@@ -86,6 +92,7 @@ const fetchGameLibraryPage = async (
     {
       fallback: () => buildGameLibraryPageFallback(options),
       shouldReport: (error) => !isRecoverableKangurClientFetchError(error),
+      shouldRethrow: isGameLibraryPageAccessDeniedError,
     }
   );
 
@@ -96,6 +103,7 @@ export const useKangurGameLibraryPage = (
     queryKey: [
       ...QUERY_KEYS.kangur.gameLibraryPage(),
       {
+        gameId: options?.gameId ?? null,
         subject: options?.subject ?? null,
         ageGroup: options?.ageGroup ?? null,
         gameStatus: options?.gameStatus ?? null,
@@ -112,7 +120,6 @@ export const useKangurGameLibraryPage = (
     ],
     queryFn: async (): Promise<KangurGameLibraryPageData> =>
       await fetchGameLibraryPage(options),
-    placeholderData: () => buildGameLibraryPageFallback(options),
     enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,

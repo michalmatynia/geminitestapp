@@ -32,6 +32,23 @@ type SearchParamReader = Pick<URLSearchParams, 'get'> | null | undefined;
 export type GamesLibraryFilterValue<T extends string> = 'all' | T;
 export type GamesLibraryTabId = 'catalog' | 'structure' | 'runtime';
 
+const GAMES_LIBRARY_QUERY_PARAM_KEYS = [
+  'gameId',
+  'subject',
+  'ageGroup',
+  'lessonComponentId',
+  'mechanic',
+  'surface',
+  'gameStatus',
+  'variantSurface',
+  'variantStatus',
+  'engineId',
+  'engineCategory',
+  'implementationOwnership',
+  'launchableOnly',
+  'tab',
+] as const;
+
 const GAMES_LIBRARY_TAB_IDS: readonly GamesLibraryTabId[] = [
   'catalog',
   'structure',
@@ -167,6 +184,7 @@ export const getGamesLibrarySearchParams = (
   gameId: filters.gameId === 'all' ? undefined : filters.gameId,
   subject: filters.subject === 'all' ? undefined : filters.subject,
   ageGroup: filters.ageGroup === 'all' ? undefined : filters.ageGroup,
+  lessonComponentId: undefined,
   mechanic: filters.mechanic === 'all' ? undefined : filters.mechanic,
   surface: filters.surface === 'all' ? undefined : filters.surface,
   gameStatus: filters.gameStatus === 'all' ? undefined : filters.gameStatus,
@@ -181,6 +199,19 @@ export const getGamesLibrarySearchParams = (
   launchableOnly: filters.launchability === 'launchable' ? 'true' : undefined,
   tab: tab && tab !== 'catalog' ? tab : undefined,
 });
+
+export const areGamesLibrarySearchParamsCanonical = (
+  searchParams: SearchParamReader,
+  filters: GamesLibraryFilterState,
+  tab?: GamesLibraryTabId | null
+): boolean => {
+  const expectedParams = getGamesLibrarySearchParams(filters, tab);
+
+  return GAMES_LIBRARY_QUERY_PARAM_KEYS.every((key) => {
+    const rawValue = readSearchParam(searchParams, key);
+    return rawValue === expectedParams[key];
+  });
+};
 
 export const buildGamesLibraryCatalogFilter = (
   filters: GamesLibraryFilterState

@@ -12,6 +12,11 @@ import {
 
 import { KANGUR_CMS_PROJECT_SETTING_KEY } from '@/features/kangur/cms-builder/project-contracts';
 import { hasKangurCmsRuntimeScreen } from '@/features/kangur/cms-builder/runtime-screen-presence';
+import {
+  canAccessKangurPage,
+  isSuperAdminOnlyKangurPage,
+  resolveAccessibleKangurPageKey,
+} from '@/features/kangur/config/page-access';
 import { KANGUR_MAIN_PAGE, kangurPages } from '@/features/kangur/config/pages';
 import { getKangurHomeHref, resolveKangurPageKey } from '@/features/kangur/config/routing';
 import { KangurAppLoader } from '@/features/kangur/ui/components/KangurAppLoader';
@@ -61,7 +66,6 @@ import { useKangurPendingRouteLoadingSnapshot } from '@/features/kangur/ui/routi
 import { resolveManagedKangurEmbeddedFromHref } from '@/features/kangur/ui/routing/managed-paths';
 import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import { cn } from '@/features/kangur/shared/utils';
-import { isSuperAdminSession } from '@/shared/lib/auth/elevated-session-user';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 import type { JSX } from 'react';
@@ -126,14 +130,14 @@ const AuthenticatedApp = (): JSX.Element | null => {
     !isAuthenticated &&
     !authErrorType &&
     resolvedPageKey === 'ParentDashboard';
-  const canAccessGamesLibrary = isSuperAdminSession(session);
-  const isGamesLibraryAccessPending =
-    resolvedPageKey === 'GamesLibrary' && sessionStatus === 'loading';
+  const canAccessResolvedPage = canAccessKangurPage(resolvedPageKey, session);
+  const isProtectedPageAccessPending =
+    isSuperAdminOnlyKangurPage(resolvedPageKey) && sessionStatus === 'loading';
   const prefersReducedMotion = usePrefersReducedMotion();
   const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
   const currentRequestedHref = requestedHref ?? requestedPath ?? null;
-  const isBootLoading = isLoadingPublicSettings || isLoadingAuth || isGamesLibraryAccessPending;
+  const isBootLoading = isLoadingPublicSettings || isLoadingAuth || isProtectedPageAccessPending;
   const isThemeBootLoading = isLoadingSettings;
   const isNavigationTransitionActive =
     isRouteAcknowledging || isRoutePending || isRouteWaitingForReady || isRouteRevealing;
@@ -149,8 +153,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
       routeContent = null;
     } else if (!resolvedPageKey) {
       routeContent = <PageNotFound />;
-    } else if (resolvedPageKey === 'GamesLibrary' && !canAccessGamesLibrary) {
-      routeContent = isGamesLibraryAccessPending ? null : <PageNotFound />;
+    } else if (!canAccessResolvedPage) {
+      routeContent = isProtectedPageAccessPending ? null : <PageNotFound />;
     } else {
       const ResolvedPage = kangurPages[resolvedPageKey];
       routeContent = ResolvedPage ? (
@@ -197,6 +201,16 @@ const AuthenticatedApp = (): JSX.Element | null => {
     isRouteAcknowledging && (isLanguageSwitcherTransition || hasCommittedTargetRoute);
   const snapshotTransitionPageKey =
     pendingRouteLoadingSnapshot?.pageKey ?? resolvedPageKey ?? KANGUR_MAIN_PAGE;
+  const accessibleTransitionPageKey = resolveAccessibleKangurPageKey(
+    transitionPageKey,
+    session,
+    KANGUR_MAIN_PAGE
+  );
+  const accessibleSnapshotTransitionPageKey = resolveAccessibleKangurPageKey(
+    snapshotTransitionPageKey,
+    session,
+    KANGUR_MAIN_PAGE
+  );
   const snapshotTransitionEmbedded =
     resolveManagedKangurEmbeddedFromHref({
       href: pendingRouteLoadingSnapshot?.href ?? null,
@@ -210,10 +224,10 @@ const AuthenticatedApp = (): JSX.Element | null => {
     isPendingRouteSnapshotVisible;
   const visibleTransitionSkeletonPageKey =
     isPendingRouteSnapshotVisible
-      ? snapshotTransitionPageKey
+      ? accessibleSnapshotTransitionPageKey
       : isRouteSkeletonVisible
-      ? latchedNavigationSkeletonRef.current?.pageKey ?? transitionPageKey
-      : transitionPageKey;
+      ? latchedNavigationSkeletonRef.current?.pageKey ?? accessibleTransitionPageKey
+      : accessibleTransitionPageKey;
   const visibleTransitionSkeletonVariant =
     isPendingRouteSnapshotVisible
       ? pendingRouteLoadingSnapshot?.skeletonVariant ?? activeTransitionSkeletonVariant
@@ -352,9 +366,13 @@ const AuthenticatedApp = (): JSX.Element | null => {
           embedded:
             latchedNavigationSkeletonRef.current?.embedded ?? nextTransitionEmbedded,
           pageKey:
-            nextTransitionPageKey ??
-            latchedNavigationSkeletonRef.current?.pageKey ??
-            transitionPageKey,
+            resolveAccessibleKangurPageKey(
+              nextTransitionPageKey ??
+                latchedNavigationSkeletonRef.current?.pageKey ??
+                transitionPageKey,
+              session,
+              KANGUR_MAIN_PAGE
+            ),
           variant:
             nextTransitionSkeletonVariant ?? latchedNavigationSkeletonRef.current?.variant ?? null,
         };

@@ -1,9 +1,11 @@
 'use client';
 
+import { useSession } from 'next-auth/react';
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 
+import { canAccessKangurPage } from '@/features/kangur/config/page-access';
 import {
   appendKangurUrlParams,
   getKangurCanonicalPublicHref,
@@ -24,6 +26,7 @@ import {
   getLocalizedKangurSubjectLabel,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
+import PageNotFound from '@/features/kangur/ui/components/PageNotFound';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
@@ -47,18 +50,22 @@ import { useKangurGameLibraryPage } from '@/features/kangur/ui/hooks/useKangurGa
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import {
+  areGamesLibrarySearchParamsCanonical,
   areGamesLibraryFiltersEqual,
   buildGamesLibraryCatalogFilter,
   DEFAULT_GAMES_LIBRARY_FILTERS,
   getGamesLibrarySearchParams,
   hasActiveGamesLibraryFilters,
+  readGamesLibraryTabFromSearchParams,
   readGamesLibraryFiltersFromSearchParams,
   type GamesLibraryFilterState,
+  type GamesLibraryTabId,
 } from '@/features/kangur/ui/pages/GamesLibrary.filters';
 import {
   buildKangurGameLaunchHref,
   buildKangurGameLessonHref,
 } from '@/features/kangur/ui/services/game-launch';
+import { GamesLibraryGameModal } from '@/features/kangur/ui/pages/GamesLibraryGameModal';
 import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 import type {
   KangurGameVariantSurface,
@@ -73,8 +80,6 @@ import type {
 import { cn } from '@/features/kangur/shared/utils';
 
 const GAMES_LIBRARY_MAIN_ID = 'kangur-games-library-main';
-
-type GamesLibraryTabId = 'catalog' | 'structure' | 'runtime';
 
 const GAMES_LIBRARY_TABS: Array<{ id: GamesLibraryTabId; labelKey: string }> = [
   {
@@ -97,6 +102,45 @@ const getGamesLibraryTabIds = (
   tabId: `kangur-games-library-tab-${tabId}`,
   panelId: `kangur-games-library-panel-${tabId}`,
 });
+
+const resolveGamesLibraryAvailableTabIds = (input: {
+  engineId: GamesLibraryFilterState['engineId'];
+  hasStructureSections: boolean;
+  serializationAuditVisible: boolean;
+}): GamesLibraryTabId[] =>
+  GAMES_LIBRARY_TABS.filter((tab) => {
+    switch (tab.id) {
+      case 'catalog':
+        return true;
+      case 'structure':
+        return input.hasStructureSections || input.engineId !== 'all';
+      case 'runtime':
+        return input.serializationAuditVisible;
+      default:
+        return false;
+    }
+  }).map((tab) => tab.id);
+
+const resolveGamesLibraryActiveTab = (input: {
+  availableTabIds: readonly GamesLibraryTabId[];
+  engineId: GamesLibraryFilterState['engineId'];
+  gameId: GamesLibraryFilterState['gameId'];
+  requestedTab: GamesLibraryTabId | null;
+}): GamesLibraryTabId => {
+  if (input.gameId !== 'all') {
+    return 'catalog';
+  }
+
+  if (input.engineId !== 'all' && input.availableTabIds.includes('structure')) {
+    return 'structure';
+  }
+
+  if (input.requestedTab && input.availableTabIds.includes(input.requestedTab)) {
+    return input.requestedTab;
+  }
+
+  return input.availableTabIds[0] ?? 'catalog';
+};
 
 const formatMechanicLabel = (
   mechanic: KangurGameMechanic,
@@ -260,11 +304,40 @@ const getGamesLibraryAnchorBaseHref = (href: string): string => {
   return withoutQuery ?? href;
 };
 
+const withGamesLibrarySearchParams = (
+  href: string,
+  searchParams: ReturnType<typeof useSearchParams>
+): string => {
+  const search = searchParams?.toString() ?? '';
+
+  if (!search) {
+    return href;
+  }
+
+  const [withoutHash, rawHash = ''] = href.split('#');
+  const [withoutQuery = href] = (withoutHash ?? href).split('?');
+  const hash = rawHash ? `#${rawHash}` : '';
+
+  return `${withoutQuery}?${search}${hash}`;
+};
+
 const getKangurGameCardAnchorId = (gameId: string): string =>
   `kangur-game-card-${gameId}`;
 
 const getKangurEngineCardAnchorId = (engineId: string): string =>
   `kangur-engine-card-${engineId}`;
+
+const isGamesLibraryCardInteractiveTarget = (target: EventTarget | null): boolean => {
+  if (!(target instanceof Element)) {
+    return false;
+  }
+
+  return (
+    target.closest(
+      'a, button, input, select, textarea, summary, [role="button"], [role="link"]'
+    ) !== null
+  );
+};
 
 const getSerializationIssueHref = (
   hrefBase: string,
@@ -314,11 +387,11 @@ const resolveLessonCoverageStatusAccent = (
   }
 };
 
-export default function GamesLibrary(): React.JSX.Element {
+function GamesLibraryContent(): React.JSX.Element {
   const locale = useLocale();
   const translations = useTranslations('KangurGamesLibraryPage');
   const searchParams = useSearchParams();
-  const routeNavigator = useKangurRouteNavigator();
+  const { replace: replaceRoute } = useKangurRouteNavigator();
   const { basePath, requestedHref } = useKangurRouting();
   const auth = useKangurAuth();
   const { user, logout } = auth;
@@ -331,6 +404,9 @@ export default function GamesLibrary(): React.JSX.Element {
   const catalogFilter = buildGamesLibraryCatalogFilter(deferredFilters);
   const pageDataQuery = useKangurGameLibraryPage(catalogFilter);
   const pageData = pageDataQuery.data;
+  if (pageDataQuery.isError && !pageData) {
+    return <PageNotFound />;
+  }
   const overview = pageData?.overview;
   const engineOverview = pageData?.engineOverview;
   const coverageResource = pageData?.coverage;
@@ -451,10 +527,26 @@ export default function GamesLibrary(): React.JSX.Element {
     drawingGroups.length > 0 ||
     engineGroups.length > 0 ||
     variantGroups.length > 0;
-  const currentGamesLibraryHref =
+  const currentGamesLibraryHref = withGamesLibrarySearchParams(
     requestedHref ??
-    getKangurCanonicalPublicHref([getKangurPageSlug('GamesLibrary')]);
+      getKangurCanonicalPublicHref([getKangurPageSlug('GamesLibrary')]),
+    searchParams
+  );
   const gamesLibraryAnchorBaseHref = getGamesLibraryAnchorBaseHref(currentGamesLibraryHref);
+  const requestedTab = readGamesLibraryTabFromSearchParams(searchParams);
+  const availableTabIds = useMemo(
+    () =>
+      resolveGamesLibraryAvailableTabIds({
+        engineId: filters.engineId,
+        hasStructureSections,
+        serializationAuditVisible,
+      }),
+    [filters.engineId, hasStructureSections, serializationAuditVisible]
+  );
+  const availableTabs = useMemo(
+    () => GAMES_LIBRARY_TABS.filter((tab) => availableTabIds.includes(tab.id)),
+    [availableTabIds]
+  );
 
   const navigation = {
     basePath,
@@ -469,17 +561,30 @@ export default function GamesLibrary(): React.JSX.Element {
 
   const applyFilters = (
     nextFilters: GamesLibraryFilterState,
-    sourceId: string
+    sourceId: string,
+    requestedNextTab: GamesLibraryTabId | null = activeTab
   ): void => {
-    if (areGamesLibraryFiltersEqual(filters, nextFilters)) {
+    const nextActiveTab = resolveGamesLibraryActiveTab({
+      availableTabIds: resolveGamesLibraryAvailableTabIds({
+        engineId: nextFilters.engineId,
+        hasStructureSections,
+        serializationAuditVisible,
+      }),
+      engineId: nextFilters.engineId,
+      gameId: nextFilters.gameId,
+      requestedTab: requestedNextTab,
+    });
+
+    if (areGamesLibraryFiltersEqual(filters, nextFilters) && nextActiveTab === activeTab) {
       return;
     }
 
     setFilters(nextFilters);
-    routeNavigator.replace(
+    setActiveTab(nextActiveTab);
+    replaceRoute(
       appendKangurUrlParams(
         currentGamesLibraryHref,
-        getGamesLibrarySearchParams(nextFilters),
+        getGamesLibrarySearchParams(nextFilters, nextActiveTab),
         basePath
       ),
       {
@@ -504,43 +609,89 @@ export default function GamesLibrary(): React.JSX.Element {
 
   useEffect(() => {
     const nextFilters = readGamesLibraryFiltersFromSearchParams(searchParams);
+    const nextRequestedTab = readGamesLibraryTabFromSearchParams(searchParams);
+    const nextActiveTab = resolveGamesLibraryActiveTab({
+      availableTabIds: resolveGamesLibraryAvailableTabIds({
+        engineId: nextFilters.engineId,
+        hasStructureSections,
+        serializationAuditVisible,
+      }),
+      engineId: nextFilters.engineId,
+      gameId: nextFilters.gameId,
+      requestedTab: nextRequestedTab,
+    });
 
     setFilters((current) =>
       areGamesLibraryFiltersEqual(current, nextFilters) ? current : nextFilters
     );
-  }, [searchParams]);
+    setActiveTab((current) => (current === nextActiveTab ? current : nextActiveTab));
+
+    if (
+      !areGamesLibrarySearchParamsCanonical(searchParams, nextFilters, nextActiveTab)
+    ) {
+      replaceRoute(
+        appendKangurUrlParams(
+          currentGamesLibraryHref,
+          getGamesLibrarySearchParams(nextFilters, nextActiveTab),
+          basePath
+        ),
+        {
+          pageKey: 'GamesLibrary',
+          scroll: false,
+          sourceId: 'kangur-games-library:query-normalize',
+        }
+      );
+    }
+  }, [
+    basePath,
+    currentGamesLibraryHref,
+    hasStructureSections,
+    replaceRoute,
+    searchParams,
+    serializationAuditVisible,
+  ]);
 
   useKangurRoutePageReady({
     pageKey: 'GamesLibrary',
     ready: true,
   });
-
-  const availableTabs = useMemo(
-    () =>
-      GAMES_LIBRARY_TABS.filter((tab) => {
-        switch (tab.id) {
-          case 'catalog':
-            return true;
-          case 'structure':
-            return hasStructureSections || filters.engineId !== 'all';
-          case 'runtime':
-            return serializationAuditVisible;
-          default:
-            return false;
-        }
-      }),
-    [
-      filters.engineId,
-      hasStructureSections,
-      serializationAuditVisible,
-    ]
+  const [activeTab, setActiveTab] = useState<GamesLibraryTabId>(() =>
+    resolveGamesLibraryActiveTab({
+      availableTabIds,
+      engineId: filters.engineId,
+      gameId: filters.gameId,
+      requestedTab,
+    })
   );
-  const [activeTab, setActiveTab] = useState<GamesLibraryTabId>('catalog');
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const [selectedGame, setSelectedGame] = useState<KangurGameDefinition | null>(null);
 
   const handleTabChange = useCallback((tabId: GamesLibraryTabId): void => {
-    setActiveTab(tabId);
-  }, []);
+    const nextActiveTab = resolveGamesLibraryActiveTab({
+      availableTabIds,
+      engineId: filters.engineId,
+      gameId: filters.gameId,
+      requestedTab: tabId,
+    });
+
+    if (nextActiveTab === activeTab) {
+      return;
+    }
+
+    setActiveTab(nextActiveTab);
+    replaceRoute(
+      appendKangurUrlParams(
+        currentGamesLibraryHref,
+        getGamesLibrarySearchParams(filters, nextActiveTab),
+        basePath
+      ),
+      {
+        pageKey: 'GamesLibrary',
+        scroll: false,
+        sourceId: `kangur-games-library:tab:${nextActiveTab}`,
+      }
+    );
+  }, [activeTab, availableTabIds, basePath, currentGamesLibraryHref, filters, replaceRoute]);
 
   const focusTabAt = useCallback((index: number): void => {
     tabRefs.current[index]?.focus();
@@ -592,23 +743,6 @@ export default function GamesLibrary(): React.JSX.Element {
     []
   );
 
-  useEffect(() => {
-    if (!availableTabs.some((tab) => tab.id === activeTab)) {
-      setActiveTab(availableTabs[0]?.id ?? 'catalog');
-    }
-  }, [activeTab, availableTabs]);
-
-  useEffect(() => {
-    if (filters.gameId !== 'all') {
-      setActiveTab('catalog');
-      return;
-    }
-
-    if (filters.engineId !== 'all' && availableTabs.some((tab) => tab.id === 'structure')) {
-      setActiveTab('structure');
-    }
-  }, [availableTabs, filters.engineId, filters.gameId]);
-
   return (
     <KangurStandardPageLayout
       tone='learn'
@@ -626,7 +760,7 @@ export default function GamesLibrary(): React.JSX.Element {
         description={translations('description')}
         showBackButton
         onBack={() =>
-          routeNavigator.replace(basePath, {
+          replaceRoute(basePath, {
             pageKey: 'Game',
             sourceId: 'kangur-games-library:back',
           })
@@ -2212,7 +2346,14 @@ export default function GamesLibrary(): React.JSX.Element {
                     id={getKangurGameCardAnchorId(game.id)}
                     accent='slate'
                     padding='lg'
-                    className='flex h-full scroll-mt-24 flex-col gap-4'
+                    className='flex h-full scroll-mt-24 cursor-pointer flex-col gap-4 transition hover:border-[color:var(--kangur-page-accent)]'
+                    onClick={(event) => {
+                      if (isGamesLibraryCardInteractiveTarget(event.target)) {
+                        return;
+                      }
+
+                      setSelectedGame(game);
+                    }}
                   >
                     <div className='flex flex-wrap items-start justify-between gap-3'>
                       <div className='min-w-0 flex-1'>
@@ -2253,8 +2394,16 @@ export default function GamesLibrary(): React.JSX.Element {
 
                     {gameHref || lessonHref ? (
                       <div className='flex flex-wrap gap-2'>
+                        <KangurButton
+                          onClick={() => setSelectedGame(game)}
+                          size='sm'
+                          type='button'
+                          variant='primary'
+                        >
+                          {translations('actions.previewGame')}
+                        </KangurButton>
                         {gameHref ? (
-                          <KangurButton asChild size='sm' variant='primary'>
+                          <KangurButton asChild size='sm' variant='surface'>
                             <Link
                               href={gameHref}
                               targetPageKey='Game'
@@ -2268,7 +2417,7 @@ export default function GamesLibrary(): React.JSX.Element {
                           <KangurButton
                             asChild
                             size='sm'
-                            variant={gameHref ? 'surface' : 'primary'}
+                            variant='surface'
                           >
                             <Link
                               href={lessonHref}
@@ -2362,6 +2511,31 @@ export default function GamesLibrary(): React.JSX.Element {
           </div>
         ) : null}
       </section>
+
+      <GamesLibraryGameModal
+        basePath={basePath}
+        game={selectedGame}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedGame(null);
+          }
+        }}
+        open={selectedGame !== null}
+      />
     </KangurStandardPageLayout>
   );
+}
+
+export default function GamesLibrary(): React.JSX.Element {
+  const { data: session, status } = useSession();
+
+  if (status === 'loading') {
+    return <></>;
+  }
+
+  if (!canAccessKangurPage('GamesLibrary', session)) {
+    return <PageNotFound />;
+  }
+
+  return <GamesLibraryContent />;
 }

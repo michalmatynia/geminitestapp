@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/features/auth/server';
+import { canAccessKangurPage } from '@/features/kangur/config/page-access';
 import {
   createKangurGameLibraryPageDataFromGames,
 } from '@/features/kangur/games';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { listKangurGames } from '@/features/kangur/services/kangur-game-repository/mongo-kangur-game-repository';
-import { isSuperAdminSession } from '@/shared/lib/auth/elevated-session-user';
 import {
   kangurGameEngineCategorySchema,
   kangurGameEngineIdSchema,
@@ -38,7 +38,7 @@ export async function getKangurGameLibraryPageHandler(
   ctx: ApiHandlerContext
 ): Promise<Response> {
   const session = await auth().catch(() => null);
-  if (!isSuperAdminSession(session)) {
+  if (!canAccessKangurPage('GamesLibrary', session)) {
     return NextResponse.json(
       {
         error: 'Not Found',

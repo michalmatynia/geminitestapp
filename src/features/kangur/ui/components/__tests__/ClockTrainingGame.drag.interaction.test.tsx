@@ -781,4 +781,32 @@ describe('ClockTrainingGame drag interactions', () => {
 
     expect(screen.queryByTestId('clock-time-display')).toBeNull();
   });
+
+  it('can hide each clock hand independently for scaffold previews', () => {
+    const { container, rerender } = render(
+      <ClockTrainingGame
+        onFinish={vi.fn()}
+        section='mixed'
+        showHourHand={false}
+        showMinuteHand
+      />
+    );
+
+    expect(container.querySelector('[data-testid="clock-hour-hand"]')).toBeNull();
+    expect(container.querySelector('[data-testid="clock-minute-hand"]')).not.toBeNull();
+    expect(screen.queryByTestId('clock-snap-mode-switch')).toBeInTheDocument();
+
+    rerender(
+      <ClockTrainingGame
+        onFinish={vi.fn()}
+        section='mixed'
+        showHourHand
+        showMinuteHand={false}
+      />
+    );
+
+    expect(container.querySelector('[data-testid="clock-hour-hand"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="clock-minute-hand"]')).toBeNull();
+    expect(screen.queryByTestId('clock-snap-mode-switch')).toBeNull();
+  });
 });

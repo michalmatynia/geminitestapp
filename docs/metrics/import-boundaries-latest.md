@@ -8,15 +8,15 @@ canonical: true
 ---
 # Import Boundaries Check
 
-Generated at: 2026-03-26T14:24:00.140Z
+Generated at: 2026-03-26T16:36:10.525Z
 
 ## Summary
 
-- Status: PASSED
-- Files scanned: 5840
+- Status: FAILED
+- Files scanned: 5865
 - Features tracked: 10
 - Circular dependencies: 0
-- Errors: 0
+- Errors: 26
 - Warnings: 0
 - Info: 0
 
@@ -39,10 +39,38 @@ Generated at: 2026-03-26T14:24:00.140Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
+| cross-feature-internal-import | 26 | 0 | 0 |
 
 ## Issues
 
-No import boundary issues detected.
+| Severity | Rule | Location | Message |
+| --- | --- | --- | --- |
+| ERROR | cross-feature-internal-import | src/features/admin/components/AdminValidatorSettings.tsx:3 | Imports internal path from feature "products": @/features/products/validator/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/admin/components/Menu.tsx:19 | Imports internal path from feature "ai": @/features/ai/chatbot/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/ai/image-studio/components/center-preview/sections/CenterPreviewCanvas.tsx:10 | Imports internal path from feature "viewer3d": @/features/viewer3d/client/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/ai/image-studio/components/modals/DriveImportModal.tsx:8 | Imports internal path from feature "files": @/features/files/client/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/blocks/Model3DBlock.tsx:5 | Imports internal path from feature "viewer3d": @/features/viewer3d/client/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/home/home-fallback-content.products.tsx:8 | Imports internal path from feature "products": @/features/products/components/ProductCard. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/cms/components/frontend/home/home-fallback-content.signature.tsx:7 | Imports internal path from feature "products": @/features/products/components/ProductCard. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/Asset3DPickerModal.tsx:5 | Imports internal path from feature "viewer3d": @/features/viewer3d/client/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/Asset3DPickerModal.tsx:6 | Imports internal path from feature "viewer3d": @/features/viewer3d/client/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/Asset3DPickerModal.tsx:7 | Imports internal path from feature "viewer3d": @/features/viewer3d/client/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/MediaLibraryPanel.tsx:15 | Imports internal path from feature "files": @/features/files/client/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/preview/MemoizedViewer3D.tsx:5 | Imports internal path from feature "viewer3d": @/features/viewer3d/client/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/shared-fields.tsx:5 | Imports internal path from feature "viewer3d": @/features/viewer3d/client/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/shared-fields.tsx:6 | Imports internal path from feature "viewer3d": @/features/viewer3d/client/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/cms/components/page-builder/shared-fields.tsx:7 | Imports internal path from feature "viewer3d": @/features/viewer3d/client/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/drafter/components/DraftCreator.tsx:12 | Imports internal path from feature "products": @/features/products/forms/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/drafter/components/DraftCreatorFormFields.tsx:5 | Imports internal path from feature "products": @/features/products/forms/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/kangur/cms-builder/kangur-page-builder-policy.ts:2 | Imports internal path from feature "cms": @/features/cms/components/page-builder/PageBuilderPolicyContext. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/products/components/EditProductForm.tsx:17 | Imports internal path from feature "files": @/features/files/client/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/products/components/form/ProductImagesTabContent.tsx:22 | Imports internal path from feature "files": @/features/files/client/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/products/components/form/studio/StudioPreviewCanvas.tsx:7 | Imports internal path from feature "ai": @/features/ai/image-studio/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/products/components/form/studio/StudioVariantsGrid.tsx:9 | Imports internal path from feature "ai": @/features/ai/image-studio/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/products/components/ProductModals.tsx:41 | Imports internal path from feature "files": @/features/files/client/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/products/components/settings/ProductImageRoutingSettings.tsx:10 | Imports internal path from feature "ai": @/features/ai/image-studio/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/products/context/ProductStudioContext.derived.ts:6 | Imports internal path from feature "ai": @/features/ai/image-studio/public. Use the barrel export instead. |
+| ERROR | cross-feature-internal-import | src/features/products/context/ProductStudioContext.tsx:18 | Imports internal path from feature "ai": @/features/ai/image-studio/public. Use the barrel export instead. |
 
 ## Notes
 

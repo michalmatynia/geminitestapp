@@ -73,9 +73,9 @@ const ROOT_DEFINITIONS = {
     relatedFlowId: 'flow:kangur:lesson-help',
   },
   gameLibraryContext: {
-    title: 'Games library help',
+    title: 'Games and practice help',
     summary:
-      'Games-library navigation, reusable game catalog references, and tutor context for practice-mode guidance.',
+      'Game-home navigation, reusable game catalog references, and tutor context for practice-mode guidance.',
     relatedFlowId: 'flow:kangur:game-help',
   },
   testContext: {
@@ -112,8 +112,7 @@ const FLOW_TARGETS: Partial<Record<string, {
     anchorId: 'kangur-primary-nav-login',
   },
   'flow:kangur:game-help': {
-    route: toRelativeKangurPageRoute('GamesLibrary'),
-    anchorId: 'kangur-primary-nav-games-library',
+    route: toRelativeKangurPageRoute('Game'),
   },
 };
 
@@ -194,35 +193,6 @@ const REFERENCE_DETAILS: Partial<Record<string, ReferenceDetail>> = {
   'collection:kangur-lessons': {
     title: 'Lessons collection',
     summary: 'Lesson metadata and library entries referenced by the tutor.',
-  },
-  'page:kangur-games-library': {
-    title: {
-      pl: 'Biblioteka gier',
-      en: 'Games library page',
-    },
-    summary: {
-      pl: 'Biblioteka gier i ekran wyboru ćwiczeń w Kangurze.',
-      en: 'Kangur games library and practice selection surface.',
-    },
-    route: toRelativeKangurPageRoute('GamesLibrary'),
-    triggerPhrases: {
-      pl: [
-        'gry',
-        'biblioteka gier',
-        'gdzie są gry',
-        'otwórz gry',
-        'wróć do gier',
-      ],
-      en: ['games', 'games library', 'open games'],
-    },
-    tags: {
-      pl: ['gry', 'biblioteka-gier'],
-      en: ['games', 'games-library'],
-    },
-    semanticText: {
-      pl: 'Biblioteka gier w Kangurze. To tutaj uczeń wybiera gry i ćwiczenia do samodzielnej praktyki.',
-      en: 'Kangur games library where learners choose games and practice activities.',
-    },
   },
   'collection:kangur-games': {
     title: 'Games collection',
@@ -313,8 +283,8 @@ const FLOW_DEFINITIONS = [
   },
   {
     id: 'flow:kangur:game-help',
-    title: 'Games library help',
-    summary: 'How to find games, open the games library, and start practice activities in Kangur.',
+    title: 'Games and practice help',
+    summary: 'How to find games and start practice activities in Kangur.',
     tags: ['games', 'navigation', 'practice'],
   },
   {

@@ -22,6 +22,7 @@ import {
   CmsStorefrontAppearanceButtons,
   useOptionalCmsStorefrontAppearance,
 } from '@/features/cms/public';
+import { canAccessKangurPage } from '@/features/kangur/config/page-access';
 import { KANGUR_TIGHT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   getKangurHomeHref,
@@ -86,10 +87,7 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
-import {
-  getElevatedSessionUserSnapshot,
-  isSuperAdminSession,
-} from '@/shared/lib/auth/elevated-session-user';
+import { getElevatedSessionUserSnapshot } from '@/shared/lib/auth/elevated-session-user';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type KangurPrimaryNavigationPage =
@@ -258,7 +256,7 @@ const isTransitionSourceActive = ({
 
 const renderNavAction = (config: KangurNavActionConfig): React.JSX.Element => {
   const { content, ...action } = config;
-  return <KangurNavAction {...action}>{content}</KangurNavAction>;
+  return <KangurNavAction action={action}>{content}</KangurNavAction>;
 };
 
 const resolveTutorFallbackCopy = (
@@ -387,7 +385,7 @@ export function KangurPrimaryNavigation({
   const shouldRenderElevatedUserMenu =
     effectiveIsAuthenticated && Boolean(elevatedSessionUser);
   const canAccessGamesLibrary =
-    effectiveIsAuthenticated && isSuperAdminSession(session);
+    effectiveIsAuthenticated && canAccessKangurPage('GamesLibrary', session);
   const shouldRenderProfileMenu =
     effectiveIsAuthenticated && !shouldRenderElevatedUserMenu && (!isParentAccount || hasActiveLearner);
   const isCoarsePointer = useKangurCoarsePointer();

@@ -20,6 +20,13 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonGameSections', () => ({
+  useKangurLessonGameSections: () => ({
+    data: [],
+    isPending: false,
+  }),
+}));
+
 vi.mock('@/features/kangur/ui/components/ClockTrainingGame', () => ({
   __esModule: true,
   default: ({ section }: { section?: string }) => (

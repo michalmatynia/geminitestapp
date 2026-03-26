@@ -8,6 +8,8 @@ import type {
   InspectorSettings,
 } from '@/shared/contracts/cms';
 
+import { usePageBuilderPolicy } from '@/features/cms/components/page-builder/PageBuilderPolicyContext';
+
 import { findSection, findBlock, findColumn } from './page-builder/block-helpers';
 import { pageBuilderReducer } from './page-builder/page-builder-reducer';
 import { PageDispatchContext, usePageBuilderDispatch } from './page-builder/PageDispatchContext';
@@ -71,7 +73,13 @@ export function PageBuilderProvider({
   children: ReactNode;
   initialState?: PageBuilderState;
 }): React.ReactNode {
-  const [state, dispatch] = useReducer(pageBuilderReducer, customInitialState);
+  const policy = usePageBuilderPolicy();
+  const [state, dispatch] = useReducer(
+    (currentState: PageBuilderState, action: PageBuilderAction): PageBuilderState =>
+      policy.sanitizeState(pageBuilderReducer(currentState, action)),
+    customInitialState,
+    policy.sanitizeState
+  );
   const [vectorOverlay, setVectorOverlay] = useState<VectorOverlayRequest | null>(null);
 
   const openVectorOverlay = useCallback((request: VectorOverlayRequest): void => {

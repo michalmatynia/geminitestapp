@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   DragStateProvider,
   PageBuilderPageSkeleton,
+  PageBuilderPolicyProvider,
   PageBuilderProvider,
   ThemeSettingsProvider,
   type LeftPanelMode,
@@ -38,6 +39,10 @@ import { KangurCmsBuilderStatusSidebar } from './KangurCmsBuilderStatusSidebar';
 import { KangurCmsBuilderRuntimeProvider } from './KangurCmsBuilderRuntimeContext';
 import { KangurCmsPreviewPanel } from './KangurCmsPreviewPanel';
 import {
+  buildKangurPageBuilderPolicy,
+  sanitizeKangurScreenComponents,
+} from './kangur-page-builder-policy';
+import {
   KANGUR_CMS_PROJECT_SETTING_KEY,
   buildKangurCmsBuilderState,
   parseKangurCmsProject,
@@ -56,7 +61,7 @@ const commitScreenSections = (
     ...project.screens,
     [screenKey]: {
       ...project.screens[screenKey],
-      components: serializeKangurCmsSections(sections),
+      components: sanitizeKangurScreenComponents(screenKey, serializeKangurCmsSections(sections)),
     },
   },
 });
@@ -322,31 +327,37 @@ export function KangurCmsBuilderWorkspace(): React.JSX.Element {
     if (!draftProject) return null;
     return buildKangurCmsBuilderState(draftProject, activeScreenKey, locale);
   }, [activeScreenKey, draftProject, locale]);
+  const pageBuilderPolicy = useMemo(
+    () => buildKangurPageBuilderPolicy(activeScreenKey),
+    [activeScreenKey]
+  );
 
   if (!settingsReady || !draftProject || !savedProject || !initialState) {
     return <PageBuilderPageSkeleton />;
   }
 
   return (
-    <PageBuilderProvider key={activeScreenKey} initialState={initialState}>
-      <DragStateProvider>
-        {renderBuilderThemeSettingsProvider(
-          themePreviewMode,
-          <KangurCmsBuilderRuntimeProvider
-            draftProject={draftProject}
-            savedProject={savedProject}
-            activeScreenKey={activeScreenKey}
-            onSwitchScreen={handleSwitchScreen}
-            onSave={handleSave}
-            isSaving={isSaving}
-          >
-            <KangurCmsBuilderInner
-              themePreviewMode={themePreviewMode}
-              onThemeModeChange={setThemePreviewMode}
-            />
-          </KangurCmsBuilderRuntimeProvider>
-        )}
-      </DragStateProvider>
-    </PageBuilderProvider>
+    <PageBuilderPolicyProvider value={pageBuilderPolicy}>
+      <PageBuilderProvider key={activeScreenKey} initialState={initialState}>
+        <DragStateProvider>
+          {renderBuilderThemeSettingsProvider(
+            themePreviewMode,
+            <KangurCmsBuilderRuntimeProvider
+              draftProject={draftProject}
+              savedProject={savedProject}
+              activeScreenKey={activeScreenKey}
+              onSwitchScreen={handleSwitchScreen}
+              onSave={handleSave}
+              isSaving={isSaving}
+            >
+              <KangurCmsBuilderInner
+                themePreviewMode={themePreviewMode}
+                onThemeModeChange={setThemePreviewMode}
+              />
+            </KangurCmsBuilderRuntimeProvider>
+          )}
+        </DragStateProvider>
+      </PageBuilderProvider>
+    </PageBuilderPolicyProvider>
   );
 }

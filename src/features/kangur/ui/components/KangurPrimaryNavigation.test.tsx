@@ -613,10 +613,7 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
-    expect(screen.getByTestId('kangur-primary-nav-games-library')).toHaveAttribute(
-      'href',
-      '/en/games'
-    );
+    expect(screen.queryByTestId('kangur-primary-nav-games-library')).toBeNull();
     expect(screen.getByTestId('kangur-primary-nav-lessons')).toHaveAttribute(
       'href',
       '/en/lessons'
@@ -637,6 +634,91 @@ describe('KangurPrimaryNavigation', () => {
       pageKey: 'Lessons',
       sourceId: 'kangur-primary-nav:lessons',
     });
+  });
+
+  it('shows the localized Games library link only for logged-in super admins', () => {
+    frontendPublicOwnerMock.mockReturnValue({ publicOwner: 'kangur' });
+    localeMock.mockReturnValue('en');
+    pathnameMock.mockReturnValue('/en/kangur');
+    sessionMock.mockReturnValue({
+      data: {
+        expires: '2026-12-31T23:59:59.000Z',
+        user: {
+          email: 'admin@example.com',
+          id: 'admin-1',
+          image: null,
+          isElevated: true,
+          name: 'Super Admin',
+          role: 'super_admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Game'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('kangur-primary-nav-games-library')).toHaveAttribute(
+      'href',
+      '/en/games'
+    );
+  });
+
+  it('hides the Games library link for authenticated non-super-admin users', () => {
+    optionalAuthMock.mockReturnValue({
+      authError: null,
+      appPublicSettings: null,
+      canAccessParentAssignments: true,
+      checkAppState: vi.fn(),
+      hasResolvedAuth: true,
+      isAuthenticated: true,
+      isLoadingAuth: false,
+      isLoadingPublicSettings: false,
+      isLoggingOut: false,
+      logout: vi.fn(),
+      navigateToLogin: vi.fn(),
+      selectLearner: vi.fn(),
+      user: {
+        activeLearner: null,
+        actorType: 'parent',
+        canManageLearners: true,
+        email: 'parent@example.com',
+        full_name: 'Parent User',
+        id: 'parent-1',
+        learners: [],
+        role: 'parent',
+      },
+    });
+    sessionMock.mockReturnValue({
+      data: {
+        expires: '2026-12-31T23:59:59.000Z',
+        user: {
+          email: 'parent@example.com',
+          id: 'parent-1',
+          image: null,
+          name: 'Parent User',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Game'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByTestId('kangur-primary-nav-games-library')).toBeNull();
   });
 
   it('uses the canonical localized home route when Kangur owns the public frontend', () => {

@@ -28,6 +28,20 @@ const requestedDevBundler =
 const isPlaywrightBrokerRuntime = Boolean(
   process.env.PLAYWRIGHT_RUNTIME_LEASE_KEY || process.env.PLAYWRIGHT_RUNTIME_AGENT_ID
 );
+const outputFileTracingExcludes = {
+  // These directories hold local runtime artifacts and user data. When server code
+  // references them via process.cwd(), @vercel/nft can conservatively trace the
+  // entire directory tree, which explodes Vercel function size.
+  '/*': [
+    './public/uploads/**/*',
+    './mongo/backups/**/*',
+    './tmp/**/*',
+    './playwright-debug/**/*',
+    './test-results/**/*',
+    './node_modules/.cache/**/*',
+  ],
+  '/api/ai-paths/playwright/[runId]/artifacts/[file]': ['./test-results/**/*'],
+};
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -67,6 +81,7 @@ const nextConfig = {
   // when `next build` and `next dev` are triggered in parallel.
   distDir: process.env.NEXT_DIST_DIR || (isDev ? '.next-dev' : '.next'),
   compress: true, // Ensure gzip compression is enabled
+  outputFileTracingExcludes,
   // Standalone output is needed for Docker/self-hosted deploys (see Dockerfile).
   // On Vercel, Vercel manages deployment itself and standalone output only adds
   // expensive file-tracing work that can push builds past the 45-minute limit.
@@ -75,9 +90,6 @@ const nextConfig = {
     : {
         output: 'standalone',
         outputFileTracingRoot: __dirname,
-        outputFileTracingExcludes: {
-          '/api/ai-paths/playwright/[runId]/artifacts/[file]': ['./test-results/**/*'],
-        },
       }),
   // Skip TypeScript type-checking during `next build` — already enforced in CI.
   // Saves ~5-10 minutes on a 5926-file project.

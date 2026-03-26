@@ -1,22 +1,22 @@
 {
   "summary": {
-    "generatedAt": "2026-03-26T15:10:56.459Z",
-    "scannedSourceFiles": 5831,
+    "generatedAt": "2026-03-26T15:42:51.005Z",
+    "scannedSourceFiles": 5833,
     "scannedJsxFiles": 2136,
-    "componentCount": 3635,
+    "componentCount": 3636,
     "componentsWithForwarding": 120,
-    "componentsWithAnyForwarding": 271,
-    "resolvedTransitionCount": 1221,
-    "depth2CandidateChainCount": 1221,
+    "componentsWithAnyForwarding": 270,
+    "resolvedTransitionCount": 1205,
+    "depth2CandidateChainCount": 1205,
     "candidateChainCount": 275,
     "highPriorityChainCount": 58,
     "unknownSpreadForwardingCount": 32,
     "highPropCountComponentCount": 68,
-    "passThroughHotspotCount": 86,
+    "passThroughHotspotCount": 85,
     "topFeatureScopes": [
       {
         "scope": "feature:kangur",
-        "count": 139
+        "count": 138
       },
       {
         "scope": "shared-ui",
@@ -10108,58 +10108,6 @@
       "depth": 2,
       "rootFanout": 2,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-        "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink"
-      ],
-      "propPath": [
-        "transition",
-        "transitionAcknowledgeMs"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-          "toComponentId": "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink",
-          "sourceProp": "transition",
-          "targetProp": "transitionAcknowledgeMs",
-          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
-          "line": 130
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-        "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink"
-      ],
-      "propPath": [
-        "transition",
-        "transitionSourceId"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-          "toComponentId": "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink",
-          "sourceProp": "transition",
-          "targetProp": "transitionSourceId",
-          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
-          "line": 130
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx#LessonsLibraryIntroSkeleton",
       "sinkComponentId": "src/features/kangur/ui/components/KangurPageIntroCard.tsx#KangurPageIntroCard",
       "componentPath": [
@@ -16920,214 +16868,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "active",
-        "aria-current"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "active",
-          "targetProp": "aria-current",
-          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
-          "line": 106
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "ariaControls",
-        "aria-controls"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "ariaControls",
-          "targetProp": "aria-controls",
-          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
-          "line": 106
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "ariaExpanded",
-        "aria-expanded"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "ariaExpanded",
-          "targetProp": "aria-expanded",
-          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
-          "line": 106
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "ariaHasPopup",
-        "aria-haspopup"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "ariaHasPopup",
-          "targetProp": "aria-haspopup",
-          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
-          "line": 106
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "ariaLabel",
-        "aria-label"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "ariaLabel",
-          "targetProp": "aria-label",
-          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
-          "line": 106
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "docId",
-        "data-doc-id"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "docId",
-          "targetProp": "data-doc-id",
-          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
-          "line": 106
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "testId",
-        "data-testid"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "testId",
-          "targetProp": "data-testid",
-          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
-          "line": 106
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "elementRef",
-        "ref"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "elementRef",
-          "targetProp": "ref",
-          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
-          "line": 144
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx#SkeletonGlassPanel",
       "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurPanel.tsx#KangurGlassPanel",
       "componentPath": [
@@ -17223,7 +16963,7 @@
           "sourceProp": "className",
           "targetProp": "icon",
           "relativePath": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx",
-          "line": 833
+          "line": 838
         }
       ]
     },
@@ -25812,162 +25552,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "disabled",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "disabled",
-          "targetProp": "disabled",
-          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
-          "line": 106
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "size",
-        "size"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "size",
-          "targetProp": "size",
-          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
-          "line": 106
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "title",
-        "title"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "title",
-          "targetProp": "title",
-          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
-          "line": 106
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-        "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink"
-      ],
-      "propPath": [
-        "href",
-        "href"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-          "toComponentId": "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink",
-          "sourceProp": "href",
-          "targetProp": "href",
-          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
-          "line": 130
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-        "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink"
-      ],
-      "propPath": [
-        "prefetch",
-        "prefetch"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-          "toComponentId": "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink",
-          "sourceProp": "prefetch",
-          "targetProp": "prefetch",
-          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
-          "line": 130
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-        "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink"
-      ],
-      "propPath": [
-        "targetPageKey",
-        "targetPageKey"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-          "toComponentId": "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink",
-          "sourceProp": "targetPageKey",
-          "targetProp": "targetPageKey",
-          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
-          "line": 130
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx#SkeletonGlassPanel",
       "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurPanel.tsx#KangurGlassPanel",
       "componentPath": [
@@ -26297,7 +25881,7 @@
           "sourceProp": "basePath",
           "targetProp": "basePath",
           "relativePath": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx",
-          "line": 1127
+          "line": 1134
         }
       ]
     },
@@ -26323,7 +25907,7 @@
           "sourceProp": "currentPage",
           "targetProp": "currentPage",
           "relativePath": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx",
-          "line": 1127
+          "line": 1134
         }
       ]
     },
@@ -26349,7 +25933,7 @@
           "sourceProp": "onLogout",
           "targetProp": "onLogout",
           "relativePath": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx",
-          "line": 1139
+          "line": 1146
         }
       ]
     },
@@ -35397,15 +34981,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-      "name": "KangurNavAction",
-      "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 15,
-      "outgoingTransitionCount": 16,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx#KangurDrawingFreeformToolbar",
       "name": "KangurDrawingFreeformToolbar",
       "relativePath": "src/features/kangur/ui/components/drawing-engine/KangurDrawingFreeformToolbar.tsx",
@@ -36430,6 +36005,15 @@
       "forwardedPropCount": 3,
       "outgoingTransitionCount": 3,
       "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/shared/ui/templates/modals/ConfirmModal.tsx#ConfirmModalPasswordField",
+      "name": "ConfirmModalPasswordField",
+      "relativePath": "src/shared/ui/templates/modals/ConfirmModal.tsx",
+      "feature": "shared-ui",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": false
     }
   ],
   "forwardingComponentBacklog": [
@@ -36476,15 +36060,6 @@
       "feature": "shared-ui",
       "forwardedPropCount": 18,
       "outgoingTransitionCount": 19,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
-      "name": "KangurNavAction",
-      "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 15,
-      "outgoingTransitionCount": 16,
       "hasUnknownSpreadForwarding": false
     },
     {

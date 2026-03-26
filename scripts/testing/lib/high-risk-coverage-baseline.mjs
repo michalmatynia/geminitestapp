@@ -3,6 +3,7 @@ import path from 'node:path';
 
 export const HIGH_RISK_COVERAGE_REPORTS_DIRECTORY = 'coverage/high-risk';
 export const HIGH_RISK_COVERAGE_SUMMARY_PATH = `${HIGH_RISK_COVERAGE_REPORTS_DIRECTORY}/coverage-summary.json`;
+const highRiskCoverageExcludeGlobs = ['**/*.md', '**/*.markdown'];
 
 const METRIC_KEYS = ['lines', 'statements', 'functions', 'branches'];
 
@@ -203,5 +204,6 @@ export const buildHighRiskCoverageVitestArgs = ({
   '--coverage.reporter',
   'text-summary',
   ...coverageIncludeGlobs.flatMap((pattern) => ['--coverage.include', pattern]),
+  ...highRiskCoverageExcludeGlobs.flatMap((pattern) => ['--coverage.exclude', pattern]),
   ...testFiles,
 ];

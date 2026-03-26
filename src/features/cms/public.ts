@@ -18,6 +18,8 @@ export type { LeftPanelMode } from './components/page-builder/CmsBuilderLeftPane
 export { ComponentSettingsPanel } from './components/page-builder/ComponentSettingsPanel';
 export { MediaLibraryPanel } from './components/page-builder/MediaLibraryPanel';
 export { PageBuilderPageSkeleton } from './components/page-builder/PageBuilderPageSkeleton';
+export { PageBuilderPolicyProvider } from './components/page-builder/PageBuilderPolicyContext';
+export type { PageBuilderPolicyConfig } from './components/page-builder/PageBuilderPolicyContext';
 export {
   PreviewSection,
   type MediaReplaceTarget,

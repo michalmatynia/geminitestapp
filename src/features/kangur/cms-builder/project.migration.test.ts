@@ -17,6 +17,32 @@ const screenContainsWidgetId = (
   widgetId: string
 ): boolean => components.some((component) => componentContainsWidgetId(component, widgetId));
 
+const componentContainsBlockType = (
+  component: PageComponentInput,
+  blockType: string
+): boolean =>
+  component.content.blocks.some((block) => block.type === blockType);
+
+const createLegacyThreeDComponent = (sectionId: string): PageComponentInput => ({
+  type: 'Block',
+  order: 999,
+  content: {
+    zone: 'template',
+    settings: {},
+    blocks: [
+      {
+        id: `${sectionId}-model-3d`,
+        type: 'Model3D',
+        settings: {
+          assetId: 'asset-legacy',
+        },
+      },
+    ],
+    sectionId,
+    parentSectionId: null,
+  },
+});
+
 describe('parseKangurCmsProject results ownership migration', () => {
   it('moves legacy parent-dashboard scores ownership into learner profile results', () => {
     const project = createDefaultKangurCmsProject('pl');
@@ -82,5 +108,32 @@ describe('parseKangurCmsProject results ownership migration', () => {
 
     expect(overviewIndex).toBeGreaterThanOrEqual(0);
     expect(resultsIndex).toBe(overviewIndex + 1);
+  });
+
+  it('strips legacy 3D blocks from the Game screen while leaving other screens intact', () => {
+    const project = createDefaultKangurCmsProject('pl');
+
+    project.screens.Game.components.push(createLegacyThreeDComponent('kangur-game-legacy-3d'));
+    project.screens.Lessons.components.push(
+      createLegacyThreeDComponent('kangur-lessons-legacy-3d')
+    );
+
+    const migrated = parseKangurCmsProject(JSON.stringify(project), {
+      fallbackToDefault: false,
+      locale: 'pl',
+    });
+
+    if (!migrated) {
+      throw new Error('Expected migrated CMS project');
+    }
+
+    expect(
+      migrated.screens.Game.components.some((component) => componentContainsBlockType(component, 'Model3D'))
+    ).toBe(false);
+    expect(
+      migrated.screens.Lessons.components.some((component) =>
+        componentContainsBlockType(component, 'Model3D')
+      )
+    ).toBe(true);
   });
 });

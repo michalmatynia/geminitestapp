@@ -20,7 +20,7 @@ export const KANGUR_CONTEXT_ROOT_IDS = {
     'policy:kangur-ai-tutor-socratic',
   ],
   gameLibraryContext: [
-    'page:kangur-games-library',
+    'page:kangur-game',
     'collection:kangur-games',
     'action:kangur-ai-tutor-chat',
   ],

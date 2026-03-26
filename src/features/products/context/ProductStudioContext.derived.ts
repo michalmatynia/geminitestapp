@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { buildProductStudioWorkspaceContextBundle } from '@/features/products/context-registry/workspace';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import type { ContextRegistryPageSource } from '@/shared/lib/ai-context-registry/page-context-shared';
-import { getImageStudioSlotImageSrc } from '@/features/ai/public';
+import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/public';
 
 import type {
   ProductImageSlotPreview,

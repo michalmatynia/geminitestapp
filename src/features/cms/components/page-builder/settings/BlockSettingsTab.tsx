@@ -27,6 +27,7 @@ import {
   renderFieldGroups,
 } from './field-group-helpers';
 import { SettingsFormProvider } from './SettingsFormContext';
+import { usePageBuilderPolicy } from '../PageBuilderPolicyContext';
 import { useComponentSettingsActions } from '../context/ComponentSettingsContext';
 import { getBlockDefinition } from '../section-registry';
 
@@ -34,6 +35,7 @@ import { getBlockDefinition } from '../section-registry';
 
 export function BlockSettingsTab(): React.JSX.Element | null {
   const dispatch = usePageBuilderDispatch();
+  const policy = usePageBuilderPolicy();
   const selection = usePageBuilderSelection();
   const selectedBlock = selection.selectedBlock;
   const selectedParentSection = selection.selectedParentSection;
@@ -171,6 +173,7 @@ export function BlockSettingsTab(): React.JSX.Element | null {
   const blockDef = getBlockDefinition(selectedBlock.type);
   if (!blockDef) return null;
   const blockSettingsForRender = rowSettingsForRender ?? selectedBlock.settings;
+  const visibleSettingsSchema = policy.filterSettingsFields(blockDef.settingsSchema);
 
   return (
     <SettingsFormProvider values={blockSettingsForRender} onChange={handleBlockSettingChange}>
@@ -178,7 +181,7 @@ export function BlockSettingsTab(): React.JSX.Element | null {
         {appEmbedConfigurationNote}
         {renderFieldGroups(
           groupSettingsFields(
-            appendRuntimeVisibilityFields(prependManagementFields(blockDef.settingsSchema))
+            appendRuntimeVisibilityFields(prependManagementFields(visibleSettingsSchema))
           ),
           blockSettingsForRender,
           handleBlockSettingChange,

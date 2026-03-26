@@ -2,7 +2,7 @@ import { JSX } from 'react';
 
 import {
   CmsPageShell,
-  CmsRuntimePageRenderer as CmsPageRenderer,
+  CmsPageRenderer,
   ThemeProvider,
 } from '@/features/cms/public';
 

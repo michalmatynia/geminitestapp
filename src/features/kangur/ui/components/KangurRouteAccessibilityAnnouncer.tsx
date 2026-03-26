@@ -1,8 +1,10 @@
 'use client';
 
+import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
+import { resolveAccessibleKangurPageKey } from '@/features/kangur/config/page-access';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
@@ -75,10 +77,12 @@ const resolveAnnouncementLabel = (
 export function KangurRouteAccessibilityAnnouncer(): React.JSX.Element {
   const translations = useTranslations('KangurPublic');
   const { pageKey, requestedHref, requestedPath } = useKangurRouting();
+  const { data: session } = useSession();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const previousRequestedPathRef = useRef<string | undefined>(requestedPath);
   const previousRequestedHrefRef = useRef<string | undefined>(requestedHref);
   const [announcement, setAnnouncement] = useState('');
+  const effectivePageKey = resolveAccessibleKangurPageKey(pageKey, session, 'Game');
 
   useEffect(() => {
     if (!requestedPath && !requestedHref) {
@@ -96,7 +100,7 @@ export function KangurRouteAccessibilityAnnouncer(): React.JSX.Element {
       return;
     }
 
-    const label = resolveAnnouncementLabel(pageKey, translations);
+    const label = resolveAnnouncementLabel(effectivePageKey, translations);
     const isLocaleSwitch =
       routeTransitionState?.activeTransitionKind === 'locale-switch' ||
       (!pathChanged && hrefChanged);
@@ -118,7 +122,13 @@ export function KangurRouteAccessibilityAnnouncer(): React.JSX.Element {
     return () => {
       window.cancelAnimationFrame(frameId);
     };
-  }, [pageKey, requestedHref, requestedPath, routeTransitionState?.activeTransitionKind, translations]);
+  }, [
+    effectivePageKey,
+    requestedHref,
+    requestedPath,
+    routeTransitionState?.activeTransitionKind,
+    translations,
+  ]);
 
   return (
     <div aria-atomic='true' aria-live='polite' className='sr-only' role='status'>

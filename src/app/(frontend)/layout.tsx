@@ -5,9 +5,9 @@ import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/front
 import { getCmsThemeSettings } from '@/features/cms/server';
 import { getKangurAuthBootstrapScript } from '@/features/kangur/server/auth-bootstrap';
 import { getKangurStorefrontInitialState } from '@/features/kangur/server/storefront-appearance';
+import { KangurAuthWarmupClient } from '@/features/kangur/ui/KangurAuthWarmupClient';
 import { FrontendPublicOwnerProvider } from '@/features/kangur/ui/FrontendPublicOwnerContext';
 import { FrontendPublicOwnerKangurShell } from '@/features/kangur/ui/FrontendPublicOwnerKangurShell';
-import FrontendPublicOwnerShellClient from '@/features/kangur/ui/FrontendPublicOwnerShellClient';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
@@ -145,13 +145,10 @@ export default async function FrontendLayout({
                 initialThemeSettings={kangurInitialState?.initialThemeSettings}
               />
             ) : (
-              <FrontendPublicOwnerShellClient
-                publicOwner={publicOwner}
-                kangurInitialMode={kangurInitialState?.initialMode}
-                kangurInitialThemeSettings={kangurInitialState?.initialThemeSettings}
-              >
+              <>
+                {publicOwner === 'kangur' ? <KangurAuthWarmupClient /> : null}
                 {children}
-              </FrontendPublicOwnerShellClient>
+              </>
             )}
           </QueryErrorBoundary>
         </FrontendPublicOwnerProvider>

@@ -9,8 +9,16 @@ const { listKangurGamesMock, captureExceptionMock } = vi.hoisted(() => ({
   captureExceptionMock: vi.fn(),
 }));
 
+const { authMock } = vi.hoisted(() => ({
+  authMock: vi.fn(),
+}));
+
 vi.mock('@/features/kangur/services/kangur-game-repository/mongo-kangur-game-repository', () => ({
   listKangurGames: listKangurGamesMock,
+}));
+
+vi.mock('@/features/auth/server', () => ({
+  auth: authMock,
 }));
 
 vi.mock('@/features/kangur/shared/utils/observability/error-system', () => ({
@@ -34,6 +42,16 @@ const createRequestContext = (query?: Record<string, unknown>): ApiHandlerContex
 describe('kangur game library page handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    authMock.mockResolvedValue({
+      expires: '2026-12-31T23:59:59.000Z',
+      user: {
+        email: 'admin@example.com',
+        id: 'admin-1',
+        isElevated: true,
+        name: 'Super Admin',
+        role: 'super_admin',
+      },
+    });
     listKangurGamesMock.mockResolvedValue(createDefaultKangurGames());
   });
 
@@ -45,9 +63,7 @@ describe('kangur game library page handler', () => {
 
     expect(listKangurGamesMock).toHaveBeenCalledTimes(1);
     expect(response.status).toBe(200);
-    expect(response.headers.get('Cache-Control')).toBe(
-      'public, max-age=300, stale-while-revalidate=3600'
-    );
+    expect(response.headers.get('Cache-Control')).toBe('private, no-store');
 
     const payload = await response.json();
 
@@ -77,6 +93,30 @@ describe('kangur game library page handler', () => {
         group.entries.map((entry) => entry.game.id)
       )
     ).toEqual(['division_groups']);
+  });
+
+  it('returns not found for non-super-admin sessions and skips loading games', async () => {
+    authMock.mockResolvedValueOnce({
+      expires: '2026-12-31T23:59:59.000Z',
+      user: {
+        email: 'admin@example.com',
+        id: 'admin-1',
+        isElevated: true,
+        name: 'Admin',
+        role: 'admin',
+      },
+    });
+
+    const response = await getKangurGameLibraryPageHandler(
+      new NextRequest('http://localhost/api/kangur/game-library-page'),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(404);
+    expect(response.headers.get('Cache-Control')).toBe('private, no-store');
+    expect(await response.json()).toEqual({ error: 'Not Found' });
+    expect(listKangurGamesMock).not.toHaveBeenCalled();
+    expect(captureExceptionMock).not.toHaveBeenCalled();
   });
 
   it('captures handler context when loading the page payload fails', async () => {

@@ -329,10 +329,14 @@ export type KangurCalendarInteractiveStageSection = z.infer<
 >;
 
 const KANGUR_CLOCK_TRAINING_STAGE_SECTIONS = ['hours', 'minutes', 'combined'] as const;
-const kangurClockTrainingStageSectionSchema = z.enum(KANGUR_CLOCK_TRAINING_STAGE_SECTIONS);
+export const kangurClockTrainingStageSectionSchema = z.enum(
+  KANGUR_CLOCK_TRAINING_STAGE_SECTIONS
+);
 export type KangurClockTrainingStageSection = z.infer<
   typeof kangurClockTrainingStageSectionSchema
 >;
+
+const kangurClockTrainingInitialModeSchema = z.enum(['practice', 'challenge']);
 
 const KANGUR_LOGICAL_PATTERN_SET_IDS = [
   'logical_patterns_workshop',
@@ -364,6 +368,7 @@ export const kangurLessonStageGameRuntimeRendererPropsSchema = z
     activityKey: nonEmptyTrimmedString.max(120).optional(),
     calendarSection: kangurCalendarInteractiveStageSectionSchema.optional(),
     clockSection: kangurClockTrainingStageSectionSchema.optional(),
+    clockInitialMode: kangurClockTrainingInitialModeSchema.optional(),
     difficultyLabelOverride: nonEmptyTrimmedString.max(120).optional(),
     finishLabel: nonEmptyTrimmedString.max(120).optional(),
     finishLabelVariant: kangurLessonStageGameFinishLabelVariantSchema.optional(),
@@ -372,6 +377,11 @@ export const kangurLessonStageGameRuntimeRendererPropsSchema = z
     patternSetId: kangurLogicalPatternSetIdSchema.optional(),
     operation: nonEmptyTrimmedString.max(80).optional(),
     shapeIds: z.array(kangurGeometryDrawingShapeIdSchema).min(1).max(12).optional(),
+    showClockHourHand: z.boolean().optional(),
+    showClockMinuteHand: z.boolean().optional(),
+    showClockModeSwitch: z.boolean().optional(),
+    showClockTaskTitle: z.boolean().optional(),
+    showClockTimeDisplay: z.boolean().optional(),
     showDifficultySelector: z.boolean().optional(),
   })
   .strict();

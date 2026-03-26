@@ -23,6 +23,7 @@ import {
   kangurCmsProjectSchema,
 } from './project-contracts';
 import { withOrders } from './project-factories';
+import { sanitizeKangurScreenComponents } from './kangur-page-builder-policy';
 
 // Re-export contracts and constants
 export * from './project-contracts';
@@ -197,6 +198,35 @@ const pruneHiddenWidgetsFromProject = (project: KangurCmsProject): KangurCmsProj
   },
 });
 
+const sanitizeDisallowedBlocksFromProject = (project: KangurCmsProject): KangurCmsProject => ({
+  ...project,
+  screens: {
+    ...project.screens,
+    Game: {
+      ...project.screens.Game,
+      components: sanitizeKangurScreenComponents('Game', project.screens.Game.components),
+    },
+    Lessons: {
+      ...project.screens.Lessons,
+      components: sanitizeKangurScreenComponents('Lessons', project.screens.Lessons.components),
+    },
+    LearnerProfile: {
+      ...project.screens.LearnerProfile,
+      components: sanitizeKangurScreenComponents(
+        'LearnerProfile',
+        project.screens.LearnerProfile.components
+      ),
+    },
+    ParentDashboard: {
+      ...project.screens.ParentDashboard,
+      components: sanitizeKangurScreenComponents(
+        'ParentDashboard',
+        project.screens.ParentDashboard.components
+      ),
+    },
+  },
+});
+
 const upgradeLegacyScreenComponents = (
   project: KangurCmsProject,
   locale?: string | null
@@ -283,8 +313,10 @@ export function parseKangurCmsProject(
     return fallbackToDefault ? createDefaultKangurCmsProject(locale) : null;
   }
 
-  return pruneHiddenWidgetsFromProject(
-    normalizeResultsOwnership(upgradeLegacyScreenComponents(result.data, locale))
+  return sanitizeDisallowedBlocksFromProject(
+    pruneHiddenWidgetsFromProject(
+      normalizeResultsOwnership(upgradeLegacyScreenComponents(result.data, locale))
+    )
   );
 }
 
@@ -307,7 +339,7 @@ export function buildKangurCmsSyntheticPage(
     publishedAt: undefined,
     themeId: null,
     showMenu: false,
-    components: withOrders(screen.components),
+    components: withOrders(sanitizeKangurScreenComponents(screen.key, screen.components)),
     slugs: [],
     seoTitle: `Kangur ${screen.name}`,
     seoDescription: '',
@@ -332,7 +364,14 @@ export function buildKangurCmsBuilderState(
   locale?: string | null
 ): PageBuilderState {
   const screen = project.screens[screenKey];
-  const currentPage = buildKangurCmsSyntheticPage(screen, locale);
+  const sanitizedComponents = sanitizeKangurScreenComponents(screenKey, screen.components);
+  const currentPage = buildKangurCmsSyntheticPage(
+    {
+      ...screen,
+      components: sanitizedComponents,
+    },
+    locale
+  );
   const sections: SectionInstance[] = currentPage.components.map(
     (component: PageComponentInput) => ({
       id: component.content.sectionId,

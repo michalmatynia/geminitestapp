@@ -14,7 +14,7 @@ import { useProductFormImages } from '@/features/products/context/ProductFormIma
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { AdminProductsPageLayout, Button } from '@/shared/ui';
 
-const FileManager = dynamic(() => import('@/features/files/public'), {
+const FileManager = dynamic(() => import('@/features/files/client/public'), {
   ssr: false,
 });
 

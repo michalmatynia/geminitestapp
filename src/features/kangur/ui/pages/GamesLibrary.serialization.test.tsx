@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -18,6 +18,10 @@ const {
   openLoginModalMock,
   logoutMock,
   setGuestPlayerNameMock,
+  sessionState,
+  lessonGameSectionsState,
+  replaceLessonGameSectionsMutateAsyncMock,
+  useKangurGameLibraryPageMock,
 } = vi.hoisted(() => ({
   pageDataState: {
     value: null as ReturnType<typeof createKangurGameLibraryPageDataFromGames> | null,
@@ -29,6 +33,41 @@ const {
   openLoginModalMock: vi.fn(),
   logoutMock: vi.fn(),
   setGuestPlayerNameMock: vi.fn(),
+  sessionState: {
+    value: {
+      data: {
+        expires: '2026-12-31T23:59:59.000Z',
+        user: {
+          email: 'admin@example.com',
+          id: 'admin-1',
+          isElevated: true,
+          name: 'Super Admin',
+          role: 'super_admin',
+        },
+      },
+      status: 'authenticated',
+    } as {
+      data: {
+        expires: string;
+        user: {
+          email: string;
+          id: string;
+          isElevated?: boolean;
+          name: string;
+          role: string;
+        };
+      } | null;
+      status: 'authenticated' | 'loading' | 'unauthenticated';
+    },
+  },
+  lessonGameSectionsState: {
+    value: [] as Array<Record<string, unknown>>,
+  },
+  replaceLessonGameSectionsMutateAsyncMock: vi.fn(async (input: { sections: Array<Record<string, unknown>> }) => {
+    lessonGameSectionsState.value = input.sections;
+    return input.sections;
+  }),
+  useKangurGameLibraryPageMock: vi.fn(),
 }));
 
 const messageMap = {
@@ -80,9 +119,18 @@ const messageMap = {
   'KangurGamesLibraryPage.filters.game.label': 'Game',
   'KangurGamesLibraryPage.filters.game.aria': 'Filter games by exact game',
   'KangurGamesLibraryPage.filters.game.all': 'All games',
+  'KangurGamesLibraryPage.filters.subject.label': 'Subject',
+  'KangurGamesLibraryPage.filters.subject.aria': 'Filter games by subject',
+  'KangurGamesLibraryPage.filters.subject.all': 'All subjects',
+  'KangurGamesLibraryPage.filters.launchability.label': 'Launchability',
+  'KangurGamesLibraryPage.filters.launchability.aria': 'Filter games by launchability',
+  'KangurGamesLibraryPage.filters.launchability.all': 'All launch states',
+  'KangurGamesLibraryPage.filters.launchability.launchable': 'Launchable only',
   'KangurGamesLibraryPage.filters.engine.label': 'Engine family',
   'KangurGamesLibraryPage.filters.engine.aria': 'Filter games by engine family',
   'KangurGamesLibraryPage.filters.engine.all': 'All engines',
+  'KangurGamesLibraryPage.filters.clear': 'Clear filters',
+  'KangurGamesLibraryPage.actions.previewGame': 'Preview & map',
   'KangurGamesLibraryPage.variantSurfaces.lesson_inline': 'Lesson inline',
   'KangurGamesLibraryPage.variantSurfaces.lesson_stage': 'Lesson stage',
   'KangurGamesLibraryPage.variantSurfaces.library_preview': 'Library preview',
@@ -104,6 +152,62 @@ const messageMap = {
   'KangurGamesLibraryPage.tabs.catalog': 'Catalog',
   'KangurGamesLibraryPage.tabs.structure': 'Structure',
   'KangurGamesLibraryPage.tabs.runtime': 'Runtime',
+  'KangurGamesLibraryPage.modal.eyebrow': 'Game scaffold',
+  'KangurGamesLibraryPage.modal.scaffoldBadge': 'Scaffold',
+  'KangurGamesLibraryPage.modal.description':
+    'Preview the active runtime, map the game to a lesson hub, and draft new hub sections before persistence is wired.',
+  'KangurGamesLibraryPage.modal.settingsButton': 'Game settings',
+  'KangurGamesLibraryPage.modal.hideSettingsButton': 'Hide settings',
+  'KangurGamesLibraryPage.modal.closeButton': 'Close',
+  'KangurGamesLibraryPage.modal.lessonEyebrow': 'Lesson hub',
+  'KangurGamesLibraryPage.modal.lessonTitle': 'Attach the game to a hub lesson',
+  'KangurGamesLibraryPage.modal.lessonSelectLabel': 'Attached hub lesson',
+  'KangurGamesLibraryPage.modal.lessonPlaceholder': 'Select a lesson hub',
+  'KangurGamesLibraryPage.modal.lessonSearchPlaceholder': 'Search lesson hubs',
+  'KangurGamesLibraryPage.modal.lessonEmpty': 'No lesson hubs found.',
+  'KangurGamesLibraryPage.modal.lessonUnassigned': 'No lesson attached yet',
+  'KangurGamesLibraryPage.modal.scaffoldHint':
+    'Scaffold only. The current draft is mapped to {lesson}.',
+  'KangurGamesLibraryPage.modal.previewEyebrow': 'Live runtime',
+  'KangurGamesLibraryPage.modal.previewTitle': 'Game preview',
+  'KangurGamesLibraryPage.modal.previewFallback':
+    'Clock is scaffolded first. Other games will plug into this modal next.',
+  'KangurGamesLibraryPage.modal.draftEyebrow': 'Hub section draft',
+  'KangurGamesLibraryPage.modal.draftTitle': 'Create a new hub game section',
+  'KangurGamesLibraryPage.modal.draftNameLabel': 'Section name',
+  'KangurGamesLibraryPage.modal.draftNamePlaceholder': 'Clock challenge',
+  'KangurGamesLibraryPage.modal.draftSubtextLabel': 'Section subtext',
+  'KangurGamesLibraryPage.modal.draftSubtextPlaceholder':
+    'Write a short subtext for the lesson hub card.',
+  'KangurGamesLibraryPage.modal.draftIconLabel': 'Game icon',
+  'KangurGamesLibraryPage.modal.draftIconAria': 'Choose {icon} as the game icon',
+  'KangurGamesLibraryPage.modal.addDraftButton': 'Add hub section draft',
+  'KangurGamesLibraryPage.modal.draftListEyebrow': 'Draft list',
+  'KangurGamesLibraryPage.modal.draftListTitle': 'Drafted hub sections',
+  'KangurGamesLibraryPage.modal.draftListEmpty': 'No hub sections drafted yet.',
+  'KangurGamesLibraryPage.modal.removeDraftButton': 'Remove',
+  'KangurGamesLibraryPage.modal.settingsEyebrow': 'Preview settings',
+  'KangurGamesLibraryPage.modal.settingsTitle': 'Clock preview settings',
+  'KangurGamesLibraryPage.modal.settingsDescription':
+    'These options currently drive the clock scaffold inside the modal.',
+  'KangurGamesLibraryPage.modal.settings.showModeSwitchLabel': 'Show mode switch',
+  'KangurGamesLibraryPage.modal.settings.showModeSwitchDescription':
+    'Keep practice and challenge tabs visible inside the preview.',
+  'KangurGamesLibraryPage.modal.settings.showTaskTitleLabel': 'Show task title',
+  'KangurGamesLibraryPage.modal.settings.showTaskTitleDescription':
+    'Display the target time above the clock.',
+  'KangurGamesLibraryPage.modal.settings.showTimeDisplayLabel': 'Show digital time',
+  'KangurGamesLibraryPage.modal.settings.showTimeDisplayDescription':
+    'Render the live blue digital readout above the dial.',
+  'KangurGamesLibraryPage.modal.settings.showHourHandLabel': 'Show hour hand',
+  'KangurGamesLibraryPage.modal.settings.showHourHandDescription':
+    'Hide or reveal the short red clock hand in the preview.',
+  'KangurGamesLibraryPage.modal.settings.showMinuteHandLabel': 'Show minute hand',
+  'KangurGamesLibraryPage.modal.settings.showMinuteHandDescription':
+    'Hide or reveal the long green clock hand in the preview.',
+  'KangurGamesLibraryPage.modal.settings.initialModeLabel': 'Initial mode',
+  'KangurGamesLibraryPage.modal.settings.initialModePractice': 'Practice',
+  'KangurGamesLibraryPage.modal.settings.initialModeChallenge': 'Challenge',
   'KangurGamesLibraryPage.labels.none': 'None',
 } as const;
 
@@ -129,6 +233,10 @@ vi.mock('next-intl', () => ({
 
 vi.mock('next/navigation', () => ({
   useSearchParams: () => searchParamsState.value,
+}));
+
+vi.mock('next-auth/react', () => ({
+  useSession: () => sessionState.value,
 }));
 
 vi.mock('@/features/kangur/config/routing', () => ({
@@ -183,8 +291,25 @@ vi.mock('@/features/kangur/ui/components/KangurStandardPageLayout', () => ({
   ),
 }));
 
+vi.mock('@/features/kangur/ui/components/PageNotFound', () => ({
+  PageNotFound: () => <div data-testid='kangur-page-not-found' />,
+  default: () => <div data-testid='kangur-page-not-found' />,
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
   KangurTopNavigationController: () => <div data-testid='games-library-top-nav' />,
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurDialog', () => ({
+  KangurDialog: ({
+    children,
+    open,
+    contentProps,
+  }: {
+    children: React.ReactNode;
+    open: boolean;
+    contentProps?: Record<string, unknown>;
+  }) => (open ? <div data-testid={String(contentProps?.['data-testid'] ?? 'kangur-dialog')}>{children}</div> : null),
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({
@@ -195,6 +320,57 @@ vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({
     children: React.ReactNode;
     href: string;
   }) => <a href={href}>{children}</a>,
+}));
+
+vi.mock('@/shared/ui/searchable-select', () => ({
+  SearchableSelect: ({
+    label,
+    options,
+    value,
+    onChange,
+  }: {
+    label?: string;
+    options: Array<{ label: string; value: string }>;
+    value?: string | null;
+    onChange: (value: string | null) => void;
+  }) => (
+    <label>
+      <span>{label}</span>
+      <select
+        aria-label={label}
+        onChange={(event) => onChange(event.target.value || null)}
+        value={value ?? ''}
+      >
+        <option value=''>None</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  ),
+}));
+
+vi.mock('@/features/kangur/ui/components/ClockTrainingGame', () => ({
+  default: ({
+    hideModeSwitch = false,
+    initialMode = 'practice',
+    showHourHand = true,
+    showMinuteHand = true,
+    showTaskTitle = true,
+    showTimeDisplay = true,
+  }: Record<string, unknown>) => (
+    <div
+      data-hide-mode-switch={String(hideModeSwitch)}
+      data-initial-mode={String(initialMode)}
+      data-show-hour-hand={String(showHourHand)}
+      data-show-minute-hand={String(showMinuteHand)}
+      data-show-task-title={String(showTaskTitle)}
+      data-show-time-display={String(showTimeDisplay)}
+      data-testid='clock-training-game-preview'
+    />
+  ),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
@@ -225,8 +401,23 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurGameLibraryPage', () => ({
-  useKangurGameLibraryPage: () => ({
-    data: pageDataState.value,
+  useKangurGameLibraryPage: (...args: unknown[]) => {
+    useKangurGameLibraryPageMock(...args);
+    return {
+      data: pageDataState.value,
+      isError: false,
+    };
+  },
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonGameSections', () => ({
+  useKangurLessonGameSections: () => ({
+    data: lessonGameSectionsState.value,
+    isPending: false,
+  }),
+  useReplaceKangurLessonGameSections: () => ({
+    isPending: false,
+    mutateAsync: replaceLessonGameSectionsMutateAsyncMock,
   }),
 }));
 
@@ -320,9 +511,57 @@ describe('GamesLibrary serialization audit', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     searchParamsState.value = new URLSearchParams();
+    lessonGameSectionsState.value = [];
+    sessionState.value = {
+      data: {
+        expires: '2026-12-31T23:59:59.000Z',
+        user: {
+          email: 'admin@example.com',
+          id: 'admin-1',
+          isElevated: true,
+          name: 'Super Admin',
+          role: 'super_admin',
+        },
+      },
+      status: 'authenticated',
+    };
     pageDataState.value = createKangurGameLibraryPageDataFromGames({
       games: createDefaultKangurGames(),
     });
+  });
+
+  it('renders nothing while the admin session is still loading and skips page data hooks', () => {
+    sessionState.value = {
+      data: null,
+      status: 'loading',
+    };
+
+    const { container } = render(<GamesLibrary />);
+
+    expect(container).toBeEmptyDOMElement();
+    expect(screen.queryByTestId('games-library-layout')).toBeNull();
+    expect(useKangurGameLibraryPageMock).not.toHaveBeenCalled();
+  });
+
+  it('renders not found for non-super-admin sessions before loading page data', () => {
+    sessionState.value = {
+      data: {
+        expires: '2026-12-31T23:59:59.000Z',
+        user: {
+          email: 'admin@example.com',
+          id: 'admin-1',
+          name: 'Admin',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    };
+
+    render(<GamesLibrary />);
+
+    expect(screen.getByTestId('kangur-page-not-found')).toBeInTheDocument();
+    expect(screen.queryByTestId('games-library-layout')).toBeNull();
+    expect(useKangurGameLibraryPageMock).not.toHaveBeenCalled();
   });
 
   it('renders the runtime serialization summary when the catalog is fully explicit', () => {
@@ -344,6 +583,215 @@ describe('GamesLibrary serialization audit', () => {
     expect(screen.queryByText('Fix backlog')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Games library' })).toBeInTheDocument();
     expect(screen.getAllByText('Lesson stage').length).toBeGreaterThan(0);
+  });
+
+  it('opens the runtime tab directly from the route query and persists tab clicks back to the route', () => {
+    searchParamsState.value = new URLSearchParams('tab=runtime');
+
+    render(<GamesLibrary />);
+
+    expect(screen.getByRole('tab', { name: 'Runtime' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    expect(screen.getByText('Runtime serialization')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Catalog' }));
+
+    expect(replaceMock).toHaveBeenCalledWith('/games', {
+      pageKey: 'GamesLibrary',
+      scroll: false,
+      sourceId: 'kangur-games-library:tab:catalog',
+    });
+  });
+
+  it('normalizes an explicit catalog tab back to the canonical catalog route', () => {
+    searchParamsState.value = new URLSearchParams('tab=catalog');
+
+    render(<GamesLibrary />);
+
+    expect(screen.getByRole('tab', { name: 'Catalog' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    expect(replaceMock).toHaveBeenCalledWith('/games', {
+      pageKey: 'GamesLibrary',
+      scroll: false,
+      sourceId: 'kangur-games-library:query-normalize',
+    });
+  });
+
+  it('drops invalid tab query values back to the canonical catalog route', () => {
+    searchParamsState.value = new URLSearchParams('tab=invalid');
+
+    render(<GamesLibrary />);
+
+    expect(screen.getByRole('tab', { name: 'Catalog' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    expect(replaceMock).toHaveBeenCalledWith('/games', {
+      pageKey: 'GamesLibrary',
+      scroll: false,
+      sourceId: 'kangur-games-library:query-normalize',
+    });
+  });
+
+  it('writes the runtime tab into the route when the user switches tabs manually', () => {
+    render(<GamesLibrary />);
+
+    openRuntimeTab();
+
+    expect(replaceMock).toHaveBeenCalledWith('/games?tab=runtime', {
+      pageKey: 'GamesLibrary',
+      scroll: false,
+      sourceId: 'kangur-games-library:tab:runtime',
+    });
+  });
+
+  it('drops invalid filter query values while preserving valid tab state', () => {
+    searchParamsState.value = new URLSearchParams('subject=invalid&tab=runtime');
+
+    render(<GamesLibrary />);
+
+    expect(screen.getByRole('tab', { name: 'Runtime' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    expect(replaceMock).toHaveBeenCalledWith('/games?tab=runtime', {
+      pageKey: 'GamesLibrary',
+      scroll: false,
+      sourceId: 'kangur-games-library:query-normalize',
+    });
+  });
+
+  it('preserves unrelated query params while normalizing invalid filter values', () => {
+    searchParamsState.value = new URLSearchParams(
+      'subject=invalid&view=compact&tab=runtime'
+    );
+
+    render(<GamesLibrary />);
+
+    expect(screen.getByRole('tab', { name: 'Runtime' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    expect(replaceMock).toHaveBeenCalledWith('/games?view=compact&tab=runtime', {
+      pageKey: 'GamesLibrary',
+      scroll: false,
+      sourceId: 'kangur-games-library:query-normalize',
+    });
+  });
+
+  it('drops unsupported lessonComponentId query values while preserving valid tab state', () => {
+    searchParamsState.value = new URLSearchParams(
+      'lessonComponentId=legacy-inline-link&tab=runtime'
+    );
+
+    render(<GamesLibrary />);
+
+    expect(screen.getByRole('tab', { name: 'Runtime' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    expect(replaceMock).toHaveBeenCalledWith('/games?tab=runtime', {
+      pageKey: 'GamesLibrary',
+      scroll: false,
+      sourceId: 'kangur-games-library:query-normalize',
+    });
+  });
+
+  it('keeps the runtime tab in the route when non-overriding filters change', () => {
+    render(<GamesLibrary />);
+    openRuntimeTab();
+    replaceMock.mockClear();
+
+    fireEvent.change(screen.getByLabelText('Filter games by subject'), {
+      target: { value: 'english' },
+    });
+
+    expect(replaceMock).toHaveBeenCalledWith('/games?subject=english&tab=runtime', {
+      pageKey: 'GamesLibrary',
+      scroll: false,
+      sourceId: 'kangur-games-library:filters:subject',
+    });
+  });
+
+  it('preserves unrelated query params when non-overriding filters change', () => {
+    searchParamsState.value = new URLSearchParams('view=compact&tab=runtime');
+
+    render(<GamesLibrary />);
+    replaceMock.mockClear();
+
+    fireEvent.change(screen.getByLabelText('Filter games by subject'), {
+      target: { value: 'english' },
+    });
+
+    expect(replaceMock).toHaveBeenCalledWith(
+      '/games?view=compact&tab=runtime&subject=english',
+      {
+        pageKey: 'GamesLibrary',
+        scroll: false,
+        sourceId: 'kangur-games-library:filters:subject',
+      }
+    );
+  });
+
+  it('switches to the structure tab when an engine filter overrides runtime focus', () => {
+    render(<GamesLibrary />);
+    openRuntimeTab();
+    replaceMock.mockClear();
+
+    fireEvent.change(screen.getByLabelText('Filter games by engine family'), {
+      target: { value: 'classification-engine' },
+    });
+
+    expect(replaceMock).toHaveBeenCalledWith(
+      '/games?engineId=classification-engine&tab=structure',
+      {
+        pageKey: 'GamesLibrary',
+        scroll: false,
+        sourceId: 'kangur-games-library:filters:engineId',
+      }
+    );
+  });
+
+  it('preserves the runtime tab when clearing filters from a runtime deep link', () => {
+    searchParamsState.value = new URLSearchParams('tab=runtime&subject=english');
+    pageDataState.value = createKangurGameLibraryPageDataFromGames({
+      filter: { subject: 'english' },
+      games: createDefaultKangurGames(),
+    });
+
+    render(<GamesLibrary />);
+    replaceMock.mockClear();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+
+    expect(replaceMock).toHaveBeenCalledWith('/games?tab=runtime', {
+      pageKey: 'GamesLibrary',
+      scroll: false,
+      sourceId: 'kangur-games-library:filters:clear',
+    });
+  });
+
+  it('preserves unrelated query params when clearing known filters', () => {
+    searchParamsState.value = new URLSearchParams('view=compact&tab=runtime&subject=english');
+    pageDataState.value = createKangurGameLibraryPageDataFromGames({
+      filter: { subject: 'english' },
+      games: createDefaultKangurGames(),
+    });
+
+    render(<GamesLibrary />);
+    replaceMock.mockClear();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+
+    expect(replaceMock).toHaveBeenCalledWith('/games?view=compact&tab=runtime', {
+      pageKey: 'GamesLibrary',
+      scroll: false,
+      sourceId: 'kangur-games-library:filters:clear',
+    });
   });
 
   it('switches the audit status when compatibility cleanup is needed', () => {
@@ -448,6 +896,11 @@ describe('GamesLibrary serialization audit', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('division_groups')).toBeInTheDocument();
     expect(screen.getByLabelText('Filter games by exact game')).toHaveValue('division_groups');
+    expect(useKangurGameLibraryPageMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        gameId: 'division_groups',
+      })
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear game focus' }));
 
@@ -475,6 +928,76 @@ describe('GamesLibrary serialization audit', () => {
       screen.getByText('This view is currently narrowed to Division Groups.')
     ).toBeInTheDocument();
     expect(screen.getByLabelText('Filter games by exact game')).toHaveValue('division_groups');
+    expect(useKangurGameLibraryPageMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        gameId: 'division_groups',
+        subject: 'english',
+      })
+    );
+  });
+
+  it('passes the selected exact game into the page data hook when the filter changes', () => {
+    render(<GamesLibrary />);
+    useKangurGameLibraryPageMock.mockClear();
+
+    fireEvent.change(screen.getByLabelText('Filter games by exact game'), {
+      target: { value: 'division_groups' },
+    });
+
+    expect(useKangurGameLibraryPageMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        gameId: 'division_groups',
+      })
+    );
+    expect(replaceMock).toHaveBeenCalledWith('/games?gameId=division_groups', {
+      pageKey: 'GamesLibrary',
+      scroll: false,
+      sourceId: 'kangur-games-library:filters:gameId',
+    });
+  });
+
+  it('passes launchableOnly into the page data hook when the launchability filter changes', () => {
+    render(<GamesLibrary />);
+    useKangurGameLibraryPageMock.mockClear();
+
+    fireEvent.change(screen.getByLabelText('Filter games by launchability'), {
+      target: { value: 'launchable' },
+    });
+
+    expect(useKangurGameLibraryPageMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        launchableOnly: true,
+      })
+    );
+    expect(replaceMock).toHaveBeenCalledWith('/games?launchableOnly=true', {
+      pageKey: 'GamesLibrary',
+      scroll: false,
+      sourceId: 'kangur-games-library:filters:launchability',
+    });
+  });
+
+  it('keeps the catalog tab active when a focused game deep link also requests runtime', () => {
+    searchParamsState.value = new URLSearchParams('gameId=division_groups&tab=runtime');
+    pageDataState.value = createKangurGameLibraryPageDataFromGames({
+      filter: { gameId: 'division_groups' },
+      games: createDefaultKangurGames(),
+    });
+
+    render(<GamesLibrary />);
+
+    expect(screen.getByRole('tab', { name: 'Catalog' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    expect(screen.getByRole('tab', { name: 'Runtime' })).toHaveAttribute(
+      'aria-selected',
+      'false'
+    );
+    expect(replaceMock).toHaveBeenCalledWith('/games?gameId=division_groups', {
+      pageKey: 'GamesLibrary',
+      scroll: false,
+      sourceId: 'kangur-games-library:query-normalize',
+    });
   });
 
   it('explains when the page is focused to a single engine through a deep link', () => {
@@ -503,7 +1026,7 @@ describe('GamesLibrary serialization audit', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear engine focus' }));
 
-    expect(replaceMock).toHaveBeenCalledWith('/games', {
+    expect(replaceMock).toHaveBeenCalledWith('/games?tab=structure', {
       pageKey: 'GamesLibrary',
       scroll: false,
       sourceId: 'kangur-games-library:filters:engineId',
@@ -535,6 +1058,83 @@ describe('GamesLibrary serialization audit', () => {
     ).toBeInTheDocument();
     expect(screen.getByLabelText('Filter games by engine family')).toHaveValue(
       'sentence-builder-engine'
+    );
+  });
+
+  it('opens the game modal from a catalog card and scaffolds hub-section controls for the clock game', () => {
+    render(<GamesLibrary />);
+
+    const clockCard = document.getElementById('kangur-game-card-clock_training');
+    if (!clockCard) {
+      throw new Error('Clock Training card container not found.');
+    }
+
+    fireEvent.click(within(clockCard).getByRole('button', { name: 'Preview & map' }));
+
+    expect(screen.getByTestId('games-library-game-modal')).toBeInTheDocument();
+    expect(screen.getByLabelText('Attached hub lesson')).toHaveValue('clock');
+    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
+      'data-show-minute-hand',
+      'true'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hide settings' }));
+    expect(screen.queryByText('Clock preview settings')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Game settings' }));
+    fireEvent.click(screen.getByLabelText('Show minute hand'));
+    fireEvent.change(screen.getByLabelText('Initial mode'), {
+      target: { value: 'challenge' },
+    });
+
+    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
+      'data-show-minute-hand',
+      'false'
+    );
+    expect(screen.getByTestId('clock-training-game-preview')).toHaveAttribute(
+      'data-initial-mode',
+      'challenge'
+    );
+
+    fireEvent.change(screen.getByLabelText('Section name'), {
+      target: { value: 'Clock deck' },
+    });
+    fireEvent.change(screen.getByLabelText('Section subtext'), {
+      target: { value: 'Mixed drills for the lesson hub.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose 🧩 as the game icon' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add hub section draft' }));
+
+    expect(screen.getByText('Clock deck')).toBeInTheDocument();
+    expect(screen.getByText('Mixed drills for the lesson hub.')).toBeInTheDocument();
+  });
+
+  it('keeps the structure tab active when an engine deep link also requests runtime', () => {
+    searchParamsState.value = new URLSearchParams(
+      'engineId=classification-engine&tab=runtime'
+    );
+    pageDataState.value = createKangurGameLibraryPageDataFromGames({
+      filter: { engineId: 'classification-engine' },
+      games: createDefaultKangurGames(),
+    });
+
+    render(<GamesLibrary />);
+
+    expect(screen.getByRole('tab', { name: 'Structure' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    expect(screen.getByRole('tab', { name: 'Runtime' })).toHaveAttribute(
+      'aria-selected',
+      'false'
+    );
+    expect(replaceMock).toHaveBeenCalledWith(
+      '/games?engineId=classification-engine&tab=structure',
+      {
+        pageKey: 'GamesLibrary',
+        scroll: false,
+        sourceId: 'kangur-games-library:query-normalize',
+      }
     );
   });
 });

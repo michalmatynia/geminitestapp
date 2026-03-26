@@ -8,6 +8,7 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
+import { usePageBuilderPolicy } from './PageBuilderPolicyContext';
 import { getBlockDefinition, getColumnAllowedBlockTypes } from './section-registry';
 
 import type { BlockDefinition } from '../../types/page-builder';
@@ -33,6 +34,7 @@ export function ColumnBlockPicker({
   allowedBlockTypes,
 }: ColumnBlockPickerProps): React.ReactNode {
   const settingsStore = useSettingsStore();
+  const policy = usePageBuilderPolicy();
   const enabledEmbedsRaw = settingsStore.get(APP_EMBED_SETTING_KEY);
   const enabledEmbedsSetting = typeof enabledEmbedsRaw === 'string' ? enabledEmbedsRaw : null;
   const enabledEmbeds = useMemo<AppEmbedId[]>(
@@ -43,12 +45,13 @@ export function ColumnBlockPicker({
 
   const resolvedTypes = useMemo(() => {
     const defs = allowedBlockTypes
-      ? allowedBlockTypes
-        .map((type: string) => getBlockDefinition(type))
-        .filter((def: BlockDefinition | undefined): def is BlockDefinition => Boolean(def))
-      : getColumnAllowedBlockTypes();
+      ? policy
+          .filterBlockTypes(allowedBlockTypes)
+          .map((type: string) => getBlockDefinition(type))
+          .filter((def: BlockDefinition | undefined): def is BlockDefinition => Boolean(def))
+      : policy.filterBlockDefinitions(getColumnAllowedBlockTypes());
     return defs.filter((def: BlockDefinition) => def.type !== 'AppEmbed' || hasAppEmbeds);
-  }, [allowedBlockTypes, hasAppEmbeds]);
+  }, [allowedBlockTypes, hasAppEmbeds, policy]);
 
   const groups = useMemo(() => {
     const elementTypes = resolvedTypes.filter((d) => !SECTION_BLOCK_TYPES.includes(d.type));

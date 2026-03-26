@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import { useSession } from 'next-auth/react';
 
+import { resolveAccessibleKangurPageKey } from '@/features/kangur/config/page-access';
 import { KANGUR_MAIN_PAGE } from '@/features/kangur/config/pages';
 import { resolveKangurPageKey } from '@/features/kangur/config/routing';
 import { KANGUR_CONTEXT_ROOT_IDS } from '@/features/kangur/context-registry/refs';
@@ -86,14 +88,17 @@ export function KangurContextRegistryPageBoundary({
   children: React.ReactNode;
 }): React.JSX.Element {
   const { pageKey } = useKangurRouting();
+  const { data: session } = useSession();
   const resolvedPageKey = resolveKangurPageKey(
     pageKey,
     KANGUR_PAGE_KEY_LOOKUP,
     KANGUR_FALLBACK_PAGE_KEY
   );
-  const effectivePageKey: KangurContextPageKey = isKangurContextPageKey(resolvedPageKey)
-    ? resolvedPageKey
-    : KANGUR_FALLBACK_PAGE_KEY;
+  const effectivePageKey = resolveAccessibleKangurPageKey(
+    isKangurContextPageKey(resolvedPageKey) ? resolvedPageKey : null,
+    session,
+    KANGUR_FALLBACK_PAGE_KEY
+  ) as KangurContextPageKey;
 
   const rootNodeIds = useMemo(
     () => dedupeRootIds(KANGUR_PAGE_CONTEXT_ROOTS[effectivePageKey] ?? []),

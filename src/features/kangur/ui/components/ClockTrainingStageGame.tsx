@@ -9,8 +9,14 @@ import {
 import ClockTrainingGame from './ClockTrainingGame';
 
 type ClockTrainingStageGameProps = {
+  clockInitialMode?: 'practice' | 'challenge';
   clockSection?: KangurClockTrainingStageSection;
   onFinish: () => void;
+  showClockHourHand?: boolean;
+  showClockMinuteHand?: boolean;
+  showClockModeSwitch?: boolean;
+  showClockTaskTitle?: boolean;
+  showClockTimeDisplay?: boolean;
 };
 
 const resolvePracticeTasks = (
@@ -18,21 +24,29 @@ const resolvePracticeTasks = (
 ): ClockPracticeTask[] | undefined => TRAINING_PANEL_TASKS[section].pick_one;
 
 export default function ClockTrainingStageGame({
+  clockInitialMode = 'practice',
   clockSection = 'hours',
   onFinish,
+  showClockHourHand = true,
+  showClockMinuteHand = true,
+  showClockModeSwitch = false,
+  showClockTaskTitle = true,
+  showClockTimeDisplay = false,
 }: ClockTrainingStageGameProps): React.JSX.Element {
   return (
     <ClockTrainingGame
       key={clockSection}
       enableAdaptiveRetry={false}
-      hideModeSwitch
-      initialMode='practice'
+      hideModeSwitch={!showClockModeSwitch}
+      initialMode={clockInitialMode}
       onFinish={onFinish}
-      onPracticeCompleted={() => onFinish()}
+      onPracticeCompleted={clockInitialMode === 'practice' ? () => onFinish() : undefined}
       practiceTasks={resolvePracticeTasks(clockSection)}
       section={clockSection}
-      showTaskTitle
-      showTimeDisplay={false}
+      showHourHand={showClockHourHand}
+      showMinuteHand={showClockMinuteHand}
+      showTaskTitle={showClockTaskTitle}
+      showTimeDisplay={showClockTimeDisplay}
     />
   );
 }

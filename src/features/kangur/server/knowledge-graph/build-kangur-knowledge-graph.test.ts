@@ -42,8 +42,22 @@ const makeCmsPage = (overrides: Partial<Page> = {}): Page => ({
 describe('buildKangurKnowledgeGraph', () => {
   it('builds a Kangur website-help graph from context roots and tutor content', () => {
     const snapshot = buildKangurKnowledgeGraph();
+    const gameHelpFlow = snapshot.nodes.find((node) => node.id === 'flow:kangur:game-help');
+    const gameLibraryPage = snapshot.nodes.find((node) => node.id === 'page:kangur-games-library');
+    const gameLibraryRootEdge = snapshot.edges.find(
+      (edge) =>
+        edge.kind === 'HAS_REFERENCE' &&
+        edge.from === 'root:kangur:gameLibraryContext' &&
+        edge.to === 'page:kangur-games-library'
+    );
 
     expect(snapshot.graphKey).toBe('kangur-website-help-v1');
+    expect(gameHelpFlow).toMatchObject({
+      title: 'Games and practice help',
+      route: '/game',
+    });
+    expect(gameLibraryPage).toBeUndefined();
+    expect(gameLibraryRootEdge).toBeUndefined();
     expect(snapshot.nodes).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

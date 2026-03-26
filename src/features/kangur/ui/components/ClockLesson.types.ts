@@ -6,7 +6,7 @@ import type {
 } from './clock-training/types';
 
 export type SectionId = SharedClockTrainingSectionId;
-export type TrainingCardId = 'game_hours' | 'game_minutes' | 'game_combined';
+export type TrainingCardId = string;
 export type ClockHubId = SectionId | TrainingCardId;
 export type ClockTrainingPanelId = 'learn' | 'pick_one' | 'pick_two' | 'challenge';
 export type ClockChallengeMedal = SharedClockChallengeMedal;

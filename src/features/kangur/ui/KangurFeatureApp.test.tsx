@@ -14,6 +14,7 @@ const {
   routingStateMock,
   routeTransitionStateMock,
   routeNavigatorMock,
+  sessionMock,
   settingsStoreStateMock,
   topNavigationHostVisibleMock,
 } = vi.hoisted(() => ({
@@ -28,6 +29,7 @@ const {
     push: vi.fn(),
     replace: vi.fn(),
   },
+  sessionMock: vi.fn(),
   settingsStoreStateMock: vi.fn(),
   topNavigationHostVisibleMock: vi.fn(),
 }));
@@ -62,6 +64,10 @@ vi.mock('framer-motion', () => ({
     div: ({ children, ...props }: React.ComponentProps<'div'>) => <div {...props}>{children}</div>,
   },
   useReducedMotion: () => false,
+}));
+
+vi.mock('next-auth/react', () => ({
+  useSession: () => sessionMock(),
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurPageTransitionSkeleton', () => ({
@@ -197,6 +203,7 @@ vi.mock('@/features/kangur/config/pages', () => ({
   KANGUR_MAIN_PAGE: 'Game',
   kangurPages: {
     Game: () => <div data-testid='kangur-page-game'>Game</div>,
+    GamesLibrary: () => <div data-testid='kangur-page-games-library'>GamesLibrary</div>,
     Lessons: () => <div data-testid='kangur-page-lessons'>Lessons</div>,
     ParentDashboard: () => (
       <div data-testid='kangur-page-parent-dashboard'>ParentDashboard</div>
@@ -257,6 +264,10 @@ describe('KangurFeatureApp', () => {
       navigateToLogin: vi.fn(),
       isAuthenticated: true,
     });
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
     routingStateMock.mockReturnValue({
       pageKey: 'Lessons',
       embedded: false,
@@ -309,6 +320,61 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-page-lessons')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
     expect(screen.queryByTestId('kangur-login-modal')).toBeNull();
+  });
+
+  it('hides the Games library route behind a 404 for non-super-admin sessions', () => {
+    sessionMock.mockReturnValue({
+      data: {
+        expires: '2026-12-31T23:59:59.000Z',
+        user: {
+          email: 'admin@example.com',
+          id: 'admin-1',
+          name: 'Admin',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+    routingStateMock.mockReturnValue({
+      pageKey: 'GamesLibrary',
+      embedded: false,
+      requestedPath: '/kangur/games',
+      requestedHref: '/kangur/games',
+      basePath: '/kangur',
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-page-not-found')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-page-games-library')).toBeNull();
+  });
+
+  it('renders the Games library route for super-admin sessions', () => {
+    sessionMock.mockReturnValue({
+      data: {
+        expires: '2026-12-31T23:59:59.000Z',
+        user: {
+          email: 'super-admin@example.com',
+          id: 'admin-1',
+          isElevated: true,
+          name: 'Super Admin',
+          role: 'super_admin',
+        },
+      },
+      status: 'authenticated',
+    });
+    routingStateMock.mockReturnValue({
+      pageKey: 'GamesLibrary',
+      embedded: false,
+      requestedPath: '/kangur/games',
+      requestedHref: '/kangur/games',
+      basePath: '/kangur',
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-page-games-library')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-page-not-found')).toBeNull();
   });
 
   it('mounts the login modal only when the modal state is open', () => {

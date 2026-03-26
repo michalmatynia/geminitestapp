@@ -1,19 +1,47 @@
 import { useMemo } from 'react';
 
-import type { PageZone, SectionDefinition } from '@/features/cms/types/page-builder';
+import type {
+  BlockInstance,
+  PageZone,
+  SectionDefinition,
+  SectionInstance,
+} from '@/features/cms/types/page-builder';
 
 import { cloneGridTemplateSection, type GridTemplateRecord } from '../grid-templates';
+import { usePageBuilderPolicy } from '../PageBuilderPolicyContext';
 import { getSectionTypesForZone } from '../section-registry';
 import { cloneSectionTemplateSection, type SectionTemplateRecord } from '../section-template-store';
 import { getTemplatesByCategory, type SectionTemplate } from '../section-templates';
 
+const sectionContainsOnlyAllowedTypes = (
+  section: SectionInstance,
+  isSectionTypeAvailable: (sectionType: string) => boolean,
+  isBlockTypeAvailable: (blockType: string) => boolean
+): boolean => {
+  if (!isSectionTypeAvailable(section.type)) {
+    return false;
+  }
+
+  const traverseBlocks = (blocks: BlockInstance[]): boolean =>
+    blocks.every(
+      (block: BlockInstance) =>
+        isBlockTypeAvailable(block.type) &&
+        (!block.blocks || block.blocks.length === 0 || traverseBlocks(block.blocks))
+    );
+
+  return traverseBlocks(section.blocks);
+};
 
 export function useGroupedTemplates(
   zone: PageZone,
   savedGridTemplates: GridTemplateRecord[],
   savedSectionTemplates: SectionTemplateRecord[]
 ) {
-  const sectionTypes = useMemo(() => getSectionTypesForZone(zone), [zone]);
+  const policy = usePageBuilderPolicy();
+  const sectionTypes = useMemo(
+    () => policy.filterSectionDefinitions(getSectionTypesForZone(zone), { zone }),
+    [policy, zone]
+  );
   const primitiveTypes = useMemo(() => new Set(['Grid', 'Block']), []);
   const elementTypes = useMemo(
     () => new Set(['TextElement', 'TextAtom', 'ImageElement', 'Model3DElement', 'ButtonElement']),
@@ -45,9 +73,21 @@ export function useGroupedTemplates(
   const groupedTemplates = useMemo(() => {
     const base = getTemplatesByCategory(zone);
     const result: Record<string, SectionTemplate[]> = {};
+    const allowTemplateSection = (section: SectionInstance): boolean =>
+      sectionContainsOnlyAllowedTypes(
+        section,
+        policy.isSectionTypeAvailable,
+        policy.isBlockTypeAvailable
+      );
+    const allowedGridTemplates = savedGridTemplates.filter((record: GridTemplateRecord) =>
+      allowTemplateSection(record.section)
+    );
+    const allowedSectionTemplates = savedSectionTemplates.filter((record: SectionTemplateRecord) =>
+      allowTemplateSection(record.section)
+    );
 
-    if (gridAllowed && savedGridTemplates.length > 0) {
-      const savedGrids: SectionTemplate[] = savedGridTemplates.map(
+    if (gridAllowed && allowedGridTemplates.length > 0) {
+      const savedGrids: SectionTemplate[] = allowedGridTemplates.map(
         (record: GridTemplateRecord) => ({
           name: record.name,
           description:
@@ -61,8 +101,8 @@ export function useGroupedTemplates(
       result['Saved grids'] = savedGrids;
     }
 
-    if (savedSectionTemplates.length > 0) {
-      for (const record of savedSectionTemplates) {
+    if (allowedSectionTemplates.length > 0) {
+      for (const record of allowedSectionTemplates) {
         const category = record.category || 'Saved sections';
         if (!result[category]) {
           result[category] = [];
@@ -80,7 +120,7 @@ export function useGroupedTemplates(
     }
 
     return { ...base, ...result };
-  }, [zone, gridAllowed, savedGridTemplates, savedSectionTemplates]);
+  }, [gridAllowed, policy, savedGridTemplates, savedSectionTemplates, zone]);
 
   return {
     sectionTypes,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  areGamesLibrarySearchParamsCanonical,
   DEFAULT_GAMES_LIBRARY_FILTERS,
   areGamesLibraryFiltersEqual,
   buildGamesLibraryCatalogFilter,
@@ -120,5 +121,50 @@ describe('GamesLibrary filters', () => {
         ...filters,
       })
     ).toBe(true);
+  });
+
+  it('detects when route search params are already canonicalized', () => {
+    const filters = {
+      ...DEFAULT_GAMES_LIBRARY_FILTERS,
+      gameId: 'division_groups' as const,
+      subject: 'maths' as const,
+    };
+
+    expect(
+      areGamesLibrarySearchParamsCanonical(
+        new URLSearchParams({
+          gameId: 'division_groups',
+          subject: 'maths',
+          tab: 'runtime',
+        }),
+        filters,
+        'runtime'
+      )
+    ).toBe(true);
+
+    expect(
+      areGamesLibrarySearchParamsCanonical(
+        new URLSearchParams({
+          gameId: 'division_groups',
+          subject: 'invalid',
+          tab: 'runtime',
+        }),
+        filters,
+        'runtime'
+      )
+    ).toBe(false);
+
+    expect(
+      areGamesLibrarySearchParamsCanonical(
+        new URLSearchParams({
+          gameId: 'division_groups',
+          subject: 'maths',
+          lessonComponentId: 'legacy-inline-link',
+          tab: 'runtime',
+        }),
+        filters,
+        'runtime'
+      )
+    ).toBe(false);
   });
 });

@@ -8,7 +8,7 @@ canonical: true
 ---
 # UI Consolidation Scan
 
-Generated at: 2026-03-26T15:10:56.905Z
+Generated at: 2026-03-26T15:42:50.824Z
 
 ## Snapshot
 
